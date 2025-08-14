@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+*.pyc
+__pycache__/
+.env
+.venv/
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+*.log
+.pytest_cache/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+scratch*
+test-*
+
+# Local notes
+local-notes/
+.local/
+personal-notes.md
+TODO.local.md
