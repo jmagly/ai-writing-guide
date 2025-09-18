@@ -203,6 +203,60 @@ If output loses sophistication:
 ❌ "Yeah, so we basically just..."
 ✅ "We implemented a pragmatic solution that..."
 
+## Subagents and Automation
+
+### Using Claude Code Subagents
+For complex writing tasks, leverage specialized agents:
+
+**Documentation**: See `docs/subagents/comprehensive-guide.md`
+
+**Quick Start**:
+```
+# For content validation
+Use the Writing Validator agent from docs/agents/writing-validator.md
+
+# For prompt optimization
+Use the Prompt Optimizer agent from docs/agents/prompt-optimizer.md
+
+# For generating diverse examples
+Use the Content Diversifier agent from docs/agents/content-diversifier.md
+```
+
+### Available Specialized Agents
+
+#### Writing & Content Agents
+- **Writing Validator**: Detects AI patterns and validates authenticity
+- **Prompt Optimizer**: Enhances prompts for better output quality
+- **Content Diversifier**: Generates varied examples and perspectives
+
+#### Development Agents
+- **Code Reviewer**: Security and quality focused review
+- **Test Engineer**: Comprehensive test generation
+- **Architecture Designer**: System design and technical decisions
+- **Requirements Analyst**: Transforms requests into specifications
+- **DevOps Engineer**: CI/CD and infrastructure automation
+
+### When to Use Subagents
+
+**Use for**:
+- Validating large documents for AI patterns
+- Generating multiple variations of examples
+- Complex multi-step writing projects
+- Systematic content improvement
+
+**Don't use for**:
+- Simple edits or rewrites
+- Single paragraph fixes
+- Quick pattern checks
+
+### Parallel Processing
+Launch multiple agents for comprehensive work:
+```
+1. Writing Validator - Check current content
+2. Content Diversifier - Generate alternatives
+3. Prompt Optimizer - Improve future outputs
+```
+
 ## Remember
 
 - **Authority comes from expertise**, not formality
