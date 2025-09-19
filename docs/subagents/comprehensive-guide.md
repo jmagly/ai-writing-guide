@@ -294,6 +294,163 @@ Track agent effectiveness by monitoring:
 - Prompt revision frequency
 - Output quality/usefulness
 
+## Custom Commands and Automation
+
+### Slash Commands vs Agents
+
+Claude Code supports both custom slash commands and agents, each serving different purposes:
+
+| Use Slash Commands For | Use Agents For |
+|----------------------|---------------|
+| Quick, focused tasks | Complex, multi-step workflows |
+| File manipulation | Deep analysis and reasoning |
+| Simple transformations | Domain expertise requirements |
+| Status checks | Creative problem solving |
+| Formatting operations | Strategic decision making |
+
+### Creating Custom Commands
+
+#### Basic Command Structure
+```markdown
+---
+name: Command Name
+description: Brief description of functionality
+model: sonnet
+tools: ["read", "write", "bash"]
+argument-hint: "expected arguments"
+color: blue
+---
+
+# Command Implementation
+[Command logic and instructions]
+```
+
+#### Command Locations
+- **Project Commands**: `.claude/commands/command-name.md`
+- **Personal Commands**: `~/.claude/commands/command-name.md`
+- **Agents**: `.claude/agents/agent-name.md`
+
+#### Example: Code Review Command
+```markdown
+---
+name: Code Review
+description: Comprehensive security and performance review
+model: sonnet
+tools: ["read", "grep", "glob"]
+argument-hint: "file-path or 'staged'"
+---
+
+You are a Senior Code Reviewer focusing on production-ready code.
+
+For the specified code:
+1. Check security vulnerabilities (SQL injection, XSS, auth)
+2. Identify performance issues (N+1 queries, algorithms)
+3. Review maintainability (complexity, duplication)
+
+Provide specific, actionable feedback with code examples.
+```
+
+### Automation with Hooks
+
+#### Hook System Overview
+Claude Code supports hooks that trigger on specific events:
+
+- **UserPromptSubmit**: When user submits a prompt
+- **PreToolUse**: Before tool execution (can block)
+- **PostToolUse**: After tool completion
+- **Stop**: When Claude finishes responding
+- **SubAgentStop**: When sub-agents complete
+- **SessionEnd**: When session terminates
+
+#### Hook Configuration
+Configure in `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Executing: $TOOL_INPUT' >> ~/claude-audit.log"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Session completed at $(date)' >> ~/claude-sessions.log"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Command Development Workflow
+
+#### 1. Planning
+```yaml
+define:
+  purpose: "What problem does this solve?"
+  scope: "What should/shouldn't it do?"
+  inputs: "What information is needed?"
+  outputs: "What should it produce?"
+  tools: "What capabilities are required?"
+```
+
+#### 2. Implementation
+```bash
+# Create command file
+touch .claude/commands/my-command.md
+
+# Test with usage
+/project:my-command test-input
+
+# Iterate based on results
+```
+
+#### 3. Security Considerations
+```json
+// In .claude/settings.local.json
+{
+  "permissions": {
+    "allow": ["Bash(git:*)", "Read(/src/**)"],
+    "deny": ["Bash(rm:*)", "Write(/etc/**)"],
+    "ask": ["Bash(npm:install)"]
+  }
+}
+```
+
+### Ready-to-Use Command Examples
+
+See `docs/commands/examples/development-commands.md` for:
+- **Code Review**: Security and performance analysis
+- **Test Generator**: Comprehensive test suite creation
+- **Commit Helper**: Conventional commit messages
+- **API Documentation**: Comprehensive endpoint docs
+- **Docker Optimization**: Production-ready containers
+- **Project Setup**: Best-practice project initialization
+
+### Command Templates
+
+- **Basic Command**: `docs/commands/templates/basic-command-template.md`
+- **Advanced Agent**: `docs/commands/templates/agent-command-template.md`
+
+### Best Practices for Commands
+
+1. **Single Responsibility**: Each command does one thing well
+2. **Clear Interface**: Obvious inputs, predictable outputs
+3. **Error Handling**: Graceful failure with helpful messages
+4. **Security First**: Minimal required permissions
+5. **Documentation**: Include usage examples and edge cases
+
 ## Future Considerations
 
 As the subagent system evolves, expect:
@@ -301,6 +458,8 @@ As the subagent system evolves, expect:
 - Inter-agent communication capabilities
 - Persistent agent sessions
 - Custom agent definition support
+- Enhanced command automation
+- Improved hook system integration
 
 ## Quick Reference
 
