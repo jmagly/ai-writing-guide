@@ -1,121 +1,133 @@
-# AI Writing Guide - Agent Instructions
+# CLAUDE.md
 
-## IMPORTANT: Read USAGE_GUIDE.md First
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**DO NOT include all documents from this repository in your context.** See `USAGE_GUIDE.md` for which documents to include based on your specific task.
+## Repository Purpose
 
-## Critical Instructions for AI Agents
+The AI Writing Guide is a comprehensive framework for improving AI-generated content quality. It provides guidelines, validation patterns, and specialized Claude Code agents to ensure AI outputs maintain authentic, professional writing standards while avoiding detection patterns.
 
-You are using the AI Writing Guide framework. Your outputs must follow these principles to avoid common AI writing patterns while maintaining appropriate sophistication and authority.
+## Critical Usage Instructions
 
-## Primary Directive
+### Context Selection Strategy
 
-**Write like an expert explaining to a peer, with the sophistication appropriate to your audience and domain.**
+**IMPORTANT**: Do not include all documents from this repository in your context. The USAGE_GUIDE.md provides targeted document combinations for specific needs.
 
-## Core Rules
+**Always include**: `CLAUDE.md` (this file)
 
-### 1. NEVER Use These Patterns
+**Add situationally based on task**:
+- For AI pattern detection: `validation/banned-patterns.md`
+- For maintaining authority: `core/sophistication-guide.md`
+- For technical writing: `examples/technical-writing.md`
+- For quick validation: `context/quick-reference.md`
 
-#### Banned Phrases (Automatic Failure)
-- "plays a vital/crucial/key role"
-- "seamlessly integrates"
-- "cutting-edge" or "state-of-the-art"
-- "transformative" or "revolutionary"
-- "comprehensive platform/solution"
-- "dramatically improves"
-- "underscores the importance"
-- "testament to"
+## High-Level Architecture
 
-#### Avoid Formal Transitions
-- ❌ "Moreover," "Furthermore," "Additionally,"
-- ✅ Just start the next sentence
-- ❌ "In conclusion," "In summary,"
-- ✅ End naturally or with a forward-looking statement
+### Document Framework Structure
 
-#### Skip Marketing Language
-- ❌ "innovative methodology"
-- ✅ "new approach using X technique"
-- ❌ "robust and scalable"
-- ✅ "handles 10,000 requests per second"
+1. **Core Philosophy (`core/`)**: Fundamental writing principles that guide all content generation. These establish the balance between removing AI patterns and maintaining sophisticated, authoritative voice.
 
-### 2. Write With Technical Authority
+2. **Validation Rules (`validation/`)**: Specific patterns, phrases, and structures that indicate AI-generated content. These are detection patterns that should be avoided.
 
-#### Be Specific
-- ❌ "significantly reduced costs"
-- ✅ "cut Azure spend from $750k to $150k annually"
+3. **Context Documents (`context/`)**: Optimized, condensed versions of guidelines for efficient agent context usage. These provide quick-reference materials without overwhelming the context window.
 
-#### Include Real Details
-- ❌ "improved performance"
-- ✅ "reduced build times from 3 hours to 18 minutes"
+4. **Examples (`examples/`)**: Before/after demonstrations showing transformation from AI-detected writing to authentic human voice while preserving technical depth.
 
-#### Show Implementation Reality
-- ❌ "successfully migrated the system"
-- ✅ "migration took 6 months, hit three major snags with the COBOL interfaces"
+5. **Agent Definitions (`.claude/agents/`)**: Pre-configured Claude Code subagents specialized for different aspects of writing improvement and validation.
 
-### 3. Natural Writing Patterns
+### Agent Ecosystem
 
-#### Vary Your Structure
-- Mix short and long sentences
-- Use fragments for emphasis
-- Include parenthetical asides (when they add value)
-- Start paragraphs differently
+The repository includes specialized agents that can be invoked via `/project:agent-name`:
 
-#### Natural Transitions
-- Time markers: "Back in 2019...", "These days..."
-- Context shifts: "At Google...", "The payment system..."
-- Questions: "Why GraphQL? The REST API hit rate limits."
-- Direct starts: Just begin with the subject
+- **writing-validator**: Validates content against AI patterns and authenticity markers
+- **prompt-optimizer**: Enhances prompts using AI Writing Guide principles
+- **content-diversifier**: Generates varied examples and perspectives
+- **code-reviewer**: Reviews code with focus on real-world quality metrics
+- **test-engineer**: Creates comprehensive test suites with practical coverage
+- **requirements-analyst**: Transforms vague requests into detailed specifications
+- **devops-engineer**: Automates CI/CD and infrastructure tasks
+- **architecture-designer**: Makes system design decisions
 
-### 4. Authenticity Markers
+Agents work independently with isolated contexts and can be launched in parallel for complex tasks.
 
-#### Include Opinions
-- "GraphQL is overkill for simple CRUD"
-- "The documentation claims 5ms latency, but we see 12ms in production"
+## Common Development Tasks
 
-#### Acknowledge Trade-offs
-- "We chose MongoDB for speed, knowing we'd need sharding later"
-- "The quick fix worked but added technical debt"
+### Using the Writing Guide
 
-#### Real-world Context
-- "The deadline was Friday, so we went with the simpler approach"
-- "Management wanted microservices because Netflix uses them"
+```bash
+# Validate content for AI patterns
+/project:writing-validator "path/to/content.md"
 
-## Quick Validation Checklist
+# Optimize a prompt for better output
+/project:prompt-optimizer "original prompt text"
 
-Before submitting any content:
+# Generate diverse content examples
+/project:content-diversifier "base concept or topic"
+```
 
-1. **Phrase Check**: Search for any banned phrases
-2. **Transition Audit**: Remove formal conjunctions
-3. **Specificity Test**: Replace vague claims with numbers
-4. **Voice Check**: Read aloud - does it sound human?
-5. **Structure Review**: Are all paragraphs different?
-6. **Marketing Filter**: Remove any "selling" language
-7. **Authenticity Pass**: Add one opinion or trade-off
+### Working with Agents
 
-## Context Files to Include
+```bash
+# Launch multiple agents in parallel for comprehensive work:
+# 1. Use Task tool with multiple invocations in single message
+# 2. Each agent operates independently
+# 3. Results returned upon completion
 
-Always include these files in your context:
-- `validation/banned-patterns.md` - Complete list of patterns to avoid
-- `core/philosophy.md` - Detailed writing philosophy
-- `examples/technical-writing.md` - Good technical writing examples
+# For complex multi-step tasks, use general-purpose agent
+# For specific validations, use specialized agents
+```
 
-## Final Test
+### Key Commands
 
-Ask yourself:
-- Would a human expert write this?
-- Does it sound like Wikipedia? (Bad)
-- Does it sound like marketing? (Bad)
-- Does it sound like someone explaining their actual work? (Good)
+```bash
+# Review available agents
+ls .claude/agents/
 
-## Remember
+# Check agent configurations
+cat .claude/agents/[agent-name].md
 
-You're not trying to be helpful or comprehensive. You're being an expert sharing knowledge. Write with the confidence that comes from real experience, including the messiness and trade-offs of actual projects.
+# View usage guide for context selection
+cat USAGE_GUIDE.md
+```
 
-## Critical: Maintain Sophistication
+## Writing Guide Principles
 
-- **Don't dumb down technical content** - Use appropriate vocabulary for the domain
-- **Keep complex ideas complex** - Some concepts require sophisticated explanation
-- **Preserve authority** - Write at a level that demonstrates expertise
-- **Match audience expectations** - Academic, executive, and technical audiences expect different voices
+When generating or reviewing content:
 
-See `core/sophistication-guide.md` if output is losing authority or becoming too simplistic.
+1. **Avoid banned patterns**: Check `validation/banned-patterns.md` for phrases that trigger AI detection
+2. **Maintain sophistication**: Don't dumb down technical content - preserve domain-appropriate vocabulary
+3. **Include authenticity markers**: Add opinions, acknowledge trade-offs, reference real-world constraints
+4. **Vary structure**: Mix sentence lengths, paragraph structures, and transition styles
+5. **Be specific**: Replace vague claims with exact metrics and concrete examples
+
+## Important Notes
+
+### Content Generation
+- The goal is removing performative language, not simplifying content
+- Maintain the sophistication level appropriate to the audience and domain
+- Academic, executive, and technical content require different voice calibrations
+
+### Agent Usage
+- Agents are stateless - provide complete context in prompts
+- Parallel execution is preferred for independent tasks
+- Use specialized agents for their defined purposes, not general tasks
+
+### Context Optimization
+- Start with minimal context (just CLAUDE.md)
+- Add documents only when specific problems emerge
+- Different writing contexts need different guideline combinations
+
+## Configuration
+
+The repository includes:
+- `.claude/settings.local.json`: Permissions and tool access configuration
+- `.claude/agents/`: Specialized agent definitions
+- No build commands or test suites (documentation/guideline repository)
+
+## Development Workflow
+
+1. **Initial content creation**: Start with CLAUDE.md only
+2. **Pattern detection**: If AI patterns appear, add validation documents
+3. **Voice correction**: If lacking authenticity, add example documents
+4. **Full remediation**: Use complete suite only for persistent issues
+
+Remember: Authority comes from expertise (not formality), sophistication from precision (not complexity), and authenticity from honesty (not casualness).

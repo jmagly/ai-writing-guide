@@ -1,5 +1,9 @@
 # Banned Patterns and Phrases
 
+## Usage Frequency Guidelines
+
+Some words are acceptable when used sparingly (1:1000 or 1:10000 word ratio) but become AI detection signals when overused (1:100 ratio). Words like "manifest," "revolutionary," and "next-generation" should only appear when they are truly the most salient option, not as default descriptors.
+
 ## Critical Banned Phrases
 
 These phrases immediately identify content as AI-generated. **Never use them.**
@@ -10,6 +14,8 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - cutting-edge technology/solution/platform
 - state-of-the-art
 - transformative/revolutionary/groundbreaking
+- next-generation/next generation
+- manifest/manifests/manifesting/manifestation
 - comprehensive platform/solution/approach
 - innovative methodology/approach/solution
 - robust and scalable
@@ -184,6 +190,9 @@ Instead of banned phrases, use:
 - "innovative approach" → "different method" / specific technique
 - "dramatically improves" → [specific metric]
 - "robust" → "handles X requests/second" / "99.9% uptime"
+- "manifest" → "show" / "appear" / "create" / "build"
+- "revolutionary" → "different" / "new" / [specific change description]
+- "next-generation" → "new" / "updated" / "version 2.0" / [specific version]
 
 ## Remember
 
