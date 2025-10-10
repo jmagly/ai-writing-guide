@@ -1,5 +1,7 @@
 # Business Vision Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/bm/rup_bvis.htm
+
 ## Purpose
 Capture the business objectives, stakeholder needs, and success criteria that justify the project.
 Agents should tailor the sections below to the current engagement and ensure traceability to

@@ -1,5 +1,7 @@
 # Use-Case Specification Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/rup_ucspec.htm
+
 ## Purpose
 Detail the interactions between actors and the system to fulfill specific goals. Use this template to inform
 analysis, design, testing, and traceability matrices.

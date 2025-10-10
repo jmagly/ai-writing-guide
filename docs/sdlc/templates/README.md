@@ -4,15 +4,15 @@
 This directory provides Markdown templates adapted from the Rational Unified Process to support PLAN → ACT agent workflows. Each template mirrors a classic RUP artifact, with sections and checklists tailored for collaborative, parallel development.
 
 ## Structure
-- `business-modeling/` – Vision, business use-case, glossary, and architecture templates.
-- `requirements/` – Vision, use-case, supplementary, and stakeholder request templates.
+- `business-modeling/` – Vision, supplementary business specification, business use-case specs/realizations, architecture documents, glossaries, rules, and target-organization assessments.
+- `requirements/` – Vision (formal/informal), use-case specifications (formal/informal), supplementary specs, SRS variants, requirements management plan, stakeholder requests, glossary, interview scripts.
 - `analysis-design/` – Software architecture and use-case realization templates.
 - `implementation/` – Integration build planning templates.
-- `test/` – Master and iteration test plans, strategy, evaluation summaries.
-- `deployment/` – Deployment playbooks, release notes, acceptance, and support runbooks.
-- `management/` – Software development plan, iteration plan, status assessment, risk list, measurement plan.
+- `test/` – Master and iteration test plans, strategy, evaluation summaries, and supporting guidance.
+- `deployment/` – Bill of materials, deployment plans, release notes, acceptance artifacts, and support runbooks.
+- `management/` – Software development plans, iteration plans (formal/informal), iteration assessments, status assessments, risk management artifacts, measurement plans, business cases, quality assurance, development-organization assessments, and risk lists.
 - `configuration/` – Configuration management and problem resolution plans.
-- `environments/` – Development case and guideline scaffolds for discipline standards.
+- `environments/` – Development case plus discipline-specific guidelines (business modeling, use-case modeling, design, programming, testing).
 
 ## How to Use
 1. Copy the relevant template into `docs/sdlc/artifacts/<project>/` (or project-specific location).

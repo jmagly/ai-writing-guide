@@ -1,5 +1,7 @@
 # Master Test Plan Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/test/rup_tstpln_mstr.htm
+
 ## Purpose
 Establish the overarching testing strategy, scope, resources, and schedule across all phases of the project.
 

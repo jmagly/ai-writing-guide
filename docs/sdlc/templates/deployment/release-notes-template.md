@@ -1,5 +1,7 @@
 # Release Notes Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/deploy/rup_relnt.htm
+
 ## Purpose
 Communicate the contents, fixes, and operational considerations of a release to end users, support teams,
 and other stakeholders.

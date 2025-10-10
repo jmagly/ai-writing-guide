@@ -1,5 +1,7 @@
 # Deployment Plan Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/deploy/rup_depln.htm
+
 ## Purpose
 Describe how the solution will be deployed, verified, and supported in target environments during the Transition phase.
 

@@ -1,5 +1,7 @@
 # Software Architecture Document Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/a_and_d/rup_sad.htm
+
 ## Purpose
 Describe the architectural baseline, including views, decisions, and rationale that guide implementation and evolution.
 

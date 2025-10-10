@@ -1,5 +1,7 @@
 # Iteration Test Plan Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/test/rup_tstpln_itn.htm
+
 ## Purpose
 Detail the testing scope, approach, and logistics for a specific iteration within Construction or Transition.
 

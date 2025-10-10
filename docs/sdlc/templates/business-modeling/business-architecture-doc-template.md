@@ -1,5 +1,7 @@
 # Business Architecture Document Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/bm/rup_barchdoc.htm
+
 ## Purpose
 Provide a structured view of the enterprise processes, organizational structure, and information flows
 to inform solution scope and alignment.

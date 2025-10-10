@@ -1,5 +1,7 @@
 # Business Glossary Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/bm/rup_bgloss.htm
+
 ## Purpose
 Maintain a shared vocabulary for business and system stakeholders to reduce ambiguity during
 requirements and design work.

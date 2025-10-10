@@ -1,5 +1,7 @@
 # Product Acceptance Plan Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_pacpln.htm
+
 ## Purpose
 Define the criteria, responsibilities, and procedures for obtaining stakeholder acceptance of the solution prior to release.
 

@@ -1,5 +1,7 @@
 # Development Case Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/environ/wb_dvlcs.htm
+
 ## Purpose
 Tailor the Rational Unified Process to the specific project, defining which artifacts, roles, and workflows are in scope for each phase and iteration.
 

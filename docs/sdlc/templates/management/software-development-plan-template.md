@@ -1,5 +1,7 @@
 # Software Development Plan Template
 
+Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_sdpln.htm
+
 ## Purpose
 Provide a consolidated plan covering scope, schedule, resources, and management processes for the project.
 
