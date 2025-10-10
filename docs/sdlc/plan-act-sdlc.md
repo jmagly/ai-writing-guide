@@ -38,6 +38,9 @@ Return an initial charter plus top unknowns for stakeholder review.
 | Project Management | Project Manager, Metrics Analyst | Track progress, risks, estimates, resource allocation | Iteration plans, status assessments, risk list, measurement plan | Plans current, risks mitigated or escalated |
 | Environment | Process Engineer, Toolsmith | Tailor development case, maintain guidelines, enable tooling | Development case, modeling/programming/test guidelines | Process assets published, tooling validated |
 
+Use the Markdown templates in `docs/sdlc/templates/` to instantiate each artifact; update file names to match
+the project or iteration context and record any tailoring in the Development Case.
+
 ## Detailed Phase Prompts
 1. **Inception Kickoff**
 ```

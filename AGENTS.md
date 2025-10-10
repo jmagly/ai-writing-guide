@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Keep contributions inside the existing documentation tree: `core/` captures philosophy references, `validation/` holds rules and checklists, `context/` serves trimmed briefs, `docs/agents/` and `docs/subagents/` store role playbooks, `docs/commands/` documents slash workflows, `docs/sdlc/` contains PLAN → ACT SDLC scripts, while `examples/` and `patterns/` illustrate outcomes. Reserve `tools/` for helper scripts and explain invocation alongside the script.
+Keep contributions inside the existing documentation tree: `core/` captures philosophy references, `validation/` holds rules and checklists, `context/` serves trimmed briefs, `docs/agents/` and `docs/subagents/` store role playbooks, `docs/commands/` documents slash workflows, `docs/sdlc/` houses PLAN → ACT SDLC scripts, prompts, and templates, while `examples/` and `patterns/` illustrate outcomes. Reserve `tools/` for helper scripts and explain invocation alongside the script.
 
 ## Build, Test, and Development Commands
 - `npm exec markdownlint-cli2 "**/*.md"` (Node ≥18) enforces Markdown consistency before review.
@@ -25,7 +25,7 @@ Anchor multi-agent work on the Rational Unified Process:
 4. **Transition** – Prepare deployment, training, and support while confirming product acceptance and operational readiness.
 Document decisions and artifacts from every phase within `docs/sdlc/` (or project-specific mirrors) so long-running efforts stay synchronized. Favor modular designs, SOLID principles, and high test coverage to keep follow-on edits localized.
 
-Refer to `docs/sdlc/plan-act-sdlc.md` for detailed milestones, `docs/sdlc/prompt-templates.md` for copy-ready prompts, and `docs/sdlc/rup-actors-and-templates.md` for role and artifact guidance.
+Refer to `docs/sdlc/plan-act-sdlc.md` for detailed milestones, `docs/sdlc/prompt-templates.md` for copy-ready prompts, `docs/sdlc/rup-actors-and-templates.md` for role and artifact guidance, and `docs/sdlc/templates/` when instantiating new documents.
 
 ## Agent-Facing Notes
 When updating a playbook, echo the critical directives in `context/quick-reference.md` so lightweight contexts stay fresh, and capture inter-agent handoffs directly in the relevant guides to maintain orchestration discipline.
