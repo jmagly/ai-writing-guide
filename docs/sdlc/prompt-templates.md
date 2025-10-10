@@ -1,102 +1,112 @@
 # SDLC Prompt Library
 
-Use these copy-ready prompts to drive PLAN → ACT agent workflows from idea intake to post-release
-feedback. Each block assumes the agent has access to the latest artifacts from `docs/sdlc/artifacts/`
-or equivalent context.
+Use these copy-ready prompts to drive PLAN → ACT agent workflows across the Rational Unified Process phases. Each block assumes the agent has access to the latest artifacts in `docs/sdlc/artifacts/` or equivalent context.
 
-## 1. Idea Amplifier
+## 0. Idea Amplifier
 ```
-Role: Product strategist, vision officer, domain expert trio.
-Goal: Expand <idea> into a product charter.
+Role: Product strategist, vision owner, domain expert trio.
+Goal: Expand <idea> into an inception-ready charter.
 Instructions:
-- state the core problem, users, and jobs-to-be-done
-- list success metrics, regulatory or domain constraints
-- draft north-star narrative and positioning
-- enumerate unknowns to validate with stakeholders
-Output: charter.md, metrics.yaml, questions.md
+- articulate problem statement, target personas, value hypotheses
+- list success metrics, regulatory or domain constraints, funding assumptions
+- identify critical use cases and stakeholder map
+- capture unresolved questions for follow-up
+Output: vision.md, stakeholder-map.md, success-metrics.yaml, questions.md
 ```
 
-## 2. Requirements Deep-Dive
+## 1. Inception Charter Sprint
 ```
-Role: Requirements analyst with UX researcher and compliance partner.
-Goal: Translate charter into granular requirements.
+Role: Business analyst with project manager.
+Goal: Baseline scope and business case for Inception.
 Instructions:
-- generate user stories with GIVEN/WHEN/THEN acceptance tests
-- note domain vocabulary and data dictionaries
-- capture non-functional requirements and compliance obligations
-- flag open questions requiring human decision
-Output: backlog.csv, acceptance-tests.md, glossary.md, risk-register.md
+- synthesize business context, objectives, and constraints
+- inventory candidate use cases and prioritize MVP scope
+- outline high-level release plan and budget guardrails
+- document initial risk list and mitigation hypotheses
+Output: business-case.md, mvp-scope.csv, phase-plan-inception.md, risk-list.md
 ```
 
-## 3. Architecture Blueprint
+## 2. Requirements & Stakeholder Workshops
 ```
-Role: Solution architect with operations liaison.
-Goal: Design SOLID, modular system architecture.
+Role: Requirements analyst, UX researcher, legal liaison.
+Goal: Elaborate critical requirements and traceability.
 Instructions:
-- define modules, boundaries, interfaces, and data flows
-- map technology stack choices with justification
-- describe deployment topology, observability, and scaling strategy
-- identify integration points and failure modes
-Output: architecture.md, adr/*.md, interface-contracts/*.md, ops-topology.drawio.json
+- craft use-case specifications with GIVEN/WHEN/THEN acceptance criteria
+- author supplementary requirements (non-functional, compliance, data)
+- populate glossary and stakeholder request log
+- flag ambiguities requiring stakeholder clarification
+Output: use-cases/, supplementary-spec.md, glossary.md, stakeholder-requests.csv
 ```
 
-## 4. Implementation Task Graph
+## 3. Elaboration Architecture Laboratory
 ```
-Role: Engineering lead and project manager pair.
-Goal: Produce executable task plan for feature agents.
+Role: Software architect with operations liaison.
+Goal: Produce architectural baseline for Elaboration.
 Instructions:
-- break requirements into single-file or focused tasks
-- assign agent role, dependencies, and test expectations
-- include ready-to-run PLAN prompt per task
-- schedule sync checkpoints for cross-layer coordination
-Output: tasks-board.csv, sync-calendar.md, prompts/*.md
+- define system decomposition, component responsibilities, interface contracts
+- sketch deployment topology, scaling plan, and observability hooks
+- identify architecturally significant use cases and prototype plan
+- capture architectural decisions and trade-offs
+Output: software-architecture.md, interface-contracts/, adr/, prototype-plan.md
 ```
 
-## 5. Feature Delivery Loop
+## 4. Elaboration Iteration Planning
 ```
-Role: Feature implementation agent with QA partner.
-Goal: Deliver one task through PLAN → ACT → Evaluate → Debug → Correct cycles.
+Role: Project manager and configuration manager.
+Goal: Tailor development case and iteration schedule.
 Instructions:
-- outline planned approach and test strategy before coding
-- implement changes with traceable commits or patches
-- run automated tests, linters, and scenario scripts; log results
-- loop until acceptance criteria fully pass
-- escalate after three failed cycles with diagnostic bundle
-Output: change-summary.md, test-report.json, escalation.md (if applicable)
+- create iteration plans aligned to risk retirement and priority use cases
+- specify configuration management strategy and baselines
+- assemble development case tailoring guidelines and tool configurations
+- define measurement plan and reporting cadence
+Output: iteration-plan-elaboration.csv, cm-plan.md, development-case.md, measurement-plan.md
 ```
 
-## 6. Verification & Validation Sweep
+## 5. Construction Feature Loop
 ```
-Role: QA lead, UAT coordinator, accessibility reviewer.
-Goal: Confirm release readiness.
+Role: Feature squad (designer, developer, tester).
+Goal: Deliver a prioritized use case during Construction.
 Instructions:
-- execute regression, integration, and scenario suites
-- perform exploratory testing and accessibility checks
-- compile defect log with severity and reproduction paths
-- recommend go/no-go status and remediation plan
-Output: validation-report.md, defects.csv, go-no-go.yaml
+- PLAN approach, dependencies, and test strategy before coding
+- ACT to implement code and tests with traceable commits or patches
+- Evaluate via automated suites, exploratory scripts, and peer review
+- Debug and Correct until acceptance criteria and Definition of Done are satisfied
+- Update iteration assessment and traceability
+Output: change-summary.md, test-report.json, iteration-assessment.md, traceability-update.csv
 ```
 
-## 7. Release & Operations Handoff
+## 6. Construction Integration & Quality Gate
 ```
-Role: Release manager and SRE.
-Goal: Prepare deployment and support.
+Role: Build engineer and QA lead.
+Goal: Maintain integration stability and quality benchmarks.
 Instructions:
-- script rollout steps, feature flags, rollback strategy
-- define monitoring dashboards, alerts, and SLOs
-- draft support FAQ and incident response playbook
-- verify documentation links and ownership
-Output: release-playbook.md, dashboards.json, support-faq.md, incident-runbook.md
+- refresh integration build plan and smoke test checklist
+- execute regression suites, capture defect trends, enforce severity gates
+- coordinate fixes across teams and baseline configuration snapshots
+- prepare status assessment for steering review
+Output: integration-build-plan.md, regression-log.csv, defect-report.xlsx, status-assessment.md
 ```
 
-## 8. Lifecycle Feedback Loop
+## 7. Transition Deployment Playbook
 ```
-Role: Product ops and analytics team.
-Goal: Feed learnings back into roadmap.
+Role: Deployment manager, support lead, training coordinator.
+Goal: Ready product for release during Transition.
 Instructions:
-- analyze telemetry against success metrics
-- summarize user feedback and support trends
-- capture lessons learned, improvement backlog, and follow-up experiments
-- refresh roadmap priorities and archive artifacts
-Output: analytics.md, retrospective.md, roadmap-updates.yaml, archive-index.md
+- script deployment/rollback, infrastructure prerequisites, and validation probes
+- assemble release notes, bill of materials, licensing info, and training package
+- document support workflows, SLAs, incident response runbooks
+- schedule pilot/beta feedback loop and go/no-go review
+Output: deployment-plan.md, release-notes.md, support-runbook.md, training-kit.zip, go-no-go-checklist.md
+```
+
+## 8. Transition Feedback & Roadmap Refresh
+```
+Role: Product operations and analytics team.
+Goal: Capture lessons and feed backlog post-release.
+Instructions:
+- analyze telemetry versus success metrics and SLAs
+- synthesize user feedback, adoption data, and operational incidents
+- conduct postmortem/retrospective, extract improvement backlog items
+- update roadmap priorities and archive iteration artifacts
+Output: analytics-report.md, retrospective.md, improvement-backlog.csv, roadmap-update.yaml, archive-index.md
 ```

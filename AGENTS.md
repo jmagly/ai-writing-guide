@@ -18,18 +18,14 @@ Treat every addition as policy: confirm alignment with `validation/banned-patter
 Follow the established history with imperative, scoped commit subjects under ~55 characters. Group related directories per commit. Pull requests should summarize scope, flag high-priority files, link issues or roadmap items, and attach lint or test output that supports risk assessment.
 
 ## Plan-Act SDLC Playbook
-Use this ladder as a PLAN → ACT to-do list, assigning each step to a responsible agent or human:
-1. **Vision Charter** – Product strategist + domain expert expand `<idea>` into personas, outcomes, and differentiation. Prompt: “Act as a product trio; elaborate `<idea>` into problem statement, target users, success metrics, and constraints.”
-2. **Requirements Elaboration** – Requirements analyst codifies user stories, acceptance tests, glossary, compliance flags, and open questions for stakeholder review.
-3. **Solution Architecture** – Architecture designer establishes module boundaries, data contracts, SOLID-driven dependencies, and integration touchpoints with operations.
-4. **Implementation Planning** – Break work into single-file or narrowly scoped tasks; map UI/API/data/infra layers to parallel agents and define synchronization checkpoints.
-5. **Build & Iteration Loop** – For each task, cycle PLAN → ACT → Evaluate (`tests`, `lint`, scenario scripts) → Debug → Correct until acceptance criteria pass or escalation is needed.
-6. **Verification & Validation** – Combine automated suites, exploratory scripts, and user acceptance runs; require regression signals before merge.
-7. **Release & Operations** – Coordinate deployment plans, rollout guards, observability hooks, and runbooks so support agents can triage quickly.
-8. **Lifecycle Feedback** – Schedule analytics reviews and user interviews; feed insights back into the backlog and future prompts.
-Document decisions and artifacts from every step in `docs/sdlc/` (or project-specific mirrors) so long-running efforts remain synchronized, even across multi-day agent sessions. Favor modular designs, SOLID principles, and high test coverage to keep follow-on edits localized.
+Anchor multi-agent work on the Rational Unified Process:
+1. **Inception** – Validate business case, scope, and funding through charter, risk, and stakeholder artifacts.
+2. **Elaboration** – Baseline architecture and requirements; retire top risks and tailor the development case.
+3. **Construction** – Iterate on prioritized use cases with PLAN → ACT → Evaluate → Debug → Correct loops, pairing code with comprehensive tests.
+4. **Transition** – Prepare deployment, training, and support while confirming product acceptance and operational readiness.
+Document decisions and artifacts from every phase within `docs/sdlc/` (or project-specific mirrors) so long-running efforts stay synchronized. Favor modular designs, SOLID principles, and high test coverage to keep follow-on edits localized.
 
-Refer to `docs/sdlc/plan-act-sdlc.md` for full-stage guidance and `docs/sdlc/prompt-templates.md` for copy-ready prompts when seeding agent workflows.
+Refer to `docs/sdlc/plan-act-sdlc.md` for detailed milestones, `docs/sdlc/prompt-templates.md` for copy-ready prompts, and `docs/sdlc/rup-actors-and-templates.md` for role and artifact guidance.
 
 ## Agent-Facing Notes
 When updating a playbook, echo the critical directives in `context/quick-reference.md` so lightweight contexts stay fresh, and capture inter-agent handoffs directly in the relevant guides to maintain orchestration discipline.
