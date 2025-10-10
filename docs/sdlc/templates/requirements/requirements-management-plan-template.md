@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Project Manager
+- Contributor Roles: System Analyst, Requirements Reviewer, Configuration Manager
+- Automation Inputs: Process policies, backlog taxonomy, tooling inventory
+- Automation Outputs: `requirements-management-plan.md` covering sections 1–5
+
 ## 1 Introduction
 > Provide an overview of the plan, including purpose, scope, references, and structure.
 
@@ -77,3 +83,8 @@
 
 ## Appendices (Optional)
 > Include templates, attribute dictionaries, change request forms, or sample reports.
+
+## Agent Notes
+- Detail change request workflows so automation can enforce approvals.
+- List reporting cadences to keep dashboards synchronized.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

@@ -1,5 +1,11 @@
 # Informal Vision Template
 
+## Ownership & Collaboration
+- Document Owner: System Analyst
+- Contributor Roles: Business Process Analyst, Project Manager, Requirements Reviewer
+- Automation Inputs: Idea summary, stakeholder notes
+- Automation Outputs: `vision-informal.md` covering sections 1–5
+
 ## Cover Page
 - `<Project Name>`
 - `Vision`
@@ -43,3 +49,8 @@
 
 ## Appendices (Optional)
 > Include research notes, market analysis, or supporting diagrams as needed.
+
+## Agent Notes
+- Keep personas and needs consistent with the formal vision when both exist.
+- List competitive alternatives to inform subsequent requirement prioritization.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

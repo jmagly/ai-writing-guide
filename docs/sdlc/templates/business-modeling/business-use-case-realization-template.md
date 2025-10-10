@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Business Process Analyst
+- Contributor Roles: System Analyst, Designer, Software Architect
+- Automation Inputs: Target business use-case specification, collaboration models
+- Automation Outputs: `business-use-case-realization-<id>.md` detailing sections 1–3
+
 ## 1 Introduction
 > Summarize the document purpose, scope, references, and structure. Note the relationship between this markdown artifact and any modeling tools capturing diagrams.
 
@@ -36,3 +42,8 @@
 
 ## Appendices (Optional)
 > Link to diagrams, models, or additional evidence supporting the realization.
+
+## Agent Notes
+- Reference the originating business use-case ID to keep traceability intact.
+- Detail collaborations so downstream analysts can derive system interactions without reworking diagrams.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

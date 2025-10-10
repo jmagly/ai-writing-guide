@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Environment Engineer
+- Contributor Roles: Business Process Analyst, System Analyst
+- Automation Inputs: Modeling standards, notation policies
+- Automation Outputs: `business-modeling-guidelines.md` with sections 1–5
+
 ## 1 Introduction
 > Explain purpose, scope, terminology, references, and structure for these guidelines.
 
@@ -48,3 +54,8 @@
 
 ## Appendices (Optional)
 > Attach examples, modeling checklists, or reference diagrams.
+
+## Agent Notes
+- State notation and diagramming rules so automation can generate models consistently.
+- List validation checks that must pass before business models are approved.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

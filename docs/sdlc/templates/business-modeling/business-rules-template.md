@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Business Process Analyst
+- Contributor Roles: System Analyst, Requirements Reviewer
+- Automation Inputs: Policy documents, regulatory guidance, stakeholder notes
+- Automation Outputs: `business-rules.md` grouped by domain
+
 ## 1 Introduction
 > Provide a brief overview of the document and how to use it as a shared terminology and rules reference.
 
@@ -54,3 +60,8 @@
 
 ## Appendices (Optional)
 > Attach data dictionaries, policy excerpts, or traceability matrices that support the rules catalog.
+
+## Agent Notes
+- Alphabetize rules inside each group for deterministic parsing.
+- Reference canonical sources (policy IDs, regulation numbers) alongside each rule.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

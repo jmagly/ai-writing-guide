@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Business Process Analyst
+- Contributor Roles: Project Manager, Environment Engineer
+- Automation Inputs: Discovery interviews, capability assessments, benchmarking data
+- Automation Outputs: `target-organization-assessment.md` summarizing sections 1–8
+
 ## 1 Introduction
 > Summarize purpose, scope, terminology, references, and structure of the assessment.
 
@@ -77,3 +83,8 @@
 
 ## Appendices (Optional)
 > Include supporting data, research instruments, or detailed analysis tables as needed.
+
+## Agent Notes
+- Quantify capability gaps with metrics where possible (maturity levels, cycle times).
+- Highlight opportunity areas that should feed the backlog or change program.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

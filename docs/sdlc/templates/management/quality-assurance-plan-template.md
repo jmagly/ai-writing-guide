@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Test Architect
+- Contributor Roles: Project Manager, Configuration Manager, Requirements Reviewer
+- Automation Inputs: Quality objectives, review policies, tooling standards
+- Automation Outputs: `quality-assurance-plan.md` with sections 1–15
+
 ## 1 Introduction
 > Provide purpose, scope, terminology, references, and document organization.
 
@@ -67,3 +73,8 @@
 
 ## Appendices (Optional)
 > Include review checklists, audit templates, or process flow diagrams.
+
+## Agent Notes
+- Reference measurement targets from `measurement-plan.md` when defining metrics.
+- Align review schedules with the iteration and lifecycle milestones in `software-development-plan.md`.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

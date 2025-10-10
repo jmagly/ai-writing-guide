@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Business Process Analyst
+- Contributor Roles: System Analyst, Requirements Reviewer, Project Manager
+- Automation Inputs: Business rules inventory, compliance obligations, charter goals
+- Automation Outputs: `supplementary-business-spec.md` covering sections 1–6
+
 ## 1 Introduction
 > Provide an overview of the document, including purpose, scope, terminology, references, and structure.
 
@@ -45,3 +51,8 @@
 
 ## Appendices (Optional)
 > Attach supporting analyses, calculations, or reference materials if needed.
+
+## Agent Notes
+- Keep each requirement measurable and tied back to the business vision objectives.
+- Update related business rules or glossary entries when terminology changes.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

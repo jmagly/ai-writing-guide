@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Environment Engineer
+- Contributor Roles: Project Manager, Configuration Manager
+- Automation Inputs: Process assessment interviews, tooling audit, capability metrics
+- Automation Outputs: `development-organization-assessment.md` covering sections 1–6
+
 ## 1 Introduction
 > Outline purpose, scope, terminology, references, and structure of the assessment.
 
@@ -48,3 +54,8 @@
 
 ## Appendices (Optional)
 > Include detailed surveys, metrics, or interview summaries supporting the assessment.
+
+## Agent Notes
+- Capture toolchain gaps to inform the Development Case tailoring decisions.
+- Summarize recommended improvement actions with accountable roles.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

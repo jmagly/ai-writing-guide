@@ -1,5 +1,11 @@
 # Informal Business Case Template
 
+## Ownership & Collaboration
+- Document Owner: Project Manager
+- Contributor Roles: Business Process Analyst, Requirements Reviewer
+- Automation Inputs: Opportunity brief, financial assumptions
+- Automation Outputs: `business-case-informal.md` covering sections 1–6
+
 ## 1 Introduction
 > Summarize why the business case is being developed and what it covers.
 
@@ -31,3 +37,8 @@
 
 ## Appendices (Optional)
 > Include supporting research, cost breakdowns, or stakeholder endorsements.
+
+## Agent Notes
+- Capture the ROI summary using the provided table for machine readability.
+- List key constraints so downstream planners can validate feasibility quickly.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

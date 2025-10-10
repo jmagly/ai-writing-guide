@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Project Manager
+- Contributor Roles: Test Architect, Requirements Reviewer, Implementer
+- Automation Inputs: Iteration metrics, evaluation criteria, retrospectives
+- Automation Outputs: `iteration-<id>-assessment.md` summarizing sections 1–8
+
 ## 1 Introduction
 > Summarize purpose, scope, references, and structure of the assessment.
 
@@ -42,3 +48,8 @@
 
 ## Appendices (Optional)
 > Attach metrics, burn-up/down charts, or supporting artifacts.
+
+## Agent Notes
+- Compare actual outcomes against iteration evaluation criteria in Section 5.
+- Escalate rework items with owners and target iterations in Section 8.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

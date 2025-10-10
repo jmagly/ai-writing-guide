@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Environment Engineer
+- Contributor Roles: System Analyst, Requirements Reviewer
+- Automation Inputs: Use-case modeling conventions, review checklist
+- Automation Outputs: `use-case-modeling-guidelines.md` covering sections 1–8
+
 ## 1 Introduction
 > Outline purpose, scope, terminology, references, and document structure.
 
@@ -42,3 +48,8 @@
 
 ## Appendices (Optional)
 > Include examples, templates, or narrative guidelines for consistent authoring.
+
+## Agent Notes
+- Include naming conventions so generated use-case files follow consistent identifiers.
+- Call out review checkpoints agents must satisfy before accepting a use-case spec.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

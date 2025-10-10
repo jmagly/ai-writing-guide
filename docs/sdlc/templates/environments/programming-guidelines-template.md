@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Environment Engineer
+- Contributor Roles: Implementer, Integrator
+- Automation Inputs: Language standards, static analysis rules
+- Automation Outputs: `programming-guidelines.md` with sections 1–9
+
 ## 1 Introduction
 > Outline purpose, scope, terminology, references, and organization of the programming guidelines.
 
@@ -45,3 +51,8 @@
 
 ## Appendices (Optional)
 > Include snippets, templates, or references to style guides for specific languages.
+
+## Agent Notes
+- List formatting rules and static analysis configurations explicitly for agent tooling.
+- Identify security and compliance requirements that code generators must respect.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

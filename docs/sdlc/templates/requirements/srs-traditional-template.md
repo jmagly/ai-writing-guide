@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: System Analyst
+- Contributor Roles: Software Architect, Test Architect, Requirements Reviewer
+- Automation Inputs: Vision, use-case library, supplementary specification
+- Automation Outputs: `software-requirements-specification.md` with sections 1–4
+
 ## 1 Introduction
 > Provide context for the SRS, including purpose, scope, terminology, references, and document organization.
 
@@ -69,3 +75,8 @@
 
 ## 4 Supporting Information
 > Provide appendices, indexes, or reference materials used to elaborate requirements (storyboards, prototypes, traceability matrices, etc.).
+
+## Agent Notes
+- Reference related use-case IDs and supplementary requirements for each section.
+- Highlight constraints and interfaces that downstream architects must honor.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

@@ -2,6 +2,12 @@
 
 > Use this script to elicit stakeholder or user problems, context, and desired outcomes without biasing the conversation with implementation ideas.
 
+## Ownership & Collaboration
+- Document Owner: System Analyst
+- Contributor Roles: Business Process Analyst, Requirements Reviewer
+- Automation Inputs: Stakeholder profile, interview goals
+- Automation Outputs: `interview-session-notes.md` aligned to sections 2–11
+
 ## 1 Preparation
 - Identify stakeholder / user role.
 - Schedule session, confirm recording or note-taking approach.
@@ -58,3 +64,8 @@
 
 ## Interview Artifacts
 - Attach notes, recordings, or summaries in `docs/sdlc/artifacts/<project>/interviews/`.
+
+## Agent Notes
+- Summarize interview outcomes in Section 11 so they can feed stakeholder requests automatically.
+- Record consent for follow-ups and review participation when applicable.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

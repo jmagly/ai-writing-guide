@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Project Manager
+- Contributor Roles: Requirements Reviewer, Configuration Manager, Test Architect
+- Automation Inputs: Risk baseline, governance policies, mitigation backlog
+- Automation Outputs: `risk-management-plan.md` covering sections 1–7
+
 ## 1 Introduction
 > Summarize purpose, scope, references, and structure of the plan.
 
@@ -39,3 +45,8 @@
 
 ## Appendices (Optional)
 > Include detailed risk registers, mitigation plans, or analysis worksheets.
+
+## Agent Notes
+- Cross-link critical risks to entries in `risk-list.md` for traceability.
+- Record mitigation owners in Section 7 before handing off to other agents.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

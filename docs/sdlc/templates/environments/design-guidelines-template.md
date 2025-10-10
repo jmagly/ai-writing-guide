@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Environment Engineer
+- Contributor Roles: Software Architect, Designer
+- Automation Inputs: Architecture principles, design patterns
+- Automation Outputs: `design-guidelines.md` documenting sections 1–9
+
 ## 1 Introduction
 > State purpose, scope, terminology, references, and structure of the design guidelines.
 
@@ -45,3 +51,8 @@
 
 ## Appendices (Optional)
 > Include sample diagrams, decision logs, or reference architectures.
+
+## Agent Notes
+- Reference architecture decisions to ensure design guidance remains aligned.
+- Call out mandatory patterns or banned anti-patterns for automation enforcement.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

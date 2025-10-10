@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: System Analyst
+- Contributor Roles: Software Architect, Test Architect, Requirements Reviewer
+- Automation Inputs: Use-case model survey, supplementary requirements
+- Automation Outputs: `software-requirements-specification.md` referencing use-case packages
+
 ## 1 Introduction
 > Outline the purpose, scope, terminology, references, and organization of this SRS.
 
@@ -39,3 +45,8 @@
 
 ## 4 Supporting Information
 > Provide appendices, traceability matrices, UI prototypes, or other materials that assist in applying this SRS. Clarify whether appendices are normative.
+
+## Agent Notes
+- Ensure every referenced use-case report exists and is tagged with the same identifier.
+- Document assumptions and dependencies in Section 2.2 for planning alignment.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

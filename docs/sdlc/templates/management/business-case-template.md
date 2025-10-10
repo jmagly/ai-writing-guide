@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Project Manager
+- Contributor Roles: Business Process Analyst, Requirements Reviewer
+- Automation Inputs: Market analysis, cost estimates, revenue projections
+- Automation Outputs: `business-case.md` with sections 1–6
+
 ## 1 Introduction
 > Provide purpose, scope, terminology, references, and structure of the business case.
 
@@ -36,3 +42,8 @@
 
 ## Appendices (Optional)
 > Include cost models, market research, or sensitivity analyses.
+
+## Agent Notes
+- Document financial assumptions so sensitivity analysis can be automated.
+- Ensure objectives align with the current `vision.md` to avoid conflicting targets.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

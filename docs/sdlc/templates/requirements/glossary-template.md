@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: System Analyst
+- Contributor Roles: Business Process Analyst, Requirements Reviewer
+- Automation Inputs: Domain term list, glossary references
+- Automation Outputs: `glossary.md` sorted alphabetically
+
 ## 1 Introduction
 > Explain the glossary’s purpose, scope, references, and structure.
 
@@ -57,3 +63,8 @@
 
 ## Appendices (Optional)
 > Include data dictionaries, acronym lists, or traceability tables if required.
+
+## Agent Notes
+- Include synonyms and ownership for each term to aid automated lookup.
+- Retire obsolete terms by moving them to a dedicated subsection.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

@@ -10,6 +10,12 @@
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
 
+## Ownership & Collaboration
+- Document Owner: Integrator
+- Contributor Roles: Configuration Manager, Deployment Manager
+- Automation Inputs: Release manifest, package checksums, licensing notes
+- Automation Outputs: `bill-of-materials.md` enumerating sections 2.1–2.6
+
 ## 1 Introduction
 > Summarize document purpose, audience, references, and organization.
 
@@ -43,3 +49,8 @@
 
 ## Appendices (Optional)
 > Include manifests, checksum listings, or shipment details as required.
+
+## Agent Notes
+- Record artifact hashes to support reproducibility and integrity checks.
+- Note licensing or distribution restrictions for each material.
+- Verify the Automation Outputs entry is satisfied before signaling completion.
