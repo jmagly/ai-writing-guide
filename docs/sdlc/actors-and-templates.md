@@ -1,10 +1,10 @@
-# RUP Actors & Template Suite
+# Lifecycle Actors & Template Suite
 
 ## Purpose
-Provide PLAN → ACT agents with a ready catalogue of Rational Unified Process roles and artifact templates. Use this document to assign responsibilities, seed prompts, and ensure every discipline produces the expected work products.
+Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifact templates. Use this document to assign responsibilities, seed prompts, and ensure every discipline produces the expected work products.
 
 ## Core Workers and Responsibilities
-| RUP Worker | Key Responsibilities | Primary Artifacts | Repository Template |
+| Lifecycle Worker | Key Responsibilities | Primary Artifacts | Repository Template |
 | --- | --- | --- | --- |
 | Business Process Analyst | Capture business context, processes, and actors | Vision, business use-case/assets, organizational assessments | `docs/sdlc/templates/business-modeling/business-vision-template.md`, `docs/sdlc/templates/business-modeling/supplementary-business-spec-template.md`, `docs/sdlc/templates/business-modeling/business-use-case-spec-template.md`, `docs/sdlc/templates/business-modeling/business-use-case-realization-template.md`, `docs/sdlc/templates/business-modeling/business-glossary-template.md`, `docs/sdlc/templates/business-modeling/business-rules-template.md`, `docs/sdlc/templates/business-modeling/target-organization-assessment-template.md` |
 | System Analyst | Elaborate system requirements and maintain traceability | Use-case specs, supplementary/SRS artifacts, req management assets | `docs/sdlc/templates/requirements/use-case-spec-template.md`, `docs/sdlc/templates/requirements/use-case-spec-informal-template.md`, `docs/sdlc/templates/requirements/supplementary-spec-template.md`, `docs/sdlc/templates/requirements/requirements-management-plan-template.md`, `docs/sdlc/templates/requirements/srs-traditional-template.md`, `docs/sdlc/templates/requirements/srs-use-case-template.md`, `docs/sdlc/templates/requirements/stakeholder-requests-template.md`, `docs/sdlc/templates/requirements/glossary-template.md`, `docs/sdlc/templates/requirements/context-free-interview-template.md` |
@@ -44,6 +44,6 @@ Provide PLAN → ACT agents with a ready catalogue of Rational Unified Process r
 ## Prompt Starters
 - **Worker Briefing**: “As the `<worker>`, use the `<template>` structure to produce the artifact for `<use case or feature>`. Confirm dependencies from the latest iteration plan before drafting.”
 - **Template Tailoring**: “Review the standard sections in `<template>`. Indicate which sections are not applicable and justify omissions. Add project-specific sections where risks or compliance requirements demand it.”
-- **Quality Gate**: “Validate that the `<template>` delivered for `<phase>` satisfies the exit criteria listed in the Plan-Act RUP Script. Flag gaps and propose corrective tasks.”
+- **Quality Gate**: “Validate that the `<template>` delivered for `<phase>` satisfies the exit criteria listed in the Plan-Act Lifecycle Script. Flag gaps and propose corrective tasks.”
 
 Keep this catalogue synchronized with updates to `docs/sdlc/plan-act-sdlc.md` and expand it whenever new templates or roles are introduced.

@@ -1,6 +1,5 @@
 # Informal Vision Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/vision_informal.htm
 
 ## Cover Page
 - `<Project Name>`

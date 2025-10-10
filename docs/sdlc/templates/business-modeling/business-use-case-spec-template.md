@@ -1,6 +1,5 @@
 # Business Use-Case Specification Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/bm/rup_bucs.htm
 
 ## Purpose
 Describe end-to-end business processes, actors, and value realization to guide system scope during

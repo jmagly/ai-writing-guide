@@ -1,6 +1,5 @@
 # Bill of Materials Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/deploy/rup_bom.htm
 
 ## Cover Page
 - `<Project Name>`

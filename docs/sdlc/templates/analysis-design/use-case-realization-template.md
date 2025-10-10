@@ -1,6 +1,5 @@
 # Use-Case Realization Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/a_and_d/rup_ucrs.htm
 
 ## Purpose
 Bridge requirements and design by detailing how a use case is realized within the architecture, including collaborations among components and classes.

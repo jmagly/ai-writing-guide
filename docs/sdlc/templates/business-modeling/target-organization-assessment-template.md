@@ -1,6 +1,5 @@
 # Target-Organization Assessment Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/bm/rup_tarorgass.htm
 
 ## Cover Page
 - `<Project Name>`

@@ -1,6 +1,5 @@
 # Business Use-Case Realization Specification Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/bm/rup_bucr.htm
 
 ## Cover Page
 - `<Project Name>`

@@ -1,9 +1,8 @@
 # Development Case Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/environ/wb_dvlcs.htm
 
 ## Purpose
-Tailor the Rational Unified Process to the specific project, defining which artifacts, roles, and workflows are in scope for each phase and iteration.
+Tailor the delivery process to the specific project, defining which artifacts, roles, and workflows are in scope for each phase and iteration.
 
 ## Completion Checklist
 - Lifecycle tailoring decisions documented with rationale
@@ -14,7 +13,7 @@ Tailor the Rational Unified Process to the specific project, defining which arti
 1. **Project Overview**
    - Summarize project context, objectives, and constraints influencing tailoring.
 2. **Process Tailoring Summary**
-   - Describe deviations from standard RUP, including omitted or added artifacts.
+   - Describe deviations from the baseline process, including omitted or added artifacts.
 3. **Lifecycle Phases and Iterations**
    - Outline phase structure, number of iterations, and high-level objectives.
 4. **Artifact Responsibility Matrix**

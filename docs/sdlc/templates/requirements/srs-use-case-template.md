@@ -1,6 +1,5 @@
 # Software Requirements Specification (Use-Case Driven) Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/rup_srsuc.htm
 
 ## Cover Page
 - `<Project Name>`

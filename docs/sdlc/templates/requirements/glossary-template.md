@@ -1,6 +1,5 @@
 # Project Glossary Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/rup_gloss.htm
 
 ## Cover Page
 - `<Project Name>`

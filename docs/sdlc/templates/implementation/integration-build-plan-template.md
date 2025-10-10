@@ -1,6 +1,5 @@
 # Integration Build Plan Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/impl/rup_ibpln.htm
 
 ## Purpose
 Define how components are assembled, validated, and delivered across iterations. Use this plan to align feature teams and build engineers on integration cadence and responsibilities.

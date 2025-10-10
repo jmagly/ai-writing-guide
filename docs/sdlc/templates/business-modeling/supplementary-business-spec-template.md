@@ -1,6 +1,5 @@
 # Supplementary Business Specification Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/bm/rup_sbs.htm
 
 ## Cover Page
 - `<Project Name>`

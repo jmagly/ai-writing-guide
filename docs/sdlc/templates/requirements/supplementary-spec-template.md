@@ -1,6 +1,5 @@
 # Supplementary Specification Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/rup_sspec.htm
 
 ## Purpose
 Capture requirements that are not easily expressed in use cases, including non-functional constraints,

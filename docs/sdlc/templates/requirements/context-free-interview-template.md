@@ -1,6 +1,5 @@
 # Context-Free Interview Script
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/rup_stkintrvw_informal.htm
 
 > Use this script to elicit stakeholder or user problems, context, and desired outcomes without biasing the conversation with implementation ideas.
 

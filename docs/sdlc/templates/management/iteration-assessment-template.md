@@ -1,6 +1,5 @@
 # Iteration Assessment Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_itass.htm
 
 ## Cover Page
 - `<Project Name>`

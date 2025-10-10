@@ -1,6 +1,5 @@
 # Risk Management Plan Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_rskpln.htm
 
 ## Cover Page
 - `<Project Name>`

@@ -1,6 +1,5 @@
 # Quality Assurance Plan Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_qapln.htm
 
 ## Cover Page
 - `<Project Name>`

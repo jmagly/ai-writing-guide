@@ -1,6 +1,5 @@
 # Software Requirements Specification (Traditional) Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/rup_srs.htm
 
 ## Cover Page
 - `<Project Name>`

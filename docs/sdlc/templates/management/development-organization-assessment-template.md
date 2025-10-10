@@ -1,6 +1,5 @@
 # Development-Organization Assessment Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/environ/rup_dorgass.htm
 
 ## Cover Page
 - `<Project Name>`

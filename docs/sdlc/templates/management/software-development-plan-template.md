@@ -1,6 +1,5 @@
 # Software Development Plan Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_sdpln.htm
 
 ## Purpose
 Provide a consolidated plan covering scope, schedule, resources, and management processes for the project.
@@ -18,9 +17,9 @@ Provide a consolidated plan covering scope, schedule, resources, and management 
 3. **Management Objectives and Priorities**
    - Define success criteria, priorities, and guiding principles.
 4. **Scope and Deliverables**
-   - List major deliverables per RUP phase with descriptions.
+   - List major deliverables per lifecycle phase with descriptions.
 5. **Lifecycle Model**
-   - Describe the tailored RUP lifecycle, iterations, and milestones.
+   - Describe the tailored lifecycle, iterations, and milestones.
 6. **Work Breakdown Structure**
    - Outline major work packages and dependencies.
 7. **Schedule and Milestones**

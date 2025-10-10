@@ -1,6 +1,5 @@
 # Informal Business Case Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/bcase_informal.htm
 
 ## 1 Introduction
 > Summarize why the business case is being developed and what it covers.

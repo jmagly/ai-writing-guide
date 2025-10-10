@@ -1,6 +1,5 @@
 # Requirements Management Plan Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/rup_rmpln.htm
 
 ## Cover Page
 - `<Project Name>`

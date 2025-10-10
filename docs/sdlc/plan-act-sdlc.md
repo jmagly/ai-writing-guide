@@ -1,7 +1,7 @@
-# Plan-Act RUP Script
+# Plan-Act Lifecycle Script
 
 ## Purpose
-Equip PLAN → ACT coding agents with a complete Rational Unified Process (RUP) playbook so they can deliver usable software from a single idea prompt. Each activity lists the roles, artifacts, disciplines, and exit checks agents must satisfy before advancing.
+Equip PLAN → ACT coding agents with a complete lifecycle playbook so they can deliver usable software from a single idea prompt. Each activity lists the roles, artifacts, disciplines, and exit checks agents must satisfy before advancing.
 
 ## Intake & Vision Sprint
 - **Trigger**: User provides a short idea or problem statement.
@@ -17,12 +17,12 @@ Return an initial charter plus top unknowns for stakeholder review.
 ```
 - **Outputs**: Charter summary, success metrics, open questions log, stakeholder contacts.
 
-## RUP Phases and Major Milestones
+## Lifecycle Phases and Major Milestones
 | Phase | Lifecycle Objectives | Primary Disciplines | Lifecycle Milestone | Exit Criteria |
 | --- | --- | --- | --- | --- |
 | **Inception** | Establish business case, project scope, critical use cases | Business Modeling, Requirements, Project Management | Lifecycle Objective Milestone | Stakeholder agreement on vision, scope, and funding guardrails |
-| **Elaboration** | Stabilize architecture, baseline requirements, retire highest risks | Requirements, Analysis & Design, Configuration Mgmt, Environment | Lifecycle Architecture Milestone | Executable architectural prototype, baseline architecture document, prioritized risk list closed |
-| **Construction** | Build product increments, achieve component completeness | Analysis & Design, Implementation, Test, Project Management | Initial Operational Capability Milestone | Feature set meets acceptance tests, deployment pipeline proven, defects triaged |
+| **Elaboration** | Stabilize architecture, baseline requirements, retire highest risks | Requirements, Analysis & Design, Configuration Mgmt, Environment | Architecture Baseline Milestone | Executable architectural prototype, baseline architecture document, prioritized risk list closed |
+| **Construction** | Build product increments, achieve component completeness | Analysis & Design, Implementation, Test, Project Management | Operational Capability Milestone | Feature set meets acceptance tests, deployment pipeline proven, defects triaged |
 | **Transition** | Deploy, train, and validate with end users | Deployment, Support, Change Management, Test | Product Release Milestone | Users trained, release criteria met, support handover accepted |
 
 ## Discipline Backlog for Agent To-Do Lists
@@ -85,12 +85,12 @@ Deliver: deployment-plan.md, release-notes.md, training-pack.md, product-accepta
 ```
 
 ## Multi-Agent Collaboration Rules
-- Parallelize work by discipline while synchronizing at iteration boundaries; each iteration concludes with an assessment referencing RUP milestones.
+- Parallelize work by discipline while synchronizing at iteration boundaries; each iteration concludes with an assessment against the agreed milestones.
 - Maintain a shared artifact registry under `docs/sdlc/artifacts/` (create per project) so agents can resume long-running builds across sessions.
 - Escalate decisions flagged as regulatory, budgetary, or strategic to human stakeholders before baselining.
 
 ## Quality & Design Guardrails
-- Apply RUP best practices: iterate, manage requirements, maintain component-based architecture, visually model, verify quality continuously, and manage change.
+- Apply lifecycle best practices: iterate, manage requirements, maintain a modular architecture, visually model, verify quality continuously, and manage change.
 - Favor SOLID, dependency inversion, and dependency injection to keep edits localized.
 - Default to high test coverage with unit, integration, scenario, and regression suites accompanying each major use case.
 - Capture heuristics and learned fixes in `docs/patterns/` to reduce repeat defects.

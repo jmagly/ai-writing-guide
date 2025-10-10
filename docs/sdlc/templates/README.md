@@ -1,7 +1,7 @@
-# RUP Template Suite
+# Lifecycle Template Suite
 
 ## Overview
-This directory provides Markdown templates adapted from the Rational Unified Process to support PLAN → ACT agent workflows. Each template mirrors a classic RUP artifact, with sections and checklists tailored for collaborative, parallel development.
+This directory provides Markdown templates to support PLAN → ACT agent workflows. Each template mirrors a well-established lifecycle artifact, with sections and checklists tailored for collaborative, parallel development.
 
 ## Structure
 - `business-modeling/` – Vision, supplementary business specification, business use-case specs/realizations, architecture documents, glossaries, rules, and target-organization assessments.
@@ -21,6 +21,6 @@ This directory provides Markdown templates adapted from the Rational Unified Pro
 4. Commit the completed artifact alongside supporting evidence (diagrams, scripts, test reports).
 
 ## Maintenance
-- Align updates with `docs/sdlc/plan-act-sdlc.md` and `docs/sdlc/rup-actors-and-templates.md`.
+- Align updates with `docs/sdlc/plan-act-sdlc.md` and `docs/sdlc/actors-and-templates.md`.
 - When adding new templates, update this README and the actors/roles catalogue.
 - Run Markdown linting to ensure formatting consistency.

@@ -1,6 +1,5 @@
 # Risk List Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_rsklst.htm
 
 ## Purpose
 Maintain a prioritized list of project risks, their status, and mitigation actions across the lifecycle.

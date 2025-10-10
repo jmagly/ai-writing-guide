@@ -1,6 +1,5 @@
 # Measurement Plan Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_mspln.htm
 
 ## Purpose
 Define the metrics, collection methods, and reporting cadence used to monitor project health and product quality.

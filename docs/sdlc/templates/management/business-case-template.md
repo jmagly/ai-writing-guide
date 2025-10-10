@@ -1,6 +1,5 @@
 # Business Case Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_buscs.htm
 
 ## Cover Page
 - `<Project Name>`

@@ -1,6 +1,5 @@
 # Status Assessment Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_stass.htm
 
 ## Purpose
 Provide a concise snapshot of project health at regular intervals, highlighting progress, risks, and required decisions.

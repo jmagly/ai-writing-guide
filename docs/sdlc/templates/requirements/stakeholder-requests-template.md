@@ -1,6 +1,5 @@
 # Stakeholder Requests Log Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/rup_stkreq.htm
 
 ## Purpose
 Track stakeholder needs, requests, and decisions to maintain alignment and ensure traceability across

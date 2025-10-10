@@ -18,14 +18,14 @@ Treat every addition as policy: confirm alignment with `validation/banned-patter
 Follow the established history with imperative, scoped commit subjects under ~55 characters. Group related directories per commit. Pull requests should summarize scope, flag high-priority files, link issues or roadmap items, and attach lint or test output that supports risk assessment.
 
 ## Plan-Act SDLC Playbook
-Anchor multi-agent work on the Rational Unified Process:
+Anchor multi-agent work on the lifecycle phases:
 1. **Inception** – Validate business case, scope, and funding through charter, risk, and stakeholder artifacts.
 2. **Elaboration** – Baseline architecture and requirements; retire top risks and tailor the development case.
 3. **Construction** – Iterate on prioritized use cases with PLAN → ACT → Evaluate → Debug → Correct loops, pairing code with comprehensive tests.
 4. **Transition** – Prepare deployment, training, and support while confirming product acceptance and operational readiness.
 Document decisions and artifacts from every phase within `docs/sdlc/` (or project-specific mirrors) so long-running efforts stay synchronized. Favor modular designs, SOLID principles, and high test coverage to keep follow-on edits localized.
 
-Refer to `docs/sdlc/plan-act-sdlc.md` for detailed milestones, `docs/sdlc/prompt-templates.md` for copy-ready prompts, `docs/sdlc/rup-actors-and-templates.md` for role and artifact guidance, and `docs/sdlc/templates/` when instantiating new documents.
+Refer to `docs/sdlc/plan-act-sdlc.md` for detailed milestones, `docs/sdlc/prompt-templates.md` for copy-ready prompts, `docs/sdlc/actors-and-templates.md` for role and artifact guidance, and `docs/sdlc/templates/` when instantiating new documents.
 
 ## Agent-Facing Notes
 When updating a playbook, echo the critical directives in `context/quick-reference.md` so lightweight contexts stay fresh, and capture inter-agent handoffs directly in the relevant guides to maintain orchestration discipline.

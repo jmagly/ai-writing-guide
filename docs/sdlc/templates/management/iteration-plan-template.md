@@ -1,9 +1,8 @@
 # Iteration Plan Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/rup_itpln.htm
 
 ## Purpose
-Define objectives, scope, tasks, and evaluation criteria for a single iteration within the RUP lifecycle.
+Define objectives, scope, tasks, and evaluation criteria for a single iteration within the delivery lifecycle.
 
 ## Completion Checklist
 - Iteration objectives align with phase goals and risk priorities

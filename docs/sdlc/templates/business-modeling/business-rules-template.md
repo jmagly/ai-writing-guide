@@ -1,6 +1,5 @@
 # Business Rules Document Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/bm/rup_brul.htm
 
 ## Cover Page
 - `<Project Name>`

@@ -1,6 +1,5 @@
 # Informal Use-Case Specification Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/req/ucspec_informal.htm
 
 ## Use-Case Header
 - `Use-Case: <Use-Case Name>`

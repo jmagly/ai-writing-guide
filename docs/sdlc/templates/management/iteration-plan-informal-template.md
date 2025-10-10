@@ -1,6 +1,5 @@
 # Informal Iteration Plan Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/mgmnt/itplan_informal.htm
 
 ## 1 Key Milestones
 > Provide a lightweight timeline of the iteration, including start/stop dates, demos, testing start, beta drops, or stakeholder reviews.
