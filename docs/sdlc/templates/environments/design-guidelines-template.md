@@ -56,3 +56,5 @@
 - Reference architecture decisions to ensure design guidance remains aligned.
 - Call out mandatory patterns or banned anti-patterns for automation enforcement.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Reference architecture decisions to keep design guidance synchronized.
+- Highlight prohibited patterns or practices to protect quality.

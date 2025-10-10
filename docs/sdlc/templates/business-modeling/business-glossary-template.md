@@ -37,3 +37,5 @@ requirements and design work.
 - Reference source documents by relative path where possible.
 - Coordinate updates with Requirements and Architecture disciplines to prevent drift.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Maintain alphabetical order and include sources for each definition.
+- Retire obsolete terms in the dedicated subsection to prevent reuse.

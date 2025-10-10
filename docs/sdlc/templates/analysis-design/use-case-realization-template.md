@@ -42,3 +42,5 @@ Bridge requirements and design by detailing how a use case is realized within th
 - Ensure realization aligns with Software Architecture Document decisions.
 - Coordinate with implementation agents to confirm feasibility and identify code impacts.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Cross-reference each step with component responsibilities and interfaces.
+- Capture non-functional considerations to inform testing and implementation.

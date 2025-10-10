@@ -78,3 +78,4 @@
 - Reference measurement targets from `measurement-plan.md` when defining metrics.
 - Align review schedules with the iteration and lifecycle milestones in `software-development-plan.md`.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Align review schedules with milestones documented in `software-development-plan.md`.

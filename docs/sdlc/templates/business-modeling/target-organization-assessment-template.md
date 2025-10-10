@@ -88,3 +88,4 @@
 - Quantify capability gaps with metrics where possible (maturity levels, cycle times).
 - Highlight opportunity areas that should feed the backlog or change program.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Identify improvement opportunities that should seed backlog items.

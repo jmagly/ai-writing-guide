@@ -44,3 +44,5 @@ to inform solution scope and alignment.
 - For diagrams, embed Markdown image references or relative links to models stored elsewhere.
 - Collaborate with Change Management stakeholders to ensure organizational readiness is addressed.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Highlight impacted processes and systems to guide scope decisions.
+- Document capability gaps for inclusion in planning and change roadmaps.

@@ -69,3 +69,4 @@
 - Summarize interview outcomes in Section 11 so they can feed stakeholder requests automatically.
 - Record consent for follow-ups and review participation when applicable.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Summarize interview outcomes in Section 11 so they feed stakeholder requests automatically.

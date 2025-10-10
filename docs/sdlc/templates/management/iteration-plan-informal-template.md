@@ -34,3 +34,5 @@
 - Keep milestone names deterministic so other agents can parse them easily.
 - Log dependency notes adjacent to the objective they affect.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Keep milestone names deterministic for automated parsing.
+- Document dependencies adjacent to the related objective.

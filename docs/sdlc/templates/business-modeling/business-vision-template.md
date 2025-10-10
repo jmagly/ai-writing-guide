@@ -47,3 +47,5 @@ stakeholder requests.
 - Reference supporting artifacts with relative paths (e.g., `docs/research/*`).
 - Populate **Outstanding Questions and Decisions** before signaling completion so downstream agents can act without re-reading.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Maintain alignment between personas, objectives, and risks across artifacts.
+- Flag assumptions and decisions clearly so follow-on teams can validate them.

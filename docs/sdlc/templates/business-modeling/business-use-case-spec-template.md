@@ -43,3 +43,5 @@ Inception and Elaboration.
 - Cross-reference relevant supplementary documents to maintain traceability.
 - Coordinate updates with the System Analyst to ensure alignment with system use cases.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Reference related business goals and KPIs for each workflow.
+- Link alternate flows to the step they diverge from for clarity.

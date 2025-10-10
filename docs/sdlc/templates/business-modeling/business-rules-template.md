@@ -65,3 +65,5 @@
 - Alphabetize rules inside each group for deterministic parsing.
 - Reference canonical sources (policy IDs, regulation numbers) alongside each rule.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Alphabetize rules and include authoritative sources (policy IDs, regulations).
+- Flag dependencies between rules to help automation detect conflicts.

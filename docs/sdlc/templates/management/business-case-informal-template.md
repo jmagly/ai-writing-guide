@@ -42,3 +42,5 @@
 - Capture the ROI summary using the provided table for machine readability.
 - List key constraints so downstream planners can validate feasibility quickly.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Capture ROI summary using the provided table for machine readability.
+- List key constraints so planners can validate feasibility quickly.

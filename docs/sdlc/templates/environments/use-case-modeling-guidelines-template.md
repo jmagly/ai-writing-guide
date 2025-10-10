@@ -53,3 +53,5 @@
 - Include naming conventions so generated use-case files follow consistent identifiers.
 - Call out review checkpoints agents must satisfy before accepting a use-case spec.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Define naming conventions so automation generates consistent identifiers.
+- List acceptance checks that must pass before approving a use-case spec.

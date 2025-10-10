@@ -54,3 +54,4 @@
 - Record artifact hashes to support reproducibility and integrity checks.
 - Note licensing or distribution restrictions for each material.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Record hashes/signatures for each material to support reproducibility.

@@ -52,3 +52,5 @@ Describe the architectural baseline, including views, decisions, and rationale t
 - Synchronize with Supplementary Specification to ensure quality attributes stay aligned.
 - Update runtime scenarios when new critical use cases are introduced.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Document architectural drivers so downstream design work remains aligned.
+- Record decision rationale in Section 6 to support audits and future changes.

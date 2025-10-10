@@ -56,3 +56,5 @@
 - Keep each requirement measurable and tied back to the business vision objectives.
 - Update related business rules or glossary entries when terminology changes.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Tie each requirement to measurable objectives or policy constraints.
+- Synchronize updates with business rules and glossary entries.

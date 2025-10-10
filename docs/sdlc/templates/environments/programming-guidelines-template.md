@@ -56,3 +56,5 @@
 - List formatting rules and static analysis configurations explicitly for agent tooling.
 - Identify security and compliance requirements that code generators must respect.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Document formatting, linting, and static analysis rules for automation.
+- Include security and compliance requirements code generators must follow.

@@ -50,3 +50,4 @@
 - Ensure every referenced use-case report exists and is tagged with the same identifier.
 - Document assumptions and dependencies in Section 2.2 for planning alignment.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Ensure every referenced use-case report exists and shares consistent identifiers.

@@ -47,3 +47,5 @@ Define how components are assembled, validated, and delivered across iterations.
 - Link to relevant automation scripts in `tools/` or pipeline repositories.
 - Coordinate with Configuration Management to baseline build artifacts and documentation.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Align build windows with environment reservations to avoid resource contention.
+- List automated and manual verification steps to streamline triage.

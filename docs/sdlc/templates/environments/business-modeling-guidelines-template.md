@@ -59,3 +59,5 @@
 - State notation and diagramming rules so automation can generate models consistently.
 - List validation checks that must pass before business models are approved.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Document notation rules so automated modeling stays consistent.
+- List validation steps that must pass before publishing business models.

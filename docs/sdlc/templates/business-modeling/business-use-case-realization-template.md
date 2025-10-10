@@ -47,3 +47,5 @@
 - Reference the originating business use-case ID to keep traceability intact.
 - Detail collaborations so downstream analysts can derive system interactions without reworking diagrams.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Reference the originating business use-case ID for traceability.
+- Describe collaborations so downstream teams can derive system interactions.

@@ -59,3 +59,5 @@
 - Capture toolchain gaps to inform the Development Case tailoring decisions.
 - Summarize recommended improvement actions with accountable roles.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- Record strengths and gaps to inform process tailoring decisions.
+- Summarize improvement actions with owners and target dates.
