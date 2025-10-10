@@ -1,8 +1,13 @@
 # Iteration Test Plan Template
 
-
 ## Purpose
 Detail the testing scope, approach, and logistics for a specific iteration within Construction or Transition.
+
+## Ownership & Collaboration
+- Document Owner: Test Engineer
+- Contributor Roles: Test Architect, Implementer
+- Automation Inputs: Iteration scope, build availability, data refresh plan
+- Automation Outputs: `iteration-<id>-test-plan.md` covering sections 1–11
 
 ## Completion Checklist
 - Iteration objectives and acceptance criteria captured
@@ -37,3 +42,4 @@ Detail the testing scope, approach, and logistics for a specific iteration withi
 - Keep plan lightweight but actionable; cross-check with iteration plan to avoid scope drift.
 - Coordinate with Build/Integration plan for environment scheduling.
 - Update status daily during execution and feed into iteration assessment.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

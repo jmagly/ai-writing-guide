@@ -1,6 +1,5 @@
 # Iteration Assessment Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Iteration Assessment`

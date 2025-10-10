@@ -1,9 +1,14 @@
 # Business Glossary Template
 
-
 ## Purpose
 Maintain a shared vocabulary for business and system stakeholders to reduce ambiguity during
 requirements and design work.
+
+## Ownership & Collaboration
+- Document Owner: Business Process Analyst
+- Contributor Roles: System Analyst, Environment Engineer
+- Automation Inputs: Domain terminology list, stakeholder definitions
+- Automation Outputs: `business-glossary.md` table with canonical terms
 
 ## Completion Checklist
 - Terms are sorted alphabetically or by domain
@@ -31,3 +36,4 @@ requirements and design work.
 - Keep formatting consistent; avoid multi-paragraph definitions.
 - Reference source documents by relative path where possible.
 - Coordinate updates with Requirements and Architecture disciplines to prevent drift.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

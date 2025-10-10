@@ -3,6 +3,12 @@
 ## Purpose
 Capture standards, conventions, and best practices for a specific discipline (e.g., use-case modeling, design, programming, testing) to ensure consistency across agents and teams.
 
+## Ownership & Collaboration
+- Document Owner: Environment Engineer
+- Contributor Roles: Project Manager, System Analyst
+- Automation Inputs: Discipline-specific standards, tooling references
+- Automation Outputs: `<discipline>-guidelines.md` adhering to sections 1–8
+
 ## Completion Checklist
 - Scope and applicability defined
 - Standards referenced or embedded with examples
@@ -30,3 +36,4 @@ Capture standards, conventions, and best practices for a specific discipline (e.
 - Replace `<Discipline>` in the title once instantiated.
 - Keep instructions concise; favor bullet lists and examples over prose.
 - Align with relevant artifacts (e.g., Supplementary Specification, Test Strategy) to avoid conflicting guidance.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

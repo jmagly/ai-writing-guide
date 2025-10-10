@@ -1,6 +1,5 @@
 # Business Rules Document Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Business Rules Document`

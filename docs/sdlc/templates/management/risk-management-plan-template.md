@@ -1,6 +1,5 @@
 # Risk Management Plan Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Risk Management Plan`

@@ -5,6 +5,12 @@ Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/temp
 ## Purpose
 Summarize testing results at the end of an iteration, release, or major test cycle to inform go/no-go decisions.
 
+## Ownership & Collaboration
+- Document Owner: Test Engineer
+- Contributor Roles: Test Architect, Project Manager
+- Automation Inputs: Executed test results, defect logs, coverage metrics
+- Automation Outputs: `test-evaluation-summary.md` with sections 1–9
+
 ## Completion Checklist
 - Test execution metrics captured with context
 - Defect summary mapped to severity and resolution status
@@ -35,3 +41,4 @@ Summarize testing results at the end of an iteration, release, or major test cyc
 - Use concise tables or bullet lists for metrics to aid quick review.
 - Align severity nomenclature with the Defect Management process.
 - Provide narrative context for metrics to help stakeholders interpret results.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

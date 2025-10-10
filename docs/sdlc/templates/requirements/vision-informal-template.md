@@ -1,6 +1,5 @@
 # Informal Vision Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Vision`

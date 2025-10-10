@@ -1,6 +1,5 @@
 # Business Modeling Guidelines Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Business Modeling Guidelines`

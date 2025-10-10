@@ -1,6 +1,5 @@
 # Software Requirements Specification (Traditional) Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Software Requirements Specification for <Subsystem or Feature>`

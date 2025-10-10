@@ -1,6 +1,5 @@
 # Informal Business Case Template
 
-
 ## 1 Introduction
 > Summarize why the business case is being developed and what it covers.
 

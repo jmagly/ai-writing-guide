@@ -1,9 +1,14 @@
 # Release Notes Template
 
-
 ## Purpose
 Communicate the contents, fixes, and operational considerations of a release to end users, support teams,
 and other stakeholders.
+
+## Ownership & Collaboration
+- Document Owner: Deployment Manager
+- Contributor Roles: Integrator, Project Manager, Test Engineer
+- Automation Inputs: Change log, resolved defects, feature list
+- Automation Outputs: `release-notes.md` with highlights, changes, and known issues
 
 ## Completion Checklist
 - Features and fixes categorized clearly with impact statements
@@ -37,3 +42,4 @@ and other stakeholders.
 - Use consistent formatting for change lists (e.g., `- [ID] Description`).
 - Coordinate with Product Acceptance Plan and Support Runbook so messaging aligns.
 - Include links to analytics dashboards or monitoring when relevant.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

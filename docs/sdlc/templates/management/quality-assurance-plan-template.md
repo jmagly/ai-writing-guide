@@ -1,6 +1,5 @@
 # Quality Assurance Plan Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Quality Assurance Plan`

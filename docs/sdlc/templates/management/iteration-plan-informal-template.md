@@ -1,6 +1,5 @@
 # Informal Iteration Plan Template
 
-
 ## 1 Key Milestones
 > Provide a lightweight timeline of the iteration, including start/stop dates, demos, testing start, beta drops, or stakeholder reviews.
 

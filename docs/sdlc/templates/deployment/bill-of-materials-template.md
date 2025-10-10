@@ -1,6 +1,5 @@
 # Bill of Materials Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Bill of Materials`

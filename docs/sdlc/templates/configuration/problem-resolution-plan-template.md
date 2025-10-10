@@ -3,6 +3,12 @@
 ## Purpose
 Define the process for tracking, analyzing, and resolving defects, change requests, and other issues throughout the project.
 
+## Ownership & Collaboration
+- Document Owner: Configuration Manager
+- Contributor Roles: Project Manager, Test Engineer, Requirements Reviewer
+- Automation Inputs: Defect workflow, SLA commitments, tooling setup
+- Automation Outputs: `problem-resolution-plan.md` describing sections 1–12
+
 ## Completion Checklist
 - Problem lifecycle states and transitions defined
 - Roles, SLAs, and escalation paths documented
@@ -38,3 +44,4 @@ Define the process for tracking, analyzing, and resolving defects, change reques
 - Maintain consistent IDs with defect and change tracking tools.
 - Align severity/priority definitions with Test Strategy and Release governance.
 - Update plan when new tooling or workflows are introduced.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

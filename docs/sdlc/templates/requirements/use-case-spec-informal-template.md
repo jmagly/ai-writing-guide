@@ -1,6 +1,5 @@
 # Informal Use-Case Specification Template
 
-
 ## Use-Case Header
 - `Use-Case: <Use-Case Name>`
 - `<Project>` identifier

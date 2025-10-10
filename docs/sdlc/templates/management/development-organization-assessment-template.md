@@ -1,6 +1,5 @@
 # Development-Organization Assessment Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Development-Organization Assessment`

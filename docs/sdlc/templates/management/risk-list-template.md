@@ -1,8 +1,13 @@
 # Risk List Template
 
-
 ## Purpose
 Maintain a prioritized list of project risks, their status, and mitigation actions across the lifecycle.
+
+## Ownership & Collaboration
+- Document Owner: Project Manager
+- Contributor Roles: Requirements Reviewer, Test Architect, Deployment Manager
+- Automation Inputs: Risk workshop output, mitigation status
+- Automation Outputs: `risk-list.md` sorted by exposure
 
 ## Usage Instructions
 - Update at least once per iteration, or when new risks emerge.
@@ -24,3 +29,4 @@ Maintain a prioritized list of project risks, their status, and mitigation actio
 - Quantify impact and likelihood using agreed scales (e.g., High/Medium/Low or numeric).
 - Reference related tasks, decisions, or tests with relative links.
 - Review during iteration planning and status assessments to ensure visibility.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

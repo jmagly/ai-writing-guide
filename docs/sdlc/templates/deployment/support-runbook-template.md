@@ -3,6 +3,12 @@
 ## Purpose
 Equip operations and support teams with actionable procedures to monitor, troubleshoot, and resolve issues for the released product.
 
+## Ownership & Collaboration
+- Document Owner: Deployment Manager
+- Contributor Roles: Integrator, Configuration Manager, Test Engineer
+- Automation Inputs: Monitoring configuration, incident procedures, on-call roster
+- Automation Outputs: `support-runbook.md` covering sections 1–11
+
 ## Completion Checklist
 - Monitoring and alerting coverage documented
 - Incident classification and response steps defined
@@ -36,3 +42,4 @@ Equip operations and support teams with actionable procedures to monitor, troubl
 - Use concise command snippets or references to scripts stored in `tools/` or infrastructure repos.
 - Align terminology with Deployment Plan and Release Notes to avoid confusion.
 - Validate procedures with operations teams before finalizing the runbook.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

@@ -1,8 +1,13 @@
 # Master Test Plan Template
 
-
 ## Purpose
 Establish the overarching testing strategy, scope, resources, and schedule across all phases of the project.
+
+## Ownership & Collaboration
+- Document Owner: Test Architect
+- Contributor Roles: Test Engineer, Project Manager
+- Automation Inputs: Test strategy, iteration roadmap, environment plan
+- Automation Outputs: `master-test-plan.md` with sections 1–14
 
 ## Completion Checklist
 - Test objectives and scope aligned with Vision and SDP
@@ -43,3 +48,4 @@ Establish the overarching testing strategy, scope, resources, and schedule acros
 - Keep terminology aligned with the Supplementary Specification and Risk List.
 - Link to iteration-level plans and evaluation summaries for traceability.
 - Update schedule and risks after each iteration assessment.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

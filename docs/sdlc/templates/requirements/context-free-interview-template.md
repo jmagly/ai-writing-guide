@@ -1,6 +1,5 @@
 # Context-Free Interview Script
 
-
 > Use this script to elicit stakeholder or user problems, context, and desired outcomes without biasing the conversation with implementation ideas.
 
 ## 1 Preparation

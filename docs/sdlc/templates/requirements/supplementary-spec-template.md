@@ -1,9 +1,14 @@
 # Supplementary Specification Template
 
-
 ## Purpose
 Capture requirements that are not easily expressed in use cases, including non-functional constraints,
 regulatory needs, and domain rules.
+
+## Ownership & Collaboration
+- Document Owner: System Analyst
+- Contributor Roles: Requirements Reviewer, Software Architect, Test Architect
+- Automation Inputs: Vision document, non-functional requirements backlog
+- Automation Outputs: `supplementary-spec.md` covering sections 1–14
 
 ## Completion Checklist
 - All quality attributes quantified where feasible
@@ -44,3 +49,4 @@ regulatory needs, and domain rules.
 - Use measurable statements; avoid vague adjectives.
 - Cross-reference risk list entries when a requirement mitigates a known risk.
 - Coordinate with Architecture and QA to maintain consistency across artifacts.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

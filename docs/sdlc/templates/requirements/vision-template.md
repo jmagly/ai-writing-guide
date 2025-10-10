@@ -1,9 +1,14 @@
 # Vision Template
 
-
 ## Purpose
 Define the system-level goals, features, and constraints that align business objectives with solution scope.
 Use this document to anchor prioritization and stakeholder expectations throughout Inception and Elaboration.
+
+## Ownership & Collaboration
+- Document Owner: System Analyst
+- Contributor Roles: Business Process Analyst, Project Manager, Requirements Reviewer
+- Automation Inputs: Business vision draft, stakeholder map, roadmap hypotheses
+- Automation Outputs: `vision.md` with sections 1–5
 
 ## Completion Checklist
 - Problem statement and stakeholder needs captured concisely
@@ -40,3 +45,4 @@ Use this document to anchor prioritization and stakeholder expectations througho
 - Keep sections brief but authoritative; aim for clarity over completeness.
 - Link to current risk list, glossary, and stakeholder request logs for traceability.
 - Update the Vision document when major pivots occur; log decision history in change notes.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

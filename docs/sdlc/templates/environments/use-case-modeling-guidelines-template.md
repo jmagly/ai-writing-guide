@@ -1,6 +1,5 @@
 # Use-Case Modeling Guidelines Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Use-Case Modeling Guidelines`

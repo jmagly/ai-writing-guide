@@ -1,6 +1,5 @@
 # Business Case Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Business Case`

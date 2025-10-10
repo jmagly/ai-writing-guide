@@ -1,9 +1,14 @@
 # Stakeholder Requests Log Template
 
-
 ## Purpose
 Track stakeholder needs, requests, and decisions to maintain alignment and ensure traceability across
 disciplines.
+
+## Ownership & Collaboration
+- Document Owner: System Analyst
+- Contributor Roles: Business Process Analyst, Project Manager
+- Automation Inputs: Interview transcripts, support tickets, roadmap ideas
+- Automation Outputs: `stakeholder-requests.csv` populated with normalized entries
 
 ## Usage Instructions
 - Log requests as they arrive, tagging priority and status.
@@ -26,3 +31,4 @@ disciplines.
 - Maintain consistent IDs for easy cross-referencing (`SR-###`).
 - Update linked artifacts to include anchors or section references when possible.
 - Surface unresolved high-priority requests during status reviews.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

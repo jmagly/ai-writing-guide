@@ -1,8 +1,13 @@
 # Use-Case Realization Template
 
-
 ## Purpose
 Bridge requirements and design by detailing how a use case is realized within the architecture, including collaborations among components and classes.
+
+## Ownership & Collaboration
+- Document Owner: Software Architect
+- Contributor Roles: Designer, Implementer
+- Automation Inputs: Detailed use-case specification, architecture guidelines
+- Automation Outputs: `use-case-realization-<id>.md` with flows and responsibilities
 
 ## Completion Checklist
 - Collaborations align with architectural constraints
@@ -36,3 +41,4 @@ Bridge requirements and design by detailing how a use case is realized within th
 - Reference sequence or collaboration diagrams stored in the repository; include links or filenames.
 - Ensure realization aligns with Software Architecture Document decisions.
 - Coordinate with implementation agents to confirm feasibility and identify code impacts.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

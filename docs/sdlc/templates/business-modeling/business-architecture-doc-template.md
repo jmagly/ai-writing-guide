@@ -1,9 +1,14 @@
 # Business Architecture Document Template
 
-
 ## Purpose
 Provide a structured view of the enterprise processes, organizational structure, and information flows
 to inform solution scope and alignment.
+
+## Ownership & Collaboration
+- Document Owner: Business Process Analyst
+- Contributor Roles: System Analyst, Environment Engineer, Project Manager
+- Automation Inputs: Current-state process landscape, org charts, system inventory
+- Automation Outputs: `business-architecture.md` including sections 1–9
 
 ## Completion Checklist
 - End-to-end process context diagrammed or referenced
@@ -38,3 +43,4 @@ to inform solution scope and alignment.
 - Maintain traceability to the Business Vision and Business Use-Case Specifications.
 - For diagrams, embed Markdown image references or relative links to models stored elsewhere.
 - Collaborate with Change Management stakeholders to ensure organizational readiness is addressed.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

@@ -1,8 +1,13 @@
 # Software Development Plan Template
 
-
 ## Purpose
 Provide a consolidated plan covering scope, schedule, resources, and management processes for the project.
+
+## Ownership & Collaboration
+- Document Owner: Project Manager
+- Contributor Roles: System Analyst, Software Architect, Test Architect
+- Automation Inputs: Business case, roadmap, capacity model
+- Automation Outputs: `software-development-plan.md` with sections 1–16
 
 ## Completion Checklist
 - Lifecycle phases, milestones, and dependencies outlined
@@ -47,3 +52,4 @@ Provide a consolidated plan covering scope, schedule, resources, and management 
 - Keep the SDP synchronized with iteration plans and status assessments.
 - Reference artifacts by relative path to maintain traceability.
 - Update after major replanning events; record revision history with date and author.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

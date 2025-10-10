@@ -1,6 +1,5 @@
 # Business Use-Case Realization Specification Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Business Use-Case Realization Specification: <Business Use-Case Name>`

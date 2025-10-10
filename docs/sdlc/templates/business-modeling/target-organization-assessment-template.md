@@ -1,6 +1,5 @@
 # Target-Organization Assessment Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Target-Organization Assessment`

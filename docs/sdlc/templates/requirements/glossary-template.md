@@ -1,6 +1,5 @@
 # Project Glossary Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Glossary`

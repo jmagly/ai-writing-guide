@@ -1,8 +1,13 @@
 # Measurement Plan Template
 
-
 ## Purpose
 Define the metrics, collection methods, and reporting cadence used to monitor project health and product quality.
+
+## Ownership & Collaboration
+- Document Owner: Project Manager
+- Contributor Roles: Test Architect, System Analyst, Configuration Manager
+- Automation Inputs: Metric definitions, data sources, reporting cadence
+- Automation Outputs: `measurement-plan.md` including inventory table
 
 ## Completion Checklist
 - Metrics mapped to project objectives and risks
@@ -36,3 +41,4 @@ Define the metrics, collection methods, and reporting cadence used to monitor pr
 - Ensure metric definitions align with Status Assessments and Test Strategy.
 - Automate data collection whenever possible; link scripts or queries used.
 - Revisit metrics when project goals or risks evolve.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

@@ -1,6 +1,5 @@
 # Programming Guidelines Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Programming Guidelines`

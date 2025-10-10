@@ -3,6 +3,12 @@
 ## Purpose
 Describe how project artifacts are identified, controlled, baselined, and audited throughout the lifecycle.
 
+## Ownership & Collaboration
+- Document Owner: Configuration Manager
+- Contributor Roles: Integrator, Project Manager
+- Automation Inputs: Repository map, change control policies, tool access matrix
+- Automation Outputs: `configuration-management-plan.md` including sections 1–12
+
 ## Completion Checklist
 - Configuration items (CIs) defined with naming/versioning standards
 - Change control workflow and tooling specified
@@ -38,3 +44,4 @@ Describe how project artifacts are identified, controlled, baselined, and audite
 - Ensure CI list references repository paths or external systems explicitly.
 - Sync change control process with Problem Resolution Plan and Iteration Plans.
 - Update plan when tooling or governance changes occur.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

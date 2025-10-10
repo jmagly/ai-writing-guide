@@ -1,6 +1,5 @@
 # Design Guidelines Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Design Guidelines`

@@ -5,6 +5,12 @@ Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/temp
 ## Purpose
 Describe the guiding principles, methodologies, and standards governing the testing effort throughout the project lifecycle.
 
+## Ownership & Collaboration
+- Document Owner: Test Architect
+- Contributor Roles: Test Engineer, Configuration Manager, Project Manager
+- Automation Inputs: Quality goals, architecture overview, tooling inventory
+- Automation Outputs: `test-strategy.md` documenting sections 1–11
+
 ## Completion Checklist
 - Strategy aligns with business risks, architecture, and release cadence
 - Test levels, methods, and responsibilities clearly delineated
@@ -38,3 +44,4 @@ Describe the guiding principles, methodologies, and standards governing the test
 - Keep strategy evergreen; revisit when significant architectural or process changes occur.
 - Align with Master Test Plan and Measurement Plan to ensure consistency.
 - Include links to tooling documentation or scripts maintained elsewhere in the repo.
+- Verify the Automation Outputs entry is satisfied before signaling completion.

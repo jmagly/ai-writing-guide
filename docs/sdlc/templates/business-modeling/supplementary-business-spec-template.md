@@ -1,6 +1,5 @@
 # Supplementary Business Specification Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Supplementary Business Specification`

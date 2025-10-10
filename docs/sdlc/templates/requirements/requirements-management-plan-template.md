@@ -1,6 +1,5 @@
 # Requirements Management Plan Template
 
-
 ## Cover Page
 - `<Project Name>`
 - `Requirements Management Plan`

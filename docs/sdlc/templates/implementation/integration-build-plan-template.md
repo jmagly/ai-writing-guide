@@ -1,8 +1,13 @@
 # Integration Build Plan Template
 
-
 ## Purpose
 Define how components are assembled, validated, and delivered across iterations. Use this plan to align feature teams and build engineers on integration cadence and responsibilities.
+
+## Ownership & Collaboration
+- Document Owner: Integrator
+- Contributor Roles: Implementer, Configuration Manager, Test Architect
+- Automation Inputs: Iteration backlog, CI/CD tooling configuration, deployment topology
+- Automation Outputs: `integration-build-plan.md` including schedule and verification
 
 ## Completion Checklist
 - Build schedule aligned with iteration plan
@@ -41,3 +46,4 @@ Define how components are assembled, validated, and delivered across iterations.
 - Keep schedule and ownership current; update after each iteration retrospective.
 - Link to relevant automation scripts in `tools/` or pipeline repositories.
 - Coordinate with Configuration Management to baseline build artifacts and documentation.
+- Verify the Automation Outputs entry is satisfied before signaling completion.
