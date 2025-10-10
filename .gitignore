@@ -37,3 +37,6 @@ local-notes/
 .local/
 personal-notes.md
 TODO.local.md
+
+# Local Claude agents/config (do not commit)
+.claude/
