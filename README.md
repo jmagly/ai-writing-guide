@@ -67,11 +67,11 @@ Install the framework to `~/.local/share/ai-writing-guide` and register CLI alia
 curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh | bash
 ```
 
-This adds:
-- `aiwg-deploy-agents` — copy shared agents into `.claude/agents` (current dir)
-- `aiwg-new` — scaffold a new project with intake templates
-  - Both commands auto-update the installed framework before running.
-  - aiwg-new deploys agents automatically and initializes git (branch `main`). Use `--no-agents` to skip.
+This adds a unified CLI:
+- `aiwg -deploy-agents` — copy shared agents into `.claude/agents` (current dir)
+- `aiwg -new` — scaffold a new project with intake templates
+  - The CLI auto-updates the installed framework before running.
+  - `aiwg -new` deploys agents automatically and initializes git (branch `main`). Use `--no-agents` to skip.
 
 To customize the install (repo, branch, prefix):
 

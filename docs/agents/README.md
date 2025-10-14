@@ -23,9 +23,10 @@ Use the deploy script to copy shared agents into a project's `.claude/agents` di
 - Node.js ≥ 18
 - Access to this repository on disk
 
-### Command
+### Commands
 ```
-node tools/agents/deploy-agents.mjs [--source <path>] [--target <path>] [--dry-run] [--force]
+aiwg -deploy-agents [--source <path>] [--target <path>] [--dry-run] [--force]
+aiwg -new [--no-agents]
 ```
 
 ### Behavior
@@ -45,21 +46,19 @@ node tools/agents/deploy-agents.mjs [--source <path>] [--target <path>] [--dry-r
 ### Examples
 - Deploy into current directory's `.claude/agents`:
   ```bash
-  node tools/agents/deploy-agents.mjs
+  aiwg -deploy-agents
   ```
 - Deploy from a separate clone into another project:
   ```bash
-  node tools/agents/deploy-agents.mjs \
-    --source /path/to/ai-writing-guide \
-    --target /path/to/another-project
+  aiwg -deploy-agents --source /path/to/ai-writing-guide --target /path/to/another-project
   ```
 - Preview without writing:
   ```bash
-  node tools/agents/deploy-agents.mjs --dry-run
+  aiwg -deploy-agents --dry-run
   ```
 - Force overwrite on conflicts:
   ```bash
-  node tools/agents/deploy-agents.mjs --force
+  aiwg -deploy-agents --force
   ```
 
 ### Alias (optional)

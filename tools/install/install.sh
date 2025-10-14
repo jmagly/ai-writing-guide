@@ -179,8 +179,14 @@ fi
 {
   echo "$ALIAS_BANNER"
   echo "aiwg_update() { command -v git >/dev/null 2>&1 && git -C \"$PREFIX\" fetch --all -q && git -C \"$PREFIX\" pull --ff-only -q || true; }"
-  echo "aiwg-deploy-agents() { aiwg_update; $DEPLOY_CMD \"\$@\"; }"
-  echo "aiwg-new() { aiwg_update; $NEW_CMD \"\$@\"; }"
+  echo "aiwg() { aiwg_update; local sub=\"\$1\"; shift || true; case \"\$sub\" in \\
+    -new|--new) node \"$PREFIX/tools/install/new-project.mjs\" \"\$@\" ;; \\
+    -deploy-agents|--deploy-agents) node \"$PREFIX/tools/agents/deploy-agents.mjs\" \"\$@\" ;; \\
+    -h|--help|-help|help|\"\") echo 'Usage: aiwg -new [--no-agents] | -deploy-agents [--force|--dry-run|--source <path>|--target <path>]' ;; \\
+    *) echo 'Unknown command. Use: aiwg -new | -deploy-agents' ;; \\
+  esac }"
+  echo "aiwg-deploy-agents() { aiwg -deploy-agents \"\$@\"; }"
+  echo "aiwg-new() { aiwg -new \"\$@\"; }"
   echo "$ALIAS_FOOTER"
 } >> "$ALIAS_FILE"
 

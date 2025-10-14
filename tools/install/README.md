@@ -22,16 +22,18 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guid
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh)" -- --auto-install-node
 ```
 
-Aliases installed:
-- `aiwg-deploy-agents` → copy shared agents into `.claude/agents` of current dir
-- `aiwg-new` → scaffold a new project with intake templates (and optional agents)
-  - Both commands auto-update the installed framework (git pull) before executing.
+Aliases installed (unified CLI):
+- `aiwg -deploy-agents` → copy shared agents into `.claude/agents` of current dir
+- `aiwg -new` → scaffold a new project with intake templates (agents auto-deployed by default)
+  - The CLI auto-updates the installed framework (git pull) before executing.
 
 Scaffolding:
 ```bash
 # In a new/empty project directory
-aiwg-new               # create docs/sdlc/intake/*.md and a README
-# agents are deployed automatically by aiwg-new (use --no-agents to skip)
+aiwg -new              # create docs/sdlc/intake/*.md and a README; deploy agents; init git
+# use --no-agents to skip deployment
+# to copy agents later or in an existing project:
+aiwg -deploy-agents    # copy shared agents into .claude/agents
 ```
 
 Node.js requirement:
