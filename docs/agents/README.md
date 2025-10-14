@@ -10,6 +10,7 @@ specialized by subfolder.
 
 ## Quick links
 - `docs/agents/sdlc/` — SDLC agent suite
+- `docs/agents/openai-compat.md` — OpenAI/Codex model mapping and paths
 
 ## Maintenance
 - Keep agent responsibilities and deliverables current
@@ -38,8 +39,13 @@ aiwg -new [--no-agents]
   overwritten.
 
 ### Options
+- `--provider <claude|openai>`: Target provider (default: `claude`). For `openai`, agents are written to `.codex/agents`.
+- `--reasoning-model <name>`: Override reasoning model (default: `opus` for Claude, `gpt-5` for OpenAI).
+- `--coding-model <name>`: Override coding model (default: `sonnet` for Claude, `gpt-5-codex` for OpenAI).
+- `--efficiency-model <name>`: Override efficiency model (default: `sonnet` for Claude, `gpt-5-codex` for OpenAI).
+- `--as-agents-md` (OpenAI): Aggregate all agents into `.codex/AGENTS.md` instead of individual files.
 - `--source <path>`: Path to this repo (defaults to repo root relative to the script).
-- `--target <path>`: Project root that will receive `.claude/agents` (defaults to current directory).
+- `--target <path>`: Project root that will receive agent files (defaults to current directory).
 - `--dry-run`: Print planned actions without copying files.
 - `--force`: Overwrite existing files on conflict (disables the `-sdlc` suffix fallback).
 

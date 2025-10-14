@@ -72,6 +72,7 @@ This adds a unified CLI:
 - `aiwg -new` — scaffold a new project with intake templates
   - The CLI auto-updates the installed framework before running.
   - `aiwg -new` deploys agents automatically and initializes git (branch `main`). Use `--no-agents` to skip.
+  - Use `aiwg -deploy-agents --provider openai` to generate OpenAI/Codex-compatible agents into `.codex/agents`.
 
 To customize the install (repo, branch, prefix):
 
