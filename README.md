@@ -59,6 +59,27 @@ Use the shared agent pool to bootstrap projects quickly by copying agents into a
 Tip: add a shell alias for convenience:
 `alias deploy_agents='node /path/to/ai-writing-guide/tools/agents/deploy-agents.mjs'`
 
+## One-Liner Install
+
+Install the framework to `~/.local/share/ai-writing-guide` and register CLI aliases:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh | bash
+```
+
+This adds:
+- `aiwg-deploy-agents` — copy shared agents into `.claude/agents` (current dir)
+- `aiwg-new` — scaffold a new project with intake templates
+
+To customize the install (repo, branch, prefix):
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh)" -- \
+  --repo https://github.com/manitcor/ai-writing-guide.git \
+  --branch main \
+  --prefix $HOME/.local/share/ai-writing-guide
+```
+
 ## Key Principles
 
 1. **Accuracy First** - Never invent facts or embellish details
