@@ -1,0 +1,12 @@
+{
+  "name": "Intake Templates",
+  "path": "docs/sdlc/templates/intake",
+  "files": [
+    "README.md",
+    "option-matrix-template.md",
+    "project-intake-template.md",
+    "solution-profile-template.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

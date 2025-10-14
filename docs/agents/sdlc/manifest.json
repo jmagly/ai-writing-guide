@@ -5,6 +5,7 @@
     "README.md",
     "context-librarian.md",
     "decision-matrix-expert.md",
+    "intake-coordinator.md",
     "executive-orchestrator.md",
     "manifest.md",
     "privacy-officer.md",
@@ -16,4 +17,3 @@
   ],
   "ignore": ["manifest.json"]
 }
-

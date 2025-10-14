@@ -7,8 +7,8 @@
     "check-traceability.md",
     "manifest.md",
     "orchestrate-project.md",
-    "security-gate.md"
+    "security-gate.md",
+    "intake-start.md"
   ],
   "ignore": ["manifest.json"]
 }
-
