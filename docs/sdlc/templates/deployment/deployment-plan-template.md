@@ -1,20 +1,26 @@
 # Deployment Plan Template
 
 ## Purpose
+
 Describe how the solution will be deployed, verified, and supported in target environments during the Transition phase.
 
 ## Ownership & Collaboration
+
 - Document Owner: Deployment Manager
 - Contributor Roles: Integrator, Configuration Manager, Test Architect
 - Automation Inputs: Release candidate designation, environment matrix, rollout constraints
 - Automation Outputs: `deployment-plan.md` covering sections 1–12
 
+
 ## Completion Checklist
+
 - Deployment steps sequenced with owners and timing
 - Environment prerequisites, data migration, and rollback strategies defined
 - Verification activities and success metrics established
 
+
 ## Document Sections
+
 1. **Introduction**
    - Purpose, scope, release identifiers, and references.
 2. **Deployment Strategy**
@@ -40,7 +46,9 @@ Describe how the solution will be deployed, verified, and supported in target en
 12. **Approvals**
     - Capture sign-offs required before proceeding.
 
+
 ## Agent Notes
+
 - Use tables for steps, linking to scripts or playbooks stored in the repo or external automation.
 - Coordinate with Release Notes, Product Acceptance Plan, and Support Runbook for consistency.
 - Update the plan after each rehearsal or dry run to reflect lessons learned.

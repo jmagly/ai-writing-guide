@@ -3,6 +3,7 @@
 Artifacts for business context and process modeling.
 
 Files:
+
 - business-architecture-doc-template.md
 - business-glossary-template.md
 - business-rules-template.md

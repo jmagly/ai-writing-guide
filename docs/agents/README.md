@@ -1,28 +1,37 @@
 # Agents
 
 ## Purpose
+
 This directory holds shared agent playbooks used across projects. Agents are universal and may be
 specialized by subfolder.
 
 ## Layout
+
 - `./` — General-purpose agents (architecture, PM, devops, testing, etc.)
 - `sdlc/` — SDLC-focused agents (orchestrator, governance, security, reliability)
 
+
 ## Quick links
+
 - `docs/agents/sdlc/` — SDLC agent suite
 - `docs/agents/openai-compat.md` — OpenAI/Codex model mapping and paths
 
+
 ## Maintenance
+
 - Keep agent responsibilities and deliverables current
 - Prefer embedded templates for agents that generate standard artifacts (e.g., RACI Expert)
+
 
 ## Agent Deployment CLI
 
 Use the deploy script to copy shared agents into a project's `.claude/agents` directory.
 
 ### Prerequisites
+
 - Node.js ≥ 18
 - Access to this repository on disk
+
 
 ### Commands
 
@@ -33,6 +42,7 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
 ```
 
 ### Behavior
+
 - Copies all Markdown agents from `docs/agents/` and `docs/agents/sdlc/` into the target
   project's `.claude/agents` directory (flat structure).
 - Creates `.claude/agents` if it does not exist.
@@ -40,7 +50,9 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
   with a `-sdlc` suffix (e.g., `project-manager-sdlc.md`). With `--force`, existing files are
   overwritten.
 
+
 ### Options
+
 - `--provider <claude|openai>`: Target provider (default: `claude`). For `openai`, agents are written to `.codex/agents`.
 - `--reasoning-model <name>`: Override reasoning model (default: `opus` for Claude, `gpt-5` for OpenAI).
 - `--coding-model <name>`: Override coding model (default: `sonnet` for Claude, `gpt-5-codex` for OpenAI).
@@ -51,7 +63,9 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
 - `--dry-run`: Print planned actions without copying files.
 - `--force`: Overwrite existing files on conflict (disables the `-sdlc` suffix fallback).
 
+
 ### Examples
+
 - Deploy into current directory's `.claude/agents`:
   ```bash
   aiwg -deploy-agents
@@ -69,7 +83,9 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
   aiwg -deploy-agents --force
   ```
 
+
 ### Alias (optional)
+
 Add a shell alias for convenience (adjust path as needed):
 
 ```bash
@@ -77,6 +93,7 @@ alias deploy_agents='node /path/to/ai-writing-guide/tools/agents/deploy-agents.m
 ```
 
 ### CI usage (optional)
+
 In a GitHub Action step (if you want to vendor agents into a build artifact):
 
 ```yaml
@@ -85,6 +102,7 @@ In a GitHub Action step (if you want to vendor agents into a build artifact):
 ```
 
 ### Notes
+
 - Commands auto-update the installed framework before running.
 - Current behavior is intentionally simple: flat copy of all agents. Future flags may support
   selective deployment by role, category, or glob.

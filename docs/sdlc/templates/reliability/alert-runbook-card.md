@@ -1,6 +1,7 @@
 # Alert Runbook Card
 
 ## Metadata
+
 - ID: ALERT-<id>
 - Owner: Reliability Engineer (docs/agents/sdlc/reliability-engineer.md)
 - Contributors: Support Lead (docs/agents/support-lead.md)
@@ -11,20 +12,30 @@
 - Related: SLI-<id>, RUN-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/reliability/sli-card.md
 - docs/sdlc/templates/deployment/runbook-entry-card.md
 
+
 ## Alert
+
 - Name and severity
 
+
 ## Trigger
+
 - Condition and SLI/metric linkage
 
+
 ## Actions
+
 1. Triage steps
 2. Remediation steps
 3. Escalation
 
+
 ## Verification
+
 - Success indicators and rollback

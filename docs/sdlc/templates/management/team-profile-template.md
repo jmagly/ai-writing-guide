@@ -1,6 +1,7 @@
 # Team Profile
 
 ## Purpose
+
 Define team members, roles, and contact details for pre-filling card metadata (owners, contributors,
 reviewers) and ensuring clear handoffs.
 
@@ -24,6 +25,7 @@ reviewers) and ensuring clear handoffs.
 | Project Manager | <name> | <email> | <TZ> | |
 
 ## YAML Mapping (Optional)
+
 ```yaml
 roles:
   product_strategist: "<name>"

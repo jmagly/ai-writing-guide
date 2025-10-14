@@ -5,18 +5,22 @@ A comprehensive framework for improving AI-generated content by avoiding common 
 ## Purpose
 
 This repository provides guidelines, validation tools, and context documents to help AI agents produce natural, professional content that:
+
 - Avoids detection as AI-generated
 - Maintains technical accuracy and depth
 - Sounds authentically human
 - Follows consistent quality standards across projects
 
+
 ## Quick Start
 
 For AI agents, include these files in your context:
+
 1. `CLAUDE.md` - Agent-specific instructions
 2. `core/philosophy.md` - Core writing principles
 3. `validation/banned-patterns.md` - Patterns to avoid
 4. `context/quick-reference.md` - Quick validation checklist
+
 
 ## Structure
 
@@ -27,15 +31,19 @@ For AI agents, include these files in your context:
 - **`patterns/`** - Common AI patterns to avoid
 - **`tools/`** - Validation scripts and utilities
 
+
 ## Usage
 
 ### For Developers
+
 Include relevant documents from this repository in your AI agent's context to improve output quality.
 
 ### For AI Agents
+
 Follow the guidelines in `CLAUDE.md` and reference the validation rules before generating content.
 
 ### For Content Reviewers
+
 Use the validation checklists and examples to assess AI-generated content quality.
 
 ## Agent Deployment
@@ -56,6 +64,7 @@ Use the shared agent pool to bootstrap projects quickly by copying agents into a
   - Creates `.claude/agents` if it does not exist.
   - Filename conflicts are resolved by suffixing SDLC copies unless `--force`.
 
+
 Tip: add a shell alias for convenience:
 `alias deploy_agents='node /path/to/ai-writing-guide/tools/agents/deploy-agents.mjs'`
 
@@ -68,11 +77,13 @@ curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tool
 ```
 
 This adds a unified CLI:
+
 - `aiwg -deploy-agents` — copy shared agents into `.claude/agents` (current dir)
 - `aiwg -new` — scaffold a new project with intake templates
   - The CLI auto-updates the installed framework before running.
   - `aiwg -new` deploys agents automatically and initializes git (branch `main`). Use `--no-agents` to skip.
   - Use `aiwg -deploy-agents --provider openai` to generate OpenAI/Codex-compatible agents into `.codex/agents`.
+
 
 To customize the install (repo, branch, prefix):
 
@@ -84,9 +95,11 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guid
 ```
 
 Node.js requirement:
+
 - Node >= 18.20.8 (Latest LTS: Hydrogen).
 - Use `--auto-install-node` to let the installer attempt setup via your package manager (NodeSource/Homebrew).
 - If installation cannot be automated, the installer prints NVM/NodeSource instructions.
+
 
 ## CLI Quick Reference
 
@@ -97,8 +110,10 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
 ```
 
 Tips:
+
 - Use the Team Profile example at `docs/sdlc/templates/management/team-profile-example.yaml` as a starting point.
 - For OpenAI/Codex projects, `aiwg -new --provider openai` deploys `.codex/AGENTS.md` by default.
+
 
 ## Key Principles
 
@@ -108,13 +123,16 @@ Tips:
 4. **Specific Details** - Use exact metrics and real examples
 5. **Authentic Voice** - Sound like a human expert, not a content generator
 
+
 ## Contributing
 
 When adding new patterns or guidelines:
+
 1. Document specific examples
 2. Provide both good and bad alternatives
 3. Explain why certain patterns are problematic
 4. Test with actual AI outputs
+
 
 ## License
 

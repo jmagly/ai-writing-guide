@@ -1,6 +1,7 @@
 # Rollout Checklist Card
 
 ## Metadata
+
 - ID: DEP-ROL-<id>
 - Owner: Deployment Manager (docs/agents/deployment-manager.md)
 - Contributors: DevOps Engineer (docs/agents/devops-engineer.md)
@@ -11,21 +12,31 @@
 - Related: REL-<id>, RUN-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/deployment/deployment-plan-template.md
 - docs/sdlc/templates/deployment/support-runbook-template.md
 
+
 ## Pre-Checks
+
 - [ ] Migration tested
 - [ ] Backups verified
 - [ ] Feature flags configured
 
+
 ## Rollout Steps
+
 1. <action>
 2. <action>
 
+
 ## Validation
+
 - Smoke checks, metrics, and logs
 
+
 ## Rollback
+
 - Procedure and triggers

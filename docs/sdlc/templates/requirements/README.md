@@ -3,6 +3,7 @@
 Artifacts for requirements and stakeholder alignment.
 
 Files:
+
 - context-free-interview-template.md
 - glossary-template.md
 - requirements-management-plan-template.md

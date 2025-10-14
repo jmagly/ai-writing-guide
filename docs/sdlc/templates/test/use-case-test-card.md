@@ -1,6 +1,7 @@
 # Use-Case Test Card
 
 ## Metadata
+
 - ID: TEST-UC-<id>
 - Owner: Test Engineer (docs/agents/test-engineer.md)
 - Contributors: Implementer (docs/agents/software-implementer.md)
@@ -11,17 +12,25 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/requirements/use-case-acceptance-template.md
 
+
 ## Identifier
+
 - UC: UC-<num>
 
+
 ## Scenarios
+
 List of acceptance tests linked to the acceptance card.
 
 ## Data and Setup
+
 Test data, fixtures, and environment notes.
 
 ## Expected Results
+
 Clear success/failure indicators.

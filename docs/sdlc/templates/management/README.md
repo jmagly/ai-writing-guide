@@ -3,6 +3,7 @@
 Artifacts for planning, assessments, risk, quality, and traceability.
 
 Files:
+
 - business-case-informal-template.md
 - business-case-template.md
 - development-organization-assessment-template.md

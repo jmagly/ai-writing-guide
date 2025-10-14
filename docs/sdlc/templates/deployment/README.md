@@ -3,6 +3,7 @@
 Artifacts for deployment planning and release collateral.
 
 Files:
+
 - bill-of-materials-template.md
 - deployment-plan-template.md
 - product-acceptance-plan-template.md

@@ -1,6 +1,7 @@
 # RACI Matrix
 
 ## Scope
+
 Define tasks and roles. Use Responsible (R), Accountable (A), Consulted (C), Informed (I).
 
 | Task | Exec Orchestrator | Security Architect | Privacy Officer | Reliability Engineer | PM | Dev | QA |
@@ -13,6 +14,7 @@ Define tasks and roles. Use Responsible (R), Accountable (A), Consulted (C), Inf
 | Release go/no-go | A | C | C | C | R | C | C |
 
 Notes:
+
 - Exactly one Accountable per task
 - Keep Responsible roles minimal
 

@@ -1,10 +1,12 @@
 # OpenAI/Codex Agent Compatibility
 
 ## Overview
+
 The agent Markdown format in this repository is compatible with OpenAI/Codex-style agents with
 minimal changes. The primary difference is the `model` value in the YAML frontmatter.
 
 ## Models
+
 - Defaults (Claude):
   - reasoning: `opus`
   - coding: `sonnet`
@@ -13,6 +15,7 @@ minimal changes. The primary difference is the `model` value in the YAML frontma
   - reasoning: `gpt-5`
   - coding: `gpt-5-codex`
   - efficiency: `gpt-5-codex`
+
 
 Use the CLI to deploy agents for your target provider while overriding model names if needed:
 
@@ -34,8 +37,10 @@ aiwg -deploy-agents --provider openai \
 ```
 
 ## Paths
+
 - Claude: `.claude/agents/*.md`
 - OpenAI/Codex: `.codex/agents/*.md`
+
 
 For more details on Codex sub-agents and mechanics, see:
 <https://codexlog.io/mechanics/agents/sub-agents.html>

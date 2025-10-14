@@ -1,20 +1,26 @@
 # Iteration Plan Template
 
 ## Purpose
+
 Define objectives, scope, tasks, and evaluation criteria for a single iteration within the delivery lifecycle.
 
 ## Ownership & Collaboration
+
 - Document Owner: Project Manager
 - Contributor Roles: System Analyst, Implementer, Test Architect
 - Automation Inputs: Prioritized backlog, team capacity, dependency map
 - Automation Outputs: `iteration-<id>-plan.md` detailing scope and tasks
 
+
 ## Completion Checklist
+
 - Iteration objectives align with phase goals and risk priorities
 - Task breakdown supports parallel agent work with clear owners
 - Evaluation criteria and planned measurements documented
 
+
 ## Document Sections
+
 1. **Iteration Overview**
    - Iteration ID, dates, phase, and summary objectives.
 2. **Goals and Evaluation Criteria**
@@ -38,7 +44,9 @@ Define objectives, scope, tasks, and evaluation criteria for a single iteration 
 11. **Review and Retrospective Plan**
     - Schedule iteration review, demo, and retrospective sessions.
 
+
 ## Agent Notes
+
 - Keep task estimates time-boxed to enable PLAN → ACT loops (e.g., single-file or small-module scope).
 - Update plan mid-iteration only when approved via change control; log decisions in `docs/sdlc/artifacts/`.
 - Sync with status assessment to report progress and impediments.

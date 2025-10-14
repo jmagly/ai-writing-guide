@@ -1,6 +1,7 @@
 # Threat Scenario Card
 
 ## Metadata
+
 - ID: SEC-THR-<id>
 - Owner: Security Architect (docs/agents/sdlc/security-architect.md)
 - Contributors: Test Engineer (docs/agents/test-engineer.md)
@@ -11,18 +12,27 @@
 - Related: REQ-<id>, DES-<id>, CTRL-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/security/security-test-case-card.md
 - docs/sdlc/templates/security/control-implementation-card.md
 
+
 ## Identifier
+
 - Scenario: <name>
 
+
 ## Description
+
 Actor, asset, entry point, and objective.
 
 ## STRIDE Mapping
+
 - S/T/R/I/D/E as applicable
 
+
 ## Mitigations
+
 - Controls and residual risk

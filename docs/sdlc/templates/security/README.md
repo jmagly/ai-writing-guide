@@ -3,6 +3,7 @@
 Artifacts for security design, verification, and privacy.
 
 Files:
+
 - threat-model-template.md — scope, STRIDE, mitigations
 - security-requirements-template.md — controls and verification
 - secrets-management-policy-template.md — storage, rotation, auditing

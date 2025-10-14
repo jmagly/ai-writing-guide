@@ -7,6 +7,7 @@
 - [ ] Am I clear on what actually happened vs. what sounds good?
 - [ ] Have I identified what went wrong or was difficult?
 
+
 ## During Writing Validation
 
 ### Phrase Check
@@ -19,6 +20,7 @@
 - [ ] Searched for "transform" → Found better verb
 - [ ] Searched for "leverage" → Changed to "use"
 
+
 ### Structure Check
 
 - [ ] Paragraph lengths vary (1-5 sentences)
@@ -26,6 +28,7 @@
 - [ ] No formulaic intro → body → conclusion pattern
 - [ ] Mixed sentence lengths
 - [ ] No summary paragraph at end
+
 
 ### Voice Check
 
@@ -35,6 +38,7 @@
 - [ ] Has context for decisions
 - [ ] Sounds conversational, not formal
 
+
 ### Specificity Check
 
 - [ ] Vague improvements → Exact metrics
@@ -42,9 +46,11 @@
 - [ ] Abstract benefits → Concrete outcomes
 - [ ] Broad statements → Narrow facts
 
+
 ## Post-Writing Validation
 
 ### The Read-Aloud Test
+
 Read the content aloud and check:
 
 - [ ] Does it sound like a real person?
@@ -52,7 +58,9 @@ Read the content aloud and check:
 - [ ] Any parts sound like Wikipedia?
 - [ ] Any parts sound like marketing?
 
+
 ### The Tired Developer Test
+
 Could you imagine:
 
 - [ ] A developer writing this at 5pm?
@@ -60,7 +68,9 @@ Could you imagine:
 - [ ] This being said in a stand-up meeting?
 - [ ] This appearing in a Slack message?
 
+
 ### The AI Detection Test
+
 Count occurrences:
 
 - [ ] Em-dashes: Maximum 2 per document
@@ -68,6 +78,7 @@ Count occurrences:
 - [ ] "Solution" uses: Try for zero
 - [ ] Formal transitions: Should be zero
 - [ ] Perfect outcomes: Should have some problems
+
 
 ### The Authenticity Score
 
@@ -84,10 +95,13 @@ Give yourself 1 point for each:
 - [ ] Team dynamic referenced
 - [ ] Learning or mistake admitted
 
+
 **Score interpretation:**
+
 - 0-3: Too polished, likely AI-detected
 - 4-6: Getting better, needs more authenticity
 - 7-10: Sounds human and experienced
+
 
 ## Quick Fixes for Common Issues
 
@@ -99,6 +113,7 @@ Give yourself 1 point for each:
 4. Add a contraction
 5. Include a fragment
 
+
 ### If it sounds too positive
 
 1. Add what went wrong
@@ -106,6 +121,7 @@ Give yourself 1 point for each:
 3. Include the constraint
 4. State what you'd do differently
 5. Admit the hack or shortcut
+
 
 ### If it sounds too vague
 
@@ -115,6 +131,7 @@ Give yourself 1 point for each:
 4. State the metric
 5. Include the version
 
+
 ### If it sounds too helpful
 
 1. Remove "I hope this helps"
@@ -122,6 +139,7 @@ Give yourself 1 point for each:
 3. Just state the fact
 4. Skip the context setting
 5. Don't summarize
+
 
 ## Final Sign-Off Questions
 
@@ -133,15 +151,18 @@ Before submitting, answer:
 4. **Are my numbers specific?** Y/N
 5. **Did I avoid all banned phrases?** Y/N
 
+
 If any answer is No, revise.
 
 ## Remember
 
 Perfect content is suspicious. Real content has:
+
 - Rough edges
 - Strong opinions
 - Specific details
 - Actual problems
 - Human voice
+
 
 Ship it when it sounds real, not when it sounds perfect.

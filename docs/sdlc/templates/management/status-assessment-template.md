@@ -1,20 +1,26 @@
 # Status Assessment Template
 
 ## Purpose
+
 Provide a concise snapshot of project health at regular intervals, highlighting progress, risks, and required decisions.
 
 ## Ownership & Collaboration
+
 - Document Owner: Project Manager
 - Contributor Roles: System Analyst, Test Architect
 - Automation Inputs: Progress metrics, risk updates, change log
 - Automation Outputs: `status-assessment.md` covering sections 1–10
 
+
 ## Completion Checklist
+
 - Progress against plan quantified and contextualized
 - Top risks, issues, and change requests summarized with owners
 - Decision requests clearly articulated for stakeholders
 
+
 ## Document Sections
+
 1. **Reporting Period**
    - Dates covered, iteration or milestone name, report author.
 2. **Overall Status**
@@ -36,7 +42,9 @@ Provide a concise snapshot of project health at regular intervals, highlighting 
 10. **Notes and Attachments**
      - Link to supporting artifacts, dashboards, or detailed reports.
 
+
 ## Agent Notes
+
 - Keep report concise—use tables and bullet lists for quick consumption.
 - Maintain consistent risk/issue IDs with the central logs.
 - Highlight variances early to enable timely corrective actions.

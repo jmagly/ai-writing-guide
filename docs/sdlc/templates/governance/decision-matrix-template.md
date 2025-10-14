@@ -1,6 +1,7 @@
 # Decision Matrix
 
 ## Context
+
 Describe the decision, constraints, and desired outcome. Include actors and deadline.
 
 ## Options
@@ -29,6 +30,7 @@ Describe the decision, constraints, and desired outcome. Include actors and dead
 | C |  |  |  |  |  |
 
 ## Decision
+
 - Selected option: <A/B/C>
 - Rationale: concise explanation
 - Risks: list known trade-offs

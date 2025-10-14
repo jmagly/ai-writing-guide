@@ -1,9 +1,11 @@
 # Concept → Inception Flow
 
 ## Objective
+
 Validate the problem, scope, risks, and success metrics before implementation.
 
 ## Steps
+
 1. Idea intake (vision brief, stakeholders, constraints)
 2. Business value and persona alignment (use-case briefs)
 3. Top risks identified (spikes/POCs planned)
@@ -12,7 +14,9 @@ Validate the problem, scope, risks, and success metrics before implementation.
 6. Decision checkpoints (ADR for critical choices)
 7. Funding and scope guardrails
 
+
 ## Exit Criteria
+
 - Vision brief approved; success metrics defined
 - 1–3 risks retired or planned with owners/dates
 - Initial architecture and data classifications recorded

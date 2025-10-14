@@ -3,6 +3,7 @@
 Artifacts for test strategy and plans.
 
 Files:
+
 - iteration-test-plan-template.md
 - master-test-plan-template.md
 - test-evaluation-summary-template.md

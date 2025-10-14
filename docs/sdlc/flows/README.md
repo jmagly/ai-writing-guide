@@ -4,6 +4,7 @@ Concise, step-by-step flows that operators can follow to coordinate discovery an
 parallel with clear handoffs and gates.
 
 Files:
+
 - concept-to-inception-template.md — conceptualize and de-risk before coding
 - discovery-track-template.md — dual-track discovery workflows
 - delivery-track-template.md — iterative delivery workflows

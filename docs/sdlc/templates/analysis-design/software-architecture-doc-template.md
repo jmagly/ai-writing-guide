@@ -1,20 +1,26 @@
 # Software Architecture Document Template
 
 ## Purpose
+
 Describe the architectural baseline, including views, decisions, and rationale that guide implementation and evolution.
 
 ## Ownership & Collaboration
+
 - Document Owner: Software Architect
 - Contributor Roles: System Analyst, Designer, Test Architect
 - Automation Inputs: Approved requirements set, non-functional drivers, platform constraints
 - Automation Outputs: `software-architecture.md` including views and decisions
 
+
 ## Completion Checklist
+
 - Architectural drivers (requirements, constraints, risks) captured
 - Views cover logical, process, deployment, and data perspectives as needed
 - Architectural decisions documented with rationale and status
 
+
 ## Document Sections
+
 1. **Introduction**
    - Purpose, scope, and intended audience.
    - Summary of architectural drivers and constraints.
@@ -47,7 +53,9 @@ Describe the architectural baseline, including views, decisions, and rationale t
 12. **Appendices**
     - Include diagrams, ADR references, glossary terms.
 
+
 ## Agent Notes
+
 - Keep diagrams consistent with repository naming conventions; store source files alongside exports.
 - Synchronize with Supplementary Specification to ensure quality attributes stay aligned.
 - Update runtime scenarios when new critical use cases are introduced.

@@ -1,8 +1,10 @@
 # Threat Model (Sample)
 
 ## Scope
+
 - Component: Core API
 - Data: PII (email), session tokens
+
 
 ## STRIDE (excerpt)
 
@@ -11,5 +13,6 @@
 | API GW | MFA | WAF rules | signed logs | TLS | rate limits | RBAC |
 
 ## Mitigations
+
 - TLS 1.2+, HSTS
 - JWT with short TTL, refresh tokens

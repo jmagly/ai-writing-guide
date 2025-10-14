@@ -1,6 +1,7 @@
 # Chaos Experiment Card
 
 ## Metadata
+
 - ID: CHAOS-<id>
 - Owner: Reliability Engineer (docs/agents/sdlc/reliability-engineer.md)
 - Contributors: DevOps Engineer (docs/agents/devops-engineer.md)
@@ -11,17 +12,26 @@
 - Related: SLI-<id>, RUN-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/reliability/chaos-experiment-plan-template.md
 
+
 ## Hypothesis
+
 Expected behavior under specific failure.
 
 ## Failure Injection
+
 - Type and scope
 
+
 ## Observations
+
 - Metrics, logs, and traces
 
+
 ## Remediation
+
 - Actions and backlog items

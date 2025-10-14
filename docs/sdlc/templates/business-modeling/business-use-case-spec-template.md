@@ -1,21 +1,27 @@
 # Business Use-Case Specification Template
 
 ## Purpose
+
 Describe end-to-end business processes, actors, and value realization to guide system scope during
 Inception and Elaboration.
 
 ## Ownership & Collaboration
+
 - Document Owner: Business Process Analyst
 - Contributor Roles: System Analyst, Requirements Reviewer, Test Architect
 - Automation Inputs: Validated personas, charter outcomes, stakeholder interviews
 - Automation Outputs: `business-use-case-<id>.md` with fully described flows
 
+
 ## Completion Checklist
+
 - Primary and alternate flows documented with clear triggers and outcomes
 - Business rules and KPIs linked to each activity
 - Preconditions and postconditions validated with stakeholders
 
+
 ## Document Sections
+
 1. **Use-Case Identifier and Name**
    - Provide a unique ID (`BM-UC-###`) and concise name.
 2. **Business Goal**
@@ -38,7 +44,9 @@ Inception and Elaboration.
 10. **Open Issues and Assumptions**
     - Log pending questions, risks, or required policy clarifications.
 
+
 ## Agent Notes
+
 - Use active voice and keep steps action-oriented (`Actor does X`).
 - Cross-reference relevant supplementary documents to maintain traceability.
 - Coordinate updates with the System Analyst to ensure alignment with system use cases.

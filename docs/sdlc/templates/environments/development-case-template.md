@@ -1,20 +1,26 @@
 # Development Case Template
 
 ## Purpose
+
 Tailor the delivery process to the specific project, defining which artifacts, roles, and workflows are in scope for each phase and iteration.
 
 ## Ownership & Collaboration
+
 - Document Owner: Environment Engineer
 - Contributor Roles: Project Manager, System Analyst
 - Automation Inputs: Process framework, lifecycle tailoring decisions
 - Automation Outputs: `development-case.md` documenting artifact responsibilities
 
+
 ## Completion Checklist
+
 - Lifecycle tailoring decisions documented with rationale
 - Artifact responsibilities and production schedule defined
 - Review and governance checkpoints identified
 
+
 ## Document Sections
+
 1. **Project Overview**
    - Summarize project context, objectives, and constraints influencing tailoring.
 2. **Process Tailoring Summary**
@@ -23,6 +29,7 @@ Tailor the delivery process to the specific project, defining which artifacts, r
    - Outline phase structure, number of iterations, and high-level objectives.
 4. **Artifact Responsibility Matrix**
    - Provide table mapping artifacts to responsible roles and phase/iteration produced.
+
 
 | Artifact | Responsible Role | Phase/Iteration | Notes |
 | --- | --- | --- | --- |
@@ -41,7 +48,9 @@ Tailor the delivery process to the specific project, defining which artifacts, r
 10. **Appendices**
     - Include detailed schedules, checklists, or decision logs.
 
+
 ## Agent Notes
+
 - Keep development case current; review at phase transitions.
 - Coordinate with Software Development Plan and Configuration Management Plan.
 - Store tailoring decisions to help new agents onboard quickly.

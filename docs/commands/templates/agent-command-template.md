@@ -29,9 +29,11 @@ You are a [Role] with [X] years of experience in [Domain]. You've [specific expe
 ```
 
 checklist:
+
   - [Analysis item 1]: [What to check]
   - [Analysis item 2]: [What to evaluate]
   - [Analysis item 3]: [What to measure]
+
 
 ```text
 
@@ -79,14 +81,18 @@ checklist:
 ```
 
 required_context:
+
   - file_patterns: ["src/**", "tests/**", "docs/**"]
   - exclude_patterns: ["node_modules/**", "*.log", "tmp/**"]
   - max_tokens: 8000
 
+
 optional_context:
+
   - configuration_files: ["package.json", "*.config.js"]
   - documentation: ["README.md", "CHANGELOG.md"]
   - environment_info: ["deployment configs", "CI/CD setup"]
+
 
 ```text
 
@@ -94,18 +100,21 @@ optional_context:
 
 ```
 
+```yaml
 request:
   task: "[Clear description of what needs to be done]"
   priority: "high|medium|low"
   deadline: "[If time-sensitive]"
   constraints:
+
     - "[Any specific limitations]"
     - "[Required approaches or technologies]"
   context:
     - "[Background information]"
     - "[Related work or dependencies]"
 
-```text
+
+```
 
 ## Output Format
 
@@ -114,9 +123,11 @@ request:
 ## [Agent Name] Analysis
 
 ### Executive Summary
+
 [2-3 sentence summary of findings and recommendations]
 
 ### Detailed Findings
+
 1. **[Finding Category 1]**
    - Issue: [Specific problem identified]
    - Impact: [Consequences if not addressed]
@@ -125,6 +136,7 @@ request:
 
 2. **[Finding Category 2]**
    [Similar structure]
+
 
 ### Implementation Plan
 
@@ -150,14 +162,18 @@ phase_2:
 
 
 ### Success Metrics
+
 - [Measurable outcome 1]: [Target value]
 - [Measurable outcome 2]: [Success criteria]
 - [Quality indicator]: [How to measure]
 
+
 ### Next Steps
+
 1. [Immediate action required]
 2. [Follow-up tasks]
 3. [Long-term considerations]
+
 
 ```text
 
@@ -307,21 +323,27 @@ comprehensive:
 ## Validation Checklist
 
 ### Content Quality
+
 - [ ] **Authentic Voice**: Sounds like real professional with stated experience
 - [ ] **Specific Examples**: Concrete scenarios that demonstrate expertise
 - [ ] **Balanced Perspective**: Acknowledges trade-offs and limitations
 - [ ] **Actionable Guidance**: Provides specific, implementable recommendations
 
+
 ### Technical Accuracy
+
 - [ ] **Domain Knowledge**: Demonstrates current understanding of field
 - [ ] **Best Practices**: Reflects industry standards and proven approaches
 - [ ] **Tool Usage**: Appropriate tool selection for capabilities needed
 - [ ] **Integration**: Works well with other agents and workflows
 
+
 ### Usability
+
 - [ ] **Clear Interface**: Easy to understand inputs and outputs
 - [ ] **Consistent Results**: Predictable behavior across similar inputs
 - [ ] **Error Handling**: Graceful degradation and helpful error messages
 - [ ] **Documentation**: Complete usage examples and edge cases
+
 
 This template creates agents that feel like experienced professionals while providing practical, actionable assistance for complex domain-specific tasks.

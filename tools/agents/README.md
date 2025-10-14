@@ -23,6 +23,7 @@ node tools/agents/deploy-agents.mjs --force
 ```
 
 ### Behavior
+
 - Copies Markdown files from `docs/agents/` and `docs/agents/sdlc/` into `.claude/agents` (flat).
 - On filename conflicts, SDLC files get a `-sdlc` suffix unless `--force` is used.
 - Creates `.claude/agents` if it does not exist.

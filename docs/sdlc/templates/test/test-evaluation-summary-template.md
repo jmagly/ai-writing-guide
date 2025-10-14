@@ -3,20 +3,26 @@
 Adapted from the original RUP template: <https://files.defcon.no/RUP/webtmpl/templates/test/rup_tsteval.htm>
 
 ## Purpose
+
 Summarize testing results at the end of an iteration, release, or major test cycle to inform go/no-go decisions.
 
 ## Ownership & Collaboration
+
 - Document Owner: Test Engineer
 - Contributor Roles: Test Architect, Project Manager
 - Automation Inputs: Executed test results, defect logs, coverage metrics
 - Automation Outputs: `test-evaluation-summary.md` with sections 1–9
 
+
 ## Completion Checklist
+
 - Test execution metrics captured with context
 - Defect summary mapped to severity and resolution status
 - Recommendations and outstanding risks clearly stated
 
+
 ## Document Sections
+
 1. **Overview**
    - Identify test cycle, dates, scope, and responsible teams.
 2. **Objectives**
@@ -37,7 +43,9 @@ Summarize testing results at the end of an iteration, release, or major test cyc
 9. **Appendices**
    - Link to detailed logs, dashboards, and defect reports.
 
+
 ## Agent Notes
+
 - Use concise tables or bullet lists for metrics to aid quick review.
 - Align severity nomenclature with the Defect Management process.
 - Provide narrative context for metrics to help stakeholders interpret results.

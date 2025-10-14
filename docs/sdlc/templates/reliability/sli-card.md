@@ -1,6 +1,7 @@
 # SLI Card
 
 ## Metadata
+
 - ID: SLI-<id>
 - Owner: Reliability Engineer (docs/agents/sdlc/reliability-engineer.md)
 - Contributors: DevOps Engineer (docs/agents/devops-engineer.md)
@@ -11,18 +12,28 @@
 - Related: ALERT-<id>, RUN-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/reliability/alert-runbook-card.md
 
+
 ## Metric
+
 - Name: <availability|latency|errors>
 - Source: <logs|metrics|traces>
 
+
 ## Definition
+
 - Query and window
 
+
 ## Target
+
 - Threshold and alerting
 
+
 ## Ownership
+
 - Dashboard link and on-call group

@@ -1,6 +1,7 @@
 # Risk Card
 
 ## Metadata
+
 - ID: RSK-<id>
 - Owner: Project Manager (docs/agents/project-manager.md)
 - Contributors: Security Architect (docs/agents/sdlc/security-architect.md)
@@ -11,18 +12,27 @@
 - Related: ADR-<id>, DEP-<id>
 - Links: <paths/urls>
 
+
 ## Identifier
+
 - Risk: RSK-<id>
 
+
 ## Description
+
 Short statement of the risk and impact.
 
 ## Likelihood/Impact
+
 - Likelihood: <L/M/H>
 - Impact: <L/M/H>
 
+
 ## Mitigation / Contingency
+
 - Actions and owners
 
+
 ## Status
+
 - Open/Closed/Accepted and rationale

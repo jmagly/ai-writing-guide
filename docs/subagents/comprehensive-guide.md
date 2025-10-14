@@ -17,40 +17,51 @@ Subagents are specialized Claude instances launched through the Task tool, each 
 3. **Context Isolation**: Agents maintain separate contexts, preventing interference
 4. **Resource Efficiency**: Use appropriate models (Haiku, Sonnet, Opus) based on task complexity
 
+
 ## Available Agent Types
 
 ### Built-in Agents
 
 #### general-purpose
+
 - **Use Case**: Complex research, multi-step tasks, comprehensive searches
 - **Tools**: Full access to all tools
 - **When to Use**: Open-ended tasks requiring exploration and iteration
 
+
 #### statusline-setup
+
 - **Use Case**: Configuring Claude Code status line settings
 - **Tools**: Read, Edit
 - **When to Use**: User preference configuration
 
+
 #### output-style-setup
+
 - **Use Case**: Creating custom output styles
 - **Tools**: Read, Write, Edit, Glob, Grep
 - **When to Use**: Formatting and styling configuration
+
 
 ## Best Practices
 
 ### 1. Task Delegation Strategy
 
 #### DO Delegate
+
 - Complex searches across large codebases
 - Multi-step research requiring iteration
 - Independent parallel tasks
 - Specialized domain expertise needs
 
+
 #### DON'T Delegate
+
 - Simple file reads (use Read tool directly)
 - Single class/function searches (use Glob)
 - Specific file edits (use Edit)
 - Tasks requiring real-time interaction
+
 
 ### 2. Prompt Engineering for Subagents
 
@@ -141,18 +152,22 @@ While agents can't communicate directly, you can chain their outputs:
 ### 2. Context Optimization
 
 Agents have isolated contexts, so:
+
 - Include all necessary information in the prompt
 - Specify exact file paths when known
 - Provide search patterns and keywords
 - Set clear boundaries for the task
 
+
 ### 3. Error Handling
 
 Always instruct agents to:
+
 - Report when blocked or unable to complete
 - Provide partial results if full completion impossible
 - Include diagnostic information for failures
 - Suggest alternative approaches
+
 
 ## Common Patterns
 
@@ -221,36 +236,48 @@ RETURN:
 ## Troubleshooting
 
 ### Agent Not Finding Information
+
 - Make prompt more specific with file paths
 - Provide better search keywords
 - Break into smaller, focused tasks
 
+
 ### Agent Taking Too Long
+
 - Reduce scope of task
 - Use more specific search patterns
 - Consider using multiple focused agents
 
+
 ### Agent Returning Incomplete Results
+
 - Ensure return requirements are explicit
 - Provide format examples
 - Set clear completion criteria
 
+
 ## Performance Optimization
 
 ### 1. Model Selection
+
 - **Haiku**: Simple searches, basic file operations
 - **Sonnet**: Code analysis, implementation, testing
 - **Opus**: Architecture decisions, complex reasoning
 
+
 ### 2. Task Sizing
+
 - Keep tasks under 10 minutes of work
 - Break large tasks into parallel subtasks
 - Be specific to avoid exploration overhead
 
+
 ### 3. Search Optimization
+
 - Provide specific file patterns
 - Include likely locations
 - Give example code snippets to search for
+
 
 ## Integration Examples
 
@@ -289,10 +316,12 @@ RETURN:
 ## Metrics and Monitoring
 
 Track agent effectiveness by monitoring:
+
 - Task completion rates
 - Average execution time
 - Prompt revision frequency
 - Output quality/usefulness
+
 
 ## Custom Commands and Automation
 
@@ -327,9 +356,11 @@ color: blue
 ```
 
 #### Command Locations
+
 - **Project Commands**: `.claude/commands/command-name.md`
 - **Personal Commands**: `~/.claude/commands/command-name.md`
 - **Agents**: `.claude/agents/agent-name.md`
+
 
 #### Example: Code Review Command
 
@@ -355,6 +386,7 @@ Provide specific, actionable feedback with code examples.
 ### Automation with Hooks
 
 #### Hook System Overview
+
 Claude Code supports hooks that trigger on specific events:
 
 - **UserPromptSubmit**: When user submits a prompt
@@ -364,7 +396,9 @@ Claude Code supports hooks that trigger on specific events:
 - **SubAgentStop**: When sub-agents complete
 - **SessionEnd**: When session terminates
 
+
 #### Hook Configuration
+
 Configure in `~/.claude/settings.json`:
 
 ```json
@@ -436,6 +470,7 @@ touch .claude/commands/my-command.md
 ### Ready-to-Use Command Examples
 
 See `docs/commands/examples/development-commands.md` for:
+
 - **Code Review**: Security and performance analysis
 - **Test Generator**: Comprehensive test suite creation
 - **Commit Helper**: Conventional commit messages
@@ -443,10 +478,12 @@ See `docs/commands/examples/development-commands.md` for:
 - **Docker Optimization**: Production-ready containers
 - **Project Setup**: Best-practice project initialization
 
+
 ### Command Templates
 
 - **Basic Command**: `docs/commands/templates/basic-command-template.md`
 - **Advanced Agent**: `docs/commands/templates/agent-command-template.md`
+
 
 ### Best Practices for Commands
 
@@ -456,15 +493,18 @@ See `docs/commands/examples/development-commands.md` for:
 4. **Security First**: Minimal required permissions
 5. **Documentation**: Include usage examples and edge cases
 
+
 ## Future Considerations
 
 As the subagent system evolves, expect:
+
 - More specialized agent types
 - Inter-agent communication capabilities
 - Persistent agent sessions
 - Custom agent definition support
 - Enhanced command automation
 - Improved hook system integration
+
 
 ## Quick Reference
 
@@ -481,10 +521,13 @@ Send single message with multiple Task tool calls
 ```
 
 ### Agent Best For
+
 - **general-purpose**: Unknown scope, exploration needed
 - **Specific tools**: When you know exactly what's needed
 
+
 ### Don't Use Agents For
+
 - Single file reads
 - Simple grep/searches
 - Direct file edits

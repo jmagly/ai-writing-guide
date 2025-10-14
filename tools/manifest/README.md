@@ -1,6 +1,7 @@
 # Manifest Linter
 
 ## Purpose
+
 Validate that each directory with a `manifest.json` lists every non-hidden file in that directory.
 Supports `--fix` to add missing entries automatically.
 
@@ -27,9 +28,11 @@ node tools/manifest/sync-manifests.mjs --target . --create --fix --write-md
 ```
 
 ## Notes
+
 - Only checks files in the directory (not subdirectories)
 - Hidden files are ignored by default
 - Add exceptions via `ignore`
+
 
 ## Scripts
 

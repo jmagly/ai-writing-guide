@@ -8,6 +8,7 @@
 4. **Does this sound like marketing?** → Rewrite
 5. **Would I say this to a colleague?** → This is the test
 
+
 ## The Core Formula
 
 Formula: Expert talking to peer + specific details + real trade-offs = authentic content
@@ -28,12 +29,15 @@ Formula: Expert talking to peer + specific details + real trade-offs = authentic
 ## Voice Calibration
 
 ### Too Formal (AI-like)
+
 > "Furthermore, the implementation leverages cutting-edge methodologies to deliver transformative results."
 
 ### Too Casual
+
 > "So like, we basically just hacked together some stuff and it worked lol"
 
 ### Just Right
+
 > "We used event sourcing for the audit trail. Overkill? Maybe. But compliance required immutable logs."
 
 ## Structure Checklist
@@ -44,32 +48,39 @@ Formula: Expert talking to peer + specific details + real trade-offs = authentic
 - [ ] Different paragraph openings
 - [ ] Mix of sentence lengths
 
+
 ## Natural Transitions
 
 Instead of formal conjunctions:
+
 - "The payment system..." (just name the topic)
 - "Back in 2020..." (time marker)
 - "Why TypeScript?" (question)
 - "Turns out..." (discovery)
 - "Problem was..." (direct statement)
 
+
 ## Authenticity Markers
 
 Add at least one per section:
+
 - **Opinion**: "Redis is overkill for session storage"
 - **Trade-off**: "Chose speed over consistency"
 - **Reality check**: "The migration took 3 months, not the planned 3 weeks"
 - **Context**: "Friday deadline meant going with the quick fix"
 - **Learning**: "Should've used Postgres from the start"
 
+
 ## Numbers to Include
 
 Be specific:
+
 - Percentages: "reduced by 73%"
 - Time: "in 18 minutes"
 - Money: "$450K under budget"
 - Scale: "12 million daily users"
 - Technical: "p95 latency of 200ms"
+
 
 ## Final Pre-Submit Check
 
@@ -79,6 +90,7 @@ Be specific:
 4. **Count em-dashes** - Maximum 1-2
 5. **Read aloud** - Does it sound human?
 
+
 ## The One Rule
 
 **Write like you're explaining your actual work, not like you're trying to impress anyone.**
@@ -86,11 +98,13 @@ Be specific:
 ## Emergency Rewrite
 
 If something sounds too AI-like, try:
+
 1. Cut it in half
 2. Add a specific number
 3. Include what went wrong
 4. State an opinion
 5. Remove all adjectives
+
 
 ## Remember
 
@@ -98,5 +112,6 @@ If something sounds too AI-like, try:
 - You're not marketing
 - You're not writing a paper
 - You're an expert sharing knowledge
+
 
 That's it. Now write like a human.

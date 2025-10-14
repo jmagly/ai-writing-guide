@@ -1,10 +1,12 @@
 # Card Metadata Standard
 
 ## Purpose
+
 Define a consistent metadata header for all “card” templates so teams can assign ownership,
 maintain traceability, and relate cards to their parent templates and artifacts.
 
 ## Required fields
+
 - ID: use a prefix plus number (examples below)
 - Owner: person/role/team responsible for delivery
 - Contributors: collaborators
@@ -16,7 +18,9 @@ maintain traceability, and relate cards to their parent templates and artifacts.
 - Related: IDs to other artifacts (UC, REQ, DES, CODE, TEST, ADR, DEP, RSK, CR, etc.)
 - Links: file paths or URLs to source/related artifacts
 
+
 ## Allowed ID prefixes (examples)
+
 - UC-: Use case (e.g., UC-001)
 - REQ-: Requirement (e.g., REQ-010)
 - DES-: Design item (e.g., DES-004)
@@ -26,6 +30,7 @@ maintain traceability, and relate cards to their parent templates and artifacts.
 - RSK-: Risk (e.g., RSK-005)
 - CR-: Change request (e.g., CR-002)
 - WP-: Work package (e.g., WP-001)
+
 
 ## Header block (copy into cards)
 

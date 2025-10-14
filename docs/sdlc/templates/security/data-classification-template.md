@@ -10,6 +10,7 @@
 | Restricted | PII/PHI/keys | user data, secrets | strict access, audit |
 
 ## Rules
+
 - Label and tag data at ingestion
 - Enforce controls per class across storage and transport
 - Review classification changes during releases

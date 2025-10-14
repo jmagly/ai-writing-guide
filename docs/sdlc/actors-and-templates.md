@@ -1,6 +1,7 @@
 # Lifecycle Actors & Template Suite
 
 ## Purpose
+
 Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifact templates. Use this document to assign responsibilities, seed prompts, and ensure every discipline produces the expected work products.
 
 ## Core Workers and Responsibilities
@@ -22,6 +23,7 @@ Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifa
 | Environment Engineer | Tailor process assets, guidelines, toolchain | Development case, discipline guidelines | `docs/sdlc/templates/environments/development-case-template.md`, `docs/sdlc/templates/environments/business-modeling-guidelines-template.md`, `docs/sdlc/templates/environments/use-case-modeling-guidelines-template.md`, `docs/sdlc/templates/environments/design-guidelines-template.md`, `docs/sdlc/templates/environments/programming-guidelines-template.md`, `docs/sdlc/templates/environments/test-guidelines-template.md` | `docs/agents/environment-engineer.md` |
 
 ## Template Index by Discipline
+
 - **Business Modeling**: `business-vision-template.md`, `supplementary-business-spec-template.md`, `business-use-case-spec-template.md`, `business-use-case-realization-template.md`, `business-architecture-doc-template.md`, `business-glossary-template.md`, `business-rules-template.md`, `target-organization-assessment-template.md`.
 - **Requirements**: `vision-template.md`, `vision-informal-template.md`, `use-case-spec-template.md`, `use-case-spec-informal-template.md`, `supplementary-spec-template.md`, `requirements-management-plan-template.md`, `srs-traditional-template.md`, `srs-use-case-template.md`, `stakeholder-requests-template.md`, `glossary-template.md`, `context-free-interview-template.md`.
 - **Architecture & Design**: `software-architecture-doc-template.md`, `use-case-realization-template.md`.
@@ -32,7 +34,9 @@ Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifa
 - **Configuration & Change Management**: `configuration-management-plan-template.md`, `problem-resolution-plan-template.md`.
 - **Environment & Process Assets**: `development-case-template.md`, `business-modeling-guidelines-template.md`, `use-case-modeling-guidelines-template.md`, `design-guidelines-template.md`, `programming-guidelines-template.md`, `test-guidelines-template.md`.
 
+
 ## Usage Guidance
+
 1. **Assign Roles**: Map each active agent to one or more workers above. Maintain a responsibility matrix (`docs/sdlc/artifacts/raci.md`).
 2. **Pick Templates**: For every planned artifact, start from the listed template name. When the original format is required (Word, FrameMaker, SoDA), capture the content structure in Markdown to keep this repository portable.
 3. **Tailor Per Phase**:
@@ -42,12 +46,16 @@ Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifa
    - Transition activates Deployment and Support templates alongside closing Test evidence.
 4. **Traceability**: Link each template instance to use cases and risks in the traceability matrix to maintain coverage across disciplines.
 
+
 ## Prompt Starters
+
 - **Worker Briefing**: “As the `<worker>`, use the `<template>` structure to produce the artifact for `<use case or feature>`. Confirm dependencies from the latest iteration plan before drafting.”
 - **Template Tailoring**: “Review the standard sections in `<template>`. Indicate which sections are not applicable and justify omissions. Add project-specific sections where risks or compliance requirements demand it.”
 - **Quality Gate**: “Validate that the `<template>` delivered for `<phase>` satisfies the exit criteria listed in the Plan-Act Lifecycle Script. Flag gaps and propose corrective tasks.”
 
+
 Keep this catalogue synchronized with updates to `docs/sdlc/plan-act-sdlc.md` and expand it whenever new templates or roles are introduced.
+
 ## Strategic & Supporting Roles
 
 | Role | Primary Focus | Key Artifacts | Agent Definition |

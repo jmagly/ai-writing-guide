@@ -1,9 +1,11 @@
 # Escalation Matrix
 
 ## Triggers
+
 - Gate failures beyond threshold
 - Aged risks without owner updates
 - Regulatory or legal impact
+
 
 ## Contacts
 
@@ -15,6 +17,7 @@
 | 4 | Steering Committee | <email> | ad hoc | 48h |
 
 ## Procedure
+
 1. Record issue with timestamp and impact
 2. Notify level 1; wait response target
 3. Escalate to next level with context packet

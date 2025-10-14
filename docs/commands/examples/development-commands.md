@@ -53,6 +53,7 @@ For each file reviewed, provide:
 ## File: [filename]
 
 ### Critical Issues (Must Fix)
+
 - **Line [X]**: [Issue description]
   ```[language]
   // Current (problematic)
@@ -63,16 +64,23 @@ For each file reviewed, provide:
   ```
   **Risk**: [What could happen if not fixed]
 
+
 ### Performance Issues
+
 - **Line [X]**: [Performance problem]
   **Impact**: [Specific performance impact]
   **Fix**: [Optimization approach]
 
+
 ### Maintainability Suggestions
+
 - [Improvement suggestions]
 
+
 ### Positive Patterns
+
 - [Good practices worth noting]
+
 
 ```
 
@@ -241,9 +249,11 @@ You create conventional commit messages that follow best practices and include c
 ✨ feat(auth): add OAuth2 integration
 
 Implement Google and GitHub OAuth2 providers
+
 - Add OAuth2 configuration
 - Create redirect handlers
 - Update user model for external IDs
+
 
 Closes #123
 
@@ -254,9 +264,11 @@ Closes #123
 🐛 fix(payment): handle expired credit cards
 
 Add proper error handling for expired payment methods
+
 - Check expiry date before processing
 - Return user-friendly error message
 - Log payment failures for monitoring
+
 
 Fixes #456
 
@@ -308,9 +320,11 @@ You are a Technical Writer specializing in API documentation that developers act
 ## API Endpoint: [Method] [Path]
 
 ## Description
+
 [Clear description of what this endpoint does]
 
 ## Authentication
+
 [Required authentication type and details]
 
 ## Request
@@ -436,11 +450,14 @@ data = response.json()
 ```
 
 ## Rate Limiting
+
 - Limit: 1000 requests per hour
 - Header: `X-RateLimit-Remaining`
 - Reset: Every hour at minute 0
 
+
 ## Notes
+
 [Any additional information, caveats, or usage tips]
 
 ```text
@@ -503,16 +520,20 @@ When analyzing a Dockerfile:
 ## Docker Optimization Report
 
 ## Current Analysis
+
 - **Image Size**: [current size]
 - **Build Time**: [current build time]
 - **Security Score**: [assessment]
 - **Cache Efficiency**: [rating]
 
+
 ## Critical Issues
+
 1. **[Issue Type]**: [Problem description]
    - **Impact**: [Performance/security impact]
    - **Fix**: [Specific solution]
    - **Estimated Savings**: [Size/time improvement]
+
 
 ## Recommended Optimizations
 
@@ -562,19 +583,27 @@ ENTRYPOINT ["dumb-init", "--"]
 ```
 
 ## Size Reduction Techniques
+
 - [Specific recommendations for size reduction]
 
+
 ## Security Enhancements
+
 - [Security improvements with rationale]
 
+
 ## Build Performance
+
 - [Build time optimization strategies]
 
+
 ## Expected Improvements
+
 - **Size Reduction**: [X]% smaller
 - **Build Time**: [X]% faster
 - **Security**: [X] vulnerabilities fixed
 - **Cache Hit Rate**: [X]% improvement
+
 
 ```text
 
@@ -617,9 +646,11 @@ Based on the project type, create:
 ```bash
 
 # Create directory structure
+
 mkdir -p {src,tests,docs,scripts}
 
 # Package.json with best practices
+
 npm init -y
 npm install --save-dev eslint prettier husky lint-staged jest
 npm install --save express helmet cors
@@ -692,13 +723,16 @@ Create virtual environment and structure:
 ```bash
 
 # Virtual environment
+
 python -m venv venv
 source venv/bin/activate  # or venv\\Scripts\\activate on Windows
 
 # Directory structure
+
 mkdir -p {src,tests,docs,scripts}
 
 # Dependencies
+
 pip install black flake8 pytest pytest-cov
 
 ```
@@ -741,6 +775,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
       - name: Setup [Language]
         uses: actions/setup-[language]@v4
@@ -758,6 +793,7 @@ jobs:
 
       - name: Check coverage
         run: [coverage command]
+
 
 ```text
 

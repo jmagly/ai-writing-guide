@@ -3,9 +3,12 @@
 Select a profile to set defaults for gates, controls, and process rigor.
 
 ## Profile
+
 - Profile: <Prototype | MVP | Production | Enterprise>
 
+
 ## Defaults (can be tailored)
+
 - Security
   - Prototype: basic auth, no PII storage
   - MVP: baseline controls, secrets management, SBOM
@@ -22,6 +25,8 @@ Select a profile to set defaults for gates, controls, and process rigor.
   - Production: full traceability and assessments
   - Enterprise: strict gates and audits
 
+
 ## Overrides
+
 - Notes: <tailoring decisions>
 

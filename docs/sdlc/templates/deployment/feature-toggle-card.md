@@ -1,6 +1,7 @@
 # Feature Toggle Card
 
 ## Metadata
+
 - ID: FT-<id>
 - Owner: DevOps Engineer (docs/agents/devops-engineer.md)
 - Contributors: Implementer (docs/agents/software-implementer.md)
@@ -11,18 +12,28 @@
 - Related: REQ-<id>, REL-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/deployment/deployment-plan-template.md
 
+
 ## Toggle
+
 - Name and scope
 - Default state
 
+
 ## Safety
+
 - Dependencies and guardrails
 
+
 ## Rollout Plan
+
 - Cohorts, % rollout, and monitoring
 
+
 ## Removal Criteria
+
 - When and how to remove the toggle

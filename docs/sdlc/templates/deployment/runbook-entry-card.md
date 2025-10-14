@@ -1,6 +1,7 @@
 # Runbook Entry Card
 
 ## Metadata
+
 - ID: RUN-<id>
 - Owner: Support Lead (docs/agents/support-lead.md)
 - Contributors: Reliability Engineer (docs/agents/sdlc/reliability-engineer.md)
@@ -11,17 +12,25 @@
 - Related: SLI-<id>, ALERT-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/reliability/alert-runbook-card.md
 
+
 ## Service/Component
+
 - Name and owner
 
+
 ## Symptoms
+
 What signals indicate a problem?
 
 ## Diagnosis
+
 First checks, dashboards, and logs
 
 ## Remediation
+
 Step-by-step actions and when to escalate

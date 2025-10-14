@@ -1,6 +1,7 @@
 # Development Case Tailoring Card
 
 ## Metadata
+
 - ID: DEVCASE-<id>
 - Owner: Environment Engineer (docs/agents/environment-engineer.md)
 - Contributors: Toolsmith (docs/agents/toolsmith.md)
@@ -11,14 +12,22 @@
 - Related: SDP-<id>, QA-PLAN-<id>
 - Links: <paths/urls>
 
+
 ## Scope
+
 - Project context and constraints
 
+
 ## Tailorings
+
 - Which templates/processes are in/out
 
+
 ## Tooling
+
 - Linters, CI, environments, permissions
 
+
 ## Review
+
 - Approvers and effective date

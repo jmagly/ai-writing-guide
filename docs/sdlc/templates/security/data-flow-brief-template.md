@@ -1,6 +1,7 @@
 # Data Flow Brief
 
 ## Metadata
+
 - ID: SEC-DFD-<id>
 - Owner: Security Architect (docs/agents/sdlc/security-architect.md)
 - Contributors: API Designer (docs/agents/sdlc/api-designer.md)
@@ -11,17 +12,27 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/requirements/data-contract-template.md
 
+
 ## Scope
+
 - System/feature: <name>
 
+
 ## Sources/Sinks
+
 - <component> → <component>: <data>
 
+
 ## Trust Boundaries
+
 - Notes on boundary crossings and controls
 
+
 ## Risks
+
 - Key risks and mitigations

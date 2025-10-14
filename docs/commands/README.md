@@ -7,7 +7,9 @@ Claude Code supports custom slash commands and hooks that extend functionality b
 ## Command Types
 
 ### 1. Built-in Commands
+
 Standard commands available in all Claude Code sessions:
+
 - `/help` - Show available commands and usage
 - `/clear` - Clear conversation history
 - `/model` - Change AI model (sonnet, opus, haiku)
@@ -20,7 +22,9 @@ Standard commands available in all Claude Code sessions:
 - `/mcp` - Show MCP server status
 - `/agents` - Show available agents
 
+
 ### 2. Custom Slash Commands
+
 User-defined commands stored as Markdown files with YAML frontmatter.
 
 **Invocation Patterns:**
@@ -45,13 +49,16 @@ User-defined commands stored as Markdown files with YAML frontmatter.
 ```
 
 ### 3. Hooks
+
 Automated responses to Claude Code events:
+
 - **UserPromptSubmit** - When user submits a prompt
 - **PreToolUse** - Before tool execution (can block)
 - **PostToolUse** - After tool completion
 - **Stop** - When Claude finishes responding
 - **SubAgentStop** - When sub-agents finish
 - **SessionEnd** - When session ends
+
 
 ## Command Structure
 
@@ -232,6 +239,7 @@ test_scenarios:
 ## Security Considerations
 
 ### Permission System
+
 Control command access via `.claude/settings.local.json`:
 
 ```json
@@ -256,11 +264,13 @@ Control command access via `.claude/settings.local.json`:
 ```
 
 ### Best Practices
+
 - **Principle of Least Privilege**: Only grant necessary tool access
 - **Input Validation**: Validate all user inputs within commands
 - **Safe Defaults**: Design commands to fail safely
 - **Audit Trail**: Log command execution when appropriate
 - **Code Review**: Review custom commands like any other code
+
 
 ## Hook Configuration
 
@@ -488,24 +498,30 @@ Delegate each aspect to the appropriate specialist agent.
 ## Best Practices Summary
 
 ### Command Design
+
 1. **Single Responsibility**: Each command should do one thing well
 2. **Clear Interface**: Obvious inputs, predictable outputs
 3. **Error Handling**: Graceful failure with helpful messages
 4. **Documentation**: Include usage examples and edge cases
 5. **Security**: Follow principle of least privilege
 
+
 ### Development Process
+
 1. **Start Simple**: Basic functionality first, then enhance
 2. **Test Thoroughly**: Cover normal and edge cases
 3. **Document Everything**: Commands are part of your codebase
 4. **Version Control**: Track command changes like any other code
 5. **Share Knowledge**: Document patterns for team use
 
+
 ### Performance Optimization
+
 1. **Choose Right Model**: Match complexity to capability
 2. **Minimize Context**: Only include necessary information
 3. **Cache Results**: Avoid redundant processing
 4. **Parallel Execution**: Use agents for independent tasks
 5. **Monitor Usage**: Track costs and performance
+
 
 This comprehensive guide provides the foundation for creating powerful, secure, and maintainable Claude Code commands that enhance development workflows.

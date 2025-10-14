@@ -7,21 +7,25 @@
 ## File Purposes and When to Use
 
 ### quick-reference.md
+
 **When to use**: Quick validation checks, light editing
 **When NOT to use**: First drafts, formal documents
 **Load priority**: Low - only for spot checks
 
 ### executive-voice.md
+
 **When to use**: C-level communications, board presentations, strategic documents
 **When NOT to use**: Technical documentation, casual blog posts
 **Load priority**: Only for executive-targeted content
 
 ### academic-voice.md
+
 **When to use**: Research papers, whitepapers, technical reports
 **When NOT to use**: User documentation, marketing content
 **Load priority**: Only for scholarly content
 
 ### technical-depth.md
+
 **When to use**: Architecture documents, technical specifications, engineering blogs
 **When NOT to use**: User guides, executive summaries
 **Load priority**: When technical authority needed
@@ -29,29 +33,39 @@
 ## Context Combinations
 
 ### Minimal Setup (Start Here)
+
 Just the main `CLAUDE.md` file - often sufficient
 
 ### Technical Documentation
+
 - `CLAUDE.md`
 - `technical-depth.md`
 - `sophistication-guide.md` (from core/)
 
+
 ### Executive Communications
+
 - `CLAUDE.md`
 - `executive-voice.md`
 - `sophistication-guide.md` (from core/)
 
+
 ### Academic Writing
+
 - `CLAUDE.md`
 - `academic-voice.md`
 - Note: Many "banned patterns" are acceptable in academic context
 
+
 ### Problem Solving
+
 Only add these when you see specific issues:
+
 - Seeing "seamlessly"? Add `banned-patterns.md`
 - Too casual? Add `sophistication-guide.md`
 - Too formal? Add relevant examples
 - Lost voice? Add appropriate voice guide
+
 
 ## Progressive Loading Strategy
 
@@ -60,6 +74,7 @@ Only add these when you see specific issues:
 3. **If voice wrong**: Add appropriate voice guide
 4. **If struggling**: Add examples (sparingly)
 5. **Last resort**: Multiple documents
+
 
 ## Remember
 

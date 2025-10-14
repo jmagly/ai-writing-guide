@@ -1,6 +1,7 @@
 # Control Implementation Card
 
 ## Metadata
+
 - ID: SEC-CTRL-<id>
 - Owner: Security Architect (docs/agents/sdlc/security-architect.md)
 - Contributors: DevOps Engineer (docs/agents/devops-engineer.md), Implementer (docs/agents/software-implementer.md)
@@ -11,17 +12,27 @@
 - Related: SEC-THR-<id>, REQ-<id>, DES-<id>
 - Links: <paths/urls>
 
+
 ## Related templates
+
 - docs/sdlc/templates/security/security-test-case-card.md
 
+
 ## Control
+
 - Name/ID and purpose
 
+
 ## Implementation Plan
+
 - Steps, owners, and dependencies
 
+
 ## Verification
+
 - Tests or evidence required
 
+
 ## Rollout
+
 - Environments and schedule

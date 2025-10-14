@@ -35,4 +35,11 @@ jobs:
             echo "Code fence drift detected. Run: node tools/lint/fix-md-codefences.mjs --target . --write" >&2
             exit 1
           fi
-
+      - name: Check headings/lists spacing (MD022/MD032)
+        run: |
+          OUT=$(node tools/lint/fix-md-heading-lists.mjs --target . || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "would-fix"; then
+            echo "Heading/list spacing drift detected. Run: node tools/lint/fix-md-heading-lists.mjs --target . --write" >&2
+            exit 1
+          fi

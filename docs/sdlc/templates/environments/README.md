@@ -3,6 +3,7 @@
 Artifacts for development case and discipline guidelines.
 
 Files:
+
 - business-modeling-guidelines-template.md
 - design-guidelines-template.md
 - development-case-template.md

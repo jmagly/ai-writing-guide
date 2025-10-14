@@ -3,11 +3,13 @@
 ## The Fundamental Problem
 
 AI-generated content has recognizable patterns that make it feel inauthentic:
+
 - Over-polished and formulaic
 - Marketing-speak instead of expertise
 - Vague generalities instead of specifics
 - Performative helpfulness
 - Consistent structure that feels robotic
+
 
 ## The Solution: Write Like a Human Expert
 
@@ -51,6 +53,7 @@ Good:
 - Others run longer, include asides (like this one), and cover multiple related points without perfect structure.
 - Use fragments. Start with conjunctions. And break "rules" when it sounds natural.
 
+
 ### Principle 5: Include the Messy Reality
 
 **Real projects have problems, trade-offs, and context.**
@@ -66,10 +69,12 @@ Good:
 ### Show Implementation Scars
 
 Real experts mention:
+
 - What broke
 - What took longer than expected
 - Why certain decisions were made
 - What they'd do differently
+
 
 Example:
 > "We picked Cassandra for scale but didn't anticipate the operational overhead. Three years later, we're still fighting consistency issues."
@@ -85,36 +90,44 @@ Good:
 ### Voice Opinions
 
 Experts have perspectives:
+
 - "Kubernetes is overkill for most startups"
 - "CQRS sounds good until you debug event sourcing at 3am"
 - "Sometimes a boring Rails monolith is the right choice"
+
 
 ## Writing Rhythm
 
 ### Natural Transitions
 
 Instead of formal conjunctions, use:
+
 - **Time markers**: "By 2019...", "Initially...", "These days..."
 - **Context shifts**: "At Amazon...", "The auth system...", "Production showed..."
 - **Questions**: "The problem? Scale.", "Why Redis? Speed."
 - **Direct starts**: Just begin with the subject
 
+
 ### Sentence Variety
 
 Mix:
+
 - Short, punchy statements
 - Longer explanations with technical detail
 - Questions
 - Fragments for emphasis
 - Lists when appropriate
 
+
 ### Paragraph Flow
 
 Avoid:
+
 - Starting every paragraph the same way
 - Consistent paragraph lengths
 - Predictable structure
 - Summary sentences
+
 
 ## The Authenticity Test
 
@@ -125,12 +138,15 @@ Read your content aloud. Does it sound like:
 3. **A technical paper?** Too academic, no human voice
 4. **Someone explaining their work?** ✅ This is the goal
 
+
 ## Examples of Authentic Voice
 
 ### Bad (AI-typical):
+
 > "Furthermore, the implementation of advanced caching mechanisms dramatically improved response times, showcasing the transformative power of modern optimization techniques. This comprehensive approach underscores the vital role that performance tuning plays in contemporary web applications."
 
 ### Good (Human expert):
+
 > "Response times sucked - 3 seconds for a simple query. Added Redis caching and got it down to 200ms. Should've done it from the start but we were rushing to launch."
 
 ## Final Reminder
