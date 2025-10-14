@@ -37,4 +37,4 @@ aiwg -deploy-agents --provider openai \
 - OpenAI/Codex: `.codex/agents/*.md`
 
 For more details on Codex sub-agents and mechanics, see:
-https://codexlog.io/mechanics/agents/sub-agents.html
+<https://codexlog.io/mechanics/agents/sub-agents.html>
