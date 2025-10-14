@@ -88,6 +88,18 @@ Node.js requirement:
 - Use `--auto-install-node` to let the installer attempt setup via your package manager (NodeSource/Homebrew).
 - If installation cannot be automated, the installer prints NVM/NodeSource instructions.
 
+## CLI Quick Reference
+
+```text
+aiwg -deploy-agents [--provider <claude|openai>] [--source <path>] [--target <path>] [--dry-run] [--force]
+aiwg -new [--no-agents] [--provider <claude|openai>]
+aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(yml|yaml|json) [--write]
+```
+
+Tips:
+- Use the Team Profile example at `docs/sdlc/templates/management/team-profile-example.yaml` as a starting point.
+- For OpenAI/Codex projects, `aiwg -new --provider openai` deploys `.codex/AGENTS.md` by default.
+
 ## Key Principles
 
 1. **Accuracy First** - Never invent facts or embellish details

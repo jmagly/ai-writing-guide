@@ -10,7 +10,7 @@
 
 ## The Core Formula
 
-**Expert talking to peer + specific details + real trade-offs = Authentic content**
+Formula: Expert talking to peer + specific details + real trade-offs = authentic content
 
 ## Instant Fixes
 
