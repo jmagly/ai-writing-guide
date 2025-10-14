@@ -1,0 +1,13 @@
+{
+  "name": "Context",
+  "path": "context",
+  "files": [
+    "README.md",
+    "academic-voice.md",
+    "executive-voice.md",
+    "manifest.md",
+    "quick-reference.md",
+    "technical-depth.md"
+  ],
+  "ignore": ["manifest.json"]
+}

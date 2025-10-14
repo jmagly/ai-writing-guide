@@ -1,0 +1,10 @@
+{
+  "name": "Commands (Shared)",
+  "path": "docs/commands",
+  "files": [
+    "DEVELOPMENT_GUIDE.md",
+    "README.md",
+    "manifest.md"
+  ],
+  "ignore": ["manifest.json", "examples", "templates", "sdlc"]
+}

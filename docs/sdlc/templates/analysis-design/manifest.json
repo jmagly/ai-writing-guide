@@ -1,0 +1,13 @@
+{
+  "name": "Analysis & Design Templates",
+  "path": "docs/sdlc/templates/analysis-design",
+  "files": [
+    "README.md",
+    "software-architecture-doc-template.md",
+    "use-case-realization-template.md",
+    "interface-contract-card.md",
+    "component-design-card.md",
+    "sequence-diagram-template.md"
+  ],
+  "ignore": ["manifest.json"]
+}

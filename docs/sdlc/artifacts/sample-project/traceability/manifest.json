@@ -1,0 +1,9 @@
+{
+  "name": "Sample Traceability",
+  "path": "docs/sdlc/artifacts/sample-project/traceability",
+  "files": [
+    "traceability-matrix.csv"
+  ],
+  "ignore": ["manifest.json"]
+}
+

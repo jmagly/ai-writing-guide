@@ -1,0 +1,16 @@
+{
+  "name": "Environment Templates",
+  "path": "docs/sdlc/templates/environments",
+  "files": [
+    "README.md",
+    "business-modeling-guidelines-template.md",
+    "design-guidelines-template.md",
+    "development-case-template.md",
+    "guideline-template.md",
+    "programming-guidelines-template.md",
+    "test-guidelines-template.md",
+    "use-case-modeling-guidelines-template.md",
+    "dev-case-tailoring-card.md"
+  ],
+  "ignore": ["manifest.json"]
+}

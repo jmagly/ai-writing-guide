@@ -1,0 +1,14 @@
+{
+  "name": "SDLC Commands",
+  "path": "docs/commands/sdlc",
+  "files": [
+    "README.md",
+    "build-artifact-index.md",
+    "check-traceability.md",
+    "manifest.md",
+    "orchestrate-project.md",
+    "security-gate.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

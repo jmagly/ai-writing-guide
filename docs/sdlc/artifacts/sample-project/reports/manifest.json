@@ -1,0 +1,10 @@
+{
+  "name": "Sample Reports",
+  "path": "docs/sdlc/artifacts/sample-project/reports",
+  "files": [
+    "security-gate-report.md",
+    "status-assessment.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

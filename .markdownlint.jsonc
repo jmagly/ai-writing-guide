@@ -1,0 +1,7 @@
+{
+  // Allow long lines; we wrap near 100 chars informally
+  "MD013": false,
+  // Permit two trailing spaces for hard line breaks
+  "MD009": { "br_spaces": 2 }
+}
+

@@ -1,0 +1,9 @@
+{
+  "name": "GitHub Workflows",
+  "path": ".github/workflows",
+  "files": [
+    "manifest-lint.yml"
+  ],
+  "ignore": ["manifest.json"]
+}
+

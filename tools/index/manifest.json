@@ -1,0 +1,9 @@
+{
+  "name": "Index Tools",
+  "path": "tools/index",
+  "files": [
+    "README.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

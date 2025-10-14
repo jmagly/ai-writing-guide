@@ -1,0 +1,10 @@
+{
+  "name": "SDLC Templates",
+  "path": "docs/sdlc/templates",
+  "files": [
+    "README.md",
+    "manifest.md"
+  ],
+  "ignore": ["manifest.json", "business-modeling", "requirements", "analysis-design", "implementation", "test", "deployment", "management", "configuration", "environments", "governance", "security", "reliability"]
+}
+

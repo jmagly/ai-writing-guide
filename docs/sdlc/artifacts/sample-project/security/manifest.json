@@ -1,0 +1,9 @@
+{
+  "name": "Sample Security",
+  "path": "docs/sdlc/artifacts/sample-project/security",
+  "files": [
+    "threat-model.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

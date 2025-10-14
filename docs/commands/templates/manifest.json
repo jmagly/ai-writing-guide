@@ -1,0 +1,11 @@
+{
+  "name": "Command Templates",
+  "path": "docs/commands/templates",
+  "files": [
+    "README.md",
+    "agent-command-template.md",
+    "basic-command-template.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

@@ -1,0 +1,11 @@
+{
+  "name": "Core",
+  "path": "core",
+  "files": [
+    "README.md",
+    "philosophy.md",
+    "sophistication-guide.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

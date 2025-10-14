@@ -130,7 +130,7 @@ Instead of broad claims, show specific expertise:
 
 ### Examples of Over-Correction
 
-❌ **Too Simple**: 
+❌ **Too Simple**:
 > "We made a program. It runs fast. Uses less memory. Boss happy."
 
 ✅ **Appropriate Complexity**:

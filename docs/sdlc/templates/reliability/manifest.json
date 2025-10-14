@@ -1,0 +1,15 @@
+{
+  "name": "Reliability Templates",
+  "path": "docs/sdlc/templates/reliability",
+  "files": [
+    "README.md",
+    "chaos-experiment-plan-template.md",
+    "manifest.md",
+    "operational-readiness-review-template.md",
+    "slo-sli-template.md",
+    "sli-card.md",
+    "alert-runbook-card.md",
+    "chaos-experiment-card.md"
+  ],
+  "ignore": ["manifest.json"]
+}

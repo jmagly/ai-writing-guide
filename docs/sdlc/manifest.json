@@ -1,0 +1,13 @@
+{
+  "name": "SDLC Root",
+  "path": "docs/sdlc",
+  "files": [
+    "README.md",
+    "actors-and-templates.md",
+    "manifest.md",
+    "plan-act-sdlc.md",
+    "prompt-templates.md"
+  ],
+  "ignore": ["manifest.json", "artifacts", "templates"]
+}
+

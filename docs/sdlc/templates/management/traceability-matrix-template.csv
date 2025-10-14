@@ -1,0 +1,4 @@
+use_case_id,requirement_id,design_item,code_module,test_id,defect_id,release_ref,owner,status,notes
+UC-001,REQ-010,DES-004,src/orders/checkout.ts,IT-023,,REL-0.3.0,QA,covered,
+UC-001,REQ-011,DES-005,src/payments/charge.ts,UT-144,DEF-332,REL-0.3.0,Dev,open,edge case missing
+

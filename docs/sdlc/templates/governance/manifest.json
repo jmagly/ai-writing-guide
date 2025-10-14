@@ -1,0 +1,14 @@
+{
+  "name": "Governance Templates",
+  "path": "docs/sdlc/templates/governance",
+  "files": [
+    "README.md",
+    "decision-matrix-template.md",
+    "escalation-matrix-template.md",
+    "manifest.md",
+    "raci-template.md",
+    "risk-acceptance-template.md",
+    "adr-template.md"
+  ],
+  "ignore": ["manifest.json"]
+}

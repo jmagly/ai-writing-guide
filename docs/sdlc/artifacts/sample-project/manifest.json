@@ -1,0 +1,9 @@
+{
+  "name": "Sample Project",
+  "path": "docs/sdlc/artifacts/sample-project",
+  "files": [
+    "README.md"
+  ],
+  "ignore": ["manifest.json", "requirements", "management", "security", "reliability", "traceability", "reports"]
+}
+

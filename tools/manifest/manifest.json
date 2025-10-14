@@ -1,0 +1,11 @@
+{
+  "name": "Manifest Tools",
+  "path": "tools/manifest",
+  "files": [
+    "README.md",
+    "check-manifests.mjs",
+    "generate-manifest.mjs",
+    "pre-commit.sample"
+  ],
+  "ignore": ["manifest.json"]
+}

@@ -1,0 +1,26 @@
+name: Manifest Lint
+
+on:
+  push:
+    paths:
+      - '**/*.md'
+      - '**/manifest.json'
+      - 'tools/manifest/**'
+  pull_request:
+    paths:
+      - '**/*.md'
+      - '**/manifest.json'
+      - 'tools/manifest/**'
+
+jobs:
+  manifest-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run manifest linter
+        run: node tools/manifest/check-manifests.mjs
+

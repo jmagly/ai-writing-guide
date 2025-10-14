@@ -1,0 +1,9 @@
+{
+  "name": "Sample Requirements",
+  "path": "docs/sdlc/artifacts/sample-project/requirements",
+  "files": [
+    "vision.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

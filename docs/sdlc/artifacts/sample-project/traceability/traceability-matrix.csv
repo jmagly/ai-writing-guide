@@ -1,0 +1,2 @@
+use_case_id,requirement_id,design_item,code_module,test_id,defect_id,release_ref,owner,status,notes
+UC-001,REQ-010,DES-004,src/orders/checkout.ts,IT-023,,REL-0.1.0,QA,covered,

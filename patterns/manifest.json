@@ -1,0 +1,10 @@
+{
+  "name": "Patterns",
+  "path": "patterns",
+  "files": [
+    "README.md",
+    "common-ai-tells.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

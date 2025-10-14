@@ -1,0 +1,21 @@
+{
+  "name": "Security Templates",
+  "path": "docs/sdlc/templates/security",
+  "files": [
+    "README.md",
+    "data-classification-template.md",
+    "dependency-policy-template.md",
+    "manifest.md",
+    "privacy-impact-assessment-template.md",
+    "sbom-guidance.md",
+    "secrets-management-policy-template.md",
+    "security-requirements-template.md",
+    "threat-model-template.md",
+    "vulnerability-management-plan-template.md",
+    "threat-scenario-card.md",
+    "data-flow-brief-template.md",
+    "control-implementation-card.md",
+    "security-test-case-card.md"
+  ],
+  "ignore": ["manifest.json"]
+}

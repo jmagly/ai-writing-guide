@@ -14,6 +14,7 @@ This directory provides Markdown templates to support PLAN → ACT agent workflo
 - `configuration/` – Configuration management and problem resolution plans.
 - `environments/` – Development case plus discipline-specific guidelines (business modeling, use-case modeling, design, programming, testing).
 
+
 ## How to Use
 1. Copy the relevant template into `docs/sdlc/artifacts/<project>/` (or project-specific location).
 2. Replace placeholders, fill sections, and remove any that do not apply—record tailoring decisions in the Development Case.

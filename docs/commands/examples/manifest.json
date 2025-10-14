@@ -1,0 +1,10 @@
+{
+  "name": "Command Examples",
+  "path": "docs/commands/examples",
+  "files": [
+    "README.md",
+    "development-commands.md"
+  ],
+  "ignore": ["manifest.json"]
+}
+

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Run manifest linter before commit
+node tools/manifest/check-manifests.mjs || exit 1
+

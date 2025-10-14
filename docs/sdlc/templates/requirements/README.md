@@ -1,0 +1,20 @@
+# Requirements Templates
+
+Artifacts for requirements and stakeholder alignment.
+
+Files:
+- context-free-interview-template.md
+- glossary-template.md
+- requirements-management-plan-template.md
+- srs-traditional-template.md
+- srs-use-case-template.md
+- stakeholder-requests-template.md
+- stakeholder-request-card-template.md
+- supplementary-spec-template.md
+- use-case-brief-template.md
+- use-case-spec-informal-template.md
+- use-case-spec-template.md
+- use-case-acceptance-template.md
+- data-contract-template.md
+- vision-informal-template.md
+- vision-template.md

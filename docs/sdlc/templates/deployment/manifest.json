@@ -1,0 +1,16 @@
+{
+  "name": "Deployment Templates",
+  "path": "docs/sdlc/templates/deployment",
+  "files": [
+    "README.md",
+    "bill-of-materials-template.md",
+    "deployment-plan-template.md",
+    "product-acceptance-plan-template.md",
+    "release-notes-template.md",
+    "support-runbook-template.md",
+    "rollout-checklist-card.md",
+    "runbook-entry-card.md",
+    "feature-toggle-card.md"
+  ],
+  "ignore": ["manifest.json"]
+}
