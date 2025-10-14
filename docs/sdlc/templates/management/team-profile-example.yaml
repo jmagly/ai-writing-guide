@@ -1,0 +1,21 @@
+roles:
+  product_strategist: "Alex Rivera"
+  vision_owner: "Morgan Lee"
+  requirements_analyst: "Priya Patel"
+  system_analyst: "Sam Chen"
+  architecture_designer: "Riley Thompson"
+  api_designer: "Jordan Kim"
+  software_implementer: "Casey Nguyen"
+  test_architect: "Taylor Brooks"
+  test_engineer: "Jamie Carter"
+  security_architect: "Avery Scott"
+  reliability_engineer: "Drew Parker"
+  deployment_manager: "Shawn Murphy"
+  configuration_manager: "Quinn Bailey"
+  project_manager: "Cameron Diaz"
+
+contacts:
+  Alex Rivera:
+    email: "alex@example.com"
+    handle: "@alex"
+    timezone: "UTC-5"

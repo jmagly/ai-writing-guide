@@ -99,6 +99,34 @@ function prefillOwnerLine(line, rolesMap) {
   return `- Owner: ${person}${suffix}`;
 }
 
+function mapRolesList(listStr, rolesMap) {
+  // Split by comma and map each token (role label) to Name (Role)
+  const parts = listStr.split(',').map(s => s.trim()).filter(Boolean);
+  const mapped = parts.map(tok => {
+    // if already looks like Name (Role), keep
+    if (/\(.+\)/.test(tok)) return tok;
+    const key = roleNameToKey.get(tok);
+    if (!key) return tok;
+    const person = rolesMap[key];
+    return person ? `${person} (${tok})` : tok;
+  });
+  return mapped.join(', ');
+}
+
+function prefillContribsLine(line, rolesMap) {
+  const m = line.match(/^-\s*Contributors?:\s*(.+)$/);
+  if (!m) return null;
+  const val = m[1].trim();
+  return `- Contributors: ${mapRolesList(val, rolesMap)}`;
+}
+
+function prefillReviewersLine(line, rolesMap) {
+  const m = line.match(/^-\s*Reviewers?:\s*(.+)$/);
+  if (!m) return null;
+  const val = m[1].trim();
+  return `- Reviewers: ${mapRolesList(val, rolesMap)}`;
+}
+
 function processFile(file, rolesMap, write) {
   const orig = fs.readFileSync(file, 'utf8');
   const lines = orig.split(/\r?\n/);
@@ -111,6 +139,16 @@ function processFile(file, rolesMap, write) {
         const newOwner = prefillOwnerLine(lines[j], rolesMap);
         if (newOwner && newOwner !== lines[j]) {
           lines[j] = newOwner;
+          changed = true;
+        }
+        const newContrib = prefillContribsLine(lines[j], rolesMap);
+        if (newContrib && newContrib !== lines[j]) {
+          lines[j] = newContrib;
+          changed = true;
+        }
+        const newReview = prefillReviewersLine(lines[j], rolesMap);
+        if (newReview && newReview !== lines[j]) {
+          lines[j] = newReview;
           changed = true;
         }
         j++;
@@ -136,4 +174,3 @@ function processFile(file, rolesMap, write) {
   }
   console.log(`${write ? 'Updated' : 'Would update'} ${changedCount} file(s).`);
 })();
-
