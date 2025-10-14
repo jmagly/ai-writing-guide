@@ -3,19 +3,21 @@
   "path": "docs/sdlc/templates/security",
   "files": [
     "README.md",
+    "control-implementation-card.md",
     "data-classification-template.md",
+    "data-flow-brief-template.md",
     "dependency-policy-template.md",
     "manifest.md",
     "privacy-impact-assessment-template.md",
     "sbom-guidance.md",
     "secrets-management-policy-template.md",
     "security-requirements-template.md",
+    "security-test-case-card.md",
     "threat-model-template.md",
-    "vulnerability-management-plan-template.md",
     "threat-scenario-card.md",
-    "data-flow-brief-template.md",
-    "control-implementation-card.md",
-    "security-test-case-card.md"
+    "vulnerability-management-plan-template.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }

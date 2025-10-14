@@ -1,11 +1,15 @@
 {
-  "name": "Implementation Templates",
+  "name": "implementation",
   "path": "docs/sdlc/templates/implementation",
   "files": [
     "README.md",
     "integration-build-plan-template.md",
-    "task-slice-card.md",
-    "integration-test-spec-card.md"
+    "integration-test-spec-card.md",
+    "manifest.json",
+    "manifest.md",
+    "task-slice-card.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }

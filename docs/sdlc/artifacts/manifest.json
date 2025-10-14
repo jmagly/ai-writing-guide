@@ -1,9 +1,12 @@
 {
-  "name": "SDLC Artifacts",
+  "name": "artifacts",
   "path": "docs/sdlc/artifacts",
   "files": [
-    "README.md"
+    "README.md",
+    "manifest.json",
+    "manifest.md"
   ],
-  "ignore": ["manifest.json", "sample-project"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

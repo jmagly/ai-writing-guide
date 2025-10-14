@@ -1,5 +1,20 @@
 # Alert Runbook Card
 
+## Metadata
+- ID: ALERT-<id>
+- Owner: Reliability Engineer (docs/agents/sdlc/reliability-engineer.md)
+- Contributors: Support Lead (docs/agents/support-lead.md)
+- Reviewers: Project Manager (docs/agents/project-manager.md)
+- Team: <team>
+- Status: <draft/in-progress/blocked/approved/done>
+- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
+- Related: SLI-<id>, RUN-<id>
+- Links: <paths/urls>
+
+## Related templates
+- docs/sdlc/templates/reliability/sli-card.md
+- docs/sdlc/templates/deployment/runbook-entry-card.md
+
 ## Alert
 - Name and severity
 
@@ -13,4 +28,3 @@
 
 ## Verification
 - Success indicators and rollback
-

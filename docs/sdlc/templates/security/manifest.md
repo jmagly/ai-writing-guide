@@ -1,12 +1,18 @@
 # Directory Manifest
 
 ## Files
-- threat-model-template.md — scope, STRIDE, mitigations
-- security-requirements-template.md — controls and verification
-- secrets-management-policy-template.md — storage, rotation, auditing
-- dependency-policy-template.md — SBOM and updates
-- vulnerability-management-plan-template.md — intake and SLAs
-- sbom-guidance.md — SBOM content and review
-- privacy-impact-assessment-template.md — PIA/DPIA
-- data-classification-template.md — classes and handling rules
+- README.md
+- control-implementation-card.md
+- data-classification-template.md
+- data-flow-brief-template.md
+- dependency-policy-template.md
+- manifest.md
+- privacy-impact-assessment-template.md
+- sbom-guidance.md
+- secrets-management-policy-template.md
+- security-requirements-template.md
+- security-test-case-card.md
+- threat-model-template.md
+- threat-scenario-card.md
+- vulnerability-management-plan-template.md
 

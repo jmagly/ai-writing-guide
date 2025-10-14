@@ -1,5 +1,20 @@
 # Threat Scenario Card
 
+## Metadata
+- ID: SEC-THR-<id>
+- Owner: Security Architect (docs/agents/sdlc/security-architect.md)
+- Contributors: Test Engineer (docs/agents/test-engineer.md)
+- Reviewers: Executive Orchestrator (docs/agents/sdlc/executive-orchestrator.md)
+- Team: <team>
+- Status: <draft/in-progress/blocked/approved/done>
+- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
+- Related: REQ-<id>, DES-<id>, CTRL-<id>
+- Links: <paths/urls>
+
+## Related templates
+- docs/sdlc/templates/security/security-test-case-card.md
+- docs/sdlc/templates/security/control-implementation-card.md
+
 ## Identifier
 - Scenario: <name>
 
@@ -11,4 +26,3 @@ Actor, asset, entry point, and objective.
 
 ## Mitigations
 - Controls and residual risk
-

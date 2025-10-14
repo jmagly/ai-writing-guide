@@ -3,8 +3,22 @@
   "path": "docs/sdlc/templates",
   "files": [
     "README.md",
+    "card-metadata-standard.md",
     "manifest.md"
   ],
-  "ignore": ["manifest.json", "business-modeling", "requirements", "analysis-design", "implementation", "test", "deployment", "management", "configuration", "environments", "governance", "security", "reliability"]
+  "ignore": [
+    "manifest.json",
+    "business-modeling",
+    "requirements",
+    "analysis-design",
+    "implementation",
+    "test",
+    "deployment",
+    "management",
+    "configuration",
+    "environments",
+    "governance",
+    "security",
+    "reliability"
+  ]
 }
-

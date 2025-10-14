@@ -1,9 +1,12 @@
 {
-  "name": "Docs",
+  "name": "docs",
   "path": "docs",
   "files": [
-    "README.md"
+    "README.md",
+    "manifest.json",
+    "manifest.md"
   ],
-  "ignore": ["manifest.json", "agents", "commands", "sdlc", "subagents"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

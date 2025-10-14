@@ -1,8 +1,11 @@
 # Directory Manifest
 
 ## Files
-- decision-matrix-template.md — structured trade-off analysis
-- raci-template.md — responsibility assignments
-- escalation-matrix-template.md — escalation triggers and contacts
-- risk-acceptance-template.md — formal acceptance record
+- README.md
+- adr-template.md
+- decision-matrix-template.md
+- escalation-matrix-template.md
+- manifest.md
+- raci-template.md
+- risk-acceptance-template.md
 

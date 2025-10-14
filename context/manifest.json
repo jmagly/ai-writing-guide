@@ -9,5 +9,7 @@
     "quick-reference.md",
     "technical-depth.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }

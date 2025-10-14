@@ -2,6 +2,8 @@
   "name": ".github",
   "path": ".github",
   "files": [],
-  "ignore": ["manifest.json", "workflows"]
+  "ignore": [
+    "manifest.json",
+    "workflows"
+  ]
 }
-

@@ -1,9 +1,12 @@
 {
-  "name": "Sample Reliability",
+  "name": "reliability",
   "path": "docs/sdlc/artifacts/sample-project/reliability",
   "files": [
+    "manifest.json",
+    "manifest.md",
     "slo-sli.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

@@ -13,6 +13,7 @@ This directory provides Markdown templates to support PLAN → ACT agent workflo
 - `management/` – Software development plans, iteration plans (formal/informal), iteration assessments, status assessments, risk management artifacts, measurement plans, business cases, quality assurance, development-organization assessments, and risk lists.
 - `configuration/` – Configuration management and problem resolution plans.
 - `environments/` – Development case plus discipline-specific guidelines (business modeling, use-case modeling, design, programming, testing).
+- `card-metadata-standard.md` – Standard metadata header for all cards (ownership, team, traceability).
 
 
 ## How to Use
@@ -25,3 +26,8 @@ This directory provides Markdown templates to support PLAN → ACT agent workflo
 - Align updates with `docs/sdlc/plan-act-sdlc.md` and `docs/sdlc/actors-and-templates.md`.
 - When adding new templates, update this README and the actors/roles catalogue.
 - Run Markdown linting to ensure formatting consistency.
+
+## Cards
+Cards are small, parallelizable work units with clear ownership and traceability. Each card should
+include the metadata header defined in `card-metadata-standard.md` and list the related templates
+it depends on.

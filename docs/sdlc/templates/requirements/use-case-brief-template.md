@@ -1,5 +1,21 @@
 # Use-Case Brief
 
+## Metadata
+- ID: UC-<num>
+- Owner: Requirements Analyst (docs/agents/requirements-analyst.md)
+- Contributors: System Analyst (docs/agents/system-analyst.md)
+- Reviewers: Requirements Reviewer (docs/agents/requirements-reviewer.md)
+- Team: <team>
+- Stakeholders: <list>
+- Status: <draft/in-progress/blocked/approved/done>
+- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
+- Related: REQ-<id>, ADR-<id>
+- Links: <paths/urls>
+
+## Related templates
+- docs/sdlc/templates/requirements/use-case-acceptance-template.md
+- docs/sdlc/templates/requirements/data-contract-template.md
+
 ## Identifier
 - ID: UC-<num>
 - Name: <concise name>
@@ -17,4 +33,3 @@ One paragraph describing actor, trigger, and value.
 
 ## Notes
 - Open questions, risks, or dependencies
-

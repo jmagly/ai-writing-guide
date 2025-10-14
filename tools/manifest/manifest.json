@@ -1,11 +1,16 @@
 {
-  "name": "Manifest Tools",
+  "name": "manifest",
   "path": "tools/manifest",
   "files": [
     "README.md",
     "check-manifests.mjs",
     "generate-manifest.mjs",
-    "pre-commit.sample"
+    "manifest.json",
+    "manifest.md",
+    "pre-commit.sample",
+    "sync-manifests.mjs"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }

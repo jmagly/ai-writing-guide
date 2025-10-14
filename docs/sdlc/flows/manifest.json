@@ -1,5 +1,5 @@
 {
-  "name": "SDLC Operator Flows",
+  "name": "flows",
   "path": "docs/sdlc/flows",
   "files": [
     "README.md",
@@ -8,8 +8,11 @@
     "discovery-track-template.md",
     "handoff-checklist-template.md",
     "iteration-dual-track-template.md",
+    "manifest.json",
+    "manifest.md",
     "parallelization-guide.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

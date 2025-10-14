@@ -8,6 +8,9 @@
     "plan-act-sdlc.md",
     "prompt-templates.md"
   ],
-  "ignore": ["manifest.json", "artifacts", "templates"]
+  "ignore": [
+    "manifest.json",
+    "artifacts",
+    "templates"
+  ]
 }
-

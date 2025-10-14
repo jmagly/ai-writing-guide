@@ -3,10 +3,11 @@
   "path": "docs/agents/sdlc",
   "files": [
     "README.md",
+    "api-designer.md",
     "context-librarian.md",
     "decision-matrix-expert.md",
-    "intake-coordinator.md",
     "executive-orchestrator.md",
+    "intake-coordinator.md",
     "manifest.md",
     "privacy-officer.md",
     "raci-expert.md",
@@ -15,5 +16,7 @@
     "security-gatekeeper.md",
     "traceability-manager.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }

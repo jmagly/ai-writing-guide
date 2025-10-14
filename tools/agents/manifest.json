@@ -1,0 +1,10 @@
+{
+  "name": "Agent Tools",
+  "path": "tools/agents",
+  "files": [
+    "README.md",
+    "deploy-agents.mjs"
+  ],
+  "ignore": ["manifest.json"]
+}
+

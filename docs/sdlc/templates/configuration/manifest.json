@@ -1,11 +1,15 @@
 {
-  "name": "Configuration Templates",
+  "name": "configuration",
   "path": "docs/sdlc/templates/configuration",
   "files": [
     "README.md",
+    "change-request-card.md",
     "configuration-management-plan-template.md",
-    "problem-resolution-plan-template.md",
-    "change-request-card.md"
+    "manifest.json",
+    "manifest.md",
+    "problem-resolution-plan-template.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }

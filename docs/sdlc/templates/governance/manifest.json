@@ -3,12 +3,14 @@
   "path": "docs/sdlc/templates/governance",
   "files": [
     "README.md",
+    "adr-template.md",
     "decision-matrix-template.md",
     "escalation-matrix-template.md",
     "manifest.md",
     "raci-template.md",
-    "risk-acceptance-template.md",
-    "adr-template.md"
+    "risk-acceptance-template.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }

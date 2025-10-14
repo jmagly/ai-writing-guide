@@ -1,10 +1,13 @@
 {
-  "name": "Subagents",
+  "name": "subagents",
   "path": "docs/subagents",
   "files": [
     "README.md",
-    "comprehensive-guide.md"
+    "comprehensive-guide.md",
+    "manifest.json",
+    "manifest.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

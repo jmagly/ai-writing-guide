@@ -3,13 +3,15 @@
   "path": "docs/sdlc/templates/reliability",
   "files": [
     "README.md",
+    "alert-runbook-card.md",
+    "chaos-experiment-card.md",
     "chaos-experiment-plan-template.md",
     "manifest.md",
     "operational-readiness-review-template.md",
-    "slo-sli-template.md",
     "sli-card.md",
-    "alert-runbook-card.md",
-    "chaos-experiment-card.md"
+    "slo-sli-template.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }

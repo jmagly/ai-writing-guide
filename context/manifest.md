@@ -1,9 +1,10 @@
 # Directory Manifest
 
 ## Files
-- README.md — overview and usage
-- academic-voice.md — academic tone calibration
-- executive-voice.md — executive tone calibration
-- quick-reference.md — quick writing checks
-- technical-depth.md — depth and specificity guidance
+- README.md
+- academic-voice.md
+- executive-voice.md
+- manifest.md
+- quick-reference.md
+- technical-depth.md
 

@@ -6,5 +6,10 @@
     "README.md",
     "manifest.md"
   ],
-  "ignore": ["manifest.json", "examples", "templates", "sdlc"]
+  "ignore": [
+    "manifest.json",
+    "examples",
+    "templates",
+    "sdlc"
+  ]
 }

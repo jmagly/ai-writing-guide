@@ -1,9 +1,12 @@
 {
-  "name": "Index Tools",
+  "name": "index",
   "path": "tools/index",
   "files": [
-    "README.md"
+    "README.md",
+    "manifest.json",
+    "manifest.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

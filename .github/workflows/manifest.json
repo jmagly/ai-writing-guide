@@ -2,8 +2,10 @@
   "name": "GitHub Workflows",
   "path": ".github/workflows",
   "files": [
-    "manifest-lint.yml"
+    "manifest-lint.yml",
+    "markdownlint.yml"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

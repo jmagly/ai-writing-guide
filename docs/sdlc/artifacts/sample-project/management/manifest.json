@@ -1,9 +1,12 @@
 {
-  "name": "Sample Management",
+  "name": "management",
   "path": "docs/sdlc/artifacts/sample-project/management",
   "files": [
-    "iteration-plan-informal.md"
+    "iteration-plan-informal.md",
+    "manifest.json",
+    "manifest.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

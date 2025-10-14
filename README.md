@@ -38,6 +38,27 @@ Follow the guidelines in `CLAUDE.md` and reference the validation rules before g
 ### For Content Reviewers
 Use the validation checklists and examples to assess AI-generated content quality.
 
+## Agent Deployment
+
+Use the shared agent pool to bootstrap projects quickly by copying agents into a project's `.claude/agents` directory.
+
+- Quick deploy (from this repo root):
+  - `node tools/agents/deploy-agents.mjs`
+
+- Options:
+  - `--source <path>`: path to this repo (defaults to this repo)
+  - `--target <path>`: project root that will receive `.claude/agents` (defaults to current directory)
+  - `--dry-run`: preview copies without writing
+  - `--force`: overwrite on conflicts (otherwise SDLC agents get a `-sdlc` suffix)
+
+- Behavior:
+  - Copies all Markdown agents from `docs/agents/` and `docs/agents/sdlc/` into `.claude/agents` (flat).
+  - Creates `.claude/agents` if it does not exist.
+  - Filename conflicts are resolved by suffixing SDLC copies unless `--force`.
+
+Tip: add a shell alias for convenience:
+`alias deploy_agents='node /path/to/ai-writing-guide/tools/agents/deploy-agents.mjs'`
+
 ## Key Principles
 
 1. **Accuracy First** - Never invent facts or embellish details

@@ -1,11 +1,14 @@
 {
-  "name": "Examples",
+  "name": "examples",
   "path": "examples",
   "files": [
     "README.md",
+    "manifest.json",
+    "manifest.md",
     "rewrite-exercises.md",
     "technical-writing.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

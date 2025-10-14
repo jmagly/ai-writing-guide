@@ -1,5 +1,5 @@
 {
-  "name": "Business Modeling Templates",
+  "name": "business-modeling",
   "path": "docs/sdlc/templates/business-modeling",
   "files": [
     "README.md",
@@ -9,9 +9,12 @@
     "business-use-case-realization-template.md",
     "business-use-case-spec-template.md",
     "business-vision-template.md",
+    "manifest.json",
+    "manifest.md",
     "supplementary-business-spec-template.md",
     "target-organization-assessment-template.md"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-
