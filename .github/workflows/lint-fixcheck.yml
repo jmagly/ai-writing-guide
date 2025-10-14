@@ -1,0 +1,38 @@
+name: Lint Fix Drift
+
+on:
+  push:
+    paths:
+      - '**/*.md'
+      - 'tools/lint/**'
+  pull_request:
+    paths:
+      - '**/*.md'
+      - 'tools/lint/**'
+
+jobs:
+  fix-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check table spacing (MD058)
+        run: |
+          OUT=$(node tools/lint/fix-md58.mjs --target . || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "would-fix"; then
+            echo "MD058 drift detected. Run: node tools/lint/fix-md58.mjs --target . --write" >&2
+            exit 1
+          fi
+      - name: Check code fences (MD031/MD040)
+        run: |
+          OUT=$(node tools/lint/fix-md-codefences.mjs --target . || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "would-fix"; then
+            echo "Code fence drift detected. Run: node tools/lint/fix-md-codefences.mjs --target . --write" >&2
+            exit 1
+          fi
+

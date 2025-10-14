@@ -7,7 +7,7 @@
  * target project directory.
  *
  * Usage:
- *   node tools/install/new-project.mjs [--name <project-name>] [--no-agents]
+ *   node tools/install/new-project.mjs [--name <project-name>] [--no-agents] [--provider <claude|openai>]
  */
 
 import fs from 'fs';
@@ -17,12 +17,14 @@ function parseArgs() {
   const args = process.argv.slice(2);
   let name = path.basename(process.cwd());
   let withAgents = true; // deploy agents by default
+  let provider = 'claude';
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--name' && args[i + 1]) name = args[++i];
     else if (a === '--no-agents') withAgents = false;
+    else if (a === '--provider' && args[i + 1]) provider = String(args[++i]).toLowerCase();
   }
-  return { name, withAgents };
+  return { name, withAgents, provider };
 }
 
 function ensureDir(d) { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); }
@@ -34,7 +36,7 @@ function copyFile(src, dest) {
 }
 
 (function main() {
-  const { name, withAgents } = parseArgs();
+  const { name, withAgents, provider } = parseArgs();
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
   const repoRoot = path.resolve(scriptDir, '..', '..');
 
@@ -79,7 +81,9 @@ function copyFile(src, dest) {
     const deployPath = path.join(repoRoot, 'tools', 'agents', 'deploy-agents.mjs');
     if (fs.existsSync(deployPath)) {
       const { spawnSync } = await import('node:child_process');
-      const res = spawnSync('node', [deployPath], { stdio: 'inherit' });
+      const args = ['--provider', provider];
+      if (provider === 'openai') args.push('--as-agents-md');
+      const res = spawnSync('node', [deployPath, ...args], { stdio: 'inherit' });
       if (res.status !== 0) {
         console.warn('Agent deployment returned non-zero status');
       }
@@ -118,5 +122,5 @@ function copyFile(src, dest) {
     }
   }
 
-  console.log(`Scaffold complete. Files created: ${created}`);
+  console.log(`Scaffold complete. Files created: ${created}. Provider: ${provider}.`);
 })();
