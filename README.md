@@ -81,6 +81,11 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guid
   --prefix $HOME/.local/share/ai-writing-guide
 ```
 
+Node.js requirement:
+- Node >= 18.20.8 (Latest LTS: Hydrogen).
+- Use `--auto-install-node` to let the installer attempt setup via your package manager (NodeSource/Homebrew).
+- If installation cannot be automated, the installer prints NVM/NodeSource instructions.
+
 ## Key Principles
 
 1. **Accuracy First** - Never invent facts or embellish details
