@@ -5,6 +5,7 @@ Validate that each directory with a `manifest.json` lists every non-hidden file 
 Supports `--fix` to add missing entries automatically.
 
 ## Schema (manifest.json)
+
 ```json
 {
   "name": "Directory name",
@@ -15,6 +16,7 @@ Supports `--fix` to add missing entries automatically.
 ```
 
 ## Usage
+
 ```bash
 node tools/manifest/check-manifests.mjs                  # lint from repo root
 node tools/manifest/check-manifests.mjs docs/sdlc --fix  # fix manifests under docs/sdlc

@@ -299,7 +299,8 @@ Test prompts with:
 ## Usage Examples
 
 ### Technical Writing Prompt
-```
+
+```text
 Optimize this prompt:
 "Write a blog post about microservices"
 
@@ -312,7 +313,8 @@ Into a prompt that generates:
 ```
 
 ### Code Generation Prompt
-```
+
+```text
 Enhance this prompt:
 "Create a user authentication system"
 
@@ -325,7 +327,8 @@ To ensure:
 ```
 
 ### Analysis Prompt
-```
+
+```text
 Improve this prompt:
 "Analyze the pros and cons of cloud migration"
 
@@ -340,6 +343,7 @@ To produce:
 ## Optimization Patterns
 
 ### Adding Specificity
+
 ```markdown
 ❌ BEFORE:
 "Write about database optimization"
@@ -354,6 +358,7 @@ To produce:
 ```
 
 ### Injecting Authenticity
+
 ```markdown
 ❌ BEFORE:
 "Explain containerization benefits"
@@ -368,6 +373,7 @@ To produce:
 ```
 
 ### Preventing AI Patterns
+
 ```markdown
 ADD TO EVERY PROMPT:
 
@@ -387,6 +393,7 @@ Instead:
 ## Multi-Shot Example Structure
 
 ### Pattern for Technical Content
+
 ```markdown
 EXAMPLE 1 (Good):
 "The migration took 3 months longer than planned. PostgreSQL's JSONB turned out to be slower than MongoDB for our workload - queries went from 50ms to 180ms. We ended up keeping MongoDB for the analytics pipeline."
@@ -402,6 +409,7 @@ Why this fails: Vague, uses banned phrases, no specifics, sounds like marketing.
 ## Sophistication Calibration
 
 ### Technical Domain
+
 ```markdown
 Maintain sophisticated vocabulary:
 - "idempotent operations" not "operations that can be repeated"
@@ -413,6 +421,7 @@ But explain when needed:
 ```
 
 ### Executive Domain
+
 ```markdown
 Balance sophistication with clarity:
 - "ROI of 340% over 24 months" not "good returns"
@@ -426,6 +435,7 @@ But stay grounded:
 ## Model-Specific Optimizations
 
 ### Claude Optimization
+
 ```markdown
 Claude responds well to:
 - Explicit "never use" lists
@@ -437,6 +447,7 @@ Add: "Think through this step by step, explaining your reasoning."
 ```
 
 ### GPT-4 Optimization
+
 ```markdown
 GPT-4 benefits from:
 - Structured output formats
@@ -450,6 +461,7 @@ Add: "As a senior engineer with 10+ years experience..."
 ## Validation Rubric
 
 ### Scoring Framework
+
 ```markdown
 Create outputs that score:
 
@@ -498,7 +510,8 @@ Minimum passing score: 80/100
 ## Testing Strategy
 
 ### A/B Testing
-```
+
+```text
 1. Generate output with original prompt
 2. Generate output with optimized prompt
 3. Run Writing Validator on both
@@ -507,7 +520,8 @@ Minimum passing score: 80/100
 ```
 
 ### Edge Case Testing
-```
+
+```text
 Test prompts with:
 - Minimal context
 - Contradictory requirements

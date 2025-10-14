@@ -211,7 +211,8 @@ For complex writing tasks, leverage specialized agents:
 **Documentation**: See `docs/subagents/comprehensive-guide.md`
 
 **Quick Start**:
-```
+
+```text
 # For content validation
 Use the Writing Validator agent from docs/agents/writing-validator.md
 
@@ -251,7 +252,8 @@ Use the Content Diversifier agent from docs/agents/content-diversifier.md
 
 ### Parallel Processing
 Launch multiple agents for comprehensive work:
-```
+
+```text
 1. Writing Validator - Check current content
 2. Content Diversifier - Generate alternatives
 3. Prompt Optimizer - Improve future outputs

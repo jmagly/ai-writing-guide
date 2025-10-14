@@ -120,7 +120,8 @@ Brief summary with:
 ## Example Review Comments
 
 ### Good Review Comment
-```
+
+```text
 file: src/auth/validator.js:45
 issue: SQL Injection vulnerability
 current: `SELECT * FROM users WHERE id = '${userId}'`
@@ -129,7 +130,8 @@ reason: Direct string interpolation allows SQL injection attacks
 ```
 
 ### Poor Review Comment
-```
+
+```text
 "Code needs improvement" - too vague
 "Don't do this" - not constructive
 "Wrong approach" - missing alternative

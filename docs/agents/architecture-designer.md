@@ -107,6 +107,7 @@ Design migration from monolith to microservices:
 ## Architecture Patterns
 
 ### Microservices Architecture
+
 ```mermaid
 graph TB
     Gateway[API Gateway]
@@ -125,6 +126,7 @@ graph TB
 ```
 
 ### Event-Driven Architecture
+
 ```mermaid
 graph LR
     Producer[Event Producers]
@@ -140,7 +142,8 @@ graph LR
 ```
 
 ### Layered Architecture
-```
+
+```text
 ┌─────────────────────────┐
 │   Presentation Layer    │
 ├─────────────────────────┤
@@ -212,6 +215,7 @@ graph LR
 ## Deployment Strategies
 
 ### Container Orchestration
+
 ```yaml
 # Kubernetes deployment example
 apiVersion: apps/v1
@@ -249,6 +253,7 @@ spec:
 ## Documentation Standards
 
 ### ADR Template
+
 ```markdown
 # ADR-001: [Decision Title]
 
@@ -306,7 +311,8 @@ Accepted/Rejected/Deprecated
 ## Usage Examples
 
 ### E-Commerce Platform
-```
+
+```text
 Design architecture for an e-commerce platform:
 - Expected: 100K daily active users
 - Features: Product catalog, cart, checkout, payments
@@ -316,7 +322,8 @@ Design architecture for an e-commerce platform:
 ```
 
 ### Real-Time Analytics System
-```
+
+```text
 Design architecture for real-time analytics:
 - Data volume: 1M events/second
 - Processing: Stream processing with ML inference
@@ -326,7 +333,8 @@ Design architecture for real-time analytics:
 ```
 
 ### Microservices Migration
-```
+
+```text
 Design migration from monolith to microservices:
 - Current: Django monolith with PostgreSQL
 - Target: Containerized microservices
@@ -338,6 +346,7 @@ Design migration from monolith to microservices:
 ## Architecture Patterns
 
 ### Microservices Architecture
+
 ```mermaid
 graph TB
     Gateway[API Gateway]
@@ -356,6 +365,7 @@ graph TB
 ```
 
 ### Event-Driven Architecture
+
 ```mermaid
 graph LR
     Producer[Event Producers]
@@ -371,7 +381,8 @@ graph LR
 ```
 
 ### Layered Architecture
-```
+
+```text
 ┌─────────────────────────┐
 │   Presentation Layer    │
 ├─────────────────────────┤
@@ -443,6 +454,7 @@ graph LR
 ## Deployment Strategies
 
 ### Container Orchestration
+
 ```yaml
 # Kubernetes deployment example
 apiVersion: apps/v1
@@ -480,6 +492,7 @@ spec:
 ## Documentation Standards
 
 ### ADR Template
+
 ```markdown
 # ADR-001: [Decision Title]
 

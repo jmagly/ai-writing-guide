@@ -131,7 +131,7 @@ RETURN:
 
 While agents can't communicate directly, you can chain their outputs:
 
-```
+```text
 1. Research Agent → Generates implementation plan
 2. You review plan → Launch implementation agents
 3. Implementation Agents → Create code
@@ -311,6 +311,7 @@ Claude Code supports both custom slash commands and agents, each serving differe
 ### Creating Custom Commands
 
 #### Basic Command Structure
+
 ```markdown
 ---
 name: Command Name
@@ -331,6 +332,7 @@ color: blue
 - **Agents**: `.claude/agents/agent-name.md`
 
 #### Example: Code Review Command
+
 ```markdown
 ---
 name: Code Review
@@ -396,6 +398,7 @@ Configure in `~/.claude/settings.json`:
 ### Command Development Workflow
 
 #### 1. Planning
+
 ```yaml
 define:
   purpose: "What problem does this solve?"
@@ -406,6 +409,7 @@ define:
 ```
 
 #### 2. Implementation
+
 ```bash
 # Create command file
 touch .claude/commands/my-command.md
@@ -417,6 +421,7 @@ touch .claude/commands/my-command.md
 ```
 
 #### 3. Security Considerations
+
 ```json
 // In .claude/settings.local.json
 {
@@ -464,12 +469,14 @@ As the subagent system evolves, expect:
 ## Quick Reference
 
 ### Launch Single Agent
-```
+
+```text
 Use Task tool with detailed prompt
 ```
 
 ### Launch Parallel Agents
-```
+
+```text
 Send single message with multiple Task tool calls
 ```
 

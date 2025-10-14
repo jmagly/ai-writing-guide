@@ -7,7 +7,8 @@ Equip PLAN → ACT coding agents with a complete lifecycle playbook so they can 
 - **Trigger**: User provides a short idea or problem statement.
 - **Roles**: Product Strategist, Vision Owner, Domain Expert (human or simulated agents).
 - **Prompt**:
-```
+
+```text
 Act as a product triad. Expand <idea> into:
 - problem statement and motivating context
 - target personas and scenarios
@@ -15,6 +16,7 @@ Act as a product triad. Expand <idea> into:
 - competitive or regulatory constraints
 Return an initial charter plus top unknowns for stakeholder review.
 ```
+
 - **Outputs**: Charter summary, success metrics, open questions log, stakeholder contacts.
 
 ## Lifecycle Phases and Major Milestones
@@ -45,7 +47,8 @@ the project or iteration context and record any tailoring in the Development Cas
 
 ## Detailed Phase Prompts
 1. **Inception Kickoff**
-```
+
+```text
 Role: Business analyst + vision owner + project manager.
 Goal: Shape the inception baseline.
 Instructions:
@@ -54,8 +57,10 @@ Instructions:
 - outline initial risk list and phase plan
 Deliver: vision.md, business-case.md, risk-list.md, phase-plan-inception.md
 ```
+
 2. **Elaboration Planning**
-```
+
+```text
 Role: Software architect with requirements lead and configuration manager.
 Goal: Produce architectural baseline and iteration plans.
 Instructions:
@@ -65,8 +70,10 @@ Instructions:
 - record configuration management approach and environment tailoring
 Deliver: software-architecture.md, iteration-plan-elaboration.csv, cm-plan.md, development-case.md
 ```
+
 3. **Construction Execution Loop**
-```
+
+```text
 Role: Feature squad (design + implementation + test agents).
 Goal: Implement prioritized use cases.
 Instructions:
@@ -75,8 +82,10 @@ Instructions:
 - coordinate with deployment owner on integration build readiness
 Deliver: code changes, test evidence, iteration-assessment.md, integration-build-plan.md
 ```
+
 4. **Transition Preparation**
-```
+
+```text
 Role: Deployment manager, support lead, product owner.
 Goal: Ready the software for operational use.
 Instructions:

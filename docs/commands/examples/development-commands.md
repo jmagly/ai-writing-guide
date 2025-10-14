@@ -48,7 +48,8 @@ When given code to review:
 
 For each file reviewed, provide:
 
-```markdown
+```
+
 ## File: [filename]
 
 ### Critical Issues (Must Fix)
@@ -72,7 +73,8 @@ For each file reviewed, provide:
 
 ### Positive Patterns
 - [Good practices worth noting]
-```
+
+```text
 
 ## Input Handling
 
@@ -127,7 +129,8 @@ For the given source file or class:
 
 ## Test File Structure
 
-```[test-language]
+```
+
 describe('[ClassName/ModuleName]', () => {
   beforeEach(() => {
     // Common setup
@@ -161,7 +164,8 @@ describe('[ClassName/ModuleName]', () => {
     });
   });
 });
-```
+
+```text
 
 ## Edge Cases to Always Test
 
@@ -221,16 +225,19 @@ You create conventional commit messages that follow best practices and include c
 ## Commit Format
 
 ```
+
 <emoji> <type>(<scope>): <description>
 
 [Optional detailed description]
 [Optional breaking changes]
 [Optional issue references]
-```
+
+```text
 
 ## Examples
 
 ```
+
 ✨ feat(auth): add OAuth2 integration
 
 Implement Google and GitHub OAuth2 providers
@@ -239,9 +246,11 @@ Implement Google and GitHub OAuth2 providers
 - Update user model for external IDs
 
 Closes #123
-```
+
+```text
 
 ```
+
 🐛 fix(payment): handle expired credit cards
 
 Add proper error handling for expired payment methods
@@ -250,7 +259,8 @@ Add proper error handling for expired payment methods
 - Log payment failures for monitoring
 
 Fixes #456
-```
+
+```text
 
 If no argument provided, analyze staged changes and generate appropriate message.
 If argument provided, use it as the description and determine type from context.
@@ -293,7 +303,8 @@ You are a Technical Writer specializing in API documentation that developers act
 
 ## Documentation Format
 
-```markdown
+```
+
 # API Endpoint: [Method] [Path]
 
 ## Description
@@ -305,6 +316,7 @@ You are a Technical Writer specializing in API documentation that developers act
 ## Request
 
 ### Headers
+
 ```http
 Content-Type: application/json
 Authorization: Bearer <token>
@@ -317,6 +329,7 @@ Authorization: Bearer <token>
 | [param] | [type] | [yes/no] | [description] |
 
 ### Request Body
+
 ```json
 {
   "example": "request body",
@@ -327,6 +340,7 @@ Authorization: Bearer <token>
 ## Response
 
 ### Success Response (200)
+
 ```json
 {
   "data": {
@@ -342,6 +356,7 @@ Authorization: Bearer <token>
 ### Error Responses
 
 #### 400 Bad Request
+
 ```json
 {
   "error": {
@@ -358,6 +373,7 @@ Authorization: Bearer <token>
 ```
 
 #### 401 Unauthorized
+
 ```json
 {
   "error": {
@@ -370,6 +386,7 @@ Authorization: Bearer <token>
 ## Examples
 
 ### cURL
+
 ```bash
 curl -X POST https://api.example.com/users \\
   -H "Content-Type: application/json" \\
@@ -381,6 +398,7 @@ curl -X POST https://api.example.com/users \\
 ```
 
 ### JavaScript
+
 ```javascript
 const response = await fetch('https://api.example.com/users', {
   method: 'POST',
@@ -398,6 +416,7 @@ const data = await response.json();
 ```
 
 ### Python
+
 ```python
 import requests
 
@@ -423,7 +442,8 @@ data = response.json()
 
 ## Notes
 [Any additional information, caveats, or usage tips]
-```
+
+```text
 
 Focus on creating documentation that answers the questions developers actually ask.
 ```
@@ -478,7 +498,8 @@ When analyzing a Dockerfile:
 
 ## Optimization Report Format
 
-```markdown
+```
+
 # Docker Optimization Report
 
 ## Current Analysis
@@ -496,6 +517,7 @@ When analyzing a Dockerfile:
 ## Recommended Optimizations
 
 ### Multi-stage Build Example
+
 ```dockerfile
 # Build stage
 FROM node:18-alpine AS builder
@@ -517,6 +539,7 @@ CMD ["node", "dist/server.js"]
 ```
 
 ### Security Improvements
+
 ```dockerfile
 # Use specific version tags
 FROM node:18.17.0-alpine3.18
@@ -552,7 +575,8 @@ ENTRYPOINT ["dumb-init", "--"]
 - **Build Time**: [X]% faster
 - **Security**: [X] vulnerabilities fixed
 - **Cache Hit Rate**: [X]% improvement
-```
+
+```text
 
 Provide specific, actionable recommendations that have measurable impact.
 ```
@@ -590,7 +614,8 @@ Based on the project type, create:
 ## Project Types
 
 ### Node.js Project
-```bash
+```
+
 # Create directory structure
 mkdir -p {src,tests,docs,scripts}
 
@@ -600,12 +625,14 @@ npm install --save-dev eslint prettier husky lint-staged jest
 npm install --save express helmet cors
 
 # Configuration files
-```
+
+```text
 
 Create these files:
 
 **`.eslintrc.js`**
-```javascript
+```
+
 module.exports = {
   env: {
     node: true,
@@ -622,10 +649,12 @@ module.exports = {
     'no-unused-vars': 'error'
   }
 };
-```
+
+```text
 
 **`.prettierrc`**
-```json
+```
+
 {
   "semi": true,
   "trailingComma": "es5",
@@ -633,10 +662,12 @@ module.exports = {
   "printWidth": 80,
   "tabWidth": 2
 }
-```
+
+```text
 
 **`jest.config.js`**
-```javascript
+```
+
 module.exports = {
   testEnvironment: 'node',
   collectCoverageFrom: [
@@ -652,12 +683,14 @@ module.exports = {
     }
   }
 };
-```
+
+```text
 
 ### Python Project
 Create virtual environment and structure:
 
-```bash
+```
+
 # Virtual environment
 python -m venv venv
 source venv/bin/activate  # or venv\\Scripts\\activate on Windows
@@ -667,10 +700,12 @@ mkdir -p {src,tests,docs,scripts}
 
 # Dependencies
 pip install black flake8 pytest pytest-cov
-```
+
+```text
 
 **`pyproject.toml`**
-```toml
+```
+
 [tool.black]
 line-length = 88
 target-version = ['py39']
@@ -681,7 +716,8 @@ addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
 
 [tool.coverage.run]
 source = ["src"]
-```
+
+```text
 
 ## Common Files for All Projects
 
@@ -696,7 +732,8 @@ source = ["src"]
 ## CI/CD Pipeline
 
 **`.github/workflows/ci.yml`**
-```yaml
+```
+
 name: CI
 on: [push, pull_request]
 
@@ -721,7 +758,8 @@ jobs:
 
       - name: Check coverage
         run: [coverage command]
-```
+
+```text
 
 ## Documentation Templates
 
@@ -748,6 +786,7 @@ Provide a complete, production-ready project structure that follows industry bes
 ## Usage Examples
 
 ### Basic Command Usage
+
 ```bash
 # Review specific file
 /project:review src/auth.js
@@ -772,6 +811,7 @@ Provide a complete, production-ready project structure that follows industry bes
 ```
 
 ### Command Chaining
+
 ```bash
 # Complete development workflow
 /project:review staged

@@ -7,6 +7,7 @@ curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tool
 ```
 
 Options:
+
 ```bash
 # View help
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh)" -- --help
@@ -28,6 +29,7 @@ Aliases installed (unified CLI):
   - The CLI auto-updates the installed framework (git pull) before executing.
 
 Scaffolding:
+
 ```bash
 # In a new/empty project directory
 aiwg -new              # create docs/sdlc/intake/*.md and a README; deploy agents; init git

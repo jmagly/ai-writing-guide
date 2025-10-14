@@ -15,6 +15,7 @@ minimal changes. The primary difference is the `model` value in the YAML frontma
   - efficiency: `gpt-5-codex`
 
 Use the CLI to deploy agents for your target provider while overriding model names if needed:
+
 ```bash
 # Claude
 aiwg -deploy-agents --provider claude

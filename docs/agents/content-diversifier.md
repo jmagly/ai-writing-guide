@@ -282,7 +282,8 @@ Generate intentionally bad examples that:
 ## Usage Examples
 
 ### Generate More Examples
-```
+
+```text
 Create 10 more examples of AI patterns vs authentic writing for:
 - DevOps contexts
 - Data science projects
@@ -292,7 +293,8 @@ Focus on different failure modes in each.
 ```
 
 ### Create Persona Voices
-```
+
+```text
 Generate 5 distinct developer personas:
 - Burned-out senior dev
 - Enthusiastic bootcamp grad
@@ -303,7 +305,8 @@ Show how each would describe the same API bug.
 ```
 
 ### Industry Variations
-```
+
+```text
 Create writing examples for:
 - Government contractors
 - Game developers

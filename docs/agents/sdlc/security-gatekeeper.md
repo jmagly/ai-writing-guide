@@ -20,6 +20,7 @@ required actions for a go/no-go decision.
 - `security-gate-report.md` with status and remediation plan
 
 ## Embedded Gate Checklist
+
 ```markdown
 # Security Gate
 

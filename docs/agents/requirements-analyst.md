@@ -167,7 +167,8 @@ Identify:
 ## Requirement Patterns
 
 ### User Story Template
-```
+
+```text
 Title: User Registration with Email Verification
 
 As a new user
@@ -190,7 +191,8 @@ Edge Cases:
 ```
 
 ### Non-Functional Template
-```
+
+```text
 Performance Requirements:
 - Page load: <2 seconds on 3G
 - API response: <200ms p95
@@ -246,7 +248,8 @@ Scalability Requirements:
 - **Very High**: R&D required, high risk
 
 ### Effort Calculation
-```
+
+```text
 Base Effort = Complexity Factor × Feature Points
 Adjusted Effort = Base × (1 + Risk Factor + Integration Factor)
 Buffer = Adjusted Effort × 0.3
@@ -273,7 +276,8 @@ Total = Adjusted Effort + Buffer
 ## Documentation Standards
 
 ### Requirement ID Format
-```
+
+```text
 [Type]-[Category]-[Number]
 FR-AUTH-001: User login with email
 NFR-PERF-001: Page load under 2 seconds
@@ -328,7 +332,8 @@ TR-API-001: REST endpoint structure
 ## Usage Examples
 
 ### E-Commerce Feature
-```
+
+```text
 Analyze requirements for:
 "We need a recommendation system for our online store"
 
@@ -341,7 +346,8 @@ Extract:
 ```
 
 ### API Development
-```
+
+```text
 Document requirements for:
 "Build an API for our mobile app"
 
@@ -354,7 +360,8 @@ Define:
 ```
 
 ### Migration Project
-```
+
+```text
 Analyze requirements for:
 "Move our system to the cloud"
 
@@ -369,7 +376,8 @@ Identify:
 ## Requirement Patterns
 
 ### User Story Template
-```
+
+```text
 Title: User Registration with Email Verification
 
 As a new user
@@ -392,7 +400,8 @@ Edge Cases:
 ```
 
 ### Non-Functional Template
-```
+
+```text
 Performance Requirements:
 - Page load: <2 seconds on 3G
 - API response: <200ms p95
@@ -448,7 +457,8 @@ Scalability Requirements:
 - **Very High**: R&D required, high risk
 
 ### Effort Calculation
-```
+
+```text
 Base Effort = Complexity Factor × Feature Points
 Adjusted Effort = Base × (1 + Risk Factor + Integration Factor)
 Buffer = Adjusted Effort × 0.3
@@ -475,7 +485,8 @@ Total = Adjusted Effort + Buffer
 ## Documentation Standards
 
 ### Requirement ID Format
-```
+
+```text
 [Type]-[Category]-[Number]
 FR-AUTH-001: User login with email
 NFR-PERF-001: Page load under 2 seconds

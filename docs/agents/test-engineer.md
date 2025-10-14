@@ -102,6 +102,7 @@ Include error scenarios and edge cases.
 ## Test Patterns
 
 ### Unit Test Structure
+
 ```javascript
 describe('ComponentName', () => {
   let component;
@@ -137,6 +138,7 @@ describe('ComponentName', () => {
 ```
 
 ### Integration Test Structure
+
 ```javascript
 describe('API Endpoints', () => {
   let app;
@@ -200,6 +202,7 @@ describe('API Endpoints', () => {
 ## Test Data Strategies
 
 ### Factories
+
 ```javascript
 const userFactory = (overrides = {}) => ({
   id: faker.datatype.uuid(),
@@ -211,6 +214,7 @@ const userFactory = (overrides = {}) => ({
 ```
 
 ### Fixtures
+
 ```javascript
 const fixtures = {
   users: [
@@ -264,7 +268,8 @@ const fixtures = {
 ## Usage Examples
 
 ### Unit Test Generation
-```
+
+```text
 Generate unit tests for the UserService class in src/services/UserService.js:
 - Mock database connections
 - Test all CRUD operations
@@ -274,7 +279,8 @@ Generate unit tests for the UserService class in src/services/UserService.js:
 ```
 
 ### API Integration Tests
-```
+
+```text
 Create integration tests for the REST API endpoints in src/routes/api/:
 - Test authentication flows
 - Validate request/response schemas
@@ -284,7 +290,8 @@ Create integration tests for the REST API endpoints in src/routes/api/:
 ```
 
 ### E2E Test Scenarios
-```
+
+```text
 Design end-to-end tests for the checkout flow:
 1. User adds items to cart
 2. Applies discount code
@@ -297,6 +304,7 @@ Include error scenarios and edge cases.
 ## Test Patterns
 
 ### Unit Test Structure
+
 ```javascript
 describe('ComponentName', () => {
   let component;
@@ -332,6 +340,7 @@ describe('ComponentName', () => {
 ```
 
 ### Integration Test Structure
+
 ```javascript
 describe('API Endpoints', () => {
   let app;
@@ -395,6 +404,7 @@ describe('API Endpoints', () => {
 ## Test Data Strategies
 
 ### Factories
+
 ```javascript
 const userFactory = (overrides = {}) => ({
   id: faker.datatype.uuid(),
@@ -406,6 +416,7 @@ const userFactory = (overrides = {}) => ({
 ```
 
 ### Fixtures
+
 ```javascript
 const fixtures = {
   users: [

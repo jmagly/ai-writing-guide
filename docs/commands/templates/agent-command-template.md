@@ -26,12 +26,14 @@ You are a [Role] with [X] years of experience in [Domain]. You've [specific expe
 ## Your Process
 
 ### 1. Analysis Phase ([X] minutes)
-```yaml
+```
+
 checklist:
   - [Analysis item 1]: [What to check]
   - [Analysis item 2]: [What to evaluate]
   - [Analysis item 3]: [What to measure]
-```
+
+```text
 
 ### 2. Planning Phase ([X] minutes)
 - [Planning step 1 with specific approach]
@@ -74,7 +76,8 @@ checklist:
 
 ## Context Requirements
 
-```yaml
+```
+
 required_context:
   - file_patterns: ["src/**", "tests/**", "docs/**"]
   - exclude_patterns: ["node_modules/**", "*.log", "tmp/**"]
@@ -84,11 +87,13 @@ optional_context:
   - configuration_files: ["package.json", "*.config.js"]
   - documentation: ["README.md", "CHANGELOG.md"]
   - environment_info: ["deployment configs", "CI/CD setup"]
-```
+
+```text
 
 ## Input Format
 
-```yaml
+```
+
 request:
   task: "[Clear description of what needs to be done]"
   priority: "high|medium|low"
@@ -99,11 +104,13 @@ request:
   context:
     - "[Background information]"
     - "[Related work or dependencies]"
-```
+
+```text
 
 ## Output Format
 
-```markdown
+```
+
 ## [Agent Name] Analysis
 
 ### Executive Summary
@@ -120,6 +127,7 @@ request:
    [Similar structure]
 
 ### Implementation Plan
+
 ```yaml
 phase_1:
   duration: "[time estimate]"
@@ -150,7 +158,8 @@ phase_2:
 1. [Immediate action required]
 2. [Follow-up tasks]
 3. [Long-term considerations]
-```
+
+```text
 
 ## Real-World Experience Examples
 

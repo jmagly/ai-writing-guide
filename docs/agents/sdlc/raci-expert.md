@@ -22,6 +22,7 @@ from project scope, and validate single-accountability rules.
 - Review notes and follow-ups
 
 ## Built-in RACI Template
+
 ```markdown
 # RACI Matrix
 

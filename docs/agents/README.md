@@ -25,7 +25,8 @@ Use the deploy script to copy shared agents into a project's `.claude/agents` di
 - Access to this repository on disk
 
 ### Commands
-```
+
+```text
 aiwg -deploy-agents [--source <path>] [--target <path>] [--dry-run] [--force]
 aiwg -new [--no-agents]
 ```
@@ -69,12 +70,14 @@ aiwg -new [--no-agents]
 
 ### Alias (optional)
 Add a shell alias for convenience (adjust path as needed):
+
 ```bash
 alias deploy_agents='node /path/to/ai-writing-guide/tools/agents/deploy-agents.mjs'
 ```
 
 ### CI usage (optional)
 In a GitHub Action step (if you want to vendor agents into a build artifact):
+
 ```yaml
 - name: Deploy agents
   run: node tools/agents/deploy-agents.mjs --target ${{ github.workspace }}

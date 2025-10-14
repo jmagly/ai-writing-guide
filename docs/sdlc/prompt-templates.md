@@ -3,7 +3,8 @@
 Use these copy-ready prompts to drive PLAN → ACT agent workflows across the delivery lifecycle. Each block assumes the agent has access to the latest artifacts in `docs/sdlc/artifacts/` or equivalent context. When a prompt references an artifact, seed the agent with the matching template from `docs/sdlc/templates/`.
 
 ## 0. Idea Amplifier
-```
+
+```text
 Role: Product strategist, vision owner, domain expert trio.
 Goal: Expand <idea> into an inception-ready charter.
 Instructions:
@@ -15,7 +16,8 @@ Output: vision.md, stakeholder-map.md, success-metrics.yaml, questions.md
 ```
 
 ## 1. Inception Charter Sprint
-```
+
+```text
 Role: Business analyst with project manager.
 Goal: Baseline scope and business case for Inception.
 Instructions:
@@ -27,7 +29,8 @@ Output: business-case.md, mvp-scope.csv, phase-plan-inception.md, risk-list.md
 ```
 
 ## 2. Requirements & Stakeholder Workshops
-```
+
+```text
 Role: Requirements analyst, UX researcher, legal liaison.
 Goal: Elaborate critical requirements and traceability.
 Instructions:
@@ -39,7 +42,8 @@ Output: use-cases/, supplementary-spec.md, glossary.md, stakeholder-requests.csv
 ```
 
 ## 3. Elaboration Architecture Laboratory
-```
+
+```text
 Role: Software architect with operations liaison.
 Goal: Produce architectural baseline for Elaboration.
 Instructions:
@@ -51,7 +55,8 @@ Output: software-architecture.md, interface-contracts/, adr/, prototype-plan.md
 ```
 
 ## 4. Elaboration Iteration Planning
-```
+
+```text
 Role: Project manager and configuration manager.
 Goal: Tailor development case and iteration schedule.
 Instructions:
@@ -63,7 +68,8 @@ Output: iteration-plan-elaboration.csv, cm-plan.md, development-case.md, measure
 ```
 
 ## 5. Construction Feature Loop
-```
+
+```text
 Role: Feature squad (designer, developer, tester).
 Goal: Deliver a prioritized use case during Construction.
 Instructions:
@@ -76,7 +82,8 @@ Output: change-summary.md, test-report.json, iteration-assessment.md, traceabili
 ```
 
 ## 6. Construction Integration & Quality Gate
-```
+
+```text
 Role: Build engineer and QA lead.
 Goal: Maintain integration stability and quality benchmarks.
 Instructions:
@@ -88,7 +95,8 @@ Output: integration-build-plan.md, regression-log.csv, defect-report.xlsx, statu
 ```
 
 ## 7. Transition Deployment Playbook
-```
+
+```text
 Role: Deployment manager, support lead, training coordinator.
 Goal: Ready product for release during Transition.
 Instructions:
@@ -100,7 +108,8 @@ Output: deployment-plan.md, release-notes.md, support-runbook.md, training-kit.z
 ```
 
 ## 8. Transition Feedback & Roadmap Refresh
-```
+
+```text
 Role: Product operations and analytics team.
 Goal: Capture lessons and feed backlog post-release.
 Instructions:

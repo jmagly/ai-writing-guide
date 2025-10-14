@@ -53,31 +53,41 @@ When the user invokes this command with `/project:command-name [arguments]`:
 
 ## Output Format
 
-```[format-type]
-[Specific structure example]
 ```
+
+[Specific structure example]
+
+```text
 
 ## Examples
 
 ### Example 1: [Scenario Name]
-```bash
-/project:command-name input-example
 ```
+
+/project:command-name input-example
+
+```text
 
 **Expected Output:**
 ```
+
 [Sample output showing expected format]
-```
+
+```text
 
 ### Example 2: [Edge Case]
-```bash
-/project:command-name --option value
 ```
+
+/project:command-name --option value
+
+```text
 
 **Expected Output:**
 ```
+
 [Sample output for edge case]
-```
+
+```text
 
 ## Error Handling
 
@@ -171,6 +181,7 @@ Before deploying your command:
 ## Testing Your Command
 
 ### 1. Basic Functionality Test
+
 ```bash
 # Test with typical input
 /project:your-command normal-input
@@ -181,6 +192,7 @@ Before deploying your command:
 ```
 
 ### 2. Error Condition Tests
+
 ```bash
 # Test with missing arguments
 /project:your-command
@@ -190,6 +202,7 @@ Before deploying your command:
 ```
 
 ### 3. Integration Tests
+
 ```bash
 # Test with other commands
 /project:your-command | /project:another-command
@@ -200,6 +213,7 @@ Before deploying your command:
 ## Common Patterns
 
 ### File Processing Command
+
 ```markdown
 ## Your Task
 1. **Read** the specified file using the Read tool
@@ -209,6 +223,7 @@ Before deploying your command:
 ```
 
 ### Analysis Command
+
 ```markdown
 ## Your Task
 1. **Search** for relevant files using Glob tool
@@ -218,6 +233,7 @@ Before deploying your command:
 ```
 
 ### Validation Command
+
 ```markdown
 ## Your Task
 1. **Check** all specified criteria

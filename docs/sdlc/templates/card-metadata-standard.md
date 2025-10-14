@@ -28,6 +28,7 @@ maintain traceability, and relate cards to their parent templates and artifacts.
 - WP-: Work package (e.g., WP-001)
 
 ## Header block (copy into cards)
+
 ```markdown
 ## Metadata
 - ID: <PREFIX-###>

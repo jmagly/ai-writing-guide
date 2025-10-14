@@ -21,6 +21,7 @@
 - Version: v<major.minor>
 
 ## Request Schema
+
 ```json
 {
   "field": "type",
@@ -29,6 +30,7 @@
 ```
 
 ## Response Schema
+
 ```json
 {
   "data": {},

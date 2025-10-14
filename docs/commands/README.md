@@ -24,6 +24,7 @@ Standard commands available in all Claude Code sessions:
 User-defined commands stored as Markdown files with YAML frontmatter.
 
 **Invocation Patterns:**
+
 ```bash
 /project:command-name     # Project-specific command
 /personal:command-name    # Personal/global command
@@ -31,7 +32,8 @@ User-defined commands stored as Markdown files with YAML frontmatter.
 ```
 
 **File Locations:**
-```
+
+```text
 # Project-specific commands
 .claude/commands/command-name.md
 
@@ -54,6 +56,7 @@ Automated responses to Claude Code events:
 ## Command Structure
 
 ### Basic Command Template
+
 ```markdown
 ---
 name: Command Name
@@ -84,6 +87,7 @@ When the user invokes this command:
 ```
 
 ### Advanced Agent Template
+
 ```markdown
 ---
 name: Agent Name
@@ -179,6 +183,7 @@ allowed-tools: [
 ## Command Development Workflow
 
 ### 1. Planning Phase
+
 ```yaml
 define:
   - purpose: "What problem does this command solve?"
@@ -189,6 +194,7 @@ define:
 ```
 
 ### 2. Implementation Phase
+
 ```bash
 # Create command file
 touch .claude/commands/my-command.md
@@ -200,6 +206,7 @@ touch .claude/commands/my-command.md
 ```
 
 ### 3. Testing Phase
+
 ```yaml
 test_scenarios:
   - happy_path: "Normal usage with expected inputs"
@@ -209,6 +216,7 @@ test_scenarios:
 ```
 
 ### 4. Documentation Phase
+
 ```markdown
 # Usage Examples
 /project:my-command input-file.js
@@ -257,6 +265,7 @@ Control command access via `.claude/settings.local.json`:
 ## Hook Configuration
 
 ### Basic Hook Setup
+
 ```json
 {
   "hooks": {
@@ -286,6 +295,7 @@ Control command access via `.claude/settings.local.json`:
 ```
 
 ### Advanced Hook Patterns
+
 ```json
 {
   "hooks": {
@@ -320,6 +330,7 @@ Control command access via `.claude/settings.local.json`:
 ### Development Workflow Commands
 
 #### Code Review Command
+
 ```markdown
 ---
 name: Code Review
@@ -341,6 +352,7 @@ Provide specific, actionable feedback with code examples.
 ```
 
 #### Test Generation Command
+
 ```markdown
 ---
 name: Generate Tests
@@ -364,6 +376,7 @@ Focus on testing behavior, not implementation.
 ### Documentation Commands
 
 #### API Documentation
+
 ```markdown
 ---
 name: Document API
@@ -388,6 +401,7 @@ Use OpenAPI 3.0 format when applicable.
 ### Infrastructure Commands
 
 #### Deployment Validator
+
 ```markdown
 ---
 name: Validate Deployment
@@ -422,6 +436,7 @@ Provide specific recommendations for issues found.
 | Formatting operations | Integration with multiple systems |
 
 ### Command-Agent Collaboration
+
 ```markdown
 # In a command that delegates to agents
 ---
@@ -455,6 +470,7 @@ Delegate each aspect to the appropriate specialist agent.
 | Inconsistent results | Insufficient context | Improve command instructions and examples |
 
 ### Debug Commands
+
 ```bash
 # List available commands
 /help

@@ -63,7 +63,8 @@
 - Option matrix: link to `option-matrix-template.md`
 
 ## Kickoff Prompt (copy into orchestrator)
-```
+
+```text
 Role: Executive Orchestrator
 Goal: Initialize project from intake and start Concept → Inception flow
 Inputs:

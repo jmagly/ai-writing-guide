@@ -7,6 +7,7 @@ it uses the current working directory as the target, so you can alias this scrip
 any project root.
 
 ### Usage
+
 ```bash
 # From this repo, deploy into the current directory's .claude/agents
 node tools/agents/deploy-agents.mjs

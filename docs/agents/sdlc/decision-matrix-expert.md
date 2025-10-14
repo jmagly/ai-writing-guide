@@ -23,6 +23,7 @@ weighted criteria, and document rationale with owners and follow-ups.
 - Recommendation and risk notes
 
 ## Embedded Decision Matrix Template
+
 ```markdown
 # Decision Matrix
 

@@ -9,6 +9,7 @@ This guide covers advanced topics for developing effective Claude Code commands 
 ### 1. Planning Phase
 
 #### Requirements Analysis
+
 ```yaml
 command_requirements:
   purpose: "What specific problem does this solve?"
@@ -20,6 +21,7 @@ command_requirements:
 ```
 
 #### Scope Definition
+
 ```yaml
 in_scope:
   - Primary functionality
@@ -40,6 +42,7 @@ future_considerations:
 ### 2. Design Phase
 
 #### Command Architecture
+
 ```markdown
 ## Command Structure Decision Tree
 
@@ -63,6 +66,7 @@ future_considerations:
 ```
 
 #### Tool Selection Matrix
+
 ```yaml
 tool_selection:
   read_only_analysis:
@@ -85,6 +89,7 @@ tool_selection:
 ### 3. Implementation Phase
 
 #### Command Template Selection
+
 ```bash
 # For simple, focused tasks
 cp docs/commands/templates/basic-command-template.md .claude/commands/my-command.md
@@ -94,6 +99,7 @@ cp docs/commands/templates/agent-command-template.md .claude/agents/my-agent.md
 ```
 
 #### Configuration Best Practices
+
 ```yaml
 frontmatter_guidelines:
   name:
@@ -126,6 +132,7 @@ frontmatter_guidelines:
 ### 4. Testing Strategy
 
 #### Unit Testing for Commands
+
 ```bash
 # Test command creation
 touch .claude/commands/test-command.md
@@ -143,6 +150,7 @@ touch .claude/commands/test-command.md
 ```
 
 #### Integration Testing
+
 ```yaml
 integration_scenarios:
   command_chaining:
@@ -162,6 +170,7 @@ integration_scenarios:
 ```
 
 #### Performance Testing
+
 ```python
 # Measure command performance
 import time
@@ -184,6 +193,7 @@ def test_command_performance():
 ### 5. Documentation Phase
 
 #### README Template for Commands
+
 ```markdown
 # Command Name
 
@@ -191,9 +201,11 @@ def test_command_performance():
 Brief description of what this command does and why it's useful.
 
 ## Usage
-```bash
-/project:command-name [arguments]
 ```
+
+/project:command-name [arguments]
+
+```text
 
 ## Arguments
 - `argument1`: Description and expected format
@@ -202,15 +214,19 @@ Brief description of what this command does and why it's useful.
 ## Examples
 
 ### Basic Usage
-```bash
-/project:command-name src/component.js
 ```
+
+/project:command-name src/component.js
+
+```text
 Expected output: [description]
 
 ### Advanced Usage
-```bash
-/project:command-name --option value directory/
 ```
+
+/project:command-name --option value directory/
+
+```text
 Expected output: [description]
 
 ## Error Handling
@@ -232,6 +248,7 @@ Works well with:
 ### 1. Command Composition
 
 #### Sequential Command Pattern
+
 ```markdown
 # In a coordination command
 ---
@@ -257,6 +274,7 @@ Synthesize all findings into an executive summary with:
 ```
 
 #### Parallel Execution Pattern
+
 ```markdown
 # In agent coordination
 ---
@@ -268,14 +286,16 @@ tools: ["read", "write", "bash"]
 
 Launch these agents in parallel for comprehensive analysis:
 
-```python
+```
+
 # Parallel execution request
 "Run these agents in parallel:
 1. Security Auditor: Scan for vulnerabilities
 2. Performance Analyzer: Identify bottlenecks
 3. Code Quality Reviewer: Check maintainability
 4. Documentation Auditor: Verify completeness"
-```
+
+```text
 
 Collect results and provide unified report.
 ```
@@ -283,6 +303,7 @@ Collect results and provide unified report.
 ### 2. Dynamic Command Generation
 
 #### Context-Aware Command Selection
+
 ```python
 def select_appropriate_command(context):
     """Select command based on context analysis"""
@@ -298,6 +319,7 @@ def select_appropriate_command(context):
 ```
 
 #### Adaptive Tool Selection
+
 ```yaml
 adaptive_tools:
   small_files: ["read", "edit"]
@@ -309,6 +331,7 @@ adaptive_tools:
 ### 3. Error Recovery Patterns
 
 #### Graceful Degradation
+
 ```markdown
 ## Error Handling Strategy
 
@@ -335,6 +358,7 @@ If all approaches fail:
 ```
 
 #### Retry Logic
+
 ```python
 def execute_with_retry(command, max_retries=3):
     """Execute command with exponential backoff retry"""
@@ -359,6 +383,7 @@ def execute_with_retry(command, max_retries=3):
 ### Permission Management
 
 #### Principle of Least Privilege
+
 ```json
 {
   "permissions": {
@@ -383,6 +408,7 @@ def execute_with_retry(command, max_retries=3):
 ```
 
 #### Audit and Monitoring
+
 ```bash
 # Enable command auditing
 echo "PreToolUse hook: Log all bash commands" >> ~/.claude/audit.log
@@ -397,6 +423,7 @@ cat .claude/settings.local.json | jq '.permissions'
 ### Input Validation
 
 #### Sanitization Patterns
+
 ```python
 def validate_file_path(path):
     """Validate file path for security"""
@@ -417,6 +444,7 @@ def validate_file_path(path):
 ```
 
 #### Command Injection Prevention
+
 ```python
 def safe_bash_execution(command, args):
     """Execute bash command safely"""
@@ -440,6 +468,7 @@ def safe_bash_execution(command, args):
 ### Model Selection Optimization
 
 #### Task Complexity Analysis
+
 ```python
 def select_optimal_model(task):
     """Select model based on task complexity"""
@@ -464,6 +493,7 @@ def select_optimal_model(task):
 ### Context Window Management
 
 #### Efficient Context Usage
+
 ```python
 def optimize_context(files, max_tokens=4000):
     """Optimize context for token efficiency"""
@@ -491,6 +521,7 @@ def optimize_context(files, max_tokens=4000):
 ### Caching Strategies
 
 #### Result Caching
+
 ```python
 from functools import lru_cache
 import hashlib
@@ -511,6 +542,7 @@ def get_file_hash(filepath):
 ### Performance Tracking
 
 #### Command Metrics
+
 ```python
 class CommandMetrics:
     def __init__(self):
@@ -540,6 +572,7 @@ class CommandMetrics:
 ### Quality Assurance
 
 #### Automated Testing
+
 ```bash
 #!/bin/bash
 # test-commands.sh - Automated command testing
@@ -566,6 +599,7 @@ done
 ```
 
 #### Quality Gates
+
 ```yaml
 quality_checklist:
   functionality:
@@ -594,6 +628,7 @@ quality_checklist:
 ### Common Issues
 
 #### Command Not Found
+
 ```bash
 # Check command file exists
 ls -la .claude/commands/my-command.md
@@ -606,6 +641,7 @@ head -20 .claude/commands/my-command.md
 ```
 
 #### Permission Denied
+
 ```bash
 # Check permissions configuration
 cat .claude/settings.local.json | jq '.permissions'
@@ -618,6 +654,7 @@ echo '{"permissions": {"allow": ["Read(/project/**)"]}}'  > .claude/settings.loc
 ```
 
 #### Poor Performance
+
 ```bash
 # Profile command execution
 time /project:my-command test-input
@@ -632,6 +669,7 @@ grep -E "(include|exclude)" .claude/commands/my-command.md
 ### Debug Commands
 
 #### Command Inspection
+
 ```bash
 # List all available commands
 /help
@@ -644,6 +682,7 @@ cat .claude/commands/my-command.md | head -20
 ```
 
 #### Performance Analysis
+
 ```bash
 # Check token usage
 /cost

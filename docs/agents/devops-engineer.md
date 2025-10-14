@@ -59,6 +59,7 @@ When designing and implementing DevOps solutions:
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflow
+
 ```yaml
 name: Deploy to Production
 
@@ -105,6 +106,7 @@ jobs:
 ## Infrastructure as Code
 
 ### Terraform Configuration
+
 ```hcl
 # AWS EKS Cluster
 module "eks" {
@@ -155,6 +157,7 @@ resource "aws_db_instance" "postgres" {
 ## Monitoring Configuration
 
 ### Prometheus Rules
+
 ```yaml
 groups:
   - name: app_alerts
@@ -178,6 +181,7 @@ groups:
 ## Deployment Strategy
 
 ### Blue-Green Deployment
+
 ```bash
 #!/bin/bash
 # Blue-green deployment script
@@ -218,6 +222,7 @@ fi
 ## Security Implementation
 
 ### Secret Management
+
 ```yaml
 # Kubernetes Secret with Sealed Secrets
 apiVersion: bitnami.com/v1alpha1
@@ -274,6 +279,7 @@ Plan AWS infrastructure:
 ## Common Patterns
 
 ### Container Orchestration
+
 ```yaml
 # Kubernetes Deployment
 apiVersion: apps/v1
@@ -314,6 +320,7 @@ spec:
 ```
 
 ### GitOps Workflow
+
 ```yaml
 # ArgoCD Application
 apiVersion: argoproj.io/v1alpha1
@@ -351,6 +358,7 @@ spec:
 ## Security Practices
 
 ### Supply Chain Security
+
 ```yaml
 # Trivy scan in pipeline
 - name: Security Scan
@@ -361,6 +369,7 @@ spec:
 ```
 
 ### Network Security
+
 ```yaml
 # Network Policy
 apiVersion: networking.k8s.io/v1
@@ -386,6 +395,7 @@ spec:
 ## Disaster Recovery
 
 ### Backup Strategy
+
 ```bash
 # Automated backup script
 #!/bin/bash
@@ -409,6 +419,7 @@ aws s3 sync /data s3://backups/app-data/ --delete
 ## Cost Management
 
 ### Resource Optimization
+
 ```yaml
 # Cluster Autoscaler
 apiVersion: v1
@@ -423,6 +434,7 @@ data:
 ```
 
 ### Cost Allocation
+
 ```hcl
 # Tagging strategy
 locals {
@@ -469,7 +481,8 @@ locals {
 ## Usage Examples
 
 ### Kubernetes Setup
-```
+
+```text
 Create complete Kubernetes deployment:
 - Multi-environment setup (dev/staging/prod)
 - Auto-scaling configuration
@@ -479,7 +492,8 @@ Create complete Kubernetes deployment:
 ```
 
 ### CI/CD Pipeline
-```
+
+```text
 Design GitHub Actions pipeline for:
 - Node.js microservices
 - Automated testing
@@ -489,7 +503,8 @@ Design GitHub Actions pipeline for:
 ```
 
 ### Infrastructure Migration
-```
+
+```text
 Plan AWS infrastructure:
 - Migrate from EC2 to EKS
 - Setup RDS with read replicas
@@ -501,6 +516,7 @@ Plan AWS infrastructure:
 ## Common Patterns
 
 ### Container Orchestration
+
 ```yaml
 # Kubernetes Deployment
 apiVersion: apps/v1
@@ -541,6 +557,7 @@ spec:
 ```
 
 ### GitOps Workflow
+
 ```yaml
 # ArgoCD Application
 apiVersion: argoproj.io/v1alpha1
@@ -578,6 +595,7 @@ spec:
 ## Security Practices
 
 ### Supply Chain Security
+
 ```yaml
 # Trivy scan in pipeline
 - name: Security Scan
@@ -588,6 +606,7 @@ spec:
 ```
 
 ### Network Security
+
 ```yaml
 # Network Policy
 apiVersion: networking.k8s.io/v1
@@ -613,6 +632,7 @@ spec:
 ## Disaster Recovery
 
 ### Backup Strategy
+
 ```bash
 # Automated backup script
 #!/bin/bash
@@ -636,6 +656,7 @@ aws s3 sync /data s3://backups/app-data/ --delete
 ## Cost Management
 
 ### Resource Optimization
+
 ```yaml
 # Cluster Autoscaler
 apiVersion: v1
@@ -650,6 +671,7 @@ data:
 ```
 
 ### Cost Allocation
+
 ```hcl
 # Tagging strategy
 locals {

@@ -27,7 +27,8 @@ when gates fail.
 - Release recommendations and postmortems
 
 ## State Machine
-```
+
+```text
 Idea → Inception → Elaboration → Construction (iterative) → Transition → Operate
              ^                 |                                  |
 
