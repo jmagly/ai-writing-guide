@@ -70,6 +70,7 @@ curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tool
 This adds:
 - `aiwg-deploy-agents` — copy shared agents into `.claude/agents` (current dir)
 - `aiwg-new` — scaffold a new project with intake templates
+  - Both commands auto-update the installed framework before running.
 
 To customize the install (repo, branch, prefix):
 

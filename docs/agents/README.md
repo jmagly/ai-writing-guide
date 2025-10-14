@@ -76,6 +76,7 @@ In a GitHub Action step (if you want to vendor agents into a build artifact):
 ```
 
 ### Notes
+- Commands auto-update the installed framework before running.
 - Current behavior is intentionally simple: flat copy of all agents. Future flags may support
   selective deployment by role, category, or glob.
 - Generated agents should be reviewed per-project and tailored where necessary.

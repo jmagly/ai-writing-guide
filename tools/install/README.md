@@ -22,6 +22,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guid
 Aliases installed:
 - `aiwg-deploy-agents` → copy shared agents into `.claude/agents` of current dir
 - `aiwg-new` → scaffold a new project with intake templates (and optional agents)
+  - Both commands auto-update the installed framework (git pull) before executing.
 
 Scaffolding:
 ```bash
@@ -29,4 +30,3 @@ Scaffolding:
 aiwg-new               # create docs/sdlc/intake/*.md and a README
 aiwg-deploy-agents     # copy shared agents into .claude/agents
 ```
-

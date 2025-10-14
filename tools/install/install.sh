@@ -42,6 +42,31 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+ensure_git() {
+  if command -v git >/dev/null 2>&1; then
+    return
+  fi
+  echo "git not found; attempting to install..."
+  if command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update && sudo apt-get install -y git
+  elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf install -y git
+  elif command -v yum >/dev/null 2>&1; then
+    sudo yum install -y git
+  elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -Sy --noconfirm git
+  elif command -v zypper >/dev/null 2>&1; then
+    sudo zypper -n install git
+  elif command -v brew >/dev/null 2>&1; then
+    brew install git
+  else
+    echo "Could not detect a supported package manager. Please install git and re-run."
+    exit 1
+  fi
+}
+
+ensure_git
+
 mkdir -p "$PREFIX"
 if [[ -d "$PREFIX/.git" ]]; then
   echo "Updating existing install at $PREFIX"
@@ -85,12 +110,12 @@ fi
 
 {
   echo "$ALIAS_BANNER"
-  echo "alias aiwg-deploy-agents=\"$DEPLOY_CMD\""
-  echo "alias aiwg-new=\"$NEW_CMD\""
+  echo "aiwg_update() { command -v git >/dev/null 2>&1 && git -C \"$PREFIX\" fetch --all -q && git -C \"$PREFIX\" pull --ff-only -q || true; }"
+  echo "aiwg-deploy-agents() { aiwg_update; $DEPLOY_CMD \"\$@\"; }"
+  echo "aiwg-new() { aiwg_update; $NEW_CMD \"\$@\"; }"
   echo "$ALIAS_FOOTER"
 } >> "$ALIAS_FILE"
 
 echo "Installed to: $PREFIX"
 echo "Aliases added to: $ALIAS_FILE"
 echo "Run 'source $ALIAS_FILE' or open a new shell to use: aiwg-deploy-agents, aiwg-new"
-
