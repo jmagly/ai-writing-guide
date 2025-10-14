@@ -7,13 +7,11 @@
 - Date: <YYYY-MM-DD>
 - Stakeholders: <list>
 
-
 ## Problem and Outcomes
 
 - Problem statement: <1–3 sentences>
 - Target personas/scenarios: <bullets>
 - Success metrics (KPIs): <e.g., activation +20%, p95 < 200ms>
-
 
 ## Scope and Constraints
 
@@ -22,7 +20,6 @@
 - Timeframe: <e.g., MVP in 6 weeks>
 - Budget guardrails: <e.g., <$X/mo infra>
 - Platforms and languages (preferences/constraints): <list>
-
 
 ## Non-Functional Preferences
 
@@ -34,26 +31,22 @@
 - Maintainability: <low | medium | high>
 - Portability: <cloud-locked | portable>
 
-
 ## Data
 
 - Classification: <Public | Internal | Confidential | Restricted>
 - PII/PHI present: <yes/no>
 - Retention/deletion constraints: <notes>
 
-
 ## Integrations
 
 - External systems/APIs: <list>
 - Dependencies and contracts: <list>
-
 
 ## Architecture Preferences (if any)
 
 - Style: <Monolith | Modular | Microservices | Event-driven>
 - Cloud/infra: <vendor/regions>
 - Languages/frameworks: <list>
-
 
 ## Risk and Trade-offs
 
@@ -64,12 +57,10 @@
   - Quality/security: <0.0–1.0>
 - Known risks/unknowns: <bullets>
 
-
 ## Team & Operations
 
 - Team size/skills: <notes>
 - Operational support (on-call, SRE): <notes>
-
 
 ## Decision Heuristics (quick reference)
 
@@ -77,12 +68,10 @@
 - Prefer managed services vs control: <M/C>
 - Prefer time-to-market vs robustness: <T/R>
 
-
 ## Attachments
 
 - Solution profile: link to `solution-profile-template.md`
 - Option matrix: link to `option-matrix-template.md`
-
 
 ## Kickoff Prompt (copy into orchestrator)
 
@@ -102,4 +91,3 @@ Output:
 - risk-list.md
 - initial ADRs for critical choices
 ```
-

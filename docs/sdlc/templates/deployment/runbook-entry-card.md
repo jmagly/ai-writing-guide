@@ -12,16 +12,13 @@
 - Related: SLI-<id>, ALERT-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/reliability/alert-runbook-card.md
 
-
 ## Service/Component
 
 - Name and owner
-
 
 ## Symptoms
 

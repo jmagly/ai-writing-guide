@@ -11,4 +11,3 @@
 - manifest.json
 - manifest.md
 - parallelization-guide.md
-

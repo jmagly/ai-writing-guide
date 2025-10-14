@@ -5,4 +5,3 @@
 - DEVELOPMENT_GUIDE.md
 - README.md
 - manifest.md
-

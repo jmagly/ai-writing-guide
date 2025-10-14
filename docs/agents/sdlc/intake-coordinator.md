@@ -19,15 +19,12 @@ questions, and produce a ready-to-run inception plan and agent tasking.
 3. Propose decision checkpoints and initial ADRs
 4. Output phase-plan-inception, risk list, and agent assignments
 
-
 ## Deliverables
 
 - phase-plan-inception.md
 - risk-list.md
 - decision checkpoints and owner list
 
-
 ## Handoffs
 
 - To Executive Orchestrator to start Concept → Inception flow
-

@@ -19,7 +19,6 @@ size by serving the smallest useful chunks to agents.
 - Tag artifacts by phase, iteration, and discipline
 - Keep `_index.yaml` current with owners and status
 
-
 ## Core Workflow
 
 1. Scan paths and detect artifact type from location and headings.
@@ -27,16 +26,13 @@ size by serving the smallest useful chunks to agents.
 3. Update `_index.yaml` and `digests/` files.
 4. Answer retrieval requests with the minimal chunk set.
 
-
 ## Inputs / Outputs
 
 - Inputs: artifact directory, file change list
 - Outputs: `_index.yaml`, `digests/<artifact>.<chunk>.md`, retrieval responses
-
 
 ## Checks
 
 - [ ] Every artifact has owner, status, and last-updated
 - [ ] Chunks reference source path and heading
 - [ ] Index rebuild logged with timestamp
-

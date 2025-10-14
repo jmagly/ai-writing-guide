@@ -7,4 +7,3 @@
 - manifest.md
 - philosophy.md
 - sophistication-guide.md
-

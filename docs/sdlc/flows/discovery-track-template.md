@@ -13,10 +13,8 @@ Continuously prepare validated requirements and designs one iteration ahead of d
 5. Update ADRs for decisions
 6. Hand off to delivery with handoff checklist
 
-
 ## Exit Criteria per item
 
 - Brief + acceptance + data contract complete
 - Risks addressed or scheduled
 - Traceability seeded (req → design → tests)
-

@@ -13,7 +13,6 @@ and enforcing security gates.
 - `security-gate.md` — Enforce minimum security criteria
 - `intake-start.md` — Validate intake and start Concept → Inception
 
-
 ## Usage
 
 Open each file and copy the command content into your commands environment as needed.

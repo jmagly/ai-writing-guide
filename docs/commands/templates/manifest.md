@@ -7,4 +7,3 @@
 - basic-command-template.md
 - manifest.json
 - manifest.md
-

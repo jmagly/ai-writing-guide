@@ -10,7 +10,6 @@ Keep contributions inside the existing documentation tree: `core/` captures phil
 - `rg "keyword" -n context` searches guidance quickly; prefer it over slower alternatives.
 - Note any additional linters or scripts in the PR body so reviewers can rerun them.
 
-
 ## Coding Style & Naming Conventions
 
 Write in concise, expert prose that mirrors `README.md`. Use Title Case for H1s, sentence case for subordinate headings, and wrap lines near 100 characters. Reference paths with backticks and name new documents with lowercase hyphenated filenames unless the file is a canonical entry point (e.g., `CLAUDE.md`).

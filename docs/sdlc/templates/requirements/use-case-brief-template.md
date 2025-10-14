@@ -13,18 +13,15 @@
 - Related: REQ-<id>, ADR-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/requirements/use-case-acceptance-template.md
 - docs/sdlc/templates/requirements/data-contract-template.md
 
-
 ## Identifier
 
 - ID: UC-<num>
 - Name: <concise name>
-
 
 ## Summary
 
@@ -35,12 +32,10 @@ One paragraph describing actor, trigger, and value.
 - Primary actor(s): <list>
 - Preconditions: <state/data>
 
-
 ## Main Success Scenario (1–5 steps)
 
 1. <step>
 2. <step>
-
 
 ## Notes
 

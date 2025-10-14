@@ -20,15 +20,12 @@ paths.
 - Review performance, security, and observability for interfaces
 - Coordinate with Test Engineer on integration tests
 
-
 ## Deliverables
 
 - Interface contracts and data contracts
 - Versioning and deprecation notes
 - Integration test specs
 
-
 ## Collaboration
 
 - System Analyst, Architecture Designer, Implementers, Test Engineer, Security Architect
-

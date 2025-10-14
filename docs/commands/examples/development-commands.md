@@ -64,23 +64,19 @@ For each file reviewed, provide:
   ```
   **Risk**: [What could happen if not fixed]
 
-
 ### Performance Issues
 
 - **Line [X]**: [Performance problem]
   **Impact**: [Specific performance impact]
   **Fix**: [Optimization approach]
 
-
 ### Maintainability Suggestions
 
 - [Improvement suggestions]
 
-
 ### Positive Patterns
 
 - [Good practices worth noting]
-
 
 ```
 
@@ -254,7 +250,6 @@ Implement Google and GitHub OAuth2 providers
 - Create redirect handlers
 - Update user model for external IDs
 
-
 Closes #123
 
 ```text
@@ -268,7 +263,6 @@ Add proper error handling for expired payment methods
 - Check expiry date before processing
 - Return user-friendly error message
 - Log payment failures for monitoring
-
 
 Fixes #456
 
@@ -455,7 +449,6 @@ data = response.json()
 - Header: `X-RateLimit-Remaining`
 - Reset: Every hour at minute 0
 
-
 ## Notes
 
 [Any additional information, caveats, or usage tips]
@@ -526,14 +519,12 @@ When analyzing a Dockerfile:
 - **Security Score**: [assessment]
 - **Cache Efficiency**: [rating]
 
-
 ## Critical Issues
 
 1. **[Issue Type]**: [Problem description]
    - **Impact**: [Performance/security impact]
    - **Fix**: [Specific solution]
    - **Estimated Savings**: [Size/time improvement]
-
 
 ## Recommended Optimizations
 
@@ -586,16 +577,13 @@ ENTRYPOINT ["dumb-init", "--"]
 
 - [Specific recommendations for size reduction]
 
-
 ## Security Enhancements
 
 - [Security improvements with rationale]
 
-
 ## Build Performance
 
 - [Build time optimization strategies]
-
 
 ## Expected Improvements
 
@@ -603,7 +591,6 @@ ENTRYPOINT ["dumb-init", "--"]
 - **Build Time**: [X]% faster
 - **Security**: [X] vulnerabilities fixed
 - **Cache Hit Rate**: [X]% improvement
-
 
 ```text
 
@@ -793,7 +780,6 @@ jobs:
 
       - name: Check coverage
         run: [coverage command]
-
 
 ```text
 

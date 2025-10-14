@@ -6,7 +6,6 @@
 - `Design Guidelines`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Software Architect, Designer
 - Automation Inputs: Architecture principles, design patterns
 - Automation Outputs: `design-guidelines.md` documenting sections 1–9
-
 
 ## 1 Introduction
 

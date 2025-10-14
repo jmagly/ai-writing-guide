@@ -6,12 +6,10 @@
 - Data types: <PII/PHI/payment/etc>
 - Trust boundaries: <list>
 
-
 ## Assets And Entry Points
 
 - Assets: <list>
 - Entry points: <list>
-
 
 ## STRIDE Analysis
 
@@ -23,7 +21,6 @@
 
 - Control list mapped to findings
 - Residual risks and rationale
-
 
 ## Validation
 

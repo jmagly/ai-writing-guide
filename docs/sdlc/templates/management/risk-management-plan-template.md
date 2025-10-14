@@ -6,7 +6,6 @@
 - `Risk Management Plan`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Requirements Reviewer, Configuration Manager, Test Architect
 - Automation Inputs: Risk baseline, governance policies, mitigation backlog
 - Automation Outputs: `risk-management-plan.md` covering sections 1–7
-
 
 ## 1 Introduction
 

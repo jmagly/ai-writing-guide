@@ -12,26 +12,21 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>
 - Links: <paths/urls>
 
-
 ## Identifier
 
 - WP-<id>
-
 
 ## Scope
 
 - Outcome, boundaries, and acceptance
 
-
 ## Breakdown
 
 - Sub-cards: tasks, tests, decisions
 
-
 ## Handoffs
 
 - Upstream inputs and downstream deliverables
-
 
 ## Timeline
 

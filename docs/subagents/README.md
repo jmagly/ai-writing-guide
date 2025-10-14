@@ -5,4 +5,3 @@ Guides and patterns for launching specialized subagents and coordinating them in
 Files:
 
 - comprehensive-guide.md — concepts, patterns, and examples
-

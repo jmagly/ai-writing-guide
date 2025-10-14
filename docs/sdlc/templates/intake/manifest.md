@@ -8,4 +8,3 @@
 - option-matrix-template.md
 - project-intake-template.md
 - solution-profile-template.md
-

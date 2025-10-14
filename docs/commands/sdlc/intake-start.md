@@ -17,17 +17,14 @@ Given a Project Intake Form and Solution Profile:
 3. Recommend initial ADRs and agent assignments
 4. Hand off to Executive Orchestrator to start Concept → Inception flow
 
-
 ## Inputs
 
 - `project-intake-template.md` (filled)
 - `solution-profile-template.md` (filled)
 - `option-matrix-template.md` (optional)
 
-
 ## Outputs
 
 - `phase-plan-inception.md`
 - `risk-list.md`
 - `agent-assignments.md`
-

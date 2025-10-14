@@ -12,11 +12,9 @@
 - Related: ADR-<id>, DEP-<id>
 - Links: <paths/urls>
 
-
 ## Identifier
 
 - Risk: RSK-<id>
-
 
 ## Description
 
@@ -27,11 +25,9 @@ Short statement of the risk and impact.
 - Likelihood: <L/M/H>
 - Impact: <L/M/H>
 
-
 ## Mitigation / Contingency
 
 - Actions and owners
-
 
 ## Status
 

@@ -18,11 +18,9 @@ required actions for a go/no-go decision.
 2. Evaluate against gate checklist
 3. Produce a clear pass/fail report with owners and deadlines
 
-
 ## Deliverables
 
 - `security-gate-report.md` with status and remediation plan
-
 
 ## Embedded Gate Checklist
 
@@ -40,4 +38,3 @@ required actions for a go/no-go decision.
 - Findings: list with severity and owners
 - Next actions: owners, due dates
 ```
-

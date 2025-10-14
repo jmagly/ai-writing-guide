@@ -25,7 +25,6 @@ Scan content for AI tells:
 - Wikipedia-style neutral tone
 - Hyperbolic claims without evidence
 
-
 ### 2. Authenticity Assessment
 
 Verify human elements:
@@ -35,7 +34,6 @@ Verify human elements:
 - Personal opinions and preferences
 - Trade-off acknowledgments
 - Real-world context and constraints
-
 
 ### 3. Structure Analysis
 
@@ -47,7 +45,6 @@ Check writing variety:
 - Voice consistency throughout
 - Natural rhythm and flow
 
-
 ### 4. Sophistication Validation
 
 Ensure appropriate complexity:
@@ -56,7 +53,6 @@ Ensure appropriate complexity:
 - Concept complexity preservation
 - Authority and expertise signals
 - Avoidance of oversimplification
-
 
 ## Scoring System
 
@@ -68,7 +64,6 @@ Ensure appropriate complexity:
 - Vague claim: -5 points each
 - Wikipedia tone: -8 points per paragraph
 
-
 ### Rewards
 
 - Specific metric/number: +3 points
@@ -76,7 +71,6 @@ Ensure appropriate complexity:
 - Trade-off mentioned: +5 points
 - Natural transition: +2 points
 - Varied structure: +3 points
-
 
 ## Output Format
 
@@ -91,7 +85,6 @@ Banned phrases and severe AI patterns:
   - Context: [surrounding text]
   - Fix: [specific replacement]
 
-
 ### ⚠️ Major Issues
 
 Problems that significantly impact authenticity:
@@ -100,13 +93,11 @@ Problems that significantly impact authenticity:
   - Example: [problematic text]
   - Suggestion: [improved version]
 
-
 ### 📝 Minor Issues
 
 Areas for improvement:
 
 - Brief description with location
-
 
 ### ✅ Positive Elements
 
@@ -114,14 +105,12 @@ Well-executed human patterns:
 
 - Specific examples of good writing
 
-
 ### 📊 Sophistication Analysis
 
 - **Current Level**: [Basic/Intermediate/Advanced]
 - **Vocabulary**: Appropriate/Too Simple/Overly Complex
 - **Authority**: Strong/Moderate/Weak
 - **Recommendation**: [specific advice]
-
 
 ### 📈 Overall Score
 
@@ -132,7 +121,6 @@ Well-executed human patterns:
 1. **Most Critical**: [specific change with example]
 2. **Quick Win**: [easy improvement]
 3. **Polish**: [final touch]
-
 
 ## Banned Phrases to Detect
 
@@ -150,7 +138,6 @@ Always check for these automatic failures:
 - "leverages advanced"
 - "best-in-class"
 
-
 ## Pattern Recognition Examples
 
 ### Marketing Language
@@ -162,14 +149,12 @@ Always check for these automatic failures:
 - "best-in-class performance"
 - "enterprise-grade security"
 
-
 **Good (Human-like)**:
 
 - "new approach using event sourcing"
 - "handles 50K requests per second"
 - "99.99% uptime over 6 months"
 - "AES-256 encryption with key rotation"
-
 
 ### Transitions
 
@@ -180,14 +165,12 @@ Always check for these automatic failures:
 - "Additionally, it should be noted..."
 - "In conclusion, the results show..."
 
-
 **Good (Natural)**:
 
 - "The system also handles..."
 - "We also saw..."
 - "Another thing: ..."
 - "Bottom line: it worked."
-
 
 ## Sophistication Guidelines
 
@@ -200,7 +183,6 @@ Always check for these automatic failures:
 - Reference specific technologies and versions
 - Discuss algorithmic complexity
 
-
 ### Business Writing
 
 **Maintain professional vocabulary**:
@@ -210,7 +192,6 @@ Always check for these automatic failures:
 - Include concrete metrics and KPIs
 - Reference actual market conditions
 
-
 ### Academic Writing
 
 **Balance formality with authenticity**:
@@ -219,7 +200,6 @@ Always check for these automatic failures:
 - Include methodology details
 - Reference specific studies
 - Add author's analytical voice
-
 
 ## Pass/Fail Criteria
 
@@ -250,14 +230,12 @@ Always check for these automatic failures:
 - "cutting-edge ML" → "BERT model with 92% accuracy"
 - "comprehensive solution" → "includes auth, storage, and API"
 
-
 ### For Vague Claims
 
 - "significantly improved" → "reduced latency from 200ms to 45ms"
 - "enhanced security" → "added MFA and encrypted all PII"
 - "better performance" → "3x faster queries using indexes"
 - "optimized the system" → "cut memory usage by 60%"
-
 
 ### For Formal Transitions
 
@@ -266,7 +244,6 @@ Always check for these automatic failures:
 - "In conclusion," → "So" or direct ending
 - "It should be noted that" → Just state it
 
-
 ## Remember
 
 - **Goal**: Make AI content sound human while preserving sophistication
@@ -274,7 +251,6 @@ Always check for these automatic failures:
 - **Focus**: Specific examples, real numbers, authentic voice
 - **Avoid**: Over-correction that removes all professional language
 - **Include**: Opinions, trade-offs, real-world context
-
 
 ## Usage Notes
 

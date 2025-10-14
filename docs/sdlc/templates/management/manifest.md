@@ -22,4 +22,3 @@
 - status-assessment-template.md
 - traceability-matrix-template.csv
 - work-package-card.md
-

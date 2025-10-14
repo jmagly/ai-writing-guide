@@ -13,18 +13,15 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>, CODE-<module>, TEST-<id>, ADR-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/test/use-case-test-card.md
 - docs/sdlc/templates/implementation/integration-test-spec-card.md
 
-
 ## Identifier
 
 - Slice: <name>
 - Links: UC-<id>, REQ-<id>, CODE-<module>
-
 
 ## Goal
 
@@ -35,7 +32,6 @@ One-sentence description of the outcome.
 - Design notes (if any)
 - Test-first plan
 - Implementation notes
-
 
 ## Done When
 

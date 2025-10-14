@@ -36,4 +36,3 @@
 - ux-lead.md
 - vision-owner.md
 - writing-validator.md
-

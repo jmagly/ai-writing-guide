@@ -21,7 +21,6 @@ node tools/cards/prefill-cards.mjs --target docs/sdlc/artifacts/<project> --team
   - Example: `- Owner: Test Engineer (...)` → `- Owner: Jane Doe (Test Engineer)`
 - Skips files without a recognizable `## Metadata` block.
 
-
 ### Notes
 
 - Prefills `Owner:`, `Contributors:`, and `Reviewers:` when roles map to names.

@@ -42,20 +42,17 @@ Just the main `CLAUDE.md` file - often sufficient
 - `technical-depth.md`
 - `sophistication-guide.md` (from core/)
 
-
 ### Executive Communications
 
 - `CLAUDE.md`
 - `executive-voice.md`
 - `sophistication-guide.md` (from core/)
 
-
 ### Academic Writing
 
 - `CLAUDE.md`
 - `academic-voice.md`
 - Note: Many "banned patterns" are acceptable in academic context
-
 
 ### Problem Solving
 
@@ -66,7 +63,6 @@ Only add these when you see specific issues:
 - Too formal? Add relevant examples
 - Lost voice? Add appropriate voice guide
 
-
 ## Progressive Loading Strategy
 
 1. **Start**: Just `CLAUDE.md`
@@ -74,7 +70,6 @@ Only add these when you see specific issues:
 3. **If voice wrong**: Add appropriate voice guide
 4. **If struggling**: Add examples (sparingly)
 5. **Last resort**: Multiple documents
-
 
 ## Remember
 

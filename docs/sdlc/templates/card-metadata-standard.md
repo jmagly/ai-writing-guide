@@ -18,7 +18,6 @@ maintain traceability, and relate cards to their parent templates and artifacts.
 - Related: IDs to other artifacts (UC, REQ, DES, CODE, TEST, ADR, DEP, RSK, CR, etc.)
 - Links: file paths or URLs to source/related artifacts
 
-
 ## Allowed ID prefixes (examples)
 
 - UC-: Use case (e.g., UC-001)
@@ -30,7 +29,6 @@ maintain traceability, and relate cards to their parent templates and artifacts.
 - RSK-: Risk (e.g., RSK-005)
 - CR-: Change request (e.g., CR-002)
 - WP-: Work package (e.g., WP-001)
-
 
 ## Header block (copy into cards)
 
@@ -51,4 +49,3 @@ maintain traceability, and relate cards to their parent templates and artifacts.
 - <template path 1>
 - <template path 2>
 ```
-

@@ -19,7 +19,6 @@ documentation such as the Privacy Impact Assessment (PIA/DPIA).
 - Review consent, retention, and deletion workflows
 - Align with legal on cross-border transfers and special categories
 
-
 ## Deliverables
 
 - Privacy impact assessment
@@ -27,11 +26,9 @@ documentation such as the Privacy Impact Assessment (PIA/DPIA).
 - Consent and retention records
 - Privacy risks and mitigations in risk register
 
-
 ## Checks
 
 - [ ] PII inventory complete
 - [ ] Lawful basis documented
 - [ ] Retention and deletion policies tested
 - [ ] User rights workflows verified (access, delete, export)
-

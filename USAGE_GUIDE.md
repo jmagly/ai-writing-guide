@@ -14,7 +14,6 @@ The goal is to maintain sophisticated, authoritative writing while avoiding AI d
 
 - `CLAUDE.md` - Core instructions only
 
-
 ### Situational Additions
 
 Only add additional documents when:
@@ -23,7 +22,6 @@ Only add additional documents when:
 2. Content lacks authenticity
 3. Specific writing challenge emerges
 4. Quality check before publication
-
 
 ## Context Combinations by Use Case
 
@@ -36,18 +34,15 @@ Only add additional documents when:
 - `CLAUDE.md`
 - `core/sophistication-guide.md` (maintaining authority)
 
-
 **Add if needed**:
 
 - `validation/banned-patterns.md` (if seeing AI patterns)
 - `examples/technical-writing.md` (if struggling with voice)
 
-
 **Do NOT include**:
 
 - Rewrite exercises (too remedial)
 - Common tells (overly restrictive)
-
 
 ### 2. Executive Communications
 
@@ -59,12 +54,10 @@ Only add additional documents when:
 - `core/sophistication-guide.md`
 - `context/executive-voice.md`
 
-
 **Avoid**:
 
 - Technical examples
 - Casual voice guides
-
 
 ### 3. Blog Posts / Articles
 
@@ -76,7 +69,6 @@ Only add additional documents when:
 - `core/philosophy.md`
 - `patterns/common-ai-tells.md` (only if drafts sound robotic)
 
-
 ### 4. User-Facing Content
 
 **Goal**: Clear, helpful, natural
@@ -86,12 +78,10 @@ Only add additional documents when:
 - `CLAUDE.md`
 - `context/quick-reference.md`
 
-
 **Add for problems**:
 
 - `validation/banned-patterns.md` (if too marketing-heavy)
 - `examples/rewrite-exercises.md` (if struggling)
-
 
 ### 5. Academic/Research Writing
 
@@ -102,7 +92,6 @@ Only add additional documents when:
 - `CLAUDE.md`
 - `core/sophistication-guide.md`
 - `context/academic-voice.md`
-
 
 **Note**: Many banned patterns are actually appropriate in academic contexts
 
@@ -121,7 +110,6 @@ Add `validation/banned-patterns.md` only if seeing:
 - "Moreover/Furthermore"
 - Other red flags
 
-
 ### Level 3: Voice Correction
 
 Add `examples/technical-writing.md` if:
@@ -130,7 +118,6 @@ Add `examples/technical-writing.md` if:
 - Lacking personality
 - Missing technical depth
 
-
 ### Level 4: Full Remediation
 
 Only use full suite if content consistently fails. This indicates need for:
@@ -138,7 +125,6 @@ Only use full suite if content consistently fails. This indicates need for:
 - Model adjustment
 - Prompt engineering
 - Different approach
-
 
 ## Reading Level and Authority
 
@@ -156,7 +142,6 @@ Only use full suite if content consistently fails. This indicates need for:
 - **Remove**: Performative adjectives, formulaic transitions, marketing speak
 - **Add**: Specific metrics, implementation details, honest assessments
 
-
 ## Warning Signs You're Over-Correcting
 
 ### Too Casual (Loss of Authority)
@@ -166,7 +151,6 @@ Only use full suite if content consistently fails. This indicates need for:
 - Slang or colloquialisms
 - Reading level below 10th grade for technical content
 
-
 ### Still Too AI (Under-Correcting)
 
 - Every paragraph same length
@@ -174,33 +158,27 @@ Only use full suite if content consistently fails. This indicates need for:
 - No opinions or trade-offs mentioned
 - Perfect outcomes only
 
-
 ## Specific Use Case Guidance
 
 ### For Code Comments
 
 - Don't use this guide - code comments should be formulaic and clear
 
-
 ### For API Documentation
 
 - Use minimal guide - consistency matters more than voice
-
 
 ### For Sales/Marketing
 
 - Some "banned" patterns are industry standard - use selectively
 
-
 ### For Legal/Compliance
 
 - Formal language often required - skip most guidelines
 
-
 ### For Internal Communications
 
 - Focus on clarity over style - minimal guide usage
-
 
 ## Document Selection Matrix
 
@@ -229,7 +207,6 @@ Technical writing needs technical vocabulary. Don't simplify quantum computing t
 - Legal documents need formal language
 - API docs should be consistent over conversational
 
-
 ### 4. Test Output
 
 Read result aloud:
@@ -238,7 +215,6 @@ Read result aloud:
 - Does it maintain authority?
 - Is it appropriate for audience?
 
-
 ### 5. Iterate
 
 If output loses sophistication:
@@ -246,7 +222,6 @@ If output loses sophistication:
 1. Remove restrictive documents
 2. Add sophistication guide
 3. Adjust prompt to emphasize expertise
-
 
 ## Common Mistakes
 
@@ -299,7 +274,6 @@ Use the Content Diversifier agent from docs/agents/content-diversifier.md
 - **Prompt Optimizer**: Enhances prompts for better output quality
 - **Content Diversifier**: Generates varied examples and perspectives
 
-
 #### Development Agents
 
 - **Code Reviewer**: Security and quality focused review
@@ -307,7 +281,6 @@ Use the Content Diversifier agent from docs/agents/content-diversifier.md
 - **Architecture Designer**: System design and technical decisions
 - **Requirements Analyst**: Transforms requests into specifications
 - **DevOps Engineer**: CI/CD and infrastructure automation
-
 
 ### When to Use Subagents
 
@@ -318,13 +291,11 @@ Use the Content Diversifier agent from docs/agents/content-diversifier.md
 - Complex multi-step writing projects
 - Systematic content improvement
 
-
 **Don't use for**:
 
 - Simple edits or rewrites
 - Single paragraph fixes
 - Quick pattern checks
-
 
 ### Parallel Processing
 
@@ -342,6 +313,5 @@ Launch multiple agents for comprehensive work:
 - **Sophistication comes from precision**, not complexity
 - **Authenticity comes from honesty**, not casualness
 - **Different contexts need different voices**
-
 
 The goal: Write like an expert who's confident enough to be honest, not an AI trying to impress or a novice trying to be casual.

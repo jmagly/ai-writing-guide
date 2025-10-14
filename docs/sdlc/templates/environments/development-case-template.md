@@ -11,13 +11,11 @@ Tailor the delivery process to the specific project, defining which artifacts, r
 - Automation Inputs: Process framework, lifecycle tailoring decisions
 - Automation Outputs: `development-case.md` documenting artifact responsibilities
 
-
 ## Completion Checklist
 
 - Lifecycle tailoring decisions documented with rationale
 - Artifact responsibilities and production schedule defined
 - Review and governance checkpoints identified
-
 
 ## Document Sections
 
@@ -29,7 +27,6 @@ Tailor the delivery process to the specific project, defining which artifacts, r
    - Outline phase structure, number of iterations, and high-level objectives.
 4. **Artifact Responsibility Matrix**
    - Provide table mapping artifacts to responsible roles and phase/iteration produced.
-
 
 | Artifact | Responsible Role | Phase/Iteration | Notes |
 | --- | --- | --- | --- |
@@ -47,7 +44,6 @@ Tailor the delivery process to the specific project, defining which artifacts, r
    - Describe how tailoring decisions may evolve over time and how changes are approved.
 10. **Appendices**
     - Include detailed schedules, checklists, or decision logs.
-
 
 ## Agent Notes
 

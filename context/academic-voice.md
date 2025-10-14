@@ -11,7 +11,6 @@ Only include this for:
 - Conference papers
 - Journal submissions
 
-
 ## Academic Writing Exceptions
 
 ### Many "Banned" Patterns Are Academic Standards
@@ -25,7 +24,6 @@ In academic contexts, these are EXPECTED:
 - Passive voice - Often preferred
 - Formal conjunctions - Required for flow
 
-
 ### Academic Rigor Requirements
 
 What makes academic writing different:
@@ -35,7 +33,6 @@ What makes academic writing different:
 - Comprehensive coverage expected
 - Formal structure mandatory
 - Technical precision critical
-
 
 ## Appropriate Academic Patterns
 
@@ -48,7 +45,6 @@ What makes academic writing different:
 - "Nevertheless, alternative interpretations..."
 - "Consequently, we propose..."
 
-
 ### Academic Hedging (Required, Not Weak)
 
 ✅ **Appropriate hedging**:
@@ -57,7 +53,6 @@ What makes academic writing different:
 - "This may indicate..."
 - "One possible interpretation..."
 - "The evidence appears to support..."
-
 
 This isn't AI weakness - it's academic precision about certainty levels.
 
@@ -72,7 +67,6 @@ This isn't AI weakness - it's academic precision about certainty levels.
 5. Discussion
 6. Conclusion
 7. References
-
 
 ## Maintaining Authority in Academic Context
 
@@ -96,7 +90,6 @@ This isn't AI weakness - it's academic precision about certainty levels.
 - "Recent work (Smith et al., 2023; Brown, 2024) suggests..."
 - "This aligns with established theory (Chen, 2021)..."
 
-
 ### Methodological Precision
 
 - Detailed experimental setup
@@ -104,14 +97,12 @@ This isn't AI weakness - it's academic precision about certainty levels.
 - Statistical methods specified
 - Limitations acknowledged
 
-
 ### Theoretical Grounding
 
 - Connect to existing literature
 - Position within theoretical framework
 - Address competing theories
 - Justify methodological choices
-
 
 ## What Still Applies from General Guidelines
 
@@ -148,7 +139,6 @@ Use freely without simplification:
 - Hamiltonian dynamics
 - Epistemic uncertainty
 
-
 ### Theoretical Frameworks
 
 Reference and build upon:
@@ -157,7 +147,6 @@ Reference and build upon:
 - Canonical papers
 - Methodological traditions
 - Disciplinary conventions
-
 
 ## The Academic Test
 
@@ -170,7 +159,6 @@ Before submission, verify:
 5. Is the language formally appropriate?
 6. Are theoretical contributions clear?
 
-
 ## Remember
 
 Academic writing has different goals than business or technical writing:
@@ -179,6 +167,5 @@ Academic writing has different goals than business or technical writing:
 - **Theoretical rigor** vs. implementation details
 - **Comprehensive review** vs. focused solution
 - **Formal discourse** vs. conversational tone
-
 
 Many patterns that indicate AI in other contexts are simply academic convention. The key is using them with precision and purpose, not as filler.

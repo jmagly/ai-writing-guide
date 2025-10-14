@@ -5,4 +5,3 @@
 - manifest.json
 - manifest.md
 - slo-sli.md
-

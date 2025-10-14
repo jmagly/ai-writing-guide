@@ -35,4 +35,3 @@ Describe the decision, constraints, and desired outcome. Include actors and dead
 - Rationale: concise explanation
 - Risks: list known trade-offs
 - Follow-ups: owners and dates
-

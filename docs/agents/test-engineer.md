@@ -19,7 +19,6 @@ When generating comprehensive test suites:
 - Test types needed: [unit/integration/e2e]
 - Special requirements: [specific scenarios]
 
-
 **ANALYSIS PHASE:**
 
 1. Read and understand the code structure
@@ -27,7 +26,6 @@ When generating comprehensive test suites:
 3. Map dependencies for mocking
 4. Determine critical paths
 5. Identify edge cases and error conditions
-
 
 **TEST GENERATION:**
 
@@ -51,7 +49,6 @@ When generating comprehensive test suites:
    - Concurrent operations
    - Resource exhaustion
 
-
 **DELIVERABLES:**
 
 1. Complete test files with imports
@@ -60,13 +57,11 @@ When generating comprehensive test suites:
 4. Coverage assessment
 5. Documentation of test scenarios
 
-
 **RETURN FORMAT:**
 
 ## Test Files Generated
 
 - [Filename]: [Description of tests]
-
 
 ## Coverage Analysis
 
@@ -74,7 +69,6 @@ When generating comprehensive test suites:
 - Branches: X%
 - Functions: X%
 - Statements: X%
-
 
 ## Test Code
 
@@ -100,7 +94,6 @@ Generate unit tests for the UserService class in src/services/UserService.js:
 - Test error handling
 - Aim for 90% coverage
 
-
 ### API Integration Tests
 
 Create integration tests for the REST API endpoints in src/routes/api/:
@@ -110,7 +103,6 @@ Create integration tests for the REST API endpoints in src/routes/api/:
 - Test error responses
 - Include rate limiting tests
 - Test database transactions
-
 
 ### E2E Test Scenarios
 
@@ -202,7 +194,6 @@ describe('API Endpoints', () => {
 - Permission levels
 - Session management
 
-
 ### Data Validation Testing
 
 - Required fields
@@ -211,7 +202,6 @@ describe('API Endpoints', () => {
 - Format validation
 - Business rule validation
 - Sanitization
-
 
 ### Error Handling Testing
 
@@ -222,7 +212,6 @@ describe('API Endpoints', () => {
 - Rate limiting
 - Circuit breaker behavior
 
-
 ### Performance Testing
 
 - Response time under load
@@ -230,7 +219,6 @@ describe('API Endpoints', () => {
 - Memory usage patterns
 - Database query performance
 - Cache effectiveness
-
 
 ## Test Data Strategies
 
@@ -270,14 +258,12 @@ const fixtures = {
 - Function Coverage: 90%
 - Statement Coverage: 80%
 
-
 ### Critical Path Requirements
 
 - Authentication: 100%
 - Payment Processing: 100%
 - Data Validation: 95%
 - Error Handlers: 90%
-
 
 ## Integration Tips
 
@@ -287,14 +273,12 @@ const fixtures = {
 4. **Test Parallelization**: Run tests in parallel for speed
 5. **Test Categorization**: Tag tests for selective running
 
-
 ## Limitations
 
 - Cannot test visual/UI rendering
 - Limited ability to test real external services
 - Cannot verify non-deterministic behavior
 - May not understand complex business logic
-
 
 ## Success Metrics
 
@@ -303,7 +287,6 @@ const fixtures = {
 - Coverage percentage trends
 - False positive rate
 - Test maintenance effort
-
 
 ## Usage Examples
 
@@ -419,7 +402,6 @@ describe('API Endpoints', () => {
 - Permission levels
 - Session management
 
-
 ### Data Validation Testing
 
 - Required fields
@@ -428,7 +410,6 @@ describe('API Endpoints', () => {
 - Format validation
 - Business rule validation
 - Sanitization
-
 
 ### Error Handling Testing
 
@@ -439,7 +420,6 @@ describe('API Endpoints', () => {
 - Rate limiting
 - Circuit breaker behavior
 
-
 ### Performance Testing
 
 - Response time under load
@@ -447,7 +427,6 @@ describe('API Endpoints', () => {
 - Memory usage patterns
 - Database query performance
 - Cache effectiveness
-
 
 ## Test Data Strategies
 
@@ -487,14 +466,12 @@ const fixtures = {
 - Function Coverage: 90%
 - Statement Coverage: 80%
 
-
 ### Critical Path Requirements
 
 - Authentication: 100%
 - Payment Processing: 100%
 - Data Validation: 95%
 - Error Handlers: 90%
-
 
 ## Integration Tips
 
@@ -504,14 +481,12 @@ const fixtures = {
 4. **Test Parallelization**: Run tests in parallel for speed
 5. **Test Categorization**: Tag tests for selective running
 
-
 ## Limitations
 
 - Cannot test visual/UI rendering
 - Limited ability to test real external services
 - Cannot verify non-deterministic behavior
 - May not understand complex business logic
-
 
 ## Success Metrics
 

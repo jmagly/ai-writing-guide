@@ -11,26 +11,21 @@
 - Related: REQ-<id>, CODE-<module>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/test/iteration-test-plan-template.md
-
 
 ## Scope
 
 - Features/modules covered
 
-
 ## Tests
 
 - List of tests and owners
 
-
 ## Frequency
 
 - When to run, and triggers
-
 
 ## Exit
 

@@ -13,18 +13,15 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>, TEST-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/analysis-design/interface-contract-card.md
 - docs/sdlc/templates/requirements/use-case-acceptance-template.md
 
-
 ## Endpoint / Interface
 
 - Name/Path: <GET /api/v1/...>
 - Version: v<major.minor>
-
 
 ## Request Schema
 

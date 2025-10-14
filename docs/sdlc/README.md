@@ -12,7 +12,6 @@ Plan → Act lifecycle scripts, prompts, roles, and templates for software deliv
 - `templates/` — Markdown templates for artifacts
  - `flows/` — Operator flows for discovery/delivery and handoffs
 
-
 ## Agent integration
 
 - Shared agents in `docs/agents/sdlc/`

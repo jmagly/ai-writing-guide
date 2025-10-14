@@ -11,7 +11,6 @@ quickly understand contents without extra tooling.
 - Validate manifests before pushing:
   - `node tools/manifest/check-manifests.mjs`
 
-
 ## Optional pre-commit hook
 
 Create `.git/hooks/pre-commit`:

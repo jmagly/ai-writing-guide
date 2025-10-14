@@ -18,7 +18,6 @@ traceability, and reliability.
 - `traceability-manager.md` — Maintains end-to-end coverage
 - `reliability-engineer.md` — SLO/SLI, ORR, chaos drills
 
-
 ## Usage
 
 Pair these agents with commands in `docs/commands/sdlc/` and templates in

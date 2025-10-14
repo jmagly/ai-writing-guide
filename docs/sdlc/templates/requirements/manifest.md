@@ -20,4 +20,3 @@
 - use-case-spec-template.md
 - vision-informal-template.md
 - vision-template.md
-

@@ -16,4 +16,3 @@
 - threat-model-template.md
 - threat-scenario-card.md
 - vulnerability-management-plan-template.md
-

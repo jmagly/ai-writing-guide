@@ -12,27 +12,22 @@
 - Related: UC-<id>, REQ-<id>, SLA-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/reliability/slo-sli-template.md
-
 
 ## Objective
 
 - Endpoint(s): <list>
 - Target(s): <p95/p99>, throughput
 
-
 ## Setup
 
 - Env, data volume, think time
 
-
 ## Steps
 
 - Load pattern and ramp schedule
-
 
 ## Results
 

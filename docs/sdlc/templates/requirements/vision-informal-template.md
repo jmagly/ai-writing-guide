@@ -7,12 +7,10 @@
 - Automation Inputs: Idea summary, stakeholder notes
 - Automation Outputs: `vision-informal.md` covering sections 1–5
 
-
 ## Cover Page
 
 - `<Project Name>`
 - `Vision`
-
 
 ## 1 Introduction
 

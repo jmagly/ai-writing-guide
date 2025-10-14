@@ -12,26 +12,21 @@
 - Related: REQ-<id>, ADR-<id>
 - Links: <paths/urls>
 
-
 ## Dependency
 
 - Name/system and contact
-
 
 ## Type
 
 - Contract, API, service, library
 
-
 ## Constraints
 
 - Versions, SLAs, or windows
 
-
 ## Risks
 
 - Potential impacts and mitigation
-
 
 ## Status
 

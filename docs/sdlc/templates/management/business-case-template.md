@@ -6,7 +6,6 @@
 - `Business Case`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Business Process Analyst, Requirements Reviewer
 - Automation Inputs: Market analysis, cost estimates, revenue projections
 - Automation Outputs: `business-case.md` with sections 1–6
-
 
 ## 1 Introduction
 

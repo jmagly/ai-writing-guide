@@ -6,7 +6,6 @@
 - `Glossary`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Business Process Analyst, Requirements Reviewer
 - Automation Inputs: Domain term list, glossary references
 - Automation Outputs: `glossary.md` sorted alphabetically
-
 
 ## 1 Introduction
 

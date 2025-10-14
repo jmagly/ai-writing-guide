@@ -12,16 +12,13 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/analysis-design/interface-contract-card.md
 
-
 ## Scenario
 
 - Name: <interaction>
-
 
 ## Participants
 
@@ -29,13 +26,11 @@
 - <Service A>
 - <Service B>
 
-
 ## Steps
 
 1. <Actor> → <Service A>: <call>
 2. <Service A> → <Service B>: <call>
 3. <Service B> → <Service A>: <response>
 4. <Service A> → <Actor>: <response>
-
 
 Use as a stub for Mermaid or plantuml diagrams.

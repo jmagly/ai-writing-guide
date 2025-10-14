@@ -12,9 +12,7 @@ Define how secrets are provisioned, stored, rotated, and audited across environm
 - Access control and least privilege
 - Audit trails and alerts for access anomalies
 
-
 ## Validation
 
 - Periodic checks and rotation reports
 - Incident drills for key compromise
-

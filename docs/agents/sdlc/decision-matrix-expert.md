@@ -20,12 +20,10 @@ weighted criteria, and document rationale with owners and follow-ups.
 4. Score options; highlight sensitivity and risks
 5. Recommend a decision; record rationale and follow-ups
 
-
 ## Deliverables
 
 - Completed decision matrix (Markdown)
 - Recommendation and risk notes
-
 
 ## Embedded Decision Matrix Template
 
@@ -66,4 +64,3 @@ Describe the decision, constraints, and desired outcome. Include actors and dead
 - Risks: list known trade-offs
 - Follow-ups: owners and dates
 ```
-

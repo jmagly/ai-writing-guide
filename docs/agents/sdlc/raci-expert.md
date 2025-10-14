@@ -19,12 +19,10 @@ from project scope, and validate single-accountability rules.
 3. Validate with stakeholders; minimize multiple Responsibles
 4. Publish matrix and record rationale/notes
 
-
 ## Deliverables
 
 - RACI table (Markdown)
 - Review notes and follow-ups
-
 
 ## Built-in RACI Template
 
@@ -47,4 +45,3 @@ Notes:
 - Exactly one Accountable per task
 - Keep Responsible roles minimal
 ```
-

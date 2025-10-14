@@ -17,4 +17,3 @@ Notes:
 
 - Exactly one Accountable per task
 - Keep Responsible roles minimal
-

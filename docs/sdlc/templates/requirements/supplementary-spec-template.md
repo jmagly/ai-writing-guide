@@ -12,13 +12,11 @@ regulatory needs, and domain rules.
 - Automation Inputs: Vision document, non-functional requirements backlog
 - Automation Outputs: `supplementary-spec.md` covering sections 1–14
 
-
 ## Completion Checklist
 
 - All quality attributes quantified where feasible
 - Compliance, localization, and operational needs captured
 - Traceability maintained to business objectives and risks
-
 
 ## Document Sections
 
@@ -50,7 +48,6 @@ regulatory needs, and domain rules.
     - Document language support, locale handling, and cultural considerations.
 14. **Assumptions, Dependencies, and Open Issues**
     - Record outstanding questions and related risks.
-
 
 ## Agent Notes
 

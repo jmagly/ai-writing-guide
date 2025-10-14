@@ -12,11 +12,9 @@
 - Related: SLI-<id>, RUN-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/reliability/chaos-experiment-plan-template.md
-
 
 ## Hypothesis
 
@@ -26,11 +24,9 @@ Expected behavior under specific failure.
 
 - Type and scope
 
-
 ## Observations
 
 - Metrics, logs, and traces
-
 
 ## Remediation
 

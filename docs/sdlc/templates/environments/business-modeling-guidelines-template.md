@@ -6,7 +6,6 @@
 - `Business Modeling Guidelines`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Business Process Analyst, System Analyst
 - Automation Inputs: Modeling standards, notation policies
 - Automation Outputs: `business-modeling-guidelines.md` with sections 1–5
-
 
 ## 1 Introduction
 

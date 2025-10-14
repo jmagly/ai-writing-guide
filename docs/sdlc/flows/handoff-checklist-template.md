@@ -6,7 +6,6 @@
 - Owners and reviewers
 - Due date and dependencies
 
-
 ## Included Artifacts (check all)
 
 - [ ] Use-case brief
@@ -15,10 +14,8 @@
 - [ ] Risks and ADRs
 - [ ] Test approach notes
 
-
 ## Acceptance
 
 - [ ] Completeness verified
 - [ ] Ambiguities resolved or flagged
 - [ ] Traceability updated
-

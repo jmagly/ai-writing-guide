@@ -13,18 +13,15 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>, CODE-<module>, TEST-<id>, ADR-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/analysis-design/interface-contract-card.md
 - docs/sdlc/templates/requirements/use-case-brief-template.md
 
-
 ## Identifier
 
 - Component: <name>
 - Owner: <team>
-
 
 ## Responsibilities
 

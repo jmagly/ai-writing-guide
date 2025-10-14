@@ -11,7 +11,6 @@ Include for:
 - Code documentation
 - System design interviews
 
-
 ## Core Principle
 
 Technical depth demonstrates expertise through precision, not simplification. Maintain sophisticated vocabulary and complex concepts when the audience expects it.
@@ -50,20 +49,17 @@ Technical depth demonstrates expertise through precision, not simplification. Ma
 - "Amortized constant time for insertions"
 - "Worst-case quadratic but average-case linear"
 
-
 ### System Characteristics
 
 - "Eventually consistent with tunable consistency levels"
 - "Linearizable reads with sequential consistency for writes"
 - "CAP theorem trade-offs favor availability over consistency"
 
-
 ### Performance Metrics
 
 - "p99 latency of 50ms under 10K QPS load"
 - "Garbage collection pauses under 10ms with ZGC"
 - "L1 cache hit rate of 95% with cache-aligned data structures"
-
 
 ## Deep Technical Explanations
 
@@ -90,7 +86,6 @@ Don't simplify these - explain them properly:
 - Lock-free data structures
 - Memory ordering guarantees
 - Cache coherence protocols
-
 
 ### Technical Trade-offs
 
@@ -134,7 +129,6 @@ Ask yourself:
 3. Are design decisions explained with reasoning?
 4. Are trade-offs quantified?
 5. Is the complexity justified by the problem?
-
 
 ## What to Avoid
 

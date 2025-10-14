@@ -10,10 +10,8 @@ State expected system behavior under failure.
 - Scope and blast radius
 - Metrics to watch and abort conditions
 
-
 ## Procedure
 
 1. Dry-run in staging
 2. Execute with observers
 3. Record findings and remediation tasks
-

@@ -13,4 +13,3 @@
 - programming-guidelines-template.md
 - test-guidelines-template.md
 - use-case-modeling-guidelines-template.md
-

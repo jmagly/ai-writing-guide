@@ -33,7 +33,6 @@ node tools/manifest/sync-manifests.mjs --target . --create --fix --write-md
 - Hidden files are ignored by default
 - Add exceptions via `ignore`
 
-
 ## Scripts
 
 - `check-manifests.mjs` — lints manifests and optionally fixes declared files

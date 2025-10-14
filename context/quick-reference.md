@@ -8,7 +8,6 @@
 4. **Does this sound like marketing?** → Rewrite
 5. **Would I say this to a colleague?** → This is the test
 
-
 ## The Core Formula
 
 Formula: Expert talking to peer + specific details + real trade-offs = authentic content
@@ -48,7 +47,6 @@ Formula: Expert talking to peer + specific details + real trade-offs = authentic
 - [ ] Different paragraph openings
 - [ ] Mix of sentence lengths
 
-
 ## Natural Transitions
 
 Instead of formal conjunctions:
@@ -58,7 +56,6 @@ Instead of formal conjunctions:
 - "Why TypeScript?" (question)
 - "Turns out..." (discovery)
 - "Problem was..." (direct statement)
-
 
 ## Authenticity Markers
 
@@ -70,7 +67,6 @@ Add at least one per section:
 - **Context**: "Friday deadline meant going with the quick fix"
 - **Learning**: "Should've used Postgres from the start"
 
-
 ## Numbers to Include
 
 Be specific:
@@ -81,7 +77,6 @@ Be specific:
 - Scale: "12 million daily users"
 - Technical: "p95 latency of 200ms"
 
-
 ## Final Pre-Submit Check
 
 1. **Search for "seamlessly"** - Delete it
@@ -89,7 +84,6 @@ Be specific:
 3. **Search for "comprehensive"** - Be specific
 4. **Count em-dashes** - Maximum 1-2
 5. **Read aloud** - Does it sound human?
-
 
 ## The One Rule
 
@@ -105,13 +99,11 @@ If something sounds too AI-like, try:
 4. State an opinion
 5. Remove all adjectives
 
-
 ## Remember
 
 - You're not Wikipedia
 - You're not marketing
 - You're not writing a paper
 - You're an expert sharing knowledge
-
 
 That's it. Now write like a human.

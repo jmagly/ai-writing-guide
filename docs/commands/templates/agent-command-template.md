@@ -34,7 +34,6 @@ checklist:
   - [Analysis item 2]: [What to evaluate]
   - [Analysis item 3]: [What to measure]
 
-
 ```text
 
 ### 2. Planning Phase ([X] minutes)
@@ -86,13 +85,11 @@ required_context:
   - exclude_patterns: ["node_modules/**", "*.log", "tmp/**"]
   - max_tokens: 8000
 
-
 optional_context:
 
   - configuration_files: ["package.json", "*.config.js"]
   - documentation: ["README.md", "CHANGELOG.md"]
   - environment_info: ["deployment configs", "CI/CD setup"]
-
 
 ```text
 
@@ -160,21 +157,17 @@ phase_2:
 |------|-------------|--------|------------|
 | [Risk 1] | [High/Med/Low] | [Severity] | [How to address] |
 
-
 ### Success Metrics
 
 - [Measurable outcome 1]: [Target value]
 - [Measurable outcome 2]: [Success criteria]
 - [Quality indicator]: [How to measure]
 
-
 ### Next Steps
 
 1. [Immediate action required]
 2. [Follow-up tasks]
 3. [Long-term considerations]
-
-
 ```text
 
 ## Real-World Experience Examples
@@ -328,22 +321,16 @@ comprehensive:
 - [ ] **Specific Examples**: Concrete scenarios that demonstrate expertise
 - [ ] **Balanced Perspective**: Acknowledges trade-offs and limitations
 - [ ] **Actionable Guidance**: Provides specific, implementable recommendations
-
-
 ### Technical Accuracy
 
 - [ ] **Domain Knowledge**: Demonstrates current understanding of field
 - [ ] **Best Practices**: Reflects industry standards and proven approaches
 - [ ] **Tool Usage**: Appropriate tool selection for capabilities needed
 - [ ] **Integration**: Works well with other agents and workflows
-
-
 ### Usability
 
 - [ ] **Clear Interface**: Easy to understand inputs and outputs
 - [ ] **Consistent Results**: Predictable behavior across similar inputs
 - [ ] **Error Handling**: Graceful degradation and helpful error messages
 - [ ] **Documentation**: Complete usage examples and edge cases
-
-
 This template creates agents that feel like experienced professionals while providing practical, actionable assistance for complex domain-specific tasks.

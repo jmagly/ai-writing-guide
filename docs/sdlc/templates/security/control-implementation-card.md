@@ -12,26 +12,21 @@
 - Related: SEC-THR-<id>, REQ-<id>, DES-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/security/security-test-case-card.md
-
 
 ## Control
 
 - Name/ID and purpose
 
-
 ## Implementation Plan
 
 - Steps, owners, and dependencies
 
-
 ## Verification
 
 - Tests or evidence required
-
 
 ## Rollout
 

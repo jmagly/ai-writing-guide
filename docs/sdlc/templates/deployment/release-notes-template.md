@@ -12,13 +12,11 @@ and other stakeholders.
 - Automation Inputs: Change log, resolved defects, feature list
 - Automation Outputs: `release-notes.md` with highlights, changes, and known issues
 
-
 ## Completion Checklist
 
 - Features and fixes categorized clearly with impact statements
 - Known issues and workarounds documented
 - Upgrade/rollback notes synchronized with Deployment Plan
-
 
 ## Document Sections
 
@@ -43,7 +41,6 @@ and other stakeholders.
    - Point to updated manuals, API docs, or training assets.
 10. **Support Contacts**
     - Provide contact info and escalation path for release-related inquiries.
-
 
 ## Agent Notes
 

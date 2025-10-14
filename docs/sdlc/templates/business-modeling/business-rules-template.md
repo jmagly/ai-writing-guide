@@ -6,7 +6,6 @@
 - `Business Rules Document`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: System Analyst, Requirements Reviewer
 - Automation Inputs: Policy documents, regulatory guidance, stakeholder notes
 - Automation Outputs: `business-rules.md` grouped by domain
-
 
 ## 1 Introduction
 

@@ -6,4 +6,3 @@ Files:
 
 - rewrite-exercises.md — practice exercises
 - technical-writing.md — examples of technical writing
-

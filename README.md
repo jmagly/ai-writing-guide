@@ -11,7 +11,6 @@ This repository provides guidelines, validation tools, and context documents to 
 - Sounds authentically human
 - Follows consistent quality standards across projects
 
-
 ## Quick Start
 
 For AI agents, include these files in your context:
@@ -21,7 +20,6 @@ For AI agents, include these files in your context:
 3. `validation/banned-patterns.md` - Patterns to avoid
 4. `context/quick-reference.md` - Quick validation checklist
 
-
 ## Structure
 
 - **`core/`** - Fundamental writing philosophy and principles
@@ -30,7 +28,6 @@ For AI agents, include these files in your context:
 - **`context/`** - Optimized documents for agent context
 - **`patterns/`** - Common AI patterns to avoid
 - **`tools/`** - Validation scripts and utilities
-
 
 ## Usage
 
@@ -64,7 +61,6 @@ Use the shared agent pool to bootstrap projects quickly by copying agents into a
   - Creates `.claude/agents` if it does not exist.
   - Filename conflicts are resolved by suffixing SDLC copies unless `--force`.
 
-
 Tip: add a shell alias for convenience:
 `alias deploy_agents='node /path/to/ai-writing-guide/tools/agents/deploy-agents.mjs'`
 
@@ -84,7 +80,6 @@ This adds a unified CLI:
   - `aiwg -new` deploys agents automatically and initializes git (branch `main`). Use `--no-agents` to skip.
   - Use `aiwg -deploy-agents --provider openai` to generate OpenAI/Codex-compatible agents into `.codex/agents`.
 
-
 To customize the install (repo, branch, prefix):
 
 ```bash
@@ -100,7 +95,6 @@ Node.js requirement:
 - Use `--auto-install-node` to let the installer attempt setup via your package manager (NodeSource/Homebrew).
 - If installation cannot be automated, the installer prints NVM/NodeSource instructions.
 
-
 ## CLI Quick Reference
 
 ```text
@@ -114,7 +108,6 @@ Tips:
 - Use the Team Profile example at `docs/sdlc/templates/management/team-profile-example.yaml` as a starting point.
 - For OpenAI/Codex projects, `aiwg -new --provider openai` deploys `.codex/AGENTS.md` by default.
 
-
 ## Key Principles
 
 1. **Accuracy First** - Never invent facts or embellish details
@@ -122,7 +115,6 @@ Tips:
 3. **Natural Flow** - Vary structure, avoid formulaic patterns
 4. **Specific Details** - Use exact metrics and real examples
 5. **Authentic Voice** - Sound like a human expert, not a content generator
-
 
 ## Contributing
 
@@ -132,7 +124,6 @@ When adding new patterns or guidelines:
 2. Provide both good and bad alternatives
 3. Explain why certain patterns are problematic
 4. Test with actual AI outputs
-
 
 ## License
 

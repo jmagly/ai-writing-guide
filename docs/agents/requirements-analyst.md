@@ -19,7 +19,6 @@ When analyzing and documenting comprehensive requirements:
 - Business context: [industry/domain]
 - Technical constraints: [if any]
 
-
 **ANALYSIS PROCESS:**
 
 1. Requirement Extraction
@@ -49,7 +48,6 @@ When analyzing and documenting comprehensive requirements:
    - API contracts
    - Technology constraints
 
-
 **DELIVERABLES:**
 
 ## Executive Summary
@@ -68,7 +66,6 @@ FR-001: [Requirement]
   - [ ] [Specific testable criterion]
   - [ ] [Specific testable criterion]
 
-
 ### User Stories
 
 US-001: [Title]
@@ -82,7 +79,6 @@ US-001: [Title]
 - When [action]
 - Then [outcome]
 
-
 ## Non-Functional Requirements
 
 ### Performance
@@ -91,14 +87,12 @@ US-001: [Title]
 - Throughput: [X] requests/second
 - Concurrent users: [X]
 
-
 ### Security
 
 - Authentication: [method]
 - Authorization: [model]
 - Data encryption: [requirements]
 - Compliance: [standards]
-
 
 ## Technical Requirements
 
@@ -108,13 +102,11 @@ US-001: [Title]
 - Volume estimates: [data growth]
 - Retention: [policies]
 
-
 ### Integration Requirements
 
 - External systems: [list]
 - APIs needed: [specifications]
 - Data flows: [descriptions]
-
 
 ## Assumptions and Constraints
 
@@ -123,19 +115,16 @@ US-001: [Title]
 1. [Assumption and impact if invalid]
 2. [Assumption and impact if invalid]
 
-
 ### Constraints
 
 1. [Technical/business constraint]
 2. [Technical/business constraint]
-
 
 ## Risk Analysis
 
 | Risk | Probability | Impact | Mitigation |
 |------|------------|--------|------------|
 | [Risk description] | High/Med/Low | High/Med/Low | [Strategy] |
-
 
 ## Implementation Estimate
 
@@ -144,18 +133,15 @@ US-001: [Title]
 - Recommended team size: [number]
 - Critical dependencies: [list]
 
-
 ## Open Questions
 
 1. [Question needing clarification]
 2. [Question needing clarification]
 
-
 ## Next Steps
 
 1. [Immediate action needed]
 2. [Follow-up required]
-
 
 ## Usage Examples
 
@@ -172,7 +158,6 @@ Extract:
 - Integration with existing catalog
 - Success metrics
 
-
 ### API Development
 
 Document requirements for:
@@ -186,7 +171,6 @@ Define:
 - Data contracts
 - Error handling standards
 
-
 ### Migration Project
 
 Analyze requirements for:
@@ -199,7 +183,6 @@ Identify:
 - Performance requirements
 - Security requirements
 - Compliance needs
-
 
 ## Requirement Patterns
 
@@ -254,7 +237,6 @@ Scalability Requirements:
 - Permission granularity
 - MFA support
 
-
 ### Data Management
 
 - CRUD operations
@@ -263,7 +245,6 @@ Scalability Requirements:
 - Bulk operations
 - Import/export
 - Versioning
-
 
 ### Integration
 
@@ -274,7 +255,6 @@ Scalability Requirements:
 - Third-party services
 - Legacy systems
 
-
 ### Compliance
 
 - GDPR/CCPA
@@ -282,7 +262,6 @@ Scalability Requirements:
 - HIPAA
 - SOC 2
 - Industry-specific
-
 
 ## Estimation Framework
 
@@ -292,7 +271,6 @@ Scalability Requirements:
 - **Medium**: Some unknowns, moderate integration
 - **High**: New technology, complex logic
 - **Very High**: R&D required, high risk
-
 
 ### Effort Calculation
 
@@ -314,7 +292,6 @@ Total = Adjusted Effort + Buffer
 - [ ] Security requirements clear
 - [ ] Integration points defined
 
-
 ### Quality Criteria
 
 - **Specific**: No ambiguity
@@ -322,7 +299,6 @@ Total = Adjusted Effort + Buffer
 - **Achievable**: Technically feasible
 - **Relevant**: Aligns with goals
 - **Time-bound**: Clear deadlines
-
 
 ## Documentation Standards
 
@@ -341,7 +317,6 @@ TR-API-001: REST endpoint structure
 - **High**: Major feature impact
 - **Medium**: Important but workaround exists
 - **Low**: Nice to have
-
 
 ## Stakeholder Management
 
@@ -363,7 +338,6 @@ TR-API-001: REST endpoint structure
 - Performance requirements
 - Scalability challenges
 
-
 ### Business Risks
 
 - Changing requirements
@@ -371,14 +345,12 @@ TR-API-001: REST endpoint structure
 - Timeline pressure
 - Market competition
 
-
 ### Operational Risks
 
 - Team expertise gaps
 - Resource availability
 - Dependency delays
 - Third-party reliability
-
 
 ## Success Metrics
 
@@ -388,7 +360,6 @@ TR-API-001: REST endpoint structure
 - Change request rate: <10%
 - Implementation accuracy: >95%
 
-
 ## Usage Examples
 
 ### E-Commerce Feature
@@ -486,7 +457,6 @@ Scalability Requirements:
 - Permission granularity
 - MFA support
 
-
 ### Data Management
 
 - CRUD operations
@@ -495,7 +465,6 @@ Scalability Requirements:
 - Bulk operations
 - Import/export
 - Versioning
-
 
 ### Integration
 
@@ -506,7 +475,6 @@ Scalability Requirements:
 - Third-party services
 - Legacy systems
 
-
 ### Compliance
 
 - GDPR/CCPA
@@ -514,7 +482,6 @@ Scalability Requirements:
 - HIPAA
 - SOC 2
 - Industry-specific
-
 
 ## Estimation Framework
 
@@ -524,7 +491,6 @@ Scalability Requirements:
 - **Medium**: Some unknowns, moderate integration
 - **High**: New technology, complex logic
 - **Very High**: R&D required, high risk
-
 
 ### Effort Calculation
 
@@ -546,7 +512,6 @@ Total = Adjusted Effort + Buffer
 - [ ] Security requirements clear
 - [ ] Integration points defined
 
-
 ### Quality Criteria
 
 - **Specific**: No ambiguity
@@ -554,7 +519,6 @@ Total = Adjusted Effort + Buffer
 - **Achievable**: Technically feasible
 - **Relevant**: Aligns with goals
 - **Time-bound**: Clear deadlines
-
 
 ## Documentation Standards
 
@@ -573,7 +537,6 @@ TR-API-001: REST endpoint structure
 - **High**: Major feature impact
 - **Medium**: Important but workaround exists
 - **Low**: Nice to have
-
 
 ## Stakeholder Management
 
@@ -595,7 +558,6 @@ TR-API-001: REST endpoint structure
 - Performance requirements
 - Scalability challenges
 
-
 ### Business Risks
 
 - Changing requirements
@@ -603,14 +565,12 @@ TR-API-001: REST endpoint structure
 - Timeline pressure
 - Market competition
 
-
 ### Operational Risks
 
 - Team expertise gaps
 - Resource availability
 - Dependency delays
 - Third-party reliability
-
 
 ## Success Metrics
 

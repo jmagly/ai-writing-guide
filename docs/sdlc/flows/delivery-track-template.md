@@ -12,10 +12,8 @@ Implement prioritized slices with tests and quality gates.
 4. Validate gates (security, reliability)
 5. Integrate and prepare release notes/runbooks
 
-
 ## Exit Criteria per slice
 
 - Tests green and coverage targets met
 - Gates passed; defects triaged
 - Traceability updated and iteration assessment recorded
-

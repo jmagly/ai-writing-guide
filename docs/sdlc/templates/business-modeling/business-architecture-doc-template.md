@@ -12,13 +12,11 @@ to inform solution scope and alignment.
 - Automation Inputs: Current-state process landscape, org charts, system inventory
 - Automation Outputs: `business-architecture.md` including sections 1–9
 
-
 ## Completion Checklist
 
 - End-to-end process context diagrammed or referenced
 - Organizational impacts and change considerations captured
 - Information flows and supporting systems identified
-
 
 ## Document Sections
 
@@ -44,7 +42,6 @@ to inform solution scope and alignment.
    - Capture business-level risks and dependency map.
 9. **Appendices**
    - Include detailed diagrams, matrices, or supporting analysis.
-
 
 ## Agent Notes
 

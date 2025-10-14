@@ -10,7 +10,6 @@ Only include this for:
 - Investor updates
 - Executive summaries
 
-
 ## The Executive Voice Balance
 
 ### What Executives Expect
@@ -21,7 +20,6 @@ Only include this for:
 - **Confident decisions** - not hedged possibilities
 - **Time efficiency** - not comprehensive coverage
 
-
 ### Maintaining Sophistication
 
 Executive communication requires high sophistication without technical jargon:
@@ -30,7 +28,6 @@ Executive communication requires high sophistication without technical jargon:
 - Strategic vocabulary
 - Financial terminology
 - Market dynamics language
-
 
 ## Appropriate Patterns for Executive Context
 
@@ -51,7 +48,6 @@ These are appropriate in executive context even though they might be "banned" in
 - Strategic initiatives
 - Value creation
 - Stakeholder alignment
-
 
 ### Executive-Appropriate Complexity
 
@@ -91,7 +87,6 @@ Start with business value, not technical achievement:
 - Time to market
 - Competitive positioning
 
-
 ### Address Risk Professionally
 
 > "While the migration carries execution risk, our phased approach and fallback provisions mitigate potential service disruption."
@@ -110,7 +105,6 @@ Start with business value, not technical achievement:
 - Optimize (in business context)
 - Enable (for strategic capabilities)
 
-
 ## Executive Formatting Preferences
 
 ### Structured Thinking
@@ -120,7 +114,6 @@ Start with business value, not technical achievement:
 - Bold key metrics
 - Executive summary upfront
 
-
 ### Conclusion-First Writing
 
 Unlike technical writing, executives prefer:
@@ -128,7 +121,6 @@ Unlike technical writing, executives prefer:
 1. Recommendation/conclusion first
 2. Supporting rationale second
 3. Details in appendix if needed
-
 
 ## The Executive Test
 
@@ -139,7 +131,6 @@ Before sending, verify:
 3. Are strategic implications addressed?
 4. Would a board member find this valuable?
 5. Is the reading level appropriate (graduate level but not technical)?
-
 
 ## Remember
 

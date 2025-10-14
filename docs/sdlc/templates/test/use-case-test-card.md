@@ -12,16 +12,13 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/requirements/use-case-acceptance-template.md
 
-
 ## Identifier
 
 - UC: UC-<num>
-
 
 ## Scenarios
 

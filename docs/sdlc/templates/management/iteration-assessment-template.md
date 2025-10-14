@@ -6,7 +6,6 @@
 - `Iteration Assessment`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Test Architect, Requirements Reviewer, Implementer
 - Automation Inputs: Iteration metrics, evaluation criteria, retrospectives
 - Automation Outputs: `iteration-<id>-assessment.md` summarizing sections 1–8
-
 
 ## 1 Introduction
 

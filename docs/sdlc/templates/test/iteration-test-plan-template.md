@@ -11,13 +11,11 @@ Detail the testing scope, approach, and logistics for a specific iteration withi
 - Automation Inputs: Iteration scope, build availability, data refresh plan
 - Automation Outputs: `iteration-<id>-test-plan.md` covering sections 1–11
 
-
 ## Completion Checklist
 
 - Iteration objectives and acceptance criteria captured
 - Test cases mapped to implemented stories/use cases
 - Environment, data, and resource needs scheduled
-
 
 ## Document Sections
 
@@ -43,7 +41,6 @@ Detail the testing scope, approach, and logistics for a specific iteration withi
     - Describe reporting cadence, dashboards, and stakeholders to inform.
 11. **Open Issues**
     - Track pending items or blockers.
-
 
 ## Agent Notes
 

@@ -23,4 +23,3 @@ Positive, negative, and trade-offs. Operational impacts.
 ## Alternatives Considered
 
 Other options and why not chosen.
-

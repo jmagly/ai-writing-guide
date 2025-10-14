@@ -12,12 +12,10 @@
 - Related: REL-<id>, RUN-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/deployment/deployment-plan-template.md
 - docs/sdlc/templates/deployment/support-runbook-template.md
-
 
 ## Pre-Checks
 
@@ -25,17 +23,14 @@
 - [ ] Backups verified
 - [ ] Feature flags configured
 
-
 ## Rollout Steps
 
 1. <action>
 2. <action>
 
-
 ## Validation
 
 - Smoke checks, metrics, and logs
-
 
 ## Rollback
 

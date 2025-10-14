@@ -6,7 +6,6 @@
 - `Requirements Management Plan`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: System Analyst, Requirements Reviewer, Configuration Manager
 - Automation Inputs: Process policies, backlog taxonomy, tooling inventory
 - Automation Outputs: `requirements-management-plan.md` covering sections 1–5
-
 
 ## 1 Introduction
 

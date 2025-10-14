@@ -9,4 +9,3 @@
 - manifest.md
 - orchestrate-project.md
 - security-gate.md
-

@@ -52,7 +52,6 @@ Target reading level: College to Graduate level for technical content
 - Domain-specific terminology without apology
 - Multi-clause sentences for nuanced ideas
 
-
 ### Example of Appropriate Complexity
 
 > "The distributed consensus mechanism employs a modified Raft protocol with optimizations for geo-distributed clusters, specifically addressing the latency challenges inherent in cross-region replication while maintaining linearizability guarantees under partition scenarios."
@@ -68,7 +67,6 @@ Instead of broad claims, show specific expertise:
 - Name specific technologies, protocols, algorithms
 - Reference actual constraints and trade-offs
 - Include version numbers, performance metrics, configuration details
-
 
 ### Examples of Authoritative Voice
 
@@ -89,20 +87,17 @@ Instead of broad claims, show specific expertise:
 - "Implements the Circuit Breaker pattern with exponential backoff"
 - "Uses Copy-on-Write semantics for thread safety"
 
-
 ### Professional Constructions
 
 - "This approach, while computationally expensive, ensures data consistency"
 - "Performance degrades linearly with dataset size"
 - "The architecture follows Domain-Driven Design principles"
 
-
 ### Nuanced Assessments
 
 - "The solution is optimal for read-heavy workloads but struggles with write amplification"
 - "While theoretically sound, practical implementation revealed edge cases"
 - "The abstraction leaks under high concurrency"
-
 
 ## Balancing Authenticity with Authority
 
@@ -130,7 +125,6 @@ Instead of broad claims, show specific expertise:
 - Include Big O notation
 - Mention specific tools and versions
 
-
 ### Data Science
 
 - Statistical terminology
@@ -138,14 +132,12 @@ Instead of broad claims, show specific expertise:
 - Evaluation metrics
 - Dataset characteristics
 
-
 ### DevOps/SRE
 
 - Infrastructure as Code
 - Monitoring and observability terms
 - SLA/SLO/SLI references
 - Specific cloud services
-
 
 ## Red Flags of Over-Simplification
 
@@ -156,7 +148,6 @@ Instead of broad claims, show specific expertise:
 - Single-syllable words dominating
 - Lack of subordinate clauses
 - No domain-specific vocabulary
-
 
 ### Examples of Over-Correction
 
@@ -176,7 +167,6 @@ Ask yourself:
 4. Would peers respect this analysis?
 5. Does it use the vocabulary of the domain?
 
-
 ## Final Principle
 
 **Sophistication comes from precision and depth, not from fancy words or complex grammar.**
@@ -187,6 +177,5 @@ Write like someone who:
 - Can explain complex ideas clearly
 - Knows when complexity is necessary
 - Isn't trying to impress, just to communicate accurately
-
 
 The goal is to sound like an expert explaining to other experts, not an AI trying to sound impressive or a novice trying to sound casual.

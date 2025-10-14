@@ -12,13 +12,11 @@ analysis, design, testing, and traceability matrices.
 - Automation Inputs: Approved personas, business use-case spec, stakeholder walkthroughs
 - Automation Outputs: `use-case-<id>.md` with main and alternate flows
 
-
 ## Completion Checklist
 
 - All flows (main and alternate) enumerated with pre/postconditions
 - Non-functional requirements and business rules linked
 - Open issues and assumptions clearly documented
-
 
 ## Document Sections
 
@@ -52,7 +50,6 @@ analysis, design, testing, and traceability matrices.
     - Track unresolved questions, decisions, or dependencies.
 15. **References**
     - Link to supporting documents (vision, supplementary spec, designs).
-
 
 ## Agent Notes
 

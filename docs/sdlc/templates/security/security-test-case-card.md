@@ -12,21 +12,17 @@
 - Related: SEC-THR-<id>, SEC-CTRL-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/security/threat-scenario-card.md
-
 
 ## Scope
 
 - Feature/endpoint: <name>
 
-
 ## Threat/Control Targeted
 
 - Link to threat scenario or control
-
 
 ## Steps
 

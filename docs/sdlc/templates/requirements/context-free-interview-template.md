@@ -9,12 +9,10 @@
 - Automation Inputs: Stakeholder profile, interview goals
 - Automation Outputs: `interview-session-notes.md` aligned to sections 2–11
 
-
 ## 1 Preparation
 
 - Identify stakeholder / user role.
 - Schedule session, confirm recording or note-taking approach.
-
 
 ## 2 Establish Stakeholder or User Profile
 
@@ -24,7 +22,6 @@
 - Success metrics and inhibitors
 - Influential trends affecting the role
 
-
 ## 3 Assess the Problem Space
 
 - Which `<application type>` problems lack good solutions?
@@ -32,7 +29,6 @@
 - How are they solved currently?
 - How would the stakeholder prefer to solve them?
 - Continue probing (“Anything else?”) until no further issues emerge.
-
 
 ## 4 Understand the User Environment
 
@@ -42,30 +38,25 @@
 - Usability expectations and training tolerance
 - Documentation (online and hard-copy) requirements
 
-
 ## 5 Recap for Understanding
 
 - Restate problems in your own words and confirm accuracy.
 - Ask if additional problems exist beyond those discussed.
-
 
 ## 6 Present Analyst Inputs (if appropriate)
 
 - Introduce observed or suspected problems for validation.
 - For each proposed problem, ask: Is it real? Causes? Current workaround? Desired solution? Relative priority?
 
-
 ## 7 Assess Potential Solution Concepts
 
 - Share high-level “What if you could…“ capability statements.
 - Capture stakeholder’s perceived value and priority for each capability.
 
-
 ## 8 Evaluate Opportunity Size
 
 - Identify other impacted stakeholders or teams.
 - Estimate number of users and perceived business value of a solution.
-
 
 ## 9 Reliability, Performance, and Support Expectations
 
@@ -73,23 +64,19 @@
 - Support model, maintenance expectations, security, installation, configuration, licensing, packaging, distribution requirements
 - Regulatory or environmental constraints
 
-
 ## 10 Wrap-Up
 
 - Ask for remaining questions or concerns.
 - Confirm permission for follow-up and potential participation in reviews.
-
 
 ## 11 Analyst Summary
 
 - Record top three to four problems/opportunities highlighted.
 - Note immediate follow-up actions or research tasks.
 
-
 ## Interview Artifacts
 
 - Attach notes, recordings, or summaries in `docs/sdlc/artifacts/<project>/interviews/`.
-
 
 ## Agent Notes
 

@@ -11,13 +11,11 @@ Define objectives, scope, tasks, and evaluation criteria for a single iteration 
 - Automation Inputs: Prioritized backlog, team capacity, dependency map
 - Automation Outputs: `iteration-<id>-plan.md` detailing scope and tasks
 
-
 ## Completion Checklist
 
 - Iteration objectives align with phase goals and risk priorities
 - Task breakdown supports parallel agent work with clear owners
 - Evaluation criteria and planned measurements documented
-
 
 ## Document Sections
 
@@ -43,7 +41,6 @@ Define objectives, scope, tasks, and evaluation criteria for a single iteration 
     - State how scope changes will be assessed and approved during the iteration.
 11. **Review and Retrospective Plan**
     - Schedule iteration review, demo, and retrospective sessions.
-
 
 ## Agent Notes
 

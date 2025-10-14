@@ -6,4 +6,3 @@ Files:
 
 - philosophy.md — core writing philosophy
 - sophistication-guide.md — guidance on sophistication and depth
-

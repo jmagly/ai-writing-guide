@@ -29,7 +29,6 @@ Aliases installed (unified CLI):
 - `aiwg -new` → scaffold a new project with intake templates (agents auto-deployed by default)
   - The CLI auto-updates the installed framework (git pull) before executing.
 
-
 Scaffolding:
 
 ```bash

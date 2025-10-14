@@ -5,4 +5,3 @@
 - manifest-lint.yml
 - manifest.md
 - markdownlint.yml
-

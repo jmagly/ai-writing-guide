@@ -11,10 +11,8 @@ Reduce supply chain risk by controlling sources, versions, and updates.
 - Apply security updates on a fixed cadence
 - Block known-bad licenses if applicable
 
-
 ## Processes
 
 - New dependency review checklist
 - Periodic audit and removal of unused deps
 - Automated alerts on CVE advisories
-

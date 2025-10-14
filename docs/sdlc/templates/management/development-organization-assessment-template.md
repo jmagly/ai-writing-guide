@@ -6,7 +6,6 @@
 - `Development-Organization Assessment`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Project Manager, Configuration Manager
 - Automation Inputs: Process assessment interviews, tooling audit, capability metrics
 - Automation Outputs: `development-organization-assessment.md` covering sections 1–6
-
 
 ## 1 Introduction
 

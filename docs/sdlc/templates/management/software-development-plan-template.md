@@ -11,13 +11,11 @@ Provide a consolidated plan covering scope, schedule, resources, and management 
 - Automation Inputs: Business case, roadmap, capacity model
 - Automation Outputs: `software-development-plan.md` with sections 1–16
 
-
 ## Completion Checklist
 
 - Lifecycle phases, milestones, and dependencies outlined
 - Resource assignments, budget, and staffing assumptions documented
 - Management processes (risk, change, communication) defined
-
 
 ## Document Sections
 
@@ -53,7 +51,6 @@ Provide a consolidated plan covering scope, schedule, resources, and management 
     - Outline training needs for team members and stakeholders.
 16. **Tailoring and Process Improvement**
     - Document deviations from standard process and continuous improvement approach.
-
 
 ## Agent Notes
 

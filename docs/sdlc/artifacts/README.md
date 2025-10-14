@@ -5,4 +5,3 @@ Store instantiated lifecycle artifacts for projects. Use templates from `../temp
 Subdirectories:
 
 - `sample-project/` — example iteration with minimal artifacts
-

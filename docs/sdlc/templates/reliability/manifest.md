@@ -10,4 +10,3 @@
 - operational-readiness-review-template.md
 - sli-card.md
 - slo-sli-template.md
-

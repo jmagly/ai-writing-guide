@@ -6,4 +6,3 @@
 - common-ai-tells.md
 - manifest.json
 - manifest.md
-

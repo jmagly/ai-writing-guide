@@ -6,7 +6,6 @@
 - `Supplementary Business Specification`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: System Analyst, Requirements Reviewer, Project Manager
 - Automation Inputs: Business rules inventory, compliance obligations, charter goals
 - Automation Outputs: `supplementary-business-spec.md` covering sections 1–6
-
 
 ## 1 Introduction
 

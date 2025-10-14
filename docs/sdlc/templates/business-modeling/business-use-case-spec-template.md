@@ -12,13 +12,11 @@ Inception and Elaboration.
 - Automation Inputs: Validated personas, charter outcomes, stakeholder interviews
 - Automation Outputs: `business-use-case-<id>.md` with fully described flows
 
-
 ## Completion Checklist
 
 - Primary and alternate flows documented with clear triggers and outcomes
 - Business rules and KPIs linked to each activity
 - Preconditions and postconditions validated with stakeholders
-
 
 ## Document Sections
 
@@ -43,7 +41,6 @@ Inception and Elaboration.
    - Specify KPIs or SLAs tied to this process and how they are measured.
 10. **Open Issues and Assumptions**
     - Log pending questions, risks, or required policy clarifications.
-
 
 ## Agent Notes
 

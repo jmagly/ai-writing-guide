@@ -6,7 +6,6 @@
 - `Programming Guidelines`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Implementer, Integrator
 - Automation Inputs: Language standards, static analysis rules
 - Automation Outputs: `programming-guidelines.md` with sections 1–9
-
 
 ## 1 Introduction
 

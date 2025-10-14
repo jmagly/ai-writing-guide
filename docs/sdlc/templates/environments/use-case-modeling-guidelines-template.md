@@ -6,7 +6,6 @@
 - `Use-Case Modeling Guidelines`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: System Analyst, Requirements Reviewer
 - Automation Inputs: Use-case modeling conventions, review checklist
 - Automation Outputs: `use-case-modeling-guidelines.md` covering sections 1–8
-
 
 ## 1 Introduction
 

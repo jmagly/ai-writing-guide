@@ -6,7 +6,6 @@
 - `Software Requirements Specification for <Subsystem or Feature>`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Software Architect, Test Architect, Requirements Reviewer
 - Automation Inputs: Vision, use-case library, supplementary specification
 - Automation Outputs: `software-requirements-specification.md` with sections 1–4
-
 
 ## 1 Introduction
 

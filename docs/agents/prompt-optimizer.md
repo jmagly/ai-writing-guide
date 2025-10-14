@@ -19,7 +19,6 @@ When optimizing prompts for authentic, high-quality output:
 - Output type: [article/code/analysis]
 - Specific problems: [current issues with output]
 
-
 **OPTIMIZATION PROCESS:**
 
 1. Prompt Analysis
@@ -49,7 +48,6 @@ When optimizing prompts for authentic, high-quality output:
    - Specify expertise level
    - Add relevant constraints
 
-
 **DELIVERABLES:**
 
 ## Optimized Prompt
@@ -68,7 +66,6 @@ When optimizing prompts for authentic, high-quality output:
 - ALWAYS include: [specific elements]
 - Voice: [description]
 - Sophistication: [level]
-
 
 ### Task Instructions
 
@@ -90,7 +87,6 @@ When optimizing prompts for authentic, high-quality output:
 - [ ] Natural transitions
 - [ ] Varied structure
 
-
 ## Comparison Analysis
 
 ### Original Prompt Issues
@@ -98,18 +94,15 @@ When optimizing prompts for authentic, high-quality output:
 1. [Issue]: [Impact on output]
 2. [Issue]: [Impact on output]
 
-
 ### Improvements Made
 
 1. [Change]: [Expected benefit]
 2. [Change]: [Expected benefit]
 
-
 ### Test Cases
 
 1. [Scenario]: [Expected output characteristics]
 2. [Scenario]: [Expected output characteristics]
-
 
 ## Usage Instructions
 
@@ -130,7 +123,6 @@ Into a prompt that generates:
 - No marketing language
 - Authentic engineering voice
 
-
 ### Code Generation Prompt
 
 Enhance this prompt:
@@ -144,7 +136,6 @@ To ensure:
 - No over-engineering
 - Production-ready mindset
 
-
 ### Analysis Prompt
 
 Improve this prompt:
@@ -157,7 +148,6 @@ To produce:
 - Specific vendor comparisons
 - Honest challenges faced
 - Lessons learned tone
-
 
 ## Optimization Patterns
 
@@ -175,7 +165,6 @@ To produce:
 - Trade-offs between read and write performance
 - Real mistake you might make (like over-indexing)"
 
-
 ### Injecting Authenticity
 
 ❌ BEFORE:
@@ -190,7 +179,6 @@ To produce:
 - A complaint about Docker Desktop licensing
 - Specific commands you run daily"
 
-
 ### Preventing AI Patterns
 
 ADD TO EVERY PROMPT:
@@ -202,14 +190,12 @@ CRITICAL - Never use these phrases:
 - "cutting-edge" or "state-of-the-art"
 - "transformative" or "revolutionary"
 
-
 Instead:
 
 - Name specific functions/responsibilities
 - Describe actual integration points
 - Use concrete technology names
 - Explain what actually changed
-
 
 ## Multi-Shot Example Structure
 
@@ -235,7 +221,6 @@ Maintain sophisticated vocabulary:
 - "race condition" not "timing problem"
 - "dependency injection" not "passing in what you need"
 
-
 But explain when needed:
 "We used event sourcing (storing state changes rather than current state) because we needed audit trails for compliance."
 
@@ -246,7 +231,6 @@ Balance sophistication with clarity:
 - "ROI of 340% over 24 months" not "good returns"
 - "market penetration" not "getting customers"
 - "operational leverage" not "doing more with less"
-
 
 But stay grounded:
 "The board wanted 50% growth. We delivered 32%. Here's why that's actually good given the market."
@@ -262,7 +246,6 @@ Claude responds well to:
 - Clear role definition
 - Multiple specific examples
 
-
 Add: "Think through this step by step, explaining your reasoning."
 
 ### GPT-4 Optimization
@@ -273,7 +256,6 @@ GPT-4 benefits from:
 - Temperature/style hints
 - Chain-of-thought prompting
 - Explicit expertise level
-
 
 Add: "As a senior engineer with 10+ years experience..."
 
@@ -290,20 +272,17 @@ Authenticity (40 points):
 - [ ] Acknowledges trade-offs (10)
 - [ ] Shows real-world messiness (10)
 
-
 Technical Quality (30 points):
 
 - [ ] Accurate information (10)
 - [ ] Appropriate depth (10)
 - [ ] Practical applicability (10)
 
-
 Writing Quality (30 points):
 
 - [ ] No banned phrases (10)
 - [ ] Natural transitions (10)
 - [ ] Varied structure (10)
-
 
 Minimum passing score: 80/100
 
@@ -317,7 +296,6 @@ Minimum passing score: 80/100
 - Add domain context
 - Include constraints
 
-
 ### For Generic Output
 
 - Require specific examples
@@ -326,7 +304,6 @@ Minimum passing score: 80/100
 - Request unpopular opinions
 - Specify unique angles
 
-
 ### For AI-Sounding Text
 
 - Ban specific phrases explicitly
@@ -334,7 +311,6 @@ Minimum passing score: 80/100
 - Ask for implementation problems
 - Demand specific tool names
 - Request informal asides
-
 
 ## Testing Strategy
 
@@ -346,7 +322,6 @@ Minimum passing score: 80/100
 4. Compare scores and specific improvements
 5. Iterate on optimization
 
-
 ### Edge Case Testing
 
 Test prompts with:
@@ -357,7 +332,6 @@ Test prompts with:
 - Different expertise levels
 - Various output lengths
 
-
 ## Success Metrics
 
 - Banned phrase reduction: >95%
@@ -365,7 +339,6 @@ Test prompts with:
 - Authenticity score: >85
 - Human preference: >75%
 - Task completion accuracy: >90%
-
 
 ## Usage Examples
 
@@ -565,7 +538,6 @@ Minimum passing score: 80/100
 - Add domain context
 - Include constraints
 
-
 ### For Generic Output
 
 - Require specific examples
@@ -574,7 +546,6 @@ Minimum passing score: 80/100
 - Request unpopular opinions
 - Specify unique angles
 
-
 ### For AI-Sounding Text
 
 - Ban specific phrases explicitly
@@ -582,7 +553,6 @@ Minimum passing score: 80/100
 - Ask for implementation problems
 - Demand specific tool names
 - Request informal asides
-
 
 ## Testing Strategy
 

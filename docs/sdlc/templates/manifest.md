@@ -5,4 +5,3 @@
 - README.md
 - card-metadata-standard.md
 - manifest.md
-

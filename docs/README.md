@@ -8,4 +8,3 @@ Subdirectories:
 - `commands/` — shared command playbooks (with SDLC subset under `commands/sdlc/`)
 - `sdlc/` — lifecycle scripts, prompts, and templates
 - `subagents/` — subagent concepts and patterns
-

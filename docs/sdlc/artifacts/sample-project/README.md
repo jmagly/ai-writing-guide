@@ -11,4 +11,3 @@ Artifacts:
 - traceability/traceability-matrix.csv — coverage mapping
 - reports/status-assessment.md — iteration status summary
 - reports/security-gate-report.md — gate status and actions
-

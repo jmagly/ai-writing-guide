@@ -19,7 +19,6 @@ When generating diverse content for AI Writing Guide:
 - Diversity goals: [what variations needed]
 - Quality bar: [standards to maintain]
 
-
 **GENERATION PROCESS:**
 
 1. Gap Analysis
@@ -43,7 +42,6 @@ When generating diverse content for AI Writing Guide:
    - Validate diversity
    - Confirm teachability
 
-
 **DELIVERABLES:**
 
 ## Generated Examples
@@ -65,7 +63,6 @@ When generating diverse content for AI Writing Guide:
 - Includes failure point
 - Informal "duct-taped"
 
-
 #### Example 2: Enterprise Architect Perspective
 
 **Before (AI-like):**
@@ -80,7 +77,6 @@ When generating diverse content for AI Writing Guide:
 - Admits overengineering
 - Shows organizational reality
 - Includes business context
-
 
 ### Difficulty Progression
 
@@ -199,7 +195,6 @@ Good: "Hits 144fps on RTX 3070, drops to 45fps in boss fights when particle effe
    - Fail: "Successfully migrated to microservices"
    - Pass: "Microservices migration took 18 months instead of 6. Three services are still talking directly to the monolith's database."
 
-
 ## Edge Cases
 
 ### Maximum Authenticity
@@ -226,7 +221,6 @@ Good: "Hits 144fps on RTX 3070, drops to 45fps in boss fights when particle effe
 7. **Add personal opinions or preferences**
 8. **Mention actual problems encountered**
 
-
 ## Usage Examples
 
 ### Generate More Examples
@@ -274,7 +268,6 @@ Include industry-specific authenticity markers.
 - Failure types: 20+ categories
 - Voice personas: 12+ distinct
 
-
 ### Authenticity Validation
 
 - Contains specific details: 100%
@@ -282,7 +275,6 @@ Include industry-specific authenticity markers.
 - Has opinions: 60%
 - Admits failures: 40%
 - Natural voice: 95%
-
 
 ## Anti-Pattern Generation
 
@@ -296,14 +288,12 @@ Generate intentionally bad examples that:
 - Over-explain simple concepts
 - Under-explain complex ones
 
-
 ### Purpose
 
 - Training data for validators
 - Clear contrast for learning
 - Pattern recognition practice
 - Humor and engagement
-
 
 ## Progressive Learning
 
@@ -315,7 +305,6 @@ Generate intentionally bad examples that:
 4. **Level 4**: Add personality
 5. **Level 5**: Master subtlety
 
-
 ### Skill Building
 
 - Start with single-sentence fixes
@@ -323,7 +312,6 @@ Generate intentionally bad examples that:
 - Advance to full document revision
 - Master voice consistency
 - Achieve natural expertise
-
 
 ## Success Metrics
 
@@ -333,7 +321,6 @@ Generate intentionally bad examples that:
 - User engagement: >80%
 - Learning effectiveness: >75%
 
-
 ## Usage Examples
 
 ### Generate More Examples
@@ -381,7 +368,6 @@ Include industry-specific authenticity markers.
 - Failure types: 20+ categories
 - Voice personas: 12+ distinct
 
-
 ### Authenticity Validation
 
 - Contains specific details: 100%
@@ -389,7 +375,6 @@ Include industry-specific authenticity markers.
 - Has opinions: 60%
 - Admits failures: 40%
 - Natural voice: 95%
-
 
 ## Anti-Pattern Generation
 
@@ -403,14 +388,12 @@ Generate intentionally bad examples that:
 - Over-explain simple concepts
 - Under-explain complex ones
 
-
 ### Purpose
 
 - Training data for validators
 - Clear contrast for learning
 - Pattern recognition practice
 - Humor and engagement
-
 
 ## Progressive Learning
 
@@ -422,7 +405,6 @@ Generate intentionally bad examples that:
 4. **Level 4**: Add personality
 5. **Level 5**: Master subtlety
 
-
 ### Skill Building
 
 - Start with single-sentence fixes
@@ -430,7 +412,6 @@ Generate intentionally bad examples that:
 - Advance to full document revision
 - Master voice consistency
 - Achieve natural expertise
-
 
 ## Success Metrics
 

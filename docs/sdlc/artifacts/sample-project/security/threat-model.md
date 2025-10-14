@@ -5,7 +5,6 @@
 - Component: Core API
 - Data: PII (email), session tokens
 
-
 ## STRIDE (excerpt)
 
 | Component | Spoofing | Tampering | Repudiation | Info disclosure | DoS | EoP |

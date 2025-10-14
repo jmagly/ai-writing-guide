@@ -13,13 +13,11 @@ stakeholder requests.
 - Automation Inputs: Idea brief, stakeholder roster, market research snapshot
 - Automation Outputs: `business-vision.md` with completed sections and live outstanding questions
 
-
 ## Completion Checklist
 
 - All personas, goals, and constraints documented
 - Success metrics aligned with organizational targets
 - Open issues and assumptions logged for review
-
 
 ## Document Sections
 
@@ -47,7 +45,6 @@ stakeholder requests.
 8. **Outstanding Questions and Decisions**
    - Log unresolved items requiring stakeholder action.
    - Assign owners and due dates.
-
 
 ## Agent Notes
 

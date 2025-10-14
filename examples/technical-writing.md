@@ -51,7 +51,6 @@
 - Mentions specific metrics (10K requests/second)
 - Describes actual implementation choices
 
-
 ### Admits Reality
 
 - "almost killed us"
@@ -59,13 +58,11 @@
 - "Still not great"
 - "burning through AWS credits"
 
-
 ### Shows Trade-offs
 
 - "gave up ACID transactions"
 - "hit consistency issues"
 - "Would I use it for a bank? Hell no"
-
 
 ### Natural Voice
 
@@ -73,7 +70,6 @@
 - Questions: "Would I use it for a bank?"
 - Opinions: "junior dev mistake we should've caught"
 - Context: "that's what the startup needed"
-
 
 ## Before/After Rewrites
 
@@ -113,7 +109,6 @@
 - Formal transitions
 - Everything is "seamless"
 
-
 ### Human Expert Characteristics:
 
 - Mixed outcomes
@@ -123,7 +118,6 @@
 - Exact numbers
 - Natural transitions
 - Things break, take time, cost money
-
 
 ## Practice Exercise
 

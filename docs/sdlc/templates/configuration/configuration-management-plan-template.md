@@ -11,13 +11,11 @@ Describe how project artifacts are identified, controlled, baselined, and audite
 - Automation Inputs: Repository map, change control policies, tool access matrix
 - Automation Outputs: `configuration-management-plan.md` including sections 1–12
 
-
 ## Completion Checklist
 
 - Configuration items (CIs) defined with naming/versioning standards
 - Change control workflow and tooling specified
 - Audit and compliance activities scheduled
-
 
 ## Document Sections
 
@@ -45,7 +43,6 @@ Describe how project artifacts are identified, controlled, baselined, and audite
     - Define metrics (change lead time, compliance rate) and reporting cadence.
 12. **Appendices**
     - Include templates for change requests, baseline lists, or audit checklists.
-
 
 ## Agent Notes
 

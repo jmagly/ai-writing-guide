@@ -15,4 +15,3 @@
 - security-architect.md
 - security-gatekeeper.md
 - traceability-manager.md
-

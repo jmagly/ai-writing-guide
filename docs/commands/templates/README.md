@@ -6,4 +6,3 @@ Files:
 
 - basic-command-template.md — single-purpose command
 - agent-command-template.md — multi-step agent coordination
-

@@ -18,7 +18,6 @@
 - Hidden cost (contractor)
 - Opinion about vendor promises
 
-
 ## Exercise 2: Feature Announcement
 
 ### Original (AI-style):
@@ -36,7 +35,6 @@
 - Specific integration (Postgres → Tableau)
 - Included team friction
 - Added resignation about reality
-
 
 ## Exercise 3: Technical Architecture
 
@@ -56,7 +54,6 @@
 - Clear trade-offs (good vs bad)
 - Current problem (Jaeger setup)
 
-
 ## Exercise 4: Project Success Story
 
 ### Original (AI-style):
@@ -75,7 +72,6 @@
 - Mixed stakeholder reactions
 - Technical debt admission
 
-
 ## Exercise 5: Problem Solution
 
 ### Original (AI-style):
@@ -93,7 +89,6 @@
 - Specific metric (85% hit rate)
 - Admitted it's temporary
 - Business context (Black Friday)
-
 
 ## Practice Exercises
 
@@ -128,7 +123,6 @@ When rewriting AI content:
 5. **Remove fluff**: Adjectives, transitions, summaries
 6. **Vary structure**: Different sentence and paragraph lengths
 
-
 ## Common Patterns
 
 ### AI loves:
@@ -140,7 +134,6 @@ When rewriting AI content:
 - Exceeding expectations
 - Delighting stakeholders
 
-
 ### Humans mention:
 
 - Stuff that broke
@@ -149,7 +142,6 @@ When rewriting AI content:
 - Team disagreements
 - Time pressure
 - Budget limits
-
 
 ## The Rewrite Test
 
@@ -160,7 +152,6 @@ After rewriting, ask:
 3. Are there specific technologies or numbers?
 4. Does it sound like someone who actually did the work?
 5. Would this appear in a Slack channel?
-
 
 If you answered "no" to any, keep rewriting.
 

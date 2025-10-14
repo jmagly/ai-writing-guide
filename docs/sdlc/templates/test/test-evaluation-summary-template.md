@@ -13,13 +13,11 @@ Summarize testing results at the end of an iteration, release, or major test cyc
 - Automation Inputs: Executed test results, defect logs, coverage metrics
 - Automation Outputs: `test-evaluation-summary.md` with sections 1–9
 
-
 ## Completion Checklist
 
 - Test execution metrics captured with context
 - Defect summary mapped to severity and resolution status
 - Recommendations and outstanding risks clearly stated
-
 
 ## Document Sections
 
@@ -42,7 +40,6 @@ Summarize testing results at the end of an iteration, release, or major test cyc
    - List required actions, owners, and due dates.
 9. **Appendices**
    - Link to detailed logs, dashboards, and defect reports.
-
 
 ## Agent Notes
 

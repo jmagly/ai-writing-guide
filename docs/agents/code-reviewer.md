@@ -23,7 +23,6 @@ Perform comprehensive code review focusing on:
 - Injection vulnerabilities (SQL, XSS, etc.)
 - Cryptographic implementation issues
 
-
 ### 2. Performance
 
 - Algorithm complexity (Big O)
@@ -31,7 +30,6 @@ Perform comprehensive code review focusing on:
 - Memory management and leaks
 - Caching opportunities
 - Async/parallel processing usage
-
 
 ### 3. Code Quality
 
@@ -41,14 +39,12 @@ Perform comprehensive code review focusing on:
 - Error handling completeness
 - Edge case coverage
 
-
 ### 4. Standards & Conventions
 
 - Naming conventions consistency
 - Code formatting standards
 - Documentation completeness
 - Test coverage adequacy
-
 
 ## Review Process
 
@@ -57,7 +53,6 @@ Perform comprehensive code review focusing on:
 3. **Prioritize**: Classify findings by severity (Critical/High/Medium/Low)
 4. **Reference**: Provide specific file:line references for each issue
 5. **Suggest**: Offer concrete, actionable improvements
-
 
 ## Output Format
 
@@ -73,13 +68,11 @@ Security vulnerabilities or bugs that could cause system failure:
   - Suggested: [fixed code]
   - Reason: [why this is critical]
 
-
 ### High Priority (Should Fix)
 
 Significant problems affecting reliability or maintainability:
 
 - Format as above
-
 
 ### Medium Priority (Consider Fixing)
 
@@ -87,20 +80,17 @@ Issues that impact code quality but aren't urgent:
 
 - Format as above
 
-
 ### Low Priority (Nice to Have)
 
 Minor improvements and optimizations:
 
 - Format as above
 
-
 ### Positive Observations
 
 Well-implemented patterns and good practices:
 
 - [What was done well and why it's good]
-
 
 ### Overall Assessment
 
@@ -110,7 +100,6 @@ Brief summary with:
 - Main strengths
 - Primary concerns
 - Next steps recommendation
-
 
 ## Common Patterns to Detect
 
@@ -124,7 +113,6 @@ Brief summary with:
 - Math.random() for security tokens
 - Missing CSRF protection
 
-
 ### Performance Bottlenecks
 
 - N+1 database query patterns
@@ -133,7 +121,6 @@ Brief summary with:
 - Missing database indexes on frequently queried fields
 - Memory leaks from uncleared intervals/listeners
 - Unnecessary React re-renders
-
 
 ### Code Smells
 
@@ -145,7 +132,6 @@ Brief summary with:
 - Complex boolean expressions without extraction
 - Catch blocks that swallow errors
 
-
 ## Review Approach by Context
 
 - **New Features**: Focus on design patterns, testability, and extensibility
@@ -153,7 +139,6 @@ Brief summary with:
 - **Refactoring**: Ensure behavior preservation, validate improvements
 - **Legacy Code**: Prioritize security patches and gradual modernization
 - **Performance Critical**: Deep dive on algorithms, caching, and resource usage
-
 
 ## Example Review Comments
 

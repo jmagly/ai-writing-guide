@@ -11,13 +11,11 @@ Equip operations and support teams with actionable procedures to monitor, troubl
 - Automation Inputs: Monitoring configuration, incident procedures, on-call roster
 - Automation Outputs: `support-runbook.md` covering sections 1–11
 
-
 ## Completion Checklist
 
 - Monitoring and alerting coverage documented
 - Incident classification and response steps defined
 - Escalation paths and contact information verified
-
 
 ## Document Sections
 
@@ -43,7 +41,6 @@ Equip operations and support teams with actionable procedures to monitor, troubl
     - Define postmortem expectations, data to collect, and follow-up tasks.
 11. **Runbook Maintenance**
     - Specify review cadence, owners, and update process.
-
 
 ## Agent Notes
 

@@ -5,4 +5,3 @@
 - README.md
 - install.sh
 - new-project.mjs
-

@@ -11,13 +11,11 @@ Bridge requirements and design by detailing how a use case is realized within th
 - Automation Inputs: Detailed use-case specification, architecture guidelines
 - Automation Outputs: `use-case-realization-<id>.md` with flows and responsibilities
 
-
 ## Completion Checklist
 
 - Collaborations align with architectural constraints
 - Sequence and collaboration diagrams (or textual equivalents) provided
 - Design responsibilities mapped to components and classes
-
 
 ## Document Sections
 
@@ -42,7 +40,6 @@ Bridge requirements and design by detailing how a use case is realized within th
    - Explain how performance, security, availability requirements are addressed.
 10. **Open Issues and TODOs**
     - Record pending design questions or technical spikes.
-
 
 ## Agent Notes
 

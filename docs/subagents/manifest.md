@@ -6,4 +6,3 @@
 - comprehensive-guide.md
 - manifest.json
 - manifest.md
-

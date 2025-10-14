@@ -8,4 +8,3 @@
 - manifest.json
 - manifest.md
 - problem-resolution-plan-template.md
-

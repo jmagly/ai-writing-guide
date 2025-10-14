@@ -6,4 +6,3 @@
 - manifest.md
 - security-gate-report.md
 - status-assessment.md
-

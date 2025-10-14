@@ -11,13 +11,11 @@ Provide a concise snapshot of project health at regular intervals, highlighting 
 - Automation Inputs: Progress metrics, risk updates, change log
 - Automation Outputs: `status-assessment.md` covering sections 1–10
 
-
 ## Completion Checklist
 
 - Progress against plan quantified and contextualized
 - Top risks, issues, and change requests summarized with owners
 - Decision requests clearly articulated for stakeholders
-
 
 ## Document Sections
 
@@ -41,7 +39,6 @@ Provide a concise snapshot of project health at regular intervals, highlighting 
    - Explicitly state decisions or escalations required, with due dates.
 10. **Notes and Attachments**
      - Link to supporting artifacts, dashboards, or detailed reports.
-
 
 ## Agent Notes
 

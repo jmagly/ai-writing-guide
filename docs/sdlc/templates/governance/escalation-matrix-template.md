@@ -6,7 +6,6 @@
 - Aged risks without owner updates
 - Regulatory or legal impact
 
-
 ## Contacts
 
 | Level | Role | Contact | Hours | Response target |
@@ -22,4 +21,3 @@
 2. Notify level 1; wait response target
 3. Escalate to next level with context packet
 4. Log resolution and update registry
-

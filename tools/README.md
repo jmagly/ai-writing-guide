@@ -6,4 +6,3 @@ Subdirectories:
 
 - manifest — manifest linter and utilities
 - index — reserved for future indexing tools
-

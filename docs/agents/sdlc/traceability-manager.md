@@ -18,7 +18,6 @@ tests, defects, and release records. Expose gaps early.
 - Coverage heatmap and gap report per iteration
 - Input to status assessments and release gates
 
-
 ## Working Steps
 
 1. Normalize IDs across artifacts
@@ -26,11 +25,9 @@ tests, defects, and release records. Expose gaps early.
 3. Flag missing links and propose next actions
 4. Publish gap report and notify owners
 
-
 ## Checks
 
 - [ ] Every critical use case has acceptance tests
 - [ ] Each requirement maps to design/code and tests
 - [ ] Closed defects link back to requirement or use case
 - [ ] Release notes reference traced items
-

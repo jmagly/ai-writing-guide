@@ -5,4 +5,3 @@
 - iteration-plan-informal.md
 - manifest.json
 - manifest.md
-

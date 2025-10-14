@@ -12,13 +12,11 @@ requirements and design work.
 - Automation Inputs: Domain terminology list, stakeholder definitions
 - Automation Outputs: `business-glossary.md` table with canonical terms
 
-
 ## Completion Checklist
 
 - Terms are sorted alphabetically or by domain
 - Definitions are concise (<2 sentences) and reference authoritative sources
 - Synonyms, acronyms, and ownership information captured
-
 
 ## Document Sections
 
@@ -26,7 +24,6 @@ requirements and design work.
    - Describe update cadence, reviewer roles, and approval workflow.
 2. **Term Table**
    - Use the table format below and extend as needed.
-
 
 | Term | Definition | Source/Owner | Notes |
 | --- | --- | --- | --- |
@@ -38,7 +35,6 @@ requirements and design work.
    - Track terminology that should no longer be used and the replacements.
 5. **Open Questions**
    - Capture terms requiring clarification or stakeholder decision.
-
 
 ## Agent Notes
 

@@ -19,8 +19,6 @@ and timestamps; otherwise, create a minimal one.
 - `digests/*.md` with 1–3 paragraph summaries
 - `_index.yaml` updated with paths, summaries, and timestamps
 
-
 ## Notes
 
 - Keep digests short and specific to reduce context size
-

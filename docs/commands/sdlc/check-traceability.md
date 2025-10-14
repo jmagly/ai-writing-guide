@@ -16,8 +16,6 @@ Analyze the traceability matrix and report gaps:
 - Requirements without design/code links
 - Closed defects not linked back to a requirement/use case
 
-
 ## Output
 
 - `traceability-gap-report.md` with prioritized fixes and owners
-

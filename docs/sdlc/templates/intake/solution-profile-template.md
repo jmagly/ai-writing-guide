@@ -6,7 +6,6 @@ Select a profile to set defaults for gates, controls, and process rigor.
 
 - Profile: <Prototype | MVP | Production | Enterprise>
 
-
 ## Defaults (can be tailored)
 
 - Security
@@ -25,8 +24,6 @@ Select a profile to set defaults for gates, controls, and process rigor.
   - Production: full traceability and assessments
   - Enterprise: strict gates and audits
 
-
 ## Overrides
 
 - Notes: <tailoring decisions>
-

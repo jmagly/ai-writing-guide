@@ -12,27 +12,22 @@
 - Related: ALERT-<id>, RUN-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/reliability/alert-runbook-card.md
-
 
 ## Metric
 
 - Name: <availability|latency|errors>
 - Source: <logs|metrics|traces>
 
-
 ## Definition
 
 - Query and window
 
-
 ## Target
 
 - Threshold and alerting
-
 
 ## Ownership
 

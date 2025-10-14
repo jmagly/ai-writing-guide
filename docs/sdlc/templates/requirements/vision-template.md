@@ -12,13 +12,11 @@ Use this document to anchor prioritization and stakeholder expectations througho
 - Automation Inputs: Business vision draft, stakeholder map, roadmap hypotheses
 - Automation Outputs: `vision.md` with sections 1–5
 
-
 ## Completion Checklist
 
 - Problem statement and stakeholder needs captured concisely
 - Product features prioritized and linked to use cases
 - Constraints, assumptions, and dependencies recorded with owners
-
 
 ## Document Sections
 
@@ -46,7 +44,6 @@ Use this document to anchor prioritization and stakeholder expectations througho
     - Reference risk list entries and mitigation plans.
 11. **Appendices**
     - Include supporting research, surveys, or glossary references.
-
 
 ## Agent Notes
 

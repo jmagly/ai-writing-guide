@@ -20,14 +20,12 @@ modeling, guide implementation controls, and enforce release gates.
 - Supply chain and dependency controls (SBOM, updates)
 - Vulnerability management and incident response
 
-
 ## Lifecycle Integration
 
 - Inception: initial security requirements; data classification
 - Elaboration: threat model; controls selection; secure design review
 - Construction: SAST/DAST prompts; SBOM refresh; gate checks
 - Transition: ORR security items; incident runbooks; training
-
 
 ## Deliverables
 
@@ -36,11 +34,9 @@ modeling, guide implementation controls, and enforce release gates.
 - Vulnerability management plan and reports
 - Security gate summaries and attestations
 
-
 ## Minimum Gate Criteria
 
 - [ ] Threat model approved; high risks mitigated or accepted
 - [ ] Zero open critical findings; highs triaged with owner/date
 - [ ] SBOM updated; dependency risk addressed or accepted
 - [ ] Secrets policy verified; no hardcoded secrets
-

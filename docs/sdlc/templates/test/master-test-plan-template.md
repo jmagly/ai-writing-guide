@@ -11,13 +11,11 @@ Establish the overarching testing strategy, scope, resources, and schedule acros
 - Automation Inputs: Test strategy, iteration roadmap, environment plan
 - Automation Outputs: `master-test-plan.md` with sections 1–14
 
-
 ## Completion Checklist
 
 - Test objectives and scope aligned with Vision and SDP
 - Environments, tools, and resource needs confirmed
 - Entry/exit criteria for each test level documented
-
 
 ## Document Sections
 
@@ -49,7 +47,6 @@ Establish the overarching testing strategy, scope, resources, and schedule acros
     - Document test management tools, automation frameworks, and integration points.
 14. **Approvals**
     - Capture sign-off requirements and responsible parties.
-
 
 ## Agent Notes
 

@@ -13,23 +13,19 @@
 - Related: UC-<id>, REQ-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/requirements/use-case-brief-template.md
 
-
 ## Identifier
 
 - UC: UC-<num>
-
 
 ## GIVEN/WHEN/THEN Scenarios
 
 - GIVEN <precondition>
 - WHEN <action>
 - THEN <observable outcome>
-
 
 Add 5–10 scenarios covering main, edge, and error cases.
 

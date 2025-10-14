@@ -13,13 +13,11 @@
 - Related: UC-<id>, REQ-<id>, ADR-<id>, DEP-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/requirements/use-case-brief-template.md
 - docs/sdlc/templates/requirements/use-case-acceptance-template.md
 - docs/sdlc/templates/governance/decision-matrix-template.md
-
 
 ## Request
 
@@ -27,18 +25,15 @@
 - Stakeholder(s): <names>
 - Desired outcome/metric: <value>
 
-
 ## Context
 
 - Links to prior discussions or artifacts
 - Constraints or deadlines
 
-
 ## Validation
 
 - Assumptions to check
 - Quick POC/spike plan (if needed)
-
 
 ## Decision
 

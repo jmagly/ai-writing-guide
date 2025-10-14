@@ -15,8 +15,6 @@ argument-hint: "docs/sdlc/artifacts/<project>"
 - SBOM generated and reviewed (if applicable)
 - Secrets policy verified; no hardcoded secrets
 
-
 ## Output
 
 - `security-gate-report.md` with pass/fail and remediation tasks
-

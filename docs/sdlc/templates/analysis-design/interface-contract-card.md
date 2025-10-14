@@ -13,19 +13,16 @@
 - Related: UC-<id>, REQ-<id>, DES-<id>, DATA-<id>, TEST-<id>, ADR-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/requirements/data-contract-template.md
 - docs/sdlc/templates/requirements/use-case-acceptance-template.md
 - docs/sdlc/templates/analysis-design/sequence-diagram-template.md
 
-
 ## Identifier
 
 - Interface: <name>
 - Owners/consumers: <teams/services>
-
 
 ## Summary
 
@@ -36,7 +33,6 @@ Purpose and responsibilities in one paragraph.
 - Operations: <methods/endpoints>
 - Inputs/outputs: link to data contracts
 - Error model: codes and semantics
-
 
 ## Non-Functional
 

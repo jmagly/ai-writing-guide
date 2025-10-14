@@ -11,4 +11,3 @@ Files:
 - iteration-dual-track-template.md — synchronized discovery/delivery per iteration
 - handoff-checklist-template.md — consistent, low-friction handoffs
 - parallelization-guide.md — how to slice work for parallel agents
-

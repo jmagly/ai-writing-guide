@@ -8,7 +8,6 @@ Adapted from the original RUP template: <https://files.defcon.no/RUP/webtmpl/tem
 - `Test Guidelines`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |

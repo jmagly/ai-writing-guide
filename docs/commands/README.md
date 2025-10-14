@@ -22,7 +22,6 @@ Standard commands available in all Claude Code sessions:
 - `/mcp` - Show MCP server status
 - `/agents` - Show available agents
 
-
 ### 2. Custom Slash Commands
 
 User-defined commands stored as Markdown files with YAML frontmatter.
@@ -58,7 +57,6 @@ Automated responses to Claude Code events:
 - **Stop** - When Claude finishes responding
 - **SubAgentStop** - When sub-agents finish
 - **SessionEnd** - When session ends
-
 
 ## Command Structure
 
@@ -270,7 +268,6 @@ Control command access via `.claude/settings.local.json`:
 - **Safe Defaults**: Design commands to fail safely
 - **Audit Trail**: Log command execution when appropriate
 - **Code Review**: Review custom commands like any other code
-
 
 ## Hook Configuration
 
@@ -505,7 +502,6 @@ Delegate each aspect to the appropriate specialist agent.
 4. **Documentation**: Include usage examples and edge cases
 5. **Security**: Follow principle of least privilege
 
-
 ### Development Process
 
 1. **Start Simple**: Basic functionality first, then enhance
@@ -514,7 +510,6 @@ Delegate each aspect to the appropriate specialist agent.
 4. **Version Control**: Track command changes like any other code
 5. **Share Knowledge**: Document patterns for team use
 
-
 ### Performance Optimization
 
 1. **Choose Right Model**: Match complexity to capability
@@ -522,6 +517,5 @@ Delegate each aspect to the appropriate specialist agent.
 3. **Cache Results**: Avoid redundant processing
 4. **Parallel Execution**: Use agents for independent tasks
 5. **Monitor Usage**: Track costs and performance
-
 
 This comprehensive guide provides the foundation for creating powerful, secure, and maintainable Claude Code commands that enhance development workflows.

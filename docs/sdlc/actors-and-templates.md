@@ -34,7 +34,6 @@ Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifa
 - **Configuration & Change Management**: `configuration-management-plan-template.md`, `problem-resolution-plan-template.md`.
 - **Environment & Process Assets**: `development-case-template.md`, `business-modeling-guidelines-template.md`, `use-case-modeling-guidelines-template.md`, `design-guidelines-template.md`, `programming-guidelines-template.md`, `test-guidelines-template.md`.
 
-
 ## Usage Guidance
 
 1. **Assign Roles**: Map each active agent to one or more workers above. Maintain a responsibility matrix (`docs/sdlc/artifacts/raci.md`).
@@ -46,13 +45,11 @@ Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifa
    - Transition activates Deployment and Support templates alongside closing Test evidence.
 4. **Traceability**: Link each template instance to use cases and risks in the traceability matrix to maintain coverage across disciplines.
 
-
 ## Prompt Starters
 
 - **Worker Briefing**: “As the `<worker>`, use the `<template>` structure to produce the artifact for `<use case or feature>`. Confirm dependencies from the latest iteration plan before drafting.”
 - **Template Tailoring**: “Review the standard sections in `<template>`. Indicate which sections are not applicable and justify omissions. Add project-specific sections where risks or compliance requirements demand it.”
 - **Quality Gate**: “Validate that the `<template>` delivered for `<phase>` satisfies the exit criteria listed in the Plan-Act Lifecycle Script. Flag gaps and propose corrective tasks.”
-
 
 Keep this catalogue synchronized with updates to `docs/sdlc/plan-act-sdlc.md` and expand it whenever new templates or roles are introduced.
 

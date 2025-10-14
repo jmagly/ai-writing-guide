@@ -17,8 +17,6 @@ This directory provides Markdown templates to support PLAN → ACT agent workflo
 - `environments/` – Development case plus discipline-specific guidelines (business modeling, use-case modeling, design, programming, testing).
 - `card-metadata-standard.md` – Standard metadata header for all cards (ownership, team, traceability).
 
-
-
 ## How to Use
 
 1. Copy the relevant template into `docs/sdlc/artifacts/<project>/` (or project-specific location).
@@ -26,13 +24,11 @@ This directory provides Markdown templates to support PLAN → ACT agent workflo
 3. Update cross-references (e.g., risk IDs, use-case IDs) for traceability.
 4. Commit the completed artifact alongside supporting evidence (diagrams, scripts, test reports).
 
-
 ## Maintenance
 
 - Align updates with `docs/sdlc/plan-act-sdlc.md` and `docs/sdlc/actors-and-templates.md`.
 - When adding new templates, update this README and the actors/roles catalogue.
 - Run Markdown linting to ensure formatting consistency.
-
 
 ## Cards
 

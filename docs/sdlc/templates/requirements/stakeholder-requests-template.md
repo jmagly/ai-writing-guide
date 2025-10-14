@@ -12,13 +12,11 @@ disciplines.
 - Automation Inputs: Interview transcripts, support tickets, roadmap ideas
 - Automation Outputs: `stakeholder-requests.csv` populated with normalized entries
 
-
 ## Usage Instructions
 
 - Log requests as they arrive, tagging priority and status.
 - Reference origin (meeting, email, etc.) and link to follow-up actions.
 - Review the log at each iteration planning session to update disposition.
-
 
 ## Table Structure
 
@@ -33,7 +31,6 @@ disciplines.
 - `Deferred`: Postponed to later phase or release.
 - `Rejected`: Will not be implemented; rationale provided.
 - `Completed`: Delivered and verified.
-
 
 ## Agent Notes
 

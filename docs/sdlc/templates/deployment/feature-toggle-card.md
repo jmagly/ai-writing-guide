@@ -12,27 +12,22 @@
 - Related: REQ-<id>, REL-<id>
 - Links: <paths/urls>
 
-
 ## Related templates
 
 - docs/sdlc/templates/deployment/deployment-plan-template.md
-
 
 ## Toggle
 
 - Name and scope
 - Default state
 
-
 ## Safety
 
 - Dependencies and guardrails
 
-
 ## Rollout Plan
 
 - Cohorts, % rollout, and monitoring
-
 
 ## Removal Criteria
 

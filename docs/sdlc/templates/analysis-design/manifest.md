@@ -10,4 +10,3 @@
 - sequence-diagram-template.md
 - software-architecture-doc-template.md
 - use-case-realization-template.md
-

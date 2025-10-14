@@ -14,11 +14,9 @@ Validate the problem, scope, risks, and success metrics before implementation.
 6. Decision checkpoints (ADR for critical choices)
 7. Funding and scope guardrails
 
-
 ## Exit Criteria
 
 - Vision brief approved; success metrics defined
 - 1–3 risks retired or planned with owners/dates
 - Initial architecture and data classifications recorded
 - Go/No-Go decision to Elaboration
-

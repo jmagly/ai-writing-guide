@@ -6,7 +6,6 @@
 - `Quality Assurance Plan`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Project Manager, Configuration Manager, Requirements Reviewer
 - Automation Inputs: Quality objectives, review policies, tooling standards
 - Automation Outputs: `quality-assurance-plan.md` with sections 1–15
-
 
 ## 1 Introduction
 

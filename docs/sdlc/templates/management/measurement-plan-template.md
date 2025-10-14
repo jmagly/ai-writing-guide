@@ -11,13 +11,11 @@ Define the metrics, collection methods, and reporting cadence used to monitor pr
 - Automation Inputs: Metric definitions, data sources, reporting cadence
 - Automation Outputs: `measurement-plan.md` including inventory table
 
-
 ## Completion Checklist
 
 - Metrics mapped to project objectives and risks
 - Data collection methods and tools specified
 - Reporting cadence and stakeholders defined
-
 
 ## Document Sections
 
@@ -25,7 +23,6 @@ Define the metrics, collection methods, and reporting cadence used to monitor pr
    - State why measurement is necessary and which decisions it supports.
 2. **Metric Inventory**
    - List metrics with definitions, formulas, and targets.
-
 
 | Metric | Purpose | Data Source | Frequency | Target/Threshold | Owner |
 | --- | --- | --- | --- | --- | --- |
@@ -43,7 +40,6 @@ Define the metrics, collection methods, and reporting cadence used to monitor pr
    - Outline how metrics will be refined or retired.
 8. **Risks and Assumptions**
    - Capture measurement risks (data quality, tooling limits) and mitigation plans.
-
 
 ## Agent Notes
 

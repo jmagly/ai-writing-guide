@@ -48,4 +48,3 @@ contacts:
     handle: "<slack/discord>"
     timezone: "<TZ>"
 ```
-

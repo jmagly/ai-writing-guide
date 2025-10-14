@@ -20,14 +20,12 @@ When designing and implementing DevOps solutions:
 - Team size: [developers count]
 - Deployment frequency: [daily/weekly/monthly]
 
-
 **REQUIREMENTS:**
 
 - Uptime SLA: [99.9%/99.99%]
 - Deployment model: [blue-green/canary/rolling]
 - Compliance: [SOC2/HIPAA/PCI]
 - Budget constraints: [if any]
-
 
 **IMPLEMENTATION PROCESS:**
 
@@ -57,7 +55,6 @@ When designing and implementing DevOps solutions:
    - Access controls
    - Vulnerability scanning
    - Compliance checks
-
 
 **DELIVERABLES:**
 
@@ -249,7 +246,6 @@ spec:
 - Test execution: 5 minutes
 - Full pipeline: 12 minutes
 
-
 ## Cost Optimization
 
 - Spot instances for non-critical: 65% savings
@@ -257,7 +253,6 @@ spec:
 - Auto-scaling based on metrics: 30% reduction
 - S3 lifecycle policies: $2K/month saved
 - Total monthly cost: $8,500 (was $15,000)
-
 
 ## Usage Examples
 
@@ -271,7 +266,6 @@ Create complete Kubernetes deployment:
 - Health checks and probes
 - Service mesh integration
 
-
 ### CI/CD Pipeline
 
 Design GitHub Actions pipeline for:
@@ -282,7 +276,6 @@ Design GitHub Actions pipeline for:
 - Kubernetes deployment
 - Rollback capability
 
-
 ### Infrastructure Migration
 
 Plan AWS infrastructure:
@@ -292,7 +285,6 @@ Plan AWS infrastructure:
 - Configure CloudFront CDN
 - Implement WAF rules
 - Estimate costs
-
 
 ## Common Patterns
 
@@ -368,14 +360,12 @@ spec:
 - **AlertManager**: Alert routing
 - **PagerDuty**: Incident management
 
-
 ### Log Management
 
 - **Fluentd**: Log collection
 - **Elasticsearch**: Log storage
 - **Kibana**: Log analysis
 - **S3**: Long-term archive
-
 
 ## Security Practices
 
@@ -439,7 +429,6 @@ aws s3 sync /data s3://backups/app-data/ --delete
 4. **Cross-region replication**: Enabled
 5. **Tested quarterly**: Last test 10/15/2023
 
-
 ## Cost Management
 
 ### Resource Optimization
@@ -481,14 +470,12 @@ locals {
 - Dependency caching: 3min saved
 - Multi-stage builds: 60% smaller images
 
-
 ### Deployment Speed
 
 - Canary rollout: 5% → 25% → 100%
 - Health check tuning: 30s faster detection
 - PreStop hooks: Graceful shutdown
 - Connection draining: Zero downtime
-
 
 ## Troubleshooting Guide
 
@@ -498,7 +485,6 @@ locals {
 2. **High memory usage**: Profile application, adjust limits
 3. **Slow deployments**: Optimize image size, parallelize
 4. **Failed health checks**: Increase timeout, check endpoints
-
 
 ## Success Metrics
 
@@ -508,7 +494,6 @@ locals {
 - Change failure rate: 15% → 2%
 - Infrastructure cost: -35%
 
-
 ## Usage Examples
 
 ### Kubernetes Setup
@@ -618,14 +603,12 @@ spec:
 - **AlertManager**: Alert routing
 - **PagerDuty**: Incident management
 
-
 ### Log Management
 
 - **Fluentd**: Log collection
 - **Elasticsearch**: Log storage
 - **Kibana**: Log analysis
 - **S3**: Long-term archive
-
 
 ## Security Practices
 
@@ -689,7 +672,6 @@ aws s3 sync /data s3://backups/app-data/ --delete
 4. **Cross-region replication**: Enabled
 5. **Tested quarterly**: Last test 10/15/2023
 
-
 ## Cost Management
 
 ### Resource Optimization
@@ -731,14 +713,12 @@ locals {
 - Dependency caching: 3min saved
 - Multi-stage builds: 60% smaller images
 
-
 ### Deployment Speed
 
 - Canary rollout: 5% → 25% → 100%
 - Health check tuning: 30s faster detection
 - PreStop hooks: Graceful shutdown
 - Connection draining: Zero downtime
-
 
 ## Troubleshooting Guide
 
@@ -748,7 +728,6 @@ locals {
 2. **High memory usage**: Profile application, adjust limits
 3. **Slow deployments**: Optimize image size, parallelize
 4. **Failed health checks**: Increase timeout, check endpoints
-
 
 ## Success Metrics
 

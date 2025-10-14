@@ -19,7 +19,6 @@ Operational Readiness Reviews before release.
 - Run failure injection and chaos experiments
 - Lead ORR and track remediation items
 
-
 ## Deliverables
 
 - SLO/SLI doc and dashboards
@@ -27,11 +26,9 @@ Operational Readiness Reviews before release.
 - Chaos experiment plans and findings
 - ORR checklist and results
 
-
 ## Checks
 
 - [ ] SLOs cover latency, availability, and error budget
 - [ ] Autoscaling and rollback validated
 - [ ] Alarms and runbooks tested
 - [ ] ORR passed with sign-off
-

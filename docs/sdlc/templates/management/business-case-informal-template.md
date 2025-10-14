@@ -7,7 +7,6 @@
 - Automation Inputs: Opportunity brief, financial assumptions
 - Automation Outputs: `business-case-informal.md` covering sections 1–6
 
-
 ## 1 Introduction
 
 > Summarize why the business case is being developed and what it covers.

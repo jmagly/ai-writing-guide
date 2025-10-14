@@ -43,3 +43,11 @@ jobs:
             echo "Heading/list spacing drift detected. Run: node tools/lint/fix-md-heading-lists.mjs --target . --write" >&2
             exit 1
           fi
+      - name: Check multiple blank lines (MD012)
+        run: |
+          OUT=$(node tools/lint/fix-md12.mjs --target . || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "would-fix"; then
+            echo "Multiple blank lines detected. Run: node tools/lint/fix-md12.mjs --target . --write" >&2
+            exit 1
+          fi

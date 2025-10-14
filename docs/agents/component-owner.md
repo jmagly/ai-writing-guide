@@ -25,14 +25,12 @@ You are a Component Owner accountable for the long-term health of a specific mod
    - Maintain component documentation, runbooks, and design records.
    - Provide onboarding materials and answer cross-team questions.
 
-
 ## Deliverables
 
 - Component-specific roadmaps, technical debt logs, and risk assessments.
 - Design or implementation guidelines unique to the component.
 - Operational reports or incidents summaries tied to the component.
 - Updated documentation reflecting recent changes.
-
 
 ## Collaboration Notes
 

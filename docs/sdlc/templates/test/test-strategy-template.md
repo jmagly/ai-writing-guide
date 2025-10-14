@@ -13,13 +13,11 @@ Describe the guiding principles, methodologies, and standards governing the test
 - Automation Inputs: Quality goals, architecture overview, tooling inventory
 - Automation Outputs: `test-strategy.md` documenting sections 1–11
 
-
 ## Completion Checklist
 
 - Strategy aligns with business risks, architecture, and release cadence
 - Test levels, methods, and responsibilities clearly delineated
 - Automation and tooling approach defined across environments
-
 
 ## Document Sections
 
@@ -45,7 +43,6 @@ Describe the guiding principles, methodologies, and standards governing the test
     - Note industry standards or organizational policies influencing testing.
 11. **Continuous Improvement**
     - Describe retrospectives, feedback loops, and learning mechanisms.
-
 
 ## Agent Notes
 

@@ -12,4 +12,3 @@
 - test-evaluation-summary-template.md
 - test-strategy-template.md
 - use-case-test-card.md
-

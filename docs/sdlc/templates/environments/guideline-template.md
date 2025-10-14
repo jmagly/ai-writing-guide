@@ -11,13 +11,11 @@ Capture standards, conventions, and best practices for a specific discipline (e.
 - Automation Inputs: Discipline-specific standards, tooling references
 - Automation Outputs: `<discipline>-guidelines.md` adhering to sections 1–8
 
-
 ## Completion Checklist
 
 - Scope and applicability defined
 - Standards referenced or embedded with examples
 - Review cadence and ownership established
-
 
 ## Document Sections
 
@@ -37,7 +35,6 @@ Capture standards, conventions, and best practices for a specific discipline (e.
    - Track updates, authors, and rationale.
 8. **Appendices**
    - Include extended references, glossary terms, or resource links.
-
 
 ## Agent Notes
 

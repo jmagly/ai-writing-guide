@@ -11,13 +11,11 @@ Describe how the solution will be deployed, verified, and supported in target en
 - Automation Inputs: Release candidate designation, environment matrix, rollout constraints
 - Automation Outputs: `deployment-plan.md` covering sections 1–12
 
-
 ## Completion Checklist
 
 - Deployment steps sequenced with owners and timing
 - Environment prerequisites, data migration, and rollback strategies defined
 - Verification activities and success metrics established
-
 
 ## Document Sections
 
@@ -45,7 +43,6 @@ Describe how the solution will be deployed, verified, and supported in target en
     - Identify deployment risks and mitigation/responsible owners.
 12. **Approvals**
     - Capture sign-offs required before proceeding.
-
 
 ## Agent Notes
 

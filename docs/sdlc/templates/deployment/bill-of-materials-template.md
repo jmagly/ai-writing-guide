@@ -6,7 +6,6 @@
 - `Bill of Materials`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Configuration Manager, Deployment Manager
 - Automation Inputs: Release manifest, package checksums, licensing notes
 - Automation Outputs: `bill-of-materials.md` enumerating sections 2.1–2.6
-
 
 ## 1 Introduction
 

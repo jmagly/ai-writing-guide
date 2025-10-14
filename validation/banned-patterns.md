@@ -29,7 +29,6 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - utilize (just use "use")
 - facilitate (usually unnecessary)
 
-
 ### Vague Intensifiers
 
 - dramatically improves/improved
@@ -40,7 +39,6 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - highly effective
 - extremely valuable
 - remarkably efficient
-
 
 ### Academic/Formal Phrases
 
@@ -54,7 +52,6 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - serves as a testament to
 - bears witness to
 - speaks volumes about
-
 
 ### Formulaic Transitions
 
@@ -72,7 +69,6 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - All in all,
 - On the one hand... On the other hand,
 
-
 ### Overused Metaphors
 
 - at the heart of
@@ -82,7 +78,6 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - functions as a bridge
 - represents a milestone
 - marks a turning point
-
 
 ### Cliché Descriptions
 
@@ -95,7 +90,6 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - nestled in/between
 - tucked away
 
-
 ### Performative Language
 
 - aims to provide
@@ -106,7 +100,6 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - intended to facilitate
 - meant to streamline
 - poised to transform
-
 
 ## Structural Patterns to Avoid
 
@@ -146,7 +139,6 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 - could enhance
 - has the potential to
 - offers the opportunity to
-
 
 ### Overly Balanced Statements
 
@@ -207,7 +199,6 @@ If your text contains ANY of these exact phrases, rewrite:
 9. "dramatically improves"
 10. "In conclusion,"
 
-
 ## Replacement Guide
 
 Instead of banned phrases, use:
@@ -223,7 +214,6 @@ Instead of banned phrases, use:
 - "manifest" → "show" / "appear" / "create" / "build"
 - "revolutionary" → "different" / "new" / [specific change description]
 - "next-generation" → "new" / "updated" / "version 2.0" / [specific version]
-
 
 ## Remember
 

@@ -11,13 +11,11 @@ Maintain a prioritized list of project risks, their status, and mitigation actio
 - Automation Inputs: Risk workshop output, mitigation status
 - Automation Outputs: `risk-list.md` sorted by exposure
 
-
 ## Usage Instructions
 
 - Update at least once per iteration, or when new risks emerge.
 - Align risk IDs across documents (`R-###`).
 - Include residual risk assessment after mitigation.
-
 
 ## Table Structure
 
@@ -31,7 +29,6 @@ Maintain a prioritized list of project risks, their status, and mitigation actio
 - `Mitigating`: Mitigation in progress.
 - `Resolved`: No longer a risk (explain why in notes).
 - `Accepted`: Risk tolerated with rationale.
-
 
 ## Agent Notes
 

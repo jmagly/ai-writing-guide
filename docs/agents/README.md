@@ -10,18 +10,15 @@ specialized by subfolder.
 - `./` — General-purpose agents (architecture, PM, devops, testing, etc.)
 - `sdlc/` — SDLC-focused agents (orchestrator, governance, security, reliability)
 
-
 ## Quick links
 
 - `docs/agents/sdlc/` — SDLC agent suite
 - `docs/agents/openai-compat.md` — OpenAI/Codex model mapping and paths
 
-
 ## Maintenance
 
 - Keep agent responsibilities and deliverables current
 - Prefer embedded templates for agents that generate standard artifacts (e.g., RACI Expert)
-
 
 ## Agent Deployment CLI
 
@@ -31,7 +28,6 @@ Use the deploy script to copy shared agents into a project's `.claude/agents` di
 
 - Node.js ≥ 18
 - Access to this repository on disk
-
 
 ### Commands
 
@@ -50,7 +46,6 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
   with a `-sdlc` suffix (e.g., `project-manager-sdlc.md`). With `--force`, existing files are
   overwritten.
 
-
 ### Options
 
 - `--provider <claude|openai>`: Target provider (default: `claude`). For `openai`, agents are written to `.codex/agents`.
@@ -62,7 +57,6 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
 - `--target <path>`: Project root that will receive agent files (defaults to current directory).
 - `--dry-run`: Print planned actions without copying files.
 - `--force`: Overwrite existing files on conflict (disables the `-sdlc` suffix fallback).
-
 
 ### Examples
 
@@ -82,7 +76,6 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
   ```bash
   aiwg -deploy-agents --force
   ```
-
 
 ### Alias (optional)
 

@@ -6,7 +6,6 @@
 - `Target-Organization Assessment`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: Project Manager, Environment Engineer
 - Automation Inputs: Discovery interviews, capability assessments, benchmarking data
 - Automation Outputs: `target-organization-assessment.md` summarizing sections 1–8
-
 
 ## 1 Introduction
 

@@ -6,7 +6,6 @@
 - `Business Use-Case Realization Specification: <Business Use-Case Name>`
 - `Version <1.0>`
 
-
 ## Revision History
 
 | Date | Version | Description | Author |
@@ -19,7 +18,6 @@
 - Contributor Roles: System Analyst, Designer, Software Architect
 - Automation Inputs: Target business use-case specification, collaboration models
 - Automation Outputs: `business-use-case-realization-<id>.md` detailing sections 1–3
-
 
 ## 1 Introduction
 

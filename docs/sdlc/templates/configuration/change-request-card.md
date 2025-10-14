@@ -12,21 +12,17 @@
 - Related: REQ-<id>, DES-<id>, TEST-<id>
 - Links: <paths/urls>
 
-
 ## Request
 
 - Summary and rationale
-
 
 ## Impact
 
 - Affected artifacts, components, and timelines
 
-
 ## Approval
 
 - Reviewers, decision, and conditions
-
 
 ## Implementation
 

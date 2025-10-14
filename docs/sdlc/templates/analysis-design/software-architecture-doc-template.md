@@ -11,13 +11,11 @@ Describe the architectural baseline, including views, decisions, and rationale t
 - Automation Inputs: Approved requirements set, non-functional drivers, platform constraints
 - Automation Outputs: `software-architecture.md` including views and decisions
 
-
 ## Completion Checklist
 
 - Architectural drivers (requirements, constraints, risks) captured
 - Views cover logical, process, deployment, and data perspectives as needed
 - Architectural decisions documented with rationale and status
-
 
 ## Document Sections
 
@@ -52,7 +50,6 @@ Describe the architectural baseline, including views, decisions, and rationale t
     - Document open questions, experiments, or pending validations.
 12. **Appendices**
     - Include diagrams, ADR references, glossary terms.
-
 
 ## Agent Notes
 

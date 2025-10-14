@@ -3,8 +3,8 @@
   "MD013": false,
   // Permit two trailing spaces for hard line breaks
   "MD009": { "br_spaces": 2 },
-  // Allow multiple blank lines for readability in legacy docs
-  "MD012": false,
+  // Enforce single blank line (auto-fixed)
+  "MD012": true,
   // Tolerate missing blank lines around headings/lists in legacy docs
   "MD022": false,
   "MD032": false,

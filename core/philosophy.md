@@ -10,7 +10,6 @@ AI-generated content has recognizable patterns that make it feel inauthentic:
 - Performative helpfulness
 - Consistent structure that feels robotic
 
-
 ## The Solution: Write Like a Human Expert
 
 ### Principle 1: Accuracy Over Enhancement
@@ -53,7 +52,6 @@ Good:
 - Others run longer, include asides (like this one), and cover multiple related points without perfect structure.
 - Use fragments. Start with conjunctions. And break "rules" when it sounds natural.
 
-
 ### Principle 5: Include the Messy Reality
 
 **Real projects have problems, trade-offs, and context.**
@@ -75,7 +73,6 @@ Real experts mention:
 - Why certain decisions were made
 - What they'd do differently
 
-
 Example:
 > "We picked Cassandra for scale but didn't anticipate the operational overhead. Three years later, we're still fighting consistency issues."
 
@@ -95,7 +92,6 @@ Experts have perspectives:
 - "CQRS sounds good until you debug event sourcing at 3am"
 - "Sometimes a boring Rails monolith is the right choice"
 
-
 ## Writing Rhythm
 
 ### Natural Transitions
@@ -107,7 +103,6 @@ Instead of formal conjunctions, use:
 - **Questions**: "The problem? Scale.", "Why Redis? Speed."
 - **Direct starts**: Just begin with the subject
 
-
 ### Sentence Variety
 
 Mix:
@@ -118,7 +113,6 @@ Mix:
 - Fragments for emphasis
 - Lists when appropriate
 
-
 ### Paragraph Flow
 
 Avoid:
@@ -128,7 +122,6 @@ Avoid:
 - Predictable structure
 - Summary sentences
 
-
 ## The Authenticity Test
 
 Read your content aloud. Does it sound like:
@@ -137,7 +130,6 @@ Read your content aloud. Does it sound like:
 2. **Marketing copy?** Too polished, selling something
 3. **A technical paper?** Too academic, no human voice
 4. **Someone explaining their work?** ✅ This is the goal
-
 
 ## Examples of Authentic Voice
 

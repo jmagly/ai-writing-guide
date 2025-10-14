@@ -21,7 +21,6 @@ The AI Writing Guide is a comprehensive framework for improving AI-generated con
 - For technical writing: `examples/technical-writing.md`
 - For quick validation: `context/quick-reference.md`
 
-
 ## High-Level Architecture
 
 ### Document Framework Structure
@@ -36,7 +35,6 @@ The AI Writing Guide is a comprehensive framework for improving AI-generated con
 
 5. **Agent Definitions (`.claude/agents/`)**: Pre-configured Claude Code subagents specialized for different aspects of writing improvement and validation.
 
-
 ### Agent Ecosystem
 
 The repository includes specialized agents that can be invoked via `/project:agent-name`:
@@ -49,7 +47,6 @@ The repository includes specialized agents that can be invoked via `/project:age
 - **requirements-analyst**: Transforms vague requests into detailed specifications
 - **devops-engineer**: Automates CI/CD and infrastructure tasks
 - **architecture-designer**: Makes system design decisions
-
 
 Agents work independently with isolated contexts and can be launched in parallel for complex tasks.
 
@@ -103,7 +100,6 @@ When generating or reviewing content:
 4. **Vary structure**: Mix sentence lengths, paragraph structures, and transition styles
 5. **Be specific**: Replace vague claims with exact metrics and concrete examples
 
-
 ## Important Notes
 
 ### Content Generation
@@ -112,20 +108,17 @@ When generating or reviewing content:
 - Maintain the sophistication level appropriate to the audience and domain
 - Academic, executive, and technical content require different voice calibrations
 
-
 ### Agent Usage
 
 - Agents are stateless - provide complete context in prompts
 - Parallel execution is preferred for independent tasks
 - Use specialized agents for their defined purposes, not general tasks
 
-
 ### Context Optimization
 
 - Start with minimal context (just CLAUDE.md)
 - Add documents only when specific problems emerge
 - Different writing contexts need different guideline combinations
-
 
 ## Configuration
 
@@ -135,13 +128,11 @@ The repository includes:
 - `.claude/agents/`: Specialized agent definitions
 - No build commands or test suites (documentation/guideline repository)
 
-
 ## Development Workflow
 
 1. **Initial content creation**: Start with CLAUDE.md only
 2. **Pattern detection**: If AI patterns appear, add validation documents
 3. **Voice correction**: If lacking authenticity, add example documents
 4. **Full remediation**: Use complete suite only for persistent issues
-
 
 Remember: Authority comes from expertise (not formality), sophistication from precision (not complexity), and authenticity from honesty (not casualness).

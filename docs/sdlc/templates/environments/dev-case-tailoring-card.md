@@ -12,21 +12,17 @@
 - Related: SDP-<id>, QA-PLAN-<id>
 - Links: <paths/urls>
 
-
 ## Scope
 
 - Project context and constraints
-
 
 ## Tailorings
 
 - Which templates/processes are in/out
 
-
 ## Tooling
 
 - Linters, CI, environments, permissions
-
 
 ## Review
 

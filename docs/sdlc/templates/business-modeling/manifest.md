@@ -13,4 +13,3 @@
 - manifest.md
 - supplementary-business-spec-template.md
 - target-organization-assessment-template.md
-

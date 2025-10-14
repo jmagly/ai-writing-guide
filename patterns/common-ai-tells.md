@@ -120,7 +120,6 @@ AI never mentions:
 - Missed deadlines
 - Arguments about architecture
 
-
 ### The Politeness Pattern
 
 AI always:
@@ -131,7 +130,6 @@ AI always:
 - Maintains positive tone
 - Provides complete coverage
 
-
 ### The Completeness Compulsion
 
 AI tries to:
@@ -141,7 +139,6 @@ AI tries to:
 - Provide comprehensive overview
 - Include all stakeholders
 - Address every concern
-
 
 ## Detection Exercise
 
@@ -166,7 +163,6 @@ When your writing sounds too AI:
 5. **Remove adjectives**: They're usually unnecessary
 6. **Remove transitions**: Just start the next sentence
 
-
 ## Real Writing Has
 
 - Typos (occasionally)
@@ -180,7 +176,6 @@ When your writing sounds too AI:
 - Budget constraints
 - Team dynamics
 
-
 ## The Ultimate Test
 
 If you can't imagine a tired developer writing this at 4pm on a Friday, it's too AI.
@@ -192,6 +187,5 @@ Real human writing is:
 - Occasionally brilliant
 - Always specific
 - Never seamless
-
 
 Remember: You're not trying to sound professional. You're trying to sound human.
