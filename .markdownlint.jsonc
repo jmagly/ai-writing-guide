@@ -3,7 +3,7 @@
   "MD013": false,
   // Permit two trailing spaces for hard line breaks
   "MD009": { "br_spaces": 2 },
-  // Tolerate multiple blank lines in legacy docs
+  // Allow multiple blank lines for readability in legacy docs
   "MD012": false,
   // Tolerate missing blank lines around headings/lists in legacy docs
   "MD022": false,
@@ -21,14 +21,14 @@
   "MD026": false,
   // Allow emphasis used as headings in quick-reference
   "MD036": false,
-  // Allow inline HTML placeholders and bare URLs in templates
+  // Allow inline HTML placeholders (kept), enforce no bare URLs (fixed)
   "MD033": false,
-  "MD034": false,
+  "MD034": true,
   // Loosen indent/order constraints for legacy lists
   "MD005": false,
   "MD007": false,
   "MD001": false,
   "MD029": false,
-  // Ignore blank lines around tables in docs
-  "MD058": false
+  // Enforce blank lines around tables (fixed via tools/lint/fix-md58.mjs)
+  "MD058": true
 }

@@ -1,6 +1,6 @@
 # Test Guidelines Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/environ/rup_tstgd.htm
+Adapted from the original RUP template: <https://files.defcon.no/RUP/webtmpl/templates/environ/rup_tstgd.htm>
 
 ## Cover Page
 - `<Project Name>`
@@ -8,6 +8,7 @@ Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/temp
 - `Version <1.0>`
 
 ## Revision History
+
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |

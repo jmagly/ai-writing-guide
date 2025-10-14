@@ -1,6 +1,6 @@
 # Test Strategy Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/test/rup_tststr.htm
+Adapted from the original RUP template: <https://files.defcon.no/RUP/webtmpl/templates/test/rup_tststr.htm>
 
 ## Purpose
 Describe the guiding principles, methodologies, and standards governing the testing effort throughout the project lifecycle.

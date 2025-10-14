@@ -22,6 +22,7 @@
 
 ## 3 Stakeholder Descriptions
 ### 3.1 Stakeholder Summary
+
 | Name | Description | Responsibilities |
 | --- | --- | --- |
 | `<Stakeholder>` | `<Role description>` | `<Interests and responsibilities>` |
@@ -37,6 +38,7 @@
 > List assumptions that influence the vision and dependencies (platform availability, external systems, regulatory milestones).
 
 ### 4.3 Needs and Features
+
 | Need | Priority | Features | Planned Release |
 | --- | --- | --- | --- |
 | `<Stakeholder need>` | `<High/Med/Low>` | `<Feature description>` | `<Release target>` |

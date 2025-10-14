@@ -15,6 +15,7 @@ Maintain a prioritized list of project risks, their status, and mitigation actio
 - Include residual risk assessment after mitigation.
 
 ## Table Structure
+
 | Risk ID | Description | Impact | Likelihood | Exposure | Mitigation Strategy | Owner | Status | Residual Risk |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | R-001 | Concise risk summary. | High | Medium | HxM=High | Planned mitigation steps. | Responsible person/agent. | Open | Updated after mitigation. |

@@ -30,7 +30,9 @@ when gates fail.
 ```
 Idea → Inception → Elaboration → Construction (iterative) → Transition → Operate
              ^                 |                                  |
+
              |                 └────────── Escalations ───────────┘
+
 ```
 
 ## Delivery Loop

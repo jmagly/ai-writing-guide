@@ -1,6 +1,7 @@
 # Data Classification
 
 ## Categories
+
 | Class | Description | Examples | Handling |
 |------|-------------|----------|----------|
 | Public | Safe for public | docs | no special controls |

@@ -7,6 +7,7 @@
 - Reliability/scale: <0.0–1.0>
 
 ## Options and Scoring (0–5)
+
 | Option | Speed | Cost | Quality | Reliability | Total |
 |--------|------:|-----:|--------:|------------:|------:|
 | A |  |  |  |  |  |

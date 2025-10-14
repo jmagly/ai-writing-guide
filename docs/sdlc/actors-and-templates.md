@@ -4,6 +4,7 @@
 Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifact templates. Use this document to assign responsibilities, seed prompts, and ensure every discipline produces the expected work products.
 
 ## Core Workers and Responsibilities
+
 | Lifecycle Worker | Key Responsibilities | Primary Artifacts | Repository Template | Agent Definition |
 | --- | --- | --- | --- | --- |
 | Business Process Analyst | Capture business context, processes, and actors | Vision, business use-case/assets, organizational assessments | `docs/sdlc/templates/business-modeling/business-vision-template.md`, `docs/sdlc/templates/business-modeling/supplementary-business-spec-template.md`, `docs/sdlc/templates/business-modeling/business-use-case-spec-template.md`, `docs/sdlc/templates/business-modeling/business-use-case-realization-template.md`, `docs/sdlc/templates/business-modeling/business-glossary-template.md`, `docs/sdlc/templates/business-modeling/business-rules-template.md`, `docs/sdlc/templates/business-modeling/target-organization-assessment-template.md` | `docs/agents/business-process-analyst.md` |
@@ -48,6 +49,7 @@ Provide PLAN → ACT agents with a ready catalogue of lifecycle roles and artifa
 
 Keep this catalogue synchronized with updates to `docs/sdlc/plan-act-sdlc.md` and expand it whenever new templates or roles are introduced.
 ## Strategic & Supporting Roles
+
 | Role | Primary Focus | Key Artifacts | Agent Definition |
 | --- | --- | --- | --- |
 | Product Strategist | Shape product outcomes, positioning, and success metrics | Business vision, opportunity assessments | `docs/agents/product-strategist.md` |
@@ -60,4 +62,3 @@ Keep this catalogue synchronized with updates to `docs/sdlc/plan-act-sdlc.md` an
 | Support Lead | Prepare support teams and manage incident readiness | Support runbooks, FAQs, incident logs | `docs/agents/support-lead.md` |
 | Toolsmith | Deliver internal tooling and automation | Tooling scripts, documentation | `docs/agents/toolsmith.md` |
 | Metrics Analyst | Define and interpret delivery/product metrics | Measurement plan, dashboards | `docs/agents/metrics-analyst.md` |
-

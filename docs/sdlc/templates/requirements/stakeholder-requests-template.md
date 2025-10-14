@@ -16,6 +16,7 @@ disciplines.
 - Review the log at each iteration planning session to update disposition.
 
 ## Table Structure
+
 | Request ID | Stakeholder | Description | Priority | Status | Linked Artifacts | Notes/Actions |
 | --- | --- | --- | --- | --- | --- | --- |
 | SR-001 | Example Stakeholder | Short summary of the request. | High | Proposed | `docs/...` | Follow-up owner/date. |

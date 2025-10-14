@@ -6,6 +6,7 @@
 - Regulatory or legal impact
 
 ## Contacts
+
 | Level | Role | Contact | Hours | Response target |
 |-------|------|---------|-------|-----------------|
 | 1 | Project Manager | <email> | 9–5 | 24h |

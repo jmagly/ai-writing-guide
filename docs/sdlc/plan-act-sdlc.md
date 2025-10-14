@@ -18,6 +18,7 @@ Return an initial charter plus top unknowns for stakeholder review.
 - **Outputs**: Charter summary, success metrics, open questions log, stakeholder contacts.
 
 ## Lifecycle Phases and Major Milestones
+
 | Phase | Lifecycle Objectives | Primary Disciplines | Lifecycle Milestone | Exit Criteria |
 | --- | --- | --- | --- | --- |
 | **Inception** | Establish business case, project scope, critical use cases | Business Modeling, Requirements, Project Management | Lifecycle Objective Milestone | Stakeholder agreement on vision, scope, and funding guardrails |
@@ -26,6 +27,7 @@ Return an initial charter plus top unknowns for stakeholder review.
 | **Transition** | Deploy, train, and validate with end users | Deployment, Support, Change Management, Test | Product Release Milestone | Users trained, release criteria met, support handover accepted |
 
 ## Discipline Backlog for Agent To-Do Lists
+
 | Discipline | Key Roles | PLAN Focus | ACT Deliverables | Cross-Checks |
 | --- | --- | --- | --- | --- |
 | Business Modeling | Business Analyst, Domain Expert | Model business processes, identify actors, align strategy | Business vision, business use-case specs, glossary | Business stakeholders sign off |

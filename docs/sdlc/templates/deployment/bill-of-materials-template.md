@@ -6,6 +6,7 @@
 - `Version <1.0>`
 
 ## Revision History
+
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
 | `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |

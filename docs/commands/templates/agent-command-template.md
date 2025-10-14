@@ -135,9 +135,11 @@ phase_2:
 ```
 
 ### Risk Assessment
+
 | Risk | Probability | Impact | Mitigation |
 |------|-------------|--------|------------|
 | [Risk 1] | [High/Med/Low] | [Severity] | [How to address] |
+
 
 ### Success Metrics
 - [Measurable outcome 1]: [Target value]

@@ -30,6 +30,7 @@ weighted criteria, and document rationale with owners and follow-ups.
 Describe the decision, constraints, and desired outcome. Include actors and deadline.
 
 ## Options
+
 | Option | Summary | Pros | Cons |
 |-------|---------|------|------|
 | A |  |  |  |
@@ -37,6 +38,7 @@ Describe the decision, constraints, and desired outcome. Include actors and dead
 | C |  |  |  |
 
 ## Criteria and weights
+
 | Criterion | Weight | Notes |
 |-----------|--------|-------|
 | Reliability | 0.3 |  |
@@ -45,6 +47,7 @@ Describe the decision, constraints, and desired outcome. Include actors and dead
 | Security | 0.3 |  |
 
 ## Scoring
+
 | Option | Reliability | Cost | Delivery | Security | Total |
 |--------|------------:|-----:|---------:|---------:|------:|
 | A |  |  |  |  |  |

@@ -1,6 +1,6 @@
 # Test Evaluation Summary Template
 
-Adapted from the original RUP template: https://files.defcon.no/RUP/webtmpl/templates/test/rup_tsteval.htm
+Adapted from the original RUP template: <https://files.defcon.no/RUP/webtmpl/templates/test/rup_tsteval.htm>
 
 ## Purpose
 Summarize testing results at the end of an iteration, release, or major test cycle to inform go/no-go decisions.

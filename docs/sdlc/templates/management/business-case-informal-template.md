@@ -19,6 +19,7 @@
 > Capture strategic objectives, high-level schedule expectations, and success criteria.
 
 ## 5 Financial Forecast
+
 | Category | Value |
 | --- | --- |
 | Revenue enhancement | `$` |

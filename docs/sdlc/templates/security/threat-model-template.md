@@ -10,6 +10,7 @@
 - Entry points: <list>
 
 ## STRIDE Analysis
+
 | Component | Spoofing | Tampering | Repudiation | Information disclosure | Denial of service | Elevation of privilege |
 |-----------|---------|-----------|-------------|------------------------|-------------------|------------------------|
 | <comp> |  |  |  |  |  |  |
@@ -21,4 +22,3 @@
 ## Validation
 - Reviewers and date
 - Links to tests/scans and tickets
-

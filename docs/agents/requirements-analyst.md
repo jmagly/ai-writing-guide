@@ -109,9 +109,11 @@ US-001: [Title]
 2. [Technical/business constraint]
 
 ## Risk Analysis
+
 | Risk | Probability | Impact | Mitigation |
 |------|------------|--------|------------|
 | [Risk description] | High/Med/Low | High/Med/Low | [Strategy] |
+
 
 ## Implementation Estimate
 - Complexity: [Low/Medium/High/Very High]
@@ -287,6 +289,7 @@ TR-API-001: REST endpoint structure
 ## Stakeholder Management
 
 ### Stakeholder Matrix
+
 | Stakeholder | Interest | Influence | Requirements Focus |
 |------------|----------|-----------|-------------------|
 | End Users | High | Low | Usability, Features |
@@ -488,6 +491,7 @@ TR-API-001: REST endpoint structure
 ## Stakeholder Management
 
 ### Stakeholder Matrix
+
 | Stakeholder | Interest | Influence | Requirements Focus |
 |------------|----------|-----------|-------------------|
 | End Users | High | Low | Usability, Features |

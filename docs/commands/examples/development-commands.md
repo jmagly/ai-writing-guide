@@ -311,6 +311,7 @@ Authorization: Bearer <token>
 ```
 
 ### Parameters
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | [param] | [type] | [yes/no] | [description] |
