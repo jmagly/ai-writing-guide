@@ -1,0 +1,10 @@
+{
+  "name": "Card Tools",
+  "path": "tools/cards",
+  "files": [
+    "README.md",
+    "prefill-cards.mjs"
+  ],
+  "ignore": ["manifest.json"]
+}
+
