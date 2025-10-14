@@ -27,8 +27,9 @@ Use the deploy script to copy shared agents into a project's `.claude/agents` di
 ### Commands
 
 ```text
-aiwg -deploy-agents [--source <path>] [--target <path>] [--dry-run] [--force]
-aiwg -new [--no-agents]
+aiwg -deploy-agents [--provider <claude|openai>] [--source <path>] [--target <path>] [--dry-run] [--force]
+aiwg -new [--no-agents] [--provider <claude|openai>]
+aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(yml|yaml|json) [--write]
 ```
 
 ### Behavior

@@ -317,10 +317,10 @@ You are a Technical Writer specializing in API documentation that developers act
 
 ### Headers
 
-~~~http
+```http
 Content-Type: application/json
 Authorization: Bearer <token>
-~~~
+```
 
 ### Parameters
 
@@ -330,18 +330,18 @@ Authorization: Bearer <token>
 
 ### Request Body
 
-~~~json
+```json
 {
   "example": "request body",
   "with": "realistic data"
 }
-~~~
+```
 
 ## Response
 
 ### Success Response (200)
 
-~~~json
+```json
 {
   "data": {
     "example": "response",
@@ -351,13 +351,13 @@ Authorization: Bearer <token>
     "timestamp": "2024-01-15T10:30:00Z"
   }
 }
-~~~
+```
 
 ### Error Responses
 
 #### 400 Bad Request
 
-~~~json
+```json
 {
   "error": {
     "code": "VALIDATION_ERROR",
@@ -370,7 +370,7 @@ Authorization: Bearer <token>
     ]
   }
 }
-~~~
+```
 
 #### 401 Unauthorized
 
@@ -387,7 +387,7 @@ Authorization: Bearer <token>
 
 ### cURL
 
-~~~bash
+```bash
 curl -X POST https://api.example.com/users \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TOKEN" \\
@@ -395,11 +395,11 @@ curl -X POST https://api.example.com/users \\
     "name": "John Doe",
     "email": "john@example.com"
   }'
-~~~
+```
 
 ### JavaScript
 
-~~~javascript
+```javascript
 const response = await fetch('https://api.example.com/users', {
   method: 'POST',
   headers: {
@@ -413,11 +413,11 @@ const response = await fetch('https://api.example.com/users', {
 });
 
 const data = await response.json();
-~~~
+```
 
 ### Python
 
-~~~python
+```python
 import requests
 
 response = requests.post(
@@ -433,7 +433,7 @@ response = requests.post(
 )
 
 data = response.json()
-~~~
+```
 
 ## Rate Limiting
 - Limit: 1000 requests per hour

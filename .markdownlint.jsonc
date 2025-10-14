@@ -27,8 +27,8 @@
   // Enforce single H1 and fenced code blocks
   "MD025": true,
   "MD046": true,
-  // Allow tilde code fences from nested examples
-  "MD048": false,
+  // Enforce backtick fence style
+  "MD048": true,
   // Loosen indent/order constraints for legacy lists
   "MD005": false,
   "MD007": false,

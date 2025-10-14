@@ -182,8 +182,9 @@ fi
   echo "aiwg() { aiwg_update; local sub=\"\$1\"; shift || true; case \"\$sub\" in \\
     -new|--new) node \"$PREFIX/tools/install/new-project.mjs\" \"\$@\" ;; \\
     -deploy-agents|--deploy-agents) node \"$PREFIX/tools/agents/deploy-agents.mjs\" \"\$@\" ;; \\
-    -h|--help|-help|help|\"\") echo 'Usage: aiwg -new [--no-agents] | -deploy-agents [--force|--dry-run|--source <path>|--target <path>]' ;; \\
-    *) echo 'Unknown command. Use: aiwg -new | -deploy-agents' ;; \\
+    -prefill-cards|--prefill-cards) node \"$PREFIX/tools/cards/prefill-cards.mjs\" \"\$@\" ;; \\
+    -h|--help|-help|help|\"\") echo 'Usage: aiwg -new [--no-agents|--provider <claude|openai>] | -deploy-agents [--provider <...> --force|--dry-run|--source <path>|--target <path>] | -prefill-cards --target <path> --team <team-profile.(yml|yaml|json)> [--write]' ;; \\
+    *) echo 'Unknown command. Use: aiwg -new | -deploy-agents | -prefill-cards' ;; \\
   esac }"
   echo "aiwg-deploy-agents() { aiwg -deploy-agents \"\$@\"; }"
   echo "aiwg-new() { aiwg -new \"\$@\"; }"
