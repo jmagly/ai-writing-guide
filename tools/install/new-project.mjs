@@ -7,7 +7,7 @@
  * target project directory.
  *
  * Usage:
- *   node tools/install/new-project.mjs [--name <project-name>] [--with-agents]
+ *   node tools/install/new-project.mjs [--name <project-name>] [--no-agents]
  */
 
 import fs from 'fs';
@@ -16,11 +16,11 @@ import path from 'path';
 function parseArgs() {
   const args = process.argv.slice(2);
   let name = path.basename(process.cwd());
-  let withAgents = false;
+  let withAgents = true; // deploy agents by default
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--name' && args[i + 1]) name = args[++i];
-    else if (a === '--with-agents') withAgents = true;
+    else if (a === '--no-agents') withAgents = false;
   }
   return { name, withAgents };
 }
@@ -69,11 +69,12 @@ function copyFile(src, dest) {
       `- docs/sdlc/intake/solution-profile.md\n` +
       `- docs/sdlc/intake/option-matrix.md\n\n` +
       `Once complete, kick off the flow with:\n\n` +
-      \`\`\`bash\n# (optional) copy shared agents into .claude/agents\naiwg-deploy-agents\n\n# start Concept → Inception\naiwg-new --with-agents  # or use orchestrator/commands as desired\n\`\`\`\n`;
+      \`\`\`bash\n# copy shared agents into .claude/agents (auto-run by aiwg-new)\naiwg-deploy-agents\n\n# start Concept → Inception with orchestrator/commands\n# refer to docs/sdlc/flows and docs/commands/sdlc\n\`\`\`\n`;
     fs.writeFileSync(readmePath, readme, 'utf8');
     console.log(`created README.md`);
   }
 
+  // Deploy agents by default (can be disabled with --no-agents)
   if (withAgents) {
     const deployPath = path.join(repoRoot, 'tools', 'agents', 'deploy-agents.mjs');
     if (fs.existsSync(deployPath)) {
@@ -85,6 +86,37 @@ function copyFile(src, dest) {
     }
   }
 
+  // Initialize git repository if not present
+  if (!fs.existsSync(path.resolve(process.cwd(), '.git'))) {
+    try {
+      const { spawnSync } = await import('node:child_process');
+      let r = spawnSync('git', ['init', '-b', 'main'], { stdio: 'inherit' });
+      if (r.status !== 0) {
+        // fallback for older git
+        spawnSync('git', ['init'], { stdio: 'inherit' });
+        spawnSync('git', ['symbolic-ref', 'HEAD', 'refs/heads/main'], { stdio: 'inherit' });
+      }
+      const gi = path.resolve(process.cwd(), '.gitignore');
+      if (!fs.existsSync(gi)) {
+        const gitignore = [
+          'node_modules/',
+          'dist/',
+          'build/',
+          '.env',
+          '.DS_Store',
+          'coverage/',
+          '.idea/',
+          '.vscode/'
+        ].join('\n') + '\n';
+        fs.writeFileSync(gi, gitignore, 'utf8');
+        console.log('created .gitignore');
+      }
+      console.log('Initialized git repository on branch main.');
+      console.log('Next: fill intake docs, then run: git add . && git commit -m "chore: initial scaffold"');
+    } catch (e) {
+      console.warn('git initialization skipped or failed:', e.message);
+    }
+  }
+
   console.log(`Scaffold complete. Files created: ${created}`);
 })();
-

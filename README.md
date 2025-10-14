@@ -71,6 +71,7 @@ This adds:
 - `aiwg-deploy-agents` — copy shared agents into `.claude/agents` (current dir)
 - `aiwg-new` — scaffold a new project with intake templates
   - Both commands auto-update the installed framework before running.
+  - aiwg-new deploys agents automatically and initializes git (branch `main`). Use `--no-agents` to skip.
 
 To customize the install (repo, branch, prefix):
 

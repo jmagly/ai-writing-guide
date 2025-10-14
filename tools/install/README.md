@@ -31,7 +31,7 @@ Scaffolding:
 ```bash
 # In a new/empty project directory
 aiwg-new               # create docs/sdlc/intake/*.md and a README
-aiwg-deploy-agents     # copy shared agents into .claude/agents
+# agents are deployed automatically by aiwg-new (use --no-agents to skip)
 ```
 
 Node.js requirement:
