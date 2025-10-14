@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - banned-patterns.md
 - manifest.json

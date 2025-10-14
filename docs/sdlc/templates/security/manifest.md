@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - control-implementation-card.md
 - data-classification-template.md

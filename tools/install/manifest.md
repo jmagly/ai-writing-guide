@@ -2,7 +2,7 @@
 
 ## Files
 
-- DEVELOPMENT_GUIDE.md
 - README.md
-- manifest.md
+- install.sh
+- new-project.mjs
 

@@ -5,6 +5,7 @@
     "README.md",
     "deploy-agents.mjs"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

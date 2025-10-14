@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - development-commands.md
 - manifest.json

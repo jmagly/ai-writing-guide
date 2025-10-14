@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - api-designer.md
 - context-librarian.md

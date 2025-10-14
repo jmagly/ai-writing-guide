@@ -3,6 +3,7 @@
   "path": ".github/workflows",
   "files": [
     "manifest-lint.yml",
+    "manifest.md",
     "markdownlint.yml"
   ],
   "ignore": [

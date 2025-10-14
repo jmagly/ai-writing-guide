@@ -6,6 +6,7 @@
     "install.sh",
     "new-project.mjs"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

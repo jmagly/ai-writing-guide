@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - bill-of-materials-template.md
 - deployment-plan-template.md

@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - business-case-informal-template.md
 - business-case-template.md

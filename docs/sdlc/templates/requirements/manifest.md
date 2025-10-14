@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - context-free-interview-template.md
 - data-contract-template.md

@@ -2,3 +2,5 @@
 
 ## Files
 
+- manifest.md
+

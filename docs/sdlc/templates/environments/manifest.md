@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - business-modeling-guidelines-template.md
 - design-guidelines-template.md

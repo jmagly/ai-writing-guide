@@ -121,7 +121,14 @@ function syncDir(dir, { create, fix, writeMd }) {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
   let wroteMd = false;
   if (writeMd) {
-    const md = ['# Directory Manifest', '', '## Files', ...next.map(f => `- ${f}`), ''].join('\n');
+    const md = [
+      '# Directory Manifest',
+      '',
+      '## Files',
+      '',
+      ...next.map(f => `- ${f}`),
+      ''
+    ].join('\n');
     fs.writeFileSync(path.join(dir, 'manifest.md'), md + '\n', 'utf8');
     wroteMd = true;
   }
@@ -143,4 +150,3 @@ function syncDir(dir, { create, fix, writeMd }) {
   }
   console.log(`Processed ${dirs.length} directories; updated ${count}.`);
 })();
-

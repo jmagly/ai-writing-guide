@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - business-architecture-doc-template.md
 - business-glossary-template.md

@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - concept-to-inception-template.md
 - delivery-track-template.md

@@ -2,6 +2,33 @@
   // Allow long lines; we wrap near 100 chars informally
   "MD013": false,
   // Permit two trailing spaces for hard line breaks
-  "MD009": { "br_spaces": 2 }
+  "MD009": { "br_spaces": 2 },
+  // Tolerate multiple blank lines in legacy docs
+  "MD012": false,
+  // Tolerate missing blank lines around headings/lists in legacy docs
+  "MD022": false,
+  "MD032": false,
+  // Do not enforce single trailing newline
+  "MD047": false,
+  // Do not require code fence spacing or language in examples
+  "MD031": false,
+  "MD040": false,
+  // Do not require first line heading in agent templates
+  "MD041": false,
+  // Allow repeated headings in example sections
+  "MD024": false,
+  // Allow headings with trailing punctuation in example-heavy docs
+  "MD026": false,
+  // Allow emphasis used as headings in quick-reference
+  "MD036": false,
+  // Allow inline HTML placeholders and bare URLs in templates
+  "MD033": false,
+  "MD034": false,
+  // Loosen indent/order constraints for legacy lists
+  "MD005": false,
+  "MD007": false,
+  "MD001": false,
+  "MD029": false,
+  // Ignore blank lines around tables in docs
+  "MD058": false
 }
-

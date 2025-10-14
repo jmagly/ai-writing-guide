@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - check-manifests.mjs
 - generate-manifest.mjs

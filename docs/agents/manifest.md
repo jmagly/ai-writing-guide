@@ -1,6 +1,7 @@
 # Directory Manifest
 
 ## Files
+
 - README.md
 - agent-template.md
 - architecture-designer.md
@@ -18,6 +19,7 @@
 - legal-liaison.md
 - manifest.md
 - metrics-analyst.md
+- openai-compat.md
 - product-designer.md
 - product-strategist.md
 - project-manager.md
