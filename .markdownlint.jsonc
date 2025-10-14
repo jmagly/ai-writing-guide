@@ -24,10 +24,11 @@
   // Allow inline HTML placeholders (kept), enforce no bare URLs (fixed)
   "MD033": false,
   "MD034": true,
-  // Allow multiple H1 titles in long-form guides
+  // Enforce single H1 and fenced code blocks
   "MD025": false,
-  // Allow indented code blocks in examples
-  "MD046": false,
+  "MD046": true,
+  // Allow tilde code fences from nested examples
+  "MD048": false,
   // Loosen indent/order constraints for legacy lists
   "MD005": false,
   "MD007": false,

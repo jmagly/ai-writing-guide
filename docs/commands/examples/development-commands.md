@@ -48,7 +48,7 @@ When given code to review:
 
 For each file reviewed, provide:
 
-```
+```javascript
 
 ## File: [filename]
 
@@ -74,7 +74,7 @@ For each file reviewed, provide:
 ### Positive Patterns
 - [Good practices worth noting]
 
-```text
+```
 
 ## Input Handling
 
@@ -129,7 +129,7 @@ For the given source file or class:
 
 ## Test File Structure
 
-```
+```javascript
 
 describe('[ClassName/ModuleName]', () => {
   beforeEach(() => {
@@ -165,7 +165,7 @@ describe('[ClassName/ModuleName]', () => {
   });
 });
 
-```text
+```
 
 ## Edge Cases to Always Test
 
@@ -317,10 +317,10 @@ You are a Technical Writer specializing in API documentation that developers act
 
 ### Headers
 
-```http
+~~~http
 Content-Type: application/json
 Authorization: Bearer <token>
-```
+~~~
 
 ### Parameters
 
@@ -330,18 +330,18 @@ Authorization: Bearer <token>
 
 ### Request Body
 
-```json
+~~~json
 {
   "example": "request body",
   "with": "realistic data"
 }
-```
+~~~
 
 ## Response
 
 ### Success Response (200)
 
-```json
+~~~json
 {
   "data": {
     "example": "response",
@@ -351,13 +351,13 @@ Authorization: Bearer <token>
     "timestamp": "2024-01-15T10:30:00Z"
   }
 }
-```
+~~~
 
 ### Error Responses
 
 #### 400 Bad Request
 
-```json
+~~~json
 {
   "error": {
     "code": "VALIDATION_ERROR",
@@ -370,7 +370,7 @@ Authorization: Bearer <token>
     ]
   }
 }
-```
+~~~
 
 #### 401 Unauthorized
 
@@ -387,7 +387,7 @@ Authorization: Bearer <token>
 
 ### cURL
 
-```bash
+~~~bash
 curl -X POST https://api.example.com/users \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TOKEN" \\
@@ -395,11 +395,11 @@ curl -X POST https://api.example.com/users \\
     "name": "John Doe",
     "email": "john@example.com"
   }'
-```
+~~~
 
 ### JavaScript
 
-```javascript
+~~~javascript
 const response = await fetch('https://api.example.com/users', {
   method: 'POST',
   headers: {
@@ -413,11 +413,11 @@ const response = await fetch('https://api.example.com/users', {
 });
 
 const data = await response.json();
-```
+~~~
 
 ### Python
 
-```python
+~~~python
 import requests
 
 response = requests.post(
@@ -433,7 +433,7 @@ response = requests.post(
 )
 
 data = response.json()
-```
+~~~
 
 ## Rate Limiting
 - Limit: 1000 requests per hour
@@ -614,7 +614,7 @@ Based on the project type, create:
 ## Project Types
 
 ### Node.js Project
-```
+```bash
 
 # Create directory structure
 mkdir -p {src,tests,docs,scripts}
@@ -626,12 +626,12 @@ npm install --save express helmet cors
 
 # Configuration files
 
-```text
+```
 
 Create these files:
 
 **`.eslintrc.js`**
-```
+```javascript
 
 module.exports = {
   env: {
@@ -650,10 +650,10 @@ module.exports = {
   }
 };
 
-```text
+```
 
 **`.prettierrc`**
-```
+```json
 
 {
   "semi": true,
@@ -663,10 +663,10 @@ module.exports = {
   "tabWidth": 2
 }
 
-```text
+```
 
 **`jest.config.js`**
-```
+```javascript
 
 module.exports = {
   testEnvironment: 'node',
@@ -684,12 +684,12 @@ module.exports = {
   }
 };
 
-```text
+```
 
 ### Python Project
 Create virtual environment and structure:
 
-```
+```bash
 
 # Virtual environment
 python -m venv venv
@@ -701,10 +701,10 @@ mkdir -p {src,tests,docs,scripts}
 # Dependencies
 pip install black flake8 pytest pytest-cov
 
-```text
+```
 
 **`pyproject.toml`**
-```
+```toml
 
 [tool.black]
 line-length = 88
@@ -717,7 +717,7 @@ addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
 [tool.coverage.run]
 source = ["src"]
 
-```text
+```
 
 ## Common Files for All Projects
 
