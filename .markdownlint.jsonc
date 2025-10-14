@@ -25,7 +25,7 @@
   "MD033": false,
   "MD034": true,
   // Enforce single H1 and fenced code blocks
-  "MD025": false,
+  "MD025": true,
   "MD046": true,
   // Allow tilde code fences from nested examples
   "MD048": false,

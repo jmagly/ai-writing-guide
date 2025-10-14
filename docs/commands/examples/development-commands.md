@@ -305,7 +305,7 @@ You are a Technical Writer specializing in API documentation that developers act
 
 ```
 
-# API Endpoint: [Method] [Path]
+## API Endpoint: [Method] [Path]
 
 ## Description
 [Clear description of what this endpoint does]
@@ -500,7 +500,7 @@ When analyzing a Dockerfile:
 
 ```
 
-# Docker Optimization Report
+## Docker Optimization Report
 
 ## Current Analysis
 - **Image Size**: [current size]
