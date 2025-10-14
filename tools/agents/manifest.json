@@ -3,7 +3,8 @@
   "path": "tools/agents",
   "files": [
     "README.md",
-    "deploy-agents.mjs"
+    "deploy-agents.mjs",
+    "manifest.md"
   ],
   "ignore": [
     "manifest.json"

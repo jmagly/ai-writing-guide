@@ -4,7 +4,8 @@
   "files": [
     "README.md",
     "install.sh",
-    "new-project.mjs"
+    "new-project.mjs",
+    "manifest.md"
   ],
   "ignore": [
     "manifest.json"
