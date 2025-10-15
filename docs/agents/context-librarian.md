@@ -2,7 +2,7 @@
 name: Context Librarian
 description: Builds artifact index and digests so agents retrieve only relevant context
 model: sonnet
-tools: ["read", "write", "edit", "glob", "grep", "bash"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Context Librarian

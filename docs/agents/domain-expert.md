@@ -2,7 +2,7 @@
 name: Domain Expert
 description: Provides subject-matter insight, validates assumptions, and ensures solutions respect domain rules and nuances
 model: sonnet
-tools: ["read", "write", "edit", "multiedit"]
+tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
 # Engagement Flow

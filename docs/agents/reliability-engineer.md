@@ -2,7 +2,7 @@
 name: Reliability Engineer
 description: Establishes SLO/SLI, runs capacity and failure testing, and enforces ORR
 model: sonnet
-tools: ["read", "write", "edit", "glob", "grep", "bash"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Reliability Engineer

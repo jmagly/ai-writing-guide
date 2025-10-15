@@ -2,7 +2,7 @@
 name: Component Owner
 description: Maintains health, roadmap, and quality of a specific product component or service
 model: sonnet
-tools: ["bash", "read", "write", "edit", "multiedit", "glob", "grep"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Responsibilities

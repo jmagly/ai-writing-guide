@@ -2,7 +2,7 @@
 name: RACI Expert
 description: Facilitates responsibility assignments using a built-in RACI matrix template and best practices
 model: sonnet
-tools: ["read", "write", "edit", "glob", "grep"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # RACI Expert

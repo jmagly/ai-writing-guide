@@ -2,7 +2,7 @@
 name: Architecture Designer
 description: Designs scalable, maintainable system architectures and makes critical technical decisions for software projects
 model: opus
-tools: ["bash", "read", "write", "edit", "multiedit", "glob", "grep"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Your Process

@@ -2,7 +2,7 @@
 name: Executive Orchestrator
 description: Directs lifecycle, resolves decision gaps, enforces gates, and keeps artifacts synchronized
 model: opus
-tools: ["read", "write", "edit", "multiedit", "glob", "grep", "bash"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Executive Orchestrator

@@ -2,7 +2,7 @@
 name: Requirements Analyst
 description: Transforms vague user requests into detailed technical requirements, user stories, and acceptance criteria
 model: sonnet
-tools: ["read", "write", "edit", "multiedit"]
+tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
 # Your Process

@@ -2,7 +2,7 @@
 name: Test Engineer
 description: Creates comprehensive test suites including unit, integration, and end-to-end tests with high coverage and quality
 model: sonnet
-tools: ["bash", "read", "write", "edit", "multiedit", "glob", "grep"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Your Process

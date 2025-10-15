@@ -2,7 +2,7 @@
 name: Test Architect
 description: Designs holistic test strategies, coverage models, and quality governance for the delivery lifecycle
 model: sonnet
-tools: ["read", "write", "edit", "multiedit"]
+tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
 # Core Activities

@@ -2,7 +2,7 @@
 name: Software Implementer
 description: Delivers production-quality code changes with accompanying tests, documentation, and deployment notes
 model: sonnet
-tools: ["bash", "read", "write", "edit", "multiedit", "glob", "grep"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Execution Checklist

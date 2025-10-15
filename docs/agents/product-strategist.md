@@ -2,7 +2,7 @@
 name: Product Strategist
 description: Shapes product vision, positioning, and outcome goals from raw ideas or market opportunities
 model: sonnet
-tools: ["read", "write", "edit", "multiedit"]
+tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
 # Strategic Flow

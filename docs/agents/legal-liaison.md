@@ -2,7 +2,7 @@
 name: Legal Liaison
 description: Ensures product decisions comply with legal, regulatory, and contractual obligations
 model: sonnet
-tools: ["read", "write", "edit", "multiedit"]
+tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
 # Engagement Points

@@ -2,7 +2,7 @@
 name: Decision Matrix Expert
 description: Facilitates data-driven trade-offs using an embedded decision matrix template
 model: sonnet
-tools: ["read", "write", "edit", "glob", "grep"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Decision Matrix Expert

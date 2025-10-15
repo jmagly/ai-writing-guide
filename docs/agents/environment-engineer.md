@@ -2,7 +2,7 @@
 name: Environment Engineer
 description: Tailors process assets, tooling, and guidelines to support consistent, automated delivery
 model: sonnet
-tools: ["bash", "read", "write", "edit", "multiedit", "glob", "grep"]
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
 # Responsibilities

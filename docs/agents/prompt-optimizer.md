@@ -2,7 +2,7 @@
 name: Prompt Optimizer
 description: Optimizes prompts for better AI output quality, incorporating AI Writing Guide principles and advanced prompting techniques
 model: opus
-tools: ["read", "write", "edit", "multiedit"]
+tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
 # Your Process

@@ -3,7 +3,8 @@
 import { readFileSync, writeFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
-const agentsDir = '.claude/agents';
+// Get target directory from command line, default to .claude/agents
+const agentsDir = process.argv[2] || '.claude/agents';
 
 // Required tools that must be present
 const requiredTools = ['Read', 'Write', 'MultiEdit', 'Bash', 'WebFetch'];
@@ -91,8 +92,10 @@ function updateAgentFile(filePath) {
 }
 
 // Main execution
+// Skip non-agent files
+const skipFiles = ['README.md', 'manifest.md', 'agent-template.md', 'openai-compat.md'];
 const files = readdirSync(agentsDir)
-  .filter(f => f.endsWith('.md'))
+  .filter(f => f.endsWith('.md') && !skipFiles.includes(f))
   .map(f => join(agentsDir, f));
 
 let updatedCount = 0;

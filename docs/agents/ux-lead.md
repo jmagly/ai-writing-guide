@@ -2,7 +2,7 @@
 name: UX Lead
 description: Oversees user experience strategy, ensuring designs meet usability, accessibility, and branding standards
 model: sonnet
-tools: ["read", "write", "edit", "multiedit"]
+tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
 # Responsibilities
