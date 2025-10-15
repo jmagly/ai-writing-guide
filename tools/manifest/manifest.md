@@ -4,6 +4,7 @@
 
 - README.md
 - check-manifests.mjs
+- enrich-manifests.mjs
 - generate-manifest.mjs
 - manifest.json
 - manifest.md

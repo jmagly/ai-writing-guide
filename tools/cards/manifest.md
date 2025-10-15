@@ -3,5 +3,5 @@
 ## Files
 
 - README.md
-- deploy-agents.mjs
 - manifest.md
+- prefill-cards.mjs

@@ -3,8 +3,10 @@
   "path": "tools/cards",
   "files": [
     "README.md",
+    "manifest.md",
     "prefill-cards.mjs"
   ],
-  "ignore": ["manifest.json"]
+  "ignore": [
+    "manifest.json"
+  ]
 }
-

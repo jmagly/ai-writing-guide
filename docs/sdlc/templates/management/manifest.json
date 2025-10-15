@@ -20,10 +20,10 @@
     "risk-management-plan-template.md",
     "software-development-plan-template.md",
     "status-assessment-template.md",
-    "traceability-matrix-template.csv",
-    "work-package-card.md",
+    "team-profile-example.yaml",
     "team-profile-template.md",
-    "team-profile-example.yaml"
+    "traceability-matrix-template.csv",
+    "work-package-card.md"
   ],
   "ignore": [
     "manifest.json"

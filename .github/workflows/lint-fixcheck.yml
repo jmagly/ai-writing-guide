@@ -59,6 +59,17 @@ jobs:
             echo "Inline placeholders detected. Run: node tools/lint/fix-md33-inlineplaceholders.mjs --target . --write" >&2
             exit 1
           fi
+      - name: Check manifest enrichment (descriptions + manifest.md)
+        run: |
+          OUT=$(node tools/manifest/enrich-manifests.mjs --target . || true)
+          echo "$OUT"
+          if ! echo "$OUT" | grep -q "Would enrich 0 manifest(s)."; then
+            echo "Manifest enrichment drift detected. Run:" >&2
+            echo "  node tools/manifest/enrich-manifests.mjs --target . --write" >&2
+            echo "  node tools/manifest/sync-manifests.mjs --target . --fix --write-md" >&2
+            echo "  node tools/lint/fix-md12.mjs --target . --write" >&2
+            exit 1
+          fi
       - name: Check list indentation (MD005/MD007)
         run: |
           OUT=$(node tools/lint/fix-md5-7-lists.mjs --target . || true)

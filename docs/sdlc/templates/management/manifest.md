@@ -20,5 +20,7 @@
 - risk-management-plan-template.md
 - software-development-plan-template.md
 - status-assessment-template.md
+- team-profile-example.yaml
+- team-profile-template.md
 - traceability-matrix-template.csv
 - work-package-card.md

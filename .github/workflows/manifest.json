@@ -2,6 +2,7 @@
   "name": "GitHub Workflows",
   "path": ".github/workflows",
   "files": [
+    "lint-fixcheck.yml",
     "manifest-lint.yml",
     "manifest.md",
     "markdownlint.yml"
