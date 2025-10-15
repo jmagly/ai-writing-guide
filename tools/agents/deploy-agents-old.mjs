@@ -2,11 +2,9 @@
 /**
  * Deploy Agents and Commands
  *
- * Deploy agents/commands from this repository to a target project.
- * Supports three deployment modes:
- * 1. General-purpose (writing agents, general commands)
- * 2. SDLC framework (complete software development lifecycle)
- * 3. Both (default)
+ * Copy shared agents from this repo (docs/agents) and/or commands (docs/commands)
+ * into a target project's `.claude/agents` and `.claude/commands` directories.
+ * Flattens subdirectories for agents. Designed for simple bootstrapping.
  *
  * Usage:
  *   node tools/agents/deploy-agents.mjs [options]
@@ -14,7 +12,6 @@
  * Options:
  *   --source <path>          Source directory (defaults to repo root)
  *   --target <path>          Target directory (defaults to cwd)
- *   --mode <type>            Deployment mode: general, sdlc, or both (default)
  *   --deploy-commands        Deploy commands in addition to agents
  *   --commands-only          Deploy only commands (skip agents)
  *   --dry-run                Show what would be deployed without writing
@@ -25,15 +22,9 @@
  *   --efficiency-model <name> Override model for efficiency tasks
  *   --as-agents-md           Aggregate to single AGENTS.md (OpenAI)
  *
- * Modes:
- *   general  - Deploy only general-purpose writing agents and commands
- *   sdlc     - Deploy only SDLC Complete framework agents and commands
- *   both     - Deploy everything (default)
- *
  * Defaults:
  *   --source resolves relative to this script's repo root (../..)
  *   --target is process.cwd()
- *   --mode is 'both'
  */
 
 import fs from 'fs';
@@ -44,7 +35,6 @@ function parseArgs() {
   const cfg = {
     source: null,
     target: process.cwd(),
-    mode: 'both',  // 'general', 'sdlc', or 'both'
     dryRun: false,
     force: false,
     provider: 'claude',
@@ -59,7 +49,6 @@ function parseArgs() {
     const a = args[i];
     if (a === '--source' && args[i + 1]) cfg.source = path.resolve(args[++i]);
     else if (a === '--target' && args[i + 1]) cfg.target = path.resolve(args[++i]);
-    else if (a === '--mode' && args[i + 1]) cfg.mode = String(args[++i]).toLowerCase();
     else if (a === '--dry-run') cfg.dryRun = true;
     else if (a === '--force') cfg.force = true;
     else if ((a === '--provider' || a === '--platform') && args[i + 1]) cfg.provider = String(args[++i]).toLowerCase();
@@ -212,7 +201,7 @@ function aggregateToAgentsMd(files, destPath, opts) {
 
 (function main() {
   const cfg = parseArgs();
-  const { source, target, mode, dryRun, force, provider, reasoningModel, codingModel, efficiencyModel, deployCommands, commandsOnly, asAgentsMd } = cfg;
+  const { source, target, dryRun, force, provider, reasoningModel, codingModel, efficiencyModel, deployCommands, commandsOnly, asAgentsMd } = cfg;
 
   // Resolve default source = repo root of this script
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
@@ -230,75 +219,50 @@ function aggregateToAgentsMd(files, destPath, opts) {
 
   // Deploy Agents (unless --commands-only)
   if (!commandsOnly) {
-    // Deploy general agents if mode is 'general' or 'both'
-    if (mode === 'general' || mode === 'both') {
-      const generalAgentsRoot = path.join(srcRoot, 'agents');
-      if (fs.existsSync(generalAgentsRoot)) {
-        const files = listMdFiles(generalAgentsRoot);
-        if (files.length > 0) {
-          const destDir = provider === 'openai'
-            ? path.join(target, '.codex', 'agents')
-            : path.join(target, '.claude', 'agents');
-          if (!dryRun) ensureDir(destDir);
-          console.log(`Deploying ${files.length} general-purpose agents to ${destDir} (provider=${provider})`);
-          deployFiles(files, destDir, deployOpts);
-        }
-      }
+    const agentsRoot = path.join(srcRoot, 'docs', 'agents');
+    if (!fs.existsSync(agentsRoot)) {
+      console.error('Cannot find agents root at', agentsRoot);
+      process.exit(1);
     }
 
-    // Deploy SDLC agents if mode is 'sdlc' or 'both'
-    if (mode === 'sdlc' || mode === 'both') {
-      const sdlcAgentsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
-      if (fs.existsSync(sdlcAgentsRoot)) {
-        const files = listMdFiles(sdlcAgentsRoot);
-        if (files.length > 0) {
-          const destDir = provider === 'openai'
-            ? path.join(target, '.codex', 'agents')
-            : path.join(target, '.claude', 'agents');
-          if (!dryRun) ensureDir(destDir);
-          console.log(`\nDeploying ${files.length} SDLC framework agents to ${destDir} (provider=${provider})`);
-          deployFiles(files, destDir, deployOpts);
-        }
-      } else {
-        console.warn(`SDLC agents not found at ${sdlcAgentsRoot}`);
-      }
+    const files = listMdFiles(agentsRoot);
+
+    if (provider === 'openai' && asAgentsMd) {
+      const destDir = path.join(target, '.codex');
+      if (!dryRun) ensureDir(destDir);
+      const destPath = path.join(destDir, 'AGENTS.md');
+      console.log(`Aggregating ${files.length} agents to ${destPath} (provider=${provider})`);
+      aggregateToAgentsMd(files, destPath, deployOpts);
+    } else {
+      const destDir = provider === 'openai'
+        ? path.join(target, '.codex', 'agents')
+        : path.join(target, '.claude', 'agents');
+      if (!dryRun) ensureDir(destDir);
+      console.log(`Deploying ${files.length} agents to ${destDir} (provider=${provider})`);
+      deployFiles(files, destDir, deployOpts);
     }
   }
 
   // Deploy Commands (if --deploy-commands or --commands-only)
   if (deployCommands || commandsOnly) {
-    // Deploy general commands if mode is 'general' or 'both'
-    if (mode === 'general' || mode === 'both') {
-      const generalCommandsRoot = path.join(srcRoot, 'commands');
-      if (fs.existsSync(generalCommandsRoot)) {
-        const commandFiles = listMdFilesRecursive(generalCommandsRoot);
-        if (commandFiles.length > 0) {
-          const destDir = provider === 'openai'
-            ? path.join(target, '.codex', 'commands')
-            : path.join(target, '.claude', 'commands');
-          if (!dryRun) ensureDir(destDir);
-          console.log(`\nDeploying ${commandFiles.length} general-purpose commands to ${destDir} (provider=${provider})`);
-          deployFiles(commandFiles, destDir, deployOpts);
-        }
-      }
+    const commandsRoot = path.join(srcRoot, 'docs', 'commands');
+    if (!fs.existsSync(commandsRoot)) {
+      console.error('Cannot find commands root at', commandsRoot);
+      process.exit(1);
     }
 
-    // Deploy SDLC commands if mode is 'sdlc' or 'both'
-    if (mode === 'sdlc' || mode === 'both') {
-      const sdlcCommandsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
-      if (fs.existsSync(sdlcCommandsRoot)) {
-        const commandFiles = listMdFilesRecursive(sdlcCommandsRoot);
-        if (commandFiles.length > 0) {
-          const destDir = provider === 'openai'
-            ? path.join(target, '.codex', 'commands')
-            : path.join(target, '.claude', 'commands');
-          if (!dryRun) ensureDir(destDir);
-          console.log(`\nDeploying ${commandFiles.length} SDLC framework commands to ${destDir} (provider=${provider})`);
-          deployFiles(commandFiles, destDir, deployOpts);
-        }
-      } else {
-        console.warn(`SDLC commands not found at ${sdlcCommandsRoot}`);
-      }
+    // Get all command files recursively (includes sdlc/ subdirectory)
+    const commandFiles = listMdFilesRecursive(commandsRoot);
+
+    if (commandFiles.length === 0) {
+      console.log('No command files found to deploy');
+    } else {
+      const destDir = provider === 'openai'
+        ? path.join(target, '.codex', 'commands')
+        : path.join(target, '.claude', 'commands');
+      if (!dryRun) ensureDir(destDir);
+      console.log(`\nDeploying ${commandFiles.length} commands to ${destDir} (provider=${provider})`);
+      deployFiles(commandFiles, destDir, deployOpts);
     }
   }
 })();
