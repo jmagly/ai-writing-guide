@@ -3,7 +3,7 @@
   "directory": "agentic/code/frameworks/sdlc-complete/commands",
   "description": "SDLC workflow orchestration commands for comprehensive cradle-to-grave project lifecycle management from concept through production operations",
   "last_updated": "2025-10-15",
-  "total_commands": 38,
+  "total_commands": 39,
   "coverage": {
     "phase_transitions": "100%",
     "iterative_workflows": "100%",
@@ -75,6 +75,7 @@
     "project-management": {
       "description": "High-level project orchestration, health checks, and intake workflows",
       "commands": [
+        "intake-from-codebase",
         "intake-start",
         "intake-wizard",
         "orchestrate-project",
@@ -264,6 +265,12 @@
       "file": "generate-tests.md",
       "description": "Auto-generate test suites from requirements with comprehensive coverage",
       "category": "utilities"
+    },
+    {
+      "name": "intake-from-codebase",
+      "file": "intake-from-codebase.md",
+      "description": "Scan existing codebase/product and generate intake documents by analyzing code, dependencies, and infrastructure with interactive questioning",
+      "category": "project-management"
     },
     {
       "name": "intake-start",
