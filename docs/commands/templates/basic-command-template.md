@@ -6,12 +6,11 @@ Use this template as a starting point for creating new Claude Code commands.
 
 ```markdown
 ---
-name: Command Name
 description: Brief description of what this command does (keep under 80 characters)
+category: category-name
+argument-hint: <expected-arguments>
+allowed-tools: Read, Write, Bash, Grep, Glob
 model: sonnet
-tools: ["read", "write", "bash", "grep", "glob"]
-argument-hint: "Description of expected arguments"
-color: blue
 ---
 
 # [Command Name]
@@ -130,16 +129,20 @@ model: sonnet   # For balanced tasks (recommended default)
 model: opus     # For complex reasoning tasks
 
 # Tool selection based on needs
-tools: ["read"]                    # Read-only commands
-tools: ["read", "write"]           # File manipulation
-tools: ["bash", "read", "write"]   # System interaction
-tools: ["read", "grep", "glob"]    # Search and analysis
+allowed-tools: Read                    # Read-only commands
+allowed-tools: Read, Write             # File manipulation
+allowed-tools: Bash, Read, Write       # System interaction
+allowed-tools: Read, Grep, Glob        # Search and analysis
 
-# Color coding for organization
-color: blue     # General purpose
-color: green    # Success/validation commands
-color: orange   # Warning/analysis commands
-color: red      # Critical/security commands
+# Category organization (choose one)
+category: sdlc-management              # SDLC workflow commands
+category: security-quality             # Security and quality gates
+category: documentation-tracking       # Documentation and traceability
+category: project-task-management      # Project planning and management
+category: version-control-git          # Git and version control
+category: code-analysis-testing        # Testing and code analysis
+category: team-collaboration           # Team and retrospective tools
+category: documentation-changelogs     # Documentation generation
 ```
 
 ### 3. Add Domain-Specific Logic

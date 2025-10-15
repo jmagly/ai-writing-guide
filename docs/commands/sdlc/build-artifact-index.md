@@ -1,9 +1,9 @@
 ---
-name: Build Artifact Index
 description: Summarize key SDLC artifacts and produce short digests for agent context
+category: documentation-tracking
+argument-hint: <docs/sdlc/artifacts/project>
+allowed-tools: Read, Write, Glob, Grep
 model: sonnet
-tools: ["read", "write", "glob", "grep"]
-argument-hint: "docs/sdlc/artifacts/<project>"
 ---
 
 # Build Artifact Index (SDLC)

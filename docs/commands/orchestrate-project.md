@@ -1,9 +1,9 @@
 ---
-name: Orchestrate Project
 description: Plan iterations, delegate to SDLC agents, and compile iteration status
+category: sdlc-management
+argument-hint: <docs/sdlc/artifacts/project>
+allowed-tools: Read, Write, Grep, Glob
 model: opus
-tools: ["read", "write", "grep", "glob"]
-argument-hint: "docs/sdlc/artifacts/<project> (optional)"
 ---
 
 # Orchestrator Command (SDLC)

@@ -1,9 +1,9 @@
 ---
-name: Check Traceability
 description: Verify links from use cases and requirements to design, code, tests, and releases
+category: documentation-tracking
+argument-hint: <path-to-traceability-csv>
+allowed-tools: Read, Write, Glob, Grep
 model: sonnet
-tools: ["read", "write", "glob", "grep"]
-argument-hint: "path to traceability CSV"
 ---
 
 # Check Traceability (SDLC)

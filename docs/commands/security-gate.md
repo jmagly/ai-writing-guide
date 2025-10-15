@@ -1,9 +1,9 @@
 ---
-name: Security Gate
 description: Enforce minimum security criteria before iteration close or release
+category: security-quality
+argument-hint: <docs/sdlc/artifacts/project>
+allowed-tools: Read, Write, Glob, Grep
 model: sonnet
-tools: ["read", "write", "glob", "grep"]
-argument-hint: "docs/sdlc/artifacts/<project>"
 ---
 
 # Security Gate (SDLC)

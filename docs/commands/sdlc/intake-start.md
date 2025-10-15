@@ -1,9 +1,9 @@
 ---
-name: Intake Start
 description: Ingest the Project Intake Form and kick off Concept → Inception with agent assignments
+category: sdlc-management
+argument-hint: <path-to-intake-folder-or-form>
+allowed-tools: Read, Write, Glob, Grep
 model: sonnet
-tools: ["read", "write", "glob", "grep"]
-argument-hint: "path to intake folder or intake form file"
 ---
 
 # Intake Start (SDLC)
