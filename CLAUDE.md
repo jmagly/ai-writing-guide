@@ -45,18 +45,19 @@ document combinations for specific needs.
 
 ### Agent Ecosystem
 
-The repository includes specialized agents that can be invoked via `/project:agent-name`:
+The repository includes two categories of specialized agents:
 
+**General-Purpose Writing Agents** (`/agents/`):
 - **writing-validator**: Validates content against AI patterns and authenticity markers
 - **prompt-optimizer**: Enhances prompts using AI Writing Guide principles
 - **content-diversifier**: Generates varied examples and perspectives
-- **code-reviewer**: Reviews code with focus on real-world quality metrics
-- **test-engineer**: Creates comprehensive test suites with practical coverage
-- **requirements-analyst**: Transforms vague requests into detailed specifications
-- **devops-engineer**: Automates CI/CD and infrastructure tasks
-- **architecture-designer**: Makes system design decisions
 
-Agents work independently with isolated contexts and can be launched in parallel for complex tasks.
+**SDLC Framework Agents** (`/agentic/code/frameworks/sdlc-complete/agents/`):
+- 51 specialized agents covering all SDLC phases (Inception → Transition)
+- Including: code-reviewer, test-engineer, requirements-analyst, devops-engineer, architecture-designer, security-gatekeeper, incident-responder, and many more
+- See `/agentic/code/frameworks/sdlc-complete/README.md` for complete list
+
+Agents can be deployed via `aiwg -deploy-agents --mode general|sdlc|both` and work independently with isolated contexts.
 
 ## Common Development Tasks
 
@@ -199,26 +200,32 @@ This installs to `~/.local/share/ai-writing-guide` and registers the `aiwg` CLI.
 
 ```bash
 # Deploy agents to current project
-aiwg -deploy-agents [--provider claude|openai] [--dry-run] [--force]
+aiwg -deploy-agents [--mode general|sdlc|both] [--provider claude|openai] [--dry-run] [--force]
+
+# Deploy commands to current project
+aiwg -deploy-commands [--mode general|sdlc|both] [--provider claude|openai]
 
 # Scaffold new project with SDLC templates
 aiwg -new [--no-agents] [--provider claude|openai]
 
 # Prefill card metadata from team profile
-aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.yaml [--write]
+aiwg -prefill-cards --target agentic/code/frameworks/sdlc-complete/artifacts/<project> --team team-profile.yaml [--write]
 ```
 
 ### Direct Tool Usage (Without Install)
 
 ```bash
-# Deploy agents
-node tools/agents/deploy-agents.mjs --target /path/to/project
+# Deploy agents (supports --mode general|sdlc|both)
+node tools/agents/deploy-agents.mjs --target /path/to/project --mode both
+
+# Deploy commands
+node tools/agents/deploy-agents.mjs --target /path/to/project --deploy-commands
 
 # Generate new project scaffold
 node tools/install/new-project.mjs --name my-project
 
 # Prefill SDLC card ownership
-node tools/cards/prefill-cards.mjs --target docs/sdlc/artifacts/my-project --team team.yaml --write
+node tools/cards/prefill-cards.mjs --target agentic/code/frameworks/sdlc-complete/artifacts/my-project --team team.yaml --write
 ```
 
 ## Multi-Provider Support
@@ -239,27 +246,31 @@ aiwg -deploy-agents --provider openai \
   --efficiency-model gpt-5-codex
 ```
 
-See `docs/agents/openai-compat.md` for platform-specific guidance.
+See `agentic/code/frameworks/sdlc-complete/agents/openai-compat.md` for platform-specific guidance.
 
-## SDLC Framework (PLAN → ACT)
+## SDLC Complete Framework (PLAN → ACT)
 
-This repository includes a comprehensive software development lifecycle framework at `docs/sdlc/`:
+This repository includes a comprehensive software development lifecycle framework at `/agentic/code/frameworks/sdlc-complete/`:
 
 ### Core Components
 
-- **Templates** (`docs/sdlc/templates/`): Intake, requirements, architecture, test, security, deployment
-- **Flows** (`docs/sdlc/flows/`): Phase-based workflows (Inception → Elaboration → Construction → Transition)
-- **Agents** (`docs/agents/sdlc/`): Specialized SDLC role agents (intake-coordinator, security-gatekeeper, etc.)
-- **Artifacts** (`docs/sdlc/artifacts/`): Sample projects demonstrating complete lifecycle
+- **Agents** (`agentic/code/frameworks/sdlc-complete/agents/`): 51 specialized SDLC role agents (intake-coordinator, security-gatekeeper, architecture-designer, etc.)
+- **Commands** (`agentic/code/frameworks/sdlc-complete/commands/`): 24 SDLC commands for project management, security, traceability
+- **Templates** (`agentic/code/frameworks/sdlc-complete/templates/`): Intake, requirements, architecture, test, security, deployment
+- **Flows** (`agentic/code/frameworks/sdlc-complete/flows/`): Phase-based workflows (Inception → Elaboration → Construction → Transition)
+- **Add-ons** (`agentic/code/frameworks/sdlc-complete/add-ons/`): GDPR compliance, legal frameworks
+- **Artifacts** (`agentic/code/frameworks/sdlc-complete/artifacts/`): Sample projects demonstrating complete lifecycle
+- **Metrics** (`agentic/code/frameworks/sdlc-complete/metrics/`): Tracking catalogs and health indicators
 
-### Using SDLC Templates
+### Using SDLC Framework
 
 1. Scaffold new project: `aiwg -new` (copies intake templates)
-2. Fill intake forms: `docs/sdlc/intake/project-intake.md`, `solution-profile.md`, `option-matrix.md`
-3. Deploy specialized agents: Review `docs/agents/sdlc/` for orchestration agents
-4. Follow phase workflows: Reference `docs/sdlc/plan-act-sdlc.md` for milestone guidance
+2. Deploy SDLC agents: `aiwg -deploy-agents --mode sdlc`
+3. Deploy SDLC commands: `aiwg -deploy-commands --mode sdlc`
+4. Fill intake forms in your project's intake directory
+5. Follow phase workflows: Reference `agentic/code/frameworks/sdlc-complete/plan-act-sdlc.md` for milestone guidance
 
-See `docs/sdlc/actors-and-templates.md` for role-to-template mappings.
+See `agentic/code/frameworks/sdlc-complete/actors-and-templates.md` for role-to-template mappings.
 
 ## Important File References
 
@@ -269,9 +280,10 @@ When contributing or troubleshooting:
 - **USAGE_GUIDE.md**: Context selection strategy (critical for avoiding over-inclusion)
 - **PROJECT_SUMMARY.md**: Expansion roadmap and value proposition
 - **ROADMAP.md**: 12-month development plan
-- **docs/sdlc/prompt-templates.md**: Copy-ready prompts for SDLC phases
-- **docs/sdlc/actors-and-templates.md**: Role and artifact mappings
-- **docs/commands/DEVELOPMENT_GUIDE.md**: Advanced slash command patterns
+- **agentic/code/frameworks/sdlc-complete/README.md**: Complete SDLC framework documentation
+- **agentic/code/frameworks/sdlc-complete/prompt-templates.md**: Copy-ready prompts for SDLC phases
+- **agentic/code/frameworks/sdlc-complete/actors-and-templates.md**: Role and artifact mappings
+- **commands/DEVELOPMENT_GUIDE.md**: Advanced slash command patterns
 
 ## Development Workflow
 

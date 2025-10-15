@@ -24,12 +24,29 @@ For AI agents, include these files in your context:
 
 ## Structure
 
+### Writing Guide Content
 - **`core/`** - Fundamental writing philosophy and principles
 - **`validation/`** - Rules, banned phrases, and detection patterns
 - **`examples/`** - Good vs. bad writing examples
 - **`context/`** - Optimized documents for agent context
 - **`patterns/`** - Common AI patterns to avoid
-- **`tools/`** - Validation scripts and utilities
+
+### General-Purpose Agents & Commands
+- **`agents/`** - Writing-focused agents (writing-validator, prompt-optimizer, content-diversifier)
+- **`commands/`** - General command documentation and examples
+
+### SDLC Complete Framework
+- **`agentic/code/frameworks/sdlc-complete/`** - Comprehensive software development lifecycle toolkit
+  - `agents/` - 51 specialized SDLC role agents
+  - `commands/` - 24 SDLC commands for project management
+  - `templates/` - Intake, requirements, architecture, test, security, deployment templates
+  - `flows/` - Phase-based workflows (Inception → Transition)
+  - `add-ons/` - GDPR compliance, legal frameworks
+  - `artifacts/` - Sample projects demonstrating complete lifecycle
+  - `metrics/` - Tracking catalogs and health indicators
+
+### Development Tools
+- **`tools/`** - Validation scripts, deployment utilities, manifest generators
 
 ## Usage
 
@@ -45,26 +62,36 @@ Follow the guidelines in `CLAUDE.md` and reference the validation rules before g
 
 Use the validation checklists and examples to assess AI-generated content quality.
 
-## Agent Deployment
+## Agent & Command Deployment
 
-Use the shared agent pool to bootstrap projects quickly by copying agents into a project's `.claude/agents` directory.
+Deploy agents and commands to bootstrap projects quickly:
 
-- Quick deploy (from this repo root):
-  - `node tools/agents/deploy-agents.mjs`
+```bash
+# Deploy both general and SDLC agents (default)
+node tools/agents/deploy-agents.mjs --target /path/to/project
 
-- Options:
-  - `--source <path>`: path to this repo (defaults to this repo)
-  - `--target <path>`: project root that will receive `.claude/agents` (defaults to current directory)
-  - `--dry-run`: preview copies without writing
-  - `--force`: overwrite on conflicts (otherwise SDLC agents get a `-sdlc` suffix)
+# Deploy only general-purpose writing agents
+node tools/agents/deploy-agents.mjs --mode general --target /path/to/project
 
-- Behavior:
-  - Copies all Markdown agents from `docs/agents/` and `docs/agents/sdlc/` into `.claude/agents` (flat).
-  - Creates `.claude/agents` if it does not exist.
-  - Filename conflicts are resolved by suffixing SDLC copies unless `--force`.
+# Deploy only SDLC framework agents
+node tools/agents/deploy-agents.mjs --mode sdlc --target /path/to/project
 
-Tip: add a shell alias for convenience: `alias deploy_agents='node
-/path/to/ai-writing-guide/tools/agents/deploy-agents.mjs'`
+# Deploy commands along with agents
+node tools/agents/deploy-agents.mjs --deploy-commands --target /path/to/project
+
+# Deploy only commands (no agents)
+node tools/agents/deploy-agents.mjs --commands-only --target /path/to/project
+```
+
+Options:
+- `--mode general|sdlc|both` - Select which agent set to deploy (default: both)
+- `--source <path>` - Path to this repo (defaults to this repo)
+- `--target <path>` - Project root that will receive `.claude/agents` (defaults to current directory)
+- `--deploy-commands` - Also deploy commands to `.claude/commands`
+- `--commands-only` - Deploy only commands, skip agents
+- `--provider claude|openai` - Target platform (affects model names and directory structure)
+- `--dry-run` - Preview copies without writing
+- `--force` - Overwrite existing files
 
 ## One-Liner Install
 
@@ -76,11 +103,12 @@ curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/
 
 This adds a unified CLI:
 
-- `aiwg -deploy-agents` — copy shared agents into `.claude/agents` (current dir)
-- `aiwg -new` — scaffold a new project with intake templates
-  - The CLI auto-updates the installed framework before running.
-  - `aiwg -new` deploys agents automatically and initializes git (branch `main`). Use `--no-agents` to skip.
-  - Use `aiwg -deploy-agents --provider openai` to generate OpenAI/Codex-compatible agents into `.codex/agents`.
+- `aiwg -deploy-agents [--mode general|sdlc|both]` — Deploy agents to current project
+- `aiwg -deploy-commands [--mode general|sdlc|both]` — Deploy commands to current project
+- `aiwg -new` — Scaffold a new project with SDLC intake templates
+  - The CLI auto-updates the installed framework before running
+  - `aiwg -new` deploys SDLC agents automatically and initializes git (branch `main`). Use `--no-agents` to skip
+  - Use `aiwg -deploy-agents --provider openai` to generate OpenAI/Codex-compatible agents into `.codex/agents`
 
 To customize the install (repo, branch, prefix):
 
@@ -100,15 +128,17 @@ Node.js requirement:
 ## CLI Quick Reference
 
 ```text
-aiwg -deploy-agents [--provider <claude|openai>] [--source <path>] [--target <path>] [--dry-run] [--force]
+aiwg -deploy-agents [--mode general|sdlc|both] [--provider <claude|openai>] [--source <path>] [--target <path>] [--dry-run] [--force]
+aiwg -deploy-commands [--mode general|sdlc|both] [--provider <claude|openai>]
 aiwg -new [--no-agents] [--provider <claude|openai>]
-aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(yml|yaml|json) [--write]
+aiwg -prefill-cards --target agentic/code/frameworks/sdlc-complete/artifacts/<project> --team team-profile.(yml|yaml|json) [--write]
 ```
 
 Tips:
 
-- Use the Team Profile example at `docs/sdlc/templates/management/team-profile-example.yaml` as a starting point.
-- For OpenAI/Codex projects, `aiwg -new --provider openai` deploys `.codex/AGENTS.md` by default.
+- Use the Team Profile example at `agentic/code/frameworks/sdlc-complete/templates/management/team-profile-example.yaml` as a starting point
+- For OpenAI/Codex projects, `aiwg -new --provider openai` deploys `.codex/AGENTS.md` by default
+- Deploy only what you need: `--mode general` for writing tools, `--mode sdlc` for development lifecycle, `--mode both` for everything
 
 ## Key Principles
 

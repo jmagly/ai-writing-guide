@@ -2,11 +2,12 @@
 
 ## Project Structure & Module Organization
 
-Keep contributions inside the existing documentation tree: `core/` captures philosophy references, `validation/` holds
-rules and checklists, `context/` serves trimmed briefs, `docs/agents/` and `docs/subagents/` store role playbooks,
-`docs/commands/` documents slash workflows, `docs/sdlc/` houses PLAN → ACT SDLC scripts, prompts, and templates, while
-`examples/` and `patterns/` illustrate outcomes. Reserve `tools/` for helper scripts and explain invocation alongside
-the script.
+Keep contributions inside the existing documentation tree:
+
+- **Writing Guide Core**: `core/` captures philosophy, `validation/` holds rules, `context/` serves trimmed briefs, `examples/` and `patterns/` illustrate outcomes
+- **General Agents & Commands**: `/agents/` stores general-purpose writing agents (writing-validator, prompt-optimizer, content-diversifier), `/commands/` documents general command workflows
+- **SDLC Framework**: `/agentic/code/frameworks/sdlc-complete/` houses the complete PLAN → ACT SDLC framework with 51 agents, 24 commands, templates, flows, add-ons, artifacts, and metrics
+- **Development Tools**: `tools/` contains deployment utilities, manifest generators, and lint fixers with documented invocation
 
 ## Build, Test, and Development Commands
 
@@ -43,13 +44,15 @@ Anchor multi-agent work on the lifecycle phases:
 4. **Transition** – Prepare deployment, training, and support while confirming product acceptance and operational
    readiness.
 
-Document decisions and artifacts from every phase within `docs/sdlc/` (or project-specific mirrors) so long-running
-efforts stay synchronized. Favor modular designs, SOLID principles, and high test coverage to keep follow-on edits
-localized.
+Document decisions and artifacts from every phase within `/agentic/code/frameworks/sdlc-complete/` (or project-specific mirrors) so long-running efforts stay synchronized. Favor modular designs, SOLID principles, and high test coverage to keep follow-on edits localized.
 
-Refer to `docs/sdlc/plan-act-sdlc.md` for detailed milestones, `docs/sdlc/prompt-templates.md` for copy-ready prompts,
-`docs/sdlc/actors-and-templates.md` for role and artifact guidance, and `docs/sdlc/templates/` when instantiating new
-documents.
+**SDLC Framework References**:
+- `agentic/code/frameworks/sdlc-complete/plan-act-sdlc.md` - Detailed phase milestones
+- `agentic/code/frameworks/sdlc-complete/prompt-templates.md` - Copy-ready prompts for each phase
+- `agentic/code/frameworks/sdlc-complete/actors-and-templates.md` - Role and artifact mappings
+- `agentic/code/frameworks/sdlc-complete/templates/` - Template instantiation directory
+- `agentic/code/frameworks/sdlc-complete/agents/` - 51 specialized SDLC agents
+- `agentic/code/frameworks/sdlc-complete/commands/` - 24 SDLC slash commands
 
 ## Agent-Facing Notes
 

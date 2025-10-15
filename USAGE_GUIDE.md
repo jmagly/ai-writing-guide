@@ -245,40 +245,53 @@ If output loses sophistication:
 
 ## Subagents and Automation
 
-### Using Claude Code Subagents
+### Using Claude Code Agents
 
 For complex writing tasks, leverage specialized agents:
 
-**Documentation**: See `docs/subagents/comprehensive-guide.md`
-
 **Quick Start**:
+
+```bash
+# Deploy general-purpose writing agents to your project
+aiwg -deploy-agents --mode general
+
+# Or deploy all agents (general + SDLC)
+aiwg -deploy-agents --mode both
+```
+
+**Agent Invocation**:
 
 ```text
 # For content validation
-Use the Writing Validator agent from docs/agents/writing-validator.md
+/project:writing-validator path/to/content.md
 
 # For prompt optimization
-Use the Prompt Optimizer agent from docs/agents/prompt-optimizer.md
+/project:prompt-optimizer "your prompt text"
 
 # For generating diverse examples
-Use the Content Diversifier agent from docs/agents/content-diversifier.md
+/project:content-diversifier "base concept or topic"
 ```
 
-### Available Specialized Agents
+### Available Agent Categories
 
-#### Writing & Content Agents
+#### General-Purpose Writing Agents (`/agents/`)
 
-- **Writing Validator**: Detects AI patterns and validates authenticity
-- **Prompt Optimizer**: Enhances prompts for better output quality
-- **Content Diversifier**: Generates varied examples and perspectives
+- **writing-validator**: Detects AI patterns and validates authenticity
+- **prompt-optimizer**: Enhances prompts for better output quality
+- **content-diversifier**: Generates varied examples and perspectives
 
-#### Development Agents
+#### SDLC Framework Agents (`/agentic/code/frameworks/sdlc-complete/agents/`)
 
-- **Code Reviewer**: Security and quality focused review
-- **Test Engineer**: Comprehensive test generation
-- **Architecture Designer**: System design and technical decisions
-- **Requirements Analyst**: Transforms requests into specifications
-- **DevOps Engineer**: CI/CD and infrastructure automation
+51 specialized agents covering all development lifecycle phases:
+
+- **Development**: code-reviewer, test-engineer, architecture-designer, debugger, performance-engineer
+- **Requirements**: requirements-analyst, requirements-reviewer, business-process-analyst
+- **Security**: security-architect, security-gatekeeper, security-auditor, privacy-officer
+- **Operations**: devops-engineer, incident-responder, reliability-engineer, deployment-manager
+- **Management**: project-manager, product-strategist, executive-orchestrator, intake-coordinator
+- And many more specialized roles
+
+See `/agentic/code/frameworks/sdlc-complete/README.md` for complete list
 
 ### When to Use Subagents
 
