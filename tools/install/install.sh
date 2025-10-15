@@ -14,7 +14,7 @@ ALIAS_FOOTER="# --- ai-writing-guide aliases (end) ---"
 usage() {
   cat <<USAGE
 Usage: $0 [--repo <url>] [--branch <name>] [--prefix <dir>] [--alias-file <file>]
-             [--auto-install-node]
+             [--auto-install-node] [--force-reinstall]
 
 Options:
   --repo <url>     Repository URL (default: env AIWG_REPO_URL or $REPO_URL_DEFAULT)
@@ -22,6 +22,7 @@ Options:
   --prefix <dir>   Install location (default: $PREFIX_DEFAULT)
   --alias-file <f> Shell RC/alias file to append (auto-detected if omitted)
   --auto-install-node  Attempt to install Node.js >= 18.20.8 if missing/older
+  --force-reinstall    Delete existing installation and reinstall fresh
 
 This installs the framework to the prefix and registers the 'aiwg' CLI with commands:
   aiwg -deploy-agents  -> deploy agents to .claude/agents
@@ -39,6 +40,7 @@ USAGE
 REPO_URL="${AIWG_REPO_URL:-$REPO_URL_DEFAULT}"
 PREFIX="$PREFIX_DEFAULT"
 ALIAS_FILE=""
+FORCE_REINSTALL=0
 
 AUTO_INSTALL_NODE="${AIWG_AUTO_INSTALL_NODE:-0}"
 while [[ $# -gt 0 ]]; do
@@ -48,6 +50,7 @@ while [[ $# -gt 0 ]]; do
     --prefix) PREFIX="$2"; shift 2;;
     --alias-file) ALIAS_FILE="$2"; shift 2;;
     --auto-install-node) AUTO_INSTALL_NODE="1"; shift 1;;
+    --force-reinstall) FORCE_REINSTALL=1; shift 1;;
     -h|--help) usage; exit 0;;
     *) echo "Unknown option: $1"; usage; exit 1;;
   esac
@@ -142,14 +145,51 @@ ensure_node() {
 
 ensure_node
 
-mkdir -p "$PREFIX"
-if [[ -d "$PREFIX/.git" ]]; then
-  echo "Updating existing install at $PREFIX"
-  git -C "$PREFIX" fetch --all
-  git -C "$PREFIX" checkout "$BRANCH"
-  git -C "$PREFIX" pull --ff-only
+# Handle force reinstall
+if [[ "$FORCE_REINSTALL" == "1" ]] && [[ -d "$PREFIX" ]]; then
+  echo "Force reinstall requested. Removing existing installation at $PREFIX"
+  rm -rf "$PREFIX"
+fi
+
+# Create parent directory
+mkdir -p "$(dirname "$PREFIX")"
+
+# Install or update
+if [[ -d "$PREFIX" ]]; then
+  if [[ -d "$PREFIX/.git" ]]; then
+    echo "Updating existing install at $PREFIX"
+
+    # Check for git issues and recover
+    if ! git -C "$PREFIX" status >/dev/null 2>&1; then
+      echo "Git repository appears corrupted. Removing and reinstalling..."
+      rm -rf "$PREFIX"
+      git clone --branch "$BRANCH" "$REPO_URL" "$PREFIX"
+    else
+      # Try to update, but recover gracefully if it fails
+      if ! git -C "$PREFIX" fetch --all 2>/dev/null; then
+        echo "Fetch failed. Removing and reinstalling..."
+        rm -rf "$PREFIX"
+        git clone --branch "$BRANCH" "$REPO_URL" "$PREFIX"
+      elif ! git -C "$PREFIX" checkout "$BRANCH" 2>/dev/null; then
+        echo "Checkout failed. Removing and reinstalling..."
+        rm -rf "$PREFIX"
+        git clone --branch "$BRANCH" "$REPO_URL" "$PREFIX"
+      elif ! git -C "$PREFIX" pull --ff-only 2>/dev/null; then
+        echo "Pull failed (likely dirty state or conflicts). Removing and reinstalling..."
+        rm -rf "$PREFIX"
+        git clone --branch "$BRANCH" "$REPO_URL" "$PREFIX"
+      else
+        echo "Update successful!"
+      fi
+    fi
+  else
+    # Directory exists but not a git repo - replace it
+    echo "Existing directory is not a git repository. Removing and reinstalling..."
+    rm -rf "$PREFIX"
+    git clone --branch "$BRANCH" "$REPO_URL" "$PREFIX"
+  fi
 else
-  echo "Cloning $REPO_URL to $PREFIX"
+  echo "Installing aiwg to $PREFIX"
   git clone --branch "$BRANCH" "$REPO_URL" "$PREFIX"
 fi
 
@@ -187,6 +227,7 @@ fi
   echo "$ALIAS_BANNER"
   echo "aiwg_update() { command -v git >/dev/null 2>&1 && git -C \"$PREFIX\" fetch --all -q && git -C \"$PREFIX\" pull --ff-only -q || true; }"
   echo "aiwg_version() { if [[ -d \"$PREFIX/.git\" ]]; then echo \"aiwg version: \$(git -C \"$PREFIX\" rev-parse --short HEAD) (branch: \$(git -C \"$PREFIX\" branch --show-current))\"; echo \"Installed at: $PREFIX\"; else echo \"aiwg not installed via git\"; fi; }"
+  echo "aiwg_reinstall() { echo 'Reinstalling aiwg from scratch...'; curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh | bash -s -- --force-reinstall; echo 'Reinstall complete. Please restart your shell or run: source ~/.bash_aliases (or ~/.zshrc)'; }"
   echo "aiwg() { aiwg_update; local sub=\"\$1\"; shift || true; case \"\$sub\" in \\
     -new|--new) node \"$PREFIX/tools/install/new-project.mjs\" \"\$@\" ;; \\
     -deploy-agents|--deploy-agents) node \"$PREFIX/tools/agents/deploy-agents.mjs\" \"\$@\" ;; \\
@@ -194,7 +235,8 @@ fi
     -prefill-cards|--prefill-cards) node \"$PREFIX/tools/cards/prefill-cards.mjs\" \"\$@\" ;; \\
     -version|--version|version) aiwg_version ;; \\
     -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Current version:' && aiwg_version ;; \\
-    -h|--help|-help|help|\"\") echo 'Usage: aiwg <command> [options]'; echo ''; echo 'Commands:'; echo '  -new [--no-agents|--provider <claude|openai>]'; echo '       Create new project with SDLC templates'; echo '  -deploy-agents [--provider <...> --force|--dry-run|--source <path>|--target <path>]'; echo '       Deploy agent definitions to current/target directory'; echo '  -deploy-commands [--provider <...> --force|--dry-run]'; echo '       Deploy slash commands to current/target directory'; echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; echo '       Prefill SDLC card metadata from team profile'; echo '  -version'; echo '       Show current installed version (commit hash)'; echo '  -update'; echo '       Manually update aiwg installation'; echo '  -help'; echo '       Show this help message'; echo ''; echo 'Note: aiwg automatically updates on every command run.' ;; \\
+    -reinstall|--reinstall|reinstall) aiwg_reinstall ;; \\
+    -h|--help|-help|help|\"\") echo 'Usage: aiwg <command> [options]'; echo ''; echo 'Commands:'; echo '  -new [--no-agents|--provider <claude|openai>]'; echo '       Create new project with SDLC templates'; echo '  -deploy-agents [--provider <...> --force|--dry-run|--source <path>|--target <path>]'; echo '       Deploy agent definitions to current/target directory'; echo '  -deploy-commands [--provider <...> --force|--dry-run]'; echo '       Deploy slash commands to current/target directory'; echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; echo '       Prefill SDLC card metadata from team profile'; echo '  -version'; echo '       Show current installed version (commit hash)'; echo '  -update'; echo '       Manually update aiwg installation (graceful)'; echo '  -reinstall'; echo '       Force fresh reinstall (removes and reclones)'; echo '  -help'; echo '       Show this help message'; echo ''; echo 'Note: aiwg automatically updates on every command run.' ;; \\
     *) echo 'Unknown command. Use: aiwg -help for usage information' ;; \\
   esac }"
   echo "aiwg-deploy-agents() { aiwg -deploy-agents \"\$@\"; }"
@@ -210,7 +252,8 @@ echo "Run 'source $ALIAS_FILE' or open a new shell to activate the 'aiwg' CLI."
 echo ""
 echo "Available commands:"
 echo "  aiwg -version           Show current version"
-echo "  aiwg -update            Manually update installation"
+echo "  aiwg -update            Update installation (graceful)"
+echo "  aiwg -reinstall         Force fresh reinstall"
 echo "  aiwg -deploy-agents     Deploy agents"
 echo "  aiwg -deploy-commands   Deploy commands"
 echo "  aiwg -new               Create new project"
@@ -218,3 +261,4 @@ echo "  aiwg -prefill-cards     Prefill card metadata"
 echo "  aiwg -help              Show detailed help"
 echo ""
 echo "Note: aiwg automatically updates on every command run."
+echo "For corrupted installs, use: aiwg -reinstall"
