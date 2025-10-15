@@ -80,18 +80,28 @@ function fixFile(file, write) {
       continue;
     }
 
-    // Lists: handle contiguous block, ensure blank lines around
+    // Lists: handle contiguous block, ensure blank lines around (idempotent)
     if (isList(line)) {
-      const prev = out.length > 0 ? out[out.length - 1] : null;
-      if (prev !== null && prev.trim() !== '') { out.push(''); changed = true; }
-      // Emit contiguous list block
+      const prevOut = out.length > 0 ? out[out.length - 1] : null;
+      const prevOrig = i > 0 ? lines[i - 1] : null;
+      const origHadBlankBefore = prevOrig !== null && prevOrig.trim() === '';
+      if (prevOut !== null && prevOut.trim() !== '') {
+        out.push('');
+        if (!origHadBlankBefore) changed = true; // only mark drift if not already blank in source
+      }
+      // Emit contiguous list block; track if we saw trailing blank(s)
       let j = i;
+      let hadTrailingBlank = false;
       while (j < lines.length && (isList(lines[j]) || lines[j].trim() === '' || /^\s{2,}\S/.test(lines[j]))) {
+        if (lines[j].trim() === '') hadTrailingBlank = true;
         out.push(lines[j]);
         j++;
       }
       const next = j < lines.length ? lines[j] : '';
-      if (next !== undefined && next.trim() !== '') { out.push(''); changed = true; }
+      if (next !== undefined && next.trim() !== '' && !hadTrailingBlank) {
+        out.push('');
+        changed = true;
+      }
       i = j;
       continue;
     }
@@ -118,4 +128,3 @@ function fixFile(file, write) {
   }
   console.log(`${write ? 'Fixed' : 'Would fix'} ${changedCount} file(s).`);
 })();
-
