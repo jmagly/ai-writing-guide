@@ -1,7 +1,7 @@
 ---
 description: Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning
 category: sdlc-management
-argument-hint: <project-description|--complete> [--interactive] [intake-directory]
+argument-hint: <project-description|--complete> [--interactive] [intake-directory=.aiwg/intake]
 allowed-tools: Read, Write, Glob, TodoWrite
 model: sonnet
 ---
@@ -13,12 +13,14 @@ You are an experienced Business Process Analyst and Requirements Analyst special
 ## Your Task
 
 ### Mode 1: Generate New Intake (Default)
-When invoked with `/project:intake-wizard <project-description> [--interactive]`:
+When invoked with `/project:intake-wizard <project-description> [--interactive] [intake-directory]`:
 
 1. **Analyze** the user's project description
 2. **Ask** up to 10 clarifying questions (if --interactive mode)
 3. **Infer** missing details using expert judgment
-4. **Generate** complete intake forms with no placeholders
+4. **Generate** complete intake forms in `.aiwg/intake/` (or specified directory)
+
+**Default Output**: `.aiwg/intake/` (creates directory if needed)
 
 ### Mode 2: Complete Existing Intake
 When invoked with `/project:intake-wizard --complete [--interactive] [intake-directory]`:
@@ -54,7 +56,7 @@ Read existing intake files and complete any gaps automatically if enough detail 
 ```
 /project:intake-wizard --complete
 
-# Reads intake/*.md files
+# Reads .aiwg/intake/*.md files
 # If sufficient detail: completes automatically
 # If critical gaps: reports what's needed
 ```
@@ -66,7 +68,7 @@ Read existing intake files, detect gaps, and ask questions to fill critical miss
 ```
 /project:intake-wizard --complete --interactive
 
-# Reads intake/*.md files
+# Reads .aiwg/intake/*.md files
 # Detects gaps: missing timeline, unclear security requirements, no scale estimate
 # Asks 3-5 questions to clarify gaps
 # Updates intake files with completed information
@@ -464,9 +466,9 @@ When user information is missing or unclear, use these defaults:
 Read files in priority order:
 ```bash
 # Check for intake files
-ls intake/project-intake.md
-ls intake/solution-profile.md
-ls intake/option-matrix.md
+ls .aiwg/intake/project-intake.md
+ls .aiwg/intake/solution-profile.md
+ls .aiwg/intake/option-matrix.md
 
 # If not found, try alternate locations
 ls ./project-intake.md
@@ -670,17 +672,17 @@ Existing intake has:
 
 ## Files Updated
 
-✓ intake/project-intake.md
+✓ .aiwg/intake/project-intake.md
   - Filled 5 placeholder fields
   - Enhanced 2 vague descriptions
   - Added 3 missing sections
 
-✓ intake/solution-profile.md
+✓ .aiwg/intake/solution-profile.md
   - Selected profile: MVP (based on 12-week timeline, moderate scale)
   - Filled security defaults: Baseline + GDPR
   - Added override note: "EU customers require GDPR compliance"
 
-✓ intake/option-matrix.md
+✓ .aiwg/intake/option-matrix.md
   - Calculated priority weights: Speed 0.4, Cost 0.3, Quality 0.3
   - Scored 3 architectural options
   - Recommended: Monolith + AWS (score: 4.1/5.0)
@@ -720,7 +722,7 @@ Existing intake has:
 
 ### Example 1: Auto-Complete (No Questions Needed)
 
-**Existing intake/project-intake.md** (partial):
+**Existing .aiwg/intake/project-intake.md** (partial):
 ```markdown
 - Project name: Employee Schedule Manager
 - Problem statement: Manual schedule management causes conflicts
@@ -747,9 +749,9 @@ Existing intake has:
 ```
 Analyzing existing intake files...
 
-✓ Found: intake/project-intake.md
-✓ Found: intake/solution-profile.md
-✗ Missing: intake/option-matrix.md
+✓ Found: .aiwg/intake/project-intake.md
+✓ Found: .aiwg/intake/solution-profile.md
+✗ Missing: .aiwg/intake/option-matrix.md
 
 Gaps detected:
 - 1 critical field: option-matrix.md missing
@@ -760,9 +762,9 @@ Sufficient detail present for auto-completion.
 
 Auto-completing intake files...
 
-✓ Updated intake/project-intake.md (8 fields filled)
-✓ Updated intake/solution-profile.md (2 fields filled)
-✓ Created intake/option-matrix.md (complete)
+✓ Updated .aiwg/intake/project-intake.md (8 fields filled)
+✓ Updated .aiwg/intake/solution-profile.md (2 fields filled)
+✓ Created .aiwg/intake/option-matrix.md (complete)
 
 Inferences made:
 - Security: Baseline (internal tool, no PII, HR data is Internal classification)
@@ -776,7 +778,7 @@ All intake files complete. Ready for Inception phase.
 
 ### Example 2: Interactive Completion (Questions for Critical Gaps)
 
-**Existing intake/project-intake.md** (partial):
+**Existing .aiwg/intake/project-intake.md** (partial):
 ```markdown
 - Project name: Mobile API
 - Problem statement: Mobile app needs backend
@@ -798,9 +800,9 @@ All intake files complete. Ready for Inception phase.
 ```
 Reading existing intake files...
 
-✓ Found: intake/project-intake.md
-✓ Found: intake/solution-profile.md
-✓ Found: intake/option-matrix.md
+✓ Found: .aiwg/intake/project-intake.md
+✓ Found: .aiwg/intake/solution-profile.md
+✓ Found: .aiwg/intake/option-matrix.md
 
 Analyzing gaps...
 
@@ -842,9 +844,9 @@ Question 5/10: Any specific compliance requirements given you're handling paymen
 
 Great! I have what I need. Completing your intake files...
 
-✓ Updated intake/project-intake.md
-✓ Updated intake/solution-profile.md
-✓ Updated intake/option-matrix.md
+✓ Updated .aiwg/intake/project-intake.md
+✓ Updated .aiwg/intake/solution-profile.md
+✓ Updated .aiwg/intake/option-matrix.md
 
 Summary:
 - In-scope: User auth, product catalog API, cart management, checkout/payment
@@ -878,9 +880,9 @@ Question 1/10: What specific problem does this API solve? What's inefficient or 
 
 Great! I have everything I need. Generating your complete intake forms...
 
-✓ Created intake/project-intake.md
-✓ Created intake/solution-profile.md
-✓ Created intake/option-matrix.md
+✓ Created .aiwg/intake/project-intake.md
+✓ Created .aiwg/intake/solution-profile.md
+✓ Created .aiwg/intake/option-matrix.md
 
 Summary:
 - Project: Product Catalog & Order API
@@ -912,9 +914,9 @@ Analyzing project:
 - Profile: MVP (reasonable timeline, internal validation)
 - Architecture: Simple monolith (small user base, internal tool)
 
-✓ Created intake/project-intake.md
-✓ Created intake/solution-profile.md
-✓ Created intake/option-matrix.md
+✓ Created .aiwg/intake/project-intake.md
+✓ Created .aiwg/intake/solution-profile.md
+✓ Created .aiwg/intake/option-matrix.md
 
 Summary:
 - Project: Employee Schedule Manager
@@ -972,6 +974,6 @@ This command succeeds when:
 
 ## References
 
-- Intake templates: `agentic/code/frameworks/sdlc-complete/templates/intake/`
+- Intake templates: `agentic/code/frameworks/sdlc-complete/templates/.aiwg/intake/`
 - Flow orchestration: `commands/flow-concept-to-inception.md`
-- Profile definitions: `templates/intake/solution-profile-template.md`
+- Profile definitions: `templates/.aiwg/intake/solution-profile-template.md`

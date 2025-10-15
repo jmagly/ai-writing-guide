@@ -269,20 +269,23 @@
     {
       "name": "intake-from-codebase",
       "file": "intake-from-codebase.md",
-      "description": "Scan existing codebase/product and generate intake documents by analyzing code, dependencies, and infrastructure with interactive questioning",
-      "category": "project-management"
+      "description": "Scan existing codebase/product and generate intake documents in .aiwg/intake/ by analyzing code, dependencies, and infrastructure",
+      "category": "project-management",
+      "default_output": ".aiwg/intake/"
     },
     {
       "name": "intake-start",
       "file": "intake-start.md",
       "description": "Initiate Inception phase workflow from completed intake forms with automated validation",
-      "category": "project-management"
+      "category": "project-management",
+      "reads_from": ".aiwg/intake/"
     },
     {
       "name": "intake-wizard",
       "file": "intake-wizard.md",
-      "description": "Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning",
-      "category": "project-management"
+      "description": "Generate or complete intake forms in .aiwg/intake/ (project-intake, solution-profile, option-matrix) with interactive questioning",
+      "category": "project-management",
+      "default_output": ".aiwg/intake/"
     },
     {
       "name": "orchestrate-project",

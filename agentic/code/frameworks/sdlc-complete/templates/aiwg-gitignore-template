@@ -1,0 +1,40 @@
+# .aiwg/ - SDLC Artifacts
+#
+# Choose one of the three strategies below based on your needs:
+
+# =============================================================================
+# OPTION 1: Commit Everything (Recommended for Teams & Enterprise)
+# =============================================================================
+# Full audit trail, team coordination, compliance support
+# Remove all .aiwg entries below (comment them out or delete this section)
+
+
+# =============================================================================
+# OPTION 2: Commit Planning, Ignore Working Files (Good Balance)
+# =============================================================================
+# Keep important artifacts, ignore temporary/generated files
+
+# Temporary working files
+.aiwg/working/
+.aiwg/*/drafts/
+.aiwg/*/scratch/
+
+# Generated reports (can be regenerated)
+.aiwg/reports/
+
+# Test results (can be regenerated)
+.aiwg/testing/test-results/
+
+
+# =============================================================================
+# OPTION 3: Use Locally Only (Solo Developers)
+# =============================================================================
+# Keep repos clean, use SDLC tooling locally
+
+# Ignore all SDLC artifacts
+.aiwg/
+
+# Exception: Keep intake forms and README for project context
+!.aiwg/intake/
+!.aiwg/README.md
+!.aiwg/.gitkeep

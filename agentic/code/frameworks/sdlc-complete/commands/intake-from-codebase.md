@@ -1,7 +1,7 @@
 ---
 description: Scan existing codebase/product and generate intake documents by analyzing code, dependencies, and infrastructure with interactive questioning
 category: sdlc-management
-argument-hint: <codebase-directory> [--interactive] [--output intake/]
+argument-hint: <codebase-directory> [--interactive] [--output .aiwg/intake/]
 allowed-tools: Read, Write, Glob, Grep, Bash, TodoWrite
 model: sonnet
 ---
@@ -12,7 +12,7 @@ You are an experienced Software Architect and Reverse Engineer specializing in a
 
 ## Your Task
 
-When invoked with `/project:intake-from-codebase <codebase-directory> [--interactive] [--output intake/]`:
+When invoked with `/project:intake-from-codebase <codebase-directory> [--interactive] [--output .aiwg/intake/]`:
 
 1. **Scan** the codebase directory to understand the system
 2. **Analyze** code structure, dependencies, infrastructure, and patterns
@@ -407,9 +407,9 @@ Got it! Generating complete intake documents...
 Create three intake files documenting the existing system.
 
 **Output Files**:
-1. `intake/project-intake.md` - Comprehensive project documentation
-2. `intake/solution-profile.md` - Current profile and maturity level
-3. `intake/option-matrix.md` - Modernization/improvement options
+1. `.aiwg/intake/project-intake.md` - Comprehensive project documentation
+2. `.aiwg/intake/solution-profile.md` - Current profile and maturity level
+3. `.aiwg/intake/option-matrix.md` - Modernization/improvement options
 
 #### Generated: project-intake.md
 
@@ -908,9 +908,9 @@ Create three intake files documenting the existing system.
 
 ## Files Generated
 
-✓ intake/project-intake.md (comprehensive system documentation)
-✓ intake/solution-profile.md (current profile and improvement roadmap)
-✓ intake/option-matrix.md (improvement options with scoring)
+✓ .aiwg/intake/project-intake.md (comprehensive system documentation)
+✓ .aiwg/intake/solution-profile.md (current profile and improvement roadmap)
+✓ .aiwg/intake/option-matrix.md (improvement options with scoring)
 
 ## Next Steps
 
@@ -960,7 +960,7 @@ This command succeeds when:
 
 ## References
 
-- Intake templates: `agentic/code/frameworks/sdlc-complete/templates/intake/`
+- Intake templates: `agentic/code/frameworks/sdlc-complete/templates/.aiwg/intake/`
 - SDLC flows: `commands/flow-*.md`
 - Architecture evolution: `commands/flow-architecture-evolution.md`
 - Iteration workflow: `commands/flow-iteration-dual-track.md`
