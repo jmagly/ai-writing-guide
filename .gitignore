@@ -40,3 +40,7 @@ TODO.local.md
 
 # Local Claude agents/config (do not commit)
 .claude/
+.claude/agents
+
+# Agent temporary files
+_agent-temp/
