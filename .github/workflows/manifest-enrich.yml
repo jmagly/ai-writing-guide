@@ -35,7 +35,7 @@ jobs:
           node tools/lint/fix-md12.mjs --target . --write
           node tools/lint/fix-md-heading-lists.mjs --target . --write
       - name: Lint markdown
-        run: markdownlint-cli2 "**/*.md"
+        run: npx -y markdownlint-cli2 "**/*.md"
       - name: Detect changes
         id: changes
         run: |
@@ -52,4 +52,3 @@ jobs:
           git add -A
           git commit -m "chore(manifests): auto-enrich manifest descriptions and regenerate manifest.md"
           git push
-
