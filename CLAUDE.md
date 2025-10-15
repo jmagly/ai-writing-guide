@@ -136,6 +136,143 @@ The repository includes:
 - `.claude/agents/`: Specialized agent definitions
 - No build commands or test suites (documentation/guideline repository)
 
+## Manifest System
+
+The repository uses a manifest-based documentation structure:
+
+- **Purpose**: Each directory contains `manifest.json` tracking files and metadata
+- **Auto-generation**: `node tools/manifest/generate-manifest.mjs <dir> [--write-md]`
+- **Enrichment**: `node tools/manifest/enrich-manifests.mjs --target . [--write]`
+- **Sync check**: `node tools/manifest/sync-manifests.mjs --target . --fix --write-md`
+
+When adding new files to documented directories, update manifests to maintain consistency.
+
+## Markdown Linting
+
+The repository enforces strict markdown formatting via custom fixers:
+
+```bash
+# Fix table spacing (MD058)
+node tools/lint/fix-md58.mjs --target . --write
+
+# Fix code fences (MD031/MD040)
+node tools/lint/fix-md-codefences.mjs --target . --write
+
+# Fix heading/list spacing (MD022/MD032)
+node tools/lint/fix-md-heading-lists.mjs --target . --write
+
+# Fix multiple blank lines (MD012)
+node tools/lint/fix-md12.mjs --target . --write
+
+# Fix list indentation (MD005/MD007)
+node tools/lint/fix-md5-7-lists.mjs --target . --write
+
+# Fix heading punctuation (MD026)
+node tools/lint/fix-md26-headpunct.mjs --target . --write
+
+# Fix first-line H1 (MD041)
+node tools/lint/fix-md41-firsth1.mjs --target . --write
+
+# Fix final newline (MD047)
+node tools/lint/fix-md47-finalnewline.mjs --target . --write
+
+# Fix code span spacing (MD038)
+node tools/lint/fix-md38-codespace.mjs --target . --write
+
+# Run all lint checks (CI drift check)
+npm exec markdownlint-cli2 "**/*.md"
+```
+
+The `.github/workflows/lint-fixcheck.yml` workflow enforces these on all PRs.
+
+## Installation & CLI
+
+### One-Line Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh | bash
+```
+
+This installs to `~/.local/share/ai-writing-guide` and registers the `aiwg` CLI.
+
+### Available Commands
+
+```bash
+# Deploy agents to current project
+aiwg -deploy-agents [--provider claude|openai] [--dry-run] [--force]
+
+# Scaffold new project with SDLC templates
+aiwg -new [--no-agents] [--provider claude|openai]
+
+# Prefill card metadata from team profile
+aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.yaml [--write]
+```
+
+### Direct Tool Usage (Without Install)
+
+```bash
+# Deploy agents
+node tools/agents/deploy-agents.mjs --target /path/to/project
+
+# Generate new project scaffold
+node tools/install/new-project.mjs --name my-project
+
+# Prefill SDLC card ownership
+node tools/cards/prefill-cards.mjs --target docs/sdlc/artifacts/my-project --team team.yaml --write
+```
+
+## Multi-Provider Support
+
+Agents support both Claude and OpenAI platforms:
+
+```bash
+# Deploy for OpenAI/Codex (creates .codex/agents/)
+aiwg -deploy-agents --provider openai
+
+# Deploy as single AGENTS.md file (OpenAI preference)
+aiwg -deploy-agents --provider openai --as-agents-md
+
+# Override model selections
+aiwg -deploy-agents --provider openai \
+  --reasoning-model gpt-5 \
+  --coding-model gpt-5-codex \
+  --efficiency-model gpt-5-codex
+```
+
+See `docs/agents/openai-compat.md` for platform-specific guidance.
+
+## SDLC Framework (PLAN → ACT)
+
+This repository includes a comprehensive software development lifecycle framework at `docs/sdlc/`:
+
+### Core Components
+
+- **Templates** (`docs/sdlc/templates/`): Intake, requirements, architecture, test, security, deployment
+- **Flows** (`docs/sdlc/flows/`): Phase-based workflows (Inception → Elaboration → Construction → Transition)
+- **Agents** (`docs/agents/sdlc/`): Specialized SDLC role agents (intake-coordinator, security-gatekeeper, etc.)
+- **Artifacts** (`docs/sdlc/artifacts/`): Sample projects demonstrating complete lifecycle
+
+### Using SDLC Templates
+
+1. Scaffold new project: `aiwg -new` (copies intake templates)
+2. Fill intake forms: `docs/sdlc/intake/project-intake.md`, `solution-profile.md`, `option-matrix.md`
+3. Deploy specialized agents: Review `docs/agents/sdlc/` for orchestration agents
+4. Follow phase workflows: Reference `docs/sdlc/plan-act-sdlc.md` for milestone guidance
+
+See `docs/sdlc/actors-and-templates.md` for role-to-template mappings.
+
+## Important File References
+
+When contributing or troubleshooting:
+
+- **AGENTS.md**: Repository contribution guidelines and SDLC overview
+- **USAGE_GUIDE.md**: Context selection strategy (critical for avoiding over-inclusion)
+- **PROJECT_SUMMARY.md**: Expansion roadmap and value proposition
+- **ROADMAP.md**: 12-month development plan
+- **docs/sdlc/prompt-templates.md**: Copy-ready prompts for SDLC phases
+- **docs/sdlc/actors-and-templates.md**: Role and artifact mappings
+- **docs/commands/DEVELOPMENT_GUIDE.md**: Advanced slash command patterns
+
 ## Development Workflow
 
 1. **Initial content creation**: Start with CLAUDE.md only
