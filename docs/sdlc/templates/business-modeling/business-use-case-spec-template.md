@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Describe end-to-end business processes, actors, and value realization to guide system scope during
-Inception and Elaboration.
+Describe end-to-end business processes, actors, and value realization to guide system scope during Inception and
+Elaboration.
 
 ## Ownership & Collaboration
 

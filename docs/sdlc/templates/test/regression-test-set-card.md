@@ -2,14 +2,14 @@
 
 ## Metadata
 
-- ID: TEST-REG-<id>
+- ID: TEST-REG-`id`
 - Owner: Test Engineer (docs/agents/test-engineer.md)
 - Reviewers: Test Architect (docs/agents/test-architect.md)
-- Team: <team>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: REQ-<id>, CODE-<module>
-- Links: <paths/urls>
+- Team: `team`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: REQ-`id`, CODE-`module`
+- Links: `paths/urls`
 
 ## Related templates
 

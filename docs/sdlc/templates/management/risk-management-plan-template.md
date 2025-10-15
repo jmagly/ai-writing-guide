@@ -2,15 +2,15 @@
 
 ## Cover Page
 
-- `<Project Name>`
+- ``Project Name``
 - `Risk Management Plan`
-- `Version <1.0>`
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## Ownership & Collaboration
 
@@ -55,7 +55,8 @@
 
 ## 7 Risk Items to be Managed
 
-> Reference the active risk list, highlight Top-N risks, and note triggers, mitigation/avoidance strategies, and contingency actions.
+> Reference the active risk list, highlight Top-N risks, and note triggers, mitigation/avoidance strategies, and
+> contingency actions.
 
 ## Appendices (Optional)
 

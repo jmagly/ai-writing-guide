@@ -1,6 +1,7 @@
 # Context-Free Interview Script
 
-> Use this script to elicit stakeholder or user problems, context, and desired outcomes without biasing the conversation with implementation ideas.
+> Use this script to elicit stakeholder or user problems, context, and desired outcomes without biasing the conversation
+> with implementation ideas.
 
 ## Ownership & Collaboration
 
@@ -24,7 +25,7 @@
 
 ## 3 Assess the Problem Space
 
-- Which `<application type>` problems lack good solutions?
+- Which ``application type`` problems lack good solutions?
 - Why do these problems exist today?
 - How are they solved currently?
 - How would the stakeholder prefer to solve them?
@@ -61,7 +62,8 @@
 ## 9 Reliability, Performance, and Support Expectations
 
 - Reliability, availability, and performance targets
-- Support model, maintenance expectations, security, installation, configuration, licensing, packaging, distribution requirements
+- Support model, maintenance expectations, security, installation, configuration, licensing, packaging, distribution
+  requirements
 - Regulatory or environmental constraints
 
 ## 10 Wrap-Up

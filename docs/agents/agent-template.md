@@ -5,4 +5,6 @@ model: <MODEL:sonnet | opus>
 tools: <TOOLS>
 ---
 
-<AGENT_DEFINITION>
+# Agent Template
+
+`AGENT_DEFINITION`

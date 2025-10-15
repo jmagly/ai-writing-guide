@@ -2,9 +2,8 @@
 
 ## deploy-agents.mjs
 
-Copy shared agents from this repository into a project's `.claude/agents` directory. By default,
-it uses the current working directory as the target, so you can alias this script and run it from
-any project root.
+Copy shared agents from this repository into a project's `.claude/agents` directory. By default, it uses the current
+working directory as the target, so you can alias this script and run it from any project root.
 
 ### Usage
 

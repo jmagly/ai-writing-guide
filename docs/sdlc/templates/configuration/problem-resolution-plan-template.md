@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Define the process for tracking, analyzing, and resolving defects, change requests, and other issues throughout the project.
+Define the process for tracking, analyzing, and resolving defects, change requests, and other issues throughout the
+project.
 
 ## Ownership & Collaboration
 

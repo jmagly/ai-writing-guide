@@ -6,7 +6,7 @@ State expected system behavior under failure.
 
 ## Experiment Design
 
-- Failure type: <instance kill/network drop/latency>
+- Failure type: `instance kill/network drop/latency`
 - Scope and blast radius
 - Metrics to watch and abort conditions
 

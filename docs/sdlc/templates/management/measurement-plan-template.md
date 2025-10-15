@@ -28,17 +28,17 @@ Define the metrics, collection methods, and reporting cadence used to monitor pr
 | --- | --- | --- | --- | --- | --- |
 | Example Metric | Explain why it matters. | Tool or artifact. | Weekly | Target value. | Person/role. |
 
-3. **Data Collection Process**
+1. **Data Collection Process**
    - Describe how data is gathered, validated, and stored.
-4. **Reporting and Visualization**
+2. **Reporting and Visualization**
    - Identify dashboards, reports, and distribution lists.
-5. **Roles and Responsibilities**
+3. **Roles and Responsibilities**
    - Define who collects, analyzes, and acts on metrics.
-6. **Review Cadence**
+4. **Review Cadence**
    - Specify when metrics are reviewed (stand-ups, demos, governance boards).
-7. **Continuous Improvement**
+5. **Continuous Improvement**
    - Outline how metrics will be refined or retired.
-8. **Risks and Assumptions**
+6. **Risks and Assumptions**
    - Capture measurement risks (data quality, tooling limits) and mitigation plans.
 
 ## Agent Notes

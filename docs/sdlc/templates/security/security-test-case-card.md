@@ -2,15 +2,15 @@
 
 ## Metadata
 
-- ID: TEST-SEC-<id>
+- ID: TEST-SEC-`id`
 - Owner: Test Engineer (docs/agents/test-engineer.md)
 - Contributors: Security Architect (docs/agents/sdlc/security-architect.md)
 - Reviewers: Test Architect (docs/agents/test-architect.md)
-- Team: <team>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: SEC-THR-<id>, SEC-CTRL-<id>
-- Links: <paths/urls>
+- Team: `team`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: SEC-THR-`id`, SEC-CTRL-`id`
+- Links: `paths/urls`
 
 ## Related templates
 
@@ -18,7 +18,7 @@
 
 ## Scope
 
-- Feature/endpoint: <name>
+- Feature/endpoint: `name`
 
 ## Threat/Control Targeted
 

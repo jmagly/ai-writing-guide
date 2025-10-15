@@ -242,4 +242,5 @@ Before deploying your command:
 4. **Suggest** specific remediation steps
 ```
 
-This template provides a solid foundation for creating effective Claude Code commands. Customize it based on your specific needs and domain requirements.
+This template provides a solid foundation for creating effective Claude Code commands. Customize it based on your
+specific needs and domain requirements.

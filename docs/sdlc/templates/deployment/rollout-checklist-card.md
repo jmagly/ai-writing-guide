@@ -2,15 +2,15 @@
 
 ## Metadata
 
-- ID: DEP-ROL-<id>
+- ID: DEP-ROL-`id`
 - Owner: Deployment Manager (docs/agents/deployment-manager.md)
 - Contributors: DevOps Engineer (docs/agents/devops-engineer.md)
 - Reviewers: Project Manager (docs/agents/project-manager.md)
-- Team: <team>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: REL-<id>, RUN-<id>
-- Links: <paths/urls>
+- Team: `team`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: REL-`id`, RUN-`id`
+- Links: `paths/urls`
 
 ## Related templates
 
@@ -25,8 +25,8 @@
 
 ## Rollout Steps
 
-1. <action>
-2. <action>
+1. `action`
+2. `action`
 
 ## Validation
 

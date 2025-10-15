@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Maintain a shared vocabulary for business and system stakeholders to reduce ambiguity during
-requirements and design work.
+Maintain a shared vocabulary for business and system stakeholders to reduce ambiguity during requirements and design
+work.
 
 ## Ownership & Collaboration
 
@@ -29,11 +29,11 @@ requirements and design work.
 | --- | --- | --- | --- |
 | Example Term | Brief definition of the concept. | Team or document reference. | Usage clarifications or links. |
 
-3. **Acronyms and Abbreviations**
+1. **Acronyms and Abbreviations**
    - List acronyms with expansions and context.
-4. **Retired or Replaced Terms**
+2. **Retired or Replaced Terms**
    - Track terminology that should no longer be used and the replacements.
-5. **Open Questions**
+3. **Open Questions**
    - Capture terms requiring clarification or stakeholder decision.
 
 ## Agent Notes

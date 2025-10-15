@@ -4,7 +4,7 @@ Select a profile to set defaults for gates, controls, and process rigor.
 
 ## Profile
 
-- Profile: <Prototype | MVP | Production | Enterprise>
+- Profile: `Prototype | MVP | Production | Enterprise`
 
 ## Defaults (can be tailored)
 
@@ -26,4 +26,4 @@ Select a profile to set defaults for gates, controls, and process rigor.
 
 ## Overrides
 
-- Notes: <tailoring decisions>
+- Notes: `tailoring decisions`

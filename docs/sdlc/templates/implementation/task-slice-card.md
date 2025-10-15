@@ -2,16 +2,16 @@
 
 ## Metadata
 
-- ID: TASK-<id>
-- Owner: <name/role/team>
-- Contributors: <list>
-- Reviewers: <list>
-- Team: <team>
-- Stakeholders: <list>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: UC-<id>, REQ-<id>, DES-<id>, CODE-<module>, TEST-<id>, ADR-<id>
-- Links: <paths/urls>
+- ID: TASK-`id`
+- Owner: `name/role/team`
+- Contributors: `list`
+- Reviewers: `list`
+- Team: `team`
+- Stakeholders: `list`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: UC-`id`, REQ-`id`, DES-`id`, CODE-`module`, TEST-`id`, ADR-`id`
+- Links: `paths/urls`
 
 ## Related templates
 
@@ -20,8 +20,8 @@
 
 ## Identifier
 
-- Slice: <name>
-- Links: UC-<id>, REQ-<id>, CODE-<module>
+- Slice: `name`
+- Links: UC-`id`, REQ-`id`, CODE-`module`
 
 ## Goal
 

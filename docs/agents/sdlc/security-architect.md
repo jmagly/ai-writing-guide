@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep", "bash"]
 
 ## Purpose
 
-Own security posture from Inception to Transition. Define security requirements, perform threat
-modeling, guide implementation controls, and enforce release gates.
+Own security posture from Inception to Transition. Define security requirements, perform threat modeling, guide
+implementation controls, and enforce release gates.
 
 ## Scope
 

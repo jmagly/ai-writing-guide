@@ -2,9 +2,8 @@
 
 ## Purpose
 
-Capture the business objectives, stakeholder needs, and success criteria that justify the project.
-Agents should tailor the sections below to the current engagement and ensure traceability to
-stakeholder requests.
+Capture the business objectives, stakeholder needs, and success criteria that justify the project. Agents should tailor
+the sections below to the current engagement and ensure traceability to stakeholder requests.
 
 ## Ownership & Collaboration
 
@@ -50,7 +49,8 @@ stakeholder requests.
 
 - Keep tone professional and concise (≤4 sentences per paragraph).
 - Reference supporting artifacts with relative paths (e.g., `docs/research/*`).
-- Populate **Outstanding Questions and Decisions** before signaling completion so downstream agents can act without re-reading.
+- Populate **Outstanding Questions and Decisions** before signaling completion so downstream agents can act without
+  re-reading.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
 - Maintain alignment between personas, objectives, and risks across artifacts.
 - Flag assumptions and decisions clearly so follow-on teams can validate them.

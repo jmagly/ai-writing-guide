@@ -2,15 +2,15 @@
 
 ## Cover Page
 
-- `<Project Name>`
+- ``Project Name``
 - `Supplementary Business Specification`
-- `Version <1.0>`
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## Ownership & Collaboration
 
@@ -57,7 +57,8 @@
 
 ## 5 Performance
 
-> Record performance characteristics (response time, throughput, capacity, resource utilization) and associate them with relevant business use cases.
+> Record performance characteristics (response time, throughput, capacity, resource utilization) and associate them with
+> relevant business use cases.
 
 ## 6 Scaling Issues
 

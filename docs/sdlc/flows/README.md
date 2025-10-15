@@ -1,7 +1,7 @@
 # SDLC Operator Flows
 
-Concise, step-by-step flows that operators can follow to coordinate discovery and delivery in
-parallel with clear handoffs and gates.
+Concise, step-by-step flows that operators can follow to coordinate discovery and delivery in parallel with clear
+handoffs and gates.
 
 Files:
 

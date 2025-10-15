@@ -2,8 +2,8 @@
 
 ## Overview
 
-Specialized agents that coordinate lifecycle work: orchestration, governance, security, privacy,
-traceability, and reliability.
+Specialized agents that coordinate lifecycle work: orchestration, governance, security, privacy, traceability, and
+reliability.
 
 ## Agents
 
@@ -20,5 +20,5 @@ traceability, and reliability.
 
 ## Usage
 
-Pair these agents with commands in `docs/commands/sdlc/` and templates in
-`docs/sdlc/templates/` for a complete pipeline.
+Pair these agents with commands in `docs/commands/sdlc/` and templates in `docs/sdlc/templates/` for a complete
+pipeline.

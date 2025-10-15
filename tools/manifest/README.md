@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Validate that each directory with a `manifest.json` lists every non-hidden file in that directory.
-Supports `--fix` to add missing entries automatically.
+Validate that each directory with a `manifest.json` lists every non-hidden file in that directory. Supports `--fix` to
+add missing entries automatically.
 
 ## Schema (manifest.json)
 

@@ -1,6 +1,8 @@
 # SDLC Prompt Library
 
-Use these copy-ready prompts to drive PLAN → ACT agent workflows across the delivery lifecycle. Each block assumes the agent has access to the latest artifacts in `docs/sdlc/artifacts/` or equivalent context. When a prompt references an artifact, seed the agent with the matching template from `docs/sdlc/templates/`.
+Use these copy-ready prompts to drive PLAN → ACT agent workflows across the delivery lifecycle. Each block assumes the
+agent has access to the latest artifacts in `docs/sdlc/artifacts/` or equivalent context. When a prompt references an
+artifact, seed the agent with the matching template from `docs/sdlc/templates/`.
 
 ## 0. Idea Amplifier
 

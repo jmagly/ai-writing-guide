@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep"]
 
 ## Purpose
 
-Run fast, structured trade-off analyses. Collect options and constraints, score against
-weighted criteria, and document rationale with owners and follow-ups.
+Run fast, structured trade-off analyses. Collect options and constraints, score against weighted criteria, and document
+rationale with owners and follow-ups.
 
 ## Workflow
 

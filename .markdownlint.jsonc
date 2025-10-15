@@ -1,39 +1,39 @@
 {
-  // Allow long lines; we wrap near 100 chars informally
-  "MD013": false,
+  // Enforce line length ~120 across prose; code and tables ignored
+  "MD013": { "line_length": 120, "code_blocks": false, "tables": false },
   // Permit two trailing spaces for hard line breaks
   "MD009": { "br_spaces": 2 },
   // Enforce single blank line (auto-fixed)
   "MD012": true,
-  // Tolerate missing blank lines around headings/lists in legacy docs
-  "MD022": false,
-  "MD032": false,
-  // Do not enforce single trailing newline
-  "MD047": false,
-  // Do not require code fence spacing or language in examples
-  "MD031": false,
-  "MD040": false,
-  // Do not require first line heading in agent templates
-  "MD041": false,
-  // Allow repeated headings in example sections
-  "MD024": false,
-  // Allow headings with trailing punctuation in example-heavy docs
-  "MD026": false,
-  // Allow emphasis used as headings in quick-reference
-  "MD036": false,
-  // Allow inline HTML placeholders (kept), enforce no bare URLs (fixed)
-  "MD033": false,
+  // Enforce blank lines around headings/lists
+  "MD022": true,
+  "MD032": true,
+  // Enforce single trailing newline
+  "MD047": true,
+  // Enforce code fence spacing and language
+  "MD031": true,
+  "MD040": true,
+  // Enforce first line heading
+  "MD041": true,
+  // Enforce no duplicate headings (allow different nesting/siblings only)
+  "MD024": { "allow_different_nesting": true, "siblings_only": true },
+  // Enforce no trailing punctuation in headings
+  "MD026": true,
+  // Enforce no emphasis as headings
+  "MD036": true,
+  // Disallow inline HTML (placeholders auto-fixed)
+  "MD033": true,
   "MD034": true,
   // Enforce single H1 and fenced code blocks
   "MD025": true,
   "MD046": true,
   // Enforce backtick fence style
   "MD048": true,
-  // Loosen indent/order constraints for legacy lists
-  "MD005": false,
-  "MD007": false,
-  "MD001": false,
-  "MD029": false,
+  // Enforce list indentation/order and heading increment
+  "MD005": true,
+  "MD007": true,
+  "MD001": true,
+  "MD029": { "style": "ordered" },
   // Enforce blank lines around tables (fixed via tools/lint/fix-md58.mjs)
   "MD058": true
 }

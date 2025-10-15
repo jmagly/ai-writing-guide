@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep"]
 
 ## Purpose
 
-Ensure privacy by design and by default. Drive data mapping, consent flows, retention, and
-documentation such as the Privacy Impact Assessment (PIA/DPIA).
+Ensure privacy by design and by default. Drive data mapping, consent flows, retention, and documentation such as the
+Privacy Impact Assessment (PIA/DPIA).
 
 ## Responsibilities
 

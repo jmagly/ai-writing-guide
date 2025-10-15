@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Define the system-level goals, features, and constraints that align business objectives with solution scope.
-Use this document to anchor prioritization and stakeholder expectations throughout Inception and Elaboration.
+Define the system-level goals, features, and constraints that align business objectives with solution scope. Use this
+document to anchor prioritization and stakeholder expectations throughout Inception and Elaboration.
 
 ## Ownership & Collaboration
 

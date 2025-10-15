@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Equip operations and support teams with actionable procedures to monitor, troubleshoot, and resolve issues for the released product.
+Equip operations and support teams with actionable procedures to monitor, troubleshoot, and resolve issues for the
+released product.
 
 ## Ownership & Collaboration
 

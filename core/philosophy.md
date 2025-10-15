@@ -74,7 +74,8 @@ Real experts mention:
 - What they'd do differently
 
 Example:
-> "We picked Cassandra for scale but didn't anticipate the operational overhead. Three years later, we're still fighting consistency issues."
+> "We picked Cassandra for scale but didn't anticipate the operational overhead. Three years later, we're still fighting
+> consistency issues."
 
 ### Include Context and Constraints
 
@@ -133,16 +134,20 @@ Read your content aloud. Does it sound like:
 
 ## Examples of Authentic Voice
 
-### Bad (AI-typical):
+### Bad (AI-typical)
 
-> "Furthermore, the implementation of advanced caching mechanisms dramatically improved response times, showcasing the transformative power of modern optimization techniques. This comprehensive approach underscores the vital role that performance tuning plays in contemporary web applications."
+> "Furthermore, the implementation of advanced caching mechanisms dramatically improved response times, showcasing the
+> transformative power of modern optimization techniques. This comprehensive approach underscores the vital role that
+> performance tuning plays in contemporary web applications."
 
-### Good (Human expert):
+### Good (Human expert)
 
-> "Response times sucked - 3 seconds for a simple query. Added Redis caching and got it down to 200ms. Should've done it from the start but we were rushing to launch."
+> "Response times sucked - 3 seconds for a simple query. Added Redis caching and got it down to 200ms. Should've done it
+> from the start but we were rushing to launch."
 
 ## Final Reminder
 
-You're not writing to impress or to be comprehensive. You're sharing knowledge like you would with a colleague. Include the complexity, the trade-offs, and the reality of building systems.
+You're not writing to impress or to be comprehensive. You're sharing knowledge like you would with a colleague. Include
+the complexity, the trade-offs, and the reality of building systems.
 
 The goal isn't perfection - it's authenticity.

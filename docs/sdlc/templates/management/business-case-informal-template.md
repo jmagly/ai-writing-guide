@@ -13,7 +13,8 @@
 
 ## 2 Product Description
 
-> Provide a concise description of the proposed product, the problem it solves, and references to supporting vision material.
+> Provide a concise description of the proposed product, the problem it solves, and references to supporting vision
+> material.
 
 ## 3 Business Context
 

@@ -2,7 +2,7 @@
 
 ## Identifier
 
-- Feature/Flow: <name>
+- Feature/Flow: `name`
 
 ## Setup
 
@@ -10,8 +10,8 @@
 
 ## Scenarios
 
-- <scenario 1>
-- <scenario 2>
+- `scenario 1`
+- `scenario 2`
 
 ## Pass Criteria
 

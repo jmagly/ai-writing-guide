@@ -2,7 +2,7 @@
 
 ## Context
 
-- Work item(s): <ids>
+- Work item(s): `ids`
 - Owners and reviewers
 - Due date and dependencies
 

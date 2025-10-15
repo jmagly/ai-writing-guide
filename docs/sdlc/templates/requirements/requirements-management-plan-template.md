@@ -2,15 +2,15 @@
 
 ## Cover Page
 
-- `<Project Name>`
+- ``Project Name``
 - `Requirements Management Plan`
-- `Version <1.0>`
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## Ownership & Collaboration
 
@@ -63,15 +63,16 @@
 
 > Explain traceability strategy across artifacts.
 
-#### 3.2.1 Criteria for `<traceability item>`
+#### 3.2.1 Criteria for ``traceability item``
 
 > Define entry/exit criteria for each traceability link type (e.g., Vision items, use cases, tests).
 
 ### 3.3 Attributes
 
-> List requirement attributes tracked (status, priority, benefit, effort, risk, stability, target release, owner, rationale).
+> List requirement attributes tracked (status, priority, benefit, effort, risk, stability, target release, owner,
+> rationale).
 
-#### 3.3.1 Attributes for `<traceability item>`
+#### 3.3.1 Attributes for ``traceability item``
 
 > Provide attribute definitions and allowed values for each requirement type.
 

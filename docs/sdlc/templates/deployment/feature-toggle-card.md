@@ -2,15 +2,15 @@
 
 ## Metadata
 
-- ID: FT-<id>
+- ID: FT-`id`
 - Owner: DevOps Engineer (docs/agents/devops-engineer.md)
 - Contributors: Implementer (docs/agents/software-implementer.md)
 - Reviewers: Project Manager (docs/agents/project-manager.md)
-- Team: <team>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: REQ-<id>, REL-<id>
-- Links: <paths/urls>
+- Team: `team`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: REQ-`id`, REL-`id`
+- Links: `paths/urls`
 
 ## Related templates
 

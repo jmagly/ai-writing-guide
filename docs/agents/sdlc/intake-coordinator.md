@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep"]
 
 ## Purpose
 
-Review and validate the Project Intake Form and Solution Profile, ask targeted clarifying
-questions, and produce a ready-to-run inception plan and agent tasking.
+Review and validate the Project Intake Form and Solution Profile, ask targeted clarifying questions, and produce a
+ready-to-run inception plan and agent tasking.
 
 ## Workflow
 

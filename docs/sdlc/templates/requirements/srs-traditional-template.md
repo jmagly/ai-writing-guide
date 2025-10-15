@@ -2,15 +2,15 @@
 
 ## Cover Page
 
-- `<Project Name>`
-- `Software Requirements Specification for <Subsystem or Feature>`
-- `Version <1.0>`
+- ``Project Name``
+- `Software Requirements Specification for`Subsystem or Feature``
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## Ownership & Collaboration
 
@@ -43,37 +43,37 @@
 
 ### 3.1 Functionality
 
-#### 3.1.1 `<Functional Requirement>`
+#### 3.1.1 ``Functional Requirement``
 
 > State behavior, stimulus/response, and acceptance criteria.
 
 ### 3.2 Usability
 
-#### 3.2.1 `<Usability Requirement>`
+#### 3.2.1 ``Usability Requirement``
 
 > Describe usability targets (learnability, accessibility, training, UI conventions).
 
 ### 3.3 Reliability
 
-#### 3.3.1 `<Reliability Requirement>`
+#### 3.3.1 ``Reliability Requirement``
 
 > Specify availability, fault tolerance, recovery, and defect thresholds.
 
 ### 3.4 Performance
 
-#### 3.4.1 `<Performance Requirement>`
+#### 3.4.1 ``Performance Requirement``
 
 > Capture response time, throughput, capacity, degradation modes, and resource usage limits.
 
 ### 3.5 Supportability
 
-#### 3.5.1 `<Supportability Requirement>`
+#### 3.5.1 ``Supportability Requirement``
 
 > Describe maintainability constraints, diagnostics, coding standards, or tooling needs.
 
 ### 3.6 Design Constraints
 
-#### 3.6.1 `<Design Constraint>`
+#### 3.6.1 ``Design Constraint``
 
 > Enumerate mandated technologies, architectural restrictions, or compliance constraints.
 
@@ -107,7 +107,8 @@
 
 ## 4 Supporting Information
 
-> Provide appendices, indexes, or reference materials used to elaborate requirements (storyboards, prototypes, traceability matrices, etc.).
+> Provide appendices, indexes, or reference materials used to elaborate requirements (storyboards, prototypes,
+> traceability matrices, etc.).
 
 ## Agent Notes
 

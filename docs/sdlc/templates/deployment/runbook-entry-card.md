@@ -2,15 +2,15 @@
 
 ## Metadata
 
-- ID: RUN-<id>
+- ID: RUN-`id`
 - Owner: Support Lead (docs/agents/support-lead.md)
 - Contributors: Reliability Engineer (docs/agents/sdlc/reliability-engineer.md)
 - Reviewers: Project Manager (docs/agents/project-manager.md)
-- Team: <team>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: SLI-<id>, ALERT-<id>
-- Links: <paths/urls>
+- Team: `team`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: SLI-`id`, ALERT-`id`
+- Links: `paths/urls`
 
 ## Related templates
 

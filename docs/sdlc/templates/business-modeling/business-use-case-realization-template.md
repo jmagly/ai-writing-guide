@@ -2,15 +2,15 @@
 
 ## Cover Page
 
-- `<Project Name>`
-- `Business Use-Case Realization Specification: <Business Use-Case Name>`
-- `Version <1.0>`
+- ``Project Name``
+- `Business Use-Case Realization Specification:`Business Use-Case Name``
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## Ownership & Collaboration
 
@@ -21,7 +21,8 @@
 
 ## 1 Introduction
 
-> Summarize the document purpose, scope, references, and structure. Note the relationship between this markdown artifact and any modeling tools capturing diagrams.
+> Summarize the document purpose, scope, references, and structure. Note the relationship between this markdown artifact
+> and any modeling tools capturing diagrams.
 
 ### 1.1 Purpose
 
@@ -45,11 +46,13 @@
 
 ## 2 Workflow Realization
 
-> Describe how the business use case is realized through collaborating business objects. Summarize accompanying diagrams and explain key interactions.
+> Describe how the business use case is realized through collaborating business objects. Summarize accompanying diagrams
+> and explain key interactions.
 
 ## 3 Derived Requirements
 
-> Capture automation or systemic requirements not covered in the business use-case model but required for implementation.
+> Capture automation or systemic requirements not covered in the business use-case model but required for
+> implementation.
 
 ## Appendices (Optional)
 

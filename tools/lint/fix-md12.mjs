@@ -86,4 +86,3 @@ function fixFile(file, write) {
   }
   console.log(`${write ? 'Fixed' : 'Would fix'} ${changedCount} file(s).`);
 })();
-

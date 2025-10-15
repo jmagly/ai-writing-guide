@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Tailor the delivery process to the specific project, defining which artifacts, roles, and workflows are in scope for each phase and iteration.
+Tailor the delivery process to the specific project, defining which artifacts, roles, and workflows are in scope for
+each phase and iteration.
 
 ## Ownership & Collaboration
 
@@ -32,17 +33,17 @@ Tailor the delivery process to the specific project, defining which artifacts, r
 | --- | --- | --- | --- |
 | Example | Role name | Inception Iteration 1 | Tailoring comments |
 
-5. **Role Tailoring**
+1. **Role Tailoring**
    - List roles engaged, merged, or delegated to automated agents.
-6. **Workflow and Activity Adjustments**
+2. **Workflow and Activity Adjustments**
    - Explain changes to workflows (e.g., additional reviews, automation).
-7. **Tooling and Environment Setup**
+3. **Tooling and Environment Setup**
    - Document tools, repositories, and automation supporting the tailored process.
-8. **Compliance and Governance**
+4. **Compliance and Governance**
    - Note required reviews, approvals, or audits.
-9. **Change Management**
+5. **Change Management**
    - Describe how tailoring decisions may evolve over time and how changes are approved.
-10. **Appendices**
+6. **Appendices**
     - Include detailed schedules, checklists, or decision logs.
 
 ## Agent Notes

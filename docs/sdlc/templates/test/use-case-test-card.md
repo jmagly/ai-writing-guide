@@ -2,15 +2,15 @@
 
 ## Metadata
 
-- ID: TEST-UC-<id>
+- ID: TEST-UC-`id`
 - Owner: Test Engineer (docs/agents/test-engineer.md)
 - Contributors: Implementer (docs/agents/software-implementer.md)
 - Reviewers: Test Architect (docs/agents/test-architect.md)
-- Team: <team>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: UC-<id>, REQ-<id>, DES-<id>
-- Links: <paths/urls>
+- Team: `team`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: UC-`id`, REQ-`id`, DES-`id`
+- Links: `paths/urls`
 
 ## Related templates
 
@@ -18,7 +18,7 @@
 
 ## Identifier
 
-- UC: UC-<num>
+- UC: UC-`num`
 
 ## Scenarios
 

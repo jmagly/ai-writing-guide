@@ -2,27 +2,27 @@
 
 ## Purpose
 
-Define team members, roles, and contact details for pre-filling card metadata (owners, contributors,
-reviewers) and ensuring clear handoffs.
+Define team members, roles, and contact details for pre-filling card metadata (owners, contributors, reviewers) and
+ensuring clear handoffs.
 
 ## Team Roster (Table)
 
 | Role | Name | Email/Handle | Timezone | Notes |
 |------|------|--------------|----------|-------|
-| Product Strategist | <name> | <email> | <TZ> | |
-| Vision Owner | <name> | <email> | <TZ> | |
-| Requirements Analyst | <name> | <email> | <TZ> | |
-| System Analyst | <name> | <email> | <TZ> | |
-| Architecture Designer | <name> | <email> | <TZ> | |
-| API Designer | <name> | <email> | <TZ> | |
-| Software Implementer | <name> | <email> | <TZ> | |
-| Test Architect | <name> | <email> | <TZ> | |
-| Test Engineer | <name> | <email> | <TZ> | |
-| Security Architect | <name> | <email> | <TZ> | |
-| Reliability Engineer | <name> | <email> | <TZ> | |
-| Deployment Manager | <name> | <email> | <TZ> | |
-| Configuration Manager | <name> | <email> | <TZ> | |
-| Project Manager | <name> | <email> | <TZ> | |
+| Product Strategist | `name` | `email` | `TZ` | |
+| Vision Owner | `name` | `email` | `TZ` | |
+| Requirements Analyst | `name` | `email` | `TZ` | |
+| System Analyst | `name` | `email` | `TZ` | |
+| Architecture Designer | `name` | `email` | `TZ` | |
+| API Designer | `name` | `email` | `TZ` | |
+| Software Implementer | `name` | `email` | `TZ` | |
+| Test Architect | `name` | `email` | `TZ` | |
+| Test Engineer | `name` | `email` | `TZ` | |
+| Security Architect | `name` | `email` | `TZ` | |
+| Reliability Engineer | `name` | `email` | `TZ` | |
+| Deployment Manager | `name` | `email` | `TZ` | |
+| Configuration Manager | `name` | `email` | `TZ` | |
+| Project Manager | `name` | `email` | `TZ` | |
 
 ## YAML Mapping (Optional)
 

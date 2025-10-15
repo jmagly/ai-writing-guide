@@ -9,13 +9,14 @@
 
 ## 1 Key Milestones
 
-> Provide a lightweight timeline of the iteration, including start/stop dates, demos, testing start, beta drops, or stakeholder reviews.
+> Provide a lightweight timeline of the iteration, including start/stop dates, demos, testing start, beta drops, or
+> stakeholder reviews.
 
 | Milestone | Date |
 | --- | --- |
-| Iteration Start | `<dd/mmm/yy>` |
-| Iteration Stop | `<dd/mmm/yy>` |
-| `<Milestone>` | `<dd/mmm/yy>` |
+| Iteration Start | ``dd/mmm/yy`` |
+| Iteration Stop | ``dd/mmm/yy`` |
+| `<Milestone>` | ``dd/mmm/yy`` |
 
 ## 2 Iteration Objectives
 
@@ -25,7 +26,7 @@
 | --- | --- |
 | `Implement Use Case: <Name> (Basic + Alternate flows)` | `<Owner>` |
 | `Complete <Artifact>` | `<Owner>` |
-| `Detail <Use Case>` | `<Owner>` |
+| `Detail`Use Case``|`<Owner>` |
 | `Execute regression suite` | `<Owner>` |
 | `Prepare next-iteration plan` | `<Owner>` |
 

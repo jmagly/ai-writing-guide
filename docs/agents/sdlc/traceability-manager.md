@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep"]
 
 ## Purpose
 
-Maintain a current trace from use cases and requirements through design items, code modules,
-tests, defects, and release records. Expose gaps early.
+Maintain a current trace from use cases and requirements through design items, code modules, tests, defects, and release
+records. Expose gaps early.
 
 ## Deliverables
 

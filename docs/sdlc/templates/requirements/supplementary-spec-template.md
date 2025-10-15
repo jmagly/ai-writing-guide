@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Capture requirements that are not easily expressed in use cases, including non-functional constraints,
-regulatory needs, and domain rules.
+Capture requirements that are not easily expressed in use cases, including non-functional constraints, regulatory needs,
+and domain rules.
 
 ## Ownership & Collaboration
 

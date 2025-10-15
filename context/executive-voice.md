@@ -33,8 +33,8 @@ Executive communication requires high sophistication without technical jargon:
 
 ### Strategic Framing
 
-✅ **Acceptable**: "This initiative aligns with our digital transformation strategy"
-✅ **Acceptable**: "The investment demonstrates our commitment to innovation"
+✅ **Acceptable**: "This initiative aligns with our digital transformation strategy" ✅ **Acceptable**: "The investment
+demonstrates our commitment to innovation"
 
 These are appropriate in executive context even though they might be "banned" in technical writing.
 
@@ -51,7 +51,8 @@ These are appropriate in executive context even though they might be "banned" in
 
 ### Executive-Appropriate Complexity
 
-> "The platform consolidation reduces operational expenditure by 30% while improving time-to-market for new products, directly supporting our strategic objective of operational excellence and market responsiveness."
+> "The platform consolidation reduces operational expenditure by 30% while improving time-to-market for new products,
+> directly supporting our strategic objective of operational excellence and market responsiveness."
 
 This complexity is justified by the audience's expectation of strategic thinking.
 
@@ -59,25 +60,23 @@ This complexity is justified by the audience's expectation of strategic thinking
 
 ### Technical Deep Dives
 
-❌ "The system uses Kubernetes with Istio service mesh"
-✅ "The cloud infrastructure provides scalability and resilience"
+❌ "The system uses Kubernetes with Istio service mesh" ✅ "The cloud infrastructure provides scalability and resilience"
 
 ### Implementation Details
 
-❌ "We refactored the codebase using SOLID principles"
-✅ "We improved system maintainability and reduced technical debt"
+❌ "We refactored the codebase using SOLID principles" ✅ "We improved system maintainability and reduced technical debt"
 
 ### Uncertain Language
 
-❌ "This might possibly help us perhaps achieve"
-✅ "This positions us to capture market opportunity"
+❌ "This might possibly help us perhaps achieve" ✅ "This positions us to capture market opportunity"
 
 ## Executive Communication Patterns
 
 ### Lead with Impact
 
 Start with business value, not technical achievement:
-> "This quarter we reduced customer acquisition cost by 40% through automated onboarding, directly improving unit economics."
+> "This quarter we reduced customer acquisition cost by 40% through automated onboarding, directly improving unit
+> economics."
 
 ### Quantify Strategic Value
 
@@ -89,13 +88,15 @@ Start with business value, not technical achievement:
 
 ### Address Risk Professionally
 
-> "While the migration carries execution risk, our phased approach and fallback provisions mitigate potential service disruption."
+> "While the migration carries execution risk, our phased approach and fallback provisions mitigate potential service
+> disruption."
 
 ## Sophistication Without Jargon
 
 ### Complex Ideas, Clear Language
 
-> "The acquisition provides vertical integration opportunities that reduce our dependency on third-party suppliers while improving margin structure through elimination of intermediary costs."
+> "The acquisition provides vertical integration opportunities that reduce our dependency on third-party suppliers while
+> improving margin structure through elimination of intermediary costs."
 
 ### Strategic Vocabulary
 
@@ -134,4 +135,5 @@ Before sending, verify:
 
 ## Remember
 
-For executives, some "banned" AI patterns are actually industry-standard business language. The key is using them authentically with specific business context, not as empty filler.
+For executives, some "banned" AI patterns are actually industry-standard business language. The key is using them
+authentically with specific business context, not as empty filler.

@@ -2,8 +2,8 @@
 
 ## Purpose
 
-This directory holds shared agent playbooks used across projects. Agents are universal and may be
-specialized by subfolder.
+This directory holds shared agent playbooks used across projects. Agents are universal and may be specialized by
+subfolder.
 
 ## Layout
 
@@ -48,7 +48,7 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
 
 ### Options
 
-- `--provider <claude|openai>`: Target provider (default: `claude`). For `openai`, agents are written to `.codex/agents`.
+- `--provider`claude|openai``: Target provider (default:`claude`). For`openai`, agents are written to`.codex/agents`.
 - `--reasoning-model <name>`: Override reasoning model (default: `opus` for Claude, `gpt-5` for OpenAI).
 - `--coding-model <name>`: Override coding model (default: `sonnet` for Claude, `gpt-5-codex` for OpenAI).
 - `--efficiency-model <name>`: Override efficiency model (default: `sonnet` for Claude, `gpt-5-codex` for OpenAI).
@@ -61,18 +61,25 @@ aiwg -prefill-cards --target docs/sdlc/artifacts/<project> --team team-profile.(
 ### Examples
 
 - Deploy into current directory's `.claude/agents`:
+
   ```bash
   aiwg -deploy-agents
   ```
+
 - Deploy from a separate clone into another project:
+
   ```bash
   aiwg -deploy-agents --source /path/to/ai-writing-guide --target /path/to/another-project
   ```
+
 - Preview without writing:
+
   ```bash
   aiwg -deploy-agents --dry-run
   ```
+
 - Force overwrite on conflicts:
+
   ```bash
   aiwg -deploy-agents --force
   ```

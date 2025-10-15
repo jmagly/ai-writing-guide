@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Detail the interactions between actors and the system to fulfill specific goals. Use this template to inform
-analysis, design, testing, and traceability matrices.
+Detail the interactions between actors and the system to fulfill specific goals. Use this template to inform analysis,
+design, testing, and traceability matrices.
 
 ## Ownership & Collaboration
 

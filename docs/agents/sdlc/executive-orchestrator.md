@@ -9,9 +9,8 @@ tools: ["read", "write", "edit", "multiedit", "glob", "grep", "bash"]
 
 ## Purpose
 
-Provide top-level control across Inception → Transition. Convert an idea into a funded plan,
-sequence specialist agents, manage risks, keep the artifact registry current, and stop release
-when gates fail.
+Provide top-level control across Inception → Transition. Convert an idea into a funded plan, sequence specialist agents,
+manage risks, keep the artifact registry current, and stop release when gates fail.
 
 ## Operating Model
 

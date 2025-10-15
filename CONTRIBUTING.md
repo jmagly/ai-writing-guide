@@ -2,8 +2,8 @@
 
 ## Manifests and READMEs
 
-We maintain a `manifest.json` and a README/manifest.md in every directory to help agents and humans
-quickly understand contents without extra tooling.
+We maintain a `manifest.json` and a README/manifest.md in every directory to help agents and humans quickly understand
+contents without extra tooling.
 
 - Add or update files? Update the directory's `manifest.json`.
 - Need help? Use the generator:

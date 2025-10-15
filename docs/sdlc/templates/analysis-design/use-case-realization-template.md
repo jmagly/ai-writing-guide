@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Bridge requirements and design by detailing how a use case is realized within the architecture, including collaborations among components and classes.
+Bridge requirements and design by detailing how a use case is realized within the architecture, including collaborations
+among components and classes.
 
 ## Ownership & Collaboration
 

@@ -2,8 +2,8 @@
 
 ## Overview
 
-The agent Markdown format in this repository is compatible with OpenAI/Codex-style agents with
-minimal changes. The primary difference is the `model` value in the YAML frontmatter.
+The agent Markdown format in this repository is compatible with OpenAI/Codex-style agents with minimal changes. The
+primary difference is the `model` value in the YAML frontmatter.
 
 ## Models
 
@@ -40,5 +40,4 @@ aiwg -deploy-agents --provider openai \
 - Claude: `.claude/agents/*.md`
 - OpenAI/Codex: `.codex/agents/*.md`
 
-For more details on Codex sub-agents and mechanics, see:
-<https://codexlog.io/mechanics/agents/sub-agents.html>
+For more details on Codex sub-agents and mechanics, see: <https://codexlog.io/mechanics/agents/sub-agents.html>

@@ -2,15 +2,15 @@
 
 ## Cover Page
 
-- `<Project Name>`
+- ``Project Name``
 - `Use-Case Modeling Guidelines`
-- `Version <1.0>`
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## Ownership & Collaboration
 
@@ -35,7 +35,8 @@
 
 ## 2 General Modeling Conventions
 
-> Specify notation choices, diagram usage, package structure, and modeling policies (extends/includes, generalization, etc.).
+> Specify notation choices, diagram usage, package structure, and modeling policies (extends/includes, generalization,
+> etc.).
 
 ## 3 Actor Modeling Guidelines
 
@@ -43,7 +44,8 @@
 
 ## 4 Use-Case Specification Guidelines
 
-> Provide rules for writing use-case briefs, fully dressed use cases, alternate flows, extension points, and special requirements.
+> Provide rules for writing use-case briefs, fully dressed use cases, alternate flows, extension points, and special
+> requirements.
 
 ## 5 Use-Case Diagram Guidelines
 

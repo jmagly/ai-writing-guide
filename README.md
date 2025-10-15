@@ -1,10 +1,12 @@
 # AI Writing Guide
 
-A comprehensive framework for improving AI-generated content by avoiding common tropes and maintaining authentic, professional writing standards.
+A comprehensive framework for improving AI-generated content by avoiding common tropes and maintaining authentic,
+professional writing standards.
 
 ## Purpose
 
-This repository provides guidelines, validation tools, and context documents to help AI agents produce natural, professional content that:
+This repository provides guidelines, validation tools, and context documents to help AI agents produce natural,
+professional content that:
 
 - Avoids detection as AI-generated
 - Maintains technical accuracy and depth
@@ -61,8 +63,8 @@ Use the shared agent pool to bootstrap projects quickly by copying agents into a
   - Creates `.claude/agents` if it does not exist.
   - Filename conflicts are resolved by suffixing SDLC copies unless `--force`.
 
-Tip: add a shell alias for convenience:
-`alias deploy_agents='node /path/to/ai-writing-guide/tools/agents/deploy-agents.mjs'`
+Tip: add a shell alias for convenience: `alias deploy_agents='node
+/path/to/ai-writing-guide/tools/agents/deploy-agents.mjs'`
 
 ## One-Liner Install
 

@@ -51,21 +51,22 @@ function fixFile(file, write) {
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    const fenceMatch = line.match(/^```(.*)$/);
+    const fenceMatch = line.match(/^(\s*)```(.*)$/);
     if (fenceMatch) {
       // Determine fence block end
       let j = i + 1;
-      while (j < lines.length && !lines[j].startsWith('```')) j++;
+      const indent = fenceMatch[1] || '';
+      while (j < lines.length && !lines[j].startsWith(indent + '```')) j++;
       const endIndex = j < lines.length ? j : lines.length - 1;
 
       // Ensure language
-      let lang = fenceMatch[1].trim();
-      let newStart = line;
+      let lang = (fenceMatch[2] || '').trim();
+      let newStart = indent + '```' + lang;
       if (!lang) {
         // Guess mermaid else default to text
         const isMermaid = shouldBeMermaidBlock(lines, i, endIndex);
         lang = isMermaid ? 'mermaid' : 'text';
-        newStart = '```' + lang;
+        newStart = indent + '```' + lang;
         changed = true;
       }
 
@@ -79,7 +80,7 @@ function fixFile(file, write) {
       // Copy inner block
       for (let k = i + 1; k < endIndex; k++) out.push(lines[k]);
       // Add closing fence
-      out.push('```');
+      out.push(indent + '```');
       // Ensure blank line after
       const next = endIndex + 1 < lines.length ? lines[endIndex + 1] : '';
       if (next !== undefined && next.trim() !== '') {
@@ -111,4 +112,3 @@ function fixFile(file, write) {
   }
   console.log(`${write ? 'Fixed' : 'Would fix'} ${changedCount} file(s).`);
 })();
-

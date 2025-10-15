@@ -2,15 +2,15 @@
 
 ## Cover Page
 
-- `<Project Name>`
+- ``Project Name``
 - `Business Case`
-- `Version <1.0>`
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## Ownership & Collaboration
 
@@ -35,7 +35,8 @@
 
 ## 2 Product Description
 
-> Summarize the product concept, problems it solves, and why development is justified (reference the Vision where appropriate).
+> Summarize the product concept, problems it solves, and why development is justified (reference the Vision where
+> appropriate).
 
 ## 3 Business Context
 

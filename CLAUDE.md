@@ -4,13 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Purpose
 
-The AI Writing Guide is a comprehensive framework for improving AI-generated content quality. It provides guidelines, validation patterns, and specialized Claude Code agents to ensure AI outputs maintain authentic, professional writing standards while avoiding detection patterns.
+The AI Writing Guide is a comprehensive framework for improving AI-generated content quality. It provides guidelines,
+validation patterns, and specialized Claude Code agents to ensure AI outputs maintain authentic, professional writing
+standards while avoiding detection patterns.
 
 ## Critical Usage Instructions
 
 ### Context Selection Strategy
 
-**IMPORTANT**: Do not include all documents from this repository in your context. The USAGE_GUIDE.md provides targeted document combinations for specific needs.
+**IMPORTANT**: Do not include all documents from this repository in your context. The USAGE_GUIDE.md provides targeted
+document combinations for specific needs.
 
 **Always include**: `CLAUDE.md` (this file)
 
@@ -25,15 +28,20 @@ The AI Writing Guide is a comprehensive framework for improving AI-generated con
 
 ### Document Framework Structure
 
-1. **Core Philosophy (`core/`)**: Fundamental writing principles that guide all content generation. These establish the balance between removing AI patterns and maintaining sophisticated, authoritative voice.
+1. **Core Philosophy (`core/`)**: Fundamental writing principles that guide all content generation. These establish the
+   balance between removing AI patterns and maintaining sophisticated, authoritative voice.
 
-2. **Validation Rules (`validation/`)**: Specific patterns, phrases, and structures that indicate AI-generated content. These are detection patterns that should be avoided.
+2. **Validation Rules (`validation/`)**: Specific patterns, phrases, and structures that indicate AI-generated content.
+   These are detection patterns that should be avoided.
 
-3. **Context Documents (`context/`)**: Optimized, condensed versions of guidelines for efficient agent context usage. These provide quick-reference materials without overwhelming the context window.
+3. **Context Documents (`context/`)**: Optimized, condensed versions of guidelines for efficient agent context usage.
+   These provide quick-reference materials without overwhelming the context window.
 
-4. **Examples (`examples/`)**: Before/after demonstrations showing transformation from AI-detected writing to authentic human voice while preserving technical depth.
+4. **Examples (`examples/`)**: Before/after demonstrations showing transformation from AI-detected writing to authentic
+   human voice while preserving technical depth.
 
-5. **Agent Definitions (`.claude/agents/`)**: Pre-configured Claude Code subagents specialized for different aspects of writing improvement and validation.
+5. **Agent Definitions (`.claude/agents/`)**: Pre-configured Claude Code subagents specialized for different aspects of
+   writing improvement and validation.
 
 ### Agent Ecosystem
 
@@ -135,4 +143,5 @@ The repository includes:
 3. **Voice correction**: If lacking authenticity, add example documents
 4. **Full remediation**: Use complete suite only for persistent issues
 
-Remember: Authority comes from expertise (not formality), sophistication from precision (not complexity), and authenticity from honesty (not casualness).
+Remember: Authority comes from expertise (not formality), sophistication from precision (not complexity), and
+authenticity from honesty (not casualness).

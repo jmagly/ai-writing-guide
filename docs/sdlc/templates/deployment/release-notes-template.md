@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Communicate the contents, fixes, and operational considerations of a release to end users, support teams,
-and other stakeholders.
+Communicate the contents, fixes, and operational considerations of a release to end users, support teams, and other
+stakeholders.
 
 ## Ownership & Collaboration
 

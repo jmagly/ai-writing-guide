@@ -9,7 +9,7 @@
 
 ## Use-Case Header
 
-- `Use-Case: <Use-Case Name>`
+- `Use-Case:`Use-Case Name``
 - `<Project>` identifier
 
 ## Brief Description
@@ -22,41 +22,42 @@
 
 ## Preconditions
 
-- `<Precondition 1>`
-- `<Precondition 2>`
+- ``Precondition 1``
+- ``Precondition 2``
 
 ## Basic Flow of Events
 
-1. `<Primary step>`
+1. ``Primary step``
 2. `…`
 3. `The use case ends.`
 
 ## Alternative Flows
 
-- `<Alternative flow name>`
+- ``Alternative flow name``
   - Describe trigger, path, and completion.
 
 ## Subflows
 
-- `<Subflow name>`
+- ``Subflow name``
   - Provide reusable step sequences referenced from the basic or alternative flows.
 
 ## Key Scenarios
 
-- `<Scenario name>` – Outline narrative or storyboard for critical scenarios.
+- ``Scenario name`` – Outline narrative or storyboard for critical scenarios.
 
 ## Postconditions
 
-- `<Postcondition 1>`
-- `<Postcondition 2>`
+- ``Postcondition 1``
+- ``Postcondition 2``
 
 ## Extension Points
 
-- `<Extension point name>` – Identify where other use cases can extend this flow.
+- ``Extension point name`` – Identify where other use cases can extend this flow.
 
 ## Special Requirements
 
-> Capture supplementary or non-functional requirements specific to this use case (performance, UX constraints, business rules).
+> Capture supplementary or non-functional requirements specific to this use case (performance, UX constraints, business
+> rules).
 
 ## Additional Information
 

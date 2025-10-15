@@ -24,5 +24,8 @@ node tools/cards/prefill-cards.mjs --target docs/sdlc/artifacts/<project> --team
 ### Notes
 
 - Prefills `Owner:`, `Contributors:`, and `Reviewers:` when roles map to names.
-- Role keys supported (from YAML team-profile-template.md): `requirements_analyst`, `system_analyst`, `architecture_designer`, `api_designer`, `software_implementer`, `test_architect`, `test_engineer`, `security_architect`, `reliability_engineer`, `deployment_manager`, `configuration_manager`, `project_manager`, `product_strategist`, `vision_owner`.
+- Role keys supported (from YAML team-profile-template.md): `requirements_analyst`, `system_analyst`,
+  `architecture_designer`, `api_designer`, `software_implementer`, `test_architect`, `test_engineer`,
+  `security_architect`, `reliability_engineer`, `deployment_manager`, `configuration_manager`, `project_manager`,
+  `product_strategist`, `vision_owner`.
 - If a role is not found in the mapping, the line is left unchanged.

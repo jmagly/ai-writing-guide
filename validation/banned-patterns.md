@@ -2,7 +2,9 @@
 
 ## Usage Frequency Guidelines
 
-Some words are acceptable when used sparingly (1:1000 or 1:10000 word ratio) but become AI detection signals when overused (1:100 ratio). Words like "manifest," "revolutionary," and "next-generation" should only appear when they are truly the most salient option, not as default descriptors.
+Some words are acceptable when used sparingly (1:1000 or 1:10000 word ratio) but become AI detection signals when
+overused (1:100 ratio). Words like "manifest," "revolutionary," and "next-generation" should only appear when they are
+truly the most salient option, not as default descriptors.
 
 ## Critical Banned Phrases
 
@@ -105,29 +107,24 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 
 ### Three-Item Lists
 
-❌ "The system is reliable, scalable, and secure"
-❌ "Fast, efficient, and cost-effective"
-✅ Use varying list lengths or skip lists entirely
+❌ "The system is reliable, scalable, and secure" ❌ "Fast, efficient, and cost-effective" ✅ Use varying list lengths or
+skip lists entirely
 
 ### Em-Dash Overuse
 
-❌ "The system — a comprehensive platform — delivers value"
-✅ Use sparingly, maybe once per document
+❌ "The system — a comprehensive platform — delivers value" ✅ Use sparingly, maybe once per document
 
 ### Consistent Paragraph Structure
 
-❌ Every paragraph: Topic sentence → 3 supporting points → Conclusion
-✅ Vary paragraph structure and length
+❌ Every paragraph: Topic sentence → 3 supporting points → Conclusion ✅ Vary paragraph structure and length
 
 ### Section Summaries
 
-❌ Ending sections with "This approach ensures..."
-✅ Just end when the point is made
+❌ Ending sections with "This approach ensures..." ✅ Just end when the point is made
 
 ### Title Case Headers
 
-❌ "Implementation Of The New System"
-✅ "Implementation of the new system" or "IMPLEMENTATION"
+❌ "Implementation Of The New System" ✅ "Implementation of the new system" or "IMPLEMENTATION"
 
 ## Detection Red Flags
 
@@ -142,47 +139,35 @@ These phrases immediately identify content as AI-generated. **Never use them.**
 
 ### Overly Balanced Statements
 
-❌ "While X presents challenges, it also offers opportunities"
-❌ "Although Y has limitations, its benefits outweigh..."
-✅ Pick a side or state facts directly
+❌ "While X presents challenges, it also offers opportunities" ❌ "Although Y has limitations, its benefits outweigh..." ✅
+Pick a side or state facts directly
 
 ### Academic Passive Voice
 
-❌ "It has been observed that..."
-❌ "It can be argued that..."
-✅ "We observed..." or just state the observation
+❌ "It has been observed that..." ❌ "It can be argued that..." ✅ "We observed..." or just state the observation
 
 ### Conclusion Starters
 
-❌ "In conclusion..."
-❌ "To sum up..."
-❌ "Ultimately..."
-✅ Just end or use a forward-looking statement
+❌ "In conclusion..." ❌ "To sum up..." ❌ "Ultimately..." ✅ Just end or use a forward-looking statement
 
 ## Subtle Patterns
 
 ### The "Journey" Narrative
 
-❌ "Our journey began..."
-❌ "Throughout this journey..."
-❌ "The path forward..."
+❌ "Our journey began..." ❌ "Throughout this journey..." ❌ "The path forward..."
 
 ### The "Landscape" Metaphor
 
-❌ "In today's digital landscape..."
-❌ "Navigating the complex landscape of..."
-❌ "The evolving landscape of technology..."
+❌ "In today's digital landscape..." ❌ "Navigating the complex landscape of..." ❌ "The evolving landscape of
+technology..."
 
 ### The "Solutions" Fixation
 
-❌ Everything is a "solution"
-✅ Use: system, tool, approach, method, process
+❌ Everything is a "solution" ✅ Use: system, tool, approach, method, process
 
 ### The "Commitment" Declaration
 
-❌ "We remain committed to..."
-❌ "Our unwavering commitment..."
-❌ "Demonstrates our commitment..."
+❌ "We remain committed to..." ❌ "Our unwavering commitment..." ❌ "Demonstrates our commitment..."
 
 ## Quick Reference Test
 
@@ -217,4 +202,5 @@ Instead of banned phrases, use:
 
 ## Remember
 
-The goal isn't to avoid these phrases by using synonyms. It's to write in a fundamentally different way - direct, specific, and natural.
+The goal isn't to avoid these phrases by using synonyms. It's to write in a fundamentally different way - direct,
+specific, and natural.

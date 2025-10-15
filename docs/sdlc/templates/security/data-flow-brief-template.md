@@ -2,15 +2,15 @@
 
 ## Metadata
 
-- ID: SEC-DFD-<id>
+- ID: SEC-DFD-`id`
 - Owner: Security Architect (docs/agents/sdlc/security-architect.md)
 - Contributors: API Designer (docs/agents/sdlc/api-designer.md)
 - Reviewers: Architecture Designer (docs/agents/architecture-designer.md)
-- Team: <team>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: UC-<id>, REQ-<id>, DES-<id>
-- Links: <paths/urls>
+- Team: `team`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: UC-`id`, REQ-`id`, DES-`id`
+- Links: `paths/urls`
 
 ## Related templates
 
@@ -18,11 +18,11 @@
 
 ## Scope
 
-- System/feature: <name>
+- System/feature: `name`
 
 ## Sources/Sinks
 
-- <component> → <component>: <data>
+- `component` → `component`: `data`
 
 ## Trust Boundaries
 

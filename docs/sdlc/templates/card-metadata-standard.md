@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Define a consistent metadata header for all “card” templates so teams can assign ownership,
-maintain traceability, and relate cards to their parent templates and artifacts.
+Define a consistent metadata header for all “card” templates so teams can assign ownership, maintain traceability, and
+relate cards to their parent templates and artifacts.
 
 ## Required fields
 

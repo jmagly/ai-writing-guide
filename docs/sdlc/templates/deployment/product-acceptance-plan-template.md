@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Define the criteria, responsibilities, and procedures for obtaining stakeholder acceptance of the solution prior to release.
+Define the criteria, responsibilities, and procedures for obtaining stakeholder acceptance of the solution prior to
+release.
 
 ## Ownership & Collaboration
 

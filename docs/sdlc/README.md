@@ -10,7 +10,7 @@ Plan → Act lifecycle scripts, prompts, roles, and templates for software deliv
 - `prompt-templates.md` — Copy-ready prompts by phase
 - `actors-and-templates.md` — Roles and artifact template mapping
 - `templates/` — Markdown templates for artifacts
- - `flows/` — Operator flows for discovery/delivery and handoffs
+- `flows/` — Operator flows for discovery/delivery and handoffs
 
 ## Agent integration
 

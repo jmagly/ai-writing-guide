@@ -2,15 +2,15 @@
 
 ## Cover Page
 
-- `<Project Name>`
-- `Software Requirements Specification for <Subsystem or Feature>`
-- `Version <1.0>`
+- ``Project Name``
+- `Software Requirements Specification for`Subsystem or Feature``
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## Ownership & Collaboration
 
@@ -39,7 +39,8 @@
 
 ### 2.1 Use-Case Model Survey
 
-> Summarize the relevant portion of the use-case model (actors, use-case list, diagrams). Reference external surveys or reports when available.
+> Summarize the relevant portion of the use-case model (actors, use-case list, diagrams). Reference external surveys or
+> reports when available.
 
 ### 2.2 Assumptions and Dependencies
 
@@ -55,11 +56,13 @@
 
 ### 3.2 Supplementary Requirements
 
-> Include non-functional and cross-cutting requirements leveraging the Supplementary Specification for this subsystem or feature.
+> Include non-functional and cross-cutting requirements leveraging the Supplementary Specification for this subsystem or
+> feature.
 
 ## 4 Supporting Information
 
-> Provide appendices, traceability matrices, UI prototypes, or other materials that assist in applying this SRS. Clarify whether appendices are normative.
+> Provide appendices, traceability matrices, UI prototypes, or other materials that assist in applying this SRS. Clarify
+> whether appendices are normative.
 
 ## Agent Notes
 

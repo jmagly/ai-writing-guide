@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep", "bash"]
 
 ## Purpose
 
-Maintain a searchable artifact registry with short digests for large documents. Reduce context
-size by serving the smallest useful chunks to agents.
+Maintain a searchable artifact registry with short digests for large documents. Reduce context size by serving the
+smallest useful chunks to agents.
 
 ## Responsibilities
 

@@ -9,9 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep"]
 
 ## Purpose
 
-Define API styles, endpoints, and data contracts that are simple, stable, and testable. Work with
-System Analyst, Architecture Designer, and Implementers to ensure interface clarity and evolution
-paths.
+Define API styles, endpoints, and data contracts that are simple, stable, and testable. Work with System Analyst,
+Architecture Designer, and Implementers to ensure interface clarity and evolution paths.
 
 ## Responsibilities
 

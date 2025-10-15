@@ -10,10 +10,10 @@
 
 | Level | Role | Contact | Hours | Response target |
 |-------|------|---------|-------|-----------------|
-| 1 | Project Manager | <email> | 9–5 | 24h |
-| 2 | Executive Orchestrator | <email> | 9–5 | 12h |
-| 3 | Security/Privacy Lead | <email> | on call | 4h |
-| 4 | Steering Committee | <email> | ad hoc | 48h |
+| 1 | Project Manager | `email` | 9–5 | 24h |
+| 2 | Executive Orchestrator | `email` | 9–5 | 12h |
+| 3 | Security/Privacy Lead | `email` | on call | 4h |
+| 4 | Steering Committee | `email` | ad hoc | 48h |
 
 ## Procedure
 

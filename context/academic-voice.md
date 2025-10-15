@@ -72,15 +72,20 @@ This isn't AI weakness - it's academic precision about certainty levels.
 
 ### Technical Sophistication
 
-> "The proposed algorithm exhibits O(n log n) computational complexity with space complexity of O(n), representing a significant improvement over existing quadratic-time solutions while maintaining theoretical guarantees of convergence under standard assumptions."
+> "The proposed algorithm exhibits O(n log n) computational complexity with space complexity of O(n), representing a
+> significant improvement over existing quadratic-time solutions while maintaining theoretical guarantees of convergence
+> under standard assumptions."
 
 ### Precise Theoretical Language
 
-> "The framework extends the work of Smith et al. (2023) by incorporating stochastic elements into the deterministic model, thereby accounting for the inherent uncertainty in real-world applications while preserving the mathematical tractability necessary for analytical solutions."
+> "The framework extends the work of Smith et al. (2023) by incorporating stochastic elements into the deterministic
+> model, thereby accounting for the inherent uncertainty in real-world applications while preserving the mathematical
+> tractability necessary for analytical solutions."
 
 ### Statistical Rigor
 
-> "The results achieved statistical significance (p < 0.001, η² = 0.73), with post-hoc Bonferroni-corrected pairwise comparisons revealing significant differences between all experimental conditions."
+> "The results achieved statistical significance (p < 0.001, η² = 0.73), with post-hoc Bonferroni-corrected pairwise
+> comparisons revealing significant differences between all experimental conditions."
 
 ## Academic Voice Requirements
 
@@ -108,24 +113,24 @@ This isn't AI weakness - it's academic precision about certainty levels.
 
 ### Avoid Empty Enhancement
 
-❌ "groundbreaking revolutionary breakthrough"
-✅ "novel approach to the established problem"
+❌ "groundbreaking revolutionary breakthrough" ✅ "novel approach to the established problem"
 
 ### Include Specific Metrics
 
-❌ "significantly improved performance"
-✅ "improved F1 score from 0.72 to 0.89"
+❌ "significantly improved performance" ✅ "improved F1 score from 0.72 to 0.89"
 
 ### Acknowledge Limitations
 
-❌ "Our method solves all problems"
-✅ "While effective for structured data, our approach shows limitations with sparse datasets"
+❌ "Our method solves all problems" ✅ "While effective for structured data, our approach shows limitations with sparse
+datasets"
 
 ## Academic Sophistication Markers
 
 ### Complex Sentence Structures
 
-> "While previous approaches have focused primarily on supervised learning paradigms, which require extensive labeled datasets that are often unavailable in specialized domains, our methodology leverages semi-supervised techniques that can effectively utilize the abundance of unlabeled data, thereby addressing a critical limitation in the field."
+> "While previous approaches have focused primarily on supervised learning paradigms, which require extensive labeled
+> datasets that are often unavailable in specialized domains, our methodology leverages semi-supervised techniques that
+> can effectively utilize the abundance of unlabeled data, thereby addressing a critical limitation in the field."
 
 This complexity is appropriate for academic audiences.
 
@@ -168,4 +173,5 @@ Academic writing has different goals than business or technical writing:
 - **Comprehensive review** vs. focused solution
 - **Formal discourse** vs. conversational tone
 
-Many patterns that indicate AI in other contexts are simply academic convention. The key is using them with precision and purpose, not as filler.
+Many patterns that indicate AI in other contexts are simply academic convention. The key is using them with precision
+and purpose, not as filler.

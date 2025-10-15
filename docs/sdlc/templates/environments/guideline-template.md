@@ -1,8 +1,9 @@
-# <Discipline> Guidelines Template
+# `Discipline` Guidelines Template
 
 ## Purpose
 
-Capture standards, conventions, and best practices for a specific discipline (e.g., use-case modeling, design, programming, testing) to ensure consistency across agents and teams.
+Capture standards, conventions, and best practices for a specific discipline (e.g., use-case modeling, design,
+programming, testing) to ensure consistency across agents and teams.
 
 ## Ownership & Collaboration
 

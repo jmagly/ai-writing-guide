@@ -2,16 +2,16 @@
 
 ## Metadata
 
-- ID: DES-IFC-<id>
-- Owner: <name/role/team>
-- Contributors: <list>
-- Reviewers: <list>
-- Team: <team>
-- Stakeholders: <list>
-- Status: <draft/in-progress/blocked/approved/done>
-- Dates: created <YYYY-MM-DD> / updated <YYYY-MM-DD> / due <YYYY-MM-DD>
-- Related: UC-<id>, REQ-<id>, DES-<id>, DATA-<id>, TEST-<id>, ADR-<id>
-- Links: <paths/urls>
+- ID: DES-IFC-`id`
+- Owner: `name/role/team`
+- Contributors: `list`
+- Reviewers: `list`
+- Team: `team`
+- Stakeholders: `list`
+- Status: `draft/in-progress/blocked/approved/done`
+- Dates: created `YYYY-MM-DD` / updated `YYYY-MM-DD` / due `YYYY-MM-DD`
+- Related: UC-`id`, REQ-`id`, DES-`id`, DATA-`id`, TEST-`id`, ADR-`id`
+- Links: `paths/urls`
 
 ## Related templates
 
@@ -21,8 +21,8 @@
 
 ## Identifier
 
-- Interface: <name>
-- Owners/consumers: <teams/services>
+- Interface: `name`
+- Owners/consumers: `teams/services`
 
 ## Summary
 
@@ -30,7 +30,7 @@ Purpose and responsibilities in one paragraph.
 
 ## Contract
 
-- Operations: <methods/endpoints>
+- Operations: `methods/endpoints`
 - Inputs/outputs: link to data contracts
 - Error model: codes and semantics
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Define how components are assembled, validated, and delivered across iterations. Use this plan to align feature teams and build engineers on integration cadence and responsibilities.
+Define how components are assembled, validated, and delivered across iterations. Use this plan to align feature teams
+and build engineers on integration cadence and responsibilities.
 
 ## Ownership & Collaboration
 

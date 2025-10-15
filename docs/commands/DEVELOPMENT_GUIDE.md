@@ -2,7 +2,8 @@
 
 ## Overview
 
-This guide covers advanced topics for developing effective Claude Code commands and agents, including testing strategies, performance optimization, and integration patterns.
+This guide covers advanced topics for developing effective Claude Code commands and agents, including testing
+strategies, performance optimization, and integration patterns.
 
 ## Development Lifecycle
 
@@ -696,4 +697,5 @@ cat .claude/commands/my-command.md | head -20
 /doctor
 ```
 
-This development guide provides the foundation for creating robust, secure, and efficient Claude Code commands that enhance development workflows while maintaining quality and security standards.
+This development guide provides the foundation for creating robust, secure, and efficient Claude Code commands that
+enhance development workflows while maintaining quality and security standards.

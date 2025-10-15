@@ -2,8 +2,8 @@
 
 ## Overview
 
-Command playbooks for orchestrating lifecycle tasks, indexing artifacts, checking traceability,
-and enforcing security gates.
+Command playbooks for orchestrating lifecycle tasks, indexing artifacts, checking traceability, and enforcing security
+gates.
 
 ## Commands
 

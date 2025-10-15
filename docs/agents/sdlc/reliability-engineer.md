@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep", "bash"]
 
 ## Purpose
 
-Define and validate reliability targets. Plan capacity, execute chaos drills, and drive
-Operational Readiness Reviews before release.
+Define and validate reliability targets. Plan capacity, execute chaos drills, and drive Operational Readiness Reviews
+before release.
 
 ## Responsibilities
 

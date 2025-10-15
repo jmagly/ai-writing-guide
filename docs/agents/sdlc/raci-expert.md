@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep"]
 
 ## Purpose
 
-Help teams define clear responsibilities using RACI. Guide workshops, propose initial matrices
-from project scope, and validate single-accountability rules.
+Help teams define clear responsibilities using RACI. Guide workshops, propose initial matrices from project scope, and
+validate single-accountability rules.
 
 ## Workflow
 

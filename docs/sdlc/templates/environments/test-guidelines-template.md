@@ -4,15 +4,15 @@ Adapted from the original RUP template: <https://files.defcon.no/RUP/webtmpl/tem
 
 ## Cover Page
 
-- `<Project Name>`
+- ``Project Name``
 - `Test Guidelines`
-- `Version <1.0>`
+- `Version`1.0``
 
 ## Revision History
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| `<dd/mmm/yy>` | `<x.x>` | `<details>` | `<name>` |
+| ``dd/mmm/yy``|``x.x``|`<details>`|`<name>` |
 
 ## 1 Introduction
 
@@ -30,7 +30,8 @@ Adapted from the original RUP template: <https://files.defcon.no/RUP/webtmpl/tem
 
 ## 2 Test Levels and Coverage Expectations
 
-> Define expectations for unit, integration, system, acceptance, performance, security, usability, and regression testing.
+> Define expectations for unit, integration, system, acceptance, performance, security, usability, and regression
+> testing.
 
 ## 3 Test Design Standards
 

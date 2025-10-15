@@ -2,8 +2,7 @@
 
 ## Purpose
 
-Track stakeholder needs, requests, and decisions to maintain alignment and ensure traceability across
-disciplines.
+Track stakeholder needs, requests, and decisions to maintain alignment and ensure traceability across disciplines.
 
 ## Ownership & Collaboration
 

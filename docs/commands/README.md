@@ -2,7 +2,8 @@
 
 ## Overview
 
-Claude Code supports custom slash commands and hooks that extend functionality beyond the built-in commands. This guide covers how to create, configure, and deploy custom commands for both personal and project use.
+Claude Code supports custom slash commands and hooks that extend functionality beyond the built-in commands. This guide
+covers how to create, configure, and deploy custom commands for both personal and project use.
 
 ## Command Types
 
@@ -518,4 +519,5 @@ Delegate each aspect to the appropriate specialist agent.
 4. **Parallel Execution**: Use agents for independent tasks
 5. **Monitor Usage**: Track costs and performance
 
-This comprehensive guide provides the foundation for creating powerful, secure, and maintainable Claude Code commands that enhance development workflows.
+This comprehensive guide provides the foundation for creating powerful, secure, and maintainable Claude Code commands
+that enhance development workflows.

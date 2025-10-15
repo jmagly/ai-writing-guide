@@ -9,8 +9,8 @@ tools: ["read", "write", "edit", "glob", "grep"]
 
 ## Purpose
 
-Enforce minimum security criteria at iteration close and pre-release. Summarize findings and
-required actions for a go/no-go decision.
+Enforce minimum security criteria at iteration close and pre-release. Summarize findings and required actions for a
+go/no-go decision.
 
 ## Workflow
 

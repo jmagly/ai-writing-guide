@@ -4,7 +4,8 @@ Adapted from the original RUP template: <https://files.defcon.no/RUP/webtmpl/tem
 
 ## Purpose
 
-Describe the guiding principles, methodologies, and standards governing the testing effort throughout the project lifecycle.
+Describe the guiding principles, methodologies, and standards governing the testing effort throughout the project
+lifecycle.
 
 ## Ownership & Collaboration
 

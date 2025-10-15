@@ -10,9 +10,8 @@ argument-hint: "docs/sdlc/artifacts/<project>"
 
 ## Task
 
-Walk the specified artifacts folder, extract titles and short summaries, and write digest
-Markdown files to support compact agent context. If an `_index.yaml` exists, update summaries
-and timestamps; otherwise, create a minimal one.
+Walk the specified artifacts folder, extract titles and short summaries, and write digest Markdown files to support
+compact agent context. If an `_index.yaml` exists, update summaries and timestamps; otherwise, create a minimal one.
 
 ## Outputs
 

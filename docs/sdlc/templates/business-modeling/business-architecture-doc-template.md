@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Provide a structured view of the enterprise processes, organizational structure, and information flows
-to inform solution scope and alignment.
+Provide a structured view of the enterprise processes, organizational structure, and information flows to inform
+solution scope and alignment.
 
 ## Ownership & Collaboration
 

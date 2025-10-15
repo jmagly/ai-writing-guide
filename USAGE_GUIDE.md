@@ -6,7 +6,8 @@
 
 ## Core Principle
 
-The goal is to maintain sophisticated, authoritative writing while avoiding AI detection patterns. We're not dumbing down content - we're removing performative language while preserving technical depth and professional voice.
+The goal is to maintain sophisticated, authoritative writing while avoiding AI detection patterns. We're not dumbing
+down content - we're removing performative language while preserving technical depth and professional voice.
 
 ## When to Use This Guide
 
@@ -134,7 +135,8 @@ Only use full suite if content consistently fails. This indicates need for:
 > "We built a thing. It works good. Saves money."
 
 **Correct interpretation**:
-> "We architected a distributed system using CQRS and event sourcing. Initial benchmarks show 3x throughput improvement over the monolithic approach, though operational complexity increased substantially."
+> "We architected a distributed system using CQRS and event sourcing. Initial benchmarks show 3x throughput improvement
+> over the monolithic approach, though operational complexity increased substantially."
 
 ### The Balance
 
@@ -147,7 +149,7 @@ Only use full suite if content consistently fails. This indicates need for:
 ### Too Casual (Loss of Authority)
 
 - Single-syllable words dominating
-- Sentence fragments everywhere  
+- Sentence fragments everywhere
 - Slang or colloquialisms
 - Reading level below 10th grade for technical content
 
@@ -227,23 +229,19 @@ If output loses sophistication:
 
 ### Over-Application
 
-❌ Using all documents for every task
-✅ Selective inclusion based on needs
+❌ Using all documents for every task ✅ Selective inclusion based on needs
 
 ### Wrong Context
 
-❌ Using technical examples for marketing
-✅ Matching examples to domain
+❌ Using technical examples for marketing ✅ Matching examples to domain
 
 ### Dumbing Down
 
-❌ "The code makes the computer go fast"
-✅ "The optimized algorithm reduces time complexity from O(n²) to O(n log n)"
+❌ "The code makes the computer go fast" ✅ "The optimized algorithm reduces time complexity from O(n²) to O(n log n)"
 
 ### Losing Professional Voice
 
-❌ "Yeah, so we basically just..."
-✅ "We implemented a pragmatic solution that..."
+❌ "Yeah, so we basically just..." ✅ "We implemented a pragmatic solution that..."
 
 ## Subagents and Automation
 
@@ -314,4 +312,5 @@ Launch multiple agents for comprehensive work:
 - **Authenticity comes from honesty**, not casualness
 - **Different contexts need different voices**
 
-The goal: Write like an expert who's confident enough to be honest, not an AI trying to impress or a novice trying to be casual.
+The goal: Write like an expert who's confident enough to be honest, not an AI trying to impress or a novice trying to be
+casual.

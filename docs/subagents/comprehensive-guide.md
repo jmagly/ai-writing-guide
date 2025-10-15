@@ -2,13 +2,16 @@
 
 ## Overview
 
-Subagents in Claude Code allow you to delegate complex, multi-step tasks to specialized AI agents that operate autonomously. This reduces task completion time from hours to minutes by enabling parallel execution and leveraging specialized expertise.
+Subagents in Claude Code allow you to delegate complex, multi-step tasks to specialized AI agents that operate
+autonomously. This reduces task completion time from hours to minutes by enabling parallel execution and leveraging
+specialized expertise.
 
 ## Core Concepts
 
-### What Are Subagents?
+### What Are Subagents
 
-Subagents are specialized Claude instances launched through the Task tool, each configured for specific domains or task types. They operate independently with their own context windows and tool permissions.
+Subagents are specialized Claude instances launched through the Task tool, each configured for specific domains or task
+types. They operate independently with their own context windows and tool permissions.
 
 ### Key Benefits
 
