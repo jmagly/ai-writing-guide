@@ -23,9 +23,16 @@ Options:
   --alias-file <f> Shell RC/alias file to append (auto-detected if omitted)
   --auto-install-node  Attempt to install Node.js >= 18.20.8 if missing/older
 
-This installs the framework to the prefix and registers aliases:
-  aiwg-deploy-agents  -> copy shared agents into .claude/agents (current dir)
-  aiwg-new            -> scaffold a new project with intake templates
+This installs the framework to the prefix and registers the 'aiwg' CLI with commands:
+  aiwg -deploy-agents  -> deploy agents to .claude/agents
+  aiwg -deploy-commands -> deploy slash commands to .claude/commands
+  aiwg -new            -> scaffold new project with SDLC templates
+  aiwg -prefill-cards  -> prefill SDLC card metadata from team profile
+  aiwg -version        -> show installed version (commit hash)
+  aiwg -update         -> manually update installation
+  aiwg -help           -> show command help
+
+Note: aiwg automatically updates on every command invocation.
 USAGE
 }
 
@@ -179,13 +186,16 @@ fi
 {
   echo "$ALIAS_BANNER"
   echo "aiwg_update() { command -v git >/dev/null 2>&1 && git -C \"$PREFIX\" fetch --all -q && git -C \"$PREFIX\" pull --ff-only -q || true; }"
+  echo "aiwg_version() { if [[ -d \"$PREFIX/.git\" ]]; then echo \"aiwg version: \$(git -C \"$PREFIX\" rev-parse --short HEAD) (branch: \$(git -C \"$PREFIX\" branch --show-current))\"; echo \"Installed at: $PREFIX\"; else echo \"aiwg not installed via git\"; fi; }"
   echo "aiwg() { aiwg_update; local sub=\"\$1\"; shift || true; case \"\$sub\" in \\
     -new|--new) node \"$PREFIX/tools/install/new-project.mjs\" \"\$@\" ;; \\
     -deploy-agents|--deploy-agents) node \"$PREFIX/tools/agents/deploy-agents.mjs\" \"\$@\" ;; \\
     -deploy-commands|--deploy-commands) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --deploy-commands \"\$@\" ;; \\
     -prefill-cards|--prefill-cards) node \"$PREFIX/tools/cards/prefill-cards.mjs\" \"\$@\" ;; \\
-    -h|--help|-help|help|\"\") echo 'Usage: aiwg -new [--no-agents|--provider <claude|openai>] | -deploy-agents [--provider <...> --force|--dry-run|--deploy-commands|--commands-only|--source <path>|--target <path>] | -deploy-commands [--provider <...> --force|--dry-run] | -prefill-cards --target <path> --team <team-profile.(yml|yaml|json)> [--write]' ;; \\
-    *) echo 'Unknown command. Use: aiwg -new | -deploy-agents | -deploy-commands | -prefill-cards' ;; \\
+    -version|--version|version) aiwg_version ;; \\
+    -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Current version:' && aiwg_version ;; \\
+    -h|--help|-help|help|\"\") echo 'Usage: aiwg <command> [options]'; echo ''; echo 'Commands:'; echo '  -new [--no-agents|--provider <claude|openai>]'; echo '       Create new project with SDLC templates'; echo '  -deploy-agents [--provider <...> --force|--dry-run|--source <path>|--target <path>]'; echo '       Deploy agent definitions to current/target directory'; echo '  -deploy-commands [--provider <...> --force|--dry-run]'; echo '       Deploy slash commands to current/target directory'; echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; echo '       Prefill SDLC card metadata from team profile'; echo '  -version'; echo '       Show current installed version (commit hash)'; echo '  -update'; echo '       Manually update aiwg installation'; echo '  -help'; echo '       Show this help message'; echo ''; echo 'Note: aiwg automatically updates on every command run.' ;; \\
+    *) echo 'Unknown command. Use: aiwg -help for usage information' ;; \\
   esac }"
   echo "aiwg-deploy-agents() { aiwg -deploy-agents \"\$@\"; }"
   echo "aiwg-deploy-commands() { aiwg -deploy-commands \"\$@\"; }"
@@ -195,4 +205,16 @@ fi
 
 echo "Installed to: $PREFIX"
 echo "Aliases added to: $ALIAS_FILE"
-echo "Run 'source $ALIAS_FILE' or open a new shell to use: aiwg -deploy-agents, aiwg -deploy-commands, aiwg -new"
+echo ""
+echo "Run 'source $ALIAS_FILE' or open a new shell to activate the 'aiwg' CLI."
+echo ""
+echo "Available commands:"
+echo "  aiwg -version           Show current version"
+echo "  aiwg -update            Manually update installation"
+echo "  aiwg -deploy-agents     Deploy agents"
+echo "  aiwg -deploy-commands   Deploy commands"
+echo "  aiwg -new               Create new project"
+echo "  aiwg -prefill-cards     Prefill card metadata"
+echo "  aiwg -help              Show detailed help"
+echo ""
+echo "Note: aiwg automatically updates on every command run."

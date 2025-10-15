@@ -199,6 +199,12 @@ This installs to `~/.local/share/ai-writing-guide` and registers the `aiwg` CLI.
 ### Available Commands
 
 ```bash
+# Show current installed version
+aiwg -version
+
+# Manually update aiwg installation
+aiwg -update
+
 # Deploy agents to current project
 aiwg -deploy-agents [--mode general|sdlc|both] [--provider claude|openai] [--dry-run] [--force]
 
@@ -210,7 +216,12 @@ aiwg -new [--no-agents] [--provider claude|openai]
 
 # Prefill card metadata from team profile
 aiwg -prefill-cards --target agentic/code/frameworks/sdlc-complete/artifacts/<project> --team team-profile.yaml [--write]
+
+# Show help
+aiwg -help
 ```
+
+**Note**: aiwg automatically updates on every command invocation to ensure you're always using the latest version.
 
 ### Direct Tool Usage (Without Install)
 
