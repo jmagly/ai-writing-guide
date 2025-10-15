@@ -281,10 +281,93 @@ This repository includes a comprehensive software development lifecycle framewor
 1. Scaffold new project: `aiwg -new` (copies intake templates)
 2. Deploy SDLC agents: `aiwg -deploy-agents --mode sdlc`
 3. Deploy SDLC commands: `aiwg -deploy-commands --mode sdlc`
-4. Fill intake forms in your project's intake directory
+4. Fill intake forms: `/project:intake-wizard "your project description"`
 5. Follow phase workflows: Reference `agentic/code/frameworks/sdlc-complete/plan-act-sdlc.md` for milestone guidance
 
 See `agentic/code/frameworks/sdlc-complete/actors-and-templates.md` for role-to-template mappings.
+
+## .aiwg/ - SDLC Artifacts Directory
+
+All SDLC artifacts (requirements, architecture, planning, testing, etc.) are stored in the **`.aiwg/`** directory by default. This keeps user-facing code in the project root separate from process artifacts.
+
+### Directory Structure
+
+```
+.aiwg/
+├── intake/              # Project intake forms (default output)
+├── requirements/        # User stories, use cases, NFRs
+├── architecture/        # SAD, ADRs, diagrams, API contracts
+├── planning/            # Phase and iteration plans
+├── risks/               # Risk register and spikes
+├── testing/             # Test strategy, plans, results
+├── security/            # Threat models and security artifacts
+├── quality/             # Code reviews, retrospectives, metrics
+├── deployment/          # Deployment plans and runbooks
+├── handoffs/            # Phase transition checklists
+├── gates/               # Quality gate reports
+├── decisions/           # Change requests, CCB meetings
+├── team/                # Team profile and coordination
+├── working/             # Temporary/scratch (safe to delete)
+└── reports/             # Generated reports and indices
+```
+
+### Benefits
+
+- **Clean separation**: User code stays in root, process artifacts in `.aiwg/`
+- **Easy to ignore**: Single `.gitignore` entry ignores all SDLC artifacts
+- **Optional sharing**: Teams choose to commit (full audit trail) or ignore (local use)
+- **Discoverable**: Centralized location for all planning documents
+- **Tooling-friendly**: Consistent paths for all SDLC commands
+
+### Recommended .gitignore Strategy
+
+**Option 1: Commit Everything** (Teams & Enterprise)
+- Full audit trail for compliance
+- Shared context for team coordination
+- No .gitignore entries for `.aiwg/`
+
+**Option 2: Commit Planning Only** (Balanced)
+```gitignore
+.aiwg/working/       # Ignore temporary files
+.aiwg/reports/       # Ignore generated reports
+```
+
+**Option 3: Use Locally Only** (Solo Developers)
+```gitignore
+.aiwg/               # Ignore all SDLC artifacts
+!.aiwg/intake/       # Keep intake forms for context
+!.aiwg/README.md
+```
+
+### Default Output Paths
+
+| Command | Default Output |
+|---------|---------------|
+| intake-wizard | `.aiwg/intake/` |
+| intake-from-codebase | `.aiwg/intake/` |
+| flow-risk-management-cycle | `.aiwg/risks/` |
+| flow-architecture-evolution | `.aiwg/architecture/` |
+| flow-test-strategy-execution | `.aiwg/testing/` |
+| flow-security-review-cycle | `.aiwg/security/` |
+| flow-gate-check | `.aiwg/gates/` |
+| flow-handoff-checklist | `.aiwg/handoffs/` |
+| flow-change-control | `.aiwg/decisions/` |
+| build-artifact-index | `.aiwg/reports/` |
+| check-traceability | `.aiwg/reports/` |
+| project-health-check | `.aiwg/reports/` |
+
+All commands support custom output paths via arguments.
+
+### Migration from intake/
+
+If you have existing `intake/` artifacts:
+```bash
+mkdir -p .aiwg/intake
+mv intake/* .aiwg/intake/
+rmdir intake
+```
+
+Or specify custom path: `/project:intake-wizard --complete intake/`
 
 ## Important File References
 
