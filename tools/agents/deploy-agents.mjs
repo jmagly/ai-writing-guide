@@ -51,9 +51,10 @@ function ensureDir(d) {
 
 function listMdFiles(dir) {
   if (!fs.existsSync(dir)) return [];
+  const excluded = ['README.md', 'manifest.md', 'agent-template.md', 'openai-compat.md'];
   return fs
     .readdirSync(dir, { withFileTypes: true })
-    .filter((e) => e.isFile() && e.name.toLowerCase().endsWith('.md'))
+    .filter((e) => e.isFile() && e.name.toLowerCase().endsWith('.md') && !excluded.includes(e.name))
     .map((e) => path.join(dir, e.name));
 }
 
@@ -111,30 +112,20 @@ function writeFile(dest, data, dryRun) {
 }
 
 function deployFiles(files, destDir, opts) {
-  const { preferSuffixForSDLC = true, force = false, dryRun = false, provider = 'claude' } = opts;
+  const { force = false, dryRun = false, provider = 'claude' } = opts;
   const seen = new Set();
   const actions = [];
   for (const f of files) {
     const base = path.basename(f);
     let dest = path.join(destDir, base);
-    let fromSDLC = f.includes(`${path.sep}sdlc${path.sep}`);
     if (seen.has(dest) || (fs.existsSync(dest) && !force)) {
-      if (preferSuffixForSDLC && fromSDLC) {
-        const ext = path.extname(base);
-        const name = path.basename(base, ext);
-        let candidate = path.join(destDir, `${name}-sdlc${ext}`);
-        let idx = 1;
-        while (fs.existsSync(candidate)) {
-          candidate = path.join(destDir, `${name}-sdlc-${idx++}${ext}`);
-        }
-        dest = candidate;
-      } else if (!force) {
+      if (!force) {
         // Skip duplicates when not forcing
         actions.push({ type: 'skip', src: f, dest });
         continue;
       }
     }
-    actions.push({ type: 'deploy', src: f, dest, fromSDLC });
+    actions.push({ type: 'deploy', src: f, dest });
     seen.add(dest);
   }
 
@@ -174,15 +165,12 @@ function aggregateToAgentsMd(files, destPath, opts) {
   const repoRoot = path.resolve(scriptDir, '..', '..');
   const srcRoot = source ? source : repoRoot;
   const agentsRoot = path.join(srcRoot, 'docs', 'agents');
-  const sdlcRoot = path.join(agentsRoot, 'sdlc');
   if (!fs.existsSync(agentsRoot)) {
     console.error('Cannot find agents root at', agentsRoot);
     process.exit(1);
   }
 
-  const topAgents = listMdFiles(agentsRoot);
-  const sdlcAgents = fs.existsSync(sdlcRoot) ? listMdFiles(sdlcRoot) : [];
-  const files = [...topAgents, ...sdlcAgents];
+  const files = listMdFiles(agentsRoot);
 
   if (provider === 'openai' && cfg.asAgentsMd) {
     const destDir = path.join(target, '.codex');
@@ -203,7 +191,6 @@ function aggregateToAgentsMd(files, destPath, opts) {
     if (!dryRun) ensureDir(destDir);
     console.log(`Deploying ${files.length} agents to ${destDir} (provider=${provider})`);
     deployFiles(files, destDir, {
-      preferSuffixForSDLC: true,
       force,
       dryRun,
       provider,
