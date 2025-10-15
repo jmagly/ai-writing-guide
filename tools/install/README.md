@@ -3,24 +3,24 @@
 One-liner installs the framework to a standard location and registers CLI aliases:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh | bash
 ```
 
 Options:
 
 ```bash
 # View help
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh)" -- --help
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh)" -- --help
 
 # Custom repo/prefix/branch/alias-file
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh)" -- \
-  --repo https://github.com/manitcor/ai-writing-guide.git \
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh)" -- \
+  --repo https://github.com/jmagly/ai-writing-guide.git \
   --branch main \
   --prefix $HOME/.local/share/ai-writing-guide \
   --alias-file $HOME/.bash_aliases
 
 # Auto-install Node.js (attempt via NodeSource/Homebrew/etc.)
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh)" -- --auto-install-node
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh)" -- --auto-install-node
 ```
 
 Aliases installed (unified CLI):

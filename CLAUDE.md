@@ -190,7 +190,7 @@ The `.github/workflows/lint-fixcheck.yml` workflow enforces these on all PRs.
 ### One-Line Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh | bash
 ```
 
 This installs to `~/.local/share/ai-writing-guide` and registers the `aiwg` CLI.

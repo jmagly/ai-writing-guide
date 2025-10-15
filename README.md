@@ -71,7 +71,7 @@ Tip: add a shell alias for convenience: `alias deploy_agents='node
 Install the framework to `~/.local/share/ai-writing-guide` and register CLI aliases:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh | bash
 ```
 
 This adds a unified CLI:
@@ -85,8 +85,8 @@ This adds a unified CLI:
 To customize the install (repo, branch, prefix):
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/manitcor/ai-writing-guide/main/tools/install/install.sh)" -- \
-  --repo https://github.com/manitcor/ai-writing-guide.git \
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh)" -- \
+  --repo https://github.com/jmagly/ai-writing-guide.git \
   --branch main \
   --prefix $HOME/.local/share/ai-writing-guide
 ```

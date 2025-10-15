@@ -5,7 +5,7 @@ set -euo pipefail
 # - Clones/updates the repository to an install location
 # - Registers CLI aliases: aiwg-deploy-agents, aiwg-new
 
-REPO_URL_DEFAULT="https://github.com/manitcor/ai-writing-guide.git"
+REPO_URL_DEFAULT="https://github.com/jmagly/ai-writing-guide.git"
 BRANCH="main"
 PREFIX_DEFAULT="$HOME/.local/share/ai-writing-guide"
 ALIAS_BANNER="# --- ai-writing-guide aliases (begin) ---"
