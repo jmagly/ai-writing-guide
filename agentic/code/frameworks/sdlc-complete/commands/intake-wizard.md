@@ -1,8 +1,8 @@
 ---
-description: Generate complete intake forms (project-intake, solution-profile, option-matrix) from user input with interactive mode
+description: Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning
 category: sdlc-management
-argument-hint: <project-description> [--interactive]
-allowed-tools: Read, Write, TodoWrite
+argument-hint: <project-description|--complete> [--interactive] [intake-directory]
+allowed-tools: Read, Write, Glob, TodoWrite
 model: sonnet
 ---
 
@@ -12,6 +12,7 @@ You are an experienced Business Process Analyst and Requirements Analyst special
 
 ## Your Task
 
+### Mode 1: Generate New Intake (Default)
 When invoked with `/project:intake-wizard <project-description> [--interactive]`:
 
 1. **Analyze** the user's project description
@@ -19,9 +20,18 @@ When invoked with `/project:intake-wizard <project-description> [--interactive]`
 3. **Infer** missing details using expert judgment
 4. **Generate** complete intake forms with no placeholders
 
+### Mode 2: Complete Existing Intake
+When invoked with `/project:intake-wizard --complete [--interactive] [intake-directory]`:
+
+1. **Read** existing intake files (project-intake.md, solution-profile.md, option-matrix.md)
+2. **Detect gaps** - identify missing or placeholder fields
+3. **Auto-complete** if sufficient detail exists (no questions needed)
+4. **Ask questions** (up to 10) if critical gaps exist and --interactive mode enabled
+5. **Update** intake files with completed information, preserving existing content
+
 ## Input Modes
 
-### Quick Mode (Default)
+### Quick Mode (Default - Generate)
 User provides project description, you generate complete intake forms using best-practice defaults.
 
 **Example**:
@@ -29,12 +39,37 @@ User provides project description, you generate complete intake forms using best
 /project:intake-wizard "Build a customer dashboard for viewing order history and tracking shipments"
 ```
 
-### Interactive Mode
+### Interactive Mode (Generate)
 Ask 5-10 targeted questions to clarify critical decisions, adapting based on user responses.
 
 **Example**:
 ```
 /project:intake-wizard "Build a customer dashboard" --interactive
+```
+
+### Complete Mode (Auto-complete Existing)
+Read existing intake files and complete any gaps automatically if enough detail exists.
+
+**Example**:
+```
+/project:intake-wizard --complete
+
+# Reads intake/*.md files
+# If sufficient detail: completes automatically
+# If critical gaps: reports what's needed
+```
+
+### Complete Mode + Interactive (Fill Gaps with Questions)
+Read existing intake files, detect gaps, and ask questions to fill critical missing information.
+
+**Example**:
+```
+/project:intake-wizard --complete --interactive
+
+# Reads intake/*.md files
+# Detects gaps: missing timeline, unclear security requirements, no scale estimate
+# Asks 3-5 questions to clarify gaps
+# Updates intake files with completed information
 ```
 
 ## Question Strategy (Interactive Mode Only)
@@ -421,6 +456,406 @@ When user information is missing or unclear, use these defaults:
 - MVP/Startup: Speed 0.4, Cost 0.3, Quality 0.3
 - Production: Speed 0.2, Cost 0.2, Quality 0.3, Reliability 0.3
 - Enterprise: Speed 0.1, Cost 0.2, Quality 0.4, Reliability 0.3
+
+## Complete Mode Workflow
+
+### Step 1: Read Existing Intake Files
+
+Read files in priority order:
+```bash
+# Check for intake files
+ls intake/project-intake.md
+ls intake/solution-profile.md
+ls intake/option-matrix.md
+
+# If not found, try alternate locations
+ls ./project-intake.md
+ls ./solution-profile.md
+ls ./option-matrix.md
+```
+
+**If files don't exist**:
+- Report: "No existing intake files found. Use without --complete to generate new intake."
+- Exit with error
+
+**If files exist**: Continue to gap detection
+
+### Step 2: Parse and Analyze Existing Content
+
+For each file, identify:
+
+**Placeholder Patterns** (indicate missing content):
+- `{placeholder}` or `{TBD}` or `{TODO}`
+- `name` or `contact` (template placeholders)
+- `bullets` or `list` or `notes`
+- `e.g., ...` without actual value
+- `YYYY-MM-DD` without actual date
+- Empty bullet points: `- `
+- Field with no value after colon: `- Field:`
+
+**Vague Content** (needs clarification):
+- "TBD", "To be determined", "Unknown"
+- "Small", "Medium", "Large" without numbers
+- "Soon", "Later", "Eventually" without timeline
+- "Some", "A few", "Several" without specifics
+
+**Sufficient Content** (acceptable as-is):
+- Specific numbers: "5,000 users", "3 months", "$50k budget"
+- Named entities: "AWS", "React + Node", "PostgreSQL"
+- Dates: "2025-12-31", "Q2 2025"
+- Enumerations: "Customer Support, Engineering, Product"
+
+### Step 3: Gap Classification
+
+Classify each gap by criticality:
+
+**Critical Gaps** (blocks Inception phase):
+- Problem statement missing or vague
+- No timeline/timeframe
+- No scope definition (in-scope items)
+- No security classification
+- No profile selection (solution-profile.md)
+- Missing all options (option-matrix.md)
+
+**Important Gaps** (should fill, can infer if needed):
+- Success metrics unclear
+- Stakeholders incomplete
+- Team size unknown
+- Scale expectations missing
+- Compliance requirements unclear
+
+**Minor Gaps** (can infer with high confidence):
+- Specific dates (use current date + timeline)
+- Budget (infer from scale and profile)
+- Operational support details
+- Technical preferences
+- Observability level
+
+### Step 4: Auto-Complete Decision
+
+**If zero critical gaps** AND **≤3 important gaps**:
+- Auto-complete mode: Fill all gaps using expert inference
+- No questions needed
+- Preserve ALL existing content
+- Only add missing values
+
+**If 1+ critical gaps** OR **>3 important gaps**:
+- **If --interactive flag present**: Ask questions to fill critical and important gaps (max 10)
+- **If no --interactive flag**: Report gaps and suggest re-running with --interactive
+  ```
+  Found 2 critical gaps and 4 important gaps:
+
+  Critical:
+  - Timeline/timeframe not specified
+  - Security classification missing
+
+  Important:
+  - Success metrics vague ("improve efficiency")
+  - Scale expectations unclear
+  - Team size unknown
+  - Compliance requirements not mentioned
+
+  Recommendation: Run with --interactive to clarify:
+  /project:intake-wizard --complete --interactive
+  ```
+
+### Step 5: Gap-Focused Questioning (Complete + Interactive)
+
+**Prioritize questions by gap criticality**:
+
+1. **Critical gaps first** (always ask):
+   - Missing timeline → "What's your target timeline for this project?"
+   - Missing scope → "What are the must-have features for the first version?"
+   - Missing security → "What type of data will this handle? Any PII or sensitive information?"
+
+2. **Important gaps second** (ask if <10 questions total):
+   - Vague metrics → "How will you measure success? What specific metrics matter?"
+   - Missing scale → "How many users do you expect initially and in 6 months?"
+   - Unknown team → "What's your team size and technical experience?"
+
+3. **Minor gaps** (infer, don't ask):
+   - Use expert judgment based on other provided information
+
+**Example Gap-Focused Flow**:
+
+Existing intake has:
+- Project name: "Customer Portal" ✓
+- Problem: "Customers can't see order status" ✓
+- Timeline: `{timeframe}` ✗ CRITICAL GAP
+- In-scope: "Order status, tracking" ✓
+- Security: `{classification}` ✗ CRITICAL GAP
+- Scale: "customers" (vague) ✗ IMPORTANT GAP
+- Team: `{notes}` ✗ IMPORTANT GAP
+
+**Questions (4 total, under 10 limit)**:
+1. "What's your target timeline to get this live?" (CRITICAL)
+2. "What type of data will customers see? Any personal info like addresses or payment details?" (CRITICAL)
+3. "How many customers will use this? Current count and 6-month projection?" (IMPORTANT)
+4. "What's your team size and tech stack experience?" (IMPORTANT)
+
+**Auto-infer** (no questions):
+- Success metrics: "80% customer self-service", "50% reduction in support calls"
+- Stakeholders: Customer Support, Engineering, Product
+- Budget: $500-1000/mo based on scale
+- Profile: MVP (3-month timeline, modest scale)
+
+### Step 6: Update Files (Preserve Existing Content)
+
+**Merge Strategy**:
+- **Keep all existing non-placeholder content**
+- **Replace placeholders** with actual values
+- **Enhance vague content** with specifics
+- **Add missing sections** if entirely absent
+- **Preserve formatting** and structure
+
+**Example Update**:
+
+**Before (project-intake.md)**:
+```markdown
+- Project name: Customer Portal
+- Requestor/owner: `name/contact`
+- Date: `YYYY-MM-DD`
+
+## Problem and Outcomes
+
+- Problem statement: Customers can't see order status online
+- Target personas/scenarios: `bullets`
+- Success metrics (KPIs): `e.g., activation +20%, p95 < 200ms`
+
+## Scope and Constraints
+
+- In-scope: Order status, tracking
+- Out-of-scope (for now): `bullets`
+- Timeframe: `e.g., MVP in 6 weeks`
+```
+
+**After (completed)**:
+```markdown
+- Project name: Customer Portal
+- Requestor/owner: Engineering Team
+- Date: 2025-10-15
+
+## Problem and Outcomes
+
+- Problem statement: Customers can't see order status online, resulting in 50+ daily support calls
+- Target personas/scenarios: Existing customers checking order status and shipment tracking
+- Success metrics (KPIs): 50% reduction in support calls within 3 months, 80% customer self-service rate, p95 latency < 500ms
+
+## Scope and Constraints
+
+- In-scope: Order status, tracking
+- Out-of-scope (for now): Order history (full purchase history), Returns processing, Refund requests
+- Timeframe: MVP in 12 weeks (3 months)
+```
+
+**Changes Made**:
+- Filled `name/contact` → "Engineering Team" (inferred)
+- Filled `YYYY-MM-DD` → "2025-10-15" (current date)
+- Enhanced problem statement with context from user answers
+- Filled `bullets` for personas → specific personas based on problem
+- Replaced vague metrics with specific KPIs from user answers
+- Filled out-of-scope bullets → inferred complementary features
+- Filled timeframe → from user answer "3 months"
+
+### Step 7: Generate Completion Report
+
+**Report Format**:
+```markdown
+# Intake Completion Report
+
+**Mode**: {Auto-complete | Interactive completion}
+**Files Updated**: {count}
+**Gaps Filled**: {count}
+**Questions Asked**: {count} (if interactive)
+
+## Files Updated
+
+✓ intake/project-intake.md
+  - Filled 5 placeholder fields
+  - Enhanced 2 vague descriptions
+  - Added 3 missing sections
+
+✓ intake/solution-profile.md
+  - Selected profile: MVP (based on 12-week timeline, moderate scale)
+  - Filled security defaults: Baseline + GDPR
+  - Added override note: "EU customers require GDPR compliance"
+
+✓ intake/option-matrix.md
+  - Calculated priority weights: Speed 0.4, Cost 0.3, Quality 0.3
+  - Scored 3 architectural options
+  - Recommended: Monolith + AWS (score: 4.1/5.0)
+
+## Changes Summary
+
+**Filled Placeholders**: 12 fields
+- Timeline: 12 weeks (from user)
+- Security: Baseline + GDPR (inferred from EU customers)
+- Scale: 5k users initially, 10k in 6 months (from user)
+- Team: 2 developers, React + Node experience (from user)
+- Success metrics: 50% fewer support calls (from user)
+- ... (list all)
+
+**Enhanced Vague Content**: 3 fields
+- "improve efficiency" → "50% reduction in support calls within 3 months"
+- "customers" → "5,000 active customers, growing to 10,000 in 6 months"
+- "soon" → "12 weeks (Q1 2026)"
+
+**Added Missing Sections**: 1
+- Compliance: GDPR (data privacy, consent, 30-day deletion)
+
+## Validation
+
+✓ Zero placeholders remaining
+✓ All critical fields complete
+✓ Internally consistent
+✓ Ready for Inception phase
+
+## Next Steps
+
+1. Review completed intake files
+2. Start Inception flow: /project:flow-concept-to-inception .
+```
+
+## Complete Mode Examples
+
+### Example 1: Auto-Complete (No Questions Needed)
+
+**Existing intake/project-intake.md** (partial):
+```markdown
+- Project name: Employee Schedule Manager
+- Problem statement: Manual schedule management causes conflicts
+- In-scope: Shift scheduling, conflict detection
+- Timeframe: 10 weeks
+- Stakeholders: HR, Engineering
+- Team size/skills: 3 developers, full-stack
+- Security posture: `{Minimal|Baseline|Strong|Enterprise}`
+```
+
+**Command**:
+```
+/project:intake-wizard --complete
+```
+
+**Agent Analysis**:
+- Critical gaps: 0 (has problem, scope, timeline)
+- Important gaps: 1 (security posture placeholder)
+- Minor gaps: several (dates, some details)
+
+**Decision**: Auto-complete (sufficient detail)
+
+**Agent Action**:
+```
+Analyzing existing intake files...
+
+✓ Found: intake/project-intake.md
+✓ Found: intake/solution-profile.md
+✗ Missing: intake/option-matrix.md
+
+Gaps detected:
+- 1 critical field: option-matrix.md missing
+- 8 placeholder fields in project-intake.md
+- 2 placeholder fields in solution-profile.md
+
+Sufficient detail present for auto-completion.
+
+Auto-completing intake files...
+
+✓ Updated intake/project-intake.md (8 fields filled)
+✓ Updated intake/solution-profile.md (2 fields filled)
+✓ Created intake/option-matrix.md (complete)
+
+Inferences made:
+- Security: Baseline (internal tool, no PII, HR data is Internal classification)
+- Scale: <100 users (internal HR tool)
+- Profile: MVP (10-week timeline, internal validation)
+- Architecture: Simple monolith (small team, internal scale)
+- Priority weights: Speed 0.4, Cost 0.3, Quality 0.3 (MVP focus)
+
+All intake files complete. Ready for Inception phase.
+```
+
+### Example 2: Interactive Completion (Questions for Critical Gaps)
+
+**Existing intake/project-intake.md** (partial):
+```markdown
+- Project name: Mobile API
+- Problem statement: Mobile app needs backend
+- In-scope: `bullets`
+- Timeframe: `e.g., MVP in 6 weeks`
+- Security posture: `{classification}`
+```
+
+**Command**:
+```
+/project:intake-wizard --complete --interactive
+```
+
+**Agent Analysis**:
+- Critical gaps: 3 (scope, timeline, security all missing)
+- Important gaps: many
+
+**Agent Response**:
+```
+Reading existing intake files...
+
+✓ Found: intake/project-intake.md
+✓ Found: intake/solution-profile.md
+✓ Found: intake/option-matrix.md
+
+Analyzing gaps...
+
+Found 3 critical gaps and 5 important gaps:
+
+Critical:
+- In-scope features not defined
+- Timeline not specified
+- Security classification missing
+
+Important:
+- Success metrics vague ("backend for mobile app")
+- Scale expectations unclear
+- Team size unknown
+- Integrations not specified
+- Compliance requirements not mentioned
+
+I'll ask a few questions to fill the critical gaps.
+
+Question 1/10: What specific features does the mobile API need to provide? What can the app do?
+
+{user responds: "User login, product catalog browsing, add to cart, checkout"}
+
+Question 2/10: What's your target timeline to get this API production-ready?
+
+{user responds: "We need it in 4 months for the mobile app launch"}
+
+Question 3/10: What type of data will the API handle? Any personal info, payment data, or health information?
+
+{user responds: "Yes - user profiles, shipping addresses, and credit card processing"}
+
+Question 4/10: How many users do you expect? Initial launch and 6-month projection?
+
+{user responds: "Launching to 10k existing customers, expecting 25k in 6 months"}
+
+Question 5/10: Any specific compliance requirements given you're handling payment data?
+
+{user responds: "We're in the US and EU, so PCI-DSS for payments and GDPR for EU users"}
+
+Great! I have what I need. Completing your intake files...
+
+✓ Updated intake/project-intake.md
+✓ Updated intake/solution-profile.md
+✓ Updated intake/option-matrix.md
+
+Summary:
+- In-scope: User auth, product catalog API, cart management, checkout/payment
+- Timeline: 16 weeks (4 months)
+- Security: Strong (PCI-DSS + GDPR compliance required)
+- Scale: 10k launch, 25k in 6 months
+- Profile: Production (compliance requirements, revenue-generating)
+- Architecture: Service-oriented (moderate scale, payment isolation)
+
+All critical gaps filled. Ready for Inception phase.
+```
 
 ## Interactive Mode Example
 
