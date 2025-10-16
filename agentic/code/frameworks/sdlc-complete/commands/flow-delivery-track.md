@@ -1,571 +1,963 @@
 ---
-description: Execute Delivery Track flow with test-driven development, quality gates, and iteration assessment
-category: sdlc-management
+description: Orchestrate Delivery Track flow with test-driven development, quality gates, and iteration assessment
+category: sdlc-orchestration
 argument-hint: <iteration-number> [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Delivery Track Flow
 
-You are an SDLC Delivery Coordinator specializing in orchestrating implementation iterations with quality gates and test-driven development.
+**You are the Core Orchestrator** for the critical Delivery Track iteration implementation.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-delivery-track <iteration-number> [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Validate** iteration backlog readiness (DoR passed from Discovery)
-2. **Coordinate** 6-step delivery workflow with quality gates
-3. **Monitor** Definition of Done (DoD) compliance
-4. **Generate** iteration assessment and velocity metrics
+When the user requests this flow (via natural language or explicit command):
 
-## Phase Overview
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
-The Delivery Track implements prioritized work slices with tests and quality gates, ensuring production-ready increments 
+## Delivery Track Overview
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Purpose**: Execute prioritized work items with test-driven development and quality gates
 
-**Parse Command Line**:
+**Key Principle**: Each iteration produces production-ready increments through rigorous quality control
 
-Extract optional `--guidance` and `--interactive` parameters.
+**Iteration Duration**: 1-2 weeks typical, 20-30 minutes orchestration
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
+**Success Metrics**:
+- All work items meet Definition of Done (DoD)
+- Quality gates passed (security, performance, coverage)
+- Tests written before implementation (TDD)
+- Continuous integration maintained
 
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+## Natural Language Triggers
+
+Users may say:
+- "Execute delivery for iteration 3"
+- "Start delivery track"
+- "Execute current iteration"
+- "Run implementation sprint"
+- "Begin construction iteration"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### Iteration Number
+
+**Required**: The iteration number to execute (e.g., 3, 5, 12)
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor orchestration priorities
+
+**Examples**:
+```
+--guidance "Focus on security, we have a pen test next week"
+--guidance "Performance critical, must maintain sub-100ms response times"
+--guidance "Code coverage is slipping, prioritize test completion"
+--guidance "New team members, extra code review emphasis needed"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: security, performance, testing, quality
+- Adjust agent assignments (add security-architect for security focus)
+- Modify gate thresholds (stricter performance limits if critical)
+- Influence priority ordering (tests first vs. features first)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 5-7 strategic questions to understand iteration context
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 7 strategic questions to tailor the Delivery Track to your needs:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What are your top priorities for this iteration?
+    (e.g., feature completion, tech debt, bug fixes, performance)
 
-**Resolve AIWG installation**:
+Q2: Are there any blocked dependencies or risks?
+    (Helps me plan mitigation strategies)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: What's your current test coverage percentage?
+    (Influences test-first emphasis and coverage targets)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: Are there any compliance or security requirements this iteration?
+    (e.g., security audit preparation, compliance features)
+
+Q5: What's your team's current velocity trend?
+    (Helps calibrate iteration scope)
+
+Q6: Any operational concerns for this release?
+    (e.g., database migrations, API changes, performance impacts)
+
+Q7: What's the deployment target after this iteration?
+    (e.g., staging only, production release, demo environment)
+
+Based on your answers, I'll adjust:
+- Agent assignments (add specialized reviewers)
+- Quality gate thresholds
+- Test coverage requirements
+- Security scan depth
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance string for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Delivery Track - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **Iteration Plan**: Task breakdown with estimates → `.aiwg/planning/iteration-{N}-plan.md`
+- **Implementation Code**: Feature implementation with tests → Project source files
+- **Test Results**: Unit, integration, and acceptance tests → `.aiwg/testing/iteration-{N}-test-results.md`
+- **Quality Gate Report**: Security, performance, coverage → `.aiwg/gates/iteration-{N}-quality-report.md`
+- **Release Notes**: User-facing changes → `.aiwg/deployment/release-notes-iteration-{N}.md`
+- **Iteration Assessment**: Velocity and lessons learned → `.aiwg/reports/iteration-{N}-assessment.md`
 
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
+**Supporting Artifacts**:
+- Work package cards (task definitions)
+- Design class cards (implementation details)
+- Test evaluation summaries
+- Defect reports
+- Runbook updates
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
+## Multi-Agent Orchestration Workflow
 
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
+### Step 1: Validate Iteration Readiness
 
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
+**Purpose**: Ensure backlog items are ready for implementation (DoR met)
+
+**Your Actions**:
+
+1. **Check for Ready Backlog**:
+   ```
+   Read and verify presence of:
+   - .aiwg/planning/iteration-{N}-backlog.md (or discovery output)
+   - .aiwg/requirements/use-case-*.md (acceptance criteria)
+   - .aiwg/architecture/software-architecture-doc.md (design context)
+   ```
+
+2. **Launch Readiness Validation**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Validate iteration {N} readiness",
+       prompt="""
+       Read backlog items for iteration {N}
+
+       Validate Definition of Ready (DoR):
+       - User stories have acceptance criteria
+       - Technical designs documented
+       - Dependencies identified
+       - Test criteria defined
+       - Estimates provided
+
+       Calculate:
+       - Total story points planned
+       - Number of work items
+       - Risk items to address
+
+       Status: READY | BLOCKED | PARTIAL
+
+       If BLOCKED or PARTIAL, list gaps
+
+       Save validation to: .aiwg/reports/iteration-{N}-readiness.md
+       """
+   )
+   ```
+
+3. **Decision Point**:
+   - If READY → Continue to Step 2
+   - If BLOCKED → Report gaps, recommend Discovery Track completion
+   - If PARTIAL → Proceed with ready items only
+
+**Communicate Progress**:
+```
+✓ Initialized iteration {N} validation
+⏳ Validating backlog readiness...
+✓ Iteration readiness: [READY | BLOCKED | PARTIAL]
 ```
 
-**Apply Guidance**:
+### Step 2: Plan Task Slices and Assignments
 
-Parse guidance for keywords and adjust execution:
+**Purpose**: Break down work into 1-2 hour implementable tasks
 
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
+**Your Actions**:
 
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
+1. **Read Iteration Context**:
+   ```
+   Read:
+   - .aiwg/planning/iteration-{N}-backlog.md (work items)
+   - .aiwg/reports/iteration-{N-1}-assessment.md (velocity history)
+   - .aiwg/team/team-profile.yaml (team capacity)
+   ```
 
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
+2. **Launch Task Planning Agents** (parallel):
+   ```
+   # Agent 1: Software Implementer
+   Task(
+       subagent_type="software-implementer",
+       description="Break down implementation tasks",
+       prompt="""
+       Read iteration backlog items
 
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
+       For each user story/feature:
+       - Break into 1-2 hour tasks (max 4 hours)
+       - Define technical approach
+       - Identify test requirements
+       - Estimate effort in hours
 
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
+       Document using work package template:
+       - Task ID and name
+       - Acceptance criteria
+       - Test strategy (unit, integration)
+       - Dependencies
+       - Estimated hours
 
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
+       Output: .aiwg/working/iteration-{N}/task-breakdown.md
+       """
+   )
 
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
+   # Agent 2: Test Engineer
+   Task(
+       subagent_type="test-engineer",
+       description="Define test-first strategy",
+       prompt="""
+       Read task breakdown
 
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
+       For each task, define:
+       - Test cases to write BEFORE implementation
+       - Unit test scenarios
+       - Integration test requirements
+       - Acceptance test criteria
+       - Expected test coverage
 
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
+       Create test-first checklist:
+       - Which tests block implementation start
+       - Test data requirements
+       - Mock/stub needs
+
+       Output: .aiwg/working/iteration-{N}/test-first-strategy.md
+       """
+   )
+
+   # Agent 3: Project Manager
+   Task(
+       subagent_type="project-manager",
+       description="Create iteration plan with assignments",
+       prompt="""
+       Read task breakdown and test strategy
+
+       Create iteration plan:
+       1. Task sequence (considering dependencies)
+       2. Owner assignments (load balancing)
+       3. Critical path identification
+       4. Risk mitigation tasks
+       5. Daily milestone targets
+
+       Calculate:
+       - Total effort hours
+       - Team capacity utilization
+       - Iteration burndown forecast
+
+       Template: $AIWG_ROOT/.../management/iteration-plan-template.md
+
+       Output: .aiwg/planning/iteration-{N}-plan.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Planning iteration {N} tasks...
+  ✓ Implementation tasks defined ({count} tasks)
+  ✓ Test-first strategy created
+  ✓ Iteration plan finalized
+✓ Iteration plan complete: .aiwg/planning/iteration-{N}-plan.md
 ```
 
-each iteration.
+### Step 3: Implement with Test-Driven Development
 
-## Workflow Steps
+**Purpose**: Write tests first, then implement code to pass tests
 
-### Step 1: Plan Task Slices
-**Agents**: Component Owner (lead), Project Manager
-**Templates Required**:
-- `management/work-package-card.md`
-- `management/iteration-plan-template.md`
+**Your Actions**:
 
-**Actions**:
-1. Break down ready backlog items into 1-2 hour task slices
-2. Define acceptance criteria for each task
-3. Document test-first strategy
-4. Estimate effort and assign ownership
+1. **For Each Task in Plan, Execute TDD Cycle**:
+   ```
+   # Step 3.1: Write Tests First
+   Task(
+       subagent_type="test-engineer",
+       description="Write tests for task {task-id}",
+       prompt="""
+       Task: {task-description}
+       Acceptance criteria: {criteria}
 
-**Gate Criteria**:
-- [ ] Task slices are 1-2 hours each (max 4 hours)
-- [ ] Acceptance criteria defined for all tasks
-- [ ] Test-first strategy documented
-- [ ] Tasks assigned to Component Owners
+       Write comprehensive tests BEFORE implementation:
 
-### Step 2: Implement Code and Tests
-**Agents**: Component Owner (lead), Build Engineer
-**Templates Required**:
-- `implementation/design-class-card.md`
-- `test/use-case-test-card.md`
+       1. Unit tests for core logic
+       2. Integration tests for APIs/services
+       3. Edge cases and error conditions
+       4. Performance benchmarks (if applicable)
 
-**Actions**:
-1. Write tests first (TDD approach)
-2. Implement code to pass acceptance criteria
-3. Ensure commits are traceable to requirements
-4. Maintain code quality standards (linting, formatting)
+       Use project test framework (Jest, pytest, etc.)
+       Tests should FAIL initially (no implementation yet)
 
-**Gate Criteria**:
-- [ ] Code implements all acceptance criteria
-- [ ] Unit tests written before implementation
-- [ ] Commits reference work item IDs
-- [ ] Code passes linting and formatting checks
+       Output test files to project test directories
+       Document test count and coverage targets
 
-### Step 3: Run Test Suites, Fix Defects
-**Agents**: QA Engineer (lead), Component Owner
-**Templates Required**:
-- `test/iteration-test-plan-template.md`
-- `test/test-evaluation-summary-template.md`
+       Report: .aiwg/working/iteration-{N}/tests/{task-id}-tests.md
+       """
+   )
 
-**Actions**:
-1. Run unit test suite (must be ≥80% coverage)
-2. Run integration test suite
-3. Document defects in issue tracker
-4. Fix defects and re-test
+   # Step 3.2: Implement Code
+   Task(
+       subagent_type="software-implementer",
+       description="Implement task {task-id} to pass tests",
+       prompt="""
+       Task: {task-description}
+       Tests written: {test-count}
 
-**Gate Criteria**:
-- [ ] Unit test coverage ≥ 80% (or per project standard)
-- [ ] Integration tests passing 100%
-- [ ] All defects documented and triaged
-- [ ] P0/P1 defects fixed
+       Implement code to make ALL tests pass:
 
-### Step 4: Validate Quality Gates
-**Agents**: Security Gatekeeper (lead), Reliability Engineer
-**Templates Required**:
-- `security/security-test-case-card.md`
-- `deployment/sli-card.md`
+       1. Follow architecture patterns from SAD
+       2. Use coding standards defined in project
+       3. Write clean, maintainable code
+       4. Add inline documentation
+       5. Ensure commits reference task ID
 
-**Actions**:
-1. Run security scans (SAST/DAST)
-2. Validate performance metrics against SLO targets
-3. Check for High/Critical vulnerabilities
-4. Verify no performance regressions
+       Run tests continuously during implementation
+       All tests must pass before marking complete
 
-**Gate Criteria**:
-- [ ] Security scans passing (no High/Critical vulnerabilities)
-- [ ] Performance metrics within SLO targets
-- [ ] No performance regressions vs. baseline
-- [ ] Reliability Engineer signoff
+       Design documentation: Use design-class-card template if needed
 
-### Step 5: Integrate and Prepare Documentation
-**Agents**: Deployment Manager (lead), Technical Writer
-**Templates Required**:
-- `deployment/release-notes-template.md`
-- `deployment/runbook-entry-card.md`
+       Report: .aiwg/working/iteration-{N}/implementation/{task-id}-complete.md
+       """
+   )
 
-**Actions**:
-1. Merge code to main/trunk branch
-2. Update release notes with user-facing changes
-3. Update runbooks for operational changes
-4. Deploy to dev/staging environments
+   # Step 3.3: Code Review
+   Task(
+       subagent_type="code-reviewer",
+       description="Review implementation for task {task-id}",
+       prompt="""
+       Review code implementation:
 
-**Gate Criteria**:
-- [ ] Integration build successful
-- [ ] Release notes updated
-- [ ] Runbooks updated for operational changes
-- [ ] Deployed successfully to dev and staging
+       Check for:
+       - Acceptance criteria met
+       - Tests comprehensive and passing
+       - Code quality (readability, maintainability)
+       - Security best practices
+       - Performance considerations
+       - Documentation completeness
 
-### Step 6: Update Iteration Assessment
-**Agents**: Project Manager (lead)
-**Templates Required**:
-- `management/iteration-assessment-template.md`
+       Provide feedback:
+       - Required changes (blockers)
+       - Suggested improvements
+       - Approval status: APPROVED | NEEDS_CHANGES
 
-**Actions**:
-1. Calculate velocity (story points or work items completed)
-2. Update risk list (new risks, retired risks)
-3. Capture lessons learned
-4. Update traceability matrix
+       If NEEDS_CHANGES, be specific about required fixes
 
-**Gate Criteria**:
-- [ ] Iteration goals met (all planned work completed)
-- [ ] Velocity tracked and analyzed
-- [ ] Risks updated
-- [ ] Lessons learned captured
+       Review report: .aiwg/working/iteration-{N}/reviews/{task-id}-review.md
+       """
+   )
+   ```
 
-## Definition of Done (DoD)
+2. **Iterate Until All Tasks Complete**:
+   - Track completion percentage
+   - Handle review feedback loops
+   - Ensure all tests remain passing
 
-A work item is DONE when ALL of the following criteria are met:
+**Communicate Progress**:
+```
+⏳ Implementing iteration {N} ({total} tasks)...
+  ✓ Task 1: Tests written (12), implementation complete, APPROVED
+  ✓ Task 2: Tests written (8), implementation complete, APPROVED
+  ⏳ Task 3: Tests written (15), implementing...
+Progress: {completed}/{total} tasks complete
+```
+
+### Step 4: Execute Comprehensive Testing
+
+**Purpose**: Run full test suites and achieve coverage targets
+
+**Your Actions**:
+
+1. **Launch Test Execution** (parallel):
+   ```
+   # Unit Test Suite
+   Task(
+       subagent_type="test-engineer",
+       description="Execute unit test suite",
+       prompt="""
+       Run complete unit test suite for iteration {N}
+
+       Execute:
+       - All new tests from this iteration
+       - Full regression suite
+       - Coverage analysis
+
+       Target: ≥80% code coverage (or project standard)
+
+       Document:
+       - Tests run: {count}
+       - Tests passed: {count}
+       - Coverage: {percentage}%
+       - Failed tests (if any) with details
+
+       Output: .aiwg/testing/iteration-{N}-unit-test-results.md
+       """
+   )
+
+   # Integration Test Suite
+   Task(
+       subagent_type="test-engineer",
+       description="Execute integration test suite",
+       prompt="""
+       Run integration tests for iteration {N}
+
+       Test:
+       - API endpoints
+       - Service interactions
+       - Database operations
+       - External system integrations
+
+       All integration tests must pass (100%)
+
+       Document:
+       - Tests run: {count}
+       - Tests passed: {count}
+       - Performance metrics
+       - Failed tests with root cause
+
+       Output: .aiwg/testing/iteration-{N}-integration-test-results.md
+       """
+   )
+
+   # End-to-End Test Suite
+   Task(
+       subagent_type="test-engineer",
+       description="Execute E2E acceptance tests",
+       prompt="""
+       Run end-to-end tests for user journeys
+
+       Validate:
+       - Critical user paths work correctly
+       - Cross-component interactions
+       - User acceptance criteria met
+
+       Document:
+       - Scenarios tested: {count}
+       - Scenarios passed: {count}
+       - UI/UX issues found
+       - Performance observations
+
+       Output: .aiwg/testing/iteration-{N}-e2e-test-results.md
+       """
+   )
+   ```
+
+2. **Fix Any Test Failures**:
+   ```
+   If test failures detected:
+   Task(
+       subagent_type="software-implementer",
+       description="Fix test failures from iteration {N}",
+       prompt="""
+       Test failures detected:
+       {list failures}
+
+       For each failure:
+       1. Analyze root cause
+       2. Determine if bug in code or test
+       3. Fix issue
+       4. Re-run affected tests
+       5. Document fix in commit message
+
+       All tests must pass before proceeding
+
+       Output: .aiwg/working/iteration-{N}/test-fixes.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Executing test suites...
+  ✓ Unit tests: 156/156 passed (85% coverage)
+  ✓ Integration tests: 42/42 passed
+  ✓ E2E tests: 8/8 scenarios passed
+✓ All tests passing, coverage targets met
+```
+
+### Step 5: Validate Quality Gates
+
+**Purpose**: Ensure code meets security, performance, and quality standards
+
+**Your Actions**:
+
+1. **Launch Quality Gate Checks** (parallel):
+   ```
+   # Security Gate
+   Task(
+       subagent_type="security-gatekeeper",
+       description="Run security gate validation",
+       prompt="""
+       Perform security analysis for iteration {N}:
+
+       1. Run SAST (static analysis) scan
+       2. Check for vulnerable dependencies
+       3. Validate secure coding practices
+       4. Review authentication/authorization changes
+
+       Gate criteria:
+       - No Critical vulnerabilities
+       - No High vulnerabilities (or documented exceptions)
+       - OWASP Top 10 compliance
+
+       Status: PASS | FAIL | CONDITIONAL
+
+       If FAIL, list vulnerabilities requiring fix
+
+       Output: .aiwg/gates/iteration-{N}-security-gate.md
+       """
+   )
+
+   # Performance Gate
+   Task(
+       subagent_type="devops-engineer",
+       description="Validate performance metrics",
+       prompt="""
+       Run performance validation for iteration {N}:
+
+       1. Execute performance test suite
+       2. Compare against baseline metrics
+       3. Check SLO compliance
+       4. Identify regressions
+
+       Gate criteria:
+       - No performance regressions >10%
+       - Response time p95 < {target}ms
+       - Throughput > {target} req/s
+       - Memory usage stable
+
+       Status: PASS | FAIL | WARNING
+
+       Document performance profile and any issues
+
+       Output: .aiwg/gates/iteration-{N}-performance-gate.md
+       """
+   )
+
+   # Code Quality Gate
+   Task(
+       subagent_type="code-reviewer",
+       description="Validate code quality standards",
+       prompt="""
+       Assess code quality for iteration {N}:
+
+       1. Run static analysis (linting, complexity)
+       2. Check code coverage percentage
+       3. Review technical debt introduced
+       4. Validate documentation completeness
+
+       Gate criteria:
+       - Code coverage ≥80% (or project standard)
+       - Cyclomatic complexity <10
+       - No critical linting errors
+       - Public APIs documented
+
+       Status: PASS | FAIL | WARNING
+
+       Output: .aiwg/gates/iteration-{N}-code-quality-gate.md
+       """
+   )
+   ```
+
+2. **Consolidate Gate Results**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Consolidate quality gate results",
+       prompt="""
+       Read all gate reports:
+       - Security gate status
+       - Performance gate status
+       - Code quality gate status
+
+       Generate consolidated quality report:
+
+       Overall Status: PASS (all gates pass) | BLOCKED (any gate fails)
+
+       If BLOCKED:
+       - List failing gates
+       - Required fixes
+       - Remediation timeline
+
+       Output: .aiwg/gates/iteration-{N}-quality-report.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Validating quality gates...
+  ✓ Security gate: PASS (0 vulnerabilities)
+  ✓ Performance gate: PASS (no regressions)
+  ✓ Code quality gate: PASS (82% coverage)
+✓ All quality gates passed
+```
+
+### Step 6: Integration and Documentation
+
+**Purpose**: Merge code and update all documentation
+
+**Your Actions**:
+
+1. **Merge to Main Branch**:
+   ```
+   Task(
+       subagent_type="devops-engineer",
+       description="Integrate iteration {N} to main",
+       prompt="""
+       With all gates passed, merge iteration work:
+
+       1. Merge feature branches to main/trunk
+       2. Run CI/CD pipeline
+       3. Validate build success
+       4. Deploy to dev environment
+       5. Run smoke tests
+
+       Document:
+       - Commits merged: {count}
+       - Build status: SUCCESS | FAILURE
+       - Deployment status
+       - Smoke test results
+
+       Output: .aiwg/deployment/iteration-{N}-integration.md
+       """
+   )
+   ```
+
+2. **Update Documentation** (parallel):
+   ```
+   # Release Notes
+   Task(
+       subagent_type="technical-writer",
+       description="Generate release notes",
+       prompt="""
+       Create user-facing release notes for iteration {N}:
+
+       Sections:
+       - New Features (user-visible changes)
+       - Improvements (performance, UX enhancements)
+       - Bug Fixes (issues resolved)
+       - Known Issues (if any)
+
+       Write in user-friendly language
+       Include relevant screenshots/examples if applicable
+
+       Template: $AIWG_ROOT/.../deployment/release-notes-template.md
+
+       Output: .aiwg/deployment/release-notes-iteration-{N}.md
+       """
+   )
+
+   # Runbook Updates
+   Task(
+       subagent_type="operations-manager",
+       description="Update operational runbooks",
+       prompt="""
+       Review iteration {N} for operational changes:
+
+       Update runbooks if:
+       - New configuration added
+       - Deployment process changed
+       - New monitoring/alerts added
+       - Database migrations required
+       - API changes affecting operations
+
+       Document all operational impacts
+
+       Output: .aiwg/deployment/runbook-updates-iteration-{N}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Finalizing integration...
+  ✓ Code merged to main branch
+  ✓ CI/CD pipeline successful
+  ✓ Deployed to dev environment
+  ✓ Release notes generated
+  ✓ Runbooks updated
+✓ Integration complete
+```
+
+### Step 7: Generate Iteration Assessment
+
+**Purpose**: Calculate velocity metrics and capture lessons learned
+
+**Your Actions**:
+
+1. **Calculate Metrics**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Calculate iteration {N} metrics",
+       prompt="""
+       Analyze iteration {N} completion:
+
+       Calculate:
+       - Story points planned vs completed
+       - Tasks planned vs completed
+       - Velocity (points/iteration)
+       - Defects found and fixed
+       - Test coverage achieved
+       - Quality gate pass rate
+
+       Compare to previous iterations:
+       - Velocity trend (improving/declining)
+       - Quality trend
+       - Team productivity
+
+       Output metrics summary
+       """
+   )
+   ```
+
+2. **Generate Assessment Report**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Generate iteration {N} assessment",
+       prompt="""
+       Create comprehensive iteration assessment:
+
+       1. Goals Achievement
+          - Planned vs completed work
+          - Success percentage
+
+       2. Velocity Metrics
+          - Points completed
+          - Velocity trend analysis
+
+       3. Quality Metrics
+          - Test coverage
+          - Defect rates
+          - Gate pass rates
+
+       4. Risks
+          - New risks identified
+          - Risks retired
+          - Risk mitigation status
+
+       5. Lessons Learned
+          - What went well
+          - What needs improvement
+          - Action items for next iteration
+
+       6. Team Performance
+          - Capacity utilization
+          - Collaboration effectiveness
+
+       Template: $AIWG_ROOT/.../management/iteration-assessment-template.md
+
+       Output: .aiwg/reports/iteration-{N}-assessment.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Generating iteration assessment...
+✓ Iteration {N} assessment complete
+  - Velocity: {points} story points
+  - Completion: {percentage}%
+  - Quality gates: {pass-rate}%
+```
+
+## Definition of Done (DoD) Checklist
+
+Before marking iteration complete, verify:
 
 ### Implementation Complete
-- [ ] Code implements all acceptance criteria
-- [ ] Code peer-reviewed by at least 1 reviewer
-- [ ] Code merged to integration branch
-- [ ] No outstanding code review comments
+- [ ] All acceptance criteria met
+- [ ] Code peer-reviewed
+- [ ] Code merged to main
+- [ ] No outstanding review comments
 
 ### Tests Complete
 - [ ] Unit tests written and passing
-- [ ] Integration tests written and passing
-- [ ] Acceptance tests passing (per DoR criteria)
-- [ ] Test coverage meets project standards (≥80%)
+- [ ] Integration tests passing
+- [ ] E2E tests passing
+- [ ] Coverage targets met
 
 ### Documentation Complete
-- [ ] Code comments added (public APIs documented)
-- [ ] Release notes entry added
-- [ ] Runbook entry added (if operational impact)
-- [ ] Traceability updated (work item → code → tests)
+- [ ] Code comments added
+- [ ] Release notes updated
+- [ ] Runbooks updated
+- [ ] Traceability maintained
 
 ### Quality Gates Passed
-- [ ] Security scan passing (no High/Critical vulnerabilities)
-- [ ] Performance within SLO targets
-- [ ] No new High/Critical defects introduced
-- [ ] Reliability Engineer signoff
+- [ ] Security gate passed
+- [ ] Performance gate passed
+- [ ] Code quality gate passed
+- [ ] No critical defects
 
 ### Deployment Ready
-- [ ] Deployed to dev environment successfully
-- [ ] Deployed to test/staging environment successfully
-- [ ] Feature flag configured (if applicable)
-- [ ] Configuration changes documented
+- [ ] Deployed to dev successfully
+- [ ] Smoke tests passing
+- [ ] Configuration documented
 
-## Quality Gate Failure Recovery
+## User Communication
 
-### Security Gate Failure
-**Trigger**: High/Critical vulnerabilities found
+**At start**: Confirm understanding and list deliverables
 
-**Response**:
-1. STOP: Do not proceed to next iteration
-2. Security Gatekeeper triages vulnerability
-3. If P0/P1: Emergency fix required, may require architecture change
-4. If P2: Document in backlog, schedule for next iteration
-5. Re-scan after fix, Security Gatekeeper re-approval required
+```
+Understood. I'll orchestrate Delivery Track for iteration {N}.
 
-**Commands**:
-```bash
-# Run security scan
-/project:security-audit
+This will include:
+- Task planning and breakdown
+- Test-driven development
+- Comprehensive testing
+- Quality gate validation
+- Documentation updates
+- Iteration assessment
 
-# Check security gate status
-/project:security-gate
+I'll coordinate multiple agents for implementation and review.
+Expected duration: 20-30 minutes.
+
+Starting orchestration...
 ```
 
-### Reliability Gate Failure
-**Trigger**: Performance regression, SLO breach
+**During**: Update progress with clear indicators
 
-**Response**:
-1. STOP: Do not merge to main
-2. Reliability Engineer investigates root cause
-3. Performance profiling, load testing to identify bottleneck
-4. Fix and re-test
-5. Reliability Engineer re-approval required
-
-**Commands**:
-```bash
-# Generate performance profile
-/project:generate-tests --type performance
+```
+✓ = Complete
+⏳ = In progress
+❌ = Error/blocked
+⚠️ = Warning/attention needed
 ```
 
-### Test Coverage Gate Failure
-**Trigger**: Coverage below threshold
+**At end**: Summary report with locations
 
-**Response**:
-1. STOP: Do not merge to main
-2. Test Architect reviews coverage gaps
-3. Additional tests written to cover critical paths
-4. Re-run coverage analysis
-5. Test Architect re-approval required
+```
+─────────────────────────────────────────
+Iteration {N} Delivery Complete
+─────────────────────────────────────────
 
-**Commands**:
-```bash
-# Generate missing tests
-/project:generate-tests --coverage-gaps
+**Status**: COMPLETE
+**Velocity**: {points} story points
+**Quality Gates**: ALL PASSED
+
+**Work Completed**:
+- Tasks: {completed}/{planned}
+- Tests: {test-count} written
+- Coverage: {percentage}%
+- Defects: {fixed-count} fixed
+
+**Artifacts Generated**:
+- Iteration plan: .aiwg/planning/iteration-{N}-plan.md
+- Test results: .aiwg/testing/iteration-{N}-test-results.md
+- Quality report: .aiwg/gates/iteration-{N}-quality-report.md
+- Release notes: .aiwg/deployment/release-notes-iteration-{N}.md
+- Assessment: .aiwg/reports/iteration-{N}-assessment.md
+
+**Next Steps**:
+- Review iteration assessment
+- Plan next iteration
+- Deploy to staging if ready
+
+─────────────────────────────────────────
 ```
 
-### Regression Gate Failure
-**Trigger**: Existing tests failing
+## Error Handling
 
-**Response**:
-1. STOP: Do not merge to main
-2. Root cause analysis: bug in new code or test issue?
-3. Fix bug or update test (if requirements changed)
-4. Re-run full regression suite
-5. Document reason for test change in commit
+**If Backlog Not Ready**:
+```
+❌ Iteration {N} backlog not ready
 
-## Integration with Discovery Track
+Missing:
+- {list missing items}
 
-### Input from Discovery
-- Ready backlog items (passed DoR from discovery-delivery handoff)
-- Use case briefs with acceptance criteria
-- Data contracts and interface definitions
-- ADRs for technical decisions
-
-### Synchronization
-- Delivery consumes work 1 iteration behind Discovery
-- Discovery prepares iteration N+1 while Delivery implements iteration N
-- Weekly synchronization meeting to review handoff readiness
-
-### Feedback Loop
-- If implementation discovers requirements gap:
-  1. Escalate to Requirements Reviewer
-  2. May return item to Discovery track
-  3. Document issue in iteration assessment
-  4. Adjust velocity forecast
-
-### Handoff Cadence
-- Weekly or per iteration boundary
-- Align with dual-track iteration flow
-- Use handoff checklist template
-
-**Command**:
-```bash
-# Check handoff readiness
-/project:flow-handoff-checklist discovery delivery
+Recommendation: Complete Discovery Track first
+Run: /project:flow-discovery-track {N}
 ```
 
-## Output Report
+**If Tests Fail**:
+```
+⚠️ Test failures detected
 
-Generate an iteration assessment report:
+Failed tests: {count}
+- {test names}
 
-```markdown
-# Iteration {N} Delivery Assessment
+Action: Fixing test failures before proceeding...
+```
 
-**Project**: {project-name}
-**Iteration**: {iteration-number}
-**Date**: {current-date}
-**Status**: {COMPLETE | INCOMPLETE | BLOCKED}
+**If Quality Gate Fails**:
+```
+❌ Quality gate failed: {gate-name}
 
-## Iteration Goals
+Issue: {specific problem}
+Required fix: {description}
 
-**Planned Work Items**: {count}
-**Completed Work Items**: {count}
-**Carry-Over Work Items**: {count}
+Cannot proceed until gate passes.
+Initiating remediation...
+```
 
-**Goal Achievement**: {percentage}%
+**If Integration Fails**:
+```
+❌ Integration build failed
 
-## Velocity Metrics
+Error: {build error}
+Action: Investigating build failure...
 
-**Story Points Planned**: {points}
-**Story Points Completed**: {points}
-**Velocity**: {points-per-iteration}
-
-**Velocity Trend**:
-- Iteration N-2: {points}
-- Iteration N-1: {points}
-- Iteration N: {points}
-
-## Quality Gates Status
-
-### Security Gate
-- Status: {PASS | FAIL | BLOCKED}
-- Vulnerabilities Found: {count} (Critical: {count}, High: {count})
-- Security Gatekeeper Signoff: {YES | NO}
-
-### Reliability Gate
-- Status: {PASS | FAIL | BLOCKED}
-- Performance Regressions: {count}
-- SLO Compliance: {percentage}%
-- Reliability Engineer Signoff: {YES | NO}
-
-### Test Coverage Gate
-- Status: {PASS | FAIL | BLOCKED}
-- Unit Test Coverage: {percentage}%
-- Integration Test Coverage: {percentage}%
-- Test Architect Signoff: {YES | NO}
-
-### Regression Gate
-- Status: {PASS | FAIL | BLOCKED}
-- Tests Passing: {count}/{total}
-- Regressions Fixed: {count}
-
-## Defects Summary
-
-**New Defects**: {count}
-**Fixed Defects**: {count}
-**Open Defects**: {count}
-
-**By Severity**:
-- P0 (Critical): {count}
-- P1 (High): {count}
-- P2 (Medium): {count}
-- P3 (Low): {count}
-
-## Risks Updated
-
-**New Risks**: {count}
-**Retired Risks**: {count}
-**Active Risks**: {count}
-
-**Top 3 Risks**:
-1. {risk-description} - Severity: {level} - Mitigation: {plan}
-2. {risk-description} - Severity: {level} - Mitigation: {plan}
-3. {risk-description} - Severity: {level} - Mitigation: {plan}
-
-## Lessons Learned
-
-**What Went Well**:
-{list positive outcomes}
-
-**What Could Improve**:
-{list improvement opportunities}
-
-**Action Items**:
-{list concrete actions for next iteration}
-
-## Traceability Matrix Status
-
-**Requirements Coverage**: {percentage}%
-**Test Coverage**: {percentage}%
-**Code Coverage**: {percentage}%
-
-**Gaps**:
-{list any traceability gaps}
-
-## Next Iteration Planning
-
-**Carry-Over Work**: {count} items
-**Ready Backlog Size**: {count} items
-**Planned Velocity**: {points}
-
-**Focus Areas**:
-{list planned focus areas for next iteration}
+May need manual intervention.
 ```
 
 ## Success Criteria
 
-This command succeeds when:
-- [ ] All 6 workflow steps completed
-- [ ] Definition of Done met for all work items
-- [ ] All quality gates pass or have documented exceptions
-- [ ] Iteration assessment generated with velocity metrics
-- [ ] Risks and lessons learned captured
-- [ ] Traceability matrix updated
+This orchestration succeeds when:
+- [ ] All planned work items complete
+- [ ] Definition of Done met for all items
+- [ ] All tests passing
+- [ ] Quality gates passed
+- [ ] Code integrated to main
+- [ ] Documentation updated
+- [ ] Iteration assessment generated
 
-## Error Handling
+## Metrics to Track
 
-**Empty Backlog**:
-- Report: "No ready backlog items found for iteration {N}"
-- Action: "Run Discovery Track to prepare backlog items"
-- Command: "/project:flow-discovery-track"
-
-**Failed Quality Gate**:
-- Report: "Quality gate failed: {gate-name}"
-- Action: "Follow gate failure recovery procedure"
-- Command: "/project:gate-check {gate-name}"
-
-**DoD Not Met**:
-- Report: "Work item {ID} does not meet Definition of Done"
-- Action: "Review DoD checklist and complete missing items"
-- Recommendation: "Move to carry-over for next iteration"
-
-**Integration Failure**:
-- Report: "Integration build failed: {error-message}"
-- Action: "Fix build errors and re-run integration"
-- Command: "/project:troubleshooting-guide build-failure"
+**During orchestration, track**:
+- Task completion rate
+- Test coverage percentage
+- Defect discovery rate
+- Gate pass/fail rate
+- Velocity (story points)
+- Cycle time per task
 
 ## References
 
-- Full workflow: `flows/delivery-track-template.md`
-- Test strategy: `test/master-test-plan-template.md`
-- Quality gates: `flows/gate-criteria-by-phase.md` (Construction Phase)
-- Handoff checklist: `flows/handoff-checklist-template.md` (Discovery → Delivery)
-- Iteration planning: `management/iteration-plan-template.md`
+**Templates** (via $AIWG_ROOT):
+- Iteration Plan: `templates/management/iteration-plan-template.md`
+- Work Package: `templates/management/work-package-card.md`
+- Test Plan: `templates/test/iteration-test-plan-template.md`
+- Release Notes: `templates/deployment/release-notes-template.md`
+- Assessment: `templates/management/iteration-assessment-template.md`
+
+**Related Flows**:
+- Discovery Track: `commands/flow-discovery-track.md`
+- Gate Check: `commands/flow-gate-check.md`
+- Handoff: `commands/flow-handoff-checklist.md`
+
+**Quality Standards**:
+- DoD Criteria: `flows/definition-of-done.md`
+- Gate Criteria: `flows/gate-criteria-by-phase.md`

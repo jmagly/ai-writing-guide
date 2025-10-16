@@ -1,850 +1,1045 @@
 ---
-description: Execute Knowledge Transfer flow with assessment, documentation, shadowing, reverse shadowing, validation, and handover checklist
-category: sdlc-management
+description: Orchestrate Knowledge Transfer flow with assessment, documentation, shadowing, validation, and handover
+category: sdlc-orchestration
 argument-hint: <from-member> <to-member> [domain] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Glob, Grep, TodoWrite
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
-# Knowledge Transfer Flow
+# Knowledge Transfer Orchestration Flow
 
-You are a Knowledge Transfer Coordinator specializing in structured context handoff between team members during transitions, rotations, or specialization changes.
+**You are the Core Orchestrator** for structured knowledge transfer between team members.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-knowledge-transfer <from-member> <to-member> [domain]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Assess** knowledge gaps and transfer scope
-2. **Document** critical knowledge areas and artifacts
-3. **Execute** shadowing phase (knowledge receiver observes)
-4. **Execute** reverse shadowing phase (knowledge receiver leads)
-5. **Validate** knowledge acquisition with practical tests
-6. **Complete** handover checklist and signoff
+When the user requests this flow (via natural language or explicit command):
 
-## Phase Overview
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
-The Knowledge Transfer flow ensures continuity when team members transition roles, leave projects, or hand off domain expertise through structured observation, practice, 
+## Knowledge Transfer Overview
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Purpose**: Ensure continuity when team members transition roles, leave projects, or hand off domain expertise
 
-**Parse Command Line**:
-
-Extract optional `--guidance` and `--interactive` parameters.
-
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
-
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
-```
-
-**Path Resolution**:
-
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
-
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
-
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
-
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
-
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
-
-**Resolve AIWG installation**:
-
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
-
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
-```
-
-**Interactive Mode**:
-
-If `--interactive` flag set, prompt user with strategic questions:
-
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Knowledge Transfer - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
-
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
-
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-and validation.
-
-## Workflow Steps
-
-### Step 1: Knowledge Assessment and Transfer Scope
-**Agents**: Knowledge Analyst (lead), Project Manager
-**Templates Required**:
-- `knowledge/knowledge-map-template.md`
-- `knowledge/transfer-plan-template.md`
-
-**Actions**:
-1. Identify knowledge domain(s) to transfer
-2. Assess knowledge holder's expertise depth
-3. Assess knowledge receiver's current knowledge level
-4. Define transfer scope and success criteria
-5. Estimate transfer timeline (typically 2-6 weeks)
-
-**Gate Criteria**:
-- [ ] Knowledge domain clearly defined
-- [ ] Knowledge gaps identified
-- [ ] Transfer scope documented with boundaries
-- [ ] Success criteria agreed by both parties
-- [ ] Timeline estimated and approved by Project Manager
-
-**Knowledge Assessment Matrix**:
-```markdown
-## Knowledge Domain: {domain-name}
-
-### Knowledge Areas
-| Area | Criticality | Holder Expertise | Receiver Expertise | Transfer Priority |
-|------|-------------|------------------|-------------------|-------------------|
-| {area-1} | Critical | Expert | Novice | HIGH |
-| {area-2} | High | Advanced | Beginner | HIGH |
-| {area-3} | Medium | Expert | Intermediate | MEDIUM |
-| {area-4} | Low | Intermediate | Novice | LOW |
-
-### Transfer Scope
-**In Scope**:
-- {area 1}: {specific topics}
-- {area 2}: {specific topics}
-
-**Out of Scope**:
-- {area 3}: {reason - low priority, already documented, etc.}
+**Key Milestone**: Knowledge Transfer Signoff
 
 **Success Criteria**:
-- [ ] Receiver can perform {task 1} independently
-- [ ] Receiver can troubleshoot {issue type 1} without assistance
-- [ ] Receiver can explain {concept 1} to others
-- [ ] Receiver can train future team members on {area 1}
+- Knowledge gaps identified and addressed
+- Documentation complete and reviewed
+- Shadowing and reverse shadowing completed
+- Practical validation passed
+- Handover checklist signed off
 
-**Timeline**: {weeks} (estimated)
+**Expected Duration**: 2-6 weeks (typical), 30-45 minutes orchestration
+
+## Natural Language Triggers
+
+Users may say:
+- "Knowledge transfer from Alice to Bob"
+- "Handoff backend responsibilities to new team member"
+- "Transfer knowledge from {from} to {to}"
+- "Documentation handoff for {domain}"
+- "Onboard new team member to {area}"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### Required Parameters
+
+- **from-member**: The team member transferring knowledge (knowledge holder)
+- **to-member**: The team member receiving knowledge (knowledge receiver)
+- **domain** (optional): Specific knowledge domain (e.g., "backend-api", "deployment", "security")
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor transfer priorities
+
+**Examples**:
+```
+--guidance "Focus on production support and incident response procedures"
+--guidance "Tight timeline, prioritize critical operational knowledge"
+--guidance "Receiver has strong technical background but no domain experience"
+--guidance "Include compliance and regulatory knowledge for audit requirements"
+```
+
+**How to Apply**:
+- Parse guidance for keywords: operations, compliance, security, timeline, experience level
+- Adjust focus areas (operational vs. architectural knowledge)
+- Modify shadowing depth (minimal vs. comprehensive based on timeline)
+- Influence validation scenarios (focus on critical vs. comprehensive testing)
+
+### --interactive Parameter
+
+**Purpose**: You ask 6 strategic questions to understand transfer context
+
+**Questions to Ask** (if --interactive):
+
+```
+I'll ask 6 strategic questions to tailor the knowledge transfer to your needs:
+
+Q1: What are your top priorities for this knowledge transfer?
+    (e.g., operational continuity, architectural understanding, troubleshooting skills)
+
+Q2: What are your biggest constraints?
+    (e.g., timeline, availability of knowledge holder, complexity of domain)
+
+Q3: What risks concern you most for this transfer?
+    (e.g., critical knowledge loss, insufficient practice time, documentation gaps)
+
+Q4: What's the receiver's experience level with similar domains?
+    (Helps calibrate transfer depth and pace)
+
+Q5: What's your target timeline for independent operation?
+    (Influences shadowing duration and validation rigor)
+
+Q6: Are there compliance or regulatory requirements?
+    (e.g., SOX separation of duties, HIPAA training requirements)
+
+Based on your answers, I'll adjust:
+- Focus areas (operational vs. architectural vs. compliance)
+- Shadowing duration (standard vs. extended)
+- Validation rigor (basic vs. comprehensive)
+- Documentation depth (reference vs. tutorial)
+```
+
+**Synthesize Guidance**: Combine answers into structured guidance string for execution
+
+## Artifacts to Generate
+
+**Primary Deliverables**:
+- **Knowledge Map**: Domain expertise assessment → `.aiwg/knowledge/knowledge-map-{domain}.md`
+- **Transfer Plan**: Structured handoff schedule → `.aiwg/knowledge/transfer-plan-{from}-to-{to}.md`
+- **Documentation Package**: Updated/created docs → `.aiwg/knowledge/docs/`
+- **Shadowing Logs**: Observation records → `.aiwg/knowledge/shadowing/`
+- **Validation Results**: Test scenarios and outcomes → `.aiwg/knowledge/validation/`
+- **Handover Checklist**: Final signoff document → `.aiwg/knowledge/handover-checklist-{domain}.md`
+- **Transfer Report**: Completion summary → `.aiwg/reports/knowledge-transfer-report-{domain}.md`
+
+**Supporting Artifacts**:
+- Knowledge gap analysis
+- Runbook updates
+- Training materials
+- Follow-up plans
+
+## Multi-Agent Orchestration Workflow
+
+### Step 1: Knowledge Assessment and Transfer Scope
+
+**Purpose**: Identify knowledge domain(s) and define transfer scope
+
+**Your Actions**:
+
+1. **Validate Team Members Exist**:
+   ```
+   Read .aiwg/team/team-profile.yaml (if exists)
+   Verify from-member and to-member are valid team members
+   If not found, proceed with provided names but note in report
+   ```
+
+2. **Launch Knowledge Assessment Agents** (parallel):
+   ```
+   # Agent 1: Knowledge Manager (lead)
+   Task(
+       subagent_type="knowledge-manager",
+       description="Assess knowledge domain and create transfer scope",
+       prompt="""
+       Create knowledge assessment for transfer:
+       - From: {from-member}
+       - To: {to-member}
+       - Domain: {domain if specified, else "all responsibilities"}
+
+       Define Knowledge Map:
+       1. Knowledge Areas (list all relevant areas)
+       2. Criticality Assessment (Critical, High, Medium, Low)
+       3. Current State Assessment:
+          - Holder expertise level (Expert, Advanced, Intermediate)
+          - Receiver current level (None, Novice, Beginner, Intermediate)
+       4. Knowledge Gaps (delta between holder and receiver)
+       5. Transfer Priority (HIGH, MEDIUM, LOW for each area)
+
+       Define Transfer Scope:
+       - In Scope: Areas requiring active transfer
+       - Out of Scope: Already documented or low priority
+       - Success Criteria: What defines successful transfer
+
+       Estimate Timeline:
+       - Based on scope and gaps
+       - Typical: 2-6 weeks
+
+       Use template if available: $AIWG_ROOT/templates/knowledge/knowledge-map-template.md
+
+       Output: .aiwg/knowledge/knowledge-map-{domain}.md
+       """
+   )
+
+   # Agent 2: Training Coordinator
+   Task(
+       subagent_type="training-coordinator",
+       description="Create structured transfer plan",
+       prompt="""
+       Based on knowledge assessment, create transfer plan:
+
+       Structure:
+       1. Documentation Phase (Week 1)
+          - Review existing docs
+          - Identify and fill gaps
+          - Create runbooks
+
+       2. Shadowing Phase (Week 2-3)
+          - 4-8 observation sessions
+          - Knowledge holder leads, receiver observes
+          - Q&A and note-taking
+
+       3. Reverse Shadowing (Week 3-4)
+          - 4-8 practice sessions
+          - Receiver leads, holder observes
+          - Feedback and correction
+
+       4. Validation Phase (Week 4-5)
+          - Practical scenarios
+          - Independent operation test
+          - Knowledge verification
+
+       5. Handover Phase (Week 5-6)
+          - Final checklist
+          - Signoffs
+          - Follow-up plan
+
+       Adjust timeline based on:
+       - Scope complexity
+       - Availability constraints
+       - {guidance if provided}
+
+       Use template if available: $AIWG_ROOT/templates/knowledge/transfer-plan-template.md
+
+       Output: .aiwg/knowledge/transfer-plan-{from}-to-{to}.md
+       """
+   )
+   ```
+
+3. **Review and Confirm Scope**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Review and validate transfer scope",
+       prompt="""
+       Read:
+       - .aiwg/knowledge/knowledge-map-{domain}.md
+       - .aiwg/knowledge/transfer-plan-{from}-to-{to}.md
+
+       Validate:
+       - Scope is realistic for timeline
+       - Critical knowledge areas covered
+       - Success criteria are measurable
+       - Plan accounts for constraints
+
+       Create gate decision:
+       - GO: Proceed with transfer
+       - ADJUST: Modify scope or timeline
+       - ESCALATE: Needs management decision
+
+       Output validation summary to transfer plan
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Knowledge assessment complete
+✓ Transfer scope defined: {X} knowledge areas, {Y} weeks estimated
+✓ Transfer plan created: .aiwg/knowledge/transfer-plan-{from}-to-{to}.md
 ```
 
 ### Step 2: Documentation Review and Knowledge Artifacts
-**Agents**: Knowledge Analyst (lead), Technical Writer
-**Templates Required**:
-- `knowledge/knowledge-artifact-checklist.md`
-- `knowledge/runbook-entry-card.md`
 
-**Actions**:
-1. Compile existing documentation for transfer domain
-2. Identify documentation gaps
-3. Create missing documentation (runbooks, diagrams, FAQs)
-4. Organize materials in logical learning sequence
-5. Schedule documentation review session
+**Purpose**: Compile and enhance documentation for knowledge transfer
 
-**Gate Criteria**:
-- [ ] All existing documentation compiled and organized
-- [ ] Documentation gaps identified (max 3 critical gaps)
-- [ ] Missing documentation created or scheduled for creation
-- [ ] Materials sequenced for progressive learning
-- [ ] Documentation review session scheduled
+**Your Actions**:
 
-**Knowledge Artifacts Checklist**:
-```markdown
-## Documentation Artifacts for Transfer
+1. **Inventory Existing Documentation**:
+   ```
+   # Use Glob to find relevant docs
+   Glob("**/*.md")
+   Glob("**/*.txt")
 
-### Core Documentation
-- [ ] Architecture overview and diagrams
-- [ ] Component responsibilities and boundaries
-- [ ] Data flows and integration points
-- [ ] Configuration and deployment procedures
+   Filter for domain-relevant documentation
+   Create inventory list
+   ```
 
-### Operational Knowledge
-- [ ] Runbooks for common tasks
-- [ ] Troubleshooting guides
-- [ ] Incident response procedures
-- [ ] On-call playbook
+2. **Launch Documentation Agents** (parallel):
+   ```
+   # Agent 1: Documentation Archivist
+   Task(
+       subagent_type="documentation-archivist",
+       description="Organize and review existing documentation",
+       prompt="""
+       Domain: {domain}
 
-### Domain-Specific Knowledge
-- [ ] Business logic and rules
-- [ ] Edge cases and gotchas
-- [ ] Performance optimization notes
-- [ ] Technical debt and known issues
+       Review existing documentation:
+       1. Architecture documents
+       2. Runbooks and procedures
+       3. Configuration guides
+       4. Troubleshooting guides
+       5. Historical incident reports
 
-### Historical Context
-- [ ] ADRs (Architecture Decision Records)
-- [ ] Past incidents and lessons learned
-- [ ] Evolution of the system (why it is this way)
-- [ ] Stakeholder relationships and politics
+       Assess each document:
+       - Currency (up-to-date?)
+       - Completeness (gaps?)
+       - Clarity (understandable?)
+       - Relevance (needed for transfer?)
 
-### Access and Tools
-- [ ] System access credentials and permissions
-- [ ] Monitoring dashboards and alerts
-- [ ] Logging and debugging tools
-- [ ] Key contacts and escalation paths
+       Create Documentation Inventory:
+       - Core Docs (must review)
+       - Reference Docs (good to know)
+       - Archive Docs (historical context)
+       - Missing Docs (gaps to fill)
 
-### Gaps Identified
-1. {gap 1} - Priority: {HIGH/MEDIUM/LOW} - Owner: {who will create}
-2. {gap 2} - Priority: {HIGH/MEDIUM/LOW} - Owner: {who will create}
+       Organize in logical learning sequence
+
+       Output: .aiwg/knowledge/docs/documentation-inventory.md
+       """
+   )
+
+   # Agent 2: Subject Matter Expert (knowledge holder role)
+   Task(
+       subagent_type="subject-matter-expert",
+       description="Identify and create missing documentation",
+       prompt="""
+       Acting as {from-member} (knowledge holder perspective)
+
+       Based on documentation inventory, create missing critical docs:
+
+       1. Runbooks for common operations:
+          - Daily/weekly tasks
+          - Deployment procedures
+          - Rollback procedures
+          - Monitoring and alerting
+
+       2. Troubleshooting guides:
+          - Common issues and solutions
+          - Debugging techniques
+          - Log analysis patterns
+          - Performance tuning
+
+       3. Architecture notes:
+          - Design decisions and rationale
+          - System boundaries and interfaces
+          - Data flows and dependencies
+          - Security considerations
+
+       4. Tribal knowledge:
+          - Undocumented gotchas
+          - Historical context ("why it's this way")
+          - Stakeholder relationships
+          - Political/organizational context
+
+       Focus on practical, hands-on knowledge needed for independent operation
+
+       Output to: .aiwg/knowledge/docs/{category}/
+       """
+   )
+
+   # Agent 3: Technical Writer
+   Task(
+       subagent_type="technical-writer",
+       description="Enhance documentation clarity and completeness",
+       prompt="""
+       Review and enhance documentation for knowledge transfer:
+
+       Improvements:
+       1. Add missing context for newcomers
+       2. Clarify technical jargon
+       3. Add examples and scenarios
+       4. Create quick reference guides
+       5. Add diagrams where helpful
+
+       Ensure documentation is:
+       - Self-contained (minimal external references)
+       - Progressive (basic → advanced)
+       - Actionable (clear steps)
+       - Verifiable (testable outcomes)
+
+       Create consolidated reading list in order
+
+       Output enhanced docs to: .aiwg/knowledge/docs/enhanced/
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Documentation review in progress...
+  ✓ {X} existing documents inventoried
+  ✓ {Y} documentation gaps identified
+  ✓ {Z} new documents created
+✓ Documentation package complete: .aiwg/knowledge/docs/
 ```
 
 ### Step 3: Shadowing Phase (Receiver Observes)
-**Agents**: Knowledge Holder (lead)
-**Templates Required**:
-- `knowledge/shadowing-log-template.md`
 
-**Actions**:
-1. Schedule shadowing sessions (4-8 sessions, 1-2 hours each)
-2. Receiver observes knowledge holder performing tasks
-3. Knowledge holder narrates decisions and reasoning
-4. Receiver asks clarifying questions
-5. Document observations and questions in shadowing log
+**Purpose**: Knowledge receiver observes holder performing actual work
 
-**Gate Criteria**:
-- [ ] At least 4 shadowing sessions completed
-- [ ] Shadowing log maintained with observations
-- [ ] Key decisions and reasoning documented
-- [ ] Receiver demonstrates understanding in Q&A
-- [ ] No critical knowledge areas missed
+**Your Actions**:
 
-**Shadowing Session Structure**:
-```markdown
-## Shadowing Session {N}
+1. **Initialize Shadowing Sessions**:
+   ```
+   # Create session structure
+   mkdir -p .aiwg/knowledge/shadowing/sessions
 
-**Date**: {date}
-**Duration**: {hours}
-**Knowledge Area**: {area}
-**Holder**: {name}
-**Receiver**: {name}
+   # Define 4-8 sessions based on knowledge areas
+   For each critical knowledge area, allocate 1-2 sessions
+   ```
 
-### Tasks Observed
-1. {task 1}: {brief description}
-   - Key decisions: {what and why}
-   - Gotchas: {things to watch out for}
-   - Questions asked: {receiver's questions}
+2. **Launch Shadowing Simulation** (for each session):
+   ```
+   # For each shadowing session (4-8 total)
+   Task(
+       subagent_type="training-coordinator",
+       description="Simulate shadowing session {N}",
+       prompt="""
+       Shadowing Session {N}
+       Knowledge Area: {area from knowledge map}
+       Duration: 1-2 hours (simulated)
 
-2. {task 2}: {brief description}
-   - Key decisions: {what and why}
-   - Gotchas: {things to watch out for}
-   - Questions asked: {receiver's questions}
+       Simulate session where {from-member} demonstrates:
+       1. Task execution (step-by-step)
+       2. Decision points (what and why)
+       3. Tool usage (specific commands/interfaces)
+       4. Common issues (what to watch for)
+       5. Best practices (efficiency tips)
 
-### Key Learnings
-- {learning 1}
-- {learning 2}
-- {learning 3}
+       {to-member} perspective:
+       - Observations noted
+       - Questions asked
+       - Concepts clarified
+       - Confidence assessment (1-5)
 
-### Follow-Up Items
-- [ ] {item 1} - Owner: {owner}
-- [ ] {item 2} - Owner: {owner}
+       Create session log including:
+       - Tasks demonstrated
+       - Key decisions explained
+       - Questions and answers
+       - Key learnings captured
+       - Follow-up items identified
+       - Confidence rating
 
-### Confidence Assessment
-**Receiver's Self-Assessment**:
-- Understanding of {area}: {1-5 rating}
-- Confidence to attempt independently: {1-5 rating}
-- Questions remaining: {list}
+       Output: .aiwg/knowledge/shadowing/sessions/session-{N}-{area}.md
+       """
+   )
+   ```
 
-### Next Session
-**Focus**: {what to cover in next session}
-**Pre-Work**: {any preparation needed}
+3. **Synthesize Shadowing Learnings**:
+   ```
+   Task(
+       subagent_type="knowledge-manager",
+       description="Synthesize shadowing phase learnings",
+       prompt="""
+       Read all shadowing session logs
+
+       Create synthesis:
+       1. Knowledge areas covered
+       2. Key learnings consolidated
+       3. Remaining questions
+       4. Confidence progression (trend over sessions)
+       5. Areas needing more practice
+
+       Identify patterns:
+       - Concepts requiring repetition
+       - Complex areas needing breakdown
+       - Tools requiring hands-on practice
+
+       Recommend focus for reverse shadowing
+
+       Output: .aiwg/knowledge/shadowing/shadowing-synthesis.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
 ```
-
-**Shadowing Best Practices**:
-- Schedule sessions during real work (not simulations)
-- Cover both routine tasks and edge cases
-- Encourage interruptions for questions
-- Explain the "why" not just the "what"
-- Share mental models and heuristics
+⏳ Shadowing phase in progress...
+  ✓ Session 1: Database operations (confidence: 3/5)
+  ✓ Session 2: Deployment procedures (confidence: 2/5)
+  ✓ Session 3: Incident response (confidence: 4/5)
+  ✓ Session 4: Performance tuning (confidence: 2/5)
+✓ Shadowing complete: {X} sessions, average confidence: {Y}/5
+```
 
 ### Step 4: Reverse Shadowing Phase (Receiver Leads)
-**Agents**: Knowledge Receiver (lead)
-**Templates Required**:
-- `knowledge/reverse-shadowing-log-template.md`
 
-**Actions**:
-1. Schedule reverse shadowing sessions (4-8 sessions)
-2. Receiver leads task execution, holder observes
-3. Holder provides real-time feedback and corrections
-4. Document mistakes and corrections for learning
-5. Gradually reduce holder involvement
+**Purpose**: Knowledge receiver performs tasks with holder observing
 
-**Gate Criteria**:
-- [ ] At least 4 reverse shadowing sessions completed
-- [ ] Receiver successfully completes tasks with minimal guidance
-- [ ] Common mistakes identified and corrected
-- [ ] Holder confident in receiver's ability
-- [ ] Receiver comfortable leading tasks independently
+**Your Actions**:
 
-**Reverse Shadowing Session Structure**:
-```markdown
-## Reverse Shadowing Session {N}
+1. **Plan Reverse Shadowing Sessions**:
+   ```
+   Based on shadowing synthesis, prioritize:
+   - Low confidence areas (2/5 or below)
+   - Critical operations
+   - Complex procedures
+   ```
 
-**Date**: {date}
-**Duration**: {hours}
-**Knowledge Area**: {area}
-**Receiver (Leading)**: {name}
-**Holder (Observing)**: {name}
+2. **Launch Reverse Shadowing** (for each session):
+   ```
+   # For each reverse shadowing session (4-8 total)
+   Task(
+       subagent_type="learner",
+       description="Simulate reverse shadowing session {N}",
+       prompt="""
+       Reverse Shadowing Session {N}
+       Knowledge Area: {area}
+       Receiver Leading: {to-member}
+       Holder Observing: {from-member}
 
-### Tasks Performed
-1. {task 1}: {brief description}
-   - Approach taken: {how receiver approached it}
-   - Holder interventions: {when and why holder stepped in}
-   - Outcome: {SUCCESS | PARTIAL | FAILED}
+       Simulate {to-member} performing tasks:
+       1. Task approach (how they tackle it)
+       2. Decision making (choices and reasoning)
+       3. Challenges faced (what's difficult)
+       4. Holder interventions (when and why)
+       5. Corrections made (learning moments)
 
-2. {task 2}: {brief description}
-   - Approach taken: {how receiver approached it}
-   - Holder interventions: {when and why holder stepped in}
-   - Outcome: {SUCCESS | PARTIAL | FAILED}
+       Holder feedback:
+       - What went well
+       - Areas for improvement
+       - Specific corrections
+       - Confidence assessment
 
-### Feedback from Holder
-**What Went Well**:
-- {positive 1}
-- {positive 2}
+       Success indicators:
+       - Task completed correctly
+       - Minimal interventions needed
+       - Sound reasoning demonstrated
 
-**Areas for Improvement**:
-- {improvement 1}: {specific guidance}
-- {improvement 2}: {specific guidance}
+       Create session log:
+       - Tasks performed
+       - Interventions required
+       - Feedback provided
+       - Outcome (SUCCESS, PARTIAL, NEEDS_PRACTICE)
+       - Confidence growth
 
-### Receiver Reflection
-**Challenges Faced**:
-- {challenge 1}: {how addressed}
-- {challenge 2}: {how addressed}
+       Output: .aiwg/knowledge/shadowing/reverse/session-{N}-{area}.md
+       """
+   )
+   ```
 
-**Confidence Growth**:
-- Previous rating: {1-5}
-- Current rating: {1-5}
-- Remaining concerns: {list}
+3. **Assess Progress and Readiness**:
+   ```
+   Task(
+       subagent_type="training-coordinator",
+       description="Assess reverse shadowing progress",
+       prompt="""
+       Read all reverse shadowing sessions
 
-### Next Session
-**Focus**: {what to practice next}
-**Increased Autonomy**: {how to reduce holder involvement}
+       Assess readiness:
+       1. Tasks completed successfully (%)
+       2. Intervention frequency (trending down?)
+       3. Confidence ratings (trending up?)
+       4. Decision quality (sound reasoning?)
+
+       For each knowledge area:
+       - Status: READY | NEEDS_PRACTICE | NOT_READY
+       - Remaining gaps
+       - Recommended actions
+
+       Overall assessment:
+       - Ready for validation: YES/NO
+       - Areas needing more practice
+       - Estimated additional time needed
+
+       Output: .aiwg/knowledge/shadowing/reverse/readiness-assessment.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Reverse shadowing in progress...
+  ✓ Session 1: Database operations (SUCCESS, minimal intervention)
+  ✓ Session 2: Deployment procedures (PARTIAL, 2 interventions)
+  ✓ Session 3: Incident response (SUCCESS, no intervention)
+  ⚠️ Session 4: Performance tuning (NEEDS_PRACTICE, multiple interventions)
+✓ Reverse shadowing complete: 75% success rate
 ```
 
-**Reverse Shadowing Best Practices**:
-- Start with lower-risk tasks
-- Let receiver make mistakes (safely)
-- Provide feedback immediately but gently
-- Gradually increase task complexity
-- Celebrate progress and build confidence
-
 ### Step 5: Knowledge Validation and Practical Testing
-**Agents**: Knowledge Analyst (lead), Technical Lead
-**Templates Required**:
-- `knowledge/knowledge-validation-checklist.md`
 
-**Actions**:
-1. Create practical validation scenarios
-2. Receiver demonstrates competency independently
-3. Conduct knowledge check interviews
-4. Review documentation receiver has created
-5. Assess readiness for independent operation
+**Purpose**: Validate knowledge acquisition through realistic scenarios
 
-**Gate Criteria**:
-- [ ] Receiver passes all critical validation scenarios
-- [ ] Receiver can explain concepts to third party
-- [ ] Receiver can troubleshoot realistic issues
-- [ ] Holder and Technical Lead both confirm readiness
-- [ ] Receiver expresses confidence in independent operation
+**Your Actions**:
 
-**Knowledge Validation Scenarios**:
-```markdown
-## Validation Scenarios for {domain}
+1. **Create Validation Scenarios**:
+   ```
+   Task(
+       subagent_type="test-architect",
+       description="Design validation scenarios",
+       prompt="""
+       Based on knowledge domain {domain}, create 4 validation scenarios:
 
-### Scenario 1: Routine Operation
-**Task**: {realistic routine task}
-**Context**: {background information}
-**Expected Outcome**: {success criteria}
-**Time Limit**: {minutes}
+       Scenario 1: Routine Operation
+       - Common daily/weekly task
+       - Expected to complete independently
+       - Time limit: reasonable for task
 
-**Receiver Performance**:
-- Completed: {YES | NO}
-- Time Taken: {minutes}
-- Assistance Needed: {NONE | MINOR | MAJOR}
-- Outcome: {PASS | FAIL}
+       Scenario 2: Troubleshooting
+       - Realistic problem to diagnose and fix
+       - Tests analytical skills
+       - Multiple solution paths acceptable
 
-### Scenario 2: Troubleshooting
-**Task**: {realistic problem to diagnose and fix}
-**Context**: {symptoms and error messages}
-**Expected Outcome**: {correct diagnosis and resolution}
-**Time Limit**: {minutes}
+       Scenario 3: Teach-Back
+       - Explain concept to simulated junior member
+       - Tests depth of understanding
+       - Must be accurate and clear
 
-**Receiver Performance**:
-- Correct Diagnosis: {YES | NO}
-- Correct Resolution: {YES | NO}
-- Assistance Needed: {NONE | MINOR | MAJOR}
-- Outcome: {PASS | FAIL}
+       Scenario 4: Novel Situation
+       - New problem not explicitly covered
+       - Tests knowledge application
+       - Reasonable extrapolation expected
 
-### Scenario 3: Teach-Back
-**Task**: Explain {key concept} to junior team member
-**Context**: {scenario setup}
-**Expected Outcome**: Clear, accurate explanation with examples
-**Evaluation**: Technical Lead observes and assesses
+       Each scenario includes:
+       - Context and setup
+       - Success criteria
+       - Evaluation rubric
+       - Time expectations
 
-**Receiver Performance**:
-- Accuracy: {1-5 rating}
-- Clarity: {1-5 rating}
-- Completeness: {1-5 rating}
-- Outcome: {PASS | FAIL}
+       Output: .aiwg/knowledge/validation/validation-scenarios.md
+       """
+   )
+   ```
 
-### Scenario 4: Novel Situation
-**Task**: {new problem not covered in training}
-**Context**: {realistic situation requiring applied knowledge}
-**Expected Outcome**: Reasonable approach and solution
-**Time Limit**: {minutes}
+2. **Execute Validation Tests** (parallel where possible):
+   ```
+   # For each validation scenario
+   Task(
+       subagent_type="learner",
+       description="Execute validation scenario {N}",
+       prompt="""
+       As {to-member}, complete validation scenario {N}
 
-**Receiver Performance**:
-- Problem-Solving Approach: {rating and notes}
-- Use of Resources: {did they consult docs, etc.}
-- Solution Quality: {rating and notes}
-- Outcome: {PASS | FAIL}
+       Demonstrate:
+       1. Understanding of the problem
+       2. Systematic approach
+       3. Correct solution or diagnosis
+       4. Appropriate tool usage
+       5. Documentation of actions
 
-## Overall Validation Assessment
-**Scenarios Passed**: {count}/{total}
-**Critical Scenarios Passed**: {count}/{total}
-**Readiness for Independent Operation**: {YES | NO | CONDITIONAL}
+       For teach-back scenario:
+       - Explain clearly
+       - Use examples
+       - Check understanding
 
-**Conditions (if CONDITIONAL)**:
-- {condition 1}
-- {condition 2}
+       For novel situation:
+       - Show problem-solving process
+       - Use available resources
+       - Apply learned principles
+
+       Document:
+       - Approach taken
+       - Solution provided
+       - Time taken
+       - Confidence level
+       - Resources consulted
+
+       Output: .aiwg/knowledge/validation/scenario-{N}-results.md
+       """
+   )
+
+   # Parallel evaluation by holder
+   Task(
+       subagent_type="subject-matter-expert",
+       description="Evaluate validation scenarios",
+       prompt="""
+       As {from-member}, evaluate {to-member}'s performance
+
+       For each scenario:
+       - Accuracy (correct solution?)
+       - Approach (systematic and logical?)
+       - Efficiency (reasonable time?)
+       - Independence (minimal help needed?)
+       - Documentation (clear and complete?)
+
+       Rating scale:
+       - EXCELLENT: Exceeds expectations
+       - PASS: Meets requirements
+       - CONDITIONAL: Mostly correct, minor gaps
+       - FAIL: Significant gaps, more practice needed
+
+       Provide specific feedback:
+       - What was done well
+       - Areas for improvement
+       - Recommendations
+
+       Overall readiness assessment:
+       - READY for independent operation
+       - READY with support period
+       - NOT READY, need more practice
+
+       Output: .aiwg/knowledge/validation/evaluation-results.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Validation testing in progress...
+  ✓ Scenario 1 (Routine): PASS
+  ✓ Scenario 2 (Troubleshooting): PASS
+  ✓ Scenario 3 (Teach-Back): EXCELLENT
+  ⚠️ Scenario 4 (Novel): CONDITIONAL (minor gaps noted)
+✓ Validation complete: 3/4 PASS or better
 ```
 
 ### Step 6: Handover Checklist and Signoff
-**Agents**: Project Manager (lead), Knowledge Holder, Knowledge Receiver
-**Templates Required**:
-- `knowledge/handover-checklist-template.md`
 
-**Actions**:
-1. Complete handover checklist with all parties
-2. Transfer ownership of responsibilities
-3. Update team roster and on-call schedules
-4. Document any residual knowledge gaps
-5. Schedule follow-up check-ins (1 week, 1 month)
+**Purpose**: Complete formal handover with all parties signing off
 
-**Gate Criteria**:
-- [ ] Handover checklist 100% complete
-- [ ] Both parties sign off on transfer
-- [ ] Responsibilities transferred in team systems
-- [ ] Follow-up check-ins scheduled
-- [ ] Emergency contact plan established
+**Your Actions**:
 
-**Handover Checklist**:
-```markdown
-## Knowledge Transfer Handover Checklist
+1. **Generate Handover Checklist**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Create comprehensive handover checklist",
+       prompt="""
+       Create handover checklist for:
+       - Domain: {domain}
+       - From: {from-member}
+       - To: {to-member}
+       - Duration: {weeks from start to now}
 
-**Knowledge Domain**: {domain}
-**From**: {holder-name}
-**To**: {receiver-name}
-**Transfer Start Date**: {date}
-**Transfer Complete Date**: {date}
-**Duration**: {weeks}
+       Checklist sections:
 
-### Documentation
-- [ ] All documentation reviewed and understood
+       1. Documentation
+          - All docs reviewed: YES/NO
+          - Gaps addressed: YES/NO
+          - Bookmarks/access: YES/NO
+
+       2. Practical Skills
+          - Routine tasks: {validation results}
+          - Troubleshooting: {validation results}
+          - Emergency procedures: UNDERSTOOD/PRACTICED
+
+       3. Knowledge Validation
+          - Scenarios passed: {X}/4
+          - Teach-back successful: YES/NO
+          - Holder confidence: {rating}
+
+       4. Access and Permissions
+          - System access: GRANTED/PENDING
+          - Tool access: GRANTED/PENDING
+          - Communication channels: ADDED/PENDING
+
+       5. Operational Handoff
+          - On-call rotation: UPDATED/PENDING
+          - Responsibility matrix: UPDATED/PENDING
+          - Stakeholder notification: SENT/PENDING
+
+       6. Follow-Up Plan
+          - 1-week check-in: {date}
+          - 1-month check-in: {date}
+          - Support period: {duration}
+
+       7. Residual Gaps (if any)
+          - List with severity and remediation plan
+
+       Use template if available: $AIWG_ROOT/templates/knowledge/handover-checklist-template.md
+
+       Output: .aiwg/knowledge/handover-checklist-{domain}.md
+       """
+   )
+   ```
+
+2. **Collect Signoffs**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Collect handover signoffs",
+       prompt="""
+       Document signoffs for handover:
+
+       Required signatures:
+       1. Knowledge Receiver ({to-member}):
+          "I am confident in my ability to perform {domain} responsibilities independently"
+          Confidence level: {1-5}
+          Concerns (if any): {list}
+
+       2. Knowledge Holder ({from-member}):
+          "I am confident the receiver has the knowledge to succeed independently"
+          Confidence level: {1-5}
+          Recommendations: {list}
+
+       3. Project Manager:
+          "Knowledge transfer is complete and receiver is ready for independent operation"
+          Decision: APPROVED / CONDITIONAL / NOT_APPROVED
+
+       Conditional requirements (if CONDITIONAL):
+       - What must be completed
+       - Timeline for completion
+       - Re-validation plan
+
+       Add signatures to handover checklist
+       """
+   )
+   ```
+
+3. **Generate Final Report**:
+   ```
+   Task(
+       subagent_type="knowledge-manager",
+       description="Generate knowledge transfer completion report",
+       prompt="""
+       Create comprehensive transfer report including:
+
+       1. Executive Summary
+          - Transfer status: COMPLETE/PARTIAL/INCOMPLETE
+          - Readiness: READY/CONDITIONAL/NOT_READY
+          - Key outcomes
+
+       2. Transfer Summary
+          - Scope (knowledge areas covered)
+          - Timeline (planned vs actual)
+          - Methods (shadowing, documentation, validation)
+
+       3. Knowledge Acquisition Metrics
+          - Shadowing sessions: {count}
+          - Reverse shadowing: {count}
+          - Validation scenarios: {passed}/{total}
+          - Confidence progression: {start} → {end}
+
+       4. Documentation Improvements
+          - Docs created: {count}
+          - Docs enhanced: {count}
+          - Remaining gaps: {list}
+
+       5. Validation Results
+          - Detailed scenario outcomes
+          - Evaluator feedback
+          - Areas of strength
+          - Areas for improvement
+
+       6. Lessons Learned
+          - What worked well
+          - What could improve
+          - Recommendations for future transfers
+
+       7. Follow-Up Plan
+          - Check-in schedule
+          - Support arrangements
+          - Escalation path
+
+       8. Risk Assessment
+          - Operational risks
+          - Mitigation strategies
+          - Contingency plans
+
+       Output: .aiwg/reports/knowledge-transfer-report-{domain}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Handover checklist complete: .aiwg/knowledge/handover-checklist-{domain}.md
+✓ All parties signed off
+✓ Transfer report generated: .aiwg/reports/knowledge-transfer-report-{domain}.md
+```
+
+## Quality Gates
+
+Before marking workflow complete, verify:
+- [ ] Knowledge assessment documented
+- [ ] Transfer plan created and followed
 - [ ] Documentation gaps addressed
-- [ ] Receiver has bookmarked/saved all key docs
-- [ ] Receiver knows where to find information
+- [ ] Shadowing sessions completed (minimum 4)
+- [ ] Reverse shadowing completed (minimum 4)
+- [ ] Validation scenarios passed (≥75%)
+- [ ] Handover checklist complete
+- [ ] All required signoffs obtained
+- [ ] Follow-up plan established
 
-### Practical Skills
-- [ ] Routine tasks demonstrated and practiced
-- [ ] Troubleshooting scenarios completed
-- [ ] Emergency procedures understood
-- [ ] Receiver comfortable with tools and systems
+## User Communication
 
-### Knowledge Validation
-- [ ] All validation scenarios passed
-- [ ] Teach-back session completed successfully
-- [ ] Technical Lead confirms readiness
-- [ ] Holder confirms confidence in receiver
+**At start**: Confirm understanding and outline process
 
-### Access and Permissions
-- [ ] All necessary access granted
-- [ ] Credentials transferred (or new ones created)
-- [ ] Monitoring and alerting configured
-- [ ] Receiver added to relevant communication channels
+```
+Understood. I'll orchestrate the knowledge transfer from {from-member} to {to-member} for {domain}.
 
-### Operational Handoff
-- [ ] Receiver added to on-call rotation (if applicable)
-- [ ] Team roster updated with new responsibilities
-- [ ] Stakeholders notified of handoff
-- [ ] Emergency escalation plan updated
+This will include:
+- Knowledge assessment and gap analysis
+- Documentation review and enhancement
+- Shadowing sessions (observation)
+- Reverse shadowing (practice)
+- Validation testing
+- Formal handover and signoff
 
-### Follow-Up Plan
-- [ ] 1-week check-in scheduled: {date}
-- [ ] 1-month check-in scheduled: {date}
-- [ ] Holder available as backup for: {duration}
-- [ ] Residual gaps documented with remediation plan
+Expected duration: 30-45 minutes orchestration.
+Real-world timeline: 2-6 weeks for actual transfer.
 
-### Signoffs
-**Knowledge Receiver**: {signature} {date}
-- "I am confident in my ability to perform {domain} responsibilities independently"
-
-**Knowledge Holder**: {signature} {date}
-- "I am confident the receiver has the knowledge to succeed independently"
-
-**Project Manager**: {signature} {date}
-- "Knowledge transfer is complete and receiver is ready for independent operation"
-
-### Residual Gaps (if any)
-1. {gap 1} - Severity: {HIGH/MEDIUM/LOW} - Plan: {remediation}
-2. {gap 2} - Severity: {HIGH/MEDIUM/LOW} - Plan: {remediation}
+Starting orchestration...
 ```
 
-## Success Criteria
+**During**: Update progress with clear indicators
 
-This command succeeds when:
-- [ ] Knowledge assessment completed with clear scope
-- [ ] All documentation gaps addressed
-- [ ] At least 4 shadowing sessions completed
-- [ ] At least 4 reverse shadowing sessions completed
-- [ ] Knowledge validation scenarios passed
-- [ ] Handover checklist signed off by all parties
-- [ ] Receiver operating independently with confidence
+```
+✓ = Complete
+⏳ = In progress
+⚠️ = Attention needed
+❌ = Failed/blocked
+```
 
-## Output Report
+**At end**: Summary report with status and next steps
 
-Generate a knowledge transfer completion report:
+```
+─────────────────────────────────────────────
+Knowledge Transfer Complete
+─────────────────────────────────────────────
 
-```markdown
-# Knowledge Transfer Completion Report
-
+**Transfer**: {from-member} → {to-member}
 **Domain**: {domain}
-**From**: {holder-name}
-**To**: {receiver-name}
-**Start Date**: {date}
-**Completion Date**: {date}
-**Total Duration**: {weeks}
-
-## Transfer Summary
-
-### Scope
-**Knowledge Areas Transferred**:
-- {area 1}: {description}
-- {area 2}: {description}
-- {area 3}: {description}
-
-**Out of Scope**:
-- {area 4}: {reason}
-
-### Timeline
-| Phase | Planned Duration | Actual Duration | Status |
-|-------|-----------------|-----------------|--------|
-| Assessment | {weeks} | {weeks} | {COMPLETE} |
-| Documentation | {weeks} | {weeks} | {COMPLETE} |
-| Shadowing | {weeks} | {weeks} | {COMPLETE} |
-| Reverse Shadowing | {weeks} | {weeks} | {COMPLETE} |
-| Validation | {weeks} | {weeks} | {COMPLETE} |
-| Handover | {weeks} | {weeks} | {COMPLETE} |
-
-**Total**: {planned} vs {actual}
-
-## Knowledge Acquisition Metrics
-
-### Shadowing Sessions
-**Completed**: {count}
-**Key Learnings Documented**: {count}
-**Follow-Up Items Generated**: {count}
-
-### Reverse Shadowing Sessions
-**Completed**: {count}
-**Tasks Performed Successfully**: {count}/{total}
-**Holder Interventions**: {count} (trending down over time)
-
-### Validation Results
-**Scenarios Attempted**: {count}
-**Scenarios Passed**: {count}
-**Pass Rate**: {percentage}%
-
-**Critical Scenarios**: {all passed | {count} failed}
-
-## Confidence Assessment
-
-**Receiver Self-Assessment** (1-5 scale):
-- Task Execution: {rating}
-- Troubleshooting: {rating}
-- Teaching Others: {rating}
-- Independent Operation: {rating}
-
-**Holder Assessment** (1-5 scale):
-- Technical Competence: {rating}
-- Problem-Solving Ability: {rating}
-- Readiness for Independence: {rating}
-
-## Documentation Improvements
-
-**Documentation Created**:
-- {doc 1}: {purpose}
-- {doc 2}: {purpose}
-
-**Documentation Enhanced**:
-- {doc 3}: {improvements made}
-
-**Remaining Gaps**:
-- {gap 1}: {plan to address}
-
-## Lessons Learned
-
-**What Worked Well**:
-- {positive 1}
-- {positive 2}
-
-**What Could Improve**:
-- {improvement 1}
-- {improvement 2}
-
-**Process Improvements for Future Transfers**:
-- {improvement 1}
-- {improvement 2}
-
-## Follow-Up Plan
-
-**1-Week Check-In**: {date}
-- Focus: Address any immediate questions or issues
-
-**1-Month Check-In**: {date}
-- Focus: Validate sustained competency and confidence
-
-**Holder Availability**: {duration}
-- Holder remains available as backup resource
-
-## Recommendations
-
-**Immediate**:
-- {recommendation 1}
-
-**Short-Term (1-3 months)**:
-- {recommendation 2}
-
-**Long-Term (3-6 months)**:
-- {recommendation 3}
-
-## Final Status
-**Transfer Status**: {COMPLETE | INCOMPLETE | CONDITIONAL}
-**Receiver Readiness**: {READY | NEEDS SUPPORT | NOT READY}
-**Recommendation**: {APPROVE HANDOFF | EXTEND TRANSFER | ESCALATE}
-```
-
-## Common Failure Modes
-
-### Insufficient Time Allocation
-**Symptoms**: Sessions rushed, knowledge gaps remain
-**Remediation**:
-1. Extend transfer timeline
-2. Reduce other commitments for both parties
-3. Prioritize critical knowledge areas
-4. Schedule additional focused sessions
-
-### Documentation-Only Transfer
-**Symptoms**: Receiver reads docs but lacks practical experience
-**Remediation**:
-1. Increase shadowing and reverse shadowing time
-2. Create hands-on exercises
-3. Simulate realistic scenarios
-4. Emphasize learning-by-doing
-
-### Knowledge Holder Unavailable
-**Symptoms**: Sessions canceled, holder too busy
-**Remediation**:
-1. Escalate to Project Manager
-2. Protect holder's calendar for transfer sessions
-3. Consider backup knowledge holder
-4. Adjust timeline if delays persist
-
-### Receiver Confidence Issues
-**Symptoms**: Passes validation but lacks confidence
-**Remediation**:
-1. Additional practice sessions
-2. Start with holder as backup (shadowing in reverse)
-3. Pair receiver with buddy for initial independent work
-4. Celebrate small wins to build confidence
-
-### Knowledge Not Validated
-**Symptoms**: Skipping validation phase, assuming competency
-**Remediation**:
-1. Enforce validation gate strictly
-2. Create realistic validation scenarios
-3. Include third-party evaluator
-4. Do not sign off without proven competency
-
-## Integration with Team Operations
-
-### Update Team Roster
-```bash
-# Transfer responsibility to new owner
-/project:update-roster transfer-responsibility \
-  --from "{holder}" \
-  --to "{receiver}" \
-  --domain "{domain}"
-```
-
-### Update On-Call Schedule
-```bash
-# Add receiver to on-call rotation
-/project:update-oncall add \
-  --member "{receiver}" \
-  --domain "{domain}" \
-  --start-date "{date}"
-```
-
-### Notify Stakeholders
-```markdown
-## Knowledge Transfer Notification
-
-**Subject**: {Domain} Responsibility Transfer Complete
+**Status**: COMPLETE
+**Readiness**: READY FOR INDEPENDENT OPERATION
 
 **Summary**:
-Knowledge transfer for {domain} from {holder} to {receiver} is complete as of {date}.
+✓ Knowledge gaps identified and addressed
+✓ Documentation: {X} docs created/updated
+✓ Shadowing: {Y} sessions completed
+✓ Validation: {Z}/4 scenarios passed
+✓ Handover: All parties signed off
 
-**Effective**: {date}
-**New Primary Contact**: {receiver}
-**Backup Contact**: {holder} (for {duration})
+**Confidence Assessment**:
+- Receiver confidence: 4/5
+- Holder confidence: 4/5
+- Manager approval: APPROVED
 
-**Change Impact**:
-- {receiver} is now primary for {domain} tasks
-- {holder} remains available as backup for {duration}
-- No change to service level or response times
+**Follow-Up Plan**:
+- 1-week check-in: {date}
+- 1-month review: {date}
+- Support period: {from-member} available for {duration}
 
-**Questions**: Contact {Project Manager}
+**Artifacts Generated**:
+- Knowledge Map: .aiwg/knowledge/knowledge-map-{domain}.md
+- Transfer Plan: .aiwg/knowledge/transfer-plan-{from}-to-{to}.md
+- Documentation: .aiwg/knowledge/docs/
+- Validation Results: .aiwg/knowledge/validation/
+- Handover Checklist: .aiwg/knowledge/handover-checklist-{domain}.md
+- Final Report: .aiwg/reports/knowledge-transfer-report-{domain}.md
+
+**Next Steps**:
+- Update team roster and responsibilities
+- Schedule follow-up check-ins
+- Monitor initial independent operation
+- Address any residual gaps per remediation plan
+
+─────────────────────────────────────────────
 ```
 
 ## Error Handling
 
-**Missing Knowledge Holder**:
-- Report: "Knowledge holder {name} not found in team roster"
-- Action: "Verify team member name and role"
-- Command: "/project:team-roster list"
+**Team Member Not Found**:
+```
+⚠️ Team member not found in roster
+Proceeding with provided names: {from-member} → {to-member}
 
-**Missing Knowledge Receiver**:
-- Report: "Knowledge receiver {name} not found in team roster"
-- Action: "Verify team member name and role"
-- Command: "/project:team-roster list"
+Note: Consider updating .aiwg/team/team-profile.yaml
+```
 
-**Domain Not Specified**:
-- Report: "Knowledge domain not specified"
-- Action: "Provide domain name (e.g., backend-api, deployment, security)"
-- Command: "/project:flow-knowledge-transfer {holder} {receiver} {domain}"
+**Knowledge Domain Unclear**:
+```
+⚠️ Knowledge domain not specified
+
+Defaulting to: "all responsibilities"
+This may extend timeline and scope.
+
+Recommendation: Specify domain for focused transfer
+Example: "backend-api", "deployment", "security"
+```
 
 **Validation Failure**:
-- Report: "Knowledge validation failed: {scenario} not passed"
-- Action: "Additional training and practice required"
-- Recommendation: "Do not proceed to handover until validation passes"
+```
+❌ Validation scenario failed: {scenario}
 
-**Handover Without Signoff**:
-- Report: "Handover checklist not signed by all parties"
-- Action: "Complete all checklist items and obtain signoffs"
-- Recommendation: "Review residual gaps and create remediation plan"
+Result: {failure-reason}
+Impact: Receiver not ready for independent operation
+
+Recommendations:
+1. Additional practice in {area}
+2. Review relevant documentation
+3. Schedule extra reverse shadowing session
+4. Re-attempt validation after practice
+```
+
+**Insufficient Confidence**:
+```
+⚠️ Low confidence detected
+
+Receiver confidence: {X}/5 (target: ≥3)
+Holder confidence: {Y}/5 (target: ≥3)
+
+Actions:
+1. Identify specific concern areas
+2. Provide additional shadowing/practice
+3. Consider extended support period
+4. Document contingency plans
+```
+
+**Timeline Overrun**:
+```
+⚠️ Transfer taking longer than planned
+
+Original estimate: {X} weeks
+Current duration: {Y} weeks
+
+Factors:
+- Complexity underestimated
+- Availability constraints
+- Additional gaps discovered
+
+Recommendation: Adjust timeline and expectations
+```
+
+## Success Criteria
+
+This orchestration succeeds when:
+- [ ] Knowledge gaps identified and documented
+- [ ] Transfer scope agreed by all parties
+- [ ] Documentation complete and accessible
+- [ ] Minimum 4 shadowing sessions completed
+- [ ] Minimum 4 reverse shadowing sessions completed
+- [ ] ≥75% validation scenarios passed
+- [ ] Receiver confidence ≥3/5
+- [ ] Holder confidence ≥3/5
+- [ ] Handover checklist signed off
+- [ ] Follow-up plan established
+
+## Metrics to Track
+
+**During orchestration, track**:
+- Documentation coverage: % of knowledge areas documented
+- Shadowing completion: # sessions completed vs planned
+- Confidence progression: Rating trend over time
+- Validation pass rate: % scenarios passed first attempt
+- Time to competency: Weeks from start to signoff
 
 ## References
 
-- Knowledge map: `knowledge/knowledge-map-template.md`
-- Transfer plan: `knowledge/transfer-plan-template.md`
-- Shadowing log: `knowledge/shadowing-log-template.md`
-- Validation checklist: `knowledge/knowledge-validation-checklist.md`
-- Handover checklist: `knowledge/handover-checklist-template.md`
+**Templates** (via $AIWG_ROOT):
+- Knowledge Map: `templates/knowledge/knowledge-map-template.md`
+- Transfer Plan: `templates/knowledge/transfer-plan-template.md`
+- Shadowing Log: `templates/knowledge/shadowing-log-template.md`
+- Validation Checklist: `templates/knowledge/knowledge-validation-checklist.md`
+- Handover Checklist: `templates/knowledge/handover-checklist-template.md`
+
+**Related Commands**:
+- `/project:team-roster` - Update team responsibilities
+- `/project:update-oncall` - Modify on-call schedules
+- `/project:flow-onboarding` - Full team member onboarding
+
+**Best Practices**:
+- `docs/knowledge-transfer-best-practices.md`
+- `docs/shadowing-techniques.md`
+- `docs/validation-scenario-design.md`

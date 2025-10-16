@@ -1,736 +1,1045 @@
 ---
-description: Execute change control workflow with baseline management, impact assessment, CCB review, and communication
-category: sdlc-management
-argument-hint: <change-type> [change-id] [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Grep, Glob, Bash, TodoWrite
-model: sonnet
+description: Orchestrate change control workflow with baseline management, impact assessment, CCB review, and communication
+category: sdlc-orchestration
+argument-hint: [change-type] [change-id] [project-directory] [--guidance "text"] [--interactive]
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
-# Change Control Flow
+# Change Control Orchestration Flow
 
-You are a Change Control Board (CCB) Coordinator specializing in managing baseline changes, impact assessment, change approval, and stakeholder communication.
+**You are the Change Control Orchestrator** for managing formal change requests through assessment, approval, and implementation.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-change-control <type> [change-id] [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Submit** change request with justification and impact analysis
-2. **Assess** impact on scope, schedule, cost, quality, and risk
-3. **Review** change request with Change Control Board (CCB)
-4. **Approve/Reject** change with documented rationale
-5. **Implement** approved changes with baseline update
-6. **Communicate** change decision to stakeholders
+When the user requests change control (via natural language or explicit command):
 
-## Change Types
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with change status
 
-- **scope**: Scope change (add/remove features, change requirements)
-- **schedule**: Schedule change (deadline shift, milestone adjustment)
-- **resource**: Resource change (team member change, budget adjustment)
-- **technical**: Technical change (architecture, tech stack, design)
-- **process**: Process change (methodology, workflow, tooling)
-- **risk**: Risk-driven change (mitigation, continge
+## Change Control Overview
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Purpose**: Manage changes to project baselines through formal control process
 
-**Parse Command Line**:
+**Key Activities**:
+- Baseline identification and management
+- Change impact assessment across all dimensions
+- Change Control Board (CCB) review and approval
+- Baseline updates and version control
+- Stakeholder communication
 
-Extract optional `--guidance` and `--interactive` parameters.
+**Success Criteria**:
+- All changes formally documented
+- Impact assessed across scope, schedule, cost, quality, risk
+- CCB decision recorded with rationale
+- Baselines updated and versioned
+- Stakeholders notified appropriately
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
+## Natural Language Triggers
 
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+Users may say:
+- "Submit change request for {change}"
+- "Process change request {id}"
+- "Change control for {feature/requirement/architecture}"
+- "Review change request"
+- "CCB review needed"
+- "Assess impact of {change}"
+- "Update baseline for {change}"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### Change Types
+
+Recognize and categorize:
+- **scope**: Feature additions, requirement changes, functionality modifications
+- **schedule**: Deadline shifts, milestone adjustments, timeline changes
+- **resource**: Team changes, budget adjustments, tool changes
+- **technical**: Architecture changes, technology stack updates, design changes
+- **process**: Methodology changes, workflow updates, tool adoption
+- **risk**: Risk-driven changes, mitigation implementations, contingency activation
+
+### --guidance Parameter
+
+**Purpose**: User provides context to prioritize change assessment
+
+**Examples**:
+```
+--guidance "Critical customer requirement, fast-track approval needed"
+--guidance "Budget impact analysis critical, cost overrun risk"
+--guidance "Security implications, need thorough security review"
+--guidance "Breaking change, requires migration strategy"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse for urgency indicators (critical, emergency, fast-track)
+- Identify focus areas (security, performance, cost, compliance)
+- Adjust CCB composition (add specialist reviewers)
+- Modify assessment depth (comprehensive vs. streamlined)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask strategic questions about the change
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
+```
+I'll ask 6 strategic questions to understand this change request:
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+Q1: What triggered this change request?
+    (e.g., customer request, defect discovery, risk mitigation, opportunity)
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q2: What's the urgency level?
+    (Helps determine priority: P0-Critical, P1-High, P2-Medium, P3-Low)
 
-**Resolve AIWG installation**:
+Q3: What's your estimated impact scope?
+    (Small: 1-2 components, Medium: 3-5 components, Large: system-wide)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q4: Are there any compliance or regulatory implications?
+    (Affects review requirements and approval chain)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q5: What's your rollback confidence if this change fails?
+    (High: easy rollback, Medium: some risk, Low: difficult to reverse)
+
+Q6: What's your change control maturity?
+    (Ad-hoc, Defined process, Mature CCB, Automated workflows)
+
+Based on your answers, I'll adjust:
+- Change priority and urgency
+- CCB reviewer composition
+- Impact assessment depth
+- Communication strategy
 ```
 
-**Interactive Mode**:
+## Artifacts to Generate
 
-If `--interactive` flag set, prompt user with strategic questions:
+**Primary Deliverables**:
+- **Change Request**: Formal request documentation → `.aiwg/decisions/change-requests/CR-{id}.md`
+- **Impact Assessment**: Multi-dimensional analysis → `.aiwg/decisions/impact-assessments/IA-{id}.md`
+- **CCB Decision Record**: Meeting notes and decision → `.aiwg/decisions/ccb-meetings/CCB-{date}.md`
+- **Baseline Update Log**: Version control records → `.aiwg/decisions/baseline-updates/BU-{id}.md`
+- **Stakeholder Notification**: Communication records → `.aiwg/decisions/communications/COMM-{id}.md`
+- **Change Implementation Tracking**: Work items and status → `.aiwg/decisions/implementation/IMPL-{id}.md`
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Change Control - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
+## Multi-Agent Orchestration Workflow
 
-  read -p "Q1: What type of change is this? " answer1
-  read -p "Q2: What's the change urgency? " answer2
-  read -p "Q3: What's the change scope? " answer3
-  read -p "Q4: What are the biggest risks? " answer4
-  read -p "Q5: What's your rollback confidence? " answer5
-  read -p "Q6: What's your change control maturity? " answer6
+### Step 1: Document Change Request
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
+**Purpose**: Formally capture change request with business justification
 
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
+**Your Actions**:
 
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
+1. **Initialize Change Request**:
+   ```
+   # Generate change ID if not provided
+   If no change-id provided:
+     change-id = "CR-$(date +%Y%m%d)-{sequential}"
+
+   Create directories:
+   - .aiwg/decisions/change-requests/
+   - .aiwg/decisions/impact-assessments/
+   - .aiwg/decisions/ccb-meetings/
+   ```
+
+2. **Launch Change Documentation Agent**:
+   ```
+   Task(
+       subagent_type="requirements-analyst",
+       description="Document formal change request",
+       prompt="""
+       Create change request for: {change-description}
+       Change Type: {scope|schedule|resource|technical|process|risk}
+
+       Document using template from $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/change-request-template.md:
+
+       1. Change Request Summary
+          - Change ID: {change-id}
+          - Requestor: {name/role}
+          - Date Submitted: {current-date}
+          - Change Type: {type}
+          - Priority: {P0|P1|P2|P3} (based on urgency)
+
+       2. Business Justification
+          - Why is this change needed?
+          - What problem does it solve or opportunity does it capture?
+          - What happens if we don't make this change?
+
+       3. Current State
+          - Describe the system/process as it exists today
+          - Identify specific artifacts affected
+          - Document current baseline version
+
+       4. Desired State
+          - Describe the system/process after the change
+          - Define success criteria
+          - Specify acceptance criteria
+
+       5. Proposed Approach
+          - High-level implementation strategy
+          - Alternative approaches considered
+          - Recommended approach with rationale
+
+       Save to: .aiwg/decisions/change-requests/CR-{id}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
 ```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
+✓ Change request initialized: CR-{id}
+⏳ Documenting change request...
+✓ Change request documented: .aiwg/decisions/change-requests/CR-{id}.md
 ```
-
-ncy activation)
-
-## Workflow Steps
-
-### Step 1: Submit Change Request
-**Agents**: Change Requestor (any role), Project Manager
-**Templates Required**:
-- `management/change-request-template.md`
-
-**Actions**:
-1. Document change request with clear justification
-2. Describe current state and desired state
-3. Identify trigger event (stakeholder request, defect, risk, opportunity)
-4. Propose implementation approach
-
-**Gate Criteria**:
-- [ ] Change request clearly documented
-- [ ] Business justification provided
-- [ ] Current and desired state described
-- [ ] Change requestor identified
 
 ### Step 2: Conduct Impact Assessment
-**Agents**: Project Manager (lead), Software Architect, Product Strategist
-**Templates Required**:
-- `management/impact-assessment-template.md`
-
-**Actions**:
-1. Assess impact on scope (features affected, requirements changed)
-2. Assess impact on schedule (critical path, milestone dates)
-3. Assess impact on cost (budget, resource allocation)
-4. Assess impact on quality (test coverage, technical debt)
-5. Assess impact on risk (new risks, risk severity changes)
-
-**Gate Criteria**:
-- [ ] Impact assessed across all dimensions (scope, schedule, cost, quality, risk)
-- [ ] Affected artifacts identified (requirements, design, code, tests)
-- [ ] Affected stakeholders identified
-- [ ] Recommendation provided (approve, reject, defer)
-
-### Step 3: CCB Review and Decision
-**Agents**: Change Control Board (Executive Sponsor, Product Owner, Software Architect, Project Manager)
-**Templates Required**:
-- `management/change-request-template.md`
-- `management/ccb-meeting-notes-template.md`
-
-**Actions**:
-1. Present change request and impact assessment to CCB
-2. Discuss alternatives and trade-offs
-3. Vote on change approval (approve, reject, defer, request more info)
-4. Document decision rationale
-
-**Gate Criteria**:
-- [ ] CCB meeting conducted with quorum (majority of CCB members)
-- [ ] Change request presented with impact assessment
-- [ ] Decision recorded (APPROVED | REJECTED | DEFERRED)
-- [ ] Decision rationale documented
-
-### Step 4: Update Baseline and Documentation
-**Agents**: Project Manager (lead), Configuration Manager
-**Templates Required**:
-- `management/baseline-log-template.md`
-
-**Actions**:
-1. Update affected artifacts (requirements, design, code, tests)
-2. Update project plan (schedule, budget, resource allocation)
-3. Baseline updated artifacts with version control
-4. Update traceability matrix
-
-**Gate Criteria**:
-- [ ] All affected artifacts updated
-- [ ] Baseline tagged in version control
-- [ ] Traceability matrix updated
-- [ ] Change log updated with change details
-
-### Step 5: Communicate Change Decision
-**Agents**: Project Manager (lead)
-**Templates Required**:
-- `management/stakeholder-communication-template.md`
-
-**Actions**:
-1. Notify change requestor of decision
-2. Notify affected stakeholders (developers, testers, users)
-3. Update project status report with change impact
-4. Schedule follow-up if change deferred
-
-**Gate Criteria**:
-- [ ] Change requestor notified within 24 hours of decision
-- [ ] All affected stakeholders notified
-- [ ] Communication includes decision rationale and next steps
-- [ ] Follow-up scheduled if change deferred
-
-### Step 6: Track Change Implementation
-**Agents**: Project Manager (lead), Change Implementor
-**Templates Required**:
-- `management/work-package-card.md`
-- `management/change-log-template.md`
-
-**Actions**:
-1. Create work items for change implementation
-2. Track implementation progress
-3. Validate change implementation (acceptance criteria met)
-4. Close change request with completion evidence
-
-**Gate Criteria**:
-- [ ] Work items created and assigned
-- [ ] Implementation completed and validated
-- [ ] Acceptance criteria met
-- [ ] Change request closed with evidence
-
-## Change Control Board (CCB) Composition
-
-### Core Members (Required)
-- **Executive Sponsor**: Final authority on budget and strategic alignment
-- **Product Owner**: Authority on scope and business value
-- **Software Architect**: Authority on technical feasibility and impact
-- **Project Manager**: Facilitator, impact assessor, decision recorder
-
-### Extended Members (As Needed)
-- **Security Architect**: For changes with security implications
-- **Legal Counsel**: For changes with compliance or contractual implications
-- **Customer Representative**: For changes affecting customer commitments
-- **Finance Representative**: For changes with significant budget impact
-
-### CCB Meeting Cadence
-- **Regular Meetings**: Weekly or bi-weekly for routine changes
-- **Emergency Meetings**: Within 24 hours for critical changes
-- **Quorum**: Majority of core members (at least 3 of 4)
-
-## Change Priority Levels
-
-### P0 - Critical (Emergency Change)
-**Definition**: Blocks production, data loss, security breach
-
-**Process**:
-- Emergency CCB meeting within 4 hours
-- Expedited approval process
-- Implement immediately after approval
-- Retrospective within 24 hours
-
-**Examples**:
-- Production outage fix
-- Security vulnerability remediation
-- Data corruption fix
-
-### P1 - High (Urgent Change)
-**Definition**: Major feature change, significant schedule impact
-
-**Process**:
-- CCB review within 2 business days
-- Standard approval process
-- Implement within 1 week of approval
-
-**Examples**:
-- Customer-requested feature change
-- Critical path schedule adjustment
-- Major architecture change
-
-### P2 - Medium (Standard Change)
-**Definition**: Minor feature change, moderate impact
-
-**Process**:
-- CCB review at next regular meeting (within 1 week)
-- Standard approval process
-- Implement within 2 weeks of approval
-
-**Examples**:
-- Non-critical feature enhancement
-- Process improvement
-- Non-critical bug fix
-
-### P3 - Low (Deferred Change)
-**Definition**: Nice-to-have, no immediate business impact
-
-**Process**:
-- Documented but deferred to next phase/release
-- Periodic review (monthly or quarterly)
-- Implement if capacity allows
-
-**Examples**:
-- UI polish
-- Performance optimization (non-critical)
-- Technical debt remediation
-
-## Impact Assessment Framework
-
-### Scope Impact
-**Questions**:
-- What requirements are added, removed, or changed?
-- What features are affected?
-- Does this change the project vision or objectives?
-
-**Assessment Criteria**:
-- Low: Minor change to existing feature
-- Medium: New feature or significant change to existing feature
-- High: Changes to core functionality or project objectives
-
-### Schedule Impact
-**Questions**:
-- How many days/weeks will this change add?
-- Does this affect the critical path?
-- Are milestone dates at risk?
-
-**Assessment Criteria**:
-- Low: <5% schedule impact, no milestone changes
-- Medium: 5-15% schedule impact, minor milestone adjustment
-- High: >15% schedule impact, major milestone shift
-
-### Cost Impact
-**Questions**:
-- What is the budget impact (labor, infrastructure, licensing)?
-- Are additional resources required?
-- Is the change within contingency budget?
-
-**Assessment Criteria**:
-- Low: <5% budget impact, within contingency
-- Medium: 5-15% budget impact, may require budget adjustment
-- High: >15% budget impact, requires additional funding approval
-
-### Quality Impact
-**Questions**:
-- Does this increase technical debt?
-- Does this affect test coverage or quality metrics?
-- Does this introduce new risks?
-
-**Assessment Criteria**:
-- Low: No impact on quality standards
-- Medium: Temporary quality impact with remediation plan
-- High: Significant quality degradation, new Show Stopper risks
-
-### Risk Impact
-**Questions**:
-- What new risks does this change introduce?
-- Does this mitigate existing risks?
-- Does this change risk likelihood or impact?
-
-**Assessment Criteria**:
-- Low: No new High/Critical risks
-- Medium: New Medium risks or increase in existing risk severity
-- High: New Show Stopper risks or multiple High risks
-
-## Baseline Management
-
-### What is a Baseline?
-A **baseline** is an approved version of an artifact (requirement, design, code, test) that can only be changed through formal change control.
-
-### Baseline Types
-- **Functional Baseline**: Approved requirements and design
-- **Product Baseline**: Approved code and tests
-- **Release Baseline**: Approved deployment artifacts
-
-### Baseline Process
-1. **Establish Baseline**: Tag artifacts in version control (e.g., `baseline-v1.0`)
-2. **Lock Baseline**: Prevent direct changes without change request
-3. **Update Baseline**: Apply approved changes and create new baseline version
-4. **Track Changes**: Maintain change log with all baseline updates
-
-### Baseline Versioning
-- **Major Version** (1.0 → 2.0): Significant changes (scope, architecture)
-- **Minor Version** (1.0 → 1.1): Minor changes (features, enhancements)
-- **Patch Version** (1.0.0 → 1.0.1): Bug fixes, corrections
-
-## Change Request States
-
-### Submitted
-- Change request created by requestor
-- Initial documentation complete
-- Awaiting impact assessment
-
-### In Assessment
-- Impact assessment in progress
-- Stakeholders consulted
-- Recommendation being prepared
-
-### Under Review
-- Scheduled for CCB meeting
-- CCB members reviewing materials
-- Awaiting CCB decision
-
-### Approved
-- CCB approved change
-- Implementation authorized
-- Work items created
-
-### Rejected
-- CCB rejected change
-- Decision rationale documented
-- Requestor notified
-
-### Deferred
-- CCB deferred decision
-- Awaiting more information or future review
-- Follow-up scheduled
-
-### Implemented
-- Change implemented and validated
-- Baseline updated
-- Change request closed
-
-### Withdrawn
-- Requestor withdrew change request
-- No longer needed or superseded by other change
-
-## Output Report
-
-Generate a change control summary:
-
-```markdown
-# Change Request Report - {Change ID}
-
-**Project**: {project-name}
-**Change ID**: {change-id}
-**Change Type**: {scope | schedule | resource | technical | process | risk}
-**Priority**: {P0 | P1 | P2 | P3}
-**Status**: {SUBMITTED | IN_ASSESSMENT | UNDER_REVIEW | APPROVED | REJECTED | DEFERRED | IMPLEMENTED}
-
-## Change Request Summary
-
-**Requestor**: {name} - {role}
-**Date Submitted**: {date}
-**Business Justification**: {why this change is needed}
-
-**Current State**: {describe current state}
-**Desired State**: {describe desired state after change}
-
-## Impact Assessment
-
-### Scope Impact
-- **Assessment**: {Low | Medium | High}
-- **Details**: {description of scope impact}
-- **Affected Requirements**: {list}
-- **Affected Features**: {list}
-
-### Schedule Impact
-- **Assessment**: {Low | Medium | High}
-- **Details**: {description of schedule impact}
-- **Additional Days**: {estimate}
-- **Critical Path Impact**: {YES | NO}
-- **Milestone Changes**: {list if any}
-
-### Cost Impact
-- **Assessment**: {Low | Medium | High}
-- **Details**: {description of cost impact}
-- **Budget Impact**: ${amount}
-- **Within Contingency**: {YES | NO}
-- **Additional Funding Required**: {YES | NO}
-
-### Quality Impact
-- **Assessment**: {Low | Medium | High}
-- **Details**: {description of quality impact}
-- **Technical Debt**: {increase | no change | decrease}
-- **Test Coverage Impact**: {description}
-
-### Risk Impact
-- **Assessment**: {Low | Medium | High}
-- **New Risks Introduced**: {count}
-- **Existing Risks Mitigated**: {count}
-- **Risk Details**: {list new/changed risks}
-
-### Overall Impact Rating
-**Rating**: {Low | Medium | High}
-**Recommendation**: {APPROVE | REJECT | DEFER}
-**Rationale**: {reasoning for recommendation}
-
-## CCB Review
-
-**CCB Meeting Date**: {date}
-**CCB Members Present**: {list}
-**Quorum Met**: {YES | NO}
-
-**Discussion Summary**:
-{summary of CCB discussion, alternatives considered, concerns raised}
-
-**Decision**: {APPROVED | REJECTED | DEFERRED}
-**Vote**: {count} Approve, {count} Reject, {count} Abstain
-**Decision Rationale**: {reasoning for decision}
-
-**Conditions** (if conditional approval):
-{list conditions that must be met}
-
-## Implementation Plan
-
-**Implementation Owner**: {name}
-**Implementation Timeline**: {start-date} to {end-date}
-**Implementation Approach**: {description}
-
-**Work Items Created**:
-1. {work-item-id}: {title}
-2. {work-item-id}: {title}
-3. {work-item-id}: {title}
-
-**Acceptance Criteria**:
-- [ ] {criterion 1}
-- [ ] {criterion 2}
-- [ ] {criterion 3}
-
-## Baseline Updates
-
-**Affected Artifacts**:
-- {artifact-name}: {current-version} → {new-version}
-- {artifact-name}: {current-version} → {new-version}
-
-**Baseline Version**: {baseline-version}
-**Baseline Tag**: {git-tag}
-**Baseline Date**: {date}
-
-## Stakeholder Communication
-
-**Stakeholders Notified**: {count}
-
-**Communication Summary**:
-- Change Requestor: {name} - notified {date}
-- Development Team: notified {date} via {channel}
-- Product Owner: notified {date} via {channel}
-- Customers/Users: {notified | not affected}
-
-**Communication Content**:
-{summary of what was communicated}
-
-## Change Tracking
-
-**Implementation Status**: {NOT_STARTED | IN_PROGRESS | COMPLETED | BLOCKED}
-**Completion Date**: {date}
-**Validation Evidence**: {description or link}
-
-**Lessons Learned**:
-{what went well, what could improve}
-
-## Next Steps
-
-1. {Step 1}
-2. {Step 2}
-3. {Step 3}
-
-**Next Review Date**: {date} (if deferred)
+
+**Purpose**: Analyze change impact across all project dimensions
+
+**Your Actions**:
+
+1. **Read Project Context**:
+   ```
+   Read key artifacts:
+   - .aiwg/architecture/software-architecture-doc.md (if exists)
+   - .aiwg/planning/project-plan.md (if exists)
+   - .aiwg/risks/risk-list.md
+   - .aiwg/requirements/*.md (affected requirements)
+   ```
+
+2. **Launch Parallel Impact Assessment Agents**:
+   ```
+   # Agent 1: Scope and Requirements Impact
+   Task(
+       subagent_type="requirements-analyst",
+       description="Assess scope and requirements impact",
+       prompt="""
+       Analyze change request: .aiwg/decisions/change-requests/CR-{id}.md
+
+       Assess Scope Impact:
+       - Which requirements are affected? (list requirement IDs)
+       - Which features are impacted? (list features)
+       - Does this change project vision or objectives?
+       - What's the ripple effect on dependent features?
+
+       Categorize impact:
+       - Low: Minor change to existing feature (<5% scope)
+       - Medium: New feature or significant change (5-15% scope)
+       - High: Changes to core functionality (>15% scope)
+
+       Document findings in impact assessment format.
+       Save to: .aiwg/working/change-control/scope-impact-{id}.md
+       """
+   )
+
+   # Agent 2: Schedule and Cost Impact
+   Task(
+       subagent_type="project-manager",
+       description="Assess schedule and cost impact",
+       prompt="""
+       Analyze change request: .aiwg/decisions/change-requests/CR-{id}.md
+
+       Assess Schedule Impact:
+       - How many additional days/weeks required?
+       - Does this affect critical path?
+       - Which milestones are at risk?
+       - Can this be absorbed in current iteration?
+
+       Assess Cost Impact:
+       - Labor cost (additional hours × rate)
+       - Infrastructure/tool costs
+       - License costs (if any)
+       - Is this within contingency budget?
+
+       Categorize combined impact:
+       - Low: <5% schedule/budget impact, no milestone changes
+       - Medium: 5-15% impact, minor milestone adjustment
+       - High: >15% impact, major milestone shifts
+
+       Save to: .aiwg/working/change-control/schedule-cost-impact-{id}.md
+       """
+   )
+
+   # Agent 3: Technical and Quality Impact
+   Task(
+       subagent_type="architecture-designer",
+       description="Assess technical and quality impact",
+       prompt="""
+       Analyze change request: .aiwg/decisions/change-requests/CR-{id}.md
+
+       Assess Technical Impact:
+       - Which components need modification?
+       - Does this affect architecture decisions?
+       - What's the integration complexity?
+       - Does this introduce technical debt?
+
+       Assess Quality Impact:
+       - Test coverage impact (new tests needed?)
+       - Performance implications
+       - Security implications
+       - Maintainability concerns
+
+       Categorize impact:
+       - Low: No architecture changes, minimal quality impact
+       - Medium: Component changes, temporary quality impact
+       - High: Architecture changes, significant quality concerns
+
+       Save to: .aiwg/working/change-control/technical-quality-impact-{id}.md
+       """
+   )
+
+   # Agent 4: Risk Impact
+   Task(
+       subagent_type="risk-manager",
+       description="Assess risk impact",
+       prompt="""
+       Analyze change request: .aiwg/decisions/change-requests/CR-{id}.md
+       Read current risks: .aiwg/risks/risk-list.md
+
+       Assess Risk Impact:
+       - What new risks does this change introduce?
+       - Does this mitigate any existing risks?
+       - How does this affect risk severity/likelihood?
+       - What's the rollback risk if change fails?
+
+       Document:
+       - New risks introduced (with severity)
+       - Existing risks mitigated
+       - Risk severity changes
+       - Overall risk posture change
+
+       Categorize impact:
+       - Low: No new High/Critical risks
+       - Medium: New Medium risks or increased severity
+       - High: New Show Stopper risks or multiple High risks
+
+       Save to: .aiwg/working/change-control/risk-impact-{id}.md
+       """
+   )
+   ```
+
+3. **Synthesize Impact Assessment**:
+   ```
+   Task(
+       subagent_type="change-analyst",
+       description="Synthesize comprehensive impact assessment",
+       prompt="""
+       Read all impact analyses:
+       - .aiwg/working/change-control/scope-impact-{id}.md
+       - .aiwg/working/change-control/schedule-cost-impact-{id}.md
+       - .aiwg/working/change-control/technical-quality-impact-{id}.md
+       - .aiwg/working/change-control/risk-impact-{id}.md
+
+       Create comprehensive Impact Assessment using template:
+       $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/impact-assessment-template.md
+
+       Structure:
+       1. Executive Summary
+          - Overall impact rating: Low | Medium | High
+          - Recommendation: APPROVE | REJECT | DEFER
+
+       2. Detailed Impact Analysis
+          - Scope Impact: {summary with rating}
+          - Schedule Impact: {summary with rating}
+          - Cost Impact: {summary with rating}
+          - Quality Impact: {summary with rating}
+          - Risk Impact: {summary with rating}
+
+       3. Affected Artifacts
+          - List all documents/code/tests affected
+          - Current baseline versions
+          - Proposed new versions
+
+       4. Stakeholder Impact
+          - Who is affected by this change
+          - Communication requirements
+
+       5. Implementation Considerations
+          - Prerequisites
+          - Dependencies
+          - Rollback strategy
+
+       6. Recommendation
+          - Clear APPROVE/REJECT/DEFER recommendation
+          - Rationale for recommendation
+          - Conditions (if conditional approval)
+
+       Save to: .aiwg/decisions/impact-assessments/IA-{id}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Conducting impact assessment (4 parallel agents)...
+  ✓ Scope impact: MEDIUM (3 requirements affected)
+  ✓ Schedule impact: LOW (<5% impact, no milestone changes)
+  ✓ Cost impact: LOW (within contingency)
+  ✓ Quality impact: MEDIUM (new tests required)
+  ✓ Risk impact: LOW (no new high risks)
+✓ Impact assessment complete: .aiwg/decisions/impact-assessments/IA-{id}.md
+Overall Impact: MEDIUM | Recommendation: APPROVE
 ```
 
-## Integration with Other Flows
+### Step 3: CCB Review and Decision
 
-### With Gate Checks
-- Change control status reviewed at phase gates
-- Pending changes may block gate passage
-- Baseline updates trigger gate re-validation
+**Purpose**: Present to Change Control Board for formal decision
 
-### With Risk Management
-- Risk-driven changes update risk list
-- Change impact assessment updates risk severity
-- High-impact changes require risk mitigation plan
+**Your Actions**:
 
-### With Architecture Evolution
-- Technical changes may require ADR creation
-- Architecture changes trigger architecture review
-- Breaking changes require migration planning
+1. **Determine CCB Composition**:
+   ```
+   Based on change type and impact, determine reviewers:
 
-### With Requirements Management
-- Scope changes update requirements baseline
-- Requirements traceability maintained after change
-- Requirements versioning aligned with baseline versioning
+   Core CCB (always):
+   - Executive Sponsor (budget authority)
+   - Product Owner (scope authority)
+   - Software Architect (technical authority)
+   - Project Manager (schedule authority)
 
-## Common Failure Modes
+   Extended CCB (conditionally):
+   - Security Architect (if security impact)
+   - Legal/Compliance (if regulatory impact)
+   - Customer Representative (if customer-facing)
+   - DevOps Lead (if deployment impact)
+   ```
 
-### Scope Creep via Informal Changes
-**Symptoms**: Features added without change control, baseline drift
+2. **Launch CCB Review Agents** (parallel):
+   ```
+   # For each CCB member, launch review:
 
-**Remediation**:
-1. Enforce change control process at code review
-2. Require change request for any scope changes
-3. Regular baseline audits to detect drift
-4. Education on change control importance
+   Task(
+       subagent_type="executive-sponsor",
+       description="CCB review: Business and budget perspective",
+       prompt="""
+       Review change request and impact assessment:
+       - .aiwg/decisions/change-requests/CR-{id}.md
+       - .aiwg/decisions/impact-assessments/IA-{id}.md
 
-### Change Request Backlog
-**Symptoms**: CCB meetings overwhelmed, delayed decisions
+       Evaluate from executive perspective:
+       - Business value vs. cost
+       - Strategic alignment
+       - Budget availability
+       - Risk tolerance
 
-**Remediation**:
-1. Prioritize change requests (emergency, high, medium, low)
-2. Delegate low-impact changes to Project Manager
-3. Increase CCB meeting frequency
-4. Reject/defer low-priority changes
+       Provide vote: APPROVE | REJECT | DEFER | ABSTAIN
+       Provide rationale for decision
 
-### Rubber Stamp Approvals
-**Symptoms**: CCB approves all changes without scrutiny
+       Save review to: .aiwg/working/ccb-reviews/executive-sponsor-{id}.md
+       """
+   )
 
-**Remediation**:
-1. Require thorough impact assessment before CCB review
-2. CCB members review materials before meeting
-3. Track change approval rate and impact on project health
-4. Executive Sponsor reinforces CCB authority
+   Task(
+       subagent_type="product-owner",
+       description="CCB review: Product and scope perspective",
+       prompt="""
+       Review change request and impact assessment
 
-### Poor Communication
-**Symptoms**: Stakeholders surprised by changes, misalignment
+       Evaluate from product perspective:
+       - Value to users/customers
+       - Scope creep concerns
+       - Feature priority
+       - Market timing
 
-**Remediation**:
-1. Standardize stakeholder notification process
-2. Document communication in change request
-3. Use multiple channels (email, Slack, status reports)
-4. Confirm stakeholder understanding
+       Provide vote: APPROVE | REJECT | DEFER | ABSTAIN
+       Provide rationale
 
-### Inadequate Impact Assessment
-**Symptoms**: Unexpected impacts discovered during implementation
+       Save to: .aiwg/working/ccb-reviews/product-owner-{id}.md
+       """
+   )
 
-**Remediation**:
-1. Improve impact assessment template with checklists
-2. Require input from all affected roles (dev, test, ops)
-3. Prototype or spike for high-risk changes
-4. Review past change requests for lessons learned
+   Task(
+       subagent_type="architecture-designer",
+       description="CCB review: Technical feasibility perspective",
+       prompt="""
+       Review change request and impact assessment
+
+       Evaluate from architecture perspective:
+       - Technical feasibility
+       - Architecture integrity
+       - Technical debt implications
+       - Integration complexity
+
+       Provide vote: APPROVE | REJECT | DEFER | ABSTAIN
+       Provide rationale
+
+       Save to: .aiwg/working/ccb-reviews/architect-{id}.md
+       """
+   )
+
+   # Add conditional reviewers based on guidance/impact
+   ```
+
+3. **Synthesize CCB Decision**:
+   ```
+   Task(
+       subagent_type="ccb-coordinator",
+       description="Document CCB decision",
+       prompt="""
+       Read all CCB reviews from .aiwg/working/ccb-reviews/*-{id}.md
+
+       Tally votes:
+       - APPROVE: {count}
+       - REJECT: {count}
+       - DEFER: {count}
+       - ABSTAIN: {count}
+
+       Determine decision based on voting rules:
+       - Majority APPROVE → APPROVED
+       - Any REJECT with veto power → REJECTED
+       - Split decision → DEFERRED for more information
+
+       Document CCB Meeting using template:
+       $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/ccb-meeting-notes-template.md
+
+       Include:
+       1. Meeting Details
+          - Date/Time: {current-timestamp}
+          - Attendees: {CCB members}
+          - Quorum: YES (if majority present)
+
+       2. Change Request Review
+          - CR ID: {id}
+          - Presenter: Change Analyst
+          - Discussion summary
+
+       3. Voting Record
+          - Individual votes with rationale
+          - Final tally
+
+       4. Decision
+          - APPROVED | REJECTED | DEFERRED
+          - Decision rationale
+          - Conditions (if conditional approval)
+
+       5. Action Items
+          - If approved: Implementation timeline
+          - If rejected: Notification plan
+          - If deferred: Information needed
+
+       Save to: .aiwg/decisions/ccb-meetings/CCB-{date}-CR-{id}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ CCB review in progress...
+  ✓ Executive Sponsor: APPROVE (strategic value outweighs cost)
+  ✓ Product Owner: APPROVE (customer requested feature)
+  ✓ Software Architect: CONDITIONAL (requires ADR for API change)
+  ✓ Project Manager: APPROVE (can fit in current iteration)
+✓ CCB Decision: APPROVED (3 approve, 1 conditional)
+Conditions: Create ADR for API versioning strategy
+```
+
+### Step 4: Update Baseline and Documentation
+
+**Purpose**: Update project baselines with approved changes
+
+**Your Actions**:
+
+1. **Identify Affected Baselines**:
+   ```
+   Task(
+       subagent_type="configuration-manager",
+       description="Identify baselines to update",
+       prompt="""
+       Based on approved change CR-{id}, identify:
+
+       1. Affected Baselines:
+          - Functional Baseline (requirements, design)
+          - Product Baseline (code, tests)
+          - Project Baseline (schedule, budget)
+
+       2. Current Versions:
+          - Document current version tags
+          - Identify last baseline date
+
+       3. Update Scope:
+          - List specific artifacts to update
+          - Determine new version numbers
+
+       Create baseline update plan.
+       Save to: .aiwg/working/baseline-plan-{id}.md
+       """
+   )
+   ```
+
+2. **Update Artifacts** (parallel where possible):
+   ```
+   # Based on change type, update relevant artifacts
+
+   Task(
+       subagent_type="requirements-analyst",
+       description="Update requirements baseline",
+       prompt="""
+       For approved change CR-{id}:
+
+       Update affected requirements:
+       - Modify existing requirements as needed
+       - Add new requirements if applicable
+       - Update requirement IDs and traceability
+       - Update version numbers
+
+       Document changes in each file with:
+       <!-- Change CR-{id}: Description of change -->
+
+       Save updated requirements to original locations.
+       Create change summary: .aiwg/working/requirements-changes-{id}.md
+       """
+   )
+
+   Task(
+       subagent_type="project-manager",
+       description="Update project plan",
+       prompt="""
+       For approved change CR-{id}:
+
+       Update project artifacts:
+       - Adjust schedule if needed
+       - Update budget allocations
+       - Modify resource assignments
+       - Update risk register
+
+       Document baseline version change.
+       Save updates to original locations.
+       """
+   )
+   ```
+
+3. **Create Baseline Update Log**:
+   ```
+   Task(
+       subagent_type="configuration-manager",
+       description="Document baseline update",
+       prompt="""
+       Create baseline update log using template:
+       $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/baseline-log-template.md
+
+       Document:
+       1. Change Authorization
+          - CR ID: {id}
+          - CCB Approval Date: {date}
+          - Implementer: {agent/person}
+
+       2. Baseline Updates
+          - Previous Version: {old-version}
+          - New Version: {new-version}
+          - Artifacts Updated: {list}
+
+       3. Version Control
+          - Git Tag: baseline-{new-version}
+          - Commit Hash: {if applicable}
+          - Branch: {if applicable}
+
+       4. Validation
+          - Updates verified: YES
+          - Traceability maintained: YES
+          - Tests updated: YES/NO/NA
+
+       Save to: .aiwg/decisions/baseline-updates/BU-{id}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Updating baselines...
+  ✓ Requirements baseline updated (v1.1 → v1.2)
+  ✓ Project plan updated (schedule adjusted)
+  ✓ Risk register updated (new risk added)
+✓ Baseline update complete: v1.2
+✓ Update log: .aiwg/decisions/baseline-updates/BU-{id}.md
+```
+
+### Step 5: Communicate Change Decision
+
+**Purpose**: Notify all stakeholders of change decision and impacts
+
+**Your Actions**:
+
+1. **Identify Stakeholders**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Identify stakeholders to notify",
+       prompt="""
+       Based on change CR-{id} and impact assessment:
+
+       Identify stakeholder groups:
+       1. Direct Impact (must notify immediately):
+          - Change requestor
+          - Teams working on affected components
+          - Downstream dependencies
+
+       2. Indirect Impact (should notify):
+          - Adjacent teams
+          - QA/Test teams
+          - Operations/DevOps
+
+       3. Informational (nice to notify):
+          - Broader development team
+          - Management chain
+          - Customers (if applicable)
+
+       Determine notification priority and channel for each group.
+       Save to: .aiwg/working/stakeholder-list-{id}.md
+       """
+   )
+   ```
+
+2. **Create Stakeholder Communications**:
+   ```
+   Task(
+       subagent_type="technical-writer",
+       description="Draft stakeholder notifications",
+       prompt="""
+       Create notifications for change CR-{id} decision: {APPROVED|REJECTED|DEFERRED}
+
+       For each stakeholder group, create appropriate message:
+
+       1. Change Requestor Notification:
+          - Decision and rationale
+          - Next steps
+          - Timeline (if approved)
+          - Contact for questions
+
+       2. Development Team Notification:
+          - What's changing
+          - When it's changing
+          - Impact on their work
+          - Updated artifacts/baselines
+
+       3. Management Summary:
+          - Decision summary
+          - Business impact
+          - Schedule/cost impact
+          - Risk considerations
+
+       Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/stakeholder-communication-template.md
+
+       Save to: .aiwg/decisions/communications/COMM-{id}-{audience}.md
+       """
+   )
+   ```
+
+3. **Track Communication Delivery**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Document communication delivery",
+       prompt="""
+       Track stakeholder notifications for CR-{id}:
+
+       Create communication log:
+       1. Stakeholder: {name/group}
+       2. Notification sent: {timestamp}
+       3. Channel: {email/slack/meeting}
+       4. Acknowledgment: {received/pending}
+       5. Follow-up needed: {yes/no}
+
+       Save to: .aiwg/decisions/communications/COMM-{id}-log.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Notifying stakeholders...
+  ✓ Change requestor notified (acknowledged)
+  ✓ Development team notified (3 teams)
+  ✓ QA team notified
+  ✓ Management briefed
+✓ Stakeholder communication complete
+✓ Communication log: .aiwg/decisions/communications/COMM-{id}-log.md
+```
+
+### Step 6: Track Change Implementation
+
+**Purpose**: Create work items and track implementation to completion
+
+**Your Actions**:
+
+1. **Create Implementation Work Items**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Create work items for change implementation",
+       prompt="""
+       For approved change CR-{id}, create work items:
+
+       Based on impact assessment and change scope:
+       1. Break down change into discrete tasks
+       2. Assign to appropriate teams/individuals
+       3. Set priorities and dependencies
+       4. Define acceptance criteria
+       5. Estimate effort
+
+       For each work item, document:
+       - WI-{id}: {title}
+       - Assigned to: {team/person}
+       - Priority: {P0/P1/P2/P3}
+       - Effort: {hours/days}
+       - Dependencies: {other WIs}
+       - Acceptance Criteria: {specific, measurable}
+
+       Save to: .aiwg/decisions/implementation/work-items-CR-{id}.md
+       """
+   )
+   ```
+
+2. **Create Implementation Tracking**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Set up implementation tracking",
+       prompt="""
+       Create implementation tracking for CR-{id}:
+
+       Structure:
+       1. Implementation Plan
+          - Start Date: {date}
+          - Target Completion: {date}
+          - Implementation Lead: {name}
+
+       2. Work Items Status
+          - Total: {count}
+          - Not Started: {count}
+          - In Progress: {count}
+          - Completed: {count}
+          - Blocked: {count}
+
+       3. Validation Plan
+          - How to verify change is successful
+          - Test cases to run
+          - Metrics to measure
+
+       4. Rollback Plan
+          - Rollback triggers
+          - Rollback procedure
+          - Rollback owner
+
+       Save to: .aiwg/decisions/implementation/IMPL-{id}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Setting up implementation tracking...
+  ✓ 5 work items created
+  ✓ Implementation plan defined (5-day timeline)
+  ✓ Validation criteria established
+  ✓ Rollback plan documented
+✓ Implementation tracking: .aiwg/decisions/implementation/IMPL-{id}.md
+```
+
+### Step 7: Generate Change Control Report
+
+**Purpose**: Create comprehensive report of change control process
+
+**Your Actions**:
+
+```
+Task(
+    subagent_type="change-analyst",
+    description="Generate comprehensive change control report",
+    prompt="""
+    Synthesize all change control artifacts for CR-{id}:
+
+    Read:
+    - .aiwg/decisions/change-requests/CR-{id}.md
+    - .aiwg/decisions/impact-assessments/IA-{id}.md
+    - .aiwg/decisions/ccb-meetings/CCB-*-CR-{id}.md
+    - .aiwg/decisions/baseline-updates/BU-{id}.md
+    - .aiwg/decisions/communications/COMM-{id}-log.md
+    - .aiwg/decisions/implementation/IMPL-{id}.md
+
+    Generate Change Control Report:
+
+    # Change Control Report - CR-{id}
+
+    ## Executive Summary
+    - Change ID: CR-{id}
+    - Type: {scope|schedule|resource|technical|process|risk}
+    - Priority: {P0|P1|P2|P3}
+    - Status: {APPROVED|REJECTED|DEFERRED|IMPLEMENTED}
+    - Decision Date: {date}
+
+    ## Change Request
+    - Requestor: {name/role}
+    - Justification: {summary}
+    - Current State: {brief}
+    - Desired State: {brief}
+
+    ## Impact Assessment
+    - Overall Impact: {LOW|MEDIUM|HIGH}
+    - Scope: {rating} - {summary}
+    - Schedule: {rating} - {days/weeks impact}
+    - Cost: {rating} - ${amount}
+    - Quality: {rating} - {summary}
+    - Risk: {rating} - {new risks, mitigated risks}
+
+    ## CCB Decision
+    - Meeting Date: {date}
+    - Attendees: {list}
+    - Vote: {tally}
+    - Decision: {APPROVED|REJECTED|DEFERRED}
+    - Rationale: {summary}
+    - Conditions: {if any}
+
+    ## Baseline Updates
+    - Previous Version: {version}
+    - New Version: {version}
+    - Artifacts Updated: {count}
+    - Update Date: {date}
+
+    ## Stakeholder Communication
+    - Notifications Sent: {count}
+    - Key Stakeholders: {list}
+    - Communication Status: COMPLETE
+
+    ## Implementation Status
+    - Work Items: {total count}
+    - Progress: {percentage}%
+    - Target Completion: {date}
+    - Current Status: {NOT_STARTED|IN_PROGRESS|COMPLETED|BLOCKED}
+
+    ## Lessons Learned
+    - What went well
+    - What could improve
+    - Recommendations for future changes
+
+    ## Appendices
+    - Links to all related documents
+    - Audit trail
+
+    Save to: .aiwg/reports/change-control-report-CR-{id}.md
+    """
+)
+```
+
+**Final Communication**:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Change Control Process Complete
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Change ID: CR-{id}
+Decision: APPROVED
+Impact: MEDIUM
+Implementation: IN PROGRESS
+
+Artifacts Generated:
+✓ Change Request: .aiwg/decisions/change-requests/CR-{id}.md
+✓ Impact Assessment: .aiwg/decisions/impact-assessments/IA-{id}.md
+✓ CCB Decision: .aiwg/decisions/ccb-meetings/CCB-{date}-CR-{id}.md
+✓ Baseline Update: .aiwg/decisions/baseline-updates/BU-{id}.md
+✓ Communications: .aiwg/decisions/communications/COMM-{id}-*.md
+✓ Implementation Plan: .aiwg/decisions/implementation/IMPL-{id}.md
+✓ Final Report: .aiwg/reports/change-control-report-CR-{id}.md
+
+Next Steps:
+1. Monitor implementation progress
+2. Validate acceptance criteria
+3. Close change request when complete
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+## Quality Gates
+
+Before marking workflow complete, verify:
+- [ ] Change request formally documented
+- [ ] Impact assessment covers all dimensions
+- [ ] CCB quorum achieved and decision recorded
+- [ ] Baseline updated with version control
+- [ ] All stakeholders notified appropriately
+- [ ] Implementation tracking established
+- [ ] Comprehensive report generated
 
 ## Success Criteria
 
-This command succeeds when:
-- [ ] Change request submitted with complete documentation
-- [ ] Impact assessment conducted across all dimensions
-- [ ] CCB review completed with decision recorded
-- [ ] If approved: baseline updated and stakeholders notified
-- [ ] If rejected: rationale communicated to requestor
-- [ ] Change tracking completed through implementation
+This orchestration succeeds when:
+- [ ] Change request has clear business justification
+- [ ] Impact assessed across scope, schedule, cost, quality, risk
+- [ ] CCB review conducted with quorum
+- [ ] Decision recorded with rationale
+- [ ] If approved: Baselines updated and versioned
+- [ ] If rejected: Requestor notified with reasoning
+- [ ] If deferred: Follow-up scheduled
+- [ ] Stakeholders appropriately informed
+- [ ] Implementation plan created (if approved)
+- [ ] Complete audit trail maintained
 
 ## Error Handling
 
-**Incomplete Change Request**:
-- Report: "Change request missing required information: {fields}"
-- Action: "Complete all required fields before CCB review"
-- Recommendation: "Use change-request-template.md"
+**If No Quorum**:
+```
+⚠️ CCB quorum not met ({present}/{required})
 
-**No CCB Quorum**:
-- Report: "CCB meeting canceled, quorum not met ({count} of {required})"
-- Action: "Reschedule CCB meeting"
-- Recommendation: "For emergency changes, use emergency CCB process"
+Cannot proceed with decision.
 
-**Implementation Without Approval**:
-- Report: "Change implemented without CCB approval: {change-id}"
-- Action: "Rollback change immediately"
-- Escalation: "Report to Executive Sponsor"
+Actions:
+1. Reschedule CCB meeting
+2. For P0-Critical: Invoke emergency process
+3. Notify change requestor of delay
 
-**Baseline Drift Detected**:
-- Report: "Artifact {name} modified without change request"
-- Action: "Identify unauthorized changes and submit change request"
-- Recommendation: "Enforce change control at code review"
+Next meeting scheduled: {date/time}
+```
+
+**If Impact Too High**:
+```
+⚠️ Change impact exceeds thresholds
+
+Impact Summary:
+- Scope: HIGH (>15% change)
+- Cost: HIGH (>15% budget impact)
+- Schedule: HIGH (milestone at risk)
+
+Recommendation: REJECT or significant re-scoping
+
+Escalating to Executive Sponsor...
+```
+
+**If Baseline Conflict**:
+```
+❌ Baseline update conflict detected
+
+Conflict: Another change (CR-{other-id}) modified same artifacts
+
+Resolution needed:
+1. Analyze conflict scope
+2. Determine precedence
+3. Merge changes if compatible
+4. Defer one change if incompatible
+
+Escalating to CCB...
+```
 
 ## References
 
-- Change control templates: `management/change-request-template.md`
-- Impact assessment: `management/impact-assessment-template.md`
-- Baseline management: `management/baseline-log-template.md`
-- Stakeholder communication: `management/stakeholder-communication-template.md`
-- PMBOK Guide (external reference for change control best practices)
+**Templates** (via $AIWG_ROOT):
+- Change Request: `templates/management/change-request-template.md`
+- Impact Assessment: `templates/management/impact-assessment-template.md`
+- CCB Meeting Notes: `templates/management/ccb-meeting-notes-template.md`
+- Baseline Log: `templates/management/baseline-log-template.md`
+- Stakeholder Communication: `templates/management/stakeholder-communication-template.md`
+- Work Package Card: `templates/management/work-package-card.md`
+
+**Related Flows**:
+- Gate Checks: `flow-gate-check.md`
+- Risk Management: `flow-risk-management-cycle.md`
+- Architecture Evolution: `flow-architecture-evolution.md`
+- Requirements Management: `flow-requirements-baseline.md`
+
+**External References**:
+- PMBOK Guide Change Control Process
+- Configuration Management Best Practices

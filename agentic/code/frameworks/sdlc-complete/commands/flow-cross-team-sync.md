@@ -1,990 +1,911 @@
 ---
-description: Execute Cross-Team Sync flow with dependency mapping, sync cadence, blocker escalation, integration planning, and cross-team demos
-category: sdlc-management
-argument-hint: <team-a> <team-b> [sync-frequency] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Glob, Grep, TodoWrite
-model: sonnet
+description: Orchestrate cross-team synchronization with dependency mapping, sync cadence, blocker escalation, integration planning, and cross-team demos
+category: sdlc-orchestration
+argument-hint: [team-a] [team-b] [sync-frequency] [--guidance "text"] [--interactive]
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
-# Cross-Team Sync Flow
+# Cross-Team Synchronization Flow
 
-You are a Cross-Team Coordination Specialist responsible for orchestrating synchronization, dependency management, and integration planning across multiple teams working on interconnected systems.
+**You are the Core Orchestrator** for cross-team coordination and integration alignment.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-cross-team-sync <team-a> <team-b> [sync-frequency]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Map** dependencies and integration points between teams
-2. **Establish** sync cadence (weekly, bi-weekly) with structured agenda
-3. **Track** blockers and escalate cross-team issues
-4. **Coordinate** integration planning and API contracts
-5. **Facilitate** cross-team demos and knowledge sharing
+When the user requests this flow (via natural language or explicit command):
 
-## Phase Overview
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
-The Cross-Team Sync flow ensures teams working on interdependent components maintain alignment, resolve blockers quickly, and integrate seamlessly through structured communication an
+## Cross-Team Sync Overview
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Purpose**: Orchestrate synchronization, dependency management, and integration planning across multiple teams working on interconnected systems.
 
-**Parse Command Line**:
+**Key Activities**:
+- Dependency mapping (team-to-team dependencies)
+- Sync cadence establishment (daily, weekly)
+- Blocker escalation
+- Integration planning
+- Cross-team demos and validation
 
-Extract optional `--guidance` and `--interactive` parameters.
+**Expected Duration**: Initial setup 2-3 hours, ongoing syncs 1 hour weekly, orchestration 20-30 minutes
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
+## Natural Language Triggers
 
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+Users may say:
+- "Sync with {team}"
+- "Coordinate teams"
+- "Cross-team sync"
+- "Team alignment meeting"
+- "Set up team coordination"
+- "Map team dependencies"
+- "Establish team sync cadence"
+- "Resolve cross-team blockers"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### Team Parameters
+
+**Primary inputs**:
+- `team-a`: First team name (required)
+- `team-b`: Second team name (required)
+- `sync-frequency`: Optional frequency (weekly, bi-weekly, default: weekly)
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor orchestration priorities
+
+**Examples**:
+```
+--guidance "High API dependencies, need tight integration coordination"
+--guidance "Teams in different time zones, prefer async communication"
+--guidance "Critical launch deadline, daily sync needed for next 2 weeks"
+--guidance "New teams, need extra focus on knowledge sharing and patterns"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: integration, timezone, deadline, knowledge
+- Adjust sync frequency (daily for critical periods)
+- Modify meeting structure (async-friendly for timezone issues)
+- Add knowledge sharing emphasis (for new teams)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 6 strategic questions to understand team dynamics
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 6 strategic questions to tailor cross-team synchronization:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What are the main integration points between teams?
+    (e.g., APIs, shared databases, event streams, UI components)
 
-**Resolve AIWG installation**:
+Q2: How critical are the dependencies?
+    (Helps determine sync frequency and escalation urgency)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: What's the current blocker resolution time?
+    (Helps set appropriate SLAs and escalation paths)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: What are the teams' time zones and availability?
+    (Influences meeting scheduling and async strategies)
+
+Q5: What's your timeline pressure?
+    (Daily sync for critical periods vs. weekly for normal pace)
+
+Q6: What collaboration tools do teams use?
+    (Slack, Teams, Jira, GitHub - affects communication setup)
+
+Based on your answers, I'll adjust:
+- Sync frequency (daily, weekly, bi-weekly)
+- Meeting structure (sync vs. async emphasis)
+- Escalation paths (SLAs and ownership)
+- Knowledge sharing approach
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance string for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Cross Team Sync - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **Dependency Map**: Component ownership and integration points → `.aiwg/team/dependency-map-{team-a}-{team-b}.md`
+- **Integration Contracts**: API specifications and change protocol → `.aiwg/team/integration-contracts/`
+- **Sync Meeting Agenda**: Structured meeting template → `.aiwg/team/sync-agenda-{team-a}-{team-b}.md`
+- **Blocker Tracker**: Active blockers with SLAs → `.aiwg/team/blocker-tracker.md`
+- **Escalation Matrix**: Clear escalation paths → `.aiwg/team/escalation-matrix.md`
+- **Cross-Team Sync Report**: Health metrics and recommendations → `.aiwg/reports/cross-team-sync-report.md`
 
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
+**Supporting Artifacts**:
+- Meeting notes archive
+- Demo recordings/summaries
+- Reusable patterns documentation
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-d coordination.
-
-## Workflow Steps
+## Multi-Agent Orchestration Workflow
 
 ### Step 1: Dependency Mapping and Integration Points
-**Agents**: System Analyst (lead), Software Architect
-**Templates Required**:
-- `analysis-design/dependency-map-template.md`
-- `analysis-design/integration-contract-template.md`
 
-**Actions**:
-1. Identify components owned by each team
-2. Map dependencies (which team depends on which team)
-3. Document integration points (APIs, events, data contracts)
-4. Classify dependency criticality (blocking vs non-blocking)
-5. Create dependency matrix and visualization
+**Purpose**: Identify components owned by each team and map dependencies
 
-**Gate Criteria**:
-- [ ] All components and ownership identified
-- [ ] Dependencies mapped in both directions
-- [ ] Integration points documented with contracts
-- [ ] Criticality classification complete
-- [ ] Dependency visualization created and shared
+**Your Actions**:
 
-**Dependency Map Structure**:
-```markdown
-## Cross-Team Dependency Map
+1. **Gather Context**:
+   ```
+   Read existing artifacts if present:
+   - .aiwg/architecture/software-architecture-doc.md
+   - .aiwg/requirements/use-case-*.md
+   - Any existing team documentation
+   ```
 
-**Teams**: {team-a} ↔ {team-b}
-**Date**: {date}
-**Maintained By**: {System Analyst}
+2. **Launch Dependency Analysis Agents** (parallel):
+   ```
+   # Agent 1: System Analyst - Component Analysis
+   Task(
+       subagent_type="system-analyst",
+       description="Map component ownership and dependencies",
+       prompt="""
+       Analyze architecture and identify:
 
-### Component Ownership
+       For Team A ({team-a}):
+       - Components owned
+       - Services maintained
+       - Data stores managed
+       - External dependencies
 
-#### Team A Components
-- {component-1}: {description}
-- {component-2}: {description}
-- {component-3}: {description}
+       For Team B ({team-b}):
+       - Components owned
+       - Services maintained
+       - Data stores managed
+       - External dependencies
 
-#### Team B Components
-- {component-4}: {description}
-- {component-5}: {description}
-- {component-6}: {description}
+       Map dependencies:
+       - Team A → Team B dependencies
+       - Team B → Team A dependencies
+       - Shared resources
+       - External system touchpoints
 
-### Dependency Matrix
+       Classify each dependency:
+       - Type: API, Database, Event Stream, File System
+       - Criticality: BLOCKING, NON-BLOCKING
+       - Status: ACTIVE, PLANNED, DEPRECATED
 
-| Team A Depends On | Team B Component | Integration Type | Criticality | Status |
-|-------------------|------------------|------------------|-------------|--------|
-| {component-1} | {component-4} | REST API | BLOCKING | ACTIVE |
-| {component-2} | {component-5} | Event Stream | NON-BLOCKING | PLANNED |
+       Create dependency matrix showing all relationships.
 
-| Team B Depends On | Team A Component | Integration Type | Criticality | Status |
-|-------------------|------------------|------------------|-------------|--------|
-| {component-4} | {component-1} | REST API | BLOCKING | ACTIVE |
-| {component-6} | {component-3} | Shared Database | BLOCKING | ACTIVE |
+       Output: .aiwg/working/team/dependency-analysis-draft.md
+       """
+   )
 
-### Integration Points
+   # Agent 2: Integration Engineer - Technical Integration
+   Task(
+       subagent_type="integration-engineer",
+       description="Define integration points and contracts",
+       prompt="""
+       Based on component analysis, define integration points:
 
-#### IP-001: Team A → Team B API
-**Type**: REST API
-**Owner**: Team B
-**Consumer**: Team A
-**Criticality**: BLOCKING
-**Contract**: `contracts/team-b-api-v1.yaml`
-**Status**: STABLE
+       For each integration point:
+       1. Integration ID and name
+       2. Type (REST API, GraphQL, Event Stream, Database)
+       3. Owner team
+       4. Consumer team(s)
+       5. Criticality (BLOCKING vs NON-BLOCKING)
+       6. Current status (STABLE, IN_DEVELOPMENT, PLANNED)
 
-**Endpoints**:
-- `GET /api/v1/resource` - Retrieve resources
-- `POST /api/v1/resource` - Create resource
-- `PUT /api/v1/resource/{id}` - Update resource
+       Define integration contracts:
+       - API endpoints and methods
+       - Data schemas
+       - Error handling
+       - Rate limits and SLAs
+       - Authentication/authorization
 
-**SLA**:
-- Availability: 99.9%
-- Response Time: p95 < 200ms
-- Rate Limit: 1000 req/min
+       Document change protocol:
+       - Breaking vs non-breaking changes
+       - Notice period required
+       - Version support policy
+       - Migration requirements
 
-**Change Protocol**:
-- Breaking changes require 2 sprints notice
-- Backward compatibility maintained for 1 version
-- Deprecation warnings 3 sprints before removal
+       Output: .aiwg/working/team/integration-points-draft.md
+       """
+   )
+   ```
 
-#### IP-002: Team B → Team A Event Stream
-**Type**: Event Stream (Kafka)
-**Owner**: Team A
-**Consumer**: Team B
-**Criticality**: NON-BLOCKING
-**Contract**: `contracts/team-a-events-v1.yaml`
-**Status**: IN DEVELOPMENT
+3. **Synthesize Dependency Map**:
+   ```
+   Task(
+       subagent_type="documentation-synthesizer",
+       description="Create unified dependency map",
+       prompt="""
+       Read drafts:
+       - .aiwg/working/team/dependency-analysis-draft.md
+       - .aiwg/working/team/integration-points-draft.md
 
-**Events**:
-- `user.created` - User registration event
-- `user.updated` - User profile update
-- `user.deleted` - User deletion event
+       Create comprehensive Dependency Map including:
 
-**SLA**:
-- Delivery Guarantee: At-least-once
-- Max Latency: 5 seconds
-- Retention: 7 days
+       1. Component Ownership
+          - Team A components with descriptions
+          - Team B components with descriptions
 
-**Change Protocol**:
-- Additive changes allowed anytime
-- Schema evolution with backward compatibility
-- Breaking changes require migration period
+       2. Dependency Matrix
+          - Team A → Team B dependencies table
+          - Team B → Team A dependencies table
+          - Criticality and status for each
 
-### Critical Path Dependencies
+       3. Integration Points Detail
+          - Detailed specifications for each IP
+          - SLAs and performance requirements
+          - Change management protocol
 
-**Team A blocked by Team B**:
-- {dependency-1}: {impact if not resolved}
-- {dependency-2}: {impact if not resolved}
+       4. Critical Path Dependencies
+          - Dependencies that block progress
+          - Impact analysis if not resolved
 
-**Team B blocked by Team A**:
-- {dependency-3}: {impact if not resolved}
+       5. Dependency Risks
+          - Risk assessment table
+          - Mitigation strategies
 
-### Dependency Risks
+       Use clear tables and structured format.
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| API contract change breaks Team A | Medium | High | Enforce API versioning and change protocol |
-| Team B delays feature Team A needs | High | Critical | Escalate priority, add buffer time |
-| Shared database schema conflict | Low | High | Coordination on schema changes |
+       Output: .aiwg/team/dependency-map-{team-a}-{team-b}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Initialized dependency mapping
+⏳ Analyzing team components and dependencies...
+✓ Dependency map complete: .aiwg/team/dependency-map-{team-a}-{team-b}.md
 ```
 
-### Step 2: Sync Cadence and Structured Meetings
-**Agents**: Project Manager (lead)
-**Templates Required**:
-- `management/cross-team-sync-agenda-template.md`
-- `management/sync-meeting-notes-template.md`
+### Step 2: Establish Sync Cadence and Meeting Structure
 
-**Actions**:
-1. Establish sync frequency (weekly or bi-weekly)
-2. Define standing agenda with time-boxes
-3. Identify mandatory attendees from each team
-4. Schedule recurring meeting with calendar invites
-5. Define async communication channels (Slack, docs)
+**Purpose**: Define structured sync meetings with clear agenda and attendees
 
-**Gate Criteria**:
-- [ ] Sync frequency agreed by both teams
-- [ ] Recurring meeting scheduled
-- [ ] Agenda template created and shared
-- [ ] Mandatory attendees identified
-- [ ] Async channels established
+**Your Actions**:
 
-**Sync Meeting Structure**:
-```markdown
-## Cross-Team Sync Meeting Template
+1. **Launch Meeting Planning Agent**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Establish cross-team sync structure",
+       prompt="""
+       Create sync meeting structure for {team-a} and {team-b}
 
-**Teams**: {team-a} ↔ {team-b}
-**Frequency**: {weekly | bi-weekly}
-**Duration**: 60 minutes
-**Mandatory Attendees**:
-- Team A: Tech Lead, PM
-- Team B: Tech Lead, PM
+       Frequency: {sync-frequency} (weekly/bi-weekly/daily)
 
-### Agenda (60 minutes)
+       Define:
+       1. Meeting cadence and duration
+       2. Mandatory attendees from each team
+       3. Optional attendees
+       4. Meeting roles (facilitator, note-taker)
 
-#### 1. Blockers and Escalations (15 min)
-**Purpose**: Surface and resolve cross-team blockers
-**Format**: Each team shares top 3 blockers
-**Outcome**: Action items with owners and dates
+       Create standing agenda with time boxes:
+       1. Blockers and Escalations (15 min)
+       2. Integration Status (15 min)
+       3. Roadmap Alignment (15 min)
+       4. Knowledge Sharing (10 min)
+       5. Action Items Review (5 min)
 
-**Team A Blockers**:
-- {blocker-1}: Blocked by {dependency}, Impact: {high/med/low}
-- {blocker-2}: Blocked by {dependency}, Impact: {high/med/low}
+       Define async communication:
+       - Slack/Teams channels
+       - Shared documentation location
+       - Escalation channels
 
-**Team B Blockers**:
-- {blocker-1}: Blocked by {dependency}, Impact: {high/med/low}
+       Include guidelines for:
+       - When to sync vs async
+       - How to prepare for meetings
+       - Meeting notes storage
 
-**Resolutions**:
-- {blocker-1}: {resolution plan} - Owner: {name} - Due: {date}
+       Output: .aiwg/team/sync-agenda-{team-a}-{team-b}.md
+       """
+   )
+   ```
 
-#### 2. Integration Status (15 min)
-**Purpose**: Sync on integration point health and upcoming changes
-**Format**: Review each integration point
-**Outcome**: Updated integration status
+2. **Create Meeting Template**:
+   ```
+   Task(
+       subagent_type="scrum-master",
+       description="Create reusable meeting notes template",
+       prompt="""
+       Create meeting notes template for recurring syncs:
 
-**Integration Points**:
-- IP-001 (Team A → Team B API): {status} - {notes}
-- IP-002 (Team B → Team A Events): {status} - {notes}
+       Include sections for:
+       - Date and attendees
+       - Blockers discussed
+       - Integration updates
+       - Roadmap changes
+       - Demo/knowledge shared
+       - Action items with owners and dates
+       - Parking lot items
 
-**Upcoming Changes**:
-- {team-a}: {planned change} - Impact: {description} - ETA: {date}
-- {team-b}: {planned change} - Impact: {description} - ETA: {date}
+       Make it easy to copy/paste for each meeting.
 
-#### 3. Roadmap Alignment (15 min)
-**Purpose**: Ensure roadmaps remain aligned
-**Format**: Review next 2-4 weeks of work
-**Outcome**: Dependency awareness and sequencing
+       Output: .aiwg/team/meeting-notes-template.md
+       """
+   )
+   ```
 
-**Team A Next 2 Weeks**:
-- {feature-1}: Depends on {team-b component}
-- {feature-2}: Provides API for {team-b feature}
-
-**Team B Next 2 Weeks**:
-- {feature-3}: Depends on {team-a component}
-- {feature-4}: Consumes {team-a API}
-
-**Sequencing Concerns**:
-- {concern-1}: {resolution}
-
-#### 4. Knowledge Sharing (10 min)
-**Purpose**: Share learnings, best practices, reusable patterns
-**Format**: Quick shares or demos (optional)
-**Outcome**: Cross-pollination of ideas
-
-**This Meeting**:
-- {team-a}: {quick demo or learning}
-- {team-b}: {quick demo or learning}
-
-#### 5. Action Items Review (5 min)
-**Purpose**: Confirm ownership and deadlines
-**Format**: Review all action items
-**Outcome**: Clear accountability
-
-| Action Item | Owner | Due Date | Status |
-|-------------|-------|----------|--------|
-| {item-1} | {name} | {date} | {status} |
-| {item-2} | {name} | {date} | {status} |
-
-### Meeting Notes (stored in shared doc)
-**Date**: {date}
-**Attendees**: {list}
-**Absentees**: {list}
-
-{detailed notes from meeting}
+**Communicate Progress**:
+```
+⏳ Establishing sync cadence...
+✓ Sync structure defined: {sync-frequency} meetings
+✓ Meeting agenda created: .aiwg/team/sync-agenda-{team-a}-{team-b}.md
 ```
 
-**Sync Frequency Guidelines**:
-- **Weekly**: High interdependency, fast-moving project, integration phase
-- **Bi-weekly**: Moderate interdependency, stable interfaces, maintenance phase
-- **Ad-hoc**: Low interdependency, escalation-driven only
+### Step 3: Blocker Tracking and Escalation Setup
 
-### Step 3: Blocker Tracking and Escalation
-**Agents**: Project Manager (lead), Engineering Manager
-**Templates Required**:
-- `management/blocker-card.md`
-- `management/escalation-matrix-template.md`
+**Purpose**: Create blocker tracking system with clear SLAs and escalation paths
 
-**Actions**:
-1. Create shared blocker tracking system
-2. Define blocker severity levels and SLAs
-3. Establish escalation paths for unresolved blockers
-4. Track blocker age and resolution time
-5. Retrospective on blocker patterns
+**Your Actions**:
 
-**Gate Criteria**:
-- [ ] Blocker tracking system in place (shared doc/board)
-- [ ] Severity levels and SLAs defined
-- [ ] Escalation paths documented
-- [ ] All active blockers have owners and due dates
-- [ ] Blockers reviewed in every sync meeting
+1. **Launch Blocker Management Agents** (parallel):
+   ```
+   # Agent 1: Project Manager - Blocker System
+   Task(
+       subagent_type="project-manager",
+       description="Create blocker tracking system",
+       prompt="""
+       Design blocker tracking system:
 
-**Blocker Tracking System**:
-```markdown
-## Cross-Team Blocker Tracker
+       1. Blocker Severity Levels
+          - P0 (Critical): Work stopped, no workaround
+          - P1 (High): Workaround exists but suboptimal
+          - P2 (Medium): Minor impact, can work on other items
+          - P3 (Low): Nice to have, no immediate impact
 
-**Teams**: {team-a} ↔ {team-b}
-**Last Updated**: {date}
+       2. SLAs by Severity
+          - P0: Resolve within 2 business days
+          - P1: Resolve within 1 week
+          - P2: Resolve within 2 weeks
+          - P3: Best effort
 
-### Active Blockers
+       3. Tracking Fields
+          - ID, Severity, Blocked Team, Blocking Team
+          - Description, Owner, Opened Date, Age
+          - Due Date, Status, Resolution
 
-| ID | Severity | Blocked Team | Blocking Team | Description | Owner | Opened | Age | Due | Status |
-|----|----------|--------------|---------------|-------------|-------|--------|-----|-----|--------|
-| BLK-001 | P0 | Team A | Team B | API not ready | Bob | 2025-10-01 | 14d | 2025-10-10 | ESCALATED |
-| BLK-002 | P1 | Team B | Team A | Data model unclear | Alice | 2025-10-08 | 7d | 2025-10-15 | IN PROGRESS |
-| BLK-003 | P2 | Team A | Team B | Performance issue | Charlie | 2025-10-10 | 5d | 2025-10-20 | NEW |
+       4. Status Values
+          - NEW, IN_PROGRESS, ESCALATED, RESOLVED, CLOSED
 
-### Blocker Severity Levels
+       Create initial blocker tracker with example entries.
 
-**P0 (Critical)**: Work completely stopped, cannot proceed
-- SLA: Resolve within 2 business days
-- Escalation: Immediate to Engineering Managers
-- Response: Daily updates required
+       Output: .aiwg/team/blocker-tracker.md
+       """
+   )
 
-**P1 (High)**: Workaround exists but suboptimal
-- SLA: Resolve within 1 week
-- Escalation: If not resolved in 5 days, escalate to EMs
-- Response: Updates every 2 days
+   # Agent 2: Agile Coach - Escalation Matrix
+   Task(
+       subagent_type="agile-coach",
+       description="Define escalation paths",
+       prompt="""
+       Create escalation matrix:
 
-**P2 (Medium)**: Minor impact, can work on other items
-- SLA: Resolve within 2 weeks
-- Escalation: If not resolved in 10 days, escalate to Tech Leads
-- Response: Weekly updates
+       1. Escalation Triggers
+          - Age-based (blocker open too long)
+          - Severity-based (P0/P1 immediate escalation)
+          - Impact-based (affecting multiple teams)
 
-**P3 (Low)**: Nice to have, no immediate impact
-- SLA: Best effort
-- Escalation: None
-- Response: As available
+       2. Escalation Levels
+          - Level 1: Tech Leads
+          - Level 2: Engineering Managers
+          - Level 3: Directors
+          - Level 4: VPs/Executives
 
-### Escalation Matrix
+       3. Escalation Actions
+          - Who to notify
+          - Meeting to schedule
+          - Communication required
+          - Decision authority
 
-| Blocker Age | Severity | Escalation Action | Notify |
-|-------------|----------|-------------------|--------|
-| 2 days | P0 | Emergency meeting | Engineering Managers |
-| 5 days | P1 | Escalation to EMs | Engineering Managers |
-| 10 days | P2 | Escalation to Tech Leads | Tech Leads |
-| 14 days | P0/P1 | Executive escalation | Director/VP |
+       4. Response SLAs
+          - How quickly escalation must be acknowledged
+          - Resolution timeline after escalation
 
-### Blocker Details Template
+       Create clear escalation flowchart.
 
-#### BLK-001: API Not Ready
-**Severity**: P0 (Critical)
-**Blocked Team**: Team A
-**Blocking Team**: Team B
-**Opened**: 2025-10-01 (14 days ago)
-**Owner**: Bob (Team B)
-**Due**: 2025-10-10
+       Output: .aiwg/team/escalation-matrix.md
+       """
+   )
+   ```
 
-**Description**:
-Team A needs `/api/v1/resource` endpoint to complete feature X. Team B has not deployed API to staging.
+2. **Create Blocker Resolution Process**:
+   ```
+   Task(
+       subagent_type="scrum-master",
+       description="Document blocker resolution workflow",
+       prompt="""
+       Define end-to-end blocker resolution process:
 
-**Impact**:
-Team A cannot test integration, feature X launch blocked.
+       1. Identification
+          - How blockers are identified
+          - Who can raise blockers
+          - Where to log them
 
-**Workaround**:
-Mock API locally (not sufficient for integration testing).
+       2. Assignment
+          - How owners are assigned
+          - Default ownership rules
+          - Handoff process
 
-**Resolution Plan**:
-Team B to deploy API to staging by EOD 2025-10-10.
+       3. Resolution
+          - Daily standup updates
+          - Status tracking
+          - Workaround documentation
 
-**Status Updates**:
-- 2025-10-08: Team B working on final testing, deploy planned for 2025-10-10
-- 2025-10-05: Team B deprioritized due to production incident
-- 2025-10-01: Blocker opened, Team B committed to deliver by 2025-10-07
+       4. Closure
+          - Verification steps
+          - Retrospective for patterns
+          - Process improvements
 
-**Escalation History**:
-- 2025-10-08: Escalated to Engineering Managers due to missed deadline
+       Include example scenarios.
 
-### Resolved Blockers (last 30 days)
+       Output: .aiwg/team/blocker-resolution-process.md
+       """
+   )
+   ```
 
-| ID | Severity | Resolution Time | Resolution Summary |
-|----|----------|----------------|-------------------|
-| BLK-000 | P1 | 4 days | Schema change deployed, Team A unblocked |
+**Communicate Progress**:
 ```
-
-**Escalation Process**:
-1. Blocker identified → Logged in tracker with severity
-2. Owner assigned from blocking team
-3. Regular status updates per SLA
-4. If SLA missed → Auto-escalate per matrix
-5. Escalation meeting within 24 hours
-6. Executive involvement if needed
+⏳ Setting up blocker management...
+✓ Blocker tracker created with SLAs
+✓ Escalation matrix defined: .aiwg/team/escalation-matrix.md
+```
 
 ### Step 4: Integration Planning and API Contracts
-**Agents**: Software Architect (lead), API Designer
-**Templates Required**:
-- `analysis-design/api-contract-template.md`
-- `analysis-design/integration-test-plan-template.md`
 
-**Actions**:
-1. Define API contracts with versioning strategy
-2. Document data schemas and validation rules
-3. Establish change management protocol
-4. Create integration test plan
-5. Schedule integration sprints/milestones
+**Purpose**: Document API contracts and establish change management protocol
 
-**Gate Criteria**:
-- [ ] All API contracts documented and reviewed
-- [ ] Versioning strategy agreed and documented
-- [ ] Change management protocol established
-- [ ] Integration test plan created
-- [ ] Integration milestones scheduled
+**Your Actions**:
 
-**API Contract Example**:
-```yaml
-# contracts/team-b-api-v1.yaml
+1. **Launch API Contract Documentation** (for each integration point):
+   ```
+   # For each major integration point identified in Step 1
+   Task(
+       subagent_type="api-designer",
+       description="Create API contract for {integration-point}",
+       prompt="""
+       Create detailed API contract:
 
-openapi: 3.0.0
-info:
-  title: Team B Resource API
-  version: 1.0.0
-  description: API for managing resources consumed by Team A
-  contact:
-    name: Team B Tech Lead
-    email: teamb-lead@example.com
+       Integration Point: {integration-point}
+       Owner: {owner-team}
+       Consumer: {consumer-team}
 
-servers:
-  - url: https://api.example.com/v1
-    description: Production
-  - url: https://api-staging.example.com/v1
-    description: Staging
+       Document:
+       1. API Specification
+          - OpenAPI 3.0 format preferred
+          - Endpoints, methods, parameters
+          - Request/response schemas
+          - Error responses
 
-paths:
-  /resource:
-    get:
-      summary: List resources
-      operationId: listResources
-      parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 50
-            maximum: 100
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Resource'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalError'
+       2. Performance SLA
+          - Response time targets (p50, p95, p99)
+          - Throughput limits
+          - Rate limiting rules
 
-    post:
-      summary: Create resource
-      operationId: createResource
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResourceCreate'
-      responses:
-        '201':
-          description: Resource created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Resource'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalError'
+       3. Security
+          - Authentication method
+          - Authorization rules
+          - Data encryption requirements
 
-components:
-  schemas:
-    Resource:
-      type: object
-      required:
-        - id
-        - name
-        - status
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        status:
-          type: string
-          enum: [active, inactive, pending]
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+       4. Versioning Strategy
+          - URL versioning (/v1/, /v2/)
+          - Header versioning
+          - Deprecation timeline
 
-    ResourceCreate:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        status:
-          type: string
-          enum: [active, inactive, pending]
-          default: pending
+       5. Change Protocol
+          - Breaking vs non-breaking changes
+          - Notice period (2 sprints for breaking)
+          - Migration support period
 
-    Pagination:
-      type: object
-      properties:
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+       Output: .aiwg/team/integration-contracts/api-{integration-point}.yaml
+       """
+   )
+   ```
 
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              details:
-                type: array
-                items:
-                  type: string
+2. **Create Change Management Protocol**:
+   ```
+   Task(
+       subagent_type="architecture-designer",
+       description="Define API change management protocol",
+       prompt="""
+       Create comprehensive change management protocol:
 
-    InternalError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
+       1. Change Categories
+          - Additive (non-breaking): New endpoints, optional fields
+          - Evolving (backward compatible): Deprecations with warnings
+          - Breaking: Removing fields, changing types
 
-# Change Management Protocol
-# - Breaking changes require 2 sprints notice
-# - New version URL path (/v2/) for breaking changes
-# - Old version supported for 1 version overlap
-# - Deprecation warnings 3 sprints before removal
-# - Consumer must migrate before old version sunset
+       2. Process by Category
+          - Additive: Deploy anytime with notice
+          - Evolving: 1 sprint notice, 3 sprint deprecation
+          - Breaking: 2 sprint notice, new version required
 
-# SLA
-# - Availability: 99.9%
-# - Response Time: p95 < 200ms
-# - Rate Limit: 1000 req/min per consumer
+       3. Communication Requirements
+          - Where to announce changes
+          - Documentation updates required
+          - Consumer notification process
+
+       4. Version Support Policy
+          - How many versions supported simultaneously
+          - Sunset timeline for old versions
+          - Migration assistance provided
+
+       5. Testing Requirements
+          - Contract testing in CI/CD
+          - Consumer testing coordination
+          - Rollback procedures
+
+       Output: .aiwg/team/api-change-protocol.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Documenting integration contracts...
+✓ API contracts created: {count} integration points
+✓ Change management protocol established
 ```
 
-**Change Management Protocol**:
-```markdown
-## API Change Management Protocol
+### Step 5: Cross-Team Knowledge Sharing
 
-### Change Types
+**Purpose**: Facilitate demos, pattern sharing, and cross-pollination of ideas
 
-**Additive Changes** (Non-Breaking):
-- Adding new endpoints
-- Adding optional request fields
-- Adding response fields
-- Adding new enum values (if handled gracefully)
+**Your Actions**:
 
-**Process**:
-- Announce in sync meeting
-- Deploy anytime
-- Update contract documentation
+1. **Setup Knowledge Sharing Framework**:
+   ```
+   Task(
+       subagent_type="technical-lead",
+       description="Create knowledge sharing structure",
+       prompt="""
+       Design knowledge sharing framework:
 
-**Evolving Changes** (Backward Compatible):
-- Changing field validation (making more lenient)
-- Deprecating fields (with warning period)
-- Performance improvements
+       1. Demo Cadence
+          - Monthly cross-team demos
+          - 60 minutes duration
+          - Recording for async viewing
 
-**Process**:
-- Announce 1 sprint in advance
-- Deploy with deprecation warnings
-- Monitor consumer usage
-- Remove after 3 sprints
+       2. Demo Structure
+          - Team A: 25 minutes
+          - Team B: 25 minutes
+          - Open discussion: 10 minutes
 
-**Breaking Changes**:
-- Removing endpoints
-- Removing request/response fields
-- Changing field types
-- Making fields required
-- Changing authentication
+       3. Knowledge Topics
+          - Integration patterns that worked
+          - Performance optimizations
+          - Debugging techniques
+          - Testing strategies
+          - Tooling improvements
+          - Incident learnings
 
-**Process**:
-- Announce 2 sprints in advance
-- Create new API version (/v2/)
-- Support both versions for 1 version overlap
-- Provide migration guide
-- Consumer must migrate before old version sunset
-- Remove old version after migration complete
+       4. Documentation
+          - Shared patterns library
+          - Reusable code snippets
+          - Best practices guide
 
-### Version Support Policy
-- Current version (vN): Fully supported
-- Previous version (vN-1): Supported, deprecated warnings
-- Older versions (vN-2+): Unsupported, may be removed
+       5. Collaboration Opportunities
+          - Pair programming sessions
+          - Architecture reviews
+          - Code reviews across teams
 
-### Communication
-- Breaking changes announced in sync meetings
-- Email notification to all consumers
-- Changelog maintained in contract repo
-- Migration guides provided for breaking changes
+       Create demo agenda template and knowledge base structure.
+
+       Output: .aiwg/team/knowledge-sharing-framework.md
+       """
+   )
+   ```
+
+2. **Create Initial Demo Schedule**:
+   ```
+   Task(
+       subagent_type="program-manager",
+       description="Schedule first cross-team demo",
+       prompt="""
+       Plan first cross-team demo:
+
+       1. Proposed Date/Time
+          - Within next 2 weeks
+          - Consider team time zones
+
+       2. Initial Topics
+          - Team A: {suggested topics based on recent work}
+          - Team B: {suggested topics based on recent work}
+
+       3. Attendee List
+          - Mandatory: Tech leads, architects
+          - Optional: All team members
+          - Guests: Other interested teams
+
+       4. Preparation Checklist
+          - Demo environment setup
+          - Slides/materials preparation
+          - Recording setup
+
+       Create calendar invite template.
+
+       Output: .aiwg/team/first-demo-plan.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Setting up knowledge sharing...
+✓ Knowledge sharing framework created
+✓ First demo scheduled: {date}
 ```
 
-### Step 5: Cross-Team Demos and Knowledge Sharing
-**Agents**: Product Strategist (lead), Technical Lead
-**Templates Required**:
-- `management/demo-agenda-template.md`
+### Step 6: Generate Cross-Team Sync Status Report
 
-**Actions**:
-1. Schedule periodic cross-team demos (monthly or per milestone)
-2. Showcase integrated features and capabilities
-3. Share technical learnings and patterns
-4. Solicit feedback from other team
-5. Document reusable patterns and best practices
+**Purpose**: Compile comprehensive status report with health metrics
 
-**Gate Criteria**:
-- [ ] Demo cadence established (monthly minimum)
-- [ ] Demo agenda template created
-- [ ] Both teams committed to participating
-- [ ] Demos recorded for async viewing
-- [ ] Learnings documented and shared
+**Your Actions**:
 
-**Demo Structure**:
-```markdown
-## Cross-Team Demo
+1. **Launch Report Generation**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Generate cross-team sync status report",
+       prompt="""
+       Read all generated artifacts:
+       - .aiwg/team/dependency-map-{team-a}-{team-b}.md
+       - .aiwg/team/sync-agenda-{team-a}-{team-b}.md
+       - .aiwg/team/blocker-tracker.md
+       - .aiwg/team/escalation-matrix.md
+       - .aiwg/team/integration-contracts/*.yaml
+       - .aiwg/team/knowledge-sharing-framework.md
 
-**Date**: {date}
-**Teams**: {team-a} ↔ {team-b}
-**Duration**: 60 minutes
-**Attendees**: {list}
+       Generate comprehensive status report:
 
-### Agenda
+       1. Executive Summary
+          - Teams involved
+          - Sync frequency established
+          - Key dependencies identified
+          - Current health status
 
-#### Team A Demos (25 min)
-1. **Feature X Integration** (10 min)
-   - Presenter: {name}
-   - Description: End-to-end demo of Feature X using Team B API
-   - Integration points highlighted
-   - Q&A
+       2. Dependency Analysis
+          - Total dependencies: {count}
+          - Critical (blocking): {count}
+          - Documented with contracts: {percentage}%
+          - Integration test coverage: {percentage}%
 
-2. **Performance Optimization** (10 min)
-   - Presenter: {name}
-   - Description: How we optimized calls to Team B API
-   - Pattern: API response caching strategy
-   - Reusable for other teams
+       3. Blocker Status
+          - Active blockers: {count}
+          - Average resolution time: {days}
+          - Escalations this period: {count}
 
-3. **Tool Demo: Integration Testing** (5 min)
-   - Presenter: {name}
-   - Description: New tool for testing cross-team integrations
-   - Could benefit Team B
+       4. Sync Meeting Health
+          - Attendance rate: {percentage}%
+          - Action items completion: {percentage}%
+          - Meeting effectiveness score
 
-#### Team B Demos (25 min)
-1. **New API Capabilities** (10 min)
-   - Presenter: {name}
-   - Description: New endpoints and features available to Team A
-   - Breaking vs non-breaking changes
-   - Migration guide walkthrough
+       5. Integration Health
+          - API contract coverage: {percentage}%
+          - Breaking changes planned: {count}
+          - Integration test pass rate: {percentage}%
 
-2. **Error Handling Improvements** (10 min)
-   - Presenter: {name}
-   - Description: Better error messages and debugging info
-   - Examples and best practices
+       6. Knowledge Sharing
+          - Demos conducted: {count}
+          - Patterns documented: {count}
+          - Cross-team code reviews: {count}
 
-3. **Monitoring Dashboard** (5 min)
-   - Presenter: {name}
-   - Description: New dashboard for API health and usage
-   - Team A can use for troubleshooting
+       7. Risks and Recommendations
+          - Top risks identified
+          - Recommended actions
+          - Process improvements
 
-#### Open Discussion (10 min)
-- Feedback on demos
-- Ideas for collaboration
-- Upcoming integrations
+       8. Next Steps
+          - Immediate actions (this week)
+          - Short-term (next sprint)
+          - Long-term (next quarter)
 
-### Demo Outcomes
-**Learnings Captured**:
-- {learning 1}: {description}
-- {learning 2}: {description}
+       Output: .aiwg/reports/cross-team-sync-report.md
+       """
+   )
+   ```
 
-**Reusable Patterns**:
-- {pattern 1}: {description and link to documentation}
+2. **Present Summary to User**:
+   ```
+   # You present this directly
 
-**Action Items**:
-- {action 1} - Owner: {name} - Due: {date}
+   Read .aiwg/reports/cross-team-sync-report.md
 
-**Feedback**:
-- {feedback 1}
-- {feedback 2}
+   Present summary:
+   ─────────────────────────────────────────────
+   Cross-Team Synchronization Setup Complete
+   ─────────────────────────────────────────────
+
+   **Teams**: {team-a} ↔ {team-b}
+   **Sync Frequency**: {weekly | bi-weekly | daily}
+   **Status**: OPERATIONAL
+
+   **Dependencies Mapped**:
+   ✓ Total dependencies: {count}
+   ✓ Critical/Blocking: {count}
+   ✓ Integration points documented: {count}
+
+   **Sync Structure Established**:
+   ✓ Meeting cadence: {frequency}
+   ✓ Agenda template created
+   ✓ Mandatory attendees identified
+   ✓ Async channels defined
+
+   **Blocker Management**:
+   ✓ Tracking system: ACTIVE
+   ✓ Severity levels: P0-P3 defined
+   ✓ SLAs established
+   ✓ Escalation matrix: 4 levels
+
+   **Integration Planning**:
+   ✓ API contracts: {count} documented
+   ✓ Change protocol: DEFINED
+   ✓ Version strategy: ESTABLISHED
+
+   **Knowledge Sharing**:
+   ✓ Demo schedule: Monthly
+   ✓ First demo: {date}
+   ✓ Pattern library: INITIATED
+
+   **Artifacts Generated**:
+   - Dependency Map (.aiwg/team/dependency-map-{team-a}-{team-b}.md)
+   - Sync Agenda (.aiwg/team/sync-agenda-{team-a}-{team-b}.md)
+   - Blocker Tracker (.aiwg/team/blocker-tracker.md)
+   - Escalation Matrix (.aiwg/team/escalation-matrix.md)
+   - Integration Contracts (.aiwg/team/integration-contracts/)
+   - Knowledge Framework (.aiwg/team/knowledge-sharing-framework.md)
+   - Status Report (.aiwg/reports/cross-team-sync-report.md)
+
+   **Immediate Actions**:
+   1. Schedule first sync meeting
+   2. Share dependency map with both teams
+   3. Train teams on blocker tracking process
+   4. Review and sign off on API contracts
+
+   **Recommendations**:
+   - Start with weekly sync, adjust based on needs
+   - Focus first meetings on critical blockers
+   - Document patterns from first demo
+   - Review sync effectiveness after 4 weeks
+
+   ─────────────────────────────────────────────
+   ```
+
+**Communicate Progress**:
+```
+⏳ Generating status report...
+✓ Cross-team sync report complete: .aiwg/reports/cross-team-sync-report.md
 ```
 
-**Knowledge Sharing Topics**:
-- Integration patterns that worked well
-- Performance optimization techniques
-- Debugging and troubleshooting tips
-- Testing strategies for cross-team dependencies
-- Tooling and automation improvements
-- Lessons learned from incidents
+## Quality Gates
+
+Before marking workflow complete, verify:
+- [ ] Dependency map comprehensive and accurate
+- [ ] All integration points have documented contracts
+- [ ] Sync meeting structure agreed by both teams
+- [ ] Blocker tracking system operational
+- [ ] Escalation paths clear and communicated
+- [ ] Knowledge sharing framework established
+- [ ] First meetings/demos scheduled
+
+## User Communication
+
+**At start**: Confirm understanding and list deliverables
+
+```
+Understood. I'll orchestrate cross-team synchronization between {team-a} and {team-b}.
+
+This will establish:
+- Dependency mapping and integration points
+- Sync meeting cadence ({frequency})
+- Blocker tracking with escalation
+- API contracts and change protocol
+- Knowledge sharing framework
+
+Expected duration: 20-30 minutes.
+
+Starting orchestration...
+```
+
+**During**: Update progress with clear indicators
+
+```
+✓ = Complete
+⏳ = In progress
+❌ = Error/blocked
+⚠️ = Warning/attention needed
+```
+
+**At end**: Summary report with status and next steps (see Step 6.2 above)
+
+## Error Handling
+
+**Teams Not Found**:
+```
+❌ Team not found in project roster
+
+Teams specified: {team-a}, {team-b}
+Missing: {team-name}
+
+Action: Verify team names or add to project roster
+Command: /project:team-roster add {team-name}
+```
+
+**No Architecture Available**:
+```
+⚠️ No architecture documentation found
+
+Cannot automatically map dependencies without:
+- Software Architecture Document
+- Component diagrams
+- Service definitions
+
+Recommendation: Conduct manual dependency mapping workshop
+Alternative: Create architecture first with /project:flow-inception-to-elaboration
+```
+
+**Time Zone Conflict**:
+```
+⚠️ Significant time zone difference detected
+
+Team A: {timezone-1}
+Team B: {timezone-2}
+Overlap: {hours} hours
+
+Recommendations:
+1. Emphasize async communication
+2. Rotate meeting times
+3. Record all sync meetings
+4. Use written updates heavily
+```
+
+**High Blocker Volume**:
+```
+⚠️ High blocker volume detected
+
+Active blockers: {count} (threshold: 10)
+P0/P1 blockers: {count}
+
+Recommendations:
+1. Increase sync frequency to daily
+2. Dedicated blocker resolution session
+3. Executive escalation for resource allocation
+4. Consider team reorganization
+```
 
 ## Success Criteria
 
-This command succeeds when:
-- [ ] Dependency map complete and maintained
-- [ ] Sync cadence established and meetings occurring
-- [ ] Blocker tracking system in place with SLAs
-- [ ] All active blockers have owners and resolution plans
-- [ ] API contracts documented and reviewed
-- [ ] Integration test plan created
-- [ ] First cross-team demo completed
+This orchestration succeeds when:
+- [ ] Dependencies fully mapped with criticality
+- [ ] Integration points documented with contracts
+- [ ] Sync cadence established and agreed
+- [ ] First sync meeting scheduled
+- [ ] Blocker tracking operational
+- [ ] Escalation paths defined and communicated
+- [ ] Knowledge sharing framework in place
+- [ ] Both teams trained on processes
 
-## Output Report
+## Metrics to Track
 
-Generate a cross-team sync status report:
+**During orchestration, track**:
+- Dependency coverage: % of components analyzed
+- Integration documentation: % with contracts
+- Blocker age: Average days open
+- Meeting attendance: % of required attendees
+- Knowledge sharing: Patterns documented
 
-```markdown
-# Cross-Team Sync Status Report
-
-**Teams**: {team-a} ↔ {team-b}
-**Report Date**: {date}
-**Sync Frequency**: {weekly | bi-weekly}
-**Last Sync Meeting**: {date}
-
-## Dependency Health
-
-### Integration Points Status
-| Integration Point | Type | Status | Health | Last Updated |
-|-------------------|------|--------|--------|--------------|
-| IP-001: Team A → Team B API | REST API | STABLE | 🟢 HEALTHY | {date} |
-| IP-002: Team B → Team A Events | Event Stream | IN DEV | 🟡 DEVELOPING | {date} |
-
-**Legend**:
-- 🟢 HEALTHY: Stable, no issues
-- 🟡 CAUTION: Minor issues or in development
-- 🔴 CRITICAL: Blocking issues, requires attention
-
-### Dependency Coverage
-**Total Dependencies**: {count}
-**Documented with Contracts**: {count} ({percentage}%)
-**Tested with Integration Tests**: {count} ({percentage}%)
-
-## Blocker Summary
-
-### Active Blockers
-**Total**: {count}
-**By Severity**:
-- P0 (Critical): {count}
-- P1 (High): {count}
-- P2 (Medium): {count}
-- P3 (Low): {count}
-
-**Aging Blockers** (>7 days):
-- {blocker-1}: {age} days - Status: {status}
-- {blocker-2}: {age} days - Status: {status}
-
-**Escalated**: {count}
-
-### Blocker Resolution Metrics
-**Resolved This Period**: {count}
-**Average Resolution Time**: {days} days
-**Longest Unresolved**: {days} days (BLK-{id})
-
-## Sync Meeting Health
-
-### Attendance
-**Last 4 Meetings**:
-| Date | Team A Attendance | Team B Attendance | Duration |
-|------|-------------------|-------------------|----------|
-| {date} | {present}/{required} | {present}/{required} | {minutes} |
-| {date} | {present}/{required} | {present}/{required} | {minutes} |
-
-**Attendance Rate**: {percentage}%
-
-### Meeting Effectiveness
-**Action Items Generated**: {count}
-**Action Items Completed**: {count} ({percentage}%)
-**Overdue Action Items**: {count}
-
-## Roadmap Alignment
-
-### Next 4 Weeks
-**Team A Dependencies on Team B**: {count}
-- {dependency-1}: Due {date} - Status: {on-track | at-risk | blocked}
-- {dependency-2}: Due {date} - Status: {on-track | at-risk | blocked}
-
-**Team B Dependencies on Team A**: {count}
-- {dependency-3}: Due {date} - Status: {on-track | at-risk | blocked}
-
-**Alignment Issues**: {count}
-- {issue-1}: {description and resolution plan}
-
-## Knowledge Sharing
-
-### Demos Conducted
-**Last Demo**: {date}
-**Topics Covered**: {count}
-**Reusable Patterns Identified**: {count}
-
-### Documentation
-**Shared Documentation**: {count} documents
-**Last Updated**: {date}
-**Coverage**: {documentation-gaps}
-
-## Recommendations
-
-**Immediate Actions**:
-- {action-1}
-- {action-2}
-
-**Process Improvements**:
-- {improvement-1}
-- {improvement-2}
-
-**Escalations Needed**:
-- {escalation-1}
-
-## Overall Health Score
-**Score**: {1-10}
-**Trend**: {improving | stable | declining}
-
-**Factors**:
-- Dependency health: {rating}
-- Blocker resolution: {rating}
-- Meeting effectiveness: {rating}
-- Roadmap alignment: {rating}
-```
+**Ongoing metrics** (post-setup):
+- Blocker resolution velocity
+- Integration stability (breaking changes)
+- Meeting effectiveness scores
+- Cross-team collaboration index
+- Knowledge reuse rate
 
 ## Common Failure Modes
 
@@ -994,12 +915,12 @@ Generate a cross-team sync status report:
 1. Enforce change notification protocol
 2. Increase sync frequency
 3. Add pre-integration testing gate
-4. Review and update dependency map
+4. Review and update dependency map quarterly
 
 ### Meeting Fatigue
 **Symptoms**: Attendance drops, meetings feel unproductive
 **Remediation**:
-1. Reduce frequency if dependencies are stable
+1. Reduce frequency if dependencies stable
 2. Shorten meeting duration
 3. Focus on blockers only, move other topics async
 4. Rotate facilitator to share ownership
@@ -1008,82 +929,41 @@ Generate a cross-team sync status report:
 **Symptoms**: Blockers remain unresolved for weeks
 **Remediation**:
 1. Escalate immediately per escalation matrix
-2. Assign dedicated resources to unblock
-3. Revisit priorities with Engineering Managers
-4. Consider temporary workarounds
+2. Assign dedicated resources
+3. Executive intervention if needed
+4. Consider architectural changes to reduce dependencies
 
 ### API Contract Violations
 **Symptoms**: Breaking changes deployed without notice
 **Remediation**:
-1. Implement API contract testing in CI/CD
-2. Enforce change management protocol strictly
-3. Post-mortem on how violation occurred
+1. Implement contract testing in CI/CD
+2. Enforce change management protocol
+3. Post-mortem on violation
 4. Improve contract governance
 
 ### One-Way Communication
 **Symptoms**: One team dominates sync, other team passive
 **Remediation**:
-1. Rotate meeting facilitator
-2. Require equal time for each team
-3. Use structured agenda to ensure balance
-4. Check in with passive team about concerns
-
-## Integration with Project Management
-
-### Update Dependency Tracker
-```bash
-# Log new dependency
-/project:dependency add \
-  --from "{team-a}" \
-  --to "{team-b}" \
-  --type "{api|event|data}" \
-  --criticality "{blocking|non-blocking}"
-
-# Update dependency status
-/project:dependency update \
-  --id "{dep-id}" \
-  --status "{active|planned|deprecated}"
-```
-
-### Integration with Risk Management
-Cross-team dependencies are risks. Log in risk register:
-```bash
-# Log dependency risk
-/project:risk add \
-  --title "Team B API delay blocks Team A feature" \
-  --severity "high" \
-  --probability "medium" \
-  --mitigation "Weekly sync and blocker escalation protocol"
-```
-
-## Error Handling
-
-**Team Not Found**:
-- Report: "Team {name} not found in project roster"
-- Action: "Verify team name and add to roster if needed"
-- Command: "/project:team-roster list"
-
-**No Integration Points**:
-- Report: "No integration points found between {team-a} and {team-b}"
-- Action: "Create dependency map first"
-- Command: "/project:dependency-map {team-a} {team-b}"
-
-**Sync Frequency Invalid**:
-- Report: "Sync frequency must be 'weekly' or 'bi-weekly'"
-- Action: "Specify valid frequency"
-- Command: "/project:flow-cross-team-sync {team-a} {team-b} weekly"
-
-**Missing Mandatory Attendees**:
-- Report: "Sync meeting missing mandatory attendees: {names}"
-- Action: "Ensure Tech Leads and PMs from both teams attend"
-- Escalation: "Notify Engineering Managers if attendance continues to be issue"
+1. Rotate meeting facilitator between teams
+2. Require equal time allocation
+3. Use structured agenda strictly
+4. Private check-in with passive team
 
 ## References
 
-- Dependency map: `analysis-design/dependency-map-template.md`
-- API contracts: `analysis-design/api-contract-template.md`
-- Integration tests: `analysis-design/integration-test-plan-template.md`
-- Blocker tracking: `management/blocker-card.md`
-- Escalation matrix: `management/escalation-matrix-template.md`
-- Sync agenda: `management/cross-team-sync-agenda-template.md`
-- Demo template: `management/demo-agenda-template.md`
+**Templates** (via $AIWG_ROOT):
+- Dependency Map: `templates/analysis-design/dependency-map-template.md`
+- Integration Contract: `templates/analysis-design/integration-contract-template.md`
+- Blocker Card: `templates/management/blocker-card.md`
+- Escalation Matrix: `templates/management/escalation-matrix-template.md`
+- Sync Agenda: `templates/management/cross-team-sync-agenda-template.md`
+- Demo Agenda: `templates/management/demo-agenda-template.md`
+
+**Related Flows**:
+- `flow-risk-management-cycle.md` (for dependency risks)
+- `flow-architecture-evolution.md` (for integration architecture)
+- `flow-change-control.md` (for API changes)
+
+**Multi-Agent Patterns**:
+- `docs/multi-agent-coordination-pattern.md`
+- `docs/orchestrator-architecture.md`

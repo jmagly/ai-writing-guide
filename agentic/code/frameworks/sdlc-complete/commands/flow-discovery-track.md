@@ -1,600 +1,991 @@
 ---
-description: Execute Discovery Track flow to prepare validated requirements and designs one iteration ahead of delivery
-category: sdlc-management
+description: Orchestrate Discovery Track flow to prepare validated requirements and designs one iteration ahead of delivery
+category: sdlc-orchestration
 argument-hint: <iteration-number> [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Grep, Glob, TodoWrite
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Discovery Track Flow
 
-You are an SDLC Discovery Coordinator specializing in continuous requirements refinement, design preparation, and backlog readiness one iteration ahead of delivery.
+**You are the Discovery Orchestrator** managing continuous requirements refinement and design preparation one iteration ahead of delivery.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-discovery-track <iteration-number> [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Gather** and prioritize stakeholder requests
-2. **Refine** requirements with acceptance criteria
-3. **Design** data contracts and interfaces
-4. **Validate** assumptions with spikes/POCs
-5. **Handoff** ready backlog items to Delivery Track
+When the user requests this flow (via natural language or explicit command):
 
-## Phase Overview
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
-The Discovery Track operates one iteration ahead of Delivery, ensuring a continuous supply of well-defined, validated work items ready for
+## Discovery Track Overview
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Purpose**: Operate one iteration ahead of Delivery Track, ensuring a continuous supply of well-defined, validated work items
 
-**Parse Command Line**:
+**Key Activities**:
+- Gather and prioritize stakeholder requests
+- Author use-case briefs with acceptance criteria
+- Design data contracts and interfaces
+- Validate assumptions via spikes/POCs
+- Maintain ready backlog for Delivery
 
-Extract optional `--guidance` and `--interactive` parameters.
+**Success Criteria**:
+- Definition of Ready (DoR) met for all items
+- 1.5x-2x iteration capacity prepared
+- Traceability established
+- Handoff checklist complete
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
+**Expected Duration**: 1-2 week iteration, 30-45 minutes orchestration
 
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+## Natural Language Triggers
+
+Users may say:
+- "Discovery for iteration 3"
+- "Start discovery track"
+- "Prepare next iteration"
+- "Refine backlog for iteration N"
+- "Run discovery cycle"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor discovery focus
+
+**Examples**:
+```
+--guidance "Focus on security requirements, payment processing is critical path"
+--guidance "UI/UX designs needed, customer experience is priority"
+--guidance "Technical debt items, need architecture refactoring"
+--guidance "Performance optimization, sub-100ms response time required"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: security, performance, UI/UX, technical debt
+- Adjust agent assignments (add security-architect for security focus)
+- Modify artifact depth (comprehensive vs. minimal based on complexity)
+- Influence priority ordering (feature vs. technical debt focus)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 6 strategic questions to understand iteration context
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 6 strategic questions to tailor this Discovery Track to your needs:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What are your top priorities for this iteration?
+    (e.g., new features, technical debt, performance improvements)
 
-**Resolve AIWG installation**:
+Q2: What are your biggest constraints?
+    (e.g., timeline, team capacity, technical limitations)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: What risks concern you most for this iteration?
+    (e.g., unclear requirements, technical uncertainty, dependencies)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: What's your team's experience level with this type of work?
+    (Helps me gauge how detailed documentation should be)
+
+Q5: What's your target timeline for Delivery?
+    (Influences discovery depth and validation scope)
+
+Q6: Are there compliance or regulatory requirements?
+    (e.g., HIPAA, GDPR, PCI - affects security and privacy focus)
+
+Based on your answers, I'll adjust:
+- Agent assignments (add specialized reviewers)
+- Artifact depth (comprehensive vs. streamlined)
+- Priority ordering (features vs. technical items)
+- Validation approach (spike scope and focus areas)
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance string for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Discovery Track - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **Stakeholder Request Cards**: Captured requirements → `.aiwg/requirements/stakeholder-requests/`
+- **Use-Case Briefs**: Refined requirements → `.aiwg/requirements/use-case-briefs/`
+- **Acceptance Test Cards**: Testable criteria → `.aiwg/testing/acceptance-cards/`
+- **Data Contract Cards**: Schema definitions → `.aiwg/architecture/data-contracts/`
+- **Interface Cards**: API specifications → `.aiwg/architecture/interfaces/`
+- **Spike Results**: Risk validation → `.aiwg/risks/spikes/`
+- **Architecture Decision Records**: Design decisions → `.aiwg/architecture/adr/`
+- **Discovery Report**: Iteration summary → `.aiwg/reports/discovery-iteration-{N}-report.md`
 
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
+**Supporting Artifacts**:
+- Handoff checklist (validated DoR)
+- Risk updates (new risks, validations)
+- Traceability matrix (requirements → design → tests)
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
- implementation.
-
-## Workflow Loop
+## Multi-Agent Orchestration Workflow
 
 ### Step 1: Gather Stakeholder Requests
-**Agents**: Requirements Analyst (lead), Product Strategist
-**Templates Required**:
-- `requirements/stakeholder-request-card.md`
-- `management/backlog-item-card.md`
 
-**Actions**:
-1. Collect stakeholder requests from multiple channels (emails, meetings, tickets)
-2. Create stakeholder request cards for each request
-3. Initial prioritization using MoSCoW method
-4. Validate request aligns with vision and business goals
+**Purpose**: Collect and prioritize new requirements from stakeholders
 
-**Deliverables**:
-- Stakeholder request cards created
-- Initial priority assigned (Must/Should/Could/Won't)
-- Business value estimated
+**Your Actions**:
 
-**Success Criteria**:
-- [ ] All new requests captured in stakeholder request cards
-- [ ] Priority assigned based on business value
-- [ ] At least 1.5x iteration capacity in prioritized backlog
+1. **Initialize Discovery Workspace**:
+   ```
+   # You do this directly
+   mkdir -p .aiwg/working/discovery/iteration-{N}/{requests,briefs,designs,spikes}
 
-### Step 2: Author Use-Case Briefs + Acceptance Cards
-**Agents**: Requirements Analyst (lead), System Analyst
-**Templates Required**:
-- `requirements/use-case-brief-template.md`
-- `test/acceptance-test-card.md`
+   # Create tracking metadata
+   Write to .aiwg/working/discovery/iteration-{N}/metadata.json:
+   {
+     "iteration": {N},
+     "status": "IN_PROGRESS",
+     "start-date": "{current-date}",
+     "target-delivery-iteration": {N-1}
+   }
+   ```
 
-**Actions**:
-1. Expand high-priority stakeholder requests into use-case briefs
-2. Define acceptance criteria for each use case
-3. Identify happy path and alternative flows
-4. Document pre-conditions and post-conditions
+2. **Launch Stakeholder Gathering Agents** (parallel):
+   ```
+   # Agent 1: Requirements Analyst
+   Task(
+       subagent_type="requirements-analyst",
+       description="Gather and document stakeholder requests",
+       prompt="""
+       Iteration: {N}
 
-**Deliverables**:
-- Use-case briefs for next iteration scope
-- Acceptance test cards with testable criteria
-- Success scenarios and edge cases documented
+       Check for existing stakeholder inputs:
+       - .aiwg/requirements/stakeholder-requests/*.md (unprocessed)
+       - .aiwg/feedback/*.md (user feedback)
+       - Project backlog or issue tracker references
 
-**Success Criteria**:
-- [ ] Use-case briefs complete for all planned work
-- [ ] Acceptance criteria are testable and measurable
-- [ ] Edge cases and alternative flows identified
-- [ ] Stakeholder validation obtained
+       For each request found or simulated (create 3-5 if none exist):
+
+       Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/requirements/stakeholder-request-card.md
+
+       Document:
+       - Request ID and title
+       - Stakeholder name and role
+       - Business value statement
+       - Desired outcome
+       - Priority (Must/Should/Could/Won't)
+       - Acceptance criteria (initial, high-level)
+
+       Apply MoSCoW prioritization based on:
+       - Business value (revenue, cost savings, risk reduction)
+       - Strategic alignment (vision, roadmap)
+       - Dependencies (blocking other work)
+
+       Output cards to: .aiwg/working/discovery/iteration-{N}/requests/
+       Generate summary: .aiwg/working/discovery/iteration-{N}/requests-summary.md
+       """
+   )
+
+   # Agent 2: Product Strategist
+   Task(
+       subagent_type="product-strategist",
+       description="Validate request alignment with vision",
+       prompt="""
+       Read vision: .aiwg/requirements/vision-*.md
+       Read business case: .aiwg/planning/business-case-*.md
+
+       Review gathered requests in: .aiwg/working/discovery/iteration-{N}/requests/
+
+       For each request:
+       - Validate alignment with product vision
+       - Assess strategic value (1-10 score)
+       - Identify conflicts or overlaps
+       - Recommend priority adjustments
+
+       Create alignment report:
+       - Aligned requests (proceed to refinement)
+       - Misaligned requests (defer or reject with rationale)
+       - Strategic recommendations
+
+       Output: .aiwg/working/discovery/iteration-{N}/alignment-assessment.md
+       """
+   )
+   ```
+
+3. **Prioritize Backlog**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Create prioritized backlog for iteration",
+       prompt="""
+       Read requests: .aiwg/working/discovery/iteration-{N}/requests/
+       Read alignment: .aiwg/working/discovery/iteration-{N}/alignment-assessment.md
+
+       Create prioritized backlog:
+       1. Must Have (critical for iteration)
+       2. Should Have (important but not critical)
+       3. Could Have (nice to have if time permits)
+       4. Won't Have (explicitly out of scope)
+
+       Consider:
+       - Team velocity (estimate: 20-30 story points)
+       - Dependencies between items
+       - Risk factors
+
+       Select items for Discovery totaling 1.5x-2x velocity (30-60 points)
+
+       Output: .aiwg/working/discovery/iteration-{N}/prioritized-backlog.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Discovery workspace initialized for iteration {N}
+⏳ Gathering stakeholder requests...
+  ✓ Requirements Analyst: {count} requests documented
+  ✓ Product Strategist: Alignment validated
+  ✓ Project Manager: Backlog prioritized ({points} points selected)
+✓ Stakeholder gathering complete: {count} items for refinement
+```
+
+### Step 2: Author Use-Case Briefs and Acceptance Cards
+
+**Purpose**: Expand high-priority requests into detailed use cases with testable criteria
+
+**Your Actions**:
+
+1. **Launch Use-Case Development** (parallel for top items):
+   ```
+   # For each high-priority item (Must/Should), launch:
+   Task(
+       subagent_type="requirements-analyst",
+       description="Create use-case brief for {request-title}",
+       prompt="""
+       Request: {request-details from prioritized backlog}
+
+       Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/requirements/use-case-brief-template.md
+
+       Develop comprehensive use-case brief:
+
+       1. Use Case Overview
+          - ID and name
+          - Business context and value
+          - Actors involved
+
+       2. Main Flow (Happy Path)
+          - Step-by-step user actions
+          - System responses
+          - Data transformations
+
+       3. Alternative Flows
+          - Error scenarios
+          - Edge cases
+          - Exception handling
+
+       4. Pre-conditions
+          - System state required
+          - User permissions
+          - Data prerequisites
+
+       5. Post-conditions
+          - System state after completion
+          - Data changes
+          - Notifications/events triggered
+
+       6. Business Rules
+          - Validation rules
+          - Calculations
+          - Constraints
+
+       Output: .aiwg/working/discovery/iteration-{N}/briefs/use-case-{id}.md
+       """
+   )
+   ```
+
+2. **Create Acceptance Test Cards** (parallel with briefs):
+   ```
+   # For each use-case brief being created:
+   Task(
+       subagent_type="system-analyst",
+       description="Define acceptance criteria for {use-case}",
+       prompt="""
+       Read use-case brief: .aiwg/working/discovery/iteration-{N}/briefs/use-case-{id}.md
+
+       Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/test/acceptance-test-card.md
+
+       Create acceptance test card:
+
+       1. Test Scenarios
+          - Happy path validation
+          - Alternative flow tests
+          - Error condition tests
+          - Boundary/edge cases
+
+       2. Test Data Requirements
+          - Valid test data sets
+          - Invalid data for negative tests
+          - Edge case data
+
+       3. Expected Results
+          - Success criteria (measurable)
+          - Error messages expected
+          - Performance targets (if applicable)
+
+       4. Test Execution Approach
+          - Manual vs. automated
+          - Test environment needs
+          - Dependencies
+
+       Ensure all acceptance criteria are:
+       - Testable (can be verified)
+       - Measurable (quantifiable)
+       - Independent (no overlaps)
+       - Complete (cover all flows)
+
+       Output: .aiwg/working/discovery/iteration-{N}/briefs/acceptance-{use-case-id}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Authoring use-case briefs and acceptance cards...
+  ✓ Use-case briefs: {count}/{total} complete
+  ✓ Acceptance cards: {count}/{total} complete
+  ✓ Edge cases identified: {count}
+✓ Requirements refinement complete: {count} use cases ready
+```
 
 ### Step 3: Draft Data Contracts and Interface Cards
-**Agents**: API Designer (lead), Architecture Designer
-**Templates Required**:
-- `analysis-design/data-contract-card.md`
-- `analysis-design/interface-card.md`
 
-**Actions**:
-1. Define data structures and schemas
-2. Specify API contracts (REST, GraphQL, gRPC)
-3. Document interface boundaries and integration points
-4. Validate backward compatibility
+**Purpose**: Define data structures and API contracts for new/modified functionality
 
-**Deliverables**:
-- Data contract cards for new entities
-- Interface cards for APIs and integration points
-- Schema definitions (JSON Schema, OpenAPI, etc.)
+**Your Actions**:
 
-**Success Criteria**:
-- [ ] Data contracts defined for all new entities
-- [ ] Interface specifications complete
-- [ ] Backward compatibility validated
-- [ ] API versioning strategy documented
+1. **Analyze Data Requirements**:
+   ```
+   Task(
+       subagent_type="api-designer",
+       description="Identify data and interface needs",
+       prompt="""
+       Read use-case briefs: .aiwg/working/discovery/iteration-{N}/briefs/*.md
+
+       Analyze requirements to identify:
+       - New data entities needed
+       - Existing entities to modify
+       - New API endpoints required
+       - Integration points with external systems
+
+       Create data/interface inventory:
+       - List of data contracts needed
+       - List of interface specifications needed
+       - Dependencies on existing contracts
+
+       Output: .aiwg/working/discovery/iteration-{N}/designs/inventory.md
+       """
+   )
+   ```
+
+2. **Create Data Contract Cards** (parallel):
+   ```
+   # For each identified data entity:
+   Task(
+       subagent_type="api-designer",
+       description="Define data contract for {entity}",
+       prompt="""
+       Entity: {entity-name}
+       Related use cases: {use-case-ids}
+
+       Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/data-contract-card.md
+
+       Define data contract:
+
+       1. Entity Definition
+          - Name and purpose
+          - Relationships to other entities
+          - Business rules
+
+       2. Schema Specification
+          - Fields and data types
+          - Required vs. optional
+          - Validation rules
+          - Default values
+
+       3. Example (JSON/YAML)
+          ```json
+          {
+            "id": "uuid",
+            "name": "string",
+            "status": "enum[active,inactive]",
+            "created_at": "timestamp"
+          }
+          ```
+
+       4. Versioning Strategy
+          - Current version
+          - Migration approach
+          - Backward compatibility
+
+       Output: .aiwg/working/discovery/iteration-{N}/designs/data-contract-{entity}.md
+       """
+   )
+   ```
+
+3. **Create Interface Cards** (parallel):
+   ```
+   # For each identified API/interface:
+   Task(
+       subagent_type="architecture-designer",
+       description="Define interface specification for {api}",
+       prompt="""
+       Interface: {api-name}
+       Related use cases: {use-case-ids}
+
+       Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/interface-card.md
+
+       Define interface specification:
+
+       1. API Overview
+          - Purpose and scope
+          - Consumer systems
+          - Protocol (REST, GraphQL, gRPC)
+
+       2. Endpoints
+          - Path and method
+          - Request parameters
+          - Request body schema
+          - Response schema
+          - Error responses
+
+       3. Authentication/Authorization
+          - Auth mechanism (OAuth, JWT, API key)
+          - Required scopes/permissions
+
+       4. Non-functional Requirements
+          - Rate limits
+          - Response time SLA
+          - Availability requirements
+
+       5. OpenAPI/Swagger snippet (if REST)
+
+       Ensure backward compatibility if modifying existing interface.
+
+       Output: .aiwg/working/discovery/iteration-{N}/designs/interface-{api}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Designing data contracts and interfaces...
+  ✓ Data contracts: {count} defined
+  ✓ Interface specifications: {count} defined
+  ✓ Backward compatibility: Validated
+✓ Design artifacts complete: Ready for validation
+```
 
 ### Step 4: Spike/POC for High-Risk Assumptions
-**Agents**: Technical Researcher (lead), Software Implementer
-**Templates Required**:
-- `analysis-design/spike-card.md`
-- `management/risk-card.md`
-
-**Actions**:
-1. Identify high-risk technical assumptions
-2. Design time-boxed spikes (4-8 hours max)
-3. Execute proof-of-concept implementations
-4. Document findings and update risk list
-
-**Deliverables**:
-- Spike cards with outcomes
-- POC code (if applicable, not for production)
-- Risk mitigation recommendations
-- Go/no-go decision for risky features
-
-**Success Criteria**:
-- [ ] All high-risk assumptions validated
-- [ ] Spikes complete within time box
-- [ ] Findings documented with recommendations
-- [ ] Risks updated based on spike outcomes
-
-### Step 5: Update ADRs for Decisions
-**Agents**: Architecture Designer (lead)
-**Templates Required**:
-- `analysis-design/architecture-decision-record-template.md`
-
-**Actions**:
-1. Document architectural decisions made during discovery
-2. Capture decision context, alternatives considered
-3. Record consequences and trade-offs
-4. Link ADRs to requirements and use cases
-
-**Deliverables**:
-- ADRs for significant architectural decisions
-- Decision rationale documented
-- Trade-offs and consequences captured
-
-**Success Criteria**:
-- [ ] All significant decisions documented in ADRs
-- [ ] Alternatives considered and evaluated
-- [ ] Consequences (positive and negative) documented
-- [ ] ADRs linked to requirements
-
-### Step 6: Hand Off to Delivery with Handoff Checklist
-**Agents**: Requirements Reviewer (lead), Project Manager
-**Templates Required**:
-- `flows/handoff-checklist-template.md`
-
-**Actions**:
-1. Validate all discovery artifacts complete
-2. Run handoff checklist validation
-3. Confirm acceptance criteria testable
-4. Transfer ready backlog items to Delivery Track
-
-**Deliverables**:
-- Handoff checklist completed
-- Ready backlog items packaged
-- Traceability established (requests → briefs → acceptance → data contracts)
-
-**Success Criteria**:
-- [ ] Handoff checklist 100% complete
-- [ ] All artifacts validated and approved
-- [ ] Backlog items meet Definition of Ready (DoR)
-- [ ] Delivery Track team notified
-
-## Definition of Ready (DoR)
-
-A backlog item is READY for Delivery when:
-
-### Requirements Complete
-- [ ] Use-case brief authored and reviewed
-- [ ] Acceptance criteria defined and testable
-- [ ] Pre-conditions and post-conditions documented
-- [ ] Happy path and alternative flows identified
-
-### Design Complete
-- [ ] Data contracts defined (if new entities)
-- [ ] Interface specifications complete (if API changes)
-- [ ] Integration points identified
-- [ ] Backward compatibility validated
-
-### Risks Addressed
-- [ ] High-risk assumptions validated via spike/POC
-- [ ] Technical risks documented and mitigated
-- [ ] Dependencies identified and resolved
-- [ ] No blocking risks without mitigation
-
-### Traceability Established
-- [ ] Stakeholder request → use-case brief linkage
-- [ ] Use-case brief → acceptance criteria linkage
-- [ ] Acceptance criteria → test card linkage
-- [ ] Design artifacts linked to requirements
-
-### Stakeholder Approval
-- [ ] Product Owner approval obtained
-- [ ] Stakeholder validation complete
-- [ ] Priority confirmed
-- [ ] Business value validated
-
-## Exit Criteria per Backlog Item
 
-For each backlog item handed off to Delivery:
-
-- [ ] **Use-case brief complete**: All sections filled, reviewed, approved
-- [ ] **Acceptance card complete**: Testable criteria, success scenarios documented
-- [ ] **Data contract complete**: Schemas defined, validated (if applicable)
-- [ ] **Interface card complete**: API specs documented (if applicable)
-- [ ] **Risks addressed**: High-risk assumptions validated or scheduled
-- [ ] **ADRs updated**: Decisions documented with rationale
-- [ ] **Traceability seeded**: Requirements → design → tests linkage established
-- [ ] **Handoff checklist signed**: Requirements Reviewer and Project Manager signoff
-
-## Backlog Health Metrics
-
-Track discovery effectiveness with these metrics:
-
-### Lead Time
-**Target**: Discovery completes 1 iteration ahead of Delivery
-
-**Measurement**:
-- Discovery Iteration N completes: Week X
-- Delivery Iteration N starts: Week X+1
-
-**Health Indicator**:
-- 🟢 Green: Discovery consistently 1 iteration ahead
-- 🟡 Yellow: Discovery occasionally same iteration as Delivery
-- 🔴 Red: Delivery waiting on Discovery (backlog starvation)
-
-### Defect Leakage from Discovery
-**Target**: <10% of Delivery defects caused by requirements gaps
-
-**Measurement**:
-- Count defects in Delivery caused by: unclear requirements, missing acceptance criteria, design gaps
-- Calculate percentage: (discovery-caused defects / total defects) × 100
-
-**Health Indicator**:
-- 🟢 Green: <10% defect leakage
-- 🟡 Yellow: 10-20% defect leakage
-- 🔴 Red: >20% defect leakage (Discovery quality issue)
-
-### Rework Rate
-**Target**: <5% of Discovery work returned from Delivery for refinement
-
-**Measurement**:
-- Count backlog items returned to Discovery for refinement
-- Calculate percentage: (returned items / total items) × 100
-
-**Health Indicator**:
-- 🟢 Green: <5% rework
-- 🟡 Yellow: 5-15% rework
-- 🔴 Red: >15% rework (DoR not being met)
-
-### Ready Backlog Size
-**Target**: 1.5x-2x next iteration capacity
-
-**Measurement**:
-- Count ready backlog items (passed DoR)
-- Compare to typical iteration velocity
-
-**Health Indicator**:
-- 🟢 Green: 1.5x-2x capacity ready
-- 🟡 Yellow: 1x-1.5x capacity ready (marginal buffer)
-- 🔴 Red: <1x capacity ready (starvation risk)
-
-## Output Report
-
-Generate a discovery iteration report:
-
-```markdown
-# Discovery Track Report - Iteration {N+1}
-
-**Project**: {project-name}
-**Iteration**: {iteration-number}
-**Discovery Completion Date**: {date}
-**Handoff to Delivery**: {date}
-
-## Backlog Items Prepared
-
-**Items Ready for Delivery**: {count}
-**Story Points Ready**: {points}
-**Estimated Delivery Iteration**: {iteration-N}
-
-### Items by Type
-- New Features: {count}
-- Enhancements: {count}
-- Technical Debt: {count}
-- Bug Fixes: {count}
-
-## Artifacts Created
-
-### Requirements
-- Use-Case Briefs: {count}
-- Acceptance Test Cards: {count}
-- Stakeholder Request Cards: {count}
-
-### Design
-- Data Contract Cards: {count}
-- Interface Cards: {count}
-- Architecture Decision Records: {count}
-
-### Risk Management
-- Spikes Executed: {count}
-- Risks Identified: {count}
-- Risks Mitigated: {count}
-
-## Definition of Ready Compliance
-
-**DoR Pass Rate**: {percentage}%
-
-**Items Failing DoR**:
-{list items that don't meet DoR with reasons}
-
-**Remediation Plan**:
-{actions to address DoR failures}
-
-## Handoff Checklist Status
-
-- [ ] All use-case briefs complete and reviewed
-- [ ] All acceptance criteria testable
-- [ ] All data contracts validated
-- [ ] All high-risk assumptions validated
-- [ ] All ADRs documented
-- [ ] Traceability established
-- [ ] Requirements Reviewer signoff obtained
-- [ ] Project Manager signoff obtained
-
-**Handoff Status**: {READY | PARTIAL | BLOCKED}
-
-## Risks and Assumptions
-
-**Active Risks**: {count}
-
-**Top Risks for Delivery**:
-1. {risk-description} - Mitigation: {plan}
-2. {risk-description} - Mitigation: {plan}
-3. {risk-description} - Mitigation: {plan}
-
-**Unvalidated Assumptions**:
-{list any assumptions not yet validated}
-
-## Stakeholder Feedback
-
-**Stakeholders Engaged**: {count}
-**Feedback Sessions Conducted**: {count}
-
-**Key Feedback**:
-{summary of stakeholder input}
-
-**Adjustments Made**:
-{changes made based on feedback}
-
-## Discovery Health Metrics
-
-### Lead Time
-- Discovery Lead Time: {weeks}
-- Target: 1 iteration ahead
-- Status: {ON-TRACK | AT-RISK}
-
-### Backlog Health
-- Ready Backlog Size: {story-points}
-- Iteration Capacity: {story-points}
-- Ratio: {ratio}x
-- Status: {HEALTHY | MARGINAL | STARVED}
-
-### Quality Metrics
-- DoR Pass Rate: {percentage}%
-- Rework Rate: {percentage}%
-- Defect Leakage (last iteration): {percentage}%
-
-## Next Steps
-
-**For Delivery Track**:
-- Handoff meeting scheduled: {date}
-- Iteration kickoff: {date}
-- Ready backlog items: {list-IDs}
-
-**For Next Discovery Iteration**:
-- New stakeholder requests: {count}
-- Carry-over items: {count}
-- Spike plans: {count}
+**Purpose**: Validate technical assumptions and retire risks through time-boxed investigations
+
+**Your Actions**:
+
+1. **Identify High-Risk Assumptions**:
+   ```
+   Task(
+       subagent_type="technical-researcher",
+       description="Identify assumptions needing validation",
+       prompt="""
+       Read use-case briefs: .aiwg/working/discovery/iteration-{N}/briefs/*.md
+       Read data/interface designs: .aiwg/working/discovery/iteration-{N}/designs/*.md
+       Read risk list: .aiwg/risks/risk-list.md
+
+       Identify high-risk assumptions:
+       - Technical feasibility unknowns
+       - Performance concerns
+       - Integration uncertainties
+       - Security vulnerabilities
+       - Scalability questions
+
+       For each assumption:
+       - Risk level (High/Medium/Low)
+       - Validation approach (Spike/POC/Analysis)
+       - Time box (4-8 hours typical)
+       - Success criteria
+
+       Output: .aiwg/working/discovery/iteration-{N}/spikes/spike-plan.md
+       """
+   )
+   ```
+
+2. **Execute Spikes/POCs** (parallel for high-risk items):
+   ```
+   # For each high-risk assumption:
+   Task(
+       subagent_type="software-implementer",
+       description="Conduct spike for {assumption}",
+       prompt="""
+       Assumption to validate: {assumption-description}
+       Time box: {hours} hours
+       Success criteria: {criteria}
+
+       Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/spike-card.md
+
+       Conduct investigation:
+
+       1. Approach
+          - What will be tested/prototyped
+          - Tools/technologies to evaluate
+          - Metrics to collect
+
+       2. Implementation (if POC)
+          - Minimal code to prove concept
+          - Focus on risk validation, not production quality
+          - Document code snippets
+
+       3. Findings
+          - What worked
+          - What didn't work
+          - Performance measurements
+          - Limitations discovered
+
+       4. Recommendation
+          - GO: Assumption validated, proceed
+          - NO-GO: Assumption invalid, need alternative
+          - PIVOT: Partial success, adjust approach
+
+       5. Next Steps
+          - If GO: Implementation guidance
+          - If NO-GO: Alternative approaches
+          - If PIVOT: Additional investigation needed
+
+       Output: .aiwg/working/discovery/iteration-{N}/spikes/spike-{id}-results.md
+       """
+   )
+   ```
+
+3. **Update Risk Register**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Update risks based on spike results",
+       prompt="""
+       Read spike results: .aiwg/working/discovery/iteration-{N}/spikes/*-results.md
+       Read current risks: .aiwg/risks/risk-list.md
+
+       Update risk list:
+       - Mark validated risks as RETIRED
+       - Update mitigation strategies based on spike findings
+       - Add new risks discovered during spikes
+       - Adjust risk priorities
+
+       Document:
+       - Risks retired this iteration
+       - New risks identified
+       - Updated mitigation plans
+
+       Output updated risk list: .aiwg/risks/risk-list.md
+       Output risk summary: .aiwg/working/discovery/iteration-{N}/risk-updates.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Validating high-risk assumptions...
+  ✓ Spikes executed: {count}
+  ✓ POCs completed: {count}
+  ✓ Risks retired: {count}
+  ⚠️ New risks identified: {count}
+✓ Risk validation complete: {go-count} GO, {no-go-count} NO-GO, {pivot-count} PIVOT
+```
+
+### Step 5: Update Architecture Decision Records
+
+**Purpose**: Document architectural decisions made during discovery
+
+**Your Actions**:
+
+```
+Task(
+    subagent_type="architecture-designer",
+    description="Create ADRs for discovery decisions",
+    prompt="""
+    Review discovery artifacts:
+    - Spike results: .aiwg/working/discovery/iteration-{N}/spikes/*
+    - Data contracts: .aiwg/working/discovery/iteration-{N}/designs/data-*
+    - Interface specs: .aiwg/working/discovery/iteration-{N}/designs/interface-*
+
+    Identify significant architectural decisions made:
+    - Technology choices from spikes
+    - API design patterns selected
+    - Data model decisions
+    - Integration approaches
+
+    For each significant decision:
+
+    Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md
+
+    Create ADR documenting:
+    1. Status: Proposed | Accepted
+    2. Context: Problem/issue faced
+    3. Decision: What we're doing
+    4. Consequences: Trade-offs and impacts
+    5. Alternatives: Options considered and why rejected
+
+    Link to relevant spike results as evidence.
+
+    Output: .aiwg/architecture/adr/ADR-{number}-{title}.md
+    """
+)
+```
+
+**Communicate Progress**:
+```
+✓ Architecture decisions documented: {count} ADRs created
+```
+
+### Step 6: Handoff to Delivery Track
+
+**Purpose**: Validate readiness and transfer work to Delivery team
+
+**Your Actions**:
+
+1. **Validate Definition of Ready**:
+   ```
+   Task(
+       subagent_type="requirements-reviewer",
+       description="Validate DoR for all backlog items",
+       prompt="""
+       Read Definition of Ready criteria from template:
+       $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/handoff-checklist-template.md
+
+       For each backlog item in iteration {N}:
+
+       Validate DoR Criteria:
+
+       Requirements Complete:
+       - [ ] Use-case brief authored and reviewed
+       - [ ] Acceptance criteria defined and testable
+       - [ ] Pre/post-conditions documented
+       - [ ] Alternative flows identified
+
+       Design Complete:
+       - [ ] Data contracts defined (if applicable)
+       - [ ] Interface specs complete (if applicable)
+       - [ ] Integration points identified
+       - [ ] Backward compatibility validated
+
+       Risks Addressed:
+       - [ ] High-risk assumptions validated
+       - [ ] Technical risks documented
+       - [ ] Dependencies identified
+       - [ ] No blocking risks without mitigation
+
+       Traceability:
+       - [ ] Request → use-case linkage
+       - [ ] Use-case → acceptance criteria linkage
+       - [ ] Design artifacts linked to requirements
+
+       Stakeholder Approval:
+       - [ ] Product Owner approval
+       - [ ] Priority confirmed
+       - [ ] Business value validated
+
+       Mark each item: READY | NOT_READY (with reasons)
+
+       Output: .aiwg/working/discovery/iteration-{N}/dor-validation.md
+       """
+   )
+   ```
+
+2. **Package Artifacts for Handoff**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Package discovery artifacts for Delivery",
+       prompt="""
+       Copy validated artifacts from working to final locations:
+
+       From .aiwg/working/discovery/iteration-{N}/:
+       - briefs/* → .aiwg/requirements/use-case-briefs/
+       - briefs/acceptance-* → .aiwg/testing/acceptance-cards/
+       - designs/data-* → .aiwg/architecture/data-contracts/
+       - designs/interface-* → .aiwg/architecture/interfaces/
+       - spikes/*-results → .aiwg/risks/spikes/
+
+       Create handoff package summary:
+       - List of all artifacts
+       - DoR status for each item
+       - Total story points ready
+       - Key decisions made
+       - Risks identified/retired
+
+       Output: .aiwg/handoffs/discovery-to-delivery-iteration-{N}.md
+       """
+   )
+   ```
+
+3. **Generate Discovery Report**:
+   ```
+   Task(
+       subagent_type="documentation-synthesizer",
+       description="Create Discovery iteration report",
+       prompt="""
+       Synthesize complete Discovery report for iteration {N}:
+
+       # Discovery Track Report - Iteration {N}
+
+       **Completion Date**: {date}
+       **Target Delivery Iteration**: {N-1}
+       **Status**: READY | PARTIAL | BLOCKED
+
+       ## Backlog Items Prepared
+       - Items Ready: {count} ({points} points)
+       - Items Not Ready: {count} (reasons listed)
+       - Story Points Ready: {points}
+       - Coverage: {ratio}x iteration capacity
+
+       ## Artifacts Created
+
+       ### Requirements
+       - Stakeholder Request Cards: {count}
+       - Use-Case Briefs: {count}
+       - Acceptance Test Cards: {count}
+
+       ### Design
+       - Data Contract Cards: {count}
+       - Interface Cards: {count}
+       - Architecture Decision Records: {count}
+
+       ### Risk Management
+       - Spikes Executed: {count}
+       - Risks Retired: {count}
+       - New Risks Identified: {count}
+
+       ## Definition of Ready Compliance
+       - DoR Pass Rate: {percentage}%
+       - Items failing DoR: {list with reasons}
+
+       ## Key Decisions
+       {list architectural decisions with ADR references}
+
+       ## Handoff Status
+       - Checklist Complete: YES | NO
+       - Artifacts Packaged: YES | NO
+       - Delivery Team Notified: YES | NO
+
+       ## Discovery Health Metrics
+
+       ### Lead Time
+       - Discovery ahead of Delivery: {iterations}
+       - Status: ON-TRACK | AT-RISK
+
+       ### Backlog Health
+       - Coverage Ratio: {ratio}x
+       - Status: HEALTHY | MARGINAL | STARVED
+
+       ### Quality
+       - DoR Pass Rate: {percentage}%
+       - Rework Rate: {percentage}%
+
+       ## Next Steps
+       - Handoff meeting: {date}
+       - Delivery kickoff: {date}
+       - Next Discovery iteration: {N+1}
+
+       Output: .aiwg/reports/discovery-iteration-{N}-report.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Completing handoff to Delivery...
+  ✓ DoR validation: {percentage}% pass rate
+  ✓ Artifacts packaged: {count} items
+  ✓ Handoff checklist: Complete
+✓ Discovery iteration {N} complete: READY FOR DELIVERY
+```
+
+## Quality Gates
+
+Before marking workflow complete, verify:
+- [ ] All high-priority requests refined into use cases
+- [ ] Acceptance criteria testable and complete
+- [ ] Data contracts and interfaces defined
+- [ ] High-risk assumptions validated
+- [ ] ADRs document key decisions
+- [ ] DoR met for ≥90% of items
+- [ ] 1.5x-2x iteration capacity prepared
+- [ ] Handoff checklist complete
+- [ ] Discovery report generated
+
+## User Communication
+
+**At start**: Confirm understanding and scope
+
+```
+Understood. I'll orchestrate the Discovery Track for iteration {N}.
+
+This will prepare:
+- Use-case briefs with acceptance criteria
+- Data contracts and interface specifications
+- Risk validations via spikes/POCs
+- Architecture decision records
+- Complete handoff package for Delivery
+
+Target: 1.5x-2x iteration capacity ({points} story points)
+Expected duration: 30-45 minutes
+
+Starting orchestration...
+```
+
+**During**: Update progress with clear indicators
+
+```
+✓ = Complete
+⏳ = In progress
+❌ = Error/blocked
+⚠️ = Warning/attention needed
+```
+
+**At end**: Summary report with metrics
+
+```
+─────────────────────────────────────────────
+Discovery Track - Iteration {N} Complete
+─────────────────────────────────────────────
+
+**Status**: READY FOR DELIVERY
+**Items Prepared**: {count} ({points} story points)
+**DoR Compliance**: {percentage}%
+**Coverage Ratio**: {ratio}x iteration capacity
+
+**Artifacts Generated**:
+- Use-case briefs: {count}
+- Acceptance cards: {count}
+- Data contracts: {count}
+- Interface specs: {count}
+- ADRs: {count}
+- Spike results: {count}
+
+**Risk Status**:
+- Retired: {count}
+- New: {count}
+- Outstanding: {count}
+
+**Key Decisions**:
+{list top 3-5 architectural decisions}
+
+**Handoff Package**: .aiwg/handoffs/discovery-to-delivery-iteration-{N}.md
+**Full Report**: .aiwg/reports/discovery-iteration-{N}-report.md
+
+**Next Steps**:
+- Review generated artifacts
+- Schedule handoff meeting with Delivery team
+- Begin Discovery for iteration {N+1}
+
+─────────────────────────────────────────────
+```
+
+## Error Handling
+
+**If No Stakeholder Requests**:
+```
+⚠️ No stakeholder requests found
+
+Creating simulated requests based on:
+- Vision document priorities
+- Outstanding technical debt
+- Risk mitigation needs
+
+Recommendation: Engage stakeholders for input
+```
+
+**If DoR Not Met**:
+```
+❌ Items not meeting Definition of Ready
+
+{item}: {missing-criteria}
+
+Actions required:
+- Complete missing artifacts
+- Obtain stakeholder approval
+- Validate acceptance criteria
+
+These items cannot be handed to Delivery until DoR met.
+```
+
+**If Spike Failed**:
+```
+❌ Spike validation failed
+
+Risk: {description}
+Result: NO-GO - {reason}
+
+Recommendations:
+1. Alternative technical approach
+2. Adjust requirements
+3. Accept risk with mitigation
+
+Escalating to Architecture Designer for decision...
+```
+
+**If Capacity Insufficient**:
+```
+⚠️ Insufficient work prepared
+
+Ready: {points} points
+Target: {target} points (1.5x capacity)
+Gap: {gap} points
+
+Actions:
+- Add more items from backlog
+- Reduce scope of complex items
+- Carry over to next iteration
 ```
 
 ## Success Criteria
 
-This command succeeds when:
-- [ ] All 6 discovery workflow steps completed
-- [ ] At least 1.5x iteration capacity prepared
-- [ ] All backlog items meet Definition of Ready
-- [ ] Handoff checklist 100% complete
-- [ ] Traceability established for all items
-- [ ] Requirements Reviewer and Project Manager signoff obtained
+This orchestration succeeds when:
+- [ ] Stakeholder requests gathered and prioritized
+- [ ] Use-case briefs complete with acceptance criteria
+- [ ] Data contracts and interfaces defined
+- [ ] High-risk assumptions validated via spikes
+- [ ] Architecture decisions documented
+- [ ] Definition of Ready met for ≥90% of items
+- [ ] 1.5x-2x iteration capacity prepared
+- [ ] Traceability established (requirements → design → tests)
+- [ ] Handoff to Delivery complete
 
-## Error Handling
+## Metrics to Track
 
-**Empty Stakeholder Request Queue**:
-- Report: "No new stakeholder requests found"
-- Action: "Engage stakeholders to gather input"
-- Command: "Review requirements/stakeholder-request-card.md template"
-
-**DoR Failures**:
-- Report: "Backlog item {ID} does not meet Definition of Ready"
-- Action: "Complete missing artifacts: {list}"
-- Recommendation: "Do not hand off to Delivery until DoR met"
-
-**Spike Inconclusive**:
-- Report: "Spike {ID} did not validate assumption: {assumption}"
-- Action: "Escalate to Architecture Designer for decision"
-- Options: "Extended spike, alternative approach, or de-scope feature"
-
-**Handoff Blocked**:
-- Report: "Handoff checklist incomplete: {missing-items}"
-- Action: "Complete required artifacts before handoff"
-- Impact: "Delivery iteration may be delayed"
-
-## Integration with Delivery Track
-
-### Synchronization Points
-- **Weekly Handoff Meeting**: Review ready backlog, answer questions
-- **Mid-Iteration Check-in**: Delivery provides feedback on current implementation
-- **Retrospective**: Joint review of Discovery → Delivery effectiveness
-
-### Feedback Loop
-- Delivery discovers requirements gap → Escalate to Requirements Reviewer
-- Delivery finds design issue → Return to API Designer for refinement
-- Delivery identifies new risks → Update risk list, inform Discovery
-
-### Continuous Improvement
-- Track defect leakage from Discovery
-- Monitor rework rate
-- Analyze DoR compliance trends
-- Adjust Discovery process based on Delivery feedback
+**During orchestration, track**:
+- Requirements clarity: % with complete acceptance criteria
+- Design coverage: % of use cases with data/interface specs
+- Risk validation: % of high-risk items validated
+- DoR compliance: % meeting all criteria
+- Cycle time: Discovery duration (target: 1-2 weeks, orchestration: 30-45 min)
 
 ## References
 
-- Full workflow: `flows/discovery-track-template.md`
-- Handoff checklist: `flows/handoff-checklist-template.md` (Discovery → Delivery section)
-- Definition of Ready: `flows/handoff-checklist-template.md` (DoR criteria)
-- Dual-track synchronization: `flows/iteration-dual-track-template.md`
-- Spike guidance: `analysis-design/spike-card.md`
+**Templates** (via $AIWG_ROOT):
+- Stakeholder Request: `templates/requirements/stakeholder-request-card.md`
+- Use-Case Brief: `templates/requirements/use-case-brief-template.md`
+- Acceptance Test: `templates/test/acceptance-test-card.md`
+- Data Contract: `templates/analysis-design/data-contract-card.md`
+- Interface Card: `templates/analysis-design/interface-card.md`
+- Spike Card: `templates/analysis-design/spike-card.md`
+- ADR: `templates/analysis-design/architecture-decision-record-template.md`
+
+**Flows**:
+- Handoff Checklist: `flows/handoff-checklist-template.md`
+- Dual-Track Synchronization: `flows/iteration-dual-track-template.md`
+
+**Definition of Ready**:
+- `flows/handoff-checklist-template.md` (DoR section)
+
+**Discovery Best Practices**:
+- `docs/discovery-track-best-practices.md`

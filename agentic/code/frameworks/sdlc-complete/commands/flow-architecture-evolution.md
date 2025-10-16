@@ -1,27 +1,123 @@
 ---
-description: Execute architecture evolution workflow with ADR management, architecture review, breaking change analysis, and migration planning
-category: sdlc-management
-argument-hint: <trigger-event> [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Grep, Glob, TodoWrite
-model: sonnet
+description: Orchestrate architecture evolution workflow with ADR management, architecture review, breaking change analysis, and migration planning
+category: sdlc-orchestration
+argument-hint: [trigger-event] [project-directory] [--guidance "text"] [--interactive]
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Architecture Evolution Flow
 
-You are an Architecture Evolution Coordinator specializing in managing architecture refinement, decision tracking, breaking change analysis, and migration planning as products grow.
+**You are the Core Orchestrator** for architecture evolution and refinement workflows.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-architecture-evolution <trigger> [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Assess** architecture evolution trigger and impact scope
-2. **Review** current architecture state and identify evolution needs
-3. **Design** architecture changes with ADR documentation
-4. **Analyze** breaking changes and migration requirements
-5. **Plan** migration strategy with rollback options
-6. **Update** architecture documentation (SAD, ADRs, diagrams)
+When the user requests this flow (via natural language or explicit command):
+
+1. **Interpret the request** and identify the architecture change trigger
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with evolution summary
+
+## Natural Language Triggers
+
+Users may say:
+- "Evolve architecture for scalability"
+- "Update architecture for new requirements"
+- "Architecture change for performance"
+- "Refactor architecture for technical debt"
+- "Need to change our database architecture"
+- "We need to scale to handle more users"
+- "Update SAD with new decisions"
+- "Create ADR for technology change"
+
+You recognize these as requests for architecture evolution orchestration.
+
+## Architecture Evolution Overview
+
+**Purpose**: Manage architecture refinement, decision tracking, breaking change analysis, and migration planning as products grow
+
+**Key Activities**:
+- Assess architecture evolution trigger and impact scope
+- Review current architecture state and identify evolution needs
+- Design architecture changes with ADR documentation
+- Analyze breaking changes and migration requirements
+- Plan migration strategy with rollback options
+- Update architecture documentation (SAD, ADRs, diagrams)
+
+**Success Criteria**:
+- Architecture decision documented (ADR) and approved
+- Breaking changes identified with migration plan
+- SAD and diagrams updated to reflect new architecture
+- Risk assessment complete with mitigation strategies
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor architecture evolution
+
+**Examples**:
+```
+--guidance "Focus on security first, HIPAA compliance critical for healthcare data"
+--guidance "Performance is critical path, need sub-100ms p95 response time"
+--guidance "Tight timeline for migration, minimize breaking changes"
+--guidance "Team has limited DevOps experience, need simple deployment model"
+```
+
+**How to Apply**:
+- Parse for keywords: security, performance, compliance, timeline, breaking changes
+- Adjust agent assignments (add security-architect for compliance focus)
+- Modify migration strategy (blue-green vs phased based on risk tolerance)
+- Influence decision criteria (performance-first vs security-first trade-offs)
+
+### --interactive Parameter
+
+**Purpose**: You ask 7 strategic questions to understand evolution context
+
+**Questions to Ask** (if --interactive):
+
+```
+I'll ask 7 strategic questions to tailor the architecture evolution to your needs:
+
+Q1: What's driving this architecture change?
+    (e.g., performance issues, new features, technical debt, security requirements)
+
+Q2: What are your top priorities for this evolution?
+    (e.g., minimize downtime, maintain backward compatibility, improve performance)
+
+Q3: What are your biggest constraints?
+    (e.g., budget, timeline, team expertise, regulatory compliance)
+
+Q4: What architectural risks concern you most?
+    (e.g., data loss, breaking changes, performance degradation, security vulnerabilities)
+
+Q5: How mature is your current architecture documentation?
+    (e.g., comprehensive SAD exists, minimal docs, out of date)
+
+Q6: What's your team's architecture review experience?
+    (e.g., formal ADR process, informal decisions, no review process)
+
+Q7: What's your target timeline for this evolution?
+    (e.g., immediate hotfix, next sprint, next quarter, long-term roadmap)
+
+Based on your answers, I'll adjust:
+- Migration strategy (big bang vs phased)
+- ADR depth (lightweight vs comprehensive)
+- Breaking change tolerance
+- Rollback planning depth
+```
+
+**Synthesize Guidance**: Combine answers into structured guidance for execution
 
 ## Architecture Evolution Triggers
+
+### Common Triggers
 
 - **scale**: System needs to scale beyond current architecture (performance, load)
 - **feature**: New feature requires architectural change
@@ -29,690 +125,744 @@ When invoked with `/project:flow-architecture-evolution <trigger> [project-direc
 - **security**: Security vulnerability requires architecture change
 - **compliance**: Regulatory compliance requires architecture modification
 - **technology**: Technology upgrade or platform migration
-- **cost**: Cost optimization requires arch
+- **cost**: Cost optimization requires architecture change
 
-### Step 0: Parameter Parsing and Guidance Setup
+## Artifacts to Generate
 
-**Parse Command Line**:
+**Primary Deliverables**:
+- **Architecture Decision Record (ADR)**: Major decision → `.aiwg/architecture/adr/ADR-*.md`
+- **Updated SAD**: Architecture changes → `.aiwg/architecture/software-architecture-doc.md`
+- **Migration Plan**: Step-by-step migration → `.aiwg/deployment/migration-plan-*.md`
+- **Rollback Plan**: Emergency procedures → `.aiwg/deployment/rollback-plan-*.md`
+- **Impact Assessment**: Breaking changes → `.aiwg/reports/impact-assessment-*.md`
+- **Architecture Evolution Report**: Summary → `.aiwg/reports/architecture-evolution-*.md`
 
-Extract optional `--guidance` and `--interactive` parameters.
+**Supporting Artifacts**:
+- Component diagrams (updated)
+- API specifications (if APIs change)
+- Data migration scripts (if data model changes)
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
-
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
-```
-
-**Path Resolution**:
-
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
-
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
-
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
-
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
-
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
-
-**Resolve AIWG installation**:
-
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
-
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
-```
-
-**Interactive Mode**:
-
-If `--interactive` flag set, prompt user with strategic questions:
-
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Architecture Evolution - Interactive Setup"
-  echo ""
-  echo "I'll ask 7 strategic questions to tailor this flow to your project's needs."
-  echo ""
-
-  read -p "Q1: What's driving this architecture change? " answer1
-  read -p "Q2: What are your top priorities? " answer2
-  read -p "Q3: What are your biggest constraints? " answer3
-  read -p "Q4: What architectural risks concern you most? " answer4
-  read -p "Q5: How mature is your current architecture documentation? " answer5
-  read -p "Q6: What's your team's architecture review experience? " answer6
-  read -p "Q7: What's your target timeline for this evolution? " answer7
-
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-itecture change
-
-## Workflow Steps
+## Multi-Agent Orchestration Workflow
 
 ### Step 1: Architecture Review Trigger Assessment
-**Agents**: Software Architect (lead), System Analyst
-**Templates Required**:
-- `analysis-design/software-architecture-doc-template.md`
-- `management/change-request-template.md`
 
-**Actions**:
-1. Document trigger event and business justification
-2. Review current architecture state from SAD
-3. Assess scope of impact (components, interfaces, data)
-4. Identify stakeholders and affected teams
+**Purpose**: Document trigger event and assess impact scope
 
-**Gate Criteria**:
-- [ ] Trigger event documented with business justification
-- [ ] Current architecture baseline identified
-- [ ] Impact scope assessed (components, interfaces, data, teams)
-- [ ] Stakeholders identified and notified
+**Your Actions**:
+
+1. **Read Current Architecture State**:
+   ```
+   Read and analyze:
+   - .aiwg/architecture/software-architecture-doc.md (current state)
+   - .aiwg/architecture/adr/*.md (past decisions)
+   - .aiwg/risks/risk-list.md (architectural risks)
+   ```
+
+2. **Launch Impact Assessment**:
+   ```
+   Task(
+       subagent_type="system-analyst",
+       description="Assess architecture change trigger and impact",
+       prompt="""
+       Trigger event: {user-provided trigger description}
+
+       Read current architecture from SAD and ADRs.
+
+       Document in Impact Assessment:
+       1. Trigger Event
+          - Business justification
+          - Technical drivers
+          - Urgency level (immediate/planned/future)
+
+       2. Scope of Impact
+          - Components affected (list with rationale)
+          - Interfaces affected (APIs, data contracts)
+          - External systems affected (integrations, clients)
+          - Teams affected (who needs to be involved)
+
+       3. Initial Risk Assessment
+          - Technical risks
+          - Business risks
+          - Timeline risks
+
+       Use template: $AIWG_ROOT/templates/management/impact-assessment-template.md
+
+       Save to: .aiwg/working/architecture-evolution/impact-assessment-draft.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Architecture evolution triggered by: {trigger}
+⏳ Assessing impact scope...
+✓ Impact assessment complete: {X} components, {Y} interfaces affected
+```
 
 ### Step 2: Architecture Options Analysis
-**Agents**: Software Architect (lead), Senior Developer
-**Templates Required**:
-- `analysis-design/architecture-decision-record-template.md`
-- `intake/option-matrix-template.md`
 
-**Actions**:
-1. Identify at least 3 architecture options
-2. Evaluate each option (cost, complexity, risk, time)
-3. Prototype critical path for top 2 options (if needed)
-4. Recommend preferred option with rationale
+**Purpose**: Identify and evaluate architecture options
 
-**Gate Criteria**:
-- [ ] At least 3 architecture options evaluated
-- [ ] Each option scored on cost, complexity, risk, time
-- [ ] Prototypes created for high-risk options
-- [ ] Preferred option recommended with clear rationale
+**Your Actions**:
+
+1. **Launch Parallel Analysis** (multiple agents):
+   ```
+   # Agent 1: Architecture Designer - Options
+   Task(
+       subagent_type="architecture-designer",
+       description="Identify architecture options",
+       prompt="""
+       Based on trigger: {trigger}
+       Impact assessment: .aiwg/working/architecture-evolution/impact-assessment-draft.md
+
+       Identify at least 3 architecture options:
+
+       For each option document:
+       - Description (high-level approach)
+       - Components changed
+       - Technology changes (if any)
+       - Estimated complexity (Low/Medium/High)
+       - Rough cost estimate
+       - Timeline estimate
+
+       Consider patterns:
+       - Strangler Fig (gradual replacement)
+       - Big Bang (all at once)
+       - Parallel Run (old and new together)
+       - Blue-Green (instant switch)
+       - Canary (gradual rollout)
+
+       Save to: .aiwg/working/architecture-evolution/architecture-options.md
+       """
+   )
+
+   # Agent 2: Senior Developer - Technical Feasibility
+   Task(
+       subagent_type="senior-developer",
+       description="Evaluate technical feasibility",
+       prompt="""
+       Review architecture options: .aiwg/working/architecture-evolution/architecture-options.md
+
+       For each option assess:
+       - Technical complexity (implementation difficulty)
+       - Team capability (do we have the skills?)
+       - Technology maturity (proven vs experimental)
+       - Integration complexity
+       - Testing complexity
+
+       Recommend prototypes if needed for high-risk options.
+
+       Save to: .aiwg/working/architecture-evolution/feasibility-assessment.md
+       """
+   )
+   ```
+
+2. **Synthesize Option Matrix**:
+   ```
+   Task(
+       subagent_type="architecture-designer",
+       description="Create option comparison matrix",
+       prompt="""
+       Read all analyses:
+       - Architecture options
+       - Feasibility assessment
+
+       Create option matrix using template:
+       $AIWG_ROOT/templates/intake/option-matrix-template.md
+
+       Score each option on:
+       - Cost (1-5, lower is better)
+       - Complexity (1-5, lower is better)
+       - Risk (1-5, lower is better)
+       - Timeline (weeks/months)
+       - Benefits (1-5, higher is better)
+
+       Calculate weighted score.
+       Recommend preferred option with rationale.
+
+       Save to: .aiwg/working/architecture-evolution/option-matrix.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Analyzing architecture options...
+  ✓ 3 options identified
+  ✓ Feasibility assessed
+  ✓ Option matrix complete
+✓ Recommended option: {option-name} (score: {score})
+```
 
 ### Step 3: Create Architecture Decision Record (ADR)
-**Agents**: Software Architect (lead)
-**Templates Required**:
-- `analysis-design/architecture-decision-record-template.md`
 
-**Actions**:
-1. Create ADR documenting decision context
-2. Document alternatives considered
-3. Document decision made and rationale
-4. Document consequences (benefits, risks, trade-offs)
-5. Link ADR to requirements and constraints
+**Purpose**: Document the architecture decision formally
 
-**Gate Criteria**:
-- [ ] ADR created with unique ID (ADR-YYYY-NNN)
-- [ ] Context section explains why decision needed
-- [ ] Alternatives section lists at least 2 other options
-- [ ] Decision section states choice and rationale
-- [ ] Consequences section documents trade-offs
+**Your Actions**:
 
-### Step 4: Breaking Change and Impact Analysis
-**Agents**: Software Architect (lead), API Designer
-**Templates Required**:
-- `analysis-design/interface-specification-card.md`
-- `management/impact-assessment-template.md`
+```
+Task(
+    subagent_type="architecture-designer",
+    description="Create ADR for architecture decision",
+    prompt="""
+    Based on analysis:
+    - Impact assessment
+    - Option matrix (preferred option)
 
-**Actions**:
-1. Identify breaking changes to APIs, data contracts, interfaces
-2. Assess impact on consumers (internal services, external clients)
-3. Document backward compatibility requirements
-4. Identify affected teams and communication plan
+    Create comprehensive ADR using template:
+    $AIWG_ROOT/templates/analysis-design/architecture-decision-record-template.md
 
-**Gate Criteria**:
-- [ ] All breaking changes identified and documented
-- [ ] Consumer impact assessed (list of affected services/clients)
-- [ ] Backward compatibility strategy defined
-- [ ] Communication plan created for affected teams
+    Structure:
+    1. Title: Clear, descriptive (e.g., "Migration from PostgreSQL to DynamoDB")
 
-### Step 5: Migration Planning
-**Agents**: Software Architect (lead), Deployment Manager
-**Templates Required**:
-- `deployment/migration-plan-template.md`
-- `deployment/rollback-plan-template.md`
+    2. Status: PROPOSED (will become ACCEPTED after review)
 
-**Actions**:
-1. Define migration strategy (big bang, phased, parallel run, strangler fig)
-2. Create migration runbook with step-by-step instructions
-3. Identify rollback triggers and rollback plan
-4. Define success criteria and monitoring
-5. Schedule migration timeline with go/no-go gates
+    3. Context
+       - What issue are we addressing?
+       - Current state description
+       - Business/technical drivers
 
-**Gate Criteria**:
-- [ ] Migration strategy selected and justified
-- [ ] Migration runbook created with detailed steps
-- [ ] Rollback plan documented with rollback triggers
-- [ ] Success criteria defined (SLIs, error rates, performance)
-- [ ] Migration timeline scheduled with stakeholder approval
+    4. Decision
+       - What we're changing
+       - Chosen approach (from option matrix)
+       - Key design details
+
+    5. Consequences
+       - Positive impacts (benefits)
+       - Negative impacts (trade-offs)
+       - Risks and mitigations
+
+    6. Alternatives Considered
+       - Other options from matrix
+       - Why each was rejected
+
+    Number sequentially based on existing ADRs in .aiwg/architecture/adr/
+
+    Save to: .aiwg/architecture/adr/ADR-{number:03d}-{slug}.md
+    """
+)
+```
+
+**Communicate Progress**:
+```
+⏳ Creating Architecture Decision Record...
+✓ ADR created: ADR-{number}-{title}
+```
+
+### Step 4: Breaking Change and Migration Analysis
+
+**Purpose**: Identify breaking changes and plan migration
+
+**Your Actions**:
+
+1. **Launch Breaking Change Analysis** (parallel agents):
+   ```
+   # Agent 1: API Designer - Interface Changes
+   Task(
+       subagent_type="api-designer",
+       description="Identify API breaking changes",
+       prompt="""
+       Compare current vs proposed architecture.
+
+       Identify breaking changes:
+       - API endpoint changes (removed, modified signatures)
+       - Data contract changes (schema modifications)
+       - Protocol changes (REST to gRPC, etc.)
+       - Authentication changes
+
+       For each breaking change:
+       - Description of change
+       - Affected consumers (internal/external)
+       - Backward compatibility options
+       - Migration approach
+
+       Save to: .aiwg/working/architecture-evolution/api-breaking-changes.md
+       """
+   )
+
+   # Agent 2: Data Architect - Data Changes
+   Task(
+       subagent_type="data-architect",
+       description="Identify data model changes",
+       prompt="""
+       Analyze data architecture changes.
+
+       Identify:
+       - Schema changes (tables, columns, types)
+       - Data migration requirements
+       - Data integrity risks
+       - Rollback data considerations
+
+       Document migration strategy:
+       - Online migration (zero downtime)
+       - Offline migration (maintenance window)
+       - Dual write period
+
+       Save to: .aiwg/working/architecture-evolution/data-migration-analysis.md
+       """
+   )
+   ```
+
+2. **Create Migration Plan**:
+   ```
+   Task(
+       subagent_type="deployment-manager",
+       description="Create detailed migration plan",
+       prompt="""
+       Based on breaking changes and chosen architecture option.
+
+       Use template: $AIWG_ROOT/templates/deployment/migration-plan-template.md
+
+       Define migration strategy:
+       - Pattern (Strangler Fig, Blue-Green, Canary, Big Bang)
+       - Phases (if phased approach)
+       - Timeline with milestones
+       - Go/No-Go gates
+
+       For each phase document:
+       - Scope (what migrates)
+       - Steps (detailed runbook)
+       - Validation (how to verify success)
+       - Rollback trigger conditions
+
+       Include:
+       - Pre-migration checklist
+       - Migration runbook
+       - Post-migration validation
+       - Communication plan
+
+       Save to: .aiwg/deployment/migration-plan-{date}.md
+       """
+   )
+   ```
+
+3. **Create Rollback Plan**:
+   ```
+   Task(
+       subagent_type="deployment-manager",
+       description="Create rollback plan",
+       prompt="""
+       Based on migration plan.
+
+       Use template: $AIWG_ROOT/templates/deployment/rollback-plan-template.md
+
+       Document:
+       1. Rollback Triggers
+          - Error thresholds
+          - Performance degradation
+          - Data corruption indicators
+
+       2. Rollback Procedures
+          - Step-by-step instructions
+          - Data restoration steps
+          - Configuration rollback
+
+       3. Rollback Testing
+          - How to test rollback in staging
+          - Validation steps
+
+       Save to: .aiwg/deployment/rollback-plan-{date}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Analyzing breaking changes and migration requirements...
+  ✓ API breaking changes: {count}
+  ✓ Data migration requirements identified
+  ✓ Migration plan created: {strategy} pattern
+  ✓ Rollback plan documented
+✓ Migration planning complete
+```
+
+### Step 5: Multi-Agent Architecture Review
+
+**Purpose**: Review proposed changes with specialized architects
+
+**Your Actions**:
+
+**Launch Parallel Reviews**:
+```
+# Security Architect Review
+Task(
+    subagent_type="security-architect",
+    description="Review architecture evolution security impact",
+    prompt="""
+    Review:
+    - ADR: .aiwg/architecture/adr/ADR-{latest}.md
+    - Migration plan: .aiwg/deployment/migration-plan-{date}.md
+
+    Validate:
+    - Security controls maintained/improved
+    - Authentication/authorization impacts
+    - Data encryption during migration
+    - Audit trail continuity
+    - Compliance implications
+
+    Provide feedback:
+    - Security risks identified
+    - Required security controls
+    - Recommendations
+
+    Status: APPROVED | CONDITIONAL | NEEDS_WORK
+
+    Save to: .aiwg/working/architecture-evolution/reviews/security-review.md
+    """
+)
+
+# Test Architect Review
+Task(
+    subagent_type="test-architect",
+    description="Review testability impact",
+    prompt="""
+    Review proposed architecture changes.
+
+    Assess:
+    - Test strategy updates needed
+    - Test environment changes
+    - Test data migration
+    - Regression test scope
+    - Performance test updates
+
+    Provide recommendations for:
+    - Migration testing approach
+    - Rollback testing
+    - Post-migration validation
+
+    Save to: .aiwg/working/architecture-evolution/reviews/test-review.md
+    """
+)
+
+# Performance Engineer Review (if performance-related)
+Task(
+    subagent_type="performance-engineer",
+    description="Review performance implications",
+    prompt="""
+    Analyze performance impact of architecture changes.
+
+    Review:
+    - Scalability improvements/degradations
+    - Latency impacts
+    - Throughput changes
+    - Resource utilization
+
+    Recommend:
+    - Performance testing requirements
+    - Monitoring updates
+    - Performance baselines
+
+    Save to: .aiwg/working/architecture-evolution/reviews/performance-review.md
+    """
+)
+
+# Legacy Modernizer Review (if modernizing legacy)
+Task(
+    subagent_type="legacy-modernizer",
+    description="Review legacy system migration approach",
+    prompt="""
+    Review migration strategy for legacy components.
+
+    Assess:
+    - Legacy system dependencies
+    - Data migration complexity
+    - Integration point changes
+    - Gradual vs big-bang approach
+
+    Validate migration strategy minimizes risk.
+
+    Save to: .aiwg/working/architecture-evolution/reviews/legacy-review.md
+    """
+)
+```
+
+**Communicate Progress**:
+```
+⏳ Conducting architecture reviews (4 parallel reviewers)...
+  ✓ Security Architect: {status}
+  ✓ Test Architect: {status}
+  ✓ Performance Engineer: {status}
+  ✓ Legacy Modernizer: {status}
+✓ Reviews complete: {X}/4 APPROVED
+```
 
 ### Step 6: Update Architecture Documentation
-**Agents**: Software Architect (lead), Technical Writer
-**Templates Required**:
-- `analysis-design/software-architecture-doc-template.md`
-- `analysis-design/component-diagram-template.md`
 
-**Actions**:
-1. Update Software Architecture Document (SAD)
-2. Update component diagrams (C4 model or equivalent)
-3. Update data flow diagrams
-4. Update deployment architecture
-5. Version and baseline architecture documentation
+**Purpose**: Update SAD and related documentation
 
-**Gate Criteria**:
-- [ ] SAD updated with new architecture state
-- [ ] Component diagrams updated and version controlled
-- [ ] Data flow diagrams updated (if data architecture changed)
-- [ ] Deployment architecture updated (if deployment changed)
-- [ ] Architecture baseline tagged (architecture-v{version})
+**Your Actions**:
 
-## Architecture Evolution Patterns
+1. **Update Software Architecture Document**:
+   ```
+   Task(
+       subagent_type="architecture-documenter",
+       description="Update SAD with architecture changes",
+       prompt="""
+       Update Software Architecture Document based on:
+       - Approved ADR
+       - Review feedback
+
+       Updates needed:
+       1. Component Architecture (if components change)
+       2. Deployment Architecture (if deployment changes)
+       3. Technology Stack (if technologies change)
+       4. Integration Architecture (if integrations change)
+       5. Security Architecture (if security changes)
+       6. Data Architecture (if data model changes)
+       7. Reference new ADR in decisions section
+
+       Maintain version history.
+       Mark sections as "Updated: {date}".
+
+       Save to: .aiwg/architecture/software-architecture-doc.md
+       """
+   )
+   ```
+
+2. **Update Diagrams** (if needed):
+   ```
+   Task(
+       subagent_type="architecture-documenter",
+       description="Update architecture diagrams",
+       prompt="""
+       Based on architecture changes, update:
+
+       1. Component diagrams (C4 Level 2)
+       2. Deployment diagrams
+       3. Data flow diagrams
+       4. Sequence diagrams (if flows change)
+
+       Use PlantUML or Mermaid syntax.
+       Include before/after comparison if helpful.
+
+       Save to: .aiwg/architecture/diagrams/
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Updating architecture documentation...
+  ✓ SAD updated (version {version})
+  ✓ Diagrams updated: {count} diagrams
+✓ Documentation complete
+```
+
+### Step 7: Generate Architecture Evolution Report
+
+**Purpose**: Create comprehensive summary for stakeholders
+
+**Your Actions**:
+
+```
+Task(
+    subagent_type="architecture-documenter",
+    description="Generate Architecture Evolution Report",
+    prompt="""
+    Synthesize all artifacts into executive summary.
+
+    # Architecture Evolution Report
+
+    **Date**: {current-date}
+    **Trigger**: {trigger-event}
+    **Status**: PLANNING | IN_PROGRESS | COMPLETED
+
+    ## Executive Summary
+    Brief description of change and business justification
+
+    ## Architecture Decision
+    - ADR ID: {ADR-number}
+    - Decision: {decision-summary}
+    - Selected Option: {option-name}
+    - Rationale: {brief-rationale}
+
+    ## Impact Analysis
+    - Components Affected: {count} - {list}
+    - Breaking Changes: {count}
+    - Teams Affected: {list}
+
+    ## Migration Plan
+    - Strategy: {migration-pattern}
+    - Timeline: {start} to {end}
+    - Phases: {count}
+    - Rollback Plan: DEFINED
+
+    ## Risk Assessment
+    - Technical Risks: {list with mitigation}
+    - Business Risks: {list with mitigation}
+
+    ## Review Status
+    - Security: {APPROVED/CONDITIONAL}
+    - Testing: {APPROVED/CONDITIONAL}
+    - Performance: {APPROVED/CONDITIONAL}
+
+    ## Next Steps
+    1. Obtain stakeholder approval
+    2. Schedule migration windows
+    3. Execute migration plan
+
+    ## Artifacts Generated
+    - ADR: .aiwg/architecture/adr/ADR-{number}.md
+    - Migration Plan: .aiwg/deployment/migration-plan-{date}.md
+    - Rollback Plan: .aiwg/deployment/rollback-plan-{date}.md
+    - Updated SAD: .aiwg/architecture/software-architecture-doc.md
+
+    Save to: .aiwg/reports/architecture-evolution-{date}.md
+    """
+)
+```
+
+**Present to User**:
+```
+─────────────────────────────────────────────
+Architecture Evolution Complete
+─────────────────────────────────────────────
+
+**Trigger**: {trigger-event}
+**Decision**: {architecture-decision}
+**Migration Strategy**: {strategy}
+
+**Key Changes**:
+- {change-1}
+- {change-2}
+- {change-3}
+
+**Breaking Changes**: {count}
+**Migration Timeline**: {timeline}
+
+**Review Status**:
+✓ Security: APPROVED
+✓ Testing: APPROVED
+✓ Performance: APPROVED
+
+**Artifacts Generated**:
+- ADR-{number}: {title}
+- Migration Plan: {strategy} approach
+- Rollback Plan: Defined with triggers
+- Updated SAD: Version {version}
+
+**Next Steps**:
+1. Review generated artifacts
+2. Schedule stakeholder review meeting
+3. Obtain formal approvals
+4. Schedule migration windows
+5. Execute migration plan
+
+Full report: .aiwg/reports/architecture-evolution-{date}.md
+─────────────────────────────────────────────
+```
+
+## Migration Patterns Reference
 
 ### Strangler Fig Pattern
-**Use Case**: Replace legacy system incrementally
-
-**Strategy**:
-1. Build new functionality alongside legacy system
-2. Redirect traffic incrementally from legacy to new
-3. Monitor and validate each increment
-4. Decommission legacy components as traffic shifts
-
-**Advantages**: Low risk, incremental rollback, business continuity
-**Disadvantages**: Longer timeline, dual system maintenance
-
-### Parallel Run Pattern
-**Use Case**: Validate new architecture without risk
-
-**Strategy**:
-1. Run new architecture in parallel with existing system
-2. Compare outputs for correctness
-3. Gradually shift traffic to new architecture
-4. Decommission old architecture when validated
-
-**Advantages**: Risk mitigation, validation before cutover
-**Disadvantages**: Dual infrastructure cost, data consistency challenges
-
-### Big Bang Migration
-**Use Case**: Simple systems, downtime acceptable
-
-**Strategy**:
-1. Prepare new architecture in full
-2. Schedule maintenance window
-3. Cutover all at once
-4. Rollback if critical issues detected
-
-**Advantages**: Fast, simple, clean cutover
-**Disadvantages**: High risk, downtime required, difficult rollback
-
-### Phased Migration
-**Use Case**: Complex systems with independent components
-
-**Strategy**:
-1. Identify migration phases (e.g., by component or user segment)
-2. Migrate one phase at a time
-3. Validate each phase before next
-4. Rollback phase if issues detected
-
-**Advantages**: Controlled risk, incremental validation
-**Disadvantages**: Complex coordination, longer timeline
+- **Use Case**: Gradual legacy replacement
+- **Advantages**: Low risk, incremental
+- **Disadvantages**: Longer timeline, dual maintenance
 
 ### Blue-Green Deployment
-**Use Case**: Zero-downtime migration with fast rollback
-
-**Strategy**:
-1. Deploy new architecture to "green" environment
-2. Test green environment fully
-3. Switch traffic from "blue" to "green"
-4. Keep blue environment for rollback
-
-**Advantages**: Zero downtime, instant rollback, full testing before cutover
-**Disadvantages**: Dual infrastructure cost, database migration complexity
+- **Use Case**: Zero-downtime with instant rollback
+- **Advantages**: Fast rollback, full testing
+- **Disadvantages**: Double infrastructure cost
 
 ### Canary Deployment
-**Use Case**: Gradual rollout with risk mitigation
-
-**Strategy**:
-1. Deploy new architecture to small subset (5-10% traffic)
-2. Monitor metrics (errors, latency, business KPIs)
-3. Gradually increase traffic if metrics healthy
-4. Rollback if issues detected
-
-**Advantages**: Risk mitigation, early detection of issues
-**Disadvantages**: Complex traffic routing, monitoring overhead
-
-## Breaking Change Management
-
-### API Versioning Strategies
-
-**URL Versioning**: `/api/v1/users` vs `/api/v2/users`
-- Pros: Clear, explicit, easy to route
-- Cons: URL proliferation, duplicate endpoints
-
-**Header Versioning**: `Accept: application/vnd.company.v2+json`
-- Pros: Clean URLs, flexible
-- Cons: Less visible, routing complexity
-
-**Content Negotiation**: `Accept: application/json; version=2`
-- Pros: RESTful, flexible
-- Cons: Complex routing, less discoverable
-
-### Deprecation Process
-
-1. **Announce**: Notify consumers 90 days before deprecation
-2. **Document**: Update API docs with deprecation notice
-3. **Monitor**: Track usage of deprecated endpoints
-4. **Sunset**: Remove deprecated endpoints after grace period
-5. **Support**: Provide migration guide and support
-
-### Backward Compatibility Techniques
-
-**Additive Changes**: Add new fields without removing old fields
-**Default Values**: Provide sensible defaults for new required fields
-**Adapter Pattern**: Create adapters to translate old to new format
-**Feature Flags**: Toggle new behavior without deploying new code
-**Dual Write**: Write to both old and new data stores during migration
-
-## Architecture Decision Record (ADR) Template
-
-```markdown
-# ADR-{YYYY-NNN}: {Decision Title}
-
-**Status**: {PROPOSED | ACCEPTED | REJECTED | DEPRECATED | SUPERSEDED}
-**Date**: {YYYY-MM-DD}
-**Deciders**: {list of people involved in decision}
-**Consulted**: {list of people consulted}
-**Informed**: {list of people informed}
-
-## Context
-
-{Describe the issue or problem that requires this decision. Include constraints, requirements, and business context.}
-
-## Decision Drivers
-
-- {Driver 1 - e.g., performance requirements}
-- {Driver 2 - e.g., cost constraints}
-- {Driver 3 - e.g., team skills}
-
-## Considered Options
-
-### Option 1: {Option Name}
-**Description**: {Brief description}
-**Pros**:
-- {Pro 1}
-- {Pro 2}
-
-**Cons**:
-- {Con 1}
-- {Con 2}
-
-**Cost**: {ROM estimate}
-**Complexity**: {Low | Medium | High}
-**Risk**: {Low | Medium | High}
-
-### Option 2: {Option Name}
-{Same structure as Option 1}
-
-### Option 3: {Option Name}
-{Same structure as Option 1}
-
-## Decision Outcome
-
-**Chosen option**: "{option name}", because {rationale}
-
-### Consequences
-
-**Positive**:
-- {Positive consequence 1}
-- {Positive consequence 2}
-
-**Negative**:
-- {Negative consequence 1}
-- {Mitigation for consequence 1}
-- {Negative consequence 2}
-- {Mitigation for consequence 2}
-
-**Neutral**:
-- {Neutral consequence 1}
-
-### Implementation Plan
-
-1. {Step 1}
-2. {Step 2}
-3. {Step 3}
-
-**Timeline**: {estimate}
-**Owner**: {responsible person/team}
-
-## Validation
-
-**Success Criteria**:
-- {Measurable criterion 1}
-- {Measurable criterion 2}
-
-**Monitoring**:
-- {Metric 1 to monitor}
-- {Metric 2 to monitor}
-
-## Related Decisions
-
-- Supersedes: {ADR-YYYY-NNN}
-- Related to: {ADR-YYYY-NNN}
-- Depends on: {ADR-YYYY-NNN}
-
-## References
-
-- {Link to requirements}
-- {Link to prototypes}
-- {Link to research}
-```
-
-## Output Report
-
-Generate an architecture evolution summary:
-
-```markdown
-# Architecture Evolution: {Trigger Event}
-
-**Project**: {project-name}
-**Date**: {current-date}
-**Trigger**: {trigger-event}
-**Architect**: {architect-name}
-**Status**: {PLANNING | IN_PROGRESS | COMPLETED | ROLLED_BACK}
-
-## Evolution Overview
-
-**Business Justification**: {why this architecture change is needed}
-
-**Scope of Impact**:
-- Components Affected: {count} - {list}
-- Interfaces Affected: {count} - {list}
-- Teams Affected: {count} - {list}
-
-## Architecture Decision
-
-**ADR ID**: {ADR-YYYY-NNN}
-**Decision**: {decision-title}
-**Status**: {PROPOSED | ACCEPTED}
-
-**Alternatives Considered**: {count}
-**Recommended Option**: {option-name}
-**Rationale**: {brief rationale}
-
-## Breaking Changes
-
-**API Breaking Changes**: {count}
-{list breaking changes with impact}
-
-**Data Breaking Changes**: {count}
-{list data contract changes}
-
-**Consumer Impact**:
-- Internal Services: {count affected}
-- External Clients: {count affected}
-
-**Backward Compatibility Strategy**: {strategy}
-
-## Migration Plan
-
-**Strategy**: {migration-pattern}
-**Timeline**: {start-date} to {end-date}
-**Phases**: {count}
-
-**Phase 1**: {phase-name}
-- Duration: {estimate}
-- Scope: {what migrates}
-- Go/No-Go Gate: {criteria}
-
-**Phase 2**: {phase-name}
-{repeat for each phase}
-
-**Rollback Plan**: {summary of rollback triggers and steps}
-
-## Success Criteria
-
-**Performance**:
-- Latency: {target} (current: {baseline})
-- Throughput: {target} (current: {baseline})
-
-**Reliability**:
-- Error Rate: {target} (current: {baseline})
-- Uptime: {target} (current: {baseline})
-
-**Business Metrics**:
-- {KPI 1}: {target}
-- {KPI 2}: {target}
-
-## Documentation Updates
-
-- [ ] Software Architecture Document (SAD) updated
-- [ ] Component diagrams updated
-- [ ] Data flow diagrams updated
-- [ ] Deployment architecture updated
-- [ ] ADR created and linked
-- [ ] Migration runbook created
-- [ ] Rollback runbook created
-
-## Risk Assessment
-
-**Technical Risks**:
-{list risks with mitigation}
-
-**Business Risks**:
-{list risks with mitigation}
-
-**Schedule Risks**:
-{list risks with mitigation}
-
-## Stakeholder Sign-Off
-
-- [ ] Software Architect: {name} - {date}
-- [ ] Product Owner: {name} - {date}
-- [ ] Engineering Manager: {name} - {date}
-- [ ] Security Architect: {name} - {date} (if security impact)
-
-## Next Steps
-
-1. {Step 1}
-2. {Step 2}
-3. {Step 3}
-
-**Next Review Date**: {date}
-```
-
-## Integration with Other Flows
-
-### With Change Control
-- Architecture changes trigger change control process
-- Architecture baseline updated after change approval
-- Change impact analysis references architecture documentation
-
-### With Gate Checks
-- Architecture ADRs reviewed at phase gates
-- Architecture evolution readiness is gate criterion
-- Architecture risks assessed at each gate
-
-### With Testing
-- Architecture changes require updated test strategy
-- Breaking changes require consumer contract testing
-- Migration requires migration testing (data integrity, rollback)
-
-## Common Failure Modes
-
-### Undiscovered Breaking Changes
-**Symptoms**: Production incidents after migration, consumer failures
-
-**Remediation**:
-1. Implement consumer-driven contract testing
-2. Maintain API changelog
-3. Automated breaking change detection in CI/CD
-4. Require consumer signoff before migration
-
-### Inadequate Rollback Plan
-**Symptoms**: Unable to rollback, stuck in broken state
-
-**Remediation**:
-1. Test rollback plan in staging before production
-2. Define rollback triggers clearly
-3. Automate rollback process
-4. Schedule rollback drills
-
-### Architecture Drift
-**Symptoms**: Implementation deviates from documented architecture
-
-**Remediation**:
-1. Implement architecture fitness functions (automated checks)
-2. Regular architecture reviews (quarterly)
-3. Code review checklist includes architecture compliance
-4. Update architecture documentation when deviations occur
-
-### Over-Engineering
-**Symptoms**: Architecture too complex for current needs, premature optimization
-
-**Remediation**:
-1. Apply YAGNI principle (You Aren't Gonna Need It)
-2. Start simple, evolve as needs emerge
-3. Validate assumptions with prototypes
-4. Defer decisions until last responsible moment
-
-## Success Criteria
-
-This command succeeds when:
-- [ ] Architecture evolution trigger assessed and justified
-- [ ] Architecture options analyzed (at least 3)
-- [ ] ADR created and approved by stakeholders
-- [ ] Breaking changes identified and impact assessed
-- [ ] Migration plan created with rollback strategy
-- [ ] Architecture documentation updated and baselined
+- **Use Case**: Gradual rollout with monitoring
+- **Advantages**: Early issue detection
+- **Disadvantages**: Complex routing
+
+### Big Bang Migration
+- **Use Case**: Simple systems, maintenance window available
+- **Advantages**: Fast, clean
+- **Disadvantages**: High risk, downtime required
+
+### Parallel Run
+- **Use Case**: Validation without risk
+- **Advantages**: Safe validation
+- **Disadvantages**: Dual infrastructure, data sync complexity
+
+## Quality Gates
+
+Before marking workflow complete, verify:
+- [ ] Impact assessment documented
+- [ ] At least 3 options evaluated
+- [ ] ADR created and reviewed
+- [ ] Breaking changes identified
+- [ ] Migration plan with rollback strategy
+- [ ] Architecture documentation updated
+- [ ] Review approvals obtained
 
 ## Error Handling
 
-**No ADR Found**:
-- Report: "No ADR found for architecture decision: {decision}"
-- Action: "Create ADR before proceeding with architecture change"
-- Command: "Use architecture-decision-record-template.md"
+**If No Current Architecture Documentation**:
+```
+❌ No Software Architecture Document found
 
-**Breaking Changes Without Migration Plan**:
-- Report: "{count} breaking changes identified without migration plan"
-- Action: "Create migration plan before proceeding"
-- Recommendation: "Use migration-plan-template.md"
+Cannot evolve architecture without baseline.
+Recommendation: Create initial SAD first
+- Run: /project:flow-inception-to-elaboration
+- Or: Document current architecture manually
+```
 
-**Architecture Drift Detected**:
-- Report: "Implementation deviates from documented architecture in {component}"
-- Action: "Update architecture documentation or fix implementation"
-- Recommendation: "Review with Software Architect"
+**If Migration Risk Too High**:
+```
+⚠️ High-risk migration detected
 
-**Rollback Plan Missing**:
-- Report: "No rollback plan found for migration"
-- Action: "Create rollback plan with rollback triggers"
-- Recommendation: "Test rollback in staging before production"
+Critical risks identified:
+- {risk-1}: {description}
+- {risk-2}: {description}
+
+Recommendation:
+- Consider phased approach instead of big bang
+- Add extensive rollback testing
+- Plan for parallel run period
+```
+
+**If Review Conflicts**:
+```
+⚠️ Architecture review conflict
+
+Conflict between reviewers:
+- {Reviewer-1}: {position}
+- {Reviewer-2}: {opposing-position}
+
+Escalating to user for decision...
+Trade-off analysis provided in review documents.
+```
+
+## Success Criteria
+
+This orchestration succeeds when:
+- [ ] Architecture evolution trigger assessed
+- [ ] Multiple options analyzed (≥3)
+- [ ] ADR created and approved
+- [ ] Breaking changes documented
+- [ ] Migration plan created with rollback
+- [ ] Architecture documentation updated
+- [ ] Review approvals obtained
+- [ ] Evolution report generated
+
+## Metrics to Track
+
+- Decision velocity: Time from trigger to ADR approval
+- Option quality: Number of viable options identified
+- Breaking change ratio: Breaking vs non-breaking changes
+- Review consensus: Approval rate across reviewers
+- Migration complexity: Phases and timeline
 
 ## References
 
-- Architecture templates: `analysis-design/software-architecture-doc-template.md`
-- ADR template: `analysis-design/architecture-decision-record-template.md`
-- Migration planning: `deployment/migration-plan-template.md`
-- Impact assessment: `management/impact-assessment-template.md`
-- Evolutionary Architecture book by Ford, Parsons, Kua (external reference)
+**Templates** (via $AIWG_ROOT):
+- ADR: `templates/analysis-design/architecture-decision-record-template.md`
+- Impact Assessment: `templates/management/impact-assessment-template.md`
+- Migration Plan: `templates/deployment/migration-plan-template.md`
+- Rollback Plan: `templates/deployment/rollback-plan-template.md`
+- Option Matrix: `templates/intake/option-matrix-template.md`
+
+**Related Flows**:
+- `/project:flow-inception-to-elaboration` - Initial architecture creation
+- `/project:flow-change-control` - Change approval process
+- `/project:flow-gate-check` - Gate validation
+
+**Architecture Patterns**:
+- Martin Fowler's Strangler Fig Pattern
+- Blue-Green Deployment Pattern
+- Canary Release Pattern

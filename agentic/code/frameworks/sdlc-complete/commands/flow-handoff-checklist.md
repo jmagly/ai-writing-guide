@@ -1,613 +1,882 @@
 ---
-description: Execute handoff checklist validation between SDLC phases and tracks (Discovery→Delivery, Delivery→Ops)
-category: sdlc-management
+description: Orchestrate handoff validation between SDLC phases and tracks (Discovery→Delivery, Delivery→Ops, phase transitions)
+category: sdlc-orchestration
 argument-hint: <from-phase> <to-phase> [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Grep, Glob
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
-# SDLC Handoff Checklist
+# SDLC Handoff Checklist Flow
 
-You are an SDLC Handoff Coordinator specializing in validating phase transitions, ensuring artifact completeness, and facilitating clean handoffs between teams.
+**You are the Core Orchestrator** for validating and executing handoffs between SDLC phases and tracks.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-handoff-checklist <from-phase> <to-phase> [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Identify** applicable handoff checklist for the transition
-2. **Validate** all required artifacts are complete and approved
-3. **Check** Definition of Ready (DoR) or Definition of Done (DoD) compliance
-4. **Generate** handoff package with signoff status
+When the user requests this flow (via natural language or explicit command):
+
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
+
+## Natural Language Triggers
+
+Users may say:
+- "Check handoff readiness to Delivery"
+- "Validate handoff from Discovery"
+- "Verify handoff readiness for Operations"
+- "Review handoff checklist"
+- "Check if we're ready for phase transition"
+- "Validate Definition of Ready"
+- "Run operational readiness review"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor handoff validation priorities
+
+**Examples**:
+```
+--guidance "Focus on security compliance, SOC2 audit next month"
+--guidance "Quick validation, team is waiting to start"
+--guidance "Pay special attention to test coverage and documentation"
+--guidance "First handoff, need detailed validation"
+```
+
+**How to Apply**:
+- Parse guidance for keywords: security, documentation, testing, compliance, speed
+- Adjust validation depth (comprehensive vs. essential checks)
+- Modify agent assignments (add specialized validators)
+- Influence priority ordering (critical checks first)
+
+### --interactive Parameter
+
+**Purpose**: You ask 5-7 strategic questions to understand handoff context
+
+**Questions to Ask** (if --interactive):
+
+```
+I'll ask 7 strategic questions to tailor the handoff validation:
+
+Q1: Is this your first handoff of this type?
+    (Helps me determine validation thoroughness needed)
+
+Q2: What's your biggest concern about this handoff?
+    (e.g., incomplete requirements, missing tests, documentation gaps)
+
+Q3: How urgent is this handoff?
+    (Influences whether to do comprehensive or essential checks)
+
+Q4: Are there any known gaps you're already aware of?
+    (Helps focus validation on unknown issues)
+
+Q5: Who are the key stakeholders who need to sign off?
+    (Determines which reviewers to engage)
+
+Q6: Are there any special compliance or regulatory requirements?
+    (e.g., HIPAA, SOC2, PCI-DSS affects validation criteria)
+
+Q7: What's your fallback plan if handoff is blocked?
+    (Helps prepare contingency recommendations)
+
+Based on your answers, I'll adjust:
+- Validation depth (comprehensive vs. streamlined)
+- Agent assignments (add specialized reviewers)
+- Priority ordering (critical items first)
+- Remediation recommendations
+```
+
+**Synthesize Guidance**: Combine answers into structured guidance for execution
 
 ## Supported Handoffs
 
 ### Phase Transitions
-- `inception elaboration` - Lifecycle Objective Milestone handoff
-- `elaboration construction` - Lifecycle Architecture Milestone handoff
-- `construction transition` - Operational Capability Milestone handoff
-- `transition operations` - Product Release Milestone handoff
+- **inception → elaboration**: Lifecycle Objective Milestone handoff
+- **elaboration → construction**: Lifecycle Architecture Milestone handoff
+- **construction → transition**: Operational Capability Milestone handoff
+- **transition → operations**: Product Release Milestone handoff
 
 ### Track Handoffs
-- `discovery delivery` - Discovery → Delivery (Definition of Ready)
-- `delivery operations` - Delivery → Operations (Operational Readiness Review)
-- `delivery discovery` - Delivery feedback to Discovery (rework/clarification)
+- **discovery → delivery**: Definition of Ready (DoR) validation
+- **delivery → operations**: Operational Readiness Review (ORR)
+- **delivery → discovery**: Feedback loop for rework/clarification
 
 ### Special Handoffs
-- `intake inception` - Project Intake → Inception kickoff
-- `concept inception` - Concept → Inception flow start
+- **intake → inception**: Project Intake to Inception kickoff
+- **concept → inception**: Concept to Inception flow start
 
-## Handoff Checklists
+## Multi-Agent Orchestration Workflow
 
-### Discovery → Delivery Handoff (Definition of Ready)
+### Step 1: Identify and Load Handoff Checklist
 
-**Purpose**: Ensure backlog items are ready for implementation
+**Purpose**: Determine which handoff checklist applies and load criteria
 
-**Required Artifacts per Backlog Item**:
-```bash
-# Requirements
-ls requirements/use-case-brief-{ID}.md
-ls test/acceptance-test-card-{ID}.md
+**Your Actions**:
 
-# Design (if applicable)
-ls analysis-design/data-contract-card-{ID}.md
-ls analysis-design/interface-card-{ID}.md
+1. **Parse Handoff Type**:
+   ```
+   Determine from user input:
+   - From phase/track
+   - To phase/track
+   - Type: Phase transition, Track handoff, or Special
+   ```
 
-# Risk Management
-ls management/risk-card-{ID}.md  # if high-risk item
-ls analysis-design/spike-card-{ID}.md  # if spike conducted
+2. **Load Checklist Criteria**:
+   ```
+   Based on handoff type, identify:
+   - Required artifacts
+   - Validation criteria
+   - Signoff requirements
+   - Pass threshold
+   ```
+
+3. **Initialize Validation Workspace**:
+   ```
+   Create workspace structure:
+   .aiwg/working/handoff/
+   ├── artifacts/      # Artifact validation results
+   ├── checklist/      # Checklist item validation
+   ├── signoffs/       # Signoff status tracking
+   └── report/         # Final handoff report
+   ```
+
+**Communicate Progress**:
+```
+✓ Handoff identified: {from-phase} → {to-phase}
+✓ Checklist loaded: {checklist-name}
+⏳ Starting validation...
 ```
 
-**Checklist**:
+### Step 2: Validate Required Artifacts
 
-#### Requirements Complete
-- [ ] Use-case brief authored
-  - File exists and is not empty
-  - All sections filled (Purpose, Actors, Preconditions, Main Flow, Alternative Flows, Postconditions)
-  - Stakeholder validation obtained
-  - Requirements Reviewer approval
+**Purpose**: Check presence and completeness of required artifacts
 
-- [ ] Acceptance criteria defined
-  - Acceptance test card created
-  - Criteria are testable (Given/When/Then format)
-  - Success scenarios documented
-  - Edge cases identified
-  - Product Owner approval
+**Your Actions**:
 
-- [ ] Pre-conditions and post-conditions documented
-  - System state before use case execution
-  - System state after use case completion
-  - Data state changes specified
+1. **For Discovery → Delivery (Definition of Ready)**:
+   ```
+   Task(
+       subagent_type="requirements-analyst",
+       description="Validate Definition of Ready artifacts",
+       prompt="""
+       Check for required artifacts per backlog item:
 
-- [ ] Happy path and alternative flows identified
-  - Main success scenario documented
-  - At least 2 alternative flows documented
-  - Error handling flows specified
+       Requirements:
+       - requirements/use-case-brief-{ID}.md
+       - test/acceptance-test-card-{ID}.md
 
-#### Design Complete
-- [ ] Data contracts defined (if new entities)
-  - Data structure schemas created
-  - Field types and constraints specified
-  - Validation rules documented
-  - Backward compatibility validated
+       Design (if applicable):
+       - analysis-design/data-contract-card-{ID}.md
+       - analysis-design/interface-card-{ID}.md
 
-- [ ] Interface specifications complete (if API changes)
-  - API endpoints documented (method, path, parameters)
-  - Request/response schemas defined
-  - Error response codes specified
-  - Authentication/authorization requirements
+       Risk Management:
+       - management/risk-card-{ID}.md (if high-risk)
+       - analysis-design/spike-card-{ID}.md (if spike conducted)
 
-- [ ] Integration points identified
-  - External system dependencies listed
-  - Data exchange formats specified
-  - Integration test scenarios outlined
+       For each artifact:
+       1. Check existence (file present)
+       2. Validate completeness (all sections filled)
+       3. Check approval status (stakeholder signoff)
+       4. Verify currency (last updated within sprint)
 
-- [ ] Backward compatibility validated
-  - Breaking changes identified
-  - Migration plan documented (if breaking changes)
-  - Deprecation notices prepared
+       Output validation report:
+       .aiwg/working/handoff/artifacts/dor-artifacts-validation.md
+       """
+   )
+   ```
 
-#### Risks Addressed
-- [ ] High-risk assumptions validated
-  - All High/Critical risks identified
-  - Spikes/POCs conducted for high-risk items
-  - Findings documented in spike cards
-  - Go/no-go decisions recorded
+2. **For Delivery → Operations (Operational Readiness)**:
+   ```
+   Task(
+       subagent_type="documentation-archivist",
+       description="Validate Operational Readiness artifacts",
+       prompt="""
+       Check for required deployment artifacts:
 
-- [ ] Technical risks documented
-  - Risk list updated with new risks
-  - Likelihood and impact assessed
-  - Mitigation plans created for High risks
-  - Acceptance criteria adjusted if needed
+       Deployment:
+       - deployment/deployment-plan-template.md
+       - deployment/release-notes-template.md
+       - deployment/runbook-*.md
 
-- [ ] Dependencies identified and resolved
-  - External dependencies documented
-  - Dependency owners identified
-  - Resolution timeline confirmed
-  - Fallback plans created for blocked dependencies
+       Testing:
+       - test/test-evaluation-summary-template.md
+       - test/acceptance-test-results-*.md
 
-- [ ] No blocking risks without mitigation
-  - All Show Stopper risks have mitigation plans
-  - Critical dependencies confirmed available
-  - No unvalidated assumptions remain
+       Operations:
+       - deployment/operational-readiness-review-template.md
+       - support/support-plan-template.md
+       - training/user-guide-template.md
 
-#### Traceability Established
-- [ ] Stakeholder request → use-case brief linkage
-  - Original stakeholder request ID referenced
-  - Business value restated
-  - Priority confirmed
+       For each artifact:
+       1. Verify existence and completeness
+       2. Check version currency (matches release)
+       3. Validate technical accuracy
+       4. Confirm operational procedures documented
 
-- [ ] Use-case brief → acceptance criteria linkage
-  - Acceptance criteria cover all use-case flows
-  - Each criterion references specific use-case section
-  - Coverage validated (no gaps)
+       Output validation report:
+       .aiwg/working/handoff/artifacts/orr-artifacts-validation.md
+       """
+   )
+   ```
 
-- [ ] Acceptance criteria → test card linkage
-  - Each acceptance criterion has corresponding test case
-  - Test cases are executable
-  - Test data specified
+3. **For Phase Transitions**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Validate phase transition artifacts",
+       prompt="""
+       Based on transition {from-phase} → {to-phase}:
 
-- [ ] Design artifacts linked to requirements
-  - Data contracts reference use cases
-  - Interface cards reference acceptance criteria
-  - ADRs reference requirements
+       For inception → elaboration:
+       - intake/project-intake-template.md
+       - requirements/vision-*.md
+       - management/business-case-*.md
+       - management/risk-list.md
+       - security/data-classification-template.md
 
-#### Stakeholder Approval
-- [ ] Product Owner approval obtained
-  - Signoff documented in use-case brief
-  - Priority confirmed
-  - Business value validated
+       For elaboration → construction:
+       - analysis-design/software-architecture-doc-template.md
+       - requirements/supplemental-specification-template.md
+       - test/master-test-plan-template.md
+       - management/development-case-template.md
 
-- [ ] Stakeholder validation complete
-  - Key stakeholders reviewed use case
-  - Feedback incorporated
-  - No outstanding concerns
+       Validate each artifact:
+       1. Present and complete
+       2. Reviewed and approved
+       3. Baselined (version tagged)
 
-- [ ] Priority confirmed
-  - Priority aligns with product roadmap
-  - Sequencing validated (dependencies considered)
-  - Business urgency confirmed
+       Output validation report:
+       .aiwg/working/handoff/artifacts/phase-artifacts-validation.md
+       """
+   )
+   ```
 
-- [ ] Business value validated
-  - ROI or value metric confirmed
-  - Success metrics defined
-  - Acceptance threshold set
-
-**Pass Criteria**: 100% of checklist items must be met
-
-**Signoff Required**:
-- [ ] Requirements Reviewer
-- [ ] Product Owner
-- [ ] Project Manager
-
-### Delivery → Operations Handoff (Operational Readiness Review)
-
-**Purpose**: Ensure product is ready for production deployment and operational support
-
-**Required Artifacts**:
-```bash
-# Deployment
-ls deployment/deployment-plan-template.md
-ls deployment/release-notes-template.md
-ls deployment/runbook-*.md
-
-# Testing
-ls test/test-evaluation-summary-template.md
-ls test/acceptance-test-results-*.md
-
-# Operations
-ls deployment/operational-readiness-review-template.md
-ls support/support-plan-template.md
-ls training/user-guide-template.md
+**Communicate Progress**:
+```
+⏳ Validating artifacts...
+✓ Required artifacts: {found}/{required}
+✓ Artifact completeness: {percentage}%
 ```
 
-**Checklist**:
+### Step 3: Execute Checklist Validation (Multi-Agent)
 
-#### Code Completeness
-- [ ] All planned features implemented
-  - Iteration plan work items 100% complete
-  - No critical features deferred
-  - Scope aligned with release goals
+**Purpose**: Validate all checklist items using specialized agents
 
-- [ ] Code peer-reviewed and approved
-  - All pull requests reviewed by ≥1 peer
-  - Code review comments addressed
-  - No outstanding review concerns
+**Your Actions**:
 
-- [ ] Code merged to main branch
-  - All feature branches merged
-  - No merge conflicts
-  - Main branch builds successfully
+1. **Launch Parallel Checklist Validators**:
 
-- [ ] No compiler warnings or linter errors
-  - Static analysis passing
-  - Linter checks passing
-  - Code quality metrics met
+   ```
+   # For Discovery → Delivery (DoR)
 
-- [ ] Technical debt documented
-  - Any introduced technical debt documented
-  - Repayment plan created
-  - Impact assessed
+   # Requirements Validator
+   Task(
+       subagent_type="requirements-analyst",
+       description="Validate requirements completeness",
+       prompt="""
+       Check Definition of Ready requirements criteria:
 
-#### Test Completeness
-- [ ] Unit test coverage ≥ 80% (or per project standard)
-  - Coverage report generated
-  - Coverage threshold met
-  - Critical paths 100% covered
+       - [ ] Use-case brief authored
+       - [ ] Acceptance criteria defined
+       - [ ] Pre-conditions and post-conditions documented
+       - [ ] Happy path and alternative flows identified
 
-- [ ] Integration tests passing 100%
-  - All integration tests executed
-  - No failing tests
-  - Test results documented
+       For each item:
+       - Status: PASS | FAIL
+       - Evidence: File path or reference
+       - Issues: Description if failed
 
-- [ ] Acceptance tests passing
-  - User acceptance testing complete
-  - Stakeholder validation obtained
-  - Edge cases tested
+       Output: .aiwg/working/handoff/checklist/requirements-validation.md
+       """
+   )
 
-- [ ] Regression tests passing
-  - Full regression suite executed
-  - No regressions introduced
-  - Performance validated
+   # Design Validator
+   Task(
+       subagent_type="architecture-designer",
+       description="Validate design completeness",
+       prompt="""
+       Check Definition of Ready design criteria:
 
-- [ ] Performance tests passing
-  - Load tests executed
-  - SLO targets met
-  - Performance baseline established
+       - [ ] Data contracts defined (if new entities)
+       - [ ] Interface specifications complete (if API changes)
+       - [ ] Integration points identified
+       - [ ] Backward compatibility validated
 
-- [ ] Security scans passing
-  - SAST/DAST scans clean
-  - No High/Critical vulnerabilities
-  - Security Gatekeeper signoff
+       For each item:
+       - Status: PASS | FAIL
+       - Evidence: Documentation reference
+       - Issues: Gaps identified
 
-#### Quality Gate Validation
-- [ ] **Security Gate**: SAST/DAST scans clean
-  - No Critical vulnerabilities
-  - No High vulnerabilities (or accepted risk)
-  - Dependency vulnerabilities addressed
-  - Security Gatekeeper signoff obtained
+       Output: .aiwg/working/handoff/checklist/design-validation.md
+       """
+   )
 
-- [ ] **Reliability Gate**: SLIs within targets
-  - Response time SLO met
-  - Throughput SLO met
-  - Error rate SLO met
-  - Reliability Engineer signoff obtained
+   # Risk Validator
+   Task(
+       subagent_type="project-manager",
+       description="Validate risk management",
+       prompt="""
+       Check Definition of Ready risk criteria:
 
-- [ ] **Documentation Gate**: Complete and current
-  - Release notes updated
-  - Runbooks complete
-  - API documentation current
-  - User guides complete
+       - [ ] High-risk assumptions validated
+       - [ ] Technical risks documented
+       - [ ] Dependencies identified and resolved
+       - [ ] No blocking risks without mitigation
 
-- [ ] **Traceability Gate**: Requirements → code → tests verified
-  - Traceability matrix current
-  - 100% bidirectional traceability
-  - No orphaned code or tests
+       For each item:
+       - Status: PASS | FAIL
+       - Evidence: Risk cards, spike results
+       - Issues: Unmitigated risks
 
-#### Deployment Readiness
-- [ ] Deployed to dev environment successfully
-  - Dev deployment verified
-  - Smoke tests passed
-  - Configuration validated
+       Output: .aiwg/working/handoff/checklist/risk-validation.md
+       """
+   )
+   ```
 
-- [ ] Deployed to test/staging environment successfully
-  - Staging deployment verified
-  - Integration tests passed
-  - User acceptance testing complete
+2. **For Delivery → Operations (ORR)**:
 
-- [ ] Feature flags configured (if applicable)
-  - Feature flags documented
-  - Toggle mechanisms tested
-  - Rollback strategy validated
+   ```
+   # Code Completeness
+   Task(
+       subagent_type="software-implementer",
+       description="Validate code completeness",
+       prompt="""
+       Check code completeness criteria:
 
-- [ ] Configuration changes documented
-  - Environment variables documented
-  - Configuration files updated
-  - Secrets management validated
+       - [ ] All planned features implemented
+       - [ ] Code peer-reviewed and approved
+       - [ ] Code merged to main branch
+       - [ ] No compiler warnings or linter errors
+       - [ ] Technical debt documented
 
-#### Documentation Complete
-- [ ] Release notes complete
-  - User-facing changes documented
-  - Breaking changes highlighted
-  - Migration guide provided (if needed)
+       Validate against:
+       - Pull request history
+       - Code review comments
+       - Build logs
+       - Static analysis reports
 
-- [ ] Runbooks updated
-  - Operational procedures documented
-  - Troubleshooting guide updated
-  - Escalation procedures defined
+       Output: .aiwg/working/handoff/checklist/code-validation.md
+       """
+   )
 
-- [ ] API documentation current
-  - OpenAPI/Swagger specs updated
-  - Example requests/responses provided
-  - Authentication documented
+   # Test Completeness
+   Task(
+       subagent_type="test-engineer",
+       description="Validate test completeness",
+       prompt="""
+       Check test completeness criteria:
 
-- [ ] User guides complete
-  - User documentation updated
-  - Screenshots/videos current
-  - FAQs updated
+       - [ ] Unit test coverage ≥ 80%
+       - [ ] Integration tests passing 100%
+       - [ ] Acceptance tests passing
+       - [ ] Regression tests passing
+       - [ ] Performance tests passing
+       - [ ] Security scans passing
 
-#### Operational Readiness
-- [ ] Monitoring and alerting configured
-  - Application metrics instrumented
-  - Alerts configured for SLO breaches
-  - Dashboards created
+       Validate against:
+       - Coverage reports
+       - Test execution results
+       - Performance benchmarks
+       - Security scan reports
 
-- [ ] Logging configured
-  - Structured logging implemented
-  - Log aggregation configured
-  - Log retention policies set
+       Output: .aiwg/working/handoff/checklist/test-validation.md
+       """
+   )
 
-- [ ] Backup and recovery tested
-  - Backup procedures documented
-  - Recovery tested successfully
-  - RTO/RPO targets met
+   # Quality Gates
+   Task(
+       subagent_type="security-gatekeeper",
+       description="Validate quality gates",
+       prompt="""
+       Check quality gate criteria:
 
-- [ ] Rollback plan tested
-  - Rollback procedure documented
-  - Rollback tested in staging
-  - Rollback triggers defined
+       Security Gate:
+       - [ ] SAST/DAST scans clean
+       - [ ] No Critical/High vulnerabilities
 
-#### Support Readiness
-- [ ] Support plan in place
-  - On-call schedule created
-  - Escalation path defined
-  - Support contacts documented
+       Reliability Gate:
+       - [ ] SLIs within targets
+       - [ ] Performance SLOs met
 
-- [ ] Operations team trained
-  - Runbook walkthrough complete
-  - Troubleshooting scenarios practiced
-  - Access and permissions validated
+       Documentation Gate:
+       - [ ] Release notes updated
+       - [ ] Runbooks complete
 
-- [ ] Support team trained
-  - User guide reviewed
-  - Common issues documented
-  - Support scripts prepared
+       Traceability Gate:
+       - [ ] Requirements → code → tests verified
 
-**Pass Criteria**: 100% of checklist items must be met
+       Output: .aiwg/working/handoff/checklist/gates-validation.md
+       """
+   )
 
-**Signoff Required**:
-- [ ] Deployment Manager
-- [ ] Reliability Engineer
-- [ ] Security Gatekeeper
-- [ ] Operations Lead
-- [ ] Support Lead
+   # Operational Readiness
+   Task(
+       subagent_type="operations-manager",
+       description="Validate operational readiness",
+       prompt="""
+       Check operational readiness criteria:
 
-### Inception → Elaboration Handoff
+       Deployment:
+       - [ ] Deployed to dev/test/staging successfully
+       - [ ] Feature flags configured
+       - [ ] Configuration changes documented
 
-**Purpose**: Transition from vision validation to architecture baselining
+       Operations:
+       - [ ] Monitoring and alerting configured
+       - [ ] Logging configured
+       - [ ] Backup and recovery tested
+       - [ ] Rollback plan tested
 
-**Required Artifacts**:
-```bash
-ls intake/project-intake-template.md
-ls requirements/vision-*.md
-ls management/business-case-*.md
-ls management/risk-list.md
-ls security/data-classification-template.md
-ls analysis-design/software-architecture-doc-template.md
+       Support:
+       - [ ] Support plan in place
+       - [ ] Operations team trained
+       - [ ] Support team trained
+
+       Output: .aiwg/working/handoff/checklist/operations-validation.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Running checklist validation (parallel agents)...
+✓ Requirements validation: PASS
+✓ Design validation: PASS
+✓ Risk validation: CONDITIONAL
+✓ Code validation: PASS
+✓ Test validation: PASS
+✓ Gates validation: PASS
+✓ Operations validation: CONDITIONAL
 ```
 
-**Checklist**:
+### Step 4: Obtain Signoffs
 
-#### Artifacts Baselined
-- [ ] Vision document approved
-- [ ] Business case approved
-- [ ] Risk list baselined
-- [ ] Data classification complete
-- [ ] Architecture scan documented
+**Purpose**: Track and obtain required signoffs from stakeholders
 
-#### Handoff Package
-- [ ] All artifacts tagged in version control
-  ```bash
-  git tag inception-baseline-{YYYY-MM-DD}
-  ```
-- [ ] Handoff meeting scheduled (within 1 week)
-- [ ] Elaboration team assigned
-- [ ] Context transfer document created
+**Your Actions**:
 
-**Signoff Required**:
-- [ ] Vision Owner
-- [ ] Executive Sponsor
-- [ ] Project Manager
+1. **Identify Required Signoffs**:
+   ```
+   Based on handoff type, determine required signoffs:
 
-### Elaboration → Construction Handoff
+   Discovery → Delivery:
+   - Requirements Reviewer
+   - Product Owner
+   - Project Manager
 
-**Purpose**: Transition from architecture baselining to iterative development
+   Delivery → Operations:
+   - Deployment Manager
+   - Reliability Engineer
+   - Security Gatekeeper
+   - Operations Lead
+   - Support Lead
 
-**Required Artifacts**:
-```bash
-ls analysis-design/software-architecture-doc-template.md
-ls requirements/supplemental-specification-template.md
-ls test/master-test-plan-template.md
-ls management/development-case-template.md
-ls deployment/deployment-plan-template.md
+   Phase Transitions:
+   - Executive Sponsor
+   - Architecture Owner
+   - Project Manager
+   ```
+
+2. **Generate Signoff Requests**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Generate signoff tracking",
+       prompt="""
+       Create signoff tracking for {handoff-type}:
+
+       Required Signoffs:
+       - {Role}: Status [OBTAINED | PENDING | DECLINED]
+         - Request Date: {date}
+         - Response Date: {date if obtained}
+         - Comments: {feedback}
+
+       For pending signoffs:
+       - Generate request summary
+       - List items requiring attention
+       - Provide checklist status
+
+       Output: .aiwg/working/handoff/signoffs/signoff-tracking.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Tracking signoffs...
+✓ Signoffs obtained: {obtained}/{required}
+⚠️ Pending: {list of pending signoffs}
 ```
 
-**Checklist**:
+### Step 5: Synthesize Handoff Report
 
-#### Artifacts Baselined
-- [ ] Architecture baselined (ADRs complete)
-- [ ] All architecturally significant use cases implemented
-- [ ] Supplemental requirements complete
-- [ ] Master Test Plan approved
-- [ ] Development case tailored
+**Purpose**: Generate comprehensive handoff validation report
 
-#### Handoff Package
-- [ ] Artifacts tagged: `elaboration-baseline-{date}`
-- [ ] Construction team assigned
-- [ ] First iteration planned
-- [ ] CI/CD pipeline operational
+**Your Actions**:
 
-**Signoff Required**:
-- [ ] Architecture Designer
-- [ ] Test Architect
-- [ ] Project Manager
+```
+Task(
+    subagent_type="documentation-synthesizer",
+    description="Generate handoff validation report",
+    prompt="""
+    Read all validation results:
+    - .aiwg/working/handoff/artifacts/*.md
+    - .aiwg/working/handoff/checklist/*.md
+    - .aiwg/working/handoff/signoffs/*.md
 
-### Construction → Transition Handoff
+    Generate Handoff Validation Report:
 
-**Purpose**: Transition from development to deployment and operations
+    # Handoff Validation Report
 
-**Required Artifacts**:
-```bash
-# All from Delivery → Operations handoff
-ls deployment/operational-readiness-review-template.md
+    **Handoff**: {from-phase} → {to-phase}
+    **Project**: {project-name}
+    **Date**: {current-date}
+
+    ## Overall Status
+
+    **Readiness**: {READY | PARTIAL | BLOCKED}
+    **Checklist Compliance**: {percentage}% ({passed}/{total} items)
+    **Signoff Status**: {percentage}% ({obtained}/{required})
+
+    **Handoff Decision**: {APPROVED | CONDITIONAL | REJECTED}
+
+    ## Artifact Validation
+
+    ### Required Artifacts ({passed}/{total})
+    {for each required artifact}
+    - [ ] {artifact-name}
+      - Status: {PRESENT | MISSING | INCOMPLETE}
+      - Location: {file-path}
+      - Completeness: {percentage}%
+      - Issues: {list problems}
+
+    ## Checklist Results
+
+    ### {Category} ({passed}/{total})
+    {for each checklist item}
+    - [ ] {criterion-description}
+      - Status: {PASS | FAIL}
+      - Evidence: {file-path or reference}
+      - Issues: {description if failed}
+
+    ## Signoff Status
+
+    **Required Signoffs** ({obtained}/{required}):
+    - [ ] {Role}: {OBTAINED | PENDING | DECLINED}
+      - Comments: {feedback}
+
+    ## Handoff Decision
+
+    **Decision**: {APPROVED | CONDITIONAL | REJECTED}
+
+    **Rationale**:
+    {detailed reasoning based on validation results}
+
+    **Conditions** (if CONDITIONAL):
+    1. {condition that must be met}
+    2. {condition that must be met}
+
+    **Blockers** (if REJECTED):
+    1. {critical issue blocking handoff}
+    2. {critical issue blocking handoff}
+
+    ## Gaps and Remediation
+
+    ### Critical Gaps (Must Fix)
+    {list critical missing items}
+
+    **Remediation Actions**:
+    1. {action} - Owner: {role} - Due: {date}
+    2. {action} - Owner: {role} - Due: {date}
+
+    ### Non-Critical Gaps (Can Defer)
+    {list minor missing items}
+
+    **Deferral Plan**:
+    {how these will be addressed post-handoff}
+
+    ## Next Steps
+
+    **If APPROVED**:
+    - [ ] Schedule {to-phase} kickoff
+    - [ ] Transfer artifacts
+    - [ ] Assign {to-phase} team
+
+    **If CONDITIONAL**:
+    - [ ] Complete conditions
+    - [ ] Re-validate within {timeframe}
+
+    **If REJECTED**:
+    - [ ] Address critical gaps
+    - [ ] Re-run validation
+    - [ ] Target date: {date}
+
+    ## Recommendations
+
+    {process improvements}
+    {risk mitigations}
+    {communication adjustments}
+
+    Save to: .aiwg/handoffs/handoff-report-{from}-to-{to}-{date}.md
+    """
+)
 ```
 
-**Checklist**: Same as Delivery → Operations handoff (ORR)
-
-**Signoff Required**:
-- [ ] All signoffs from ORR checklist
-
-## Output Report
-
-Generate a handoff validation report:
-
-```markdown
-# Handoff Validation Report
-
-**Handoff**: {from-phase} → {to-phase}
-**Project**: {project-name}
-**Date**: {current-date}
-
-## Overall Status
-
-**Readiness**: {READY | PARTIAL | BLOCKED}
-**Checklist Compliance**: {percentage}% ({passed}/{total} items)
-**Signoff Status**: {percentage}% ({obtained}/{required})
-
-**Handoff Decision**: {APPROVED | CONDITIONAL | REJECTED}
-
-## Artifact Validation
-
-### Required Artifacts ({passed}/{total})
-{for each required artifact}
-- [ ] {artifact-name}
-  - Status: {PRESENT | MISSING | INCOMPLETE}
-  - Location: {file-path}
-  - Completeness: {percentage}%
-  - Last Updated: {date}
-  - Issues: {list problems}
-
-## Checklist Results
-
-### {Category} ({passed}/{total})
-{for each checklist item}
-- [ ] {criterion-description}
-  - Status: {PASS | FAIL}
-  - Evidence: {file-path or reference}
-  - Issues: {description if failed}
-
-## Signoff Status
-
-**Required Signoffs** ({obtained}/{required}):
-- [ ] {Role}: {OBTAINED | PENDING | DECLINED}
-  - Signoff Date: {date}
-  - Comments: {feedback}
-- [ ] {Role}: {OBTAINED | PENDING | DECLINED}
-  - Reason Pending: {explanation}
-
-## Handoff Decision
-
-**Decision**: {APPROVED | CONDITIONAL | REJECTED}
-
-**Rationale**:
-{detailed reasoning}
-
-**Conditions** (if CONDITIONAL):
-{list conditions that must be met}
-
-**Blockers** (if REJECTED):
-{list critical issues blocking handoff}
-
-## Gaps and Remediation
-
-### Critical Gaps (Must Fix)
-{list critical missing items}
-
-**Remediation Actions**:
-1. {action} - Owner: {role} - Due: {date}
-2. {action} - Owner: {role} - Due: {date}
-
-### Non-Critical Gaps (Can Defer)
-{list minor missing items}
-
-**Deferral Plan**:
-{how these will be addressed post-handoff}
-
-## Handoff Package
-
-**Artifacts Included**:
-{list all artifacts in handoff package}
-
-**Version Control Tag**:
-```bash
-git tag {phase}-baseline-{YYYY-MM-DD}
-git push --tags
+**Communicate Progress**:
+```
+⏳ Generating handoff report...
+✓ Handoff report complete: .aiwg/handoffs/handoff-report-{from}-to-{to}.md
 ```
 
-**Handoff Meeting**:
-- Date: {scheduled-date}
-- Attendees: {list roles/people}
-- Agenda: {handoff topics}
+### Step 6: Execute Handoff Package Creation
 
-## Next Steps
+**Purpose**: Create handoff package with all artifacts and context
 
-**If APPROVED**:
-- [ ] Schedule {to-phase} kickoff: {date}
-- [ ] Assign {to-phase} team
-- [ ] Transfer context documents
-- [ ] Schedule follow-up check-in
+**Your Actions**:
 
-**If CONDITIONAL**:
-- [ ] Complete conditions: {list}
-- [ ] Re-validate within: {timeframe}
-- [ ] Escalate if blockers persist
+1. **For APPROVED Handoffs**:
+   ```
+   Task(
+       subagent_type="documentation-archivist",
+       description="Create handoff package",
+       prompt="""
+       Create handoff package for {from-phase} → {to-phase}:
 
-**If REJECTED**:
-- [ ] Address critical gaps
-- [ ] Re-run handoff checklist
-- [ ] Target re-check date: {date}
+       1. Tag artifacts in version control:
+          git tag {phase}-handoff-{YYYY-MM-DD}
 
-## Recommendations
+       2. Create handoff package:
+          .aiwg/handoffs/{from}-to-{to}/
+          ├── artifacts/      # Copy of all artifacts
+          ├── context/        # Context transfer docs
+          ├── report.md       # Handoff report
+          └── README.md       # Package overview
 
-{process improvement suggestions}
-{risk mitigation recommendations}
-{communication plan adjustments}
+       3. Generate context transfer document:
+          - Key decisions made
+          - Outstanding risks
+          - Technical debt
+          - Lessons learned
+          - Team recommendations
+
+       4. Schedule handoff meeting:
+          - Date: Within 1 week
+          - Attendees: From and To teams
+          - Agenda: Context transfer
+
+       Output: .aiwg/handoffs/{from}-to-{to}/README.md
+       """
+   )
+   ```
+
+2. **For CONDITIONAL Handoffs**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Create conditional handoff plan",
+       prompt="""
+       Create action plan for conditional handoff:
+
+       1. List conditions to be met:
+          - {condition 1} - Owner - Due date
+          - {condition 2} - Owner - Due date
+
+       2. Create tracking mechanism:
+          - TodoWrite entries for each condition
+          - Daily check-ins scheduled
+
+       3. Set re-validation date:
+          - Target: {date}
+          - Validator: {role}
+
+       4. Define escalation path:
+          - If conditions not met by {date}
+          - Escalate to: {executive}
+
+       Output: .aiwg/handoffs/conditional-plan-{from}-to-{to}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Handoff package created: .aiwg/handoffs/{from}-to-{to}/
+✓ Version tagged: {phase}-handoff-{date}
+✓ Handoff meeting scheduled: {date}
 ```
 
-## Success Criteria
+## Quality Gates
 
-This command succeeds when:
-- [ ] Handoff checklist identified for transition
+Before marking workflow complete, verify:
 - [ ] All required artifacts validated
-- [ ] Checklist compliance calculated
-- [ ] Signoff status determined
+- [ ] Checklist items assessed (100% coverage)
+- [ ] Signoff status tracked
 - [ ] Handoff decision clear (APPROVED/CONDITIONAL/REJECTED)
 - [ ] Remediation plan provided for gaps
+- [ ] Handoff package created (if approved)
+- [ ] Next steps documented
+
+## User Communication
+
+**At start**: Confirm understanding and handoff type
+
+```
+Understood. I'll validate the {from-phase} → {to-phase} handoff.
+
+This will check:
+- Required artifacts presence and completeness
+- Checklist criteria compliance
+- Signoff status from stakeholders
+- Overall handoff readiness
+
+I'll coordinate multiple specialized agents for validation.
+Expected duration: 10-15 minutes.
+
+Starting handoff validation...
+```
+
+**During**: Update progress with clear indicators
+
+```
+✓ = Complete/Pass
+⏳ = In progress
+❌ = Failed/Missing
+⚠️ = Warning/Conditional
+```
+
+**At end**: Summary report with decision and next steps
+
+```
+─────────────────────────────────────────────
+Handoff Validation Complete
+─────────────────────────────────────────────
+
+**Handoff**: Discovery → Delivery
+**Decision**: APPROVED
+
+**Summary**:
+✓ Artifacts: 12/12 complete
+✓ Checklist: 95% compliant (19/20 items)
+✓ Signoffs: 3/3 obtained
+
+**Minor Gaps** (non-blocking):
+- Performance test scenarios need enhancement
+  → Can be addressed during sprint
+
+**Next Steps**:
+1. Review handoff report: .aiwg/handoffs/handoff-report-discovery-to-delivery.md
+2. Handoff meeting scheduled: Tuesday 10am
+3. Delivery team can begin sprint planning
+
+**Artifacts Transferred**:
+- 5 use case briefs
+- 5 acceptance test cards
+- 3 interface specifications
+- 2 spike results
+
+Ready to proceed with Delivery phase.
+─────────────────────────────────────────────
+```
 
 ## Error Handling
 
 **Unknown Handoff**:
-- Report: "Unknown handoff: {from-phase} → {to-phase}"
-- Action: "Supported handoffs: inception→elaboration, elaboration→construction, construction→transition, transition→operations, discovery→delivery, delivery→operations"
-- Suggestion: "Check phase names for typos"
+```
+❌ Unknown handoff: {from-phase} → {to-phase}
 
-**Missing Artifacts**:
-- Report: "Required artifact missing: {artifact-name}"
-- Action: "Create {artifact-name} using template: {template-path}"
-- Impact: "Handoff cannot be approved until artifact complete"
+Supported handoffs:
+- Phase: inception→elaboration, elaboration→construction, construction→transition
+- Track: discovery→delivery, delivery→operations
+- Special: intake→inception, concept→inception
 
-**Failed Signoff**:
-- Report: "Signoff declined by {role}: {reason}"
-- Action: "Address concerns raised by {role}"
-- Escalation: "Contact Project Manager if disagreement persists"
+Please specify a valid handoff type.
+```
 
-**Incomplete Checklist**:
-- Report: "Checklist compliance {percentage}% (target: 100%)"
-- Action: "Complete missing items: {list}"
-- Impact: "Handoff may be delayed"
+**Missing Critical Artifacts**:
+```
+❌ Critical artifacts missing - handoff BLOCKED
+
+Missing:
+- {artifact-1}: Required for {reason}
+- {artifact-2}: Required for {reason}
+
+These must be completed before handoff.
+Recommended actions:
+1. Complete {artifact-1} using template
+2. Obtain stakeholder approval
+3. Re-run handoff validation
+
+Impact: Cannot proceed to {to-phase} until resolved.
+```
+
+**Failed Checklist Items**:
+```
+⚠️ Checklist compliance: {percentage}% (target: 100%)
+
+Failed items:
+- {item-1}: {reason for failure}
+- {item-2}: {reason for failure}
+
+Recommendation: Address failed items or obtain exception approval
+```
+
+**Declined Signoff**:
+```
+❌ Signoff declined by {role}
+
+Reason: {feedback from role}
+
+Actions required:
+1. Address concerns raised
+2. Update artifacts as needed
+3. Request re-review
+
+Escalation: Contact Project Manager if disagreement persists
+```
+
+## Success Criteria
+
+This orchestration succeeds when:
+- [ ] Handoff type identified and validated
+- [ ] All required artifacts checked for presence
+- [ ] Artifact completeness assessed
+- [ ] Checklist items validated (100% coverage)
+- [ ] Signoff status determined
+- [ ] Handoff decision clear (APPROVED/CONDITIONAL/REJECTED)
+- [ ] Remediation plan provided for any gaps
+- [ ] Handoff report generated
+- [ ] Next steps documented
+
+## Metrics to Track
+
+**During orchestration, track**:
+- Artifact completeness: % of required artifacts present and complete
+- Checklist compliance: % of checklist items passing
+- Signoff rate: % of required signoffs obtained
+- Gap severity: Critical vs. non-critical gaps identified
+- Remediation effort: Estimated hours to close gaps
+- Handoff cycle time: Days from request to approval
 
 ## References
 
-- Handoff checklist templates: `flows/handoff-checklist-template.md`
+**Templates** (via $AIWG_ROOT):
+- Handoff checklists: `flows/handoff-checklist-template.md`
 - Gate criteria: `flows/gate-criteria-by-phase.md`
 - ORR template: `deployment/operational-readiness-review-template.md`
-- Traceability validation: `commands/check-traceability.md`
+
+**Related Commands**:
+- Traceability: `commands/check-traceability.md`
+- Gate checks: `commands/flow-gate-check.md`
+- Phase transitions: `commands/flow-inception-to-elaboration.md`
+
+**Handoff Patterns**:
+- Definition of Ready: `docs/definition-of-ready-pattern.md`
+- Operational Readiness: `docs/operational-readiness-pattern.md`

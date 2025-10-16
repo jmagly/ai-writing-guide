@@ -1,716 +1,947 @@
 ---
-description: Execute Team Onboarding flow with pre-boarding, training, buddy assignment, and 30/60/90 day check-ins
-category: sdlc-management
+description: Orchestrate Team Onboarding flow with pre-boarding, training, buddy assignment, and 30/60/90 day check-ins
+category: sdlc-orchestration
 argument-hint: <team-member-name> [role] [start-date] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Glob, Grep, TodoWrite
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Team Onboarding Flow
 
-You are a Team Onboarding Coordinator specializing in integrating new team members into projects with structured ramp-up, knowledge transfer, and milestone check-ins.
+**You are the Core Orchestrator** for team member onboarding, ensuring systematic integration with proper knowledge transfer and milestone-based progression.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-team-onboarding <team-member-name> [role] [start-date]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Prepare** pre-boarding checklist (access, equipment, documentation)
-2. **Create** personalized onboarding plan with training schedule
-3. **Assign** buddy and establish pairing cadence
-4. **Schedule** 30/60/90 day check-ins with success criteria
-5. **Track** onboarding progress and knowledge acquisition
+When the user requests this flow (via natural language or explicit command):
 
-## Phase Overview
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and track progress
+6. **Report completion** with onboarding status
 
-The Team Onboarding flow ensures new team members are productive, integrated, and supported through structured ramp-up with clear milestones and 
+## Onboarding Process Overview
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Purpose**: Systematically integrate new team members with structured ramp-up, knowledge transfer, and milestone-based validation
 
-**Parse Command Line**:
+**Duration**: 90 days (30/60/90 day milestones)
 
-Extract optional `--guidance` and `--interactive` parameters.
+**Success Criteria**:
+- Pre-boarding checklist 100% complete by start date
+- Buddy assigned with pairing cadence established
+- 30/60/90 day milestones achieved on schedule
+- Full productivity reached by day 90
+- Onboarding feedback collected for process improvement
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
+## Natural Language Triggers
 
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+Users may say:
+- "Onboard [name] as [role]"
+- "Add team member [name]"
+- "New team member [name] starting [date]"
+- "Onboard new developer"
+- "Add [name] to the team"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor onboarding focus
+
+**Examples**:
+```
+--guidance "Technical architect role, focus on security and infrastructure"
+--guidance "Junior developer, needs extra mentorship and pairing"
+--guidance "Remote team member in different timezone, coordinate async"
+--guidance "Fast-track onboarding for urgent project needs"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for role specifics (seniority, domain focus)
+- Adjust buddy assignment (match expertise areas)
+- Modify training intensity (junior vs senior needs)
+- Adapt communication approach (remote vs local)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 6 strategic questions to understand onboarding needs
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 6 strategic questions to tailor this onboarding flow:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What are your top priorities for this new team member?
+    (e.g., specific skills, project ownership, team collaboration)
 
-**Resolve AIWG installation**:
+Q2: What are your biggest constraints for onboarding?
+    (e.g., timeline, buddy availability, remote coordination)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: What risks concern you most for this onboarding?
+    (e.g., skill gaps, team fit, ramp-up speed)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: What's your team's experience level with onboarding?
+    (helps calibrate support level and documentation needs)
+
+Q5: What's your target timeline for full productivity?
+    (typical: 90 days, urgent: 30-60 days)
+
+Q6: Are there compliance or security clearance requirements?
+    (e.g., background checks, training certifications)
+
+Based on your answers, I'll adjust:
+- Buddy selection and pairing intensity
+- Training schedule and focus areas
+- Milestone targets and check-in frequency
+- Documentation and access requirements
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Team Onboarding - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **Pre-Boarding Checklist**: System access, equipment, documentation → `.aiwg/team/onboarding/{name}/pre-boarding-checklist.md`
+- **Onboarding Plan**: Personalized 90-day plan → `.aiwg/team/onboarding/{name}/onboarding-plan.md`
+- **Buddy Assignment**: Buddy responsibilities and schedule → `.aiwg/team/onboarding/{name}/buddy-assignment.md`
+- **Starter Tasks**: Sequenced tasks with acceptance criteria → `.aiwg/team/onboarding/{name}/starter-tasks.md`
+- **30-Day Check-In Report**: Milestone review → `.aiwg/team/onboarding/{name}/30-day-checkin.md`
+- **60-Day Check-In Report**: Performance assessment → `.aiwg/team/onboarding/{name}/60-day-checkin.md`
+- **90-Day Check-In Report**: Full integration validation → `.aiwg/team/onboarding/{name}/90-day-checkin.md`
+- **Onboarding Status Report**: Current progress tracker → `.aiwg/reports/onboarding-status-{name}.md`
 
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
+**Supporting Artifacts**:
+- Training schedule and materials
+- Knowledge transfer documentation
+- Feedback collection forms
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-feedback loops.
-
-## Workflow Steps
+## Multi-Agent Orchestration Workflow
 
 ### Step 1: Pre-Boarding Preparation
-**Agents**: Project Manager (lead), Operations Liaison
-**Templates Required**:
-- `management/team-roster-template.md`
-- `management/onboarding-checklist.md`
 
-**Actions**:
-1. Validate start date and role assignment
-2. Request system access (repository, CI/CD, monitoring, etc.)
-3. Order equipment (laptop, monitors, peripherals)
-4. Schedule first-day logistics (office access, parking, introductions)
-5. Prepare workspace and documentation access
+**Purpose**: Ensure all systems, equipment, and documentation ready before start date
 
-**Gate Criteria**:
-- [ ] All system access requests submitted (5 business days before start)
-- [ ] Equipment ordered and delivered (3 business days before start)
-- [ ] Workspace prepared with credentials document
-- [ ] Welcome email sent with first-day agenda
+**Your Actions**:
 
-**Pre-Boarding Checklist**:
-```markdown
-## System Access
-- [ ] Git repository access (read/write)
-- [ ] CI/CD pipeline access
-- [ ] Issue tracker account
-- [ ] Monitoring/logging tools
-- [ ] Communication channels (Slack, email lists)
-- [ ] VPN credentials
-- [ ] SSO/MFA setup
+1. **Initialize Onboarding Workspace**:
+   ```
+   Create directory structure:
+   .aiwg/team/onboarding/{name}/
+   ├── pre-boarding/
+   ├── training/
+   ├── check-ins/
+   └── feedback/
+   ```
 
-## Equipment
-- [ ] Laptop provisioned with OS and dev tools
-- [ ] Monitor(s) and peripherals
-- [ ] Keyboard, mouse, headset
-- [ ] Mobile device (if required)
-- [ ] Security badge/access card
+2. **Launch Pre-Boarding Agents** (parallel):
+   ```
+   # Agent 1: HR Coordinator
+   Task(
+       subagent_type="human-resources-coordinator",
+       description="Prepare pre-boarding checklist and paperwork",
+       prompt="""
+       Create pre-boarding checklist for new team member:
+       - Name: {name}
+       - Role: {role}
+       - Start Date: {start-date}
 
-## Documentation
-- [ ] Project README and CLAUDE.md
-- [ ] Architecture documentation
-- [ ] Runbooks and incident response procedures
-- [ ] Team conventions (coding standards, PR process)
-- [ ] Emergency contacts and escalation paths
+       Document requirements:
+       1. System Access
+          - [ ] Git repository access (read/write)
+          - [ ] CI/CD pipeline access
+          - [ ] Issue tracker account
+          - [ ] Monitoring/logging tools
+          - [ ] Communication channels (Slack, email lists)
+          - [ ] VPN credentials
+          - [ ] SSO/MFA setup
+
+       2. Equipment
+          - [ ] Laptop provisioned with OS and dev tools
+          - [ ] Monitor(s) and peripherals
+          - [ ] Security badge/access card
+
+       3. Documentation
+          - [ ] Project README and CLAUDE.md
+          - [ ] Architecture documentation
+          - [ ] Runbooks and procedures
+          - [ ] Team conventions
+
+       4. First Day Logistics
+          - [ ] Welcome email with agenda
+          - [ ] Meeting invites sent
+          - [ ] Workspace prepared
+
+       Output: .aiwg/team/onboarding/{name}/pre-boarding-checklist.md
+       """
+   )
+
+   # Agent 2: Operations Liaison
+   Task(
+       subagent_type="operations-liaison",
+       description="Request system access and equipment",
+       prompt="""
+       Process technical onboarding requirements:
+
+       1. Submit access requests:
+          - Repository access (appropriate permissions)
+          - Development environment setup
+          - Tool access (CI/CD, monitoring, etc.)
+          - Security clearances if needed
+
+       2. Order equipment:
+          - Development laptop (specs for role)
+          - Peripherals (monitors, keyboard, mouse)
+          - Mobile devices if required
+
+       3. Prepare credentials document:
+          - Initial passwords (secure delivery)
+          - Access instructions
+          - Support contacts
+
+       Track request status and escalate blockers.
+
+       Output: .aiwg/team/onboarding/{name}/access-requests.md
+       """
+   )
+   ```
+
+3. **Validate Pre-Boarding Readiness**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Validate pre-boarding completion",
+       prompt="""
+       Review pre-boarding status:
+       - Read checklist: .aiwg/team/onboarding/{name}/pre-boarding-checklist.md
+       - Read access status: .aiwg/team/onboarding/{name}/access-requests.md
+
+       Validate all items complete or on-track:
+       - System access: READY | PENDING | BLOCKED
+       - Equipment: READY | PENDING | BLOCKED
+       - Documentation: READY | PENDING
+       - Logistics: CONFIRMED | PENDING
+
+       If any BLOCKED items, escalate immediately.
+       Target: 100% complete 2 business days before start.
+
+       Generate readiness report with status and any risks.
+
+       Output: .aiwg/team/onboarding/{name}/pre-boarding-status.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Pre-boarding initialized for {name}
+⏳ Preparing access and equipment...
+  ✓ System access requests submitted
+  ✓ Equipment ordered (delivery by {date})
+  ✓ Documentation prepared
+✓ Pre-boarding 95% complete (awaiting VPN setup)
 ```
 
-### Step 2: Onboarding Plan and Training Schedule
-**Agents**: Project Manager (lead), Technical Lead
-**Templates Required**:
-- `management/onboarding-plan-template.md`
-- `knowledge/training-schedule-card.md`
+### Step 2: Create Personalized Onboarding Plan
 
-**Actions**:
-1. Create personalized onboarding plan based on role and experience
-2. Identify knowledge gaps and required training
-3. Schedule training sessions (internal and external)
-4. Assign starter tasks with clear acceptance criteria
-5. Set 30/60/90 day goals
+**Purpose**: Develop role-specific 90-day plan with clear milestones
 
-**Gate Criteria**:
-- [ ] Onboarding plan approved by Project Manager and Technical Lead
-- [ ] Training schedule created with specific dates/times
-- [ ] Starter tasks identified (3-5 tasks for first 30 days)
-- [ ] 30/60/90 day goals documented and shared
+**Your Actions**:
 
-**Onboarding Plan Structure**:
-```markdown
-## Week 1: Orientation and Environment Setup
-**Focus**: Get comfortable with tools, codebase, and team
+1. **Analyze Role and Context**:
+   ```
+   Read available context:
+   - Project intake: .aiwg/intake/project-intake.md
+   - Team roster: .aiwg/team/team-roster.md
+   - Architecture: .aiwg/architecture/software-architecture-doc.md
+   ```
 
-**Activities**:
-- Day 1: Welcome, team introductions, tool setup
-- Day 2-3: Codebase walkthrough, architecture overview
-- Day 4-5: Complete first starter task (documentation fix or simple bug)
+2. **Launch Planning Agents** (parallel):
+   ```
+   # Agent 1: Training Coordinator
+   Task(
+       subagent_type="training-coordinator",
+       description="Create training schedule for {role}",
+       prompt="""
+       Design training plan for new {role}:
 
-**Training**:
-- Git workflow and PR process (2 hours)
-- CI/CD pipeline overview (1 hour)
-- Monitoring and logging tools (1 hour)
+       Week 1: Orientation and Environment
+       - Company/team culture and values
+       - Development environment setup
+       - Git workflow and PR process
+       - CI/CD pipeline overview
+       - Basic codebase walkthrough
 
-**Success Criteria**:
-- [ ] Development environment fully functional
-- [ ] First PR submitted and merged
-- [ ] Attended all team meetings
+       Week 2-4: Technical Ramp-Up
+       - Architecture deep dive
+       - Domain knowledge transfer
+       - Coding standards and patterns
+       - Testing strategies
+       - Security best practices
 
-## Week 2-4: Ramp-Up and Starter Tasks
-**Focus**: Build confidence with low-risk, high-learning tasks
+       Month 2: Applied Learning
+       - Pair programming sessions
+       - Code review participation
+       - Feature development with support
+       - Production support shadowing
 
-**Activities**:
-- Complete 3-5 starter tasks (bugs, small features, tests)
-- Shadow buddy on production support rotation
-- Participate in code reviews as observer
+       Month 3: Independent Contribution
+       - Solo feature ownership
+       - On-call rotation (if applicable)
+       - Process improvement contributions
 
-**Training**:
-- Domain-specific training (as needed)
-- Security and compliance overview (if applicable)
-- On-call procedures and incident response (observational)
+       Include specific courses, documentation, and hands-on exercises.
 
-**Success Criteria**:
-- [ ] 3-5 starter tasks completed and deployed
-- [ ] Participated in at least 5 code reviews
-- [ ] Shadowed on-call rotation (if applicable)
+       Output: .aiwg/team/onboarding/{name}/training-schedule.md
+       """
+   )
 
-## Month 2: Increased Autonomy
-**Focus**: Take ownership of features with buddy support
+   # Agent 2: Technical Lead
+   Task(
+       subagent_type="technical-lead",
+       description="Identify starter tasks and progression",
+       prompt="""
+       Create starter task sequence for {role}:
 
-**Activities**:
-- Own 1-2 medium complexity features
-- Lead code reviews for own PRs
-- Participate in design discussions
+       Selection criteria:
+       - Self-contained (minimal dependencies)
+       - Low risk (not critical path)
+       - Good learning opportunity
+       - Clear acceptance criteria
+       - Progressive complexity
 
-**Success Criteria**:
-- [ ] Delivered 1-2 features end-to-end
-- [ ] Led design discussion for at least 1 feature
-- [ ] Provided code review feedback to peers
+       Week 1-2 Tasks (Low Complexity):
+       - Documentation improvements
+       - Unit test additions
+       - Bug fixes (minor)
+       - Code refactoring (small scope)
 
-## Month 3: Full Integration
-**Focus**: Operate as fully ramped team member
+       Week 3-4 Tasks (Medium Complexity):
+       - Small feature implementation
+       - Integration test creation
+       - Performance optimization (isolated)
+       - API endpoint addition
 
-**Activities**:
-- Full workload capacity (no "ramp-up" discount)
-- Participate in on-call rotation (if applicable)
-- Mentor new team members (if opportunity arises)
+       Month 2+ Tasks (Increasing Complexity):
+       - Cross-component features
+       - System design participation
+       - Architecture improvements
+       - Production issue resolution
 
-**Success Criteria**:
-- [ ] Velocity matches team average
-- [ ] Independently resolves production issues
-- [ ] Contributes to team retrospectives and planning
+       For each task provide:
+       - Task ID and title
+       - Description and context
+       - Acceptance criteria
+       - Estimated effort
+       - Learning objectives
+
+       Output: .aiwg/team/onboarding/{name}/starter-tasks.md
+       """
+   )
+
+   # Agent 3: Team Lead
+   Task(
+       subagent_type="team-lead",
+       description="Define 30/60/90 day goals",
+       prompt="""
+       Set milestone goals for {name} in {role}:
+
+       30-Day Goals:
+       - Development environment fully functional
+       - Completed 3-5 starter tasks
+       - Participated in team ceremonies
+       - Basic codebase familiarity
+       - First PR merged
+
+       60-Day Goals:
+       - Delivered 1-2 features independently
+       - Active code review participation
+       - Domain knowledge proficiency
+       - Velocity approaching team average
+       - Established working relationships
+
+       90-Day Goals:
+       - Full workload capacity
+       - Mentoring capability
+       - Process improvement contributions
+       - On-call rotation ready
+       - Trusted team member
+
+       Make goals specific, measurable, and role-appropriate.
+
+       Output: .aiwg/team/onboarding/{name}/milestone-goals.md
+       """
+   )
+   ```
+
+3. **Synthesize Onboarding Plan**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Create comprehensive onboarding plan",
+       prompt="""
+       Synthesize onboarding components:
+       - Training schedule: .aiwg/team/onboarding/{name}/training-schedule.md
+       - Starter tasks: .aiwg/team/onboarding/{name}/starter-tasks.md
+       - Milestone goals: .aiwg/team/onboarding/{name}/milestone-goals.md
+
+       Create unified 90-day onboarding plan:
+
+       1. Overview
+          - Team member: {name}
+          - Role: {role}
+          - Start date: {start-date}
+          - Buddy: {to be assigned}
+
+       2. Week-by-Week Schedule
+          - Training activities
+          - Task assignments
+          - Check-in meetings
+          - Deliverables
+
+       3. Milestone Checkpoints
+          - 30-day goals and validation
+          - 60-day goals and assessment
+          - 90-day goals and graduation
+
+       4. Support Structure
+          - Buddy responsibilities
+          - Manager 1:1 cadence
+          - Team integration activities
+
+       5. Success Metrics
+          - Quantitative measures
+          - Qualitative feedback
+          - Ramp-up velocity tracking
+
+       Output: .aiwg/team/onboarding/{name}/onboarding-plan.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Creating personalized onboarding plan...
+  ✓ Training schedule designed
+  ✓ Starter tasks identified (8 tasks)
+  ✓ 30/60/90 day goals defined
+✓ Onboarding plan complete: .aiwg/team/onboarding/{name}/onboarding-plan.md
 ```
 
-### Step 3: Buddy Assignment and Pairing Cadence
-**Agents**: Technical Lead (lead)
-**Templates Required**:
-- `management/buddy-assignment-card.md`
+### Step 3: Buddy Assignment and Pairing Setup
 
-**Actions**:
-1. Assign buddy based on domain expertise and availability
-2. Establish pairing cadence (daily for week 1, then 2-3x/week)
-3. Define buddy responsibilities (code review priority, Q&A availability)
-4. Schedule weekly buddy check-ins for first month
+**Purpose**: Match appropriate buddy and establish support structure
 
-**Gate Criteria**:
-- [ ] Buddy assigned and notified (before start date)
-- [ ] Buddy has 20% capacity reserved for onboarding support
-- [ ] Pairing cadence scheduled in shared calendar
-- [ ] Buddy responsibilities documented and acknowledged
+**Your Actions**:
 
-**Buddy Responsibilities**:
-```markdown
-## Buddy Role
-**Duration**: First 90 days (intensive first 30 days)
-**Time Commitment**: 20% capacity (week 1-4), 10% capacity (week 5-12)
+1. **Select and Assign Buddy**:
+   ```
+   Task(
+       subagent_type="team-lead",
+       description="Assign buddy for {name}",
+       prompt="""
+       Select appropriate buddy based on:
+       - Domain expertise match
+       - Availability (20% capacity first month)
+       - Mentoring experience
+       - Personality fit
+       - Timezone alignment (if remote)
 
-### Week 1-4: Intensive Support
-- [ ] Daily pairing session (1-2 hours)
-- [ ] Priority code review for all PRs
-- [ ] Be available for questions (Slack, etc.)
-- [ ] Weekly 1:1 check-in (30 minutes)
+       Document buddy assignment:
 
-### Week 5-12: Ongoing Support
-- [ ] Pairing 2-3x per week (as needed)
-- [ ] Code review with detailed feedback
-- [ ] Monthly check-in on progress
+       1. Buddy Selection
+          - Selected: {buddy-name}
+          - Rationale: {why this person}
+          - Backup buddy: {alternate if needed}
 
-### Responsibilities
-- Answer questions about codebase, architecture, team practices
-- Review code with educational feedback (not just approval)
-- Introduce new member to cross-functional partners
-- Escalate concerns to Project Manager if ramp-up not on track
-- Celebrate wins and provide positive reinforcement
+       2. Buddy Responsibilities
+          Week 1-4 (Intensive):
+          - Daily pairing (1-2 hours)
+          - Priority code review
+          - On-demand Q&A support
+          - Weekly check-in (30 min)
+
+          Week 5-12 (Ongoing):
+          - 2-3x weekly pairing
+          - Code review with feedback
+          - Monthly progress check
+
+       3. Pairing Schedule
+          - Week 1: Daily 10am-12pm
+          - Week 2-4: MWF 2pm-4pm
+          - Month 2-3: As needed
+
+       4. Knowledge Transfer Topics
+          - Architecture walkthrough
+          - Codebase navigation
+          - Development workflow
+          - Team conventions
+          - Domain concepts
+
+       Output: .aiwg/team/onboarding/{name}/buddy-assignment.md
+       """
+   )
+   ```
+
+2. **Notify Buddy and Set Expectations**:
+   ```
+   Task(
+       subagent_type="human-resources-coordinator",
+       description="Communicate buddy assignment",
+       prompt="""
+       Create buddy notification and prep materials:
+
+       1. Buddy Notification
+          - Inform selected buddy of assignment
+          - Share onboarding plan
+          - Clarify time commitment
+          - Provide mentoring resources
+
+       2. Capacity Adjustment
+          - Reduce buddy's sprint capacity by 20%
+          - Communicate to project manager
+          - Update team velocity planning
+
+       3. Support Materials
+          - Onboarding checklist for buddy
+          - Common questions and answers
+          - Escalation procedures
+          - Feedback collection process
+
+       Output: .aiwg/team/onboarding/{name}/buddy-prep.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Buddy assigned: {buddy-name}
+✓ Pairing schedule established
+✓ Capacity adjustments made
 ```
 
-### Step 4: Starter Tasks and Progressive Complexity
-**Agents**: Component Owner (lead), Buddy
-**Templates Required**:
-- `management/work-package-card.md`
+### Step 4: Execute Onboarding with Progress Tracking
 
-**Actions**:
-1. Identify starter tasks labeled "good-first-issue" or "onboarding"
-2. Sequence tasks from low to high complexity
-3. Ensure tasks span different parts of codebase
-4. Provide clear acceptance criteria and success metrics
+**Purpose**: Monitor daily/weekly progress and address issues proactively
 
-**Gate Criteria**:
-- [ ] 3-5 starter tasks identified and labeled
-- [ ] Tasks sequenced by complexity (easy → medium)
-- [ ] Acceptance criteria documented for each task
-- [ ] Buddy assigned as code reviewer for all starter tasks
+**Your Actions**:
 
-**Starter Task Characteristics**:
-```markdown
-## Good Starter Task Criteria
-- Self-contained (minimal cross-component dependencies)
-- Low risk (not customer-facing critical path)
-- Clear acceptance criteria
-- Good learning opportunity (touches key patterns)
-- Completable in 1-3 days
-- Has automated tests
+1. **Week 1 Execution**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Monitor Week 1 onboarding progress",
+       prompt="""
+       Track Week 1 activities for {name}:
 
-## Example Starter Tasks by Complexity
+       Daily Checklist:
+       Day 1:
+       - [ ] Welcome and introductions
+       - [ ] Equipment setup complete
+       - [ ] Account access verified
+       - [ ] First buddy session
 
-### Week 1-2: Low Complexity
-- Fix typo in documentation
-- Add unit test for existing function
-- Update logging statements
-- Refactor variable names for clarity
+       Day 2-3:
+       - [ ] Development environment setup
+       - [ ] Codebase walkthrough
+       - [ ] First documentation task assigned
 
-### Week 3-4: Medium Complexity
-- Implement small feature with tests
-- Fix bug with root cause analysis
-- Add new API endpoint with validation
-- Improve error handling in module
+       Day 4-5:
+       - [ ] First PR submitted
+       - [ ] Team meeting participation
+       - [ ] Week 1 feedback collected
 
-### Month 2: Increasing Complexity
-- Design and implement cross-component feature
-- Optimize performance bottleneck
-- Lead refactoring effort
-- Propose and implement architectural improvement
+       Document any blockers or concerns.
+       Escalate access issues immediately.
+
+       Output: .aiwg/team/onboarding/{name}/week-1-status.md
+       """
+   )
+   ```
+
+2. **Ongoing Progress Monitoring** (weekly):
+   ```
+   Task(
+       subagent_type="team-lead",
+       description="Weekly onboarding progress check",
+       prompt="""
+       Assess weekly progress for {name}:
+
+       Review:
+       - Task completion rate
+       - Training attendance
+       - Buddy session feedback
+       - Team integration observations
+
+       Metrics:
+       - Tasks completed: X/Y
+       - PRs submitted: count
+       - Code review participation: count
+       - Training modules completed: X/Y
+
+       Identify:
+       - Strengths observed
+       - Areas needing support
+       - Pace adjustment needs
+       - Additional resources required
+
+       Output: .aiwg/team/onboarding/{name}/week-{N}-status.md
+       """
+   )
+   ```
+
+### Step 5: Conduct 30/60/90 Day Check-Ins
+
+**Purpose**: Formal milestone reviews with feedback and adjustments
+
+**Your Actions**:
+
+1. **30-Day Check-In**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Conduct 30-day check-in for {name}",
+       prompt="""
+       Facilitate 30-day milestone review:
+
+       Attendees: {name}, Manager, Buddy, Technical Lead
+
+       Agenda:
+       1. Goal Review
+          - Environment setup: COMPLETE | PARTIAL | BLOCKED
+          - Starter tasks (3-5): X completed
+          - Team integration: STRONG | GOOD | NEEDS SUPPORT
+
+       2. Feedback Discussion
+          - What's going well?
+          - What challenges exist?
+          - What support is needed?
+
+       3. Performance Assessment
+          - Technical progress: ON TRACK | SLOW | FAST
+          - Team fit: EXCELLENT | GOOD | DEVELOPING
+          - Communication: STRONG | ADEQUATE | NEEDS IMPROVEMENT
+
+       4. Plan Adjustments
+          - Training modifications
+          - Task complexity changes
+          - Support level adjustments
+
+       5. Next 30 Days
+          - Confirm goals
+          - Address concerns
+          - Set expectations
+
+       Output: .aiwg/team/onboarding/{name}/30-day-checkin.md
+       """
+   )
+   ```
+
+2. **60-Day Check-In**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Conduct 60-day check-in for {name}",
+       prompt="""
+       Facilitate 60-day milestone review:
+
+       Focus: Increasing autonomy and contribution
+
+       Assessment Areas:
+       1. Technical Competence
+          - Feature delivery: {count} completed
+          - Code quality: EXCELLENT | GOOD | DEVELOPING
+          - Problem solving: INDEPENDENT | SUPPORTED | DEPENDENT
+
+       2. Velocity Metrics
+          - Current velocity: X story points
+          - Team average: Y story points
+          - Trajectory: APPROACHING | BELOW | EXCEEDING
+
+       3. Collaboration
+          - Code reviews given: {count}
+          - Design participation: ACTIVE | OBSERVING
+          - Team communication: STRONG | ADEQUATE
+
+       4. Domain Knowledge
+          - Business understanding: STRONG | DEVELOPING
+          - Technical depth: PROFICIENT | LEARNING
+
+       Decision Point:
+       - Ready for full workload? YES | NOT YET
+       - Buddy support reduction? YES | MAINTAIN
+
+       Output: .aiwg/team/onboarding/{name}/60-day-checkin.md
+       """
+   )
+   ```
+
+3. **90-Day Check-In (Graduation)**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Conduct 90-day graduation review for {name}",
+       prompt="""
+       Facilitate 90-day final review:
+
+       Graduation Criteria:
+       - [ ] Operating at full capacity
+       - [ ] Independently delivering features
+       - [ ] Actively contributing to team
+       - [ ] Ready for on-call (if applicable)
+
+       Final Assessment:
+       1. Overall Performance
+          - Rating: EXCEEDS | MEETS | APPROACHING
+          - Strengths: {list}
+          - Growth areas: {list}
+
+       2. Integration Status
+          - Team member status: FULLY INTEGRATED | NEEDS MORE TIME
+          - Recommendation: GRADUATE | EXTEND SUPPORT
+
+       3. Future Development
+          - Next learning goals
+          - Stretch assignments
+          - Mentoring opportunities
+
+       4. Process Feedback
+          - What worked well in onboarding?
+          - What could improve?
+          - Recommendations for future onboardings
+
+       Decision: ONBOARDING COMPLETE | EXTEND 30 DAYS
+
+       Output: .aiwg/team/onboarding/{name}/90-day-checkin.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ 30-day check-in complete: ON TRACK
+✓ 60-day check-in complete: APPROACHING TARGET
+✓ 90-day check-in complete: GRADUATED
 ```
 
-### Step 5: 30/60/90 Day Check-Ins
-**Agents**: Project Manager (lead), Technical Lead
-**Templates Required**:
-- `management/onboarding-milestone-checklist.md`
+### Step 6: Generate Final Onboarding Report
 
-**Actions**:
-1. Schedule 30/60/90 day check-in meetings
-2. Review milestone completion and feedback
-3. Adjust onboarding plan if needed
-4. Collect feedback on onboarding process
-5. Celebrate successes and address concerns
+**Purpose**: Summarize complete onboarding journey and capture lessons learned
 
-**Gate Criteria**:
-- [ ] 30 day check-in completed with documented feedback
-- [ ] 60 day check-in completed with performance assessment
-- [ ] 90 day check-in completed with full integration confirmation
-- [ ] Onboarding feedback collected and shared with team
+**Your Actions**:
 
-**Check-In Agendas**:
+```
+Task(
+    subagent_type="project-manager",
+    description="Generate comprehensive onboarding report",
+    prompt="""
+    Create final onboarding summary for {name}:
 
-#### 30 Day Check-In
-```markdown
-## 30 Day Milestone Check-In
+    Read all artifacts:
+    - Onboarding plan: .aiwg/team/onboarding/{name}/onboarding-plan.md
+    - Check-ins: .aiwg/team/onboarding/{name}/*-checkin.md
+    - Weekly status: .aiwg/team/onboarding/{name}/week-*-status.md
 
-**Date**: {date}
-**Attendees**: New Member, Project Manager, Technical Lead, Buddy
+    Generate report:
 
-### Review Checklist
-- [ ] Development environment fully functional
-- [ ] 3-5 starter tasks completed
-- [ ] Participated in code reviews
-- [ ] Attended all team ceremonies
-- [ ] Comfortable with team communication channels
+    # Team Onboarding Report
 
-### Discussion Topics
-1. What has gone well so far?
-2. What challenges have you faced?
-3. What additional training or support would help?
-4. Are you clear on 60-day goals?
+    **Team Member**: {name}
+    **Role**: {role}
+    **Start Date**: {start-date}
+    **Graduation Date**: {90-day-date}
+    **Status**: COMPLETE | EXTENDED | IN PROGRESS
 
-### Action Items
-- {list follow-up actions}
+    ## Milestone Achievement
 
-### Manager Assessment
-**Progress**: {On Track | Needs Support | Exceeding Expectations}
-**Concerns**: {any concerns to address}
-**Adjustments**: {any onboarding plan changes}
+    30-Day Milestone:
+    - Status: ACHIEVED | PARTIAL | MISSED
+    - Key accomplishments: {list}
+
+    60-Day Milestone:
+    - Status: ACHIEVED | PARTIAL | MISSED
+    - Velocity: {X} vs team average {Y}
+
+    90-Day Milestone:
+    - Status: GRADUATED | EXTENDED
+    - Full integration: YES | NO
+
+    ## Metrics Summary
+
+    - Total tasks completed: {count}
+    - Features delivered: {count}
+    - PRs submitted: {count}
+    - Code reviews performed: {count}
+    - Training modules completed: {X}/{Y}
+    - Ramp-up velocity: {FAST | NORMAL | SLOW}
+
+    ## Buddy Relationship
+
+    - Buddy: {buddy-name}
+    - Total pairing hours: {hours}
+    - Effectiveness: {rating and feedback}
+
+    ## Strengths Demonstrated
+    - {strength 1}
+    - {strength 2}
+    - {strength 3}
+
+    ## Development Areas
+    - {area 1}
+    - {area 2}
+
+    ## Process Improvements
+
+    Based on this onboarding:
+    - {improvement 1}
+    - {improvement 2}
+    - {improvement 3}
+
+    ## Recommendations
+
+    For {name}:
+    - Next development goals
+    - Suggested projects/features
+    - Mentoring opportunities
+
+    For future onboardings:
+    - Process adjustments
+    - Resource additions
+    - Timeline modifications
+
+    Output: .aiwg/reports/onboarding-complete-{name}.md
+    """
+)
 ```
 
-#### 60 Day Check-In
-```markdown
-## 60 Day Milestone Check-In
+## Quality Gates
 
-**Date**: {date}
-**Attendees**: New Member, Project Manager, Technical Lead
+Before marking workflow complete, verify:
+- [ ] Pre-boarding 100% complete before start date
+- [ ] Buddy assigned and prepared
+- [ ] Onboarding plan reviewed and approved
+- [ ] All milestone check-ins conducted
+- [ ] Graduation criteria met or extension justified
+- [ ] Feedback collected and documented
+- [ ] Process improvements identified
 
-### Review Checklist
-- [ ] Delivered 1-2 features end-to-end
-- [ ] Leading code reviews for own PRs
-- [ ] Participating in design discussions
-- [ ] Velocity increasing toward team average
+## User Communication
 
-### Discussion Topics
-1. What are you most proud of from the last 30 days?
-2. Where do you still feel less confident?
-3. Are you ready to take on full workload?
-4. What would make you more effective?
+**At start**: Confirm understanding and timeline
 
-### Performance Assessment
-**Technical Skills**: {rating and comments}
-**Collaboration**: {rating and comments}
-**Communication**: {rating and comments}
-**Autonomy**: {rating and comments}
+```
+Understood. I'll orchestrate onboarding for {name} starting {date}.
 
-### Action Items
-- {list follow-up actions}
+This will include:
+- Pre-boarding preparation (access, equipment, docs)
+- 90-day personalized onboarding plan
+- Buddy assignment and pairing schedule
+- Starter tasks with progressive complexity
+- 30/60/90 day milestone check-ins
+- Progress tracking and reporting
 
-### 90 Day Goals
-- {confirm or adjust 90-day goals}
+Expected timeline: 90 days total, with weekly progress updates.
+
+Starting pre-boarding preparation...
 ```
 
-#### 90 Day Check-In
-```markdown
-## 90 Day Milestone Check-In (Full Integration)
+**During**: Regular status updates
 
-**Date**: {date}
-**Attendees**: New Member, Project Manager, Technical Lead
+```
+Week 1 Status:
+✓ Day 1: Welcome complete, environment 80% setup
+✓ Day 2: First PR submitted (documentation fix)
+⏳ Day 3: Codebase walkthrough with buddy
+⚠️ Blocker: CI/CD access pending (escalated)
+```
 
-### Review Checklist
-- [ ] Operating at full team capacity
-- [ ] Independently resolving issues
-- [ ] Participating in on-call (if applicable)
-- [ ] Contributing to team improvements
+**At milestones**: Detailed checkpoint summaries
 
-### Discussion Topics
-1. Do you feel fully integrated into the team?
-2. What skills would you like to develop next?
-3. How can we improve the onboarding process?
-4. Career development goals for next 6 months?
+```
+30-Day Check-In Complete:
+- Status: ON TRACK
+- Tasks completed: 4/5
+- First feature delivered
+- Team integration: STRONG
+- Next focus: Increase task complexity
+```
 
-### Final Assessment
-**Onboarding Status**: {COMPLETE | NEEDS EXTENSION}
-**Overall Performance**: {rating and comments}
-**Readiness for Full Workload**: {YES | NO}
+## Error Handling
 
-### Next Steps
-- Remove "onboarding" status from team roster
-- Transition from buddy to peer relationship
-- Schedule 6-month performance review
-- Consider mentoring future new hires
+**Access Delays**:
+```
+⚠️ System access delayed - impacting onboarding
 
-### Onboarding Feedback
-**What Worked Well**: {feedback}
-**What Could Improve**: {feedback}
-**Process Improvements**: {actionable improvements}
+Missing access:
+- {system}: Expected {date}, now {new-date}
+
+Mitigation:
+- Buddy providing screen-share access
+- Read-only access granted temporarily
+- Adjusting task sequence
+
+Impact: Minimal if resolved within 48 hours
+```
+
+**Buddy Unavailable**:
+```
+⚠️ Buddy unavailable due to {reason}
+
+Action taken:
+- Backup buddy activated: {backup-name}
+- Knowledge transfer session scheduled
+- Pairing schedule adjusted
+
+No impact to onboarding timeline expected.
+```
+
+**Slow Progress**:
+```
+⚠️ 30-day milestone partially met
+
+Gaps:
+- Tasks completed: 2/5 (target: 3-5)
+- PR velocity below target
+
+Adjustments:
+- Increased buddy pairing time
+- Simplified task complexity
+- Additional training scheduled
+
+Reviewing progress weekly for improvement.
 ```
 
 ## Success Criteria
 
-This command succeeds when:
-- [ ] Pre-boarding checklist 100% complete by start date
-- [ ] Onboarding plan created and approved
-- [ ] Buddy assigned and pairing cadence established
-- [ ] Starter tasks identified and sequenced
-- [ ] 30/60/90 day check-ins scheduled
-- [ ] New member reaches full productivity by day 90
-
-## Output Report
-
-Generate an onboarding status report:
-
-```markdown
-# Team Onboarding Report
-
-**Team Member**: {name}
-**Role**: {role}
-**Start Date**: {date}
-**Report Date**: {current-date}
-**Days Since Start**: {days}
-
-## Pre-Boarding Status
-- System Access: {COMPLETE | IN PROGRESS | BLOCKED}
-- Equipment: {COMPLETE | IN PROGRESS | BLOCKED}
-- Documentation: {COMPLETE | IN PROGRESS | BLOCKED}
-
-**Blockers**: {list any blockers}
-
-## Onboarding Plan Progress
-
-### Current Phase: {Week 1 | Week 2-4 | Month 2 | Month 3}
-
-**Completed Activities**: {count}/{total}
-**Completed Training**: {count}/{total}
-**Completed Starter Tasks**: {count}/{total}
-
-### Milestone Status
-- 30 Day Goals: {NOT REACHED | ON TRACK | COMPLETE}
-- 60 Day Goals: {NOT REACHED | ON TRACK | COMPLETE}
-- 90 Day Goals: {NOT REACHED | ON TRACK | COMPLETE}
-
-## Buddy Relationship
-**Buddy**: {buddy-name}
-**Pairing Sessions This Week**: {count}
-**Last Check-In**: {date}
-
-**Buddy Feedback**: {qualitative feedback}
-
-## Recent Accomplishments
-- {accomplishment 1}
-- {accomplishment 2}
-- {accomplishment 3}
-
-## Current Challenges
-- {challenge 1}
-- {challenge 2}
-
-## Upcoming Milestones
-- {next milestone}: {date}
-- {next check-in}: {date}
-
-## Action Items
-- {action 1} - Owner: {owner} - Due: {date}
-- {action 2} - Owner: {owner} - Due: {date}
-
-## Overall Assessment
-**Status**: {ON TRACK | NEEDS SUPPORT | EXCEEDING EXPECTATIONS}
-**Concerns**: {any concerns}
-**Recommendations**: {any adjustments needed}
-```
-
-## Common Failure Modes
-
-### Access Delays
-**Symptoms**: New member cannot access critical systems on day 1
-**Remediation**:
-1. Escalate to Operations Liaison immediately
-2. Provide temporary workarounds (read-only access, pair with buddy)
-3. Document delay and root cause
-4. Adjust onboarding timeline if significant delay
-
-### Overwhelming Information
-**Symptoms**: New member struggling to absorb material, asks same questions repeatedly
-**Remediation**:
-1. Slow down pace, reduce training density
-2. Provide written documentation for reference
-3. Increase buddy pairing time
-4. Break complex topics into smaller chunks
-
-### Buddy Unavailability
-**Symptoms**: Buddy too busy to provide adequate support
-**Remediation**:
-1. Escalate to Project Manager
-2. Assign backup buddy or rotate buddy duties
-3. Reduce buddy's other commitments
-4. Adjust new member's expectations and timeline
-
-### Mismatched Expectations
-**Symptoms**: New member expected different role, responsibilities, or tech stack
-**Remediation**:
-1. Clarify role and responsibilities immediately
-2. If mismatch is significant, escalate to leadership
-3. Adjust onboarding plan to bridge gaps
-4. Consider role change if fundamental mismatch
-
-### Slow Ramp-Up
-**Symptoms**: Not meeting 30/60/90 day milestones
-**Remediation**:
-1. Conduct early intervention check-in
-2. Identify specific skill gaps or blockers
-3. Provide targeted training or mentorship
-4. Extend onboarding timeline if needed
-5. Document reasons for slower ramp-up
-
-## Integration with Team Roster
-
-Update team roster with onboarding status:
-
-```bash
-# Add new team member to roster
-/project:update-roster add \
-  --name "{name}" \
-  --role "{role}" \
-  --start-date "{date}" \
-  --status "onboarding"
-
-# Update onboarding progress
-/project:update-roster update \
-  --name "{name}" \
-  --onboarding-phase "{week-1 | month-2 | month-3}"
-
-# Mark onboarding complete
-/project:update-roster update \
-  --name "{name}" \
-  --status "active" \
-  --onboarding-complete true
-```
-
-## Documentation Requirements
-
-Maintain the following onboarding documents:
-
-1. **Pre-Boarding Checklist**: Track access, equipment, documentation
-2. **Onboarding Plan**: Personalized plan with training schedule
-3. **Buddy Assignment**: Buddy responsibilities and pairing schedule
-4. **Starter Tasks**: Sequenced tasks with acceptance criteria
-5. **Check-In Notes**: 30/60/90 day check-in summaries
-6. **Feedback Log**: Continuous feedback on onboarding process
-
-## Handoff to Regular Operations
-
-At 90 days (or when onboarding complete):
-
-1. Remove "onboarding" status from team roster
-2. Transition buddy relationship to peer relationship
-3. Include in regular performance review cycle
-4. Consider as mentor for future onboardees
-5. Archive onboarding materials for process improvement
-
-## Error Handling
-
-**Start Date Not Provided**:
-- Report: "Start date required for onboarding planning"
-- Action: "Provide start date in format YYYY-MM-DD"
-- Command: "/project:flow-team-onboarding {name} {role} {start-date}"
-
-**Role Not Specified**:
-- Report: "Role required to create appropriate onboarding plan"
-- Action: "Specify role (engineer, designer, pm, qa, etc.)"
-- Command: "/project:flow-team-onboarding {name} {role}"
-
-**No Available Buddy**:
-- Report: "No available buddy found for {role}"
-- Action: "Identify team member with capacity and domain expertise"
-- Recommendation: "Consider rotating buddy duties or reducing buddy's other commitments"
-
-**Missing Pre-Boarding Items**:
-- Report: "Pre-boarding checklist incomplete: {items}"
-- Action: "Complete all pre-boarding items before start date"
-- Escalation: "Notify Operations Liaison and Project Manager"
+This orchestration succeeds when:
+- [ ] New team member fully productive by day 90
+- [ ] All milestones achieved or explicitly adjusted
+- [ ] Positive feedback from team member and buddy
+- [ ] No critical knowledge gaps identified
+- [ ] Team integration successful
+- [ ] Process improvements documented
 
 ## References
 
-- Team roster: `management/team-roster-template.md`
-- Onboarding plan: `management/onboarding-plan-template.md`
-- Buddy assignment: `management/buddy-assignment-card.md`
-- Training schedule: `knowledge/training-schedule-card.md`
-- Milestone checklists: `management/onboarding-milestone-checklist.md`
+**Templates** (via $AIWG_ROOT):
+- Team Roster: `templates/management/team-roster-template.md`
+- Onboarding Plan: `templates/management/onboarding-plan-template.md`
+- Buddy Assignment: `templates/management/buddy-assignment-card.md`
+- Training Schedule: `templates/knowledge/training-schedule-card.md`
+- Work Package: `templates/management/work-package-card.md`
+- Milestone Checklist: `templates/management/onboarding-milestone-checklist.md`
+
+**Related Flows**:
+- `flow-team-coordination` - Ongoing team management
+- `flow-knowledge-transfer` - Deep technical knowledge sharing
+- `flow-training-certification` - Formal training programs
+
+**Supporting Documents**:
+- `docs/team-onboarding-best-practices.md`
+- `docs/buddy-system-guide.md`
+- `docs/remote-onboarding-adjustments.md`

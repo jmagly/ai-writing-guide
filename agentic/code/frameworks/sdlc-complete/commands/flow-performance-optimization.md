@@ -1,796 +1,961 @@
 ---
-description: Execute continuous performance optimization with baseline establishment, bottleneck identification, optimization implementation, load testing, and SLO validation
-category: sdlc-management
-argument-hint: <optimization-trigger> [target-component] [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
-model: sonnet
+description: Orchestrate continuous performance optimization with baseline establishment, bottleneck identification, optimization implementation, load testing, and SLO validation
+category: sdlc-orchestration
+argument-hint: [trigger] [component] [project-directory] [--guidance "text"] [--interactive]
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Performance Optimization Flow
 
-You are a Performance Optimization Coordinator specializing in systematic performance tuning, load testing, bottleneck analysis, and SLO validation.
+**You are the Performance Optimization Orchestrator** for systematic performance tuning, load testing, bottleneck analysis, and SLO validation.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-performance-optimization <trigger> [component] [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Establish** performance baseline and SLO targets
-2. **Identify** performance bottlenecks through profiling and monitoring
-3. **Implement** optimizations with measured impact
-4. **Validate** improvements through load testing
-5. **Monitor** performance metrics against SLOs
-6. **Document** optimization results and lessons learned
+When the user requests this flow (via natural language or explicit command):
 
-## Optimization Triggers
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
+
+## Natural Language Triggers
+
+Users may say:
+- "Performance review"
+- "Optimize performance"
+- "Performance tuning"
+- "Improve performance"
+- "Fix slow response times"
+- "Application is too slow"
+- "Need better performance"
+- "SLO breach"
+- "Reduce latency"
+- "Improve throughput"
+
+You recognize these as requests for this performance optimization flow.
+
+## Parameter Handling
+
+### Optimization Triggers
 
 - **slo-breach**: Service Level Objective breached or at risk
 - **capacity-planning**: Anticipate scale requirements
 - **cost-reduction**: Reduce infrastructure costs
 - **user-complaint**: User-reported performance issues
 - **proactive**: Regular performance tuning cycle
-- **new-feature**: Performance testing 
+- **new-feature**: Performance testing for new functionality
 
-### Step 0: Parameter Parsing and Guidance Setup
+### --guidance Parameter
 
-**Parse Command Line**:
+**Purpose**: User provides upfront direction to tailor optimization priorities
 
-Extract optional `--guidance` and `--interactive` parameters.
-
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
-
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+**Examples**:
+```
+--guidance "Focus on database performance, seeing slow queries in production"
+--guidance "API latency is critical, p95 must be under 100ms"
+--guidance "Cost reduction priority, need to reduce infrastructure spend by 30%"
+--guidance "User complaints about page load times, frontend optimization needed"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: database, API, frontend, cost, latency, throughput
+- Adjust agent assignments (add database-optimizer for DB focus)
+- Modify optimization priorities (latency vs throughput vs cost)
+- Influence testing focus (load patterns, metrics to track)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 7 strategic questions to understand performance context
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 7 strategic questions to tailor the performance optimization to your needs:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What performance issue are you addressing?
+    (e.g., slow response times, high costs, capacity limits)
 
-**Resolve AIWG installation**:
+Q2: What's your current performance baseline?
+    (Help me understand starting point - p95 latency, throughput, error rate)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: What's your target performance improvement?
+    (Specific goals - reduce latency by 50%, double throughput, etc.)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: Where do you suspect bottlenecks?
+    (Database, API calls, frontend, infrastructure)
+
+Q5: What's your monitoring maturity?
+    (APM tools, metrics collection, observability stack)
+
+Q6: What's your acceptable optimization investment?
+    (Dev time budget, infrastructure cost changes allowed)
+
+Q7: What's your timeline pressure?
+    (Emergency fix needed vs. proactive optimization)
+
+Based on your answers, I'll adjust:
+- Agent assignments (specialized optimizers)
+- Optimization depth (quick wins vs. comprehensive)
+- Testing rigor (basic vs. extensive load testing)
+- Risk tolerance (safe vs. aggressive optimizations)
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Performance Optimization - Interactive Setup"
-  echo ""
-  echo "I'll ask 7 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **Performance Baseline Report**: Current metrics → `.aiwg/reports/performance-baseline.md`
+- **Bottleneck Analysis**: Profiling results → `.aiwg/reports/bottleneck-analysis.md`
+- **Optimization Plan**: Prioritized improvements → `.aiwg/planning/optimization-plan.md`
+- **Load Test Results**: Performance validation → `.aiwg/testing/load-test-results.md`
+- **SLO Compliance Report**: Target achievement → `.aiwg/reports/slo-compliance.md`
+- **Optimization Summary**: ROI analysis → `.aiwg/reports/optimization-summary.md`
 
-  read -p "Q1: What performance issue are you addressing? " answer1
-  read -p "Q2: What's your current performance baseline? " answer2
-  read -p "Q3: What's your target performance improvement? " answer3
-  read -p "Q4: Where do you suspect bottlenecks? " answer4
-  read -p "Q5: What's your monitoring maturity? " answer5
-  read -p "Q6: What's your acceptable optimization investment? " answer6
-  read -p "Q7: What's your timeline pressure? " answer7
+**Supporting Artifacts**:
+- Performance profiles (`.aiwg/working/profiles/`)
+- POC implementations (`.aiwg/working/optimizations/`)
+- Test scripts (`.aiwg/testing/scripts/`)
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-for new feature
-
-## Workflow Steps
+## Multi-Agent Orchestration Workflow
 
 ### Step 1: Establish Performance Baseline
-**Agents**: Reliability Engineer (lead), Performance Analyst
-**Templates Required**:
-- `deployment/sli-card.md`
-- `deployment/slo-card.md`
 
-**Actions**:
-1. Define Service Level Indicators (SLIs) to measure
-2. Establish current performance baseline metrics
-3. Define Service Level Objectives (SLOs) and error budgets
-4. Identify performance-critical user journeys
+**Purpose**: Define Service Level Indicators (SLIs) and establish current performance metrics
 
-**Gate Criteria**:
-- [ ] SLIs defined (latency, throughput, error rate, availability)
-- [ ] Baseline metrics collected for at least 7 days
-- [ ] SLOs defined with target percentiles (e.g., p50, p95, p99)
-- [ ] Error budget calculated (allowable failure rate)
+**Your Actions**:
+
+1. **Check for Existing Performance Artifacts**:
+   ```
+   Read and verify presence of:
+   - .aiwg/deployment/sli-card.md (if exists)
+   - .aiwg/deployment/slo-card.md (if exists)
+   - .aiwg/architecture/software-architecture-doc.md (for performance targets)
+   ```
+
+2. **Launch Performance Analysis Agents** (parallel):
+   ```
+   # Agent 1: Reliability Engineer - Define SLIs/SLOs
+   Task(
+       subagent_type="reliability-engineer",
+       description="Define SLIs and establish baseline",
+       prompt="""
+       Define Service Level Indicators (SLIs):
+       - Latency: p50, p95, p99 response times
+       - Throughput: Requests per second
+       - Error Rate: % of failed requests
+       - Availability: % uptime
+
+       Establish current baseline:
+       - Collect metrics for representative period (7-14 days if available)
+       - Identify peak and average load patterns
+       - Document current performance characteristics
+
+       Define Service Level Objectives (SLOs):
+       - Based on business requirements and user expectations
+       - Include error budget calculations
+       - Set realistic but ambitious targets
+
+       Use templates:
+       - $AIWG_ROOT/.../deployment/sli-card.md
+       - $AIWG_ROOT/.../deployment/slo-card.md
+
+       Output: .aiwg/working/performance/baseline-metrics.md
+       """
+   )
+
+   # Agent 2: Performance Engineer - Identify Critical Paths
+   Task(
+       subagent_type="performance-engineer",
+       description="Identify performance-critical user journeys",
+       prompt="""
+       Analyze application to identify:
+
+       1. Critical User Journeys
+          - Most frequent operations
+          - Business-critical transactions
+          - User-facing bottlenecks
+
+       2. System Boundaries
+          - API endpoints and their usage patterns
+          - Database queries and access patterns
+          - External service dependencies
+
+       3. Current Monitoring
+          - Available metrics and logs
+          - APM tool coverage
+          - Gaps in observability
+
+       Document findings with specific paths and components.
+
+       Output: .aiwg/working/performance/critical-paths.md
+       """
+   )
+   ```
+
+3. **Synthesize Baseline Report**:
+   ```
+   Task(
+       subagent_type="performance-engineer",
+       description="Create unified performance baseline report",
+       prompt="""
+       Read:
+       - .aiwg/working/performance/baseline-metrics.md
+       - .aiwg/working/performance/critical-paths.md
+
+       Create comprehensive baseline report:
+       1. Current Performance Metrics
+       2. SLI Definitions
+       3. SLO Targets
+       4. Critical User Journeys
+       5. Error Budget Status
+
+       Output: .aiwg/reports/performance-baseline.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Initialized performance baseline
+⏳ Establishing SLIs and current metrics...
+✓ Performance baseline complete: .aiwg/reports/performance-baseline.md
+  - p95 latency: {value}ms
+  - Throughput: {value} RPS
+  - Error rate: {value}%
+```
 
 ### Step 2: Identify Performance Bottlenecks
-**Agents**: Performance Analyst (lead), Software Architect
-**Templates Required**:
-- `analysis-design/performance-profile-card.md`
-- `test/load-test-plan-template.md`
 
-**Actions**:
-1. Run performance profiling (CPU, memory, I/O, network)
-2. Analyze application logs and traces (APM tools)
-3. Execute load tests to identify breaking points
-4. Identify top bottlenecks (queries, algorithms, I/O, external calls)
+**Purpose**: Profile application and identify optimization opportunities
 
-**Gate Criteria**:
-- [ ] Performance profile captured (CPU, memory, I/O)
-- [ ] APM traces analyzed for slow operations
-- [ ] Load test executed to identify capacity limits
-- [ ] Top 3-5 bottlenecks identified with evidence
+**Your Actions**:
 
-### Step 3: Prioritize Optimization Opportunities
-**Agents**: Performance Analyst (lead), Software Architect
-**Templates Required**:
-- `intake/option-matrix-template.md`
+1. **Launch Profiling and Analysis Agents** (parallel):
+   ```
+   # Agent 1: Performance Engineer - Application Profiling
+   Task(
+       subagent_type="performance-engineer",
+       description="Profile application performance",
+       prompt="""
+       Conduct performance profiling:
 
-**Actions**:
-1. Estimate impact of each optimization (latency reduction, throughput increase)
-2. Estimate effort required for each optimization (dev time, risk)
-3. Calculate ROI (impact / effort)
-4. Prioritize optimizations by ROI and business impact
+       1. CPU Profiling
+          - Identify hot paths and expensive operations
+          - Find inefficient algorithms (O(n²) operations)
+          - Detect excessive computation
 
-**Gate Criteria**:
-- [ ] Each optimization scored on impact and effort
-- [ ] ROI calculated for each optimization
-- [ ] Top 3-5 optimizations prioritized
-- [ ] Quick wins identified (high impact, low effort)
+       2. Memory Profiling
+          - Memory allocation patterns
+          - Garbage collection pressure
+          - Memory leaks
+
+       3. I/O Profiling
+          - Database query performance
+          - File system operations
+          - Network calls
+
+       4. Application Traces
+          - End-to-end request flow
+          - Service call latencies
+          - Async operation delays
+
+       Use template: $AIWG_ROOT/.../analysis-design/performance-profile-card.md
+
+       Document top 5-10 bottlenecks with evidence.
+
+       Output: .aiwg/working/performance/profiling-results.md
+       """
+   )
+
+   # Agent 2: Database Optimizer - Database Analysis
+   Task(
+       subagent_type="database-optimizer",
+       description="Analyze database performance",
+       prompt="""
+       Analyze database performance issues:
+
+       1. Query Analysis
+          - Slow query log analysis
+          - Missing indexes identification
+          - N+1 query problems
+          - Inefficient joins
+
+       2. Schema Analysis
+          - Table structure optimization opportunities
+          - Denormalization candidates
+          - Partitioning opportunities
+
+       3. Connection Management
+          - Connection pool sizing
+          - Connection lifecycle
+          - Transaction boundaries
+
+       4. Caching Opportunities
+          - Query result caching
+          - Object caching
+          - Session caching
+
+       Provide specific optimization recommendations.
+
+       Output: .aiwg/working/performance/database-analysis.md
+       """
+   )
+
+   # Agent 3: Software Implementer - Code Analysis
+   Task(
+       subagent_type="software-implementer",
+       description="Analyze code-level optimization opportunities",
+       prompt="""
+       Review code for performance issues:
+
+       1. Algorithm Efficiency
+          - Time complexity issues
+          - Unnecessary loops
+          - Redundant computations
+
+       2. API Usage
+          - Synchronous calls that could be async
+          - Opportunities for batching
+          - Parallel execution opportunities
+
+       3. Resource Management
+          - Resource leaks
+          - Inefficient object creation
+          - String concatenation in loops
+
+       4. Frontend Performance (if applicable)
+          - Bundle size optimization
+          - Render performance
+          - Network request optimization
+
+       Document specific code locations and improvements.
+
+       Output: .aiwg/working/performance/code-analysis.md
+       """
+   )
+   ```
+
+2. **Synthesize Bottleneck Analysis**:
+   ```
+   Task(
+       subagent_type="performance-engineer",
+       description="Create bottleneck analysis report",
+       prompt="""
+       Read all analysis results:
+       - .aiwg/working/performance/profiling-results.md
+       - .aiwg/working/performance/database-analysis.md
+       - .aiwg/working/performance/code-analysis.md
+
+       Create prioritized bottleneck analysis:
+
+       For each bottleneck:
+       1. Description and root cause
+       2. Performance impact (% of total latency)
+       3. Affected user journeys
+       4. Optimization approach
+       5. Estimated improvement
+       6. Implementation effort
+
+       Prioritize by ROI (impact/effort).
+
+       Use template: $AIWG_ROOT/.../intake/option-matrix-template.md for prioritization
+
+       Output: .aiwg/reports/bottleneck-analysis.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Identifying performance bottlenecks...
+  ✓ Application profiling complete
+  ✓ Database analysis complete
+  ✓ Code analysis complete
+✓ Bottleneck analysis: .aiwg/reports/bottleneck-analysis.md
+  - Top bottleneck: {description} (impacts {%} of requests)
+```
+
+### Step 3: Plan and Prioritize Optimizations
+
+**Purpose**: Create actionable optimization plan with prioritized improvements
+
+**Your Actions**:
+
+1. **Calculate ROI and Create Plan**:
+   ```
+   Task(
+       subagent_type="performance-engineer",
+       description="Create optimization plan",
+       prompt="""
+       Read bottleneck analysis: .aiwg/reports/bottleneck-analysis.md
+
+       Create optimization plan:
+
+       1. Quick Wins (High impact, low effort)
+          - Implementation < 1 day
+          - Measurable improvement
+          - Low risk
+
+       2. Strategic Improvements (High impact, medium effort)
+          - Implementation 2-5 days
+          - Significant improvement
+          - Moderate risk
+
+       3. Major Refactoring (High impact, high effort)
+          - Implementation > 5 days
+          - Transformative improvement
+          - Higher risk
+
+       For each optimization:
+       - Specific implementation steps
+       - Success criteria
+       - Testing approach
+       - Rollback plan
+
+       Output: .aiwg/planning/optimization-plan.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Optimization plan created: .aiwg/planning/optimization-plan.md
+  - Quick wins: {count} optimizations
+  - Strategic improvements: {count} optimizations
+  - Major refactoring: {count} optimizations
+```
 
 ### Step 4: Implement Performance Optimizations
-**Agents**: Component Owner (lead), Performance Analyst
-**Templates Required**:
-- `implementation/design-class-card.md`
 
-**Actions**:
-1. Implement optimization with measurable hypothesis
-2. Add performance tests to validate improvement
-3. Measure before/after metrics
-4. Document optimization in code comments and ADR
+**Purpose**: Execute prioritized optimizations with measurement
 
-**Gate Criteria**:
-- [ ] Optimization implemented with before/after measurement
-- [ ] Performance tests added to regression suite
-- [ ] Code review completed with focus on correctness
-- [ ] Optimization documented in ADR or commit message
+**Your Actions**:
+
+1. **Launch Implementation Agents** (can be parallel for independent optimizations):
+   ```
+   # For each optimization in the plan:
+
+   # Database Optimizations
+   Task(
+       subagent_type="database-optimizer",
+       description="Implement database optimizations",
+       prompt="""
+       Read optimization plan: .aiwg/planning/optimization-plan.md
+
+       Implement database optimizations:
+
+       1. Query Optimization
+          - Add missing indexes
+          - Rewrite inefficient queries
+          - Implement query result caching
+
+       2. Schema Optimization
+          - Denormalize where appropriate
+          - Add database-level constraints
+          - Implement partitioning if needed
+
+       3. Connection Optimization
+          - Tune connection pool settings
+          - Implement connection retry logic
+
+       Measure before/after performance for each change.
+       Document implementation details and results.
+
+       Use template: $AIWG_ROOT/.../implementation/design-class-card.md
+
+       Output: .aiwg/working/optimizations/database-optimizations.md
+       """
+   )
+
+   # Code Optimizations
+   Task(
+       subagent_type="software-implementer",
+       description="Implement code optimizations",
+       prompt="""
+       Read optimization plan: .aiwg/planning/optimization-plan.md
+
+       Implement code optimizations:
+
+       1. Algorithm Improvements
+          - Replace inefficient algorithms
+          - Add memoization/caching
+          - Implement lazy loading
+
+       2. Async Processing
+          - Convert sync to async operations
+          - Implement parallel processing
+          - Add background job processing
+
+       3. API Optimization
+          - Implement request batching
+          - Add response compression
+          - Optimize payload sizes
+
+       Include performance tests for each optimization.
+       Document implementation with before/after metrics.
+
+       Output: .aiwg/working/optimizations/code-optimizations.md
+       """
+   )
+
+   # Infrastructure Optimizations
+   Task(
+       subagent_type="reliability-engineer",
+       description="Implement infrastructure optimizations",
+       prompt="""
+       Read optimization plan: .aiwg/planning/optimization-plan.md
+
+       Implement infrastructure optimizations:
+
+       1. Caching Layer
+          - Configure Redis/Memcached
+          - Implement cache warming
+          - Set appropriate TTLs
+
+       2. CDN Configuration
+          - Static asset caching
+          - Edge computing if applicable
+          - Compression settings
+
+       3. Load Balancing
+          - Algorithm tuning
+          - Connection draining
+          - Health check optimization
+
+       4. Auto-scaling
+          - Metric-based scaling rules
+          - Predictive scaling if available
+
+       Document configuration changes and impact.
+
+       Output: .aiwg/working/optimizations/infrastructure-optimizations.md
+       """
+   )
+   ```
+
+2. **Consolidate Implementation Results**:
+   ```
+   Task(
+       subagent_type="performance-engineer",
+       description="Consolidate optimization implementations",
+       prompt="""
+       Read all optimization results:
+       - .aiwg/working/optimizations/database-optimizations.md
+       - .aiwg/working/optimizations/code-optimizations.md
+       - .aiwg/working/optimizations/infrastructure-optimizations.md
+
+       Create implementation summary:
+       1. Optimizations completed
+       2. Measured improvements (before/after)
+       3. Failed attempts (what didn't work)
+       4. Pending optimizations
+
+       Output: .aiwg/working/optimizations/implementation-summary.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Implementing optimizations...
+  ✓ Database optimizations: {X}% improvement
+  ✓ Code optimizations: {Y}% improvement
+  ✓ Infrastructure optimizations: {Z}% improvement
+✓ Optimizations implemented: .aiwg/working/optimizations/implementation-summary.md
+```
 
 ### Step 5: Validate with Load Testing
-**Agents**: Performance Analyst (lead), QA Engineer
-**Templates Required**:
-- `test/load-test-plan-template.md`
-- `test/performance-test-card.md`
 
-**Actions**:
-1. Execute load tests with production-like traffic patterns
-2. Measure performance metrics under load (latency, throughput, error rate)
-3. Compare results to baseline and SLO targets
-4. Identify any performance regressions
+**Purpose**: Verify optimizations under realistic load conditions
 
-**Gate Criteria**:
-- [ ] Load test executed with realistic traffic patterns
-- [ ] Metrics meet SLO targets (p95 latency, throughput, error rate)
-- [ ] No performance regressions detected
-- [ ] System stable under sustained load
+**Your Actions**:
 
-### Step 6: Monitor and Report Results
-**Agents**: Reliability Engineer (lead), Project Manager
-**Templates Required**:
-- `deployment/sli-card.md`
-- `management/performance-report-template.md`
+1. **Create Load Test Plan**:
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Create load test plan",
+       prompt="""
+       Read baseline report: .aiwg/reports/performance-baseline.md
+       Read critical paths: .aiwg/working/performance/critical-paths.md
 
-**Actions**:
-1. Deploy optimization to production
-2. Monitor performance metrics in production
-3. Validate SLO compliance over 7-14 days
-4. Generate performance optimization report
+       Create load test plan covering:
 
-**Gate Criteria**:
-- [ ] Optimization deployed to production
-- [ ] Production metrics monitored for at least 7 days
-- [ ] SLOs met consistently
-- [ ] Performance report generated with ROI analysis
+       1. Test Scenarios
+          - Baseline load test (normal traffic)
+          - Stress test (find breaking point)
+          - Spike test (sudden traffic increase)
+          - Soak test (sustained load over time)
 
-## Performance Optimization Patterns
+       2. Traffic Patterns
+          - User journey distribution
+          - Request rates
+          - Concurrent users
+          - Geographic distribution
 
-### Database Optimization
+       3. Success Criteria
+          - SLO compliance
+          - No regressions
+          - Error rate threshold
+          - Resource utilization limits
 
-**Slow Queries**:
-- Add indexes on frequently queried columns
-- Optimize query structure (avoid N+1 queries)
-- Use query caching for repeated queries
-- Implement database connection pooling
+       Use template: $AIWG_ROOT/.../test/load-test-plan-template.md
 
-**Expected Impact**: 50-90% latency reduction for query-bound operations
+       Output: .aiwg/testing/load-test-plan.md
+       """
+   )
+   ```
 
-**Example**:
-```sql
--- Before: Table scan on 1M rows
-SELECT * FROM users WHERE email = 'user@example.com';
+2. **Execute Load Tests**:
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Execute load tests and analyze results",
+       prompt="""
+       Execute load tests per plan: .aiwg/testing/load-test-plan.md
 
--- After: Index seek
-CREATE INDEX idx_users_email ON users(email);
--- Result: 500ms → 5ms (100x improvement)
+       For each test scenario:
+
+       1. Baseline Load Test
+          - Measure p50, p95, p99 latencies
+          - Track throughput (RPS)
+          - Monitor error rates
+          - Resource utilization
+
+       2. Stress Test
+          - Identify breaking point
+          - Document failure modes
+          - Resource bottlenecks
+
+       3. Spike Test
+          - Auto-scaling response
+          - Recovery time
+          - Error handling
+
+       4. Soak Test
+          - Memory leak detection
+          - Performance degradation
+          - Resource exhaustion
+
+       Compare results to:
+       - Original baseline
+       - SLO targets
+       - Previous test runs
+
+       Use template: $AIWG_ROOT/.../test/performance-test-card.md
+
+       Output: .aiwg/testing/load-test-results.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Running load tests...
+  ✓ Baseline test complete: p95 = {X}ms (target: <{Y}ms)
+  ✓ Stress test complete: Breaking point at {Z} RPS
+  ✓ Spike test complete: Recovery time = {T} seconds
+  ✓ Soak test complete: No degradation over 4 hours
+✓ Load test results: .aiwg/testing/load-test-results.md
 ```
 
-### Caching Strategies
+### Step 6: Validate SLO Compliance and Report
 
-**In-Memory Caching**:
-- Cache frequently accessed data (Redis, Memcached)
-- Set appropriate TTL based on data freshness requirements
-- Implement cache invalidation strategy
-- Use cache-aside or write-through patterns
+**Purpose**: Confirm optimizations meet targets and document results
 
-**Expected Impact**: 80-95% latency reduction for cached operations
+**Your Actions**:
 
-**Example**:
-```python
-# Before: Database query every request
-user = db.query("SELECT * FROM users WHERE id = ?", user_id)
+1. **Validate SLO Compliance**:
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Validate SLO compliance",
+       prompt="""
+       Read:
+       - .aiwg/reports/performance-baseline.md (original SLOs)
+       - .aiwg/testing/load-test-results.md (test results)
+       - .aiwg/working/optimizations/implementation-summary.md
 
-# After: Cache with 5-minute TTL
-user = cache.get(f"user:{user_id}")
-if not user:
-    user = db.query("SELECT * FROM users WHERE id = ?", user_id)
-    cache.set(f"user:{user_id}", user, ttl=300)
-# Result: 50ms → 2ms (25x improvement)
+       Validate SLO compliance:
+
+       1. Compare metrics to SLO targets
+          - Latency: p95, p99 vs targets
+          - Throughput: RPS vs target
+          - Error rate: % vs target
+          - Availability: Uptime vs target
+
+       2. Calculate error budget impact
+          - Budget consumed before optimization
+          - Budget consumed after optimization
+          - Budget saved/recovered
+
+       3. Identify any SLO breaches
+          - Which SLOs still not met
+          - Root cause
+          - Recommended next steps
+
+       Status: PASS | PARTIAL | FAIL
+
+       Output: .aiwg/reports/slo-compliance.md
+       """
+   )
+   ```
+
+2. **Generate Final Optimization Report**:
+   ```
+   Task(
+       subagent_type="performance-engineer",
+       description="Generate optimization summary report",
+       prompt="""
+       Read all optimization artifacts:
+       - .aiwg/reports/performance-baseline.md
+       - .aiwg/reports/bottleneck-analysis.md
+       - .aiwg/planning/optimization-plan.md
+       - .aiwg/working/optimizations/implementation-summary.md
+       - .aiwg/testing/load-test-results.md
+       - .aiwg/reports/slo-compliance.md
+
+       Generate comprehensive optimization report:
+
+       # Performance Optimization Report
+
+       ## Executive Summary
+       - Trigger: {optimization-trigger}
+       - Duration: {start} to {end}
+       - Overall improvement: {X}%
+       - SLO compliance: {PASS|PARTIAL|FAIL}
+
+       ## Performance Improvements
+
+       ### Before vs After Metrics
+       | Metric | Before | After | Improvement |
+       |--------|--------|-------|-------------|
+       | p50 Latency | Xms | Yms | Z% |
+       | p95 Latency | Xms | Yms | Z% |
+       | p99 Latency | Xms | Yms | Z% |
+       | Throughput | X RPS | Y RPS | Z% |
+       | Error Rate | X% | Y% | Z% |
+
+       ## Optimizations Implemented
+       {List each optimization with impact}
+
+       ## ROI Analysis
+       - Development effort: {hours/days}
+       - Infrastructure cost change: ${amount}/month
+       - User experience impact: {metrics}
+       - Business impact: {revenue/conversion improvement}
+
+       ## Lessons Learned
+       - What worked well
+       - What didn't work
+       - Recommendations for future
+
+       ## Next Steps
+       - Additional optimization opportunities
+       - Monitoring improvements needed
+       - Follow-up schedule
+
+       Output: .aiwg/reports/optimization-summary.md
+       """
+   )
+   ```
+
+3. **Archive Working Files**:
+   ```
+   # You do this directly
+   Archive working files to: .aiwg/archive/{date}/performance-optimization/
+   ```
+
+**Communicate Progress**:
+```
+⏳ Generating final reports...
+✓ SLO compliance validated: {PASS|PARTIAL|FAIL}
+✓ Optimization summary: .aiwg/reports/optimization-summary.md
+  - Overall improvement: {X}%
+  - p95 latency: {before}ms → {after}ms
+  - Throughput: {before} → {after} RPS
 ```
 
-### Algorithm Optimization
+## Quality Gates
 
-**Time Complexity Reduction**:
-- Replace O(n²) with O(n log n) or O(n) algorithms
-- Use appropriate data structures (hash maps vs lists)
-- Implement early termination conditions
-- Use lazy evaluation
-
-**Expected Impact**: 10-1000x performance improvement depending on data size
-
-**Example**:
-```python
-# Before: O(n²) nested loop
-matches = []
-for user in users:
-    for item in items:
-        if user.id == item.user_id:
-            matches.append((user, item))
-
-# After: O(n) hash map
-user_map = {user.id: user for user in users}
-matches = [(user_map[item.user_id], item) for item in items if item.user_id in user_map]
-# Result: 1000ms → 10ms on 10K records (100x improvement)
-```
-
-### Asynchronous Processing
-
-**Background Jobs**:
-- Move slow operations to background jobs (email, reports)
-- Use message queues (RabbitMQ, SQS, Kafka)
-- Implement job retry and failure handling
-- Provide status tracking for users
-
-**Expected Impact**: 90-99% latency reduction for user-facing operations
-
-**Example**:
-```python
-# Before: Synchronous email sending blocks request
-def register_user(user):
-    create_user(user)
-    send_welcome_email(user)  # 2 seconds
-    return "User registered"
-
-# After: Asynchronous background job
-def register_user(user):
-    create_user(user)
-    queue.enqueue(send_welcome_email, user)  # 10ms
-    return "User registered"
-# Result: 2000ms → 50ms (40x improvement)
-```
-
-### API Call Optimization
-
-**Batching and Parallelization**:
-- Batch multiple API calls into one request
-- Execute independent API calls in parallel
-- Implement request coalescing (deduplicate identical requests)
-- Use HTTP/2 multiplexing
-
-**Expected Impact**: 50-90% latency reduction for API-bound operations
-
-**Example**:
-```python
-# Before: Sequential API calls
-user = api.get_user(user_id)         # 100ms
-orders = api.get_orders(user_id)     # 100ms
-reviews = api.get_reviews(user_id)   # 100ms
-# Total: 300ms
-
-# After: Parallel API calls
-results = await asyncio.gather(
-    api.get_user(user_id),
-    api.get_orders(user_id),
-    api.get_reviews(user_id)
-)
-# Total: 100ms (3x improvement)
-```
-
-### Resource Pool Management
-
-**Connection Pooling**:
-- Reuse database connections (avoid connection overhead)
-- Tune pool size based on load (not too small, not too large)
-- Implement connection health checks
-- Use connection timeout and retry logic
-
-**Expected Impact**: 20-50% latency reduction by avoiding connection overhead
-
-## Service Level Objectives (SLO) Framework
-
-### Latency SLOs
-
-**Definition**: Time to respond to user requests
-
-**Measurement**:
-- p50 (median): 50% of requests faster than X ms
-- p95: 95% of requests faster than Y ms
-- p99: 99% of requests faster than Z ms
-
-**Example SLOs**:
-- API endpoint: p95 < 200ms, p99 < 500ms
-- Page load: p95 < 2s, p99 < 5s
-- Background job: p95 < 30s, p99 < 60s
-
-### Throughput SLOs
-
-**Definition**: Number of requests handled per second
-
-**Measurement**:
-- Requests per second (RPS)
-- Transactions per second (TPS)
-
-**Example SLOs**:
-- API endpoint: 1000 RPS sustained, 5000 RPS peak
-- Database: 10,000 TPS sustained, 50,000 TPS peak
-
-### Availability SLOs
-
-**Definition**: Percentage of time service is operational
-
-**Measurement**:
-- Uptime percentage (99.9% = 43 minutes downtime/month)
-- Error rate (% of requests resulting in errors)
-
-**Example SLOs**:
-- Critical service: 99.95% uptime (21 minutes downtime/month)
-- Non-critical service: 99.5% uptime (3.6 hours downtime/month)
-
-### Error Budget
-
-**Definition**: Allowable failure rate before violating SLO
-
-**Calculation**:
-- 99.9% SLO = 0.1% error budget
-- 1M requests/month = 1000 failed requests allowed
-
-**Usage**:
-- If error budget exhausted: STOP feature work, focus on reliability
-- If error budget healthy: OK to take risks (new features, experiments)
-
-## Load Testing Strategies
-
-### Baseline Load Test
-**Goal**: Establish normal performance under typical load
-
-**Configuration**:
-- Virtual users: Average concurrent users
-- Duration: 15-30 minutes
-- Ramp-up: Gradual increase to avoid cold start effects
-
-### Stress Test
-**Goal**: Identify breaking point and failure modes
-
-**Configuration**:
-- Virtual users: Increase until system fails
-- Duration: Until failure or 2x peak capacity
-- Monitor: Error rate, response time, resource utilization
-
-### Soak Test
-**Goal**: Validate stability under sustained load
-
-**Configuration**:
-- Virtual users: Average load
-- Duration: 4-24 hours
-- Monitor: Memory leaks, resource exhaustion, degradation over time
-
-### Spike Test
-**Goal**: Validate handling of sudden traffic spikes
-
-**Configuration**:
-- Virtual users: Sudden jump from low to high load
-- Duration: 5-10 minute spike
-- Monitor: Auto-scaling response, error rate during spike
-
-### Capacity Planning Test
-**Goal**: Forecast infrastructure needs for future growth
-
-**Configuration**:
-- Virtual users: Projected future load (3x, 5x, 10x)
-- Duration: 30-60 minutes per scenario
-- Monitor: Resource utilization, cost per transaction
-
-## Performance Metrics to Track
-
-### Application Metrics
-- **Response Time**: p50, p95, p99 latency (milliseconds)
-- **Throughput**: Requests per second (RPS)
-- **Error Rate**: % of requests resulting in errors
-- **Concurrency**: Concurrent requests being processed
-
-### Infrastructure Metrics
-- **CPU Utilization**: % CPU usage (target: <70% average)
-- **Memory Utilization**: % memory usage (target: <80% average)
-- **Disk I/O**: Read/write operations per second, latency
-- **Network I/O**: Bandwidth usage, packet loss, latency
-
-### Database Metrics
-- **Query Time**: p95, p99 query latency
-- **Connection Pool**: Active connections, wait time
-- **Cache Hit Rate**: % of queries served from cache (target: >90%)
-- **Lock Contention**: Waiting locks, deadlocks
-
-### External Service Metrics
-- **Third-Party API Latency**: Response time for external calls
-- **Third-Party Error Rate**: % of external calls failing
-- **Timeout Rate**: % of calls timing out
-
-## Output Report
-
-Generate a performance optimization summary:
-
-```markdown
-# Performance Optimization Report - {Component}
-
-**Project**: {project-name}
-**Component**: {component-name}
-**Date**: {current-date}
-**Trigger**: {optimization-trigger}
-**Status**: {COMPLETE | IN_PROGRESS | BLOCKED}
-
-## Optimization Overview
-
-**Business Justification**: {why optimization needed}
-**Optimization Timeline**: {start-date} to {end-date}
-
-## Performance Baseline
-
-### SLI Metrics (Before Optimization)
-- **p50 Latency**: {value}ms
-- **p95 Latency**: {value}ms
-- **p99 Latency**: {value}ms
-- **Throughput**: {value} RPS
-- **Error Rate**: {percentage}%
-
-### SLO Targets
-- **p95 Latency Target**: <{value}ms
-- **Throughput Target**: >{value} RPS
-- **Error Rate Target**: <{percentage}%
-- **Availability Target**: {percentage}%
-
-### SLO Compliance (Before)
-- p95 Latency: {PASS | FAIL} ({value}ms vs {target}ms)
-- Throughput: {PASS | FAIL} ({value} vs {target} RPS)
-- Error Rate: {PASS | FAIL} ({percentage}% vs {target}%)
-
-## Bottleneck Analysis
-
-### Identified Bottlenecks
-1. **{bottleneck-name}**
-   - Impact: {percentage}% of total latency
-   - Root Cause: {description}
-   - Evidence: {profiling data, traces, logs}
-
-2. **{bottleneck-name}**
-   - Impact: {percentage}% of total latency
-   - Root Cause: {description}
-   - Evidence: {profiling data, traces, logs}
-
-3. **{bottleneck-name}**
-   - Impact: {percentage}% of total latency
-   - Root Cause: {description}
-   - Evidence: {profiling data, traces, logs}
-
-## Optimizations Implemented
-
-### Optimization 1: {optimization-title}
-- **Type**: {database | caching | algorithm | async | API}
-- **Effort**: {Low | Medium | High}
-- **Estimated Impact**: {latency reduction | throughput increase}
-- **Implementation**: {brief description}
-
-**Hypothesis**: If we {action}, then we expect {measurable outcome}
-
-**Results**:
-- Before: {metric} = {value}
-- After: {metric} = {value}
-- Improvement: {percentage}% or {multiplier}x
-
-**Status**: {IMPLEMENTED | IN_PROGRESS | REJECTED}
-
-### Optimization 2: {optimization-title}
-{repeat structure for each optimization}
-
-## Load Test Results
-
-### Baseline Load Test
-- **Virtual Users**: {count}
-- **Duration**: {minutes}
-- **RPS**: {value}
-- **p95 Latency**: {value}ms
-- **Error Rate**: {percentage}%
-- **Status**: {PASS | FAIL}
-
-### Stress Test
-- **Breaking Point**: {count} virtual users or {value} RPS
-- **Failure Mode**: {description}
-- **Resource Bottleneck**: {CPU | Memory | Database | Network}
-
-### Soak Test
-- **Duration**: {hours}
-- **Memory Leak Detected**: {YES | NO}
-- **Performance Degradation**: {percentage}% over time
-- **Status**: {PASS | FAIL}
-
-## Performance Improvements
-
-### SLI Metrics (After Optimization)
-- **p50 Latency**: {value}ms (baseline: {value}ms, improvement: {percentage}%)
-- **p95 Latency**: {value}ms (baseline: {value}ms, improvement: {percentage}%)
-- **p99 Latency**: {value}ms (baseline: {value}ms, improvement: {percentage}%)
-- **Throughput**: {value} RPS (baseline: {value} RPS, improvement: {percentage}%)
-- **Error Rate**: {percentage}% (baseline: {percentage}%, improvement: {percentage}%)
-
-### SLO Compliance (After)
-- p95 Latency: {PASS | FAIL} ({value}ms vs {target}ms)
-- Throughput: {PASS | FAIL} ({value} vs {target} RPS)
-- Error Rate: {PASS | FAIL} ({percentage}% vs {target}%)
-
-### ROI Analysis
-- **Development Effort**: {hours} or {days}
-- **Infrastructure Cost Savings**: ${value}/month
-- **User Experience Improvement**: {metric improvement}
-- **Business Impact**: {revenue increase, churn reduction, etc.}
-
-## Production Monitoring
-
-**Monitoring Period**: {start-date} to {end-date} ({days} days)
-
-**Metrics Stability**:
-- [ ] p95 latency within ±10% of target
-- [ ] No performance regressions detected
-- [ ] Error rate stable
-- [ ] No new production incidents
-
-## Lessons Learned
-
-**What Worked Well**:
-{list successful optimization strategies}
-
-**What Didn't Work**:
-{list failed optimization attempts and why}
-
-**Recommendations**:
-{recommendations for future optimization work}
-
-## Next Steps
-
-1. {Step 1}
-2. {Step 2}
-3. {Step 3}
-
-**Next Optimization Target**: {component or bottleneck}
-**Next Review Date**: {date}
-```
-
-## Integration with Other Flows
-
-### With Gate Checks
-- Performance SLO compliance is gate criterion
-- Load test results reviewed at phase gates
-- Performance degradation blocks release
-
-### With Architecture Evolution
-- Performance optimization may trigger architecture changes
-- Performance results inform architecture decisions
-- ADRs created for significant optimizations
-
-### With Monitoring
-- Performance metrics continuously monitored in production
-- SLO violations trigger optimization flow
-- Error budget tracking informs risk-taking
-
-## Common Failure Modes
-
-### Premature Optimization
-**Symptoms**: Optimizing before identifying real bottleneck
-
-**Remediation**:
-1. Always profile first before optimizing
-2. Measure before/after to validate improvement
-3. Focus on top 3 bottlenecks (80/20 rule)
-4. Don't sacrifice readability for micro-optimizations
-
-### Optimization Without Measurement
-**Symptoms**: Can't prove optimization worked, no baseline
-
-**Remediation**:
-1. Establish baseline before optimization
-2. Add performance tests to regression suite
-3. Monitor metrics before and after deployment
-4. Validate improvement with load tests
-
-### Load Test Doesn't Match Production
-**Symptoms**: Performance good in test, bad in production
-
-**Remediation**:
-1. Use production-like data volumes
-2. Replicate production traffic patterns
-3. Test with production-like infrastructure
-4. Include realistic third-party API latency
-
-### Optimizing the Wrong Metric
-**Symptoms**: Optimized latency but users care about throughput
-
-**Remediation**:
-1. Identify user-facing metrics (Core Web Vitals, business KPIs)
-2. Align SLOs with business objectives
-3. Validate optimization impact with user feedback
-4. Monitor business metrics, not just technical metrics
-
-## Success Criteria
-
-This command succeeds when:
+Before marking workflow complete, verify:
 - [ ] Performance baseline established with SLOs
-- [ ] Bottlenecks identified through profiling
-- [ ] Optimizations implemented and measured
-- [ ] Load tests validate improvement
-- [ ] SLOs met consistently in production
-- [ ] Performance report generated with ROI analysis
+- [ ] Bottlenecks identified and prioritized
+- [ ] Optimizations implemented with measurements
+- [ ] Load tests validate improvements
+- [ ] SLO compliance validated
+- [ ] ROI analysis completed
+
+## User Communication
+
+**At start**: Confirm understanding and list deliverables
+
+```
+Understood. I'll orchestrate the performance optimization flow.
+
+This will analyze and optimize:
+- Performance bottlenecks
+- Database queries
+- Code efficiency
+- Infrastructure configuration
+
+Deliverables:
+- Performance baseline report
+- Bottleneck analysis
+- Optimization plan
+- Load test results
+- SLO compliance report
+- Optimization summary with ROI
+
+Expected duration: 20-30 minutes.
+
+Starting optimization workflow...
+```
+
+**During**: Update progress with metrics
+
+```
+✓ = Complete
+⏳ = In progress
+📈 = Improvement measured
+⚠️ = Issue found
+```
+
+**At end**: Summary with results
+
+```
+─────────────────────────────────────────────
+Performance Optimization Complete
+─────────────────────────────────────────────
+
+**Overall Status**: SUCCESS
+**SLO Compliance**: PASS
+
+**Performance Improvements**:
+- p95 Latency: 450ms → 180ms (-60%)
+- Throughput: 500 → 1200 RPS (+140%)
+- Error Rate: 2.1% → 0.3% (-86%)
+
+**Key Optimizations**:
+✓ Database: Added 3 indexes, query optimization
+✓ Caching: Redis layer, 85% cache hit rate
+✓ Code: Async processing, algorithm improvements
+✓ Infrastructure: CDN, connection pooling
+
+**ROI Analysis**:
+- Development: 3 days
+- Cost Impact: -$800/month (reduced instances)
+- User Impact: Page loads 2.5x faster
+
+**Artifacts Generated**:
+- Performance baseline: .aiwg/reports/performance-baseline.md
+- Bottleneck analysis: .aiwg/reports/bottleneck-analysis.md
+- Optimization plan: .aiwg/planning/optimization-plan.md
+- Load test results: .aiwg/testing/load-test-results.md
+- SLO compliance: .aiwg/reports/slo-compliance.md
+- Final summary: .aiwg/reports/optimization-summary.md
+
+**Next Steps**:
+- Monitor production metrics for 7 days
+- Schedule follow-up optimization cycle in 30 days
+- Consider implementing observability improvements
+─────────────────────────────────────────────
+```
 
 ## Error Handling
 
-**SLO Breach**:
-- Report: "SLO breached: {metric} {value} exceeds target {target}"
-- Action: "Identify bottleneck and implement optimization"
-- Escalation: "If error budget exhausted, STOP feature work"
+**If SLO Breach Critical**:
+```
+❌ Critical SLO breach detected
 
-**Load Test Failure**:
-- Report: "Load test failed: {failure-mode}"
-- Action: "Identify breaking point and optimize bottleneck"
-- Recommendation: "Do not proceed to production"
+Metric: {metric}
+Current: {value}
+Target: {target}
+Impact: {user/business impact}
 
-**Performance Regression**:
-- Report: "Performance regression detected: {metric} degraded by {percentage}%"
-- Action: "Rollback change and investigate root cause"
-- Command: "/project:troubleshooting-guide performance-regression"
+Emergency optimization required:
+1. Implement quick wins immediately
+2. Consider rollback if regression
+3. Escalate to stakeholders
 
-**Optimization Not Effective**:
-- Report: "Optimization did not improve {metric} as expected"
-- Action: "Re-profile to identify actual bottleneck"
-- Recommendation: "Document failed optimization as lesson learned"
+Continuing with emergency optimization protocol...
+```
+
+**If Optimization Failed**:
+```
+⚠️ Optimization did not improve performance
+
+Optimization: {description}
+Expected: {X}% improvement
+Actual: {Y}% degradation
+
+Actions:
+1. Rolling back change
+2. Re-analyzing bottleneck
+3. Trying alternative approach
+
+Documenting in lessons learned...
+```
+
+**If Load Test Failure**:
+```
+❌ Load test failed
+
+Test: {scenario}
+Failure: {description}
+Breaking point: {metric}
+
+Impact:
+- Cannot handle expected load
+- SLO targets not achievable
+
+Recommendations:
+1. Infrastructure scaling required
+2. Additional optimizations needed
+3. Adjust SLO targets (with stakeholder approval)
+```
+
+## Success Criteria
+
+This orchestration succeeds when:
+- [ ] Performance baseline established with clear SLOs
+- [ ] Top bottlenecks identified through profiling
+- [ ] Prioritized optimizations implemented
+- [ ] Load tests show measurable improvement
+- [ ] SLOs met or improvement plan defined
+- [ ] ROI analysis shows positive impact
+
+## Metrics to Track
+
+**During orchestration**:
+- Optimization velocity: optimizations/day
+- Performance improvement rate: % improvement/optimization
+- Test coverage: % of critical paths tested
+- SLO compliance rate: % of SLOs met
+- Error budget consumption: before vs after
 
 ## References
 
-- Performance templates: `deployment/sli-card.md`, `deployment/slo-card.md`
-- Load testing: `test/load-test-plan-template.md`, `test/performance-test-card.md`
-- Profiling: `analysis-design/performance-profile-card.md`
-- Site Reliability Engineering book by Google (external reference)
+**Templates** (via $AIWG_ROOT):
+- SLI Card: `templates/deployment/sli-card.md`
+- SLO Card: `templates/deployment/slo-card.md`
+- Performance Profile: `templates/analysis-design/performance-profile-card.md`
+- Load Test Plan: `templates/test/load-test-plan-template.md`
+- Performance Test Card: `templates/test/performance-test-card.md`
+- Option Matrix: `templates/intake/option-matrix-template.md`
+
+**Related Flows**:
+- `flow-monitoring-setup` - Establish observability
+- `flow-incident-response` - Handle performance incidents
+- `flow-capacity-planning` - Plan for scale
+
+**External References**:
+- Site Reliability Engineering (Google)
+- High Performance Browser Networking (Ilya Grigorik)

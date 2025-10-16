@@ -1,33 +1,33 @@
 ---
 description: Orchestrate Elaboration→Construction phase transition with iteration planning, team scaling, and full-scale development kickoff
-category: sdlc-management
+category: sdlc-orchestration
 argument-hint: [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Elaboration → Construction Phase Transition Flow
 
-You are an SDLC Phase Coordinator specializing in orchestrating the critical transition from Elaboration (architecture validated) to Construction (full-scale iterative development).
+**You are the Core Orchestrator** for the critical Elaboration→Construction phase transition.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-elaboration-to-construction [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Validate** Architecture Baseline Milestone (ABM) criteria met
-2. **Orchestrate** Construction phase kickoff and team scaling
-3. **Coordinate** first iteration planning (dual-track Discovery + Delivery)
-4. **Monitor** architectural stability during transition
-5. **Generate** Construction Phase Readiness Report
+When the user requests this flow (via natural language or explicit command):
 
-## Objective
-
-Transition from architecture validation to full-scale iterative development, scaling the team and processes to deliver the complete product while maintaining architectural integrity.
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
 ## Phase Transition Overview
 
 **From**: Elaboration (architecture proven, risks retired)
-**To**: Construction (full feature development, testing, deployment preparation)
+**To**: Construction (full-scale iterative development)
 
 **Key Milestone**: Construction Phase Entry
 
@@ -36,889 +36,970 @@ Transition from architecture validation to full-scale iterative development, sca
 - First 2 iterations planned with ready backlog
 - Development process tailored and team trained
 - CI/CD pipeline operational
-- Iteration 0 (infrastru
+- Iteration 0 (infrastructure) complete
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Expected Duration**: 1-2 weeks setup, 15-20 minutes orchestration
 
-**Parse Command Line**:
+## Natural Language Triggers
 
-Extract optional `--guidance` and `--interactive` parameters.
+Users may say:
+- "Transition to Construction"
+- "Start Construction phase"
+- "Begin building"
+- "Move to Construction"
+- "Scale up for Construction"
+- "Start full development"
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
+You recognize these as requests for this orchestration flow.
 
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor orchestration priorities
+
+**Examples**:
+```
+--guidance "Team scaling from 5 to 20 developers, need extensive onboarding"
+--guidance "Fast track, minimal documentation, focus on delivery"
+--guidance "Offshore team joining, need extra process documentation"
+--guidance "Complex integrations, need thorough environment setup"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: scaling, timeline, team, infrastructure
+- Adjust agent assignments (add environment-engineer for complex setup)
+- Modify artifact depth (comprehensive vs minimal documentation)
+- Influence priority ordering (infrastructure vs process focus)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 5-8 strategic questions to understand project context
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 6 strategic questions to tailor the Construction transition to your needs:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What's your team scaling plan?
+    (e.g., 5→20 developers, gradual vs immediate, onshore/offshore mix)
 
-**Resolve AIWG installation**:
+Q2: What are your infrastructure priorities?
+    (Help me focus Iteration 0 on critical infrastructure needs)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: What's your iteration cadence preference?
+    (1 week, 2 weeks, 3 weeks - affects planning depth)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: How mature is your CI/CD pipeline?
+    (Determines infrastructure setup focus)
+
+Q5: What's your biggest concern for Construction?
+    (e.g., quality, velocity, team coordination, technical debt)
+
+Q6: Do you need specialized environments?
+    (e.g., compliance environments, performance testing, security scanning)
+
+Based on your answers, I'll adjust:
+- Agent assignments (infrastructure vs process focus)
+- Iteration planning depth (detailed vs high-level)
+- Onboarding materials (comprehensive vs minimal)
+- Environment setup complexity
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance string for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Elaboration To Construction - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **ABM Validation Report**: Elaboration exit criteria → `.aiwg/reports/abm-validation-report.md`
+- **Iteration 0 Completion Report**: Infrastructure readiness → `.aiwg/reports/iteration-0-completion.md`
+- **Development Process Guide**: Tailored process → `.aiwg/planning/development-process-guide.md`
+- **Iteration Plan - Sprint 1**: First iteration → `.aiwg/planning/iteration-plan-001.md`
+- **Iteration Plan - Sprint 2**: Second iteration → `.aiwg/planning/iteration-plan-002.md`
+- **Team Onboarding Guide**: New member guide → `.aiwg/team/onboarding-guide.md`
+- **Architecture Stability Report**: Change tracking → `.aiwg/reports/architecture-stability-report.md`
+- **Construction Readiness Report**: Final go/no-go → `.aiwg/reports/construction-readiness-report.md`
 
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
+**Supporting Artifacts**:
+- Environment setup scripts
+- CI/CD pipeline configurations
+- Team RACI matrix updates
+- Dual-track workflow setup
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
+## Multi-Agent Orchestration Workflow
 
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
+### Step 1: Validate Architecture Baseline Milestone (ABM)
 
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
+**Purpose**: Verify Elaboration phase complete before starting Construction
+
+**Your Actions**:
+
+1. **Check for Required Elaboration Artifacts**:
+   ```
+   Read and verify presence of:
+   - .aiwg/architecture/software-architecture-doc.md
+   - .aiwg/architecture/adr/*.md
+   - .aiwg/requirements/supplemental-specification.md
+   - .aiwg/testing/master-test-plan.md
+   - .aiwg/risks/risk-list.md (≥70% retired)
+   ```
+
+2. **Launch ABM Validation Agent**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Validate Architecture Baseline Milestone criteria",
+       prompt="""
+       Read gate criteria from: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/gate-criteria-by-phase.md
+
+       Validate ABM criteria:
+       - Software Architecture Document BASELINED
+       - Executable architecture baseline OPERATIONAL
+       - All P0/P1 architectural risks RETIRED/MITIGATED
+       - ≥70% of all risks retired or mitigated
+       - Requirements baseline ESTABLISHED (≥10 use cases)
+       - Master Test Plan APPROVED
+       - Development Case tailored
+       - Test environments OPERATIONAL
+
+       Generate ABM Validation Report:
+       - Status: PASS | FAIL
+       - Criteria checklist with evidence
+       - Decision: GO to Construction | NO-GO
+       - Gaps (if NO-GO): List missing artifacts
+
+       Save to: .aiwg/reports/abm-validation-report.md
+       """
+   )
+   ```
+
+3. **Decision Point**:
+   - If ABM PASS → Continue to Step 2
+   - If ABM FAIL → Report gaps, recommend extending Elaboration
+   - Escalate to user for executive decision if criteria partially met
+
+**Communicate Progress**:
+```
+✓ Initialized ABM validation
+⏳ Validating Elaboration exit criteria...
+✓ ABM Validation complete: [PASS | FAIL]
 ```
 
-**Apply Guidance**:
+### Step 2: Execute Iteration 0 (Infrastructure Setup)
 
-Parse guidance for keywords and adjust execution:
+**Purpose**: Scale infrastructure for full Construction team
 
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
+**Your Actions**:
 
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
+1. **Launch Infrastructure Setup Agents** (parallel):
+   ```
+   # Agent 1: DevOps Engineer
+   Task(
+       subagent_type="devops-engineer",
+       description="Setup CI/CD pipeline and environments",
+       prompt="""
+       Setup Construction infrastructure:
 
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
+       CI/CD Pipeline:
+       - Build automation (compile, package, containerize)
+       - Test automation (unit, integration, E2E)
+       - Deployment automation (dev, test, staging)
+       - Quality gates (coverage, security scans)
 
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
+       Environments:
+       - Development: Per-developer or shared
+       - Test: Shared integration environment
+       - Staging: Production-like validation
+       - Production: Provisioned (not deployed)
 
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
+       Document setup in: .aiwg/working/construction/infrastructure/ci-cd-setup.md
+       """
+   )
 
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
+   # Agent 2: Build Engineer
+   Task(
+       subagent_type="build-engineer",
+       description="Configure build and artifact management",
+       prompt="""
+       Configure build infrastructure:
 
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
+       - Build scripts and configurations
+       - Dependency management
+       - Artifact repository setup
+       - Version control branching strategy
+       - Build optimization (caching, parallelization)
 
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
+       Document in: .aiwg/working/construction/infrastructure/build-config.md
+       """
+   )
 
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
+   # Agent 3: Reliability Engineer
+   Task(
+       subagent_type="reliability-engineer",
+       description="Setup monitoring and observability",
+       prompt="""
+       Configure monitoring infrastructure:
+
+       - Application metrics (APM)
+       - Infrastructure metrics
+       - Log aggregation and retention
+       - Alerting rules and escalation
+       - Dashboard creation
+       - SLO/SLI definitions
+
+       Document in: .aiwg/working/construction/infrastructure/monitoring-setup.md
+       """
+   )
+
+   # Agent 4: Environment Engineer
+   Task(
+       subagent_type="environment-engineer",
+       description="Setup development environment and tools",
+       prompt="""
+       Configure development environment:
+
+       - IDE configurations and plugins
+       - Local development setup (Docker, etc)
+       - Debugging tools
+       - Code quality tools (linters, formatters)
+       - Security scanning tools
+       - Collaboration tools (Slack, Jira, Wiki)
+
+       Create developer setup guide: .aiwg/working/construction/infrastructure/dev-environment-guide.md
+       """
+   )
+   ```
+
+2. **Synthesize Infrastructure Report**:
+   ```
+   Task(
+       subagent_type="devops-engineer",
+       description="Create Iteration 0 Completion Report",
+       prompt="""
+       Read all infrastructure setup documents:
+       - .aiwg/working/construction/infrastructure/*.md
+
+       Create comprehensive Iteration 0 Completion Report:
+
+       1. Version Control (repository, branching, access)
+       2. CI/CD Pipeline (build, test, deploy status)
+       3. Environments (dev, test, staging operational status)
+       4. Monitoring & Observability (metrics, logs, alerts)
+       5. Collaboration Tools (chat, tracking, documentation)
+       6. Security (secrets management, scanning)
+       7. Developer Tools (IDE, debugging, quality)
+
+       Include:
+       - Checklist of completed items
+       - Outstanding items (if any)
+       - Access instructions for team
+       - Overall status: COMPLETE | INCOMPLETE
+
+       Save to: .aiwg/reports/iteration-0-completion.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Setting up Construction infrastructure (Iteration 0)...
+  ✓ CI/CD pipeline configured
+  ✓ Environments provisioned (dev, test, staging)
+  ✓ Monitoring and observability operational
+  ✓ Development tools configured
+✓ Iteration 0 complete: Infrastructure ready for full team
 ```
 
-cture) complete
+### Step 3: Tailor Development Process and Create Onboarding
 
-## Workflow Steps
+**Purpose**: Finalize process for Construction and prepare team scaling
 
-### Step 1: Validate Elaboration Exit Criteria (ABM)
+**Your Actions**:
 
-Before starting Construction, verify Architecture Baseline Milestone was achieved.
+1. **Launch Process Definition Agents** (parallel):
+   ```
+   # Agent 1: Project Manager
+   Task(
+       subagent_type="project-manager",
+       description="Tailor Development Case for Construction",
+       prompt="""
+       Create Development Process Guide:
 
-**Commands**:
-```bash
-# Validate Elaboration gate
-/project:flow-gate-check elaboration
+       Iteration Configuration:
+       - Length: {1 week | 2 weeks | 3 weeks}
+       - Ceremonies: Planning, Daily Standup, Review, Retrospective
+       - Schedules and durations
 
-# Check for required Elaboration artifacts
-ls analysis-design/software-architecture-doc-template.md
-ls requirements/supplemental-specification-template.md
-ls test/master-test-plan-template.md
-ls management/development-case-template.md
-ls environment/design-guidelines-template.md
-ls environment/programming-guidelines-template.md
+       Roles and Responsibilities:
+       - Update RACI matrix for Construction phase
+       - Define approval processes
+       - Establish escalation paths
+
+       Workflow:
+       - Definition of Ready (DoR)
+       - Definition of Done (DoD)
+       - Code review process
+       - Deployment process
+
+       Template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/development-case-template.md
+
+       Save to: .aiwg/planning/development-process-guide.md
+       """
+   )
+
+   # Agent 2: Software Implementer
+   Task(
+       subagent_type="software-implementer",
+       description="Create coding and design guidelines",
+       prompt="""
+       Document technical guidelines:
+
+       Design Guidelines:
+       - Architecture patterns to follow
+       - Component boundaries
+       - API design standards
+       - Data model conventions
+
+       Programming Guidelines:
+       - Coding standards (language-specific)
+       - Naming conventions
+       - Error handling patterns
+       - Logging standards
+       - Documentation requirements
+
+       Test Guidelines:
+       - Test naming and organization
+       - Coverage targets
+       - Test data management
+       - Mocking strategies
+
+       Save to: .aiwg/working/construction/guidelines/
+       """
+   )
+
+   # Agent 3: Human Resources Coordinator
+   Task(
+       subagent_type="human-resources-coordinator",
+       description="Create team onboarding guide",
+       prompt="""
+       Create comprehensive onboarding guide for new team members:
+
+       Week 1: Orientation
+       - Project overview and vision
+       - Architecture walkthrough
+       - Development environment setup
+       - Tool access and training
+
+       Week 2: Ramp-up
+       - Codebase tour
+       - First starter task assignment
+       - Pair programming sessions
+       - Process training
+
+       Resources:
+       - Key documentation links
+       - Team contacts and expertise areas
+       - FAQ and troubleshooting
+       - Escalation paths
+
+       Checklists:
+       - [ ] Accounts created
+       - [ ] Tools installed
+       - [ ] First commit completed
+       - [ ] Process training attended
+
+       Save to: .aiwg/team/onboarding-guide.md
+       """
+   )
+   ```
+
+2. **Plan Team Training**:
+   ```
+   Task(
+       subagent_type="training-coordinator",
+       description="Create training schedule for Construction team",
+       prompt="""
+       Design training program:
+
+       Process Training (2-4 hours):
+       - Development Case walkthrough
+       - Ceremony participation
+       - Tool usage (Jira, GitHub, Slack)
+       - Quality standards
+
+       Technical Training (as needed):
+       - Architecture overview (SAD walkthrough)
+       - Coding standards
+       - Test strategy
+       - Deployment process
+
+       Training Materials:
+       - Slide decks
+       - Recorded sessions
+       - Hands-on exercises
+       - Knowledge checks
+
+       Schedule:
+       - Session dates and times
+       - Attendee lists
+       - Completion tracking
+
+       Save to: .aiwg/team/training-schedule.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Tailoring development process...
+  ✓ Development Process Guide created
+  ✓ Technical guidelines documented
+  ✓ Team onboarding guide prepared
+  ✓ Training schedule planned
+✓ Process ready for Construction team
 ```
 
-**Exit Criteria Checklist**:
-- [ ] Software Architecture Document (SAD) BASELINED
-- [ ] Executable architecture baseline OPERATIONAL (prototype working)
-- [ ] All Show Stopper and High architectural risks RETIRED/MITIGATED
-- [ ] ≥70% of all risks retired or mitigated
-- [ ] Requirements baseline ESTABLISHED (≥10 use cases documented)
-- [ ] Master Test Plan APPROVED
-- [ ] Development Case tailored (process defined)
-- [ ] Test environments OPERATIONAL (dev, test)
+### Step 4: Plan First Two Iterations
 
-**If ABM Not Met**:
-- **Action**: Extend Elaboration phase, complete missing artifacts
-- **Command**: `/project:flow-inception-to-elaboration` (continue Elaboration)
-- **Escalation**: Contact Software Architect and Project Manager
+**Purpose**: Create detailed iteration plans with ready backlog
 
-**Output**: ABM Validation Report
-```markdown
-# Architecture Baseline Milestone Validation
+**Your Actions**:
 
-**Status**: {PASS | FAIL}
-**Date**: {current-date}
+1. **Assess Backlog Readiness**:
+   ```
+   Task(
+       subagent_type="requirements-analyst",
+       description="Validate backlog readiness for Construction",
+       prompt="""
+       Assess backlog status:
 
-## Criteria Status
-- Architecture Baselined: {YES | NO}
-- Prototype Operational: {YES | NO}
-- Risks Retired: {percentage}% (target: ≥70%)
-- Requirements Baselined: {YES | NO}
-- Test Strategy Approved: {YES | NO}
+       1. Count total backlog items
+       2. Validate Definition of Ready (DoR) for each:
+          - Use case documented
+          - Acceptance criteria defined
+          - Dependencies identified
+          - Estimates provided
+          - Risks assessed
 
-## Decision
-{GO to Construction | NO-GO - extend Elaboration}
+       3. Calculate ready backlog size (story points)
+       4. Assess backlog health:
+          - Healthy: 1.5x-2x capacity ready
+          - Marginal: 1x-1.5x capacity
+          - Starved: <1x capacity
 
-## Gaps (if NO-GO)
-{list missing artifacts or incomplete criteria}
+       Report:
+       - Total items: {count}
+       - Ready items: {count}
+       - Ready size: {story points}
+       - Health status: {HEALTHY | MARGINAL | STARVED}
+
+       Save to: .aiwg/working/construction/backlog-assessment.md
+       """
+   )
+   ```
+
+2. **Launch Iteration Planning Agents** (sequential):
+   ```
+   # Iteration 1 Planning
+   Task(
+       subagent_type="project-manager",
+       description="Plan Iteration 1 (conservative start)",
+       prompt="""
+       Create Iteration 1 Plan:
+
+       Configuration:
+       - Dates: {start} to {end}
+       - Team capacity: {story points} (80% of full - ramp-up factor)
+       - Buffer: 20% for unknowns
+
+       Work Item Selection:
+       - Prioritize: Must-have items first
+       - Include: Architecture validation items
+       - Avoid: High-risk items (save for Iteration 2+)
+       - Target: {points} including buffer
+
+       For each work item:
+       - ID and name
+       - Story points
+       - Priority (MoSCoW)
+       - Owner assignment
+       - Dependencies
+       - Acceptance criteria
+
+       Objectives:
+       - Validate development process
+       - Establish team rhythm
+       - Deliver first working features
+
+       Template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/iteration-plan-template.md
+
+       Save to: .aiwg/planning/iteration-plan-001.md
+       """
+   )
+
+   # Iteration 2 Planning
+   Task(
+       subagent_type="project-manager",
+       description="Plan Iteration 2 (baseline velocity)",
+       prompt="""
+       Create Iteration 2 Plan:
+
+       Configuration:
+       - Dates: {start} to {end}
+       - Team capacity: {story points} (100% - full capacity)
+       - Buffer: 15% for unknowns
+
+       Work Item Selection:
+       - Continue priority order
+       - Include: More complex items
+       - Consider: Technical debt items
+       - Target: {points} including buffer
+
+       For each work item:
+       - ID and name
+       - Story points
+       - Priority (MoSCoW)
+       - Owner assignment
+       - Dependencies
+       - Acceptance criteria
+
+       Objectives:
+       - Establish baseline velocity
+       - Tackle complex features
+       - Refine estimation accuracy
+
+       Template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/iteration-plan-template.md
+
+       Save to: .aiwg/planning/iteration-plan-002.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Planning first 2 iterations...
+  ✓ Backlog assessed: {status}
+  ✓ Iteration 1 planned: {points} points
+  ✓ Iteration 2 planned: {points} points
+✓ Iteration planning complete
 ```
 
-### Step 2: Conduct Iteration 0 (Infrastructure Setup)
+### Step 5: Setup Dual-Track Workflow
 
-Prepare infrastructure, tools, and environments for full Construction team.
+**Purpose**: Establish parallel Discovery and Delivery tracks
 
-**Iteration 0 Objectives**:
-- Scale infrastructure for full team (not just prototype team)
-- Operationalize CI/CD for all developers
-- Set up collaboration tools (Slack, Jira, Confluence, GitHub)
-- Establish monitoring and logging infrastructure
-- Create onboarding materials for new team members
+**Your Actions**:
 
-**Commands**:
-```bash
-# Validate CI/CD pipeline
-git status
-npm run build  # or equivalent
-npm run test
-npm run deploy:test
+1. **Configure Dual-Track Process**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Setup dual-track Discovery/Delivery workflow",
+       prompt="""
+       Configure dual-track workflow:
 
-# Check environments
-curl {dev-endpoint}/health
-curl {test-endpoint}/health
-curl {staging-endpoint}/health
+       Discovery Track (Iteration N+1):
+       - Team: Requirements Analyst, Product Owner, Domain Experts
+       - Focus: Prepare backlog for next iteration
+       - Deliverables: Ready work items passing DoR
+       - Timing: 1 iteration ahead of Delivery
 
-# Validate monitoring
-# Check monitoring dashboards operational
-# Check log aggregation working
-# Check alert routing configured
+       Delivery Track (Iteration N):
+       - Team: Developers, Testers, Component Owners
+       - Focus: Implement current iteration work
+       - Deliverables: Working software increments
+       - Timing: Current iteration
+
+       Synchronization:
+       - Handoff: End of Discovery N → Start of Delivery N
+       - Gate: Definition of Ready (DoR)
+       - Cadence: Every iteration boundary
+
+       Shared Resources:
+       - Software Architect (design reviews)
+       - Security Architect (security reviews)
+       - Project Manager (coordination)
+
+       Document workflow in: .aiwg/planning/dual-track-workflow.md
+       """
+   )
+   ```
+
+2. **Launch Initial Tracks**:
+   ```
+   # Start Discovery for Iteration 3
+   Task(
+       subagent_type="requirements-analyst",
+       description="Begin Discovery track for Iteration 3",
+       prompt="""
+       Initiate Discovery for Iteration 3:
+
+       1. Review product backlog priorities
+       2. Select candidate items for Iteration 3
+       3. Begin requirement elaboration:
+          - User stories
+          - Acceptance criteria
+          - Interface specifications
+          - Data contracts
+
+       4. Identify dependencies and risks
+       5. Coordinate with architects for feasibility
+
+       Target: Prepare {capacity * 1.5} story points
+       Due: Before Iteration 2 ends
+
+       Track progress in: .aiwg/working/discovery/iteration-003/
+       """
+   )
+
+   # Confirm Delivery ready for Iteration 1
+   Task(
+       subagent_type="software-implementer",
+       description="Confirm Delivery track ready for Iteration 1",
+       prompt="""
+       Validate Delivery readiness for Iteration 1:
+
+       1. Confirm all Iteration 1 work items ready (DoR met)
+       2. Verify team assignments complete
+       3. Check development environment access
+       4. Validate CI/CD pipeline operational
+       5. Confirm daily standup scheduled
+
+       Report readiness status
+
+       Save to: .aiwg/working/delivery/iteration-001/readiness.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Setting up dual-track workflow...
+  ✓ Discovery track configured (Iteration 3)
+  ✓ Delivery track ready (Iteration 1)
+  ✓ Synchronization points established
+✓ Dual-track workflow operational
 ```
 
-**Infrastructure Checklist**:
-- [ ] Version Control: Repository structure, branching strategy, access control
-- [ ] CI/CD Pipeline: Build automation, test automation, deployment automation
-- [ ] Environments: Dev (per developer), Test (shared), Staging (production-like)
-- [ ] Monitoring: Application metrics, infrastructure metrics, dashboards
-- [ ] Logging: Structured logging, log aggregation, log retention
-- [ ] Collaboration: Team chat, issue tracking, documentation wiki
-- [ ] Security: Secrets management, vulnerability scanning, code scanning
-- [ ] Development Tools: IDEs, linters, formatters, debugging tools
+### Step 6: Monitor Architecture Stability
 
-**Agents to Coordinate**:
-- **DevOps Engineer**: CI/CD, infrastructure, environments
-- **Build Engineer**: Build automation, artifact packaging
-- **Reliability Engineer**: Monitoring, alerting, SLO setup
-- **Environment Engineer**: Development environment setup, tooling
+**Purpose**: Ensure architecture remains stable during Construction startup
 
-**Output**: Iteration 0 Completion Report
-```markdown
-# Iteration 0 Completion Report
+**Your Actions**:
 
-**Project**: {project-name}
-**Date**: {date}
+```
+Task(
+    subagent_type="architecture-designer",
+    description="Assess architecture stability for Construction",
+    prompt="""
+    Analyze architecture stability:
 
-## Infrastructure Status
+    1. Review architectural changes since ABM:
+       - Count new ADRs created
+       - Identify component boundary changes
+       - Check technology stack modifications
+       - Assess integration changes
 
-### Version Control
-- Repository: {URL}
-- Branching Strategy: {strategy} (e.g., Git Flow, Trunk-Based)
-- Access Control: {configured}
+    2. Calculate metrics:
+       - Architectural Change Rate: % changes (target <10%)
+       - ADR Frequency: ADRs per iteration
+       - Component Violations: boundary breaches (target 0)
+       - Prototype Divergence: % rewritten (target <30%)
 
-### CI/CD Pipeline
-- Build: {AUTOMATED | MANUAL}
-- Test: {AUTOMATED | MANUAL}
-- Deploy: {AUTOMATED | MANUAL}
-- Pipeline Status: {OPERATIONAL | INCOMPLETE}
+    3. Identify risks:
+       - Architecture drift indicators
+       - Instability patterns
+       - Technical debt accumulation
 
-### Environments
-- Development: {count} environments (per-developer or shared)
-- Test: {OPERATIONAL | INCOMPLETE}
-- Staging: {OPERATIONAL | INCOMPLETE}
-- Production: {PROVISIONED | NOT YET}
+    4. Recommendations:
+       - Continue as-is
+       - Conduct architecture review
+       - Adjust Construction approach
 
-### Monitoring & Observability
-- Application Metrics: {CONFIGURED | INCOMPLETE}
-- Infrastructure Metrics: {CONFIGURED | INCOMPLETE}
-- Dashboards: {OPERATIONAL | INCOMPLETE}
-- Alerting: {CONFIGURED | INCOMPLETE}
-- Log Aggregation: {OPERATIONAL | INCOMPLETE}
+    Generate Architecture Stability Report:
+    - Overall status: STABLE | UNSTABLE
+    - Metrics with targets
+    - Risk assessment
+    - Action items
 
-### Collaboration Tools
-- Team Chat: {tool-name} - {CONFIGURED}
-- Issue Tracking: {tool-name} - {CONFIGURED}
-- Documentation: {tool-name} - {CONFIGURED}
-
-### Security
-- Secrets Management: {tool-name} - {CONFIGURED}
-- Vulnerability Scanning: {CONFIGURED | INCOMPLETE}
-- Code Scanning: {CONFIGURED | INCOMPLETE}
-
-## Iteration 0 Checklist
-- [ ] All infrastructure operational
-- [ ] All team members have access
-- [ ] Developer onboarding guide created
-- [ ] Build/test/deploy validated end-to-end
-- [ ] Monitoring dashboards accessible
-
-**Iteration 0 Status**: {COMPLETE | INCOMPLETE}
+    Save to: .aiwg/reports/architecture-stability-report.md
+    """
+)
 ```
 
-### Step 3: Tailor Development Process and Train Team
-
-Finalize Development Case, train team on process, establish ceremonies.
-
-**Commands**:
-```bash
-# Validate Development Case exists
-cat management/development-case-template.md
-
-# Check for guidelines
-cat environment/design-guidelines-template.md
-cat environment/programming-guidelines-template.md
-cat environment/test-guidelines-template.md
+**Communicate Progress**:
+```
+⏳ Monitoring architecture stability...
+✓ Architecture stability: [STABLE | UNSTABLE]
+  - Change rate: {X}% (target <10%)
+  - Component violations: {N} (target 0)
 ```
 
-**Development Case Tailoring**:
-- **Iteration Length**: 1 week? 2 weeks? (decide based on team size, project complexity)
-- **Ceremonies**:
-  - Daily Standup: 15 min, what did, what doing, blockers
-  - Iteration Planning: 2-4 hours, plan next iteration
-  - Demo/Review: 1-2 hours, show completed work to stakeholders
-  - Retrospective: 1-2 hours, lessons learned, improvements
-- **Roles and Responsibilities**: RACI matrix updated for Construction
-- **Artifact Requirements**: Which templates are required vs optional
-- **Review and Approval Process**:
-  - Peer review: All code reviewed by ≥1 peer
-  - Architectural review: Major changes reviewed by architect
-  - Security review: Security-sensitive changes reviewed by Security Architect
+### Step 7: Generate Construction Readiness Report
 
-**Team Training**:
-- **Process Training** (2-4 hours)
-  - Development Case walkthrough
-  - Iteration workflow
-  - Ceremony participation
-  - Tool usage (Jira, GitHub, Slack)
-- **Technical Training** (as needed)
-  - Architecture overview (SAD walkthrough)
-  - Coding standards
-  - Test strategy
-  - Deployment process
-- **Onboarding** (for new team members)
-  - Codebase tour
-  - Development environment setup
-  - First task assignment (starter task)
+**Purpose**: Final readiness assessment and go/no-go decision
 
-**Agents to Coordinate**:
-- **Project Manager**: Process definition, ceremony facilitation
-- **Software Architect**: Architecture training, design reviews
-- **Test Architect**: Test strategy training, quality standards
-- **Component Owners**: Domain-specific training
+**Your Actions**:
 
-**Output**: Development Process Readiness Report
-```markdown
-# Development Process Readiness Report
+```
+Task(
+    subagent_type="project-manager",
+    description="Generate Construction Phase Readiness Report",
+    prompt="""
+    Read all transition artifacts:
+    - .aiwg/reports/abm-validation-report.md
+    - .aiwg/reports/iteration-0-completion.md
+    - .aiwg/planning/development-process-guide.md
+    - .aiwg/planning/iteration-plan-001.md
+    - .aiwg/planning/iteration-plan-002.md
+    - .aiwg/team/onboarding-guide.md
+    - .aiwg/reports/architecture-stability-report.md
 
-**Project**: {project-name}
-**Date**: {date}
+    Generate comprehensive Construction Readiness Report:
 
-## Development Case
+    1. Overall Status
+       - Construction Readiness: READY | NOT READY
+       - Decision: PROCEED | DEFER
 
-**Iteration Length**: {duration} (1 week, 2 weeks, etc.)
+    2. Gate Validation (6 criteria)
+       - ABM Complete: {status}
+       - Infrastructure Ready: {status}
+       - Process Defined: {status}
+       - Iterations Planned: {status}
+       - Dual-Track Setup: {status}
+       - Architecture Stable: {status}
 
-**Ceremonies**:
-- Daily Standup: {schedule}
-- Iteration Planning: {schedule}
-- Demo/Review: {schedule}
-- Retrospective: {schedule}
+    3. Team Readiness
+       - Team size and scaling status
+       - Training completion
+       - Onboarding materials ready
 
-**RACI Matrix**: {link to RACI}
+    4. Infrastructure Readiness
+       - CI/CD operational
+       - Environments ready
+       - Monitoring configured
 
-## Guidelines
+    5. Backlog Readiness
+       - Ready backlog size vs capacity
+       - DoR compliance
+       - First 2 iterations planned
 
-- Design Guidelines: {COMPLETE | INCOMPLETE}
-- Programming Guidelines: {COMPLETE | INCOMPLETE}
-- Test Guidelines: {COMPLETE | INCOMPLETE}
+    6. Decision and Next Steps
+       - If READY: Kickoff instructions
+       - If NOT READY: Gap closure plan
 
-## Team Training
+    7. Success Metrics to Track
+       - Velocity targets
+       - Quality targets
+       - Schedule targets
 
-**Process Training**: {COMPLETE | SCHEDULED | INCOMPLETE}
-- Date: {date}
-- Attendees: {count}/{total}
-
-**Technical Training**: {COMPLETE | SCHEDULED | INCOMPLETE}
-- Architecture Overview: {COMPLETE}
-- Coding Standards: {COMPLETE}
-- Test Strategy: {COMPLETE}
-
-**Onboarding** (for new team members):
-- Onboarding Guide: {COMPLETE | INCOMPLETE}
-- Starter Tasks: {count} tasks identified
-
-## Team Status
-
-**Team Size**:
-- Elaboration: {count} people
-- Construction: {count} people (scaled up)
-
-**Team Composition**:
-- Developers: {count}
-- Testers: {count}
-- Architect: {count}
-- Project Manager: {count}
-- Product Owner: {count}
-
-**Training Completion**: {percentage}% ({trained}/{total})
-
-## Process Checklist
-- [ ] Development Case finalized
-- [ ] Guidelines published
-- [ ] Ceremonies scheduled
-- [ ] Team trained
-- [ ] Tools configured
-- [ ] Process ready for Iteration 1
-
-**Process Readiness**: {READY | NOT READY}
+    Save to: .aiwg/reports/construction-readiness-report.md
+    """
+)
 ```
 
-### Step 4: Plan First 2 Iterations (Backlog Preparation)
-
-Create iteration plans for first 2 Construction iterations with ready backlog.
-
-**Commands**:
-```bash
-# Create iteration plans
-ls management/iteration-plan-template.md
-
-# Check backlog readiness
-ls requirements/use-case-brief-*.md
-ls test/acceptance-test-card-*.md
-
-# Validate Definition of Ready
-/project:flow-gate-check discovery
+**Present Summary to User**:
 ```
+# You present this directly (not via agent)
 
-**Iteration Planning Process**:
-1. **Prioritize Backlog** (Product Owner + Project Manager)
-   - MoSCoW: Must have, Should have, Could have, Won't have
-   - Business value: High-value features first
-   - Dependencies: Blocked items deferred
-   - Risk: High-risk items early (fail fast)
+Read .aiwg/reports/construction-readiness-report.md
 
-2. **Estimate Work Items** (Team)
-   - Story points or hours
-   - Velocity baseline from Elaboration prototype work
-   - Capacity planning: Available hours per iteration
+Present summary:
+─────────────────────────────────────────────
+Construction Phase Readiness Assessment
+─────────────────────────────────────────────
 
-3. **Select Work Items for Iteration 1 and 2**
-   - Iteration 1: {story-points} (conservative estimate)
-   - Iteration 2: {story-points} (baseline velocity)
-   - Buffer: 20% buffer for unknowns
-
-4. **Validate Definition of Ready** (per work item)
-   - [ ] Use-case brief authored and reviewed
-   - [ ] Acceptance criteria defined and testable
-   - [ ] Data contracts defined (if new entities)
-   - [ ] Interface specifications complete (if API changes)
-   - [ ] High-risk assumptions validated via spike/POC
-   - [ ] Traceability established
-   - [ ] Product Owner approval obtained
-
-**Agents to Coordinate**:
-- **Requirements Analyst**: Backlog preparation, DoR validation
-- **Product Owner**: Prioritization, business value assessment
-- **Project Manager**: Iteration planning, resource allocation
-- **Component Owners**: Estimation, technical feasibility
-
-**Output**: Iteration Planning Report
-```markdown
-# Iteration Planning Report
-
-**Project**: {project-name}
-**Date**: {date}
-
-## Backlog Status
-
-**Total Backlog Items**: {count}
-**Ready Backlog Items** (passed DoR): {count}
-**Ready Backlog Size**: {story-points} ({ratio}x capacity)
-
-**Backlog Health**: {HEALTHY | MARGINAL | STARVED}
-- Healthy: 1.5x-2x capacity ready
-- Marginal: 1x-1.5x capacity
-- Starved: <1x capacity
-
-## Iteration 1 Plan
-
-**Dates**: {start-date} to {end-date}
-**Team Capacity**: {story-points or hours}
-**Planned Work**: {story-points} (includes 20% buffer)
-
-### Work Items
-{for each work item}
-1. **WI-{ID}**: {work-item-name}
-   - Story Points: {points}
-   - Priority: {Must Have | Should Have}
-   - Owner: {Component Owner}
-   - Dependencies: {list or "None"}
-
-**Iteration 1 Objectives**:
-{what will be delivered}
-
-**Success Criteria**:
-- [ ] All Must Have items completed
-- [ ] Acceptance tests passing
-- [ ] Code reviewed and merged
-- [ ] Deployed to test environment
-
-## Iteration 2 Plan
-
-**Dates**: {start-date} to {end-date}
-**Team Capacity**: {story-points or hours}
-**Planned Work**: {story-points}
-
-### Work Items
-{for each work item}
-1. **WI-{ID}**: {work-item-name}
-   - Story Points: {points}
-   - Priority: {Must Have | Should Have}
-   - Owner: {Component Owner}
-   - Dependencies: {list or "None"}
-
-**Iteration 2 Objectives**:
-{what will be delivered}
-
-## Risk and Dependencies
-
-**Risks**:
-{list any iteration risks}
-
-**Dependencies**:
-{list any blocking dependencies}
-
-**Mitigation Plans**:
-{how risks and dependencies will be addressed}
-
-## Iteration Planning Checklist
-- [ ] Backlog prioritized
-- [ ] First 2 iterations planned
-- [ ] Work items estimated
-- [ ] Dependencies identified
-- [ ] Team capacity validated
-- [ ] Product Owner approval obtained
-
-**Iteration Planning Status**: {COMPLETE | INCOMPLETE}
-```
-
-### Step 5: Establish Dual-Track Workflow (Discovery + Delivery)
-
-Kick off parallel Discovery (iteration N+1) and Delivery (iteration N) tracks.
-
-**Commands**:
-```bash
-# Start Discovery track for Iteration 2
-/project:flow-discovery-track 2
-
-# Start Delivery track for Iteration 1
-/project:flow-delivery-track 1
-
-# Monitor dual-track synchronization
-/project:flow-iteration-dual-track 1
-```
-
-**Dual-Track Cadence**:
-- **Discovery Track**: Works 1 iteration ahead, prepares backlog for Iteration N+1
-- **Delivery Track**: Implements Iteration N, delivers working software
-- **Synchronization**: Weekly handoff from Discovery to Delivery (Definition of Ready)
-
-**Track Coordination**:
-- **Discovery Team**: Requirements Analyst, Product Owner, Domain Experts
-- **Delivery Team**: Developers, Testers, Component Owners
-- **Shared Resources**: Architect (design reviews), Security (security reviews), PM (coordination)
-
-**Handoff Points**:
-- **Discovery → Delivery**: End of Discovery iteration N → Start of Delivery iteration N
-- **Delivery → Operations**: End of Delivery iteration N → Deploy to staging/production
-
-**Output**: Dual-Track Kickoff Report
-```markdown
-# Dual-Track Workflow Kickoff Report
-
-**Project**: {project-name}
-**Date**: {date}
-
-## Track Status
-
-### Discovery Track (Iteration 2)
-- Status: {STARTED | NOT STARTED}
-- Focus: Prepare backlog for Iteration 2
-- Work Items: {count} items in Discovery
-- Target Completion: {date}
-
-### Delivery Track (Iteration 1)
-- Status: {STARTED | NOT STARTED}
-- Focus: Deliver Iteration 1 work items
-- Work Items: {count} items in Delivery
-- Target Completion: {date}
-
-## Team Allocation
-
-**Discovery Team**:
-- Requirements Analyst: {name}
-- Product Owner: {name}
-- Domain Experts: {names}
-
-**Delivery Team**:
-- Developers: {names}
-- Testers: {names}
-- Component Owners: {names}
-
-**Shared Resources**:
-- Software Architect: {name}
-- Security Architect: {name}
-- Project Manager: {name}
-
-## Synchronization
-
-**Handoff Cadence**: Weekly (end of iteration)
-**Handoff Checklist**: Definition of Ready (DoR)
-**Lead Time**: Discovery 1 iteration ahead of Delivery
-
-## Dual-Track Metrics
-
-- Lead Time Alignment: {status}
-- Ready Backlog Size: {ratio}x capacity
-- Gate Pass Rate: {percentage}% (target: >90%)
-- Defect Leakage: {percentage}% (target: <10%)
-
-**Dual-Track Status**: {OPERATIONAL | NOT READY}
-```
-
-### Step 6: Monitor Architectural Stability
-
-Track architectural changes during Construction to ensure architecture remains stable.
-
-**Commands**:
-```bash
-# Review architectural changes
-git log --grep="ADR" --since="1 month ago"
-git diff --stat elaboration-baseline..HEAD analysis-design/
-
-# Check for architecture drift
-ls analysis-design/architecture-decision-record-*.md
-
-# Validate component boundaries not violated
-# Use static analysis tools or manual code review
-```
-
-**Architecture Stability Metrics**:
-- **Architectural Change Rate**: % of architectural changes (target: <10% during Construction)
-- **ADR Frequency**: Number of ADRs created per iteration (high frequency = instability)
-- **Component Boundary Violations**: Code violations of layering/modularity (target: 0)
-- **Prototype Divergence**: % of prototype code rewritten (target: <30%)
-
-**Architecture Review Triggers**:
-- New ADR created (major decision)
-- Component boundary change (adding/removing components)
-- Technology stack change (switching frameworks, databases)
-- Integration change (new external system, API contract change)
-
-**Agents to Coordinate**:
-- **Architecture Designer**: Reviews all architectural changes
-- **Code Reviewer**: Validates component boundaries during peer review
-- **Component Owners**: Report architectural issues to architect
-
-**Output**: Architecture Stability Report
-```markdown
-# Architecture Stability Report
-
-**Project**: {project-name}
-**Phase**: Construction (Iteration {N})
-**Date**: {date}
-
-## Baseline Reference
-- Architecture Baseline Date: {date}
-- Architecture Baseline Version: {version}
-- Baseline Tag: `elaboration-baseline-{date}`
-
-## Architectural Changes
-
-**ADRs Created Since ABM**: {count}
-{for each ADR}
-- **ADR-{ID}**: {title}
-  - Impact: {HIGH | MEDIUM | LOW}
-  - Reason: {why change needed}
-  - Reviewed: {YES | NO}
-
-**Architectural Change Rate**: {percentage}% (target: <10%)
-
-## Component Boundary Validation
-
-**Component Boundary Violations**: {count} (target: 0)
-{list violations if any}
-
-## Prototype Divergence
-
-**Prototype Code Retained**: {percentage}%
-**Prototype Code Rewritten**: {percentage}% (target: <30%)
-
-**Divergence Reasons**:
-{why prototype code was changed}
-
-## Architecture Stability
-
-**Overall Stability**: {STABLE | UNSTABLE}
-- Stable: <10% change, 0 violations, <30% divergence
-- Unstable: ≥10% change or >0 violations or ≥30% divergence
-
-**Recommendation**:
-{continue Construction | conduct architecture review | consider pivot}
-
-**Action Items**:
-{list any actions to address instability}
-```
-
-### Step 7: Generate Construction Phase Readiness Report
-
-Final report confirming readiness to proceed with full Construction.
-
-**Output**: Construction Phase Readiness Report
-```markdown
-# Construction Phase Readiness Report
-
-**Project**: {project-name}
-**Date**: {date}
-**Phase**: Construction Entry
-
-## Overall Status
-
-**Construction Readiness**: {READY | NOT READY}
+**Overall Status**: {READY | NOT READY}
 **Decision**: {PROCEED | DEFER}
 
-## Gate Validation
+**Gate Criteria Status**:
+✓ Architecture Baseline Milestone: PASS
+✓ Infrastructure (Iteration 0): COMPLETE
+✓ Development Process: READY
+✓ Iteration Planning: COMPLETE (2 sprints)
+✓ Dual-Track Workflow: OPERATIONAL
+✓ Architecture Stability: STABLE
 
-### 1. Architecture Baseline Milestone (ABM)
-- Status: {PASS | FAIL}
-- Evidence: ABM review conducted {date}
+**Team Scaling**:
+- Elaboration team: {N} members
+- Construction team: {M} members
+- Onboarding status: READY
 
-### 2. Iteration 0 (Infrastructure)
-- Status: {COMPLETE | INCOMPLETE}
-- Evidence: CI/CD operational, environments ready
+**Infrastructure**:
+- CI/CD Pipeline: OPERATIONAL
+- Environments: Dev, Test, Staging READY
+- Monitoring: CONFIGURED
 
-### 3. Development Process
-- Status: {READY | NOT READY}
-- Evidence: Team trained, process documented
+**Backlog**:
+- Ready items: {X} story points
+- Capacity ratio: {Y}x (target 1.5x-2x)
+- Iteration 1: {Z} points planned
+- Iteration 2: {W} points planned
 
-### 4. Iteration Planning
-- Status: {COMPLETE | INCOMPLETE}
-- Evidence: First 2 iterations planned
+**Artifacts Generated**:
+- ABM Validation Report (.aiwg/reports/abm-validation-report.md)
+- Iteration 0 Completion (.aiwg/reports/iteration-0-completion.md)
+- Development Process Guide (.aiwg/planning/development-process-guide.md)
+- Iteration Plans (.aiwg/planning/iteration-plan-*.md)
+- Onboarding Guide (.aiwg/team/onboarding-guide.md)
+- Architecture Stability (.aiwg/reports/architecture-stability-report.md)
+- Construction Readiness (.aiwg/reports/construction-readiness-report.md)
 
-### 5. Dual-Track Workflow
-- Status: {OPERATIONAL | NOT READY}
-- Evidence: Discovery and Delivery tracks started
+**Next Steps**:
+- Kick off Iteration 1: {date}
+- First daily standup: {date}
+- Discovery continues for Iteration 3
+- Monitor velocity and quality metrics
 
-### 6. Architecture Stability
-- Status: {STABLE | UNSTABLE}
-- Evidence: <10% architectural change
+─────────────────────────────────────────────
+```
 
-## Team Readiness
+## Quality Gates
 
-**Team Size**: {count} (scaled from {elaboration-count})
-**Training Completion**: {percentage}%
-**Onboarding Status**: {count} new members onboarded
+Before marking workflow complete, verify:
+- [ ] All required artifacts generated and reviewed
+- [ ] Infrastructure validated operational (Iteration 0)
+- [ ] Team process defined and training scheduled
+- [ ] First 2 iterations planned with ready backlog
+- [ ] Dual-track workflow configured
+- [ ] Architecture stability confirmed
+- [ ] Construction readiness validated
 
-## Infrastructure Readiness
+## User Communication
 
-**CI/CD Pipeline**: {OPERATIONAL}
-**Environments**: Dev {READY}, Test {READY}, Staging {READY}
-**Monitoring**: {OPERATIONAL}
-**Collaboration Tools**: {CONFIGURED}
+**At start**: Confirm understanding and list artifacts to generate
 
-## Backlog Readiness
+```
+Understood. I'll orchestrate the Elaboration → Construction transition.
 
-**Ready Backlog Size**: {story-points} ({ratio}x capacity)
-**DoR Compliance**: {percentage}%
-**First 2 Iterations**: {PLANNED}
+This will generate:
+- ABM Validation Report
+- Iteration 0 Completion Report
+- Development Process Guide
+- Iteration Plans (first 2 sprints)
+- Team Onboarding Guide
+- Architecture Stability Report
+- Construction Readiness Report
 
-## Decision
+I'll coordinate multiple agents for infrastructure setup and planning.
+Expected duration: 15-20 minutes.
 
-**Construction Readiness**: {READY | NOT READY}
+Starting orchestration...
+```
 
-**Rationale**:
-{detailed reasoning}
+**During**: Update progress with clear indicators
 
-## Next Steps
+```
+✓ = Complete
+⏳ = In progress
+❌ = Error/blocked
+⚠️ = Warning/attention needed
+```
 
-**If READY**:
-- [ ] Kick off Iteration 1: {start-date}
-- [ ] Discovery track for Iteration 2: {start-date}
-- [ ] First iteration planning meeting: {date}
-- [ ] Daily standups begin: {date}
+**At end**: Summary report with artifact locations and status
 
-**If NOT READY**:
-- [ ] Complete missing criteria: {list}
-- [ ] Re-validate readiness: {date}
-- [ ] Notify stakeholders of delay
+## Error Handling
 
-## Success Metrics
+**If ABM Not Met**:
+```
+❌ Elaboration phase incomplete - cannot proceed to Construction
 
-**Track During Construction**:
-- Velocity: Story points delivered per iteration
-- Quality: Defect density, test coverage
-- Schedule: On-time delivery percentage
-- Scope: Feature completion percentage
+Gaps identified:
+- {list missing artifacts or incomplete criteria}
 
-**Target Metrics**:
-- Velocity: {baseline-velocity} ±20%
-- Test Coverage: ≥80% unit, ≥70% integration
-- Defect Density: <1 defect per 1000 LOC
-- On-Time Delivery: ≥80%
+Recommendation: Extend Elaboration
+- Complete missing artifacts
+- Re-run: /project:flow-inception-to-elaboration
 
-## References
+Contact Software Architect for architecture completion.
+```
 
-- Architecture baseline: `elaboration-baseline-{date}`
-- Iteration plans: `management/iteration-plan-*.md`
-- Development Case: `management/development-case-template.md`
-- Dual-track flow: `/project:flow-iteration-dual-track`
+**If Infrastructure Not Ready**:
+```
+❌ Iteration 0 incomplete - infrastructure not operational
+
+Issues:
+- {list infrastructure gaps}
+
+Actions:
+1. Complete infrastructure setup
+2. Validate CI/CD pipeline
+3. Confirm environment access
+
+Impact: Construction blocked until infrastructure ready.
+```
+
+**If Backlog Starved**:
+```
+⚠️ Backlog health: STARVED ({ratio}x capacity)
+
+Ready backlog insufficient for smooth Construction start.
+
+Actions:
+1. Accelerate Discovery track
+2. Simplify requirements for faster preparation
+3. Consider starting with reduced team
+
+Risk: Delivery team may be blocked waiting for work.
+```
+
+**If Architecture Unstable**:
+```
+⚠️ Architecture stability: UNSTABLE
+
+Metrics:
+- Change rate: {X}% (target <10%)
+- Violations: {N}
+
+Recommendation: Architecture review needed
+- Stabilize architecture before scaling team
+- Document pending decisions as ADRs
+- Consider architecture refactoring in Iteration 1
+
+Risk: Continued instability will impact Construction velocity.
 ```
 
 ## Success Criteria
 
-This command succeeds when:
+This orchestration succeeds when:
 - [ ] Architecture Baseline Milestone validated (ABM complete)
 - [ ] Iteration 0 infrastructure setup COMPLETE
 - [ ] Development process tailored and team trained
 - [ ] First 2 iterations planned with ready backlog
 - [ ] Dual-track workflow OPERATIONAL
 - [ ] Architecture stability confirmed (<10% change)
-- [ ] Construction Phase Readiness Report generated with READY status
+- [ ] Construction Phase Readiness Report shows READY
+- [ ] Complete audit trails archived
 
-## Error Handling
+## Metrics to Track
 
-**ABM Not Met**:
-- Report: "Elaboration phase incomplete, cannot proceed to Construction"
-- Action: "Extend Elaboration: /project:flow-inception-to-elaboration"
-- Escalation: "Contact Software Architect and Project Manager"
-
-**Infrastructure Not Ready**:
-- Report: "Iteration 0 incomplete, CI/CD or environments not operational"
-- Action: "Complete infrastructure setup, re-validate"
-- Impact: "Construction cannot start without operational infrastructure"
-
-**Backlog Starved**:
-- Report: "Ready backlog size {ratio}x capacity (target: 1.5x-2x)"
-- Action: "Accelerate Discovery, simplify requirements"
-- Impact: "Delivery team may be blocked waiting for backlog"
-
-**Team Not Trained**:
-- Report: "Team training {percentage}% complete (target: 100%)"
-- Action: "Complete training sessions, defer Construction start"
-- Impact: "Untrained team = higher defect rate, slower velocity"
-
-## Metrics
-
-**Track During Transition**:
-- Team scaling time: Days to onboard new team members
-- Infrastructure setup time: Days to complete Iteration 0
-- Training completion rate: % of team trained on process
-- Backlog readiness: Ratio of ready backlog to team capacity
+**During orchestration, track**:
+- Team scaling time: Days to onboard new members
+- Infrastructure setup time: Iteration 0 completion
+- Training completion rate: % of team trained
+- Backlog readiness: Ratio to team capacity
+- Architecture stability: % changes since ABM
+- Cycle time: Transition duration (target: 1-2 weeks, orchestration: 15-20 min)
 
 ## References
 
-- Gate criteria: `flows/gate-criteria-by-phase.md`
-- Iteration planning: `management/iteration-plan-template.md`
-- Development Case: `management/development-case-template.md`
-- Dual-track flow: `commands/flow-iteration-dual-track.md`
-- Discovery track: `commands/flow-discovery-track.md`
-- Delivery track: `commands/flow-delivery-track.md`
+**Templates** (via $AIWG_ROOT):
+- Development Case: `templates/management/development-case-template.md`
+- Iteration Plan: `templates/management/iteration-plan-template.md`
+- Programming Guidelines: `templates/environment/programming-guidelines-template.md`
+- Design Guidelines: `templates/environment/design-guidelines-template.md`
+- Test Guidelines: `templates/environment/test-guidelines-template.md`
+
+**Gate Criteria**:
+- `flows/gate-criteria-by-phase.md` (Construction section)
+
+**Related Flows**:
+- `commands/flow-iteration-dual-track.md`
+- `commands/flow-discovery-track.md`
+- `commands/flow-delivery-track.md`
+
+**Multi-Agent Pattern**:
+- `docs/multi-agent-documentation-pattern.md`
+
+**Orchestrator Architecture**:
+- `docs/orchestrator-architecture.md`

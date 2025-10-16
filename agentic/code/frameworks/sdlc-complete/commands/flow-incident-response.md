@@ -1,1551 +1,1421 @@
 ---
-description: Execute production incident triage, escalation, resolution, and post-incident review using ITIL best practices
-category: operations
+description: Orchestrate production incident triage, escalation, resolution, and post-incident review using ITIL best practices
+category: sdlc-orchestration
 argument-hint: <incident-id> [severity] [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Incident Response Flow
 
-You are an Incident Commander specializing in production incident management, ITIL/ITSM best practices, functional and hierarchical escalation, root cause analysis, and post-incident learning.
+**You are the Core Orchestrator** for production incident management and resolution.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-incident-response <incident-id> [severity] [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Detect and Log** incident with ID, timestamp, reporter, and initial classification
-2. **Triage and Prioritize** using Impact × Urgency matrix (P0/P1/P2/P3)
-3. **Escalate** functionally (Tier 1 → Tier 2 → Tier 3) and hierarchically (management/executive)
-4. **Investigate and Diagnose** using runbooks, logs, metrics, and RCA tools (5 Whys, fishbone)
-5. **Mitigate and Resolve** with workaround or fix, hotfix deployment if needed
-6. **Conduct Post-Incident Review** (PIR) within 48h for P0/P1, blameless RCA, preventive actions
+When the user requests this flow (via natural language or explicit command):
 
-## ITIL Incident Management Framework
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
-### Incident Lifecycle
+## Incident Response Overview
 
+**Purpose**: Rapid detection, triage, escalation, resolution, and learning from production incidents
+
+**Key Objectives**:
+- Minimize user impact through rapid response
+- Follow ITIL tier escalation (Tier 1 → Tier 2 → Tier 3)
+- Conduct blameless post-incident reviews
+- Drive continuous improvement through preventive actions
+
+**Expected Duration**: P0 = 1-2h resolution, P1 = 4h, P2 = 24h (orchestration: 5-10 minutes)
+
+## Natural Language Triggers
+
+Users may say:
+- "Handle incident"
+- "Production issue detected"
+- "Incident response"
+- "P0 incident"
+- "Service down"
+- "System outage"
+- "Critical production issue"
+- "Emergency response"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor incident response priorities
+
+**Examples**:
 ```
-Detection → Logging → Triage → Investigation → Resolution → Closure → PIR
-   │           │         │           │             │           │        │
-   │           │         │           │             │           │        └─ Lessons learned
-   │           │         │           │             │           └─ Validation
-   │           │         │           │             └─ Mitigation/fix
-   │           │         │           └─ Root cause analysis
-   │           │         └─ Prioritization (Impact × Urgency)
-   │           └─ Incident ticket creation
-   └─ Alert or user report
-```
-
-### Incident Severity Classification (2025 ITIL Best Practices)
-
-**Priority Matrix**: Priority = Impact × Urgency
-
-| Impact/Urgency | High Urgency | Medium Urgency | Low Urgency |
-|----------------|--------------|----------------|-------------|
-| High Impact    | P0 (Critical) | P1 (High)     | P2 (Medium) |
-| Medium Impact  | P1 (High)    | P2 (Medium)    | P3 (Low)    |
-| Low Impact     | P2 (Medium)  | P3 (Low)       | P3 (Low)    |
-
-### Tier Structure (Functional Escalation)
-
-**Tier 1 (Triage/First Response)**:
-- Scope: Basic troubleshooting, runbook execution
-- Resolution Rate: 60-80% of incidents
-- Skills: Generalist, incident logging, basic diagnostics
-- Escalation Timer: P0 = 15 min, P1 = 30 min, P2 = 2h
-
-**Tier 2 (Specialists/Component Owners)**:
-- Scope: Advanced troubleshooting, component expertise
-- Resolution Rate: 15-30% of incidents (escalated from Tier 1)
-- Skills: Component-specific deep knowledge, code review
-- Escalation Timer: P0 = 30 min, P1 = 1h
-
-**Tier 3 (Architects/Vendors)**:
-- Scope: Deep expertise, architectural decisions, vendor escalation
-- Resolution Rate: 5-10% of incidents (escalated from Tier 2)
-- Skills: System design, vendor relationships, emergency fixes
-- Escalation Timer: P
-
-### Step 0: Parameter Parsing and Guidance Setup
-
-**Parse Command Line**:
-
-Extract optional `--guidance` and `--interactive` parameters.
-
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
-
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+--guidance "Security incident suspected, preserve forensics before mitigation"
+--guidance "Performance degradation, focus on database query optimization"
+--guidance "Payment processing down, revenue impact critical"
+--guidance "Tight SLA window, prioritize fast rollback over investigation"
+--guidance "First P0 for new team, need extra documentation and communication"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: security, performance, compliance, revenue, data-loss
+- Adjust agent assignments (add security-gatekeeper for security incidents)
+- Modify escalation paths (immediate executive notification for revenue impact)
+- Influence mitigation strategy (rollback vs hotfix vs investigation)
+- Prioritize documentation depth (standard vs comprehensive for learning)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 5-8 strategic questions to understand incident context
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 8 strategic questions to tailor incident response to your situation:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What is the observed user impact?
+    (e.g., complete outage, degraded performance, specific feature unavailable)
 
-**Resolve AIWG installation**:
+Q2: What percentage of users are affected?
+    (Helps me assign initial severity: P0 = >50%, P1 = 10-50%, P2 = <10%)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: When did the issue start?
+    (Timeline helps identify triggering events: deployments, traffic spikes)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: What recent changes occurred in the last 24 hours?
+    (Deployments, config changes, infrastructure updates - guides rollback decisions)
+
+Q5: Is this security-related or involving data loss?
+    (Immediate escalation to security team, forensics preservation)
+
+Q6: What is the business impact?
+    (Revenue loss, compliance risk, reputation damage - affects escalation urgency)
+
+Q7: What is your on-call team's experience level?
+    (Helps me tailor runbook detail and escalation speed)
+
+Q8: What is your current SLA status?
+    (Error budget remaining, time to SLA breach - affects mitigation strategy)
+
+Based on your answers, I'll adjust:
+- Severity classification (P0/P1/P2/P3)
+- Escalation urgency (functional and hierarchical)
+- Mitigation strategy priority (rollback vs investigation)
+- Communication frequency (every 15 min vs hourly)
+- Documentation depth (standard vs comprehensive PIR)
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance string for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Incident Response - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **Incident Record**: Initial detection and classification → `.aiwg/incidents/{incident-id}/incident-record.md`
+- **Incident Timeline**: Chronological event log → `.aiwg/incidents/{incident-id}/timeline.md`
+- **Triage Assessment**: Impact and urgency analysis → `.aiwg/incidents/{incident-id}/triage-assessment.md`
+- **Root Cause Analysis**: 5 Whys and fishbone → `.aiwg/incidents/{incident-id}/root-cause-analysis.md`
+- **Mitigation Report**: Resolution strategy and validation → `.aiwg/incidents/{incident-id}/mitigation-report.md`
+- **Post-Incident Review (PIR)**: Blameless retrospective → `.aiwg/incidents/{incident-id}/post-incident-review.md`
+- **Preventive Actions**: Tracked action items → `.aiwg/incidents/{incident-id}/preventive-actions.md`
 
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
+**Supporting Artifacts**:
+- Escalation logs (who, when, why)
+- Communication templates (status page updates)
+- Runbook updates (new troubleshooting steps)
+- Knowledge base articles (lessons learned)
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
+## Multi-Agent Orchestration Workflow
 
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-0 = 1h, P1 = 2h
-
-## Workflow Steps
-
-### Step 1: Incident Detection and Logging
+### Step 1: Incident Detection and Initial Logging
 
 **Purpose**: Capture incident details immediately to enable rapid response
 
-**Actions**:
+**Your Actions**:
 
-1. **Create Incident Record**:
-   ```markdown
-   # Incident Record: {incident-id}
-
-   **Incident ID**: {incident-id}
-   **Detection Time**: {YYYY-MM-DD HH:MM:SS UTC}
-   **Reporter**: {user/system/alert}
-   **Detection Method**: {automated-alert | user-report | monitoring | manual}
-
-   ## Initial Description
-   {1-2 sentence summary of reported issue}
-
-   **User Impact**: {description of user-facing symptoms}
-   **Affected Systems**: {list systems/components}
-   **Affected User Count**: {estimated count | UNKNOWN}
-
-   ## Classification
-   **Severity**: {P0 | P1 | P2 | P3 | TBD}
-   **Impact**: {HIGH | MEDIUM | LOW}
-   **Urgency**: {HIGH | MEDIUM | LOW}
-   **Category**: {availability | performance | functionality | security | data-integrity}
-
-   ## Assigned Team
-   **Incident Commander**: {name} (assigned at: {timestamp})
-   **On-Call Engineer**: {name}
-   **Status**: {DETECTED | TRIAGED | INVESTIGATING | MITIGATING | RESOLVED | CLOSED}
+1. **Create Incident Directory**:
+   ```
+   # You do this directly (no agent needed)
+   mkdir -p .aiwg/incidents/{incident-id}/{logs,diagnostics,communications,actions}
    ```
 
-2. **Log Incident Ticket**:
-   ```bash
-   # Create incident ticket (example: JIRA, ServiceNow)
-   # Capture:
-   # - Incident ID (auto-generated or manual)
-   # - Reporter contact
-   # - Initial symptoms
-   # - Detection timestamp
-   # - Initial severity estimate
+2. **Launch Detection and Logging Agent**:
+   ```
+   Task(
+       subagent_type="incident-responder",
+       description="Create incident record and initial classification",
+       prompt="""
+       Incident ID: {incident-id}
+       Reported symptoms: {user-provided description}
 
-   # Example command (adjust to your ticketing system)
-   # jira create --project INC --type Incident --summary "{title}" --description "{details}"
+       Create Incident Record:
+
+       **Incident ID**: {incident-id}
+       **Detection Time**: {YYYY-MM-DD HH:MM:SS UTC}
+       **Reporter**: {user/system/alert}
+       **Detection Method**: {automated-alert | user-report | monitoring | manual}
+
+       ## Initial Description
+       {1-2 sentence summary of reported issue}
+
+       **User Impact**: {description of user-facing symptoms}
+       **Affected Systems**: {list systems/components based on description}
+       **Affected User Count**: {estimated count | UNKNOWN}
+
+       ## Initial Classification
+       **Severity**: {P0 | P1 | P2 | P3 | TBD}
+       **Category**: {availability | performance | functionality | security | data-integrity}
+
+       ## Assigned Team
+       **Incident Commander**: {TBD - to be assigned based on severity}
+       **On-Call Engineer**: {TBD - from on-call rotation}
+       **Status**: DETECTED
+
+       Save to: .aiwg/incidents/{incident-id}/incident-record.md
+
+       Also create initial timeline entry:
+       | Time | Event | Actor | Notes |
+       |------|-------|-------|-------|
+       | {HH:MM UTC} | Incident detected | {reporter} | {initial symptoms} |
+
+       Save to: .aiwg/incidents/{incident-id}/timeline.md
+       """
+   )
    ```
 
-3. **Initial Notification**:
-   ```markdown
-   ## Incident Alert: {incident-id}
+3. **Create Incident Communication Channel**:
+   ```
+   Task(
+       subagent_type="incident-responder",
+       description="Create incident alert and communication template",
+       prompt="""
+       Generate initial incident alert template:
 
-   **Status**: DETECTED
-   **Severity**: {P0/P1/P2/P3}
-   **Time**: {HH:MM UTC}
+       ## Incident Alert: {incident-id}
 
-   **Issue**: {brief description}
-   **User Impact**: {high-level impact}
+       **Status**: DETECTED
+       **Severity**: {P0/P1/P2/P3}
+       **Time**: {HH:MM UTC}
 
-   **Assigned**: {on-call engineer}
-   **Next Update**: {estimated time}
+       **Issue**: {brief description}
+       **User Impact**: {high-level impact}
 
-   {Link to incident channel: #incident-{YYYY-MM-DD}-{ID}}
+       **Assigned**: {on-call engineer}
+       **Next Update**: {estimated time}
+
+       **Incident Channel**: #incident-{YYYY-MM-DD}-{ID}
+       **Incident Dashboard**: {link to monitoring dashboard}
+
+       Save to: .aiwg/incidents/{incident-id}/communications/initial-alert.md
+       """
+   )
    ```
 
-4. **Create Incident Communication Channel**:
-   ```bash
-   # Create dedicated Slack/Teams channel for incident coordination
-   # Channel naming convention: #incident-{YYYY-MM-DD}-{ID}
+**Communicate Progress**:
+```
+✓ Incident {incident-id} logged
+✓ Initial record created
+⏳ Proceeding to triage and prioritization...
+```
 
-   # Pin critical information:
-   # - Incident ID and summary
-   # - Assigned Incident Commander
-   # - Escalation contacts
-   # - Incident timeline (Google Doc or wiki)
-   # - Monitoring dashboard links
+### Step 2: Triage and Severity Assessment
+
+**Purpose**: Rapidly assess severity and assign priority using Impact × Urgency matrix
+
+**Your Actions**:
+
+1. **Launch Triage Agents** (parallel):
+   ```
+   # Agent 1: Impact Assessment
+   Task(
+       subagent_type="incident-responder",
+       description="Assess incident impact (user effect)",
+       prompt="""
+       Read incident record: .aiwg/incidents/{incident-id}/incident-record.md
+
+       Assess Impact Level:
+
+       **User Impact Assessment**:
+       - Affected Users: {count or percentage}
+       - Severity of Effect: {complete outage | severe degradation | minor issue}
+       - Impact Level: {HIGH | MEDIUM | LOW}
+
+       Criteria:
+       - HIGH: Complete service outage OR >50% users affected OR data loss/corruption
+       - MEDIUM: Severe degradation OR 10-50% users affected OR critical feature unavailable
+       - LOW: Minor degradation OR <10% users affected OR cosmetic issue
+
+       **Business Impact**:
+       - Revenue Impact: {$amount | NONE}
+       - Compliance Risk: {YES | NO}
+       - Reputation Risk: {HIGH | MEDIUM | LOW}
+       - User Safety Risk: {YES | NO}
+
+       **Affected Systems**: {list all affected components, services, integrations}
+
+       Save to: .aiwg/incidents/{incident-id}/triage-assessment.md (Impact section)
+       """
+   )
+
+   # Agent 2: Urgency Assessment
+   Task(
+       subagent_type="reliability-engineer",
+       description="Assess incident urgency (time sensitivity)",
+       prompt="""
+       Read incident record: .aiwg/incidents/{incident-id}/incident-record.md
+
+       Assess Urgency Level:
+
+       **Urgency Assessment**:
+       - Time Sensitivity: {immediate | hours | days}
+       - Worsening Trend: {rapidly degrading | stable | improving}
+       - Urgency Level: {HIGH | MEDIUM | LOW}
+
+       Criteria:
+       - HIGH: Immediate resolution required, worsening rapidly, SLA breach imminent
+       - MEDIUM: Resolution needed within hours, stable degradation
+       - LOW: Resolution can be scheduled, no time pressure
+
+       **SLA Breach Risk**:
+       - Current Availability: {percentage}%
+       - SLA Target: {percentage}%
+       - Error Budget Remaining: {percentage}%
+       - Time to SLA Breach: {estimated time}
+
+       Append to: .aiwg/incidents/{incident-id}/triage-assessment.md (Urgency section)
+       """
+   )
    ```
 
-**Deliverables**:
-- [ ] Incident record created with ID and timestamp
-- [ ] Ticket logged in incident management system
-- [ ] Initial notification sent to on-call engineer
-- [ ] Incident channel created (#incident-*)
-- [ ] Incident Commander assigned
+2. **Synthesize Priority Classification**:
+   ```
+   Task(
+       subagent_type="incident-responder",
+       description="Determine incident priority from Impact × Urgency",
+       prompt="""
+       Read triage assessment: .aiwg/incidents/{incident-id}/triage-assessment.md
 
-**Detection Time SLA**: <5 minutes from alert/report
+       Determine Priority using matrix:
 
-### Step 2: Triage and Prioritization
+       | Impact/Urgency | High Urgency | Medium Urgency | Low Urgency |
+       |----------------|--------------|----------------|-------------|
+       | High Impact    | P0 (Critical) | P1 (High)     | P2 (Medium) |
+       | Medium Impact  | P1 (High)    | P2 (Medium)    | P3 (Low)    |
+       | Low Impact     | P2 (Medium)  | P3 (Low)       | P3 (Low)    |
 
-**Purpose**: Rapidly assess severity and assign priority to determine response path
+       **Priority**: {P0 | P1 | P2 | P3}
 
-**Actions**:
+       **Response SLA**:
+       - P0: Acknowledgment immediate, Engage 15 min, Resolve 1-2h, Updates every 15 min
+       - P1: Acknowledgment 5 min, Engage 30 min, Resolve 4h, Updates every 30 min
+       - P2: Acknowledgment 30 min, Engage 4h, Resolve 24h, Updates daily
+       - P3: Acknowledgment 1 business day, Standard backlog process
 
-1. **Assess Impact** (User Effect):
-   ```markdown
-   ## Impact Assessment
+       **Escalation Path**:
+       - P0: Page on-call → Incident Commander → Deployment Manager → Executive (30 min)
+       - P1: Alert on-call → Incident Commander → Component Owner → Management (2h)
+       - P2: Create ticket → On-call triage → Component Owner if needed
+       - P3: Standard backlog
 
-   **User Impact Level**:
-   - [ ] **HIGH**: Complete service outage OR >50% users affected OR data loss/corruption
-   - [ ] **MEDIUM**: Severe degradation OR 10-50% users affected OR critical feature unavailable
-   - [ ] **LOW**: Minor degradation OR <10% users affected OR cosmetic issue
+       **Incident Commander Assignment** (P0/P1 only):
+       - Assign Incident Commander: {name or role}
+       - Assign Technical Lead: {on-call engineer or component owner}
+       - Assign Communications Lead: {support lead or PM}
 
-   **Business Impact**:
-   - Revenue Impact: {$amount | NONE}
-   - Compliance Risk: {YES | NO}
-   - Reputation Risk: {HIGH | MEDIUM | LOW}
-   - User Safety Risk: {YES | NO}
+       Update incident record with priority and assignments
+       Save to: .aiwg/incidents/{incident-id}/incident-record.md
 
-   **Affected Systems**:
-   {list all affected components, services, integrations}
+       Append timeline:
+       | {HH:MM UTC} | Triage complete, severity {P0/P1/P2/P3} assigned | incident-responder | Impact: {HIGH/MED/LOW}, Urgency: {HIGH/MED/LOW} |
+       | {HH:MM UTC} | Incident Commander assigned | {name} | {P0/P1 only} |
+
+       Append to: .aiwg/incidents/{incident-id}/timeline.md
+       """
+   )
    ```
 
-2. **Assess Urgency** (Time Sensitivity):
-   ```markdown
-   ## Urgency Assessment
-
-   **Urgency Level**:
-   - [ ] **HIGH**: Immediate resolution required, worsening rapidly, SLA breach imminent
-   - [ ] **MEDIUM**: Resolution needed within hours, stable degradation
-   - [ ] **LOW**: Resolution can be scheduled, no time pressure
-
-   **SLA Breach Risk**:
-   - Current Availability: {percentage}%
-   - SLA Target: {percentage}%
-   - Error Budget Remaining: {percentage}%
-   - Time to SLA Breach: {estimated time}
-   ```
-
-3. **Determine Priority** (Impact × Urgency):
-   ```markdown
-   ## Incident Priority Classification
-
-   **Priority**: {P0 | P1 | P2 | P3}
-
-   ### P0 - Critical (Page Immediately)
-   **Definition**: Complete service outage OR data loss OR security breach
-   **Examples**:
-   - Application completely unavailable (all users blocked)
-   - Database down or inaccessible
-   - Data corruption or loss detected
-   - Security breach or unauthorized access
-   - Payment processing failure (revenue impact)
-
-   **Response SLA**:
-   - Acknowledgment: Immediate
-   - Time to Engage: 15 minutes
-   - Time to Resolve: 1-2 hours
-   - Status Updates: Every 15 minutes
-
-   **Escalation Path**:
-   1. Page on-call engineer immediately
-   2. Alert Incident Commander
-   3. Notify Deployment Manager (rollback authority)
-   4. Notify Executive Sponsor within 30 minutes
-   5. Update public status page within 30 minutes
-
-   ### P1 - High (Alert Within 5 Minutes)
-   **Definition**: Severe degradation affecting majority of users
-   **Examples**:
-   - Critical feature unavailable (e.g., login, checkout)
-   - Error rate >0.5% (5x normal)
-   - Response time >2x SLA (e.g., p95 >1000ms vs. 500ms target)
-   - Database performance severely degraded
-   - Single region outage (with multi-region setup)
-
-   **Response SLA**:
-   - Acknowledgment: 5 minutes
-   - Time to Engage: 30 minutes
-   - Time to Resolve: 4 hours
-   - Status Updates: Every 30 minutes
-
-   **Escalation Path**:
-   1. Alert on-call engineer via SMS + Slack
-   2. Notify Incident Commander
-   3. Engage Component Owner(s)
-   4. Notify management if not resolved within 2 hours
-
-   ### P2 - Medium (Alert Within 30 Minutes)
-   **Definition**: Moderate degradation affecting subset of users
-   **Examples**:
-   - Non-critical feature unavailable
-   - Error rate >0.1% (normal baseline)
-   - Response time >SLA but <2x SLA
-   - Minor UI issues or visual glitches
-   - Elevated resource utilization (>80% CPU/memory)
-
-   **Response SLA**:
-   - Acknowledgment: 30 minutes
-   - Time to Engage: 4 hours
-   - Time to Resolve: 24 hours
-   - Status Updates: Daily
-
-   **Escalation Path**:
-   1. Create ticket, assign to on-call
-   2. Triage within 30 minutes
-   3. Consult Component Owner if needed
-
-   ### P3 - Low (Standard Process)
-   **Definition**: Minor issues, enhancement requests, or proactive improvements
-   **Examples**:
-   - Cosmetic issues (styling, typos)
-   - Feature requests
-   - Performance optimization opportunities
-   - Documentation errors
-
-   **Response SLA**:
-   - Acknowledgment: 1 business day
-   - Time to Resolve: Post-incident backlog
-   - Status Updates: As needed
-
-   **Escalation Path**:
-   1. Create ticket for normal backlog
-   2. Prioritize in sprint planning
-   ```
-
-4. **Assign Incident Commander** (for P0/P1):
-   ```markdown
-   ## Incident Command Structure (P0/P1 Only)
-
-   **Incident Commander**: {name}
-   - Overall coordination
-   - Communication to stakeholders
-   - Escalation decisions
-   - Post-incident review ownership
-
-   **Technical Lead**: {on-call engineer or component owner}
-   - Investigation and diagnosis
-   - Mitigation implementation
-   - Technical escalation
-
-   **Communications Lead**: {support lead or PM}
-   - User-facing communication
-   - Status page updates
-   - Stakeholder notifications
-   ```
-
-5. **Stakeholder Notification**:
-   ```bash
-   # P0: Immediate notification to executives, status page update
-   # P1: Notify management and product owner
-   # P2/P3: Standard ticket workflow
-
-   # Example notification (P0/P1)
-   # Subject: P0 INCIDENT: {brief-title}
-   # Body: {see template below}
-   ```
-
-**Deliverables**:
-- [ ] Impact and urgency assessed
-- [ ] Priority assigned (P0/P1/P2/P3)
-- [ ] Incident Commander assigned (P0/P1)
-- [ ] Escalation path identified and initiated
-- [ ] Stakeholders notified per severity matrix
-
-**Triage Time SLA**: <15 minutes from detection
+**Communicate Progress**:
+```
+✓ Incident detected
+⏳ Assessing impact and urgency...
+  ✓ Impact: {HIGH/MEDIUM/LOW}
+  ✓ Urgency: {HIGH/MEDIUM/LOW}
+✓ Priority assigned: {P0/P1/P2/P3}
+✓ Incident Commander assigned: {name} (P0/P1)
+⏳ Initiating functional escalation (Tier 1)...
+```
 
 ### Step 3: Functional Escalation (Tier 1 → Tier 2 → Tier 3)
 
-**Purpose**: Engage appropriate expertise based on incident complexity and resolution progress
+**Purpose**: Engage appropriate expertise based on incident complexity
 
-**Actions**:
+**Your Actions**:
 
-1. **Tier 1 (First Response / Triage)**:
-   ```markdown
-   ## Tier 1 Response (On-Call Engineer)
+1. **Tier 1 Response (First 15-30 minutes)**:
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Tier 1 response: Runbook execution and data gathering",
+       prompt="""
+       Read incident record: .aiwg/incidents/{incident-id}/incident-record.md
 
-   **Scope**: Basic troubleshooting, runbook execution, data gathering
+       Execute Tier 1 Response:
 
-   ### Initial Actions (First 5 minutes)
-   - [ ] Acknowledge incident
-   - [ ] Confirm user impact (reproduce issue if possible)
-   - [ ] Check recent deployments/changes (last 24h)
-   - [ ] Review monitoring dashboards for anomalies
-   - [ ] Execute relevant runbook if available
+       ## Initial Actions (First 5 minutes)
+       - [ ] Acknowledge incident
+       - [ ] Confirm user impact (reproduce if possible)
+       - [ ] Check recent deployments/changes (last 24h)
+       - [ ] Review monitoring dashboards for anomalies
+       - [ ] Identify applicable runbook: deployment/runbook-{scenario}.md
 
-   ### Runbook Execution
-   - [ ] Identify applicable runbook: `deployment/runbook-{scenario}.md`
-   - [ ] Follow troubleshooting steps
-   - [ ] Document actions taken and results
-   - [ ] Capture diagnostic data (logs, metrics, traces)
+       ## Data Gathering
+       Collect diagnostic data:
+       - System health (pods, nodes, services status)
+       - Recent deployments (git log, rollout history)
+       - Logs (last 500 lines from affected services)
+       - Metrics (error rate, latency, throughput)
+       - Database health (active connections, slow queries)
 
-   ### Data Gathering
-   ```bash
-   # Collect system health
-   kubectl get pods --all-namespaces | grep -v Running
-   kubectl top nodes
-   kubectl top pods -l app={service}
+       Document actions taken and results.
 
-   # Check recent deployments
-   kubectl rollout history deployment/{service}
-   git log --oneline --since="24 hours ago"
+       ## Escalation Decision (Tier 1 → Tier 2)
+       Escalate if:
+       - Runbook not available OR issue unresolved after {15 min P0 | 30 min P1}
+       - Requires deep component knowledge or code changes
+       - Database, network, or infrastructure issue suspected
 
-   # Retrieve logs
-   kubectl logs {pod-name} --tail=500 > incident-{ID}-logs.txt
+       If escalation needed, document:
+       - Why escalating (specific reason)
+       - Data collected (attach logs, metrics)
+       - Hypotheses tested (what was tried)
 
-   # Check metrics
-   curl https://metrics.example.com/error_rate
-   curl https://metrics.example.com/latency_p99
+       Save diagnostic data to: .aiwg/incidents/{incident-id}/diagnostics/tier1-data.md
 
-   # Database health
-   psql -c "SELECT * FROM pg_stat_activity WHERE state = 'active';"
+       Append timeline with all actions taken.
+       """
+   )
    ```
 
-   ### Escalation Decision (Tier 1 → Tier 2)
-   - [ ] **Escalate if**: Runbook not available OR issue unresolved after 15 min (P0) / 30 min (P1)
-   - [ ] **Escalate if**: Requires deep component knowledge or code changes
-   - [ ] **Escalate if**: Database, network, or infrastructure issue suspected
+2. **Tier 2 Response (If escalated)**:
+   ```
+   Task(
+       subagent_type="component-owner",
+       description="Tier 2 response: Advanced troubleshooting and code review",
+       prompt="""
+       Read incident record: .aiwg/incidents/{incident-id}/incident-record.md
+       Read Tier 1 data: .aiwg/incidents/{incident-id}/diagnostics/tier1-data.md
 
-   **Tier 1 Resolution Target**: 60-80% of incidents
+       Execute Tier 2 Response:
+
+       ## Handoff from Tier 1
+       - Review incident summary and diagnostic data
+       - Review actions already taken by Tier 1
+       - Review relevant runbooks and recent changes
+
+       ## Advanced Troubleshooting
+       - Deep log analysis (error patterns, stack traces)
+       - Code review for recent changes (git diff last 48h)
+       - Reproduce issue in non-prod environment (if possible)
+       - Check component dependencies (upstream/downstream services)
+       - Analyze performance profiles (CPU, memory, query execution plans)
+
+       ## Root Cause Hypothesis
+       Formulate hypothesis:
+
+       **Hypothesis**: {statement of suspected root cause}
+
+       **Evidence**:
+       1. {log pattern or metric anomaly}
+       2. {recent deployment or config change}
+       3. {external dependency status}
+
+       **Test Plan**:
+       - [ ] {validation step 1}
+       - [ ] {validation step 2}
+
+       ## Escalation Decision (Tier 2 → Tier 3)
+       Escalate if:
+       - Architectural issue or design flaw suspected
+       - Vendor/third-party dependency issue
+       - Unresolved after {30 min P0 | 1 hour P1}
+       - Emergency code fix required (hotfix approval needed)
+
+       Save hypothesis and findings to: .aiwg/incidents/{incident-id}/diagnostics/tier2-analysis.md
+
+       Append timeline with advanced troubleshooting results.
+       """
+   )
    ```
 
-2. **Tier 2 (Component Owners / Specialists)**:
-   ```markdown
-   ## Tier 2 Response (Component Owner / Specialist)
+3. **Tier 3 Response (If escalated)**:
+   ```
+   Task(
+       subagent_type="architecture-designer",
+       description="Tier 3 response: Architectural analysis and emergency decisions",
+       prompt="""
+       Read all prior diagnostics:
+       - .aiwg/incidents/{incident-id}/diagnostics/tier1-data.md
+       - .aiwg/incidents/{incident-id}/diagnostics/tier2-analysis.md
 
-   **Scope**: Advanced troubleshooting, component-specific expertise, code review
+       Execute Tier 3 Response:
 
-   ### Handoff from Tier 1
-   - [ ] Receive incident summary and diagnostic data
-   - [ ] Review actions already taken by Tier 1
-   - [ ] Review relevant runbooks and recent changes
+       ## Architectural Analysis
+       - Review system design for fundamental issues
+       - Evaluate scalability/capacity constraints
+       - Consider architectural trade-offs (CAP theorem, consistency models)
+       - Engage vendor support if third-party dependency issue
 
-   ### Advanced Troubleshooting
-   - [ ] Deep log analysis (error patterns, stack traces)
-   - [ ] Code review for recent changes
-   - [ ] Reproduce issue in non-prod environment
-   - [ ] Check component dependencies (upstream/downstream services)
-   - [ ] Analyze performance profiles (CPU, memory, query execution plans)
+       ## Emergency Decision Authority
+       Provide decisions on:
+       - Emergency architecture changes (approve/reject)
+       - Vendor escalation (initiate if needed)
+       - Hotfix deployment outside normal process (approve with conditions)
+       - Temporary workaround vs. full fix (recommend approach)
 
-   ### Root Cause Hypothesis
-   ```markdown
-   ## Root Cause Hypothesis
+       Document architectural assessment and decisions:
+       Save to: .aiwg/incidents/{incident-id}/diagnostics/tier3-architecture-assessment.md
 
-   **Hypothesis**: {statement of suspected root cause}
-
-   **Evidence**:
-   1. {log pattern or metric anomaly}
-   2. {recent deployment or config change}
-   3. {external dependency status}
-
-   **Test Plan**:
-   - [ ] {validation step 1}
-   - [ ] {validation step 2}
+       Append timeline with architectural decisions.
+       """
+   )
    ```
 
-   ### Escalation Decision (Tier 2 → Tier 3)
-   - [ ] **Escalate if**: Architectural issue or design flaw suspected
-   - [ ] **Escalate if**: Vendor/third-party dependency issue
-   - [ ] **Escalate if**: Unresolved after 30 min (P0) / 1 hour (P1)
-   - [ ] **Escalate if**: Emergency code fix required (hotfix approval needed)
-
-   **Tier 2 Resolution Target**: 15-30% of incidents (escalated from Tier 1)
-   ```
-
-3. **Tier 3 (Architects / Vendor Escalation)**:
-   ```markdown
-   ## Tier 3 Response (Software Architect / Vendor)
-
-   **Scope**: Deep architectural expertise, system design decisions, vendor engagement
-
-   ### Handoff from Tier 2
-   - [ ] Receive complete incident timeline and diagnostic data
-   - [ ] Review root cause hypotheses tested so far
-   - [ ] Assess architectural implications
-
-   ### Architectural Analysis
-   - [ ] Review system design for fundamental issues
-   - [ ] Evaluate scalability/capacity constraints
-   - [ ] Consider architectural trade-offs (CAP theorem, consistency models)
-   - [ ] Engage vendor support if third-party dependency issue
-
-   ### Emergency Decision Authority
-   - [ ] Approve emergency architecture changes
-   - [ ] Authorize vendor escalation
-   - [ ] Approve hotfix deployment outside normal process
-   - [ ] Recommend temporary workaround vs. full fix
-
-   ### Vendor Escalation (if applicable)
-   ```bash
-   # Engage vendor support with priority escalation
-   # Provide: incident ID, impact, diagnostic data, logs, reproduction steps
-
-   # Example: AWS Support, Database vendor, SaaS provider
-   ```
-
-   **Tier 3 Resolution Target**: 5-10% of incidents (escalated from Tier 2)
-   ```
-
-4. **Escalation Timer Tracking**:
-   ```markdown
-   ## Escalation Timers
-
-   **P0 (Critical)**:
-   - Tier 1 → Tier 2: 15 minutes
-   - Tier 2 → Tier 3: 30 minutes
-   - Tier 3 → Management: 1 hour
-
-   **P1 (High)**:
-   - Tier 1 → Tier 2: 30 minutes
-   - Tier 2 → Tier 3: 1 hour
-   - Tier 3 → Management: 2 hours
-
-   **P2 (Medium)**:
-   - Tier 1 → Tier 2: 2 hours
-   - Tier 2 → Tier 3: 8 hours
-
-   **P3 (Low)**:
-   - Standard backlog process (no timers)
-   ```
-
-**Deliverables**:
-- [ ] Tier 1 response initiated within SLA
-- [ ] Runbooks executed and documented
-- [ ] Diagnostic data collected
-- [ ] Functional escalation (Tier 1 → 2 → 3) as needed
-- [ ] Escalation timers tracked and enforced
+**Communicate Progress**:
+```
+✓ Priority assigned: {P0/P1/P2/P3}
+⏳ Tier 1 response initiated...
+  ✓ Runbook executed: {runbook-name}
+  ✓ Diagnostic data collected
+  ⚠️ Escalating to Tier 2 (reason: {escalation-reason})
+⏳ Tier 2 response: Component Owner engaged...
+  ✓ Root cause hypothesis: {hypothesis}
+  {✓ Hypothesis confirmed | ⚠️ Escalating to Tier 3}
+```
 
 ### Step 4: Hierarchical Escalation (Management / Executive)
 
 **Purpose**: Notify leadership when business impact warrants executive involvement
 
-**Actions**:
+**Your Actions**:
 
-1. **Management Escalation** (Director / VP):
-   ```markdown
-   ## Management Notification (P0/P1)
-
-   **Trigger**:
-   - P0: Within 30 minutes of detection (automatic)
-   - P1: Within 2 hours if unresolved
-   - P2: If user impact escalates or SLA breach imminent
-
-   **Notification Template**:
+1. **Management Notification (P0/P1)**:
    ```
-   Subject: [P0 INCIDENT] {brief-title} - {status}
+   Task(
+       subagent_type="project-manager",
+       description="Notify management per escalation matrix",
+       prompt="""
+       Read incident record: .aiwg/incidents/{incident-id}/incident-record.md
 
-   **Incident ID**: {incident-id}
-   **Severity**: P0 (Critical)
-   **Start Time**: {HH:MM UTC}
-   **Duration**: {elapsed-time}
+       Determine if management notification required:
 
-   **User Impact**: {high-level description}
-   **Affected Users**: {count | percentage}
-   **Business Impact**: {revenue loss | compliance risk | reputation impact}
+       **Trigger**:
+       - P0: Within 30 minutes of detection (automatic)
+       - P1: Within 2 hours if unresolved
+       - P2: If user impact escalates or SLA breach imminent
 
-   **Current Status**: {INVESTIGATING | MITIGATING | RESOLVED}
-   **Root Cause**: {hypothesis or confirmed}
-   **ETA to Resolution**: {estimated time | UNKNOWN}
+       Generate management notification:
 
-   **Incident Commander**: {name}
-   **Next Update**: {time}
-   ```
+       Subject: [{P0 | P1} INCIDENT] {brief-title} - {status}
 
-   **Management Role**:
-   - Provide additional resources if needed
-   - Make business decisions (e.g., external communication, customer credits)
-   - Authorize emergency exceptions (e.g., deployment freeze override)
-   - Escalate to executive if warranted
-   ```
+       **Incident ID**: {incident-id}
+       **Severity**: {P0/P1}
+       **Start Time**: {HH:MM UTC}
+       **Duration**: {elapsed-time}
 
-2. **Executive Escalation** (C-Suite):
-   ```markdown
-   ## Executive Notification (P0 Only)
+       **User Impact**: {high-level description}
+       **Affected Users**: {count | percentage}
+       **Business Impact**: {revenue loss | compliance risk | reputation impact}
 
-   **Trigger**:
-   - P0: If unresolved after 2 hours OR major business impact
-   - Security breach or data loss (immediate)
-   - Public/media attention likely
-   - Regulatory reporting required
+       **Current Status**: {INVESTIGATING | MITIGATING | RESOLVED}
+       **Root Cause**: {hypothesis or confirmed}
+       **ETA to Resolution**: {estimated time | UNKNOWN}
 
-   **Notification Template**:
-   ```
-   Subject: [EXECUTIVE ALERT] P0 Incident - {brief-title}
+       **Incident Commander**: {name}
+       **Next Update**: {time}
 
-   **Business Impact Summary**:
-   - Revenue Impact: {$amount estimated}
-   - User Impact: {count} users / {percentage}% of user base
-   - Compliance Risk: {YES/NO - describe}
-   - Reputation Risk: {HIGH/MEDIUM/LOW}
+       Save to: .aiwg/incidents/{incident-id}/communications/management-notification.md
 
-   **Incident Summary**:
-   {2-3 sentence summary of issue and response}
-
-   **Current Status**: {status}
-   **ETA to Resolution**: {time}
-   **Incident Commander**: {name}
-
-   **Executive Action Needed**:
-   {NONE | DECISION REQUIRED | AWARENESS ONLY}
-
-   **Next Update**: {time}
+       Append timeline: Management notified
+       """
+   )
    ```
 
-   **Executive Role**:
-   - Final authority on business continuity decisions
-   - External stakeholder communication (customers, partners, press)
-   - Regulatory reporting decisions
-   - Post-incident investment decisions (prevention)
+2. **Executive Escalation (P0 Critical)**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Notify executive leadership for P0 or major business impact",
+       prompt="""
+       Read incident record: .aiwg/incidents/{incident-id}/incident-record.md
+
+       Determine if executive notification required:
+
+       **Trigger**:
+       - P0: If unresolved after 2 hours OR major business impact
+       - Security breach or data loss (immediate)
+       - Public/media attention likely
+       - Regulatory reporting required
+
+       Generate executive notification:
+
+       Subject: [EXECUTIVE ALERT] P0 Incident - {brief-title}
+
+       **Business Impact Summary**:
+       - Revenue Impact: {$amount estimated}
+       - User Impact: {count} users / {percentage}% of user base
+       - Compliance Risk: {YES/NO - describe}
+       - Reputation Risk: {HIGH/MEDIUM/LOW}
+
+       **Incident Summary**:
+       {2-3 sentence summary of issue and response}
+
+       **Current Status**: {status}
+       **ETA to Resolution**: {time}
+       **Incident Commander**: {name}
+
+       **Executive Action Needed**:
+       {NONE | DECISION REQUIRED | AWARENESS ONLY}
+
+       **Next Update**: {time}
+
+       Save to: .aiwg/incidents/{incident-id}/communications/executive-notification.md
+
+       Append timeline: Executive leadership notified
+       """
+   )
    ```
 
-3. **Status Page Communication** (P0/P1):
-   ```markdown
-   ## Public Status Page Update (P0/P1)
-
-   **P0**: Update within 30 minutes of detection
-   **P1**: Update within 1 hour if user-facing
-
-   **Status Page Template**:
+3. **Status Page Communication (P0/P1)**:
    ```
-   {YYYY-MM-DD HH:MM UTC} - Investigating
-   We are currently investigating an issue affecting {service/feature}.
-   Users may experience {specific symptoms}. We will provide updates every 30 minutes.
+   Task(
+       subagent_type="incident-responder",
+       description="Generate status page update template",
+       prompt="""
+       Create public-facing status page update:
 
-   {YYYY-MM-DD HH:MM UTC} - Identified
-   We have identified the root cause: {high-level explanation}.
-   We are implementing a fix. Estimated resolution: {time}.
+       {YYYY-MM-DD HH:MM UTC} - Investigating
+       We are currently investigating an issue affecting {service/feature}.
+       Users may experience {specific symptoms}. We will provide updates every {15|30|60} minutes.
 
-   {YYYY-MM-DD HH:MM UTC} - Monitoring
-   A fix has been deployed. We are monitoring the service to ensure stability.
+       Save template to: .aiwg/incidents/{incident-id}/communications/status-page-update.md
 
-   {YYYY-MM-DD HH:MM UTC} - Resolved
-   The issue has been resolved. Service is operating normally.
-   We apologize for the disruption. A post-incident review will follow.
-   ```
+       Note: Update within 30 minutes for P0, 1 hour for P1
+       """
+   )
    ```
 
-**Deliverables**:
-- [ ] Management notified per severity and timeline
-- [ ] Executive notified if criteria met (P0 >2h, security breach, major business impact)
-- [ ] Status page updated (P0/P1)
-- [ ] Stakeholder communication coordinated
+**Communicate Progress**:
+```
+✓ Tier 2 analysis complete
+⏳ Escalating per severity matrix...
+  ✓ Management notified (P0/P1)
+  {✓ Executive notified (P0 >2h or critical business impact) | ⊘ Executive notification not required}
+  ✓ Status page update template created
+⏳ Proceeding to root cause analysis and mitigation...
+```
 
-### Step 5: Investigation and Diagnosis
+### Step 5: Root Cause Analysis
 
-**Purpose**: Identify root cause using structured methodologies and diagnostic tools
+**Purpose**: Identify root cause using structured methodologies (5 Whys, Fishbone)
 
-**Actions**:
+**Your Actions**:
 
-1. **5 Whys Root Cause Analysis**:
-   ```markdown
-   ## 5 Whys Analysis
+1. **Launch RCA Agents** (parallel):
+   ```
+   # Agent 1: 5 Whys Analysis
+   Task(
+       subagent_type="incident-responder",
+       description="Conduct 5 Whys root cause analysis",
+       prompt="""
+       Read diagnostics:
+       - .aiwg/incidents/{incident-id}/diagnostics/tier1-data.md
+       - .aiwg/incidents/{incident-id}/diagnostics/tier2-analysis.md
+       - .aiwg/incidents/{incident-id}/diagnostics/tier3-architecture-assessment.md (if exists)
 
-   **Problem Statement**: {what happened}
+       Conduct 5 Whys Analysis:
 
-   1. **Why did {problem} occur?**
-      - Because {reason-1}
+       **Problem Statement**: {what happened}
 
-   2. **Why did {reason-1} occur?**
-      - Because {reason-2}
+       1. **Why did {problem} occur?**
+          - Because {reason-1}
 
-   3. **Why did {reason-2} occur?**
-      - Because {reason-3}
+       2. **Why did {reason-1} occur?**
+          - Because {reason-2}
 
-   4. **Why did {reason-3} occur?**
-      - Because {reason-4}
+       3. **Why did {reason-2} occur?**
+          - Because {reason-3}
 
-   5. **Why did {reason-4} occur?**
-      - Because {root-cause}
+       4. **Why did {reason-3} occur?**
+          - Because {reason-4}
 
-   **Root Cause**: {final answer from 5th why}
+       5. **Why did {reason-4} occur?**
+          - Because {root-cause}
 
-   **Validation**: {test to confirm root cause}
+       **Root Cause**: {final answer from 5th why}
+
+       **Validation**: {test to confirm root cause}
+
+       Save to: .aiwg/incidents/{incident-id}/root-cause-analysis.md (5 Whys section)
+       """
+   )
+
+   # Agent 2: Contributing Factors (Fishbone)
+   Task(
+       subagent_type="reliability-engineer",
+       description="Identify contributing factors using Ishikawa diagram",
+       prompt="""
+       Read diagnostics and 5 Whys analysis
+
+       Analyze Contributing Factors:
+
+       **Problem**: {incident title}
+
+       ### People
+       - {factor 1: e.g., insufficient training}
+       - {factor 2: e.g., on-call fatigue}
+
+       ### Process
+       - {factor 1: e.g., inadequate testing}
+       - {factor 2: e.g., unclear runbook}
+
+       ### Technology
+       - {factor 1: e.g., database connection pool exhaustion}
+       - {factor 2: e.g., monitoring gap}
+
+       ### Environment
+       - {factor 1: e.g., traffic spike}
+       - {factor 2: e.g., resource constraints}
+
+       **Primary Root Cause**: {from 5 Whys}
+       **Contributing Factors**: {list key factors from above}
+
+       Append to: .aiwg/incidents/{incident-id}/root-cause-analysis.md (Contributing Factors section)
+       """
+   )
    ```
 
-2. **Ishikawa / Fishbone Diagram** (Contributing Factors):
-   ```markdown
-   ## Contributing Factors Analysis
-
-   **Problem**: {incident title}
-
-   ### People
-   - {factor 1: e.g., insufficient training}
-   - {factor 2: e.g., on-call fatigue}
-
-   ### Process
-   - {factor 1: e.g., inadequate testing}
-   - {factor 2: e.g., unclear runbook}
-
-   ### Technology
-   - {factor 1: e.g., database connection pool exhaustion}
-   - {factor 2: e.g., monitoring gap}
-
-   ### Environment
-   - {factor 1: e.g., traffic spike}
-   - {factor 2: e.g., resource constraints}
-
-   **Primary Root Cause**: {from 5 Whys}
-   **Contributing Factors**: {list key factors from above}
-   ```
-
-3. **Log and Metrics Analysis**:
-   ```bash
-   # Log pattern analysis (find error patterns)
-   grep -i "error\|exception\|fail" incident-{ID}-logs.txt | sort | uniq -c | sort -rn
-
-   # Correlate errors with timeline
-   awk '/ERROR/ {print $1, $2, $NF}' incident-{ID}-logs.txt
-
-   # Metrics correlation (check for anomalies around incident time)
-   curl "https://metrics.example.com/query?start={incident-start-time}&end={incident-end-time}"
-
-   # Database query analysis
-   # Check slow queries, lock contention, connection pool usage
-   psql -c "SELECT * FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;"
-   ```
-
-4. **Recent Changes Review**:
-   ```bash
-   # Check recent deployments
-   git log --oneline --since="48 hours ago"
-   kubectl rollout history deployment/{service}
-
-   # Check configuration changes
-   git diff HEAD~10 config/
-
-   # Check infrastructure changes (example: Terraform)
-   terraform state list
-   terraform show
-
-   # Check dependency updates
-   git diff HEAD~10 package.json requirements.txt go.mod
-   ```
-
-5. **Hypothesis Testing**:
-   ```markdown
-   ## Root Cause Hypothesis Testing
-
-   **Hypothesis 1**: {statement}
-   - Test: {validation method}
-   - Result: {CONFIRMED | REJECTED}
-   - Evidence: {data or observation}
-
-   **Hypothesis 2**: {statement}
-   - Test: {validation method}
-   - Result: {CONFIRMED | REJECTED}
-   - Evidence: {data or observation}
-
-   **Confirmed Root Cause**: {hypothesis that was confirmed}
-   ```
-
-**Deliverables**:
-- [ ] 5 Whys analysis completed
-- [ ] Contributing factors identified (fishbone)
-- [ ] Logs and metrics analyzed
-- [ ] Recent changes reviewed
-- [ ] Root cause hypothesis tested and confirmed
-
-**Investigation Target**: P0 = 30 min, P1 = 1h
+**Communicate Progress**:
+```
+✓ Hierarchical escalation complete
+⏳ Conducting root cause analysis...
+  ✓ 5 Whys analysis: Root cause identified as {root-cause}
+  ✓ Contributing factors analysis: {count} factors identified
+✓ Root cause analysis complete: .aiwg/incidents/{incident-id}/root-cause-analysis.md
+⏳ Implementing mitigation strategy...
+```
 
 ### Step 6: Mitigation and Resolution
 
 **Purpose**: Implement workaround or fix to restore service and eliminate user impact
 
-**Actions**:
+**Your Actions**:
 
-1. **Mitigation Decision Tree**:
-   ```markdown
-   ## Mitigation Strategy Decision
+1. **Select Mitigation Strategy**:
+   ```
+   Task(
+       subagent_type="incident-responder",
+       description="Select mitigation strategy based on root cause",
+       prompt="""
+       Read root cause analysis: .aiwg/incidents/{incident-id}/root-cause-analysis.md
 
-   **Option 1: Rollback** (fastest, safest for deployment-related incidents)
-   - Use Case: Recent deployment caused issue, old version was stable
-   - Time to Mitigate: 5-15 minutes
-   - Risk: Low (return to known-good state)
-   - Commands: See flow-deploy-to-production.md (Rollback section)
+       Evaluate Mitigation Options:
 
-   **Option 2: Hotfix** (targeted code fix)
-   - Use Case: Bug fix required, rollback not viable
-   - Time to Mitigate: 30 minutes - 2 hours
-   - Risk: Medium (new code, limited testing)
-   - Process: See Hotfix Deployment Procedure below
+       **Option 1: Rollback** (fastest, safest for deployment-related incidents)
+       - Use Case: Recent deployment caused issue, old version was stable
+       - Time to Mitigate: 5-15 minutes
+       - Risk: Low (return to known-good state)
 
-   **Option 3: Configuration Change** (parameter adjustment)
-   - Use Case: Resource limits, timeouts, feature flags
-   - Time to Mitigate: 10-30 minutes
-   - Risk: Low-Medium (no code change)
-   - Commands: kubectl edit configmap/{config}, restart pods
+       **Option 2: Hotfix** (targeted code fix)
+       - Use Case: Bug fix required, rollback not viable
+       - Time to Mitigate: 30 minutes - 2 hours
+       - Risk: Medium (new code, limited testing)
 
-   **Option 4: Workaround** (temporary user-side solution)
-   - Use Case: Fix requires significant time, need immediate relief
-   - Time to Mitigate: Immediate (communication)
-   - Risk: Low (no system change)
-   - Example: "Use alternate workflow while feature X is unavailable"
+       **Option 3: Configuration Change** (parameter adjustment)
+       - Use Case: Resource limits, timeouts, feature flags
+       - Time to Mitigate: 10-30 minutes
+       - Risk: Low-Medium (no code change)
 
-   **Option 5: Infrastructure Scaling** (resource addition)
-   - Use Case: Capacity issue, traffic spike
-   - Time to Mitigate: 10-20 minutes
-   - Risk: Low-Medium (cost implications)
-   - Commands: kubectl scale deployment/{service} --replicas={count}
+       **Option 4: Workaround** (temporary user-side solution)
+       - Use Case: Fix requires significant time, need immediate relief
+       - Time to Mitigate: Immediate (communication)
+       - Risk: Low (no system change)
 
-   **Decision**: {selected-option}
-   **Rationale**: {why this option was chosen}
+       **Option 5: Infrastructure Scaling** (resource addition)
+       - Use Case: Capacity issue, traffic spike
+       - Time to Mitigate: 10-20 minutes
+       - Risk: Low-Medium (cost implications)
+
+       **Selected Strategy**: {option}
+       **Rationale**: {why this option was chosen}
+       **Implementation Plan**: {specific steps}
+       **Rollback Plan**: {if mitigation fails, how to revert}
+
+       Save to: .aiwg/incidents/{incident-id}/mitigation-report.md (Strategy section)
+       """
+   )
    ```
 
-2. **Rollback Procedure** (Deployment-Related Incidents):
-   ```bash
-   # Blue-Green Rollback
-   kubectl patch service {service} -p '{"spec":{"selector":{"version":"blue"}}}'
+2. **Execute Mitigation** (agent depends on strategy):
+   ```
+   # If Rollback
+   Task(
+       subagent_type="devops-engineer",
+       description="Execute rollback procedure",
+       prompt="""
+       Execute rollback based on deployment strategy:
 
-   # Canary Rollback
-   kubectl argo rollouts abort {service}
-   kubectl argo rollouts undo {service}
+       Use existing deployment command:
+       /project:flow-deploy-to-production --rollback
 
-   # Rolling Rollback
-   kubectl rollout undo deployment/{service}
+       Document rollback execution:
+       - Rollback timestamp
+       - Previous version: {old-version}
+       - Rolled back to: {stable-version}
+       - Verification: smoke tests, metrics
 
-   # Verify rollback success
-   kubectl get pods -l app={service} -o jsonpath='{.items[*].spec.containers[*].image}'
-   curl https://prod.example.com/health
+       Append to: .aiwg/incidents/{incident-id}/mitigation-report.md (Execution section)
+       Append timeline: Rollback executed
+       """
+   )
 
-   # Smoke tests post-rollback
-   ./scripts/smoke-tests.sh https://prod.example.com
+   # If Hotfix
+   Task(
+       subagent_type="devops-engineer",
+       description="Deploy emergency hotfix",
+       prompt="""
+       Execute hotfix deployment:
+
+       1. Create hotfix branch: hotfix/INC-{incident-ID}-{brief-description}
+       2. Implement minimal fix (code change already identified)
+       3. Test in staging (smoke tests, regression tests)
+       4. Deploy to production using standard flow
+       5. Monitor for 15 minutes (metrics validation)
+
+       Get Deployment Manager approval before production deploy.
+
+       Document hotfix deployment:
+       - Hotfix commit SHA
+       - Deployment timestamp
+       - Validation results
+
+       Append to: .aiwg/incidents/{incident-id}/mitigation-report.md (Execution section)
+       Append timeline: Hotfix deployed
+       """
+   )
+
+   # If Configuration Change
+   Task(
+       subagent_type="reliability-engineer",
+       description="Apply configuration change",
+       prompt="""
+       Apply configuration change:
+
+       Document:
+       - Parameter changed: {config-parameter}
+       - Old value: {old-value}
+       - New value: {new-value}
+       - Restart required: {YES/NO}
+       - Validation: {how to verify fix}
+
+       Append to: .aiwg/incidents/{incident-id}/mitigation-report.md (Execution section)
+       Append timeline: Configuration updated
+       """
+   )
    ```
 
-3. **Hotfix Deployment Procedure** (Emergency Code Fix):
-   ```markdown
-   ## Emergency Hotfix Process (P0/P1)
+3. **Validate Resolution**:
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Validate mitigation resolves incident",
+       prompt="""
+       Validate mitigation success:
 
-   ### Prerequisites
-   - [ ] P0 or P1 incident requiring code change
-   - [ ] Deployment Manager approval obtained
-   - [ ] Rollback plan confirmed
+       ## Validation Tests
+       - [ ] Smoke tests passed
+       - [ ] Error rate returned to baseline (<{threshold}%)
+       - [ ] Latency returned to SLA (p95 <{target}ms)
+       - [ ] User journey validation (critical paths working)
+       - [ ] Monitored for 15-30 minutes (stability confirmed)
 
-   ### Hotfix Workflow
-   1. **Create Hotfix Branch**:
-      ```bash
-      git checkout production  # or main
-      git checkout -b hotfix/INC-{incident-ID}-{brief-description}
-      ```
+       ## Metrics Validation
+       - Error rate: {current}% (baseline: {baseline}%, target: <{threshold}%)
+       - Latency p95: {current}ms (baseline: {baseline}ms, target: <{target}ms)
+       - Throughput: {current} req/s (baseline: {baseline} req/s)
 
-   2. **Implement Minimal Fix**:
-      - Make minimal code change to resolve issue
-      - Add regression test
-      - NO feature additions or refactoring
-      - Document change in commit message
+       **Resolution Status**: {RESOLVED | PARTIALLY RESOLVED | NOT RESOLVED}
 
-   3. **Peer Review** (async if P0, required if P1):
-      - Create PR with `[HOTFIX]` prefix
-      - Tag reviewer (Component Owner or Architect)
-      - P0: Review can be async (deploy first, review after)
-      - P1: Require approval before deploy
+       If RESOLVED:
+       - Update incident record: Status → RESOLVED
+       - Record resolution time
+       - Prepare user communication
 
-   4. **Test in Staging**:
-      ```bash
-      # Deploy to staging environment
-      kubectl apply -f k8s/staging/hotfix-deployment.yaml
+       Save validation results to: .aiwg/incidents/{incident-id}/mitigation-report.md (Validation section)
 
-      # Validate fix resolves issue
-      ./scripts/smoke-tests.sh https://staging.example.com
-
-      # Run regression tests
-      npm run test:integration
-      ```
-
-   5. **Deploy to Production**:
-      ```bash
-      # Get Deployment Manager approval
-      # Deploy hotfix using standard deployment strategy (prefer blue-green or canary)
-
-      /project:flow-deploy-to-production blue-green v{version}-hotfix
-
-      # Monitor metrics for 15 minutes
-      watch -n 10 'curl https://metrics.example.com/error_rate'
-
-      # Validate issue resolved
-      # Check incident symptoms no longer present
-      ```
-
-   6. **Post-Deployment**:
-      - [ ] Monitor SLOs for 1 hour
-      - [ ] Update incident with resolution details
-      - [ ] Merge hotfix to main branch
-      - [ ] Schedule post-incident review
-      - [ ] Update runbooks with new learnings
+       Append timeline:
+       | {HH:MM UTC} | Mitigation validated, incident RESOLVED | reliability-engineer | Total duration: {duration} |
+       """
+   )
    ```
 
-4. **Validation Testing**:
-   ```bash
-   # Validate mitigation resolves incident
+4. **User Communication**:
+   ```
+   Task(
+       subagent_type="incident-responder",
+       description="Generate resolution communication",
+       prompt="""
+       Create resolution communication:
 
-   # Smoke tests
-   ./scripts/smoke-tests.sh https://prod.example.com
+       ## Status Page Update
+       {YYYY-MM-DD HH:MM UTC} - Resolved
+       The issue affecting {service/feature} has been resolved.
+       Service is operating normally. We apologize for the disruption.
+       Root cause: {brief explanation}.
+       A detailed post-incident review will be published within 48 hours.
 
-   # Check metrics (error rate, latency should return to baseline)
-   curl https://metrics.example.com/error_rate | jq '.value'
-   curl https://metrics.example.com/latency_p99 | jq '.value'
+       ## Internal Notification
+       Subject: [RESOLVED] {incident-id} - {title}
 
-   # User journey validation
-   ./tests/critical-paths.sh
+       **Status**: RESOLVED
+       **Resolution Time**: {HH:MM UTC}
+       **Total Duration**: {hours:minutes}
 
-   # Monitor for 15-30 minutes to confirm stability
+       **Resolution Summary**: {brief description of fix}
+       **User Impact**: {summary of user experience during incident}
+
+       **Next Steps**: Post-incident review scheduled for {date/time}
+
+       Save to: .aiwg/incidents/{incident-id}/communications/resolution-notification.md
+       """
+   )
    ```
 
-5. **User Communication**:
-   ```markdown
-   ## Resolution Communication
-
-   **Status Page Update**:
-   ```
-   {YYYY-MM-DD HH:MM UTC} - Resolved
-   The issue affecting {service/feature} has been resolved.
-   Service is operating normally. We apologize for the disruption.
-   Root cause: {brief explanation}.
-   A detailed post-incident review will be published within 48 hours.
-   ```
-
-   **Internal Notification**:
-   ```
-   Subject: [RESOLVED] {incident-id} - {title}
-
-   **Status**: RESOLVED
-   **Resolution Time**: {HH:MM UTC}
-   **Total Duration**: {hours:minutes}
-
-   **Resolution Summary**: {brief description of fix}
-   **User Impact**: {summary of user experience during incident}
-
-   **Next Steps**: Post-incident review scheduled for {date/time}
-   ```
-   ```
-
-**Deliverables**:
-- [ ] Mitigation strategy selected and approved
-- [ ] Mitigation deployed (rollback, hotfix, config change, or workaround)
-- [ ] Validation tests passed
-- [ ] User communication sent (status page, internal notification)
-- [ ] Incident status updated to RESOLVED
-
-**Resolution Target**: P0 = 1-2h, P1 = 4h, P2 = 24h
+**Communicate Progress**:
+```
+✓ Root cause identified: {root-cause}
+⏳ Implementing mitigation strategy: {strategy}...
+  ✓ Mitigation executed: {details}
+  ✓ Validation tests: PASSED
+  ✓ Metrics returned to baseline
+✓ Incident RESOLVED (duration: {HH:MM})
+✓ User communication sent
+⏳ Scheduling post-incident review...
+```
 
 ### Step 7: Post-Incident Review (PIR)
 
 **Purpose**: Conduct blameless retrospective to learn from incident and prevent recurrence
 
-**Actions**:
+**Your Actions**:
 
-1. **Schedule PIR** (Blameless Post-Mortem):
-   ```markdown
-   ## Post-Incident Review Meeting
+1. **Schedule PIR Meeting**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Schedule post-incident review meeting",
+       prompt="""
+       Schedule PIR based on severity:
 
-   **Timing**:
-   - P0: Within 24 hours of resolution
-   - P1: Within 48 hours of resolution
-   - P2: Within 1 week (optional, at discretion)
-   - P3: No PIR required
+       **Timing**:
+       - P0: Within 24 hours of resolution
+       - P1: Within 48 hours of resolution
+       - P2: Within 1 week (optional)
+       - P3: No PIR required
 
-   **Duration**: 60 minutes
+       **Duration**: 60 minutes
 
-   **Required Attendees**:
-   - Incident Commander (facilitator)
-   - On-call engineer(s) involved
-   - Component Owner(s)
-   - Reliability Engineer
-   - Support Lead (if user-facing impact)
+       **Required Attendees**:
+       - Incident Commander (facilitator)
+       - On-call engineer(s) involved
+       - Component Owner(s)
+       - Reliability Engineer
+       - Support Lead (if user-facing impact)
 
-   **Optional Attendees**:
-   - Product Owner
-   - Project Manager
-   - Security Gatekeeper (if security-related)
+       **Optional Attendees**:
+       - Product Owner
+       - Project Manager
+       - Security Gatekeeper (if security-related)
 
-   **Agenda**:
-   1. Timeline reconstruction (10 min)
-   2. Root cause analysis (15 min)
-   3. Contributing factors discussion (10 min)
-   4. What went well (10 min)
-   5. What could improve (10 min)
-   6. Preventive actions brainstorm (15 min)
+       **Agenda**:
+       1. Timeline reconstruction (10 min)
+       2. Root cause analysis (15 min)
+       3. Contributing factors discussion (10 min)
+       4. What went well (10 min)
+       5. What could improve (10 min)
+       6. Preventive actions brainstorm (15 min)
+
+       Document meeting details:
+       Save to: .aiwg/incidents/{incident-id}/pir-meeting-invite.md
+       """
+   )
    ```
 
-2. **PIR Document Template**:
-   ```markdown
-   # Post-Incident Review: {incident-id}
+2. **Generate PIR Document**:
+   ```
+   Task(
+       subagent_type="incident-responder",
+       description="Create comprehensive post-incident review document",
+       prompt="""
+       Read all incident artifacts:
+       - .aiwg/incidents/{incident-id}/incident-record.md
+       - .aiwg/incidents/{incident-id}/timeline.md
+       - .aiwg/incidents/{incident-id}/triage-assessment.md
+       - .aiwg/incidents/{incident-id}/root-cause-analysis.md
+       - .aiwg/incidents/{incident-id}/mitigation-report.md
 
-   **Incident ID**: {incident-id}
-   **Date**: {YYYY-MM-DD}
-   **Severity**: {P0/P1/P2}
-   **Duration**: {hours:minutes from detection to resolution}
-   **User Impact**: {count} users affected, {duration} minutes downtime
+       Generate Post-Incident Review:
 
-   ## Executive Summary
+       # Post-Incident Review: {incident-id}
 
-   {2-3 sentence summary of what happened, why, and resolution}
+       **Incident ID**: {incident-id}
+       **Date**: {YYYY-MM-DD}
+       **Severity**: {P0/P1/P2}
+       **Duration**: {hours:minutes from detection to resolution}
+       **User Impact**: {count} users affected, {duration} minutes downtime
 
-   **Root Cause**: {one-sentence root cause}
-   **Resolution**: {one-sentence resolution}
+       ## Executive Summary
+       {2-3 sentence summary of what happened, why, and resolution}
 
-   ## Timeline
+       **Root Cause**: {one-sentence root cause}
+       **Resolution**: {one-sentence resolution}
 
-   All times in UTC.
+       ## Timeline
+       {Copy detailed timeline from timeline.md}
 
-   | Time | Event | Actor | Notes |
-   |------|-------|-------|-------|
-   | {HH:MM} | Incident detected | {monitoring/user report} | {alert details} |
-   | {HH:MM} | Engineer acknowledged | {name} | Response time: {minutes} |
-   | {HH:MM} | Triage complete, severity assigned | {name} | Priority: {P0/P1/P2} |
-   | {HH:MM} | Investigation started | {name} | {runbook executed, logs reviewed} |
-   | {HH:MM} | Root cause identified | {name} | {hypothesis confirmed} |
-   | {HH:MM} | Mitigation started | {name} | {rollback/hotfix/config change} |
-   | {HH:MM} | Mitigation deployed | {name} | {deployment method} |
-   | {HH:MM} | Validation testing passed | {name} | {smoke tests, metrics} |
-   | {HH:MM} | Incident resolved | {name} | Total duration: {duration} |
-   | {HH:MM} | Status page updated | {name} | Resolution communicated |
+       ## Root Cause
+       {Copy 5 Whys analysis and contributing factors}
 
-   ## Root Cause
+       ## Impact Assessment
 
-   **5 Whys Analysis**:
-   {copy from Step 5}
+       ### User Impact
+       - **Affected Users**: {count} users ({percentage}% of user base)
+       - **User Symptoms**: {description of user experience}
+       - **Downtime**: {duration} minutes {complete outage | degraded service}
+       - **Failed Transactions**: {count}
 
-   **Technical Root Cause**:
-   {detailed technical explanation of root cause}
+       ### Business Impact
+       - **Revenue Impact**: ${amount} estimated
+       - **Reputation Impact**: {HIGH/MEDIUM/LOW}
+       - **Compliance Impact**: {NONE | describe}
 
-   **Example**:
-   "The database connection pool was exhausted due to a connection leak introduced in release v1.2.3. The `closeConnection()` method was not called in error paths, causing connections to remain open indefinitely. Under normal traffic, the leak was slow. A traffic spike on {date} accelerated connection exhaustion, causing all new requests to timeout after 30 seconds."
+       ### SLO Impact
+       - **Availability**: {percentage}% (Target: ≥99.9%)
+       - **Error Budget Consumed**: {percentage}% of monthly budget
+       - **SLA Breach**: {YES/NO}
 
-   ## Contributing Factors
+       ## Response Effectiveness
 
-   **People**:
-   - {factor 1}
-   - {factor 2}
+       ### What Went Well
+       1. {positive aspect 1}
+       2. {positive aspect 2}
+       3. {positive aspect 3}
 
-   **Process**:
-   - {factor 1}
-   - {factor 2}
+       ### What Could Improve
+       1. {improvement area 1}
+       2. {improvement area 2}
+       3. {improvement area 3}
 
-   **Technology**:
-   - {factor 1}
-   - {factor 2}
+       ## Preventive Actions
+       {To be populated in next step}
 
-   **Environment**:
-   - {factor 1}
-   - {factor 2}
+       ## Lessons Learned
 
-   ## Impact Assessment
+       ### Technical Lessons
+       - {lesson 1}
+       - {lesson 2}
 
-   ### User Impact
-   - **Affected Users**: {count} users ({percentage}% of user base)
-   - **User Symptoms**: {description of user experience}
-   - **Downtime**: {duration} minutes of complete outage OR {duration} minutes of degraded service
-   - **Failed Transactions**: {count}
+       ### Process Lessons
+       - {lesson 1}
+       - {lesson 2}
 
-   ### Business Impact
-   - **Revenue Impact**: ${amount} estimated (failed transactions, refunds, SLA credits)
-   - **Reputation Impact**: {HIGH/MEDIUM/LOW} - {social media mentions, support tickets}
-   - **Compliance Impact**: {NONE | describe if applicable}
+       ### Communication Lessons
+       - {lesson 1}
+       - {lesson 2}
 
-   ### SLO Impact
-   - **Availability**: {percentage}% (Target: ≥99.9%)
-   - **Error Budget Consumed**: {percentage}% of monthly budget
-   - **SLA Breach**: {YES/NO} - {describe if applicable}
-
-   ## Response Effectiveness
-
-   ### What Went Well
-   1. {positive aspect 1}
-      - Example: "Automated alerts detected issue within 2 minutes"
-   2. {positive aspect 2}
-      - Example: "Rollback procedure executed flawlessly"
-   3. {positive aspect 3}
-      - Example: "Cross-team communication was clear and efficient"
-
-   ### What Could Improve
-   1. {improvement area 1}
-      - Example: "Runbook did not cover this failure scenario"
-   2. {improvement area 2}
-      - Example: "Escalation timer not enforced (delayed Tier 2 engagement)"
-   3. {improvement area 3}
-      - Example: "Smoke tests did not catch connection pool leak"
-
-   ## Preventive Actions
-
-   **Immediate Actions** (Complete within 1 week):
-   | Action | Owner | Due Date | Status |
-   |--------|-------|----------|--------|
-   | Fix connection leak bug | {engineer} | {date} | {Open/In Progress/Done} |
-   | Add connection pool metrics to monitoring | {reliability-engineer} | {date} | {Open/In Progress/Done} |
-   | Update runbook with connection pool troubleshooting | {on-call-engineer} | {date} | {Open/In Progress/Done} |
-
-   **Short-Term Actions** (Complete within 1 month):
-   | Action | Owner | Due Date | Status |
-   |--------|-------|----------|--------|
-   | Add connection pool health checks to smoke tests | {test-engineer} | {date} | {Open/In Progress/Done} |
-   | Implement connection pool circuit breaker | {architect} | {date} | {Open/In Progress/Done} |
-   | Review all database connection handling for similar leaks | {component-owners} | {date} | {Open/In Progress/Done} |
-
-   **Long-Term Actions** (Complete within 3 months):
-   | Action | Owner | Due Date | Status |
-   |--------|-------|----------|--------|
-   | Implement automated resource leak detection in CI/CD | {devops} | {date} | {Open/In Progress/Done} |
-   | Conduct "chaos engineering" drill for database failures | {reliability-engineer} | {date} | {Open/In Progress/Done} |
-   | Increase connection pool capacity (horizontal scaling) | {infrastructure} | {date} | {Open/In Progress/Done} |
-
-   ## Lessons Learned
-
-   ### Technical Lessons
-   - {lesson 1: e.g., "Always close connections in error paths"}
-   - {lesson 2: e.g., "Connection pool metrics are critical for early detection"}
-
-   ### Process Lessons
-   - {lesson 1: e.g., "Escalation timers must be enforced, not optional"}
-   - {lesson 2: e.g., "Runbooks must be tested quarterly, not just written"}
-
-   ### Communication Lessons
-   - {lesson 1: e.g., "Status page updates should include ETA"}
-   - {lesson 2: e.g., "Executive notification was too delayed"}
-
-   ## Appendix
-
-   ### Relevant Links
-   - Incident ticket: {link}
-   - Incident channel: {slack-channel}
-   - Monitoring dashboard: {dashboard-url}
-   - Deployment that introduced bug: {git-commit-sha}
-   - Hotfix deployment: {git-commit-sha}
-
-   ### Metrics and Logs
-   - Attached: incident-{ID}-logs.txt
-   - Attached: incident-{ID}-metrics.csv
-
-   ---
-
-   **Facilitator**: {Incident Commander name}
-   **Date**: {YYYY-MM-DD}
-   **Attendees**: {list names}
+       Save to: .aiwg/incidents/{incident-id}/post-incident-review.md
+       """
+   )
    ```
 
-3. **Action Tracking**:
-   ```bash
-   # Create tickets for all preventive actions
-   # Example: JIRA, GitHub Issues
+3. **Create Preventive Actions**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Identify and track preventive actions",
+       prompt="""
+       Read PIR: .aiwg/incidents/{incident-id}/post-incident-review.md
 
-   # Immediate actions (1 week)
-   jira create --project ACT --type Task --summary "[PIR] Fix connection leak" --assignee {engineer}
+       Identify Preventive Actions in 3 categories:
 
-   # Short-term actions (1 month)
-   # Long-term actions (3 months)
+       ## Immediate Actions (Complete within 1 week)
+       | Action | Owner | Due Date | Status |
+       |--------|-------|----------|--------|
+       | Fix {specific bug} | {engineer} | {date} | Open |
+       | Add {metric} to monitoring | {reliability-engineer} | {date} | Open |
+       | Update runbook with {scenario} | {on-call-engineer} | {date} | Open |
 
-   # Weekly review of action progress (Project Manager responsibility)
+       ## Short-Term Actions (Complete within 1 month)
+       | Action | Owner | Due Date | Status |
+       |--------|-------|----------|--------|
+       | Add {test} to smoke tests | {test-engineer} | {date} | Open |
+       | Implement {safeguard} | {architect} | {date} | Open |
+       | Review {component} for similar issues | {component-owners} | {date} | Open |
+
+       ## Long-Term Actions (Complete within 3 months)
+       | Action | Owner | Due Date | Status |
+       |--------|-------|----------|--------|
+       | Implement {automation} in CI/CD | {devops} | {date} | Open |
+       | Conduct chaos engineering drill | {reliability-engineer} | {date} | Open |
+       | Increase {resource} capacity | {infrastructure} | {date} | Open |
+
+       Save to: .aiwg/incidents/{incident-id}/preventive-actions.md
+
+       Create tracked tickets for each action (instructions for user):
+       # Example: JIRA, GitHub Issues
+       # jira create --project ACT --type Task --summary "[PIR-{incident-id}] {action}" --assignee {owner}
+       """
+   )
    ```
 
-4. **Runbook Updates**:
-   ```markdown
-   ## Runbook Update: Connection Pool Exhaustion
+4. **Update Runbooks and Knowledge Base**:
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Update runbooks with incident learnings",
+       prompt="""
+       Create runbook update recommendations:
 
-   **Scenario**: Database connection pool exhausted
+       ## Runbook Update: {Scenario}
 
-   **Symptoms**:
-   - Error logs: "Timeout waiting for connection from pool"
-   - Metrics: connection_pool_active_connections = max_connections
-   - User impact: All database operations timeout
+       **Scenario**: {incident category}
 
-   **Diagnosis**:
-   ```bash
-   # Check connection pool status
-   curl https://metrics.example.com/connection_pool_status
+       **Symptoms**:
+       - {symptom 1 from incident}
+       - {symptom 2 from incident}
+       - User impact: {typical user experience}
 
-   # Check active connections
-   psql -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
+       **Diagnosis**:
+       {Commands/checks to identify this issue}
 
-   # Identify connection leaks
-   kubectl logs {pod-name} | grep "Connection opened" | wc -l
-   kubectl logs {pod-name} | grep "Connection closed" | wc -l
-   # If opened >> closed, connection leak present
+       **Mitigation**:
+       1. Immediate: {fastest mitigation from incident}
+       2. Short-term: {temporary fix}
+       3. Long-term: {permanent fix}
+
+       **Escalation**: If unresolved after {time}, escalate to {Tier 2 role}
+
+       **Prevention**: {monitoring alerts, safeguards to add}
+
+       Save to: .aiwg/incidents/{incident-id}/runbook-update-recommendation.md
+
+       Also create knowledge base article template:
+
+       ## Knowledge Base Article: INC-{ID}
+
+       **Title**: How to Troubleshoot {Problem}
+
+       **Keywords**: {relevant keywords}
+
+       **Problem**: {user-facing problem description}
+
+       **Root Cause**: {technical root cause}
+
+       **Resolution Steps**: {link to runbook}
+
+       **Prevention**: {link to monitoring setup, safeguards}
+
+       **Related Incidents**: {list similar past incidents}
+
+       Save to: .aiwg/incidents/{incident-id}/knowledge-base-article.md
+       """
+   )
    ```
 
-   **Mitigation**:
-   1. Immediate: Restart application pods to reset connection pool
-      ```bash
-      kubectl rollout restart deployment/{service}
-      ```
-   2. Short-term: Scale pods to distribute connections
-      ```bash
-      kubectl scale deployment/{service} --replicas={count}
-      ```
-   3. Long-term: Fix connection leak in code, deploy hotfix
+**Communicate Progress**:
+```
+✓ Incident RESOLVED
+⏳ Conducting post-incident review...
+  ✓ PIR meeting scheduled: {date/time}
+  ✓ PIR document generated
+  ✓ Preventive actions identified: {count} immediate, {count} short-term, {count} long-term
+  ✓ Runbook updates recommended
+  ✓ Knowledge base article drafted
+✓ Post-incident review complete: .aiwg/incidents/{incident-id}/post-incident-review.md
+```
 
-   **Escalation**: If unresolved after pod restart, escalate to Component Owner (Tier 2)
+## Quality Gates
 
-   **Prevention**: Monitor connection_pool_utilization metric, alert at >80%
-   ```
-
-5. **Knowledge Base Update**:
-   ```markdown
-   ## Knowledge Base Article: INC-{ID}
-
-   **Title**: How to Troubleshoot Database Connection Pool Exhaustion
-
-   **Keywords**: database, connection pool, timeout, resource leak
-
-   **Problem**: Users experience timeouts when application cannot acquire database connections
-
-   **Root Cause**: Connection pool exhausted due to connection leaks or insufficient capacity
-
-   **Resolution Steps**: {link to runbook}
-
-   **Prevention**: {link to monitoring setup, code review checklist}
-
-   **Related Incidents**: {list similar past incidents}
-   ```
-
-**Deliverables**:
-- [ ] PIR meeting conducted within 24-48h (P0/P1)
-- [ ] PIR document completed with timeline, root cause, and preventive actions
-- [ ] Preventive actions created as tracked tickets
-- [ ] Runbooks updated with new troubleshooting steps
-- [ ] Knowledge base updated with lessons learned
-
-## Success Criteria
-
-This flow succeeds when:
-- [ ] Incident detected within 5 minutes (automated or manual)
+Before marking workflow complete, verify:
+- [ ] Incident detected and logged within 5 minutes
 - [ ] Triage and prioritization completed within 15 minutes
-- [ ] Incident Commander assigned for P0/P1
-- [ ] Functional escalation (Tier 1 → 2 → 3) executed per timers
-- [ ] Hierarchical escalation (management/executive) per criteria
-- [ ] Root cause identified using 5 Whys and fishbone analysis
+- [ ] Incident Commander assigned (P0/P1)
+- [ ] Functional escalation executed per timers (Tier 1 → 2 → 3)
+- [ ] Hierarchical escalation completed per severity (management/executive)
+- [ ] Root cause identified using 5 Whys and fishbone
 - [ ] Mitigation deployed and validated
 - [ ] User communication sent (status page, internal)
 - [ ] Incident resolved within SLA (P0 = 1-2h, P1 = 4h, P2 = 24h)
 - [ ] Post-incident review completed within 24-48h (P0/P1)
 - [ ] Preventive actions identified and tracked
 
-## Key Metrics (ITIL Best Practices)
+## User Communication
 
-**Detection Metrics**:
-- Mean Time to Detect (MTTD): <5 minutes
-- Detection Method: {automated | user-report | manual}
+**At start**: Confirm understanding and initial severity assessment
+
+```
+Understood. I'll orchestrate incident response for {incident-id}.
+
+Initial assessment:
+- Reported symptoms: {user-provided description}
+- Estimated severity: {P0/P1/P2/P3} (pending triage confirmation)
+- Expected resolution SLA: {time}
+
+I'll coordinate incident response across:
+- Tier 1 → Tier 2 → Tier 3 escalation
+- Management/executive notification (if warranted)
+- Root cause analysis
+- Mitigation and validation
+- Post-incident review
+
+Expected orchestration duration: 5-10 minutes.
+Resolution duration: {P0: 1-2h | P1: 4h | P2: 24h}
+
+Starting incident response...
+```
+
+**During**: Update progress with clear indicators
+
+```
+✓ = Complete
+⏳ = In progress
+❌ = Error/blocked
+⚠️ = Warning/escalation triggered
+```
+
+**At end**: Summary report with resolution status and PIR schedule
+
+```
+─────────────────────────────────────────────
+Incident Response Complete: {incident-id}
+─────────────────────────────────────────────
+
+**Overall Status**: RESOLVED
+**Severity**: {P0/P1/P2/P3}
+**Duration**: {HH:MM} (Detection → Resolution)
+**Resolution SLA**: {MET | MISSED by {time}}
+
+**Resolution Summary**:
+- Root Cause: {one-sentence root cause}
+- Mitigation: {strategy applied}
+- User Impact: {count} users, {duration} minutes {outage|degradation}
 
 **Response Metrics**:
+- Detection Time: {minutes} (SLA: <5 min)
+- Acknowledgment: {minutes} (SLA: {immediate|5 min|30 min})
+- Time to Engage: {minutes} (SLA: {15|30|240} min)
+- Time to Resolve: {HH:MM} (SLA: {1-2h|4h|24h})
+
+**Escalation Path Executed**:
+✓ Tier 1: On-call engineer → {escalated|resolved}
+{✓ Tier 2: Component Owner → {escalated|resolved}}
+{✓ Tier 3: Architecture team → resolved}
+{✓ Management notified (P0/P1)}
+{✓ Executive notified (P0 critical)}
+
+**Artifacts Generated**:
+- Incident Record (.aiwg/incidents/{incident-id}/incident-record.md)
+- Timeline (.aiwg/incidents/{incident-id}/timeline.md)
+- Triage Assessment (.aiwg/incidents/{incident-id}/triage-assessment.md)
+- Root Cause Analysis (.aiwg/incidents/{incident-id}/root-cause-analysis.md)
+- Mitigation Report (.aiwg/incidents/{incident-id}/mitigation-report.md)
+- Post-Incident Review (.aiwg/incidents/{incident-id}/post-incident-review.md)
+- Preventive Actions (.aiwg/incidents/{incident-id}/preventive-actions.md)
+
+**Next Steps**:
+- PIR meeting: {date/time}
+- Preventive actions: {count} tracked ({immediate|short-term|long-term})
+- Runbook updates: Review .aiwg/incidents/{incident-id}/runbook-update-recommendation.md
+- Knowledge base: Publish .aiwg/incidents/{incident-id}/knowledge-base-article.md
+
+─────────────────────────────────────────────
+```
+
+## Error Handling
+
+**If Incident Not Resolving Within SLA**:
+```
+⚠️ Incident exceeds resolution SLA ({P0 >2h | P1 >4h})
+
+Current status: {INVESTIGATING | MITIGATING}
+Elapsed time: {HH:MM}
+
+Actions:
+1. Escalating to Incident Commander (if not already involved)
+2. Assembling war room with all Component Owners
+3. Considering emergency measures:
+   - Rollback to last known-good version
+   - Enable maintenance mode (planned downtime)
+   - Engage vendor support (if third-party dependency)
+4. Updating stakeholders every {15|30} minutes
+5. Notifying {executive sponsor | management}
+
+Escalation contact: {Incident Commander → Engineering Manager → VP Engineering → CTO}
+```
+
+**If Escalation Path Blocked**:
+```
+⚠️ Key person unavailable: {Tier 2/3 owner | Incident Commander}
+
+Actions:
+1. Checking on-call rotation for backup/secondary contact
+2. Escalating to engineering manager for alternate assignment
+3. Engaging Software Architect for temporary coverage (if Component Owner unavailable)
+4. Documenting unavailability in incident timeline
+
+Backup contacts:
+- Tier 2 Backup: {name, contact}
+- Tier 3 Backup: {name, contact}
+- Incident Commander Backup: {name, contact}
+```
+
+**If Multiple Concurrent Incidents (Major Incident)**:
+```
+⚠️ Multiple concurrent incidents detected: {count} P0/P1 incidents
+
+Declaring MAJOR INCIDENT status.
+
+Actions:
+1. Assigning separate Incident Commander for each incident
+2. Establishing central coordination (Senior Incident Commander)
+3. Triaging incidents by business impact priority
+4. Allocating resources (may pull from non-critical work)
+5. Executive notification immediate
+6. Status page update: "Multiple service disruptions"
+
+Considerations:
+- Implementing change freeze (halt all deployments)
+- Scaling back non-essential services to free resources
+- Engaging vendor support across all affected systems
+
+Major Incident Coordinator: {Senior Engineering Manager or VP Engineering}
+```
+
+**If Rollback Fails (CRITICAL)**:
+```
+❌ Rollback did not resolve incident or rollback itself failed
+
+STOP: No further changes until assessment complete.
+
+Escalating to P0 CRITICAL.
+
+Assembling emergency war room:
+- Incident Commander
+- Deployment Manager
+- Software Architect
+- Database Administrator (if data issue)
+- Infrastructure Lead
+
+Options under evaluation:
+- Rollback to earlier version (skip problematic release)
+- Emergency hotfix (if root cause clear)
+- Maintenance mode (planned downtime for investigation)
+- Manual intervention (database repair, data migration)
+
+Executive notification: IMMEDIATE
+Public communication: "Extended outage, team working on resolution"
+
+Emergency contact: {CTO or VP Engineering}
+```
+
+**If Security Breach or Data Loss**:
+```
+❌ SECURITY INCIDENT or DATA LOSS detected
+
+IMMEDIATE ACTIONS:
+1. Engaging Security Gatekeeper and Security Incident Response Team
+2. Preserving evidence (logs, forensics) before mitigation
+3. Isolating affected systems
+4. Following Security Incident Response Plan (separate from standard flow)
+
+Notifications:
+- Legal and compliance: IMMEDIATE
+- Executive: IMMEDIATE
+- Regulatory reporting: {GDPR, HIPAA, etc.} within required timeframes
+- User notification: Per breach disclosure laws
+
+Forensic analysis required before system restoration.
+
+Security Incident Lead: {Security Gatekeeper or CISO}
+Legal Contact: {General Counsel}
+
+Extended PIR with security-specific preventive actions required.
+```
+
+## Success Criteria
+
+This orchestration succeeds when:
+- [ ] Incident detected within 5 minutes
+- [ ] Triage and prioritization completed within 15 minutes
+- [ ] Incident Commander assigned (P0/P1)
+- [ ] Functional escalation executed per timers (Tier 1 → 2 → 3)
+- [ ] Hierarchical escalation completed per severity
+- [ ] Root cause identified using 5 Whys and fishbone
+- [ ] Mitigation deployed and validated
+- [ ] User communication sent (status page, internal)
+- [ ] Incident resolved within SLA (P0 = 1-2h, P1 = 4h, P2 = 24h)
+- [ ] Post-incident review completed within 24-48h (P0/P1)
+- [ ] Preventive actions identified and tracked
+- [ ] Runbooks and knowledge base updated
+
+## Metrics to Track
+
+**During orchestration, track**:
+- Mean Time to Detect (MTTD): <5 minutes
 - Mean Time to Acknowledge (MTTA): P0 = immediate, P1 = 5 min, P2 = 30 min
 - Mean Time to Engage (MTTE): P0 = 15 min, P1 = 30 min
-
-**Resolution Metrics**:
 - Mean Time to Resolve (MTTR): P0 = 1-2h, P1 = 4h, P2 = 24h
 - Resolution Rate by Tier: Tier 1 = 60-80%, Tier 2 = 15-30%, Tier 3 = 5-10%
-
-**Quality Metrics**:
 - Incident Recurrence Rate: <5% (same root cause within 90 days)
 - PIR Completion Rate: 100% for P0/P1
 - Preventive Action Completion Rate: >90% within due dates
 
-## Error Handling
-
-### Incident Not Resolving Within SLA
-
-**Situation**: Incident exceeds resolution SLA (P0 >2h, P1 >4h)
-
-**Actions**:
-1. Escalate to Incident Commander (if not already involved)
-2. Assemble war room with all relevant Component Owners
-3. Consider emergency measures:
-   - Rollback to last known-good version
-   - Enable maintenance mode (planned downtime)
-   - Engage vendor support (if third-party dependency)
-4. Update stakeholders every 30 minutes (P0) or hourly (P1)
-5. Notify executive sponsor (P0) or management (P1)
-6. If unresolved after 4h (P0) or 8h (P1), declare major incident and activate Business Continuity Plan
-
-**Escalation Contact**: {Incident Commander → Engineering Manager → VP Engineering → CTO}
-
-### Escalation Path Blocked
-
-**Situation**: Key person (Tier 2/3 owner, Incident Commander) unavailable
-
-**Actions**:
-1. Check on-call rotation for backup/secondary contact
-2. Escalate to engineering manager for alternate assignment
-3. If Component Owner unavailable, engage Software Architect for temporary coverage
-4. Document unavailability in incident timeline
-5. Review on-call coverage gaps in post-incident review
-
-**Backup Contacts**:
-- Tier 2 Backup: {name, contact}
-- Tier 3 Backup: {name, contact}
-- Incident Commander Backup: {name, contact}
-
-### Multiple Concurrent Incidents (Major Incident)
-
-**Situation**: 2+ P0 incidents OR 3+ P1 incidents occurring simultaneously
-
-**Actions**:
-1. Declare **Major Incident** status
-2. Activate Major Incident Procedure:
-   - Assign separate Incident Commander for each incident
-   - Establish central coordination (Senior Incident Commander)
-   - Triage incidents by business impact priority
-   - Allocate resources (may need to pull from non-critical work)
-   - Executive notification immediate
-   - Status page update: "Multiple service disruptions"
-3. Consider:
-   - Implementing change freeze (halt all deployments)
-   - Scaling back non-essential services to free resources
-   - Engaging vendor support across all affected systems
-4. Daily executive briefings until all incidents resolved
-5. Comprehensive PIR covering all incidents + systemic issues
-
-**Major Incident Coordinator**: {Senior Engineering Manager or VP Engineering}
-
-### Rollback Fails (CRITICAL)
-
-**Situation**: Rollback does not resolve incident, or rollback itself fails
-
-**Actions**:
-1. STOP further changes immediately
-2. Escalate to P0 (if not already)
-3. Assemble emergency war room:
-   - Incident Commander
-   - Deployment Manager
-   - Software Architect
-   - Database Administrator (if data issue)
-   - Infrastructure Lead
-4. Assess options:
-   - Rollback to earlier version (skip problematic release)
-   - Emergency hotfix (if root cause clear)
-   - Maintenance mode (planned downtime for investigation)
-   - Manual intervention (database repair, data migration)
-5. Executive notification immediate
-6. Public communication: "Extended outage, team working on resolution"
-
-**Emergency Contact**: {CTO or VP Engineering - escalate immediately}
-
-### Security Breach or Data Loss
-
-**Situation**: Incident involves unauthorized access, data leak, or data corruption/loss
-
-**Actions**:
-1. **IMMEDIATE**: Engage Security Gatekeeper and Security Incident Response Team
-2. Preserve evidence (logs, forensics) before any mitigation
-3. Isolate affected systems if breach suspected
-4. Follow Security Incident Response Plan (separate from standard incident flow)
-5. Legal and compliance notification may be required
-6. Executive notification immediate
-7. Regulatory reporting (GDPR, HIPAA, etc.) within required timeframes
-8. User notification per breach disclosure laws
-9. Forensic analysis before system restoration
-10. Extended PIR with security-specific preventive actions
-
-**Security Incident Lead**: {Security Gatekeeper or CISO}
-**Legal Contact**: {General Counsel}
-
 ## Agent Coordination
 
-This flow coordinates with the following agents:
+**Primary Agents**:
+- **incident-responder**: Overall coordination, triage, communication
+- **reliability-engineer**: Tier 1 response, monitoring, validation
+- **component-owner**: Tier 2 advanced troubleshooting
+- **architecture-designer**: Tier 3 architectural analysis
 
-### Primary Agents
-
-- **Incident Commander** (Lead for P0/P1)
-  - Overall incident coordination
-  - Stakeholder communication
-  - Escalation decisions
-  - Post-incident review facilitation
-
-- **On-Call Engineer** (Tier 1)
-  - First response and triage
-  - Runbook execution
-  - Data gathering
-  - Functional escalation initiation
-
-- **Component Owner** (Tier 2)
-  - Advanced troubleshooting
-  - Code review and analysis
-  - Hotfix implementation
-  - Root cause investigation
-
-- **Software Architect** (Tier 3)
-  - Architectural analysis
-  - Vendor escalation
-  - Emergency decision authority
-  - Design-level mitigation
-
-### Supporting Agents
-
-- **Deployment Manager**
-  - Rollback authority
-  - Hotfix deployment approval
-  - Production environment validation
-
-- **Reliability Engineer**
-  - SLO/SLI monitoring
-  - Performance analysis
-  - Capacity planning
-  - Runbook updates
-
-- **Security Gatekeeper**
-  - Security incident response (if security-related)
-  - Vulnerability assessment
-  - Compliance reporting
-
-- **Support Lead**
-  - User communication
-  - Support ticket triage
-  - User impact assessment
-
-- **Project Manager / Engineering Manager**
-  - Management escalation
-  - Resource allocation
-  - PIR action tracking
-
-- **Executive Sponsor**
-  - Executive escalation
-  - Business continuity decisions
-  - External communication
+**Supporting Agents**:
+- **devops-engineer**: Emergency deployment, rollback execution
+- **security-architect**: Security incident response (if security-related)
+- **project-manager**: Management escalation, PIR scheduling, action tracking
 
 ## References
 
-- Incident response runbooks: `templates/support/incident-response-runbook-template.md`
-- Escalation matrix: `templates/support/escalation-matrix-template.md`
-- Post-incident review template: `templates/support/post-incident-review-template.md`
-- Hotfix deployment: See Step 6 in this flow, also `commands/flow-deploy-to-production.md`
-- Hypercare monitoring: `commands/flow-hypercare-monitoring.md`
-- Operational readiness: `templates/deployment/operational-readiness-review-template.md`
+**Templates** (via $AIWG_ROOT):
+- Incident Response Runbook: `templates/support/incident-response-runbook-template.md`
+- Escalation Matrix: `templates/support/escalation-matrix-template.md`
+- Post-Incident Review: `templates/support/post-incident-review-template.md`
 
-## Notes
+**Related Commands**:
+- Deployment: `commands/flow-deploy-to-production.md` (rollback procedures)
+- Hypercare: `commands/flow-hypercare-monitoring.md` (post-deployment monitoring)
+- Operational Readiness: `templates/deployment/operational-readiness-review-template.md`
 
-- **Blameless Culture**: Post-incident reviews must be blameless. Focus on systems and processes, not individuals.
-- **Incident Fatigue**: Avoid "incident fatigue" by automating detection, runbooks, and mitigation where possible.
-- **On-Call Wellbeing**: Ensure on-call rotations are sustainable (1 week max, backup coverage, post-incident recovery time).
-- **Continuous Improvement**: Every incident is a learning opportunity. Track preventive action completion rigorously.
-- **Runbook Maintenance**: Runbooks must be tested quarterly. Untested runbooks are often worse than no runbook.
-- **Escalation Timer Enforcement**: Timers are not suggestions. Escalate proactively, even if hypothesis exists.
+**Gate Criteria**:
+- `flows/gate-criteria-by-phase.md` (incident severity classification)
+
+**Multi-Agent Pattern**:
+- `docs/multi-agent-documentation-pattern.md`
+
+**Orchestrator Architecture**:
+- `docs/orchestrator-architecture.md`

@@ -1,29 +1,28 @@
 ---
-description: Orchestrate Construction→Transition phase transition with production deployment, support handover, and hypercare monitoring
-category: sdlc-management
+description: Orchestrate Construction→Transition phase transition with IOC validation, production deployment, and operational handover
+category: sdlc-orchestration
 argument-hint: [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Construction → Transition Phase Transition Flow
 
-You are an SDLC Phase Coordinator specializing in orchestrating the critical transition from Construction (feature-complete, tested product) to Transition (production deployment, user training, support handover, and operational validation).
+**You are the Core Orchestrator** for the critical Construction→Transition phase transition.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-construction-to-transition [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Validate** Operational Capability Milestone (OCM) criteria met
-2. **Orchestrate** production deployment preparation and execution
-3. **Coordinate** user training and acceptance testing
-4. **Monitor** support and operations handover activities
-5. **Supervise** hypercare period (7-14 days of intensive monitoring)
-6. **Generate** Product Release Milestone (PRM) readiness report
+When the user requests this flow (via natural language or explicit command):
 
-## Objective
-
-Transition from development completion to production success, ensuring the product is deployed safely, users are trained and satisfied, support teams are prepared, and the system demonstrates operational stability.
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
 ## Phase Transition Overview
 
@@ -37,1235 +36,953 @@ Transition from development completion to production success, ensuring the produ
 - Users trained and actively using system
 - Support and operations teams operational
 - Hypercare period completed without critical issues
-- Business 
+- Business value validated
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Expected Duration**: 2-4 weeks (typical), 20-30 minutes orchestration
 
-**Parse Command Line**:
+## Natural Language Triggers
 
-Extract optional `--guidance` and `--interactive` parameters.
+Users may say:
+- "Transition to production"
+- "Start Transition phase"
+- "Prepare for deployment"
+- "Move to Transition"
+- "Ready to deploy"
+- "Deploy to production"
+- "Begin production rollout"
+- "Start hypercare period"
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
+You recognize these as requests for this orchestration flow.
 
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor orchestration priorities
+
+**Examples**:
+```
+--guidance "High-risk deployment, need extensive validation and rollback plans"
+--guidance "Limited support team, extra training and documentation needed"
+--guidance "Performance critical, validate SLAs thoroughly before cutover"
+--guidance "Phased rollout required, start with pilot users only"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: rollback, training, performance, phased, pilot
+- Adjust agent assignments (add reliability-engineer for performance focus)
+- Modify deployment strategy (phased vs. big-bang based on risk tolerance)
+- Influence validation depth (comprehensive vs. streamlined based on risk)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 6-8 strategic questions to understand deployment context
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 8 strategic questions to tailor the Transition to your needs:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What deployment strategy do you prefer?
+    (e.g., big-bang, phased/canary, blue-green, feature toggles)
 
-**Resolve AIWG installation**:
+Q2: How critical is zero-downtime deployment?
+    (Helps me plan cutover strategy and rollback procedures)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: What's your support team's readiness level?
+    (Determines training depth and handover timeline)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: What are your rollback criteria?
+    (Define when to pull back vs. fix forward)
+
+Q5: How long should the hypercare period be?
+    (7 days minimum, 14 days standard, 30 days for critical systems)
+
+Q6: Are there specific compliance requirements for production?
+    (e.g., SOC2 audit trails, HIPAA logging, PCI-DSS controls)
+
+Q7: What's your user adoption strategy?
+    (All at once, pilot group first, gradual onboarding)
+
+Q8: What business metrics define success?
+    (KPIs to validate during hypercare and PRM review)
+
+Based on your answers, I'll adjust:
+- Deployment strategy and validation depth
+- Support training intensity
+- Hypercare monitoring focus
+- Success criteria thresholds
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance string for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Construction To Transition - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **Production Deployment Report**: Deployment execution and validation → `.aiwg/deployment/production-deployment-report.md`
+- **User Training Report**: Training delivery and UAT results → `.aiwg/deployment/user-training-report.md`
+- **Support Handover Report**: Support team readiness → `.aiwg/deployment/support-handover-report.md`
+- **Operations Handover Report**: Ops team readiness → `.aiwg/deployment/operations-handover-report.md`
+- **Hypercare Daily Reports**: Production monitoring → `.aiwg/reports/hypercare-day-*.md`
+- **PRM Report**: Milestone readiness assessment → `.aiwg/reports/prm-report.md`
 
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
+**Supporting Artifacts**:
+- Infrastructure Readiness Report
+- Operational Runbooks
+- Support Knowledge Base
+- Complete audit trails
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-value validated
-
-## Workflow Steps
+## Multi-Agent Orchestration Workflow
 
 ### Step 1: Validate Construction Exit Criteria (OCM)
 
-Before starting Transition, verify Operational Capability Milestone was achieved.
+**Purpose**: Verify Operational Capability Milestone achieved before starting Transition
 
-**Commands**:
-```bash
-# Validate Construction gate
-/project:flow-gate-check construction
+**Your Actions**:
 
-# Check for required Construction artifacts
-ls deployment/deployment-plan-template.md
-ls deployment/release-notes-template.md
-ls deployment/support-runbook-template.md
-ls test/test-evaluation-summary-template.md
-ls deployment/bill-of-materials-template.md
+1. **Check for Required Construction Artifacts**:
+   ```
+   Read and verify presence of:
+   - .aiwg/deployment/deployment-plan.md
+   - .aiwg/deployment/release-notes.md
+   - .aiwg/deployment/support-runbook.md
+   - .aiwg/testing/test-evaluation-summary.md
+   - .aiwg/deployment/bill-of-materials.md
+   ```
+
+2. **Launch Gate Check Agent**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Validate Construction gate (OCM) criteria",
+       prompt="""
+       Read gate criteria from: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/gate-criteria-by-phase.md
+
+       Validate OCM criteria:
+       - All planned features IMPLEMENTED (100% Must Have, ≥80% Should Have)
+       - All acceptance tests PASSING (≥98% pass rate)
+       - Test coverage targets MET (unit ≥80%, integration ≥70%, e2e ≥50%)
+       - Zero P0 (Show Stopper) defects open
+       - Zero P1 (High) defects open OR all have approved waivers
+       - Performance tests PASSING (response time, throughput, concurrency)
+       - Security tests PASSING (no High/Critical vulnerabilities)
+       - CI/CD pipeline OPERATIONAL
+       - Deployment plan COMPLETE and APPROVED
+       - Operational Readiness Review (ORR) PASSED
+
+       Generate OCM Validation Report:
+       - Status: PASS | FAIL
+       - Criteria checklist with results
+       - Decision: GO to Transition | NO-GO
+       - Gaps (if NO-GO): List missing artifacts
+
+       Save to: .aiwg/reports/ocm-validation-report.md
+       """
+   )
+   ```
+
+3. **Decision Point**:
+   - If OCM PASS → Continue to Step 2
+   - If OCM FAIL → Report gaps to user, recommend `/project:flow-elaboration-to-construction` to complete Construction
+   - Escalate to user for executive decision if criteria partially met
+
+**Communicate Progress**:
+```
+✓ Initialized OCM validation
+⏳ Validating Construction exit criteria...
+✓ OCM Validation complete: [PASS | FAIL]
 ```
 
-**Exit Criteria Checklist**:
-- [ ] All planned features IMPLEMENTED (100% Must Have, ≥80% Should Have)
-- [ ] All acceptance tests PASSING (≥98% pass rate)
-- [ ] Test coverage targets MET (unit ≥80%, integration ≥70%, e2e ≥50%)
-- [ ] Zero P0 (Show Stopper) defects open
-- [ ] Zero P1 (High) defects open OR all have approved waivers
-- [ ] Performance tests PASSING (response time, throughput, concurrency)
-- [ ] Security tests PASSING (no High/Critical vulnerabilities)
-- [ ] CI/CD pipeline OPERATIONAL (automated build, test, deploy)
-- [ ] Deployment plan COMPLETE and APPROVED
-- [ ] Operational Readiness Review (ORR) PASSED
+### Step 2: Prepare Production Environment
 
-**If OCM Not Met**:
-- **Action**: Return to Construction, complete missing work
-- **Command**: `/project:flow-elaboration-to-construction` (continue Construction)
-- **Escalation**: Contact Product Owner and Deployment Manager
+**Purpose**: Ensure production infrastructure is provisioned, configured, and validated
 
-**Output**: OCM Validation Report
-```markdown
-# Operational Capability Milestone Validation
+**Your Actions**:
 
-**Status**: {PASS | FAIL}
-**Date**: {current-date}
+1. **Read Infrastructure Context**:
+   ```
+   Read:
+   - .aiwg/deployment/infrastructure-definition.md
+   - .aiwg/deployment/deployment-environment.md
+   - .aiwg/architecture/software-architecture-doc.md (deployment view)
+   ```
 
-## Criteria Status
-- Feature Completeness: {percentage}% (target: 100% Must Have)
-- Test Coverage: Unit {percentage}%, Integration {percentage}%, E2E {percentage}%
-- Test Pass Rate: {percentage}% (target: ≥98%)
-- Open Defects: P0: {count}, P1: {count} (target: 0/0)
-- Performance: {PASS | FAIL}
-- Security: {PASS | FAIL}
-- Deployment Pipeline: {OPERATIONAL | INCOMPLETE}
-- ORR Status: {PASSED | INCOMPLETE}
+2. **Launch Infrastructure Validation Agents** (parallel):
+   ```
+   # Agent 1: DevOps Engineer
+   Task(
+       subagent_type="devops-engineer",
+       description="Validate production infrastructure readiness",
+       prompt="""
+       Read infrastructure definition and deployment environment docs
 
-## Decision
-{GO to Transition | NO-GO - return to Construction}
+       Validate production environment:
+       - Infrastructure provisioned (compute, storage, network)
+       - Capacity validated (expected load + 20% buffer)
+       - High availability configured (redundancy, failover)
+       - Scalability tested (autoscaling operational)
+       - Network configuration (load balancers, CDN, DNS)
 
-## Gaps (if NO-GO)
-{list missing artifacts or incomplete criteria}
+       Document infrastructure status:
+       - Environment provisioning status
+       - Capacity test results
+       - HA/DR configuration
+       - Outstanding issues
+
+       Save to: .aiwg/working/transition/infrastructure-readiness.md
+       """
+   )
+
+   # Agent 2: Security Architect
+   Task(
+       subagent_type="security-architect",
+       description="Validate production security configuration",
+       prompt="""
+       Read security architecture and deployment docs
+
+       Validate security hardening:
+       - Firewall rules configured (least privilege)
+       - SSL/TLS certificates valid (no expiry < 30 days)
+       - Access controls configured (RBAC, audit logging)
+       - Secrets management operational (vault, KMS)
+       - Encryption enabled (at-rest, in-transit)
+       - Security scan results (no High/Critical vulnerabilities)
+
+       Document security status
+
+       Save to: .aiwg/working/transition/security-validation.md
+       """
+   )
+
+   # Agent 3: Reliability Engineer
+   Task(
+       subagent_type="reliability-engineer",
+       description="Validate monitoring and observability",
+       prompt="""
+       Validate monitoring infrastructure:
+       - Application metrics configured
+       - Infrastructure metrics configured
+       - Dashboards operational (list key dashboards)
+       - Alerting configured and tested
+       - Log aggregation working
+       - SLIs/SLOs defined
+       - Backup procedures automated
+       - Disaster recovery validated
+
+       Document observability status
+
+       Save to: .aiwg/working/transition/observability-readiness.md
+       """
+   )
+   ```
+
+3. **Synthesize Infrastructure Readiness Report**:
+   ```
+   Task(
+       subagent_type="deployment-manager",
+       description="Create Production Environment Readiness Report",
+       prompt="""
+       Read all infrastructure validation reports:
+       - .aiwg/working/transition/infrastructure-readiness.md
+       - .aiwg/working/transition/security-validation.md
+       - .aiwg/working/transition/observability-readiness.md
+
+       Synthesize comprehensive readiness report covering:
+       - Infrastructure provisioning status
+       - Capacity and scalability validation
+       - Security hardening status
+       - Monitoring and observability
+       - Backup and disaster recovery
+       - Overall readiness: READY | NOT READY
+
+       Output: .aiwg/deployment/production-environment-readiness-report.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
 ```
-
-### Step 2: Prepare Production Environment and Validate Infrastructure
-
-Ensure production infrastructure is provisioned, configured, and validated.
-
-**Infrastructure Preparation**:
-- Production environment provisioned (compute, storage, network)
-- Infrastructure capacity validated (can handle expected load + 20% buffer)
-- High availability configured (redundancy, failover mechanisms)
-- Security hardening complete (firewall rules, access controls, encryption)
-- Monitoring and observability operational (metrics, logs, dashboards, alerts)
-- Backup and disaster recovery tested
-
-**Commands**:
-```bash
-# Validate production infrastructure
-# Check infrastructure definition
-cat deployment/infrastructure-definition-template.md
-cat deployment/deployment-environment-template.md
-
-# Validate production readiness
-# Connectivity tests
-curl {prod-endpoint}/health
-curl {prod-endpoint}/metrics
-
-# Infrastructure capacity check
-# Review monitoring dashboards for resource capacity
-# Validate autoscaling configuration
-# Test failover mechanisms
-
-# Security validation
-# Review firewall rules
-# Validate SSL/TLS certificates
-# Test access controls
-```
-
-**Agents to Coordinate**:
-- **DevOps Engineer**: Infrastructure provisioning, configuration
-- **Reliability Engineer**: Monitoring, alerting, SLO setup
-- **Security Architect**: Security hardening, access controls
-- **Deployment Manager**: Environment readiness coordination
-
-**Infrastructure Checklist**:
-- [ ] Production environment provisioned and accessible
-- [ ] Infrastructure capacity validated (load test against production-like environment)
-- [ ] Scalability tested (can handle 120% of expected load)
-- [ ] High availability operational (redundancy validated)
-- [ ] Security hardening complete (firewall, access controls, encryption)
-- [ ] Monitoring dashboards operational (metrics visible)
-- [ ] Alerting configured and tested (alerts firing correctly)
-- [ ] Log aggregation working (structured logs searchable)
-- [ ] Backup procedures automated (backup test successful)
-- [ ] Disaster recovery plan validated (restore test successful)
-- [ ] Production access controls validated (least privilege, audit logging)
-
-**Output**: Production Environment Readiness Report
-```markdown
-# Production Environment Readiness Report
-
-**Project**: {project-name}
-**Date**: {date}
-
-## Infrastructure Status
-
-### Environment Provisioning
-- Production Environment: {PROVISIONED | INCOMPLETE}
-- Compute Resources: {vCPUs, RAM, instances}
-- Storage: {capacity, type, IOPS}
-- Network: {bandwidth, latency, CDN}
-
-### Capacity and Scalability
-- Expected Load: {req/s, concurrent users}
-- Capacity Buffer: {percentage}% (target: ≥20%)
-- Load Test Results: {PASS | FAIL}
-  - Peak Load Handled: {req/s}
-  - Response Time at Peak: p95 {value}ms
-  - Concurrent Users: {count}
-- Autoscaling: {CONFIGURED | NOT CONFIGURED}
-- Failover Tested: {PASS | FAIL}
-
-### Security Hardening
-- Firewall Rules: {CONFIGURED}
-- SSL/TLS Certificates: {VALID | EXPIRING | MISSING}
-- Access Controls: {CONFIGURED} (least privilege enforced)
-- Secrets Management: {OPERATIONAL}
-- Encryption at Rest: {ENABLED | DISABLED}
-- Encryption in Transit: {ENABLED | DISABLED}
-- Security Scan: {PASS | FAIL} (no High/Critical vulnerabilities)
-
-### Monitoring and Observability
-- Application Metrics: {CONFIGURED}
-- Infrastructure Metrics: {CONFIGURED}
-- Dashboards: {OPERATIONAL} ({count} dashboards)
-- Alerting: {CONFIGURED} ({count} alerts)
-- Log Aggregation: {OPERATIONAL} (retention: {days} days)
-- SLIs/SLOs Defined: {YES | NO}
-
-### Backup and Disaster Recovery
-- Backup Procedures: {AUTOMATED | MANUAL}
-- Backup Frequency: {schedule}
-- Backup Test: {SUCCESSFUL | FAILED}
-- Restore Test: {SUCCESSFUL | FAILED}
-- RTO (Recovery Time Objective): {duration}
-- RPO (Recovery Point Objective): {duration}
-- Disaster Recovery Plan: {COMPLETE | INCOMPLETE}
-
-## Production Readiness Checklist
-- [ ] Infrastructure provisioned and validated
-- [ ] Capacity and scalability tested
-- [ ] Security hardening complete
-- [ ] Monitoring and alerting operational
-- [ ] Backup and disaster recovery validated
-- [ ] Production access controls configured
-
-**Production Readiness**: {READY | NOT READY}
+✓ OCM validation complete
+⏳ Validating production environment...
+  ✓ Infrastructure provisioned and validated
+  ✓ Security hardening complete
+  ✓ Monitoring and observability operational
+✓ Production environment: READY
 ```
 
 ### Step 3: Execute Production Deployment
 
-Deploy the application to production using validated deployment plan.
+**Purpose**: Deploy application to production using validated deployment plan
 
-**Deployment Strategy Selection**:
-- **Big Bang**: All-at-once cutover (simple, but high risk)
-- **Phased/Canary**: Gradual rollout to percentage of users (reduced risk)
-- **Blue-Green**: Parallel environments, instant switchover (rollback easy)
-- **Feature Toggle**: Deploy dark, enable features incrementally (maximum control)
+**Your Actions**:
 
-**Commands**:
-```bash
-# Review deployment plan
-cat deployment/deployment-plan-template.md
+1. **Select Deployment Strategy**:
+   ```
+   Task(
+       subagent_type="deployment-manager",
+       description="Select and plan deployment strategy",
+       prompt="""
+       Read deployment plan: .aiwg/deployment/deployment-plan.md
+       Consider guidance: {user-guidance if provided}
 
-# Execute deployment (example for blue-green)
-# Step 1: Deploy to green environment (parallel to blue)
-npm run deploy:green  # or equivalent for your stack
+       Select optimal strategy:
+       - Big Bang: Simple but high risk (for low-traffic systems)
+       - Phased/Canary: Gradual rollout (for risk mitigation)
+       - Blue-Green: Parallel environments (for instant rollback)
+       - Feature Toggle: Dark launch (for maximum control)
 
-# Step 2: Run smoke tests on green
-curl {green-endpoint}/health
-npm run test:smoke -- --target green
+       Document selected strategy and rationale
+       Define rollback criteria and procedures
 
-# Step 3: Switch traffic to green (cutover)
-# Update load balancer or DNS to point to green
-./scripts/cutover-to-green.sh
+       Output: .aiwg/working/transition/deployment-strategy.md
+       """
+   )
+   ```
 
-# Step 4: Monitor production for 15-30 minutes
-# Watch dashboards, error rates, performance metrics
+2. **Execute Deployment** (coordinate multiple agents):
+   ```
+   # Pre-deployment
+   Task(
+       subagent_type="deployment-manager",
+       description="Execute pre-deployment checklist",
+       prompt="""
+       Validate pre-deployment:
+       - Deployment window scheduled and communicated
+       - Code freeze active
+       - Deployment team assembled
+       - Rollback plan validated
+       - Stakeholders notified
 
-# Step 5: Keep blue environment warm (for rollback)
-# Blue environment remains available for 24-48 hours
+       Document readiness: .aiwg/working/transition/pre-deployment-checklist.md
+       """
+   )
 
-# If deployment fails, rollback to blue
-./scripts/rollback-to-blue.sh
+   # Deployment execution
+   Task(
+       subagent_type="devops-engineer",
+       description="Execute production deployment",
+       prompt="""
+       Deploy to production following selected strategy:
+       1. Execute deployment scripts/automation
+       2. Run database migrations (if applicable)
+       3. Update configuration (env vars, feature flags)
+       4. Deploy application (code, containers, artifacts)
+       5. Validate health checks
+
+       Monitor deployment progress
+       Document any issues encountered
+
+       Output: .aiwg/working/transition/deployment-execution-log.md
+       """
+   )
+
+   # Post-deployment validation
+   Task(
+       subagent_type="reliability-engineer",
+       description="Validate post-deployment health",
+       prompt="""
+       Validate deployment success:
+       - Smoke tests passing (critical paths)
+       - Monitoring dashboards green
+       - Error rates normal (<0.1%)
+       - Performance metrics acceptable
+       - User login tested
+       - Key features tested
+
+       Decision: SUCCESS | ISSUES DETECTED | ROLLBACK
+
+       Output: .aiwg/working/transition/post-deployment-validation.md
+       """
+   )
+   ```
+
+3. **Generate Deployment Report**:
+   ```
+   Task(
+       subagent_type="deployment-manager",
+       description="Create Production Deployment Report",
+       prompt="""
+       Read all deployment artifacts:
+       - Deployment strategy
+       - Pre-deployment checklist
+       - Deployment execution log
+       - Post-deployment validation
+
+       Generate comprehensive deployment report:
+       - Deployment strategy and rationale
+       - Execution timeline
+       - Validation results
+       - Issues and resolutions
+       - Deployment outcome: SUCCESS | PARTIAL SUCCESS | FAILED | ROLLED BACK
+       - Next steps
+
+       Output: .aiwg/deployment/production-deployment-report.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Executing production deployment...
+  ✓ Pre-deployment checklist complete
+  ✓ Deployment executed successfully
+  ✓ Post-deployment validation: PASSED
+✓ Production deployment: SUCCESS
 ```
 
-**Deployment Execution Steps**:
-1. **Pre-Deployment**:
-   - [ ] Deployment window scheduled and communicated
-   - [ ] Freeze on non-emergency changes (code freeze)
-   - [ ] Deployment team assembled (engineers, on-call)
-   - [ ] Rollback plan validated and ready
-   - [ ] Stakeholders notified (deployment starting)
+### Step 4: Conduct User Training and UAT
 
-2. **Deployment**:
-   - [ ] Deployment script executed (automated or semi-automated)
-   - [ ] Database migrations run (if applicable)
-   - [ ] Configuration updated (environment variables, feature flags)
-   - [ ] Application deployed (code, containers, or artifacts)
-   - [ ] Health checks passing (all services operational)
+**Purpose**: Train users and validate acceptance in production
 
-3. **Post-Deployment Validation**:
-   - [ ] Smoke tests passing (critical paths validated)
-   - [ ] Monitoring dashboards green (no anomalies)
-   - [ ] Error rates normal (< 0.1% of requests)
-   - [ ] Performance metrics acceptable (response time, throughput)
-   - [ ] User login tested (authentication working)
-   - [ ] Key features tested (core functionality working)
+**Your Actions**:
 
-4. **Deployment Decision**:
-   - **SUCCESS**: Continue monitoring, complete cutover
-   - **ISSUES DETECTED**: Investigate, fix forward or rollback
-   - **ROLLBACK**: Execute rollback plan, investigate root cause
+1. **Prepare Training Materials**:
+   ```
+   Task(
+       subagent_type="training-lead",
+       description="Prepare and validate training materials",
+       prompt="""
+       Create/validate training materials:
+       - User guides (role-based)
+       - Quick reference cards
+       - Video tutorials (if needed)
+       - Online help documentation
+       - FAQs
 
-**Agents to Coordinate**:
-- **Deployment Manager**: Deployment orchestration, decision authority
-- **DevOps Engineer**: Deployment execution, infrastructure
-- **Reliability Engineer**: Monitoring, anomaly detection
-- **Security Architect**: Security validation post-deployment
-- **Product Owner**: Acceptance of deployment success
+       Ensure materials cover all user roles
+       Validate accuracy against deployed system
 
-**Output**: Production Deployment Report
-```markdown
-# Production Deployment Report
+       Output: .aiwg/working/transition/training-materials-status.md
+       """
+   )
+   ```
 
-**Project**: {project-name}
-**Deployment Date**: {date}
-**Deployment Window**: {start-time} to {end-time}
+2. **Deliver Training**:
+   ```
+   Task(
+       subagent_type="training-lead",
+       description="Coordinate user training delivery",
+       prompt="""
+       Plan and track training delivery:
+       - Schedule instructor-led sessions
+       - Set up hands-on practice environments
+       - Deploy self-paced e-learning
+       - Schedule office hours for Q&A
 
-## Deployment Strategy
+       Track participation and completion
+       Gather feedback scores
 
-**Strategy**: {Big Bang | Phased/Canary | Blue-Green | Feature Toggle}
-**Rationale**: {why this strategy was selected}
+       Output: .aiwg/working/transition/training-delivery-status.md
+       """
+   )
+   ```
 
-## Deployment Execution
+3. **Execute UAT**:
+   ```
+   Task(
+       subagent_type="requirements-analyst",
+       description="Coordinate User Acceptance Testing",
+       prompt="""
+       Read Product Acceptance Plan template
 
-### Pre-Deployment
-- Deployment Window: {SCHEDULED}
-- Code Freeze: {ACTIVE}
-- Deployment Team: {ASSEMBLED} ({count} people)
-- Rollback Plan: {VALIDATED}
-- Stakeholder Notification: {SENT}
+       Coordinate UAT execution:
+       - Identify key users per role
+       - Define UAT scenarios (10+ critical workflows)
+       - Track scenario execution
+       - Capture user feedback
+       - Document issues found
 
-### Deployment Steps
-{for each deployment step}
-1. **{step-name}**
-   - Status: {COMPLETE | FAILED}
-   - Duration: {duration}
-   - Owner: {name}
-   - Issues: {none or description}
+       Calculate UAT metrics:
+       - Pass rate (target: ≥90%)
+       - User satisfaction (target: ≥4/5)
+       - Critical issues found
 
-### Post-Deployment Validation
-- Smoke Tests: {PASSED | FAILED} ({passed}/{total})
-- Health Checks: {GREEN | RED}
-- Error Rate: {percentage}% (target: <0.1%)
-- Response Time: p95 {value}ms (target: <{threshold}ms)
-- Throughput: {req/s} (target: ≥{threshold} req/s)
-- User Login: {SUCCESSFUL | FAILED}
-- Core Features: {WORKING | ISSUES}
+       Output: .aiwg/working/transition/uat-results.md
+       """
+   )
+   ```
 
-## Deployment Outcome
+4. **Generate Training and Acceptance Report**:
+   ```
+   Task(
+       subagent_type="product-owner",
+       description="Create User Training and Acceptance Report",
+       prompt="""
+       Synthesize training and UAT results:
+       - Training completion rates
+       - Knowledge check results
+       - UAT pass rates
+       - User satisfaction scores
+       - User adoption metrics
+       - Acceptance decision: ACCEPTED | CONDITIONAL | REJECTED
 
-**Deployment Status**: {SUCCESS | PARTIAL SUCCESS | FAILED | ROLLED BACK}
+       Output: .aiwg/deployment/user-training-report.md
+       """
+   )
+   ```
 
-**Decision**: {PROCEED | FIX FORWARD | ROLLBACK}
-
-**Rationale**:
-{detailed reasoning for decision}
-
-## Issues and Resolutions
-{if issues occurred}
-- **Issue**: {description}
-  - Severity: {P0 | P1 | P2}
-  - Resolution: {how resolved}
-  - Duration: {time to resolve}
-
-## Rollback Details (if applicable)
-- Rollback Triggered: {YES | NO}
-- Rollback Reason: {description}
-- Rollback Duration: {duration}
-- Rollback Successful: {YES | NO}
-
-## Post-Deployment Actions
-- [ ] Monitoring dashboards reviewed (15-30 minute soak period)
-- [ ] Error logs reviewed (no critical errors)
-- [ ] Stakeholders notified (deployment complete)
-- [ ] Deployment retrospective scheduled (lessons learned)
-- [ ] Documentation updated (as-deployed state)
-
-## Next Steps
-
-**If SUCCESS**:
-- [ ] Enter hypercare period (7-14 days intensive monitoring)
-- [ ] User training begins
-- [ ] Support handover proceeds
-
-**If FAILED or ROLLED BACK**:
-- [ ] Root cause analysis (immediate)
-- [ ] Fix and retest (Construction sprint)
-- [ ] Re-schedule deployment (new deployment window)
+**Communicate Progress**:
 ```
-
-### Step 4: Conduct User Training and Acceptance Testing
-
-Train users and validate acceptance in production environment.
-
-**User Training Activities**:
-1. **Training Material Preparation**:
-   - User guides (role-based, step-by-step)
-   - Quick reference cards (cheat sheets)
-   - Video tutorials (recorded demos)
-   - Online help (searchable documentation)
-   - FAQs (common questions, troubleshooting)
-
-2. **Training Delivery**:
-   - Instructor-led training (live sessions, 2-4 hours per role)
-   - Hands-on practice (sandbox environment)
-   - Self-paced e-learning (for remote/async users)
-   - Office hours (Q&A, support during initial adoption)
-
-3. **Training Validation**:
-   - Training completion tracking (attendance, e-learning progress)
-   - Knowledge checks (quizzes, hands-on exercises)
-   - User certification (optional, for critical systems)
-
-**User Acceptance Testing (UAT)**:
-- UAT in production environment (real data, real workflows)
-- Key users validate scenarios (representative users per role)
-- Acceptance criteria validated (per Product Acceptance Plan)
-- User feedback captured (surveys, interviews, observations)
-
-**Commands**:
-```bash
-# Check training materials
-ls docs/user-training/  # or equivalent location
-
-# Track UAT progress
-cat deployment/product-acceptance-plan-template.md
-
-# Capture user feedback
-# Survey or feedback collection tool
-```
-
-**Agents to Coordinate**:
-- **Product Owner**: UAT coordination, acceptance criteria
-- **Training Lead**: Training delivery, material preparation
-- **Support Lead**: User support during training, FAQ updates
-- **Requirements Analyst**: Validate scenarios, trace to requirements
-
-**Output**: User Training and Acceptance Report
-```markdown
-# User Training and Acceptance Report
-
-**Project**: {project-name}
-**Date**: {date}
-
-## User Training Status
-
-### Training Materials
-- User Guides: {COMPLETE | INCOMPLETE} ({count} guides)
-- Quick Reference Cards: {COMPLETE | INCOMPLETE}
-- Video Tutorials: {COMPLETE | INCOMPLETE} ({count} videos)
-- Online Help: {COMPLETE | INCOMPLETE}
-- FAQs: {COMPLETE | INCOMPLETE} ({count} FAQs)
-
-### Training Delivery
-- Instructor-Led Training Sessions: {count} sessions
-  - Total Attendees: {count}
-  - Training Completion Rate: {percentage}%
-- Self-Paced E-Learning: {count} users enrolled
-  - Completion Rate: {percentage}%
-- Office Hours: {count} sessions held
-  - Attendance: {count} users
-
-### Training Validation
-- Knowledge Check Results: {percentage}% average score (target: ≥80%)
-- User Certification: {count} users certified
-- Training Feedback Score: {score}/5 (target: ≥4/5)
-
-**Training Status**: {COMPLETE | INCOMPLETE}
-
-## User Acceptance Testing (UAT)
-
-### UAT Participants
-- Key Users: {count} users ({list roles})
-- UAT Period: {start-date} to {end-date}
-- UAT Environment: Production
-
-### UAT Scenarios
-{for each scenario}
-- **Scenario {ID}**: {scenario-name}
-  - Status: {PASSED | FAILED | BLOCKED}
-  - Tester: {name}
-  - Issues Found: {count}
-
-**UAT Pass Rate**: {percentage}% (target: ≥90%)
-
-### User Feedback
-
-**User Satisfaction Score**: {score}/5 (target: ≥4/5)
-
-**Positive Feedback**:
-{list positive themes}
-
-**Issues and Concerns**:
-{list critical issues}
-
-**Feature Requests**:
-{list requested enhancements for backlog}
-
-## User Adoption Metrics
-
-- Target Users: {count}
-- Onboarded Users: {count} ({percentage}%)
-- Active Users (Week 1): {count} ({percentage}% adoption rate)
-- Key Feature Usage: {percentage}% (features being used)
-
-## Acceptance Decision
-
-**User Acceptance**: {ACCEPTED | CONDITIONAL | REJECTED}
-
-**Rationale**:
-{detailed reasoning}
-
-**Conditions** (if CONDITIONAL):
-1. {condition-1}
-2. {condition-2}
-
-## Next Steps
-- [ ] Address critical user feedback (prioritize backlog)
-- [ ] Continue user onboarding (additional training sessions)
-- [ ] Monitor user adoption metrics (weekly tracking)
+⏳ Conducting user training and acceptance...
+  ✓ Training materials prepared
+  ✓ Training delivered (85% completion)
+  ✓ UAT completed (92% pass rate)
+  ✓ User satisfaction: 4.2/5
+✓ User acceptance: ACCEPTED
 ```
 
 ### Step 5: Execute Support and Operations Handover
 
-Formally hand over production support and operations to dedicated teams.
+**Purpose**: Formally hand over to support and operations teams
 
-**Support Handover Activities**:
+**Your Actions**:
+
 1. **Support Team Training**:
-   - System architecture overview
-   - Common user issues and resolutions
-   - Runbook walkthrough (incident response procedures)
-   - Hands-on practice (resolve 3+ practice incidents)
-   - Tool training (ticketing, monitoring, logging)
+   ```
+   Task(
+       subagent_type="support-lead",
+       description="Train and validate support team readiness",
+       prompt="""
+       Train support team on:
+       - System architecture overview
+       - Common user issues and resolutions
+       - Runbook procedures
+       - Incident escalation paths
+       - Support tools and ticketing
 
-2. **Support Infrastructure**:
-   - Support ticketing system integrated
-   - Support knowledge base populated
-   - Escalation procedures validated (test escalation)
-   - On-call rotation staffed (if applicable)
+       Validate readiness:
+       - Practice incidents resolved (≥3)
+       - Runbook effectiveness tested
+       - Knowledge base populated
 
-3. **Support Handover Meeting**:
-   - Development team presents product
-   - Known issues reviewed
-   - Common troubleshooting scenarios reviewed
-   - Support team questions answered
+       Output: .aiwg/working/transition/support-training-status.md
+       """
+   )
+   ```
 
-**Operations Handover Activities**:
-1. **Operations Team Training**:
-   - Deployment procedures (automated and manual)
-   - Monitoring and alerting (dashboards, alert response)
-   - Incident response (runbooks, escalation)
-   - Backup and restore (procedures validation)
-   - Scaling and capacity management
+2. **Operations Team Training**:
+   ```
+   Task(
+       subagent_type="operations-lead",
+       description="Train and validate operations team readiness",
+       prompt="""
+       Train operations team on:
+       - Deployment procedures
+       - Monitoring and alerting
+       - Incident response
+       - Backup and restore
+       - Scaling procedures
 
-2. **Operational Procedures Validation**:
-   - Runbooks tested and working
-   - Backup/restore validated (test restore successful)
-   - Disaster recovery validated (if applicable)
-   - Scaling procedures validated (test scale-up/down)
+       Validate readiness:
+       - Independent deployment successful
+       - Alert response tested
+       - Backup/restore validated
 
-3. **Operational Handover Meeting**:
-   - Operations team performs deployment independently
-   - Monitoring and alerting validated
-   - On-call team responds to test alerts
+       Output: .aiwg/working/transition/operations-training-status.md
+       """
+   )
+   ```
 
-**Commands**:
-```bash
-# Review support materials
-cat deployment/support-runbook-template.md
-ls deployment/runbook-entry-card.md
+3. **Formal Handover**:
+   ```
+   Task(
+       subagent_type="deployment-manager",
+       description="Coordinate formal handover",
+       prompt="""
+       Coordinate handover meetings:
+       - Support handover meeting conducted
+       - Operations handover meeting conducted
+       - Known issues reviewed
+       - Escalation procedures confirmed
 
-# Validate support infrastructure
-# Check support ticketing system integration
-# Verify knowledge base populated
+       Obtain signoffs:
+       - Support Lead signoff
+       - Operations Lead signoff
 
-# Track handover progress
-# Support Lead signoff
-# Operations Lead signoff
+       Document handover status:
+       - Support: ACCEPTED | CONDITIONAL | NOT ACCEPTED
+       - Operations: ACCEPTED | CONDITIONAL | NOT ACCEPTED
+
+       Output: .aiwg/deployment/support-handover-report.md
+       Output: .aiwg/deployment/operations-handover-report.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Executing support and operations handover...
+  ✓ Support team trained and ready
+  ✓ Operations team trained and ready
+  ✓ Support Lead signoff: OBTAINED
+  ✓ Operations Lead signoff: OBTAINED
+✓ Handover complete: ACCEPTED
 ```
 
-**Agents to Coordinate**:
-- **Support Lead**: Support team training, handover coordination
-- **Operations Lead**: Operations team training, procedures validation
-- **Deployment Manager**: Handover orchestration, signoff tracking
-- **Reliability Engineer**: Runbook validation, monitoring training
+### Step 6: Enter Hypercare Period
 
-**Output**: Support and Operations Handover Report
-```markdown
-# Support and Operations Handover Report
+**Purpose**: Conduct 7-14 days of intensive monitoring and rapid response
 
-**Project**: {project-name}
-**Handover Date**: {date}
+**Your Actions**:
 
-## Support Handover
+1. **Initialize Hypercare Monitoring**:
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Set up hypercare monitoring",
+       prompt="""
+       Initialize hypercare period:
+       - Duration: 7-14 days (based on system criticality)
+       - Monitoring intensity: ELEVATED
+       - Response SLAs: ACCELERATED
+       - Daily standup schedule: SET
 
-### Support Team Training
-- Training Sessions: {count} sessions
-- Training Attendees: {count}/{total} support staff
-- Training Completion: {percentage}%
-- Hands-On Practice: {count} practice incidents resolved
-- Tool Training: {COMPLETE | INCOMPLETE}
+       Define success criteria:
+       - Zero P0/P1 incidents
+       - Error rate <0.1%
+       - Performance within SLA
+       - User adoption on track
 
-### Support Infrastructure
-- Support Ticketing System: {INTEGRATED | NOT INTEGRATED}
-- Support Knowledge Base: {POPULATED | INCOMPLETE} ({count} articles)
-- Escalation Procedures: {VALIDATED | NOT VALIDATED}
-- On-Call Rotation: {STAFFED | INCOMPLETE} ({count} people)
+       Output: .aiwg/working/transition/hypercare-plan.md
+       """
+   )
+   ```
 
-### Support Handover Meeting
-- Meeting Date: {date}
-- Attendees: {names}
-- Topics Covered:
-  - [ ] System architecture overview
-  - [ ] Known issues review
-  - [ ] Common troubleshooting scenarios
-  - [ ] Support team questions answered
+2. **Daily Hypercare Monitoring** (repeat daily):
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Daily hypercare monitoring report",
+       prompt="""
+       Monitor and report daily:
 
-### Support Readiness
-- Support Team Ready: {YES | NO}
-- Support Lead Signoff: {OBTAINED | PENDING}
+       Production Stability:
+       - Incidents (P0/P1/P2/P3 counts)
+       - Error rates and trends
+       - Uptime percentage
+       - Performance metrics (p50, p95, p99)
 
-**Support Handover Status**: {ACCEPTED | CONDITIONAL | NOT ACCEPTED}
+       User Adoption:
+       - Active users (DAU/WAU)
+       - Feature usage statistics
+       - User feedback themes
 
-## Operations Handover
+       Support Effectiveness:
+       - Ticket volume and categories
+       - Resolution times (MTTR)
+       - Escalations to development
 
-### Operations Team Training
-- Training Sessions: {count} sessions
-- Training Attendees: {count}/{total} operations staff
-- Training Completion: {percentage}%
-- Independent Deployment: {SUCCESSFUL | FAILED}
+       Decision: CONTINUE | EXTEND | CONCLUDE
 
-### Operational Procedures Validation
-- Runbooks Tested: {count}/{total} runbooks
-- Backup/Restore Test: {SUCCESSFUL | FAILED}
-- Disaster Recovery Test: {SUCCESSFUL | FAILED | N/A}
-- Scaling Test: {SUCCESSFUL | FAILED | N/A}
+       Output: .aiwg/reports/hypercare-day-{day}.md
+       """
+   )
+   ```
 
-### Monitoring and Alerting Validation
-- Critical Alerts Validated: {count}/{total} alerts
-- False Positive Rate: {percentage}% (target: <5%)
-- Alert Response Time: {duration} (target: <{threshold})
-- On-Call Team Response: {SUCCESSFUL | FAILED}
+3. **Hypercare Review** (Day 7 and Day 14):
+   ```
+   Task(
+       subagent_type="deployment-manager",
+       description="Hypercare period review",
+       prompt="""
+       Review hypercare metrics:
+       - Production stability validated
+       - User adoption on track
+       - Support effectiveness confirmed
+       - No critical issues outstanding
 
-### Operations Readiness
-- Operations Team Ready: {YES | NO}
-- Operations Lead Signoff: {OBTAINED | PENDING}
+       Decision:
+       - CONCLUDE hypercare (ready for PRM)
+       - EXTEND hypercare (specify duration and criteria)
+       - ISSUES DETECTED (return to remediation)
 
-**Operations Handover Status**: {ACCEPTED | CONDITIONAL | NOT ACCEPTED}
+       Output: .aiwg/reports/hypercare-review.md
+       """
+   )
+   ```
 
-## Handover Decision
-
-**Overall Handover Status**: {ACCEPTED | CONDITIONAL | NOT ACCEPTED}
-
-**Rationale**:
-{detailed reasoning}
-
-**Conditions** (if CONDITIONAL):
-1. {condition-1}
-2. {condition-2}
-
-## Post-Handover Support
-
-**Handover Support Period**: {duration} (typical: 2-4 weeks)
-- Development team available for escalations
-- Gradual reduction of development team involvement
-- Knowledge transfer continues during hypercare
-
-## Next Steps
-- [ ] Begin hypercare period (7-14 days)
-- [ ] Monitor support ticket volume and resolution times
-- [ ] Track escalations to development team
-- [ ] Conduct handover retrospective (lessons learned)
+**Communicate Progress**:
 ```
-
-### Step 6: Enter Hypercare Period (Intensive Monitoring)
-
-Conduct 7-14 days of intensive monitoring and rapid response.
-
-**Hypercare Objectives**:
-- Validate production stability (no P0/P1 incidents)
-- Monitor performance and error rates
-- Respond rapidly to issues (accelerated response SLAs)
-- Support user adoption (extra support availability)
-- Capture lessons learned (continuous improvement)
-
-**Hypercare Activities**:
-1. **24/7 Monitoring** (or business hours, depending on system criticality):
-   - Development team on standby
-   - Support team at increased capacity
-   - Operations team monitoring infrastructure
-   - Product Owner monitoring user feedback
-
-2. **Daily Standups**:
-   - Review previous 24 hours (incidents, metrics, feedback)
-   - Identify trends (error patterns, performance degradation)
-   - Plan responses (hotfixes, runbook updates, communication)
-
-3. **Metrics Tracking**:
-   - Production stability (incidents, error rates, uptime)
-   - Performance (response time, throughput, resource utilization)
-   - User adoption (active users, feature usage, support tickets)
-   - Support effectiveness (ticket volume, resolution time, escalations)
-
-**Commands**:
-```bash
-# Monitor production health
-# Check monitoring dashboards
-curl {prod-endpoint}/health
-curl {prod-endpoint}/metrics
-
-# Review error logs
-# Check log aggregation tool for errors
-# Filter for ERROR, CRITICAL severity
-
-# Track support tickets
-# Review support ticketing system
-# Analyze ticket volume, categories, resolution times
-
-# Monitor user adoption
-# Analytics dashboard (active users, feature usage)
-```
-
-**Hypercare Decision Points**:
-- **Day 3**: Initial stability check (are we stable?)
-- **Day 7**: Mid-hypercare review (extend or conclude?)
-- **Day 14**: Final hypercare review (ready for PRM?)
-
-**Agents to Coordinate**:
-- **Reliability Engineer**: Production monitoring, anomaly detection
-- **Support Lead**: Support ticket tracking, user issues
-- **Operations Lead**: Infrastructure monitoring, incident response
-- **Deployment Manager**: Hypercare coordination, daily standup facilitation
-- **Product Owner**: User feedback, business metrics
-
-**Output**: Hypercare Monitoring Report
-```markdown
-# Hypercare Monitoring Report
-
-**Project**: {project-name}
-**Hypercare Period**: {start-date} to {end-date} ({days} days)
-**Report Date**: {date}
-
-## Production Stability
-
-### Incident Summary
-- Total Incidents: {count}
-  - P0 (Show Stopper): {count} (target: 0)
-  - P1 (High): {count} (target: 0)
-  - P2 (Medium): {count}
-  - P3/P4 (Low): {count}
-
-### Error Rates
-- Error Rate: {percentage}% (target: <0.1%)
-- Critical Errors: {count} (target: 0)
-- Error Trend: {INCREASING | STABLE | DECREASING}
-
-### Uptime and Availability
-- Uptime: {percentage}% (target: ≥{SLA}%)
-- Downtime: {duration} (incidents: {count})
-- SLO Compliance: {MEETING | NOT MEETING}
-
-**Production Stability Status**: {STABLE | UNSTABLE}
-
-## Performance Metrics
-
-### Response Time
-- p50: {value}ms
-- p95: {value}ms (target: <{threshold}ms)
-- p99: {value}ms
-- Performance Trend: {IMPROVING | STABLE | DEGRADING}
-
-### Throughput
-- Average Throughput: {req/s} (target: ≥{threshold} req/s)
-- Peak Throughput: {req/s}
-- Throughput Trend: {INCREASING | STABLE | DECREASING}
-
-### Resource Utilization
-- CPU: {percentage}% (target: <70%)
-- Memory: {percentage}% (target: <70%)
-- Disk: {percentage}% (target: <70%)
-- Network: {percentage}% (target: <70%)
-
-**Performance Status**: {ACCEPTABLE | DEGRADED | CRITICAL}
-
-## User Adoption
-
-### Active Users
-- Daily Active Users (DAU): {count}
-- Weekly Active Users (WAU): {count}
-- User Adoption Rate: {percentage}% ({active}/{target})
-- Adoption Trend: {INCREASING | STABLE | DECREASING}
-
-### Feature Usage
-- Key Features Used: {count}/{total} ({percentage}%)
-- Most Used Features: {list top 5}
-- Least Used Features: {list bottom 3}
-
-### User Feedback
-- User Satisfaction Score: {score}/5 (target: ≥4/5)
-- Positive Feedback Themes: {list}
-- Negative Feedback Themes: {list}
-
-**User Adoption Status**: {ON TRACK | BELOW TARGET | EXCEEDING TARGET}
-
-## Support Effectiveness
-
-### Support Ticket Volume
-- Total Tickets: {count}
-- Tickets by Category:
-  - How-To Questions: {count}
-  - Bugs: {count}
-  - Feature Requests: {count}
-  - Other: {count}
-
-### Resolution Metrics
-- Mean Time to Resolution (MTTR): {duration} (target: <{threshold})
-- First Contact Resolution Rate: {percentage}% (target: ≥60%)
-- Escalations to Development: {count} (target: <10% of tickets)
-
-### Support Team Readiness
-- Support Team Capacity: {ADEQUATE | OVERWHELMED | UNDERUTILIZED}
-- Runbook Effectiveness: {percentage}% (tickets resolved via runbook)
-- Knowledge Base Updates: {count} articles added/updated
-
-**Support Effectiveness Status**: {EFFECTIVE | STRUGGLING | EXCELLENT}
-
-## Critical Issues and Resolutions
-
-{for each critical issue}
-- **Issue {ID}**: {description}
-  - Severity: {P0 | P1}
-  - Detected: {date/time}
-  - Resolved: {date/time}
-  - Duration: {duration}
-  - Resolution: {how resolved}
-  - Root Cause: {root cause}
-  - Prevention: {how to prevent recurrence}
-
-## Hypercare Decision
-
-**Hypercare Status**: {CONTINUE | EXTEND | CONCLUDE}
-
-**Decision Rationale**:
-{detailed reasoning}
-
-**If EXTEND**:
-- Extension Duration: {days} days
-- Reasons for Extension: {list reasons}
-- Exit Criteria: {what needs to improve}
-
-**If CONCLUDE**:
-- Production Stability: VALIDATED
-- User Adoption: ON TRACK
-- Support Effectiveness: VALIDATED
-- Ready for PRM: YES
-
-## Lessons Learned
-
-**What Went Well**:
-{positive outcomes during hypercare}
-
-**What Could Improve**:
-{improvement opportunities}
-
-**Action Items**:
-1. {action-item} - Owner: {name} - Due: {date}
-2. {action-item} - Owner: {name} - Due: {date}
-
-## Next Steps
-
-**If CONCLUDE Hypercare**:
-- [ ] Schedule PRM review meeting
-- [ ] Prepare PRM final report
-- [ ] Transition to normal operations (reduce monitoring intensity)
-
-**If EXTEND Hypercare**:
-- [ ] Address critical issues
-- [ ] Increase support capacity (if needed)
-- [ ] Re-evaluate in {days} days
+⏳ Hypercare period (Day 1-14)...
+  Day 1: ✓ Stable (0 incidents, 99.99% uptime)
+  Day 3: ✓ Stable (1 P3 incident resolved)
+  Day 7: ✓ Mid-review: CONTINUE
+  Day 14: ✓ Final review: READY FOR PRM
+✓ Hypercare complete: Production stable
 ```
 
 ### Step 7: Validate Product Release Milestone (PRM)
 
-Conduct formal PRM review to decide project completion.
+**Purpose**: Formal PRM review to decide project completion
 
-**PRM Review Criteria**:
-1. Production deployment successful and stable
-2. Hypercare period completed without critical issues
-3. User acceptance validated (training complete, UAT passed)
-4. Support and operations handover accepted
-5. Business value validated (early indicators positive)
+**Your Actions**:
 
-**Commands**:
-```bash
-# Validate all PRM criteria
-/project:flow-gate-check transition
+1. **Validate PRM Criteria**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Validate PRM gate criteria",
+       prompt="""
+       Read gate criteria: $AIWG_ROOT/.../flows/gate-criteria-by-phase.md (Transition section)
 
-# Generate final PRM report
-# Report includes:
-# - Production stability summary
-# - User adoption summary
-# - Support handover status
-# - Business value validation
-# - Project closure decision
+       Validate all PRM criteria:
+
+       1. Production Deployment
+          - [ ] Deployment successful and stable
+          - [ ] Hypercare completed (7-14 days)
+
+       2. Production Stability
+          - [ ] Uptime meets SLA
+          - [ ] Zero P0/P1 incidents
+          - [ ] Performance within targets
+
+       3. User Adoption
+          - [ ] Users trained (≥80%)
+          - [ ] UAT passed
+          - [ ] User satisfaction ≥4/5
+          - [ ] Active user adoption on track
+
+       4. Support Handover
+          - [ ] Support team operational
+          - [ ] Support Lead signoff obtained
+
+       5. Operations Handover
+          - [ ] Operations team operational
+          - [ ] Operations Lead signoff obtained
+
+       6. Business Value
+          - [ ] Success metrics tracking
+          - [ ] ROI forecast positive
+
+       Report status: PASS | CONDITIONAL PASS | FAIL
+
+       Output: .aiwg/reports/prm-criteria-validation.md
+       """
+   )
+   ```
+
+2. **Generate PRM Report**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Generate Product Release Milestone Report",
+       prompt="""
+       Read all Transition artifacts:
+       - Production deployment report
+       - User training and acceptance reports
+       - Support/Operations handover reports
+       - Hypercare reports
+       - PRM criteria validation
+
+       Generate comprehensive PRM Report:
+
+       1. Overall Status
+          - PRM Status: PASS | CONDITIONAL PASS | FAIL
+          - Decision: PROJECT COMPLETE | EXTENDED HYPERCARE | ISSUES DETECTED
+
+       2. Criteria Validation (detailed breakdown)
+
+       3. Signoff Checklist
+          - [ ] Executive Sponsor
+          - [ ] Product Owner
+          - [ ] Deployment Manager
+          - [ ] Support Lead
+          - [ ] Operations Lead
+          - [ ] Reliability Engineer
+
+       4. Business Value Validation
+          - Success metrics vs. baseline
+          - ROI forecast
+          - Stakeholder satisfaction
+
+       5. Lessons Learned
+          - What went well
+          - What could improve
+          - Action items
+
+       6. Next Steps
+          - Project closure activities
+          - Transition to BAU
+
+       Output: .aiwg/reports/prm-report.md
+       """
+   )
+   ```
+
+3. **Present PRM Summary to User**:
+   ```
+   # You present this directly (not via agent)
+
+   Read .aiwg/reports/prm-report.md
+
+   Present summary:
+   ─────────────────────────────────────────────
+   Product Release Milestone Review
+   ─────────────────────────────────────────────
+
+   **Overall Status**: {PASS | CONDITIONAL PASS | FAIL}
+   **Decision**: {PROJECT COMPLETE | EXTENDED HYPERCARE | ISSUES DETECTED}
+
+   **Criteria Status**:
+   ✓ Production Deployment: PASS
+     - Successfully deployed, 14 days stable
+
+   ✓ Production Stability: PASS
+     - Uptime: 99.97% (target: ≥99.9%)
+     - P0/P1 Incidents: 0
+
+   ✓ User Adoption: PASS
+     - Users trained: 92% (target: ≥80%)
+     - UAT passed: 95% scenarios
+     - User satisfaction: 4.3/5
+
+   ✓ Support Handover: PASS
+     - Support team operational
+     - MTTR: 2.5 hours (target: <4 hours)
+
+   ✓ Operations Handover: PASS
+     - Operations team validated
+     - Independent deployment successful
+
+   ✓ Business Value: ON TRACK
+     - Early metrics positive
+     - ROI forecast: Meeting projections
+
+   **Artifacts Generated**:
+   - Production Deployment Report (.aiwg/deployment/production-deployment-report.md)
+   - User Training Report (.aiwg/deployment/user-training-report.md)
+   - Support Handover Report (.aiwg/deployment/support-handover-report.md)
+   - Operations Handover Report (.aiwg/deployment/operations-handover-report.md)
+   - Hypercare Reports (.aiwg/reports/hypercare-day-*.md)
+   - PRM Report (.aiwg/reports/prm-report.md)
+
+   **Next Steps**:
+   - Formal project closure
+   - Transition to Business As Usual (BAU)
+   - Team celebration and recognition
+   - Final retrospective scheduled
+
+   ─────────────────────────────────────────────
+   ```
+
+**Communicate Progress**:
+```
+⏳ Conducting PRM validation...
+✓ PRM criteria validated: PASS (6/6 criteria met)
+✓ PRM Report generated: .aiwg/reports/prm-report.md
+✓ PROJECT COMPLETE - Ready for closure
 ```
 
-**PRM Review Meeting**:
+## Quality Gates
 
-**Required Attendees**:
-- Executive Sponsor (decision authority)
-- Product Owner
-- Project Manager
-- Deployment Manager
-- Support Lead
-- Operations Lead
-- Reliability Engineer
-- Key Stakeholders (at least 2)
+Before marking workflow complete, verify:
+- [ ] All required artifacts generated and BASELINED
+- [ ] Production deployment successful and stable
+- [ ] User acceptance validated
+- [ ] Support/Operations handover accepted
+- [ ] Hypercare period completed successfully
+- [ ] PRM criteria validated: PASS or CONDITIONAL PASS
 
-**Agenda** (Week 2 post-launch, 2 hours):
-1. Production stability report (20 min) - Reliability Engineer presents
-2. User adoption report (15 min) - Product Owner presents
-3. Support handover status (15 min) - Support Lead presents
-4. Operations handover status (15 min) - Operations Lead presents
-5. Known issues and roadmap (15 min) - Project Manager presents
-6. Business value validation (15 min) - Executive Sponsor reviews
-7. Lessons learned preview (15 min) - Project Manager presents
-8. Project closure decision (15 min)
+## User Communication
 
-**Decision Outcomes**:
-- **PROJECT COMPLETE**: All criteria met, formal project closure
-- **EXTENDED HYPERCARE**: Need more time to validate stability (extend 1-2 weeks)
-- **ISSUES DETECTED**: Production issues require additional work (back to Construction)
-- **ROLLBACK**: Critical issues, roll back deployment (escalation, executive decision)
+**At start**: Confirm understanding and list artifacts to generate
 
-**Output**: Product Release Milestone Report
-```markdown
-# Product Release Milestone Report
+```
+Understood. I'll orchestrate the Construction → Transition phase.
 
-**Project**: {project-name}
-**Review Date**: {date}
-**Phase**: Transition → Project Closure
+This will generate:
+- Production Deployment Report
+- User Training and Acceptance Reports
+- Support and Operations Handover Reports
+- Hypercare Daily Reports (7-14 days)
+- PRM Report
 
-## Overall Status
+I'll coordinate deployment, training, handover, and monitoring.
+Expected duration: 20-30 minutes orchestration (2-4 weeks actual).
 
-**PRM Status**: {PASS | CONDITIONAL PASS | FAIL}
-**Decision**: {PROJECT COMPLETE | EXTENDED HYPERCARE | ISSUES DETECTED | ROLLBACK}
+Starting orchestration...
+```
 
-## Criteria Validation
+**During**: Update progress with clear indicators
 
-### 1. Production Deployment
-- Deployment Successful: {YES | NO}
-- Production Stable: {YES | NO} (hypercare {days} days)
-- Status: {PASS | FAIL}
+```
+✓ = Complete
+⏳ = In progress
+❌ = Error/blocked
+⚠️ = Warning/attention needed
+```
 
-### 2. Production Stability
-- Uptime: {percentage}% (target: ≥{SLA}%)
-- P0/P1 Incidents: {count} (target: 0)
-- Error Rate: {percentage}% (target: <0.1%)
-- Performance: {MEETING SLA | NOT MEETING SLA}
-- Status: {PASS | FAIL}
+**At end**: Summary report with artifact locations and status (see Step 7.3 above)
 
-### 3. User Adoption
-- Users Trained: {count}/{target} ({percentage}%)
-- UAT Passed: {YES | NO}
-- User Satisfaction: {score}/5 (target: ≥4/5)
-- Active Users: {count} ({percentage}% adoption)
-- Status: {PASS | FAIL}
+## Error Handling
 
-### 4. Support Handover
-- Support Team Trained: {YES | NO}
-- Support Infrastructure: {OPERATIONAL}
-- Support Lead Signoff: {OBTAINED | PENDING}
-- Status: {PASS | FAIL}
+**If OCM Not Met**:
+```
+❌ Construction phase incomplete - cannot proceed to Transition
 
-### 5. Operations Handover
-- Operations Team Trained: {YES | NO}
-- Operational Procedures Validated: {YES | NO}
-- Operations Lead Signoff: {OBTAINED | PENDING}
-- Status: {PASS | FAIL}
+Gaps identified:
+- {list missing artifacts or incomplete criteria}
 
-### 6. Business Value
-- Success Metrics Tracked: {YES | NO}
-- Metrics Trending: {POSITIVE | NEUTRAL | NEGATIVE}
-- ROI Forecast: {ON TRACK | BELOW EXPECTATIONS | EXCEEDING}
-- Status: {PASS | FAIL}
+Recommendation: Complete Construction first
+- Run: /project:flow-elaboration-to-construction
+- Or: Complete missing artifacts manually
 
-## Signoff Status
+Contact Product Owner for project status decision.
+```
 
-**Required Signoffs**:
-- [ ] Executive Sponsor: {OBTAINED | PENDING}
-- [ ] Product Owner: {OBTAINED | PENDING}
-- [ ] Deployment Manager: {OBTAINED | PENDING}
-- [ ] Support Lead: {OBTAINED | PENDING}
-- [ ] Operations Lead: {OBTAINED | PENDING}
-- [ ] Reliability Engineer: {OBTAINED | PENDING}
+**If Deployment Failed**:
+```
+❌ Production deployment failed
 
-## Decision Rationale
+Failure point: {deployment stage}
+Error: {error description}
 
-**Decision**: {PROJECT COMPLETE | EXTENDED HYPERCARE | ISSUES DETECTED | ROLLBACK}
+Actions:
+1. Execute rollback plan
+2. Investigate root cause
+3. Fix issues in Construction
+4. Re-plan deployment
 
-**Rationale**:
-{detailed reasoning based on criteria validation}
+Impact: Cannot proceed to user training until deployment successful.
 
-## Conditions (if CONDITIONAL PASS or EXTENDED HYPERCARE)
+Escalating to user for decision...
+```
 
-**Conditions to Meet**:
-1. {condition-1}
-2. {condition-2}
+**If Production Unstable**:
+```
+⚠️ Production instability detected
 
-**Re-validation Date**: {date}
+Issues:
+- P0/P1 Incidents: {count}
+- Error rate: {percentage}%
+- Performance degradation: {metrics}
 
-## Blockers (if FAIL or ISSUES DETECTED)
+Recommendation:
+- Fix forward (hotfix) if minor
+- Rollback if critical
+- Extend hypercare period
 
-**Critical Gaps**:
-1. {gap-1}
-2. {gap-2}
+Impact: PRM blocked until stability demonstrated.
+```
 
-**Remediation Plan**:
-{specific actions to address gaps}
+**If Support Not Ready**:
+```
+⚠️ Support team not ready for handover
 
-**Re-review Date**: {date}
+Gaps:
+- {list training gaps or readiness issues}
 
-## Known Issues and Roadmap
+Recommendation: Additional training required
+- Schedule supplemental training
+- Update runbooks
+- Defer handover by {days} days
 
-### Known Issues
-{list production issues being monitored}
-
-### Post-Release Roadmap
-- Iteration 1 (Month 1): {planned features/fixes}
-- Iteration 2 (Month 2): {planned features/fixes}
-- Iteration 3 (Month 3): {planned features/fixes}
-
-## Business Value Validation
-
-### Success Metrics (Baseline vs Actual)
-- Metric 1: Baseline {value}, Actual {value} ({trend})
-- Metric 2: Baseline {value}, Actual {value} ({trend})
-- Metric 3: Baseline {value}, Actual {value} ({trend})
-
-### ROI Forecast
-- Projected Benefits: {value} (annual)
-- Actual Benefits (Week 1-2): {value}
-- ROI Forecast: {ON TRACK | BELOW | EXCEEDING}
-
-### Stakeholder Satisfaction
-- Executive Sponsor: {score}/5
-- Key Stakeholders: {average-score}/5
-- User Satisfaction: {score}/5
-
-**Business Value Status**: {VALIDATED | UNCERTAIN | NOT VALIDATED}
-
-## Lessons Learned
-
-**What Went Well**:
-{positive outcomes from Transition phase}
-
-**What Could Improve**:
-{improvement opportunities}
-
-**Process Improvements**:
-{process changes for future projects}
-
-**Action Items**:
-1. {action-item} - Owner: {name} - Due: {date}
-2. {action-item} - Owner: {name} - Due: {date}
-
-## Next Steps
-
-**If PROJECT COMPLETE**:
-- [ ] Formal project closure (archive artifacts)
-- [ ] Transition to normal operations (BAU - Business As Usual)
-- [ ] Disband project team (reassign resources)
-- [ ] Final retrospective (capture lessons learned)
-- [ ] Celebrate success (team recognition)
-
-**If EXTENDED HYPERCARE**:
-- [ ] Continue intensive monitoring ({days} more days)
-- [ ] Address conditions: {list}
-- [ ] Re-validate PRM criteria: {date}
-
-**If ISSUES DETECTED**:
-- [ ] Return to Construction (emergency sprint)
-- [ ] Fix critical issues
-- [ ] Re-deploy to production
-- [ ] Re-enter hypercare period
-
-**If ROLLBACK**:
-- [ ] Execute rollback plan (revert to previous version)
-- [ ] Root cause analysis (investigate failure)
-- [ ] Plan remediation (major work may be required)
-- [ ] Executive briefing (explain failure, recovery plan)
-
-## Project Metrics Summary
-
-### Schedule
-- Planned Duration: {duration}
-- Actual Duration: {duration}
-- Variance: {variance} ({percentage}%)
-
-### Budget
-- Planned Budget: {amount}
-- Actual Cost: {amount}
-- Variance: {variance} ({percentage}%)
-
-### Quality
-- Test Coverage: {percentage}%
-- Defect Density: {value} defects/KLOC
-- Production Incidents (Week 1-2): {count}
-
-### Team
-- Team Size: {count} people
-- Velocity: {story-points} per iteration
-- Team Satisfaction: {score}/5
-
-## References
-
-- Deployment Plan: `deployment/deployment-plan-template.md`
-- Release Notes: `deployment/release-notes-template.md`
-- Support Runbook: `deployment/support-runbook-template.md`
-- Product Acceptance Plan: `deployment/product-acceptance-plan-template.md`
-- Hypercare Reports: `{links to daily/weekly reports}`
+Impact: Cannot achieve PRM without support acceptance.
 ```
 
 ## Success Criteria
 
-This command succeeds when:
+This orchestration succeeds when:
 - [ ] Operational Capability Milestone validated (OCM complete)
 - [ ] Production environment provisioned and validated
 - [ ] Production deployment SUCCESSFUL and STABLE
@@ -1275,58 +992,32 @@ This command succeeds when:
 - [ ] Hypercare period COMPLETED (7-14 days, no critical issues)
 - [ ] Product Release Milestone achieved (PRM review passed)
 
-## Error Handling
+## Metrics to Track
 
-**OCM Not Met**:
-- Report: "Construction phase incomplete, cannot proceed to Transition"
-- Action: "Return to Construction: /project:flow-elaboration-to-construction"
-- Escalation: "Contact Product Owner and Deployment Manager"
-
-**Deployment Failed**:
-- Report: "Production deployment failed during execution"
-- Action: "Execute rollback plan, investigate root cause, re-plan deployment"
-- Impact: "Cannot proceed to user training or hypercare until deployment successful"
-
-**Production Instability**:
-- Report: "Critical incidents during hypercare (P0/P1 incidents: {count})"
-- Action: "Fix forward (hotfix) or rollback, extend hypercare period"
-- Impact: "PRM blocked until production stability demonstrated"
-
-**Support Not Ready**:
-- Report: "Support team not ready to accept handover"
-- Action: "Additional training, runbook updates, defer handover"
-- Impact: "Cannot achieve PRM without support handover acceptance"
-
-**User Rejection**:
-- Report: "User adoption below target ({percentage}%), user satisfaction low ({score}/5)"
-- Action: "Additional training, usability improvements, stakeholder re-engagement"
-- Impact: "PRM blocked until user acceptance validated"
-
-**Rollback Needed**:
-- Report: "Critical production issues, rollback decision made"
-- Action: "Execute rollback plan, return to Construction, root cause analysis"
-- Impact: "Return to Construction phase, re-plan deployment"
-
-## Metrics
-
-**Track During Transition**:
-- Production stability: Uptime (%), incidents (count), error rate (%)
-- User adoption: Active users (count), adoption rate (%), satisfaction (score/5)
-- Support effectiveness: Ticket volume (count), MTTR (duration), escalations (count)
-- Business value: Success metrics (baseline vs actual), ROI forecast
-
-**Target Metrics**:
-- Production Uptime: ≥ SLA target (e.g., 99.9%)
-- User Adoption: ≥ 80% of target users
-- User Satisfaction: ≥ 4/5
-- Support MTTR: < 4 hours (P1 incidents)
-- Zero P0/P1 incidents during hypercare
+**During orchestration, track**:
+- Production stability: Uptime %, incidents, error rate %
+- User adoption: Active users, adoption rate %, satisfaction score
+- Support effectiveness: Ticket volume, MTTR, escalations
+- Business value: Success metrics vs. baseline, ROI forecast
+- Deployment success rate: % of deployments without rollback
 
 ## References
 
-- Gate criteria: `flows/gate-criteria-by-phase.md`
-- Deployment plan: `deployment/deployment-plan-template.md`
-- Release notes: `deployment/release-notes-template.md`
-- Support runbook: `deployment/support-runbook-template.md`
-- Product acceptance plan: `deployment/product-acceptance-plan-template.md`
-- Hypercare monitoring: Daily/weekly hypercare reports
+**Templates** (via $AIWG_ROOT):
+- Deployment Plan: `templates/deployment/deployment-plan-template.md`
+- Release Notes: `templates/deployment/release-notes-template.md`
+- Support Runbook: `templates/deployment/support-runbook-template.md`
+- Product Acceptance Plan: `templates/deployment/product-acceptance-plan-template.md`
+- Infrastructure Definition: `templates/deployment/infrastructure-definition-template.md`
+
+**Gate Criteria**:
+- `flows/gate-criteria-by-phase.md` (Transition section)
+
+**Multi-Agent Pattern**:
+- `docs/multi-agent-documentation-pattern.md`
+
+**Orchestrator Architecture**:
+- `docs/orchestrator-architecture.md`
+
+**Natural Language Translations**:
+- `docs/simple-language-translations.md`

@@ -1,478 +1,740 @@
 ---
-description: Validate SDLC phase gate criteria with automated checks and comprehensive reporting
-category: sdlc-management
+description: Orchestrate SDLC phase gate validation with multi-agent review and comprehensive reporting
+category: sdlc-orchestration
 argument-hint: <phase-or-gate-name> [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Bash, Grep, Glob
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
-# SDLC Gate Check
+# SDLC Gate Check Orchestration
 
-You are an SDLC Quality Gatekeeper specializing in validating phase gate criteria, artifact completeness, and readiness for milestone transitions.
+**You are the Core Orchestrator** for SDLC phase gate validation.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-gate-check <phase-or-gate-name> [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Identify** applicable gate criteria for the specified phase or gate
-2. **Validate** all required artifacts exist and are complete
-3. **Check** quality gates (security, performance, test coverage, documentation)
-4. **Generate** pass/fail report with specific remediation actions
+When the user requests this flow (via natural language or explicit command):
 
-## Supported Gates
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
-### Phase Gates
-- `inception` - Lifecycle Objective Milestone
-- `elaboration` - Lifecycle Architecture Milestone
-- `construction` - Operational Capability Milestone (Construction End)
-- `transition` - Product Release Milestone
+## Natural Language Triggers
 
-### Workflow Gates
-- `discovery` - Discovery Track Definition of Ready (DoR)
-- `delivery` - Delivery Track Definition of Done (DoD)
-- `security` - Security Gate (SAST/DAST, vulnerabilities)
-- `reliability` - Reliability Gate (performance, SLO compliance)
-- `test-coverage` - Test Coverage Gate (unit, integration, acceptance)
-- `documentation` - Documentation Gate (runbooks, release notes, API docs)
-- `traceability` - Traceability Gate (requirements → code → tests)
+Users may say:
+- "Can we transition to {phase}?"
+- "Are we ready for {phase}?"
+- "Validate gate criteria"
+- "Check if we can proceed"
+- "Gate validation for {phase}"
+- "Check {phase} readiness"
+- "Is the {milestone} complete?"
+- "Run gate check for {phase}"
+- "Validate our readiness to move forward"
 
-### Special Gates
-- `all` - Run all applicable gates for current phase
-- `pre-deploy` - Pre-deployment readiness (combines security, reliability, test-coverage, documentation)
-- `orr` - Operational Readiness Review (Transition phase)
+You recognize these as requests for this orchestration flow.
 
-## Gate Criteria by Phase
+## Parameter Handling
 
-### Inception Gate (Lifecycle Objective Milestone)
+### Phase/Gate Identification
 
-**Required Artifacts**:
-```bash
-# Check for required files
-ls intake/project-intake-template.md
-ls requirements/vision-*.md
-ls management/business-case-*.md
-ls management/risk-list.md
-ls security/data-classification-template.md
-ls analysis-design/software-architecture-doc-template.md
+**Supported Gates**:
+
+**Phase Milestones**:
+- `inception` / `LOM` - Lifecycle Objective Milestone
+- `elaboration` / `ABM` - Architecture Baseline Milestone
+- `construction` / `IOC` - Initial Operational Capability
+- `transition` / `PR` - Product Release
+
+**Workflow Gates**:
+- `discovery` - Discovery Track Definition of Ready
+- `delivery` - Delivery Track Definition of Done
+- `security` - Security validation
+- `reliability` - Performance and SLO compliance
+- `test-coverage` - Test coverage thresholds
+- `documentation` - Documentation completeness
+- `traceability` - Requirements → code → tests
+
+**Special Gates**:
+- `all` - Run all applicable gates
+- `pre-deploy` - Pre-deployment readiness
+- `orr` - Operational Readiness Review
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor validation priorities
+
+**Examples**:
+```
+--guidance "Focus on security compliance, HIPAA critical"
+--guidance "Time-constrained, prioritize minimum viable gates"
+--guidance "Enterprise deployment, need full compliance validation"
 ```
 
-**Validation Checklist**:
-- [ ] Vision document APPROVED (check for "Status: Approved" in frontmatter)
-- [ ] Project intake COMPLETE (all required fields filled)
-- [ ] Business case APPROVED (Executive Sponsor signoff)
-- [ ] Risk list BASELINED (at least 5 risks, top 3 have mitigation plans)
-- [ ] Data classification COMPLETE (all data classes identified)
-- [ ] Initial architecture scan documented (component boundaries, tech stack)
-- [ ] Stakeholder requests logged (at least 3 stakeholder interviews)
+**How to Apply**:
+- Parse guidance for keywords: security, compliance, timeline, quality
+- Adjust validation depth (comprehensive vs. essential)
+- Influence agent assignments (add specialized validators)
+- Modify reporting detail level
 
-**Quality Gates**:
-- [ ] Vision Owner signoff present
-- [ ] Executive Sponsor signoff present
-- [ ] At least 75% of key stakeholders approve vision
-- [ ] No Show Stopper risks without mitigation plans
-- [ ] Funding approved for at least Elaboration phase
-- [ ] Security Architect confirms no Show Stopper security concerns
+### --interactive Parameter
 
-**Decision Point**:
-- [ ] Go/No-Go to Elaboration decision recorded in ADR
-- [ ] If GO: Elaboration phase kickoff scheduled (within 1 week)
+**Purpose**: You ask 3-5 strategic questions to understand context
 
-### Elaboration Gate (Lifecycle Architecture Milestone)
+**Questions to Ask** (if --interactive):
 
-**Required Artifacts**:
-```bash
-ls analysis-design/software-architecture-doc-template.md
-ls requirements/supplemental-specification-template.md
-ls test/master-test-plan-template.md
-ls management/development-case-template.md
-ls deployment/deployment-plan-template.md
+```
+I'll ask strategic questions to tailor the gate validation:
+
+Q1: What's your primary concern for this gate check?
+    (e.g., compliance readiness, technical quality, team preparedness)
+
+Q2: Are there any known issues or gaps you're concerned about?
+    (Help me focus validation on problem areas)
+
+Q3: What's your timeline for passing this gate?
+    (Influences whether to report quick-fixes vs. comprehensive remediation)
+
+Q4: Who needs to sign off on this gate?
+    (Helps identify which specialized reviewers to involve)
+
+Q5: What happens if the gate doesn't pass?
+    (Helps determine how strict validation should be)
 ```
 
-**Validation Checklist**:
-- [ ] Architecture baselined (all critical decisions in ADRs)
-- [ ] All architecturally significant use cases implemented
-- [ ] Supplemental requirements complete (performance, security, scalability)
-- [ ] Master Test Plan approved
-- [ ] Development case tailored (SDLC adapted to project needs)
-- [ ] Top 3 risks from Inception retired or mitigated
+## Multi-Agent Orchestration Workflow
 
-**Quality Gates**:
-- [ ] Architecture review completed (peer review, stakeholder validation)
-- [ ] Proof-of-concept successful (critical technical risks validated)
-- [ ] Test strategy validated (test types, coverage targets, automation)
-- [ ] Deployment plan feasible (infrastructure, CI/CD, rollback)
+### Step 1: Determine Gate Context
 
-**Decision Point**:
-- [ ] Go/No-Go to Construction decision recorded in ADR
+**Purpose**: Identify which gate to validate and current project state
 
-### Construction Gate (Operational Capability Milestone)
+**Your Actions**:
 
-**Required Artifacts**:
-```bash
-# Code and tests
-find . -name "*.test.*" -o -name "*_test.*" -o -name "test_*"
+1. **Parse Gate Parameter**:
+   ```
+   Map user input to gate type:
+   - "inception" | "LOM" → Lifecycle Objective Milestone
+   - "elaboration" | "ABM" → Architecture Baseline Milestone
+   - "construction" | "IOC" → Initial Operational Capability
+   - "transition" | "PR" → Product Release
+   - Others → Workflow or special gates
+   ```
 
-# Documentation
-ls deployment/release-notes-template.md
-ls deployment/runbook-*.md
-ls analysis-design/api-documentation-template.md
+2. **Scan Project State**:
+   ```
+   Use Glob to check for phase indicators:
+   - .aiwg/intake/* → Likely in Inception
+   - .aiwg/architecture/software-architecture-doc.md → Likely post-Elaboration
+   - .aiwg/testing/test-results/* → Likely in Construction
+   - .aiwg/deployment/production-deploy.md → Likely in Transition
+   ```
+
+**Communicate Progress**:
+```
+✓ Gate identified: {gate-name}
+⏳ Scanning project state...
+✓ Current phase detected: {phase}
 ```
 
-**Validation Checklist**:
-- [ ] All use cases implemented and tested
-- [ ] Unit test coverage ≥ 80% (or per Master Test Plan)
-- [ ] Integration tests passing 100%
-- [ ] Acceptance tests passing (stakeholder validation)
-- [ ] Performance tests meeting SLO targets
-- [ ] Security scans passing (no High/Critical vulnerabilities)
+### Step 2: Phase Gate Validation (LOM/ABM/IOC/PR)
 
-**Quality Gates**:
-- [ ] **Security Gate**: SAST/DAST clean, Security Gatekeeper signoff
-- [ ] **Reliability Gate**: SLIs within targets, load tests passed
-- [ ] **Test Coverage Gate**: All coverage targets met
-- [ ] **Documentation Gate**: Release notes, runbooks, API docs complete
-- [ ] **Traceability Gate**: Requirements → code → tests verified
+#### 2.1: Inception Gate (LOM) Validation
 
-**Decision Point**:
-- [ ] Go/No-Go to Transition decision recorded in ADR
+**When**: User requests "inception", "LOM", or system detects Inception phase
 
-### Transition Gate (Product Release Milestone)
+**Launch Validation Agents**:
 
-**Required Artifacts**:
-```bash
-ls deployment/operational-readiness-review-template.md
-ls deployment/deployment-plan-template.md
-ls training/user-guide-template.md
-ls support/support-plan-template.md
+```
+# Primary Validator
+Task(
+    subagent_type="project-manager",
+    description="Validate Lifecycle Objective Milestone criteria",
+    prompt="""
+    Read gate criteria from: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/gate-criteria-by-phase.md
+
+    Check for required Inception artifacts:
+    - .aiwg/intake/project-intake.md (COMPLETE)
+    - .aiwg/requirements/vision-*.md (APPROVED)
+    - .aiwg/planning/business-case-*.md (APPROVED)
+    - .aiwg/risks/risk-list.md (BASELINED)
+    - .aiwg/security/data-classification.md (COMPLETE)
+
+    Validate LOM criteria:
+    - Vision document APPROVED (stakeholder signoff ≥75%)
+    - Business case APPROVED (funding secured)
+    - Risk list BASELINED (5-10 risks, top 3 have mitigation)
+    - Data classification COMPLETE
+    - Initial architecture documented
+    - Executive Sponsor approval obtained
+
+    Generate validation report:
+    - Status: PASS | FAIL | CONDITIONAL
+    - Missing artifacts list
+    - Failed criteria with reasons
+    - Signoff status
+    - Remediation actions
+
+    Save to: .aiwg/gates/lom-validation-report.md
+    """
+)
+
+# Parallel Specialized Reviewers
+Task(
+    subagent_type="business-analyst",
+    description="Validate business readiness for LOM",
+    prompt="""
+    Review business artifacts:
+    - Business case viability
+    - Stakeholder alignment
+    - Funding adequacy
+    - Vision clarity
+
+    Report business readiness: READY | GAPS | BLOCKED
+    Save to: .aiwg/gates/lom-business-review.md
+    """
+)
+
+Task(
+    subagent_type="security-architect",
+    description="Validate security readiness for LOM",
+    prompt="""
+    Review security artifacts:
+    - Data classification completeness
+    - Initial threat assessment
+    - Compliance requirements identified
+    - Security risks documented
+
+    Report security readiness: READY | GAPS | BLOCKED
+    Save to: .aiwg/gates/lom-security-review.md
+    """
+)
 ```
 
-**Validation Checklist**:
-- [ ] Operational Readiness Review (ORR) complete
-- [ ] Production deployment successful
-- [ ] User training materials complete
-- [ ] Support plan in place (on-call, escalation)
-- [ ] Monitoring and alerting configured
-- [ ] Rollback plan tested
+#### 2.2: Elaboration Gate (ABM) Validation
 
-**Quality Gates**:
-- [ ] Production environment validated (smoke tests passed)
-- [ ] User acceptance testing complete
-- [ ] Operations team trained and ready
-- [ ] Support team trained and ready
-- [ ] Business stakeholders accept product
+**When**: User requests "elaboration", "ABM", or system detects Elaboration phase
 
-**Decision Point**:
-- [ ] Product Release approved
-- [ ] Transition to Operations complete
+**Launch Validation Agents**:
 
-## Workflow Gate Checks
+```
+# Primary Validator
+Task(
+    subagent_type="project-manager",
+    description="Validate Architecture Baseline Milestone criteria",
+    prompt="""
+    Read gate criteria from: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/gate-criteria-by-phase.md
 
-### Discovery Gate (Definition of Ready)
+    Check for required Elaboration artifacts:
+    - .aiwg/architecture/software-architecture-doc.md (BASELINED)
+    - .aiwg/architecture/adr/*.md (3-5 ADRs)
+    - .aiwg/requirements/supplemental-specification.md (COMPLETE)
+    - .aiwg/testing/master-test-plan.md (APPROVED)
+    - .aiwg/risks/risk-retirement-report.md
 
-**Checklist**:
-```bash
-# Required artifacts per backlog item
-ls requirements/use-case-brief-*.md
-ls test/acceptance-test-card-*.md
-ls analysis-design/data-contract-card-*.md  # if applicable
-ls analysis-design/interface-card-*.md       # if applicable
+    Validate ABM criteria:
+    - Architecture BASELINED and peer-reviewed
+    - ADRs documented (3-5 major decisions)
+    - Risks ≥70% retired or mitigated
+    - Requirements baseline established
+    - Test strategy approved
+    - Development case tailored
+
+    Generate validation report with pass/fail status
+    Save to: .aiwg/gates/abm-validation-report.md
+    """
+)
+
+# Architecture validation specialist
+Task(
+    subagent_type="architecture-designer",
+    description="Deep validation of architecture readiness",
+    prompt="""
+    Validate architecture completeness:
+    - All views documented (logical, physical, deployment)
+    - Technology decisions justified
+    - Integration points defined
+    - Security architecture complete
+    - Performance architecture validated
+
+    Check architecture risks retired via POCs
+    Report: READY | GAPS | BLOCKED
+    Save to: .aiwg/gates/abm-architecture-review.md
+    """
+)
+
+# Test readiness specialist
+Task(
+    subagent_type="test-architect",
+    description="Validate test strategy readiness",
+    prompt="""
+    Review test planning:
+    - Master Test Plan completeness
+    - Test environment readiness
+    - Test data strategy defined
+    - Automation approach clear
+    - Coverage targets established
+
+    Report: READY | GAPS | BLOCKED
+    Save to: .aiwg/gates/abm-test-review.md
+    """
+)
 ```
 
-**Validation**:
-- [ ] Use-case brief authored and reviewed
-- [ ] Acceptance criteria defined and testable
-- [ ] Data contracts defined (if new entities)
-- [ ] Interface specifications complete (if API changes)
-- [ ] High-risk assumptions validated via spike/POC
-- [ ] Traceability established (stakeholder request → use-case → acceptance)
-- [ ] Product Owner approval obtained
+#### 2.3: Construction Gate (IOC) Validation
 
-**Pass Criteria**: 100% of checklist items must pass
+**When**: User requests "construction", "IOC", or system detects Construction complete
 
-### Delivery Gate (Definition of Done)
+**Launch Validation Agents**:
 
-**Checklist**:
-```bash
-# Per work item
-# Check git commits
-git log --oneline --grep="WI-{ID}"
+```
+# Primary Validator
+Task(
+    subagent_type="project-manager",
+    description="Validate Initial Operational Capability",
+    prompt="""
+    Check for Construction completeness:
+    - All use cases implemented
+    - Test coverage targets met
+    - Performance within SLOs
+    - Security scans passing
+    - Documentation current
 
-# Check test files
-find . -name "*{feature}*.test.*"
+    Validate IOC criteria:
+    - Unit test coverage ≥80%
+    - Integration tests 100% passing
+    - Acceptance tests validated
+    - No High/Critical vulnerabilities
+    - Release notes complete
+    - Runbooks documented
 
-# Check code coverage
-npm run test:coverage  # or equivalent
+    Generate comprehensive IOC report
+    Save to: .aiwg/gates/ioc-validation-report.md
+    """
+)
+
+# Quality validation team (parallel)
+Task(
+    subagent_type="test-engineer",
+    description="Validate test coverage and quality",
+    prompt="""
+    Analyze test metrics:
+    - Unit coverage percentage
+    - Integration test results
+    - Acceptance test status
+    - Performance test results
+    - Regression test status
+
+    Validate against Master Test Plan targets
+    Report: PASS | FAIL with specific gaps
+    Save to: .aiwg/gates/ioc-test-validation.md
+    """
+)
+
+Task(
+    subagent_type="security-gatekeeper",
+    description="Security gate validation",
+    prompt="""
+    Review security posture:
+    - SAST/DAST results
+    - Vulnerability scan status
+    - Dependency analysis
+    - Secret scanning results
+    - OWASP compliance
+
+    Validate: No High/Critical without mitigation
+    Report: PASS | FAIL with remediation
+    Save to: .aiwg/gates/ioc-security-validation.md
+    """
+)
+
+Task(
+    subagent_type="reliability-engineer",
+    description="Performance and reliability validation",
+    prompt="""
+    Validate SLOs:
+    - Response time (p50, p95, p99)
+    - Throughput capacity
+    - Error rates
+    - Resource utilization
+    - Scalability validation
+
+    Compare against targets in supplemental spec
+    Report: PASS | FAIL with metrics
+    Save to: .aiwg/gates/ioc-reliability-validation.md
+    """
+)
 ```
 
-**Validation**:
-- [ ] Code implements all acceptance criteria
-- [ ] Code peer-reviewed and approved
-- [ ] Code merged to main branch
-- [ ] Unit tests written and passing
-- [ ] Integration tests passing
-- [ ] Test coverage meets standards (≥80%)
-- [ ] Security scan passing
-- [ ] Performance within SLO targets
-- [ ] Release notes updated
-- [ ] Runbooks updated (if operational impact)
+#### 2.4: Transition Gate (PR) Validation
 
-**Pass Criteria**: 100% of checklist items must pass
+**When**: User requests "transition", "PR", "orr", or system detects Transition phase
 
-### Security Gate
+**Launch Validation Agents**:
 
-**Validation**:
-```bash
-# Run security scans (example commands)
-npm audit                    # Node.js
-pip-audit                    # Python
-safety check                 # Python
-trivy scan .                 # Container images
-sonarqube-scanner            # Static analysis
+```
+# Primary Validator
+Task(
+    subagent_type="project-manager",
+    description="Validate Product Release readiness",
+    prompt="""
+    Validate Transition/Release criteria:
+    - Operational Readiness Review complete
+    - Production deployment validated
+    - User training materials ready
+    - Support plan established
+    - Monitoring configured
+    - Rollback tested
 
-# Check for secrets
-trufflehog git file://. --only-verified
+    Check for:
+    - User acceptance signoff
+    - Operations team readiness
+    - Support team training
+    - Business stakeholder approval
+
+    Generate Product Release validation report
+    Save to: .aiwg/gates/pr-validation-report.md
+    """
+)
+
+# Operations readiness team
+Task(
+    subagent_type="devops-engineer",
+    description="Validate operational readiness",
+    prompt="""
+    Review deployment readiness:
+    - Infrastructure provisioned
+    - Monitoring/alerting configured
+    - Logging established
+    - Backup/recovery tested
+    - Rollback procedures validated
+    - Runbooks complete
+
+    Report: READY | GAPS | BLOCKED
+    Save to: .aiwg/gates/pr-operations-review.md
+    """
+)
+
+Task(
+    subagent_type="support-engineer",
+    description="Validate support readiness",
+    prompt="""
+    Review support preparedness:
+    - Support documentation complete
+    - Known issues documented
+    - Escalation paths defined
+    - Support team trained
+    - User guides available
+    - FAQ/troubleshooting ready
+
+    Report: READY | GAPS | BLOCKED
+    Save to: .aiwg/gates/pr-support-review.md
+    """
+)
 ```
 
-**Criteria**:
-- [ ] No Critical vulnerabilities
-- [ ] No High vulnerabilities (or all have accepted risk / mitigation plan)
-- [ ] No hardcoded secrets or credentials
-- [ ] Dependency vulnerabilities addressed
-- [ ] OWASP Top 10 checks passed
-- [ ] Security Gatekeeper signoff
+### Step 3: Workflow Gate Validation
 
-**Pass Criteria**: No High/Critical vulnerabilities without accepted risk
+**For non-phase gates** (security, reliability, test-coverage, etc.):
 
-### Reliability Gate
+```
+# Dispatch to appropriate specialist
+if gate == "security":
+    Task(
+        subagent_type="security-gatekeeper",
+        description="Run security gate validation",
+        prompt="""
+        Comprehensive security validation:
+        - Run/review SAST results
+        - Run/review DAST results
+        - Check dependency vulnerabilities
+        - Scan for secrets
+        - Validate OWASP Top 10
+        - Review security architecture
 
-**Validation**:
-```bash
-# Performance tests
-npm run test:performance     # or equivalent
-artillery run load-test.yml  # load testing
+        Pass criteria: No High/Critical without accepted risk
+        Generate detailed findings
+        Save to: .aiwg/gates/security-gate-report.md
+        """
+    )
 
-# Check SLI metrics
-curl {monitoring-endpoint}/sli
+elif gate == "reliability":
+    Task(
+        subagent_type="reliability-engineer",
+        description="Run reliability gate validation",
+        prompt="""
+        Validate performance and reliability:
+        - Load test results
+        - Stress test results
+        - SLI/SLO compliance
+        - Resource utilization
+        - Scalability validation
+
+        Pass criteria: All SLOs met
+        Generate metrics report
+        Save to: .aiwg/gates/reliability-gate-report.md
+        """
+    )
+
+elif gate == "test-coverage":
+    Task(
+        subagent_type="test-engineer",
+        description="Run test coverage validation",
+        prompt="""
+        Analyze test coverage:
+        - Unit test coverage
+        - Integration coverage
+        - Critical path coverage
+        - Error handling coverage
+        - Edge case coverage
+
+        Pass criteria: Meet Master Test Plan thresholds
+        Generate coverage report
+        Save to: .aiwg/gates/test-coverage-report.md
+        """
+    )
+
+elif gate == "documentation":
+    Task(
+        subagent_type="technical-writer",
+        description="Run documentation gate validation",
+        prompt="""
+        Validate documentation completeness:
+        - User documentation
+        - API documentation
+        - Release notes
+        - Runbooks
+        - Architecture docs
+        - README files
+
+        Pass criteria: All user-facing docs complete
+        Generate completeness report
+        Save to: .aiwg/gates/documentation-gate-report.md
+        """
+    )
+
+elif gate == "traceability":
+    Task(
+        subagent_type="requirements-analyst",
+        description="Run traceability validation",
+        prompt="""
+        Validate bidirectional traceability:
+        - Requirements → Code
+        - Code → Tests
+        - Tests → Requirements
+        - Risks → Mitigations
+        - Decisions → Implementation
+
+        Pass criteria: 100% traceability
+        Generate traceability matrix
+        Save to: .aiwg/gates/traceability-gate-report.md
+        """
+    )
 ```
 
-**Criteria**:
-- [ ] Response time within SLO (e.g., p95 < 500ms)
-- [ ] Throughput within SLO (e.g., 1000 req/sec)
-- [ ] Error rate within SLO (e.g., <0.1%)
-- [ ] Resource utilization acceptable (CPU < 70%, Memory < 80%)
-- [ ] No performance regressions vs. baseline
-- [ ] Reliability Engineer signoff
+### Step 4: Synthesize Results
 
-**Pass Criteria**: All SLO targets met
+**Purpose**: Combine all validation results into comprehensive gate report
 
-### Test Coverage Gate
+```
+Task(
+    subagent_type="project-manager",
+    description="Synthesize gate validation results",
+    prompt="""
+    Read all validation reports from .aiwg/gates/*.md
 
-**Validation**:
-```bash
-# Generate coverage reports
-npm run test:coverage        # Node.js
-pytest --cov                 # Python
-./gradlew jacocoTestReport   # Java
+    Create comprehensive Gate Validation Report:
 
-# Check coverage thresholds
-cat coverage/coverage-summary.json
+    # Gate Validation Report
+
+    **Gate**: {gate-name}
+    **Date**: {current-date}
+    **Overall Status**: PASS | FAIL | CONDITIONAL
+
+    ## Summary
+    - Pass Rate: X% (Y/Z criteria)
+    - Decision: GO | NO-GO | CONDITIONAL GO
+
+    ## Validation Results
+
+    ### Required Artifacts
+    - List each with status (PRESENT/MISSING/INCOMPLETE)
+
+    ### Quality Gates
+    - List each gate with PASS/FAIL status
+
+    ### Failed Criteria
+    - Detailed list with reasons
+
+    ### Signoff Status
+    - List required signoffs with status
+
+    ## Remediation Plan
+    - Prioritized list of actions to pass gate
+    - Owner assignments
+    - Timeline estimates
+
+    ## Recommendations
+    - Process improvements
+    - Risk mitigations
+    - Next steps
+
+    ## Decision
+    - Clear GO/NO-GO/CONDITIONAL recommendation
+    - Rationale based on findings
+    - Conditions if CONDITIONAL
+
+    Save to: .aiwg/reports/gate-validation-{gate}-{date}.md
+    """
+)
 ```
 
-**Criteria**:
-- [ ] Unit test coverage ≥ 80% (or per Master Test Plan)
-- [ ] Integration test coverage ≥ 70%
-- [ ] Critical path coverage 100%
-- [ ] Acceptance tests passing 100%
-- [ ] No uncovered error handling paths
-- [ ] Test Architect signoff
+### Step 5: Present Results to User
 
-**Pass Criteria**: All coverage thresholds met
+**Your Direct Communication**:
 
-### Documentation Gate
-
-**Validation**:
-```bash
-# Check for documentation files
-ls deployment/release-notes-*.md
-ls deployment/runbook-*.md
-ls analysis-design/api-documentation-*.md
-ls README.md
-ls CHANGELOG.md
 ```
+─────────────────────────────────────────────
+{Gate Name} Validation Complete
+─────────────────────────────────────────────
 
-**Criteria**:
-- [ ] Release notes complete (user-facing changes documented)
-- [ ] Runbooks updated (operational procedures)
-- [ ] API documentation current (if applicable)
-- [ ] README updated (setup, usage, configuration)
-- [ ] CHANGELOG updated (version, date, changes)
-- [ ] Code comments for public APIs
-- [ ] Technical Writer signoff (if applicable)
-
-**Pass Criteria**: All user-facing documentation complete
-
-### Traceability Gate
-
-**Validation**:
-```bash
-# Check traceability matrix
-cat management/traceability-matrix.md
-
-# Verify requirement coverage
-/project:check-traceability
-```
-
-**Criteria**:
-- [ ] All requirements traced to code
-- [ ] All code traced to requirements
-- [ ] All tests traced to requirements
-- [ ] All risks traced to mitigation actions
-- [ ] All ADRs linked to requirements
-- [ ] Traceability matrix current (updated within 1 week)
-
-**Pass Criteria**: 100% bidirectional traceability
-
-## Output Report
-
-Generate a gate validation report:
-
-```markdown
-# Gate Validation Report
-
-**Gate**: {gate-name}
-**Project**: {project-name}
-**Date**: {current-date}
-**Validator**: {agent-name}
-
-## Overall Status
-
-**Result**: {PASS | FAIL | CONDITIONAL PASS}
-**Pass Rate**: {percentage}% ({passed}/{total} criteria)
-
+**Overall Status**: {PASS | FAIL | CONDITIONAL}
 **Decision**: {GO | NO-GO | CONDITIONAL GO}
 
-## Artifact Validation
+**Validation Summary**:
+✓ Required Artifacts: {X/Y} complete
+✓ Quality Gates: {X/Y} passed
+✓ Signoffs: {X/Y} obtained
 
-### Required Artifacts
-{for each required artifact}
-- [ ] {artifact-name}
-  - Status: {PRESENT | MISSING | INCOMPLETE}
-  - Location: {file-path}
-  - Completeness: {percentage}%
-  - Issues: {list any problems}
+{If FAIL or CONDITIONAL:}
+**Critical Issues**:
+- {Issue 1 with impact}
+- {Issue 2 with impact}
 
-**Artifacts Status**: {passed}/{total} artifacts complete
+**Remediation Required**:
+1. {Action} - Owner: {role} - Est: {time}
+2. {Action} - Owner: {role} - Est: {time}
 
-## Quality Gate Results
+**Reports Generated**:
+- Full Report: .aiwg/reports/gate-validation-{gate}-{date}.md
+- Specialist Reviews: .aiwg/gates/*.md
 
-### {Gate-Name} Gate
-- Status: {PASS | FAIL}
-- Criteria Passed: {count}/{total}
+**Next Steps**:
+{If PASS}: Proceed to {next-phase}
+{If FAIL}: Complete remediation, then re-validate
+{If CONDITIONAL}: Address conditions within {timeframe}
 
-**Failed Criteria**:
-{list each failed criterion with details}
-
-**Remediation Actions**:
-{for each failure, provide specific action}
-
-## Signoff Status
-
-**Required Signoffs**:
-- [ ] {Role-Name}: {OBTAINED | PENDING | DECLINED}
-- [ ] {Role-Name}: {OBTAINED | PENDING | DECLINED}
-
-**Signoff Rate**: {percentage}% ({obtained}/{required})
-
-## Decision Point
-
-**Gate Decision**: {GO | NO-GO | CONDITIONAL GO}
-
-**Rationale**:
-{detailed reasoning based on results}
-
-**Conditions** (if CONDITIONAL GO):
-{list conditions that must be met}
-
-**Remediation Plan** (if NO-GO or CONDITIONAL):
-{list specific actions to address failures}
-
-## Detailed Findings
-
-### Critical Issues (Blockers)
-{list issues that block gate passage}
-
-### Major Issues (Must Fix)
-{list issues that should be fixed}
-
-### Minor Issues (Nice to Have)
-{list issues that can be deferred}
-
-## Recommendations
-
-**Immediate Actions**:
-1. {action-item} - Owner: {role} - Due: {date}
-2. {action-item} - Owner: {role} - Due: {date}
-
-**Process Improvements**:
-{suggestions to prevent similar issues}
-
-## Next Steps
-
-**If PASS**:
-- Proceed to {next-phase}
-- Schedule {next-milestone} for {date}
-
-**If FAIL**:
-- Complete remediation actions
-- Re-run gate check when ready
-- Estimated re-check date: {date}
-
-**If CONDITIONAL**:
-- Complete conditions: {list}
-- Re-validate within {timeframe}
-
-## References
-
-- Gate criteria source: `flows/gate-criteria-by-phase.md`
-- Remediation templates: {list applicable templates}
-- Escalation contact: {role or person}
+─────────────────────────────────────────────
 ```
 
-## Success Criteria
+## Special Gate Orchestration
 
-This command succeeds when:
-- [ ] Gate criteria identified for specified phase/gate
-- [ ] All required artifacts validated
-- [ ] All quality gates checked
-- [ ] Pass/fail decision clear and justified
+### "All" Gates
+
+When user requests "all":
+1. Detect current phase from artifacts
+2. Run all applicable gates for that phase
+3. Generate consolidated report
+
+### "Pre-Deploy" Gates
+
+When user requests "pre-deploy":
+1. Run security, reliability, test-coverage, and documentation gates in parallel
+2. All must pass for deployment approval
+3. Generate deployment readiness report
+
+## Quality Assurance
+
+Before completing orchestration:
+- [ ] All requested gates validated
+- [ ] Results from all agents collected
+- [ ] Synthesis report generated
+- [ ] Clear pass/fail decision provided
 - [ ] Remediation actions specific and actionable
-- [ ] Report generated with full details
+
+## User Communication
+
+**At start**:
+```
+Understood. I'll orchestrate gate validation for {gate-name}.
+
+This will involve:
+- Checking required artifacts
+- Running quality validations
+- Collecting specialist reviews
+- Generating comprehensive report
+
+Expected duration: 5-10 minutes.
+
+Starting validation...
+```
+
+**During execution**:
+```
+✓ = Complete
+⏳ = In progress
+❌ = Failed check
+⚠️ = Issue found
+```
+
+**At end**: Present synthesized results (see Step 5)
 
 ## Error Handling
 
 **Unknown Gate**:
-- Report: "Unknown gate: {gate-name}"
-- Action: "Supported gates: inception, elaboration, construction, transition, discovery, delivery, security, reliability, test-coverage, documentation, traceability, all, pre-deploy, orr"
-- Suggestion: "Use /project:flow-gate-check all to check all gates"
+```
+❌ Unknown gate: {input}
 
-**Missing Artifacts**:
-- Report: "Required artifact missing: {artifact-name} at {expected-path}"
-- Action: "Create {artifact-name} using template: {template-path}"
-- Command: "Refer to {template-reference}"
+Supported gates:
+- Phase gates: inception, elaboration, construction, transition
+- Workflow gates: security, reliability, test-coverage, documentation, traceability
+- Special: all, pre-deploy, orr
 
-**Failed Gate with No Owner**:
-- Report: "Gate {gate-name} failed but no signoff owner assigned"
-- Action: "Assign {role} to review and approve gate"
-- Escalation: "Contact Project Manager for assignment"
+Please specify a valid gate.
+```
 
-**Incomplete Data**:
-- Report: "Cannot validate {criterion}: insufficient data"
-- Action: "Complete {artifact-or-process} to enable validation"
-- Impact: "Gate check incomplete until data available"
+**Missing Critical Artifacts**:
+```
+⚠️ Cannot validate - critical artifacts missing:
+- {artifact-1}: Expected at {path}
+- {artifact-2}: Expected at {path}
+
+These artifacts are required for {gate} validation.
+Create them using appropriate templates or commands.
+```
+
+**Conflicting Results**:
+```
+⚠️ Validation conflict detected:
+- {Agent-1}: PASS
+- {Agent-2}: FAIL
+
+Reviewing details to determine overall status...
+[Then provide reasoned decision based on criticality]
+```
+
+## Success Criteria
+
+This orchestration succeeds when:
+- [ ] Appropriate gate criteria identified
+- [ ] All validations completed by specialists
+- [ ] Results synthesized into clear report
+- [ ] Pass/fail decision justified with evidence
+- [ ] Remediation plan specific and actionable
+- [ ] User receives clear guidance on next steps
 
 ## References
 
-- Gate criteria definitions: `flows/gate-criteria-by-phase.md`
+**Templates** (via $AIWG_ROOT):
+- Gate criteria: `flows/gate-criteria-by-phase.md`
 - Handoff checklists: `flows/handoff-checklist-template.md`
-- Security gate details: `security/security-gate.md`
-- Traceability checking: `commands/check-traceability.md`
+
+**Multi-Agent Pattern**:
+- `docs/multi-agent-documentation-pattern.md`
+
+**Orchestrator Architecture**:
+- `docs/orchestrator-architecture.md`

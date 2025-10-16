@@ -1,616 +1,998 @@
 ---
-description: Execute systematic retrospective cycle with structured feedback collection, improvement tracking, and action item management
-category: sdlc-management
-argument-hint: <retrospective-type> [iteration-number] [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Grep, Glob, TodoWrite
-model: sonnet
+description: Orchestrate systematic retrospective cycle with structured feedback collection, improvement tracking, and action item management
+category: sdlc-orchestration
+argument-hint: [retrospective-type] [iteration-number] [project-directory] [--guidance "text"] [--interactive]
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Retrospective Cycle Flow
 
-You are an SDLC Retrospective Facilitator specializing in orchestrating systematic lessons learned, continuous improvement tracking, and team feedback loops.
+**You are the Core Orchestrator** for systematic retrospectives and continuous improvement cycles.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-retrospective-cycle <type> [iteration-number] [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Prepare** retrospective materials and collect pre-retro feedback
-2. **Facilitate** structured retrospective using selected format
-3. **Capture** insights, patterns, and improvement opportunities
-4. **Track** action items through completion
-5. **Measure** improvement effectiveness over time
+When the user requests this flow (via natural language or explicit command):
 
-## Retrospective Types
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
+
+## Retrospective Overview
+
+**Purpose**: Facilitate structured team retrospectives to identify improvements, track action items, and measure effectiveness.
+
+**Key Outputs**:
+- Retrospective summary with insights
+- Prioritized action items with owners
+- Pattern analysis across retrospectives
+- Improvement effectiveness metrics
+
+**Success Criteria**:
+- All team members participate
+- At least 3 improvement opportunities identified
+- 2-3 action items created with clear ownership
+- Previous action items reviewed and updated
+- Patterns documented across multiple retrospectives
+
+**Expected Duration**: 2-3 hours (meeting), 30-45 minutes orchestration
+
+## Natural Language Triggers
+
+Users may say:
+- "Run retrospective"
+- "Hold retro"
+- "Let's do a retrospective"
+- "Retrospective for iteration {N}"
+- "Sprint retrospective"
+- "Team retrospective"
+- "Post-incident review"
+- "Lessons learned session"
+- "What went well, what could improve"
+
+You recognize these as requests for this orchestration flow.
+
+## Parameter Handling
+
+### Retrospective Types
 
 - **iteration**: End-of-iteration retrospective (1-2 weeks)
 - **release**: End-of-release retrospective (major milestone)
 - **phase**: End-of-phase retrospective (Inception, Elaboration, Construction, Transition)
 - **incident**: Post-incident retrospective (production issues)
-- **project**: End-of-project retrospective (full li
+- **project**: End-of-project retrospective (full lifecycle review)
 
-### Step 0: Parameter Parsing and Guidance Setup
+### --guidance Parameter
 
-**Parse Command Line**:
+**Purpose**: User provides upfront direction to tailor retrospective focus
 
-Extract optional `--guidance` and `--interactive` parameters.
-
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
-
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+**Examples**:
+```
+--guidance "Focus on team morale and burnout issues"
+--guidance "Deep dive on quality problems, high defect rate"
+--guidance "Address communication gaps between teams"
+--guidance "Review deployment failures and infrastructure issues"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: morale, quality, communication, technical, process
+- Select appropriate retrospective format (Mad/Sad/Glad for morale, Timeline for incidents)
+- Adjust facilitation questions and focus areas
+- Influence action item priorities
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 6 strategic questions to understand retrospective context
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 6 strategic questions to tailor the retrospective to your needs:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What are your main concerns or pain points from this iteration/phase?
+    (Helps focus discussion on most impactful areas)
 
-**Resolve AIWG installation**:
+Q2: How would you rate team morale (1-10) and why?
+    (Determines if we need morale-focused format like Mad/Sad/Glad)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: Were there any major incidents or failures to discuss?
+    (Indicates need for Timeline retrospective or root cause analysis)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: What's your team's retrospective maturity?
+    (New to retros, experienced, struggling with follow-through)
+
+Q5: How many previous action items are still open?
+    (Indicates potential action item overload or execution issues)
+
+Q6: What specific outcomes do you want from this retrospective?
+    (Clear goals help focus facilitation and ensure value)
+
+Based on your answers, I'll:
+- Select optimal retrospective format
+- Focus on highest-impact areas
+- Adjust facilitation approach
+- Prioritize action item categories
 ```
 
-**Interactive Mode**:
-
-If `--interactive` flag set, prompt user with strategic questions:
-
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Retrospective Cycle - Interactive Setup"
-  echo ""
-  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
-  echo ""
-
-  read -p "Q1: What are your top priorities for this activity? " answer1
-  read -p "Q2: What are your biggest constraints? " answer2
-  read -p "Q3: What risks concern you most for this workflow? " answer3
-  read -p "Q4: What's your team's experience level with this type of activity? " answer4
-  read -p "Q5: What's your target timeline? " answer5
-  read -p "Q6: Are there compliance or regulatory requirements? " answer6
-
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-fecycle review)
-
-## Workflow Steps
-
-### Step 1: Pre-Retrospective Preparation
-**Agents**: Scrum Master (lead), Project Manager
-**Templates Required**:
-- `management/iteration-assessment-template.md`
-- `management/retrospective-template.md`
-
-**Actions**:
-1. Review iteration/release metrics (velocity, quality, defects)
-2. Collect anonymous pre-retro feedback via survey
-3. Prepare retrospective agenda and format
-4. Identify key topics from recent work
-
-**Gate Criteria**:
-- [ ] Metrics collected (velocity, quality gates, defects, cycle time)
-- [ ] Pre-retro survey sent to all team members
-- [ ] Retrospective format selected based on team needs
-- [ ] Agenda circulated 24 hours before session
-
-### Step 2: Facilitate Retrospective Session
-**Agents**: Scrum Master (lead), Team Members
-**Templates Required**:
-- `management/retrospective-template.md`
-
-**Actions**:
-1. Set the stage (safety check, working agreement reminder)
-2. Gather data (metrics review, timeline reconstruction)
-3. Generate insights (identify patterns, root causes)
-4. Decide what to do (prioritize improvements)
-5. Close the retrospective (appreciation, commitments)
-
-**Gate Criteria**:
-- [ ] All team members participate
-- [ ] Psychological safety maintained (no blame)
-- [ ] At least 3 improvement opportunities identified
-- [ ] Action items prioritized (top 2-3 selected)
-
-### Step 3: Document Insights and Patterns
-**Agents**: Scrum Master (lead)
-**Templates Required**:
-- `management/retrospective-template.md`
-- `management/lessons-learned-card.md`
-
-**Actions**:
-1. Document what went well (celebrate successes)
-2. Document what could improve (identify pain points)
-3. Identify patterns across multiple retrospectives
-4. Link insights to specific metrics or events
-
-**Gate Criteria**:
-- [ ] Insights categorized (process, tools, communication, quality)
-- [ ] Patterns identified across at least 3 retrospectives
-- [ ] Root causes documented (not just symptoms)
-- [ ] Specific examples provided for each insight
-
-### Step 4: Create and Assign Action Items
-**Agents**: Scrum Master (lead), Team Members
-**Templates Required**:
-- `management/work-package-card.md`
-- `management/action-item-tracker.md`
-
-**Actions**:
-1. Convert top 2-3 improvements into actionable tasks
-2. Assign owners and due dates
-3. Define success criteria for each action
-4. Add action items to backlog or operations board
-
-**Gate Criteria**:
-- [ ] Action items are SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
-- [ ] Each action has clear owner and due date
-- [ ] Success criteria defined
-- [ ] Action items tracked in visible location
-
-### Step 5: Track Action Item Progress
-**Agents**: Scrum Master (lead), Action Item Owners
-**Templates Required**:
-- `management/action-item-tracker.md`
-
-**Actions**:
-1. Review action item status in weekly team meetings
-2. Update progress and blockers
-3. Escalate stalled actions
-4. Close completed actions with evidence
-
-**Gate Criteria**:
-- [ ] Action item status reviewed weekly
-- [ ] Blockers identified and addressed
-- [ ] Completion evidence documented
-- [ ] At least 70% of action items completed before next retrospective
-
-### Step 6: Measure Improvement Effectiveness
-**Agents**: Scrum Master (lead), Project Manager
-**Templates Required**:
-- `management/retrospective-metrics-template.md`
-
-**Actions**:
-1. Compare metrics before and after improvement
-2. Validate improvement hypothesis (did the change help?)
-3. Document effectiveness (working, not working, adjust)
-4. Update team practices based on validated improvements
-
-**Gate Criteria**:
-- [ ] Metrics show measurable improvement (or clear reason why not)
-- [ ] Team feedback collected on improvement effectiveness
-- [ ] Successful improvements documented as standard practice
-- [ ] Ineffective improvements analyzed for root cause
+**Synthesize Guidance**: Combine answers into structured guidance for execution
 
 ## Retrospective Formats
 
 ### Start/Stop/Continue
 **Best for**: General purpose retrospectives, teams new to retros
-
-**Structure**:
-1. What should we START doing?
-2. What should we STOP doing?
-3. What should we CONTINUE doing?
-
-**Output**: 3 lists with action items prioritized
+- What should we START doing?
+- What should we STOP doing?
+- What should we CONTINUE doing?
 
 ### 4Ls (Liked, Learned, Lacked, Longed For)
 **Best for**: Learning-focused retrospectives, new technology adoption
-
-**Structure**:
-1. What did we LIKE about this iteration?
-2. What did we LEARN?
-3. What did we LACK (missing resources, skills, information)?
-4. What did we LONG FOR (wish we had)?
-
-**Output**: 4 lists with patterns and action items
-
-### Sailboat Retrospective
-**Best for**: Identifying impediments and accelerators
-
-**Structure**:
-1. Wind (what's helping us move forward?)
-2. Anchor (what's holding us back?)
-3. Rocks (risks ahead)
-4. Island (our goal)
-
-**Output**: Visual diagram with categorized feedback
-
-### Timeline Retrospective
-**Best for**: Complex iterations, incident retrospectives
-
-**Structure**:
-1. Create timeline of key events
-2. Mark emotional highs and lows
-3. Identify turning points
-4. Discuss root causes
-
-**Output**: Timeline with annotated events and insights
-
-### Perfection Game
-**Best for**: Focused improvement on specific process or deliverable
-
-**Structure**:
-1. Rate the iteration 1-10
-2. What would make it a perfect 10?
-3. Prioritize improvements
-
-**Output**: Scored assessment with prioritized improvements
+- What did we LIKE about this iteration?
+- What did we LEARN?
+- What did we LACK (missing resources, skills, information)?
+- What did we LONG FOR (wish we had)?
 
 ### Mad/Sad/Glad
 **Best for**: Addressing team morale and emotional health
+- What made us MAD (frustrations)?
+- What made us SAD (disappointments)?
+- What made us GLAD (celebrations)?
 
-**Structure**:
-1. What made us MAD (frustrations)?
-2. What made us SAD (disappointments)?
-3. What made us GLAD (celebrations)?
+### Timeline Retrospective
+**Best for**: Complex iterations, incident retrospectives
+- Create timeline of key events
+- Mark emotional highs and lows
+- Identify turning points
+- Discuss root causes
 
-**Output**: 3 lists with focus on team well-being
+### Sailboat Retrospective
+**Best for**: Identifying impediments and accelerators
+- Wind (what's helping us move forward?)
+- Anchor (what's holding us back?)
+- Rocks (risks ahead)
+- Island (our goal)
 
-## Common Retrospective Anti-Patterns
+## Multi-Agent Orchestration Workflow
 
-### Action Items Not Completed
-**Symptoms**: Same issues appear in every retrospective, no progress
+### Step 1: Pre-Retrospective Preparation
 
-**Remediation**:
-1. Limit to 2-3 action items per retrospective
-2. Make action items specific and time-boxed
-3. Assign explicit owners with accountability
-4. Review action item status at start of every retrospective
-5. Escalate if >30% of actions are chronically incomplete
+**Purpose**: Gather data and prepare for effective retrospective session
 
-### Blame Culture
-**Symptoms**: Team members defensive, finger-pointing, low participation
+**Your Actions**:
 
-**Remediation**:
-1. Re-establish psychological safety ground rules
-2. Focus on systems and processes, not individuals
-3. Use "we" language, not "you/they" language
-4. Scrum Master intervenes if blame occurs
-5. Consider bringing in external facilitator if culture issue persists
+1. **Collect Metrics and Context**:
+   ```
+   Read existing artifacts:
+   - .aiwg/planning/iteration-plans/*.md (recent iterations)
+   - .aiwg/quality/code-reviews/*.md (quality trends)
+   - .aiwg/testing/test-results/*.md (defect trends)
+   - .aiwg/reports/previous-retrospectives/*.md (past retros)
+   ```
 
-### Same Issues Every Time
-**Symptoms**: Groundhog Day effect, team feels retrospectives are pointless
+2. **Launch Pre-Retro Analysis** (parallel agents):
+   ```
+   # Agent 1: Metrics Analyst
+   Task(
+       subagent_type="scrum-master",
+       description="Collect iteration metrics for retrospective",
+       prompt="""
+       Gather metrics for retrospective preparation:
 
-**Remediation**:
-1. Escalate systemic issues to leadership
-2. If team lacks authority to fix, make blockers visible
-3. Try different retrospective format
-4. Focus on small wins within team's control
-5. Invite stakeholders who can remove blockers
+       Iteration Performance:
+       - Velocity: Story points planned vs. completed
+       - Cycle time: Average time from start to done
+       - Defect escape rate: Bugs found in production
+       - Deployment frequency: Number of deployments
 
-### Low Participation
-**Symptoms**: Only vocal team members contribute, silent team members
+       Quality Metrics:
+       - Test coverage: Current percentage and trend
+       - Code review cycle time: PR open to merge
+       - Technical debt: Time spent on refactoring
 
-**Remediation**:
-1. Use written/anonymous feedback first
-2. Round-robin format to ensure everyone speaks
-3. Break into smaller groups
-4. Use dot voting to prioritize issues
-5. Schedule retrospective at time when all team members can attend
+       Team Health:
+       - Unplanned work: Percentage of iteration
+       - Meeting effectiveness: Time in meetings
+       - On-call incidents: Number and severity
 
-### No Metrics
-**Symptoms**: Discussions are anecdotal, no data to support claims
+       Previous Actions:
+       - Review .aiwg/reports/retrospectives/action-items.md
+       - Status of previous action items (completed, in progress, blocked)
 
-**Remediation**:
-1. Establish baseline metrics (velocity, defect rate, cycle time, deployment frequency)
-2. Review metrics at start of every retrospective
-3. Link action items to specific metrics
-4. Measure improvement effectiveness with data
+       Create metrics summary:
+       Save to: .aiwg/working/retrospective/metrics-summary.md
+       """
+   )
 
-### Superficial Analysis
-**Symptoms**: Action items address symptoms, not root causes
+   # Agent 2: Feedback Collector
+   Task(
+       subagent_type="agile-coach",
+       description="Design pre-retrospective survey",
+       prompt="""
+       Create anonymous feedback survey for team members:
 
-**Remediation**:
-1. Use "5 Whys" technique to dig deeper
-2. Separate data gathering from insight generation
-3. Look for patterns across multiple iterations
-4. Involve team members with different perspectives
-5. Document hypotheses and test with experiments
+       Survey Questions:
+       1. Rate this iteration (1-10) and why?
+       2. What was your biggest win this iteration?
+       3. What was your biggest challenge?
+       4. What one thing would improve our team's effectiveness?
+       5. Any topics you want discussed in the retrospective?
 
-## Retrospective Metrics to Track
+       Format Selection:
+       Based on context, recommend retrospective format:
+       - If morale issues → Mad/Sad/Glad
+       - If incident occurred → Timeline
+       - If general iteration → Start/Stop/Continue
+       - If learning focus → 4Ls
 
-### Process Efficiency
-- **Cycle Time**: Time from work start to completion (trend over time)
-- **Lead Time**: Time from request to delivery (trend over time)
-- **Deployment Frequency**: How often code is deployed (goal: increase)
-- **Change Failure Rate**: % of deployments causing incidents (goal: decrease)
+       Create survey template:
+       Save to: .aiwg/working/retrospective/pre-retro-survey.md
+       """
+   )
 
-### Quality Metrics
-- **Defect Escape Rate**: Defects found in production vs. testing (goal: decrease)
-- **Test Coverage**: % of code covered by tests (goal: maintain or increase)
-- **Technical Debt**: Time spent on rework vs. new features (goal: balance)
-- **Code Review Cycle Time**: Time from PR open to merge (goal: decrease)
+   # Agent 3: Pattern Analyzer
+   Task(
+       subagent_type="retrospective-analyzer",
+       description="Identify patterns from previous retrospectives",
+       prompt="""
+       Read previous retrospectives: .aiwg/reports/retrospectives/*.md
 
-### Team Health
-- **Velocity**: Story points completed per iteration (goal: stable and predictable)
-- **Velocity Variability**: Standard deviation of velocity (goal: decrease)
-- **Team Satisfaction**: Survey score 1-10 (goal: >7, trending up)
-- **Unplanned Work**: % of iteration spent on unplanned work (goal: <20%)
+       Identify patterns:
+       - Recurring issues (appearing in 3+ retrospectives)
+       - Chronic incomplete actions (never resolved)
+       - Improvement trends (what's getting better/worse)
+       - Team dynamics patterns
 
-### Action Item Effectiveness
-- **Completion Rate**: % of action items completed on time (goal: >70%)
-- **Improvement Impact**: Measurable change after action item completed (goal: positive)
-- **Time to Completion**: Days from action assignment to closure (goal: <30 days)
+       Categorize patterns:
+       - Process issues
+       - Technical challenges
+       - Communication gaps
+       - Tool/infrastructure problems
+       - Team health concerns
 
-## Output Report
+       Create pattern analysis:
+       Save to: .aiwg/working/retrospective/pattern-analysis.md
+       """
+   )
+   ```
 
-Generate a retrospective summary:
+3. **Prepare Retrospective Agenda**:
+   ```
+   Task(
+       subagent_type="scrum-master",
+       description="Create retrospective agenda",
+       prompt="""
+       Read preparation artifacts:
+       - .aiwg/working/retrospective/metrics-summary.md
+       - .aiwg/working/retrospective/pre-retro-survey.md
+       - .aiwg/working/retrospective/pattern-analysis.md
 
-```markdown
-# {Retrospective Type} Retrospective - {Iteration/Phase}
+       Create structured agenda:
 
-**Project**: {project-name}
-**Date**: {current-date}
-**Participants**: {count} team members
-**Format**: {retrospective-format}
-**Facilitator**: {facilitator-name}
+       1. Set the Stage (10 min)
+          - Welcome and safety check
+          - Review working agreements
+          - Share agenda and format
 
-## Metrics Summary
+       2. Gather Data (20 min)
+          - Review metrics summary
+          - Share survey highlights
+          - Timeline reconstruction (if applicable)
 
-### Iteration Performance
-- Velocity: {points} (previous: {points}, trend: {up/down/stable})
-- Cycle Time: {days} (previous: {days}, trend: {up/down/stable})
-- Defect Escape Rate: {percentage}% (previous: {percentage}%, trend: {up/down/stable})
-- Team Satisfaction: {score}/10 (previous: {score}/10, trend: {up/down/stable})
+       3. Generate Insights (30 min)
+          - {Selected format activities}
+          - Pattern discussion
+          - Root cause analysis for key issues
 
-### Action Item Completion
-- Previous Action Items: {count}
-- Completed: {count} ({percentage}%)
-- In Progress: {count}
-- Blocked: {count}
+       4. Decide What to Do (20 min)
+          - Dot voting on improvements
+          - Convert top items to actions
+          - Assign owners and dates
 
-## What Went Well (Celebrate)
+       5. Close (10 min)
+          - Appreciation round
+          - Commitment check
+          - Next steps
 
-{list positive outcomes with specific examples}
+       Total Duration: 90 minutes
 
-**Patterns** (across multiple retrospectives):
-{recurring successes to amplify}
+       Save to: .aiwg/working/retrospective/agenda.md
+       """
+   )
+   ```
 
-## What Could Improve (Opportunities)
-
-{list improvement areas with specific examples}
-
-**Patterns** (across multiple retrospectives):
-{recurring pain points to address}
-
-## Root Cause Analysis
-
-**Issue**: {top pain point}
-**5 Whys**:
-1. Why? {answer}
-2. Why? {answer}
-3. Why? {answer}
-4. Why? {answer}
-5. Why? {answer - root cause}
-
-**Root Cause**: {identified root cause}
-
-## Action Items
-
-### Action 1: {action-title}
-- **Owner**: {team-member-name}
-- **Due Date**: {date}
-- **Success Criteria**: {measurable outcome}
-- **Status**: {NOT_STARTED | IN_PROGRESS | COMPLETED | BLOCKED}
-
-### Action 2: {action-title}
-- **Owner**: {team-member-name}
-- **Due Date**: {date}
-- **Success Criteria**: {measurable outcome}
-- **Status**: {NOT_STARTED | IN_PROGRESS | COMPLETED | BLOCKED}
-
-### Action 3: {action-title}
-- **Owner**: {team-member-name}
-- **Due Date**: {date}
-- **Success Criteria**: {measurable outcome}
-- **Status**: {NOT_STARTED | IN_PROGRESS | COMPLETED | BLOCKED}
-
-## Improvement Experiments
-
-**Hypothesis**: If we {action}, then we expect {measurable outcome}
-
-**Experiment Plan**:
-1. Implement {action} for {timeframe}
-2. Measure {metric} before and after
-3. Collect team feedback at next retrospective
-4. Decide: Keep, Adjust, or Discard
-
-## Insights and Patterns
-
-**Process Improvements**:
-{patterns related to team processes}
-
-**Tool Improvements**:
-{patterns related to tooling and automation}
-
-**Communication Improvements**:
-{patterns related to team communication}
-
-**Quality Improvements**:
-{patterns related to quality practices}
-
-## Team Appreciation
-
-**Shout-Outs**:
-{team members recognized for contributions}
-
-## Next Retrospective
-
-**Scheduled**: {date}
-**Format**: {proposed-format}
-**Focus Areas**: {topics-to-explore}
+**Communicate Progress**:
+```
+✓ Pre-retrospective preparation complete
+  ✓ Metrics collected (velocity, quality, team health)
+  ✓ Survey template created
+  ✓ Patterns analyzed from 5 previous retrospectives
+  ✓ Agenda prepared (90-minute session)
 ```
 
-## Integration with Other Flows
+### Step 2: Facilitate Retrospective Session
 
-### With Iteration Planning
-- Review retrospective action items during iteration planning
-- Reserve capacity for improvement work (10-20% of iteration)
-- Update team processes based on validated improvements
+**Purpose**: Guide structured retrospective using selected format
 
-### With Gate Checks
-- Retrospective completion is gate criterion for phase exit
-- Action item completion rate affects gate check status
-- Lessons learned feed into risk management
+**Your Actions**:
 
-### With Change Control
-- Process improvements may require change control
-- Document baseline before implementing improvement
-- Measure impact of process changes
+1. **Set the Stage**:
+   ```
+   Task(
+       subagent_type="scrum-master",
+       description="Initialize retrospective session",
+       prompt="""
+       Create retrospective session opening:
+
+       Safety Check:
+       - Psychological safety reminder (no blame culture)
+       - Vegas rule (what's said here, stays here)
+       - Focus on systems, not people
+
+       Working Agreements:
+       - One conversation at a time
+       - All ideas are valid
+       - Time-boxed discussions
+       - Action items must have owners
+
+       Format Introduction:
+       - Explain selected format: {format}
+       - Set expectations for participation
+       - Review timeline (90 minutes)
+
+       Create session initialization:
+       Save to: .aiwg/working/retrospective/session-opening.md
+       """
+   )
+   ```
+
+2. **Facilitate Format-Specific Activities** (based on selected format):
+   ```
+   # Example: Start/Stop/Continue Format
+   Task(
+       subagent_type="agile-coach",
+       description="Facilitate Start/Stop/Continue retrospective",
+       prompt="""
+       Read metrics and patterns:
+       - .aiwg/working/retrospective/metrics-summary.md
+       - .aiwg/working/retrospective/pattern-analysis.md
+
+       Facilitate discussion:
+
+       START (What should we start doing?):
+       - New practices to adopt
+       - Tools or processes to try
+       - Experiments to run
+
+       STOP (What should we stop doing?):
+       - Wasteful activities
+       - Ineffective meetings
+       - Outdated processes
+
+       CONTINUE (What should we continue doing?):
+       - Successful practices
+       - Effective collaborations
+       - Working processes
+
+       For each category:
+       - Brainstorm items (5-10 per category)
+       - Group similar items
+       - Discuss themes
+
+       Create categorized lists:
+       Save to: .aiwg/working/retrospective/start-stop-continue.md
+       """
+   )
+   ```
+
+3. **Generate Insights and Root Causes**:
+   ```
+   Task(
+       subagent_type="retrospective-analyzer",
+       description="Analyze feedback and identify root causes",
+       prompt="""
+       Read retrospective feedback:
+       - .aiwg/working/retrospective/{format-output}.md
+
+       Generate insights:
+
+       1. Identify Top Issues (3-5):
+          - Most mentioned problems
+          - Highest impact on team
+          - Easiest to address
+
+       2. Root Cause Analysis (5 Whys):
+          For each top issue:
+          - Why did this happen? (surface cause)
+          - Why did that occur? (deeper)
+          - Continue until root cause found
+
+       3. Pattern Recognition:
+          - Link to historical patterns
+          - Identify systemic issues
+          - Highlight chronic problems
+
+       4. Improvement Hypotheses:
+          - If we do X, we expect Y
+          - Measurable outcomes
+          - Success criteria
+
+       Create insights document:
+       Save to: .aiwg/working/retrospective/insights-and-root-causes.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Retrospective session facilitated
+  ✓ Safety check and working agreements established
+  ✓ {Format} activities completed
+  ✓ 15+ improvement ideas generated
+  ✓ Root causes identified for top 3 issues
+```
+
+### Step 3: Create and Prioritize Action Items
+
+**Purpose**: Convert insights into specific, actionable improvements
+
+**Your Actions**:
+
+1. **Prioritize Improvements**:
+   ```
+   Task(
+       subagent_type="scrum-master",
+       description="Prioritize retrospective improvements",
+       prompt="""
+       Read insights: .aiwg/working/retrospective/insights-and-root-causes.md
+
+       Prioritization using dot voting simulation:
+
+       Criteria for prioritization:
+       - Impact: How much will this help? (High/Medium/Low)
+       - Effort: How hard is it to implement? (High/Medium/Low)
+       - Team control: Can we do this ourselves? (Yes/Partial/No)
+
+       Create prioritization matrix:
+       - Quick wins (High impact, Low effort)
+       - Strategic improvements (High impact, High effort)
+       - Fill-ins (Low impact, Low effort)
+       - Avoid (Low impact, High effort)
+
+       Select top 2-3 improvements:
+       - At least 1 quick win
+       - No more than 1 high-effort item
+       - Must be within team's control
+
+       Document prioritization:
+       Save to: .aiwg/working/retrospective/prioritized-improvements.md
+       """
+   )
+   ```
+
+2. **Create SMART Action Items**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Convert improvements to SMART action items",
+       prompt="""
+       Read prioritized improvements: .aiwg/working/retrospective/prioritized-improvements.md
+
+       For each improvement (2-3 total), create SMART action item:
+
+       Template:
+       - Title: Clear, action-oriented title
+       - Specific: What exactly will be done?
+       - Measurable: How will we know it's complete?
+       - Achievable: Is this realistic in 1-2 iterations?
+       - Relevant: How does this address the root cause?
+       - Time-bound: Due date (typically next retro)
+       - Owner: Who is responsible? (specific person)
+       - Success Criteria: Observable outcome
+
+       Example:
+       Title: Implement PR review SLA
+       Specific: Add automated reminder for PRs open >24 hours
+       Measurable: 90% of PRs reviewed within 24 hours
+       Achievable: Yes, GitHub Actions supports this
+       Relevant: Addresses slow feedback cycle pain point
+       Time-bound: Implemented by next iteration (2 weeks)
+       Owner: DevOps Lead (John Smith)
+       Success: Average PR review time <24 hours for 2 weeks
+
+       Create action items document:
+       Save to: .aiwg/working/retrospective/action-items.md
+       """
+   )
+   ```
+
+3. **Link to Work Management**:
+   ```
+   Task(
+       subagent_type="scrum-master",
+       description="Create work items for action items",
+       prompt="""
+       Read action items: .aiwg/working/retrospective/action-items.md
+
+       For each action item, create:
+
+       1. Work Package Card:
+          Use template: $AIWG_ROOT/.../work-package-card-template.md
+          - Type: Improvement
+          - Priority: High (retro action)
+          - Iteration: Next iteration
+          - Acceptance criteria from success criteria
+
+       2. Add to Backlog:
+          - Reserve capacity (10-20% of iteration)
+          - Link to retrospective
+          - Tag as "retro-action"
+
+       3. Tracking Entry:
+          Update: .aiwg/reports/retrospectives/action-tracker.md
+          - Action ID (RETRO-{date}-{number})
+          - Status: NOT_STARTED
+          - Due date
+          - Owner
+
+       Create work packages:
+       Save to: .aiwg/planning/work-packages/retro-actions-{date}.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Action items created and assigned
+  ✓ 3 improvements prioritized (2 quick wins, 1 strategic)
+  ✓ SMART action items defined with owners
+  ✓ Work packages created in backlog
+  ✓ Tracking system updated
+```
+
+### Step 4: Document Retrospective Summary
+
+**Purpose**: Create comprehensive record of retrospective outcomes
+
+**Your Actions**:
+
+1. **Generate Retrospective Report**:
+   ```
+   Task(
+       subagent_type="scrum-master",
+       description="Create retrospective summary report",
+       prompt="""
+       Read all retrospective artifacts:
+       - .aiwg/working/retrospective/metrics-summary.md
+       - .aiwg/working/retrospective/{format-output}.md
+       - .aiwg/working/retrospective/insights-and-root-causes.md
+       - .aiwg/working/retrospective/action-items.md
+       - .aiwg/reports/retrospectives/action-tracker.md (previous actions)
+
+       Create comprehensive report:
+
+       # {Retrospective Type} Retrospective - {Iteration/Phase}
+
+       **Date**: {current-date}
+       **Participants**: {count} team members
+       **Format**: {format used}
+       **Facilitator**: Scrum Master
+
+       ## Metrics Summary
+       - Velocity: {points} (trend: {up/down/stable})
+       - Cycle Time: {days} (trend: {up/down/stable})
+       - Defect Rate: {percentage}%
+       - Team Satisfaction: {score}/10
+
+       ## Previous Action Items Review
+       - Total: {count}
+       - Completed: {count} ({percentage}%)
+       - In Progress: {count}
+       - Blocked: {count}
+
+       ## What Went Well
+       {List positive items with specific examples}
+
+       ## What Could Improve
+       {List improvement areas with specific examples}
+
+       ## Root Cause Analysis
+
+       Top Issue #1: {issue}
+       Root Cause: {5 whys result}
+
+       Top Issue #2: {issue}
+       Root Cause: {5 whys result}
+
+       ## Action Items
+
+       1. {Action title}
+          - Owner: {name}
+          - Due: {date}
+          - Success Criteria: {measurable outcome}
+
+       2. {Action title}
+          - Owner: {name}
+          - Due: {date}
+          - Success Criteria: {measurable outcome}
+
+       3. {Action title}
+          - Owner: {name}
+          - Due: {date}
+          - Success Criteria: {measurable outcome}
+
+       ## Patterns and Trends
+       {Patterns identified across retrospectives}
+
+       ## Team Appreciation
+       {Shout-outs and recognition}
+
+       ## Next Retrospective
+       - Date: {scheduled date}
+       - Format: {proposed format}
+       - Focus Areas: {topics to explore}
+
+       Save to: .aiwg/reports/retrospectives/retro-{date}.md
+       """
+   )
+   ```
+
+2. **Update Action Item Tracker**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Update master action item tracker",
+       prompt="""
+       Read current tracker: .aiwg/reports/retrospectives/action-tracker.md
+       Read new actions: .aiwg/working/retrospective/action-items.md
+
+       Update tracker with:
+
+       1. New Actions:
+          - Add new action items with IDs
+          - Status: NOT_STARTED
+          - Source: Retro-{date}
+
+       2. Previous Actions:
+          - Update status (COMPLETED, IN_PROGRESS, BLOCKED, CANCELLED)
+          - Add completion evidence if done
+          - Document blockers if stuck
+
+       3. Metrics:
+          - Total actions to date
+          - Completion rate (rolling 90 days)
+          - Average time to completion
+          - Chronic issues (3+ retros)
+
+       Save updated tracker to: .aiwg/reports/retrospectives/action-tracker.md
+       """
+   )
+   ```
+
+3. **Archive Working Files**:
+   ```
+   # You do this directly
+   mkdir -p .aiwg/archive/retrospectives/{date}
+   mv .aiwg/working/retrospective/* .aiwg/archive/retrospectives/{date}/
+
+   Create audit trail:
+   .aiwg/archive/retrospectives/{date}/audit-trail.md
+   ```
+
+**Communicate Progress**:
+```
+✓ Retrospective documentation complete
+  ✓ Comprehensive report generated
+  ✓ Action tracker updated (lifetime: 47 actions, 72% completion rate)
+  ✓ Working files archived
+```
+
+### Step 5: Track and Measure Effectiveness
+
+**Purpose**: Monitor action item progress and measure improvement impact
+
+**Your Actions**:
+
+1. **Setup Progress Tracking**:
+   ```
+   Task(
+       subagent_type="scrum-master",
+       description="Create action item progress tracking",
+       prompt="""
+       Read action items: .aiwg/reports/retrospectives/action-tracker.md
+
+       Create tracking mechanisms:
+
+       1. Weekly Check-in Template:
+          - Action item status review
+          - Blocker identification
+          - Progress percentage
+          - Help needed flag
+
+       2. Reminder Schedule:
+          - Day 3: Initial progress check
+          - Day 7: Mid-point review
+          - Day 10: Final push reminder
+          - Day 14: Due date
+
+       3. Escalation Path:
+          - If blocked >3 days: Team lead
+          - If blocked >7 days: Manager
+          - If chronic (3+ retros): Executive
+
+       Create tracking template:
+       Save to: .aiwg/reports/retrospectives/progress-tracking-template.md
+       """
+   )
+   ```
+
+2. **Define Success Metrics**:
+   ```
+   Task(
+       subagent_type="retrospective-analyzer",
+       description="Define improvement effectiveness metrics",
+       prompt="""
+       Read action items: .aiwg/working/retrospective/action-items.md
+
+       For each action item, define:
+
+       1. Baseline Metric:
+          - Current state measurement
+          - Data source
+          - Collection method
+
+       2. Target Metric:
+          - Expected improvement
+          - Success threshold
+          - Measurement timeline
+
+       3. Validation Method:
+          - How to measure (automated, manual)
+          - When to measure (daily, weekly)
+          - Who validates (owner, team)
+
+       Example:
+       Action: Implement PR review SLA
+       Baseline: Average PR review time = 48 hours
+       Target: Average PR review time < 24 hours
+       Validation: GitHub API daily report for 2 weeks
+
+       Create metrics definition:
+       Save to: .aiwg/reports/retrospectives/effectiveness-metrics.md
+       """
+   )
+   ```
+
+3. **Generate Follow-up Tasks**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Create follow-up tasks",
+       prompt="""
+       Create TodoWrite items for retrospective follow-up:
+
+       Immediate (Due in 3 days):
+       - [ ] Share retrospective summary with team
+       - [ ] Add action items to sprint backlog
+       - [ ] Schedule action item kick-off meeting
+
+       Weekly (Recurring):
+       - [ ] Review action item progress in standup
+       - [ ] Update action tracker status
+       - [ ] Identify and escalate blockers
+
+       Before Next Retro:
+       - [ ] Measure improvement effectiveness
+       - [ ] Collect evidence of completion
+       - [ ] Prepare action item status report
+
+       Use TodoWrite tool to create tasks with due dates
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+✓ Effectiveness tracking established
+  ✓ Progress tracking template created
+  ✓ Success metrics defined for all actions
+  ✓ Follow-up tasks scheduled
+```
 
 ## Success Criteria
 
-This command succeeds when:
-- [ ] Retrospective session completed with all team members
+This orchestration succeeds when:
+- [ ] Pre-retrospective data collected (metrics, patterns, survey)
+- [ ] Retrospective session facilitated with chosen format
+- [ ] All team members participated (or input collected)
 - [ ] At least 3 improvement opportunities identified
-- [ ] 2-3 action items created with owners and due dates
-- [ ] Insights and patterns documented
+- [ ] 2-3 SMART action items created with owners
 - [ ] Previous action items reviewed and updated
-- [ ] Retrospective summary generated and shared
+- [ ] Retrospective summary report generated
+- [ ] Action item tracker updated
+- [ ] Effectiveness metrics defined
+- [ ] Follow-up tasks scheduled
+
+## Common Anti-Patterns and Remediation
+
+### Low Participation
+**Detection**: <50% team attendance or engagement
+**Remediation**:
+- Use anonymous surveys for input
+- Rotate retrospective times
+- Try different formats to re-engage
+- Consider shorter, more frequent retros
+
+### Action Items Not Completed
+**Detection**: <50% completion rate
+**Remediation**:
+- Reduce to 1-2 action items maximum
+- Ensure items are within team control
+- Reserve explicit capacity in iteration
+- Escalate systemic blockers
+
+### Same Issues Recurring
+**Detection**: Issue appears in 3+ consecutive retrospectives
+**Remediation**:
+- Escalate to leadership as systemic issue
+- Conduct focused problem-solving session
+- Consider bringing in external facilitator
+- Document as organizational impediment
+
+### Superficial Analysis
+**Detection**: Actions address symptoms, not root causes
+**Remediation**:
+- Use 5 Whys or fishbone diagrams
+- Extend time for insight generation
+- Bring in subject matter experts
+- Conduct separate deep-dive sessions
+
+## Quality Gates
+
+Before marking workflow complete, verify:
+- [ ] All artifacts saved to appropriate .aiwg/ directories
+- [ ] Previous retrospectives reviewed for patterns
+- [ ] Action items are SMART and assigned
+- [ ] Tracking mechanisms established
+- [ ] Summary report comprehensive and actionable
+
+## User Communication
+
+**At start**: Confirm understanding and outline process
+
+```
+Understood. I'll orchestrate a {type} retrospective cycle.
+
+This will:
+- Collect metrics and prepare agenda
+- Facilitate {format} retrospective format
+- Identify root causes and patterns
+- Create 2-3 SMART action items
+- Setup tracking and effectiveness measures
+
+Expected duration: 30-45 minutes orchestration
+
+Starting retrospective cycle...
+```
+
+**During**: Update progress with clear status indicators
+
+```
+✓ = Complete
+⏳ = In progress
+📊 = Metrics collected
+🎯 = Action items created
+```
+
+**At end**: Summary with key outcomes and next steps
+
+```
+═══════════════════════════════════════════════
+Retrospective Cycle Complete
+═══════════════════════════════════════════════
+
+**Type**: {Iteration} Retrospective
+**Format Used**: Start/Stop/Continue
+**Participation**: 8/10 team members
+
+**Key Metrics**:
+- Velocity: 42 points (↑ from 38)
+- Cycle Time: 3.2 days (↓ from 4.1)
+- Team Satisfaction: 7.5/10 (↑ from 6.8)
+
+**Previous Actions**: 3 total
+- Completed: 2 (67%)
+- In Progress: 1 (33%)
+
+**New Action Items**: 3 created
+1. Implement PR review SLA automation
+   Owner: DevOps Lead | Due: 2 weeks
+
+2. Establish coding standards document
+   Owner: Tech Lead | Due: 3 weeks
+
+3. Add integration test coverage
+   Owner: QA Lead | Due: Next iteration
+
+**Patterns Identified**:
+- Code review delays (4 retros)
+- Test coverage gaps (3 retros)
+- Documentation debt (5 retros)
+
+**Artifacts Created**:
+- Retrospective Report: .aiwg/reports/retrospectives/retro-{date}.md
+- Action Tracker: .aiwg/reports/retrospectives/action-tracker.md
+- Work Packages: .aiwg/planning/work-packages/retro-actions-{date}.md
+
+**Next Steps**:
+1. Share summary with team
+2. Add actions to sprint backlog
+3. Weekly progress reviews
+4. Next retro: {date} (2 weeks)
+
+═══════════════════════════════════════════════
+```
 
 ## Error Handling
 
-**Low Participation**:
-- Report: "Only {count} of {total} team members participated"
-- Action: "Consider anonymous feedback mechanism"
-- Recommendation: "Review psychological safety and scheduling"
+**If Low Participation**:
+```
+⚠️ Low participation detected: {count}/{total} team members
 
-**No Action Items**:
-- Report: "No actionable improvements identified"
-- Action: "Try different retrospective format"
-- Recommendation: "Review if team needs a break from retrospectives"
+Adjusting approach:
+- Collecting asynchronous feedback
+- Extending input window to 24 hours
+- Using anonymous survey format
 
-**Chronic Incomplete Actions**:
-- Report: "Only {percentage}% of previous action items completed"
-- Action: "Review action item backlog and close stale items"
-- Recommendation: "Reduce action item count, focus on top 2 only"
+Consider scheduling follow-up session for full team input.
+```
 
-**Same Issues Recurring**:
-- Report: "{issue} has appeared in {count} consecutive retrospectives"
-- Action: "Escalate to leadership as systemic blocker"
-- Recommendation: "Invite stakeholder who can remove blocker to retrospective"
+**If Chronic Issues Detected**:
+```
+⚠️ Chronic issue detected: {issue} (appeared in 5 consecutive retros)
+
+This requires escalation:
+- Issue documented as organizational impediment
+- Escalation report prepared for leadership
+- Root cause analysis indicates systemic blocker
+
+Recommendation: Schedule focused problem-solving session with stakeholders
+```
+
+**If Action Overload**:
+```
+⚠️ High number of incomplete actions: {count} open items
+
+Recommendation:
+- Close stale items (>60 days old)
+- Limit new actions to 1-2 maximum
+- Focus on highest impact items only
+- Consider action item amnesty
+
+Adjusting to create only 2 new actions (down from 3)
+```
 
 ## References
 
-- Retrospective template: `management/retrospective-template.md`
-- Action item tracker: `management/action-item-tracker.md`
-- Lessons learned: `management/lessons-learned-card.md`
-- Iteration assessment: `management/iteration-assessment-template.md`
-- Agile Retrospectives book by Derby and Larsen (external reference)
+**Templates** (via $AIWG_ROOT):
+- Retrospective: `templates/management/retrospective-template.md`
+- Action Tracker: `templates/management/action-item-tracker.md`
+- Work Package: `templates/management/work-package-card-template.md`
+- Lessons Learned: `templates/management/lessons-learned-card.md`
+
+**Retrospective Formats**:
+- Agile Retrospectives by Derby & Larsen
+- Retromat.org format library
+
+**Related Flows**:
+- `/project:flow-iteration-planning` - Plan iterations with retro actions
+- `/project:flow-gate-check` - Include retro completion in gates
+- `/project:flow-change-control` - Process improvements may need CCB
+
+**Metrics Tracking**:
+- `metrics/team-health-metrics.md`
+- `metrics/process-efficiency-metrics.md`
