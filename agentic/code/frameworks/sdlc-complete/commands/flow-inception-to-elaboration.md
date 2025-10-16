@@ -171,27 +171,159 @@ ls analysis-design/architecture-decision-record-template.md
 - Week 7-8: Requirements baseline, test strategy, ABM review
 ```
 
-### Step 3: Develop Architecture Baseline (SAD)
+### Step 3: Develop Architecture Baseline (SAD) - Multi-Agent Pattern
 
-Create comprehensive Software Architecture Document with peer review.
+Create comprehensive Software Architecture Document using multi-agent collaboration for depth and quality.
 
-**Commands**:
-```bash
-# Use Architecture Designer agent
-# Agent will create/update SAD with:
-# - Architectural drivers
-# - Component decomposition
-# - Deployment architecture
-# - ADRs for major decisions
-# - Technology stack rationale
-# - Security architecture
-# - Data architecture
+**Multi-Agent Workflow:**
 
-# Agents automatically coordinate:
-# - Architecture Designer (lead)
-# - Security Architect (validates security)
-# - Requirements Analyst (maps use cases to components)
-```
+1. **Initialize Documentation Workflow** (Documentation Archivist)
+   ```bash
+   # Create working directory structure
+   mkdir -p .aiwg/working/architecture/sad/{drafts,reviews,synthesis}
+
+   # Read template metadata to identify responsible roles
+   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
+
+   # Template specifies:
+   # - Owner: Software Architect (or Architecture Designer)
+   # - Contributors: System Analyst, Designer, Test Architect
+   # - Additional reviewers: Security Architect, Technical Writer
+
+   # Initialize metadata tracking
+   cat > .aiwg/working/architecture/sad/metadata.json <<EOF
+   {
+     "document-id": "software-architecture-doc",
+     "template-source": "$TEMPLATE",
+     "primary-author": "architecture-designer",
+     "reviewers": ["security-architect", "test-architect", "requirements-analyst", "technical-writer"],
+     "synthesizer": "architecture-documenter",
+     "status": "DRAFT",
+     "current-version": "0.1",
+     "output-path": ".aiwg/architecture/software-architecture-doc.md"
+   }
+   EOF
+   ```
+
+2. **Primary Draft Creation** (Architecture Designer + Architecture Documenter)
+   ```bash
+   # Architecture Designer provides technical design and decisions
+   # Architecture Documenter structures into SAD template format
+
+   # Draft includes:
+   # - Architectural drivers (quality attributes, constraints)
+   # - Component decomposition (logical and physical views)
+   # - Deployment architecture (environments, infrastructure)
+   # - Technology stack (with rationale)
+   # - Integration architecture (external systems, APIs)
+   # - Security architecture (authentication, authorization, encryption)
+   # - Data architecture (models, storage, migration)
+   # - ADRs (major decisions documented)
+
+   # Save v0.1 draft
+   cp sad-draft.md .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
+   ```
+
+3. **Parallel Multi-Agent Review** (Launch all reviewers simultaneously)
+   ```bash
+   # Use Task tool to launch reviewers in parallel (single message, multiple tool calls):
+
+   # Security Architect Review:
+   # - Validates security architecture completeness
+   # - Checks authentication/authorization mechanisms
+   # - Verifies encryption strategy (at-rest, in-transit)
+   # - Adds security-specific sections if missing
+   # - Inline feedback: <!-- SEC-ARCH: comment -->
+   # - Output: reviews/security-architect-review.md
+
+   # Test Architect Review:
+   # - Validates testability of architecture
+   # - Checks test strategy alignment
+   # - Verifies component boundaries enable testing
+   # - Recommends test infrastructure
+   # - Inline feedback: <!-- TEST-ARCH: comment -->
+   # - Output: reviews/test-architect-review.md
+
+   # Requirements Analyst Review:
+   # - Maps use cases to architectural components
+   # - Validates requirements traceability
+   # - Checks component responsibilities match requirements
+   # - Flags missing functionality
+   # - Inline feedback: <!-- REQ-ANALYST: comment -->
+   # - Output: reviews/requirements-analyst-review.md
+
+   # Technical Writer Review:
+   # - Ensures clarity and consistency
+   # - Fixes grammar, spelling, formatting
+   # - Standardizes terminology
+   # - Validates diagram references
+   # - Inline feedback: <!-- TECH-WRITER: comment -->
+   # - Output: reviews/technical-writer-review.md
+
+   # Each reviewer provides: APPROVED | CONDITIONAL | NEEDS_WORK
+   # Archivist tracks review completion and saves versions
+   ```
+
+4. **Synthesis and Finalization** (Documentation Synthesizer + Architecture Documenter)
+   ```bash
+   # Documentation Synthesizer:
+   # - Reads all review feedback from reviews/ directory
+   # - Reads latest draft with all inline comments
+   # - Resolves conflicts (e.g., security vs. performance trade-offs)
+   # - Merges complementary additions
+   # - Creates unified final document
+
+   # Architecture Documenter:
+   # - Validates technical accuracy of synthesis
+   # - Ensures architectural consistency
+   # - Verifies all ADRs referenced
+
+   # Generate synthesis report documenting:
+   # - All feedback integrated
+   # - Conflicts resolved (with rationale)
+   # - Outstanding concerns escalated
+
+   # Output final v1.0 to designated location
+   cp synthesized-sad.md .aiwg/architecture/software-architecture-doc.md
+
+   # Generate synthesis report
+   cat > .aiwg/working/architecture/sad/synthesis/synthesis-report.md
+   ```
+
+5. **Archive and Audit Trail** (Documentation Archivist)
+   ```bash
+   # Archive complete workflow for audit trail
+   mv .aiwg/working/architecture/sad \
+      .aiwg/archive/$(date +%Y-%m)/sad-$(date +%Y-%m-%d)/
+
+   # Generate human-readable audit trail
+   cat > .aiwg/archive/$(date +%Y-%m)/sad-$(date +%Y-%m-%d)/audit-trail.md <<EOF
+   # Audit Trail: Software Architecture Document
+
+   **Document ID:** software-architecture-doc
+   **Final Version:** 1.0
+   **Baselined:** $(date -Iseconds)
+   **Output:** .aiwg/architecture/software-architecture-doc.md
+
+   ## Timeline
+   - v0.1: Architecture Designer initial draft
+   - v0.2: Security Architect review complete (APPROVED with recommendations)
+   - v0.3: Test Architect review complete (CONDITIONAL - test mocking strategy needed)
+   - v0.3: Requirements Analyst review complete (APPROVED)
+   - v0.3: Technical Writer review complete (APPROVED - minor fixes applied)
+   - v1.0: Documentation Synthesizer final synthesis (BASELINED)
+
+   ## Reviews
+   - Security Architect: APPROVED (added TLS 1.3 requirement)
+   - Test Architect: CONDITIONAL (requested service mocking documentation)
+   - Requirements Analyst: APPROVED (validated component mapping)
+   - Technical Writer: APPROVED (standardized terminology, fixed diagrams)
+
+   ## Synthesis
+   - Conflicts resolved: 1 (TLS version for test environment: 1.3 prod, 1.2 test/dev)
+   - Final status: BASELINED
+   EOF
+   ```
 
 **SAD Contents** (per template):
 - **Architectural Drivers**: Quality attributes (performance, scalability, security), constraints
@@ -203,11 +335,12 @@ Create comprehensive Software Architecture Document with peer review.
 - **Security Architecture**: Authentication (OAuth, JWT), authorization (RBAC), encryption
 - **Data Architecture**: Data models, storage (RDBMS, NoSQL), migration strategy
 
-**Peer Review Requirements**:
-- At least 1 external architect reviews SAD
-- Security Architect validates security architecture
-- Test Architect validates testability
-- All critical decisions documented in ADRs
+**Multi-Agent Benefits**:
+- **Depth**: Security, testing, and requirements perspectives vs. single architect view
+- **Quality**: Technical writer ensures clarity and consistency
+- **Completeness**: Reviewers catch missing sections (security details, test strategy)
+- **Traceability**: Complete audit trail (all versions, reviews, decisions documented)
+- **Accountability**: Clear sign-offs from all responsible roles
 
 **Output**: Software Architecture Document (BASELINED)
 ```markdown
