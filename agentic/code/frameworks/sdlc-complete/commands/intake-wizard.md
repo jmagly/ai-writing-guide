@@ -293,104 +293,228 @@ Applied:
 
 ### Generate Complete Intake Forms
 
-Create three files with **no placeholders or TODO items**:
+Create three files with **no placeholders or TODO items**. Use the comprehensive template structure from `intake-from-codebase.md` adapted for greenfield projects.
 
 #### 1. project-intake.md
 
 ```markdown
 # Project Intake Form
 
+**Document Type**: {Greenfield Project | Existing System Enhancement}
+**Generated**: {current date}
+**Source**: {Project description + user responses | "User-provided requirements"}
+
 ## Metadata
 
-- Project name: {inferred from description}
-- Requestor/owner: {from user or "Project Team"}
-- Date: {current date}
-- Stakeholders: {inferred: customer support, engineering, product}
+- **Project name**: {inferred from description, pattern: Primary Noun + Purpose}
+- **Requestor/owner**: {from user or "Project Team"}
+- **Date**: {current date}
+- **Stakeholders**: {inferred: Engineering (always), Product (always), + context-specific: Customer Support if customer-facing, Security/Compliance if sensitive data, Operations/SRE if production deployment}
+
+## System Overview
+
+**Purpose**: {1-2 sentences from user description, expanded with inferred context}
+**Current Status**: {Planning (new project) | In Development | Early Users | Production}
+**Users**: {from user or inferred from description: "internal team of X" or "external customers, estimated Y users"}
+**Tech Stack** (proposed or inferred):
+- **Languages**: {from user preferences or defaults: JavaScript/TypeScript, Python, Java, Go}
+- **Frontend**: {if UI mentioned: React, Vue, Angular, Next.js | "N/A (API only)"}
+- **Backend**: {if mentioned: Node.js/Express, Django/Flask, Spring Boot, .NET | inferred from scale}
+- **Database**: {from user or defaults: PostgreSQL for relational, MongoDB for document, Redis for cache}
+- **Deployment**: {from user or defaults: Docker + Cloud provider, Serverless, Static hosting}
 
 ## Problem and Outcomes
 
-- Problem statement: {1-3 sentences from user input + clarifications}
-- Target personas/scenarios: {inferred from user/customer description}
-- Success metrics (KPIs): {from user answers or expert defaults}
+**Problem Statement**: {from user input, 2-3 sentences explaining what's broken or inefficient today, or opportunity being pursued}
 
-## Scope and Constraints
+**Target Personas**: {from user or inferred from description}
+- Primary: {specific user type with context: "warehouse managers checking inventory status"}
+- Secondary: {if applicable: "warehouse staff creating shipment records"}
 
-- In-scope: {specific features from user}
-- Out-of-scope (for now): {explicitly excluded features}
-- Timeframe: {from user or "MVP in 8-12 weeks"}
-- Budget guardrails: {if mentioned, else "Cost-conscious (<$500/mo initial)"}
-- Platforms and languages (preferences/constraints): {from user or team skills}
+**Success Metrics (KPIs)**: {from user or expert defaults}
+- **User adoption**: {specific target: "80% of warehouse staff using daily" or "100 sign-ups in month 1"}
+- **Performance**: {from user or defaults: "p95 latency <500ms", "99% uptime"}
+- **Business impact**: {from user or inferred: "50% reduction in support calls", "20% increase in productivity"}
 
-## Non-Functional Preferences
+## Current Scope and Features
 
-- Security posture: {Baseline|Strong based on data sensitivity}
-- Privacy & compliance: {GDPR/HIPAA/None based on user input}
-- Reliability targets: {99% uptime, p95 < 500ms - adjust based on user type}
-- Scale expectations: {initial: N users, 6 months: M users, 2 years: estimate}
-- Observability: {logs+metrics for MVP, full tracing for Production}
-- Maintainability: {medium for small teams, high for larger}
-- Portability: {cloud-locked for speed, portable for enterprise}
+**Core Features** (in-scope for first release):
+{from user description, broken down into specific features}
+- {Feature 1 with brief description}
+- {Feature 2 with brief description}
+- {Feature 3 with brief description}
 
-## Data
+**Out-of-Scope** (explicitly excluded for now, may revisit later):
+{from user or inferred complementary features}
+- {Feature A - rationale: complexity, timeline, dependencies}
+- {Feature B - rationale: defer until MVP validated}
 
-- Classification: {Public|Internal|Confidential|Restricted}
-- PII/PHI present: {yes/no based on user input}
-- Retention/deletion constraints: {GDPR 30-day deletion if EU, else standard}
+**Future Considerations** (post-MVP, if project succeeds):
+{from user or inferred natural evolution}
+- {Enhancement 1}
+- {Enhancement 2}
 
-## Integrations
+## Architecture (Proposed)
 
-- External systems/APIs: {from user or "None initially"}
-- Dependencies and contracts: {list or "TBD during Elaboration"}
+**Architecture Style**: {inferred from scale and team size}
+- **Monolith**: Small team (<5), moderate scale (<10k users), fast iteration
+- **Modular Monolith**: Medium team (5-10), moderate-high scale (10k-100k users), clear boundaries
+- **Microservices**: Large team (>10), high scale (>100k users), independent deployment needs
+- **Serverless**: Event-driven, variable load, minimal ops overhead
+- **Hybrid**: Combination based on specific needs
 
-## Architecture Preferences (if any)
+**Chosen**: {specific choice} - **Rationale**: {why based on team size, scale, timeline}
 
-- Style: {Monolith for small teams, Microservices for scale >10k users}
-- Cloud/infra: {AWS/Azure/GCP based on user preference or default AWS}
-- Languages/frameworks: {from user or popular choices: React/Node, Python/Django, etc.}
+**Components** (proposed):
+- {Component 1}: {description, technology choice, rationale}
+- {Component 2}: {description, technology choice, rationale}
+- {Component 3}: {description, technology choice, rationale}
 
-## Risk and Trade-offs
+**Data Models** (estimated):
+{from feature analysis, infer primary entities}
+- {Entity 1}: {fields inferred from feature description}
+- {Entity 2}: {fields inferred from feature description}
+- {Entity 3}: {fields inferred from feature description}
 
-- Risk tolerance: {Low for compliance-heavy, Medium for MVP, High for prototype}
-- Priorities (weights sum 1.0):
-  - Delivery speed: {0.4 for MVP, 0.2 for Enterprise}
-  - Cost efficiency: {0.3 for startups, 0.2 for enterprise}
-  - Quality/security: {0.3 baseline, 0.6 for compliance/enterprise}
-- Known risks/unknowns: {inferred: technical debt in MVP, integration complexity, etc.}
+**Integration Points** (if mentioned):
+- {External Service 1}: {purpose, API/SDK}
+- {External Service 2}: {purpose, API/SDK}
+- {Internal System}: {if integrating with existing systems}
 
-## Team & Operations
+## Scale and Performance (Target)
 
-- Team size/skills: {from user or "Small team (2-5), full-stack"}
-- Operational support (on-call, SRE): {Business hours for MVP, 24/7 for Production}
+**Target Capacity**: {from user or inferred from audience description}
+- **Initial users**: {count, context: internal team, beta customers, public launch}
+- **6-month projection**: {count, growth assumption}
+- **2-year vision**: {count or "revisit post-MVP"}
 
-## Decision Heuristics (quick reference)
+**Performance Targets**: {from user or defaults based on use case}
+- **Latency**: {p95 <500ms for interactive, <2s for batch, adjust based on criticality}
+- **Throughput**: {requests/sec or transactions/min, based on use case}
+- **Availability**: {99% for internal/MVP, 99.9% for production, 99.99% for mission-critical}
 
-- Prefer simplicity vs power: {S for small teams, P for enterprise}
-- Prefer managed services vs control: {M for speed/small teams, C for scale/compliance}
-- Prefer time-to-market vs robustness: {T for MVP, R for production/compliance}
+**Performance Strategy**: {inferred from scale and tech stack}
+- **Caching**: {Redis for session/API responses if >1k users}
+- **Database**: {Connection pooling, indexing, read replicas if >10k users}
+- **CDN**: {CloudFront/Cloudflare if global users, static assets}
+- **Background Jobs**: {Queue workers for email, reports, async processing}
+
+## Security and Compliance (Requirements)
+
+**Security Posture**: {inferred from data sensitivity}
+- **Minimal**: Public data, no auth, basic HTTPS
+- **Baseline**: User auth, secrets management, encryption at rest, SBOM
+- **Strong**: Threat model, SAST/DAST, compliance controls, audit logs
+- **Enterprise**: Full SDL, penetration testing, IR playbooks, SOC2/ISO27001
+
+**Chosen**: {specific level} - **Rationale**: {based on data classification and compliance}
+
+**Data Classification**: {from user input on data types}
+- **Public**: No privacy concerns, can be exposed
+- **Internal**: Company confidential, not for external sharing
+- **Confidential**: PII, requires protection, limited access
+- **Restricted**: PHI, payment data, high-sensitivity, strict controls
+
+**Identified**: {specific classification} - **Evidence**: {PII/PHI/payment mentioned or none}
+
+**Security Controls** (required):
+- **Authentication**: {OAuth, JWT, basic auth based on user type and scale}
+- **Authorization**: {RBAC for roles, ABAC for fine-grained, none for public}
+- **Data Protection**: {Encryption at rest (AWS KMS, database encryption), TLS in transit}
+- **Secrets Management**: {Environment variables for MVP, AWS Secrets Manager/Vault for production}
+
+**Compliance Requirements**: {from user or inferred from region/industry}
+- **GDPR**: {if EU users mentioned: consent, data deletion, privacy policy}
+- **CCPA**: {if California users: data access, deletion rights}
+- **HIPAA**: {if healthcare data: PHI protection, BAA, audit logs}
+- **PCI-DSS**: {if payment processing: tokenization, no card storage}
+- **SOX**: {if financial reporting: audit trails, access controls}
+- **None**: {if no regulatory requirements detected}
+
+## Team and Operations (Planned)
+
+**Team Size**: {from user or inferred: "Small team (2-5), full-stack"}
+**Team Skills**: {from user or inferred from tech stack preferences}
+- **Frontend**: {React, Vue, Angular based on choices}
+- **Backend**: {Node.js, Python, Java based on choices}
+- **DevOps**: {AWS, Docker, CI/CD experience level}
+- **Database**: {SQL, NoSQL experience}
+
+**Development Velocity** (target): {from timeline}
+- **Sprint length**: {2 weeks typical for agile teams}
+- **Release frequency**: {weekly for MVP, monthly for production, based on profile}
+
+**Process Maturity** (planned):
+- **Version Control**: Git with feature branches
+- **Code Review**: {PR required for small teams, optional for solo, pair programming for tight timelines}
+- **Testing**: {target coverage: 30% for MVP, 60% for production, 80% for mission-critical}
+- **CI/CD**: {GitHub Actions, GitLab CI, CircleCI - automate lint, test, deploy}
+- **Documentation**: {README, API docs if applicable, runbooks for production}
+
+**Operational Support** (planned):
+- **Monitoring**: {Logs + basic metrics for MVP, APM for production: Datadog, New Relic}
+- **Logging**: {Structured logs (JSON), centralized (CloudWatch, ELK) for production}
+- **Alerting**: {Email for MVP, PagerDuty/Opsgenie for production SLA}
+- **On-call**: {None for MVP, business hours for production, 24/7 for mission-critical}
+
+## Dependencies and Infrastructure
+
+**Third-Party Services** (proposed):
+{from feature description or user mention}
+- **Payment**: {Stripe, PayPal if payments mentioned}
+- **Email**: {SendGrid, Mailgun if notifications mentioned}
+- **SMS**: {Twilio if SMS mentioned}
+- **File Storage**: {AWS S3, Google Cloud Storage if file uploads}
+- **Analytics**: {Google Analytics, Mixpanel if tracking mentioned}
+- **Monitoring**: {Sentry for errors, Datadog/New Relic for APM}
+
+**Infrastructure** (proposed):
+- **Hosting**: {from user preference or default: AWS (broadest services), Azure (Microsoft shop), GCP (container-first), Vercel/Netlify (frontend static)}
+- **Deployment**: {Docker containers, Kubernetes if microservices, Serverless if event-driven}
+- **Database**: {Managed (RDS, Cloud SQL) for speed, self-hosted if cost-sensitive or compliance}
+- **Caching**: {Redis (ElastiCache, Cloud Memorystore) if >1k users}
+- **Message Queue**: {SQS, RabbitMQ, Kafka if async processing needed}
+
+## Known Risks and Uncertainties
+
+**Technical Risks**: {from feature complexity or user mention}
+- {Risk 1}: {description, likelihood, impact, mitigation strategy}
+- {Risk 2}: {description, likelihood, impact, mitigation strategy}
+
+**Integration Risks**: {if external services mentioned}
+- {Risk}: {third-party API reliability, rate limits, cost overruns}
+
+**Timeline Risks**: {from user timeline vs scope assessment}
+- {Risk}: {scope too large for timeline, recommend MVP reduction}
+
+**Team Risks**: {from team size and skills}
+- {Risk}: {skill gaps, capacity constraints, mitigation: training, hiring, reduce scope}
+
+## Why This Intake Now?
+
+**Context**: {from user or inferred: starting new project, seeking SDLC structure, planning phase}
+
+**Goals**:
+- Establish clear requirements and scope before development starts
+- Align team on architecture and technical approach
+- Identify risks and dependencies early
+- Enable structured SDLC process (Inception → Elaboration → Construction → Transition)
+
+**Triggers**:
+- {New project kickoff | Planning phase | Stakeholder alignment needed | Team onboarding}
 
 ## Attachments
 
-- Solution profile: link to `solution-profile.md`
-- Option matrix: link to `option-matrix.md`
+- Solution profile: `.aiwg/intake/solution-profile.md`
+- Option matrix: `.aiwg/intake/option-matrix.md`
 
-## Kickoff Prompt
+## Next Steps
 
-```text
-Role: Executive Orchestrator
-Goal: Initialize project from intake and start Concept → Inception flow
-Inputs:
-- Project Intake Form (this file)
-- Solution Profile
-- Option Matrix
-Actions:
-- Validate scope and NFRs; identify risks and needed spikes
-- Select agents for Concept → Inception
-- Produce phase plan and decision checkpoints
-Output:
-- phase-plan-inception.md
-- risk-list.md
-- initial ADRs for critical choices
-```
+1. Review generated intake for accuracy and completeness
+2. Fill any gaps marked "TBD" or "Clarify" (if --interactive not used, user can manually update)
+3. Choose technical approach from `option-matrix.md` (recommended option provided)
+4. Start Inception flow: `/project:intake-start .aiwg/intake/` (kicks off agent assignments and phase planning)
+5. Alternative: Jump directly to Concept → Inception: `/project:flow-concept-to-inception .aiwg/intake/`
 ```
 
 #### 2. solution-profile.md
@@ -398,79 +522,587 @@ Output:
 ```markdown
 # Solution Profile
 
-Select a profile to set defaults for gates, controls, and process rigor.
+**Document Type**: {Greenfield Project Profile | Existing System Profile}
+**Generated**: {current date}
 
-## Profile
+## Profile Selection
 
-- Profile: {Prototype|MVP|Production|Enterprise}
+**Profile**: {Prototype | MVP | Production | Enterprise}
 
-**Selection Logic**:
-- **Prototype**: Timeline < 4 weeks, no users yet, experimental
-- **MVP**: Timeline 1-3 months, initial users, proving viability
-- **Production**: Timeline 3-6 months, established users, revenue-generating
-- **Enterprise**: Compliance requirements, >10k users, mission-critical
+**Selection Logic** (automated based on inputs):
+- **Prototype**: Timeline <4 weeks, no external users, experimental/learning, high uncertainty
+- **MVP**: Timeline 1-3 months, initial users (internal or limited beta), proving viability
+- **Production**: Timeline 3-6 months, established users, revenue-generating or critical operations
+- **Enterprise**: Compliance requirements (HIPAA/SOC2/PCI-DSS), >10k users, mission-critical, contracts/SLAs
 
-**Chosen**: {profile} - {rationale based on timeline, users, compliance}
+**Chosen**: {profile} - **Rationale**: {specific reasons based on timeline, user count, compliance, criticality}
 
-## Defaults (can be tailored)
+Example rationales:
+- "MVP: 3-month timeline, 50 internal users for beta testing, validating before public launch"
+- "Production: GDPR compliance required (EU customers), 5k established users, revenue-critical"
+- "Enterprise: HIPAA + SOC2 compliance, 50k users, 99.99% uptime SLA, mission-critical healthcare app"
 
-- Security
-  - {profile}: {appropriate security level from template}
-- Reliability
-  - {profile}: {appropriate reliability targets}
-- Process
-  - {profile}: {appropriate process rigor}
+## Profile Characteristics
 
-## Overrides
+### Security
 
-- Notes: {any specific tailoring based on user requirements}
-  - Example: "MVP profile but with Strong security due to GDPR requirements"
-  - Example: "Production profile but lightweight process due to small team (2 devs)"
+**Posture**: {Minimal | Baseline | Strong | Enterprise} - based on data classification and compliance
+
+**Profile Defaults**:
+- **Prototype/MVP**: Baseline (user auth, environment secrets, HTTPS, basic logging)
+- **Production**: Strong (threat model, SAST/DAST, secrets manager, audit logs, incident response)
+- **Enterprise**: Enterprise (full SDL, penetration testing, compliance controls, SOC2/ISO27001, IR playbooks)
+
+**Chosen**: {specific posture} - **Rationale**: {data sensitivity, compliance requirements, user trust needs}
+
+**Controls Included**:
+- **Authentication**: {mechanism based on profile: JWT for MVP, OAuth for Production, SSO for Enterprise}
+- **Authorization**: {RBAC for roles, ABAC for fine-grained Enterprise}
+- **Data Protection**: {Encryption at rest, TLS in transit, key management approach}
+- **Secrets Management**: {Environment variables for Prototype, Secrets Manager for Production+}
+- **Audit Logging**: {None for Prototype, basic for MVP, comprehensive for Production, compliance-grade for Enterprise}
+
+**Gaps/Additions**: {any profile customizations based on user input}
+- Example: "MVP profile but Strong security due to GDPR" → Add: data deletion API, consent management
+- Example: "Production profile but no audit logs" → Gap: Consider audit logs for debugging
+
+### Reliability
+
+**Targets**: {based on profile and criticality}
+
+**Profile Defaults**:
+- **Prototype**: 95% uptime, best-effort, no SLA
+- **MVP**: 99% uptime, p95 latency <1s, business hours support
+- **Production**: 99.9% uptime, p95 latency <500ms, 24/7 monitoring, runbooks
+- **Enterprise**: 99.99% uptime, p95 latency <200ms, 24/7 on-call, disaster recovery
+
+**Chosen**: {specific targets}
+- **Availability**: {percentage, rationale}
+- **Latency**: {p95/p99 target, rationale}
+- **Error Rate**: {target percentage, rationale}
+
+**Monitoring Strategy**:
+- **Prototype**: Basic logging (stdout), no metrics
+- **MVP**: Structured logs + basic metrics (request count, latency, errors)
+- **Production**: APM (Datadog/New Relic), distributed tracing, dashboards, alerts
+- **Enterprise**: Full observability (metrics, logs, traces), SLO tracking, automated remediation
+
+**Chosen**: {specific monitoring approach}
+
+### Testing & Quality
+
+**Coverage Targets**: {based on profile and criticality}
+
+**Profile Defaults**:
+- **Prototype**: 0-30% (manual testing OK, fast iteration priority)
+- **MVP**: 30-60% (critical paths covered, some integration tests)
+- **Production**: 60-80% (comprehensive unit + integration, some e2e)
+- **Enterprise**: 80-95% (comprehensive coverage, full e2e, performance/load testing)
+
+**Chosen**: {specific target} - **Rationale**: {balance speed vs. quality based on priorities}
+
+**Test Types**:
+- **Unit**: {always recommended: Jest, Pytest, JUnit}
+- **Integration**: {MVP+: API tests, database tests}
+- **E2E**: {Production+: Cypress, Playwright, Selenium}
+- **Performance**: {Production+: k6, JMeter, load testing}
+- **Security**: {Production+: SAST (SonarQube), DAST (OWASP ZAP), dependency scanning}
+
+**Quality Gates**: {based on profile}
+- **Prototype**: None (manual review only)
+- **MVP**: Linting, unit tests pass (CI required)
+- **Production**: Linting, tests pass, coverage threshold, security scan, code review required
+- **Enterprise**: All Production gates + penetration testing, compliance scan, performance benchmarks
+
+### Process Rigor
+
+**SDLC Adoption**: {based on team size and profile}
+
+**Profile Defaults**:
+- **Prototype**: Minimal (README, ad-hoc, trunk-based)
+- **MVP**: Moderate (user stories, basic architecture docs, feature branches, PRs for review)
+- **Production**: Full (requirements docs, SAD, ADRs, test plans, runbooks, traceability)
+- **Enterprise**: Enterprise (full artifact suite, compliance evidence, change control, audit trails)
+
+**Chosen**: {specific rigor level} - **Rationale**: {team size, compliance needs, coordination requirements}
+
+**Key Artifacts** (required for chosen profile):
+- **Prototype**: README, basic git commit messages
+- **MVP**: README, user stories, basic architecture diagram, runbook
+- **Production**: Requirements (user stories/use cases), SAD, ADRs, test strategy, deployment plan, runbook
+- **Enterprise**: Full template suite (requirements, architecture, test, security, deployment, governance)
+
+**Tailoring Notes**: {customizations based on team/context}
+- Example: "Production profile but lightweight process due to small team (2 devs) - skip governance templates"
+- Example: "MVP profile but add ADRs early due to expected refactoring"
+
+## Improvement Roadmap
+
+**Phase 1 (Immediate - First Sprint)**:
+{critical setup for chosen profile}
+- **Prototype**: Git repo, README, basic deployment script
+- **MVP**: Git + feature branches, CI with linting, basic tests, README
+- **Production**: Full CI/CD, monitoring, basic runbook, 30%+ test coverage
+- **Enterprise**: All Production + security scanning, audit logging, compliance controls
+
+**Recommended Actions** (specific to this project):
+1. {Action 1 based on profile gaps}
+2. {Action 2 based on profile gaps}
+3. {Action 3 based on profile gaps}
+
+**Phase 2 (Short-term - First 3 Months)**:
+{build toward target state}
+- **Prototype → MVP**: Add tests (30%), structured logging, basic monitoring
+- **MVP → Production**: Increase tests (60%), add APM, create runbooks, incident response plan
+- **Production → Enterprise**: Compliance controls, penetration testing, disaster recovery plan
+
+**Recommended Actions** (if project succeeds and scales):
+1. {Scaling action 1}
+2. {Scaling action 2}
+3. {Scaling action 3}
+
+**Phase 3 (Long-term - 6-12 Months)**:
+{mature to next profile level if needed}
+- **Growth triggers**: {when to level up: user count, revenue, compliance requirements, team size}
+- **Leveling up**: {what changes when moving to next profile}
+
+## Overrides and Customizations
+
+**Security Overrides**: {if different from profile defaults}
+- Example: "MVP profile but Strong security due to PII" → Add: encryption at rest, secrets manager, audit logs
+
+**Reliability Overrides**: {if different from profile defaults}
+- Example: "Production profile but 99.5% OK (not 99.9%) due to internal tool" → Relaxed monitoring
+
+**Testing Overrides**: {if different from profile defaults}
+- Example: "Production profile but 40% coverage acceptable (tight timeline, will increase post-launch)"
+
+**Process Overrides**: {if different from profile defaults}
+- Example: "Enterprise profile but skip governance templates (small team, pre-compliance phase)"
+
+**Rationale for Overrides**: {explain why deviating from defaults}
+- {Justification for each override, with triggers for revisiting}
+
+## Key Decisions
+
+**Decision #1: Profile Selection**
+- **Chosen**: {profile}
+- **Alternative Considered**: {next closest profile}
+- **Rationale**: {why chosen over alternative}
+- **Revisit Trigger**: {when to consider upgrading profile}
+
+**Decision #2: Security Posture**
+- **Chosen**: {posture level}
+- **Alternative Considered**: {higher or lower level}
+- **Rationale**: {data sensitivity, compliance, cost/time trade-offs}
+- **Revisit Trigger**: {when to upgrade security}
+
+**Decision #3: Test Coverage Target**
+- **Chosen**: {percentage}
+- **Alternative Considered**: {higher or lower}
+- **Rationale**: {quality vs. speed trade-off, team capacity, risk tolerance}
+- **Revisit Trigger**: {when to increase coverage}
+
+## Next Steps
+
+1. Review profile selection and customizations
+2. Validate that security/reliability/testing targets align with priorities from `option-matrix.md`
+3. Ensure process rigor matches team size and coordination needs
+4. Start Inception with profile-appropriate templates and agents
+5. Revisit profile selection at phase transitions (Inception → Elaboration → Construction → Transition)
 ```
 
 #### 3. option-matrix.md
 
+Use the comprehensive 6-step approach from `intake-from-codebase.md`, adapted for greenfield projects:
+
 ```markdown
-# Option Matrix (Weighted)
+# Option Matrix (Project Context & Intent)
 
-## Criteria (weights sum 1.0)
+**Purpose**: Capture what this project IS - its nature, audience, constraints, and intent - to determine appropriate SDLC framework application (templates, commands, agents, rigor levels).
 
-Based on project priorities:
+**Generated**: {current date} (from user description + responses)
 
-- Delivery speed: {weight from user priorities or inferred}
-- Cost efficiency: {weight from user priorities or inferred}
-- Quality/security: {weight from user priorities or inferred}
-- Reliability/scale: {weight from user priorities or inferred}
+## Step 1: Project Reality
 
-**Weights Rationale**: {explain why these weights based on user input}
+### What IS This Project?
 
-## Options and Scoring (0–5)
+**Project Description** (in natural language):
+```
+{Describe in 2-3 sentences based on user input and inferred context:}
 
-{Generate 2-3 realistic architectural options based on requirements}
+Examples:
+- "Customer dashboard for 5k users to track order status, built by 2-person team in 3 months, React + Node.js, GDPR compliance required"
+- "Internal HR tool for 50 employees, scheduling and time-off management, solo developer, 6-week MVP timeline"
+- "Public API for mobile app, payment processing + user accounts, 10k launch users scaling to 100k, PCI-DSS compliance, 6-month timeline"
+```
 
-| Option | Speed | Cost | Quality | Reliability | Total |
-|--------|------:|-----:|--------:|------------:|------:|
-| {Option A: e.g., Monolith + AWS} | {score} | {score} | {score} | {score} | {weighted total} |
-| {Option B: e.g., Serverless} | {score} | {score} | {score} | {score} | {weighted total} |
-| {Option C: e.g., Microservices} | {score} | {score} | {score} | {score} | {weighted total} |
+### Audience & Scale
 
-**Recommended**: {highest scoring option} - {brief rationale}
+**Who uses this?** (check all from user input):
+- {[ ] or [x]} Just me (personal project)
+- {[ ] or [x]} Small team (2-10 people, known individuals) - {evidence from user: internal team size}
+- {[ ] or [x]} Department (10-100 people, organization-internal)
+- {[ ] or [x]} External customers (100-10k users, paying or free)
+- {[ ] or [x]} Large scale (10k-100k+ users, public-facing)
+- {[ ] or [x]} Other: {description if provided}
 
-## Notes
+**Audience Characteristics**:
+- Technical sophistication: {Non-technical | Mixed | Technical} - {inferred from user description}
+- User risk tolerance: {Experimental OK | Expects stability | Zero-tolerance} - {inferred from criticality}
+- Support expectations: {Self-service | Best-effort | SLA | 24/7} - {inferred from user type and scale}
 
-- **Option A Details**: {architecture, trade-offs, when to choose}
-- **Option B Details**: {architecture, trade-offs, when to choose}
-- **Option C Details**: {architecture, trade-offs, when to choose}
+**Usage Scale** (from user or inferred):
+- Active users: {count} initially, {count} in 6 months, {count} in 2 years
+- Request volume: {count} requests/min OR N/A (batch/cron/manual use)
+- Data volume: {size} GB/TB OR N/A (stateless/small)
+- Geographic distribution: {Single location | Regional | Multi-region | Global}
+
+### Deployment & Infrastructure
+
+**Expected Deployment Model** (inferred from user requirements):
+- {[x] if applicable} Static site (HTML/CSS/JS, no backend, GitHub Pages/Netlify/Vercel)
+- {[x] if applicable} Client-server (SPA + API backend, traditional web app)
+- {[x] if applicable} Full-stack application (frontend + backend + database + workers)
+- {[x] if applicable} Multi-system (microservices, service mesh, distributed)
+- {[x] if applicable} Serverless (AWS Lambda, Cloud Functions, event-driven)
+- {[x] if applicable} Mobile (iOS/Android native or React Native/Flutter)
+- {[x] if applicable} Desktop (Electron, native apps)
+- {[x] if applicable} CLI tool (command-line utility)
+- {[x] if applicable} Hybrid (multiple deployment patterns)
+
+**Where does this run?** (from user preference or defaults):
+- {[x] if applicable} Cloud platform (AWS, GCP, Azure, Vercel, Netlify)
+- {[x] if applicable} On-premise (company servers, data center)
+- {[x] if applicable} Hybrid (cloud + on-premise)
+- {[x] if applicable} Local only (laptop, desktop, not deployed)
+
+**Infrastructure Complexity**:
+- Deployment type: {Static site | Single server | Multi-tier | Microservices | Serverless}
+- Data persistence: {None | Client-side | File system | Single database | Multiple data stores}
+- External dependencies: {count} third-party services (from feature analysis)
+- Network topology: {Standalone | Client-server | Multi-tier | Distributed}
+
+### Technical Complexity
+
+**Codebase Characteristics** (estimated):
+- Size: {<1k | 1k-10k | 10k-100k} LoC (estimated from scope)
+- Languages: {primary}, {secondary if any} (from user or defaults)
+- Architecture: {Simple app | Modular | Multi-service} (inferred from scale and team)
+- Team familiarity: Greenfield (new project, no legacy constraints)
+
+**Technical Risk Factors** (check all from requirements):
+- {[x] if detected} Performance-sensitive (latency, throughput critical)
+- {[x] if detected} Security-sensitive (PII, payments, authentication)
+- {[x] if detected} Data integrity-critical (financial, medical, legal records)
+- {[x] if detected} High concurrency (many simultaneous users/processes)
+- {[x] if detected} Complex business logic (many edge cases, domain rules)
+- {[x] if detected} Integration-heavy (many external systems, APIs)
+- {[ ] if none} None (straightforward technical requirements)
+
+---
+
+## Step 2: Constraints & Context
+
+### Resources
+
+**Team** (from user input):
+- Size: {count} developers, {count} designers, {count} other roles
+- Experience: {Junior | Mid | Senior | Mixed} (from user or inferred)
+- Availability: {Full-time | Part-time | Contracting}
+
+**Budget** (from user or inferred):
+- Development: {Unconstrained | Moderate | Tight | Zero (volunteer)}
+- Infrastructure: ${amount}/month OR {Free tier | Cost-conscious | Scalable budget}
+- Timeline: {weeks/months to milestone} (from user)
+
+### Regulatory & Compliance
+
+**Data Sensitivity** (check all from user input):
+- {[x] if applicable} Public data only (no privacy concerns)
+- {[x] if applicable} User-provided content (email, profile, preferences)
+- {[x] if applicable} Personally Identifiable Information (PII: name, address, phone)
+- {[x] if applicable} Payment information (credit cards, financial accounts)
+- {[x] if applicable} Protected Health Information (PHI: medical records)
+- {[x] if applicable} Sensitive business data (trade secrets, confidential)
+
+**Regulatory Requirements** (check all from user mention or inferred):
+- {[x] if applicable} None (no specific regulations)
+- {[x] if applicable} GDPR (EU users, data privacy)
+- {[x] if applicable} CCPA (California users)
+- {[x] if applicable} HIPAA (US healthcare)
+- {[x] if applicable} PCI-DSS (payment card processing)
+- {[x] if applicable} SOX (US financial reporting)
+- {[x] if applicable} SOC2 (service organization controls)
+
+**Contractual Obligations** (from user):
+- {[x] if applicable} None (no contracts)
+- {[x] if applicable} SLA commitments (uptime, response time guarantees)
+- {[x] if applicable} Security requirements (penetration testing, audits)
+- {[x] if applicable} Compliance certifications (SOC2, ISO27001)
+
+### Technical Context
+
+**Current State** (for new project):
+- Current stage: Planning (greenfield project, requirements gathering)
+- Test coverage: Target {percentage}% (from profile selection)
+- Documentation: Target {level} (from profile selection)
+- Deployment automation: Target {level} (from profile selection)
+
+---
+
+## Step 3: Priorities & Trade-offs
+
+**INTERACTIVE SECTION** - Allocate 6-8 of 10 questions here if --interactive mode.
+
+### What Matters Most?
+
+**Rank these priorities** (1 = most important, 4 = least important):
+
+From user responses or inferred from project characteristics:
+- {rank} - Speed to delivery (launch fast, iterate quickly)
+- {rank} - Cost efficiency (minimize time/money spent)
+- {rank} - Quality & security (build it right, avoid issues)
+- {rank} - Reliability & scale (handle growth, stay available)
+
+**Priority Weights** (must sum to 1.0, derived from ranking + questions):
+
+| Criterion | Weight | Rationale |
+|-----------|--------|-----------|
+| **Delivery speed** | {0.10-0.50} | {Based on timeline pressure, competitive urgency, learning goals} |
+| **Cost efficiency** | {0.10-0.40} | {Based on budget constraints, resource limitations, startup/enterprise} |
+| **Quality/security** | {0.10-0.50} | {Based on data sensitivity, compliance, user trust needs} |
+| **Reliability/scale** | {0.10-0.40} | {Based on user base size, uptime needs, growth plans} |
+| **TOTAL** | **1.00** | ← Must sum to 1.0 |
+
+Example weights:
+- MVP/Startup: Speed 0.4, Cost 0.3, Quality 0.2, Reliability 0.1
+- Production: Speed 0.2, Cost 0.2, Quality 0.3, Reliability 0.3
+- Enterprise: Speed 0.1, Cost 0.2, Quality 0.4, Reliability 0.3
+
+### Trade-off Context
+
+**What are you optimizing for?** (from user or inferred):
+```
+{Capture user's priorities in their words or infer from context}
+
+Example: "Fast time-to-market to validate product-market fit before investing in scalable architecture. Can refactor later if users adopt."
+```
+
+**What are you willing to sacrifice?** (from user or inferred):
+```
+{Capture explicit trade-offs}
+
+Example: "Skip comprehensive tests initially (30% coverage OK), manual deployment acceptable for MVP, can add automation post-launch."
+```
+
+**What is non-negotiable?** (from user or inferred):
+```
+{Capture absolute constraints}
+
+Example: "GDPR compliance non-negotiable (EU customers). Data encryption and deletion APIs must be day-one features."
+```
+
+---
+
+## Step 4: Intent & Decision Context
+
+**INTERACTIVE SECTION** - Allocate 2-3 of 10 questions here if --interactive.
+
+### Why This Intake Now?
+
+**What triggered this intake?** (from user or inferred):
+- {[x] if applicable} Starting new project (need to plan approach)
+- {[x] if applicable} Seeking SDLC structure (want organized process)
+- {[x] if applicable} Team alignment (multiple stakeholders need shared understanding)
+- {[x] if applicable} Funding/business milestone (investor pitch, customer demo)
+
+**What decisions need making?** (from user or inferred):
+```
+{Capture key decisions requiring intake clarity}
+
+Example: "Choose between monolith (fast) vs microservices (scalable). Need data to justify trade-off to CTO."
+```
+
+**What's uncertain or controversial?** (from user if provided):
+```
+{Capture disagreements or unknowns}
+
+Example: "Team split on React vs Vue. Need objective criteria (team skills, ecosystem, hiring) to decide."
+```
+
+**Success criteria for this intake process** (from user or defaults):
+```
+{What makes intake valuable?}
+
+Example: "Clear technical direction, stakeholder alignment on priorities, realistic timeline and scope, ready to start development."
+```
+
+---
+
+## Step 5: Framework Application
+
+**INTERACTIVE SECTION** - Allocate 1-2 of 10 questions here if --interactive.
+
+### Relevant SDLC Components
+
+Based on project reality (Step 1) and priorities (Step 3), which framework components are relevant?
+
+**Templates** (check applicable):
+- [x] Intake (project-intake, solution-profile, option-matrix) - **Always include**
+- {[x] if applicable} Requirements (user-stories, use-cases, NFRs) - Include if: {team >1, complex domain, multiple stakeholders}
+- {[x] if applicable} Architecture (SAD, ADRs, API contracts) - Include if: {multi-service, >10k LoC estimated, team >3}
+- {[x] if applicable} Test (test-strategy, test-plan, test-cases) - Include if: {Production+ profile, >1 developer, compliance}
+- {[x] if applicable} Security (threat-model, security-requirements) - Include if: {PII, payments, compliance, external users}
+- {[x] if applicable} Deployment (deployment-plan, runbook, ORR) - Include if: {Production+ profile, >10 users, SLA}
+- {[x] if applicable} Governance (decision-log, CCB-minutes, RACI) - Include if: {team >5, multiple stakeholders, enterprise}
+
+**Commands** (check applicable):
+- [x] Intake commands (intake-wizard, intake-start) - **Always include**
+- {[x] if applicable} Flow commands (/flow-iteration-dual-track, /flow-discovery-track, /flow-delivery-track) - Include if: {team >1, iterative development}
+- {[x] if applicable} Quality gates (/security-gate, /gate-check) - Include if: {compliance, Production+ profile}
+- {[x] if applicable} Specialized (/build-poc, /pr-review, /create-prd) - Include if: {specific needs from requirements}
+
+**Agents** (check applicable):
+- {[x] if applicable} Core SDLC agents (requirements-analyst, architect, code-reviewer, test-engineer, devops-engineer) - Include if: {team >1, MVP+ profile}
+- {[x] if applicable} Security specialists (security-gatekeeper, security-auditor) - Include if: {PII, compliance, Production+ profile}
+- {[x] if applicable} Operations specialists (incident-responder, reliability-engineer) - Include if: {Production+ profile, SLA, >100 users}
+- {[x] if applicable} Enterprise specialists (legal-liaison, compliance-validator, privacy-officer) - Include if: {Enterprise profile, contracts, compliance}
+
+**Process Rigor Level** (select based on profile):
+- {[x] if applicable} Minimal (README, lightweight notes) - For: Prototype (solo, <4 weeks, experimental)
+- {[x] if applicable} Moderate (user stories, basic architecture, test plan) - For: MVP (small team, 1-3 months, proving viability)
+- {[x] if applicable} Full (comprehensive docs, traceability, gates) - For: Production (established users, compliance, mission-critical)
+- {[x] if applicable} Enterprise (audit trails, compliance evidence, change control) - For: Enterprise (contracts, >10k users, regulated)
+
+### Rationale for Framework Choices
+
+**Why this subset of framework?** (based on analysis):
+```
+{Explain which components are relevant and why}
+
+Example:
+"MVP project (3-month timeline, 50 beta users) needs Moderate rigor:
+- Intake (establish baseline, align team)
+- Requirements (user stories for 2-person team coordination)
+- Architecture (basic SAD, ADRs for refactoring decisions expected)
+- Test (30% coverage target, smoke tests for critical paths)
+- Skip security templates (Baseline posture sufficient, no compliance yet)
+- Skip governance (team of 2, informal communication OK)
+- Core SDLC agents (requirements-analyst, architect, code-reviewer, test-engineer)
+- Flow commands (/flow-iteration-dual-track for 2-week sprints)"
+```
+
+**What we're skipping and why** (be explicit):
+```
+{List unused framework components with justification}
+
+Example:
+"Skipping enterprise templates because:
+- No compliance requirements (no HIPAA/PCI-DSS/SOC2)
+- Small team (2 developers, no coordination overhead)
+- MVP timeline (3 months, lightweight process priority)
+- Internal beta users (no contracts, no SLA)
+
+Will revisit if: beta succeeds → production launch, compliance requirements emerge, team expands >5 people."
+```
+
+---
+
+## Step 6: Evolution & Adaptation
+
+**INTERACTIVE SECTION** - Allocate 1-2 of 10 questions here if --interactive.
+
+### Expected Changes
+
+**How might this project evolve?** (from user or inferred):
+- {[x] if applicable} User base growth (when: {timeline}, trigger: {event})
+- {[x] if applicable} Feature expansion (when: {timeline}, trigger: {event})
+- {[x] if applicable} Team expansion (when: {timeline}, trigger: {event})
+- {[x] if applicable} Commercial/monetization (when: {timeline}, trigger: {event})
+- {[x] if applicable} Compliance requirements (when: {timeline}, trigger: {event})
+- {[x] if applicable} Technical pivot (when: {timeline}, trigger: {event})
+
+**Adaptation Triggers** (when to revisit framework application):
+```
+{What events would require more structure?}
+
+Example:
+"Add security templates when PII introduced (user accounts planned for month 4).
+Add governance templates when team exceeds 5 people (hiring planned post-Series A).
+Upgrade to Production profile when beta ends (timeline: month 6, trigger: 500+ active users)."
+```
+
+**Planned Framework Evolution** (from analysis):
+- **Current (Inception)**: {list components from Step 5}
+- **3 months (Elaboration)**: {add if growth/validation occurs}
+- **6 months (Construction)**: {add if assumptions validated, scale increases}
+- **12 months (Transition)**: {add if production launch, compliance, team scaling}
+
+---
+
+## Architectural Options Analysis
+
+### Option A: {Architecture 1 Name}
+
+**Description**: {brief overview of architectural approach}
+
+**Technology Stack**: {specific technologies}
+
+**Scoring** (0-5 scale):
+| Criterion | Score | Rationale |
+|-----------|------:|-----------|
+| Delivery Speed | {0-5} | {why this score} |
+| Cost Efficiency | {0-5} | {why this score} |
+| Quality/Security | {0-5} | {why this score} |
+| Reliability/Scale | {0-5} | {why this score} |
+| **Weighted Total** | **{calculated}** | {sum of score × weight from Step 3} |
+
+**Trade-offs**:
+- **Pros**: {advantages specific to this option}
+- **Cons**: {disadvantages specific to this option}
+
+**When to choose**: {scenarios where this option fits best}
+
+### Option B: {Architecture 2 Name}
+
+{Repeat structure from Option A}
+
+### Option C: {Architecture 3 Name}
+
+{Repeat structure from Option A}
+
+---
+
+## Recommendation
+
+**Recommended Option**: {highest scoring option} (Score: {total})
+
+**Rationale**: {explain why this option best fits priorities from Step 3}
 
 **Sensitivities**:
-- If timeline pressure increases → favor {speed-optimized option}
-- If compliance requirements added → favor {quality-optimized option}
-- If scale projections exceed 50k users → favor {scale-optimized option}
+- If timeline pressure increases → consider {speed-optimized option}
+- If compliance requirements added → reconsider {quality-optimized option}
+- If scale projections exceed 50k users → reevaluate {scale-optimized option}
 
-**Follow-ups**:
-- Validate cloud provider preference with team
-- Spike/POC for {any uncertain technical decision}
-- Confirm budget allocation matches chosen option
+**Implementation Plan**:
+1. {First step for chosen option}
+2. {Second step}
+3. {Third step}
+
+**Risks and Mitigations**:
+- **Risk 1**: {description} → Mitigation: {strategy}
+- **Risk 2**: {description} → Mitigation: {strategy}
+
+---
+
+## Next Steps
+
+1. Review option-matrix and validate priorities align with team/stakeholder expectations
+2. Confirm chosen architectural option with technical leads
+3. Use recommended framework components from Step 5 for Inception phase
+4. Start Inception flow: `/project:intake-start .aiwg/intake/`
+5. Revisit framework selection at phase gates (Inception → Elaboration → Construction → Transition)
 ```
 
 ## Expert Inference Guidelines
