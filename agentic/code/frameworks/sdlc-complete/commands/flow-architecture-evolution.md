@@ -1,7 +1,7 @@
 ---
 description: Execute architecture evolution workflow with ADR management, architecture review, breaking change analysis, and migration planning
 category: sdlc-management
-argument-hint: <trigger-event> [project-directory]
+argument-hint: <trigger-event> [project-directory] [--guidance "text"] [--interactive]
 allowed-tools: Read, Write, Grep, Glob, TodoWrite
 model: sonnet
 ---
@@ -29,7 +29,170 @@ When invoked with `/project:flow-architecture-evolution <trigger> [project-direc
 - **security**: Security vulnerability requires architecture change
 - **compliance**: Regulatory compliance requires architecture modification
 - **technology**: Technology upgrade or platform migration
-- **cost**: Cost optimization requires architecture change
+- **cost**: Cost optimization requires arch
+
+### Step 0: Parameter Parsing and Guidance Setup
+
+**Parse Command Line**:
+
+Extract optional `--guidance` and `--interactive` parameters.
+
+```bash
+# Parse arguments (flow-specific primary param varies)
+PROJECT_DIR="."
+GUIDANCE=""
+INTERACTIVE=false
+
+# Parse all arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --guidance)
+      GUIDANCE="$2"
+      shift 2
+      ;;
+    --interactive)
+      INTERACTIVE=true
+      shift
+      ;;
+    --*)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+    *)
+      # If looks like a path (contains / or is .), treat as project-directory
+      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
+        PROJECT_DIR="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+```
+
+**Path Resolution**:
+
+# Function: Resolve AIWG installation path
+resolve_aiwg_root() {
+  # 1. Check environment variable
+  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
+    echo "$AIWG_ROOT"
+    return 0
+  fi
+
+  # 2. Check installer location (user)
+  if [ -d ~/.local/share/ai-writing-guide ]; then
+    echo ~/.local/share/ai-writing-guide
+    return 0
+  fi
+
+  # 3. Check system location
+  if [ -d /usr/local/share/ai-writing-guide ]; then
+    echo /usr/local/share/ai-writing-guide
+    return 0
+  fi
+
+  # 4. Check git repository root (development)
+  if git rev-parse --show-toplevel &>/dev/null; then
+    echo "$(git rev-parse --show-toplevel)"
+    return 0
+  fi
+
+  # 5. Fallback to current directory
+  echo "."
+  return 1
+}
+
+**Resolve AIWG installation**:
+
+```bash
+AIWG_ROOT=$(resolve_aiwg_root)
+
+if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
+  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
+  echo ""
+  echo "Please install AIWG or set AIWG_ROOT environment variable"
+  exit 1
+fi
+```
+
+**Interactive Mode**:
+
+If `--interactive` flag set, prompt user with strategic questions:
+
+```bash
+if [ "$INTERACTIVE" = true ]; then
+  echo "# Flow Architecture Evolution - Interactive Setup"
+  echo ""
+  echo "I'll ask 7 strategic questions to tailor this flow to your project's needs."
+  echo ""
+
+  read -p "Q1: What's driving this architecture change? " answer1
+  read -p "Q2: What are your top priorities? " answer2
+  read -p "Q3: What are your biggest constraints? " answer3
+  read -p "Q4: What architectural risks concern you most? " answer4
+  read -p "Q5: How mature is your current architecture documentation? " answer5
+  read -p "Q6: What's your team's architecture review experience? " answer6
+  read -p "Q7: What's your target timeline for this evolution? " answer7
+
+  echo ""
+  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
+  echo ""
+  read -p "Proceed with these adjustments? (yes/no) " confirm
+
+  if [ "$confirm" != "yes" ]; then
+    echo "Aborting flow."
+    exit 0
+  fi
+
+  # Synthesize guidance from answers
+  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
+fi
+```
+
+**Apply Guidance**:
+
+Parse guidance for keywords and adjust execution:
+
+```bash
+if [ -n "$GUIDANCE" ]; then
+  # Keyword detection
+  FOCUS_SECURITY=false
+  FOCUS_PERFORMANCE=false
+  FOCUS_COMPLIANCE=false
+  TIGHT_TIMELINE=false
+
+  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
+    FOCUS_SECURITY=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
+    FOCUS_PERFORMANCE=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
+    FOCUS_COMPLIANCE=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
+    TIGHT_TIMELINE=true
+  fi
+
+  # Adjust agent assignments based on guidance
+  ADDITIONAL_REVIEWERS=""
+
+  if [ "$FOCUS_SECURITY" = true ]; then
+    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
+  fi
+
+  if [ "$FOCUS_COMPLIANCE" = true ]; then
+    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
+  fi
+
+  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
+fi
+```
+
+itecture change
 
 ## Workflow Steps
 

@@ -1,7 +1,7 @@
 ---
 description: Orchestrate dual-track iteration with synchronized Discovery (next) and Delivery (current) workflows
 category: sdlc-management
-argument-hint: <iteration-number> [project-directory]
+argument-hint: <iteration-number> [project-directory] [--guidance "text"] [--interactive]
 allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
 model: sonnet
 ---

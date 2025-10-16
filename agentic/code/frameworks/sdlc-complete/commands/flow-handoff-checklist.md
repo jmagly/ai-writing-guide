@@ -1,7 +1,7 @@
 ---
 description: Execute handoff checklist validation between SDLC phases and tracks (Discovery→Delivery, Delivery→Ops)
 category: sdlc-management
-argument-hint: <from-phase> <to-phase> [project-directory]
+argument-hint: <from-phase> <to-phase> [project-directory] [--guidance "text"] [--interactive]
 allowed-tools: Read, Write, Grep, Glob
 model: sonnet
 ---

@@ -142,8 +142,8 @@ function transformIfNeeded(srcPath, content, provider, modelCfg) {
   let destContent = content;
   // Determine target models by provider and overrides
   const defaults = provider === 'openai'
-    ? { reasoning: 'gpt-5', coding: 'gpt-5-codex', efficiency: 'gpt-5-codex' }
-    : { reasoning: 'opus', coding: 'sonnet', efficiency: 'sonnet' };
+    ? { reasoning: 'gpt-5', coding: 'gpt-5-codex', efficiency: 'gpt-4o-mini' }
+    : { reasoning: 'opus', coding: 'sonnet', efficiency: 'haiku' };
   const models = {
     reasoning: modelCfg.reasoningModel || defaults.reasoning,
     coding: modelCfg.codingModel || defaults.coding,

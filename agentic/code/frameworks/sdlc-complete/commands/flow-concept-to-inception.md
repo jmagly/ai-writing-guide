@@ -1,7 +1,7 @@
 ---
 description: Execute Concept → Inception flow with automated validation, agent coordination, and milestone tracking
 category: sdlc-management
-argument-hint: <project-directory>
+argument-hint: <project-directory> [--guidance "text"] [--interactive]
 allowed-tools: Read, Write, Glob, Grep, TodoWrite
 model: sonnet
 ---
@@ -21,7 +21,169 @@ When invoked with `/project:flow-concept-to-inception <project-directory>`:
 
 ## Phase Overview
 
-The Concept → Inception flow validates problem, scope, risks, and success metrics before implementation begins.
+The Concept → Inception flow validates problem, scope, risks, and success metrics before impleme
+
+### Step 0: Parameter Parsing and Guidance Setup
+
+**Parse Command Line**:
+
+Extract optional `--guidance` and `--interactive` parameters.
+
+```bash
+# Parse arguments (flow-specific primary param varies)
+PROJECT_DIR="."
+GUIDANCE=""
+INTERACTIVE=false
+
+# Parse all arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --guidance)
+      GUIDANCE="$2"
+      shift 2
+      ;;
+    --interactive)
+      INTERACTIVE=true
+      shift
+      ;;
+    --*)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+    *)
+      # If looks like a path (contains / or is .), treat as project-directory
+      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
+        PROJECT_DIR="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+```
+
+**Path Resolution**:
+
+# Function: Resolve AIWG installation path
+resolve_aiwg_root() {
+  # 1. Check environment variable
+  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
+    echo "$AIWG_ROOT"
+    return 0
+  fi
+
+  # 2. Check installer location (user)
+  if [ -d ~/.local/share/ai-writing-guide ]; then
+    echo ~/.local/share/ai-writing-guide
+    return 0
+  fi
+
+  # 3. Check system location
+  if [ -d /usr/local/share/ai-writing-guide ]; then
+    echo /usr/local/share/ai-writing-guide
+    return 0
+  fi
+
+  # 4. Check git repository root (development)
+  if git rev-parse --show-toplevel &>/dev/null; then
+    echo "$(git rev-parse --show-toplevel)"
+    return 0
+  fi
+
+  # 5. Fallback to current directory
+  echo "."
+  return 1
+}
+
+**Resolve AIWG installation**:
+
+```bash
+AIWG_ROOT=$(resolve_aiwg_root)
+
+if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
+  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
+  echo ""
+  echo "Please install AIWG or set AIWG_ROOT environment variable"
+  exit 1
+fi
+```
+
+**Interactive Mode**:
+
+If `--interactive` flag set, prompt user with strategic questions:
+
+```bash
+if [ "$INTERACTIVE" = true ]; then
+  echo "# Flow Concept To Inception - Interactive Setup"
+  echo ""
+  echo "I'll ask 6 strategic questions to tailor this flow to your project's needs."
+  echo ""
+
+  read -p "Q1: What are your top priorities for this activity? " answer1
+  read -p "Q2: What are your biggest constraints? " answer2
+  read -p "Q3: What risks concern you most for this workflow? " answer3
+  read -p "Q4: What's your team's experience level with this type of activity? " answer4
+  read -p "Q5: What's your target timeline? " answer5
+  read -p "Q6: Are there compliance or regulatory requirements? " answer6
+
+  echo ""
+  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
+  echo ""
+  read -p "Proceed with these adjustments? (yes/no) " confirm
+
+  if [ "$confirm" != "yes" ]; then
+    echo "Aborting flow."
+    exit 0
+  fi
+
+  # Synthesize guidance from answers
+  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
+fi
+```
+
+**Apply Guidance**:
+
+Parse guidance for keywords and adjust execution:
+
+```bash
+if [ -n "$GUIDANCE" ]; then
+  # Keyword detection
+  FOCUS_SECURITY=false
+  FOCUS_PERFORMANCE=false
+  FOCUS_COMPLIANCE=false
+  TIGHT_TIMELINE=false
+
+  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
+    FOCUS_SECURITY=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
+    FOCUS_PERFORMANCE=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
+    FOCUS_COMPLIANCE=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
+    TIGHT_TIMELINE=true
+  fi
+
+  # Adjust agent assignments based on guidance
+  ADDITIONAL_REVIEWERS=""
+
+  if [ "$FOCUS_SECURITY" = true ]; then
+    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
+  fi
+
+  if [ "$FOCUS_COMPLIANCE" = true ]; then
+    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
+  fi
+
+  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
+fi
+```
+
+ntation begins.
 
 ## Workflow Steps
 
@@ -29,8 +191,8 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
 
 **Primary Authors**: Business Process Analyst (lead), Vision Owner
 **Templates**:
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/intake/project-intake-template.md`
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/vision-informal-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/intake/project-intake-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/requirements/vision-informal-template.md`
 
 **Multi-Agent Workflow**:
 
@@ -38,7 +200,7 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
    ```bash
    mkdir -p .aiwg/working/requirements/vision/{drafts,reviews,synthesis}
 
-   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/vision-informal-template.md
+   TEMPLATE=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/requirements/vision-informal-template.md
 
    cat > .aiwg/working/requirements/vision/metadata.json <<EOF
    {
@@ -95,8 +257,8 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
 
 **Primary Authors**: Product Strategist (lead), Requirements Analyst
 **Templates**:
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/use-case-brief-template.md`
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/context-free-interview-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/requirements/use-case-brief-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/requirements/context-free-interview-template.md`
 
 **Multi-Agent Workflow**:
 
@@ -105,8 +267,8 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
    mkdir -p .aiwg/working/requirements/use-case-briefs/{drafts,reviews,synthesis}
    mkdir -p .aiwg/working/requirements/stakeholder-interviews/{drafts,reviews,synthesis}
 
-   TEMPLATE_UC=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/use-case-brief-template.md
-   TEMPLATE_INT=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/context-free-interview-template.md
+   TEMPLATE_UC=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/requirements/use-case-brief-template.md
+   TEMPLATE_INT=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/requirements/context-free-interview-template.md
 
    cat > .aiwg/working/requirements/use-case-briefs/metadata.json <<EOF
    {
@@ -177,8 +339,8 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
 
 **Primary Authors**: Project Manager (lead), Software Architect
 **Templates**:
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/risk-list-template.md`
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/risk-card.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/risk-list-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/risk-card.md`
 
 **Multi-Agent Workflow**:
 
@@ -186,7 +348,7 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
    ```bash
    mkdir -p .aiwg/working/risks/risk-list/{drafts,reviews,synthesis}
 
-   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/risk-list-template.md
+   TEMPLATE=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/risk-list-template.md
 
    cat > .aiwg/working/risks/risk-list/metadata.json <<EOF
    {
@@ -248,8 +410,8 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
 
 **Primary Authors**: Security Architect (lead), Legal Liaison
 **Templates**:
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/security/data-classification-template.md`
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/security/privacy-impact-assessment-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/security/data-classification-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/security/privacy-impact-assessment-template.md`
 
 **Multi-Agent Workflow**:
 
@@ -258,8 +420,8 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
    mkdir -p .aiwg/working/security/data-classification/{drafts,reviews,synthesis}
    mkdir -p .aiwg/working/security/privacy-assessment/{drafts,reviews,synthesis}
 
-   TEMPLATE_DATA=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/security/data-classification-template.md
-   TEMPLATE_PIA=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/security/privacy-impact-assessment-template.md
+   TEMPLATE_DATA=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/security/data-classification-template.md
+   TEMPLATE_PIA=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/security/privacy-impact-assessment-template.md
 
    # Metadata for both documents
    cat > .aiwg/working/security/data-classification/metadata.json <<EOF
@@ -327,7 +489,7 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
 
 **Primary Authors**: Software Architect (Architecture Designer lead)
 **Templates**:
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md`
 
 **Multi-Agent Workflow**:
 
@@ -335,7 +497,7 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
    ```bash
    mkdir -p .aiwg/working/architecture/architecture-sketch/{drafts,reviews,synthesis}
 
-   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
+   TEMPLATE=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
 
    cat > .aiwg/working/architecture/architecture-sketch/metadata.json <<EOF
    {
@@ -388,7 +550,7 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
 
 **Primary Authors**: Software Architect (Architecture Designer lead)
 **Templates**:
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md`
 
 **Multi-Agent Workflow**:
 
@@ -396,7 +558,7 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
    ```bash
    mkdir -p .aiwg/working/architecture/adrs/{drafts,reviews,synthesis}
 
-   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md
+   TEMPLATE=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md
 
    # Create metadata for ADR collection (3+ ADRs)
    cat > .aiwg/working/architecture/adrs/metadata.json <<EOF
@@ -458,8 +620,8 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
 
 **Primary Authors**: Product Strategist (lead), Project Manager
 **Templates**:
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/business-case-informal-template.md`
-- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/intake/option-matrix-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/business-case-informal-template.md`
+- `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/intake/option-matrix-template.md`
 
 **Multi-Agent Workflow**:
 
@@ -468,8 +630,8 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
    mkdir -p .aiwg/working/management/business-case/{drafts,reviews,synthesis}
    mkdir -p .aiwg/working/planning/scope-boundaries/{drafts,reviews,synthesis}
 
-   TEMPLATE_BC=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/business-case-informal-template.md
-   TEMPLATE_OM=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/intake/option-matrix-template.md
+   TEMPLATE_BC=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/management/business-case-informal-template.md
+   TEMPLATE_OM=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/intake/option-matrix-template.md
 
    cat > .aiwg/working/management/business-case/metadata.json <<EOF
    {

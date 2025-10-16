@@ -1,7 +1,7 @@
 ---
 description: Validate SDLC phase gate criteria with automated checks and comprehensive reporting
 category: sdlc-management
-argument-hint: <phase-or-gate-name> [project-directory]
+argument-hint: <phase-or-gate-name> [project-directory] [--guidance "text"] [--interactive]
 allowed-tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

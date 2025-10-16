@@ -1,7 +1,7 @@
 ---
 description: Orchestrate Inception→Elaboration phase transition with architecture baselining and risk retirement
 category: sdlc-management
-argument-hint: [project-directory]
+argument-hint: [project-directory] [--guidance "text"] [--interactive]
 allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
 model: sonnet
 ---
@@ -34,7 +34,171 @@ Transition from vision validation to architecture validation, proving the system
 - Architecture documentation complete and peer-reviewed
 - Top 70%+ of risks retired or mitigated
 - Requirements baseline established
-- Test strategy defined
+- Test s
+
+### Step 0: Parameter Parsing and Guidance Setup
+
+**Parse Command Line**:
+
+Extract optional `--guidance` and `--interactive` parameters.
+
+```bash
+# Parse arguments (flow-specific primary param varies)
+PROJECT_DIR="."
+GUIDANCE=""
+INTERACTIVE=false
+
+# Parse all arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --guidance)
+      GUIDANCE="$2"
+      shift 2
+      ;;
+    --interactive)
+      INTERACTIVE=true
+      shift
+      ;;
+    --*)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+    *)
+      # If looks like a path (contains / or is .), treat as project-directory
+      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
+        PROJECT_DIR="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+```
+
+**Path Resolution**:
+
+# Function: Resolve AIWG installation path
+resolve_aiwg_root() {
+  # 1. Check environment variable
+  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
+    echo "$AIWG_ROOT"
+    return 0
+  fi
+
+  # 2. Check installer location (user)
+  if [ -d ~/.local/share/ai-writing-guide ]; then
+    echo ~/.local/share/ai-writing-guide
+    return 0
+  fi
+
+  # 3. Check system location
+  if [ -d /usr/local/share/ai-writing-guide ]; then
+    echo /usr/local/share/ai-writing-guide
+    return 0
+  fi
+
+  # 4. Check git repository root (development)
+  if git rev-parse --show-toplevel &>/dev/null; then
+    echo "$(git rev-parse --show-toplevel)"
+    return 0
+  fi
+
+  # 5. Fallback to current directory
+  echo "."
+  return 1
+}
+
+**Resolve AIWG installation**:
+
+```bash
+AIWG_ROOT=$(resolve_aiwg_root)
+
+if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
+  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
+  echo ""
+  echo "Please install AIWG or set AIWG_ROOT environment variable"
+  exit 1
+fi
+```
+
+**Interactive Mode**:
+
+If `--interactive` flag set, prompt user with strategic questions:
+
+```bash
+if [ "$INTERACTIVE" = true ]; then
+  echo "# Flow Inception To Elaboration - Interactive Setup"
+  echo ""
+  echo "I'll ask 8 strategic questions to tailor this flow to your project's needs."
+  echo ""
+
+  read -p "Q1: What are your top priorities for Elaboration? " answer1
+  read -p "Q2: What percentage of requirements do you estimate are understood? " answer2
+  read -p "Q3: What are your biggest architectural unknowns? " answer3
+  read -p "Q4: What's your team's size and composition? " answer4
+  read -p "Q5: How tight is your timeline for Elaboration? " answer5
+  read -p "Q6: What domain expertise does your team have? " answer6
+  read -p "Q7: Are there regulatory or compliance requirements? " answer7
+  read -p "Q8: What's your testing maturity? " answer8
+
+  echo ""
+  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
+  echo ""
+  read -p "Proceed with these adjustments? (yes/no) " confirm
+
+  if [ "$confirm" != "yes" ]; then
+    echo "Aborting flow."
+    exit 0
+  fi
+
+  # Synthesize guidance from answers
+  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
+fi
+```
+
+**Apply Guidance**:
+
+Parse guidance for keywords and adjust execution:
+
+```bash
+if [ -n "$GUIDANCE" ]; then
+  # Keyword detection
+  FOCUS_SECURITY=false
+  FOCUS_PERFORMANCE=false
+  FOCUS_COMPLIANCE=false
+  TIGHT_TIMELINE=false
+
+  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
+    FOCUS_SECURITY=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
+    FOCUS_PERFORMANCE=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
+    FOCUS_COMPLIANCE=true
+  fi
+
+  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
+    TIGHT_TIMELINE=true
+  fi
+
+  # Adjust agent assignments based on guidance
+  ADDITIONAL_REVIEWERS=""
+
+  if [ "$FOCUS_SECURITY" = true ]; then
+    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
+  fi
+
+  if [ "$FOCUS_COMPLIANCE" = true ]; then
+    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
+  fi
+
+  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
+fi
+```
+
+trategy defined
 
 ## Workflow Steps
 
@@ -183,7 +347,7 @@ Create comprehensive Software Architecture Document using multi-agent collaborat
    mkdir -p .aiwg/working/architecture/sad/{drafts,reviews,synthesis}
 
    # Read template metadata to identify responsible roles
-   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
+   TEMPLATE=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
 
    # Template specifies:
    # - Owner: Software Architect (or Architecture Designer)
