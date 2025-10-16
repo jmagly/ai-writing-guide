@@ -1,5 +1,5 @@
 ---
-description: Orchestrate Inception→Elaboration phase transition with architecture baselining, prototype development, and risk retirement
+description: Orchestrate Inception→Elaboration phase transition with architecture baselining and risk retirement
 category: sdlc-management
 argument-hint: [project-directory]
 allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
@@ -16,9 +16,8 @@ When invoked with `/project:flow-inception-to-elaboration [project-directory]`:
 
 1. **Validate** Lifecycle Objective Milestone (LOM) criteria met
 2. **Orchestrate** architecture baseline development workflow
-3. **Coordinate** prototype implementation (executable architecture baseline)
-4. **Monitor** risk retirement progress
-5. **Generate** Architecture Baseline Milestone (ABM) readiness report
+3. **Monitor** risk retirement progress
+4. **Generate** Architecture Baseline Milestone (ABM) readiness report
 
 ## Objective
 
@@ -32,9 +31,8 @@ Transition from vision validation to architecture validation, proving the system
 **Key Milestone**: Architecture Baseline Milestone (ABM)
 
 **Success Criteria**:
-- Executable architecture baseline operational
+- Architecture documentation complete and peer-reviewed
 - Top 70%+ of risks retired or mitigated
-- Architecture peer-reviewed and validated
 - Requirements baseline established
 - Test strategy defined
 
@@ -92,7 +90,7 @@ ls security/data-classification-template.md
 
 ### Step 2: Plan Architecture Baseline Development
 
-Define architecture objectives, select architecturally significant use cases, and plan prototype.
+Define architecture objectives and select architecturally significant use cases for validation.
 
 **Agents to Coordinate**:
 - **Architecture Designer**: Lead architect, defines SAD (Software Architecture Document)
@@ -128,11 +126,10 @@ ls analysis-design/architecture-decision-record-template.md
      - Security mechanisms (authentication, authorization)
      - Performance requirements (load, response time)
 
-3. **Define Prototype Scope**
-   - Prototype is NOT a "toy app" - must prove architecture
-   - Include: Authentication, data persistence, API integration, logging
-   - Exclude: Non-architecturally significant features, polish, full coverage
-   - Target: 10-20% of final functionality, 100% architecture coverage
+3. **Plan Risk Validation Approach**
+   - Identify high-risk assumptions requiring validation (spikes, POCs)
+   - Define acceptance criteria for each risk retirement
+   - Use `/project:build-poc` command for technical feasibility validation as needed
 
 **Output**: Architecture Baseline Plan
 ```markdown
@@ -156,11 +153,10 @@ ls analysis-design/architecture-decision-record-template.md
    - Why Architecturally Significant: {reason}
    - Risks Addressed: {risk IDs}
 
-## Prototype Scope
-- Components: {list logical components}
-- Technologies: {list frameworks, libraries}
-- Integrations: {list external systems}
-- Test Coverage: Unit ≥60%, Integration key paths
+## Risk Validation Strategy
+- High-risk assumptions: {list assumptions requiring validation}
+- POC/Spike requirements: {describe validation approach}
+- Technologies requiring proof: {list frameworks, integrations, patterns}
 
 ## Team Assignments
 - Architect: {name}
@@ -170,9 +166,9 @@ ls analysis-design/architecture-decision-record-template.md
 
 ## Schedule
 - Week 1-2: Architecture design, ADRs, SAD documentation
-- Week 3-5: Prototype implementation (steel thread)
-- Week 6: Prototype testing and peer review
-- Week 7-8: Risk retirement, requirements baseline, ABM review
+- Week 3-5: Risk retirement activities (spikes, POCs via /project:build-poc)
+- Week 6: Architecture peer review and validation
+- Week 7-8: Requirements baseline, test strategy, ABM review
 ```
 
 ### Step 3: Develop Architecture Baseline (SAD)
@@ -252,96 +248,7 @@ Create comprehensive Software Architecture Document with peer review.
 - Peer Reviewer: {signature, date}
 ```
 
-### Step 4: Implement Executable Architecture Baseline (Prototype)
-
-Build working prototype that proves architecture (steel thread implementation).
-
-**Commands**:
-```bash
-# Software Implementers build prototype
-# Test Engineers create test suite
-# Deployment Manager sets up CI/CD
-
-# Agents coordinate:
-# - Software Implementer (coding)
-# - Test Engineer (test automation)
-# - Deployment Manager (CI/CD setup)
-# - Code Reviewer (code quality)
-```
-
-**Prototype Requirements**:
-- **End-to-End Flow**: User action → business logic → data persistence → response
-- **Architecturally Significant**: Demonstrates key patterns (layering, modularity, etc.)
-- **Executable**: Runs in dev environment, deployed via CI/CD to test environment
-- **Tested**: Unit tests ≥60% coverage, integration tests for key paths
-- **Documented**: Code comments, architecture diagrams (as-built), configuration guide
-
-**Validation Criteria**:
-- [ ] Prototype runs successfully in development environment
-- [ ] CI/CD pipeline builds and deploys prototype automatically
-- [ ] Smoke tests pass post-deployment (critical paths validated)
-- [ ] Unit test coverage ≥60%
-- [ ] Integration tests passing (at least 2 end-to-end flows)
-- [ ] Performance baseline established (load test results captured)
-- [ ] Code reviewed and meets coding standards
-- [ ] Architecture patterns visible in code (layers, separation of concerns)
-
-**Commands**:
-```bash
-# Build prototype
-npm run build  # or equivalent for tech stack
-
-# Run tests
-npm run test
-npm run test:integration
-npm run test:performance
-
-# Deploy to test environment
-npm run deploy:test
-
-# Validate deployment
-curl {test-endpoint}/health
-```
-
-**Output**: Executable Architecture Baseline Report
-```markdown
-# Executable Architecture Baseline Report
-
-**Project**: {project-name}
-**Prototype Version**: {version}
-**Date**: {date}
-
-## Prototype Scope
-- Steel Thread Use Cases: {list implemented use cases}
-- Components Implemented: {list}
-- Integrations Demonstrated: {list}
-
-## Test Results
-- Unit Test Coverage: {percentage}% (target: ≥60%)
-- Integration Tests: {passed}/{total}
-- Performance Baseline: {response time, throughput}
-
-## Deployment Status
-- Development: {DEPLOYED | FAILED}
-- Test: {DEPLOYED | FAILED}
-- CI/CD Pipeline: {OPERATIONAL | INCOMPLETE}
-
-## Architecture Validation
-- [ ] End-to-end flow demonstrated
-- [ ] Key architectural patterns proven
-- [ ] External integration working
-- [ ] Security mechanisms operational
-- [ ] Performance acceptable
-
-## Issues and Gaps
-{list any prototype issues or missing functionality}
-
-## Conclusion
-**Architecture Proven**: {YES | NO | PARTIAL}
-**Rationale**: {detailed reasoning}
-```
-
-### Step 5: Retire Architectural Risks
+### Step 4: Retire Architectural Risks
 
 Validate high-risk assumptions, conduct spikes/POCs, update risk list.
 
@@ -349,6 +256,9 @@ Validate high-risk assumptions, conduct spikes/POCs, update risk list.
 ```bash
 # Update risk list
 cat management/risk-list.md
+
+# Build POCs for high-risk assumptions
+/project:build-poc {feature-or-risk-to-validate} --scope {minimal|standard|comprehensive}
 
 # Document spike results
 ls analysis-design/spike-card-*.md
@@ -366,14 +276,15 @@ grep -r "Risk Status: MITIGATED" management/
 
 **Risk Retirement Activities**:
 1. **Spike/POC Execution** (for high-risk assumptions)
-   - Timebox: 1-3 days per spike
-   - Document findings in spike cards
-   - Go/no-go decision per spike
+   - Use `/project:build-poc` for technical feasibility validation
+   - Timebox: 1-3 days per spike (minimal scope), 1-2 weeks for comprehensive POCs
+   - Document findings in spike cards or POC reports
+   - Go/no-go decision per spike/POC
 
-2. **Prototype Validation** (proves architectural risks retired)
-   - Performance risk → load test results
-   - Integration risk → working integration demonstrated
-   - Security risk → security controls validated
+2. **Risk Validation** (proves architectural assumptions)
+   - Performance risk → load testing, benchmarking
+   - Integration risk → integration spike, API validation
+   - Security risk → security controls demonstration, threat modeling
 
 3. **Risk List Update**
    - Mark risks as RETIRED (no longer a concern)
@@ -414,15 +325,15 @@ grep -r "Risk Status: MITIGATED" management/
 
 1. **{Risk-ID}**: {risk-description}
    - Status: {RESOLVED | PARTIALLY RESOLVED}
-   - Evidence: {how validated}
+   - Evidence: {spike/POC results, validation approach}
 
 2. **{Risk-ID}**: {risk-description}
    - Status: {RESOLVED | PARTIALLY RESOLVED}
-   - Evidence: {how validated}
+   - Evidence: {spike/POC results, validation approach}
 
 3. **{Risk-ID}**: {risk-description}
    - Status: {RESOLVED | PARTIALLY RESOLVED}
-   - Evidence: {how validated}
+   - Evidence: {spike/POC results, validation approach}
 
 ## Remaining Risks
 
@@ -441,7 +352,7 @@ grep -r "Risk Status: MITIGATED" management/
 **Risk Retirement Status**: {PASS | FAIL}
 ```
 
-### Step 6: Baseline Requirements and Test Strategy
+### Step 5: Baseline Requirements and Test Strategy
 
 Document use cases, supplemental requirements, and test plan.
 
@@ -459,7 +370,7 @@ ls test/master-test-plan-template.md
 
 **Requirements Baseline Contents**:
 1. **Use Case Specifications** (10+ use cases minimum)
-   - Top 3 use cases: Architecturally significant (covered by prototype)
+   - Top 3 use cases: Architecturally significant (validated via risk retirement)
    - Remaining use cases: Functional requirements for Construction
    - Acceptance criteria defined for each use case
    - Traceability: Requirements → components (per SAD)
@@ -494,9 +405,9 @@ ls test/master-test-plan-template.md
 **Architecturally Significant**: {count}
 **Acceptance Criteria Defined**: {count}/{total}
 
-### Steel Thread Use Cases (Prototype)
-1. **UC-{ID}**: {name} - Prototype Status: {IMPLEMENTED}
-2. **UC-{ID}**: {name} - Prototype Status: {IMPLEMENTED}
+### Steel Thread Use Cases (Architecturally Significant)
+1. **UC-{ID}**: {name} - Validation Status: {VALIDATED}
+2. **UC-{ID}**: {name} - Validation Status: {VALIDATED}
 
 ### Construction Use Cases
 {list remaining use cases with priority}
@@ -544,7 +455,7 @@ ls test/master-test-plan-template.md
 **ABM Requirements Criteria**: {PASS | FAIL}
 ```
 
-### Step 7: Conduct Architecture Baseline Milestone (ABM) Review
+### Step 6: Conduct Architecture Baseline Milestone (ABM) Review
 
 Formal gate review to decide GO/NO-GO to Construction.
 
@@ -575,16 +486,15 @@ Formal gate review to decide GO/NO-GO to Construction.
 - Peer Architect (external reviewer)
 - Key Stakeholders (at least 2)
 
-**Agenda** (3 hours):
+**Agenda** (2.5 hours):
 1. Architecture presentation (30 min) - Architect presents SAD
-2. Prototype demonstration (30 min) - Live demo of working prototype
-3. Requirements baseline review (20 min) - Requirements Analyst presents
-4. Risk retirement review (20 min) - Project Manager presents risk status
-5. Test strategy review (15 min) - Test Architect presents
-6. Process and planning review (15 min) - Project Manager presents
-7. Peer review feedback (15 min) - External architect provides assessment
-8. Q&A and discussion (30 min)
-9. Go/No-Go decision (15 min)
+2. Requirements baseline review (20 min) - Requirements Analyst presents
+3. Risk retirement review (30 min) - Project Manager presents risk status and POC results
+4. Test strategy review (15 min) - Test Architect presents
+5. Process and planning review (15 min) - Project Manager presents
+6. Peer review feedback (15 min) - External architect provides assessment
+7. Q&A and discussion (20 min)
+8. Go/No-Go decision (15 min)
 
 **Decision Outcomes**:
 - **GO to Construction**: All criteria met, architecture proven, ready to build
@@ -613,11 +523,11 @@ Formal gate review to decide GO/NO-GO to Construction.
 - SAD Approved: {YES | NO}
 - Status: {PASS | FAIL}
 
-### 2. Executable Architecture Baseline
-- Prototype Operational: {YES | NO}
-- Steel Thread Demonstrated: {YES | NO}
-- Tests Passing: Unit {percentage}%, Integration {passed}/{total}
-- CI/CD Operational: {YES | NO}
+### 2. Risk Validation and Retirement
+- Risks Retired/Mitigated: {percentage}% (target: ≥70%)
+- Show Stopper Risks: {count} (target: 0)
+- POC/Spike Results: {count completed}/{count planned}
+- Technical Feasibility Proven: {YES | NO}
 - Status: {PASS | FAIL}
 
 ### 3. Requirements Baseline
@@ -626,14 +536,7 @@ Formal gate review to decide GO/NO-GO to Construction.
 - Traceability Established: {percentage}%
 - Status: {PASS | FAIL}
 
-### 4. Risk Retirement
-- Risks Retired/Mitigated: {percentage}% (target: ≥70%)
-- Show Stopper Risks: {count} (target: 0)
-- High Risks: {count} (target: 0 or mitigated)
-- Top 3 Inception Risks Resolved: {YES | NO}
-- Status: {PASS | FAIL}
-
-### 5. Test Strategy
+### 4. Test Strategy
 - Master Test Plan Approved: {YES | NO}
 - Test Environments Operational: {count}/{total}
 - Status: {PASS | FAIL}
@@ -711,8 +614,8 @@ This command succeeds when:
 - [ ] Lifecycle Objective Milestone validated (LOM complete)
 - [ ] Architecture Baseline Plan created
 - [ ] Software Architecture Document BASELINED
-- [ ] Executable architecture baseline OPERATIONAL
 - [ ] Risks retired ≥70% (Show Stopper and High 100% retired/mitigated)
+- [ ] POCs/Spikes completed for high-risk assumptions
 - [ ] Requirements baseline ESTABLISHED
 - [ ] Master Test Plan APPROVED
 - [ ] ABM review conducted with GO/CONDITIONAL GO decision
@@ -724,10 +627,10 @@ This command succeeds when:
 - Action: "Return to Inception flow: /project:flow-concept-to-inception"
 - Escalation: "Contact Executive Sponsor for project status"
 
-**Prototype Failed**:
-- Report: "Executable architecture baseline not operational"
-- Action: "Identify technical blockers, may need architecture pivot"
-- Impact: "ABM cannot pass without working prototype"
+**POC/Spike Failed**:
+- Report: "Critical POC failed - technical feasibility not proven"
+- Action: "Identify technical blockers, may need architecture pivot or technology change"
+- Impact: "ABM blocked until technical feasibility proven or risk accepted"
 
 **Risk Retirement Insufficient**:
 - Report: "Risk retirement {percentage}% (target: ≥70%)"
@@ -743,7 +646,7 @@ This command succeeds when:
 
 **Track During Elaboration**:
 - Architecture stability: % of architectural changes (target: <10% after ABM)
-- Prototype quality: Defects found in prototype (target: <20 open defects)
+- POC/Spike completion: % of planned validations completed (target: 100%)
 - Risk retirement velocity: % of risks resolved per week
 - Cycle time: Elaboration phase duration (target: 4-8 weeks)
 
