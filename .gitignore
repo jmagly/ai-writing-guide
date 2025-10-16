@@ -47,3 +47,6 @@ TODO.local.md
 
 # Agent temporary files
 _agent-temp/
+
+# SDLC artifacts (use locally, don't commit)
+.aiwg/
