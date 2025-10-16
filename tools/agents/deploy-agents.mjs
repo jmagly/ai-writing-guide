@@ -170,26 +170,42 @@ function deployFiles(files, destDir, opts) {
   for (const f of files) {
     const base = path.basename(f);
     let dest = path.join(destDir, base);
-    if (seen.has(dest) || (fs.existsSync(dest) && !force)) {
-      if (!force) {
-        // Skip duplicates when not forcing
-        actions.push({ type: 'skip', src: f, dest });
+
+    // Check for duplicate destination in this batch
+    if (seen.has(dest)) {
+      actions.push({ type: 'skip', src: f, dest, reason: 'duplicate' });
+      continue;
+    }
+
+    // Read and transform source content
+    const srcContent = fs.readFileSync(f, 'utf8');
+    const transformedContent = transformIfNeeded(f, srcContent, provider, opts);
+
+    // Check if destination exists and compare contents
+    if (fs.existsSync(dest)) {
+      const destContent = fs.readFileSync(dest, 'utf8');
+      if (destContent === transformedContent && !force) {
+        // Contents are identical, skip
+        actions.push({ type: 'skip', src: f, dest, reason: 'unchanged' });
+        seen.add(dest);
         continue;
       }
+      // Contents differ or force flag set, deploy (overwrite)
+      actions.push({ type: 'deploy', src: f, dest, content: transformedContent, reason: force ? 'forced' : 'changed' });
+    } else {
+      // File doesn't exist, deploy
+      actions.push({ type: 'deploy', src: f, dest, content: transformedContent, reason: 'new' });
     }
-    actions.push({ type: 'deploy', src: f, dest });
     seen.add(dest);
   }
 
   for (const a of actions) {
     if (a.type === 'deploy') {
-      const content = fs.readFileSync(a.src, 'utf8');
-      const transformed = transformIfNeeded(a.src, content, provider, opts);
-      if (dryRun) console.log(`[dry-run] deploy ${a.src} -> ${a.dest}`);
-      else writeFile(a.dest, transformed, false);
-      console.log(`deployed ${path.basename(a.src)} -> ${path.relative(process.cwd(), a.dest)}`);
+      if (dryRun) console.log(`[dry-run] deploy ${a.src} -> ${a.dest} (${a.reason})`);
+      else writeFile(a.dest, a.content, false);
+      console.log(`deployed ${path.basename(a.src)} -> ${path.relative(process.cwd(), a.dest)} (${a.reason})`);
     } else if (a.type === 'skip') {
-      console.log(`skip (exists): ${path.basename(a.dest)}`);
+      console.log(`skip (${a.reason}): ${path.basename(a.dest)}`);
     }
   }
 }
