@@ -19,6 +19,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { spawnSync } from 'node:child_process';
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -155,7 +156,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
   return settingsPath;
 }
 
-(function main() {
+(async function main() {
   const { name, withAgents, provider } = parseArgs();
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
   const repoRoot = path.resolve(scriptDir, '..', '..');
@@ -206,7 +207,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
       `Access to SDLC framework documentation is configured in \`.claude/settings.json\`.\n\n` +
       `### 3. Start SDLC Flow\n\n` +
       `Once intake forms are complete, kick off the Concept → Inception flow:\n\n` +
-      \`\`\`bash\n# Start Inception phase with automated validation\n/project:flow-concept-to-inception .\n\n# Or use the intake-start command\n/project:intake-start intake/\n\n# Check available flow commands\nls .claude/commands/flow-*.md\n\`\`\`\n\n` +
+      '```bash\n# Start Inception phase with automated validation\n/project:flow-concept-to-inception .\n\n# Or use the intake-start command\n/project:intake-start intake/\n\n# Check available flow commands\nls .claude/commands/flow-*.md\n```\n\n' +
       `### 4. SDLC Framework Documentation\n\n` +
       `Claude Code agents have read access to the complete SDLC framework documentation at:\n\n` +
       `\`${aiwgPath}/agentic/code/frameworks/sdlc-complete/\`\n\n` +
@@ -233,8 +234,6 @@ function createOrUpdateSettings(aiwgPath, provider) {
   if (withAgents) {
     const deployPath = path.join(aiwgPath, 'tools', 'agents', 'deploy-agents.mjs');
     if (fs.existsSync(deployPath)) {
-      const { spawnSync } = await import('node:child_process');
-
       // Deploy agents
       const agentArgs = ['--provider', provider, '--mode', 'sdlc'];
       if (provider === 'openai') agentArgs.push('--as-agents-md');
@@ -257,7 +256,6 @@ function createOrUpdateSettings(aiwgPath, provider) {
   // Initialize git repository if not present
   if (!fs.existsSync(path.resolve(process.cwd(), '.git'))) {
     try {
-      const { spawnSync } = await import('node:child_process');
       let r = spawnSync('git', ['init', '-b', 'main'], { stdio: 'inherit' });
       if (r.status !== 0) {
         // fallback for older git
