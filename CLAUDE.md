@@ -286,6 +286,35 @@ This repository includes a comprehensive software development lifecycle framewor
 
 See `agentic/code/frameworks/sdlc-complete/actors-and-templates.md` for role-to-template mappings.
 
+### Intake Commands with Guidance
+
+All three intake commands now support an optional `--guidance` parameter to provide additional context:
+
+**intake-wizard** - Generate or complete intake forms with guidance:
+```bash
+/project:intake-wizard "Build customer portal" --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
+/project:intake-wizard --complete --interactive --guidance "Focus on security first, SOC2 audit in 3 months"
+```
+
+**intake-from-codebase** - Analyze existing codebase with guidance:
+```bash
+/project:intake-from-codebase . --guidance "Focus on security posture and compliance gaps for SOC2 audit"
+/project:intake-from-codebase . --interactive --guidance "Fintech app, PCI-DSS required, preparing for Series A fundraising"
+```
+
+**intake-start** - Kick off Inception with guidance:
+```bash
+/project:intake-start .aiwg/intake/ --guidance "Focus on security architecture first, compliance is critical path"
+/project:intake-start .aiwg/intake/ --guidance "Team has limited DevOps experience, need extra infrastructure support"
+```
+
+The `--guidance` parameter accepts free-form text to:
+- Prioritize specific areas (security, compliance, scale, performance)
+- Provide business context (domain, strategic drivers, constraints)
+- Clarify requirements (timeline pressure, budget limits, team skills)
+- Highlight unknowns or risks (technical uncertainties, integration challenges)
+- Influence profile selection, priority weights, and agent assignments
+
 ## .aiwg/ - SDLC Artifacts Directory
 
 All SDLC artifacts (requirements, architecture, planning, testing, etc.) are stored in the **`.aiwg/`** directory by default. This keeps user-facing code in the project root separate from process artifacts.

@@ -1,7 +1,7 @@
 ---
-description: Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning
+description: Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning and optional guidance
 category: sdlc-management
-argument-hint: <project-description|--complete> [--interactive] [intake-directory=.aiwg/intake]
+argument-hint: <project-description|--complete> [--interactive] [--guidance "context"] [intake-directory=.aiwg/intake]
 allowed-tools: Read, Write, Glob, TodoWrite
 model: sonnet
 ---
@@ -13,12 +13,13 @@ You are an experienced Business Process Analyst and Requirements Analyst special
 ## Your Task
 
 ### Mode 1: Generate New Intake (Default)
-When invoked with `/project:intake-wizard <project-description> [--interactive] [intake-directory]`:
+When invoked with `/project:intake-wizard <project-description> [--interactive] [--guidance "text"] [intake-directory]`:
 
 1. **Analyze** the user's project description
-2. **Ask** up to 10 clarifying questions (if --interactive mode)
-3. **Infer** missing details using expert judgment
-4. **Generate** complete intake forms in `.aiwg/intake/` (or specified directory)
+2. **Process guidance** from user prompt (if provided) to focus analysis or clarify context
+3. **Ask** up to 10 clarifying questions (if --interactive mode)
+4. **Infer** missing details using expert judgment
+5. **Generate** complete intake forms in `.aiwg/intake/` (or specified directory)
 
 **Default Output**: `.aiwg/intake/` (creates directory if needed)
 
@@ -49,6 +50,42 @@ Ask 5-10 targeted questions to clarify critical decisions, adapting based on use
 /project:intake-wizard "Build a customer dashboard" --interactive
 ```
 
+### Guidance Parameter
+The `--guidance` parameter accepts free-form text to help tailor the intake generation. Use it for:
+
+**Business Context**:
+```bash
+/project:intake-wizard "Build a customer portal" --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
+```
+
+**Project Constraints**:
+```bash
+/project:intake-wizard "Build mobile app backend" --guidance "Tight 3-month deadline, limited budget, team of 2 developers"
+```
+
+**Strategic Goals**:
+```bash
+/project:intake-wizard "Modernize legacy system" --guidance "Preparing for Series A fundraising, need SOC2 compliance, phased migration required"
+```
+
+**Domain-Specific Requirements**:
+```bash
+/project:intake-wizard "E-commerce platform" --guidance "Fintech app, PCI-DSS required, multi-currency support, 10+ payment gateways"
+```
+
+**Combination with Interactive**:
+```bash
+/project:intake-wizard "Customer analytics dashboard" --interactive --guidance "Real-time data processing, 100k events/sec, enterprise clients"
+```
+
+**How guidance influences generation**:
+- **Prioritizes** specific areas (security, compliance, scale, performance) in generated intake
+- **Infers** missing information based on context (e.g., "healthcare" → check HIPAA requirements)
+- **Adjusts** profile recommendations (e.g., "compliance critical" → favor Production/Enterprise profile)
+- **Tailors** questions (if --interactive, asks about guidance-specific topics first)
+- **Documents** in "Problem and Outcomes" section (captures business context and drivers)
+- **Sets priority weights** in option-matrix based on guidance (e.g., "tight deadline" → higher speed weight)
+
 ### Complete Mode (Auto-complete Existing)
 Read existing intake files and complete any gaps automatically if enough detail exists.
 
@@ -74,14 +111,52 @@ Read existing intake files, detect gaps, and ask questions to fill critical miss
 # Updates intake files with completed information
 ```
 
+## Guidance Processing (If Provided)
+
+If user provided `--guidance "text"`, parse and apply throughout intake generation.
+
+**Extract from guidance**:
+- **Business domain** (healthcare, fintech, e-commerce, enterprise, consumer)
+- **Compliance requirements** (HIPAA, PCI-DSS, GDPR, SOX, FedRAMP, SOC2)
+- **Scale indicators** (user count, transaction volume, geographic distribution)
+- **Timeline constraints** (tight deadline, phased rollout, MVP first)
+- **Budget constraints** (cost-conscious, enterprise budget, startup)
+- **Team characteristics** (size, experience level, tech stack familiarity)
+- **Strategic drivers** (fundraising, audit prep, market expansion, modernization)
+
+**Apply guidance to**:
+1. **Profile recommendation**: Weight criteria based on guidance (e.g., "HIPAA" → Enterprise profile)
+2. **Priority weights**: Adjust option-matrix weights (e.g., "tight deadline" → Speed 0.5)
+3. **Security posture**: Elevate based on compliance (e.g., "PCI-DSS" → Strong security)
+4. **Interactive questions**: Focus on guidance-specific gaps (if --interactive)
+5. **Documentation**: Reference guidance in intake forms (Problem statement, constraints)
+
+**Example guidance processing**:
+
+Input: `--guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users, preparing for SOC2 audit"`
+
+Extracted:
+- Domain: Healthcare (B2B SaaS)
+- Compliance: HIPAA (critical), SOC2 (in progress)
+- Scale: 50k users (Production profile likely)
+- Intent: Audit preparation
+
+Applied:
+- Profile: Production (compliance + established users)
+- Security: Strong (HIPAA + SOC2 mandatory)
+- Priority weights: Quality 0.4, Reliability 0.3, Speed 0.2, Cost 0.1
+- Questions (if --interactive): Focus on HIPAA controls, audit timeline, PHI handling
+- Documentation: Capture in "Problem and Outcomes" → "SOC2 audit preparation for healthcare SaaS"
+
 ## Question Strategy (Interactive Mode Only)
 
 ### Core Principles
 - **Maximum 10 questions total** - be selective and strategic
-- **Adapt dynamically** - adjust questions based on previous answers
+- **Adapt dynamically** - adjust questions based on previous answers AND guidance
 - **Match technical level** - gauge user expertise and adjust complexity
 - **Focus on decisions** - ask about trade-offs that significantly impact architecture
 - **Fill gaps intelligently** - use expert judgment when user lacks technical knowledge
+- **Leverage guidance** - skip questions already answered by guidance, focus on remaining gaps
 
 ### Question Categories (Priority Order)
 
