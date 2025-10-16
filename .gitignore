@@ -30,7 +30,10 @@ build/
 *.temp
 *.bak
 scratch*
-test-*
+test-*.tmp
+test-*.temp
+test-output/
+test-results/
 
 # Local notes
 local-notes/
