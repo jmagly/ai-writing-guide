@@ -751,162 +751,399 @@ Create three intake files documenting the existing system.
 
 #### Generated: option-matrix.md
 
+Follow the template structure from `agentic/code/frameworks/sdlc-complete/templates/intake/option-matrix-template.md`:
+
+**Key Principles**:
+1. **Descriptive, not prescriptive** - Capture what IS (project reality), not what should be (analysis)
+2. **Natural language** - Use descriptive project types ("personal blog, <100 readers" vs "Prototype profile")
+3. **Intent-driven** - Focus interactive questions (6-8 of 10) on priorities, trade-offs, decisions, evolution
+4. **Framework mapping** - Map project reality to relevant templates/commands/agents/rigor levels
+
 ```markdown
-# Option Matrix (Improvement Paths)
+# Option Matrix (Project Context & Intent)
 
-**Document Type**: Existing System Improvement Options
-**Generated**: {current date}
+**Purpose**: Capture what this project IS - its nature, audience, constraints, and intent - to determine appropriate SDLC framework application (templates, commands, agents, rigor levels).
 
-## Context
+**Generated**: {current date} (from codebase analysis)
 
-**Current State**: {Production system with {X} users}
-**Key Challenges**: {from user questions or analysis}
-**Business Driver**: {compliance, scale, handoff, modernization}
+## Step 1: Project Reality
 
-## Criteria (weights sum 1.0)
+### What IS This Project?
 
-{based on business driver}
+**Project Description** (in natural language):
+```
+{Describe in 2-3 sentences based on codebase analysis and user guidance:}
 
-- Minimal disruption: {0.3 if production, 0.1 if greenfield}
-- Cost efficiency: {0.2 for all}
-- Quality/security improvement: {0.3 if compliance, 0.2 otherwise}
-- Performance/scale improvement: {0.2 if bottlenecks, 0.1 otherwise}
+Examples:
+- "Documentation framework and SDLC toolkit (60 agents, 40 commands), 474 markdown files, GitHub-hosted open source (MIT), 0 users (pre-launch), solo developer (30 years system engineering), expects multiple refactors for multi-platform evolution"
+- "B2B inventory tracking app for 5 warehouse staff, critical to daily operations, Node.js + PostgreSQL on local server, 50k SKUs, used 8hrs/day, 2 part-time developers, moderate technical debt limiting new features"
+- "Personal portfolio site for job applications, 10-20 visitors/month expected, static HTML/CSS on GitHub Pages, solo project, need to ship in 2 weeks"
+```
 
-**Weights Rationale**: {explain based on detected priorities}
+### Audience & Scale
 
-## Options
+**Who uses this?** (check all from analysis)
+- {[x] if detected} Just me (personal project) - {evidence: solo git contributor, guidance}
+- {[x] if detected} Small team (2-10 people, known individuals) - {evidence: warehouse staff, internal tool}
+- {[x] if detected} Department (10-100 people, organization-internal)
+- {[x] if detected} External customers (100-10k users, paying or free) - {evidence: payment integration, multi-tenancy}
+- {[x] if detected} Large scale (10k-100k+ users, public-facing) - {evidence: load balancing, sharding}
+- {[ ] if unknown} Other: `___ (mark for interactive question)`
 
-### Option A: Maintain + SDLC Adoption (Low Disruption)
+**Audience Characteristics**:
+- Technical sophistication: `{Non-technical | Mixed | Technical}` - {inferred from UI complexity, API design}
+- User risk tolerance: `{Experimental OK | Expects stability | Zero-tolerance}` - {inferred from SLA, criticality}
+- Support expectations: `{Self-service | Best-effort | SLA | 24/7}` - {detected from runbooks, on-call patterns}
 
-**Approach**: Keep existing architecture, adopt SDLC process framework
+**Usage Scale** (current or projected from analysis):
+- Active users: `{count} (daily/weekly/monthly)` - {from guidance or "mark for question"}
+- Request volume: `{count} requests/min` or `N/A (batch/cron/manual use)` - {from scale analysis}
+- Data volume: `{size} GB/TB` or `N/A (stateless/small)` - {from database size, S3 usage}
+- Geographic distribution: `{Single location | Regional | Multi-region | Global}` - {from deployment, CDN}
 
-**Changes**:
-- No code refactoring (architecture stays as-is)
-- Add SDLC documentation (intake, requirements, architecture)
-- Implement quality gates (security, testing, compliance)
-- Adopt dual-track iterations (Discovery + Delivery)
-- Add monitoring/observability (if missing)
+### Deployment & Infrastructure
 
-**Timeline**: 4-8 weeks for full SDLC adoption
+**Expected Deployment Model** (what will this become? - inferred from codebase):
+- {[x] if detected} Client-only (desktop app, mobile app, CLI tool, browser extension) - {detect from: Electron config, React Native, mobile directories, manifest.json for extensions, CLI scripts}
+- {[x] if detected} Static site (HTML/CSS/JS, no backend, hosted files) - {detect from: only HTML/CSS/JS, no server code, static site generator config (11ty, Hugo, Jekyll), Netlify/Vercel/GitHub Pages deploy config}
+- {[x] if detected} Client-server (SPA + API backend, traditional web app with database) - {detect from: React/Vue/Angular + Express/Django/Rails, single database, traditional MVC structure}
+- {[x] if detected} Full-stack application (frontend + backend + database + supporting services) - {detect from: multiple services (API, workers, cron jobs), message queues, caching layer, multiple data stores}
+- {[x] if detected} Multi-system (multiple services, microservices, service mesh, distributed) - {detect from: multiple services/, docker-compose with >3 services, Kubernetes manifests, service discovery (Consul, Eureka), API gateway}
+- {[x] if detected} Distributed application (edge computing, P2P, blockchain, federated) - {detect from: WebRTC, IPFS, blockchain SDKs, edge function configs (Cloudflare Workers, Lambda@Edge), peer-to-peer protocols}
+- {[x] if detected} Embedded/IoT (device firmware, embedded systems, hardware integration) - {detect from: Arduino/PlatformIO config, embedded C/C++, hardware abstraction layers, serial communication, sensor integration}
+- {[x] if detected} Hybrid (multiple deployment patterns, e.g., mobile app + cloud backend) - {detect from: combination of above indicators}
+- {[ ] if unclear} Other: `___ (mark for interactive question)`
 
-**Pros**:
-- Zero business disruption (no downtime)
-- Low risk (no code changes)
-- Immediate process improvements
-- Compliance/audit-ready documentation
+**Where does this run?** (from infrastructure analysis):
+- {[x] if detected} Local only (laptop, desktop, not deployed) - {no Dockerfile, no CI/CD, no deployment scripts}
+- {[x] if detected} Personal hosting (VPS, shared hosting, home server) - {simple deployment scripts, SSH deploy, rsync patterns}
+- {[x] if detected} Cloud platform (AWS, GCP, Azure, Vercel, Netlify, GitHub Pages) - {detected from terraform/, AWS SDK, gcloud config, azure-pipelines.yml, vercel.json, netlify.toml, GitHub Actions with pages deploy}
+- {[x] if detected} On-premise (company servers, data center) - {from guidance or local server evidence, ansible playbooks, chef/puppet configs}
+- {[x] if detected} Hybrid (cloud + on-premise, multi-cloud) - {multiple cloud providers detected, hybrid architecture indicators}
+- {[x] if detected} Edge/CDN (distributed, geographically distributed) - {Cloudflare Workers, Lambda@Edge, CDN configs}
+- {[x] if detected} Mobile (iOS, Android, native or cross-platform) - {Xcode project, Android Studio, React Native, Flutter, Ionic}
+- {[x] if detected} Desktop (Windows, macOS, Linux executables) - {Electron, .NET, Qt, PyInstaller, pkg configs}
+- {[x] if detected} Browser (extension, PWA, web app) - {manifest.json for extensions, service-worker.js for PWA, web app manifest}
+- {[ ] if unclear} Other: `___ (mark for interactive question)`
 
-**Cons**:
-- Doesn't address technical debt
-- Existing bottlenecks remain
-- Architecture limitations persist
+**Infrastructure Complexity**:
+- Deployment type: `{Static site | Single server | Multi-tier | Microservices | Serverless | Container orchestration}` - {from architecture analysis: static HTML, single Dockerfile, docker-compose with tiers, services/ directory, Lambda functions, kubernetes/}
+- Data persistence: `{None (stateless) | Client-side only | File system | Single database | Multiple data stores | Distributed database}` - {from dependencies: no DB libs, localStorage/IndexedDB, file I/O, single DB connection, multiple DBs (PostgreSQL + Redis + Elasticsearch), Cassandra/MongoDB sharding}
+- External dependencies: `{count} third-party services (0 = none, 1-3 = few, 4-10 = moderate, 10+ = many)` - {from API integrations detected: Stripe, SendGrid, Twilio, AWS services, etc.}
+- Network topology: `{Standalone | Client-server | Multi-tier | Peer-to-peer | Mesh | Hybrid}` - {from architecture: single process, client + server, frontend + API + DB + workers, WebRTC/P2P, service mesh (Istio, Linkerd), combination}
 
-**Best For**: Compliance-driven intake, stable systems, risk-averse teams
+### Technical Complexity
 
-**Score**:
-- Minimal disruption: 5/5 (no changes)
-- Cost efficiency: 5/5 (documentation only)
-- Quality/security: 3/5 (process improvement, no code changes)
-- Performance/scale: 2/5 (no optimization)
+**Codebase Characteristics** (from analysis):
+- Size: `{<1k | 1k-10k | 10k-100k | 100k+} LoC` - {from cloc or file count estimate}
+- Languages: `{primary}, {secondary if any}` - {from file extensions, percentages}
+- Architecture: `{Single script | Simple app | Modular | Multi-service | Complex distributed}` - {from step 2 analysis}
+- Team familiarity: `{Greenfield | Brownfield | Legacy}` - {from git history, tech debt indicators}
 
-**Total**: {weighted score}
+**Technical Risk Factors** (check all from security/performance analysis):
+- {[x] if detected} Performance-sensitive (latency, throughput critical) - {caching, optimization patterns}
+- {[x] if detected} Security-sensitive (PII, payments, authentication) - {JWT, encryption, compliance indicators}
+- {[x] if detected} Data integrity-critical (financial, medical, legal records) - {transaction patterns, audit logs}
+- {[x] if detected} High concurrency (many simultaneous users/processes) - {connection pooling, queue workers}
+- {[x] if detected} Complex business logic (many edge cases, domain rules) - {code complexity, conditional density}
+- {[x] if detected} Integration-heavy (many external systems, APIs, protocols) - {3+ external services}
+- {[ ] if none} None (straightforward technical requirements)
 
-### Option B: Incremental Modernization (Medium Disruption)
+---
 
-**Approach**: Phased refactoring while adopting SDLC
+## Step 2: Constraints & Context
 
-**Changes**:
-- Phase 1: SDLC adoption + critical fixes (0-2 months)
-- Phase 2: Performance optimization (2-4 months)
-- Phase 3: Architecture improvements (4-8 months)
-- Phase 4: Security hardening (6-10 months)
+### Resources
 
-**Timeline**: 8-12 months total
+**Team** (from git analysis):
+- Size: `{count} developers, {count} designers, {count} other roles` - {from contributors, guidance}
+- Experience: `{Junior | Mid | Senior | Mixed}` - {inferred from code quality, patterns}
+- Availability: `{Full-time | Part-time | Volunteer/hobby | Contracting}` - {from commit patterns, guidance}
 
-**Pros**:
-- Addresses technical debt incrementally
-- Reduces risk (small changes)
-- Continuous value delivery
-- Modernize while maintaining stability
+**Budget** (from guidance and infrastructure):
+- Development: `{Unconstrained | Moderate | Tight | Zero (volunteer/personal)}` - {from team size, guidance}
+- Infrastructure: `${amount}/month` or `{Free tier | Cost-conscious | Scalable budget}` - {from cloud usage}
+- Timeline: `{weeks/months to milestone}` or `{No deadline | Flexible | Fixed}` - {from guidance, urgency indicators}
 
-**Cons**:
-- Longer timeline
-- Requires disciplined process
-- May not solve fundamental architecture issues
+### Regulatory & Compliance
 
-**Best For**: Systems with moderate technical debt, performance issues, small teams
+**Data Sensitivity** (check all from security analysis):
+- {[x] if no PII} Public data only (no privacy concerns)
+- {[x] if detected} User-provided content (email, profile, preferences)
+- {[x] if detected} Personally Identifiable Information (PII: name, address, phone)
+- {[x] if detected} Payment information (credit cards, financial accounts) - {Stripe, payment processors}
+- {[x] if detected} Protected Health Information (PHI: medical records) - {HIPAA indicators}
+- {[x] if detected} Sensitive business data (trade secrets, confidential)
 
-**Score**:
-- Minimal disruption: 4/5 (phased changes)
-- Cost efficiency: 3/5 (gradual investment)
-- Quality/security: 5/5 (comprehensive improvements)
-- Performance/scale: 4/5 (targeted optimizations)
+**Regulatory Requirements** (check all from compliance analysis + guidance):
+- {[x] if no indicators} None (no specific regulations)
+- {[x] if detected} GDPR (EU users, data privacy) - {consent, deletion endpoints}
+- {[x] if detected} CCPA (California users, data privacy)
+- {[x] if detected} HIPAA (US healthcare) - {PHI, audit logs}
+- {[x] if detected} PCI-DSS (payment card processing) - {payment tokenization}
+- {[x] if detected} SOX (US financial reporting)
+- {[x] if detected} FedRAMP (US government cloud)
+- {[x] if detected} ISO27001 (information security management)
+- {[x] if detected} SOC2 (service organization controls) - {from guidance}
 
-**Total**: {weighted score}
+**Contractual Obligations** (from guidance and evidence):
+- {[x] if no evidence} None (no contracts)
+- {[x] if detected} SLA commitments (uptime, response time guarantees) - {SLO monitoring, runbooks}
+- {[x] if detected} Security requirements (penetration testing, audits) - {from guidance, customer contracts}
+- {[x] if detected} Compliance certifications (SOC2, ISO27001, etc.) - {from guidance}
+- {[x] if detected} Data residency (data must stay in specific regions) - {multi-region deployment}
+- {[x] if detected} Right to audit (customers can audit code/infrastructure)
 
-### Option C: Major Refactoring/Rewrite (High Disruption)
+### Technical Context
 
-**Approach**: Significant architecture changes or rewrite
+**Current State** (for existing projects):
+- Current stage: `{Concept | Prototype | Early users | Established | Mature | Legacy}` - {from user count, versioning}
+- Test coverage: `{percent}%` or `{None | Manual only | Automated (partial) | Comprehensive}` - {from CI, test files}
+- Documentation: `{None | README only | Basic | Comprehensive}` - {from docs/ directory, README quality}
+- Deployment automation: `{Manual | Scripted | CI/CD (basic) | CI/CD (full pipeline)}` - {from .github/workflows/}
 
-**Changes**:
-- Redesign architecture (monolith → microservices, etc.)
-- Modern tech stack (upgrade frameworks, languages)
-- Rebuild with SDLC from start (clean slate)
-- Parallel run old and new systems during transition
+**Technical Debt** (for existing projects):
+- Severity: `{None | Minor | Moderate | Significant}` - {from TODO/FIXME count, guidance}
+- Type: `{Code quality | Architecture | Dependencies | Performance | Security | Tests | Documentation}` - {from analysis}
+- Priority: `{Can wait | Should address | Must address | Blocking}` - {from guidance, pain points}
 
-**Timeline**: 6-18 months
+---
 
-**Pros**:
-- Solves fundamental architecture issues
-- Modern, maintainable codebase
-- Optimal performance and scalability
-- Clean slate for best practices
+## Step 3: Priorities & Trade-offs
 
-**Cons**:
-- High risk (big bang or long parallel run)
-- Expensive (full rebuild cost)
-- Business disruption during transition
-- Long time to value
+**INTERACTIVE SECTION** - Allocate 6-8 of 10 questions here. This captures intent and trade-offs - the most nuanced information.
 
-**Best For**: Systems with fundamental flaws, tech stack obsolescence, major scale change
+### What Matters Most?
 
-**Score**:
-- Minimal disruption: 1/5 (major changes)
-- Cost efficiency: 1/5 (expensive)
-- Quality/security: 5/5 (clean slate)
-- Performance/scale: 5/5 (optimized)
+**Rank these priorities** (1 = most important, 4 = least important):
+- `___` Speed to delivery (launch fast, iterate quickly)
+- `___` Cost efficiency (minimize time/money spent)
+- `___` Quality & security (build it right, avoid issues)
+- `___` Reliability & scale (handle growth, stay available)
 
-**Total**: {weighted score}
+**Interactive Questions (Priority Deep Dive - ask 2-3)**:
+1. "You ranked {criterion} as highest priority. Can you expand on why? What would failure look like?"
+2. "You're willing to sacrifice {aspect}. What's your threshold? At what point would you revisit that trade-off?"
+3. "You mentioned {non-negotiable from guidance}. What's the consequence if we compromise on that? Is there flexibility?"
 
-## Recommended Option
+**Priority Weights** (must sum to 1.0, derived from ranking + questions):
 
-**Recommendation**: {Option with highest weighted score}
+| Criterion | Weight | Rationale |
+|-----------|--------|-----------|
+| **Delivery speed** | `{0.10-0.50}` | {Based on answers: time-to-market pressure, learning goals, competitive urgency} |
+| **Cost efficiency** | `{0.10-0.40}` | {Based on answers: budget constraints, resource limitations, opportunity cost} |
+| **Quality/security** | `{0.10-0.50}` | {Based on answers: user trust, data sensitivity, regulatory requirements, reputation} |
+| **Reliability/scale** | `{0.10-0.40}` | {Based on answers: user base size, uptime needs, performance expectations, growth plans} |
+| **TOTAL** | **1.00** | ← Must sum to 1.0 |
 
-**Rationale**:
-{explain based on detected priorities, business context, technical debt}
+### Trade-off Context
 
-## Sensitivity Analysis
+**What are you optimizing for?** (in your own words - from answers):
+```
+{Capture user's actual words from question responses}
 
-**If compliance urgency increases**:
-- Option A becomes more attractive (fastest to audit-ready)
+Example: "Need to validate assumptions with user testing in 2-4 weeks before investing in architectural refactor. Speed critical now, can add structure later if validated."
+```
 
-**If performance bottlenecks worsen**:
-- Option B or C needed (optimization or redesign)
+**What are you willing to sacrifice?** (be explicit - from answers):
+```
+{Capture explicit trade-offs mentioned}
 
-**If budget constraints tighten**:
-- Option A only viable (minimal cost)
+Example: "Skip comprehensive tests initially (30% coverage OK), add post-MVP if user testing validates need. Manual deployment acceptable short-term."
+```
 
-**If team size grows**:
-- Option B or C feasible (more capacity)
+**What is non-negotiable?** (constraints that override trade-offs - from answers):
+```
+{Capture absolute constraints}
 
-## Next Steps
+Example: "Zero dependencies (maintainability critical). Open source from day one (community transparency core value)."
+```
 
-1. **Validate recommendation** with team and stakeholders
-2. **Choose path**: Select option based on priorities
-3. **Start SDLC flow**:
-   - Option A: /project:flow-iteration-dual-track (adopt process)
-   - Option B: /project:flow-architecture-evolution (plan refactoring)
-   - Option C: /project:flow-concept-to-inception (new architecture)
-4. **Create roadmap**: Detailed plan with milestones
+---
+
+## Step 4: Intent & Decision Context
+
+**INTERACTIVE SECTION** - Allocate 2-3 of 10 questions here.
+
+### Why This Intake Now?
+
+**What triggered this intake?** (check all from guidance + ask):
+- {[x] if applicable} Starting new project (need to plan approach)
+- {[x] if applicable} Documenting existing project (never had formal intake)
+- {[x] if applicable} Preparing for scale/growth (need more structure) - {from guidance: "small team testing planned"}
+- {[x] if applicable} Compliance requirement (audit, certification, customer demand) - {from guidance}
+- {[x] if applicable} Team expansion (onboarding new members, need clarity)
+- {[x] if applicable} Technical pivot (major refactor, platform change) - {from guidance: "multiple refactors expected"}
+- {[x] if applicable} Handoff/transition (new maintainer, acquisition, open-sourcing)
+- {[x] if applicable} Funding/business milestone (investor due diligence, enterprise sales)
+
+**Interactive Questions (Decision Context - ask 2-3)**:
+4. "What specific decisions are you trying to make with this intake? What's blocking you?"
+5. "You mentioned {controversy/disagreement from guidance}. What are the different perspectives? What data would resolve it?"
+6. "What's the biggest risk you see in this project? How does that influence your priorities?"
+
+**What decisions need making?** (be specific - from answers):
+```
+{Capture actual decisions user needs to make}
+
+Example: "Should we invest in MVP process infrastructure (tests, versioning, telemetry) now, or ship as Prototype and iterate? Team capacity limited (solo), but user testing needs stability."
+```
+
+**What's uncertain or controversial?** (surface disagreements - from answers):
+```
+{Capture uncertainties and disagreements}
+
+Example: "Unsure if multi-platform abstraction is needed immediately, or if current file-based deployment (`.claude/` directories) is sufficient. Won't know until user testing validates demand."
+```
+
+**Success criteria for this intake process** (from answers):
+```
+{What would make this intake valuable?}
+
+Example: "Clear framework recommendation (which templates/commands/agents to use for project type). Shared understanding of quality vs. speed trade-offs. Roadmap for evolving process as we grow."
+```
+
+---
+
+## Step 5: Framework Application
+
+**INTERACTIVE SECTION** - Allocate 1-2 of 10 questions here.
+
+### Relevant SDLC Components
+
+Based on project reality (Step 1) and priorities (Step 3), which framework components are relevant?
+
+**Templates** (check applicable based on analysis):
+- [x] Intake (project-intake, solution-profile, option-matrix) - **Always include**
+- {[x] if} Requirements (user-stories, use-cases, NFRs) - Include if: `{complex domain detected, multiple stakeholders, team >2}`
+- {[x] if} Architecture (SAD, ADRs, API contracts) - Include if: `{multi-service, 10k+ LoC, team >3}`
+- {[x] if} Test (test-strategy, test-plan, test-cases) - Include if: `{quality-critical, >1 developer, regulated, PII}`
+- {[x] if} Security (threat-model, security-requirements) - Include if: `{PII, payments, compliance, external users}`
+- {[x] if} Deployment (deployment-plan, runbook, ORR) - Include if: `{production, >10 users, SLA detected}`
+- {[x] if} Governance (decision-log, CCB-minutes, RACI) - Include if: `{team >5, stakeholders >3, compliance}`
+
+**Commands** (check applicable):
+- [x] Intake commands (intake-wizard, intake-from-codebase, intake-start) - **Always include**
+- {[x] if} Flow commands (iteration, discovery, delivery) - Include if: `{ongoing development, team >2}`
+- {[x] if} Quality gates (security-gate, gate-check, traceability) - Include if: `{regulated, team >3, enterprise customers}`
+- {[x] if} Specialized (build-poc, pr-review, troubleshooting-guide) - Include if: `{specific needs from guidance}`
+
+**Agents** (check applicable):
+- {[x] if} Core SDLC agents (requirements-analyst, architect, code-reviewer, test-engineer, devops) - Include if: `{team >1, structured process}`
+- {[x] if} Security specialists (security-gatekeeper, security-auditor) - Include if: `{PII, compliance, external users}`
+- {[x] if} Operations specialists (incident-responder, reliability-engineer) - Include if: `{production, SLA, >100 users}`
+- {[x] if} Enterprise specialists (legal-liaison, compliance-validator, privacy-officer) - Include if: `{regulated, contracts, large org}`
+
+**Process Rigor Level** (select based on evidence):
+- {[x] if} Minimal (README, lightweight notes, ad-hoc) - For: `{solo, learning, <10 users, prototype}`
+- {[x] if} Moderate (user stories, basic architecture, test plan, runbook) - For: `{small team, <1k users, established}`
+- {[x] if} Full (comprehensive docs, traceability, gates) - For: `{large team, >1k users, regulated, mission-critical}`
+- {[x] if} Enterprise (audit trails, compliance evidence, change control) - For: `{regulated, contracts, >10k users}`
+
+**Interactive Questions (Framework Application - ask 1-2)**:
+9. "Looking at the templates/commands/agents list above, which ones feel like overkill for your project? Which feel essential?"
+10. "Where do you want to over-invest relative to typical {project type}? Where can you be lean?"
+
+### Rationale for Framework Choices
+
+**Why this subset of framework?** (based on analysis + answers):
+```
+{Explain which components are relevant and why}
+
+Example:
+"Documentation framework (solo, 0 users, pre-MVP) needs minimal rigor:
+- Intake only (understand baseline, plan evolution)
+- Skip requirements templates (clear vision, solo developer)
+- Skip comprehensive architecture docs (expecting refactors, will document post-stabilization)
+- Skip security templates (no PII, documentation project, open source)
+- Add writing-validator agent (content quality is product value)
+- Add smoke tests (prevent regression during expected refactors)
+
+Relevant: intake-wizard, writing-validator, prompt-optimizer, code-reviewer (for Node.js utilities)"
+```
+
+**What we're skipping and why** (be explicit):
+```
+{List unused framework components with justification}
+
+Example:
+"Skipping enterprise templates because:
+- No regulatory requirements (open source, no PII, MIT license)
+- No team coordination needs (solo developer, may add 2-3 for testing)
+- No compliance obligations (no customer data, no contracts)
+- No operational complexity (static content on GitHub, no backend)
+
+Will revisit if: user testing validates market fit, team expands >3 people, commercial version emerges, enterprise customers request compliance."
+```
+
+---
+
+## Step 6: Evolution & Adaptation
+
+**INTERACTIVE SECTION** - Allocate 1-2 of 10 questions here.
+
+### Expected Changes
+
+**How might this project evolve?** (from guidance + questions):
+- {[x] if} No planned changes (stable scope and scale)
+- {[x] if} User base growth (when: `{timeline}`, trigger: `{event}`) - {from guidance or questions}
+- {[x] if} Feature expansion (when: `{timeline}`, trigger: `{event}`)
+- {[x] if} Team expansion (when: `{timeline}`, trigger: `{event}`) - {from guidance: "small team testing"}
+- {[x] if} Commercial/monetization (when: `{timeline}`, trigger: `{event}`)
+- {[x] if} Compliance requirements (when: `{timeline}`, trigger: `{event}`)
+- {[x] if} Technical pivot (when: `{timeline}`, trigger: `{event}`) - {from guidance: "multiple refactors"}
+
+**Interactive Questions (Evolution - ask 1-2)**:
+7. "How do you expect this project to change in the next 6-12 months? What would trigger more structure?"
+8. "If you had 10x the users/budget/team, what would you do differently? What's the growth limiting factor?"
+
+**Adaptation Triggers** (when to revisit framework application - from answers):
+```
+{What events would require more structure?}
+
+Example:
+"Add requirements docs when 2nd developer joins (need shared understanding of multi-platform vision).
+Add security templates if we handle user accounts (PII would require threat model, GDPR compliance).
+Add deployment runbook when we exceed 1k CLI installations (operational complexity, user support needs).
+Add governance templates when team exceeds 5 people (coordination overhead, decision tracking)."
+```
+
+**Planned Framework Evolution** (from answers):
+- Current: `{list current framework components from Step 5}`
+- 3 months: `{add/change if growth occurs}` - {from evolution questions}
+- 6 months: `{add/change if assumptions validated}` - {from evolution questions}
+- 12 months: `{add/change if scale/complexity increases}` - {from evolution questions}
+
+---
+
+## Notes for Generation
+
+### Interactive Question Allocation (6-8 of 10)
+
+**Options Matrix gets majority of questions** (6-8 total):
+- **Priority questions (2-3)**: Deep dive on trade-offs, thresholds, non-negotiables
+- **Decision context (2-3)**: Surface disagreements, blockers, risks
+- **Evolution (1-2)**: Growth triggers, 10x scenarios
+- **Framework application (1-2)**: Overkill vs essential, over-invest vs lean
+
+**Other files get remainder** (2-4 total):
+- **project-intake.md (1-2)**: "What problem does this solve?" (if not clear), "Success metrics?" (if not documented)
+- **solution-profile.md (1-2)**: "Current pain points?" (technical debt, bottlenecks), "Wish invested in earlier?" (for existing projects)
+- **Factual gaps (0-2)**: Tech stack, deployment, team size (if not detectable from codebase)
+
+### Principle: Descriptive, Not Prescriptive
+
+**This document captures "what IS"** (project reality, constraints, intent):
+- ✅ "Personal blog, <100 readers, solo, need to ship in 2 weeks for job search"
+- ✅ "Team split on microservices vs monolith - CTO wants flexibility, CEO wants simplicity"
+- ✅ "Willing to skip tests initially to launch fast, but non-negotiable on GDPR compliance"
+
+**Analysis and recommendations go elsewhere**:
+- ❌ "Should use MVP profile because small team and limited budget" → Goes in **solution-profile.md**
+- ❌ "Microservices inappropriate for this scale, recommend monolith" → Goes in **project-intake.md** (architecture section)
+- ❌ "Need to add automated tests immediately" → Goes in **solution-profile.md** (improvement roadmap)
+
+This option-matrix is **input** to analysis (capture reality), not **output** of analysis (prescribe solution).
 ```
 
 ### Step 9: Generate Analysis Report
