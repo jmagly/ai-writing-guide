@@ -5,336 +5,327 @@
 
 ## Current Profile
 
-**Profile**: Prototype
+**Profile**: **Development** → **Production** (Transitioning)
 
 **Selection Rationale**:
-- System Status: Active development, not in production deployment
-- User Base: Unknown/Early adopters (documentation framework)
-- Compliance: None required (open source documentation)
-- Team Size: 1 developer (solo project)
-- Process Maturity: Medium (CI/CD, comprehensive docs, no formal testing)
+- **System Status**: Open source project in active development
+- **User Base**: Community-driven (not yet at production scale)
+- **Maturity**: Solo developer with comprehensive documentation
+- **Process Rigor**: CI/CD automation, systematic documentation
+- **Deployment**: Public distribution via GitHub and installer
 
-**Actual Profile**: Prototype transitioning toward Production readiness
+**Actual Profile**: Development with Production-Ready Components
 
-The AI Writing Guide is a documentation and tooling framework rather than a deployed application. However, it provides SDLC templates for Production and Enterprise profiles while itself operating as a Prototype.
+This is a **documentation and tooling framework** rather than a runtime system. It exhibits characteristics of both Development (active iteration, solo developer) and Production (public distribution, automated quality gates, comprehensive documentation).
 
 ## Current State Characteristics
 
 ### Security
 
-**Posture**: Minimal (appropriate for documentation repository)
-
-**Controls Present**:
-- Version control with GitHub
-- Automated distribution via signed git commits
-- Node.js version requirement (>= 18.20.8)
-- No secrets or sensitive data handling
-- MIT open source license
-
-**Gaps**:
-- No security scanning (SAST/DAST) - not applicable for docs
-- No vulnerability monitoring - consider Dependabot for npm dependencies
-- No supply chain verification - installer downloads from GitHub without signature
-
-**Recommendation**: Add GitHub Dependabot for npm dependency monitoring (low priority - minimal dependencies)
+- **Posture**: **Baseline**
+- **Controls Present**:
+  - Public repository with open source license (MIT)
+  - .gitignore excludes secrets and credentials
+  - No hardcoded sensitive data
+  - Documentation includes security reminders
+  - SDLC framework provides security agents and gates
+- **Gaps**:
+  - No branch protection rules (acceptable for solo developer)
+  - No automated security scanning (low risk for documentation)
+  - No dependency scanning (zero npm dependencies)
+  - No code signing for distribution
+- **Recommendation**: **Maintain Baseline** (appropriate for open source documentation project)
+  - Add branch protection if community contributions increase
+  - Consider Sigstore signing for future releases
+  - No urgent security improvements needed
 
 ### Reliability
 
-**Current SLOs**: Not applicable (static documentation)
-
-**Monitoring Maturity**:
-- No metrics collection (static content)
-- No logging (git history only)
-- No traces (documentation repository)
-- Limited alerting (GitHub Actions CI failures only)
-
-**Distribution Reliability**:
-- Automatic updates built into CLI (aiwg auto-updates)
-- Graceful error recovery (reinstall on corruption)
-- GitHub uptime dependency (99.9% typical)
-
-**Recommendation**: Maintain current approach (monitoring not needed for docs)
+- **Current SLOs**: Not applicable (static content distribution)
+  - **Availability**: GitHub uptime (99.9%+)
+  - **Latency**: Git clone/pull speed (seconds)
+  - **Error Rate**: CI pipeline success rate (~95% estimated from commit frequency)
+- **Monitoring Maturity**:
+  - **Metrics**: GitHub Actions success/failure
+  - **Logs**: Git commit history
+  - **Traces**: Not applicable
+  - **Alerting**: GitHub Actions email notifications
+- **Recommendation**: **Add Basic Monitoring**
+  - Track installer success rate (telemetry opt-in)
+  - Monitor agent deployment failures
+  - Add health check for key template integrity
 
 ### Testing & Quality
 
-**Test Coverage**: 0% (no automated tests for Node.js scripts)
-
-**Test Types**:
-- No unit tests
-- No integration tests
-- Markdown linting as quality gate (10+ custom fixers)
-- GitHub Actions CI enforcement
-
-**Quality Gates**:
-- Markdown format validation (MD012, MD022, MD026, MD031, MD032, MD038, MD040, MD041, MD047, MD058)
-- Manifest sync drift detection
-- Automated formatting standardization
-- CI blocks on violations
-
-**Recommendation**: Add basic smoke tests for critical Node.js scripts:
-- deploy-agents.mjs (validate deployment logic)
-- new-project.mjs (validate scaffolding)
-- install.sh (validate shell script logic)
-
-**Priority**: Medium (quality scripts prevent installation failures)
+- **Test Coverage**: Manual validation only (no automated test suite)
+- **Test Types**:
+  - **Linting**: Comprehensive (10 markdown checks via GitHub Actions)
+  - **Manifest validation**: Automated (sync checks in CI)
+  - **Integration**: Manual (agent deployment tested locally)
+  - **No unit/e2e tests**: Tooling scripts unvalidated
+- **Quality Gates**:
+  - ✓ CI markdown linting (lint-fixcheck.yml)
+  - ✓ Manifest consistency checks
+  - ✗ Automated tool script testing
+  - ✗ Agent deployment validation
+- **Recommendation**: **Add Automated Testing**
+  - Target: Basic test coverage for .mjs tooling (30-50%)
+  - Add smoke tests for agent deployment
+  - Validate manifest generation idempotency
+  - Test CLI wrapper functionality
 
 ### Process Rigor
 
-**SDLC Adoption**: Partial (self-documenting SDLC framework)
-
-**Process Maturity**:
-- Version Control: Full (Git + GitHub)
-- Code Review: None (solo developer)
-- Documentation: Excellent (comprehensive README, CLAUDE.md, guides)
-- CI/CD: Partial (linting only, no testing/deployment)
-- Release Management: None (no versioning or tags)
-
-**Recommendation**: Adopt own SDLC framework for self-improvement:
-1. Add semantic versioning (v1.0.0, v1.1.0, etc.)
-2. Create GitHub releases with changelog
-3. Add basic script testing before releases
-4. Consider multi-contributor governance if project grows
+- **SDLC Adoption**: **Partial** (Framework creator, not yet self-applying)
+  - ✓ Documentation-driven development
+  - ✓ CI/CD automation
+  - ✓ Comprehensive intake templates available
+  - ✗ Not using own SDLC framework (irony alert!)
+  - ✗ No formal iteration planning
+  - ✗ No traceability artifacts
+- **Code Review**: Not applicable (solo developer)
+- **Documentation**: **Excellent**
+  - ✓ README, CLAUDE.md, USAGE_GUIDE
+  - ✓ ROADMAP with 12-month plan
+  - ✓ PROJECT_SUMMARY with value proposition
+  - ✓ Comprehensive template library
+  - ⚠ Some drift (TODO items in P0-IMPLEMENTATION-SUMMARY.md)
+- **Recommendation**: **Self-Apply SDLC Framework**
+  - Use own intake process to formalize current state
+  - Adopt dual-track iteration planning
+  - Create architecture decision records (ADRs)
+  - Establish traceability from roadmap to implementation
 
 ## Recommended Profile Adjustments
 
-**Current Profile**: Prototype
-**Recommended Profile**: Production (when ready for v1.0 release)
+**Current Profile**: Development (active iteration, solo developer)
+
+**Recommended Profile**: **Production-Ready Development** (hybrid approach)
 
 **Rationale**:
-The project provides Enterprise-grade SDLC tooling but lacks formal release process. Before promoting to Production profile:
-
-**Phase 1: Quality Foundation** (1-2 weeks)
-- Add semantic versioning (tag v1.0.0)
-- Create CHANGELOG.md with release notes
-- Add basic smoke tests for deploy-agents.mjs and new-project.mjs
-- Document breaking changes policy
-
-**Phase 2: Release Readiness** (2-4 weeks)
-- Create GitHub release with installation archives
-- Add version compatibility matrix (Node.js versions tested)
-- Document upgrade path (existing installations → new versions)
-- Add deprecation policy for agents/commands
-
-**Phase 3: Production Profile** (post-v1.0)
-- Establish release cadence (monthly, quarterly, etc.)
-- Add contributor guidelines for multi-developer workflow
-- Consider security scanning for installer supply chain
-- Implement telemetry (optional - usage metrics for popular agents)
+- Project is **publicly distributed** (installer, CLI, GitHub)
+- Users depend on **stability** (framework for SDLC adoption)
+- Development velocity remains **high** (28 commits/month)
+- Solo developer needs **agility** (lightweight process)
 
 **Tailoring Notes**:
-- Lightweight process (solo developer doesn't need heavy ceremonies)
-- Focus on release quality (versioning, testing, changelog)
-- Maintain documentation-first approach (already a strength)
-- Automate what makes sense (CI/CD expansion)
 
-## Current State vs. Target Profiles
+### Keep Lightweight (Solo Developer Efficiency)
+- No heavyweight processes (lengthy reviews, excessive documentation)
+- Maintain rapid iteration cycle
+- Use automation over manual processes
+- Leverage GitHub Actions for quality gates
 
-### Prototype Profile (Current)
+### Add Stability (User Trust)
+- **Versioning**: Adopt semantic versioning (git tags)
+  - `v1.0.0` for initial stable release
+  - `v1.1.0` for new agents/commands
+  - `v1.0.1` for bug fixes
+- **Releases**: GitHub Releases with changelogs
+- **Breaking changes**: Documented in CHANGELOG.md
+- **Deprecation policy**: 1 version notice before removal
 
-**Characteristics**:
-- Rapid development and iteration (70 commits last week)
-- Minimal formal process (no versioning)
-- Comprehensive documentation (README, guides, examples)
-- Solo developer workflow
-- CI for quality (markdown linting)
+### Improve Quality (Framework Credibility)
+- **Testing**: Add smoke tests for critical tooling
+- **Validation**: Automated agent deployment checks
+- **Documentation sync**: Manifest regeneration on template changes
+- **Self-dogfooding**: Use own SDLC framework for development
 
-**Strengths**:
-- Fast iteration speed
-- Responsive to needs (active development)
-- Clear documentation
-- Automated quality gates
-
-**Weaknesses**:
-- No versioning or releases
-- No automated testing for scripts
-- Solo contributor (bus factor = 1)
-- No formal upgrade path
-
-### Production Profile (Target for v1.0)
-
-**Recommended Changes**:
-1. **Versioning**: Add semantic versioning and CHANGELOG.md
-2. **Testing**: Basic smoke tests for critical scripts
-3. **Releases**: GitHub releases with installation archives
-4. **Stability**: Release cadence and breaking change policy
-
-**Not Recommended** (overkill for documentation project):
-- Heavy test coverage requirements (>80%)
-- Formal security scanning (SAST/DAST)
-- On-call rotations or SLA commitments
-- Complex release approval processes
+### Scale Community (Future-Proofing)
+- **Contribution guidelines**: Expand CONTRIBUTING.md
+- **Issue templates**: Add for bugs, features, agent submissions
+- **Pull request template**: Guide community contributions
+- **Branch protection**: Require CI passing before merge (when contributors join)
 
 ## Improvement Roadmap
 
-### Immediate Actions (1-2 Weeks)
+### Phase 1: Immediate (1-2 weeks)
 
-**High Priority**:
-1. **Add semantic versioning**:
-   - Tag current commit as v1.0.0-rc.1 (release candidate)
-   - Create CHANGELOG.md following Keep a Changelog format
-   - Document version numbering scheme in CONTRIBUTING.md
+**Priority**: Stability and Self-Application
 
-2. **Create GitHub release**:
-   - Draft v1.0.0 release notes
-   - Include installation instructions
-   - Link to USAGE_GUIDE.md and README.md
+1. **Adopt Semantic Versioning**
+   - Tag current state as `v0.9.0` (pre-release)
+   - Plan `v1.0.0` release with complete P0 items
+   - Add version to README and CLI output
 
-3. **Basic script testing**:
-   - Add smoke test for deploy-agents.mjs (dry-run mode)
-   - Add smoke test for new-project.mjs (temp directory)
-   - Add to GitHub Actions CI
+2. **Complete Pending TODOs**
+   - Update framework-inventory.md
+   - Regenerate manifests for new templates
+   - Update CLAUDE.md template counts
+   - Resolve P0-IMPLEMENTATION-SUMMARY.md items
 
-**Medium Priority**:
-4. **Documentation polish**:
-   - Review all agent descriptions for consistency
-   - Ensure CLAUDE.md reflects current structure
-   - Update ROADMAP.md with versioning plans
+3. **Self-Apply SDLC Framework**
+   - Generate own intake documents (✓ in progress)
+   - Create solution profile (✓ in progress)
+   - Evaluate option matrix (✓ in progress)
+   - Start using `/flow-iteration-dual-track` for roadmap execution
 
-### Short-term (1-3 Months)
+**Estimated Effort**: 8-12 hours
+**Risk**: Low (documentation and process)
+**Value**: High (credibility, dogfooding validation)
 
-**Quality Improvements**:
-1. **Expand testing coverage**:
-   - Test install.sh on multiple Linux distributions
-   - Test aiwg CLI on macOS, Linux, WSL
-   - Add manifest generation smoke tests
+### Phase 2: Short-term (1 month)
 
-2. **Release process**:
-   - Establish monthly/quarterly release cadence
-   - Document upgrade procedure (existing → new version)
-   - Add breaking changes policy
+**Priority**: Quality and Testing
 
-3. **Community readiness**:
-   - Expand CONTRIBUTING.md for multi-developer workflow
-   - Add PR template with checklist
-   - Consider code owner assignments (CODEOWNERS)
+1. **Add Automated Testing**
+   - Smoke tests for deploy-agents.mjs (verify file copy, manifest parsing)
+   - Validation for manifest generation (idempotency checks)
+   - CLI wrapper tests (aiwg -version, aiwg -help)
+   - Target: 30% coverage of critical tooling
 
-**Feature Enhancements** (from ROADMAP.md):
-4. **Agent improvements**:
-   - Add more specialized agents (per ROADMAP)
-   - Expand template library
-   - Create example projects
+2. **Improve Documentation Sync**
+   - Automated manifest regeneration in pre-commit hook
+   - Template count validation in CI
+   - Cross-reference checker for agent/command links
 
-### Long-term (3-12 Months)
+3. **Create v1.0.0 Release**
+   - Complete all P0 items
+   - Generate CHANGELOG.md
+   - Tag and publish GitHub Release
+   - Announce on relevant communities
 
-**Maturity Goals**:
-1. **Multi-contributor workflow**:
-   - Add peer review requirement for PRs
-   - Establish maintainer governance model
-   - Create release manager role
+**Estimated Effort**: 20-30 hours
+**Risk**: Low-Medium (requires test infrastructure setup)
+**Value**: High (quality assurance, professional polish)
 
-2. **Distribution enhancements**:
-   - Consider package manager distribution (Homebrew, apt, etc.)
-   - Add automatic update notifications
-   - Create migration guides for major versions
+### Phase 3: Medium-term (3 months)
 
-3. **Quality evolution**:
-   - Add integration tests for full workflows
-   - Consider property-based testing for validators
-   - Expand CI/CD to include script linting (ShellCheck, ESLint)
+**Priority**: Community Scaling
 
-**Not Recommended**:
-- Heavy process ceremonies (defeats agility advantage)
-- Microservice architecture (monorepo is fine)
-- Complex deployment pipelines (static content is simple)
-- Over-engineering quality gates (docs don't need 99.99% SLA)
+1. **Enhance Contribution Process**
+   - Expand CONTRIBUTING.md with agent development guide
+   - Create issue templates (bug, feature, agent submission)
+   - Add pull request template with checklist
+   - Document agent review process
 
-## Success Criteria for Profile Transition
+2. **Add Community Features**
+   - Agent showcase/catalog page
+   - Example projects using SDLC framework
+   - Video tutorials or walkthroughs
+   - Community Discord or Discussions
 
-### Ready for Production Profile (v1.0)
+3. **Implement Branch Protection**
+   - Require CI passing for main branch
+   - Add CODEOWNERS for agent/template reviews
+   - Enable Dependabot (future-proofing for when deps added)
 
-**Required**:
-- [x] Comprehensive documentation (README, CLAUDE.md, USAGE_GUIDE) ✓ Complete
-- [x] CI/CD quality gates (markdown linting, drift detection) ✓ Complete
-- [ ] Semantic versioning with tagged releases
-- [ ] CHANGELOG.md with release notes
-- [ ] Basic smoke tests for critical scripts
-- [ ] GitHub release with installation archives
+**Estimated Effort**: 40-50 hours
+**Risk**: Medium (community coordination)
+**Value**: High (scalability, sustainability)
 
-**Optional** (defer to post-v1.0):
-- Multi-contributor workflow (CODEOWNERS, PR reviews)
-- Package manager distribution (Homebrew, etc.)
-- Usage telemetry and metrics
-- Security scanning for supply chain
+### Phase 4: Long-term (6-12 months)
 
-### Ready for Enterprise Profile (Future)
+**Priority**: Advanced Features (per ROADMAP.md)
 
-**Not Applicable** - The AI Writing Guide is a tooling framework, not an enterprise application. It *provides* Enterprise profile guidance but doesn't need Enterprise profile itself.
+1. **IDE Integrations**
+   - VSCode extension for agent management
+   - IntelliJ plugin for SDLC workflows
+   - Vim/Neovim integration
 
-If the project were to adopt Enterprise characteristics:
-- Would need: SOC2 compliance, security audits, SLA commitments
-- Current state: Open source documentation (these requirements don't apply)
+2. **Agent Marketplace**
+   - Community submission platform
+   - Rating and review system
+   - Quality verification automation
+
+3. **Enterprise Features**
+   - White-label deployment options
+   - Custom agent templates
+   - Performance analytics dashboard
+
+**Estimated Effort**: 100+ hours
+**Risk**: High (ecosystem complexity)
+**Value**: Very High (market differentiation)
+
+## Success Criteria
+
+### Immediate Success (Phase 1)
+- ✓ Semantic versioning adopted (git tags present)
+- ✓ All P0 TODO items resolved
+- ✓ Self-applying SDLC framework (intake docs generated)
+- ✓ v1.0.0 release published
+
+### Short-term Success (Phase 2)
+- ✓ Test coverage ≥30% for tooling
+- ✓ CI validates documentation sync
+- ✓ CHANGELOG.md maintained
+- ✓ Zero known critical bugs
+
+### Medium-term Success (Phase 3)
+- ✓ First community-contributed agent merged
+- ✓ >5 community contributions
+- ✓ CONTRIBUTING.md comprehensive
+- ✓ Branch protection enabled
+
+### Long-term Success (Phase 4)
+- ✓ 1000+ active users (per ROADMAP.md target)
+- ✓ 50+ community agents
+- ✓ IDE integration deployed
+- ✓ Industry recognition as go-to SDLC framework
 
 ## Risk Assessment
 
-### Current Risks
+### Technical Risks
 
-**Technical Risks**:
-1. **Bus Factor = 1**: Solo developer (Joseph Magly)
-   - Mitigation: Comprehensive documentation enables handoff
-   - Priority: Low (well-documented project is recoverable)
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+| Solo developer bus factor | Medium | High | Comprehensive documentation, community engagement |
+| Template/manifest drift | Medium | Medium | Automated validation in CI, pre-commit hooks |
+| Breaking changes to Claude Code platform | Low | High | Abstraction layer, multi-provider support (OpenAI/Codex) |
+| Tool script bugs in production | Medium | Low | Add smoke tests, versioned releases with rollback |
 
-2. **No Versioning**: Breaking changes could disrupt users
-   - Mitigation: Add semantic versioning immediately
-   - Priority: High (affects user trust)
+### Business Risks
 
-3. **Untested Scripts**: Installation/deployment failures possible
-   - Mitigation: Add basic smoke tests
-   - Priority: Medium (already has CI quality gates)
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+| Platform providers build competing solutions | Medium | High | Open source moat, community contributions, first-mover advantage |
+| Low community adoption | Medium | Medium | Clear value proposition, examples, documentation, marketing |
+| Maintenance burden scaling | Low | Medium | Automation, modular design, community maintainers |
+| Scope creep from roadmap | Medium | Low | Phased approach, MVP releases, prioritization |
 
-**Operational Risks**:
-1. **GitHub Dependency**: Complete reliance on GitHub availability
-   - Mitigation: None needed (acceptable for open source)
-   - Priority: Low (GitHub SLA is sufficient)
+### Process Risks
 
-2. **Update Mechanism**: Auto-update on every command could break workflows
-   - Mitigation: Add version pinning option (aiwg -version-lock)
-   - Priority: Low (graceful recovery already implemented)
-
-### Mitigated Risks
-
-**Already Addressed**:
-- ✓ Installation corruption: Graceful reinstall with aiwg -reinstall
-- ✓ Markdown quality drift: 10+ custom linters with CI enforcement
-- ✓ Manifest inconsistencies: Automated sync checking
-- ✓ Documentation gaps: Comprehensive guides and examples
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+| Not self-applying SDLC framework | High | High | **Priority action**: Generate own intake, use dual-track iterations |
+| Documentation quality degradation | Low | Medium | Automated linting, manifest checks, review process |
+| Test coverage remaining low | Medium | Medium | Incremental test addition, CI enforcement |
 
 ## Recommendations Summary
 
-### Do Now (High Priority)
-1. Add semantic versioning (tag v1.0.0-rc.1)
-2. Create CHANGELOG.md
-3. Add basic smoke tests for deploy-agents.mjs and new-project.mjs
-4. Create GitHub v1.0.0 release
+### Top 3 Immediate Actions
 
-### Do Soon (Medium Priority)
-5. Test installation on multiple platforms (Linux distros, macOS, WSL)
-6. Document upgrade procedure
-7. Expand CONTRIBUTING.md for multi-contributor workflow
+1. **Adopt Semantic Versioning** (Effort: 1 hour, Impact: High)
+   - Tag current as v0.9.0, plan v1.0.0
+   - Establishes release discipline
 
-### Do Later (Low Priority)
-8. Consider package manager distribution (Homebrew)
-9. Add optional usage telemetry
-10. Expand integration testing
+2. **Complete P0 TODO Items** (Effort: 4-6 hours, Impact: High)
+   - Resolve documentation drift
+   - Demonstrates consistency
 
-### Don't Do (Not Valuable)
-- Heavy test coverage requirements (>80% for docs is overkill)
-- Complex security scanning (supply chain risk is low for git-based install)
-- Microservices or distributed architecture (monorepo is appropriate)
-- SLA commitments or on-call rotations (static documentation doesn't need operational support)
+3. **Self-Apply SDLC Framework** (Effort: 2-4 hours, Impact: Very High)
+   - Use own intake process (✓ in progress)
+   - Validates framework effectiveness
+   - Identifies improvement opportunities
 
-## Conclusion
+### Profile Adjustment
 
-The AI Writing Guide is a well-structured, well-documented framework in active development. It's ready to transition from Prototype to Production profile with minimal effort:
+**From**: Development (agile, solo, rapid iteration)
+**To**: Production-Ready Development (stable, tested, versioned, community-ready)
 
-**Current Strengths**:
-- Comprehensive documentation (excellent)
-- Automated quality gates (CI/CD for markdown)
-- Graceful error recovery (reinstall automation)
-- Clear architecture (separation of concerns)
+**Key Changes**:
+- Add versioning without slowing velocity
+- Add testing without heavyweight processes
+- Enable community without losing agility
+- Self-apply SDLC without bureaucracy
 
-**Path to Production**:
-- Add semantic versioning and releases (1-2 weeks)
-- Basic smoke testing (1 week)
-- Establish release cadence (ongoing)
+### Success Metrics (30 days)
 
-The project demonstrates best practices for its own SDLC framework and is positioned for sustainable growth with minimal technical debt.
+- [ ] v1.0.0 released with semantic versioning
+- [ ] All P0 TODO items resolved
+- [ ] Own SDLC intake complete
+- [ ] Basic test coverage (≥30%) for tooling
+- [ ] CHANGELOG.md established
+- [ ] First iteration using dual-track planning
+
+**Next Review**: 30 days from intake acceptance

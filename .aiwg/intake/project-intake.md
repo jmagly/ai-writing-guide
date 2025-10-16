@@ -8,251 +8,352 @@
 
 - **Project name**: AI Writing Guide
 - **Repository**: https://github.com/jmagly/ai-writing-guide.git
-- **Current Version**: No version tags (active development)
-- **Last Updated**: 2025-10-15 19:16:00 -0400
-- **Stakeholders**: Software development teams, AI content creators, technical writers, SDLC practitioners
+- **Current Version**: In active development (no versioning detected)
+- **Last Updated**: 2025-10-15 23:34:01 -0400
+- **License**: MIT License (Copyright 2024 Joe Magly)
+- **Stakeholders**: Solo developer, Open source community, Enterprise SDLC adopters
 
 ## System Overview
 
-**Purpose**: Comprehensive framework for improving AI-generated content quality by avoiding common detection patterns and maintaining authentic, professional writing standards. Expanded to include a complete Software Development Lifecycle (SDLC) framework with 51 specialized agents.
+**Purpose**: Comprehensive framework for improving AI-generated content quality by providing guidelines, validation tools, SDLC agents, and commands to help AI agents produce natural, professional content that avoids detection patterns while maintaining technical accuracy.
 
-**Current Status**: Active development (75 commits in last year, 70 in last week)
+**Current Status**: Active Development / Open Source (GitHub)
 
-**Users**: Unknown (documentation/framework repository - not a deployed application)
+**Users**:
+- AI developers using Claude Code
+- Teams adopting SDLC frameworks
+- Content creators validating AI outputs
+- Enterprise development teams
 
 **Tech Stack**:
-- **Languages**: Markdown (759 files, ~75%), JavaScript/Node.js (38 files, ~5%), JSON (61 files, ~5%), Shell scripts (~2%)
-- **Runtime**: Node.js >= 18.20.8
-- **Deployment**: Git-based distribution with automated installer
-- **Distribution**: GitHub repository with one-line install script
-- **CI/CD**: GitHub Actions for markdown linting and drift detection
+- **Languages**: Markdown (91.2%), JSON (8.3%), YAML (0.6%)
+- **Primary Content**: Documentation framework (474 markdown files)
+- **Tools**: Node.js tooling (2,896 lines across .mjs files)
+- **Deployment**: GitHub-based distribution, shell script installer
+- **Framework**: SDLC Complete - comprehensive software development lifecycle toolkit
 
-## Problem and Outcomes (Historical)
+## Problem and Outcomes
 
-**Problem Statement**: AI-generated content often contains detectable patterns, formulaic structures, and lacks authentic human voice. Development teams need structured SDLC processes but lack accessible, practical frameworks.
+**Problem Statement**: AI-generated content often exhibits detectable patterns (formulaic structure, performative language, lack of authentic voice) that undermine credibility while lacking systematic development lifecycle support for AI-assisted projects.
 
 **Target Personas**:
-1. **Individual Developers**: Using AI coding assistants (Claude Code, GitHub Copilot) to improve output quality
-2. **Technical Writers**: Creating documentation that sounds authentically human
-3. **Development Teams**: Adopting structured SDLC processes with AI agent support
-4. **Enterprise Organizations**: Implementing compliance-ready software development practices
+1. **AI Developers**: Using Claude Code for software development, need specialized agents
+2. **Technical Writers**: Validating AI-generated documentation for authenticity
+3. **Development Teams**: Adopting structured SDLC processes with AI assistance
+4. **Enterprise Architects**: Implementing comprehensive development frameworks
 
-**Success Metrics** (Inferred from documentation):
-- Content authenticity: Avoiding AI detection patterns
-- Token optimization: 60-80% reduction through agent context isolation
-- Development velocity: 40-60% faster execution through parallel agents
-- Process adoption: Complete SDLC coverage from Inception to Transition
+**Success Metrics**:
+- Writing quality: Eliminate AI detection patterns while maintaining sophistication
+- Token optimization: 60-80% reduction in context usage
+- Time efficiency: 40-60% faster execution through parallel agents
+- SDLC coverage: Complete lifecycle from Inception → Transition
+- Community adoption: 1000+ active users within 6 months (planned)
+- Agent contributions: 50+ community-contributed agents (planned)
 
 ## Current Scope and Features
 
-**Core Features** (Writing Guide):
-- **Writing Philosophy** (`core/`): Fundamental principles for authentic technical writing
-- **Validation Rules** (`validation/`): Banned patterns, detection indicators, quality checklists
-- **Examples** (`examples/`): Before/after writing transformations
-- **Context Documents** (`context/`): Optimized quick-reference materials
-- **Pattern Library** (`patterns/`): Common AI patterns to avoid
+**Core Features**:
 
-**Core Features** (Agent Framework):
-- **3 General-Purpose Agents** (`agents/`):
-  - writing-validator: Content validation against AI patterns
-  - prompt-optimizer: Prompt enhancement using writing principles
-  - content-diversifier: Varied example generation
-- **51 SDLC Agents** (`agentic/code/frameworks/sdlc-complete/agents/`):
-  - Complete role coverage: Architecture, Testing, Security, DevOps, Product, Legal
-  - Includes: requirements-analyst, code-reviewer, test-engineer, security-auditor, cloud-architect, debugger, incident-responder, and 44 others
-- **24 SDLC Commands** (slash commands for workflows)
-- **Complete Template Library** (intake, requirements, architecture, testing, security, deployment)
+1. **Writing Quality Framework**:
+   - Banned pattern detection (validation/banned-patterns.md)
+   - Sophistication guidelines (core/sophistication-guide.md)
+   - Quick reference validation checklist (context/quick-reference.md)
+   - Before/after examples (examples/technical-writing.md)
 
-**Deployment Tooling**:
-- Agent deployment automation (`tools/agents/deploy-agents.mjs`)
-- Project scaffolding (`tools/install/new-project.mjs`)
-- One-line installer (`tools/install/install.sh`)
-- Manifest generation and sync (`tools/manifest/`)
-- Markdown linting automation (`tools/lint/`)
-- Card prefilling from team profiles (`tools/cards/`)
+2. **General-Purpose Agents** (4 agents):
+   - writing-validator: Content authenticity validation
+   - prompt-optimizer: AI Writing Guide principles application
+   - content-diversifier: Varied perspective generation
+   - (1 additional agent in agents/ directory)
 
-**Recent Additions** (Last week - 70 commits):
-- .aiwg/ directory standardization
-- Graceful reinstall with automatic error recovery
-- Version and update commands (aiwg -version, aiwg -update)
-- Intake from codebase generation command
-- Agent tools standardization (comma-separated format)
+3. **SDLC Complete Framework** (57 specialized agents):
+   - 51 SDLC role agents (Architecture Designer, Test Engineer, Security Gatekeeper, etc.)
+   - Complete phase coverage: Inception → Elaboration → Construction → Transition
+   - 24 SDLC commands (/flow-concept-to-inception, /security-gate, /check-traceability, etc.)
+   - 44 slash commands total (9 general + 35 SDLC-specific)
+
+4. **Development Tooling**:
+   - Agent deployment script (deploy-agents.mjs) supporting Claude/OpenAI
+   - Manifest generation and validation (42 manifest.json files)
+   - Markdown linting automation (10 custom fixers for MD058, MD031, MD040, etc.)
+   - Installation system with CLI wrapper (aiwg command)
+   - Card prefill automation for team profiles
+
+5. **Template Library**:
+   - Intake forms (project-intake, solution-profile, option-matrix)
+   - Requirements templates (user stories, use cases, NFRs)
+   - Architecture templates (SAD, ADRs, API contracts)
+   - Test templates (test plans, strategies, cases)
+   - Security templates (threat models, DPIA, breach plans)
+   - Deployment templates (runbooks, checklists)
+
+6. **Add-on Modules**:
+   - GDPR compliance framework (templates/GDPR/)
+   - Legal liaison templates
+   - Development workflow patterns
+
+**Recent Additions** (last 3 months - 84 commits):
+- Multi-agent pattern documentation (2025-10-15)
+- SDLC flow command updates (flow-concept-to-inception)
+- Test card templates (test-case-card.md, test-suite-card.md)
+- Comprehensive markdown linting workflow
+
+**Planned/In Progress** (from ROADMAP.md):
+- Agent marketplace for community contributions
+- IDE integrations (VSCode, IntelliJ, Vim)
+- Cloud platform-specific agents (AWS, Azure, GCP)
+- Self-improving agents with feedback loops
 
 ## Architecture (Current State)
 
-**Architecture Style**: Documentation repository + Distribution framework
+**Architecture Style**: Documentation-Centric Open Source Framework (Monorepo)
 
 **Components**:
-1. **Writing Guide Content** (Markdown documentation):
-   - Core philosophy and principles
-   - Validation rules and banned patterns
-   - Examples and context documents
-2. **Agent Definitions** (Markdown specifications):
-   - General-purpose writing agents (3)
-   - SDLC framework agents (51)
-   - Deployed to `.claude/agents/` in target projects
-3. **Command Definitions** (Markdown specifications):
-   - SDLC workflow commands (24)
-   - Deployed to `.claude/commands/` in target projects
-4. **Distribution Tooling** (Node.js scripts):
-   - Installation and update automation
-   - Agent/command deployment
-   - Manifest generation and synchronization
-   - Markdown linting and formatting
-5. **Template Library** (SDLC artifacts):
-   - Intake forms, requirements, architecture docs
-   - Test plans, security assessments, deployment runbooks
 
-**Data Models**: N/A (documentation repository - no runtime data persistence)
+1. **Core Writing Guide** (core/, validation/, examples/, patterns/, context/)
+   - Philosophy and principles
+   - Validation rules and banned patterns
+   - Example transformations
+   - Quick reference materials
+
+2. **Agent Ecosystem**:
+   - General writing agents (agents/ - 4 agents)
+   - SDLC agents (agentic/code/frameworks/sdlc-complete/agents/ - 57 agents)
+   - Deployment via .claude/agents/ or .codex/AGENTS.md
+
+3. **Command Framework**:
+   - General commands (commands/ - 9 commands)
+   - SDLC commands (agentic/.../commands/ - 44 commands)
+   - Deployment via .claude/commands/
+
+4. **Template Repository** (agentic/.../templates/):
+   - 15 subdirectories covering all SDLC disciplines
+   - 100+ template files (.md format)
+   - Organized by phase and artifact type
+
+5. **Tooling Layer** (tools/):
+   - agents/ - Deployment and agent management
+   - manifest/ - Documentation metadata management
+   - lint/ - Markdown quality automation
+   - install/ - Installation and CLI wrapper
+   - cards/ - Team profile integration
+   - index/ - Content cataloging
+
+6. **Distribution Mechanisms**:
+   - GitHub repository as source of truth
+   - Shell-based installer (install.sh)
+   - CLI wrapper (aiwg command) with auto-update
+   - Direct tool invocation for CI/CD
+
+**Data Models**: 42 manifest.json metadata files tracking documentation structure
 
 **Integration Points**:
 - GitHub for version control and distribution
-- Claude Code for agent execution (primary target platform)
-- OpenAI/Codex compatibility (secondary target platform)
-- Shell environment for CLI installation
+- Claude Code as primary platform (.claude/ directory structure)
+- OpenAI/Codex as secondary platform (.codex/ directory structure)
+- CI/CD via GitHub Actions (lint-fixcheck.yml, markdownlint.yml, manifest-lint.yml)
+- Node.js runtime for tooling (no package.json - uses system Node)
 
 ## Scale and Performance (Current)
 
-**Current Capacity**: Documentation repository (no active users measured)
+**Current Capacity**: Documentation framework (no runtime system)
+- Content serving: GitHub Pages / raw file access
+- Installation: Shell script with git clone
+- Scalability: Unlimited (static content distribution)
 
-**Distribution Metrics**:
-- Repository size: 3,403 files
-- Documentation: 759 markdown files
-- Agent definitions: 54 total (3 general + 51 SDLC)
-- Command definitions: 8 general + 24 SDLC
-- Tools: 38 JavaScript/Shell scripts
+**Performance Characteristics**:
+- Agent deployment: ~1 second (file copy operations)
+- Manifest generation: Processes 42 manifests across directory tree
+- Lint checks: 10 parallel checks in CI pipeline (~2-3 minutes)
+- Installation: ~10-30 seconds (git clone + alias setup)
 
-**Performance Characteristics** (from documentation):
-- Token usage reduction: 60-80% through agent context isolation
-- Execution speed improvement: 40-60% through parallel agent deployment
-- Installation time: <5 minutes (automated installer)
-- Update time: <30 seconds (git pull automation)
+**Performance Optimizations Present**:
+- Parallel agent deployment (copy operations)
+- Cached manifest metadata (avoid re-parsing)
+- Incremental linting (only changed files trigger CI)
+- Auto-update on CLI invocation (ensures latest version)
 
-**Optimization Patterns**:
-- Context isolation (agents operate independently)
-- Parallel execution (multiple agents simultaneously)
-- Automatic updates (built into CLI wrapper)
-- Graceful error recovery (reinstall on corruption)
+**Documented Performance Benefits**:
+- Token usage: 60-80% reduction through agent context isolation
+- Execution time: 40-60% faster through parallel agent execution
+- Context efficiency: Targeted document combinations vs. full repo inclusion
+
+**Bottlenecks/Pain Points**:
+- No automated version management (no semantic versioning detected)
+- Manual synchronization needed between docs/agents/ and deployment targets
+- Potential drift between template files and command documentation
+- TODO items in P0-IMPLEMENTATION-SUMMARY.md indicate incomplete manifest updates
 
 ## Security and Compliance (Current)
 
-**Security Posture**: Minimal (documentation repository)
+**Security Posture**: Baseline (Open Source Documentation Project)
 
-**Data Classification**: Public (open source MIT license)
+**Data Classification**: Public (MIT Licensed, Open Source)
 
 **Security Controls**:
-- Version control: Git with GitHub remote
-- Distribution: Automated installer with signature verification (git)
-- Secrets Management: None required (no runtime secrets)
-- Access Control: GitHub repository permissions
+- **Access Control**: GitHub repository permissions (public read, maintainer write)
+- **Secrets Management**: .gitignore excludes .env, credentials, secrets
+- **Code Review**: Not enforced (solo developer, no branch protection detected)
+- **Supply Chain**: No package dependencies (shell/Node.js tools only)
+- **Content Security**: No user data collection, static content only
 
-**Compliance Requirements**: None detected
-- No GDPR (no PII processing)
-- No PCI-DSS (no payment processing)
-- No HIPAA (no health data)
-- Open source MIT license (permissive)
+**Compliance Requirements**:
+- **Open Source Licensing**: MIT License (permissive, attribution required)
+- **GDPR**: Not applicable (no personal data processing)
+- **No PII/PHI**: Documentation framework only, no sensitive data
 
-**Security Considerations**:
-- Installation script runs with user permissions (not sudo except for package managers)
-- Node.js version requirement (>= 18.20.8 for security)
-- GitHub Actions CI/CD with no secret exposure
-- No external service dependencies (self-contained framework)
+**Security Best Practices Implemented**:
+- Explicit .gitignore for secrets (.env, credentials)
+- No hardcoded credentials detected
+- Command documentation includes security reminders (commit-and-push.md checks for secrets)
+- SDLC framework includes security agents (Security Gatekeeper, Security Auditor)
+
+**Security Gaps**:
+- No branch protection rules (solo developer workflow)
+- No automated security scanning (SAST/DAST)
+- No dependency scanning (no dependencies to scan)
+- No code signing for releases
 
 ## Team and Operations (Current)
 
-**Team Size**: Solo developer (1 active contributor)
+**Team Size**: Solo Developer (1 active contributor)
 
-**Active Contributors**: 1 (Joseph Magly - 75 commits total)
+**Active Contributors**: Joseph Magly (100% of commits)
 
 **Development Velocity**:
-- Last year: 75 commits total
-- Last 3 months: 75 commits (all recent activity)
-- Last week: 70 commits (intensive development phase)
-- Average: ~10 commits/day during active periods
+- Last 3 months: 84 commits (28 commits/month avg)
+- Last year: 84 commits total (project started recently)
+- Commit frequency: ~1 commit/day during active periods
 
 **Process Maturity**:
-- **Version Control**: Git with main branch (GitHub Flow)
-- **Code Review**: Not detected (solo developer)
-- **Testing**: N/A (documentation repository - markdown linting instead)
-- **CI/CD**: GitHub Actions for markdown linting and drift detection
-- **Documentation**: Comprehensive (README, CLAUDE.md, USAGE_GUIDE, PROJECT_SUMMARY, ROADMAP, CONTRIBUTING)
-- **Versioning**: No semantic versioning or tags yet (using commit hashes)
+
+- **Version Control**: Git with GitHub (simple main branch workflow)
+- **Branch Strategy**: GitHub Flow (main branch only, no feature branches detected)
+- **Code Review**: Not applicable (solo developer)
+- **Testing**: Manual validation (no automated test suite)
+- **CI/CD**: GitHub Actions for linting and validation
+  - lint-fixcheck.yml: 10 markdown linting checks
+  - markdownlint.yml: Comprehensive markdown validation
+  - manifest-lint.yml: Manifest consistency checks
+- **Documentation**: Comprehensive (README, CLAUDE.md, USAGE_GUIDE, ROADMAP, PROJECT_SUMMARY)
+- **Versioning**: No semantic versioning (continuous deployment model)
 
 **Operational Support**:
-- **Monitoring**: None (static content repository)
-- **Logging**: Git commit history only
-- **Alerting**: GitHub Actions workflow failures
-- **On-call**: N/A (documentation project)
+- **Monitoring**: Not applicable (static content distribution)
+- **Logging**: Git history as audit trail
+- **Alerting**: GitHub Actions failure notifications
+- **On-call**: Not applicable
+- **Support Model**: GitHub Issues for community support
 
-**Quality Assurance**:
-- Custom markdown linters (10+ specialized fixers)
-- Manifest drift detection
-- GitHub Actions CI enforcement on PRs
-- Automated formatting standardization
+**Development Tools**:
+- Node.js >= 18.20.8 (LTS Hydrogen) for tooling
+- GitHub Actions for CI automation
+- markdownlint-cli2 for content validation
+- Custom .mjs scripts for manifest/agent/lint automation
 
 ## Dependencies and Infrastructure
 
 **Third-Party Services**:
-- **GitHub**: Repository hosting, version control, CI/CD
-- **npm**: Markdown linting tools (markdownlint-cli2)
-- **NodeSource**: Node.js distribution for installer
-
-**Runtime Dependencies** (Node.js tools):
-- No package.json detected (scripts use only Node.js stdlib)
-- Markdown linting: markdownlint-cli2 (invoked via npx)
+- **GitHub**: Version control, CI/CD, issue tracking, distribution
+- **Node.js**: Runtime for tooling scripts (no npm packages)
+- **Shell (bash)**: Installation and CLI wrapper
 
 **Infrastructure**:
-- **Hosting**: GitHub repository (static content)
-- **Distribution**: Git clone + shell installer
-- **Installation Location**: `~/.local/share/ai-writing-guide` (default)
-- **CLI Integration**: Shell aliases (~/.bash_aliases or ~/.zshrc)
+- **Hosting**: GitHub repository (https://github.com/jmagly/ai-writing-guide.git)
+- **Deployment**: Git-based (clone/pull for updates)
+- **Distribution**:
+  - Direct git clone
+  - One-liner install script (curl | bash)
+  - CLI wrapper (aiwg) installed to user environment
+- **No Database**: File-based content storage (markdown + JSON manifests)
+- **No Caching**: Static content, browser/CDN caching only
+- **No Message Queue**: Not applicable
 
-**Build/Deployment**:
-- No build step (documentation + scripts)
-- Distribution via git clone
-- Updates via git pull (automated in CLI wrapper)
-- CI enforcement via GitHub Actions (markdown linting)
+**Installation Locations**:
+- Default: `~/.local/share/ai-writing-guide`
+- Customizable via --prefix flag
+- CLI aliases registered in shell rc files (.bashrc, .zshrc)
+
+**Node.js Dependencies**: None (no package.json)
+- Pure JavaScript/shell tooling
+- No external npm packages
+- Self-contained .mjs scripts
 
 ## Known Issues and Technical Debt
 
-**Quality Gaps** (from analysis):
-- No semantic versioning or release tags
-- Solo development (no peer review)
-- No automated testing for Node.js scripts
-- Documentation-only (no compiled artifacts or release binaries)
+**Performance Issues**: None detected (static content)
+
+**Security Gaps**:
+- No branch protection (acceptable for solo developer)
+- No automated security scanning (low risk for documentation)
+- No release signing (future enhancement)
+
+**Technical Debt** (from TODO/FIXME analysis):
+- **P0-IMPLEMENTATION-SUMMARY.md** lists incomplete tasks:
+  - Update framework-inventory.md with new templates
+  - Run manifest generation for new templates
+  - Update CLAUDE.md with new template counts
+- **Potential drift**: Template files added but manifests not regenerated
+- **Documentation lag**: New features may not be reflected in all docs
 
 **Modernization Opportunities**:
-- Add semantic versioning and changelog
-- Create GitHub releases with versioned archives
-- Add script testing (e.g., for deploy-agents.mjs)
-- Consider multi-contributor governance model
+- Add semantic versioning and releases (GitHub Releases)
+- Implement automated changelog generation
+- Add contribution guidelines (CONTRIBUTING.md exists but minimal)
+- Create automated regression testing for tooling
+- Add GitHub branch protection rules
+- Implement automated template validation
 
-**Technical Debt**: Minimal (young project in active development)
-
-**Performance Considerations**: None (static content distribution)
+**Maintenance Considerations**:
+- Solo developer bus factor (single maintainer risk)
+- Manual manifest synchronization prone to drift
+- No automated validation of agent/command deployment
+- Template proliferation may need organizational review
 
 ## Why This Intake Now?
 
-**Context**: Self-documentation for SDLC framework demonstration
+**Context**: Self-documentation for SDLC framework demonstration and validation
 
 **Goals**:
-- Demonstrate intake-from-codebase command on real project
-- Establish baseline documentation for AI Writing Guide itself
-- Validate SDLC framework tools on actual codebase
-- Enable future contributors to understand project structure
+- Demonstrate `/intake-from-codebase` command capability
+- Establish baseline for own SDLC process adoption
+- Document current state for future contributors
+- Validate comprehensive intake generation from code analysis
+- Provide reference example for other projects
+
+**Value of Documentation**:
+- Enables structured development planning (roadmap execution)
+- Supports contributor onboarding
+- Demonstrates framework capabilities to potential users
+- Creates audit trail for open source project evolution
 
 ## Attachments
 
-- **Solution profile**: [solution-profile.md](solution-profile.md)
-- **Option matrix**: [option-matrix.md](option-matrix.md)
+- **Solution profile**: [solution-profile.md](./solution-profile.md)
+- **Option matrix**: [option-matrix.md](./option-matrix.md)
 - **Codebase location**: `/home/manitcor/dev/ai-writing-guide`
 - **Repository**: https://github.com/jmagly/ai-writing-guide.git
-- **Documentation**: [README.md](../../README.md), [CLAUDE.md](../../CLAUDE.md), [USAGE_GUIDE.md](../../USAGE_GUIDE.md)
+- **Main documentation**: README.md, CLAUDE.md, USAGE_GUIDE.md
+- **Roadmap**: ROADMAP.md (4-phase, 12-month plan)
+- **Project summary**: PROJECT_SUMMARY.md
 
 ## Next Steps
 
-1. **Review generated intake** for accuracy and completeness
-2. **Add version tagging** (semantic versioning for releases)
-3. **Create GitHub release** with installation instructions
-4. **Consider**: Multi-contributor governance and contribution guidelines expansion
-5. **Continue development**: Follow ROADMAP.md for planned features
+1. **Review generated intake** for accuracy (validate assumptions)
+2. **Complete pending TODOs** from P0-IMPLEMENTATION-SUMMARY.md:
+   - Update framework-inventory.md
+   - Regenerate manifests for new templates
+   - Update CLAUDE.md template counts
+3. **Choose improvement path** from option-matrix.md:
+   - Option A: Continue current development (maintain agility)
+   - Option B: Add versioning and release process (improve stability)
+   - Option C: Formalize contribution process (scale community)
+4. **Start appropriate SDLC flow**:
+   - For roadmap execution: `/flow-iteration-dual-track`
+   - For new features: `/flow-concept-to-inception`
+   - For community scaling: `/flow-team-onboarding`
+5. **Consider adding**:
+   - Semantic versioning (git tags)
+   - CHANGELOG.md automation
+   - Contributor guidelines expansion
+   - Automated testing for tooling scripts
