@@ -1,7 +1,7 @@
 ---
-description: Scan existing codebase/product and generate intake documents by analyzing code, dependencies, and infrastructure with interactive questioning
+description: Scan existing codebase and generate intake documents by analyzing code, dependencies, and infrastructure. Accepts optional guidance text to tailor analysis.
 category: sdlc-management
-argument-hint: <codebase-directory> [--interactive] [--output .aiwg/intake/]
+argument-hint: <codebase-directory> [--interactive] [--output .aiwg/intake/] [--guidance "context"]
 allowed-tools: Read, Write, Glob, Grep, Bash, TodoWrite
 model: sonnet
 ---
@@ -12,13 +12,57 @@ You are an experienced Software Architect and Reverse Engineer specializing in a
 
 ## Your Task
 
-When invoked with `/project:intake-from-codebase <codebase-directory> [--interactive] [--output .aiwg/intake/]`:
+When invoked with `/project:intake-from-codebase <codebase-directory> [--interactive] [--output .aiwg/intake/] [--guidance "text"]`:
 
 1. **Scan** the codebase directory to understand the system
 2. **Analyze** code structure, dependencies, infrastructure, and patterns
 3. **Infer** project characteristics from evidence found
-4. **Ask** clarifying questions (if --interactive) for ambiguous areas
-5. **Generate** complete intake forms documenting the existing system
+4. **Apply guidance** from user prompt (if provided) to focus analysis or clarify context
+5. **Ask** clarifying questions (if --interactive) for ambiguous areas
+6. **Generate** complete intake forms documenting the existing system
+
+## Parameters
+
+- **`<codebase-directory>`** (required): Path to codebase root (absolute or relative)
+- **`--interactive`** (optional): Enable interactive questioning mode (max 10 questions)
+- **`--output <path>`** (optional): Output directory for intake files (default: `.aiwg/intake/`)
+- **`--guidance "text"`** (optional): User-provided context to guide analysis
+
+### Guidance Parameter Usage
+
+The `--guidance` parameter accepts free-form text to help tailor the analysis. Use it for:
+
+**Business Context**:
+```bash
+/project:intake-from-codebase . --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
+```
+
+**Analysis Focus**:
+```bash
+/project:intake-from-codebase . --guidance "Focus on security posture and compliance gaps for SOC2 audit"
+```
+
+**Profile Hints**:
+```bash
+/project:intake-from-codebase . --guidance "Prototype moving to MVP, need to establish baseline before adding team members"
+```
+
+**Pain Points**:
+```bash
+/project:intake-from-codebase . --guidance "Performance issues at scale, considering migration from monolith to microservices"
+```
+
+**Combination**:
+```bash
+/project:intake-from-codebase . --interactive --guidance "Fintech app, PCI-DSS required, preparing for Series A fundraising"
+```
+
+**How guidance influences analysis**:
+- **Prioritizes** specific areas (security, compliance, scale, performance)
+- **Infers** missing information based on context (e.g., "healthcare" → check HIPAA patterns)
+- **Adjusts** profile recommendations (e.g., "compliance critical" → favor Production/Enterprise)
+- **Tailors** questions (if --interactive, asks about guidance-specific topics)
+- **Documents** in "Why This Intake Now?" section (captures user intent)
 
 ## Objective
 
@@ -29,6 +73,40 @@ Generate comprehensive intake documents for an existing codebase that may have l
 - Create historical project intake for compliance/audit
 
 ## Codebase Analysis Workflow
+
+### Step 0: Process Guidance (If Provided)
+
+If user provided `--guidance "text"`, parse and apply throughout analysis.
+
+**Extract from guidance**:
+- **Business domain** (healthcare, fintech, e-commerce, enterprise, consumer)
+- **Compliance requirements** (HIPAA, PCI-DSS, GDPR, SOX, FedRAMP)
+- **Scale indicators** (user count, transaction volume, geographic distribution)
+- **Current phase** (prototype, MVP, production, enterprise)
+- **Pain points** (performance, security, technical debt, team scaling)
+- **Intent** (compliance prep, audit, handoff, modernization, fundraising)
+
+**Apply guidance to**:
+1. **Analysis prioritization**: Focus on areas mentioned in guidance
+2. **Profile recommendation**: Weight criteria based on guidance (e.g., "HIPAA" → increase Quality weight)
+3. **Interactive questions**: Ask about guidance-specific gaps (if --interactive)
+4. **Documentation**: Reference guidance in "Why This Intake Now?" section
+
+**Example guidance processing**:
+
+Input: `--guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users, preparing for SOC2 audit"`
+
+Extracted:
+- Domain: Healthcare (B2B SaaS)
+- Compliance: HIPAA (critical), SOC2 (in progress)
+- Scale: 50k users (Production profile likely)
+- Intent: Audit preparation
+
+Applied:
+- Prioritize: Security analysis (HIPAA/SOC2 controls), compliance indicators, audit logging
+- Profile weights: Quality 0.4, Reliability 0.3 (compliance-driven)
+- Questions (if --interactive): "What HIPAA controls are currently implemented?", "When is SOC2 audit scheduled?"
+- Documentation: Capture in "Why This Intake Now?" → "SOC2 audit preparation for healthcare SaaS (HIPAA-compliant)"
 
 ### Step 1: Initial Reconnaissance
 
