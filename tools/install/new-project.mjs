@@ -170,7 +170,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
   console.log(`Settings configured: ${settingsPath}`);
 
   const intakeSrc = path.join(aiwgPath, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'intake');
-  const destIntake = path.resolve(process.cwd(), 'intake');
+  const destIntake = path.resolve(process.cwd(), '.aiwg', 'intake');
   ensureDir(destIntake);
 
   const mapping = [
@@ -198,16 +198,16 @@ function createOrUpdateSettings(aiwgPath, provider) {
       `This project uses the AI Writing Guide SDLC Complete framework.\n\n` +
       `## Getting Started\n\n` +
       `### 1. Fill Intake Forms\n\n` +
-      `Start by completing the intake forms in the \`intake/\` directory:\n\n` +
-      `- \`intake/project-intake.md\` - Project overview, stakeholders, constraints\n` +
-      `- \`intake/solution-profile.md\` - Technical requirements, architecture preferences\n` +
-      `- \`intake/option-matrix.md\` - Solution alternatives and evaluation criteria\n\n` +
+      `Start by completing the intake forms in the \`.aiwg/intake/\` directory:\n\n` +
+      `- \`.aiwg/intake/project-intake.md\` - Project overview, stakeholders, constraints\n` +
+      `- \`.aiwg/intake/solution-profile.md\` - Technical requirements, architecture preferences\n` +
+      `- \`.aiwg/intake/option-matrix.md\` - Solution alternatives and evaluation criteria\n\n` +
       `### 2. Agents and Commands\n\n` +
       `SDLC agents and commands are automatically deployed to \`.claude/agents/\` and \`.claude/commands/\`.\n\n` +
       `Access to SDLC framework documentation is configured in \`.claude/settings.json\`.\n\n` +
       `### 3. Start SDLC Flow\n\n` +
       `Once intake forms are complete, kick off the Concept → Inception flow:\n\n` +
-      '```bash\n# Start Inception phase with automated validation\n/project:flow-concept-to-inception .\n\n# Or use the intake-start command\n/project:intake-start intake/\n\n# Check available flow commands\nls .claude/commands/flow-*.md\n```\n\n' +
+      '```bash\n# Start Inception phase with automated validation\n/project:flow-concept-to-inception .\n\n# Or use the intake-start command\n/project:intake-start .aiwg/intake/\n\n# Check available flow commands\nls .claude/commands/flow-*.md\n```\n\n' +
       `### 4. SDLC Framework Documentation\n\n` +
       `Claude Code agents have read access to the complete SDLC framework documentation at:\n\n` +
       `\`${aiwgPath}/agentic/code/frameworks/sdlc-complete/\`\n\n` +
@@ -280,7 +280,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
       }
       console.log('Initialized git repository on branch main.');
       console.log('Next steps:');
-      console.log('  1. Fill intake forms: intake/project-intake.md, intake/solution-profile.md, intake/option-matrix.md');
+      console.log('  1. Fill intake forms: .aiwg/intake/project-intake.md, .aiwg/intake/solution-profile.md, .aiwg/intake/option-matrix.md');
       console.log('  2. Start SDLC flow: /project:flow-concept-to-inception .');
       console.log('  3. Commit: git add . && git commit -m "chore: initial scaffold"');
     } catch (e) {
@@ -291,7 +291,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
   console.log('\n=== Scaffold Complete ===');
   console.log(`Project: ${name}`);
   console.log(`Provider: ${provider}`);
-  console.log(`Intake templates: ${created} files created in intake/`);
+  console.log(`Intake templates: ${created} files created in .aiwg/intake/`);
   console.log(`Settings: .claude/settings.json configured with SDLC documentation access`);
   console.log(`SDLC Framework: ${aiwgPath}/agentic/code/frameworks/sdlc-complete/`);
   if (withAgents) {
