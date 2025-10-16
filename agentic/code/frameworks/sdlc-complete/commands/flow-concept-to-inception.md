@@ -25,125 +25,515 @@ The Concept → Inception flow validates problem, scope, risks, and success metr
 
 ## Workflow Steps
 
-### Step 1: Idea Intake and Vision Brief
-**Agents**: Business Process Analyst (lead), Vision Owner
-**Templates Required**:
-- `intake/project-intake-template.md`
-- `requirements/vision-informal-template.md`
+### Step 1: Idea Intake and Vision Brief - Multi-Agent Pattern
 
-**Actions**:
-1. Read and validate intake form completeness
-2. Check for clear problem statement, personas, constraints
-3. Generate vision brief if missing
-4. Record gaps in intake-gaps.md
+**Primary Authors**: Business Process Analyst (lead), Vision Owner
+**Templates**:
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/intake/project-intake-template.md`
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/vision-informal-template.md`
+
+**Multi-Agent Workflow**:
+
+1. **Initialize** (Documentation Archivist)
+   ```bash
+   mkdir -p .aiwg/working/requirements/vision/{drafts,reviews,synthesis}
+
+   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/vision-informal-template.md
+
+   cat > .aiwg/working/requirements/vision/metadata.json <<EOF
+   {
+     "document-id": "vision-document",
+     "template-source": "$TEMPLATE",
+     "primary-author": "vision-owner",
+     "reviewers": ["business-process-analyst", "product-strategist", "technical-writer"],
+     "synthesizer": "requirements-documenter",
+     "output-path": ".aiwg/requirements/vision-document.md"
+   }
+   EOF
+   ```
+
+2. **Primary Draft** (Vision Owner + Business Process Analyst)
+   ```bash
+   # Read and validate intake form
+   cat intake/project-intake-template.md
+
+   # Vision Owner creates vision draft from intake
+   # Business Process Analyst structures per template
+   # Draft includes: problem statement, personas, success metrics, constraints
+
+   cp vision-draft.md .aiwg/working/requirements/vision/drafts/v0.1-primary-draft.md
+   ```
+
+3. **Parallel Review**
+   ```bash
+   # Product Strategist: Validates business value and market alignment
+   # Business Process Analyst: Validates process context and stakeholder needs
+   # Technical Writer: Ensures clarity and consistency
+
+   # Output: reviews/{role}-review.md
+   # Status: APPROVED | CONDITIONAL | NEEDS_WORK
+   ```
+
+4. **Synthesis** (Requirements Documenter)
+   ```bash
+   # Merge feedback, resolve conflicts
+   # Output final vision to .aiwg/requirements/vision-document.md
+   ```
+
+5. **Archive** (Documentation Archivist)
+   ```bash
+   mv .aiwg/working/requirements/vision .aiwg/archive/$(date +%Y-%m)/vision-$(date +%Y-%m-%d)/
+   ```
 
 **Gate Criteria**:
 - [ ] Problem statement is clear and measurable
 - [ ] At least 2 personas identified
 - [ ] Constraints documented (technical, budget, timeline)
+- [ ] All reviewers signed off (APPROVED or CONDITIONAL)
 
-### Step 2: Business Value and Persona Alignment
-**Agents**: Product Strategist (lead), System Analyst
-**Templates Required**:
-- `requirements/use-case-brief-template.md`
-- `requirements/context-free-interview-template.md`
+### Step 2: Business Value and Persona Alignment - Multi-Agent Pattern
 
-**Actions**:
-1. Identify 3-5 core business use cases
-2. Document stakeholder interviews
-3. Validate value proposition
-4. Create use case briefs
+**Primary Authors**: Product Strategist (lead), Requirements Analyst
+**Templates**:
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/use-case-brief-template.md`
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/context-free-interview-template.md`
+
+**Multi-Agent Workflow**:
+
+1. **Initialize** (Documentation Archivist)
+   ```bash
+   mkdir -p .aiwg/working/requirements/use-case-briefs/{drafts,reviews,synthesis}
+   mkdir -p .aiwg/working/requirements/stakeholder-interviews/{drafts,reviews,synthesis}
+
+   TEMPLATE_UC=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/use-case-brief-template.md
+   TEMPLATE_INT=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/requirements/context-free-interview-template.md
+
+   cat > .aiwg/working/requirements/use-case-briefs/metadata.json <<EOF
+   {
+     "document-id": "use-case-briefs",
+     "template-source": "$TEMPLATE_UC",
+     "primary-author": "requirements-analyst",
+     "reviewers": ["product-strategist", "business-process-analyst", "architecture-designer", "technical-writer"],
+     "synthesizer": "requirements-documenter",
+     "output-path": ".aiwg/requirements/use-case-briefs/"
+   }
+   EOF
+   ```
+
+2. **Primary Draft** (Requirements Analyst + Product Strategist)
+   ```bash
+   # Requirements Analyst conducts stakeholder interviews
+   # Product Strategist validates value proposition
+
+   # Create 3-5 use case briefs using template
+   # Each brief includes: actor, goal, preconditions, success criteria
+
+   # Example use cases:
+   # - UC-001: User registration
+   # - UC-002: Primary workflow
+   # - UC-003: Admin management
+
+   cp use-case-brief-001.md .aiwg/working/requirements/use-case-briefs/drafts/
+   cp use-case-brief-002.md .aiwg/working/requirements/use-case-briefs/drafts/
+   cp use-case-brief-003.md .aiwg/working/requirements/use-case-briefs/drafts/
+
+   # Document stakeholder interviews
+   cp stakeholder-interviews.md .aiwg/working/requirements/stakeholder-interviews/drafts/v0.1-primary-draft.md
+   ```
+
+3. **Parallel Review**
+   ```bash
+   # Product Strategist: Validates business value and market alignment
+   # Business Process Analyst: Validates process flows and stakeholder needs
+   # Architecture Designer: Validates technical feasibility
+   # Technical Writer: Ensures clarity and consistency
+
+   # Each use case reviewed independently
+   # Output: reviews/{role}-review-uc-{number}.md
+   ```
+
+4. **Synthesis** (Requirements Documenter)
+   ```bash
+   # Validate completeness of each use case brief
+   # Ensure consistency across briefs
+   # Validate value proposition alignment
+
+   # Output final use case briefs to .aiwg/requirements/use-case-briefs/
+   ```
+
+5. **Archive** (Documentation Archivist)
+   ```bash
+   mv .aiwg/working/requirements/use-case-briefs .aiwg/archive/$(date +%Y-%m)/use-case-briefs-$(date +%Y-%m-%d)/
+   mv .aiwg/working/requirements/stakeholder-interviews .aiwg/archive/$(date +%Y-%m)/stakeholder-interviews-$(date +%Y-%m-%d)/
+   ```
 
 **Gate Criteria**:
 - [ ] 3-5 business use cases identified and documented
 - [ ] Stakeholder interviews conducted (at least 3 stakeholders)
 - [ ] Value proposition validated
+- [ ] All reviewers signed off for each use case (APPROVED or CONDITIONAL)
 
-### Step 3: Top Risks Identified
-**Agents**: Project Manager (lead), Software Architect
-**Templates Required**:
-- `management/risk-list-template.md`
-- `management/risk-card.md`
+### Step 3: Top Risks Identified - Multi-Agent Pattern
 
-**Actions**:
-1. Conduct risk identification workshop
-2. Document 5-10 risks with likelihood and impact
-3. Create mitigation plans for top 3 risks
-4. Establish risk monitoring cadence
+**Primary Authors**: Project Manager (lead), Software Architect
+**Templates**:
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/risk-list-template.md`
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/risk-card.md`
+
+**Multi-Agent Workflow**:
+
+1. **Initialize** (Documentation Archivist)
+   ```bash
+   mkdir -p .aiwg/working/risks/risk-list/{drafts,reviews,synthesis}
+
+   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/risk-list-template.md
+
+   cat > .aiwg/working/risks/risk-list/metadata.json <<EOF
+   {
+     "document-id": "risk-list",
+     "template-source": "$TEMPLATE",
+     "primary-author": "project-manager",
+     "reviewers": ["architecture-designer", "security-architect", "test-architect", "technical-writer"],
+     "synthesizer": "documentation-synthesizer",
+     "output-path": ".aiwg/risks/risk-list.md"
+   }
+   EOF
+   ```
+
+2. **Primary Draft** (Project Manager + Software Architect)
+   ```bash
+   # Conduct risk identification workshop
+   # Project Manager facilitates and documents
+   # Software Architect identifies technical risks
+
+   # Draft includes: 5-10 risks with likelihood, impact, mitigation plans
+   # Focus on top 3 risks with detailed mitigation
+
+   cp risk-list-draft.md .aiwg/working/risks/risk-list/drafts/v0.1-primary-draft.md
+   ```
+
+3. **Parallel Review**
+   ```bash
+   # Architecture Designer: Validates architectural risk assessment
+   # Security Architect: Identifies security risks, validates severity
+   # Test Architect: Identifies testability risks
+   # Technical Writer: Ensures clarity of risk descriptions
+
+   # Each creates risk cards for missing risks using risk-card.md template
+   # Output: reviews/{role}-review.md
+   ```
+
+4. **Synthesis** (Documentation Synthesizer)
+   ```bash
+   # Merge all identified risks
+   # Consolidate duplicates
+   # Prioritize by severity (Show Stopper, High, Medium, Low)
+   # Ensure top 3 have mitigation plans
+
+   # Output final risk list to .aiwg/risks/risk-list.md
+   ```
+
+5. **Archive** (Documentation Archivist)
+   ```bash
+   mv .aiwg/working/risks/risk-list .aiwg/archive/$(date +%Y-%m)/risk-list-$(date +%Y-%m-%d)/
+   ```
 
 **Gate Criteria**:
 - [ ] 5-10 risks documented with severity ratings
-- [ ] Top 3 risks have mitigation plans
+- [ ] Top 3 risks have detailed mitigation plans
 - [ ] No Show Stopper risks without mitigation
+- [ ] All reviewers signed off (APPROVED or CONDITIONAL)
 
-### Step 4: Security and Privacy Screening
-**Agents**: Security Architect (lead), Legal Liaison
-**Templates Required**:
-- `security/data-classification-template.md`
-- `security/privacy-impact-assessment-template.md`
+### Step 4: Security and Privacy Screening - Multi-Agent Pattern
 
-**Actions**:
-1. Classify data sensitivity levels
-2. Conduct privacy impact assessment
-3. Identify security requirements
-4. Document compliance obligations (GDPR, HIPAA, etc.)
+**Primary Authors**: Security Architect (lead), Legal Liaison
+**Templates**:
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/security/data-classification-template.md`
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/security/privacy-impact-assessment-template.md`
+
+**Multi-Agent Workflow**:
+
+1. **Initialize** (Documentation Archivist)
+   ```bash
+   mkdir -p .aiwg/working/security/data-classification/{drafts,reviews,synthesis}
+   mkdir -p .aiwg/working/security/privacy-assessment/{drafts,reviews,synthesis}
+
+   TEMPLATE_DATA=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/security/data-classification-template.md
+   TEMPLATE_PIA=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/security/privacy-impact-assessment-template.md
+
+   # Metadata for both documents
+   cat > .aiwg/working/security/data-classification/metadata.json <<EOF
+   {
+     "document-id": "data-classification",
+     "template-source": "$TEMPLATE_DATA",
+     "primary-author": "security-architect",
+     "reviewers": ["legal-liaison", "privacy-officer", "architecture-designer", "technical-writer"],
+     "synthesizer": "documentation-synthesizer",
+     "output-path": ".aiwg/security/data-classification.md"
+   }
+   EOF
+   ```
+
+2. **Primary Draft** (Security Architect + Legal Liaison)
+   ```bash
+   # Security Architect: Classifies data (Public, Internal, Confidential, Restricted)
+   # Legal Liaison: Documents compliance obligations (GDPR, HIPAA, CCPA, etc.)
+
+   # Draft includes:
+   # - Data sensitivity levels
+   # - Privacy impact assessment
+   # - Security requirements
+   # - Compliance obligations
+
+   cp data-classification-draft.md .aiwg/working/security/data-classification/drafts/v0.1-primary-draft.md
+   cp privacy-assessment-draft.md .aiwg/working/security/privacy-assessment/drafts/v0.1-primary-draft.md
+   ```
+
+3. **Parallel Review**
+   ```bash
+   # Privacy Officer: Validates privacy assessment, GDPR/CCPA compliance
+   # Legal Liaison: Validates legal/regulatory requirements
+   # Architecture Designer: Validates security architecture alignment
+   # Technical Writer: Ensures clarity and completeness
+
+   # Output: reviews/{role}-review.md for each document
+   ```
+
+4. **Synthesis** (Documentation Synthesizer)
+   ```bash
+   # Merge feedback for both documents
+   # Ensure no Show Stopper security concerns
+   # Validate all compliance requirements documented
+
+   # Output final documents
+   cp synthesized-data-classification.md .aiwg/security/data-classification.md
+   cp synthesized-privacy-assessment.md .aiwg/security/privacy-impact-assessment.md
+   ```
+
+5. **Archive** (Documentation Archivist)
+   ```bash
+   mv .aiwg/working/security/data-classification .aiwg/archive/$(date +%Y-%m)/data-classification-$(date +%Y-%m-%d)/
+   mv .aiwg/working/security/privacy-assessment .aiwg/archive/$(date +%Y-%m)/privacy-assessment-$(date +%Y-%m-%d)/
+   ```
 
 **Gate Criteria**:
 - [ ] Data classes identified (Public, Internal, Confidential, Restricted)
 - [ ] No Show Stopper security concerns
 - [ ] Privacy assessment complete
-- [ ] Compliance requirements documented
+- [ ] Compliance requirements documented (GDPR, HIPAA, CCPA as applicable)
+- [ ] All reviewers signed off (APPROVED or CONDITIONAL)
 
-### Step 5: Architecture Sketch
-**Agents**: Software Architect (lead)
-**Templates Required**:
-- `analysis-design/software-architecture-doc-template.md`
+### Step 5: Architecture Sketch - Multi-Agent Pattern
 
-**Actions**:
-1. Sketch component boundaries
-2. Identify integration points
-3. Propose tech stack
-4. Document architectural constraints
+**Primary Authors**: Software Architect (Architecture Designer lead)
+**Templates**:
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md`
+
+**Multi-Agent Workflow**:
+
+1. **Initialize** (Documentation Archivist)
+   ```bash
+   mkdir -p .aiwg/working/architecture/architecture-sketch/{drafts,reviews,synthesis}
+
+   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
+
+   cat > .aiwg/working/architecture/architecture-sketch/metadata.json <<EOF
+   {
+     "document-id": "architecture-sketch",
+     "template-source": "$TEMPLATE",
+     "primary-author": "architecture-designer",
+     "reviewers": ["security-architect", "requirements-analyst", "technical-writer"],
+     "synthesizer": "architecture-documenter",
+     "output-path": ".aiwg/architecture/architecture-sketch.md"
+   }
+   EOF
+   ```
+
+2. **Primary Draft** (Architecture Designer)
+   ```bash
+   # Read template and create initial architecture sketch
+   # Draft includes: component boundaries, integration points, tech stack, constraints
+
+   cp architecture-sketch-draft.md .aiwg/working/architecture/architecture-sketch/drafts/v0.1-primary-draft.md
+   ```
+
+3. **Parallel Review**
+   ```bash
+   # Security Architect: Validates security considerations in architecture
+   # Requirements Analyst: Validates alignment with use cases
+   # Technical Writer: Ensures clarity and diagram quality
+
+   # Output: reviews/{role}-review.md
+   ```
+
+4. **Synthesis** (Architecture Documenter)
+   ```bash
+   # Merge feedback, ensure technical accuracy
+   # Output to .aiwg/architecture/architecture-sketch.md
+   ```
+
+5. **Archive** (Documentation Archivist)
+   ```bash
+   mv .aiwg/working/architecture/architecture-sketch .aiwg/archive/$(date +%Y-%m)/architecture-sketch-$(date +%Y-%m-%d)/
+   ```
 
 **Gate Criteria**:
 - [ ] Component boundaries sketched
 - [ ] Integration points identified
 - [ ] Tech stack proposed with rationale
 - [ ] Architectural risks documented
+- [ ] All reviewers signed off (APPROVED or CONDITIONAL)
 
-### Step 6: Decision Checkpoints
-**Agents**: Software Architect (lead)
-**Templates Required**:
-- `analysis-design/architecture-decision-record-template.md`
+### Step 6: Decision Checkpoints - Multi-Agent Pattern
 
-**Actions**:
-1. Document critical architectural decisions
-2. Capture decision context and alternatives
-3. Record consequences and trade-offs
-4. Link decisions to requirements
+**Primary Authors**: Software Architect (Architecture Designer lead)
+**Templates**:
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md`
+
+**Multi-Agent Workflow**:
+
+1. **Initialize** (Documentation Archivist)
+   ```bash
+   mkdir -p .aiwg/working/architecture/adrs/{drafts,reviews,synthesis}
+
+   TEMPLATE=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md
+
+   # Create metadata for ADR collection (3+ ADRs)
+   cat > .aiwg/working/architecture/adrs/metadata.json <<EOF
+   {
+     "document-id": "inception-adrs",
+     "template-source": "$TEMPLATE",
+     "primary-author": "architecture-designer",
+     "reviewers": ["security-architect", "test-architect", "technical-writer"],
+     "synthesizer": "architecture-documenter",
+     "output-path": ".aiwg/architecture/adr/"
+   }
+   EOF
+   ```
+
+2. **Primary Draft** (Architecture Designer)
+   ```bash
+   # Create at least 3 critical ADRs using template
+   # Each ADR includes: context, decision, consequences, alternatives
+
+   # Example ADRs for Inception:
+   # - ADR-001: Database selection
+   # - ADR-002: API architecture (REST/GraphQL)
+   # - ADR-003: Authentication mechanism
+
+   cp adr-001-database.md .aiwg/working/architecture/adrs/drafts/
+   cp adr-002-api-architecture.md .aiwg/working/architecture/adrs/drafts/
+   cp adr-003-authentication.md .aiwg/working/architecture/adrs/drafts/
+   ```
+
+3. **Parallel Review**
+   ```bash
+   # Security Architect: Reviews security implications of decisions
+   # Test Architect: Reviews testability implications
+   # Technical Writer: Ensures clarity and completeness
+
+   # Each ADR reviewed independently
+   # Output: reviews/{role}-review-adr-{number}.md
+   ```
+
+4. **Synthesis** (Architecture Documenter)
+   ```bash
+   # Validate technical accuracy of each ADR
+   # Ensure consistency across ADRs
+   # Output final ADRs to .aiwg/architecture/adr/
+   ```
+
+5. **Archive** (Documentation Archivist)
+   ```bash
+   mv .aiwg/working/architecture/adrs .aiwg/archive/$(date +%Y-%m)/adrs-$(date +%Y-%m-%d)/
+   ```
 
 **Gate Criteria**:
 - [ ] At least 3 critical ADRs created
-- [ ] Each ADR has context, decision, consequences
+- [ ] Each ADR has context, decision, consequences, alternatives
 - [ ] Alternatives considered and documented
+- [ ] All reviewers signed off for each ADR (APPROVED or CONDITIONAL)
 
-### Step 7: Funding and Scope Guardrails
-**Agents**: Product Strategist (lead), Project Manager
-**Templates Required**:
-- `management/business-case-informal-template.md`
-- `intake/option-matrix-template.md`
+### Step 7: Funding and Scope Guardrails - Multi-Agent Pattern
 
-**Actions**:
-1. Develop ROM cost estimate
-2. Create business case
-3. Secure funding approval for Elaboration
-4. Document scope boundaries
+**Primary Authors**: Product Strategist (lead), Project Manager
+**Templates**:
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/business-case-informal-template.md`
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/intake/option-matrix-template.md`
+
+**Multi-Agent Workflow**:
+
+1. **Initialize** (Documentation Archivist)
+   ```bash
+   mkdir -p .aiwg/working/management/business-case/{drafts,reviews,synthesis}
+   mkdir -p .aiwg/working/planning/scope-boundaries/{drafts,reviews,synthesis}
+
+   TEMPLATE_BC=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/management/business-case-informal-template.md
+   TEMPLATE_OM=~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/intake/option-matrix-template.md
+
+   cat > .aiwg/working/management/business-case/metadata.json <<EOF
+   {
+     "document-id": "business-case",
+     "template-source": "$TEMPLATE_BC",
+     "primary-author": "product-strategist",
+     "reviewers": ["project-manager", "vision-owner", "architecture-designer", "technical-writer"],
+     "synthesizer": "documentation-synthesizer",
+     "output-path": ".aiwg/management/business-case.md"
+   }
+   EOF
+   ```
+
+2. **Primary Draft** (Product Strategist + Project Manager)
+   ```bash
+   # Product Strategist: Develops ROI analysis and business value
+   # Project Manager: Creates ROM cost estimate (±50% accuracy)
+
+   # Draft includes:
+   # - Problem statement and business need
+   # - ROM cost estimate with assumptions
+   # - Expected benefits and ROI
+   # - Funding request and phasing plan
+   # - Scope boundaries (in/out of scope)
+   # - Option matrix with alternatives
+
+   cp business-case-draft.md .aiwg/working/management/business-case/drafts/v0.1-primary-draft.md
+   cp option-matrix.md .aiwg/working/planning/scope-boundaries/drafts/v0.1-option-matrix.md
+   ```
+
+3. **Parallel Review**
+   ```bash
+   # Vision Owner: Validates alignment with vision and constraints
+   # Project Manager: Validates cost estimates and resource assumptions
+   # Architecture Designer: Validates technical feasibility and architecture cost drivers
+   # Technical Writer: Ensures clarity and executive-level readability
+
+   # Output: reviews/{role}-review.md
+   # Status: APPROVED | CONDITIONAL | NEEDS_WORK
+   ```
+
+4. **Synthesis** (Documentation Synthesizer)
+   ```bash
+   # Merge feedback, ensure business case is compelling
+   # Validate ROM cost estimate has clear assumptions
+   # Ensure scope boundaries are explicit
+
+   # Output final business case to .aiwg/management/business-case.md
+   # Output option matrix to .aiwg/planning/option-matrix.md
+   ```
+
+5. **Archive** (Documentation Archivist)
+   ```bash
+   mv .aiwg/working/management/business-case .aiwg/archive/$(date +%Y-%m)/business-case-$(date +%Y-%m-%d)/
+   mv .aiwg/working/planning/scope-boundaries .aiwg/archive/$(date +%Y-%m)/scope-boundaries-$(date +%Y-%m-%d)/
+   ```
 
 **Gate Criteria**:
-- [ ] ROM cost estimate created (±50% accuracy)
+- [ ] ROM cost estimate created (±50% accuracy) with clear assumptions
 - [ ] Business case approved by Executive Sponsor
 - [ ] Funding secured for at least Elaboration phase
-- [ ] Scope boundaries clearly defined
+- [ ] Scope boundaries clearly defined (in-scope and out-of-scope explicit)
+- [ ] Option matrix complete with at least 3 alternatives analyzed
+- [ ] All reviewers signed off (APPROVED or CONDITIONAL)
 
 ## Exit Criteria (Lifecycle Objective Milestone)
 
