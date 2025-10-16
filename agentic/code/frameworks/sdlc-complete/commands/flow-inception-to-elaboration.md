@@ -1,27 +1,28 @@
 ---
 description: Orchestrate Inception→Elaboration phase transition with architecture baselining and risk retirement
-category: sdlc-management
+category: sdlc-orchestration
 argument-hint: [project-directory] [--guidance "text"] [--interactive]
-allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
-model: sonnet
+allowed-tools: Task, Read, Write, Glob, TodoWrite
+orchestration: true
+model: opus
 ---
 
 # Inception → Elaboration Phase Transition Flow
 
-You are an SDLC Phase Coordinator specializing in orchestrating the critical transition from Inception (vision and business case) to Elaboration (architecture validation and risk retirement).
+**You are the Core Orchestrator** for the critical Inception→Elaboration phase transition.
 
-## Your Task
+## Your Role
 
-When invoked with `/project:flow-inception-to-elaboration [project-directory]`:
+**You orchestrate multi-agent workflows. You do NOT execute bash scripts.**
 
-1. **Validate** Lifecycle Objective Milestone (LOM) criteria met
-2. **Orchestrate** architecture baseline development workflow
-3. **Monitor** risk retirement progress
-4. **Generate** Architecture Baseline Milestone (ABM) readiness report
+When the user requests this flow (via natural language or explicit command):
 
-## Objective
-
-Transition from vision validation to architecture validation, proving the system is technically feasible and major risks are retired before committing to full-scale Construction.
+1. **Interpret the request** and confirm understanding
+2. **Read this template** as your orchestration guide
+3. **Extract agent assignments** and workflow steps
+4. **Launch agents via Task tool** in correct sequence
+5. **Synthesize results** and finalize artifacts
+6. **Report completion** with summary
 
 ## Phase Transition Overview
 
@@ -34,923 +35,1228 @@ Transition from vision validation to architecture validation, proving the system
 - Architecture documentation complete and peer-reviewed
 - Top 70%+ of risks retired or mitigated
 - Requirements baseline established
-- Test s
+- Test strategy defined
 
-### Step 0: Parameter Parsing and Guidance Setup
+**Expected Duration**: 4-8 weeks (typical), 15-20 minutes orchestration
 
-**Parse Command Line**:
+## Natural Language Triggers
 
-Extract optional `--guidance` and `--interactive` parameters.
+Users may say:
+- "Let's transition to Elaboration"
+- "Move to Elaboration"
+- "Start Elaboration phase"
+- "Create architecture baseline"
+- "Generate SAD and ADRs"
 
-```bash
-# Parse arguments (flow-specific primary param varies)
-PROJECT_DIR="."
-GUIDANCE=""
-INTERACTIVE=false
+You recognize these as requests for this orchestration flow.
 
-# Parse all arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --guidance)
-      GUIDANCE="$2"
-      shift 2
-      ;;
-    --interactive)
-      INTERACTIVE=true
-      shift
-      ;;
-    --*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # If looks like a path (contains / or is .), treat as project-directory
-      if [[ "$1" == *"/"* ]] || [[ "$1" == "." ]]; then
-        PROJECT_DIR="$1"
-      fi
-      shift
-      ;;
-  esac
-done
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: User provides upfront direction to tailor orchestration priorities
+
+**Examples**:
+```
+--guidance "Focus on security architecture, HIPAA compliance critical"
+--guidance "Tight timeline, prioritize steel thread validation over comprehensive documentation"
+--guidance "Team has limited DevOps experience, need extra infrastructure support"
+--guidance "Performance is critical path, optimize for sub-100ms p95 response time"
 ```
 
-**Path Resolution**:
+**How to Apply**:
+- Parse guidance for keywords: security, performance, compliance, timeline, team skills
+- Adjust agent assignments (add security-architect, privacy-officer for compliance focus)
+- Modify artifact depth (minimal vs comprehensive based on timeline)
+- Influence priority ordering (architecture vs. requirements focus)
 
-# Function: Resolve AIWG installation path
-resolve_aiwg_root() {
-  # 1. Check environment variable
-  if [ -n "$AIWG_ROOT" ] && [ -d "$AIWG_ROOT" ]; then
-    echo "$AIWG_ROOT"
-    return 0
-  fi
+### --interactive Parameter
 
-  # 2. Check installer location (user)
-  if [ -d ~/.local/share/ai-writing-guide ]; then
-    echo ~/.local/share/ai-writing-guide
-    return 0
-  fi
+**Purpose**: You ask 5-8 strategic questions to understand project context
 
-  # 3. Check system location
-  if [ -d /usr/local/share/ai-writing-guide ]; then
-    echo /usr/local/share/ai-writing-guide
-    return 0
-  fi
+**Questions to Ask** (if --interactive):
 
-  # 4. Check git repository root (development)
-  if git rev-parse --show-toplevel &>/dev/null; then
-    echo "$(git rev-parse --show-toplevel)"
-    return 0
-  fi
+```
+I'll ask 8 strategic questions to tailor the Elaboration transition to your needs:
 
-  # 5. Fallback to current directory
-  echo "."
-  return 1
-}
+Q1: What are your top priorities for Elaboration?
+    (e.g., security validation, performance proof, compliance requirements)
 
-**Resolve AIWG installation**:
+Q2: What percentage of requirements do you estimate are understood?
+    (Help me gauge requirements stability and architecture validation depth)
 
-```bash
-AIWG_ROOT=$(resolve_aiwg_root)
+Q3: What are your biggest architectural unknowns?
+    (These become POC/spike targets for risk retirement)
 
-if [ ! -d "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete" ]; then
-  echo "❌ Error: AIWG installation not found at $AIWG_ROOT"
-  echo ""
-  echo "Please install AIWG or set AIWG_ROOT environment variable"
-  exit 1
-fi
+Q4: What's your team's size and composition?
+    (Helps me assign realistic agent coordination and activity scope)
+
+Q5: How tight is your timeline for Elaboration?
+    (Influences whether to generate comprehensive vs. minimal viable documentation)
+
+Q6: What domain expertise does your team have?
+    (Helps identify knowledge gaps where agents should provide extra guidance)
+
+Q7: Are there regulatory or compliance requirements?
+    (e.g., HIPAA, SOC2, PCI-DSS - affects security/privacy agent assignments)
+
+Q8: What's your testing maturity?
+    (Helps tailor test strategy complexity and automation recommendations)
+
+Based on your answers, I'll adjust:
+- Agent assignments (add specialized reviewers)
+- Artifact depth (comprehensive vs. streamlined)
+- Priority ordering (security-first vs. performance-first)
+- Risk validation approach (POC scope and focus areas)
 ```
 
-**Interactive Mode**:
+**Synthesize Guidance**: Combine answers into structured guidance string for execution
 
-If `--interactive` flag set, prompt user with strategic questions:
+## Artifacts to Generate
 
-```bash
-if [ "$INTERACTIVE" = true ]; then
-  echo "# Flow Inception To Elaboration - Interactive Setup"
-  echo ""
-  echo "I'll ask 8 strategic questions to tailor this flow to your project's needs."
-  echo ""
+**Primary Deliverables**:
+- **Software Architecture Document (SAD)**: Comprehensive architecture → `.aiwg/architecture/software-architecture-doc.md`
+- **Architecture Decision Records (ADRs)**: 3-5 major decisions → `.aiwg/architecture/adr/ADR-*.md`
+- **Master Test Plan**: Testing strategy and coverage targets → `.aiwg/testing/master-test-plan.md`
+- **Requirements Baseline**: Use cases and NFRs → `.aiwg/requirements/`
+- **Risk Retirement Report**: POC results and status → `.aiwg/risks/risk-retirement-report.md`
+- **Elaboration Phase Plan**: Activities and schedule → `.aiwg/planning/phase-plan-elaboration.md`
+- **ABM Report**: Milestone readiness assessment → `.aiwg/reports/abm-report.md`
 
-  read -p "Q1: What are your top priorities for Elaboration? " answer1
-  read -p "Q2: What percentage of requirements do you estimate are understood? " answer2
-  read -p "Q3: What are your biggest architectural unknowns? " answer3
-  read -p "Q4: What's your team's size and composition? " answer4
-  read -p "Q5: How tight is your timeline for Elaboration? " answer5
-  read -p "Q6: What domain expertise does your team have? " answer6
-  read -p "Q7: Are there regulatory or compliance requirements? " answer7
-  read -p "Q8: What's your testing maturity? " answer8
+**Supporting Artifacts**:
+- Architecture Baseline Plan (working doc)
+- LOM Validation Report (gate check)
+- Complete audit trails (archived workflows)
 
-  echo ""
-  echo "Based on your answers, I'll adjust priorities, agent assignments, and activity focus."
-  echo ""
-  read -p "Proceed with these adjustments? (yes/no) " confirm
-
-  if [ "$confirm" != "yes" ]; then
-    echo "Aborting flow."
-    exit 0
-  fi
-
-  # Synthesize guidance from answers
-  GUIDANCE="Priorities: $answer1. Constraints: $answer2. Risks: $answer3. Team: $answer4. Timeline: $answer5."
-fi
-```
-
-**Apply Guidance**:
-
-Parse guidance for keywords and adjust execution:
-
-```bash
-if [ -n "$GUIDANCE" ]; then
-  # Keyword detection
-  FOCUS_SECURITY=false
-  FOCUS_PERFORMANCE=false
-  FOCUS_COMPLIANCE=false
-  TIGHT_TIMELINE=false
-
-  if echo "$GUIDANCE" | grep -qiE "security|secure|audit"; then
-    FOCUS_SECURITY=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "performance|latency|speed|throughput"; then
-    FOCUS_PERFORMANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "compliance|regulatory|gdpr|hipaa|sox|pci"; then
-    FOCUS_COMPLIANCE=true
-  fi
-
-  if echo "$GUIDANCE" | grep -qiE "tight|urgent|deadline|crisis"; then
-    TIGHT_TIMELINE=true
-  fi
-
-  # Adjust agent assignments based on guidance
-  ADDITIONAL_REVIEWERS=""
-
-  if [ "$FOCUS_SECURITY" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS security-architect privacy-officer"
-  fi
-
-  if [ "$FOCUS_COMPLIANCE" = true ]; then
-    ADDITIONAL_REVIEWERS="$ADDITIONAL_REVIEWERS legal-liaison privacy-officer"
-  fi
-
-  echo "✓ Guidance applied: Adjusted priorities and agent assignments"
-fi
-```
-
-trategy defined
-
-## Workflow Steps
+## Multi-Agent Orchestration Workflow
 
 ### Step 1: Validate Inception Exit Criteria (LOM)
 
-Before starting Elaboration, verify Lifecycle Objective Milestone was achieved.
+**Purpose**: Verify Lifecycle Objective Milestone achieved before starting Elaboration
 
-**Commands**:
-```bash
-# Validate Inception gate
-/project:flow-gate-check inception
+**Your Actions**:
 
-# Check for required Inception artifacts
-ls intake/project-intake.md
-ls requirements/vision-*.md
-ls management/business-case-*.md
-ls management/risk-list.md
-ls security/data-classification-template.md
+1. **Check for Required Inception Artifacts**:
+   ```
+   Read and verify presence of:
+   - .aiwg/intake/project-intake.md
+   - .aiwg/requirements/vision-*.md
+   - .aiwg/planning/business-case-*.md
+   - .aiwg/risks/risk-list.md
+   - .aiwg/security/data-classification.md
+   ```
+
+2. **Launch Gate Check Agent**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Validate Inception gate (LOM) criteria",
+       prompt="""
+       Read gate criteria from: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/gate-criteria-by-phase.md
+
+       Validate LOM criteria:
+       - Vision document APPROVED (stakeholder signoff ≥75%)
+       - Business case APPROVED (funding secured)
+       - Risk list BASELINED (5-10 risks, top 3 have mitigation plans)
+       - Data classification COMPLETE
+       - Architecture scan documented
+       - Executive Sponsor approval obtained
+
+       Generate LOM Validation Report:
+       - Status: PASS | FAIL
+       - Criteria checklist with results
+       - Decision: GO to Elaboration | NO-GO
+       - Gaps (if NO-GO): List missing artifacts
+
+       Save to: .aiwg/reports/lom-validation-report.md
+       """
+   )
+   ```
+
+3. **Decision Point**:
+   - If LOM PASS → Continue to Step 2
+   - If LOM FAIL → Report gaps to user, recommend `/project:flow-concept-to-inception` to complete Inception
+   - Escalate to user for executive decision if criteria partially met
+
+**Communicate Progress**:
 ```
-
-**Exit Criteria Checklist**:
-- [ ] Vision document APPROVED (stakeholder signoff ≥75%)
-- [ ] Business case APPROVED (funding secured for Elaboration)
-- [ ] Risk list BASELINED (5-10 risks identified, top 3 have mitigation plans)
-- [ ] Data classification COMPLETE
-- [ ] Initial architecture scan documented
-- [ ] Executive Sponsor APPROVAL obtained
-
-**If LOM Not Met**:
-- **Action**: Return to Inception, complete missing artifacts
-- **Command**: `/project:flow-concept-to-inception` (re-run Inception flow)
-- **Escalation**: Contact Executive Sponsor for go/no-go decision
-
-**Output**: LOM Validation Report
-```markdown
-# Lifecycle Objective Milestone Validation
-
-**Status**: {PASS | FAIL}
-**Date**: {current-date}
-
-## Criteria Status
-- Vision: {APPROVED | INCOMPLETE}
-- Business Case: {APPROVED | INCOMPLETE}
-- Risk List: {COMPLETE | INCOMPLETE}
-- Architecture Scan: {COMPLETE | INCOMPLETE}
-
-## Decision
-{GO to Elaboration | NO-GO - return to Inception}
-
-## Gaps (if NO-GO)
-{list missing artifacts or incomplete criteria}
+✓ Initialized LOM validation
+⏳ Validating Inception exit criteria...
+✓ LOM Validation complete: [PASS | FAIL]
 ```
 
 ### Step 2: Plan Architecture Baseline Development
 
-Define architecture objectives and select architecturally significant use cases for validation.
+**Purpose**: Define architecture objectives and select steel thread use cases
 
-**Agents to Coordinate**:
-- **Architecture Designer**: Lead architect, defines SAD (Software Architecture Document)
-- **Requirements Analyst**: Identifies architecturally significant use cases
-- **Security Architect**: Validates security architecture
-- **Test Architect**: Defines test strategy for prototype
+**Your Actions**:
 
-**Commands**:
-```bash
-# Create Software Architecture Document
-ls analysis-design/software-architecture-doc-template.md
+1. **Read Intake and Risk Context**:
+   ```
+   Read:
+   - .aiwg/intake/project-intake.md (understand project scope)
+   - .aiwg/risks/risk-list.md (identify architectural risks)
+   - .aiwg/requirements/vision-*.md (understand quality attributes)
+   ```
 
-# Identify architecturally significant use cases
-ls requirements/use-case-spec-template.md
+2. **Launch Architecture Planning Agents** (parallel):
+   ```
+   # Agent 1: Architecture Designer
+   Task(
+       subagent_type="architecture-designer",
+       description="Define architecture objectives and drivers",
+       prompt="""
+       Read project intake and vision documents
 
-# Create initial ADRs (Architecture Decision Records)
-ls analysis-design/architecture-decision-record-template.md
+       Define for Architecture Baseline Plan:
+       - Architectural drivers (quality attributes: performance, security, scalability)
+       - Architectural constraints (technology, budget, timeline)
+       - Component boundaries (logical decomposition approach)
+       - Technology stack candidates (languages, frameworks, databases)
+       - Integration architecture approach (APIs, external systems)
+
+       Draft architecture objectives section
+       Save to: .aiwg/working/elaboration/planning/architecture-objectives-draft.md
+       """
+   )
+
+   # Agent 2: Requirements Analyst
+   Task(
+       subagent_type="requirements-analyst",
+       description="Identify architecturally significant use cases",
+       prompt="""
+       Read vision and risk list
+
+       Select 2-3 Steel Thread Use Cases:
+       - Must exercise key architectural patterns
+       - Must address high-priority architectural risks
+       - Must demonstrate end-to-end flow (UI → logic → data)
+       - Must include external system integration (if applicable)
+
+       For each use case document:
+       - Why architecturally significant (technical complexity, risk coverage)
+       - Risks addressed (map to risk IDs)
+       - Acceptance criteria (how to validate architecture works)
+
+       Draft steel thread use cases section
+       Save to: .aiwg/working/elaboration/planning/steel-thread-use-cases-draft.md
+       """
+   )
+
+   # Agent 3: System Analyst
+   Task(
+       subagent_type="system-analyst",
+       description="Define risk validation approach",
+       prompt="""
+       Read risk list
+
+       For top 3 architectural risks:
+       - Define validation approach (spike, POC, performance test)
+       - Specify acceptance criteria (what proves risk is retired)
+       - Recommend scope (minimal, standard, comprehensive)
+       - Estimate effort (days/weeks)
+
+       Document risk validation strategy
+       Save to: .aiwg/working/elaboration/planning/risk-validation-strategy-draft.md
+       """
+   )
+   ```
+
+3. **Synthesize Architecture Baseline Plan**:
+   ```
+   Task(
+       subagent_type="documentation-synthesizer",
+       description="Create unified Architecture Baseline Plan",
+       prompt="""
+       Read all planning drafts:
+       - .aiwg/working/elaboration/planning/architecture-objectives-draft.md
+       - .aiwg/working/elaboration/planning/steel-thread-use-cases-draft.md
+       - .aiwg/working/elaboration/planning/risk-validation-strategy-draft.md
+
+       Synthesize into cohesive Architecture Baseline Plan:
+       1. Architecture Objectives
+       2. Steel Thread Use Cases
+       3. Risk Validation Strategy
+       4. Team Assignments (placeholder for user to fill)
+       5. Schedule (4-8 weeks broken into phases)
+
+       Use template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/planning/phase-plan-template.md
+
+       Output: .aiwg/planning/architecture-baseline-plan.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
 ```
-
-**Key Activities**:
-1. **Architecture Vision Workshop** (1-2 days)
-   - Define architectural drivers (quality attributes, constraints)
-   - Identify component boundaries (logical decomposition)
-   - Select technology stack (languages, frameworks, databases)
-   - Document integration architecture (external systems, APIs)
-
-2. **Select Steel Thread Use Cases** (architecturally significant)
-   - Choose 2-3 use cases that exercise key architectural patterns
-   - Prioritize use cases with highest technical risk
-   - Ensure selected use cases demonstrate:
-     - End-to-end flow (UI → business logic → data persistence)
-     - External system integration (if applicable)
-     - Security mechanisms (authentication, authorization)
-     - Performance requirements (load, response time)
-
-3. **Plan Risk Validation Approach**
-   - Identify high-risk assumptions requiring validation (spikes, POCs)
-   - Define acceptance criteria for each risk retirement
-   - Use `/project:build-poc` command for technical feasibility validation as needed
-
-**Output**: Architecture Baseline Plan
-```markdown
-# Architecture Baseline Plan
-
-**Project**: {project-name}
-**Phase**: Elaboration
-**Target ABM Date**: {date} (4-8 weeks from LOM)
-
-## Architecture Objectives
-- Validate architectural drivers: {list quality attributes}
-- Prove technology stack: {languages, frameworks, databases}
-- Retire top risks: {list top 3 risks from Inception}
-
-## Steel Thread Use Cases
-1. **UC-{ID}**: {use-case-name}
-   - Why Architecturally Significant: {reason}
-   - Risks Addressed: {risk IDs}
-
-2. **UC-{ID}**: {use-case-name}
-   - Why Architecturally Significant: {reason}
-   - Risks Addressed: {risk IDs}
-
-## Risk Validation Strategy
-- High-risk assumptions: {list assumptions requiring validation}
-- POC/Spike requirements: {describe validation approach}
-- Technologies requiring proof: {list frameworks, integrations, patterns}
-
-## Team Assignments
-- Architect: {name}
-- Developers: {names} (2-4 people typical)
-- Testers: {names}
-- Security: {name}
-
-## Schedule
-- Week 1-2: Architecture design, ADRs, SAD documentation
-- Week 3-5: Risk retirement activities (spikes, POCs via /project:build-poc)
-- Week 6: Architecture peer review and validation
-- Week 7-8: Requirements baseline, test strategy, ABM review
+✓ LOM validation complete
+⏳ Planning architecture baseline development...
+  ✓ Architecture objectives defined
+  ✓ Steel thread use cases identified (2-3)
+  ✓ Risk validation strategy created
+✓ Architecture Baseline Plan complete: .aiwg/planning/architecture-baseline-plan.md
 ```
 
 ### Step 3: Develop Architecture Baseline (SAD) - Multi-Agent Pattern
 
-Create comprehensive Software Architecture Document using multi-agent collaboration for depth and quality.
+**Purpose**: Create comprehensive Software Architecture Document using multi-agent collaboration
 
-**Multi-Agent Workflow:**
+**Template**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md`
 
-1. **Initialize Documentation Workflow** (Documentation Archivist)
-   ```bash
-   # Create working directory structure
-   mkdir -p .aiwg/working/architecture/sad/{drafts,reviews,synthesis}
+**Output**: `.aiwg/architecture/software-architecture-doc.md` (BASELINED)
 
-   # Read template metadata to identify responsible roles
-   TEMPLATE=$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
+**Agent Assignments** (from template metadata):
+- **Primary Author**: Architecture Designer
+- **Reviewers** (parallel): Security Architect, Test Architect, Requirements Analyst, Technical Writer
+- **Synthesizer**: Architecture Documenter
+- **Archivist**: Documentation Archivist
 
-   # Template specifies:
-   # - Owner: Software Architect (or Architecture Designer)
-   # - Contributors: System Analyst, Designer, Test Architect
-   # - Additional reviewers: Security Architect, Technical Writer
+**Your Orchestration Steps**:
 
-   # Initialize metadata tracking
-   cat > .aiwg/working/architecture/sad/metadata.json <<EOF
-   {
-     "document-id": "software-architecture-doc",
-     "template-source": "$TEMPLATE",
-     "primary-author": "architecture-designer",
-     "reviewers": ["security-architect", "test-architect", "requirements-analyst", "technical-writer"],
-     "synthesizer": "architecture-documenter",
-     "status": "DRAFT",
-     "current-version": "0.1",
-     "output-path": ".aiwg/architecture/software-architecture-doc.md"
-   }
-   EOF
+#### 3.1: Initialize Workspace
+
+```
+# You do this directly (no agent needed)
+mkdir -p .aiwg/working/architecture/sad/{drafts,reviews,synthesis}
+
+# Create metadata tracking
+Write to .aiwg/working/architecture/sad/metadata.json:
+{
+  "document-id": "software-architecture-doc",
+  "template-source": "$AIWG_ROOT/.../software-architecture-doc-template.md",
+  "primary-author": "architecture-designer",
+  "reviewers": ["security-architect", "test-architect", "requirements-analyst", "technical-writer"],
+  "synthesizer": "architecture-documenter",
+  "status": "DRAFT",
+  "current-version": "0.1",
+  "output-path": ".aiwg/architecture/software-architecture-doc.md"
+}
+```
+
+#### 3.2: Primary Draft Creation
+
+```
+Task(
+    subagent_type="architecture-designer",
+    description="Create Software Architecture Document draft",
+    prompt="""
+    Read template: $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
+    Read inputs:
+    - .aiwg/planning/architecture-baseline-plan.md (objectives, drivers)
+    - .aiwg/requirements/vision-*.md (quality attributes)
+    - .aiwg/intake/project-intake.md (context, scope)
+    - .aiwg/risks/risk-list.md (architectural risks to address)
+
+    Create comprehensive SAD draft covering:
+
+    1. Architectural Drivers
+       - Quality attributes (performance, scalability, security, availability)
+       - Constraints (technology, budget, timeline, regulatory)
+       - Assumptions (technical, organizational)
+
+    2. Component Decomposition
+       - Logical view (modules, layers, responsibilities)
+       - Physical view (deployment units, processes, threads)
+       - Component relationships (dependencies, interfaces)
+
+    3. Deployment Architecture
+       - Environments (dev, test, staging, prod)
+       - Infrastructure (cloud, on-prem, hybrid)
+       - Networking (VPCs, subnets, load balancers)
+       - Scaling strategy (horizontal, vertical, auto-scaling)
+
+    4. Technology Stack
+       - Languages (with rationale)
+       - Frameworks (with alternatives considered)
+       - Databases (RDBMS, NoSQL, caching)
+       - Tools and services (CI/CD, monitoring, logging)
+
+    5. Integration Architecture
+       - External systems (APIs, protocols, data formats)
+       - Authentication mechanisms (OAuth, JWT, API keys)
+       - Data exchange patterns (sync, async, event-driven)
+
+    6. Security Architecture
+       - Authentication (user identity, SSO)
+       - Authorization (RBAC, ABAC, policies)
+       - Encryption (at-rest, in-transit, key management)
+       - Audit logging (what, when, who, compliance)
+
+    7. Data Architecture
+       - Data models (entities, relationships)
+       - Storage strategy (transactional, analytical, archival)
+       - Migration strategy (schema evolution, data migration)
+
+    8. Key Decisions (ADR References)
+       - List 3-5 major architectural decisions
+       - Link to detailed ADR documents (to be created in Step 4)
+
+    Follow template structure exactly.
+    Technical depth appropriate for Elaboration (detailed but not implementation-level).
+
+    Save draft to: .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
+    """
+)
+```
+
+**Wait for completion**, then update user:
+```
+✓ Architecture Designer created SAD v0.1 draft (estimated 3,000-5,000 words)
+```
+
+#### 3.3: Parallel Multi-Agent Review
+
+**Launch all reviewers simultaneously** (single message with 4 Task calls):
+
+```
+# Security Architect Review
+Task(
+    subagent_type="security-architect",
+    description="Review SAD: Security architecture validation",
+    prompt="""
+    Read draft: .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
+
+    Review focus: Security Architecture completeness
+
+    Validate:
+    - Authentication mechanisms (OAuth, JWT, SSO) - are they appropriate?
+    - Authorization strategy (RBAC, ABAC) - is it complete?
+    - Encryption (at-rest, in-transit) - are standards specified (e.g., TLS 1.3, AES-256)?
+    - Security controls (input validation, CSRF, XSS protection)
+    - Audit logging (what events, retention, compliance)
+    - Key management (where secrets stored, rotation policy)
+    - Threat model considerations (STRIDE, attack surface)
+
+    Add inline comments: <!-- SEC-ARCH: your feedback -->
+
+    Create review summary:
+    - Strengths (what's well-documented)
+    - Gaps (missing security details)
+    - Recommendations (specific improvements)
+    - Status: APPROVED | CONDITIONAL | NEEDS_WORK
+
+    If CONDITIONAL or NEEDS_WORK, specify what must be addressed.
+
+    Save review to: .aiwg/working/architecture/sad/reviews/security-architect-review.md
+    """
+)
+
+# Test Architect Review
+Task(
+    subagent_type="test-architect",
+    description="Review SAD: Testability and test strategy",
+    prompt="""
+    Read draft: .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
+
+    Review focus: Architecture testability
+
+    Validate:
+    - Component boundaries enable unit testing
+    - Integration points are mockable/stubbable
+    - Deployment architecture supports test environments
+    - Performance testing infrastructure (load testing, benchmarking)
+    - Test data strategy (synthetic, anonymized, production-like)
+    - Observability (logging, metrics, tracing for debugging)
+
+    Add inline comments: <!-- TEST-ARCH: your feedback -->
+
+    Create review summary:
+    - Testability strengths
+    - Testability gaps
+    - Test infrastructure recommendations
+    - Status: APPROVED | CONDITIONAL | NEEDS_WORK
+
+    Save review to: .aiwg/working/architecture/sad/reviews/test-architect-review.md
+    """
+)
+
+# Requirements Analyst Review
+Task(
+    subagent_type="requirements-analyst",
+    description="Review SAD: Requirements traceability",
+    prompt="""
+    Read draft: .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
+    Read requirements: .aiwg/requirements/vision-*.md
+
+    Review focus: Requirements-to-architecture traceability
+
+    Validate:
+    - Architectural components map to functional requirements
+    - Quality attributes (NFRs) addressed in architecture
+    - Steel thread use cases covered by component design
+    - Missing functionality (requirements without component assignment)
+
+    Add inline comments: <!-- REQ-ANALYST: your feedback -->
+
+    Create review summary:
+    - Traceability strengths (well-mapped components)
+    - Traceability gaps (requirements without architecture coverage)
+    - Recommendations (component additions or clarifications)
+    - Status: APPROVED | CONDITIONAL | NEEDS_WORK
+
+    Save review to: .aiwg/working/architecture/sad/reviews/requirements-analyst-review.md
+    """
+)
+
+# Technical Writer Review
+Task(
+    subagent_type="technical-writer",
+    description="Review SAD: Clarity and consistency",
+    prompt="""
+    Read draft: .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
+
+    Review focus: Documentation quality
+
+    Validate:
+    - Clarity (understandable by developers, stakeholders)
+    - Consistency (terminology, formatting, style)
+    - Grammar and spelling
+    - Diagram references (are they clear, do they exist)
+    - Section completeness (no TODOs or placeholders)
+
+    Add inline comments: <!-- TECH-WRITER: your feedback -->
+
+    Create review summary:
+    - Clarity strengths
+    - Clarity issues (jargon, ambiguity, missing context)
+    - Formatting/style improvements
+    - Status: APPROVED | CONDITIONAL | NEEDS_WORK
+
+    Save review to: .aiwg/working/architecture/sad/reviews/technical-writer-review.md
+    """
+)
+```
+
+**Wait for all 4 reviews to complete**, then update user:
+```
+⏳ Launching parallel review (4 agents)...
+  ✓ Security Architect: [APPROVED | CONDITIONAL | NEEDS_WORK] (2-3 min)
+  ✓ Test Architect: [APPROVED | CONDITIONAL | NEEDS_WORK] (2-3 min)
+  ✓ Requirements Analyst: [APPROVED | CONDITIONAL | NEEDS_WORK] (2-3 min)
+  ✓ Technical Writer: [APPROVED | CONDITIONAL | NEEDS_WORK] (2-3 min)
+```
+
+#### 3.4: Synthesis and Finalization
+
+```
+Task(
+    subagent_type="architecture-documenter",
+    description="Synthesize SAD review feedback",
+    prompt="""
+    Read primary draft: .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
+    Read all reviews:
+    - .aiwg/working/architecture/sad/reviews/security-architect-review.md
+    - .aiwg/working/architecture/sad/reviews/test-architect-review.md
+    - .aiwg/working/architecture/sad/reviews/requirements-analyst-review.md
+    - .aiwg/working/architecture/sad/reviews/technical-writer-review.md
+
+    Synthesize final Software Architecture Document:
+
+    1. Read all inline comments (<!-- ROLE: feedback -->)
+    2. Merge complementary feedback (add missing sections)
+    3. Resolve conflicts (e.g., security vs. performance trade-offs):
+       - Document trade-off rationale
+       - Escalate to user if unresolvable
+    4. Address CONDITIONAL feedback (must-fix items)
+    5. Incorporate APPROVED feedback (nice-to-have improvements)
+    6. Ensure technical accuracy and architectural consistency
+
+    Create synthesis report documenting:
+    - All feedback integrated (checklist)
+    - Conflicts resolved (with rationale)
+    - Outstanding concerns escalated (if any)
+    - Review status summary (4/4 APPROVED, etc.)
+
+    Output final SAD v1.0:
+    - .aiwg/architecture/software-architecture-doc.md (BASELINED)
+
+    Output synthesis report:
+    - .aiwg/working/architecture/sad/synthesis/synthesis-report.md
+    """
+)
+```
+
+**Wait for synthesis**, then update user:
+```
+⏳ Synthesizing SAD feedback...
+✓ SAD BASELINED: .aiwg/architecture/software-architecture-doc.md
+  - Review status: [X/4 APPROVED, Y/4 CONDITIONAL resolved]
+  - Final version: 1.0
+  - Word count: ~3,500-5,500 words
+```
+
+#### 3.5: Archive Workflow
+
+```
+# You do this directly (or via Documentation Archivist agent)
+
+# Archive complete workflow
+mv .aiwg/working/architecture/sad \
+   .aiwg/archive/$(date +%Y-%m)/sad-$(date +%Y-%m-%d)/
+
+# Generate audit trail
+Create .aiwg/archive/$(date +%Y-%m)/sad-$(date +%Y-%m-%d)/audit-trail.md:
+
+# Audit Trail: Software Architecture Document
+
+**Document ID:** software-architecture-doc
+**Final Version:** 1.0
+**Baselined:** {current-timestamp}
+**Output:** .aiwg/architecture/software-architecture-doc.md
+
+## Timeline
+- v0.1: Architecture Designer initial draft (timestamp)
+- v0.2: Security Architect review complete (APPROVED with recommendations)
+- v0.3: Test Architect review complete (CONDITIONAL - test mocking strategy needed)
+- v0.3: Requirements Analyst review complete (APPROVED)
+- v0.3: Technical Writer review complete (APPROVED - minor fixes applied)
+- v1.0: Architecture Documenter final synthesis (BASELINED)
+
+## Reviews
+- Security Architect: APPROVED (added TLS 1.3 requirement)
+- Test Architect: CONDITIONAL → RESOLVED (added service mocking documentation)
+- Requirements Analyst: APPROVED (validated component mapping)
+- Technical Writer: APPROVED (standardized terminology, fixed diagrams)
+
+## Synthesis
+- Conflicts resolved: 1 (TLS version for test environment: 1.3 prod, 1.2 test/dev)
+- Final status: BASELINED
+```
+
+**Update user**:
+```
+✓ Archived workflow: .aiwg/archive/{date}/sad-{date}/
+```
+
+### Step 4: Create Architecture Decision Records (ADRs)
+
+**Purpose**: Document 3-5 major architectural decisions identified in SAD
+
+**Template**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md`
+
+**Your Actions**:
+
+1. **Extract Decisions from SAD**:
+   ```
+   Read .aiwg/architecture/software-architecture-doc.md
+   Identify section "Key Decisions" (3-5 major decisions)
    ```
 
-2. **Primary Draft Creation** (Architecture Designer + Architecture Documenter)
-   ```bash
-   # Architecture Designer provides technical design and decisions
-   # Architecture Documenter structures into SAD template format
+2. **For Each Decision, Launch ADR Creation** (can be parallel):
+   ```
+   Task(
+       subagent_type="architecture-designer",
+       description="Create ADR-{number}: {decision-title}",
+       prompt="""
+       Read SAD: .aiwg/architecture/software-architecture-doc.md
+       Read ADR template: $AIWG_ROOT/.../architecture-decision-record-template.md
 
-   # Draft includes:
-   # - Architectural drivers (quality attributes, constraints)
-   # - Component decomposition (logical and physical views)
-   # - Deployment architecture (environments, infrastructure)
-   # - Technology stack (with rationale)
-   # - Integration architecture (external systems, APIs)
-   # - Security architecture (authentication, authorization, encryption)
-   # - Data architecture (models, storage, migration)
-   # - ADRs (major decisions documented)
+       Create ADR for decision: {decision-title}
 
-   # Save v0.1 draft
-   cp sad-draft.md .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
+       Structure:
+       1. Status: Proposed | Accepted | Superseded
+       2. Context: What is the issue we're facing?
+       3. Decision: What is the change we're making?
+       4. Consequences: What are the impacts (positive, negative, risks)?
+       5. Alternatives Considered: What other options were evaluated? Why rejected?
+
+       Example decisions to document:
+       - Database Selection (PostgreSQL vs MySQL vs MongoDB)
+       - API Architecture (REST vs GraphQL vs gRPC)
+       - Authentication Strategy (OAuth vs JWT vs session-based)
+       - Deployment Model (monolith vs microservices)
+       - Cloud Provider Selection (AWS vs Azure vs GCP)
+
+       Technical depth: Elaborate on trade-offs, not just "we chose X"
+
+       Save to: .aiwg/architecture/adr/ADR-{number:03d}-{slug}.md
+       (e.g., ADR-001-database-selection.md)
+       """
+   )
    ```
 
-3. **Parallel Multi-Agent Review** (Launch all reviewers simultaneously)
-   ```bash
-   # Use Task tool to launch reviewers in parallel (single message, multiple tool calls):
+3. **Quick Review Cycle** (parallel reviewers):
+   ```
+   # Launch 2-3 reviewers for each ADR:
+   # - Security Architect (if security-relevant decision)
+   # - Test Architect (for testability impacts)
+   # - Technical Writer (for clarity)
 
-   # Security Architect Review:
-   # - Validates security architecture completeness
-   # - Checks authentication/authorization mechanisms
-   # - Verifies encryption strategy (at-rest, in-transit)
-   # - Adds security-specific sections if missing
-   # - Inline feedback: <!-- SEC-ARCH: comment -->
-   # - Output: reviews/security-architect-review.md
-
-   # Test Architect Review:
-   # - Validates testability of architecture
-   # - Checks test strategy alignment
-   # - Verifies component boundaries enable testing
-   # - Recommends test infrastructure
-   # - Inline feedback: <!-- TEST-ARCH: comment -->
-   # - Output: reviews/test-architect-review.md
-
-   # Requirements Analyst Review:
-   # - Maps use cases to architectural components
-   # - Validates requirements traceability
-   # - Checks component responsibilities match requirements
-   # - Flags missing functionality
-   # - Inline feedback: <!-- REQ-ANALYST: comment -->
-   # - Output: reviews/requirements-analyst-review.md
-
-   # Technical Writer Review:
-   # - Ensures clarity and consistency
-   # - Fixes grammar, spelling, formatting
-   # - Standardizes terminology
-   # - Validates diagram references
-   # - Inline feedback: <!-- TECH-WRITER: comment -->
-   # - Output: reviews/technical-writer-review.md
-
-   # Each reviewer provides: APPROVED | CONDITIONAL | NEEDS_WORK
-   # Archivist tracks review completion and saves versions
+   # Lighter review than SAD (5-10 min per reviewer)
+   # Focus on: decision rationale complete, alternatives documented, consequences realistic
    ```
 
-4. **Synthesis and Finalization** (Documentation Synthesizer + Architecture Documenter)
-   ```bash
-   # Documentation Synthesizer:
-   # - Reads all review feedback from reviews/ directory
-   # - Reads latest draft with all inline comments
-   # - Resolves conflicts (e.g., security vs. performance trade-offs)
-   # - Merges complementary additions
-   # - Creates unified final document
+**Communicate Progress**:
+```
+⏳ Creating ADRs (3-5 decisions)...
+  ✓ ADR-001: Database Selection (PostgreSQL) - APPROVED
+  ✓ ADR-002: API Architecture (REST + GraphQL) - APPROVED
+  ✓ ADR-003: Authentication (OAuth 2.0 + JWT) - APPROVED
+  ✓ ADR-004: Deployment Model (Kubernetes) - CONDITIONAL → RESOLVED
+✓ ADRs baselined: .aiwg/architecture/adr/ (3-5 files)
+```
 
-   # Architecture Documenter:
-   # - Validates technical accuracy of synthesis
-   # - Ensures architectural consistency
-   # - Verifies all ADRs referenced
+### Step 5: Retire Architectural Risks
 
-   # Generate synthesis report documenting:
-   # - All feedback integrated
-   # - Conflicts resolved (with rationale)
-   # - Outstanding concerns escalated
+**Purpose**: Validate high-risk assumptions via POCs, update risk list
 
-   # Output final v1.0 to designated location
-   cp synthesized-sad.md .aiwg/architecture/software-architecture-doc.md
+**Your Actions**:
 
-   # Generate synthesis report
-   cat > .aiwg/working/architecture/sad/synthesis/synthesis-report.md
+1. **Read Risk List and Identify High-Priority Risks**:
+   ```
+   Read .aiwg/risks/risk-list.md
+   Filter for:
+   - Priority: P0 (Show Stopper) or P1 (High)
+   - Category: Architectural or Technical
+   - Status: Open or Identified (not yet retired)
    ```
 
-5. **Archive and Audit Trail** (Documentation Archivist)
-   ```bash
-   # Archive complete workflow for audit trail
-   mv .aiwg/working/architecture/sad \
-      .aiwg/archive/$(date +%Y-%m)/sad-$(date +%Y-%m-%d)/
+2. **For Each High-Risk Assumption, Launch Risk Validation**:
+   ```
+   # Option A: Build POC (if technical feasibility needs proof)
+   Task(
+       subagent_type="software-implementer",
+       description="Build POC for Risk #{risk-id}",
+       prompt="""
+       Risk to validate: {risk-description}
 
-   # Generate human-readable audit trail
-   cat > .aiwg/archive/$(date +%Y-%m)/sad-$(date +%Y-%m-%d)/audit-trail.md <<EOF
-   # Audit Trail: Software Architecture Document
+       Use /project:build-poc command to create proof of concept:
+       /project:build-poc "{risk-description}" --scope {minimal|standard|comprehensive}
 
-   **Document ID:** software-architecture-doc
-   **Final Version:** 1.0
-   **Baselined:** $(date -Iseconds)
-   **Output:** .aiwg/architecture/software-architecture-doc.md
+       Acceptance criteria: {what proves risk is retired}
 
-   ## Timeline
-   - v0.1: Architecture Designer initial draft
-   - v0.2: Security Architect review complete (APPROVED with recommendations)
-   - v0.3: Test Architect review complete (CONDITIONAL - test mocking strategy needed)
-   - v0.3: Requirements Analyst review complete (APPROVED)
-   - v0.3: Technical Writer review complete (APPROVED - minor fixes applied)
-   - v1.0: Documentation Synthesizer final synthesis (BASELINED)
+       Output POC results to: .aiwg/risks/poc-{risk-id}-results.md
 
-   ## Reviews
-   - Security Architect: APPROVED (added TLS 1.3 requirement)
-   - Test Architect: CONDITIONAL (requested service mocking documentation)
-   - Requirements Analyst: APPROVED (validated component mapping)
-   - Technical Writer: APPROVED (standardized terminology, fixed diagrams)
+       Document:
+       - POC approach (what was tested)
+       - Results (metrics, observations)
+       - Decision: GO (risk retired) | NO-GO (risk remains) | PIVOT (change approach)
+       """
+   )
 
-   ## Synthesis
-   - Conflicts resolved: 1 (TLS version for test environment: 1.3 prod, 1.2 test/dev)
-   - Final status: BASELINED
-   EOF
+   # Option B: Conduct Spike (if research/investigation needed)
+   Task(
+       subagent_type="architecture-designer",
+       description="Conduct spike for Risk #{risk-id}",
+       prompt="""
+       Risk to investigate: {risk-description}
+
+       Conduct time-boxed investigation (1-3 days):
+       - Research alternatives (frameworks, patterns, technologies)
+       - Prototype minimal implementation
+       - Benchmark performance (if performance risk)
+       - Document findings
+
+       Spike card template: $AIWG_ROOT/.../spike-card-template.md
+
+       Output: .aiwg/risks/spike-{risk-id}-results.md
+       """
+   )
+
+   # Option C: Analysis Only (if risk can be retired by design)
+   Task(
+       subagent_type="security-architect",
+       description="Validate Risk #{risk-id} through architecture",
+       prompt="""
+       Risk: {risk-description}
+
+       Validate that architecture addresses this risk:
+       - Read SAD: .aiwg/architecture/software-architecture-doc.md
+       - Verify risk mitigation documented (security controls, design patterns)
+       - Confirm mitigation is sufficient
+
+       Document validation:
+       - How architecture addresses risk
+       - Residual risk (if any)
+       - Decision: RETIRED | MITIGATED | ACCEPTED
+
+       Output: .aiwg/risks/risk-{risk-id}-validation.md
+       """
+   )
    ```
 
-**SAD Contents** (per template):
-- **Architectural Drivers**: Quality attributes (performance, scalability, security), constraints
-- **Component Decomposition**: Logical view (modules, layers), physical view (deployment)
-- **Deployment Architecture**: Environments (dev, test, staging, prod), infrastructure
-- **ADRs**: Architecture Decision Records for major choices (framework selection, database choice, etc.)
-- **Technology Stack**: Languages, frameworks, databases, tools (with rationale)
-- **Integration Architecture**: External systems, APIs, protocols, data exchange formats
-- **Security Architecture**: Authentication (OAuth, JWT), authorization (RBAC), encryption
-- **Data Architecture**: Data models, storage (RDBMS, NoSQL), migration strategy
+3. **Update Risk List**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Update risk list with validation results",
+       prompt="""
+       Read all risk validation results:
+       - .aiwg/risks/poc-*-results.md
+       - .aiwg/risks/spike-*-results.md
+       - .aiwg/risks/risk-*-validation.md
 
-**Multi-Agent Benefits**:
-- **Depth**: Security, testing, and requirements perspectives vs. single architect view
-- **Quality**: Technical writer ensures clarity and consistency
-- **Completeness**: Reviewers catch missing sections (security details, test strategy)
-- **Traceability**: Complete audit trail (all versions, reviews, decisions documented)
-- **Accountability**: Clear sign-offs from all responsible roles
+       Update .aiwg/risks/risk-list.md:
+       - Change status: Open → RETIRED | MITIGATED | ACCEPTED
+       - Add validation evidence (POC results, spike findings)
+       - Document residual risk (if any)
+       - Add newly discovered risks (if any)
 
-**Output**: Software Architecture Document (BASELINED)
-```markdown
-# Software Architecture Document
+       Calculate risk retirement metrics:
+       - Total risks: {count}
+       - Retired: {count} ({percentage}%)
+       - Mitigated: {count} ({percentage}%)
+       - Accepted: {count} ({percentage}%)
 
-**Project**: {project-name}
-**Version**: {version} (BASELINED for Elaboration)
-**Date**: {date}
-**Status**: {DRAFT | REVIEWED | APPROVED | BASELINED}
+       ABM Target: ≥70% retired or mitigated
+       Critical Target: 100% of P0 and P1 architectural risks retired/mitigated
+       """
+   )
+   ```
 
-## 1. Architectural Drivers
-{quality attributes, constraints}
-
-## 2. Component Decomposition
-{logical and physical views}
-
-## 3. Deployment Architecture
-{environments, infrastructure}
-
-## 4. Technology Stack
-{languages, frameworks, databases, tools}
-
-## 5. Integration Architecture
-{external systems, APIs, protocols}
-
-## 6. Security Architecture
-{authentication, authorization, encryption}
-
-## 7. Data Architecture
-{data models, storage, migration}
-
-## 8. Key Decisions (ADRs)
-{list ADRs with titles and links}
-
-## Approvals
-- Software Architect: {signature, date}
-- Security Architect: {signature, date}
-- Peer Reviewer: {signature, date}
+**Communicate Progress**:
+```
+⏳ Retiring architectural risks...
+  ✓ Risk #1 (Database scale): POC complete → RETIRED (validated 1M records, <100ms)
+  ✓ Risk #2 (OAuth integration): Spike complete → RETIRED (tested Auth0 integration)
+  ✓ Risk #3 (Performance SLA): Architecture analysis → MITIGATED (caching strategy)
+  ✓ Risk #4 (API versioning): Design validated → RETIRED (versioning strategy documented)
+✓ Risk retirement: 75% (target: ≥70%) - ABM CRITERIA MET
 ```
 
-### Step 4: Retire Architectural Risks
+### Step 6: Baseline Requirements and Test Strategy
 
-Validate high-risk assumptions, conduct spikes/POCs, update risk list.
+**Purpose**: Document use cases, NFRs, and Master Test Plan
 
-**Commands**:
-```bash
-# Update risk list
-cat management/risk-list.md
+**Your Actions**:
 
-# Build POCs for high-risk assumptions
-/project:build-poc {feature-or-risk-to-validate} --scope {minimal|standard|comprehensive}
+1. **Create Use Case Specifications** (parallel):
+   ```
+   Task(
+       subagent_type="requirements-analyst",
+       description="Create use case specifications (10+ use cases)",
+       prompt="""
+       Read architecture baseline plan: .aiwg/planning/architecture-baseline-plan.md
+       Read steel thread use cases (already identified)
 
-# Document spike results
-ls analysis-design/spike-card-*.md
+       Create 10+ use case specifications:
+       - Top 3: Steel thread use cases (architecturally significant, already validated)
+       - Remaining 7+: Functional requirements for Construction
 
-# Track risk retirement
-grep -r "Risk Status: RETIRED" management/
-grep -r "Risk Status: MITIGATED" management/
+       Template: $AIWG_ROOT/.../use-case-spec-template.md
+
+       For each use case:
+       1. Use Case ID and Name
+       2. Actors (who interacts)
+       3. Preconditions (system state before)
+       4. Main Flow (happy path steps)
+       5. Alternative Flows (error cases, edge cases)
+       6. Postconditions (system state after)
+       7. Acceptance Criteria (how to test)
+       8. Component Mapping (which SAD components implement this)
+
+       Ensure traceability: Use Case → SAD Components
+
+       Output: .aiwg/requirements/use-case-{id}-{name}.md (10+ files)
+       """
+   )
+   ```
+
+2. **Create Supplemental Specification (NFRs)**:
+   ```
+   Task(
+       subagent_type="requirements-analyst",
+       description="Document non-functional requirements",
+       prompt="""
+       Read SAD quality attributes
+       Read architecture baseline plan
+
+       Create Supplemental Specification covering:
+
+       1. Performance
+          - Response time: p50, p95, p99 (e.g., p95 < 500ms)
+          - Throughput: requests/second (e.g., 1000 req/s)
+
+       2. Scalability
+          - Concurrent users (e.g., 10,000 simultaneous)
+          - Data volume (e.g., 1M records, 10GB database)
+
+       3. Availability
+          - Uptime target (e.g., 99.9% = 43 min downtime/month)
+          - SLA definition (service level agreement)
+
+       4. Security (reference SAD security architecture)
+          - Authentication: OAuth 2.0, JWT
+          - Authorization: RBAC
+          - Audit: All user actions logged
+
+       5. Usability
+          - Accessibility: WCAG 2.1 Level AA
+          - Internationalization: English, Spanish, French
+
+       6. Maintainability
+          - Coding standards: (reference or define)
+          - Documentation: Inline comments, API docs
+          - Technical debt: Policy for addressing
+
+       Template: $AIWG_ROOT/.../supplemental-specification-template.md
+
+       Output: .aiwg/requirements/supplemental-specification.md
+       """
+   )
+   ```
+
+3. **Create Master Test Plan**:
+   ```
+   Task(
+       subagent_type="test-architect",
+       description="Develop Master Test Plan",
+       prompt="""
+       Read SAD testability sections
+       Read supplemental specification (NFRs)
+       Read use case specifications
+
+       Create Master Test Plan covering:
+
+       1. Test Strategy
+          - Test types: Unit, Integration, System, Acceptance, Performance, Security
+          - Test levels: Component, Service, End-to-End
+
+       2. Coverage Targets
+          - Unit tests: ≥80% code coverage
+          - Integration tests: ≥70% API coverage
+          - End-to-End: ≥50% user journey coverage
+
+       3. Test Environments
+          - Development: Local, Docker Compose
+          - Test: Shared environment, CI/CD integrated
+          - Staging: Production-like, final validation
+          - Production: Smoke tests only
+
+       4. Test Data Strategy
+          - Synthetic data: Generated for unit/integration
+          - Anonymized data: Production data sanitized for staging
+          - Production-like: Realistic volume and variety
+
+       5. Test Automation
+          - Unit: Jest (JS), Pytest (Python)
+          - Integration: Postman, REST Assured
+          - E2E: Playwright, Selenium
+          - CI Integration: GitHub Actions, Jenkins
+
+       6. Defect Management
+          - Triage: P0 (blocker), P1 (critical), P2 (major), P3 (minor), P4 (trivial)
+          - Tracking: Jira, GitHub Issues
+          - Resolution SLAs: P0 = 4 hours, P1 = 24 hours, P2 = 3 days
+
+       Template: $AIWG_ROOT/.../master-test-plan-template.md
+
+       Output: .aiwg/testing/master-test-plan.md
+       """
+   )
+   ```
+
+**Communicate Progress**:
+```
+⏳ Baselining requirements and test strategy...
+  ✓ Use case specifications created (10+ use cases)
+  ✓ Supplemental specification (NFRs) complete
+  ✓ Master Test Plan approved
+✓ Requirements baseline: .aiwg/requirements/ (10+ files + supplemental spec)
+✓ Test strategy: .aiwg/testing/master-test-plan.md
 ```
 
-**Risk Retirement Targets** (ABM Criteria):
-- **Show Stopper (P0) risks**: 100% retired or have approved mitigation
-- **High (P1) architectural risks**: 100% retired or have approved mitigation
-- **All identified risks**: ≥70% retired or mitigated
-- **Top 3 risks from Inception**: 100% RESOLVED (specific validation)
+### Step 7: Conduct Architecture Baseline Milestone (ABM) Review
 
-**Risk Retirement Activities**:
-1. **Spike/POC Execution** (for high-risk assumptions)
-   - Use `/project:build-poc` for technical feasibility validation
-   - Timebox: 1-3 days per spike (minimal scope), 1-2 weeks for comprehensive POCs
-   - Document findings in spike cards or POC reports
-   - Go/no-go decision per spike/POC
+**Purpose**: Formal gate review to decide GO/NO-GO to Construction
 
-2. **Risk Validation** (proves architectural assumptions)
-   - Performance risk → load testing, benchmarking
-   - Integration risk → integration spike, API validation
-   - Security risk → security controls demonstration, threat modeling
+**Your Actions**:
 
-3. **Risk List Update**
-   - Mark risks as RETIRED (no longer a concern)
-   - Mark risks as MITIGATED (reduced to acceptable level)
-   - Mark risks as ACCEPTED (within risk tolerance, monitoring plan)
-   - Add newly discovered risks (assess and mitigate)
+1. **Validate ABM Criteria**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Validate ABM gate criteria",
+       prompt="""
+       Read gate criteria: $AIWG_ROOT/.../flows/gate-criteria-by-phase.md (Elaboration section)
 
-**Output**: Risk Retirement Report
-```markdown
-# Risk Retirement Report
+       Validate all ABM criteria:
 
-**Project**: {project-name}
-**Phase**: Elaboration
-**Date**: {date}
+       1. Architecture Documentation
+          - [ ] SAD complete and BASELINED
+          - [ ] SAD peer-reviewed (4+ reviewers)
+          - [ ] ADRs documented (3-5 decisions)
 
-## Risk Retirement Summary
-- Total Risks Identified: {count}
-- Risks Retired: {count} ({percentage}%)
-- Risks Mitigated: {count} ({percentage}%)
-- Risks Accepted: {count} ({percentage}%)
-- New Risks Identified: {count}
+       2. Risk Retirement
+          - [ ] ≥70% of risks retired or mitigated
+          - [ ] 100% of P0/P1 architectural risks retired/mitigated
+          - [ ] POC/Spike results documented
 
-## Risk Status by Priority
+       3. Requirements Baseline
+          - [ ] ≥10 use cases documented
+          - [ ] Supplemental specification (NFRs) complete
+          - [ ] Traceability established (use cases → SAD components)
 
-### Show Stopper (P0): {count}
-{for each P0 risk}
-- **{Risk-ID}**: {risk-description}
-  - Status: {RETIRED | MITIGATED | ACCEPTED}
-  - Validation: {spike results, prototype evidence}
+       4. Test Strategy
+          - [ ] Master Test Plan approved
+          - [ ] Test environments operational (dev, test)
 
-### High (P1): {count}
-{for each P1 risk}
-- **{Risk-ID}**: {risk-description}
-  - Status: {RETIRED | MITIGATED | ACCEPTED}
-  - Validation: {spike results, prototype evidence}
+       Report status: PASS | CONDITIONAL PASS | FAIL
 
-## Top 3 Inception Risks
+       Output: .aiwg/reports/abm-criteria-validation.md
+       """
+   )
+   ```
 
-1. **{Risk-ID}**: {risk-description}
-   - Status: {RESOLVED | PARTIALLY RESOLVED}
-   - Evidence: {spike/POC results, validation approach}
+2. **Generate ABM Report**:
+   ```
+   Task(
+       subagent_type="project-manager",
+       description="Generate Architecture Baseline Milestone Report",
+       prompt="""
+       Read all Elaboration artifacts:
+       - .aiwg/architecture/software-architecture-doc.md
+       - .aiwg/architecture/adr/*.md
+       - .aiwg/risks/risk-list.md
+       - .aiwg/requirements/*.md
+       - .aiwg/testing/master-test-plan.md
+       - .aiwg/reports/abm-criteria-validation.md
 
-2. **{Risk-ID}**: {risk-description}
-   - Status: {RESOLVED | PARTIALLY RESOLVED}
-   - Evidence: {spike/POC results, validation approach}
+       Generate comprehensive ABM Report:
 
-3. **{Risk-ID}**: {risk-description}
-   - Status: {RESOLVED | PARTIALLY RESOLVED}
-   - Evidence: {spike/POC results, validation approach}
+       1. Overall Status
+          - ABM Status: PASS | CONDITIONAL PASS | FAIL
+          - Decision: GO | CONDITIONAL GO | NO-GO | PIVOT
 
-## Remaining Risks
+       2. Criteria Validation (detailed breakdown)
+          - Architecture Documentation: PASS | FAIL
+          - Risk Retirement: PASS | FAIL (with metrics)
+          - Requirements Baseline: PASS | FAIL
+          - Test Strategy: PASS | FAIL
 
-**Within Risk Tolerance**: {count}
-{list risks accepted with monitoring plan}
+       3. Signoff Checklist
+          - [ ] Executive Sponsor
+          - [ ] Software Architect
+          - [ ] Security Architect
+          - [ ] Test Architect
+          - [ ] Product Owner
+          - [ ] Peer Reviewer (external architect)
 
-**Require Escalation**: {count}
-{list risks that need executive decision}
+       4. Decision Rationale
+          - Why GO/NO-GO/CONDITIONAL GO
+          - Evidence supporting decision
 
-## ABM Risk Criteria
-- [ ] Zero Show Stopper risks without mitigation
-- [ ] Zero High architectural risks without mitigation
-- [ ] ≥70% of all risks retired or mitigated
-- [ ] Top 3 Inception risks RESOLVED
+       5. Conditions (if CONDITIONAL GO)
+          - What must be completed before full GO
+          - Re-validation date
 
-**Risk Retirement Status**: {PASS | FAIL}
+       6. Next Steps
+          - Action items
+          - Schedule (Construction kickoff date)
+
+       Template: Use ABM Report structure from orchestration template
+
+       Output: .aiwg/reports/abm-report.md
+       """
+   )
+   ```
+
+3. **Present ABM Summary to User**:
+   ```
+   # You present this directly (not via agent)
+
+   Read .aiwg/reports/abm-report.md
+
+   Present summary:
+   ─────────────────────────────────────────────
+   Architecture Baseline Milestone Review
+   ─────────────────────────────────────────────
+
+   **Overall Status**: {PASS | CONDITIONAL PASS | FAIL}
+   **Decision**: {GO | CONDITIONAL GO | NO-GO | PIVOT}
+
+   **Criteria Status**:
+   ✓ Architecture Documentation: PASS
+     - SAD baselined (v1.0, 4 reviewers APPROVED)
+     - ADRs documented (4 major decisions)
+
+   ✓ Risk Retirement: PASS
+     - 75% retired or mitigated (target: ≥70%)
+     - 100% of P0/P1 risks addressed
+
+   ✓ Requirements Baseline: PASS
+     - 12 use cases documented
+     - Supplemental spec complete
+     - Traceability: 100%
+
+   ✓ Test Strategy: PASS
+     - Master Test Plan approved
+     - Test environments operational
+
+   **Artifacts Generated**:
+   - Software Architecture Document (.aiwg/architecture/software-architecture-doc.md)
+   - ADR-001: Database Selection (.aiwg/architecture/adr/ADR-001-database-selection.md)
+   - ADR-002: API Architecture (.aiwg/architecture/adr/ADR-002-api-architecture.md)
+   - ADR-003: Authentication (.aiwg/architecture/adr/ADR-003-authentication.md)
+   - ADR-004: Deployment Model (.aiwg/architecture/adr/ADR-004-deployment-model.md)
+   - Master Test Plan (.aiwg/testing/master-test-plan.md)
+   - Use Case Specifications (.aiwg/requirements/use-case-*.md, 12 files)
+   - Supplemental Specification (.aiwg/requirements/supplemental-specification.md)
+   - ABM Report (.aiwg/reports/abm-report.md)
+
+   **Next Steps**:
+   - Review all generated artifacts
+   - Schedule ABM review meeting with stakeholders
+   - Obtain formal signoffs (6 required signatures)
+   - If GO: Run /project:flow-elaboration-to-construction to begin Construction
+   - If CONDITIONAL GO: Complete conditions, then re-validate
+   - If NO-GO: Address gaps, extend Elaboration, re-review in 2-4 weeks
+
+   ─────────────────────────────────────────────
+   ```
+
+**Communicate Progress**:
+```
+⏳ Conducting ABM gate validation...
+✓ ABM criteria validated: PASS (4/4 criteria met)
+✓ ABM Report generated: .aiwg/reports/abm-report.md
 ```
 
-### Step 5: Baseline Requirements and Test Strategy
+## Quality Gates
 
-Document use cases, supplemental requirements, and test plan.
+Before marking workflow complete, verify:
+- [ ] All required artifacts generated and BASELINED
+- [ ] All reviewers provided sign-off (APPROVED or CONDITIONAL resolved)
+- [ ] Final artifacts saved to .aiwg/{category}/
+- [ ] Working drafts archived to .aiwg/archive/
+- [ ] Synthesis reports document all changes
+- [ ] ABM criteria validated: PASS or CONDITIONAL PASS
 
-**Commands**:
-```bash
-# Create use case specifications (10+ use cases)
-ls requirements/use-case-spec-*.md
+## User Communication
 
-# Create supplemental specification (NFRs)
-ls requirements/supplemental-specification-template.md
+**At start**: Confirm understanding and list artifacts to generate
 
-# Create Master Test Plan
-ls test/master-test-plan-template.md
+```
+Understood. I'll orchestrate the Inception → Elaboration transition.
+
+This will generate:
+- Software Architecture Document (SAD)
+- Architecture Decision Records (3-5 ADRs)
+- Master Test Plan
+- Requirements Baseline (10+ use cases + NFRs)
+- Risk Retirement Report
+- Elaboration Phase Plan
+- ABM Report
+
+I'll coordinate multiple agents for comprehensive review.
+Expected duration: 15-20 minutes.
+
+Starting orchestration...
 ```
 
-**Requirements Baseline Contents**:
-1. **Use Case Specifications** (10+ use cases minimum)
-   - Top 3 use cases: Architecturally significant (validated via risk retirement)
-   - Remaining use cases: Functional requirements for Construction
-   - Acceptance criteria defined for each use case
-   - Traceability: Requirements → components (per SAD)
+**During**: Update progress with clear indicators
 
-2. **Supplemental Specification** (Non-Functional Requirements)
-   - Performance: Response time (p95 < 500ms), throughput (1000 req/s)
-   - Scalability: Concurrent users (10k users), data volume (1M records)
-   - Availability: Uptime target (99.9%), SLA
-   - Security: Authentication (OAuth/JWT), authorization (RBAC), audit logging
-   - Usability: Accessibility (WCAG 2.1), internationalization (i18n)
-   - Maintainability: Coding standards, documentation, technical debt policy
-
-3. **Master Test Plan**
-   - Test types: Unit, integration, system, acceptance, performance, security
-   - Test coverage targets: Unit ≥80%, integration ≥70%, e2e ≥50%
-   - Test environments: Dev, test, staging, prod
-   - Test data strategy: Synthetic, anonymized, production-like
-   - Test automation: Frameworks (Jest, Pytest, Selenium), CI integration
-   - Defect management: Triage (P0-P4), tracking (Jira, GitHub), resolution SLAs
-
-**Output**: Requirements Baseline Report
-```markdown
-# Requirements Baseline Report
-
-**Project**: {project-name}
-**Phase**: Elaboration
-**Date**: {date}
-
-## Use Case Specifications
-
-**Total Use Cases**: {count}
-**Architecturally Significant**: {count}
-**Acceptance Criteria Defined**: {count}/{total}
-
-### Steel Thread Use Cases (Architecturally Significant)
-1. **UC-{ID}**: {name} - Validation Status: {VALIDATED}
-2. **UC-{ID}**: {name} - Validation Status: {VALIDATED}
-
-### Construction Use Cases
-{list remaining use cases with priority}
-
-## Supplemental Specification (NFRs)
-
-### Performance
-- Response Time: p95 < {value}ms
-- Throughput: {value} req/s
-
-### Scalability
-- Concurrent Users: {value}
-- Data Volume: {value}
-
-### Availability
-- Uptime Target: {percentage}%
-- SLA: {definition}
-
-### Security
-- Authentication: {mechanism}
-- Authorization: {mechanism}
-- Audit: {requirements}
-
-## Master Test Plan
-
-**Test Strategy Approved**: {YES | NO}
-**Test Architect Signoff**: {signature, date}
-
-### Coverage Targets
-- Unit: ≥{percentage}%
-- Integration: ≥{percentage}%
-- End-to-End: ≥{percentage}%
-
-### Test Environments
-- Development: {OPERATIONAL | INCOMPLETE}
-- Test: {OPERATIONAL | INCOMPLETE}
-- Staging: {OPERATIONAL | INCOMPLETE}
-
-## Baseline Status
-
-**Requirements Baselined**: {YES | NO}
-**Traceability Established**: {percentage}%
-**Change Control**: {process defined}
-
-**ABM Requirements Criteria**: {PASS | FAIL}
+```
+✓ = Complete
+⏳ = In progress
+❌ = Error/blocked
+⚠️ = Warning/attention needed
 ```
 
-### Step 6: Conduct Architecture Baseline Milestone (ABM) Review
+**At end**: Summary report with artifact locations and status (see Step 7.3 above)
 
-Formal gate review to decide GO/NO-GO to Construction.
+## Error Handling
 
-**Commands**:
-```bash
-# Validate all ABM criteria
-/project:flow-gate-check elaboration
+**If LOM Not Met**:
+```
+❌ Inception phase incomplete - cannot proceed to Elaboration
 
-# Generate final ABM report
-# Report includes:
-# - Architecture baseline status
-# - Prototype validation results
-# - Risk retirement status
-# - Requirements baseline status
-# - Test strategy status
+Gaps identified:
+- {list missing artifacts or incomplete criteria}
+
+Recommendation: Complete Inception first
+- Run: /project:flow-concept-to-inception
+- Or: Complete missing artifacts manually
+
+Contact Executive Sponsor for project status decision.
 ```
 
-**ABM Review Meeting**:
+**If POC/Spike Failed**:
+```
+❌ Critical POC failed - technical feasibility not proven
 
-**Required Attendees**:
-- Executive Sponsor (decision authority)
-- Product Owner
-- Project Manager
-- Software Architect (presenter)
-- Security Architect
-- Test Architect
-- Requirements Analyst
-- Peer Architect (external reviewer)
-- Key Stakeholders (at least 2)
+Risk: {risk-description}
+POC Result: {NO-GO reason}
 
-**Agenda** (2.5 hours):
-1. Architecture presentation (30 min) - Architect presents SAD
-2. Requirements baseline review (20 min) - Requirements Analyst presents
-3. Risk retirement review (30 min) - Project Manager presents risk status and POC results
-4. Test strategy review (15 min) - Test Architect presents
-5. Process and planning review (15 min) - Project Manager presents
-6. Peer review feedback (15 min) - External architect provides assessment
-7. Q&A and discussion (20 min)
-8. Go/No-Go decision (15 min)
+Actions:
+1. Identify technical blockers
+2. Consider architecture pivot or technology change
+3. Conduct additional investigation spike
 
-**Decision Outcomes**:
-- **GO to Construction**: All criteria met, architecture proven, ready to build
-- **CONDITIONAL GO**: Minor gaps, continue Elaboration in parallel with early Construction
-- **NO-GO**: Major gaps, extend Elaboration phase, re-review in 2-4 weeks
-- **PIVOT**: Architecture fundamentally flawed, return to Inception (rare)
+Impact: ABM blocked until technical feasibility proven or risk accepted by sponsor.
 
-**Output**: Architecture Baseline Milestone Report
-```markdown
-# Architecture Baseline Milestone Report
+Escalating to user for decision...
+```
 
-**Project**: {project-name}
-**Review Date**: {date}
-**Phase**: Elaboration → Construction Transition
+**If Risk Retirement Insufficient**:
+```
+⚠️ Risk retirement {percentage}% (target: ≥70%)
 
-## Overall Status
+Outstanding risks:
+- {risk-1}: {status}
+- {risk-2}: {status}
 
-**ABM Status**: {PASS | CONDITIONAL PASS | FAIL}
-**Decision**: {GO | CONDITIONAL GO | NO-GO | PIVOT}
+Recommendation: Conduct additional spikes/POCs to retire critical risks
 
-## Criteria Validation
+Impact: ABM may result in CONDITIONAL GO or NO-GO if risk retirement remains insufficient.
+```
 
-### 1. Architecture Documentation
-- SAD Complete: {YES | NO}
-- SAD Peer Reviewed: {YES | NO}
-- SAD Approved: {YES | NO}
-- Status: {PASS | FAIL}
+**If Review Conflicts Unresolvable**:
+```
+⚠️ Review conflict requires user decision
 
-### 2. Risk Validation and Retirement
-- Risks Retired/Mitigated: {percentage}% (target: ≥70%)
-- Show Stopper Risks: {count} (target: 0)
-- POC/Spike Results: {count completed}/{count planned}
-- Technical Feasibility Proven: {YES | NO}
-- Status: {PASS | FAIL}
+Conflict: {description}
+- Security Architect: {position}
+- Performance Architect: {opposing position}
 
-### 3. Requirements Baseline
-- Use Cases Documented: {count} (target: ≥10)
-- Supplemental Spec Complete: {YES | NO}
-- Traceability Established: {percentage}%
-- Status: {PASS | FAIL}
+Trade-off analysis:
+- Option A: {pros/cons}
+- Option B: {pros/cons}
 
-### 4. Test Strategy
-- Master Test Plan Approved: {YES | NO}
-- Test Environments Operational: {count}/{total}
-- Status: {PASS | FAIL}
-
-## Signoff Status
-
-**Required Signoffs**:
-- [ ] Executive Sponsor: {OBTAINED | PENDING}
-- [ ] Software Architect: {OBTAINED | PENDING}
-- [ ] Security Architect: {OBTAINED | PENDING}
-- [ ] Test Architect: {OBTAINED | PENDING}
-- [ ] Product Owner: {OBTAINED | PENDING}
-- [ ] Peer Reviewer: {OBTAINED | PENDING}
-
-## Decision Rationale
-
-**Decision**: {GO | CONDITIONAL GO | NO-GO | PIVOT}
-
-**Rationale**:
-{detailed reasoning based on criteria validation}
-
-## Conditions (if CONDITIONAL GO)
-
-**Conditions to Meet**:
-1. {condition-1}
-2. {condition-2}
-
-**Re-validation Date**: {date}
-
-## Blockers (if NO-GO)
-
-**Critical Gaps**:
-1. {gap-1}
-2. {gap-2}
-
-**Remediation Plan**:
-{specific actions to address gaps}
-
-**Re-review Date**: {date}
-
-## Next Steps
-
-**If GO to Construction**:
-- [ ] Baseline all artifacts (version control tags)
-- [ ] Schedule Construction kickoff: {date}
-- [ ] Assign Construction team
-- [ ] Plan first 2 iterations
-
-**If CONDITIONAL GO**:
-- [ ] Complete conditions: {list}
-- [ ] Start Construction for non-blocked work
-- [ ] Re-validate conditions: {date}
-
-**If NO-GO**:
-- [ ] Address critical gaps
-- [ ] Extend Elaboration phase
-- [ ] Re-run ABM review: {date}
-
-## Lessons Learned
-
-**What Went Well**:
-{positive outcomes}
-
-**What Could Improve**:
-{improvement opportunities}
-
-**Action Items**:
-1. {action-item} - Owner: {name} - Due: {date}
-2. {action-item} - Owner: {name} - Due: {date}
+Escalating to user for architectural decision...
 ```
 
 ## Success Criteria
 
-This command succeeds when:
+This orchestration succeeds when:
 - [ ] Lifecycle Objective Milestone validated (LOM complete)
 - [ ] Architecture Baseline Plan created
-- [ ] Software Architecture Document BASELINED
-- [ ] Risks retired ≥70% (Show Stopper and High 100% retired/mitigated)
+- [ ] Software Architecture Document BASELINED (multi-agent reviewed)
+- [ ] ADRs documented (3-5 major decisions)
+- [ ] Risks retired ≥70% (P0/P1 100% retired/mitigated)
 - [ ] POCs/Spikes completed for high-risk assumptions
-- [ ] Requirements baseline ESTABLISHED
+- [ ] Requirements baseline ESTABLISHED (10+ use cases + NFRs)
 - [ ] Master Test Plan APPROVED
 - [ ] ABM review conducted with GO/CONDITIONAL GO decision
+- [ ] Complete audit trails archived
 
-## Error Handling
+## Metrics to Track
 
-**LOM Not Met**:
-- Report: "Inception phase incomplete, cannot proceed to Elaboration"
-- Action: "Return to Inception flow: /project:flow-concept-to-inception"
-- Escalation: "Contact Executive Sponsor for project status"
-
-**POC/Spike Failed**:
-- Report: "Critical POC failed - technical feasibility not proven"
-- Action: "Identify technical blockers, may need architecture pivot or technology change"
-- Impact: "ABM blocked until technical feasibility proven or risk accepted"
-
-**Risk Retirement Insufficient**:
-- Report: "Risk retirement {percentage}% (target: ≥70%)"
-- Action: "Conduct additional spikes, validate assumptions"
-- Impact: "ABM blocked until critical risks retired"
-
-**Architecture Not Approved**:
-- Report: "SAD not approved by peer reviewer or security architect"
-- Action: "Address review feedback, update SAD"
-- Impact: "ABM cannot pass without architecture approval"
-
-## Metrics
-
-**Track During Elaboration**:
+**During orchestration, track**:
 - Architecture stability: % of architectural changes (target: <10% after ABM)
 - POC/Spike completion: % of planned validations completed (target: 100%)
 - Risk retirement velocity: % of risks resolved per week
-- Cycle time: Elaboration phase duration (target: 4-8 weeks)
+- Review consensus: % of reviews APPROVED vs CONDITIONAL vs NEEDS_WORK
+- Cycle time: Elaboration phase duration (target: 4-8 weeks, orchestration: 15-20 min)
 
 ## References
 
-- Gate criteria: `flows/gate-criteria-by-phase.md`
-- Architecture template: `analysis-design/software-architecture-doc-template.md`
-- Risk management: `management/risk-list-template.md`
-- Use case template: `requirements/use-case-spec-template.md`
-- Test plan: `test/master-test-plan-template.md`
+**Templates** (via $AIWG_ROOT):
+- Software Architecture Doc: `templates/analysis-design/software-architecture-doc-template.md`
+- ADR: `templates/analysis-design/architecture-decision-record-template.md`
+- Use Case: `templates/requirements/use-case-spec-template.md`
+- Supplemental Spec: `templates/requirements/supplemental-specification-template.md`
+- Master Test Plan: `templates/test/master-test-plan-template.md`
+- Risk List: `templates/management/risk-list-template.md`
+
+**Gate Criteria**:
+- `flows/gate-criteria-by-phase.md` (Elaboration section)
+
+**Multi-Agent Pattern**:
+- `docs/multi-agent-documentation-pattern.md`
+
+**Orchestrator Architecture**:
+- `docs/orchestrator-architecture.md`
+
+**Natural Language Translations**:
+- `docs/simple-language-translations.md`
