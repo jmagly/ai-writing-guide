@@ -25,7 +25,10 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/
 
 Aliases installed (unified CLI):
 
-- `aiwg -deploy-agents` → copy shared agents into `.claude/agents` of current dir
+- `aiwg -deploy-agents` → deploy agents to `.claude/agents/` (Claude Code)
+- `aiwg -deploy-commands` → deploy commands to `.claude/commands/` (Claude Code)
+- `aiwg -setup-warp` → setup Warp Terminal with AIWG framework (creates/updates WARP.md)
+- `aiwg -update-warp` → update existing WARP.md with latest AIWG content
 - `aiwg -new` → scaffold a new project with intake templates (agents auto-deployed by default)
   - The CLI auto-updates the installed framework (git pull) before executing.
 
@@ -33,10 +36,16 @@ Scaffolding:
 
 ```bash
 # In a new/empty project directory
-aiwg -new              # create docs/sdlc/intake/*.md and a README; deploy agents; init git
+aiwg -new              # create .aiwg/intake/*.md and a README; deploy agents; init git
 # use --no-agents to skip deployment
-# to copy agents later or in an existing project:
-aiwg -deploy-agents    # copy shared agents into .claude/agents
+
+# Deploy to Claude Code (existing project):
+aiwg -deploy-agents    # copy agents into .claude/agents/
+aiwg -deploy-commands  # copy commands into .claude/commands/
+
+# Deploy to Warp Terminal (existing project):
+aiwg -setup-warp       # create/update WARP.md with AIWG framework
+aiwg -update-warp      # update existing WARP.md with latest content
 ```
 
 Node.js requirement:
