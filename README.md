@@ -18,23 +18,7 @@
 
 ## 🚀 Quick Start
 
-> **⚠️ IMPORTANT NOTICES**
->
-> **Framework Scope:** This is an **agent toolset and prompting framework** for process automation. Current features: **Writing Quality utilities** and **SDLC Complete framework**. Future: Many additional process types (see roadmap). Prompts function as executable software within agentic environments.
->
-> **Early Access / Active Testing:** This framework is in active development and validation (Phase 1: 0-3 months). Expect breaking changes, incomplete features, and evolving documentation. **Not recommended for production-critical projects without thorough testing.**
->
-> **API Costs Warning:** Multi-agent workflows generate extensive prompts and large document outputs (5,000-15,000 words per workflow). This framework **requires Claude Pro or enterprise accounts** with high usage limits. **Estimated costs:** $20-50/month for moderate usage (10-20 workflows). [See cost guidance →](#-cost-considerations)
->
-> **Rate Limits:** Agentic tools handle rate limits and retries automatically. No manual timeout management required.
->
-> **Version Control:** Document rollback is **optional** and user-controlled. Enable by committing `.aiwg/` artifacts to git, or add `.aiwg/` to `.gitignore` for local-only use.
->
-> **AS-IS License:** Provided under MIT License with NO WARRANTY. Use at your own risk. [Read full disclaimer →](#-license--disclaimer)
->
-> ---
->
-> **📋 Prerequisites:** Node.js ≥18.20.8 and Claude Code installed. [See setup instructions](#-prerequisites) if you need help getting started.
+> **📋 Prerequisites:** Node.js ≥18.20.8 and Claude Code installed. [See detailed setup instructions →](#-prerequisites)
 
 **Install in 30 seconds** — One command. Zero configuration.
 
@@ -63,6 +47,8 @@ cd my-awesome-project
 ---
 
 ## ✨ What You Get
+
+> **📦 Framework Scope:** This is an **agent toolset and prompting framework** for process automation. Current features: **Writing Quality utilities** and **SDLC Complete framework**. Future expansion planned for business process, content strategy, research synthesis, and decision-making frameworks. Prompts function as executable software within agentic environments.
 
 <table>
 <tr>
@@ -369,6 +355,8 @@ aiwg -deploy-agents --mode sdlc
 
 ## 🛠️ Installation & Setup
 
+> **⚠️ Early Access / Active Testing:** This framework is in active development and validation (Phase 1: 0-3 months). Expect breaking changes, incomplete features, and evolving documentation. **Not recommended for production-critical projects without thorough testing.** See [project status →](#-project-status) for current phase and validation metrics.
+
 ### Method 1: One-Line Install (Recommended)
 
 **Install to `~/.local/share/ai-writing-guide` and activate CLI:**
@@ -414,6 +402,10 @@ node tools/cards/prefill-cards.mjs --target artifacts/my-project --team team.yam
 ## 📋 Prerequisites
 
 Before installing, ensure you have the following requirements. This framework is currently **tested and optimized for Claude Code**. Support for other platforms is in development.
+
+> **ℹ️ Technical Notes:**
+> - **Rate Limits:** Agentic tools handle rate limits and retries automatically. No manual timeout management required.
+> - **Version Control:** Document rollback is **optional** and user-controlled. Enable by committing `.aiwg/` artifacts to git, or add `.aiwg/` to `.gitignore` for local-only use.
 
 ### Required
 
