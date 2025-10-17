@@ -10,13 +10,15 @@
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.20.8-brightgreen)](https://nodejs.org)
 [![GitHub Stars](https://img.shields.io/github/stars/jmagly/ai-writing-guide?style=social)](https://github.com/jmagly/ai-writing-guide/stargazers)
 
-[**Get Started**](#-quick-start) · [**Documentation**](#-what-you-get) · [**Examples**](examples/) · [**Contributing**](#-contributing)
+[**Get Started**](#-quick-start) · [**Prerequisites**](#-prerequisites) · [**Documentation**](#-documentation) · [**Examples**](examples/) · [**Contributing**](#-contributing)
 
 </div>
 
 ---
 
 ## 🚀 Quick Start
+
+> **📋 Prerequisites:** Node.js ≥18.20.8 and Claude Code installed. [See setup instructions](#-prerequisites) if you need help getting started.
 
 **Install in 30 seconds** — One command. Zero configuration.
 
@@ -387,19 +389,201 @@ node tools/cards/prefill-cards.mjs --target artifacts/my-project --team team.yam
 
 ---
 
-### Requirements
+## 📋 Prerequisites
 
-**Node.js:** ≥18.20.8 (Latest LTS: Hydrogen)
+Before installing, ensure you have the following requirements. This framework is currently **tested and optimized for Claude Code**. Support for other platforms is in development.
 
-**Supported Platforms:**
-- ✅ Claude Code (primary)
-- ✅ OpenAI/Codex (secondary, use `--provider openai`)
-- ✅ Cursor, Windsurf, Zed (Claude-compatible)
+### Required
 
-**Operating Systems:**
-- ✅ macOS (Intel + Apple Silicon)
-- ✅ Linux (Ubuntu, Debian, Fedora, Arch)
-- ✅ WSL2 (Windows Subsystem for Linux)
+#### 1. Node.js ≥18.20.8 (LTS: Hydrogen)
+
+**Check if you have Node.js:**
+
+```bash
+node --version  # Should show v18.20.8 or higher
+```
+
+**Don't have Node.js?** Choose your installation method:
+
+<details>
+<summary><strong>📦 macOS (Homebrew)</strong></summary>
+
+```bash
+# Install Homebrew (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Node.js LTS
+brew install node@18
+```
+
+[**Official Homebrew docs →**](https://brew.sh/)
+
+</details>
+
+<details>
+<summary><strong>📦 Linux (NodeSource)</strong></summary>
+
+**Ubuntu/Debian:**
+
+```bash
+# Add NodeSource repository
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+
+# Install Node.js
+sudo apt-get install -y nodejs
+```
+
+**Fedora/RHEL:**
+
+```bash
+# Add NodeSource repository
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+
+# Install Node.js
+sudo dnf install -y nodejs
+```
+
+[**NodeSource installation guide →**](https://github.com/nodesource/distributions)
+
+</details>
+
+<details>
+<summary><strong>📦 Windows (WSL2 Required)</strong></summary>
+
+**Step 1: Install WSL2**
+
+```powershell
+# Run in PowerShell as Administrator
+wsl --install
+```
+
+**Step 2: Install Node.js in WSL2**
+
+```bash
+# Open WSL2 terminal
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+[**WSL2 installation guide →**](https://learn.microsoft.com/en-us/windows/wsl/install)
+
+</details>
+
+<details>
+<summary><strong>📦 NVM (Node Version Manager) - All Platforms</strong></summary>
+
+**Install NVM:**
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+```
+
+**Install Node.js 18:**
+
+```bash
+nvm install 18
+nvm use 18
+nvm alias default 18
+```
+
+**Verify:**
+
+```bash
+node --version  # Should show v18.x.x
+```
+
+[**NVM installation guide →**](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+</details>
+
+---
+
+#### 2. Claude Code (Primary Platform)
+
+**Currently Required:** This framework is **actively tested with Claude Code**. Other platforms (OpenAI/Codex, Cursor, Windsurf, Zed) are supported via `--provider` flags but not fully validated yet.
+
+**Install Claude Code:**
+
+1. **Download:** Visit [claude.ai/code](https://claude.ai/code)
+2. **Sign up/Login:** Create an Anthropic account or login
+3. **Install CLI:** Follow platform-specific instructions (macOS, Linux, Windows)
+
+**Verify Installation:**
+
+```bash
+# Check Claude Code is installed
+claude --version
+```
+
+[**Claude Code documentation →**](https://docs.claude.com/claude-code)
+
+---
+
+### Platform Support Status
+
+| Platform | Status | Provider Flag | Notes |
+|----------|--------|---------------|-------|
+| **Claude Code** | ✅ **Tested & Validated** | (default) | Primary development platform |
+| **OpenAI/Codex** | 🟡 Experimental | `--provider openai` | Functional but not fully tested |
+| **Cursor** | 🟡 Experimental | (Claude-compatible) | Should work, not validated |
+| **Windsurf** | 🟡 Experimental | (Claude-compatible) | Should work, not validated |
+| **Zed** | 🟡 Experimental | (Claude-compatible) | Should work, not validated |
+
+**Want to help?** We're actively seeking beta testers for other platforms! [Open a discussion](https://github.com/jmagly/ai-writing-guide/discussions) if you're interested.
+
+---
+
+### Operating Systems
+
+**Fully Supported:**
+- ✅ **macOS** (Intel + Apple Silicon)
+- ✅ **Linux** (Ubuntu, Debian, Fedora, Arch, RHEL)
+- ✅ **WSL2** (Windows Subsystem for Linux)
+
+**Not Supported:**
+- ❌ Native Windows (PowerShell/CMD) — Use WSL2 instead
+
+---
+
+### Optional (Recommended)
+
+**Git:** Required for `aiwg -new` project scaffolding and version control.
+
+```bash
+# Check if you have Git
+git --version
+
+# Install Git (if needed)
+# macOS (Homebrew)
+brew install git
+
+# Ubuntu/Debian
+sudo apt-get install git
+
+# Fedora/RHEL
+sudo dnf install git
+```
+
+---
+
+### Quick Compatibility Check
+
+Run this command to verify all prerequisites:
+
+```bash
+# Check Node.js version
+node --version && echo "✅ Node.js installed" || echo "❌ Node.js missing"
+
+# Check Claude Code
+claude --version && echo "✅ Claude Code installed" || echo "❌ Claude Code missing"
+
+# Check Git (optional)
+git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed for aiwg -new)"
+```
+
+**All checks passed?** You're ready! [Jump to installation →](#-installation--setup)
+
+**Missing something?** Expand the relevant section above for installation instructions.
 
 ---
 
