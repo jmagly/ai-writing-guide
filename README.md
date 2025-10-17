@@ -18,7 +18,7 @@
 
 ## 🚀 Quick Start
 
-> **📋 Prerequisites:** Node.js ≥18.20.8 and Claude Code installed. [See detailed setup instructions →](#-prerequisites)
+> **📋 Prerequisites:** Node.js ≥18.20.8 and Claude Code or Warp Terminal. [See detailed setup instructions →](#-prerequisites)
 
 **Install in 30 seconds** — One command. Zero configuration.
 
@@ -26,13 +26,28 @@
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
 ```
 
-**Activate on your project** — Deploy agents and start using immediately:
+**Activate on your project** — Choose your platform:
+
+<details>
+<summary><strong>Claude Code (Multi-agent orchestration)</strong></summary>
 
 ```bash
 cd your-project
 aiwg -deploy-agents        # Adds AI agents to .claude/agents/
 aiwg -deploy-commands      # Adds workflow commands to .claude/commands/
 ```
+
+</details>
+
+<details>
+<summary><strong>Warp Terminal (Terminal-native workflows)</strong></summary>
+
+```bash
+cd your-project
+aiwg -setup-warp           # Creates WARP.md with agents and commands
+```
+
+</details>
 
 **Start a new project** — Full SDLC scaffolding in seconds:
 
@@ -299,8 +314,14 @@ aiwg -deploy-agents --mode general
 
 **Solution:** One command deploys 58 agents + 45 commands + 156 templates.
 
+**Claude Code:**
 ```bash
 aiwg -deploy-agents --mode sdlc
+```
+
+**Warp Terminal:**
+```bash
+aiwg -setup-warp --mode sdlc
 ```
 
 **Time Saved:** 98% (6 hours → 10 seconds)
@@ -313,8 +334,15 @@ aiwg -deploy-agents --mode sdlc
 
 **Solution:** Analyze codebase, generate comprehensive intake automatically.
 
+**Claude Code:**
 ```bash
 /project:intake-from-codebase .
+```
+
+**Warp Terminal:**
+```text
+# In Warp AI
+"Analyze this codebase and generate intake documents"
 ```
 
 **Output:** Project intake, solution profile, option matrix (3 documents, 5,000+ words)
@@ -329,13 +357,22 @@ aiwg -deploy-agents --mode sdlc
 
 **Solution:** Orchestrate parallel reviews, synthesize feedback, baseline artifact.
 
+**Claude Code (Multi-Agent):**
 ```bash
 "Create Software Architecture Document with multi-agent review"
+```
+
+**Warp Terminal (Context-Aware):**
+```text
+# In Warp AI
+"Create architecture baseline with security and testing review"
 ```
 
 **Workflow:** Primary Author → 4 Parallel Reviewers → Synthesizer → Baseline
 
 **Time Saved:** 92-96% (9-15 hours → 45-60 minutes)
+
+**Note:** Multi-agent orchestration is Claude Code's strength. Warp provides context-aware guidance.
 
 ---
 
@@ -401,7 +438,7 @@ node tools/cards/prefill-cards.mjs --target artifacts/my-project --team team.yam
 
 ## 📋 Prerequisites
 
-Before installing, ensure you have the following requirements. This framework is currently **tested and optimized for Claude Code**. Support for other platforms is in development.
+Before installing, ensure you have the following requirements. This framework is **tested and validated** for both **Claude Code** and **Warp Terminal**. Support for other platforms is in development.
 
 > **ℹ️ Technical Notes:**
 > - **Rate Limits:** Agentic tools handle rate limits and retries automatically. No manual timeout management required.
@@ -512,9 +549,13 @@ node --version  # Should show v18.x.x
 
 ---
 
-#### 2. Claude Code (Primary Platform)
+#### 2. AI Platform (Choose One or Both)
 
-**Currently Required:** This framework is **actively tested with Claude Code**. Other platforms (OpenAI/Codex, Cursor, Windsurf, Zed) are supported via `--provider` flags but not fully validated yet.
+This framework supports **both Claude Code and Warp Terminal**. Choose based on your workflow:
+
+**Option A: Claude Code (Multi-Agent Orchestration)**
+
+**Best for:** Full SDLC orchestration, multi-agent workflows, artifact generation
 
 **Install Claude Code:**
 
@@ -525,23 +566,60 @@ node --version  # Should show v18.x.x
 **Verify Installation:**
 
 ```bash
-# Check Claude Code is installed
-claude --version
+claude --version  # Should show Claude Code version
 ```
 
-[**Claude Code documentation →**](https://docs.claude.com/claude-code)
+[**Claude Code Quick Start →**](docs/integrations/claude-code-quickstart.md) | [**Documentation →**](https://docs.claude.com/claude-code)
+
+---
+
+**Option B: Warp Terminal (Terminal-Native Workflows)**
+
+**Best for:** Command-line workflows, terminal-native AI, lightweight integration
+
+**Install Warp Terminal:**
+
+1. **Download:** Visit [warp.dev](https://www.warp.dev/)
+2. **Sign up/Login:** Create a Warp account or login
+3. **Install:** Follow platform-specific instructions (macOS, Linux)
+
+**Verify Installation:**
+
+```bash
+# Warp is installed if it opens successfully
+# No separate CLI to verify
+```
+
+[**Warp Terminal Quick Start →**](docs/integrations/warp-terminal-quickstart.md) | [**Documentation →**](https://docs.warp.dev/)
+
+---
+
+**Option C: Use Both (Recommended)**
+
+Get the best of both platforms:
+
+- **Warp Terminal:** Command-line workflows, terminal-native AI
+- **Claude Code:** Multi-agent orchestration, artifact generation
+
+```bash
+# Deploy to both platforms
+aiwg -deploy-agents --mode sdlc      # Claude Code agents
+aiwg -deploy-commands --mode sdlc    # Claude Code commands
+aiwg -setup-warp --mode sdlc         # Warp Terminal integration
+```
 
 ---
 
 ### Platform Support Status
 
-| Platform | Status | Provider Flag | Notes |
-|----------|--------|---------------|-------|
-| **Claude Code** | ✅ **Tested & Validated** | (default) | Primary development platform |
+| Platform | Status | Integration | Notes |
+|----------|--------|-------------|-------|
+| **Claude Code** | ✅ **Tested & Validated** | Multi-file (.claude/agents/*.md) | Multi-agent orchestration |
+| **Warp Terminal** | ✅ **Tested & Validated** | Single-file (WARP.md) | Terminal-native workflows |
 | **OpenAI/Codex** | 🟡 Experimental | `--provider openai` | Functional but not fully tested |
-| **Cursor** | 🟡 Experimental | (Claude-compatible) | Should work, not validated |
-| **Windsurf** | 🟡 Experimental | (Claude-compatible) | Should work, not validated |
-| **Zed** | 🟡 Experimental | (Claude-compatible) | Should work, not validated |
+| **Cursor** | 🟡 Experimental | Claude-compatible | Should work, not validated |
+| **Windsurf** | 🟡 Experimental | Claude-compatible | Should work, not validated |
+| **Zed** | 🟡 Experimental | Claude-compatible | Should work, not validated |
 
 **Want to help?** We're actively seeking beta testers for other platforms! [Open a discussion](https://github.com/jmagly/ai-writing-guide/discussions) if you're interested.
 
@@ -588,8 +666,11 @@ Run this command to verify all prerequisites:
 # Check Node.js version
 node --version && echo "✅ Node.js installed" || echo "❌ Node.js missing"
 
-# Check Claude Code
-claude --version && echo "✅ Claude Code installed" || echo "❌ Claude Code missing"
+# Check Claude Code (if using)
+claude --version && echo "✅ Claude Code installed" || echo "ℹ️ Claude Code not installed"
+
+# Check Warp Terminal (if using)
+# Open Warp Terminal and verify it launches successfully
 
 # Check Git (optional)
 git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed for aiwg -new)"
@@ -608,6 +689,12 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 - [**Quick Start Guide**](USAGE_GUIDE.md) — Context selection for different tasks
 - [**Installation Guide**](tools/install/README.md) — Detailed setup instructions
 - [**CLI Reference**](tools/install/README.md#cli-commands) — All `aiwg` commands
+
+### Platform Integration
+
+- [**Claude Code Quick Start**](docs/integrations/claude-code-quickstart.md) — 5-10 minute setup for Claude Code
+- [**Warp Terminal Quick Start**](docs/integrations/warp-terminal-quickstart.md) — 3-5 minute setup for Warp Terminal
+- [**Warp Terminal Integration Guide**](docs/integrations/warp-terminal.md) — Comprehensive Warp documentation
 
 ### Writing Quality
 
