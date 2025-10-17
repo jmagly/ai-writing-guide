@@ -278,11 +278,31 @@ This repository includes a comprehensive software development lifecycle framewor
 
 ### Using SDLC Framework
 
-1. Scaffold new project: `aiwg -new` (copies intake templates)
+**For New Projects**:
+
+1. Scaffold new project: `aiwg -new` (copies intake templates, CLAUDE.md with orchestration prompts)
 2. Deploy SDLC agents: `aiwg -deploy-agents --mode sdlc`
 3. Deploy SDLC commands: `aiwg -deploy-commands --mode sdlc`
 4. Fill intake forms: `/project:intake-wizard "your project description"`
 5. Follow phase workflows: Reference `agentic/code/frameworks/sdlc-complete/plan-act-sdlc.md` for milestone guidance
+
+**For Existing Projects**:
+
+1. Update project CLAUDE.md: `/project:aiwg-setup-project` (preserves existing content, adds AIWG orchestration section)
+2. Deploy SDLC agents: `aiwg -deploy-agents --mode sdlc`
+3. Deploy SDLC commands: `aiwg -deploy-commands --mode sdlc`
+4. Start intake: `/project:intake-wizard "your project description"` or `/project:intake-from-codebase .`
+
+**Natural Language Orchestration**:
+
+Both new and existing projects configured with AIWG support natural language workflow triggering:
+
+- "Let's transition to Elaboration" → Orchestrates `flow-inception-to-elaboration`
+- "Run security review" → Orchestrates `flow-security-review-cycle`
+- "Where are we?" → Checks project status
+- "Create architecture baseline" → Generates SAD + ADRs
+
+See `agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md` for 70+ supported phrases.
 
 See `agentic/code/frameworks/sdlc-complete/actors-and-templates.md` for role-to-template mappings.
 
