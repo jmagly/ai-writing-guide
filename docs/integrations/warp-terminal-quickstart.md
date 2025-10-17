@@ -57,7 +57,7 @@ cd /path/to/your/new/project  # in Warp Terminal
 
 ---
 
-## Existing Project Setup (5 Minutes)
+## Existing Project Setup (5-10 Minutes)
 
 ### Step 1: Install AIWG
 
@@ -72,19 +72,63 @@ source ~/.bash_aliases
 cd /path/to/existing/project
 ```
 
-### Step 3: Setup Warp (Preserves Existing WARP.md)
+### Step 3: Choose Your Integration Method
+
+You have two options for integrating AIWG into your existing WARP.md:
+
+#### Option A: Quick Append (CLI) - Simple but Limited
 
 ```bash
-# If you have existing WARP.md with custom rules
+# Simple append - no disruption to existing content
 aiwg -setup-warp
 ```
 
 **What this does:**
 
-- **Preserves** all your existing Tech Stack, Team Conventions, Project Rules
-- **Adds** AIWG SDLC Framework section at bottom
+- **Preserves** all your existing content exactly as-is
+- **Appends** AIWG SDLC Framework section at bottom
 - **Creates backup**: `WARP.md.backup-{timestamp}`
-- **Intelligent merge**: User content stays, AIWG content appended
+- **No modifications** to your existing content
+
+**When to use:** Quick testing, minimal disruption
+
+#### Option B: Intelligent Merge (Slash Command) - **RECOMMENDED for Best Results**
+
+```bash
+# Open project in Claude Code (or similar AI IDE)
+claude .
+```
+
+Then in Claude Code:
+
+```text
+/project:aiwg-update-warp
+```
+
+**What this does:**
+
+- **Preserves** all user-specific content (Tech Stack, Team Rules, Project Notes)
+- **Intelligently integrates** AIWG framework with your existing content
+- **Expands and links** important user notes into SDLC documentation
+- **Improves quality** by enriching context for better AI responses
+- **Deep integration** - your project rules become part of SDLC workflows
+- **Creates backup**: `WARP.md.backup-{timestamp}`
+
+**Example transformations:**
+
+```markdown
+# Before intelligent merge
+## Deployment Notes
+- Production requires 2 approvals
+
+# After intelligent merge
+## Deployment Notes
+- Production requires 2 approvals
+- See detailed deployment workflow: flow-deploy-to-production
+- Approval process documented in: .aiwg/deployment/approval-checklist.md
+```
+
+**When to use:** Best results, deep SDLC integration, production use
 
 ### Step 4: Open in Warp Terminal
 
@@ -93,10 +137,111 @@ aiwg -setup-warp
 cd /path/to/existing/project
 ```
 
-**Warp loads both:**
+**Warp loads:**
 
-- Your existing project rules
-- AIWG SDLC framework
+- Your existing project rules (preserved and enhanced)
+- AIWG SDLC framework (integrated with your context)
+
+---
+
+## Why Use Intelligent Merge? (Option B)
+
+### The Power of Deep Integration
+
+The intelligent merge does more than just append AIWG content - it creates a **cohesive, enriched context** that dramatically improves AI response quality.
+
+### What Makes It "Intelligent"?
+
+**1. Context Linking**
+
+Your existing notes get linked to SDLC workflows:
+
+```markdown
+# Your existing note
+## Security Requirements
+- Must comply with SOC2
+
+# After intelligent merge
+## Security Requirements
+- Must comply with SOC2
+- Security validation workflow: /project:flow-security-review-cycle
+- Compliance tracking: .aiwg/security/compliance-matrix.md
+- Gate criteria documented: .aiwg/gates/security-gate-criteria.md
+```
+
+**2. Content Expansion**
+
+Vague notes get expanded with actionable details:
+
+```markdown
+# Before
+## Testing Strategy
+- Write tests for all features
+
+# After
+## Testing Strategy
+- Write tests for all features
+  - Unit tests: 80%+ coverage (tools/test/coverage-config.js)
+  - Integration tests: API endpoints (test/integration/)
+  - E2E tests: Critical user flows (test/e2e/)
+- Test execution: /project:flow-test-strategy-execution
+- Test plan template: {AIWG_ROOT}/templates/testing/master-test-plan.md
+```
+
+**3. Quality Improvements**
+
+Your project rules get elevated with best practices:
+
+```markdown
+# Before
+## Deployment Process
+- Deploy to staging first
+
+# After
+## Deployment Process
+- Deploy to staging first
+  1. Validate staging deployment (smoke tests)
+  2. Run automated regression suite
+  3. Manual QA sign-off
+  4. Production deployment (blue-green strategy)
+  5. Monitor for 24h (hypercare)
+- Deployment workflow: /project:flow-deploy-to-production
+- Rollback procedure: .aiwg/deployment/rollback-runbook.md
+```
+
+### Real-World Impact
+
+**Without intelligent merge** (CLI append):
+
+```text
+User: "Deploy to production"
+Warp AI: [Generic deployment steps]
+```
+
+**With intelligent merge** (slash command):
+
+```text
+User: "Deploy to production"
+Warp AI: [Understands your 2-approval requirement]
+         [References your rollback procedure]
+         [Follows your blue-green strategy]
+         [Triggers your monitoring setup]
+         [Complete context-aware deployment]
+```
+
+### When to Use Each Method
+
+| Scenario | CLI Append | Intelligent Merge |
+|----------|-----------|------------------|
+| **Quick testing** | ✅ Fast setup | ⚠️ Takes 2-3 min |
+| **Production use** | ⚠️ Limited integration | ✅ Best results |
+| **Team projects** | ⚠️ Generic responses | ✅ Context-aware |
+| **Complex codebases** | ⚠️ Shallow context | ✅ Deep integration |
+| **Existing WARP.md** | ✅ Zero disruption | ✅ Preserves + enhances |
+
+**Recommendation**: Start with CLI append for testing, then run intelligent merge for production use.
+
+---
 
 ### Step 5: Analyze Codebase (Key for Existing Projects!)
 

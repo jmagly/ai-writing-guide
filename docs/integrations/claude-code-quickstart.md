@@ -105,7 +105,19 @@ source ~/.bash_aliases
 cd /path/to/existing/project
 ```
 
-### Step 3: Setup AIWG Context
+### Step 3: Deploy Agents & Commands First
+
+```bash
+# Deploy SDLC framework
+aiwg -deploy-agents --mode sdlc
+aiwg -deploy-commands --mode sdlc
+```
+
+### Step 4: Choose Your Integration Method
+
+You have two options for integrating AIWG into your existing CLAUDE.md:
+
+#### Option A: Simple Setup (New CLAUDE.md or First Time)
 
 ```bash
 # Open in Claude Code
@@ -125,13 +137,157 @@ Claude: [Runs /project:aiwg-setup-project]
 - Adds AIWG orchestration section at bottom
 - Creates `.aiwg/` directory structure
 
-### Step 4: Deploy Agents & Commands
+**When to use:** First-time setup, no CLAUDE.md exists yet
+
+#### Option B: Intelligent Merge (Existing CLAUDE.md) - **RECOMMENDED for Best Results**
 
 ```bash
-# Deploy SDLC framework
-aiwg -deploy-agents --mode sdlc
-aiwg -deploy-commands --mode sdlc
+# Open in Claude Code
+claude .
 ```
+
+```text
+# In Claude Code
+You: "Update CLAUDE.md with intelligent AIWG integration"
+Claude: [Runs /project:aiwg-update-claude]
+```
+
+**What this does:**
+
+- **Preserves** all user-specific content (Repository Purpose, Team Rules, etc.)
+- **Intelligently integrates** AIWG framework with your existing content
+- **Expands and links** important user notes into SDLC documentation
+- **Improves quality** by enriching context for better AI responses
+- **Deep integration** - your project rules become part of SDLC workflows
+- **Creates backup**: `CLAUDE.md.backup-{timestamp}`
+
+**Example transformations:**
+
+```markdown
+# Before intelligent merge
+## Team Rules
+- Use Prettier for formatting
+- Run tests before pushing
+
+# After intelligent merge
+## Team Rules
+- Use Prettier for formatting (config: .prettierrc)
+- Run tests before pushing
+  - Test execution: /project:flow-test-strategy-execution
+  - Coverage target: 80%+ (enforced by CI)
+  - Pre-commit hook: .husky/pre-commit
+- Code review required for all PRs
+  - Review checklist: .aiwg/quality/code-review-checklist.md
+```
+
+**When to use:** Existing CLAUDE.md with project-specific content, production use
+
+---
+
+## Why Use Intelligent Merge? (Option B)
+
+### The Power of Deep Integration
+
+The intelligent merge (`/project:aiwg-update-claude`) does more than just append AIWG content - it creates a **cohesive, enriched context** that dramatically improves AI response quality.
+
+### What Makes It "Intelligent"?
+
+**1. Context Linking**
+
+Your existing notes get linked to SDLC workflows:
+
+```markdown
+# Your existing note
+## Security Requirements
+- Must comply with SOC2
+
+# After intelligent merge
+## Security Requirements
+- Must comply with SOC2
+- Security validation: /project:flow-security-review-cycle
+- Compliance framework: /project:flow-compliance-validation SOC2
+- Audit preparation: .aiwg/security/audit-prep-checklist.md
+- Gate criteria: .aiwg/gates/security-gate-criteria.md
+```
+
+**2. Content Expansion**
+
+Vague notes get expanded with actionable details:
+
+```markdown
+# Before
+## Testing Strategy
+- Write tests for all features
+
+# After
+## Testing Strategy
+- Write tests for all features
+  - Unit tests: 80%+ coverage (jest.config.js)
+  - Integration tests: API endpoints (test/integration/)
+  - E2E tests: Critical user flows (playwright.config.js)
+- Test execution: /project:flow-test-strategy-execution
+- Test architecture: .aiwg/testing/test-strategy.md
+- Coverage reporting: CI/CD pipeline (.github/workflows/test.yml)
+```
+
+**3. Quality Improvements**
+
+Your project rules get elevated with best practices:
+
+```markdown
+# Before
+## Deployment Process
+- Deploy to staging first
+
+# After
+## Deployment Process
+- Deploy to staging first
+  1. Run full test suite (unit + integration + E2E)
+  2. Deploy to staging environment
+  3. Automated smoke tests (post-deployment)
+  4. Manual QA sign-off (critical flows)
+  5. Production deployment (blue-green strategy)
+  6. Monitor for 24h (hypercare period)
+- Deployment workflow: /project:flow-deploy-to-production
+- Rollback runbook: .aiwg/deployment/rollback-procedure.md
+- Monitoring dashboards: .aiwg/deployment/monitoring-setup.md
+```
+
+### Real-World Impact
+
+**Without intelligent merge** (simple setup):
+
+```text
+User: "Run security review before release"
+Claude: [Generic security checklist]
+```
+
+**With intelligent merge** (intelligent integration):
+
+```text
+User: "Run security review before release"
+Claude: [Understands SOC2 requirement]
+        [References your audit timeline]
+        [Uses your compliance framework]
+        [Checks your specific gate criteria]
+        [Generates audit-ready documentation]
+        [Complete context-aware security review]
+```
+
+### When to Use Each Method
+
+| Scenario | Simple Setup | Intelligent Merge |
+|----------|-----------|------------------|
+| **First-time setup** | ✅ Quick start | ⚠️ Use after initial setup |
+| **No CLAUDE.md yet** | ✅ Creates from scratch | ❌ Requires existing file |
+| **Existing CLAUDE.md** | ⚠️ Just appends | ✅ Deep integration |
+| **Production use** | ⚠️ Limited context | ✅ Best results |
+| **Team projects** | ⚠️ Generic responses | ✅ Context-aware |
+| **Complex codebases** | ⚠️ Shallow context | ✅ Rich integration |
+
+**Recommendation**: Use simple setup first, then run intelligent merge to enhance integration.
+
+---
 
 ### Step 5: Generate Intake from Codebase
 
