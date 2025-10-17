@@ -49,4 +49,4 @@ TODO.local.md
 _agent-temp/
 
 # SDLC artifacts (use locally, don't commit)
-.aiwg/
+# .aiwg/
