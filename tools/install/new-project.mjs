@@ -192,6 +192,19 @@ function createOrUpdateSettings(aiwgPath, provider) {
     }
   }
 
+  // Copy CLAUDE.md template with AIWG_ROOT substitution
+  const claudeMdTemplate = path.join(aiwgPath, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'project', 'CLAUDE.md');
+  const claudeMdDest = path.resolve(process.cwd(), 'CLAUDE.md');
+  if (fs.existsSync(claudeMdTemplate) && !fs.existsSync(claudeMdDest)) {
+    let claudeMdContent = fs.readFileSync(claudeMdTemplate, 'utf8');
+    // Replace {AIWG_ROOT} placeholder with actual path
+    claudeMdContent = claudeMdContent.replace(/\{AIWG_ROOT\}/g, aiwgPath);
+    fs.writeFileSync(claudeMdDest, claudeMdContent, 'utf8');
+    console.log(`created CLAUDE.md`);
+  } else if (fs.existsSync(claudeMdDest)) {
+    console.log(`exists  CLAUDE.md`);
+  }
+
   const readmePath = path.resolve(process.cwd(), 'README.md');
   if (!fs.existsSync(readmePath)) {
     const readme = `# ${name}\n\n` +

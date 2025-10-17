@@ -102,364 +102,36 @@ else
 fi
 ```
 
-### Step 4: Generate AIWG Section Content
+### Step 4: Read AIWG CLAUDE.md Template
 
-Create the AIWG framework documentation section:
-
-```markdown
-## AIWG (AI Writing Guide) SDLC Framework
-
-This project uses the **AI Writing Guide SDLC framework** for software development lifecycle management.
-
-### What is AIWG?
-
-AIWG is a comprehensive SDLC framework providing:
-- **58 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
-- **42+ commands** for project management, security, testing, deployment, and traceability
-- **100+ templates** for requirements, architecture, testing, security, deployment artifacts
-- **Phase-based workflows** with gate criteria and milestone tracking
-- **Multi-agent orchestration** patterns for collaborative artifact generation
-
-### Installation and Access
-
-**AIWG Installation Path**: `{AIWG_ROOT}`
-
-**Agent Access**: Claude Code agents have read access to AIWG templates and documentation via allowed-tools configuration.
-
-**Verify Installation**:
-```bash
-# Check AIWG is accessible
-ls {AIWG_ROOT}/agentic/code/frameworks/sdlc-complete/
-
-# Available resources:
-# - agents/     → 58 SDLC role agents
-# - commands/   → 42+ slash commands
-# - templates/  → 100+ artifact templates
-# - flows/      → Phase workflow documentation
-```
-
-### Project Artifacts Directory: .aiwg/
-
-All SDLC artifacts (requirements, architecture, testing, etc.) are stored in **`.aiwg/`**:
-
-```
-.aiwg/
-├── intake/              # Project intake forms
-├── requirements/        # User stories, use cases, NFRs
-├── architecture/        # SAD, ADRs, diagrams
-├── planning/            # Phase and iteration plans
-├── risks/               # Risk register and mitigation
-├── testing/             # Test strategy, plans, results
-├── security/            # Threat models, security artifacts
-├── quality/             # Code reviews, retrospectives
-├── deployment/          # Deployment plans, runbooks
-├── team/                # Team profile, agent assignments
-├── working/             # Temporary scratch (safe to delete)
-└── reports/             # Generated reports and indices
-```
-
-### Available Commands
-
-**Intake & Inception**:
-- `/project:intake-wizard` - Generate or complete intake forms interactively
-- `/project:intake-from-codebase` - Analyze existing codebase to generate intake
-- `/project:intake-start` - Validate intake and kick off Inception phase
-- `/project:flow-concept-to-inception` - Execute Concept → Inception workflow
-
-**Phase Transitions**:
-- `/project:flow-inception-to-elaboration` - Transition to Elaboration phase
-- `/project:flow-elaboration-to-construction` - Transition to Construction phase
-- `/project:flow-construction-to-transition` - Transition to Transition phase
-
-**Continuous Workflows** (run throughout lifecycle):
-- `/project:flow-risk-management-cycle` - Risk identification and mitigation
-- `/project:flow-requirements-evolution` - Living requirements refinement
-- `/project:flow-architecture-evolution` - Architecture change management
-- `/project:flow-test-strategy-execution` - Test suite execution and validation
-- `/project:flow-security-review-cycle` - Security validation and threat modeling
-- `/project:flow-performance-optimization` - Performance baseline and optimization
-
-**Quality & Gates**:
-- `/project:flow-gate-check <phase-name>` - Validate phase gate criteria
-- `/project:flow-handoff-checklist <from-phase> <to-phase>` - Phase handoff validation
-- `/project:project-status` - Current phase, milestone progress, next steps
-- `/project:project-health-check` - Overall project health metrics
-
-**Team & Process**:
-- `/project:flow-team-onboarding <member> [role]` - Onboard new team member
-- `/project:flow-knowledge-transfer <from> <to> [domain]` - Knowledge transfer workflow
-- `/project:flow-cross-team-sync <team-a> <team-b>` - Cross-team coordination
-- `/project:flow-retrospective-cycle <type> [iteration]` - Retrospective facilitation
-
-**Deployment & Operations**:
-- `/project:flow-deploy-to-production <strategy> <version>` - Production deployment
-- `/project:flow-hypercare-monitoring <duration-days>` - Post-launch monitoring
-- `/project:flow-incident-response <incident-id> [severity]` - Production incident triage
-
-**Compliance & Governance**:
-- `/project:flow-compliance-validation <framework>` - Compliance validation workflow
-- `/project:flow-change-control <change-type> [change-id]` - Change control workflow
-- `/project:check-traceability <path-to-csv>` - Verify requirements-to-code traceability
-- `/project:security-gate` - Enforce security criteria before release
-
-### Command Parameters
-
-All flow commands support standard parameters:
-- `[project-directory]` - Path to project root (default: `.`)
-- `--guidance "text"` - Strategic guidance to influence execution
-- `--interactive` - Enable interactive mode with strategic questions
-
-**Examples**:
-```bash
-# Provide upfront guidance
-/project:flow-architecture-evolution --guidance "Focus on security first, SOC2 audit in 3 months"
-
-# Interactive mode with questions
-/project:flow-inception-to-elaboration --interactive
-
-# Combined approach
-/project:intake-wizard "Build customer portal" --interactive --guidance "Healthcare domain, HIPAA critical"
-```
-
-### Agent Deployment
-
-Deploy SDLC agents to your project:
+Read the AIWG CLAUDE.md template and prepare for merging:
 
 ```bash
-# Deploy all agents (general-purpose + SDLC)
-aiwg -deploy-agents --mode both
+CLAUDE_TEMPLATE="$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/project/CLAUDE.md"
 
-# Deploy only SDLC agents
-aiwg -deploy-agents --mode sdlc
+if [ ! -f "$CLAUDE_TEMPLATE" ]; then
+  echo "❌ Error: CLAUDE.md template not found at $CLAUDE_TEMPLATE"
+  exit 1
+fi
 
-# Deploy commands
-aiwg -deploy-commands --mode sdlc
+# Read template and substitute AIWG_ROOT placeholder
+AIWG_SECTION=$(cat "$CLAUDE_TEMPLATE" | sed "s|{AIWG_ROOT}|$AIWG_ROOT|g")
+
+echo "✓ Loaded CLAUDE.md template with orchestration guidance"
 ```
 
-Agents are deployed to:
-- `.claude/agents/` (Claude Code)
-- `.codex/agents/` (OpenAI Codex, if using --provider openai)
+**Key sections in template**:
 
-### Phase Overview
+1. **Core Platform Orchestrator Role** - Explains natural language interpretation and multi-agent coordination
+2. **Natural Language Command Translation** - Maps user phrases to flow templates
+3. **Multi-Agent Workflow Pattern** - Primary Author → Parallel Reviewers → Synthesizer → Archive
+4. **Available Commands Reference** - All SDLC commands with descriptions
+5. **Phase Overview** - Inception through Production with milestones
+6. **Quick Start Guide** - Step-by-step initialization
+7. **Common Patterns** - Example workflows for risk, architecture, security, testing
 
-**Inception** (4-6 weeks):
-- Validate problem, vision, risks
-- Architecture sketch, ADRs
-- Security screening, data classification
-- Business case, funding approval
-- **Milestone**: Lifecycle Objective (LO)
-
-**Elaboration** (4-8 weeks):
-- Detailed requirements (use cases, NFRs)
-- Architecture baseline (SAD, component design)
-- Risk retirement (PoCs, spikes)
-- Test strategy, CI/CD setup
-- **Milestone**: Lifecycle Architecture (LA)
-
-**Construction** (8-16 weeks):
-- Feature implementation
-- Automated testing (unit, integration, E2E)
-- Security validation (SAST, DAST)
-- Performance optimization
-- **Milestone**: Initial Operational Capability (IOC)
-
-**Transition** (2-4 weeks):
-- Production deployment
-- User acceptance testing
-- Support handover, runbooks
-- Hypercare monitoring (2-4 weeks)
-- **Milestone**: Product Release (PR)
-
-**Production** (ongoing):
-- Operational monitoring
-- Incident response
-- Feature iteration
-- Continuous improvement
-
-### Quick Start
-
-1. **Initialize Project**:
-   ```bash
-   # Generate intake forms
-   /project:intake-wizard "Your project description" --interactive
-   ```
-
-2. **Start Inception**:
-   ```bash
-   # Validate intake and kick off Inception
-   /project:intake-start .aiwg/intake/
-
-   # Execute Concept → Inception workflow
-   /project:flow-concept-to-inception .
-   ```
-
-3. **Check Status**:
-   ```bash
-   # View current phase and next steps
-   /project:project-status
-   ```
-
-4. **Progress Through Phases**:
-   ```bash
-   # When Inception complete, transition to Elaboration
-   /project:flow-gate-check inception  # Validate gate criteria
-   /project:flow-inception-to-elaboration  # Transition phase
-   ```
-
-### Common Patterns
-
-**Risk Management** (run weekly or when risks identified):
-```bash
-/project:flow-risk-management-cycle --guidance "Focus on technical risks, preparing for Elaboration"
-```
-
-**Architecture Evolution** (when architecture changes needed):
-```bash
-/project:flow-architecture-evolution database-migration --interactive
-```
-
-**Security Review** (before each phase gate):
-```bash
-/project:flow-security-review-cycle --guidance "SOC2 audit prep, focus on access controls"
-```
-
-**Test Execution** (run continuously in Construction):
-```bash
-/project:flow-test-strategy-execution integration --guidance "Focus on API endpoints, <5min execution time target"
-```
-
-### AIWG-Specific Rules
-
-1. **Artifact Location**: All SDLC artifacts MUST be created in `.aiwg/` subdirectories (not project root)
-2. **Template Usage**: Always use AIWG templates from `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/`
-3. **Agent Orchestration**: Follow multi-agent patterns (Primary Author → Parallel Reviewers → Synthesizer → Archive)
-4. **Phase Gates**: Validate gate criteria before transitioning phases (use `/project:flow-gate-check`)
-5. **Traceability**: Maintain traceability from requirements → code → tests → deployment
-6. **Guidance First**: Use `--guidance` or `--interactive` to express direction upfront (vs redirecting post-generation)
-
-### Core Platform Orchestrator Role
-
-**IMPORTANT**: You (Claude Code) are the **Core Orchestrator** for SDLC workflows, not a command executor.
-
-#### Your Orchestration Responsibilities
-
-When users request SDLC workflows (natural language or commands):
-
-1. **Interpret Natural Language**: Map user requests to flow templates
-   - "Let's transition to Elaboration" → `flow-inception-to-elaboration`
-   - "Start security review" → `flow-security-review-cycle`
-   - "Create architecture baseline" → Extract SAD generation from flow
-
-2. **Read Flow Commands as Orchestration Templates** (not bash scripts):
-   - Extract agent assignments from templates
-   - Identify artifacts to generate
-   - Note quality criteria and review cycles
-
-3. **Launch Multi-Agent Workflows via Task Tool**:
-   - Primary Author creates initial draft
-   - Parallel Reviewers (3-5) provide domain-specific feedback
-   - Documentation Synthesizer merges consensus
-   - Documentation Archivist archives complete workflow
-
-4. **Track Progress and Communicate**:
-   - Update user with progress indicators (✓ ⏳)
-   - Report completion with artifact summary
-   - Escalate blockers or conflicts
-
-#### Multi-Agent Orchestration Pattern
-
-**Always follow this sequence**:
-
-```
-Primary Author → Parallel Reviewers → Synthesizer → Archive
-     ↓                ↓                    ↓           ↓
-  Draft v0.1    Reviews (3-5)      Final merge    .aiwg/archive/
-```
-
-**Launch reviewers in parallel** (single message, multiple Task tool calls).
-
-#### Example Orchestration
-
-**User**: "Let's transition to Elaboration"
-
-**You orchestrate**:
-```
-Understood. I'll orchestrate the Inception → Elaboration transition.
-
-This will generate:
-- Software Architecture Document (SAD)
-- Architecture Decision Records (3-5 ADRs)
-- Master Test Plan
-- Elaboration Phase Plan
-
-I'll coordinate multiple agents for comprehensive review.
-
-Starting orchestration...
-
-✓ Initialized workspaces
-⏳ SAD Draft (Architecture Designer)...
-✓ SAD v0.1 draft complete (3,245 words)
-⏳ Launching parallel review (4 agents)...
-  ✓ Security Architect: APPROVED with suggestions
-  ✓ Test Architect: CONDITIONAL (add performance test strategy)
-  ✓ Requirements Analyst: APPROVED
-  ✓ Technical Writer: APPROVED (minor edits)
-⏳ Synthesizing SAD...
-✓ SAD BASELINED: .aiwg/architecture/software-architecture-doc.md
-
-{...continue for all artifacts...}
-
-Transition Complete ✓
-```
-
-#### Reference Documentation
-
-- **Orchestrator Architecture**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md`
-- **Multi-Agent Pattern**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/docs/multi-agent-documentation-pattern.md`
-- **Flow Templates**: `.claude/commands/flow-*.md`
-
-### Troubleshooting
-
-**Template Not Found**:
-```bash
-# Verify AIWG installation
-ls $AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/
-
-# Set environment variable if installed elsewhere
-export AIWG_ROOT=/custom/path/to/ai-writing-guide
-```
-
-**Agent Access Denied**:
-- Check `.claude/settings.local.json` has read access to AIWG installation path
-- Verify path uses absolute path (not `~` shorthand for user home)
-
-**Command Not Found**:
-```bash
-# Deploy commands to project
-aiwg -deploy-commands --mode sdlc
-
-# Verify deployment
-ls .claude/commands/flow-*.md
-```
-
-### Resources
-
-- **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
-- **Framework Documentation**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/README.md`
-- **Phase Workflows**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/`
-- **Template Library**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/`
-- **Agent Catalog**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/agents/`
-
-### Support
-
-- **Issues**: https://github.com/jmagly/ai-writing-guide/issues
-- **Discussions**: https://github.com/jmagly/ai-writing-guide/discussions
-- **Documentation**: https://github.com/jmagly/ai-writing-guide/blob/main/README.md
-```
-
-**Substitutions to Make**:
-- Replace `{AIWG_ROOT}` with actual resolved path (e.g., `/home/user/.local/share/ai-writing-guide`)
-- Expand user home `~` to absolute path (e.g., `/home/user`) for agent access
+**Template placeholders**:
+- `{AIWG_ROOT}` → Replace with actual resolved path
 
 ### Step 5: Update or Append AIWG Section
 
@@ -497,20 +169,11 @@ fi
 If no existing CLAUDE.md:
 
 ```bash
-# Create new CLAUDE.md with AIWG section
-cat > "$CLAUDE_MD" <<'EOF'
-# CLAUDE.md
+# Copy template directly with substitutions
+cat "$CLAUDE_TEMPLATE" | sed "s|{AIWG_ROOT}|$AIWG_ROOT|g" > "$CLAUDE_MD"
 
-This file provides guidance to Claude Code when working with code in this repository.
-
-## Repository Purpose
-
-{User should fill this in}
-
-{AIWG_SECTION_CONTENT}
-EOF
-
-echo "✓ Created new CLAUDE.md with AIWG documentation: $CLAUDE_MD"
+echo "✓ Created new CLAUDE.md from template: $CLAUDE_MD"
+echo "  User should fill in 'Repository Purpose' section"
 ```
 
 ### Step 6: Update Allowed-Tools (if needed)
