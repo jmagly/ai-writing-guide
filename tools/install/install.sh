@@ -29,6 +29,8 @@ This installs the framework to the prefix and registers the 'aiwg' CLI with comm
   aiwg -deploy-commands -> deploy slash commands to .claude/commands
   aiwg -new            -> scaffold new project with SDLC templates
   aiwg -prefill-cards  -> prefill SDLC card metadata from team profile
+  aiwg -setup-warp     -> setup Warp Terminal with AIWG framework
+  aiwg -update-warp    -> update existing WARP.md with latest AIWG content
   aiwg -version        -> show installed version (commit hash)
   aiwg -update         -> manually update installation
   aiwg -help           -> show command help
@@ -233,10 +235,12 @@ fi
     -deploy-agents|--deploy-agents) node \"$PREFIX/tools/agents/deploy-agents.mjs\" \"\$@\" ;; \\
     -deploy-commands|--deploy-commands) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --deploy-commands \"\$@\" ;; \\
     -prefill-cards|--prefill-cards) node \"$PREFIX/tools/cards/prefill-cards.mjs\" \"\$@\" ;; \\
+    -setup-warp|--setup-warp) node \"$PREFIX/tools/warp/setup-warp.mjs\" \"\$@\" ;; \\
+    -update-warp|--update-warp) node \"$PREFIX/tools/warp/setup-warp.mjs\" --update \"\$@\" ;; \\
     -version|--version|version) aiwg_version ;; \\
     -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Current version:' && aiwg_version ;; \\
     -reinstall|--reinstall|reinstall) aiwg_reinstall ;; \\
-    -h|--help|-help|help|\"\") echo 'Usage: aiwg <command> [options]'; echo ''; echo 'Commands:'; echo '  -new [--no-agents|--provider <claude|openai>]'; echo '       Create new project with SDLC templates'; echo '  -deploy-agents [--provider <...> --force|--dry-run|--source <path>|--target <path>]'; echo '       Deploy agent definitions to current/target directory'; echo '  -deploy-commands [--provider <...> --force|--dry-run]'; echo '       Deploy slash commands to current/target directory'; echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; echo '       Prefill SDLC card metadata from team profile'; echo '  -version'; echo '       Show current installed version (commit hash)'; echo '  -update'; echo '       Manually update aiwg installation (graceful)'; echo '  -reinstall'; echo '       Force fresh reinstall (removes and reclones)'; echo '  -help'; echo '       Show this help message'; echo ''; echo 'Note: aiwg automatically updates on every command run.' ;; \\
+    -h|--help|-help|help|\"\") echo 'Usage: aiwg <command> [options]'; echo ''; echo 'Commands:'; echo '  -new [--no-agents|--provider <claude|openai>]'; echo '       Create new project with SDLC templates'; echo '  -deploy-agents [--provider <...> --force|--dry-run|--source <path>|--target <path>]'; echo '       Deploy agent definitions to current/target directory'; echo '  -deploy-commands [--provider <...> --force|--dry-run]'; echo '       Deploy slash commands to current/target directory'; echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; echo '       Prefill SDLC card metadata from team profile'; echo '  -setup-warp [--target <path>|--mode <general|sdlc|both>|--dry-run|--force]'; echo '       Setup Warp Terminal with AIWG SDLC framework'; echo '  -update-warp [--target <path>]'; echo '       Update existing WARP.md with latest AIWG content'; echo '  -version'; echo '       Show current installed version (commit hash)'; echo '  -update'; echo '       Manually update aiwg installation (graceful)'; echo '  -reinstall'; echo '       Force fresh reinstall (removes and reclones)'; echo '  -help'; echo '       Show this help message'; echo ''; echo 'Note: aiwg automatically updates on every command run.' ;; \\
     *) echo 'Unknown command. Use: aiwg -help for usage information' ;; \\
   esac }"
   echo "aiwg-deploy-agents() { aiwg -deploy-agents \"\$@\"; }"
@@ -258,6 +262,8 @@ echo "  aiwg -deploy-agents     Deploy agents"
 echo "  aiwg -deploy-commands   Deploy commands"
 echo "  aiwg -new               Create new project"
 echo "  aiwg -prefill-cards     Prefill card metadata"
+echo "  aiwg -setup-warp        Setup Warp Terminal"
+echo "  aiwg -update-warp       Update Warp Terminal config"
 echo "  aiwg -help              Show detailed help"
 echo ""
 echo "Note: aiwg automatically updates on every command run."
