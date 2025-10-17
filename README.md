@@ -44,7 +44,7 @@ aiwg -deploy-commands      # Adds workflow commands to .claude/commands/
 
 ```bash
 cd your-project
-aiwg -setup-warp           # Creates WARP.md with agents and commands
+aiwg -deploy-agents --platform warp    # Creates WARP.md with all agents/commands
 ```
 
 </details>

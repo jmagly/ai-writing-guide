@@ -15,10 +15,11 @@ source ~/.bash_aliases  # or ~/.zshrc
 cd /path/to/your/new/project
 ```
 
-### Step 3: Setup Warp with AIWG
+### Step 3: Deploy AIWG to Warp
 
 ```bash
-aiwg -setup-warp
+# Deploy agents and commands to create WARP.md
+aiwg -deploy-agents --platform warp --mode sdlc
 ```
 
 **What this creates:**
@@ -27,6 +28,11 @@ aiwg -setup-warp
 - 58 specialized SDLC agents (embedded in WARP.md)
 - 42+ SDLC commands (embedded in WARP.md)
 - Orchestration context for natural language workflows
+
+**Mode options:**
+- `--mode sdlc` - SDLC agents only (58 agents)
+- `--mode general` - Writing quality agents only (3 agents)
+- `--mode both` - Everything (61 agents)
 
 ### Step 4: Open in Warp Terminal
 
@@ -72,7 +78,19 @@ source ~/.bash_aliases
 cd /path/to/existing/project
 ```
 
-### Step 3: Choose Your Integration Method
+### Step 3: Deploy AIWG Commands to Your Project
+
+```bash
+# Deploy slash commands (needed for intelligent merge)
+aiwg -deploy-commands --platform warp
+```
+
+**What this does:**
+
+- Creates `.claude/commands/aiwg-update-warp.md` slash command
+- This command enables intelligent merge when you open in an AI IDE
+
+### Step 4: Choose Your Integration Method
 
 You have two options for integrating AIWG into your existing WARP.md:
 
@@ -80,7 +98,7 @@ You have two options for integrating AIWG into your existing WARP.md:
 
 ```bash
 # Simple append - no disruption to existing content
-aiwg -setup-warp
+aiwg -deploy-agents --platform warp
 ```
 
 **What this does:**
@@ -130,7 +148,7 @@ Then in Claude Code:
 
 **When to use:** Best results, deep SDLC integration, production use
 
-### Step 4: Open in Warp Terminal
+### Step 5: Open in Warp Terminal
 
 ```bash
 # Navigate to project in Warp
