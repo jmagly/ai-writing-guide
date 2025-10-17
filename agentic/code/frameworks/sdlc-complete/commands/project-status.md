@@ -528,7 +528,12 @@ For complete command list, see `.claude/commands/` directory.
 
 ---
 
-**Tip**: Run `/project:project-status` anytime to refresh this report and see updated recommendations.
+**Natural Language Support**: You can use natural language instead of slash commands:
+- Instead of `/project:project-status`, say "Where are we?" or "What's next?"
+- Instead of `/project:flow-inception-to-elaboration`, say "Transition to Elaboration" or "Start Elaboration"
+- See `.aiwg/docs/simple-language-translations.md` for complete translation table
+
+**Tip**: Run `/project:project-status` (or say "Where are we?") anytime to refresh this report and see updated recommendations.
 ```
 
 ## Phase Progression Reference

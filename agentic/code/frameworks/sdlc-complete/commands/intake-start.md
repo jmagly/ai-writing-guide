@@ -8,9 +8,19 @@ model: sonnet
 
 # Intake Start (SDLC)
 
+## Purpose
+
+**IMPORTANT**: This command is for teams who have **manually crafted their own intake documents** (project-intake.md, solution-profile.md, option-matrix.md) and want to validate them before starting the SDLC process.
+
+**If you need to generate intake documents**, use one of these instead:
+- `/project:intake-wizard "description"` - Generate intake from scratch with interactive guidance
+- `/project:intake-from-codebase .` - Generate intake by analyzing existing codebase
+
+**This command is NOT required** if you used `intake-wizard` or `intake-from-codebase` - those commands produce complete, validated intake forms ready for the next phase.
+
 ## Task
 
-Given a Project Intake Form and Solution Profile:
+Given existing, manually-created Project Intake documents:
 
 1. **Process guidance** from user prompt (if provided) to tailor analysis
 2. **Validate** required fields and note gaps

@@ -510,11 +510,14 @@ Create three files with **no placeholders or TODO items**. Use the comprehensive
 
 ## Next Steps
 
-1. Review generated intake for accuracy and completeness
-2. Fill any gaps marked "TBD" or "Clarify" (if --interactive not used, user can manually update)
-3. Choose technical approach from `option-matrix.md` (recommended option provided)
-4. Start Inception flow: `/project:intake-start .aiwg/intake/` (kicks off agent assignments and phase planning)
-5. Alternative: Jump directly to Concept → Inception: `/project:flow-concept-to-inception .aiwg/intake/`
+**Your intake documents are now complete and ready for the next phase!**
+
+1. **Review** generated intake files for accuracy
+2. **Proceed directly to Inception** using natural language or explicit commands:
+   - Natural language: "Start Inception" or "Let's transition to Inception"
+   - Explicit command: `/project:flow-concept-to-inception .`
+
+**Note**: You do NOT need to run `/project:intake-start` - that command is only for teams who manually created their own intake documents. The `intake-wizard` and `intake-from-codebase` commands produce validated intake ready for immediate use
 ```
 
 #### 2. solution-profile.md

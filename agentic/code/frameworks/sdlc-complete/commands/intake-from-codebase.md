@@ -651,16 +651,20 @@ Create three intake files documenting the existing system.
 
 ## Next Steps
 
-1. Review generated intake for accuracy
-2. Fill any gaps marked as "Unknown" or "Clarify"
-3. Choose improvement path from option-matrix.md:
+**Your intake documents are now complete and ready for the next phase!**
+
+1. **Review** generated intake documents for accuracy
+2. **Fill any gaps** marked as "Unknown" or "Clarify" (if any)
+3. **Choose improvement path** from option-matrix.md:
    - Maintain as-is with SDLC process adoption
    - Incremental modernization
    - Major refactoring/rewrite
-4. Start appropriate SDLC flow:
-   - Maintenance: /project:flow-iteration-dual-track
-   - Improvement: /project:flow-concept-to-inception
-   - Refactoring: /project:flow-architecture-evolution
+4. **Start appropriate SDLC flow** using natural language or explicit commands:
+   - For new SDLC adoption: "Start Inception" or `/project:flow-concept-to-inception .`
+   - For maintenance/iterations: "Run iteration 1" or `/project:flow-iteration-dual-track 1`
+   - For architecture changes: "Evolve architecture" or `/project:flow-architecture-evolution`
+
+**Note**: You do NOT need to run `/project:intake-start` - that command is only for teams who manually created their own intake documents. The `intake-from-codebase` command produces validated intake ready for immediate use
 ```
 
 #### Generated: solution-profile.md
@@ -1229,10 +1233,17 @@ This option-matrix is **input** to analysis (capture reality), not **output** of
 
 ## Next Steps
 
-1. Review generated intake documents for accuracy
-2. Fill any gaps marked as "Unknown" or "Clarify"
-3. Choose improvement path from option-matrix.md
-4. Start appropriate SDLC flow based on chosen path
+**Your intake documents are now complete and ready for the next phase!**
+
+1. **Review** generated intake documents for accuracy
+2. **Fill any gaps** marked as "Unknown" or "Clarify" (if any)
+3. **Choose improvement path** from option-matrix.md
+4. **Start appropriate SDLC flow** using natural language or explicit commands:
+   - For new SDLC adoption: "Start Inception" or `/project:flow-concept-to-inception .`
+   - For maintenance/iterations: "Run iteration 1" or `/project:flow-iteration-dual-track 1`
+   - For architecture changes: "Evolve architecture" or `/project:flow-architecture-evolution`
+
+**Note**: You do NOT need to run `/project:intake-start` - that command is only for teams who manually created their own intake documents
 ```
 
 ## Success Criteria
