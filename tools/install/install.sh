@@ -232,15 +232,15 @@ fi
     -new|--new) node \"$PREFIX/tools/install/new-project.mjs\" \"\$@\" ;; \\
     -deploy-agents|--deploy-agents) \\
       if echo \"\$@\" | grep -q \"\\-\\-platform[[:space:]]*warp\"; then \\
-        node \"$PREFIX/tools/warp/setup-warp.mjs\" \"\$@\" ;; \\
+        node \"$PREFIX/tools/warp/setup-warp.mjs\" \"\$@\"; \\
       else \\
-        node \"$PREFIX/tools/agents/deploy-agents.mjs\" \"\$@\" ;; \\
+        node \"$PREFIX/tools/agents/deploy-agents.mjs\" \"\$@\"; \\
       fi ;; \\
     -deploy-commands|--deploy-commands) \\
       if echo \"\$@\" | grep -q \"\\-\\-platform[[:space:]]*warp\"; then \\
-        node \"$PREFIX/tools/warp/setup-warp.mjs\" \"\$@\" ;; \\
+        node \"$PREFIX/tools/warp/setup-warp.mjs\" \"\$@\"; \\
       else \\
-        node \"$PREFIX/tools/agents/deploy-agents.mjs\" --deploy-commands \"\$@\" ;; \\
+        node \"$PREFIX/tools/agents/deploy-agents.mjs\" --deploy-commands \"\$@\"; \\
       fi ;; \\
     -prefill-cards|--prefill-cards) node \"$PREFIX/tools/cards/prefill-cards.mjs\" \"\$@\" ;; \\
     -version|--version|version) aiwg_version ;; \\
