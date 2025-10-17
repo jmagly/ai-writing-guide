@@ -69,12 +69,15 @@ ls intake/ 2>/dev/null
 1. **Pre-Inception** (No intake):
    - Condition: No `.aiwg/intake/` directory OR intake files missing
    - Status: "Project not started"
-   - Next: `/project:intake-wizard` or `/project:intake-from-codebase`
+   - Next: Choose ONE intake method:
+     - `/project:intake-wizard` (interactive generation)
+     - `/project:intake-from-codebase` (analyze existing code)
+     - `/project:intake-start` (enhance user-provided intake files)
 
 2. **Inception** (Intake complete, no phase plan):
    - Condition: Intake files present + NO `planning/phase-plan-inception.md`
    - Status: "Intake complete, ready for Inception"
-   - Next: `/project:intake-start` → `/project:flow-concept-to-inception`
+   - Next: `/project:flow-concept-to-inception`
 
 3. **Inception Active** (Phase plan exists, not complete):
    - Condition: `planning/phase-plan-inception.md` exists + NO `gates/gate-inception.md` OR gate status ≠ PASSED
@@ -222,34 +225,37 @@ For detected phase, check milestone artifacts:
 
 Based on phase and state, recommend **3-5 most relevant commands**:
 
-#### Pre-Inception → Inception
+#### Pre-Inception → Intake Complete
 
 ```markdown
 **Recommended Next Steps**:
 
-1. **Start intake process**:
-   - `/project:intake-wizard "your project description"` (greenfield)
-   - `/project:intake-from-codebase .` (existing codebase)
+Choose ONE intake method:
 
-2. **Or complete existing intake** (if partial intake found):
-   - `/project:intake-wizard --complete --interactive`
+1. **Generate intake interactively** (recommended for new projects):
+   - `/project:intake-wizard "your project description"`
+   - Or complete partial intake: `/project:intake-wizard --complete --interactive`
+
+2. **Generate intake from codebase** (for existing projects):
+   - `/project:intake-from-codebase .`
+
+3. **Enhance user-provided intake files** (if you manually created intake docs):
+   - `/project:intake-start .aiwg/intake/`
 ```
 
-#### Inception Ready → Inception Active
+#### Intake Complete → Inception Active
 
 ```markdown
 **Recommended Next Steps**:
 
-1. **Validate intake and start Inception**:
-   - `/project:intake-start .aiwg/intake/`
+1. **Begin Concept → Inception flow**:
+   - `/project:flow-concept-to-inception`
+   - Natural language: "Start Inception" or "Let's begin Inception phase"
 
-2. **Begin Concept → Inception flow**:
-   - `/project:flow-concept-to-inception .aiwg/`
+2. **Initiate risk management**:
+   - `/project:flow-risk-management-cycle`
 
-3. **Initiate risk management**:
-   - `/project:flow-risk-management-cycle .aiwg/`
-
-4. **Document architecture decisions** (if not done):
+3. **Document architecture decisions** (if not done):
    - Manually create `architecture/ADR-001-<decision>.md`
 ```
 
@@ -507,8 +513,13 @@ Based on phase and state, recommend **3-5 most relevant commands**:
 ## Quick Reference
 
 **All Available Commands**:
-- `/project:intake-wizard` - Generate or complete intake
-- `/project:intake-start` - Validate intake and start Inception
+
+**Intake Methods** (choose ONE):
+- `/project:intake-wizard` - Generate intake interactively
+- `/project:intake-from-codebase` - Generate intake by analyzing codebase
+- `/project:intake-start` - Enhance user-provided intake files
+
+**Phase Workflows**:
 - `/project:flow-concept-to-inception` - Execute Inception phase
 - `/project:flow-inception-to-elaboration` - Transition to Elaboration
 - `/project:flow-elaboration-to-construction` - Transition to Construction
@@ -543,11 +554,14 @@ For complete command list, see `.claude/commands/` directory.
 ```
 Pre-Inception
     ↓
-  intake-wizard or intake-from-codebase
+  Choose ONE intake method:
+  - intake-wizard (interactive)
+  - intake-from-codebase (analyze code)
+  - intake-start (enhance user files)
     ↓
-Inception (Ready)
+Intake Complete
     ↓
-  intake-start → flow-concept-to-inception
+  flow-concept-to-inception
     ↓
 Inception (Active)
     ↓
