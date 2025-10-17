@@ -4,7 +4,7 @@
 
 ### Write like a human. Build like a pro.
 
-**A comprehensive framework for authentic AI-generated content and structured software development**
+**An agent toolset and prompting framework for authentic AI-generated content, structured software development, and process automation**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.20.8-brightgreen)](https://nodejs.org)
@@ -18,6 +18,22 @@
 
 ## 🚀 Quick Start
 
+> **⚠️ IMPORTANT NOTICES**
+>
+> **Framework Scope:** This is an **agent toolset and prompting framework** for process automation. Current features: **Writing Quality utilities** and **SDLC Complete framework**. Future: Many additional process types (see roadmap). Prompts function as executable software within agentic environments.
+>
+> **Early Access / Active Testing:** This framework is in active development and validation (Phase 1: 0-3 months). Expect breaking changes, incomplete features, and evolving documentation. **Not recommended for production-critical projects without thorough testing.**
+>
+> **API Costs Warning:** Multi-agent workflows generate extensive prompts and large document outputs (5,000-15,000 words per workflow). This framework **requires Claude Pro or enterprise accounts** with high usage limits. **Estimated costs:** $20-50/month for moderate usage (10-20 workflows). [See cost guidance →](#-cost-considerations)
+>
+> **Rate Limits:** Agentic tools handle rate limits and retries automatically. No manual timeout management required.
+>
+> **Version Control:** Document rollback is **optional** and user-controlled. Enable by committing `.aiwg/` artifacts to git, or add `.aiwg/` to `.gitignore` for local-only use.
+>
+> **AS-IS License:** Provided under MIT License with NO WARRANTY. Use at your own risk. [Read full disclaimer →](#-license--disclaimer)
+>
+> ---
+>
 > **📋 Prerequisites:** Node.js ≥18.20.8 and Claude Code installed. [See setup instructions](#-prerequisites) if you need help getting started.
 
 **Install in 30 seconds** — One command. Zero configuration.
@@ -154,25 +170,31 @@ This framework solves that. 485 documents, 19 validation rules,
 
 ```text
 ai-writing-guide/
-├── 📝 Writing Quality (Remove AI tells)
+├── 📝 Writing Quality (Remove AI tells) — CURRENT
 │   ├── core/           → Philosophy and sophistication principles
 │   ├── validation/     → Banned patterns, detection markers
 │   ├── examples/       → Before/after rewrites
 │   ├── context/        → Quick-reference for different voices
 │   └── patterns/       → Common AI tells and avoidance strategies
 │
-├── 🤖 General Agents (3 writing-focused)
+├── 🤖 General Agents (3 writing-focused) — CURRENT
 │   ├── writing-validator      → Validate content against AI patterns
 │   ├── prompt-optimizer       → Improve prompts using AIWG principles
 │   └── content-diversifier    → Generate varied examples/perspectives
 │
-├── 🏗️ SDLC Complete (Enterprise-grade lifecycle management)
+├── 🏗️ SDLC Complete (Enterprise-grade lifecycle management) — CURRENT
 │   ├── agents/ (58)           → Requirements, architecture, testing, security, DevOps
 │   ├── commands/ (45+)        → Intake, phase gates, deployments, compliance
 │   ├── templates/ (156)       → Every artifact from concept → production
 │   ├── flows/                 → Phase-based workflows (Inception → Transition)
 │   ├── add-ons/               → GDPR compliance, legal frameworks
 │   └── artifacts/             → Sample projects (complete lifecycle examples)
+│
+├── 🔮 Future Process Frameworks — PLANNED (see roadmap)
+│   ├── agentic/code/frameworks/business-process/    → Business analysis workflows
+│   ├── agentic/code/frameworks/content-strategy/    → Content planning & creation
+│   ├── agentic/code/frameworks/research-synthesis/  → Research & analysis
+│   └── agentic/code/frameworks/decision-making/     → Decision frameworks & matrices
 │
 └── 🛠️ Development Tools
     ├── install/       → One-line installer + CLI
@@ -791,11 +813,160 @@ Closes #123
 
 ---
 
-## 📄 License
+## ⚠️ Cost Considerations
 
-**MIT License** — Free to use, modify, and distribute.
+**IMPORTANT:** This framework generates extensive AI interactions. Understand your costs before deploying.
 
-See [LICENSE](LICENSE) for full terms.
+### Usage Characteristics
+
+**Document Generation Volume:**
+- Single workflow: 5,000-15,000 words (intake, SAD, reviews, synthesis)
+- Multi-agent pattern: 3-5x token multiplier (parallel reviews)
+- Full Inception phase: ~50,000-100,000 words total output
+- Iteration cycles: 10,000-30,000 words per iteration
+
+**Typical Monthly Usage** (varies widely):
+- **Light** (1-2 workflows/week): 40,000-120,000 words → ~$10-20/month
+- **Moderate** (10-20 workflows/month): 150,000-300,000 words → **$20-50/month**
+- **Heavy** (daily workflows, full SDLC): 500,000+ words → **$50-150+/month**
+
+### Account Requirements
+
+| Account Type | Suitability | Notes |
+|--------------|-------------|-------|
+| **Claude Free** | ❌ Not Suitable | Daily message limits hit quickly (5-10 messages) |
+| **Claude Pro** | ✅ **Recommended** | Higher limits, suitable for moderate usage |
+| **Claude Team/Enterprise** | ✅ Best | Highest limits, team collaboration, no rate throttling |
+| **API Pay-as-you-go** | ⚠️ Use with Caution | Can be expensive without cost controls ($50-200+/month) |
+
+### Cost Mitigation Strategies
+
+1. **Start Small:** Test with 1-2 use cases before full deployment
+2. **Use Selectively:** Not every project needs full SDLC artifacts
+3. **Manual Review:** Edit generated drafts instead of regenerating
+4. **Monitor Usage:** Track costs weekly, set budget alerts if using API
+5. **Skip Optional Workflows:** Only run required artifacts for your profile
+
+### Your Mileage May Vary
+
+Actual costs depend on:
+- Codebase size (larger = more tokens)
+- Project complexity (more complex = longer artifacts)
+- Revision frequency (regeneration costs add up)
+- Account tier and rate limits
+- Whether you hit rate limits (retry costs)
+
+**Bottom Line:** Budget $20-50/month for moderate use. Enterprise teams may see $100-500+/month depending on scale.
+
+---
+
+## 📄 License & Disclaimer
+
+### MIT License
+
+**Free to use, modify, and distribute.** Full text: [LICENSE](LICENSE)
+
+```
+MIT License
+
+Copyright (c) 2025 Joseph Magly
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### Important Disclaimers
+
+#### No Warranty
+
+**THE SOFTWARE IS PROVIDED "AS IS"**, without warranty of any kind. The authors make no guarantees about:
+- Accuracy of generated artifacts
+- Fitness for any particular purpose
+- Absence of bugs or logic errors
+- API cost predictions
+- Compatibility with all platforms
+
+#### Not Professional Advice
+
+This framework **does not provide**:
+- Legal advice (compliance guidance is informational only)
+- Security audit services (templates are starting points, not guarantees)
+- Financial consulting (ROI estimates are illustrative)
+- Professional liability coverage
+
+**Always consult qualified professionals** for legal, security, and compliance requirements.
+
+#### User Responsibility
+
+**You are responsible for:**
+- Reviewing all generated content before use
+- Validating compliance with your specific regulations
+- Testing in non-production environments first
+- Monitoring and controlling API costs
+- Maintaining backups of critical data
+- Understanding licensing of generated artifacts (MIT applies to framework, but your outputs are yours)
+
+#### Experimental Status
+
+This framework is in **active development** (Phase 1: Validation). Expect:
+- Breaking changes to agents, commands, templates
+- Incomplete documentation
+- Bugs and unexpected behavior
+- Rate limit issues
+- API cost volatility
+
+**Not recommended for:**
+- Production-critical projects without thorough testing
+- Regulated industries without legal review
+- Budget-constrained accounts (pay-as-you-go)
+- Time-sensitive deliverables (troubleshooting may take days)
+
+#### Data & Privacy
+
+- **No data collection:** Framework processes everything locally
+- **No telemetry:** No analytics, tracking, or usage reporting
+- **User artifacts:** You own everything generated (MIT license does not claim your outputs)
+- **Third-party services:** Claude Code/OpenAI terms apply to API usage
+
+[**Read Privacy Policy →**](PRIVACY.md) | [**Read Terms of Use →**](TERMS.md)
+
+#### Cost Responsibility
+
+**API usage costs are your responsibility.** The framework does not:
+- Track or limit your spending
+- Provide cost alerts or budgets
+- Guarantee cost estimates
+- Refund unexpected charges
+
+**Monitor your usage** via your AI provider's dashboard. Set budget alerts if available.
+
+---
+
+### Known Limitations
+
+**Current Limitations** (will improve over time):
+- ⚠️ Only tested with Claude Code (other platforms experimental)
+- ⚠️ English-only templates and agents
+- ⚠️ No cost tracking or budget enforcement
+- ⚠️ Context window limits not validated (>200k tokens)
+- ⚠️ Only two process frameworks currently available (Writing Quality + SDLC Complete)
+
+**Report Issues:** [GitHub Issues](https://github.com/jmagly/ai-writing-guide/issues)
 
 ---
 
