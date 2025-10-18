@@ -12,7 +12,7 @@ Implemented the `aiwg -contribute-pr` command that creates well-formed pull requ
 
 ### File Created
 
-**`/home/manitcor/dev/ai-writing-guide/tools/contrib/create-pr.mjs`**
+**`~/.local/share/ai-writing-guide/tools/contrib/create-pr.mjs`**
 - 550+ lines of production-ready code
 - Full error handling and validation
 - Interactive user prompts with defaults
@@ -325,7 +325,7 @@ See contributor-quickstart.md "Example Walkthrough" for complete manual test sce
 ## Files Modified
 
 **Created:**
-- `/home/manitcor/dev/ai-writing-guide/tools/contrib/create-pr.mjs` (550+ lines)
+- `~/.local/share/ai-writing-guide/tools/contrib/create-pr.mjs` (550+ lines)
 
 **Dependencies (existing):**
 - `tools/contrib/lib/quality-validator.mjs`

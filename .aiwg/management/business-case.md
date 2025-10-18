@@ -468,11 +468,11 @@ Assuming conservative usage:
 
 ### D. Reference Documents
 
-1. **Vision Document** v1.0 (BASELINED 2025-10-17): `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/vision-document.md`
-2. **Value Proposition Validation** v1.0 (APPROVED 2025-10-17): `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/value-proposition-validation.md`
-3. **Risk List** v1.0 (BASELINED 2025-10-17): `/home/manitcor/dev/ai-writing-guide/.aiwg/risks/risk-list.md`
-4. **Solution Profile** (Current System): `/home/manitcor/dev/ai-writing-guide/.aiwg/intake/solution-profile.md`
-5. **Use Case Briefs** (5 total): `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/use-case-briefs/`
+1. **Vision Document** v1.0 (BASELINED 2025-10-17): `~/.local/share/ai-writing-guide/.aiwg/requirements/vision-document.md`
+2. **Value Proposition Validation** v1.0 (APPROVED 2025-10-17): `~/.local/share/ai-writing-guide/.aiwg/requirements/value-proposition-validation.md`
+3. **Risk List** v1.0 (BASELINED 2025-10-17): `~/.local/share/ai-writing-guide/.aiwg/risks/risk-list.md`
+4. **Solution Profile** (Current System): `~/.local/share/ai-writing-guide/.aiwg/intake/solution-profile.md`
+5. **Use Case Briefs** (5 total): `~/.local/share/ai-writing-guide/.aiwg/requirements/use-case-briefs/`
 
 ---
 

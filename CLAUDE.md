@@ -459,7 +459,7 @@ AIWG is a comprehensive SDLC framework providing:
 
 ### Installation and Access
 
-**AIWG Installation Path**: `/home/manitcor/dev/ai-writing-guide`
+**AIWG Installation Path**: `~/.local/share/ai-writing-guide`
 
 **Agent Access**: Claude Code agents have read access to AIWG templates and documentation via allowed-tools configuration.
 
@@ -467,7 +467,7 @@ AIWG is a comprehensive SDLC framework providing:
 
 ```bash
 # Check AIWG is accessible
-ls /home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/
+ls ~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/
 
 # Available resources:
 # - agents/     → 58 SDLC role agents
@@ -513,7 +513,7 @@ Map user requests to flow templates:
 - "Create architecture baseline" → Extract SAD generation from flow
 - "Run iteration 5" → `flow-iteration-dual-track` with iteration=5
 
-See full translation table in `/home/manitcor/dev/ai-writing-guide/docs/simple-language-translations.md`
+See full translation table in `~/.local/share/ai-writing-guide/docs/simple-language-translations.md`
 
 #### 2. Read Flow Commands as Orchestration Templates
 
@@ -546,7 +546,7 @@ Task(
     subagent_type="architecture-designer",
     description="Create Software Architecture Document draft",
     prompt="""
-    Read template: /home/manitcor/dev/ai-writing-guide/templates/analysis-design/software-architecture-doc-template.md
+    Read template: ~/.local/share/ai-writing-guide/templates/analysis-design/software-architecture-doc-template.md
     Read requirements from: .aiwg/requirements/
     Create initial SAD draft
     Save draft to: .aiwg/working/architecture/sad/drafts/v0.1-primary-draft.md
@@ -740,7 +740,7 @@ You: [Orchestrate flow-security-review-cycle with guidance="focus on authenticat
 ## AIWG-Specific Rules
 
 1. **Artifact Location**: All SDLC artifacts MUST be created in `.aiwg/` subdirectories (not project root)
-2. **Template Usage**: Always use AIWG templates from `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
+2. **Template Usage**: Always use AIWG templates from `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
 3. **Agent Orchestration**: Follow multi-agent patterns (Primary Author → Parallel Reviewers → Synthesizer → Archive)
 4. **Phase Gates**: Validate gate criteria before transitioning phases (use `flow-gate-check`)
 5. **Traceability**: Maintain traceability from requirements → code → tests → deployment
@@ -749,13 +749,13 @@ You: [Orchestrate flow-security-review-cycle with guidance="focus on authenticat
 
 ## Reference Documentation
 
-- **Orchestrator Architecture**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md`
-- **Multi-Agent Pattern**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/multi-agent-documentation-pattern.md`
-- **Natural Language Translations**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md`
+- **Orchestrator Architecture**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md`
+- **Multi-Agent Pattern**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/multi-agent-documentation-pattern.md`
+- **Natural Language Translations**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md`
 - **Flow Templates**: `.claude/commands/flow-*.md`
-- **SDLC Framework**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
-- **Template Library**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
-- **Agent Catalog**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
+- **SDLC Framework**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+- **Template Library**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
+- **Agent Catalog**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
 
 ## Phase Overview
 
@@ -880,7 +880,7 @@ User: "Execute integration tests with 5 minute timeout"
 
 ```bash
 # Verify AIWG installation
-ls /home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/
+ls ~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/
 
 # Set environment variable if installed elsewhere
 export AIWG_ROOT=/custom/path/to/ai-writing-guide
@@ -904,10 +904,10 @@ ls .claude/commands/flow-*.md
 ## Resources
 
 - **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
-- **Framework Documentation**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
-- **Phase Workflows**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/flows/`
-- **Template Library**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
-- **Agent Catalog**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
+- **Framework Documentation**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+- **Phase Workflows**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/flows/`
+- **Template Library**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
+- **Agent Catalog**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
 
 ## Support
 

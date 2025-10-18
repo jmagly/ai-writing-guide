@@ -549,7 +549,7 @@ You: "Analyze codebase with focus on backend API, ignore frontend for now"
 
 1. **New Projects**: Follow "New Project Setup" above
 2. **Existing Projects**: Follow "Existing Project Setup" above
-3. **Learn More**: See `/home/manitcor/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+3. **Learn More**: See `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
 4. **Get Help**: https://github.com/jmagly/ai-writing-guide/issues
 
 ---
@@ -557,9 +557,9 @@ You: "Analyze codebase with focus on backend API, ignore frontend for now"
 ## Resources
 
 - **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
-- **SDLC Framework**: `/home/manitcor/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/`
-- **Template Library**: `/home/manitcor/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
-- **Natural Language Translations**: `/home/manitcor/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md`
+- **SDLC Framework**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/`
+- **Template Library**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
+- **Natural Language Translations**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md`
 
 ---
 

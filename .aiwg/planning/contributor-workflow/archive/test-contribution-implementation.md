@@ -13,7 +13,7 @@ Implements quality validation for contributor workflow before PR creation. Ensur
 
 ### File Location
 
-`/home/manitcor/dev/ai-writing-guide/tools/contrib/test-contribution.mjs`
+`~/.local/share/ai-writing-guide/tools/contrib/test-contribution.mjs`
 
 ### Dependencies
 

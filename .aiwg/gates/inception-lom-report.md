@@ -1426,15 +1426,15 @@ The Lifecycle Objective Milestone marks the transition from **Inception** (probl
 - Agent Assignments: `.aiwg/team/agent-assignments.md`
 
 **AIWG Templates**:
-- Gate Report Template: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/gate-handoff/phase-gate-report-template.md`
-- SAD Template: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md`
-- ADR Template: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md`
-- Test Plan Template: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/testing/master-test-plan-template.md`
-- Deployment Plan Template: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/deployment/deployment-plan-template.md`
+- Gate Report Template: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/gate-handoff/phase-gate-report-template.md`
+- SAD Template: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md`
+- ADR Template: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md`
+- Test Plan Template: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/testing/master-test-plan-template.md`
+- Deployment Plan Template: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/deployment/deployment-plan-template.md`
 
 **AIWG Framework**:
-- SDLC Complete Framework: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
-- PLAN → ACT Methodology: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/plan-act-sdlc.md`
+- SDLC Complete Framework: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+- PLAN → ACT Methodology: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/plan-act-sdlc.md`
 
 ---
 

@@ -89,7 +89,7 @@ Metrics Analyst (Primary) → Project Manager (Validation) → Archive
   - Read: `.aiwg/working/vision/vision-v1.0-final.md`
   - Read: `tools/agents/deploy-agents.mjs` (existing deployment tooling)
   - Read: `tools/install/install.sh` (installation patterns)
-  - Read: AIWG SAD template (`/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md`)
+  - Read: AIWG SAD template (`~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md`)
 - **Output**: `.aiwg/planning/contributor-workflow/architecture/drafts/sad-v0.1-primary.md`
 - **Deliverables**:
   - Component architecture (contributor commands, maintainer commands, quality gates)
@@ -110,7 +110,7 @@ Metrics Analyst (Primary) → Project Manager (Validation) → Archive
 - **Timeline**: Oct 19-23 (5 days)
 - **Inputs**:
   - Insights from SAD drafting (design decisions requiring documentation)
-  - Read: AIWG ADR template (`/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md`)
+  - Read: AIWG ADR template (`~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/architecture-decision-record-template.md`)
 - **Output**: `.aiwg/planning/contributor-workflow/architecture/adr-topics.md`
 - **Deliverables**:
   - List of 3-5 ADR topics requiring documentation
@@ -585,7 +585,7 @@ Oct 30: Project Manager (Weekly Retro)
 - **Inputs**:
   - SAD architecture (testability considerations from Week 2 review)
   - Implemented commands (11 total)
-  - AIWG Test Strategy template (`/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/testing/master-test-plan-template.md`)
+  - AIWG Test Strategy template (`~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/testing/master-test-plan-template.md`)
 - **Output**: `.aiwg/planning/contributor-workflow/testing/test-strategy.md`
 - **Deliverables**:
   - Test approach:
@@ -753,7 +753,7 @@ Nov 6: Project Manager (Weekly Retro)
 - **Inputs**:
   - Implemented commands (11 total)
   - Existing deployment patterns (`tools/install/install.sh`)
-  - AIWG Deployment Plan template (`/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/deployment/deployment-plan-template.md`)
+  - AIWG Deployment Plan template (`~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/deployment/deployment-plan-template.md`)
 - **Output**: `.aiwg/planning/contributor-workflow/deployment/deployment-plan.md`
 - **Deliverables**:
 
@@ -947,7 +947,7 @@ Nov 6: Project Manager (Weekly Retro)
   - All deliverables (SAD, ADRs, commands, documentation)
   - Test results (manual testing, quality gates)
   - Phase retrospective (learnings, risks)
-  - AIWG Gate Report template (`/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/gate-handoff/phase-gate-report-template.md`)
+  - AIWG Gate Report template (`~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/gate-handoff/phase-gate-report-template.md`)
 - **Output**: `.aiwg/planning/contributor-workflow/gate-review-report.md`
 - **Deliverables**:
 
@@ -1275,7 +1275,7 @@ Security Gatekeeper (gate report) + Traceability Manager (requirements validatio
 **Template-Driven Prompts** (reduce context overhead):
 
 - **Always include**:
-  - Specific AIWG template path (from `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`)
+  - Specific AIWG template path (from `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`)
   - Relevant input artifacts (intake, vision, SAD, etc.)
   - Clear output path (where to save deliverable)
   - Success criteria (what defines "complete")
@@ -1287,7 +1287,7 @@ Security Gatekeeper (gate report) + Traceability Manager (requirements validatio
 
 **Example Efficient Prompt** (Architecture Designer, SAD v0.1):
 ```
-Read template: /home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
+Read template: ~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/analysis-design/software-architecture-doc-template.md
 Read intake: .aiwg/intake/ (all forms)
 Read vision: .aiwg/working/vision/vision-v1.0-final.md
 Read existing tooling: tools/agents/deploy-agents.mjs, tools/install/install.sh
@@ -1464,7 +1464,7 @@ Target: 3,000-5,000 words, 80%+ completeness
 
 ### A. Agent Definitions
 
-**All SDLC agents available at**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
+**All SDLC agents available at**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
 
 **Agents Used in This Phase** (17 total):
 
@@ -1488,7 +1488,7 @@ Target: 3,000-5,000 words, 80%+ completeness
 
 ### B. Templates Used
 
-**All AIWG templates available at**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
+**All AIWG templates available at**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
 
 **Templates Referenced in Agent Assignments**:
 

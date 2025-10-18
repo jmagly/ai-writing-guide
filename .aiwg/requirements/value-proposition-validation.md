@@ -8,12 +8,12 @@
 - **Date**: 2025-10-17
 - **Status**: APPROVED
 - **Related Documents**:
-  - `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/vision-document.md`
-  - `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-001-validate-ai-generated-content.md`
-  - `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-002-deploy-sdlc-framework.md`
-  - `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-003-generate-intake-from-codebase.md`
-  - `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-004-multi-agent-workflows.md`
-  - `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-005-framework-self-improvement.md`
+  - `~/.local/share/ai-writing-guide/.aiwg/requirements/vision-document.md`
+  - `~/.local/share/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-001-validate-ai-generated-content.md`
+  - `~/.local/share/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-002-deploy-sdlc-framework.md`
+  - `~/.local/share/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-003-generate-intake-from-codebase.md`
+  - `~/.local/share/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-004-multi-agent-workflows.md`
+  - `~/.local/share/ai-writing-guide/.aiwg/requirements/use-case-briefs/UC-005-framework-self-improvement.md`
 
 ## Executive Summary
 

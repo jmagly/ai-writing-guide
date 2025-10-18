@@ -2,7 +2,7 @@
 
 **Document Type**: Brownfield System Documentation (Self-Intake)
 **Generated**: 2025-10-16
-**Source**: Codebase analysis of `/home/manitcor/dev/ai-writing-guide`
+**Source**: Codebase analysis of `~/.local/share/ai-writing-guide`
 
 ## Metadata
 
@@ -253,7 +253,7 @@ AI-generated content often exhibits formulaic patterns that trigger detection an
 
 - Solution profile: [solution-profile.md](./solution-profile.md)
 - Option matrix: [option-matrix.md](./option-matrix.md)
-- Codebase location: `/home/manitcor/dev/ai-writing-guide`
+- Codebase location: `~/.local/share/ai-writing-guide`
 - Repository: `https://github.com/jmagly/ai-writing-guide.git`
 
 ## Next Steps

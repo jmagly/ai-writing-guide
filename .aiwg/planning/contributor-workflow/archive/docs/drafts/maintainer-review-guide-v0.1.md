@@ -63,10 +63,10 @@ aiwg -help | grep review
 4. **SDLC Framework:** Intake forms, phase workflows, artifact structure
 
 **Recommended Reading:**
-- `/home/manitcor/dev/ai-writing-guide/README.md`
-- `/home/manitcor/dev/ai-writing-guide/CLAUDE.md`
-- `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
-- `/home/manitcor/dev/ai-writing-guide/docs/contributing/pr-guidelines.md`
+- `~/.local/share/ai-writing-guide/README.md`
+- `~/.local/share/ai-writing-guide/CLAUDE.md`
+- `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+- `~/.local/share/ai-writing-guide/docs/contributing/pr-guidelines.md`
 
 ## Review Workflow Overview
 

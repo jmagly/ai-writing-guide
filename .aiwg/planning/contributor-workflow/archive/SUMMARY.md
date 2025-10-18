@@ -226,7 +226,7 @@ docs/contributing/
 
 ## Stakeholder Sign-off
 
-✅ **Approved by:** User (manitcor)
+✅ **Approved by:** User 
 ✅ **Date:** 2025-10-17
 ✅ **Documentation reviewed and approved:** Yes
 ✅ **Ready for implementation:** Yes

@@ -1922,10 +1922,10 @@ To exit Inception and enter Elaboration, the following must be achieved:
 - Maintainer Review Guide: `docs/contributing/maintainer-review-guide.md`
 
 **AIWG Framework Resources**:
-- SDLC Framework README: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
-- Agent Catalog: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
-- Template Library: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
-- Flow Documentation: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/flows/`
+- SDLC Framework README: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+- Agent Catalog: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
+- Template Library: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
+- Flow Documentation: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/flows/`
 
 **Tool References**:
 - Install Script: `tools/install/install.sh`

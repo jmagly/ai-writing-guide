@@ -51,7 +51,7 @@
 
 ### 1.1 Vision Document
 
-**Location**: `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/vision-document.md`
+**Location**: `~/.local/share/ai-writing-guide/.aiwg/requirements/vision-document.md`
 **Version**: v1.0
 **Status**: BASELINED
 **Date**: 2025-10-17
@@ -75,7 +75,7 @@
 
 ### 1.2 Business Case
 
-**Location**: `/home/manitcor/dev/ai-writing-guide/.aiwg/management/business-case.md`
+**Location**: `~/.local/share/ai-writing-guide/.aiwg/management/business-case.md`
 **Version**: v1.0
 **Status**: BASELINED
 **Date**: 2025-10-17
@@ -105,7 +105,7 @@
 
 ### 1.3 Risk List
 
-**Location**: `/home/manitcor/dev/ai-writing-guide/.aiwg/risks/risk-list.md`
+**Location**: `~/.local/share/ai-writing-guide/.aiwg/risks/risk-list.md`
 **Version**: v1.0
 **Status**: BASELINED
 **Date**: 2025-10-17
@@ -163,7 +163,7 @@
 
 ### 1.4 Use Case Briefs
 
-**Location**: `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/use-case-briefs/`
+**Location**: `~/.local/share/ai-writing-guide/.aiwg/requirements/use-case-briefs/`
 **Status**: 5 use cases COMPLETE and APPROVED
 **Date**: 2025-10-17
 
@@ -184,7 +184,7 @@
 
 ### 1.5 Data Classification
 
-**Location**: `/home/manitcor/dev/ai-writing-guide/.aiwg/security/data-classification.md`
+**Location**: `~/.local/share/ai-writing-guide/.aiwg/security/data-classification.md`
 **Version**: v1.0
 **Status**: BASELINED
 **Date**: 2025-10-17
@@ -203,7 +203,7 @@
 
 ### 1.6 Privacy Impact Assessment
 
-**Location**: `/home/manitcor/dev/ai-writing-guide/.aiwg/security/privacy-impact-assessment.md`
+**Location**: `~/.local/share/ai-writing-guide/.aiwg/security/privacy-impact-assessment.md`
 **Version**: v1.0
 **Status**: APPROVED
 **Date**: 2025-10-17
@@ -231,7 +231,7 @@
 
 ### 1.7 Architecture Sketch
 
-**Location**: `/home/manitcor/dev/ai-writing-guide/.aiwg/architecture/architecture-sketch.md`
+**Location**: `~/.local/share/ai-writing-guide/.aiwg/architecture/architecture-sketch.md`
 **Version**: v0.1
 **Status**: APPROVED
 **Date**: 2025-10-17
@@ -266,7 +266,7 @@
 
 ### 1.8 Option Matrix
 
-**Location**: `/home/manitcor/dev/ai-writing-guide/.aiwg/planning/option-matrix.md`
+**Location**: `~/.local/share/ai-writing-guide/.aiwg/planning/option-matrix.md`
 **Version**: v1.0
 **Status**: DRAFT
 **Date**: 2025-10-17
@@ -294,7 +294,7 @@
 
 ### 2.1 Inception Exit Criteria Status
 
-**Gate Criteria Source**: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/flows/gates/gate-criteria-by-phase.md`
+**Gate Criteria Source**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/flows/gates/gate-criteria-by-phase.md`
 
 #### Vision Documentation: COMPLETE ✓
 - [x] Vision document exists (vision-document.md, 7,200 words)
@@ -898,22 +898,22 @@ All Inception artifacts archived in `.aiwg/` directory:
 ### C. Reference Documents
 
 **Inception Artifacts**:
-1. Vision Document v1.0: `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/vision-document.md`
-2. Business Case v1.0: `/home/manitcor/dev/ai-writing-guide/.aiwg/management/business-case.md`
-3. Risk List v1.0: `/home/manitcor/dev/ai-writing-guide/.aiwg/risks/risk-list.md`
-4. LOM Report v1.0: `/home/manitcor/dev/ai-writing-guide/.aiwg/reports/lom-report.md`
-5. Value Proposition Validation: `/home/manitcor/dev/ai-writing-guide/.aiwg/requirements/value-proposition-validation.md`
+1. Vision Document v1.0: `~/.local/share/ai-writing-guide/.aiwg/requirements/vision-document.md`
+2. Business Case v1.0: `~/.local/share/ai-writing-guide/.aiwg/management/business-case.md`
+3. Risk List v1.0: `~/.local/share/ai-writing-guide/.aiwg/risks/risk-list.md`
+4. LOM Report v1.0: `~/.local/share/ai-writing-guide/.aiwg/reports/lom-report.md`
+5. Value Proposition Validation: `~/.local/share/ai-writing-guide/.aiwg/requirements/value-proposition-validation.md`
 
 **SDLC Framework References**:
-1. Gate Criteria by Phase: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/flows/gates/gate-criteria-by-phase.md`
-2. SDLC Framework README: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
-3. Orchestrator Architecture: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md`
-4. Multi-Agent Pattern: `/home/manitcor/dev/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/multi-agent-documentation-pattern.md`
+1. Gate Criteria by Phase: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/flows/gates/gate-criteria-by-phase.md`
+2. SDLC Framework README: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+3. Orchestrator Architecture: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md`
+4. Multi-Agent Pattern: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/multi-agent-documentation-pattern.md`
 
 **Project Context**:
-1. CLAUDE.md (Project Instructions): `/home/manitcor/dev/ai-writing-guide/CLAUDE.md`
-2. USAGE_GUIDE.md: `/home/manitcor/dev/ai-writing-guide/USAGE_GUIDE.md`
-3. ROADMAP.md (12-Month Plan): `/home/manitcor/dev/ai-writing-guide/ROADMAP.md`
+1. CLAUDE.md (Project Instructions): `~/.local/share/ai-writing-guide/CLAUDE.md`
+2. USAGE_GUIDE.md: `~/.local/share/ai-writing-guide/USAGE_GUIDE.md`
+3. ROADMAP.md (12-Month Plan): `~/.local/share/ai-writing-guide/ROADMAP.md`
 
 ---
 

@@ -421,4 +421,4 @@ Risks will be marked CLOSED when:
 
 **Document Status**: BASELINED
 **Next Review**: Weekly (RISK-004), Bi-weekly (HIGH risks), Monthly (full register)
-**Archive Location**: /home/manitcor/dev/ai-writing-guide/.aiwg/risks/risk-list.md
+**Archive Location**: ~/.local/share/ai-writing-guide/.aiwg/risks/risk-list.md

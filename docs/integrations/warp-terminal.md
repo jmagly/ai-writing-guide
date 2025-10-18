@@ -471,7 +471,7 @@ aiwg -setup-warp              # For Warp
 - **Warp Terminal**: https://www.warp.dev/
 - **Warp Rules Documentation**: https://docs.warp.dev/knowledge-and-collaboration/rules
 - **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
-- **AIWG SDLC Framework**: `/home/manitcor/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+- **AIWG SDLC Framework**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
 
 ---
 

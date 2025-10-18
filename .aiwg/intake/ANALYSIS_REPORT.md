@@ -1,7 +1,7 @@
 # Codebase Analysis Report
 
 **Project**: AI Writing Guide
-**Directory**: /home/manitcor/dev/ai-writing-guide
+**Directory**: ~/.local/share/ai-writing-guide
 **Generated**: 2025-10-16
 **Analysis Duration**: ~15 minutes (comprehensive interactive intake)
 

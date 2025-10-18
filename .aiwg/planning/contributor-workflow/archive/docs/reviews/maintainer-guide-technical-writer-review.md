@@ -141,7 +141,7 @@ This maintainer review guide is comprehensive and well-structured with excellent
 
 **Potential issue:**
 
-- Line 69: References `/home/manitcor/dev/ai-writing-guide/...` - uses absolute path with username. Should this be relative or generic?
+- Line 69: References `~/.local/share/ai-writing-guide/...` - uses absolute path with username. Should this be relative or generic?
 - **Recommendation:** Change to relative paths from repo root (e.g., `agentic/code/frameworks/sdlc-complete/README.md`)
 
 ## Tone and Style Feedback
@@ -248,7 +248,7 @@ This maintainer review guide is comprehensive and well-structured with excellent
 4. **Convert passive voice to active** in Command Reference section
 5. **Fix heading hierarchy** (promote "Special Case Decision Matrix" to H2)
 6. **Standardize code examples** (remove `$` prompts, consistent fencing)
-7. **Change absolute paths to relative paths** (remove `/home/manitcor/dev/...`)
+7. **Change absolute paths to relative paths** (remove `/home/project owner/dev/...`)
 
 ### Optional Improvements (Not Blocking)
 
