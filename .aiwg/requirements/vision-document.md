@@ -1,696 +1,954 @@
-# AI Writing Guide - Product Vision
+# AI Writing Guide (AIWG) Vision Document
 
-## Ownership & Collaboration
+**Document Version:** v1.0 (BASELINED)
+**Created:** 2025-10-17
+**Author:** Vision Owner with Multi-Agent Synthesis
+**Status:** BASELINED - Ready for Implementation
 
-- **Document Owner**: System Analyst
-- **Contributors**: Business Process Analyst, Product Strategist, Technical Writer, Requirements Reviewer
-- **Version**: v1.0 (Final)
-- **Date**: 2025-10-17
-- **Status**: BASELINED
-
-## Cover Page
-
-- **Project Name**: AI Writing Guide
-- **Document Type**: Informal Vision
-- **Repository**: https://github.com/jmagly/ai-writing-guide
-- **Current Phase**: Pre-launch (brownfield SDLC formalization)
+> **Note:** See Appendix E: Glossary for term definitions.
 
 ## Executive Summary
 
-AI-generated content exhibits formulaic detection patterns. Agentic coding workflows produce unstructured chat logs instead of compliance-ready artifacts. The AI Writing Guide framework addresses both challenges through 61 specialized agents (58 SDLC + 3 writing), 45 slash commands, and 156 templates. Success requires validation with 5-10 early adopters (0-3 months), growth to 25-50 GitHub stars (3-6 months), and sustainable community infrastructure supporting 100+ users (6-12 months). Zero-budget sustainability relies on modular deployment, self-service infrastructure, and optional transition to community funding if support exceeds 15 hours/week for 2+ months.
+The AI Writing Guide (AIWG) is a comprehensive SDLC framework designed to bring structure, traceability, and quality to agentic software development. Our vision extends beyond creating tools for others - AIWG must prove its value by successfully applying its own framework to develop itself.
 
-## 1 Introduction
+**Strategic Direction:** The contributor workflow feature serves as both a critical capability AND the demonstration vehicle for AIWG's self-application maturity. By building this feature using our complete SDLC process - from intake through production deployment - we establish credible proof that AIWG can manage real-world development at scale.
 
-The AI Writing Guide is a dual-purpose framework addressing two critical gaps in AI-assisted content creation and software development:
+**MVP Definition:** Complete traceable artifacts (intake → architecture → testing → deployment) for contributor workflow, demonstrating full SDLC cycle on a production feature.
 
-1. **Writing Quality Framework**: Guidelines, validation patterns, and agents to ensure AI-generated content maintains authentic, professional writing standards while avoiding detection patterns.
+## Problem Statement
 
-2. **SDLC Complete Framework**: Comprehensive software development lifecycle toolkit providing 58 specialized SDLC agents, 3 general writing agents (61 total), 45 slash commands, and 156 templates for managing agentic coding projects from concept through production.
+### The Core Challenge
 
-This vision document establishes the strategic direction for evolving from a solo-developed prototype (485+ files, 105 commits in 3 months) to a community-driven framework supporting individual developers, small teams, and enterprise organizations.
+Agentic development environments (Claude Code, Cursor, Windsurf, etc.) excel at rapid feature generation but lack structured lifecycle management. This creates three critical problems:
 
-**Document Purpose**: This vision serves as the alignment reference for all stakeholders (current solo developer, planned 2-3 contributors within 6 months, early adopters) to ensure development priorities, feature decisions, and community-building efforts advance the core mission: making AI-assisted work more authentic, structured, and traceable.
+1. **Process Gap:** Projects move from concept to code with no requirements, architecture, or test artifacts between chat logs and commits
+2. **Quality Gap:** Fast iteration without gates leads to technical debt, security vulnerabilities, and unmaintainable code
+3. **Traceability Gap:** Decisions buried in chat history, making audit trails impossible and knowledge transfer difficult
 
-## 2 Positioning
+### Why Self-Application Matters
 
-### 2.1 Problem Statement
-
-**Problem**: AI-generated content exhibits formulaic patterns that trigger detection tools. Agentic coding workflows produce unstructured chat logs instead of traceable artifacts required for compliance.
-
-**Impact**: Writers face authenticity challenges when AI patterns undermine credibility. Developers lack SDLC structure, making chat-based artifacts hard to process. Enterprise teams cannot maintain audit trails for regulatory requirements.
-
-**Solution**: Remove AI detection patterns while preserving professional sophistication. Provide comprehensive SDLC templates, agents, and workflows from concept to production with full traceability.
-
-### 2.2 Product Position Statement
-
-**For writers, agentic developers, and enterprise teams**, who **need to produce authentic AI-assisted content and structured SDLC artifacts with compliance trails**, the **AI Writing Guide** is a **comprehensive documentation framework and agentic toolkit** that **eliminates AI detection patterns while preserving professional sophistication, and provides complete lifecycle support from intake through production deployment**. Unlike **generic writing guides or fragmented SDLC templates**, our product **combines context-optimized validation rules with 61 specialized agents (58 SDLC + 3 writing), 45 workflows, and 156 templates in a single modular framework designed specifically for AI-assisted work**.
-
-## 3 Stakeholder Descriptions
-
-### 3.1 Stakeholder Summary
-
-| Name | Description | Responsibilities |
-| --- | --- | --- |
-| **Solo Developer** (Joseph Magly) | Framework creator, maintainer, primary contributor | Strategic direction, core development, community infrastructure, documentation, release management |
-| **AI Users** (writers, content creators) | Individuals using AI assistants for writing | Consume writing guidelines, validate content against detection patterns, maintain authentic voice |
-| **Agentic Developers** (Claude Code, Cursor, Codex users) | Developers using AI coding assistants for software projects | Deploy SDLC agents/commands, generate requirements/architecture artifacts, maintain traceability |
-| **Enterprise Teams** (10+ developers) | Organizations requiring compliance and audit trails | Use full SDLC lifecycle support, maintain artifact traceability, meet compliance requirements (SOC2, HIPAA, PCI-DSS) |
-| **Small Teams** (2-5 developers) | Collaborative projects needing shared structure | Deploy lightweight SDLC workflows, coordinate multi-agent artifact generation, maintain shared documentation |
-| **Future Contributors** (2-3 within 6 months) | Developers contributing to framework evolution | Code review, feature development, documentation, community support |
-| **GitHub Community** | Open source contributors, issue reporters | Report bugs, suggest features, contribute improvements, validate framework through usage |
-| **Platform Vendors** (Anthropic, OpenAI) | LLM platform providers | Monitor API changes, maintain platform compatibility, provide integration feedback |
-
-### 3.2 User Environment
-
-**Operational Context**:
-
-- **Team Size**: Solo developers to enterprise teams (1-50+ developers)
-- **Task Cycle Time**: Writing validation (seconds), SDLC artifact generation (minutes to hours), full phase transitions (days to weeks)
-- **Environmental Constraints**:
-  - Solo developer currently (limited support capacity)
-  - Zero budget (volunteer time, free infrastructure)
-  - Node.js >=18.20.8 required for tooling
-  - GitHub repository as primary distribution channel
-- **Platforms**: Claude Code (primary target), OpenAI/Codex (secondary support), Cursor (future consideration)
-- **Integrations**: GitHub Actions (CI/CD), Git (version control), LLM chat interfaces (consumption)
-- **Business Model**: Open source (MIT license), community-driven, no monetization currently planned
-
-**User Workflows**:
-
-1. **Writing Validation Workflow**:
-   - User generates content via AI assistant
-   - Loads validation documents into context
-   - Reviews content against banned patterns
-   - Rewrites flagged sections maintaining sophistication
-
-2. **Agentic Development Workflow**:
-   - Install framework via one-line bash script (`curl ... | bash`)
-   - Deploy agents/commands to project (`.claude/agents/`, `.claude/commands/`)
-   - Generate intake forms (`/project:intake-wizard`)
-   - Progress through SDLC phases (Inception → Elaboration → Construction → Transition)
-   - Generate structured artifacts (requirements, architecture, test plans, deployment runbooks)
-   - Maintain traceability from requirements → code → tests → deployment
-
-3. **Enterprise Adoption Workflow**:
-   - Deploy SDLC framework to projects requiring compliance
-   - Generate complete artifact trail (intake → requirements → architecture → testing → deployment)
-   - Use multi-agent workflows for comprehensive review (primary author → parallel reviewers → synthesizer)
-   - Validate phase gate criteria before transitions
-   - Maintain audit trail via Git commit history of `.aiwg/` artifacts
-
-## 4 Product Overview
-
-### 4.1 Product Perspective
-
-The AI Writing Guide exists as a **meta-framework** for AI-assisted work, positioned at the intersection of three domains:
-
-1. **Content Quality**: Fills the gap between generic writing guides and AI-specific detection/authenticity concerns
-2. **SDLC Process**: Bridges the disconnect between chat-based agentic coding and structured artifact generation
-3. **Enterprise Compliance**: Provides the missing traceability layer for AI-assisted development in regulated environments
-
-**System Architecture** (Block Diagram):
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                    AI WRITING GUIDE                          │
-│                  (GitHub Repository)                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────────────────────┐  ┌──────────────────────────┐    │
-│  │  WRITING FRAMEWORK   │  │   SDLC FRAMEWORK          │    │
-│  ├──────────────────────┤  ├──────────────────────────┤    │
-│  │ • Core philosophy    │  │ • 58 specialized agents   │    │
-│  │ • Validation rules   │  │ • 45 slash commands       │    │
-│  │ • Banned patterns    │  │ • 156 templates           │    │
-│  │ • Examples           │  │ • Phase workflows         │    │
-│  │ • 3 writing agents   │  │ • Add-ons (GDPR, legal)   │    │
-│  └──────────────────────┘  └──────────────────────────┘    │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │              TOOLING LAYER                           │   │
-│  ├──────────────────────────────────────────────────────┤   │
-│  │ • Deploy agents (general/SDLC/both)                  │   │
-│  │ • Scaffold new projects                              │   │
-│  │ • Markdown linting (10 custom fixers)                │   │
-│  │ • Manifest management                                │   │
-│  │ • Card prefilling (team profile integration)         │   │
-│  │ • CLI installer (aiwg command)                       │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           │ Installation
-                           ▼
-        ┌──────────────────────────────────────┐
-        │  User's Local Machine                │
-        ├──────────────────────────────────────┤
-        │  ~/.local/share/ai-writing-guide/    │
-        │                                       │
-        │  ┌────────────────────────────────┐  │
-        │  │   CLI: aiwg                    │  │
-        │  ├────────────────────────────────┤  │
-        │  │ • -version                     │  │
-        │  │ • -update / -reinstall         │  │
-        │  │ • -deploy-agents               │  │
-        │  │ • -deploy-commands             │  │
-        │  │ • -new (scaffold project)      │  │
-        │  │ • -prefill-cards               │  │
-        │  │ • -help                        │  │
-        │  └────────────────────────────────┘  │
-        └──────────────────────────────────────┘
-                           │
-                           │ Deploy to project
-                           ▼
-        ┌──────────────────────────────────────┐
-        │  User's Project Directory            │
-        ├──────────────────────────────────────┤
-        │  .claude/agents/   (61 agents)       │
-        │  .claude/commands/ (45 commands)     │
-        │  .aiwg/            (artifacts)       │
-        │  CLAUDE.md         (orchestration)   │
-        └──────────────────────────────────────┘
-```
-
-**Agent Count Breakdown**: 61 total agents = 58 SDLC agents (covering all phases from Inception to Production) + 3 general writing agents (writing-validator, prompt-optimizer, content-diversifier).
-
-**Major Interfaces**:
-
-- **User → Framework**: One-line bash install, `aiwg` CLI commands, natural language orchestration via Claude Code
-- **Framework → LLM Platforms**: Claude Code (primary), OpenAI/Codex (multi-provider support)
-- **Framework → Projects**: Agent deployment (`.claude/agents/`), command deployment (`.claude/commands/`), template copying (`.aiwg/intake/`)
-- **Framework → Git**: Version control of artifacts, CI/CD via GitHub Actions, community contributions via PRs
-- **Framework → Platform Vendors**: API compatibility monitoring, changelog tracking, integration feedback
-
-### 4.2 Assumptions and Dependencies
-
-**Assumptions**:
-
-1. **User Workflow Correctness**: Current workflows (intake → inception → elaboration → construction → transition) are fundamentally sound
-   - **Validation Trigger**: User testing with 2-5 early adopters reveals major friction points
-   - **Pivot Strategy**: If workflows are fundamentally flawed, iterate based on feedback (ship-now mindset allows rapid adjustment)
-
-2. **Performance at Scale**: Framework remains performant as usage grows from 0 → 10 → 100+ active users
-   - **Validation Trigger**: Performance degradation reports, support capacity overwhelmed
-   - **Mitigation**: Modular deployment (users load subsets), context-optimized documents, self-service infrastructure
-
-3. **GitHub as Distribution**: GitHub repository remains primary distribution channel
-   - **Dependency**: GitHub platform availability and policies
-   - **Fallback**: Framework is portable (can mirror to GitLab, self-hosted Git if needed)
-
-4. **Node.js Availability**: Users have Node.js >=18.20.8 available for tooling scripts
-   - **Dependency**: Node.js runtime
-   - **Mitigation**: Minimal Node.js usage (22 scripts), fallback to manual template copying if unavailable
-
-5. **Community Engagement**: Early adopters will provide feedback, report issues, contribute improvements
-   - **Validation Trigger**: GitHub stars, issue activity, contributor growth indicate engagement
-   - **Risk**: Zero adoption means solo-developer-only tool (valid scenario, but limits impact)
-
-6. **Self-Improvement Loop Viability**: Framework can successfully maintain and evolve itself using its own SDLC tools
-   - **Current Status**: Early/experimental stage (this intake is part of self-application testing)
-   - **Success Criteria**: Framework artifacts (requirements, architecture, tests) improve development velocity and quality
-
-**Terminology**:
-
-- **Active User**: Installed AIWG in last 30 days OR generated 1+ artifact in last 30 days OR contributed 1+ GitHub interaction (issue/PR/discussion) in last 30 days
-- **Regular Contributor**: 3+ merged PRs in last 90 days
-- **Early Adopter**: User within first 50 installations (0-3 months post-launch)
-
-**Dependencies**:
-
-1. **Platform Dependencies**:
-   - GitHub (repository hosting, CI/CD, issue tracking)
-   - Node.js >=18.20.8 (for tooling scripts)
-   - Bash (for install script)
-   - Git (for version control operations)
-
-2. **LLM Platform Dependencies**:
-   - Claude Code (primary target platform)
-   - OpenAI/Codex (secondary platform, multi-provider support)
-
-3. **Regulatory/Compliance Dependencies**:
-   - MIT License compliance (permissive, attribution required)
-   - The framework does not enforce GDPR/PCI-DSS/HIPAA compliance; users handle regulatory requirements using framework artifacts
-
-4. **Community Dependencies**:
-   - Contributor availability (planning 2-3 within 6 months)
-   - Maintainer capacity (solo developer currently, limited support bandwidth)
-
-5. **Platform Vendor Dependencies**:
-   - API stability (Anthropic Claude, OpenAI)
-   - Agent format compatibility
-   - Pricing model stability
-
-### 4.3 Needs and Features
-
-**Priority Key**:
-- HIGH = Current (v0.1 pre-launch)
-- MEDIUM = Planned (v0.2-0.3, next 1-6 months)
-- LOW = Backlog (conditional on adoption/feedback)
-
-| Need | Priority | Features | Planned Release |
-| --- | --- | --- | --- |
-| **Avoid AI detection patterns** (AI Users) | HIGH | Writing validation rules, banned patterns documentation, content-diversifier agent, examples of authentic rewrites | Current (v0.1 pre-launch) |
-| **Structure agentic coding workflows** (Agentic Developers) | HIGH | 58 SDLC agents, 45 slash commands, 156 templates, phase-based workflows (Inception → Transition) | Current (v0.1 pre-launch) |
-| **Generate intake artifacts from existing codebases** (All Users) | HIGH | `intake-from-codebase` command, interactive intake wizard, option-matrix for project type handling | Current (v0.1 pre-launch) |
-| **Deploy agents to projects easily** (All Users) | HIGH | One-line bash installer, `aiwg -deploy-agents` command, modular deployment (general/SDLC/both) | Current (v0.1 pre-launch) |
-| **Update existing projects with AIWG orchestration** (Agentic Developers) | HIGH | `aiwg-setup-project` command (preserves existing CLAUDE.md, adds orchestration section) | Current (v0.1.1 recent addition) |
-| **Natural language workflow orchestration** (All Users) | MEDIUM | Translation guide mapping phrases to flows (70+ supported phrases), CLAUDE.md orchestration prompts | Current (v0.1.1 recent addition) |
-| **Multi-platform support** (All Users) | MEDIUM | Claude Code (primary), OpenAI/Codex compatibility (secondary), platform-agnostic templates | Current (v0.1 pre-launch) |
-| **Maintain compliance/audit trails** (Enterprise Teams) | MEDIUM | Artifact traceability commands (`check-traceability`), gate validation, handoff checklists, `.aiwg/` structured storage | Current (v0.1 pre-launch) |
-| **Community self-service infrastructure** (All Users) | LOW | FAQs, discussions, PR acceptance patterns, contributor onboarding docs | Planned (v0.2, post-launch +1-2 months) |
-| **Automated testing for tooling scripts** (Contributors) | LOW | Unit tests for deploy-agents, integration tests for workflows, CI/CD test automation | Planned (v0.3, post-validation +2-4 months) |
-| **Advanced multi-platform abstraction** (All Users) | LOW | Abstraction layer for Cursor, Codex, other LLM platforms beyond Claude/OpenAI | Backlog (conditional on adoption growth) |
-| **Performance optimization at scale** (All Users) | LOW | Caching, incremental processing, optimized context loading for large projects | Backlog (triggered by performance reports) |
-| **Team coordination features** (Small/Enterprise Teams) | MEDIUM | Team profile management, agent assignment workflows, cross-team sync commands | Current (v0.1 pre-launch, basic support) |
-| **Security and deployment workflows** (All Users) | HIGH | Security review cycles, deployment orchestration, hypercare monitoring, incident response | Current (v0.1 pre-launch) |
-
-### 4.4 Alternatives and Competition
-
-| Alternative | Strengths | Weaknesses | Differentiation |
-| --- | --- | --- | --- |
-| **Generic Writing Guides** (Strunk & White, technical writing guides) | Timeless principles, broad applicability | Not AI-specific, no detection pattern awareness, no validation tools | AIWG targets AI-generated content explicitly with detection markers, banned phrases, and agent-based validation |
-| **AI Detection Tools** (GPTZero, Originality.ai) | Identify AI content | Reactive (detect only, no prevention), no guidance for authentic rewriting | AIWG is preventive (guidelines to avoid patterns), includes rewriting examples maintaining sophistication |
-| **Fragmented SDLC Templates** (GitHub template repos, Atlassian templates) | Available for free, cover specific artifacts | Disconnected (no lifecycle integration), no multi-agent orchestration, no LLM platform integration | AIWG provides end-to-end lifecycle (Inception → Production), 61 specialized agents, natural language orchestration, LLM-first design |
-| **Enterprise SDLC Tools** (Jira, Azure DevOps, Atlassian suite) | Mature, integrated, team collaboration features | Expensive, heavyweight, not designed for agentic/AI-assisted workflows | AIWG is free, lightweight (documentation-based), optimized for AI agent consumption, supports solo → enterprise scale |
-| **Claude Code Docs** (official Anthropic documentation) | Authoritative, platform-specific | Limited SDLC guidance, no comprehensive templates, no writing validation | AIWG extends Claude Code with comprehensive SDLC framework and writing quality layer |
-| **DIY Chat Logs** (developers using Claude/GPT without structure) | Flexible, no setup required | Hard to process, no traceability, no artifact structure, poor compliance support | AIWG converts chat-based workflows to structured artifacts with full traceability |
-
-**Competitive Advantages**:
-
-1. **Dual-Purpose Framework**: Only solution combining writing quality validation with comprehensive SDLC toolkit
-2. **LLM-First Design**: Optimized for agent consumption (context-optimized docs, natural language orchestration)
-3. **Multi-Agent Orchestration**: Built-in patterns for collaborative artifact generation (primary author → reviewers → synthesizer)
-4. **Modular Deployment**: Users choose general writing tools, SDLC framework, or both (avoids overwhelming context)
-5. **Zero Budget**: Free, open source (MIT license), community-driven
-6. **Ship-Now Mindset**: Rapid iteration based on feedback, not waterfall planning
-7. **Self-Application**: Framework maintains itself using its own tools (validates practicality)
-
-**Market Positioning**: AIWG targets the underserved niche of **AI-assisted workers needing structure without enterprise overhead**. It's more comprehensive than generic writing guides, more integrated than fragmented SDLC templates, and more accessible than enterprise tools.
-
-**Competitive Risk Mitigation**: If platform vendors (Anthropic, OpenAI, Cursor) launch native SDLC features, AIWG differentiates on:
-- **Comprehensiveness**: 156 templates vs basic starters
-- **Specialization**: Writing quality validation + SDLC (not just SDLC)
-- **Customization**: Community can fork/extend (vs platform lock-in)
-- **Multi-platform**: Works across Claude, OpenAI, Codex (vs single-platform)
-
-## 5 Technical Requirements and Constraints
-
-### 5.1 Performance Requirements
-
-**Current Performance Targets** (acceptable for pre-launch):
-
-- **Installation**: One-line bash script completes in <60 seconds (even on slow connections)
-- **Agent Deployment**: Deploy 61 agents + 45 commands in <10 seconds
-- **Linting**: Markdown validation completes in <30 seconds for full repository (485 files)
-- **Manifest Generation**: Generate/sync manifests in <15 seconds
-- **Documentation Consumption**: Context-optimized documents fit within LLM context windows (agents can read full templates without truncation)
-
-**Future Performance Goals** (if scale triggers optimization):
-
-- **Support at 100+ users**: Self-service infrastructure reduces maintainer burden to <5 hours/week
-- **Repository size**: Maintain <100MB total (primarily markdown, minimal binary assets)
-- **Tool responsiveness**: All CLI commands complete in <30 seconds on standard hardware
-
-### 5.2 Environmental Constraints
-
-**Development Environment**:
-
-- Solo developer (1 active contributor currently)
-- Zero budget (volunteer time, free infrastructure)
-- GitHub-dependent (repository hosting, CI/CD, issue tracking)
-
-**User Environment**:
-
-- Node.js >=18.20.8 required for tooling (fallback: manual template copying)
-- Git required for version control operations
-- Bash required for install script (Linux/macOS primary, WSL for Windows)
-- LLM platform required (Claude Code primary, OpenAI/Codex secondary)
-
-**Constraints Driving Design Decisions**:
-
-- **Zero budget** → Free hosting (GitHub), no paid services, community-driven support
-- **Solo developer** → Ship-now mindset, accept 30-50% test coverage short-term, prioritize features over refactoring
-- **Pre-launch** → User testing with 2-5 early adopters validates assumptions before broader release
-
-### 5.3 Documentation Requirements
-
-**Current Documentation** (comprehensive for pre-launch):
-
-- **README.md**: Overview, installation, quick start
-- **USAGE_GUIDE.md**: Context selection strategy (critical for avoiding over-inclusion)
-- **AGENTS.md**: Contribution guidelines, SDLC overview
-- **CLAUDE.md**: Project-specific instructions for Claude Code agents
-- **ROADMAP.md**: 12-month development plan
-- **PROJECT_SUMMARY.md**: Expansion roadmap, value proposition
-- **CONTRIBUTING.md**: Contributor guidelines (planned for team expansion)
-- **agentic/code/frameworks/sdlc-complete/README.md**: SDLC framework documentation
-- **commands/DEVELOPMENT_GUIDE.md**: Advanced slash command patterns
-- **Per-directory READMEs**: Context-specific guidance
-
-**Future Documentation Needs** (post-launch):
-
-- **FAQs**: Self-service support for common questions
-- **Tutorials**: Beginner-friendly paths if user testing reveals clarity gaps
-- **API Documentation**: If programmatic access to framework emerges as need
-- **Case Studies**: Real-world usage examples from community
-
-### 5.4 Quality Attributes
-
-**Stability**:
-
-- **Current**: Early/experimental (pre-launch, 0 users, accepting breaking changes)
-- **Target**: Stable API after v1.0 (semantic versioning, deprecation warnings for breaking changes)
-- **Risk**: Solo developer limits testing coverage (mitigated by community testing post-launch)
-
-**Benefit/Value**:
-
-- **Writing Quality**: Measurable via user-reported reduction in AI detection rates (5-point Likert scale: "My content passes AI detection tools: Never / Rarely / Sometimes / Often / Always")
-- **SDLC Adoption**: Measurable via GitHub stars, issue activity, contributor growth
-- **Self-Improvement Loop**: Measurable via framework artifacts improving development velocity
-
-**Effort/Complexity**:
-
-- **User Effort**: One-line install, single command deployment, natural language orchestration (minimize setup friction)
-- **Contributor Effort**: Comprehensive CLAUDE.md/CONTRIBUTING.md reduce onboarding friction
-- **Maintenance Effort**: Solo developer sustainable (<10 hours/week) via automation (linting CI/CD, manifest sync)
-
-**Risk**:
-
-- **Adoption Risk**: Zero users post-launch → Continue as solo-developer tool (valid scenario, but limits impact)
-- **Support Risk**: 100+ users overwhelm solo developer → Community infrastructure (FAQs, discussions, PR patterns)
-- **Performance Risk**: Scale issues even at small usage → Optimization triggered by performance reports
-- **Platform Risk**: Claude Code discontinues agent support → Multi-platform support mitigates (OpenAI/Codex fallback)
-
-## 6 Success Metrics (Quantifiable)
-
-### 6.1 Phase 1: Validation (0-3 months)
-
-**Goal**: Validate product-market fit with early adopters
-
-1. **Installation & Adoption**:
-   - **Metric**: GitHub clone analytics, successful installs
-   - **Target**: 10+ successful installations
-   - **Data Source**: GitHub clone analytics (public API)
-
-2. **Community Engagement**:
-   - **Metric**: GitHub stars, issues/PRs filed
-   - **Target**: 5-10 stars, 3-5 active issues/PRs
-   - **Data Source**: GitHub repository analytics
-
-3. **User Validation**:
-   - **Metric**: Users completing full SDLC cycle (Inception → Elaboration)
-   - **Target**: 2-5 users report experience via surveys/discussions
-   - **Data Source**: GitHub Discussions surveys, user testimonials
-
-4. **Writing Quality Baseline**:
-   - **Metric**: AI detection pass rate (5-point Likert scale: Never/Rarely/Sometimes/Often/Always)
-   - **Baseline**: New users report "Rarely" or "Sometimes" (2-3 on scale)
-   - **Target**: Establish baseline for Phase 2 improvement measurement
-   - **Data Source**: Onboarding surveys
-
-### 6.2 Phase 2: Growth (3-6 months)
-
-**Goal**: Grow community and validate ROI
-
-1. **SDLC Framework Adoption**:
-   - **Metric**: GitHub stars, issue activity, PR contributions
-   - **Target**: 25-50 stars, 5-10 issues/PRs per month
-   - **Data Source**: GitHub repository analytics
-
-2. **Community Growth**:
-   - **Metric**: Active contributors (non-maintainer commits)
-   - **Target**: 1-2 regular contributors (3+ PRs in 90 days)
-   - **Data Source**: Git commit history, GitHub contributor graphs
-
-3. **Writing Quality Improvement**:
-   - **Metric**: User-reported AI detection pass rate (5-point Likert scale)
-   - **Target**: 30-40% of users report "Often" or "Always" (4-5 on scale)
-   - **Data Source**: 3-month follow-up surveys
-
-4. **Artifact Generation Volume**:
-   - **Metric**: Number of `.aiwg/` artifact directories created in community projects
-   - **Target**: 10-20 projects with `.aiwg/` artifacts
-   - **Data Source**: GitHub search (public repositories using framework)
-
-5. **ROI Validation**:
-   - **Metric**: Time saved on artifact creation (hours before/after AIWG adoption)
-   - **Target**: 30-40% of surveyed users report measurable time savings
-   - **Data Source**: Quarterly surveys via GitHub Discussions
-
-### 6.3 Phase 3: Scale (6-12 months)
-
-**Goal**: Sustainable community-driven framework
-
-1. **Broad Adoption**:
-   - **Metric**: GitHub stars, active users (30-day activity)
-   - **Target**: 100+ stars, 50+ active users
-   - **Data Source**: GitHub analytics, user surveys
-
-2. **Thriving Community**:
-   - **Metric**: Regular contributors, self-service support
-   - **Target**: 2-3 regular contributors, 80% issues resolved without maintainer
-   - **Data Source**: GitHub Insights, contributor graphs
-
-3. **Proven ROI**:
-   - **Metric**: AI detection pass rate, time saved, case studies
-   - **Target**: 50%+ of users report "Often/Always" (4-5 on scale), 2-3 published case studies
-   - **Data Source**: Annual surveys, community case study submissions
-
-4. **Self-Improvement Loop Validation**:
-   - **Metric**: Framework artifacts (requirements, architecture, test plans) generated for framework itself
-   - **Milestones**:
-     - 3 months: 50% of new features have SDLC artifacts
-     - 6 months: 75% of new features have SDLC artifacts
-     - 9 months: 100% of new features have SDLC artifacts (full self-application)
-   - **Data Source**: `.aiwg/` directory contents, artifact traceability reports
-
-5. **User Diversity** (project types):
-   - **Metric**: Distribution of small (1-3 devs), team (4-10 devs), enterprise (10+ devs) projects
-   - **Target**: Balanced adoption across all three categories
-   - **Data Source**: User surveys, project intake forms shared publicly
-
-6. **Multi-Platform Adoption**:
-   - **Metric**: Ratio of Claude Code vs OpenAI/Codex vs other platform usage
-   - **Target**: 70% Claude Code, 20% OpenAI/Codex, 10% other
-   - **Data Source**: User surveys, platform-specific issue reports
-
-### 6.4 Health Indicators
-
-**Green (Healthy)**:
-- 10+ GitHub stars per month growth
-- 5+ active issues/PRs per month
-- 1+ new contributor per quarter
-- <5 hours/week maintainer support burden
-- Zero critical issues unresolved >2 weeks
-
-**Yellow (Attention Needed)**:
-- Stagnant growth (<5 stars/month for 2+ months)
-- 10+ open critical issues unresolved >2 weeks
-- Zero new contributors for 2+ quarters
-- Support burden >10 hours/week
-- Negative user feedback patterns emerging
-
-**Red (Requires Pivot/Intervention)**:
-- Negative growth (users abandoning framework, public criticism)
-- 20+ open critical issues unresolved >1 month
-- All contributors inactive for 6+ months
-- Support burden >20 hours/week (unsustainable for solo developer)
-- Platform vendor announces incompatible changes
-
-## 7 Constraints and Trade-offs
-
-### 7.1 Resource Constraints
-
-**Current**:
-- **Team**: Solo developer (1 active contributor)
-- **Budget**: Zero (volunteer time, free infrastructure)
-- **Time**: ~35 commits/month (~1+ per day), sustainable at <10 hours/week
-
-**Trade-offs Accepted**:
-- **Testing**: Manual testing, 30-50% coverage acceptable short-term (will add comprehensive tests post-user-validation)
-- **Refactoring**: Prioritize features over code quality short-term (technical debt acceptable, will clean up post-validation)
-- **Documentation**: Core usage covered, beginner-friendly paths added reactively based on user feedback
-
-**Sustainability Scenarios**:
-
-**Scenario 1: Personal Tool Path** (0-10 active users)
-- Volunteer time sustainable at <5 hours/week
-- No community support burden
-- Clear communication: framework available as-is, no support commitments
-- **Trigger**: If <5 stars after 3 months, accept personal-tool-only path
-
-**Scenario 2: Community Path** (10-100 active users)
-- Self-service infrastructure reduces support to <10 hours/week by 6 months
-- Contributor growth (2-3 regulars) shares maintenance burden
-- GitHub Sponsors or OpenCollective for optional funding (server costs, contributor recognition)
-- **Trigger**: If 10-50 stars in 3-6 months, invest in community infrastructure (FAQs, discussions)
-
-**Scenario 3: Commercial Path** (100+ active users, enterprise traction)
-- Paid support tiers (consulting, custom features, SLAs)
-- Dual-license model (MIT for community, commercial for enterprises requiring support contracts)
-- Revenue funds maintainer time, infrastructure scaling
-- **Trigger**: If support >15 hours/week for 2+ months OR 2+ enterprise requests for paid support
-
-### 7.2 Scope Constraints
-
-**In Scope**:
-- Writing quality validation (AI detection patterns, authenticity markers)
-- SDLC framework (Inception → Transition phases)
-- Multi-agent orchestration patterns
-- Deployment automation (agents, commands, templates)
-- Git-based artifact storage and traceability
-
-**Out of Scope** (at least for v1.0):
-- Hosted SaaS version (framework is self-hosted, Git-based)
-- Paid features or monetization (MIT license, community-driven)
-- Real-time collaboration (async Git-based workflows only)
-- Custom LLM training or fine-tuning (framework uses existing LLMs)
-- Automated code generation beyond templates (agents guide humans, don't replace them)
-
-### 7.3 Philosophical Constraints
-
-**Ship-Now Mindset**:
-- Iterate based on feedback (not waterfall planning)
-- Accept imperfection (30-50% test coverage, technical debt acceptable short-term)
-- Validate assumptions with real users (2-5 early adopters) before broader launch
-
-**Modular by Design**:
-- Users load subsets for project type (general writing, SDLC, or both)
-- Avoid overwhelming context (context-optimized documents, selective deployment)
-- Support solo → enterprise scale (same framework, different usage patterns)
-
-**Self-Application First**:
-- Framework maintains itself using its own tools (validates practicality)
-- Dogfooding reveals friction points early (improves user experience)
-- Meta-validation (if framework cannot improve itself, the framework needs refinement)
-
-## Appendices
-
-### A. Risk Register (High-Level)
-
-| Risk | Likelihood | Impact | Mitigation | Pivot Trigger |
-| --- | --- | --- | --- | --- |
-| **Zero adoption post-launch** | Medium | Medium | Accept as solo-developer tool, continue iterating based on own usage | <5 stars after 3 months AND <2 active users AND <3 issues/PRs → Accept personal-tool path |
-| **Wrong workflows** (user testing reveals fundamental issues) | Low | High | Pivot based on feedback (ship-now mindset allows rapid adjustment) | 3+ users (out of first 5) report "workflows confusing" → Pause features, conduct interviews, prototype alternatives |
-| **Support capacity overwhelmed** | Medium | High | Self-service infrastructure (FAQs, discussions, PR patterns) | Support >15 hours/week for 4+ consecutive weeks → Implement self-service OR reduce scope OR commercial transition |
-| **Performance issues at scale** | Low | Medium | Modular deployment, context optimization, triggered optimization | Performance degradation reports from 10+ users → Prioritize optimization backlog |
-| **Platform vendor changes** | Low | High | Multi-platform support (OpenAI/Codex fallback), portable framework design | Claude Code deprecates agents OR OpenAI requests >40% → Accelerate multi-platform abstraction |
-| **Contributor attrition** | Medium | Medium | Comprehensive onboarding docs (CLAUDE.md, CONTRIBUTING.md), welcoming community culture | All contributors inactive 6+ months → Reassess scope, accept reduced maintenance |
-
-### B. Market Analysis (Lightweight)
-
-**Target Market Size**:
-- **AI Users** (writers, content creators): Millions globally using ChatGPT, Claude, other LLMs for writing
-- **Agentic Developers**: Tens of thousands using Claude Code, Cursor, Codex, other AI coding assistants
-- **Enterprise Teams**: Thousands of organizations exploring AI-assisted development with compliance needs
-
-**Addressable Market** (realistic for open source project):
-- **Optimistic**: 1000+ active users within 12 months (GitHub stars, regular usage)
-- **Realistic**: 100+ active users within 12 months (early adopters, niche audience)
-- **Pessimistic**: <10 active users (solo-developer tool, limited appeal)
-
-**Market Validation Triggers**:
-- **Proceed**: 50+ GitHub stars within 3 months, 5+ active issues/PRs per month
-- **Reassess**: <10 stars after 3 months, zero community engagement
-- **Pivot**: User testing reveals fundamental workflow issues, negative feedback
-
-### C. Competitive Positioning Map
-
-```text
-                High Enterprise Features
-                        │
-                        │
-    Enterprise Tools    │    [Aspiration: AIWG@Scale]
-    (Jira, Azure DevOps)│
-                        │
-                        │
-─────────────────────────┼─────────────────────────────
-High Cost               │              Low Cost / Free
-                        │
-                        │    [AIWG Current Position]
-                        │    (Lightweight, modular,
-                        │     solo → small team)
-                        │
-    Generic Templates   │    DIY Chat Logs
-                        │
-                        │
-                Low Enterprise Features
-```
-
-**Strategic Position**: AIWG occupies the "Free + Lightweight + Structured" quadrant, targeting users who need more than DIY chat logs but less than enterprise overhead.
-
-### D. Technical Architecture Notes
-
-**Key Design Decisions**:
-
-1. **Documentation-First**: Framework is 485+ markdown files (not code-heavy SaaS)
-   - **Rationale**: LLMs consume documentation naturally, low maintenance burden, version-control-friendly
-   - **Trade-off**: Less interactive than SaaS, requires LLM platform to be useful
-
-2. **Multi-Agent Orchestration**: Primary Author → Parallel Reviewers → Synthesizer → Archive
-   - **Rationale**: Mirrors human collaboration patterns, comprehensive validation, reduces solo-developer bias
-   - **Trade-off**: Slower than single-agent generation, requires coordination overhead
-
-3. **`.aiwg/` Artifacts Directory**: All SDLC artifacts stored in structured directory (not project root)
-   - **Rationale**: Clean separation (user code vs process artifacts), easy to ignore (.gitignore), discoverable
-   - **Trade-off**: Adds directory structure, users must learn new convention
-
-4. **Natural Language Orchestration**: Users trigger flows via phrases ("transition to Elaboration") not slash commands
-   - **Rationale**: More intuitive, reduces cognitive load, leverages LLM natural language understanding
-   - **Trade-off**: Requires translation layer (70+ phrases mapped to flows), ambiguity potential
-
-### E. Future Considerations (Beyond v1.0)
-
-**If Adoption Grows (100+ Active Users)**:
-- Community infrastructure (FAQs, discussions, PR review process)
-- Contributor onboarding automation (welcome bots, starter issue labels)
-- Advanced multi-platform abstraction (Cursor, Codex, other LLMs)
-- Performance optimization (caching, incremental processing)
-
-**If Adoption Stays Small (<10 Active Users)**:
-- Continue as solo-developer tool (valid scenario, validates personal workflow)
-- Reduce maintenance burden (archive less-used features, focus on core)
-- Consider merging with complementary projects (if strategic fit emerges)
-
-**If Pivot Required (User Testing Reveals Fundamental Issues)**:
-- Re-evaluate workflows based on feedback (ship-now mindset allows rapid iteration)
-- Simplify or expand scope as needed (modular design supports both directions)
-- Transparent communication with community (explain pivot rationale, invite input)
+AIWG faces a credibility challenge: recommending comprehensive SDLC processes while our own development lacks formal artifacts beyond README files and ad-hoc commits. This creates:
+
+- **Trust Deficit:** Users question framework value when we don't visibly use it ourselves
+- **Validation Risk:** Without dogfooding, we can't identify real-world friction points
+- **Maturity Concerns:** Frameworks that can't manage their own evolution appear immature
+
+**Critical Insight:** The fastest path to proving AIWG's value is building a feature we need (contributor workflow) using the complete AIWG process. Success creates a reference implementation that others can study and replicate.
+
+## Vision Statement
+
+**AIWG becomes the standard SDLC framework for agentic development by demonstrating that sophisticated processes enhance (not hinder) rapid iteration.**
+
+We achieve this through:
+
+1. **Self-Application First:** Every AIWG feature developed using full SDLC artifacts (intake, requirements, architecture, testing, deployment)
+2. **Traceable Development:** Complete audit trail from initial concept through production deployment
+3. **Quality Without Friction:** Processes that improve code quality while maintaining ship velocity
+4. **Reference Implementation:** Contributor workflow as the exemplar for "how to use AIWG on real projects"
+
+## Strategic Objectives
+
+### Primary Objective: Demonstrate Self-Application Capability
+
+**Goal:** Complete contributor workflow feature with full SDLC artifacts visible in `.aiwg/` directory.
+
+**Success Criteria:**
+- Intake forms documenting feature requirements and constraints
+- Software Architecture Document (SAD) describing system design
+- Architecture Decision Records (ADRs) justifying key choices
+- Test strategy and validation results
+- Deployment plan and runbooks
+- Complete traceability from requirements to code to tests
+
+**Why This Matters:** When users inspect AIWG's repository, they see a working example of the framework applied to itself. This "show, don't tell" approach builds credibility faster than any documentation.
+
+### Secondary Objective: Enable Community Growth
+
+**Goal:** Reduce contribution friction through automated workflows and quality gates.
+
+**Success Criteria:**
+- Contributors can fork, develop, test, and PR using only AIWG commands
+- Quality gates catch 90%+ of maintainability issues automatically
+- PR review time reduced by 50% through automated validation
+- 80%+ PR merge rate (indicating clear quality standards)
+
+**Why This Matters:** Self-application proves AIWG works on itself. Community contributions prove it works for others. Together, they establish market validation.
+
+### Tertiary Objective: Establish Reference Architecture
+
+**Goal:** Contributor workflow becomes the template for all future AIWG feature development.
+
+**Success Criteria:**
+- Architecture patterns documented in ADRs
+- Reusable components identified and extracted
+- Development process documented for future features
+- Lessons learned captured in retrospectives
+
+**Why This Matters:** First feature developed with full SDLC establishes precedents. Make them right, and future development accelerates. Get them wrong, and technical debt compounds.
+
+## Target Outcomes
+
+### For AIWG Project (Internal)
+
+**Immediate (Phase 1 - 4 weeks):**
+- Contributor workflow commands operational (`-contribute-*`, `-review-*`)
+- Complete SDLC artifacts in `.aiwg/planning/contributor-workflow/`
+- First community PR using AIWG toolset successfully merged
+- Reference implementation visible to all users
+
+**Short-term (3 months):**
+- 5+ platform integrations contributed using AIWG workflow
+- Self-application process mature enough to mandate for all features
+- Documentation citing contributor workflow as case study
+- Community contributors report 4/5+ satisfaction with tooling
+
+**Long-term (6-12 months):**
+- Every AIWG feature developed with full SDLC artifacts
+- Repository demonstrates comprehensive process maturity
+- AIWG used as example in conferences, blog posts, case studies
+- Framework recognized as credible due to visible self-application
+
+### For AIWG Users (External)
+
+**Immediate:**
+- Clear example of AIWG applied to real project (not theoretical)
+- Step-by-step reference for "what does SDLC look like in practice"
+- Reusable patterns for their own contribution workflows
+
+**Short-term:**
+- Confidence that AIWG scales beyond toy examples
+- Validation that processes enhance quality without blocking velocity
+- Community of practice sharing learnings and improvements
+
+**Long-term:**
+- Industry standard for agentic development lifecycle management
+- Ecosystem of integrations, extensions, and add-ons
+- Commercial support options for enterprise adoption
+
+## Success Metrics
+
+### Primary Metrics (Self-Application)
+
+| Metric | Current Baseline | Target | Measurement | Threshold |
+|--------|-----------------|--------|-------------|-----------|
+| Artifact Completeness | 0% (no contributor workflow artifacts exist) | 100% | Count of required documents vs actual in `.aiwg/` directory | All intake, architecture, test, and deployment artifacts complete |
+| Traceability | N/A (no contributor workflow requirements) | 100% | Requirements matrix linking stories to implementation | No orphaned requirements or untested code paths |
+| Process Adherence | Partial (intake only) | All gates passed | Gate checklist completion (Inception → Elaboration → Construction → Transition) | All gate criteria met, no skipped phases |
+
+### Secondary Metrics (Community Growth)
+
+| Metric | Current Baseline | Target | Measurement | Threshold |
+|--------|-----------------|--------|-------------|-----------|
+| Contribution Velocity | 0 (pre-launch) | 3+ per quarter | PRs with `platform-integration` label merged | At least 1 per month average |
+| Quality Score | N/A | 85/100 average | Automated quality gate validation | 80/100 minimum for PR acceptance |
+| PR Cycle Time | N/A | <3 days median | GitHub PR timeline analysis | 80% of PRs merged within 5 days |
+
+**Quality Score Interpretation:**
+- **0-79/100:** Below threshold (automated rejection, contributor must improve before review)
+- **80-84/100:** Minimum acceptable (PR can be reviewed, but likely needs changes)
+- **85-89/100:** Good quality (target average, minor review feedback expected)
+- **90-94/100:** Excellent (minimal maintainer review needed)
+- **95-100/100:** Exceptional (fast-track merge candidate)
+
+### Tertiary Metrics (Framework Maturity)
+
+| Metric | Current Baseline | Target | Measurement | Threshold |
+|--------|-----------------|--------|-------------|-----------|
+| Dogfooding Coverage | 5% (1/20 features with full artifacts) | 100% | Percentage of features with complete `.aiwg/` artifacts | No features shipped without full SDLC documentation |
+| Reference Architecture Reuse | 0 patterns | 3+ patterns extracted | Count of ADRs referencing contributor workflow patterns | At least 1 pattern per subsequent feature |
+| User Adoption | 0 repositories | 50+ within 12 months | GitHub search for `.aiwg/` directories in other repos | 10+ active users within 6 months |
+
+**Active User Definition:** Repository with `.aiwg/` directory AND at least 1 commit in last 30 days
+
+## Stakeholders
+
+### Primary Stakeholders
+
+**AIWG Maintainers (Joseph Magly - Solo Developer Currently):**
+- **Needs:** Scalable contribution workflow, quality automation, reduced review burden
+- **Concerns:** Sustainability (can't support 100 issues/week), maintaining quality standards
+- **Success Criteria:** 50% reduction in PR review time, 90%+ quality issues caught automatically
+
+**AIWG Contributors (Future - 2-5 users initially, 10-100 long-term):**
+- **Needs:** Clear contribution path, automated quality feedback, responsive maintainers
+- **Concerns:** Steep learning curve, PR rejection risk, slow feedback loops
+- **Success Criteria:** <30 minutes to first PR, 80%+ merge rate, 4/5+ satisfaction
+
+**AIWG Users (Developers using framework for their projects):**
+- **Needs:** Credible example of framework in practice, reusable patterns, proof of scalability
+- **Concerns:** Framework overhead, complexity, "do as I say not as I do" perception
+- **Success Criteria:** Visible self-application artifacts, reference implementation, case studies
+
+### Secondary Stakeholders
+
+**Agentic Platform Vendors (Claude, OpenAI, Cursor, Windsurf, etc.):**
+- **Needs:** Ecosystem of integrations, user adoption, quality tooling
+- **Concerns:** Platform-specific complexity, maintenance burden
+- **Success Criteria:** AIWG architecture supports platform abstraction (proven via deployment tools), contributor workflow demonstrates Claude Code, expansion validated by vendor demand
+
+**Enterprise Decision Makers (CTOs, Engineering Managers):**
+- **Needs:** Compliance support, audit trails, risk mitigation
+- **Concerns:** Framework maturity, support availability, vendor lock-in
+- **Success Criteria:** Complete traceability demonstrated, enterprise examples available
+
+**Broader Developer Community:**
+- **Needs:** Open source collaboration patterns, AI-assisted workflows
+- **Concerns:** Tool proliferation, learning curve, vendor dependencies
+- **Success Criteria:** AIWG recognized as credible, cited in articles/talks
+
+## Key Assumptions
+
+### Critical Assumptions (High Risk if Wrong)
+
+**Assumption 1: Self-application drives adoption**
+- **Rationale:** Developers trust frameworks that use their own processes
+- **Validation:** Track user feedback, measure adoption after contributor workflow launch
+- **Risk if Wrong:** Self-application effort wasted if users don't value credibility
+- **Mitigation:** User interviews pre-launch to validate assumption
+
+**Assumption 2: Full SDLC doesn't slow velocity**
+- **Rationale:** AIWG processes designed for efficiency (agent-assisted artifact generation)
+- **Validation:** Measure contributor workflow development time vs previous features
+- **Risk if Wrong:** Process overhead kills momentum, users reject complexity
+- **Mitigation:** Optimize workflows based on dogfooding friction points
+
+**Assumption 3: Community contributions provide market validation**
+- **Rationale:** Active contributions signal product-market fit
+- **Validation:** Track contribution volume, quality, and contributor retention
+- **Risk if Wrong:** No contributors = no market, solo maintainer burnout
+- **Mitigation:** Start with 2-5 user testing, validate before scaling
+
+### Supporting Assumptions (Lower Risk)
+
+**Assumption 4: Platform integrations drive growth**
+- **Rationale:** Supporting multiple platforms (Claude, Cursor, Windsurf) expands addressable market
+- **Validation:** Track which platforms contributors target
+- **Risk if Wrong:** Fragmentation across platforms dilutes focus
+- **Mitigation:** Start with Claude Code (primary), expand based on demand
+
+**Assumption 5: Automated quality gates improve PR quality**
+- **Rationale:** Instant feedback helps contributors meet standards before submission
+- **Validation:** Compare PR quality scores before/after gate implementation
+- **Risk if Wrong:** Gates too strict (block valid PRs) or too loose (miss issues)
+- **Mitigation:** Tune thresholds based on actual PR outcomes (start at 80%, adjust)
+
+**Assumption 6: Documentation completeness matters for enterprise**
+- **Rationale:** Regulated industries require audit trails and traceability
+- **Validation:** Enterprise user feedback on artifact completeness
+- **Risk if Wrong:** Overhead not valued by target users
+- **Mitigation:** Modular framework (users choose rigor level for their context)
+
+## Outstanding Questions
+
+### Strategic Questions
+
+**Q1: What is the optimal self-application rigor level?**
+- **Context:** AIWG supports minimal to enterprise rigor. Which level for our own development?
+- **Options:**
+  - A) Minimal (intake + ADRs only) - fastest, least overhead
+  - B) Moderate (add architecture + test plan) - balanced
+  - C) Full (complete Inception → Transition artifacts) - maximum credibility
+- **Decision Needed By:** Before Phase 1 implementation start
+- **Owner:** Vision Owner + Requirements Analyst
+- **Current Thinking:** Start with (C) Full for contributor workflow to prove capability, then evaluate if sustainable
+
+**Q2: Community vs Commercial vs Personal Tool - which path?**
+- **Context:** Undecided long-term strategy (depends on traction)
+- **Options:**
+  - A) Community-driven (open source, volunteer maintainers)
+  - B) Commercial SaaS (paid features, support SLAs)
+  - C) Personal tool (low maintenance, no support)
+- **Decision Needed By:** After 6 months user feedback
+- **Owner:** Project Owner (Joseph Magly)
+- **Current Thinking:** Stay open source, pivot based on enterprise vs community traction
+
+**Q3: How many platforms should AIWG support?**
+- **Context:** Currently Claude Code focused, OpenAI/Cursor/Windsurf interest exists. AIWG deployment infrastructure already supports multi-platform (deploy-agents.mjs has --provider flag for Claude/OpenAI).
+- **Options:**
+  - A) Single platform (Claude Code only) - simpler maintenance
+  - B) Multi-platform abstraction (unified API, platform adapters) - broader reach
+  - C) Platform-specific versions (separate distributions) - optimized UX per platform
+- **Decision Needed By:** After contributor workflow proves single-platform viability
+- **Owner:** Architecture Designer + DevOps Lead
+- **Current Thinking:** Deployment infrastructure already multi-platform capable. Contributor workflow Claude-only for MVP, expand based on demand.
+
+### Tactical Questions
+
+**Q4: Should contributors work in AIWG install directory or separate clone?**
+- **Context:** Security vs convenience trade-off
+- **Options:**
+  - A) Direct in `~/.local/share/ai-writing-guide` (easy testing, quick abort)
+  - B) Separate clone (cleaner separation, slower testing)
+- **Decision Status:** APPROVED - Option A (direct install work, abort with `aiwg -reinstall`)
+- **Rationale:** Easy testing, can abort with full reinstall if needed
+
+**Q5: What quality score threshold for PR acceptance?**
+- **Context:** Balance between accessibility and maintainability
+- **Options:**
+  - A) 70/100 (accessible, more review burden)
+  - B) 80/100 (balanced)
+  - C) 90/100 (high quality, may discourage contributions)
+- **Decision Status:** APPROVED - 80-90/100 range (can help fill gap, but PRs may still need changes)
+- **Rationale:** Automated gates catch most issues, maintainer review for nuanced decisions
+
+**Q6: How to handle multi-platform SDLC artifact generation?**
+- **Context:** Claude Code uses `.claude/agents/`, OpenAI might use `.codex/agents/` or single `AGENTS.md`
+- **Options:**
+  - A) Platform-specific SDLC artifacts (duplicate templates per platform)
+  - B) Unified artifacts with platform detection (single source, generated outputs)
+  - C) Manual platform selection (user chooses format)
+- **Decision Needed By:** If/when multi-platform pivot happens
+- **Owner:** Architecture Designer
+- **Current Thinking:** Defer until multi-platform demand validates need
+
+## Risks and Mitigation
+
+### Critical Risks (High Impact, High Priority)
+
+**Risk 1: Process Overhead Kills Velocity**
+- **Description:** Full SDLC artifacts slow development, contributors abandon complex workflows
+- **Impact:** High (undermines value proposition - AIWG should enhance not hinder velocity)
+- **Likelihood:** Medium (mitigated by agent-assisted generation, but unproven at scale)
+- **Mitigation:**
+  - **Pre-emptive:** Design for efficiency (reusable templates, automated generation)
+  - **Detective:** Measure time-to-PR vs previous features, track contributor friction
+  - **Corrective:** Simplify workflows if data shows excessive overhead
+- **Owner:** Process Lead
+- **Status:** Active - monitoring contributor workflow development time
+
+**Risk 2: Self-Application Reveals Framework Flaws**
+- **Description:** Dogfooding exposes gaps, inefficiencies, or broken workflows in AIWG
+- **Impact:** High (framework credibility damaged if self-application fails publicly)
+- **Likelihood:** Medium (early/experimental self-application stage, expect issues)
+- **Mitigation:**
+  - **Pre-emptive:** Accept imperfection, document learnings transparently
+  - **Detective:** Capture friction points in retrospectives, track workarounds
+  - **Corrective:** Treat flaws as validation opportunities, fix and republish
+- **Owner:** Quality Lead + Vision Owner
+- **Status:** Active - embracing "show our work" philosophy
+
+**Risk 3: Solo Maintainer Burnout**
+- **Description:** Comprehensive SDLC + community contributions overwhelm single developer
+- **Impact:** High (project abandonment risk if maintainer capacity exceeded)
+- **Likelihood:** Medium (current velocity 1+ commit/day, adding PR review burden)
+- **Mitigation:**
+  - **Pre-emptive:** Automate quality gates, design for self-service contribution
+  - **Detective:** Monitor maintainer time allocation, watch for review backlog
+  - **Corrective:** Recruit 2nd maintainer within 6 months, establish support boundaries
+- **Owner:** Project Owner (Joseph Magly)
+- **Status:** Planned - maintainer tools designed to reduce review burden 50%
+
+### High Impact, Medium Priority Risks
+
+**Risk 4: No Community Contributions Materialize**
+- **Description:** Contributors don't adopt AIWG workflows despite tooling investment
+- **Impact:** High (invalidates community growth strategy, wastes development effort)
+- **Likelihood:** Low (early user testing should validate before full investment)
+- **Mitigation:**
+  - **Pre-emptive:** User testing with 2-5 contributors before Phase 2
+  - **Detective:** Track contribution volume, contributor satisfaction scores
+  - **Corrective:** Pivot to personal tool or commercial support if community doesn't form
+- **Owner:** Community Lead
+- **Status:** Validation in progress - user testing underway
+
+**Risk 5: Multi-Platform Fragmentation**
+- **Description:** Supporting multiple platforms (Claude, OpenAI, Cursor) creates maintenance burden
+- **Impact:** Medium (increases complexity, but broader reach if managed well)
+- **Likelihood:** Medium (platform vendors evolve independently, APIs diverge)
+- **Mitigation:**
+  - **Pre-emptive:** Defer multi-platform contributor workflow until single-platform proves viable. Note: Deployment infrastructure already supports multi-platform abstraction.
+  - **Detective:** Track platform-specific feature requests
+  - **Corrective:** Leverage existing abstraction layer in deployment tools if multi-platform demand validates
+- **Owner:** Architecture Designer
+- **Status:** Deferred - Claude Code focus for contributor workflow MVP, infrastructure ready for expansion
+
+### Medium Impact, Lower Priority Risks
+
+**Risk 6: Enterprise Adoption Requires Compliance Features**
+- **Description:** Enterprise users need SOC2, HIPAA, ISO27001 templates not yet built
+- **Impact:** Medium (limits enterprise market, but not blocking for community/SMB)
+- **Likelihood:** Medium (enterprise SRE background suggests eventual enterprise usage)
+- **Mitigation:**
+  - **Pre-emptive:** Design modular framework (enterprise templates addable later)
+  - **Detective:** Track enterprise user requests for compliance features
+  - **Corrective:** Add enterprise templates if demand validates (6-12 month timeline)
+- **Owner:** Compliance Specialist (future role)
+- **Status:** Deferred - focus on core framework first
+
+## Validation Experiments
+
+### Experiment 1: Contributor Workflow Dogfooding
+
+**Hypothesis:** Full SDLC artifacts improve quality without significantly slowing development
+
+**Method:**
+1. Develop contributor workflow using complete AIWG process (intake → architecture → testing → deployment)
+2. Measure time-to-delivery vs previous features (e.g., Warp integration, intake commands)
+3. Assess artifact quality (completeness, traceability, usefulness)
+4. Conduct retrospective to identify friction points
+
+**Success Criteria:**
+- Development time <2x previous features (acceptable overhead for first full SDLC run)
+- All required artifacts present and meet quality standards
+- At least 3 architectural patterns identified for reuse
+- Team reports process added value (not just bureaucracy)
+
+**Timeline:** 4 weeks (Phase 1 implementation)
+
+**Owner:** Requirements Analyst + Architecture Designer + Test Lead
+
+**Status:** In progress - contributor workflow Phase 1 underway
+
+### Experiment 2: Early Contributor Testing
+
+**Hypothesis:** 2-5 early contributors can successfully use AIWG tooling to create quality PRs
+
+**Method:**
+1. Recruit 2-5 users willing to test contributor workflow
+2. Provide quickstart guide and AIWG CLI tools
+3. Support first PR creation (platform integration or documentation improvement)
+4. Measure time-to-PR, quality score, contributor satisfaction
+
+**Success Criteria:**
+- 80%+ contributors successfully create PR within 30 minutes
+- Average quality score >80/100
+- Contributors rate experience 4/5+ on satisfaction survey
+- At least 1 PR merged without major rework
+
+**Timeline:** 2-4 weeks after Phase 1 completion
+
+**Owner:** Community Lead + UX Lead
+
+**Status:** Planned - awaiting Phase 1 completion
+
+### Experiment 3: Reference Implementation Validation
+
+**Hypothesis:** Visible self-application artifacts increase user confidence in AIWG
+
+**Method:**
+1. Publish contributor workflow SDLC artifacts in `.aiwg/planning/contributor-workflow/`
+2. Link to artifacts from documentation (README, case studies)
+3. Survey new users: "Did seeing AIWG's own artifacts influence your adoption decision?"
+4. Track repository stars, clones, issues/discussions mentioning self-application
+
+**Success Criteria:**
+- 60%+ new users cite self-application as adoption factor
+- Repository engagement increases (stars, clones, discussions)
+- No negative feedback about "performative documentation"
+- At least 1 external blog post or talk cites AIWG as example
+
+**Timeline:** 3 months post-launch
+
+**Owner:** Vision Owner + Marketing Lead (future role)
+
+**Status:** Planned - dependent on Phase 1 completion
+
+## Roadmap
+
+### Phase 1: Foundation (Weeks 1-4) - IN PROGRESS
+
+**Objective:** Establish contributor workflow with full SDLC artifacts
+
+**Deliverables:**
+- Complete intake for contributor workflow feature (DONE)
+- Software Architecture Document (SAD) and ADRs
+- Contributor commands implemented (`-contribute-*`)
+- Maintainer review commands implemented (`-review-*`)
+- Quality gates automated (markdown lint, manifest sync, documentation completeness)
+- Test strategy and validation results documented
+- Deployment plan and runbooks created
+- All artifacts published in `.aiwg/planning/contributor-workflow/`
+
+**Success Criteria:**
+- First community PR using AIWG toolset merged successfully
+- Complete SDLC artifacts visible and traceable
+- Development time <2x previous features (acceptable first-run overhead)
+- Retrospective identifies 3+ architectural patterns for reuse
+
+**Status:** In progress - intake complete, architecture and implementation underway
+
+### Phase 2: Validation (Weeks 5-8)
+
+**Objective:** Prove contributor workflow with real users
+
+**Deliverables:**
+- 2-5 early contributors recruited and onboarded
+- 3+ platform integrations contributed (Cursor, Windsurf, Zed, etc.)
+- Contributor satisfaction survey results
+- Quality metrics analysis (PR scores, cycle time, merge rate)
+- Iteration retrospective documenting learnings
+- Process refinements based on user feedback
+
+**Success Criteria:**
+- 80%+ contributors create PR within 30 minutes
+- Average PR quality score >80/100
+- Contributors rate experience 4/5+ satisfaction
+- At least 2 PRs merged with minimal rework
+- No show-stopper issues identified
+
+**Status:** Planned - dependent on Phase 1 completion
+
+### Phase 3: Scale (Weeks 9-16)
+
+**Objective:** Expand community and establish self-application as standard
+
+**Deliverables:**
+- 10+ community contributions merged
+- All new AIWG features mandated to use full SDLC process
+- Reference implementation case study published
+- Architecture patterns documented and reused in 3+ features
+- Maintainer tools validated (50% review time reduction achieved)
+- Community infrastructure mature (FAQs, discussions, issue templates)
+
+**Success Criteria:**
+- 3+ platform integrations per quarter sustained
+- <3 days median PR cycle time
+- 80%+ PR merge rate
+- Self-application coverage 100% for new features
+- Repository recognized as credible example (cited in articles/talks)
+
+**Status:** Planned - dependent on Phase 2 validation
+
+### Phase 4: Maturity (Months 4-6)
+
+**Objective:** Full self-hosting and ecosystem growth
+
+**Deliverables:**
+- Every AIWG feature developed with complete SDLC artifacts
+- Multi-platform support (if demand validates)
+- Enterprise templates added (compliance, security, governance)
+- Commercial support options explored (if enterprise traction)
+- 50+ repositories using AIWG framework
+- Industry recognition as standard for agentic SDLC
+
+**Success Criteria:**
+- 100% dogfooding coverage (no features without artifacts)
+- 50+ active users, 10+ active contributors
+- Enterprise adoption validated (5+ commercial inquiries)
+- Framework profitability achieved (if commercial path chosen)
+- Self-improvement loops functioning (automated PR acceptance for certain categories)
+
+**Status:** Planned - path depends on Phase 2-3 outcomes
+
+## Alignment with Strategic Inputs
+
+### Integration with Product Strategy
+
+**Product Strategist Input:** "Two products in one repository - writing quality framework + SDLC toolkit. Focus SDLC toolkit as critical path."
+
+**Vision Alignment:**
+- Contributor workflow focuses on SDLC toolkit (not writing guide)
+- Self-application proves SDLC framework works on real projects
+- Writing guide can iterate slower while SDLC matures through dogfooding
+
+**Product Strategist Input:** "Modular deployment - users compose subset based on project type (smallest to largest apps)."
+
+**Vision Alignment:**
+- Contributor workflow demonstrates modular usage (lightweight intake + plan, not full enterprise rigor)
+- Establishes pattern for "what subset to use when" guidance
+- Proves framework scales from personal scripts to enterprise systems
+
+### Integration with Business Process Analysis
+
+**Business Process Analyst Input:** "Self-improvement loops critical - tooling builds/manages itself, superior documentation vs chat logs."
+
+**Vision Alignment:**
+- Contributor workflow IS a self-improvement loop (using AIWG to improve AIWG)
+- Generated artifacts (intake, SAD, test plans) replace hard-to-process chat logs
+- Automated PR acceptance patterns emerging from contributor workflow
+
+**Business Process Analyst Input:** "Support capacity limiting factor - can't support 100 issues/week solo."
+
+**Vision Alignment:**
+- Maintainer tools designed to reduce review burden 50%
+- Quality gates automate 90%+ of validation (less manual review)
+- Self-service contribution workflow reduces onboarding overhead
+
+### Integration with Stakeholder Feedback
+
+**Solo Developer (Joseph Magly):** "Ship-now mindset - already usable, iterate based on feedback. Accepting technical debt short-term."
+
+**Vision Alignment:**
+- Phase 1 focuses on MVP (4 weeks to functional contributor workflow)
+- Full SDLC artifacts ensure quality without blocking velocity
+- Retrospectives identify technical debt, plan paydown incrementally
+
+**Enterprise SRE/Eng Background:** "Plan to use for enterprise work eventually, need compliance and audit trails."
+
+**Vision Alignment:**
+- Self-application establishes audit trail precedent
+- Contributor workflow artifacts demonstrate compliance-ready documentation
+- Enterprise templates deferred until validation, but architecture supports future addition
+
+**Community Contributors (Future):** "Need clear contribution path, automated quality feedback, responsive maintainers."
+
+**Vision Alignment:**
+- Contributor commands provide guided workflow (fork → develop → test → PR)
+- Quality gates give instant feedback (no waiting for maintainer review)
+- Maintainer tools ensure <3 day PR cycle time
+
+## Communication Plan
+
+### Internal Communication (AIWG Development Team)
+
+**Current State:** Solo developer (Joseph Magly), planning 2-3 contributors within 6 months
+
+**Vision Communication:**
+- **Artifact:** This vision document published in `.aiwg/requirements/`
+- **Frequency:** Updated quarterly or when strategic direction changes
+- **Audience:** Current and future AIWG maintainers
+- **Message:** "We prove AIWG works by using it ourselves. Contributor workflow is our reference implementation."
+
+**Execution Updates:**
+- **Artifact:** Phase retrospectives, iteration status reports
+- **Frequency:** After each phase completion (4-8 week cycles)
+- **Audience:** Development team
+- **Message:** Progress on self-application, learnings, next steps
+
+### External Communication (AIWG Users & Community)
+
+**Target Audiences:**
+1. **Current Users** (early adopters testing AIWG): Need reassurance framework is maturing
+2. **Prospective Users** (evaluating AIWG): Need credibility proof before adoption
+3. **Contributors** (platform integrators): Need clear contribution path and standards
+
+**Communication Vehicles:**
+
+**README.md Updates:**
+- **When:** After Phase 1 completion
+- **Message:** "AIWG self-applies its own SDLC - see contributor workflow artifacts as example"
+- **Call-to-Action:** Link to `.aiwg/planning/contributor-workflow/` for reference implementation
+
+**Case Study / Blog Post:**
+- **When:** After Phase 2 validation
+- **Message:** "How we used AIWG to build AIWG: lessons from dogfooding our own framework"
+- **Audience:** Developers interested in agentic SDLC, platform vendors
+- **Distribution:** Dev.to, Medium, Hacker News, relevant Discords/Slacks
+
+**Contribution Guide:**
+- **When:** Phase 1 completion
+- **Message:** "Contribute platform integrations using AIWG toolset - here's how"
+- **Audience:** Developers wanting to add Cursor, Windsurf, Zed, etc. support
+- **Distribution:** `docs/contributing/contributor-quickstart.md` (already completed)
+
+**GitHub Discussions / Issues:**
+- **When:** Ongoing
+- **Message:** Transparent sharing of self-application learnings, friction points, improvements
+- **Audience:** Community members following AIWG development
+- **Distribution:** GitHub repository discussions
+
+### Stakeholder-Specific Messaging
+
+**For Enterprise Decision Makers:**
+- **Message:** "AIWG provides complete audit trails - see our own artifacts as proof"
+- **Evidence:** Point to `.aiwg/` directory with complete requirements → code → test traceability
+- **Timing:** When enterprise inquiries emerge (6-12 month timeline)
+
+**For Platform Vendors (Claude, OpenAI, Cursor, etc.):**
+- **Message:** "AIWG enables high-quality integrations - contributor workflow proves it"
+- **Evidence:** Platform integration PRs with comprehensive documentation and testing
+- **Timing:** After 3+ platform integrations merged successfully
+
+**For Developer Community:**
+- **Message:** "Agentic development doesn't mean no process - AIWG shows the balance"
+- **Evidence:** Case study demonstrating velocity + quality through structured workflows
+- **Timing:** Conference talks, blog posts after Phase 3 maturity
+
+## Decision Log
+
+### Strategic Decisions
+
+**Decision 1: Use Contributor Workflow as Self-Application Proof**
+- **Date:** 2025-10-17
+- **Context:** Need credible demonstration of AIWG self-application capability
+- **Decision:** Develop contributor workflow using full SDLC process (intake → deployment)
+- **Rationale:** Feature serves dual purpose - critical functionality + reference implementation
+- **Owner:** Vision Owner + Project Owner
+- **Status:** APPROVED
+
+**Decision 2: Full SDLC Rigor for Phase 1**
+- **Date:** 2025-10-17
+- **Context:** What rigor level to apply? Minimal, Moderate, or Full?
+- **Decision:** Full SDLC (Inception → Elaboration → Construction → Transition artifacts)
+- **Rationale:** Maximum credibility demonstration, establishes patterns for future features
+- **Trade-offs:** Higher overhead (acceptable for first full run), longer timeline (4 weeks vs 2)
+- **Owner:** Vision Owner + Requirements Analyst
+- **Status:** APPROVED
+
+**Decision 3: Defer Multi-Platform Contributor Workflow Until Validation**
+- **Date:** 2025-10-17
+- **Context:** AIWG deployment infrastructure already supports multi-platform (deploy-agents.mjs has --provider flag for Claude/OpenAI). Question: Should contributor workflow support all platforms from Phase 1?
+- **Decision:** Contributor workflow Claude Code-only for Phase 1-2, multi-platform expansion based on contributor demand
+- **Rationale:** Prove single-platform viability before adding platform-specific testing complexity. Deployment abstraction already exists (low migration cost if demand validates).
+- **Trade-offs:** Smaller addressable market for contributors initially (Claude Code users only), but faster Phase 1 execution
+- **Owner:** Architecture Designer + Product Strategist
+- **Status:** APPROVED
+
+### Tactical Decisions
+
+**Decision 4: Contributors Work in AIWG Install Directory**
+- **Date:** 2025-10-17
+- **Context:** Where should contributors develop? Install directory or separate clone?
+- **Decision:** Direct work in `~/.local/share/ai-writing-guide`, abort with `aiwg -reinstall`
+- **Rationale:** Easy testing, quick recovery if issues
+- **Owner:** DevOps Lead
+- **Status:** APPROVED
+
+**Decision 5: Quality Score Threshold 80-90/100**
+- **Date:** 2025-10-17
+- **Context:** What quality bar for PR acceptance?
+- **Decision:** 80-90/100 range, maintainer review still expected
+- **Rationale:** Balance accessibility and quality, automated gates catch most issues
+- **Owner:** Quality Lead
+- **Status:** APPROVED
+
+**Decision 6: Support Multiple Contributions Simultaneously**
+- **Date:** 2025-10-17
+- **Context:** Can contributors work on multiple features at once?
+- **Decision:** Yes, using `.aiwg/contrib/{feature}/` isolation
+- **Rationale:** Power users may contribute multiple integrations
+- **Owner:** Architecture Designer
+- **Status:** APPROVED
+
+### Pending Decisions
+
+**Pending 1: Community vs Commercial vs Personal Tool Path**
+- **Context:** Long-term business model undecided
+- **Options:** Community-driven, Commercial SaaS, Personal tool (low maintenance)
+- **Decision Needed By:** After 6 months user feedback
+- **Owner:** Project Owner (Joseph Magly)
+- **Status:** DEFERRED - depends on traction
+
+**Pending 2: Multi-Platform Architecture**
+- **Context:** How to support multiple platforms if demand validates?
+- **Options:** Platform-specific versions, unified abstraction, manual selection
+- **Decision Needed By:** If/when multi-platform pivot happens
+- **Owner:** Architecture Designer
+- **Status:** DEFERRED - single platform focus for now
+
+**Pending 3: Enterprise Template Investment**
+- **Context:** When to add SOC2, HIPAA, ISO27001 templates?
+- **Options:** Now (comprehensive), 6 months (validated demand), never (community-only)
+- **Decision Needed By:** After enterprise user feedback (6-12 months)
+- **Owner:** Compliance Specialist (future role)
+- **Status:** DEFERRED - core framework first
+
+## Conclusion
+
+The AI Writing Guide vision centers on a simple but powerful idea: **prove the framework works by using it ourselves.**
+
+The contributor workflow feature serves as both critical functionality (enabling community growth) and strategic validation (demonstrating self-application). By developing this feature with complete SDLC artifacts - from intake through production deployment - we establish credible proof that AIWG can manage real-world development at scale.
+
+**Key Takeaways:**
+
+1. **Self-Application First:** Every AIWG feature developed using full SDLC process, starting with contributor workflow
+2. **Show, Don't Tell:** Visible artifacts in `.aiwg/` directory provide reference implementation
+3. **Quality Without Friction:** Processes enhance velocity through automation and agent-assisted generation
+4. **Community Validation:** Contributor success proves framework works beyond just ourselves
+5. **Iterative Maturity:** Phase 1 establishes foundation, Phases 2-4 validate and scale
+
+**MVP Definition Reaffirmed:** Functional contributor workflow with complete traceable artifacts (intake → architecture → testing → deployment) demonstrating full SDLC cycle on production feature.
+
+**Next Steps:**
+1. Publish this vision document to `.aiwg/requirements/vision-document.md` (COMPLETE)
+2. Communication to stakeholders (README update, case study planning)
+3. Execution of Phase 1 roadmap with vision as North Star
+4. Continuous iteration based on dogfooding learnings
 
 ---
 
-## Document Status
+**Appendices**
 
-**Version**: v1.0 (BASELINED)
-**Authors**: System Analyst (Vision Owner), Business Process Analyst, Product Strategist, Technical Writer, Requirements Reviewer
-**Date**: 2025-10-17
-**Status**: APPROVED
+## Appendix A: AIWG Framework Components
 
-**Changes from v0.1 Draft**:
-1. Rewrote Problem Statement (Section 2.1) for clarity - broke 78-word sentence into 3 clear sentences
-2. Clarified agent count (61 total = 58 SDLC + 3 writing) throughout document
-3. Added Platform Vendors stakeholder (Section 3.1) to address dependency monitoring
-4. Restructured success metrics into 3 phases (0-3, 3-6, 6-12 months) with leading/lagging indicators
-5. Added quantified measurement criteria for AI detection metric (5-point Likert scale)
-6. Added sustainability scenarios (personal tool, community, commercial paths) with explicit triggers
-7. Added actionable pivot triggers with specific thresholds and timeframes
-8. Added executive summary for stakeholder quick reference
-9. Defined "active user" and other key terminology
-10. Renamed Section 5 to "Technical Requirements and Constraints" for clarity
+**For Reference - Current State:**
 
-**Review Sign-Offs**:
-- Business Process Analyst: APPROVED
-- Product Strategist: APPROVED (conditions met)
-- Technical Writer: APPROVED (conditions met)
-- Requirements Reviewer: APPROVED (implicit via synthesis)
+- **58 specialized agents** covering all SDLC roles
+- **42+ slash commands** for project management and workflows
+- **156 templates** for artifacts (intake, requirements, architecture, testing, deployment)
+- **Phase-based flows** (Inception → Elaboration → Construction → Transition → Production)
+- **Multi-platform support** (Claude Code primary, OpenAI/Codex compatibility layer)
+- **Modular deployment** (users load subsets based on project type)
 
-**Next Steps**:
-1. Archive to `.aiwg/requirements/vision-document.md` (COMPLETE)
-2. Use as strategic reference for all development decisions
-3. Update quarterly based on actual adoption metrics and community feedback
-4. Trigger phase transitions based on success metric thresholds
+## Appendix B: Contributor Workflow Feature Scope
 
-**Assumptions Validated**:
-- User workflows validated via self-application (this document generated using SDLC framework)
-- Multi-agent review pattern validated (4 parallel reviews synthesized successfully)
-- Context-optimized documentation works (all reviewers accessed full templates)
+**Traceability to Intake:** Contributor workflow extends existing Development Tools (project-intake.md lines 66-72):
+- **Extends deploy-agents.mjs:** Fork → develop → test → PR workflow layered on existing agent deployment
+- **Extends new-project.mjs:** Platform integration scaffolding (create contrib workspace, templates)
+- **Extends markdown linting:** Quality gates enforce lint passing before PR acceptance
+- **Extends manifest management:** Automated sync validation prevents documentation drift
+
+**Phase 1 Deliverables (Foundation):**
+
+**Contributor Commands:**
+- `aiwg -contribute-start [feature-name]` - Initialize contribution workspace
+- `aiwg -contribute-status [feature-name]` - Show contribution status
+- `aiwg -contribute-test [feature-name]` - Run quality validation
+- `aiwg -contribute-pr [feature-name]` - Create pull request
+- `aiwg -contribute-monitor [feature-name]` - Monitor PR status
+- `aiwg -contribute-respond [feature-name]` - Address PR feedback
+- `aiwg -contribute-sync [feature-name]` - Sync fork with upstream
+
+**Maintainer Commands:**
+- `aiwg -review-pr <pr-number>` - Comprehensive PR validation
+- `aiwg -review-request-changes <pr-number>` - Request changes with guidance
+- `aiwg -review-approve <pr-number>` - Approve and merge PR
+- `aiwg -review-stats [--since "date"]` - Contribution metrics
+
+**Quality Gates:**
+- Markdown linting (all rules passing)
+- Manifest sync validation
+- Documentation completeness (README, quickstart, integration guide)
+- Breaking change analysis
+- Security scan (basic)
+
+**Documentation:**
+- ✅ Contributor quickstart guide (COMPLETE - 1,682 lines, 98/100 quality score)
+- ✅ Maintainer review guide (COMPLETE - 1,816 lines, 96/100 quality score)
+- Using AIWG for contributions (planned Phase 2)
+- PR guidelines and templates (planned Phase 2)
+
+## Appendix C: Success Metrics Summary
+
+**Primary (Self-Application):**
+- 100% artifact completeness
+- 100% requirements traceability
+- All SDLC gates passed
+
+**Secondary (Community):**
+- 3+ platform integrations per quarter
+- 85/100 average PR quality score
+- <3 days median PR cycle time
+
+**Tertiary (Maturity):**
+- 100% new features use AIWG SDLC
+- 3+ architectural patterns extracted
+- 50+ repositories using AIWG
+
+## Appendix D: Reference - Project Intake Summary
+
+**From `.aiwg/intake/project-intake.md`:**
+
+- **Project:** AI Writing Guide (AIWG)
+- **Status:** Active development, pre-launch (0 users, planning 2-5 user testing)
+- **Team:** Solo developer (Joseph Magly - 30 years enterprise SRE/eng, 105 commits in 3 months)
+- **Tech Stack:** 485 markdown files, 22 Node.js tools, GitHub-hosted open source (MIT)
+- **Priorities:** Speed 0.40, Quality 0.20, Cost 0.20, Scale 0.20 (MVP phase)
+- **Trade-offs:** Accepting technical debt short-term, manual testing, iterate based on feedback
+- **Non-negotiable:** Modular deployment, self-improvement loops, generated docs > chat logs
+
+**From `.aiwg/intake/solution-profile.md`:**
+
+- **Current Profile:** MVP (ship-now mode, comprehensive features but accepting imperfections)
+- **Target Profile:** Production (within 6 months after user validation)
+- **Process Maturity:** Medium (CI/CD present, comprehensive docs, manual testing currently)
+- **Evolution Plan:** MVP → Moderate (3 months, team 2-3, testing 60-80%) → Production/Enterprise (6-12 months, depends on traction)
+
+## Appendix E: Glossary
+
+**AIWG:** AI Writing Guide - the framework/product
+
+**SDLC:** Software Development Lifecycle - structured process from concept to production
+
+**Self-Application:** Using AIWG framework to develop AIWG itself (dogfooding)
+
+**Quality Gate:** Automated validation checkpoint (e.g., lint passing, docs complete)
+
+**PR Cycle Time:** Time from pull request creation to merge
+
+**Artifact:** Structured document generated during SDLC (intake, SAD, test plan, etc.)
+
+**Traceability:** Ability to trace requirements through architecture, code, and tests
+
+**Platform Integration:** Support for agentic development tools (Claude Code, Cursor, Windsurf, etc.)
+
+**Dogfooding:** Company/project using its own product (validates quality and usability)
+
+**MVP:** Minimum Viable Product - simplest version that delivers core value
+
+**Contributor Workflow:** Fork → develop → test → PR process with automated quality gates
+
+**Active User:** Repository with `.aiwg/` directory AND at least 1 commit in last 30 days
+
+## Appendix F: Alternatives Considered for Self-Application Proof
+
+**Alternative 1: Build multi-platform support with full SDLC**
+- **Pro:** Addresses secondary intake requirement (OpenAI/Codex support)
+- **Con:** Doesn't solve maintainer scalability bottleneck (support capacity)
+- **Rejected:** Lower strategic value, doesn't enable community growth
+
+**Alternative 2: Self-apply to existing feature (markdown linting tools)**
+- **Pro:** Smaller scope, lower complexity, tools already functional
+- **Con:** No new functionality to demonstrate, doesn't address bottlenecks
+- **Rejected:** Insufficient proof-of-concept value (tools too simple)
+
+**Alternative 3: Create synthetic demo project (separate repository)**
+- **Pro:** Lower risk, controlled narrative, can tailor for demonstration
+- **Con:** "Do as I say not as I do" perception undermines credibility
+- **Rejected:** Doesn't address real project needs, lacks authenticity
+
+**Chosen: Contributor workflow with full SDLC**
+- **Rationale:** Dual purpose (critical functionality + demonstration vehicle)
+- **Addresses:** Maintainer scalability, community growth, self-application proof
+- **Aligns:** Intake priorities (speed 0.40, support capacity bottleneck)
+
+---
+
+## Synthesis Notes
+
+### Changes Made from v0.1
+
+**Major Enhancements:**
+1. **Standardized risk ratings** to sentence case (High/Medium/Low) throughout document for improved readability
+2. **Added baseline values** to all success metrics tables showing current state vs targets
+3. **Clarified multi-platform strategy** in Decision 3 - distinguishing deployment infrastructure (already multi-platform) from contributor workflow (Claude-only for MVP)
+4. **Added Quality Score interpretation guide** with clear thresholds (0-79 reject, 80-84 needs changes, 85-89 good, 90+ excellent)
+5. **Specified user adoption timeline** (50+ repositories within 12 months) and defined "active user"
+6. **Added Glossary reference** in Executive Summary for improved accessibility
+7. **Created Appendix F** documenting alternatives considered for self-application strategy
+
+**Minor Refinements:**
+1. Updated stakeholder success criteria for Platform Vendors to reflect multi-platform architecture reality
+2. Added traceability paragraph to Appendix B linking contributor workflow to intake's Development Tools
+3. Clarified Risk 5 mitigation to acknowledge existing deployment infrastructure abstraction
+4. Enhanced Q3 context with information about existing multi-platform deployment support
+
+### Reviewer Feedback Incorporated
+
+**Technical Writer Review (APPROVED WITH MINOR REVISIONS):**
+- ✓ Standardized risk rating capitalization (High/Medium/Low)
+- ✓ Added glossary reference in Executive Summary
+- ✓ Maintained excellent document structure and consistency
+
+**Requirements Analyst Review (CONDITIONAL APPROVAL):**
+- ✓ Clarified multi-platform strategy inconsistency
+- ✓ Added baseline values to all success metrics
+- ✓ Clarified quality score interpretation
+- ✓ Defined user adoption timeline and "active user"
+- ✓ Added contributor workflow traceability to intake
+- ✓ Added alternatives considered (Appendix F)
+
+**Architecture Designer Review (APPROVED WITH ENHANCEMENTS):**
+- ✓ Acknowledged architectural recommendations for future implementation (event-driven orchestration, platform abstraction, observability)
+- ✓ Incorporated feedback that self-application strategy is architecturally elegant
+- ✓ Noted performance optimization considerations for artifact generation
+
+### Feedback Deferred for Future Consideration
+
+**Architecture Designer's Technical Recommendations:**
+- Event-driven orchestration patterns - To be addressed in SAD and ADRs during Phase 1 implementation
+- Detailed platform abstraction layer design - To be formalized when multi-platform expansion validated
+- Observability architecture - To be implemented in Phase 2 based on Phase 1 learnings
+- Performance optimization strategies - To be measured and refined during Phase 1 dogfooding
+
+All critical feedback has been addressed. The vision document is now BASELINED and ready for implementation.
+
+**Document Metadata:**
+
+- **Version:** v1.0 (BASELINED)
+- **Created:** 2025-10-17
+- **Synthesis Completed:** 2025-10-17
+- **Synthesizer:** Documentation Synthesizer
+- **Reviewers:** Technical Writer (APPROVED), Requirements Analyst (APPROVED), Architecture Designer (APPROVED)
+- **Status:** BASELINED - Ready for Phase 1 Implementation
+- **Next Action:** Execute Phase 1 roadmap with this vision as North Star
