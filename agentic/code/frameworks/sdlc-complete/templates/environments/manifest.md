@@ -3,6 +3,7 @@
 ## Files
 
 - README.md
+- api-design-guidelines.md
 - business-modeling-guidelines-template.md
 - design-guidelines-template.md
 - dev-case-tailoring-card.md
@@ -13,3 +14,4 @@
 - programming-guidelines-template.md
 - test-guidelines-template.md
 - use-case-modeling-guidelines-template.md
+

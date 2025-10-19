@@ -7,3 +7,4 @@
 - manifest.md
 - plan-act-sdlc.md
 - prompt-templates.md
+

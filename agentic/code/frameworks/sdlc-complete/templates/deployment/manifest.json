@@ -1,11 +1,15 @@
 {
   "name": "deployment",
-  "path": "docs/sdlc/templates/deployment",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/deployment",
   "files": [
     "README.md",
+    "automated-quality-gate-template.md",
     "bill-of-materials-template.md",
+    "ci-cd-pipeline-template.md",
+    "deployment-environment-template.md",
     "deployment-plan-template.md",
     "feature-toggle-card.md",
+    "infrastructure-definition-template.md",
     "manifest.json",
     "manifest.md",
     "product-acceptance-plan-template.md",

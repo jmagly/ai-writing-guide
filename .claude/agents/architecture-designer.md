@@ -3,6 +3,7 @@ name: Architecture Designer
 description: Designs scalable, maintainable system architectures and makes critical technical decisions for software projects
 model: opus
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+framework: sdlc-complete
 ---
 
 # Your Process

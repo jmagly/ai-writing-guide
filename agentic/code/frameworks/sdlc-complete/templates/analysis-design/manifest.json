@@ -1,9 +1,11 @@
 {
   "name": "analysis-design",
-  "path": "docs/sdlc/templates/analysis-design",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/analysis-design",
   "files": [
     "README.md",
     "component-design-card.md",
+    "data-flow-diagram-template.md",
+    "database-design-template.md",
     "interface-contract-card.md",
     "manifest.json",
     "manifest.md",

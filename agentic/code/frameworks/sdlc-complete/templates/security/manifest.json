@@ -1,6 +1,6 @@
 {
   "name": "Security Templates",
-  "path": "docs/sdlc/templates/security",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/security",
   "files": [
     "README.md",
     "control-implementation-card.md",
@@ -8,9 +8,9 @@
     "data-flow-brief-template.md",
     "dependency-policy-template.md",
     "manifest.md",
-    "privacy-impact-assessment-template.md",
     "sbom-guidance.md",
     "secrets-management-policy-template.md",
+    "security-design-review-checklist.md",
     "security-requirements-template.md",
     "security-test-case-card.md",
     "threat-model-template.md",

@@ -1,0 +1,50 @@
+# Directory Manifest
+
+## Files
+
+- aiwg-setup-project.md
+- aiwg-setup-warp.md
+- aiwg-update-claude.md
+- aiwg-update-warp.md
+- build-artifact-index.md
+- build-poc.md
+- check-traceability.md
+- create-prd.md
+- flow-architecture-evolution.md
+- flow-change-control.md
+- flow-compliance-validation.md
+- flow-concept-to-inception.md
+- flow-construction-to-transition.md
+- flow-cross-team-sync.md
+- flow-delivery-track.md
+- flow-deploy-to-production.md
+- flow-discovery-track.md
+- flow-elaboration-to-construction.md
+- flow-gate-check.md
+- flow-handoff-checklist.md
+- flow-hypercare-monitoring.md
+- flow-inception-to-elaboration.md
+- flow-incident-response.md
+- flow-iteration-dual-track.md
+- flow-knowledge-transfer.md
+- flow-performance-optimization.md
+- flow-requirements-evolution.md
+- flow-retrospective-cycle.md
+- flow-risk-management-cycle.md
+- flow-security-review-cycle.md
+- flow-team-onboarding.md
+- flow-test-strategy-execution.md
+- generate-tests.md
+- intake-from-codebase.md
+- intake-start.md
+- intake-wizard.md
+- orchestrate-project.md
+- pr-review.md
+- project-health-check.md
+- project-status.md
+- project-timeline-simulator.md
+- retrospective-analyzer.md
+- security-audit.md
+- security-gate.md
+- troubleshooting-guide.md
+

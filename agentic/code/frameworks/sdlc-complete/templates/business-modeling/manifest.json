@@ -1,6 +1,6 @@
 {
   "name": "business-modeling",
-  "path": "docs/sdlc/templates/business-modeling",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/business-modeling",
   "files": [
     "README.md",
     "business-architecture-doc-template.md",

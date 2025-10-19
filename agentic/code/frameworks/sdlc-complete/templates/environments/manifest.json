@@ -1,8 +1,9 @@
 {
   "name": "environments",
-  "path": "docs/sdlc/templates/environments",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/environments",
   "files": [
     "README.md",
+    "api-design-guidelines.md",
     "business-modeling-guidelines-template.md",
     "design-guidelines-template.md",
     "dev-case-tailoring-card.md",

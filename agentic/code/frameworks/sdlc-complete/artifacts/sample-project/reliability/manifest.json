@@ -1,6 +1,6 @@
 {
   "name": "reliability",
-  "path": "docs/sdlc/artifacts/sample-project/reliability",
+  "path": "agentic/code/frameworks/sdlc-complete/artifacts/sample-project/reliability",
   "files": [
     "manifest.json",
     "manifest.md",

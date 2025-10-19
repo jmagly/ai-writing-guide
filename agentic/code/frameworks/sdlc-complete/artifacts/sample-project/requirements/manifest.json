@@ -1,6 +1,6 @@
 {
   "name": "requirements",
-  "path": "docs/sdlc/artifacts/sample-project/requirements",
+  "path": "agentic/code/frameworks/sdlc-complete/artifacts/sample-project/requirements",
   "files": [
     "manifest.json",
     "manifest.md",

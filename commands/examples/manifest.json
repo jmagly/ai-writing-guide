@@ -1,6 +1,6 @@
 {
   "name": "examples",
-  "path": "docs/commands/examples",
+  "path": "commands/examples",
   "files": [
     "README.md",
     "development-commands.md",

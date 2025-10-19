@@ -1,6 +1,6 @@
 {
   "name": "implementation",
-  "path": "docs/sdlc/templates/implementation",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/implementation",
   "files": [
     "README.md",
     "integration-build-plan-template.md",

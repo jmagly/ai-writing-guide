@@ -1,10 +1,12 @@
 {
   "name": "configuration",
-  "path": "docs/sdlc/templates/configuration",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/configuration",
   "files": [
     "README.md",
+    "aiwg-config-template.md",
     "change-request-card.md",
     "configuration-management-plan-template.md",
+    "flow-command-parameters-template.md",
     "manifest.json",
     "manifest.md",
     "problem-resolution-plan-template.md"

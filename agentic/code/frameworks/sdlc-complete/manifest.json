@@ -1,6 +1,6 @@
 {
   "name": "SDLC Root",
-  "path": "docs/sdlc",
+  "path": "agentic/code/frameworks/sdlc-complete",
   "files": [
     "README.md",
     "actors-and-templates.md",

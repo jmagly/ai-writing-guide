@@ -1,0 +1,38 @@
+{
+  "name": "ai-writing-guide",
+  "version": "1.0.0",
+  "description": "Comprehensive framework for improving AI-generated content quality",
+  "type": "module",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "validate-metadata": "node tools/workspace/metadata-loader.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmagly/ai-writing-guide.git"
+  },
+  "keywords": [
+    "ai",
+    "writing",
+    "guide",
+    "sdlc",
+    "framework",
+    "workspace",
+    "metadata"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jmagly/ai-writing-guide/issues"
+  },
+  "homepage": "https://github.com/jmagly/ai-writing-guide#readme",
+  "dependencies": {
+    "glob": "^11.0.0",
+    "yaml": "^2.8.1"
+  }
+}

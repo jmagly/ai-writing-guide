@@ -3,8 +3,10 @@
   "path": "tools/agents",
   "files": [
     "README.md",
+    "deploy-agents-old.mjs",
     "deploy-agents.mjs",
-    "manifest.md"
+    "manifest.md",
+    "update-agent-tools.mjs"
   ],
   "ignore": [
     "manifest.json"

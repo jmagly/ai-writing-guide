@@ -18,5 +18,7 @@
 - use-case-brief-template.md
 - use-case-spec-informal-template.md
 - use-case-spec-template.md
+- user-story-card.md
 - vision-informal-template.md
 - vision-template.md
+

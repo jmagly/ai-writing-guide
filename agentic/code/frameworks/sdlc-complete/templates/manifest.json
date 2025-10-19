@@ -1,8 +1,10 @@
 {
   "name": "SDLC Templates",
-  "path": "docs/sdlc/templates",
+  "path": "agentic/code/frameworks/sdlc-complete/templates",
   "files": [
     "README.md",
+    "aiwg-gitignore-template",
+    "aiwg-readme-template.md",
     "card-metadata-standard.md",
     "manifest.md"
   ],

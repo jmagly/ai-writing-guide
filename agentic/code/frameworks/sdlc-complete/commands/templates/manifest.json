@@ -1,6 +1,6 @@
 {
   "name": "templates",
-  "path": "docs/commands/templates",
+  "path": "agentic/code/frameworks/sdlc-complete/commands/templates",
   "files": [
     "README.md",
     "agent-command-template.md",

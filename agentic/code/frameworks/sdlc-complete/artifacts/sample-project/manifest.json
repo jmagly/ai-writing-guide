@@ -1,6 +1,6 @@
 {
   "name": "sample-project",
-  "path": "docs/sdlc/artifacts/sample-project",
+  "path": "agentic/code/frameworks/sdlc-complete/artifacts/sample-project",
   "files": [
     "README.md",
     "manifest.json",

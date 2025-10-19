@@ -1,6 +1,6 @@
 {
   "name": "Reliability Templates",
-  "path": "docs/sdlc/templates/reliability",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/reliability",
   "files": [
     "README.md",
     "alert-runbook-card.md",

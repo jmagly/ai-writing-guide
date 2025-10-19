@@ -1,339 +1,54 @@
 {
-  "type": "commands",
-  "directory": "agentic/code/frameworks/sdlc-complete/commands",
-  "description": "SDLC workflow orchestration commands for comprehensive cradle-to-grave project lifecycle management from concept through production operations",
-  "last_updated": "2025-10-15",
-  "total_commands": 39,
-  "coverage": {
-    "phase_transitions": "100%",
-    "iterative_workflows": "100%",
-    "production_operations": "100%",
-    "quality_governance": "100%",
-    "team_coordination": "100%"
-  },
-  "categories": {
-    "phase-transitions": {
-      "description": "Critical SDLC phase transition orchestration with formal gate reviews",
-      "commands": [
-        "flow-concept-to-inception",
-        "flow-inception-to-elaboration",
-        "flow-elaboration-to-construction",
-        "flow-construction-to-transition"
-      ]
-    },
-    "iterative-workflows": {
-      "description": "Dual-track Discovery and Delivery iteration workflows",
-      "commands": [
-        "flow-delivery-track",
-        "flow-discovery-track",
-        "flow-iteration-dual-track"
-      ]
-    },
-    "quality-gates": {
-      "description": "Quality gate validation and handoff checklist execution",
-      "commands": [
-        "flow-gate-check",
-        "flow-handoff-checklist",
-        "security-gate"
-      ]
-    },
-    "production-operations": {
-      "description": "Production deployment, hypercare monitoring, and incident response",
-      "commands": [
-        "flow-deploy-to-production",
-        "flow-hypercare-monitoring",
-        "flow-incident-response"
-      ]
-    },
-    "cross-cutting": {
-      "description": "Continuous risk, requirements, and security management throughout lifecycle",
-      "commands": [
-        "flow-requirements-evolution",
-        "flow-risk-management-cycle",
-        "flow-security-review-cycle"
-      ]
-    },
-    "quality-governance": {
-      "description": "Continuous improvement, architecture evolution, testing, and compliance",
-      "commands": [
-        "flow-architecture-evolution",
-        "flow-change-control",
-        "flow-compliance-validation",
-        "flow-performance-optimization",
-        "flow-retrospective-cycle",
-        "flow-test-strategy-execution"
-      ]
-    },
-    "team-coordination": {
-      "description": "Team onboarding, knowledge transfer, and cross-team synchronization",
-      "commands": [
-        "flow-cross-team-sync",
-        "flow-knowledge-transfer",
-        "flow-team-onboarding"
-      ]
-    },
-    "project-management": {
-      "description": "High-level project orchestration, health checks, and intake workflows",
-      "commands": [
-        "intake-from-codebase",
-        "intake-start",
-        "intake-wizard",
-        "orchestrate-project",
-        "project-health-check",
-        "project-timeline-simulator"
-      ]
-    },
-    "utilities": {
-      "description": "Supporting utilities for artifact indexing, traceability, reviews, and analysis",
-      "commands": [
-        "build-artifact-index",
-        "check-traceability",
-        "create-prd",
-        "generate-tests",
-        "pr-review",
-        "retrospective-analyzer",
-        "security-audit",
-        "troubleshooting-guide"
-      ]
-    }
-  },
-  "commands": [
-    {
-      "name": "build-artifact-index",
-      "file": "build-artifact-index.md",
-      "description": "Summarize key SDLC artifacts and produce short digests for agent context",
-      "category": "utilities"
-    },
-    {
-      "name": "check-traceability",
-      "file": "check-traceability.md",
-      "description": "Validate bidirectional traceability from requirements through code to tests",
-      "category": "utilities"
-    },
-    {
-      "name": "create-prd",
-      "file": "create-prd.md",
-      "description": "Generate Product Requirements Document from stakeholder requests and vision",
-      "category": "utilities"
-    },
-    {
-      "name": "flow-architecture-evolution",
-      "file": "flow-architecture-evolution.md",
-      "description": "Execute architecture refinement cycle with ADR creation and migration planning as product evolves",
-      "category": "quality-governance"
-    },
-    {
-      "name": "flow-change-control",
-      "file": "flow-change-control.md",
-      "description": "Execute change control process with impact assessment, CCB review, and baseline management",
-      "category": "quality-governance"
-    },
-    {
-      "name": "flow-compliance-validation",
-      "file": "flow-compliance-validation.md",
-      "description": "Execute regulatory compliance verification across 8 frameworks (SOX, HIPAA, GDPR, PCI-DSS, ISO 27001, FedRAMP, CCPA, NIST)",
-      "category": "quality-governance"
-    },
-    {
-      "name": "flow-concept-to-inception",
-      "file": "flow-concept-to-inception.md",
-      "description": "Orchestrate complete Inception phase from concept through Lifecycle Objective Milestone with automated validation",
-      "category": "phase-transitions"
-    },
-    {
-      "name": "flow-construction-to-transition",
-      "file": "flow-construction-to-transition.md",
-      "description": "Orchestrate Construction→Transition phase transition with production deployment, support handover, and hypercare monitoring",
-      "category": "phase-transitions"
-    },
-    {
-      "name": "flow-cross-team-sync",
-      "file": "flow-cross-team-sync.md",
-      "description": "Execute multi-team coordination workflow with dependency mapping, blocker tracking, and API contract management",
-      "category": "team-coordination"
-    },
-    {
-      "name": "flow-delivery-track",
-      "file": "flow-delivery-track.md",
-      "description": "Execute test-driven implementation workflow with continuous quality gates and velocity tracking",
-      "category": "iterative-workflows"
-    },
-    {
-      "name": "flow-deploy-to-production",
-      "file": "flow-deploy-to-production.md",
-      "description": "Execute automated production deployment with blue-green or canary strategies, smoke tests, and automated rollback",
-      "category": "production-operations"
-    },
-    {
-      "name": "flow-discovery-track",
-      "file": "flow-discovery-track.md",
-      "description": "Execute continuous requirements refinement workflow staying one iteration ahead of Delivery",
-      "category": "iterative-workflows"
-    },
-    {
-      "name": "flow-elaboration-to-construction",
-      "file": "flow-elaboration-to-construction.md",
-      "description": "Orchestrate Elaboration→Construction phase transition with iteration planning, team scaling, and full-scale development kickoff",
-      "category": "phase-transitions"
-    },
-    {
-      "name": "flow-gate-check",
-      "file": "flow-gate-check.md",
-      "description": "Validate SDLC phase gate criteria with automated checks and comprehensive reporting",
-      "category": "quality-gates"
-    },
-    {
-      "name": "flow-handoff-checklist",
-      "file": "flow-handoff-checklist.md",
-      "description": "Execute handoff checklist validation between SDLC phases and tracks (Discovery→Delivery, Delivery→Ops)",
-      "category": "quality-gates"
-    },
-    {
-      "name": "flow-hypercare-monitoring",
-      "file": "flow-hypercare-monitoring.md",
-      "description": "Execute hypercare monitoring period with 24/7 support, SLO tracking, and rapid issue response",
-      "category": "production-operations"
-    },
-    {
-      "name": "flow-inception-to-elaboration",
-      "file": "flow-inception-to-elaboration.md",
-      "description": "Orchestrate Inception→Elaboration phase transition with architecture baselining, prototype development, and risk retirement",
-      "category": "phase-transitions"
-    },
-    {
-      "name": "flow-incident-response",
-      "file": "flow-incident-response.md",
-      "description": "Execute production incident triage, escalation, resolution, and post-incident review using ITIL best practices",
-      "category": "production-operations"
-    },
-    {
-      "name": "flow-iteration-dual-track",
-      "file": "flow-iteration-dual-track.md",
-      "description": "Orchestrate dual-track iteration with synchronized Discovery (next) and Delivery (current) workflows",
-      "category": "iterative-workflows"
-    },
-    {
-      "name": "flow-knowledge-transfer",
-      "file": "flow-knowledge-transfer.md",
-      "description": "Execute structured knowledge transfer workflow with shadowing, reverse shadowing, and practical validation",
-      "category": "team-coordination"
-    },
-    {
-      "name": "flow-performance-optimization",
-      "file": "flow-performance-optimization.md",
-      "description": "Execute continuous performance tuning cycle with SLO framework, bottleneck analysis, and optimization patterns",
-      "category": "quality-governance"
-    },
-    {
-      "name": "flow-requirements-evolution",
-      "file": "flow-requirements-evolution.md",
-      "description": "Execute living requirements refinement workflow with change control, impact analysis, and traceability maintenance throughout lifecycle",
-      "category": "cross-cutting"
-    },
-    {
-      "name": "flow-retrospective-cycle",
-      "file": "flow-retrospective-cycle.md",
-      "description": "Execute systematic retrospective cycle with multiple formats, action tracking, and continuous improvement",
-      "category": "quality-governance"
-    },
-    {
-      "name": "flow-risk-management-cycle",
-      "file": "flow-risk-management-cycle.md",
-      "description": "Execute continuous risk identification, assessment, spike execution, and retirement workflow across SDLC phases",
-      "category": "cross-cutting"
-    },
-    {
-      "name": "flow-security-review-cycle",
-      "file": "flow-security-review-cycle.md",
-      "description": "Execute continuous security validation workflow with STRIDE threat modeling, automated testing, and vulnerability management",
-      "category": "cross-cutting"
-    },
-    {
-      "name": "flow-team-onboarding",
-      "file": "flow-team-onboarding.md",
-      "description": "Execute new team member integration workflow with buddy system, starter tasks, and 30/60/90 day milestones",
-      "category": "team-coordination"
-    },
-    {
-      "name": "flow-test-strategy-execution",
-      "file": "flow-test-strategy-execution.md",
-      "description": "Execute comprehensive test strategy with 8 test levels, defect triage, and coverage validation",
-      "category": "quality-governance"
-    },
-    {
-      "name": "generate-tests",
-      "file": "generate-tests.md",
-      "description": "Auto-generate test suites from requirements with comprehensive coverage",
-      "category": "utilities"
-    },
-    {
-      "name": "intake-from-codebase",
-      "file": "intake-from-codebase.md",
-      "description": "Scan existing codebase/product and generate intake documents in .aiwg/intake/ by analyzing code, dependencies, and infrastructure",
-      "category": "project-management",
-      "default_output": ".aiwg/intake/"
-    },
-    {
-      "name": "intake-start",
-      "file": "intake-start.md",
-      "description": "Initiate Inception phase workflow from completed intake forms with automated validation",
-      "category": "project-management",
-      "reads_from": ".aiwg/intake/"
-    },
-    {
-      "name": "intake-wizard",
-      "file": "intake-wizard.md",
-      "description": "Generate or complete intake forms in .aiwg/intake/ (project-intake, solution-profile, option-matrix) with interactive questioning",
-      "category": "project-management",
-      "default_output": ".aiwg/intake/"
-    },
-    {
-      "name": "orchestrate-project",
-      "file": "orchestrate-project.md",
-      "description": "High-level project orchestration coordinator managing phase transitions and workflow synchronization",
-      "category": "project-management"
-    },
-    {
-      "name": "pr-review",
-      "file": "pr-review.md",
-      "description": "Comprehensive pull request review focusing on code quality, security, and maintainability",
-      "category": "utilities"
-    },
-    {
-      "name": "project-health-check",
-      "file": "project-health-check.md",
-      "description": "Comprehensive project health assessment with metrics analysis and recommendations",
-      "category": "project-management"
-    },
-    {
-      "name": "project-timeline-simulator",
-      "file": "project-timeline-simulator.md",
-      "description": "Simulate project timeline with Monte Carlo analysis and risk-adjusted forecasting",
-      "category": "project-management"
-    },
-    {
-      "name": "retrospective-analyzer",
-      "file": "retrospective-analyzer.md",
-      "description": "Analyze retrospective data to identify patterns and generate actionable insights",
-      "category": "utilities"
-    },
-    {
-      "name": "security-audit",
-      "file": "security-audit.md",
-      "description": "Comprehensive security audit with threat modeling and remediation recommendations",
-      "category": "utilities"
-    },
-    {
-      "name": "security-gate",
-      "file": "security-gate.md",
-      "description": "Validate security gate criteria with SAST/DAST scans and vulnerability assessment",
-      "category": "quality-gates"
-    },
-    {
-      "name": "troubleshooting-guide",
-      "file": "troubleshooting-guide.md",
-      "description": "Diagnostic and troubleshooting workflows for common SDLC issues",
-      "category": "utilities"
-    }
+  "name": "commands",
+  "path": "agentic/code/frameworks/sdlc-complete/commands",
+  "files": [
+    "aiwg-setup-project.md",
+    "aiwg-setup-warp.md",
+    "aiwg-update-claude.md",
+    "aiwg-update-warp.md",
+    "build-artifact-index.md",
+    "build-poc.md",
+    "check-traceability.md",
+    "create-prd.md",
+    "flow-architecture-evolution.md",
+    "flow-change-control.md",
+    "flow-compliance-validation.md",
+    "flow-concept-to-inception.md",
+    "flow-construction-to-transition.md",
+    "flow-cross-team-sync.md",
+    "flow-delivery-track.md",
+    "flow-deploy-to-production.md",
+    "flow-discovery-track.md",
+    "flow-elaboration-to-construction.md",
+    "flow-gate-check.md",
+    "flow-handoff-checklist.md",
+    "flow-hypercare-monitoring.md",
+    "flow-inception-to-elaboration.md",
+    "flow-incident-response.md",
+    "flow-iteration-dual-track.md",
+    "flow-knowledge-transfer.md",
+    "flow-performance-optimization.md",
+    "flow-requirements-evolution.md",
+    "flow-retrospective-cycle.md",
+    "flow-risk-management-cycle.md",
+    "flow-security-review-cycle.md",
+    "flow-team-onboarding.md",
+    "flow-test-strategy-execution.md",
+    "generate-tests.md",
+    "intake-from-codebase.md",
+    "intake-start.md",
+    "intake-wizard.md",
+    "orchestrate-project.md",
+    "pr-review.md",
+    "project-health-check.md",
+    "project-status.md",
+    "project-timeline-simulator.md",
+    "retrospective-analyzer.md",
+    "security-audit.md",
+    "security-gate.md",
+    "troubleshooting-guide.md"
+  ],
+  "ignore": [
+    "manifest.json"
   ]
 }

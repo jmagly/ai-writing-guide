@@ -4,4 +4,8 @@
 
 - DEVELOPMENT_GUIDE.md
 - README.md
+- commit-and-push.md
 - manifest.md
+- subagents-README.md
+- subagents-and-commands-guide.md
+

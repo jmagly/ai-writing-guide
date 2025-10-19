@@ -7,3 +7,4 @@
 - manifest.json
 - manifest.md
 - validation-checklist.md
+

@@ -1,6 +1,6 @@
 {
   "name": "requirements",
-  "path": "docs/sdlc/templates/requirements",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/requirements",
   "files": [
     "README.md",
     "context-free-interview-template.md",
@@ -18,6 +18,7 @@
     "use-case-brief-template.md",
     "use-case-spec-informal-template.md",
     "use-case-spec-template.md",
+    "user-story-card.md",
     "vision-informal-template.md",
     "vision-template.md"
   ],

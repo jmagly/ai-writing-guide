@@ -5,8 +5,11 @@
 - README.md
 - business-case-informal-template.md
 - business-case-template.md
+- capacity-planning-template.md
+- definition-of-done-template.md
 - dependency-card.md
 - development-organization-assessment-template.md
+- epic-card.md
 - iteration-assessment-template.md
 - iteration-plan-informal-template.md
 - iteration-plan-template.md
@@ -14,13 +17,18 @@
 - manifest.json
 - manifest.md
 - measurement-plan-template.md
+- product-backlog-template.md
 - quality-assurance-plan-template.md
 - risk-card.md
 - risk-list-template.md
 - risk-management-plan-template.md
 - software-development-plan-template.md
+- sprint-backlog-template.md
+- sprint-retrospective-template.md
 - status-assessment-template.md
 - team-profile-example.yaml
 - team-profile-template.md
 - traceability-matrix-template.csv
+- velocity-tracking-template.md
 - work-package-card.md
+

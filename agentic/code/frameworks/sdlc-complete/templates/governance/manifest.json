@@ -1,6 +1,6 @@
 {
   "name": "Governance Templates",
-  "path": "docs/sdlc/templates/governance",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/governance",
   "files": [
     "README.md",
     "adr-template.md",

@@ -1,10 +1,13 @@
 {
   "name": "Commands (Shared)",
-  "path": "docs/commands",
+  "path": "commands",
   "files": [
     "DEVELOPMENT_GUIDE.md",
     "README.md",
-    "manifest.md"
+    "commit-and-push.md",
+    "manifest.md",
+    "subagents-README.md",
+    "subagents-and-commands-guide.md"
   ],
   "ignore": [
     "manifest.json",

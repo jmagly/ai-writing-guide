@@ -1,6 +1,6 @@
 {
   "name": "intake",
-  "path": "docs/sdlc/templates/intake",
+  "path": "agentic/code/frameworks/sdlc-complete/templates/intake",
   "files": [
     "README.md",
     "manifest.json",
