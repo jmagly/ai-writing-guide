@@ -239,10 +239,12 @@ Exclude:
 - **Impact**: Medium (commands route to wrong framework)
 - **Mitigation**:
   - Metadata validation tooling: `aiwg -validate-metadata`
-  - Linting enforces `framework` property in all commands/agents/templates
+  - **Data integrity linting** enforces `framework` property in all commands/agents/templates
   - CI/CD checks prevent missing metadata (GitHub Actions workflow)
   - Default fallback: `framework: sdlc-complete` if metadata missing (logged warning)
 - **Acceptance**: Metadata validation runs in CI/CD on every commit
+
+**Linting Policy Note**: FID-007 implementation requires **data integrity linting only** (metadata validation, schema compliance), NOT markdown formatting enforcement. Markdown linting (MD001-MD047) disabled 2025-10-18 to reduce token waste and CI/CD overhead. Priority: structural validation (JSON schema, required fields, framework property) > formatting (table spacing, heading punctuation).
 
 **Risk 3: Context Loading Performance** (LOW)
 - **Probability**: Low
@@ -438,6 +440,52 @@ jobs:
       - uses: actions/checkout@v3
       - run: aiwg -validate-metadata --target .claude/
 ```
+
+### Linting Priorities and Tooling
+
+**Policy**: FID-007 requires **data integrity linting ONLY**. Markdown formatting enforcement disabled to conserve tokens and reduce CI/CD overhead.
+
+**Priority Hierarchy**:
+1. **CRITICAL - Data Integrity** (ENFORCE):
+   - Metadata schema compliance (JSON, YAML structure)
+   - Required field validation (`framework`, `framework-version`, `output-path`)
+   - Framework property presence in all commands/agents/templates
+   - File existence validation (referenced paths exist)
+   - Registry consistency (installed frameworks match filesystem)
+
+2. **MEDIUM - Structural Validation** (OPTIONAL):
+   - Manifest sync (files match manifest.json)
+   - Broken link detection (internal references resolve)
+   - Duplicate ID detection (unique project/framework IDs)
+
+3. **LOW - Formatting** (DISABLED):
+   - ❌ Markdown linting (MD001-MD047) - **disabled 2025-10-18**
+   - ❌ Table spacing, heading punctuation, code fence formatting
+   - ❌ Line length, trailing spaces, multiple blank lines
+
+**Rationale**: Formatting enforcement wastes tokens during AI-assisted development. Data integrity prevents system failures. Focus limited resources on structural correctness, not aesthetic consistency.
+
+**Tooling**:
+```bash
+# Data integrity validation (CRITICAL - runs in CI/CD)
+aiwg -validate-metadata --target .claude/           # Schema + required fields
+aiwg -validate-registry --check-filesystem          # Registry consistency
+aiwg -validate-framework-refs --all-frameworks      # Cross-framework links
+
+# Structural validation (OPTIONAL - manual)
+aiwg -sync-manifests --check                        # Manifest drift detection
+aiwg -validate-links --internal-only                # Broken link check
+
+# Formatting (DISABLED - tools available but not enforced)
+# node tools/lint/fix-md58.mjs --target . --write   # Available but not required
+# markdownlint-cli2 "**/*.md"                       # Available but not enforced
+```
+
+**CI/CD Configuration**:
+- **Enabled**: `metadata-validation.yml` (data integrity only)
+- **Disabled**: `lint-fixcheck.yml`, `markdownlint.yml`, `manifest-lint.yml` (formatting)
+- **Run Time**: <30s for metadata validation vs 3-5 minutes for full lint suite (90% time reduction)
+- **Token Savings**: ~500-1000 tokens per PR (no formatting fix discussions)
 
 ### Cross-Framework Linking
 
