@@ -138,7 +138,7 @@ Deliver comprehensive ABM Report demonstrating architecture readiness for Constr
 - ✅ Week 7: ADR-002 updates, Security View documentation
 
 **Testability Enhancements** (8+ of 10 weeks, 64+ hours minimum):
-- ✅ Weeks 1-2: Rollback strategy implementation (transaction-based, <5s target)
+- ✅ Weeks 1-2: Rollback strategy implementation (reset + redeploy, <2s target) - **Simplified from transaction-based**
 - ✅ Weeks 3-4: Performance baselines (NFR validation infrastructure)
 - ✅ Weeks 5-6: Test data catalog (50+ fixtures)
 - ✅ Weeks 7-8: E2E scenarios (12+ comprehensive workflows)
@@ -169,9 +169,9 @@ Deliver comprehensive ABM Report demonstrating architecture readiness for Constr
 - Select top 5-10 features for Construction
 - Defer remaining ideas to future phases
 
-**Proof-of-Concepts** (Weeks 4-5):
+**Proof-of-Concepts** (Weeks 6-7):
 - Build 2-3 POCs for highest-risk features:
-  - Example: Plugin rollback mechanism (transaction-based)
+  - Example: Plugin rollback mechanism (reset + redeploy strategy)
   - Example: Multi-platform platform abstraction
   - Example: Automated traceability engine
 - Validate architectural assumptions
@@ -289,7 +289,7 @@ To exit Elaboration and enter Construction, the following must be achieved:
 | Supplemental Specification (NFRs) | Requirements Analyst | Week 3 | IN_PROGRESS | All quality attributes defined + FID-007 NFRs, reviewed | `.aiwg/requirements/supplemental-specification.md` |
 | Feature Backlog Prioritized | Product Manager | Week 1 | COMPLETE | Decision matrix applied, 7 P0, 10 P1, 7 P2 ranked | `.aiwg/requirements/feature-backlog-prioritized.md` |
 | **Proof-of-Concepts** |
-| POC 1: Plugin Rollback Mechanism | DevOps Lead | Week 6 | PLANNED | Transaction-based rollback validated, <5s target | `.aiwg/working/pocs/rollback-poc.md` |
+| POC 1: Plugin Rollback Mechanism | DevOps Lead | Week 6 | PLANNED | Reset + redeploy strategy validated, <2s target | `.aiwg/working/pocs/rollback-poc.md` |
 | POC 2: Multi-Platform Abstraction | Architecture Designer | Week 7 | PLANNED | Platform adapter pattern validated | `.aiwg/working/pocs/platform-abstraction-poc.md` |
 | POC 3: Automated Traceability | Traceability Engineer | Week 7 | PLANNED | Dependency graph generation automated | `.aiwg/working/pocs/traceability-poc.md` |
 | **Testing & Validation** |
@@ -555,7 +555,7 @@ To exit Elaboration and enter Construction, the following must be achieved:
   - Write main success scenarios, extensions
   - Define acceptance criteria
 - Continue security enhancements (injection validation: CLAUDE.md content validation)
-- Continue testability enhancements (rollback transaction implementation)
+- Continue testability enhancements (rollback reset + redeploy implementation)
 
 **Wednesday-Thursday (Dec 2-3)**:
 - Create use case specifications 8-10
@@ -616,7 +616,7 @@ To exit Elaboration and enter Construction, the following must be achieved:
 |-------------|-------|-------------|------------------|
 | Security Enhancement Complete | Security Architect | Dec 6 | All documentation finalized, 90+/100 score |
 | Testability Enhancements Week 4-5 | Test Architect | Dec 18 | Test data catalog started, performance baselines complete |
-| POC 1: Rollback Mechanism | DevOps Lead | Dec 11 | Transaction-based rollback validated, <5s target |
+| POC 1: Rollback Mechanism | DevOps Lead | Dec 11 | Reset + redeploy strategy validated, <2s target |
 | POC 2: Platform Abstraction | Architecture Designer | Dec 18 | Platform adapter pattern proven viable |
 | POC 3: Traceability Engine | Traceability Engineer | Dec 18 | Dependency graph auto-generation working |
 | SAD/ADR Updates | Documentation Synthesizer | Dec 18 | Changes documented, <10% modification threshold |
@@ -629,16 +629,19 @@ To exit Elaboration and enter Construction, the following must be achieved:
   - Finalize security enhancement documentation (ADR-002 updates, Security View final)
   - Security enhancement plan COMPLETE confirmation
   - Begin POC 1: Plugin Rollback Mechanism:
-    - Design transaction-based rollback architecture
-    - Implement snapshot/restore mechanism
+    - Design reset + redeploy strategy (baseline backup + registry)
+    - Implement CLAUDE.md baseline preservation
+    - Implement reset command (clear agents/commands/plugins)
     - Test failure scenarios (download failure, verification failure, deployment failure)
   - Continue testability enhancements (test data catalog design)
 
 - **Wednesday-Friday (Dec 7-11)**:
   - Complete POC 1: Rollback Mechanism:
-    - Validate <5 second rollback target
+    - Validate <2 second reset target
+    - Validate redeploy from registry
+    - Test idempotent reset (repeated calls safe)
     - Document learnings (architecture implications)
-    - Update ADR-006 if needed
+    - Confirm ADR-006 updated strategy is viable
   - Continue testability enhancements (performance baselines complete)
   - Weekly retrospective #4:
     - POC 1 validation assessment
@@ -672,7 +675,7 @@ To exit Elaboration and enter Construction, the following must be achieved:
 **Success Metrics**:
 - Security enhancement plan 100% complete with documentation
 - Testability enhancement plan 50% complete (Weeks 1-5 of 10)
-- 3 POCs complete and validated (rollback <5s, platform abstraction viable, traceability automated)
+- 3 POCs complete and validated (rollback <2s reset + redeploy, platform abstraction viable, traceability automated)
 - SAD/ADR changes <10% (architecture stability maintained)
 - Workload ≤15 hours/week average (cumulative Weeks 1-5)
 
@@ -1200,7 +1203,7 @@ From Risk Register (`.aiwg/risks/risk-register.md`):
 - Effort: 64+ of 80 hours (8h/week average)
 - Target: 86/100 → 95+/100 testability score
 - Critical Work:
-  - Weeks 1-2: Rollback strategy (transaction-based, <5s target)
+  - Weeks 1-2: Rollback strategy (reset + redeploy, <2s target)
   - Weeks 3-4: Performance baselines (NFR validation infrastructure)
   - Weeks 5-6: Test data catalog (50+ fixtures)
   - Weeks 7-8: E2E scenarios (12+ comprehensive workflows)

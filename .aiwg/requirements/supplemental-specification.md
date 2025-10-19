@@ -241,7 +241,7 @@ Performance requirements ensure AIWG tools remain responsive during normal usage
 
 **Traceability**:
 - SAD Section 4.3: Development View - Module Structure
-- ADR-006: Plugin Rollback Strategy (temporary disk space for snapshots ~2x plugin size)
+- ADR-006: Plugin Rollback Strategy (CLAUDE.md baseline ~50KB, minimal disk overhead)
 
 **Implementation Guidance**:
 - Compress plugin archives (gzip/brotli for distribution)
@@ -475,7 +475,7 @@ Availability requirements ensure AIWG tools remain accessible during normal usag
 
 **Recovery Procedures**:
 - Corruption detected: `aiwg -reinstall` (force fresh reinstall, <5 minutes)
-- Partial installation: Rollback via InstallationTransaction (ADR-006, <5s)
+- Partial installation: Rollback via reset + redeploy (ADR-006, <2s)
 - Missing aiwg command: Reinstall via one-line bash script
 
 #### NFR-AVAIL-03: CI/CD Pipeline Availability
@@ -506,12 +506,12 @@ Availability requirements ensure AIWG tools remain accessible during normal usag
 | Failure Scenario | RTO | Rationale |
 |-----------------|-----|-----------|
 | Installation corruption | <5 minutes (`aiwg -reinstall`) | Critical for developer productivity (Solution Profile) |
-| Plugin installation failure | <5 seconds (rollback via ADR-006) | Transaction-based rollback (SAD Section 11.2) |
+| Plugin installation failure | <2 seconds (rollback via ADR-006) | Reset + redeploy strategy (ADR-006) |
 | Repository issues (GitHub outage) | <15 minutes (manual intervention) | Wait for GitHub recovery, use local tools |
 | CI/CD pipeline failure | <2 hours (maintainer investigation) | Non-critical, batched fixes |
 
 **Traceability**:
-- ADR-006: Plugin Rollback Strategy (<5 second rollback target)
+- ADR-006: Plugin Rollback Strategy (<2 second reset target)
 - SAD Section 11.2: Security Implementation Roadmap (rollback implementation)
 
 **Implementation Guidance**:
@@ -622,12 +622,12 @@ Security requirements ensure AIWG protects user data, prevents malicious plugin 
 | Plugin manifests | SHA-256 checksum validation (UC-001: NFR-WR-06) | Prevent tampering (SAD Section 4.6.1) |
 | Pattern database | SHA-256 checksum validation | Trust (prevent malicious pattern injection) |
 | Dependency hashes | SHA-256 lock file | Dependency integrity (ADR-002 updated) |
-| File deployments | Transaction-based rollback (ADR-006) | Atomic operations, zero partial installs |
+| File deployments | Reset + redeploy (ADR-006) | Atomic operations, zero partial installs |
 
 **Traceability**:
 - UC-001: Validate AI-Generated Content (NFR-WR-06: Pattern database integrity)
 - ADR-002: Plugin Isolation Strategy (dependency hash verification)
-- ADR-006: Plugin Rollback Strategy (transaction-based installation)
+- ADR-006: Plugin Rollback Strategy (reset + redeploy)
 
 **Implementation Guidance**:
 - DependencyVerifier class validates SHA-256 hashes (SAD Section 5.1)
@@ -1207,7 +1207,7 @@ Reliability requirements ensure AIWG remains dependable during normal operation,
 | Context window exhaustion (large document) | Chunk document, process in sections | Automated chunking (UC-004: Exc-3) | Large documents exceed LLM limits |
 
 **Traceability**:
-- ADR-006: Plugin Rollback Strategy (<5 second rollback on failure)
+- ADR-006: Plugin Rollback Strategy (<2 second reset on failure)
 - UC-004: Multi-Agent Workflows (Exc-3: Context window exhaustion, chunked processing)
 
 **Implementation Guidance**:
@@ -1221,13 +1221,13 @@ Reliability requirements ensure AIWG remains dependable during normal operation,
 
 | Data Type | Integrity Guarantee | Mechanism | Rationale |
 |-----------|-------------------|-----------|-----------|
-| Plugin installations | 100% rollback on failure | Transaction-based (ADR-006) | Zero partial installs (UC-010: NFR-RB-02) |
+| Plugin installations | 100% rollback on failure | Reset + redeploy (ADR-006) | Zero partial installs (UC-010: NFR-RB-02) |
 | CLAUDE.md modifications | Backup before edit, restore on failure | Pre-modification backup (UC-002: Exc-3) | Prevent corruption of project configuration |
 | Git commits | Atomic commits (all-or-nothing) | Git's transactional model | Standard Git guarantee |
 | Manifest files | Schema validation before write | JSON Schema validation | Prevent malformed manifests |
 
 **Traceability**:
-- ADR-006: Plugin Rollback Strategy (transaction-based installation, <5s rollback)
+- ADR-006: Plugin Rollback Strategy (reset + redeploy, <2s reset)
 - UC-002: Deploy SDLC Framework (NFR-SD-03: CLAUDE.md update preserves existing content)
 - UC-010: Rollback Plugin Installation (NFR-RB-02: 100% state restoration)
 
@@ -1291,7 +1291,7 @@ Reliability requirements ensure AIWG remains dependable during normal operation,
 | Manifest sync drift | `aiwg -sync-manifests --fix` repairs | User runs sync command | Detect file additions/deletions |
 
 **Traceability**:
-- ADR-006: Plugin Rollback Strategy (transaction-based, <5s rollback)
+- ADR-006: Plugin Rollback Strategy (reset + redeploy, <2s reset)
 - UC-004: Multi-Agent Workflows (Exc-1: Reviewer timeout, automatic retry)
 
 **Implementation Guidance**:
@@ -1704,7 +1704,7 @@ This traceability matrix links NFRs to functional requirements (use cases), arch
 | NFR-AVAIL-01 | GitHub Repository Availability | UC-002 (Deploy SDLC Framework) | 99.9%+ uptime (GitHub SLA) |
 | NFR-AVAIL-02 | CLI Tool Availability | All use cases | 99.99% local availability |
 | NFR-AVAIL-03 | CI/CD Pipeline Availability | UC-005 (Framework Self-Improvement) | 99.9%+ uptime (GitHub Actions) |
-| NFR-AVAIL-04 | Recovery Time Objective | UC-010 (Rollback Plugin Installation) | <5 minutes reinstall, <5s rollback |
+| NFR-AVAIL-04 | Recovery Time Objective | UC-010 (Rollback Plugin Installation) | <5 minutes reinstall, <2s reset |
 | NFR-AVAIL-05 | Data Backup and Retention | UC-010 (Rollback Plugin Installation) | 30-day backup retention |
 | NFR-SEC-01 | Authentication Requirements | All use cases | N/A (open source, no authentication) |
 | NFR-SEC-02 | Authorization Requirements | UC-011 (Validate Plugin Security) | User consent for sensitive operations |
@@ -1765,7 +1765,7 @@ This traceability matrix links NFRs to functional requirements (use cases), arch
 | NFR-AVAIL-01 | GitHub Repository Availability | 4.4 Deployment View | GitHub Repository | External dependency (99.9%+ SLA) |
 | NFR-AVAIL-02 | CLI Tool Availability | 2.1 High-Level Architecture | CLI Entry Point | Local tool, no network dependencies |
 | NFR-AVAIL-03 | CI/CD Pipeline Availability | 4.4 Deployment View | GitHub Actions | Retry logic, caching |
-| NFR-AVAIL-04 | Recovery Time Objective | 11.2 Security Implementation Roadmap | InstallationTransaction (ADR-006) | Transaction-based rollback <5s |
+| NFR-AVAIL-04 | Recovery Time Objective | 11.2 Security Implementation Roadmap | InstallationTransaction (ADR-006) | Reset + redeploy <5s |
 | NFR-AVAIL-05 | Data Backup and Retention | 11.2 Security Implementation Roadmap | Backup utilities (`.aiwg/backups/`) | 30-day retention, automated cleanup |
 | NFR-SEC-01 | Authentication Requirements | 4.6 Security View | N/A (open source, no authentication) | Not applicable |
 | NFR-SEC-02 | Authorization Requirements | 4.6.4 Permission Model | PathValidator, User approval workflow | Filesystem boundaries, consent gates |
@@ -1811,7 +1811,7 @@ This traceability matrix links NFRs to functional requirements (use cases), arch
 |--------|------------|---------------|-------------------|
 | NFR-SEC-05 | Plugin Isolation | ADR-002: Plugin Isolation Strategy (Updated 2025-10-17) | Lifecycle hooks removed, filesystem-based isolation only |
 | NFR-SEC-04 | Data Integrity | ADR-002: Plugin Isolation Strategy (dependency hash verification) | SHA-256 lock file for dependency integrity |
-| NFR-AVAIL-04 | Recovery Time Objective | ADR-006: Plugin Rollback Strategy | Transaction-based installation, <5s rollback target |
+| NFR-AVAIL-04 | Recovery Time Objective | ADR-006: Plugin Rollback Strategy | Transaction-based installation, <2s reset target |
 | NFR-REL-02 | Data Integrity Guarantees | ADR-006: Plugin Rollback Strategy | InstallationTransaction class, snapshot/restore mechanism |
 | NFR-REL-05 | Automated Recovery | ADR-006: Plugin Rollback Strategy | Automatic rollback on installation failure |
 | NFR-SCAL-03 | Traceability Graph Capacity | ADR-003: Traceability Automation Approach | NetworkX graph algorithms, 99% effort reduction |
@@ -1853,7 +1853,7 @@ This traceability matrix links NFRs to functional requirements (use cases), arch
 - **ADR-003**: Traceability Automation Approach (NetworkX graph algorithms)
 - **ADR-004**: Contributor Workspace Isolation (`.aiwg/contrib/{feature}/`)
 - **ADR-005**: Quality Gate Thresholds (80/100 minimum, 85/100 target)
-- **ADR-006**: Plugin Rollback Strategy (transaction-based, <5s rollback)
+- **ADR-006**: Plugin Rollback Strategy (transaction-based, <2s reset)
 
 ### 13.3 Planning Documents
 
