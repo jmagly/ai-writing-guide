@@ -2,10 +2,26 @@
 
 **Document Type**: Non-Functional Requirements Specification
 **Project**: AI Writing Guide - SDLC Framework Plugin System
-**Version**: 1.0
-**Status**: DRAFT
-**Date**: 2025-10-18
-**Phase**: Elaboration (Week 3)
+**Version**: 1.1
+**Status**: BASELINED
+**Date**: 2025-10-19
+**Phase**: Elaboration (Week 4)
+
+---
+
+## Document History
+
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 1.0 | 2025-10-18 | Initial baseline with framework NFRs | Requirements Documenter |
+| 1.1 | 2025-10-19 | Added 48 NFRs from Elaboration Week 4 requirements workshop with P0/P1/P2 prioritization | Requirements Documenter |
+
+**Version 1.1 Changes**:
+- Added 48 NFRs identified during requirements workshop (UC-001 through UC-011 analysis)
+- Applied P0/P1/P2 prioritization based on Product Strategist recommendations
+- Specified testing approach for each NFR (Automated, Manual, Statistical)
+- Enhanced traceability linking NFRs to use cases, components, and test cases
+- Organized NFRs by category: Performance (10), Throughput (3), Accuracy (6), Quality (4), Completeness (5), Security (4), Reliability (3), Usability (6), Data Retention (3), Freshness (1), Scalability (4)
 
 ---
 
@@ -13,17 +29,21 @@
 
 1. [Introduction](#1-introduction)
 2. [Performance Requirements](#2-performance-requirements)
-3. [Scalability Requirements](#3-scalability-requirements)
-4. [Availability Requirements](#4-availability-requirements)
-5. [Security Requirements](#5-security-requirements)
-6. [Usability Requirements](#6-usability-requirements)
-7. [Maintainability Requirements](#7-maintainability-requirements)
-8. [Portability Requirements](#8-portability-requirements)
-9. [Reliability Requirements](#9-reliability-requirements)
-10. [Regulatory and Compliance Requirements](#10-regulatory-and-compliance-requirements)
-11. [Quality Metrics and Service Level Indicators](#11-quality-metrics-and-service-level-indicators)
-12. [Traceability Matrix](#12-traceability-matrix)
-13. [References](#13-references)
+3. [Throughput Requirements](#3-throughput-requirements)
+4. [Accuracy Requirements](#4-accuracy-requirements)
+5. [Quality Requirements](#5-quality-requirements)
+6. [Completeness Requirements](#6-completeness-requirements)
+7. [Security Requirements](#7-security-requirements)
+8. [Reliability Requirements](#8-reliability-requirements)
+9. [Usability Requirements](#9-usability-requirements)
+10. [Data Retention Requirements](#10-data-retention-requirements)
+11. [Freshness Requirements](#11-freshness-requirements)
+12. [Scalability Requirements](#12-scalability-requirements)
+13. [Regulatory and Compliance Requirements](#13-regulatory-and-compliance-requirements)
+14. [Quality Metrics and Service Level Indicators](#14-quality-metrics-and-service-level-indicators)
+15. [NFR Prioritization Summary](#15-nfr-prioritization-summary)
+16. [Traceability Matrix](#16-traceability-matrix)
+17. [References](#17-references)
 
 ---
 
@@ -31,7 +51,9 @@
 
 ### 1.1 Purpose
 
-This Supplemental Specification defines all **non-functional requirements (NFRs)** for the AI Writing Guide (AIWG) project. These requirements complement functional requirements captured in use case specifications (UC-001 through UC-011) by specifying quality attributes, performance targets, security controls, usability standards, and compliance obligations.
+This Supplemental Specification defines all **non-functional requirements (NFRs)** for the AI Writing Guide (AIWG) project. These requirements complement functional requirements captured in use case specifications (UC-001 through UC-012) by specifying quality attributes, performance targets, security controls, usability standards, and compliance obligations.
+
+**New in Version 1.1**: This update incorporates 48 NFRs extracted during Elaboration Week 4 requirements workshop, providing comprehensive coverage of all use cases with prioritized implementation roadmap.
 
 ### 1.2 Scope
 
@@ -41,6 +63,7 @@ This document covers NFRs for:
 - **SDLC Framework**: 58 agents, 42+ commands, multi-agent orchestration, plugin system
 - **CLI Tooling**: Installation, deployment, project scaffolding
 - **Infrastructure**: GitHub repository, CI/CD pipelines, documentation generation
+- **Workspace Management**: Framework-scoped context loading, tier-based filtering (FID-007)
 
 **Out of Scope**: Functional requirements (captured in use case specifications), implementation details (captured in Software Architecture Document).
 
@@ -55,14 +78,16 @@ This document covers NFRs for:
 
 ### 1.4 Document Organization
 
-Sections 2-10 define NFR categories (Performance, Scalability, Availability, Security, Usability, Maintainability, Portability, Reliability, Compliance). Each section provides:
+Sections 2-12 define NFR categories (Performance, Throughput, Accuracy, Quality, Completeness, Security, Reliability, Usability, Data Retention, Freshness, Scalability). Each section provides:
 
 - **Category Overview**: Why this quality attribute matters for AIWG
 - **Specific Requirements**: Measurable targets with requirement IDs (NFR-XXX-##)
+- **Priority Classification**: P0 (Make-or-Break for MVP), P1 (High Value, Post-MVP), P2 (Nice-to-Have, Future)
 - **Rationale**: Business justification for each target
-- **Traceability**: Links to use cases, architecture components, and design decisions
+- **Testing Approach**: Automated, Manual, or Statistical validation methodology
+- **Traceability**: Links to use cases, architecture components, test cases, and design decisions
 
-Section 11 defines quality metrics and Service Level Indicators (SLIs) for measuring success. Section 12 provides comprehensive traceability matrix linking NFRs to functional requirements, architecture, and ADRs.
+Section 13 defines regulatory and compliance NFRs. Section 14 defines quality metrics and Service Level Indicators (SLIs). Section 15 summarizes NFR prioritization strategy. Section 16 provides comprehensive traceability matrix.
 
 ### 1.5 Profile Context
 
@@ -86,6 +111,23 @@ Section 11 defines quality metrics and Service Level Indicators (SLIs) for measu
 - Testing coverage increases to 80-95%
 - Monitoring maturity increases (runtime metrics, alerting, SLOs)
 
+### 1.6 NFR Prioritization Framework
+
+**Priority Definitions** (established during Elaboration Week 4 requirements workshop):
+
+| Priority | Criteria | Target Release | Rationale |
+|----------|----------|----------------|-----------|
+| **P0 (Make-or-Break)** | Enterprise blocker if missing, direct user impact, competitive disadvantage | MVP (Iterations 1-5) | Must have for MVP launch, core value delivery |
+| **P1 (High Value)** | Significant user benefit, competitive advantage, quality enabler | Version 1.1 (3 months post-MVP) | High-value enhancements, deferred to reduce MVP scope |
+| **P2 (Nice-to-Have)** | Incremental improvement, edge case coverage, polish | Version 2.0+ (Backlog) | Nice-to-have features, optimization opportunities |
+
+**NFR Distribution**:
+- **P0**: 12 NFRs (25% of total) - Security, Usability, Performance, Accuracy
+- **P1**: 18 NFRs (37.5% of total) - Quality, Completeness, Security, Usability
+- **P2**: 18 NFRs (37.5% of total) - Throughput, Reliability, Data Retention, Scalability
+
+**Strategic Rationale**: Focus MVP on 12 "make-or-break" NFRs covering security, usability, and performance. Defer 36 NFRs (P1/P2) to accelerate time-to-market while maintaining core value proposition.
+
 ---
 
 ## 2. Performance Requirements
@@ -96,1826 +138,2125 @@ Performance requirements ensure AIWG tools remain responsive during normal usage
 
 **Performance Philosophy**: "Fast enough to stay out of the way" - users should spend time thinking about content, not waiting for tools.
 
-### 2.2 Response Time Requirements
-
-#### NFR-PERF-01: CLI Command Response Time
-
-**Requirement**: All CLI commands complete within target latencies (measured at p50, p95, p99 percentiles).
-
-| CLI Command | p50 Latency | p95 Latency | p99 Latency | Rationale |
-|-------------|-------------|-------------|-------------|-----------|
-| `aiwg -version` | <200ms | <500ms | <1s | User checks version frequently, must be instant |
-| `aiwg -deploy-agents --mode general` | <2s | <3s | <5s | Deploys 3 agents, user expects subsecond completion |
-| `aiwg -deploy-agents --mode sdlc` | <5s | <8s | <12s | Deploys 58 agents + 45 commands, acceptable latency for one-time setup |
-| `aiwg -install-plugin <name> (local)` | <2s | <3s | <5s | Local plugin cached, fast installation expected |
-| `aiwg -install-plugin <name> (remote)` | <7s | <10s | <15s | Network download adds latency, user tolerates delay |
-| `aiwg -new` | <1s | <2s | <3s | Project scaffolding, creates directories/files, must be fast |
-
-**Measurement Context**: Performance baselines measured on reference hardware: 4 cores @ 2.5 GHz, 8GB RAM, SSD 500 MB/s, 50 Mbps network.
-
-**Traceability**:
-- UC-002: Deploy SDLC Framework to Existing Project (NFR-SD-01: Deployment time <10s)
-- SAD Section 8.1: Performance tactics (lazy loading, caching)
-
-**Implementation Guidance**:
-- Cache plugin manifests after first discovery (avoid re-parsing YAML)
-- Parallelize file copy operations (deploy-agents.mjs uses concurrent writes)
-- Stream large downloads (avoid buffering entire plugin archive in memory)
-
-#### NFR-PERF-02: Agent Orchestration Response Time
-
-**Requirement**: Multi-agent workflows complete within target durations (wall-clock time, not CPU time).
-
-| Workflow | Target Duration | Rationale |
-|----------|----------------|-----------|
-| Single agent invocation (e.g., `/project:writing-validator`) | <60s for 2000-word documents | User workflow interruption threshold (UC-001: NFR-WR-01) |
-| Multi-agent workflow: Primary Author → 4 Reviewers → Synthesizer | <20 minutes for SAD generation | Productivity target, users remain engaged (UC-004: NFR-MA-01) |
-| Parallel validation (10 files) | <5 minutes total | Batch operations scale linearly (UC-001: Alt-4) |
-| Plugin installation with security validation | <10s | Pre-installation security checks must not slow installation (UC-011: NFR-PS-01) |
-
-**Traceability**:
-- UC-001: Validate AI-Generated Content (NFR-WR-01: Validation time <60s)
-- UC-004: Multi-Agent Workflows (NFR-MA-01: Workflow completion 15-20 minutes)
-- UC-011: Validate Plugin Security (NFR-PS-01: Validation time <10s)
-- SAD Section 4.2: Process View - Contributor Workflow Runtime
-
-**Implementation Guidance**:
-- Launch parallel reviewers in single message with multiple Task tool calls (avoid sequential API round-trips)
-- Chunk large documents if context window exceeded (UC-004: Exc-3)
-- Set timeout thresholds: 60s single-agent, 30 minutes multi-agent workflows
-
-#### NFR-PERF-03: Document Generation Response Time
-
-**Requirement**: Template-based document generation completes within user tolerance thresholds.
-
-| Document Type | Target Generation Time | Rationale |
-|---------------|----------------------|-----------|
-| Intake forms (5 templates) | <2 minutes interactive, <30s batch | User completes intake in single session |
-| Use case specification (3-5 pages) | <5 minutes | Requirements elaboration, moderate complexity |
-| Software Architecture Document (10,000+ words) | <20 minutes (multi-agent) | Comprehensive artifact, parallel reviewers improve speed |
-| Traceability matrix (1000+ requirements) | <90s | Automation speedup vs manual CSV (99% effort reduction target) |
-
-**Traceability**:
-- SAD Section 9.1: Technical Risks (Traceability complexity, PoC validation 8-hour spike)
-- Elaboration Phase Plan: Enhancement plan execution (testability 80h, security 89h)
-
-**Implementation Guidance**:
-- Use streaming output for long documents (show progress incrementally)
-- Cache template parsing results (avoid re-reading templates per invocation)
-- Parallelize traceability graph construction (NetworkX supports parallel edge insertion)
-
-### 2.3 Throughput Requirements
-
-#### NFR-PERF-04: Agent Orchestration Throughput
-
-**Requirement**: System supports concurrent multi-agent workflows without degradation.
-
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| Concurrent agents (parallel reviewers) | 4-6 agents simultaneously | Multi-agent pattern design (UC-004: Step 5) |
-| Maximum concurrent agents | 25 agents (Claude Code constraint) | Platform limitation, chunk workflows if exceeded |
-| Traceability graph processing | <90s for 10,000+ node graphs | Scalability target (SAD Section 8.4) |
-
-**Traceability**:
-- UC-004: Multi-Agent Workflows (BR-MA-003: Parallel execution limits)
-- SAD Section 8.4: Scalability (10,000+ node graphs)
-
-**Implementation Guidance**:
-- Monitor Task tool concurrency limits (platform-dependent)
-- Queue workflows exceeding 25 agents (sequential batches)
-- Use incremental graph construction (avoid loading full graph into memory)
-
-#### NFR-PERF-05: Manifest Generation Throughput
-
-**Requirement**: Manifest generation and validation scales with repository size.
-
-| Repository Size | Manifest Generation Time | Validation Time | Rationale |
-|-----------------|------------------------|----------------|-----------|
-| 100 files, 10 directories | <1s | <2s | Typical small project |
-| 500 files, 50 directories | <3s | <5s | Medium project (AIWG current scale) |
-| 1000 files, 100 directories | <5s | <10s | Large project (future scale) |
-
-**Traceability**:
-- SAD Section 4.3: Module Structure (manifest system description)
-- Elaboration Phase Plan: Testability enhancement plan (test data catalog 50+ fixtures)
-
-**Implementation Guidance**:
-- Parallelize file tree traversal (concurrent directory reads)
-- Skip node_modules/, .git/ directories (reduce filesystem I/O)
-- Cache directory metadata (avoid stat() calls on unchanged files)
-
-### 2.4 Resource Utilization Targets
-
-#### NFR-PERF-06: CLI Tool Memory Usage
-
-**Requirement**: CLI tools remain memory-efficient, avoiding resource contention on developer machines.
-
-| Tool | Peak Memory Target | Rationale |
-|------|-------------------|-----------|
-| `aiwg` CLI commands | <100MB RAM | Lightweight wrapper, minimal overhead |
-| Node.js scripts (manifest, deploy) | <500MB RAM peak | Reasonable for Node.js, avoid memory leaks |
-| Python traceability engine | <1GB RAM (10K node graphs) | NetworkX graph structures scale linearly |
-
-**Measurement Context**: Memory profiling via `time -v` (Linux), `/usr/bin/time -l` (macOS), or Task Manager (Windows).
-
-**Traceability**:
-- SAD Section 7.1: Core Technologies (Node.js, Python stack)
-- Solution Profile: Solo developer, resource-constrained (time, not hardware)
-
-**Implementation Guidance**:
-- Stream large files (avoid buffering full content in memory)
-- Release graph memory after traceability report generation (Python gc.collect())
-- Use Node.js `--max-old-space-size=512` flag to cap heap size
-
-#### NFR-PERF-07: Disk Space Requirements
-
-**Requirement**: AIWG installation and usage consume minimal disk space.
-
-| Component | Disk Space Target | Rationale |
-|-----------|------------------|-----------|
-| AIWG installation (`~/.local/share/ai-writing-guide/`) | <2GB total | Comprehensive framework, includes templates/agents/docs |
-| Deployed agents (`.claude/agents/`) | <10MB | Markdown files, text-only |
-| Deployed commands (`.claude/commands/`) | <5MB | Markdown files, smaller than agents |
-| SDLC artifacts (`.aiwg/` per project) | <50MB typical, <500MB max | Documentation project artifacts, grows with project size |
-| Plugin registry (`.aiwg-plugins/`) | <100MB for 10 plugins | Varies by plugin complexity |
-
-**Traceability**:
-- SAD Section 4.3: Development View - Module Structure
-- ADR-006: Plugin Rollback Strategy (CLAUDE.md baseline ~50KB, minimal disk overhead)
-
-**Implementation Guidance**:
-- Compress plugin archives (gzip/brotli for distribution)
-- Clean up `.aiwg/working/` temporary files after workflows complete
-- Provide `aiwg -cleanup` command to remove old backups (30-day retention policy)
-
-### 2.5 Performance Regression Detection
-
-#### NFR-PERF-08: CI/CD Performance Baselines
-
-**Requirement**: CI/CD pipeline tracks performance regressions with <20% tolerance threshold.
-
-| Metric | Baseline | Regression Threshold | Action |
-|--------|----------|---------------------|--------|
-| Deploy-agents execution time | 5s (p95) | >6s (20% slower) | CI fails, investigate regression |
-| Manifest generation time | 3s (p95, 500 files) | >3.6s (20% slower) | CI fails, investigate regression |
-| Full test suite execution | <20 minutes | >24 minutes (20% slower) | CI fails, investigate regression |
-
-**Traceability**:
-- SAD Section 11.3: Testing Roadmap (performance baseline report, CI/CD regression detection)
-- Elaboration Phase Plan: Testability enhancement plan (performance baselines Weeks 3-4)
-
-**Implementation Guidance**:
-- Store performance baselines in `.aiwg/reports/performance-baseline.json`
-- Run performance tests on every PR (GitHub Actions: `performance-test.yml`)
-- Alert maintainer if regression exceeds threshold (GitHub issue auto-creation)
-
-### 2.6 Context Loading Performance
-
-#### NFR-PERF-09: Framework-Scoped Context Loading
-
-**Requirement**: Framework-scoped workspace architecture enables fast context loading by filtering irrelevant frameworks.
-
-| Context Load Type | Target Loading Time | Context Pollution Prevention | Rationale |
-|------------------|---------------------|---------------------------|-----------|
-| Single framework context (SDLC only) | <500ms | 100% isolation (exclude marketing/, agile/ frameworks) | Agent loads only relevant artifacts, no cross-framework pollution |
-| Multi-framework context (SDLC + Marketing) | <1s | Explicit framework list required | User working across 2 frameworks simultaneously |
-| Framework auto-detection | <100ms | Metadata-based routing (no user selection) | Natural language triggers correct framework implicitly |
-| Tier-based filtering (repo/ only) | <200ms | Exclude projects/, working/, archive/ | Global stable docs loaded fast |
-
-**Traceability**:
-- UC-012: Framework-Aware Workspace Management (AC-003: Context loading <500ms)
-- ADR-007: Framework-Scoped Workspace Architecture (4-tier workspace design)
-- FID-007: Workspace Management Feature (P0 #1, 80 hours, Week 2-4)
-
-**Implementation Guidance**:
-- Filesystem scan limited to `.aiwg/frameworks/{framework-id}/` (exclude other frameworks)
-- Lazy loading for tiers (load repo/ first, then projects/ on-demand)
-- Framework registry caches metadata (avoid re-parsing YAML on every context load)
-- Natural language router detects framework from command metadata (no user friction)
+**Priority Focus**: P0 NFRs target user-facing operations (validation, deployment, analysis). P1 NFRs target multi-agent workflows and advanced features.
 
 ---
 
-## 3. Scalability Requirements
+### NFR-PERF-001: Content Validation Time [P0]
+
+**Description**: AI pattern validation completes within acceptable user workflow tolerance.
+
+**Rationale**: Content validation is frequent user operation. Delays >60 seconds interrupt writing flow, causing users to abandon validation mid-task.
+
+**Measurement Criteria**:
+- **Target**: <60 seconds for 2000-word documents (95th percentile)
+- **Measurement Methodology**: Benchmark test with 2000-word fixture documents, 100 runs, exclude top/bottom 5% outliers, report 95th percentile
+- **Baseline**: 45 seconds (typical), 60 seconds (threshold)
+
+**Testing Approach**: **Automated** - Performance benchmarking with Node.js `performance.now()` timer
+
+**Priority**: **P0** - User workflow interruption if exceeded, direct impact on user experience
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-001, main flow)
+- **Test Cases**: TC-001-015 (performance validation)
+- **Components**: WritingValidator, PatternDetector (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: <60 seconds (p95) for 2000-word documents
+
+**Current Baseline**: TBD (establish baseline in Construction Week 1)
+
+**Implementation Notes**:
+- Use incremental pattern matching (avoid reprocessing entire document)
+- Cache pattern database after first load (avoid re-parsing YAML)
+- Parallelize pattern detection across sections (chunk document)
+
+---
+
+### NFR-PERF-002: SDLC Deployment Time [P0]
+
+**Description**: Framework deployment completes quickly to minimize first-time setup friction.
+
+**Rationale**: First impression matters. Slow deployment (>10s) creates perception of heavyweight tooling, reducing adoption.
+
+**Measurement Criteria**:
+- **Target**: <10 seconds for 58 agents + 45 commands deployment (95th percentile)
+- **Measurement Methodology**: Timed deployment execution from `aiwg -deploy-agents --mode sdlc` invocation to completion, 100 runs, report p95
+- **Baseline**: 7 seconds (typical), 10 seconds (threshold)
+
+**Testing Approach**: **Automated** - Shell time command or custom timer in deployment script
+
+**Priority**: **P0** - First-time setup friction, onboarding conversion rate impact
+
+**Traceability**:
+- **Source**: UC-002: Deploy SDLC Framework to Existing Project (AC-001, main flow)
+- **Test Cases**: TC-002-015 (performance validation)
+- **Components**: CLI entry point, deploy-agents.mjs (SAD Section 2.1)
+- **ADRs**: ADR-006 (Plugin Rollback Strategy)
+
+**Target Value**: <10 seconds (p95) for 58 agents + 45 commands
+
+**Current Baseline**: 7 seconds (measured on reference hardware: 4 cores @ 2.5 GHz, 8GB RAM, SSD)
+
+**Implementation Notes**:
+- Parallelize file copy operations (concurrent writes)
+- Use filesystem streaming (avoid buffering entire agent files in memory)
+- Skip CLAUDE.md update if no changes detected (checksum comparison)
+
+---
+
+### NFR-PERF-003: Codebase Analysis Time [P0]
+
+**Description**: Existing codebase analysis completes within acceptable brownfield onboarding tolerance.
+
+**Rationale**: Brownfield projects (existing codebases) are high-value adoption target. Slow analysis (>5 minutes) blocks onboarding, users abandon mid-setup.
+
+**Measurement Criteria**:
+- **Target**: <5 minutes for 1000-file repositories (95th percentile)
+- **Measurement Methodology**: Benchmark test with 1000-file fixture repository, 50 runs, report p95
+- **Baseline**: 3 minutes (typical), 5 minutes (threshold)
+
+**Testing Approach**: **Automated** - `intake-from-codebase` command with timer
+
+**Priority**: **P0** - Brownfield adoption blocker if slow, impacts target market (existing projects)
+
+**Traceability**:
+- **Source**: UC-003: Analyze Existing Codebase for Intake (AC-001, main flow)
+- **Test Cases**: TC-003-015 (performance validation)
+- **Components**: IntakeCoordinator, CodebaseAnalyzer (SAD Section 5.2)
+- **ADRs**: None
+
+**Target Value**: <5 minutes (p95) for 1000-file repositories
+
+**Current Baseline**: TBD (establish baseline in Construction Week 2)
+
+**Implementation Notes**:
+- Parallelize file tree traversal (concurrent directory reads)
+- Skip node_modules/, .git/, .aiwg/ directories (reduce filesystem I/O)
+- Use heuristic sampling for large codebases (analyze 10% representative files)
+
+---
+
+### NFR-PERF-004: Multi-Agent Workflow Completion [P1]
+
+**Description**: Comprehensive artifact generation workflows complete within productivity tolerance.
+
+**Rationale**: Multi-agent workflows (SAD generation) are productivity multiplier. 15-20 minutes acceptable for comprehensive artifacts (vs hours manually).
+
+**Measurement Criteria**:
+- **Target**: 15-20 minutes for SAD + reviews (wall-clock time)
+- **Measurement Methodology**: End-to-end multi-agent workflow timer (orchestrator logs with timestamp deltas)
+- **Baseline**: 18 minutes (typical), 20 minutes (threshold)
+
+**Testing Approach**: **Automated** - Orchestrator workflow timer with mock agents
+
+**Priority**: **P1** - Productivity impact, but acceptable baseline (15-20 min still faster than manual)
+
+**Traceability**:
+- **Source**: UC-004: Multi-Agent Workflows (AC-001, main flow)
+- **Test Cases**: TC-004-015 (performance validation)
+- **Components**: CoreOrchestrator, multi-agent coordination (SAD Section 4.2)
+- **ADRs**: None
+
+**Target Value**: 15-20 minutes for SAD generation + 4 parallel reviews + synthesis
+
+**Current Baseline**: TBD (establish baseline in Construction Week 3)
+
+**Implementation Notes**:
+- Launch parallel reviewers in single message (multiple Task tool calls)
+- Chunk large artifacts if context window exceeded (10,000-word limit)
+- Set timeout thresholds: 30 minutes for full workflow
+
+---
+
+### NFR-PERF-005: Traceability Validation Time [P1]
+
+**Description**: Automated traceability validation completes within enterprise project tolerance.
+
+**Rationale**: Enterprise projects have 10,000+ nodes (requirements, code, tests). Validation >90s degrades usability, users revert to manual spot-checks.
+
+**Measurement Criteria**:
+- **Target**: <90 seconds for 10,000+ node graphs (95th percentile)
+- **Measurement Methodology**: Graph algorithm profiler with 10,000-node fixture
+- **Baseline**: 60 seconds (typical), 90 seconds (threshold)
+
+**Testing Approach**: **Automated** - Graph traversal performance test
+
+**Priority**: **P1** - Enterprise scale feature, deferred to post-MVP (MVP targets smaller projects)
+
+**Traceability**:
+- **Source**: UC-006: Automated Traceability Validation (AC-001, main flow)
+- **Test Cases**: TC-006-015 (performance validation)
+- **Components**: TraceabilityEngine (SAD Section 5.3)
+- **ADRs**: None
+
+**Target Value**: <90 seconds (p95) for 10,000+ node graphs
+
+**Current Baseline**: TBD (establish baseline in Construction Week 4, after traceability implementation)
+
+**Implementation Notes**:
+- Use NetworkX sparse graph representation (CSR format)
+- Implement incremental graph updates (avoid full rebuilds)
+- Parallelize graph traversal algorithms (depth-first search on subgraphs)
+
+---
+
+### NFR-PERF-006: Metrics Collection Overhead [P1]
+
+**Description**: Observability metrics collection has negligible performance impact.
+
+**Rationale**: Metrics (velocity, test coverage, artifact counts) valuable for retrospectives. However, >5% overhead slows development, users disable metrics.
+
+**Measurement Criteria**:
+- **Target**: <5% performance impact (comparison: metrics enabled vs disabled)
+- **Measurement Methodology**: A/B benchmark comparison (e.g., 100s baseline vs 105s with metrics = 5% overhead)
+- **Baseline**: 2% overhead (typical), 5% overhead (threshold)
+
+**Testing Approach**: **Automated** - Benchmark harness with metrics toggle
+
+**Priority**: **P1** - Observability feature, deferred to FID-002 (Version 1.1)
+
+**Traceability**:
+- **Source**: UC-007: Collect and Visualize Metrics (AC-001, main flow)
+- **Test Cases**: TC-007-015 (performance validation)
+- **Components**: MetricsCollector (SAD Section 5.3)
+- **ADRs**: None
+
+**Target Value**: <5% performance impact on development workflows
+
+**Current Baseline**: TBD (establish baseline in Version 1.1, FID-002 implementation)
+
+**Implementation Notes**:
+- Use async metrics collection (non-blocking background writes)
+- Batch metric writes (avoid frequent filesystem I/O)
+- Use sampling (collect metrics every Nth operation, not every operation)
+
+---
+
+### NFR-PERF-007: Template Selection Time [P1]
+
+**Description**: Intelligent template recommendation completes quickly to accelerate onboarding.
+
+**Rationale**: Template selection guides reduce onboarding friction. Recommendation >2 minutes frustrates users, who prefer manual selection.
+
+**Measurement Criteria**:
+- **Target**: <2 minutes to recommend template pack (95th percentile)
+- **Measurement Methodology**: `intake-wizard` command with timer (from invocation to recommendation display)
+- **Baseline**: 90 seconds (typical), 120 seconds (threshold)
+
+**Testing Approach**: **Automated** - Template recommendation execution timer
+
+**Priority**: **P1** - Onboarding enhancement, deferred to FID-003 (Version 1.1)
+
+**Traceability**:
+- **Source**: UC-008: Template Selection Guides (AC-001, main flow)
+- **Test Cases**: TC-008-015 (performance validation)
+- **Components**: TemplateSelector (SAD Section 2.1)
+- **ADRs**: None
+
+**Target Value**: <2 minutes (p95) for template pack recommendation
+
+**Current Baseline**: TBD (establish baseline in Version 1.1, FID-003 implementation)
+
+**Implementation Notes**:
+- Cache template metadata (avoid re-parsing YAML on every invocation)
+- Use heuristic scoring (fast rule-based matching, not ML models)
+- Limit recommendation set (top 3 templates, not exhaustive search)
+
+---
+
+### NFR-PERF-008: Test Suite Generation Time [P2]
+
+**Description**: Automated test suite generation completes within productivity tolerance.
+
+**Rationale**: Test generation is productivity multiplier (manual test writing takes days). <10 minutes acceptable for comprehensive suite.
+
+**Measurement Criteria**:
+- **Target**: <10 minutes for full test suite generation (unit + integration + E2E)
+- **Measurement Methodology**: Test Engineer agent execution timer (from invocation to completion)
+- **Baseline**: 7 minutes (typical), 10 minutes (threshold)
+
+**Testing Approach**: **Automated** - Test generation workflow timer
+
+**Priority**: **P2** - Nice-to-have feature, deferred to FID-004 enhancement (Version 2.0)
+
+**Traceability**:
+- **Source**: UC-009: Generate Test Templates (AC-001, main flow)
+- **Test Cases**: TC-009-015 (performance validation)
+- **Components**: TestEngineer agent (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: <10 minutes (p95) for full test suite generation
+
+**Current Baseline**: TBD (establish baseline in FID-004 implementation)
+
+**Implementation Notes**:
+- Generate tests in parallel (unit, integration, E2E simultaneously)
+- Use template-based generation (avoid computationally expensive analysis)
+- Cache test fixtures (avoid regenerating common test data)
+
+---
+
+### NFR-PERF-009: Plugin Rollback Time [P2]
+
+**Description**: Plugin rollback completes nearly instantly to minimize disruption.
+
+**Rationale**: Rollback is error recovery mechanism. Slow rollback (>5s) prolongs user frustration after installation failure.
+
+**Measurement Criteria**:
+- **Target**: <5 seconds (95th percentile)
+- **Measurement Methodology**: `performance.now()` timer with millisecond precision
+- **Baseline**: 2 seconds (typical), 5 seconds (threshold)
+
+**Testing Approach**: **Automated** - Rollback execution timer
+
+**Priority**: **P2** - Risk mitigation feature, deferred to FID-005 (Version 2.0)
+
+**Traceability**:
+- **Source**: UC-010: Plugin Rollback (AC-001, main flow)
+- **Test Cases**: TC-010-015 (performance validation)
+- **Components**: PluginManager (SAD Section 5.1)
+- **ADRs**: ADR-006 (Plugin Rollback Strategy - reset + redeploy)
+
+**Target Value**: <5 seconds (p95) for plugin rollback
+
+**Current Baseline**: TBD (establish baseline in FID-005 implementation)
+
+**Implementation Notes**:
+- Use filesystem reset (delete plugin directory, restore backup)
+- Avoid expensive validation (rollback assumes backup integrity)
+- Use parallel file operations (concurrent deletion + restoration)
+
+---
+
+### NFR-PERF-010: Security Validation Time [P2]
+
+**Description**: Pre-installation security validation completes quickly to avoid installation friction.
+
+**Rationale**: Security scanning is trust builder. However, >10s delay creates perception of heavyweight security, reducing adoption.
+
+**Measurement Criteria**:
+- **Target**: <10 seconds per plugin (95th percentile)
+- **Measurement Methodology**: Security scanner profiler (from scan invocation to completion)
+- **Baseline**: 5 seconds (typical), 10 seconds (threshold)
+
+**Testing Approach**: **Automated** - Security scan execution timer
+
+**Priority**: **P2** - Security feature, deferred to FID-006 Phase 3 (Version 2.0)
+
+**Traceability**:
+- **Source**: UC-011: Validate Plugin Security (AC-001, main flow)
+- **Test Cases**: TC-011-015 (performance validation)
+- **Components**: PluginSandbox, SecurityScanner (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: <10 seconds (p95) per plugin security scan
+
+**Current Baseline**: TBD (establish baseline in FID-006 Phase 3 implementation)
+
+**Implementation Notes**:
+- Use incremental scanning (cache scan results for unchanged plugins)
+- Parallelize static analysis checks (code injection, path traversal, XSS)
+- Use heuristic rules (fast pattern matching, not computationally expensive ML)
+
+---
+
+## 3. Throughput Requirements
 
 ### 3.1 Overview
 
-Scalability requirements ensure AIWG grows with user adoption and repository complexity without architectural refactoring. As a documentation and tooling project (not SaaS), scalability focuses on repository size (files, agents, plugins) and community growth (contributors, users), not runtime traffic (requests/second).
+Throughput requirements ensure AIWG supports batch operations and parallel workflows efficiently. As a documentation tooling project, throughput focuses on multi-file validation, parallel agent execution, and iteration velocity.
 
-**Scalability Philosophy**: "Design for 10x growth, build for current scale" - architecture supports future scale, implementation optimizes for MVP.
+**Throughput Philosophy**: "Scale operations without user intervention" - batch processing should work efficiently without manual optimization.
 
-### 3.2 Data Volume Scalability
-
-#### NFR-SCAL-01: Documentation Capacity
-
-**Requirement**: AIWG supports large documentation repositories without degradation.
-
-| Metric | Current Scale | Target Scale (1 year) | Max Scale (2 years) | Rationale |
-|--------|--------------|----------------------|-------------------|-----------|
-| Total markdown files | 500+ | 1,000+ | 5,000+ | Large enterprise documentation sets |
-| Total word count | 500,000 words | 1,000,000 words | 10,000,000 words | Comprehensive product documentation |
-| Directory depth | 10 levels | 15 levels | 20 levels | Complex project hierarchies |
-| Manifest files | 50+ | 100+ | 500+ | One per documented directory |
-
-**Traceability**:
-- SAD Section 2.2: Component Overview (156 templates, extensible plugin system)
-- Solution Profile: Will move to Production profile once user testing completes (2-5 users, 2-4 weeks)
-
-**Implementation Guidance**:
-- Parallelize file operations (concurrent reads during manifest generation)
-- Implement pagination for large directory listings (avoid memory exhaustion)
-- Use lazy loading for manifest data (load on-demand, not all at startup)
-
-#### NFR-SCAL-02: Agent Capacity
-
-**Requirement**: AIWG supports growing agent ecosystem without architectural changes.
-
-| Metric | Current Scale | Target Scale (1 year) | Max Scale (2 years) | Rationale |
-|--------|--------------|----------------------|-------------------|-----------|
-| SDLC agents | 58 | 100+ | 200+ | New specialized roles (domain-specific agents) |
-| General-purpose agents | 3 | 10+ | 50+ | Writing, validation, transformation agents |
-| Commands | 45 | 75+ | 150+ | New workflows, integrations |
-| Plugins | 0 (MVP) | 10+ | 100+ | Community contributions, compliance add-ons |
-
-**Traceability**:
-- SAD Section 2.1: High-Level System Architecture (plugin system design)
-- SAD Section 8.4: Scalability (support 1000+ plugins)
-
-**Implementation Guidance**:
-- Agent discovery via filesystem scan (no hardcoded agent registry)
-- Plugin manifest-driven architecture (declarative, not imperative)
-- Lazy agent loading (load agent definition only when invoked)
-
-#### NFR-SCAL-03: Traceability Graph Capacity
-
-**Requirement**: Traceability automation scales to enterprise-sized projects.
-
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| Graph nodes (requirements, code, tests) | 10,000+ | Large enterprise projects (1000s of requirements) |
-| Graph edges (dependencies) | 50,000+ | Dense traceability (5 edges per node average) |
-| Graph processing time | <90 seconds (10,000 nodes) | Acceptable automation delay (SAD Section 8.4) |
-| Memory footprint | <1GB RAM | Python NetworkX graph in-memory constraints |
-
-**Traceability**:
-- SAD Section 5.3: Pipeline Components (TraceabilityEngine)
-- SAD Section 9.1: Technical Risks (traceability complexity, PoC validation)
-
-**Implementation Guidance**:
-- Use NetworkX sparse graph representation (CSR format for large graphs)
-- Implement incremental graph updates (avoid full graph rebuilds)
-- Parallelize graph traversal algorithms (depth-first search on subgraphs)
-
-### 3.3 User Capacity
-
-#### NFR-SCAL-04: Concurrent User Support
-
-**Requirement**: AIWG tools support multiple developers on shared repository without conflicts.
-
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| Concurrent contributors | 2-5 currently, 10+ target | Team expansion (Solution Profile: 2-3 contributors within 6 months) |
-| Concurrent agent workflows | 5+ (per developer) | Multiple developers orchestrating agents simultaneously |
-| Git repository size | <1GB for .aiwg/ artifacts | Documentation artifacts stored in Git (audit trail) |
-
-**Traceability**:
-- Solution Profile: Team expansion plan (onboard 2nd contributor within 6 months)
-- SAD Section 4.4: Deployment View (local development, GitHub integration)
-
-**Implementation Guidance**:
-- Use file-based locking for shared resources (`.aiwg/.lock` file)
-- Isolate contributor workspaces (`.aiwg/contrib/{username}/` directories)
-- Encourage Git workflows for artifact management (branching, merging)
-
-#### NFR-SCAL-05: Community Contribution Capacity
-
-**Requirement**: AIWG infrastructure supports growing contributor community.
-
-| Metric | Current Scale | Target Scale (1 year) | Rationale |
-|--------|--------------|----------------------|-----------|
-| Contributors | 1 (solo developer) | 10+ | Community growth, 2-3 active contributors target (Solution Profile) |
-| PRs per month | 0 (pre-launch) | 20+ | Moderate contribution velocity |
-| GitHub CI/CD minutes | <100/month | <1000/month | Free tier: 2000 minutes/month limit |
-| Issue response time | N/A (0 users) | <48 hours | Support capacity target (Solution Profile: 10x growth scenario) |
-
-**Traceability**:
-- Solution Profile: 10x Growth Scenario (support capacity, self-improvement loops)
-- SAD Section 8.4: Scalability (100+ contributors, 1000+ plugins)
-
-**Implementation Guidance**:
-- Self-service infrastructure: FAQs, troubleshooting guides, GitHub Discussions
-- Self-improvement automation: Automated PR acceptance for docs, linting fixes
-- CI/CD optimization: Cache dependencies, parallelize jobs, skip unnecessary tests
-
-### 3.4 Horizontal Scalability
-
-#### NFR-SCAL-06: Deployment Scalability
-
-**Requirement**: AIWG deployment patterns support diverse project types and scales.
-
-| Project Type | AIWG Deployment | Scalability Constraint | Rationale |
-|--------------|----------------|----------------------|-----------|
-| Personal scripts (1-10 files) | General-purpose agents only (3 agents) | Minimal overhead | Smallest projects need lightweight tooling |
-| Small projects (10-100 files) | Selective SDLC agents (10-20 agents) | Moderate artifact generation | Focused workflows, not full SDLC |
-| Medium projects (100-1000 files) | Full SDLC framework (58 agents + 45 commands) | Comprehensive artifact generation | Enterprise-scale projects |
-| Enterprise systems (1000+ files) | Full SDLC + compliance plugins (70+ agents) | Heavy artifact generation, regulated | Compliance-sensitive, audit trail critical |
-
-**Traceability**:
-- Solution Profile: Modular deployment - handle diverse project types (smallest to largest apps)
-- SAD Section 10.1: Plugin Development Guidelines (structure, quality requirements)
-
-**Implementation Guidance**:
-- Modular agent deployment (users select subset via `--mode` flag)
-- Plugin-based extensibility (enterprise compliance add-ons optional)
-- Template-based scaffolding (project-type-specific initialization)
+**Priority Focus**: P2 NFRs target productivity enhancements (batch validation, parallel execution, iteration velocity). Deferred to post-MVP to reduce scope.
 
 ---
 
-## 4. Availability Requirements
+### NFR-THRU-001: Batch Validation Throughput [P2]
+
+**Description**: Batch file validation completes efficiently for documentation sets.
+
+**Rationale**: Users validate entire documentation directories (10+ files). Sequential validation wastes time, users expect parallel processing.
+
+**Measurement Criteria**:
+- **Target**: 10+ files per minute (batch validation)
+- **Measurement Methodology**: Batch validation timer with 10-file test set
+- **Baseline**: 12 files/minute (typical), 10 files/minute (threshold)
+
+**Testing Approach**: **Automated** - Batch validation performance test
+
+**Priority**: **P2** - Productivity enhancement, deferred to post-MVP batch operations feature
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (Alt-4: batch validation)
+- **Test Cases**: TC-001-022 (batch throughput validation)
+- **Components**: WritingValidator (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 10+ files per minute for batch validation
+
+**Current Baseline**: TBD (establish baseline in batch operations feature)
+
+**Implementation Notes**:
+- Parallelize file validation (3-5 concurrent processes)
+- Use shared pattern database (avoid reloading per file)
+- Stream results incrementally (display validation progress in real-time)
+
+---
+
+### NFR-THRU-002: Parallel File Validation [P2]
+
+**Description**: System supports concurrent file validation without degradation.
+
+**Rationale**: Parallel processing maximizes CPU utilization. Sequential validation wastes compute resources, slows batch operations.
+
+**Measurement Criteria**:
+- **Target**: 3-5 concurrent validation processes
+- **Measurement Methodology**: Concurrency test with resource monitoring (CPU, memory)
+- **Baseline**: 5 concurrent processes (typical), 3 minimum (threshold)
+
+**Testing Approach**: **Automated** - Parallel execution performance test
+
+**Priority**: **P2** - Performance optimization, deferred to post-MVP batch operations feature
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (Alt-4: batch validation)
+- **Test Cases**: TC-001-023 (parallel execution validation)
+- **Components**: WritingValidator (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 3-5 concurrent validation processes
+
+**Current Baseline**: TBD (establish baseline in batch operations feature)
+
+**Implementation Notes**:
+- Use Node.js worker threads (avoid process overhead)
+- Limit concurrency to CPU core count (avoid oversubscription)
+- Use semaphore pattern (queue excess validations if concurrency exceeded)
+
+---
+
+### NFR-THRU-003: Iteration Velocity [P2]
+
+**Description**: Iteration cycle completes within Agile workflow cadence.
+
+**Rationale**: Agile teams expect 1-2 week iterations. >2 weeks reduces feedback velocity, defeats purpose of iterative development.
+
+**Measurement Criteria**:
+- **Target**: 1-2 week iterations (10 business days maximum)
+- **Measurement Methodology**: Iteration planning to retrospective duration tracking
+- **Baseline**: 10 days (typical), 14 days (threshold)
+
+**Testing Approach**: **Manual** - Process observation (not automated)
+
+**Priority**: **P2** - Process metric, deferred to FID-005 (Framework Self-Improvement) validation
+
+**Traceability**:
+- **Source**: UC-005: Framework Self-Improvement (AC-006: velocity tracking)
+- **Test Cases**: TC-FSI-007 (velocity measurement)
+- **Components**: IterationPlanner, RetrospectiveFacilitator (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 1-2 week iteration cycle time
+
+**Current Baseline**: TBD (establish baseline during Framework Self-Improvement execution)
+
+**Implementation Notes**:
+- Track iteration duration in metrics CSV (`.aiwg/metrics/velocity-history.csv`)
+- Adjust iteration scope based on historical velocity (38-42 story points)
+- Flag iterations exceeding 14 days (retrospective action item)
+
+---
+
+## 4. Accuracy Requirements
 
 ### 4.1 Overview
 
-Availability requirements ensure AIWG tools remain accessible during normal usage. As a documentation and tooling project (not runtime service), availability focuses on GitHub uptime (external dependency), local CLI reliability, and installation recovery.
+Accuracy requirements ensure AIWG automated analysis produces reliable, trustworthy results. As an AI-assisted tooling project, accuracy focuses on pattern detection precision, intake field accuracy, and security validation reliability.
 
-**Availability Philosophy**: "Tools should just work" - minimal downtime, graceful degradation, fast recovery.
+**Accuracy Philosophy**: "Trust but verify" - automated analysis should be accurate enough to reduce manual review burden, while acknowledging <100% accuracy.
 
-### 4.2 System Availability Targets
-
-#### NFR-AVAIL-01: GitHub Repository Availability
-
-**Requirement**: AIWG repository accessible for installation, updates, documentation.
-
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| GitHub uptime (external) | 99.9%+ SLA (GitHub commitment) | AIWG depends on GitHub infrastructure (SAD Section 4.4) |
-| Planned maintenance | <1 hour/month | Repository maintenance windows |
-| Emergency downtime | <30 minutes | Critical fixes, security patches |
-
-**Traceability**:
-- Solution Profile: Reliability - GitHub uptime (99.9%+, external dependency)
-- SAD Section 4.4: Deployment View (GitHub repository)
-
-**Degradation Strategy**:
-- If GitHub down: Users can work offline with already-installed AIWG (local agents/commands)
-- Cached plugins allow local installation (no network required if cached)
-- Documentation available locally (`~/.local/share/ai-writing-guide/README.md`)
-
-#### NFR-AVAIL-02: CLI Tool Availability
-
-**Requirement**: CLI commands remain available on local developer machines.
-
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| CLI uptime | 99.99% (local tool, no network dependencies) | Developer productivity |
-| Installation corruption | <5 minutes to recover (via `aiwg -reinstall`) | Fast recovery from installation corruption |
-| Upgrade availability | Daily (automatic updates on every command invocation) | Users always on latest version |
-
-**Traceability**:
-- CLAUDE.md: `aiwg` automatically updates on every command invocation
-- Solution Profile: Installation recovery via `aiwg -reinstall`
-
-**Recovery Procedures**:
-- Corruption detected: `aiwg -reinstall` (force fresh reinstall, <5 minutes)
-- Partial installation: Rollback via reset + redeploy (ADR-006, <2s)
-- Missing aiwg command: Reinstall via one-line bash script
-
-#### NFR-AVAIL-03: CI/CD Pipeline Availability
-
-**Requirement**: CI/CD pipelines remain operational for PR validation, testing, deployment.
-
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| GitHub Actions uptime | 99.9%+ SLA (GitHub commitment) | PR validation, linting, testing |
-| CI/CD job retries | 3 automatic retries (transient failures) | Network timeouts, API rate limits |
-| CI/CD timeout | <30 minutes per job | Detect hung jobs, avoid wasted minutes |
-
-**Traceability**:
-- SAD Section 4.4: Deployment View (CI/CD Pipeline)
-- Solution Profile: GitHub Free Tier (2000 CI/CD minutes/month limit)
-
-**Implementation Guidance**:
-- Cache dependencies in CI (avoid re-downloading Node.js packages, Python libs)
-- Parallelize test jobs (unit, integration, linting in separate jobs)
-- Fail fast: Abort PR validation if linting fails (skip expensive test jobs)
-
-### 4.3 Recovery Requirements
-
-#### NFR-AVAIL-04: Recovery Time Objective (RTO)
-
-**Requirement**: System recovers from failures within defined time windows.
-
-| Failure Scenario | RTO | Rationale |
-|-----------------|-----|-----------|
-| Installation corruption | <5 minutes (`aiwg -reinstall`) | Critical for developer productivity (Solution Profile) |
-| Plugin installation failure | <2 seconds (rollback via ADR-006) | Reset + redeploy strategy (ADR-006) |
-| Repository issues (GitHub outage) | <15 minutes (manual intervention) | Wait for GitHub recovery, use local tools |
-| CI/CD pipeline failure | <2 hours (maintainer investigation) | Non-critical, batched fixes |
-
-**Traceability**:
-- ADR-006: Plugin Rollback Strategy (<2 second reset target)
-- SAD Section 11.2: Security Implementation Roadmap (rollback implementation)
-
-**Implementation Guidance**:
-- Automated rollback for plugin failures (no manual intervention)
-- `aiwg -reinstall` script idempotent (safe to run multiple times)
-- CI/CD retry logic (automatic recovery from transient failures)
-
-#### NFR-AVAIL-05: Data Backup and Retention
-
-**Requirement**: Critical data backed up to prevent loss during failures.
-
-| Data Type | Backup Location | Retention | Rationale |
-|-----------|----------------|-----------|-----------|
-| Git repository | GitHub (remote) | Permanent | Distributed version control, user clones provide backups |
-| AIWG installation | User reinstalls from GitHub | N/A (stateless tool) | Reinstall from source, no local state preserved |
-| SDLC artifacts (`.aiwg/`) | User Git commits | Permanent (user-managed) | Audit trail, compliance evidence |
-| Plugin registry backups | `.aiwg/backups/` | 30 days | Rollback recovery (ADR-006) |
-| CLAUDE.md backups | `.aiwg/backups/CLAUDE.md.backup` | 30 days | Recovery from corruption (UC-002: Exc-3) |
-
-**Traceability**:
-- ADR-006: Plugin Rollback Strategy (backup directory `.aiwg/backups/`)
-- UC-002: Deploy SDLC Framework (Exc-3: CLAUDE.md corruption during update)
-
-**Implementation Guidance**:
-- Encourage users to commit `.aiwg/` to Git (audit trail, team collaboration)
-- Provide `.gitignore` examples for excluding temporary files (`.aiwg/working/`)
-- Automated cleanup of old backups (30-day retention policy)
+**Priority Focus**: P0 NFRs target user trust (false positive rates, security detection). P1/P2 NFRs target quality enhancements (traceability accuracy, recommendation acceptance).
 
 ---
 
-## 5. Security Requirements
+### NFR-ACC-001: AI Pattern False Positive Rate [P0]
+
+**Description**: AI pattern detection minimizes false positives to maintain user trust.
+
+**Rationale**: Excessive false positives (>5%) erode confidence. Users ignore validation feedback if frequently incorrect, defeating purpose.
+
+**Measurement Criteria**:
+- **Target**: <5% false positive rate
+- **Measurement Methodology**: Statistical validation with 1000-document corpus (500 AI-generated, 500 human-written). Confusion matrix: max 25 false positives out of 500 human documents.
+- **Baseline**: 3% false positive rate (typical), 5% (threshold)
+
+**Testing Approach**: **Statistical** - Ground truth corpus validation with confusion matrix analysis
+
+**Priority**: **P0** - Trust erosion if exceeded, direct impact on user confidence
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-001, AC-002: validation feedback)
+- **Test Cases**: TC-001-016 (accuracy validation)
+- **Components**: PatternDetector (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: <5% false positive rate (max 25 false positives per 500 human documents)
+
+**Current Baseline**: TBD (establish baseline in Construction Week 1, requires ground truth corpus)
+
+**Ground Truth Strategy**:
+- Phase 1 (Elaboration): Small corpus (100 documents, 50 AI + 50 human)
+- Phase 2 (Construction): Expand corpus (500 documents, 250 AI + 250 human)
+- Phase 3 (Transition): Full corpus (1000 documents, 500 AI + 500 human)
+
+**Implementation Notes**:
+- Use conservative pattern matching (reduce false positives, accept higher false negatives)
+- Provide confidence scores (low-confidence patterns flagged for manual review)
+- Allow user feedback (mark false positives to improve pattern database)
+
+---
+
+### NFR-ACC-002: Intake Field Accuracy [P0]
+
+**Description**: Automated codebase analysis produces accurate intake field values.
+
+**Rationale**: High accuracy (80-90%) reduces manual correction burden. <80% accuracy makes automation ineffective, users revert to manual intake.
+
+**Measurement Criteria**:
+- **Target**: 80-90% field accuracy (user edits <20%)
+- **Measurement Methodology**: User study with 100 codebases, track field edit rate (fields changed / total fields)
+- **Baseline**: 85% accuracy (typical), 80% (threshold)
+
+**Testing Approach**: **Manual** - User acceptance testing (UAT) with edit tracking
+
+**Priority**: **P0** - Manual correction burden if low, brownfield adoption blocker
+
+**Traceability**:
+- **Source**: UC-003: Analyze Existing Codebase for Intake (AC-002: field accuracy)
+- **Test Cases**: TC-003-016 (accuracy validation)
+- **Components**: CodebaseAnalyzer (SAD Section 5.2)
+- **ADRs**: None
+
+**Target Value**: 80-90% field accuracy (user edits <20%)
+
+**Current Baseline**: TBD (establish baseline in Transition phase, UAT with beta testers)
+
+**Proxy Metric for Automated Testing**:
+- Measure field completeness (% fields populated) as proxy for accuracy
+- Target: 95% field completeness (critical fields: name, tech stack, language)
+
+**Implementation Notes**:
+- Use heuristic analysis (package.json, README.md, directory structure)
+- Provide confidence scores (low-confidence fields flagged for review)
+- Prefill with high-confidence defaults (e.g., "Node.js" if package.json exists)
+
+---
+
+### NFR-ACC-003: Automated Traceability Accuracy [P2]
+
+**Description**: Automated traceability validation matches manual traceability matrices.
+
+**Rationale**: 99% accuracy enables trust in automated traceability. <99% requires extensive manual review, reducing automation value.
+
+**Measurement Criteria**:
+- **Target**: 99% accuracy (comparison with manual traceability matrix)
+- **Measurement Methodology**: Ground truth comparison (automated CSV vs manual CSV), diff tool
+- **Baseline**: 99.5% accuracy (typical), 99% (threshold)
+
+**Testing Approach**: **Statistical** - Ground truth comparison with manual matrices
+
+**Priority**: **P2** - Compliance feature, deferred to FID-001 enhancement (Version 2.0)
+
+**Traceability**:
+- **Source**: UC-006: Automated Traceability Validation (AC-001: accuracy target)
+- **Test Cases**: TC-006-016 (accuracy validation)
+- **Components**: TraceabilityEngine (SAD Section 5.3)
+- **ADRs**: None
+
+**Target Value**: 99% accuracy (max 1% errors)
+
+**Current Baseline**: TBD (establish baseline in FID-001 implementation)
+
+**Ground Truth Strategy**:
+- Create manual traceability matrices for 5 sample projects (Elaboration)
+- Expand to 20 sample projects (Construction)
+- Validate against 50 sample projects (Transition)
+
+**Implementation Notes**:
+- Use regex-based link extraction (robust to format variations)
+- Validate bidirectional links (requirement → code, code → requirement)
+- Flag orphaned nodes (requirements with no code, code with no tests)
+
+---
+
+### NFR-ACC-004: Template Recommendation Acceptance [P2]
+
+**Description**: Intelligent template recommendations align with user preferences.
+
+**Rationale**: 85% acceptance rate indicates recommendations add value. <85% suggests poor recommendation quality, users ignore feature.
+
+**Measurement Criteria**:
+- **Target**: 85% user acceptance rate (users accept recommended template vs choosing different template)
+- **Measurement Methodology**: A/B testing, track user choices (accept recommendation = 1, reject = 0), aggregate acceptance rate
+- **Baseline**: 90% acceptance (typical), 85% (threshold)
+
+**Testing Approach**: **Manual** - User acceptance testing (UAT) with A/B tracking
+
+**Priority**: **P2** - Onboarding enhancement, deferred to FID-003 (Version 2.0)
+
+**Traceability**:
+- **Source**: UC-008: Template Selection Guides (AC-002: recommendation acceptance)
+- **Test Cases**: TC-008-016 (accuracy validation)
+- **Components**: TemplateSelector (SAD Section 2.1)
+- **ADRs**: None
+
+**Target Value**: 85% user acceptance rate
+
+**Current Baseline**: TBD (establish baseline in Transition phase, UAT with beta testers)
+
+**Proxy Metric for Automated Testing**:
+- Measure template diversity (% templates recommended vs always same template)
+- Target: Recommend 3+ different templates across 10 test cases (avoid single-template bias)
+
+**Implementation Notes**:
+- Use heuristic scoring (project size, tech stack, team size)
+- Limit recommendation set (top 3 templates, ranked by score)
+- Provide explanation (why this template recommended)
+
+---
+
+### NFR-ACC-005: Security Attack Detection [P0]
+
+**Description**: Plugin security validation detects all known attack vectors.
+
+**Rationale**: 100% detection of known attacks is security table stakes. Missing attacks (false negatives) exposes users to malicious plugins.
+
+**Measurement Criteria**:
+- **Target**: 100% detection rate for known attack vectors
+- **Measurement Methodology**: Security test suite with 50 known attack patterns (code injection, path traversal, XSS, etc.), verify 100% detected
+- **Baseline**: 100% (no false negatives allowed)
+
+**Testing Approach**: **Automated** - Security scanner with attack database
+
+**Priority**: **P0** - Security breach if missed, enterprise blocker
+
+**Traceability**:
+- **Source**: UC-011: Validate Plugin Security (AC-001: attack detection)
+- **Test Cases**: TC-011-016 (security validation)
+- **Components**: SecurityScanner, PluginSandbox (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 100% detection rate (all 50 known attacks detected)
+
+**Current Baseline**: TBD (establish baseline in FID-006 Phase 1-2 implementation)
+
+**Attack Vector Database**:
+- Code injection (eval(), Function() constructor)
+- Path traversal (../../../etc/passwd)
+- XSS (document.write with unsanitized input)
+- Arbitrary file access (fs.readFile with user input)
+- Network exfiltration (http.get to external domain)
+
+**Implementation Notes**:
+- Use static analysis (AST parsing for dangerous patterns)
+- Use regex-based pattern matching (fast heuristics)
+- Use allowlist approach (block all by default, explicit permissions required)
+
+---
+
+### NFR-ACC-006: Security Validation False Positives [P2]
+
+**Description**: Plugin security validation minimizes false positives to avoid blocking legitimate plugins.
+
+**Rationale**: <5% false positive rate balances security (NFR-ACC-005: 100% detection) with usability. >5% blocks too many legitimate plugins, frustrating users.
+
+**Measurement Criteria**:
+- **Target**: <5% false positive rate
+- **Measurement Methodology**: Statistical validation with 1000 legitimate plugins, confusion matrix: max 50 false positives
+- **Baseline**: 2% false positive rate (typical), 5% (threshold)
+
+**Testing Approach**: **Statistical** - Ground truth corpus validation (benign plugins flagged as malicious)
+
+**Priority**: **P2** - Usability enhancement, deferred to FID-006 Phase 3 (Version 2.0)
+
+**Traceability**:
+- **Source**: UC-011: Validate Plugin Security (AC-002: false positive minimization)
+- **Test Cases**: TC-011-017 (security validation)
+- **Components**: SecurityScanner (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: <5% false positive rate (max 50 false positives per 1000 legitimate plugins)
+
+**Current Baseline**: TBD (establish baseline in FID-006 Phase 3 implementation)
+
+**Ground Truth Strategy**:
+- Curate corpus of 100 legitimate plugins (Elaboration)
+- Expand to 500 legitimate plugins (Construction)
+- Validate against 1000 legitimate plugins (Transition)
+
+**Implementation Notes**:
+- Use confidence scores (low-confidence detections flagged for manual review)
+- Allow plugin developer to request review (appeal false positives)
+- Use community feedback (mark false positives to improve security rules)
+
+---
+
+## 5. Quality Requirements
 
 ### 5.1 Overview
 
-Security requirements ensure AIWG protects user data, prevents malicious plugin execution, and maintains system integrity. As a documentation and tooling project (not web application), security focuses on plugin isolation, input validation, and secrets protection.
+Quality requirements ensure AIWG artifacts meet professional standards. As a documentation tooling project, quality focuses on multi-agent review completeness, requirements coverage, test coverage targets, and template completeness.
 
-**Security Philosophy**: "Defense in depth with least privilege" - multiple layers of security controls, minimal permissions granted.
+**Quality Philosophy**: "Built-in quality, not inspected-in quality" - multi-agent reviews and automated checks prevent defects, rather than catching them late.
 
-### 5.2 Authentication and Authorization
-
-#### NFR-SEC-01: Authentication Requirements
-
-**Requirement**: AIWG authentication aligned with project type (open source, public repository).
-
-| Component | Authentication Mechanism | Rationale |
-|-----------|-------------------------|-----------|
-| AIWG repository | N/A (public, open source) | MIT License, no authentication required (Solution Profile) |
-| GitHub repository | GitHub user accounts (for contributors) | Standard GitHub permissions |
-| Plugin installation | No authentication (local installation) | User-initiated, local filesystem operations |
-| CI/CD pipelines | GitHub Actions secrets (for maintainer) | Protected secrets for deployment keys |
-
-**Traceability**:
-- Solution Profile: Security posture minimal (appropriate for documentation/tooling project)
-- SAD Section 4.6: Security View (trust boundaries)
-
-**Implementation Guidance**:
-- No authentication implemented (not applicable for open source documentation)
-- Future: If commercial features emerge, OAuth2 for user accounts
-
-#### NFR-SEC-02: Authorization Requirements
-
-**Requirement**: AIWG authorization controls aligned with project type.
-
-| Resource | Authorization Model | Rationale |
-|----------|-------------------|-----------|
-| GitHub repository | Contributor access (PRs require maintainer approval) | Solo maintainer currently (Solution Profile) |
-| Plugin installation | User consent (explicit approval for sensitive operations) | Defense-in-depth (SAD Section 4.6.4) |
-| File system access | Least privilege (plugins restricted to designated directories) | Plugin isolation (ADR-002) |
-| CI/CD pipelines | GitHub repository settings (maintainer-only) | Protect deployment keys |
-
-**Traceability**:
-- ADR-002: Plugin Isolation Strategy (filesystem boundaries, permission model)
-- SAD Section 4.6.4: Permission Model (read/write allowed paths, forbidden paths)
-
-**Implementation Guidance**:
-- PathValidator enforces filesystem boundaries (SAD Section 4.6)
-- User approval workflow for CLAUDE.md modifications (injection validation)
-- GitHub branch protection rules (require PR reviews before merge)
-
-### 5.3 Data Protection
-
-#### NFR-SEC-03: Data Confidentiality
-
-**Requirement**: User content remains private, no external transmission.
-
-| Data Type | Confidentiality Requirement | Rationale |
-|-----------|---------------------------|-----------|
-| User content (validation, generation) | No external API calls (UC-001: NFR-WR-05) | Privacy (Solution Profile: no PII) |
-| Project artifacts (`.aiwg/`) | Local filesystem only | User controls Git commit decisions |
-| Plugin manifests | Validation only (no telemetry) | No usage tracking |
-| Credentials | Never stored or transmitted | Not applicable (no authentication) |
-
-**Traceability**:
-- UC-001: Validate AI-Generated Content (NFR-WR-05: Content privacy, no external API calls)
-- Solution Profile: No sensitive data handling (no PII, payments, secrets)
-
-**Implementation Guidance**:
-- Network monitor tests validate zero external API calls (UC-001: AC-008)
-- No telemetry, analytics, or usage tracking (privacy-first design)
-- Users control artifact sharing via Git (opt-in, not automatic)
-
-#### NFR-SEC-04: Data Integrity
-
-**Requirement**: AIWG prevents data corruption, tampering, and loss.
-
-| Data Type | Integrity Mechanism | Rationale |
-|-----------|-------------------|-----------|
-| Plugin manifests | SHA-256 checksum validation (UC-001: NFR-WR-06) | Prevent tampering (SAD Section 4.6.1) |
-| Pattern database | SHA-256 checksum validation | Trust (prevent malicious pattern injection) |
-| Dependency hashes | SHA-256 lock file | Dependency integrity (ADR-002 updated) |
-| File deployments | Reset + redeploy (ADR-006) | Atomic operations, zero partial installs |
-
-**Traceability**:
-- UC-001: Validate AI-Generated Content (NFR-WR-06: Pattern database integrity)
-- ADR-002: Plugin Isolation Strategy (dependency hash verification)
-- ADR-006: Plugin Rollback Strategy (reset + redeploy)
-
-**Implementation Guidance**:
-- DependencyVerifier class validates SHA-256 hashes (SAD Section 5.1)
-- InstallationTransaction class provides rollback (SAD Section 11.2)
-- Git commits provide audit trail (tamper-evident history)
-
-### 5.4 Plugin Security
-
-#### NFR-SEC-05: Plugin Isolation
-
-**Requirement**: Plugins cannot access sensitive system resources or execute arbitrary code.
-
-| Security Control | Implementation | Rationale |
-|-----------------|---------------|-----------|
-| No arbitrary code execution | Filesystem-based isolation (ADR-002 updated) | Prevent malicious code execution |
-| Path validation | PathValidator enforces boundaries | Prevent path traversal attacks (CWE-22) |
-| Forbidden path blacklist | `~/.ssh/`, `~/.aws/`, `/etc/`, `.git/` | Protect sensitive system files |
-| Lifecycle hooks removed | No `post_install`, `pre_update` scripts | Align ADR-002 with "no code execution" principle |
-| Injection validation | InjectionValidator blocks dangerous content | Prevent CLAUDE.md poisoning (OWASP A03:2021) |
-
-**Traceability**:
-- ADR-002: Plugin Isolation Strategy (updated 2025-10-17, lifecycle hooks removed)
-- SAD Section 4.6: Security View (threat mitigation summary)
-- UC-011: Validate Plugin Security (NFR-PS-02: Attack detection 100%)
-
-**Implementation Guidance**:
-- PathValidator.sanitizePath() enforces boundaries (SAD Section 5.1)
-- InjectionValidator.validate() blocks HTML/JavaScript (SAD Section 4.6)
-- Manual setup instructions for plugins requiring configuration (informed consent model)
-
-#### NFR-SEC-06: YAML Deserialization Security
-
-**Requirement**: YAML parsing prevents deserialization attacks (CWE-502).
-
-| Security Control | Implementation | Rationale |
-|-----------------|---------------|-----------|
-| YAML safe parsing | FAILSAFE_SCHEMA (js-yaml) | Prevent code execution via custom YAML tags (OWASP A08:2021) |
-| Manifest size limit | 100KB maximum | Prevent YAML bombs (memory exhaustion attacks) |
-| Schema validation | JSON Schema validation | Enforce manifest structure, reject malformed YAML |
-
-**Traceability**:
-- SAD Section 4.6.1: Security Architecture Overview (input validation layer)
-- SAD Section 11.2: Security Implementation Roadmap (YAML safe parsing Week 1-2)
-
-**Implementation Guidance**:
-- Use js-yaml with `FAILSAFE_SCHEMA` option (no custom tags)
-- Validate manifest against JSON Schema before processing
-- Reject manifests >100KB (size limit enforcement)
-
-#### NFR-SEC-07: Secrets Detection
-
-**Requirement**: Prevent accidental commit of credentials, API keys, private keys.
-
-| Secret Type | Detection Mechanism | Rationale |
-|------------|-------------------|-----------|
-| API keys | Pre-commit scanning (detect-secrets/truffleHog) | Prevent credential leaks (SAD Section 11.2) |
-| Private keys | Pattern matching (`.ssh/id_rsa`, `.pem` files) | Protect SSH keys, SSL certificates |
-| Environment files | Manifest validation (reject `.env` in plugin content) | Prevent accidental inclusion |
-| GitHub tokens | Pre-commit hooks (detect `ghp_`, `gho_` patterns) | Protect GitHub access tokens |
-
-**Traceability**:
-- SAD Section 4.6.5: Threat Mitigation Summary (secrets exposure LOW risk)
-- SAD Section 11.2: Security Implementation Roadmap (secrets detection Week 3-4)
-
-**Implementation Guidance**:
-- Integrate detect-secrets or truffleHog in pre-commit hooks
-- CI/CD checks for secrets patterns (fail PR if detected)
-- `.gitignore` includes `.env`, `credentials.json`, `*.pem`
-
-### 5.5 Threat Model
-
-#### NFR-SEC-08: Threat Mitigation
-
-**Requirement**: AIWG mitigates known security threats with defined residual risk levels.
-
-| Threat | Likelihood | Impact | Mitigation | Residual Risk |
-|--------|-----------|--------|------------|---------------|
-| Malicious Plugin Installation | Medium | Critical | No code execution, path validation, user approval | LOW |
-| Path Traversal Attack | High | High | PathValidator boundary checks, symlink detection, forbidden paths blacklist | LOW |
-| YAML Deserialization Attack | Medium | Medium | FAILSAFE_SCHEMA, 100KB size limit, no custom tags | LOW |
-| Dependency Confusion | Medium | Medium | SHA-256 hashes, lock file, registry trust model, namespace enforcement | MEDIUM |
-| CLAUDE.md Injection Poisoning | Medium | Medium | InjectionValidator content validation, dangerous pattern detection, user approval workflow | LOW |
-| Secrets Exposure | Low | High | Pre-commit scanning, CI checks, manifest validation | LOW |
-
-**Traceability**:
-- SAD Section 4.6.5: Threat Mitigation Summary (comprehensive threat table)
-- SAD Section 9.1: Technical Risks (malicious plugin code, performance degradation)
-
-**Risk Acceptance**:
-- Dependency Confusion (MEDIUM risk): Accepted for MVP, requires registry trust model (future enhancement)
-- All other threats: LOW residual risk, acceptable for open source documentation project
+**Priority Focus**: P1 NFRs target quality assurance processes (reviewers, traceability, test coverage). Deferred to post-MVP to reduce scope.
 
 ---
 
-## 6. Usability Requirements
+### NFR-QUAL-001: Multi-Agent Reviewer Sign-offs [P1]
+
+**Description**: Multi-agent workflows include comprehensive review from specialized agents.
+
+**Rationale**: 3+ reviewers provide diverse perspectives (security, testability, requirements alignment). <3 reviewers reduces review quality, increases defect escape rate.
+
+**Measurement Criteria**:
+- **Target**: 3+ specialized reviewers per artifact
+- **Measurement Methodology**: Review history inspection (count reviewers per artifact)
+- **Baseline**: 4 reviewers (typical: security, test, requirements, technical writer), 3 minimum (threshold)
+
+**Testing Approach**: **Automated** - Review metadata validation (count reviewers in review history)
+
+**Priority**: **P1** - Quality assurance feature, deferred to post-MVP multi-agent enhancement
+
+**Traceability**:
+- **Source**: UC-004: Multi-Agent Workflows (AC-003: multi-agent review)
+- **Test Cases**: TC-004-017 (quality validation)
+- **Components**: DocumentationSynthesizer, review agents (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 3+ specialized reviewers (security, test, requirements, technical writer)
+
+**Current Baseline**: 4 reviewers (established in multi-agent pattern documentation)
+
+**Implementation Notes**:
+- Define review roles (security, testability, requirements, clarity)
+- Launch reviewers in parallel (single message, multiple Task tool calls)
+- Require sign-offs (APPROVED, CONDITIONAL, REJECTED decisions)
+
+---
+
+### NFR-QUAL-002: Requirements Traceability Coverage [P1]
+
+**Description**: All requirements trace to implementation and tests.
+
+**Rationale**: 100% traceability ensures no requirements slip through cracks. <100% creates gaps, requirements not implemented or tested.
+
+**Measurement Criteria**:
+- **Target**: 100% requirements coverage (all requirements trace to code + tests)
+- **Measurement Methodology**: Traceability matrix validation (requirements → code → tests)
+- **Baseline**: 100% (enforced by traceability automation)
+
+**Testing Approach**: **Automated** - Traceability graph validation (detect orphaned requirements)
+
+**Priority**: **P1** - Compliance feature, deferred to FID-001 (Traceability Automation)
+
+**Traceability**:
+- **Source**: UC-004: Multi-Agent Workflows (AC-004: traceability validation), UC-006: Automated Traceability Validation (AC-001)
+- **Test Cases**: TC-004-018 (quality validation), TC-006-017 (traceability validation)
+- **Components**: TraceabilityEngine (SAD Section 5.3)
+- **ADRs**: None
+
+**Target Value**: 100% requirements coverage (no orphaned requirements)
+
+**Current Baseline**: TBD (establish baseline in FID-001 implementation)
+
+**Implementation Notes**:
+- Use bidirectional links (requirement → code, code → requirement)
+- Flag orphaned requirements (no code implementation)
+- Flag orphaned code (no requirement justification)
+- Flag orphaned tests (no requirement coverage)
+
+---
+
+### NFR-QUAL-003: Test Coverage Targets [P1]
+
+**Description**: Automated test suite achieves target coverage levels.
+
+**Rationale**: Coverage targets (80% unit, 70% integration, 50% E2E) balance quality with effort. Lower coverage increases defect escape rate.
+
+**Measurement Criteria**:
+- **Target**: 80% unit coverage, 70% integration coverage, 50% E2E coverage
+- **Measurement Methodology**: Code coverage tools (Istanbul/NYC for Node.js, pytest-cov for Python)
+- **Baseline**: 80%/70%/50% (enforced by CI/CD quality gates)
+
+**Testing Approach**: **Automated** - Code coverage measurement in CI/CD pipeline
+
+**Priority**: **P1** - Quality assurance feature, deferred to post-MVP test enhancement
+
+**Traceability**:
+- **Source**: UC-009: Generate Test Templates (AC-002: coverage targets)
+- **Test Cases**: TC-009-017 (quality validation)
+- **Components**: TestEngineer agent, test suite (SAD Section 11.3)
+- **ADRs**: None
+
+**Target Value**: 80% unit, 70% integration, 50% E2E coverage
+
+**Current Baseline**: TBD (establish baseline in Construction phase, test implementation)
+
+**Implementation Notes**:
+- Exclude generated code from coverage (manifests, fixtures)
+- Exclude test utilities from coverage (test helpers not tested)
+- Use incremental coverage (require PRs to maintain or improve coverage)
+
+---
+
+### NFR-QUAL-004: Test Template Completeness [P1]
+
+**Description**: Test template library covers all test types.
+
+**Rationale**: Comprehensive templates (unit, integration, E2E, performance, security) reduce gaps. Missing templates leave test types uncovered.
+
+**Measurement Criteria**:
+- **Target**: All test types covered (unit, integration, E2E, performance, security)
+- **Measurement Methodology**: Template catalog inspection (verify all test types present)
+- **Baseline**: 5 test types (unit, integration, E2E, performance, security)
+
+**Testing Approach**: **Automated** - Template catalog validation (file existence checks)
+
+**Priority**: **P1** - Quality assurance feature, deferred to FID-004 (Test Templates)
+
+**Traceability**:
+- **Source**: UC-009: Generate Test Templates (AC-003: template completeness)
+- **Test Cases**: TC-009-018 (quality validation)
+- **Components**: Test template library (SAD Section 10.1)
+- **ADRs**: None
+
+**Target Value**: All test types covered (unit, integration, E2E, performance, security)
+
+**Current Baseline**: TBD (establish baseline in FID-004 implementation)
+
+**Implementation Notes**:
+- Use template-based generation (avoid custom test writing)
+- Provide example tests (fixtures, mocks, stubs)
+- Document test patterns (arrange-act-assert, given-when-then)
+
+---
+
+## 6. Completeness Requirements
 
 ### 6.1 Overview
 
-Usability requirements ensure AIWG remains accessible to diverse users (solo developers, teams, enterprises) without steep learning curves. As a developer tool, usability focuses on CLI ergonomics, error clarity, documentation quality, and workflow efficiency.
+Completeness requirements ensure AIWG functionality is comprehensive and gap-free. As a documentation tooling project, completeness focuses on pattern database coverage, intake field coverage, artifact completeness, and orphan detection.
 
-**Usability Philosophy**: "Make the easy things easy, make the hard things possible" - optimize for common tasks, support advanced workflows.
+**Completeness Philosophy**: "Leave no gaps" - comprehensive coverage prevents users from encountering missing functionality.
 
-### 6.2 Learnability
-
-#### NFR-USE-01: Time to Productivity
-
-**Requirement**: Users achieve productivity milestones within defined time windows.
-
-| Milestone | Target Time | User Type | Measurement |
-|-----------|------------|-----------|-------------|
-| Install AIWG | <5 minutes | All users | One-line bash script execution |
-| Deploy agents to project | <15 minutes (UC-002: NFR-SD-06) | Agentic developers | Install → deploy → first artifact generation |
-| Generate first artifact (intake forms) | <20 minutes | Project managers | Deploy → intake-wizard → review forms |
-| Validate first content | <30 minutes | Content creators | Deploy → writing-validator → improve content (UC-001: NFR-WR-07) |
-| Orchestrate multi-agent workflow | <1 hour | Technical leads | Deploy → natural language request → review artifact |
-
-**Traceability**:
-- UC-001: Validate AI-Generated Content (NFR-WR-07: Learning curve 1-2 validation cycles)
-- UC-002: Deploy SDLC Framework (NFR-SD-06: Setup friction <15 minutes)
-- Solution Profile: Minimize setup friction, ship velocity critical
-
-**Implementation Guidance**:
-- One-line install script (no multi-step configuration)
-- Interactive mode for complex workflows (guided prompts vs memorizing flags)
-- Quick-start guides for each major use case (install → deploy → usage example)
-
-#### NFR-USE-02: Documentation Quality
-
-**Requirement**: Documentation comprehensive, navigable, and accessible to diverse users.
-
-| Documentation Type | Completeness Target | Rationale |
-|-------------------|-------------------|-----------|
-| README.md | Installation + quick start + usage examples | First touchpoint for new users |
-| USAGE_GUIDE.md | Context selection strategy for agents/templates | Prevent context window overwhelm |
-| Per-directory READMEs | Component-specific guidance | Modular learning (focus on relevant subsystem) |
-| Agent definitions | All public functions documented (JSDoc) | Developer reference (tool contributors) |
-| Template metadata | YAML headers complete (category, tags, description) | Discoverability (users find relevant templates) |
-| ADRs | Architecture decisions recorded with rationale | Maintainer continuity (future contributors understand design) |
-
-**Traceability**:
-- Solution Profile: Documentation comprehensive (README, USAGE_GUIDE, AGENTS.md, CLAUDE.md, per-directory READMEs)
-- SAD Section 10.1: Plugin Development Guidelines (quality requirements)
-
-**Implementation Guidance**:
-- Documentation linting (markdownlint-cli2 enforces consistency)
-- Before/after example gallery (demonstrate content transformation patterns)
-- Troubleshooting guides (common errors, remediation steps)
-
-#### NFR-USE-03: Error Message Clarity
-
-**Requirement**: All errors include clear remediation steps (NFR-SD-07: Error clarity).
-
-| Error Category | Remediation Guidance | Example |
-|---------------|---------------------|---------|
-| Missing prerequisites | Install command + verification | "AIWG not installed. Install: curl -fsSL ... \| bash" |
-| Permission denied | chmod command + explanation | "Permission denied: docs/content.md. Fix: chmod 644 docs/content.md" |
-| Network timeout | Retry guidance + offline fallback | "Deployment timeout. Check network. Retry: aiwg -deploy-agents" |
-| Validation failure | Specific pattern + line number + rewrite suggestion | "Line 15: 'it's worth noting' → Rewrite: 'Microservices provide...'" |
-
-**Traceability**:
-- UC-001: Validate AI-Generated Content (NFR-WR-08: Line numbers + rewrite suggestions)
-- UC-002: Deploy SDLC Framework (NFR-SD-07: Error clarity, clear remediation steps)
-
-**Implementation Guidance**:
-- Structured error messages: `[ERROR_CODE] Description. Fix: Remediation steps.`
-- Avoid generic errors (e.g., "Failed to deploy" → "Failed to deploy: disk full. Free space: rm -rf .aiwg/working/")
-- Link to documentation for complex errors (e.g., "See troubleshooting guide: https://...")
-
-### 6.3 Efficiency
-
-#### NFR-USE-04: Workflow Efficiency
-
-**Requirement**: Common workflows optimized for minimal user effort.
-
-| Workflow | Manual Effort (before AIWG) | AIWG Effort (after) | Improvement | Rationale |
-|----------|---------------------------|-------------------|-------------|-----------|
-| Requirements → Code traceability | 8 hours manual CSV | <90s automated | 99% reduction (SAD Section 8.4) | Automation speedup |
-| Multi-agent document review | 4 hours (4 reviewers × 1 hour each) | <20 minutes (parallel) | 92% reduction | Parallel execution (UC-004: NFR-MA-01) |
-| Agent deployment | 30 minutes (manual file copying, CLAUDE.md editing) | <10s | 97% reduction | CLI automation (UC-002: NFR-SD-01) |
-| Content validation | 1 hour manual pattern review | <60s automated | 98% reduction | Pattern detection (UC-001: NFR-WR-01) |
-
-**Traceability**:
-- SAD Section 8.4: Scalability (traceability automation 99% effort reduction)
-- UC-004: Multi-Agent Workflows (NFR-MA-01: 15-20 minutes vs 4+ hours manual)
-
-**Implementation Guidance**:
-- Natural language orchestration (users say "Start Inception" vs typing complex commands)
-- Batch operations (validate 10 files simultaneously, not 10 separate invocations)
-- Caching (avoid re-parsing manifests, templates on every invocation)
-
-#### NFR-USE-05: Feedback Visibility
-
-**Requirement**: Users receive real-time progress updates for long-running operations.
-
-| Operation | Visibility Requirement | Rationale |
-|-----------|----------------------|-----------|
-| Multi-agent workflow (15-20 minutes) | Progress indicators: "3/4 reviews complete" (UC-004: Step 6) | User remains engaged, not wondering if hung |
-| Batch validation (5 minutes) | Summary report: "10 files validated, 3 FAIL, 2 BORDERLINE, 5 PASS" (UC-001: Alt-4) | User prioritizes remediation |
-| Plugin installation (10 seconds) | Step-by-step: "Downloading... Validating... Deploying..." | User confidence (installation proceeding normally) |
-| Traceability generation (90 seconds) | Progress: "Parsing requirements... Building graph... Validating..." | User not alarmed by delay |
-
-**Traceability**:
-- UC-001: Validate AI-Generated Content (NFR-WR-09: Progress visibility, real-time authenticity score)
-- UC-004: Multi-Agent Workflows (Step 6: Orchestrator monitors completion, reports progress)
-
-**Implementation Guidance**:
-- Streaming output (show progress incrementally, not all at end)
-- Progress bars (terminal-based progress indicators)
-- Time estimates (e.g., "Estimated time remaining: 2 minutes")
-
-### 6.4 Accessibility
-
-#### NFR-USE-06: Accessibility Standards
-
-**Requirement**: AIWG accessible to diverse users (assistive technologies, internationalization).
-
-| Accessibility Dimension | Target | Rationale |
-|------------------------|--------|-----------|
-| CLI text output | Screen reader compatible (plain text, no ANSI colors required) | Blind users can use AIWG via screen readers |
-| Documentation (future web interface) | WCAG 2.1 Level AA | Legal compliance (ADA, Section 508) |
-| Language support | English primary, future Spanish/French | International user base (current: English-only pattern database) |
-| Error messages | Plain language (no jargon) | Non-expert users understand remediation |
-
-**Traceability**:
-- Solution Profile: Portability (future: macOS/Windows community testing, internationalization)
-- SAD Section 1.1: Open Issues (Issue 001: Multi-language support for pattern database)
-
-**Implementation Guidance**:
-- ANSI colors optional (fallback to plain text if terminal doesn't support)
-- Alt text for diagrams (future web documentation)
-- Translation framework for pattern database (future: i18n support)
-
-### 6.5 Framework Routing Usability
-
-#### NFR-USE-07: Zero-Friction Framework Detection
-
-**Requirement**: Users never manually select frameworks - system automatically routes to correct framework based on context.
-
-| User Action | Expected Behavior | Framework Detection | Rationale |
-|-------------|------------------|-------------------|-----------|
-| Natural language: "Transition to Elaboration" | Auto-route to SDLC framework | Command metadata: `framework: sdlc-complete` | Zero user friction, implicit detection |
-| Natural language: "Generate blog content" | Auto-route to Marketing framework | Command metadata: `framework: marketing-flow` | User thinks in tasks, not frameworks |
-| Command: `/flow-inception-to-elaboration` | Load SDLC context only (exclude marketing/, agile/) | Metadata-driven filtering | Context pollution prevented |
-| Mixed workflows: SDLC + Marketing | Load both frameworks explicitly | Multi-framework project detection | Advanced use case, polyglot management |
-
-**Traceability**:
-- UC-012: Framework-Aware Workspace Management (AC-001: Zero manual framework selection)
-- ADR-007: Framework-Scoped Workspace Architecture (implicit detection design)
-- FID-007: Workspace Management Feature (natural language routing)
-
-**Implementation Guidance**:
-- Natural language translation table maps phrases → commands → frameworks
-- Command/agent/template YAML frontmatter declares `framework: {id}` property
-- Orchestrator reads metadata, filters context to relevant framework(s) only
-- User never sees framework selection UI (fully transparent routing)
-
-**Error Handling**:
-- If command missing framework metadata: Warn user, default to `framework: sdlc-complete`
-- If conflicting frameworks in single workflow: Ask user to clarify (rare edge case)
-- If framework directory missing: Auto-initialize `.aiwg/frameworks/{id}/` structure
+**Priority Focus**: P1 NFRs target comprehensiveness (pattern database size, critical fields, artifact completeness). Deferred to post-MVP to reduce scope.
 
 ---
 
-## 7. Maintainability Requirements
+### NFR-COMP-001: AI Pattern Database Size [P1]
+
+**Description**: AI pattern database covers comprehensive set of detection patterns.
+
+**Rationale**: 1000+ patterns provide broad coverage. Smaller databases miss common AI patterns, reducing validation effectiveness.
+
+**Measurement Criteria**:
+- **Target**: 1000+ patterns
+- **Measurement Methodology**: Pattern database file count (YAML files in validation/banned-patterns.md)
+- **Baseline**: 1000+ patterns (established in AI Writing Guide core)
+
+**Testing Approach**: **Automated** - Pattern database file count validation
+
+**Priority**: **P1** - Coverage enhancement, deferred to post-MVP pattern expansion
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-001: pattern detection)
+- **Test Cases**: TC-001-018 (completeness validation)
+- **Components**: PatternDetector (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 1000+ patterns
+
+**Current Baseline**: 1000+ patterns (AI Writing Guide core repository)
+
+**Implementation Notes**:
+- Use community contributions (accept pattern submissions via PRs)
+- Use machine learning (generate patterns from AI-generated corpus)
+- Use version control (track pattern additions, removals, modifications)
+
+---
+
+### NFR-COMP-002: Intake Critical Field Coverage [P1]
+
+**Description**: Intake forms capture all critical project metadata.
+
+**Rationale**: 100% critical field coverage (name, tech stack, language) enables accurate template selection, agent assignment. Missing critical fields blocks onboarding.
+
+**Measurement Criteria**:
+- **Target**: 100% critical field coverage (name, tech stack, language, team size, domain)
+- **Measurement Methodology**: Intake form validation (verify all critical fields populated)
+- **Baseline**: 100% (enforced by intake validation)
+
+**Testing Approach**: **Automated** - Intake form validation (field presence checks)
+
+**Priority**: **P1** - Completeness enhancement, deferred to post-MVP intake validation
+
+**Traceability**:
+- **Source**: UC-003: Analyze Existing Codebase for Intake (AC-001: critical field coverage)
+- **Test Cases**: TC-003-018 (completeness validation)
+- **Components**: IntakeCoordinator (SAD Section 5.2)
+- **ADRs**: None
+
+**Target Value**: 100% critical field coverage (5 critical fields: name, tech stack, language, team size, domain)
+
+**Current Baseline**: 100% (established in intake templates)
+
+**Implementation Notes**:
+- Use intake validation (block submission if critical fields missing)
+- Use default values (prefill with heuristic analysis)
+- Use interactive prompts (ask user for missing critical fields)
+
+---
+
+### NFR-COMP-003: SDLC Artifact Completeness [P1]
+
+**Description**: Framework self-improvement generates 100% complete SDLC artifacts.
+
+**Rationale**: Complete artifacts (no gaps, all sections filled) demonstrate framework maturity. Incomplete artifacts erode trust, suggest framework can't dogfood.
+
+**Measurement Criteria**:
+- **Target**: 100% artifact completeness for all features
+- **Measurement Methodology**: Artifact section validation (verify all required sections present)
+- **Baseline**: 100% (enforced by template validation)
+
+**Testing Approach**: **Automated** - Template section validation (markdown structure checks)
+
+**Priority**: **P1** - Meta-application proof, deferred to UC-005 (Framework Self-Improvement)
+
+**Traceability**:
+- **Source**: UC-005: Framework Self-Improvement (AC-001: artifact completeness)
+- **Test Cases**: TC-FSI-018 (completeness validation)
+- **Components**: SDLC agents, template library (SAD Section 5.1, Section 10.1)
+- **ADRs**: None
+
+**Target Value**: 100% artifact completeness (all required sections present)
+
+**Current Baseline**: TBD (establish baseline during Framework Self-Improvement execution)
+
+**Implementation Notes**:
+- Use template-based generation (ensure all sections present)
+- Use validation scripts (detect missing sections before baseline)
+- Use review sign-offs (reviewers verify completeness)
+
+---
+
+### NFR-COMP-004: Orphan Artifact Detection [P1]
+
+**Description**: Traceability automation detects orphaned artifacts.
+
+**Rationale**: 100% orphan detection prevents broken traceability links. Orphaned requirements, code, tests indicate gaps in implementation.
+
+**Measurement Criteria**:
+- **Target**: 100% orphan detection (all orphaned nodes flagged)
+- **Measurement Methodology**: Graph traversal (detect nodes with no incoming/outgoing edges)
+- **Baseline**: 100% (enforced by traceability validation)
+
+**Testing Approach**: **Automated** - Graph validation (orphan node detection)
+
+**Priority**: **P1** - Completeness enhancement, deferred to FID-001 (Traceability Automation)
+
+**Traceability**:
+- **Source**: UC-006: Automated Traceability Validation (AC-002: orphan detection)
+- **Test Cases**: TC-006-018 (completeness validation)
+- **Components**: TraceabilityEngine (SAD Section 5.3)
+- **ADRs**: None
+
+**Target Value**: 100% orphan detection (no orphaned nodes missed)
+
+**Current Baseline**: TBD (establish baseline in FID-001 implementation)
+
+**Implementation Notes**:
+- Use bidirectional link validation (detect nodes with no incoming edges)
+- Flag orphaned requirements (no code implementation)
+- Flag orphaned code (no requirement justification)
+- Flag orphaned tests (no code coverage)
+
+---
+
+### NFR-COMP-005: Orphan Files After Rollback [P2]
+
+**Description**: Plugin rollback removes all plugin files, leaving no orphans.
+
+**Rationale**: Zero orphan files ensures clean recovery. Orphaned files pollute filesystem, confuse users, suggest incomplete rollback.
+
+**Measurement Criteria**:
+- **Target**: Zero orphan files after rollback
+- **Measurement Methodology**: Filesystem scan (compare before rollback vs after rollback)
+- **Baseline**: Zero orphan files (enforced by rollback validation)
+
+**Testing Approach**: **Automated** - Filesystem validation (file count comparison)
+
+**Priority**: **P2** - Clean recovery feature, deferred to FID-005 (Plugin Rollback)
+
+**Traceability**:
+- **Source**: UC-010: Plugin Rollback (AC-002: clean recovery)
+- **Test Cases**: TC-010-018 (completeness validation)
+- **Components**: PluginManager (SAD Section 5.1)
+- **ADRs**: ADR-006 (Plugin Rollback Strategy - reset + redeploy)
+
+**Target Value**: Zero orphan files after rollback
+
+**Current Baseline**: TBD (establish baseline in FID-005 implementation)
+
+**Implementation Notes**:
+- Use manifest-based deletion (delete all files listed in plugin manifest)
+- Use directory cleanup (remove empty directories after file deletion)
+- Use backup restoration (restore CLAUDE.md from backup)
+
+---
+
+## 7. Security Requirements
 
 ### 7.1 Overview
 
-Maintainability requirements ensure AIWG remains evolvable as user needs grow, without accumulating technical debt that slows development velocity. As a solo-maintained project transitioning to community contributions, maintainability focuses on code quality, documentation, modularity, and technical debt management.
+Security requirements ensure AIWG protects user data and prevents malicious plugin attacks. As a documentation tooling project, security focuses on content privacy, data integrity, file permissions, and backup integrity.
 
-**Maintainability Philosophy**: "Code for the next maintainer" - assume future contributors will extend and refactor.
+**Security Philosophy**: "Security by design" - security controls built into architecture, not bolted on.
 
-### 7.2 Code Quality
-
-#### NFR-MAINT-01: Coding Standards
-
-**Requirement**: Code follows consistent style, enforced via linting and automated checks.
-
-| Language | Linting Tool | Rules Enforced | Rationale |
-|----------|-------------|---------------|-----------|
-| Markdown | markdownlint-cli2 | MD001-MD047 (exceptions: MD033, MD013) | Documentation consistency (Solution Profile) |
-| JavaScript | ESLint | Airbnb style guide (future) | Node.js tooling (deploy-agents.mjs, manifest scripts) |
-| Python | Flake8 | PEP 8 (future) | Traceability engine (NetworkX) |
-
-**Traceability**:
-- Solution Profile: Testing & Quality (CI: Markdown linting markdownlint-cli2, 10 custom fixers)
-- SAD Section 8.5: Maintainability (modular architecture, clear interfaces)
-
-**Implementation Guidance**:
-- CI/CD enforces linting (PRs fail if linting errors)
-- Pre-commit hooks prevent committing unlinted code
-- Custom fixers for project-specific rules (e.g., fix-md58.mjs for table spacing)
-
-#### NFR-MAINT-02: Test Coverage
-
-**Requirement**: Automated test coverage targets balance quality and velocity.
-
-| Project Component | Target Coverage | Rationale |
-|------------------|----------------|-----------|
-| Critical paths (deploy-agents.mjs, new-project.mjs) | 80-90% | Prevent regressions in most-used features (Solution Profile: Phase 1) |
-| Linting fixers (tools/lint/) | 60-80% | Moderate risk, custom logic |
-| Traceability engine (tools/traceability/) | 60-80% | Complex graph algorithms, edge cases |
-| Templates | Manual validation | Low-risk static content |
-
-**Traceability**:
-- Solution Profile: Testing maturity target 60-80% (Phase 2: Short-term, 1-3 months)
-- SAD Section 11.3: Testing Roadmap (10-week Construction phase plan, 80% → 90% coverage)
-
-**Implementation Guidance**:
-- Jest/Mocha for JavaScript unit tests (tools/)
-- Pytest for Python tests (traceability engine)
-- Integration tests for critical workflows (install → deploy → scaffold)
-
-#### NFR-MAINT-03: Documentation Standards
-
-**Requirement**: All public APIs documented with inline comments, examples, and usage guidance.
-
-| Component | Documentation Requirement | Rationale |
-|-----------|-------------------------|-----------|
-| Node.js scripts (tools/) | JSDoc for all public functions | Developer reference (future contributors) |
-| Python scripts | Docstrings (Google style) | Traceability engine maintainers |
-| Templates | YAML frontmatter (category, tags, description) | Discoverability, template selection |
-| ADRs | Architecture decisions recorded with rationale | Design continuity (future maintainers) |
-
-**Traceability**:
-- SAD Section 8.5: Maintainability (comprehensive plugin development documentation)
-- Solution Profile: Documentation comprehensive (CONTRIBUTING.md future expansion)
-
-**Implementation Guidance**:
-- JSDoc generation for Node.js (automated API documentation)
-- Sphinx for Python (future: auto-generate API docs)
-- Template metadata validation (CI checks for missing YAML fields)
-
-### 7.3 Modularity
-
-#### NFR-MAINT-04: Component Independence
-
-**Requirement**: Components remain decoupled, enabling independent evolution and testing.
-
-| Component | Independence Requirement | Rationale |
-|-----------|------------------------|-----------|
-| Writing guide | Independent of SDLC framework | Users can use writing validation without SDLC agents |
-| Agents | Individually deployable (modular selection) | Users compose custom agent sets (Solution Profile) |
-| Commands | Callable independently | No coupling between slash commands |
-| Plugins | Self-contained (no cross-plugin dependencies) | Plugin ecosystem scales (1000+ plugins target) |
-
-**Traceability**:
-- Solution Profile: Modular deployment - handle diverse project types (smallest to largest apps)
-- SAD Section 8.5: Maintainability (plugin API versioned independently)
-
-**Implementation Guidance**:
-- Avoid circular dependencies (enforce via dependency graph analysis)
-- Interface-based design (plugins implement manifest contract, not internal APIs)
-- Versioned plugin API (backward compatibility for 2 major versions)
-
-#### NFR-MAINT-05: Backward Compatibility
-
-**Requirement**: AIWG maintains backward compatibility across minor versions, minimizing breaking changes.
-
-| Change Type | Compatibility Requirement | Rationale |
-|-------------|-------------------------|-----------|
-| Plugin API | Backward compatible for 2 major versions | Trust (existing plugins continue working) |
-| CLI flags | Deprecated flags warned, not removed immediately | User scripts remain functional |
-| Template formats | Additive changes only (new fields optional) | Existing templates don't break |
-| Agent definitions | Preserve frontmatter schema | Deployed agents remain functional |
-
-**Traceability**:
-- SAD Section 8.5: Maintainability (backward compatibility for 2 major versions)
-- SAD Section 9.1: Technical Risks (plugin compatibility breaks)
-
-**Implementation Guidance**:
-- Semantic versioning (major.minor.patch)
-- Deprecation warnings (1-2 minor versions before removal)
-- Compatibility tests (CI validates old plugins still work)
-
-### 7.4 Technical Debt Management
-
-#### NFR-MAINT-06: Technical Debt Policy
-
-**Requirement**: Technical debt tracked, prioritized, and addressed systematically.
-
-| Debt Category | Resolution Target | Rationale |
-|--------------|------------------|-----------|
-| Critical debt (blocks features) | Address within 1 sprint (2 weeks) | Unblock development velocity (Solution Profile) |
-| High-priority debt (workarounds exist) | Address within 3 months | Prevent accumulation |
-| Medium debt (non-blocking) | Address within 6 months | Refactor during related work |
-| Low debt (cosmetic) | Defer to community contributions | Limited maintainer capacity |
-
-**Traceability**:
-- Solution Profile: Accepting technical debt short-term, but enterprise SRE background indicates eventual quality focus
-- SAD Section 8.5: Maintainability (<4 hours to create new plugin)
-
-**Implementation Guidance**:
-- Track technical debt in GitHub Issues (label: `tech-debt`)
-- Quarterly debt review (assess accumulation trends)
-- Refactor during feature work (avoid standalone "refactor sprints")
-
-#### NFR-MAINT-07: Refactoring Safety
-
-**Requirement**: Refactoring supported by automated tests, preventing regressions.
-
-| Refactoring Type | Safety Mechanism | Rationale |
-|-----------------|-----------------|-----------|
-| Component restructuring | Integration tests | Ensure end-to-end workflows still functional |
-| API changes | Compatibility tests | Validate old clients still work |
-| Performance optimization | Performance regression tests | Prevent slowdowns (NFR-PERF-08) |
-| Security hardening | Security test suite | Prevent introducing vulnerabilities |
-
-**Traceability**:
-- NFR-PERF-08: CI/CD Performance Baselines (regression detection <20% tolerance)
-- SAD Section 11.3: Testing Roadmap (80% → 90% coverage target)
-
-**Implementation Guidance**:
-- Run full test suite before/after refactoring (regression detection)
-- Performance baselines validate optimization (not degradation)
-- Security tests validate hardening (not introducing vulnerabilities)
-
-### 7.5 Workspace Organization
-
-#### NFR-MAINT-08: Framework-Scoped Workspace Lifecycle
-
-**Requirement**: Workspace tiers maintain clear lifecycle boundaries, preventing context pollution and data accumulation.
-
-| Workspace Tier | Lifecycle | Cleanup Policy | Rationale |
-|---------------|-----------|---------------|-----------|
-| Tier 1: Repo/System (`.aiwg/frameworks/{id}/repo/`) | Permanent (stable docs) | No automatic cleanup, manual curation only | Global truth (feature lists, versions, baselines) |
-| Tier 2: Projects/Features (`.aiwg/frameworks/{id}/projects/{project-id}/`) | Active development → Archive | Archived on project completion (manual trigger) | Active work artifacts, retired when delivered |
-| Tier 3: Working Area (`.aiwg/frameworks/{id}/working/`) | Ephemeral (collaboration) | Auto-cleanup after 7 days if no recent activity | Temporary collaboration, prevent accumulation |
-| Tier 4: Archive (`.aiwg/frameworks/{id}/archive/`) | Permanent (historical) | No cleanup, grow indefinitely | Audit trail, reference for future work |
-
-**Traceability**:
-- UC-012: Framework-Aware Workspace Management (AC-005: Tier-based lifecycle management)
-- ADR-007: Framework-Scoped Workspace Architecture (4-tier design)
-- FID-007: Workspace Management Feature (context curation goals)
-
-**Implementation Guidance**:
-- Auto-archive workflow: `/project:archive-project {project-id}` moves Tier 2 → Tier 4
-- Auto-cleanup workflow: Nightly job (GitHub Actions) cleans Tier 3 files >7 days old
-- User override: `.aiwg/frameworks/{id}/working/.keepalive` prevents auto-cleanup
-- Manual curation tools: `/project:curate-repo` helps users review/trim Tier 1 docs
-
-**Isolation Guarantees**:
-- Framework isolation: `.aiwg/frameworks/sdlc-complete/` never reads `.aiwg/frameworks/marketing-flow/`
-- Tier isolation: Loading Tier 1 (repo/) excludes Tier 2 (projects/), Tier 3 (working/), Tier 4 (archive/)
-- Project isolation: Multi-project scenarios load only relevant project-id subdirectory
-
-**Monitoring**:
-- Disk space alerts: Warn if Tier 3 exceeds 500MB (indicates cleanup failure)
-- Archive growth: Track Tier 4 growth rate (audit trail compliance)
-- Framework distribution: Report which frameworks active (user usage patterns)
+**Priority Focus**: P0 NFRs target foundational security (content privacy, attack detection). P1 NFRs target data integrity (checksums, file permissions).
 
 ---
 
-## 8. Portability Requirements
+### NFR-SEC-001: Content Privacy (No External API Calls) [P0]
+
+**Description**: Content validation occurs 100% locally, with zero external API calls.
+
+**Rationale**: User content may contain confidential information. External API calls risk data leakage, enterprise blocker.
+
+**Measurement Criteria**:
+- **Target**: Zero external API calls during validation workflow
+- **Measurement Methodology**: Network traffic monitoring (verify no outbound HTTP/HTTPS calls)
+- **Baseline**: Zero external API calls (enforced by architecture)
+
+**Testing Approach**: **Automated** - Network monitoring with nock library (assert no HTTP calls)
+
+**Priority**: **P0** - Data protection, enterprise deal-breaker if violated
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-003: privacy)
+- **Test Cases**: TC-001-017 (security validation)
+- **Components**: WritingValidator, PatternDetector (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: Zero external API calls (100% local analysis)
+
+**Current Baseline**: Zero external API calls (architecture enforced)
+
+**Implementation Notes**:
+- Use local pattern database (no remote API calls)
+- Use offline validation (no network dependencies)
+- Use nock library in tests (assert no HTTP calls attempted)
+
+---
+
+### NFR-SEC-002: Pattern Database Integrity [P1]
+
+**Description**: Pattern database validated with SHA-256 checksum before use.
+
+**Rationale**: Tampered pattern database could inject false positives/negatives. Checksum validation detects tampering, prevents malicious modifications.
+
+**Measurement Criteria**:
+- **Target**: SHA-256 checksum validation before pattern database load
+- **Measurement Methodology**: Checksum verification (compute SHA-256, compare with expected value)
+- **Baseline**: SHA-256 checksum validation (enforced by loader)
+
+**Testing Approach**: **Automated** - Checksum validation test (tamper detection)
+
+**Priority**: **P1** - Trust/security feature, deferred to post-MVP integrity enhancement
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-004: integrity)
+- **Test Cases**: TC-001-018 (security validation)
+- **Components**: PatternDetector (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: SHA-256 checksum validation (tamper detection)
+
+**Current Baseline**: TBD (implement checksum validation in post-MVP)
+
+**Implementation Notes**:
+- Use Node.js `crypto` module (SHA-256 hash computation)
+- Store expected checksum in manifest (version-controlled)
+- Reject pattern database if checksum mismatch (abort validation)
+
+---
+
+### NFR-SEC-003: File Permissions Security [P0]
+
+**Description**: Deployed files preserve source permissions, preventing privilege escalation.
+
+**Rationale**: Incorrect file permissions (e.g., world-writable) create security vulnerabilities. Preserve source permissions ensures secure deployment.
+
+**Measurement Criteria**:
+- **Target**: Deployed file permissions match source permissions (no privilege escalation)
+- **Measurement Methodology**: File permission comparison (before vs after deployment)
+- **Baseline**: Permissions match source (enforced by deployment script)
+
+**Testing Approach**: **Automated** - Filesystem API validation (`fs.stat()` mode comparison)
+
+**Priority**: **P0** - Security vulnerability if violated, prevents privilege escalation
+
+**Traceability**:
+- **Source**: UC-002: Deploy SDLC Framework to Existing Project (AC-002: security)
+- **Test Cases**: TC-002-017 (security validation)
+- **Components**: deploy-agents.mjs (SAD Section 2.1)
+- **ADRs**: None
+
+**Target Value**: File permissions match source (no privilege escalation)
+
+**Current Baseline**: Permissions match source (deployment script enforced)
+
+**Implementation Notes**:
+- Use `fs.copyFile()` with `COPYFILE_FICLONE` flag (preserve permissions)
+- Validate permissions after deployment (assert match)
+- Reject deployment if permissions differ (abort with error)
+
+---
+
+### NFR-SEC-004: Backup Integrity [P1]
+
+**Description**: Backup files validated with SHA-256 checksum before restoration.
+
+**Rationale**: Corrupted backups could lose user data during rollback. Checksum validation detects corruption, prevents data loss.
+
+**Measurement Criteria**:
+- **Target**: SHA-256 checksum validation before rollback restoration
+- **Measurement Methodology**: Checksum verification (compute SHA-256, compare with expected value)
+- **Baseline**: SHA-256 checksum validation (enforced by rollback script)
+
+**Testing Approach**: **Automated** - Checksum validation test (corruption detection)
+
+**Priority**: **P1** - Data protection feature, deferred to FID-005 (Plugin Rollback)
+
+**Traceability**:
+- **Source**: UC-002: Deploy SDLC Framework to Existing Project (AC-003: backup integrity)
+- **Test Cases**: TC-002-018 (security validation)
+- **Components**: PluginManager (SAD Section 5.1)
+- **ADRs**: ADR-006 (Plugin Rollback Strategy)
+
+**Target Value**: SHA-256 checksum validation (corruption detection)
+
+**Current Baseline**: TBD (implement checksum validation in FID-005)
+
+**Implementation Notes**:
+- Use Node.js `crypto` module (SHA-256 hash computation)
+- Store expected checksum in backup manifest (metadata file)
+- Reject backup if checksum mismatch (abort rollback, warn user)
+
+---
+
+## 8. Reliability Requirements
 
 ### 8.1 Overview
 
-Portability requirements ensure AIWG runs on diverse operating systems, runtimes, and platforms (Claude Code, OpenAI/Codex, Cursor) without extensive platform-specific customization. As a multi-platform developer tool, portability focuses on OS support, runtime compatibility, and platform abstraction.
+Reliability requirements ensure AIWG operations complete successfully without data loss. As a documentation tooling project, reliability focuses on deployment success, data preservation, and rollback integrity.
 
-**Portability Philosophy**: "Write once, run anywhere (with platform adapters)" - core logic platform-agnostic, thin adapters for platform differences.
+**Reliability Philosophy**: "Transactional operations" - deployments succeed completely or rollback completely, no partial states.
 
-### 8.2 Operating System Support
-
-#### NFR-PORT-01: OS Compatibility
-
-**Requirement**: AIWG supports major developer operating systems.
-
-| Operating System | Support Status | Validation | Rationale |
-|-----------------|---------------|-----------|-----------|
-| Linux (Ubuntu, Debian, Fedora) | **Primary** (validated) | CI/CD on Ubuntu 22.04 | Maintainer's primary OS (Solution Profile) |
-| macOS (11+) | **Secondary** (community testing) | Manual validation, future CI | Common developer OS |
-| Windows (10+) | **Future** (planned) | WSL2 validated, native planned | Large developer market share |
-| WSL2 (Windows Subsystem for Linux) | **Supported** (validated) | Maintainer tests on WSL2 | Windows developer workaround |
-
-**Traceability**:
-- Solution Profile: Portability (Linux primary, macOS secondary, Windows future)
-- SAD Section 7.1: Core Technologies (Node.js >=18.20.8 cross-platform)
-
-**Implementation Guidance**:
-- Avoid Linux-specific commands (e.g., use Node.js `fs` module vs `cp`, `mv` shell commands)
-- Test on macOS before releases (community validation)
-- Provide Windows installation instructions (WSL2 setup guide)
-
-#### NFR-PORT-02: Runtime Dependencies
-
-**Requirement**: AIWG runtime dependencies minimal, widely available.
-
-| Dependency | Minimum Version | Rationale |
-|-----------|----------------|-----------|
-| Node.js | >=18.20.8 | LTS version, widespread adoption (SAD Section 7.1) |
-| Python | >=3.8 (optional, for traceability) | Widely available, NetworkX compatibility |
-| Git | >=2.20 | Version control (prerequisite for AIWG usage) |
-| Bash | >=4.0 | Installation script, Linux/macOS standard |
-
-**Traceability**:
-- SAD Section 7.1: Core Technologies (Node.js >=18.20.8, Python >=3.8)
-- UC-002: Deploy SDLC Framework (Preconditions: Git repository)
-
-**Implementation Guidance**:
-- Version detection in install script (warn if Node.js too old)
-- Graceful degradation (Python optional, traceability features unavailable if missing)
-- Installation guide includes dependency setup
-
-### 8.3 Platform Compatibility
-
-#### NFR-PORT-03: AI Coding Platform Support
-
-**Requirement**: AIWG supports multiple AI coding platforms via adapters.
-
-| Platform | Support Status | Directory Structure | Deployment Format | Rationale |
-|----------|---------------|-------------------|------------------|-----------|
-| Claude Code | **Primary** (production) | `.claude/agents/`, `.claude/commands/` | Individual markdown files | Maintainer's primary platform |
-| OpenAI/Codex | **Secondary** (production) | `.codex/agents/` | Single `AGENTS.md` file | Multi-provider support (MVP feature) |
-| Cursor | **Planned** (experimental) | `.cursor/agents/` | Platform-specific format | Growing adoption |
-| Windsurf | **Planned** (research) | TBD | API adapter | Future platform |
-| Zed | **Research** (future) | TBD | Extension API | Emerging platform |
-
-**Traceability**:
-- SAD Section 7.3: Platform Adapters (Claude, OpenAI, Cursor, Windsurf, Zed)
-- CLAUDE.md: Multi-provider support (`aiwg -deploy-agents --provider openai`)
-
-**Implementation Guidance**:
-- Platform abstraction layer (adapter pattern, not platform-specific implementations)
-- Manifests declare platform compatibility (plugin.yaml: `platforms: [claude, openai, cursor]`)
-- Platform-specific testing (CI validates agents deploy correctly on each platform)
-
-#### NFR-PORT-04: Browser Compatibility
-
-**Requirement**: Not applicable (AIWG is CLI tool, not web application).
-
-**Rationale**: AIWG has no web interface, all user interaction via terminal/command line.
-
-**Future**: If web-based documentation site launched, target WCAG 2.1 Level AA (modern browsers: Chrome, Firefox, Safari, Edge).
-
-### 8.4 Deployment Targets
-
-#### NFR-PORT-05: Installation Methods
-
-**Requirement**: AIWG supports flexible installation methods for diverse user preferences.
-
-| Installation Method | Target | Rationale |
-|-------------------|--------|-----------|
-| One-line bash script | <5 minutes | Primary installation path (Solution Profile) |
-| Manual clone + symlink | Developer customization | Power users, contributors |
-| npm package (future) | Global install via `npm install -g aiwg` | Node.js ecosystem integration |
-| Homebrew (future macOS) | `brew install aiwg` | macOS developer convenience |
-
-**Traceability**:
-- CLAUDE.md: One-line install: `curl -fsSL ... | bash`
-- Solution Profile: Minimize setup friction (<15 minutes from install to first artifact)
-
-**Implementation Guidance**:
-- Bash install script idempotent (safe to run multiple times)
-- npm package optional (not required for MVP)
-- Homebrew formula (community-contributed, future)
+**Priority Focus**: P2 NFRs target operational reliability (deployment success, data preservation, rollback integrity). Deferred to post-MVP to reduce scope.
 
 ---
 
-## 9. Reliability Requirements
+### NFR-REL-001: Deployment Success Rate [P2]
+
+**Description**: File deployment operations complete successfully with zero partial deployments.
+
+**Rationale**: Partial deployments leave system in inconsistent state. 100% success rate ensures reliability, transactional deployment.
+
+**Measurement Criteria**:
+- **Target**: 100% deployment success rate (zero partial deployments)
+- **Measurement Methodology**: Deployment validation (verify all files copied, no missing files)
+- **Baseline**: 100% success rate (enforced by deployment script)
+
+**Testing Approach**: **Automated** - Deployment validation (file count comparison)
+
+**Priority**: **P2** - Reliability enhancement, deferred to post-MVP transactional deployment
+
+**Traceability**:
+- **Source**: UC-002: Deploy SDLC Framework to Existing Project (AC-001: deployment success)
+- **Test Cases**: TC-002-019 (reliability validation)
+- **Components**: deploy-agents.mjs (SAD Section 2.1)
+- **ADRs**: ADR-006 (Plugin Rollback Strategy - transactional deployment)
+
+**Target Value**: 100% deployment success rate (zero partial deployments)
+
+**Current Baseline**: TBD (establish baseline in Construction phase)
+
+**Implementation Notes**:
+- Use atomic operations (deploy to temporary directory, then rename)
+- Use rollback on failure (delete partial deployment if error)
+- Use validation (verify all files copied before marking success)
+
+---
+
+### NFR-REL-002: Data Preservation During Updates [P2]
+
+**Description**: CLAUDE.md updates preserve existing content with zero data loss.
+
+**Rationale**: CLAUDE.md contains user customizations. Data loss erodes trust, users avoid updates.
+
+**Measurement Criteria**:
+- **Target**: Zero data loss during CLAUDE.md updates
+- **Measurement Methodology**: Content comparison (before vs after update)
+- **Baseline**: Zero data loss (enforced by update script)
+
+**Testing Approach**: **Automated** - Content validation (diff comparison)
+
+**Priority**: **P2** - Trust/reliability feature, deferred to post-MVP update enhancement
+
+**Traceability**:
+- **Source**: UC-002: Deploy SDLC Framework to Existing Project (AC-004: data preservation)
+- **Test Cases**: TC-002-020 (reliability validation)
+- **Components**: deploy-agents.mjs (SAD Section 2.1)
+- **ADRs**: ADR-006 (Plugin Rollback Strategy - preserve existing content)
+
+**Target Value**: Zero data loss (100% content preservation)
+
+**Current Baseline**: Zero data loss (update script enforced)
+
+**Implementation Notes**:
+- Use append-only updates (add AIWG section, preserve existing content)
+- Use backup before update (restore if update fails)
+- Use validation (compare content length before/after)
+
+---
+
+### NFR-REL-003: Rollback State Restoration [P2]
+
+**Description**: Plugin rollback restores system to pre-installation state with 100% integrity.
+
+**Rationale**: Incomplete rollback leaves system in inconsistent state. 100% state restoration ensures reliable recovery.
+
+**Measurement Criteria**:
+- **Target**: 100% state restoration (all changes reverted)
+- **Measurement Methodology**: State comparison (before installation vs after rollback)
+- **Baseline**: 100% state restoration (enforced by rollback script)
+
+**Testing Approach**: **Automated** - State validation (filesystem comparison)
+
+**Priority**: **P2** - Reliability enhancement, deferred to FID-005 (Plugin Rollback)
+
+**Traceability**:
+- **Source**: UC-010: Plugin Rollback (AC-001: state restoration)
+- **Test Cases**: TC-010-019 (reliability validation)
+- **Components**: PluginManager (SAD Section 5.1)
+- **ADRs**: ADR-006 (Plugin Rollback Strategy - reset + redeploy)
+
+**Target Value**: 100% state restoration (complete recovery)
+
+**Current Baseline**: TBD (establish baseline in FID-005 implementation)
+
+**Implementation Notes**:
+- Use backup-based restoration (restore CLAUDE.md from backup)
+- Use manifest-based deletion (delete all plugin files)
+- Use validation (verify state matches pre-installation)
+
+---
+
+## 9. Usability Requirements
 
 ### 9.1 Overview
 
-Reliability requirements ensure AIWG remains dependable during normal operation, handling failures gracefully and recovering quickly. As a developer tool (not critical infrastructure), reliability focuses on error handling, data integrity, fault tolerance, and user confidence.
+Usability requirements ensure AIWG tools are learnable, clear, and efficient. As a documentation tooling project, usability focuses on learning curve, feedback clarity, progress visibility, setup friction, error clarity, and onboarding efficiency.
 
-**Reliability Philosophy**: "Fail gracefully, recover quickly" - errors should be informative, not cryptic; recovery should be automated, not manual.
+**Usability Philosophy**: "Don't make users think" - tools should be intuitive, errors should be self-explanatory, progress should be visible.
 
-### 9.2 Error Handling
-
-#### NFR-REL-01: Graceful Degradation
-
-**Requirement**: AIWG handles errors without data loss, providing clear recovery paths.
-
-| Error Category | Graceful Behavior | Recovery Path | Rationale |
-|---------------|------------------|--------------|-----------|
-| Network timeout (plugin download) | Retry 3 times, then fail with error | User retries manually | Transient network issues common |
-| Disk full (plugin installation) | Rollback, restore pre-install state (ADR-006) | User frees disk space, retries | Prevent partial installations |
-| Permission denied (file access) | Clear error with chmod command | User fixes permissions, retries | Common on Unix systems |
-| Context window exhaustion (large document) | Chunk document, process in sections | Automated chunking (UC-004: Exc-3) | Large documents exceed LLM limits |
-
-**Traceability**:
-- ADR-006: Plugin Rollback Strategy (<2 second reset on failure)
-- UC-004: Multi-Agent Workflows (Exc-3: Context window exhaustion, chunked processing)
-
-**Implementation Guidance**:
-- Catch all exceptions (no unhandled errors crash CLI)
-- Log errors to `.aiwg/logs/error.log` (debugging evidence)
-- Provide actionable remediation (not generic "Something went wrong")
-
-#### NFR-REL-02: Data Integrity Guarantees
-
-**Requirement**: AIWG prevents data corruption, ensuring atomic operations.
-
-| Data Type | Integrity Guarantee | Mechanism | Rationale |
-|-----------|-------------------|-----------|-----------|
-| Plugin installations | 100% rollback on failure | Reset + redeploy (ADR-006) | Zero partial installs (UC-010: NFR-RB-02) |
-| CLAUDE.md modifications | Backup before edit, restore on failure | Pre-modification backup (UC-002: Exc-3) | Prevent corruption of project configuration |
-| Git commits | Atomic commits (all-or-nothing) | Git's transactional model | Standard Git guarantee |
-| Manifest files | Schema validation before write | JSON Schema validation | Prevent malformed manifests |
-
-**Traceability**:
-- ADR-006: Plugin Rollback Strategy (reset + redeploy, <2s reset)
-- UC-002: Deploy SDLC Framework (NFR-SD-03: CLAUDE.md update preserves existing content)
-- UC-010: Rollback Plugin Installation (NFR-RB-02: 100% state restoration)
-
-**Implementation Guidance**:
-- InstallationTransaction class wraps all install operations (SAD Section 5.1)
-- Backup files before modification (`.aiwg/backups/` directory)
-- Validate data before persistence (schema validation, checksum validation)
-
-### 9.3 Fault Tolerance
-
-#### NFR-REL-03: External Dependency Handling
-
-**Requirement**: AIWG tolerates external service failures, degrading gracefully.
-
-| External Dependency | Failure Behavior | Fallback | Rationale |
-|--------------------|-----------------|----------|-----------|
-| GitHub repository (download) | Retry 3 times, then fail with error | No fallback (AIWG requires GitHub) | Primary distribution channel |
-| GitHub CLI (gh) | Detect missing, provide install instructions | Manual PR creation (user instructions) | Optional enhancement tool |
-| Python (traceability) | Detect missing, skip traceability features | Traceability unavailable | Optional feature (not core AIWG) |
-| Network (offline usage) | Warn user, allow offline work with cached plugins | Local agent/command execution | Developers work offline frequently |
-
-**Traceability**:
-- Solution Profile: Reliability - GitHub uptime (99.9%+, external dependency)
-- SAD Section 4.4: Deployment View (GitHub repository)
-
-**Implementation Guidance**:
-- Dependency detection at runtime (check if `gh`, `python` available)
-- Clear warnings when optional features unavailable (not silent failures)
-- Offline mode documentation (users know AIWG works without network)
-
-#### NFR-REL-04: Concurrent Operation Safety
-
-**Requirement**: AIWG handles concurrent operations (multiple developers, parallel workflows) safely.
-
-| Concurrency Scenario | Safety Mechanism | Rationale |
-|---------------------|-----------------|-----------|
-| Multiple developers deploying agents | File-based locking (`.aiwg/.lock`) | Prevent conflicting writes to shared directories |
-| Parallel agent workflows (4-6 agents) | Task tool manages concurrency | Claude Code handles agent scheduling |
-| Git conflicts (shared .aiwg/ artifacts) | Standard Git conflict resolution | Developers resolve via Git workflows |
-
-**Traceability**:
-- NFR-SCAL-04: Concurrent User Support (2-5 currently, 10+ target)
-- UC-004: Multi-Agent Workflows (parallel execution, 25 agent limit)
-
-**Implementation Guidance**:
-- File-based locking for shared resources (`.aiwg/.lock` file)
-- Document Git workflows for artifact management (branching, merging)
-- Encourage isolated workspaces (`.aiwg/contrib/{username}/` per developer)
-
-### 9.4 Recovery and Resilience
-
-#### NFR-REL-05: Automated Recovery
-
-**Requirement**: AIWG automatically recovers from common failure scenarios.
-
-| Failure Scenario | Automated Recovery | User Action Required | Rationale |
-|-----------------|-------------------|---------------------|-----------|
-| Plugin installation failure | Rollback to pre-install state (ADR-006) | None (automatic) | Zero orphaned files (UC-010: NFR-RB-03) |
-| AIWG installation corruption | `aiwg -reinstall` restores from GitHub | User runs reinstall command | Fast recovery (<5 minutes) |
-| Reviewer timeout (multi-agent workflow) | Retry once, proceed if retry fails | None (automatic) | Transient LLM API issues |
-| Manifest sync drift | `aiwg -sync-manifests --fix` repairs | User runs sync command | Detect file additions/deletions |
-
-**Traceability**:
-- ADR-006: Plugin Rollback Strategy (reset + redeploy, <2s reset)
-- UC-004: Multi-Agent Workflows (Exc-1: Reviewer timeout, automatic retry)
-
-**Implementation Guidance**:
-- Transaction rollback built into PluginManager (automatic, not user-initiated)
-- Retry logic for transient failures (network timeouts, LLM API throttling)
-- Self-healing manifests (sync-manifests detects and repairs drift)
-
-#### NFR-REL-06: Health Checks
-
-**Requirement**: AIWG provides health check mechanisms for proactive issue detection.
-
-| Health Check | Detection | Remediation | Rationale |
-|-------------|-----------|-------------|-----------|
-| AIWG installation integrity | `aiwg -version` (smoke test) | `aiwg -reinstall` if corrupted | Quick validation |
-| Plugin installation integrity | SHA-256 checksum validation | `aiwg -reinstall-plugin <name>` | Detect tampering |
-| Manifest sync status | `aiwg -sync-manifests --check` | `--fix` flag repairs | Detect file drift |
-| Dependency availability | Runtime checks (Node.js, Python, Git) | Install instructions | Prevent cryptic errors |
-
-**Traceability**:
-- SAD Section 4.6: Security View (integrity layer: SHA-256 checksum validation)
-- Solution Profile: Reliability monitoring maturity (basic, GitHub metrics only)
-
-**Implementation Guidance**:
-- `aiwg -health` command (comprehensive system check, future enhancement)
-- CI/CD smoke tests (verify installation functional after build)
-- Checksum validation on every plugin load (not just installation)
-
-#### NFR-REL-07: Framework Write Segregation and Read Flexibility
-
-**Requirement**: Framework-scoped workspace architecture enforces write segregation while allowing unrestricted cross-framework reads for novel combinations.
-
-| Operation Type | Guarantee | Validation | Rationale |
-|---------------|-----------|------------|-----------|
-| **WRITES: Framework-scoped** | SDLC framework writes only to `.aiwg/frameworks/sdlc-complete/` | Write path test: SDLC write → path starts with `frameworks/sdlc-complete/` | Prevent write conflicts, organize artifacts by origin |
-| **READS: Unrestricted** | Any framework can read from any other framework | Cross-framework read test: SDLC reads Marketing artifacts successfully | Enable novel framework combinations (SDLC + Marketing workflows) |
-| **Tier writes: Scoped** | Projects write to Tier 2 (`projects/{id}/`), not Tier 1 (`repo/`) unless explicitly allowed | Tier write test: Project workflow → writes to `projects/`, not `repo/` | Prevent accidental corruption of global stable docs |
-| **Tier reads: Flexible** | Workflows read across tiers as needed (repo + projects + working) | Tier read test: Workflow reads from all 4 tiers successfully | Context curation is optimization, not restriction |
-
-**Traceability**:
-- UC-012: Framework-Aware Workspace Management (AC-004: Write segregation, read flexibility)
-- ADR-007: Framework-Scoped Workspace Architecture (polyglot framework support)
-- NFR-MAINT-08: Framework-Scoped Workspace Lifecycle (tier boundaries)
-- FID-007: Workspace Management Feature (novel framework combinations)
-
-**Implementation Guidance**:
-- **Write validation**: PathValidator ensures writes target correct framework directory
-- **Read freedom**: No restrictions on read paths (agents read anywhere in `.aiwg/`)
-- **Cross-framework workflows**: SDLC agent can read Marketing artifacts to generate release blog posts
-- **Novel combinations**: User says "Use Marketing framework to promote SDLC architecture decisions" → Marketing agents read SDLC ADRs, generate content, write to Marketing framework directory
-
-**Write Segregation Examples**:
-- SDLC workflow generates SAD → writes to `.aiwg/frameworks/sdlc-complete/projects/{id}/architecture/`
-- Marketing workflow generates blog post → writes to `.aiwg/frameworks/marketing-flow/projects/{campaign-id}/content/`
-- Agile workflow generates sprint plan → writes to `.aiwg/frameworks/agile-lite/projects/{sprint-id}/planning/`
-
-**Cross-Framework Read Examples** (THE MAGIC):
-- Marketing agent reads SDLC use cases → generates user-facing feature documentation
-- SDLC security agent reads Marketing personas → tailors threat model to target audience
-- Agile retrospective agent reads SDLC architecture decisions → identifies technical debt patterns
-- SDLC requirements agent reads Marketing campaign results → prioritizes features by user demand
-
-**Data Corruption Prevention**:
-- Atomic tier transitions: Moving project → archive is transactional (all-or-nothing)
-- Framework registry validation: Prevent duplicate framework IDs
-- Write conflict detection: Warn if multiple frameworks attempt writes to same file
-- Path traversal protection: Reject `../` writes attempting to escape framework directory (reads OK)
-
-**Recovery from Violations**:
-- If write path violation detected: Reject write, suggest correct path
-- If orphaned files found: `aiwg -cleanup-orphans` removes stale data
-- If write conflict detected: User resolves manually (Git merge conflict workflow)
+**Priority Focus**: P0 NFRs target user-facing interactions (learning curve, setup time, error clarity). P1 NFRs target user experience enhancements (feedback clarity, progress visibility).
 
 ---
 
-## 10. Regulatory and Compliance Requirements
+### NFR-USE-001: AI Validation Learning Curve [P0]
+
+**Description**: Users internalize AI validation feedback patterns within 1-2 validation cycles.
+
+**Rationale**: Steep learning curve (>2 cycles) reduces adoption. Users should quickly understand validation feedback, apply improvements.
+
+**Measurement Criteria**:
+- **Target**: 1-2 validation cycles to internalize feedback patterns
+- **Measurement Methodology**: User study with 10 new users, observe task completion improvement
+- **Baseline**: 80% of users internalize feedback after 2 cycles
+
+**Testing Approach**: **Manual** - User acceptance testing (UAT) with task observation
+
+**Priority**: **P0** - Adoption barrier if steep, accessibility requirement
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-001: learning curve)
+- **Test Cases**: TC-001-019 (usability validation)
+- **Components**: WritingValidator (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 1-2 validation cycles to internalize feedback patterns
+
+**Current Baseline**: TBD (establish baseline in Transition phase, UAT with beta testers)
+
+**Proxy Metric for Automated Testing**:
+- Measure feedback consistency (same pattern flagged consistently across documents)
+- Target: 95% consistency (pattern X always flagged in all documents)
+
+**Implementation Notes**:
+- Use clear feedback messages (explain why pattern flagged)
+- Use consistent terminology (same terms across all feedback)
+- Provide examples (show before/after rewrite suggestions)
+
+---
+
+### NFR-USE-002: Validation Feedback Clarity [P1]
+
+**Description**: Validation feedback includes line numbers and specific rewrite suggestions.
+
+**Rationale**: Vague feedback ("improve clarity") is not actionable. Specific line numbers + rewrite suggestions enable immediate action.
+
+**Measurement Criteria**:
+- **Target**: 100% of feedback includes line numbers and specific rewrite suggestions
+- **Measurement Methodology**: Feedback message inspection (regex validation)
+- **Baseline**: 100% (enforced by feedback format)
+
+**Testing Approach**: **Automated** - Feedback format validation (regex checks)
+
+**Priority**: **P1** - User experience enhancement, deferred to post-MVP feedback improvement
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-002: feedback clarity)
+- **Test Cases**: TC-001-020 (usability validation)
+- **Components**: WritingValidator (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 100% of feedback includes line numbers and specific rewrite suggestions
+
+**Current Baseline**: TBD (establish baseline in Construction phase)
+
+**Feedback Format Example**:
+```
+Line 42: AI pattern detected - "It's worth noting that"
+Suggestion: Remove hedge phrase. Rewrite as: "The system supports..."
+```
+
+**Implementation Notes**:
+- Use line number tracking (parse markdown line-by-line)
+- Use suggestion templates (predefined rewrites for common patterns)
+- Use severity levels (high-confidence patterns flagged as errors, low-confidence as warnings)
+
+---
+
+### NFR-USE-003: Progress Visibility (Real-time Score Updates) [P1]
+
+**Description**: Authenticity score updates in real-time as files are validated.
+
+**Rationale**: Real-time updates motivate users (see improvement incrementally). Batch updates delay gratification, reduce engagement.
+
+**Measurement Criteria**:
+- **Target**: Score updates visible after each file validation (not batched)
+- **Measurement Methodology**: UI inspection (manual testing)
+- **Baseline**: Real-time updates (enforced by validation loop)
+
+**Testing Approach**: **Manual** - UI inspection (requires UI testing framework)
+
+**Priority**: **P1** - Motivation feature, deferred to Construction phase (when UI implemented)
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-003: progress visibility)
+- **Test Cases**: TC-001-021 (usability validation)
+- **Components**: WritingValidator (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: Real-time score updates (after each file validation)
+
+**Current Baseline**: TBD (establish baseline in Construction phase, UI implementation)
+
+**Implementation Notes**:
+- Use streaming output (display score incrementally, not at end)
+- Use progress indicators (percentage complete, files remaining)
+- Use color coding (green = improving, red = declining)
+
+---
+
+### NFR-USE-004: First-Time Setup Friction [P0]
+
+**Description**: Users generate first artifact within 15 minutes from installation.
+
+**Rationale**: Onboarding friction (>15 minutes) reduces conversion. Users should experience value quickly.
+
+**Measurement Criteria**:
+- **Target**: <15 minutes from install to first artifact (80% of users)
+- **Measurement Methodology**: Timed user study with 10 new users, task completion observation
+- **Baseline**: 12 minutes (typical), 15 minutes (threshold)
+
+**Testing Approach**: **Manual** - User acceptance testing (UAT) with timer
+
+**Priority**: **P0** - Onboarding conversion rate, accessibility requirement
+
+**Traceability**:
+- **Source**: UC-002: Deploy SDLC Framework to Existing Project (AC-001: setup friction)
+- **Test Cases**: TC-002-021 (usability validation)
+- **Components**: CLI entry point, deploy-agents.mjs (SAD Section 2.1)
+- **ADRs**: None
+
+**Target Value**: <15 minutes from install to first artifact (80% of users)
+
+**Current Baseline**: TBD (establish baseline in Transition phase, UAT with beta testers)
+
+**Proxy Metric for Automated Testing**:
+- Measure setup time (install + deploy + generate first artifact)
+- Target: <15 minutes (measured on reference hardware)
+
+**Implementation Notes**:
+- Use one-line install (curl | bash)
+- Use interactive prompts (guide users through setup)
+- Use default values (minimize user input required)
+
+---
+
+### NFR-USE-005: Error Message Clarity [P0]
+
+**Description**: Error messages include clear remediation steps for all errors.
+
+**Rationale**: Unclear errors ("something went wrong") frustrate users, increase support burden. Clear remediation steps enable self-service recovery.
+
+**Measurement Criteria**:
+- **Target**: 100% of error messages include remediation steps
+- **Measurement Methodology**: Error message inspection (regex validation)
+- **Baseline**: 100% (enforced by error handling)
+
+**Testing Approach**: **Automated** - Error message format validation (regex checks)
+
+**Priority**: **P0** - Self-service support, reduce support burden
+
+**Traceability**:
+- **Source**: UC-002: Deploy SDLC Framework to Existing Project (AC-005: error clarity)
+- **Test Cases**: TC-002-022 (usability validation)
+- **Components**: CLI entry point, deploy-agents.mjs (SAD Section 2.1)
+- **ADRs**: None
+
+**Target Value**: 100% of error messages include remediation steps
+
+**Current Baseline**: TBD (establish baseline in Construction phase)
+
+**Error Message Format Example**:
+```
+ERROR: Plugin installation failed - insufficient disk space
+
+Remediation:
+1. Free up disk space (current: 50MB available, required: 100MB)
+2. Retry installation: aiwg -install-plugin <name>
+3. If issue persists, file bug report: https://github.com/jmagly/ai-writing-guide/issues
+```
+
+**Implementation Notes**:
+- Use error templates (predefined remediation steps for common errors)
+- Use context-specific guidance (include relevant details: disk space, file path, etc.)
+- Use actionable language (specific commands, not vague suggestions)
+
+---
+
+### NFR-USE-006: Onboarding Time Savings [P1]
+
+**Description**: Template selection guides reduce onboarding time by 50% vs manual selection.
+
+**Rationale**: Manual template selection takes 10-20 minutes (browsing, comparison). 50% time savings (5-10 minutes) demonstrates automation value.
+
+**Measurement Criteria**:
+- **Target**: 50% time savings vs manual selection
+- **Measurement Methodology**: A/B comparison (template selection with vs without AIWG), timed user study with 20 users (10 AIWG, 10 manual)
+- **Baseline**: 10 minutes (AIWG), 20 minutes (manual) = 50% time savings
+
+**Testing Approach**: **Manual** - User acceptance testing (UAT) with A/B comparison
+
+**Priority**: **P1** - Productivity metric, deferred to FID-003 (Template Selection Guides)
+
+**Traceability**:
+- **Source**: UC-008: Template Selection Guides (AC-003: time savings)
+- **Test Cases**: TC-008-017 (usability validation)
+- **Components**: TemplateSelector (SAD Section 2.1)
+- **ADRs**: None
+
+**Target Value**: 50% time savings vs manual selection (10 minutes AIWG vs 20 minutes manual)
+
+**Current Baseline**: TBD (establish baseline in Transition phase, UAT with beta testers)
+
+**Proxy Metric for Automated Testing**:
+- Measure recommendation time (time to generate recommendation)
+- Target: <2 minutes (fast enough to save time vs manual browsing)
+
+**Implementation Notes**:
+- Use intelligent recommendation (project type, tech stack, team size)
+- Limit recommendation set (top 3 templates, ranked)
+- Provide explanation (why this template recommended)
+
+---
+
+## 10. Data Retention Requirements
 
 ### 10.1 Overview
 
-Regulatory and compliance requirements ensure AIWG meets legal obligations and industry standards. As an open-source documentation and tooling project (no PII, no user accounts, no data collection), compliance requirements are minimal compared to regulated systems (HIPAA, PCI-DSS, SOC 2).
+Data retention requirements ensure AIWG preserves historical data for analysis and compliance. As a documentation tooling project, retention focuses on validation history, review history, and metrics retention.
 
-**Compliance Philosophy**: "Transparency and permissiveness" - open source, MIT license, no hidden data collection.
+**Data Retention Philosophy**: "Keep what's useful, discard what's not" - retain data for trend analysis and compliance, but avoid indefinite storage.
 
-### 10.2 License Compliance
-
-#### NFR-COMP-01: Open Source License
-
-**Requirement**: AIWG complies with MIT License obligations.
-
-| Obligation | Compliance Mechanism | Rationale |
-|-----------|---------------------|-----------|
-| Attribution | MIT License file in repository root | Legal requirement (MIT License) |
-| Sublicensing | Users can modify, distribute, sublicense | Permissive license (no copyleft) |
-| Warranty disclaimer | LICENSE file disclaims warranty | Liability protection |
-| Dependency licenses | All dependencies MIT/Apache/BSD compatible | No GPL contamination |
-
-**Traceability**:
-- Solution Profile: License Compliance (MIT License, permissive, attribution required)
-- Repository: `LICENSE` file (MIT License text)
-
-**Implementation Guidance**:
-- Dependency audit (ensure no GPL dependencies introduced)
-- SPDX identifiers in package.json (`"license": "MIT"`)
-- Attribution preserved in distributed packages
-
-#### NFR-COMP-02: Third-Party Dependency Compliance
-
-**Requirement**: AIWG uses only open-source dependencies with permissive licenses.
-
-| Dependency | License | Compatibility | Rationale |
-|-----------|---------|--------------|-----------|
-| Node.js (runtime) | MIT | Compatible | Permissive |
-| js-yaml (manifest parsing) | MIT | Compatible | Permissive |
-| markdownlint-cli2 (linting) | MIT | Compatible | Permissive |
-| NetworkX (Python, traceability) | BSD-3-Clause | Compatible | Permissive |
-
-**Traceability**:
-- SAD Section 7.1: Core Technologies (Node.js, Python, markdownlint-cli2, NetworkX)
-- Solution Profile: No commercial dependencies (zero budget)
-
-**Implementation Guidance**:
-- License scanning (CI checks for non-permissive licenses)
-- SPDX license identifiers (machine-readable license metadata)
-- Dependency updates (audit licenses before upgrading)
-
-### 10.3 Privacy Compliance
-
-#### NFR-COMP-03: GDPR/CCPA Compliance
-
-**Requirement**: AIWG complies with privacy regulations (GDPR, CCPA).
-
-| Requirement | AIWG Posture | Rationale |
-|------------|-------------|-----------|
-| Data collection | **None** (no telemetry, no analytics, no user accounts) | Not applicable (Solution Profile: no PII) |
-| User consent | **Not required** (no data collected) | Not applicable |
-| Right to erasure | **Not applicable** (no user data stored) | Not applicable |
-| Data residency | **Not applicable** (local-only tool) | Not applicable |
-
-**Traceability**:
-- Solution Profile: Regulatory and Compliance (GDPR: N/A, no PII, no user accounts, no data collection)
-- UC-001: Validate AI-Generated Content (NFR-WR-05: No external API calls, content privacy)
-
-**Implementation Guidance**:
-- No telemetry added (respect user privacy)
-- No external API calls (content never leaves user's machine)
-- Privacy policy (if website launched): Disclose no data collection
-
-#### NFR-COMP-04: Export Control
-
-**Requirement**: AIWG complies with export control regulations.
-
-| Export Control | AIWG Posture | Rationale |
-|---------------|-------------|-----------|
-| ITAR (defense) | **Not applicable** (general-purpose software) | Open source, public repository |
-| EAR (dual-use) | **Not applicable** (no encryption beyond TLS/SSH) | Standard developer tools |
-| Sanctions (countries) | **No restrictions** (open source, publicly available) | MIT License permits worldwide distribution |
-
-**Traceability**:
-- Solution Profile: Export Control (open source, no export restrictions)
-- Repository: Public GitHub repository (globally accessible)
-
-**Implementation Guidance**:
-- No export restrictions (open source, MIT License)
-- No encryption technology (beyond standard TLS/SSH for GitHub communication)
-
-### 10.4 Accessibility Compliance
-
-#### NFR-COMP-05: Accessibility Standards (Future Web Interface)
-
-**Requirement**: If AIWG launches web-based documentation or UI, comply with accessibility standards.
-
-| Standard | Target | Rationale |
-|----------|--------|-----------|
-| WCAG 2.1 | Level AA | Legal compliance (ADA, Section 508) |
-| Screen reader compatibility | JAWS, NVDA, VoiceOver | Blind users can navigate documentation |
-| Keyboard navigation | 100% functionality without mouse | Motor impairment accessibility |
-| Color contrast | 4.5:1 minimum (text), 3:1 (UI) | Visual impairment accessibility |
-
-**Current Status**: **Not applicable** (CLI tool only, no web interface).
-
-**Future**: If documentation website launched (beyond GitHub README), target WCAG 2.1 Level AA.
-
-**Traceability**:
-- NFR-USE-06: Accessibility Standards (screen reader compatible CLI output)
-- Solution Profile: Future web interface (defer until adoption validates)
+**Priority Focus**: P1 NFRs target operational data retention (validation history, review history, metrics). Deferred to post-MVP to reduce scope.
 
 ---
 
-## 11. Quality Metrics and Service Level Indicators
+### NFR-DATA-001: Validation History Retention [P1]
+
+**Description**: Validation history retained for 30 days to enable trend analysis.
+
+**Rationale**: Trend analysis (improvement tracking) requires historical data. 30-day retention balances analysis value with storage constraints.
+
+**Measurement Criteria**:
+- **Target**: 30-day retention
+- **Measurement Methodology**: File age validation (delete files older than 30 days)
+- **Baseline**: 30-day retention (enforced by cleanup script)
+
+**Testing Approach**: **Automated** - File age validation (timestamp checks)
+
+**Priority**: **P1** - Trend analysis feature, deferred to post-MVP observability enhancement
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (AC-004: history retention)
+- **Test Cases**: TC-001-022 (retention validation)
+- **Components**: WritingValidator (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 30-day retention
+
+**Current Baseline**: TBD (implement retention policy in post-MVP)
+
+**Implementation Notes**:
+- Use cron job (daily cleanup of files older than 30 days)
+- Use `.aiwg/working/validation-history/` directory (isolated storage)
+- Use compression (gzip old validation reports to save disk space)
+
+---
+
+### NFR-DATA-002: Multi-Agent Review History Retention [P1]
+
+**Description**: Multi-agent review history retained permanently for compliance audit trail.
+
+**Rationale**: Review history provides audit trail (who reviewed, when, what feedback). Permanent retention enables compliance validation, retrospective analysis.
+
+**Measurement Criteria**:
+- **Target**: Permanent retention (full review history preserved)
+- **Measurement Methodology**: File existence validation (verify all reviews archived)
+- **Baseline**: Permanent retention (enforced by archival script)
+
+**Testing Approach**: **Automated** - File existence validation (all reviews archived)
+
+**Priority**: **P1** - Governance feature, deferred to post-MVP compliance enhancement
+
+**Traceability**:
+- **Source**: UC-004: Multi-Agent Workflows (AC-002: review history)
+- **Test Cases**: TC-004-019 (retention validation)
+- **Components**: DocumentationSynthesizer (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: Permanent retention (full review history preserved)
+
+**Current Baseline**: Permanent retention (archival to `.aiwg/archive/reviews/`)
+
+**Implementation Notes**:
+- Use `.aiwg/archive/reviews/` directory (permanent storage)
+- Use version control (commit review history to Git)
+- Use markdown format (human-readable, future-proof)
+
+---
+
+### NFR-DATA-003: Historical Metrics Retention [P1]
+
+**Description**: Metrics data retained for 12 months to enable long-term trend analysis.
+
+**Rationale**: Long-term trends (capacity planning, velocity improvement) require 12+ months data. Shorter retention prevents trend analysis.
+
+**Measurement Criteria**:
+- **Target**: 12-month retention
+- **Measurement Methodology**: File age validation (delete files older than 12 months)
+- **Baseline**: 12-month retention (enforced by cleanup script)
+
+**Testing Approach**: **Automated** - File age validation (timestamp checks)
+
+**Priority**: **P1** - Long-term analysis feature, deferred to FID-002 (Metrics Collection)
+
+**Traceability**:
+- **Source**: UC-007: Collect and Visualize Metrics (AC-002: retention)
+- **Test Cases**: TC-007-016 (retention validation)
+- **Components**: MetricsCollector (SAD Section 5.3)
+- **ADRs**: None
+
+**Target Value**: 12-month retention
+
+**Current Baseline**: TBD (implement retention policy in FID-002)
+
+**Implementation Notes**:
+- Use cron job (monthly cleanup of files older than 12 months)
+- Use `.aiwg/metrics/` directory (isolated storage)
+- Use CSV format (compact, analysis-friendly)
+
+---
+
+## 11. Freshness Requirements
 
 ### 11.1 Overview
 
-Quality metrics and Service Level Indicators (SLIs) provide measurable targets for assessing AIWG's quality, performance, and reliability. Unlike Service Level Objectives (SLOs) for runtime services, AIWG metrics focus on development velocity, artifact quality, user satisfaction, and maintainer sustainability.
+Freshness requirements ensure AIWG data reflects current system state. As a documentation tooling project, freshness focuses on real-time metric updates.
 
-**Metrics Philosophy**: "Measure what matters, not what's easy" - track metrics that indicate user value, not vanity metrics.
+**Freshness Philosophy**: "Current data for current decisions" - metrics should reflect real-time state, not stale snapshots.
 
-### 11.2 Development Velocity Metrics
-
-#### METRIC-001: Contribution Velocity
-
-**Metric**: Commits per day, PRs per week
-
-| Metric | Current Baseline | Target (MVP) | Target (Production) | Rationale |
-|--------|-----------------|-------------|-------------------|-----------|
-| Commits/day | 1+ (105 commits in 3 months) | 0.5+ | 2+ (multi-contributor) | Sustainable development pace (Solution Profile) |
-| PRs/week | 0 (solo developer, no PRs) | 0 (solo) | 5+ (community) | Community contribution health |
-| Issues/month | 0 (pre-launch) | 5+ | 20+ | User engagement, feedback volume |
-
-**Measurement**: GitHub API metrics, tracked in `.aiwg/metrics/velocity.json`
-
-**Traceability**:
-- Solution Profile: Solo developer (105 commits in 3 months, 1+ per day velocity)
-- SAD Section 5.3: Pipeline Components (MetricsCollector tracks velocity)
-
-#### METRIC-002: Artifact Quality Score
-
-**Metric**: Average quality score for generated artifacts (0-100 scale)
-
-| Artifact Type | Target Quality Score | Measurement | Rationale |
-|--------------|---------------------|-------------|-----------|
-| Requirements (use cases, NFRs) | 85+/100 | Multi-agent review (UC-004) | Comprehensive specifications |
-| Architecture (SAD, ADRs) | 90+/100 | Specialist review (security, test, clarity) | Critical design decisions |
-| Testing (test plans, results) | 85+/100 | Test coverage, execution success | Validation rigor |
-| Process (retrospectives, plans) | 80+/100 | Completeness, actionability | Process adherence |
-
-**Measurement**: Multi-agent review scores, tracked in artifact YAML frontmatter
-
-**Traceability**:
-- UC-004: Multi-Agent Workflows (NFR-MA-02: 3+ reviewer sign-offs)
-- Elaboration Phase Plan: Quality scores maintain 85+/100 average
-
-#### METRIC-003: Test Coverage
-
-**Metric**: Percentage of codebase covered by automated tests
-
-| Project Component | Current Coverage | Target (MVP) | Target (Production) | Rationale |
-|------------------|-----------------|-------------|-------------------|-----------|
-| Critical paths (tools/) | 0% | 80% | 90% | Prevent regressions (Solution Profile: Phase 1) |
-| Linting fixers | 0% | 60% | 80% | Moderate risk |
-| Traceability engine | 0% | 60% | 80% | Complex algorithms |
-
-**Measurement**: Jest/Pytest coverage reports, CI/CD validation
-
-**Traceability**:
-- Solution Profile: Testing maturity target 60-80% (Phase 2: Short-term)
-- SAD Section 11.3: Testing Roadmap (80% → 90% coverage)
-
-### 11.3 Performance Metrics
-
-#### METRIC-004: Response Time Percentiles
-
-**Metric**: p50, p95, p99 latencies for CLI commands and workflows
-
-| Command/Workflow | p50 Target | p95 Target | p99 Target | Rationale |
-|-----------------|-----------|-----------|-----------|-----------|
-| `aiwg -version` | <200ms | <500ms | <1s | Instant response (NFR-PERF-01) |
-| `aiwg -deploy-agents --mode sdlc` | <5s | <8s | <12s | One-time setup (NFR-PERF-01) |
-| Multi-agent workflow (SAD generation) | <15min | <20min | <25min | Productivity (NFR-PERF-02) |
-
-**Measurement**: Performance baselines in `.aiwg/reports/performance-baseline.json`, CI/CD regression detection
-
-**Traceability**:
-- NFR-PERF-01: CLI Command Response Time (targets by command)
-- NFR-PERF-02: Agent Orchestration Response Time (workflow duration targets)
-- NFR-PERF-08: CI/CD Performance Baselines (regression detection <20% tolerance)
-
-#### METRIC-005: Resource Utilization
-
-**Metric**: Peak memory usage, disk space consumption
-
-| Resource | Target | Measurement | Rationale |
-|----------|--------|-------------|-----------|
-| CLI memory | <100MB RAM | `time -v` (Linux) | Lightweight tool (NFR-PERF-06) |
-| Node.js scripts memory | <500MB RAM | Memory profiling | Reasonable for Node.js |
-| Disk space (AIWG installation) | <2GB | Directory size check | Comprehensive framework (NFR-PERF-07) |
-
-**Traceability**:
-- NFR-PERF-06: CLI Tool Memory Usage (targets by tool)
-- NFR-PERF-07: Disk Space Requirements (targets by component)
-
-### 11.4 Reliability Metrics
-
-#### METRIC-006: Defect Density
-
-**Metric**: Bugs per 1,000 lines of code (KLOC)
-
-| Project Component | Target Defect Density | Rationale |
-|------------------|---------------------|-----------|
-| Critical paths (tools/) | <0.5 bugs/KLOC | High-quality, well-tested |
-| Templates | <0.1 bugs/KLOC | Static content, low-risk |
-| Overall project | <1.0 bugs/KLOC | Industry standard for mature projects |
-
-**Measurement**: GitHub Issues (label: `bug`), defect tracking
-
-**Traceability**:
-- SAD Section 10.2: Contribution Guidelines (quality standards)
-- Solution Profile: Quality/security priority 20% (MVP), 40-45% (Production)
-
-#### METRIC-007: Installation Success Rate
-
-**Metric**: Percentage of installations completing successfully
-
-| Installation Method | Target Success Rate | Rationale |
-|--------------------|-------------------|-----------|
-| One-line bash script | >95% | Primary installation path (Solution Profile) |
-| Manual clone + symlink | >90% | Power users, more error-prone |
-| Plugin installation (local) | >98% | Cached, fast, reliable |
-| Plugin installation (remote) | >90% | Network dependencies, more failure modes |
-
-**Measurement**: User-reported installation failures (GitHub Issues), CI/CD smoke tests
-
-**Traceability**:
-- NFR-REL-01: Graceful Degradation (error handling requirements)
-- NFR-REL-05: Automated Recovery (recovery mechanisms)
-
-### 11.5 User Satisfaction Metrics
-
-#### METRIC-008: Time to Productivity
-
-**Metric**: Time from installation to first artifact generation
-
-| User Type | Target Time | Measurement | Rationale |
-|-----------|------------|-------------|-----------|
-| Agentic developers | <15 minutes | User surveys, session recordings | Setup friction minimization (NFR-USE-01) |
-| Content creators | <30 minutes | User surveys | Learning curve (NFR-USE-01) |
-| Project managers | <20 minutes | User surveys | Intake workflow completion |
-
-**Measurement**: User surveys (post-installation feedback), session duration analysis (optional telemetry if user consents)
-
-**Traceability**:
-- NFR-USE-01: Time to Productivity (targets by milestone)
-- UC-002: Deploy SDLC Framework (NFR-SD-06: Setup friction <15 minutes)
-
-#### METRIC-009: GitHub Star Growth
-
-**Metric**: GitHub stars, forks, watchers (community adoption indicators)
-
-| Metric | Current Baseline | Target (6 months) | Target (1 year) | Rationale |
-|--------|-----------------|------------------|----------------|-----------|
-| GitHub stars | 0 (pre-launch) | 50+ | 200+ | Adoption indicator (Solution Profile: 100+ stars if Community path) |
-| GitHub forks | 0 | 10+ | 50+ | Community engagement |
-| Contributors | 1 (solo) | 3+ | 10+ | Team expansion (Solution Profile: 2-3 contributors within 6 months) |
-
-**Measurement**: GitHub API metrics, tracked in `.aiwg/metrics/adoption.json`
-
-**Traceability**:
-- Solution Profile: Success Criteria (Community path: 100+ stars, 10+ contributors)
-- SAD Section 8.4: Scalability (100+ contributors, 1000+ plugins)
-
-#### METRIC-010: Issue Response Time
-
-**Metric**: Time from issue creation to first maintainer response
-
-| Priority | Target Response Time | Rationale |
-|----------|---------------------|-----------|
-| Critical (bugs blocking usage) | <24 hours | User productivity impact (Solution Profile: 48hr target) |
-| High (feature requests, enhancements) | <48 hours | Community engagement |
-| Medium/Low | <7 days | Maintainer capacity constraints |
-
-**Measurement**: GitHub Issues API (label-based priority), tracked in `.aiwg/metrics/support.json`
-
-**Traceability**:
-- Solution Profile: 10x Growth Scenario (issue response time commitments)
-- NFR-SCAL-05: Community Contribution Capacity (<48 hours target)
-
-### 11.6 DORA Metrics (DevOps Research and Assessment)
-
-#### METRIC-011: DORA Metrics (Future - Team Expansion)
-
-**Metric**: Standard DevOps performance indicators (applicable when team expands)
-
-| DORA Metric | Current Status | Target (Production) | Rationale |
-|------------|---------------|-------------------|-----------|
-| Deployment Frequency | N/A (pre-launch) | Weekly releases | Continuous delivery |
-| Lead Time for Changes | N/A | <1 week (feature idea → release) | Agile development |
-| Change Failure Rate | N/A | <15% | Quality control |
-| Time to Restore Service | N/A (no runtime service) | <5 minutes (installation recovery) | Fast recovery |
-
-**Measurement**: GitHub Actions logs, release history, incident tracking
-
-**Traceability**:
-- SAD Section 5.3: Pipeline Components (DORA metrics tracking)
-- Solution Profile: Production profile transition (6 months)
+**Priority Focus**: P1 NFRs target observability (real-time metrics). Deferred to FID-002 (Metrics Collection).
 
 ---
 
-## 12. Traceability Matrix
+### NFR-FRESH-001: Metrics Data Freshness [P1]
+
+**Description**: Metrics data updates in real-time, not batched.
+
+**Rationale**: Real-time metrics enable current decision-making. Stale metrics (batched hourly/daily) provide outdated information.
+
+**Measurement Criteria**:
+- **Target**: Real-time metric updates (after each event)
+- **Measurement Methodology**: Timestamp validation (verify metrics updated after each event)
+- **Baseline**: Real-time updates (enforced by metrics collection)
+
+**Testing Approach**: **Automated** - Timestamp validation (event vs metric update timestamp)
+
+**Priority**: **P1** - Decision accuracy feature, deferred to FID-002 (Metrics Collection)
+
+**Traceability**:
+- **Source**: UC-007: Collect and Visualize Metrics (AC-001: real-time updates)
+- **Test Cases**: TC-007-017 (freshness validation)
+- **Components**: MetricsCollector (SAD Section 5.3)
+- **ADRs**: None
+
+**Target Value**: Real-time metric updates (after each event)
+
+**Current Baseline**: TBD (establish baseline in FID-002 implementation)
+
+**Implementation Notes**:
+- Use event-driven updates (write metrics after each event, not batched)
+- Use async writes (non-blocking metrics collection)
+- Use append-only files (avoid locking, enable concurrent writes)
+
+---
+
+## 12. Scalability Requirements
 
 ### 12.1 Overview
 
-This traceability matrix links NFRs to functional requirements (use cases), architecture components (SAD sections), and design decisions (ADRs). Comprehensive traceability ensures all NFRs are grounded in user needs and architectural design.
+Scalability requirements ensure AIWG handles growing data volumes and user bases. As a documentation tooling project, scalability focuses on content size limits, agent concurrency, and artifact size limits.
 
-### 12.2 NFR to Use Case Traceability
+**Scalability Philosophy**: "Design for 10x growth, build for current scale" - architecture supports future scale, implementation optimizes for MVP.
 
-| NFR ID | NFR Summary | Related Use Case(s) | Functional Link |
-|--------|------------|-------------------|----------------|
-| NFR-PERF-01 | CLI Command Response Time | UC-002 (Deploy SDLC Framework) | NFR-SD-01: Deployment time <10s |
-| NFR-PERF-02 | Agent Orchestration Response Time | UC-001 (Validate Content), UC-004 (Multi-Agent Workflows) | NFR-WR-01: Validation <60s, NFR-MA-01: Workflow 15-20min |
-| NFR-PERF-03 | Document Generation Response Time | UC-004 (Multi-Agent Workflows) | SAD generation <20 minutes |
-| NFR-PERF-04 | Agent Orchestration Throughput | UC-004 (Multi-Agent Workflows) | 4-6 agents simultaneously, max 25 |
-| NFR-PERF-05 | Manifest Generation Throughput | Manifest system (tools/manifest/) | <3s for 500 files |
-| NFR-PERF-06 | CLI Tool Memory Usage | UC-002 (Deploy SDLC Framework) | <100MB RAM for CLI |
-| NFR-PERF-07 | Disk Space Requirements | UC-002 (Deploy SDLC Framework) | <2GB installation, <10MB agents |
-| NFR-PERF-08 | CI/CD Performance Baselines | All use cases (regression prevention) | <20% regression tolerance |
-| NFR-SCAL-01 | Documentation Capacity | UC-001 (Validate Content) | Support 1,000+ markdown files |
-| NFR-SCAL-02 | Agent Capacity | UC-002 (Deploy SDLC Framework) | Support 100+ agents, 1000+ plugins |
-| NFR-SCAL-03 | Traceability Graph Capacity | UC-006 (Automated Traceability) | 10,000+ nodes, <90s processing |
-| NFR-SCAL-04 | Concurrent User Support | UC-004 (Multi-Agent Workflows) | 10+ concurrent contributors |
-| NFR-SCAL-05 | Community Contribution Capacity | UC-005 (Framework Self-Improvement) | 10+ contributors, 20+ PRs/month |
-| NFR-SCAL-06 | Deployment Scalability | UC-002 (Deploy SDLC Framework) | Support personal scripts → enterprise systems |
-| NFR-AVAIL-01 | GitHub Repository Availability | UC-002 (Deploy SDLC Framework) | 99.9%+ uptime (GitHub SLA) |
-| NFR-AVAIL-02 | CLI Tool Availability | All use cases | 99.99% local availability |
-| NFR-AVAIL-03 | CI/CD Pipeline Availability | UC-005 (Framework Self-Improvement) | 99.9%+ uptime (GitHub Actions) |
-| NFR-AVAIL-04 | Recovery Time Objective | UC-010 (Rollback Plugin Installation) | <5 minutes reinstall, <2s reset |
-| NFR-AVAIL-05 | Data Backup and Retention | UC-010 (Rollback Plugin Installation) | 30-day backup retention |
-| NFR-SEC-01 | Authentication Requirements | All use cases | N/A (open source, no authentication) |
-| NFR-SEC-02 | Authorization Requirements | UC-011 (Validate Plugin Security) | User consent for sensitive operations |
-| NFR-SEC-03 | Data Confidentiality | UC-001 (Validate Content) | NFR-WR-05: No external API calls |
-| NFR-SEC-04 | Data Integrity | UC-001 (Validate Content), UC-010 (Rollback) | NFR-WR-06: SHA-256 checksums, NFR-RB-02: 100% state restoration |
-| NFR-SEC-05 | Plugin Isolation | UC-011 (Validate Plugin Security) | Path validation, no code execution (ADR-002) |
-| NFR-SEC-06 | YAML Deserialization Security | UC-011 (Validate Plugin Security) | FAILSAFE_SCHEMA, 100KB limit |
-| NFR-SEC-07 | Secrets Detection | UC-011 (Validate Plugin Security) | Pre-commit scanning, CI checks |
-| NFR-SEC-08 | Threat Mitigation | UC-011 (Validate Plugin Security) | NFR-PS-02: 100% attack detection |
-| NFR-USE-01 | Time to Productivity | UC-002 (Deploy SDLC Framework) | NFR-SD-06: <15 minutes setup |
-| NFR-USE-02 | Documentation Quality | All use cases | Comprehensive docs (README, USAGE_GUIDE, READMEs) |
-| NFR-USE-03 | Error Message Clarity | UC-002 (Deploy SDLC Framework) | NFR-SD-07: Clear remediation steps |
-| NFR-USE-04 | Workflow Efficiency | UC-001 (Validate Content), UC-004 (Multi-Agent Workflows) | 99% traceability reduction, 92% review reduction |
-| NFR-USE-05 | Feedback Visibility | UC-001 (Validate Content), UC-004 (Multi-Agent Workflows) | NFR-WR-09: Real-time progress, NFR-MA-01: Progress indicators |
-| NFR-USE-06 | Accessibility Standards | UC-001 (Validate Content) | Screen reader compatible CLI output |
-| NFR-MAINT-01 | Coding Standards | All use cases (codebase quality) | Markdown linting (markdownlint-cli2) |
-| NFR-MAINT-02 | Test Coverage | All use cases (regression prevention) | 60-80% target (MVP), 80-95% (Production) |
-| NFR-MAINT-03 | Documentation Standards | All use cases (maintainability) | JSDoc for Node.js, docstrings for Python |
-| NFR-MAINT-04 | Component Independence | UC-002 (Deploy SDLC Framework) | Modular agent deployment |
-| NFR-MAINT-05 | Backward Compatibility | UC-002 (Deploy SDLC Framework) | 2 major version compatibility |
-| NFR-MAINT-06 | Technical Debt Policy | All use cases (velocity) | Critical debt <2 weeks, high-priority <3 months |
-| NFR-MAINT-07 | Refactoring Safety | All use cases (regression prevention) | Integration tests, performance regression tests |
-| NFR-PORT-01 | OS Compatibility | UC-002 (Deploy SDLC Framework) | Linux (primary), macOS (secondary), Windows (future) |
-| NFR-PORT-02 | Runtime Dependencies | UC-002 (Deploy SDLC Framework) | Node.js >=18.20.8, Python >=3.8 (optional) |
-| NFR-PORT-03 | AI Coding Platform Support | UC-002 (Deploy SDLC Framework) | Claude, OpenAI/Codex (production), Cursor (planned) |
-| NFR-PORT-04 | Browser Compatibility | N/A (CLI tool) | Not applicable |
-| NFR-PORT-05 | Installation Methods | UC-002 (Deploy SDLC Framework) | Bash script <5 minutes |
-| NFR-REL-01 | Graceful Degradation | All use cases (error handling) | Clear errors, recovery paths |
-| NFR-REL-02 | Data Integrity Guarantees | UC-010 (Rollback Plugin Installation) | NFR-RB-02: 100% state restoration |
-| NFR-REL-03 | External Dependency Handling | UC-002 (Deploy SDLC Framework) | GitHub retry 3x, graceful degradation |
-| NFR-REL-04 | Concurrent Operation Safety | UC-004 (Multi-Agent Workflows) | File-based locking, parallel agent support |
-| NFR-REL-05 | Automated Recovery | UC-010 (Rollback Plugin Installation) | Transaction rollback <5s |
-| NFR-REL-06 | Health Checks | UC-002 (Deploy SDLC Framework) | `aiwg -version` smoke test, checksum validation |
-| NFR-COMP-01 | Open Source License | All use cases (legal compliance) | MIT License |
-| NFR-COMP-02 | Third-Party Dependency Compliance | All use cases (legal compliance) | MIT/Apache/BSD compatible |
-| NFR-COMP-03 | GDPR/CCPA Compliance | UC-001 (Validate Content) | Not applicable (no data collection) |
-| NFR-COMP-04 | Export Control | All use cases (legal compliance) | Not applicable (open source) |
-| NFR-COMP-05 | Accessibility Standards (Future Web) | Future web interface | WCAG 2.1 Level AA (if launched) |
-
-### 12.3 NFR to SAD Component Traceability
-
-| NFR ID | NFR Summary | SAD Section | Architecture Component | Implementation Guidance |
-|--------|------------|------------|----------------------|------------------------|
-| NFR-PERF-01 | CLI Command Response Time | 8.1 Performance | CLI Entry Point, Deployment Engine | Lazy loading, caching |
-| NFR-PERF-02 | Agent Orchestration Response Time | 4.2 Process View | Core Orchestrator, Task tool | Parallel reviewers (single message, multiple Tasks) |
-| NFR-PERF-03 | Document Generation Response Time | 5.3 Pipeline Components | Documentation Synthesizer | Streaming output, template caching |
-| NFR-PERF-04 | Agent Orchestration Throughput | 4.2 Process View | Task tool | 25 agent limit (Claude Code constraint) |
-| NFR-PERF-05 | Manifest Generation Throughput | 4.3 Development View | Manifest system (tools/manifest/) | Parallel file tree traversal |
-| NFR-PERF-06 | CLI Tool Memory Usage | 7.1 Technology Stack | Node.js CLI | Stream large files, release memory |
-| NFR-PERF-07 | Disk Space Requirements | 4.3 Development View | AIWG installation directory | Compress archives, cleanup backups |
-| NFR-PERF-08 | CI/CD Performance Baselines | 11.3 Testing Roadmap | CI/CD Pipeline | Performance baseline report, regression detection |
-| NFR-SCAL-01 | Documentation Capacity | 2.2 Component Overview | Validation Engine, Manifest system | Lazy loading, pagination |
-| NFR-SCAL-02 | Agent Capacity | 2.1 High-Level Architecture | Plugin System, Agent Registry | Lazy agent loading, filesystem scan |
-| NFR-SCAL-03 | Traceability Graph Capacity | 5.3 Pipeline Components | TraceabilityEngine (Python, NetworkX) | Sparse graph representation, incremental updates |
-| NFR-SCAL-04 | Concurrent User Support | 4.4 Deployment View | File-based locking, Git workflows | `.aiwg/.lock` file, isolated workspaces |
-| NFR-SCAL-05 | Community Contribution Capacity | 8.4 Scalability | GitHub API, CI/CD Pipeline | Self-service infrastructure, automated PR acceptance |
-| NFR-SCAL-06 | Deployment Scalability | 10.1 Plugin Development Guidelines | Deployment Engine | Modular agent selection, plugin-based extensibility |
-| NFR-AVAIL-01 | GitHub Repository Availability | 4.4 Deployment View | GitHub Repository | External dependency (99.9%+ SLA) |
-| NFR-AVAIL-02 | CLI Tool Availability | 2.1 High-Level Architecture | CLI Entry Point | Local tool, no network dependencies |
-| NFR-AVAIL-03 | CI/CD Pipeline Availability | 4.4 Deployment View | GitHub Actions | Retry logic, caching |
-| NFR-AVAIL-04 | Recovery Time Objective | 11.2 Security Implementation Roadmap | InstallationTransaction (ADR-006) | Reset + redeploy <5s |
-| NFR-AVAIL-05 | Data Backup and Retention | 11.2 Security Implementation Roadmap | Backup utilities (`.aiwg/backups/`) | 30-day retention, automated cleanup |
-| NFR-SEC-01 | Authentication Requirements | 4.6 Security View | N/A (open source, no authentication) | Not applicable |
-| NFR-SEC-02 | Authorization Requirements | 4.6.4 Permission Model | PathValidator, User approval workflow | Filesystem boundaries, consent gates |
-| NFR-SEC-03 | Data Confidentiality | 4.6 Security View | Validation Engine (local-only) | No external API calls |
-| NFR-SEC-04 | Data Integrity | 4.6.1 Security Architecture | DependencyVerifier, InstallationTransaction | SHA-256 checksums, atomic operations |
-| NFR-SEC-05 | Plugin Isolation | 4.6 Security View, ADR-002 | PluginSandbox, PathValidator, InjectionValidator | Path validation, no code execution |
-| NFR-SEC-06 | YAML Deserialization Security | 4.6.1 Security Architecture | Manifest parser (YAML safe parsing) | FAILSAFE_SCHEMA, 100KB limit, JSON Schema |
-| NFR-SEC-07 | Secrets Detection | 11.2 Security Implementation Roadmap | Pre-commit hooks, CI checks | detect-secrets/truffleHog integration |
-| NFR-SEC-08 | Threat Mitigation | 4.6.5 Threat Mitigation Summary | Defense-in-depth layers | Multiple security controls (5 layers) |
-| NFR-USE-01 | Time to Productivity | 2.1 High-Level Architecture | CLI Entry Point, Deployment Engine | One-line install, interactive mode |
-| NFR-USE-02 | Documentation Quality | 10.1 Plugin Development Guidelines | Documentation artifacts | Markdown linting, per-directory READMEs |
-| NFR-USE-03 | Error Message Clarity | 10.2 Contribution Guidelines | Error handling (all components) | Structured errors with remediation |
-| NFR-USE-04 | Workflow Efficiency | 8.4 Scalability | Traceability automation, multi-agent parallel execution | 99% automation speedup |
-| NFR-USE-05 | Feedback Visibility | 4.2 Process View | Core Orchestrator | Progress indicators, streaming output |
-| NFR-USE-06 | Accessibility Standards | 2.1 High-Level Architecture | CLI output (plain text) | Screen reader compatible |
-| NFR-MAINT-01 | Coding Standards | 10.1 Plugin Development Guidelines | Linting tools (markdownlint-cli2) | CI/CD enforcement |
-| NFR-MAINT-02 | Test Coverage | 11.3 Testing Roadmap | Test suite (Jest, Pytest) | 60-80% target (MVP) |
-| NFR-MAINT-03 | Documentation Standards | 10.1 Plugin Development Guidelines | JSDoc (Node.js), docstrings (Python) | API documentation generation |
-| NFR-MAINT-04 | Component Independence | 8.5 Maintainability | Modular architecture | No circular dependencies |
-| NFR-MAINT-05 | Backward Compatibility | 8.5 Maintainability | Plugin API versioning | 2 major version compatibility |
-| NFR-MAINT-06 | Technical Debt Policy | 8.5 Maintainability | GitHub Issues (tech-debt label) | Critical <2 weeks, high <3 months |
-| NFR-MAINT-07 | Refactoring Safety | 11.3 Testing Roadmap | Integration tests, performance regression tests | Full suite before/after refactoring |
-| NFR-PORT-01 | OS Compatibility | 7.1 Technology Stack | Node.js (cross-platform) | Avoid OS-specific commands |
-| NFR-PORT-02 | Runtime Dependencies | 7.1 Technology Stack | Node.js >=18.20.8, Python >=3.8 | Version detection, graceful degradation |
-| NFR-PORT-03 | AI Coding Platform Support | 7.3 Platform Adapters | Platform adapter layer | Claude, OpenAI, Cursor adapters |
-| NFR-PORT-04 | Browser Compatibility | N/A (CLI tool) | Not applicable | Future web interface: WCAG 2.1 |
-| NFR-PORT-05 | Installation Methods | 4.4 Deployment View | Bash install script | One-line script <5 minutes |
-| NFR-REL-01 | Graceful Degradation | 8.3 Reliability | Error handling (all components) | Catch all exceptions, log errors |
-| NFR-REL-02 | Data Integrity Guarantees | 5.1 Component Design, ADR-006 | InstallationTransaction, backup utilities | Atomic operations, pre-modification backups |
-| NFR-REL-03 | External Dependency Handling | 4.4 Deployment View | GitHub API client | Retry logic, offline fallback |
-| NFR-REL-04 | Concurrent Operation Safety | 4.4 Deployment View | File-based locking | `.aiwg/.lock` file |
-| NFR-REL-05 | Automated Recovery | 5.1 Component Design, ADR-006 | InstallationTransaction | Transaction rollback <5s |
-| NFR-REL-06 | Health Checks | 2.1 High-Level Architecture | CLI Entry Point | `aiwg -version`, checksum validation |
-| NFR-COMP-01 | Open Source License | 12. Appendices | LICENSE file (MIT) | SPDX identifiers |
-| NFR-COMP-02 | Third-Party Dependency Compliance | 7.1 Technology Stack | Dependency audit | License scanning (CI) |
-| NFR-COMP-03 | GDPR/CCPA Compliance | 4.6 Security View | N/A (no data collection) | Not applicable |
-| NFR-COMP-04 | Export Control | 12. Appendices | Open source (no restrictions) | Not applicable |
-| NFR-COMP-05 | Accessibility Standards (Future Web) | N/A (CLI tool) | Future web interface | WCAG 2.1 Level AA (if launched) |
-
-### 12.4 NFR to ADR Traceability
-
-| NFR ID | NFR Summary | Related ADR(s) | ADR Decision Impact |
-|--------|------------|---------------|-------------------|
-| NFR-SEC-05 | Plugin Isolation | ADR-002: Plugin Isolation Strategy (Updated 2025-10-17) | Lifecycle hooks removed, filesystem-based isolation only |
-| NFR-SEC-04 | Data Integrity | ADR-002: Plugin Isolation Strategy (dependency hash verification) | SHA-256 lock file for dependency integrity |
-| NFR-AVAIL-04 | Recovery Time Objective | ADR-006: Plugin Rollback Strategy | Transaction-based installation, <2s reset target |
-| NFR-REL-02 | Data Integrity Guarantees | ADR-006: Plugin Rollback Strategy | InstallationTransaction class, snapshot/restore mechanism |
-| NFR-REL-05 | Automated Recovery | ADR-006: Plugin Rollback Strategy | Automatic rollback on installation failure |
-| NFR-SCAL-03 | Traceability Graph Capacity | ADR-003: Traceability Automation Approach | NetworkX graph algorithms, 99% effort reduction |
-| NFR-SEC-06 | YAML Deserialization Security | ADR-001: Plugin Manifest Format | YAML format with FAILSAFE_SCHEMA, JSON Schema validation |
-| NFR-MAINT-05 | Backward Compatibility | ADR-001: Plugin Manifest Format | Semantic versioning, additive-only changes |
-| NFR-USE-04 | Workflow Efficiency | ADR-004: Contributor Workspace Isolation | Isolated workspaces (`.aiwg/contrib/{feature}/`) |
-| NFR-MAINT-04 | Component Independence | ADR-005: Quality Gate Thresholds | 80/100 minimum, 85/100 target |
-
-### 12.5 Cross-Reference Summary
-
-**Total NFRs Defined**: 57 (NFR-PERF-01 through NFR-COMP-05)
-
-**Traceability Coverage**:
-- **Use Case Coverage**: 100% of NFRs linked to at least 1 use case (UC-001 through UC-011)
-- **SAD Component Coverage**: 100% of NFRs linked to SAD sections (architecture, components, tactics)
-- **ADR Coverage**: 35% of NFRs linked to ADRs (security, reliability, scalability decisions)
-
-**Validation**:
-- All performance NFRs (NFR-PERF-01 through NFR-PERF-08) linked to use case performance requirements
-- All security NFRs (NFR-SEC-01 through NFR-SEC-08) linked to SAD Section 4.6 (Security View)
-- All reliability NFRs (NFR-REL-01 through NFR-REL-06) linked to ADR-006 (Rollback Strategy)
+**Priority Focus**: P2 NFRs target boundary conditions (max/min content size, concurrency limits). Deferred to post-MVP to reduce scope.
 
 ---
 
-## 13. References
+### NFR-SCAL-001: Maximum Content Size [P2]
 
-### 13.1 Requirements Documents
+**Description**: System handles large documents up to 100,000 words without timeout.
 
-- **Vision Document**: `.aiwg/requirements/vision-document.md` - High-level vision, strategic objectives
-- **Use Case Specifications**: `.aiwg/requirements/use-cases/UC-001.md` through `UC-011.md` - Functional requirements
-- **Feature Backlog (Prioritized)**: `.aiwg/requirements/feature-backlog-prioritized.md` - Prioritized feature ideas
-- **Solution Profile**: `.aiwg/intake/solution-profile.md` - MVP profile, priority weights, transition plan
+**Rationale**: Large documents (technical specifications, compliance documents) reach 100,000 words. Timeout prevents validation, blocks adoption.
 
-### 13.2 Architecture Documents
+**Measurement Criteria**:
+- **Target**: <100,000 words (validation completes without timeout)
+- **Measurement Methodology**: Stress test with 100,000-word fixture document
+- **Baseline**: Validation completes (may exceed 60s NFR-PERF-001, but must complete)
 
-- **Software Architecture Document (SAD) v1.0**: `.aiwg/planning/sdlc-framework/architecture/software-architecture-doc.md` - Comprehensive architecture baseline
-- **ADR-001**: Plugin Manifest Format (YAML, semantic versioning)
-- **ADR-002**: Plugin Isolation Strategy (Updated 2025-10-17, lifecycle hooks removed)
-- **ADR-003**: Traceability Automation Approach (NetworkX graph algorithms)
-- **ADR-004**: Contributor Workspace Isolation (`.aiwg/contrib/{feature}/`)
-- **ADR-005**: Quality Gate Thresholds (80/100 minimum, 85/100 target)
-- **ADR-006**: Plugin Rollback Strategy (transaction-based, <2s reset)
+**Testing Approach**: **Automated** - Stress test with large document fixture
 
-### 13.3 Planning Documents
+**Priority**: **P2** - Edge case, deferred to post-MVP scalability enhancement
 
-- **Elaboration Phase Plan**: `.aiwg/planning/phase-plan-elaboration.md` - 8-week Elaboration roadmap
-- **Inception Roadmap Integration**: `.aiwg/planning/inception-roadmap-integration.md` - P1 integration work (traceability, metrics, testing)
-- **Security Enhancement Plan**: `.aiwg/planning/sdlc-framework/architecture/updates/security-enhancement-plan.md` - 4-week security roadmap (89 hours)
-- **Testability Enhancement Plan**: `.aiwg/planning/sdlc-framework/architecture/updates/testability-enhancement-plan.md` - 10-week testability roadmap (80 hours)
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (BR-001: content size limits)
+- **Test Cases**: TC-001-020 (scalability validation)
+- **Components**: WritingValidator (SAD Section 5.1)
+- **ADRs**: None
 
-### 13.4 Testing Documents
+**Target Value**: <100,000 words (validation completes)
 
-- **Test Strategy** (Future): `.aiwg/planning/sdlc-framework/testing/test-strategy.md` - Comprehensive test approach
-- **Test Data Catalog** (Future): `.aiwg/planning/sdlc-framework/testing/test-data-catalog.md` - 50+ fixtures
-- **Performance Baselines** (Future): `.aiwg/reports/performance-baseline.json` - Empirical performance measurements
+**Current Baseline**: TBD (establish baseline in Construction phase)
 
-### 13.5 Community Resources
-
-- **README.md**: Installation, quick start, usage examples
-- **USAGE_GUIDE.md**: Context selection strategy for agents/templates
-- **CLAUDE.md**: Project-specific instructions for Claude Code
-- **AGENTS.md**: Repository contribution guidelines, SDLC overview
-- **CONTRIBUTING.md**: Contributor guidelines (future expansion)
-
-### 13.6 External Standards
-
-- **OWASP Top 10 (2021)**: Web application security risks (A03 Injection, A08 Software Integrity)
-- **CWE (Common Weakness Enumeration)**: CWE-22 (Path Traversal), CWE-502 (Deserialization)
-- **WCAG 2.1**: Web Content Accessibility Guidelines (Level AA target for future web interface)
-- **MIT License**: Open source license (permissive, attribution required)
-- **Semantic Versioning**: Version numbering standard (major.minor.patch)
+**Implementation Notes**:
+- Use chunking (split large documents into sections, validate independently)
+- Use streaming (avoid loading full document into memory)
+- Use timeout threshold (abort validation if exceeds 10 minutes)
 
 ---
 
-## Document Metadata
+### NFR-SCAL-002: Minimum Content Size [P2]
 
-**Version**: 1.0
-**Status**: DRAFT
-**Created**: 2025-10-18
-**Last Updated**: 2025-10-18
-**Word Count**: 19,847 words
-**Quality Score**: Pending multi-agent review
+**Description**: System requires minimum 100 words for meaningful analysis.
 
-**Authors**:
-- **Primary Author**: Requirements Analyst (AIWG SDLC Framework)
-- **Contributors**: Architecture Designer, Security Architect, Test Architect, Technical Writer
+**Rationale**: Statistical validation requires sufficient sample size. <100 words provides insufficient data for pattern detection.
 
-**Review Status**: Pending review by:
-- [ ] Requirements Reviewer (traceability validation, completeness check)
-- [ ] Security Architect (security requirements validation)
-- [ ] Test Architect (testability requirements validation)
-- [ ] Technical Writer (clarity, consistency)
-- [ ] Documentation Synthesizer (final synthesis, baseline approval)
+**Measurement Criteria**:
+- **Target**: 100+ words minimum
+- **Measurement Methodology**: Boundary test with 99-word fixture document
+- **Baseline**: Validation rejects documents <100 words with clear error message
 
-**Next Actions**:
-1. Launch multi-agent review (4 parallel reviewers)
-2. Synthesize feedback, baseline final Supplemental Specification
-3. Archive to `.aiwg/requirements/supplemental-specification.md` (BASELINED)
-4. Update traceability matrix (requirements → architecture → code mapping)
-5. Proceed with Elaboration Week 4 activities (POCs, architecture refinement)
+**Testing Approach**: **Automated** - Boundary test with small document fixture
+
+**Priority**: **P2** - Edge case, deferred to post-MVP validation enhancement
+
+**Traceability**:
+- **Source**: UC-001: Validate AI-Generated Content (BR-001: content size limits)
+- **Test Cases**: TC-001-021 (scalability validation)
+- **Components**: WritingValidator (SAD Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 100+ words minimum (statistical validity)
+
+**Current Baseline**: 100 words minimum (enforced by validation)
+
+**Error Message Example**:
+```
+ERROR: Document too short for meaningful analysis
+
+Current: 99 words
+Minimum: 100 words
+
+Remediation: Expand document to at least 100 words for validation.
+```
+
+**Implementation Notes**:
+- Use word count validation (check before pattern detection)
+- Use clear error message (specify current vs minimum word count)
+- Use bypass flag (allow short documents with explicit user override)
 
 ---
 
-**Generated**: 2025-10-18
-**Owner**: Requirements Analyst (AIWG SDLC Framework)
-**Status**: DRAFT - Ready for Multi-Agent Review
-**Phase**: Elaboration (Week 3 Deliverable)
+### NFR-SCAL-003: Maximum Concurrent Agents [P2]
+
+**Description**: Orchestrator queues workflows exceeding 25 concurrent agents (Claude Code constraint).
+
+**Rationale**: Claude Code platform limits concurrent agents to 25. Exceeding limit causes throttling, workflow failures.
+
+**Measurement Criteria**:
+- **Target**: 25 agents maximum concurrency
+- **Measurement Methodology**: Stress test with 30 concurrent agent invocations
+- **Baseline**: Orchestrator queues 5 excess agents (max 25 concurrent, 5 queued)
+
+**Testing Approach**: **Automated** - Concurrency test with multi-agent mock framework
+
+**Priority**: **P2** - Platform constraint, deferred to post-MVP multi-agent enhancement
+
+**Traceability**:
+- **Source**: UC-004: Multi-Agent Workflows (BR-MA-003: platform limits)
+- **Test Cases**: TC-004-021 (scalability validation)
+- **Components**: CoreOrchestrator (SAD Section 4.2)
+- **ADRs**: None
+
+**Target Value**: 25 agents maximum concurrency (platform constraint)
+
+**Current Baseline**: 25 agents maximum (platform enforced)
+
+**Implementation Notes**:
+- Use semaphore pattern (limit concurrent agents to 25)
+- Use queueing (sequential execution for excess agents)
+- Use progress updates (inform user of queue status)
+
+---
+
+### NFR-SCAL-004: Maximum Artifact Size [P2]
+
+**Description**: Orchestrator chunks or rejects artifacts exceeding 10,000 words to avoid context window exhaustion.
+
+**Rationale**: Claude Code context window limits artifact size. >10,000 words exhausts context, causes generation failures.
+
+**Measurement Criteria**:
+- **Target**: 10,000 words maximum (artifact chunked or rejected)
+- **Measurement Methodology**: Stress test with 15,000-word artifact generation
+- **Baseline**: Orchestrator chunks artifact or rejects with clear error message
+
+**Testing Approach**: **Automated** - Stress test with large artifact fixture
+
+**Priority**: **P2** - Platform constraint, deferred to post-MVP artifact chunking enhancement
+
+**Traceability**:
+- **Source**: UC-004: Multi-Agent Workflows (Exc-3: context window exhaustion)
+- **Test Cases**: TC-004-022 (scalability validation)
+- **Components**: CoreOrchestrator, DocumentationSynthesizer (SAD Section 4.2, Section 5.1)
+- **ADRs**: None
+
+**Target Value**: 10,000 words maximum (chunked or rejected)
+
+**Current Baseline**: 10,000 words maximum (chunking strategy)
+
+**Error Message Example**:
+```
+ERROR: Artifact size exceeds 10,000 words
+
+Current: 15,000 words
+Maximum: 10,000 words
+
+Remediation:
+1. Chunk artifact into sections (e.g., split SAD into multiple documents)
+2. Reduce scope (remove optional sections)
+3. If issue persists, file feature request for chunking support
+```
+
+**Implementation Notes**:
+- Use word count validation (check before generation)
+- Use chunking strategy (split into sections, generate independently)
+- Use clear error message (specify current vs maximum word count)
+
+---
+
+## 13. Regulatory and Compliance Requirements
+
+### 13.1 Overview
+
+As an open-source documentation and tooling project, AIWG has minimal regulatory obligations. However, responsible data handling and security practices are maintained.
+
+**Compliance Philosophy**: "Security by design, privacy by default" - protect user data, prevent malicious attacks, maintain trust.
+
+---
+
+### NFR-COMP-001: Open Source Licensing
+
+**Requirement**: All AIWG components licensed under MIT License (permissive, commercial-friendly).
+
+**Rationale**: MIT License maximizes adoption, enables commercial use, minimizes legal friction.
+
+**Traceability**:
+- README.md: License section
+- LICENSE file (repository root)
+
+---
+
+### NFR-COMP-002: Dependency Licensing
+
+**Requirement**: All dependencies use permissive licenses (MIT, Apache 2.0, BSD).
+
+**Rationale**: Copyleft licenses (GPL) create legal constraints, reduce commercial adoption.
+
+**Validation**: `npm audit` (Node.js), `pip-licenses` (Python) - verify all dependencies permissive
+
+**Traceability**:
+- package.json (Node.js dependencies)
+- requirements.txt (Python dependencies)
+
+---
+
+### NFR-COMP-003: Data Privacy
+
+**Requirement**: No user data collected or transmitted externally (100% local processing).
+
+**Rationale**: User content may contain confidential information. Zero data collection ensures privacy, enables enterprise adoption.
+
+**Validation**: Network monitoring (verify zero external API calls during operation)
+
+**Traceability**:
+- NFR-SEC-001: Content Privacy (No External API Calls)
+- UC-001: Validate AI-Generated Content (AC-003: privacy)
+
+---
+
+### NFR-COMP-004: Security Vulnerability Disclosure
+
+**Requirement**: Security vulnerabilities disclosed responsibly via SECURITY.md policy.
+
+**Rationale**: Transparent vulnerability disclosure builds trust, enables coordinated fixes.
+
+**Traceability**:
+- SECURITY.md file (repository root)
+- GitHub Security Advisories (CVE reporting)
+
+---
+
+## 14. Quality Metrics and Service Level Indicators
+
+### 14.1 NFR Validation Metrics
+
+**Performance Metrics** (10 NFRs):
+- Response time: p50, p95, p99 percentiles (measured via `performance.now()`)
+- Throughput: operations per minute (measured via benchmark harness)
+- Resource utilization: CPU, memory, disk (measured via profiling tools)
+
+**Accuracy Metrics** (6 NFRs):
+- False positive rate: <5% (measured via confusion matrix)
+- False negative rate: <10% (measured via confusion matrix)
+- Field accuracy: 80-90% (measured via user edit rate)
+
+**Quality Metrics** (4 NFRs):
+- Test coverage: 80% unit, 70% integration, 50% E2E (measured via Istanbul/NYC, pytest-cov)
+- Reviewer sign-offs: 3+ reviewers per artifact (measured via review metadata)
+- Traceability coverage: 100% (measured via graph validation)
+
+**Security Metrics** (4 NFRs):
+- External API calls: 0 (measured via network monitoring)
+- Checksum validation: 100% (measured via integrity checks)
+- Attack detection: 100% known vectors (measured via security test suite)
+
+**Usability Metrics** (6 NFRs):
+- Learning curve: 1-2 cycles (measured via user study)
+- Setup time: <15 minutes (measured via timed user study)
+- Error clarity: 100% include remediation steps (measured via error message inspection)
+
+### 14.2 Service Level Indicators (SLIs)
+
+**Availability SLIs**:
+- GitHub uptime: 99.9%+ (external dependency)
+- CLI uptime: 99.99% (local tool)
+- CI/CD uptime: 99.9%+ (external dependency)
+
+**Performance SLIs**:
+- Validation latency: <60s (p95) for 2000-word documents
+- Deployment latency: <10s (p95) for 58 agents + 45 commands
+- Analysis latency: <5 minutes (p95) for 1000-file repositories
+
+**Reliability SLIs**:
+- Deployment success rate: 100%
+- Data preservation rate: 100%
+- Rollback success rate: 100%
+
+---
+
+## 15. NFR Prioritization Summary
+
+### 15.1 Priority Distribution
+
+| Priority | NFR Count | % of Total | Target Release |
+|----------|-----------|-----------|----------------|
+| **P0 (Make-or-Break)** | 12 | 25% | MVP (Iterations 1-5) |
+| **P1 (High Value)** | 18 | 37.5% | Version 1.1 (3 months post-MVP) |
+| **P2 (Nice-to-Have)** | 18 | 37.5% | Version 2.0+ (Backlog) |
+
+### 15.2 P0 NFRs (Make-or-Break for MVP)
+
+**Performance (4 NFRs)**:
+- NFR-PERF-001: Content Validation Time (<60s for 2000 words)
+- NFR-PERF-002: SDLC Deployment Time (<10s for 58 agents)
+- NFR-PERF-003: Codebase Analysis Time (<5 min for 1000 files)
+
+**Accuracy (2 NFRs)**:
+- NFR-ACC-001: AI Pattern False Positive Rate (<5%)
+- NFR-ACC-002: Intake Field Accuracy (80-90%)
+- NFR-ACC-005: Security Attack Detection (100% known vectors)
+
+**Security (2 NFRs)**:
+- NFR-SEC-001: Content Privacy (Zero external API calls)
+- NFR-SEC-003: File Permissions Security (Match source)
+
+**Usability (3 NFRs)**:
+- NFR-USE-001: AI Validation Learning Curve (1-2 cycles)
+- NFR-USE-004: First-Time Setup Friction (<15 minutes)
+- NFR-USE-005: Error Message Clarity (100% include remediation)
+
+**Total P0 NFRs**: 12 (Security, Usability, Performance, Accuracy)
+
+### 15.3 P1 NFRs (High Value, Post-MVP)
+
+**Performance (4 NFRs)**:
+- NFR-PERF-004: Multi-Agent Workflow Completion (15-20 min)
+- NFR-PERF-005: Traceability Validation (<90s for 10k nodes)
+- NFR-PERF-006: Metrics Collection Overhead (<5%)
+- NFR-PERF-007: Template Selection Time (<2 min)
+
+**Quality (4 NFRs)**:
+- NFR-QUAL-001: Multi-Agent Reviewer Sign-offs (3+ reviewers)
+- NFR-QUAL-002: Requirements Traceability Coverage (100%)
+- NFR-QUAL-003: Test Coverage Targets (80%/70%/50%)
+- NFR-QUAL-004: Test Template Completeness (All types)
+
+**Completeness (5 NFRs)**:
+- NFR-COMP-001: AI Pattern Database Size (1000+ patterns)
+- NFR-COMP-002: Intake Critical Field Coverage (100%)
+- NFR-COMP-003: SDLC Artifact Completeness (100%)
+- NFR-COMP-004: Orphan Artifact Detection (100%)
+
+**Security (2 NFRs)**:
+- NFR-SEC-002: Pattern Database Integrity (SHA-256)
+- NFR-SEC-004: Backup Integrity (SHA-256)
+
+**Usability (3 NFRs)**:
+- NFR-USE-002: Validation Feedback Clarity (Line numbers + suggestions)
+- NFR-USE-003: Progress Visibility (Real-time scores)
+- NFR-USE-006: Onboarding Time Savings (50% vs manual)
+
+**Data Retention (3 NFRs)**:
+- NFR-DATA-001: Validation History Retention (30 days)
+- NFR-DATA-002: Review History Retention (Permanent)
+- NFR-DATA-003: Metrics Retention (12 months)
+
+**Freshness (1 NFR)**:
+- NFR-FRESH-001: Metrics Data Freshness (Real-time)
+
+**Total P1 NFRs**: 18 (Quality, Completeness, Security, Usability, Retention)
+
+### 15.4 P2 NFRs (Nice-to-Have, Future)
+
+**Performance (2 NFRs)**:
+- NFR-PERF-008: Test Suite Generation (<10 min)
+- NFR-PERF-010: Security Validation (<10s per plugin)
+
+**Throughput (3 NFRs)**:
+- NFR-THRU-001: Batch Validation Throughput (10+ files/min)
+- NFR-THRU-002: Parallel File Validation (3-5 concurrent)
+- NFR-THRU-003: Iteration Velocity (1-2 weeks)
+
+**Accuracy (3 NFRs)**:
+- NFR-ACC-003: Traceability Accuracy (99%)
+- NFR-ACC-004: Template Recommendation Acceptance (85%)
+- NFR-ACC-006: Security False Positives (<5%)
+
+**Reliability (3 NFRs)**:
+- NFR-REL-001: Deployment Success Rate (100%)
+- NFR-REL-002: Data Preservation (Zero loss)
+- NFR-REL-003: Rollback State Restoration (100%)
+
+**Completeness (1 NFR)**:
+- NFR-COMP-005: Orphan Files After Rollback (Zero)
+
+**Scalability (4 NFRs)**:
+- NFR-SCAL-001: Maximum Content Size (100,000 words)
+- NFR-SCAL-002: Minimum Content Size (100 words)
+- NFR-SCAL-003: Maximum Concurrent Agents (25)
+- NFR-SCAL-004: Maximum Artifact Size (10,000 words)
+
+**Performance (1 NFR - duplicate categorization)**:
+- NFR-PERF-009: Plugin Rollback Time (<5s)
+
+**Total P2 NFRs**: 18 (Throughput, Reliability, Scalability, Polish)
+
+### 15.5 Strategic Rationale
+
+**Focus MVP on 12 P0 NFRs**:
+- Security (3 NFRs): Content privacy, file permissions, attack detection - enterprise blockers
+- Usability (3 NFRs): Learning curve, setup time, error clarity - adoption barriers
+- Performance (4 NFRs): Validation, deployment, analysis - user-facing operations
+- Accuracy (2 NFRs): False positives, intake accuracy - trust builders
+
+**Defer 36 NFRs (P1/P2) to accelerate MVP**:
+- **Benefit**: Reduces MVP scope by 75% (12 vs 48 NFRs)
+- **Risk**: Acceptable - P1/P2 NFRs are enhancements, not blockers
+- **Timeline Impact**: Accelerates MVP delivery by 2 weeks
+
+**Post-MVP Roadmap**:
+- **Version 1.1** (3 months post-MVP): 18 P1 NFRs (quality, completeness, security)
+- **Version 2.0** (6+ months post-MVP): 18 P2 NFRs (throughput, reliability, scalability)
+
+---
+
+## 16. Traceability Matrix
+
+### 16.1 NFR-to-Use-Case Traceability
+
+| NFR ID | Category | Source UC | Test Cases | Priority |
+|--------|----------|-----------|-----------|----------|
+| NFR-PERF-001 | Performance | UC-001 | TC-001-015 | P0 |
+| NFR-PERF-002 | Performance | UC-002 | TC-002-015 | P0 |
+| NFR-PERF-003 | Performance | UC-003 | TC-003-015 | P0 |
+| NFR-PERF-004 | Performance | UC-004 | TC-004-015 | P1 |
+| NFR-PERF-005 | Performance | UC-006 | TC-006-015 | P1 |
+| NFR-PERF-006 | Performance | UC-007 | TC-007-015 | P1 |
+| NFR-PERF-007 | Performance | UC-008 | TC-008-015 | P1 |
+| NFR-PERF-008 | Performance | UC-009 | TC-009-015 | P2 |
+| NFR-PERF-009 | Performance | UC-010 | TC-010-015 | P2 |
+| NFR-PERF-010 | Performance | UC-011 | TC-011-015 | P2 |
+| NFR-THRU-001 | Throughput | UC-001 | TC-001-022 | P2 |
+| NFR-THRU-002 | Throughput | UC-001 | TC-001-023 | P2 |
+| NFR-THRU-003 | Throughput | UC-005 | TC-FSI-007 | P2 |
+| NFR-ACC-001 | Accuracy | UC-001 | TC-001-016 | P0 |
+| NFR-ACC-002 | Accuracy | UC-003 | TC-003-016 | P0 |
+| NFR-ACC-003 | Accuracy | UC-006 | TC-006-016 | P2 |
+| NFR-ACC-004 | Accuracy | UC-008 | TC-008-016 | P2 |
+| NFR-ACC-005 | Accuracy | UC-011 | TC-011-016 | P0 |
+| NFR-ACC-006 | Accuracy | UC-011 | TC-011-017 | P2 |
+| NFR-QUAL-001 | Quality | UC-004 | TC-004-017 | P1 |
+| NFR-QUAL-002 | Quality | UC-004, UC-006 | TC-004-018, TC-006-017 | P1 |
+| NFR-QUAL-003 | Quality | UC-009 | TC-009-017 | P1 |
+| NFR-QUAL-004 | Quality | UC-009 | TC-009-018 | P1 |
+| NFR-COMP-001 | Completeness | UC-001 | TC-001-018 | P1 |
+| NFR-COMP-002 | Completeness | UC-003 | TC-003-018 | P1 |
+| NFR-COMP-003 | Completeness | UC-005 | TC-FSI-018 | P1 |
+| NFR-COMP-004 | Completeness | UC-006 | TC-006-018 | P1 |
+| NFR-COMP-005 | Completeness | UC-010 | TC-010-018 | P2 |
+| NFR-SEC-001 | Security | UC-001 | TC-001-017 | P0 |
+| NFR-SEC-002 | Security | UC-001 | TC-001-018 | P1 |
+| NFR-SEC-003 | Security | UC-002 | TC-002-017 | P0 |
+| NFR-SEC-004 | Security | UC-002 | TC-002-018 | P1 |
+| NFR-REL-001 | Reliability | UC-002 | TC-002-019 | P2 |
+| NFR-REL-002 | Reliability | UC-002 | TC-002-020 | P2 |
+| NFR-REL-003 | Reliability | UC-010 | TC-010-019 | P2 |
+| NFR-USE-001 | Usability | UC-001 | TC-001-019 | P0 |
+| NFR-USE-002 | Usability | UC-001 | TC-001-020 | P1 |
+| NFR-USE-003 | Usability | UC-001 | TC-001-021 | P1 |
+| NFR-USE-004 | Usability | UC-002 | TC-002-021 | P0 |
+| NFR-USE-005 | Usability | UC-002 | TC-002-022 | P0 |
+| NFR-USE-006 | Usability | UC-008 | TC-008-017 | P1 |
+| NFR-DATA-001 | Data Retention | UC-001 | TC-001-022 | P1 |
+| NFR-DATA-002 | Data Retention | UC-004 | TC-004-019 | P1 |
+| NFR-DATA-003 | Data Retention | UC-007 | TC-007-016 | P1 |
+| NFR-FRESH-001 | Freshness | UC-007 | TC-007-017 | P1 |
+| NFR-SCAL-001 | Scalability | UC-001 | TC-001-020 | P2 |
+| NFR-SCAL-002 | Scalability | UC-001 | TC-001-021 | P2 |
+| NFR-SCAL-003 | Scalability | UC-004 | TC-004-021 | P2 |
+| NFR-SCAL-004 | Scalability | UC-004 | TC-004-022 | P2 |
+
+### 16.2 NFR-to-Component Traceability
+
+| NFR Category | Affected Components (SAD Reference) |
+|--------------|-----------------------------------|
+| Performance | WritingValidator (5.1), CLI Entry Point (2.1), IntakeCoordinator (5.2), CoreOrchestrator (4.2), TraceabilityEngine (5.3), MetricsCollector (5.3), TemplateSelector (2.1), TestEngineer (5.1), PluginManager (5.1), SecurityScanner (5.1) |
+| Throughput | WritingValidator (5.1), IterationPlanner (5.1), RetrospectiveFacilitator (5.1) |
+| Accuracy | PatternDetector (5.1), CodebaseAnalyzer (5.2), TraceabilityEngine (5.3), TemplateSelector (2.1), SecurityScanner (5.1) |
+| Quality | DocumentationSynthesizer (5.1), Review Agents (5.1), TraceabilityEngine (5.3), Test Suite (11.3), Template Library (10.1) |
+| Completeness | PatternDetector (5.1), IntakeCoordinator (5.2), SDLC Agents (5.1), TraceabilityEngine (5.3), PluginManager (5.1) |
+| Security | WritingValidator (5.1), deploy-agents.mjs (2.1), PluginManager (5.1), PluginSandbox (5.1) |
+| Reliability | deploy-agents.mjs (2.1), PluginManager (5.1) |
+| Usability | WritingValidator (5.1), CLI Entry Point (2.1), deploy-agents.mjs (2.1), TemplateSelector (2.1) |
+| Data Retention | WritingValidator (5.1), DocumentationSynthesizer (5.1), MetricsCollector (5.3) |
+| Freshness | MetricsCollector (5.3) |
+| Scalability | WritingValidator (5.1), CoreOrchestrator (4.2), DocumentationSynthesizer (5.1) |
+
+### 16.3 NFR-to-ADR Traceability
+
+| NFR ID | Related ADRs |
+|--------|--------------|
+| NFR-PERF-002, NFR-SEC-003, NFR-REL-001, NFR-REL-002, NFR-REL-003, NFR-SEC-004, NFR-COMP-005 | ADR-006: Plugin Rollback Strategy (reset + redeploy, backup integrity) |
+| NFR-PERF-009 | ADR-007: Framework-Scoped Workspace Architecture (4-tier workspace design) |
+
+---
+
+## 17. References
+
+### 17.1 AIWG Project Documents
+
+- **Use Case Specifications**: UC-001 through UC-012 (`.aiwg/requirements/use-cases/`)
+- **Software Architecture Document**: `.aiwg/architecture/software-architecture-doc.md`
+- **Solution Profile Document**: `.aiwg/intake/solution-profile.md`
+- **Elaboration Phase Plan**: `.aiwg/planning/elaboration-phase-plan.md`
+- **Architecture Decision Records**: `.aiwg/architecture/adrs/` (ADR-006, ADR-007)
+
+### 17.2 Requirements Workshop Artifacts
+
+- **NFR Extraction List**: `.aiwg/working/nfr-extraction-list.md` (48 NFRs with traceability)
+- **Product Strategist Review**: `.aiwg/working/requirements-workshop-reviews/product-strategist-review.md` (P0/P1/P2 prioritization)
+- **Test Architect Review**: `.aiwg/working/requirements-workshop-reviews/test-architect-review.md` (Testing strategies)
+
+### 17.3 External Standards
+
+- **ISO/IEC 25010**: Software Quality Model (performance, usability, security, reliability)
+- **IEEE 830-1998**: Recommended Practice for Software Requirements Specifications
+- **NIST SP 800-53**: Security and Privacy Controls for Information Systems
+
+---
+
+**Document Status**: BASELINED
+**Version**: 1.1
+**Date**: 2025-10-19
+**Owner**: Requirements Documenter
+**Reviewers**: Product Strategist (APPROVED), Test Architect (CONDITIONAL - 3 blockers), Security Architect (PENDING)
+**Next Review**: Construction Week 1 (validate performance baselines established)
