@@ -57,3 +57,54 @@ NFR-SCAL-001,Scalability,Maximum Content Size,UC-001,ContentAnalyzer;TimeoutMana
 NFR-SCAL-002,Scalability,Minimum Content Size,UC-001,ContentAnalyzer;ValidityChecker,TC-001-103;TC-001-104,Pending,Pending,P2,100+ words for meaningful statistical analysis
 NFR-SCAL-003,Scalability,Maximum Concurrent Agents,UC-004,CoreOrchestrator;TaskCoordinator,TC-004-105;TC-004-106,Pending,Pending,P1,25 agents max (Claude Code platform constraint)
 NFR-SCAL-004,Scalability,Maximum Artifact Size,UC-004,DocumentationSynthesizer;ContextManager,TC-004-107;TC-004-108,Pending,Pending,P1,10000 words max to avoid context window exhaustion
+UC-006,Use Case,Automated Traceability Validation,Elaboration Workshop,"TraceabilityEngine;GraphAnalyzer;MetadataParser;CSVGenerator;ReportGenerator;OrphanDetector;RequirementsLoader;CodebaseScanner;TestFileAnalyzer","TC-TRACE-001;TC-TRACE-002;TC-TRACE-003;TC-TRACE-004;TC-TRACE-005;TC-TRACE-006;TC-TRACE-007;TC-TRACE-008;TC-TRACE-009;TC-TRACE-010;TC-TRACE-011;TC-TRACE-012;TC-TRACE-013;TC-TRACE-014;TC-TRACE-015;TC-TRACE-016;TC-TRACE-017;TC-TRACE-018;TC-TRACE-019;TC-TRACE-020;TC-TRACE-021;TC-TRACE-022;TC-TRACE-023;TC-TRACE-024;TC-TRACE-025",Pending,Pending,P0,Elaborated Week 5 - 9247 words with 25 test cases
+NFR-TRACE-01,Performance,Traceability Check Time,UC-006,TraceabilityEngine;RequirementsLoader,TC-TRACE-003;TC-TRACE-015,Pending,Pending,P0,<90s for 10000+ nodes - CI/CD integration critical
+NFR-TRACE-02,Performance,Requirements Scan Time,UC-006,RequirementsLoader,TC-TRACE-003,Pending,Pending,P0,<10s for 200 requirements - Baseline loading speed
+NFR-TRACE-03,Performance,Code Scan Time,UC-006,CodebaseScanner,TC-TRACE-003,Pending,Pending,P0,<30s for 1000 files - Implementation mapping speed
+NFR-TRACE-04,Performance,Test Scan Time,UC-006,TestFileAnalyzer,TC-TRACE-003,Pending,Pending,P0,<20s for 500 test files - Test mapping speed
+NFR-TRACE-05,Performance,CSV Generation Time,UC-006,CSVGenerator,TC-TRACE-003,Pending,Pending,P1,<5s for 200 requirements - Report generation speed
+NFR-TRACE-06,Accuracy,Requirement ID Extraction Accuracy,UC-006,MetadataParser,TC-TRACE-008;TC-TRACE-009,Pending,Pending,P0,98% accuracy - Regex pattern matching precision
+NFR-TRACE-07,Accuracy,False Positive Rate,UC-006,TraceabilityEngine,TC-TRACE-008;TC-TRACE-009,Pending,Pending,P0,<2% false positives - Trust in validation
+NFR-TRACE-08,Completeness,Traceability Link Coverage,UC-006,TraceabilityEngine,TC-TRACE-021,Pending,Pending,P0,100% requirement coverage - All requirements traced
+NFR-TRACE-09,Completeness,Graph Integrity,UC-006,GraphAnalyzer,TC-TRACE-007,Pending,Pending,P1,0 orphan clusters - Complete traceability graph
+NFR-TRACE-10,Reliability,Graceful Degradation,UC-006,TraceabilityEngine,TC-TRACE-006;TC-TRACE-011,Pending,Pending,P0,Continue validation despite parse errors
+NFR-TRACE-11,Reliability,Error Recovery,UC-006,TraceabilityEngine,TC-TRACE-014,Pending,Pending,P0,100% error logging - Debugging support
+NFR-TRACE-12,Usability,Report Clarity,UC-006,ReportGenerator,TC-TRACE-012,Pending,Pending,P0,100% actionable remediation steps - Developer productivity
+NFR-TRACE-13,Usability,Summary Brevity,UC-006,ReportGenerator,TC-TRACE-012,Pending,Pending,P1,<500 words summary - Quick understanding
+UC-008,Use Case,Developer Selects Templates by Project Context,Elaboration Workshop,"TemplateSelector;TemplateCatalog;ContextAnalyzer;RecommendationEngine;FileManager;PlaceholderReplacer","TC-TMPL-001;TC-TMPL-002;TC-TMPL-003;TC-TMPL-004;TC-TMPL-005;TC-TMPL-006;TC-TMPL-007;TC-TMPL-008;TC-TMPL-009;TC-TMPL-010",Pending,Pending,P0,Elaborated Week 5 - 4987 words with 10 test cases
+NFR-TMPL-01,Performance,Template Catalog Search Time,UC-008,TemplateSelector;TemplateCatalog,TC-TMPL-002;TC-TMPL-006;TC-TMPL-010,Pending,Pending,P0,<2 seconds (95th percentile) - Responsiveness for 100+ templates
+NFR-TMPL-02,Performance,Template Selection Time (First-Time User),UC-008,TemplateSelector;ContextAnalyzer,TC-TMPL-001,Pending,Pending,P0,<5 minutes (95th percentile) - Onboarding friction reduction
+NFR-TMPL-03,Performance,Template Copy and Placeholder Replacement,UC-008,FileManager;PlaceholderReplacer,TC-TMPL-004,Pending,Pending,P1,<5 seconds (95th percentile) - Perceived performance
+NFR-TMPL-04,Usability,First-Time User Success Rate,UC-008,TemplateSelector;RecommendationEngine,TC-TMPL-001,Pending,Pending,P0,85%+ find correct template - Onboarding conversion
+NFR-TMPL-05,Usability,Template Recommendation Acceptance,UC-008,RecommendationEngine,TC-TMPL-003,Pending,Pending,P0,85%+ developers use recommended template - Trust in recommendations
+NFR-TMPL-06,Usability,Error Message Clarity,UC-008,TemplateSelector;ErrorHandler,TC-TMPL-005;TC-TMPL-008,Pending,Pending,P1,90%+ developers understand remediation - Self-service troubleshooting
+NFR-TMPL-07,Accuracy,Template Recommendation Accuracy,UC-008,RecommendationEngine;ContextAnalyzer,TC-TMPL-003,Pending,Pending,P0,90%+ correct template for context - User satisfaction
+NFR-TMPL-08,Accuracy,Fuzzy Match Accuracy (Typo Tolerance),UC-008,TemplateSelector,TC-TMPL-009,Pending,Pending,P1,95%+ typos corrected - Input error handling
+UC-009,Use Case,Generate Comprehensive Test Strategies and Test Cases,Elaboration Workshop,"TestGeneratorEngine;TestCaseDeriver;CoverageCalculator;TestPlanGenerator;PyramidBalancer;TestStrategyGenerator;RequirementsAnalyzer;TemplateEngine","TC-TEST-001;TC-TEST-002;TC-TEST-003;TC-TEST-004;TC-TEST-005;TC-TEST-006;TC-TEST-007;TC-TEST-008;TC-TEST-009;TC-TEST-010;TC-TEST-011;TC-TEST-012;TC-TEST-013;TC-TEST-014;TC-TEST-015",Pending,Pending,P0,Elaborated Week 5 - 6847 words with 15 test cases
+NFR-TEST-01,Performance,Test Generation Time,UC-009,TestGeneratorEngine;PerformanceOptimizer,TC-TEST-001;TC-TEST-003;TC-TEST-008,Pending,Pending,P0,<10 minutes for 100 requirements - Developer productivity
+NFR-TEST-02,Performance,Test Case Derivation Time,UC-009,TestCaseDeriver,TC-TEST-002;TC-TEST-008,Pending,Pending,P0,<5 seconds per use case - Rapid feedback
+NFR-TEST-03,Performance,Coverage Calculation Time,UC-009,CoverageCalculator,TC-TEST-005,Pending,Pending,P1,<2 seconds for 500 test cases - Instant metrics
+NFR-TEST-04,Quality,Test Case Completeness,UC-009,TestCaseDeriver;ScenarioCoverageValidator,TC-TEST-001;TC-TEST-002,Pending,Pending,P0,100% scenario coverage (main + alternates + exceptions)
+NFR-TEST-05,Quality,Test Strategy Balance,UC-009,TestStrategyGenerator;PyramidBalancer,TC-TEST-004;TC-TEST-006,Pending,Pending,P1,70-80% unit / 15-20% integration / 5-10% E2E - Pyramid pattern
+NFR-TEST-06,Quality,Test Specification Format,UC-009,TestCaseDeriver,TC-TEST-002,Pending,Pending,P0,100% Given/When/Then (Gherkin/BDD) - Clarity for developers
+NFR-TEST-07,Usability,Test Plan Clarity,UC-009,TestPlanGenerator,TC-TEST-001;TC-TEST-007;TC-TEST-012,Pending,Pending,P0,100% actionable test cases (no ambiguous steps)
+NFR-TEST-08,Usability,Effort Estimate Accuracy,UC-009,TestPlanGenerator,TC-TEST-011,Pending,Pending,P1,±20% variance (actual vs estimated effort) - Reliable velocity forecasting
+UC-011,Use Case,Security Validation via /project:security-gate,Elaboration Workshop,"SecurityValidationEngine;SecretScanner;SASTRunner;DependencyScanner;ThreatModelValidator;NFRValidator;AttackDetector;PerformanceOptimizer;GracefulDegradation","TC-SEC-001;TC-SEC-002;TC-SEC-003;TC-SEC-004;TC-SEC-005;TC-SEC-006;TC-SEC-007;TC-SEC-008;TC-SEC-009;TC-SEC-010;TC-SEC-011;TC-SEC-012;TC-SEC-013;TC-SEC-014;TC-SEC-015;TC-SEC-016;TC-SEC-017;TC-SEC-018",Pending,Pending,P0,Elaborated Week 5 - 7842 words with 18 test cases
+NFR-SEC-PERF-01,Performance,Security Gate Validation Time,UC-011,SecurityValidationEngine;PerformanceOptimizer,TC-SEC-001;TC-SEC-008,Pending,Pending,P0,<10s (95th percentile) for typical project (1000 files) - Developer productivity
+NFR-SEC-PERF-02,Performance,Secret Scan Time,UC-011,SecretScanner,TC-SEC-002;TC-SEC-008,Pending,Pending,P0,<3s for 1000 files - Baseline scanning speed
+NFR-SEC-PERF-03,Performance,SAST Time,UC-011,SASTRunner,TC-SEC-003;TC-SEC-008,Pending,Pending,P0,<5s for 1000 files - Static analysis speed
+NFR-SEC-PERF-04,Performance,Dependency Scan Time,UC-011,DependencyScanner,TC-SEC-004;TC-SEC-008,Pending,Pending,P0,<2s for 100 dependencies - CVE lookup speed
+NFR-SEC-PERF-05,Performance,Incremental Validation Time,UC-011,SecurityValidationEngine,TC-SEC-012,Pending,Pending,P1,<5s for delta scans (large projects >5000 files)
+NFR-SEC-ACC-01,Accuracy,Attack Detection Accuracy,UC-011,SASTRunner;AttackDetector,TC-SEC-003;TC-SEC-008,Pending,Pending,P0,100% detection for known attack vectors (SQL injection/XSS/CSRF/RCE)
+NFR-SEC-ACC-02,Accuracy,False Positive Rate,UC-011,SASTRunner,TC-SEC-009,Pending,Pending,P1,<10% for SAST findings - Developer trust
+NFR-SEC-ACC-03,Accuracy,Secret Detection Accuracy,UC-011,SecretScanner,TC-SEC-002,Pending,Pending,P0,98% accuracy (2% false positives acceptable)
+NFR-SEC-ACC-04,Accuracy,CVE Detection Accuracy,UC-011,DependencyScanner,TC-SEC-004;TC-SEC-011,Pending,Pending,P0,100% detection for Critical/High CVEs
+NFR-SEC-COMP-01,Completeness,Threat Model Coverage,UC-011,ThreatModelValidator,TC-SEC-005,Pending,Pending,P1,100% asset coverage (all assets have threats defined)
+NFR-SEC-COMP-02,Completeness,P0 Threat Mitigation,UC-011,ThreatModelValidator,TC-SEC-005,Pending,Pending,P0,100% P0 threat mitigations (all High-risk threats mitigated)
+NFR-SEC-COMP-03,Completeness,NFR Validation,UC-011,NFRValidator,TC-SEC-014,Pending,Pending,P0,100% security NFR validation
+NFR-SEC-REL-01,Reliability,Graceful Degradation,UC-011,SecurityValidationEngine;GracefulDegradation,TC-SEC-006;TC-SEC-007;TC-SEC-013,Pending,Pending,P0,Continue validation despite tool failures (partial security validation)
+NFR-SEC-REL-02,Reliability,Error Recovery,UC-011,SecurityValidationEngine,TC-SEC-017,Pending,Pending,P0,100% error logging for all failures - Debugging support
+NFR-SEC-REL-03,Reliability,Cache Staleness Detection,UC-011,DependencyScanner,TC-SEC-007;TC-SEC-011,Pending,Pending,P1,Warn if CVE cache >7 days old - Data quality
+NFR-SEC-USE-01,Usability,Report Clarity,UC-011,SecurityValidationEngine,TC-SEC-015,Pending,Pending,P0,100% actionable remediation steps - Developer productivity
+NFR-SEC-USE-02,Usability,Summary Brevity,UC-011,SecurityValidationEngine,TC-SEC-016,Pending,Pending,P1,<500 words gate summary - Quick understanding
+NFR-SEC-USE-03,Usability,Acceptable Risk Approval,UC-011,SecurityValidationEngine,TC-SEC-010,Pending,Pending,P1,<2 minutes for Security Architect approval workflow
