@@ -1,0 +1,588 @@
+{
+  "profiles": [
+    {
+      "voice": "academic",
+      "detectionConfidence": 0.85,
+      "characteristics": {
+        "formality": 0.85,
+        "technicality": 0.75,
+        "assertiveness": 0.65,
+        "complexity": 0.80,
+        "sentenceLength": {
+          "avg": 25,
+          "min": 15,
+          "max": 35,
+          "variance": 8
+        },
+        "vocabularyLevel": "expert",
+        "firstPersonUsage": 7.5,
+        "passiveVoiceRatio": 25
+      },
+      "markers": [
+        {
+          "type": "vocabulary",
+          "indicator": "methodology",
+          "weight": 0.85,
+          "examples": [
+            "Our methodology involves systematic analysis",
+            "The research methodology demonstrates",
+            "This methodological approach provides"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "framework",
+          "weight": 0.80,
+          "examples": [
+            "The theoretical framework suggests",
+            "Within this framework, we observe",
+            "This conceptual framework enables"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "empirical",
+          "weight": 0.90,
+          "examples": [
+            "Empirical evidence demonstrates",
+            "Our empirical analysis reveals",
+            "The empirical data supports"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "theoretical",
+          "weight": 0.75,
+          "examples": [
+            "The theoretical underpinnings",
+            "From a theoretical perspective",
+            "Theoretical considerations suggest"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "hypothesis",
+          "weight": 0.85,
+          "examples": [
+            "Our hypothesis posits that",
+            "The null hypothesis states",
+            "This hypothesis was tested"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "furthermore",
+          "weight": 0.70,
+          "examples": [
+            "Furthermore, the analysis reveals",
+            "Furthermore, we observe that",
+            "Furthermore, it should be noted"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "moreover",
+          "weight": 0.68,
+          "examples": [
+            "Moreover, the findings suggest",
+            "Moreover, this approach enables",
+            "Moreover, empirical evidence"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "nevertheless",
+          "weight": 0.72,
+          "examples": [
+            "Nevertheless, certain limitations exist",
+            "Nevertheless, the results indicate",
+            "Nevertheless, further research is needed"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "suggests that",
+          "weight": 0.80,
+          "examples": [
+            "The research suggests that",
+            "Our analysis suggests that",
+            "This evidence suggests that"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "appears to",
+          "weight": 0.75,
+          "examples": [
+            "This approach appears to be effective",
+            "The data appears to support",
+            "The relationship appears to be significant"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "may indicate",
+          "weight": 0.70,
+          "examples": [
+            "These results may indicate",
+            "This pattern may indicate",
+            "The findings may indicate"
+          ]
+        },
+        {
+          "type": "perspective",
+          "indicator": "we observe",
+          "weight": 0.65,
+          "examples": [
+            "We observe that the correlation",
+            "In our study, we observe",
+            "Through this analysis, we observe"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "it should be noted",
+          "weight": 0.68,
+          "examples": [
+            "It should be noted that limitations exist",
+            "However, it should be noted that",
+            "It should be noted that further validation"
+          ]
+        }
+      ]
+    },
+    {
+      "voice": "technical",
+      "detectionConfidence": 0.90,
+      "characteristics": {
+        "formality": 0.60,
+        "technicality": 0.90,
+        "assertiveness": 0.80,
+        "complexity": 0.70,
+        "sentenceLength": {
+          "avg": 17,
+          "min": 8,
+          "max": 25,
+          "variance": 6
+        },
+        "vocabularyLevel": "expert",
+        "firstPersonUsage": 15,
+        "passiveVoiceRatio": 12
+      },
+      "markers": [
+        {
+          "type": "vocabulary",
+          "indicator": "latency",
+          "weight": 0.92,
+          "examples": [
+            "The average latency is 45ms",
+            "Reduced latency by 30%",
+            "Sub-millisecond latency performance"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "throughput",
+          "weight": 0.88,
+          "examples": [
+            "System throughput of 10K req/sec",
+            "Improved throughput by 2.5x",
+            "Maximum throughput under load"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "payload",
+          "weight": 0.85,
+          "examples": [
+            "The JSON payload contains",
+            "Reduced payload size by 40%",
+            "Request payload validation"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "optimization",
+          "weight": 0.83,
+          "examples": [
+            "Query optimization reduces load time",
+            "Code-level optimization strategies",
+            "Database optimization through indexing"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "implementation",
+          "weight": 0.80,
+          "examples": [
+            "The implementation uses connection pooling",
+            "Current implementation leverages Redis",
+            "Implementation details in the codebase"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "configuration",
+          "weight": 0.78,
+          "examples": [
+            "The configuration file specifies",
+            "Environment-specific configuration",
+            "Default configuration parameters"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "ms",
+          "weight": 0.95,
+          "examples": [
+            "Response time is 150ms",
+            "Timeout set to 5000ms",
+            "Processing takes 2ms"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "MB",
+          "weight": 0.90,
+          "examples": [
+            "Memory usage at 256MB",
+            "File size is 12MB",
+            "Allocated 512MB RAM"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "in my experience",
+          "weight": 0.70,
+          "examples": [
+            "In my experience, this pattern works",
+            "I've found that caching helps",
+            "From experience, connection pooling scales"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "trade-off",
+          "weight": 0.75,
+          "examples": [
+            "The trade-off is memory vs speed",
+            "Performance trade-offs exist",
+            "Consider the latency-throughput trade-off"
+          ]
+        },
+        {
+          "type": "perspective",
+          "indicator": "we can",
+          "weight": 0.68,
+          "examples": [
+            "We can optimize this query",
+            "We can reduce overhead by",
+            "We can implement caching"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "kubernetes",
+          "weight": 0.82,
+          "examples": [
+            "Deploy to Kubernetes cluster",
+            "Kubernetes orchestration handles",
+            "K8s pod configuration"
+          ]
+        }
+      ]
+    },
+    {
+      "voice": "executive",
+      "detectionConfidence": 0.88,
+      "characteristics": {
+        "formality": 0.75,
+        "technicality": 0.40,
+        "assertiveness": 0.90,
+        "complexity": 0.50,
+        "sentenceLength": {
+          "avg": 15,
+          "min": 8,
+          "max": 22,
+          "variance": 5
+        },
+        "vocabularyLevel": "intermediate",
+        "firstPersonUsage": 20,
+        "passiveVoiceRatio": 7
+      },
+      "markers": [
+        {
+          "type": "vocabulary",
+          "indicator": "ROI",
+          "weight": 0.95,
+          "examples": [
+            "Delivering 30% ROI in Q1",
+            "Expected ROI of $2M annually",
+            "Three-year ROI projection shows"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "strategic",
+          "weight": 0.88,
+          "examples": [
+            "Our strategic priority is",
+            "Strategic alignment with business goals",
+            "The strategic impact includes"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "stakeholder",
+          "weight": 0.85,
+          "examples": [
+            "Stakeholder alignment achieved",
+            "Key stakeholder requirements",
+            "Executive stakeholder approval"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "alignment",
+          "weight": 0.80,
+          "examples": [
+            "Ensuring cross-team alignment",
+            "Strategic alignment is critical",
+            "Organizational alignment on priorities"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "$",
+          "weight": 0.92,
+          "examples": [
+            "Cost savings of $500K annually",
+            "Revenue increase of $2M",
+            "Budget allocation of $1.5M"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "% improvement",
+          "weight": 0.90,
+          "examples": [
+            "40% improvement in efficiency",
+            "25% reduction in costs",
+            "60% increase in market share"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "Q1",
+          "weight": 0.82,
+          "examples": [
+            "Targeting Q1 2024 launch",
+            "Q2 results exceeded targets",
+            "Q3 priorities include"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "recommend",
+          "weight": 0.87,
+          "examples": [
+            "I recommend prioritizing",
+            "We recommend accelerating",
+            "The analysis recommends"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "demonstrates",
+          "weight": 0.83,
+          "examples": [
+            "Our analysis demonstrates",
+            "The data demonstrates clear ROI",
+            "This approach demonstrates value"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "maximize",
+          "weight": 0.85,
+          "examples": [
+            "To maximize business value",
+            "Maximize operational efficiency",
+            "Strategy to maximize returns"
+          ]
+        },
+        {
+          "type": "perspective",
+          "indicator": "we should",
+          "weight": 0.78,
+          "examples": [
+            "We should prioritize this initiative",
+            "We should accelerate deployment",
+            "We should allocate resources"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "mitigates risk",
+          "weight": 0.80,
+          "examples": [
+            "This approach mitigates execution risk",
+            "Risk mitigation through phased rollout",
+            "Mitigates operational risk"
+          ]
+        }
+      ]
+    },
+    {
+      "voice": "casual",
+      "detectionConfidence": 0.82,
+      "characteristics": {
+        "formality": 0.30,
+        "technicality": 0.30,
+        "assertiveness": 0.60,
+        "complexity": 0.40,
+        "sentenceLength": {
+          "avg": 12,
+          "min": 5,
+          "max": 18,
+          "variance": 5
+        },
+        "vocabularyLevel": "intermediate",
+        "firstPersonUsage": 35,
+        "passiveVoiceRatio": 3
+      },
+      "markers": [
+        {
+          "type": "structure",
+          "indicator": "don't",
+          "weight": 0.88,
+          "examples": [
+            "We don't need to overcomplicate this",
+            "Don't forget about edge cases",
+            "You don't want to ignore that"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "it's",
+          "weight": 0.85,
+          "examples": [
+            "It's basically a caching layer",
+            "It's pretty straightforward",
+            "It's like managing a queue"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "that's",
+          "weight": 0.83,
+          "examples": [
+            "That's the key insight",
+            "That's why performance matters",
+            "That's what we learned"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "here's the thing",
+          "weight": 0.90,
+          "examples": [
+            "Here's the thing - caching solves this",
+            "Here's the thing about latency",
+            "Here's the thing we discovered"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "basically",
+          "weight": 0.82,
+          "examples": [
+            "It's basically a state machine",
+            "We're basically optimizing for speed",
+            "Basically, you need connection pooling"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "pretty much",
+          "weight": 0.78,
+          "examples": [
+            "That's pretty much it",
+            "Pretty much the same approach",
+            "It's pretty much a solved problem"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "I've seen",
+          "weight": 0.85,
+          "examples": [
+            "I've seen this pattern work well",
+            "I've seen production systems fail",
+            "I've seen this issue before"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "in production",
+          "weight": 0.80,
+          "examples": [
+            "We ran into this in production",
+            "In production, this scales well",
+            "Production systems need careful monitoring"
+          ]
+        },
+        {
+          "type": "perspective",
+          "indicator": "you might",
+          "weight": 0.75,
+          "examples": [
+            "You might want to cache that",
+            "You might run into this issue",
+            "You might consider using Redis"
+          ]
+        },
+        {
+          "type": "structure",
+          "indicator": "look",
+          "weight": 0.82,
+          "examples": [
+            "Look, the reality is",
+            "Look, we need to optimize",
+            "Look, caching helps here"
+          ]
+        },
+        {
+          "type": "tone",
+          "indicator": "think of it like",
+          "weight": 0.88,
+          "examples": [
+            "Think of it like a conveyor belt",
+            "Think of it like a restaurant kitchen",
+            "Think of it like managing traffic"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "just",
+          "weight": 0.70,
+          "examples": [
+            "We just need to add caching",
+            "It's just a matter of tuning",
+            "Just optimize the query"
+          ]
+        },
+        {
+          "type": "vocabulary",
+          "indicator": "really",
+          "weight": 0.68,
+          "examples": [
+            "This really helps performance",
+            "It's really about trade-offs",
+            "Caching really makes a difference"
+          ]
+        }
+      ]
+    }
+  ]
+}

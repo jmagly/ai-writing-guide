@@ -1,0 +1,502 @@
+[
+  {
+    "id": "adj-001",
+    "category": "generic-adjectives",
+    "subcategory": "quantity-vagueness",
+    "pattern": "\\bvarious\\b",
+    "severity": "low",
+    "confidence": 0.76,
+    "examples": [
+      "Various optimization techniques.",
+      "We tried various approaches."
+    ],
+    "replacements": [
+      "We tried indexing, caching, and query optimization",
+      "Five optimization techniques: ...",
+      "Name the specific items"
+    ],
+    "context": "Vague quantity indicator",
+    "frequency": "very-common",
+    "domains": ["technical", "academic"]
+  },
+  {
+    "id": "adj-002",
+    "category": "generic-adjectives",
+    "subcategory": "quantity-vagueness",
+    "pattern": "\\bnumerous\\b",
+    "severity": "low",
+    "confidence": 0.77,
+    "examples": [
+      "Numerous benefits to caching.",
+      "We found numerous issues."
+    ],
+    "replacements": [
+      "Caching provides 3 key benefits: ...",
+      "We found 12 bugs in code review",
+      "Quantify 'numerous'"
+    ],
+    "context": "Vague large quantity",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "adj-003",
+    "category": "generic-adjectives",
+    "subcategory": "quantity-vagueness",
+    "pattern": "\\bseveral\\b",
+    "severity": "low",
+    "confidence": 0.73,
+    "examples": [
+      "Several different approaches.",
+      "We tested several configurations."
+    ],
+    "replacements": [
+      "We tested 4 configurations: ...",
+      "Three approaches: monolith, microservices, serverless",
+      "Give the actual number"
+    ],
+    "context": "Vague mid-range quantity",
+    "frequency": "very-common",
+    "domains": ["technical", "academic"]
+  },
+  {
+    "id": "adj-004",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bsignificant\\b",
+    "severity": "medium",
+    "confidence": 0.82,
+    "examples": [
+      "A significant improvement.",
+      "This has significant impact."
+    ],
+    "replacements": [
+      "Latency dropped from 200ms to 45ms",
+      "Revenue increased by $2M annually",
+      "Quantify significance"
+    ],
+    "context": "Vague importance without evidence",
+    "frequency": "very-common",
+    "domains": ["academic", "technical", "executive"]
+  },
+  {
+    "id": "adj-005",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bimportant\\b",
+    "severity": "low",
+    "confidence": 0.71,
+    "examples": [
+      "This is important for security.",
+      "An important consideration."
+    ],
+    "replacements": [
+      "This prevents SQL injection attacks",
+      "This affects 50k users daily",
+      "Explain why it's important"
+    ],
+    "context": "Generic importance claim",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-006",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bcrucial\\b",
+    "severity": "medium",
+    "confidence": 0.80,
+    "examples": [
+      "Testing is crucial.",
+      "This is crucial for performance."
+    ],
+    "replacements": [
+      "Testing caught 89 bugs before release",
+      "Without this, latency exceeds 500ms",
+      "Explain the criticality"
+    ],
+    "context": "Strong claim without justification",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-007",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bvital\\b",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Security is vital.",
+      "This is vital to success."
+    ],
+    "replacements": [
+      "Security prevents $4M average breach cost",
+      "This determines if users stay or leave",
+      "Justify the vital claim"
+    ],
+    "context": "Hyperbolic importance",
+    "frequency": "common",
+    "domains": ["executive"]
+  },
+  {
+    "id": "adj-008",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bessential\\b",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Caching is essential.",
+      "This is essential for scale."
+    ],
+    "replacements": [
+      "Without caching, pages load in 3+ seconds",
+      "This enables handling 100k concurrent users",
+      "Explain why it's essential"
+    ],
+    "context": "Strong claim needing support",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-009",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\bcomprehensive\\b",
+    "severity": "medium",
+    "confidence": 0.85,
+    "examples": [
+      "A comprehensive solution.",
+      "Comprehensive testing."
+    ],
+    "replacements": [
+      "Solution covering auth, storage, and APIs",
+      "Unit, integration, and E2E tests (95% coverage)",
+      "List what's included"
+    ],
+    "context": "Vague completeness claim",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-010",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\brobust\\b",
+    "severity": "medium",
+    "confidence": 0.88,
+    "examples": [
+      "A robust architecture.",
+      "Robust error handling."
+    ],
+    "replacements": [
+      "99.9% uptime over 12 months",
+      "Handles 10 error types with retries",
+      "Specify robustness metrics"
+    ],
+    "context": "Very common AI adjective",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "adj-011",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\binnovative\\b",
+    "severity": "medium",
+    "confidence": 0.86,
+    "examples": [
+      "An innovative approach.",
+      "Innovative solutions."
+    ],
+    "replacements": [
+      "First to use edge caching with WebAssembly",
+      "Novel algorithm reducing complexity from O(n²) to O(n log n)",
+      "Describe the innovation"
+    ],
+    "context": "Buzzword without substance",
+    "frequency": "very-common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "adj-012",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\boptimal\\b",
+    "severity": "medium",
+    "confidence": 0.81,
+    "examples": [
+      "The optimal solution.",
+      "Optimal performance."
+    ],
+    "replacements": [
+      "Fastest among 5 tested approaches",
+      "Meets p99 <50ms target with lowest cost",
+      "Define optimality criteria"
+    ],
+    "context": "Unsubstantiated optimality",
+    "frequency": "common",
+    "domains": ["technical", "academic"]
+  },
+  {
+    "id": "adj-013",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\bscalable\\b",
+    "severity": "low",
+    "confidence": 0.69,
+    "examples": [
+      "A scalable architecture.",
+      "Scalable solutions."
+    ],
+    "replacements": [
+      "Handles 10 to 100k users without code changes",
+      "Auto-scales from 2 to 50 instances",
+      "Specify scale range"
+    ],
+    "context": "Acceptable if quantified",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "adj-014",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\befficient\\b",
+    "severity": "low",
+    "confidence": 0.70,
+    "examples": [
+      "An efficient algorithm.",
+      "Efficient use of resources."
+    ],
+    "replacements": [
+      "O(log n) search vs O(n) linear scan",
+      "Uses 50MB RAM vs 500MB naive approach",
+      "Quantify efficiency"
+    ],
+    "context": "Vague performance claim",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "adj-015",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\beffective\\b",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "An effective strategy.",
+      "Effective at reducing bugs."
+    ],
+    "replacements": [
+      "Reduced bugs from 45 to 8 per sprint",
+      "Increased conversion by 23%",
+      "Measure effectiveness"
+    ],
+    "context": "Claim without evidence",
+    "frequency": "very-common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "adj-016",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\bpowerful\\b",
+    "severity": "medium",
+    "confidence": 0.83,
+    "examples": [
+      "A powerful feature.",
+      "Powerful capabilities."
+    ],
+    "replacements": [
+      "Processes 1M records in 2 seconds",
+      "Supports 50+ data sources out of box",
+      "Specify the power"
+    ],
+    "context": "Marketing buzzword",
+    "frequency": "common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "adj-017",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\badvanced\\b",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Advanced features.",
+      "An advanced algorithm."
+    ],
+    "replacements": [
+      "Supports custom retry policies and circuit breakers",
+      "Uses gradient boosting with hyperparameter tuning",
+      "Describe what makes it advanced"
+    ],
+    "context": "Vague sophistication claim",
+    "frequency": "common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-018",
+    "category": "generic-adjectives",
+    "subcategory": "ease-claims",
+    "pattern": "\\beasy\\b",
+    "severity": "low",
+    "confidence": 0.72,
+    "examples": [
+      "Easy to use.",
+      "This makes it easy."
+    ],
+    "replacements": [
+      "3-line API vs 50-line manual approach",
+      "New users complete tasks in 2 minutes",
+      "Quantify ease"
+    ],
+    "context": "Subjective ease claim",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-019",
+    "category": "generic-adjectives",
+    "subcategory": "ease-claims",
+    "pattern": "\\bsimple\\b",
+    "severity": "low",
+    "confidence": 0.71,
+    "examples": [
+      "A simple solution.",
+      "Simple to implement."
+    ],
+    "replacements": [
+      "Requires only 2 config values",
+      "Built in 1 afternoon vs 1 week for alternatives",
+      "Define simplicity"
+    ],
+    "context": "Relative simplicity",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "adj-020",
+    "category": "generic-adjectives",
+    "subcategory": "ease-claims",
+    "pattern": "\\bstraightforward\\b",
+    "severity": "low",
+    "confidence": 0.74,
+    "examples": [
+      "A straightforward approach.",
+      "Straightforward to configure."
+    ],
+    "replacements": [
+      "Single YAML file with 5 fields",
+      "No surprises, follows REST conventions",
+      "Explain straightforwardness"
+    ],
+    "context": "Subjective ease",
+    "frequency": "common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "adj-021",
+    "category": "generic-adjectives",
+    "subcategory": "flexibility-claims",
+    "pattern": "\\bflexible\\b",
+    "severity": "low",
+    "confidence": 0.73,
+    "examples": [
+      "A flexible architecture.",
+      "Flexible configuration."
+    ],
+    "replacements": [
+      "Supports 5 storage backends: S3, Azure, GCS, etc.",
+      "Configurable via env vars, YAML, or UI",
+      "Describe flexibility options"
+    ],
+    "context": "Vague adaptability",
+    "frequency": "common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-022",
+    "category": "generic-adjectives",
+    "subcategory": "reliability-claims",
+    "pattern": "\\breliable\\b",
+    "severity": "low",
+    "confidence": 0.70,
+    "examples": [
+      "A reliable system.",
+      "Reliable performance."
+    ],
+    "replacements": [
+      "99.95% uptime over 18 months",
+      "Zero data loss in 10k deployments",
+      "Provide reliability metrics"
+    ],
+    "context": "Claim needing evidence",
+    "frequency": "common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-023",
+    "category": "generic-adjectives",
+    "subcategory": "speed-claims",
+    "pattern": "\\bfast\\b",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Fast performance.",
+      "This is fast."
+    ],
+    "replacements": [
+      "p95 latency of 12ms",
+      "10x faster than previous version",
+      "Quantify speed"
+    ],
+    "context": "Relative speed without numbers",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "adj-024",
+    "category": "generic-adjectives",
+    "subcategory": "speed-claims",
+    "pattern": "\\bquick\\b",
+    "severity": "low",
+    "confidence": 0.67,
+    "examples": [
+      "Quick deployment.",
+      "A quick solution."
+    ],
+    "replacements": [
+      "Deploy in 3 commands (<5 minutes)",
+      "Built in 2 hours vs 2 days",
+      "Specify time"
+    ],
+    "context": "Vague time claim",
+    "frequency": "common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "adj-025",
+    "category": "generic-adjectives",
+    "subcategory": "user-focus",
+    "pattern": "\\buser-friendly\\b",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "A user-friendly interface.",
+      "User-friendly design."
+    ],
+    "replacements": [
+      "90% task completion rate in usability tests",
+      "New users complete setup in <5 minutes",
+      "Provide UX metrics"
+    ],
+    "context": "Subjective UX claim",
+    "frequency": "common",
+    "domains": ["executive"]
+  }
+]

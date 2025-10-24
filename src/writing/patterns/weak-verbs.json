@@ -1,0 +1,402 @@
+[
+  {
+    "id": "weak-verb-001",
+    "category": "weak-verbs",
+    "subcategory": "corporate-speak",
+    "pattern": "\\butilize\\b",
+    "severity": "medium",
+    "confidence": 0.87,
+    "examples": [
+      "We utilize Redis for caching.",
+      "The system utilizes microservices."
+    ],
+    "replacements": [
+      "We use Redis for caching",
+      "The system uses microservices",
+      "Just say 'use'"
+    ],
+    "context": "Corporate jargon for 'use'",
+    "frequency": "very-common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "weak-verb-002",
+    "category": "weak-verbs",
+    "subcategory": "corporate-speak",
+    "pattern": "\\bleverage\\b",
+    "severity": "medium",
+    "confidence": 0.89,
+    "examples": [
+      "We leverage cloud infrastructure.",
+      "Leveraging Kubernetes for orchestration."
+    ],
+    "replacements": [
+      "We use AWS ECS for container hosting",
+      "Using Kubernetes to manage 200+ pods",
+      "Use 'use' or be more specific"
+    ],
+    "context": "Business buzzword",
+    "frequency": "very-common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "weak-verb-003",
+    "category": "weak-verbs",
+    "subcategory": "corporate-speak",
+    "pattern": "\\bfacilitate\\b",
+    "severity": "medium",
+    "confidence": 0.84,
+    "examples": [
+      "This facilitates faster development.",
+      "APIs facilitate integration."
+    ],
+    "replacements": [
+      "This enables 2-day deploy cycles",
+      "APIs enable integration via REST",
+      "Use 'enable' or be specific"
+    ],
+    "context": "Vague enabler verb",
+    "frequency": "common",
+    "domains": ["executive", "academic"]
+  },
+  {
+    "id": "weak-verb-004",
+    "category": "weak-verbs",
+    "subcategory": "corporate-speak",
+    "pattern": "\\bendeavor\\b",
+    "severity": "medium",
+    "confidence": 0.82,
+    "examples": [
+      "We endeavor to improve performance.",
+      "The team endeavors to deliver quality."
+    ],
+    "replacements": [
+      "We aim to reduce latency below 50ms",
+      "The team targets zero critical bugs",
+      "Use 'try' or 'aim' with specifics"
+    ],
+    "context": "Overly formal effort verb",
+    "frequency": "occasional",
+    "domains": ["executive", "academic"]
+  },
+  {
+    "id": "weak-verb-005",
+    "category": "weak-verbs",
+    "subcategory": "overused-technical",
+    "pattern": "\\bimplement\\b",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "We implemented caching.",
+      "Implementing a new feature."
+    ],
+    "replacements": [
+      "We added Redis caching",
+      "Building a notification system",
+      "Use more specific verbs when possible"
+    ],
+    "context": "Overused but acceptable in technical contexts",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "weak-verb-006",
+    "category": "weak-verbs",
+    "subcategory": "vague-action",
+    "pattern": "\\benhance\\b",
+    "severity": "medium",
+    "confidence": 0.81,
+    "examples": [
+      "This enhances performance.",
+      "Enhancements to the UI."
+    ],
+    "replacements": [
+      "This cuts load time by 40%",
+      "Redesigned UI with larger buttons",
+      "Specify what improved"
+    ],
+    "context": "Vague improvement verb",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "weak-verb-007",
+    "category": "weak-verbs",
+    "subcategory": "vague-action",
+    "pattern": "\\boptimize\\b",
+    "severity": "low",
+    "confidence": 0.65,
+    "examples": [
+      "We optimized the database.",
+      "Optimize for performance."
+    ],
+    "replacements": [
+      "We added indexes on user_id and created_at",
+      "Cache frequently accessed data",
+      "Specify the optimization"
+    ],
+    "context": "Vague but acceptable if followed by details",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "weak-verb-008",
+    "category": "weak-verbs",
+    "subcategory": "vague-action",
+    "pattern": "\\bstreamline\\b",
+    "severity": "medium",
+    "confidence": 0.83,
+    "examples": [
+      "We streamlined the process.",
+      "Streamlining workflows."
+    ],
+    "replacements": [
+      "We reduced steps from 7 to 3",
+      "Automated 4 manual approval steps",
+      "Describe the actual simplification"
+    ],
+    "context": "Business jargon for simplification",
+    "frequency": "common",
+    "domains": ["executive"]
+  },
+  {
+    "id": "weak-verb-009",
+    "category": "weak-verbs",
+    "subcategory": "passive-constructions",
+    "pattern": "\\bis (being )?(used|utilized|employed|deployed)",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Redis is being used for caching.",
+      "Microservices are employed."
+    ],
+    "replacements": [
+      "We use Redis for caching",
+      "We built microservices",
+      "Use active voice"
+    ],
+    "context": "Passive voice weakens technical writing",
+    "frequency": "very-common",
+    "domains": ["technical", "academic"]
+  },
+  {
+    "id": "weak-verb-010",
+    "category": "weak-verbs",
+    "subcategory": "passive-constructions",
+    "pattern": "can be (achieved|accomplished|done)",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "This can be achieved with caching.",
+      "Performance can be accomplished via optimization."
+    ],
+    "replacements": [
+      "Caching achieves this",
+      "We achieve performance via indexing",
+      "Make subject active"
+    ],
+    "context": "Passive possibility",
+    "frequency": "common",
+    "domains": ["technical", "academic"]
+  },
+  {
+    "id": "weak-verb-011",
+    "category": "weak-verbs",
+    "subcategory": "helps-family",
+    "pattern": "\\bhelps? to\\b",
+    "severity": "low",
+    "confidence": 0.70,
+    "examples": [
+      "Caching helps to improve speed.",
+      "This helps to reduce latency."
+    ],
+    "replacements": [
+      "Caching improves speed",
+      "This reduces latency",
+      "Remove 'to' or rewrite actively"
+    ],
+    "context": "Wordy helper verb",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "weak-verb-012",
+    "category": "weak-verbs",
+    "subcategory": "helps-family",
+    "pattern": "\\bserves? to\\b",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "This serves to demonstrate the point.",
+      "Caching serves to improve performance."
+    ],
+    "replacements": [
+      "This demonstrates the point",
+      "Caching improves performance",
+      "Use direct verb"
+    ],
+    "context": "Formal wordiness",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "weak-verb-013",
+    "category": "weak-verbs",
+    "subcategory": "allows-enables",
+    "pattern": "\\ballows? (for|us to)\\b",
+    "severity": "low",
+    "confidence": 0.67,
+    "examples": [
+      "This allows for better scaling.",
+      "APIs allow us to integrate easily."
+    ],
+    "replacements": [
+      "This enables better scaling",
+      "APIs let us integrate via REST",
+      "Use 'enables' or 'lets'"
+    ],
+    "context": "Wordy enabler",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "weak-verb-014",
+    "category": "weak-verbs",
+    "subcategory": "allows-enables",
+    "pattern": "\\benables? (for|us to)\\b",
+    "severity": "low",
+    "confidence": 0.66,
+    "examples": [
+      "This enables for rapid deployment.",
+      "Automation enables us to deploy fast."
+    ],
+    "replacements": [
+      "This enables rapid deployment",
+      "Automation lets us deploy in 5 minutes",
+      "Remove 'for' or 'us to'"
+    ],
+    "context": "Slightly wordy but acceptable",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "weak-verb-015",
+    "category": "weak-verbs",
+    "subcategory": "provision-family",
+    "pattern": "\\bprovision\\b",
+    "severity": "low",
+    "confidence": 0.64,
+    "examples": [
+      "We provision cloud resources.",
+      "Provisioning new servers."
+    ],
+    "replacements": [
+      "We create EC2 instances via Terraform",
+      "Spinning up new Kubernetes nodes",
+      "Use specific technical term"
+    ],
+    "context": "DevOps jargon - acceptable but consider specifics",
+    "frequency": "common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "weak-verb-016",
+    "category": "weak-verbs",
+    "subcategory": "impact-family",
+    "pattern": "\\bimpact\\b",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "This impacts performance.",
+      "Changes impact users."
+    ],
+    "replacements": [
+      "This slows queries by 200ms",
+      "Changes affect 10k users",
+      "Specify the impact"
+    ],
+    "context": "Vague effect verb",
+    "frequency": "very-common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "weak-verb-017",
+    "category": "weak-verbs",
+    "subcategory": "process-family",
+    "pattern": "\\bprocess\\b",
+    "severity": "low",
+    "confidence": 0.63,
+    "examples": [
+      "We process requests quickly.",
+      "Processing 1M events per day."
+    ],
+    "replacements": [
+      "We handle requests in <50ms",
+      "Ingesting 1M events per day",
+      "Use domain-specific verb"
+    ],
+    "context": "Generic but acceptable in data contexts",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "weak-verb-018",
+    "category": "weak-verbs",
+    "subcategory": "transform-family",
+    "pattern": "\\btransform\\b",
+    "severity": "low",
+    "confidence": 0.69,
+    "examples": [
+      "We transform the data.",
+      "Transforming JSON to CSV."
+    ],
+    "replacements": [
+      "We normalize timestamps to UTC",
+      "Converting JSON to CSV via pandas",
+      "Specify the transformation"
+    ],
+    "context": "Acceptable if followed by details",
+    "frequency": "common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "weak-verb-019",
+    "category": "weak-verbs",
+    "subcategory": "ensure-family",
+    "pattern": "\\bensure\\b",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "We ensure data consistency.",
+      "Ensuring security."
+    ],
+    "replacements": [
+      "We use transactions for ACID guarantees",
+      "We enforce HTTPS and rate limiting",
+      "Specify how you ensure"
+    ],
+    "context": "Promise without method",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "weak-verb-020",
+    "category": "weak-verbs",
+    "subcategory": "provide-family",
+    "pattern": "\\bprovide\\b",
+    "severity": "low",
+    "confidence": 0.66,
+    "examples": [
+      "We provide caching.",
+      "Provides authentication."
+    ],
+    "replacements": [
+      "We cache frequently accessed queries",
+      "Supports OAuth2 and API keys",
+      "Say what, not just 'provide'"
+    ],
+    "context": "Vague offering verb",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  }
+]

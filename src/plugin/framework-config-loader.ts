@@ -245,7 +245,6 @@ export class FrameworkConfigLoader {
     const lines = content.split('\n');
     let currentObject: any = result;
     let currentKey: string | null = null;
-    let indent = 0;
 
     for (const line of lines) {
       const trimmed = line.trim();

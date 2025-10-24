@@ -1,0 +1,79 @@
+{
+  "version": "1.0.0",
+  "lastUpdate": 1761245753041,
+  "metrics": [
+    {
+      "timestamp": 1761245753033,
+      "nfrId": "NFR-ACC-001",
+      "category": "Accuracy",
+      "currentValue": 0.95,
+      "targetValue": 0.95,
+      "status": "pass",
+      "trend": "stable",
+      "alertLevel": "none",
+      "unit": "ratio",
+      "deviation": 0
+    },
+    {
+      "timestamp": 1761245753033,
+      "nfrId": "NFR-PERF-001",
+      "category": "Performance",
+      "currentValue": 48.76164389664182,
+      "targetValue": 48.76164389664182,
+      "status": "pass",
+      "trend": "stable",
+      "alertLevel": "none",
+      "unit": "ms",
+      "deviation": 0
+    },
+    {
+      "timestamp": 1761245753033,
+      "nfrId": "NFR-PERF-002",
+      "category": "Performance",
+      "currentValue": 44.43878809194552,
+      "targetValue": 44.43878809194552,
+      "status": "pass",
+      "trend": "stable",
+      "alertLevel": "none",
+      "unit": "ms",
+      "deviation": 0
+    },
+    {
+      "timestamp": 1761245753033,
+      "nfrId": "NFR-PERF-003",
+      "category": "Performance",
+      "currentValue": 43.76219861969706,
+      "targetValue": 43.76219861969706,
+      "status": "pass",
+      "trend": "stable",
+      "alertLevel": "none",
+      "unit": "ms",
+      "deviation": 0
+    },
+    {
+      "timestamp": 1761245753033,
+      "nfrId": "NFR-PERF-004",
+      "category": "Performance",
+      "currentValue": 46.74537389196365,
+      "targetValue": 46.74537389196365,
+      "status": "pass",
+      "trend": "stable",
+      "alertLevel": "none",
+      "unit": "ms",
+      "deviation": 0
+    },
+    {
+      "timestamp": 1761245753033,
+      "nfrId": "NFR-PERF-005",
+      "category": "Performance",
+      "currentValue": 44.88859617042263,
+      "targetValue": 44.88859617042263,
+      "status": "pass",
+      "trend": "stable",
+      "alertLevel": "none",
+      "unit": "ms",
+      "deviation": 0
+    }
+  ],
+  "alerts": []
+}

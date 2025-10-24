@@ -1,0 +1,108 @@
+{
+  "version": "1.0.0",
+  "lastModified": "2025-10-23T18:55:53.033Z",
+  "entries": [
+    {
+      "id": "d5ea8826-5d94-4a40-84b0-d69a51a71548",
+      "nfrId": "NFR-PERF-001",
+      "category": "Performance",
+      "measurement": {
+        "value": 48.76164389664182,
+        "unit": "ms",
+        "confidence": 0.95
+      },
+      "metadata": {
+        "environment": "test",
+        "system": "linux-x64",
+        "nodeVersion": "v20.0.0"
+      },
+      "timestamp": "2025-10-23T18:55:53.033Z",
+      "verified": false
+    },
+    {
+      "id": "c2197cc7-fcb4-41a3-b713-8cbc57cef448",
+      "nfrId": "NFR-PERF-002",
+      "category": "Performance",
+      "measurement": {
+        "value": 44.43878809194552,
+        "unit": "ms",
+        "confidence": 0.95
+      },
+      "metadata": {
+        "environment": "test",
+        "system": "linux-x64",
+        "nodeVersion": "v20.0.0"
+      },
+      "timestamp": "2025-10-23T18:55:53.033Z",
+      "verified": false
+    },
+    {
+      "id": "b79b0f04-029c-4e66-bdd4-d5c59dcd14b8",
+      "nfrId": "NFR-PERF-003",
+      "category": "Performance",
+      "measurement": {
+        "value": 43.76219861969706,
+        "unit": "ms",
+        "confidence": 0.95
+      },
+      "metadata": {
+        "environment": "test",
+        "system": "linux-x64",
+        "nodeVersion": "v20.0.0"
+      },
+      "timestamp": "2025-10-23T18:55:53.033Z",
+      "verified": false
+    },
+    {
+      "id": "56e85296-8f73-46b7-a351-d2ebdf984f47",
+      "nfrId": "NFR-PERF-004",
+      "category": "Performance",
+      "measurement": {
+        "value": 46.74537389196365,
+        "unit": "ms",
+        "confidence": 0.95
+      },
+      "metadata": {
+        "environment": "test",
+        "system": "linux-x64",
+        "nodeVersion": "v20.0.0"
+      },
+      "timestamp": "2025-10-23T18:55:53.033Z",
+      "verified": false
+    },
+    {
+      "id": "ff1881d0-2c71-4927-b247-cda3a310fe99",
+      "nfrId": "NFR-PERF-005",
+      "category": "Performance",
+      "measurement": {
+        "value": 44.88859617042263,
+        "unit": "ms",
+        "confidence": 0.95
+      },
+      "metadata": {
+        "environment": "test",
+        "system": "linux-x64",
+        "nodeVersion": "v20.0.0"
+      },
+      "timestamp": "2025-10-23T18:55:53.033Z",
+      "verified": false
+    },
+    {
+      "id": "e90f305b-b00c-4235-a1eb-9bd9c7c29441",
+      "nfrId": "NFR-ACC-001",
+      "category": "Accuracy",
+      "measurement": {
+        "value": 0.95,
+        "unit": "ratio",
+        "confidence": 0.98
+      },
+      "metadata": {
+        "environment": "test",
+        "system": "linux-x64",
+        "nodeVersion": "v20.0.0"
+      },
+      "timestamp": "2025-10-23T18:55:53.033Z",
+      "verified": false
+    }
+  ]
+}

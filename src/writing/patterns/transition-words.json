@@ -1,0 +1,602 @@
+[
+  {
+    "id": "trans-001",
+    "category": "transition-words",
+    "subcategory": "additive-formal",
+    "pattern": "^Moreover,",
+    "severity": "medium",
+    "confidence": 0.91,
+    "examples": [
+      "Moreover, caching improves performance.",
+      "Moreover, security is critical."
+    ],
+    "replacements": [
+      "Also, caching improves performance",
+      "Caching also improves performance",
+      "Start sentence directly"
+    ],
+    "context": "Very common AI transition - overly formal",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "trans-002",
+    "category": "transition-words",
+    "subcategory": "additive-formal",
+    "pattern": "^Furthermore,",
+    "severity": "medium",
+    "confidence": 0.90,
+    "examples": [
+      "Furthermore, testing reduces bugs.",
+      "Furthermore, users prefer simplicity."
+    ],
+    "replacements": [
+      "Also, testing reduces bugs",
+      "Testing also reduces bugs",
+      "Continue without marker"
+    ],
+    "context": "Paired with Moreover - strong AI signal",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "trans-003",
+    "category": "transition-words",
+    "subcategory": "additive-formal",
+    "pattern": "^Additionally,",
+    "severity": "medium",
+    "confidence": 0.87,
+    "examples": [
+      "Additionally, we optimized queries.",
+      "Additionally, costs decreased."
+    ],
+    "replacements": [
+      "We also optimized queries",
+      "Also, we optimized queries",
+      "Continue naturally"
+    ],
+    "context": "Formal addition marker",
+    "frequency": "very-common",
+    "domains": ["academic", "technical", "executive"]
+  },
+  {
+    "id": "trans-004",
+    "category": "transition-words",
+    "subcategory": "contrast-formal",
+    "pattern": "^Nevertheless,",
+    "severity": "medium",
+    "confidence": 0.88,
+    "examples": [
+      "Nevertheless, the approach works.",
+      "Nevertheless, we proceeded."
+    ],
+    "replacements": [
+      "Still, the approach works",
+      "But the approach works",
+      "Use simpler contrast"
+    ],
+    "context": "Overly formal contrast",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "trans-005",
+    "category": "transition-words",
+    "subcategory": "contrast-formal",
+    "pattern": "^Nonetheless,",
+    "severity": "medium",
+    "confidence": 0.86,
+    "examples": [
+      "Nonetheless, performance improved.",
+      "Nonetheless, we shipped."
+    ],
+    "replacements": [
+      "Still, performance improved",
+      "Even so, performance improved",
+      "Simplify contrast"
+    ],
+    "context": "Formal despite marker",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "trans-006",
+    "category": "transition-words",
+    "subcategory": "contrast-formal",
+    "pattern": "^However,",
+    "severity": "low",
+    "confidence": 0.65,
+    "examples": [
+      "However, latency increased.",
+      "However, costs rose."
+    ],
+    "replacements": [
+      "But latency increased",
+      "Latency increased, though",
+      "Acceptable but consider variety"
+    ],
+    "context": "Common but acceptable - just don't overuse",
+    "frequency": "very-common",
+    "domains": ["academic", "technical", "executive"]
+  },
+  {
+    "id": "trans-007",
+    "category": "transition-words",
+    "subcategory": "causal-formal",
+    "pattern": "^Consequently,",
+    "severity": "medium",
+    "confidence": 0.84,
+    "examples": [
+      "Consequently, we added caching.",
+      "Consequently, performance improved."
+    ],
+    "replacements": [
+      "So we added caching",
+      "As a result, we added caching",
+      "This led us to add caching"
+    ],
+    "context": "Formal consequence marker",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "trans-008",
+    "category": "transition-words",
+    "subcategory": "causal-formal",
+    "pattern": "^Subsequently,",
+    "severity": "medium",
+    "confidence": 0.83,
+    "examples": [
+      "Subsequently, we tested the fix.",
+      "Subsequently, bugs decreased."
+    ],
+    "replacements": [
+      "Then we tested the fix",
+      "After that, we tested the fix",
+      "Next, we tested the fix"
+    ],
+    "context": "Overly formal sequence",
+    "frequency": "occasional",
+    "domains": ["academic"]
+  },
+  {
+    "id": "trans-009",
+    "category": "transition-words",
+    "subcategory": "causal-formal",
+    "pattern": "^Therefore,",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Therefore, caching is essential.",
+      "Therefore, we optimized."
+    ],
+    "replacements": [
+      "So caching is essential",
+      "That's why caching is essential",
+      "Acceptable but consider variety"
+    ],
+    "context": "Common logical conclusion - acceptable",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "trans-010",
+    "category": "transition-words",
+    "subcategory": "causal-formal",
+    "pattern": "^Thus,",
+    "severity": "low",
+    "confidence": 0.70,
+    "examples": [
+      "Thus, we chose Redis.",
+      "Thus, latency improved."
+    ],
+    "replacements": [
+      "So we chose Redis",
+      "This led us to choose Redis",
+      "Acceptable in formal writing"
+    ],
+    "context": "Formal therefore - acceptable",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "trans-011",
+    "category": "transition-words",
+    "subcategory": "causal-formal",
+    "pattern": "^Hence,",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Hence, optimization is required.",
+      "Hence, we refactored."
+    ],
+    "replacements": [
+      "So optimization is required",
+      "That's why optimization is required",
+      "Use simpler transition"
+    ],
+    "context": "Overly formal hence",
+    "frequency": "occasional",
+    "domains": ["academic"]
+  },
+  {
+    "id": "trans-012",
+    "category": "transition-words",
+    "subcategory": "prepositional-phrases",
+    "pattern": "In light of",
+    "severity": "medium",
+    "confidence": 0.82,
+    "examples": [
+      "In light of these findings, we optimized.",
+      "In light of performance issues."
+    ],
+    "replacements": [
+      "Given these findings, we optimized",
+      "Because of performance issues",
+      "Simplify the phrase"
+    ],
+    "context": "Wordy formal phrase",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "trans-013",
+    "category": "transition-words",
+    "subcategory": "prepositional-phrases",
+    "pattern": "With regard to",
+    "severity": "medium",
+    "confidence": 0.81,
+    "examples": [
+      "With regard to performance, we optimized.",
+      "With regard to security concerns."
+    ],
+    "replacements": [
+      "Regarding performance, we optimized",
+      "About security concerns",
+      "For performance, we optimized"
+    ],
+    "context": "Verbose regarding",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "trans-014",
+    "category": "transition-words",
+    "subcategory": "prepositional-phrases",
+    "pattern": "With respect to",
+    "severity": "medium",
+    "confidence": 0.80,
+    "examples": [
+      "With respect to scalability, we used Kubernetes.",
+      "With respect to costs."
+    ],
+    "replacements": [
+      "For scalability, we used Kubernetes",
+      "Regarding costs",
+      "About costs"
+    ],
+    "context": "Wordy respect phrase",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "trans-015",
+    "category": "transition-words",
+    "subcategory": "prepositional-phrases",
+    "pattern": "In terms of",
+    "severity": "low",
+    "confidence": 0.67,
+    "examples": [
+      "In terms of performance, it's fast.",
+      "In terms of cost, it's expensive."
+    ],
+    "replacements": [
+      "Performance-wise, it's fast",
+      "For performance, it's fast",
+      "Acceptable but verbose"
+    ],
+    "context": "Common but wordy - consider shorter alternatives",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "trans-016",
+    "category": "transition-words",
+    "subcategory": "emphasis-markers",
+    "pattern": "^Indeed,",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Indeed, caching improves speed.",
+      "Indeed, testing is valuable."
+    ],
+    "replacements": [
+      "Caching improves speed",
+      "Start directly without emphasis",
+      "Let facts speak for themselves"
+    ],
+    "context": "Unnecessary emphasis marker",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "trans-017",
+    "category": "transition-words",
+    "subcategory": "emphasis-markers",
+    "pattern": "^Notably,",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Notably, latency decreased by 60%.",
+      "Notably, users preferred the new UI."
+    ],
+    "replacements": [
+      "Latency decreased by 60%",
+      "Users preferred the new UI",
+      "The fact is notable enough"
+    ],
+    "context": "Self-referential emphasis",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "trans-018",
+    "category": "transition-words",
+    "subcategory": "emphasis-markers",
+    "pattern": "^Importantly,",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Importantly, security was maintained.",
+      "Importantly, costs stayed low."
+    ],
+    "replacements": [
+      "Security was maintained",
+      "We kept security intact",
+      "State importance without label"
+    ],
+    "context": "Meta-commentary on importance",
+    "frequency": "common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "trans-019",
+    "category": "transition-words",
+    "subcategory": "example-intros",
+    "pattern": "For instance,",
+    "severity": "low",
+    "confidence": 0.66,
+    "examples": [
+      "For instance, Redis is fast.",
+      "For instance, we cache queries."
+    ],
+    "replacements": [
+      "For example, Redis achieves <1ms latency",
+      "Redis, for instance, achieves <1ms latency",
+      "Acceptable but consider variety"
+    ],
+    "context": "Common example introduction - acceptable",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "trans-020",
+    "category": "transition-words",
+    "subcategory": "example-intros",
+    "pattern": "For example,",
+    "severity": "low",
+    "confidence": 0.64,
+    "examples": [
+      "For example, we use Redis.",
+      "For example, latency matters."
+    ],
+    "replacements": [
+      "We use Redis, for example",
+      "Redis, for example, provides caching",
+      "Acceptable but vary placement"
+    ],
+    "context": "Very common - acceptable but don't overuse",
+    "frequency": "very-common",
+    "domains": ["technical", "academic", "casual"]
+  },
+  {
+    "id": "trans-021",
+    "category": "transition-words",
+    "subcategory": "time-sequences",
+    "pattern": "^Initially,",
+    "severity": "low",
+    "confidence": 0.69,
+    "examples": [
+      "Initially, we used MySQL.",
+      "Initially, performance was slow."
+    ],
+    "replacements": [
+      "We started with MySQL",
+      "At first, performance was slow",
+      "Acceptable time marker"
+    ],
+    "context": "Common temporal marker - acceptable",
+    "frequency": "common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "trans-022",
+    "category": "transition-words",
+    "subcategory": "time-sequences",
+    "pattern": "^Eventually,",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Eventually, we migrated to PostgreSQL.",
+      "Eventually, performance improved."
+    ],
+    "replacements": [
+      "We later migrated to PostgreSQL",
+      "After 6 months, we migrated",
+      "Acceptable with specifics"
+    ],
+    "context": "Vague timeline - better with specific time",
+    "frequency": "common",
+    "domains": ["technical", "casual"]
+  },
+  {
+    "id": "trans-023",
+    "category": "transition-words",
+    "subcategory": "time-sequences",
+    "pattern": "^Subsequently,",
+    "severity": "medium",
+    "confidence": 0.83,
+    "examples": [
+      "Subsequently, we added indexes.",
+      "Subsequently, queries got faster."
+    ],
+    "replacements": [
+      "Then we added indexes",
+      "Next, we added indexes",
+      "After that, we added indexes"
+    ],
+    "context": "Overly formal sequence",
+    "frequency": "occasional",
+    "domains": ["academic"]
+  },
+  {
+    "id": "trans-024",
+    "category": "transition-words",
+    "subcategory": "clarification",
+    "pattern": "^In other words,",
+    "severity": "low",
+    "confidence": 0.71,
+    "examples": [
+      "In other words, caching helps.",
+      "In other words, optimize queries."
+    ],
+    "replacements": [
+      "That is, caching helps",
+      "Simply put, caching helps",
+      "Just say it clearly the first time"
+    ],
+    "context": "Acceptable clarification - but question if needed",
+    "frequency": "common",
+    "domains": ["academic", "technical", "casual"]
+  },
+  {
+    "id": "trans-025",
+    "category": "transition-words",
+    "subcategory": "clarification",
+    "pattern": "^That is to say,",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "That is to say, performance matters.",
+      "That is to say, we need caching."
+    ],
+    "replacements": [
+      "In other words, performance matters",
+      "Performance matters",
+      "Simplify or omit"
+    ],
+    "context": "Wordy clarification",
+    "frequency": "occasional",
+    "domains": ["academic"]
+  },
+  {
+    "id": "trans-026",
+    "category": "transition-words",
+    "subcategory": "summary-intros",
+    "pattern": "^In summary,",
+    "severity": "high",
+    "confidence": 0.90,
+    "examples": [
+      "In summary, caching is essential.",
+      "In summary, we optimized three areas."
+    ],
+    "replacements": [
+      "Caching is essential",
+      "We optimized three areas",
+      "End naturally without announcing summary"
+    ],
+    "context": "Formulaic summary marker",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "trans-027",
+    "category": "transition-words",
+    "subcategory": "summary-intros",
+    "pattern": "^To sum up,",
+    "severity": "high",
+    "confidence": 0.89,
+    "examples": [
+      "To sum up, testing saves time.",
+      "To sum up, three key points."
+    ],
+    "replacements": [
+      "Testing saves time",
+      "Three key points: ...",
+      "Summarize without announcing"
+    ],
+    "context": "Informal summary marker",
+    "frequency": "occasional",
+    "domains": ["casual"]
+  },
+  {
+    "id": "trans-028",
+    "category": "transition-words",
+    "subcategory": "summary-intros",
+    "pattern": "^All in all,",
+    "severity": "medium",
+    "confidence": 0.82,
+    "examples": [
+      "All in all, the migration succeeded.",
+      "All in all, costs decreased."
+    ],
+    "replacements": [
+      "The migration succeeded",
+      "Overall, the migration succeeded",
+      "Simplify summary intro"
+    ],
+    "context": "Casual summary phrase",
+    "frequency": "occasional",
+    "domains": ["casual"]
+  },
+  {
+    "id": "trans-029",
+    "category": "transition-words",
+    "subcategory": "contrast-casual",
+    "pattern": "^That said,",
+    "severity": "low",
+    "confidence": 0.67,
+    "examples": [
+      "That said, latency increased.",
+      "That said, costs rose."
+    ],
+    "replacements": [
+      "But latency increased",
+      "Still, latency increased",
+      "Acceptable casual contrast"
+    ],
+    "context": "Conversational contrast - acceptable",
+    "frequency": "common",
+    "domains": ["casual", "technical"]
+  },
+  {
+    "id": "trans-030",
+    "category": "transition-words",
+    "subcategory": "contrast-casual",
+    "pattern": "^Having said that,",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Having said that, we proceeded.",
+      "Having said that, risks remained."
+    ],
+    "replacements": [
+      "Still, we proceeded",
+      "Even so, we proceeded",
+      "Simplify contrast"
+    ],
+    "context": "Wordy casual contrast",
+    "frequency": "occasional",
+    "domains": ["casual"]
+  }
+]

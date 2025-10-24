@@ -1,0 +1,502 @@
+[
+  {
+    "id": "hedge-001",
+    "category": "hedging-language",
+    "subcategory": "modal-stacking",
+    "pattern": "may potentially",
+    "severity": "medium",
+    "confidence": 0.85,
+    "examples": [
+      "This may potentially improve performance.",
+      "Users may potentially prefer this approach."
+    ],
+    "replacements": [
+      "This might improve performance",
+      "This could improve performance",
+      "Use one modal verb, not two"
+    ],
+    "context": "Double hedging - excessive uncertainty",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-002",
+    "category": "hedging-language",
+    "subcategory": "modal-stacking",
+    "pattern": "might possibly",
+    "severity": "medium",
+    "confidence": 0.84,
+    "examples": [
+      "This might possibly reduce latency.",
+      "We might possibly see improvements."
+    ],
+    "replacements": [
+      "This might reduce latency",
+      "This could reduce latency",
+      "Choose one hedge word"
+    ],
+    "context": "Redundant hedging",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "hedge-003",
+    "category": "hedging-language",
+    "subcategory": "modal-stacking",
+    "pattern": "could potentially",
+    "severity": "medium",
+    "confidence": 0.83,
+    "examples": [
+      "This could potentially scale better.",
+      "We could potentially reduce costs."
+    ],
+    "replacements": [
+      "This could scale better",
+      "This might scale better",
+      "Avoid stacking modals"
+    ],
+    "context": "Double uncertainty",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "hedge-004",
+    "category": "hedging-language",
+    "subcategory": "adverbial-hedges",
+    "pattern": "\\barguably\\b",
+    "severity": "medium",
+    "confidence": 0.82,
+    "examples": [
+      "This is arguably the best approach.",
+      "Arguably, caching is essential."
+    ],
+    "replacements": [
+      "This is the best approach",
+      "Make the argument without hedging",
+      "Commit to your position"
+    ],
+    "context": "Weakens authoritative voice",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-005",
+    "category": "hedging-language",
+    "subcategory": "adverbial-hedges",
+    "pattern": "\\bpossibly\\b",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "This possibly explains the behavior.",
+      "We could possibly optimize this."
+    ],
+    "replacements": [
+      "This might explain the behavior",
+      "This likely explains the behavior",
+      "Choose stronger or omit"
+    ],
+    "context": "Weak possibility marker",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-006",
+    "category": "hedging-language",
+    "subcategory": "adverbial-hedges",
+    "pattern": "\\bperhaps\\b",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Perhaps we should consider caching.",
+      "This is perhaps the main issue."
+    ],
+    "replacements": [
+      "We should consider caching",
+      "This is the main issue",
+      "Be more definitive"
+    ],
+    "context": "Tentative suggestion",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "hedge-007",
+    "category": "hedging-language",
+    "subcategory": "appearance-verbs",
+    "pattern": "\\bseems to\\b",
+    "severity": "medium",
+    "confidence": 0.80,
+    "examples": [
+      "This seems to improve performance.",
+      "The approach seems to work well."
+    ],
+    "replacements": [
+      "This improves performance by 23%",
+      "The approach works well",
+      "State what you know or measured"
+    ],
+    "context": "Uncertain observation",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-008",
+    "category": "hedging-language",
+    "subcategory": "appearance-verbs",
+    "pattern": "\\bappears to\\b",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "The system appears to handle load well.",
+      "This appears to be the bottleneck."
+    ],
+    "replacements": [
+      "The system handles 10k req/sec",
+      "This is the bottleneck",
+      "Provide evidence or commit"
+    ],
+    "context": "Tentative assessment",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-009",
+    "category": "hedging-language",
+    "subcategory": "appearance-verbs",
+    "pattern": "\\btends to\\b",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Caching tends to improve speed.",
+      "This pattern tends to emerge."
+    ],
+    "replacements": [
+      "Caching improves speed",
+      "This pattern emerges when...",
+      "Be more specific about when"
+    ],
+    "context": "General tendency claim",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-010",
+    "category": "hedging-language",
+    "subcategory": "intensifier-hedges",
+    "pattern": "\\bsomewhat\\b",
+    "severity": "medium",
+    "confidence": 0.81,
+    "examples": [
+      "This is somewhat complex.",
+      "Performance is somewhat degraded."
+    ],
+    "replacements": [
+      "This has 5 dependencies and 3 edge cases",
+      "Performance dropped from 50ms to 75ms",
+      "Quantify the degree"
+    ],
+    "context": "Vague degree marker",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-011",
+    "category": "hedging-language",
+    "subcategory": "intensifier-hedges",
+    "pattern": "\\brather\\b",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "This is rather inefficient.",
+      "The process is rather slow."
+    ],
+    "replacements": [
+      "This uses O(n²) time complexity",
+      "The process takes 2 seconds vs 50ms target",
+      "Specify the inefficiency"
+    ],
+    "context": "British-style hedge",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "hedge-012",
+    "category": "hedging-language",
+    "subcategory": "intensifier-hedges",
+    "pattern": "\\bquite\\b",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "This is quite effective.",
+      "The results are quite promising."
+    ],
+    "replacements": [
+      "This improved conversion by 34%",
+      "Accuracy increased from 78% to 91%",
+      "Use specific measurements"
+    ],
+    "context": "Vague intensifier",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-013",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "to some extent",
+    "severity": "medium",
+    "confidence": 0.83,
+    "examples": [
+      "This is true to some extent.",
+      "Performance improves to some extent."
+    ],
+    "replacements": [
+      "This is true in 60% of cases",
+      "Performance improves by 15-25%",
+      "Quantify the extent"
+    ],
+    "context": "Vague partial agreement",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "hedge-014",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "to a certain degree",
+    "severity": "medium",
+    "confidence": 0.81,
+    "examples": [
+      "Caching helps to a certain degree.",
+      "This is accurate to a certain degree."
+    ],
+    "replacements": [
+      "Caching reduces latency by 40%",
+      "This is 85% accurate",
+      "Specify the degree"
+    ],
+    "context": "Vague qualification",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "hedge-015",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "to a large extent",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "This explains the behavior to a large extent.",
+      "Success depends to a large extent on testing."
+    ],
+    "replacements": [
+      "This explains 70% of the behavior",
+      "Testing accounts for 80% of success",
+      "Quantify 'large extent'"
+    ],
+    "context": "Imprecise quantity",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "hedge-016",
+    "category": "hedging-language",
+    "subcategory": "conditional-hedges",
+    "pattern": "in most cases",
+    "severity": "low",
+    "confidence": 0.70,
+    "examples": [
+      "In most cases, caching improves speed.",
+      "This works in most cases."
+    ],
+    "replacements": [
+      "Caching improves speed except for tiny datasets",
+      "This works for 95% of inputs",
+      "Specify when it doesn't work"
+    ],
+    "context": "Acceptable qualifier if truthful",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "hedge-017",
+    "category": "hedging-language",
+    "subcategory": "conditional-hedges",
+    "pattern": "in many cases",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "In many cases, this approach works.",
+      "Performance improves in many cases."
+    ],
+    "replacements": [
+      "This works for read-heavy workloads",
+      "Performance improves 60% of the time",
+      "Specify the conditions"
+    ],
+    "context": "Vague frequency",
+    "frequency": "common",
+    "domains": ["technical", "academic"]
+  },
+  {
+    "id": "hedge-018",
+    "category": "hedging-language",
+    "subcategory": "conditional-hedges",
+    "pattern": "in some cases",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "In some cases, optimization is necessary.",
+      "This fails in some cases."
+    ],
+    "replacements": [
+      "Optimization is necessary for datasets >1GB",
+      "This fails for concurrent writes",
+      "Name the specific cases"
+    ],
+    "context": "Very vague qualifier",
+    "frequency": "common",
+    "domains": ["technical", "academic"]
+  },
+  {
+    "id": "hedge-019",
+    "category": "hedging-language",
+    "subcategory": "likelihood-phrases",
+    "pattern": "it is (possible|likely|probable) that",
+    "severity": "medium",
+    "confidence": 0.82,
+    "examples": [
+      "It is possible that caching would help.",
+      "It is likely that users prefer simplicity."
+    ],
+    "replacements": [
+      "Caching might help",
+      "Users prefer simplicity (87% in survey)",
+      "Shorten or provide evidence"
+    ],
+    "context": "Wordy hedge construction",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "hedge-020",
+    "category": "hedging-language",
+    "subcategory": "likelihood-phrases",
+    "pattern": "(may|might|could) (help to|serve to|contribute to)",
+    "severity": "medium",
+    "confidence": 0.80,
+    "examples": [
+      "This may help to reduce latency.",
+      "Caching could serve to improve speed."
+    ],
+    "replacements": [
+      "This might reduce latency",
+      "Caching improves speed",
+      "Remove verbose hedge"
+    ],
+    "context": "Wordy possibility construction",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "hedge-021",
+    "category": "hedging-language",
+    "subcategory": "likelihood-phrases",
+    "pattern": "has the potential to",
+    "severity": "medium",
+    "confidence": 0.84,
+    "examples": [
+      "This has the potential to scale well.",
+      "The approach has the potential to succeed."
+    ],
+    "replacements": [
+      "This could scale to 100k users",
+      "The approach might succeed if we fix X",
+      "Be specific about potential"
+    ],
+    "context": "Weak potential claim",
+    "frequency": "very-common",
+    "domains": ["executive", "academic"]
+  },
+  {
+    "id": "hedge-022",
+    "category": "hedging-language",
+    "subcategory": "probability-adverbs",
+    "pattern": "\\bpresumably\\b",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "This presumably improves performance.",
+      "Users presumably want faster load times."
+    ],
+    "replacements": [
+      "This improves performance (verified in tests)",
+      "Users want faster load times (cite survey)",
+      "Replace assumption with evidence"
+    ],
+    "context": "Assumption without verification",
+    "frequency": "occasional",
+    "domains": ["academic"]
+  },
+  {
+    "id": "hedge-023",
+    "category": "hedging-language",
+    "subcategory": "probability-adverbs",
+    "pattern": "\\bsupposedly\\b",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "This supposedly works at scale.",
+      "The framework is supposedly faster."
+    ],
+    "replacements": [
+      "This works at 50k req/sec (benchmarked)",
+      "The framework is 2.3x faster (our tests)",
+      "Verify or cite evidence"
+    ],
+    "context": "Skeptical hedge - verify instead",
+    "frequency": "occasional",
+    "domains": ["technical"]
+  },
+  {
+    "id": "hedge-024",
+    "category": "hedging-language",
+    "subcategory": "generalization-hedges",
+    "pattern": "generally speaking",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Generally speaking, caching helps.",
+      "Generally speaking, testing reduces bugs."
+    ],
+    "replacements": [
+      "Caching helps except for...",
+      "Testing reduces bugs by 40% (study X)",
+      "Be specific about exceptions"
+    ],
+    "context": "Vague generalization",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "hedge-025",
+    "category": "hedging-language",
+    "subcategory": "generalization-hedges",
+    "pattern": "broadly speaking",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Broadly speaking, microservices add complexity.",
+      "Broadly speaking, users want speed."
+    ],
+    "replacements": [
+      "Microservices add operational complexity",
+      "Users abandon sites slower than 3 seconds",
+      "State specifics"
+    ],
+    "context": "Vague scope qualifier",
+    "frequency": "occasional",
+    "domains": ["executive"]
+  }
+]

@@ -126,7 +126,7 @@ export class FrameworkIsolator {
    * @param framework - Optional framework name (for access checking)
    * @returns Array of resource paths
    */
-  async getSharedResources(resourceType: string, framework?: string): Promise<string[]> {
+  async getSharedResources(resourceType: string, _framework?: string): Promise<string[]> {
     const sharedPath = path.join(this.projectRoot, '.aiwg', 'shared', resourceType);
 
     try {

@@ -1,0 +1,602 @@
+[
+  {
+    "id": "banned-phrase-001",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is important to note that",
+    "severity": "critical",
+    "confidence": 0.95,
+    "examples": [
+      "It is important to note that the database must be optimized.",
+      "It is important to note that security is critical."
+    ],
+    "replacements": [
+      "The database must be optimized",
+      "Note: security is critical",
+      "Simply state the fact directly"
+    ],
+    "context": "One of the strongest AI detection signals - never use this phrase",
+    "frequency": "very-common",
+    "domains": ["academic", "technical", "executive"]
+  },
+  {
+    "id": "banned-phrase-002",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it should be emphasized that",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "It should be emphasized that performance matters.",
+      "It should be emphasized that testing is crucial."
+    ],
+    "replacements": [
+      "Performance matters",
+      "Testing is crucial",
+      "State directly without preamble"
+    ],
+    "context": "Signals AI-generated meta-commentary",
+    "frequency": "very-common",
+    "domains": ["academic", "technical", "executive"]
+  },
+  {
+    "id": "banned-phrase-003",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is worth noting",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "It is worth noting that caching improves speed.",
+      "It is worth noting that users prefer simplicity."
+    ],
+    "replacements": [
+      "Caching improves speed",
+      "Users prefer simplicity",
+      "Note: [direct statement]"
+    ],
+    "context": "Extremely common AI pattern",
+    "frequency": "very-common",
+    "domains": ["academic", "technical", "executive"]
+  },
+  {
+    "id": "banned-phrase-004",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it should be mentioned",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "It should be mentioned that latency varies.",
+      "It should be mentioned that costs can escalate."
+    ],
+    "replacements": [
+      "Latency varies",
+      "Costs can escalate",
+      "Omit the preamble entirely"
+    ],
+    "context": "Typical AI throat-clearing",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "banned-phrase-005",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it cannot be denied",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "It cannot be denied that AI is advancing.",
+      "It cannot be denied that efficiency matters."
+    ],
+    "replacements": [
+      "AI is advancing",
+      "Efficiency matters",
+      "State the fact confidently"
+    ],
+    "context": "Overly formal AI pattern",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "banned-phrase-006",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "seamlessly",
+    "severity": "critical",
+    "confidence": 0.96,
+    "examples": [
+      "The system integrates seamlessly with APIs.",
+      "Data flows seamlessly between services."
+    ],
+    "replacements": [
+      "The system integrates with APIs via REST endpoints",
+      "Data flows between services using event streaming",
+      "Use specific technical details"
+    ],
+    "context": "Marketing buzzword that signals AI writing",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "banned-phrase-007",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "cutting-edge",
+    "severity": "critical",
+    "confidence": 0.95,
+    "examples": [
+      "We use cutting-edge technology.",
+      "This is a cutting-edge solution."
+    ],
+    "replacements": [
+      "We use PostgreSQL 15 with pgvector extensions",
+      "Specify the actual technology and version",
+      "Name the specific innovation"
+    ],
+    "context": "Vague marketing language",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "banned-phrase-008",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "state-of-the-art",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "State-of-the-art machine learning models.",
+      "A state-of-the-art approach to optimization."
+    ],
+    "replacements": [
+      "GPT-4 with fine-tuning on domain data",
+      "Gradient boosting using XGBoost 2.0",
+      "Name the specific model or technique"
+    ],
+    "context": "Academic/technical vagueness",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "banned-phrase-009",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "revolutionary",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "A revolutionary new framework.",
+      "Revolutionary approach to caching."
+    ],
+    "replacements": [
+      "A framework that reduces build times by 60%",
+      "Caching that cuts latency from 200ms to 15ms",
+      "Use specific measurable improvements"
+    ],
+    "context": "Hyperbolic marketing language",
+    "frequency": "common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "banned-phrase-010",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "game-changing",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "This is a game-changing feature.",
+      "A game-changing approach to deployment."
+    ],
+    "replacements": [
+      "This feature increased user retention by 40%",
+      "Deployment time dropped from 2 hours to 8 minutes",
+      "Provide concrete metrics"
+    ],
+    "context": "Business buzzword",
+    "frequency": "common",
+    "domains": ["executive"]
+  },
+  {
+    "id": "banned-phrase-011",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "paradigm shift",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "A paradigm shift in software development.",
+      "This represents a paradigm shift."
+    ],
+    "replacements": [
+      "Moving from waterfall to continuous deployment",
+      "Switching from monolith to microservices",
+      "Describe the actual change"
+    ],
+    "context": "Management consulting jargon",
+    "frequency": "occasional",
+    "domains": ["executive"]
+  },
+  {
+    "id": "banned-phrase-012",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "best-in-class",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "Best-in-class performance.",
+      "A best-in-class solution."
+    ],
+    "replacements": [
+      "p95 latency of 12ms vs industry average of 45ms",
+      "Faster than 95% of competitors in benchmarks",
+      "Provide specific comparative metrics"
+    ],
+    "context": "Unsubstantiated claim",
+    "frequency": "common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "banned-phrase-013",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "industry-leading",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Industry-leading security features.",
+      "Industry-leading performance."
+    ],
+    "replacements": [
+      "SOC2 Type II certified with zero breaches",
+      "Top 3 in Gartner MQ for 2 consecutive years",
+      "Cite specific rankings or certifications"
+    ],
+    "context": "Marketing claim without evidence",
+    "frequency": "common",
+    "domains": ["executive"]
+  },
+  {
+    "id": "banned-phrase-014",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "comprehensive solution",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "A comprehensive solution for data management.",
+      "Our comprehensive solution addresses all needs."
+    ],
+    "replacements": [
+      "Handles ingestion, storage, and querying of 10TB+",
+      "Covers authentication, authorization, and audit logging",
+      "List specific capabilities"
+    ],
+    "context": "Vague feature claim",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "banned-phrase-015",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "robust and scalable",
+    "severity": "critical",
+    "confidence": 0.95,
+    "examples": [
+      "A robust and scalable architecture.",
+      "Built to be robust and scalable."
+    ],
+    "replacements": [
+      "Handles 10k requests/sec with 99.9% uptime",
+      "Scales from 100 to 100k users without code changes",
+      "Provide capacity and reliability numbers"
+    ],
+    "context": "Extremely common AI phrase pair",
+    "frequency": "very-common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "banned-phrase-016",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "innovative approach",
+    "severity": "critical",
+    "confidence": 0.90,
+    "examples": [
+      "An innovative approach to caching.",
+      "We take an innovative approach."
+    ],
+    "replacements": [
+      "We cache at the edge using Cloudflare Workers",
+      "Multi-layer caching with Redis and browser localStorage",
+      "Describe the actual innovation"
+    ],
+    "context": "Generic claim of novelty",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "banned-phrase-017",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "next-generation",
+    "severity": "critical",
+    "confidence": 0.89,
+    "examples": [
+      "Next-generation AI capabilities.",
+      "A next-generation platform."
+    ],
+    "replacements": [
+      "GPT-4 with 128k context window",
+      "Built on Kubernetes 1.28 with eBPF networking",
+      "Specify versions and technologies"
+    ],
+    "context": "Temporal vagueness",
+    "frequency": "common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "banned-phrase-018",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "transformative",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "A transformative technology.",
+      "This has transformative potential."
+    ],
+    "replacements": [
+      "Reduced manual work from 8 hours to 15 minutes",
+      "Cut costs by 70% while improving quality",
+      "Quantify the transformation"
+    ],
+    "context": "Hyperbolic business language",
+    "frequency": "common",
+    "domains": ["executive"]
+  },
+  {
+    "id": "banned-phrase-019",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "groundbreaking",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Groundbreaking research in AI.",
+      "A groundbreaking discovery."
+    ],
+    "replacements": [
+      "First to achieve 95% accuracy on benchmark X",
+      "Novel algorithm published in Nature",
+      "Cite specific achievements or publications"
+    ],
+    "context": "Academic/research hyperbole",
+    "frequency": "occasional",
+    "domains": ["academic"]
+  },
+  {
+    "id": "banned-phrase-020",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "studies suggest",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "Studies suggest that users prefer simplicity.",
+      "Studies suggest this approach is effective."
+    ],
+    "replacements": [
+      "Nielsen et al. (2020) found 78% prefer minimal UI",
+      "Our A/B test showed 23% higher conversion",
+      "Cite specific studies or your own data"
+    ],
+    "context": "Vague research reference",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "banned-phrase-021",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "studies show",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "Studies show that caching improves speed.",
+      "Studies show users value privacy."
+    ],
+    "replacements": [
+      "Chen (2021) measured 60% latency reduction",
+      "Pew Research (2023): 81% prioritize privacy",
+      "Name the study or conduct your own"
+    ],
+    "context": "Generic research citation",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "banned-phrase-022",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "research has shown",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Research has shown that testing matters.",
+      "Research has shown the importance of UX."
+    ],
+    "replacements": [
+      "Fowler (2018) correlated test coverage with fewer bugs",
+      "Our usability study found 2x task completion rate",
+      "Reference specific research"
+    ],
+    "context": "Unattributed research claim",
+    "frequency": "very-common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "banned-phrase-023",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "research indicates",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "Research indicates that modularity helps.",
+      "Research indicates users prefer speed."
+    ],
+    "replacements": [
+      "Martin (2008) argues for single responsibility",
+      "Google RAIL model targets <100ms interactions",
+      "Cite the actual research"
+    ],
+    "context": "Vague authority appeal",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "banned-phrase-024",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in today's world",
+    "severity": "critical",
+    "confidence": 0.95,
+    "examples": [
+      "In today's world, cloud computing is essential.",
+      "In today's world, security matters."
+    ],
+    "replacements": [
+      "Cloud spending reached $500B in 2023",
+      "Data breaches cost $4.35M on average (IBM 2023)",
+      "Use current year and specific facts"
+    ],
+    "context": "Meaningless temporal qualifier",
+    "frequency": "very-common",
+    "domains": ["executive"]
+  },
+  {
+    "id": "banned-phrase-025",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in this day and age",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "In this day and age, APIs are ubiquitous.",
+      "In this day and age, mobile-first is crucial."
+    ],
+    "replacements": [
+      "70% of web traffic now comes from mobile (2023)",
+      "REST APIs power 80% of web services",
+      "State current facts directly"
+    ],
+    "context": "Dated expression",
+    "frequency": "common",
+    "domains": ["executive"]
+  },
+  {
+    "id": "banned-phrase-026",
+    "category": "banned-phrases",
+    "subcategory": "conclusion-markers",
+    "pattern": "at the end of the day",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "At the end of the day, performance matters.",
+      "At the end of the day, users decide success."
+    ],
+    "replacements": [
+      "Performance matters most",
+      "Users determine success",
+      "State the point directly"
+    ],
+    "context": "Casual cliche",
+    "frequency": "common",
+    "domains": ["casual", "executive"]
+  },
+  {
+    "id": "banned-phrase-027",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "one might argue",
+    "severity": "critical",
+    "confidence": 0.90,
+    "examples": [
+      "One might argue that microservices add complexity.",
+      "One might argue that testing is expensive."
+    ],
+    "replacements": [
+      "Microservices add operational complexity",
+      "Testing requires upfront investment",
+      "Make the argument directly"
+    ],
+    "context": "Hedging voice",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "banned-phrase-028",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it could be argued",
+    "severity": "critical",
+    "confidence": 0.89,
+    "examples": [
+      "It could be argued that caching is essential.",
+      "It could be argued that security comes first."
+    ],
+    "replacements": [
+      "Caching is essential for sub-100ms latency",
+      "Security must be built in from day one",
+      "Assert your position"
+    ],
+    "context": "Passive argumentation",
+    "frequency": "common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "banned-phrase-029",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "highly effective",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "This is a highly effective strategy.",
+      "Highly effective at reducing latency."
+    ],
+    "replacements": [
+      "Reduced latency by 65%",
+      "Improved conversion rate from 2% to 4.5%",
+      "Quantify effectiveness"
+    ],
+    "context": "Vague effectiveness claim",
+    "frequency": "very-common",
+    "domains": ["executive", "technical"]
+  },
+  {
+    "id": "banned-phrase-030",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "extremely important",
+    "severity": "high",
+    "confidence": 0.86,
+    "examples": [
+      "Security is extremely important.",
+      "Testing is extremely important."
+    ],
+    "replacements": [
+      "Security prevents breaches that average $4M cost",
+      "Testing caught 156 bugs before production",
+      "Explain why it's important"
+    ],
+    "context": "Intensity without substance",
+    "frequency": "very-common",
+    "domains": ["executive", "technical"]
+  }
+]

@@ -1,0 +1,402 @@
+[
+  {
+    "id": "structure-001",
+    "category": "formulaic-structures",
+    "subcategory": "numbered-transitions",
+    "pattern": "^Firstly,",
+    "severity": "high",
+    "confidence": 0.92,
+    "examples": [
+      "Firstly, we need to consider performance.",
+      "Firstly, let's examine the architecture."
+    ],
+    "replacements": [
+      "First,",
+      "Start the sentence directly",
+      "Use natural transitions"
+    ],
+    "context": "Formulaic enumeration - very common AI pattern",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "structure-002",
+    "category": "formulaic-structures",
+    "subcategory": "numbered-transitions",
+    "pattern": "^Secondly,",
+    "severity": "high",
+    "confidence": 0.91,
+    "examples": [
+      "Secondly, we must address security.",
+      "Secondly, consider the cost implications."
+    ],
+    "replacements": [
+      "Second,",
+      "Next,",
+      "Continue naturally"
+    ],
+    "context": "Paired with Firstly - strong AI signal",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "structure-003",
+    "category": "formulaic-structures",
+    "subcategory": "numbered-transitions",
+    "pattern": "^Thirdly,",
+    "severity": "high",
+    "confidence": 0.90,
+    "examples": [
+      "Thirdly, we need to optimize for mobile.",
+      "Thirdly, documentation is essential."
+    ],
+    "replacements": [
+      "Third,",
+      "Finally,",
+      "Additionally,"
+    ],
+    "context": "Completes the numbered trio",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "structure-004",
+    "category": "formulaic-structures",
+    "subcategory": "numbered-transitions",
+    "pattern": "^Lastly,",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "Lastly, we should monitor performance.",
+      "Lastly, testing is crucial."
+    ],
+    "replacements": [
+      "Finally,",
+      "Last,",
+      "End naturally without marker"
+    ],
+    "context": "Formal conclusion marker",
+    "frequency": "common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "structure-005",
+    "category": "formulaic-structures",
+    "subcategory": "conclusion-phrases",
+    "pattern": "In conclusion,",
+    "severity": "high",
+    "confidence": 0.94,
+    "examples": [
+      "In conclusion, microservices offer flexibility.",
+      "In conclusion, testing saves time."
+    ],
+    "replacements": [
+      "Just end when you're done",
+      "State the conclusion directly",
+      "Omit the marker"
+    ],
+    "context": "School essay structure - very obvious AI tell",
+    "frequency": "very-common",
+    "domains": ["academic"]
+  },
+  {
+    "id": "structure-006",
+    "category": "formulaic-structures",
+    "subcategory": "conclusion-phrases",
+    "pattern": "To summarize,",
+    "severity": "high",
+    "confidence": 0.91,
+    "examples": [
+      "To summarize, caching improves performance.",
+      "To summarize, we covered three approaches."
+    ],
+    "replacements": [
+      "Recap without announcing it",
+      "End with key takeaway",
+      "Skip the meta-commentary"
+    ],
+    "context": "Formal summary introduction",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "structure-007",
+    "category": "formulaic-structures",
+    "subcategory": "conclusion-phrases",
+    "pattern": "In summary,",
+    "severity": "high",
+    "confidence": 0.90,
+    "examples": [
+      "In summary, security requires multiple layers.",
+      "In summary, the migration was successful."
+    ],
+    "replacements": [
+      "Summarize without labeling it",
+      "State conclusions directly",
+      "Omit the preamble"
+    ],
+    "context": "Academic conclusion marker",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "structure-008",
+    "category": "formulaic-structures",
+    "subcategory": "conclusion-phrases",
+    "pattern": "To conclude,",
+    "severity": "high",
+    "confidence": 0.89,
+    "examples": [
+      "To conclude, automation reduces errors.",
+      "To conclude, the approach proved effective."
+    ],
+    "replacements": [
+      "End naturally",
+      "State the conclusion",
+      "Skip the marker"
+    ],
+    "context": "Formal ending marker",
+    "frequency": "occasional",
+    "domains": ["academic"]
+  },
+  {
+    "id": "structure-009",
+    "category": "formulaic-structures",
+    "subcategory": "introduction-phrases",
+    "pattern": "In this (article|post|paper|section)",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "In this article, we explore microservices.",
+      "In this paper, we present a novel algorithm."
+    ],
+    "replacements": [
+      "Just start explaining",
+      "Begin with the content",
+      "Skip the meta-introduction"
+    ],
+    "context": "Academic/formal introduction",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "structure-010",
+    "category": "formulaic-structures",
+    "subcategory": "introduction-phrases",
+    "pattern": "This (article|post|paper) (will|aims to|seeks to)",
+    "severity": "high",
+    "confidence": 0.86,
+    "examples": [
+      "This article will discuss caching strategies.",
+      "This paper aims to demonstrate effectiveness."
+    ],
+    "replacements": [
+      "Start with the topic directly",
+      "Begin explaining immediately",
+      "Skip intent declaration"
+    ],
+    "context": "Self-referential introduction",
+    "frequency": "very-common",
+    "domains": ["academic", "technical"]
+  },
+  {
+    "id": "structure-011",
+    "category": "formulaic-structures",
+    "subcategory": "three-item-lists",
+    "pattern": "\\b(\\w+), (\\w+), and (\\w+)\\b",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Fast, reliable, and secure.",
+      "Users want speed, simplicity, and security."
+    ],
+    "replacements": [
+      "Use 2 or 4+ items",
+      "Vary list lengths",
+      "Break pattern occasionally"
+    ],
+    "context": "Three-item lists are AI-typical structure",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "structure-012",
+    "category": "formulaic-structures",
+    "subcategory": "bullet-overuse",
+    "pattern": "^\\s*[•\\-\\*]\\s+\\w+",
+    "severity": "medium",
+    "confidence": 0.70,
+    "examples": [
+      "• First benefit\n• Second benefit\n• Third benefit",
+      "- Point one\n- Point two\n- Point three"
+    ],
+    "replacements": [
+      "Mix bullets with prose",
+      "Use numbered lists occasionally",
+      "Vary presentation format"
+    ],
+    "context": "Excessive bullet points without prose",
+    "frequency": "very-common",
+    "domains": ["technical", "executive"]
+  },
+  {
+    "id": "structure-013",
+    "category": "formulaic-structures",
+    "subcategory": "section-intros",
+    "pattern": "Let's (explore|examine|discuss|consider)",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Let's explore the architecture.",
+      "Let's examine the trade-offs."
+    ],
+    "replacements": [
+      "Just explore it - start the topic",
+      "Begin directly",
+      "Skip the invitation"
+    ],
+    "context": "Conversational but formulaic intro",
+    "frequency": "very-common",
+    "domains": ["technical", "casual"]
+  },
+  {
+    "id": "structure-014",
+    "category": "formulaic-structures",
+    "subcategory": "section-intros",
+    "pattern": "Now (that we've|let's|we'll|we)",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Now that we've covered basics, let's dive deeper.",
+      "Now let's examine the implementation."
+    ],
+    "replacements": [
+      "Transition naturally",
+      "Continue without marker",
+      "Just shift topics"
+    ],
+    "context": "Formulaic transition",
+    "frequency": "common",
+    "domains": ["technical", "casual"]
+  },
+  {
+    "id": "structure-015",
+    "category": "formulaic-structures",
+    "subcategory": "rhetorical-questions",
+    "pattern": "What (does this mean|is the solution|should we do|are the benefits)\\?",
+    "severity": "medium",
+    "confidence": 0.80,
+    "examples": [
+      "What does this mean for developers?",
+      "What are the benefits of caching?"
+    ],
+    "replacements": [
+      "Answer directly without the question",
+      "State the point immediately",
+      "Skip rhetorical setup"
+    ],
+    "context": "Formulaic Q&A structure",
+    "frequency": "common",
+    "domains": ["technical", "casual"]
+  },
+  {
+    "id": "structure-016",
+    "category": "formulaic-structures",
+    "subcategory": "rhetorical-questions",
+    "pattern": "Why (is this important|does this matter|should (you|we) care)\\?",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Why is this important?",
+      "Why should you care about security?"
+    ],
+    "replacements": [
+      "Explain importance directly",
+      "Start with the reason",
+      "Skip the setup question"
+    ],
+    "context": "Rhetorical framing device",
+    "frequency": "common",
+    "domains": ["technical", "executive", "casual"]
+  },
+  {
+    "id": "structure-017",
+    "category": "formulaic-structures",
+    "subcategory": "rhetorical-questions",
+    "pattern": "How (can we|do we|does this|will this)",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "How can we improve performance?",
+      "How does this work in practice?"
+    ],
+    "replacements": [
+      "Answer the question directly",
+      "Explain without asking",
+      "Skip the rhetorical question"
+    ],
+    "context": "Common Q&A format",
+    "frequency": "very-common",
+    "domains": ["technical", "casual"]
+  },
+  {
+    "id": "structure-018",
+    "category": "formulaic-structures",
+    "subcategory": "step-patterns",
+    "pattern": "Step \\d+:",
+    "severity": "low",
+    "confidence": 0.65,
+    "examples": [
+      "Step 1: Install dependencies",
+      "Step 2: Configure the database"
+    ],
+    "replacements": [
+      "Use natural progression",
+      "Number without 'Step'",
+      "Vary instruction format"
+    ],
+    "context": "Procedural but acceptable in tutorials",
+    "frequency": "common",
+    "domains": ["technical"]
+  },
+  {
+    "id": "structure-019",
+    "category": "formulaic-structures",
+    "subcategory": "comparison-intros",
+    "pattern": "On (the one hand|one hand)",
+    "severity": "medium",
+    "confidence": 0.83,
+    "examples": [
+      "On the one hand, microservices offer flexibility.",
+      "On one hand, caching improves speed."
+    ],
+    "replacements": [
+      "State the first point directly",
+      "Skip the framework",
+      "Just present the trade-off"
+    ],
+    "context": "Formulaic comparison structure",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  },
+  {
+    "id": "structure-020",
+    "category": "formulaic-structures",
+    "subcategory": "comparison-intros",
+    "pattern": "On the other hand,",
+    "severity": "medium",
+    "confidence": 0.84,
+    "examples": [
+      "On the other hand, they add complexity.",
+      "On the other hand, it uses more memory."
+    ],
+    "replacements": [
+      "But they add complexity",
+      "However, memory usage increases",
+      "Use simpler contrast words"
+    ],
+    "context": "Paired with 'on one hand'",
+    "frequency": "common",
+    "domains": ["academic", "executive"]
+  }
+]
