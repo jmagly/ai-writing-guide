@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "validation": {
+    "enabled": true,
+    "threshold": 70,
+    "context": "technical",
+    "failOnCritical": true,
+    "rules": []
+  },
+  "optimization": {
+    "enabled": true,
+    "autoApply": false,
+    "strategies": [
+      "specificity",
+      "examples",
+      "constraints",
+      "anti_pattern"
+    ],
+    "createBackup": true
+  },
+  "output": {
+    "format": "text",
+    "destination": null,
+    "verbose": false,
+    "colors": true
+  },
+  "watch": {
+    "enabled": false,
+    "patterns": [
+      "**/*.md",
+      "**/*.txt"
+    ],
+    "debounce": 500,
+    "ignorePatterns": [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/dist/**"
+    ]
+  },
+  "hooks": {
+    "preCommit": false,
+    "prePush": false,
+    "hookPath": ".git/hooks"
+  }
+}
