@@ -6,8 +6,10 @@
     "README.md",
     "commit-and-push.md",
     "manifest.md",
+    "roko-voice.md",
     "subagents-README.md",
-    "subagents-and-commands-guide.md"
+    "subagents-and-commands-guide.md",
+    "summarize-transcript.md"
   ],
   "ignore": [
     "manifest.json",

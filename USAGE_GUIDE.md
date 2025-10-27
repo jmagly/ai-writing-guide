@@ -96,6 +96,25 @@ Only add additional documents when:
 
 **Note**: Many banned patterns are actually appropriate in academic contexts
 
+### 6. Cypherpunk/Technical Mythology
+
+**Goal**: Technical precision wrapped in cultural narrative, infrastructure as folklore
+
+**Include**:
+
+- `CLAUDE.md`
+- `context/cypherpunk-voice.md`
+
+**Use for**:
+
+- Protocol documentation with subcultural voice
+- Blockchain/crypto technical communications
+- Tech manifestos and position papers
+- Infrastructure storytelling
+- System architecture as cultural revolution
+
+**Note**: Preserves technical accuracy while treating revolutionary concepts as mundane infrastructure
+
 ## Progressive Enhancement Strategy
 
 ### Level 1: Minimal Intervention

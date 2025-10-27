@@ -22,6 +22,10 @@ documentation, casual blog posts **Load priority**: Only for executive-targeted 
 **When to use**: Research papers, whitepapers, technical reports **When NOT to use**: User documentation, marketing
 content **Load priority**: Only for scholarly content
 
+### cypherpunk-voice.md
+
+**When to use**: Protocol documentation with subcultural voice, blockchain/crypto technical communications, tech manifestos, infrastructure storytelling **When NOT to use**: Traditional business communications, formal documentation **Load priority**: Only for technical mythology content
+
 ### technical-depth.md
 
 **When to use**: Architecture documents, technical specifications, engineering blogs **When NOT to use**: User guides,
@@ -50,6 +54,12 @@ Just the main `CLAUDE.md` file - often sufficient
 - `CLAUDE.md`
 - `academic-voice.md`
 - Note: Many "banned patterns" are acceptable in academic context
+
+### Cypherpunk/Technical Mythology
+
+- `CLAUDE.md`
+- `cypherpunk-voice.md`
+- Note: Technical precision wrapped in cultural narrative
 
 ### Problem Solving
 
