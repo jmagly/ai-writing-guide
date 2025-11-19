@@ -23,14 +23,14 @@ npm run lint
 
 ```bash
 # Intake & Planning
-intake-wizard "Project description"              # Generate intake
-intake-from-codebase .                           # Analyze codebase
+/intake-wizard "Project description"             # Generate intake
+/intake-from-codebase .                          # Analyze codebase
 
 # Phase Workflows
-flow-inception-to-elaboration                    # Transition phases
-flow-security-review-cycle                       # Security review
-flow-test-strategy-execution                     # Run tests
-project-status                                   # Current phase
+/flow-inception-to-elaboration                   # Transition phases
+/flow-security-review-cycle                      # Security review
+/flow-test-strategy-execution                    # Run tests
+/project-status                                  # Current phase
 ```
 
 ### Droids
@@ -46,7 +46,7 @@ project-status                                   # Current phase
 
 ### Usage
 
-**Direct:** `architecture-designer "Create SAD"`  
+**Direct:** `/architecture-designer "Create SAD"`  
 **Natural:** `"Start security review"` (Factory orchestrates)  
 **Multi-Agent:** `"Create SAD with review"`
 
@@ -57,9 +57,9 @@ project-status                                   # Current phase
 ### Workflows
 
 Common commands:
-- `flow-inception-to-elaboration` - Phase transition
-- `flow-security-review-cycle` - Security review
-- `project-status` - Current phase
+- `/flow-inception-to-elaboration` - Phase transition
+- `/flow-security-review-cycle` - Security review
+- `/project-status` - Current phase
 
 **Phases:** Inception → Elaboration → Construction → Transition
 
