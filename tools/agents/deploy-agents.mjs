@@ -19,11 +19,12 @@
  *   --commands-only          Deploy only commands (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default) or openai
+ *   --provider <name>        Target provider: claude (default), openai, or factory
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
  *   --efficiency-model <name> Override model for efficiency tasks
  *   --as-agents-md           Aggregate to single AGENTS.md (OpenAI)
+ *   --create-agents-md       Create/update AGENTS.md template (Factory)
  *
  * Modes:
  *   general  - Deploy only general-purpose writing agents and commands
@@ -52,6 +53,7 @@ function parseArgs() {
     codingModel: null,
     efficiencyModel: null,
     asAgentsMd: false,
+    createAgentsMd: false,
     deployCommands: false,
     commandsOnly: false
   };
@@ -67,6 +69,7 @@ function parseArgs() {
     else if (a === '--coding-model' && args[i + 1]) cfg.codingModel = args[++i];
     else if (a === '--efficiency-model' && args[i + 1]) cfg.efficiencyModel = args[++i];
     else if (a === '--as-agents-md') cfg.asAgentsMd = true;
+    else if (a === '--create-agents-md') cfg.createAgentsMd = true;
     else if (a === '--deploy-commands') cfg.deployCommands = true;
     else if (a === '--commands-only') cfg.commandsOnly = true;
   }
@@ -138,7 +141,65 @@ function replaceModelFrontmatter(content, provider, models) {
   return updatedHeader + body;
 }
 
+function transformToFactoryDroid(content, modelCfg) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) return content;
+  
+  const [, frontmatter, body] = fmMatch;
+  
+  // Extract metadata
+  const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
+  
+  // Map model to Factory format
+  const factoryModel = mapModelToFactory(modelMatch, modelCfg);
+  
+  // Generate Factory droid frontmatter
+  const factoryFrontmatter = `---
+name: ${name}
+description: ${description || 'AIWG SDLC agent'}
+model: ${factoryModel}
+tools: ["Read", "LS", "Grep", "Glob", "Edit", "Create", "Execute"]
+---`;
+  
+  return `${factoryFrontmatter}\n\n${body.trim()}`;
+}
+
+function mapModelToFactory(originalModel, modelCfg) {
+  // Handle override models first
+  if (modelCfg.reasoningModel || modelCfg.codingModel || modelCfg.efficiencyModel) {
+    const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+    if (/opus/i.test(clean)) return modelCfg.reasoningModel || 'claude-opus-4-1-20250805';
+    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || 'claude-haiku-3-5';
+    return modelCfg.codingModel || 'claude-sonnet-4-5-20250929';
+  }
+  
+  // Default Factory model mappings
+  const factoryModels = {
+    'opus': 'claude-opus-4-1-20250805',
+    'sonnet': 'claude-sonnet-4-5-20250929',
+    'haiku': 'claude-haiku-3-5',
+    'inherit': 'inherit'
+  };
+  
+  const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+  
+  // Match to Factory model
+  for (const [key, value] of Object.entries(factoryModels)) {
+    if (clean.includes(key)) return value;
+  }
+  
+  return 'claude-sonnet-4-5-20250929'; // default
+}
+
 function transformIfNeeded(srcPath, content, provider, modelCfg) {
+  // Factory uses different format entirely
+  if (provider === 'factory') {
+    return transformToFactoryDroid(content, modelCfg);
+  }
+  
   let destContent = content;
   // Determine target models by provider and overrides
   const defaults = provider === 'openai'
@@ -226,9 +287,52 @@ function aggregateToAgentsMd(files, destPath, opts) {
   console.log(`wrote ${path.relative(process.cwd(), destPath)} with ${files.length} agents`);
 }
 
+function createFactoryAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'factory', 'AGENTS.md.aiwg-template');
+  const destPath = path.join(target, 'AGENTS.md');
+  
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`Factory AGENTS.md template not found at ${templatePath}`);
+    return;
+  }
+  
+  const template = fs.readFileSync(templatePath, 'utf8');
+  
+  // Check if AGENTS.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+    
+    // Check if it already has AIWG section
+    if (existing.includes('AIWG SDLC Framework')) {
+      console.log('AGENTS.md already contains AIWG section, skipping');
+      return;
+    }
+    
+    // Append AIWG section to existing AGENTS.md
+    const separator = '\n\n---\n\n<!-- AIWG SDLC Framework Integration -->\n\n';
+    const aiwgSection = template.split('<!-- AIWG SDLC Framework Integration -->')[1] || template;
+    const combined = existing.trimEnd() + separator + aiwgSection.trim() + '\n';
+    
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated AGENTS.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new AGENTS.md from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create AGENTS.md from Factory template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created AGENTS.md from Factory template');
+    }
+  }
+}
+
 (function main() {
   const cfg = parseArgs();
-  const { source, target, mode, dryRun, force, provider, reasoningModel, codingModel, efficiencyModel, deployCommands, commandsOnly, asAgentsMd } = cfg;
+  const { source, target, mode, dryRun, force, provider, reasoningModel, codingModel, efficiencyModel, deployCommands, commandsOnly, asAgentsMd, createAgentsMd } = cfg;
 
   // Resolve default source = repo root of this script
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
@@ -252,7 +356,9 @@ function aggregateToAgentsMd(files, destPath, opts) {
       if (fs.existsSync(generalAgentsRoot)) {
         const files = listMdFiles(generalAgentsRoot);
         if (files.length > 0) {
-          const destDir = provider === 'openai'
+          const destDir = provider === 'factory'
+            ? path.join(target, '.factory', 'droids')
+            : provider === 'openai'
             ? path.join(target, '.codex', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
@@ -268,7 +374,9 @@ function aggregateToAgentsMd(files, destPath, opts) {
       if (fs.existsSync(sdlcAgentsRoot)) {
         const files = listMdFiles(sdlcAgentsRoot);
         if (files.length > 0) {
-          const destDir = provider === 'openai'
+          const destDir = provider === 'factory'
+            ? path.join(target, '.factory', 'droids')
+            : provider === 'openai'
             ? path.join(target, '.codex', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
@@ -289,7 +397,9 @@ function aggregateToAgentsMd(files, destPath, opts) {
       if (fs.existsSync(generalCommandsRoot)) {
         const commandFiles = listMdFilesRecursive(generalCommandsRoot);
         if (commandFiles.length > 0) {
-          const destDir = provider === 'openai'
+          const destDir = provider === 'factory'
+            ? path.join(target, '.factory', 'commands')
+            : provider === 'openai'
             ? path.join(target, '.codex', 'commands')
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
@@ -305,7 +415,9 @@ function aggregateToAgentsMd(files, destPath, opts) {
       if (fs.existsSync(sdlcCommandsRoot)) {
         const commandFiles = listMdFilesRecursive(sdlcCommandsRoot);
         if (commandFiles.length > 0) {
-          const destDir = provider === 'openai'
+          const destDir = provider === 'factory'
+            ? path.join(target, '.factory', 'commands')
+            : provider === 'openai'
             ? path.join(target, '.codex', 'commands')
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
@@ -316,5 +428,11 @@ function aggregateToAgentsMd(files, destPath, opts) {
         console.warn(`SDLC commands not found at ${sdlcCommandsRoot}`);
       }
     }
+  }
+
+  // Create/update AGENTS.md for Factory provider
+  if (provider === 'factory' && createAgentsMd) {
+    console.log('\nCreating/updating AGENTS.md template for Factory...');
+    createFactoryAgentsMd(target, srcRoot, dryRun);
   }
 })();

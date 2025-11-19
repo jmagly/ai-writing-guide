@@ -49,6 +49,17 @@ aiwg -deploy-agents --platform warp    # Creates WARP.md with all agents/command
 
 </details>
 
+<details>
+<summary><strong>Factory AI (Custom droids)</strong></summary>
+
+```bash
+cd your-project
+aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
+# Deploys 54 droids to .factory/droids/ + creates AGENTS.md template
+```
+
+</details>
+
 **Start a new project** — Full SDLC scaffolding in seconds:
 
 ```bash
@@ -807,6 +818,7 @@ aiwg -setup-warp --mode sdlc         # Warp Terminal integration
 |----------|--------|-------------|-------|
 | **Claude Code** | ✅ **Tested & Validated** | Multi-file (.claude/agents/*.md) | Multi-agent orchestration |
 | **Warp Terminal** | ✅ **Tested & Validated** | Single-file (WARP.md) | Terminal-native workflows |
+| **Factory AI** | ✅ **Tested & Validated** | Custom droids (.factory/droids/*.md) | Native droid format, AGENTS.md |
 | **OpenAI/Codex** | 🟡 Experimental | `--provider openai` | Functional but not fully tested |
 | **Cursor** | 🟡 Experimental | Claude-compatible | Should work, not validated |
 | **Windsurf** | 🟡 Experimental | Claude-compatible | Should work, not validated |
@@ -886,6 +898,7 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 - [**Claude Code Quick Start**](docs/integrations/claude-code-quickstart.md) — 5-10 minute setup for Claude Code
 - [**Warp Terminal Quick Start**](docs/integrations/warp-terminal-quickstart.md) — 3-5 minute setup for Warp Terminal
 - [**Warp Terminal Integration Guide**](docs/integrations/warp-terminal.md) — Comprehensive Warp documentation
+- [**Factory AI Quick Start**](docs/integrations/factory-quickstart.md) — 5-10 minute setup for Factory AI
 
 ### Writing Quality
 
