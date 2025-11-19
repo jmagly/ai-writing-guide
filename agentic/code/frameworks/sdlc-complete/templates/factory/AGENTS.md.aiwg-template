@@ -2,15 +2,10 @@
 
 > Factory AI configuration and AIWG SDLC framework integration
 
-<!-- 
-  This AGENTS.md file is compatible with Factory AI's native AGENTS.md support.
-  For project-specific instructions, add them above this line.
--->
-
 ## Project Commands
 
 ```bash
-# Your project-specific commands here
+# Add your build/test/run commands here
 npm test
 npm run build
 npm run lint
@@ -22,327 +17,79 @@ npm run lint
 
 ## AIWG SDLC Framework
 
-This project uses the **AI Writing Guide (AIWG) SDLC framework** with Factory AI droids for comprehensive software development lifecycle management.
+**53 SDLC droids** in `.factory/droids/` | **42+ commands** in `.factory/commands/`
 
-### What is AIWG?
+### Quick Start
 
-AIWG provides:
-- **53 specialized droids** covering all SDLC phases (Inception → Elaboration → Construction → Transition → Production)
-- **42+ commands** for project management, security, testing, deployment, and traceability
-- **100+ templates** for requirements, architecture, testing, security, and deployment artifacts
-- **Phase-based workflows** with gate criteria and milestone tracking
-- **Multi-agent orchestration** for collaborative artifact generation
+```bash
+# Intake & Planning
+/project:intake-wizard "Project description"     # Generate intake
+/project:intake-from-codebase .                  # Analyze codebase
 
-### Deployed Droids
-
-**Location:** `.factory/droids/` (53 SDLC droids)
-
-**Key Droids by Category:**
-
-**Intake & Planning:**
-- `intake-coordinator` - Generates and validates project intake forms
-- `requirements-analyst` - Documents vision, user stories, use cases
-- `system-analyst` - Bridges business intent and technical delivery
-- `business-process-analyst` - Models business processes and value flows
-- `product-strategist` - Shapes product vision and positioning
-
-**Architecture:**
-- `architecture-designer` - Creates software architecture documents (SAD)
-- `api-designer` - Designs and evolves API contracts
-- `architecture-documenter` - Documents architecture artifacts with precision
-- `cloud-architect` - Designs multi-cloud infrastructure (AWS/Azure/GCP)
-
-**Security:**
-- `security-architect` - Leads threat modeling and security requirements
-- `security-gatekeeper` - Applies security gates and generates pass/fail reports
-- `security-auditor` - Reviews code for vulnerabilities and OWASP compliance
-- `privacy-officer` - Ensures lawful data processing and GDPR compliance
-
-**Testing:**
-- `test-engineer` - Creates comprehensive test suites (unit, integration, E2E)
-- `test-architect` - Designs holistic test strategies and quality governance
-- `test-documenter` - Documents test artifacts with traceability
-- `accessibility-specialist` - Ensures WCAG 2.1 AA/AAA compliance
-
-**Operations:**
-- `devops-engineer` - Automates CI/CD, infrastructure as code, deployment
-- `reliability-engineer` - Establishes SLO/SLI, capacity testing, ORR
-- `deployment-manager` - Orchestrates release planning and deployment
-- `incident-responder` - Handles production incidents with urgency
-- `support-lead` - Prepares customer support readiness and knowledge management
-- `environment-engineer` - Tailors process assets, tooling, guidelines
-
-**Documentation:**
-- `technical-writer` - Ensures documentation clarity and consistency
-- `documentation-synthesizer` - Merges multi-agent feedback into cohesive artifacts
-- `documentation-archivist` - Manages drafts, version history, audit trails
-
-**Quality & Performance:**
-- `code-reviewer` - Comprehensive code reviews (quality, security, performance)
-- `performance-engineer` - Profiles bottlenecks, conducts load testing, optimizes
-- `metrics-analyst` - Defines and interprets delivery/product metrics
-
-**Specialized Roles:**
-- `debugger` - Systematic debugging for errors and test failures
-- `database-optimizer` - Optimizes queries, designs indexes, handles migrations
-- `legacy-modernizer` - Refactors legacy code, migrates frameworks
-- `api-documenter` - Creates OpenAPI/Swagger specs and SDKs
-- `configuration-manager` - Governs version control, baselines, change processes
-- `traceability-manager` - Maintains requirements → code → tests → release mapping
-- `decision-matrix-expert` - Facilitates data-driven trade-off decisions
-- `raci-expert` - Facilitates responsibility assignments (RACI matrix)
-
-[Full droid list: 53 total in `.factory/droids/`]
-
-### Using AIWG Droids
-
-**Direct Invocation:**
-```text
-"Use requirements-analyst to review this user story"
-"Ask security-architect to evaluate authentication design"
-"Have test-engineer create test plan for payment flow"
+# Phase Workflows
+/project:flow-inception-to-elaboration           # Transition phases
+/project:flow-security-review-cycle              # Security review
+/project:flow-test-strategy-execution            # Run tests
+/project:project-status                          # Current phase
 ```
 
-**Natural Language Orchestration:**
+### Key Droids by Category
 
-Factory automatically maps natural language to droids:
+**Planning:** intake-coordinator, requirements-analyst, system-analyst, product-strategist  
+**Architecture:** architecture-designer, api-designer, cloud-architect  
+**Security:** security-architect, security-gatekeeper, security-auditor  
+**Testing:** test-engineer, test-architect, accessibility-specialist  
+**Operations:** devops-engineer, reliability-engineer, deployment-manager, incident-responder  
+**Documentation:** technical-writer, documentation-synthesizer  
+**Quality:** code-reviewer, performance-engineer, database-optimizer, debugger  
+**Specialized:** legacy-modernizer, api-documenter, traceability-manager, executive-orchestrator
 
-```text
-"Start security review"        → security-architect + security-gatekeeper + security-auditor
-"Create architecture baseline" → architecture-designer + reviewers + synthesizer
-"Generate test plan"           → test-architect + test-engineer
-"Deploy to production"         → deployment-manager + reliability-engineer
-"Run iteration 5"              → Entire iteration workflow
-```
+*Full list: `ls .factory/droids/`*
 
-**Multi-Agent Workflows:**
+### Usage
 
-Factory handles parallel execution automatically:
+**Direct:** `/project:architecture-designer "Create SAD"`  
+**Natural:** `"Start security review"` (Factory orchestrates)  
+**Multi-Agent:** `"Create SAD with review"` (parallel execution)
 
-**Pattern: Primary Author → Parallel Reviewers → Synthesizer → Archive**
+### Project Artifacts
 
-```text
-You: "Create comprehensive SAD for microservices platform"
-
-Factory orchestrates:
-1. architecture-designer creates draft
-2. Parallel review (launched simultaneously):
-   - security-architect validates security controls
-   - test-architect checks testability  
-   - requirements-analyst verifies traceability
-   - technical-writer ensures clarity
-3. documentation-synthesizer merges all feedback
-4. Final SAD saved to .aiwg/architecture/software-architecture-doc.md
-```
-
-### Project Artifacts (.aiwg/)
-
-All SDLC artifacts stored in `.aiwg/`:
-
-```
-.aiwg/
-├── intake/              # Project intake forms
-├── requirements/        # User stories, use cases, NFRs
-├── architecture/        # SAD, ADRs, diagrams
-├── planning/            # Phase and iteration plans
-├── risks/               # Risk register and mitigation
-├── testing/             # Test strategy, plans, results
-├── security/            # Threat models, security reviews
-├── quality/             # Code reviews, retrospectives
-├── deployment/          # Deployment plans, runbooks
-├── team/                # Team profile, agent assignments
-├── working/             # Temporary scratch (safe to delete)
-└── reports/             # Generated reports and indices
-```
+All SDLC artifacts in `.aiwg/`:
+- `intake/` - Project intake forms
+- `requirements/` - User stories, use cases
+- `architecture/` - SAD, ADRs, diagrams
+- `testing/` - Test plans and results
+- `security/` - Threat models, reviews
+- `deployment/` - Deployment plans, runbooks
 
 ### Phase Workflows
 
-**Inception** (4-6 weeks):
-- intake-coordinator validates intake forms
-- requirements-analyst documents vision and business case
-- security-architect performs initial security screening
-- **Milestone**: Lifecycle Objective (LO)
+**Inception** → Validate vision, risks, initial architecture  
+**Elaboration** → Detailed requirements, architecture baseline  
+**Construction** → Feature implementation, testing, security validation  
+**Transition** → Production deployment, UAT, hypercare  
 
-**Elaboration** (4-8 weeks):
-- architecture-designer creates Software Architecture Document (SAD)
-- test-architect defines test strategy
-- security-architect performs threat modeling
-- **Milestone**: Lifecycle Architecture (LA)
-
-**Construction** (8-16 weeks):
-- Iterative feature implementation
-- test-engineer validates quality with comprehensive tests
-- code-reviewer ensures standards and best practices
-- **Milestone**: Initial Operational Capability (IOC)
-
-**Transition** (2-4 weeks):
-- deployment-manager orchestrates production release
-- reliability-engineer validates operational readiness
-- support-lead prepares handover and documentation
-- **Milestone**: Product Release (PR)
-
-**Production** (ongoing):
-- incident-responder handles production issues
-- performance-engineer optimizes system performance
-- Continuous monitoring and improvement
-
-### Common Commands
-
-```bash
-# Project status
-"Where are we?" or "What's next?"
-
-# Phase transitions
-"Transition to Elaboration"
-"Move to Construction"
-"Start Transition phase"
-
-# Reviews and validation
-"Run security review"
-"Execute test strategy"
-"Check compliance for SOC2"
-"Validate GDPR compliance"
-
-# Artifact generation
-"Create architecture baseline"
-"Generate test plan"
-"Build risk register"
-"Document deployment runbook"
-
-# Iteration workflows
-"Run iteration 3"
-"Start discovery track for iteration 4"
-"Execute delivery track for iteration 3"
-
-# Gate checks
-"Check if we're ready to move to Construction"
-"Validate Elaboration gate criteria"
-"Check IOC gate status"
-```
-
-### SDLC Commands
-
-**Location:** `.factory/commands/` (42+ flow commands)
-
-**Phase Transitions:**
-- `flow-concept-to-inception` - Execute Inception phase
-- `flow-inception-to-elaboration` - Transition to Elaboration
-- `flow-elaboration-to-construction` - Transition to Construction
-- `flow-construction-to-transition` - Transition to Transition
-
-**Continuous Workflows:**
-- `flow-risk-management-cycle` - Ongoing risk tracking
-- `flow-requirements-evolution` - Living requirements management
-- `flow-architecture-evolution` - Architecture refinement
-- `flow-test-strategy-execution` - Execute test strategy
-- `flow-security-review-cycle` - Security validation
-- `flow-performance-optimization` - Performance baseline and optimization
-
-**Gate Validation:**
-- `flow-gate-check <phase>` - Validate phase gate criteria
-- `flow-handoff-checklist <from> <to>` - Phase handoff validation
-- `project-status` - Current phase, milestone progress, next steps
-- `project-health-check` - Overall project health metrics
-
-**Team & Process:**
-- `flow-team-onboarding <member> [role]` - Onboard new team member
-- `flow-knowledge-transfer <from> <to>` - Knowledge transfer workflow
-- `flow-retrospective-cycle <type>` - Retrospective facilitation
-
-**Deployment & Operations:**
-- `flow-deploy-to-production` - Production deployment
-- `flow-hypercare-monitoring <days>` - Post-launch monitoring
-- `flow-incident-response <id> [severity]` - Production incident triage
-
-**Intake Methods** (choose ONE for new projects):
-- `intake-wizard` - Generate intake interactively
-- `intake-from-codebase` - Analyze existing codebase to generate intake
-- `intake-start` - Enhance user-provided intake files
+Common commands:
+- `/project:flow-inception-to-elaboration`
+- `/project:flow-security-review-cycle`
+- `/project:flow-risk-management-cycle`
+- `/project:flow-gate-check <phase>`
+- `/project:project-health-check`
 
 ### Configuration
 
-**AIWG Installation:** `~/.local/share/ai-writing-guide`
-
-**Verify Installation:**
-```bash
-ls ~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/
-
-# Available resources:
-# - agents/     → SDLC role agents (source)
-# - commands/   → Slash commands (source)
-# - templates/  → 100+ artifact templates
-# - flows/      → Phase workflow documentation
-```
-
-**Deployed Resources:**
-```bash
-ls .factory/droids/     # 53 SDLC droids
-ls .factory/commands/   # 42+ flow commands
-ls .aiwg/               # SDLC artifacts
-```
-
-### Customizing Droids
-
-Edit any droid to adjust behavior:
-
-```bash
-code .factory/droids/architecture-designer.md
-```
-
-**Customize:**
-- `model`: Change to faster/slower model (opus, sonnet, haiku)
-- `tools`: Restrict to specific tools (remove Execute for safety)
-- System prompt: Adjust behavior, style, focus areas
-
-**Example:**
-```yaml
----
-name: architecture-designer
-description: Creates software architecture documents
-model: claude-sonnet-4-5-20250929  # Changed from opus for speed/cost
-tools: ["Read", "LS", "Grep", "Glob", "Edit", "Create"]  # Removed Execute
----
-```
+**AIWG Installation:** `~/.local/share/ai-writing-guide`  
+**Verify:** `ls ~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/`
 
 ### Resources
 
-- **AIWG Repository:** https://github.com/jmagly/ai-writing-guide
-- **AIWG Installation:** `~/.local/share/ai-writing-guide`
-- **SDLC Framework:** `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
-- **Template Library:** `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
-- **Factory Quickstart:** `~/.local/share/ai-writing-guide/docs/integrations/factory-quickstart.md`
-- **Factory AI Docs:** https://docs.factory.ai/
+- **AIWG Repo:** https://github.com/jmagly/ai-writing-guide
+- **Factory Quick Start:** `~/.local/share/ai-writing-guide/docs/integrations/factory-quickstart.md`
+- **Templates:** `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
+- **Flows:** `.factory/commands/flow-*.md`
 
 ### Troubleshooting
 
-**Droids Not Found:**
-```bash
-ls .factory/droids/
-# If empty, redeploy:
-aiwg -deploy-agents --provider factory --mode sdlc
-```
-
-**Commands Not Working:**
-```bash
-ls .factory/commands/
-# If empty, deploy:
-aiwg -deploy-commands --provider factory --mode sdlc
-```
-
-**AIWG Not Accessible:**
-```bash
-ls ~/.local/share/ai-writing-guide
-# If missing, reinstall:
-curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
-```
-
----
-
-**Natural Language Support:** Factory AI understands natural language for SDLC workflows. You don't need to memorize commands—just describe what you want:
-
-- "Where are we in the SDLC?" → project-status
-- "Start security review" → flow-security-review-cycle  
-- "Create architecture baseline" → Multi-agent SAD generation
-- "Ready to deploy?" → flow-gate-check + deployment readiness
-
-**Tip:** Run `"Where are we?"` anytime to get current phase, progress, and next steps.
+**Droids not found:** `ls .factory/droids/` (should show 53 files)  
+**Commands not found:** `ls .factory/commands/` (should show 42+ files)  
+**Redeploy:** `aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --force`

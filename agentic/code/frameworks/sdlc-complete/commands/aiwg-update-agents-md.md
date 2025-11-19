@@ -150,110 +150,89 @@ Use Read tool to read existing AGENTS.md, Grep to detect AIWG section.
 
 ### Step 4: Generate Project-Specific Commands Section
 
+**IMPORTANT:** Keep project-specific content concise (≤50 lines) to maintain total AGENTS.md ≤150 lines.
+
 Based on codebase analysis, generate the project commands section:
 
 **For Node.js/TypeScript projects**:
 
 ```markdown
-## Core Commands
+## Project Commands
 
-Build & Test:
-- Build: `npm run build`
-- Test suite: `npm test`
-- Test with coverage: `npm run test:coverage`
-- Lint: `npm run lint`
-- Fix lint issues: `npm run lint:fix`
-
-Development:
-- Start dev server: `npm run dev`
-- Watch mode: `npm run watch`
-
-Deployment:
-- Production build: `npm run build:prod`
-- Start production: `npm start`
+```bash
+npm test              # Run tests
+npm run build         # Build project
+npm run lint          # Lint code
+npm run dev           # Development server
+```
 ```
 
 **For Python projects**:
 
 ```markdown
-## Core Commands
+## Project Commands
 
-Build & Test:
-- Install dependencies: `pip install -r requirements.txt`
-- Run tests: `pytest`
-- Test with coverage: `pytest --cov`
-- Lint: `pylint src/`
-
-Development:
-- Start dev server: `python -m uvicorn app.main:app --reload`
-- Run scripts: `python scripts/<script-name>.py`
+```bash
+pytest                # Run tests
+pip install -r requirements.txt  # Install deps
+python -m uvicorn app.main:app --reload  # Dev server
+```
 ```
 
 **For Multi-language projects** (like IntelCC):
 
 ```markdown
-## Core Commands
+## Project Commands
 
-TypeScript/Node.js:
-- Build: `npm run build`
-- Test suite: `npm test`
-- Test with coverage: `npm run test:coverage`
-- Lint: `npm run lint`
-- Development: `npm run dev`
+```bash
+# TypeScript
+npm test && npm run build
 
-Python:
-- Install dependencies: `pip install -r requirements.txt`
-- Run tests: `python -m pytest agents/tests/`
-- Start agents: `npm run agents:start`
+# Python
+python -m pytest agents/tests/
 
-System Management:
-- Start all services: `npm run all`
-- Check status: `npm run pm2:status`
-- Stop all: `./start-system.sh stop`
+# System
+npm run all           # Start services
+npm run pm2:status    # Check status
+```
 ```
 
-### Step 5: Generate Architecture Overview Section
+### Step 5: Generate Architecture Overview Section (Optional - Only if Critical)
 
-Based on codebase analysis:
+**Keep minimal** (3-5 lines max). Only include if architecture is non-standard.
 
 ```markdown
-## Architecture Overview
+## Architecture
 
-{Detected architecture pattern}
-
-Key directories:
-- `{src_directory}/` - {Purpose}
-- `{test_directory}/` - {Purpose}
-- `{config_directory}/` - {Purpose}
-
-{Tech stack detected}:
-- Frontend: {React/Vue/Angular/etc}
-- Backend: {Express/FastAPI/Django/etc}
-- Database: {PostgreSQL/MongoDB/SQLite/etc}
-- Infrastructure: {Docker/K8s/etc}
+{Pattern}: {src_dir}/, {test_dir}/  
+{Tech}: {Framework} + {Database} + {Infrastructure}
 ```
 
-### Step 6: Generate Conventions Section
+**Example:**
+```markdown
+## Architecture
 
-Based on codebase scanning:
+Monorepo: packages/api, packages/web  
+Tech: React + Express + PostgreSQL + Docker
+```
+
+### Step 6: Generate Conventions Section (Optional - Only if Critical)
+
+**Keep minimal** (3-5 lines max). Only include unusual patterns.
 
 ```markdown
-## Development Patterns & Constraints
+## Development Notes
 
-Code Style:
-- {Language} {strict mode/type hints/etc}
-- {Linting tool}: {Configuration}
-- {Formatting tool}: {Configuration}
+- {Critical constraint or pattern}
+- {Important gotcha}
+```
 
-Testing:
-- Test framework: {Jest/Pytest/etc}
-- Coverage target: {X%}
-- Test location: {Pattern}
+**Example:**
+```markdown
+## Development Notes
 
-Git Workflow:
-- Default branch: {main/master}
-- Branch naming: {Convention detected}
-- Commit format: {Conventional commits/etc}
+- npm test requires CI=true environment variable
+- Coverage target: 85% (current: 43%)
 ```
 
 ### Step 7: Load AIWG Template Section
@@ -394,42 +373,30 @@ fi
 
 ## Output Format
 
-The generated AGENTS.md should follow this structure:
+**Target:** ≤150 total lines (≤50 project-specific + ~95 AIWG section)
+
+The generated AGENTS.md should follow this minimal structure:
 
 ```markdown
 # {Project Name}
 
-> {One-line project description - inferred or from README}
+> {One-line project description}
 
-<!-- User can customize above this line -->
+## Project Commands
 
-## Core Commands
+```bash
+{Top 5-8 critical commands only}
+```
 
-{Detected commands organized by category}
+## Architecture (Optional - if non-standard)
 
-## Project Layout
+{Pattern}: {directories}  
+{Tech}: {Stack summary}
 
-{Directory structure and purpose}
+## Development Notes (Optional - if critical gotchas)
 
-## Development Patterns & Constraints
-
-{Detected patterns from codebase}
-
-## Architecture Overview
-
-{Architecture pattern identified}
-
-## Security
-
-{Security-related notes if applicable}
-
-## Git Workflow Essentials
-
-{Detected from .git config and branch structure}
-
-## External Services
-
-{Detected from .env files and dependencies}
+- {Critical constraint or gotcha}
+- {Important pattern}
 
 ---
 
@@ -437,8 +404,10 @@ The generated AGENTS.md should follow this structure:
 
 ## AIWG SDLC Framework
 
-{Full AIWG template section from factory/AGENTS.md.aiwg-template}
+{Full AIWG template section from factory/AGENTS.md.aiwg-template - ~95 lines}
 ```
+
+**Keep it minimal:** Only include architecture/notes sections if they're critical. Most projects should be ≤30 lines project-specific content.
 
 ## Success Criteria
 
