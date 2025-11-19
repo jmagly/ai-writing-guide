@@ -12,7 +12,7 @@ You are a Technical Documentation Specialist responsible for updating AGENTS.md 
 
 ## Your Task
 
-When invoked with `/project:aiwg-update-agents-md [project-directory] [--provider factory]`:
+When invoked with `aiwg-update-agents-md [project-directory] [--provider factory]` (Factory AI) or `/project:aiwg-update-agents-md [project-directory]` (Claude Code):
 
 1. **Analyze** the project codebase structure
 2. **Detect** build/test commands from package.json, Makefile, or scripts
@@ -29,7 +29,7 @@ This command is specifically designed for **Factory AI** users. It creates or up
 - Factory droid usage examples
 - Multi-agent workflow patterns
 
-For Claude Code users, use `/project:aiwg-update-claude` instead.
+For Claude Code users, use `/project:aiwg-update-claude` instead (note the `/project:` prefix for Claude Code).
 
 ## Execution Steps
 
@@ -301,7 +301,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Review AGENTS.md and customize project-specific sections"
 echo "  2. Deploy Factory droids: aiwg -deploy-agents --provider factory --mode sdlc"
-echo "  3. Run intake: /project:intake-wizard 'your project description'"
+echo "  3. Run intake: intake-wizard 'your project description'"
 echo ""
 ```
 
@@ -573,9 +573,9 @@ All:
 ## Integration with Intake Process
 
 This command should be called automatically at the end of:
-- `/project:intake-wizard` (after intake forms generated)
-- `/project:intake-from-codebase` (after analyzing existing code)
-- `/project:intake-start` (after validating intake)
+- `intake-wizard` (after intake forms generated)
+- `intake-from-codebase` (after analyzing existing code)
+- `intake-start` (after validating intake)
 
 **Trigger condition**: If `--provider factory` is detected or `.factory/droids/` directory exists.
 
@@ -586,7 +586,7 @@ This command should be called automatically at the end of:
 1. Generate intake forms in .aiwg/intake/
 2. Detect provider (check for .factory/droids/)
 3. If Factory detected:
-   → Call /project:aiwg-update-agents-md
+   → Call aiwg-update-agents-md
    → Generate project-specific AGENTS.md
    → Log: "✓ Updated AGENTS.md with project commands and AIWG context"
 ```
@@ -638,7 +638,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Review AGENTS.md and customize if needed"
 echo "  2. Verify droids deployed: ls .factory/droids/ (should show 54 files)"
-echo "  3. Start building: /project:intake-wizard or /project:intake-from-codebase"
+echo "  3. Start building: intake-wizard or intake-from-codebase"
 echo ""
 ```
 
@@ -694,7 +694,7 @@ This command is designed to be called by other AIWG commands:
 if [ -d ".factory/droids" ] || [ "$PROVIDER" = "factory" ]; then
   echo ""
   echo "Detected Factory AI - updating AGENTS.md..."
-  /project:aiwg-update-agents-md .
+  aiwg-update-agents-md .
 fi
 ```
 
@@ -706,7 +706,7 @@ fi
 if [ -d ".factory/droids" ] || [ "$PROVIDER" = "factory" ]; then
   echo ""
   echo "Updating AGENTS.md with codebase analysis..."
-  /project:aiwg-update-agents-md .
+  aiwg-update-agents-md .
 fi
 ```
 
@@ -718,7 +718,7 @@ fi
 if [ -d ".factory/droids" ]; then
   echo ""
   echo "Factory AI detected - updating AGENTS.md..."
-  /project:aiwg-update-agents-md .
+  aiwg-update-agents-md .
 fi
 ```
 
@@ -726,15 +726,25 @@ fi
 
 Users can also call this directly:
 
+**Factory AI:**
+```bash
+# Update AGENTS.md for current project
+aiwg-update-agents-md
+
+# Update for specific project
+aiwg-update-agents-md /path/to/project
+
+# Force update even if AIWG section exists
+aiwg-update-agents-md . --force
+```
+
+**Claude Code:**
 ```bash
 # Update AGENTS.md for current project
 /project:aiwg-update-agents-md
 
 # Update for specific project
 /project:aiwg-update-agents-md /path/to/project
-
-# Force update even if AIWG section exists
-/project:aiwg-update-agents-md . --force
 ```
 
 ## Summary
