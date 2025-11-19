@@ -150,7 +150,7 @@ Use Read tool to read existing AGENTS.md, Grep to detect AIWG section.
 
 ### Step 4: Generate Project-Specific Commands Section
 
-**IMPORTANT:** Keep project-specific content concise (≤50 lines) to maintain total AGENTS.md ≤150 lines.
+**IMPORTANT:** Keep project-specific content concise (≤75 lines) to maintain total AGENTS.md ≤150 lines (75/75 split).
 
 Based on codebase analysis, generate the project commands section:
 
@@ -373,7 +373,7 @@ fi
 
 ## Output Format
 
-**Target:** ≤150 total lines (≤50 project-specific + ~95 AIWG section)
+**Target:** ≤150 total lines (≤75 project-specific + ~75 AIWG section)
 
 The generated AGENTS.md should follow this minimal structure:
 
@@ -404,10 +404,10 @@ The generated AGENTS.md should follow this minimal structure:
 
 ## AIWG SDLC Framework
 
-{Full AIWG template section from factory/AGENTS.md.aiwg-template - ~95 lines}
+{Full AIWG template section from factory/AGENTS.md.aiwg-template - ~75 lines}
 ```
 
-**Keep it minimal:** Only include architecture/notes sections if they're critical. Most projects should be ≤30 lines project-specific content.
+**Keep balanced:** Aim for ~75 lines of project-specific content + ~75 lines AIWG section = ≤150 total.
 
 ## Success Criteria
 

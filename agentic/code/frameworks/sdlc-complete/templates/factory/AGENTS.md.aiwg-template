@@ -33,63 +33,38 @@ npm run lint
 /project:project-status                          # Current phase
 ```
 
-### Key Droids by Category
+### Droids
 
-**Planning:** intake-coordinator, requirements-analyst, system-analyst, product-strategist  
+**Planning:** intake-coordinator, requirements-analyst, system-analyst  
 **Architecture:** architecture-designer, api-designer, cloud-architect  
 **Security:** security-architect, security-gatekeeper, security-auditor  
-**Testing:** test-engineer, test-architect, accessibility-specialist  
-**Operations:** devops-engineer, reliability-engineer, deployment-manager, incident-responder  
-**Documentation:** technical-writer, documentation-synthesizer  
-**Quality:** code-reviewer, performance-engineer, database-optimizer, debugger  
-**Specialized:** legacy-modernizer, api-documenter, traceability-manager, executive-orchestrator
+**Testing:** test-engineer, test-architect  
+**Operations:** devops-engineer, deployment-manager, incident-responder  
+**Quality:** code-reviewer, performance-engineer, debugger
 
-*Full list: `ls .factory/droids/`*
+*Full list: `ls .factory/droids/` (53 total)*
 
 ### Usage
 
 **Direct:** `/project:architecture-designer "Create SAD"`  
 **Natural:** `"Start security review"` (Factory orchestrates)  
-**Multi-Agent:** `"Create SAD with review"` (parallel execution)
+**Multi-Agent:** `"Create SAD with review"`
 
-### Project Artifacts
+### Artifacts
 
-All SDLC artifacts in `.aiwg/`:
-- `intake/` - Project intake forms
-- `requirements/` - User stories, use cases
-- `architecture/` - SAD, ADRs, diagrams
-- `testing/` - Test plans and results
-- `security/` - Threat models, reviews
-- `deployment/` - Deployment plans, runbooks
+`.aiwg/` - intake, requirements, architecture, testing, security, deployment
 
-### Phase Workflows
-
-**Inception** → Validate vision, risks, initial architecture  
-**Elaboration** → Detailed requirements, architecture baseline  
-**Construction** → Feature implementation, testing, security validation  
-**Transition** → Production deployment, UAT, hypercare  
+### Workflows
 
 Common commands:
-- `/project:flow-inception-to-elaboration`
-- `/project:flow-security-review-cycle`
-- `/project:flow-risk-management-cycle`
-- `/project:flow-gate-check <phase>`
-- `/project:project-health-check`
+- `/project:flow-inception-to-elaboration` - Phase transition
+- `/project:flow-security-review-cycle` - Security review
+- `/project:project-status` - Current phase
 
-### Configuration
-
-**AIWG Installation:** `~/.local/share/ai-writing-guide`  
-**Verify:** `ls ~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/`
+**Phases:** Inception → Elaboration → Construction → Transition
 
 ### Resources
 
-- **AIWG Repo:** https://github.com/jmagly/ai-writing-guide
-- **Factory Quick Start:** `~/.local/share/ai-writing-guide/docs/integrations/factory-quickstart.md`
-- **Templates:** `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
-- **Flows:** `.factory/commands/flow-*.md`
-
-### Troubleshooting
-
-**Droids not found:** `ls .factory/droids/` (should show 53 files)  
-**Commands not found:** `ls .factory/commands/` (should show 42+ files)  
-**Redeploy:** `aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --force`
+- Repo: https://github.com/jmagly/ai-writing-guide
+- Quick Start: `~/.local/share/ai-writing-guide/docs/integrations/factory-quickstart.md`
+- Redeploy: `aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --force`
