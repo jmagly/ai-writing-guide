@@ -93,13 +93,75 @@ aiwg -deploy-agents --provider factory --mode sdlc --target ~/.factory
 
 ## Tools
 
-Factory droids require explicit tool declarations. AIWG deploys droids with a default tool set:
+Factory droids require explicit tool declarations. AIWG **automatically maps Claude Code tools to Factory equivalents** during deployment.
 
+### Tool Mapping
+
+**Claude Code → Factory (Anthropic Tools):**
+
+Factory uses Anthropic's tool naming conventions. AIWG maps Claude Code tools to these standard names:
+
+| Claude Code | Factory/Anthropic Equivalent | Notes |
+|-------------|------------------------------|-------|
+| `Bash` | `Execute` | Shell command execution |
+| `Write` | `Create`, `Edit` | File creation and modification |
+| `WebFetch` | `FetchUrl`, `WebSearch` | Web content retrieval |
+| `MultiEdit` | `MultiEdit`, `ApplyPatch` | Multiple file edits and patch application |
+| `Read`, `Grep`, `Glob`, `LS` | Same names | Already Anthropic tools |
+
+**Note:** Factory respects Anthropic's tool naming, so all mapped tools use standard Anthropic tool IDs.
+
+### Automatic Tool Enhancements
+
+**Orchestration agents** automatically receive additional tools:
+- **Task** - Invoke other droids as subagents
+- **TodoWrite** - Track progress and coordinate work
+
+**Orchestration agents include:**
+- executive-orchestrator
+- intake-coordinator
+- documentation-synthesizer
+- project-manager
+- deployment-manager
+- test-architect
+- architecture-designer
+- requirements-analyst
+- security-architect
+- technical-writer
+
+### Example Transformation
+
+**Original (Claude Code):**
 ```yaml
-tools: ["Read", "LS", "Grep", "Glob", "Edit", "Create", "Execute"]
+---
+name: Architecture Designer
+description: Designs scalable, maintainable system architectures
+model: opus
+tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+---
 ```
 
-You can customize this after deployment by editing individual droid files:
+**Deployed (Factory):**
+```yaml
+---
+name: Architecture Designer
+description: Designs scalable, maintainable system architectures
+model: claude-opus-4-1-20250805
+tools: ["ApplyPatch", "Create", "Edit", "Execute", "FetchUrl", "Glob", "Grep", "MultiEdit", "Read", "Task", "TodoWrite", "WebSearch"]
+---
+```
+
+**Changes:**
+- ✅ `Bash` → `Execute` (Anthropic tool)
+- ✅ `Write` → `Create` + `Edit` (Anthropic tools)
+- ✅ `WebFetch` → `FetchUrl` + `WebSearch` (Anthropic tools)
+- ✅ `MultiEdit` → `MultiEdit` + `ApplyPatch` (Anthropic tools)
+- ✅ Added `Task` (Factory tool for invoking subagents)
+- ✅ Added `TodoWrite` (Anthropic tool for progress tracking)
+
+### Customizing Tools Post-Deployment
+
+You can further restrict tools after deployment:
 
 ```bash
 # Edit a droid
@@ -111,8 +173,12 @@ tools: ["Read", "LS", "Grep", "Glob", "Edit", "Create"]  # Removed Execute
 
 **Common tool restrictions:**
 - **Read-only droids**: `["Read", "LS", "Grep", "Glob"]`
-- **Documentation droids**: `["Read", "LS", "Grep", "Edit", "Create"]`
-- **Full access droids**: `["Read", "LS", "Grep", "Glob", "Edit", "Create", "Execute"]`
+- **Documentation droids**: `["Read", "LS", "Grep", "Glob", "Edit", "Create", "ApplyPatch"]`
+- **Code modification droids**: `["Read", "LS", "Grep", "Glob", "Edit", "Create", "MultiEdit", "ApplyPatch", "Execute"]`
+- **Orchestration droids**: `["Read", "LS", "Grep", "Glob", "Edit", "Create", "MultiEdit", "ApplyPatch", "Execute", "Task", "TodoWrite"]`
+- **Full access droids**: `["Read", "LS", "Grep", "Glob", "Edit", "Create", "MultiEdit", "ApplyPatch", "Execute", "Task", "TodoWrite", "WebSearch", "FetchUrl"]`
+
+**All tools are Anthropic standard tools**, ensuring compatibility across Factory and other Anthropic-based platforms.
 
 ## Using Factory Droids
 

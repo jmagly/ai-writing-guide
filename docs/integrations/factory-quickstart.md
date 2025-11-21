@@ -1,10 +1,17 @@
 # Factory AI Quick Start with AIWG
 
+> **⚠️ IMPORTANT:** Factory requires **manual droid import** after deployment. Unlike Claude Code, droids aren't auto-loaded. See [Step 3: Import Droids](#step-3-import-droids-in-factory-cli-required) below.
+>
+> **✅ Auto-configured:** Custom Droids are automatically enabled in `~/.factory/settings.json` during deployment.
+>
+> **Quick Import:** `droid . → /droids → I → A → Enter` (restart droid first if it was already running)
+
 ## Prerequisites
 
-- Factory AI CLI installed
+- Factory AI CLI installed (`curl -fsSL https://app.factory.ai/cli | sh`)
 - Node.js 18+ (for aiwg CLI)
 - Git (for version control)
+- **Custom Droids enabled** in Factory settings (see setup steps below)
 
 ## Installation
 
@@ -53,14 +60,56 @@ aiwg -deploy-agents --provider factory --mode both --deploy-commands --create-ag
 - 42+ flow commands → `.factory/commands/`
 - AGENTS.md → project root (with `--create-agents-md` flag)
 - Factory droids use native Factory format (YAML frontmatter)
+- **Tool mapping**: Claude Code tools automatically mapped to Factory equivalents
+- **Orchestration tools**: Task & TodoWrite added to coordination agents
 
-### Step 3: Open in Factory AI
+### Step 3: Import Droids in Factory CLI (REQUIRED)
+
+**⚠️ IMPORTANT:** Factory doesn't auto-load droids from `.factory/droids/`. You must import them manually.
+
+**Good news:** The deployment script automatically enables Custom Droids in `~/.factory/settings.json`, so you can skip the settings step!
+
+**Import Steps:**
+
+1. **Open Factory and restart** (to load the new setting):
+   ```bash
+   droid .
+   # If this is your first time using custom droids, restart droid to load the setting:
+   # Ctrl+C, then: droid .
+   ```
+
+2. **Import Droids**:
+   ```bash
+   /droids
+   # Press 'I' to start import
+   # Press 'A' to select all (or Space for individual)
+   # Press Enter to import
+   ```
+
+3. **Verify Import**:
+   ```bash
+   /droids
+   # Should see 53 droids listed with descriptions
+   ```
+
+**What happens during deployment:**
+- ✅ Deployment automatically enables `enableCustomDroids: true` in `~/.factory/settings.json`
+- ✅ Creates `.factory/droids/*.md` files (53 droids)
+- ❌ You still need to import droids manually (Factory security feature)
+
+**What happens during import:**
+- Factory scans `.factory/droids/` for droid files
+- Converts them to Factory's internal format
+- Registers them as available subagents
+- You can now invoke them via natural language or Task tool
+
+### Step 4: Open in Factory AI
 
 ```bash
 droid .
 ```
 
-### Step 4: Generate Project Intake
+### Step 5: Generate Project Intake
 
 **Option A: Interactive Intake**
 ```text
@@ -74,7 +123,7 @@ You: "Generate intake for an e-commerce platform: React frontend, Node.js backen
 Droid: [Creates complete intake forms in .aiwg/intake/]
 ```
 
-### Step 5: Begin SDLC Phases
+### Step 6: Begin SDLC Phases
 
 **Inception Phase**
 ```text
@@ -131,10 +180,26 @@ aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-ag
 
 # Or just the script path if aiwg not aliased
 node ~/.local/share/ai-writing-guide/tools/agents/deploy-agents.mjs --provider factory --mode sdlc --deploy-commands --create-agents-md
-
-# Generate intake from existing codebase
-droid .
 ```
+
+### Step 3: Import Droids (REQUIRED)
+
+**⚠️ Factory requires manual import** - droids aren't auto-loaded.
+
+**Note:** Deployment automatically enables Custom Droids in `~/.factory/settings.json`, so you can skip the settings configuration!
+
+```bash
+droid .  # Open Factory (restart if running to load new setting)
+
+# In Factory CLI:
+/droids
+# Press 'I' → 'A' (select all) → Enter (import)
+
+# Verify:
+/droids  # Should list 53 imported droids
+```
+
+### Step 4: Generate Intake from Codebase
 
 Then in Factory:
 ```text
@@ -146,7 +211,7 @@ Droid: [Uses intake-from-codebase approach]
   - Creates intake forms in .aiwg/intake/
 ```
 
-### Step 3: Check Project Status
+### Step 5: Check Project Status
 
 ```text
 You: "Where are we in the SDLC?"
@@ -351,14 +416,40 @@ aiwg -deploy-agents --provider factory --mode sdlc \
 
 ## Troubleshooting
 
-### Droids Not Found
+### Droids Not Found / Not Available
+
+**Problem:** Factory says "subagent not found" or droids don't appear in `/droids`
+
+**Solution:**
 
 ```bash
-# Verify deployment
+# 1. Verify files were deployed
 ls .factory/droids/
+# Should show 53 .md files
 
-# Redeploy if needed
+# 2. Check Custom Droids setting (should be automatic)
+cat ~/.factory/settings.json
+# Should contain: "enableCustomDroids": true
+# If missing, deployment auto-configures this
+
+# 3. Restart droid to load settings
+# Ctrl+C to exit current session
+droid .
+
+# 4. Import droids manually
+/droids
+# Press 'I' for Import
+# Press 'A' to select all
+# Press Enter to import
+
+# 5. Verify import succeeded
+/droids
+# Should list 53 droids with descriptions
+
+# If still not working, redeploy with auto-configuration:
 aiwg -deploy-agents --provider factory --mode sdlc --force
+# This will re-enable Custom Droids in settings.json
+# Then restart droid and repeat import steps above
 ```
 
 ### Model Not Available
@@ -391,6 +482,51 @@ ls ~/.local/share/ai-writing-guide
 # Reinstall if needed
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
 ```
+
+## Factory-Specific Notes
+
+### Droid Import is Manual (Not Automatic)
+
+Unlike Claude Code (which auto-discovers `.claude/agents/`), Factory requires manual import:
+
+**Why?**
+- Factory validates and registers droids during import
+- Allows selective import (you can choose which droids to enable)
+- Prevents accidental execution of untrusted droids
+
+**When to re-import:**
+- After updating droid files (edit `.factory/droids/*.md`)
+- After pulling team changes that modify droids
+- When adding new droids to the project
+
+**Import shortcuts:**
+```bash
+droid .
+/droids → I → A → Enter
+```
+
+### Custom Droids Feature (Auto-Enabled)
+
+Factory's custom droids are **experimental**, but the deployment script automatically enables them:
+
+**What the deployment does:**
+```bash
+# Automatically configures ~/.factory/settings.json:
+{
+  "enableCustomDroids": true
+}
+```
+
+**Manual enable (if needed):**
+```bash
+droid
+/settings
+# Toggle "Custom Droids" under Experimental
+```
+
+This setting persists to `~/.factory/settings.json` and registers the Task tool.
+
+**After deployment, just restart droid to load the setting.**
 
 ## Best Practices
 

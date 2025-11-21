@@ -152,19 +152,103 @@ function transformToFactoryDroid(content, modelCfg) {
   const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
   const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
   const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
+  const toolsMatch = frontmatter.match(/tools:\s*(.+)/)?.[1]?.trim();
   
   // Map model to Factory format
   const factoryModel = mapModelToFactory(modelMatch, modelCfg);
+  
+  // Map tools to Factory equivalents
+  const factoryTools = mapToolsToFactory(toolsMatch, name);
   
   // Generate Factory droid frontmatter
   const factoryFrontmatter = `---
 name: ${name}
 description: ${description || 'AIWG SDLC agent'}
 model: ${factoryModel}
-tools: ["Read", "LS", "Grep", "Glob", "Edit", "Create", "Execute"]
+tools: ${JSON.stringify(factoryTools)}
 ---`;
   
   return `${factoryFrontmatter}\n\n${body.trim()}`;
+}
+
+function mapToolsToFactory(toolsString, agentName) {
+  // Default comprehensive tool set if no tools specified
+  if (!toolsString) {
+    return ["Read", "LS", "Grep", "Glob", "Edit", "Create", "Execute", "Task", "TodoWrite", "WebSearch", "FetchUrl"];
+  }
+  
+  // Parse tools (comma-separated or array format)
+  let originalTools = [];
+  if (toolsString.startsWith('[')) {
+    try {
+      originalTools = JSON.parse(toolsString);
+    } catch (e) {
+      // Fall back to split
+      originalTools = toolsString.replace(/[\[\]"']/g, '').split(/[,\s]+/).filter(Boolean);
+    }
+  } else {
+    originalTools = toolsString.split(/[,\s]+/).filter(Boolean);
+  }
+  
+  // Tool mapping: Claude Code → Factory
+  const toolMap = {
+    'Bash': 'Execute',
+    'Write': 'Create',  // Will add Edit too
+    'WebFetch': 'FetchUrl',
+    'MultiEdit': 'MultiEdit',
+    'Read': 'Read',
+    'Grep': 'Grep',
+    'Glob': 'Glob',
+    'LS': 'LS'
+  };
+  
+  const factoryTools = new Set();
+  
+  // Map original tools
+  for (const tool of originalTools) {
+    const mapped = toolMap[tool] || tool;
+    factoryTools.add(mapped);
+    
+    // If Write is present, add both Create and Edit
+    if (tool === 'Write') {
+      factoryTools.add('Create');
+      factoryTools.add('Edit');
+    }
+    
+    // If MultiEdit is present, also add ApplyPatch (related patch-based editing)
+    if (tool === 'MultiEdit') {
+      factoryTools.add('ApplyPatch');
+    }
+  }
+  
+  // Orchestration agents need Task tool for invoking subagents
+  const orchestrationAgents = [
+    'executive-orchestrator',
+    'intake-coordinator',
+    'documentation-synthesizer',
+    'project-manager',
+    'deployment-manager',
+    'test-architect',
+    'architecture-designer',
+    'requirements-analyst',
+    'security-architect',
+    'technical-writer'
+  ];
+  
+  const normalizedName = (agentName || '').toLowerCase().replace(/\s+/g, '-');
+  if (orchestrationAgents.some(oa => normalizedName.includes(oa))) {
+    factoryTools.add('Task');
+    factoryTools.add('TodoWrite');
+  }
+  
+  // Add web tools if WebFetch was present
+  if (originalTools.includes('WebFetch')) {
+    factoryTools.add('FetchUrl');
+    factoryTools.add('WebSearch');
+  }
+  
+  // Convert to sorted array for consistency
+  return Array.from(factoryTools).sort();
 }
 
 function mapModelToFactory(originalModel, modelCfg) {
@@ -330,6 +414,55 @@ function createFactoryAgentsMd(target, srcRoot, dryRun) {
   }
 }
 
+function enableFactoryCustomDroids(dryRun) {
+  const homeDir = process.env.HOME || process.env.USERPROFILE;
+  if (!homeDir) {
+    console.warn('Could not determine home directory, skipping Factory settings configuration');
+    return;
+  }
+  
+  const settingsDir = path.join(homeDir, '.factory');
+  const settingsPath = path.join(settingsDir, 'settings.json');
+  
+  let settings = {};
+  
+  // Read existing settings if present
+  if (fs.existsSync(settingsPath)) {
+    try {
+      const content = fs.readFileSync(settingsPath, 'utf8');
+      settings = JSON.parse(content);
+    } catch (err) {
+      console.warn(`Warning: Could not parse existing Factory settings.json: ${err.message}`);
+      console.warn('Creating new settings file...');
+      settings = {};
+    }
+  }
+  
+  // Check if Custom Droids already enabled
+  if (settings.enableCustomDroids === true) {
+    console.log('Factory Custom Droids already enabled in settings');
+    return;
+  }
+  
+  // Enable Custom Droids
+  settings.enableCustomDroids = true;
+  
+  if (dryRun) {
+    console.log(`[dry-run] Would enable Custom Droids in ${settingsPath}`);
+    console.log(`[dry-run] New setting: enableCustomDroids: true`);
+  } else {
+    // Ensure settings directory exists
+    if (!fs.existsSync(settingsDir)) {
+      fs.mkdirSync(settingsDir, { recursive: true });
+    }
+    
+    // Write updated settings
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+    console.log(`Enabled Custom Droids in Factory settings: ${settingsPath}`);
+    console.log('Note: You may need to restart droid for this setting to take effect');
+  }
+}
+
 (function main() {
   const cfg = parseArgs();
   const { source, target, mode, dryRun, force, provider, reasoningModel, codingModel, efficiencyModel, deployCommands, commandsOnly, asAgentsMd, createAgentsMd } = cfg;
@@ -434,5 +567,11 @@ function createFactoryAgentsMd(target, srcRoot, dryRun) {
   if (provider === 'factory' && createAgentsMd) {
     console.log('\nCreating/updating AGENTS.md template for Factory...');
     createFactoryAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Enable Custom Droids in Factory settings (if deploying to Factory)
+  if (provider === 'factory' && !commandsOnly) {
+    console.log('\nConfiguring Factory settings...');
+    enableFactoryCustomDroids(dryRun);
   }
 })();
