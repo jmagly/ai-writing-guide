@@ -235,7 +235,52 @@ echo "======================================================================="
 
 Use Bash tool for validation.
 
-### Step 7: Provide Next Steps
+### Step 7: Detect and Configure Factory AI (If Present)
+
+Check if Factory AI is also being used and update AGENTS.md accordingly:
+
+```bash
+# Detect Factory AI deployment
+if [ -d "$PROJECT_DIR/.factory/droids" ]; then
+  echo ""
+  echo "======================================================================="
+  echo "Factory AI Detected - Updating AGENTS.md"
+  echo "======================================================================="
+  echo ""
+
+  # Check if aiwg-update-agents-md command exists
+  if [ -f "$AIWG_PATH/agentic/code/frameworks/sdlc-complete/commands/aiwg-update-agents-md.md" ]; then
+    echo "✓ Factory AI droids detected in .factory/droids/"
+    echo "✓ Running Factory AI configuration..."
+    echo ""
+
+    # This would trigger the Factory-specific configuration command
+    # In practice, the orchestrator would call this command directly
+    echo "FACTORY_AI_DETECTED=true"
+  else
+    echo "⚠️  Factory AI droids detected but aiwg-update-agents-md command not found"
+    echo "   Skipping AGENTS.md update"
+  fi
+
+  echo ""
+  echo "======================================================================="
+fi
+```
+
+**Logic**:
+1. Check for `.factory/droids/` directory existence
+2. If found, indicate Factory AI is also configured
+3. Signal that AGENTS.md should also be updated
+4. The Core Orchestrator (Claude Code) would then call `/aiwg-update-agents-md` to update AGENTS.md with project-specific content
+
+**Cross-Platform Scenario**:
+- **Claude Code only**: Updates CLAUDE.md only
+- **Claude Code + Factory AI**: Updates both CLAUDE.md and AGENTS.md
+- **Multi-platform**: Updates all relevant platform config files
+
+Use Bash tool for Factory AI detection.
+
+### Step 8: Provide Next Steps
 
 After successful setup, provide clear guidance:
 
@@ -266,6 +311,12 @@ After successful setup, provide clear guidance:
 - ✓ Templates accessible at: {AIWG_PATH}/agentic/code/frameworks/sdlc-complete/templates/
 - ✓ Natural language translation guide: {AIWG_PATH}/docs/simple-language-translations.md
 
+{if Factory AI detected}
+### Factory AI Integration
+- ✓ Factory AI droids detected in .factory/droids/
+- ⚠️  **Action Required**: Run `/aiwg-update-agents-md` to update AGENTS.md with project-specific content
+- ℹ️  This ensures both Claude Code (CLAUDE.md) and Factory AI (AGENTS.md) are configured
+
 ## Next Steps
 
 1. **Review CLAUDE.md**:
@@ -280,6 +331,16 @@ After successful setup, provide clear guidance:
 
    # Deploy SDLC commands to .claude/commands/
    aiwg -deploy-commands --mode sdlc
+   ```
+
+   {if Factory AI detected}
+   **Factory AI Users**:
+   ```bash
+   # Update AGENTS.md with project-specific content
+   /aiwg-update-agents-md
+
+   # Or if not yet deployed, deploy Factory droids first
+   aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
    ```
 
 3. **Start Intake** (if new to AIWG):
