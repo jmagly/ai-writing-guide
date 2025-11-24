@@ -1,12 +1,23 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI platforms (Claude Code, Warp Terminal, Factory AI) when working with code in this repository.
 
 ## Repository Purpose
 
 The AI Writing Guide is a comprehensive framework for improving AI-generated content quality. It provides guidelines,
-validation patterns, and specialized Claude Code agents to ensure AI outputs maintain authentic, professional writing
+validation patterns, and specialized agents to ensure AI outputs maintain authentic, professional writing
 standards while avoiding detection patterns.
+
+## Multi-Platform Support
+
+This repository supports multiple AI platforms with platform-specific deployment formats:
+
+- **Claude Code** (`.claude/agents/*.md`, `.claude/commands/*.md`) - Multi-agent orchestration
+- **Warp Terminal** (`WARP.md` symlinked to `CLAUDE.md`) - Terminal-native workflows
+- **Factory AI** (`.factory/droids/*.md`, `.factory/commands/*.md`, `AGENTS.md`) - Custom droid format
+- **OpenAI/Codex** (`.codex/agents/*.md` or `AGENTS.md`) - Experimental support
+
+All platforms share the same agent logic and SDLC framework; only the deployment format differs.
 
 ## Critical Usage Instructions
 
@@ -57,7 +68,12 @@ The repository includes two categories of specialized agents:
 - Including: code-reviewer, test-engineer, requirements-analyst, devops-engineer, architecture-designer, security-gatekeeper, incident-responder, and many more
 - See `/agentic/code/frameworks/sdlc-complete/README.md` for complete list
 
-Agents can be deployed via `aiwg -deploy-agents --mode general|sdlc|both` and work independently with isolated contexts.
+Agents can be deployed via:
+- **Claude Code**: `aiwg -deploy-agents --mode general|sdlc|both`
+- **Warp Terminal**: `aiwg -deploy-agents --platform warp --mode sdlc`
+- **Factory AI**: `aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands`
+
+All agents work independently with isolated contexts regardless of platform.
 
 ## Common Development Tasks
 
@@ -244,23 +260,31 @@ node tools/cards/prefill-cards.mjs --target agentic/code/frameworks/sdlc-complet
 
 ## Multi-Provider Support
 
-Agents support both Claude and OpenAI platforms:
+Agents support Claude, Factory AI, and OpenAI platforms:
 
 ```bash
+# Deploy for Claude Code (default - creates .claude/agents/)
+aiwg -deploy-agents --mode sdlc
+
+# Deploy for Factory AI (creates .factory/droids/ + AGENTS.md)
+aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
+
 # Deploy for OpenAI/Codex (creates .codex/agents/)
 aiwg -deploy-agents --provider openai
 
-# Deploy as single AGENTS.md file (OpenAI preference)
+# Deploy as single AGENTS.md file (OpenAI/Factory preference)
 aiwg -deploy-agents --provider openai --as-agents-md
 
-# Override model selections
-aiwg -deploy-agents --provider openai \
-  --reasoning-model gpt-5 \
-  --coding-model gpt-5-codex \
-  --efficiency-model gpt-5-codex
+# Override model selections (all providers)
+aiwg -deploy-agents --provider factory \
+  --reasoning-model claude-opus-4-1-20250805 \
+  --coding-model claude-sonnet-4-5-20250929 \
+  --efficiency-model claude-haiku-3-5
 ```
 
-See `agentic/code/frameworks/sdlc-complete/agents/openai-compat.md` for platform-specific guidance.
+**Platform-Specific Guidance:**
+- **Factory AI**: `agentic/code/frameworks/sdlc-complete/agents/factory-compat.md`
+- **OpenAI/Codex**: `agentic/code/frameworks/sdlc-complete/agents/openai-compat.md`
 
 ## SDLC Complete Framework (PLAN → ACT)
 

@@ -18,7 +18,7 @@
 
 ## 🚀 Quick Start
 
-> **📋 Prerequisites:** Node.js ≥18.20.8 and Claude Code or Warp Terminal. [See detailed setup instructions →](#-prerequisites)
+> **📋 Prerequisites:** Node.js ≥18.20.8 and an AI platform (Claude Code, Warp Terminal, or Factory AI). [See detailed setup instructions →](#-prerequisites)
 
 **Install in 30 seconds** — One command. Zero configuration.
 
@@ -344,6 +344,11 @@ aiwg -deploy-agents --mode sdlc
 aiwg -setup-warp --mode sdlc
 ```
 
+**Factory AI:**
+```bash
+aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
+```
+
 **Time Saved:** 98% (6 hours → 10 seconds)
 
 ---
@@ -363,6 +368,11 @@ aiwg -setup-warp --mode sdlc
 ```text
 # In Warp AI
 "Analyze this codebase and generate intake documents"
+```
+
+**Factory AI:**
+```bash
+/intake-from-codebase .
 ```
 
 **Output:** Project intake, solution profile, option matrix (3 documents, 5,000+ words)
@@ -388,11 +398,17 @@ aiwg -setup-warp --mode sdlc
 "Create architecture baseline with security and testing review"
 ```
 
+**Factory AI (Droid Orchestration):**
+```bash
+"Create SAD with multi-agent review"
+# Factory automatically coordinates: architecture-designer → reviewers → synthesizer
+```
+
 **Workflow:** Primary Author → 4 Parallel Reviewers → Synthesizer → Baseline
 
 **Time Saved:** 92-96% (9-15 hours → 45-60 minutes)
 
-**Note:** Multi-agent orchestration is Claude Code's strength. Warp provides context-aware guidance.
+**Note:** Multi-agent orchestration is a strength of Claude Code and Factory AI. Warp provides context-aware guidance.
 
 ---
 
@@ -640,7 +656,7 @@ node tools/cards/prefill-cards.mjs --target artifacts/my-project --team team.yam
 
 ## 📋 Prerequisites
 
-Before installing, ensure you have the following requirements. This framework is **tested and validated** for both **Claude Code** and **Warp Terminal**. Support for other platforms is in development.
+Before installing, ensure you have the following requirements. This framework is **tested and validated** for **Claude Code, Warp Terminal, and Factory AI**. Support for other platforms is in development.
 
 > **ℹ️ Technical Notes:**
 > - **Rate Limits:** Agentic tools handle rate limits and retries automatically. No manual timeout management required.
@@ -751,9 +767,9 @@ node --version  # Should show v18.x.x
 
 ---
 
-#### 2. AI Platform (Choose One or Both)
+#### 2. AI Platform (Choose One or More)
 
-This framework supports **both Claude Code and Warp Terminal**. Choose based on your workflow:
+This framework supports **Claude Code, Warp Terminal, and Factory AI**. Choose based on your workflow:
 
 **Option A: Claude Code (Multi-Agent Orchestration)**
 
@@ -796,18 +812,41 @@ claude --version  # Should show Claude Code version
 
 ---
 
-**Option C: Use Both (Recommended)**
+**Option C: Factory AI (Custom Droids)**
 
-Get the best of both platforms:
+**Best for:** Custom droid workflows, native Factory format, AGENTS.md-based configuration
 
-- **Warp Terminal:** Command-line workflows, terminal-native AI
-- **Claude Code:** Multi-agent orchestration, artifact generation
+**Install Factory AI:**
+
+1. **Download:** Visit [factory.ai](https://factory.ai/)
+2. **Install CLI:** `curl -fsSL https://app.factory.ai/cli | sh`
+3. **Sign up/Login:** Create a Factory account or login
+
+**Verify Installation:**
 
 ```bash
-# Deploy to both platforms
-aiwg -deploy-agents --mode sdlc      # Claude Code agents
-aiwg -deploy-commands --mode sdlc    # Claude Code commands
-aiwg -setup-warp --mode sdlc         # Warp Terminal integration
+factory --version  # Should show Factory CLI version
+droid .            # Launch Factory in current directory
+```
+
+[**Factory AI Quick Start →**](docs/integrations/factory-quickstart.md) | [**Documentation →**](https://docs.factory.ai/)
+
+---
+
+**Option D: Use Multiple Platforms (Recommended)**
+
+Get the best of all platforms:
+
+- **Claude Code:** Multi-agent orchestration, artifact generation
+- **Warp Terminal:** Command-line workflows, terminal-native AI
+- **Factory AI:** Custom droid workflows, native Factory format
+
+```bash
+# Deploy to all platforms
+aiwg -deploy-agents --mode sdlc                                          # Claude Code
+aiwg -deploy-commands --mode sdlc                                        # Claude Code
+aiwg -setup-warp --mode sdlc                                             # Warp Terminal
+aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands    # Factory AI
 ```
 
 ---
@@ -874,6 +913,9 @@ claude --version && echo "✅ Claude Code installed" || echo "ℹ️ Claude Code
 
 # Check Warp Terminal (if using)
 # Open Warp Terminal and verify it launches successfully
+
+# Check Factory AI (if using)
+factory --version && echo "✅ Factory AI installed" || echo "ℹ️ Factory AI not installed"
 
 # Check Git (optional)
 git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed for aiwg -new)"
@@ -1251,7 +1293,7 @@ This framework is in **active development** (Phase 1: Validation). Expect:
 ### Known Limitations
 
 **Current Limitations** (will improve over time):
-- ⚠️ Only tested with Claude Code (other platforms experimental)
+- ⚠️ Fully tested with Claude Code, Warp Terminal, and Factory AI (other platforms experimental)
 - ⚠️ English-only templates and agents
 - ⚠️ No cost tracking or budget enforcement
 - ⚠️ Context window limits not validated (>200k tokens)
@@ -1266,10 +1308,10 @@ This framework is in **active development** (Phase 1: Validation). Expect:
 Built with inspiration from:
 - **Writing Quality:** [Hemingway Editor](https://hemingwayapp.com/), [Grammarly](https://www.grammarly.com/)
 - **SDLC Practices:** Rational Unified Process (RUP), ITIL, Agile methodologies
-- **Agent Patterns:** Claude Code orchestration, multi-agent collaboration research
+- **Agent Patterns:** Multi-agent orchestration, collaborative AI research
 - **OSS Projects:** React, Vue.js, Next.js, Tailwind CSS (README design inspiration)
 
-Special thanks to the Claude Code team for building the platform that makes this possible.
+Special thanks to the teams at Anthropic (Claude Code), Warp (Warp Terminal), and Factory AI for building the platforms that make this possible.
 
 ---
 

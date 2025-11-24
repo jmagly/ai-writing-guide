@@ -2,7 +2,9 @@
 
 ## Overview
 
-The SDLC Complete framework provides a comprehensive Plan → Act lifecycle for software delivery using Claude Code agents. This specialized framework includes agents, commands, templates, and flows for managing the entire software development lifecycle.
+The SDLC Complete framework provides a comprehensive Plan → Act lifecycle for software delivery using AI agents. This specialized framework includes agents, commands, templates, and flows for managing the entire software development lifecycle.
+
+**Supported Platforms:** Claude Code, Warp Terminal, Factory AI, OpenAI/Codex (experimental)
 
 ## Framework Structure
 
@@ -38,8 +40,10 @@ Use the AI Writing Guide CLI to deploy this framework:
 # Install CLI
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh | bash
 
-# Deploy agents to project
-aiwg -deploy-agents --provider claude
+# Deploy agents to project (choose your platform)
+aiwg -deploy-agents --mode sdlc                                          # Claude Code
+aiwg -deploy-agents --platform warp --mode sdlc                          # Warp Terminal
+aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands    # Factory AI
 
 # Scaffold new project with SDLC templates
 aiwg -new
