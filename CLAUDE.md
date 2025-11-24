@@ -276,10 +276,11 @@ aiwg -deploy-agents --provider openai
 aiwg -deploy-agents --provider openai --as-agents-md
 
 # Override model selections (all providers)
+# Note: Default models are defined in agentic/code/frameworks/sdlc-complete/config/models.json
 aiwg -deploy-agents --provider factory \
-  --reasoning-model claude-opus-4-1-20250805 \
-  --coding-model claude-sonnet-4-5-20250929 \
-  --efficiency-model claude-haiku-3-5
+  --reasoning-model <your-reasoning-model> \
+  --coding-model <your-coding-model> \
+  --efficiency-model <your-efficiency-model>
 ```
 
 **Platform-Specific Guidance:**

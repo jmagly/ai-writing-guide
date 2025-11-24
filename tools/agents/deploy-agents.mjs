@@ -141,25 +141,25 @@ function replaceModelFrontmatter(content, provider, models) {
   return updatedHeader + body;
 }
 
-function transformToFactoryDroid(content, modelCfg) {
+function transformToFactoryDroid(content, modelCfg, modelsConfig) {
   // Parse existing frontmatter
   const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!fmMatch) return content;
-  
+
   const [, frontmatter, body] = fmMatch;
-  
+
   // Extract metadata
   const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
   const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
   const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
   const toolsMatch = frontmatter.match(/tools:\s*(.+)/)?.[1]?.trim();
-  
+
   // Map model to Factory format
-  const factoryModel = mapModelToFactory(modelMatch, modelCfg);
-  
+  const factoryModel = mapModelToFactory(modelMatch, modelCfg, modelsConfig);
+
   // Map tools to Factory equivalents
   const factoryTools = mapToolsToFactory(toolsMatch, name);
-  
+
   // Generate Factory droid frontmatter
   const factoryFrontmatter = `---
 name: ${name}
@@ -167,7 +167,7 @@ description: ${description || 'AIWG SDLC agent'}
 model: ${factoryModel}
 tools: ${JSON.stringify(factoryTools)}
 ---`;
-  
+
   return `${factoryFrontmatter}\n\n${body.trim()}`;
 }
 
@@ -251,37 +251,76 @@ function mapToolsToFactory(toolsString, agentName) {
   return Array.from(factoryTools).sort();
 }
 
-function mapModelToFactory(originalModel, modelCfg) {
+/**
+ * Load model configuration from models.json
+ * Priority: Project models.json > User ~/.config/aiwg/models.json > AIWG defaults
+ */
+function loadModelConfig(srcRoot) {
+  const locations = [
+    { path: path.join(process.cwd(), 'models.json'), label: 'project' },
+    { path: path.join(process.env.HOME || process.env.USERPROFILE, '.config', 'aiwg', 'models.json'), label: 'user' },
+    { path: path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'config', 'models.json'), label: 'AIWG defaults' }
+  ];
+
+  for (const loc of locations) {
+    if (fs.existsSync(loc.path)) {
+      try {
+        const config = JSON.parse(fs.readFileSync(loc.path, 'utf8'));
+        config._source = `${loc.label} (${loc.path})`;
+        return config;
+      } catch (err) {
+        console.warn(`Warning: Could not parse models.json at ${loc.path}: ${err.message}`);
+      }
+    }
+  }
+
+  // Fallback to hardcoded defaults if no config found
+  return {
+    factory: {
+      reasoning: { model: 'claude-opus-4-1-20250805' },
+      coding: { model: 'claude-sonnet-4-5-20250929' },
+      efficiency: { model: 'claude-haiku-3-5' }
+    },
+    shorthand: {
+      'opus': 'claude-opus-4-1-20250805',
+      'sonnet': 'claude-sonnet-4-5-20250929',
+      'haiku': 'claude-haiku-3-5',
+      'inherit': 'inherit'
+    }
+  };
+}
+
+function mapModelToFactory(originalModel, modelCfg, modelsConfig) {
   // Handle override models first
   if (modelCfg.reasoningModel || modelCfg.codingModel || modelCfg.efficiencyModel) {
     const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
-    if (/opus/i.test(clean)) return modelCfg.reasoningModel || 'claude-opus-4-1-20250805';
-    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || 'claude-haiku-3-5';
-    return modelCfg.codingModel || 'claude-sonnet-4-5-20250929';
+    if (/opus/i.test(clean)) return modelCfg.reasoningModel || modelsConfig.factory.reasoning.model;
+    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || modelsConfig.factory.efficiency.model;
+    return modelCfg.codingModel || modelsConfig.factory.coding.model;
   }
-  
-  // Default Factory model mappings
-  const factoryModels = {
-    'opus': 'claude-opus-4-1-20250805',
-    'sonnet': 'claude-sonnet-4-5-20250929',
-    'haiku': 'claude-haiku-3-5',
+
+  // Use shorthand mappings from config
+  const factoryModels = modelsConfig.shorthand || {
+    'opus': modelsConfig.factory.reasoning.model,
+    'sonnet': modelsConfig.factory.coding.model,
+    'haiku': modelsConfig.factory.efficiency.model,
     'inherit': 'inherit'
   };
-  
+
   const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
-  
+
   // Match to Factory model
   for (const [key, value] of Object.entries(factoryModels)) {
     if (clean.includes(key)) return value;
   }
-  
-  return 'claude-sonnet-4-5-20250929'; // default
+
+  return modelsConfig.factory.coding.model; // default
 }
 
-function transformIfNeeded(srcPath, content, provider, modelCfg) {
+function transformIfNeeded(srcPath, content, provider, modelCfg, modelsConfig) {
   // Factory uses different format entirely
   if (provider === 'factory') {
-    return transformToFactoryDroid(content, modelCfg);
+    return transformToFactoryDroid(content, modelCfg, modelsConfig);
   }
   
   let destContent = content;
@@ -324,7 +363,7 @@ function deployFiles(files, destDir, opts) {
 
     // Read and transform source content
     const srcContent = fs.readFileSync(f, 'utf8');
-    const transformedContent = transformIfNeeded(f, srcContent, provider, opts);
+    const transformedContent = transformIfNeeded(f, srcContent, provider, opts, opts.modelsConfig);
 
     // Check if destination exists and compare contents
     if (fs.existsSync(dest)) {
@@ -360,7 +399,7 @@ function aggregateToAgentsMd(files, destPath, opts) {
   const blocks = [];
   for (const f of files) {
     let content = fs.readFileSync(f, 'utf8');
-    content = transformIfNeeded(f, content, provider, opts);
+    content = transformIfNeeded(f, content, provider, opts, opts.modelsConfig);
     // ensure block separation
     if (!content.endsWith('\n')) content += '\n';
     blocks.push(content);
@@ -472,8 +511,13 @@ function enableFactoryCustomDroids(dryRun) {
   const repoRoot = path.resolve(scriptDir, '..', '..');
   const srcRoot = source ? source : repoRoot;
 
+  // Load model configuration
+  const modelsConfig = loadModelConfig(srcRoot);
+  console.log(`Model config loaded from: ${modelsConfig._source || 'defaults'}`);
+
   const deployOpts = {
     force,
+    modelsConfig,
     dryRun,
     provider,
     reasoningModel,

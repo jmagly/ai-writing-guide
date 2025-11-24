@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jmagly/ai-writing-guide/models-config.json",
+  "title": "AIWG Model Configuration",
+  "description": "Default model mappings for AIWG SDLC framework deployment. Users can customize these values for their specific needs.",
+  "version": "1.0.0",
+  "lastUpdated": "2025-11-24",
+
+  "claude": {
+    "reasoning": {
+      "model": "claude-opus-4-1-20250805",
+      "description": "Claude Opus 4.1 - Best for complex reasoning, architecture design, strategic decisions"
+    },
+    "coding": {
+      "model": "claude-sonnet-4-5-20250929",
+      "description": "Claude Sonnet 4.5 - Best for code generation, implementation, debugging"
+    },
+    "efficiency": {
+      "model": "claude-haiku-3-5",
+      "description": "Claude Haiku 3.5 - Best for quick tasks, file operations, simple edits"
+    }
+  },
+
+  "factory": {
+    "reasoning": {
+      "model": "claude-opus-4-1-20250805",
+      "description": "Factory AI uses full Claude model identifiers"
+    },
+    "coding": {
+      "model": "claude-sonnet-4-5-20250929",
+      "description": "Factory AI uses full Claude model identifiers"
+    },
+    "efficiency": {
+      "model": "claude-haiku-3-5",
+      "description": "Factory AI uses full Claude model identifiers"
+    }
+  },
+
+  "openai": {
+    "reasoning": {
+      "model": "gpt-5",
+      "description": "OpenAI's most capable reasoning model"
+    },
+    "coding": {
+      "model": "gpt-5-codex",
+      "description": "OpenAI's specialized code model"
+    },
+    "efficiency": {
+      "model": "gpt-5-codex",
+      "description": "OpenAI's fast model for simple tasks"
+    }
+  },
+
+  "shorthand": {
+    "opus": "claude-opus-4-1-20250805",
+    "sonnet": "claude-sonnet-4-5-20250929",
+    "haiku": "claude-haiku-3-5",
+    "inherit": "inherit"
+  },
+
+  "_comments": {
+    "usage": "This file defines default model mappings used by AIWG deployment scripts",
+    "customization": "Users can modify these values to use different models or versions",
+    "location": "Place custom models.json in project root to override defaults",
+    "precedence": "Project models.json > User ~/.config/aiwg/models.json > AIWG defaults",
+    "documentation": "See docs/configuration/model-configuration.md for details"
+  }
+}

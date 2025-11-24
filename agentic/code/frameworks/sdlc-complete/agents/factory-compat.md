@@ -44,11 +44,18 @@ tools: ["Read", "LS", "Grep", "Glob", "Edit", "Create", "Execute"]
   - efficiency: `haiku`
   
 - **Factory defaults (full identifiers)**:
-  - reasoning: `claude-opus-4-1-20250805`
-  - coding: `claude-sonnet-4-5-20250929`
-  - efficiency: `claude-haiku-3-5`
+  - Defined in: `agentic/code/frameworks/sdlc-complete/config/models.json`
+  - Current defaults (see config file for latest):
+    - reasoning: Claude Opus (latest stable)
+    - coding: Claude Sonnet (latest stable)
+    - efficiency: Claude Haiku (latest stable)
 
-Model mapping is automatic during deployment. The deploy script detects the original model type and maps to the appropriate Factory model.
+**Model Configuration**:
+- Models are loaded from `models.json` configuration file
+- Priority: Project `models.json` > User `~/.config/aiwg/models.json` > AIWG defaults
+- Users can customize models without editing deployment scripts
+
+Model mapping is automatic during deployment. The deploy script detects the original model type and maps to the appropriate Factory model using the configuration.
 
 ## Deployment
 

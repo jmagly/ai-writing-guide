@@ -401,18 +401,42 @@ tools: ["Read", "LS", "Grep", "Glob", "Edit", "Create"]  # Remove Execute for sa
 ## Model Options
 
 AIWG agents are classified by role:
-- **Reasoning** (opus): Complex analysis, critical decisions → `claude-opus-4-1-20250805`
-- **Coding** (sonnet): Standard coding, reviews → `claude-sonnet-4-5-20250929`
-- **Efficiency** (haiku): Simple tasks, summaries → `claude-haiku-3-5`
+- **Reasoning** (opus): Complex analysis, critical decisions
+- **Coding** (sonnet): Standard coding, reviews
+- **Efficiency** (haiku): Simple tasks, summaries
 
-Override models during deployment:
+**Model Configuration**:
+- Default models are defined in `agentic/code/frameworks/sdlc-complete/config/models.json`
+- See configuration file for current model versions
 
+**Option 1: Command-line Override** (temporary)
 ```bash
 aiwg -deploy-agents --provider factory --mode sdlc \
-  --reasoning-model claude-opus-4-1-20250805 \
-  --coding-model claude-sonnet-4-5-20250929 \
-  --efficiency-model claude-haiku-3-5
+  --reasoning-model <your-reasoning-model> \
+  --coding-model <your-coding-model> \
+  --efficiency-model <your-efficiency-model>
 ```
+
+**Option 2: Configuration File** (persistent, recommended)
+
+Create `models.json` in your project root or `~/.config/aiwg/models.json`:
+
+```json
+{
+  "factory": {
+    "reasoning": { "model": "claude-opus-4-1-20250805" },
+    "coding": { "model": "claude-sonnet-4-5-20250929" },
+    "efficiency": { "model": "claude-haiku-3-5" }
+  },
+  "shorthand": {
+    "opus": "claude-opus-4-1-20250805",
+    "sonnet": "claude-sonnet-4-5-20250929",
+    "haiku": "claude-haiku-3-5"
+  }
+}
+```
+
+See `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/config/models.json` for the complete template.
 
 ## Troubleshooting
 
