@@ -899,6 +899,7 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 - [**Warp Terminal Quick Start**](docs/integrations/warp-terminal-quickstart.md) — 3-5 minute setup for Warp Terminal
 - [**Warp Terminal Integration Guide**](docs/integrations/warp-terminal.md) — Comprehensive Warp documentation
 - [**Factory AI Quick Start**](docs/integrations/factory-quickstart.md) — 5-10 minute setup for Factory AI
+- [**Cross-Platform Configuration**](docs/integrations/cross-platform-config.md) — Understanding the WARP.md → CLAUDE.md symlink
 
 ### Writing Quality
 
