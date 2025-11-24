@@ -435,7 +435,7 @@ define:
 touch .claude/commands/my-command.md
 
 # Test with usage
-/project:my-command test-input
+/my-command test-input
 
 # Iterate based on results
 ```

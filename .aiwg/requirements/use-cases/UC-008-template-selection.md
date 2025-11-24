@@ -84,7 +84,7 @@
 - Developer types `aiwg -find-template --phase elaboration --artifact architecture` (filtered search)
 
 **Contextual Trigger:**
-- Developer invokes phase transition command (e.g., `/project:flow-inception-to-elaboration`)
+- Developer invokes phase transition command (e.g., `/flow-inception-to-elaboration`)
 - System detects missing required artifact (e.g., Software Architecture Document for Elaboration phase)
 - System prompts: "You'll need a Software Architecture Document. Would you like help selecting the right template?"
 
@@ -157,7 +157,7 @@
 
     NEXT STEPS AFTER CREATION:
     1. Fill SAD placeholders with project-specific content
-    2. Invoke multi-agent review: /project:flow-architecture-evolution
+    2. Invoke multi-agent review: /flow-architecture-evolution
     3. Baseline SAD for Construction phase (commit to Git)
     ```
 13. System prompts: "Copy template to your project? (y/n/preview)"
@@ -182,7 +182,7 @@
     1. Open template: code .aiwg/architecture/software-architecture-doc.md
     2. Fill section placeholders (search for "[INSERT:" to find all)
     3. Reference example SAD: .aiwg/artifacts/sample-project/architecture/software-architecture-doc.md
-    4. Invoke architecture review workflow: /project:flow-architecture-evolution
+    4. Invoke architecture review workflow: /flow-architecture-evolution
     5. Commit baseline to Git when complete
     ```
 20. Developer opens template in editor, begins filling content
@@ -210,7 +210,7 @@
 **Condition:** Developer invokes phase transition command, system detects missing required artifact
 
 **Flow:**
-1. Developer invokes `/project:flow-inception-to-elaboration` (phase transition command)
+1. Developer invokes `/flow-inception-to-elaboration` (phase transition command)
 2. Core Orchestrator reads Elaboration phase requirements: SAD, Master Test Plan, ADRs required
 3. Orchestrator checks `.aiwg/architecture/` for existing SAD
 4. SAD not found (file missing)
@@ -738,7 +738,7 @@
 
 ### AC-003: Context-Aware Recommendation
 
-**Given:** Developer invokes `/project:flow-inception-to-elaboration`, SAD missing
+**Given:** Developer invokes `/flow-inception-to-elaboration`, SAD missing
 **When:** System detects missing required artifact
 **Then:**
 - System prompts: "You'll need a Software Architecture Document. Would you like help?"
@@ -881,7 +881,7 @@
 **Objective:** Validate context-aware template recommendation during phase transition
 **Preconditions:** Project in Inception phase, SAD missing, use cases defined
 **Test Steps:**
-1. Run: `/project:flow-inception-to-elaboration` (phase transition command)
+1. Run: `/flow-inception-to-elaboration` (phase transition command)
 2. Verify system detects missing SAD
 3. Verify system prompts: "You'll need a Software Architecture Document. Would you like help?"
 4. Confirm "y"

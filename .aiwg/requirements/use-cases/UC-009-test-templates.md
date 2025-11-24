@@ -97,7 +97,7 @@
 - Error log generated: `.aiwg/testing/generation-errors.log`
 - Partial test plan saved (best-effort coverage)
 - Remediation recommendations provided:
-  - Missing requirements baseline → "Run `/project:intake-wizard` to generate requirements"
+  - Missing requirements baseline → "Run `/intake-wizard` to generate requirements"
   - Missing project context → "Add `.aiwg/config/project-context.yaml` with tech stack"
   - Unsupported technology stack → "Use generic test template, customize manually"
 - User notified of completion percentage (e.g., "75% test cases generated, 25% require manual design")
@@ -105,9 +105,9 @@
 ## 7. Trigger
 
 **Manual Triggers:**
-- Developer invokes: `/project:generate-tests` (generates Master Test Plan)
-- Developer invokes: `/project:generate-tests --iteration 5` (generates iteration-specific test plan)
-- Developer invokes: `/project:generate-tests --requirements UC-006` (generates test cases for specific requirement)
+- Developer invokes: `/generate-tests` (generates Master Test Plan)
+- Developer invokes: `/generate-tests --iteration 5` (generates iteration-specific test plan)
+- Developer invokes: `/generate-tests --requirements UC-006` (generates test cases for specific requirement)
 
 **Automatic Triggers:**
 - Phase-based: Elaboration phase start → Generates Master Test Plan baseline
@@ -121,7 +121,7 @@
 ## 8. Main Success Scenario
 
 1. **Test Architect initiates test generation**
-   - Test Architect invokes: `/project:generate-tests`
+   - Test Architect invokes: `/generate-tests`
    - Core Orchestrator (Claude Code) receives command
    - Orchestrator validates arguments:
      - Project directory: `.` (current working directory)
@@ -285,7 +285,7 @@
          - **Given**: Test project with 10 requirements (5 use cases, 5 NFRs)
          - **And**: 20 implementation files with `@implements` markers
          - **And**: 15 test files with `TC-XXX-YYY` IDs
-         - **When**: Developer invokes `/project:check-traceability .aiwg/traceability/matrix.csv`
+         - **When**: Developer invokes `/check-traceability .aiwg/traceability/matrix.csv`
          - **Then**: CSV generated at `.aiwg/traceability/requirements-traceability-matrix.csv`
          - **And**: CSV contains 11 rows (10 requirements + 1 header row)
          - **And**: All requirements have 100% coverage (implementation + tests)
@@ -438,7 +438,7 @@
 **Condition:** User specifies custom test distribution (e.g., "Focus on E2E tests, 30%")
 
 **Flow:**
-1. User invokes: `/project:generate-tests --strategy custom --unit 50% --integration 20% --e2e 30%`
+1. User invokes: `/generate-tests --strategy custom --unit 50% --integration 20% --e2e 30%`
 2. System parses custom strategy arguments:
    - Unit tests: 50% (vs default 75%)
    - Integration tests: 20% (vs default 20%)
@@ -474,7 +474,7 @@
 **Condition:** Master Test Plan already exists (previous generation)
 
 **Flow:**
-1. User invokes: `/project:generate-tests`
+1. User invokes: `/generate-tests`
 2. System checks for existing Master Test Plan: `.aiwg/testing/master-test-plan.md`
 3. File exists (last modified: 10 days ago)
 4. System prompts user: "Existing Master Test Plan detected (last updated: 10 days ago). Update existing plan or create new version?"
@@ -575,7 +575,7 @@
    - Section 10 (Risks): "RISK: NFR test cases missing (project in Inception phase). Add NFR tests in Elaboration phase when Supplemental Specification complete."
 9. System recommends NFR baseline:
    - "Recommendation: Define NFRs in Supplemental Specification (`.aiwg/requirements/supplemental-specification.md`)"
-   - "Re-run `/project:generate-tests` after NFR baseline complete to add NFR test cases"
+   - "Re-run `/generate-tests` after NFR baseline complete to add NFR test cases"
 10. **Resume Main Flow:** Step 10 (System creates test coverage matrix)
 
 **Alternate Outcome:**
@@ -604,10 +604,10 @@
    Test generation requires requirements baseline (use cases and/or NFRs).
 
    Remediation Steps:
-   1. Run `/project:intake-wizard` to generate project intake
-   2. Run `/project:intake-start` to create requirements baseline
+   1. Run `/intake-wizard` to generate project intake
+   2. Run `/intake-start` to create requirements baseline
    3. Manually create requirements in `.aiwg/requirements/use-cases/` or `.aiwg/requirements/nfrs/`
-   4. Re-run `/project:generate-tests` after baseline exists
+   4. Re-run `/generate-tests` after baseline exists
    ```
 5. System logs error: "Requirements baseline missing - cannot generate tests without requirements"
 6. System exits with status code: `1` (error - baseline required)
@@ -695,7 +695,7 @@
 **Condition:** User specifies 100% coverage for 50 NFRs with 20-hour budget (effort exceeds budget)
 
 **Flow:**
-1. User invokes: `/project:generate-tests --budget 20 hours`
+1. User invokes: `/generate-tests --budget 20 hours`
 2. System calculates required effort for 100% coverage:
    - Requirements: 59 (11 use cases + 48 NFRs)
    - Estimated test cases: 336
@@ -774,7 +774,7 @@
         secondary_framework: Pytest
       ```
    2. Add language files to project (`.js`, `.py`, `.rs`, etc.)
-   3. Re-run `/project:generate-tests` after project context available
+   3. Re-run `/generate-tests` after project context available
    ```
 6. System prompts user: "Proceed with generic template (manual customization required)? (y/n)"
 7. User responds: "y" (proceed with generic template)
@@ -978,7 +978,7 @@ None (no architecture decisions specific to UC-009 at this time)
 ### AC-001: Basic Test Plan Generation - Small Project
 
 **Given:** AIWG project with 10 requirements (5 use cases, 5 NFRs), Node.js project
-**When:** Test Architect invokes `/project:generate-tests`
+**When:** Test Architect invokes `/generate-tests`
 **Then:**
 - Master Test Plan generated at `.aiwg/testing/master-test-plan.md`
 - Test plan contains 10 sections (Introduction through Risks)
@@ -1035,7 +1035,7 @@ None (no architecture decisions specific to UC-009 at this time)
 ### AC-006: Existing Test Plan Update Mode
 
 **Given:** Existing Master Test Plan (last updated: 10 days ago), 3 new use cases added
-**When:** Test Architect invokes `/project:generate-tests`
+**When:** Test Architect invokes `/generate-tests`
 **Then:**
 - System prompts: "Update existing plan or create new version?"
 - User selects "update existing"
@@ -1085,12 +1085,12 @@ None (no architecture decisions specific to UC-009 at this time)
 ### AC-010: Requirements Baseline Missing - Error Handling
 
 **Given:** Project with no requirements baseline (`.aiwg/requirements/` directory missing)
-**When:** Test Architect invokes `/project:generate-tests`
+**When:** Test Architect invokes `/generate-tests`
 **Then:**
 - System displays error: "❌ Requirements baseline missing"
 - Error message includes remediation steps:
-  - "1. Run `/project:intake-wizard` to generate project intake"
-  - "2. Run `/project:intake-start` to create requirements baseline"
+  - "1. Run `/intake-wizard` to generate project intake"
+  - "2. Run `/intake-start` to create requirements baseline"
 - System exits with status code: `1` (error)
 
 ### AC-011: Test Template Parse Error - Graceful Degradation
@@ -1125,7 +1125,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Preconditions:** 10 requirements (5 use cases, 5 NFRs), Node.js project
 **Test Steps:**
 1. Create test project with 10 requirements
-2. Invoke: `/project:generate-tests`
+2. Invoke: `/generate-tests`
 3. Verify Master Test Plan generated: `.aiwg/testing/master-test-plan.md`
 4. Verify word count: 3,000-3,500 words
 5. Verify 10 sections present (Introduction through Risks)
@@ -1157,7 +1157,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Preconditions:** Project with 100 requirements (60 use cases, 40 NFRs)
 **Test Steps:**
 1. Start timer
-2. Invoke: `/project:generate-tests`
+2. Invoke: `/generate-tests`
 3. Wait for test generation to complete
 4. Stop timer
 5. Verify generation time: <10 minutes (600 seconds)
@@ -1198,7 +1198,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Objective:** Validate custom test strategy application
 **Preconditions:** User specifies `--unit 50% --integration 20% --e2e 30%`
 **Test Steps:**
-1. Invoke: `/project:generate-tests --strategy custom --unit 50% --integration 20% --e2e 30%`
+1. Invoke: `/generate-tests --strategy custom --unit 50% --integration 20% --e2e 30%`
 2. Verify unit tests: 50% of total
 3. Verify integration tests: 20% of total
 4. Verify E2E tests: 30% of total
@@ -1213,7 +1213,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Objective:** Validate test plan update mode (merge new test cases with existing)
 **Preconditions:** Existing Master Test Plan (274 test cases), 3 new use cases added
 **Test Steps:**
-1. Invoke: `/project:generate-tests`
+1. Invoke: `/generate-tests`
 2. Verify prompt: "Update existing plan or create new version?"
 3. Select "update existing"
 4. Verify backup created: `.aiwg/testing/archive/master-test-plan-2025-10-12.md`
@@ -1242,7 +1242,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Objective:** Validate graceful handling of missing NFRs
 **Preconditions:** 11 use cases, 0 NFRs (Inception phase)
 **Test Steps:**
-1. Invoke: `/project:generate-tests`
+1. Invoke: `/generate-tests`
 2. Verify warning: "No NFR files found. Project may be in Inception phase."
 3. Verify use case tests generated: 197 test cases
 4. Verify NFR tests: 0 test cases
@@ -1287,7 +1287,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Preconditions:** `.aiwg/requirements/` directory missing
 **Test Steps:**
 1. Delete requirements directory: `rm -rf .aiwg/requirements/`
-2. Invoke: `/project:generate-tests`
+2. Invoke: `/generate-tests`
 3. Verify error: "❌ Requirements baseline missing"
 4. Verify remediation steps displayed
 5. Verify exit status code: `1` (error)
@@ -1301,7 +1301,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Preconditions:** Master Test Plan template has invalid YAML frontmatter
 **Test Steps:**
 1. Corrupt template YAML frontmatter (remove closing `---`)
-2. Invoke: `/project:generate-tests`
+2. Invoke: `/generate-tests`
 3. Verify parse error logged: `.aiwg/testing/generation-errors.log`
 4. Verify fallback to minimal template
 5. Verify warning: "⚠️ Template parse error. Using minimal template."
@@ -1316,7 +1316,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Preconditions:** Rust project (Cargo.toml), Rust not in template library
 **Test Steps:**
 1. Create Rust project context
-2. Invoke: `/project:generate-tests`
+2. Invoke: `/generate-tests`
 3. Verify warning: "Technology stack 'Rust' not in template library"
 4. Verify generic template applied
 5. Verify customization checklist included in plan
@@ -1330,7 +1330,7 @@ None (no architecture decisions specific to UC-009 at this time)
 **Objective:** Validate complete end-to-end test generation workflow
 **Preconditions:** AIWG project with 11 use cases, 48 NFRs, Node.js
 **Test Steps:**
-1. Invoke: `/project:generate-tests`
+1. Invoke: `/generate-tests`
 2. Wait for test generation to complete (Steps 1-15)
 3. Verify all outputs generated:
    - Master Test Plan: `.aiwg/testing/master-test-plan.md` (3,200 words)

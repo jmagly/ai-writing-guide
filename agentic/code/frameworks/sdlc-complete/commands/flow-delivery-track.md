@@ -889,7 +889,7 @@ Missing:
 - {list missing items}
 
 Recommendation: Complete Discovery Track first
-Run: /project:flow-discovery-track {N}
+Run: /flow-discovery-track {N}
 ```
 
 **If Tests Fail**:

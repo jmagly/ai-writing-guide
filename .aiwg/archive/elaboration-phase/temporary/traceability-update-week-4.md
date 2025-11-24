@@ -232,7 +232,7 @@ Successfully updated requirements traceability matrix to reflect Elaboration Wee
 
 #### 3. Build Automated Traceability Validation
 - **Current State**: Manual CSV inspection (tedious)
-- **Target State**: `/project:check-traceability` command (automated validation)
+- **Target State**: `/check-traceability` command (automated validation)
 - **Features**: Orphan detection, coverage analysis, gap reporting
 - **Benefit**: Self-application proof (framework uses own tools)
 
@@ -263,7 +263,7 @@ Successfully updated requirements traceability matrix to reflect Elaboration Wee
 
 #### 8. Continuous Traceability Maintenance
 - **Frequency**: Update traceability matrix every iteration
-- **Automation**: `/project:update-traceability` command (auto-sync from UC changes)
+- **Automation**: `/update-traceability` command (auto-sync from UC changes)
 - **Ownership**: Requirements Analyst + Traceability Manager
 
 #### 9. Regression Test Suite
@@ -305,7 +305,7 @@ Successfully updated requirements traceability matrix to reflect Elaboration Wee
 ### Tooling Roadmap
 
 **Iteration 6** (FID-001: Traceability Automation):
-- [ ] `/project:check-traceability <csv-path>` command
+- [ ] `/check-traceability <csv-path>` command
 - [ ] Orphan detection (requirements without components/tests)
 - [ ] Coverage analysis (% requirements traced)
 - [ ] Gap reporting (missing links, broken references)

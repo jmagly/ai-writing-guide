@@ -45,7 +45,7 @@
 
 ## 6. Trigger
 
-User starts intake: `/project:intake-wizard "Build web app"`
+User starts intake: `/intake-wizard "Build web app"`
 
 ## 7. Main Success Scenario
 

@@ -156,20 +156,20 @@ This framework solves that. 485 documents, 19 validation rules,
 
 ```bash
 # 1. Generate project intake (5 minutes, replaces 2-4 hours manual work)
-/project:intake-wizard "Build customer portal with real-time chat"
+/intake-wizard "Build customer portal with real-time chat"
 
 # 2. Validate vision and approve phase transition (automated gate check)
-/project:flow-inception-to-elaboration
+/flow-inception-to-elaboration
 
 # 3. Generate architecture document with multi-agent review
 #    (Primary Author → 4 Parallel Reviewers → Synthesizer → Baseline)
 "Create Software Architecture Document"
 
 # 4. Execute dual-track iteration (Discovery + Delivery in parallel)
-/project:flow-iteration-dual-track 3
+/flow-iteration-dual-track 3
 
 # 5. Deploy to production with automated rollback strategy
-/project:flow-deploy-to-production
+/flow-deploy-to-production
 ```
 
 **Time Savings:** 20-98% reduction across 5 core use cases. See [Use Case Briefs](.aiwg/requirements/use-case-briefs/) for quantified ROI.
@@ -361,7 +361,7 @@ aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-ag
 
 **Claude Code:**
 ```bash
-/project:intake-from-codebase .
+/intake-from-codebase .
 ```
 
 **Warp Terminal:**

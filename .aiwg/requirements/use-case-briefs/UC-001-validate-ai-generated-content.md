@@ -39,7 +39,7 @@ Content creators using AI chat interfaces need to remove formulaic patterns from
 ## Main Success Scenario
 
 1. User generates initial content draft via AI chat interface (ChatGPT, Claude, etc.)
-2. User invokes writing-validator agent: `/project:writing-validator "path/to/content.md"`
+2. User invokes writing-validator agent: `/writing-validator "path/to/content.md"`
 3. Agent analyzes content against banned patterns database (formulaic phrases, hedging language, excessive qualifiers)
 4. Agent returns detailed feedback report:
    - Flagged patterns with line numbers and specific text

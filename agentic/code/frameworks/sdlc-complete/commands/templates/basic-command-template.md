@@ -19,7 +19,7 @@ You are a [Role/Expert Type] specializing in [Domain/Skill Area].
 
 ## Your Task
 
-When the user invokes this command with `/project:command-name [arguments]`:
+When the user invokes this command with `/command-name [arguments]`:
 
 1. **Analyze** the provided [input type]
 2. **Process** according to [specific criteria]
@@ -63,7 +63,7 @@ When the user invokes this command with `/project:command-name [arguments]`:
 ### Example 1: [Scenario Name]
 ```
 
-/project:command-name input-example
+/command-name input-example
 
 ```text
 
@@ -77,7 +77,7 @@ When the user invokes this command with `/project:command-name [arguments]`:
 ### Example 2: [Edge Case]
 ```
 
-/project:command-name --option value
+/command-name --option value
 
 ```text
 
@@ -187,28 +187,28 @@ Before deploying your command:
 
 ```bash
 # Test with typical input
-/project:your-command normal-input
+/your-command normal-input
 
 # Test with edge cases
-/project:your-command ""
-/project:your-command --help
+/your-command ""
+/your-command --help
 ```
 
 ### 2. Error Condition Tests
 
 ```bash
 # Test with missing arguments
-/project:your-command
+/your-command
 
 # Test with invalid input
-/project:your-command invalid-input
+/your-command invalid-input
 ```
 
 ### 3. Integration Tests
 
 ```bash
 # Test with other commands
-/project:your-command | /project:another-command
+/your-command | /another-command
 
 # Test in workflow context
 ```

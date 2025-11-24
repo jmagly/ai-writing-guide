@@ -41,13 +41,13 @@ Validates content against AI patterns and authenticity markers defined in the Wr
 
 ```bash
 # Validate content
-/project:writing-validator path/to/content.md
+/writing-validator path/to/content.md
 
 # Optimize a prompt
-/project:prompt-optimizer "Your prompt text here"
+/prompt-optimizer "Your prompt text here"
 
 # Generate diverse examples
-/project:content-diversifier "Base concept or topic"
+/content-diversifier "Base concept or topic"
 ```
 
 ## Relationship to SDLC Framework

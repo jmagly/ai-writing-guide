@@ -98,8 +98,8 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
    - Flow command mappings
    - Phase overview
 10. User tests natural language orchestration: "Start Inception"
-11. Claude Code interprets → triggers `/project:flow-concept-to-inception`
-12. User generates first artifact: `/project:intake-wizard "Build customer portal"`
+11. Claude Code interprets → triggers `/flow-concept-to-inception`
+12. User generates first artifact: `/intake-wizard "Build customer portal"`
 13. Intake forms created in `.aiwg/intake/`
 14. User confirms deployment success: `ls .claude/agents/ .claude/commands/ .aiwg/intake/`
 
@@ -117,7 +117,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
    - prompt-optimizer.md
    - content-diversifier.md
 3. CLI skips SDLC commands (no `.claude/commands/` deployment)
-4. User tests: `/project:writing-validator "content.md"`
+4. User tests: `/writing-validator "content.md"`
 5. **Resume Main:** Step 14 (User confirms)
 
 ### Alt-2: Dry-Run Mode (Preview Changes)
@@ -146,7 +146,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 2. CLI copies agents to `.codex/agents/` (OpenAI directory structure)
 3. CLI generates AGENTS.md (single-file format for OpenAI)
 4. CLI adds platform-specific guidance to CLAUDE.md
-5. User tests: `/project:intake-wizard "Build API"`
+5. User tests: `/intake-wizard "Build API"`
 6. **Resume Main:** Step 12 (User generates artifact)
 
 ### Alt-4: Force Overwrite (Existing Agents Conflict)
@@ -348,7 +348,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 **Then:**
 - Exactly 3 agents deployed: writing-validator.md, prompt-optimizer.md, content-diversifier.md
 - No SDLC agents deployed (`.claude/agents/` contains only 3 files)
-- User can invoke `/project:writing-validator "content.md"`
+- User can invoke `/writing-validator "content.md"`
 - Deployment completes in <5 seconds
 
 ### AC-003: Combined Deployment Mode (Both General + SDLC)
@@ -367,7 +367,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 **When:** User runs `aiwg -deploy-commands --mode sdlc`
 **Then:**
 - 45 SDLC commands deployed to `.claude/commands/`
-- All commands invokable: `/project:intake-wizard`, `/project:flow-inception-to-elaboration`, etc.
+- All commands invokable: `/intake-wizard`, `/flow-inception-to-elaboration`, etc.
 - Command count verified: `ls .claude/commands/*.md | wc -l` returns 45
 - Deployment completes in <5 seconds
 
@@ -481,7 +481,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 - Install AIWG: <2 minutes
 - Deploy agents + commands: <1 minute
 - Update CLAUDE.md: <1 minute
-- Generate first artifact (`/project:intake-wizard`): <10 minutes
+- Generate first artifact (`/intake-wizard`): <10 minutes
 - Total time: <15 minutes from install to first artifact
 
 ### AC-016: Error Clarity (Clear Remediation Steps)
@@ -499,7 +499,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 **Given:** Deployment complete (agents + commands + CLAUDE.md updated)
 **When:** User invokes natural language workflow: "Start Inception"
 **Then:**
-- Claude Code interprets natural language → triggers `/project:flow-concept-to-inception`
+- Claude Code interprets natural language → triggers `/flow-concept-to-inception`
 - Workflow executes successfully
 - Artifacts generated in `.aiwg/` directories
 - User confirms natural language orchestration works (no manual slash commands needed)
@@ -562,7 +562,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 2. Verify agent count: `ls .claude/agents/*.md | wc -l` returns 3
 3. Verify agent names: writing-validator.md, prompt-optimizer.md, content-diversifier.md
 4. Verify no SDLC agents deployed (no architecture-designer.md, test-engineer.md, etc.)
-5. Test agent invocation: `/project:writing-validator "test.md"`
+5. Test agent invocation: `/writing-validator "test.md"`
 **Expected Result:** Exactly 3 general agents deployed, no SDLC agents
 **NFR Validated:** BR-SD-001 (Deployment mode logic)
 **Pass/Fail:** PASS if 3 general agents deployed
@@ -589,7 +589,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 1. Run command deployment: `aiwg -deploy-commands --mode sdlc`
 2. Verify command count: `ls .claude/commands/*.md | wc -l` returns 45
 3. Verify key commands exist: flow-inception-to-elaboration.md, intake-wizard.md, flow-gate-check.md
-4. Test command invocation: `/project:intake-wizard "Test project"`
+4. Test command invocation: `/intake-wizard "Test project"`
 5. Measure deployment time (target: <5 seconds)
 **Expected Result:** 45 commands deployed, all invokable, deployment <5s
 **NFR Validated:** NFR-SD-01 (Deployment time <10s)
@@ -768,7 +768,7 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 2. Install AIWG: `curl -fsSL https://... | bash` (measure time)
 3. Deploy agents: `aiwg -deploy-agents --mode sdlc` (measure time)
 4. Deploy commands: `aiwg -deploy-commands --mode sdlc` (measure time)
-5. Generate first artifact: `/project:intake-wizard "Test project"` (measure time)
+5. Generate first artifact: `/intake-wizard "Test project"` (measure time)
 6. Stop timer, calculate total time
 7. Verify total time: <15 minutes
 **Expected Result:** Full setup (install → deploy → first artifact) <15 minutes
@@ -782,11 +782,11 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
 **Test Steps:**
 1. Open Claude Code in project
 2. Invoke natural language: "Start Inception"
-3. Verify Claude Code interprets → triggers `/project:flow-concept-to-inception`
+3. Verify Claude Code interprets → triggers `/flow-concept-to-inception`
 4. Verify workflow executes successfully
 5. Verify artifacts generated: `.aiwg/intake/` contains intake forms
 6. Invoke another natural language workflow: "Create architecture baseline"
-7. Verify workflow triggers: `/project:flow-inception-to-elaboration`
+7. Verify workflow triggers: `/flow-inception-to-elaboration`
 **Expected Result:** Natural language triggers workflows, artifacts generated
 **NFR Validated:** REQ-SDLC-002 (Natural language orchestration)
 **Pass/Fail:** PASS if natural language works, artifacts generated
@@ -1005,8 +1005,8 @@ User runs deployment command: `aiwg -deploy-agents --mode sdlc`
    - CLAUDE.md updated (word count increased by 2,000-3,000 words)
    - `.aiwg/` directory structure created
 3. Test natural language orchestration: "Start Inception"
-4. Verify workflow triggered: `/project:flow-concept-to-inception`
-5. Generate first artifact: `/project:intake-wizard "Test project"`
+4. Verify workflow triggered: `/flow-concept-to-inception`
+5. Generate first artifact: `/intake-wizard "Test project"`
 6. Verify artifact created: `.aiwg/intake/project-intake.md`
 7. Measure total time: Install → Deploy → First Artifact (target: <15 minutes)
 **Expected Result:** Complete end-to-end workflow succeeds, <15 minutes

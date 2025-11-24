@@ -12,7 +12,7 @@ model: sonnet
 
 Analyze `.aiwg/` artifacts to determine project state and provide actionable status report with phase-appropriate next commands.
 
-When invoked with `/project:project-status [project-directory]`:
+When invoked with `/project-status [project-directory]`:
 
 1. **Scan** `.aiwg/` directory for artifacts
 2. **Detect** current SDLC phase and workflow state
@@ -60,7 +60,7 @@ ls intake/ 2>/dev/null
 **Decision**:
 - If `.aiwg/` exists → proceed with analysis
 - If only `intake/` exists → warn about legacy location, proceed with limited analysis
-- If neither exists → report "No SDLC artifacts found. Run `/project:intake-wizard` to start."
+- If neither exists → report "No SDLC artifacts found. Run `/intake-wizard` to start."
 
 ### Step 2: Detect Current Phase
 
@@ -70,14 +70,14 @@ ls intake/ 2>/dev/null
    - Condition: No `.aiwg/intake/` directory OR intake files missing
    - Status: "Project not started"
    - Next: Choose ONE intake method:
-     - `/project:intake-wizard` (interactive generation)
-     - `/project:intake-from-codebase` (analyze existing code)
-     - `/project:intake-start` (enhance user-provided intake files)
+     - `/intake-wizard` (interactive generation)
+     - `/intake-from-codebase` (analyze existing code)
+     - `/intake-start` (enhance user-provided intake files)
 
 2. **Inception** (Intake complete, no phase plan):
    - Condition: Intake files present + NO `planning/phase-plan-inception.md`
    - Status: "Intake complete, ready for Inception"
-   - Next: `/project:flow-concept-to-inception`
+   - Next: `/flow-concept-to-inception`
 
 3. **Inception Active** (Phase plan exists, not complete):
    - Condition: `planning/phase-plan-inception.md` exists + NO `gates/gate-inception.md` OR gate status ≠ PASSED
@@ -233,14 +233,14 @@ Based on phase and state, recommend **3-5 most relevant commands**:
 Choose ONE intake method:
 
 1. **Generate intake interactively** (recommended for new projects):
-   - `/project:intake-wizard "your project description"`
-   - Or complete partial intake: `/project:intake-wizard --complete --interactive`
+   - `/intake-wizard "your project description"`
+   - Or complete partial intake: `/intake-wizard --complete --interactive`
 
 2. **Generate intake from codebase** (for existing projects):
-   - `/project:intake-from-codebase .`
+   - `/intake-from-codebase .`
 
 3. **Enhance user-provided intake files** (if you manually created intake docs):
-   - `/project:intake-start .aiwg/intake/`
+   - `/intake-start .aiwg/intake/`
 ```
 
 #### Intake Complete → Inception Active
@@ -249,11 +249,11 @@ Choose ONE intake method:
 **Recommended Next Steps**:
 
 1. **Begin Concept → Inception flow**:
-   - `/project:flow-concept-to-inception`
+   - `/flow-concept-to-inception`
    - Natural language: "Start Inception" or "Let's begin Inception phase"
 
 2. **Initiate risk management**:
-   - `/project:flow-risk-management-cycle`
+   - `/flow-risk-management-cycle`
 
 3. **Document architecture decisions** (if not done):
    - Manually create `architecture/ADR-001-<decision>.md`
@@ -265,10 +265,10 @@ Choose ONE intake method:
 **Recommended Next Steps**:
 
 1. **Check Inception gate readiness**:
-   - `/project:flow-gate-check inception`
+   - `/flow-gate-check inception`
 
 2. **If gate passed, transition to Elaboration**:
-   - `/project:flow-inception-to-elaboration .aiwg/`
+   - `/flow-inception-to-elaboration .aiwg/`
 
 3. **Blockers** (if gate not ready):
    - {list missing artifacts}
@@ -282,23 +282,23 @@ Choose ONE intake method:
 **Recommended Next Steps**:
 
 1. **Build architectural baseline**:
-   - `/project:build-poc <feature-or-risk>` (for risky architecture)
+   - `/build-poc <feature-or-risk>` (for risky architecture)
    - Manually create `architecture/SAD.md` and `architecture/executable-prototype.md`
 
 2. **Evolve architecture**:
-   - `/project:flow-architecture-evolution <trigger>`
+   - `/flow-architecture-evolution <trigger>`
 
 3. **Retire risks**:
-   - `/project:flow-risk-management-cycle .aiwg/`
+   - `/flow-risk-management-cycle .aiwg/`
 
 4. **Define test strategy**:
-   - `/project:flow-test-strategy-execution <test-level>`
+   - `/flow-test-strategy-execution <test-level>`
 
 5. **Check Elaboration gate readiness**:
-   - `/project:flow-gate-check elaboration`
+   - `/flow-gate-check elaboration`
 
 6. **If gate passed, transition to Construction**:
-   - `/project:flow-elaboration-to-construction .aiwg/`
+   - `/flow-elaboration-to-construction .aiwg/`
 ```
 
 #### Construction Active (Iterations)
@@ -307,26 +307,26 @@ Choose ONE intake method:
 **Recommended Next Steps**:
 
 1. **Run dual-track iteration** (recommended):
-   - `/project:flow-iteration-dual-track <iteration-number>`
+   - `/flow-iteration-dual-track <iteration-number>`
 
 2. **Or separate Discovery and Delivery**:
-   - `/project:flow-discovery-track <iteration-number+1>` (plan ahead)
-   - `/project:flow-delivery-track <iteration-number>` (deliver current)
+   - `/flow-discovery-track <iteration-number+1>` (plan ahead)
+   - `/flow-delivery-track <iteration-number>` (deliver current)
 
 3. **Execute test strategy**:
-   - `/project:flow-test-strategy-execution <test-level> <component>`
+   - `/flow-test-strategy-execution <test-level> <component>`
 
 4. **Manage evolving requirements**:
-   - `/project:flow-requirements-evolution .aiwg/ --iteration <N>`
+   - `/flow-requirements-evolution .aiwg/ --iteration <N>`
 
 5. **Review security**:
-   - `/project:flow-security-review-cycle .aiwg/ --iteration <N>`
+   - `/flow-security-review-cycle .aiwg/ --iteration <N>`
 
 6. **Conduct retrospective** (end of iteration):
-   - `/project:flow-retrospective-cycle iteration <iteration-number>`
+   - `/flow-retrospective-cycle iteration <iteration-number>`
 
 7. **Check Construction gate readiness** (when feature complete):
-   - `/project:flow-gate-check construction`
+   - `/flow-gate-check construction`
 ```
 
 #### Construction → Transition
@@ -335,10 +335,10 @@ Choose ONE intake method:
 **Recommended Next Steps**:
 
 1. **Validate Construction gate**:
-   - `/project:flow-gate-check construction`
+   - `/flow-gate-check construction`
 
 2. **If gate passed, transition to Transition**:
-   - `/project:flow-construction-to-transition .aiwg/`
+   - `/flow-construction-to-transition .aiwg/`
 
 3. **Blockers** (if gate not ready):
    - {list failing tests}
@@ -352,16 +352,16 @@ Choose ONE intake method:
 **Recommended Next Steps**:
 
 1. **Deploy to production**:
-   - `/project:flow-deploy-to-production <blue-green|canary> <version>`
+   - `/flow-deploy-to-production <blue-green|canary> <version>`
 
 2. **Validate handoffs**:
-   - `/project:flow-handoff-checklist Construction Transition`
+   - `/flow-handoff-checklist Construction Transition`
 
 3. **Initiate hypercare monitoring**:
-   - `/project:flow-hypercare-monitoring <duration-days>`
+   - `/flow-hypercare-monitoring <duration-days>`
 
 4. **Check Transition gate readiness**:
-   - `/project:flow-gate-check transition`
+   - `/flow-gate-check transition`
 ```
 
 #### Production (Ongoing)
@@ -370,22 +370,22 @@ Choose ONE intake method:
 **Recommended Next Steps**:
 
 1. **Monitor health**:
-   - `/project:project-health-check`
+   - `/project-health-check`
 
 2. **Respond to incidents** (if issues):
-   - `/project:flow-incident-response <incident-id> <severity>`
+   - `/flow-incident-response <incident-id> <severity>`
 
 3. **Optimize performance** (if degradation):
-   - `/project:flow-performance-optimization <trigger> <component>`
+   - `/flow-performance-optimization <trigger> <component>`
 
 4. **Validate compliance** (periodic):
-   - `/project:flow-compliance-validation <framework>`
+   - `/flow-compliance-validation <framework>`
 
 5. **Onboard new team members** (if team growing):
-   - `/project:flow-team-onboarding <name> <role>`
+   - `/flow-team-onboarding <name> <role>`
 
 6. **Conduct retrospective** (periodic):
-   - `/project:flow-retrospective-cycle release <version>`
+   - `/flow-retrospective-cycle release <version>`
 ```
 
 ### Step 6: Generate Status Report
@@ -484,13 +484,13 @@ Choose ONE intake method:
 
 1. **{Command 1}**
    ```bash
-   /project:{command-name} {args}
+   /{command-name} {args}
    ```
    {Why: brief explanation}
 
 2. **{Command 2}**
    ```bash
-   /project:{command-name} {args}
+   /{command-name} {args}
    ```
    {Why: brief explanation}
 
@@ -498,13 +498,13 @@ Choose ONE intake method:
 
 3. **{Command 3}**
    ```bash
-   /project:{command-name} {args}
+   /{command-name} {args}
    ```
    {Why: brief explanation}
 
 4. **{Command 4}**
    ```bash
-   /project:{command-name} {args}
+   /{command-name} {args}
    ```
    {Why: brief explanation}
 
@@ -515,36 +515,36 @@ Choose ONE intake method:
 **All Available Commands**:
 
 **Intake Methods** (choose ONE):
-- `/project:intake-wizard` - Generate intake interactively
-- `/project:intake-from-codebase` - Generate intake by analyzing codebase
-- `/project:intake-start` - Enhance user-provided intake files
+- `/intake-wizard` - Generate intake interactively
+- `/intake-from-codebase` - Generate intake by analyzing codebase
+- `/intake-start` - Enhance user-provided intake files
 
 **Phase Workflows**:
-- `/project:flow-concept-to-inception` - Execute Inception phase
-- `/project:flow-inception-to-elaboration` - Transition to Elaboration
-- `/project:flow-elaboration-to-construction` - Transition to Construction
-- `/project:flow-construction-to-transition` - Transition to Transition
-- `/project:flow-iteration-dual-track` - Run Discovery + Delivery iteration
-- `/project:flow-gate-check <phase>` - Validate phase gate criteria
-- `/project:flow-risk-management-cycle` - Manage project risks
-- `/project:flow-test-strategy-execution` - Execute test strategy
-- `/project:flow-security-review-cycle` - Security validation
-- `/project:flow-architecture-evolution` - Evolve architecture
-- `/project:flow-deploy-to-production` - Deploy to production
-- `/project:flow-hypercare-monitoring` - Post-launch monitoring
-- `/project:project-health-check` - Overall project health
-- `/project:project-status` - This report (refresh status)
+- `/flow-concept-to-inception` - Execute Inception phase
+- `/flow-inception-to-elaboration` - Transition to Elaboration
+- `/flow-elaboration-to-construction` - Transition to Construction
+- `/flow-construction-to-transition` - Transition to Transition
+- `/flow-iteration-dual-track` - Run Discovery + Delivery iteration
+- `/flow-gate-check <phase>` - Validate phase gate criteria
+- `/flow-risk-management-cycle` - Manage project risks
+- `/flow-test-strategy-execution` - Execute test strategy
+- `/flow-security-review-cycle` - Security validation
+- `/flow-architecture-evolution` - Evolve architecture
+- `/flow-deploy-to-production` - Deploy to production
+- `/flow-hypercare-monitoring` - Post-launch monitoring
+- `/project-health-check` - Overall project health
+- `/project-status` - This report (refresh status)
 
 For complete command list, see `.claude/commands/` directory.
 
 ---
 
 **Natural Language Support**: You can use natural language instead of slash commands:
-- Instead of `/project:project-status`, say "Where are we?" or "What's next?"
-- Instead of `/project:flow-inception-to-elaboration`, say "Transition to Elaboration" or "Start Elaboration"
+- Instead of `/project-status`, say "Where are we?" or "What's next?"
+- Instead of `/flow-inception-to-elaboration`, say "Transition to Elaboration" or "Start Elaboration"
 - See `.aiwg/docs/simple-language-translations.md` for complete translation table
 
-**Tip**: Run `/project:project-status` (or say "Where are we?") anytime to refresh this report and see updated recommendations.
+**Tip**: Run `/project-status` (or say "Where are we?") anytime to refresh this report and see updated recommendations.
 ```
 
 ## Phase Progression Reference
@@ -647,12 +647,12 @@ The `.aiwg/` directory does not exist in this project.
 
 1. **Start a new SDLC project**:
    ```bash
-   /project:intake-wizard "your project description"
+   /intake-wizard "your project description"
    ```
 
 2. **Analyze existing codebase**:
    ```bash
-   /project:intake-from-codebase .
+   /intake-from-codebase .
    ```
 
 3. **Learn more**:
@@ -670,11 +670,11 @@ If artifacts exist but are malformed:
 
 If artifacts indicate conflicting states (e.g., Elaboration gate PASSED but no Construction artifacts):
 - **WARN**: "Conflicting state detected. Gate passed but next phase not started."
-- **Recommendation**: "Run `/project:flow-{phase}-to-{next-phase}` to transition."
+- **Recommendation**: "Run `/flow-{phase}-to-{next-phase}` to transition."
 
 ## Best Practices
 
-1. **Run frequently**: Use `/project:project-status` at start of each work session to orient
+1. **Run frequently**: Use `/project-status` at start of each work session to orient
 2. **After major milestones**: Check status after completing gate checks or phase transitions
 3. **When stuck**: If unsure what to do next, check status for recommendations
 4. **Team coordination**: Share status report with team to align on current state

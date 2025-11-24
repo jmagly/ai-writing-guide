@@ -139,15 +139,15 @@ frontmatter_guidelines:
 touch .claude/commands/test-command.md
 
 # Basic functionality test
-/project:test-command valid-input
+/test-command valid-input
 
 # Edge case testing
-/project:test-command ""
-/project:test-command --invalid-flag
-/project:test-command non-existent-file.js
+/test-command ""
+/test-command --invalid-flag
+/test-command non-existent-file.js
 
 # Error handling verification
-/project:test-command /etc/passwd  # Should handle permission errors
+/test-command /etc/passwd  # Should handle permission errors
 ```
 
 #### Integration Testing
@@ -155,9 +155,9 @@ touch .claude/commands/test-command.md
 ```yaml
 integration_scenarios:
   command_chaining:
-    - "/project:review src/auth.js"
-    - "/project:test src/auth.js"
-    - "/project:commit 'Fix auth vulnerabilities'"
+    - "/review src/auth.js"
+    - "/test src/auth.js"
+    - "/commit 'Fix auth vulnerabilities'"
 
   agent_collaboration:
     - Launch multiple agents in parallel
@@ -180,7 +180,7 @@ def test_command_performance():
     start_time = time.time()
 
     # Execute command
-    result = execute_command("/project:my-command", "test-input")
+    result = execute_command("/my-command", "test-input")
 
     end_time = time.time()
     execution_time = end_time - start_time
@@ -204,7 +204,7 @@ Brief description of what this command does and why it's useful.
 ## Usage
 ```
 
-/project:command-name [arguments]
+/command-name [arguments]
 
 ```text
 
@@ -217,7 +217,7 @@ Brief description of what this command does and why it's useful.
 ### Basic Usage
 ```
 
-/project:command-name src/component.js
+/command-name src/component.js
 
 ```text
 Expected output: [description]
@@ -225,7 +225,7 @@ Expected output: [description]
 ### Advanced Usage
 ```
 
-/project:command-name --option value directory/
+/command-name --option value directory/
 
 ```text
 Expected output: [description]
@@ -591,7 +591,7 @@ for cmd in "${commands[@]}"; do
     echo "Testing command: $cmd"
 
     # Execute command and capture result
-    result=$(claude-cli "/project:$cmd" 2>&1)
+    result=$(claude-cli "/$cmd" 2>&1)
 
     if [[ $? -eq 0 ]]; then
         echo "✅ $cmd passed"
@@ -640,7 +640,7 @@ ls -la .claude/commands/my-command.md
 head -20 .claude/commands/my-command.md
 
 # Test command invocation
-/project:my-command --help
+/my-command --help
 ```
 
 #### Permission Denied
@@ -660,7 +660,7 @@ echo '{"permissions": {"allow": ["Read(/project/**)"]}}'  > .claude/settings.loc
 
 ```bash
 # Profile command execution
-time /project:my-command test-input
+time /my-command test-input
 
 # Check model selection
 grep "model:" .claude/commands/my-command.md
@@ -681,7 +681,7 @@ grep -E "(include|exclude)" .claude/commands/my-command.md
 cat .claude/commands/my-command.md | head -20
 
 # Test command parsing
-/project:my-command --dry-run
+/my-command --dry-run
 ```
 
 #### Performance Analysis

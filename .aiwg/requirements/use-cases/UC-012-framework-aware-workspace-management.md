@@ -133,7 +133,7 @@ System automatically routes artifacts to framework-specific workspaces based on 
 ### 6.1 Primary Triggers
 
 1. **Natural Language Command**: User says "Transition to Elaboration" (maps to SDLC command)
-2. **Explicit Framework Command**: User invokes `/project:flow-inception-to-elaboration`
+2. **Explicit Framework Command**: User invokes `/flow-inception-to-elaboration`
 3. **Agent Artifact Generation**: Agent generates artifact with framework metadata
 4. **Template Instantiation**: Template rendered with framework-scoped output path
 
@@ -155,7 +155,7 @@ System automatically routes artifacts to framework-specific workspaces based on 
 **Step 2: Natural Language Translation**
 - **Actor:** Orchestrator (NaturalLanguageRouter component)
 - **Action:** Checks translation table (`~/.local/share/ai-writing-guide/docs/simple-language-translations.md`)
-- **System Response:** Maps phrase to command: `/project:flow-inception-to-elaboration`
+- **System Response:** Maps phrase to command: `/flow-inception-to-elaboration`
 
 **Step 3: Read Command Metadata**
 - **Actor:** Orchestrator (MetadataLoader component)
@@ -248,7 +248,7 @@ System automatically routes artifacts to framework-specific workspaces based on 
 **Step 1a: User Invokes Marketing Command**
 - **Actor:** User
 - **Action:** Says "Draft launch announcement" (natural language)
-- **System Response:** Maps to command: `/project:marketing-campaign-draft`
+- **System Response:** Maps to command: `/marketing-campaign-draft`
 
 **Step 4a: Read Marketing Command Metadata**
 - **Actor:** Orchestrator (MetadataLoader)
@@ -282,7 +282,7 @@ System automatically routes artifacts to framework-specific workspaces based on 
 **Step 1b: User Requests Link**
 - **Actor:** User
 - **Action:** Says "Link marketing campaign 'plugin-launch' to SDLC project 'plugin-system'"
-- **System Response:** Maps to command: `/project:aiwg-link-work sdlc-complete/plugin-system marketing-flow/plugin-launch`
+- **System Response:** Maps to command: `/aiwg-link-work sdlc-complete/plugin-system marketing-flow/plugin-launch`
 
 **Step 2b: Orchestrator Reads Both Framework Contexts**
 - **Actor:** Orchestrator (ContextCurator)
@@ -570,7 +570,7 @@ version: 1.0
 
 **Test Cases:**
 - **TC-WS-001-1:** Natural language "Transition to Elaboration" routes to SDLC workspace
-- **TC-WS-001-2:** Explicit `/project:flow-inception-to-elaboration` routes to SDLC workspace
+- **TC-WS-001-2:** Explicit `/flow-inception-to-elaboration` routes to SDLC workspace
 - **TC-WS-001-3:** Marketing command routes to `.aiwg/frameworks/marketing-flow/`
 
 ### 12.2 AC-2: Agents Respect Framework Context
@@ -609,7 +609,7 @@ version: 1.0
 ### 12.5 AC-5: Cross-Framework Linking Supported
 
 **Given:** SDLC project and Marketing campaign exist
-**When:** User links them via `/project:aiwg-link-work`
+**When:** User links them via `/aiwg-link-work`
 **Then:** Both `metadata.json` files updated with cross-references
 
 **Test Cases:**
@@ -816,7 +816,7 @@ version: 1.0
 
 **Week 6 (Elaboration):**
 - Implement auto-initialization (Exception Flow 1)
-- Add cross-framework linking command (`/project:aiwg-link-work`)
+- Add cross-framework linking command (`/aiwg-link-work`)
 - Comprehensive testing (24 test cases)
 
 ### 17.3 Future Enhancements

@@ -798,7 +798,7 @@ Before marking workflow complete, verify:
 
 Cannot evolve architecture without baseline.
 Recommendation: Create initial SAD first
-- Run: /project:flow-inception-to-elaboration
+- Run: /flow-inception-to-elaboration
 - Or: Document current architecture manually
 ```
 
@@ -858,9 +858,9 @@ This orchestration succeeds when:
 - Option Matrix: `templates/intake/option-matrix-template.md`
 
 **Related Flows**:
-- `/project:flow-inception-to-elaboration` - Initial architecture creation
-- `/project:flow-change-control` - Change approval process
-- `/project:flow-gate-check` - Gate validation
+- `/flow-inception-to-elaboration` - Initial architecture creation
+- `/flow-change-control` - Change approval process
+- `/flow-gate-check` - Gate validation
 
 **Architecture Patterns**:
 - Martin Fowler's Strangler Fig Pattern

@@ -442,10 +442,10 @@ final_synthesis()
 ## Integration with SDLC Flows
 
 **Flows using multi-agent pattern:**
-- `/project:flow-inception-to-elaboration` (SAD, Risk Report, Requirements Baseline)
-- `/project:flow-elaboration-to-construction` (ABM Report, Master Test Plan)
-- `/project:flow-construction-to-transition` (Deployment Plans, ORR)
-- `/project:flow-deploy-to-production` (Deployment Reports)
+- `/flow-inception-to-elaboration` (SAD, Risk Report, Requirements Baseline)
+- `/flow-elaboration-to-construction` (ABM Report, Master Test Plan)
+- `/flow-construction-to-transition` (Deployment Plans, ORR)
+- `/flow-deploy-to-production` (Deployment Reports)
 
 **Each flow implements:**
 1. Initialize working directory (Archivist)

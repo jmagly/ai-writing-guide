@@ -110,7 +110,7 @@ grep "TC-FSI-001" .aiwg/traceability/requirements-traceability-matrix.csv
 **Future Automation** (FID-001: Traceability Automation):
 ```bash
 # Check traceability coverage (future command)
-/project:check-traceability .aiwg/traceability/requirements-traceability-matrix.csv
+/check-traceability .aiwg/traceability/requirements-traceability-matrix.csv
 
 # Expected output:
 # ✓ Requirements-to-Component Coverage: 100% (58/58)
@@ -262,7 +262,7 @@ All requirements have:
 ## Future Enhancements
 
 **Iteration 6** (FID-001: Traceability Automation):
-- [ ] `/project:check-traceability` command for automated validation
+- [ ] `/check-traceability` command for automated validation
 - [ ] Orphan detection (requirements without components/tests)
 - [ ] Coverage analysis (% requirements traced)
 - [ ] Gap reporting (missing links, broken references)

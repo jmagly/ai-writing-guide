@@ -89,7 +89,7 @@
 
 ## 7. Trigger
 
-Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics collection: `/project:project-metrics`
+Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics collection: `/project-metrics`
 
 **Alternative Triggers:**
 - Automated daily metrics collection (scheduled cron job)
@@ -100,7 +100,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 ## 8. Main Success Scenario
 
 1. **User Initiates Metrics Collection**:
-   - Framework Maintainer runs: `/project:project-metrics`
+   - Framework Maintainer runs: `/project-metrics`
    - User specifies optional parameters: `--timeframe 90-days` (default: all-time)
    - User optionally enables real-time mode: `--live` (dashboard updates every 60 seconds)
 2. **Core Orchestrator Validates Preconditions**:
@@ -280,7 +280,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Condition:** User enables live dashboard mode: `--live`
 
 **Flow:**
-1. Framework Maintainer runs: `/project:project-metrics --live`
+1. Framework Maintainer runs: `/project-metrics --live`
 2. Core Orchestrator validates preconditions (same as main flow)
 3. Orchestrator launches Metrics Analyst in live mode:
    - Agent creates persistent metrics server (runs in background)
@@ -322,7 +322,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
        calculation: "reviews_per_iteration"
        target: "1 review/iteration"
    ```
-2. Maintainer runs: `/project:project-metrics --custom-config .aiwg/metrics/custom-kpis.yaml`
+2. Maintainer runs: `/project-metrics --custom-config .aiwg/metrics/custom-kpis.yaml`
 3. Metrics Analyst reads custom config file
 4. Analyst validates config format: YAML schema validation passes
 5. Analyst collects custom metrics:
@@ -354,7 +354,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
    - **DORA Metrics**: Current quarter only (no quarter-over-quarter comparison)
 5. Analyst adds data availability notes to dashboard:
    - "Note: Trend analysis requires 3+ iterations. Current iteration count: 2."
-   - "Recommendation: Re-run `/project:project-metrics` after iteration 3 completion."
+   - "Recommendation: Re-run `/project-metrics` after iteration 3 completion."
 6. Orchestrator prompts Framework Maintainer:
    - "Insufficient historical data for trend analysis. Continue with snapshot metrics? (y/n)"
 7. Maintainer confirms: "Yes, generate snapshot dashboard"
@@ -367,7 +367,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Condition:** User requests cross-project metrics aggregation (requires FID-007 Workspace Management)
 
 **Flow:**
-1. Framework Maintainer runs: `/project:project-metrics --workspace ~/.aiwg/workspaces/all-projects.yaml`
+1. Framework Maintainer runs: `/project-metrics --workspace ~/.aiwg/workspaces/all-projects.yaml`
 2. Metrics Analyst reads workspace configuration: `all-projects.yaml`
    - Project 1: `/home/user/dev/project-a` (AIWG-enabled)
    - Project 2: `/home/user/dev/project-b` (AIWG-enabled)
@@ -551,7 +551,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 ## 12. Related Business Rules
 
 **BR-MT-001: Metrics Collection Frequency**
-- **Default Mode**: On-demand collection (`/project:project-metrics` command)
+- **Default Mode**: On-demand collection (`/project-metrics` command)
 - **Scheduled Mode**: Daily automated collection (cron job: 2 AM local time)
 - **Live Mode**: Real-time updates (60-second refresh interval)
 - **Rationale**: Flexibility for different use cases (on-demand for solo developers, scheduled for teams, live for sprint planning)
@@ -638,7 +638,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 1. **Issue 001: Cross-Project Metrics Aggregation Dependency**
    - **Description**: Multi-project metrics aggregation (Alt-4) requires FID-007 (Workspace Management) which is deferred to P2
    - **Impact**: Solo developers managing multiple AIWG projects cannot aggregate metrics across projects
-   - **Workaround**: Manually run `/project:project-metrics` per project and manually aggregate results
+   - **Workaround**: Manually run `/project-metrics` per project and manually aggregate results
    - **Owner**: Metrics Analyst agent
    - **Due Date**: Version 2.0 (post-MVP, after FID-007 delivery)
 
@@ -752,7 +752,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 ### AC-001: Basic Metrics Collection Workflow
 
 **Given:** AIWG framework repository with 5 iterations completed, Git history (245 commits), SDLC artifacts in `.aiwg/`
-**When:** Framework Maintainer runs `/project:project-metrics`
+**When:** Framework Maintainer runs `/project-metrics`
 **Then:**
 - Metrics dashboard generated in <2 minutes (1,800-3,000 words)
 - Velocity metrics collected: Commits/day (2.72), PRs/week (2.95), story points/iteration (36.6 average)
@@ -840,7 +840,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 
 ### AC-009: Real-Time Dashboard (Live Mode)
 
-**Given:** Framework Maintainer runs `/project:project-metrics --live`
+**Given:** Framework Maintainer runs `/project-metrics --live`
 **When:** Live dashboard mode enabled
 **Then:**
 - Persistent metrics server launched (runs in background)
@@ -853,7 +853,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 ### AC-010: Custom Metrics Definition
 
 **Given:** Framework Maintainer creates custom metrics config: `.aiwg/metrics/custom-kpis.yaml`
-**When:** Maintainer runs `/project:project-metrics --custom-config .aiwg/metrics/custom-kpis.yaml`
+**When:** Maintainer runs `/project-metrics --custom-config .aiwg/metrics/custom-kpis.yaml`
 **Then:**
 - Custom metrics config validated: YAML schema validation passes
 - Custom metrics collected: Documentation Coverage (90%), ADR Freshness (12 days), Security Review Frequency (1.2/iteration)
@@ -921,7 +921,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Objective:** Validate end-to-end metrics collection workflow
 **Preconditions:** AIWG project with 5 iterations, 245 commits, SDLC artifacts in `.aiwg/`
 **Test Steps:**
-1. Run: `/project:project-metrics`
+1. Run: `/project-metrics`
 2. Wait for metrics collection completion
 3. Verify dashboard exists: `.aiwg/reports/metrics-dashboard.md`
 4. Verify dashboard word count: 2,000-3,000 words
@@ -1067,9 +1067,9 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 ### TC-MT-011: Real-Time Dashboard (Live Mode)
 
 **Objective:** Validate live dashboard mode
-**Preconditions:** Framework Maintainer runs `/project:project-metrics --live`
+**Preconditions:** Framework Maintainer runs `/project-metrics --live`
 **Test Steps:**
-1. Run: `/project:project-metrics --live`
+1. Run: `/project-metrics --live`
 2. Verify persistent metrics server launched (background process)
 3. Verify live dashboard file created: `.aiwg/reports/metrics-dashboard-live.md`
 4. Verify live dashboard URL provided: "http://localhost:8080/metrics"
@@ -1089,7 +1089,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Preconditions:** Custom metrics config created: `.aiwg/metrics/custom-kpis.yaml`
 **Test Steps:**
 1. Create custom config with 3 KPIs: Documentation Coverage, ADR Freshness, Security Review Frequency
-2. Run: `/project:project-metrics --custom-config .aiwg/metrics/custom-kpis.yaml`
+2. Run: `/project-metrics --custom-config .aiwg/metrics/custom-kpis.yaml`
 3. Verify config validated: YAML schema validation passes
 4. Verify custom metrics collected: Documentation Coverage (90%), ADR Freshness (12 days), Security Review Frequency (1.2/iteration)
 5. Verify custom metrics in dashboard: "Custom KPIs" section added
@@ -1103,7 +1103,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Preconditions:** AIWG project with only 12 commits (below 20-commit minimum)
 **Test Steps:**
 1. Delete recent commits to reduce history to 12 commits: `git reset --hard HEAD~33`
-2. Run: `/project:project-metrics`
+2. Run: `/project-metrics`
 3. Verify insufficient data detected: "Insufficient Git history (12 commits, minimum 20 required)"
 4. Verify user prompt: "Continue with snapshot metrics? (y/n)"
 5. Respond: "y" (generate snapshot metrics)
@@ -1119,7 +1119,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Preconditions:** GitHub API rate limit exceeded (403 Forbidden)
 **Test Steps:**
 1. Mock GitHub API rate limit response: 403 Forbidden
-2. Run: `/project:project-metrics`
+2. Run: `/project-metrics`
 3. Verify rate limit error detected: "403 Forbidden - Rate limit exceeded. Retry after 3600 seconds."
 4. Verify user prompt: "Options: 1. Wait 60 minutes, 2. Use cached data, 3. Skip PR metrics"
 5. Respond: "2" (use cached PR data)
@@ -1135,7 +1135,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Preconditions:** AIWG project with 1,000 commits, 50 SDLC artifacts
 **Test Steps:**
 1. Start timer
-2. Run: `/project:project-metrics`
+2. Run: `/project-metrics`
 3. Wait for metrics collection completion
 4. Stop timer when dashboard saved
 5. Verify collection time: <2 minutes (NFR-MT-01: <2 minutes for 1,000 commits)
@@ -1149,7 +1149,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Preconditions:** AIWG project with active development (commits, PRs, tests running)
 **Test Steps:**
 1. Measure baseline CPU usage: 10% (no metrics collection running)
-2. Start live metrics collection: `/project:project-metrics --live`
+2. Start live metrics collection: `/project-metrics --live`
 3. Measure CPU usage with metrics collection: 14%
 4. Calculate overhead: 14% - 10% = 4% (below 5% threshold)
 5. Verify memory usage: <100MB additional memory
@@ -1163,7 +1163,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Preconditions:** AIWG project with 18 months of historical metrics data
 **Test Steps:**
 1. Verify velocity history contains 18 months of data (before retention policy applied)
-2. Run: `/project:project-metrics`
+2. Run: `/project-metrics`
 3. Verify data retention policy applied: CSV rows older than 12 months deleted
 4. Count CSV rows in velocity-history.csv: Must be ≤365 rows (12 months @ 1 row/day maximum)
 5. Verify audit trail contains permanent retention: All 18 months of data in audit-trail.log
@@ -1174,7 +1174,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 ### TC-MT-018: Real-Time Update Latency (NFR-FRESH-001)
 
 **Objective:** Validate live dashboard update latency <1 second
-**Preconditions:** Live metrics collection running: `/project:project-metrics --live`
+**Preconditions:** Live metrics collection running: `/project-metrics --live`
 **Test Steps:**
 1. Start live dashboard
 2. Push new commit to Git
@@ -1191,7 +1191,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Objective:** Validate metrics collection for large projects
 **Preconditions:** AIWG project with >10,000 commits (large repository)
 **Test Steps:**
-1. Run: `/project:project-metrics`
+1. Run: `/project-metrics`
 2. Verify timeout detected after 5 minutes
 3. Verify metrics collection chunked into parallel tasks: Velocity, Quality, DORA metrics
 4. Verify parallel execution completes in <3 minutes (50% time reduction vs sequential)
@@ -1282,7 +1282,7 @@ Framework Maintainer, Solo Developer, or Enterprise Team Lead requests metrics c
 **Objective:** Validate complete end-to-end metrics collection workflow
 **Preconditions:** AIWG framework with 5 iterations completed, SDLC artifacts in `.aiwg/`, Git history (245 commits)
 **Test Steps:**
-1. Run: `/project:project-metrics`
+1. Run: `/project-metrics`
 2. Wait for metrics collection completion (Step 1-15)
 3. Verify dashboard generated: `.aiwg/reports/metrics-dashboard.md`
 4. Verify historical data updated: `.aiwg/metrics/velocity-history.csv`, `.aiwg/metrics/quality-history.csv`, `.aiwg/metrics/dora-history.csv`

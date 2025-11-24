@@ -690,34 +690,34 @@ Provide a complete, production-ready project structure that follows industry bes
 
 ```bash
 # Review specific file
-/project:review src/auth.js
+/review src/auth.js
 
 # Review all staged files
-/project:review staged
+/review staged
 
 # Generate tests for a class
-/project:test src/UserService.js
+/test src/UserService.js
 
 # Create commit message from staged changes
-/project:commit
+/commit
 
 # Generate API docs for endpoint
-/project:api-docs src/routes/users.js
+/api-docs src/routes/users.js
 
 # Optimize Dockerfile
-/project:docker-optimize
+/docker-optimize
 
 # Setup new Node.js project
-/project:setup node my-api-project
+/setup node my-api-project
 ```
 
 ### Command Chaining
 
 ```bash
 # Complete development workflow
-/project:review staged
-/project:test src/newFeature.js
-/project:commit "Add user authentication feature"
+/review staged
+/test src/newFeature.js
+/commit "Add user authentication feature"
 ```
 
 These commands provide immediate value for common development tasks while following the AI Writing Guide principles of

@@ -39,7 +39,7 @@ Solo developers formalizing existing projects need intake documents without manu
 ## Main Success Scenario
 
 1. User navigates to existing project directory: `cd /path/to/existing-project`
-2. User invokes intake generation: `/project:intake-from-codebase .`
+2. User invokes intake generation: `/intake-from-codebase .`
 3. Intake Coordinator agent analyzes codebase:
    - Git history (commit frequency, contributors, activity timeline)
    - Code structure (language, framework, architecture patterns)
@@ -52,8 +52,8 @@ Solo developers formalizing existing projects need intake documents without manu
    - `stakeholder-intake.md`: User personas, team structure, communication patterns
 5. Agent saves forms to `.aiwg/intake/` directory
 6. User reviews generated intake forms for accuracy (80-90% accuracy expected, user edits remaining 10-20%)
-7. User optionally invokes interactive refinement: `/project:intake-from-codebase . --interactive` (agent asks strategic questions to fill gaps)
-8. User validates intake completeness: `/project:intake-start .aiwg/intake/` (checks for required fields, warns if gaps exist)
+7. User optionally invokes interactive refinement: `/intake-from-codebase . --interactive` (agent asks strategic questions to fill gaps)
+8. User validates intake completeness: `/intake-start .aiwg/intake/` (checks for required fields, warns if gaps exist)
 
 ## Postconditions
 

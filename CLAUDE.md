@@ -81,13 +81,13 @@ All agents work independently with isolated contexts regardless of platform.
 
 ```bash
 # Validate content for AI patterns
-/project:writing-validator "path/to/content.md"
+/writing-validator "path/to/content.md"
 
 # Optimize a prompt for better output
-/project:prompt-optimizer "original prompt text"
+/prompt-optimizer "original prompt text"
 
 # Generate diverse content examples
-/project:content-diversifier "base concept or topic"
+/content-diversifier "base concept or topic"
 ```
 
 ### Working with Agents
@@ -308,15 +308,15 @@ This repository includes a comprehensive software development lifecycle framewor
 1. Scaffold new project: `aiwg -new` (copies intake templates, CLAUDE.md with orchestration prompts)
 2. Deploy SDLC agents: `aiwg -deploy-agents --mode sdlc`
 3. Deploy SDLC commands: `aiwg -deploy-commands --mode sdlc`
-4. Fill intake forms: `/project:intake-wizard "your project description"`
+4. Fill intake forms: `/intake-wizard "your project description"`
 5. Follow phase workflows: Reference `agentic/code/frameworks/sdlc-complete/plan-act-sdlc.md` for milestone guidance
 
 **For Existing Projects**:
 
-1. Update project CLAUDE.md: `/project:aiwg-setup-project` (preserves existing content, adds AIWG orchestration section)
+1. Update project CLAUDE.md: `/aiwg-setup-project` (preserves existing content, adds AIWG orchestration section)
 2. Deploy SDLC agents: `aiwg -deploy-agents --mode sdlc`
 3. Deploy SDLC commands: `aiwg -deploy-commands --mode sdlc`
-4. Start intake: `/project:intake-wizard "your project description"` or `/project:intake-from-codebase .`
+4. Start intake: `/intake-wizard "your project description"` or `/intake-from-codebase .`
 
 **Natural Language Orchestration**:
 
@@ -337,20 +337,20 @@ All three intake commands now support an optional `--guidance` parameter to prov
 
 **intake-wizard** - Generate or complete intake forms with guidance:
 ```bash
-/project:intake-wizard "Build customer portal" --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
-/project:intake-wizard --complete --interactive --guidance "Focus on security first, SOC2 audit in 3 months"
+/intake-wizard "Build customer portal" --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
+/intake-wizard --complete --interactive --guidance "Focus on security first, SOC2 audit in 3 months"
 ```
 
 **intake-from-codebase** - Analyze existing codebase with guidance:
 ```bash
-/project:intake-from-codebase . --guidance "Focus on security posture and compliance gaps for SOC2 audit"
-/project:intake-from-codebase . --interactive --guidance "Fintech app, PCI-DSS required, preparing for Series A fundraising"
+/intake-from-codebase . --guidance "Focus on security posture and compliance gaps for SOC2 audit"
+/intake-from-codebase . --interactive --guidance "Fintech app, PCI-DSS required, preparing for Series A fundraising"
 ```
 
 **intake-start** - Kick off Inception with guidance:
 ```bash
-/project:intake-start .aiwg/intake/ --guidance "Focus on security architecture first, compliance is critical path"
-/project:intake-start .aiwg/intake/ --guidance "Team has limited DevOps experience, need extra infrastructure support"
+/intake-start .aiwg/intake/ --guidance "Focus on security architecture first, compliance is critical path"
+/intake-start .aiwg/intake/ --guidance "Team has limited DevOps experience, need extra infrastructure support"
 ```
 
 The `--guidance` parameter accepts free-form text to:
@@ -441,7 +441,7 @@ mv intake/* .aiwg/intake/
 rmdir intake
 ```
 
-Or specify custom path: `/project:intake-wizard --complete intake/`
+Or specify custom path: `/intake-wizard --complete intake/`
 
 ## Important File References
 
@@ -693,52 +693,52 @@ Starting orchestration..."
 
 **Intake & Inception**:
 
-- `/project:intake-wizard` - Generate or complete intake forms interactively
-- `/project:intake-from-codebase` - Analyze existing codebase to generate intake
-- `/project:intake-start` - Validate intake and kick off Inception phase
-- `/project:flow-concept-to-inception` - Execute Concept → Inception workflow
+- `/intake-wizard` - Generate or complete intake forms interactively
+- `/intake-from-codebase` - Analyze existing codebase to generate intake
+- `/intake-start` - Validate intake and kick off Inception phase
+- `/flow-concept-to-inception` - Execute Concept → Inception workflow
 
 **Phase Transitions**:
 
-- `/project:flow-inception-to-elaboration` - Transition to Elaboration phase
-- `/project:flow-elaboration-to-construction` - Transition to Construction phase
-- `/project:flow-construction-to-transition` - Transition to Transition phase
+- `/flow-inception-to-elaboration` - Transition to Elaboration phase
+- `/flow-elaboration-to-construction` - Transition to Construction phase
+- `/flow-construction-to-transition` - Transition to Transition phase
 
 **Continuous Workflows** (run throughout lifecycle):
 
-- `/project:flow-risk-management-cycle` - Risk identification and mitigation
-- `/project:flow-requirements-evolution` - Living requirements refinement
-- `/project:flow-architecture-evolution` - Architecture change management
-- `/project:flow-test-strategy-execution` - Test suite execution and validation
-- `/project:flow-security-review-cycle` - Security validation and threat modeling
-- `/project:flow-performance-optimization` - Performance baseline and optimization
+- `/flow-risk-management-cycle` - Risk identification and mitigation
+- `/flow-requirements-evolution` - Living requirements refinement
+- `/flow-architecture-evolution` - Architecture change management
+- `/flow-test-strategy-execution` - Test suite execution and validation
+- `/flow-security-review-cycle` - Security validation and threat modeling
+- `/flow-performance-optimization` - Performance baseline and optimization
 
 **Quality & Gates**:
 
-- `/project:flow-gate-check <phase-name>` - Validate phase gate criteria
-- `/project:flow-handoff-checklist <from-phase> <to-phase>` - Phase handoff validation
-- `/project:project-status` - Current phase, milestone progress, next steps
-- `/project:project-health-check` - Overall project health metrics
+- `/flow-gate-check <phase-name>` - Validate phase gate criteria
+- `/flow-handoff-checklist <from-phase> <to-phase>` - Phase handoff validation
+- `/project-status` - Current phase, milestone progress, next steps
+- `/project-health-check` - Overall project health metrics
 
 **Team & Process**:
 
-- `/project:flow-team-onboarding <member> [role]` - Onboard new team member
-- `/project:flow-knowledge-transfer <from> <to> [domain]` - Knowledge transfer workflow
-- `/project:flow-cross-team-sync <team-a> <team-b>` - Cross-team coordination
-- `/project:flow-retrospective-cycle <type> [iteration]` - Retrospective facilitation
+- `/flow-team-onboarding <member> [role]` - Onboard new team member
+- `/flow-knowledge-transfer <from> <to> [domain]` - Knowledge transfer workflow
+- `/flow-cross-team-sync <team-a> <team-b>` - Cross-team coordination
+- `/flow-retrospective-cycle <type> [iteration]` - Retrospective facilitation
 
 **Deployment & Operations**:
 
-- `/project:flow-deploy-to-production` - Production deployment
-- `/project:flow-hypercare-monitoring <duration-days>` - Post-launch monitoring
-- `/project:flow-incident-response <incident-id> [severity]` - Production incident triage
+- `/flow-deploy-to-production` - Production deployment
+- `/flow-hypercare-monitoring <duration-days>` - Post-launch monitoring
+- `/flow-incident-response <incident-id> [severity]` - Production incident triage
 
 **Compliance & Governance**:
 
-- `/project:flow-compliance-validation <framework>` - Compliance validation workflow
-- `/project:flow-change-control <change-type> [change-id]` - Change control workflow
-- `/project:check-traceability <path-to-csv>` - Verify requirements-to-code traceability
-- `/project:security-gate` - Enforce security criteria before release
+- `/flow-compliance-validation <framework>` - Compliance validation workflow
+- `/flow-change-control <change-type> [change-id]` - Change control workflow
+- `/check-traceability <path-to-csv>` - Verify requirements-to-code traceability
+- `/security-gate` - Enforce security criteria before release
 
 ### Command Parameters
 
@@ -756,10 +756,10 @@ User: "Start security review with focus on authentication and HIPAA"
 You: [Orchestrate flow-security-review-cycle with guidance="focus on authentication and HIPAA"]
 
 # Explicit command (if user prefers)
-/project:flow-architecture-evolution --guidance "Focus on security first, SOC2 audit in 3 months"
+/flow-architecture-evolution --guidance "Focus on security first, SOC2 audit in 3 months"
 
 # Interactive mode
-/project:flow-inception-to-elaboration --interactive
+/flow-inception-to-elaboration --interactive
 ```
 
 ## AIWG-Specific Rules
@@ -829,32 +829,32 @@ You: [Orchestrate flow-security-review-cycle with guidance="focus on authenticat
 
    ```bash
    # Generate intake forms
-   /project:intake-wizard "Your project description" --interactive
+   /intake-wizard "Your project description" --interactive
    ```
 
 2. **Start Inception**:
 
    ```bash
    # Validate intake and kick off Inception
-   /project:intake-start .aiwg/intake/
+   /intake-start .aiwg/intake/
 
    # Execute Concept → Inception workflow
-   /project:flow-concept-to-inception .
+   /flow-concept-to-inception .
    ```
 
 3. **Check Status**:
 
    ```bash
    # View current phase and next steps
-   /project:project-status
+   /project-status
    ```
 
 4. **Progress Through Phases**:
 
    ```bash
    # When Inception complete, transition to Elaboration
-   /project:flow-gate-check inception  # Validate gate criteria
-   /project:flow-inception-to-elaboration  # Transition phase
+   /flow-gate-check inception  # Validate gate criteria
+   /flow-inception-to-elaboration  # Transition phase
    ```
 
 ## Common Patterns
@@ -866,7 +866,7 @@ You: [Orchestrate flow-security-review-cycle with guidance="focus on authenticat
 User: "Update risks with focus on technical debt"
 
 # Or explicit command
-/project:flow-risk-management-cycle --guidance "Focus on technical debt"
+/flow-risk-management-cycle --guidance "Focus on technical debt"
 ```
 
 **Architecture Evolution** (when architecture changes needed):
@@ -876,7 +876,7 @@ User: "Update risks with focus on technical debt"
 User: "Evolve architecture for database migration"
 
 # Or explicit command
-/project:flow-architecture-evolution database-migration --interactive
+/flow-architecture-evolution database-migration --interactive
 ```
 
 **Security Review** (before each phase gate):
@@ -886,7 +886,7 @@ User: "Evolve architecture for database migration"
 User: "Run security review for SOC2 audit prep"
 
 # Or explicit command
-/project:flow-security-review-cycle --guidance "SOC2 audit prep, focus on access controls"
+/flow-security-review-cycle --guidance "SOC2 audit prep, focus on access controls"
 ```
 
 **Test Execution** (run continuously in Construction):
@@ -896,7 +896,7 @@ User: "Run security review for SOC2 audit prep"
 User: "Execute integration tests with 5 minute timeout"
 
 # Or explicit command
-/project:flow-test-strategy-execution integration --guidance "Focus on API endpoints, <5min execution time target"
+/flow-test-strategy-execution integration --guidance "Focus on API endpoints, <5min execution time target"
 ```
 
 ## Troubleshooting

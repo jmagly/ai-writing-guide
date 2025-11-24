@@ -3,7 +3,7 @@
 ## Metadata
 
 - ID: UC-003
-- Name: Generate Intake Documents from Existing Codebase via `/project:intake-from-codebase`
+- Name: Generate Intake Documents from Existing Codebase via `/intake-from-codebase`
 - Owner: Requirements Analyst
 - Contributors: Intake Coordinator, System Analyst, Architecture Designer
 - Reviewers: Requirements Reviewer, Product Strategist
@@ -23,7 +23,7 @@
 ## 1. Use-Case Identifier and Name
 
 **ID:** UC-003
-**Name:** Generate Intake Documents from Existing Codebase via `/project:intake-from-codebase`
+**Name:** Generate Intake Documents from Existing Codebase via `/intake-from-codebase`
 
 ## 2. Scope and Level
 
@@ -86,14 +86,14 @@
 - Confidence scores assigned to each field (High: 90%+, Medium: 70-89%, Low: <70%)
 - Low-confidence fields flagged for user review (marked with `⚠️ LOW CONFIDENCE` indicator)
 - Analysis completes in <5 minutes for 1,000-file repositories
-- Ready for Inception phase validation (`/project:intake-start`)
+- Ready for Inception phase validation (`/intake-start`)
 - Optional: Remediation recommendations generated for technical debt, security risks
 
 **Failure Postconditions:**
 - Error log generated: `.aiwg/intake/generation-errors.log`
 - Partial intake documents saved (best-effort completion)
 - Remediation recommendations provided:
-  - Insufficient git history (<10 commits) → "Add more commits or use `/project:intake-wizard` for manual intake"
+  - Insufficient git history (<10 commits) → "Add more commits or use `/intake-wizard` for manual intake"
   - Missing README.md → "Create README.md with project description, installation instructions"
   - No package manager files → "Add package.json (Node.js) or requirements.txt (Python) for dependency analysis"
 - User notified of completion percentage (e.g., "75% fields populated, 25% low confidence")
@@ -101,10 +101,10 @@
 ## 7. Trigger
 
 **Manual Triggers:**
-- Developer invokes: `/project:intake-from-codebase .` (current directory)
-- Developer invokes: `/project:intake-from-codebase /path/to/project` (specific path)
-- Developer invokes: `/project:intake-from-codebase . --interactive` (guided refinement mode)
-- Developer invokes: `/project:intake-from-codebase . --guidance "Focus on security, SOC2 audit in 3 months"` (strategic focus)
+- Developer invokes: `/intake-from-codebase .` (current directory)
+- Developer invokes: `/intake-from-codebase /path/to/project` (specific path)
+- Developer invokes: `/intake-from-codebase . --interactive` (guided refinement mode)
+- Developer invokes: `/intake-from-codebase . --guidance "Focus on security, SOC2 audit in 3 months"` (strategic focus)
 
 **Automatic Triggers:**
 - CI/CD pipeline post-migration: Automatically generate intake for newly migrated legacy projects
@@ -124,7 +124,7 @@
    - Developer verifies AIWG commands deployed: `ls .claude/commands/intake-from-codebase.md`
 
 2. **Developer initiates intake generation**
-   - Developer invokes: `/project:intake-from-codebase .`
+   - Developer invokes: `/intake-from-codebase .`
    - Core Orchestrator (Claude Code) receives command
    - Orchestrator validates arguments:
      - Codebase path: `.` (current directory, valid path)
@@ -384,8 +384,8 @@
 
       Next Actions:
       1. Review low-confidence fields (3 fields flagged)
-      2. Run interactive refinement: `/project:intake-from-codebase . --interactive`
-      3. Validate intake: `/project:intake-start .aiwg/intake/`
+      2. Run interactive refinement: `/intake-from-codebase . --interactive`
+      3. Validate intake: `/intake-start .aiwg/intake/`
       4. Address technical debt: 47 TODOs, 2 security vulnerabilities
       ```
     - System returns success status code: `0` (generation completed successfully)
@@ -398,7 +398,7 @@
 **Condition:** User invokes with `--interactive` flag
 
 **Flow:**
-1. User invokes: `/project:intake-from-codebase . --interactive`
+1. User invokes: `/intake-from-codebase . --interactive`
 2. System generates initial intake documents (Steps 3-14 from Main Flow)
 3. System calculates overall confidence score: 75% (Medium confidence)
 4. System detects 6 low-confidence fields (<70% confidence):
@@ -461,7 +461,7 @@
 **Condition:** User provides `--guidance` parameter with strategic focus
 
 **Flow:**
-1. User invokes: `/project:intake-from-codebase . --guidance "Focus on security posture and compliance gaps for SOC2 audit in 3 months"`
+1. User invokes: `/intake-from-codebase . --guidance "Focus on security posture and compliance gaps for SOC2 audit in 3 months"`
 2. System parses guidance text:
    - Focus areas: Security posture, Compliance gaps
    - Compliance framework: SOC2
@@ -737,7 +737,7 @@
 
    Options:
    (A) Continue with low-confidence intake (best-effort analysis)
-   (B) Use manual intake wizard instead (`/project:intake-wizard`)
+   (B) Use manual intake wizard instead (`/intake-wizard`)
    (C) Cancel and add more commits before retrying
 
    Recommendation: Option A if urgent, Option B for higher accuracy
@@ -790,7 +790,7 @@
 8. System prompts user for interactive refinement:
    ```
    Missing README.md detected. Recommend interactive refinement mode:
-   `/project:intake-from-codebase . --interactive`
+   `/intake-from-codebase . --interactive`
 
    Interactive mode will ask strategic questions to fill documentation gaps.
    ```
@@ -824,10 +824,10 @@
    1. Verify .git directory exists: `ls -la .git`
    2. Re-initialize git repository: `git init` (WARNING: loses history)
    3. Clone from remote: `git clone <repo-url>` (restores history)
-   4. Use manual intake wizard: `/project:intake-wizard` (skip git analysis)
+   4. Use manual intake wizard: `/intake-wizard` (skip git analysis)
    ```
 5. User chooses: "4 - Use manual intake wizard"
-6. System redirects to manual intake workflow: `/project:intake-wizard`
+6. System redirects to manual intake workflow: `/intake-wizard`
 7. System logs error: "Git repository corrupted - redirecting to manual intake wizard"
 8. System exits with status code: `1` (error - git analysis required)
 
@@ -884,7 +884,7 @@
    - Deployment strategy: Low (60%) - Infrastructure not scanned
    - Security posture: UNKNOWN (0%) - Security scan skipped
 
-   Recommendation: Run full analysis when time permits: `/project:intake-from-codebase . --full`
+   Recommendation: Run full analysis when time permits: `/intake-from-codebase . --full`
    ```
 10. System logs shallow analysis: "Large codebase (15GB) - shallow analysis mode enabled"
 11. **Resume Main Flow:** Step 12 (System generates intake documents with partial data)
@@ -977,10 +977,10 @@
    1. Verify source code exists: Check for .java, .py, .js files
    2. Navigate to source directory: `cd src/` and retry
    3. Clone source repository: Obtain source code from version control
-   4. Use manual intake wizard: `/project:intake-wizard` (skip codebase analysis)
+   4. Use manual intake wizard: `/intake-wizard` (skip codebase analysis)
    ```
 5. User chooses: "2 - Navigate to source directory"
-6. User runs: `cd src/ && /project:intake-from-codebase .`
+6. User runs: `cd src/ && /intake-from-codebase .`
 7. System detects source code files in `src/` directory
 8. **Resume Main Flow:** Step 5 (System scans codebase structure with source code)
 
@@ -1014,7 +1014,7 @@
    ```
 5. User regenerates GitHub Personal Access Token (PAT)
 6. User updates git credentials: `git config --global credential.helper store`
-7. User retries: `/project:intake-from-codebase .`
+7. User retries: `/intake-from-codebase .`
 8. System successfully reads git history with new credentials
 9. **Resume Main Flow:** Step 4 (System analyzes git history)
 
@@ -1233,7 +1233,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-001: Basic Intake Generation (Standard Project)
 
 **Given:** Existing project with 50+ commits, README.md (1,200 words), package.json (26 dependencies)
-**When:** Developer invokes `/project:intake-from-codebase .`
+**When:** Developer invokes `/intake-from-codebase .`
 **Then:**
 - 3 intake documents generated in <5 minutes
 - Critical fields 100% populated (project name, tech stack, primary language)
@@ -1244,7 +1244,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-002: Interactive Refinement (Low-Confidence Fields)
 
 **Given:** Generated intake with 6 low-confidence fields (<70%)
-**When:** User runs `/project:intake-from-codebase . --interactive`
+**When:** User runs `/intake-from-codebase . --interactive`
 **Then:**
 - Agent asks 3-5 strategic questions
 - User answers questions (free-form text or multiple choice)
@@ -1255,7 +1255,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-003: Guidance Parameter (Security Focus)
 
 **Given:** User provides security-focused guidance
-**When:** User runs `/project:intake-from-codebase . --guidance "Focus on security posture, SOC2 audit in 3 months"`
+**When:** User runs `/intake-from-codebase . --guidance "Focus on security posture, SOC2 audit in 3 months"`
 **Then:**
 - Agent prioritizes security analysis (HTTPS, authentication, encryption)
 - Technical intake includes expanded security section (security posture, SOC2 gaps, remediation plan)
@@ -1265,7 +1265,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-004: Monorepo Detection (Multiple Packages)
 
 **Given:** Monorepo with 5 packages (packages/ directory)
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System detects monorepo pattern (packages/ directory with 5 package.json files)
 - System prompts user for scope selection: (A) All packages, (B) Specific package, (C) Root only
@@ -1276,7 +1276,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-005: Legacy Codebase (No Package Manager)
 
 **Given:** Legacy codebase with manual dependencies (no package.json, vendor/ directory with libraries)
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System detects legacy codebase (no package manager files)
 - System infers dependencies from vendor/ directory (jQuery 3.2.1, Bootstrap 4.1.0)
@@ -1288,7 +1288,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-006: Insufficient Git History (<10 Commits)
 
 **Given:** Git repository with only 5 commits
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System detects insufficient git history (5 commits < 10 threshold)
 - System displays warning: "Low confidence - sparse git history (<10 commits)"
@@ -1299,7 +1299,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-007: Missing README.md (No Documentation)
 
 **Given:** Project with no README.md file
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System detects missing README.md
 - System attempts alternative documentation sources (package.json description, CHANGELOG.md)
@@ -1310,7 +1310,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-008: Polyglot Project (Multiple Languages)
 
 **Given:** Polyglot project (45% Python backend, 40% JavaScript frontend, 10% TypeScript, 5% Shell)
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System detects polyglot project (no single language >60%)
 - System prompts: "Polyglot project detected. Select: (A) Python, (B) JavaScript, (C) Multi-language intake"
@@ -1320,7 +1320,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-009: Large Codebase (>10GB, Shallow Mode)
 
 **Given:** Large codebase (15GB, exceeds 10GB threshold)
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System detects large codebase (15GB > 10GB)
 - System prompts: "Large codebase detected. Select: (A) Full analysis (10-15 min), (B) Shallow analysis (<2 min)"
@@ -1331,7 +1331,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-010: Microservices Architecture (8 Services)
 
 **Given:** Microservices architecture with 8 services (services/ directory, Kubernetes manifests)
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System detects microservices pattern (services/ directory with 8 subdirectories)
 - System prompts: "Microservices detected. Select: (A) All services, (B) Specific service, (C) System-wide intake"
@@ -1342,7 +1342,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-011: Git Authentication Failure (Expired Token)
 
 **Given:** Private repository with expired access token
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System attempts to read git history
 - Authentication failure detected
@@ -1353,7 +1353,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-012: Performance Target (<5 Minutes for 1,000-File Repos)
 
 **Given:** Codebase with 1,000 files (standard project size)
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - Git history scan completes in <30 seconds
 - Codebase structure scan completes in <2 minutes
@@ -1376,7 +1376,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-014: Critical Field Coverage (100% Populated)
 
 **Given:** Any codebase with package.json and git repository
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - Project name: 100% populated (from package.json "name" field)
 - Tech stack: 100% populated (from dependencies)
@@ -1397,7 +1397,7 @@ None (no architecture decisions specific to UC-003 at this time)
 ### AC-016: Graceful Degradation (Missing Files)
 
 **Given:** Project with missing README.md, no package.json, sparse git history
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - System continues analysis despite missing files
 - Alternative documentation sources used (CHANGELOG.md, git commits)
@@ -1415,7 +1415,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** 50+ commits, README.md (1,200 words), package.json (26 dependencies)
 **Test Steps:**
 1. Create test project with 50 commits, README.md, package.json
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Wait for intake generation (<5 minutes)
 4. Verify 3 intake documents generated: project-intake.md, technical-intake.md, stakeholder-intake.md
 5. Verify critical fields 100% populated (project name, tech stack, primary language)
@@ -1431,7 +1431,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Test Steps:**
 1. Create test project with package.json (name: "test-project", dependencies: [react, express])
 2. Initialize git repository (15 commits)
-3. Invoke: `/project:intake-from-codebase .`
+3. Invoke: `/intake-from-codebase .`
 4. Verify project name: "test-project" (100% populated)
 5. Verify tech stack: React, Express (100% populated)
 6. Verify primary language: JavaScript (100% populated)
@@ -1447,7 +1447,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Test Steps:**
 1. Create test project with 1,000 files (JavaScript, Python, tests)
 2. Initialize git repository (100 commits)
-3. Invoke: `/project:intake-from-codebase .`
+3. Invoke: `/intake-from-codebase .`
 4. Measure git history scan time: <30 seconds
 5. Measure codebase structure scan time: <2 minutes
 6. Measure dependency parsing time: <15 seconds
@@ -1463,7 +1463,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Generated intake with 6 low-confidence fields (<70%)
 **Test Steps:**
 1. Generate intake with low-confidence fields (sparse git history, missing README)
-2. Invoke: `/project:intake-from-codebase . --interactive`
+2. Invoke: `/intake-from-codebase . --interactive`
 3. Verify 3-5 strategic questions asked
 4. Answer questions (business goals, user personas, compliance, team skill level)
 5. Verify confidence scores improve 10-20 points
@@ -1478,7 +1478,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Project with HTTPS, JWT, bcrypt, audit logs
 **Test Steps:**
 1. Create test project with security patterns (HTTPS, JWT auth, bcrypt)
-2. Invoke: `/project:intake-from-codebase . --guidance "Focus on security, SOC2 audit in 3 months"`
+2. Invoke: `/intake-from-codebase . --guidance "Focus on security, SOC2 audit in 3 months"`
 3. Verify security analysis prioritized (HTTPS, authentication, encryption detected)
 4. Verify technical intake includes expanded security section
 5. Verify SOC2 gaps identified (missing audit logs, encryption at rest, access control matrix)
@@ -1493,7 +1493,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Monorepo with 5 packages (packages/ directory)
 **Test Steps:**
 1. Create monorepo with 5 packages (frontend, backend, shared, cli, docs)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify monorepo pattern detected (packages/ directory, 5 package.json files)
 4. Verify prompt: "Monorepo detected. Select: (A) All packages, (B) Specific package, (C) Root only"
 5. Select: "A - All packages"
@@ -1509,7 +1509,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Legacy codebase with vendor/ directory (no package.json)
 **Test Steps:**
 1. Create legacy project with vendor/ directory (jQuery 3.2.1, Bootstrap 4.1.0)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify legacy codebase detected (no package manager files)
 4. Verify dependencies inferred from vendor/ directory (jQuery, Bootstrap)
 5. Verify confidence score: Low (55%)
@@ -1571,7 +1571,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Git repository with only 5 commits
 **Test Steps:**
 1. Create test project with 5 commits
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify warning: "Insufficient git history (5 commits < 10 threshold)"
 4. Verify prompt: "(A) Continue with low-confidence, (B) Use manual intake wizard"
 5. Select: "A - Continue"
@@ -1587,7 +1587,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Project with no README.md file
 **Test Steps:**
 1. Create test project with no README.md
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify warning: "README.md missing or empty"
 4. Verify alternative documentation sources used (package.json description)
 5. Verify documentation-dependent fields flagged as low-confidence or UNKNOWN
@@ -1602,7 +1602,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Polyglot project (45% Python, 40% JavaScript, 10% TypeScript, 5% Shell)
 **Test Steps:**
 1. Create polyglot project (Python backend, JavaScript frontend)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify polyglot detection: "Polyglot project detected (4 languages)"
 4. Verify prompt: "Select: (A) Python, (B) JavaScript, (C) Multi-language intake"
 5. Select: "C - Multi-language"
@@ -1618,7 +1618,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Large codebase (15GB, exceeds 10GB threshold)
 **Test Steps:**
 1. Create large test project (15GB)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify warning: "Large codebase detected (15GB > 10GB)"
 4. Verify prompt: "Select: (A) Full analysis (10-15 min), (B) Shallow analysis (<2 min)"
 5. Select: "B - Shallow"
@@ -1635,7 +1635,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Git repository with 1,000 commits
 **Test Steps:**
 1. Create test project with 1,000 commits
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Measure git history scan time
 4. Verify scan completes in <30 seconds
 5. Verify commit count extracted: 1,000 commits
@@ -1650,7 +1650,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** package.json with 100 dependencies
 **Test Steps:**
 1. Create test project with package.json (100 dependencies)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Measure dependency parsing time
 4. Verify parsing completes in <15 seconds
 5. Verify all 100 dependencies extracted
@@ -1664,7 +1664,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** README.md with 5,000 words
 **Test Steps:**
 1. Create test project with large README.md (5,000 words)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Measure README analysis time
 4. Verify analysis completes in <10 seconds
 5. Verify project description extracted
@@ -1679,7 +1679,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Microservices architecture with 8 services (services/ directory)
 **Test Steps:**
 1. Create microservices project (8 services: auth, user, order, payment, notification, analytics, api-gateway, frontend)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify microservices pattern detected (services/ directory, 8 subdirectories)
 4. Verify prompt: "Microservices detected. Select: (A) All services, (B) Specific service, (C) System-wide intake"
 5. Select: "C - System-wide"
@@ -1695,7 +1695,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Corrupted .git directory
 **Test Steps:**
 1. Create test project with corrupted .git directory
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify error: "Git repository corrupted"
 4. Verify remediation steps displayed (re-initialize git, clone from remote)
 5. Verify exit status code: `1` (error)
@@ -1709,7 +1709,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Repository with only binary files (.class, .pyc, .dll)
 **Test Steps:**
 1. Create test project with binary files only (no source code)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify error: "No source code detected (binary files only)"
 4. Verify remediation steps displayed (navigate to source directory, use manual wizard)
 5. Verify exit status code: `1` (error)
@@ -1724,7 +1724,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Test Steps:**
 1. Create private test repository
 2. Expire access token (simulate authentication failure)
-3. Invoke: `/project:intake-from-codebase .`
+3. Invoke: `/intake-from-codebase .`
 4. Verify error: "Git authentication failed"
 5. Verify remediation steps displayed (regenerate PAT, update git credentials)
 6. Verify exit status code: `1` (error)
@@ -1738,7 +1738,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Generated intake with 10 low-confidence fields
 **Test Steps:**
 1. Generate intake with 10 low-confidence fields
-2. Invoke: `/project:intake-from-codebase . --interactive`
+2. Invoke: `/intake-from-codebase . --interactive`
 3. Verify agent asks 3-5 strategic questions (not all 10)
 4. Verify questions prioritize lowest-confidence fields
 **Expected Result:** 3-5 questions asked (not all 10 fields)
@@ -1767,7 +1767,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Project with missing README, no package.json, sparse git history
 **Test Steps:**
 1. Create test project with missing README, no package.json, 5 commits
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify analysis continues despite missing files
 4. Verify alternative sources used (CHANGELOG.md, git commits)
 5. Verify partial intake generated
@@ -1782,7 +1782,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Existing project with 50 commits, README, package.json
 **Test Steps:**
 1. Create test project (50 commits, README, package.json)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Wait for analysis to complete (Steps 1-15)
 4. Verify all outputs generated:
    - project-intake.md (1,800 words)
@@ -1801,7 +1801,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Project with HTTPS, JWT auth, bcrypt, audit logs
 **Test Steps:**
 1. Create test project with security patterns (HTTPS endpoints, JWT middleware, bcrypt hashing)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify security indicators detected:
    - HTTPS usage (https:// in API endpoints)
    - Authentication (JWT library detected)
@@ -1818,7 +1818,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Project with GDPR indicators (data export, deletion, consent)
 **Test Steps:**
 1. Create test project with GDPR patterns (data-export endpoint, delete-user endpoint, consent-management module)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify GDPR indicators detected:
    - Data export functionality
    - Data deletion functionality
@@ -1835,7 +1835,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Project with 47 TODO comments, 8 large files (>500 lines)
 **Test Steps:**
 1. Create test project with technical debt (TODO comments, large files, FIXMEs)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify technical debt detected:
    - 47 TODO comments
    - 8 large files (>500 lines)
@@ -1852,7 +1852,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Project with 5 outdated packages, 2 security vulnerabilities
 **Test Steps:**
 1. Create test project with outdated dependencies (packages >2 years old)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify dependency risks detected:
    - 5 outdated packages (npm outdated)
    - 2 security vulnerabilities (npm audit)
@@ -1868,7 +1868,7 @@ None (no architecture decisions specific to UC-003 at this time)
 **Preconditions:** Project with ORM models (Sequelize, TypeORM, SQLAlchemy)
 **Test Steps:**
 1. Create test project with ORM models (Users, Posts, Comments)
-2. Invoke: `/project:intake-from-codebase .`
+2. Invoke: `/intake-from-codebase .`
 3. Verify data model inferred:
    - 8 entities (Users, Posts, Comments, ...)
    - Relationships (User has many Posts, Post has many Comments)

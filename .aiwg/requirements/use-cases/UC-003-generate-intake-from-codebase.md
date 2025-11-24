@@ -40,12 +40,12 @@
 
 ## 6. Trigger
 
-User invokes: `/project:intake-from-codebase .`
+User invokes: `/intake-from-codebase .`
 
 ## 7. Main Success Scenario
 
 1. User navigates to project: `cd /path/to/existing-project`
-2. User invokes: `/project:intake-from-codebase .`
+2. User invokes: `/intake-from-codebase .`
 3. Intake Coordinator agent analyzes codebase:
    - Git history (commit frequency, contributors, timeline)
    - Code structure (language, framework, patterns)
@@ -58,9 +58,9 @@ User invokes: `/project:intake-from-codebase .`
    - `stakeholder-intake.md` (personas, team structure)
 5. Agent saves to `.aiwg/intake/`
 6. User reviews (80-90% accuracy expected)
-7. User optionally invokes interactive refinement: `/project:intake-from-codebase . --interactive`
+7. User optionally invokes interactive refinement: `/intake-from-codebase . --interactive`
 8. Agent asks strategic questions to fill gaps
-9. User validates: `/project:intake-start .aiwg/intake/`
+9. User validates: `/intake-start .aiwg/intake/`
 
 ## 8. Alternate Flows
 
@@ -69,7 +69,7 @@ User invokes: `/project:intake-from-codebase .`
 **Condition:** User wants guided refinement
 
 **Flow:**
-1. User runs: `/project:intake-from-codebase . --interactive`
+1. User runs: `/intake-from-codebase . --interactive`
 2. Agent generates initial intake
 3. Agent asks strategic questions:
    - "Primary business driver: cost reduction or new capability?"
@@ -84,7 +84,7 @@ User invokes: `/project:intake-from-codebase .`
 **Condition:** User provides strategic guidance
 
 **Flow:**
-1. User runs: `/project:intake-from-codebase . --guidance "Focus on security posture, SOC2 audit in 3 months"`
+1. User runs: `/intake-from-codebase . --guidance "Focus on security posture, SOC2 audit in 3 months"`
 2. Agent prioritizes security analysis:
    - Scans for HTTPS usage
    - Detects authentication patterns
@@ -193,7 +193,7 @@ User invokes: `/project:intake-from-codebase .`
 ### AC-001: Basic Generation
 
 **Given:** Existing project with 50+ commits, README.md, package.json
-**When:** User runs `/project:intake-from-codebase .`
+**When:** User runs `/intake-from-codebase .`
 **Then:**
 - 3 intake documents generated in <5 minutes
 - Critical fields 100% populated (name, tech stack, language)

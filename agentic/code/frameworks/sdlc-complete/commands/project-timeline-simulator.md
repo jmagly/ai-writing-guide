@@ -383,16 +383,16 @@ Resource-Based Success:
 
 ```bash
 # Software development project simulation
-/project:project-timeline-simulator Simulate 6-month e-commerce platform development with 8-person team and Q4 launch deadline
+/project-timeline-simulator Simulate 6-month e-commerce platform development with 8-person team and Q4 launch deadline
 
 # Product launch timeline modeling
-/project:project-timeline-simulator Model mobile app launch timeline with user testing, app store approval, and marketing campaign coordination
+/project-timeline-simulator Model mobile app launch timeline with user testing, app store approval, and marketing campaign coordination
 
 # Infrastructure migration simulation
-/project:project-timeline-simulator Simulate cloud migration project with legacy system dependencies and zero-downtime requirement
+/project-timeline-simulator Simulate cloud migration project with legacy system dependencies and zero-downtime requirement
 
 # Agile release planning
-/project:project-timeline-simulator Model next quarter sprint planning with feature prioritization and team velocity uncertainty
+/project-timeline-simulator Model next quarter sprint planning with feature prioritization and team velocity uncertainty
 ```
 
 ## Quality Indicators

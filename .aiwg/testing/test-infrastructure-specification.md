@@ -390,7 +390,7 @@ test.describe('UC-005: Complete Iteration Workflow (E2E)', () => {
 
     // Step 2: Run iteration workflow command
     const { stdout, stderr } = await execAsync(
-      `/project:flow-iteration-dual-track 5`,
+      `/flow-iteration-dual-track 5`,
       { cwd: fsSandbox.sandboxPath }
     );
 

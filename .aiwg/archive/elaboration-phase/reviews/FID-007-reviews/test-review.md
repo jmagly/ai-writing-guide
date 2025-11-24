@@ -261,7 +261,7 @@ The FID-007 implementation plan provides a solid test strategy with 117 total te
    - **Given**: User has SDLC framework installed, project ID is "aiwg-framework"
    - **When**: User says "Transition to Elaboration"
    - **Then**:
-     - NL Router maps to `/project:flow-inception-to-elaboration`
+     - NL Router maps to `/flow-inception-to-elaboration`
      - Metadata loader extracts `framework: sdlc-complete`
      - Context curator loads SDLC context (`.aiwg/frameworks/sdlc-complete/repo/`, `.aiwg/frameworks/sdlc-complete/projects/aiwg-framework/`)
      - Orchestrator launches Architecture Designer agent

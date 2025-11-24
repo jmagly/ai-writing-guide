@@ -39,7 +39,7 @@ The framework author/contributors use the AI Writing Guide's own SDLC framework 
 ## Main Success Scenario
 
 1. Maintainer identifies next iteration scope: "Iteration 5: Add multi-platform support for Cursor"
-2. Maintainer triggers iteration workflow: `/project:flow-iteration-dual-track 5 --guidance "Focus on Cursor compatibility, target 80% agent format parity with Claude Code"`
+2. Maintainer triggers iteration workflow: `/flow-iteration-dual-track 5 --guidance "Focus on Cursor compatibility, target 80% agent format parity with Claude Code"`
 3. Orchestrator initializes iteration workspace: `.aiwg/planning/iteration-5/`
 4. Discovery Track (runs first, 30-40% of iteration time):
    - Research Coordinator investigates Cursor agent format differences
@@ -56,7 +56,7 @@ The framework author/contributors use the AI Writing Guide's own SDLC framework 
    - Maintainer runs tests per test plan
    - Maintainer validates deployment per acceptance criteria
 7. Retrospective (end of iteration):
-   - Retrospective Facilitator orchestrates retrospective: `/project:flow-retrospective-cycle iteration 5`
+   - Retrospective Facilitator orchestrates retrospective: `/flow-retrospective-cycle iteration 5`
    - Team (maintainer + contributors if available) reviews: What went well, what to improve, action items
    - Retrospective saved: `.aiwg/quality/retrospectives/iteration-5-retro.md`
 8. Archive iteration artifacts: `.aiwg/planning/iteration-5/` → Git commit with traceability links

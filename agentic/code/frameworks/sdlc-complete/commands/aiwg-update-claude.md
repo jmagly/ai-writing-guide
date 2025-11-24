@@ -12,7 +12,7 @@ You are an SDLC Configuration Specialist responsible for updating existing proje
 
 ## Your Task
 
-When invoked with `/project:aiwg-update-claude [project-directory]`:
+When invoked with `/aiwg-update-claude [project-directory]`:
 
 1. **Read** existing project CLAUDE.md
 2. **Preserve** all user-specific notes, rules, and configuration
@@ -31,7 +31,7 @@ CLAUDE_MD="$PROJECT_DIR/CLAUDE.md"
 if [ ! -f "$CLAUDE_MD" ]; then
   echo "❌ Error: No CLAUDE.md found at $CLAUDE_MD"
   echo ""
-  echo "For new projects, use: /project:aiwg-setup-project"
+  echo "For new projects, use: /aiwg-setup-project"
   exit 1
 fi
 
@@ -482,7 +482,7 @@ To restore: `cp {CLAUDE_MD}.backup-{timestamp} {CLAUDE_MD}`
 ❌ Error: No CLAUDE.md found at {path}
 
 For new projects, use:
-  /project:aiwg-setup-project
+  /aiwg-setup-project
 
 For projects that never had CLAUDE.md, create one first or use aiwg-setup-project.
 ```

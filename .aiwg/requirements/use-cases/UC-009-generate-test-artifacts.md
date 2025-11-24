@@ -46,7 +46,7 @@
 
 ## 6. Trigger
 
-User requests test artifacts: `/project:generate-test-plan`
+User requests test artifacts: `/generate-test-plan`
 
 ## 7. Main Success Scenario
 

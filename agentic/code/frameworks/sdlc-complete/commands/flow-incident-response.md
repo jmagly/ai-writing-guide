@@ -772,7 +772,7 @@ Based on your answers, I'll adjust:
        Execute rollback based on deployment strategy:
 
        Use existing deployment command:
-       /project:flow-deploy-to-production --rollback
+       /flow-deploy-to-production --rollback
 
        Document rollback execution:
        - Rollback timestamp

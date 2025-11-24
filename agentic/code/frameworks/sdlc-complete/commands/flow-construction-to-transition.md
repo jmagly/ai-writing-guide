@@ -183,7 +183,7 @@ Based on your answers, I'll adjust:
 
 3. **Decision Point**:
    - If OCM PASS → Continue to Step 2
-   - If OCM FAIL → Report gaps to user, recommend `/project:flow-elaboration-to-construction` to complete Construction
+   - If OCM FAIL → Report gaps to user, recommend `/flow-elaboration-to-construction` to complete Construction
    - Escalate to user for executive decision if criteria partially met
 
 **Communicate Progress**:
@@ -924,7 +924,7 @@ Gaps identified:
 - {list missing artifacts or incomplete criteria}
 
 Recommendation: Complete Construction first
-- Run: /project:flow-elaboration-to-construction
+- Run: /flow-elaboration-to-construction
 - Or: Complete missing artifacts manually
 
 Contact Product Owner for project status decision.

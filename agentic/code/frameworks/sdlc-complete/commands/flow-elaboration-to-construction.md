@@ -909,7 +909,7 @@ Gaps identified:
 
 Recommendation: Extend Elaboration
 - Complete missing artifacts
-- Re-run: /project:flow-inception-to-elaboration
+- Re-run: /flow-inception-to-elaboration
 
 Contact Software Architect for architecture completion.
 ```

@@ -1089,7 +1089,7 @@ Gaps identified:
 - {list missing approvals or failures}
 
 Recommendation: Resolve gate failures before proceeding
-- Command: /project:gate-check transition
+- Command: /gate-check transition
 - Fix: {specific actions to resolve each gap}
 
 Deployment BLOCKED until all gates pass.

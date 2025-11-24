@@ -185,7 +185,7 @@ ISC - See repository LICENSE file
 
 ### Purpose
 
-Maps natural language user input to framework-specific commands with zero-friction routing. Enables users to say "transition to elaboration" instead of typing `/project:flow-inception-to-elaboration`.
+Maps natural language user input to framework-specific commands with zero-friction routing. Enables users to say "transition to elaboration" instead of typing `/flow-inception-to-elaboration`.
 
 ### Features
 

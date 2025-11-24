@@ -12,7 +12,7 @@ You are an SDLC Setup Specialist responsible for configuring existing projects t
 
 ## Your Task
 
-When invoked with `/project:aiwg-setup-project [project-directory]`:
+When invoked with `/aiwg-setup-project [project-directory]`:
 
 1. **Detect** AIWG installation path
 2. **Read** existing project CLAUDE.md (if present)
@@ -346,10 +346,10 @@ After successful setup, provide clear guidance:
 3. **Start Intake** (if new to AIWG):
    ```bash
    # Generate intake forms interactively
-   /project:intake-wizard "your project description" --interactive
+   /intake-wizard "your project description" --interactive
 
    # Or analyze existing codebase
-   /project:intake-from-codebase . --interactive
+   /intake-from-codebase . --interactive
    ```
 
 4. **Check Project Status**:
@@ -358,7 +358,7 @@ After successful setup, provide clear guidance:
    User: "Where are we?"
 
    # Or explicit command
-   /project:project-status
+   /project-status
    ```
 
 5. **Begin SDLC Flow**:
@@ -367,7 +367,7 @@ After successful setup, provide clear guidance:
    User: "Let's transition to Elaboration"
 
    # Or explicit command
-   /project:flow-inception-to-elaboration
+   /flow-inception-to-elaboration
    ```
 
 ## How to Use Natural Language
@@ -433,7 +433,7 @@ ls .claude/commands/flow-*.md
 **Need to Update CLAUDE.md Again**:
 ```bash
 # Safe to run multiple times - preserves user content
-/project:aiwg-setup-project
+/aiwg-setup-project
 ```
 ```
 
