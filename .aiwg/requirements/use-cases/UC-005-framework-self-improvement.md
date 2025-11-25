@@ -84,7 +84,7 @@
 
 ## 7. Trigger
 
-Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-track 5`
+Framework Maintainer requests iteration workflow: `/flow-iteration-dual-track 5`
 
 ## 8. Main Success Scenario
 
@@ -92,7 +92,7 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
    - Iteration 5 scope: FID-005 (Plugin Rollback), FID-006 (Security Phase 1-2)
    - 2-week iteration (Oct 18 - Nov 1, 2025)
    - Velocity estimate: 40 story points (based on past iterations)
-2. Maintainer initiates dual-track iteration: `/project:flow-iteration-dual-track 5`
+2. Maintainer initiates dual-track iteration: `/flow-iteration-dual-track 5`
 3. Core Orchestrator (Claude Code) reads iteration workflow command: `.claude/commands/flow-iteration-dual-track.md`
 4. Orchestrator launches Iteration Planner agent:
    - Reads iteration backlog (FID-005, FID-006)
@@ -201,7 +201,7 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
 **Flow:**
 1. Retrospective Facilitator agent generates retrospective
 2. Improvement identified: "No automated traceability validation command available. Manual CSV inspection tedious."
-3. Facilitator recommends: "Add `/project:check-traceability` command for automated validation."
+3. Facilitator recommends: "Add `/check-traceability` command for automated validation."
 4. Facilitator creates feature request: FID-001 (Traceability Automation)
 5. Orchestrator adds FID-001 to backlog: `.aiwg/planning/iteration-backlog.md` (prioritized for iteration 6)
 6. Maintainer reviews feature request: "Great catch! This is a real gap. Prioritizing for next iteration."
@@ -234,8 +234,8 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
 **Condition:** flow-iteration-dual-track command not deployed to `.claude/commands/`
 
 **Flow:**
-1. Maintainer invokes: `/project:flow-iteration-dual-track 5`
-2. Claude Code returns error: "Unknown command: /project:flow-iteration-dual-track"
+1. Maintainer invokes: `/flow-iteration-dual-track 5`
+2. Claude Code returns error: "Unknown command: /flow-iteration-dual-track"
 3. Maintainer realizes SDLC commands not deployed
 4. Maintainer deploys commands: `aiwg -deploy-commands --mode sdlc`
 5. 45 SDLC commands copied to `.claude/commands/`
@@ -505,7 +505,7 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
 ### AC-001: Basic Iteration Workflow
 
 **Given:** AIWG framework repository with SDLC agents deployed
-**When:** Framework Maintainer runs `/project:flow-iteration-dual-track 5`
+**When:** Framework Maintainer runs `/flow-iteration-dual-track 5`
 **Then:**
 - Iteration plan generated in <1 hour (1,500-2,000 words)
 - Discovery track artifacts created (spikes, prototypes)
@@ -632,7 +632,7 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
 **Objective:** Validate iteration plan generation from backlog
 **Preconditions:** Iteration backlog exists with FID-005, FID-006
 **Test Steps:**
-1. Run: `/project:flow-iteration-dual-track 5`
+1. Run: `/flow-iteration-dual-track 5`
 2. Wait for iteration plan generation
 3. Verify file exists: `.aiwg/planning/iteration-5-plan.md`
 4. Verify word count: 1,500-2,000 words
@@ -783,11 +783,11 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
 **Objective:** Validate exception flow (command not deployed)
 **Preconditions:** flow-iteration-dual-track command not deployed
 **Test Steps:**
-1. Run: `/project:flow-iteration-dual-track 5`
-2. Verify error: "Unknown command: /project:flow-iteration-dual-track"
+1. Run: `/flow-iteration-dual-track 5`
+2. Verify error: "Unknown command: /flow-iteration-dual-track"
 3. Run: `aiwg -deploy-commands --mode sdlc`
 4. Verify 45 commands deployed to `.claude/commands/`
-5. Re-run: `/project:flow-iteration-dual-track 5`
+5. Re-run: `/flow-iteration-dual-track 5`
 6. Verify iteration workflow starts successfully
 **Expected Result:** Error detected, remediation executed, workflow proceeds
 **Pass/Fail:** PASS if workflow succeeds after deployment
@@ -798,7 +798,7 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
 **Preconditions:** Iteration backlog file missing
 **Test Steps:**
 1. Delete iteration backlog: `rm .aiwg/planning/iteration-backlog.md`
-2. Run: `/project:flow-iteration-dual-track 5`
+2. Run: `/flow-iteration-dual-track 5`
 3. Verify error: "Iteration backlog missing. Initialize from feature backlog?"
 4. Maintainer confirms: "Yes"
 5. Verify Backlog Manager agent launched
@@ -829,7 +829,7 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
 **Preconditions:** Iteration backlog with 3 features (typical load)
 **Test Steps:**
 1. Start timer
-2. Run: `/project:flow-iteration-dual-track 5`
+2. Run: `/flow-iteration-dual-track 5`
 3. Wait for iteration plan generation
 4. Stop timer when iteration plan saved
 5. Verify planning time: <1 hour (60 minutes)
@@ -1030,7 +1030,7 @@ Framework Maintainer requests iteration workflow: `/project:flow-iteration-dual-
 **Objective:** Validate complete end-to-end iteration workflow
 **Preconditions:** AIWG framework with SDLC agents deployed
 **Test Steps:**
-1. Run: `/project:flow-iteration-dual-track 5`
+1. Run: `/flow-iteration-dual-track 5`
 2. Wait for iteration plan generation (Step 1-6)
 3. Wait for Discovery track execution (Step 7-8)
 4. Wait for Delivery track execution (Step 9-11)

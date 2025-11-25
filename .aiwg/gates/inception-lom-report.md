@@ -175,7 +175,7 @@
 - ✅ `aiwg -update`: Working (graceful update mechanism)
 - ✅ `aiwg -deploy-agents`: Working (58 SDLC agents deployed successfully)
 - ✅ `aiwg -deploy-commands`: Working (42+ commands deployed successfully)
-- ✅ `/project:project-status`: Working (returns phase, milestone, next steps)
+- ✅ `/project-status`: Working (returns phase, milestone, next steps)
 
 **Test 2: Quality Gates Operational**
 - ✅ Markdown linting: Working (9,505 violations detected across 472 files - gates catching real issues)

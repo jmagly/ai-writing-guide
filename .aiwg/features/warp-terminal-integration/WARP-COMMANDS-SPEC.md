@@ -2,16 +2,16 @@
 
 ## Overview
 
-Based on the existing `/project:aiwg-setup-project` and `/project:aiwg-update-claude` commands, we need equivalent commands for Warp Terminal:
+Based on the existing `/aiwg-setup-project` and `/aiwg-update-claude` commands, we need equivalent commands for Warp Terminal:
 
-1. **`/project:aiwg-setup-warp`** - Initial Warp setup (mirrors `aiwg-setup-project`)
-2. **`/project:aiwg-update-warp`** - Update existing Warp setup (mirrors `aiwg-update-claude`)
+1. **`/aiwg-setup-warp`** - Initial Warp setup (mirrors `aiwg-setup-project`)
+2. **`/aiwg-update-warp`** - Update existing Warp setup (mirrors `aiwg-update-claude`)
 
 **Key Insight**: Follow the proven intelligent merge pattern from Claude commands, adapted for Warp's single-file (WARP.md) structure.
 
 ---
 
-## Command 1: `/project:aiwg-setup-warp`
+## Command 1: `/aiwg-setup-warp`
 
 ### Purpose
 
@@ -321,7 +321,7 @@ echo "======================================================================="
 
 ---
 
-## Command 2: `/project:aiwg-update-warp`
+## Command 2: `/aiwg-update-warp`
 
 ### Purpose
 
@@ -341,7 +341,7 @@ model: sonnet
 
 ### Execution Steps
 
-**Same structure as `/project:aiwg-update-claude`**:
+**Same structure as `/aiwg-update-claude`**:
 
 1. **Detect WARP.md** (fail if not found - use `aiwg-setup-warp` for first-time)
 2. **Resolve AIWG path** (same logic as setup command)

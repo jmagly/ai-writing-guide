@@ -13,8 +13,8 @@ model: sonnet
 **IMPORTANT**: This command is for teams who have **manually crafted their own intake documents** (project-intake.md, solution-profile.md, option-matrix.md) and want to validate them before starting the SDLC process.
 
 **If you need to generate intake documents**, use one of these instead:
-- `/project:intake-wizard "description"` - Generate intake from scratch with interactive guidance
-- `/project:intake-from-codebase .` - Generate intake by analyzing existing codebase
+- `/intake-wizard "description"` - Generate intake from scratch with interactive guidance
+- `/intake-from-codebase .` - Generate intake by analyzing existing codebase
 
 **This command is NOT required** if you used `intake-wizard` or `intake-from-codebase` - those commands produce complete, validated intake forms ready for the next phase.
 
@@ -39,27 +39,27 @@ The `--guidance` parameter accepts free-form text to help tailor the Inception p
 
 **Process Focus**:
 ```bash
-/project:intake-start .aiwg/intake/ --guidance "Focus on security architecture first, compliance is critical path"
+/intake-start .aiwg/intake/ --guidance "Focus on security architecture first, compliance is critical path"
 ```
 
 **Risk Priorities**:
 ```bash
-/project:intake-start .aiwg/intake/ --guidance "Third-party API integration is biggest unknown, needs spike ASAP"
+/intake-start .aiwg/intake/ --guidance "Third-party API integration is biggest unknown, needs spike ASAP"
 ```
 
 **Team Constraints**:
 ```bash
-/project:intake-start .aiwg/intake/ --guidance "Team has limited DevOps experience, need extra support for infrastructure setup"
+/intake-start .aiwg/intake/ --guidance "Team has limited DevOps experience, need extra support for infrastructure setup"
 ```
 
 **Stakeholder Expectations**:
 ```bash
-/project:intake-start .aiwg/intake/ --guidance "Executive demo required in 2 weeks, need working prototype for fundraising"
+/intake-start .aiwg/intake/ --guidance "Executive demo required in 2 weeks, need working prototype for fundraising"
 ```
 
 **Technical Unknowns**:
 ```bash
-/project:intake-start .aiwg/intake/ --guidance "Performance at scale unproven, need load testing POC before committing to architecture"
+/intake-start .aiwg/intake/ --guidance "Performance at scale unproven, need load testing POC before committing to architecture"
 ```
 
 **How guidance influences planning**:
@@ -775,7 +775,7 @@ Output summary message to user:
 
 To begin Inception phase execution:
 ```bash
-/project:flow-concept-to-inception .aiwg/
+/flow-concept-to-inception .aiwg/
 ```
 
 This will activate the Executive Orchestrator and assigned agents to begin Inception activities.
@@ -784,7 +784,7 @@ This will activate the Executive Orchestrator and assigned agents to begin Incep
 ## Error Handling
 
 ### Missing Files
-- If project-intake.md missing: **STOP** - "Cannot proceed without project-intake.md. Please run /project:intake-wizard or /project:intake-from-codebase first."
+- If project-intake.md missing: **STOP** - "Cannot proceed without project-intake.md. Please run /intake-wizard or /intake-from-codebase first."
 - If solution-profile.md missing: **STOP** - "Cannot proceed without solution-profile.md. Please complete intake generation first."
 - If option-matrix.md missing: **WARN** - "option-matrix.md missing. Will use defaults for priorities and framework application."
 

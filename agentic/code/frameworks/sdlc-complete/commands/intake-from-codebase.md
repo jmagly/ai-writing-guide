@@ -12,7 +12,7 @@ You are an experienced Software Architect and Reverse Engineer specializing in a
 
 ## Your Task
 
-When invoked with `/project:intake-from-codebase <codebase-directory> [--interactive] [--output .aiwg/intake/] [--guidance "text"]`:
+When invoked with `/intake-from-codebase <codebase-directory> [--interactive] [--output .aiwg/intake/] [--guidance "text"]`:
 
 1. **Scan** the codebase directory to understand the system
 2. **Analyze** code structure, dependencies, infrastructure, and patterns
@@ -34,27 +34,27 @@ The `--guidance` parameter accepts free-form text to help tailor the analysis. U
 
 **Business Context**:
 ```bash
-/project:intake-from-codebase . --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
+/intake-from-codebase . --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
 ```
 
 **Analysis Focus**:
 ```bash
-/project:intake-from-codebase . --guidance "Focus on security posture and compliance gaps for SOC2 audit"
+/intake-from-codebase . --guidance "Focus on security posture and compliance gaps for SOC2 audit"
 ```
 
 **Profile Hints**:
 ```bash
-/project:intake-from-codebase . --guidance "Prototype moving to MVP, need to establish baseline before adding team members"
+/intake-from-codebase . --guidance "Prototype moving to MVP, need to establish baseline before adding team members"
 ```
 
 **Pain Points**:
 ```bash
-/project:intake-from-codebase . --guidance "Performance issues at scale, considering migration from monolith to microservices"
+/intake-from-codebase . --guidance "Performance issues at scale, considering migration from monolith to microservices"
 ```
 
 **Combination**:
 ```bash
-/project:intake-from-codebase . --interactive --guidance "Fintech app, PCI-DSS required, preparing for Series A fundraising"
+/intake-from-codebase . --interactive --guidance "Fintech app, PCI-DSS required, preparing for Series A fundraising"
 ```
 
 **How guidance influences analysis**:
@@ -660,11 +660,11 @@ Create three intake files documenting the existing system.
    - Incremental modernization
    - Major refactoring/rewrite
 4. **Start appropriate SDLC flow** using natural language or explicit commands:
-   - For new SDLC adoption: "Start Inception" or `/project:flow-concept-to-inception .`
-   - For maintenance/iterations: "Run iteration 1" or `/project:flow-iteration-dual-track 1`
-   - For architecture changes: "Evolve architecture" or `/project:flow-architecture-evolution`
+   - For new SDLC adoption: "Start Inception" or `/flow-concept-to-inception .`
+   - For maintenance/iterations: "Run iteration 1" or `/flow-iteration-dual-track 1`
+   - For architecture changes: "Evolve architecture" or `/flow-architecture-evolution`
 
-**Note**: You do NOT need to run `/project:intake-start` - that command is only for teams who manually created their own intake documents. The `intake-from-codebase` command produces validated intake ready for immediate use
+**Note**: You do NOT need to run `/intake-start` - that command is only for teams who manually created their own intake documents. The `intake-from-codebase` command produces validated intake ready for immediate use
 ```
 
 #### Generated: solution-profile.md
@@ -1239,11 +1239,11 @@ This option-matrix is **input** to analysis (capture reality), not **output** of
 2. **Fill any gaps** marked as "Unknown" or "Clarify" (if any)
 3. **Choose improvement path** from option-matrix.md
 4. **Start appropriate SDLC flow** using natural language or explicit commands:
-   - For new SDLC adoption: "Start Inception" or `/project:flow-concept-to-inception .`
-   - For maintenance/iterations: "Run iteration 1" or `/project:flow-iteration-dual-track 1`
-   - For architecture changes: "Evolve architecture" or `/project:flow-architecture-evolution`
+   - For new SDLC adoption: "Start Inception" or `/flow-concept-to-inception .`
+   - For maintenance/iterations: "Run iteration 1" or `/flow-iteration-dual-track 1`
+   - For architecture changes: "Evolve architecture" or `/flow-architecture-evolution`
 
-**Note**: You do NOT need to run `/project:intake-start` - that command is only for teams who manually created their own intake documents
+**Note**: You do NOT need to run `/intake-start` - that command is only for teams who manually created their own intake documents
 ```
 
 ## Success Criteria

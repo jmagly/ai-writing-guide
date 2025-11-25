@@ -50,14 +50,14 @@ This directory contains the complete, corrected specification for integrating Wa
 
 **Commands**:
 
-#### `/project:aiwg-setup-warp`
-- Mirrors: `/project:aiwg-setup-project`
+#### `/aiwg-setup-warp`
+- Mirrors: `/aiwg-setup-project`
 - Use: Initial Warp setup or merge with existing WARP.md
 - Creates: Aggregated WARP.md with 58 agents + 42 commands
 - Preserves: All user-specific rules and conventions
 
-#### `/project:aiwg-update-warp`
-- Mirrors: `/project:aiwg-update-claude`
+#### `/aiwg-update-warp`
+- Mirrors: `/aiwg-update-claude`
 - Use: Update existing WARP.md with latest AIWG content
 - Behavior: Intelligent section replacement with backup
 - Requires: Existing WARP.md (fails gracefully if missing)
@@ -71,8 +71,8 @@ This directory contains the complete, corrected specification for integrating Wa
 ### 1. Leverage Proven Pattern
 
 **Existing Claude commands work**:
-- `/project:aiwg-setup-project` - 432 lines, battle-tested
-- `/project:aiwg-update-claude` - 525 lines, intelligent merge
+- `/aiwg-setup-project` - 432 lines, battle-tested
+- `/aiwg-update-claude` - 525 lines, intelligent merge
 
 **Benefits**:
 - 80%+ code reuse (path resolution, section parsing, validation)
@@ -259,8 +259,8 @@ This directory contains the complete, corrected specification for integrating Wa
 ### Internal
 
 - **Existing Commands**:
-  - `/project:aiwg-setup-project` - Pattern reference for setup
-  - `/project:aiwg-update-claude` - Pattern reference for updates
+  - `/aiwg-setup-project` - Pattern reference for setup
+  - `/aiwg-update-claude` - Pattern reference for updates
 - **Templates**:
   - `templates/project/CLAUDE.md` - AIWG orchestration context
 - **Scripts**:

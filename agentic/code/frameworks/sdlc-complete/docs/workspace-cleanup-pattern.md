@@ -232,7 +232,7 @@ After implementing cleanup in a flow command, test with:
 
 ```bash
 # 1. Run the flow
-/project:flow-{name}
+/flow-{name}
 
 # 2. Verify working is empty
 ls -la .aiwg/working/

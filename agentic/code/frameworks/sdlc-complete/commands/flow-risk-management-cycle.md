@@ -593,8 +593,8 @@ Based on your answers, I'll adjust:
        Risk ID: {risk-id}
        Timebox: 1-3 days
 
-       Use /project:build-poc command:
-       /project:build-poc "{risk-description}" --scope {minimal|standard|comprehensive}
+       Use /build-poc command:
+       /build-poc "{risk-description}" --scope {minimal|standard|comprehensive}
 
        POC Objectives:
        - Demonstrate technical feasibility

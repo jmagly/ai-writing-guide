@@ -123,7 +123,7 @@ To create end-user documentation from SDLC artifacts:
 
 ```bash
 # Extract user-facing docs from .aiwg/ artifacts
-/project:flow-generate-user-docs
+/flow-generate-user-docs
 
 # Outputs to: docs/ (standard user documentation location)
 ```

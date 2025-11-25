@@ -25,16 +25,16 @@ All flow commands in `agentic/code/frameworks/sdlc-complete/commands/flow-*.md` 
 **Examples**:
 ```bash
 # Security focus
-/project:flow-architecture-evolution --guidance "Focus on security architecture first, SOC2 audit in 3 months"
+/flow-architecture-evolution --guidance "Focus on security architecture first, SOC2 audit in 3 months"
 
 # Performance focus
-/project:flow-performance-optimization --guidance "User-facing latency critical, aim for <100ms p95"
+/flow-performance-optimization --guidance "User-facing latency critical, aim for <100ms p95"
 
 # Team skill gaps
-/project:flow-inception-to-elaboration --guidance "Team has limited DevOps experience, need extra infrastructure support"
+/flow-inception-to-elaboration --guidance "Team has limited DevOps experience, need extra infrastructure support"
 
 # Business constraints
-/project:flow-change-control --guidance "Regulatory approval required, prioritize compliance impact analysis"
+/flow-change-control --guidance "Regulatory approval required, prioritize compliance impact analysis"
 ```
 
 **Implementation**:
@@ -87,10 +87,10 @@ If `--guidance` parameter present:
 **Examples**:
 ```bash
 # Interactive mode prompts before execution
-/project:flow-architecture-evolution --interactive
+/flow-architecture-evolution --interactive
 
 # Can combine with guidance (guidance pre-fills answers)
-/project:flow-inception-to-elaboration --interactive --guidance "Focus on security"
+/flow-inception-to-elaboration --interactive --guidance "Focus on security"
 ```
 
 **Implementation**:
@@ -197,7 +197,7 @@ Add to "Your Task" section:
 ```markdown
 ## Your Task
 
-When invoked with `/project:flow-{name} <primary-param> [options]`:
+When invoked with `/flow-{name} <primary-param> [options]`:
 
 **Options**:
 - `[project-directory]`: Path to project root (default: `.`)

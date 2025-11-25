@@ -8,7 +8,7 @@
 
 ### Old Pattern (Incorrect)
 ```
-User → /project:flow-command → Command executes → Output
+User → /flow-command → Command executes → Output
 ```
 
 ### New Pattern (Correct)
@@ -505,7 +505,7 @@ Archived: Complete workflow saved to .aiwg/archive/2025-10/elaboration-transitio
 
 Next Steps:
 - Review generated artifacts
-- Run `/project:flow-gate-check elaboration` to validate readiness
+- Run `/flow-gate-check elaboration` to validate readiness
 - Begin Elaboration activities per phase plan
 ```
 

@@ -67,8 +67,8 @@ You recognize these as requests for this orchestration flow.
 
 **Examples**:
 ```
-/project:flow-hypercare-monitoring 7 .
-/project:flow-hypercare-monitoring 14 .
+/flow-hypercare-monitoring 7 .
+/flow-hypercare-monitoring 14 .
 ```
 
 **Default**: 7 days (low-risk deployments), 14 days (high-risk deployments)

@@ -1,0 +1,70 @@
+# AGENTS.md
+
+> Factory AI configuration and AIWG SDLC framework integration
+
+## Project Commands
+
+```bash
+# Add your build/test/run commands here
+npm test
+npm run build
+npm run lint
+```
+
+---
+
+<!-- AIWG SDLC Framework Integration -->
+
+## AIWG SDLC Framework
+
+**53 SDLC droids** in `.factory/droids/` | **42+ commands** in `.factory/commands/`
+
+### Quick Start
+
+```bash
+# Intake & Planning
+/intake-wizard "Project description"             # Generate intake
+/intake-from-codebase .                          # Analyze codebase
+
+# Phase Workflows
+/flow-inception-to-elaboration                   # Transition phases
+/flow-security-review-cycle                      # Security review
+/flow-test-strategy-execution                    # Run tests
+/project-status                                  # Current phase
+```
+
+### Droids
+
+**Planning:** intake-coordinator, requirements-analyst, system-analyst  
+**Architecture:** architecture-designer, api-designer, cloud-architect  
+**Security:** security-architect, security-gatekeeper, security-auditor  
+**Testing:** test-engineer, test-architect  
+**Operations:** devops-engineer, deployment-manager, incident-responder  
+**Quality:** code-reviewer, performance-engineer, debugger
+
+*Full list: `ls .factory/droids/` (53 total)*
+
+### Usage
+
+**Direct:** `/architecture-designer "Create SAD"`  
+**Natural:** `"Start security review"` (Factory orchestrates)  
+**Multi-Agent:** `"Create SAD with review"`
+
+### Artifacts
+
+`.aiwg/` - intake, requirements, architecture, testing, security, deployment
+
+### Workflows
+
+Common commands:
+- `/flow-inception-to-elaboration` - Phase transition
+- `/flow-security-review-cycle` - Security review
+- `/project-status` - Current phase
+
+**Phases:** Inception → Elaboration → Construction → Transition
+
+### Resources
+
+- Repo: https://github.com/jmagly/ai-writing-guide
+- Quick Start: `~/.local/share/ai-writing-guide/docs/integrations/factory-quickstart.md`
+- Redeploy: `aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --force`

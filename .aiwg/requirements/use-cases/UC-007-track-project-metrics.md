@@ -45,7 +45,7 @@
 
 ## 6. Trigger
 
-User requests metrics: `/project:project-metrics`
+User requests metrics: `/project-metrics`
 
 ## 7. Main Success Scenario
 

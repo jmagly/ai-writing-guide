@@ -91,7 +91,7 @@
 **Current AC-001 (UC-005)**:
 ```
 Given: AIWG framework repository with SDLC agents deployed
-When: Framework Maintainer runs `/project:flow-iteration-dual-track 5`
+When: Framework Maintainer runs `/flow-iteration-dual-track 5`
 Then:
 - Iteration plan generated in <1 hour (1,500-2,000 words)
 - Discovery track artifacts created (spikes, prototypes)

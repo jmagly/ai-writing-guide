@@ -3,7 +3,7 @@
 ## Metadata
 
 - ID: UC-011
-- Name: Security Validation via `/project:security-gate`
+- Name: Security Validation via `/security-gate`
 - Owner: Security Gatekeeper
 - Contributors: Security Architect, Compliance Officer, DevOps Engineer
 - Reviewers: Requirements Reviewer, Product Strategist
@@ -23,7 +23,7 @@
 ## 1. Use-Case Identifier and Name
 
 **ID:** UC-011
-**Name:** Security Validation via `/project:security-gate`
+**Name:** Security Validation via `/security-gate`
 
 ## 2. Scope and Level
 
@@ -94,9 +94,9 @@
 ## 7. Trigger
 
 **Manual Triggers:**
-- Developer invokes: `/project:security-gate` (validate current codebase)
-- Developer invokes: `/project:security-gate --update-only` (refresh security report without blocking)
-- Developer invokes: `/project:security-gate --accept-risk "UC-010 CSRF acceptable risk per ADR-007"` (override gate with justification)
+- Developer invokes: `/security-gate` (validate current codebase)
+- Developer invokes: `/security-gate --update-only` (refresh security report without blocking)
+- Developer invokes: `/security-gate --accept-risk "UC-010 CSRF acceptable risk per ADR-007"` (override gate with justification)
 
 **Automatic Triggers:**
 - CI/CD pipeline pre-merge gate: `npm run security-gate` (GitHub Actions workflow)
@@ -111,7 +111,7 @@
 ## 8. Main Success Scenario
 
 1. **Developer initiates security gate**
-   - Developer invokes: `/project:security-gate`
+   - Developer invokes: `/security-gate`
    - Core Orchestrator (Claude Code) receives command
    - Orchestrator validates arguments:
      - Project directory: `.` (current working directory)
@@ -383,7 +383,7 @@
       Security Report: .aiwg/security/security-gate-report-2025-10-22.md (3,200 words)
 
       Deployment BLOCKED until P0 vulnerabilities resolved.
-      Re-run `/project:security-gate` after remediation.
+      Re-run `/security-gate` after remediation.
       ```
     - System returns error status code: `1` (gate failed - deployment blocked)
 
@@ -425,7 +425,7 @@
       - **Priority 3**: Upgrade vulnerable dependencies
         - Run: `npm update lodash minimist`
         - Verify: `package.json` now shows `lodash@4.17.21`, `minimist@1.2.6`
-    - Developer re-runs security gate: `/project:security-gate`
+    - Developer re-runs security gate: `/security-gate`
     - System validates fixes:
       - Secrets: 0 detected (API key moved to `.env`)
       - SAST: 9 findings (SQL injection fixed, 11 remaining)
@@ -435,7 +435,7 @@
 
 16. **Security gate passes (all P0 vulnerabilities resolved)**
     - Developer completes all P0 remediations
-    - Developer re-runs security gate: `/project:security-gate`
+    - Developer re-runs security gate: `/security-gate`
     - System validates fixes:
       - Secrets: 0 detected ✅
       - SAST: 7 findings (0 Critical, 0 High, 7 Medium) ✅
@@ -524,7 +524,7 @@
 1. System detects P0 vulnerabilities: 1 CSRF vulnerability (High severity)
 2. System evaluates gate: FAIL (P0 threshold: 0)
 3. Developer invokes gate with acceptable risk override:
-   - Command: `/project:security-gate --accept-risk "CSRF acceptable risk for internal tool per ADR-007"`
+   - Command: `/security-gate --accept-risk "CSRF acceptable risk for internal tool per ADR-007"`
 4. System prompts Security Architect for approval:
    ```
    ⚠️ Acceptable Risk Override Requested
@@ -669,7 +669,7 @@
    Remediation Steps:
    1. Install ESLint: `npm install --save-dev eslint eslint-plugin-security eslint-plugin-no-unsanitized`
    2. Create ESLint security config: `.eslintrc.security.json`
-   3. Re-run `/project:security-gate` after installation
+   3. Re-run `/security-gate` after installation
 
    SAST validation SKIPPED for JavaScript files (continuing with Python SAST)
    ```
@@ -785,7 +785,7 @@
    Remediation Steps:
    1. Fix YAML syntax error in `.aiwg/security/threat-model.md`
    2. Validate YAML structure: `yamllint .aiwg/security/threat-model.md`
-   3. Re-run `/project:security-gate` after fix
+   3. Re-run `/security-gate` after fix
    ```
 6. System logs parse error: `.aiwg/security/validation-errors.log`
    - Entry: `2025-10-22 15:30:00 | ERROR | Threat model parse error (YAML syntax error Line 12) | Skipping threat model validation`
@@ -815,7 +815,7 @@
 
    Remediation Steps:
    1. Grant read permissions: `chmod +r -R tools/`
-   2. Run security gate with elevated permissions: `sudo /project:security-gate`
+   2. Run security gate with elevated permissions: `sudo /security-gate`
    3. Verify file ownership: `ls -la tools/`
    ```
 5. System logs error: `.aiwg/security/validation-errors.log`
@@ -1208,7 +1208,7 @@ None (no architecture decisions specific to UC-011 at this time)
 ### AC-011: Acceptable Risk Approval (Security Architect Override)
 
 **Given:** 1 P0 vulnerability (CSRF in tools/api.js:120), developer requests acceptable risk override
-**When:** Developer invokes: `/project:security-gate --accept-risk "CSRF acceptable risk for internal tool per ADR-007"`
+**When:** Developer invokes: `/security-gate --accept-risk "CSRF acceptable risk for internal tool per ADR-007"`
 **Then:**
 - Security Architect prompted for approval
 - Security Architect approves (justification: "Internal tool, no external users per ADR-007")
@@ -1269,7 +1269,7 @@ None (no architecture decisions specific to UC-011 at this time)
 **Preconditions:** Codebase with 0 vulnerabilities, 0 secrets, all dependencies up-to-date
 **Test Steps:**
 1. Create clean codebase (no vulnerabilities, no secrets, up-to-date dependencies)
-2. Invoke `/project:security-gate`
+2. Invoke `/security-gate`
 3. Verify gate PASS
 4. Verify security report generated: `.aiwg/security/security-gate-report-2025-10-22.md`
 5. Verify 0 findings (P0: 0, P1: 0, P2: 0)
@@ -1407,7 +1407,7 @@ None (no architecture decisions specific to UC-011 at this time)
 **Preconditions:** 1 P0 vulnerability (CSRF in tools/api.js:120), developer requests acceptable risk override
 **Test Steps:**
 1. Create codebase with 1 P0 vulnerability (CSRF)
-2. Invoke: `/project:security-gate --accept-risk "CSRF acceptable risk for internal tool per ADR-007"`
+2. Invoke: `/security-gate --accept-risk "CSRF acceptable risk for internal tool per ADR-007"`
 3. Verify Security Architect prompted for approval
 4. Security Architect approves (justification: "Internal tool, no external users per ADR-007")
 5. Verify gate PASSES (with acceptable risk warning)
@@ -1531,7 +1531,7 @@ None (no architecture decisions specific to UC-011 at this time)
 **Test Steps:**
 1. Create project with 1,000 files, 100 dependencies, threat model
 2. Introduce 3 P0 vulnerabilities: SQL injection, hardcoded secret, High CVE
-3. Invoke: `/project:security-gate`
+3. Invoke: `/security-gate`
 4. Wait for validation to complete (Steps 1-16)
 5. Verify all outputs generated:
    - Security report: `.aiwg/security/security-gate-report-2025-10-22.md` (3,200 words)

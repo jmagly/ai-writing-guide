@@ -120,7 +120,7 @@ claude .
 Then in Claude Code:
 
 ```text
-/project:aiwg-update-warp
+/aiwg-update-warp
 ```
 
 **What this does:**
@@ -182,7 +182,7 @@ Your existing notes get linked to SDLC workflows:
 # After intelligent merge
 ## Security Requirements
 - Must comply with SOC2
-- Security validation workflow: /project:flow-security-review-cycle
+- Security validation workflow: /flow-security-review-cycle
 - Compliance tracking: .aiwg/security/compliance-matrix.md
 - Gate criteria documented: .aiwg/gates/security-gate-criteria.md
 ```
@@ -202,7 +202,7 @@ Vague notes get expanded with actionable details:
   - Unit tests: 80%+ coverage (tools/test/coverage-config.js)
   - Integration tests: API endpoints (test/integration/)
   - E2E tests: Critical user flows (test/e2e/)
-- Test execution: /project:flow-test-strategy-execution
+- Test execution: /flow-test-strategy-execution
 - Test plan template: {AIWG_ROOT}/templates/testing/master-test-plan.md
 ```
 
@@ -223,7 +223,7 @@ Your project rules get elevated with best practices:
   3. Manual QA sign-off
   4. Production deployment (blue-green strategy)
   5. Monitor for 24h (hypercare)
-- Deployment workflow: /project:flow-deploy-to-production
+- Deployment workflow: /flow-deploy-to-production
 - Rollback procedure: .aiwg/deployment/rollback-runbook.md
 ```
 
@@ -475,8 +475,8 @@ This gives AIWG the context it needs to provide accurate guidance.
 ✅ "Transition to Elaboration"
 ✅ "Create test plan"
 
-❌ /project:flow-security-review-cycle
-❌ /project:flow-inception-to-elaboration
+❌ /flow-security-review-cycle
+❌ /flow-inception-to-elaboration
 ```
 
 Warp AI understands natural language from WARP.md context.

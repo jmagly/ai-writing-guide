@@ -100,7 +100,7 @@
 - Error log generated: `.aiwg/working/{artifact}/orchestration-errors.log`
 - Partial artifact preserved (best-effort draft, incomplete reviews)
 - Remediation recommendations provided:
-  - Missing requirements baseline → "Run `/project:intake-wizard` to generate requirements"
+  - Missing requirements baseline → "Run `/intake-wizard` to generate requirements"
   - Reviewer timeout → "Retry workflow or reduce reviewer panel size"
   - Context window exhaustion → "Chunk artifact into sections for review"
 - User notified of completion percentage (e.g., "3/4 reviewers complete, 1 timeout")
@@ -110,7 +110,7 @@
 **Manual Triggers:**
 - User requests: "Create architecture baseline"
 - User requests: "Generate Software Architecture Document with security review"
-- User invokes: `/project:flow-inception-to-elaboration` (triggers SAD + ADRs + Test Plan)
+- User invokes: `/flow-inception-to-elaboration` (triggers SAD + ADRs + Test Plan)
 
 **Natural Language Triggers:**
 - "Build SAD with performance focus"
@@ -427,8 +427,8 @@
    Multi-agent workflows require requirements baseline to validate traceability.
 
    Remediation Steps:
-   1. Run `/project:intake-wizard` to generate project intake and requirements
-   2. Run `/project:intake-start` to create requirements baseline from intake forms
+   1. Run `/intake-wizard` to generate project intake and requirements
+   2. Run `/intake-start` to create requirements baseline from intake forms
    3. Manually create requirements in `.aiwg/requirements/use-cases/` and `.aiwg/requirements/nfrs/`
    4. Re-run multi-agent workflow after requirements baseline exists
    ```
@@ -1034,7 +1034,7 @@ None (no architecture decisions specific to UC-004 at this time)
 - Orchestrator detects missing requirements baseline
 - Orchestrator displays error message:
   - "❌ Multi-agent workflow initialization failed. Requirements baseline missing."
-  - "Remediation Steps: 1. Run `/project:intake-wizard` ..."
+  - "Remediation Steps: 1. Run `/intake-wizard` ..."
 - Orchestrator logs error: `.aiwg/working/orchestration-errors.log`
 - Orchestrator exits with status code: `1` (error)
 - No workflow execution (error at initialization stage)
@@ -1308,7 +1308,7 @@ None (no architecture decisions specific to UC-004 at this time)
 4. Verify Orchestrator detects missing baseline
 5. Verify error message displayed:
    - "❌ Multi-agent workflow initialization failed. Requirements baseline missing."
-   - "Remediation Steps: 1. Run `/project:intake-wizard` ..."
+   - "Remediation Steps: 1. Run `/intake-wizard` ..."
 6. Verify error logged: `.aiwg/working/orchestration-errors.log`
 7. Verify exit status code: `1` (error)
 8. Verify no workflow execution (error at initialization)

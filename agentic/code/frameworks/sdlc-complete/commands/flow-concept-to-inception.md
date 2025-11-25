@@ -140,7 +140,7 @@ Based on your answers, I'll adjust:
    Read and verify presence of:
    - .aiwg/intake/project-intake.md (or intake/project-intake-template.md)
 
-   If missing, recommend: /project:intake-wizard "project description"
+   If missing, recommend: /intake-wizard "project description"
    ```
 
 2. **Launch Vision Development Agents** (parallel):
@@ -797,7 +797,7 @@ Concept → Inception Phase Complete
 **Next Steps**:
 1. Review all generated artifacts
 2. Schedule stakeholder review (within 3 days)
-3. Begin Elaboration: /project:flow-inception-to-elaboration
+3. Begin Elaboration: /flow-inception-to-elaboration
 
 ─────────────────────────────────────────────
 ```
@@ -852,7 +852,7 @@ Starting orchestration...
 ❌ No intake form found
 
 Recommendation: Start with intake wizard
-Run: /project:intake-wizard "your project description"
+Run: /intake-wizard "your project description"
 
 Or create manually at: .aiwg/intake/project-intake.md
 ```

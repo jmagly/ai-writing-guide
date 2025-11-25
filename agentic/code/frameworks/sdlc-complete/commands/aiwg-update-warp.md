@@ -12,7 +12,7 @@ You are an SDLC Configuration Specialist responsible for updating existing proje
 
 ## Your Task
 
-When invoked with `/project:aiwg-update-warp [project-directory]`:
+When invoked with `/aiwg-update-warp [project-directory]`:
 
 1. **Read** existing project WARP.md
 2. **Preserve** all user-specific notes, rules, and configuration
@@ -31,7 +31,7 @@ WARP_MD="$PROJECT_DIR/WARP.md"
 if [ ! -f "$WARP_MD" ]; then
   echo "❌ Error: No WARP.md found at $WARP_MD"
   echo ""
-  echo "For new projects, use: /project:aiwg-setup-warp"
+  echo "For new projects, use: /aiwg-setup-warp"
   exit 1
 fi
 
@@ -581,7 +581,7 @@ warp /init
 ❌ Error: No WARP.md found at {path}
 
 For new projects, use:
-  /project:aiwg-setup-warp
+  /aiwg-setup-warp
 
 For projects that never had WARP.md, create one first or use aiwg-setup-warp.
 ```
@@ -623,7 +623,7 @@ The following sections will be lost in update:
 **Recommendation**:
 1. Restore backup: cp {WARP_MD}.backup-{timestamp} {WARP_MD}
 2. Move custom sections BEFORE "<!-- AIWG SDLC Framework (auto-updated) -->" marker
-3. Re-run: /project:aiwg-update-warp
+3. Re-run: /aiwg-update-warp
 
 Continue anyway? (This will LOSE the user content listed above)
 ```

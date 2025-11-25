@@ -893,9 +893,9 @@ This orchestration succeeds when:
 - Test Evaluation: `templates/test/test-evaluation-summary-template.md`
 
 **Related Commands**:
-- `/project:flow-gate-check` - Quality gate validation
-- `/project:flow-risk-management-cycle` - Risk assessment
-- `/project:check-traceability` - Requirements coverage
+- `/flow-gate-check` - Quality gate validation
+- `/flow-risk-management-cycle` - Risk assessment
+- `/check-traceability` - Requirements coverage
 
 **Test Strategies**:
 - Test Pyramid (unit > integration > e2e)

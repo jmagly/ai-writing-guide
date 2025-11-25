@@ -76,7 +76,7 @@
 
 ## 7. Trigger
 
-User invokes writing-validator agent: `/project:writing-validator "path/to/content.md"`
+User invokes writing-validator agent: `/writing-validator "path/to/content.md"`
 
 ## 8. Main Success Scenario
 
@@ -84,7 +84,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
    - Example: User writes prompt "Explain microservices architecture benefits"
    - AI generates 2000-word article with technical depth
 2. User saves content to project file: `docs/architecture/microservices-benefits.md`
-3. User invokes writing-validator agent: `/project:writing-validator "docs/architecture/microservices-benefits.md"`
+3. User invokes writing-validator agent: `/writing-validator "docs/architecture/microservices-benefits.md"`
 4. Agent reads content file (2000 words)
 5. Agent reads banned patterns database (`validation/banned-patterns.md`):
    - Formulaic phrases (500+ patterns): "it's worth noting", "delve into", "in today's world"
@@ -112,7 +112,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
     - Rewrites Line 15: "Microservices decouple system components"
     - Rewrites Line 42: "Horizontal scaling improves throughput by 40%"
     - Rewrites Line 78: "Security boundaries require architectural decisions"
-11. User re-validates content: `/project:writing-validator "docs/architecture/microservices-benefits.md"`
+11. User re-validates content: `/writing-validator "docs/architecture/microservices-benefits.md"`
 12. Agent re-analyzes:
     - Detects 3 remaining formulaic phrases
     - Detects 1 hedging instance
@@ -134,7 +134,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 **Condition:** User specifies content type flag
 
 **Flow:**
-1. User invokes with content type: `/project:writing-validator "paper.md" --type academic`
+1. User invokes with content type: `/writing-validator "paper.md" --type academic`
 2. Agent reads content type validation rules:
    - Academic: Allow passive voice (15% tolerance), require citations, expect domain jargon
    - Technical: Require code examples, expect technical terms, allow bullet lists
@@ -155,7 +155,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 1. User identifies false positive:
    - Flagged: Line 55: "distributed consensus algorithms provide" (detected as "provide" passive construction)
    - User judgment: "This is accurate technical phrasing, not AI pattern"
-2. User invokes override: `/project:writing-validator "docs/consensus.md" --whitelist "distributed consensus algorithms provide"`
+2. User invokes override: `/writing-validator "docs/consensus.md" --whitelist "distributed consensus algorithms provide"`
 3. Agent adds phrase to user-specific whitelist (`.aiwg/validation/whitelist.yaml`)
 4. Agent re-analyzes content, skipping whitelisted phrase
 5. Agent recalculates authenticity score (excluding false positive)
@@ -173,7 +173,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 **Flow:**
 1. Agent detects 3 remaining patterns (score 75/100)
 2. User reviews 3 patterns, rewrites again
-3. User re-validates: `/project:writing-validator "docs/architecture.md"`
+3. User re-validates: `/writing-validator "docs/architecture.md"`
 4. Agent re-analyzes:
    - Detects 1 remaining pattern (score 85/100)
 5. User decides: "85/100 acceptable, publish now"
@@ -186,7 +186,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 **Condition:** User validates multiple files simultaneously
 
 **Flow:**
-1. User invokes batch validation: `/project:writing-validator "docs/**/*.md"`
+1. User invokes batch validation: `/writing-validator "docs/**/*.md"`
 2. Agent discovers 15 markdown files in `docs/` directory
 3. Agent validates files in parallel (3-5 concurrent processes)
 4. Agent generates summary report:
@@ -264,8 +264,8 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 **Condition:** writing-validator agent not deployed to project
 
 **Flow:**
-1. User invokes: `/project:writing-validator "content.md"`
-2. Claude Code returns error: "Unknown command: /project:writing-validator"
+1. User invokes: `/writing-validator "content.md"`
+2. Claude Code returns error: "Unknown command: /writing-validator"
 3. User realizes agent not deployed
 4. User deploys agents: `aiwg -deploy-agents --mode general`
 5. Agent copied to `.claude/agents/writing-validator.md`
@@ -453,7 +453,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 ### AC-001: Basic Validation Workflow
 
 **Given:** User has content draft with 10+ AI patterns
-**When:** User invokes `/project:writing-validator "content.md"`
+**When:** User invokes `/writing-validator "content.md"`
 **Then:**
 - Agent analyzes content in <60 seconds
 - Agent returns feedback report with 10+ flagged patterns
@@ -472,7 +472,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 ### AC-003: Domain-Specific Validation
 
 **Given:** User validates academic research paper
-**When:** User invokes `/project:writing-validator "paper.md" --type academic`
+**When:** User invokes `/writing-validator "paper.md" --type academic`
 **Then:**
 - Agent applies academic thresholds (passive voice tolerance 25%)
 - Agent whitelists domain jargon ("hypothesis", "methodology", "p-value")
@@ -481,7 +481,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 ### AC-004: False Positive Handling
 
 **Given:** User identifies false positive (legitimate technical term flagged)
-**When:** User invokes `/project:writing-validator "doc.md" --whitelist "distributed consensus"`
+**When:** User invokes `/writing-validator "doc.md" --whitelist "distributed consensus"`
 **Then:**
 - Agent adds phrase to user whitelist (`.aiwg/validation/whitelist.yaml`)
 - Agent re-analyzes, skipping whitelisted phrase
@@ -490,7 +490,7 @@ User invokes writing-validator agent: `/project:writing-validator "path/to/conte
 ### AC-005: Batch Validation
 
 **Given:** User has 15 markdown files in `docs/` directory
-**When:** User invokes `/project:writing-validator "docs/**/*.md"`
+**When:** User invokes `/writing-validator "docs/**/*.md"`
 **Then:**
 - Agent validates all 15 files in <5 minutes (parallel execution)
 - Agent generates summary report: X files PASS, Y files FAIL, Z files BORDERLINE

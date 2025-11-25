@@ -103,7 +103,7 @@ All 12 acceptance criteria follow Gherkin format with clear preconditions, actio
 **AC-001 (Excellent)**:
 ```gherkin
 Given: AIWG framework repository with SDLC agents deployed
-When: Framework Maintainer runs `/project:flow-iteration-dual-track 5`
+When: Framework Maintainer runs `/flow-iteration-dual-track 5`
 Then:
 - Iteration plan generated in <1 hour (1,500-2,000 words)
 - Discovery track artifacts created (spikes, prototypes)
@@ -227,7 +227,7 @@ Then:
 ### 2.2 Missing Test Scenarios
 
 **Missing Scenario 1: Concurrent Iteration Execution**
-- **Description**: User runs `/project:flow-iteration-dual-track 5` twice in parallel
+- **Description**: User runs `/flow-iteration-dual-track 5` twice in parallel
 - **Expected Behavior**: Second invocation detects iteration 5 in progress, prompts user: "Iteration 5 already running. Abort or wait?"
 - **Risk**: Race condition (two agents writing same iteration-5-plan.md file)
 - **Recommendation**: Add TC-FSI-037: Concurrent Iteration Detection

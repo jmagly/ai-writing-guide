@@ -989,9 +989,9 @@ Adjusting to create only 2 new actions (down from 3)
 - Retromat.org format library
 
 **Related Flows**:
-- `/project:flow-iteration-planning` - Plan iterations with retro actions
-- `/project:flow-gate-check` - Include retro completion in gates
-- `/project:flow-change-control` - Process improvements may need CCB
+- `/flow-iteration-planning` - Plan iterations with retro actions
+- `/flow-gate-check` - Include retro completion in gates
+- `/flow-change-control` - Process improvements may need CCB
 
 **Metrics Tracking**:
 - `metrics/team-health-metrics.md`

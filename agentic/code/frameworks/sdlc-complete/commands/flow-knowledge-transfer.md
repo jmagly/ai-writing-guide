@@ -1035,9 +1035,9 @@ This orchestration succeeds when:
 - Handover Checklist: `templates/knowledge/handover-checklist-template.md`
 
 **Related Commands**:
-- `/project:team-roster` - Update team responsibilities
-- `/project:update-oncall` - Modify on-call schedules
-- `/project:flow-onboarding` - Full team member onboarding
+- `/team-roster` - Update team responsibilities
+- `/update-oncall` - Modify on-call schedules
+- `/flow-onboarding` - Full team member onboarding
 
 **Best Practices**:
 - `docs/knowledge-transfer-best-practices.md`

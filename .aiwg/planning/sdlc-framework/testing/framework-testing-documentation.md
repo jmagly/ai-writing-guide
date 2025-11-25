@@ -704,7 +704,7 @@ fi
 - **Issue**: Requirements → Architecture → Code traceability checked manually
 - **Impact**: Risk of orphaned requirements or undocumented architectural decisions
 - **Severity**: MEDIUM (manual review catches most issues)
-- **Planned Remediation**: `/project:check-traceability` command exists but not in CI
+- **Planned Remediation**: `/check-traceability` command exists but not in CI
 - **Recommendation**: Add traceability check to phase gate criteria (Elaboration phase)
 
 **Gap 2: No Quality Score Automation**
@@ -860,7 +860,7 @@ fi
 
 **1. Traceability Automation**
 - **Gap**: Requirements → Architecture → Code traceability checked manually
-- **Test Strategy Task**: Define how `/project:check-traceability` command will be used
+- **Test Strategy Task**: Define how `/check-traceability` command will be used
 - **Recommendation**: Run traceability check at each phase gate (not in CI)
 
 **2. Quality Score Trending**
@@ -943,7 +943,7 @@ fi
     - Custom Node.js fixers (12 scripts, 1,269 LOC)
     - GitHub Actions (CI/CD)
     - Multi-agent review (quality assurance)
-    - `/project:check-traceability` (requirements coverage)
+    - `/check-traceability` (requirements coverage)
 
 ---
 

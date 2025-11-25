@@ -834,7 +834,7 @@ Teams specified: {team-a}, {team-b}
 Missing: {team-name}
 
 Action: Verify team names or add to project roster
-Command: /project:team-roster add {team-name}
+Command: /team-roster add {team-name}
 ```
 
 **No Architecture Available**:
@@ -847,7 +847,7 @@ Cannot automatically map dependencies without:
 - Service definitions
 
 Recommendation: Conduct manual dependency mapping workshop
-Alternative: Create architecture first with /project:flow-inception-to-elaboration
+Alternative: Create architecture first with /flow-inception-to-elaboration
 ```
 
 **Time Zone Conflict**:

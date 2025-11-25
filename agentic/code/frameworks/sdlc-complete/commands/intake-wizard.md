@@ -13,7 +13,7 @@ You are an experienced Business Process Analyst and Requirements Analyst special
 ## Your Task
 
 ### Mode 1: Generate New Intake (Default)
-When invoked with `/project:intake-wizard <project-description> [--interactive] [--guidance "text"] [intake-directory]`:
+When invoked with `/intake-wizard <project-description> [--interactive] [--guidance "text"] [intake-directory]`:
 
 1. **Analyze** the user's project description
 2. **Process guidance** from user prompt (if provided) to focus analysis or clarify context
@@ -24,7 +24,7 @@ When invoked with `/project:intake-wizard <project-description> [--interactive] 
 **Default Output**: `.aiwg/intake/` (creates directory if needed)
 
 ### Mode 2: Complete Existing Intake
-When invoked with `/project:intake-wizard --complete [--interactive] [intake-directory]`:
+When invoked with `/intake-wizard --complete [--interactive] [intake-directory]`:
 
 1. **Read** existing intake files (project-intake.md, solution-profile.md, option-matrix.md)
 2. **Detect gaps** - identify missing or placeholder fields
@@ -39,7 +39,7 @@ User provides project description, you generate complete intake forms using best
 
 **Example**:
 ```
-/project:intake-wizard "Build a customer dashboard for viewing order history and tracking shipments"
+/intake-wizard "Build a customer dashboard for viewing order history and tracking shipments"
 ```
 
 ### Interactive Mode (Generate)
@@ -47,7 +47,7 @@ Ask 5-10 targeted questions to clarify critical decisions, adapting based on use
 
 **Example**:
 ```
-/project:intake-wizard "Build a customer dashboard" --interactive
+/intake-wizard "Build a customer dashboard" --interactive
 ```
 
 ### Guidance Parameter
@@ -55,27 +55,27 @@ The `--guidance` parameter accepts free-form text to help tailor the intake gene
 
 **Business Context**:
 ```bash
-/project:intake-wizard "Build a customer portal" --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
+/intake-wizard "Build a customer portal" --guidance "B2B SaaS for healthcare, HIPAA compliance critical, 50k users"
 ```
 
 **Project Constraints**:
 ```bash
-/project:intake-wizard "Build mobile app backend" --guidance "Tight 3-month deadline, limited budget, team of 2 developers"
+/intake-wizard "Build mobile app backend" --guidance "Tight 3-month deadline, limited budget, team of 2 developers"
 ```
 
 **Strategic Goals**:
 ```bash
-/project:intake-wizard "Modernize legacy system" --guidance "Preparing for Series A fundraising, need SOC2 compliance, phased migration required"
+/intake-wizard "Modernize legacy system" --guidance "Preparing for Series A fundraising, need SOC2 compliance, phased migration required"
 ```
 
 **Domain-Specific Requirements**:
 ```bash
-/project:intake-wizard "E-commerce platform" --guidance "Fintech app, PCI-DSS required, multi-currency support, 10+ payment gateways"
+/intake-wizard "E-commerce platform" --guidance "Fintech app, PCI-DSS required, multi-currency support, 10+ payment gateways"
 ```
 
 **Combination with Interactive**:
 ```bash
-/project:intake-wizard "Customer analytics dashboard" --interactive --guidance "Real-time data processing, 100k events/sec, enterprise clients"
+/intake-wizard "Customer analytics dashboard" --interactive --guidance "Real-time data processing, 100k events/sec, enterprise clients"
 ```
 
 **How guidance influences generation**:
@@ -91,7 +91,7 @@ Read existing intake files and complete any gaps automatically if enough detail 
 
 **Example**:
 ```
-/project:intake-wizard --complete
+/intake-wizard --complete
 
 # Reads .aiwg/intake/*.md files
 # If sufficient detail: completes automatically
@@ -103,7 +103,7 @@ Read existing intake files, detect gaps, and ask questions to fill critical miss
 
 **Example**:
 ```
-/project:intake-wizard --complete --interactive
+/intake-wizard --complete --interactive
 
 # Reads .aiwg/intake/*.md files
 # Detects gaps: missing timeline, unclear security requirements, no scale estimate
@@ -515,9 +515,9 @@ Create three files with **no placeholders or TODO items**. Use the comprehensive
 1. **Review** generated intake files for accuracy
 2. **Proceed directly to Inception** using natural language or explicit commands:
    - Natural language: "Start Inception" or "Let's transition to Inception"
-   - Explicit command: `/project:flow-concept-to-inception .`
+   - Explicit command: `/flow-concept-to-inception .`
 
-**Note**: You do NOT need to run `/project:intake-start` - that command is only for teams who manually created their own intake documents. The `intake-wizard` and `intake-from-codebase` commands produce validated intake ready for immediate use
+**Note**: You do NOT need to run `/intake-start` - that command is only for teams who manually created their own intake documents. The `intake-wizard` and `intake-from-codebase` commands produce validated intake ready for immediate use
 ```
 
 #### 2. solution-profile.md
@@ -1104,7 +1104,7 @@ Upgrade to Production profile when beta ends (timeline: month 6, trigger: 500+ a
 1. Review option-matrix and validate priorities align with team/stakeholder expectations
 2. Confirm chosen architectural option with technical leads
 3. Use recommended framework components from Step 5 for Inception phase
-4. Start Inception flow: `/project:intake-start .aiwg/intake/`
+4. Start Inception flow: `/intake-start .aiwg/intake/`
 5. Revisit framework selection at phase gates (Inception → Elaboration → Construction → Transition)
 ```
 
@@ -1268,7 +1268,7 @@ Classify each gap by criticality:
   - Compliance requirements not mentioned
 
   Recommendation: Run with --interactive to clarify:
-  /project:intake-wizard --complete --interactive
+  /intake-wizard --complete --interactive
   ```
 
 ### Step 5: Gap-Focused Questioning (Complete + Interactive)
@@ -1425,7 +1425,7 @@ Existing intake has:
 ## Next Steps
 
 1. Review completed intake files
-2. Start Inception flow: /project:flow-concept-to-inception .
+2. Start Inception flow: /flow-concept-to-inception .
 ```
 
 ## Complete Mode Examples
@@ -1445,7 +1445,7 @@ Existing intake has:
 
 **Command**:
 ```
-/project:intake-wizard --complete
+/intake-wizard --complete
 ```
 
 **Agent Analysis**:
@@ -1499,7 +1499,7 @@ All intake files complete. Ready for Inception phase.
 
 **Command**:
 ```
-/project:intake-wizard --complete --interactive
+/intake-wizard --complete --interactive
 ```
 
 **Agent Analysis**:
@@ -1573,7 +1573,7 @@ All critical gaps filled. Ready for Inception phase.
 
 **User Input**:
 ```
-/project:intake-wizard "Build an API for our mobile app to fetch product catalog and process orders" --interactive
+/intake-wizard "Build an API for our mobile app to fetch product catalog and process orders" --interactive
 ```
 
 **Agent Response**:
@@ -1603,14 +1603,14 @@ Summary:
 
 Next steps:
 1. Review the generated intake forms
-2. Start Inception flow: /project:flow-concept-to-inception .
+2. Start Inception flow: /flow-concept-to-inception .
 ```
 
 ## Non-Interactive Mode Example
 
 **User Input**:
 ```
-/project:intake-wizard "Internal tool for managing employee schedules with shift swapping"
+/intake-wizard "Internal tool for managing employee schedules with shift swapping"
 ```
 
 **Agent Response**:
@@ -1638,7 +1638,7 @@ Summary:
 
 All intake forms complete with no placeholders. Ready to start Inception phase.
 
-Next step: /project:flow-concept-to-inception .
+Next step: /flow-concept-to-inception .
 ```
 
 ## Quality Checklist

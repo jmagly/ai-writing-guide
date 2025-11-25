@@ -26,7 +26,7 @@ This is an **orchestration command** that coordinates multiple specialized agent
 
 ## Your Task
 
-When invoked with `/project:flow-security-review-cycle [project-directory] [--iteration N]`:
+When invoked with `/flow-security-review-cycle [project-directory] [--iteration N]`:
 
 1. **Orchestrate** threat modeling sessions (per iteration or major feature)
 2. **Coordinate** security testing (SAST, DAST, dependency scanning)
@@ -64,7 +64,7 @@ Maintain continuous security assurance throughout development, identify and reme
 
 ### Step 1: Conduct Threat Modeling Session
 
-**Delegate to**: `/project:security-architect`
+**Delegate to**: `/security-architect`
 
 Identify security threats using STRIDE methodology and design security controls.
 
@@ -84,7 +84,7 @@ Identify security threats using STRIDE methodology and design security controls.
 
 **Agent Assignment**:
 ```
-Task: /project:security-architect
+Task: /security-architect
 Conduct threat modeling session using STRIDE methodology.
 - Review architecture at .aiwg/architecture/
 - Analyze data flows and trust boundaries
@@ -97,7 +97,7 @@ Conduct threat modeling session using STRIDE methodology.
 
 ### Step 2: Execute Security Testing
 
-**Delegate to**: `/project:security-auditor` and `/project:penetration-tester`
+**Delegate to**: `/security-auditor` and `/penetration-tester`
 
 Run automated security scans and coordinate manual penetration testing.
 
@@ -111,7 +111,7 @@ Run automated security scans and coordinate manual penetration testing.
 
 **Agent Assignments**:
 ```
-Task: /project:security-auditor
+Task: /security-auditor
 Execute automated security testing suite:
 - Run SAST analysis on source code
 - Perform dependency vulnerability scanning
@@ -122,7 +122,7 @@ Execute automated security testing suite:
 ```
 
 ```
-Task: /project:penetration-tester (if applicable)
+Task: /penetration-tester (if applicable)
 Conduct manual penetration testing:
 - Test authentication bypass scenarios
 - Validate authorization controls
@@ -134,7 +134,7 @@ Conduct manual penetration testing:
 
 ### Step 3: Triage Vulnerabilities
 
-**Delegate to**: `/project:security-architect` with `/project:security-auditor`
+**Delegate to**: `/security-architect` with `/security-auditor`
 
 Assess vulnerabilities using CVSS scores and prioritize remediation.
 
@@ -146,7 +146,7 @@ Assess vulnerabilities using CVSS scores and prioritize remediation.
 
 **Agent Assignment**:
 ```
-Task: /project:security-auditor
+Task: /security-auditor
 Triage discovered vulnerabilities:
 - Calculate CVSS scores for each finding
 - Assess exploitability and attack vectors
@@ -158,7 +158,7 @@ Triage discovered vulnerabilities:
 
 ### Step 4: Validate Security Controls
 
-**Delegate to**: `/project:security-architect` and `/project:security-gatekeeper`
+**Delegate to**: `/security-architect` and `/security-gatekeeper`
 
 Ensure security controls are implemented correctly and effectively.
 
@@ -172,7 +172,7 @@ Ensure security controls are implemented correctly and effectively.
 
 **Agent Assignment**:
 ```
-Task: /project:security-architect
+Task: /security-architect
 Validate implementation of security controls:
 - Test authentication flows and session management
 - Verify authorization at all access points
@@ -185,7 +185,7 @@ Validate implementation of security controls:
 
 ### Step 5: Enforce Security Gate
 
-**Delegate to**: `/project:security-gatekeeper`
+**Delegate to**: `/security-gatekeeper`
 
 Validate security gate criteria and determine deployment readiness.
 
@@ -198,7 +198,7 @@ Validate security gate criteria and determine deployment readiness.
 
 **Agent Assignment**:
 ```
-Task: /project:security-gatekeeper
+Task: /security-gatekeeper
 Enforce security gate criteria:
 - Review vulnerability status from triage report
 - Validate security controls implementation
@@ -211,13 +211,13 @@ Enforce security gate criteria:
 
 ### Step 6: Obtain Security Gatekeeper Signoff
 
-**Delegate to**: `/project:security-gatekeeper`
+**Delegate to**: `/security-gatekeeper`
 
 Formal approval from Security Gatekeeper for deployment readiness.
 
 **Agent Assignment**:
 ```
-Task: /project:security-gatekeeper
+Task: /security-gatekeeper
 Provide deployment security signoff:
 - Review all security artifacts
 - Confirm gate criteria met
@@ -249,7 +249,7 @@ If GDPR or data privacy requirements apply:
 
 **Additional Agent**:
 ```
-Task: /project:privacy-officer
+Task: /privacy-officer
 Review data privacy compliance:
 - Validate data classification
 - Check PII handling and encryption

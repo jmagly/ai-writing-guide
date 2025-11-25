@@ -1451,7 +1451,7 @@ Scalability     ████ 4 NFRs (8%)
 
 **Traceability Maintenance**:
 - Update traceability matrix every iteration (after each feature implementation)
-- Run automated traceability validation: `/project:check-traceability` (weekly)
+- Run automated traceability validation: `/check-traceability` (weekly)
 - Document orphan requirements/components/test cases (zero tolerance)
 
 **Requirements Elaboration**:
@@ -1485,7 +1485,7 @@ Scalability     ████ 4 NFRs (8%)
 
 **Main Success Scenario**: 16 detailed steps
 1. Framework Maintainer reviews iteration backlog
-2. Maintainer initiates dual-track iteration: `/project:flow-iteration-dual-track 5`
+2. Maintainer initiates dual-track iteration: `/flow-iteration-dual-track 5`
 3. Core Orchestrator reads iteration workflow command
 4. Orchestrator launches Iteration Planner agent
 5. Iteration Planner generates iteration plan (1,800 words)

@@ -282,13 +282,13 @@ aiwg -deploy-agents --mode both
 
 ```text
 # For content validation
-/project:writing-validator path/to/content.md
+/writing-validator path/to/content.md
 
 # For prompt optimization
-/project:prompt-optimizer "your prompt text"
+/prompt-optimizer "your prompt text"
 
 # For generating diverse examples
-/project:content-diversifier "base concept or topic"
+/content-diversifier "base concept or topic"
 ```
 
 ### Available Agent Categories

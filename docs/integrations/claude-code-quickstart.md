@@ -127,7 +127,7 @@ claude .
 ```text
 # In Claude Code
 You: "Setup AIWG project context"
-Claude: [Runs /project:aiwg-setup-project]
+Claude: [Runs /aiwg-setup-project]
 ```
 
 **What this does:**
@@ -149,7 +149,7 @@ claude .
 ```text
 # In Claude Code
 You: "Update CLAUDE.md with intelligent AIWG integration"
-Claude: [Runs /project:aiwg-update-claude]
+Claude: [Runs /aiwg-update-claude]
 ```
 
 **What this does:**
@@ -173,7 +173,7 @@ Claude: [Runs /project:aiwg-update-claude]
 ## Team Rules
 - Use Prettier for formatting (config: .prettierrc)
 - Run tests before pushing
-  - Test execution: /project:flow-test-strategy-execution
+  - Test execution: /flow-test-strategy-execution
   - Coverage target: 80%+ (enforced by CI)
   - Pre-commit hook: .husky/pre-commit
 - Code review required for all PRs
@@ -188,7 +188,7 @@ Claude: [Runs /project:aiwg-update-claude]
 
 ### The Power of Deep Integration
 
-The intelligent merge (`/project:aiwg-update-claude`) does more than just append AIWG content - it creates a **cohesive, enriched context** that dramatically improves AI response quality.
+The intelligent merge (`/aiwg-update-claude`) does more than just append AIWG content - it creates a **cohesive, enriched context** that dramatically improves AI response quality.
 
 ### What Makes It "Intelligent"?
 
@@ -204,8 +204,8 @@ Your existing notes get linked to SDLC workflows:
 # After intelligent merge
 ## Security Requirements
 - Must comply with SOC2
-- Security validation: /project:flow-security-review-cycle
-- Compliance framework: /project:flow-compliance-validation SOC2
+- Security validation: /flow-security-review-cycle
+- Compliance framework: /flow-compliance-validation SOC2
 - Audit preparation: .aiwg/security/audit-prep-checklist.md
 - Gate criteria: .aiwg/gates/security-gate-criteria.md
 ```
@@ -225,7 +225,7 @@ Vague notes get expanded with actionable details:
   - Unit tests: 80%+ coverage (jest.config.js)
   - Integration tests: API endpoints (test/integration/)
   - E2E tests: Critical user flows (playwright.config.js)
-- Test execution: /project:flow-test-strategy-execution
+- Test execution: /flow-test-strategy-execution
 - Test architecture: .aiwg/testing/test-strategy.md
 - Coverage reporting: CI/CD pipeline (.github/workflows/test.yml)
 ```
@@ -248,7 +248,7 @@ Your project rules get elevated with best practices:
   4. Manual QA sign-off (critical flows)
   5. Production deployment (blue-green strategy)
   6. Monitor for 24h (hypercare period)
-- Deployment workflow: /project:flow-deploy-to-production
+- Deployment workflow: /flow-deploy-to-production
 - Rollback runbook: .aiwg/deployment/rollback-procedure.md
 - Monitoring dashboards: .aiwg/deployment/monitoring-setup.md
 ```
@@ -295,7 +295,7 @@ Claude: [Understands SOC2 requirement]
 
 ```text
 You: "Analyze this codebase and generate intake documents"
-Claude: [Orchestrates /project:intake-from-codebase]
+Claude: [Orchestrates /intake-from-codebase]
 ```
 
 **What happens:**
@@ -445,7 +445,7 @@ Claude: [Orchestrates performance optimization]
 - Team composition
 - Risk tolerance
 
-**For existing projects**, use `/project:intake-from-codebase` to auto-generate intake from code analysis.
+**For existing projects**, use `/intake-from-codebase` to auto-generate intake from code analysis.
 
 ### 2. Use Natural Language
 
@@ -454,9 +454,9 @@ Claude: [Orchestrates performance optimization]
 ✅ "Transition to Elaboration"
 ✅ "Create test plan"
 
-❌ /project:flow-security-review-cycle
-❌ /project:flow-inception-to-elaboration
-❌ /project:generate-test-plan
+❌ /flow-security-review-cycle
+❌ /flow-inception-to-elaboration
+❌ /generate-test-plan
 ```
 
 Claude understands natural language and maps it to the right workflows.

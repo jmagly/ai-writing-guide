@@ -12,7 +12,7 @@ You are an SDLC Setup Specialist responsible for configuring existing projects t
 
 ## Your Task
 
-When invoked with `/project:aiwg-setup-warp [project-directory]`:
+When invoked with `/aiwg-setup-warp [project-directory]`:
 
 1. **Detect** AIWG installation path
 2. **Read** existing project WARP.md (if present)
@@ -390,16 +390,16 @@ aiwg -reinstall
 
 **Agent/Command Count Too Low**:
 - Verify AIWG installation is complete
-- Re-run setup: `/project:aiwg-setup-warp`
+- Re-run setup: `/aiwg-setup-warp`
 - Check for errors in setup-warp.mjs output
 
 **Need to Update WARP.md Again**:
 ```bash
 # Safe to run multiple times - preserves user content
-/project:aiwg-setup-warp
+/aiwg-setup-warp
 
 # Or use update command explicitly
-/project:aiwg-update-warp
+/aiwg-update-warp
 ```
 ```
 

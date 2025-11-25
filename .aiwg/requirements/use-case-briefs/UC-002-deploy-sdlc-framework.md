@@ -44,9 +44,9 @@ Developers using Claude Code or Cursor for project work need structured SDLC gui
 4. CLI copies 58 SDLC agents to `.claude/agents/` (architecture-designer, test-engineer, requirements-analyst, etc.)
 5. User optionally deploys slash commands: `aiwg -deploy-commands --mode sdlc`
 6. CLI copies 45 SDLC commands to `.claude/commands/` (flow-inception-to-elaboration, intake-wizard, etc.)
-7. User updates CLAUDE.md with orchestration prompts: `/project:aiwg-setup-project` (preserves existing content, adds AIWG orchestration section)
+7. User updates CLAUDE.md with orchestration prompts: `/aiwg-setup-project` (preserves existing content, adds AIWG orchestration section)
 8. User tests natural language orchestration: "Start Inception" → Claude Code triggers flow-concept-to-inception
-9. User generates first artifact: `/project:intake-wizard "Build customer portal"` → Intake forms created in `.aiwg/intake/`
+9. User generates first artifact: `/intake-wizard "Build customer portal"` → Intake forms created in `.aiwg/intake/`
 10. User confirms deployment success: `ls .claude/agents/ .claude/commands/ .aiwg/intake/`
 
 ## Postconditions

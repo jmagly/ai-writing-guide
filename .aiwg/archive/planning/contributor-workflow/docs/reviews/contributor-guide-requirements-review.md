@@ -128,7 +128,7 @@ The contributor quickstart guide demonstrates excellent coverage of approved req
    - **Suggested Addition:** In Step 2 (line 120-132), add:
      ```markdown
      > **Note:** You can use natural language with Claude/Warp (e.g., "Complete intake for cursor-integration")
-     > or explicit commands (e.g., `/project:intake-wizard`). This guide shows natural language for readability.
+     > or explicit commands (e.g., `/intake-wizard`). This guide shows natural language for readability.
      ```
 
 ### Nice to Have

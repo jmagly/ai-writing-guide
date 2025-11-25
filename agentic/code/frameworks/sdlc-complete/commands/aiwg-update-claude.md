@@ -12,7 +12,7 @@ You are an SDLC Configuration Specialist responsible for updating existing proje
 
 ## Your Task
 
-When invoked with `/project:aiwg-update-claude [project-directory]`:
+When invoked with `/aiwg-update-claude [project-directory]`:
 
 1. **Read** existing project CLAUDE.md
 2. **Preserve** all user-specific notes, rules, and configuration
@@ -31,7 +31,7 @@ CLAUDE_MD="$PROJECT_DIR/CLAUDE.md"
 if [ ! -f "$CLAUDE_MD" ]; then
   echo "❌ Error: No CLAUDE.md found at $CLAUDE_MD"
   echo ""
-  echo "For new projects, use: /project:aiwg-setup-project"
+  echo "For new projects, use: /aiwg-setup-project"
   exit 1
 fi
 
@@ -241,6 +241,43 @@ echo ""
 echo "======================================================================="
 ```
 
+### Step 8: Detect and Configure Factory AI (If Present)
+
+Check if Factory AI is also being used and update AGENTS.md accordingly:
+
+```bash
+# Detect Factory AI deployment
+if [ -d "$PROJECT_DIR/.factory/droids" ]; then
+  echo ""
+  echo "======================================================================="
+  echo "Factory AI Detected - AGENTS.md Update Recommended"
+  echo "======================================================================="
+  echo ""
+
+  # Check if aiwg-update-agents-md command exists
+  if [ -f "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/aiwg-update-agents-md.md" ]; then
+    echo "✓ Factory AI droids detected in .factory/droids/"
+    echo "ℹ️  AGENTS.md should also be updated for Factory AI users"
+    echo ""
+    echo "Recommended next step:"
+    echo "  /aiwg-update-agents-md"
+    echo ""
+  else
+    echo "⚠️  Factory AI droids detected but aiwg-update-agents-md command not found"
+    echo "   Install latest AIWG version for Factory AI support"
+  fi
+
+  echo "======================================================================="
+fi
+```
+
+**Cross-Platform Integration**:
+- **Claude Code only**: Updates CLAUDE.md
+- **Claude Code + Factory AI**: Updates CLAUDE.md, recommends updating AGENTS.md
+- **Multi-platform**: User should run platform-specific commands for each platform
+
+Use Bash tool for Factory AI detection.
+
 ## Intelligent Content Preservation
 
 ### User Content Indicators
@@ -426,6 +463,9 @@ Provide clear status report:
 3. **Deploy Latest Agents**: Run `aiwg -deploy-agents --mode sdlc` if needed
 4. **Check Flow Commands**: Ensure `.claude/commands/flow-*.md` are deployed
 
+{if Factory AI detected}
+5. **Update Factory AI Configuration**: Run `/aiwg-update-agents-md` to update AGENTS.md with project-specific content for Factory AI users
+
 ## Backup
 
 A backup of your previous CLAUDE.md has been saved to:
@@ -442,7 +482,7 @@ To restore: `cp {CLAUDE_MD}.backup-{timestamp} {CLAUDE_MD}`
 ❌ Error: No CLAUDE.md found at {path}
 
 For new projects, use:
-  /project:aiwg-setup-project
+  /aiwg-setup-project
 
 For projects that never had CLAUDE.md, create one first or use aiwg-setup-project.
 ```

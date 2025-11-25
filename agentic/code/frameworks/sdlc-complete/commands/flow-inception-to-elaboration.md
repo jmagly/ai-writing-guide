@@ -175,7 +175,7 @@ Based on your answers, I'll adjust:
 
 3. **Decision Point**:
    - If LOM PASS → Continue to Step 2
-   - If LOM FAIL → Report gaps to user, recommend `/project:flow-concept-to-inception` to complete Inception
+   - If LOM FAIL → Report gaps to user, recommend `/flow-concept-to-inception` to complete Inception
    - Escalate to user for executive decision if criteria partially met
 
 **Communicate Progress**:
@@ -720,8 +720,8 @@ Create .aiwg/archive/$(date +%Y-%m)/sad-$(date +%Y-%m-%d)/audit-trail.md:
        prompt="""
        Risk to validate: {risk-description}
 
-       Use /project:build-poc command to create proof of concept:
-       /project:build-poc "{risk-description}" --scope {minimal|standard|comprehensive}
+       Use /build-poc command to create proof of concept:
+       /build-poc "{risk-description}" --scope {minimal|standard|comprehensive}
 
        Acceptance criteria: {what proves risk is retired}
 
@@ -1098,7 +1098,7 @@ Create .aiwg/archive/$(date +%Y-%m)/sad-$(date +%Y-%m-%d)/audit-trail.md:
    - Review all generated artifacts
    - Schedule ABM review meeting with stakeholders
    - Obtain formal signoffs (6 required signatures)
-   - If GO: Run /project:flow-elaboration-to-construction to begin Construction
+   - If GO: Run /flow-elaboration-to-construction to begin Construction
    - If CONDITIONAL GO: Complete conditions, then re-validate
    - If NO-GO: Address gaps, extend Elaboration, re-review in 2-4 weeks
 
@@ -1165,7 +1165,7 @@ Gaps identified:
 - {list missing artifacts or incomplete criteria}
 
 Recommendation: Complete Inception first
-- Run: /project:flow-concept-to-inception
+- Run: /flow-concept-to-inception
 - Or: Complete missing artifacts manually
 
 Contact Executive Sponsor for project status decision.

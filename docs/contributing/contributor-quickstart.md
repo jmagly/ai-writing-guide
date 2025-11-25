@@ -207,7 +207,7 @@ Great start! You've successfully set up your contribution environment.
   warp
   ```
 
-> **Note:** You can use natural language with Claude Code or Warp (e.g., "Complete intake for cursor-integration") or explicit commands (e.g., `/project:intake-wizard`). This guide shows natural language for readability.
+> **Note:** You can use natural language with Claude Code or Warp (e.g., "Complete intake for cursor-integration") or explicit commands (e.g., `/intake-wizard`). This guide shows natural language for readability.
 
 **Natural language prompt to Claude Code or Warp:**
 

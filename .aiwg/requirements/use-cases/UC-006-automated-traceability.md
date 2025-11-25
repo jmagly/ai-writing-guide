@@ -3,7 +3,7 @@
 ## Metadata
 
 - ID: UC-006
-- Name: Automated Traceability Validation via `/project:check-traceability`
+- Name: Automated Traceability Validation via `/check-traceability`
 - Owner: Requirements Analyst
 - Contributors: Test Engineer, Architecture Designer
 - Reviewers: Requirements Reviewer, Product Strategist
@@ -23,7 +23,7 @@
 ## 1. Use-Case Identifier and Name
 
 **ID:** UC-006
-**Name:** Automated Traceability Validation via `/project:check-traceability`
+**Name:** Automated Traceability Validation via `/check-traceability`
 
 ## 2. Scope and Level
 
@@ -92,7 +92,7 @@
 - Error log generated: `.aiwg/traceability/validation-errors.log`
 - Partial traceability matrix saved (best-effort coverage)
 - Remediation recommendations provided:
-  - Missing requirements baseline → "Run `/project:intake-wizard` to generate requirements"
+  - Missing requirements baseline → "Run `/intake-wizard` to generate requirements"
   - Missing implementation markers → "Add `@implements UC-XXX` comments to code files"
   - Missing test IDs → "Add `TC-XXX-YYY` identifiers to test descriptions"
 - User notified of completion percentage (e.g., "75% requirements scanned, 25% parse errors")
@@ -100,9 +100,9 @@
 ## 7. Trigger
 
 **Manual Triggers:**
-- Developer invokes: `/project:check-traceability .aiwg/traceability/matrix.csv`
-- Developer invokes: `/project:check-traceability --full-report` (generates detailed gap report)
-- Developer invokes: `/project:check-traceability --update-only` (refreshes existing matrix without reporting)
+- Developer invokes: `/check-traceability .aiwg/traceability/matrix.csv`
+- Developer invokes: `/check-traceability --full-report` (generates detailed gap report)
+- Developer invokes: `/check-traceability --update-only` (refreshes existing matrix without reporting)
 
 **Automatic Triggers:**
 - CI/CD pipeline pre-merge gate: `npm run traceability-check` (GitHub Actions workflow)
@@ -117,7 +117,7 @@
 ## 8. Main Success Scenario
 
 1. **Developer initiates traceability check**
-   - Developer invokes: `/project:check-traceability .aiwg/traceability/matrix.csv`
+   - Developer invokes: `/check-traceability .aiwg/traceability/matrix.csv`
    - Core Orchestrator (Claude Code) receives command
    - Orchestrator validates arguments:
      - Output path: `.aiwg/traceability/matrix.csv` (valid CSV path)
@@ -524,10 +524,10 @@
    Traceability validation requires requirements baseline to exist.
 
    Remediation Steps:
-   1. Run `/project:intake-wizard` to generate project intake
-   2. Run `/project:intake-start` to create requirements baseline
+   1. Run `/intake-wizard` to generate project intake
+   2. Run `/intake-start` to create requirements baseline
    3. Manually create requirements in `.aiwg/requirements/use-cases/`
-   4. Re-run `/project:check-traceability` after baseline exists
+   4. Re-run `/check-traceability` after baseline exists
    ```
 5. System logs error: "Requirements baseline missing - cannot validate traceability"
 6. System exits with status code: `1` (error - baseline required)
@@ -622,7 +622,7 @@
 
    Remediation Steps:
    1. Grant read permissions: `chmod +r -R src/`
-   2. Run traceability check with elevated permissions: `sudo /project:check-traceability`
+   2. Run traceability check with elevated permissions: `sudo /check-traceability`
    3. Verify file ownership: `ls -la src/`
    ```
 5. System logs error: `.aiwg/traceability/validation-errors.log`
@@ -650,7 +650,7 @@
    Remediation Steps:
    1. Free disk space: `df -h` to check disk usage
    2. Grant write permissions: `chmod +w .aiwg/traceability/`
-   3. Specify alternative output path: `/project:check-traceability /tmp/traceability-matrix.csv`
+   3. Specify alternative output path: `/check-traceability /tmp/traceability-matrix.csv`
    ```
 5. System offers to write to alternative path:
    - Prompt: "Write to alternative path? (y/n)"
@@ -957,7 +957,7 @@ None (no architecture decisions specific to UC-006 at this time)
 ### AC-001: Basic Traceability Matrix Generation
 
 **Given:** AIWG project with requirements baseline (50 requirements), codebase (100 files), test suite (80 test files)
-**When:** Developer invokes `/project:check-traceability .aiwg/traceability/matrix.csv`
+**When:** Developer invokes `/check-traceability .aiwg/traceability/matrix.csv`
 **Then:**
 - Traceability matrix CSV generated at `.aiwg/traceability/requirements-traceability-matrix.csv`
 - CSV contains 51 rows (50 requirements + 1 header row)
@@ -1091,8 +1091,8 @@ None (no architecture decisions specific to UC-006 at this time)
 - Directory not found error
 - System displays error message: "❌ Requirements baseline missing"
 - Error message includes remediation steps:
-  - "1. Run `/project:intake-wizard` to generate project intake"
-  - "2. Run `/project:intake-start` to create requirements baseline"
+  - "1. Run `/intake-wizard` to generate project intake"
+  - "2. Run `/intake-start` to create requirements baseline"
 - System exits with status code: `1` (error)
 
 ### AC-013: Traceability Accuracy (99% Target)
@@ -1132,7 +1132,7 @@ None (no architecture decisions specific to UC-006 at this time)
 
 ### AC-016: Full Report Mode (Detailed Gap Analysis)
 
-**Given:** Developer invokes `/project:check-traceability --full-report`
+**Given:** Developer invokes `/check-traceability --full-report`
 **When:** System generates gap report (Step 13)
 **Then:**
 - Gap report includes extended sections:
@@ -1155,7 +1155,7 @@ None (no architecture decisions specific to UC-006 at this time)
 1. Create test project with 10 requirements (5 use cases, 5 NFRs)
 2. Create 20 implementation files with `@implements` markers
 3. Create 15 test files with `TC-XXX-YYY` IDs
-4. Invoke: `/project:check-traceability .aiwg/traceability/matrix.csv`
+4. Invoke: `/check-traceability .aiwg/traceability/matrix.csv`
 5. Verify CSV generated: 11 rows (10 requirements + 1 header)
 6. Verify all requirements have 100% coverage (implementation + tests)
 7. Verify validation time: <10 seconds (small project)
@@ -1364,7 +1364,7 @@ None (no architecture decisions specific to UC-006 at this time)
 3. Verify permission error: "Permission denied: src/"
 4. Verify error message includes remediation steps:
    - "1. Grant read permissions: `chmod +r -R src/`"
-   - "2. Run with elevated permissions: `sudo /project:check-traceability`"
+   - "2. Run with elevated permissions: `sudo /check-traceability`"
 5. Verify error logged: `.aiwg/traceability/validation-errors.log`
 6. Verify exit status code: `1` (error)
 **Expected Result:** Permission error displayed with remediation steps, exit code 1
@@ -1414,8 +1414,8 @@ None (no architecture decisions specific to UC-006 at this time)
 2. Invoke traceability check
 3. Verify error: "❌ Requirements baseline missing"
 4. Verify remediation steps displayed:
-   - "1. Run `/project:intake-wizard` to generate project intake"
-   - "2. Run `/project:intake-start` to create requirements baseline"
+   - "1. Run `/intake-wizard` to generate project intake"
+   - "2. Run `/intake-start` to create requirements baseline"
 5. Verify exit status code: `1` (error)
 **Expected Result:** Error displayed with remediation steps, exit code 1
 **NFR Validated:** NFR-TRACE-10 (Reliability - Error Recovery)
@@ -1494,7 +1494,7 @@ None (no architecture decisions specific to UC-006 at this time)
 **Objective:** Validate full report mode with extended sections
 **Preconditions:** Project with 50 requirements, 100 files
 **Test Steps:**
-1. Invoke: `/project:check-traceability --full-report`
+1. Invoke: `/check-traceability --full-report`
 2. Verify gap report generated: `.aiwg/reports/traceability-report-full-2025-10-22.md`
 3. Verify extended sections:
    - Traceability graph visualization (ASCII tree view)
@@ -1547,7 +1547,7 @@ None (no architecture decisions specific to UC-006 at this time)
 **Preconditions:** AIWG project with requirements, code, tests
 **Test Steps:**
 1. Create project with 50 requirements, 100 implementation files, 80 test files
-2. Invoke: `/project:check-traceability .aiwg/traceability/matrix.csv`
+2. Invoke: `/check-traceability .aiwg/traceability/matrix.csv`
 3. Wait for validation to complete (Steps 1-15)
 4. Verify all outputs generated:
    - Traceability matrix CSV: `.aiwg/traceability/requirements-traceability-matrix.csv` (51 rows)
