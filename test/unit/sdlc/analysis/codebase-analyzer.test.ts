@@ -26,7 +26,7 @@ import type {
   ArchitecturePattern,
   TechnicalDebtItem,
   EstimatedComplexity
-} from '../../../src/analysis/codebase-analyzer.js';
+} from '../../../../agentic/code/frameworks/sdlc-complete/src/analysis/codebase-analyzer.js';
 
 describe('CodebaseAnalyzer', () => {
   let analyzer: CodebaseAnalyzer;
@@ -34,7 +34,7 @@ describe('CodebaseAnalyzer', () => {
 
   beforeEach(async () => {
     // Dynamic import to avoid hoisting issues
-    const { CodebaseAnalyzer: Analyzer } = await import('../../../src/analysis/codebase-analyzer.js');
+    const { CodebaseAnalyzer: Analyzer } = await import('../../../../agentic/code/frameworks/sdlc-complete/src/analysis/codebase-analyzer.js');
     analyzer = new Analyzer();
 
     // Create temp directory for test projects

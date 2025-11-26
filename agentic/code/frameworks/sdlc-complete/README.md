@@ -8,6 +8,8 @@ The SDLC Complete framework provides a comprehensive Plan → Act lifecycle for 
 
 ## Framework Structure
 
+### Content
+
 - `agents/` — 50+ specialized SDLC role agents (architecture-designer, requirements-analyst, security-gatekeeper, etc.)
 - `commands/` — SDLC-specific slash commands (intake-start, orchestrate-project, security-gate, etc.)
 - `templates/` — Markdown templates for all SDLC artifacts
@@ -15,6 +17,21 @@ The SDLC Complete framework provides a comprehensive Plan → Act lifecycle for 
 - `add-ons/` — Compliance and legal extensions (GDPR, etc.)
 - `metrics/` — Project health and tracking metrics
 - `artifacts/` — Sample projects demonstrating complete lifecycle
+- `config/` — Framework configuration (models.json, etc.)
+
+### Source Code
+
+- `src/` — Framework-specific TypeScript implementation
+  - `analysis/` — Codebase analysis (UC-003: intake-from-codebase)
+  - `traceability/` — Requirements traceability (UC-006)
+  - `security/` — Security validation (UC-011)
+  - `orchestration/` — Multi-agent SDLC orchestration
+  - `git/` — Git workflow orchestration
+  - `cicd/` — CI/CD pipeline generation
+  - `metrics/` — DORA metrics and project tracking
+  - `monitoring/` — Performance monitoring
+  - `recovery/` — Error recovery and resilience
+  - `testing/` — NFR test infrastructure, mocks, fixtures
 
 ## Key References
 

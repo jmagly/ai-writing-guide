@@ -16,10 +16,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { IDExtractor } from '../../../src/traceability/id-extractor.js';
-import { MatrixGenerator } from '../../../src/traceability/matrix-generator.js';
-import { TraceabilityChecker } from '../../../src/traceability/traceability-checker.js';
-import { FilesystemSandbox } from '../../../src/testing/mocks/filesystem-sandbox.js';
+import { IDExtractor } from '../../../../agentic/code/frameworks/sdlc-complete/src/traceability/id-extractor.js';
+import { MatrixGenerator } from '../../../../agentic/code/frameworks/sdlc-complete/src/traceability/matrix-generator.js';
+import { TraceabilityChecker } from '../../../../agentic/code/frameworks/sdlc-complete/src/traceability/traceability-checker.js';
+import { FilesystemSandbox } from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
 
 describe('IDExtractor', () => {
   let extractor: IDExtractor;

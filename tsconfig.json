@@ -5,7 +5,12 @@
     "lib": ["ES2022"],
     "moduleResolution": "bundler",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@sdlc/*": ["agentic/code/frameworks/sdlc-complete/src/*"],
+      "@global/*": ["src/*"]
+    },
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -24,7 +29,8 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "agentic/code/frameworks/sdlc-complete/src/**/*.ts"
   ],
   "exclude": [
     "node_modules",

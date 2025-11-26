@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { GitSandbox } from '../../../../src/testing/mocks/git-sandbox.ts';
+import { GitSandbox } from '../../../../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/git-sandbox.ts';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

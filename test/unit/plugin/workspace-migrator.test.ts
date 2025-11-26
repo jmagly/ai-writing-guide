@@ -14,7 +14,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { WorkspaceMigrator } from '../../../src/plugin/workspace-migrator.js';
-import { FilesystemSandbox } from '../../../src/testing/mocks/filesystem-sandbox.js';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
 import * as path from 'path';
 
 describe('WorkspaceMigrator', () => {

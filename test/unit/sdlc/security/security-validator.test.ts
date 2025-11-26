@@ -6,10 +6,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { SecurityValidator } from '../../../src/security/security-validator.js';
-import { FilesystemSandbox } from '../../../src/testing/mocks/filesystem-sandbox.js';
-import { calculateEntropy, isPlaceholder, shouldExcludeFile } from '../../../src/security/secret-patterns.js';
-import { isWhitelisted, extractURLs } from '../../../src/security/api-patterns.js';
+import { SecurityValidator } from '../../../../agentic/code/frameworks/sdlc-complete/src/security/security-validator.js';
+import { FilesystemSandbox } from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
+import { calculateEntropy, isPlaceholder, shouldExcludeFile } from '../../../../agentic/code/frameworks/sdlc-complete/src/security/secret-patterns.js';
+import { isWhitelisted, extractURLs } from '../../../../agentic/code/frameworks/sdlc-complete/src/security/api-patterns.js';
 
 describe('SecurityValidator', () => {
   let sandbox: FilesystemSandbox;

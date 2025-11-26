@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AgentOrchestrator, type OrchestrationPlan, type OrchestrationOptions } from '../../../src/orchestration/agent-orchestrator.js';
-import { ReviewSynthesizer } from '../../../src/orchestration/review-synthesizer.js';
+import { AgentOrchestrator, type OrchestrationPlan, type OrchestrationOptions } from '../../../../agentic/code/frameworks/sdlc-complete/src/orchestration/agent-orchestrator.js';
+import { ReviewSynthesizer } from '../../../../agentic/code/frameworks/sdlc-complete/src/orchestration/review-synthesizer.js';
 
 describe('AgentOrchestrator', () => {
   let orchestrator: AgentOrchestrator;

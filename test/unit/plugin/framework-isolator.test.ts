@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { FrameworkIsolator } from '../../../src/plugin/framework-isolator.js';
-import { FilesystemSandbox } from '../../../src/testing/mocks/filesystem-sandbox.js';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
 
 describe('FrameworkIsolator', () => {
   let sandbox: FilesystemSandbox;

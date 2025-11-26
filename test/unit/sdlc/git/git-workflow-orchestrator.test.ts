@@ -22,7 +22,7 @@ import type {
   CommitOptions,
   MergeOptions,
   PROptions
-} from '../../../src/git/git-workflow-orchestrator.js';
+} from '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js';
 
 // Mock exec to avoid actual git commands
 vi.mock('child_process', () => ({
@@ -61,7 +61,7 @@ describe('GitWorkflowOrchestrator', () => {
 
     // Dynamic import
     const { GitWorkflowOrchestrator: Orchestrator } = await import(
-      '../../../src/git/git-workflow-orchestrator.js'
+      '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
     );
     orchestrator = new Orchestrator(config);
   });
@@ -74,7 +74,7 @@ describe('GitWorkflowOrchestrator', () => {
   describe('Configuration', () => {
     it('should initialize with default configuration', async () => {
       const { GitWorkflowOrchestrator: Orchestrator } = await import(
-        '../../../src/git/git-workflow-orchestrator.js'
+        '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
       );
 
       const config: GitConfig = {
@@ -88,7 +88,7 @@ describe('GitWorkflowOrchestrator', () => {
 
     it('should accept custom branch strategy', async () => {
       const { GitWorkflowOrchestrator: Orchestrator } = await import(
-        '../../../src/git/git-workflow-orchestrator.js'
+        '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
       );
 
       const strategies: Array<'gitflow' | 'github-flow' | 'trunk-based'> = [
@@ -110,7 +110,7 @@ describe('GitWorkflowOrchestrator', () => {
 
     it('should default to conventional commits enabled', async () => {
       const { GitWorkflowOrchestrator: Orchestrator } = await import(
-        '../../../src/git/git-workflow-orchestrator.js'
+        '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
       );
 
       const config: GitConfig = {
@@ -210,7 +210,7 @@ describe('GitWorkflowOrchestrator', () => {
 
       it('should create branch with GitFlow strategy', async () => {
         const { GitWorkflowOrchestrator: Orchestrator } = await import(
-          '../../../src/git/git-workflow-orchestrator.js'
+          '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
         );
 
         const config: GitConfig = {
@@ -233,7 +233,7 @@ describe('GitWorkflowOrchestrator', () => {
 
       it('should create branch with trunk-based strategy', async () => {
         const { GitWorkflowOrchestrator: Orchestrator } = await import(
-          '../../../src/git/git-workflow-orchestrator.js'
+          '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
         );
 
         const config: GitConfig = {
@@ -762,7 +762,7 @@ describe('GitWorkflowOrchestrator', () => {
 
     it('should handle GitFlow workflow', async () => {
       const { GitWorkflowOrchestrator: Orchestrator } = await import(
-        '../../../src/git/git-workflow-orchestrator.js'
+        '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
       );
 
       const config: GitConfig = {
@@ -790,7 +790,7 @@ describe('GitWorkflowOrchestrator', () => {
 
     it('should handle trunk-based workflow', async () => {
       const { GitWorkflowOrchestrator: Orchestrator } = await import(
-        '../../../src/git/git-workflow-orchestrator.js'
+        '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
       );
 
       const config: GitConfig = {
@@ -834,7 +834,7 @@ describe('GitWorkflowOrchestrator', () => {
   describe('Error Handling', () => {
     it('should handle missing repository gracefully', async () => {
       const { GitWorkflowOrchestrator: Orchestrator } = await import(
-        '../../../src/git/git-workflow-orchestrator.js'
+        '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js'
       );
 
       const config: GitConfig = {

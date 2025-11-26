@@ -9,7 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { FrameworkConfigLoader } from '../../../src/plugin/framework-config-loader.js';
-import { FilesystemSandbox } from '../../../src/testing/mocks/filesystem-sandbox.js';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
 
 describe('FrameworkConfigLoader', () => {
   let sandbox: FilesystemSandbox;

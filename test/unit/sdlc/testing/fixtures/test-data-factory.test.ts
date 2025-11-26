@@ -20,7 +20,7 @@ import {
   type IterationPlan,
   type ComponentDesign,
   type SupplementalSpec
-} from '../../../../src/testing/fixtures/test-data-factory.js';
+} from '../../../../../../agentic/code/frameworks/sdlc-complete/src/testing/fixtures/test-data-factory.js';
 
 describe('TestDataFactory', () => {
   let factory: TestDataFactory;

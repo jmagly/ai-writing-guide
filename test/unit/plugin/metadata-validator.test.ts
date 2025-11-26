@@ -15,7 +15,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MetadataValidator } from '../../../src/plugin/metadata-validator.js';
-import { FilesystemSandbox } from '../../../src/testing/mocks/filesystem-sandbox.js';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
 
 describe('MetadataValidator', () => {
   let sandbox: FilesystemSandbox;
