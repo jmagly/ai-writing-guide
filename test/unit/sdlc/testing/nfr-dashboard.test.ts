@@ -7,8 +7,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { NFRDashboard, type DashboardMetrics, type Alert, type MetricFilters } from '../../../src/testing/nfr-dashboard.js';
-import { NFRGroundTruthCorpus } from '../../../src/testing/nfr-ground-truth-corpus.js';
+import { NFRDashboard, type DashboardMetrics, type Alert, type MetricFilters } from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/nfr-dashboard.js';
+import { NFRGroundTruthCorpus } from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/nfr-ground-truth-corpus.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 

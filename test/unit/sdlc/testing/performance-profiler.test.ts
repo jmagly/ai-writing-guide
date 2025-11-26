@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PerformanceProfiler, PerformanceResult } from '../../../src/testing/performance-profiler';
+import { PerformanceProfiler, PerformanceResult } from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/performance-profiler';
 
 describe('PerformanceProfiler', () => {
   let profiler: PerformanceProfiler;

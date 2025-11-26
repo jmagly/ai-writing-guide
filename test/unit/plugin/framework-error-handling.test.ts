@@ -12,7 +12,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { FrameworkDetector } from '../../../src/plugin/framework-detector.js';
 import { WorkspaceCreator } from '../../../src/plugin/workspace-creator.js';
 import { FrameworkMigration } from '../../../src/plugin/framework-migration.js';
-import { FilesystemSandbox } from '../../../src/testing/mocks/filesystem-sandbox.js';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
 
 describe('Framework Error Handling', () => {
   let sandbox: FilesystemSandbox;

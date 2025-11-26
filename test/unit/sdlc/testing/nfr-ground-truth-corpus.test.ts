@@ -16,7 +16,7 @@ import {
   ValidationResult,
   CategoryStats,
   NFRCategory,
-} from '../../../src/testing/nfr-ground-truth-corpus';
+} from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/nfr-ground-truth-corpus';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
