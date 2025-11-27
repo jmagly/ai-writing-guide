@@ -73,6 +73,12 @@ export class WritingValidationEngine {
 
     try {
       this.ruleSet = await this.ruleLoader.loadRuleSet();
+      // If loaded rules are empty (files not found), use defaults
+      if (this.ruleSet.bannedPhrases.length === 0 &&
+          this.ruleSet.aiPatterns.length === 0 &&
+          this.ruleSet.structuralPatterns.length === 0) {
+        this.ruleSet = this.ruleLoader.getDefaultRules();
+      }
     } catch (error) {
       // Fall back to default rules if guide is not available
       console.warn('Failed to load AI Writing Guide rules, using defaults:', error);

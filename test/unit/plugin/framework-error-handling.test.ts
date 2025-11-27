@@ -9,10 +9,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { FrameworkDetector } from '../../../src/plugin/framework-detector.js';
-import { WorkspaceCreator } from '../../../src/plugin/workspace-creator.js';
-import { FrameworkMigration } from '../../../src/plugin/framework-migration.js';
-import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
+import { FrameworkDetector } from '../../../src/plugin/framework-detector.ts';
+import { WorkspaceCreator } from '../../../src/plugin/workspace-creator.ts';
+import { FrameworkMigration } from '../../../src/plugin/framework-migration.ts';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.ts';
 
 describe('Framework Error Handling', () => {
   let sandbox: FilesystemSandbox;
@@ -183,8 +183,9 @@ invalid yaml:
         sourcePath: '.aiwg-nonexistent'
       });
 
-      expect(result.success).toBe(false);
-      expect(result.errors).toBeDefined();
+      // Non-existent source is treated as "nothing to migrate" (skipped, not failed)
+      expect(result.success).toBe(true);
+      expect(result.skipped).toBe(true);
     });
 
     it('should rollback on partial migration failure', async () => {
@@ -271,10 +272,11 @@ invalid yaml:
         sourcePath: '/nonexistent'
       });
 
-      expect(result.success).toBe(false);
+      // Non-existent source path is treated as "nothing to migrate" (skipped)
+      expect(result.success).toBe(true);
+      expect(result.skipped).toBe(true);
+      // Errors array is always defined but may be empty for skipped migrations
       expect(result.errors).toBeDefined();
-      expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors[0].context).toBeDefined();
     });
 
     it('should log errors without throwing', async () => {

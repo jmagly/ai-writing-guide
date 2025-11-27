@@ -1116,9 +1116,14 @@ export class ExampleGenerator {
 
   private generateStatementsAboutTopic(topic: string, count: number): string[] {
     const statements = [
-      `${topic} affects system behavior in multiple ways`,
-      `Performance characteristics vary based on configuration`,
-      `Implementation patterns depend on specific requirements`,
+      `${topic} affects system behavior in multiple ways.`,
+      `Performance characteristics vary based on configuration.`,
+      `Implementation patterns depend on specific requirements.`,
+      `Error handling requires careful consideration.`,
+      `${topic} best practices evolve with technology.`,
+      `Testing approaches should cover edge cases.`,
+      `Documentation helps maintain ${topic} implementations.`,
+      `Monitoring ${topic} provides valuable insights.`,
     ];
     return statements.slice(0, count);
   }
@@ -1126,7 +1131,7 @@ export class ExampleGenerator {
   private generateCodeExampleForVoice(_technology: string, voice: Voice): CodeExample {
     const examples: Record<Voice, { code: string; context: string }> = {
       technical: {
-        code: `const pool = new ConnectionPool({ max: 10 });`,
+        code: `// Connection pooling for high throughput\nconst pool = new ConnectionPool({ max: 10 });`,
         context: 'Technical documentation',
       },
       academic: {
@@ -1148,23 +1153,114 @@ export class ExampleGenerator {
 
   private identifyImprovements(before: string, after: string): string[] {
     const improvements: string[] = [];
+
+    // Check for removed AI patterns
     if (before.includes('delve') && !after.includes('delve')) {
       improvements.push('Removed "delve" - typical AI filler word');
     }
-    if (!before.match(/\d+%/) && after.match(/\d+%/)) {
+    if (before.includes('It is important to note') && !after.includes('It is important to note')) {
+      improvements.push('Removed "It is important to note" AI pattern');
+    }
+
+    // Check for added metrics
+    if (!before.match(/\d+(ms|%|KB|MB|GB|\$)/) && after.match(/\d+(ms|%|KB|MB|GB|\$)/)) {
       improvements.push('Added specific metrics');
     }
+
+    // Check for added personal perspective
+    if (!before.match(/\bI\s+(believe|think|found|recommend)\b/i) && after.match(/\bI\s+(believe|think|found|recommend)\b/i)) {
+      improvements.push('Added personal perspective');
+    }
+    if (!before.match(/\bI've\b|\bwe\b/i) && after.match(/\bI've\b|\bwe\b/i)) {
+      improvements.push('Added personal perspective through contractions');
+    }
+
+    // Check for reduced redundancy (shorter content with same meaning)
+    const beforeWordCount = before.split(/\s+/).length;
+    const afterWordCount = after.split(/\s+/).length;
+    if (beforeWordCount > afterWordCount * 1.5) {
+      improvements.push('Made content more concise by removing redundancy');
+    }
+
     return improvements.length > 0 ? improvements : ['General refinement'];
   }
 
   private identifyDemonstratedPrinciples(content: string, voice: Voice): string[] {
     const principles: string[] = [];
+
+    // Academic principles
     if (voice === 'academic' && content.match(/\(\w+,\s*\d{4}\)/)) {
       principles.push('Academic citations');
     }
+
+    // Technical principles
     if (voice === 'technical' && content.match(/\d+ms|\d+%/)) {
-      principles.push('Specific metrics');
+      principles.push('Specific technical metrics');
     }
+
+    // Executive/business principles
+    if (voice === 'executive') {
+      if (content.match(/\$[\d,]+[KM]?|\d+%\s*(ROI|savings|cost)/i)) {
+        principles.push('Financial metrics for business decision');
+      }
+      if (content.match(/annual|quarterly|ROI/i)) {
+        principles.push('Business-oriented timeframes');
+      }
+    }
+
+    // Casual principles
+    if (voice === 'casual') {
+      if (content.match(/\bI've\b|\bwe've\b|\bhere's\b|\bthat's\b/i)) {
+        principles.push('Natural contraction usage');
+      }
+      if (content.match(/\bI\s+(think|believe|found|saw|seen)\b/i)) {
+        principles.push('Personal experience sharing');
+      }
+      if (content.match(/the thing is|here's the thing/i)) {
+        principles.push('Conversational analogy pattern');
+      }
+    }
+
+    // General authenticity markers (apply to all voices)
+    if (content.match(/\bhowever\b|\balthough\b|\bwhile\b/i)) {
+      principles.push('Nuanced perspective with qualifiers');
+    }
+    if (content.match(/\btrade-?off|limitation|constraint|caveat/i)) {
+      principles.push('Acknowledges limitations');
+    }
+
     return principles;
+  }
+
+  /**
+   * Generate diverse scenarios with specific count
+   */
+  async generateDiverseScenarios(
+    useCase: string,
+    count: number
+  ): Promise<Scenario[]> {
+    const scenarios: Scenario[] = [];
+    const perspectives: Perspective[] = ['first-person', 'third-person', 'neutral'];
+    const voices: Voice[] = ['technical', 'executive', 'casual', 'academic'];
+
+    for (let i = 0; i < count; i++) {
+      const perspective = perspectives[i % perspectives.length];
+      const voice = voices[i % voices.length];
+
+      const baseContent = this.generateUseCaseContent(useCase, voice);
+      const variation = await this.diversifier.generateVariation(baseContent, {
+        perspective,
+        voice,
+      });
+
+      scenarios.push({
+        description: variation.content,
+        perspective,
+        useCase,
+        voice,
+      });
+    }
+
+    return scenarios;
   }
 }

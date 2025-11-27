@@ -66,16 +66,29 @@ export class GitHookInstaller {
 
           if (aiwgStart >= 0 && aiwgEnd >= 0) {
             // Remove only AIWG section
-            const newContent = [
-              ...lines.slice(0, aiwgStart),
-              ...lines.slice(aiwgEnd + 1)
-            ].join('\n');
+            const beforeAiwg = lines.slice(0, aiwgStart);
+            const afterAiwg = lines.slice(aiwgEnd + 1);
 
-            if (newContent.trim().length > 0) {
-              await writeFile(hookPath, newContent, 'utf-8');
-            } else {
-              // File would be empty, remove it
+            // Check if the content before AIWG is just shebang (part of our hook)
+            const beforeContent = beforeAiwg.filter(l => l.trim().length > 0);
+            const isOnlyShebang = beforeContent.length <= 1 && beforeContent.every(l => l.startsWith('#!'));
+
+            // Check if after AIWG is meaningful content
+            const afterContent = afterAiwg.filter(l => l.trim().length > 0);
+
+            if (isOnlyShebang && afterContent.length === 0) {
+              // File only contains our hook (shebang + AIWG), remove entirely
               await this.removeFile(hookPath);
+            } else {
+              // There's other content, keep it
+              const newContent = [...beforeAiwg, ...afterAiwg].join('\n');
+
+              if (newContent.trim().length > 0) {
+                await writeFile(hookPath, newContent, 'utf-8');
+              } else {
+                // File would be empty, remove it
+                await this.removeFile(hookPath);
+              }
             }
           } else {
             // Entire file is AIWG hook, remove it

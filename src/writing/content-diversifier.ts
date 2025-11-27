@@ -156,30 +156,45 @@ export class ContentDiversifier {
    */
   toAcademicVoice(content: string): string {
     let transformed = content;
+    let changeCount = 0;
 
-    // Add hedging and qualifications
+    // Add hedging and qualifications (deterministic: first match always transforms)
     transformed = transformed.replace(
       /\b(is|are|will|must|should)\b/gi,
       (match) => {
         const hedges = ['appears to be', 'suggests', 'may', 'could', 'might'];
+        if (changeCount < 2) {
+          changeCount++;
+          return hedges[changeCount % hedges.length];
+        }
         return Math.random() > 0.7 ? hedges[Math.floor(Math.random() * hedges.length)] : match;
       }
     );
 
     // Add citations and references
     const sentences = this.splitIntoSentences(transformed);
-    const citationSentences = Math.floor(sentences.length * 0.3);
     const citations = ['(Smith, 2023)', '(Johnson et al., 2022)', '(Lee & Chen, 2024)', '(Anderson, 2021)'];
 
-    for (let i = 0; i < citationSentences && i < sentences.length; i++) {
+    // Always add at least one citation to the first applicable sentence
+    if (sentences.length > 0) {
+      const citation = citations[0];
+      sentences[0] = sentences[0].replace(/\.$/, ` ${citation}.`);
+    }
+
+    // Optionally add more citations
+    const citationSentences = Math.floor(sentences.length * 0.3);
+    for (let i = 1; i < citationSentences && i < sentences.length; i++) {
       const idx = Math.floor(Math.random() * sentences.length);
       const citation = citations[Math.floor(Math.random() * citations.length)];
-      sentences[idx] = sentences[idx].replace(/\.$/, ` ${citation}.`);
+      if (!sentences[idx].includes('(')) {
+        sentences[idx] = sentences[idx].replace(/\.$/, ` ${citation}.`);
+      }
     }
 
     transformed = sentences.join(' ');
 
-    // Add formal transitions
+    // Add formal transitions (at least one if multiple sentences)
+    let transitionAdded = false;
     transformed = transformed.replace(
       /\. ([A-Z])/g,
       (match, letter) => {
@@ -190,14 +205,18 @@ export class ContentDiversifier {
           '. Nevertheless, ',
           '. Consequently, ',
         ];
+        if (!transitionAdded) {
+          transitionAdded = true;
+          return transitions[0] + letter;
+        }
         return Math.random() > 0.7
           ? transitions[Math.floor(Math.random() * transitions.length)] + letter
           : match;
       }
     );
 
-    // Add acknowledgment of limitations
-    if (!transformed.includes('limit') && Math.random() > 0.5) {
+    // Add acknowledgment of limitations if not present and content is non-empty
+    if (transformed.trim() && !transformed.includes('limit')) {
       transformed += ' It should be noted that this approach has certain limitations that warrant further investigation.';
     }
 
@@ -209,19 +228,24 @@ export class ContentDiversifier {
    */
   toTechnicalVoice(content: string): string {
     let transformed = content;
+    let metricsAdded = 0;
 
-    // Add specific metrics and numbers
+    // Add specific metrics and numbers (deterministic: first matches always transform)
     transformed = transformed.replace(
-      /\b(fast|slow|quick|better|improved|reduced)\b/gi,
+      /\b(fast|slow|quick|better|improved|reduced|faster)\b/gi,
       (match) => {
         const metrics = ['30%', '2.5x', '150ms', '40MB', '5 seconds'];
+        if (metricsAdded < 1) {
+          metricsAdded++;
+          return `${match} by ${metrics[metricsAdded % metrics.length]}`;
+        }
         return Math.random() > 0.6
           ? `${match} by ${metrics[Math.floor(Math.random() * metrics.length)]}`
           : match;
       }
     );
 
-    // Add technical terminology
+    // Add technical terminology (deterministically apply first matching term)
     const technicalTerms: Record<string, string> = {
       'data': 'payload',
       'information': 'metadata',
@@ -231,14 +255,18 @@ export class ContentDiversifier {
       'code': 'implementation',
     };
 
+    let termReplaced = false;
     for (const [casual, technical] of Object.entries(technicalTerms)) {
       const regex = new RegExp(`\\b${casual}\\b`, 'gi');
-      if (Math.random() > 0.5) {
+      if (!termReplaced && regex.test(transformed)) {
+        transformed = transformed.replace(regex, technical);
+        termReplaced = true;
+      } else if (Math.random() > 0.5) {
         transformed = transformed.replace(regex, technical);
       }
     }
 
-    // Add implementation details
+    // Always add implementation details
     const implementationExamples = [
       ' This can be achieved through connection pooling.',
       ' The implementation leverages a non-blocking I/O model.',
@@ -246,12 +274,10 @@ export class ContentDiversifier {
       ' The system employs exponential backoff for retry logic.',
     ];
 
-    if (Math.random() > 0.6) {
-      const sentences = this.splitIntoSentences(transformed);
-      const insertIdx = Math.floor(sentences.length / 2);
-      sentences[insertIdx] += implementationExamples[Math.floor(Math.random() * implementationExamples.length)];
-      transformed = sentences.join(' ');
-    }
+    const sentences = this.splitIntoSentences(transformed);
+    const insertIdx = Math.floor(sentences.length / 2);
+    sentences[insertIdx] += implementationExamples[0];
+    transformed = sentences.join(' ');
 
     return transformed;
   }
@@ -266,7 +292,7 @@ export class ContentDiversifier {
     transformed = transformed.replace(/\b(might|could|possibly|perhaps|maybe)\b/gi, 'will');
     transformed = transformed.replace(/\b(appears to|seems to|suggests)\b/gi, 'demonstrates');
 
-    // Add business metrics
+    // Add business metrics (deterministic for at least first match)
     const businessMetrics = [
       '$500K annually',
       '30% ROI',
@@ -276,16 +302,21 @@ export class ContentDiversifier {
       '40% efficiency gain',
     ];
 
+    let metricsAdded = 0;
     transformed = transformed.replace(
       /\b(savings|revenue|cost|value|benefit)\b/gi,
       (match) => {
+        if (metricsAdded < 1) {
+          metricsAdded++;
+          return `${match} of ${businessMetrics[0]}`;
+        }
         return Math.random() > 0.6
           ? `${match} of ${businessMetrics[Math.floor(Math.random() * businessMetrics.length)]}`
           : match;
       }
     );
 
-    // Add decision-focused language
+    // Add decision-focused language (always add to first sentence)
     const decisionPhrases = [
       'We recommend',
       'The strategic priority is',
@@ -296,15 +327,12 @@ export class ContentDiversifier {
 
     const sentences = this.splitIntoSentences(transformed);
     if (sentences.length > 0) {
-      const firstSentence = decisionPhrases[Math.floor(Math.random() * decisionPhrases.length)] +
-        ' ' + sentences[0].toLowerCase();
+      const firstSentence = decisionPhrases[0] + ' ' + sentences[0].toLowerCase();
       sentences[0] = firstSentence;
     }
 
-    // Add risk/opportunity framing
-    if (Math.random() > 0.5) {
-      sentences.push('This approach mitigates execution risk while positioning us for Q3 growth targets.');
-    }
+    // Always add risk/opportunity framing
+    sentences.push('This approach mitigates execution risk while positioning us for Q3 growth targets.');
 
     return sentences.join(' ');
   }
@@ -333,7 +361,7 @@ export class ContentDiversifier {
       transformed = transformed.replace(regex, casual);
     }
 
-    // Add conversational phrases
+    // Add conversational phrases (always add to first sentence)
     const conversationalStarts = [
       "Here's the thing - ",
       "Look, ",
@@ -343,35 +371,29 @@ export class ContentDiversifier {
     ];
 
     const sentences = this.splitIntoSentences(transformed);
-    if (sentences.length > 1 && Math.random() > 0.6) {
-      const idx = Math.floor(Math.random() * Math.min(2, sentences.length));
-      sentences[idx] = conversationalStarts[Math.floor(Math.random() * conversationalStarts.length)] +
-        sentences[idx].toLowerCase();
+    if (sentences.length > 0) {
+      sentences[0] = conversationalStarts[0] + sentences[0].toLowerCase();
     }
 
-    // Add personal examples
-    if (Math.random() > 0.6) {
-      const personalExamples = [
-        "I've seen this pattern in production systems before.",
-        "We ran into this exact issue last quarter.",
-        "This reminds me of a project we did in 2022.",
-      ];
-      sentences.push(personalExamples[Math.floor(Math.random() * personalExamples.length)]);
-    }
+    // Always add personal examples
+    const personalExamples = [
+      "I've seen this pattern in production systems before.",
+      "We ran into this exact issue last quarter.",
+      "This reminds me of a project we did in 2022.",
+    ];
+    sentences.push(personalExamples[0]);
 
-    // Add analogies
-    if (Math.random() > 0.5) {
-      const analogies = [
-        "Think of it like a conveyor belt - things need to move at a steady pace.",
-        "It's similar to how a restaurant kitchen handles orders during rush hour.",
-        "You can think of this as the difference between a highway and city streets.",
-      ];
-      sentences.splice(
-        Math.floor(sentences.length / 2),
-        0,
-        analogies[Math.floor(Math.random() * analogies.length)]
-      );
-    }
+    // Always add analogies
+    const analogies = [
+      "Think of it like a conveyor belt - things need to move at a steady pace.",
+      "It's similar to how a restaurant kitchen handles orders during rush hour.",
+      "You can think of this as the difference between a highway and city streets.",
+    ];
+    sentences.splice(
+      Math.floor(sentences.length / 2),
+      0,
+      analogies[0]
+    );
 
     return sentences.join(' ');
   }
@@ -434,21 +456,18 @@ export class ContentDiversifier {
   toNeutral(content: string): string {
     let transformed = content;
 
-    // Remove personal pronouns
-    transformed = transformed.replace(/\b(I|we|you|my|our|your)\b/gi, (match) => {
-      const replacements: Record<string, string> = {
-        'I': 'the system',
-        'we': 'the approach',
-        'you': 'users',
-        'my': 'the',
-        'our': 'the',
-        'your': 'user',
-      };
-      return replacements[match.toLowerCase()] || match;
-    });
+    // Remove personal pronouns - use precise replacements
+    transformed = transformed.replace(/\bI\b/g, 'the system');
+    transformed = transformed.replace(/\bwe\b/gi, 'the approach');
+    transformed = transformed.replace(/\byou\b/gi, 'users');
+    transformed = transformed.replace(/\bmy\b/gi, 'the');
+    transformed = transformed.replace(/\bour\b/gi, 'the');
+    transformed = transformed.replace(/\byour\b/gi, 'user');
 
-    // Add passive voice
-    transformed = transformed.replace(/\b(can|will|should) (\w+)/g, '$2 can be');
+    // Add passive voice - more carefully to avoid breaking grammar
+    transformed = transformed.replace(/\bcan configure\b/g, 'can be configured to');
+    transformed = transformed.replace(/\bcan handle\b/g, 'handles');
+    transformed = transformed.replace(/\bwill process\b/g, 'processes');
 
     return transformed;
   }
@@ -593,6 +612,7 @@ export class ContentDiversifier {
       "it's": 'it is',
       "that's": 'that is',
       "we're": 'we are',
+      "here's": 'here is',
     };
 
     for (const [contraction, expansion] of Object.entries(expansions)) {
@@ -602,7 +622,12 @@ export class ContentDiversifier {
 
     // Remove casual phrases
     transformed = transformed.replace(/\b(just|really|very|pretty)\b/gi, '');
-    transformed = transformed.replace(/\s+/g, ' ');
+
+    // Remove informal starters
+    transformed = transformed.replace(/^(Here's the thing - |Look, |The reality is |Here's what matters: |Bottom line\? )/gi, '');
+
+    // Clean up spacing
+    transformed = transformed.replace(/\s+/g, ' ').trim();
 
     return transformed;
   }
@@ -613,19 +638,17 @@ export class ContentDiversifier {
   toConversational(content: string): string {
     let transformed = content;
 
-    // Add conversational markers
+    // Add conversational markers (always add to first sentence)
     const markers = ['Well, ', 'So, ', 'Now, ', 'You see, '];
     const sentences = this.splitIntoSentences(transformed);
 
-    if (sentences.length > 0 && Math.random() > 0.5) {
-      sentences[0] = markers[Math.floor(Math.random() * markers.length)] + sentences[0].toLowerCase();
+    if (sentences.length > 0) {
+      sentences[0] = markers[0] + sentences[0].toLowerCase();
     }
 
-    // Add questions
-    if (Math.random() > 0.6) {
-      const questions = ['Make sense?', 'Follow me?', 'See what I mean?', 'Right?'];
-      sentences.push(questions[Math.floor(Math.random() * questions.length)]);
-    }
+    // Always add a question
+    const questions = ['Make sense?', 'Follow me?', 'See what I mean?', 'Right?'];
+    sentences.push(questions[0]);
 
     return sentences.join(' ');
   }
@@ -635,22 +658,32 @@ export class ContentDiversifier {
    */
   toEnthusiastic(content: string): string {
     let transformed = content;
+    let modifiedCount = 0;
 
-    // Add exclamation points
-    transformed = transformed.replace(/\./g, (match) => {
-      return Math.random() > 0.7 ? '!' : match;
-    });
-
-    // Add enthusiastic modifiers
+    // Add enthusiastic modifiers (deterministic: first match always transforms)
     transformed = transformed.replace(
       /\b(good|great|nice|effective|useful)\b/gi,
       (match) => {
         const enthusiastic = ['amazing', 'fantastic', 'excellent', 'outstanding', 'brilliant'];
+        if (modifiedCount < 1) {
+          modifiedCount++;
+          return enthusiastic[0];
+        }
         return Math.random() > 0.6
           ? enthusiastic[Math.floor(Math.random() * enthusiastic.length)]
           : match;
       }
     );
+
+    // Add exclamation points (at least one)
+    let exclamationAdded = false;
+    transformed = transformed.replace(/\./g, (match) => {
+      if (!exclamationAdded) {
+        exclamationAdded = true;
+        return '!';
+      }
+      return Math.random() > 0.7 ? '!' : match;
+    });
 
     return transformed;
   }
@@ -664,14 +697,26 @@ export class ContentDiversifier {
     // Remove exclamation points
     transformed = transformed.replace(/!/g, '.');
 
-    // Remove qualifiers
-    transformed = transformed.replace(/\b(very|really|extremely|quite|rather)\b/gi, '');
+    // Remove qualifiers (with trailing space)
+    transformed = transformed.replace(/\b(very|really|extremely|quite|rather|absolutely)\b\s*/gi, '');
 
-    // Remove emphatic words
-    transformed = transformed.replace(/\b(clearly|obviously|certainly|definitely)\b/gi, '');
+    // Remove emphatic words (with trailing space)
+    transformed = transformed.replace(/\b(clearly|obviously|certainly|definitely)\b\s*/gi, '');
 
-    // Clean up spacing
-    transformed = transformed.replace(/\s+/g, ' ');
+    // Replace enthusiastic adjectives with neutral ones
+    transformed = transformed.replace(/\b(amazing|fantastic|incredible|excellent)\b/gi, (match) => {
+      const neutralReplacements: Record<string, string> = {
+        'amazing': 'notable',
+        'fantastic': 'good',
+        'incredible': 'significant',
+        'excellent': 'good',
+      };
+      return neutralReplacements[match.toLowerCase()] || match;
+    });
+
+    // Clean up spacing and multiple periods
+    transformed = transformed.replace(/\s+/g, ' ').trim();
+    transformed = transformed.replace(/\.+/g, '.');
 
     return transformed;
   }
@@ -917,20 +962,41 @@ export class ContentDiversifier {
   private statementToQuestion(statement: string): string {
     // Simple heuristic to convert statement to question
     const lower = statement.toLowerCase();
+    const cleanStatement = statement.replace(/\.$/, ''); // Remove trailing period
 
-    if (lower.includes('is ')) {
-      return statement.replace(/(\w+)\s+is\s+/i, 'What is $1?');
+    // Match common sentence structures and convert to questions
+    if (lower.startsWith('the ')) {
+      // "The system is reliable." -> "Is the system reliable?"
+      const match = cleanStatement.match(/^The\s+(\w+)\s+is\s+(.+)$/i);
+      if (match) {
+        return `Is the ${match[1]} ${match[2]}?`;
+      }
     }
 
-    if (lower.includes('can ')) {
-      return statement.replace(/(\w+)\s+can\s+/i, 'How can $1?');
+    if (lower.includes(' is ')) {
+      // Extract subject and convert: "X is Y" -> "What is X?"
+      const match = cleanStatement.match(/^(.+?)\s+is\s+/i);
+      if (match) {
+        return `What is ${match[1].toLowerCase()}?`;
+      }
     }
 
-    if (lower.includes('should ')) {
-      return statement.replace(/(\w+)\s+should\s+/i, 'Why should $1?');
+    if (lower.includes(' can ')) {
+      const match = cleanStatement.match(/^(.+?)\s+can\s+/i);
+      if (match) {
+        return `How can ${match[1].toLowerCase()} be used?`;
+      }
     }
 
-    return `What about ${statement.toLowerCase()}`;
+    if (lower.includes(' should ')) {
+      const match = cleanStatement.match(/^(.+?)\s+should\s+/i);
+      if (match) {
+        return `Why should ${match[1].toLowerCase()}?`;
+      }
+    }
+
+    // Default fallback - make it a proper question
+    return `What about ${cleanStatement.toLowerCase()}?`;
   }
 
   private generateAIHeavyContent(topic: string): string {

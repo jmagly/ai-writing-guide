@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { NFRTestGenerator, NFRGroundTruthCorpus, NFRBaseline, PerformanceTarget, AccuracyTarget, ReliabilityTarget } from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/nfr-test-generator.js';
+import { NFRTestGenerator, NFRGroundTruthCorpus, NFRBaseline, PerformanceTarget, AccuracyTarget, ReliabilityTarget } from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/nfr-test-generator.ts';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 

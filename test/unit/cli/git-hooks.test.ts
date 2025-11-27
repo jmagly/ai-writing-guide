@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFile, mkdir, rm, chmod, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
-import { GitHookInstaller } from '../../../src/cli/git-hooks.js';
+import { GitHookInstaller } from '../../../src/cli/git-hooks.ts';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 

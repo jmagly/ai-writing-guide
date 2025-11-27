@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AgentPackager } from '../../../src/agents/agent-packager.js';
-import type { AgentInfo } from '../../../src/agents/types.js';
+import { AgentPackager } from '../../../src/agents/agent-packager.ts';
+import type { AgentInfo } from '../../../src/agents/types.ts';
 
 describe('AgentPackager', () => {
   let packager: AgentPackager;

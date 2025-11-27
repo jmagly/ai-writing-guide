@@ -56,30 +56,32 @@ export class ValidationRuleLoader {
     const aiTellsPath = join(this.guideBasePath!, 'patterns/common-ai-tells.md');
     const sophisticationPath = join(this.guideBasePath!, 'core/sophistication-guide.md');
 
+    // Start with default rules (core patterns that should always be present)
+    const defaults = this.getDefaultRules();
     const ruleSet: RuleSet = {
-      bannedPhrases: [],
-      aiPatterns: [],
-      authenticityMarkers: [],
-      structuralPatterns: []
+      bannedPhrases: [...defaults.bannedPhrases],
+      aiPatterns: [...defaults.aiPatterns],
+      authenticityMarkers: [...defaults.authenticityMarkers],
+      structuralPatterns: [...defaults.structuralPatterns]
     };
 
-    // Load banned phrases
+    // Load and merge banned phrases from guide
     if (existsSync(bannedPatternsPath)) {
       const bannedRules = await this.loadFromMarkdown(bannedPatternsPath);
-      ruleSet.bannedPhrases.push(...bannedRules.filter(r => r.type === 'banned_phrase'));
-      ruleSet.structuralPatterns.push(...bannedRules.filter(r => r.type === 'formulaic_structure'));
+      ruleSet.bannedPhrases = this.mergeRules(ruleSet.bannedPhrases, bannedRules.filter(r => r.type === 'banned_phrase'));
+      ruleSet.structuralPatterns = this.mergeRules(ruleSet.structuralPatterns, bannedRules.filter(r => r.type === 'formulaic_structure'));
     }
 
-    // Load AI tells
+    // Load and merge AI tells from guide
     if (existsSync(aiTellsPath)) {
       const aiRules = await this.loadFromMarkdown(aiTellsPath);
-      ruleSet.aiPatterns.push(...aiRules);
+      ruleSet.aiPatterns = this.mergeRules(ruleSet.aiPatterns, aiRules);
     }
 
     // Load authenticity markers from sophistication guide
     if (existsSync(sophisticationPath)) {
       const authRules = await this.loadAuthenticityMarkers(sophisticationPath);
-      ruleSet.authenticityMarkers.push(...authRules);
+      ruleSet.authenticityMarkers = this.mergeRules(ruleSet.authenticityMarkers, authRules);
     }
 
     this.ruleCache.set(cacheKey, ruleSet);
@@ -131,8 +133,18 @@ export class ValidationRuleLoader {
       if (line.startsWith('- ')) {
         const phrase = line.substring(2).trim();
 
-        // Skip example lines and explanations
+        // Skip example lines, explanations, and replacement guides
         if (phrase.startsWith('❌') || phrase.startsWith('✅') || phrase.startsWith('**')) {
+          continue;
+        }
+
+        // Skip replacement guide lines (e.g., "revolutionary" → "different")
+        if (phrase.includes('→') || phrase.includes('->')) {
+          continue;
+        }
+
+        // Skip lines that are quoted replacement mappings (e.g., "phrase" → "replacement")
+        if (phrase.startsWith('"') && (phrase.includes('→') || phrase.includes('->'))) {
           continue;
         }
 
@@ -244,10 +256,34 @@ export class ValidationRuleLoader {
    * Create a regex pattern from a phrase string
    */
   private createPattern(phrase: string): RegExp {
-    // Handle wildcard patterns
+    // Handle wildcard patterns (e.g., "vital/crucial/key" or "cutting-edge technology/solution")
     if (phrase.includes('/')) {
-      // Already contains alternatives (e.g., "vital/crucial/key")
-      const alternatives = phrase.split('/').map(p => p.trim()).join('|');
+      // Split the phrase and check if we have multi-word alternatives
+      // For "plays a vital/crucial/key role" we want to match the alternatives in context
+      const parts = phrase.split('/').map(p => p.trim());
+
+      // If first/last parts contain multi-word context, extract the common prefix/suffix
+      // e.g., "cutting-edge technology/solution/platform" should match full phrases
+      const firstPart = parts[0];
+      const hasPrefix = firstPart.includes(' ');
+
+      if (hasPrefix) {
+        // Has leading context - match each alternative with the prefix
+        // e.g., "seamlessly integrates/integrated" -> match "seamlessly integrates" OR "seamlessly integrated"
+        const words = firstPart.split(' ');
+        const prefix = words.slice(0, -1).join(' '); // All but last word
+        const firstAlt = words[words.length - 1]; // Last word is first alternative
+
+        const alternatives = [firstAlt, ...parts.slice(1)].map(alt => {
+          const escaped = `${prefix} ${alt}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          return escaped;
+        });
+
+        return new RegExp(`\\b(${alternatives.join('|')})\\b`, 'gi');
+      }
+
+      // Simple alternatives without context - escape each and join
+      const alternatives = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
       return new RegExp(`\\b(${alternatives})\\b`, 'gi');
     }
 

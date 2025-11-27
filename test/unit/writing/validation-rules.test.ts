@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ValidationRuleLoader, ValidationRule, RuleSet } from '../../../src/writing/validation-rules.js';
+import { ValidationRuleLoader, ValidationRule, RuleSet } from '../../../src/writing/validation-rules.ts';
 import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';

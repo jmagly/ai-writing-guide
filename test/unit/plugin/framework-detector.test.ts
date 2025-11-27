@@ -8,8 +8,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { FrameworkDetector } from '../../../src/plugin/framework-detector.js';
-import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
+import { FrameworkDetector } from '../../../src/plugin/framework-detector.ts';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.ts';
 
 describe('FrameworkDetector', () => {
   let sandbox: FilesystemSandbox;

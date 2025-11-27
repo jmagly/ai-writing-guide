@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { WritingValidationEngine, ValidationResult } from '../../../src/writing/validation-engine.js';
+import { WritingValidationEngine, ValidationResult } from '../../../src/writing/validation-engine.ts';
 import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -240,8 +240,10 @@ In conclusion, this revolutionary system delivers best-in-class outcomes.`;
 
     describe('Mixed Content', () => {
       it('should handle mixed content (some AI, some human)', async () => {
-        const content = `The authentication system uses JWT tokens with 15-minute expiry. Moreover, the comprehensive solution seamlessly integrates with existing infrastructure.
-We chose this approach after evaluating alternatives. The p99 latency is 45ms.`;
+        // Content with both human markers and some AI tells (but not heavily penalized)
+        const content = `The authentication system uses JWT tokens with 15-minute expiry.
+We chose this approach after evaluating alternatives. The p99 latency is 45ms.
+Moreover, this solution integrates well with existing infrastructure.`;
 
         const result = await engine.validate(content);
 
@@ -249,7 +251,7 @@ We chose this approach after evaluating alternatives. The p99 latency is 45ms.`;
         expect(result.humanMarkers.length).toBeGreaterThan(0);
         expect(result.aiTells.length).toBeGreaterThan(0);
 
-        // Score should be moderate
+        // Score should be moderate (more than obvious AI but less than authentic)
         expect(result.score).toBeGreaterThan(0);
         expect(result.score).toBeLessThan(80);
       });

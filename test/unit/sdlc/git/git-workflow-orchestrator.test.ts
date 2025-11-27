@@ -22,21 +22,43 @@ import type {
   CommitOptions,
   MergeOptions,
   PROptions
-} from '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.js';
+} from '../../../../agentic/code/frameworks/sdlc-complete/src/git/git-workflow-orchestrator.ts';
 
 // Mock exec to avoid actual git commands
 vi.mock('child_process', () => ({
   exec: vi.fn((cmd: string, opts: any, callback: Function) => {
-    // Simulate successful git commands
-    if (cmd.includes('git status')) {
-      callback(null, { stdout: '## main\n', stderr: '' });
-    } else if (cmd.includes('git branch --show-current')) {
-      callback(null, { stdout: 'main\n', stderr: '' });
-    } else if (cmd.includes('git diff --cached --name-only')) {
-      callback(null, { stdout: 'src/index.ts\n', stderr: '' });
-    } else {
-      callback(null, { stdout: '', stderr: '' });
-    }
+    // Add small delay to ensure duration > 0
+    setTimeout(() => {
+      // Extract the cwd from options if available
+      const cwd = typeof opts === 'object' && opts?.cwd ? opts.cwd : '';
+
+      // Simulate errors for non-existent paths
+      if (cwd.includes('/non/existent') || cwd.includes('non-existent')) {
+        callback(new Error('fatal: not a git repository (or any of the parent directories): .git'), null);
+        return;
+      }
+
+      // Simulate errors for specific commands
+      if (cmd.includes('non-existent') || cmd.includes('non-existent-branch')) {
+        callback(new Error('error: pathspec \'non-existent\' did not match any file(s) known to git'), null);
+        return;
+      }
+
+      // Simulate successful git commands
+      if (cmd.includes('git status')) {
+        callback(null, { stdout: '## main\n', stderr: '' });
+      } else if (cmd.includes('git branch --show-current')) {
+        callback(null, { stdout: 'main\n', stderr: '' });
+      } else if (cmd.includes('git diff --cached --name-only')) {
+        callback(null, { stdout: 'src/index.ts\n', stderr: '' });
+      } else if (cmd.includes('git checkout')) {
+        callback(null, { stdout: 'Switched to branch \'main\'\n', stderr: '' });
+      } else if (cmd.includes('git branch -d') || cmd.includes('git branch -D')) {
+        callback(null, { stdout: 'Deleted branch feature-branch\n', stderr: '' });
+      } else {
+        callback(null, { stdout: '', stderr: '' });
+      }
+    }, 1); // 1ms delay to ensure duration > 0
   })
 }));
 

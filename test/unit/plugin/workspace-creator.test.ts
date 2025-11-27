@@ -8,8 +8,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { WorkspaceCreator } from '../../../src/plugin/workspace-creator.js';
-import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
+import { WorkspaceCreator } from '../../../src/plugin/workspace-creator.ts';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.ts';
 
 describe('WorkspaceCreator', () => {
   let sandbox: FilesystemSandbox;
@@ -257,7 +257,8 @@ describe('WorkspaceCreator', () => {
     it('should update workspace registry when adding framework', async () => {
       const creator = new WorkspaceCreator(projectRoot);
 
-      await creator.createFrameworkWorkspace('claude');
+      // addFrameworkToProject updates registry, createFrameworkWorkspace does not
+      await creator.addFrameworkToProject('claude');
       await creator.addFrameworkToProject('codex');
 
       expect(await sandbox.fileExists('.aiwg/registry.json')).toBe(true);
@@ -380,14 +381,16 @@ describe('WorkspaceCreator', () => {
       const creator = new WorkspaceCreator(projectRoot);
       await creator.initializeWorkspace();
 
-      expect(await sandbox.directoryExists('.aiwg/working')).toBe(true);
+      // SDLC directories are created under shared/
+      expect(await sandbox.directoryExists('.aiwg/shared/working')).toBe(true);
     });
 
     it('should create reports/ directory', async () => {
       const creator = new WorkspaceCreator(projectRoot);
       await creator.initializeWorkspace();
 
-      expect(await sandbox.directoryExists('.aiwg/reports')).toBe(true);
+      // SDLC directories are created under shared/
+      expect(await sandbox.directoryExists('.aiwg/shared/reports')).toBe(true);
     });
   });
 });

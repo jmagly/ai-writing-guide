@@ -182,6 +182,10 @@ export class FrameworkMigration {
       // Perform actual migration
       let filesMoved = 0;
 
+      // Always create the target framework directory
+      const targetFrameworkPath = path.join(this.projectRoot, '.aiwg', targetFramework);
+      await fs.mkdir(targetFrameworkPath, { recursive: true });
+
       // Move framework-specific resources
       for (const resource of categorized.frameworkSpecific) {
         const sourcePath = path.join(this.projectRoot, '.aiwg', resource);

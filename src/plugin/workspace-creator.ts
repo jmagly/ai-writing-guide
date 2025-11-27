@@ -35,6 +35,7 @@ export class WorkspaceCreator {
 
   private readonly SUPPORTED_FRAMEWORKS = ['claude', 'codex', 'cursor'];
   private readonly SHARED_DIRS = [
+    'intake',
     'requirements',
     'architecture',
     'planning',
@@ -44,7 +45,12 @@ export class WorkspaceCreator {
     'quality',
     'risks',
     'reports',
-    'working'
+    'working',
+    'handoffs',
+    'gates',
+    'decisions',
+    'team',
+    'management'
   ];
 
   constructor(projectRoot: string) {

@@ -50,12 +50,17 @@ export class PromptTemplateLibrary {
    * Search templates by keyword
    */
   search(query: string): PromptTemplate[] {
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = query.trim().toLowerCase();
+    // Empty search returns all templates
+    if (!lowerQuery) {
+      return Array.from(this.templates.values());
+    }
     return Array.from(this.templates.values())
       .filter(t =>
         t.name.toLowerCase().includes(lowerQuery) ||
         t.template.toLowerCase().includes(lowerQuery) ||
-        t.id.toLowerCase().includes(lowerQuery)
+        t.id.toLowerCase().includes(lowerQuery) ||
+        t.example.toLowerCase().includes(lowerQuery)
       );
   }
 

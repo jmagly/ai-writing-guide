@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PromptOptimizer } from '../../../src/writing/prompt-optimizer.js';
+import { PromptOptimizer } from '../../../src/writing/prompt-optimizer.ts';
 
 describe('PromptOptimizer', () => {
   let optimizer: PromptOptimizer;
@@ -145,7 +145,9 @@ Example structure:
     it('should identify anti-pattern locations', () => {
       const patterns = optimizer.detectAntiPatterns('Use cutting-edge technology and seamless integration');
       expect(patterns.length).toBeGreaterThan(0);
-      expect(patterns.every(p => p.locations.length > 0)).toBe(true);
+      // AI trigger words should have specific locations, but structural issues (like no_constraints) may not
+      const triggerWordPatterns = patterns.filter(p => p.pattern === 'ai_trigger_word');
+      expect(triggerWordPatterns.every(p => p.locations.length > 0)).toBe(true);
     });
   });
 

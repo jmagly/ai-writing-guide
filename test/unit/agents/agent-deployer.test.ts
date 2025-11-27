@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { AgentDeployer } from '../../../src/agents/agent-deployer.js';
-import type { DeploymentTarget, DeploymentOptions } from '../../../src/agents/types.js';
+import { AgentDeployer } from '../../../src/agents/agent-deployer.ts';
+import type { DeploymentTarget, DeploymentOptions } from '../../../src/agents/types.ts';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { existsSync } from 'fs';

@@ -7,7 +7,7 @@ import {
   VoiceAnalyzer,
   type VoiceProfile,
   type ComparisonResult,
-} from '../../../src/writing/voice-analyzer.js';
+} from '../../../src/writing/voice-analyzer.ts';
 
 describe('VoiceAnalyzer', () => {
   let analyzer: VoiceAnalyzer;

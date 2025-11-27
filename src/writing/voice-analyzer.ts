@@ -183,21 +183,24 @@ export class VoiceAnalyzer {
    * Detect tone of content
    */
   detectTone(content: string): Tone {
-    const formalMarkers = (content.match(/\b(furthermore|moreover|nevertheless|consequently)\b/gi) || []).length;
-    const casualMarkers = (content.match(/\b(just|really|pretty|basically)\b/gi) || []).length;
+    const formalMarkers = (content.match(/\b(furthermore|moreover|nevertheless|consequently|demonstrates|efficacy|implementation)\b/gi) || []).length;
+    const casualMarkers = (content.match(/\b(just|really|pretty|basically|great|awesome|cool)\b/gi) || []).length;
     const enthusiasticMarkers = (content.match(/!/g) || []).length +
       (content.match(/\b(amazing|fantastic|excellent|brilliant)\b/gi) || []).length;
-    const contractions = (content.match(/\b(don't|can't|won't|it's|that's)\b/gi) || []).length;
+    const contractions = (content.match(/\b(don't|can't|won't|it's|that's|we're|you're|I'm)\b/gi) || []).length;
 
-    if (enthusiasticMarkers > 3) {
+    // Enthusiastic: multiple exclamations or enthusiastic words
+    if (enthusiasticMarkers > 1) {
       return 'enthusiastic';
     }
 
-    if (contractions > formalMarkers && casualMarkers > 0) {
+    // Conversational: has contractions and casual words, or contractions with enthusiasm
+    if (contractions > 0 && (casualMarkers > 0 || enthusiasticMarkers > 0)) {
       return 'conversational';
     }
 
-    if (formalMarkers > casualMarkers && contractions === 0) {
+    // Formal: has formal markers and no contractions
+    if (formalMarkers > 0 && contractions === 0) {
       return 'formal';
     }
 
@@ -332,7 +335,9 @@ export class VoiceAnalyzer {
     for (const [voice, patterns] of this.voicePatterns.entries()) {
       // Strong markers worth 3 points
       for (const pattern of patterns.strongMarkers) {
-        const matches = content.match(new RegExp(pattern, 'g'));
+        // Preserve original flags and add 'g' for global matching
+        const flags = pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g';
+        const matches = content.match(new RegExp(pattern.source, flags));
         if (matches) {
           scores[voice] += matches.length * 3;
         }
@@ -340,7 +345,8 @@ export class VoiceAnalyzer {
 
       // Moderate markers worth 2 points
       for (const pattern of patterns.moderateMarkers) {
-        const matches = content.match(new RegExp(pattern, 'g'));
+        const flags = pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g';
+        const matches = content.match(new RegExp(pattern.source, flags));
         if (matches) {
           scores[voice] += matches.length * 2;
         }
@@ -348,7 +354,8 @@ export class VoiceAnalyzer {
 
       // Weak markers worth 1 point
       for (const pattern of patterns.weakMarkers) {
-        const matches = content.match(new RegExp(pattern, 'g'));
+        const flags = pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g';
+        const matches = content.match(new RegExp(pattern.source, flags));
         if (matches) {
           scores[voice] += matches.length;
         }
@@ -533,7 +540,8 @@ export class VoiceAnalyzer {
   }
 
   private splitIntoSections(content: string, sectionSize: number): string[] {
-    const words = content.split(/\s+/);
+    // Filter out empty strings from split
+    const words = content.split(/\s+/).filter(w => w.length > 0);
     const sections: string[] = [];
 
     for (let i = 0; i < words.length; i += sectionSize) {
