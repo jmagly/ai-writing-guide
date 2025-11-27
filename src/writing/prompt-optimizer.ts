@@ -122,6 +122,22 @@ export class PromptOptimizer {
       }
     }
 
+    // Inject voice guidance BEFORE constraints (constraints include "acknowledge trade-offs" which
+    // would trigger hasVoiceGuidance and skip voice injection)
+    if (context?.voice) {
+      const result = this.injectVoiceGuidance(optimized, context.voice);
+      if (result.improved) {
+        improvements.push({
+          type: 'voice',
+          description: `Injected ${context.voice} voice guidance`,
+          before: optimized,
+          after: result.prompt,
+          impact: 'medium'
+        });
+        optimized = result.prompt;
+      }
+    }
+
     if (this.needsConstraints(prompt)) {
       const constraints = this.generateConstraints(context);
       const result = this.addConstraints(optimized, constraints);
@@ -132,20 +148,6 @@ export class PromptOptimizer {
           before: optimized,
           after: result.prompt,
           impact: 'high'
-        });
-        optimized = result.prompt;
-      }
-    }
-
-    if (context?.voice) {
-      const result = this.injectVoiceGuidance(optimized, context.voice);
-      if (result.improved) {
-        improvements.push({
-          type: 'voice',
-          description: `Injected ${context.voice} voice guidance`,
-          before: optimized,
-          after: result.prompt,
-          impact: 'medium'
         });
         optimized = result.prompt;
       }
@@ -333,18 +335,24 @@ export class PromptOptimizer {
       });
     }
 
-    // Asks for "comprehensive" or "robust"
+    // Asks for "comprehensive" or "robust" (but not when instructing to AVOID them)
     const badWords = ['comprehensive', 'robust', 'innovative', 'cutting-edge', 'seamless'];
     for (const word of badWords) {
       const regex = new RegExp(`\\b${word}\\b`, 'gi');
       const matches = Array.from(prompt.matchAll(regex));
-      if (matches.length > 0) {
+      // Filter out matches that are preceded by "avoid" within 100 chars (to handle lists of words to avoid)
+      const realMatches = matches.filter(m => {
+        const idx = m.index || 0;
+        const preceding = prompt.slice(Math.max(0, idx - 100), idx).toLowerCase();
+        return !preceding.includes('avoid');
+      });
+      if (realMatches.length > 0) {
         patterns.push({
           pattern: 'ai_trigger_word',
           description: `Contains AI trigger word: "${word}"`,
           example: `Write a comprehensive guide`,
           fix: `Write a 1,500-word guide covering A, B, and C`,
-          locations: matches.map(m => m.index || 0)
+          locations: realMatches.map(m => m.index || 0)
         });
       }
     }
@@ -367,6 +375,11 @@ export class PromptOptimizer {
    * Score prompt quality (0-100)
    */
   scorePromptQuality(prompt: string): number {
+    // Empty or whitespace-only prompts get 0
+    if (!prompt || !prompt.trim()) {
+      return 0;
+    }
+
     let score = 50; // baseline
 
     // Positive factors
@@ -376,6 +389,7 @@ export class PromptOptimizer {
     if (this.hasConstraints(prompt)) score += 10;
     if (this.hasVoiceGuidance(prompt)) score += 10;
     if (this.hasMetrics(prompt)) score += 5;
+    if (this.hasNumericMetrics(prompt)) score += 3; // Bonus for actual numbers
     if (this.hasSpecificTechnologies(prompt)) score += 5;
 
     // Negative factors
@@ -586,7 +600,7 @@ export class PromptOptimizer {
   private hasConstraints(prompt: string): boolean {
     const constraintIndicators = [
       /avoid/i, /don't use/i, /never use/i, /exclude/i,
-      /requirements?:/i, /constraints?:/i, /guidelines?:/i,
+      /requirements?:?/i, /constraints?:?/i, /guidelines?:?/i,
       /must not/i, /should not/i
     ];
     return constraintIndicators.some(pattern => pattern.test(prompt));
@@ -594,16 +608,20 @@ export class PromptOptimizer {
 
   private hasExamples(prompt: string): boolean {
     const exampleIndicators = [
-      /example:/i, /for example/i, /such as/i,
-      /like this:/i, /format:/i, /structure:/i
+      /examples?:?/i, /for example/i, /such as/i,
+      /like this:?/i, /format:?/i, /structure:?/i
     ];
     return exampleIndicators.some(pattern => pattern.test(prompt));
   }
 
   private hasAudience(prompt: string): boolean {
     const audienceIndicators = [
-      /for (developers|engineers|executives|managers|students|beginners|experts)/i,
-      /audience:/i, /readers?:/i, /target:/i
+      // "for X engineers/developers" where X can be backend, frontend, senior, etc.
+      /for\s+(\w+\s+)?(developers|engineers|executives|managers|students|beginners|experts)/i,
+      /(senior|junior|lead|staff|backend|frontend|fullstack|full-stack)\s+(developers?|engineers?)/i,
+      /audience:?/i, /readers?:?/i, /target\s+(senior|developers?|engineers?|audience)/i,
+      // Common audience qualifiers
+      /(DBAs|DevOps|SREs|architects|administrators)/i
     ];
     return audienceIndicators.some(pattern => pattern.test(prompt));
   }
@@ -619,27 +637,40 @@ export class PromptOptimizer {
 
   private hasVoiceGuidance(prompt: string): boolean {
     const voiceIndicators = [
-      /technical precision/i, /acknowledge (trade-?offs|edge cases)/i,
+      /technical precision/i, /acknowledge\s+(trade-?offs|edge cases|limitations)/i,
       /include opinions?/i, /based on experience/i,
-      /reference (real-world|actual) (challenges|implementation)/i
+      /reference (real-world|actual) (challenges|implementation)/i,
+      /what goes wrong/i, /real-world scenarios/i
     ];
     return voiceIndicators.some(pattern => pattern.test(prompt));
   }
 
   private hasMetrics(prompt: string): boolean {
-    return /\d+%|\d+ (ms|seconds|requests|users|bytes|MB|GB)/i.test(prompt);
+    // Match actual numeric metrics (higher value) - space is optional between number and unit
+    return /\d+%|\d+\s?(ms|seconds?|requests?|users?|bytes?|MB|GB|KB|TB)/i.test(prompt) ||
+           /(performance|benchmarks?|hit rates?|latency)/i.test(prompt);
+  }
+
+  private hasNumericMetrics(prompt: string): boolean {
+    // Match actual numeric values with units (more specific than just keywords)
+    return /\d+%|\d+\s?(ms|seconds?|requests?|users?|bytes?|MB|GB|KB|TB)/i.test(prompt);
   }
 
   private hasSpecificTechnologies(prompt: string): boolean {
-    const techPattern = /\b(OAuth|JWT|REST|GraphQL|React|Node|Python|Docker|Kubernetes|AWS|Azure)\b/i;
+    const techPattern = /\b(OAuth|JWT|REST|GraphQL|React|Node|Python|Docker|Kubernetes|AWS|Azure|Redis|PostgreSQL|MongoDB|MySQL|Elasticsearch)\b/i;
     return techPattern.test(prompt);
   }
 
   private hasBannedPhrases(prompt: string): boolean {
     const lowerPrompt = prompt.toLowerCase();
-    return Array.from(this.bannedPhrases).some(phrase =>
-      lowerPrompt.includes(phrase.toLowerCase())
-    );
+    // Don't penalize if the banned phrase appears after "avoid" instruction
+    return Array.from(this.bannedPhrases).some(phrase => {
+      const idx = lowerPrompt.indexOf(phrase.toLowerCase());
+      if (idx === -1) return false;
+      // Check if "avoid" appears within 50 chars before this phrase
+      const preceding = lowerPrompt.slice(Math.max(0, idx - 50), idx);
+      return !preceding.includes('avoid');
+    });
   }
 
   private makeTopicSpecific(topic: string, _domain?: string): string {
@@ -688,6 +719,11 @@ export class PromptOptimizer {
       );
     }
 
+    // Include user-provided custom constraints
+    if (context?.constraints && context.constraints.length > 0) {
+      baseConstraints.push(...context.constraints);
+    }
+
     return baseConstraints;
   }
 
@@ -711,14 +747,14 @@ export class PromptOptimizer {
 
   private getVoiceGuidance(voice: 'academic' | 'technical' | 'executive'): string {
     const guidance: Record<string, string> = {
-      academic: `Academic voice guidelines:
-- Use discipline-appropriate terminology (not simplified)
+      academic: `Voice: Use academic style with:
+- Discipline-appropriate terminology (not simplified)
 - Cite specific sources and methodologies
 - Acknowledge limitations and counterarguments
 - Maintain formal but not stilted tone
 - Avoid AI patterns like "it is worth noting"`,
 
-      technical: `Technical voice guidelines:
+      technical: `Voice: Use technical style with:
 - Write for senior developers/engineers
 - Use technical precision and domain vocabulary
 - Include opinions based on experience
@@ -726,7 +762,7 @@ export class PromptOptimizer {
 - Reference actual implementation challenges you've faced
 - Avoid generic descriptions - be specific about technologies and versions`,
 
-      executive: `Executive voice guidelines:
+      executive: `Voice: Use executive style with:
 - Start with bottom-line impact (financial, time, risk)
 - Avoid hedging - state clear positions
 - Maximum brevity while maintaining completeness

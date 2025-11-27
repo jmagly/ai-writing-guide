@@ -9,8 +9,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { FrameworkIsolator } from '../../../src/plugin/framework-isolator.js';
-import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
+import { FrameworkIsolator } from '../../../src/plugin/framework-isolator.ts';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.ts';
 
 describe('FrameworkIsolator', () => {
   let sandbox: FilesystemSandbox;
@@ -437,7 +437,8 @@ describe('FrameworkIsolator', () => {
       await sandbox.writeFile('.aiwg/agents/legacy-agent.md', '# Legacy');
 
       const isolator = new FrameworkIsolator(projectRoot);
-      const toMove = await isolator.identifyFrameworkSpecificResources('.aiwg');
+      const aiwgPath = sandbox.getPath('.aiwg');
+      const toMove = await isolator.identifyFrameworkSpecificResources(aiwgPath);
 
       expect(toMove).toContainEqual(
         expect.objectContaining({
@@ -452,7 +453,8 @@ describe('FrameworkIsolator', () => {
       await sandbox.writeFile('.aiwg/requirements/uc-001.md', '# UC-001');
 
       const isolator = new FrameworkIsolator(projectRoot);
-      const toMove = await isolator.identifySharedResources('.aiwg');
+      const aiwgPath = sandbox.getPath('.aiwg');
+      const toMove = await isolator.identifySharedResources(aiwgPath);
 
       expect(toMove).toContainEqual(
         expect.objectContaining({
@@ -469,7 +471,8 @@ describe('FrameworkIsolator', () => {
       await sandbox.writeFile('.aiwg/requirements/uc.md', '# UC');
 
       const isolator = new FrameworkIsolator(projectRoot);
-      const categorized = await isolator.categorizeResources('.aiwg');
+      const aiwgPath = sandbox.getPath('.aiwg');
+      const categorized = await isolator.categorizeResources(aiwgPath);
 
       expect(categorized.frameworkSpecific).toHaveLength(1);
       expect(categorized.shared).toHaveLength(1);
@@ -481,7 +484,8 @@ describe('FrameworkIsolator', () => {
       await sandbox.writeFile('.aiwg/agents/agent.md', '# Agent');
 
       const isolator = new FrameworkIsolator(projectRoot);
-      const suggestions = await isolator.suggestFrameworkTargets('.aiwg');
+      const aiwgPath = sandbox.getPath('.aiwg');
+      const suggestions = await isolator.suggestFrameworkTargets(aiwgPath);
 
       expect(suggestions).toContainEqual(
         expect.objectContaining({

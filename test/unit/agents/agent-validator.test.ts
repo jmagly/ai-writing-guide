@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AgentValidator } from '../../../src/agents/agent-validator.js';
-import type { AgentInfo, AgentMetadata } from '../../../src/agents/types.js';
+import { AgentValidator } from '../../../src/agents/agent-validator.ts';
+import type { AgentInfo, AgentMetadata } from '../../../src/agents/types.ts';
 
 describe('AgentValidator', () => {
   let validator: AgentValidator;

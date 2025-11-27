@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFile, mkdir, rm } from 'fs/promises';
 import { resolve } from 'path';
-import { ConfigLoader, AiwgConfig } from '../../../src/cli/config-loader.js';
+import { ConfigLoader, AiwgConfig } from '../../../src/cli/config-loader.ts';
 
 describe('ConfigLoader', () => {
   let loader: ConfigLoader;

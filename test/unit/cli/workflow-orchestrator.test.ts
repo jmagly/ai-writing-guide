@@ -5,8 +5,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { writeFile, mkdir, rm } from 'fs/promises';
 import { resolve } from 'path';
-import { WorkflowOrchestrator } from '../../../src/cli/workflow-orchestrator.js';
-import { AiwgConfig } from '../../../src/cli/config-loader.js';
+import { WorkflowOrchestrator } from '../../../src/cli/workflow-orchestrator.ts';
+import { AiwgConfig } from '../../../src/cli/config-loader.ts';
 
 describe('WorkflowOrchestrator', () => {
   let orchestrator: WorkflowOrchestrator;
@@ -74,10 +74,13 @@ describe('WorkflowOrchestrator', () => {
     }, 10000);
 
     it('should skip optimization if score above threshold', async () => {
+      // Content with human markers (specific metrics, technology names, trade-offs)
       const filePath = resolve(testDir, 'good.md');
       await writeFile(
         filePath,
-        'Write a 1,500-word technical article about OAuth 2.0 PKCE flow for mobile apps. Include specific code examples in Swift. Avoid phrases like "delve into" and "it\'s important to note". Reference the RFC 7636 specification. Acknowledge challenges with token storage on mobile devices.',
+        `I think OAuth 2.0 PKCE flow is the right choice for mobile apps. We chose this approach after evaluating alternatives. In my experience, the p99 latency for token refresh is typically 45ms with Redis caching.
+
+While PKCE is more complex to implement, it provides better security for public clients. We found that token storage on iOS requires careful handling of the Keychain API - we reduced security incidents by 40% after implementing proper token rotation.`,
         'utf-8'
       );
 

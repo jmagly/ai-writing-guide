@@ -56,8 +56,9 @@ export class FrameworkIsolator {
 
   private readonly FRAMEWORK_SPECIFIC = ['agents', 'commands', 'memory', 'context'];
   private readonly SHARED_RESOURCES = [
-    'requirements', 'architecture', 'testing', 'deployment',
-    'security', 'quality', 'risks', 'planning'
+    'intake', 'requirements', 'architecture', 'testing', 'deployment',
+    'security', 'quality', 'risks', 'planning', 'reports', 'working',
+    'handoffs', 'gates', 'decisions', 'team', 'management'
   ];
 
   constructor(projectRoot: string) {

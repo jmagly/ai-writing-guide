@@ -9,8 +9,8 @@ import {
   type Example,
   type CodeExample,
   type Scenario,
-} from '../../../src/writing/example-generator.js';
-import type { Voice } from '../../../src/writing/content-diversifier.js';
+} from '../../../src/writing/example-generator.ts';
+import type { Voice } from '../../../src/writing/content-diversifier.ts';
 
 describe('ExampleGenerator', () => {
   let generator: ExampleGenerator;

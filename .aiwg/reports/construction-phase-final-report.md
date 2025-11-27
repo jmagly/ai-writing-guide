@@ -8,6 +8,18 @@
 
 ---
 
+## ⚠️ Deployment Context Note (Added November 26, 2025)
+
+**AIWG is a CLI tool and documentation framework, NOT a deployed server/API.**
+
+Some metrics in this report reference server-oriented concerns (99.9% uptime, etc.) that were included in original NFR templates. These have been clarified in the IOC gate review - server-oriented requirements do not apply to AIWG's CLI deployment model.
+
+**See:** `.aiwg/planning/deployment-context-rescoping-plan.md` for full context.
+
+---
+
+---
+
 ## Executive Summary
 
 All 12 weeks of Construction Phase development have been successfully completed, delivering **12 major features** across **8 P0 (critical)** and **4 P1 (high priority)** requirements. The implementation includes:

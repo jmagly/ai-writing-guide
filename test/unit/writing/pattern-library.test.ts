@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PatternLibrary, AIPattern, PatternCategory, PatternSeverity, PatternFilter } from '../../../src/writing/pattern-library.js';
+import { PatternLibrary, AIPattern, PatternCategory, PatternSeverity, PatternFilter } from '../../../src/writing/pattern-library.ts';
 
 describe('PatternLibrary', () => {
   let library: PatternLibrary;
@@ -1457,9 +1457,9 @@ Furthermore, it is robust.`;
 
     it('should calculate density correctly', () => {
       const text = 'It is important to note that.'; // 6 words, 1 pattern
-      expect(Math.abs(analysis.patternDensity - expectedDensity)).toBeLessThan(20);
-
+      const analysis = library.analyzeText(text);
       const expectedDensity = (1 / 6) * 100;
+      expect(Math.abs(analysis.patternDensity - expectedDensity)).toBeLessThan(20);
     });
 
     it('should group matches by category correctly', () => {
@@ -1489,7 +1489,6 @@ Furthermore, it is robust.`;
     it('should handle negative improvement (regression)', () => {
       const text1 = 'This works well.';
       const text2 = 'It is important to note that this is seamlessly integrated.';
-      expect(comparison.improvement).toBeLessThanOrEqual(0);
       const comparison = library.compareTexts(text1, text2);
 
       expect(comparison.improvement).toBeLessThanOrEqual(0);

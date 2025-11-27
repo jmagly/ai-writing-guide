@@ -243,35 +243,48 @@ export class FrameworkConfigLoader {
   private parseSimpleYaml(content: string): any {
     const result: any = {};
     const lines = content.split('\n');
-    let currentObject: any = result;
     let currentKey: string | null = null;
+    let expectingArray = false;
 
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#')) continue;
 
-      const colonIndex = trimmed.indexOf(':');
-      if (colonIndex === -1) {
-        // Might be array item
-        if (trimmed.startsWith('- ')) {
-          const value = trimmed.slice(2).trim();
-          if (currentKey && Array.isArray(currentObject[currentKey])) {
-            currentObject[currentKey].push(value);
+      // Check for array items
+      if (trimmed.startsWith('- ')) {
+        const value = trimmed.slice(2).trim();
+        if (currentKey) {
+          if (!Array.isArray(result[currentKey])) {
+            result[currentKey] = [];
           }
+          result[currentKey].push(value);
         }
         continue;
       }
+
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex === -1) continue;
 
       const key = trimmed.slice(0, colonIndex).trim();
       const value = trimmed.slice(colonIndex + 1).trim();
 
       if (value) {
-        // Simple key-value
-        currentObject[key] = value;
+        // Simple key-value - handle booleans and numbers
+        if (value === 'true') {
+          result[key] = true;
+        } else if (value === 'false') {
+          result[key] = false;
+        } else if (!isNaN(Number(value))) {
+          result[key] = Number(value);
+        } else {
+          result[key] = value;
+        }
+        currentKey = null;
+        expectingArray = false;
       } else {
-        // Nested object or array
-        currentObject[key] = {};
+        // Key with no value - next lines will be array items or nested object
         currentKey = key;
+        expectingArray = true;
       }
     }
 

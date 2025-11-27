@@ -37,8 +37,12 @@ export class FrameworkDetector {
 
   private readonly FRAMEWORK_DIRS = ['claude', 'codex', 'cursor'];
   private readonly LEGACY_DIRS = [
+    // SDLC shared directories
     'intake', 'requirements', 'architecture', 'planning',
-    'risks', 'testing', 'security', 'quality', 'deployment'
+    'risks', 'testing', 'security', 'quality', 'deployment',
+    'reports', 'working', 'handoffs', 'gates', 'decisions', 'team', 'management',
+    // Framework-specific directories (legacy when directly under .aiwg)
+    'agents', 'commands', 'memory', 'context'
   ];
 
   constructor(projectRoot: string) {

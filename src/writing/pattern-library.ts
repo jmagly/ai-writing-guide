@@ -594,7 +594,11 @@ export class PatternLibrary {
     } else {
       // Add word boundaries for phrase matching
       const escaped = patternStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      return new RegExp(`\\b${escaped}\\b`, 'gi');
+      // Check if pattern ends in punctuation - if so, don't add trailing word boundary
+      const endsWithPunctuation = /[,.:;!?]$/.test(patternStr);
+      const startBoundary = '\\b';
+      const endBoundary = endsWithPunctuation ? '' : '\\b';
+      return new RegExp(`${startBoundary}${escaped}${endBoundary}`, 'gi');
     }
   }
 

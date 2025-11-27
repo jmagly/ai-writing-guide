@@ -13,8 +13,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { WorkspaceMigrator } from '../../../src/plugin/workspace-migrator.js';
-import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.js';
+import { WorkspaceMigrator } from '../../../src/plugin/workspace-migrator.ts';
+import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.ts';
 import * as path from 'path';
 
 describe('WorkspaceMigrator', () => {

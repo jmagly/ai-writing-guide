@@ -7,9 +7,9 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { VoiceCalibration } from '../../../src/writing/voice-calibration.js';
-import { VoiceAnalyzer } from '../../../src/writing/voice-analyzer.js';
-import { ContentDiversifier } from '../../../src/writing/content-diversifier.js';
+import { VoiceCalibration } from '../../../src/writing/voice-calibration.ts';
+import { VoiceAnalyzer } from '../../../src/writing/voice-analyzer.ts';
+import { ContentDiversifier } from '../../../src/writing/content-diversifier.ts';
 
 describe('VoiceCalibration', () => {
   let calibration: VoiceCalibration;

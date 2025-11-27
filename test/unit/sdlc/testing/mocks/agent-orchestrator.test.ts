@@ -10,7 +10,7 @@ import {
   type MockAgentBehavior,
   type AgentRequest,
   type AgentResponse
-} from '../../../../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/agent-orchestrator.js';
+} from '../../../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/agent-orchestrator.ts';
 
 describe('MockAgentOrchestrator', () => {
 

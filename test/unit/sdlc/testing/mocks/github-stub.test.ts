@@ -4,7 +4,7 @@ import {
   type Issue,
   type PullRequest,
   type Request
-} from '../../../../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/github-stub.ts';
+} from '../../../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/github-stub.ts';
 
 describe('GitHubAPIStub', () => {
   let github: GitHubAPIStub;
