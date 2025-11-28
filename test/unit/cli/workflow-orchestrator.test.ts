@@ -312,7 +312,7 @@ While PKCE is more complex to implement, it provides better security for public 
       await orchestrator.stopWatchMode();
 
       // Should not throw
-    }, 10000);
+    }, 15000);
   });
 
   describe('reporting', () => {

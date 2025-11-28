@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { FilesystemSandbox } from '../../../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.ts';
+import { FilesystemSandbox } from '../../../../src/testing/mocks/filesystem-sandbox.ts';
 import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';

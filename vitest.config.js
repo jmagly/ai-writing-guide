@@ -3,7 +3,12 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     // Test file patterns
-    include: ['test/**/*.test.ts', 'test/**/*.spec.ts'],
+    include: [
+      'test/**/*.test.ts',
+      'test/**/*.spec.ts',
+      'agentic/code/frameworks/*/test/**/*.test.ts',
+      'agentic/code/frameworks/*/test/**/*.spec.ts'
+    ],
 
     // Environment configuration
     environment: 'node',

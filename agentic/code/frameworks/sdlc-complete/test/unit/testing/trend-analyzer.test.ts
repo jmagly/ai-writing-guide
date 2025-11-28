@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { TrendAnalyzer, type TimeSeries } from '../../../../agentic/code/frameworks/sdlc-complete/src/testing/trend-analyzer.ts';
+import { TrendAnalyzer, type TimeSeries } from '../../../src/testing/trend-analyzer.ts';
 
 describe('TrendAnalyzer', () => {
   let analyzer: TrendAnalyzer;
