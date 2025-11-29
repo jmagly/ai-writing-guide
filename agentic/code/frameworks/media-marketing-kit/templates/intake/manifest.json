@@ -1,0 +1,23 @@
+{
+  "name": "intake",
+  "description": "Marketing project intake and discovery templates",
+  "category": "intake",
+  "files": [
+    {
+      "name": "campaign-intake-template.md",
+      "description": "Comprehensive campaign intake form"
+    },
+    {
+      "name": "project-scope-template.md",
+      "description": "Project scope definition template"
+    },
+    {
+      "name": "audience-profile-template.md",
+      "description": "Target audience profile template"
+    },
+    {
+      "name": "brand-brief-template.md",
+      "description": "Brand brief for new initiatives"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "operations",
+  "description": "Marketing operations and workflow templates",
+  "category": "operations",
+  "files": [
+    {
+      "name": "creative-request-template.md",
+      "description": "Creative request intake form"
+    },
+    {
+      "name": "project-status-template.md",
+      "description": "Project status report template"
+    },
+    {
+      "name": "approval-workflow-template.md",
+      "description": "Content approval workflow"
+    },
+    {
+      "name": "marketing-calendar-template.md",
+      "description": "Marketing calendar planning"
+    },
+    {
+      "name": "budget-tracker-template.md",
+      "description": "Marketing budget tracking"
+    },
+    {
+      "name": "vendor-brief-template.md",
+      "description": "External vendor brief template"
+    }
+  ]
+}

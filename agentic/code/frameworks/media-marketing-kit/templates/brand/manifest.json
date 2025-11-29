@@ -1,0 +1,31 @@
+{
+  "name": "brand",
+  "description": "Brand identity and guidelines templates",
+  "category": "brand",
+  "files": [
+    {
+      "name": "brand-guidelines-template.md",
+      "description": "Comprehensive brand guidelines document"
+    },
+    {
+      "name": "voice-tone-guide-template.md",
+      "description": "Brand voice and tone guidelines"
+    },
+    {
+      "name": "messaging-framework-template.md",
+      "description": "Core messaging framework"
+    },
+    {
+      "name": "brand-story-template.md",
+      "description": "Brand narrative and story"
+    },
+    {
+      "name": "elevator-pitch-template.md",
+      "description": "Elevator pitch variations"
+    },
+    {
+      "name": "boilerplate-library-template.md",
+      "description": "Standard company descriptions"
+    }
+  ]
+}

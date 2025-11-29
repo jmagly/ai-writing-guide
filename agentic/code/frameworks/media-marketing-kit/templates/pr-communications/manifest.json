@@ -1,0 +1,31 @@
+{
+  "name": "pr-communications",
+  "description": "Public relations and communications templates",
+  "category": "pr-communications",
+  "files": [
+    {
+      "name": "press-release-template.md",
+      "description": "Standard press release format"
+    },
+    {
+      "name": "media-pitch-template.md",
+      "description": "Media outreach pitch template"
+    },
+    {
+      "name": "media-kit-template.md",
+      "description": "Press kit contents template"
+    },
+    {
+      "name": "qa-document-template.md",
+      "description": "Q&A preparation document"
+    },
+    {
+      "name": "crisis-communication-template.md",
+      "description": "Crisis response communication plan"
+    },
+    {
+      "name": "internal-announcement-template.md",
+      "description": "Internal communications template"
+    }
+  ]
+}

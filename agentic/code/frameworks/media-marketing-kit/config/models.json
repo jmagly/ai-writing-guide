@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jmagly/ai-writing-guide/mmk-models-config.json",
+  "title": "AIWG MMK Model Configuration",
+  "description": "Default model mappings for AIWG Media Marketing Kit framework deployment. Users can customize these values for their specific needs.",
+  "version": "1.0.0",
+  "lastUpdated": "2025-11-28",
+
+  "claude": {
+    "reasoning": {
+      "model": "claude-opus-4-1-20250805",
+      "description": "Claude Opus 4.1 - Best for complex reasoning, strategic planning, brand architecture"
+    },
+    "coding": {
+      "model": "claude-sonnet-4-5-20250929",
+      "description": "Claude Sonnet 4.5 - Best for content creation, copywriting, campaign development"
+    },
+    "efficiency": {
+      "model": "claude-haiku-3-5",
+      "description": "Claude Haiku 3.5 - Best for quick tasks, production coordination, reporting"
+    }
+  },
+
+  "factory": {
+    "reasoning": {
+      "model": "claude-opus-4-1-20250805",
+      "description": "Factory AI uses full Claude model identifiers"
+    },
+    "coding": {
+      "model": "claude-sonnet-4-5-20250929",
+      "description": "Factory AI uses full Claude model identifiers"
+    },
+    "efficiency": {
+      "model": "claude-haiku-3-5",
+      "description": "Factory AI uses full Claude model identifiers"
+    }
+  },
+
+  "openai": {
+    "reasoning": {
+      "model": "gpt-5",
+      "description": "OpenAI's most capable reasoning model for strategic planning"
+    },
+    "coding": {
+      "model": "gpt-5-codex",
+      "description": "OpenAI's balanced model for content generation"
+    },
+    "efficiency": {
+      "model": "gpt-5-codex",
+      "description": "OpenAI's fast model for production tasks"
+    }
+  },
+
+  "shorthand": {
+    "opus": "claude-opus-4-1-20250805",
+    "sonnet": "claude-sonnet-4-5-20250929",
+    "haiku": "claude-haiku-3-5",
+    "inherit": "inherit"
+  },
+
+  "roleAssignments": {
+    "strategy": {
+      "roles": [
+        "brand-strategist",
+        "campaign-strategist",
+        "creative-director",
+        "executive-communications",
+        "crisis-communications",
+        "positioning-specialist"
+      ],
+      "model": "opus",
+      "rationale": "Strategic roles require complex reasoning, brand architecture thinking, and long-term planning capabilities"
+    },
+    "content": {
+      "roles": [
+        "copywriter",
+        "content-strategist",
+        "pr-specialist",
+        "social-media-specialist",
+        "email-marketing-specialist",
+        "video-scriptwriter",
+        "marketing-analyst",
+        "brand-guardian",
+        "legal-reviewer"
+      ],
+      "model": "sonnet",
+      "rationale": "Content and analysis roles require balanced performance for creative writing, campaign execution, and compliance review"
+    },
+    "production": {
+      "roles": [
+        "production-coordinator",
+        "qa-reviewer",
+        "accessibility-reviewer",
+        "reporting-specialist"
+      ],
+      "model": "haiku",
+      "rationale": "Production and operational roles benefit from fast execution for coordination, quality checks, and routine reporting"
+    }
+  },
+
+  "_comments": {
+    "usage": "This file defines default model mappings used by AIWG MMK deployment scripts",
+    "customization": "Users can modify these values to use different models or versions",
+    "location": "Place custom models.json in project root to override defaults",
+    "precedence": "Project models.json > User ~/.config/aiwg/models.json > AIWG MMK defaults",
+    "documentation": "See docs/configuration/model-configuration.md for details",
+    "frameworkSpecific": "MMK framework uses 'coding' tier for content creation roles (vs SDLC's code generation focus)"
+  }
+}
