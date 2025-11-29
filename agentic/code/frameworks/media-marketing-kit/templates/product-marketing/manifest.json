@@ -1,0 +1,31 @@
+{
+  "name": "product-marketing",
+  "description": "Product marketing templates",
+  "category": "product-marketing",
+  "files": [
+    {
+      "name": "product-launch-template.md",
+      "description": "Product launch plan"
+    },
+    {
+      "name": "gtm-strategy-template.md",
+      "description": "Go-to-market strategy"
+    },
+    {
+      "name": "product-positioning-template.md",
+      "description": "Product positioning document"
+    },
+    {
+      "name": "feature-announcement-template.md",
+      "description": "Feature release announcement"
+    },
+    {
+      "name": "pricing-page-template.md",
+      "description": "Pricing page content"
+    },
+    {
+      "name": "product-comparison-template.md",
+      "description": "Product comparison matrix"
+    }
+  ]
+}

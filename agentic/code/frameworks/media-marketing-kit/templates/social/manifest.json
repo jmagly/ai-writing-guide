@@ -1,0 +1,31 @@
+{
+  "name": "social",
+  "description": "Social media marketing templates",
+  "category": "social",
+  "files": [
+    {
+      "name": "social-strategy-template.md",
+      "description": "Social media strategy document"
+    },
+    {
+      "name": "social-calendar-template.md",
+      "description": "Social media content calendar"
+    },
+    {
+      "name": "platform-playbook-template.md",
+      "description": "Platform-specific playbook"
+    },
+    {
+      "name": "community-guidelines-template.md",
+      "description": "Community engagement guidelines"
+    },
+    {
+      "name": "influencer-brief-template.md",
+      "description": "Influencer collaboration brief"
+    },
+    {
+      "name": "social-report-template.md",
+      "description": "Social media performance report"
+    }
+  ]
+}

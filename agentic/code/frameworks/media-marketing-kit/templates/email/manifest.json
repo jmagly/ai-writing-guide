@@ -1,0 +1,31 @@
+{
+  "name": "email",
+  "description": "Email marketing templates",
+  "category": "email",
+  "files": [
+    {
+      "name": "email-strategy-template.md",
+      "description": "Email marketing strategy"
+    },
+    {
+      "name": "email-brief-template.md",
+      "description": "Email campaign brief"
+    },
+    {
+      "name": "nurture-sequence-template.md",
+      "description": "Email nurture sequence design"
+    },
+    {
+      "name": "newsletter-template.md",
+      "description": "Newsletter content template"
+    },
+    {
+      "name": "email-copy-template.md",
+      "description": "Email copywriting template"
+    },
+    {
+      "name": "email-test-plan-template.md",
+      "description": "Email testing plan"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "creative",
+  "description": "Creative development templates",
+  "category": "creative",
+  "files": [
+    {
+      "name": "creative-brief-template.md",
+      "description": "Creative brief document"
+    },
+    {
+      "name": "design-spec-template.md",
+      "description": "Design specification document"
+    },
+    {
+      "name": "video-brief-template.md",
+      "description": "Video production brief"
+    },
+    {
+      "name": "photography-brief-template.md",
+      "description": "Photography brief"
+    },
+    {
+      "name": "asset-spec-template.md",
+      "description": "Asset specifications matrix"
+    },
+    {
+      "name": "qc-checklist-template.md",
+      "description": "Creative QC checklist"
+    }
+  ]
+}

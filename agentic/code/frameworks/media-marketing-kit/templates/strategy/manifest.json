@@ -1,0 +1,35 @@
+{
+  "name": "strategy",
+  "description": "Marketing strategy and planning templates",
+  "category": "strategy",
+  "files": [
+    {
+      "name": "campaign-strategy-template.md",
+      "description": "Comprehensive campaign strategy document"
+    },
+    {
+      "name": "channel-strategy-template.md",
+      "description": "Channel mix and allocation strategy"
+    },
+    {
+      "name": "audience-segmentation-template.md",
+      "description": "Audience segmentation framework"
+    },
+    {
+      "name": "competitive-analysis-template.md",
+      "description": "Competitive landscape analysis"
+    },
+    {
+      "name": "positioning-statement-template.md",
+      "description": "Brand/product positioning statement"
+    },
+    {
+      "name": "messaging-matrix-template.md",
+      "description": "Messaging by audience/channel matrix"
+    },
+    {
+      "name": "content-calendar-template.md",
+      "description": "Editorial and content calendar"
+    }
+  ]
+}

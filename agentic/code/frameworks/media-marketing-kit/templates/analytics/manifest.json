@@ -1,0 +1,31 @@
+{
+  "name": "analytics",
+  "description": "Marketing analytics and reporting templates",
+  "category": "analytics",
+  "files": [
+    {
+      "name": "campaign-report-template.md",
+      "description": "Campaign performance report"
+    },
+    {
+      "name": "monthly-report-template.md",
+      "description": "Monthly marketing report"
+    },
+    {
+      "name": "attribution-report-template.md",
+      "description": "Marketing attribution analysis"
+    },
+    {
+      "name": "dashboard-spec-template.md",
+      "description": "Dashboard specification document"
+    },
+    {
+      "name": "kpi-framework-template.md",
+      "description": "KPI definition framework"
+    },
+    {
+      "name": "ab-test-template.md",
+      "description": "A/B test documentation"
+    }
+  ]
+}

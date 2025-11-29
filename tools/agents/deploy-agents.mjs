@@ -3,10 +3,11 @@
  * Deploy Agents and Commands
  *
  * Deploy agents/commands from this repository to a target project.
- * Supports three deployment modes:
+ * Supports multiple deployment modes:
  * 1. General-purpose (writing agents, general commands)
  * 2. SDLC framework (complete software development lifecycle)
- * 3. Both (default)
+ * 3. Marketing (Media/Marketing Kit framework)
+ * 4. All (all frameworks - default)
  *
  * Usage:
  *   node tools/agents/deploy-agents.mjs [options]
@@ -14,7 +15,7 @@
  * Options:
  *   --source <path>          Source directory (defaults to repo root)
  *   --target <path>          Target directory (defaults to cwd)
- *   --mode <type>            Deployment mode: general, sdlc, or both (default)
+ *   --mode <type>            Deployment mode: general, sdlc, marketing, both, or all (default)
  *   --deploy-commands        Deploy commands in addition to agents
  *   --commands-only          Deploy only commands (skip agents)
  *   --dry-run                Show what would be deployed without writing
@@ -27,14 +28,16 @@
  *   --create-agents-md       Create/update AGENTS.md template (Factory)
  *
  * Modes:
- *   general  - Deploy only general-purpose writing agents and commands
- *   sdlc     - Deploy only SDLC Complete framework agents and commands
- *   both     - Deploy everything (default)
+ *   general   - Deploy only general-purpose writing agents and commands
+ *   sdlc      - Deploy only SDLC Complete framework agents and commands
+ *   marketing - Deploy only Media/Marketing Kit framework agents and commands
+ *   both      - Deploy general and SDLC (legacy compatibility)
+ *   all       - Deploy all frameworks (default)
  *
  * Defaults:
  *   --source resolves relative to this script's repo root (../..)
  *   --target is process.cwd()
- *   --mode is 'both'
+ *   --mode is 'all'
  */
 
 import fs from 'fs';
@@ -45,7 +48,7 @@ function parseArgs() {
   const cfg = {
     source: null,
     target: process.cwd(),
-    mode: 'both',  // 'general', 'sdlc', or 'both'
+    mode: 'all',  // 'general', 'sdlc', 'marketing', 'both' (legacy), or 'all'
     dryRun: false,
     force: false,
     provider: 'claude',
@@ -527,8 +530,8 @@ function enableFactoryCustomDroids(dryRun) {
 
   // Deploy Agents (unless --commands-only)
   if (!commandsOnly) {
-    // Deploy general agents if mode is 'general' or 'both'
-    if (mode === 'general' || mode === 'both') {
+    // Deploy general agents if mode is 'general', 'both', or 'all'
+    if (mode === 'general' || mode === 'both' || mode === 'all') {
       const generalAgentsRoot = path.join(srcRoot, 'agents');
       if (fs.existsSync(generalAgentsRoot)) {
         const files = listMdFiles(generalAgentsRoot);
@@ -545,8 +548,8 @@ function enableFactoryCustomDroids(dryRun) {
       }
     }
 
-    // Deploy SDLC agents if mode is 'sdlc' or 'both'
-    if (mode === 'sdlc' || mode === 'both') {
+    // Deploy SDLC agents if mode is 'sdlc', 'both', or 'all'
+    if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
       const sdlcAgentsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
       if (fs.existsSync(sdlcAgentsRoot)) {
         const files = listMdFiles(sdlcAgentsRoot);
@@ -564,12 +567,32 @@ function enableFactoryCustomDroids(dryRun) {
         console.warn(`SDLC agents not found at ${sdlcAgentsRoot}`);
       }
     }
+
+    // Deploy Marketing agents if mode is 'marketing' or 'all'
+    if (mode === 'marketing' || mode === 'all') {
+      const marketingAgentsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'agents');
+      if (fs.existsSync(marketingAgentsRoot)) {
+        const files = listMdFiles(marketingAgentsRoot);
+        if (files.length > 0) {
+          const destDir = provider === 'factory'
+            ? path.join(target, '.factory', 'droids')
+            : provider === 'openai'
+            ? path.join(target, '.codex', 'agents')
+            : path.join(target, '.claude', 'agents');
+          if (!dryRun) ensureDir(destDir);
+          console.log(`\nDeploying ${files.length} Marketing framework agents to ${destDir} (provider=${provider})`);
+          deployFiles(files, destDir, deployOpts);
+        }
+      } else {
+        console.warn(`Marketing agents not found at ${marketingAgentsRoot}`);
+      }
+    }
   }
 
   // Deploy Commands (if --deploy-commands or --commands-only)
   if (deployCommands || commandsOnly) {
-    // Deploy general commands if mode is 'general' or 'both'
-    if (mode === 'general' || mode === 'both') {
+    // Deploy general commands if mode is 'general', 'both', or 'all'
+    if (mode === 'general' || mode === 'both' || mode === 'all') {
       const generalCommandsRoot = path.join(srcRoot, 'commands');
       if (fs.existsSync(generalCommandsRoot)) {
         const commandFiles = listMdFilesRecursive(generalCommandsRoot);
@@ -586,8 +609,8 @@ function enableFactoryCustomDroids(dryRun) {
       }
     }
 
-    // Deploy SDLC commands if mode is 'sdlc' or 'both'
-    if (mode === 'sdlc' || mode === 'both') {
+    // Deploy SDLC commands if mode is 'sdlc', 'both', or 'all'
+    if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
       const sdlcCommandsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
       if (fs.existsSync(sdlcCommandsRoot)) {
         const commandFiles = listMdFilesRecursive(sdlcCommandsRoot);
@@ -603,6 +626,26 @@ function enableFactoryCustomDroids(dryRun) {
         }
       } else {
         console.warn(`SDLC commands not found at ${sdlcCommandsRoot}`);
+      }
+    }
+
+    // Deploy Marketing commands if mode is 'marketing' or 'all'
+    if (mode === 'marketing' || mode === 'all') {
+      const marketingCommandsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'commands');
+      if (fs.existsSync(marketingCommandsRoot)) {
+        const commandFiles = listMdFilesRecursive(marketingCommandsRoot);
+        if (commandFiles.length > 0) {
+          const destDir = provider === 'factory'
+            ? path.join(target, '.factory', 'commands')
+            : provider === 'openai'
+            ? path.join(target, '.codex', 'commands')
+            : path.join(target, '.claude', 'commands');
+          if (!dryRun) ensureDir(destDir);
+          console.log(`\nDeploying ${commandFiles.length} Marketing framework commands to ${destDir} (provider=${provider})`);
+          deployFiles(commandFiles, destDir, deployOpts);
+        }
+      } else {
+        console.warn(`Marketing commands not found at ${marketingCommandsRoot}`);
       }
     }
   }

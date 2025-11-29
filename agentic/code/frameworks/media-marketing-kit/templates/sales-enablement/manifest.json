@@ -1,0 +1,31 @@
+{
+  "name": "sales-enablement",
+  "description": "Sales enablement and support templates",
+  "category": "sales-enablement",
+  "files": [
+    {
+      "name": "sales-deck-template.md",
+      "description": "Sales presentation template"
+    },
+    {
+      "name": "battlecard-template.md",
+      "description": "Competitive battlecard"
+    },
+    {
+      "name": "one-pager-template.md",
+      "description": "Product/solution one-pager"
+    },
+    {
+      "name": "objection-handling-template.md",
+      "description": "Objection handling guide"
+    },
+    {
+      "name": "roi-calculator-template.md",
+      "description": "ROI calculator specification"
+    },
+    {
+      "name": "sales-playbook-template.md",
+      "description": "Sales playbook structure"
+    }
+  ]
+}

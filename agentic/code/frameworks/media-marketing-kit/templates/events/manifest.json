@@ -1,0 +1,31 @@
+{
+  "name": "events",
+  "description": "Event marketing templates",
+  "category": "events",
+  "files": [
+    {
+      "name": "event-marketing-plan-template.md",
+      "description": "Event marketing strategy"
+    },
+    {
+      "name": "webinar-template.md",
+      "description": "Webinar planning template"
+    },
+    {
+      "name": "tradeshow-template.md",
+      "description": "Trade show planning"
+    },
+    {
+      "name": "event-promotion-template.md",
+      "description": "Event promotion plan"
+    },
+    {
+      "name": "sponsorship-template.md",
+      "description": "Sponsorship evaluation"
+    },
+    {
+      "name": "post-event-template.md",
+      "description": "Post-event follow-up plan"
+    }
+  ]
+}

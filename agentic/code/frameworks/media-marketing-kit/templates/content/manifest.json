@@ -1,0 +1,31 @@
+{
+  "name": "content",
+  "description": "Content creation and management templates",
+  "category": "content",
+  "files": [
+    {
+      "name": "blog-post-template.md",
+      "description": "Blog post structure template"
+    },
+    {
+      "name": "case-study-template.md",
+      "description": "Customer case study format"
+    },
+    {
+      "name": "whitepaper-template.md",
+      "description": "Whitepaper structure template"
+    },
+    {
+      "name": "content-brief-template.md",
+      "description": "Content assignment brief"
+    },
+    {
+      "name": "seo-content-brief-template.md",
+      "description": "SEO-optimized content brief"
+    },
+    {
+      "name": "landing-page-template.md",
+      "description": "Landing page content structure"
+    }
+  ]
+}

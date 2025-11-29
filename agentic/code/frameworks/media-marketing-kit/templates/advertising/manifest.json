@@ -1,0 +1,31 @@
+{
+  "name": "advertising",
+  "description": "Advertising and paid media templates",
+  "category": "advertising",
+  "files": [
+    {
+      "name": "media-plan-template.md",
+      "description": "Paid media plan document"
+    },
+    {
+      "name": "ad-brief-template.md",
+      "description": "Advertising creative brief"
+    },
+    {
+      "name": "campaign-setup-template.md",
+      "description": "Ad campaign setup checklist"
+    },
+    {
+      "name": "ad-copy-template.md",
+      "description": "Ad copy variations template"
+    },
+    {
+      "name": "landing-page-spec-template.md",
+      "description": "Advertising landing page spec"
+    },
+    {
+      "name": "media-report-template.md",
+      "description": "Paid media performance report"
+    }
+  ]
+}

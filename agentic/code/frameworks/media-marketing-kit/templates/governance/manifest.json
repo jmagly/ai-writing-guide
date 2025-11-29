@@ -1,0 +1,31 @@
+{
+  "name": "governance",
+  "description": "Marketing governance and compliance templates",
+  "category": "governance",
+  "files": [
+    {
+      "name": "brand-compliance-checklist.md",
+      "description": "Brand compliance review checklist"
+    },
+    {
+      "name": "legal-review-checklist.md",
+      "description": "Legal compliance checklist"
+    },
+    {
+      "name": "accessibility-checklist.md",
+      "description": "Accessibility compliance checklist"
+    },
+    {
+      "name": "approval-matrix-template.md",
+      "description": "Approval authority matrix"
+    },
+    {
+      "name": "style-guide-template.md",
+      "description": "Editorial style guide"
+    },
+    {
+      "name": "sop-template.md",
+      "description": "Standard operating procedure template"
+    }
+  ]
+}
