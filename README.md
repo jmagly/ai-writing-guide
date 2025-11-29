@@ -189,7 +189,7 @@ This framework solves that. 485 documents, 19 validation rules,
 /flow-deploy-to-production
 ```
 
-**Time Savings:** 20-98% reduction across 5 core use cases. See [Use Case Briefs](.aiwg/requirements/use-case-briefs/) for quantified ROI.
+**Time Savings:** 20-98% reduction across 5 core use cases.
 
 ---
 
@@ -1029,42 +1029,6 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 
 ---
 
-## 🎓 Examples & Case Studies
-
-### Real-World Project: AI Writing Guide (Dogfooding)
-
-**Challenge:** Solo developer building comprehensive SDLC framework. Need to validate practicality while developing.
-
-**Solution:** Use framework on itself (meta-application).
-
-**Results:**
-- ✅ 100% Inception artifact coverage (9 required + 3 optional)
-- ✅ Multi-agent pattern validated (4 parallel reviewers → synthesis → baseline)
-- ✅ Gate criteria: 4/4 PASS (LOM approved for Elaboration)
-- ✅ ROI: 1.57x with 50 users, breaks even <12 months
-
-**Artifacts Generated:**
-- Vision Document (7,200 words, 4 parallel reviews)
-- Business Case (ROI quantified, 3 sustainability paths)
-- Risk List (19 risks, top 5 actively mitigated)
-- 5 Use Cases (20-98% time savings)
-- Architecture Sketch + 5 ADRs
-- Security assessments (zero-data architecture validated)
-
-[**See full case study →**](.aiwg/reports/inception-completion-report.md)
-
----
-
-### Sample Projects
-
-Explore complete lifecycle examples in `agentic/code/frameworks/sdlc-complete/artifacts/`:
-
-- **Web Application:** Inception → Production (full audit trail)
-- **API Service:** Microservices architecture with compliance
-- **Mobile App:** Cross-platform development with security review
-
----
-
 ## 🤝 Contributing
 
 We welcome contributions! Here's how to get started:
@@ -1157,7 +1121,6 @@ Closes #123
 - Target: 10+ installations, 5-10 GitHub stars, 2-5 active users
 - Decision Point: 3-month checkpoint (GREEN/YELLOW/RED criteria)
 
-[**View detailed status →**](.aiwg/reports/lom-report.md)
 
 ### Roadmap
 
