@@ -34,6 +34,13 @@ This installs the framework to the prefix and registers the 'aiwg' CLI with comm
   aiwg -update         -> manually update installation
   aiwg -help           -> show command help
 
+Deployment modes (--mode):
+  general   -> Writing quality agents only (3 agents)
+  sdlc      -> SDLC Complete framework only (54 agents)
+  marketing -> Media/Marketing Kit only (37 agents)
+  both      -> General + SDLC (legacy compatibility)
+  all       -> All frameworks (default)
+
 Note: aiwg automatically updates on every command invocation.
 USAGE
 }

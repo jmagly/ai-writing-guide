@@ -506,8 +506,8 @@ curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/
 # Deploy marketing agents only (for marketing projects)
 aiwg -deploy-agents --mode marketing
 
-# Deploy both SDLC and marketing (for product launches)
-aiwg -deploy-agents --mode both
+# Deploy all frameworks including marketing (for product launches)
+aiwg -deploy-agents --mode all
 
 # Deploy commands
 aiwg -deploy-commands --mode marketing

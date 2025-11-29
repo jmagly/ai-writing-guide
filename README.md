@@ -68,17 +68,17 @@ cd my-awesome-project
 # Ready to go! Intake forms, agents, and commands deployed.
 ```
 
-> **💡 What just happened?** You now have 61 specialized AI agents and 45+ workflow commands ready to help you write better content, manage projects, and ship faster.
+> **💡 What just happened?** You now have 94 specialized AI agents and 65+ workflow commands ready to help you write better content, manage projects, run campaigns, and ship faster.
 
 ---
 
 ## ✨ What You Get
 
-> **📦 Framework Scope:** This is an **agent toolset and prompting framework** for process automation. Current features: **Writing Quality utilities** and **SDLC Complete framework**. Future expansion planned for business process, content strategy, research synthesis, and decision-making frameworks. Prompts function as executable software within agentic environments.
+> **📦 Framework Scope:** This is an **agent toolset and prompting framework** for process automation. Current features: **Writing Quality utilities**, **SDLC Complete framework**, and **Media/Marketing Kit (MMK)**. Future expansion planned for business process, research synthesis, and decision-making frameworks. Prompts function as executable software within agentic environments.
 
 <table>
 <tr>
-<td width="50%">
+<td width="33%">
 
 ### 📝 **Writing Quality Framework**
 
@@ -95,13 +95,13 @@ cd my-awesome-project
 - Teams maintaining consistent writing standards
 
 </td>
-<td width="50%">
+<td width="33%">
 
 ### 🏗️ **SDLC Complete Framework**
 
 **Manage projects like an enterprise. Scale like a startup.**
 
-- ✅ **58 SDLC agents** — Requirements, architecture, testing, security, deployment
+- ✅ **54 SDLC agents** — Requirements, architecture, testing, security, deployment
 - ✅ **45+ workflow commands** — Intake, phase gates, risk management, compliance
 - ✅ **156 templates** — Every artifact from concept to production
 - ✅ **Multi-agent orchestration** — Parallel reviews, synthesis, automated quality gates
@@ -110,6 +110,23 @@ cd my-awesome-project
 - Solo developers needing structure without overhead
 - Small teams scaling from 1 to 10+ developers
 - Enterprise projects requiring compliance and audit trails
+
+</td>
+<td width="33%">
+
+### 📣 **Media/Marketing Kit (MMK)**
+
+**Run campaigns like an agency. Ship content faster.**
+
+- ✅ **37 marketing agents** — Strategy, content, creative, analytics, compliance
+- ✅ **20 workflow commands** — Campaign kickoff, content planning, brand review
+- ✅ **90+ templates** — 15 categories from intake to analytics
+- ✅ **5-phase lifecycle** — Strategy → Creation → Review → Publication → Analysis
+
+**Perfect for:**
+- Marketing teams managing campaigns end-to-end
+- Product launches coordinating dev and marketing
+- Agencies needing consistent deliverable quality
 
 </td>
 </tr>
@@ -195,16 +212,22 @@ ai-writing-guide/
 │   └── content-diversifier    → Generate varied examples/perspectives
 │
 ├── 🏗️ SDLC Complete (Enterprise-grade lifecycle management) — CURRENT
-│   ├── agents/ (58)           → Requirements, architecture, testing, security, DevOps
+│   ├── agents/ (54)           → Requirements, architecture, testing, security, DevOps
 │   ├── commands/ (45+)        → Intake, phase gates, deployments, compliance
 │   ├── templates/ (156)       → Every artifact from concept → production
 │   ├── flows/                 → Phase-based workflows (Inception → Transition)
 │   ├── add-ons/               → GDPR compliance, legal frameworks
 │   └── artifacts/             → Sample projects (complete lifecycle examples)
 │
+├── 📣 Media/Marketing Kit (Marketing campaign management) — NEW ✨
+│   ├── agents/ (37)           → Strategy, content, creative, analytics, compliance
+│   ├── commands/ (20)         → Campaign kickoff, content planning, brand review
+│   ├── templates/ (90+)       → 15 categories from intake to analytics
+│   ├── flows/                 → 5-phase lifecycle (Strategy → Analysis)
+│   └── add-ons/               → FTC compliance, GDPR-Marketing, industry-specific
+│
 ├── 🔮 Future Process Frameworks — PLANNED (see roadmap)
 │   ├── agentic/code/frameworks/business-process/    → Business analysis workflows
-│   ├── agentic/code/frameworks/content-strategy/    → Content planning & creation
 │   ├── agentic/code/frameworks/research-synthesis/  → Research & analysis
 │   └── agentic/code/frameworks/decision-making/     → Decision frameworks & matrices
 │
@@ -253,7 +276,7 @@ ai-writing-guide/
 - `reliability-engineer` — SLO/SLI definition, capacity planning
 - `deployment-manager` — Release planning and operational readiness
 
-[**See all 61 agents →**](docs/agents/README.md)
+[**See all 94 agents →**](docs/agents/README.md)
 
 ---
 
@@ -412,7 +435,30 @@ aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-ag
 
 ---
 
-### Use Case 5: Framework Self-Improvement Loop
+### Use Case 5: Run Marketing Campaigns with AI Agents
+
+**Problem:** Marketing teams lack structured workflows. Content scattered, brand inconsistent, no lifecycle tracking.
+
+**Solution:** Deploy MMK framework with 37 agents, 20 commands, and 90+ templates.
+
+**Claude Code:**
+```bash
+# Deploy marketing framework
+aiwg -deploy-agents --mode marketing
+aiwg -deploy-commands --mode marketing
+
+# Start a campaign
+/campaign-kickoff "Q1 Product Launch"
+
+# Check campaign status
+/marketing-status
+```
+
+**Time Saved:** 40-60% (campaign setup from 2-3 weeks → 1 week)
+
+---
+
+### Use Case 6: Framework Self-Improvement Loop
 
 **Problem:** Framework needs dogfooding. How do you use SDLC tools to improve SDLC tools?
 
@@ -953,11 +999,19 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 ### SDLC Framework
 
 - [**Framework Overview**](agentic/code/frameworks/sdlc-complete/README.md) — Complete lifecycle guide
-- [**Agent Catalog**](docs/agents/README.md) — All 58 SDLC agents
+- [**Agent Catalog**](docs/agents/README.md) — All 54 SDLC agents
 - [**Command Reference**](docs/commands/README.md) — All 45+ workflow commands
 - [**Template Library**](agentic/code/frameworks/sdlc-complete/templates/) — 156 artifact templates
 - [**Phase Workflows**](agentic/code/frameworks/sdlc-complete/flows/) — Inception → Transition
 - [**Natural Language Guide**](agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md) — 70+ supported phrases
+
+### Media/Marketing Kit (MMK)
+
+- [**Framework Overview**](agentic/code/frameworks/media-marketing-kit/README.md) — Complete marketing lifecycle guide
+- [**Agent Catalog**](agentic/code/frameworks/media-marketing-kit/agents/) — All 37 marketing agents
+- [**Command Reference**](agentic/code/frameworks/media-marketing-kit/commands/) — All 20 marketing commands
+- [**Template Library**](agentic/code/frameworks/media-marketing-kit/templates/) — 90+ templates in 15 categories
+- [**Lifecycle Guide**](agentic/code/frameworks/media-marketing-kit/plan-act-mmk.md) — Strategy → Analysis phases
 
 ### Workspace Management
 

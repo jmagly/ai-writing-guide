@@ -16,6 +16,8 @@ model optimization, and subagent development - serving both individual users and
 - **Command Framework**: Complete command and slash command system with templates
 - **Automation System**: Hooks and automation patterns for workflow integration
 - **Documentation Structure**: Organized hierarchy supporting multiple topics
+- **SDLC Complete Framework**: 54 agents, 45+ commands, 156 templates for full software lifecycle
+- **Media/Marketing Kit (MMK)**: 37 agents, 20 commands, 90+ templates for marketing campaigns ✨ NEW
 
 ### 📊 Success Metrics Achieved
 
