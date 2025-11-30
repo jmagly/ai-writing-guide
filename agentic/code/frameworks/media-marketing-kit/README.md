@@ -1,5 +1,35 @@
 # Media/Marketing Kit (MMK) Framework
 
+## 5-Minute Quick Start
+
+```bash
+# 1. Install CLI (one-time)
+curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh | bash
+
+# 2. Deploy marketing agents to your project
+aiwg -deploy-agents --mode marketing
+aiwg -deploy-commands --mode marketing
+
+# 3. Start a campaign (choose one)
+/marketing-intake-wizard "Your campaign description" --interactive
+# OR: /intake-from-campaign ./existing-assets --interactive
+
+# 4. Check status anytime
+/campaign-status
+```
+
+**That's it.** The wizard guides you through Strategy → Creation → Review → Publication → Analysis.
+
+| Phase | What Happens | Key Commands |
+|-------|--------------|--------------|
+| **Strategy** | Define goals, audience, messaging | `/flow-strategy-baseline` |
+| **Creation** | Generate content across channels | `/generate-content-calendar`, `/generate-social-content` |
+| **Review** | Brand + legal validation | `/brand-validate`, `/legal-clearance` |
+| **Publication** | Deploy and launch | `/flow-review-to-publication` |
+| **Analysis** | Measure and optimize | `/flow-performance-optimization` |
+
+---
+
 ## Overview
 
 The Media/Marketing Kit (MMK) framework provides a comprehensive Plan → Act lifecycle for marketing and media content delivery using AI agents. This specialized framework includes agents, commands, templates, and flows for managing the entire marketing content lifecycle from strategy through analysis.
