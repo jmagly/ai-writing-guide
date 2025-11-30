@@ -287,21 +287,60 @@ The framework provides 87+ research-backed templates:
 
 ### Intake Commands
 
-**intake-campaign** - Generate or complete campaign intake forms:
+The MMK framework provides three intake methods matching the SDLC framework pattern:
+
+| Command | Purpose | Equivalent SDLC Command |
+|---------|---------|------------------------|
+| `/marketing-intake-wizard` | Generate new or complete existing intake | `/intake-wizard` |
+| `/intake-from-campaign` | Analyze existing campaign/media kit | `/intake-from-codebase` |
+| `/intake-start-campaign` | Validate manual intake, start Strategy | `/intake-start` |
+
+**marketing-intake-wizard** - Generate or complete campaign intake forms:
+
 ```bash
-/intake-campaign "Product launch for new mobile app" --interactive
-/intake-campaign --complete --guidance "Focus on B2B SaaS, enterprise buyers"
+# Generate new intake from description
+/marketing-intake-wizard "Product launch for new mobile app targeting Gen Z"
+
+# Interactive mode with questions
+/marketing-intake-wizard "B2B SaaS launch" --interactive
+
+# With strategic guidance
+/marketing-intake-wizard "Holiday campaign" --guidance "Tight 3-week deadline, $50k budget, social and email focus"
+
+# Complete existing intake (fill gaps)
+/marketing-intake-wizard --complete
+
+# Complete with interactive gap-filling
+/marketing-intake-wizard --complete --interactive
 ```
 
-**intake-from-brief** - Convert existing creative brief to MMK intake:
+**intake-from-campaign** - Scan existing campaign materials and generate intake:
+
 ```bash
-/intake-from-brief ./creative-brief.pdf --interactive
+# Analyze existing campaign folder
+/intake-from-campaign ./q4-campaign-assets
+
+# Interactive mode for clarification
+/intake-from-campaign ./media-kit --interactive
+
+# With analysis focus
+/intake-from-campaign ./brand-assets --guidance "Preparing for agency handoff, need complete documentation"
+
+# Specify output location
+/intake-from-campaign ./campaign --output .aiwg/marketing/intake/
 ```
 
-**intake-start-campaign** - Validate intake and kick off Strategy phase:
+**intake-start-campaign** - Validate manually-created intake and kick off Strategy:
+
 ```bash
+# Validate and start (default path)
 /intake-start-campaign .aiwg/marketing/intake/
+
+# With strategic guidance
+/intake-start-campaign .aiwg/marketing/intake/ --guidance "Focus on brand consistency"
 ```
+
+**Note**: If you use `/marketing-intake-wizard` or `/intake-from-campaign`, the intake is already validated - you can proceed directly to Strategy phase without running `/intake-start-campaign`.
 
 ### Phase Transition Flows
 
@@ -536,19 +575,38 @@ aiwg -deploy-agents --provider openai --mode marketing
 
 ### 1. Initialize Marketing Campaign
 
+**Option A: New Campaign** (from description)
+
 ```bash
-# Generate campaign intake forms
-/intake-campaign "Q1 Product Launch - Enterprise CRM" --interactive
+# Generate campaign intake with interactive questions
+/marketing-intake-wizard "Q1 Product Launch - Enterprise CRM" --interactive
+
+# Or quick mode with guidance
+/marketing-intake-wizard "Product launch" --guidance "B2B SaaS, $100k budget, 8-week timeline"
+```
+
+**Option B: Existing Campaign** (from materials)
+
+```bash
+# Analyze existing campaign assets and generate intake
+/intake-from-campaign ./campaign-assets --interactive
+```
+
+**Option C: Manual Intake** (validate existing)
+
+```bash
+# If you manually created intake files, validate and start
+/intake-start-campaign .aiwg/marketing/intake/
 ```
 
 ### 2. Start Strategy Phase
 
 ```bash
-# Validate intake and kick off Strategy
-/intake-start-campaign .aiwg/marketing/intake/
-
-# Execute Strategy phase workflow
+# Proceed directly to Strategy (intake already validated by wizard commands)
 /flow-strategy-baseline
+
+# Or use natural language
+# "Start Strategy phase" or "Let's plan this campaign"
 ```
 
 ### 3. Check Campaign Status
