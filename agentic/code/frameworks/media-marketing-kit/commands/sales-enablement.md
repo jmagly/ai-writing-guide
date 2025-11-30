@@ -1,6 +1,7 @@
 ---
 name: sales-enablement
 description: Create sales enablement materials and resources for sales team
+argument-hint: "[--material-type value] [--product-focus value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: material-type
     description: Type of material (all, presentations, battlecards, case-studies, playbooks)
@@ -8,6 +9,13 @@ arguments:
   - name: product-focus
     description: Specific product or solution focus
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -92,6 +100,37 @@ Saved to `.aiwg/marketing/sales-enablement/`:
 - `roi-tools/` - ROI calculators
 - `training-guide.md` - How to use materials
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Enterprise sales focus, long sales cycle"
+--guidance "Competitive battlecard priority"
+--guidance "Technical audience, detailed specs needed"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What sales challenges are you addressing?
+2. What materials are highest priority?
+3. Who is the target buyer persona?
+4. What is the typical sales cycle length?
+5. What competitive situations are most common?
+6. What objections need addressing?
+
 ## Usage Examples
 
 ```bash
@@ -103,6 +142,12 @@ Saved to `.aiwg/marketing/sales-enablement/`:
 
 # Product-focused
 /sales-enablement --material-type all --product-focus "Enterprise Plan"
+
+# With strategic guidance
+/sales-enablement "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/sales-enablement "Example" --interactive
 ```
 
 ## Success Criteria

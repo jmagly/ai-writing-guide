@@ -1,6 +1,7 @@
 ---
 name: competitive-analysis
 description: Conduct comprehensive competitive marketing analysis
+argument-hint: "[--analysis-focus value] [--competitors value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: analysis-focus
     description: Focus area (overall, messaging, digital, content, campaigns)
@@ -8,6 +9,13 @@ arguments:
   - name: competitors
     description: Comma-separated list of competitors to analyze
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -78,6 +86,36 @@ Saved to `.aiwg/marketing/competitive/`:
 - `opportunity-gaps.md` - Strategic opportunities
 - `recommendations.md` - Action items
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Focus on pricing and positioning gaps"
+--guidance "New market entrant analysis"
+--guidance "Feature comparison for sales enablement"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. Which competitors should be analyzed?
+2. What aspects are most important (pricing, features, positioning)?
+3. What is the intended use of this analysis?
+4. What timeframe for data collection?
+5. Are there specific differentiators to highlight?
+
 ## Usage Examples
 
 ```bash
@@ -89,6 +127,12 @@ Saved to `.aiwg/marketing/competitive/`:
 
 # Specific competitors
 /competitive-analysis --competitors "CompA,CompB,CompC"
+
+# With strategic guidance
+/competitive-analysis "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/competitive-analysis "Example" --interactive
 ```
 
 ## Success Criteria

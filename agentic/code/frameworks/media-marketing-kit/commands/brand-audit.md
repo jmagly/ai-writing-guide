@@ -1,10 +1,18 @@
 ---
 name: brand-audit
 description: Conduct comprehensive brand health audit across all touchpoints
+argument-hint: "[--audit-scope value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: audit-scope
     description: Scope of audit (full, visual, verbal, touchpoints)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -84,6 +92,36 @@ Saved to `.aiwg/marketing/brand/audit/`:
 - `recommendations.md` - Action plan
 - `brand-health-metrics.md` - Brand health data
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Comprehensive audit before rebrand"
+--guidance "Focus on digital touchpoints"
+--guidance "Competitive comparison with top 3 competitors"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What is the scope of the audit?
+2. Are there specific touchpoints to prioritize?
+3. What triggered this audit?
+4. What comparisons should be included?
+5. What is the timeline for completion?
+
 ## Usage Examples
 
 ```bash
@@ -95,6 +133,12 @@ Saved to `.aiwg/marketing/brand/audit/`:
 
 # Specific touchpoints
 /brand-audit --audit-scope touchpoints
+
+# With strategic guidance
+/brand-audit "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/brand-audit "Example" --interactive
 ```
 
 ## Success Criteria

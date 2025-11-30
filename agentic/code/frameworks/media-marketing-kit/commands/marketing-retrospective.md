@@ -1,6 +1,7 @@
 ---
 name: marketing-retrospective
 description: Conduct retrospective analysis of marketing initiatives for continuous improvement
+argument-hint: "<initiative-name> [--retro-type value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: initiative-name
     description: Name of campaign or initiative to review
@@ -8,6 +9,13 @@ arguments:
   - name: retro-type
     description: Type of retrospective (campaign, quarterly, annual, process)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -91,6 +99,37 @@ Saved to `.aiwg/marketing/retrospectives/`:
 - `best-practices.md` - Documented successes
 - `process-improvements.md` - Process changes
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Focus on process improvements"
+--guidance "Cross-functional learnings"
+--guidance "Budget efficiency analysis"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What campaign or period is being reviewed?
+2. What were the original objectives?
+3. Who should participate?
+4. What went well that should be repeated?
+5. What challenges were encountered?
+6. What process improvements are suggested?
+
 ## Usage Examples
 
 ```bash
@@ -102,6 +141,12 @@ Saved to `.aiwg/marketing/retrospectives/`:
 
 # Process improvement
 /marketing-retrospective "Creative Process" --retro-type process
+
+# With strategic guidance
+/marketing-retrospective "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/marketing-retrospective "Example" --interactive
 ```
 
 ## Success Criteria

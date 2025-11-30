@@ -1,6 +1,7 @@
 ---
 name: campaign-analytics
 description: Generate comprehensive campaign performance analysis and recommendations
+argument-hint: "<campaign-name> [--analysis-type value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: campaign-name
     description: Name of campaign to analyze
@@ -8,6 +9,13 @@ arguments:
   - name: analysis-type
     description: Type of analysis (daily, weekly, final, deep-dive)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -81,6 +89,36 @@ Saved to `.aiwg/marketing/analytics/{campaign-name}/`:
 - `recommendations.md` - Optimization recommendations
 - `final-report.md` - Comprehensive final report
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Focus on attribution across paid channels"
+--guidance "Need deep-dive on email performance"
+--guidance "Benchmark against Q3 results"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What specific metrics are you most interested in?
+2. What time period should be analyzed?
+3. Are there specific channels to focus on?
+4. What benchmarks should we compare against?
+5. Who is the audience for this report?
+
 ## Usage Examples
 
 ```bash
@@ -92,6 +130,12 @@ Saved to `.aiwg/marketing/analytics/{campaign-name}/`:
 
 # Deep-dive on specific issue
 /campaign-analytics "Holiday Campaign" --analysis-type deep-dive
+
+# With strategic guidance
+/campaign-analytics "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/campaign-analytics "Example" --interactive
 ```
 
 ## Success Criteria

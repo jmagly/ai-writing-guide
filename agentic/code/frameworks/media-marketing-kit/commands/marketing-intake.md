@@ -1,9 +1,16 @@
 ---
 name: marketing-intake
 description: Initialize marketing project intake with discovery and requirements gathering
+argument-hint: "[--project-type value] [--intake-directory value] [--interactive value] [--guidance "text"] [--interactive]"
 arguments:
   - name: project-type
     description: Type of marketing project (campaign, rebrand, launch, content, ongoing)
+    required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
     required: false
   - name: intake-directory
     description: Directory for intake files (default .aiwg/marketing/intake)
@@ -103,6 +110,37 @@ Saved to `.aiwg/marketing/intake/`:
 - `timeline-draft.md` - Initial timeline
 - `team-assignments.md` - Resource allocation
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Rebrand project, comprehensive discovery needed"
+--guidance "Quick campaign intake, 2-week timeline"
+--guidance "Agency handoff, need complete documentation"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What type of project is this?
+2. What are the business objectives?
+3. Who is the target audience?
+4. What is the budget range?
+5. What is the timeline?
+6. Who are the key stakeholders?
+
 ## Usage Examples
 
 ```bash
@@ -114,6 +152,12 @@ Saved to `.aiwg/marketing/intake/`:
 
 # Custom directory
 /marketing-intake --intake-directory ./my-project/intake
+
+# With strategic guidance
+/marketing-intake "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/marketing-intake "Example" --interactive
 ```
 
 ## Interactive Mode

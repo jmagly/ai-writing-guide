@@ -1,6 +1,7 @@
 ---
 name: brand-review
 description: Conduct brand compliance review of marketing materials
+argument-hint: "<asset-path> [--review-type value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: asset-path
     description: Path to asset or asset description to review
@@ -8,6 +9,13 @@ arguments:
   - name: review-type
     description: Type of review (quick, comprehensive, pre-launch)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -78,6 +86,36 @@ Saved to `.aiwg/marketing/reviews/brand/`:
 - `{asset}-issues.md` - Issues with remediation guidance
 - `{asset}-approval.md` - Approval status and sign-off
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Pre-launch review, flag any legal concerns"
+--guidance "Focus on accessibility compliance"
+--guidance "New brand guidelines, strict adherence required"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What assets are being reviewed?
+2. What is the context (pre-launch, routine, issue)?
+3. Are there specific brand elements of concern?
+4. What is the approval deadline?
+5. Who needs to sign off?
+
 ## Usage Examples
 
 ```bash
@@ -89,6 +127,12 @@ Saved to `.aiwg/marketing/reviews/brand/`:
 
 # Pre-launch review
 /brand-review "product-launch-assets/" --review-type pre-launch
+
+# With strategic guidance
+/brand-review "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/brand-review "Example" --interactive
 ```
 
 ## Success Criteria

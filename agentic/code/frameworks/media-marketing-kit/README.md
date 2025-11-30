@@ -315,6 +315,54 @@ The framework provides 87+ research-backed templates:
 
 ## Command Reference
 
+### Standard Parameters
+
+All MMK commands support two standard parameters for customization:
+
+#### --guidance Parameter
+
+Provide upfront strategic direction to tailor command behavior and priorities.
+
+```bash
+# Focus creative direction
+/creative-brief "Product Launch" --guidance "Minimalist aesthetic, mobile-first, Gen Z audience"
+
+# Constrain timeline
+/campaign-kickoff "Q2 Launch" --guidance "3-week deadline, prioritize hero assets"
+
+# Specify compliance focus
+/brand-review ./assets --guidance "Pre-launch review, flag any legal concerns"
+
+# Set analysis priorities
+/campaign-analytics "Holiday Sale" --guidance "Focus on attribution across paid channels"
+```
+
+**How guidance is applied**:
+- Parses for keywords: priority, timeline, audience, compliance, channels
+- Adjusts agent emphasis and output depth
+- Modifies deliverable ordering based on constraints
+- Influences scope and detail level
+
+#### --interactive Parameter
+
+Enable discovery questions to gather comprehensive input before execution.
+
+```bash
+# Interactive campaign setup
+/campaign-kickoff "New Product" --interactive
+
+# Combine with guidance
+/social-strategy "Q1" --interactive --guidance "TikTok-first, Gen Z focus"
+
+# Interactive analytics deep-dive
+/campaign-analytics "Spring Campaign" --interactive
+```
+
+**Interactive mode**:
+- Asks 5-10 targeted questions based on command type
+- Adapts questions based on previous responses
+- Combines with `--guidance` to skip already-answered questions
+
 ### Intake Commands
 
 The MMK framework provides three intake methods matching the SDLC framework pattern:

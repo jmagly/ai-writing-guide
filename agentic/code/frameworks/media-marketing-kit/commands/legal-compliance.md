@@ -1,6 +1,7 @@
 ---
 name: legal-compliance
 description: Conduct legal and regulatory compliance review of marketing materials
+argument-hint: "<material-path> [--compliance-areas value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: material-path
     description: Path to materials or campaign to review
@@ -8,6 +9,13 @@ arguments:
   - name: compliance-areas
     description: Areas to check (advertising, privacy, promotions, all)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -81,6 +89,36 @@ Saved to `.aiwg/marketing/compliance/`:
 - `disclaimer-templates.md` - Required disclaimers
 - `approval-checklist.md` - Sign-off checklist
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "FTC disclosure review for influencer content"
+--guidance "GDPR compliance for EU campaign"
+--guidance "Healthcare claims review, FDA considerations"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What type of content is being reviewed?
+2. What jurisdictions apply?
+3. Are there industry-specific regulations?
+4. What is the review deadline?
+5. Are there specific claims of concern?
+
 ## Usage Examples
 
 ```bash
@@ -92,6 +130,12 @@ Saved to `.aiwg/marketing/compliance/`:
 
 # Promotional compliance
 /legal-compliance "contest-rules.md" --compliance-areas promotions
+
+# With strategic guidance
+/legal-compliance "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/legal-compliance "Example" --interactive
 ```
 
 ## Success Criteria

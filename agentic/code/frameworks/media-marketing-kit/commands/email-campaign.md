@@ -1,6 +1,7 @@
 ---
 name: email-campaign
 description: Create comprehensive email marketing campaign with content and automation
+argument-hint: "<campaign-name> [--campaign-type value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: campaign-name
     description: Name of the email campaign
@@ -8,6 +9,13 @@ arguments:
   - name: campaign-type
     description: Type of campaign (nurture, promotional, announcement, automated)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -89,6 +97,37 @@ Saved to `.aiwg/marketing/email/{campaign-name}/`:
 - `testing-plan.md` - A/B testing strategy
 - `compliance-checklist.md` - Legal compliance
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Nurture sequence for enterprise leads"
+--guidance "High personalization, segment by industry"
+--guidance "Mobile-first design, 60% mobile open rate"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What is the primary goal of this email campaign?
+2. Who is the target audience/segment?
+3. How many emails in the sequence?
+4. What is the timeline for sending?
+5. What offers or CTAs will be included?
+6. What automation triggers apply?
+
 ## Usage Examples
 
 ```bash
@@ -100,6 +139,12 @@ Saved to `.aiwg/marketing/email/{campaign-name}/`:
 
 # Product announcement
 /email-campaign "Feature Launch" --campaign-type announcement
+
+# With strategic guidance
+/email-campaign "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/email-campaign "Example" --interactive
 ```
 
 ## Success Criteria

@@ -1,6 +1,7 @@
 ---
 name: event-marketing
 description: Plan comprehensive marketing strategy for events (hosted or participated)
+argument-hint: "<event-name> [--event-type value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: event-name
     description: Name of the event
@@ -8,6 +9,13 @@ arguments:
   - name: event-type
     description: Type of event (hosted, tradeshow, webinar, conference, sponsorship)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -92,6 +100,37 @@ Saved to `.aiwg/marketing/events/{event-name}/`:
 - `follow-up-plan.md` - Post-event campaigns
 - `kpis.md` - Success metrics
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Virtual event, global audience"
+--guidance "Trade show focus, booth traffic priority"
+--guidance "Lead generation is primary KPI"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What type of event is this?
+2. What are the primary objectives?
+3. Who is the target audience?
+4. What is the event date and location?
+5. What is the marketing budget?
+6. What channels will be used for promotion?
+
 ## Usage Examples
 
 ```bash
@@ -103,6 +142,12 @@ Saved to `.aiwg/marketing/events/{event-name}/`:
 
 # Webinar series
 /event-marketing "Product Deep Dive" --event-type webinar
+
+# With strategic guidance
+/event-marketing "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/event-marketing "Example" --interactive
 ```
 
 ## Success Criteria

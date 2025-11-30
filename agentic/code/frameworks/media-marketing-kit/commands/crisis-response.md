@@ -1,6 +1,7 @@
 ---
 name: crisis-response
 description: Coordinate rapid response to brand or communications crisis
+argument-hint: "<crisis-id> [--severity value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: crisis-id
     description: Identifier for the crisis situation
@@ -8,6 +9,13 @@ arguments:
   - name: severity
     description: Crisis severity level (low, medium, high, critical)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -90,6 +98,37 @@ Saved to `.aiwg/marketing/crisis/{crisis-id}/`:
 - `monitoring-plan.md` - Ongoing tracking
 - `post-crisis-review.md` - After-action analysis
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Social media crisis, immediate response needed"
+--guidance "Product recall scenario, multi-channel"
+--guidance "Executive statement required"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What is the nature of the crisis?
+2. When did it start?
+3. What channels are affected?
+4. Who needs to be involved in response?
+5. What is the current public sentiment?
+6. What responses have been issued so far?
+
 ## Usage Examples
 
 ```bash
@@ -101,6 +140,12 @@ Saved to `.aiwg/marketing/crisis/{crisis-id}/`:
 
 # Critical
 /crisis-response "executive-misconduct" --severity critical
+
+# With strategic guidance
+/crisis-response "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/crisis-response "Example" --interactive
 ```
 
 ## Success Criteria

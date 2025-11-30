@@ -1,6 +1,7 @@
 ---
 name: pr-launch
 description: Coordinate public relations launch activities and media outreach
+argument-hint: "<announcement-name> [--launch-type value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: announcement-name
     description: Name of the PR announcement or launch
@@ -8,6 +9,13 @@ arguments:
   - name: launch-type
     description: Type of launch (product, partnership, news, event)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -78,6 +86,37 @@ Saved to `.aiwg/marketing/pr/{announcement-name}/`:
 - `media-kit.md` - Media kit contents
 - `timeline.md` - Launch timeline
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Embargo until announcement date"
+--guidance "Target tier-1 tech publications"
+--guidance "Executive availability limited, prepare talking points"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What is being announced?
+2. What is the target announcement date?
+3. Which media outlets are priorities?
+4. Is there an embargo period?
+5. Who are the spokespeople?
+6. What supporting assets are needed?
+
 ## Usage Examples
 
 ```bash
@@ -89,6 +128,12 @@ Saved to `.aiwg/marketing/pr/{announcement-name}/`:
 
 # Company news
 /pr-launch "Q3 Earnings" --launch-type news
+
+# With strategic guidance
+/pr-launch "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/pr-launch "Example" --interactive
 ```
 
 ## Success Criteria

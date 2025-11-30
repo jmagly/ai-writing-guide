@@ -1,6 +1,7 @@
 ---
 name: content-planning
 description: Create comprehensive content strategy and editorial calendar
+argument-hint: "<planning-period> [--content-focus value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: planning-period
     description: Time period for content plan (Q1, Q2, monthly, etc.)
@@ -8,6 +9,13 @@ arguments:
   - name: content-focus
     description: Primary content focus area (optional)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -73,6 +81,37 @@ Saved to `.aiwg/marketing/content/`:
 - `distribution-plan.md` - Channel distribution strategy
 - `content-standards.md` - Quality guidelines
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "SEO-driven content for organic growth"
+--guidance "Thought leadership focus for executives"
+--guidance "Product education for onboarding"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What are the primary content goals?
+2. What content formats work best for your audience?
+3. What topics/themes are priorities?
+4. What is the publishing cadence target?
+5. What resources are available for content creation?
+6. What distribution channels will be used?
+
 ## Usage Examples
 
 ```bash
@@ -84,6 +123,12 @@ Saved to `.aiwg/marketing/content/`:
 
 # With project directory
 /content-planning "Q2" --project-directory ./marketing-team
+
+# With strategic guidance
+/content-planning "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/content-planning "Example" --interactive
 ```
 
 ## Success Criteria

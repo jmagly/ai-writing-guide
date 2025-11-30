@@ -1,6 +1,7 @@
 ---
 name: social-strategy
 description: Develop comprehensive social media strategy and content calendar
+argument-hint: "<strategy-period> [--platforms value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: strategy-period
     description: Time period for strategy (Q1, monthly, campaign-based)
@@ -8,6 +9,13 @@ arguments:
   - name: platforms
     description: Target platforms (comma-separated, or 'all')
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -82,6 +90,37 @@ Saved to `.aiwg/marketing/social/{strategy-period}/`:
 - `community-guidelines.md` - Engagement rules
 - `kpis-benchmarks.md` - Success metrics
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "TikTok-first approach for Gen Z audience"
+--guidance "B2B focus, LinkedIn priority over other platforms"
+--guidance "Community building emphasis over follower growth"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What are the business objectives for social?
+2. Which platforms are priorities?
+3. What is the target audience on social?
+4. What content themes resonate with your audience?
+5. What resources are available for content creation?
+6. What are the current pain points with social?
+
 ## Usage Examples
 
 ```bash
@@ -93,6 +132,12 @@ Saved to `.aiwg/marketing/social/{strategy-period}/`:
 
 # All platforms
 /social-strategy "Q1" --platforms all
+
+# With strategic guidance
+/social-strategy "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/social-strategy "Example" --interactive
 ```
 
 ## Success Criteria

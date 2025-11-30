@@ -1,6 +1,7 @@
 ---
 name: campaign-kickoff
 description: Initialize a new marketing campaign with strategy, planning, and team coordination
+argument-hint: "<campaign-name> [--campaign-type value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: campaign-name
     description: Name of the campaign to initialize
@@ -8,6 +9,13 @@ arguments:
   - name: campaign-type
     description: Type of campaign (launch, awareness, demand-gen, event, rebrand)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -77,6 +85,37 @@ All artifacts saved to `.aiwg/marketing/campaigns/{campaign-name}/`:
 - `campaign-timeline.md` - Milestones and schedule
 - `budget-plan.md` - Budget allocation and tracking
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "B2B focus, LinkedIn and email primary channels"
+--guidance "Aggressive timeline, 3 weeks to launch"
+--guidance "Limited budget, prioritize organic over paid"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What are the primary objectives for this campaign?
+2. Who is the target audience? (segments, personas)
+3. What is the available budget range?
+4. What are the key dates and constraints?
+5. Which channels are priorities?
+6. Who are the key stakeholders and approvers?
+
 ## Usage Examples
 
 ```bash
@@ -88,6 +127,12 @@ All artifacts saved to `.aiwg/marketing/campaigns/{campaign-name}/`:
 
 # With custom project directory
 /campaign-kickoff "Holiday Campaign" --project-directory ./marketing
+
+# With strategic guidance
+/campaign-kickoff "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/campaign-kickoff "Example" --interactive
 ```
 
 ## Interactive Mode

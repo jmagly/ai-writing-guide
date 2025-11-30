@@ -1,6 +1,7 @@
 ---
 name: budget-review
 description: Analyze marketing budget allocation, spending, and ROI performance
+argument-hint: "<review-period> [--budget-area value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: review-period
     description: Period to review (monthly, quarterly, YTD, annual)
@@ -8,6 +9,13 @@ arguments:
   - name: budget-area
     description: Specific budget area (all, paid-media, content, events)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -72,6 +80,36 @@ Saved to `.aiwg/marketing/budget/`:
 - `recommendations.md` - Optimization suggestions
 - `forecast.md` - Forward projections
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Q4 optimization, reallocate underperforming channels"
+--guidance "New budget request justification"
+--guidance "Year-end close, maximize ROI"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What is the review period?
+2. What triggered this review?
+3. Are there specific channels to analyze?
+4. What is the decision context (optimization, new request)?
+5. Who needs this analysis?
+
 ## Usage Examples
 
 ```bash
@@ -83,6 +121,12 @@ Saved to `.aiwg/marketing/budget/`:
 
 # Monthly all areas
 /budget-review "October 2024" --budget-area all
+
+# With strategic guidance
+/budget-review "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/budget-review "Example" --interactive
 ```
 
 ## Success Criteria

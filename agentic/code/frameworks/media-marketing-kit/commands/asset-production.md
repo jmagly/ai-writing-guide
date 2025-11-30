@@ -1,6 +1,7 @@
 ---
 name: asset-production
 description: Coordinate marketing asset production from brief through delivery
+argument-hint: "<project-name> [--asset-types value] [--project-directory value] [--guidance "text"] [--interactive]"
 arguments:
   - name: project-name
     description: Name of the production project
@@ -8,6 +9,13 @@ arguments:
   - name: asset-types
     description: Types of assets (digital, print, video, all)
     required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
   - name: project-directory
     description: Project directory path (default current directory)
     required: false
@@ -80,6 +88,37 @@ Saved to `.aiwg/marketing/production/{project-name}/`:
 - `delivery-manifest.md` - Asset list
 - `qc-checklist.md` - Quality checklist
 
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Tight deadline, hero assets first"
+--guidance "Accessibility AAA target"
+--guidance "Localization for 5 markets"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What assets are being produced?
+2. What are the specifications (sizes, formats)?
+3. What is the production timeline?
+4. What brand guidelines apply?
+5. Who needs to approve final assets?
+6. Are there localization requirements?
+
 ## Usage Examples
 
 ```bash
@@ -91,6 +130,12 @@ Saved to `.aiwg/marketing/production/{project-name}/`:
 
 # All assets
 /asset-production "Brand Refresh" --asset-types all
+
+# With strategic guidance
+/asset-production "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/asset-production "Example" --interactive
 ```
 
 ## Success Criteria
