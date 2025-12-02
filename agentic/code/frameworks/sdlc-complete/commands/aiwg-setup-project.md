@@ -408,6 +408,8 @@ See `{AIWG_PATH}/docs/simple-language-translations.md` for complete phrase list.
 
 ## Troubleshooting
 
+> **Note**: The tips below are for reference if you encounter issues in the future. If setup completed successfully, no action is needed.
+
 **Template Not Found**:
 ```bash
 # Verify AIWG installation
