@@ -257,6 +257,21 @@ Next Steps:
 | "Validate {technical-risk}" | Same as above | `build-poc` |
 | "Spike {feature}" | Same as above | `build-poc` |
 
+### Help and Troubleshooting
+
+| User Says | Intent | Action |
+|-----------|--------|--------|
+| "Help with AIWG" | General help | `aiwg-kb "help"` |
+| "How do I fix {issue}?" | Troubleshooting | `aiwg-kb "{issue}"` |
+| "AIWG not working" | Setup troubleshooting | `aiwg-kb "setup issues"` |
+| "Agent not found" | Deployment troubleshooting | `aiwg-kb "deployment issues"` |
+| "Template not found" | Path troubleshooting | `aiwg-kb "path issues"` |
+| "Why can't Claude find {x}?" | Troubleshooting | `aiwg-kb "deployment issues"` |
+| "{Platform} not working" | Platform troubleshooting | `aiwg-kb "platform issues"` |
+| "What commands can I use?" | Natural language reference | `aiwg-kb "natural language"` |
+| "How do I start?" | Quickstart | `aiwg-kb "quickstart"` |
+| "AIWG documentation" | Documentation | `aiwg-kb "help"` |
+
 ## Regex Patterns (For Implementation)
 
 If implementing pattern matching, use these regex patterns:
@@ -277,6 +292,15 @@ WORKFLOWS = {
 STATUS = {
     r"(where|what).*(are we|next|status)": "project-status",
     r"(can|ready).*(transition|move|proceed)": "flow-gate-check",
+}
+
+HELP = {
+    r"(help|fix|problem|issue|error).*(aiwg|install|setup)": "aiwg-kb setup",
+    r"(agent|command).*(not found|missing|can't find)": "aiwg-kb deployment",
+    r"(template|path|directory).*(not found|missing|error)": "aiwg-kb path",
+    r"(claude|factory|warp).*(not working|issue|problem)": "aiwg-kb platform",
+    r"(how|what).*(start|begin|commands?)": "aiwg-kb quickstart",
+    r"(help|documentation|docs).*aiwg": "aiwg-kb help",
 }
 ```
 
