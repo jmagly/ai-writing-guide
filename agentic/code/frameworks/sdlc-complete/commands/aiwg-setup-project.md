@@ -406,37 +406,25 @@ See `{AIWG_PATH}/docs/simple-language-translations.md` for complete phrase list.
 - **Orchestrator Docs**: {AIWG_PATH}/docs/orchestrator-architecture.md
 - **Multi-Agent Pattern**: {AIWG_PATH}/docs/multi-agent-documentation-pattern.md
 
-## Troubleshooting
+## Need Help?
 
-> **Note**: The tips below are for reference if you encounter issues in the future. If setup completed successfully, no action is needed.
+If you encounter any issues, use the AIWG knowledge base:
 
-**Template Not Found**:
-```bash
-# Verify AIWG installation
-ls {AIWG_PATH}/agentic/code/frameworks/sdlc-complete/templates/
+```text
+# Slash command
+/aiwg-kb "setup issues"
+/aiwg-kb "agent not found"
+/aiwg-kb "template errors"
 
-# If missing, reinstall AIWG
-aiwg -reinstall
+# Or ask naturally
+"How do I fix my AIWG install?"
+"Why aren't my agents working?"
+"Help with AIWG templates"
 ```
 
-**Agent Access Denied**:
-- Check `.claude/settings.json` has read access to AIWG installation path
-- Add permission: `"Read({AIWG_PATH}/**)"`
+**Common topics**: setup issues, deployment issues, path issues, platform issues
 
-**Commands Not Found**:
-```bash
-# Deploy commands to project
-aiwg -deploy-commands --mode sdlc
-
-# Verify deployment
-ls .claude/commands/flow-*.md
-```
-
-**Need to Update CLAUDE.md Again**:
-```bash
-# Safe to run multiple times - preserves user content
-/aiwg-setup-project
-```
+**Quick reference**: {AIWG_PATH}/docs/troubleshooting/
 ```
 
 ## Implementation Notes
@@ -485,7 +473,7 @@ When merging AIWG section, ensure these are included:
 8. ✅ **Phase Overview** - Inception → Elaboration → Construction → Transition → Production
 9. ✅ **Quick Start Guide** - Step-by-step initialization
 10. ✅ **Common Patterns** - Example workflows (risk, architecture, security, testing)
-11. ✅ **Troubleshooting** - Common issues and solutions
+11. ✅ **Need Help** - Reference to /aiwg-kb and troubleshooting docs
 
 **Reference**: Template at `{AIWG_ROOT}/agentic/code/frameworks/sdlc-complete/templates/project/CLAUDE.md`
 
