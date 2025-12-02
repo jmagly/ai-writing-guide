@@ -37,6 +37,22 @@ claude .                               # Claude Code
 droid .                                # Factory AI
 ```
 
+## Platform Integration (Required)
+
+After deploying agents, integrate AIWG with your AI platform's context:
+
+```text
+# In Claude Code
+You: "Run /aiwg-update-claude"
+```
+
+This updates your project's `CLAUDE.md` with AIWG orchestration context, enabling:
+- Natural language workflow commands
+- Multi-agent coordination
+- Phase-aware responses
+
+**Other platforms:** See platform-specific quickstarts for integration commands.
+
 ## Which Framework?
 
 **Use SDLC Complete if you're:**

@@ -15,11 +15,15 @@ cd /path/to/project
 aiwg -deploy-agents --mode marketing
 aiwg -deploy-commands --mode marketing
 
-# Open in Claude Code and start
+# Open in Claude Code
 claude .
 ```
 
 ```text
+# Integrate AIWG with platform (required for orchestration)
+You: "Run /aiwg-update-claude"
+
+# Then start intake
 You: "Start marketing intake wizard for Q1 product launch"
 ```
 
@@ -40,6 +44,10 @@ claude .
 ```
 
 ```text
+# Integrate AIWG with platform (required for orchestration)
+You: "Run /aiwg-update-claude"
+
+# Then analyze assets
 You: "Analyze campaign assets in ./q4-campaign and generate intake"
 ```
 
@@ -57,10 +65,16 @@ For campaigns with detailed client briefs or RFPs:
 
 ```bash
 aiwg -deploy-agents --mode marketing
+aiwg -deploy-commands --mode marketing
 # Edit .aiwg/marketing/intake/campaign-brief.md manually
+claude .
 ```
 
 ```text
+# Integrate AIWG with platform (required for orchestration)
+You: "Run /aiwg-update-claude"
+
+# Then validate intake
 You: "Validate campaign intake and start Strategy phase"
 ```
 

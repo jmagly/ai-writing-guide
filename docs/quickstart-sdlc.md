@@ -18,11 +18,15 @@ aiwg -new
 aiwg -deploy-agents --mode sdlc
 aiwg -deploy-commands --mode sdlc
 
-# Open in Claude Code and start intake
+# Open in Claude Code
 claude .
 ```
 
 ```text
+# Integrate AIWG with platform (required for orchestration)
+You: "Run /aiwg-update-claude"
+
+# Then start intake
 You: "Start intake wizard for a customer portal with React and Node.js"
 ```
 
@@ -40,6 +44,10 @@ claude .
 ```
 
 ```text
+# Integrate AIWG with platform (required for orchestration)
+You: "Run /aiwg-update-claude"
+
+# Then analyze codebase
 You: "Analyze this codebase and generate intake documents"
 ```
 
@@ -51,11 +59,18 @@ For projects with specific compliance, security, or stakeholder requirements:
 
 ```bash
 aiwg -new
+aiwg -deploy-agents --mode sdlc
+aiwg -deploy-commands --mode sdlc
 # Edit .aiwg/intake/project-intake-form.md manually
 # Edit .aiwg/intake/solution-profile.md manually
+claude .
 ```
 
 ```text
+# Integrate AIWG with platform (required for orchestration)
+You: "Run /aiwg-update-claude"
+
+# Then validate intake
 You: "Validate intake and start Inception"
 ```
 
