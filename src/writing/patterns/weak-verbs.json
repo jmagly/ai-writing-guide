@@ -17,7 +17,10 @@
     ],
     "context": "Corporate jargon for 'use'",
     "frequency": "very-common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-002",
@@ -37,7 +40,10 @@
     ],
     "context": "Business buzzword",
     "frequency": "very-common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-003",
@@ -57,7 +63,10 @@
     ],
     "context": "Vague enabler verb",
     "frequency": "common",
-    "domains": ["executive", "academic"]
+    "domains": [
+      "executive",
+      "academic"
+    ]
   },
   {
     "id": "weak-verb-004",
@@ -77,7 +86,10 @@
     ],
     "context": "Overly formal effort verb",
     "frequency": "occasional",
-    "domains": ["executive", "academic"]
+    "domains": [
+      "executive",
+      "academic"
+    ]
   },
   {
     "id": "weak-verb-005",
@@ -97,7 +109,9 @@
     ],
     "context": "Overused but acceptable in technical contexts",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-006",
@@ -117,7 +131,10 @@
     ],
     "context": "Vague improvement verb",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "weak-verb-007",
@@ -137,7 +154,9 @@
     ],
     "context": "Vague but acceptable if followed by details",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-008",
@@ -157,7 +176,9 @@
     ],
     "context": "Business jargon for simplification",
     "frequency": "common",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
   },
   {
     "id": "weak-verb-009",
@@ -177,7 +198,10 @@
     ],
     "context": "Passive voice weakens technical writing",
     "frequency": "very-common",
-    "domains": ["technical", "academic"]
+    "domains": [
+      "technical",
+      "academic"
+    ]
   },
   {
     "id": "weak-verb-010",
@@ -197,7 +221,10 @@
     ],
     "context": "Passive possibility",
     "frequency": "common",
-    "domains": ["technical", "academic"]
+    "domains": [
+      "technical",
+      "academic"
+    ]
   },
   {
     "id": "weak-verb-011",
@@ -205,7 +232,7 @@
     "subcategory": "helps-family",
     "pattern": "\\bhelps? to\\b",
     "severity": "low",
-    "confidence": 0.70,
+    "confidence": 0.7,
     "examples": [
       "Caching helps to improve speed.",
       "This helps to reduce latency."
@@ -217,7 +244,9 @@
     ],
     "context": "Wordy helper verb",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-012",
@@ -237,7 +266,9 @@
     ],
     "context": "Formal wordiness",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "weak-verb-013",
@@ -257,7 +288,9 @@
     ],
     "context": "Wordy enabler",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-014",
@@ -277,7 +310,9 @@
     ],
     "context": "Slightly wordy but acceptable",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-015",
@@ -297,7 +332,9 @@
     ],
     "context": "DevOps jargon - acceptable but consider specifics",
     "frequency": "common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-016",
@@ -317,7 +354,10 @@
     ],
     "context": "Vague effect verb",
     "frequency": "very-common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-017",
@@ -337,7 +377,9 @@
     ],
     "context": "Generic but acceptable in data contexts",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-018",
@@ -357,7 +399,9 @@
     ],
     "context": "Acceptable if followed by details",
     "frequency": "common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "weak-verb-019",
@@ -377,7 +421,10 @@
     ],
     "context": "Promise without method",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "weak-verb-020",
@@ -397,6 +444,669 @@
     ],
     "context": "Vague offering verb",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "weak-verb-021",
+    "category": "weak-verbs",
+    "subcategory": "vague-action",
+    "pattern": "\\baddress\\b",
+    "severity": "low",
+    "confidence": 0.65,
+    "examples": [
+      "Example using \\baddress\\b",
+      "Another example with \\baddress\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often vague",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-022",
+    "category": "weak-verbs",
+    "subcategory": "metaphor-verbs",
+    "pattern": "\\bdrive\\b",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using \\bdrive\\b",
+      "Another example with \\bdrive\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often vague cause",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-023",
+    "category": "weak-verbs",
+    "subcategory": "metaphor-verbs",
+    "pattern": "\\bfuel\\b",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using \\bfuel\\b",
+      "Another example with \\bfuel\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Metaphorical cause",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-024",
+    "category": "weak-verbs",
+    "subcategory": "metaphor-verbs",
+    "pattern": "\\bpower\\b",
+    "severity": "medium",
+    "confidence": 0.73,
+    "examples": [
+      "Example using \\bpower\\b",
+      "Another example with \\bpower\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Metaphorical enable",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-025",
+    "category": "weak-verbs",
+    "subcategory": "corporate-speak",
+    "pattern": "\\bempower\\b",
+    "severity": "high",
+    "confidence": 0.84,
+    "examples": [
+      "Example using \\bempower\\b",
+      "Another example with \\bempower\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Corporate buzzword",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-026",
+    "category": "weak-verbs",
+    "subcategory": "enabler-verbs",
+    "pattern": "\\benable\\b",
+    "severity": "low",
+    "confidence": 0.66,
+    "examples": [
+      "Example using \\benable\\b",
+      "Another example with \\benable\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often vague",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-027",
+    "category": "weak-verbs",
+    "subcategory": "vague-action",
+    "pattern": "\\bsupport\\b",
+    "severity": "low",
+    "confidence": 0.64,
+    "examples": [
+      "Example using \\bsupport\\b",
+      "Another example with \\bsupport\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague assistance",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-028",
+    "category": "weak-verbs",
+    "subcategory": "speed-verbs",
+    "pattern": "\\baccelerate\\b",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using \\baccelerate\\b",
+      "Another example with \\baccelerate\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Speed without metrics",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-029",
+    "category": "weak-verbs",
+    "subcategory": "increase-verbs",
+    "pattern": "\\bboost\\b",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using \\bboost\\b",
+      "Another example with \\bboost\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Increase without metrics",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-030",
+    "category": "weak-verbs",
+    "subcategory": "optimization-verbs",
+    "pattern": "\\bmaximize\\b",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using \\bmaximize\\b",
+      "Another example with \\bmaximize\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Optimization claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-031",
+    "category": "weak-verbs",
+    "subcategory": "optimization-verbs",
+    "pattern": "\\bminimize\\b",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using \\bminimize\\b",
+      "Another example with \\bminimize\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Reduction claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-032",
+    "category": "weak-verbs",
+    "subcategory": "corporate-speak",
+    "pattern": "\\bmitigate\\b",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using \\bmitigate\\b",
+      "Another example with \\bmitigate\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Risk jargon",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-033",
+    "category": "weak-verbs",
+    "subcategory": "process-verbs",
+    "pattern": "\\bprioritize\\b",
+    "severity": "low",
+    "confidence": 0.67,
+    "examples": [
+      "Example using \\bprioritize\\b",
+      "Another example with \\bprioritize\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Process term",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-034",
+    "category": "weak-verbs",
+    "subcategory": "process-verbs",
+    "pattern": "\\bsync\\b",
+    "severity": "low",
+    "confidence": 0.65,
+    "examples": [
+      "Example using \\bsync\\b",
+      "Another example with \\bsync\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Process term",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-035",
+    "category": "weak-verbs",
+    "subcategory": "corporate-speak",
+    "pattern": "\\balign\\b",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using \\balign\\b",
+      "Another example with \\balign\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Corporate alignment",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-036",
+    "category": "weak-verbs",
+    "subcategory": "passive-constructions",
+    "pattern": "is utilized by",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system is utilized by data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-037",
+    "category": "weak-verbs",
+    "subcategory": "passive-constructions",
+    "pattern": "was employed to",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system was employed to data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-038",
+    "category": "weak-verbs",
+    "subcategory": "passive-constructions",
+    "pattern": "has been noted",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system has been noted data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-039",
+    "category": "weak-verbs",
+    "subcategory": "passive-constructions",
+    "pattern": "can be observed",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system can be observed data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-040",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "appears to indicate",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system appears to indicate data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-041",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "seems to suggest",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system seems to suggest data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-042",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "tends to demonstrate",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system tends to demonstrate data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-043",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "serves to highlight",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system serves to highlight data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-044",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "functions as a",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system functions as a data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-045",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "operates to provide",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system operates to provide data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-046",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "works to ensure",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system works to ensure data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-047",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "acts to facilitate",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system acts to facilitate data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-048",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "helps to enable",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system helps to enable data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-049",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "contributes to enhancing",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system contributes to enhancing data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "weak-verb-050",
+    "category": "weak-verbs",
+    "subcategory": "vague-verbs",
+    "pattern": "aids in improving",
+    "severity": "info",
+    "confidence": 0.75,
+    "examples": [
+      "The system aids in improving data processing."
+    ],
+    "replacements": [
+      "Use active voice with specific action verb"
+    ],
+    "context": "Weak verbs dilute meaning and are common in AI-generated text",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
   }
 ]

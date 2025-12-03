@@ -17,7 +17,11 @@
     ],
     "context": "One of the strongest AI detection signals - never use this phrase",
     "frequency": "very-common",
-    "domains": ["academic", "technical", "executive"]
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "banned-phrase-002",
@@ -37,7 +41,11 @@
     ],
     "context": "Signals AI-generated meta-commentary",
     "frequency": "very-common",
-    "domains": ["academic", "technical", "executive"]
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "banned-phrase-003",
@@ -57,7 +65,11 @@
     ],
     "context": "Extremely common AI pattern",
     "frequency": "very-common",
-    "domains": ["academic", "technical", "executive"]
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "banned-phrase-004",
@@ -77,7 +89,10 @@
     ],
     "context": "Typical AI throat-clearing",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "banned-phrase-005",
@@ -97,10 +112,126 @@
     ],
     "context": "Overly formal AI pattern",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "banned-phrase-006",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it goes without saying",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "It goes without saying that security is important.",
+      "It goes without saying that testing matters."
+    ],
+    "replacements": [
+      "Security is important",
+      "Testing matters",
+      "State it directly or omit"
+    ],
+    "context": "If it goes without saying, don't say it",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-007",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "needless to say",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Needless to say, performance is critical.",
+      "Needless to say, users expect speed."
+    ],
+    "replacements": [
+      "Performance is critical",
+      "Users expect speed",
+      "State it or don't"
+    ],
+    "context": "Self-contradicting preamble",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-008",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is well known that",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "It is well known that caching improves speed.",
+      "It is well known that testing reduces bugs."
+    ],
+    "replacements": [
+      "Caching improves speed",
+      "Testing reduces bugs",
+      "Cite evidence if needed"
+    ],
+    "context": "Vague authority appeal",
+    "frequency": "common",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-009",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is widely recognized",
+    "severity": "critical",
+    "confidence": 0.9,
+    "examples": [
+      "It is widely recognized that automation helps.",
+      "It is widely recognized that microservices scale."
+    ],
+    "replacements": [
+      "Automation helps",
+      "Microservices scale",
+      "Cite specific sources"
+    ],
+    "context": "Unattributed consensus claim",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-010",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it bears mentioning",
+    "severity": "critical",
+    "confidence": 0.89,
+    "examples": [
+      "It bears mentioning that costs increased.",
+      "It bears mentioning that latency improved."
+    ],
+    "replacements": [
+      "Costs increased",
+      "Latency improved",
+      "State facts directly"
+    ],
+    "context": "Overly formal intro",
+    "frequency": "occasional",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-011",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "seamlessly",
@@ -117,10 +248,13 @@
     ],
     "context": "Marketing buzzword that signals AI writing",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-007",
+    "id": "banned-phrase-012",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "cutting-edge",
@@ -137,10 +271,13 @@
     ],
     "context": "Vague marketing language",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-008",
+    "id": "banned-phrase-013",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "state-of-the-art",
@@ -157,10 +294,13 @@
     ],
     "context": "Academic/technical vagueness",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
-    "id": "banned-phrase-009",
+    "id": "banned-phrase-014",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "revolutionary",
@@ -177,10 +317,13 @@
     ],
     "context": "Hyperbolic marketing language",
     "frequency": "common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
-    "id": "banned-phrase-010",
+    "id": "banned-phrase-015",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "game-changing",
@@ -197,10 +340,12 @@
     ],
     "context": "Business buzzword",
     "frequency": "common",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-011",
+    "id": "banned-phrase-016",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "paradigm shift",
@@ -217,10 +362,12 @@
     ],
     "context": "Management consulting jargon",
     "frequency": "occasional",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-012",
+    "id": "banned-phrase-017",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "best-in-class",
@@ -237,10 +384,13 @@
     ],
     "context": "Unsubstantiated claim",
     "frequency": "common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
-    "id": "banned-phrase-013",
+    "id": "banned-phrase-018",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "industry-leading",
@@ -257,10 +407,12 @@
     ],
     "context": "Marketing claim without evidence",
     "frequency": "common",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-014",
+    "id": "banned-phrase-019",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "comprehensive solution",
@@ -277,10 +429,13 @@
     ],
     "context": "Vague feature claim",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-015",
+    "id": "banned-phrase-020",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "robust and scalable",
@@ -297,15 +452,17 @@
     ],
     "context": "Extremely common AI phrase pair",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
-    "id": "banned-phrase-016",
+    "id": "banned-phrase-021",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "innovative approach",
     "severity": "critical",
-    "confidence": 0.90,
+    "confidence": 0.9,
     "examples": [
       "An innovative approach to caching.",
       "We take an innovative approach."
@@ -317,10 +474,13 @@
     ],
     "context": "Generic claim of novelty",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-017",
+    "id": "banned-phrase-022",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "next-generation",
@@ -337,10 +497,13 @@
     ],
     "context": "Temporal vagueness",
     "frequency": "common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-018",
+    "id": "banned-phrase-023",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "transformative",
@@ -357,10 +520,12 @@
     ],
     "context": "Hyperbolic business language",
     "frequency": "common",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
   },
   {
-    "id": "banned-phrase-019",
+    "id": "banned-phrase-024",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "groundbreaking",
@@ -377,190 +542,239 @@
     ],
     "context": "Academic/research hyperbole",
     "frequency": "occasional",
-    "domains": ["academic"]
-  },
-  {
-    "id": "banned-phrase-020",
-    "category": "banned-phrases",
-    "subcategory": "research-claims",
-    "pattern": "studies suggest",
-    "severity": "critical",
-    "confidence": 0.94,
-    "examples": [
-      "Studies suggest that users prefer simplicity.",
-      "Studies suggest this approach is effective."
-    ],
-    "replacements": [
-      "Nielsen et al. (2020) found 78% prefer minimal UI",
-      "Our A/B test showed 23% higher conversion",
-      "Cite specific studies or your own data"
-    ],
-    "context": "Vague research reference",
-    "frequency": "very-common",
-    "domains": ["academic", "technical"]
-  },
-  {
-    "id": "banned-phrase-021",
-    "category": "banned-phrases",
-    "subcategory": "research-claims",
-    "pattern": "studies show",
-    "severity": "critical",
-    "confidence": 0.93,
-    "examples": [
-      "Studies show that caching improves speed.",
-      "Studies show users value privacy."
-    ],
-    "replacements": [
-      "Chen (2021) measured 60% latency reduction",
-      "Pew Research (2023): 81% prioritize privacy",
-      "Name the study or conduct your own"
-    ],
-    "context": "Generic research citation",
-    "frequency": "very-common",
-    "domains": ["academic", "technical"]
-  },
-  {
-    "id": "banned-phrase-022",
-    "category": "banned-phrases",
-    "subcategory": "research-claims",
-    "pattern": "research has shown",
-    "severity": "critical",
-    "confidence": 0.92,
-    "examples": [
-      "Research has shown that testing matters.",
-      "Research has shown the importance of UX."
-    ],
-    "replacements": [
-      "Fowler (2018) correlated test coverage with fewer bugs",
-      "Our usability study found 2x task completion rate",
-      "Reference specific research"
-    ],
-    "context": "Unattributed research claim",
-    "frequency": "very-common",
-    "domains": ["academic"]
-  },
-  {
-    "id": "banned-phrase-023",
-    "category": "banned-phrases",
-    "subcategory": "research-claims",
-    "pattern": "research indicates",
-    "severity": "critical",
-    "confidence": 0.91,
-    "examples": [
-      "Research indicates that modularity helps.",
-      "Research indicates users prefer speed."
-    ],
-    "replacements": [
-      "Martin (2008) argues for single responsibility",
-      "Google RAIL model targets <100ms interactions",
-      "Cite the actual research"
-    ],
-    "context": "Vague authority appeal",
-    "frequency": "common",
-    "domains": ["academic", "technical"]
-  },
-  {
-    "id": "banned-phrase-024",
-    "category": "banned-phrases",
-    "subcategory": "temporal-vagueness",
-    "pattern": "in today's world",
-    "severity": "critical",
-    "confidence": 0.95,
-    "examples": [
-      "In today's world, cloud computing is essential.",
-      "In today's world, security matters."
-    ],
-    "replacements": [
-      "Cloud spending reached $500B in 2023",
-      "Data breaches cost $4.35M on average (IBM 2023)",
-      "Use current year and specific facts"
-    ],
-    "context": "Meaningless temporal qualifier",
-    "frequency": "very-common",
-    "domains": ["executive"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "banned-phrase-025",
     "category": "banned-phrases",
-    "subcategory": "temporal-vagueness",
-    "pattern": "in this day and age",
+    "subcategory": "vague-intensifiers",
+    "pattern": "world-class",
     "severity": "critical",
-    "confidence": 0.94,
+    "confidence": 0.91,
     "examples": [
-      "In this day and age, APIs are ubiquitous.",
-      "In this day and age, mobile-first is crucial."
+      "World-class engineering team.",
+      "World-class infrastructure."
     ],
     "replacements": [
-      "70% of web traffic now comes from mobile (2023)",
-      "REST APIs power 80% of web services",
-      "State current facts directly"
+      "Team with 50+ years combined experience at FAANG",
+      "99.99% uptime across 5 continents",
+      "Provide specific credentials or metrics"
     ],
-    "context": "Dated expression",
+    "context": "Unverifiable claim",
     "frequency": "common",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
   },
   {
     "id": "banned-phrase-026",
     "category": "banned-phrases",
-    "subcategory": "conclusion-markers",
-    "pattern": "at the end of the day",
-    "severity": "critical",
-    "confidence": 0.93,
+    "subcategory": "vague-intensifiers",
+    "pattern": "enterprise-grade",
+    "severity": "high",
+    "confidence": 0.88,
     "examples": [
-      "At the end of the day, performance matters.",
-      "At the end of the day, users decide success."
+      "Enterprise-grade security.",
+      "Enterprise-grade scalability."
     ],
     "replacements": [
-      "Performance matters most",
-      "Users determine success",
-      "State the point directly"
+      "SOC2 Type II and HIPAA compliant",
+      "Handles 1M concurrent users",
+      "Specify certifications or capacities"
     ],
-    "context": "Casual cliche",
+    "context": "Vague quality claim",
     "frequency": "common",
-    "domains": ["casual", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "banned-phrase-027",
     "category": "banned-phrases",
-    "subcategory": "throat-clearing",
-    "pattern": "one might argue",
-    "severity": "critical",
-    "confidence": 0.90,
+    "subcategory": "vague-intensifiers",
+    "pattern": "mission-critical",
+    "severity": "high",
+    "confidence": 0.87,
     "examples": [
-      "One might argue that microservices add complexity.",
-      "One might argue that testing is expensive."
+      "Mission-critical applications.",
+      "Mission-critical infrastructure."
     ],
     "replacements": [
-      "Microservices add operational complexity",
-      "Testing requires upfront investment",
-      "Make the argument directly"
+      "Applications requiring 99.99% uptime",
+      "Systems that process $10M daily transactions",
+      "Define criticality with metrics"
     ],
-    "context": "Hedging voice",
+    "context": "Vague importance claim",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "banned-phrase-028",
     "category": "banned-phrases",
-    "subcategory": "throat-clearing",
-    "pattern": "it could be argued",
-    "severity": "critical",
-    "confidence": 0.89,
+    "subcategory": "vague-intensifiers",
+    "pattern": "battle-tested",
+    "severity": "high",
+    "confidence": 0.86,
     "examples": [
-      "It could be argued that caching is essential.",
-      "It could be argued that security comes first."
+      "Battle-tested infrastructure.",
+      "A battle-tested approach."
     ],
     "replacements": [
-      "Caching is essential for sub-100ms latency",
-      "Security must be built in from day one",
-      "Assert your position"
+      "Processed 10B requests without data loss",
+      "Deployed at 500+ companies since 2019",
+      "Cite specific track record"
     ],
-    "context": "Passive argumentation",
-    "frequency": "common",
-    "domains": ["academic"]
+    "context": "Unverified reliability claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "banned-phrase-029",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "bleeding-edge",
+    "severity": "critical",
+    "confidence": 0.9,
+    "examples": [
+      "Bleeding-edge technology.",
+      "A bleeding-edge solution."
+    ],
+    "replacements": [
+      "Released 2 weeks ago",
+      "Pre-release beta software",
+      "Specify actual version or date"
+    ],
+    "context": "Risky newness claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-030",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "dramatically improves",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "Dramatically improves performance.",
+      "Dramatically improves user experience."
+    ],
+    "replacements": [
+      "Improves performance by 300%",
+      "Reduces page load from 4s to 0.8s",
+      "Quantify the improvement"
+    ],
+    "context": "Unquantified improvement",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-031",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "significantly enhances",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "Significantly enhances security.",
+      "Significantly enhances performance."
+    ],
+    "replacements": [
+      "Blocks 99.7% of SQL injection attempts",
+      "Reduces query time from 500ms to 45ms",
+      "Provide specific metrics"
+    ],
+    "context": "Vague enhancement claim",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-032",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "substantially reduces",
+    "severity": "high",
+    "confidence": 0.91,
+    "examples": [
+      "Substantially reduces costs.",
+      "Substantially reduces latency."
+    ],
+    "replacements": [
+      "Reduces costs by 60%",
+      "Cuts latency from 200ms to 30ms",
+      "Specify the reduction amount"
+    ],
+    "context": "Vague reduction claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-033",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "greatly increases",
+    "severity": "high",
+    "confidence": 0.9,
+    "examples": [
+      "Greatly increases throughput.",
+      "Greatly increases efficiency."
+    ],
+    "replacements": [
+      "Increases throughput from 1k to 10k RPS",
+      "Doubles developer productivity",
+      "Quantify the increase"
+    ],
+    "context": "Vague increase claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-034",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "vastly superior",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Vastly superior performance.",
+      "A vastly superior approach."
+    ],
+    "replacements": [
+      "5x faster than the previous implementation",
+      "90% fewer bugs than alternative A",
+      "Specify the superiority metrics"
+    ],
+    "context": "Unsubstantiated comparison",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-035",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "highly effective",
@@ -577,10 +791,57 @@
     ],
     "context": "Vague effectiveness claim",
     "frequency": "very-common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
-    "id": "banned-phrase-030",
+    "id": "banned-phrase-036",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "extremely valuable",
+    "severity": "high",
+    "confidence": 0.86,
+    "examples": [
+      "This feature is extremely valuable.",
+      "Extremely valuable insights."
+    ],
+    "replacements": [
+      "This feature saved $200k in support costs",
+      "Insights that increased conversion by 30%",
+      "Quantify the value"
+    ],
+    "context": "Subjective value claim",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-037",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "remarkably efficient",
+    "severity": "high",
+    "confidence": 0.85,
+    "examples": [
+      "A remarkably efficient algorithm.",
+      "Remarkably efficient use of resources."
+    ],
+    "replacements": [
+      "O(log n) complexity vs O(n) baseline",
+      "Uses 80% less memory than naive approach",
+      "Specify efficiency metrics"
+    ],
+    "context": "Vague efficiency claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-038",
     "category": "banned-phrases",
     "subcategory": "vague-intensifiers",
     "pattern": "extremely important",
@@ -597,6 +858,3556 @@
     ],
     "context": "Intensity without substance",
     "frequency": "very-common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-039",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "studies suggest",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "Studies suggest that users prefer simplicity.",
+      "Studies suggest this approach is effective."
+    ],
+    "replacements": [
+      "Nielsen et al. (2020) found 78% prefer minimal UI",
+      "Our A/B test showed 23% higher conversion",
+      "Cite specific studies or your own data"
+    ],
+    "context": "Vague research reference",
+    "frequency": "very-common",
+    "domains": [
+      "academic",
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-040",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "studies show",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "Studies show that caching improves speed.",
+      "Studies show users value privacy."
+    ],
+    "replacements": [
+      "Chen (2021) measured 60% latency reduction",
+      "Pew Research (2023): 81% prioritize privacy",
+      "Name the study or conduct your own"
+    ],
+    "context": "Generic research citation",
+    "frequency": "very-common",
+    "domains": [
+      "academic",
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-041",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "research has shown",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Research has shown that testing matters.",
+      "Research has shown the importance of UX."
+    ],
+    "replacements": [
+      "Fowler (2018) correlated test coverage with fewer bugs",
+      "Our usability study found 2x task completion rate",
+      "Reference specific research"
+    ],
+    "context": "Unattributed research claim",
+    "frequency": "very-common",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-042",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "research indicates",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "Research indicates that modularity helps.",
+      "Research indicates users prefer speed."
+    ],
+    "replacements": [
+      "Martin (2008) argues for single responsibility",
+      "Google RAIL model targets <100ms interactions",
+      "Cite the actual research"
+    ],
+    "context": "Vague authority appeal",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-043",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "experts agree",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "Experts agree that microservices scale well.",
+      "Experts agree that testing is essential."
+    ],
+    "replacements": [
+      "Fowler recommends microservices for teams >50 devs",
+      "ISTQB guidelines require 80%+ coverage",
+      "Name the experts or cite sources"
+    ],
+    "context": "Vague consensus claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-044",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "according to experts",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "According to experts, caching is essential.",
+      "According to experts, security comes first."
+    ],
+    "replacements": [
+      "According to OWASP Top 10 (2023)",
+      "As recommended by AWS Well-Architected",
+      "Name specific experts or standards"
+    ],
+    "context": "Unattributed expert claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-045",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in today's world",
+    "severity": "critical",
+    "confidence": 0.95,
+    "examples": [
+      "In today's world, cloud computing is essential.",
+      "In today's world, security matters."
+    ],
+    "replacements": [
+      "Cloud spending reached $500B in 2023",
+      "Data breaches cost $4.35M on average (IBM 2023)",
+      "Use current year and specific facts"
+    ],
+    "context": "Meaningless temporal qualifier",
+    "frequency": "very-common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-046",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in this day and age",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "In this day and age, APIs are ubiquitous.",
+      "In this day and age, mobile-first is crucial."
+    ],
+    "replacements": [
+      "70% of web traffic now comes from mobile (2023)",
+      "REST APIs power 80% of web services",
+      "State current facts directly"
+    ],
+    "context": "Dated expression",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-047",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in the modern era",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "In the modern era of cloud computing.",
+      "In the modern era of AI."
+    ],
+    "replacements": [
+      "Since AWS launched in 2006",
+      "With GPT-4 (March 2023)",
+      "Be specific about time"
+    ],
+    "context": "Vague temporal reference",
+    "frequency": "common",
+    "domains": [
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-048",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in today's fast-paced",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "In today's fast-paced environment.",
+      "In today's fast-paced market."
+    ],
+    "replacements": [
+      "With 2-week sprint cycles",
+      "Given quarterly product releases",
+      "Define the pace specifically"
+    ],
+    "context": "Cliche temporal phrase",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-049",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in recent years",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "In recent years, cloud adoption has grown.",
+      "In recent years, DevOps has matured."
+    ],
+    "replacements": [
+      "Since 2020, cloud adoption grew 35%",
+      "From 2019 to 2023, DevOps adoption doubled",
+      "Specify the time range"
+    ],
+    "context": "Vague time reference",
+    "frequency": "very-common",
+    "domains": [
+      "academic",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-050",
+    "category": "banned-phrases",
+    "subcategory": "conclusion-markers",
+    "pattern": "at the end of the day",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "At the end of the day, performance matters.",
+      "At the end of the day, users decide success."
+    ],
+    "replacements": [
+      "Performance matters most",
+      "Users determine success",
+      "State the point directly"
+    ],
+    "context": "Casual cliche",
+    "frequency": "common",
+    "domains": [
+      "casual",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-051",
+    "category": "banned-phrases",
+    "subcategory": "conclusion-markers",
+    "pattern": "all things considered",
+    "severity": "high",
+    "confidence": 0.89,
+    "examples": [
+      "All things considered, the migration succeeded.",
+      "All things considered, costs are reasonable."
+    ],
+    "replacements": [
+      "The migration succeeded despite 2 rollbacks",
+      "Costs are within 10% of budget",
+      "State specific considerations"
+    ],
+    "context": "Vague summary phrase",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-052",
+    "category": "banned-phrases",
+    "subcategory": "conclusion-markers",
+    "pattern": "when all is said and done",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "When all is said and done, quality wins.",
+      "When all is said and done, users matter."
+    ],
+    "replacements": [
+      "Quality wins",
+      "Users matter",
+      "State conclusions directly"
+    ],
+    "context": "Wordy conclusion phrase",
+    "frequency": "occasional",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-053",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "one might argue",
+    "severity": "critical",
+    "confidence": 0.9,
+    "examples": [
+      "One might argue that microservices add complexity.",
+      "One might argue that testing is expensive."
+    ],
+    "replacements": [
+      "Microservices add operational complexity",
+      "Testing requires upfront investment",
+      "Make the argument directly"
+    ],
+    "context": "Hedging voice",
+    "frequency": "common",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-054",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it could be argued",
+    "severity": "critical",
+    "confidence": 0.89,
+    "examples": [
+      "It could be argued that caching is essential.",
+      "It could be argued that security comes first."
+    ],
+    "replacements": [
+      "Caching is essential for sub-100ms latency",
+      "Security must be built in from day one",
+      "Assert your position"
+    ],
+    "context": "Passive argumentation",
+    "frequency": "common",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-055",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "some would say",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "Some would say that simplicity is key.",
+      "Some would say that testing slows development."
+    ],
+    "replacements": [
+      "Simplicity is key",
+      "Testing adds upfront time but reduces bugs",
+      "Make the argument or cite sources"
+    ],
+    "context": "Vague attribution",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "casual"
+    ]
+  },
+  {
+    "id": "banned-phrase-056",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "many believe",
+    "severity": "high",
+    "confidence": 0.86,
+    "examples": [
+      "Many believe that automation is the future.",
+      "Many believe that AI will transform work."
+    ],
+    "replacements": [
+      "Automation adoption grew 40% YoY (McKinsey 2023)",
+      "60% of executives plan AI investments (Deloitte)",
+      "Cite specific polls or studies"
+    ],
+    "context": "Unsubstantiated consensus",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-057",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it has been observed",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "It has been observed that caching helps.",
+      "It has been observed that users prefer speed."
+    ],
+    "replacements": [
+      "Caching reduced our latency by 60%",
+      "Our users clicked 40% more with faster pages",
+      "Who observed it? Be specific"
+    ],
+    "context": "Passive observation without attribution",
+    "frequency": "common",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-058",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is evident that",
+    "severity": "critical",
+    "confidence": 0.9,
+    "examples": [
+      "It is evident that the system scales well.",
+      "It is evident that security is crucial."
+    ],
+    "replacements": [
+      "The system scales from 1k to 100k users",
+      "Security breaches cost $4.35M on average",
+      "Show the evidence"
+    ],
+    "context": "Claimed obviousness",
+    "frequency": "common",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-059",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it stands to reason",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "It stands to reason that faster is better.",
+      "It stands to reason that testing prevents bugs."
+    ],
+    "replacements": [
+      "Faster response times increase conversion",
+      "Testing prevents bugs",
+      "State the reasoning directly"
+    ],
+    "context": "Presumptive logic",
+    "frequency": "occasional",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-060",
+    "category": "banned-phrases",
+    "subcategory": "journey-narrative",
+    "pattern": "on this journey",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Join us on this journey.",
+      "On this journey to digital transformation."
+    ],
+    "replacements": [
+      "As we implement CI/CD",
+      "During the 6-month migration project",
+      "Be specific about the process"
+    ],
+    "context": "Corporate journey metaphor",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-061",
+    "category": "banned-phrases",
+    "subcategory": "journey-narrative",
+    "pattern": "our journey began",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "Our journey began three years ago.",
+      "Our journey began with a simple idea."
+    ],
+    "replacements": [
+      "We started in 2020 with 5 engineers",
+      "The project kicked off in Q1 2022",
+      "State concrete origins"
+    ],
+    "context": "Narrative cliche",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-062",
+    "category": "banned-phrases",
+    "subcategory": "journey-narrative",
+    "pattern": "the path forward",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "The path forward is clear.",
+      "We see a clear path forward."
+    ],
+    "replacements": [
+      "Next, we will implement feature X",
+      "Q2 priorities include Y and Z",
+      "Be specific about next steps"
+    ],
+    "context": "Vague direction metaphor",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-063",
+    "category": "banned-phrases",
+    "subcategory": "landscape-metaphor",
+    "pattern": "in today's landscape",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "In today's technology landscape.",
+      "In today's competitive landscape."
+    ],
+    "replacements": [
+      "Given current cloud pricing models",
+      "With 15 competing SaaS products",
+      "Be specific about context"
+    ],
+    "context": "Vague metaphor",
+    "frequency": "very-common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-064",
+    "category": "banned-phrases",
+    "subcategory": "landscape-metaphor",
+    "pattern": "in the digital landscape",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Navigating the digital landscape.",
+      "Success in the digital landscape."
+    ],
+    "replacements": [
+      "Across web, mobile, and API channels",
+      "Managing 5 digital touchpoints",
+      "Name specific digital contexts"
+    ],
+    "context": "Buzzword metaphor",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-065",
+    "category": "banned-phrases",
+    "subcategory": "landscape-metaphor",
+    "pattern": "the evolving landscape",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "The evolving landscape of technology.",
+      "In the evolving landscape of security."
+    ],
+    "replacements": [
+      "As container adoption grows 20% yearly",
+      "With new threats like XYZ emerging",
+      "Name specific evolutions"
+    ],
+    "context": "Vague change reference",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-066",
+    "category": "banned-phrases",
+    "subcategory": "commitment-declarations",
+    "pattern": "we remain committed",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "We remain committed to quality.",
+      "We remain committed to our customers."
+    ],
+    "replacements": [
+      "We maintained 99.9% uptime last quarter",
+      "We resolved 95% of tickets within SLA",
+      "Show commitment through metrics"
+    ],
+    "context": "Empty commitment phrase",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-067",
+    "category": "banned-phrases",
+    "subcategory": "commitment-declarations",
+    "pattern": "our unwavering commitment",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "Our unwavering commitment to excellence.",
+      "Our unwavering commitment to security."
+    ],
+    "replacements": [
+      "Zero security breaches in 5 years",
+      "100% of deploys pass security review",
+      "Demonstrate with evidence"
+    ],
+    "context": "Hyperbolic commitment",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-068",
+    "category": "banned-phrases",
+    "subcategory": "commitment-declarations",
+    "pattern": "demonstrates our commitment",
+    "severity": "high",
+    "confidence": 0.89,
+    "examples": [
+      "This demonstrates our commitment to users.",
+      "This demonstrates our commitment to quality."
+    ],
+    "replacements": [
+      "This reduced user-reported bugs by 70%",
+      "This improved test coverage from 60% to 95%",
+      "Show impact, not commitment"
+    ],
+    "context": "Self-congratulatory claim",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-069",
+    "category": "banned-phrases",
+    "subcategory": "metaphors-overused",
+    "pattern": "at the heart of",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "Security is at the heart of our platform.",
+      "Users are at the heart of our design."
+    ],
+    "replacements": [
+      "Security is enforced at every layer",
+      "User research drives all design decisions",
+      "Be specific about centrality"
+    ],
+    "context": "Cliche metaphor",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-070",
+    "category": "banned-phrases",
+    "subcategory": "metaphors-overused",
+    "pattern": "forms the backbone",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "PostgreSQL forms the backbone of our data layer.",
+      "Testing forms the backbone of our quality process."
+    ],
+    "replacements": [
+      "PostgreSQL handles all 50TB of customer data",
+      "Every PR requires passing tests before merge",
+      "Describe the actual role"
+    ],
+    "context": "Structural metaphor",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-071",
+    "category": "banned-phrases",
+    "subcategory": "metaphors-overused",
+    "pattern": "serves as the foundation",
+    "severity": "high",
+    "confidence": 0.86,
+    "examples": [
+      "This framework serves as the foundation.",
+      "Trust serves as the foundation of our relationships."
+    ],
+    "replacements": [
+      "This framework handles routing, auth, and logging",
+      "98% customer retention rate over 3 years",
+      "Describe the foundation specifically"
+    ],
+    "context": "Architectural metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-072",
+    "category": "banned-phrases",
+    "subcategory": "metaphors-overused",
+    "pattern": "acts as a cornerstone",
+    "severity": "high",
+    "confidence": 0.85,
+    "examples": [
+      "Security acts as a cornerstone of our approach.",
+      "Testing acts as a cornerstone of quality."
+    ],
+    "replacements": [
+      "Security review gates every deployment",
+      "Tests must pass before any merge",
+      "Explain the critical role"
+    ],
+    "context": "Construction metaphor",
+    "frequency": "occasional",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-073",
+    "category": "banned-phrases",
+    "subcategory": "metaphors-overused",
+    "pattern": "functions as a bridge",
+    "severity": "high",
+    "confidence": 0.84,
+    "examples": [
+      "The API functions as a bridge between systems.",
+      "This team functions as a bridge between departments."
+    ],
+    "replacements": [
+      "The API translates between REST and GraphQL",
+      "This team coordinates releases across 3 departments",
+      "Describe the actual connection"
+    ],
+    "context": "Connection metaphor",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-074",
+    "category": "banned-phrases",
+    "subcategory": "metaphors-overused",
+    "pattern": "represents a milestone",
+    "severity": "high",
+    "confidence": 0.86,
+    "examples": [
+      "This release represents a milestone.",
+      "Our growth represents a milestone."
+    ],
+    "replacements": [
+      "This release adds 5 major features",
+      "We reached 100k users this quarter",
+      "Name the specific achievement"
+    ],
+    "context": "Achievement metaphor",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-075",
+    "category": "banned-phrases",
+    "subcategory": "metaphors-overused",
+    "pattern": "marks a turning point",
+    "severity": "high",
+    "confidence": 0.85,
+    "examples": [
+      "This acquisition marks a turning point.",
+      "The new platform marks a turning point."
+    ],
+    "replacements": [
+      "This acquisition adds 500k users",
+      "The new platform enables mobile access",
+      "Describe the actual change"
+    ],
+    "context": "Transition metaphor",
+    "frequency": "occasional",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-076",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "vibrant ecosystem",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "A vibrant ecosystem of partners.",
+      "Our vibrant ecosystem of developers."
+    ],
+    "replacements": [
+      "500+ partner integrations available",
+      "12k developers using our API daily",
+      "Quantify the ecosystem"
+    ],
+    "context": "Marketing cliche",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-077",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "rich heritage",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "Our company's rich heritage.",
+      "Building on a rich heritage of innovation."
+    ],
+    "replacements": [
+      "Founded in 1995, now serving 50 countries",
+      "25 years of shipping enterprise software",
+      "State specific history"
+    ],
+    "context": "Historical vagueness",
+    "frequency": "occasional",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-078",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "diverse landscape",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "The diverse landscape of cloud providers.",
+      "A diverse landscape of solutions."
+    ],
+    "replacements": [
+      "AWS, Azure, and GCP combined hold 65% market share",
+      "15+ competing tools in this category",
+      "Name the diversity"
+    ],
+    "context": "Vague descriptor",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-079",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "thriving community",
+    "severity": "high",
+    "confidence": 0.86,
+    "examples": [
+      "Our thriving community of users.",
+      "A thriving community of contributors."
+    ],
+    "replacements": [
+      "15k active forum members posting weekly",
+      "500 contributors with 2k commits last year",
+      "Show community activity metrics"
+    ],
+    "context": "Community marketing speak",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-080",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "dynamic environment",
+    "severity": "high",
+    "confidence": 0.85,
+    "examples": [
+      "Our dynamic work environment.",
+      "In a dynamic business environment."
+    ],
+    "replacements": [
+      "Remote-first with quarterly onsites",
+      "Market share shifts 5-10% quarterly",
+      "Define the dynamics"
+    ],
+    "context": "Vague atmosphere claim",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-081",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "aims to provide",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "This feature aims to provide better UX.",
+      "Our service aims to provide reliability."
+    ],
+    "replacements": [
+      "This feature improves UX by reducing clicks 40%",
+      "Our service achieves 99.9% uptime",
+      "State what it does, not what it aims to do"
+    ],
+    "context": "Tentative achievement claim",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-082",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "seeks to deliver",
+    "severity": "critical",
+    "confidence": 0.9,
+    "examples": [
+      "Our platform seeks to deliver value.",
+      "This approach seeks to deliver results."
+    ],
+    "replacements": [
+      "Our platform delivers 3x ROI on average",
+      "This approach reduced support tickets 50%",
+      "State actual delivery"
+    ],
+    "context": "Intent over action",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-083",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "strives to achieve",
+    "severity": "critical",
+    "confidence": 0.89,
+    "examples": [
+      "Our team strives to achieve excellence.",
+      "We strive to achieve high performance."
+    ],
+    "replacements": [
+      "Our team shipped 12 features last quarter",
+      "We achieved p99 latency under 50ms",
+      "Report achievements, not striving"
+    ],
+    "context": "Effort over results",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-084",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "endeavors to create",
+    "severity": "critical",
+    "confidence": 0.88,
+    "examples": [
+      "Our company endeavors to create value.",
+      "We endeavor to create great products."
+    ],
+    "replacements": [
+      "Our products saved customers $10M last year",
+      "We built 3 products used by 100k+ users",
+      "Show what you created"
+    ],
+    "context": "Overly formal intent",
+    "frequency": "occasional",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-085",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "designed to enhance",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "Features designed to enhance productivity.",
+      "Tools designed to enhance collaboration."
+    ],
+    "replacements": [
+      "Features that cut task time by 30%",
+      "Tools that enabled 50% more cross-team projects",
+      "Show the actual enhancement"
+    ],
+    "context": "Design intent vs outcome",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-086",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "intended to facilitate",
+    "severity": "high",
+    "confidence": 0.86,
+    "examples": [
+      "Processes intended to facilitate adoption.",
+      "Tools intended to facilitate integration."
+    ],
+    "replacements": [
+      "Processes that achieved 80% adoption",
+      "Tools that reduced integration time from days to hours",
+      "Show actual facilitation"
+    ],
+    "context": "Intent vs achievement",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-087",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "meant to streamline",
+    "severity": "high",
+    "confidence": 0.85,
+    "examples": [
+      "Features meant to streamline workflows.",
+      "Changes meant to streamline operations."
+    ],
+    "replacements": [
+      "Features that reduced workflow steps from 7 to 3",
+      "Changes that cut operational overhead by 40%",
+      "Quantify the streamlining"
+    ],
+    "context": "Intent without evidence",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-088",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "poised to transform",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "We are poised to transform the industry.",
+      "This technology is poised to transform workflows."
+    ],
+    "replacements": [
+      "We're targeting 20% market share by Q4",
+      "This technology reduced workflow time 60%",
+      "Show transformation or state goals"
+    ],
+    "context": "Future hype without evidence",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-089",
+    "category": "banned-phrases",
+    "subcategory": "synergy-speak",
+    "pattern": "synergy",
+    "severity": "critical",
+    "confidence": 0.94,
+    "examples": [
+      "Creating synergy between teams.",
+      "The synergy of our approach."
+    ],
+    "replacements": [
+      "Teams sharing 3 common components",
+      "Combining frontend and API in one deployment",
+      "Describe the actual collaboration"
+    ],
+    "context": "Classic corporate buzzword",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-090",
+    "category": "banned-phrases",
+    "subcategory": "synergy-speak",
+    "pattern": "synergistic",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "A synergistic partnership.",
+      "Synergistic effects of our approach."
+    ],
+    "replacements": [
+      "Partnership adding 50k users to our platform",
+      "Combining tools reduced build time 30%",
+      "Name specific collaboration benefits"
+    ],
+    "context": "Buzzword derivative",
+    "frequency": "occasional",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-091",
+    "category": "banned-phrases",
+    "subcategory": "verb-misuse",
+    "pattern": "leverage",
+    "severity": "high",
+    "confidence": 0.89,
+    "examples": [
+      "We leverage cloud infrastructure.",
+      "Leveraging AI for automation."
+    ],
+    "replacements": [
+      "We use AWS for hosting",
+      "Using GPT-4 to generate summaries",
+      "Use 'use' or be specific"
+    ],
+    "context": "Business jargon for 'use'",
+    "frequency": "very-common",
+    "domains": [
+      "executive",
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-092",
+    "category": "banned-phrases",
+    "subcategory": "verb-misuse",
+    "pattern": "utilize",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "We utilize React for the frontend.",
+      "Utilize best practices."
+    ],
+    "replacements": [
+      "We use React for the frontend",
+      "Follow these practices",
+      "Just say 'use'"
+    ],
+    "context": "Unnecessarily formal 'use'",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-093",
+    "category": "banned-phrases",
+    "subcategory": "verb-misuse",
+    "pattern": "facilitate",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "This facilitates communication.",
+      "To facilitate integration."
+    ],
+    "replacements": [
+      "This enables team chat",
+      "To connect the two systems",
+      "Use simpler verbs"
+    ],
+    "context": "Often unnecessary",
+    "frequency": "common",
+    "domains": [
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-094",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "as such",
+    "severity": "medium",
+    "confidence": 0.8,
+    "examples": [
+      "Performance is critical. As such, we cache.",
+      "Users value speed. As such, we optimize."
+    ],
+    "replacements": [
+      "Performance is critical, so we cache",
+      "Users value speed, so we optimize",
+      "Use 'so' or 'therefore'"
+    ],
+    "context": "Formal connector",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-095",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "in order to",
+    "severity": "low",
+    "confidence": 0.7,
+    "examples": [
+      "In order to improve speed.",
+      "In order to reduce costs."
+    ],
+    "replacements": [
+      "To improve speed",
+      "To reduce costs",
+      "Just use 'to'"
+    ],
+    "context": "Wordy alternative to 'to'",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-096",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "due to the fact that",
+    "severity": "high",
+    "confidence": 0.89,
+    "examples": [
+      "Due to the fact that latency is high.",
+      "Due to the fact that costs increased."
+    ],
+    "replacements": [
+      "Because latency is high",
+      "Because costs increased",
+      "Use 'because'"
+    ],
+    "context": "Wordy 'because'",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-097",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "for the purpose of",
+    "severity": "high",
+    "confidence": 0.88,
+    "examples": [
+      "For the purpose of testing.",
+      "For the purpose of demonstration."
+    ],
+    "replacements": [
+      "For testing",
+      "To demonstrate",
+      "Simplify to 'for' or 'to'"
+    ],
+    "context": "Wordy phrase",
+    "frequency": "common",
+    "domains": [
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-098",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "in the event that",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "In the event that errors occur.",
+      "In the event that users complain."
+    ],
+    "replacements": [
+      "If errors occur",
+      "If users complain",
+      "Use 'if'"
+    ],
+    "context": "Wordy 'if'",
+    "frequency": "common",
+    "domains": [
+      "technical"
+    ]
+  },
+  {
+    "id": "banned-phrase-099",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "at this point in time",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "At this point in time, we use PostgreSQL.",
+      "At this point in time, costs are stable."
+    ],
+    "replacements": [
+      "Currently, we use PostgreSQL",
+      "Now, costs are stable",
+      "Use 'now' or 'currently'"
+    ],
+    "context": "Extremely wordy 'now'",
+    "frequency": "common",
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "banned-phrase-100",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "at the present time",
+    "severity": "critical",
+    "confidence": 0.92,
+    "examples": [
+      "At the present time, we support 10 languages.",
+      "At the present time, latency is acceptable."
+    ],
+    "replacements": [
+      "Currently, we support 10 languages",
+      "Now, latency is acceptable",
+      "Use 'now' or 'currently'"
+    ],
+    "context": "Formal 'now'",
+    "frequency": "common",
+    "domains": [
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-101",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is clear that",
+    "severity": "critical",
+    "confidence": 0.9223437211716399,
+    "examples": [
+      "Example with it is clear that",
+      "Another it is clear that example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Obviousness claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-102",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is apparent that",
+    "severity": "critical",
+    "confidence": 0.857776100557384,
+    "examples": [
+      "Example with it is apparent that",
+      "Another it is apparent that example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Visibility claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-103",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is undeniable that",
+    "severity": "critical",
+    "confidence": 0.8706031582894904,
+    "examples": [
+      "Example with it is undeniable that",
+      "Another it is undeniable that example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Strong claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-104",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is indisputable that",
+    "severity": "critical",
+    "confidence": 0.9135716472184934,
+    "examples": [
+      "Example with it is indisputable that",
+      "Another it is indisputable that example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Argument claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-105",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is safe to say",
+    "severity": "critical",
+    "confidence": 0.8549809555869946,
+    "examples": [
+      "Example with it is safe to say",
+      "Another it is safe to say example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Safety hedge",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-106",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is fair to say",
+    "severity": "critical",
+    "confidence": 0.9008310530389815,
+    "examples": [
+      "Example with it is fair to say",
+      "Another it is fair to say example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Fairness claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-107",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is reasonable to assume",
+    "severity": "critical",
+    "confidence": 0.8915200906300617,
+    "examples": [
+      "Example with it is reasonable to assume",
+      "Another it is reasonable to assume example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Assumption",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-108",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is easy to see",
+    "severity": "critical",
+    "confidence": 0.9106765010937589,
+    "examples": [
+      "Example with it is easy to see",
+      "Another it is easy to see example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Obviousness",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-109",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is hard to imagine",
+    "severity": "critical",
+    "confidence": 0.8939567000046778,
+    "examples": [
+      "Example with it is hard to imagine",
+      "Another it is hard to imagine example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Difficulty claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-110",
+    "category": "banned-phrases",
+    "subcategory": "throat-clearing",
+    "pattern": "it is no secret that",
+    "severity": "critical",
+    "confidence": 0.9233332241954741,
+    "examples": [
+      "Example with it is no secret that",
+      "Another it is no secret that example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Common knowledge",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-111",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "truly exceptional",
+    "severity": "critical",
+    "confidence": 0.9279617665521638,
+    "examples": [
+      "Example with truly exceptional",
+      "Another truly exceptional example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Hyperbole",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-112",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "absolutely essential",
+    "severity": "critical",
+    "confidence": 0.9484846942220541,
+    "examples": [
+      "Example with absolutely essential",
+      "Another absolutely essential example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Hyperbole",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-113",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "incredibly powerful",
+    "severity": "critical",
+    "confidence": 0.8651060691168818,
+    "examples": [
+      "Example with incredibly powerful",
+      "Another incredibly powerful example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Hyperbole",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-114",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "remarkably simple",
+    "severity": "critical",
+    "confidence": 0.9494015531071787,
+    "examples": [
+      "Example with remarkably simple",
+      "Another remarkably simple example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Simplicity claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-115",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "fundamentally different",
+    "severity": "critical",
+    "confidence": 0.8738887596869923,
+    "examples": [
+      "Example with fundamentally different",
+      "Another fundamentally different example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Difference claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-116",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "radically new",
+    "severity": "critical",
+    "confidence": 0.8202427321875627,
+    "examples": [
+      "Example with radically new",
+      "Another radically new example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Novelty claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-117",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "completely reimagined",
+    "severity": "critical",
+    "confidence": 0.8614391661460076,
+    "examples": [
+      "Example with completely reimagined",
+      "Another completely reimagined example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Change claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-118",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "fully optimized",
+    "severity": "critical",
+    "confidence": 0.8469575244781931,
+    "examples": [
+      "Example with fully optimized",
+      "Another fully optimized example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Optimization claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-119",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "deeply integrated",
+    "severity": "critical",
+    "confidence": 0.8666035464963094,
+    "examples": [
+      "Example with deeply integrated",
+      "Another deeply integrated example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Integration claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-120",
+    "category": "banned-phrases",
+    "subcategory": "vague-intensifiers",
+    "pattern": "highly scalable",
+    "severity": "critical",
+    "confidence": 0.8642692201858675,
+    "examples": [
+      "Example with highly scalable",
+      "Another highly scalable example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Scale claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-121",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "move the needle",
+    "severity": "high",
+    "confidence": 0.8271781837381572,
+    "examples": [
+      "Example with move the needle",
+      "Another move the needle example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Impact metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-122",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "low-hanging fruit",
+    "severity": "high",
+    "confidence": 0.9474848160849771,
+    "examples": [
+      "Example with low-hanging fruit",
+      "Another low-hanging fruit example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Easy wins",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-123",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "deep dive",
+    "severity": "high",
+    "confidence": 0.8756855964418748,
+    "examples": [
+      "Example with deep dive",
+      "Another deep dive example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Analysis metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-124",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "circle back",
+    "severity": "high",
+    "confidence": 0.9204057702709362,
+    "examples": [
+      "Example with circle back",
+      "Another circle back example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Follow-up",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-125",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "touch base",
+    "severity": "high",
+    "confidence": 0.8531271414127716,
+    "examples": [
+      "Example with touch base",
+      "Another touch base example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Contact",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-126",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "take offline",
+    "severity": "high",
+    "confidence": 0.9038763073237132,
+    "examples": [
+      "Example with take offline",
+      "Another take offline example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Side discussion",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-127",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "bandwidth",
+    "severity": "high",
+    "confidence": 0.8148079385968234,
+    "examples": [
+      "Example with bandwidth",
+      "Another bandwidth example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Capacity metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-128",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "heavy lifting",
+    "severity": "high",
+    "confidence": 0.9177422591251863,
+    "examples": [
+      "Example with heavy lifting",
+      "Another heavy lifting example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Work metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-129",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "north star",
+    "severity": "high",
+    "confidence": 0.8047476145680482,
+    "examples": [
+      "Example with north star",
+      "Another north star example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Goal metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-130",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "stakeholder",
+    "severity": "high",
+    "confidence": 0.8576792711341692,
+    "examples": [
+      "Example with stakeholder",
+      "Another stakeholder example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Person with interest",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-131",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "committed to delivering",
+    "severity": "high",
+    "confidence": 0.9047790440303286,
+    "examples": [
+      "Example with committed to delivering",
+      "Another committed to delivering example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Intent",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-132",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "focused on providing",
+    "severity": "high",
+    "confidence": 0.8275450706220463,
+    "examples": [
+      "Example with focused on providing",
+      "Another focused on providing example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Intent",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-133",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "dedicated to ensuring",
+    "severity": "high",
+    "confidence": 0.8019237629089662,
+    "examples": [
+      "Example with dedicated to ensuring",
+      "Another dedicated to ensuring example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Intent",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-134",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "determined to achieve",
+    "severity": "high",
+    "confidence": 0.9193800790213521,
+    "examples": [
+      "Example with determined to achieve",
+      "Another determined to achieve example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Intent",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-135",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "working towards",
+    "severity": "high",
+    "confidence": 0.8950872853449224,
+    "examples": [
+      "Example with working towards",
+      "Another working towards example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Progress",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-136",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "striving for excellence",
+    "severity": "high",
+    "confidence": 0.8725505364692239,
+    "examples": [
+      "Example with striving for excellence",
+      "Another striving for excellence example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Quality intent",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-137",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "driving innovation",
+    "severity": "high",
+    "confidence": 0.8636744566165909,
+    "examples": [
+      "Example with driving innovation",
+      "Another driving innovation example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Innovation intent",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-138",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "building towards",
+    "severity": "high",
+    "confidence": 0.8790917200157237,
+    "examples": [
+      "Example with building towards",
+      "Another building towards example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Construction",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-139",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "paving the way",
+    "severity": "high",
+    "confidence": 0.8203881821088673,
+    "examples": [
+      "Example with paving the way",
+      "Another paving the way example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Path metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-140",
+    "category": "banned-phrases",
+    "subcategory": "performative-language",
+    "pattern": "leading the charge",
+    "severity": "high",
+    "confidence": 0.8869906936033318,
+    "examples": [
+      "Example with leading the charge",
+      "Another leading the charge example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Leadership",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-141",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "evidence suggests",
+    "severity": "high",
+    "confidence": 0.910001648380767,
+    "examples": [
+      "Example with evidence suggests",
+      "Another evidence suggests example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague evidence",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-142",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "data indicates",
+    "severity": "high",
+    "confidence": 0.908290569607859,
+    "examples": [
+      "Example with data indicates",
+      "Another data indicates example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague data",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-143",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "findings reveal",
+    "severity": "high",
+    "confidence": 0.8251087873508179,
+    "examples": [
+      "Example with findings reveal",
+      "Another findings reveal example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague findings",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-144",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "analysis shows",
+    "severity": "high",
+    "confidence": 0.9370053318220513,
+    "examples": [
+      "Example with analysis shows",
+      "Another analysis shows example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague analysis",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-145",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "reports suggest",
+    "severity": "high",
+    "confidence": 0.8777161886681956,
+    "examples": [
+      "Example with reports suggest",
+      "Another reports suggest example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague reports",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-146",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "surveys indicate",
+    "severity": "high",
+    "confidence": 0.8216159275904266,
+    "examples": [
+      "Example with surveys indicate",
+      "Another surveys indicate example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague surveys",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-147",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "metrics demonstrate",
+    "severity": "high",
+    "confidence": 0.9158239793439502,
+    "examples": [
+      "Example with metrics demonstrate",
+      "Another metrics demonstrate example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague metrics",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-148",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "statistics show",
+    "severity": "high",
+    "confidence": 0.8371858930852321,
+    "examples": [
+      "Example with statistics show",
+      "Another statistics show example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague statistics",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-149",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "trends indicate",
+    "severity": "high",
+    "confidence": 0.9011159599491593,
+    "examples": [
+      "Example with trends indicate",
+      "Another trends indicate example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague trends",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-150",
+    "category": "banned-phrases",
+    "subcategory": "research-claims",
+    "pattern": "observations suggest",
+    "severity": "high",
+    "confidence": 0.9380645895567457,
+    "examples": [
+      "Example with observations suggest",
+      "Another observations suggest example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague observations",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-151",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "competitive advantage",
+    "severity": "high",
+    "confidence": 0.873271320358604,
+    "examples": [
+      "Example with competitive advantage",
+      "Another competitive advantage example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Strategy speak",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-152",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "value proposition",
+    "severity": "high",
+    "confidence": 0.8954284227761402,
+    "examples": [
+      "Example with value proposition",
+      "Another value proposition example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Business speak",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-153",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "core competency",
+    "severity": "high",
+    "confidence": 0.9107653329282397,
+    "examples": [
+      "Example with core competency",
+      "Another core competency example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Capability speak",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-154",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "best practice",
+    "severity": "high",
+    "confidence": 0.8091002356481247,
+    "examples": [
+      "Example with best practice",
+      "Another best practice example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Standard speak",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-155",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "thought leader",
+    "severity": "high",
+    "confidence": 0.8078232660779728,
+    "examples": [
+      "Example with thought leader",
+      "Another thought leader example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Expert claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-156",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "market leader",
+    "severity": "high",
+    "confidence": 0.8116792512033294,
+    "examples": [
+      "Example with market leader",
+      "Another market leader example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Position claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-157",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "industry pioneer",
+    "severity": "high",
+    "confidence": 0.9449064298982682,
+    "examples": [
+      "Example with industry pioneer",
+      "Another industry pioneer example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "First-mover claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-158",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "trusted partner",
+    "severity": "high",
+    "confidence": 0.8153494237855111,
+    "examples": [
+      "Example with trusted partner",
+      "Another trusted partner example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Relationship claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-159",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "strategic imperative",
+    "severity": "high",
+    "confidence": 0.8754943387817601,
+    "examples": [
+      "Example with strategic imperative",
+      "Another strategic imperative example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Necessity claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-160",
+    "category": "banned-phrases",
+    "subcategory": "corporate-speak",
+    "pattern": "key differentiator",
+    "severity": "high",
+    "confidence": 0.8824325636698543,
+    "examples": [
+      "Example with key differentiator",
+      "Another key differentiator example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Uniqueness claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-161",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "going forward",
+    "severity": "critical",
+    "confidence": 0.8046789356171512,
+    "examples": [
+      "Example with going forward",
+      "Another going forward example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Future reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-162",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "moving forward",
+    "severity": "critical",
+    "confidence": 0.8429970936522929,
+    "examples": [
+      "Example with moving forward",
+      "Another moving forward example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Future reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-163",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in the future",
+    "severity": "critical",
+    "confidence": 0.930432544278041,
+    "examples": [
+      "Example with in the future",
+      "Another in the future example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Future reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-164",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "in time",
+    "severity": "critical",
+    "confidence": 0.8779698146681796,
+    "examples": [
+      "Example with in time",
+      "Another in time example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Eventually",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-165",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "over time",
+    "severity": "critical",
+    "confidence": 0.8384285177416125,
+    "examples": [
+      "Example with over time",
+      "Another over time example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Gradual change",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-166",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "with time",
+    "severity": "critical",
+    "confidence": 0.8554235262979758,
+    "examples": [
+      "Example with with time",
+      "Another with time example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Gradual change",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-167",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "down the road",
+    "severity": "critical",
+    "confidence": 0.8216308397180606,
+    "examples": [
+      "Example with down the road",
+      "Another down the road example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Future metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-168",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "down the line",
+    "severity": "critical",
+    "confidence": 0.8418106181421088,
+    "examples": [
+      "Example with down the line",
+      "Another down the line example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Future metaphor",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-169",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "as we move forward",
+    "severity": "critical",
+    "confidence": 0.8607660892432689,
+    "examples": [
+      "Example with as we move forward",
+      "Another as we move forward example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Progress reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-170",
+    "category": "banned-phrases",
+    "subcategory": "temporal-vagueness",
+    "pattern": "as we progress",
+    "severity": "critical",
+    "confidence": 0.8330248432721264,
+    "examples": [
+      "Example with as we progress",
+      "Another as we progress example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Progress reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-171",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "at the forefront",
+    "severity": "high",
+    "confidence": 0.8549066247206353,
+    "examples": [
+      "Example with at the forefront",
+      "Another at the forefront example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Leadership cliche",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-172",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "on the cutting edge",
+    "severity": "high",
+    "confidence": 0.8115471862975727,
+    "examples": [
+      "Example with on the cutting edge",
+      "Another on the cutting edge example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Innovation cliche",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-173",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "ahead of the curve",
+    "severity": "high",
+    "confidence": 0.8691576341187062,
+    "examples": [
+      "Example with ahead of the curve",
+      "Another ahead of the curve example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Progress cliche",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-174",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "behind the scenes",
+    "severity": "high",
+    "confidence": 0.8738608856499992,
+    "examples": [
+      "Example with behind the scenes",
+      "Another behind the scenes example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Hidden work",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-175",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "under the hood",
+    "severity": "high",
+    "confidence": 0.8477652135459155,
+    "examples": [
+      "Example with under the hood",
+      "Another under the hood example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Internal work",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-176",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "in the trenches",
+    "severity": "high",
+    "confidence": 0.8593203119969386,
+    "examples": [
+      "Example with in the trenches",
+      "Another in the trenches example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Hard work",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-177",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "boots on the ground",
+    "severity": "high",
+    "confidence": 0.9344546464567611,
+    "examples": [
+      "Example with boots on the ground",
+      "Another boots on the ground example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Presence claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-178",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "hit the ground running",
+    "severity": "high",
+    "confidence": 0.9005183429305001,
+    "examples": [
+      "Example with hit the ground running",
+      "Another hit the ground running example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Fast start",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-179",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "raise the bar",
+    "severity": "high",
+    "confidence": 0.9362759706379001,
+    "examples": [
+      "Example with raise the bar",
+      "Another raise the bar example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Standard raising",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-180",
+    "category": "banned-phrases",
+    "subcategory": "cliche-descriptions",
+    "pattern": "push the envelope",
+    "severity": "high",
+    "confidence": 0.880192216562058,
+    "examples": [
+      "Example with push the envelope",
+      "Another push the envelope example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Boundary pushing",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-181",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "with that being said",
+    "severity": "high",
+    "confidence": 0.8774486224435838,
+    "examples": [
+      "Example with with that being said",
+      "Another with that being said example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Wordy transition",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-182",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "having said that",
+    "severity": "high",
+    "confidence": 0.9270484238032897,
+    "examples": [
+      "Example with having said that",
+      "Another having said that example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Wordy transition",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-183",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "that being said",
+    "severity": "high",
+    "confidence": 0.8770294286002627,
+    "examples": [
+      "Example with that being said",
+      "Another that being said example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Wordy transition",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-184",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "on that note",
+    "severity": "high",
+    "confidence": 0.9237928068896077,
+    "examples": [
+      "Example with on that note",
+      "Another on that note example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Transition filler",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-185",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "in this regard",
+    "severity": "high",
+    "confidence": 0.8982631021763141,
+    "examples": [
+      "Example with in this regard",
+      "Another in this regard example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Reference filler",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-186",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "in this respect",
+    "severity": "high",
+    "confidence": 0.905867071473792,
+    "examples": [
+      "Example with in this respect",
+      "Another in this respect example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Reference filler",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-187",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "in this context",
+    "severity": "high",
+    "confidence": 0.8201342915129463,
+    "examples": [
+      "Example with in this context",
+      "Another in this context example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Context reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-188",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "in this case",
+    "severity": "high",
+    "confidence": 0.8026736719337318,
+    "examples": [
+      "Example with in this case",
+      "Another in this case example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Case reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-189",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "in this instance",
+    "severity": "high",
+    "confidence": 0.8439696209813707,
+    "examples": [
+      "Example with in this instance",
+      "Another in this instance example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Instance reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "banned-phrase-190",
+    "category": "banned-phrases",
+    "subcategory": "filler-phrases",
+    "pattern": "in this scenario",
+    "severity": "high",
+    "confidence": 0.8071755039259016,
+    "examples": [
+      "Example with in this scenario",
+      "Another in this scenario example"
+    ],
+    "replacements": [
+      "Use specific language",
+      "Be direct",
+      "Provide concrete details"
+    ],
+    "context": "Scenario reference",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
   }
 ]

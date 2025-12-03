@@ -17,7 +17,10 @@
     ],
     "context": "Double hedging - excessive uncertainty",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-002",
@@ -37,7 +40,9 @@
     ],
     "context": "Redundant hedging",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "hedge-003",
@@ -57,7 +62,10 @@
     ],
     "context": "Double uncertainty",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "hedge-004",
@@ -77,7 +85,10 @@
     ],
     "context": "Weakens authoritative voice",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-005",
@@ -97,7 +108,10 @@
     ],
     "context": "Weak possibility marker",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-006",
@@ -117,7 +131,9 @@
     ],
     "context": "Tentative suggestion",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "hedge-007",
@@ -125,7 +141,7 @@
     "subcategory": "appearance-verbs",
     "pattern": "\\bseems to\\b",
     "severity": "medium",
-    "confidence": 0.80,
+    "confidence": 0.8,
     "examples": [
       "This seems to improve performance.",
       "The approach seems to work well."
@@ -137,7 +153,10 @@
     ],
     "context": "Uncertain observation",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-008",
@@ -157,7 +176,10 @@
     ],
     "context": "Tentative assessment",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-009",
@@ -177,7 +199,10 @@
     ],
     "context": "General tendency claim",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-010",
@@ -197,7 +222,10 @@
     ],
     "context": "Vague degree marker",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-011",
@@ -217,7 +245,9 @@
     ],
     "context": "British-style hedge",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "hedge-012",
@@ -237,7 +267,10 @@
     ],
     "context": "Vague intensifier",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-013",
@@ -257,7 +290,9 @@
     ],
     "context": "Vague partial agreement",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "hedge-014",
@@ -277,7 +312,9 @@
     ],
     "context": "Vague qualification",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "hedge-015",
@@ -297,7 +334,9 @@
     ],
     "context": "Imprecise quantity",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "hedge-016",
@@ -305,7 +344,7 @@
     "subcategory": "conditional-hedges",
     "pattern": "in most cases",
     "severity": "low",
-    "confidence": 0.70,
+    "confidence": 0.7,
     "examples": [
       "In most cases, caching improves speed.",
       "This works in most cases."
@@ -317,7 +356,9 @@
     ],
     "context": "Acceptable qualifier if truthful",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "hedge-017",
@@ -337,7 +378,10 @@
     ],
     "context": "Vague frequency",
     "frequency": "common",
-    "domains": ["technical", "academic"]
+    "domains": [
+      "technical",
+      "academic"
+    ]
   },
   {
     "id": "hedge-018",
@@ -357,7 +401,10 @@
     ],
     "context": "Very vague qualifier",
     "frequency": "common",
-    "domains": ["technical", "academic"]
+    "domains": [
+      "technical",
+      "academic"
+    ]
   },
   {
     "id": "hedge-019",
@@ -377,7 +424,9 @@
     ],
     "context": "Wordy hedge construction",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "hedge-020",
@@ -385,7 +434,7 @@
     "subcategory": "likelihood-phrases",
     "pattern": "(may|might|could) (help to|serve to|contribute to)",
     "severity": "medium",
-    "confidence": 0.80,
+    "confidence": 0.8,
     "examples": [
       "This may help to reduce latency.",
       "Caching could serve to improve speed."
@@ -397,7 +446,10 @@
     ],
     "context": "Wordy possibility construction",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "hedge-021",
@@ -417,7 +469,10 @@
     ],
     "context": "Weak potential claim",
     "frequency": "very-common",
-    "domains": ["executive", "academic"]
+    "domains": [
+      "executive",
+      "academic"
+    ]
   },
   {
     "id": "hedge-022",
@@ -437,7 +492,9 @@
     ],
     "context": "Assumption without verification",
     "frequency": "occasional",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "hedge-023",
@@ -457,7 +514,9 @@
     ],
     "context": "Skeptical hedge - verify instead",
     "frequency": "occasional",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "hedge-024",
@@ -477,7 +536,10 @@
     ],
     "context": "Vague generalization",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "hedge-025",
@@ -497,6 +559,1538 @@
     ],
     "context": "Vague scope qualifier",
     "frequency": "occasional",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-026",
+    "category": "hedging-language",
+    "subcategory": "appearance-verbs",
+    "pattern": "would appear to",
+    "severity": "medium",
+    "confidence": 0.8,
+    "examples": [
+      "Example using would appear to",
+      "Another example with would appear to"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Tentative observation",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-027",
+    "category": "hedging-language",
+    "subcategory": "appearance-verbs",
+    "pattern": "seems like",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using seems like",
+      "Another example with seems like"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Informal hedge",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-028",
+    "category": "hedging-language",
+    "subcategory": "appearance-verbs",
+    "pattern": "looks like",
+    "severity": "low",
+    "confidence": 0.72,
+    "examples": [
+      "Example using looks like",
+      "Another example with looks like"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Visual/informal hedge",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-029",
+    "category": "hedging-language",
+    "subcategory": "informal-hedges",
+    "pattern": "kind of",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using kind of",
+      "Another example with kind of"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Casual vagueness",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-030",
+    "category": "hedging-language",
+    "subcategory": "informal-hedges",
+    "pattern": "sort of",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using sort of",
+      "Another example with sort of"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Casual vagueness",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-031",
+    "category": "hedging-language",
+    "subcategory": "approximation",
+    "pattern": "more or less",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using more or less",
+      "Another example with more or less"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague approximation",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-032",
+    "category": "hedging-language",
+    "subcategory": "simplification-hedges",
+    "pattern": "basically",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Example using basically",
+      "Another example with basically"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often unnecessary",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-033",
+    "category": "hedging-language",
+    "subcategory": "simplification-hedges",
+    "pattern": "essentially",
+    "severity": "low",
+    "confidence": 0.69,
+    "examples": [
+      "Example using essentially",
+      "Another example with essentially"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often unnecessary",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-034",
+    "category": "hedging-language",
+    "subcategory": "approximation",
+    "pattern": "virtually",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using virtually",
+      "Another example with virtually"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Near-complete claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-035",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "largely",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using largely",
+      "Another example with largely"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague extent",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-036",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "mostly",
+    "severity": "low",
+    "confidence": 0.7,
+    "examples": [
+      "Example using mostly",
+      "Another example with mostly"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Acceptable with specifics",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-037",
+    "category": "hedging-language",
+    "subcategory": "frequency-hedges",
+    "pattern": "typically",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Example using typically",
+      "Another example with typically"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Common pattern",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-038",
+    "category": "hedging-language",
+    "subcategory": "frequency-hedges",
+    "pattern": "usually",
+    "severity": "low",
+    "confidence": 0.67,
+    "examples": [
+      "Example using usually",
+      "Another example with usually"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Common pattern",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-039",
+    "category": "hedging-language",
+    "subcategory": "frequency-hedges",
+    "pattern": "often",
+    "severity": "low",
+    "confidence": 0.66,
+    "examples": [
+      "Example using often",
+      "Another example with often"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Frequency claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-040",
+    "category": "hedging-language",
+    "subcategory": "frequency-hedges",
+    "pattern": "sometimes",
+    "severity": "low",
+    "confidence": 0.65,
+    "examples": [
+      "Example using sometimes",
+      "Another example with sometimes"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague frequency",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-041",
+    "category": "hedging-language",
+    "subcategory": "modal-stacking",
+    "pattern": "can sometimes",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using can sometimes",
+      "Another example with can sometimes"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Double hedge",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-042",
+    "category": "hedging-language",
+    "subcategory": "modal-stacking",
+    "pattern": "may sometimes",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using may sometimes",
+      "Another example with may sometimes"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Double hedge",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-043",
+    "category": "hedging-language",
+    "subcategory": "modal-stacking",
+    "pattern": "might sometimes",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using might sometimes",
+      "Another example with might sometimes"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Double hedge",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-044",
+    "category": "hedging-language",
+    "subcategory": "modal-stacking",
+    "pattern": "could sometimes",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using could sometimes",
+      "Another example with could sometimes"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Double hedge",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-045",
+    "category": "hedging-language",
+    "subcategory": "assumption-hedges",
+    "pattern": "presumably",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using presumably",
+      "Another example with presumably"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Unverified assumption",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-046",
+    "category": "hedging-language",
+    "subcategory": "assumption-hedges",
+    "pattern": "apparently",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using apparently",
+      "Another example with apparently"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Uncertain observation",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-047",
+    "category": "hedging-language",
+    "subcategory": "assumption-hedges",
+    "pattern": "supposedly",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using supposedly",
+      "Another example with supposedly"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Skeptical hedge",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-048",
+    "category": "hedging-language",
+    "subcategory": "assumption-hedges",
+    "pattern": "allegedly",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using allegedly",
+      "Another example with allegedly"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Distancing language",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-049",
+    "category": "hedging-language",
+    "subcategory": "assumption-hedges",
+    "pattern": "ostensibly",
+    "severity": "medium",
+    "confidence": 0.73,
+    "examples": [
+      "Example using ostensibly",
+      "Another example with ostensibly"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Formal skepticism",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-050",
+    "category": "hedging-language",
+    "subcategory": "appearance-verbs",
+    "pattern": "it would seem",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using it would seem",
+      "Another example with it would seem"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Formal hedge",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-051",
+    "category": "hedging-language",
+    "subcategory": "argumentation-hedges",
+    "pattern": "one could argue",
+    "severity": "high",
+    "confidence": 0.85,
+    "examples": [
+      "Example using one could argue",
+      "Another example with one could argue"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Distance from claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-052",
+    "category": "hedging-language",
+    "subcategory": "belief-hedges",
+    "pattern": "there is reason to believe",
+    "severity": "high",
+    "confidence": 0.82,
+    "examples": [
+      "Example using there is reason to believe",
+      "Another example with there is reason to believe"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Indirect assertion",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-053",
+    "category": "hedging-language",
+    "subcategory": "possibility-hedges",
+    "pattern": "it is conceivable",
+    "severity": "high",
+    "confidence": 0.81,
+    "examples": [
+      "Example using it is conceivable",
+      "Another example with it is conceivable"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Weak possibility",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-054",
+    "category": "hedging-language",
+    "subcategory": "possibility-hedges",
+    "pattern": "it is plausible",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using it is plausible",
+      "Another example with it is plausible"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Reasonable guess",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-055",
+    "category": "hedging-language",
+    "subcategory": "litotes-hedges",
+    "pattern": "it is not unreasonable",
+    "severity": "high",
+    "confidence": 0.83,
+    "examples": [
+      "Example using it is not unreasonable",
+      "Another example with it is not unreasonable"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Double negative hedge",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-056",
+    "category": "hedging-language",
+    "subcategory": "litotes-hedges",
+    "pattern": "it is not impossible",
+    "severity": "high",
+    "confidence": 0.82,
+    "examples": [
+      "Example using it is not impossible",
+      "Another example with it is not impossible"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Weak positive via negative",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-057",
+    "category": "hedging-language",
+    "subcategory": "litotes-hedges",
+    "pattern": "it is not unlikely",
+    "severity": "high",
+    "confidence": 0.81,
+    "examples": [
+      "Example using it is not unlikely",
+      "Another example with it is not unlikely"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Confusing double negative",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-058",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "for the most part",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using for the most part",
+      "Another example with for the most part"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague majority claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-059",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "by and large",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using by and large",
+      "Another example with by and large"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague generalization",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-060",
+    "category": "hedging-language",
+    "subcategory": "generalization-hedges",
+    "pattern": "in general",
+    "severity": "low",
+    "confidence": 0.7,
+    "examples": [
+      "Example using in general",
+      "Another example with in general"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Acceptable with specifics",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-061",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "on the whole",
+    "severity": "medium",
+    "confidence": 0.73,
+    "examples": [
+      "Example using on the whole",
+      "Another example with on the whole"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague summary",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-062",
+    "category": "hedging-language",
+    "subcategory": "generalization-hedges",
+    "pattern": "as a rule",
+    "severity": "low",
+    "confidence": 0.71,
+    "examples": [
+      "Example using as a rule",
+      "Another example with as a rule"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Pattern claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-063",
+    "category": "hedging-language",
+    "subcategory": "approximation",
+    "pattern": "for all intents and purposes",
+    "severity": "high",
+    "confidence": 0.8,
+    "examples": [
+      "Example using for all intents and purposes",
+      "Another example with for all intents and purposes"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Wordy approximation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-064",
+    "category": "hedging-language",
+    "subcategory": "approximation",
+    "pattern": "to all intents and purposes",
+    "severity": "high",
+    "confidence": 0.79,
+    "examples": [
+      "Example using to all intents and purposes",
+      "Another example with to all intents and purposes"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "British variant",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-065",
+    "category": "hedging-language",
+    "subcategory": "qualification-hedges",
+    "pattern": "in a sense",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using in a sense",
+      "Another example with in a sense"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Partial agreement",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-066",
+    "category": "hedging-language",
+    "subcategory": "qualification-hedges",
+    "pattern": "in a way",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using in a way",
+      "Another example with in a way"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Partial agreement",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-067",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "up to a point",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using up to a point",
+      "Another example with up to a point"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Limited agreement",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-068",
+    "category": "hedging-language",
+    "subcategory": "extent-qualifiers",
+    "pattern": "within limits",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using within limits",
+      "Another example with within limits"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Bounded claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-069",
+    "category": "hedging-language",
+    "subcategory": "qualification-hedges",
+    "pattern": "with certain reservations",
+    "severity": "high",
+    "confidence": 0.8,
+    "examples": [
+      "Example using with certain reservations",
+      "Another example with with certain reservations"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Qualified agreement",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-070",
+    "category": "hedging-language",
+    "subcategory": "qualification-hedges",
+    "pattern": "with some exceptions",
+    "severity": "medium",
+    "confidence": 0.73,
+    "examples": [
+      "Example using with some exceptions",
+      "Another example with with some exceptions"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Non-universal claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-071",
+    "category": "hedging-language",
+    "subcategory": "conditional-hedges",
+    "pattern": "barring unforeseen circumstances",
+    "severity": "high",
+    "confidence": 0.79,
+    "examples": [
+      "Example using barring unforeseen circumstances",
+      "Another example with barring unforeseen circumstances"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Formal caveat",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-072",
+    "category": "hedging-language",
+    "subcategory": "conditional-hedges",
+    "pattern": "all things being equal",
+    "severity": "high",
+    "confidence": 0.78,
+    "examples": [
+      "Example using all things being equal",
+      "Another example with all things being equal"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Idealized condition",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-073",
+    "category": "hedging-language",
+    "subcategory": "conditional-hedges",
+    "pattern": "other things being equal",
+    "severity": "high",
+    "confidence": 0.77,
+    "examples": [
+      "Example using other things being equal",
+      "Another example with other things being equal"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Ceteris paribus",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-074",
+    "category": "hedging-language",
+    "subcategory": "conditional-hedges",
+    "pattern": "under normal circumstances",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using under normal circumstances",
+      "Another example with under normal circumstances"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Conditional claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-075",
+    "category": "hedging-language",
+    "subcategory": "conditional-hedges",
+    "pattern": "under certain conditions",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using under certain conditions",
+      "Another example with under certain conditions"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague conditions",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "hedge-076",
+    "category": "hedging-language",
+    "subcategory": "possibility-hedges",
+    "pattern": "it could potentially be",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: it could potentially be"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-077",
+    "category": "hedging-language",
+    "subcategory": "possibility-hedges",
+    "pattern": "there might possibly be",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: there might possibly be"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-078",
+    "category": "hedging-language",
+    "subcategory": "possibility-hedges",
+    "pattern": "one could speculate that",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: one could speculate that"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-079",
+    "category": "hedging-language",
+    "subcategory": "academic-hedges",
+    "pattern": "it is plausible to suggest",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: it is plausible to suggest"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-080",
+    "category": "hedging-language",
+    "subcategory": "possibility-hedges",
+    "pattern": "this may potentially indicate",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: this may potentially indicate"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-081",
+    "category": "hedging-language",
+    "subcategory": "uncertainty-markers",
+    "pattern": "it remains to be determined",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: it remains to be determined"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-082",
+    "category": "hedging-language",
+    "subcategory": "academic-hedges",
+    "pattern": "further investigation is warranted",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: further investigation is warranted"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-083",
+    "category": "hedging-language",
+    "subcategory": "academic-hedges",
+    "pattern": "additional research is necessary",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: additional research is necessary"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-084",
+    "category": "hedging-language",
+    "subcategory": "academic-hedges",
+    "pattern": "more studies are needed",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: more studies are needed"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-085",
+    "category": "hedging-language",
+    "subcategory": "uncertainty-markers",
+    "pattern": "the evidence is inconclusive",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: the evidence is inconclusive"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-086",
+    "category": "hedging-language",
+    "subcategory": "uncertainty-markers",
+    "pattern": "results are preliminary",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: results are preliminary"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-087",
+    "category": "hedging-language",
+    "subcategory": "uncertainty-markers",
+    "pattern": "findings are tentative",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: findings are tentative"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-088",
+    "category": "hedging-language",
+    "subcategory": "uncertainty-markers",
+    "pattern": "conclusions are provisional",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: conclusions are provisional"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-089",
+    "category": "hedging-language",
+    "subcategory": "uncertainty-markers",
+    "pattern": "this interpretation is speculative",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: this interpretation is speculative"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
+  },
+  {
+    "id": "hedge-090",
+    "category": "hedging-language",
+    "subcategory": "attribution-hedges",
+    "pattern": "arguably one could say",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "Example using: arguably one could say"
+    ],
+    "replacements": [
+      "State directly without hedging",
+      "Use specific evidence instead"
+    ],
+    "context": "Hedging language reduces authority and signals AI generation",
+    "frequency": "common",
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
   }
 ]
