@@ -984,6 +984,591 @@ export class PluginRegistry {
       throw error;
     }
   }
+
+  // ===========================
+  // Health Monitoring
+  // ===========================
+
+  /**
+   * Run health check on all installed plugins
+   *
+   * Verifies each plugin's:
+   * - Directory exists at repo-path
+   * - Required files present (manifest.json or plugin.yaml)
+   * - Parent framework exists (for add-ons)
+   * - Extended framework exists (for extensions)
+   *
+   * @returns {Promise<Object>} Health check results
+   * @property {number} total - Total plugins checked
+   * @property {number} healthy - Plugins passing all checks
+   * @property {number} warning - Plugins with minor issues
+   * @property {number} error - Plugins with critical issues
+   * @property {Object[]} results - Per-plugin health status
+   *
+   * @example
+   * const health = await registry.healthCheck();
+   * console.log(`${health.healthy}/${health.total} plugins healthy`);
+   * health.results.filter(r => r.status === 'error').forEach(r => {
+   *   console.error(`${r.pluginId}: ${r.issues.join(', ')}`);
+   * });
+   */
+  async healthCheck() {
+    const registry = await this._readRegistry();
+    const results = [];
+    let healthy = 0;
+    let warning = 0;
+    let error = 0;
+
+    for (const plugin of registry.plugins) {
+      const issues = [];
+      let status = 'healthy';
+
+      // Check 1: Directory exists
+      const repoPath = path.resolve(path.dirname(this.registryPath), '..', plugin['repo-path']);
+      try {
+        const stat = await fs.stat(repoPath);
+        if (!stat.isDirectory()) {
+          issues.push(`repo-path '${plugin['repo-path']}' is not a directory`);
+          status = 'error';
+        }
+      } catch (err) {
+        if (err.code === 'ENOENT') {
+          issues.push(`repo-path '${plugin['repo-path']}' does not exist`);
+          status = 'error';
+        } else {
+          issues.push(`Cannot access repo-path: ${err.message}`);
+          status = 'warning';
+        }
+      }
+
+      // Check 2: Required files exist (if directory exists and no error yet)
+      if (status !== 'error') {
+        const manifestPath = path.join(repoPath, 'manifest.json');
+        const pluginYamlPath = path.join(repoPath, 'plugin.yaml');
+        const pluginJsonPath = path.join(repoPath, 'plugin.json');
+
+        let hasManifest = false;
+        for (const manifestFile of [manifestPath, pluginYamlPath, pluginJsonPath]) {
+          try {
+            await fs.access(manifestFile);
+            hasManifest = true;
+            break;
+          } catch {
+            // File doesn't exist, try next
+          }
+        }
+
+        if (!hasManifest) {
+          issues.push('Missing manifest file (manifest.json, plugin.yaml, or plugin.json)');
+          if (status === 'healthy') status = 'warning';
+        }
+      }
+
+      // Check 3: Parent framework exists (for add-ons)
+      if (plugin.type === 'add-on' && plugin['parent-framework']) {
+        const parentExists = registry.plugins.some(p => p.id === plugin['parent-framework']);
+        if (!parentExists) {
+          issues.push(`Parent framework '${plugin['parent-framework']}' not installed`);
+          status = 'error';
+        }
+      }
+
+      // Check 4: Extended framework exists (for extensions)
+      if (plugin.type === 'extension' && plugin.extends) {
+        const extendedExists = registry.plugins.some(p => p.id === plugin.extends);
+        if (!extendedExists) {
+          issues.push(`Extended framework '${plugin.extends}' not installed`);
+          status = 'error';
+        }
+      }
+
+      // Update plugin health status in registry
+      const healthChanged = plugin.health !== status;
+      plugin.health = status;
+      plugin['health-checked'] = new Date().toISOString();
+
+      // Count by status
+      if (status === 'healthy') healthy++;
+      else if (status === 'warning') warning++;
+      else error++;
+
+      results.push({
+        pluginId: plugin.id,
+        type: plugin.type,
+        status,
+        issues,
+        checkedAt: plugin['health-checked']
+      });
+    }
+
+    // Save updated health statuses
+    await this._acquireLock();
+    try {
+      await this._atomicWrite(registry);
+    } finally {
+      await this._releaseLock();
+    }
+
+    return {
+      total: registry.plugins.length,
+      healthy,
+      warning,
+      error,
+      results
+    };
+  }
+
+  /**
+   * Get plugins that need attention (warning or error status)
+   *
+   * @returns {Promise<Object[]>} Array of plugins with issues
+   *
+   * @example
+   * const issues = await registry.getPluginsWithIssues();
+   * if (issues.length > 0) {
+   *   console.warn('Plugins need attention:', issues.map(p => p.id));
+   * }
+   */
+  async getPluginsWithIssues() {
+    const registry = await this._readRegistry();
+    return registry.plugins.filter(p => p.health === 'warning' || p.health === 'error');
+  }
+
+  /**
+   * Update health status for specific plugin
+   *
+   * @param {string} pluginId - Plugin ID
+   * @param {string} status - New health status ('healthy' | 'warning' | 'error' | 'unknown')
+   * @param {string[]} [issues=[]] - List of issues (for warning/error status)
+   *
+   * @returns {Promise<void>}
+   *
+   * @example
+   * await registry.setHealthStatus('my-plugin', 'error', ['Config file missing']);
+   */
+  async setHealthStatus(pluginId, status, issues = []) {
+    if (!['healthy', 'warning', 'error', 'unknown'].includes(status)) {
+      throw new Error(`Invalid health status: ${status}`);
+    }
+
+    await this.updatePlugin(pluginId, {
+      health: status,
+      'health-checked': new Date().toISOString(),
+      'health-issues': issues.length > 0 ? issues : undefined
+    });
+  }
+
+  // ===========================
+  // Backup and Restore
+  // ===========================
+
+  /**
+   * Create backup of current registry
+   *
+   * Saves registry to timestamped backup file in .aiwg/frameworks/backups/
+   *
+   * @param {string} [reason] - Optional reason for backup (stored in backup metadata)
+   *
+   * @returns {Promise<string>} Path to backup file
+   *
+   * @example
+   * const backupPath = await registry.createBackup('Before plugin uninstall');
+   * console.log(`Backup saved to: ${backupPath}`);
+   */
+  async createBackup(reason = 'manual') {
+    const registry = await this._readRegistry();
+
+    const backupDir = path.join(path.dirname(this.registryPath), 'backups');
+    await fs.mkdir(backupDir, { recursive: true });
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = path.join(backupDir, `registry-${timestamp}.json`);
+
+    const backup = {
+      ...registry,
+      _backup: {
+        createdAt: new Date().toISOString(),
+        reason,
+        originalPath: this.registryPath,
+        schemaVersion: this.schemaVersion
+      }
+    };
+
+    await fs.writeFile(backupPath, JSON.stringify(backup, null, 2), 'utf-8');
+    console.debug(`[PluginRegistry] Backup created: ${backupPath}`);
+
+    return backupPath;
+  }
+
+  /**
+   * List available registry backups
+   *
+   * @returns {Promise<Object[]>} Array of backup info objects
+   * @property {string} path - Full path to backup file
+   * @property {string} filename - Backup filename
+   * @property {Date} createdAt - When backup was created
+   * @property {number} size - File size in bytes
+   *
+   * @example
+   * const backups = await registry.listBackups();
+   * backups.forEach(b => console.log(`${b.filename} (${b.size} bytes)`));
+   */
+  async listBackups() {
+    const backupDir = path.join(path.dirname(this.registryPath), 'backups');
+
+    try {
+      const files = await fs.readdir(backupDir);
+      const backups = [];
+
+      for (const file of files) {
+        if (file.startsWith('registry-') && file.endsWith('.json')) {
+          const filePath = path.join(backupDir, file);
+          const stat = await fs.stat(filePath);
+
+          // Extract timestamp from filename
+          const timestampMatch = file.match(/registry-(.+)\.json/);
+          let createdAt = stat.mtime;
+          if (timestampMatch) {
+            const timestampStr = timestampMatch[1].replace(/-/g, (match, offset) => {
+              // Convert back to ISO format: 2025-12-02T14-30-00-000Z -> 2025-12-02T14:30:00.000Z
+              if (offset === 4 || offset === 7) return '-';
+              if (offset === 10) return 'T';
+              if (offset === 13 || offset === 16) return ':';
+              if (offset === 19) return '.';
+              return match;
+            });
+            createdAt = new Date(stat.mtime);
+          }
+
+          backups.push({
+            path: filePath,
+            filename: file,
+            createdAt,
+            size: stat.size
+          });
+        }
+      }
+
+      // Sort by date, newest first
+      return backups.sort((a, b) => b.createdAt - a.createdAt);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        return []; // No backups directory
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Restore registry from backup
+   *
+   * @param {string} backupPath - Path to backup file to restore
+   * @param {boolean} [createBackupFirst=true] - Create backup of current state before restoring
+   *
+   * @returns {Promise<void>}
+   * @throws {Error} If backup file doesn't exist or is invalid
+   *
+   * @example
+   * const backups = await registry.listBackups();
+   * if (backups.length > 0) {
+   *   await registry.restoreFromBackup(backups[0].path);
+   *   console.log('Registry restored');
+   * }
+   */
+  async restoreFromBackup(backupPath, createBackupFirst = true) {
+    // Verify backup exists
+    try {
+      await fs.access(backupPath);
+    } catch {
+      throw new Error(`Backup file not found: ${backupPath}`);
+    }
+
+    // Read and validate backup
+    const backupJson = await fs.readFile(backupPath, 'utf-8');
+    let backup;
+    try {
+      backup = JSON.parse(backupJson);
+    } catch (error) {
+      throw new InvalidSchemaError(`Backup file is not valid JSON: ${error.message}`);
+    }
+
+    // Remove backup metadata before restoration
+    const { _backup, ...registry } = backup;
+
+    // Validate backup schema (without _backup field)
+    this._validateRegistrySchema(registry);
+
+    // Create backup of current state before restoring
+    if (createBackupFirst) {
+      await this.createBackup('pre-restore');
+    }
+
+    // Restore registry
+    await this._acquireLock();
+    try {
+      await this._atomicWrite(registry);
+      console.debug(`[PluginRegistry] Registry restored from: ${backupPath}`);
+    } finally {
+      await this._releaseLock();
+    }
+  }
+
+  /**
+   * Clean up old backups, keeping only recent ones
+   *
+   * @param {number} [keepCount=5] - Number of recent backups to keep
+   *
+   * @returns {Promise<number>} Number of backups deleted
+   *
+   * @example
+   * const deleted = await registry.cleanBackups(3);
+   * console.log(`Deleted ${deleted} old backups`);
+   */
+  async cleanBackups(keepCount = 5) {
+    const backups = await this.listBackups();
+
+    if (backups.length <= keepCount) {
+      return 0;
+    }
+
+    // Delete oldest backups beyond keepCount
+    const toDelete = backups.slice(keepCount);
+    let deleted = 0;
+
+    for (const backup of toDelete) {
+      try {
+        await fs.unlink(backup.path);
+        deleted++;
+        console.debug(`[PluginRegistry] Deleted old backup: ${backup.filename}`);
+      } catch (error) {
+        console.error(`[PluginRegistry] Failed to delete backup ${backup.filename}: ${error.message}`);
+      }
+    }
+
+    return deleted;
+  }
+
+  // ===========================
+  // Error Recovery
+  // ===========================
+
+  /**
+   * Attempt to recover corrupted registry
+   *
+   * Tries multiple recovery strategies:
+   * 1. Re-read and validate current registry
+   * 2. Restore from most recent backup
+   * 3. Scan filesystem and rebuild registry
+   *
+   * @returns {Promise<Object>} Recovery result
+   * @property {boolean} success - Whether recovery succeeded
+   * @property {string} method - Recovery method used ('validate' | 'backup' | 'rebuild' | 'none')
+   * @property {string} [message] - Additional information
+   *
+   * @example
+   * const result = await registry.recover();
+   * if (result.success) {
+   *   console.log(`Recovery successful via ${result.method}`);
+   * } else {
+   *   console.error('Recovery failed:', result.message);
+   * }
+   */
+  async recover() {
+    // Strategy 1: Try to read and validate current registry
+    try {
+      await this._readRegistry();
+      return { success: true, method: 'validate', message: 'Registry is valid' };
+    } catch (validationError) {
+      console.debug(`[PluginRegistry] Registry validation failed: ${validationError.message}`);
+    }
+
+    // Strategy 2: Try to restore from most recent backup
+    const backups = await this.listBackups();
+    for (const backup of backups) {
+      try {
+        await this.restoreFromBackup(backup.path, false);
+        return {
+          success: true,
+          method: 'backup',
+          message: `Restored from backup: ${backup.filename}`
+        };
+      } catch (restoreError) {
+        console.debug(`[PluginRegistry] Backup restore failed for ${backup.filename}: ${restoreError.message}`);
+        continue; // Try next backup
+      }
+    }
+
+    // Strategy 3: Rebuild from filesystem
+    try {
+      const rebuilt = await this._rebuildFromFilesystem();
+      return {
+        success: true,
+        method: 'rebuild',
+        message: `Rebuilt registry with ${rebuilt.plugins.length} plugins from filesystem scan`
+      };
+    } catch (rebuildError) {
+      console.error(`[PluginRegistry] Filesystem rebuild failed: ${rebuildError.message}`);
+    }
+
+    return {
+      success: false,
+      method: 'none',
+      message: 'All recovery strategies failed. Manual intervention required.'
+    };
+  }
+
+  /**
+   * Rebuild registry by scanning filesystem for installed plugins
+   *
+   * Scans .aiwg/frameworks/ for directories containing plugin manifests
+   *
+   * @private
+   * @returns {Promise<Object>} Rebuilt registry object
+   */
+  async _rebuildFromFilesystem() {
+    const frameworksDir = path.dirname(this.registryPath);
+    const plugins = [];
+
+    try {
+      const entries = await fs.readdir(frameworksDir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name === 'backups') {
+          continue;
+        }
+
+        const pluginDir = path.join(frameworksDir, entry.name);
+
+        // Look for manifest files
+        const manifestFiles = ['manifest.json', 'plugin.yaml', 'plugin.json'];
+        let manifest = null;
+
+        for (const manifestFile of manifestFiles) {
+          const manifestPath = path.join(pluginDir, manifestFile);
+          try {
+            const content = await fs.readFile(manifestPath, 'utf-8');
+            manifest = manifestFile.endsWith('.json') ? JSON.parse(content) : content;
+            break;
+          } catch {
+            continue;
+          }
+        }
+
+        // Create plugin entry from directory name if no manifest
+        const pluginId = entry.name;
+        plugins.push({
+          id: pluginId,
+          type: 'framework', // Default to framework
+          name: manifest?.name || pluginId,
+          version: manifest?.version || '0.0.0',
+          'install-date': new Date().toISOString(),
+          'repo-path': `${entry.name}/`,
+          projects: [],
+          health: 'unknown',
+          'health-checked': new Date().toISOString(),
+          _recovered: true
+        });
+      }
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        // No frameworks directory, create empty registry
+      } else {
+        throw error;
+      }
+    }
+
+    const registry = {
+      version: this.schemaVersion,
+      plugins,
+      _rebuilt: {
+        at: new Date().toISOString(),
+        reason: 'recovery'
+      }
+    };
+
+    // Write rebuilt registry
+    await this._acquireLock();
+    try {
+      // Create directory if needed
+      await fs.mkdir(path.dirname(this.registryPath), { recursive: true });
+      await this._atomicWrite(registry);
+    } finally {
+      await this._releaseLock();
+    }
+
+    console.debug(`[PluginRegistry] Registry rebuilt with ${plugins.length} plugins`);
+    return registry;
+  }
+
+  /**
+   * Verify registry integrity and report issues
+   *
+   * @returns {Promise<Object>} Integrity check results
+   * @property {boolean} valid - Whether registry is valid
+   * @property {string[]} errors - List of errors found
+   * @property {string[]} warnings - List of warnings
+   *
+   * @example
+   * const integrity = await registry.checkIntegrity();
+   * if (!integrity.valid) {
+   *   console.error('Registry issues:', integrity.errors);
+   * }
+   */
+  async checkIntegrity() {
+    const errors = [];
+    const warnings = [];
+
+    try {
+      const registry = await this._readRegistry();
+
+      // Check for duplicate IDs
+      const ids = registry.plugins.map(p => p.id);
+      const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
+      if (duplicates.length > 0) {
+        errors.push(`Duplicate plugin IDs: ${[...new Set(duplicates)].join(', ')}`);
+      }
+
+      // Check for orphaned add-ons/extensions
+      for (const plugin of registry.plugins) {
+        if (plugin.type === 'add-on' && plugin['parent-framework']) {
+          const parentExists = registry.plugins.some(p => p.id === plugin['parent-framework']);
+          if (!parentExists) {
+            errors.push(`Add-on '${plugin.id}' references non-existent parent framework '${plugin['parent-framework']}'`);
+          }
+        }
+
+        if (plugin.type === 'extension' && plugin.extends) {
+          const extendedExists = registry.plugins.some(p => p.id === plugin.extends);
+          if (!extendedExists) {
+            errors.push(`Extension '${plugin.id}' references non-existent framework '${plugin.extends}'`);
+          }
+        }
+
+        // Check for missing required fields
+        if (!plugin.id) errors.push('Found plugin with missing ID');
+        if (!plugin.type) warnings.push(`Plugin '${plugin.id}' missing type field`);
+        if (!plugin.version) warnings.push(`Plugin '${plugin.id}' missing version field`);
+
+        // Check for stale health checks (> 7 days)
+        if (plugin['health-checked']) {
+          const lastCheck = new Date(plugin['health-checked']);
+          const daysSinceCheck = (Date.now() - lastCheck.getTime()) / (1000 * 60 * 60 * 24);
+          if (daysSinceCheck > 7) {
+            warnings.push(`Plugin '${plugin.id}' health check is ${Math.floor(daysSinceCheck)} days old`);
+          }
+        }
+      }
+
+    } catch (error) {
+      errors.push(`Failed to read registry: ${error.message}`);
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
 }
 
 // Backward compatibility alias

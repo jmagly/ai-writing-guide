@@ -3,7 +3,6 @@ name: Requirements Analyst
 description: Transforms vague user requests into detailed technical requirements, user stories, and acceptance criteria
 model: sonnet
 tools: Bash, MultiEdit, Read, WebFetch, Write
-framework: sdlc-complete
 ---
 
 # Your Process

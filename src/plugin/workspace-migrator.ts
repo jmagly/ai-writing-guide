@@ -813,9 +813,90 @@ export class WorkspaceMigrator {
    * Update framework registry after migration
    */
   private async updateRegistry(frameworkId: string, migrationId: string): Promise<void> {
-    // Registry update logic would go here
-    // This is a placeholder - actual implementation would depend on PluginRegistry interface
-    console.debug(`[WorkspaceMigrator] Registry updated for framework: ${frameworkId}, migration: ${migrationId}`);
+    const registryPath = path.join(this.sandboxPath, 'frameworks', 'registry.json');
+
+    try {
+      // Load or create registry
+      let registry: {
+        version: string;
+        lastModified: string;
+        plugins: Array<{
+          id: string;
+          type: string;
+          name: string;
+          version: string;
+          path: string;
+          installedAt: string;
+          projects?: string[];
+          health?: {
+            status: string;
+            lastCheck: string;
+          };
+          metadata?: {
+            migrationId?: string;
+            migratedAt?: string;
+          };
+        }>;
+      };
+
+      try {
+        const content = await fs.readFile(registryPath, 'utf-8');
+        registry = JSON.parse(content);
+      } catch (error: any) {
+        // Create new registry if it doesn't exist
+        registry = {
+          version: '1.0.0',
+          lastModified: new Date().toISOString(),
+          plugins: []
+        };
+      }
+
+      // Check if framework already exists
+      const existingIndex = registry.plugins.findIndex(p => p.id === frameworkId);
+
+      const pluginEntry = {
+        id: frameworkId,
+        type: 'framework' as const,
+        name: frameworkId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        version: '1.0.0',
+        path: `frameworks/${frameworkId}`,
+        installedAt: new Date().toISOString(),
+        projects: ['default'],
+        health: {
+          status: 'healthy',
+          lastCheck: new Date().toISOString()
+        },
+        metadata: {
+          migrationId,
+          migratedAt: new Date().toISOString()
+        }
+      };
+
+      if (existingIndex >= 0) {
+        // Update existing entry
+        registry.plugins[existingIndex] = {
+          ...registry.plugins[existingIndex],
+          ...pluginEntry,
+          installedAt: registry.plugins[existingIndex].installedAt // Preserve original install date
+        };
+      } else {
+        // Add new entry
+        registry.plugins.push(pluginEntry);
+      }
+
+      registry.lastModified = new Date().toISOString();
+
+      // Ensure directory exists
+      await fs.mkdir(path.dirname(registryPath), { recursive: true });
+
+      // Write registry
+      await fs.writeFile(registryPath, JSON.stringify(registry, null, 2));
+
+      console.debug(`[WorkspaceMigrator] Registry updated for framework: ${frameworkId}, migration: ${migrationId}`);
+    } catch (error: any) {
+      console.warn(`[WorkspaceMigrator] Failed to update registry: ${error.message}`);
+      // Non-fatal error - migration still succeeded
+    }
   }
 
   /**

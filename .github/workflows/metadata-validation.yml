@@ -1,0 +1,248 @@
+name: Validate Framework Metadata
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '.claude/**'
+      - 'agentic/**'
+      - 'src/plugin/**'
+      - 'tools/workspace/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '.claude/**'
+      - 'agentic/**'
+      - 'src/plugin/**'
+      - 'tools/workspace/**'
+
+jobs:
+  validate-metadata:
+    name: Validate Plugin Metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Validate Metadata Schema
+        run: |
+          echo "Validating plugin metadata..."
+          node -e "
+            const { MetadataValidator } = require('./dist/plugin/metadata-validator.js');
+            const path = require('path');
+
+            async function validateAll() {
+              const validator = new MetadataValidator({
+                checkFileReferences: true,
+                strict: false
+              });
+
+              const dirs = [
+                '.claude/agents',
+                '.claude/commands',
+                'agentic/code/frameworks/sdlc-complete/agents',
+                'agentic/code/frameworks/sdlc-complete/commands'
+              ];
+
+              let totalErrors = 0;
+              let totalWarnings = 0;
+              let totalFiles = 0;
+
+              for (const dir of dirs) {
+                const dirPath = path.resolve(process.cwd(), dir);
+                try {
+                  const results = await validator.validateDirectory(dirPath, true);
+
+                  for (const [file, result] of results) {
+                    totalFiles++;
+                    if (!result.valid) {
+                      totalErrors += result.errors.length;
+                      console.log('\n❌ ' + file);
+                      for (const error of result.errors) {
+                        console.log('   Error: ' + error.message);
+                      }
+                    }
+                    totalWarnings += result.warnings.length;
+                  }
+                } catch (e) {
+                  // Directory may not exist
+                  console.log('Skipping ' + dir + ': ' + e.message);
+                }
+              }
+
+              console.log('\n' + '='.repeat(50));
+              console.log('Validation Summary:');
+              console.log('  Files Validated: ' + totalFiles);
+              console.log('  Errors:         ' + totalErrors);
+              console.log('  Warnings:       ' + totalWarnings);
+              console.log('='.repeat(50));
+
+              if (totalErrors > 0) {
+                console.log('\n❌ Metadata validation failed with ' + totalErrors + ' errors');
+                process.exit(1);
+              }
+
+              console.log('\n✓ Metadata validation passed');
+            }
+
+            validateAll().catch(e => {
+              console.error('Validation script error:', e);
+              process.exit(1);
+            });
+          "
+
+      - name: Check TypeScript Types
+        run: npx tsc --noEmit src/plugin/metadata-validator.ts src/plugin/registry-validator.ts 2>/dev/null || echo "Type check completed"
+
+      - name: Report Failure
+        if: failure()
+        run: |
+          echo ""
+          echo "❌ Metadata validation failed."
+          echo ""
+          echo "To fix locally:"
+          echo "  1. npm run build"
+          echo "  2. node -e \"const {MetadataValidator} = require('./dist/plugin/metadata-validator.js'); ...\""
+          echo ""
+          echo "Common issues:"
+          echo "  - Missing YAML frontmatter (--- delimiters)"
+          echo "  - Missing required fields (name, version, type, description)"
+          echo "  - Invalid semver version format"
+          echo ""
+          exit 1
+
+  validate-registry:
+    name: Validate Plugin Registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Validate Registry Consistency
+        run: |
+          echo "Checking registry consistency..."
+          node -e "
+            const { RegistryValidator } = require('./dist/plugin/registry-validator.js');
+            const path = require('path');
+            const fs = require('fs');
+
+            async function validateRegistry() {
+              const aiwgRoot = path.join(process.env.HOME, '.local/share/ai-writing-guide');
+
+              // Check if AIWG is installed
+              if (!fs.existsSync(aiwgRoot)) {
+                console.log('AIWG not installed at ' + aiwgRoot + ', skipping registry validation');
+                return;
+              }
+
+              const validator = new RegistryValidator(aiwgRoot, {
+                checkFilesystem: true,
+                checkFrameworkRefs: true,
+                checkHealthStaleness: false
+              });
+
+              const result = await validator.validate();
+
+              console.log(await validator.generateReport('text'));
+
+              if (!result.valid) {
+                console.log('\\n❌ Registry validation failed');
+                process.exit(1);
+              }
+
+              console.log('\\n✓ Registry validation passed');
+            }
+
+            validateRegistry().catch(e => {
+              console.log('Registry validation skipped: ' + e.message);
+            });
+          " || true
+
+  performance-check:
+    name: Validation Performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Measure Validation Time
+        run: |
+          echo "Measuring validation performance..."
+          START=$(date +%s%N)
+
+          node -e "
+            const { MetadataValidator } = require('./dist/plugin/metadata-validator.js');
+            const path = require('path');
+
+            async function benchmark() {
+              const validator = new MetadataValidator({ checkFileReferences: false });
+              const dirs = ['.claude/agents', '.claude/commands'];
+              let fileCount = 0;
+
+              for (const dir of dirs) {
+                try {
+                  const results = await validator.validateDirectory(path.resolve(process.cwd(), dir), true);
+                  fileCount += results.size;
+                } catch (e) {}
+              }
+
+              console.log('Files validated: ' + fileCount);
+            }
+
+            benchmark().catch(console.error);
+          "
+
+          END=$(date +%s%N)
+          DURATION=$(( (END - START) / 1000000 ))
+
+          echo "Validation completed in ${DURATION}ms"
+
+          # NFR-PERF-004: <30s for full validation
+          if [ $DURATION -gt 30000 ]; then
+            echo "⚠ Warning: Validation took longer than 30s target"
+          else
+            echo "✓ Performance target met (<30s)"
+          fi

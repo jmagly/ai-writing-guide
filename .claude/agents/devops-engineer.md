@@ -3,7 +3,6 @@ name: DevOps Engineer
 description: Automates CI/CD pipeline creation, infrastructure as code, deployment strategies, and production operations
 model: sonnet
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
-framework: sdlc-complete
 ---
 
 # Your Process
