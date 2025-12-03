@@ -53,8 +53,6 @@ export class TestCodeGenerator {
 
   constructor(options: CodeGeneratorOptions) {
     this.options = {
-      framework: options.framework,
-      language: options.language,
       includeSetup: true,
       includeTeardown: true,
       includeComments: true,
@@ -71,7 +69,6 @@ export class TestCodeGenerator {
    * @returns Code generation result with generated files
    */
   generate(suite: TestSuite): CodeGenerationResult {
-    const errors: string[] = [];
     const warnings: string[] = [];
     const files: GeneratedFile[] = [];
 
@@ -234,23 +231,23 @@ export class TestCodeGenerator {
   /**
    * Generate file header with metadata
    */
-  private generateFileHeader(suite: TestSuite, level: string): string {
+  private generateFileHeader(suite: TestSuite, _level: string): string {
     if (!this.options.includeComments) return '';
 
     return `/**
- * ${level.toUpperCase()} Tests: ${suite.name}
+ * ${_level.toUpperCase()} Tests: ${suite.name}
  *
  * Auto-generated from ${suite.useCaseId}
  * Generated at: ${suite.generatedAt}
  *
- * @module test/${level}/${suite.useCaseId.toLowerCase()}
+ * @module test/${_level}/${suite.useCaseId.toLowerCase()}
  */`;
   }
 
   /**
    * Generate imports based on framework
    */
-  private generateImports(level: 'unit' | 'integration' | 'e2e'): string {
+  private generateImports(_level: 'unit' | 'integration' | 'e2e'): string {
     switch (this.options.framework) {
       case 'vitest':
         return "import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';";
@@ -268,7 +265,7 @@ export class TestCodeGenerator {
   /**
    * Generate setup block
    */
-  private generateSetup(indent: string, suite: TestSuite): string {
+  private generateSetup(indent: string, _suite: TestSuite): string {
     const lines: string[] = [];
     const mockFn = this.options.framework === 'vitest' ? 'vi.fn()' : 'jest.fn()';
 

@@ -114,7 +114,6 @@ export class TestCaseGenerator {
    */
   generate(document: UseCaseDocument): GenerationResult {
     const startTime = Date.now();
-    const errors: string[] = [];
     const warnings: string[] = [];
     const testCases: TestCase[] = [];
 

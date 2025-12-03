@@ -523,10 +523,10 @@ export class GitWorkflowOrchestrator {
    */
   public async detectMergeConflicts(
     sourceBranch: string,
-    targetBranch?: string
+    _targetBranch?: string
   ): Promise<ConflictInfo[]> {
     try {
-      const target = targetBranch || await this.getCurrentBranch();
+      /* targetBranch check done inline in merge command */
 
       // Run merge with --no-commit --no-ff to detect conflicts without committing
       await this.execGit(`merge --no-commit --no-ff ${sourceBranch}`);
@@ -594,7 +594,7 @@ export class GitWorkflowOrchestrator {
   /**
    * Generate conflict resolution suggestions
    */
-  private generateConflictSuggestions(file: string, severity: 'trivial' | 'moderate' | 'complex'): string[] {
+  private generateConflictSuggestions(_file: string, severity: 'trivial' | 'moderate' | 'complex'): string[] {
     const suggestions = [
       'Review both versions of the conflicting code',
       'Consider using a visual merge tool (e.g., VS Code, GitKraken, Beyond Compare)'

@@ -474,10 +474,10 @@ export class CrossFrameworkOps {
    *
    * @param frameworkId - Framework ID
    * @param workId - Work item ID
-   * @param reason - Archive reason
+   * @param _reason - Archive reason
    * @returns Whether archive succeeded
    */
-  async archiveWork(frameworkId: string, workId: string, reason: string): Promise<boolean> {
+  async archiveWork(frameworkId: string, workId: string, _reason: string): Promise<boolean> {
     const metadata = await this.getWorkMetadata(frameworkId, workId);
 
     if (!metadata) {
@@ -606,7 +606,7 @@ export class CrossFrameworkOps {
   /**
    * Get all projects in a framework
    */
-  private async getFrameworkProjects(frameworkId: string, frameworkPath: string): Promise<string[]> {
+  private async getFrameworkProjects(_frameworkId: string, frameworkPath: string): Promise<string[]> {
     const projectsDir = path.join(this.aiwgRoot, frameworkPath, 'projects');
 
     try {

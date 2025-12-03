@@ -75,8 +75,6 @@ export class UseCaseParser {
    * @returns Parse result with structured document
    */
   async parseFile(filePath: string): Promise<ParseResult> {
-    const errors: string[] = [];
-    const warnings: string[] = [];
 
     try {
       const content = await fs.readFile(filePath, 'utf-8');
@@ -115,7 +113,7 @@ export class UseCaseParser {
 
     // Extract actor
     const actorMatch = content.match(/\*\*(?:Primary\s+)?Actor\*\*:\s*(.+)/i) ||
-                       content.match(/Actor:\s*(.+)/i);
+                      content.match(/Actor:\s*(.+)/i);
     const actor = actorMatch ? actorMatch[1].trim() : 'User';
 
     // Extract description

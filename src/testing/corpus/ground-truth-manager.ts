@@ -293,7 +293,7 @@ export class GroundTruthCorpusManager {
   private getLatestVersion(type: CorpusType): string | null {
     const versions: string[] = [];
 
-    for (const [key, manifest] of this.manifests) {
+    for (const [_key, manifest] of this.manifests) {
       if (manifest.type === type) {
         versions.push(manifest.version);
       }
