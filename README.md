@@ -1,10 +1,10 @@
 <div align="center">
 
-# 🎯 AI Writing Guide
+# 🎯 AIWG - AI Workflow Guide
 
-### Write like a human. Build like a pro.
+### Build like a pro. Write like a human.
 
-**An agent toolset and prompting framework for authentic AI-generated content, structured software development, and process automation**
+**A modular framework toolkit for AI-powered software development, marketing automation, and content quality**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.20.8-brightgreen)](https://nodejs.org)
@@ -55,7 +55,7 @@ aiwg -deploy-agents --platform warp    # Creates WARP.md with all agents/command
 ```bash
 cd your-project
 aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
-# Deploys 54 droids to .factory/droids/ + creates AGENTS.md template
+# Deploys 53 droids to .factory/droids/ + creates AGENTS.md template
 ```
 
 </details>
@@ -74,28 +74,14 @@ cd my-awesome-project
 
 ## ✨ What You Get
 
-> **📦 Framework Scope:** This is an **agent toolset and prompting framework** for process automation. Current features: **Writing Quality utilities**, **SDLC Complete framework**, and **Media/Marketing Kit (MMK)**. Future expansion planned for business process, research synthesis, and decision-making frameworks. Prompts function as executable software within agentic environments.
+> **📦 Modular Architecture:** AIWG is a **framework toolkit** with three component types:
+> - **Frameworks** — Complete lifecycle solutions (SDLC Complete, Media/Marketing Kit)
+> - **Addons** — Standalone utilities that work with any framework or independently (Writing Quality)
+> - **Extensions** — Framework-specific modules (GDPR compliance, FTC guidelines)
 
 <table>
 <tr>
-<td width="33%">
-
-### 📝 **Writing Quality Framework**
-
-**Remove AI tells. Write authentically.**
-
-- ✅ **Banned patterns library** — 505 AI pattern detections across 6 categories
-- ✅ **Before/after examples** — Real rewrites showing the difference
-- ✅ **3 specialized agents** — Validate, optimize, diversify content
-- ✅ **Quick-reference guides** — For technical, executive, academic voices
-
-**Perfect for:**
-- Content creators removing AI detection patterns
-- Developers documenting projects professionally
-- Teams maintaining consistent writing standards
-
-</td>
-<td width="33%">
+<td width="50%">
 
 ### 🏗️ **SDLC Complete Framework**
 
@@ -105,14 +91,12 @@ cd my-awesome-project
 - ✅ **48 workflow commands** — Intake, phase gates, risk management, compliance
 - ✅ **156 templates** — Every artifact from concept to production
 - ✅ **Multi-agent orchestration** — Parallel reviews, synthesis, automated quality gates
+- ✅ **Extensions available** — GDPR compliance, legal frameworks
 
-**Perfect for:**
-- Solo developers needing structure without overhead
-- Small teams scaling from 1 to 10+ developers
-- Enterprise projects requiring compliance and audit trails
+**Perfect for:** Solo developers, small teams (2-10), enterprise projects with compliance requirements
 
 </td>
-<td width="33%">
+<td width="50%">
 
 ### 📣 **Media/Marketing Kit (MMK)**
 
@@ -122,11 +106,32 @@ cd my-awesome-project
 - ✅ **23 workflow commands** — Campaign kickoff, content planning, brand review
 - ✅ **88 templates** — 15 categories from intake to analytics
 - ✅ **5-phase lifecycle** — Strategy → Creation → Review → Publication → Analysis
+- ✅ **Extensions available** — FTC compliance, industry-specific guidelines
 
-**Perfect for:**
-- Marketing teams managing campaigns end-to-end
-- Product launches coordinating dev and marketing
-- Agencies needing consistent deliverable quality
+**Perfect for:** Marketing teams, product launches, agencies needing consistent deliverable quality
+
+</td>
+</tr>
+</table>
+
+### 📝 **Writing Quality Addon**
+
+**Remove AI tells. Write authentically.** A standalone addon that works with any framework or independently.
+
+<table>
+<tr>
+<td width="50%">
+
+- ✅ **505 AI patterns** across 6 detection categories
+- ✅ **3 specialized agents** — Validate, optimize, diversify content
+- ✅ **Before/after examples** — Real rewrites showing the difference
+
+</td>
+<td width="50%">
+
+- ✅ **Quick-reference guides** — Technical, executive, academic voices
+- ✅ **Framework-agnostic** — Use standalone or with SDLC/MMK
+- ✅ **Zero dependencies** — Works immediately after install
 
 </td>
 </tr>
@@ -195,56 +200,46 @@ This framework solves that. 485 documents, 19 validation rules,
 
 ## 📦 What's Inside
 
-### Core Framework
+### Architecture Overview
 
 ```text
-ai-writing-guide/
-├── 📝 Writing Quality (Remove AI tells) — CURRENT
-│   ├── core/           → Philosophy and sophistication principles
-│   ├── validation/     → Banned patterns, detection markers
-│   ├── examples/       → Before/after rewrites
-│   ├── context/        → Quick-reference for different voices
-│   └── patterns/       → Common AI tells and avoidance strategies
+aiwg/
+├── 🏗️ Frameworks (Complete lifecycle solutions)
+│   │
+│   ├── sdlc-complete/                    → Enterprise software development
+│   │   ├── agents/ (53)                  → Requirements, architecture, testing, security, DevOps
+│   │   ├── commands/ (48)                → Intake, phase gates, deployments, compliance
+│   │   ├── templates/ (156)              → Every artifact from concept → production
+│   │   ├── flows/                        → Phase workflows (Inception → Transition)
+│   │   └── extensions/                   → GDPR compliance, legal frameworks
+│   │
+│   └── media-marketing-kit/              → Marketing campaign management
+│       ├── agents/ (37)                  → Strategy, content, creative, analytics
+│       ├── commands/ (23)                → Campaign kickoff, content planning, brand review
+│       ├── templates/ (88)               → 15 categories from intake to analytics
+│       ├── flows/                        → 5-phase lifecycle (Strategy → Analysis)
+│       └── extensions/                   → FTC compliance, industry-specific
 │
-├── 🤖 General Agents (3 writing-focused) — CURRENT
-│   ├── writing-validator      → Validate content against AI patterns
-│   ├── prompt-optimizer       → Improve prompts using AIWG principles
-│   └── content-diversifier    → Generate varied examples/perspectives
+├── 📝 Addons (Standalone utilities — work with any framework)
+│   │
+│   └── writing-quality/                  → AI pattern detection and content improvement
+│       ├── agents/ (3)                   → writing-validator, prompt-optimizer, content-diversifier
+│       ├── core/                         → Philosophy and sophistication principles
+│       ├── validation/                   → 505 banned patterns across 6 categories
+│       ├── examples/                     → Before/after rewrites
+│       └── context/                      → Quick-reference for different voices
 │
-├── 🏗️ SDLC Complete (Enterprise-grade lifecycle management) — CURRENT
-│   ├── agents/ (54)           → Requirements, architecture, testing, security, DevOps
-│   ├── commands/ (45+)        → Intake, phase gates, deployments, compliance
-│   ├── templates/ (156)       → Every artifact from concept → production
-│   ├── flows/                 → Phase-based workflows (Inception → Transition)
-│   ├── add-ons/               → GDPR compliance, legal frameworks
-│   └── artifacts/             → Sample projects (complete lifecycle examples)
+├── 🗂️ Workspace Management
+│   ├── Framework isolation               → Run SDLC + MMK + addons simultaneously
+│   ├── Natural language routing           → "Transition to Elaboration" → auto-routes to SDLC
+│   ├── Plugin system                      → Install/uninstall frameworks, addons, extensions
+│   └── Cross-framework reads              → MMK reads SDLC artifacts (novel combinations)
 │
-├── 📣 Media/Marketing Kit (Marketing campaign management) — NEW ✨
-│   ├── agents/ (37)           → Strategy, content, creative, analytics, compliance
-│   ├── commands/ (20)         → Campaign kickoff, content planning, brand review
-│   ├── templates/ (90+)       → 15 categories from intake to analytics
-│   ├── flows/                 → 5-phase lifecycle (Strategy → Analysis)
-│   └── add-ons/               → FTC compliance, GDPR-Marketing, industry-specific
-│
-├── 🔮 Future Process Frameworks — PLANNED (see roadmap)
-│   ├── agentic/code/frameworks/business-process/    → Business analysis workflows
-│   ├── agentic/code/frameworks/research-synthesis/  → Research & analysis
-│   └── agentic/code/frameworks/decision-making/     → Decision frameworks & matrices
-│
-├── 🗂️ Workspace Management (Zero-friction multi-framework support) — NEW ✨
-│   ├── Framework-scoped isolation    → Run SDLC + Marketing + Legal simultaneously
-│   ├── Natural language routing      → "Transition to Elaboration" → auto-routes to SDLC
-│   ├── Plugin system                 → Frameworks, add-ons, extensions with health monitoring
-│   ├── Cross-framework reads         → Marketing reads SDLC artifacts (novel combinations)
-│   ├── 4-tier architecture           → repo/ → projects/ → working/ → archive/
-│   └── Legacy migration              → Backward compatible with existing .aiwg/ structures
-│
-└── 🛠️ Development Tools
-    ├── install/       → One-line installer + CLI
-    ├── agents/        → Deployment automation
-    ├── workspace/     → Multi-framework workspace management (NEW)
-    ├── manifest/      → Documentation tracking
-    └── lint/          → Markdown quality enforcement
+└── 🛠️ CLI & Tools
+    ├── aiwg -deploy-agents               → Deploy agents to project
+    ├── aiwg -deploy-commands             → Deploy commands to project
+    ├── aiwg -new                         → Scaffold new project
+    └── aiwg -update                      → Update installation
 ```
 
 ### Agent Catalog Highlights
@@ -355,7 +350,7 @@ aiwg -deploy-agents --mode general
 
 **Problem:** Copying templates manually takes 6+ hours. You do it once and never update them.
 
-**Solution:** One command deploys 58 agents + 45 commands + 156 templates.
+**Solution:** One command deploys 53 agents + 48 commands + 156 templates.
 
 **Claude Code:**
 ```bash
