@@ -27,7 +27,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Import the validation engine from src
+// Import the validation engine from dist (compiled) or src via tsx
+const distPath = resolve(__dirname, '../../dist/writing/validation-engine.js');
 const srcPath = resolve(__dirname, '../../src/writing/validation-engine.ts');
 
 /**
@@ -289,15 +290,23 @@ async function main() {
     process.exit(options.help ? 0 : 1);
   }
 
-  // Dynamically import the validation engine
+  // Dynamically import the validation engine (try dist first, fallback to src via tsx)
   let WritingValidationEngine;
   try {
-    const module = await import(srcPath);
+    // Try compiled dist first
+    const module = await import(distPath);
     WritingValidationEngine = module.WritingValidationEngine;
-  } catch (error) {
-    console.error('Failed to load validation engine:', error.message);
-    console.error('Make sure to run from the ai-writing-guide root directory.');
-    process.exit(1);
+  } catch (distError) {
+    try {
+      // Fallback to src via tsx
+      const module = await import(srcPath);
+      WritingValidationEngine = module.WritingValidationEngine;
+    } catch (srcError) {
+      console.error('Failed to load validation engine from dist:', distError.message);
+      console.error('Failed to load validation engine from src:', srcError.message);
+      console.error('Make sure to run `npm run build` or have tsx installed.');
+      process.exit(1);
+    }
   }
 
   const engine = new WritingValidationEngine();

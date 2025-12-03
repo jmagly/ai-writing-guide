@@ -17,7 +17,10 @@
     ],
     "context": "Very common AI transition - overly formal",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "trans-002",
@@ -25,7 +28,7 @@
     "subcategory": "additive-formal",
     "pattern": "^Furthermore,",
     "severity": "medium",
-    "confidence": 0.90,
+    "confidence": 0.9,
     "examples": [
       "Furthermore, testing reduces bugs.",
       "Furthermore, users prefer simplicity."
@@ -37,7 +40,10 @@
     ],
     "context": "Paired with Moreover - strong AI signal",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "trans-003",
@@ -57,7 +63,11 @@
     ],
     "context": "Formal addition marker",
     "frequency": "very-common",
-    "domains": ["academic", "technical", "executive"]
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "trans-004",
@@ -77,7 +87,9 @@
     ],
     "context": "Overly formal contrast",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "trans-005",
@@ -97,7 +109,9 @@
     ],
     "context": "Formal despite marker",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "trans-006",
@@ -117,7 +131,11 @@
     ],
     "context": "Common but acceptable - just don't overuse",
     "frequency": "very-common",
-    "domains": ["academic", "technical", "executive"]
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "trans-007",
@@ -137,7 +155,10 @@
     ],
     "context": "Formal consequence marker",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "trans-008",
@@ -157,7 +178,9 @@
     ],
     "context": "Overly formal sequence",
     "frequency": "occasional",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "trans-009",
@@ -177,7 +200,10 @@
     ],
     "context": "Common logical conclusion - acceptable",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "trans-010",
@@ -185,7 +211,7 @@
     "subcategory": "causal-formal",
     "pattern": "^Thus,",
     "severity": "low",
-    "confidence": 0.70,
+    "confidence": 0.7,
     "examples": [
       "Thus, we chose Redis.",
       "Thus, latency improved."
@@ -197,7 +223,10 @@
     ],
     "context": "Formal therefore - acceptable",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "trans-011",
@@ -217,7 +246,9 @@
     ],
     "context": "Overly formal hence",
     "frequency": "occasional",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "trans-012",
@@ -237,7 +268,10 @@
     ],
     "context": "Wordy formal phrase",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "trans-013",
@@ -257,7 +291,10 @@
     ],
     "context": "Verbose regarding",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "trans-014",
@@ -265,7 +302,7 @@
     "subcategory": "prepositional-phrases",
     "pattern": "With respect to",
     "severity": "medium",
-    "confidence": 0.80,
+    "confidence": 0.8,
     "examples": [
       "With respect to scalability, we used Kubernetes.",
       "With respect to costs."
@@ -277,7 +314,10 @@
     ],
     "context": "Wordy respect phrase",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "trans-015",
@@ -297,7 +337,10 @@
     ],
     "context": "Common but wordy - consider shorter alternatives",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "trans-016",
@@ -317,7 +360,9 @@
     ],
     "context": "Unnecessary emphasis marker",
     "frequency": "common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "trans-017",
@@ -337,7 +382,10 @@
     ],
     "context": "Self-referential emphasis",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "trans-018",
@@ -357,7 +405,10 @@
     ],
     "context": "Meta-commentary on importance",
     "frequency": "common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
     "id": "trans-019",
@@ -377,7 +428,10 @@
     ],
     "context": "Common example introduction - acceptable",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "trans-020",
@@ -397,7 +451,11 @@
     ],
     "context": "Very common - acceptable but don't overuse",
     "frequency": "very-common",
-    "domains": ["technical", "academic", "casual"]
+    "domains": [
+      "technical",
+      "academic",
+      "casual"
+    ]
   },
   {
     "id": "trans-021",
@@ -417,7 +475,9 @@
     ],
     "context": "Common temporal marker - acceptable",
     "frequency": "common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "trans-022",
@@ -437,7 +497,10 @@
     ],
     "context": "Vague timeline - better with specific time",
     "frequency": "common",
-    "domains": ["technical", "casual"]
+    "domains": [
+      "technical",
+      "casual"
+    ]
   },
   {
     "id": "trans-023",
@@ -457,7 +520,9 @@
     ],
     "context": "Overly formal sequence",
     "frequency": "occasional",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "trans-024",
@@ -477,7 +542,11 @@
     ],
     "context": "Acceptable clarification - but question if needed",
     "frequency": "common",
-    "domains": ["academic", "technical", "casual"]
+    "domains": [
+      "academic",
+      "technical",
+      "casual"
+    ]
   },
   {
     "id": "trans-025",
@@ -497,7 +566,9 @@
     ],
     "context": "Wordy clarification",
     "frequency": "occasional",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "trans-026",
@@ -505,7 +576,7 @@
     "subcategory": "summary-intros",
     "pattern": "^In summary,",
     "severity": "high",
-    "confidence": 0.90,
+    "confidence": 0.9,
     "examples": [
       "In summary, caching is essential.",
       "In summary, we optimized three areas."
@@ -517,7 +588,10 @@
     ],
     "context": "Formulaic summary marker",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "trans-027",
@@ -537,7 +611,9 @@
     ],
     "context": "Informal summary marker",
     "frequency": "occasional",
-    "domains": ["casual"]
+    "domains": [
+      "casual"
+    ]
   },
   {
     "id": "trans-028",
@@ -557,7 +633,9 @@
     ],
     "context": "Casual summary phrase",
     "frequency": "occasional",
-    "domains": ["casual"]
+    "domains": [
+      "casual"
+    ]
   },
   {
     "id": "trans-029",
@@ -577,7 +655,10 @@
     ],
     "context": "Conversational contrast - acceptable",
     "frequency": "common",
-    "domains": ["casual", "technical"]
+    "domains": [
+      "casual",
+      "technical"
+    ]
   },
   {
     "id": "trans-030",
@@ -597,6 +678,608 @@
     ],
     "context": "Wordy casual contrast",
     "frequency": "occasional",
-    "domains": ["casual"]
+    "domains": [
+      "casual"
+    ]
+  },
+  {
+    "id": "trans-031",
+    "category": "transition-words",
+    "subcategory": "causal-formal",
+    "pattern": "^Accordingly,",
+    "severity": "medium",
+    "confidence": 0.81,
+    "examples": [
+      "Example using ^Accordingly,",
+      "Another example with ^Accordingly,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Formal consequence",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-032",
+    "category": "transition-words",
+    "subcategory": "comparison",
+    "pattern": "^Likewise,",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using ^Likewise,",
+      "Another example with ^Likewise,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Similarity marker",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-033",
+    "category": "transition-words",
+    "subcategory": "comparison",
+    "pattern": "^Similarly,",
+    "severity": "low",
+    "confidence": 0.7,
+    "examples": [
+      "Example using ^Similarly,",
+      "Another example with ^Similarly,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Similarity marker",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-034",
+    "category": "transition-words",
+    "subcategory": "contrast-formal",
+    "pattern": "^Conversely,",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using ^Conversely,",
+      "Another example with ^Conversely,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Formal contrast",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-035",
+    "category": "transition-words",
+    "subcategory": "contrast-formal",
+    "pattern": "^In contrast,",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using ^In contrast,",
+      "Another example with ^In contrast,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Explicit contrast",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-036",
+    "category": "transition-words",
+    "subcategory": "contrast-formal",
+    "pattern": "^By contrast,",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using ^By contrast,",
+      "Another example with ^By contrast,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Explicit contrast",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-037",
+    "category": "transition-words",
+    "subcategory": "comparison",
+    "pattern": "^Equally,",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using ^Equally,",
+      "Another example with ^Equally,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Equal weight marker",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-038",
+    "category": "transition-words",
+    "subcategory": "concession",
+    "pattern": "^Admittedly,",
+    "severity": "low",
+    "confidence": 0.72,
+    "examples": [
+      "Example using ^Admittedly,",
+      "Another example with ^Admittedly,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Concession marker",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-039",
+    "category": "transition-words",
+    "subcategory": "concession",
+    "pattern": "^Granted,",
+    "severity": "low",
+    "confidence": 0.71,
+    "examples": [
+      "Example using ^Granted,",
+      "Another example with ^Granted,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Concession marker",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-040",
+    "category": "transition-words",
+    "subcategory": "concession",
+    "pattern": "^To be sure,",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using ^To be sure,",
+      "Another example with ^To be sure,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Formal concession",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-041",
+    "category": "transition-words",
+    "subcategory": "concession",
+    "pattern": "^To be fair,",
+    "severity": "low",
+    "confidence": 0.7,
+    "examples": [
+      "Example using ^To be fair,",
+      "Another example with ^To be fair,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Balance marker",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-042",
+    "category": "transition-words",
+    "subcategory": "summary-intros",
+    "pattern": "^On balance,",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using ^On balance,",
+      "Another example with ^On balance,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Balanced summary",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-043",
+    "category": "transition-words",
+    "subcategory": "summary-intros",
+    "pattern": "^In essence,",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using ^In essence,",
+      "Another example with ^In essence,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Core summary",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-044",
+    "category": "transition-words",
+    "subcategory": "summary-intros",
+    "pattern": "^In short,",
+    "severity": "low",
+    "confidence": 0.69,
+    "examples": [
+      "Example using ^In short,",
+      "Another example with ^In short,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Brief summary",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-045",
+    "category": "transition-words",
+    "subcategory": "summary-intros",
+    "pattern": "^In brief,",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Example using ^In brief,",
+      "Another example with ^In brief,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Brief summary",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-046",
+    "category": "transition-words",
+    "subcategory": "simplification",
+    "pattern": "^Put simply,",
+    "severity": "low",
+    "confidence": 0.7,
+    "examples": [
+      "Example using ^Put simply,",
+      "Another example with ^Put simply,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Simplification",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-047",
+    "category": "transition-words",
+    "subcategory": "simplification",
+    "pattern": "^Simply put,",
+    "severity": "low",
+    "confidence": 0.69,
+    "examples": [
+      "Example using ^Simply put,",
+      "Another example with ^Simply put,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Simplification",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-048",
+    "category": "transition-words",
+    "subcategory": "specification",
+    "pattern": "^In particular,",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Example using ^In particular,",
+      "Another example with ^In particular,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Specification",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-049",
+    "category": "transition-words",
+    "subcategory": "specification",
+    "pattern": "^Specifically,",
+    "severity": "low",
+    "confidence": 0.67,
+    "examples": [
+      "Example using ^Specifically,",
+      "Another example with ^Specifically,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Specification",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-050",
+    "category": "transition-words",
+    "subcategory": "specification",
+    "pattern": "^Particularly,",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Example using ^Particularly,",
+      "Another example with ^Particularly,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Specification",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-051",
+    "category": "transition-words",
+    "subcategory": "importance-markers",
+    "pattern": "^More importantly,",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using ^More importantly,",
+      "Another example with ^More importantly,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Importance escalation",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-052",
+    "category": "transition-words",
+    "subcategory": "importance-markers",
+    "pattern": "^Most importantly,",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using ^Most importantly,",
+      "Another example with ^Most importantly,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Peak importance",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-053",
+    "category": "transition-words",
+    "subcategory": "importance-markers",
+    "pattern": "^Significantly,",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using ^Significantly,",
+      "Another example with ^Significantly,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Significance marker",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-054",
+    "category": "transition-words",
+    "subcategory": "importance-markers",
+    "pattern": "^Crucially,",
+    "severity": "high",
+    "confidence": 0.8,
+    "examples": [
+      "Example using ^Crucially,",
+      "Another example with ^Crucially,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Critical point",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "trans-055",
+    "category": "transition-words",
+    "subcategory": "conclusion-markers",
+    "pattern": "^Ultimately,",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using ^Ultimately,",
+      "Another example with ^Ultimately,"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Final point",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
   }
 ]

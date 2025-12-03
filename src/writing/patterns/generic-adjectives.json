@@ -17,7 +17,10 @@
     ],
     "context": "Vague quantity indicator",
     "frequency": "very-common",
-    "domains": ["technical", "academic"]
+    "domains": [
+      "technical",
+      "academic"
+    ]
   },
   {
     "id": "adj-002",
@@ -37,7 +40,10 @@
     ],
     "context": "Vague large quantity",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "adj-003",
@@ -57,7 +63,10 @@
     ],
     "context": "Vague mid-range quantity",
     "frequency": "very-common",
-    "domains": ["technical", "academic"]
+    "domains": [
+      "technical",
+      "academic"
+    ]
   },
   {
     "id": "adj-004",
@@ -77,7 +86,11 @@
     ],
     "context": "Vague importance without evidence",
     "frequency": "very-common",
-    "domains": ["academic", "technical", "executive"]
+    "domains": [
+      "academic",
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-005",
@@ -97,7 +110,10 @@
     ],
     "context": "Generic importance claim",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-006",
@@ -105,7 +121,7 @@
     "subcategory": "importance-claims",
     "pattern": "\\bcrucial\\b",
     "severity": "medium",
-    "confidence": 0.80,
+    "confidence": 0.8,
     "examples": [
       "Testing is crucial.",
       "This is crucial for performance."
@@ -117,7 +133,10 @@
     ],
     "context": "Strong claim without justification",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-007",
@@ -137,7 +156,9 @@
     ],
     "context": "Hyperbolic importance",
     "frequency": "common",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
   },
   {
     "id": "adj-008",
@@ -157,7 +178,10 @@
     ],
     "context": "Strong claim needing support",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-009",
@@ -177,7 +201,10 @@
     ],
     "context": "Vague completeness claim",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-010",
@@ -197,7 +224,9 @@
     ],
     "context": "Very common AI adjective",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "adj-011",
@@ -217,7 +246,10 @@
     ],
     "context": "Buzzword without substance",
     "frequency": "very-common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
     "id": "adj-012",
@@ -237,7 +269,10 @@
     ],
     "context": "Unsubstantiated optimality",
     "frequency": "common",
-    "domains": ["technical", "academic"]
+    "domains": [
+      "technical",
+      "academic"
+    ]
   },
   {
     "id": "adj-013",
@@ -257,7 +292,9 @@
     ],
     "context": "Acceptable if quantified",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "adj-014",
@@ -265,7 +302,7 @@
     "subcategory": "quality-vagueness",
     "pattern": "\\befficient\\b",
     "severity": "low",
-    "confidence": 0.70,
+    "confidence": 0.7,
     "examples": [
       "An efficient algorithm.",
       "Efficient use of resources."
@@ -277,7 +314,9 @@
     ],
     "context": "Vague performance claim",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "adj-015",
@@ -297,7 +336,10 @@
     ],
     "context": "Claim without evidence",
     "frequency": "very-common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
     "id": "adj-016",
@@ -317,7 +359,10 @@
     ],
     "context": "Marketing buzzword",
     "frequency": "common",
-    "domains": ["executive", "technical"]
+    "domains": [
+      "executive",
+      "technical"
+    ]
   },
   {
     "id": "adj-017",
@@ -337,7 +382,10 @@
     ],
     "context": "Vague sophistication claim",
     "frequency": "common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-018",
@@ -357,7 +405,10 @@
     ],
     "context": "Subjective ease claim",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-019",
@@ -377,7 +428,9 @@
     ],
     "context": "Relative simplicity",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "adj-020",
@@ -397,7 +450,9 @@
     ],
     "context": "Subjective ease",
     "frequency": "common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "adj-021",
@@ -417,7 +472,10 @@
     ],
     "context": "Vague adaptability",
     "frequency": "common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-022",
@@ -425,7 +483,7 @@
     "subcategory": "reliability-claims",
     "pattern": "\\breliable\\b",
     "severity": "low",
-    "confidence": 0.70,
+    "confidence": 0.7,
     "examples": [
       "A reliable system.",
       "Reliable performance."
@@ -437,7 +495,10 @@
     ],
     "context": "Claim needing evidence",
     "frequency": "common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-023",
@@ -457,7 +518,9 @@
     ],
     "context": "Relative speed without numbers",
     "frequency": "very-common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "adj-024",
@@ -477,7 +540,10 @@
     ],
     "context": "Vague time claim",
     "frequency": "common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "adj-025",
@@ -497,6 +563,948 @@
     ],
     "context": "Subjective UX claim",
     "frequency": "common",
-    "domains": ["executive"]
+    "domains": [
+      "executive"
+    ]
+  },
+  {
+    "id": "adj-026",
+    "category": "generic-adjectives",
+    "subcategory": "quality-vagueness",
+    "pattern": "\\bseamless\\b",
+    "severity": "high",
+    "confidence": 0.87,
+    "examples": [
+      "Example using \\bseamless\\b",
+      "Another example with \\bseamless\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Integration buzzword",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-027",
+    "category": "generic-adjectives",
+    "subcategory": "scope-vagueness",
+    "pattern": "\\bholistic\\b",
+    "severity": "high",
+    "confidence": 0.85,
+    "examples": [
+      "Example using \\bholistic\\b",
+      "Another example with \\bholistic\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague completeness",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-028",
+    "category": "generic-adjectives",
+    "subcategory": "buzzwords",
+    "pattern": "\\bsynergistic\\b",
+    "severity": "critical",
+    "confidence": 0.93,
+    "examples": [
+      "Example using \\bsynergistic\\b",
+      "Another example with \\bsynergistic\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Corporate buzzword",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-029",
+    "category": "generic-adjectives",
+    "subcategory": "business-vagueness",
+    "pattern": "\\bstrategic\\b",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using \\bstrategic\\b",
+      "Another example with \\bstrategic\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often overused",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-030",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bpivotal\\b",
+    "severity": "high",
+    "confidence": 0.82,
+    "examples": [
+      "Example using \\bpivotal\\b",
+      "Another example with \\bpivotal\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Importance claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-031",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bcritical\\b",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using \\bcritical\\b",
+      "Another example with \\bcritical\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often overstated",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-032",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bparamount\\b",
+    "severity": "high",
+    "confidence": 0.84,
+    "examples": [
+      "Example using \\bparamount\\b",
+      "Another example with \\bparamount\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Strong importance",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-033",
+    "category": "generic-adjectives",
+    "subcategory": "necessity-claims",
+    "pattern": "\\bindispensable\\b",
+    "severity": "high",
+    "confidence": 0.83,
+    "examples": [
+      "Example using \\bindispensable\\b",
+      "Another example with \\bindispensable\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Necessity claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-034",
+    "category": "generic-adjectives",
+    "subcategory": "necessity-claims",
+    "pattern": "\\bimperative\\b",
+    "severity": "high",
+    "confidence": 0.82,
+    "examples": [
+      "Example using \\bimperative\\b",
+      "Another example with \\bimperative\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Strong necessity",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-035",
+    "category": "generic-adjectives",
+    "subcategory": "foundation-claims",
+    "pattern": "\\bfundamental\\b",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using \\bfundamental\\b",
+      "Another example with \\bfundamental\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Foundation claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-036",
+    "category": "generic-adjectives",
+    "subcategory": "foundation-claims",
+    "pattern": "\\bcore\\b",
+    "severity": "low",
+    "confidence": 0.7,
+    "examples": [
+      "Example using \\bcore\\b",
+      "Another example with \\bcore\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Acceptable if accurate",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-037",
+    "category": "generic-adjectives",
+    "subcategory": "importance-claims",
+    "pattern": "\\bkey\\b",
+    "severity": "low",
+    "confidence": 0.68,
+    "examples": [
+      "Example using \\bkey\\b",
+      "Another example with \\bkey\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Common but vague",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-038",
+    "category": "generic-adjectives",
+    "subcategory": "scale-vagueness",
+    "pattern": "\\bmajor\\b",
+    "severity": "low",
+    "confidence": 0.69,
+    "examples": [
+      "Example using \\bmajor\\b",
+      "Another example with \\bmajor\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague scale",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-039",
+    "category": "generic-adjectives",
+    "subcategory": "scale-vagueness",
+    "pattern": "\\bminor\\b",
+    "severity": "low",
+    "confidence": 0.67,
+    "examples": [
+      "Example using \\bminor\\b",
+      "Another example with \\bminor\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague scale",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-040",
+    "category": "generic-adjectives",
+    "subcategory": "quantity-vagueness",
+    "pattern": "\\bsubstantial\\b",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using \\bsubstantial\\b",
+      "Another example with \\bsubstantial\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague quantity",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-041",
+    "category": "generic-adjectives",
+    "subcategory": "quantity-vagueness",
+    "pattern": "\\bconsiderable\\b",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using \\bconsiderable\\b",
+      "Another example with \\bconsiderable\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague quantity",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-042",
+    "category": "generic-adjectives",
+    "subcategory": "quantity-vagueness",
+    "pattern": "\\bsizeable\\b",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using \\bsizeable\\b",
+      "Another example with \\bsizeable\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Vague size",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-043",
+    "category": "generic-adjectives",
+    "subcategory": "quantity-vagueness",
+    "pattern": "\\bmodest\\b",
+    "severity": "low",
+    "confidence": 0.71,
+    "examples": [
+      "Example using \\bmodest\\b",
+      "Another example with \\bmodest\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Understated quantity",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-044",
+    "category": "generic-adjectives",
+    "subcategory": "significance-claims",
+    "pattern": "\\bnotable\\b",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using \\bnotable\\b",
+      "Another example with \\bnotable\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Self-proclaimed note",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-045",
+    "category": "generic-adjectives",
+    "subcategory": "significance-claims",
+    "pattern": "\\bremarkable\\b",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using \\bremarkable\\b",
+      "Another example with \\bremarkable\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Subjective assessment",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-046",
+    "category": "generic-adjectives",
+    "subcategory": "significance-claims",
+    "pattern": "\\bstriking\\b",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using \\bstriking\\b",
+      "Another example with \\bstriking\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Subjective impact",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-047",
+    "category": "generic-adjectives",
+    "subcategory": "quality-claims",
+    "pattern": "\\bimpressive\\b",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using \\bimpressive\\b",
+      "Another example with \\bimpressive\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Subjective quality",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-048",
+    "category": "generic-adjectives",
+    "subcategory": "quality-claims",
+    "pattern": "\\boutstanding\\b",
+    "severity": "high",
+    "confidence": 0.8,
+    "examples": [
+      "Example using \\boutstanding\\b",
+      "Another example with \\boutstanding\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Strong quality claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-049",
+    "category": "generic-adjectives",
+    "subcategory": "quality-claims",
+    "pattern": "\\bexceptional\\b",
+    "severity": "high",
+    "confidence": 0.81,
+    "examples": [
+      "Example using \\bexceptional\\b",
+      "Another example with \\bexceptional\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Above-average claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-050",
+    "category": "generic-adjectives",
+    "subcategory": "comparison-claims",
+    "pattern": "\\bsuperior\\b",
+    "severity": "high",
+    "confidence": 0.82,
+    "examples": [
+      "Example using \\bsuperior\\b",
+      "Another example with \\bsuperior\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Comparison claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-051",
+    "category": "generic-adjectives",
+    "subcategory": "comparison-claims",
+    "pattern": "\\bunparalleled\\b",
+    "severity": "critical",
+    "confidence": 0.9,
+    "examples": [
+      "Example using \\bunparalleled\\b",
+      "Another example with \\bunparalleled\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Extreme comparison",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-052",
+    "category": "generic-adjectives",
+    "subcategory": "comparison-claims",
+    "pattern": "\\bunmatched\\b",
+    "severity": "critical",
+    "confidence": 0.89,
+    "examples": [
+      "Example using \\bunmatched\\b",
+      "Another example with \\bunmatched\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Extreme comparison",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-053",
+    "category": "generic-adjectives",
+    "subcategory": "novelty-claims",
+    "pattern": "\\bunprecedented\\b",
+    "severity": "critical",
+    "confidence": 0.91,
+    "examples": [
+      "Example using \\bunprecedented\\b",
+      "Another example with \\bunprecedented\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "History claim",
+    "frequency": "very-common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-054",
+    "category": "generic-adjectives",
+    "subcategory": "uniqueness-claims",
+    "pattern": "\\bunique\\b",
+    "severity": "high",
+    "confidence": 0.83,
+    "examples": [
+      "Example using \\bunique\\b",
+      "Another example with \\bunique\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often overused",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "adj-055",
+    "category": "generic-adjectives",
+    "subcategory": "novelty-claims",
+    "pattern": "\\bnovel\\b",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using \\bnovel\\b",
+      "Another example with \\bnovel\\b"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Academic novelty",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "generic-adj-056",
+    "category": "generic-adjectives",
+    "subcategory": "vague-intensifiers",
+    "pattern": "highly effective",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a highly effective approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-057",
+    "category": "generic-adjectives",
+    "subcategory": "vague-intensifiers",
+    "pattern": "extremely valuable",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a extremely valuable approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-058",
+    "category": "generic-adjectives",
+    "subcategory": "vague-intensifiers",
+    "pattern": "incredibly useful",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a incredibly useful approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-059",
+    "category": "generic-adjectives",
+    "subcategory": "vague-intensifiers",
+    "pattern": "remarkably successful",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a remarkably successful approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-060",
+    "category": "generic-adjectives",
+    "subcategory": "vague-intensifiers",
+    "pattern": "exceptionally powerful",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a exceptionally powerful approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-061",
+    "category": "generic-adjectives",
+    "subcategory": "vague-intensifiers",
+    "pattern": "truly remarkable",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a truly remarkable approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-062",
+    "category": "generic-adjectives",
+    "subcategory": "academic-filler",
+    "pattern": "particularly noteworthy",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a particularly noteworthy approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-063",
+    "category": "generic-adjectives",
+    "subcategory": "academic-filler",
+    "pattern": "especially significant",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a especially significant approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-064",
+    "category": "generic-adjectives",
+    "subcategory": "academic-filler",
+    "pattern": "notably important",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a notably important approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
+  },
+  {
+    "id": "generic-adj-065",
+    "category": "generic-adjectives",
+    "subcategory": "academic-filler",
+    "pattern": "fundamentally essential",
+    "severity": "warning",
+    "confidence": 0.8,
+    "examples": [
+      "This is a fundamentally essential approach."
+    ],
+    "replacements": [
+      "Use specific measurable descriptors",
+      "Quantify the claim"
+    ],
+    "context": "Generic adjectives lack specificity and signal AI generation",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "marketing"
+    ]
   }
 ]

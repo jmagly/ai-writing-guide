@@ -17,7 +17,10 @@
     ],
     "context": "Formulaic enumeration - very common AI pattern",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "structure-002",
@@ -37,7 +40,10 @@
     ],
     "context": "Paired with Firstly - strong AI signal",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "structure-003",
@@ -45,7 +51,7 @@
     "subcategory": "numbered-transitions",
     "pattern": "^Thirdly,",
     "severity": "high",
-    "confidence": 0.90,
+    "confidence": 0.9,
     "examples": [
       "Thirdly, we need to optimize for mobile.",
       "Thirdly, documentation is essential."
@@ -57,7 +63,10 @@
     ],
     "context": "Completes the numbered trio",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "structure-004",
@@ -77,7 +86,10 @@
     ],
     "context": "Formal conclusion marker",
     "frequency": "common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "structure-005",
@@ -97,7 +109,9 @@
     ],
     "context": "School essay structure - very obvious AI tell",
     "frequency": "very-common",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "structure-006",
@@ -117,7 +131,10 @@
     ],
     "context": "Formal summary introduction",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "structure-007",
@@ -125,7 +142,7 @@
     "subcategory": "conclusion-phrases",
     "pattern": "In summary,",
     "severity": "high",
-    "confidence": 0.90,
+    "confidence": 0.9,
     "examples": [
       "In summary, security requires multiple layers.",
       "In summary, the migration was successful."
@@ -137,7 +154,10 @@
     ],
     "context": "Academic conclusion marker",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "structure-008",
@@ -157,7 +177,9 @@
     ],
     "context": "Formal ending marker",
     "frequency": "occasional",
-    "domains": ["academic"]
+    "domains": [
+      "academic"
+    ]
   },
   {
     "id": "structure-009",
@@ -177,7 +199,10 @@
     ],
     "context": "Academic/formal introduction",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "structure-010",
@@ -197,7 +222,10 @@
     ],
     "context": "Self-referential introduction",
     "frequency": "very-common",
-    "domains": ["academic", "technical"]
+    "domains": [
+      "academic",
+      "technical"
+    ]
   },
   {
     "id": "structure-011",
@@ -217,7 +245,10 @@
     ],
     "context": "Three-item lists are AI-typical structure",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "structure-012",
@@ -225,7 +256,7 @@
     "subcategory": "bullet-overuse",
     "pattern": "^\\s*[•\\-\\*]\\s+\\w+",
     "severity": "medium",
-    "confidence": 0.70,
+    "confidence": 0.7,
     "examples": [
       "• First benefit\n• Second benefit\n• Third benefit",
       "- Point one\n- Point two\n- Point three"
@@ -237,7 +268,10 @@
     ],
     "context": "Excessive bullet points without prose",
     "frequency": "very-common",
-    "domains": ["technical", "executive"]
+    "domains": [
+      "technical",
+      "executive"
+    ]
   },
   {
     "id": "structure-013",
@@ -257,7 +291,10 @@
     ],
     "context": "Conversational but formulaic intro",
     "frequency": "very-common",
-    "domains": ["technical", "casual"]
+    "domains": [
+      "technical",
+      "casual"
+    ]
   },
   {
     "id": "structure-014",
@@ -277,7 +314,10 @@
     ],
     "context": "Formulaic transition",
     "frequency": "common",
-    "domains": ["technical", "casual"]
+    "domains": [
+      "technical",
+      "casual"
+    ]
   },
   {
     "id": "structure-015",
@@ -285,7 +325,7 @@
     "subcategory": "rhetorical-questions",
     "pattern": "What (does this mean|is the solution|should we do|are the benefits)\\?",
     "severity": "medium",
-    "confidence": 0.80,
+    "confidence": 0.8,
     "examples": [
       "What does this mean for developers?",
       "What are the benefits of caching?"
@@ -297,7 +337,10 @@
     ],
     "context": "Formulaic Q&A structure",
     "frequency": "common",
-    "domains": ["technical", "casual"]
+    "domains": [
+      "technical",
+      "casual"
+    ]
   },
   {
     "id": "structure-016",
@@ -317,7 +360,11 @@
     ],
     "context": "Rhetorical framing device",
     "frequency": "common",
-    "domains": ["technical", "executive", "casual"]
+    "domains": [
+      "technical",
+      "executive",
+      "casual"
+    ]
   },
   {
     "id": "structure-017",
@@ -337,7 +384,10 @@
     ],
     "context": "Common Q&A format",
     "frequency": "very-common",
-    "domains": ["technical", "casual"]
+    "domains": [
+      "technical",
+      "casual"
+    ]
   },
   {
     "id": "structure-018",
@@ -357,7 +407,9 @@
     ],
     "context": "Procedural but acceptable in tutorials",
     "frequency": "common",
-    "domains": ["technical"]
+    "domains": [
+      "technical"
+    ]
   },
   {
     "id": "structure-019",
@@ -377,7 +429,10 @@
     ],
     "context": "Formulaic comparison structure",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
   },
   {
     "id": "structure-020",
@@ -397,6 +452,849 @@
     ],
     "context": "Paired with 'on one hand'",
     "frequency": "common",
-    "domains": ["academic", "executive"]
+    "domains": [
+      "academic",
+      "executive"
+    ]
+  },
+  {
+    "id": "structure-021",
+    "category": "formulaic-structures",
+    "subcategory": "reference-phrases",
+    "pattern": "As discussed above",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using As discussed above",
+      "Another example with As discussed above"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Self-referential",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-022",
+    "category": "formulaic-structures",
+    "subcategory": "reference-phrases",
+    "pattern": "As mentioned earlier",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using As mentioned earlier",
+      "Another example with As mentioned earlier"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Self-referential",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-023",
+    "category": "formulaic-structures",
+    "subcategory": "reference-phrases",
+    "pattern": "As noted previously",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using As noted previously",
+      "Another example with As noted previously"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Self-referential",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-024",
+    "category": "formulaic-structures",
+    "subcategory": "reference-phrases",
+    "pattern": "As shown above",
+    "severity": "low",
+    "confidence": 0.7,
+    "examples": [
+      "Example using As shown above",
+      "Another example with As shown above"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Reference (acceptable)",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-025",
+    "category": "formulaic-structures",
+    "subcategory": "forward-reference",
+    "pattern": "As we will see",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using As we will see",
+      "Another example with As we will see"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Preview language",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-026",
+    "category": "formulaic-structures",
+    "subcategory": "forward-reference",
+    "pattern": "As we shall see",
+    "severity": "high",
+    "confidence": 0.8,
+    "examples": [
+      "Example using As we shall see",
+      "Another example with As we shall see"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Formal preview",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-027",
+    "category": "formulaic-structures",
+    "subcategory": "importance-claims",
+    "pattern": "It is important to",
+    "severity": "high",
+    "confidence": 0.85,
+    "examples": [
+      "Example using It is important to",
+      "Another example with It is important to"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Meta-importance",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-028",
+    "category": "formulaic-structures",
+    "subcategory": "importance-claims",
+    "pattern": "It is crucial to",
+    "severity": "high",
+    "confidence": 0.84,
+    "examples": [
+      "Example using It is crucial to",
+      "Another example with It is crucial to"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Strong meta-claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-029",
+    "category": "formulaic-structures",
+    "subcategory": "importance-claims",
+    "pattern": "It is essential to",
+    "severity": "high",
+    "confidence": 0.83,
+    "examples": [
+      "Example using It is essential to",
+      "Another example with It is essential to"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Strong meta-claim",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-030",
+    "category": "formulaic-structures",
+    "subcategory": "importance-claims",
+    "pattern": "It is necessary to",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using It is necessary to",
+      "Another example with It is necessary to"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Necessity claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-031",
+    "category": "formulaic-structures",
+    "subcategory": "emphasis-markers",
+    "pattern": "It must be noted",
+    "severity": "high",
+    "confidence": 0.82,
+    "examples": [
+      "Example using It must be noted",
+      "Another example with It must be noted"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Forced emphasis",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-032",
+    "category": "formulaic-structures",
+    "subcategory": "emphasis-markers",
+    "pattern": "It should be noted",
+    "severity": "high",
+    "confidence": 0.81,
+    "examples": [
+      "Example using It should be noted",
+      "Another example with It should be noted"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Passive emphasis",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-033",
+    "category": "formulaic-structures",
+    "subcategory": "interest-claims",
+    "pattern": "It is interesting to note",
+    "severity": "high",
+    "confidence": 0.84,
+    "examples": [
+      "Example using It is interesting to note",
+      "Another example with It is interesting to note"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Self-proclaimed interest",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-034",
+    "category": "formulaic-structures",
+    "subcategory": "interest-claims",
+    "pattern": "It is noteworthy that",
+    "severity": "high",
+    "confidence": 0.83,
+    "examples": [
+      "Example using It is noteworthy that",
+      "Another example with It is noteworthy that"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Self-proclaimed note",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-035",
+    "category": "formulaic-structures",
+    "subcategory": "significance-claims",
+    "pattern": "It is significant that",
+    "severity": "high",
+    "confidence": 0.82,
+    "examples": [
+      "Example using It is significant that",
+      "Another example with It is significant that"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Claimed significance",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-036",
+    "category": "formulaic-structures",
+    "subcategory": "explanation-phrases",
+    "pattern": "What this means is",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using What this means is",
+      "Another example with What this means is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Obvious explanation",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-037",
+    "category": "formulaic-structures",
+    "subcategory": "explanation-phrases",
+    "pattern": "What this shows is",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using What this shows is",
+      "Another example with What this shows is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Obvious conclusion",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-038",
+    "category": "formulaic-structures",
+    "subcategory": "explanation-phrases",
+    "pattern": "What we see here is",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using What we see here is",
+      "Another example with What we see here is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Pointing out obvious",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-039",
+    "category": "formulaic-structures",
+    "subcategory": "summary-phrases",
+    "pattern": "The key takeaway is",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using The key takeaway is",
+      "Another example with The key takeaway is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Formulaic summary",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-040",
+    "category": "formulaic-structures",
+    "subcategory": "summary-phrases",
+    "pattern": "The bottom line is",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using The bottom line is",
+      "Another example with The bottom line is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Business cliche",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-041",
+    "category": "formulaic-structures",
+    "subcategory": "centrality-claims",
+    "pattern": "At the core of",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using At the core of",
+      "Another example with At the core of"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Core metaphor",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-042",
+    "category": "formulaic-structures",
+    "subcategory": "centrality-claims",
+    "pattern": "Central to this is",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using Central to this is",
+      "Another example with Central to this is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Centrality claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-043",
+    "category": "formulaic-structures",
+    "subcategory": "centrality-claims",
+    "pattern": "Fundamental to this is",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using Fundamental to this is",
+      "Another example with Fundamental to this is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Foundation claim",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-044",
+    "category": "formulaic-structures",
+    "subcategory": "truth-claims",
+    "pattern": "The reality is",
+    "severity": "medium",
+    "confidence": 0.79,
+    "examples": [
+      "Example using The reality is",
+      "Another example with The reality is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Asserting reality",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-045",
+    "category": "formulaic-structures",
+    "subcategory": "truth-claims",
+    "pattern": "The truth is",
+    "severity": "medium",
+    "confidence": 0.78,
+    "examples": [
+      "Example using The truth is",
+      "Another example with The truth is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Asserting truth",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-046",
+    "category": "formulaic-structures",
+    "subcategory": "truth-claims",
+    "pattern": "The fact is",
+    "severity": "medium",
+    "confidence": 0.77,
+    "examples": [
+      "Example using The fact is",
+      "Another example with The fact is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Asserting fact",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-047",
+    "category": "formulaic-structures",
+    "subcategory": "emphasis-markers",
+    "pattern": "The point is",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using The point is",
+      "Another example with The point is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Direct emphasis",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-048",
+    "category": "formulaic-structures",
+    "subcategory": "informal-intro",
+    "pattern": "The thing is",
+    "severity": "medium",
+    "confidence": 0.75,
+    "examples": [
+      "Example using The thing is",
+      "Another example with The thing is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Casual intro",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-049",
+    "category": "formulaic-structures",
+    "subcategory": "informal-intro",
+    "pattern": "Here's the thing",
+    "severity": "medium",
+    "confidence": 0.74,
+    "examples": [
+      "Example using Here's the thing",
+      "Another example with Here's the thing"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Casual emphasis",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-050",
+    "category": "formulaic-structures",
+    "subcategory": "rhetorical-setup",
+    "pattern": "The question is",
+    "severity": "medium",
+    "confidence": 0.73,
+    "examples": [
+      "Example using The question is",
+      "Another example with The question is"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Rhetorical setup",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-051",
+    "category": "formulaic-structures",
+    "subcategory": "rhetorical-setup",
+    "pattern": "This raises the question",
+    "severity": "medium",
+    "confidence": 0.76,
+    "examples": [
+      "Example using This raises the question",
+      "Another example with This raises the question"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Question intro",
+    "frequency": "occasional",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-052",
+    "category": "formulaic-structures",
+    "subcategory": "rhetorical-setup",
+    "pattern": "This begs the question",
+    "severity": "high",
+    "confidence": 0.8,
+    "examples": [
+      "Example using This begs the question",
+      "Another example with This begs the question"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Often misused phrase",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-053",
+    "category": "formulaic-structures",
+    "subcategory": "assertion-phrases",
+    "pattern": "One thing is clear",
+    "severity": "high",
+    "confidence": 0.81,
+    "examples": [
+      "Example using One thing is clear",
+      "Another example with One thing is clear"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Forced clarity",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-054",
+    "category": "formulaic-structures",
+    "subcategory": "assertion-phrases",
+    "pattern": "One thing is certain",
+    "severity": "high",
+    "confidence": 0.8,
+    "examples": [
+      "Example using One thing is certain",
+      "Another example with One thing is certain"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Forced certainty",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
+  },
+  {
+    "id": "structure-055",
+    "category": "formulaic-structures",
+    "subcategory": "certainty-claims",
+    "pattern": "There is no doubt",
+    "severity": "high",
+    "confidence": 0.82,
+    "examples": [
+      "Example using There is no doubt",
+      "Another example with There is no doubt"
+    ],
+    "replacements": [
+      "Use specific language instead",
+      "Be more direct",
+      "Provide concrete details"
+    ],
+    "context": "Overclaimed certainty",
+    "frequency": "common",
+    "domains": [
+      "technical",
+      "executive",
+      "academic"
+    ]
   }
 ]
