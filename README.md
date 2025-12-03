@@ -68,7 +68,7 @@ cd my-awesome-project
 # Ready to go! Intake forms, agents, and commands deployed.
 ```
 
-> **💡 What just happened?** You now have 94 specialized AI agents and 65+ workflow commands ready to help you write better content, manage projects, run campaigns, and ship faster.
+> **💡 What just happened?** You now have 93 specialized AI agents and 76 workflow commands ready to help you write better content, manage projects, run campaigns, and ship faster.
 
 ---
 
@@ -84,7 +84,7 @@ cd my-awesome-project
 
 **Remove AI tells. Write authentically.**
 
-- ✅ **Banned patterns library** — 100+ AI clichés to avoid
+- ✅ **Banned patterns library** — 505 AI pattern detections across 6 categories
 - ✅ **Before/after examples** — Real rewrites showing the difference
 - ✅ **3 specialized agents** — Validate, optimize, diversify content
 - ✅ **Quick-reference guides** — For technical, executive, academic voices
@@ -101,8 +101,8 @@ cd my-awesome-project
 
 **Manage projects like an enterprise. Scale like a startup.**
 
-- ✅ **54 SDLC agents** — Requirements, architecture, testing, security, deployment
-- ✅ **45+ workflow commands** — Intake, phase gates, risk management, compliance
+- ✅ **53 SDLC agents** — Requirements, architecture, testing, security, deployment
+- ✅ **48 workflow commands** — Intake, phase gates, risk management, compliance
 - ✅ **156 templates** — Every artifact from concept to production
 - ✅ **Multi-agent orchestration** — Parallel reviews, synthesis, automated quality gates
 
@@ -119,8 +119,8 @@ cd my-awesome-project
 **Run campaigns like an agency. Ship content faster.**
 
 - ✅ **37 marketing agents** — Strategy, content, creative, analytics, compliance
-- ✅ **20 workflow commands** — Campaign kickoff, content planning, brand review
-- ✅ **90+ templates** — 15 categories from intake to analytics
+- ✅ **23 workflow commands** — Campaign kickoff, content planning, brand review
+- ✅ **88 templates** — 15 categories from intake to analytics
 - ✅ **5-phase lifecycle** — Strategy → Creation → Review → Publication → Analysis
 
 **Perfect for:**
@@ -162,7 +162,7 @@ detecting and removing performative language that screams "I was
 written by ChatGPT."
 
 This framework solves that. 485 documents, 19 validation rules,
-100+ banned phrases. Ship faster. Write better.
+505 AI patterns to avoid. Ship faster. Write better.
 ```
 
 **Improvements:** Specific metrics, concrete problem, direct solution, natural voice
@@ -276,7 +276,7 @@ ai-writing-guide/
 - `reliability-engineer` — SLO/SLI definition, capacity planning
 - `deployment-manager` — Release planning and operational readiness
 
-[**See all 94 agents →**](docs/agents/README.md)
+[**See all 93 agents →**](docs/agents/README.md)
 
 ---
 
@@ -337,7 +337,7 @@ ai-writing-guide/
 
 **Problem:** ChatGPT wrote your docs. Everyone can tell.
 
-**Solution:** Validate content against 100+ banned patterns, get before/after rewrites.
+**Solution:** Validate content against 505 AI patterns across 6 categories, get before/after rewrites.
 
 ```bash
 # Deploy writing-validator agent
@@ -439,7 +439,7 @@ aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-ag
 
 **Problem:** Marketing teams lack structured workflows. Content scattered, brand inconsistent, no lifecycle tracking.
 
-**Solution:** Deploy MMK framework with 37 agents, 20 commands, and 90+ templates.
+**Solution:** Deploy MMK framework with 37 agents, 23 commands, and 88 templates.
 
 **Claude Code:**
 ```bash
@@ -992,15 +992,15 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 ### Writing Quality
 
 - [**Core Philosophy**](core/philosophy.md) — Fundamental writing principles
-- [**Banned Patterns**](validation/banned-patterns.md) — 100+ AI clichés to avoid
+- [**Banned Patterns**](validation/banned-patterns.md) — 505 AI patterns across 6 categories
 - [**Examples**](examples/) — Before/after rewrites
 - [**Quick Reference**](context/quick-reference.md) — Fast validation checklist
 
 ### SDLC Framework
 
 - [**Framework Overview**](agentic/code/frameworks/sdlc-complete/README.md) — Complete lifecycle guide
-- [**Agent Catalog**](docs/agents/README.md) — All 54 SDLC agents
-- [**Command Reference**](docs/commands/README.md) — All 45+ workflow commands
+- [**Agent Catalog**](docs/agents/README.md) — All 53 SDLC agents
+- [**Command Reference**](docs/commands/README.md) — All 48 workflow commands
 - [**Template Library**](agentic/code/frameworks/sdlc-complete/templates/) — 156 artifact templates
 - [**Phase Workflows**](agentic/code/frameworks/sdlc-complete/flows/) — Inception → Transition
 - [**Natural Language Guide**](agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md) — 70+ supported phrases
@@ -1009,8 +1009,8 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 
 - [**Framework Overview**](agentic/code/frameworks/media-marketing-kit/README.md) — Complete marketing lifecycle guide
 - [**Agent Catalog**](agentic/code/frameworks/media-marketing-kit/agents/) — All 37 marketing agents
-- [**Command Reference**](agentic/code/frameworks/media-marketing-kit/commands/) — All 20 marketing commands
-- [**Template Library**](agentic/code/frameworks/media-marketing-kit/templates/) — 90+ templates in 15 categories
+- [**Command Reference**](agentic/code/frameworks/media-marketing-kit/commands/) — All 23 marketing commands
+- [**Template Library**](agentic/code/frameworks/media-marketing-kit/templates/) — 88 templates in 15 categories
 - [**Lifecycle Guide**](agentic/code/frameworks/media-marketing-kit/plan-act-mmk.md) — Strategy → Analysis phases
 
 ### Workspace Management

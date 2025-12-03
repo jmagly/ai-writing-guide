@@ -26,7 +26,7 @@ export type PatternCategory =
   | 'conclusion-phrases'
   | 'introduction-phrases';
 
-export type PatternSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type PatternSeverity = 'critical' | 'high' | 'medium' | 'low' | 'warning' | 'info';
 export type PatternFrequency = 'very-common' | 'common' | 'occasional' | 'rare';
 export type PatternDomain = 'academic' | 'technical' | 'executive' | 'casual';
 

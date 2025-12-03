@@ -64,9 +64,14 @@ The repository includes two categories of specialized agents:
 - **content-diversifier**: Generates varied examples and perspectives
 
 **SDLC Framework Agents** (`/agentic/code/frameworks/sdlc-complete/agents/`):
-- 51 specialized agents covering all SDLC phases (Inception → Transition)
+- 53 specialized agents covering all SDLC phases (Inception → Transition)
 - Including: code-reviewer, test-engineer, requirements-analyst, devops-engineer, architecture-designer, security-gatekeeper, incident-responder, and many more
 - See `/agentic/code/frameworks/sdlc-complete/README.md` for complete list
+
+**Media/Marketing Kit Agents** (`/agentic/code/frameworks/media-marketing-kit/agents/`):
+- 37 marketing-focused agents covering campaign lifecycle (Strategy → Analysis)
+- Including: campaign-strategist, copywriter, brand-guardian, seo-specialist, analytics, and more
+- See `/agentic/code/frameworks/media-marketing-kit/README.md` for complete list
 
 Agents can be deployed via:
 - **Claude Code**: `aiwg -deploy-agents --mode general|sdlc|both`
@@ -293,8 +298,8 @@ This repository includes a comprehensive software development lifecycle framewor
 
 ### Core Components
 
-- **Agents** (`agentic/code/frameworks/sdlc-complete/agents/`): 51 specialized SDLC role agents (intake-coordinator, security-gatekeeper, architecture-designer, etc.)
-- **Commands** (`agentic/code/frameworks/sdlc-complete/commands/`): 24 SDLC commands for project management, security, traceability
+- **Agents** (`agentic/code/frameworks/sdlc-complete/agents/`): 53 specialized SDLC role agents (intake-coordinator, security-gatekeeper, architecture-designer, etc.)
+- **Commands** (`agentic/code/frameworks/sdlc-complete/commands/`): 48 SDLC commands for project management, security, traceability
 - **Templates** (`agentic/code/frameworks/sdlc-complete/templates/`): Intake, requirements, architecture, test, security, deployment
 - **Flows** (`agentic/code/frameworks/sdlc-complete/flows/`): Phase-based workflows (Inception → Elaboration → Construction → Transition)
 - **Add-ons** (`agentic/code/frameworks/sdlc-complete/add-ons/`): GDPR compliance, legal frameworks
@@ -476,9 +481,9 @@ This project uses the **AI Writing Guide SDLC framework** for software developme
 
 AIWG is a comprehensive SDLC framework providing:
 
-- **58 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
-- **42+ commands** for project management, security, testing, deployment, and traceability
-- **100+ templates** for requirements, architecture, testing, security, deployment artifacts
+- **93 specialized agents** covering all lifecycle phases (53 SDLC + 37 Marketing + 3 Writing)
+- **76 commands** for project management, security, testing, deployment, and traceability (48 SDLC + 23 MMK + 5 general)
+- **244 templates** for requirements, architecture, testing, security, deployment artifacts (156 SDLC + 88 MMK)
 - **Phase-based workflows** with gate criteria and milestone tracking
 - **Multi-agent orchestration** patterns for collaborative artifact generation
 
@@ -495,9 +500,9 @@ AIWG is a comprehensive SDLC framework providing:
 ls ~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/
 
 # Available resources:
-# - agents/     → 58 SDLC role agents
-# - commands/   → 42+ slash commands
-# - templates/  → 100+ artifact templates
+# - agents/     → 53 SDLC role agents
+# - commands/   → 48 SDLC slash commands
+# - templates/  → 156 artifact templates
 # - flows/      → Phase workflow documentation
 ```
 

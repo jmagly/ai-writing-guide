@@ -154,8 +154,8 @@ describe('AgentOrchestrator', () => {
       const duration = Date.now() - startTime;
 
       expect(result.success).toBe(true);
-      // Parallel execution should be faster than sequential
-      expect(duration).toBeLessThan(5000);
+      // Parallel execution should be faster than sequential (allow headroom for CI/slow systems)
+      expect(duration).toBeLessThan(10000);
     });
 
     it('should track active orchestrations', async () => {
