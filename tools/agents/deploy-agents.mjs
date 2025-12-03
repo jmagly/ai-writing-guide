@@ -28,11 +28,12 @@
  *   --create-agents-md       Create/update AGENTS.md template (Factory)
  *
  * Modes:
- *   general   - Deploy only general-purpose writing agents and commands
+ *   general   - Deploy only writing-quality addon agents and commands (alias: writing)
+ *   writing   - Deploy only writing-quality addon agents (alias for general)
  *   sdlc      - Deploy only SDLC Complete framework agents and commands
  *   marketing - Deploy only Media/Marketing Kit framework agents and commands
- *   both      - Deploy general and SDLC (legacy compatibility)
- *   all       - Deploy all frameworks (default)
+ *   both      - Deploy writing + SDLC (legacy compatibility)
+ *   all       - Deploy all frameworks + addons (default)
  *
  * Defaults:
  *   --source resolves relative to this script's repo root (../..)
@@ -530,11 +531,16 @@ function enableFactoryCustomDroids(dryRun) {
 
   // Deploy Agents (unless --commands-only)
   if (!commandsOnly) {
-    // Deploy general agents if mode is 'general', 'both', or 'all'
-    if (mode === 'general' || mode === 'both' || mode === 'all') {
-      const generalAgentsRoot = path.join(srcRoot, 'agents');
-      if (fs.existsSync(generalAgentsRoot)) {
-        const files = listMdFiles(generalAgentsRoot);
+    // Deploy writing addon agents if mode is 'general', 'writing', 'both', or 'all'
+    if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
+      // New location: agentic/code/addons/writing-quality/agents/
+      const writingAddonAgentsRoot = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'agents');
+      // Fallback to legacy location for backward compatibility
+      const legacyAgentsRoot = path.join(srcRoot, 'agents');
+      const agentsRoot = fs.existsSync(writingAddonAgentsRoot) ? writingAddonAgentsRoot : legacyAgentsRoot;
+
+      if (fs.existsSync(agentsRoot)) {
+        const files = listMdFiles(agentsRoot);
         if (files.length > 0) {
           const destDir = provider === 'factory'
             ? path.join(target, '.factory', 'droids')
@@ -542,7 +548,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.codex', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
-          console.log(`Deploying ${files.length} general-purpose agents to ${destDir} (provider=${provider})`);
+          const locationLabel = agentsRoot === writingAddonAgentsRoot ? 'writing-quality addon' : 'general-purpose';
+          console.log(`Deploying ${files.length} ${locationLabel} agents to ${destDir} (provider=${provider})`);
           deployFiles(files, destDir, deployOpts);
         }
       }
