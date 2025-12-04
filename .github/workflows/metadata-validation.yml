@@ -40,14 +40,13 @@ jobs:
           echo "Building TypeScript..."
           npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
           echo "Build completed. Checking dist directory..."
-          ls -la dist/ || echo "dist/ directory does not exist"
-          ls -la dist/plugin/ || echo "dist/plugin/ directory does not exist"
+          ls -la dist/src/plugin/ || echo "dist/src/plugin/ directory does not exist"
 
       - name: Validate Metadata Schema
         run: |
           echo "Validating plugin metadata..."
           node -e "
-            const { MetadataValidator } = require('./dist/plugin/metadata-validator.js');
+            const { MetadataValidator } = require('./dist/src/plugin/metadata-validator.js');
             const path = require('path');
 
             async function validateAll() {
@@ -121,7 +120,7 @@ jobs:
           echo ""
           echo "To fix locally:"
           echo "  1. npm run build"
-          echo "  2. node -e \"const {MetadataValidator} = require('./dist/plugin/metadata-validator.js'); ...\""
+          echo "  2. node -e \"const {MetadataValidator} = require('./dist/src/plugin/metadata-validator.js'); ...\""
           echo ""
           echo "Common issues:"
           echo "  - Missing YAML frontmatter (--- delimiters)"
@@ -153,13 +152,13 @@ jobs:
         run: |
           echo "Building TypeScript..."
           npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
-          ls -la dist/plugin/metadata-validator.js || echo "metadata-validator.js not found"
+          ls -la dist/src/plugin/metadata-validator.js || echo "metadata-validator.js not found"
 
       - name: Validate Registry Consistency
         run: |
           echo "Checking registry consistency..."
           node -e "
-            const { RegistryValidator } = require('./dist/plugin/registry-validator.js');
+            const { RegistryValidator } = require('./dist/src/plugin/registry-validator.js');
             const path = require('path');
             const fs = require('fs');
 
@@ -217,7 +216,7 @@ jobs:
         run: |
           echo "Building TypeScript..."
           npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
-          ls -la dist/plugin/metadata-validator.js || echo "metadata-validator.js not found"
+          ls -la dist/src/plugin/metadata-validator.js || echo "metadata-validator.js not found"
 
       - name: Measure Validation Time
         run: |
@@ -225,7 +224,7 @@ jobs:
           START=$(date +%s%N)
 
           node -e "
-            const { MetadataValidator } = require('./dist/plugin/metadata-validator.js');
+            const { MetadataValidator } = require('./dist/src/plugin/metadata-validator.js');
             const path = require('path');
 
             async function benchmark() {
