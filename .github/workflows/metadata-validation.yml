@@ -55,9 +55,9 @@ jobs:
                 strict: false
               });
 
+              // Note: .claude/agents and .claude/commands are gitignored (user-deployed)
+              // Only validate tracked source directories
               const dirs = [
-                '.claude/agents',
-                '.claude/commands',
                 'agentic/code/frameworks/sdlc-complete/agents',
                 'agentic/code/frameworks/sdlc-complete/commands'
               ];
@@ -66,12 +66,22 @@ jobs:
               let totalWarnings = 0;
               let totalFiles = 0;
 
+              // Skip documentation/manifest files (not agents/commands)
+              const skipPatterns = ['manifest.md', 'README.md', 'agent-template.md', 'openai-compat.md', 'factory-compat.md'];
+
               for (const dir of dirs) {
                 const dirPath = path.resolve(process.cwd(), dir);
                 try {
                   const results = await validator.validateDirectory(dirPath, true);
 
                   for (const [file, result] of results) {
+                    // Skip documentation files
+                    const basename = path.basename(file);
+                    if (skipPatterns.includes(basename)) {
+                      console.log('Skipping doc file: ' + basename);
+                      continue;
+                    }
+
                     totalFiles++;
                     if (!result.valid) {
                       totalErrors += result.errors.length;
