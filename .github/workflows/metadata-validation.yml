@@ -36,7 +36,12 @@ jobs:
         run: npm ci
 
       - name: Build TypeScript
-        run: npm run build
+        run: |
+          echo "Building TypeScript..."
+          npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
+          echo "Build completed. Checking dist directory..."
+          ls -la dist/ || echo "dist/ directory does not exist"
+          ls -la dist/plugin/ || echo "dist/plugin/ directory does not exist"
 
       - name: Validate Metadata Schema
         run: |
@@ -145,7 +150,10 @@ jobs:
         run: npm ci
 
       - name: Build TypeScript
-        run: npm run build
+        run: |
+          echo "Building TypeScript..."
+          npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
+          ls -la dist/plugin/metadata-validator.js || echo "metadata-validator.js not found"
 
       - name: Validate Registry Consistency
         run: |
@@ -206,7 +214,10 @@ jobs:
         run: npm ci
 
       - name: Build TypeScript
-        run: npm run build
+        run: |
+          echo "Building TypeScript..."
+          npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
+          ls -la dist/plugin/metadata-validator.js || echo "metadata-validator.js not found"
 
       - name: Measure Validation Time
         run: |
