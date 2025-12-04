@@ -21,17 +21,13 @@ import * as path from 'path';
 import { glob } from 'glob';
 import {
   ALL_SECRET_PATTERNS,
-  analyzeValue,
   calculateEntropy,
   isPlaceholder,
   shouldExcludeFile as shouldExcludeFileFromSecretScan,
-  type SecretPattern,
 } from './secret-patterns.js';
 import {
   ALL_API_PATTERNS,
-  extractURLs,
   isWhitelisted,
-  type APIPattern,
 } from './api-patterns.js';
 
 // ============================================================================
@@ -268,7 +264,7 @@ export class SecurityValidator {
 
     try {
       const content = await fs.readFile(filePath, 'utf-8');
-      const lines = content.split('\n');
+      // const lines = content.split('\n');
 
       // Check for external API calls
       const apiCalls = await this.detectExternalAPICallsInContent(content, filePath);
@@ -391,10 +387,10 @@ export class SecurityValidator {
     filePath: string
   ): Promise<ExternalAPICall[]> {
     const calls: ExternalAPICall[] = [];
-    const lines = content.split('\n');
+    // const lines = content.split('\n');
 
     // Extract all URLs from content
-    const urls = extractURLs(content);
+    // const urls = extractURLs(content);
 
     // Check each pattern
     for (const pattern of ALL_API_PATTERNS) {
@@ -484,7 +480,7 @@ export class SecurityValidator {
 
     try {
       const content = await fs.readFile(filePath, 'utf-8');
-      const lines = content.split('\n');
+      // const lines = content.split('\n');
 
       // Check each secret pattern
       for (const pattern of ALL_SECRET_PATTERNS) {
@@ -710,20 +706,15 @@ export class SecurityValidator {
 
     try {
       const packageJsonPath = path.join(this.projectPath, 'package.json');
+      // Verify package.json exists and is valid JSON
       const content = await fs.readFile(packageJsonPath, 'utf-8');
-      const packageJson = JSON.parse(content);
-
-      // Check dependencies
-      const deps = {
-        ...packageJson.dependencies || {},
-        ...packageJson.devDependencies || {},
-      };
+      JSON.parse(content);
 
       // Note: In production, this would query a local vulnerability database
-      // For now, we return empty results (no known vulnerabilities)
+      // against the parsed dependencies. For now, we return empty results.
 
-    } catch (error) {
-      // No package.json or can't read it
+    } catch (_error) {
+      // No package.json or can't read it - skip dependency check
     }
 
     return {

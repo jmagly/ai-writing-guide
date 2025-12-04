@@ -52,9 +52,21 @@ export class ValidationRuleLoader {
       return this.ruleCache.get(cacheKey)!;
     }
 
-    const bannedPatternsPath = join(this.guideBasePath!, 'validation/banned-patterns.md');
-    const aiTellsPath = join(this.guideBasePath!, 'patterns/common-ai-tells.md');
-    const sophisticationPath = join(this.guideBasePath!, 'core/sophistication-guide.md');
+    // New addon structure paths (preferred)
+    const addonBase = join(this.guideBasePath!, 'agentic', 'code', 'addons', 'writing-quality');
+    // Legacy paths (fallback for backward compatibility)
+    const legacyBase = this.guideBasePath!;
+
+    // Check for addon structure first, fall back to legacy
+    const bannedPatternsPath = existsSync(join(addonBase, 'validation/banned-patterns.md'))
+      ? join(addonBase, 'validation/banned-patterns.md')
+      : join(legacyBase, 'validation/banned-patterns.md');
+    const aiTellsPath = existsSync(join(addonBase, 'patterns/common-ai-tells.md'))
+      ? join(addonBase, 'patterns/common-ai-tells.md')
+      : join(legacyBase, 'patterns/common-ai-tells.md');
+    const sophisticationPath = existsSync(join(addonBase, 'core/sophistication-guide.md'))
+      ? join(addonBase, 'core/sophistication-guide.md')
+      : join(legacyBase, 'core/sophistication-guide.md');
 
     // Start with default rules (core patterns that should always be present)
     const defaults = this.getDefaultRules();

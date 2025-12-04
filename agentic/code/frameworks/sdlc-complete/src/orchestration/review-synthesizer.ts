@@ -158,7 +158,7 @@ export class ReviewSynthesizer {
    */
   private consolidateComments(
     reviews: ReviewResult[],
-    options: SynthesisOptions
+    _options: SynthesisOptions
   ): ConsolidatedComment[] {
     const commentGroups = new Map<string, ReviewComment[]>();
 
@@ -302,10 +302,10 @@ export class ReviewSynthesizer {
     }
 
     // Get top keywords
-    const topKeywords = Array.from(wordFreq.entries())
+    /* const _topKeywords = Array.from(wordFreq.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
-      .map(([word]) => word);
+      .map(([word]) => word); */
 
     // Build consolidated text
     const reviewerCount = comments.length;
@@ -342,7 +342,7 @@ export class ReviewSynthesizer {
    */
   private detectConflicts(
     consolidatedComments: ConsolidatedComment[],
-    reviews: ReviewResult[],
+    _reviews: ReviewResult[],
     options: SynthesisOptions
   ): ConflictResolution[] {
     const conflicts: ConflictResolution[] = [];

@@ -1,65 +1,41 @@
-# General-Purpose Agents
+# Agents Directory
 
-This directory contains Claude Code agents that support the AI Writing Guide's core mission: improving AI-generated content quality.
+This directory previously contained the writing-quality agents. Those agents have been moved to the addon structure.
 
-## Available Agents
+## New Location
 
-### content-diversifier
+Writing-quality agents are now located at:
 
-Generates varied examples and perspectives to demonstrate range in AI-generated content. Helps show different approaches to solving the same writing problem.
-
-**Use when:**
-
-- Creating before/after examples
-- Demonstrating multiple writing styles
-- Exploring alternative phrasings
-- Testing pattern detection across variations
-
-### prompt-optimizer
-
-Enhances prompts using AI Writing Guide principles to produce better, more authentic output.
-
-**Use when:**
-
-- Refining prompts to avoid banned patterns
-- Improving specificity and clarity
-- Balancing sophistication with authenticity
-- Optimizing for domain-appropriate voice
-
-### writing-validator
-
-Validates content against AI patterns and authenticity markers defined in the Writing Guide.
-
-**Use when:**
-
-- Checking for banned phrases
-- Detecting performative language
-- Verifying authenticity markers
-- Validating sophistication level
-
-## Usage
-
-```bash
-# Validate content
-/writing-validator path/to/content.md
-
-# Optimize a prompt
-/prompt-optimizer "Your prompt text here"
-
-# Generate diverse examples
-/content-diversifier "Base concept or topic"
+```
+agentic/code/addons/writing-quality/agents/
+├── content-diversifier.md
+├── prompt-optimizer.md
+└── writing-validator.md
 ```
 
-## Relationship to SDLC Framework
+## Why the Change?
 
-These agents are distinct from the SDLC framework agents found in `/agentic/code/frameworks/sdlc-complete/agents/`. While SDLC agents focus on software development lifecycle tasks, these agents support writing quality and content generation.
+Per ADR-008 (Plugin Type Taxonomy), AIWG uses a three-tier plugin structure:
 
-## Context Selection
+- **Frameworks**: Complete lifecycle solutions (SDLC, MMK) in `agentic/code/frameworks/`
+- **Addons**: Standalone utilities in `agentic/code/addons/`
+- **Extensions**: Framework-specific modules
 
-These agents work best when combined with relevant Writing Guide documents:
+The writing-quality tools are classified as an **addon** because they work with any framework or independently.
 
-- **validation**: Include `validation/banned-patterns.md`
-- **sophistication**: Include `core/sophistication-guide.md`
-- **examples**: Include relevant files from `examples/`
+## Deployment
 
-See `USAGE_GUIDE.md` in the repository root for context optimization strategies.
+The agents are automatically deployed from the correct location:
+
+```bash
+# Deploy writing addon agents
+aiwg -deploy-agents --mode writing
+
+# Deploy all (includes writing addon)
+aiwg -deploy-agents --mode all
+```
+
+## See Also
+
+- [Writing Quality Addon README](../agentic/code/addons/writing-quality/README.md)
+- [ADR-008: Plugin Type Taxonomy](../.aiwg/architecture/decisions/ADR-008-plugin-type-taxonomy.md)

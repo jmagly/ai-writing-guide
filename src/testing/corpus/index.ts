@@ -7,7 +7,10 @@
  */
 
 export {
-  GroundTruthCorpusManager,
+  GroundTruthCorpusManager
+} from './ground-truth-manager.js';
+
+export type {
   CorpusType,
   VersionConstraint,
   GroundTruthItem,
@@ -19,7 +22,10 @@ export {
 } from './ground-truth-manager.js';
 
 export {
-  CorpusBuilder,
+  CorpusBuilder
+} from './corpus-builder.js';
+
+export type {
   CorpusBuilderOptions,
   ExportOptions,
   CorpusBuilders

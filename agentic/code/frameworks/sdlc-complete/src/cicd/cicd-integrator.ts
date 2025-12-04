@@ -426,7 +426,7 @@ export class CICDIntegrator {
   /**
    * Render GitHub Actions workflow
    */
-  private renderGitHubActions(pipeline: Pipeline, config: CICDConfig): { content: string; filePath: string } {
+  private renderGitHubActions(pipeline: Pipeline, _config: CICDConfig): { content: string; filePath: string } {
     const workflow: any = {
       name: pipeline.name,
       on: {}
@@ -482,7 +482,7 @@ export class CICDIntegrator {
   /**
    * Render GitLab CI configuration
    */
-  private renderGitLabCI(pipeline: Pipeline, config: CICDConfig): { content: string; filePath: string } {
+  private renderGitLabCI(pipeline: Pipeline, _config: CICDConfig): { content: string; filePath: string } {
     const gitlabConfig: any = {
       stages: pipeline.jobs.map(j => j.name)
     };
@@ -511,7 +511,7 @@ export class CICDIntegrator {
   /**
    * Render Jenkins pipeline
    */
-  private renderJenkins(pipeline: Pipeline, config: CICDConfig): { content: string; filePath: string } {
+  private renderJenkins(pipeline: Pipeline, _config: CICDConfig): { content: string; filePath: string } {
     const stages = pipeline.jobs.map(job => {
       const commands = job.steps
         .filter(s => s.command)
@@ -542,7 +542,7 @@ ${stages}
   /**
    * Render CircleCI configuration
    */
-  private renderCircleCI(pipeline: Pipeline, config: CICDConfig): { content: string; filePath: string } {
+  private renderCircleCI(pipeline: Pipeline, _config: CICDConfig): { content: string; filePath: string } {
     const circleConfig: any = {
       version: 2.1,
       jobs: {},
@@ -604,21 +604,14 @@ ${stages}
   /**
    * Detect build tool from project
    */
-  private detectBuildTool(projectPath: string): BuildTool {
-    // Check for package.json
-    try {
-      const packageJsonPath = path.join(projectPath, 'package.json');
-      if (fs.access(packageJsonPath)) {
-        // Check for lock files
-        if (fs.access(path.join(projectPath, 'yarn.lock'))) return 'yarn';
-        if (fs.access(path.join(projectPath, 'pnpm-lock.yaml'))) return 'pnpm';
-        return 'npm';
-      }
-    } catch {
-      // Continue checking other build tools
-    }
-
-    return 'npm'; // Default
+  /**
+   * Detect build tool from project
+   */
+  private detectBuildTool(_projectPath: string): BuildTool {
+    // Note: fs.access returns a Promise, cannot synchronously check in this context
+    // This method would need refactoring to be async or use synchronous fs
+    // For now, return default
+    return 'npm';
   }
 
   /**

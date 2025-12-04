@@ -244,7 +244,6 @@ export class FrameworkConfigLoader {
     const result: any = {};
     const lines = content.split('\n');
     let currentKey: string | null = null;
-    let expectingArray = false;
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -280,11 +279,9 @@ export class FrameworkConfigLoader {
           result[key] = value;
         }
         currentKey = null;
-        expectingArray = false;
       } else {
         // Key with no value - next lines will be array items or nested object
         currentKey = key;
-        expectingArray = true;
       }
     }
 

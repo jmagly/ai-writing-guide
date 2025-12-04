@@ -36,13 +36,17 @@ jobs:
         run: npm ci
 
       - name: Build TypeScript
-        run: npm run build
+        run: |
+          echo "Building TypeScript..."
+          npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
+          echo "Build completed. Checking dist directory..."
+          ls -la dist/src/plugin/ || echo "dist/src/plugin/ directory does not exist"
 
       - name: Validate Metadata Schema
         run: |
           echo "Validating plugin metadata..."
           node -e "
-            const { MetadataValidator } = require('./dist/plugin/metadata-validator.js');
+            const { MetadataValidator } = require('./dist/src/plugin/metadata-validator.js');
             const path = require('path');
 
             async function validateAll() {
@@ -51,9 +55,9 @@ jobs:
                 strict: false
               });
 
+              // Note: .claude/agents and .claude/commands are gitignored (user-deployed)
+              // Only validate tracked source directories
               const dirs = [
-                '.claude/agents',
-                '.claude/commands',
                 'agentic/code/frameworks/sdlc-complete/agents',
                 'agentic/code/frameworks/sdlc-complete/commands'
               ];
@@ -62,12 +66,22 @@ jobs:
               let totalWarnings = 0;
               let totalFiles = 0;
 
+              // Skip documentation/manifest files (not agents/commands)
+              const skipPatterns = ['manifest.md', 'README.md', 'agent-template.md', 'openai-compat.md', 'factory-compat.md'];
+
               for (const dir of dirs) {
                 const dirPath = path.resolve(process.cwd(), dir);
                 try {
                   const results = await validator.validateDirectory(dirPath, true);
 
                   for (const [file, result] of results) {
+                    // Skip documentation files
+                    const basename = path.basename(file);
+                    if (skipPatterns.includes(basename)) {
+                      console.log('Skipping doc file: ' + basename);
+                      continue;
+                    }
+
                     totalFiles++;
                     if (!result.valid) {
                       totalErrors += result.errors.length;
@@ -116,7 +130,7 @@ jobs:
           echo ""
           echo "To fix locally:"
           echo "  1. npm run build"
-          echo "  2. node -e \"const {MetadataValidator} = require('./dist/plugin/metadata-validator.js'); ...\""
+          echo "  2. node -e \"const {MetadataValidator} = require('./dist/src/plugin/metadata-validator.js'); ...\""
           echo ""
           echo "Common issues:"
           echo "  - Missing YAML frontmatter (--- delimiters)"
@@ -145,13 +159,16 @@ jobs:
         run: npm ci
 
       - name: Build TypeScript
-        run: npm run build
+        run: |
+          echo "Building TypeScript..."
+          npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
+          ls -la dist/src/plugin/metadata-validator.js || echo "metadata-validator.js not found"
 
       - name: Validate Registry Consistency
         run: |
           echo "Checking registry consistency..."
           node -e "
-            const { RegistryValidator } = require('./dist/plugin/registry-validator.js');
+            const { RegistryValidator } = require('./dist/src/plugin/registry-validator.js');
             const path = require('path');
             const fs = require('fs');
 
@@ -206,7 +223,10 @@ jobs:
         run: npm ci
 
       - name: Build TypeScript
-        run: npm run build
+        run: |
+          echo "Building TypeScript..."
+          npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
+          ls -la dist/src/plugin/metadata-validator.js || echo "metadata-validator.js not found"
 
       - name: Measure Validation Time
         run: |
@@ -214,7 +234,7 @@ jobs:
           START=$(date +%s%N)
 
           node -e "
-            const { MetadataValidator } = require('./dist/plugin/metadata-validator.js');
+            const { MetadataValidator } = require('./dist/src/plugin/metadata-validator.js');
             const path = require('path');
 
             async function benchmark() {

@@ -283,7 +283,7 @@ export class CodebaseAnalyzer {
    */
   private async detectTechnologies(
     basePath: string,
-    metrics: CodebaseMetrics
+    _metrics: CodebaseMetrics
   ): Promise<TechnologyStack> {
     const technologies: TechnologyStack = {
       languages: [],
@@ -295,12 +295,12 @@ export class CodebaseAnalyzer {
     };
 
     // Calculate language percentages
-    const totalLines = metrics.totalLines || 1;
-    for (const [language, lines] of Object.entries(metrics.linesByLanguage)) {
+    const totalLines = _metrics.totalLines || 1;
+    for (const [language, lines] of Object.entries(_metrics.linesByLanguage)) {
       technologies.languages.push({
         language,
         percentage: (lines / totalLines) * 100,
-        files: metrics.filesByLanguage[language] || 0
+        files: _metrics.filesByLanguage[language] || 0
       });
     }
 
@@ -566,7 +566,7 @@ export class CodebaseAnalyzer {
    */
   private async detectArchitecture(
     basePath: string,
-    metrics: CodebaseMetrics
+    _metrics: CodebaseMetrics
   ): Promise<ArchitecturePattern[]> {
     const patterns: ArchitecturePattern[] = [];
 
@@ -620,7 +620,7 @@ export class CodebaseAnalyzer {
    * Detect technical debt
    */
   private async detectTechnicalDebt(
-    basePath: string,
+    _basePath: string,
     metrics: CodebaseMetrics,
     dependencies: DependencyInfo[]
   ): Promise<TechnicalDebt[]> {
@@ -672,7 +672,7 @@ export class CodebaseAnalyzer {
   private generateRecommendations(
     metrics: CodebaseMetrics,
     technologies: TechnologyStack,
-    dependencies: DependencyInfo[],
+    _dependencies: DependencyInfo[],
     technicalDebt: TechnicalDebt[]
   ): string[] {
     const recommendations: string[] = [];

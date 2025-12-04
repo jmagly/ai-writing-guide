@@ -13,7 +13,6 @@
  */
 
 import { EventEmitter } from 'events';
-import { promises as fs } from 'fs';
 import path from 'path';
 
 // ============================================================================
@@ -556,7 +555,7 @@ export class AgentOrchestrator extends EventEmitter {
   /**
    * Get next ADR number from directory
    */
-  private getNextADRNumber(adrDir: string): number {
+  private getNextADRNumber(_adrDir: string): number {
     try {
       // This would scan the directory in production
       // For now, return a mock number

@@ -354,7 +354,7 @@ export class PluginUninstaller {
   /**
    * Get active projects for a framework
    */
-  private async getActiveProjects(pluginId: string, pluginPath: string): Promise<string[]> {
+  private async getActiveProjects(_pluginId: string, pluginPath: string): Promise<string[]> {
     const projectsDir = path.join(this.aiwgRoot, pluginPath, 'projects');
 
     try {
