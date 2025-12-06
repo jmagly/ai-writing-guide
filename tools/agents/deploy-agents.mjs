@@ -17,7 +17,9 @@
  *   --target <path>          Target directory (defaults to cwd)
  *   --mode <type>            Deployment mode: general, sdlc, marketing, both, or all (default)
  *   --deploy-commands        Deploy commands in addition to agents
+ *   --deploy-skills          Deploy skills in addition to agents
  *   --commands-only          Deploy only commands (skip agents)
+ *   --skills-only            Deploy only skills (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
  *   --provider <name>        Target provider: claude (default), openai, or factory
@@ -59,7 +61,9 @@ function parseArgs() {
     asAgentsMd: false,
     createAgentsMd: false,
     deployCommands: false,
-    commandsOnly: false
+    deploySkills: false,
+    commandsOnly: false,
+    skillsOnly: false
   };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -75,7 +79,9 @@ function parseArgs() {
     else if (a === '--as-agents-md') cfg.asAgentsMd = true;
     else if (a === '--create-agents-md') cfg.createAgentsMd = true;
     else if (a === '--deploy-commands') cfg.deployCommands = true;
+    else if (a === '--deploy-skills') cfg.deploySkills = true;
     else if (a === '--commands-only') cfg.commandsOnly = true;
+    else if (a === '--skills-only') cfg.skillsOnly = true;
   }
   return cfg;
 }
@@ -91,6 +97,15 @@ function listMdFiles(dir, excludePatterns = []) {
   return fs
     .readdirSync(dir, { withFileTypes: true })
     .filter((e) => e.isFile() && e.name.toLowerCase().endsWith('.md') && !excluded.includes(e.name))
+    .map((e) => path.join(dir, e.name));
+}
+
+function listSkillDirs(dir) {
+  // Skills are directories containing SKILL.md
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && fs.existsSync(path.join(dir, e.name, 'SKILL.md')))
     .map((e) => path.join(dir, e.name));
 }
 
@@ -398,6 +413,49 @@ function deployFiles(files, destDir, opts) {
   }
 }
 
+function deploySkillDir(skillDir, destDir, opts) {
+  const { force = false, dryRun = false } = opts;
+  const skillName = path.basename(skillDir);
+  const destSkillDir = path.join(destDir, skillName);
+
+  // Create skill directory
+  if (!dryRun) ensureDir(destSkillDir);
+
+  // Copy all files recursively
+  function copyRecursive(src, dest) {
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isDirectory()) {
+        if (!dryRun) ensureDir(destPath);
+        copyRecursive(srcPath, destPath);
+      } else {
+        const srcContent = fs.readFileSync(srcPath, 'utf8');
+
+        if (fs.existsSync(destPath)) {
+          const destContent = fs.readFileSync(destPath, 'utf8');
+          if (destContent === srcContent && !force) {
+            console.log(`skip (unchanged): ${path.relative(destDir, destPath)}`);
+            continue;
+          }
+        }
+
+        if (dryRun) {
+          console.log(`[dry-run] deploy ${srcPath} -> ${destPath}`);
+        } else {
+          fs.writeFileSync(destPath, srcContent, 'utf8');
+          console.log(`deployed ${entry.name} -> ${path.relative(process.cwd(), destPath)}`);
+        }
+      }
+    }
+  }
+
+  copyRecursive(skillDir, destSkillDir);
+  console.log(`deployed skill: ${skillName}`);
+}
+
 function aggregateToAgentsMd(files, destPath, opts) {
   const { provider } = opts;
   const blocks = [];
@@ -508,7 +566,7 @@ function enableFactoryCustomDroids(dryRun) {
 
 (function main() {
   const cfg = parseArgs();
-  const { source, target, mode, dryRun, force, provider, reasoningModel, codingModel, efficiencyModel, deployCommands, commandsOnly, asAgentsMd, createAgentsMd } = cfg;
+  const { source, target, mode, dryRun, force, provider, reasoningModel, codingModel, efficiencyModel, deployCommands, deploySkills, commandsOnly, skillsOnly, asAgentsMd, createAgentsMd } = cfg;
 
   // Resolve default source = repo root of this script
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
@@ -529,8 +587,8 @@ function enableFactoryCustomDroids(dryRun) {
     efficiencyModel
   };
 
-  // Deploy Agents (unless --commands-only)
-  if (!commandsOnly) {
+  // Deploy Agents (unless --commands-only or --skills-only)
+  if (!commandsOnly && !skillsOnly) {
     // Deploy writing addon agents if mode is 'general', 'writing', 'both', or 'all'
     if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
       // New location: agentic/code/addons/writing-quality/agents/
@@ -655,6 +713,45 @@ function enableFactoryCustomDroids(dryRun) {
         console.warn(`Marketing commands not found at ${marketingCommandsRoot}`);
       }
     }
+  }
+
+  // Deploy Skills (if --deploy-skills or --skills-only)
+  // Note: Skills are only supported for Claude Code currently
+  if ((deploySkills || skillsOnly) && provider === 'claude') {
+    // Deploy writing addon skills if mode is 'general', 'writing', 'both', or 'all'
+    if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
+      const writingSkillsRoot = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'skills');
+      if (fs.existsSync(writingSkillsRoot)) {
+        const skillDirs = listSkillDirs(writingSkillsRoot);
+        if (skillDirs.length > 0) {
+          const destDir = path.join(target, '.claude', 'skills');
+          if (!dryRun) ensureDir(destDir);
+          console.log(`\nDeploying ${skillDirs.length} writing-quality skills to ${destDir}`);
+          for (const skillDir of skillDirs) {
+            deploySkillDir(skillDir, destDir, deployOpts);
+          }
+        }
+      }
+    }
+
+    // Deploy aiwg-utils skills (always deployed with any framework)
+    const utilsSkillsRoot = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'skills');
+    if (fs.existsSync(utilsSkillsRoot)) {
+      const skillDirs = listSkillDirs(utilsSkillsRoot);
+      if (skillDirs.length > 0) {
+        const destDir = path.join(target, '.claude', 'skills');
+        if (!dryRun) ensureDir(destDir);
+        console.log(`\nDeploying ${skillDirs.length} aiwg-utils skills to ${destDir}`);
+        for (const skillDir of skillDirs) {
+          deploySkillDir(skillDir, destDir, deployOpts);
+        }
+      }
+    }
+
+    // Future: SDLC and Marketing skills would be deployed here
+    // Currently skills are in addon directories only
+  } else if ((deploySkills || skillsOnly) && provider !== 'claude') {
+    console.log('\nNote: Skills are currently only supported for Claude Code provider');
   }
 
   // Create/update AGENTS.md for Factory provider

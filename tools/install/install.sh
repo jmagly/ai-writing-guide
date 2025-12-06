@@ -256,15 +256,15 @@ fi
       local skip_utils=0; \\
       for arg in \"\$@\"; do [[ \"\$arg\" == \"--no-utils\" ]] && skip_utils=1; done; \\
       case \"\$fw\" in \\
-        sdlc) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode sdlc --deploy-commands \"\$@\" ;; \\
-        marketing) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode marketing --deploy-commands \"\$@\" ;; \\
-        writing|general) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode general --deploy-commands \"\$@\" ;; \\
-        all) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode all --deploy-commands \"\$@\" ;; \\
+        sdlc) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode sdlc --deploy-commands --deploy-skills \"\$@\" ;; \\
+        marketing) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode marketing --deploy-commands --deploy-skills \"\$@\" ;; \\
+        writing|general) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode general --deploy-commands --deploy-skills \"\$@\" ;; \\
+        all) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode all --deploy-commands --deploy-skills \"\$@\" ;; \\
         *) echo \"Unknown framework: \$fw\"; echo 'Available: sdlc, marketing, writing, all'; return 1 ;; \\
       esac; \\
       if [[ \"\$skip_utils\" -eq 0 ]]; then \\
         echo ''; echo 'Deploying aiwg-utils addon...'; \\
-        node \"$PREFIX/tools/agents/deploy-agents.mjs\" --source \"$PREFIX/agentic/code/addons/aiwg-utils\" --deploy-commands; \\
+        node \"$PREFIX/tools/agents/deploy-agents.mjs\" --source \"$PREFIX/agentic/code/addons/aiwg-utils\" --deploy-commands --deploy-skills; \\
       fi ;; \\
     list) node \"$PREFIX/tools/plugin/plugin-status-cli.mjs\" \"\$@\" ;; \\
     remove) node \"$PREFIX/tools/plugin/plugin-uninstaller-cli.mjs\" \"\$@\" ;; \\
