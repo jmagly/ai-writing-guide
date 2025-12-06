@@ -25,21 +25,35 @@ Options:
   --force-reinstall    Delete existing installation and reinstall fresh
 
 This installs the framework to the prefix and registers the 'aiwg' CLI with commands:
-  aiwg -deploy-agents  -> deploy agents (use --platform warp for Warp Terminal)
-  aiwg -deploy-commands -> deploy commands (use --platform warp for Warp Terminal)
-  aiwg -new            -> scaffold new project with SDLC templates
-  aiwg -prefill-cards  -> prefill SDLC card metadata from team profile
-  aiwg -contribute-start -> start AIWG contribution workflow
-  aiwg -version        -> show installed version (commit hash)
-  aiwg -update         -> manually update installation
-  aiwg -help           -> show command help
 
-Deployment modes (--mode):
-  general   -> Writing quality agents only (3 agents)
-  sdlc      -> SDLC Complete framework only (54 agents)
-  marketing -> Media/Marketing Kit only (37 agents)
-  both      -> General + SDLC (legacy compatibility)
-  all       -> All frameworks (default)
+  Framework Management:
+    aiwg use <framework>   -> Install and deploy a framework (sdlc, marketing, writing)
+    aiwg list              -> List installed frameworks
+    aiwg remove <id>       -> Remove a framework
+
+  Project Setup:
+    aiwg -new              -> Scaffold new project with templates
+
+  Utilities:
+    aiwg -prefill-cards    -> Prefill SDLC card metadata from team profile
+    aiwg -contribute-start -> Start AIWG contribution workflow
+
+  Maintenance:
+    aiwg -version          -> Show installed version
+    aiwg -update           -> Update installation
+    aiwg -reinstall        -> Force fresh reinstall
+    aiwg -help             -> Show command help
+
+  Legacy (deprecated):
+    aiwg -deploy-agents    -> Use 'aiwg use <framework>' instead
+    aiwg -deploy-commands  -> Use 'aiwg use <framework>' instead
+
+Frameworks:
+  sdlc       -> SDLC Complete (54 agents, 42 commands)
+  marketing  -> Media/Marketing Kit (37 agents)
+  writing    -> Writing Quality addon (3 agents)
+
+Note: 'aiwg use' automatically installs the aiwg-utils addon (--no-utils to skip).
 
 Note: aiwg automatically updates on every command invocation.
 USAGE
@@ -237,14 +251,33 @@ fi
   echo "aiwg_version() { if [[ -d \"$PREFIX/.git\" ]]; then echo \"aiwg version: \$(git -C \"$PREFIX\" rev-parse --short HEAD) (branch: \$(git -C \"$PREFIX\" branch --show-current))\"; echo \"Installed at: $PREFIX\"; else echo \"aiwg not installed via git\"; fi; }"
   echo "aiwg_reinstall() { echo 'Reinstalling aiwg from scratch...'; curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh | bash -s -- --force-reinstall; echo 'Reinstall complete. Please restart your shell or run: source ~/.bash_aliases (or ~/.zshrc)'; }"
   echo "aiwg() { aiwg_update; local sub=\"\$1\"; shift || true; case \"\$sub\" in \\
+    use) \\
+      local fw=\"\$1\"; shift || true; \\
+      local skip_utils=0; \\
+      for arg in \"\$@\"; do [[ \"\$arg\" == \"--no-utils\" ]] && skip_utils=1; done; \\
+      case \"\$fw\" in \\
+        sdlc) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode sdlc --deploy-commands \"\$@\" ;; \\
+        marketing) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode marketing --deploy-commands \"\$@\" ;; \\
+        writing|general) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode general --deploy-commands \"\$@\" ;; \\
+        all) node \"$PREFIX/tools/agents/deploy-agents.mjs\" --mode all --deploy-commands \"\$@\" ;; \\
+        *) echo \"Unknown framework: \$fw\"; echo 'Available: sdlc, marketing, writing, all'; return 1 ;; \\
+      esac; \\
+      if [[ \"\$skip_utils\" -eq 0 ]]; then \\
+        echo ''; echo 'Deploying aiwg-utils addon...'; \\
+        node \"$PREFIX/tools/agents/deploy-agents.mjs\" --source \"$PREFIX/agentic/code/addons/aiwg-utils\" --deploy-commands; \\
+      fi ;; \\
+    list) node \"$PREFIX/tools/plugin/plugin-status-cli.mjs\" \"\$@\" ;; \\
+    remove) node \"$PREFIX/tools/plugin/plugin-uninstaller-cli.mjs\" \"\$@\" ;; \\
     -new|--new) node \"$PREFIX/tools/install/new-project.mjs\" \"\$@\" ;; \\
     -deploy-agents|--deploy-agents) \\
+      echo '[DEPRECATED] Use: aiwg use <framework> instead'; \\
       if echo \"\$@\" | grep -q \"\\-\\-platform[[:space:]]*warp\"; then \\
         node \"$PREFIX/tools/warp/setup-warp.mjs\" \"\$@\"; \\
       else \\
         node \"$PREFIX/tools/agents/deploy-agents.mjs\" \"\$@\"; \\
       fi ;; \\
     -deploy-commands|--deploy-commands) \\
+      echo '[DEPRECATED] Use: aiwg use <framework> instead'; \\
       if echo \"\$@\" | grep -q \"\\-\\-platform[[:space:]]*warp\"; then \\
         node \"$PREFIX/tools/warp/setup-warp.mjs\" \"\$@\"; \\
       else \\
@@ -260,7 +293,28 @@ fi
     -version|--version|version) aiwg_version ;; \\
     -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Current version:' && aiwg_version ;; \\
     -reinstall|--reinstall|reinstall) aiwg_reinstall ;; \\
-    -h|--help|-help|help|\"\") echo 'Usage: aiwg <command> [options]'; echo ''; echo 'Commands:'; echo '  -new [--no-agents|--provider <claude|openai>|--platform <warp>]'; echo '       Create new project with SDLC templates'; echo '  -deploy-agents [--provider <...>|--platform <warp>] [--force|--dry-run]'; echo '       Deploy agent definitions'; echo '  -deploy-commands [--provider <...>|--platform <warp>] [--force|--dry-run]'; echo '       Deploy slash commands'; echo '  -install-plugin <plugin-id> [--type <type>] [--parent <id>] [--dry-run]'; echo '       Install plugin (framework, add-on, or extension)'; echo '  -uninstall-plugin <plugin-id> [--force] [--keep-data]'; echo '       Uninstall plugin'; echo '  -plugin-status [plugin-id] [--type <type>] [--health] [--json]'; echo '       Show plugin status'; echo '  -migrate-workspace [--dry-run]'; echo '       Migrate legacy .aiwg/ to framework-scoped structure'; echo '  -validate-metadata [path]'; echo '       Validate plugin/agent metadata'; echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; echo '       Prefill SDLC card metadata'; echo '  -contribute-start <feature-name>'; echo '       Start AIWG contribution workflow'; echo '  -version|-update|-reinstall|-help'; echo '       Version, update, reinstall, or help'; echo ''; echo 'Note: aiwg automatically updates on every command run.' ;; \\
+    -h|--help|-help|help|\"\") \\
+      echo 'Usage: aiwg <command> [options]'; echo ''; \\
+      echo 'Framework Management:'; \\
+      echo '  use <framework> [--no-utils] [--provider <...>] [--force]'; \\
+      echo '      Install and deploy framework (sdlc, marketing, writing, all)'; \\
+      echo '  list [--type <type>] [--json]'; \\
+      echo '      List installed frameworks and addons'; \\
+      echo '  remove <id> [--force] [--keep-data]'; \\
+      echo '      Remove a framework or addon'; echo ''; \\
+      echo 'Project Setup:'; \\
+      echo '  -new [--no-agents] [--provider <...>]'; \\
+      echo '      Create new project with SDLC templates'; echo ''; \\
+      echo 'Utilities:'; \\
+      echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; \\
+      echo '      Prefill SDLC card metadata'; \\
+      echo '  -contribute-start <feature-name>'; \\
+      echo '      Start AIWG contribution workflow'; echo ''; \\
+      echo 'Maintenance:'; \\
+      echo '  -version    Show installed version'; \\
+      echo '  -update     Update installation'; \\
+      echo '  -reinstall  Force fresh reinstall'; echo ''; \\
+      echo 'Note: aiwg automatically updates on every command run.' ;; \\
     *) echo 'Unknown command. Use: aiwg -help for usage information' ;; \\
   esac }"
   echo "aiwg-deploy-agents() { aiwg -deploy-agents \"\$@\"; }"
@@ -275,20 +329,22 @@ echo "Aliases added to: $ALIAS_FILE"
 echo ""
 echo "Run 'source $ALIAS_FILE' or open a new shell to activate the 'aiwg' CLI."
 echo ""
-echo "Available commands:"
+echo "Quick Start:"
+echo "  aiwg use sdlc           Install SDLC framework (54 agents, 42 commands)"
+echo "  aiwg use marketing      Install Marketing framework (37 agents)"
+echo "  aiwg use all            Install all frameworks"
+echo "  aiwg -new               Create new project with templates"
+echo ""
+echo "Other Commands:"
+echo "  aiwg list               List installed frameworks"
+echo "  aiwg remove <id>        Remove a framework"
 echo "  aiwg -version           Show current version"
-echo "  aiwg -update            Update installation (graceful)"
-echo "  aiwg -reinstall         Force fresh reinstall"
-echo "  aiwg -deploy-agents     Deploy agents (use --platform warp for Warp Terminal)"
-echo "  aiwg -deploy-commands   Deploy commands (use --platform warp for Warp Terminal)"
-echo "  aiwg -new               Create new project"
-echo "  aiwg -prefill-cards     Prefill card metadata"
-echo "  aiwg -contribute-start  Start AIWG contribution"
-echo "  aiwg -help              Show detailed help"
+echo "  aiwg -update            Update installation"
+echo "  aiwg -help              Show all commands"
 echo ""
 echo "Platform options:"
-echo "  --platform warp         Deploy to Warp Terminal (WARP.md)"
-echo "  --provider claude       Deploy to Claude Code (default)"
+echo "  --provider factory      Deploy for Factory AI"
+echo "  --provider openai       Deploy for OpenAI/Codex"
 echo ""
-echo "Note: aiwg automatically updates on every command run."
+echo "Note: 'aiwg use' automatically includes aiwg-utils (regenerate commands, etc.)"
 echo "For corrupted installs, use: aiwg -reinstall"
