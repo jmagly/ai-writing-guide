@@ -481,9 +481,9 @@ This project uses the **AI Writing Guide SDLC framework** for software developme
 
 AIWG is a comprehensive SDLC framework providing:
 
-- **93 specialized agents** covering all lifecycle phases (53 SDLC + 37 Marketing + 3 Writing)
-- **76 commands** for project management, security, testing, deployment, and traceability (48 SDLC + 23 MMK + 5 general)
-- **244 templates** for requirements, architecture, testing, security, deployment artifacts (156 SDLC + 88 MMK)
+- **58 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
+- **42+ commands** for project management, security, testing, deployment, and traceability
+- **100+ templates** for requirements, architecture, testing, security, deployment artifacts
 - **Phase-based workflows** with gate criteria and milestone tracking
 - **Multi-agent orchestration** patterns for collaborative artifact generation
 
@@ -500,9 +500,9 @@ AIWG is a comprehensive SDLC framework providing:
 ls ~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/
 
 # Available resources:
-# - agents/     → 53 SDLC role agents
-# - commands/   → 48 SDLC slash commands
-# - templates/  → 156 artifact templates
+# - agents/     → 58 SDLC role agents
+# - commands/   → 42+ slash commands
+# - templates/  → 100+ artifact templates
 # - flows/      → Phase workflow documentation
 ```
 
@@ -944,3 +944,9 @@ ls .claude/commands/flow-*.md
 - **Issues**: https://github.com/jmagly/ai-writing-guide/issues
 - **Discussions**: https://github.com/jmagly/ai-writing-guide/discussions
 - **Documentation**: https://github.com/jmagly/ai-writing-guide/blob/main/README.md
+
+---
+
+## Project-Specific Notes
+
+<!-- User: Add project-specific guidance, conventions, and rules below -->

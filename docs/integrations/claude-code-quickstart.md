@@ -22,16 +22,14 @@ aiwg -new
 - Creates `.claude/` directory structure
 - Adds CLAUDE.md with AIWG orchestration context
 
-### Step 3: Deploy Agents & Commands
+### Step 3: Deploy Framework
 
 ```bash
-# Deploy SDLC framework
-aiwg -deploy-agents --mode sdlc
-aiwg -deploy-commands --mode sdlc
+# Deploy SDLC framework (includes agents, commands, and aiwg-utils)
+aiwg use sdlc
 
-# Or deploy everything (general + SDLC)
-aiwg -deploy-agents --mode both
-aiwg -deploy-commands --mode both
+# Or deploy everything
+aiwg use all
 ```
 
 ### Step 4: Open in Claude Code
@@ -105,12 +103,11 @@ source ~/.bash_aliases
 cd /path/to/existing/project
 ```
 
-### Step 3: Deploy Agents & Commands First
+### Step 3: Deploy Framework
 
 ```bash
-# Deploy SDLC framework
-aiwg -deploy-agents --mode sdlc
-aiwg -deploy-commands --mode sdlc
+# Deploy SDLC framework (includes agents, commands, and aiwg-utils)
+aiwg use sdlc
 ```
 
 ### Step 4: Choose Your Integration Method
@@ -504,13 +501,37 @@ All artifacts are saved in `.aiwg/`:
 
 ---
 
+## Regenerating CLAUDE.md
+
+When your project evolves, regenerate your context file to keep it current:
+
+```text
+# Preview what would change
+/aiwg-regenerate-claude --dry-run
+
+# See what content would be preserved (team rules, conventions, etc.)
+/aiwg-regenerate-claude --show-preserved
+
+# Regenerate (creates backup automatically)
+/aiwg-regenerate-claude
+```
+
+The regenerate command:
+
+- Analyzes current project state (package.json, directory structure, etc.)
+- Detects installed AIWG frameworks
+- Preserves team directives, conventions, and organizational requirements
+- Creates fresh, accurate context file
+
+---
+
 ## Troubleshooting
 
 ### "Command not found"
 
 ```bash
-# Deploy commands
-aiwg -deploy-commands --mode sdlc
+# Redeploy framework
+aiwg use sdlc
 
 # Verify
 ls .claude/commands/
@@ -519,8 +540,8 @@ ls .claude/commands/
 ### "Agent not available"
 
 ```bash
-# Deploy agents
-aiwg -deploy-agents --mode sdlc
+# Redeploy framework
+aiwg use sdlc
 
 # Verify
 ls .claude/agents/
@@ -563,5 +584,5 @@ You: "Analyze codebase with focus on backend API, ignore frontend for now"
 
 ---
 
-**Last Updated**: 2025-10-17
-**AIWG Version**: 1.4.0+
+**Last Updated**: 2025-12-06
+**AIWG Version**: 1.5.0+

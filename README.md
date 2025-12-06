@@ -26,36 +26,33 @@
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
 ```
 
-**Activate on your project** — Choose your platform:
-
-<details>
-<summary><strong>Claude Code (Multi-agent orchestration)</strong></summary>
+**Activate on your project** — Choose your framework:
 
 ```bash
 cd your-project
-aiwg -deploy-agents        # Adds AI agents to .claude/agents/
-aiwg -deploy-commands      # Adds workflow commands to .claude/commands/
+
+# Deploy SDLC framework (software development)
+aiwg use sdlc              # 54 agents, 42 commands, aiwg-utils
+
+# Deploy Marketing framework
+aiwg use marketing         # 37 agents, 23 commands
+
+# Deploy all frameworks
+aiwg use all
 ```
 
-</details>
-
 <details>
-<summary><strong>Warp Terminal (Terminal-native workflows)</strong></summary>
+<summary><strong>Platform-specific options</strong></summary>
 
 ```bash
-cd your-project
-aiwg -deploy-agents --platform warp    # Creates WARP.md with all agents/commands
-```
+# Warp Terminal (creates WARP.md)
+aiwg use sdlc --provider warp
 
-</details>
+# Factory AI (creates .factory/droids/ + AGENTS.md)
+aiwg use sdlc --provider factory
 
-<details>
-<summary><strong>Factory AI (Custom droids)</strong></summary>
-
-```bash
-cd your-project
-aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
-# Deploys 53 droids to .factory/droids/ + creates AGENTS.md template
+# OpenAI/Codex (experimental)
+aiwg use sdlc --provider openai
 ```
 
 </details>
@@ -236,8 +233,9 @@ aiwg/
 │   └── Cross-framework reads              → MMK reads SDLC artifacts (novel combinations)
 │
 └── 🛠️ CLI & Tools
-    ├── aiwg -deploy-agents               → Deploy agents to project
-    ├── aiwg -deploy-commands             → Deploy commands to project
+    ├── aiwg use <framework>              → Deploy framework (sdlc, marketing, all)
+    ├── aiwg list                         → List installed frameworks
+    ├── aiwg remove <id>                  → Remove a framework
     ├── aiwg -new                         → Scaffold new project
     └── aiwg -update                      → Update installation
 ```
@@ -335,8 +333,8 @@ aiwg/
 **Solution:** Validate content against 505 AI patterns across 6 categories, get before/after rewrites.
 
 ```bash
-# Deploy writing-validator agent
-aiwg -deploy-agents --mode general
+# Deploy writing quality addon (included with any framework)
+aiwg use sdlc   # or: aiwg use all
 
 # Validate any document
 "Check this document for AI patterns: docs/architecture.md"
@@ -350,21 +348,24 @@ aiwg -deploy-agents --mode general
 
 **Problem:** Copying templates manually takes 6+ hours. You do it once and never update them.
 
-**Solution:** One command deploys 53 agents + 48 commands + 156 templates.
+**Solution:** One command deploys 53 agents + 48 commands + 156 templates + aiwg-utils.
 
 **Claude Code:**
+
 ```bash
-aiwg -deploy-agents --mode sdlc
+aiwg use sdlc
 ```
 
 **Warp Terminal:**
+
 ```bash
-aiwg -setup-warp --mode sdlc
+aiwg use sdlc --provider warp
 ```
 
 **Factory AI:**
+
 ```bash
-aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
+aiwg use sdlc --provider factory
 ```
 
 **Time Saved:** 98% (6 hours → 10 seconds)
@@ -437,10 +438,10 @@ aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-ag
 **Solution:** Deploy MMK framework with 37 agents, 23 commands, and 88 templates.
 
 **Claude Code:**
+
 ```bash
 # Deploy marketing framework
-aiwg -deploy-agents --mode marketing
-aiwg -deploy-commands --mode marketing
+aiwg use marketing
 
 # Start a campaign
 /campaign-kickoff "Q1 Product Launch"
@@ -884,10 +885,9 @@ Get the best of all platforms:
 
 ```bash
 # Deploy to all platforms
-aiwg -deploy-agents --mode sdlc                                          # Claude Code
-aiwg -deploy-commands --mode sdlc                                        # Claude Code
-aiwg -setup-warp --mode sdlc                                             # Warp Terminal
-aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands    # Factory AI
+aiwg use sdlc                      # Claude Code (default)
+aiwg use sdlc --provider warp      # Warp Terminal
+aiwg use sdlc --provider factory   # Factory AI
 ```
 
 ---

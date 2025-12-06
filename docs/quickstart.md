@@ -26,52 +26,105 @@ Already know your AI platform? Jump to setup:
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
 source ~/.bash_aliases
 
-# Deploy to your project (choose mode)
+# Deploy to your project
 cd /path/to/project
-aiwg -deploy-agents --mode sdlc        # Software projects
-aiwg -deploy-agents --mode marketing   # Marketing projects
-aiwg -deploy-agents --mode both        # Combined
+aiwg use sdlc              # Software projects (54 agents, 42 commands)
+aiwg use marketing         # Marketing projects (37 agents)
+aiwg use all               # All frameworks
 
 # Open in your AI tool
-claude .                               # Claude Code
-droid .                                # Factory AI
+claude .                   # Claude Code
+droid .                    # Factory AI
 ```
+
+## What `aiwg use` Does
+
+The `aiwg use <framework>` command:
+
+1. Deploys framework agents to `.claude/agents/`
+2. Deploys framework commands to `.claude/commands/`
+3. Installs **aiwg-utils** addon (regenerate commands, etc.)
+
+To skip aiwg-utils: `aiwg use sdlc --no-utils`
 
 ## Platform Integration (Required)
 
 After deploying agents, integrate AIWG with your AI platform's context:
 
-```text
+```bash
 # In Claude Code
-You: "Run /aiwg-update-claude"
+/aiwg-setup-project
+
+# Or regenerate existing CLAUDE.md
+/aiwg-regenerate-claude
 ```
 
 This updates your project's `CLAUDE.md` with AIWG orchestration context, enabling:
+
 - Natural language workflow commands
 - Multi-agent coordination
 - Phase-aware responses
 
 **Other platforms:** See platform-specific quickstarts for integration commands.
 
+## CLI Commands
+
+### Framework Management
+
+```bash
+aiwg use <framework>       # Install and deploy framework
+aiwg list                  # List installed frameworks
+aiwg remove <id>           # Remove a framework
+```
+
+### Project Setup
+
+```bash
+aiwg -new                  # Create new project with templates
+```
+
+### Maintenance
+
+```bash
+aiwg -version              # Show installed version
+aiwg -update               # Update installation
+aiwg -reinstall            # Force fresh reinstall
+aiwg -help                 # Show all commands
+```
+
+## In-Platform Commands
+
+After deployment, these commands are available inside Claude Code:
+
+| Command | Description |
+|---------|-------------|
+| `/aiwg-regenerate` | Regenerate context file (auto-detect platform) |
+| `/aiwg-regenerate-claude` | Regenerate CLAUDE.md |
+| `/intake-wizard` | Generate project intake forms |
+| `/project-status` | Check project phase and status |
+
 ## Which Framework?
 
 **Use SDLC Complete if you're:**
+
 - Building software (web apps, APIs, services)
 - Managing technical projects with requirements, architecture, testing
 - Need traceability from requirements to deployment
 
 **Use Media/Marketing Kit if you're:**
+
 - Running marketing campaigns
 - Managing brand content and assets
 - Need workflow from strategy to performance analysis
 
 **Use Both if you're:**
+
 - Launching a product (code + marketing)
 - Building software with marketing requirements
 
 ```bash
-# Deploy both frameworks
-aiwg -deploy-agents --mode all
+# Deploy all frameworks
+aiwg use all
 ```
 
 ## Next Steps

@@ -18,8 +18,8 @@ cd /path/to/your/new/project
 ### Step 3: Deploy AIWG to Warp
 
 ```bash
-# Deploy agents and commands to create WARP.md
-aiwg -deploy-agents --platform warp --mode sdlc
+# Deploy SDLC framework to create WARP.md
+aiwg use sdlc --provider warp
 ```
 
 **What this creates:**
@@ -27,12 +27,14 @@ aiwg -deploy-agents --platform warp --mode sdlc
 - `WARP.md` file with AIWG SDLC framework
 - 58 specialized SDLC agents (embedded in WARP.md)
 - 42+ SDLC commands (embedded in WARP.md)
+- aiwg-utils commands (regenerate, etc.)
 - Orchestration context for natural language workflows
 
-**Mode options:**
-- `--mode sdlc` - SDLC agents only (58 agents)
-- `--mode general` - Writing quality agents only (3 agents)
-- `--mode both` - Everything (61 agents)
+**Framework options:**
+
+- `aiwg use sdlc` - SDLC agents only (58 agents)
+- `aiwg use marketing` - Marketing agents only (37 agents)
+- `aiwg use all` - All frameworks
 
 ### Step 4: Open in Warp Terminal
 
@@ -78,17 +80,18 @@ source ~/.bash_aliases
 cd /path/to/existing/project
 ```
 
-### Step 3: Deploy AIWG Commands to Your Project
+### Step 3: Deploy AIWG Framework
 
 ```bash
-# Deploy slash commands (needed for intelligent merge)
-aiwg -deploy-commands --platform warp
+# Deploy SDLC framework (includes agents, commands, aiwg-utils)
+aiwg use sdlc --provider warp
 ```
 
 **What this does:**
 
-- Creates `.claude/commands/aiwg-update-warp.md` slash command
-- This command enables intelligent merge when you open in an AI IDE
+- Creates `WARP.md` with SDLC framework
+- Includes aiwg-utils commands for regeneration
+- Enables intelligent merge via `/aiwg-regenerate-warp`
 
 ### Step 4: Choose Your Integration Method
 
@@ -385,32 +388,40 @@ aiwg -setup-warp --mode general
 
 ---
 
-## Updating AIWG Content
+## Regenerating WARP.md
 
-### When to Update
+When your project evolves, regenerate your context file:
 
-Update WARP.md when:
+```text
+# In an AI IDE with AIWG commands
+/aiwg-regenerate-warp --dry-run     # Preview changes
+/aiwg-regenerate-warp --show-preserved  # See preserved content
+/aiwg-regenerate-warp               # Regenerate (creates backup)
+```
 
-- AIWG releases new agents or commands
-- Agent definitions are enhanced
-- You want latest orchestration patterns
+The regenerate command:
 
-### Update Process
+- Analyzes current project state
+- Detects installed AIWG frameworks
+- Preserves team directives, conventions, organizational requirements
+- Creates fresh, accurate WARP.md
+
+### Manual Update
 
 ```bash
 # Update AIWG installation
 aiwg -update
 
-# Update WARP.md with latest content
-aiwg -update-warp
+# Redeploy to WARP.md
+aiwg use sdlc --provider warp --force
 ```
 
 **What happens:**
 
 1. Creates backup: `WARP.md.backup-{timestamp}`
-2. Preserves all user sections (Tech Stack, Team Conventions, etc.)
+2. Preserves user sections (Tech Stack, Team Conventions, etc.)
 3. Replaces AIWG sections with latest
-4. Validates structure and counts
+4. Validates structure
 
 ---
 
@@ -728,6 +739,6 @@ aiwg -setup-warp              # For Warp
 
 ---
 
-**Last Updated**: 2025-10-17
-**AIWG Version**: 1.4.0+
+**Last Updated**: 2025-12-06
+**AIWG Version**: 1.5.0+
 **Integration Status**: ✅ Production Ready

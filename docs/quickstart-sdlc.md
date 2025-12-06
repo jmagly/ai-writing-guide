@@ -9,14 +9,14 @@ Build software with AI-assisted lifecycle management: Inception → Elaboration 
 ```bash
 # Install CLI
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
+source ~/.bash_aliases
 
 # Create project scaffold
 cd /path/to/new/project
 aiwg -new
 
-# Deploy agents
-aiwg -deploy-agents --mode sdlc
-aiwg -deploy-commands --mode sdlc
+# Deploy SDLC framework
+aiwg use sdlc
 
 # Open in Claude Code
 claude .
@@ -24,7 +24,7 @@ claude .
 
 ```text
 # Integrate AIWG with platform (required for orchestration)
-You: "Run /aiwg-update-claude"
+You: "/aiwg-setup-project"
 
 # Then start intake
 You: "Start intake wizard for a customer portal with React and Node.js"
@@ -35,9 +35,9 @@ You: "Start intake wizard for a customer portal with React and Node.js"
 ```bash
 # Install and deploy
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
+source ~/.bash_aliases
 cd /path/to/existing/project
-aiwg -deploy-agents --mode sdlc
-aiwg -deploy-commands --mode sdlc
+aiwg use sdlc
 
 # Open in Claude Code
 claude .
@@ -45,7 +45,7 @@ claude .
 
 ```text
 # Integrate AIWG with platform (required for orchestration)
-You: "Run /aiwg-update-claude"
+You: "/aiwg-setup-project"
 
 # Then analyze codebase
 You: "Analyze this codebase and generate intake documents"
@@ -59,8 +59,7 @@ For projects with specific compliance, security, or stakeholder requirements:
 
 ```bash
 aiwg -new
-aiwg -deploy-agents --mode sdlc
-aiwg -deploy-commands --mode sdlc
+aiwg use sdlc
 # Edit .aiwg/intake/project-intake-form.md manually
 # Edit .aiwg/intake/solution-profile.md manually
 claude .
@@ -68,7 +67,7 @@ claude .
 
 ```text
 # Integrate AIWG with platform (required for orchestration)
-You: "Run /aiwg-update-claude"
+You: "/aiwg-setup-project"
 
 # Then validate intake
 You: "Validate intake and start Inception"
@@ -93,6 +92,23 @@ You: "Validate intake and start Inception"
 "Check gate criteria"              → Phase validation
 "Transition to [phase]"            → Phase transition
 ```
+
+## Regenerating CLAUDE.md
+
+When your project evolves, regenerate your context file to keep it current:
+
+```text
+# Preview what would change
+/aiwg-regenerate-claude --dry-run
+
+# See what content would be preserved
+/aiwg-regenerate-claude --show-preserved
+
+# Regenerate (creates backup automatically)
+/aiwg-regenerate-claude
+```
+
+Team directives, conventions, and organizational requirements are automatically preserved.
 
 ## Artifacts Location
 
