@@ -23,7 +23,10 @@
     "schemas": "schemas/"
   },
   "skills": [
-    "voice-apply"
+    "voice-apply",
+    "voice-create",
+    "voice-blend",
+    "voice-analyze"
   ],
   "voices": [
     "technical-authority",
