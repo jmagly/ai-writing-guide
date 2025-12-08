@@ -1,0 +1,244 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.dev/schemas/voice-profile.schema.json",
+  "title": "AIWG Voice Profile",
+  "description": "Schema for defining writing voice profiles in the AI Writing Guide framework",
+  "type": "object",
+  "required": ["name", "version", "description", "tone"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "maxLength": 64,
+      "description": "Unique identifier for the voice profile (lowercase, hyphens allowed)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the voice profile"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Brief description of when and how to use this voice"
+    },
+    "base": {
+      "type": ["string", "null"],
+      "description": "Name of parent voice to inherit from (null for standalone)"
+    },
+    "tone": {
+      "type": "object",
+      "description": "Tonal characteristics on 0-1 scales",
+      "properties": {
+        "formality": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0=casual/conversational, 1=formal/professional"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0=hedging/tentative, 1=assertive/authoritative"
+        },
+        "warmth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0=clinical/detached, 1=friendly/personable"
+        },
+        "energy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0=calm/measured, 1=enthusiastic/dynamic"
+        },
+        "complexity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0=simple/accessible, 1=nuanced/sophisticated"
+        }
+      },
+      "additionalProperties": false
+    },
+    "vocabulary": {
+      "type": "object",
+      "description": "Word choice guidance",
+      "properties": {
+        "prefer": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Types of words/phrases to favor"
+        },
+        "avoid": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Types of words/phrases to minimize"
+        },
+        "domain_terms": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Domain-specific terminology to use naturally"
+        },
+        "signature_phrases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Characteristic phrases that define this voice"
+        }
+      },
+      "additionalProperties": false
+    },
+    "structure": {
+      "type": "object",
+      "description": "Structural preferences for content organization",
+      "properties": {
+        "sentence_length": {
+          "type": "string",
+          "enum": ["short", "medium", "long", "varied"],
+          "description": "Preferred sentence length pattern"
+        },
+        "paragraph_length": {
+          "type": "string",
+          "enum": ["short", "medium", "long", "varied"],
+          "description": "Preferred paragraph length pattern"
+        },
+        "sentence_variety": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "How much to vary sentence structure"
+        },
+        "use_lists": {
+          "type": "string",
+          "enum": ["rarely", "when-appropriate", "frequently"],
+          "description": "How often to use bullet/numbered lists"
+        },
+        "use_examples": {
+          "type": "string",
+          "enum": ["rarely", "when-appropriate", "frequently"],
+          "description": "How often to include concrete examples"
+        },
+        "use_analogies": {
+          "type": "string",
+          "enum": ["rarely", "when-appropriate", "frequently"],
+          "description": "How often to use analogies and metaphors"
+        },
+        "use_questions": {
+          "type": "string",
+          "enum": ["rarely", "when-appropriate", "frequently"],
+          "description": "How often to use rhetorical questions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "perspective": {
+      "type": "object",
+      "description": "Point of view and stance",
+      "properties": {
+        "person": {
+          "type": "string",
+          "enum": ["first-singular", "first-plural", "second", "third", "mixed"],
+          "description": "Narrative perspective (I, we, you, they, or mixed)"
+        },
+        "stance": {
+          "type": "string",
+          "enum": ["objective", "opinionated", "balanced", "advocacy"],
+          "description": "How much personal opinion to express"
+        },
+        "reader_relationship": {
+          "type": "string",
+          "enum": ["peer", "mentor", "expert", "servant", "partner"],
+          "description": "Relationship to assume with the reader"
+        }
+      },
+      "additionalProperties": false
+    },
+    "domain": {
+      "type": "object",
+      "description": "Domain and audience context",
+      "properties": {
+        "expertise_areas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Subject matter domains this voice is suited for"
+        },
+        "audience_level": {
+          "type": "string",
+          "enum": ["beginner", "intermediate", "practitioner", "expert", "mixed"],
+          "description": "Assumed knowledge level of the reader"
+        },
+        "industry": {
+          "type": "string",
+          "description": "Target industry or sector"
+        }
+      },
+      "additionalProperties": false
+    },
+    "authenticity": {
+      "type": "object",
+      "description": "Markers that make the voice feel genuine",
+      "properties": {
+        "acknowledges_uncertainty": {
+          "type": "boolean",
+          "description": "Admits when something is unknown or uncertain"
+        },
+        "shows_tradeoffs": {
+          "type": "boolean",
+          "description": "Explicitly discusses pros/cons and tradeoffs"
+        },
+        "uses_specific_numbers": {
+          "type": "boolean",
+          "description": "Prefers concrete metrics over vague claims"
+        },
+        "references_constraints": {
+          "type": "boolean",
+          "description": "Mentions real-world constraints (time, budget, etc.)"
+        },
+        "expresses_opinions": {
+          "type": "boolean",
+          "description": "States preferences with reasoning"
+        }
+      },
+      "additionalProperties": false
+    },
+    "examples": {
+      "type": "object",
+      "description": "Reference examples demonstrating this voice",
+      "properties": {
+        "sample_files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to example content files"
+        },
+        "inline_samples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "context": { "type": "string" },
+              "text": { "type": "string" }
+            }
+          },
+          "description": "Short inline examples of the voice"
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "author": { "type": "string" },
+        "created": { "type": "string", "format": "date" },
+        "updated": { "type": "string", "format": "date" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,80 @@
+name: friendly-explainer
+version: 1.0.0
+description: Approachable voice for tutorials, onboarding content, and educational material. Makes complex topics accessible without being condescending.
+
+base: null
+
+tone:
+  formality: 0.3
+  confidence: 0.7
+  warmth: 0.8
+  energy: 0.7
+  complexity: 0.4
+
+vocabulary:
+  prefer:
+    - everyday words for complex concepts
+    - relatable comparisons
+    - encouraging language
+    - clear action words
+  avoid:
+    - jargon without explanation
+    - condescending phrases ("simply", "just", "obviously")
+    - overly academic language
+    - passive constructions
+  domain_terms: []
+  signature_phrases:
+    - "Think of it like..."
+    - "Here's what's actually happening:"
+    - "The key thing to remember is..."
+    - "Don't worry if this seems confusing at first"
+    - "Let's break this down"
+
+structure:
+  sentence_length: short
+  paragraph_length: short
+  sentence_variety: medium
+  use_lists: frequently
+  use_examples: frequently
+  use_analogies: frequently
+  use_questions: frequently
+
+perspective:
+  person: second
+  stance: balanced
+  reader_relationship: mentor
+
+domain:
+  expertise_areas:
+    - tutorials
+    - onboarding
+    - educational content
+    - how-to guides
+    - beginner documentation
+  audience_level: beginner
+  industry: null
+
+authenticity:
+  acknowledges_uncertainty: true
+  shows_tradeoffs: false
+  uses_specific_numbers: false
+  references_constraints: false
+  expresses_opinions: false
+
+examples:
+  inline_samples:
+    - context: Explaining a technical concept
+      text: "Think of an API like a waiter at a restaurant. You don't go into the kitchen yourself—you tell the waiter what you want, and they bring it back. An API works the same way between software systems."
+    - context: Introducing a new tool
+      text: "Git can feel intimidating at first. That's normal! Most developers felt the same way. Let's start with just three commands—that's enough to be productive. We'll add more as you need them."
+    - context: Handling a common mistake
+      text: "Getting an error here? You're probably missing the closing bracket on line 12. This trips up everyone at some point. Check that each opening { has a matching }."
+
+metadata:
+  author: AIWG
+  created: "2025-12-06"
+  tags:
+    - educational
+    - tutorial
+    - beginner
+    - approachable
