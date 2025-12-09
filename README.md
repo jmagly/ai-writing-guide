@@ -184,7 +184,7 @@ production incidents in 18 months. 99.99% uptime on auth services.
 ### SDLC Workflow: Inception → Production
 
 ```bash
-# 1. Generate project intake (5 minutes, replaces 2-4 hours manual work)
+# 1. Generate project intake
 /intake-wizard "Build customer portal with real-time chat"
 
 # 2. Validate vision and approve phase transition (automated gate check)
@@ -200,8 +200,6 @@ production incidents in 18 months. 99.99% uptime on auth services.
 # 5. Deploy to production with automated rollback strategy
 /flow-deploy-to-production
 ```
-
-**Time Savings:** 20-98% reduction across 5 core use cases.
 
 ---
 
@@ -299,12 +297,12 @@ aiwg/
 
 **You wear all the hats. We provide the structure.**
 
-- Start projects in minutes (not hours)
+- Start projects quickly with templates
 - Generate intake/architecture docs automatically
 - Validate quality with multi-agent reviews
 - Ship faster without sacrificing rigor
 
-**Time Investment:** 8-10 hrs/week sustainable
+**Best for:** Individual contributors managing full stack
 
 </td>
 <td width="33%">
@@ -359,13 +357,11 @@ aiwg use sdlc   # or: aiwg use all
 "Create a voice profile based on our existing blog posts"
 ```
 
-**Time Saved:** 56-63% (consistent editing across documents)
-
 ---
 
-### Use Case 2: Deploy Full SDLC Framework (2 Minutes)
+### Use Case 2: Deploy Full SDLC Framework
 
-**Problem:** Copying templates manually takes 6+ hours. You do it once and never update them.
+**Problem:** Setting up consistent templates and agents across projects is tedious.
 
 **Solution:** One command deploys 53 agents + 48 commands + 156 templates + aiwg-utils.
 
@@ -386,8 +382,6 @@ aiwg use sdlc --provider warp
 ```bash
 aiwg use sdlc --provider factory
 ```
-
-**Time Saved:** 98% (6 hours → 10 seconds)
 
 ---
 
@@ -413,9 +407,7 @@ aiwg use sdlc --provider factory
 /intake-from-codebase .
 ```
 
-**Output:** Project intake, solution profile, option matrix (3 documents, 5,000+ words)
-
-**Time Saved:** 81-85% (2-3.5 hours → 20-35 minutes)
+**Output:** Project intake, solution profile, option matrix
 
 ---
 
@@ -444,8 +436,6 @@ aiwg use sdlc --provider factory
 
 **Workflow:** Primary Author → 4 Parallel Reviewers → Synthesizer → Baseline
 
-**Time Saved:** 92-96% (9-15 hours → 45-60 minutes)
-
 **Note:** Multi-agent orchestration is a strength of Claude Code and Factory AI. Warp provides context-aware guidance.
 
 ---
@@ -469,8 +459,6 @@ aiwg use marketing
 /marketing-status
 ```
 
-**Time Saved:** 40-60% (campaign setup from 2-3 weeks → 1 week)
-
 ---
 
 ### Use Case 6: Framework Self-Improvement Loop
@@ -482,8 +470,6 @@ aiwg use marketing
 **Current Status:** 100% Inception artifact coverage (vision, business case, risks, architecture)
 
 **Meta-Validation:** If the framework can manage itself, it can manage your project.
-
-**Time Saved:** 20-30% overhead reduction per iteration (5-8 hours → 3-5 hours)
 
 ---
 
