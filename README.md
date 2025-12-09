@@ -574,22 +574,6 @@ ADD-ONS (1 installed)
 └─────────────────┴─────────┴──────────────┴────────────┴─────────────────┘
 ```
 
-**5. Backward Compatibility**
-
-Existing projects using root `.aiwg/` structure continue to work:
-
-```bash
-# Detects legacy structure and routes accordingly
-aiwg -migrate-workspace  # Optional migration tool with backup/rollback
-```
-
-### Performance
-
-- **99x faster routing**: <1ms natural language → framework mapping
-- **45x cache speedup**: Metadata loading optimized with 5-minute TTL
-- **5x faster rollback**: <1s recovery from migration errors
-- **100% isolation guarantee**: Zero cross-framework pollution
-
 ### Use Cases
 
 **UC-1: Solo Developer Running Multiple Frameworks**
@@ -636,28 +620,11 @@ aiwg -install-addon gdpr-compliance
 → Health monitoring includes GDPR add-on
 ```
 
-### Migration from Legacy Structure
-
-If you have existing `.aiwg/` artifacts at the root level:
-
-```bash
-# Preview migration (dry-run)
-aiwg -migrate-workspace --preview
-
-# Execute migration with backup
-aiwg -migrate-workspace --backup
-
-# Rollback if needed
-aiwg -rollback-workspace
-```
-
-All files are checksummed and validated. Rollback is instant (<1s).
-
 ---
 
 ## 🛠️ Installation & Setup
 
-> **⚠️ Early Access / Active Testing:** This framework is in active development and validation (Phase 1: 0-3 months). Expect breaking changes, incomplete features, and evolving documentation. **Not recommended for production-critical projects without thorough testing.** See [project status →](#-project-status) for current phase and validation metrics.
+> **⚠️ Early Access:** This framework is in active development. Expect evolving features and documentation.
 
 ### Method 1: One-Line Install (Recommended)
 
