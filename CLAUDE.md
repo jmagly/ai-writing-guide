@@ -4,9 +4,9 @@ This file provides guidance to AI platforms (Claude Code, Warp Terminal, Factory
 
 ## Repository Purpose
 
-The AI Writing Guide is a comprehensive framework for improving AI-generated content quality. It provides guidelines,
-validation patterns, and specialized agents to ensure AI outputs maintain authentic, professional writing
-standards while avoiding detection patterns.
+The AI Writing Guide is a comprehensive framework for improving AI-generated content quality. It provides voice profiles,
+validation tools, and specialized agents to ensure AI outputs maintain authentic, professional writing
+standards with consistent voice control.
 
 ## Multi-Platform Support
 
@@ -30,7 +30,7 @@ document combinations for specific needs.
 
 **Add situationally based on task**:
 
-- For voice consistency: Voice Framework profiles (`technical-authority`, `friendly-explainer`, `executive-brief`, `casual-conversational`)
+- For consistent voice: Voice Framework profiles (`technical-authority`, `friendly-explainer`, `executive-brief`, `casual-conversational`)
 - For maintaining authority: `core/sophistication-guide.md`
 - For technical writing: `examples/technical-writing.md`
 - For quick validation: `context/quick-reference.md`
@@ -40,7 +40,7 @@ document combinations for specific needs.
 ### Document Framework Structure
 
 1. **Core Philosophy (`core/`)**: Fundamental writing principles that guide all content generation. These establish the
-   balance between removing AI patterns and maintaining sophisticated, authoritative voice.
+   balance between voice consistency and maintaining sophisticated, authoritative writing.
 
 2. **Voice Framework (`agentic/code/addons/voice-framework/`)**: Voice profiles that define consistent writing characteristics.
    Replaces pattern-avoidance with positive voice definition.
@@ -48,7 +48,7 @@ document combinations for specific needs.
 3. **Context Documents (`context/`)**: Optimized, condensed versions of guidelines for efficient agent context usage.
    These provide quick-reference materials without overwhelming the context window.
 
-4. **Examples (`examples/`)**: Before/after demonstrations showing transformation from AI-detected writing to authentic
+4. **Examples (`examples/`)**: Before/after demonstrations showing transformation to authentic
    human voice while preserving technical depth.
 
 5. **Agent Definitions (`.claude/agents/`)**: Pre-configured Claude Code subagents specialized for different aspects of
@@ -59,7 +59,7 @@ document combinations for specific needs.
 The repository includes two categories of specialized agents:
 
 **General-Purpose Writing Agents** (`/agents/`):
-- **writing-validator**: Validates content against AI patterns and authenticity markers
+- **writing-validator**: Validates content for voice consistency and authenticity
 - **prompt-optimizer**: Enhances prompts using AI Writing Guide principles
 - **content-diversifier**: Generates varied examples and perspectives
 
@@ -85,7 +85,7 @@ All agents work independently with isolated contexts regardless of platform.
 ### Using the Writing Guide
 
 ```bash
-# Validate content for AI patterns
+# Validate content for voice consistency
 /writing-validator "path/to/content.md"
 
 # Optimize a prompt for better output

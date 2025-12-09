@@ -113,20 +113,20 @@ cd my-awesome-project
 
 ### 📝 **Writing Quality Addon**
 
-**Remove AI tells. Write authentically.** A standalone addon that works with any framework or independently.
+**Control your voice. Write naturally.** A standalone addon that works with any framework or independently.
 
 <table>
 <tr>
 <td width="50%">
 
-- ✅ **505 AI patterns** across 6 detection categories
+- ✅ **Voice Framework** — 4 built-in voice profiles (technical, friendly, executive, casual)
+- ✅ **4 voice skills** — Apply, create, blend, analyze voices
 - ✅ **3 specialized agents** — Validate, optimize, diversify content
-- ✅ **Before/after examples** — Real rewrites showing the difference
 
 </td>
 <td width="50%">
 
-- ✅ **Quick-reference guides** — Technical, executive, academic voices
+- ✅ **Custom voice profiles** — Define and save your brand's unique voice
 - ✅ **Framework-agnostic** — Use standalone or with SDLC/MMK
 - ✅ **Zero dependencies** — Works immediately after install
 
@@ -138,36 +138,46 @@ cd my-awesome-project
 
 ## 🎬 See It In Action
 
-### Writing Quality: Before & After
+### Voice Framework: Same Content, Different Voices
 
 <details>
-<summary><strong>❌ AI-Generated (Detected)</strong></summary>
+<summary><strong>🔧 Technical Authority Voice</strong></summary>
 
 ```markdown
-In today's rapidly evolving landscape of artificial intelligence,
-it's worth noting that leveraging cutting-edge solutions can
-significantly enhance your workflow. Our comprehensive approach
-delves into the intricacies of modern development paradigms...
+The authentication module implements JWT with RS256 signing,
+rotating keys every 24 hours. Session tokens expire after 15
+minutes of inactivity. We chose this over OAuth2 implicit flow
+because our threat model prioritizes server-side validation.
 ```
 
-**Problems:** Vague claims, buzzwords, no specifics, formulaic structure
+**Characteristics:** Precise terminology, implementation details, trade-off reasoning
 
 </details>
 
 <details>
-<summary><strong>✅ Human-Authentic (Validated)</strong></summary>
+<summary><strong>💬 Friendly Explainer Voice</strong></summary>
 
 ```markdown
-AI code assistants save developers 30-40% of their time on
-boilerplate and documentation. But they introduce a new problem:
-detecting and removing performative language that screams "I was
-written by ChatGPT."
-
-This framework solves that. 485 documents, 19 validation rules,
-505 AI patterns to avoid. Ship faster. Write better.
+Think of our login system like a building with security badges.
+You get a temporary badge (JWT token) when you sign in, and it
+automatically expires if you walk away. We refresh your badge
+quietly in the background so you never get locked out mid-task.
 ```
 
-**Improvements:** Specific metrics, concrete problem, direct solution, natural voice
+**Characteristics:** Analogies, accessible language, reader-focused benefits
+
+</details>
+
+<details>
+<summary><strong>📊 Executive Brief Voice</strong></summary>
+
+```markdown
+Authentication: Enterprise-grade JWT implementation with automatic
+key rotation. Security posture exceeds SOC2 requirements. Zero
+production incidents in 18 months. 99.99% uptime on auth services.
+```
+
+**Characteristics:** Metrics-driven, compliance-focused, outcome-oriented
 
 </details>
 
@@ -219,13 +229,13 @@ aiwg/
 │
 ├── 📝 Addons (Standalone utilities — work with any framework)
 │   │
-│   ├── writing-quality/                  → AI pattern detection and content improvement
+│   ├── writing-quality/                  → Content validation and writing improvement
 │   │   ├── agents/ (3)                   → writing-validator, prompt-optimizer, content-diversifier
 │   │   ├── core/                         → Philosophy and sophistication principles
 │   │   ├── examples/                     → Before/after rewrites
 │   │   └── context/                      → Quick-reference for different voices
 │   │
-│   └── voice-framework/                  → Voice profiles for consistent, authentic writing
+│   └── voice-framework/                  → Voice profiles for consistent, natural writing
 │       ├── skills/ (4)                   → voice-apply, voice-create, voice-blend, voice-analyze
 │       └── voices/templates/             → Built-in profiles (technical, friendly, executive, casual)
 │
@@ -329,21 +339,24 @@ aiwg/
 
 ## 🧩 Use Cases
 
-### Use Case 1: Remove AI Detection Patterns
+### Use Case 1: Apply Consistent Voice Across Content
 
-**Problem:** ChatGPT wrote your docs. Everyone can tell.
+**Problem:** Your documentation sounds inconsistent—technical docs read casually, marketing copy sounds robotic.
 
-**Solution:** Validate content against 505 AI patterns across 6 categories, get before/after rewrites.
+**Solution:** Use voice profiles to ensure every piece of content matches your intended tone and audience.
 
 ```bash
 # Deploy writing quality addon (included with any framework)
 aiwg use sdlc   # or: aiwg use all
 
-# Validate any document
-"Check this document for AI patterns: docs/architecture.md"
+# Apply a voice profile to your content
+"Apply technical-authority voice to docs/architecture.md"
+
+# Create a custom voice for your brand
+"Create a voice profile based on our existing blog posts"
 ```
 
-**Time Saved:** 56-63% (56-126 minutes → 30-45 minutes)
+**Time Saved:** 56-63% (consistent editing across documents)
 
 ---
 

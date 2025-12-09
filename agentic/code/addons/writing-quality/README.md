@@ -6,9 +6,9 @@
 
 ## Overview
 
-The Writing Quality addon provides AI pattern detection and content improvement capabilities. It helps remove AI "tells" from generated content while maintaining sophistication and authenticity.
+The Writing Quality addon provides content validation and writing improvement capabilities. It works alongside the Voice Framework to ensure consistent, natural writing that matches your intended voice.
 
-> **Note**: For positive voice definition (instead of pattern avoidance), see the **[Voice Framework](../voice-framework/README.md)** addon. The Voice Framework provides voice profiles that define what you *want* rather than listing what to avoid.
+> **Recommended**: Use the **[Voice Framework](../voice-framework/README.md)** addon for positive voice definition. The Voice Framework provides voice profiles that define the voice you *want*—the preferred approach for consistent writing.
 
 ## Components
 
@@ -16,7 +16,7 @@ The Writing Quality addon provides AI pattern detection and content improvement 
 
 | Agent | Purpose |
 |-------|---------|
-| `writing-validator` | Validates content against 505 AI patterns across 6 categories |
+| `writing-validator` | Validates content for voice consistency and authenticity |
 | `prompt-optimizer` | Enhances prompts using AI Writing Guide principles |
 | `content-diversifier` | Generates varied examples and perspectives |
 
@@ -25,7 +25,7 @@ The Writing Quality addon provides AI pattern detection and content improvement 
 | Directory | Contents |
 |-----------|----------|
 | `core/` | Philosophy and sophistication principles |
-| `validation/` | Banned patterns, detection markers (505 patterns) |
+| `validation/` | Writing quality guidelines and markers |
 | `examples/` | Before/after rewrites demonstrating improvements |
 | `context/` | Quick-reference guides for different voices |
 | `patterns/` | Pattern JSON files for programmatic validation |
@@ -63,16 +63,16 @@ aiwg -deploy-agents --mode all
 "Generate 5 variations of this concept: [your concept]"
 ```
 
-## Pattern Categories
+## Quality Checks
 
-The addon detects patterns across 6 categories:
+The addon validates content across 6 categories:
 
-1. **Filler phrases** - Empty hedging ("It's worth noting", "In today's world")
-2. **Buzzwords** - Overused tech jargon ("leverage", "cutting-edge")
-3. **Vague quantifiers** - Imprecise claims ("significantly improve")
-4. **Passive constructions** - Weak voice patterns
-5. **Redundant modifiers** - Unnecessary intensifiers
-6. **Formulaic structures** - Template-like sentence patterns
+1. **Specificity** - Concrete details vs. vague claims
+2. **Voice consistency** - Matching the intended tone throughout
+3. **Precision** - Accurate quantifiers and metrics
+4. **Active voice** - Strong, direct sentence construction
+5. **Appropriate modifiers** - Meaningful intensifiers
+6. **Natural structure** - Varied, authentic sentence patterns
 
 ## Integration with Frameworks
 
@@ -80,7 +80,7 @@ The Writing Quality addon works seamlessly with:
 
 - **SDLC Complete**: Validate documentation, README files, architecture docs
 - **Media/Marketing Kit**: Validate marketing copy, blog posts, social content
-- **Voice Framework**: Combine pattern detection with positive voice definition
+- **Voice Framework**: Combine quality validation with positive voice definition
 - **Standalone**: Use independently for any content improvement task
 
 ## Voice Framework Integration
@@ -96,9 +96,9 @@ aiwg use writing           # Includes Writing Quality + Voice Framework
 
 | Approach | Writing Quality | Voice Framework |
 |----------|----------------|-----------------|
-| **Method** | Pattern detection (avoid) | Voice profiles (define) |
-| **Focus** | What NOT to say | What TO say |
-| **Output** | Issues and warnings | Transformed content |
+| **Method** | Quality validation | Voice profiles (define) |
+| **Focus** | Content consistency | Voice definition |
+| **Output** | Quality assessment | Transformed content |
 | **Use Case** | Validation | Generation |
 
 **Recommended workflow:**

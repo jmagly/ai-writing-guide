@@ -6,8 +6,8 @@
 
 ## Core Principle
 
-The goal is to maintain sophisticated, authoritative writing while avoiding AI detection patterns. We're not dumbing
-down content - we're removing performative language while preserving technical depth and professional voice.
+The goal is to maintain sophisticated, authoritative writing with consistent voice control. We're not dumbing
+down content - we're defining positive voice characteristics while preserving technical depth and professional voice.
 
 ## When to Use This Guide
 
@@ -19,7 +19,7 @@ down content - we're removing performative language while preserving technical d
 
 Only add additional documents when:
 
-1. Output shows AI patterns
+1. Output lacks consistent voice
 2. Content lacks authenticity
 3. Specific writing challenge emerges
 4. Quality check before publication
@@ -68,7 +68,7 @@ Only add additional documents when:
 
 - `CLAUDE.md`
 - `core/philosophy.md`
-- `patterns/common-ai-tells.md` (only if drafts sound robotic)
+- Voice profile (`casual-conversational` or custom)
 
 ### 4. User-Facing Content
 
@@ -178,7 +178,7 @@ Only use full suite if content consistently fails. This indicates need for:
 - Slang or colloquialisms
 - Reading level below 10th grade for technical content
 
-### Still Too AI (Under-Correcting)
+### Voice Mismatch (Under-Correcting)
 
 - Every paragraph same length
 - Formal transitions persist
@@ -350,7 +350,7 @@ aiwg -deploy-agents --mode both
 
 #### General-Purpose Writing Agents (`/agents/`)
 
-- **writing-validator**: Detects AI patterns and validates authenticity
+- **writing-validator**: Validates voice consistency and content authenticity
 - **prompt-optimizer**: Enhances prompts for better output quality
 - **content-diversifier**: Generates varied examples and perspectives
 
@@ -371,7 +371,7 @@ See `/agentic/code/frameworks/sdlc-complete/README.md` for complete list
 
 **Use for**:
 
-- Validating large documents for AI patterns
+- Validating large documents for voice consistency
 - Generating multiple variations of examples
 - Complex multi-step writing projects
 - Systematic content improvement

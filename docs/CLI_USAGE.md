@@ -350,12 +350,12 @@ Adds concrete examples and use cases.
 **After**: "Explain the concept with example: [specific scenario]"
 
 ### constraints
-Adds AI Writing Guide constraints to avoid patterns.
+Adds writing quality constraints for consistency.
 
-**Adds**: "Avoid phrases like 'delve into', 'it's important to note', etc."
+**Adds**: "Be specific and direct. Use concrete examples where applicable."
 
-### anti_pattern
-Removes AI trigger words (comprehensive, robust, seamless, etc.)
+### specificity_boost
+Replaces vague language with concrete details.
 
 **Before**: "Write a comprehensive guide"
 **After**: "Write a guide covering [specific topics]"
@@ -369,7 +369,7 @@ Injects context-specific voice guidance.
 
 ## Voice Framework (Skills)
 
-The Voice Framework provides positive voice definition through voice profiles, replacing pattern-avoidance approaches.
+The Voice Framework provides positive voice definition through voice profiles—the preferred approach for consistent writing.
 
 ### Voice Profiles
 
