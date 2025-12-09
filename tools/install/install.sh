@@ -292,7 +292,7 @@ fi
     -migrate-workspace|--migrate-workspace) node \"$PREFIX/tools/workspace/migration-tool.mjs\" \"\$@\" ;; \\
     -validate-metadata|--validate-metadata) node \"$PREFIX/tools/cli/validate-metadata.mjs\" \"\$@\" ;; \\
     -version|--version|version) aiwg_version ;; \\
-    -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Current version:' && aiwg_version ;; \\
+    -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Re-running installer to refresh aliases...' && bash \"$PREFIX/tools/install/install.sh\" && echo 'Please run: source ~/.bash_aliases (or ~/.zshrc) to activate new commands' ;; \\
     -reinstall|--reinstall|reinstall) aiwg_reinstall ;; \\
     -h|--help|-help|help|\"\") \\
       echo 'Usage: aiwg <command> [options]'; echo ''; \\
