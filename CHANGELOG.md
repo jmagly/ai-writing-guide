@@ -5,6 +5,98 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-12-08
+
+### Voice Framework & Skills System Release
+
+This release introduces the **Voice Framework** addon and comprehensive **Skills system** across all frameworks, replacing pattern-avoidance approaches with positive voice definition. The CLI tooling has been updated to deploy skills automatically with framework installations.
+
+#### Added
+
+**Voice Framework Addon** (PR #52):
+- 4 built-in voice profiles for consistent, authentic writing:
+  - `technical-authority` - Direct, precise, confident (API docs, architecture)
+  - `friendly-explainer` - Approachable, encouraging (tutorials, onboarding)
+  - `executive-brief` - Concise, outcome-focused (business cases, reports)
+  - `casual-conversational` - Relaxed, personal (blogs, newsletters)
+- 4 voice skills:
+  - `voice-apply` - Transform content to match a specified voice profile
+  - `voice-create` - Generate new profiles from descriptions or examples
+  - `voice-blend` - Combine multiple profiles with weighted ratios
+  - `voice-analyze` - Analyze content's current voice characteristics
+- YAML voice profile schema with tone, vocabulary, structure, perspective settings
+- Project-specific voice profiles via `.aiwg/voices/`
+
+**Skills System** (PR #51):
+- Claude Code Skills support across all frameworks (SKILL.md format)
+- 29 total skills deployed with `aiwg use all`:
+  - 1 writing-quality skill (ai-pattern-detection)
+  - 6 aiwg-utils skills (config-validator, project-awareness, etc.)
+  - 4 voice-framework skills (voice-apply, voice-create, voice-blend, voice-analyze)
+  - 10 SDLC framework skills (project-health, artifact-indexer, etc.)
+  - 8 MMK framework skills (campaign-tracker, content-scheduler, etc.)
+- Skills auto-deploy with `aiwg use <framework>`
+
+**CLI Improvements**:
+- New `aiwg use writing` command for Writing Quality + Voice Framework
+- `--deploy-skills` flag for explicit skill deployment
+- Skills deployment by mode: general, writing, sdlc, marketing, both, all
+- Dry-run support for skill deployment testing
+
+**Test Coverage**:
+- `test/unit/cli/skill-deployer.test.ts` - 20 tests for skill deployment
+- `test/unit/writing/voice-profile.test.ts` - 16 tests for voice profiles
+- Integration tests for deploy-agents.mjs skill deployment
+
+#### Changed
+
+**Documentation Updates**:
+- Updated all quickstart guides with Voice Framework sections
+- Added voice profile usage to CLI_USAGE.md
+- Updated integration quickstarts (Claude Code, Warp Terminal)
+- Added Voice Framework integration to writing-quality addon README
+
+**Deprecations**:
+- `validation/banned-patterns.md` deprecated in favor of voice profiles
+- Pattern-avoidance approach replaced by positive voice definition
+
+#### Fixed
+
+**CLI Tooling**:
+- Fixed skills not deploying for voice-framework, SDLC, and MMK frameworks
+- Fixed mode filtering for skill deployment
+- Added provider restriction messaging (skills Claude-only currently)
+
+### Migration Guide
+
+**From banned-patterns to Voice Framework:**
+
+1. Deploy the writing framework:
+   ```bash
+   aiwg use writing
+   ```
+
+2. Replace pattern avoidance with voice profiles:
+   ```text
+   # Before (pattern avoidance)
+   "Write this avoiding AI patterns like 'delve into', 'it's important to note'"
+
+   # After (voice definition)
+   "Write this in technical-authority voice"
+   ```
+
+3. Create custom voice profiles for your project:
+   ```yaml
+   # .aiwg/voices/my-brand.yaml
+   name: my-brand
+   description: Our brand voice
+   tone:
+     formality: 0.5
+     confidence: 0.8
+   ```
+
+---
+
 ## [Unreleased]
 
 ### Inception Phase - Plugin System Architecture (2025-10-17 to 2025-10-18)
