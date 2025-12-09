@@ -176,7 +176,22 @@ async function rollbackWorkspace(args) {
       console.log('Available backups:');
       console.log('');
 
-      const backups = await migrationTool.listBackups();
+      // Check both backup locations:
+      // 1. MigrationTool pattern: .aiwg.backup.* (in parent directory)
+      // 2. WorkspaceMigrator pattern: .aiwg/backups/* (inside .aiwg)
+      let backups = await migrationTool.listBackups();
+
+      // Also check .aiwg/backups/ directory
+      const internalBackupsDir = path.join(aiwgPath, 'backups');
+      try {
+        const entries = await fs.readdir(internalBackupsDir);
+        const internalBackups = entries
+          .filter(name => name.startsWith('migration-'))
+          .map(name => path.join(internalBackupsDir, name));
+        backups = [...backups, ...internalBackups];
+      } catch {
+        // Directory doesn't exist
+      }
 
       if (backups.length === 0) {
         console.log('  No backups found.');
@@ -197,8 +212,36 @@ async function rollbackWorkspace(args) {
           console.log(`    Size: ${formatBytes(manifest.totalSize)}`);
           console.log('');
         } catch {
-          console.log(`  ${path.basename(backupPath)}`);
-          console.log('    (manifest not readable)');
+          // No manifest - try to get info from directory
+          const backupName = path.basename(backupPath);
+          console.log(`  ${backupName}`);
+
+          // Try to extract timestamp from backup name (migration-{timestamp}-{id})
+          const match = backupName.match(/migration-(\d+)-/);
+          if (match) {
+            const timestamp = new Date(parseInt(match[1], 10));
+            console.log(`    Created: ${timestamp.toISOString()}`);
+          }
+
+          // Count files in backup
+          try {
+            const countFiles = async (dir) => {
+              let count = 0;
+              const entries = await fs.readdir(dir, { withFileTypes: true });
+              for (const entry of entries) {
+                if (entry.isDirectory()) {
+                  count += await countFiles(path.join(dir, entry.name));
+                } else {
+                  count++;
+                }
+              }
+              return count;
+            };
+            const fileCount = await countFiles(backupPath);
+            console.log(`    Files: ${fileCount}`);
+          } catch {
+            // Ignore
+          }
           console.log('');
         }
       }
