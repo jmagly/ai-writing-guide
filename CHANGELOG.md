@@ -5,11 +5,11 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.0] - 2025-12-08
+## [0.9.1] - 2025-12-08
 
 ### Voice Framework & Skills System Release
 
-This release introduces the **Voice Framework** addon and comprehensive **Skills system** across all frameworks, replacing pattern-avoidance approaches with positive voice definition. The CLI tooling has been updated to deploy skills automatically with framework installations.
+This release introduces the **Voice Framework** addon and comprehensive **Skills system** across all frameworks. The CLI tooling has been updated to deploy skills automatically with framework installations.
 
 #### Added
 
