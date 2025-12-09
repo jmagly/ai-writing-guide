@@ -1,0 +1,42 @@
+{
+  "id": "voice-framework",
+  "type": "addon",
+  "name": "Voice Framework",
+  "version": "1.0.0",
+  "description": "Voice profile system for crafting and applying consistent writing voices. Define custom voices, apply them to content, and create new voices on demand.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "keywords": [
+    "voice",
+    "tone",
+    "style",
+    "writing",
+    "profiles",
+    "customization"
+  ],
+  "entry": {
+    "skills": "skills/",
+    "voices": "voices/templates/",
+    "schemas": "schemas/"
+  },
+  "skills": [
+    "voice-apply",
+    "voice-create",
+    "voice-blend",
+    "voice-analyze"
+  ],
+  "voices": [
+    "technical-authority",
+    "friendly-explainer",
+    "executive-brief",
+    "casual-conversational"
+  ],
+  "replaces": [
+    "writing-quality/validation/banned-patterns.md",
+    "writing-quality/skills/ai-pattern-detection"
+  ],
+  "dependencies": []
+}

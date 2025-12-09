@@ -1,5 +1,20 @@
 # Banned Patterns and Phrases
 
+> **⚠️ DEPRECATION NOTICE**
+>
+> This document is **deprecated** as of December 2025. Modern frontier models (Claude Opus 4.5, GPT-5, etc.) naturally produce varied, authentic content without needing explicit pattern avoidance lists.
+>
+> **Use Instead**: The [Voice Framework](../../voice-framework/) addon provides voice profiles for crafting consistent, authentic writing styles. Rather than avoiding patterns, define the voice you want.
+>
+> ```bash
+> # Deploy voice framework
+> aiwg use writing
+> ```
+>
+> This file is retained for historical reference and edge cases only.
+
+---
+
 ## Usage Frequency Guidelines
 
 Some words are acceptable when used sparingly (1:1000 or 1:10000 word ratio) but become AI detection signals when
