@@ -1,0 +1,35 @@
+{
+  "name": "voice-framework-skills",
+  "description": "Voice profile management and application skills",
+  "version": "1.0.0",
+  "type": "skills-catalog",
+  "skills": [
+    {
+      "name": "voice-apply",
+      "description": "Apply voice profiles to content with style transformation",
+      "triggers": ["apply voice", "rewrite in [voice]", "use [persona] voice", "transform to [style]"],
+      "scripts": ["scripts/voice_transformer.py"]
+    },
+    {
+      "name": "voice-create",
+      "description": "Create new voice profiles from examples or specifications",
+      "triggers": ["create voice", "new voice profile", "define voice", "build persona voice"],
+      "scripts": ["scripts/voice_creator.py"]
+    },
+    {
+      "name": "voice-blend",
+      "description": "Blend multiple voice profiles with weighted combinations",
+      "triggers": ["blend voices", "mix profiles", "combine voices", "hybrid voice"],
+      "scripts": ["scripts/voice_blender.py"]
+    },
+    {
+      "name": "voice-analyze",
+      "description": "Analyze content to detect voice characteristics",
+      "triggers": ["analyze voice", "detect style", "what voice is this", "voice characteristics"],
+      "scripts": ["scripts/voice_analyzer.py"]
+    }
+  ],
+  "dependencies": {
+    "references": ["banned-patterns.md", "sophistication-guide.md"]
+  }
+}

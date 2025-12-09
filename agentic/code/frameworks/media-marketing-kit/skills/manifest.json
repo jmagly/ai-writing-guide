@@ -1,0 +1,52 @@
+{
+  "name": "mmk-skills",
+  "description": "Model-invoked skills for Media Marketing Kit orchestration",
+  "version": "1.0.0",
+  "type": "skills-catalog",
+  "skills": [
+    {
+      "name": "brand-compliance",
+      "description": "Unified brand compliance validation across visual, verbal, and legal dimensions",
+      "triggers": ["brand review", "check brand compliance", "validate against brand guidelines", "brand audit"]
+    },
+    {
+      "name": "qa-protocol",
+      "description": "Multi-stage QA protocol with channel-specific validation",
+      "triggers": ["quality check", "QA this asset", "validate for [channel]", "pre-flight check"]
+    },
+    {
+      "name": "review-synthesis",
+      "description": "Aggregate multi-reviewer feedback into consolidated recommendations",
+      "triggers": ["synthesize reviews", "merge feedback", "consolidate comments", "what do reviewers say"]
+    },
+    {
+      "name": "approval-workflow",
+      "description": "Multi-stakeholder approval routing with status tracking",
+      "triggers": ["submit for approval", "approval workflow", "get sign-off", "approval status"]
+    },
+    {
+      "name": "data-pipeline",
+      "description": "Marketing data collection, transformation, and reporting workflows",
+      "triggers": ["collect marketing data", "update metrics", "refresh analytics", "data pipeline"]
+    },
+    {
+      "name": "audience-synthesis",
+      "description": "Synthesize audience insights into personas and segments",
+      "triggers": ["analyze audience", "build personas", "segment audience", "audience insights"]
+    },
+    {
+      "name": "competitive-intel",
+      "description": "Competitive intelligence gathering and analysis",
+      "triggers": ["competitive analysis", "analyze competitors", "competitive landscape", "competitor update"]
+    },
+    {
+      "name": "performance-digest",
+      "description": "Executive-ready performance summaries with insights",
+      "triggers": ["performance summary", "marketing report", "how are we doing", "KPI update"]
+    }
+  ],
+  "dependencies": {
+    "utilities": ["parallel-dispatch", "artifact-metadata", "project-awareness"],
+    "voice-framework": ["voice-apply"]
+  }
+}

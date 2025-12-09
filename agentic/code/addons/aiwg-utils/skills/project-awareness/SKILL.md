@@ -1,25 +1,64 @@
----
-name: project-awareness
-description: Provides AIWG project status, phase information, and next steps. Auto-applies when user asks about project status, current phase, what's next, where we are, or needs orientation within an AIWG-managed project.
-version: 1.0.0
----
+# project-awareness
 
-# Project Awareness Skill
+Comprehensive project context detection and state awareness.
+
+## Triggers
+
+- "what project is this"
+- "project context"
+- "what phase are we in"
+- "where are we?"
+- "what's next?"
+- "project status"
+- "current phase"
+- "who is on the team"
+- "what framework is active"
+- "ready to transition?"
+- "what's blocking us?"
+- (Auto-triggered at session start for context building)
 
 ## Purpose
 
-Automatically detect when users need project orientation and provide contextual status information. This skill bridges natural language queries to AIWG's project tracking artifacts.
+This skill provides rich project context awareness including:
+- Project type and technology stack detection
+- AIWG framework state (installed frameworks, current phase)
+- Team configuration and agent assignments
+- Recent activity and artifact status
+- Active work detection (branches, PRs, iterations)
+- Recommendations for next actions
 
-## When This Skill Applies
+## Behavior
 
-- User asks "where are we?" or "what's the status?"
-- User asks "what's next?" or "what should we do?"
-- User mentions "current phase" or "project phase"
-- User seems disoriented about project state
-- Starting a new conversation in an AIWG project
-- User asks about milestones, gates, or transitions
+When triggered, this skill:
 
-## Trigger Phrases
+1. **Detects project type**:
+   - Monorepo vs single project
+   - Library vs application vs service
+   - Web, API, CLI, mobile, etc.
+   - Programming languages and frameworks
+
+2. **Identifies AIWG state**:
+   - Installed frameworks (SDLC, MMK, addons)
+   - Current lifecycle phase
+   - Active iteration (if applicable)
+   - Deployed agents and commands
+
+3. **Parses team configuration**:
+   - Team roster from `.aiwg/team/`
+   - Agent assignments
+   - Role responsibilities
+
+4. **Loads recent activity**:
+   - Git log (recent commits, active branches)
+   - Recent artifact changes
+   - Open PRs and issues
+
+5. **Builds context object**:
+   - Structured data for other skills
+   - Summary for user display
+   - Recommendations for next actions
+
+## Trigger Phrase Mappings
 
 | Natural Language | Action |
 |------------------|--------|
@@ -30,10 +69,9 @@ Automatically detect when users need project orientation and provide contextual 
 | "Ready to transition?" | Gate criteria check |
 | "What's blocking us?" | Risk register + blockers |
 | "How long until..." | Milestone progress estimate |
+| "Who owns..." | Team and agent assignments |
 
 ## Information Sources
-
-This skill gathers information from:
 
 ### Primary Sources (Check First)
 - `.aiwg/planning/phase-status.md` - Current phase and progress
@@ -51,9 +89,78 @@ This skill gathers information from:
 - `.aiwg/intake/project-intake.md` - Original project scope
 - Git log - Recent activity
 
-## Response Format
+## Context Object Structure
+
+```json
+{
+  "project": {
+    "name": "my-project",
+    "type": "application",
+    "subtype": "web-api",
+    "root": "/path/to/project",
+    "description": "From package.json or README"
+  },
+
+  "tech_stack": {
+    "languages": ["typescript", "python"],
+    "runtime": "node",
+    "framework": "express",
+    "package_manager": "npm",
+    "database": "postgresql",
+    "testing": "vitest",
+    "ci_cd": "github-actions"
+  },
+
+  "aiwg": {
+    "installed": true,
+    "frameworks": ["sdlc-complete"],
+    "addons": ["aiwg-utils", "voice-framework"],
+    "phase": "elaboration",
+    "iteration": 3,
+    "agents_deployed": 45,
+    "commands_deployed": 38
+  },
+
+  "team": {
+    "members": [
+      {"name": "John", "role": "tech-lead", "agent": "architecture-designer"}
+    ],
+    "agent_assignments": {
+      "architecture-designer": "John",
+      "test-architect": "Jane"
+    }
+  },
+
+  "activity": {
+    "current_branch": "feature/user-auth",
+    "recent_commits": [...],
+    "open_prs": [...],
+    "modified_artifacts": [...],
+    "last_gate_check": "2025-12-05"
+  },
+
+  "artifacts": {
+    "total": 24,
+    "by_status": {
+      "draft": 5,
+      "review": 3,
+      "baselined": 16
+    },
+    "recent": [...]
+  },
+
+  "recommendations": [
+    "Complete SAD review (2 reviewers pending)",
+    "Run gate-check for Elaboration exit",
+    "Update risk register (7 days stale)"
+  ]
+}
+```
+
+## Response Formats
 
 ### Quick Status (Default)
+
 ```
 Phase: [Current Phase] ([X]% complete)
 Iteration: [N] of [Total]
@@ -62,6 +169,7 @@ Blockers: [Count] ([List if < 3])
 ```
 
 ### Full Status (On Request)
+
 ```
 ## Project: [Name]
 Phase: [Phase] | Iteration: [N]
@@ -85,16 +193,52 @@ Started: [Date] | Target: [Date]
 2. [Action 2]
 ```
 
-## Command Bindings
+## Detection Methods
 
-This skill may trigger these commands based on context:
+### Project Type Detection
 
-| Context | Command |
-|---------|---------|
-| User wants full report | `/project-status` |
-| User asks about health | `/project-health-check` |
-| User asks about gate readiness | `/flow-gate-check [phase]` |
-| User seems lost on next steps | Suggest relevant flow command |
+| Indicator | Project Type |
+|-----------|-------------|
+| package.json + src/index.ts | Node.js application |
+| package.json + lib/ | Node.js library |
+| setup.py or pyproject.toml | Python package |
+| Cargo.toml | Rust project |
+| go.mod | Go module |
+| pom.xml | Java Maven project |
+| turbo.json or lerna.json | Monorepo |
+
+### Framework Stack Detection
+
+| Files | Framework |
+|-------|-----------|
+| next.config.js | Next.js |
+| angular.json | Angular |
+| vite.config.ts | Vite |
+| django, manage.py | Django |
+| express in package.json | Express |
+| fastapi in requirements | FastAPI |
+
+### AIWG State Detection
+
+| Location | Information |
+|----------|-------------|
+| .aiwg/ | AIWG artifacts directory exists |
+| .aiwg/config/registry.json | Installed frameworks |
+| .aiwg/planning/phase-plan-*.md | Current phase |
+| .aiwg/planning/iteration-*.md | Current iteration |
+| .claude/agents/ | Deployed agents |
+| .claude/commands/ | Deployed commands |
+
+### Phase Detection Heuristics
+
+| Artifacts Present | Likely Phase |
+|-------------------|--------------|
+| intake/ only | Concept/Inception |
+| requirements/ + architecture/ draft | Inception |
+| architecture/ baselined | Elaboration |
+| testing/ + deployment/ draft | Construction |
+| deployment/ baselined | Transition |
+| All baselined + production logs | Production |
 
 ## Phase Reference
 
@@ -106,25 +250,113 @@ This skill may trigger these commands based on context:
 | Transition | Deployment, handover | runbooks, training |
 | Production | Operations, iteration | monitoring, incidents |
 
-## Scripts
+## Command Bindings
 
-### status_check.py
-Quick status extraction from .aiwg/ artifacts:
-```bash
-python scripts/status_check.py [project-dir]
+This skill may trigger these commands based on context:
+
+| Context | Command |
+|---------|---------|
+| User wants full report | `/project-status` |
+| User asks about health | `/project-health-check` |
+| User asks about gate readiness | `/flow-gate-check [phase]` |
+| User seems lost on next steps | Suggest relevant flow command |
+
+## Usage Examples
+
+### Session Start Context
+
+```
+Model auto-invokes project-awareness
+
+Returns:
+"Project: MyAPI (Node.js/Express API)
+Phase: Elaboration (Iteration 3)
+Team: 4 members assigned
+Recent: SAD approved, Test Plan in review
+
+Recommendations:
+- Complete Test Plan review
+- Begin Construction planning"
 ```
 
-Returns JSON with:
-- current_phase
-- iteration_number
-- completion_percentages
-- active_blockers
-- next_milestone
+### Explicit Query
+
+```
+User: "What phase are we in?"
+
+Skill returns:
+"Current Phase: Elaboration
+Milestone: Architecture Baseline (ABM)
+Progress: 75% complete
+
+Completed:
+✓ Requirements baseline
+✓ SAD approved
+✓ 3/5 ADRs written
+
+Remaining:
+- Test Plan approval
+- Risk register update
+- Gate check"
+```
+
+### Team Query
+
+```
+User: "Who owns the architecture?"
+
+Skill returns:
+"Architecture ownership:
+- Lead: John (architecture-designer)
+- Reviewers: Jane (security-architect), Bob (test-architect)
+
+Recent activity:
+- SAD v1.2 updated 2 days ago
+- ADR-005 created yesterday"
+```
+
+## CLI Usage
+
+```bash
+# Full context dump
+python project_awareness.py --full
+
+# Specific aspects
+python project_awareness.py --tech-stack
+python project_awareness.py --aiwg-state
+python project_awareness.py --team
+python project_awareness.py --activity
+
+# JSON output
+python project_awareness.py --full --json
+
+# Recommendations only
+python project_awareness.py --recommendations
+```
 
 ## Integration
 
-Works with:
-- `/project-status` - Explicit status command
-- `/flow-gate-check` - Gate validation
-- All `flow-*` commands - Phase transitions
-- `context-regenerator` agent - Context updates
+This skill provides context for:
+- `artifact-orchestration`: Knows current phase for artifact selection
+- `gate-evaluation`: Knows what gate to check
+- `parallel-dispatch`: Knows which agents are relevant
+- `template-engine`: Knows project name, type for templates
+- All SDLC flows: Phase and iteration context
+- All other skills that need project context
+
+## Caching
+
+Context is cached for performance:
+- Tech stack: Cached until package files change
+- AIWG state: Cached for 5 minutes
+- Activity: Refreshed on each call
+- Team: Cached until team files change
+
+Cache location: `.aiwg/working/context-cache.json`
+
+## References
+
+- Team configuration: `.aiwg/team/`
+- Phase plans: `.aiwg/planning/`
+- Registry: `.aiwg/config/registry.json`
+- Artifact index: `.aiwg/reports/artifact-index.json`
