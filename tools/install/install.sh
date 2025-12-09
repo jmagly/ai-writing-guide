@@ -289,7 +289,9 @@ fi
     -install-plugin|--install-plugin) node \"$PREFIX/tools/plugin/plugin-installer-cli.mjs\" \"\$@\" ;; \\
     -uninstall-plugin|--uninstall-plugin) node \"$PREFIX/tools/plugin/plugin-uninstaller-cli.mjs\" \"\$@\" ;; \\
     -plugin-status|--plugin-status) node \"$PREFIX/tools/plugin/plugin-status-cli.mjs\" \"\$@\" ;; \\
-    -migrate-workspace|--migrate-workspace) node \"$PREFIX/tools/workspace/migration-tool.mjs\" \"\$@\" ;; \\
+    -migrate-workspace|--migrate-workspace) node \"$PREFIX/tools/cli/workspace-migrate.mjs\" \"\$@\" ;; \\
+    -rollback-workspace|--rollback-workspace) node \"$PREFIX/tools/cli/workspace-rollback.mjs\" \"\$@\" ;; \\
+    -status|--status|status) node \"$PREFIX/tools/cli/workspace-status.mjs\" \"\$@\" ;; \\
     -validate-metadata|--validate-metadata) node \"$PREFIX/tools/cli/validate-metadata.mjs\" \"\$@\" ;; \\
     -version|--version|version) aiwg_version ;; \\
     -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Re-running installer to refresh aliases...' && bash \"$PREFIX/tools/install/install.sh\" && echo 'Please run: source ~/.bash_aliases (or ~/.zshrc) to activate new commands' ;; \\
@@ -306,6 +308,13 @@ fi
       echo 'Project Setup:'; \\
       echo '  -new [--no-agents] [--provider <...>]'; \\
       echo '      Create new project with SDLC templates'; echo ''; \\
+      echo 'Workspace Management:'; \\
+      echo '  -status [--verbose] [--json]'; \\
+      echo '      Show workspace health and installed frameworks'; \\
+      echo '  -migrate-workspace [--dry-run] [--force]'; \\
+      echo '      Migrate legacy .aiwg/ to framework-scoped structure'; \\
+      echo '  -rollback-workspace [--list] [--backup <path>]'; \\
+      echo '      Rollback workspace migration from backup'; echo ''; \\
       echo 'Utilities:'; \\
       echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; \\
       echo '      Prefill SDLC card metadata'; \\

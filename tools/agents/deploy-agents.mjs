@@ -515,6 +515,92 @@ function createFactoryAgentsMd(target, srcRoot, dryRun) {
   }
 }
 
+/**
+ * Initialize framework-scoped workspace structure
+ * Creates .aiwg/frameworks/{framework-id}/ directories as specified in issue #53
+ */
+function initializeFrameworkWorkspace(target, mode, dryRun) {
+  const aiwgBase = path.join(target, '.aiwg');
+  const frameworksDir = path.join(aiwgBase, 'frameworks');
+  const sharedDir = path.join(aiwgBase, 'shared');
+
+  // Framework-specific directories based on mode
+  const frameworkDirs = [];
+
+  if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
+    frameworkDirs.push({
+      id: 'sdlc-complete',
+      subdirs: ['repo', 'projects', 'working', 'archive']
+    });
+  }
+
+  if (mode === 'marketing' || mode === 'all') {
+    frameworkDirs.push({
+      id: 'media-marketing-kit',
+      subdirs: ['repo', 'campaigns', 'working', 'archive']
+    });
+  }
+
+  // Skip if no framework directories to create
+  if (frameworkDirs.length === 0) {
+    return;
+  }
+
+  if (dryRun) {
+    console.log('\n[dry-run] Would create framework-scoped workspace structure:');
+    console.log(`[dry-run]   ${aiwgBase}/`);
+    console.log(`[dry-run]   ${frameworksDir}/`);
+    console.log(`[dry-run]   ${sharedDir}/`);
+    for (const fw of frameworkDirs) {
+      for (const subdir of fw.subdirs) {
+        console.log(`[dry-run]   ${path.join(frameworksDir, fw.id, subdir)}/`);
+      }
+    }
+    return;
+  }
+
+  // Create base directories
+  ensureDir(aiwgBase);
+  ensureDir(frameworksDir);
+  ensureDir(sharedDir);
+
+  // Create framework directories
+  for (const fw of frameworkDirs) {
+    const fwBase = path.join(frameworksDir, fw.id);
+    ensureDir(fwBase);
+
+    for (const subdir of fw.subdirs) {
+      ensureDir(path.join(fwBase, subdir));
+    }
+  }
+
+  // Initialize registry.json if it doesn't exist
+  const registryPath = path.join(frameworksDir, 'registry.json');
+  if (!fs.existsSync(registryPath)) {
+    const registry = {
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      frameworks: {}
+    };
+
+    for (const fw of frameworkDirs) {
+      registry.frameworks[fw.id] = {
+        id: fw.id,
+        type: 'framework',
+        version: '1.0.0',
+        'install-date': new Date().toISOString(),
+        'repo-path': `frameworks/${fw.id}/repo`,
+        health: 'healthy'
+      };
+    }
+
+    fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2) + '\n', 'utf8');
+    console.log(`\nInitialized framework registry: ${registryPath}`);
+  }
+
+  console.log(`\nInitialized framework-scoped workspace at ${aiwgBase}/`);
+}
+
 function enableFactoryCustomDroids(dryRun) {
   const homeDir = process.env.HOME || process.env.USERPROFILE;
   if (!homeDir) {
@@ -586,6 +672,9 @@ function enableFactoryCustomDroids(dryRun) {
     codingModel,
     efficiencyModel
   };
+
+  // Initialize framework-scoped workspace structure
+  initializeFrameworkWorkspace(target, mode, dryRun);
 
   // Deploy Agents (unless --commands-only or --skills-only)
   if (!commandsOnly && !skillsOnly) {
