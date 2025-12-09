@@ -49,11 +49,12 @@ This installs the framework to the prefix and registers the 'aiwg' CLI with comm
     aiwg -deploy-commands  -> Use 'aiwg use <framework>' instead
 
 Frameworks:
-  sdlc       -> SDLC Complete (54 agents, 42 commands)
-  marketing  -> Media/Marketing Kit (37 agents)
-  writing    -> Writing Quality addon (3 agents)
+  sdlc       -> SDLC Complete (54 agents, 42 commands, 10 skills)
+  marketing  -> Media/Marketing Kit (37 agents, 23 commands, 8 skills)
+  writing    -> Writing Quality + Voice Framework (3 agents, 5 skills)
 
-Note: 'aiwg use' automatically installs the aiwg-utils addon (--no-utils to skip).
+Note: 'aiwg use' automatically installs aiwg-utils addon (6 skills) with --no-utils to skip.
+Skills include: voice-apply, voice-create, voice-blend, voice-analyze, project-awareness, and more.
 
 Note: aiwg automatically updates on every command invocation.
 USAGE

@@ -37,7 +37,7 @@ Only add additional documents when:
 
 **Add if needed**:
 
-- `validation/banned-patterns.md` (if seeing AI patterns)
+- Voice profile (`voice-framework/voices/templates/technical-authority.yaml`) (if needing consistent voice)
 - `examples/technical-writing.md` (if struggling with voice)
 
 **Do NOT include**:
@@ -81,7 +81,7 @@ Only add additional documents when:
 
 **Add for problems**:
 
-- `validation/banned-patterns.md` (if too marketing-heavy)
+- Voice profile (`friendly-explainer` or `casual-conversational`) to calibrate tone
 - `examples/rewrite-exercises.md` (if struggling)
 
 ### 5. Academic/Research Writing
@@ -94,7 +94,7 @@ Only add additional documents when:
 - `core/sophistication-guide.md`
 - `context/academic-voice.md`
 
-**Note**: Many banned patterns are actually appropriate in academic contexts
+**Note**: Academic contexts may require different voice profiles - formal transitions and structured phrasing are often appropriate here
 
 ### 6. Cypherpunk/Technical Mythology
 
@@ -121,14 +121,20 @@ Only add additional documents when:
 
 Start with just `CLAUDE.md`. Often sufficient for good models.
 
-### Level 2: Pattern Awareness
+### Level 2: Voice Calibration
 
-Add `validation/banned-patterns.md` only if seeing:
+Apply a voice profile if output shows:
 
-- "seamlessly integrates"
-- "comprehensive solution"
-- "Moreover/Furthermore"
-- Other red flags
+- Generic, impersonal tone
+- Inconsistent formality levels
+- Lack of domain-appropriate vocabulary
+
+**Built-in voice profiles**:
+
+- `technical-authority` - Direct, precise, confident (docs, APIs)
+- `friendly-explainer` - Approachable, encouraging (tutorials)
+- `executive-brief` - Concise, outcome-focused (business)
+- `casual-conversational` - Relaxed, personal (blogs)
 
 ### Level 3: Voice Correction
 
@@ -203,14 +209,14 @@ Only use full suite if content consistently fails. This indicates need for:
 
 ## Document Selection Matrix
 
-| Scenario | CLAUDE.md | Philosophy | Banned Patterns | Examples | Quick Ref |
-|----------|-----------|------------|-----------------|----------|-----------|
+| Scenario | CLAUDE.md | Philosophy | Voice Profile | Examples | Quick Ref |
+|----------|-----------|------------|---------------|----------|-----------|
 | First Draft | ✓ | | | | |
-| AI Patterns Detected | ✓ | | ✓ | | |
-| Too Formal | ✓ | ✓ | | ✓ | |
-| Lacks Authority | ✓ | ✓ (sophistication) | | | |
+| Tone Issues | ✓ | | ✓ | | |
+| Too Formal | ✓ | ✓ | casual-conversational | ✓ | |
+| Lacks Authority | ✓ | ✓ (sophistication) | technical-authority | | |
 | Quick Check | ✓ | | | | ✓ |
-| Full Rewrite | ✓ | ✓ | ✓ | ✓ | |
+| Full Rewrite | ✓ | ✓ | ✓ (select appropriate) | ✓ | |
 
 ## Implementation Tips
 
@@ -261,6 +267,55 @@ If output loses sophistication:
 ### Losing Professional Voice
 
 ❌ "Yeah, so we basically just..." ✅ "We implemented a pragmatic solution that..."
+
+## Voice Framework and Skills
+
+### Voice Framework Addon
+
+The Voice Framework replaces pattern-avoidance approaches with positive voice definition. Instead of listing what to avoid, define the voice you want.
+
+**Voice profile locations** (priority order):
+
+1. Project: `.aiwg/voices/` (project-specific)
+2. User: `~/.config/aiwg/voices/` (user-wide)
+3. Built-in: `voice-framework/voices/templates/` (AIWG defaults)
+
+**Built-in profiles**:
+
+| Profile | Description | Use For |
+|---------|-------------|---------|
+| `technical-authority` | Direct, precise, confident | API docs, architecture, engineering |
+| `friendly-explainer` | Approachable, encouraging | Tutorials, onboarding, education |
+| `executive-brief` | Concise, outcome-focused | Business cases, stakeholder comms |
+| `casual-conversational` | Relaxed, personal | Blog posts, social, newsletters |
+
+### Voice Skills
+
+Voice skills are auto-applied based on context:
+
+- **voice-apply**: Transform content to match a voice profile
+- **voice-create**: Generate new voice profile from description
+- **voice-blend**: Combine multiple profiles (e.g., 70% technical + 30% friendly)
+- **voice-analyze**: Analyze content's current voice characteristics
+
+**Natural language triggers**:
+
+- "Write this in technical voice" → applies `technical-authority`
+- "Make it more casual" → calibrates toward `casual-conversational`
+- "Create a voice for API docs" → generates custom profile
+- "Blend 70% technical with 30% friendly" → creates weighted combination
+
+### SDLC and MMK Skills
+
+Skills provide domain-specific knowledge that agents automatically load:
+
+**SDLC Skills** (10): artifact-orchestration, gate-evaluation, traceability-check, risk-cycle, security-assessment, test-coverage, architecture-evolution, decision-support, incident-triage, sdlc-reports
+
+**MMK Skills** (8): brand-compliance, audience-synthesis, competitive-intel, approval-workflow, performance-digest, review-synthesis, qa-protocol, data-pipeline
+
+**aiwg-utils Skills** (6): project-awareness, artifact-metadata, parallel-dispatch, nl-router, config-validator, template-engine
+
+Skills are deployed automatically with frameworks (`aiwg use sdlc/marketing/all`).
 
 ## Subagents and Automation
 

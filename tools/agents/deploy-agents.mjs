@@ -748,8 +748,53 @@ function enableFactoryCustomDroids(dryRun) {
       }
     }
 
-    // Future: SDLC and Marketing skills would be deployed here
-    // Currently skills are in addon directories only
+    // Deploy voice-framework skills if mode is 'general', 'writing', 'both', or 'all'
+    if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
+      const voiceSkillsRoot = path.join(srcRoot, 'agentic', 'code', 'addons', 'voice-framework', 'skills');
+      if (fs.existsSync(voiceSkillsRoot)) {
+        const skillDirs = listSkillDirs(voiceSkillsRoot);
+        if (skillDirs.length > 0) {
+          const destDir = path.join(target, '.claude', 'skills');
+          if (!dryRun) ensureDir(destDir);
+          console.log(`\nDeploying ${skillDirs.length} voice-framework skills to ${destDir}`);
+          for (const skillDir of skillDirs) {
+            deploySkillDir(skillDir, destDir, deployOpts);
+          }
+        }
+      }
+    }
+
+    // Deploy SDLC framework skills if mode is 'sdlc', 'both', or 'all'
+    if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
+      const sdlcSkillsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'skills');
+      if (fs.existsSync(sdlcSkillsRoot)) {
+        const skillDirs = listSkillDirs(sdlcSkillsRoot);
+        if (skillDirs.length > 0) {
+          const destDir = path.join(target, '.claude', 'skills');
+          if (!dryRun) ensureDir(destDir);
+          console.log(`\nDeploying ${skillDirs.length} SDLC framework skills to ${destDir}`);
+          for (const skillDir of skillDirs) {
+            deploySkillDir(skillDir, destDir, deployOpts);
+          }
+        }
+      }
+    }
+
+    // Deploy Marketing framework skills if mode is 'marketing', 'both', or 'all'
+    if (mode === 'marketing' || mode === 'both' || mode === 'all') {
+      const mmkSkillsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'skills');
+      if (fs.existsSync(mmkSkillsRoot)) {
+        const skillDirs = listSkillDirs(mmkSkillsRoot);
+        if (skillDirs.length > 0) {
+          const destDir = path.join(target, '.claude', 'skills');
+          if (!dryRun) ensureDir(destDir);
+          console.log(`\nDeploying ${skillDirs.length} MMK framework skills to ${destDir}`);
+          for (const skillDir of skillDirs) {
+            deploySkillDir(skillDir, destDir, deployOpts);
+          }
+        }
+      }
+    }
   } else if ((deploySkills || skillsOnly) && provider !== 'claude') {
     console.log('\nNote: Skills are currently only supported for Claude Code provider');
   }

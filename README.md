@@ -219,12 +219,15 @@ aiwg/
 │
 ├── 📝 Addons (Standalone utilities — work with any framework)
 │   │
-│   └── writing-quality/                  → AI pattern detection and content improvement
-│       ├── agents/ (3)                   → writing-validator, prompt-optimizer, content-diversifier
-│       ├── core/                         → Philosophy and sophistication principles
-│       ├── validation/                   → 505 banned patterns across 6 categories
-│       ├── examples/                     → Before/after rewrites
-│       └── context/                      → Quick-reference for different voices
+│   ├── writing-quality/                  → AI pattern detection and content improvement
+│   │   ├── agents/ (3)                   → writing-validator, prompt-optimizer, content-diversifier
+│   │   ├── core/                         → Philosophy and sophistication principles
+│   │   ├── examples/                     → Before/after rewrites
+│   │   └── context/                      → Quick-reference for different voices
+│   │
+│   └── voice-framework/                  → Voice profiles for consistent, authentic writing
+│       ├── skills/ (4)                   → voice-apply, voice-create, voice-blend, voice-analyze
+│       └── voices/templates/             → Built-in profiles (technical, friendly, executive, casual)
 │
 ├── 🗂️ Workspace Management
 │   ├── Framework isolation               → Run SDLC + MMK + addons simultaneously
@@ -986,8 +989,9 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 
 ### Writing Quality
 
+- [**Voice Framework**](agentic/code/addons/voice-framework/) — Voice profiles for consistent, authentic writing
+- [**Voice Skills**](agentic/code/addons/voice-framework/skills/) — Apply, create, blend, analyze voices
 - [**Core Philosophy**](core/philosophy.md) — Fundamental writing principles
-- [**Banned Patterns**](validation/banned-patterns.md) — 505 AI patterns across 6 categories
 - [**Examples**](examples/) — Before/after rewrites
 - [**Quick Reference**](context/quick-reference.md) — Fast validation checklist
 

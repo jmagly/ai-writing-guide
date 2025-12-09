@@ -30,7 +30,7 @@ document combinations for specific needs.
 
 **Add situationally based on task**:
 
-- For AI pattern detection: `validation/banned-patterns.md`
+- For voice consistency: Voice Framework profiles (`technical-authority`, `friendly-explainer`, `executive-brief`, `casual-conversational`)
 - For maintaining authority: `core/sophistication-guide.md`
 - For technical writing: `examples/technical-writing.md`
 - For quick validation: `context/quick-reference.md`
@@ -42,8 +42,8 @@ document combinations for specific needs.
 1. **Core Philosophy (`core/`)**: Fundamental writing principles that guide all content generation. These establish the
    balance between removing AI patterns and maintaining sophisticated, authoritative voice.
 
-2. **Validation Rules (`validation/`)**: Specific patterns, phrases, and structures that indicate AI-generated content.
-   These are detection patterns that should be avoided.
+2. **Voice Framework (`agentic/code/addons/voice-framework/`)**: Voice profiles that define consistent writing characteristics.
+   Replaces pattern-avoidance with positive voice definition.
 
 3. **Context Documents (`context/`)**: Optimized, condensed versions of guidelines for efficient agent context usage.
    These provide quick-reference materials without overwhelming the context window.
@@ -124,11 +124,46 @@ cat USAGE_GUIDE.md
 
 When generating or reviewing content:
 
-1. **Avoid banned patterns**: Check `validation/banned-patterns.md` for phrases that trigger AI detection
+1. **Apply appropriate voice**: Use Voice Framework profiles to match audience and context
 2. **Maintain sophistication**: Don't dumb down technical content - preserve domain-appropriate vocabulary
 3. **Include authenticity markers**: Add opinions, acknowledge trade-offs, reference real-world constraints
 4. **Vary structure**: Mix sentence lengths, paragraph structures, and transition styles
 5. **Be specific**: Replace vague claims with exact metrics and concrete examples
+
+## Voice Framework
+
+The Voice Framework addon provides voice profiles for consistent, authentic writing:
+
+### Built-in Voice Profiles
+
+Located in `agentic/code/addons/voice-framework/voices/templates/`:
+
+- `technical-authority` - Direct, precise, confident (docs, architecture)
+- `friendly-explainer` - Approachable, encouraging (tutorials, onboarding)
+- `executive-brief` - Concise, outcome-focused (business cases)
+- `casual-conversational` - Relaxed, personal (blogs, newsletters)
+
+### Voice Profile Locations (Priority Order)
+
+1. Project: `.aiwg/voices/` (project-specific)
+2. User: `~/.config/aiwg/voices/` (user-wide)
+3. Built-in: `voice-framework/voices/templates/` (AIWG defaults)
+
+### Voice Skills
+
+- `voice-apply` - Apply voice profile to content
+- `voice-create` - Generate new voice profile from description
+- `voice-blend` - Combine multiple profiles (e.g., 70% technical + 30% casual)
+- `voice-analyze` - Analyze content's current voice characteristics
+
+### Usage Examples
+
+Natural language (skills auto-trigger):
+
+- "Write this in technical-authority voice"
+- "Make it more casual"
+- "Create a voice for API docs - precise, no-nonsense"
+- "Blend 70% technical with 30% friendly"
 
 ## Important Notes
 
