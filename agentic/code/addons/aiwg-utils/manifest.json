@@ -20,7 +20,8 @@
   ],
   "entry": {
     "agents": "agents/",
-    "commands": "commands/"
+    "commands": "commands/",
+    "skills": "skills/"
   },
   "commands": [
     "aiwg-regenerate",
@@ -30,5 +31,8 @@
   ],
   "agents": [
     "context-regenerator"
+  ],
+  "skills": [
+    "project-awareness"
   ]
 }

@@ -1,0 +1,32 @@
+{
+  "id": "writing-quality",
+  "type": "addon",
+  "name": "Writing Quality",
+  "version": "1.0.0",
+  "description": "AI pattern detection, voice consistency, and writing quality enforcement for authentic content",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "keywords": [
+    "writing",
+    "quality",
+    "ai-detection",
+    "authenticity",
+    "voice",
+    "patterns"
+  ],
+  "entry": {
+    "agents": "agents/",
+    "skills": "skills/"
+  },
+  "agents": [
+    "writing-validator",
+    "prompt-optimizer",
+    "content-diversifier"
+  ],
+  "skills": [
+    "ai-pattern-detection"
+  ]
+}
