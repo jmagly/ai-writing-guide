@@ -1,12 +1,14 @@
 {
-  "name": "ai-writing-guide",
-  "version": "1.0.0",
-  "description": "Comprehensive framework for improving AI-generated content quality",
+  "name": "aiwg",
+  "version": "2024.12.0",
+  "description": "AI Writing Guide - Framework for improving AI-generated content quality with SDLC lifecycle support",
   "type": "module",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs",
-    "example": "examples"
+  "bin": {
+    "aiwg": "./bin/aiwg.mjs"
+  },
+  "main": "src/cli/index.mjs",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "scripts": {
     "validate-metadata": "node tools/cli/validate-metadata.mjs",
@@ -16,8 +18,23 @@
     "test:ui": "vitest --ui",
     "test:watch": "vitest --watch",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist coverage"
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "npm run typecheck && npm test"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "tools/",
+    "agentic/",
+    "docs/",
+    "core/",
+    "validation/",
+    "context/",
+    "examples/",
+    "CLAUDE.md",
+    "USAGE_GUIDE.md",
+    "AGENTS.md"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jmagly/ai-writing-guide.git"
@@ -28,15 +45,22 @@
     "guide",
     "sdlc",
     "framework",
-    "workspace",
-    "metadata"
+    "claude",
+    "agents",
+    "cli",
+    "devtools",
+    "productivity"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "jmagly",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/jmagly/ai-writing-guide/issues"
   },
   "homepage": "https://github.com/jmagly/ai-writing-guide#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "dependencies": {
     "chalk": "^4.1.2",
     "chokidar": "^3.6.0",

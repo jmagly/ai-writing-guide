@@ -1,0 +1,72 @@
+# Development files
+.git/
+.github/
+.vscode/
+.idea/
+
+# Test files
+test/
+tests/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+coverage/
+.nyc_output/
+
+# Build artifacts
+dist/
+*.tsbuildinfo
+
+# Config files (dev only)
+.eslintrc*
+.prettierrc*
+tsconfig.json
+vitest.config.*
+jest.config.*
+
+# Documentation (keep only essential)
+# docs/ is included via package.json files array
+
+# Local/temporary files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+*.local
+
+# Backup files
+*.backup*
+*.bak
+
+# AIWG workspace artifacts (should not be in package)
+.aiwg/
+
+# Large/unnecessary files
+*.mp4
+*.mov
+*.zip
+*.tar.gz
+
+# Node modules (never publish)
+node_modules/
+
+# TypeScript source (publish compiled JS only if applicable)
+# Note: We're publishing ESM .mjs files directly
+
+# Development scripts not needed in package
+tools/lint/
+tools/manifest/
+
+# Contributor/maintainer docs
+CONTRIBUTING.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# CI/CD configs
+.travis.yml
+.circleci/
+appveyor.yml
+azure-pipelines.yml
+Jenkinsfile

@@ -1,0 +1,84 @@
+# npm Package Publishing Workflow
+#
+# Publishes the package to npm when a version tag is pushed.
+# Uses CalVer versioning: vYYYY.MM.PATCH (e.g., v2024.12.0)
+#
+# To publish a new version:
+#   1. Update version in package.json
+#   2. Commit: git commit -am "release: v2024.12.0"
+#   3. Tag: git tag v2024.12.0
+#   4. Push: git push origin main --tags
+
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # For creating GitHub releases
+      id-token: write      # For npm provenance
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify package version matches tag
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "Error: Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "Version verified: $PKG_VERSION"
+
+      - name: Check package size
+        run: |
+          npm pack --dry-run 2>&1 | tee pack-output.txt
+          # Extract package size (npm pack shows "package size: X.X MB")
+          SIZE=$(grep -oP 'package size:\s*\K[\d.]+\s*\w+' pack-output.txt || echo "unknown")
+          echo "Package size: $SIZE"
+
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            ```bash
+            npm install -g aiwg
+            ```
+
+            ## What's Changed
+
+            See the automatically generated release notes below.
+
+            ---
+
+            Published to npm with provenance attestation.
