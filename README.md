@@ -282,7 +282,10 @@ aiwg/
 - `reliability-engineer` — SLO/SLI definition, capacity planning
 - `deployment-manager` — Release planning and operational readiness
 
-[**See all 93 agents →**](docs/agents/README.md)
+**Agent Catalogs:**
+- [**SDLC Agents (53)**](agentic/code/frameworks/sdlc-complete/agents/README.md) — Software development lifecycle
+- [**Marketing Agents (37)**](agentic/code/frameworks/media-marketing-kit/agents/) — Campaign and content management
+- [**Writing Agents (3)**](agents/README.md) — Content validation and optimization
 
 ---
 
