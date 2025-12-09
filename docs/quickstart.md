@@ -8,6 +8,7 @@ Choose your framework based on what you're building.
 |-----------|---------|----------------|
 | **[SDLC Complete](quickstart-sdlc.md)** | Software development lifecycle | New project, existing codebase, manual |
 | **[Media/Marketing Kit](quickstart-mmk.md)** | Marketing campaign lifecycle | New campaign, existing assets, manual brief |
+| **Writing Quality** | Voice profiles for authentic writing | Voice commands, profile creation |
 
 ## Platform Integration
 
@@ -28,8 +29,9 @@ source ~/.bash_aliases
 
 # Deploy to your project
 cd /path/to/project
-aiwg use sdlc              # Software projects (54 agents, 42 commands)
-aiwg use marketing         # Marketing projects (37 agents)
+aiwg use sdlc              # Software projects (54 agents, 42 commands, 10 skills)
+aiwg use marketing         # Marketing projects (37 agents, 8 skills)
+aiwg use writing           # Writing quality + Voice Framework (3 agents, 5 skills)
 aiwg use all               # All frameworks
 
 # Open in your AI tool
@@ -43,9 +45,36 @@ The `aiwg use <framework>` command:
 
 1. Deploys framework agents to `.claude/agents/`
 2. Deploys framework commands to `.claude/commands/`
-3. Installs **aiwg-utils** addon (regenerate commands, etc.)
+3. Deploys framework skills to `.claude/skills/`
+4. Installs **aiwg-utils** addon (regenerate commands, etc.)
 
 To skip aiwg-utils: `aiwg use sdlc --no-utils`
+
+## Voice Framework (Writing Quality)
+
+The `writing` framework includes the Voice Framework addon for consistent, authentic writing:
+
+**Built-in Voice Profiles:**
+
+| Profile | Description | Best For |
+|---------|-------------|----------|
+| `technical-authority` | Direct, precise, confident | API docs, architecture |
+| `friendly-explainer` | Approachable, encouraging | Tutorials, onboarding |
+| `executive-brief` | Concise, outcome-focused | Business cases, reports |
+| `casual-conversational` | Relaxed, personal | Blogs, newsletters |
+
+**Skills included:**
+- `voice-apply` - Transform content to match a voice profile
+- `voice-create` - Generate new profiles from examples
+- `voice-blend` - Combine profiles with weighted ratios
+- `voice-analyze` - Analyze content's current voice
+
+**Usage:**
+```text
+"Write this in technical-authority voice"
+"Make this documentation more friendly"
+"Create a voice profile for our internal docs"
+```
 
 ## Platform Integration (Required)
 
@@ -117,14 +146,21 @@ After deployment, these commands are available inside Claude Code:
 - Managing brand content and assets
 - Need workflow from strategy to performance analysis
 
-**Use Both if you're:**
+**Use Writing Quality if you're:**
 
-- Launching a product (code + marketing)
-- Building software with marketing requirements
+- Writing documentation, articles, or content
+- Need consistent voice across outputs
+- Want to replace pattern-avoidance with positive voice definition
+
+**Use Multiple:**
 
 ```bash
 # Deploy all frameworks
 aiwg use all
+
+# Or combine specific frameworks
+aiwg use sdlc
+aiwg use writing           # Add voice profiles to SDLC project
 ```
 
 ## Next Steps

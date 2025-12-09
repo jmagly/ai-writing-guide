@@ -1,12 +1,14 @@
 # Writing Quality Addon
 
 **Type**: Addon (standalone utility)
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Framework Dependency**: None (works with any framework or standalone)
 
 ## Overview
 
 The Writing Quality addon provides AI pattern detection and content improvement capabilities. It helps remove AI "tells" from generated content while maintaining sophistication and authenticity.
+
+> **Note**: For positive voice definition (instead of pattern avoidance), see the **[Voice Framework](../voice-framework/README.md)** addon. The Voice Framework provides voice profiles that define what you *want* rather than listing what to avoid.
 
 ## Components
 
@@ -78,7 +80,31 @@ The Writing Quality addon works seamlessly with:
 
 - **SDLC Complete**: Validate documentation, README files, architecture docs
 - **Media/Marketing Kit**: Validate marketing copy, blog posts, social content
+- **Voice Framework**: Combine pattern detection with positive voice definition
 - **Standalone**: Use independently for any content improvement task
+
+## Voice Framework Integration
+
+For the best writing experience, combine Writing Quality with the Voice Framework:
+
+```bash
+# Deploy both addons
+aiwg use writing           # Includes Writing Quality + Voice Framework
+```
+
+**Complementary approaches:**
+
+| Approach | Writing Quality | Voice Framework |
+|----------|----------------|-----------------|
+| **Method** | Pattern detection (avoid) | Voice profiles (define) |
+| **Focus** | What NOT to say | What TO say |
+| **Output** | Issues and warnings | Transformed content |
+| **Use Case** | Validation | Generation |
+
+**Recommended workflow:**
+1. Define voice profile for your project
+2. Generate content using voice profiles
+3. Validate output with Writing Quality for edge cases
 
 ## Related ADRs
 

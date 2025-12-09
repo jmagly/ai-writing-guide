@@ -114,9 +114,35 @@ All documents generated in `.aiwg/marketing/`:
 └── governance/    # Brand compliance
 ```
 
+## Voice Profiles for Content
+
+For consistent brand voice across your marketing content, add the Writing Quality framework:
+
+```bash
+aiwg use writing           # Add Voice Framework to your project
+```
+
+Then use voice profiles when generating content:
+
+```text
+"Write blog post in casual-conversational voice"
+"Create executive summary in executive-brief voice"
+"Generate social media copy with friendly, approachable tone"
+```
+
+**Built-in profiles**: `technical-authority`, `friendly-explainer`, `executive-brief`, `casual-conversational`
+
+**Custom voices**: Create brand-specific voice profiles:
+
+```text
+"Create a voice profile from this sample blog post"
+"Blend 70% friendly with 30% professional for our brand voice"
+```
+
 ## Next Steps
 
 - **Full documentation**: [MMK README](../agentic/code/frameworks/media-marketing-kit/README.md)
 - **37 Marketing agents**: Brand strategist, copywriter, SEO specialist, etc.
 - **87+ Templates**: Campaign strategy, content calendar, media kit, etc.
+- **Voice Framework**: [Voice Framework README](../agentic/code/addons/voice-framework/README.md)
 - **Platform setup**: [Claude Code](integrations/claude-code-quickstart.md) | [Factory AI](integrations/factory-quickstart.md) | [Warp](integrations/warp-terminal-quickstart.md)

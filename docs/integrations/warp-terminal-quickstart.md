@@ -730,15 +730,41 @@ aiwg -setup-warp              # For Warp
 
 ---
 
+## Voice Framework (Writing Quality)
+
+For consistent voice across your documentation and content:
+
+```bash
+# Add Voice Framework
+aiwg use writing --provider warp
+```
+
+**Built-in voice profiles:**
+- `technical-authority` - Direct, precise, confident (docs, architecture)
+- `friendly-explainer` - Approachable, encouraging (tutorials)
+- `executive-brief` - Concise, outcome-focused (business cases)
+- `casual-conversational` - Relaxed, personal (blogs)
+
+**Usage in Warp:**
+
+```text
+"Write this in technical-authority voice"
+"Make this README more friendly"
+"Create a voice profile for our brand"
+```
+
+---
+
 ## Resources
 
 - **Warp Terminal**: https://www.warp.dev/
 - **Warp Rules Documentation**: https://docs.warp.dev/knowledge-and-collaboration/rules
 - **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
+- **Voice Framework**: `~/.local/share/ai-writing-guide/agentic/code/addons/voice-framework/`
 - **Full Warp Integration Guide**: `docs/integrations/warp-terminal.md`
 
 ---
 
-**Last Updated**: 2025-12-06
+**Last Updated**: 2025-12-08
 **AIWG Version**: 1.5.0+
 **Integration Status**: ✅ Production Ready

@@ -124,9 +124,28 @@ All documents generated in `.aiwg/`:
 └── deployment/    # Runbooks
 ```
 
+## Voice Profiles for Documentation
+
+For consistent voice across your SDLC documentation, add the Writing Quality framework:
+
+```bash
+aiwg use writing           # Add Voice Framework to your project
+```
+
+Then use voice profiles when generating artifacts:
+
+```text
+"Write the architecture document in technical-authority voice"
+"Make this README more friendly for beginners"
+"Create API documentation with precise, confident tone"
+```
+
+**Built-in profiles**: `technical-authority`, `friendly-explainer`, `executive-brief`, `casual-conversational`
+
 ## Next Steps
 
 - **Full documentation**: [SDLC Complete README](../agentic/code/frameworks/sdlc-complete/README.md)
 - **Natural language commands**: [Simple Language Translations](../agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md)
 - **Templates**: [Template Library](../agentic/code/frameworks/sdlc-complete/templates/)
+- **Voice Framework**: [Voice Framework README](../agentic/code/addons/voice-framework/README.md)
 - **Platform setup**: [Claude Code](integrations/claude-code-quickstart.md) | [Factory AI](integrations/factory-quickstart.md) | [Warp](integrations/warp-terminal-quickstart.md)

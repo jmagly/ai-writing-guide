@@ -575,14 +575,47 @@ You: "Analyze codebase with focus on backend API, ignore frontend for now"
 
 ---
 
+## Voice Framework (Writing Quality)
+
+For consistent voice across your documentation and artifacts:
+
+```bash
+# Add Voice Framework to your project
+aiwg use writing
+```
+
+**Built-in voice profiles:**
+- `technical-authority` - Direct, precise, confident (docs, architecture)
+- `friendly-explainer` - Approachable, encouraging (tutorials)
+- `executive-brief` - Concise, outcome-focused (business cases)
+- `casual-conversational` - Relaxed, personal (blogs)
+
+**Usage in Claude Code:**
+
+```text
+"Write this README in technical-authority voice"
+"Make the architecture document more friendly for beginners"
+"Create a voice profile for our internal docs"
+"What voice is this document written in?"
+```
+
+**Skills deployed:**
+- `voice-apply` - Transform content to match a voice
+- `voice-create` - Generate new profiles
+- `voice-blend` - Combine profiles with weights
+- `voice-analyze` - Analyze current voice
+
+---
+
 ## Resources
 
 - **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
 - **SDLC Framework**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/`
 - **Template Library**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/`
+- **Voice Framework**: `~/.local/share/ai-writing-guide/agentic/code/addons/voice-framework/`
 - **Natural Language Translations**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md`
 
 ---
 
-**Last Updated**: 2025-12-06
+**Last Updated**: 2025-12-08
 **AIWG Version**: 1.5.0+
