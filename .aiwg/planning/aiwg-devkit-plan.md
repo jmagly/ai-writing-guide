@@ -2,18 +2,39 @@
 
 **Status:** Draft - Pending Approval
 **Created:** 2025-12-10
+**Updated:** 2025-12-10
 **Author:** Claude (Orchestrator)
 
 ## Executive Summary
 
-This plan defines an **AIWG Development Kit** - a comprehensive suite of tools, commands, and templates that enable users to easily create, extend, and customize AIWG frameworks and addons. The kit addresses user feedback requesting easier modification and extension of AIWG.
+This plan defines an **AIWG Development Kit** - a comprehensive suite of tools, commands, and templates that enable users to easily create, extend, and customize AIWG **frameworks**, **addons**, and **extensions**. The kit addresses user feedback requesting easier modification and extension of AIWG.
 
 ### Value Proposition
 
-- **Reduce Time-to-Create**: Scaffold new addons/frameworks in minutes, not hours
+- **Reduce Time-to-Create**: Scaffold new addons/frameworks/extensions in minutes, not hours
 - **Enforce Best Practices**: Templates ensure consistent structure and quality
 - **Lower Barrier to Entry**: Users don't need deep knowledge of AIWG internals
-- **Enable Community Growth**: Make it easy for users to contribute new frameworks
+- **Enable Community Growth**: Make it easy for users to contribute new content
+- **Support All Three Tiers**: Frameworks, addons, AND extensions per ADR-008 taxonomy
+
+---
+
+## Three-Tier Plugin Taxonomy (Reference)
+
+Per **ADR-008**, AIWG uses a three-tier plugin taxonomy:
+
+| Tier | Type | Purpose | Standalone | Example |
+|------|------|---------|------------|---------|
+| 1 | **Framework** | Complete lifecycle solution | ✅ Yes | sdlc-complete, media-marketing-kit |
+| 2 | **Addon** | Standalone utility, works anywhere | ✅ Yes | aiwg-utils, writing-quality |
+| 3 | **Extension** | Framework expansion pack, requires parent | ❌ No | sdlc-complete/gdpr, marketing/ftc |
+
+**Key Distinctions:**
+- **Frameworks** are large (50+ agents), define lifecycle phases, have own workspace scope
+- **Addons** are small (1-10 agents), framework-agnostic, work with any project
+- **Extensions** enhance a specific framework, inherit parent context, can't operate alone
+
+The Development Kit must support creating all three types.
 
 ---
 
@@ -24,21 +45,26 @@ This plan defines an **AIWG Development Kit** - a comprehensive suite of tools, 
 1. **CLI Scaffolding Commands** (outside Claude session)
    - `aiwg scaffold-addon <name>` - Create new addon structure
    - `aiwg scaffold-framework <name>` - Create new framework structure
-   - `aiwg add-agent <name> --to <addon|framework>` - Add agent to existing package
-   - `aiwg add-command <name> --to <addon|framework>` - Add command to existing package
-   - `aiwg add-skill <name> --to <addon>` - Add skill to existing addon
+   - `aiwg scaffold-extension <name> --for <framework>` - Create extension for framework
+   - `aiwg add-agent <name> --to <target>` - Add agent to existing package
+   - `aiwg add-command <name> --to <target>` - Add command to existing package
+   - `aiwg add-skill <name> --to <target>` - Add skill to existing package
+   - `aiwg add-template <name> --to <target>` - Add template to framework/extension
 
 2. **In-Session Development Commands** (slash commands in Claude Code)
    - `/devkit-create-addon` - Interactive addon creation with guidance
+   - `/devkit-create-framework` - Interactive framework creation
+   - `/devkit-create-extension` - Interactive extension creation (requires framework)
    - `/devkit-create-command` - Create new command with templates
    - `/devkit-create-agent` - Create new agent with domain expertise
    - `/devkit-create-skill` - Create new skill with trigger patterns
-   - `/devkit-validate` - Validate addon/framework structure and manifest
+   - `/devkit-validate` - Validate addon/framework/extension structure and manifest
    - `/devkit-test` - Test command/agent in isolation
 
 3. **Development Templates**
    - Addon manifest template
    - Framework manifest template
+   - Extension manifest template (with `requires` field)
    - Agent definition templates (simple, complex, orchestrator)
    - Command templates (utility, transformation, orchestration)
    - Skill templates (detection, transformation, validation)
@@ -49,8 +75,9 @@ This plan defines an **AIWG Development Kit** - a comprehensive suite of tools, 
 5. **Documentation**
    - Addon creation guide
    - Framework creation guide
+   - Extension creation guide
    - Best practices and patterns
-   - Extension mechanisms (replaces, dependencies)
+   - Extension mechanisms (replaces, dependencies, requires)
 
 ### Out of Scope (Future)
 
@@ -70,12 +97,16 @@ AIWG Development Kit
 ├── CLI Tools (tools/scaffolding/)
 │   ├── scaffold-addon.mjs
 │   ├── scaffold-framework.mjs
+│   ├── scaffold-extension.mjs       # NEW: Extension scaffolding
 │   ├── add-agent.mjs
 │   ├── add-command.mjs
-│   └── add-skill.mjs
+│   ├── add-skill.mjs
+│   └── add-template.mjs             # NEW: Add templates to frameworks/extensions
 │
 ├── Commands (agentic/code/addons/aiwg-utils/commands/)
 │   ├── devkit-create-addon.md
+│   ├── devkit-create-framework.md   # NEW: Framework creation
+│   ├── devkit-create-extension.md   # NEW: Extension creation
 │   ├── devkit-create-command.md
 │   ├── devkit-create-agent.md
 │   ├── devkit-create-skill.md
@@ -88,6 +119,7 @@ AIWG Development Kit
 ├── Templates (agentic/code/addons/aiwg-utils/templates/devkit/)
 │   ├── addon-manifest.json
 │   ├── framework-manifest.json
+│   ├── extension-manifest.json      # NEW: Extension manifest with requires field
 │   ├── agent-simple.md
 │   ├── agent-complex.md
 │   ├── agent-orchestrator.md
@@ -96,14 +128,44 @@ AIWG Development Kit
 │   ├── command-orchestration.md
 │   ├── skill-detection.md
 │   ├── skill-transformation.md
-│   └── README-addon.md
+│   ├── README-addon.md
+│   ├── README-framework.md
+│   └── README-extension.md          # NEW: Extension readme template
 │
 └── Documentation (docs/development/)
     ├── addon-creation-guide.md
     ├── framework-creation-guide.md
+    ├── extension-creation-guide.md  # NEW: Extension guide
     ├── command-patterns.md
     ├── agent-patterns.md
     └── extension-mechanisms.md
+```
+
+### Extension Structure (Within Parent Framework)
+
+Extensions live inside their parent framework's `extensions/` directory:
+
+```
+agentic/code/frameworks/sdlc-complete/
+├── agents/
+├── commands/
+├── templates/
+├── flows/
+└── extensions/                      # Extensions directory
+    ├── gdpr/                        # GDPR compliance extension
+    │   ├── manifest.json            # requires: ["sdlc-complete"]
+    │   ├── README.md
+    │   ├── templates/
+    │   │   ├── dpia-template.md
+    │   │   └── privacy-checklist.md
+    │   └── checklists/
+    │       └── gdpr-compliance.md
+    └── healthcare/                  # Healthcare compliance extension
+        ├── manifest.json            # requires: ["sdlc-complete"]
+        ├── README.md
+        └── templates/
+            ├── hipaa-requirements.md
+            └── phi-handling.md
 ```
 
 ### Integration Points
@@ -155,8 +217,8 @@ aiwg scaffold-addon my-utils --description "Custom utilities" --author "Me"
 
 **Acceptance Criteria:**
 - [ ] `aiwg scaffold-framework <name>` creates complete framework directory structure
-- [ ] Generates valid manifest.json
-- [ ] Creates agents/, commands/, skills/, templates/, flows/ directories
+- [ ] Generates valid manifest.json with `type: "framework"`
+- [ ] Creates agents/, commands/, skills/, templates/, flows/, extensions/ directories
 - [ ] Creates template subdirectories (intake/, requirements/, etc.)
 - [ ] Supports `--description`, `--author` flags
 - [ ] Supports `--dry-run` for preview
@@ -177,33 +239,92 @@ aiwg scaffold-framework legal-compliance --description "Legal compliance lifecyc
 # │   ├── intake/
 # │   ├── requirements/
 # │   └── ...
-# └── flows/
+# ├── flows/
+# └── extensions/          # Ready for future extensions
 ```
 
 ---
 
-### REQ-003: CLI Add Agent/Command/Skill
+### REQ-002.5: CLI Scaffold Extension
 
 **Priority:** P0 (Must Have)
 
-**Description:** Users can add individual components to existing addons/frameworks.
+**Description:** Users can create extensions (framework expansion packs) that enhance a specific parent framework.
+
+**Acceptance Criteria:**
+- [ ] `aiwg scaffold-extension <name> --for <framework>` creates extension structure
+- [ ] Extension created inside parent framework's `extensions/` directory
+- [ ] Generates valid manifest.json with `type: "extension"` and `requires: ["<framework>"]`
+- [ ] Creates templates/, checklists/ directories (typical extension content)
+- [ ] Validates parent framework exists before creating
+- [ ] Supports `--description`, `--author` flags
+- [ ] Supports `--dry-run` for preview
+- [ ] Output shows created files and extension activation instructions
+
+**Example:**
+```bash
+aiwg scaffold-extension hipaa --for sdlc-complete --description "HIPAA compliance templates"
+
+# Creates:
+# agentic/code/frameworks/sdlc-complete/extensions/hipaa/
+# ├── manifest.json         # type: "extension", requires: ["sdlc-complete"]
+# ├── README.md
+# ├── templates/
+# │   ├── phi-handling.md
+# │   └── hipaa-requirements.md
+# └── checklists/
+#     └── hipaa-compliance.md
+```
+
+**Extension Manifest Schema:**
+```json
+{
+  "id": "hipaa",
+  "type": "extension",
+  "name": "HIPAA Compliance Extension",
+  "version": "1.0.0",
+  "description": "HIPAA compliance templates for healthcare projects",
+  "requires": ["sdlc-complete"],
+  "author": "User",
+  "entry": {
+    "templates": "templates",
+    "checklists": "checklists"
+  },
+  "templates": ["phi-handling", "hipaa-requirements"],
+  "checklists": ["hipaa-compliance"]
+}
+```
+
+---
+
+### REQ-003: CLI Add Agent/Command/Skill/Template
+
+**Priority:** P0 (Must Have)
+
+**Description:** Users can add individual components to existing addons, frameworks, or extensions.
 
 **Acceptance Criteria:**
 - [ ] `aiwg add-agent <name> --to <target>` creates agent file from template
 - [ ] `aiwg add-command <name> --to <target>` creates command file from template
 - [ ] `aiwg add-skill <name> --to <target>` creates skill directory with SKILL.md
+- [ ] `aiwg add-template <name> --to <target>` creates template file (for frameworks/extensions)
 - [ ] Updates target manifest.json to include new component
 - [ ] Supports `--template <simple|complex|orchestrator>` for agents
 - [ ] Supports `--template <utility|transformation|orchestration>` for commands
 - [ ] Supports `--dry-run` for preview
+- [ ] Target can be addon, framework, OR extension (e.g., `sdlc-complete/extensions/hipaa`)
 
 **Example:**
 ```bash
+# Add to framework
 aiwg add-agent compliance-reviewer --to legal-compliance --template complex
 
+# Add to extension
+aiwg add-template audit-checklist --to sdlc-complete/extensions/hipaa
+
 # Creates:
-# agentic/code/frameworks/legal-compliance/agents/compliance-reviewer.md
-# Updates manifest.json agents array
+# agentic/code/frameworks/sdlc-complete/extensions/hipaa/templates/audit-checklist.md
+# Updates extension manifest.json templates array
 ```
 
 ---
@@ -233,6 +354,46 @@ User: Scan code for security vulnerabilities
 User: Python, JavaScript, TypeScript
 
 [Creates addon with appropriate agents and commands]
+```
+
+---
+
+### REQ-004.5: In-Session Extension Creation
+
+**Priority:** P0 (Must Have)
+
+**Description:** Users can interactively create extensions within a Claude Code session with AI assistance.
+
+**Acceptance Criteria:**
+- [ ] `/devkit-create-extension <name>` command available
+- [ ] Requires `--for <framework>` parameter to specify parent framework
+- [ ] Validates parent framework exists
+- [ ] Interactive mode asks about compliance domain, required templates
+- [ ] AI generates appropriate manifest.json with `requires` field
+- [ ] Creates extension inside parent framework's `extensions/` directory
+- [ ] Suggests templates and checklists based on extension purpose
+- [ ] Validates result before finalizing
+
+**Example:**
+```
+/devkit-create-extension sox --for sdlc-complete --interactive
+
+> What compliance domain does this extension address?
+User: Sarbanes-Oxley (SOX) compliance for financial controls
+
+> What artifacts should this extension provide?
+User: Control templates, audit checklists, evidence requirements
+
+[Creates extension with manifest, templates, and checklists]
+
+Created: agentic/code/frameworks/sdlc-complete/extensions/sox/
+├── manifest.json     # requires: ["sdlc-complete"]
+├── README.md
+├── templates/
+│   ├── control-matrix.md
+│   └── evidence-requirements.md
+└── checklists/
+    └── sox-audit-checklist.md
 ```
 
 ---
@@ -273,15 +434,22 @@ User: Python, JavaScript, TypeScript
 
 **Priority:** P1 (Should Have)
 
-**Description:** Users can validate addon/framework structure and manifests.
+**Description:** Users can validate addon/framework/extension structure and manifests.
 
 **Acceptance Criteria:**
 - [ ] `/devkit-validate <path>` validates structure
-- [ ] Checks manifest.json required fields
+- [ ] Auto-detects type (addon, framework, extension) from manifest
+- [ ] Checks manifest.json required fields for each type
+- [ ] For extensions: validates parent framework exists, checks `requires` field
 - [ ] Validates all referenced files exist
 - [ ] Checks frontmatter in agents/commands
 - [ ] Reports errors with remediation suggestions
 - [ ] Returns pass/fail status
+
+**Extension-Specific Validation:**
+- [ ] `requires` field must be array of valid framework IDs
+- [ ] Extension must be in parent's `extensions/` directory
+- [ ] Parent framework must exist and be valid
 
 ---
 
@@ -305,16 +473,18 @@ User: Python, JavaScript, TypeScript
 
 **Priority:** P0 (Must Have)
 
-**Description:** Comprehensive template library for all component types.
+**Description:** Comprehensive template library for all component types across all three plugin tiers.
 
 **Acceptance Criteria:**
-- [ ] Addon manifest template with all fields
-- [ ] Framework manifest template with all fields
+- [ ] Addon manifest template with all fields (`type: "addon"`)
+- [ ] Framework manifest template with all fields (`type: "framework"`)
+- [ ] Extension manifest template with `requires` field (`type: "extension"`)
 - [ ] Agent templates: simple, complex, orchestrator
 - [ ] Command templates: utility, transformation, orchestration
 - [ ] Skill template with SKILL.md and structure
-- [ ] README templates for addons and frameworks
+- [ ] README templates for addons, frameworks, AND extensions
 - [ ] Templates include placeholder documentation
+- [ ] Extension-specific templates: checklist.md, compliance-matrix.md
 
 ---
 
@@ -322,150 +492,53 @@ User: Python, JavaScript, TypeScript
 
 **Priority:** P1 (Should Have)
 
-**Description:** Complete documentation for addon/framework development.
+**Description:** Complete documentation for addon/framework/extension development.
 
 **Acceptance Criteria:**
 - [ ] Addon creation guide (step-by-step)
 - [ ] Framework creation guide (step-by-step)
+- [ ] Extension creation guide (step-by-step) - NEW
+- [ ] Three-tier taxonomy reference (frameworks vs addons vs extensions)
 - [ ] Command development patterns
 - [ ] Agent development patterns
-- [ ] Extension mechanisms (replaces, dependencies)
+- [ ] Extension mechanisms (replaces, dependencies, requires)
 - [ ] Best practices and anti-patterns
 - [ ] Troubleshooting guide
+- [ ] FAQ: "When should I create an addon vs extension?"
 
 ---
 
 ## Architecture Decision Records
 
-### ADR-001: Devkit as Extension of aiwg-utils
+The following ADRs have been extracted to standalone files in `.aiwg/architecture/decisions/`:
 
-**Status:** Proposed
+| ADR | Title | Status | File |
+|-----|-------|--------|------|
+| ADR-009 | Devkit as Extension of aiwg-utils | Proposed | [ADR-009-devkit-extends-aiwg-utils.md](../architecture/decisions/ADR-009-devkit-extends-aiwg-utils.md) |
+| ADR-010 | Templates in aiwg-utils/templates/devkit/ | Proposed | [ADR-010-devkit-template-location.md](../architecture/decisions/ADR-010-devkit-template-location.md) |
+| ADR-011 | CLI and In-Session Commands for Scaffolding | Proposed | [ADR-011-devkit-cli-and-session-commands.md](../architecture/decisions/ADR-011-devkit-cli-and-session-commands.md) |
+| ADR-012 | Template Selection via --template Flag | Proposed | [ADR-012-devkit-template-selection.md](../architecture/decisions/ADR-012-devkit-template-selection.md) |
+| ADR-013 | Automatic Manifest Updates on Component Add | Proposed | [ADR-013-devkit-manifest-auto-update.md](../architecture/decisions/ADR-013-devkit-manifest-auto-update.md) |
 
-**Context:**
-The Development Kit needs a home. Options:
-1. Separate addon (aiwg-devkit)
-2. Extension of existing aiwg-utils
-3. Part of core tools only (no addon)
+### ADR Summary
 
-**Decision:** Extend aiwg-utils with devkit capabilities.
+**ADR-009**: Extend aiwg-utils (already core/auto-installed) rather than create separate addon. Users get devkit features automatically.
 
-**Rationale:**
-- aiwg-utils is already core and auto-installed
-- Users already have access without extra installation
-- Consistent with "utilities" purpose
-- Avoids addon proliferation
-- Manifest already supports commands, agents, skills
+**ADR-010**: Store templates in `aiwg-utils/templates/devkit/` co-located with commands that use them. Enables deployment alongside addon.
 
-**Consequences:**
-- aiwg-utils grows larger (acceptable given purpose)
-- Version bump to 1.2.0
-- May need to split later if too large
+**ADR-011**: Provide both CLI commands (quick scaffold) and in-session commands (AI-guided). Supports different user workflows.
 
----
+**ADR-012**: Multiple templates per component type (`--template simple|complex|orchestrator`) with sensible defaults.
 
-### ADR-002: Templates in aiwg-utils/templates/devkit/
+**ADR-013**: Automatically update manifest.json when adding components. No manual editing required.
 
-**Status:** Proposed
+### Related ADRs
 
-**Context:**
-Templates need a home. Options:
-1. Inline in CLI scripts (hardcoded)
-2. docs/templates/
-3. agentic/code/addons/aiwg-utils/templates/devkit/
-4. Separate templates addon
-
-**Decision:** Store in aiwg-utils/templates/devkit/
-
-**Rationale:**
-- Templates are addon content, not documentation
-- Keeps templates co-located with commands that use them
-- Allows manifest.json to reference them
-- Easy to deploy with addon
-
-**Consequences:**
-- Need to update deploy-agents.mjs to handle templates directory
-- Templates deployed alongside addon
-
----
-
-### ADR-003: CLI Commands for Scaffolding
-
-**Status:** Proposed
-
-**Context:**
-Scaffolding requires file creation outside Claude sessions. Options:
-1. Claude-only (in-session commands create files)
-2. CLI-only (bash commands)
-3. Both (CLI for quick scaffold, Claude for interactive)
-
-**Decision:** Provide both CLI and in-session commands.
-
-**Rationale:**
-- CLI for quick, non-interactive scaffolding
-- In-session for guided, AI-assisted creation
-- Different use cases: quick start vs. thoughtful design
-- CLI doesn't require active Claude session
-
-**Consequences:**
-- Maintain two codepaths (Node.js CLI + command markdown)
-- CLI is authoritative for structure, Claude adds intelligence
-- Need to keep both in sync
-
----
-
-### ADR-004: Template Selection via --template Flag
-
-**Status:** Proposed
-
-**Context:**
-Different components need different starting templates. Options:
-1. Single template per type (one size fits all)
-2. Multiple templates selected via flag
-3. Interactive template selection
-
-**Decision:** Multiple templates via --template flag with sensible defaults.
-
-**Rationale:**
-- Simple agents need minimal template
-- Complex agents need expertise sections
-- Orchestrator agents need multi-agent patterns
-- Users know what complexity they need
-- Defaults to "simple" if not specified
-
-**Templates:**
-- Agents: `simple` (default), `complex`, `orchestrator`
-- Commands: `utility` (default), `transformation`, `orchestration`
-- Skills: `detection`, `transformation`, `validation`
-
-**Consequences:**
-- Need to maintain multiple templates per type
-- CLI help must document template options
-- Default templates must be production-ready
-
----
-
-### ADR-005: Manifest Auto-Update on Add
-
-**Status:** Proposed
-
-**Context:**
-When adding components, manifest.json needs updating. Options:
-1. Manual manifest update (user responsibility)
-2. Automatic manifest update (CLI updates it)
-3. Manifest regeneration (scan and rebuild)
-
-**Decision:** Automatic manifest update with validation.
-
-**Rationale:**
-- Manual updates are error-prone
-- Full regeneration may lose custom fields
-- Targeted update is precise and safe
-- Validates after update to catch issues
-
-**Consequences:**
-- CLI must parse and update JSON safely
-- Need to preserve custom fields and formatting
-- Must handle merge conflicts gracefully
+| ADR | Title | Relevance |
+|-----|-------|-----------|
+| [ADR-008](../architecture/decisions/ADR-008-plugin-type-taxonomy.md) | Plugin Type Taxonomy | Defines three-tier taxonomy (framework/addon/extension) that devkit must support |
+| [ADR-001](../architecture/decisions/ADR-001-plugin-manifest-format.md) | Plugin Manifest Format | Manifest schema that templates must follow |
+| [ADR-002](../architecture/decisions/ADR-002-plugin-isolation-strategy.md) | Plugin Isolation Strategy | Security constraints for all plugin types |
 
 ---
 
@@ -475,36 +548,36 @@ When adding components, manifest.json needs updating. Options:
 
 **Deliverables:**
 1. CLI scaffold-addon.mjs
-2. CLI add-agent.mjs, add-command.mjs, add-skill.mjs
-3. Template library (all templates)
-4. /devkit-create-addon command
-5. /devkit-create-command command
-6. /devkit-create-agent command
-7. aiwg-developer agent
-8. install.sh updates
+2. CLI scaffold-extension.mjs (extensions are P0 - common use case)
+3. CLI add-agent.mjs, add-command.mjs, add-skill.mjs, add-template.mjs
+4. Template library (addon, extension, agent, command, skill templates)
+5. /devkit-create-addon command
+6. /devkit-create-extension command
+7. /devkit-create-command command
+8. /devkit-create-agent command
+9. aiwg-developer agent
+10. install.sh updates
 
-**Estimated Effort:** Medium
+**Why extensions in Phase 1:** Per user feedback, extensions (framework expansion packs) are a primary use case. Users want to extend existing frameworks (e.g., add HIPAA to SDLC) more often than creating entirely new frameworks.
 
 ### Phase 2: Enhancement (P1 Requirements)
 
 **Deliverables:**
-1. CLI scaffold-framework.mjs
-2. /devkit-validate command
-3. /devkit-test command
-4. Documentation suite
+1. CLI scaffold-framework.mjs (less common, but important)
+2. /devkit-create-framework command
+3. /devkit-validate command (with extension validation)
+4. /devkit-test command
 5. /devkit-create-skill command
-
-**Estimated Effort:** Medium
+6. Documentation suite (addon, framework, extension guides)
 
 ### Phase 3: Polish (P2 Future)
 
 **Deliverables:**
 1. Interactive mode improvements
 2. Template customization
-3. Addon discovery and listing
+3. Addon/extension discovery and listing
 4. Community contribution workflow
-
-**Estimated Effort:** Low-Medium
+5. Extension dependency resolution (multi-extension support)
 
 ---
 
@@ -545,12 +618,16 @@ When adding components, manifest.json needs updating. Options:
 **CLI Tools:**
 - tools/scaffolding/scaffold-addon.mjs
 - tools/scaffolding/scaffold-framework.mjs
+- tools/scaffolding/scaffold-extension.mjs (NEW)
 - tools/scaffolding/add-agent.mjs
 - tools/scaffolding/add-command.mjs
 - tools/scaffolding/add-skill.mjs
+- tools/scaffolding/add-template.mjs (NEW)
 
 **Commands:**
 - agentic/code/addons/aiwg-utils/commands/devkit-create-addon.md
+- agentic/code/addons/aiwg-utils/commands/devkit-create-framework.md (NEW)
+- agentic/code/addons/aiwg-utils/commands/devkit-create-extension.md (NEW)
 - agentic/code/addons/aiwg-utils/commands/devkit-create-command.md
 - agentic/code/addons/aiwg-utils/commands/devkit-create-agent.md
 - agentic/code/addons/aiwg-utils/commands/devkit-create-skill.md
@@ -563,6 +640,7 @@ When adding components, manifest.json needs updating. Options:
 **Templates:**
 - agentic/code/addons/aiwg-utils/templates/devkit/addon-manifest.json
 - agentic/code/addons/aiwg-utils/templates/devkit/framework-manifest.json
+- agentic/code/addons/aiwg-utils/templates/devkit/extension-manifest.json (NEW)
 - agentic/code/addons/aiwg-utils/templates/devkit/agent-simple.md
 - agentic/code/addons/aiwg-utils/templates/devkit/agent-complex.md
 - agentic/code/addons/aiwg-utils/templates/devkit/agent-orchestrator.md
@@ -572,19 +650,33 @@ When adding components, manifest.json needs updating. Options:
 - agentic/code/addons/aiwg-utils/templates/devkit/skill-template/SKILL.md
 - agentic/code/addons/aiwg-utils/templates/devkit/README-addon.md
 - agentic/code/addons/aiwg-utils/templates/devkit/README-framework.md
+- agentic/code/addons/aiwg-utils/templates/devkit/README-extension.md (NEW)
+- agentic/code/addons/aiwg-utils/templates/devkit/checklist.md (NEW - extension-specific)
+- agentic/code/addons/aiwg-utils/templates/devkit/compliance-matrix.md (NEW - extension-specific)
 
 **Documentation:**
 - docs/development/addon-creation-guide.md
 - docs/development/framework-creation-guide.md
+- docs/development/extension-creation-guide.md (NEW)
+- docs/development/three-tier-taxonomy.md (NEW - reference guide)
 - docs/development/command-patterns.md
 - docs/development/agent-patterns.md
 - docs/development/extension-mechanisms.md
 
+**ADRs (already created):**
+- .aiwg/architecture/decisions/ADR-009-devkit-extends-aiwg-utils.md
+- .aiwg/architecture/decisions/ADR-010-devkit-template-location.md
+- .aiwg/architecture/decisions/ADR-011-devkit-cli-and-session-commands.md
+- .aiwg/architecture/decisions/ADR-012-devkit-template-selection.md
+- .aiwg/architecture/decisions/ADR-013-devkit-manifest-auto-update.md
+
 ### Files to Update
 
 - tools/install/install.sh (add scaffold commands)
+- tools/agents/deploy-agents.mjs (support extension deployment)
 - agentic/code/addons/aiwg-utils/manifest.json (add new commands, agent)
 - agentic/code/addons/aiwg-utils/README.md (document devkit features)
+- .aiwg/architecture/decisions/README.md (add ADR-009 through ADR-013)
 
 ---
 
