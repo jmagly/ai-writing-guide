@@ -2,8 +2,8 @@
   "id": "aiwg-utils",
   "type": "addon",
   "name": "AIWG Utilities",
-  "version": "1.4.0",
-  "description": "Core meta-utilities for AIWG management including context regeneration, workspace maintenance, development kit, and importable prompts",
+  "version": "1.5.0",
+  "description": "Core meta-utilities for AIWG management including context regeneration, workspace maintenance, development kit, importable prompts, and @-mention traceability",
   "core": true,
   "autoInstall": true,
   "author": "AIWG Contributors",
@@ -22,7 +22,9 @@
     "devkit",
     "scaffolding",
     "prompts",
-    "deployment"
+    "deployment",
+    "mentions",
+    "traceability"
   ],
   "entry": {
     "agents": "agents/",
@@ -51,7 +53,12 @@
     "devkit-validate",
     "devkit-test",
     "deploy-gen",
-    "parallel-dispatch"
+    "parallel-dispatch",
+    "mention-wire",
+    "mention-validate",
+    "mention-report",
+    "mention-lint",
+    "mention-conventions"
   ],
   "agents": [
     "context-regenerator",
