@@ -303,6 +303,12 @@ fi
     add-skill) node \"$PREFIX/tools/scaffolding/add-skill.mjs\" \"\$@\" ;; \\
     add-template) node \"$PREFIX/tools/scaffolding/add-template.mjs\" \"\$@\" ;; \\
     validate) node \"$PREFIX/tools/scaffolding/validate.mjs\" \"\$@\" ;; \\
+    lint) \\
+      local target=\"\$1\"; shift || true; \\
+      case \"\$target\" in \\
+        agents) node \"$PREFIX/tools/linters/agent-linter.mjs\" \"\$@\" ;; \\
+        *) echo \"Unknown lint target: \$target\"; echo 'Available: agents'; return 1 ;; \\
+      esac ;; \\
     -version|--version|version) aiwg_version ;; \\
     -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Re-running installer to refresh aliases...' && bash \"$PREFIX/tools/install/install.sh\" && echo 'Please run: source ~/.bash_aliases (or ~/.zshrc) to activate new commands' ;; \\
     -reinstall|--reinstall|reinstall) aiwg_reinstall ;; \\
@@ -346,6 +352,9 @@ fi
       echo '      Add template to framework/extension'; \\
       echo '  validate <path> [--fix] [--verbose]'; \\
       echo '      Validate addon/framework/extension structure'; echo ''; \\
+      echo 'Quality Assurance:'; \\
+      echo '  lint agents [paths...] [--json] [--strict] [--verbose]'; \\
+      echo '      Validate agents against 10 Golden Rules (Agent Design Bible)'; echo ''; \\
       echo 'Utilities:'; \\
       echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; \\
       echo '      Prefill SDLC card metadata'; \\
