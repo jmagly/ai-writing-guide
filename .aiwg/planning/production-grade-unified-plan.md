@@ -7,6 +7,21 @@ Unified analysis synthesizing:
 - **Memory System Leverage**: See [memory-system-leverage.md](./memory-system-leverage.md) for Claude Code memory integration
 - **Claude Code Features**: See [claude-code-features-leverage.md](./claude-code-features-leverage.md) for 2.0.43-2.0.64 feature adoption
 
+## Executive Summary: Roig (2025) Failure Mode Validation
+
+Gap analysis against arxiv 2512.07497v2 "How Do LLMs Fail In Agentic Scenarios?" validates our approach and identifies one significant gap:
+
+| Archetype | Current Coverage | Action |
+|-----------|------------------|--------|
+| 1. Premature Action Without Grounding | Adequate with #4, #1 | Add grounding checkpoint |
+| 2. Over-Helpfulness Under Uncertainty | Adequate with #8, #4 | Extend Rule 9 |
+| 3. Distractor-Induced Context Pollution | **GAP** | **Add #12 Context Curator (P1)** |
+| 4. Fragile Execution Under Load | Adequate with #1, #11 | Extend #11 with recovery protocol |
+
+**Key Finding**: Recovery capability (not model scale) is the dominant predictor of agentic success. DeepSeek V3.1 achieves 92% via post-training RL for verification/recovery, not architecture.
+
+See [roig-2025-gap-analysis.md](./roig-2025-gap-analysis.md) for detailed mapping.
+
 ## Executive Summary: Memory System Impact
 
 Claude Code's memory hierarchy significantly accelerates our roadmap:
@@ -114,17 +129,20 @@ Recent Claude Code updates (2.0.43-2.0.64) provide additional acceleration:
 
 | # | Item | Type | Location | Deliverable |
 |---|------|------|----------|-------------|
-| 1 | Decompose Helper | Extension | `extensions/decompose-helper/` | `/task-decompose` command, 5 prompt templates (atomic→epic) |
+| 1 | Decompose Helper | Extension | `extensions/decompose-helper/` | `/task-decompose` command, 5 prompt templates (atomic→epic), grounding checkpoint |
 | 2 | Parallel-Hint System | Addon | `addons/parallel-hints/` | Auto-injection, `/multi-run` wrapper |
-| 6 | Trace Collector | Addon | `addons/run-tracer/` | JSON Lines logging, `/trace-start`, replay CLI |
+| 6 | Trace Collector | Addon | `addons/run-tracer/` | JSON Lines logging, `/trace-start`, replay CLI, recovery attempt tracking |
+| **12** | **Context Curator** | **Addon** | `addons/context-curator/` | **Distractor filter, relevance scoring, scoped reasoning prompts** |
 
-**Rationale**: These are the "production-grade" reliability patterns that close the biggest paper gaps.
+**Rationale**: These are the "production-grade" reliability patterns that close the biggest paper gaps. #12 added based on Roig (2025) gap analysis - Archetype 3 (Distractor Pollution) was unaddressed.
 
 **Success Criteria**:
 
 - [ ] 80% of intake tasks auto-split into ≤7 subtasks
 - [ ] Parallel agent usage >60% on flows with ≥4 subtasks
 - [ ] Every failed run produces downloadable trace in <3 seconds
+- [ ] Distractor-induced errors reduced by ≥50% on KAMI-style benchmarks (#12)
+- [ ] Grounding compliance >90% (agents verify before acting) (#1)
 
 ### P2: Production Enablers (Week 6-8)
 
@@ -146,17 +164,19 @@ Recent Claude Code updates (2.0.43-2.0.64) provide additional acceleration:
 
 | # | Item | Type | Location | Deliverable |
 |---|------|------|----------|-------------|
-| 8 | Consortium Lite | Extension | `extensions/consortium-lite/` | 2-3 model config, majority-vote consolidator, opt-in flag |
-| 7 | Evals Framework | New Repo | `aiwg-evals` (separate) | Dataset format, golden test runner, 5 initial tests |
-| 11 | Retry/Circuit-Breaker | Addon | `addons/resilience/` | `@retry(3)` decorator, backoff, fallback-to-human |
+| 8 | Consortium Lite | Extension | `extensions/consortium-lite/` | 2-3 model config, majority-vote consolidator, opt-in flag (validates Archetype 2 mitigation) |
+| 7 | Evals Framework | New Repo | `aiwg-evals` (separate) | Dataset format, golden test runner, 5 initial tests, **KAMI-style archetype tests** |
+| 11 | Resilience & Recovery | Addon | `addons/resilience/` | `@retry(3)` decorator, backoff, fallback-to-human, **structured recovery protocol, loop detection, self-debug agent** |
 
-**Rationale**: Advanced reliability patterns that require foundation work to be complete.
+**Rationale**: Advanced reliability patterns that require foundation work to be complete. #11 scope extended based on Roig (2025) finding that recovery capability is dominant success predictor.
 
 **Success Criteria**:
 
 - [ ] Hallucination rate drops ≥30% on 20-sample benchmark (Consortium)
 - [ ] 5 golden tests pass for SDLC Complete Phase 1 (Evals)
 - [ ] Failed handoffs auto-retry ≥2 times before escalating (Resilience)
+- [ ] Recovery success rate ≥80% after initial failure (#11 - matches DeepSeek V3.1)
+- [ ] Entity substitution rate <5% on ambiguous inputs (#8)
 
 ## Comparison: REF-001 vs Consultant Approach
 
@@ -295,19 +315,23 @@ Recent Claude Code updates (2.0.43-2.0.64) provide additional acceleration:
 
 ## Success Metrics Summary
 
-| Phase | Metric | Target |
-|-------|--------|--------|
-| P0 | Agent lint pass rate | 100% of main repo agents |
-| P0 | New agent checklist pass rate | 100% within 2 weeks |
-| P1 | Intake task auto-split | 80% ≤7 subtasks |
-| P1 | Parallel agent utilization | >60% on ≥4-subtask flows |
-| P1 | Trace bundle generation | <3 seconds |
-| P2 | External prompt loading | All new agents load ≥1 |
-| P2 | HTTP workflow triggering | Any workflow via webhook |
-| P2 | Containerization time | Zero to running <2 minutes |
-| P3 | Hallucination reduction | ≥30% on 20-sample benchmark |
-| P3 | Golden test pass | 5 SDLC Phase 1 tests |
-| P3 | Auto-retry coverage | ≥2 retries before escalation |
+| Phase | Metric | Target | Source |
+|-------|--------|--------|--------|
+| P0 | Agent lint pass rate | 100% of main repo agents | Consultant |
+| P0 | New agent checklist pass rate | 100% within 2 weeks | Consultant |
+| P1 | Intake task auto-split | 80% ≤7 subtasks | Consultant |
+| P1 | Parallel agent utilization | >60% on ≥4-subtask flows | Consultant |
+| P1 | Trace bundle generation | <3 seconds | Consultant |
+| P1 | **Grounding compliance** | **>90% verify before act** | **Roig Archetype 1** |
+| P1 | **Distractor error reduction** | **≥50% on KAMI-style** | **Roig Archetype 3** |
+| P2 | External prompt loading | All new agents load ≥1 | Consultant |
+| P2 | HTTP workflow triggering | Any workflow via webhook | Consultant |
+| P2 | Containerization time | Zero to running <2 minutes | Consultant |
+| P3 | Hallucination reduction | ≥30% on 20-sample benchmark | Consultant |
+| P3 | Golden test pass | 5 SDLC Phase 1 tests | Consultant |
+| P3 | Auto-retry coverage | ≥2 retries before escalation | Consultant |
+| P3 | **Recovery success rate** | **≥80% after failure** | **Roig Archetype 4** |
+| P3 | **Entity substitution rate** | **<5% on ambiguous** | **Roig Archetype 2** |
 
 ## Open Questions for Resolution
 
@@ -335,3 +359,4 @@ Recent Claude Code updates (2.0.43-2.0.64) provide additional acceleration:
 | 2025-12-10 | AIWG Analysis | Added memory system leverage analysis; revised effort estimates |
 | 2025-12-10 | AIWG Analysis | Added Claude Code 2.0.64 feature leverage; async agents, hooks, @-mentions |
 | 2025-12-10 | AIWG Analysis | Added @-mention wiring utilities to aiwg-utils addon |
+| 2025-12-10 | AIWG Analysis | Gap analysis from Roig (2025) arxiv 2512.07497v2; added #12 Context Curator, extended #11 Resilience scope, added archetype-derived metrics |
