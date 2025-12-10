@@ -2,8 +2,8 @@
   "id": "aiwg-utils",
   "type": "addon",
   "name": "AIWG Utilities",
-  "version": "1.1.0",
-  "description": "Core meta-utilities for AIWG management including context regeneration and workspace maintenance",
+  "version": "1.2.0",
+  "description": "Core meta-utilities for AIWG management including context regeneration, workspace maintenance, and development kit",
   "core": true,
   "autoInstall": true,
   "author": "AIWG Contributors",
@@ -18,12 +18,15 @@
     "warp",
     "factory",
     "workspace",
-    "maintenance"
+    "maintenance",
+    "devkit",
+    "scaffolding"
   ],
   "entry": {
     "agents": "agents/",
     "commands": "commands/",
-    "skills": "skills/"
+    "skills": "skills/",
+    "templates": "templates/"
   },
   "commands": [
     "aiwg-regenerate",
@@ -35,12 +38,23 @@
     "workspace-reset",
     "commit-and-push",
     "roko-voice",
-    "summarize-transcript"
+    "summarize-transcript",
+    "devkit-create-addon",
+    "devkit-create-extension",
+    "devkit-create-agent",
+    "devkit-create-command",
+    "devkit-validate"
   ],
   "agents": [
-    "context-regenerator"
+    "context-regenerator",
+    "aiwg-developer"
   ],
   "skills": [
     "project-awareness"
+  ],
+  "templates": [
+    "devkit/addon-manifest",
+    "devkit/framework-manifest",
+    "devkit/extension-manifest"
   ]
 }

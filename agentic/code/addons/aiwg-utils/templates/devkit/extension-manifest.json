@@ -1,0 +1,15 @@
+{
+  "id": "{{id}}",
+  "type": "extension",
+  "name": "{{name}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "requires": ["{{framework}}"],
+  "author": "{{author}}",
+  "entry": {
+    "templates": "templates",
+    "checklists": "checklists"
+  },
+  "templates": [],
+  "checklists": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": "{{id}}",
+  "type": "addon",
+  "name": "{{name}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "author": "{{author}}",
+  "core": false,
+  "autoInstall": false,
+  "entry": {
+    "agents": "agents",
+    "commands": "commands",
+    "skills": "skills"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": []
+}

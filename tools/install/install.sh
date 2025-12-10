@@ -295,6 +295,14 @@ fi
     -validate-metadata|--validate-metadata) node \"$PREFIX/tools/cli/validate-metadata.mjs\" \"\$@\" ;; \\
     -wipe-working|--wipe-working) node \"$PREFIX/tools/cli/workspace-wipe-working.mjs\" \"\$@\" ;; \\
     -reset-workspace|--reset-workspace) node \"$PREFIX/tools/cli/workspace-reset.mjs\" \"\$@\" ;; \\
+    scaffold-addon) node \"$PREFIX/tools/scaffolding/scaffold-addon.mjs\" \"\$@\" ;; \\
+    scaffold-extension) node \"$PREFIX/tools/scaffolding/scaffold-extension.mjs\" \"\$@\" ;; \\
+    scaffold-framework) node \"$PREFIX/tools/scaffolding/scaffold-framework.mjs\" \"\$@\" ;; \\
+    add-agent) node \"$PREFIX/tools/scaffolding/add-agent.mjs\" \"\$@\" ;; \\
+    add-command) node \"$PREFIX/tools/scaffolding/add-command.mjs\" \"\$@\" ;; \\
+    add-skill) node \"$PREFIX/tools/scaffolding/add-skill.mjs\" \"\$@\" ;; \\
+    add-template) node \"$PREFIX/tools/scaffolding/add-template.mjs\" \"\$@\" ;; \\
+    validate) node \"$PREFIX/tools/scaffolding/validate.mjs\" \"\$@\" ;; \\
     -version|--version|version) aiwg_version ;; \\
     -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Re-running installer to refresh aliases...' && bash \"$PREFIX/tools/install/install.sh\" && echo 'Please run: source ~/.bash_aliases (or ~/.zshrc) to activate new commands' ;; \\
     -reinstall|--reinstall|reinstall) aiwg_reinstall ;; \\
@@ -321,6 +329,21 @@ fi
       echo '      Wipe .aiwg/working/ temporary files'; \\
       echo '  -reset-workspace [--backup] [--keep-intake] [--reinitialize]'; \\
       echo '      Reset entire .aiwg/ workspace'; echo ''; \\
+      echo 'Development Kit:'; \\
+      echo '  scaffold-addon <name> [--description] [--author]'; \\
+      echo '      Create new addon structure'; \\
+      echo '  scaffold-extension <name> --for <framework>'; \\
+      echo '      Create framework extension (expansion pack)'; \\
+      echo '  add-agent <name> --to <target> [--template simple|complex|orchestrator]'; \\
+      echo '      Add agent to addon/framework'; \\
+      echo '  add-command <name> --to <target> [--template utility|transformation|orchestration]'; \\
+      echo '      Add slash command to addon/framework'; \\
+      echo '  add-skill <name> --to <target>'; \\
+      echo '      Add skill to addon/framework'; \\
+      echo '  add-template <name> --to <target> [--type document|checklist|matrix|form]'; \\
+      echo '      Add template to framework/extension'; \\
+      echo '  validate <path>'; \\
+      echo '      Validate addon/framework/extension structure'; echo ''; \\
       echo 'Utilities:'; \\
       echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; \\
       echo '      Prefill SDLC card metadata'; \\
