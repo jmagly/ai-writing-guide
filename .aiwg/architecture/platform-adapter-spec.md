@@ -2,14 +2,18 @@
 
 **Status**: DRAFT - Architectural Discussion
 **Purpose**: Define lightweight abstraction for multi-platform workflow execution
+**MCP Version**: 2025-11-25 (November 25, 2025 release)
+**Reference**: [REF-003: MCP Specification 2025](../../docs/references/REF-003-mcp-specification-2025.md)
 
 ## Design Principles
 
-1. **MCP-First**: Model Context Protocol is the primary abstraction layer
+1. **MCP-First**: Model Context Protocol 2025-11-25 is the primary abstraction layer
 2. **Minimal Abstraction**: Pipe communication to platforms, don't rebuild them
 3. **Platform-Native**: Let each platform do what it does best
 4. **Context Assembly**: Standardize how context stack is built and injected
 5. **Simple CLI**: `aiwg run <workflow>` should just work
+6. **Async-Ready**: Support MCP Tasks for long-running operations
+7. **Security-First**: OAuth 2.1 with RFC 8707 resource indicators
 
 ## Architecture: MCP as Primary Abstraction
 
@@ -347,7 +351,7 @@ interface NormalizedOutput {
 
 ## MCP Server Specification
 
-The AIWG MCP Server is the primary interface. Follows MCP 1.0 specification.
+The AIWG MCP Server is the primary interface. Follows **MCP 2025-11-25 specification**.
 
 ### Server Info
 
@@ -355,7 +359,23 @@ The AIWG MCP Server is the primary interface. Follows MCP 1.0 specification.
 {
   "name": "aiwg",
   "version": "1.0.0",
-  "description": "AI Workflow Guide - SDLC, Marketing, and Writing Quality frameworks"
+  "description": "AI Workflow Guide - SDLC, Marketing, and Writing Quality frameworks",
+  "protocolVersion": "2025-11-25"
+}
+```
+
+### Capabilities
+
+```json
+{
+  "capabilities": {
+    "tools": { "listChanged": true },
+    "resources": { "subscribe": true, "listChanged": true },
+    "prompts": { "listChanged": true },
+    "experimental": {
+      "tasks": true
+    }
+  }
 }
 ```
 
@@ -599,17 +619,31 @@ Pre-defined prompts for common patterns.
 
 ### Transport
 
-The AIWG MCP Server supports:
+The AIWG MCP Server supports MCP 2025-11-25 transport protocols:
 
-1. **stdio** (default): For local CLI usage
-2. **HTTP/SSE**: For remote/containerized deployments
+1. **stdio** (default): For local CLI usage - recommended for single-client scenarios
+2. **Streamable HTTP**: For remote/containerized deployments - replaced HTTP+SSE in spec 2025-03-26
 
 ```bash
-# stdio (local)
+# stdio (local) - recommended for Claude Desktop, local tools
 aiwg mcp serve
 
-# HTTP/SSE (remote)
+# Streamable HTTP (remote) - for multi-client, load-balanced deployments
 aiwg mcp serve --transport http --port 3100
+```
+
+**Streamable HTTP Features**:
+
+- Stateless-friendly (each request self-contained)
+- Infrastructure-compatible (proxies, load balancers)
+- Optional SSE for streaming responses
+- Session management via `Mcp-Session-Id` header
+
+```typescript
+// Session ID handling for Streamable HTTP
+const sessionId = response.headers.get('Mcp-Session-Id');
+// Include in subsequent requests:
+// Headers: { 'Mcp-Session-Id': sessionId }
 ```
 
 ### Client Configuration
@@ -644,44 +678,229 @@ mcp-client connect stdio "aiwg mcp serve"
 mcp-client connect http://localhost:3100
 ```
 
+## Tasks (Async Operations) - MCP 2025-11-25
+
+Tasks enable "call-now, fetch-later" patterns for long-running AIWG workflows.
+
+### Task Lifecycle
+
+```
+┌──────────┐     ┌──────────┐     ┌──────────────┐     ┌───────────┐
+│ Request  │────▶│ working  │────▶│input_required│────▶│ completed │
+└──────────┘     └────┬─────┘     └──────────────┘     └───────────┘
+                      │                                       │
+                      └──────────────▶ failed ◀───────────────┘
+                                         │
+                                         ▼
+                                    cancelled
+```
+
+### Task-Enabled Tools
+
+```typescript
+// aiwg/workflow-run returns task handle for long operations
+const result = await client.callTool("aiwg/workflow-run", {
+  prompt: "transition to elaboration",
+  guidance: "focus on security architecture"
+});
+
+// If operation is long-running, result includes task info
+if (result.task) {
+  console.log(`Task ID: ${result.task.id}`);
+  console.log(`Status: ${result.task.status}`);  // "working"
+
+  // Poll for completion
+  while (true) {
+    const status = await client.callTool("aiwg/task-status", {
+      task_id: result.task.id
+    });
+
+    if (status.status === "completed") {
+      console.log("Workflow complete:", status.result);
+      break;
+    } else if (status.status === "failed") {
+      console.error("Workflow failed:", status.error);
+      break;
+    } else if (status.status === "input_required") {
+      // Handle interactive prompts
+      await handleUserInput(status.input_request);
+    }
+
+    await sleep(5000);  // Poll every 5 seconds
+  }
+}
+```
+
+### Task Benefits for AIWG
+
+- **Phase transitions** can run asynchronously (15-30 minute operations)
+- **Multi-agent workflows** don't block the client
+- **Fault tolerance** - operations survive network interruptions
+- **Progress updates** without blocking
+
+## OAuth 2.1 Authorization - MCP 2025-11-25
+
+For remote/production MCP deployments, AIWG supports OAuth 2.1 with RFC 8707.
+
+### Resource Indicators (RFC 8707)
+
+**Required** for token requests to prevent confused deputy attacks:
+
+```typescript
+// Token request MUST include resource indicator
+const tokenRequest = {
+  grant_type: "authorization_code",
+  code: authCode,
+  client_id: clientId,
+  resource: "https://aiwg.example.com/mcp"  // RFC 8707 - REQUIRED
+};
+
+// Server validates audience matches
+const token = await authServer.issueToken(tokenRequest);
+// Token is bound to specific AIWG MCP server
+```
+
+### Protected Resource Metadata
+
+Publish at `/.well-known/oauth-protected-resource`:
+
+```json
+{
+  "resource": "https://aiwg.example.com/mcp",
+  "authorization_servers": ["https://auth.example.com"],
+  "scopes_supported": ["aiwg:read", "aiwg:write", "aiwg:workflow"]
+}
+```
+
+### AIWG OAuth Scopes
+
+| Scope | Description |
+|-------|-------------|
+| `aiwg:read` | Read artifacts, templates, agents |
+| `aiwg:write` | Write artifacts to .aiwg/ |
+| `aiwg:workflow` | Execute workflows |
+| `aiwg:admin` | Server configuration |
+
+## Server Discovery - MCP 2025-11-25
+
+### .well-known/mcp.json
+
+Enable automatic discovery:
+
+```json
+{
+  "name": "aiwg",
+  "version": "1.0.0",
+  "description": "AI Writing Guide - SDLC, Marketing, and Writing Quality frameworks",
+  "protocolVersion": "2025-11-25",
+  "capabilities": ["tools", "resources", "prompts", "tasks"],
+  "transport": ["stdio", "streamable-http"],
+  "documentation": "https://github.com/jmagly/ai-writing-guide",
+  "contact": "https://github.com/jmagly/ai-writing-guide/issues"
+}
+```
+
+### Benefits
+
+- Clients discover capabilities without connecting
+- MCP Registry can auto-catalog
+- Service auto-detection in enterprise environments
+
 ## Implementation Phases
 
-### Phase 1: MCP Server Core
+### Phase 1: MCP Server Core (MVP)
 
-1. MCP server skeleton (`aiwg mcp serve`)
-2. Core tools: `aiwg/workflow-run`, `aiwg/artifact-read`, `aiwg/artifact-write`
+**Goal**: Claude Code can consume AIWG via MCP
+
+1. MCP server skeleton using `@modelcontextprotocol/sdk`
+2. Core tools: `workflow-run`, `artifact-read`, `artifact-write`
 3. Resource serving: prompts, templates, agents
-4. stdio transport
+4. stdio transport only
+5. Use `registerTool`, `registerResource`, `registerPrompt` API (recommended)
 
-**Deliverable**: Claude Code can consume AIWG via MCP
+**Implementation**:
+
+```typescript
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+const server = new McpServer({
+  name: "aiwg",
+  version: "1.0.0"
+});
+
+// Register tools
+server.registerTool("workflow-run", {
+  title: "Run AIWG Workflow",
+  description: "Execute AIWG workflow",
+  inputSchema: {
+    prompt: z.string(),
+    guidance: z.string().optional(),
+    framework: z.enum(["sdlc-complete", "media-marketing-kit", "auto"]).default("auto"),
+    project_dir: z.string().default("."),
+    dry_run: z.boolean().default(false)
+  }
+}, async (args) => {
+  // Implementation
+});
+
+// Start server
+const transport = new StdioServerTransport();
+await server.connect(transport);
+```
+
+**Deliverable**: `aiwg mcp serve` works with Claude Code
 
 ### Phase 2: Full Tool Suite
 
-1. All tools implemented (workflow-status, template-render, agent-list)
-2. MCP prompts (decompose-task, parallel-execution)
-3. HTTP/SSE transport option
+**Goal**: Complete MCP interface with all capabilities
+
+1. All tools: `workflow-status`, `template-render`, `agent-list`, `task-status`
+2. MCP prompts: `decompose-task`, `parallel-execution`, `recovery-protocol`
+3. Streamable HTTP transport option
 4. `aiwg mcp install` helper for client configuration
+5. Tasks (experimental) for async workflow operations
 
-**Deliverable**: Complete MCP interface, multiple transport options
+**Deliverable**: Production-ready MCP server with multiple transport options
 
-### Phase 3: Advanced Features
+### Phase 3: Production Features
 
-1. Workflow state persistence
-2. Multi-agent coordination via MCP
-3. Containerized MCP server (Docker image)
-4. Legacy platform adapters (for non-MCP platforms)
+**Goal**: Enterprise-ready deployment
+
+1. OAuth 2.1 with RFC 8707 resource indicators
+2. Server discovery via `.well-known/mcp.json`
+3. Workflow state persistence (Redis/file-based)
+4. Multi-agent coordination via MCP Tasks
+5. Containerized MCP server (Docker image)
+6. MCP Registry listing
+7. Metrics and observability (OpenTelemetry)
+
+### Phase 4: Extensions (Future)
+
+1. Custom extensions for AIWG-specific capabilities
+2. Legacy platform adapters (for non-MCP platforms)
+3. Plugin system for third-party integrations
 
 ## Open Questions
 
-1. **Session persistence**: How do we handle multi-turn conversations across invocations?
+1. ~~**Session persistence**: How do we handle multi-turn conversations across invocations?~~
+   **RESOLVED**: MCP 2025-11-25 Tasks provide async state persistence. Streamable HTTP supports `Mcp-Session-Id` for session continuity.
 
 2. **Agent state**: If Claude spawns subagents, how do we track across platforms that don't have this concept?
+   **PARTIAL**: MCP Tasks can track workflow state. Sub-agent coordination requires AIWG-specific extension.
 
 3. **Credentials**: Where do API keys live? Environment? Config file? Keychain?
+   **DIRECTION**: OAuth 2.1 for remote deployments. Environment variables (`AIWG_*`) for local. Keychain integration deferred.
 
 4. **Error recovery**: If platform CLI fails, what's the retry/fallback strategy?
+   **DIRECTION**: MCP Tasks provide fault tolerance. Implement AIWG recovery protocol (PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE).
 
-5. **Streaming**: Should output be streamed or buffered?
+5. ~~**Streaming**: Should output be streamed or buffered?~~
+   **RESOLVED**: Streamable HTTP supports optional SSE for streaming. Default to buffered for simplicity.
+
+6. **NEW - Extensions**: Should AIWG define custom MCP extensions for multi-agent coordination?
+   **STATUS**: MCP 2025-11-25 formalizes extensions framework. Evaluate for Phase 4.
 
 ## Relationship to Existing Components
 
@@ -694,8 +913,45 @@ mcp-client connect http://localhost:3100
 
 ## Next Steps
 
-1. Review and refine this spec
-2. Decide on Phase 1 scope
-3. Implement Claude adapter as reference
-4. Test with real workflows
-5. Iterate based on learnings
+### Immediate (Phase 1)
+
+1. ✅ Finalize MCP 2025-11-25 alignment (this spec update)
+2. Create `src/mcp/` directory structure
+3. Install `@modelcontextprotocol/sdk` and `zod` dependencies
+4. Implement `McpServer` with core tools (workflow-run, artifact-read, artifact-write)
+5. Register resources (prompts, templates, agents)
+6. Add `aiwg mcp serve` CLI command
+7. Test with Claude Code MCP client configuration
+8. Document client setup in README
+
+### Short-term (Phase 2)
+
+1. Add remaining tools and prompts
+2. Implement Streamable HTTP transport
+3. Add MCP Inspector integration for debugging
+4. Create `aiwg mcp install` helper
+
+### Medium-term (Phase 3)
+
+1. OAuth 2.1 implementation
+2. Server discovery endpoints
+3. Docker image for containerized deployment
+4. MCP Registry submission
+
+## Dependencies
+
+```json
+{
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "zod": "^3.25.0"
+  }
+}
+```
+
+## References
+
+- [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25)
+- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+- [MCP Best Practices](https://modelcontextprotocol.info/docs/best-practices/)
+- [REF-003: MCP Specification 2025](../../docs/references/REF-003-mcp-specification-2025.md)
