@@ -2,8 +2,8 @@
   "id": "aiwg-utils",
   "type": "addon",
   "name": "AIWG Utilities",
-  "version": "1.0.0",
-  "description": "Core meta-utilities for AIWG management including context file regeneration",
+  "version": "1.1.0",
+  "description": "Core meta-utilities for AIWG management including context regeneration and workspace maintenance",
   "core": true,
   "autoInstall": true,
   "author": "AIWG Contributors",
@@ -16,7 +16,9 @@
     "context",
     "claude",
     "warp",
-    "factory"
+    "factory",
+    "workspace",
+    "maintenance"
   ],
   "entry": {
     "agents": "agents/",
@@ -27,7 +29,13 @@
     "aiwg-regenerate",
     "aiwg-regenerate-claude",
     "aiwg-regenerate-warp",
-    "aiwg-regenerate-factory"
+    "aiwg-regenerate-factory",
+    "workspace-realign",
+    "workspace-prune-working",
+    "workspace-reset",
+    "commit-and-push",
+    "roko-voice",
+    "summarize-transcript"
   ],
   "agents": [
     "context-regenerator"

@@ -1,0 +1,360 @@
+---
+name: workspace-prune-working
+description: Clean up .aiwg/working/ by promoting, archiving, or deleting temporary files
+args: "[project-directory] [--promote-all] [--archive-all] [--delete-all] [--dry-run] [--interactive]"
+---
+
+# Workspace Prune Working
+
+Clean up the `.aiwg/working/` directory by intelligently handling temporary files. Promotes valuable content to the main documentation structure, archives content worth preserving, and deletes truly temporary files.
+
+## Parameters
+
+| Flag | Description |
+|------|-------------|
+| `project-directory` | Project root (default: `.`) |
+| `--promote-all` | Promote all promotable files without prompting |
+| `--archive-all` | Archive all archivable files without prompting |
+| `--delete-all` | Delete all deletable files without prompting |
+| `--dry-run` | Preview changes without modifying files |
+| `--interactive` | Prompt for each file decision |
+| `--force` | Skip confirmation prompts |
+
+## Purpose of .aiwg/working/
+
+The `.aiwg/working/` directory is designated for:
+
+- Multi-agent work-in-progress drafts
+- Temporary scratch files during orchestration
+- Review feedback before synthesis
+- Iterative document versions
+
+It is **NOT** a permanent storage location. Files here should eventually be:
+- **Promoted** → Moved to appropriate `.aiwg/` subdirectory as finalized docs
+- **Archived** → Preserved in `.aiwg/archive/` for historical reference
+- **Deleted** → Removed when no longer useful
+
+## Execution Steps
+
+### Step 1: Scan Working Directory
+
+Inventory all files in `.aiwg/working/`:
+
+```bash
+# List all files with metadata
+find .aiwg/working -type f -exec stat -c '%Y %s %n' {} \; | sort -rn
+
+# Count by subdirectory
+find .aiwg/working -mindepth 1 -maxdepth 1 -type d | while read dir; do
+  echo "$(basename "$dir"): $(find "$dir" -type f | wc -l) files"
+done
+```
+
+Report:
+```
+Working Directory Scan
+======================
+Total files: 23
+Total size:  145 KB
+
+By Category:
+  architecture/   8 files (SAD drafts, reviews)
+  requirements/   5 files (UC iterations)
+  testing/        4 files (test plan drafts)
+  scratch/        6 files (temporary notes)
+
+Age Distribution:
+  < 1 day:    4 files
+  1-7 days:   8 files
+  > 7 days:  11 files
+```
+
+### Step 2: Classify Files
+
+Analyze each file to determine appropriate action:
+
+**Classification Criteria:**
+
+| Classification | Criteria | Action |
+|----------------|----------|--------|
+| PROMOTE | Final/reviewed version, high quality, no TODOs | Move to main .aiwg/ structure |
+| ARCHIVE | Useful history, superseded, completed work | Move to .aiwg/archive/ |
+| DELETE | Scratch notes, duplicates, empty, truly temp | Remove |
+| REVIEW | Unclear status, needs human decision | Flag for review |
+
+**File Analysis Heuristics:**
+
+```python
+def classify_file(filepath):
+    content = read_file(filepath)
+    filename = basename(filepath)
+
+    # Check for finalization markers
+    if "FINAL" in filename or "APPROVED" in filename:
+        return "PROMOTE"
+    if "BASELINED" in content or "Status: Approved" in content:
+        return "PROMOTE"
+
+    # Check for draft/WIP markers
+    if "DRAFT" in filename or "WIP" in filename:
+        if file_age_days(filepath) > 14:
+            return "ARCHIVE"  # Old draft, archive for reference
+        return "REVIEW"  # Recent draft, needs decision
+
+    # Check for review files
+    if "review" in filename.lower():
+        if "synthesized" in get_parent_files(filepath):
+            return "DELETE"  # Reviews already synthesized
+        return "ARCHIVE"  # Keep reviews for audit
+
+    # Check for scratch/temp patterns
+    if "scratch" in filepath or "temp" in filepath:
+        if file_age_days(filepath) > 3:
+            return "DELETE"
+        return "REVIEW"
+
+    # Check for versioned files
+    if re.match(r'v\d+\.\d+', filename):
+        if not is_latest_version(filepath):
+            return "ARCHIVE"
+        return "PROMOTE"  # Latest version should be promoted
+
+    # Default: needs review
+    return "REVIEW"
+```
+
+Report:
+```
+File Classification
+===================
+
+PROMOTE (4 files):
+  .aiwg/working/architecture/sad/v0.3-final.md
+    → .aiwg/architecture/software-architecture-doc.md
+    Reason: Final version, approved status
+
+  .aiwg/working/requirements/uc-auth-approved.md
+    → .aiwg/requirements/use-cases/uc-auth.md
+    Reason: Approved use case
+
+  .aiwg/working/testing/test-plan-baselined.md
+    → .aiwg/testing/master-test-plan.md
+    Reason: Baselined marker found
+
+  .aiwg/working/architecture/adr-001-final.md
+    → .aiwg/architecture/decisions/adr-001.md
+    Reason: Final ADR
+
+ARCHIVE (6 files):
+  .aiwg/working/architecture/sad/v0.1-draft.md
+    → .aiwg/archive/architecture/sad-v0.1-20251209.md
+    Reason: Superseded by v0.3
+
+  .aiwg/working/architecture/sad/reviews/security-review.md
+    → .aiwg/archive/reviews/sad-security-review-20251209.md
+    Reason: Review already synthesized
+
+  .aiwg/working/architecture/sad/reviews/test-review.md
+    → .aiwg/archive/reviews/sad-test-review-20251209.md
+    Reason: Review already synthesized
+
+  ... (3 more)
+
+DELETE (8 files):
+  .aiwg/working/scratch/notes.md
+    Reason: Scratch file, 12 days old
+
+  .aiwg/working/scratch/temp-analysis.md
+    Reason: Temp file prefix, empty content
+
+  .aiwg/working/architecture/sad/v0.2-draft.md
+    Reason: Intermediate draft, v0.3 exists
+
+  ... (5 more)
+
+REVIEW (5 files):
+  .aiwg/working/requirements/nfr-draft.md
+    Reason: Recent draft (3 days), unclear status
+
+  .aiwg/working/testing/integration-tests-wip.md
+    Reason: WIP marker, may be active work
+
+  ... (3 more)
+```
+
+### Step 3: Determine Promotion Targets
+
+Map working files to their correct permanent locations:
+
+```
+Promotion Mapping
+=================
+
+.aiwg/working/architecture/ → .aiwg/architecture/
+  sad/*.md                  → software-architecture-doc.md
+  adr-*.md                  → decisions/adr-*.md
+  diagrams/                 → diagrams/
+
+.aiwg/working/requirements/ → .aiwg/requirements/
+  uc-*.md                   → use-cases/
+  nfr-*.md                  → nfrs/
+  user-story-*.md           → user-stories/
+
+.aiwg/working/testing/      → .aiwg/testing/
+  test-plan-*.md            → master-test-plan.md
+  test-cases-*.md           → test-cases/
+
+.aiwg/working/security/     → .aiwg/security/
+  threat-model-*.md         → threat-model.md
+  security-review-*.md      → security-assessments/
+
+.aiwg/working/risks/        → .aiwg/risks/
+  spike-*.md                → spikes/
+  risk-assessment-*.md      → risk-register.md
+```
+
+### Step 4: Execute Actions
+
+**If `--dry-run`:** Display plan and exit.
+
+**If `--interactive`:** Prompt for each file:
+
+```
+File: .aiwg/working/architecture/sad/v0.3-final.md
+Classification: PROMOTE
+Target: .aiwg/architecture/software-architecture-doc.md
+
+Action? [p]romote / [a]rchive / [d]elete / [s]kip: _
+```
+
+#### Promotion Operations
+
+```bash
+# Create target directory
+mkdir -p .aiwg/architecture/
+
+# Move file to permanent location
+mv .aiwg/working/architecture/sad/v0.3-final.md \
+   .aiwg/architecture/software-architecture-doc.md
+
+# Remove "DRAFT" or "WIP" markers from content
+sed -i 's/Status: Draft/Status: Baselined/' \
+   .aiwg/architecture/software-architecture-doc.md
+```
+
+#### Archive Operations
+
+```bash
+# Create archive with timestamp
+mkdir -p .aiwg/archive/architecture/
+
+# Move with date suffix
+mv .aiwg/working/architecture/sad/v0.1-draft.md \
+   .aiwg/archive/architecture/sad-v0.1-20251209.md
+
+# Update archive index
+echo "| 2025-12-09 | sad-v0.1 | Superseded by v0.3 | architecture/ |" \
+  >> .aiwg/archive/INDEX.md
+```
+
+#### Delete Operations
+
+```bash
+# Remove files
+rm .aiwg/working/scratch/notes.md
+rm .aiwg/working/scratch/temp-analysis.md
+
+# Clean up empty directories
+find .aiwg/working -type d -empty -delete
+```
+
+### Step 5: Handle Review Items
+
+For files marked REVIEW, either:
+
+**If `--interactive`:**
+Present each file for decision.
+
+**If `--promote-all` / `--archive-all` / `--delete-all`:**
+Apply bulk action to review items.
+
+**Otherwise:**
+List review items and exit:
+
+```
+Files Requiring Review
+======================
+
+The following files need manual decision:
+
+1. .aiwg/working/requirements/nfr-draft.md
+   Age: 3 days | Size: 2.4 KB
+   Context: Active NFR development
+
+2. .aiwg/working/testing/integration-tests-wip.md
+   Age: 5 days | Size: 1.8 KB
+   Context: WIP test cases
+
+Run with --interactive to decide each file.
+```
+
+### Step 6: Report Summary
+
+```
+Working Directory Prune Complete
+================================
+
+Actions Taken:
+  Promoted:   4 files → permanent .aiwg/ locations
+  Archived:   6 files → .aiwg/archive/
+  Deleted:    8 files (recovered 45 KB)
+  Skipped:    5 files (require review)
+
+Promotion Summary:
+  .aiwg/architecture/software-architecture-doc.md (NEW)
+  .aiwg/requirements/use-cases/uc-auth.md (NEW)
+  .aiwg/testing/master-test-plan.md (NEW)
+  .aiwg/architecture/decisions/adr-001.md (NEW)
+
+Working Directory Status:
+  Before: 23 files (145 KB)
+  After:   5 files (12 KB)
+
+Next Steps:
+  - Review 5 remaining files with --interactive
+  - Run /workspace-realign to verify doc alignment
+```
+
+## Examples
+
+```bash
+# Preview what would happen
+/workspace-prune-working --dry-run
+
+# Interactive mode - decide each file
+/workspace-prune-working --interactive
+
+# Aggressive cleanup - promote finals, archive rest, delete temp
+/workspace-prune-working --promote-all --archive-all --delete-all
+
+# Just promote finalized docs
+/workspace-prune-working --promote-all
+
+# Just clean up scratch files
+/workspace-prune-working --delete-all
+```
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| No .aiwg/working/ | Info: "Working directory is empty. Nothing to prune." |
+| Promotion target exists | Backup existing, then overwrite with warning |
+| Permission denied | Skip file, report error |
+| Active agent work | Detect recent modification (<1hr), warn before action |
+
+## Related Commands
+
+- `/workspace-realign` - Sync all .aiwg/ docs with project state
+- `/workspace-reset` - Wipe .aiwg/ and start fresh
+- `/project-status` - View current project state

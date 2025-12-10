@@ -32,6 +32,7 @@ Run `npm exec markdownlint-cli2 "**/*.md"` (Node ≥18) before PRs.
 
 ## Scope
 
-- Keep SDLC templates under `docs/sdlc/templates/`
-- Keep shared agents under `docs/agents/` (SDLC subset in `docs/agents/sdlc/`)
-- Keep shared commands under `docs/commands/` (SDLC subset in `docs/commands/sdlc/`)
+- SDLC framework: `agentic/code/frameworks/sdlc-complete/`
+- Marketing framework: `agentic/code/frameworks/media-marketing-kit/`
+- Addons (utilities, voice, writing): `agentic/code/addons/`
+- Command documentation: `docs/commands/`

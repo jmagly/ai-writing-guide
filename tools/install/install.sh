@@ -293,6 +293,8 @@ fi
     -rollback-workspace|--rollback-workspace) node \"$PREFIX/tools/cli/workspace-rollback.mjs\" \"\$@\" ;; \\
     -status|--status|status) node \"$PREFIX/tools/cli/workspace-status.mjs\" \"\$@\" ;; \\
     -validate-metadata|--validate-metadata) node \"$PREFIX/tools/cli/validate-metadata.mjs\" \"\$@\" ;; \\
+    -wipe-working|--wipe-working) node \"$PREFIX/tools/cli/workspace-wipe-working.mjs\" \"\$@\" ;; \\
+    -reset-workspace|--reset-workspace) node \"$PREFIX/tools/cli/workspace-reset.mjs\" \"\$@\" ;; \\
     -version|--version|version) aiwg_version ;; \\
     -update|--update|update) echo 'Updating ai-writing-guide...'; git -C \"$PREFIX\" fetch --all && git -C \"$PREFIX\" pull --ff-only && echo 'Update complete. Re-running installer to refresh aliases...' && bash \"$PREFIX/tools/install/install.sh\" && echo 'Please run: source ~/.bash_aliases (or ~/.zshrc) to activate new commands' ;; \\
     -reinstall|--reinstall|reinstall) aiwg_reinstall ;; \\
@@ -314,7 +316,11 @@ fi
       echo '  -migrate-workspace [--dry-run] [--force]'; \\
       echo '      Migrate legacy .aiwg/ to framework-scoped structure'; \\
       echo '  -rollback-workspace [--list] [--backup <path>]'; \\
-      echo '      Rollback workspace migration from backup'; echo ''; \\
+      echo '      Rollback workspace migration from backup'; \\
+      echo '  -wipe-working [--force] [--backup]'; \\
+      echo '      Wipe .aiwg/working/ temporary files'; \\
+      echo '  -reset-workspace [--backup] [--keep-intake] [--reinitialize]'; \\
+      echo '      Reset entire .aiwg/ workspace'; echo ''; \\
       echo 'Utilities:'; \\
       echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; \\
       echo '      Prefill SDLC card metadata'; \\
