@@ -3,6 +3,12 @@
 # Publishes the package to npm when a version tag is pushed.
 # Uses CalVer versioning: vYYYY.MM.PATCH (e.g., v2024.12.0)
 #
+# REQUIRED SECRETS:
+#   NPM_TOKEN - npm automation token with publish permissions
+#               Generate at: https://www.npmjs.com/settings/<username>/tokens
+#               Select "Automation" type for CI/CD usage
+#               Add to repo: Settings > Secrets > Actions > New repository secret
+#
 # To publish a new version:
 #   1. Update version in package.json
 #   2. Commit: git commit -am "release: v2024.12.0"
