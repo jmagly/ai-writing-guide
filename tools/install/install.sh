@@ -334,6 +334,8 @@ fi
       echo '      Create new addon structure'; \\
       echo '  scaffold-extension <name> --for <framework>'; \\
       echo '      Create framework extension (expansion pack)'; \\
+      echo '  scaffold-framework <name> [--phases <p1,p2,...>]'; \\
+      echo '      Create new lifecycle framework'; \\
       echo '  add-agent <name> --to <target> [--template simple|complex|orchestrator]'; \\
       echo '      Add agent to addon/framework'; \\
       echo '  add-command <name> --to <target> [--template utility|transformation|orchestration]'; \\
@@ -342,7 +344,7 @@ fi
       echo '      Add skill to addon/framework'; \\
       echo '  add-template <name> --to <target> [--type document|checklist|matrix|form]'; \\
       echo '      Add template to framework/extension'; \\
-      echo '  validate <path>'; \\
+      echo '  validate <path> [--fix] [--verbose]'; \\
       echo '      Validate addon/framework/extension structure'; echo ''; \\
       echo 'Utilities:'; \\
       echo '  -prefill-cards --target <path> --team <team.yml> [--write]'; \\

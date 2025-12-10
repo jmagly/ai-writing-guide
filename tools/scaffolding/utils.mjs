@@ -321,6 +321,13 @@ export function printInfo(message) {
 }
 
 /**
+ * Print warning message
+ */
+export function printWarning(message) {
+  console.log(`⚠ ${message}`);
+}
+
+/**
  * Print section header
  */
 export function printHeader(title) {
