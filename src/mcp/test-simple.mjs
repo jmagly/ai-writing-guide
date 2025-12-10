@@ -228,6 +228,45 @@ async function main() {
     console.log('  Write and read successful');
   });
 
+  // Test reading from test fixture project
+  await test('Read artifact from test project', async () => {
+    const response = await sendAndWait('tools/call', {
+      name: 'artifact-read',
+      arguments: {
+        path: 'requirements/UC-001-create-task.md',
+        project_dir: 'test/fixtures/mcp-test-project'
+      }
+    });
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    const content = response.result.content[0].text;
+    if (!content.includes('UC-001: Create Task')) {
+      throw new Error('Expected UC-001 content');
+    }
+    console.log('  Read UC-001 from test project');
+  });
+
+  // Test workflow detection with test project
+  await test('Workflow with test project context', async () => {
+    const response = await sendAndWait('tools/call', {
+      name: 'workflow-run',
+      arguments: {
+        prompt: 'run security review',
+        project_dir: 'test/fixtures/mcp-test-project',
+        dry_run: true
+      }
+    });
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    const result = JSON.parse(response.result.content[0].text);
+    if (result.detected_workflow !== 'flow-security-review-cycle') {
+      throw new Error(`Expected security review workflow, got ${result.detected_workflow}`);
+    }
+    console.log(`  Workflow: ${result.detected_workflow}`);
+  });
+
   // Get decompose-task prompt
   await test('Get decompose-task prompt', async () => {
     const response = await sendAndWait('prompts/get', {
