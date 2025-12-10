@@ -362,23 +362,97 @@ Example:
 
 ## New AIWG Deliverables
 
-### 1. @-Mention Traceability System
+### 1. @-Mention Traceability System (in `aiwg-utils` addon)
 
 **Purpose**: Leverage @-mentions for live document references throughout SDLC artifacts.
 
-**Components**:
+**Location**: Added to existing `agentic/code/addons/aiwg-utils/` (core addon, auto-installed)
+
+**New Commands**:
 ```
-agentic/code/addons/traceability/
-├── manifest.json
-├── README.md
-├── templates/
-│   ├── code-header-block.md       # Template for code file headers with @-mentions
-│   ├── artifact-references.md     # Template for doc cross-references
-│   └── traceability-matrix.md     # @-mention based traceability matrix
-├── linters/
-│   └── mention-validator.mjs      # Validate @-mentions resolve to real files
-└── guides/
-    └── @-mention-conventions.md   # Naming conventions for @-mentions
+aiwg-utils/commands/
+├── mention-wire.md          # Analyze codebase and inject @-mentions intelligently
+├── mention-validate.md      # Validate all @-mentions resolve to real files
+├── mention-report.md        # Generate traceability report from @-mentions
+└── mention-conventions.md   # Display/apply @-mention conventions
+```
+
+**New Tool**:
+```
+tools/mentions/
+├── wire-mentions.mjs        # CLI: aiwg wire-mentions [--target .] [--dry-run]
+├── validate-mentions.mjs    # CLI: aiwg validate-mentions [--target .]
+└── mention-report.mjs       # CLI: aiwg mention-report [--format md|json|csv]
+```
+
+**New Templates** (in aiwg-utils):
+```
+aiwg-utils/templates/mentions/
+├── code-header-block.md       # Template for code file headers with @-mentions
+├── artifact-references.md     # Template for doc cross-references
+└── traceability-matrix.md     # @-mention based traceability matrix
+```
+
+**`mention-wire` Command Behavior**:
+1. Scan target directory for code files and SDLC artifacts
+2. Identify relationships:
+   - Code files → Find matching requirements (by name, comments, patterns)
+   - Test files → Find matching source files
+   - Architecture docs → Find referenced requirements
+   - Security docs → Find referenced threat models
+3. Generate @-mention suggestions with confidence scores
+4. `--dry-run`: Show proposed changes without applying
+5. `--interactive`: Prompt for approval per file
+6. `--auto`: Apply high-confidence (>80%) mentions automatically
+
+**Example Usage**:
+```bash
+# Analyze and show what would be wired
+aiwg wire-mentions --target . --dry-run
+
+# Wire up with interactive approval
+aiwg wire-mentions --target . --interactive
+
+# Auto-wire high-confidence mentions
+aiwg wire-mentions --target . --auto
+
+# Validate all @-mentions resolve
+aiwg validate-mentions --target .
+
+# Generate traceability report
+aiwg mention-report --format md > .aiwg/reports/traceability.md
+```
+
+**Wiring Heuristics**:
+| Pattern | Inferred @-mention |
+|---------|-------------------|
+| File in `src/auth/` | `@.aiwg/requirements/UC-*-auth*.md` |
+| File named `*test*.ts` | `@src/{corresponding-source}.ts` |
+| Comment `// UC-001` | `@.aiwg/requirements/UC-001.md` |
+| Comment `// ADR-005` | `@.aiwg/architecture/adrs/ADR-005*.md` |
+| File in `.aiwg/architecture/` | `@.aiwg/requirements/*.md` (scan for refs) |
+| Security control reference | `@.aiwg/security/controls/*.md` |
+
+**Output of `mention-wire --dry-run`**:
+```
+@-Mention Wiring Analysis
+========================
+
+src/services/auth/login.ts (confidence: 85%)
+  + @.aiwg/requirements/UC-003-user-auth.md (name match)
+  + @.aiwg/architecture/adrs/ADR-005-jwt-strategy.md (comment: "JWT")
+
+test/integration/auth.test.ts (confidence: 92%)
+  + @src/services/auth/login.ts (test-to-source)
+  + @.aiwg/requirements/UC-003-user-auth.md (inherited from source)
+
+.aiwg/architecture/software-architecture-doc.md (confidence: 78%)
+  + @.aiwg/requirements/user-stories.md (section: "Requirements Basis")
+  + @.aiwg/requirements/nfr-security.md (mentions "security")
+
+Summary: 15 files, 42 mentions suggested, avg confidence 84%
+Run with --auto to apply 38 high-confidence mentions
+Run with --interactive to review all 42
 ```
 
 **@-Mention Conventions**:
@@ -480,9 +554,12 @@ aiwg trace-session "inception-elaboration"
 | Item | Effort | Priority |
 |------|--------|----------|
 | Hook templates addon | 1-2 days | P0 |
-| @-Mention traceability addon | 1-2 days | P0 |
+| @-Mention utilities (in aiwg-utils) | 2-3 days | P0 |
+| - Commands: mention-wire, mention-validate, mention-report | 1 day | |
+| - CLI tools: wire-mentions.mjs, validate-mentions.mjs | 1-2 days | |
+| - Templates: code headers, artifact refs | 0.5 days | |
 | Agent frontmatter updates | 1 day | P0 |
-| Template @-mention updates | 2-3 days | P1 |
+| Template @-mention updates (SDLC templates) | 2-3 days | P1 |
 | Persona configs | 0.5 days | P1 |
 | CLI wrapper updates | 0.5 days | P1 |
 
@@ -493,7 +570,10 @@ aiwg trace-session "inception-elaboration"
 1. **Agent Design Bible** (unchanged)
 2. **Responsibility Linter** (unchanged)
 3. **Hook Templates** (NEW) - `aiwg-hooks` addon
-4. **@-Mention Traceability** (NEW) - `traceability` addon with conventions and linter
+4. **@-Mention Utilities** (NEW) - Added to `aiwg-utils` addon (core, auto-installed):
+   - Commands: `/mention-wire`, `/mention-validate`, `/mention-report`, `/mention-conventions`
+   - CLI tools: `aiwg wire-mentions`, `aiwg validate-mentions`, `aiwg mention-report`
+   - Templates: code header blocks, artifact reference patterns
 5. **Prompt Library Reorganization** (from memory analysis)
 6. **Agent Frontmatter Updates** - Add skills, permissionMode
 
@@ -516,3 +596,4 @@ aiwg trace-session "inception-elaboration"
 | Date | Author | Changes |
 |------|--------|---------|
 | 2025-12-10 | AIWG Analysis | Initial feature leverage analysis from changelog review |
+| 2025-12-10 | AIWG Analysis | Added @-mention wiring utilities to aiwg-utils addon plan |

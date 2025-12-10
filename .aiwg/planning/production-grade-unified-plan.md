@@ -41,7 +41,11 @@ Recent Claude Code updates (2.0.43-2.0.64) provide additional acceleration:
 
 **New deliverables from feature adoption**:
 - `aiwg-hooks` addon: Trace capture, permission auto-approve, session naming
-- `traceability` addon: @-mention conventions, validation linter
+- `aiwg-utils` addon (extended): @-mention wiring utilities
+  - `/mention-wire` - Analyze codebase and inject @-mentions intelligently
+  - `/mention-validate` - Validate all @-mentions resolve to real files
+  - `/mention-report` - Generate traceability report from @-mentions
+  - CLI tools: `aiwg wire-mentions`, `aiwg validate-mentions`, `aiwg mention-report`
 - Agent frontmatter updates: skills, permissionMode fields
 - Template updates: @-mention references throughout SDLC artifacts
 
@@ -330,3 +334,4 @@ Recent Claude Code updates (2.0.43-2.0.64) provide additional acceleration:
 | 2025-12-10 | AIWG Analysis | Initial unified plan synthesizing REF-001 and consultant punchlist |
 | 2025-12-10 | AIWG Analysis | Added memory system leverage analysis; revised effort estimates |
 | 2025-12-10 | AIWG Analysis | Added Claude Code 2.0.64 feature leverage; async agents, hooks, @-mentions |
+| 2025-12-10 | AIWG Analysis | Added @-mention wiring utilities to aiwg-utils addon |
