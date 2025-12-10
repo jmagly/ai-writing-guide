@@ -374,15 +374,17 @@ aiwg-utils/commands/
 ├── mention-wire.md          # Analyze codebase and inject @-mentions intelligently
 ├── mention-validate.md      # Validate all @-mentions resolve to real files
 ├── mention-report.md        # Generate traceability report from @-mentions
-└── mention-conventions.md   # Display/apply @-mention conventions
+├── mention-conventions.md   # Display/apply @-mention conventions
+└── mention-lint.md          # Lint @-mentions for style consistency
 ```
 
-**New Tool**:
+**New Tools**:
 ```
 tools/mentions/
 ├── wire-mentions.mjs        # CLI: aiwg wire-mentions [--target .] [--dry-run]
 ├── validate-mentions.mjs    # CLI: aiwg validate-mentions [--target .]
-└── mention-report.mjs       # CLI: aiwg mention-report [--format md|json|csv]
+├── mention-report.mjs       # CLI: aiwg mention-report [--format md|json|csv]
+└── mention-lint.mjs         # CLI: aiwg mention-lint [--target .] [--fix]
 ```
 
 **New Templates** (in aiwg-utils):
@@ -419,8 +421,96 @@ aiwg wire-mentions --target . --auto
 # Validate all @-mentions resolve
 aiwg validate-mentions --target .
 
+# Lint @-mentions for style consistency
+aiwg mention-lint --target .
+
+# Lint and auto-fix style issues
+aiwg mention-lint --target . --fix
+
 # Generate traceability report
 aiwg mention-report --format md > .aiwg/reports/traceability.md
+
+# Display conventions guide
+aiwg mention-conventions
+```
+
+**@-Mention Conventions Guide** (output of `aiwg mention-conventions`):
+```markdown
+# @-Mention Conventions
+
+## Naming Patterns
+
+### Requirements
+@.aiwg/requirements/UC-{NNN}-{slug}.md          # Use cases
+@.aiwg/requirements/NFR-{CAT}-{NNN}.md          # Non-functional (NFR-SEC-001, NFR-PERF-002)
+@.aiwg/requirements/user-stories.md             # User story collection
+
+### Architecture
+@.aiwg/architecture/adrs/ADR-{NNN}-{slug}.md    # Architecture Decision Records
+@.aiwg/architecture/components/{name}.md        # Component specifications
+@.aiwg/architecture/software-architecture-doc.md # Main SAD
+
+### Security
+@.aiwg/security/threat-model.md                 # Main threat model
+@.aiwg/security/TM-{NNN}.md                     # Individual threats
+@.aiwg/security/controls/{control-id}.md        # Security controls
+
+### Testing
+@.aiwg/testing/test-plan.md                     # Master test plan
+@.aiwg/testing/test-cases/{TC-NNN}.md           # Individual test cases
+
+### Code References
+@src/{path/to/file}                             # Source files (relative to repo root)
+@test/{path/to/file}                            # Test files
+@lib/{path/to/file}                             # Library files
+
+## Placement Rules
+
+### In Code Files
+- Place @-mentions in file header docblock
+- Use JSDoc/docstring style for language compatibility
+- Group by type: @implements, @architecture, @security, @tests
+
+### In Markdown Documents
+- Place in "References" or "Related" section
+- Use bullet lists for multiple references
+- Include brief context for each reference
+
+### In Comments
+- Single-line: // @.aiwg/requirements/UC-001.md
+- Can appear inline near relevant code
+```
+
+**Linting Rules** (`aiwg mention-lint`):
+| Rule ID | Description | Severity | Auto-fix |
+|---------|-------------|----------|----------|
+| ML001 | @-mention path does not exist | error | no |
+| ML002 | @-mention uses wrong case (case-sensitive) | warning | yes |
+| ML003 | @-mention missing required prefix (.aiwg/, src/, test/) | warning | yes |
+| ML004 | @-mention uses deprecated path pattern | warning | yes |
+| ML005 | @-mention ID format invalid (UC-NNN, ADR-NNN) | warning | yes |
+| ML006 | Duplicate @-mentions in same file | info | yes |
+| ML007 | @-mention in wrong section (e.g., not in header) | info | no |
+| ML008 | Orphan @-mention (target exists but doesn't back-reference) | info | no |
+| ML009 | Circular @-mention chain detected | warning | no |
+| ML010 | @-mention exceeds max depth (>3 hops) | warning | no |
+
+**Lint Output Example**:
+```
+aiwg mention-lint --target .
+
+src/services/auth/login.ts
+  L3:  ML005 @.aiwg/requirements/UC-3-auth.md should be UC-003 (auto-fixable)
+  L5:  ML001 @.aiwg/architecture/adrs/ADR-999.md does not exist
+
+test/integration/auth.test.ts
+  L2:  ML003 @auth/login.ts should be @src/auth/login.ts (auto-fixable)
+
+.aiwg/architecture/software-architecture-doc.md
+  L45: ML008 References @.aiwg/requirements/UC-005.md but UC-005 doesn't back-reference
+
+Summary: 4 issues (1 error, 2 warnings, 1 info)
+         3 auto-fixable (run with --fix)
 ```
 
 **Wiring Heuristics**:
@@ -554,10 +644,12 @@ aiwg trace-session "inception-elaboration"
 | Item | Effort | Priority |
 |------|--------|----------|
 | Hook templates addon | 1-2 days | P0 |
-| @-Mention utilities (in aiwg-utils) | 2-3 days | P0 |
+| @-Mention utilities (in aiwg-utils) | 3-4 days | P0 |
 | - Commands: mention-wire, mention-validate, mention-report | 1 day | |
+| - Commands: mention-lint, mention-conventions | 0.5 days | |
 | - CLI tools: wire-mentions.mjs, validate-mentions.mjs | 1-2 days | |
-| - Templates: code headers, artifact refs | 0.5 days | |
+| - CLI tool: mention-lint.mjs (10 lint rules) | 1 day | |
+| - Templates: code headers, artifact refs, conventions guide | 0.5 days | |
 | Agent frontmatter updates | 1 day | P0 |
 | Template @-mention updates (SDLC templates) | 2-3 days | P1 |
 | Persona configs | 0.5 days | P1 |
@@ -571,9 +663,11 @@ aiwg trace-session "inception-elaboration"
 2. **Responsibility Linter** (unchanged)
 3. **Hook Templates** (NEW) - `aiwg-hooks` addon
 4. **@-Mention Utilities** (NEW) - Added to `aiwg-utils` addon (core, auto-installed):
-   - Commands: `/mention-wire`, `/mention-validate`, `/mention-report`, `/mention-conventions`
-   - CLI tools: `aiwg wire-mentions`, `aiwg validate-mentions`, `aiwg mention-report`
+   - Commands: `/mention-wire`, `/mention-validate`, `/mention-report`, `/mention-lint`, `/mention-conventions`
+   - CLI tools: `aiwg wire-mentions`, `aiwg validate-mentions`, `aiwg mention-report`, `aiwg mention-lint`
    - Templates: code header blocks, artifact reference patterns
+   - Conventions guide: naming patterns, placement rules
+   - Linting rules: 10 rules (ML001-ML010) with auto-fix support
 5. **Prompt Library Reorganization** (from memory analysis)
 6. **Agent Frontmatter Updates** - Add skills, permissionMode
 
