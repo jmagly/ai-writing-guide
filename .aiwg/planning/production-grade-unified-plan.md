@@ -5,6 +5,7 @@ Unified analysis synthesizing:
 - **REF-001**: Academic analysis of Bandara et al. "Production-Grade Agentic AI Workflows" (arxiv 2512.08769)
 - **Consultant Punchlist**: 11-item gap-closer punchlist from external review
 - **Memory System Leverage**: See [memory-system-leverage.md](./memory-system-leverage.md) for Claude Code memory integration
+- **Claude Code Features**: See [claude-code-features-leverage.md](./claude-code-features-leverage.md) for 2.0.43-2.0.64 feature adoption
 
 ## Executive Summary: Memory System Impact
 
@@ -23,6 +24,26 @@ Claude Code's memory hierarchy significantly accelerates our roadmap:
 - `.claude/rules/*.md` → Modular, deployable guidance
 - Path-specific frontmatter (`paths: .claude/agents/*.md`) → Conditional loading
 - Recursive discovery → Nested project support
+
+## Claude Code 2.0.64 Feature Impact
+
+Recent Claude Code updates (2.0.43-2.0.64) provide additional acceleration:
+
+| Feature | Impact on Unified Plan |
+|---------|------------------------|
+| **Async agents** (2.0.64) | #2 Parallel-Hints: Native async, no injection needed |
+| **Subagent hooks** (2.0.43) | #6 Trace Collector: Native lifecycle capture |
+| **Named sessions** (2.0.64) | #11 Resilience: Workflow state persistence |
+| **@-mention fixes** (2.0.43) | Traceability: Live doc references in code/artifacts |
+| **Skills frontmatter** (2.0.43) | Voice Framework: Auto-load skills per agent |
+| **permissionMode** (2.0.43) | #4 Agent Bible: Permission tiers per agent type |
+| **PermissionRequest hooks** (2.0.54) | All flows: Auto-approve trusted operations |
+
+**New deliverables from feature adoption**:
+- `aiwg-hooks` addon: Trace capture, permission auto-approve, session naming
+- `traceability` addon: @-mention conventions, validation linter
+- Agent frontmatter updates: skills, permissionMode fields
+- Template updates: @-mention references throughout SDLC artifacts
 
 ## Cross-Reference Matrix
 
@@ -308,3 +329,4 @@ Claude Code's memory hierarchy significantly accelerates our roadmap:
 |------|--------|---------|
 | 2025-12-10 | AIWG Analysis | Initial unified plan synthesizing REF-001 and consultant punchlist |
 | 2025-12-10 | AIWG Analysis | Added memory system leverage analysis; revised effort estimates |
+| 2025-12-10 | AIWG Analysis | Added Claude Code 2.0.64 feature leverage; async agents, hooks, @-mentions |
