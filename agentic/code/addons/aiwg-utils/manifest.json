@@ -2,7 +2,7 @@
   "id": "aiwg-utils",
   "type": "addon",
   "name": "AIWG Utilities",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Core meta-utilities for AIWG management including context regeneration, workspace maintenance, development kit, and importable prompts",
   "core": true,
   "autoInstall": true,
@@ -50,11 +50,14 @@
     "devkit-create-skill",
     "devkit-validate",
     "devkit-test",
-    "deploy-gen"
+    "deploy-gen",
+    "parallel-dispatch"
   ],
   "agents": [
     "context-regenerator",
-    "aiwg-developer"
+    "aiwg-developer",
+    "consortium-coordinator",
+    "self-debug"
   ],
   "skills": [
     "project-awareness"
@@ -67,6 +70,7 @@
   "prompts": [
     "core/orchestrator",
     "core/multi-agent-pattern",
+    "core/consortium-pattern",
     "agents/design-rules",
     "reliability/decomposition",
     "reliability/parallel-hints",

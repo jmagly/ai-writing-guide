@@ -1,0 +1,38 @@
+{
+  "id": "aiwg-hooks",
+  "type": "addon",
+  "name": "AIWG Hooks",
+  "version": "1.0.0",
+  "description": "Claude Code hook templates for workflow tracing, permissions, and session management",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "keywords": [
+    "aiwg",
+    "hooks",
+    "trace",
+    "permissions",
+    "session",
+    "observability"
+  ],
+  "researchFoundation": {
+    "REF-001": "BP-6 Observability - Production workflows require trace capture",
+    "REF-002": "Archetype 4 - Recovery requires execution history"
+  },
+  "entry": {
+    "hooks": "hooks/",
+    "scripts": "scripts/",
+    "templates": "templates/"
+  },
+  "hooks": [
+    "aiwg-trace",
+    "aiwg-permissions",
+    "aiwg-session"
+  ],
+  "scripts": [
+    "trace-viewer",
+    "trace-export"
+  ]
+}

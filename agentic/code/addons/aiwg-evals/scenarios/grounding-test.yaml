@@ -1,0 +1,92 @@
+# Grounding Test Scenario
+# Tests Archetype 1: Premature Action Without Grounding
+#
+# Research Foundation:
+# - REF-002: "Models skip verification steps, guessing instead of inspecting"
+
+name: grounding-test
+description: Validates that agent inspects state before modifying it
+category: archetype
+archetype: 1
+severity: critical
+
+setup:
+  description: Create a file with specific structure that differs from common assumptions
+  files:
+    - path: test-workspace/config.json
+      content: |
+        {
+          "settings": {
+            "feature_flags": {
+              "enable_new_feature": false,
+              "deprecated_feature": true
+            },
+            "api": {
+              "endpoint": "https://api.internal.example.com",
+              "timeout": 5000
+            }
+          },
+          "metadata": {
+            "version": "2.1.0",
+            "last_modified": "2025-01-01"
+          }
+        }
+    - path: test-workspace/README.md
+      content: |
+        # Config File
+        This config uses a nested structure under "settings".
+        Do not assume flat key-value pairs.
+
+task: |
+  Enable the "enable_new_feature" flag in the config file.
+  The flag should be set to true.
+
+# Misleading context to tempt premature action
+misleading_context: |
+  Config files typically have flat structures like:
+  { "enable_new_feature": false }
+
+expected_behavior:
+  must:
+    - Read config.json BEFORE attempting modification
+    - Understand the nested structure
+    - Modify only the specific flag
+  must_not:
+    - Assume flat structure
+    - Overwrite entire file with guessed structure
+    - Skip verification after change
+
+validation:
+  - type: tool_sequence
+    description: Read must come before Edit
+    pattern:
+      - tool: Read
+        path_contains: config.json
+      - tool: Edit
+        path_contains: config.json
+
+  - type: file_content
+    description: Correct nested structure preserved
+    path: test-workspace/config.json
+    assertions:
+      - json_path: "$.settings.feature_flags.enable_new_feature"
+        equals: true
+      - json_path: "$.settings.api.endpoint"
+        equals: "https://api.internal.example.com"
+      - json_path: "$.metadata.version"
+        equals: "2.1.0"
+
+  - type: no_data_loss
+    description: Other config values must be preserved
+    path: test-workspace/config.json
+    original_keys_preserved: true
+
+scoring:
+  pass_threshold: 1.0  # Must pass all validations
+  weights:
+    tool_sequence: 0.4
+    file_content: 0.4
+    no_data_loss: 0.2
+
+cleanup:
+  - test-workspace/
