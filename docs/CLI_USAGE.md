@@ -577,6 +577,160 @@ aiwg workflow docs/*.md  # Instead of docs/**/*.md
 6. **CI integration**: Use JUnit format for test result visualization
 7. **Git hooks**: Great for team consistency, but allow `--no-verify` for WIP commits
 
+## Agent Linting
+
+Validate agent definitions against the AIWG Agent Design Bible (10 Golden Rules).
+
+### lint agents
+
+```bash
+aiwg lint agents [paths...] [options]
+```
+
+**Options:**
+- `--json`: Output as JSON
+- `--strict`: Fail on any issue (warnings become errors)
+- `--verbose`: Show detailed output
+- `--fix`: Auto-fix fixable issues (where possible)
+
+**Default paths:** SDLC agents, marketing agents, project `.claude/agents/`
+
+**Example:**
+```bash
+# Lint all framework agents
+aiwg lint agents
+
+# Lint specific directory
+aiwg lint agents .claude/agents/
+
+# JSON output for CI
+aiwg lint agents --json --strict
+
+# Verbose with fix attempts
+aiwg lint agents --verbose --fix
+```
+
+**Rules Checked:**
+| Rule | Description | Severity |
+|------|-------------|----------|
+| R001 | Agent must have name field | error |
+| R002 | Agent must have description | error |
+| R003 | Single responsibility (description length) | warning |
+| R004 | Tool count (0-3 optimal) | warning |
+| R005 | Model tier appropriate to task | info |
+| R006 | Required frontmatter fields | error |
+| R007 | Tool naming convention | warning |
+| R008 | No circular dependencies | error |
+| R009 | Outputs clearly defined | info |
+| R010 | Error handling documented | info |
+
+---
+
+## @-Mention Utilities
+
+Manage traceability through @-mention references in code and documentation.
+
+### mention-wire
+
+Intelligently inject @-mentions based on codebase analysis.
+
+```bash
+aiwg wire-mentions [--target <dir>] [--dry-run] [--interactive] [--auto]
+```
+
+**Options:**
+- `--target`: Directory to analyze (default: `.`)
+- `--dry-run`: Show what would be added
+- `--interactive`: Approve each mention
+- `--auto`: Apply high-confidence (>80%) mentions
+- `--confidence <n>`: Set confidence threshold (default: 80)
+
+**Example:**
+```bash
+# Preview what would be wired
+aiwg wire-mentions --dry-run
+
+# Wire with interactive approval
+aiwg wire-mentions --interactive
+
+# Auto-wire high confidence
+aiwg wire-mentions --auto --confidence 90
+```
+
+### mention-validate
+
+Validate that @-mentions resolve to existing files.
+
+```bash
+aiwg validate-mentions [--target <dir>] [--strict]
+```
+
+### mention-lint
+
+Lint @-mentions for style consistency.
+
+```bash
+aiwg mention-lint [--target <dir>] [--fix] [--strict]
+```
+
+**Lint Rules:**
+| Rule | Description | Auto-fix |
+|------|-------------|----------|
+| ML001 | Path not exist | No |
+| ML002 | Wrong case | Yes |
+| ML003 | Missing prefix | Yes |
+| ML004 | Deprecated pattern | Yes |
+| ML005 | Invalid ID format | Yes |
+| ML006 | Duplicate mentions | Yes |
+
+### mention-report
+
+Generate traceability report from @-mentions.
+
+```bash
+aiwg mention-report [--format md|json|csv] [--output <file>]
+```
+
+### mention-conventions
+
+Display @-mention naming conventions.
+
+```bash
+aiwg mention-conventions
+```
+
+---
+
+## Deploy Generators
+
+Generate production-ready deployment configurations.
+
+### deploy-gen
+
+```bash
+# Docker deployment
+/deploy-gen docker --app-name myapp --port 3000
+
+# Kubernetes deployment
+/deploy-gen k8s --app-name myapp --port 3000
+
+# Docker Compose
+/deploy-gen compose --app-name myapp --port 3000
+```
+
+**Options:**
+- `--output <dir>`: Output directory (default: `deploy/`)
+- `--app-name <name>`: Application name
+- `--port <n>`: Application port
+- `--language <lang>`: Override detected language (node|python)
+
+**Generated Files:**
+- **Docker**: Multi-stage Dockerfile with non-root user, health checks
+- **Kubernetes**: Deployment + Service with SecurityContext, probes, resources
+- **Compose**: docker-compose.yml with volume mounts, health checks
+
+---
+
 ## Support
 
 - **GitHub Issues**: https://github.com/jmagly/ai-writing-guide/issues

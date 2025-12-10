@@ -4,6 +4,8 @@
 
 Roig, F. (2025). How Do LLMs Fail In Agentic Scenarios? A Behavioral Analysis Across Model Scales. arXiv:2512.07497v2.
 
+**Link**: [https://arxiv.org/pdf/2512.07497](https://arxiv.org/pdf/2512.07497)
+
 ## Summary
 
 Empirical analysis of 900 execution traces from KAMI v0.1 benchmark across three model tiers (32B, 400B, 671B parameters). The study identifies four failure archetypes that emerge consistently regardless of model scale, demonstrating that recovery capability—not initial correctness or model size—is the dominant predictor of agentic task success.
