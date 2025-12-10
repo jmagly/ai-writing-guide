@@ -468,7 +468,7 @@ export function createServer() {
       description: 'Break down complex task into manageable subtasks (≤7 for cognitive limit)',
       argsSchema: {
         task: z.string().describe('Complex task to decompose'),
-        max_subtasks: z.number().default(7).describe('Maximum subtasks (cognitive limit)')
+        max_subtasks: z.string().default('7').describe('Maximum subtasks (cognitive limit)')
       }
     },
     ({ task, max_subtasks }) => ({

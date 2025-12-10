@@ -179,8 +179,23 @@ export async function main(args = process.argv.slice(2)) {
       break;
 
     case 'install':
-      const target = args[1] || 'claude';
-      const projectDir = args[2] || '.';
+      // Parse install arguments (skip flags)
+      const installArgs = args.slice(1).filter(a => !a.startsWith('--'));
+      const target = installArgs[0] || 'claude';
+      const projectDir = installArgs[1] || '.';
+
+      // Check for --dry-run flag
+      if (args.includes('--dry-run')) {
+        console.log(`[DRY RUN] Would generate MCP config for: ${target}`);
+        console.log(`[DRY RUN] Target directory: ${projectDir}`);
+        const configs = {
+          claude: '.claude/settings.local.json',
+          cursor: '.cursor/mcp.json'
+        };
+        console.log(`[DRY RUN] Config file: ${configs[target] || 'unknown'}`);
+        break;
+      }
+
       await generateConfig(target, projectDir);
       break;
 
