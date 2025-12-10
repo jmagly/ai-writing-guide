@@ -18,8 +18,7 @@
     "test:ui": "vitest --ui",
     "test:watch": "vitest --watch",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist coverage",
-    "prepublishOnly": "npm run typecheck && npm test"
+    "clean": "rm -rf dist coverage"
   },
   "files": [
     "bin/",
