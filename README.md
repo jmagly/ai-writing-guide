@@ -18,13 +18,36 @@
 
 ## 🚀 Quick Start
 
-> **📋 Prerequisites:** Node.js ≥18.20.8 and an AI platform (Claude Code, Warp Terminal, or Factory AI). [See detailed setup instructions →](#-prerequisites)
+> **📋 Prerequisites:** Node.js ≥18.0.0 and an AI platform (Claude Code, Warp Terminal, or Factory AI). [See detailed setup instructions →](#-prerequisites)
 
-**Install in 30 seconds** — One command. Zero configuration.
+### Option 1: npm (Recommended)
+
+```bash
+npm install -g aiwg
+```
+
+### Option 2: Bash Script (Legacy)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
 ```
+
+<details>
+<summary><strong>Bleeding Edge Mode</strong></summary>
+
+After installing via npm, you can switch to bleeding edge (latest from main branch):
+
+```bash
+# Switch to edge channel (tracks main branch)
+aiwg --use-main
+
+# Switch back to stable (npm releases)
+aiwg --use-stable
+```
+
+Edge mode is for power users who want the latest features before they're released.
+
+</details>
 
 **Activate on your project** — Choose your framework:
 
