@@ -4,7 +4,7 @@
   "description": "AI Writing Guide - Framework for improving AI-generated content quality with SDLC lifecycle support",
   "type": "module",
   "bin": {
-    "aiwg": "./bin/aiwg.mjs"
+    "aiwg": "bin/aiwg.mjs"
   },
   "main": "src/cli/index.mjs",
   "engines": {
@@ -57,8 +57,7 @@
   },
   "homepage": "https://github.com/jmagly/ai-writing-guide#readme",
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "dependencies": {
     "chalk": "^4.1.2",
