@@ -4,6 +4,25 @@ Unified analysis synthesizing:
 
 - **REF-001**: Academic analysis of Bandara et al. "Production-Grade Agentic AI Workflows" (arxiv 2512.08769)
 - **Consultant Punchlist**: 11-item gap-closer punchlist from external review
+- **Memory System Leverage**: See [memory-system-leverage.md](./memory-system-leverage.md) for Claude Code memory integration
+
+## Executive Summary: Memory System Impact
+
+Claude Code's memory hierarchy significantly accelerates our roadmap:
+
+| Item | Original Approach | Memory-Optimized Approach | Effort Reduction |
+|------|-------------------|---------------------------|------------------|
+| #3 External Prompt Registry | Separate repo + submodule + runtime hooks | **Native via @imports** | ~90% |
+| #4 Agent Design Bible | Monolithic doc | Importable prompts + path-filtered rules | ~50% |
+| #2 Parallel-Hints | Template auto-injection | Single `.claude/rules/` file | ~80% |
+| #1 Decompose Helper | Custom extension | Command + importable prompts | ~30% |
+| #10 Linter | CLI only | CLI + runtime rules (belt & suspenders) | +20% value |
+
+**Key enablers from memory system**:
+- `@path/to/file` imports → External prompt registry is native
+- `.claude/rules/*.md` → Modular, deployable guidance
+- Path-specific frontmatter (`paths: .claude/agents/*.md`) → Conditional loading
+- Recursive discovery → Nested project support
 
 ## Cross-Reference Matrix
 
@@ -288,3 +307,4 @@ Unified analysis synthesizing:
 | Date | Author | Changes |
 |------|--------|---------|
 | 2025-12-10 | AIWG Analysis | Initial unified plan synthesizing REF-001 and consultant punchlist |
+| 2025-12-10 | AIWG Analysis | Added memory system leverage analysis; revised effort estimates |
