@@ -41,9 +41,12 @@
     "summarize-transcript",
     "devkit-create-addon",
     "devkit-create-extension",
+    "devkit-create-framework",
     "devkit-create-agent",
     "devkit-create-command",
-    "devkit-validate"
+    "devkit-create-skill",
+    "devkit-validate",
+    "devkit-test"
   ],
   "agents": [
     "context-regenerator",

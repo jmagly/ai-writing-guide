@@ -282,6 +282,37 @@ aiwg -help
 
 **Note**: aiwg automatically updates on every command invocation to ensure you're always using the latest version. If you encounter corruption or installation issues, use `aiwg -reinstall` to force a clean reinstall.
 
+### Development Kit
+
+Create and extend the AIWG ecosystem with scaffolding tools:
+
+```bash
+# Create new packages
+aiwg scaffold-addon <name> [--description "..."] [--dry-run]
+aiwg scaffold-extension <name> --for <framework> [--description "..."] [--dry-run]
+
+# Add components to existing packages
+aiwg add-agent <name> --to <target> [--template simple|complex|orchestrator]
+aiwg add-command <name> --to <target> [--template utility|transformation|orchestration]
+aiwg add-skill <name> --to <target>
+aiwg add-template <name> --to <target> [--type document|checklist|matrix|form]
+
+# Validate packages
+aiwg validate <path> [--fix] [--verbose]
+```
+
+In-session commands for AI-guided creation:
+
+```bash
+/devkit-create-addon <name> [--interactive]
+/devkit-create-extension <name> --for <framework> [--interactive]
+/devkit-create-agent <name> --to <target> [--template simple|complex|orchestrator]
+/devkit-create-command <name> --to <target> [--template utility|transformation|orchestration]
+/devkit-validate <path> [--fix] [--verbose]
+```
+
+See [Development Kit Overview](docs/development/devkit-overview.md) for comprehensive documentation.
+
 ### Direct Tool Usage (Without Install)
 
 ```bash

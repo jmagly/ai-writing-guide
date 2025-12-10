@@ -153,3 +153,64 @@ aiwg use sdlc --no-utils
 /workspace-realign --archive-stale      # Then realign docs
 /aiwg-regenerate                        # Finally, update context file
 ```
+
+## Development Kit
+
+Tools for creating and extending the AIWG ecosystem.
+
+### CLI Commands (Outside Sessions)
+
+```bash
+# Create new packages
+aiwg scaffold-addon <name> [--description "..."] [--dry-run]
+aiwg scaffold-extension <name> --for <framework> [--description "..."] [--dry-run]
+
+# Add components to existing packages
+aiwg add-agent <name> --to <target> [--template simple|complex|orchestrator]
+aiwg add-command <name> --to <target> [--template utility|transformation|orchestration]
+aiwg add-skill <name> --to <target>
+aiwg add-template <name> --to <target> [--type document|checklist|matrix|form]
+
+# Validate packages
+aiwg validate <path> [--fix] [--verbose]
+```
+
+### In-Session Commands (Within Claude Code)
+
+```bash
+# Create packages with AI guidance
+/devkit-create-addon <name> [--interactive]
+/devkit-create-extension <name> --for <framework> [--interactive]
+/devkit-create-agent <name> --to <target> [--template simple|complex|orchestrator]
+/devkit-create-command <name> --to <target> [--template utility|transformation|orchestration]
+/devkit-validate <path> [--fix] [--verbose]
+```
+
+### Agent Templates
+
+| Template | Model | Tools | Use Case |
+|----------|-------|-------|----------|
+| `simple` | sonnet | Read, Write, Bash | Single-responsibility agents |
+| `complex` | sonnet | Read, Write, Bash, Glob, Grep, WebFetch | Multi-step analysis agents |
+| `orchestrator` | opus | All + Task tool | Agents that coordinate other agents |
+
+### Command Templates
+
+| Template | Structure | Use Case |
+|----------|-----------|----------|
+| `utility` | Single action | Quick operations, lookups |
+| `transformation` | Input → Process → Output | File conversion, formatting |
+| `orchestration` | Multi-agent workflow | Complex workflows with agent coordination |
+
+### Documentation
+
+For comprehensive guides, see:
+
+- [Development Kit Overview](../../../../docs/development/devkit-overview.md)
+- [Creating Addons](../../../../docs/development/addon-creation-guide.md)
+- [Creating Extensions](../../../../docs/development/extension-creation-guide.md)
+- [Creating Frameworks](../../../../docs/development/framework-creation-guide.md)
+
+### `aiwg-developer` Agent
+
+Specialized agent for AIWG development assistance. Understands three-tier taxonomy, manifest schemas, and scaffolding tools
