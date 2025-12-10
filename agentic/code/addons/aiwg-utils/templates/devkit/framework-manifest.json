@@ -1,0 +1,20 @@
+{
+  "id": "{{id}}",
+  "type": "framework",
+  "name": "{{name}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "author": "{{author}}",
+  "entry": {
+    "agents": "agents",
+    "commands": "commands",
+    "skills": "skills",
+    "templates": "templates",
+    "flows": "flows"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": [],
+  "templates": [],
+  "flows": []
+}
