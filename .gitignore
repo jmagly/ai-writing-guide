@@ -35,6 +35,15 @@ test-*.temp
 test-output/
 test-results/
 
+# Windows Zone.Identifier files (NTFS alternate data streams)
+*:Zone.Identifier
+
+# PDF files (research papers, etc. - too large for repo)
+*.pdf
+
+# CLAUDE.md backups
+CLAUDE.md.backup-*
+
 # Local notes
 local-notes/
 .local/
