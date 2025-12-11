@@ -1,6 +1,7 @@
 ---
 name: aiwg-regenerate-claude
 description: Regenerate CLAUDE.md for Claude Code with preserved team directives (modular structure)
+argument-hint: [--guidance "text"] [--interactive]
 args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--legacy]"
 ---
 
@@ -492,6 +493,27 @@ Consider migrating to modular structure for better performance.
 | Read error | Report error, suggest --full |
 | No AIWG detected | Generate project-only content, warn |
 | No package files | Generate minimal structure, warn |
+
+
+## Optional Parameters
+
+### --guidance "text"
+Provide strategic context or constraints to guide the command execution:
+```
+/aiwg-regenerate-claude --guidance "Focus on security implications"
+```
+
+### --interactive
+Enable interactive mode for step-by-step confirmation and input:
+```
+/aiwg-regenerate-claude --interactive
+```
+
+When interactive mode is enabled, the command will:
+1. Confirm understanding of the task before proceeding
+2. Ask clarifying questions if requirements are ambiguous
+3. Present options for user decision at key branch points
+4. Summarize changes before applying them
 
 ## Notes
 

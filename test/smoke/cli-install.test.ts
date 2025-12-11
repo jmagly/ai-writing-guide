@@ -207,14 +207,16 @@ describe('CLI Installation Smoke Tests', () => {
     });
   });
 
-  describe('smoke: provider restrictions', () => {
-    it('should warn about skills for non-Claude providers', () => {
+  describe('smoke: provider skill support', () => {
+    it('should deploy skills to Factory provider', () => {
       const result = execSync(
         `node ${DEPLOY_SCRIPT} --target ${testDir} --provider factory --deploy-skills --dry-run 2>&1`,
         { encoding: 'utf-8', timeout: 30000 }
       );
 
-      expect(result).toMatch(/Skills.*Claude|not.*supported/i);
+      // Skills should deploy to Factory (multi-provider support)
+      expect(result).toMatch(/Deploying.*skills.*to.*factory/i);
+      expect(result).toMatch(/\.factory\/skills/);
     });
   });
 });

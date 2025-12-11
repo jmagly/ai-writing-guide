@@ -37,6 +37,16 @@
       "name": "nl-router",
       "description": "Natural language request routing to appropriate skills",
       "triggers": ["(meta-router - processes unmatched natural language)"]
+    },
+    {
+      "name": "workspace-health",
+      "description": "Workspace alignment assessment and cleanup recommendations",
+      "triggers": ["check workspace health", "workspace status", "is my workspace aligned", "cleanup recommendations", "do I need to realign"]
+    },
+    {
+      "name": "claims-validator",
+      "description": "Validates factual claims against source documents",
+      "triggers": ["validate claims", "check facts", "verify statements"]
     }
   ],
   "usage": "These skills are consumed by framework-specific skills and can be invoked directly for utility operations."
