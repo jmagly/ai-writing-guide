@@ -530,16 +530,20 @@ function createCodexAgentsMd(target, srcRoot, dryRun) {
   if (fs.existsSync(destPath)) {
     const existing = fs.readFileSync(destPath, 'utf8');
 
-    // Check if it already has AIWG section
-    if (existing.includes('AIWG SDLC Framework')) {
+    // Check if it already has AIWG section (look for the marker comment or header)
+    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
+        existing.includes('## AIWG SDLC Framework')) {
       console.log('AGENTS.md already contains AIWG section, skipping');
       return;
     }
 
     // Append AIWG section to existing AGENTS.md
-    const separator = '\n\n---\n\n<!-- AIWG SDLC Framework Integration -->\n\n';
-    const aiwgSection = template.split('<!-- AIWG SDLC Framework Integration -->')[1] || template;
-    const combined = existing.trimEnd() + separator + aiwgSection.trim() + '\n';
+    // Extract just the AIWG section from the template (after the marker comment)
+    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+    const aiwgSection = markerIndex !== -1
+      ? template.slice(markerIndex)
+      : template;
+    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
 
     if (dryRun) {
       console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);

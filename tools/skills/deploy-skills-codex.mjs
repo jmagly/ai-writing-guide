@@ -76,26 +76,75 @@ function findSkillDirs(baseDir) {
 }
 
 /**
- * Parse AIWG SKILL.md frontmatter
+ * Parse AIWG SKILL.md - handles both frontmatter and non-frontmatter formats
  */
-function parseSkillFrontmatter(content) {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-  if (!match) return null;
+function parseSkillContent(content, skillName) {
+  // Try YAML frontmatter format first
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (fmMatch) {
+    const [, frontmatter, body] = fmMatch;
+    const metadata = {};
 
-  const [, frontmatter, body] = match;
-  const metadata = {};
+    // Parse YAML-like frontmatter
+    for (const line of frontmatter.split('\n')) {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx > 0) {
+        const key = line.slice(0, colonIdx).trim();
+        const value = line.slice(colonIdx + 1).trim();
+        metadata[key] = value;
+      }
+    }
 
-  // Parse YAML-like frontmatter
-  for (const line of frontmatter.split('\n')) {
-    const colonIdx = line.indexOf(':');
-    if (colonIdx > 0) {
-      const key = line.slice(0, colonIdx).trim();
-      const value = line.slice(colonIdx + 1).trim();
-      metadata[key] = value;
+    return { metadata, body };
+  }
+
+  // Fallback: Parse non-frontmatter format (# skill-name header)
+  const lines = content.split('\n');
+  let name = skillName;
+  let description = '';
+  let bodyStartIdx = 0;
+
+  // Look for # header as name
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('# ')) {
+      name = line.slice(2).trim();
+      bodyStartIdx = i + 1;
+      break;
     }
   }
 
-  return { metadata, body };
+  // Look for first paragraph as description (skip empty lines)
+  for (let i = bodyStartIdx; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line && !line.startsWith('#') && !line.startsWith('-') && !line.startsWith('|')) {
+      description = line;
+      break;
+    }
+  }
+
+  // If description is too short, try next paragraph
+  if (description.length < 20) {
+    for (let i = bodyStartIdx; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith('## ') && line.toLowerCase().includes('purpose')) {
+        // Look for content after ## Purpose
+        for (let j = i + 1; j < lines.length && j < i + 10; j++) {
+          const purposeLine = lines[j].trim();
+          if (purposeLine && !purposeLine.startsWith('#') && !purposeLine.startsWith('-')) {
+            description = purposeLine;
+            break;
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  return {
+    metadata: { name, description },
+    body: content
+  };
 }
 
 /**
@@ -103,8 +152,9 @@ function parseSkillFrontmatter(content) {
  */
 function transformToCodexSkill(skillDir) {
   const skillPath = path.join(skillDir, 'SKILL.md');
+  const skillName = path.basename(skillDir);
   const content = fs.readFileSync(skillPath, 'utf8');
-  const parsed = parseSkillFrontmatter(content);
+  const parsed = parseSkillContent(content, skillName);
 
   if (!parsed) {
     console.warn(`Warning: Could not parse ${skillPath}`);

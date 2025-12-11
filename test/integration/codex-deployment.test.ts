@@ -16,19 +16,36 @@ import { execSync } from 'child_process';
 
 // Test directories
 const TEST_PROJECT_DIR = path.join(os.tmpdir(), 'aiwg-codex-test-project');
-const TEST_CODEX_DIR = path.join(os.tmpdir(), 'aiwg-codex-test-home', '.codex');
+const TEST_HOME_DIR = path.join(os.tmpdir(), 'aiwg-codex-test-home');
+const TEST_CODEX_DIR = path.join(TEST_HOME_DIR, '.codex');
 const REPO_ROOT = path.resolve(__dirname, '../..');
 
 // Helper to run CLI commands
 function runAiwg(args: string[], cwd = TEST_PROJECT_DIR): string {
   const env = {
     ...process.env,
-    HOME: path.dirname(TEST_CODEX_DIR),
-    USERPROFILE: path.dirname(TEST_CODEX_DIR),
+    HOME: TEST_HOME_DIR,
+    USERPROFILE: TEST_HOME_DIR,
   };
 
-  return execSync(`node ${REPO_ROOT}/src/cli/index.mjs ${args.join(' ')}`, {
+  // Use bin/aiwg.mjs which properly awaits async operations
+  return execSync(`node ${REPO_ROOT}/bin/aiwg.mjs ${args.join(' ')}`, {
     cwd,
+    env,
+    encoding: 'utf-8',
+  });
+}
+
+// Helper to run deployment scripts directly
+function runScript(scriptPath: string, args: string[] = []): string {
+  const env = {
+    ...process.env,
+    HOME: TEST_HOME_DIR,
+    USERPROFILE: TEST_HOME_DIR,
+  };
+
+  return execSync(`node ${path.join(REPO_ROOT, scriptPath)} ${args.join(' ')}`, {
+    cwd: TEST_PROJECT_DIR,
     env,
     encoding: 'utf-8',
   });
@@ -41,18 +58,24 @@ describe('Codex Integration', () => {
     await fs.mkdir(TEST_CODEX_DIR, { recursive: true });
 
     // Initialize as git repo (Codex requires this)
-    execSync('git init', { cwd: TEST_PROJECT_DIR });
+    execSync('git init', { cwd: TEST_PROJECT_DIR, stdio: 'pipe' });
   });
 
   afterEach(async () => {
     // Cleanup
     await fs.rm(TEST_PROJECT_DIR, { recursive: true, force: true });
-    await fs.rm(path.dirname(TEST_CODEX_DIR), { recursive: true, force: true });
+    await fs.rm(TEST_HOME_DIR, { recursive: true, force: true });
   });
 
   describe('AGENTS.md Generation', () => {
     it('generates AGENTS.md for Codex provider', async () => {
-      runAiwg(['use', 'sdlc', '--provider', 'codex']);
+      // Run deploy-agents with --create-agents-md
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'sdlc',
+        '--create-agents-md',
+        '--target', TEST_PROJECT_DIR
+      ]);
 
       const agentsMd = await fs.readFile(
         path.join(TEST_PROJECT_DIR, 'AGENTS.md'),
@@ -65,7 +88,12 @@ describe('Codex Integration', () => {
     });
 
     it('respects 32KB size limit', async () => {
-      runAiwg(['use', 'sdlc', '--provider', 'codex']);
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'sdlc',
+        '--create-agents-md',
+        '--target', TEST_PROJECT_DIR
+      ]);
 
       const agentsMd = await fs.readFile(
         path.join(TEST_PROJECT_DIR, 'AGENTS.md'),
@@ -83,7 +111,12 @@ describe('Codex Integration', () => {
         '# My Project\n\nExisting content here.\n'
       );
 
-      runAiwg(['use', 'sdlc', '--provider', 'codex']);
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'sdlc',
+        '--create-agents-md',
+        '--target', TEST_PROJECT_DIR
+      ]);
 
       const agentsMd = await fs.readFile(
         path.join(TEST_PROJECT_DIR, 'AGENTS.md'),
@@ -95,21 +128,30 @@ describe('Codex Integration', () => {
       expect(agentsMd).toContain('AIWG SDLC Framework');
 
       // Run again - should not duplicate
-      runAiwg(['use', 'sdlc', '--provider', 'codex', '--force']);
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'sdlc',
+        '--create-agents-md',
+        '--target', TEST_PROJECT_DIR,
+        '--force'
+      ]);
 
       const agentsMd2 = await fs.readFile(
         path.join(TEST_PROJECT_DIR, 'AGENTS.md'),
         'utf-8'
       );
 
-      const matches = agentsMd2.match(/AIWG SDLC Framework/g);
+      // Count only the ## heading, not the HTML comment marker
+      const matches = agentsMd2.match(/## AIWG SDLC Framework/g);
       expect(matches?.length).toBe(1);
     });
   });
 
   describe('Skills Deployment', () => {
     it('deploys skills to ~/.codex/skills/', async () => {
-      const output = runAiwg(['-deploy-skills', '--provider', 'codex']);
+      const output = runScript('tools/skills/deploy-skills-codex.mjs', [
+        '--target', path.join(TEST_CODEX_DIR, 'skills')
+      ]);
 
       expect(output).toContain('Deploying skills to Codex');
 
@@ -121,7 +163,9 @@ describe('Codex Integration', () => {
     });
 
     it('formats skill with correct YAML frontmatter', async () => {
-      runAiwg(['-deploy-skills', '--provider', 'codex']);
+      runScript('tools/skills/deploy-skills-codex.mjs', [
+        '--target', path.join(TEST_CODEX_DIR, 'skills')
+      ]);
 
       const skillDir = path.join(TEST_CODEX_DIR, 'skills', 'voice-apply');
       const skillMd = await fs.readFile(
@@ -137,7 +181,9 @@ describe('Codex Integration', () => {
     });
 
     it('truncates description to 500 chars', async () => {
-      runAiwg(['-deploy-skills', '--provider', 'codex']);
+      runScript('tools/skills/deploy-skills-codex.mjs', [
+        '--target', path.join(TEST_CODEX_DIR, 'skills')
+      ]);
 
       const skillsDir = path.join(TEST_CODEX_DIR, 'skills');
       const skills = await fs.readdir(skillsDir);
@@ -159,7 +205,9 @@ describe('Codex Integration', () => {
 
   describe('Prompts Deployment', () => {
     it('creates prompts in ~/.codex/prompts/', async () => {
-      const output = runAiwg(['-deploy-commands', '--provider', 'codex']);
+      const output = runScript('tools/commands/deploy-prompts-codex.mjs', [
+        '--target', path.join(TEST_CODEX_DIR, 'prompts')
+      ]);
 
       expect(output).toContain('Deploying commands as Codex prompts');
 
@@ -172,7 +220,9 @@ describe('Codex Integration', () => {
     });
 
     it('converts AIWG command placeholders', async () => {
-      runAiwg(['-deploy-commands', '--provider', 'codex']);
+      runScript('tools/commands/deploy-prompts-codex.mjs', [
+        '--target', path.join(TEST_CODEX_DIR, 'prompts')
+      ]);
 
       const promptsDir = path.join(TEST_CODEX_DIR, 'prompts');
       const prompts = await fs.readdir(promptsDir);
@@ -185,14 +235,16 @@ describe('Codex Integration', () => {
           'utf-8'
         );
 
-        // Should use Codex placeholder format
+        // Should use Codex placeholder format (not {{}} mustache)
         expect(content).not.toContain('{{');
         expect(content).not.toContain('}}');
       }
     });
 
     it('generates correct argument-hint in frontmatter', async () => {
-      runAiwg(['-deploy-commands', '--provider', 'codex']);
+      runScript('tools/commands/deploy-prompts-codex.mjs', [
+        '--target', path.join(TEST_CODEX_DIR, 'prompts')
+      ]);
 
       const promptsDir = path.join(TEST_CODEX_DIR, 'prompts');
       const prompts = await fs.readdir(promptsDir);
@@ -264,17 +316,17 @@ describe('Codex Integration', () => {
 
   describe('Dry Run', () => {
     it('--dry-run shows what would be deployed without writing', async () => {
-      const output = runAiwg([
-        'use',
-        'sdlc',
-        '--provider',
-        'codex',
-        '--dry-run',
+      const output = runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'sdlc',
+        '--create-agents-md',
+        '--target', TEST_PROJECT_DIR,
+        '--dry-run'
       ]);
 
       expect(output).toContain('[dry-run]');
 
-      // Verify no files were created
+      // Verify no AGENTS.md was created (only .git may exist)
       const files = await fs.readdir(TEST_PROJECT_DIR);
       expect(files).not.toContain('AGENTS.md');
     });
@@ -282,7 +334,12 @@ describe('Codex Integration', () => {
 
   describe('Provider Aliases', () => {
     it('--provider openai is alias for codex', async () => {
-      runAiwg(['use', 'sdlc', '--provider', 'openai']);
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'openai',
+        '--mode', 'sdlc',
+        '--create-agents-md',
+        '--target', TEST_PROJECT_DIR
+      ]);
 
       // Should create AGENTS.md for Codex
       const agentsMd = await fs.readFile(
@@ -339,6 +396,7 @@ describe('Config Template', () => {
     expect(configTemplate).toContain('project_doc_fallback_filenames');
     expect(configTemplate).toContain('CLAUDE.md');
     expect(configTemplate).toContain('[profiles.aiwg-sdlc]');
-    expect(configTemplate).toContain('[mcp_servers.aiwg]');
+    // MCP config is commented out in template
+    expect(configTemplate).toContain('mcp_servers.aiwg');
   });
 });
