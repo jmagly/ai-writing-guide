@@ -42,16 +42,18 @@ export function createServer() {
   // Tool: workflow-run
   server.registerTool('workflow-run', {
     title: 'Run AIWG Workflow',
-    description: 'Execute an AIWG workflow (phase transitions, reviews, artifact generation)',
+    description: 'Execute an AIWG workflow (phase transitions, reviews, artifact generation). Automatically applies decompose-task, parallel-execution, and recovery-protocol prompts.',
     inputSchema: {
       prompt: z.string().describe('Natural language workflow request or command name'),
       guidance: z.string().optional().describe('Strategic guidance to influence execution'),
       framework: z.enum(['sdlc-complete', 'media-marketing-kit', 'auto']).default('auto')
         .describe('Framework to use (auto-detected from prompt if not specified)'),
       project_dir: z.string().default('.').describe('Project directory path'),
-      dry_run: z.boolean().default(false).describe('Show what would be executed without running')
+      dry_run: z.boolean().default(false).describe('Show what would be executed without running'),
+      skip_decomposition: z.boolean().default(false).describe('Skip automatic task decomposition'),
+      max_subtasks: z.number().default(7).describe('Maximum subtasks for decomposition (cognitive limit)')
     }
-  }, async ({ prompt, guidance, framework, project_dir, dry_run }) => {
+  }, async ({ prompt, guidance, framework, project_dir, dry_run, skip_decomposition, max_subtasks }) => {
     try {
       // Detect framework from prompt if auto
       const detectedFramework = framework === 'auto'
@@ -61,6 +63,40 @@ export function createServer() {
       // Parse workflow from prompt
       const workflow = parseWorkflow(prompt);
 
+      // Get workflow complexity to determine if decomposition is needed
+      const workflowInfo = getWorkflowInfo(workflow);
+
+      // Build integrated prompt structure
+      const integratedPrompts = [];
+
+      // Auto-apply decompose-task for complex workflows
+      if (!skip_decomposition && workflowInfo.isComplex) {
+        integratedPrompts.push({
+          name: 'decompose-task',
+          applied: true,
+          reason: `Workflow "${workflow}" has ${workflowInfo.steps} steps, exceeds complexity threshold`,
+          prompt: generateDecomposePrompt(prompt, max_subtasks)
+        });
+      }
+
+      // Auto-apply parallel-execution for multi-step workflows
+      if (workflowInfo.steps > 1) {
+        integratedPrompts.push({
+          name: 'parallel-execution',
+          applied: true,
+          reason: `Multi-step workflow can benefit from parallel execution analysis`,
+          prompt: generateParallelPrompt(workflowInfo.stepDescriptions)
+        });
+      }
+
+      // Recovery protocol is always available (applied on errors)
+      integratedPrompts.push({
+        name: 'recovery-protocol',
+        applied: false,
+        reason: 'Available for error recovery (applied automatically on failures)',
+        prompt: null
+      });
+
       if (dry_run) {
         return {
           content: [{
@@ -69,16 +105,18 @@ export function createServer() {
               status: 'dry_run',
               detected_framework: detectedFramework,
               detected_workflow: workflow,
+              workflow_info: workflowInfo,
+              integrated_prompts: integratedPrompts,
               prompt,
               guidance,
               project_dir,
-              message: 'Workflow would be executed with these parameters'
+              message: 'Workflow would be executed with integrated prompts'
             }, null, 2)
           }]
         };
       }
 
-      // For now, return workflow detection info
+      // For now, return workflow detection info with integrated prompts
       // Full implementation will integrate with AIWG CLI
       return {
         content: [{
@@ -87,18 +125,31 @@ export function createServer() {
             status: 'ready',
             framework: detectedFramework,
             workflow,
+            workflow_info: workflowInfo,
+            integrated_prompts: integratedPrompts,
             prompt,
             guidance,
             project_dir,
-            message: 'Workflow parsed. Full execution requires AIWG CLI integration.'
+            message: 'Workflow parsed with integrated prompts. Full execution requires AIWG CLI integration.'
           }, null, 2)
         }]
       };
     } catch (error) {
+      // Auto-apply recovery-protocol on errors
+      const recoveryPrompt = generateRecoveryPrompt(error.message, `Executing workflow from prompt: "${prompt}"`);
+
       return {
         content: [{
           type: 'text',
-          text: `Error: ${error.message}`
+          text: JSON.stringify({
+            status: 'error',
+            error: error.message,
+            recovery_protocol: {
+              applied: true,
+              prompt: recoveryPrompt
+            },
+            message: 'Error occurred. Recovery protocol has been applied.'
+          }, null, 2)
         }],
         isError: true
       };
@@ -618,6 +669,215 @@ function detectFramework(prompt) {
 
   // Default to SDLC
   return 'sdlc-complete';
+}
+
+/**
+ * Workflow metadata for complexity analysis and prompt integration
+ */
+const WORKFLOW_METADATA = {
+  'flow-inception-to-elaboration': {
+    steps: 5,
+    isComplex: true,
+    stepDescriptions: [
+      'Validate Inception gate criteria',
+      'Generate Software Architecture Document (SAD)',
+      'Create Architecture Decision Records (ADRs)',
+      'Develop Master Test Plan',
+      'Create Elaboration Phase Plan'
+    ]
+  },
+  'flow-elaboration-to-construction': {
+    steps: 4,
+    isComplex: true,
+    stepDescriptions: [
+      'Validate Elaboration gate criteria',
+      'Finalize iteration plan',
+      'Scale team resources',
+      'Kick off Construction phase'
+    ]
+  },
+  'flow-construction-to-transition': {
+    steps: 5,
+    isComplex: true,
+    stepDescriptions: [
+      'Validate Construction gate criteria',
+      'Complete IOC validation',
+      'Prepare production deployment',
+      'Execute operational handover',
+      'Initialize hypercare period'
+    ]
+  },
+  'flow-security-review-cycle': {
+    steps: 4,
+    isComplex: true,
+    stepDescriptions: [
+      'Execute threat modeling',
+      'Run SAST/DAST scans',
+      'Validate security controls',
+      'Generate security report'
+    ]
+  },
+  'flow-architecture-evolution': {
+    steps: 4,
+    isComplex: true,
+    stepDescriptions: [
+      'Analyze change triggers',
+      'Create/update ADRs',
+      'Execute architecture review',
+      'Plan migration if needed'
+    ]
+  },
+  'flow-test-strategy-execution': {
+    steps: 4,
+    isComplex: false,
+    stepDescriptions: [
+      'Execute test suite',
+      'Validate coverage',
+      'Triage defects',
+      'Generate test report'
+    ]
+  },
+  'flow-deploy-to-production': {
+    steps: 5,
+    isComplex: true,
+    stepDescriptions: [
+      'Select deployment strategy',
+      'Execute pre-deployment validation',
+      'Perform deployment',
+      'Validate deployment health',
+      'Enable rollback if needed'
+    ]
+  },
+  'flow-gate-check': {
+    steps: 3,
+    isComplex: false,
+    stepDescriptions: [
+      'Collect gate criteria',
+      'Validate artifacts',
+      'Generate gate report'
+    ]
+  },
+  'project-status': {
+    steps: 2,
+    isComplex: false,
+    stepDescriptions: [
+      'Analyze project artifacts',
+      'Generate status report'
+    ]
+  }
+};
+
+/**
+ * Get workflow information for complexity analysis
+ */
+function getWorkflowInfo(workflow) {
+  const metadata = WORKFLOW_METADATA[workflow];
+
+  if (metadata) {
+    return metadata;
+  }
+
+  // Default for unknown workflows
+  return {
+    steps: 1,
+    isComplex: false,
+    stepDescriptions: [`Execute ${workflow}`]
+  };
+}
+
+/**
+ * Generate decompose-task prompt content
+ */
+function generateDecomposePrompt(task, maxSubtasks) {
+  return `## Task Decomposition Request
+
+Break down the following task into ${maxSubtasks} or fewer concrete, actionable subtasks.
+
+**Task**: ${task}
+
+**Guidelines**:
+1. Each subtask should be independently executable
+2. Subtasks should have clear completion criteria
+3. Order by logical dependency (prerequisites first)
+4. Identify which subtasks can run in parallel
+5. Flag any subtasks that require user input
+
+**Output Format**:
+For each subtask, provide:
+- ID: Sequential identifier
+- Description: Clear action statement
+- Dependencies: List of prerequisite subtask IDs
+- Parallelizable: Yes/No
+- Requires Input: Yes/No (if Yes, specify what)`;
+}
+
+/**
+ * Generate parallel-execution prompt content
+ */
+function generateParallelPrompt(stepDescriptions) {
+  const taskList = stepDescriptions.map((step, i) => `${i + 1}. ${step}`).join('\n');
+
+  return `## Parallel Execution Analysis
+
+Analyze the following tasks and identify which can be executed in parallel.
+
+**Tasks**:
+${taskList}
+
+**Analysis Required**:
+1. **Dependency Graph**: Map task dependencies
+2. **Parallel Groups**: Group tasks that can run simultaneously
+3. **Critical Path**: Identify the longest sequential chain
+4. **Resource Conflicts**: Flag tasks that compete for same resources
+5. **Coordination Points**: Where parallel streams must synchronize
+
+**Output**: Provide an execution plan with parallel lanes and sync points.`;
+}
+
+/**
+ * Generate recovery-protocol prompt content
+ */
+function generateRecoveryPrompt(error, context) {
+  return `## Recovery Protocol
+
+An error has occurred. Follow the structured recovery protocol.
+
+**Error**: ${error}
+${context ? `**Context**: ${context}` : ''}
+
+**Protocol**:
+
+### 1. PAUSE
+Stop execution and preserve current state.
+- What was the exact operation being performed?
+- What state needs to be preserved?
+
+### 2. DIAGNOSE
+Analyze the error and classify it:
+- **Syntax Error**: Fix formatting/structure
+- **Schema Mismatch**: Re-inspect target (Rule 4: Grounding)
+- **Logic Error**: Decompose further
+- **Loop Detected**: Change approach entirely
+- **External Failure**: Network, API, or resource issue
+
+### 3. ADAPT
+Choose a recovery strategy:
+- Simple retry (transient failures)
+- Modified approach (logic issues)
+- Alternative path (blocked resources)
+- Partial completion (scope reduction)
+
+### 4. RETRY
+Execute adapted approach (max 3 attempts).
+Track what was tried and outcomes.
+
+### 5. ESCALATE
+If retry fails, prepare structured escalation:
+- What was attempted
+- What failed
+- Current state
+- Recommended next steps
+- Human decision required`;
 }
 
 /**

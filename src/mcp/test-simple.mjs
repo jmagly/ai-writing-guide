@@ -267,6 +267,115 @@ async function main() {
     console.log(`  Workflow: ${result.detected_workflow}`);
   });
 
+  // Test integrated prompts for complex workflow
+  await test('Complex workflow includes integrated prompts', async () => {
+    const response = await sendAndWait('tools/call', {
+      name: 'workflow-run',
+      arguments: {
+        prompt: 'transition to elaboration',
+        dry_run: true
+      }
+    });
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    const result = JSON.parse(response.result.content[0].text);
+
+    // Check workflow info is included
+    if (!result.workflow_info) {
+      throw new Error('Missing workflow_info');
+    }
+    if (!result.workflow_info.isComplex) {
+      throw new Error('Expected complex workflow');
+    }
+    if (result.workflow_info.steps !== 5) {
+      throw new Error(`Expected 5 steps, got ${result.workflow_info.steps}`);
+    }
+
+    // Check integrated prompts
+    if (!result.integrated_prompts || result.integrated_prompts.length === 0) {
+      throw new Error('Missing integrated_prompts');
+    }
+
+    const decomposePrompt = result.integrated_prompts.find(p => p.name === 'decompose-task');
+    if (!decomposePrompt || !decomposePrompt.applied) {
+      throw new Error('decompose-task prompt not applied for complex workflow');
+    }
+
+    const parallelPrompt = result.integrated_prompts.find(p => p.name === 'parallel-execution');
+    if (!parallelPrompt || !parallelPrompt.applied) {
+      throw new Error('parallel-execution prompt not applied for multi-step workflow');
+    }
+
+    const recoveryPrompt = result.integrated_prompts.find(p => p.name === 'recovery-protocol');
+    if (!recoveryPrompt) {
+      throw new Error('recovery-protocol prompt not available');
+    }
+
+    console.log(`  Workflow: ${result.detected_workflow}`);
+    console.log(`  Steps: ${result.workflow_info.steps}, Complex: ${result.workflow_info.isComplex}`);
+    console.log(`  Integrated prompts: ${result.integrated_prompts.map(p => p.name).join(', ')}`);
+  });
+
+  // Test simple workflow has fewer prompts
+  await test('Simple workflow skips decomposition', async () => {
+    const response = await sendAndWait('tools/call', {
+      name: 'workflow-run',
+      arguments: {
+        prompt: 'project status',
+        dry_run: true
+      }
+    });
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    const result = JSON.parse(response.result.content[0].text);
+
+    // Check workflow is not complex
+    if (result.workflow_info.isComplex) {
+      throw new Error('project-status should not be complex');
+    }
+
+    // decompose-task should not be applied for simple workflows
+    const decomposePrompt = result.integrated_prompts.find(p => p.name === 'decompose-task');
+    if (decomposePrompt) {
+      throw new Error('decompose-task should not be applied for simple workflow');
+    }
+
+    console.log(`  Workflow: ${result.detected_workflow}`);
+    console.log(`  Steps: ${result.workflow_info.steps}, Complex: ${result.workflow_info.isComplex}`);
+  });
+
+  // Test skip_decomposition flag
+  await test('Skip decomposition flag works', async () => {
+    const response = await sendAndWait('tools/call', {
+      name: 'workflow-run',
+      arguments: {
+        prompt: 'transition to elaboration',
+        dry_run: true,
+        skip_decomposition: true
+      }
+    });
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    const result = JSON.parse(response.result.content[0].text);
+
+    // decompose-task should not be applied when skip_decomposition is true
+    const decomposePrompt = result.integrated_prompts.find(p => p.name === 'decompose-task');
+    if (decomposePrompt) {
+      throw new Error('decompose-task should be skipped when skip_decomposition=true');
+    }
+
+    // parallel-execution should still be applied
+    const parallelPrompt = result.integrated_prompts.find(p => p.name === 'parallel-execution');
+    if (!parallelPrompt || !parallelPrompt.applied) {
+      throw new Error('parallel-execution should still be applied');
+    }
+
+    console.log(`  Skip decomposition honored, parallel-execution still applied`);
+  });
+
   // Get decompose-task prompt
   await test('Get decompose-task prompt', async () => {
     const response = await sendAndWait('prompts/get', {
