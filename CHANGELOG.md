@@ -5,6 +5,77 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2024.12.2] - 2025-12-10
+
+### Skill Seekers Integration & Usability Improvements
+
+This release adds **Skill Seekers community integration** with two new addons, **workspace health guidance** for transition points, and **standardized command usability** across all flow commands.
+
+#### Added
+
+**Skill Seekers Integration** (PRs #206, #207, #208 to Skill Seekers repo):
+- **doc-intelligence addon** (`agentic/code/addons/doc-intelligence/`):
+  - Intelligent documentation analysis and generation
+  - Cross-repository knowledge synthesis
+  - Documentation gap detection and remediation
+  - Integrates with Skill Seekers community marketplace
+- **skill-factory addon** (`agentic/code/addons/skill-factory/`):
+  - Automated skill generation from natural language descriptions
+  - Skill template scaffolding and validation
+  - Multi-platform skill deployment (Claude, Factory, OpenAI)
+- **SDLC Extensions for Skill Seekers**:
+  - `skill-seekers-integration` extension with 5 specialized agents
+  - Community skill discovery and curation workflows
+  - Attribution and licensing compliance automation
+- Attribution added to README.md and addon.json files
+
+**Workspace Health Skill** (`aiwg-utils/skills/workspace-health/`):
+- Natural language triggers: "check workspace health", "workspace status", "is my workspace aligned"
+- Assesses `.aiwg/working/` directory health (stale files, large artifacts)
+- Validates documentation alignment with codebase
+- Checks artifact freshness and completeness
+- Provides actionable recommendations without auto-executing
+- Designed for use at phase transitions and after intensive processes
+
+**Post-Completion Guidance**:
+- Added "Post-Completion" section to 9 major flow commands:
+  - `flow-concept-to-inception`
+  - `flow-inception-to-elaboration`
+  - `flow-elaboration-to-construction`
+  - `flow-construction-to-transition`
+  - `flow-delivery-track`
+  - `flow-iteration-dual-track`
+  - `flow-gate-check`
+  - `flow-deploy-to-production`
+  - `flow-hypercare-monitoring`
+- Recommends workspace health check after workflow completion
+- Suggests follow-up actions based on workflow context
+- Template: `templates/flow-patterns/post-completion-template.md`
+
+#### Changed
+
+**Command Usability Standardization**:
+- Added `--interactive` and `--guidance` parameters to 28 commands:
+  - All intake commands (intake-wizard, intake-start, intake-from-codebase, etc.)
+  - All flow commands (phase transitions, reviews, deployments)
+  - Marketing commands (campaign-kickoff, creative-brief, etc.)
+  - Gate and validation commands
+- Consistent parameter documentation in frontmatter `argument-hint`
+- Added "Optional Parameters" section to command bodies
+
+**Multi-Provider Skill Deployment**:
+- Skills now deploy successfully to Factory AI (previously Claude-only)
+- Updated smoke tests to verify Factory skill deployment
+- `--deploy-skills` works with `--provider factory`
+
+#### Fixed
+
+**Test Suite**:
+- Fixed `cli-install.test.ts` smoke test for multi-provider skill deployment
+- Test now verifies successful Factory deployment instead of expecting warning
+
+---
+
 ## [2024.12.1] - 2025-12-10
 
 ### Production-Grade Reliability & Extensibility Release
@@ -622,4 +693,4 @@ For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
 ---
 
 **Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2025-12-10
+**Last Updated**: 2025-12-10 (v2024.12.2)

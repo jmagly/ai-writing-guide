@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2024.12.1",
+  "version": "2024.12.2",
   "description": "AI Writing Guide - Framework for improving AI-generated content quality with SDLC lifecycle support",
   "type": "module",
   "bin": {
@@ -55,7 +55,15 @@
   "bugs": {
     "url": "https://github.com/jmagly/ai-writing-guide/issues"
   },
-  "homepage": "https://github.com/jmagly/ai-writing-guide#readme",
+  "homepage": "https://aiwg.io",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/jmagly"
+  },
+  "community": {
+    "discord": "https://discord.gg/BuAusFMxdA",
+    "telegram": "https://t.me/+oJg9w2lE6A5lOGFh"
+  },
   "publishConfig": {
     "access": "public"
   },

@@ -125,9 +125,11 @@ npm exec markdownlint-cli2 "**/*.md"
 
 ## Support
 
+- **Website**: https://aiwg.io
 - **Repository**: https://github.com/jmagly/ai-writing-guide
 - **Issues**: https://github.com/jmagly/ai-writing-guide/issues
-- **Discussions**: https://github.com/jmagly/ai-writing-guide/discussions
+- **Discord**: https://discord.gg/BuAusFMxdA
+- **Telegram**: https://t.me/+oJg9w2lE6A5lOGFh
 
 ---
 

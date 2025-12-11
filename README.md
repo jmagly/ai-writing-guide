@@ -10,7 +10,10 @@
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.20.8-brightgreen)](https://nodejs.org)
 [![GitHub Stars](https://img.shields.io/github/stars/jmagly/ai-writing-guide?style=social)](https://github.com/jmagly/ai-writing-guide/stargazers)
 
-[**Get Started**](#-quick-start) · [**Prerequisites**](#-prerequisites) · [**Documentation**](#-documentation) · [**Examples**](examples/) · [**Contributing**](#-contributing)
+[**Get Started**](#-quick-start) · [**Prerequisites**](#-prerequisites) · [**Documentation**](#-documentation) · [**Examples**](examples/) · [**Contributing**](#-contributing) · [**Community**](#-community--support)
+
+[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/BuAusFMxdA)
+[![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white)](https://t.me/+oJg9w2lE6A5lOGFh)
 
 </div>
 
@@ -1151,16 +1154,21 @@ Closes #123
 
 ### Get Help
 
+- 🌐 **Website:** [aiwg.io](https://aiwg.io)
 - 🐛 **Bug Reports:** [GitHub Issues](https://github.com/jmagly/ai-writing-guide/issues)
 - 💡 **Feature Requests:** [GitHub Discussions](https://github.com/jmagly/ai-writing-guide/discussions)
 - 📖 **Documentation:** [Usage Guide](USAGE_GUIDE.md) | [SDLC README](agentic/code/frameworks/sdlc-complete/README.md)
-- 💬 **Community Chat:** [GitHub Discussions](https://github.com/jmagly/ai-writing-guide/discussions)
+
+### Join Our Community
+
+- 💬 **Discord:** [Join Server](https://discord.gg/BuAusFMxdA)
+- 📱 **Telegram:** [Join Group](https://t.me/+oJg9w2lE6A5lOGFh)
+- 🗨️ **GitHub Discussions:** [Community Forum](https://github.com/jmagly/ai-writing-guide/discussions)
 
 ### Stay Updated
 
 - ⭐ **Star this repo** to follow development
 - 👀 **Watch releases** for new features and templates
-- 📣 **Follow on Twitter:** [@jmagly](https://twitter.com/jmagly) (coming soon)
 
 ---
 
