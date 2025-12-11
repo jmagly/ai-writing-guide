@@ -181,6 +181,7 @@ All flow commands support:
 5. **Traceability**: Maintain requirements -> code -> tests -> deployment links
 6. **Guidance First**: Use `--guidance` or `--interactive` upfront
 7. **Parallel Execution**: Launch independent agents in single message
+8. **Wire-As-You-Go**: Include @-mentions in ALL generated artifacts (see `.claude/rules/mention-wiring.md`)
 
 ## Phase Overview
 

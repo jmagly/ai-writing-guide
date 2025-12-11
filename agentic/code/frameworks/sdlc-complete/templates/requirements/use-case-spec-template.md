@@ -49,7 +49,11 @@ design, testing, and traceability matrices.
 14. **Open Issues and TODOs**
     - Track unresolved questions, decisions, or dependencies.
 15. **References**
-    - Link to supporting documents (vision, supplementary spec, designs).
+    - Wire @-mentions for traceability:
+      - @.aiwg/architecture/software-architecture-doc.md - Architecture context
+      - @src/path/to/implementation.ts - Implementation
+      - @test/path/to/test.ts - Test coverage
+      - @.aiwg/requirements/nfr-modules/XXX.md - Related NFRs
 
 ## Agent Notes
 

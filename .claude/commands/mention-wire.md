@@ -1,7 +1,7 @@
 ---
 name: mention-wire
 description: Analyze codebase and inject @-mentions for traceability
-args: [--target <dir>] [--dry-run] [--interactive] [--auto] [--confidence <threshold>]
+args: [--target <dir>] [--scope <all|code|docs>] [--dry-run] [--interactive] [--auto] [--confidence <threshold>]
 ---
 
 # @-Mention Wiring
@@ -16,7 +16,9 @@ Analyze codebase relationships and inject @-mentions for traceability.
 ## Usage
 
 ```bash
-/mention-wire                           # Analyze current directory
+/mention-wire                           # Wire ALL files (code + docs + agents)
+/mention-wire --scope code              # Wire code files only
+/mention-wire --scope docs              # Wire documentation only
 /mention-wire --dry-run                 # Show what would be added
 /mention-wire --interactive             # Approve each mention
 /mention-wire --auto                    # Apply high-confidence mentions
@@ -28,20 +30,37 @@ Analyze codebase relationships and inject @-mentions for traceability.
 | Option | Default | Description |
 |--------|---------|-------------|
 | --target | . | Directory to analyze |
+| --scope | all | File scope: `all` (default), `code`, `docs` |
 | --dry-run | false | Show proposed changes without applying |
 | --interactive | false | Prompt for approval per file |
 | --auto | false | Apply mentions above confidence threshold |
 | --confidence | 80 | Minimum confidence % for auto mode |
 
+## Scope Details
+
+| Scope | Files Included |
+|-------|----------------|
+| `all` | Source, tests, SDLC artifacts, agents, commands, skills, docs |
+| `code` | Source code (`.ts`, `.js`, `.py`, etc.) and test files only |
+| `docs` | Markdown files (`.aiwg/**`, `docs/**`, agents, commands) |
+
 ## Process
 
 ### 1. Scan Directory
 
-Identify files and their types:
-- Source code (`.ts`, `.js`, `.py`, `.go`, etc.)
+Identify files and their types (default: ALL categories):
+
+**Code Files** (`--scope code`):
+- Source code (`.ts`, `.js`, `.mjs`, `.py`, `.go`, etc.)
 - Test files (`*.test.*`, `*.spec.*`, `test_*`)
+
+**Documentation Files** (`--scope docs`):
 - SDLC artifacts (`.aiwg/**/*.md`)
+- Agent definitions (`.claude/agents/*.md`, `agentic/**/agents/*.md`)
+- Command definitions (`.claude/commands/*.md`)
+- Skill definitions (`.claude/skills/*.md`)
 - Documentation (`docs/**/*.md`)
+- Templates (`templates/**/*.md`)
 
 ### 2. Analyze Relationships
 
