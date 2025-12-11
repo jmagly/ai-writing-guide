@@ -1173,50 +1173,17 @@ Closes #123
 
 ---
 
-## ⚠️ Cost Considerations
+## 💡 Usage Notes
 
-**IMPORTANT:** This framework generates extensive AI interactions. Understand your costs before deploying.
+AIWG is optimized for token efficiency through modular context loading and path-scoped rules. Most users on **Claude Pro** or similar plans will have no issues with normal usage.
 
-### Usage Characteristics
+| Account Type | Suitability |
+|--------------|-------------|
+| **Claude Pro / Team** | ✅ Recommended |
+| **API Pay-as-you-go** | ✅ Works well with cost monitoring |
+| **Free tiers** | ⚠️ May hit rate limits on heavy workflows |
 
-**Document Generation Volume:**
-- Single workflow: 5,000-15,000 words (intake, SAD, reviews, synthesis)
-- Multi-agent pattern: 3-5x token multiplier (parallel reviews)
-- Full Inception phase: ~50,000-100,000 words total output
-- Iteration cycles: 10,000-30,000 words per iteration
-
-**Typical Monthly Usage** (varies widely):
-- **Light** (1-2 workflows/week): 40,000-120,000 words → ~$10-20/month
-- **Moderate** (10-20 workflows/month): 150,000-300,000 words → **$20-50/month**
-- **Heavy** (daily workflows, full SDLC): 500,000+ words → **$50-150+/month**
-
-### Account Requirements
-
-| Account Type | Suitability | Notes |
-|--------------|-------------|-------|
-| **Claude Free** | ❌ Not Suitable | Daily message limits hit quickly (5-10 messages) |
-| **Claude Pro** | ✅ **Recommended** | Higher limits, suitable for moderate usage |
-| **Claude Team/Enterprise** | ✅ Best | Highest limits, team collaboration, no rate throttling |
-| **API Pay-as-you-go** | ⚠️ Use with Caution | Can be expensive without cost controls ($50-200+/month) |
-
-### Cost Mitigation Strategies
-
-1. **Start Small:** Test with 1-2 use cases before full deployment
-2. **Use Selectively:** Not every project needs full SDLC artifacts
-3. **Manual Review:** Edit generated drafts instead of regenerating
-4. **Monitor Usage:** Track costs weekly, set budget alerts if using API
-5. **Skip Optional Workflows:** Only run required artifacts for your profile
-
-### Your Mileage May Vary
-
-Actual costs depend on:
-- Codebase size (larger = more tokens)
-- Project complexity (more complex = longer artifacts)
-- Revision frequency (regeneration costs add up)
-- Account tier and rate limits
-- Whether you hit rate limits (retry costs)
-
-**Bottom Line:** Budget $20-50/month for moderate use. Enterprise teams may see $100-500+/month depending on scale.
+**Tips:** Start with individual workflows before running full SDLC phases. Use `--interactive` mode to control generation scope.
 
 ---
 
