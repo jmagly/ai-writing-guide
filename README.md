@@ -910,12 +910,16 @@ Get the best of all platforms:
 - **Claude Code:** Multi-agent orchestration, artifact generation
 - **Warp Terminal:** Command-line workflows, terminal-native AI
 - **Factory AI:** Custom droid workflows, native Factory format
+- **Cursor:** IDE-native rules, native AGENTS.md support
+- **Codex:** OpenAI's code assistant, prompts format
 
 ```bash
 # Deploy to all platforms
 aiwg use sdlc                      # Claude Code (default)
 aiwg use sdlc --provider warp      # Warp Terminal
 aiwg use sdlc --provider factory   # Factory AI
+aiwg use sdlc --provider cursor    # Cursor IDE
+aiwg use sdlc --provider openai    # OpenAI Codex
 ```
 
 ---
@@ -927,8 +931,8 @@ aiwg use sdlc --provider factory   # Factory AI
 | **Claude Code** | ✅ **Tested & Validated** | Multi-file (.claude/agents/*.md) | Multi-agent orchestration |
 | **Warp Terminal** | ✅ **Tested & Validated** | Single-file (WARP.md) | Terminal-native workflows |
 | **Factory AI** | ✅ **Tested & Validated** | Custom droids (.factory/droids/*.md) | Native droid format, AGENTS.md |
-| **OpenAI/Codex** | 🟡 Experimental | `--provider openai` | Functional but not fully tested |
-| **Cursor** | 🟡 Experimental | Claude-compatible | Should work, not validated |
+| **Cursor** | ✅ **Tested & Validated** | MDC rules (.cursor/rules/*.mdc) | Native rules format, AGENTS.md |
+| **OpenAI/Codex** | ✅ **Tested & Validated** | `--provider openai` | Native prompts format, AGENTS.md |
 | **Windsurf** | 🟡 Experimental | Claude-compatible | Should work, not validated |
 | **Zed** | 🟡 Experimental | Claude-compatible | Should work, not validated |
 
@@ -1010,6 +1014,8 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 - [**Warp Terminal Quick Start**](docs/integrations/warp-terminal-quickstart.md) — 3-5 minute setup for Warp Terminal
 - [**Warp Terminal Integration Guide**](docs/integrations/warp-terminal.md) — Comprehensive Warp documentation
 - [**Factory AI Quick Start**](docs/integrations/factory-quickstart.md) — 5-10 minute setup for Factory AI
+- [**Cursor Quick Start**](docs/integrations/cursor-quickstart.md) — 5-10 minute setup for Cursor IDE
+- [**Codex Quick Start**](docs/integrations/codex-quickstart.md) — 5-10 minute setup for OpenAI Codex
 - [**Cross-Platform Configuration**](docs/integrations/cross-platform-config.md) — Understanding the WARP.md → CLAUDE.md symlink
 
 ### Writing Quality

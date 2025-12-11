@@ -75,8 +75,8 @@ aiwg use all               # Deploy everything
 | **Claude Code** | ✅ Tested | Multi-agent orchestration |
 | **Warp Terminal** | ✅ Tested | Terminal-native workflows |
 | **Factory AI** | ✅ Tested | Native droid format |
-| **OpenAI/Codex** | 🟡 Experimental | Functional |
-| **Cursor** | 🟡 Experimental | Claude-compatible |
+| **Cursor** | ✅ Tested | MDC rules, native AGENTS.md |
+| **OpenAI/Codex** | ✅ Tested | Native prompts format |
 
 ## Documentation
 

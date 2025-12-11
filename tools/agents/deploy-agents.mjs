@@ -22,7 +22,7 @@
  *   --skills-only            Deploy only skills (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, codex, or factory
+ *   --provider <name>        Target provider: claude (default), openai, codex, cursor, or factory
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
  *   --efficiency-model <name> Override model for efficiency tasks
@@ -558,6 +558,52 @@ function createCodexAgentsMd(target, srcRoot, dryRun) {
     } else {
       fs.writeFileSync(destPath, template, 'utf8');
       console.log('Created AGENTS.md from Codex template');
+    }
+  }
+}
+
+function createCursorAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'cursor', 'AGENTS.md.aiwg-template');
+  const destPath = path.join(target, 'AGENTS.md');
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`Cursor AGENTS.md template not found at ${templatePath}`);
+    return;
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf8');
+
+  // Check if AGENTS.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+
+    // Check if it already has AIWG section (look for the marker comment or header)
+    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
+        existing.includes('## AIWG SDLC Framework')) {
+      console.log('AGENTS.md already contains AIWG section, skipping');
+      return;
+    }
+
+    // Append AIWG section to existing AGENTS.md
+    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+    const aiwgSection = markerIndex !== -1
+      ? template.slice(markerIndex)
+      : template;
+    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated AGENTS.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new AGENTS.md from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create AGENTS.md from Cursor template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created AGENTS.md from Cursor template');
     }
   }
 }
@@ -1147,6 +1193,42 @@ function enableFactoryCustomDroids(dryRun) {
   if ((provider === 'codex' || provider === 'openai') && createAgentsMd) {
     console.log('\nCreating/updating AGENTS.md template for Codex...');
     createCodexAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Create/update AGENTS.md for Cursor provider
+  if (provider === 'cursor' && createAgentsMd) {
+    console.log('\nCreating/updating AGENTS.md template for Cursor...');
+    createCursorAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Deploy rules for Cursor provider (instead of agents)
+  if (provider === 'cursor' && (deployCommands || commandsOnly)) {
+    console.log('\nDeploying commands as Cursor rules...');
+    const { execSync } = await import('child_process');
+    const rulesScript = path.join(scriptDir, '..', 'rules', 'deploy-rules-cursor.mjs');
+
+    // Determine mode for rules deployment
+    let rulesMode = 'all';
+    if (mode === 'sdlc' || mode === 'both') rulesMode = 'sdlc';
+    else if (mode === 'marketing') rulesMode = 'marketing';
+    else if (mode === 'general' || mode === 'writing') rulesMode = 'general';
+
+    const rulesArgs = [
+      '--source', srcRoot,
+      '--target', path.join(target, '.cursor', 'rules'),
+      '--mode', rulesMode
+    ];
+    if (dryRun) rulesArgs.push('--dry-run');
+    if (force) rulesArgs.push('--force');
+
+    try {
+      execSync(`node "${rulesScript}" ${rulesArgs.join(' ')}`, {
+        stdio: 'inherit',
+        cwd: srcRoot
+      });
+    } catch (err) {
+      console.error('Failed to deploy rules to Cursor:', err.message);
+    }
   }
 
   // Enable Custom Droids in Factory settings (if deploying to Factory)

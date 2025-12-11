@@ -1,0 +1,114 @@
+# Project Name
+
+> Project description here
+
+## Build & Test
+
+```bash
+# Add your build/test/run commands here
+npm test
+npm run build
+npm run lint
+```
+
+## Architecture
+
+<!-- Brief architecture overview -->
+
+---
+
+<!-- AIWG SDLC Framework Integration -->
+
+## AIWG SDLC Framework
+
+This project uses [AI Writing Guide](https://aiwg.io) for SDLC orchestration.
+
+### Install Rules
+
+Add AIWG rules to `.cursor/rules/`:
+
+```bash
+aiwg -deploy-rules --provider cursor
+```
+
+**Available Rules (auto-attach based on file patterns):**
+- `aiwg-pr-review` - Code review with AIWG standards
+- `aiwg-security-audit` - Security review for code files
+- `aiwg-generate-tests` - Generate tests following conventions
+- `aiwg-security-gate` - Security gate validation
+
+### Install MCP Server
+
+Configure AIWG MCP tools in `.cursor/mcp.json`:
+
+```bash
+aiwg mcp install cursor
+```
+
+Or manually add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "aiwg": {
+      "command": "aiwg",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+### Artifacts
+
+SDLC artifacts stored in `.aiwg/`:
+
+```
+.aiwg/
+├── intake/        # Project intake forms
+├── requirements/  # User stories, use cases
+├── architecture/  # SAD, ADRs
+├── testing/       # Test strategy, plans
+├── security/      # Threat models
+└── deployment/    # Deployment plans
+```
+
+### Natural Language Workflows
+
+In Cursor Agent or CLI (`cursor-agent`):
+
+- "Review this code for security issues"
+- "Generate tests for this module"
+- "Create architecture decision record"
+- "What's the project status?"
+- "Run security review"
+
+### CLI Usage
+
+```bash
+# Interactive mode
+cursor-agent
+
+# With initial prompt
+cursor-agent "Review this PR for security issues"
+
+# Non-interactive (for scripts/CI)
+cursor-agent -p "Generate tests for src/auth" --output-format text
+
+# Resume previous conversation
+cursor-agent resume
+```
+
+### CI/CD Integration
+
+See `.github/workflows/` for:
+- `aiwg-cursor-review.yml` - Automated code review
+- `aiwg-cursor-security.yml` - Security scanning
+- `aiwg-cursor-tests.yml` - Test generation
+
+### Resources
+
+- Website: https://aiwg.io
+- Repository: https://github.com/jmagly/ai-writing-guide
+- Cursor Docs: https://cursor.com/docs/cli/overview
+- Quick Start: `~/.local/share/ai-writing-guide/docs/integrations/cursor-quickstart.md`
+- Redeploy: `aiwg -deploy-agents --provider cursor --create-agents-md`
