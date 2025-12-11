@@ -601,39 +601,141 @@ function initializeFrameworkWorkspace(target, mode, dryRun) {
   console.log(`\nInitialized framework-scoped workspace at ${aiwgBase}/`);
 }
 
+/**
+ * Strip comments from JSONC (JSON with comments) content
+ * Factory settings.json uses JSONC format with // comments
+ */
+function stripJsonComments(content) {
+  // Remove single-line comments (// ...) but not URLs (http://, https://)
+  // Also preserve strings containing //
+  let result = '';
+  let inString = false;
+  let stringChar = '';
+  let i = 0;
+
+  while (i < content.length) {
+    const char = content[i];
+    const nextChar = content[i + 1];
+
+    // Handle string boundaries
+    if ((char === '"' || char === "'") && (i === 0 || content[i - 1] !== '\\')) {
+      if (!inString) {
+        inString = true;
+        stringChar = char;
+      } else if (char === stringChar) {
+        inString = false;
+      }
+      result += char;
+      i++;
+      continue;
+    }
+
+    // If in string, copy as-is
+    if (inString) {
+      result += char;
+      i++;
+      continue;
+    }
+
+    // Check for // comment outside strings
+    if (char === '/' && nextChar === '/') {
+      // Skip to end of line
+      while (i < content.length && content[i] !== '\n') {
+        i++;
+      }
+      continue;
+    }
+
+    // Check for /* */ block comments
+    if (char === '/' && nextChar === '*') {
+      i += 2;
+      while (i < content.length - 1 && !(content[i] === '*' && content[i + 1] === '/')) {
+        i++;
+      }
+      i += 2; // Skip */
+      continue;
+    }
+
+    result += char;
+    i++;
+  }
+
+  return result;
+}
+
 function enableFactoryCustomDroids(dryRun) {
   const homeDir = process.env.HOME || process.env.USERPROFILE;
   if (!homeDir) {
     console.warn('Could not determine home directory, skipping Factory settings configuration');
     return;
   }
-  
+
   const settingsDir = path.join(homeDir, '.factory');
   const settingsPath = path.join(settingsDir, 'settings.json');
-  
+
   let settings = {};
-  
+  let originalContent = '';
+  let hasExistingFile = false;
+
   // Read existing settings if present
   if (fs.existsSync(settingsPath)) {
+    hasExistingFile = true;
     try {
-      const content = fs.readFileSync(settingsPath, 'utf8');
-      settings = JSON.parse(content);
+      originalContent = fs.readFileSync(settingsPath, 'utf8');
+      // Strip JSONC comments before parsing
+      const jsonContent = stripJsonComments(originalContent);
+      settings = JSON.parse(jsonContent);
     } catch (err) {
       console.warn(`Warning: Could not parse existing Factory settings.json: ${err.message}`);
-      console.warn('Creating new settings file...');
-      settings = {};
+      console.warn('Will add enableCustomDroids setting using text manipulation to preserve file...');
+
+      // Try to add the setting via text manipulation instead of JSON parse/stringify
+      if (originalContent.includes('"enableCustomDroids"')) {
+        // Setting exists, check if it's true
+        if (originalContent.includes('"enableCustomDroids": true') ||
+            originalContent.includes('"enableCustomDroids":true')) {
+          console.log('Factory Custom Droids already enabled in settings');
+          return;
+        }
+        // Replace false with true
+        if (!dryRun) {
+          const updatedContent = originalContent.replace(
+            /"enableCustomDroids"\s*:\s*false/,
+            '"enableCustomDroids": true'
+          );
+          fs.writeFileSync(settingsPath, updatedContent, 'utf8');
+          console.log(`Enabled Custom Droids in Factory settings: ${settingsPath}`);
+        } else {
+          console.log(`[dry-run] Would enable Custom Droids in ${settingsPath}`);
+        }
+        return;
+      }
+
+      // Setting doesn't exist, add it after the first {
+      if (!dryRun) {
+        const insertPoint = originalContent.indexOf('{') + 1;
+        const updatedContent =
+          originalContent.slice(0, insertPoint) +
+          '\n  "enableCustomDroids": true,' +
+          originalContent.slice(insertPoint);
+        fs.writeFileSync(settingsPath, updatedContent, 'utf8');
+        console.log(`Enabled Custom Droids in Factory settings: ${settingsPath}`);
+      } else {
+        console.log(`[dry-run] Would enable Custom Droids in ${settingsPath}`);
+      }
+      return;
     }
   }
-  
+
   // Check if Custom Droids already enabled
   if (settings.enableCustomDroids === true) {
     console.log('Factory Custom Droids already enabled in settings');
     return;
   }
-  
+
   // Enable Custom Droids
   settings.enableCustomDroids = true;
-  
+
   if (dryRun) {
     console.log(`[dry-run] Would enable Custom Droids in ${settingsPath}`);
     console.log(`[dry-run] New setting: enableCustomDroids: true`);
@@ -642,9 +744,29 @@ function enableFactoryCustomDroids(dryRun) {
     if (!fs.existsSync(settingsDir)) {
       fs.mkdirSync(settingsDir, { recursive: true });
     }
-    
-    // Write updated settings
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+
+    if (hasExistingFile && originalContent.includes('//')) {
+      // File has comments - use text manipulation to preserve them
+      if (originalContent.includes('"enableCustomDroids"')) {
+        // Replace existing value
+        const updatedContent = originalContent.replace(
+          /"enableCustomDroids"\s*:\s*false/,
+          '"enableCustomDroids": true'
+        );
+        fs.writeFileSync(settingsPath, updatedContent, 'utf8');
+      } else {
+        // Add new setting after first {
+        const insertPoint = originalContent.indexOf('{') + 1;
+        const updatedContent =
+          originalContent.slice(0, insertPoint) +
+          '\n  "enableCustomDroids": true,' +
+          originalContent.slice(insertPoint);
+        fs.writeFileSync(settingsPath, updatedContent, 'utf8');
+      }
+    } else {
+      // No comments or new file - safe to use JSON.stringify
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+    }
     console.log(`Enabled Custom Droids in Factory settings: ${settingsPath}`);
     console.log('Note: You may need to restart droid for this setting to take effect');
   }
