@@ -270,6 +270,8 @@ fi
     list) node \"$PREFIX/tools/plugin/plugin-status-cli.mjs\" \"\$@\" ;; \\
     remove) node \"$PREFIX/tools/plugin/plugin-uninstaller-cli.mjs\" \"\$@\" ;; \\
     -new|--new) node \"$PREFIX/tools/install/new-project.mjs\" \"\$@\" ;; \\
+    demo|-demo|--demo) node \"$PREFIX/tools/cli/demo.mjs\" \"\$@\" ;; \\
+    doctor|-doctor|--doctor) node \"$PREFIX/tools/cli/doctor.mjs\" \"\$@\" ;; \\
     -deploy-agents|--deploy-agents) \\
       echo '[DEPRECATED] Use: aiwg use <framework> instead'; \\
       if echo \"\$@\" | grep -q \"\\-\\-platform[[:space:]]*warp\"; then \\
@@ -323,7 +325,12 @@ fi
       echo '      Remove a framework or addon'; echo ''; \\
       echo 'Project Setup:'; \\
       echo '  -new [--no-agents] [--provider <...>]'; \\
-      echo '      Create new project with SDLC templates'; echo ''; \\
+      echo '      Create new project with SDLC templates'; \\
+      echo '  demo'; \\
+      echo '      Create demo project in ~/aiwg-demo (try in < 2 min)'; echo ''; \\
+      echo 'Diagnostics:'; \\
+      echo '  doctor'; \\
+      echo '      Check installation health and diagnose issues'; echo ''; \\
       echo 'Workspace Management:'; \\
       echo '  -status [--verbose] [--json]'; \\
       echo '      Show workspace health and installed frameworks'; \\
