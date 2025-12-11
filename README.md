@@ -6,6 +6,7 @@
 
 **A modular framework toolkit for AI-powered software development, marketing automation, and content quality**
 
+[![npm](https://img.shields.io/npm/v/aiwg?color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.20.8-brightgreen)](https://nodejs.org)
 [![GitHub Stars](https://img.shields.io/github/stars/jmagly/ai-writing-guide?style=social)](https://github.com/jmagly/ai-writing-guide/stargazers)
