@@ -9,15 +9,17 @@ npm i -g aiwg        # install globally
 aiwg demo            # try it in < 2 minutes
 ```
 
-[![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
-[![npm downloads](https://img.shields.io/npm/dm/aiwg?color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/jmagly/ai-writing-guide?style=social)](https://github.com/jmagly/ai-writing-guide/stargazers)
+[![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
+[![npm downloads](https://img.shields.io/npm/dm/aiwg?color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/jmagly/ai-writing-guide?style=flat-square)](https://github.com/jmagly/ai-writing-guide/stargazers)
 
 [**Get Started**](#-quick-start) · [**Documentation**](#-documentation) · [**Examples**](examples/) · [**Contributing**](#-contributing) · [**Community**](#-community--support)
 
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/BuAusFMxdA)
-[![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white)](https://t.me/+oJg9w2lE6A5lOGFh)
+[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat-square)](https://discord.gg/BuAusFMxdA)
+[![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white&style=flat-square)](https://t.me/+oJg9w2lE6A5lOGFh)
+
+💬 **Shoutout:** [@Manitcor](https://x.com/Manitcor) on agent extraction tips
 
 🌐 **Live demo & docs:** [https://jmagly.github.io/ai-writing-guide](https://jmagly.github.io/ai-writing-guide)
 

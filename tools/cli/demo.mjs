@@ -183,7 +183,7 @@ async function createDemo() {
   console.log('');
   console.log('✅ Demo project ready!');
   console.log('');
-  console.log('   Next steps:');
+  console.log('   🚀 Next steps:');
   console.log('');
   console.log(`   cd ${DEMO_DIR}`);
   console.log('');
@@ -192,6 +192,8 @@ async function createDemo() {
   console.log('   /intake-wizard          # Configure your project');
   console.log('   "where are we?"         # Check project status');
   console.log('   "check workspace health" # Validate setup');
+  console.log('');
+  console.log('   Or explore: @.aiwg/requirements/');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log('');
