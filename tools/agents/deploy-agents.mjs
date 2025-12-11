@@ -650,7 +650,7 @@ function enableFactoryCustomDroids(dryRun) {
   }
 }
 
-(function main() {
+(async function main() {
   const cfg = parseArgs();
   const { source, target, mode, dryRun, force, provider, reasoningModel, codingModel, efficiencyModel, deployCommands, deploySkills, commandsOnly, skillsOnly, asAgentsMd, createAgentsMd } = cfg;
 
@@ -884,8 +884,36 @@ function enableFactoryCustomDroids(dryRun) {
         }
       }
     }
-  } else if ((deploySkills || skillsOnly) && provider !== 'claude') {
-    console.log('\nNote: Skills are currently only supported for Claude Code provider');
+  } else if ((deploySkills || skillsOnly) && provider === 'factory') {
+    // Deploy skills to Factory using the dedicated deploy-skills.mjs
+    console.log('\nDeploying skills to Factory...');
+    const { execSync } = await import('child_process');
+    const skillsScript = path.join(scriptDir, 'deploy-skills.mjs');
+
+    // Determine mode for skills deployment
+    let skillsMode = 'all';
+    if (mode === 'sdlc' || mode === 'both') skillsMode = 'sdlc';
+    else if (mode === 'marketing') skillsMode = 'mmk';
+    else if (mode === 'general' || mode === 'writing') skillsMode = 'addons';
+
+    const skillsArgs = [
+      '--target', target,
+      '--provider', 'factory',
+      '--mode', skillsMode
+    ];
+    if (dryRun) skillsArgs.push('--dry-run');
+    if (force) skillsArgs.push('--force');
+
+    try {
+      execSync(`node "${skillsScript}" ${skillsArgs.join(' ')}`, {
+        stdio: 'inherit',
+        cwd: srcRoot
+      });
+    } catch (err) {
+      console.error('Failed to deploy skills to Factory:', err.message);
+    }
+  } else if ((deploySkills || skillsOnly) && provider === 'openai') {
+    console.log('\nNote: Skills are currently only supported for Claude Code and Factory providers');
   }
 
   // Create/update AGENTS.md for Factory provider

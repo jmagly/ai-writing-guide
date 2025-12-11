@@ -43,7 +43,7 @@ Workspace Management:
 
 MCP Server:
   mcp serve             Start AIWG MCP server (stdio transport)
-  mcp install [target]  Generate MCP client config (claude, cursor)
+  mcp install [target]  Generate MCP client config (claude, factory, cursor)
   mcp info              Show MCP server capabilities
 
 Utilities:
@@ -69,8 +69,9 @@ Examples:
   aiwg use all --provider factory  Install all frameworks for Factory AI
   aiwg -new                        Create new project
   aiwg --use-main                  Switch to bleeding edge mode
-  aiwg mcp serve                   Start MCP server for Claude Code
+  aiwg mcp serve                   Start MCP server
   aiwg mcp install claude          Configure Claude Code to use AIWG MCP
+  aiwg mcp install factory         Configure Factory AI to use AIWG MCP
 `);
 }
 

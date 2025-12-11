@@ -30,6 +30,11 @@ Options:
   --port <number>      Port for HTTP transport (default: 3100)
   --help               Show this help message
 
+Targets for 'install':
+  claude    Generate config for Claude Code (.claude/settings.local.json)
+  factory   Generate config for Factory AI (~/.factory/mcp.json)
+  cursor    Generate config for Cursor (.cursor/mcp.json)
+
 Examples:
   # Start MCP server with stdio (default)
   aiwg mcp serve
@@ -40,6 +45,12 @@ Examples:
   # Generate Claude Code MCP configuration
   aiwg mcp install claude
 
+  # Generate Factory AI MCP configuration
+  aiwg mcp install factory
+
+  # Generate project-specific Factory MCP config
+  aiwg mcp install factory /path/to/project
+
   # Show server capabilities
   aiwg mcp info
 `);
@@ -49,6 +60,8 @@ Examples:
  * Generate MCP client configuration
  */
 async function generateConfig(target, projectDir = '.') {
+  const homeDir = process.env.HOME || process.env.USERPROFILE;
+
   const configs = {
     claude: {
       path: path.join(projectDir, '.claude/settings.local.json'),
@@ -74,6 +87,30 @@ async function generateConfig(target, projectDir = '.') {
           }
         }
       }
+    },
+    factory: {
+      // Factory stores MCP config at user level in ~/.factory/mcp.json
+      // or project level in .factory/mcp.json
+      path: projectDir === '.' || projectDir === 'global'
+        ? path.join(homeDir, '.factory/mcp.json')
+        : path.join(projectDir, '.factory/mcp.json'),
+      content: {
+        mcpServers: {
+          aiwg: {
+            type: 'stdio',
+            command: 'aiwg',
+            args: ['mcp', 'serve'],
+            disabled: false
+          }
+        }
+      },
+      merge: (existing, content) => ({
+        ...existing,
+        mcpServers: {
+          ...(existing.mcpServers || {}),
+          ...content.mcpServers
+        }
+      })
     }
   };
 
@@ -96,15 +133,17 @@ async function generateConfig(target, projectDir = '.') {
     // File doesn't exist, start fresh
   }
 
-  // Merge configuration
-  const merged = {
-    ...existing,
-    ...config.content,
-    mcpServers: {
-      ...(existing.mcpServers || {}),
-      ...config.content.mcpServers
-    }
-  };
+  // Merge configuration using custom merge function if available
+  const merged = config.merge
+    ? config.merge(existing, config.content)
+    : {
+        ...existing,
+        ...config.content,
+        mcpServers: {
+          ...(existing.mcpServers || {}),
+          ...config.content.mcpServers
+        }
+      };
 
   await fs.writeFile(config.path, JSON.stringify(merged, null, 2));
   console.log(`MCP configuration written to: ${config.path}`);
@@ -186,13 +225,17 @@ export async function main(args = process.argv.slice(2)) {
 
       // Check for --dry-run flag
       if (args.includes('--dry-run')) {
+        const homeDir = process.env.HOME || process.env.USERPROFILE;
         console.log(`[DRY RUN] Would generate MCP config for: ${target}`);
         console.log(`[DRY RUN] Target directory: ${projectDir}`);
-        const configs = {
+        const configPaths = {
           claude: '.claude/settings.local.json',
-          cursor: '.cursor/mcp.json'
+          cursor: '.cursor/mcp.json',
+          factory: (projectDir === '.' || projectDir === 'global')
+            ? path.join(homeDir, '.factory/mcp.json')
+            : path.join(projectDir, '.factory/mcp.json')
         };
-        console.log(`[DRY RUN] Config file: ${configs[target] || 'unknown'}`);
+        console.log(`[DRY RUN] Config file: ${configPaths[target] || 'unknown'}`);
         break;
       }
 
