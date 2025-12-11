@@ -1,0 +1,101 @@
+# AIWG Security Review with Cursor Agent
+#
+# Automated security review using Cursor CLI with AIWG standards.
+# This workflow runs on pull requests and identifies security issues.
+#
+# Prerequisites:
+# - CURSOR_API_KEY secret configured
+# - Cursor CLI installed
+#
+# Usage:
+# Copy this file to .github/workflows/aiwg-cursor-security.yml
+
+name: AIWG Security Review (Cursor)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+
+      - name: Run Security Review
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cursor-agent -p --force --output-format json "Perform a comprehensive security review of this codebase.
+
+          Focus areas:
+          1. Injection vulnerabilities (SQL, command, XSS)
+          2. Authentication and authorization issues
+          3. Sensitive data exposure
+          4. Security misconfigurations
+          5. Cryptographic failures
+          6. Insecure dependencies
+
+          For each finding, provide:
+          - Severity (Critical/High/Medium/Low)
+          - File and line number
+          - Description of the vulnerability
+          - Recommended fix
+
+          Output as JSON with structure:
+          {
+            \"summary\": \"Overall security assessment\",
+            \"findings\": [
+              {
+                \"severity\": \"High\",
+                \"file\": \"path/to/file.ts\",
+                \"line\": 42,
+                \"title\": \"SQL Injection\",
+                \"description\": \"User input passed directly to query\",
+                \"recommendation\": \"Use parameterized queries\"
+              }
+            ],
+            \"passed\": true/false
+          }" > security-report.json
+
+      - name: Process Security Report
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f security-report.json ]; then
+            # Post summary as PR comment
+            echo "## Security Review Results" > comment.md
+            echo "" >> comment.md
+            cat security-report.json | jq -r '.summary // "Review completed"' >> comment.md
+            echo "" >> comment.md
+            echo "### Findings" >> comment.md
+            cat security-report.json | jq -r '.findings[]? | "- **\(.severity)**: \(.title) in `\(.file):\(.line // "?")`\n  \(.description)"' >> comment.md
+
+            gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+          fi
+
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.json
+          retention-days: 30

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(aiwg)",
+      "Shell(git)",
+      "Shell(npm)",
+      "Shell(node)",
+      "Shell(npx)",
+      "Shell(ls)",
+      "Shell(cat)",
+      "Shell(grep)",
+      "Shell(find)",
+      "Read(**)",
+      "Write(.aiwg/**)",
+      "Write(src/**)",
+      "Write(test/**)",
+      "Write(docs/**)"
+    ],
+    "deny": [
+      "Write(.env*)",
+      "Write(**/*.key)",
+      "Write(**/*.pem)",
+      "Shell(rm -rf)",
+      "Shell(git push --force)"
+    ]
+  }
+}

@@ -81,13 +81,20 @@ async function generateConfig(target, projectDir = '.') {
     cursor: {
       path: path.join(projectDir, '.cursor/mcp.json'),
       content: {
-        servers: {
+        mcpServers: {
           aiwg: {
             command: 'aiwg',
             args: ['mcp', 'serve']
           }
         }
-      }
+      },
+      merge: (existing, content) => ({
+        ...existing,
+        mcpServers: {
+          ...(existing.mcpServers || {}),
+          ...content.mcpServers
+        }
+      })
     },
     factory: {
       // Factory stores MCP config at user level in ~/.factory/mcp.json

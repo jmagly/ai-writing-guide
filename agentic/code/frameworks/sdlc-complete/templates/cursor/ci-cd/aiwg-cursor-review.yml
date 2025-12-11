@@ -1,0 +1,70 @@
+# AIWG Code Review with Cursor Agent
+#
+# Automated code review using Cursor CLI with AIWG standards.
+# This workflow runs on pull requests and posts review comments.
+#
+# Prerequisites:
+# - CURSOR_API_KEY secret configured
+# - Cursor CLI installed (curl https://cursor.com/install -fsS | bash)
+#
+# Usage:
+# Copy this file to .github/workflows/aiwg-cursor-review.yml
+
+name: AIWG Code Review (Cursor)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+
+      - name: Run AIWG Code Review
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cursor-agent -p --force --output-format text "You are operating in a GitHub Actions runner performing automated code review.
+          The gh CLI is available and authenticated via GH_TOKEN. You may comment on pull requests.
+
+          Context:
+          - Repo: ${{ github.repository }}
+          - PR Number: ${{ github.event.pull_request.number }}
+          - PR Head SHA: ${{ github.event.pull_request.head.sha }}
+          - PR Base SHA: ${{ github.event.pull_request.base.sha }}
+
+          Objectives:
+          1) Review the current PR diff and flag only clear, high-severity issues
+          2) Leave very short inline comments (1-2 sentences) on changed lines only
+          3) Provide a brief summary at the end
+
+          Procedure:
+          - Get diff: gh pr diff ${{ github.event.pull_request.number }}
+          - Avoid duplicates: skip if similar feedback already exists
+
+          Commenting rules:
+          - Max 10 inline comments total; prioritize the most critical issues
+          - One issue per comment; place on the exact changed line
+          - Natural tone, specific and actionable
+          - Use emojis: Critical Security Performance Logic Improvement
+
+          Submission:
+          - Submit one review containing inline comments plus a concise summary
+          - Use only: gh pr review ${{ github.event.pull_request.number }} --comment --body 'review text'"
