@@ -35,7 +35,6 @@ Framework Management:
 Project Setup:
   -new                  Create new project with SDLC templates
                         Options: --no-agents, --provider <...>
-  demo                  Create demo project in ~/aiwg-demo/ (try in < 2 min)
 
 Workspace Management:
   -status               Show workspace health and installed frameworks
@@ -70,7 +69,6 @@ Examples:
   aiwg use sdlc                    Install SDLC framework
   aiwg use all --provider factory  Install all frameworks for Factory AI
   aiwg -new                        Create new project
-  aiwg demo                        Create instant demo project
   aiwg doctor                      Check installation health
   aiwg --use-main                  Switch to bleeding edge mode
   aiwg mcp serve                   Start MCP server
@@ -210,12 +208,6 @@ export async function run(args, options = {}) {
     case '-new':
     case '--new':
       await runScript('tools/install/new-project.mjs', commandArgs);
-      break;
-
-    case 'demo':
-    case '-demo':
-    case '--demo':
-      await runScript('tools/cli/demo.mjs', commandArgs);
       break;
 
     // Workspace management

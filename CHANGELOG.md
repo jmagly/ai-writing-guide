@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | What changed | Why you care |
 |--------------|--------------|
-| `aiwg demo` command | Try the whole thing in under 2 minutes |
 | `aiwg doctor` command | Diagnose installation issues instantly |
 | npm discoverability + badges | Actually shows up when you search npm |
 | MCP server works from any folder | No more ".aiwg not found" errors |
@@ -22,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`aiwg demo`** - Creates a complete demo project in `~/aiwg-demo/` with agents, commands, and sample artifacts ready to explore
 - **`aiwg doctor`** - Health check command that diagnoses installation issues and provides fix suggestions
 - **Postinstall PATH check** - Friendly warning with shell-specific fix instructions if `aiwg` isn't in PATH
 - **GitHub Pages** - Temporary documentation at https://jmagly.github.io/ai-writing-guide
@@ -34,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **npm keywords** - Added 14 discoverable keywords (aiwg, agentic-ai, mcp-server, claude-skills, etc.)
 - **npm description** - Clear, searchable description
-- **README hero section** - Install command front and center with demo command
+- **README hero section** - Install command front and center
 - **MCP server** - Auto-finds project root from any subdirectory (walks up looking for `.aiwg/`)
 
 ### Fixed

@@ -6,7 +6,7 @@ Modular toolkit for AI-powered SDLC, marketing, and content workflows.
 
 ```bash
 npm i -g aiwg        # install globally
-aiwg demo            # try it in < 2 minutes
+aiwg use sdlc        # deploy SDLC framework
 ```
 
 [![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)

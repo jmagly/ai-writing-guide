@@ -11,7 +11,7 @@ Modular toolkit for AI-powered SDLC, marketing, and content workflows.
 
 ```bash
 npm i -g aiwg        # install globally
-aiwg demo            # try it in < 2 minutes
+aiwg use sdlc        # deploy SDLC framework
 ```
 
 [![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
@@ -33,11 +33,7 @@ AIWG is a modular framework toolkit that provides:
 # Install globally
 npm install -g aiwg
 
-# Create a demo project (recommended first step)
-aiwg demo
-cd ~/aiwg-demo
-
-# Or use on your existing project
+# Deploy to your project
 cd your-project
 aiwg use sdlc              # Deploy SDLC framework (54 agents, 48 commands)
 aiwg use marketing         # Deploy Marketing framework (37 agents, 23 commands)
