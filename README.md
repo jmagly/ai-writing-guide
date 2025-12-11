@@ -138,9 +138,9 @@ cd my-awesome-project
 </tr>
 </table>
 
-### 🔧 **Production-Grade Reliability**
+### 🔧 **Reliability Patterns**
 
-**Research-backed patterns for enterprise-grade AI workflows.**
+**Research-backed patterns for robust AI workflows.**
 
 <table>
 <tr>
@@ -154,7 +154,7 @@ cd my-awesome-project
 <td width="50%">
 
 - ✅ **Failure Mode Mitigations** — Address 4 LLM failure archetypes
-- ✅ **Deploy Generators** — Production-ready Docker/K8s configs
+- ✅ **Deploy Generators** — Docker/K8s config generation
 - ✅ **Evals Framework** — Automated agent behavior testing
 
 </td>
