@@ -1,0 +1,29 @@
+{
+  "name": "doc-intelligence",
+  "version": "1.0.0",
+  "description": "Documentation intelligence addon for scraping, extraction, and analysis",
+  "category": "documentation",
+  "author": "AIWG",
+  "license": "MIT",
+  "skills": [
+    "doc-scraper",
+    "pdf-extractor",
+    "llms-txt-support",
+    "source-unifier",
+    "doc-splitter"
+  ],
+  "agents": [
+    "doc-analyst"
+  ],
+  "dependencies": {
+    "optional": {
+      "skill-seekers": ">=2.0.0",
+      "python": ">=3.10"
+    }
+  },
+  "platforms": ["claude-code", "factory-ai", "openai-codex"],
+  "researchCompliance": {
+    "REF-001": ["BP-1", "BP-3", "BP-4", "BP-5", "BP-9"],
+    "REF-002": ["archetype-1", "archetype-2", "archetype-3", "archetype-4"]
+  }
+}

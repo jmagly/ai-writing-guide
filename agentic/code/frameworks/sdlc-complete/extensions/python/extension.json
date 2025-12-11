@@ -1,0 +1,34 @@
+{
+  "name": "python",
+  "version": "1.0.0",
+  "description": "Python-specific SDLC extensions for testing, linting, packaging, and virtual environment management",
+  "type": "language",
+  "extends": "sdlc-complete",
+  "skills": [
+    "pytest-runner",
+    "venv-manager",
+    "pip-auditor",
+    "pylint-checker",
+    "mypy-validator",
+    "poetry-manager"
+  ],
+  "agents": [
+    "python-quality-lead"
+  ],
+  "templates": [
+    "pytest.ini.template",
+    "pyproject.toml.template",
+    "requirements.txt.template"
+  ],
+  "researchCompliance": {
+    "REF-001": ["BP-1", "BP-3", "BP-4", "BP-5", "BP-9"],
+    "REF-002": ["archetype-1", "archetype-2", "archetype-3", "archetype-4"]
+  },
+  "configuration": {
+    "defaultTestFramework": "pytest",
+    "defaultLinter": "pylint",
+    "defaultTypeChecker": "mypy",
+    "defaultPackageManager": "pip",
+    "pythonVersions": ["3.9", "3.10", "3.11", "3.12"]
+  }
+}
