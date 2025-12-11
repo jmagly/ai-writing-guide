@@ -1,7 +1,6 @@
 ---
 name: workspace-reset
 description: Wipe .aiwg/ directory and optionally restart with fresh intake
-argument-hint: [--guidance "text"] [--interactive]
 args: "[project-directory] [--backup] [--keep-intake] [--keep-team] [--reinitialize] [--force]"
 ---
 
@@ -331,27 +330,6 @@ aiwg -reset-workspace --reinitialize
 3. **Git Warning** - Warns about untracked files that will be permanently lost
 4. **Preserve Options** - Can keep critical files (intake, team)
 5. **Dry Run** - Preview before destructive action
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/workspace-reset --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/workspace-reset --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Related Commands
 

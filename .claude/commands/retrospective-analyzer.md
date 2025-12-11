@@ -1,6 +1,5 @@
 ---
 description: Analyze team retrospectives for insights
-argument-hint: [--guidance "text"] [--interactive]
 category: team-collaboration
 ---
 
@@ -322,27 +321,6 @@ Trend: Improving from last sprint (was 55% positive)"
 3. **Confluence**: Export formatted retrospective page
 4. **GitHub**: Create issues for technical debt items
 5. **Calendar**: Schedule action item check-ins
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/retrospective-analyzer --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/retrospective-analyzer --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Best Practices
 

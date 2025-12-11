@@ -1,7 +1,7 @@
 ---
 description: Simulate project outcomes with variable modeling, risk assessment, and resource optimization scenarios.
 category: project-task-management
-argument-hint: "Specify project timeline parameters" [--guidance "text"] [--interactive]
+argument-hint: "Specify project timeline parameters"
 allowed-tools: Bash(gh *), Read
 ---
 
@@ -400,27 +400,6 @@ Resource-Based Success:
 - **Green**: Comprehensive scenarios, validated risk models, optimized resource allocation
 - **Yellow**: Multiple scenarios, basic risk assessment, reasonable resource planning
 - **Red**: Single timeline, minimal risk consideration, resource allocation not optimized
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/project-timeline-simulator --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/project-timeline-simulator --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Common Pitfalls to Avoid
 

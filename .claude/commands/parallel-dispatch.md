@@ -1,7 +1,6 @@
 ---
 name: parallel-dispatch
 description: Dispatch multiple agents in parallel with dependency-aware coordination
-argument-hint: [--guidance "text"] [--interactive]
 args: <task-file> [--max-parallel <n>] [--timeout <ms>] [--output <dir>]
 ---
 
@@ -215,27 +214,6 @@ tasks:
     prompt: "Generate architecture documentation"
     output: architecture/
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/parallel-dispatch --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/parallel-dispatch --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Related
 

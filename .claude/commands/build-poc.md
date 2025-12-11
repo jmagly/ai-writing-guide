@@ -1,7 +1,7 @@
 ---
 description: Build a Proof of Concept (PoC) to validate technical feasibility and retire architectural risks
 category: development
-argument-hint: <feature-or-risk-to-validate> [--scope minimal|standard|comprehensive] [--guidance "text"] [--interactive]
+argument-hint: <feature-or-risk-to-validate> [--scope minimal|standard|comprehensive]
 allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
 model: sonnet
 ---
@@ -505,24 +505,3 @@ This command succeeds when:
 **Phase**: Any (Elaboration most common)
 **Duration**: 4 hours - 3 days (time-boxed)
 **Output**: PoC code + README + decision
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/build-poc --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/build-poc --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them

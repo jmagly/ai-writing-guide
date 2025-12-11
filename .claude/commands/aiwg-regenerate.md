@@ -1,7 +1,6 @@
 ---
 name: aiwg-regenerate
 description: Regenerate platform context file with preserved team directives
-argument-hint: [--guidance "text"] [--interactive]
 args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
 ---
 
@@ -346,27 +345,6 @@ This cannot be undone (backup will still be created).
 
 Continue with full regeneration? [y/N]
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/aiwg-regenerate --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/aiwg-regenerate --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Error Handling
 

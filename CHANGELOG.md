@@ -5,6 +5,41 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2024.12.3] - 2025-12-14 – "It Just Works" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| `aiwg demo` command | Try the whole thing in under 2 minutes |
+| `aiwg doctor` command | Diagnose installation issues instantly |
+| npm discoverability + badges | Actually shows up when you search npm |
+| MCP server works from any folder | No more ".aiwg not found" errors |
+| PATH warning on install | Know immediately if setup needs fixing |
+| Windows + cross-platform fixes | Works on Windows out of the box |
+| Team directives preserved | No more lost custom rules on regenerate |
+| GitHub Pages docs | Temporary landing page while aiwg.io loads |
+
+### Added
+
+- **`aiwg demo`** - Creates a complete demo project in `~/aiwg-demo/` with agents, commands, and sample artifacts ready to explore
+- **`aiwg doctor`** - Health check command that diagnoses installation issues and provides fix suggestions
+- **Postinstall PATH check** - Friendly warning with shell-specific fix instructions if `aiwg` isn't in PATH
+- **GitHub Pages** - Temporary documentation at https://jmagly.github.io/ai-writing-guide
+
+### Changed
+
+- **npm keywords** - Added 14 discoverable keywords (aiwg, agentic-ai, mcp-server, claude-skills, etc.)
+- **npm description** - Clear, searchable description
+- **README hero section** - Install command front and center with demo command
+- **MCP server** - Auto-finds project root from any subdirectory (walks up looking for `.aiwg/`)
+
+### Fixed
+
+- **Windows paths** - Replaced string concatenation with `path.join()` throughout
+- **CI matrix** - Added Windows runner to GitHub Actions
+- **Team directives** - `/aiwg-regenerate-claude` preserves content below `<!-- TEAM DIRECTIVES -->`
+
+---
+
 ## [2024.12.2] - 2025-12-10
 
 ### Skill Seekers Integration & Usability Improvements

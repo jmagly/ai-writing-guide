@@ -1,7 +1,7 @@
 ---
 description: Update AGENTS.md with project-specific context for Factory AI based on codebase analysis
 category: sdlc-setup
-argument-hint: [project-directory] [--provider factory] [--guidance "text"] [--interactive]
+argument-hint: [project-directory] [--provider factory]
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, TodoWrite
 model: sonnet
 ---
@@ -746,27 +746,6 @@ Users can also call this directly:
 # Update for specific project
 /aiwg-update-agents-md /path/to/project
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/aiwg-update-agents-md --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/aiwg-update-agents-md --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Summary
 

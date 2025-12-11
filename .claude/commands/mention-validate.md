@@ -1,7 +1,6 @@
 ---
 name: mention-validate
 description: Validate all @-mentions resolve to existing files
-argument-hint: [--guidance "text"] [--interactive]
 args: [--target <dir>] [--strict] [--output <file>]
 ---
 
@@ -66,27 +65,6 @@ Summary: 3 broken mentions in 3 files
 ```bash
 aiwg validate-mentions [--target <dir>] [--strict]
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/mention-validate --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/mention-validate --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Related Commands
 

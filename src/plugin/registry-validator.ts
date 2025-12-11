@@ -217,7 +217,7 @@ export class RegistryValidator {
             category: 'missing',
             pluginId: plugin.id,
             path: manifestPath,
-            message: `Plugin manifest not found: ${plugin.path}/manifest.json`,
+            message: `Plugin manifest not found: ${path.join(plugin.path, 'manifest.json')}`,
             suggestion: 'Plugin may be incomplete or corrupted'
           });
         }
@@ -267,7 +267,7 @@ export class RegistryValidator {
 
         for (const entry of entries) {
           if (entry.isDirectory()) {
-            const relativePath = `${dir}/${entry.name}`;
+            const relativePath = path.join(dir, entry.name);
 
             if (!registeredPaths.has(relativePath)) {
               issues.push({

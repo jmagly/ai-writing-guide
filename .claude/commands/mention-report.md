@@ -1,7 +1,6 @@
 ---
 name: mention-report
 description: Generate traceability report from @-mentions
-argument-hint: [--guidance "text"] [--interactive]
 args: [--target <dir>] [--format <md|json|csv>] [--output <file>]
 ---
 
@@ -106,27 +105,6 @@ UC-001 (User Authentication)
 ```bash
 aiwg mention-report [--format md|json|csv] [--output <file>]
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/mention-report --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/mention-report --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Related Commands
 

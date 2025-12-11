@@ -420,7 +420,7 @@ function printNextSteps(feature, username, cwd) {
   console.log('');
   console.log('1. Complete intake (using Claude Code or Warp):');
   console.log('   Natural language: "Complete intake for ' + feature + ' feature"');
-  console.log('   Or manually edit: .aiwg/contrib/' + feature + '/intake.md');
+  console.log('   Or manually edit: ' + path.join('.aiwg/contrib', feature, 'intake.md'));
   console.log('');
   console.log('2. Start development:');
   console.log('   Natural language: "Start Inception phase for ' + feature + '"');
@@ -557,7 +557,7 @@ async function main() {
   // Step 5: Create feature branch
   console.log('');
   console.log('[5/8] Creating feature branch...');
-  const branchName = `contrib/${username}/${feature}`;
+  const branchName = path.join('contrib', username, feature);
   const branchResult = createBranch(branchName, cwd);
 
   if (!branchResult.success) {

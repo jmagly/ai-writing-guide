@@ -1,7 +1,7 @@
 ---
 description: Setup Warp Terminal with AIWG framework context (preserves existing content)
 category: sdlc-setup
-argument-hint: [project-directory] [--guidance "text"] [--interactive]
+argument-hint: [project-directory]
 allowed-tools: Read, Write, Edit, Glob, Bash
 model: sonnet
 ---
@@ -469,24 +469,3 @@ node "$AIWG_PATH/tools/warp/setup-warp.mjs" --target "$PROJECT_DIR" --force
 **Category**: SDLC Setup
 **Mode**: Interactive Setup and Configuration
 **Platform**: Warp Terminal
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/aiwg-setup-warp --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/aiwg-setup-warp --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them

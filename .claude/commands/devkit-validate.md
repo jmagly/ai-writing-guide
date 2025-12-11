@@ -1,7 +1,6 @@
 ---
 name: devkit-validate
 description: Validate addon, framework, or extension structure and manifest
-argument-hint: [--guidance "text"] [--interactive]
 args: <path> [--fix] [--verbose]
 ---
 
@@ -146,27 +145,6 @@ When `--fix` is specified:
 2. **Update manifest**: Remove references to non-existent files
 3. **Add missing entries**: Add files found in directories but not in manifest
 4. **Fix frontmatter**: Add required fields with defaults
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/devkit-validate --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/devkit-validate --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Related Commands
 

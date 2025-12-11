@@ -1,7 +1,6 @@
 ---
 name: mention-lint
 description: Lint @-mentions for style consistency and correctness
-argument-hint: [--guidance "text"] [--interactive]
 args: [--target <dir>] [--fix] [--strict] [--rules <rule-ids>]
 ---
 
@@ -109,27 +108,6 @@ Fix: Remove duplicates, keep first occurrence
 ```bash
 aiwg mention-lint [--target <dir>] [--fix] [--strict]
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/mention-lint --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/mention-lint --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Related Commands
 

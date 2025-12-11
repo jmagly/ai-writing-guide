@@ -1,7 +1,6 @@
 ---
 name: devkit-test
 description: Test an AIWG package (addon, extension, or framework)
-argument-hint: [--guidance "text"] [--interactive]
 args:
   - name: path
     description: Path to package directory
@@ -190,24 +189,3 @@ Package Test: <package-id>
 # Test extension
 /devkit-test sdlc-complete/extensions/hipaa
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/devkit-test --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/devkit-test --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them

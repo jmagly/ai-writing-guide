@@ -1,17 +1,20 @@
 <div align="center">
 
-# 🎯 AIWG - AI Workflow Guide
+# AIWG – Agentic AI Workflow Guide
 
-### Build like a pro. Write like a human.
+Modular toolkit for AI-powered SDLC, marketing, and content workflows.
 
-**A modular framework toolkit for AI-powered software development, marketing automation, and content quality**
+```bash
+npm i -g aiwg        # install globally
+aiwg demo            # try it in < 2 minutes
+```
 
-[![npm](https://img.shields.io/npm/v/aiwg?color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
+[![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
+[![npm downloads](https://img.shields.io/npm/dm/aiwg?color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node Version](https://img.shields.io/badge/node-%3E%3D18.20.8-brightgreen)](https://nodejs.org)
 [![GitHub Stars](https://img.shields.io/github/stars/jmagly/ai-writing-guide?style=social)](https://github.com/jmagly/ai-writing-guide/stargazers)
 
-[**Get Started**](#-quick-start) · [**Prerequisites**](#-prerequisites) · [**Documentation**](#-documentation) · [**Examples**](examples/) · [**Contributing**](#-contributing) · [**Community**](#-community--support)
+[**Get Started**](#-quick-start) · [**Documentation**](#-documentation) · [**Examples**](examples/) · [**Contributing**](#-contributing) · [**Community**](#-community--support)
 
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/BuAusFMxdA)
 [![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white)](https://t.me/+oJg9w2lE6A5lOGFh)
@@ -22,38 +25,37 @@
 
 ## 🚀 Quick Start
 
-> **📋 Prerequisites:** Node.js ≥18.0.0 and an AI platform (Claude Code, Warp Terminal, or Factory AI). [See detailed setup instructions →](#-prerequisites)
-
-### Option 1: npm (Recommended)
+> **Prerequisites:** Node.js ≥18.0.0 and an AI platform (Claude Code, Warp Terminal, or Factory AI)
 
 ```bash
+# Install
 npm install -g aiwg
+
+# Try the demo (creates ~/aiwg-demo with everything set up)
+aiwg demo
+
+# Or activate on your existing project
+cd your-project
+aiwg use sdlc
 ```
 
-### Option 2: Bash Script (Legacy)
+<details>
+<summary><strong>More installation options</strong></summary>
 
+**Bash Script (Legacy):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
 ```
 
-<details>
-<summary><strong>Bleeding Edge Mode</strong></summary>
-
-After installing via npm, you can switch to bleeding edge (latest from main branch):
-
+**Bleeding Edge Mode:**
 ```bash
-# Switch to edge channel (tracks main branch)
-aiwg --use-main
-
-# Switch back to stable (npm releases)
-aiwg --use-stable
+aiwg --use-main      # Track main branch
+aiwg --use-stable    # Back to npm releases
 ```
-
-Edge mode is for power users who want the latest features before they're released.
 
 </details>
 
-**Activate on your project** — Choose your framework:
+**Choose your framework:**
 
 ```bash
 cd your-project
