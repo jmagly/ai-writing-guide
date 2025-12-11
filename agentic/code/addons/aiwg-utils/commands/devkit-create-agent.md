@@ -1,12 +1,16 @@
 ---
 name: devkit-create-agent
-description: Create a new agent with AI-guided expertise definition
+description: Create a new agent with AI-guided expertise definition following the Agent Design Bible
 args: <name> --to <target> [--template <type>] [--interactive]
 ---
 
 # Create AIWG Agent
 
 Create a new agent with AI assistance to define expertise, workflow, and capabilities.
+
+**Follows**: [Agent Design Bible](~/.local/share/ai-writing-guide/docs/AGENT-DESIGN.md) - 10 Golden Rules for production-grade agents.
+
+**Research Foundation**: REF-001 (Bandara et al.), REF-002 (Roig 2025) failure archetype prevention.
 
 ## Usage
 
@@ -35,20 +39,32 @@ Create a new agent with AI assistance to define expertise, workflow, and capabil
 
 ## Templates
 
+Templates are in `~/.local/share/ai-writing-guide/templates/agent-scaffolding/`.
+
 ### simple (default)
-Single-purpose, focused agent with minimal structure.
+Single-purpose, focused agent with minimal structure (Rule 1: Single Responsibility).
 - Best for: Utility agents, single-task specialists
-- Tools: Read, Write, MultiEdit, Bash, WebFetch
+- Model: haiku (efficiency tier)
+- Tools: Read, Write (Rule 2: Minimal Tools)
 
 ### complex
-Domain expert with deep knowledge sections, patterns, and anti-patterns.
+Full reasoning agent with all safeguards including failure archetype prevention.
 - Best for: Subject matter experts, reviewers, analysts
-- Tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+- Model: sonnet/opus (based on complexity)
+- Tools: Read, Write, Grep (Rule 2: 0-3 tools)
+- Includes: Grounding, uncertainty handling, recovery protocol
 
 ### orchestrator
 Multi-agent coordination with workflow patterns and agent assignment tables.
-- Best for: Workflow coordinators, phase managers, CI/CD orchestrators
-- Tools: Read, Write, MultiEdit, Bash, WebFetch, Task
+- Best for: Workflow coordinators, phase managers
+- Model: opus (Rule 8: reasoning tier for coordination)
+- Tools: Task only (Rule 2: single tool for delegation)
+
+### validator
+Read-only validation agent that doesn't modify state.
+- Best for: Quality gates, compliance checks, code review
+- Model: haiku/sonnet
+- Tools: Read, Grep (read-only)
 
 ## Interactive Mode
 
@@ -123,8 +139,30 @@ tools: Read, Write, MultiEdit, Bash, WebFetch
 aiwg add-agent <name> --to <target> --template <type>
 ```
 
+## 10 Golden Rules Validation
+
+After creation, validate against the Agent Design Bible:
+
+```bash
+aiwg lint agents <target>/agents/<name>.md --verbose
+```
+
+| Rule | Check |
+|------|-------|
+| 1. Single Responsibility | One clear purpose, no "and" overload |
+| 2. Minimal Tools | 0-3 tools, justified |
+| 3. Explicit I/O | Inputs and outputs defined |
+| 4. Grounding | Verify before acting (Archetype 1) |
+| 5. Uncertainty | Escalate ambiguity (Archetype 2) |
+| 6. Context Scope | Filter distractors (Archetype 3) |
+| 7. Recovery | Handle errors (Archetype 4) |
+| 8. Model Tier | Match task complexity |
+| 9. Parallel Ready | Concurrent execution safe |
+| 10. Observable | Traceable output |
+
 ## Related Commands
 
 - `/devkit-create-command` - Create a slash command
 - `/devkit-create-skill` - Create an auto-triggered skill
 - `/devkit-validate` - Validate agent structure
+- `aiwg lint agents` - Validate against 10 Golden Rules

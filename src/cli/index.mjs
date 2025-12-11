@@ -41,6 +41,11 @@ Workspace Management:
   -migrate-workspace    Migrate legacy .aiwg/ to framework-scoped structure
   -rollback-workspace   Rollback workspace migration from backup
 
+MCP Server:
+  mcp serve             Start AIWG MCP server (stdio transport)
+  mcp install [target]  Generate MCP client config (claude, factory, cursor)
+  mcp info              Show MCP server capabilities
+
 Utilities:
   -prefill-cards        Prefill SDLC card metadata from team profile
   -contribute-start     Start AIWG contribution workflow
@@ -64,6 +69,9 @@ Examples:
   aiwg use all --provider factory  Install all frameworks for Factory AI
   aiwg -new                        Create new project
   aiwg --use-main                  Switch to bleeding edge mode
+  aiwg mcp serve                   Start MCP server
+  aiwg mcp install claude          Configure Claude Code to use AIWG MCP
+  aiwg mcp install factory         Configure Factory AI to use AIWG MCP
 `);
 }
 
@@ -215,6 +223,12 @@ export async function run(args, options = {}) {
     case '-rollback-workspace':
     case '--rollback-workspace':
       await runScript('tools/cli/workspace-rollback.mjs', commandArgs);
+      break;
+
+    // MCP Server
+    case 'mcp':
+      const { main: mcpMain } = await import('../mcp/cli.mjs');
+      await mcpMain(commandArgs);
       break;
 
     // Utilities

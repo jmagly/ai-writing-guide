@@ -220,7 +220,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
       `Access to SDLC framework documentation is configured in \`.claude/settings.json\`.\n\n` +
       `### 3. Start SDLC Flow\n\n` +
       `Once intake forms are complete, kick off the Concept → Inception flow:\n\n` +
-      '```bash\n# Start Inception phase with automated validation\n/project:flow-concept-to-inception .\n\n# Or use the intake-start command\n/project:intake-start .aiwg/intake/\n\n# Check available flow commands\nls .claude/commands/flow-*.md\n```\n\n' +
+      '```bash\n# Start Inception phase with automated validation\n/flow-concept-to-inception .\n\n# Or use the intake-start command\n/intake-start .aiwg/intake/\n\n# Check available flow commands\nls .claude/commands/flow-*.md\n```\n\n' +
       `### 4. SDLC Framework Documentation\n\n` +
       `Claude Code agents have read access to the complete SDLC framework documentation at:\n\n` +
       `\`${aiwgPath}/agentic/code/frameworks/sdlc-complete/\`\n\n` +
@@ -232,12 +232,12 @@ function createOrUpdateSettings(aiwgPath, provider) {
       `- **Flows**: Phase-based workflows (Inception → Elaboration → Construction → Transition)\n` +
       `- **Add-ons**: GDPR compliance, legal frameworks\n\n` +
       `## Key Commands\n\n` +
-      `- \`/project:flow-concept-to-inception\` - Execute Inception phase\n` +
-      `- \`/project:flow-discovery-track\` - Continuous requirements refinement\n` +
-      `- \`/project:flow-delivery-track\` - Test-driven implementation\n` +
-      `- \`/project:flow-iteration-dual-track\` - Synchronize Discovery and Delivery\n` +
-      `- \`/project:flow-gate-check\` - Validate phase gates\n` +
-      `- \`/project:flow-handoff-checklist\` - Phase transition validation\n\n` +
+      `- \`/flow-concept-to-inception\` - Execute Inception phase\n` +
+      `- \`/flow-discovery-track\` - Continuous requirements refinement\n` +
+      `- \`/flow-delivery-track\` - Test-driven implementation\n` +
+      `- \`/flow-iteration-dual-track\` - Synchronize Discovery and Delivery\n` +
+      `- \`/flow-gate-check\` - Validate phase gates\n` +
+      `- \`/flow-handoff-checklist\` - Phase transition validation\n\n` +
       `For more information, see the [SDLC Complete Framework documentation](${aiwgPath}/agentic/code/frameworks/sdlc-complete/README.md).\n`;
     fs.writeFileSync(readmePath, readme, 'utf8');
     console.log(`created README.md`);
@@ -294,7 +294,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
       console.log('Initialized git repository on branch main.');
       console.log('Next steps:');
       console.log('  1. Fill intake forms: .aiwg/intake/project-intake.md, .aiwg/intake/solution-profile.md, .aiwg/intake/option-matrix.md');
-      console.log('  2. Start SDLC flow: /project:flow-concept-to-inception .');
+      console.log('  2. Start SDLC flow: /flow-concept-to-inception .');
       console.log('  3. Commit: git add . && git commit -m "chore: initial scaffold"');
     } catch (e) {
       console.warn('git initialization skipped or failed:', e.message);
@@ -311,5 +311,5 @@ function createOrUpdateSettings(aiwgPath, provider) {
     console.log(`Agents deployed: .claude/agents/`);
     console.log(`Commands deployed: .claude/commands/`);
   }
-  console.log('\nReady to start! Fill intake forms and run: /project:flow-concept-to-inception .');
+  console.log('\nReady to start! Fill intake forms and run: /flow-concept-to-inception .');
 })();

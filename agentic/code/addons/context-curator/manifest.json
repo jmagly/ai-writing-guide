@@ -1,0 +1,20 @@
+{
+  "name": "context-curator",
+  "version": "1.0.0",
+  "description": "Context curation and distractor filtering for production-grade agent reliability",
+  "author": "AIWG",
+  "license": "MIT",
+  "type": "addon",
+  "research": {
+    "foundation": "REF-002 (Roig 2025)",
+    "archetype": "3 - Distractor-Induced Context Pollution",
+    "finding": "Irrelevant but superficially relevant information derails reasoning"
+  },
+  "components": {
+    "agents": ["context-curator"],
+    "rules": ["distractor-filter", "scoped-reasoning"],
+    "prompts": ["context-classification", "scope-enforcement"]
+  },
+  "dependencies": [],
+  "deploys_to": ".claude/rules/"
+}

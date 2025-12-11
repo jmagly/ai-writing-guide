@@ -84,7 +84,7 @@
 | 3 | Deploy SDLC agents: `aiwg -deploy-agents --mode sdlc` | Deployment completes in <60 seconds | | |
 | 4 | Verify `.claude/agents/` directory created with 51+ agent files | 51 agent files exist | | |
 | 5 | Verify agent files have correct format (frontmatter + instructions) | All files valid Markdown | | |
-| 6 | Test sample agent invocation: `/project:requirements-analyst "List available commands"` | Agent responds within 10s | | |
+| 6 | Test sample agent invocation: `/requirements-analyst "List available commands"` | Agent responds within 10s | | |
 | 7 | Verify agent response is coherent and follows role guidelines | Response is valid | | |
 
 **Overall Test Result:** ☐ PASS / ☐ FAIL / ☐ CONDITIONAL PASS
@@ -124,7 +124,7 @@ Tester: _________________ Date: _________
 | Step | Action | Expected Result | Actual Result | Status |
 |------|--------|----------------|---------------|--------|
 | 1 | Navigate to project: `cd /tmp/uat-test-project-001` | Current directory changed | | |
-| 2 | Run intake wizard: `/project:intake-wizard "Build CRM system" --interactive` | Wizard starts, prompts for input | | |
+| 2 | Run intake wizard: `/intake-wizard "Build CRM system" --interactive` | Wizard starts, prompts for input | | |
 | 3 | Respond to strategic questions (domain, compliance, scale, timeline) | Questions answered | | |
 | 4 | Verify intake forms generated in `.aiwg/intake/` | 4 forms created | | |
 | 5 | Validate form completeness (no [PLACEHOLDER] text) | Forms complete | | |
@@ -162,7 +162,7 @@ Tester: _________________ Date: _________
 | Step | Action | Expected Result | Actual Result | Status |
 |------|--------|----------------|---------------|--------|
 | 1 | Navigate to AI Writing Guide repo | Current directory changed | | |
-| 2 | Run codebase analysis: `/project:intake-from-codebase . --guidance "Focus on SDLC framework"` | Analysis starts | | |
+| 2 | Run codebase analysis: `/intake-from-codebase . --guidance "Focus on SDLC framework"` | Analysis starts | | |
 | 3 | Wait for analysis completion (5-10 minutes) | Analysis completes | | |
 | 4 | Verify intake forms generated in `.aiwg/intake/` | Forms created | | |
 | 5 | Validate technology detection (Node.js, TypeScript, Jest) | Technologies detected | | |
@@ -202,7 +202,7 @@ Tester: _________________ Date: _________
 | Step | Action | Expected Result | Actual Result | Status |
 |------|--------|----------------|---------------|--------|
 | 1 | Navigate to project | Current directory changed | | |
-| 2 | Trigger SAD generation: `/project:flow-inception-to-elaboration` | Workflow starts | | |
+| 2 | Trigger SAD generation: `/flow-inception-to-elaboration` | Workflow starts | | |
 | 3 | Monitor multi-agent workflow (Primary Author creates draft) | Draft created | | |
 | 4 | Verify parallel reviewers (4 agents) provide feedback | 4 reviews completed | | |
 | 5 | Verify synthesizer merges feedback | Final SAD created | | |
@@ -242,7 +242,7 @@ Tester: _________________ Date: _________
 | Step | Action | Expected Result | Actual Result | Status |
 |------|--------|----------------|---------------|--------|
 | 1 | Navigate to project | Current directory changed | | |
-| 2 | Run traceability check: `/project:check-traceability .aiwg/requirements/traceability-matrix.csv` | Check starts | | |
+| 2 | Run traceability check: `/check-traceability .aiwg/requirements/traceability-matrix.csv` | Check starts | | |
 | 3 | Verify traceability matrix generation | Matrix generated | | |
 | 4 | Review traceability report (coverage ≥90%) | Coverage meets target | | |
 | 5 | Validate sample UC forward trace (UC-001 → Code → Tests) | Forward trace works | | |
@@ -280,7 +280,7 @@ Tester: _________________ Date: _________
 | Step | Action | Expected Result | Actual Result | Status |
 |------|--------|----------------|---------------|--------|
 | 1 | Navigate to project | Current directory changed | | |
-| 2 | Run security gate: `/project:security-gate` | Security scan starts | | |
+| 2 | Run security gate: `/security-gate` | Security scan starts | | |
 | 3 | Verify secret scanning (0 hardcoded secrets) | 0 secrets found | | |
 | 4 | Verify external API call detection | API calls identified | | |
 | 5 | Verify security NFR compliance (100%) | 35/35 NFRs met | | |

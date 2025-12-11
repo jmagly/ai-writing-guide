@@ -298,6 +298,146 @@ your-project/
 └── ... (your code)
 ```
 
+## Skills Deployment (December 2025)
+
+AIWG skills are now deployable to Factory AI. Skills provide specialized capabilities that droids can invoke.
+
+### Deploy Skills
+
+```bash
+# Deploy skills along with agents
+aiwg use sdlc --provider factory
+
+# Or deploy skills explicitly
+aiwg -deploy-agents --provider factory --mode sdlc --deploy-skills
+
+# Deploy only skills (no agents)
+node ~/.local/share/ai-writing-guide/tools/agents/deploy-skills.mjs \
+  --provider factory --target . --mode sdlc
+```
+
+### What Gets Deployed
+
+Skills are deployed to `.factory/skills/<skill-name>/SKILL.md`:
+
+```
+.factory/skills/
+├── voice-apply/SKILL.md           # Apply voice profile to content
+├── voice-create/SKILL.md          # Generate voice profiles
+├── voice-blend/SKILL.md           # Combine voice profiles
+├── voice-analyze/SKILL.md         # Analyze content voice
+├── ai-pattern-detection/SKILL.md  # Detect AI patterns
+├── artifact-orchestration/SKILL.md # Multi-agent coordination
+├── gate-evaluation/SKILL.md       # Phase gate validation
+├── incident-triage/SKILL.md       # Incident classification
+├── security-assessment/SKILL.md   # Security validation
+├── test-coverage/SKILL.md         # Test gap analysis
+└── ... (30 total skills)
+```
+
+### Using Skills in Factory
+
+Skills auto-trigger based on context. Example phrases:
+
+```text
+# Voice skills
+"Write this in technical-authority voice"
+"Make it more casual"
+"Blend 70% technical with 30% friendly"
+
+# SDLC skills
+"Run security assessment"
+"Check test coverage"
+"Evaluate gate criteria"
+"Triage this incident"
+```
+
+### Skill Categories
+
+| Category | Skills | Description |
+|----------|--------|-------------|
+| **Voice** | voice-apply, voice-create, voice-blend, voice-analyze | Voice profile management |
+| **Writing** | ai-pattern-detection, claims-validator | Content quality validation |
+| **SDLC** | gate-evaluation, risk-cycle, security-assessment, test-coverage | Lifecycle automation |
+| **Orchestration** | artifact-orchestration, parallel-dispatch, nl-router | Multi-agent coordination |
+| **Utilities** | template-engine, project-awareness, config-validator | Framework utilities |
+
+## MCP Server Integration (December 2025)
+
+AIWG MCP server can be configured for Factory AI, enabling tool-based access to AIWG capabilities.
+
+### Install AIWG MCP for Factory
+
+```bash
+# Configure Factory to use AIWG MCP server
+aiwg mcp install factory
+
+# This creates ~/.factory/mcp.json with AIWG server config
+```
+
+### What MCP Provides
+
+The AIWG MCP server exposes:
+
+**Tools:**
+- `workflow-run` - Execute AIWG workflows (phase transitions, reviews)
+- `artifact-read` - Read artifacts from `.aiwg/`
+- `artifact-write` - Write artifacts to `.aiwg/`
+- `template-render` - Render AIWG templates
+- `agent-list` - List available agents
+
+**Resources:**
+- `aiwg://prompts/catalog` - Available prompt templates
+- `aiwg://templates/catalog` - Document templates
+- `aiwg://agents/catalog` - Available agents
+
+### Verify MCP Configuration
+
+```bash
+# Check MCP config
+cat ~/.factory/mcp.json
+
+# Expected content:
+{
+  "mcpServers": {
+    "aiwg": {
+      "type": "stdio",
+      "command": "aiwg",
+      "args": ["mcp", "serve"],
+      "disabled": false
+    }
+  }
+}
+```
+
+### Using MCP in Factory
+
+Once configured, Factory can use MCP tools directly:
+
+```text
+# Factory internally uses:
+Tool: workflow-run
+Input: { "workflow": "security-review-cycle", "guidance": "Focus on auth" }
+
+# You just say:
+"Run security review focusing on authentication"
+```
+
+### Project vs User MCP Config
+
+| Level | Path | Scope |
+|-------|------|-------|
+| User (default) | `~/.factory/mcp.json` | All projects |
+| Project | `.factory/mcp.json` | Current project only |
+
+```bash
+# User-level config (default)
+aiwg mcp install factory
+
+# Project-level config
+aiwg mcp install factory /path/to/project
+```
+
 ## Using AIWG Droids
 
 ### Direct Droid Invocation

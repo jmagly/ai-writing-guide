@@ -134,6 +134,29 @@ cd my-awesome-project
 </tr>
 </table>
 
+### 🔧 **Production-Grade Reliability**
+
+**Research-backed patterns for enterprise-grade AI workflows.**
+
+<table>
+<tr>
+<td width="50%">
+
+- ✅ **Agent Design Bible** — 10 Golden Rules based on academic research
+- ✅ **Agent Linter** — Validate agents against best practices
+- ✅ **@-Mention Traceability** — Live doc references in code
+
+</td>
+<td width="50%">
+
+- ✅ **Failure Mode Mitigations** — Address 4 LLM failure archetypes
+- ✅ **Deploy Generators** — Production-ready Docker/K8s configs
+- ✅ **Evals Framework** — Automated agent behavior testing
+
+</td>
+</tr>
+</table>
+
 ### 📝 **Writing Quality Addon**
 
 **Control your voice. Write naturally.** A standalone addon that works with any framework or independently.
@@ -1010,6 +1033,36 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 - [**Workspace Tools**](tools/workspace/README.md) — Component documentation
 - [**Migration Guide**](tools/workspace/MIGRATION_GUIDE.md) — Legacy to framework-scoped migration
 - [**Plugin Health**](tools/cli/README.md#status-command) — `aiwg -status` usage
+
+### Production-Grade Features
+
+- [**Production-Grade Guide**](docs/production-grade-guide.md) — Research-backed reliability patterns
+- [**Agent Design Bible**](docs/AGENT-DESIGN.md) — 10 Golden Rules for agent design
+- [**@-Mention Traceability**](docs/CLI_USAGE.md#-mention-utilities) — Wire, validate, lint @-mentions
+- [**Deploy Generators**](docs/CLI_USAGE.md#deploy-generators) — Docker, K8s, Compose templates
+- [**Research References**](docs/references/) — REF-001 (Production-Grade) + REF-002 (Failure Modes)
+
+### MCP Server (Model Context Protocol)
+
+AIWG includes an MCP server for programmatic integration:
+
+```bash
+# Start MCP server (stdio transport)
+aiwg mcp serve
+
+# Install config for Claude Desktop or Cursor
+aiwg mcp install claude
+aiwg mcp install cursor
+
+# View MCP info
+aiwg mcp info
+```
+
+**MCP Tools:** `workflow-run`, `artifact-read`, `artifact-write`, `template-render`, `agent-list`
+
+**MCP Prompts:** `decompose-task`, `parallel-execution`, `recovery-protocol` (auto-integrated)
+
+- [**MCP Specification Research**](docs/references/REF-003-mcp-specification-2025.md) — MCP 2025-11-25 implementation details
 
 ### Advanced Topics
 

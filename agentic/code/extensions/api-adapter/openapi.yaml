@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: AIWG API Adapter
+  description: HTTP interface for triggering AIWG workflows
+  version: 0.1.0
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3100
+    description: Local development
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /workflows/trigger:
+    post:
+      summary: Trigger a workflow
+      operationId: triggerWorkflow
+      tags:
+        - Workflows
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerRequest'
+      responses:
+        '202':
+          description: Workflow queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workflow not found
+
+  /workflows/{jobId}/status:
+    get:
+      summary: Get workflow status
+      operationId: getWorkflowStatus
+      tags:
+        - Workflows
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '404':
+          description: Job not found
+
+  /workflows/{jobId}/cancel:
+    post:
+      summary: Cancel a workflow
+      operationId: cancelWorkflow
+      tags:
+        - Workflows
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow cancelled
+        '404':
+          description: Job not found
+        '409':
+          description: Cannot cancel (already completed)
+
+  /workflows/available:
+    get:
+      summary: List available workflows
+      operationId: listWorkflows
+      tags:
+        - Workflows
+      responses:
+        '200':
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowList'
+
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  version:
+                    type: string
+                    example: 0.1.0
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+
+  schemas:
+    TriggerRequest:
+      type: object
+      required:
+        - workflow
+      properties:
+        workflow:
+          type: string
+          description: Workflow name (e.g., flow-security-review-cycle)
+          example: flow-security-review-cycle
+        project_path:
+          type: string
+          description: Path to project (default from config)
+          example: /home/user/project
+        guidance:
+          type: string
+          description: Strategic guidance for workflow
+          example: Focus on authentication
+        async:
+          type: boolean
+          description: Run asynchronously (default true)
+          default: true
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Workflow-specific parameters
+
+    JobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        estimated_duration:
+          type: string
+          example: 5-10m
+
+    JobStatus:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        progress:
+          type: object
+          properties:
+            completed:
+              type: array
+              items:
+                type: string
+            in_progress:
+              type: array
+              items:
+                type: string
+            pending:
+              type: array
+              items:
+                type: string
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        error:
+          type: string
+        artifacts:
+          type: array
+          items:
+            type: string
+          description: Paths to generated artifacts
+
+    WorkflowList:
+      type: object
+      properties:
+        workflows:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              parameters:
+                type: array
+                items:
+                  type: string

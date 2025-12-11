@@ -2,8 +2,8 @@
   "id": "aiwg-utils",
   "type": "addon",
   "name": "AIWG Utilities",
-  "version": "1.2.0",
-  "description": "Core meta-utilities for AIWG management including context regeneration, workspace maintenance, and development kit",
+  "version": "1.5.0",
+  "description": "Core meta-utilities for AIWG management including context regeneration, workspace maintenance, development kit, importable prompts, and @-mention traceability",
   "core": true,
   "autoInstall": true,
   "author": "AIWG Contributors",
@@ -20,13 +20,18 @@
     "workspace",
     "maintenance",
     "devkit",
-    "scaffolding"
+    "scaffolding",
+    "prompts",
+    "deployment",
+    "mentions",
+    "traceability"
   ],
   "entry": {
     "agents": "agents/",
     "commands": "commands/",
     "skills": "skills/",
-    "templates": "templates/"
+    "templates": "templates/",
+    "prompts": "prompts/"
   },
   "commands": [
     "aiwg-regenerate",
@@ -46,11 +51,20 @@
     "devkit-create-command",
     "devkit-create-skill",
     "devkit-validate",
-    "devkit-test"
+    "devkit-test",
+    "deploy-gen",
+    "parallel-dispatch",
+    "mention-wire",
+    "mention-validate",
+    "mention-report",
+    "mention-lint",
+    "mention-conventions"
   ],
   "agents": [
     "context-regenerator",
-    "aiwg-developer"
+    "aiwg-developer",
+    "consortium-coordinator",
+    "self-debug"
   ],
   "skills": [
     "project-awareness"
@@ -59,5 +73,14 @@
     "devkit/addon-manifest",
     "devkit/framework-manifest",
     "devkit/extension-manifest"
+  ],
+  "prompts": [
+    "core/orchestrator",
+    "core/multi-agent-pattern",
+    "core/consortium-pattern",
+    "agents/design-rules",
+    "reliability/decomposition",
+    "reliability/parallel-hints",
+    "reliability/resilience"
   ]
 }

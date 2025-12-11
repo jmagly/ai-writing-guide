@@ -24,6 +24,7 @@ Each reference document includes:
 | ID | Title | Authors | Year | Relevance |
 |----|-------|---------|------|-----------|
 | REF-001 | [Production-Grade Agentic AI Workflows](./REF-001-production-grade-agentic-workflows.md) | Bandara et al. | 2024 | Multi-agent orchestration, production reliability |
+| REF-002 | [How Do LLMs Fail In Agentic Scenarios?](./REF-002-llm-failure-modes-agentic.md) | Roig | 2025 | Failure archetypes, recovery patterns, context management |
 
 ## Adding References
 

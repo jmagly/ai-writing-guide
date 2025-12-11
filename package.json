@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2024.12.0",
+  "version": "2024.12.1",
   "description": "AI Writing Guide - Framework for improving AI-generated content quality with SDLC lifecycle support",
   "type": "module",
   "bin": {
@@ -60,6 +60,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.0",
     "chalk": "^4.1.2",
     "chokidar": "^3.6.0",
     "commander": "^12.1.0",
@@ -67,7 +68,8 @@
     "js-yaml": "^4.1.0",
     "listr2": "^8.2.5",
     "ora": "^5.4.1",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",

@@ -5,6 +5,306 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2024.12.1] - 2025-12-10
+
+### Production-Grade Reliability & Extensibility Release
+
+This is a major release introducing **production-grade reliability patterns** based on academic research, the **AIWG Development Kit** for framework extensibility, **MCP Server** for Model Context Protocol integration, and **CLAUDE.md modernization** with path-scoped rules. Context loading is reduced by 87% for base sessions.
+
+#### Added
+
+**Research Integration** (REF-001, REF-002, REF-003):
+- **REF-001**: Bandara et al. (2025) "Production-Grade Agentic AI Workflows" - 9 best practices:
+  - BP-1: Direct tool calls over MCP for determinism
+  - BP-3: One agent, one responsibility principle
+  - BP-4: Single-responsibility agents
+  - BP-5: Externalized prompts in version control
+  - BP-6: Multi-model consortium for high-stakes outputs
+- **REF-002**: Roig (2025) "How Do LLMs Fail In Agentic Scenarios?" - 4 failure archetypes:
+  - Archetype 1: Premature Action Without Grounding
+  - Archetype 2: Over-Helpfulness Under Uncertainty
+  - Archetype 3: Distractor-Induced Context Pollution
+  - Archetype 4: Fragile Execution Under Load
+  - Key finding: Recovery capability > model size for success
+- **REF-003**: MCP 2025-11-25 specification research and integration patterns
+- Research references in `docs/references/` for traceable guidance
+
+**AIWG Development Kit** (PR #57, #58):
+- Three-tier plugin taxonomy: Frameworks (50+ agents) → Extensions (5-20 agents) → Addons (1-10 agents)
+- CLI scaffolding commands:
+  - `aiwg scaffold-addon <name>` - Create new addon package
+  - `aiwg scaffold-extension <name> --for <framework>` - Create framework extension
+  - `aiwg scaffold-framework <name>` - Create complete framework
+  - `aiwg add-agent|add-command|add-skill|add-template` - Add components to packages
+  - `aiwg validate <path> [--fix]` - Validate package structure
+- In-session commands with AI guidance:
+  - `/devkit-create-addon`, `/devkit-create-extension`, `/devkit-create-framework`
+  - `/devkit-create-agent`, `/devkit-create-command`, `/devkit-create-skill`
+  - `/devkit-validate`, `/devkit-test`
+- Agent templates: simple (sonnet), complex (sonnet+search), orchestrator (opus+Task)
+- Command templates: utility, transformation, orchestration
+- Comprehensive documentation: `docs/development/devkit-overview.md`
+
+**Production-Grade Reliability Patterns**:
+- **Reliability prompts** in `aiwg-utils/prompts/reliability/`:
+  - `decomposition.md` - Task breakdown using 7±2 cognitive rule
+  - `parallel-hints.md` - Concurrent execution patterns
+  - `resilience.md` - PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE protocol
+- **Core prompts** in `aiwg-utils/prompts/core/`:
+  - `orchestrator.md` - Workflow orchestration guidance
+  - `multi-agent-pattern.md` - Primary→Reviewers→Synthesizer pattern
+  - `consortium-pattern.md` - Multi-model validation for uncertain outputs
+- **New agents**:
+  - `consortium-coordinator` - Coordinates multi-agent consensus decisions
+  - `self-debug` - Diagnoses and recovers from agent failures
+  - `aiwg-developer` - AIWG development assistance with taxonomy knowledge
+  - `context-curator` - Pre-filters context, removes distractors (Archetype 3)
+
+**New Addons**:
+- **aiwg-hooks** - Claude Code hook templates for workflow tracing:
+  - `aiwg-trace.js` - Captures SubagentStart/SubagentStop events
+  - JSONL trace format for debugging, performance analysis, audit
+  - `trace-viewer.mjs` - View traces as tree/timeline/JSON
+- **aiwg-evals** - Automated agent quality assessment:
+  - Archetype tests: grounding-test, substitution-test, distractor-test, recovery-test
+  - Performance tests: parallel-test, latency-test, token-test
+  - Quality tests: output-format, tool-usage, scope-adherence
+  - CI integration workflow template
+  - Quality reports with trend tracking
+- **context-curator** - Distractor filtering for Archetype 3 prevention:
+  - Context classification: RELEVANT/PERIPHERAL/DISTRACTOR
+  - Scope enforcement rules
+  - `.claude/rules/` deployment for runtime guidance
+
+**@-Mention Conventions & Wiring**:
+- 5 new commands for artifact traceability:
+  - `/mention-wire` - Analyze codebase and inject @-mentions
+  - `/mention-validate` - Validate all @-mentions resolve to existing files
+  - `/mention-report` - Generate traceability report from @-mentions
+  - `/mention-lint` - Lint @-mentions for style consistency
+  - `/mention-conventions` - Display naming conventions and placement rules
+- Standardized mention patterns in `registry.json`:
+  - Requirements: `@.aiwg/requirements/UC-{NNN}-{slug}.md`
+  - Architecture: `@.aiwg/architecture/adrs/ADR-{NNN}-{slug}.md`
+  - Security: `@.aiwg/security/TM-{NNN}.md`
+  - Testing: `@.aiwg/testing/test-cases/TC-{NNN}.md`
+- Guidelines: `docs/guides/mention-conventions.md`
+
+**Workspace Maintenance Commands** in aiwg-utils:
+- `/workspace-realign` - Sync `.aiwg/` docs with code changes:
+  - Analyzes git history since last alignment
+  - Archives stale documents, flags missing docs
+- `/workspace-prune-working` - Clean `.aiwg/working/` directory:
+  - Promotes finalized docs to permanent locations
+  - Archives useful historical content
+  - Deletes truly temporary files
+- `/workspace-reset` - Complete `.aiwg/` wipe with safety features:
+  - Backup creation, selective preservation (intake, team)
+  - Requires confirmation (`RESET`) or `--force`
+
+**Framework-Scoped Workspace Structure** (PR #54):
+- Multi-framework coexistence in same project:
+  - Marketing can read SDLC artifacts (feature specs) for launch content
+  - Each framework maintains isolated write scope
+- Target structure:
+  ```
+  .aiwg/
+  ├── frameworks/
+  │   ├── sdlc-complete/     # SDLC artifacts
+  │   └── media-marketing-kit/  # Marketing artifacts
+  └── shared/                 # Cross-framework resources
+  ```
+- Rollback CLI improvements for finding backups
+- Assessment reports and working artifacts
+
+**Skills System Expansion**:
+- 6 new skills in aiwg-utils:
+  - `claims-validator` - Validates factual claims in content
+  - `config-validator` - Validates AIWG configuration files
+  - `nl-router` - Natural language command routing
+  - `parallel-dispatch` - Parallel agent coordination
+  - `project-awareness` - Project context detection
+  - `template-engine` - Template rendering and variable substitution
+  - `artifact-metadata` - Artifact metadata extraction
+
+**npm Package Distribution** (PR #55):
+- Published to npm as `aiwg` package
+- Global installation: `npm install -g aiwg`
+- Package includes: bin/, src/, tools/, agentic/, docs/, core/
+- Semantic versioning: 2024.12.1
+- Automated publish workflow via GitHub Actions
+
+**MCP Server Implementation** (Phase 1):
+- Complete MCP server following 2025-11-25 specification (`src/mcp/server.mjs`)
+- 5 MCP tools:
+  - `workflow-run` - Execute AIWG workflows with automatic prompt integration
+  - `artifact-read` - Read artifacts from `.aiwg/` directory
+  - `artifact-write` - Write artifacts to `.aiwg/` directory
+  - `template-render` - Render AIWG templates with variable substitution
+  - `agent-list` - List available AIWG agents by framework
+- 3 MCP resources:
+  - `aiwg://prompts/catalog` - Prompts catalog
+  - `aiwg://templates/catalog` - Templates catalog
+  - `aiwg://agents/catalog` - Agents catalog
+  - Dynamic URI templates for specific items
+- 3 MCP prompts (automatically integrated into workflow-run):
+  - `decompose-task` - Break complex tasks into manageable subtasks
+  - `parallel-execution` - Identify parallelizable work
+  - `recovery-protocol` - PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE error handling
+- Workflow metadata with complexity analysis and step descriptions
+- MCP CLI commands: `aiwg mcp serve`, `aiwg mcp install`, `aiwg mcp info`
+- Comprehensive test suite: 13 tests covering all MCP functionality
+- Test fixture project (`test/fixtures/mcp-test-project/`) for validation
+
+**CLAUDE.md Modernization**:
+- New modular CLAUDE.md structure (134 lines vs 1,018 - **87% reduction**)
+- Path-scoped rules in `.claude/rules/`:
+  - `sdlc-orchestration.md` - Loaded when working in `.aiwg/**`
+  - `voice-framework.md` - Loaded when working in `**/*.md`
+  - `development.md` - Loaded when working in `src/**`, `test/**`
+  - `agent-deployment.md` - Loaded when working in `.claude/agents/**`
+- Reference documentation in `docs/reference/`:
+  - `ORCHESTRATOR_GUIDE.md` - Full orchestration reference (on-demand via @-mentions)
+- Context loading follows Anthropic best practices for token efficiency
+
+**Centralized Registry**:
+- `agentic/code/config/registry.json` - Single source of truth for:
+  - AIWG path resolution (eliminates duplication across 20+ commands)
+  - Natural language pattern mappings (70+ phrases → flow commands)
+  - Artifact path definitions
+  - Provider-specific configurations (Claude, Factory, OpenAI, Warp)
+  - @-mention patterns for traceability
+
+**MCP Research & Documentation**:
+- `docs/references/REF-003-mcp-specification-2025.md` - MCP 2025-11-25 research
+- Updated platform adapter specification with MCP-first architecture
+
+#### Changed
+
+**Agent Design Philosophy** (from research):
+- Agents now follow "10 Golden Rules" from Agent Design Bible:
+  - Rule 1: Ground before acting (Archetype 1 prevention)
+  - Rule 2: Escalate uncertainty (Archetype 2 prevention)
+  - Rule 3: Scope context (Archetype 3 prevention)
+  - Rule 4: Decompose tasks (Archetype 4 prevention)
+  - Rule 5-10: Single responsibility, external prompts, tool discipline, etc.
+- Agent linter validates rules compliance
+
+**Command Updates**:
+- `/aiwg-regenerate-claude` now generates modular structure by default
+  - `--legacy` flag available for old monolithic format
+  - Reports context reduction metrics in output
+  - Generates `.claude/rules/` files based on detected frameworks
+
+**Context Loading Strategy**:
+- Base context: 134 lines (always loaded)
+- SDLC context: +180 lines (loaded only when working in `.aiwg/`)
+- Voice context: +75 lines (loaded only when working in `**/*.md`)
+- Dev context: +85 lines (loaded only when working in `src/`, `test/`)
+- Detailed docs: On-demand via `@docs/reference/` mentions
+
+**Addon Structure Migration** (PR #50):
+- Writing Quality migrated to addon structure (`agentic/code/addons/writing-quality/`)
+- Clear addon taxonomy established (Frameworks, Addons, Extensions)
+- Plugin management CLI commands added
+
+**Dependencies**:
+- Added `@modelcontextprotocol/sdk` ^1.24.0 (MCP server)
+- Added `zod` ^3.25.0 (schema validation)
+
+#### Fixed
+
+**MCP Server**:
+- Prompt argsSchema type handling (MCP passes all args as strings)
+- `mcp install --dry-run` flag parsing
+
+**Documentation**:
+- Updated CLAUDE.md to follow 100-200 line best practice
+- Removed redundant orchestration guidance from multiple locations
+- Consolidated natural language translations into registry
+- Removed inflated metrics and unimplemented feature claims from README
+- Removed internal project status and roadmap from public README
+
+**CLI Tooling**:
+- `aiwg -update` now refreshes shell aliases properly
+- Rollback CLI finds backups in both workspace and project locations
+- Fixed skills not deploying for voice-framework, SDLC, and MMK frameworks
+- Fixed metadata-validation workflow to skip gitignored directories
+
+**Tests**:
+- Comprehensive test remediation for SDLC framework and writing modules
+- TypeScript unused variable errors resolved across codebase
+- Added CLI installation smoke tests
+
+### Migration Guide
+
+**For Existing Projects (CLAUDE.md Modernization):**
+
+The new modular CLAUDE.md structure is opt-in. Existing monolithic CLAUDE.md files continue to work. To migrate:
+
+1. Backup your current CLAUDE.md (preserved automatically by regenerate command)
+2. Run `/aiwg-regenerate-claude` to generate modular structure
+3. Review generated `.claude/rules/` files
+4. Add team-specific content below `<!-- TEAM DIRECTIVES -->` marker
+
+**For Production-Grade Patterns:**
+
+1. Update AIWG installation:
+   ```bash
+   aiwg -update  # Or: aiwg -reinstall for clean install
+   ```
+
+2. Deploy new addons:
+   ```bash
+   aiwg use all  # Deploys all frameworks + new addons
+   ```
+
+3. Import reliability prompts in your CLAUDE.md:
+   ```markdown
+   See @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/reliability/resilience.md
+   ```
+
+**For Development Kit:**
+
+Use scaffolding commands to create new packages:
+```bash
+aiwg scaffold-addon my-utils --description "My custom utilities"
+aiwg add-agent code-helper --to my-utils --template simple
+```
+
+Or in-session with AI guidance:
+```bash
+/devkit-create-addon my-utils --interactive
+```
+
+**For MCP Integration:**
+
+```bash
+# Start MCP server
+aiwg mcp serve
+
+# Or install config for your client
+aiwg mcp install claude  # For Claude Desktop
+aiwg mcp install cursor  # For Cursor IDE
+
+# View MCP info
+aiwg mcp info
+```
+
+**For @-Mention Traceability:**
+
+1. Wire mentions into existing artifacts:
+   ```bash
+   /mention-wire --target .aiwg/requirements/
+   ```
+
+2. Validate all mentions resolve:
+   ```bash
+   /mention-validate
+   ```
+
+---
+
 ## [0.9.1] - 2025-12-08
 
 ### Voice Framework & Skills System Release
@@ -322,4 +622,4 @@ For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
 ---
 
 **Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2025-10-18
+**Last Updated**: 2025-12-10

@@ -1,0 +1,42 @@
+{
+  "id": "aiwg-evals",
+  "type": "addon",
+  "name": "AIWG Evaluations",
+  "version": "1.0.0",
+  "description": "Automated evaluation framework for agent quality, based on KAMI benchmark methodology and ReAct patterns",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "keywords": [
+    "aiwg",
+    "evals",
+    "testing",
+    "quality",
+    "benchmark",
+    "kami",
+    "react"
+  ],
+  "researchFoundation": {
+    "REF-001": "BP-9 - Continuous evaluation of agent performance",
+    "REF-002": "KAMI benchmark - Real agentic task evaluation"
+  },
+  "entry": {
+    "tests": "tests/",
+    "scenarios": "scenarios/",
+    "reports": "reports/",
+    "commands": "commands/"
+  },
+  "commands": [
+    "eval-agent",
+    "eval-workflow",
+    "eval-report"
+  ],
+  "scenarios": [
+    "grounding-test",
+    "distractor-test",
+    "recovery-test",
+    "parallel-test"
+  ]
+}

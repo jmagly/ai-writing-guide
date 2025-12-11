@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "Centralized AIWG registry for paths, patterns, and artifact mappings",
+
+  "paths": {
+    "aiwg_root": {
+      "env": "AIWG_ROOT",
+      "default": "${HOME}/.local/share/ai-writing-guide",
+      "fallbacks": [
+        "/usr/local/share/ai-writing-guide",
+        "${XDG_DATA_HOME}/ai-writing-guide"
+      ]
+    },
+    "frameworks": {
+      "sdlc_complete": "${aiwg_root}/agentic/code/frameworks/sdlc-complete",
+      "media_marketing_kit": "${aiwg_root}/agentic/code/frameworks/media-marketing-kit"
+    },
+    "templates": {
+      "sdlc": "${frameworks.sdlc_complete}/templates",
+      "marketing": "${frameworks.media_marketing_kit}/templates"
+    },
+    "agents": {
+      "sdlc": "${frameworks.sdlc_complete}/agents",
+      "marketing": "${frameworks.media_marketing_kit}/agents",
+      "writing": "${aiwg_root}/agentic/code/agents"
+    },
+    "commands": {
+      "sdlc": "${frameworks.sdlc_complete}/commands",
+      "marketing": "${frameworks.media_marketing_kit}/commands"
+    },
+    "docs": {
+      "orchestrator_architecture": "${frameworks.sdlc_complete}/docs/orchestrator-architecture.md",
+      "multi_agent_pattern": "${frameworks.sdlc_complete}/docs/multi-agent-documentation-pattern.md",
+      "natural_language_translations": "${aiwg_root}/docs/simple-language-translations.md"
+    }
+  },
+
+  "artifacts": {
+    "intake": {
+      "path": ".aiwg/intake/",
+      "templates": ["project-intake-template.md", "solution-profile-template.md"],
+      "commands": ["intake-wizard", "intake-from-codebase", "intake-start"]
+    },
+    "requirements": {
+      "path": ".aiwg/requirements/",
+      "patterns": ["UC-{NNN}-{slug}.md", "NFR-{NNN}-{slug}.md"],
+      "commands": ["flow-requirements-evolution"]
+    },
+    "architecture": {
+      "path": ".aiwg/architecture/",
+      "patterns": ["software-architecture-doc.md", "ADR-{NNN}-{slug}.md"],
+      "commands": ["flow-architecture-evolution"]
+    },
+    "planning": {
+      "path": ".aiwg/planning/",
+      "patterns": ["phase-plan-{phase}.md", "iteration-plan-{N}.md"],
+      "commands": ["flow-iteration-dual-track"]
+    },
+    "risks": {
+      "path": ".aiwg/risks/",
+      "patterns": ["risk-register.md", "spike-{id}.md"],
+      "commands": ["flow-risk-management-cycle"]
+    },
+    "testing": {
+      "path": ".aiwg/testing/",
+      "patterns": ["test-strategy.md", "TC-{NNN}-{slug}.md"],
+      "commands": ["flow-test-strategy-execution"]
+    },
+    "security": {
+      "path": ".aiwg/security/",
+      "patterns": ["threat-model.md", "TM-{NNN}.md", "controls/{id}.md"],
+      "commands": ["flow-security-review-cycle", "security-gate"]
+    },
+    "deployment": {
+      "path": ".aiwg/deployment/",
+      "patterns": ["deployment-plan.md", "rollback-plan.md", "runbook.md"],
+      "commands": ["flow-deploy-to-production"]
+    },
+    "gates": {
+      "path": ".aiwg/gates/",
+      "patterns": ["{phase}-gate-report.md"],
+      "commands": ["flow-gate-check"]
+    },
+    "handoffs": {
+      "path": ".aiwg/handoffs/",
+      "patterns": ["{from}-to-{to}-checklist.md"],
+      "commands": ["flow-handoff-checklist"]
+    },
+    "reports": {
+      "path": ".aiwg/reports/",
+      "patterns": ["*.md", "*.json", "*.csv"],
+      "commands": ["build-artifact-index", "check-traceability", "project-health-check"]
+    },
+    "working": {
+      "path": ".aiwg/working/",
+      "description": "Temporary scratch space (safe to delete)",
+      "gitignore": true
+    }
+  },
+
+  "natural_language_patterns": {
+    "phase_transitions": {
+      "flow-inception-to-elaboration": [
+        "transition to elaboration",
+        "move to elaboration",
+        "start elaboration",
+        "begin elaboration",
+        "ready for elaboration"
+      ],
+      "flow-elaboration-to-construction": [
+        "transition to construction",
+        "move to construction",
+        "start construction",
+        "begin construction",
+        "ready for construction"
+      ],
+      "flow-construction-to-transition": [
+        "transition to transition",
+        "move to transition",
+        "start transition",
+        "ready to deploy",
+        "prepare for release"
+      ]
+    },
+    "reviews": {
+      "flow-security-review-cycle": [
+        "security review",
+        "run security",
+        "validate security",
+        "security audit",
+        "check security"
+      ],
+      "flow-test-strategy-execution": [
+        "run tests",
+        "execute tests",
+        "test suite",
+        "run test suite"
+      ],
+      "flow-architecture-evolution": [
+        "architecture review",
+        "evolve architecture",
+        "update architecture",
+        "architecture changes"
+      ],
+      "flow-performance-optimization": [
+        "performance review",
+        "optimize performance",
+        "performance tuning"
+      ]
+    },
+    "status": {
+      "project-status": [
+        "where are we",
+        "what's next",
+        "project status",
+        "current status",
+        "status update"
+      ],
+      "flow-gate-check": [
+        "check gate",
+        "gate check",
+        "ready for",
+        "can we transition",
+        "validate gate"
+      ]
+    },
+    "artifacts": {
+      "architecture_baseline": [
+        "architecture baseline",
+        "create sad",
+        "generate sad",
+        "software architecture document"
+      ],
+      "adrs": [
+        "create adr",
+        "architecture decision",
+        "new adr"
+      ],
+      "test_plan": [
+        "test plan",
+        "create test plan",
+        "test strategy"
+      ],
+      "deployment_plan": [
+        "deployment plan",
+        "create deployment plan"
+      ],
+      "risk_register": [
+        "risk register",
+        "update risks",
+        "identify risks"
+      ]
+    },
+    "team": {
+      "flow-team-onboarding": [
+        "onboard",
+        "add team member",
+        "new team member"
+      ],
+      "flow-knowledge-transfer": [
+        "knowledge transfer",
+        "handoff to",
+        "transfer knowledge"
+      ],
+      "flow-retrospective-cycle": [
+        "retrospective",
+        "retro",
+        "hold retro"
+      ]
+    },
+    "operations": {
+      "flow-incident-response": [
+        "incident",
+        "production issue",
+        "handle incident",
+        "outage"
+      ],
+      "flow-hypercare-monitoring": [
+        "hypercare",
+        "monitoring",
+        "post-launch"
+      ],
+      "flow-deploy-to-production": [
+        "deploy to production",
+        "production deployment",
+        "go live"
+      ]
+    }
+  },
+
+  "mention_patterns": {
+    "requirements": "@.aiwg/requirements/UC-{NNN}-{slug}.md",
+    "architecture": "@.aiwg/architecture/adrs/ADR-{NNN}-{slug}.md",
+    "security": "@.aiwg/security/TM-{NNN}.md",
+    "testing": "@.aiwg/testing/test-cases/TC-{NNN}.md",
+    "code": "@src/{path}",
+    "tests": "@test/{path}",
+    "docs": "@docs/{path}"
+  },
+
+  "providers": {
+    "claude": {
+      "agents_dir": ".claude/agents",
+      "commands_dir": ".claude/commands",
+      "rules_dir": ".claude/rules",
+      "settings_file": ".claude/settings.local.json"
+    },
+    "factory": {
+      "agents_dir": ".factory/droids",
+      "commands_dir": ".factory/commands",
+      "agents_md": "AGENTS.md"
+    },
+    "openai": {
+      "agents_dir": ".codex/agents",
+      "agents_md": "AGENTS.md"
+    },
+    "warp": {
+      "context_file": "WARP.md"
+    }
+  }
+}
