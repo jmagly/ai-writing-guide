@@ -8,6 +8,7 @@ on:
       - 'agentic/**'
       - 'src/plugin/**'
       - 'tools/workspace/**'
+      - '.github/workflows/metadata-validation.yml'
   pull_request:
     branches: [main, develop]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'agentic/**'
       - 'src/plugin/**'
       - 'tools/workspace/**'
+      - '.github/workflows/metadata-validation.yml'
 
 jobs:
   validate-metadata:
