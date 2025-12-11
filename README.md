@@ -1328,6 +1328,7 @@ Built with inspiration from:
 - **SDLC Practices:** Rational Unified Process (RUP), ITIL, Agile methodologies
 - **Agent Patterns:** Multi-agent orchestration, collaborative AI research
 - **OSS Projects:** React, Vue.js, Next.js, Tailwind CSS (README design inspiration)
+- **Skill Creation:** [Skill Seekers](https://github.com/yusufkaraaslan/Skill_Seekers) (MIT) — Documentation-to-skill conversion
 
 Special thanks to the teams at Anthropic (Claude Code), Warp (Warp Terminal), and Factory AI for building the platforms that make this possible.
 

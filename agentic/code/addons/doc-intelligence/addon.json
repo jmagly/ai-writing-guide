@@ -25,5 +25,13 @@
   "researchCompliance": {
     "REF-001": ["BP-1", "BP-3", "BP-4", "BP-5", "BP-9"],
     "REF-002": ["archetype-1", "archetype-2", "archetype-3", "archetype-4"]
+  },
+  "attribution": {
+    "skill-seekers": {
+      "name": "Skill Seekers",
+      "url": "https://github.com/yusufkaraaslan/Skill_Seekers",
+      "license": "MIT",
+      "usage": "Documentation-to-skill conversion patterns and integration"
+    }
   }
 }
