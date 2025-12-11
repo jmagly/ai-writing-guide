@@ -1042,6 +1042,28 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 - [**Deploy Generators**](docs/CLI_USAGE.md#deploy-generators) — Docker, K8s, Compose templates
 - [**Research References**](docs/references/) — REF-001 (Production-Grade) + REF-002 (Failure Modes)
 
+### MCP Server (Model Context Protocol)
+
+AIWG includes an MCP server for programmatic integration:
+
+```bash
+# Start MCP server (stdio transport)
+aiwg mcp serve
+
+# Install config for Claude Desktop or Cursor
+aiwg mcp install claude
+aiwg mcp install cursor
+
+# View MCP info
+aiwg mcp info
+```
+
+**MCP Tools:** `workflow-run`, `artifact-read`, `artifact-write`, `template-render`, `agent-list`
+
+**MCP Prompts:** `decompose-task`, `parallel-execution`, `recovery-protocol` (auto-integrated)
+
+- [**MCP Specification Research**](docs/references/REF-003-mcp-specification-2025.md) — MCP 2025-11-25 implementation details
+
 ### Advanced Topics
 
 - [**Multi-Agent Orchestration**](agentic/code/frameworks/sdlc-complete/docs/multi-agent-documentation-pattern.md) — Parallel reviews and synthesis

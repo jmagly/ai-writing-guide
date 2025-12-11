@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2024.12.0",
+  "version": "2024.12.1",
   "description": "AI Writing Guide - Framework for improving AI-generated content quality with SDLC lifecycle support",
   "type": "module",
   "bin": {

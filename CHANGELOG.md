@@ -5,6 +5,116 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2024.12.1] - 2025-12-10
+
+### MCP Server & CLAUDE.md Modernization Release
+
+This release introduces the **AIWG MCP Server** for Model Context Protocol integration and **modernizes CLAUDE.md** with path-scoped rules following Anthropic's latest best practices. Context loading is reduced by 87% for base sessions.
+
+#### Added
+
+**MCP Server Implementation** (Phase 1):
+- Complete MCP server following 2025-11-25 specification (`src/mcp/server.mjs`)
+- 5 MCP tools:
+  - `workflow-run` - Execute AIWG workflows with automatic prompt integration
+  - `artifact-read` - Read artifacts from `.aiwg/` directory
+  - `artifact-write` - Write artifacts to `.aiwg/` directory
+  - `template-render` - Render AIWG templates with variable substitution
+  - `agent-list` - List available AIWG agents by framework
+- 3 MCP resources:
+  - `aiwg://prompts/catalog` - Prompts catalog
+  - `aiwg://templates/catalog` - Templates catalog
+  - `aiwg://agents/catalog` - Agents catalog
+  - Dynamic URI templates for specific items
+- 3 MCP prompts (automatically integrated into workflow-run):
+  - `decompose-task` - Break complex tasks into manageable subtasks
+  - `parallel-execution` - Identify parallelizable work
+  - `recovery-protocol` - PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE error handling
+- Workflow metadata with complexity analysis and step descriptions
+- MCP CLI commands: `aiwg mcp serve`, `aiwg mcp install`, `aiwg mcp info`
+- Comprehensive test suite: 13 tests covering all MCP functionality
+- Test fixture project (`test/fixtures/mcp-test-project/`) for validation
+
+**CLAUDE.md Modernization**:
+- New modular CLAUDE.md structure (134 lines vs 1,018 - **87% reduction**)
+- Path-scoped rules in `.claude/rules/`:
+  - `sdlc-orchestration.md` - Loaded when working in `.aiwg/**`
+  - `voice-framework.md` - Loaded when working in `**/*.md`
+  - `development.md` - Loaded when working in `src/**`, `test/**`
+  - `agent-deployment.md` - Loaded when working in `.claude/agents/**`
+- Reference documentation in `docs/reference/`:
+  - `ORCHESTRATOR_GUIDE.md` - Full orchestration reference (on-demand via @-mentions)
+- Context loading follows Anthropic best practices for token efficiency
+
+**Centralized Registry**:
+- `agentic/code/config/registry.json` - Single source of truth for:
+  - AIWG path resolution (eliminates duplication across 20+ commands)
+  - Natural language pattern mappings (70+ phrases → flow commands)
+  - Artifact path definitions
+  - Provider-specific configurations (Claude, Factory, OpenAI, Warp)
+  - @-mention patterns for traceability
+
+**MCP Research & Documentation**:
+- `docs/references/REF-003-mcp-specification-2025.md` - MCP 2025-11-25 research
+- Updated platform adapter specification with MCP-first architecture
+
+#### Changed
+
+**Command Updates**:
+- `/aiwg-regenerate-claude` now generates modular structure by default
+  - `--legacy` flag available for old monolithic format
+  - Reports context reduction metrics in output
+  - Generates `.claude/rules/` files based on detected frameworks
+
+**Context Loading Strategy**:
+- Base context: 134 lines (always loaded)
+- SDLC context: +180 lines (loaded only when working in `.aiwg/`)
+- Voice context: +75 lines (loaded only when working in `**/*.md`)
+- Dev context: +85 lines (loaded only when working in `src/`, `test/`)
+- Detailed docs: On-demand via `@docs/reference/` mentions
+
+**Dependencies**:
+- Added `@modelcontextprotocol/sdk` ^1.24.0 (MCP server)
+- Added `zod` ^3.25.0 (schema validation)
+
+#### Fixed
+
+**MCP Server**:
+- Prompt argsSchema type handling (MCP passes all args as strings)
+- `mcp install --dry-run` flag parsing
+
+**Documentation**:
+- Updated CLAUDE.md to follow 100-200 line best practice
+- Removed redundant orchestration guidance from multiple locations
+- Consolidated natural language translations into registry
+
+### Migration Guide
+
+**For Existing Projects:**
+
+The new modular CLAUDE.md structure is opt-in. Existing monolithic CLAUDE.md files continue to work. To migrate:
+
+1. Backup your current CLAUDE.md (preserved automatically by regenerate command)
+2. Run `/aiwg-regenerate-claude` to generate modular structure
+3. Review generated `.claude/rules/` files
+4. Add team-specific content below `<!-- TEAM DIRECTIVES -->` marker
+
+**For MCP Integration:**
+
+```bash
+# Start MCP server
+aiwg mcp serve
+
+# Or install config for your client
+aiwg mcp install claude  # For Claude Desktop
+aiwg mcp install cursor  # For Cursor IDE
+
+# View MCP info
+aiwg mcp info
+```
+
+---
+
 ## [0.9.1] - 2025-12-08
 
 ### Voice Framework & Skills System Release
@@ -322,4 +432,4 @@ For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
 ---
 
 **Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2025-10-18
+**Last Updated**: 2025-12-10
