@@ -1,0 +1,28 @@
+{
+  "name": "skill-factory",
+  "version": "1.0.0",
+  "description": "Skill generation, enhancement, packaging, and quality validation",
+  "category": "development",
+  "author": "AIWG",
+  "license": "MIT",
+  "skills": [
+    "skill-builder",
+    "skill-enhancer",
+    "skill-packager",
+    "quality-checker"
+  ],
+  "agents": [
+    "skill-architect"
+  ],
+  "dependencies": {
+    "optional": {
+      "skill-seekers": ">=2.0.0",
+      "anthropic": ">=0.20.0"
+    }
+  },
+  "platforms": ["claude-code", "factory-ai", "openai-codex"],
+  "researchCompliance": {
+    "REF-001": ["BP-1", "BP-3", "BP-4", "BP-5", "BP-9"],
+    "REF-002": ["archetype-1", "archetype-2", "archetype-3", "archetype-4"]
+  }
+}

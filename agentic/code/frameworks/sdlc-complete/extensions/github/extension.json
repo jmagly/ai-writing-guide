@@ -1,0 +1,38 @@
+{
+  "name": "github",
+  "version": "1.0.0",
+  "description": "GitHub-specific SDLC extensions for repository analysis, PR management, Actions, and issue tracking",
+  "type": "platform",
+  "extends": "sdlc-complete",
+  "skills": [
+    "repo-analyzer",
+    "pr-reviewer",
+    "actions-checker",
+    "issue-tracker",
+    "release-manager"
+  ],
+  "agents": [
+    "github-integration-lead"
+  ],
+  "templates": [
+    "workflow.yml.template",
+    "pr-template.md.template",
+    "issue-template.md.template"
+  ],
+  "researchCompliance": {
+    "REF-001": ["BP-1", "BP-3", "BP-4", "BP-5", "BP-9"],
+    "REF-002": ["archetype-1", "archetype-2", "archetype-3", "archetype-4"]
+  },
+  "configuration": {
+    "requireGhCli": true,
+    "supportedFeatures": [
+      "repository-analysis",
+      "pull-requests",
+      "issues",
+      "actions",
+      "releases",
+      "discussions"
+    ],
+    "apiVersion": "2022-11-28"
+  }
+}

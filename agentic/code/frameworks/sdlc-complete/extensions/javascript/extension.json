@@ -1,0 +1,33 @@
+{
+  "name": "javascript",
+  "version": "1.0.0",
+  "description": "JavaScript/TypeScript SDLC extensions for testing, linting, building, and package management",
+  "type": "language",
+  "extends": "sdlc-complete",
+  "skills": [
+    "vitest-runner",
+    "eslint-checker",
+    "typescript-validator",
+    "npm-auditor",
+    "bundle-analyzer"
+  ],
+  "agents": [
+    "js-quality-lead"
+  ],
+  "templates": [
+    "vitest.config.ts.template",
+    "eslint.config.js.template",
+    "tsconfig.json.template"
+  ],
+  "researchCompliance": {
+    "REF-001": ["BP-1", "BP-3", "BP-4", "BP-5", "BP-9"],
+    "REF-002": ["archetype-1", "archetype-2", "archetype-3", "archetype-4"]
+  },
+  "configuration": {
+    "defaultTestFramework": "vitest",
+    "defaultLinter": "eslint",
+    "defaultPackageManager": "npm",
+    "supportedRuntimes": ["node", "bun", "deno"],
+    "nodeVersions": ["18", "20", "22"]
+  }
+}
