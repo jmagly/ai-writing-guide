@@ -1533,4 +1533,33 @@ GitService: Optionally stage for commit
 
 ---
 
+## Traceability References
+
+### Use Cases → Source Code
+
+| UC | Implementation | Tests |
+|----|----------------|-------|
+| UC-001 | @src/writing/validation-engine.ts | @test/unit/writing/validation-engine.test.ts |
+| UC-002 | @src/agents/agent-deployer.ts | @test/unit/agents/agent-deployer.test.ts |
+| UC-003 | @src/intake/git-history-analyzer.ts | @test/unit/intake/git-history-analyzer.test.ts |
+| UC-009 | @src/testing/generators/test-case-generator.ts | @test/unit/testing/test-case-generator.test.ts |
+| UC-010 | @src/plugin/plugin-installer.ts | @test/unit/plugin/plugin-installer.test.ts |
+| UC-011 | @src/plugin/registry-validator.ts | @test/unit/plugin/registry-validator.test.ts |
+
+### NFR Modules
+
+- @.aiwg/requirements/nfr-modules/performance.md - Performance requirements
+- @.aiwg/requirements/nfr-modules/accuracy.md - Accuracy requirements
+- @.aiwg/requirements/nfr-modules/reliability.md - Reliability requirements
+- @.aiwg/requirements/nfr-modules/security.md - Security requirements
+- @.aiwg/requirements/nfr-modules/usability.md - Usability requirements
+
+### Related Artifacts
+
+- @docs/quickstart.md - User getting started guide
+- @docs/CLI_USAGE.md - CLI command reference
+- @agentic/code/frameworks/sdlc-complete/agents/ - SDLC agent catalog
+
+---
+
 **END OF DOCUMENT**

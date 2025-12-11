@@ -5,6 +5,11 @@
  * velocity metrics, team composition, and project maturity for automated intake.
  *
  * @module src/intake/git-history-analyzer
+ * @implements @.aiwg/requirements/use-cases/UC-003-generate-intake-from-codebase.md
+ * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 5.2 Intake Coordinator
+ * @tests @test/unit/intake/git-history-analyzer.test.ts
+ * @command @.claude/commands/intake-from-codebase.md
+ * @agent @agentic/code/frameworks/sdlc-complete/agents/intake-coordinator.md
  */
 
 import { exec } from 'child_process';

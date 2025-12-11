@@ -40,3 +40,13 @@ implementation controls, and enforce release gates.
 - [ ] Zero open critical findings; highs triaged with owner/date
 - [ ] SBOM updated; dependency risk addressed or accepted
 - [ ] Secrets policy verified; no hardcoded secrets
+
+## References
+
+- @.aiwg/requirements/use-cases/UC-011-validate-plugin-security.md - Security validation use case
+- @src/plugin/registry-validator.ts - Plugin security validation implementation
+- @.aiwg/requirements/nfr-modules/security.md - Security requirements
+- @.aiwg/architecture/software-architecture-doc.md - Architecture baseline (Section 4.6 Security View)
+- @.claude/commands/security-gate.md - Security gate command
+- @.claude/commands/flow-security-review-cycle.md - Security review workflow
+- @.claude/commands/security-audit.md - Comprehensive security audit

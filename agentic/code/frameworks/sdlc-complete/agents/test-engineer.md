@@ -500,3 +500,12 @@ const fixtures = {
 - Coverage percentage trends
 - False positive rate
 - Test maintenance effort
+
+## References
+
+- @.aiwg/requirements/use-cases/UC-009-generate-test-artifacts.md - Use case
+- @src/testing/generators/test-case-generator.ts - Test case generator implementation
+- @.aiwg/requirements/nfr-modules/performance.md - Performance requirements (NFR-TEST-01)
+- @.aiwg/architecture/software-architecture-doc.md - Architecture baseline
+- @.claude/commands/generate-tests.md - Related slash command
+- @.claude/commands/flow-test-strategy-execution.md - Test strategy workflow

@@ -3,6 +3,15 @@
  *
  * Core orchestration engine that chains validation → optimization → re-validation.
  * Supports batch processing, watch mode, auto-fix, and multiple output formats.
+ *
+ * @implements @.aiwg/requirements/use-cases/UC-001-validate-ai-generated-content.md
+ * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 4.2 Core Orchestrator
+ * @tests @test/unit/cli/workflow-orchestrator.test.ts
+ * @depends @src/writing/validation-engine.ts
+ * @depends @src/writing/prompt-optimizer.ts
+ * @depends @src/cli/config-loader.ts
+ * @depends @src/cli/watch-service.ts
+ * @cli @docs/CLI_USAGE.md - workflow command
  */
 
 import { readFile, writeFile, copyFile } from 'fs/promises';

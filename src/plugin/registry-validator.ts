@@ -5,6 +5,11 @@
  * and validates cross-framework references.
  *
  * @module src/plugin/registry-validator
+ * @implements @.aiwg/requirements/use-cases/UC-011-validate-plugin-security.md
+ * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 5.1 PluginManager
+ * @adr @.aiwg/architecture/decisions/ADR-002-plugin-isolation-strategy.md
+ * @tests @test/unit/plugin/registry-validator.test.ts
+ * @depends @src/plugin/metadata-validator.ts
  */
 
 import * as fs from 'fs/promises';

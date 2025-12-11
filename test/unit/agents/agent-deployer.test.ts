@@ -1,5 +1,10 @@
 /**
  * Tests for AgentDeployer
+ *
+ * @source @src/agents/agent-deployer.ts
+ * @requirement @.aiwg/requirements/use-cases/UC-002-deploy-sdlc-framework.md
+ * @nfr @.aiwg/requirements/nfr-modules/performance.md - NFR-PERF-002 (<10s deployment)
+ * @nfr @.aiwg/requirements/nfr-modules/reliability.md - NFR-REL-001 (100% success rate)
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';

@@ -5,6 +5,11 @@
  * Follows MCP 2025-11-25 specification.
  *
  * @see https://modelcontextprotocol.io/specification/2025-11-25
+ * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 2.1 CLI Layer
+ * @reference @docs/references/REF-003-mcp-specification-2025.md
+ * @cli @docs/CLI_USAGE.md - mcp serve command
+ * @frameworks @agentic/code/frameworks/sdlc-complete/
+ * @frameworks @agentic/code/frameworks/media-marketing-kit/
  */
 
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
