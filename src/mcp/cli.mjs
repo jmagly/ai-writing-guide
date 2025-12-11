@@ -33,6 +33,7 @@ Options:
 Targets for 'install':
   claude    Generate config for Claude Code (.claude/settings.local.json)
   factory   Generate config for Factory AI (~/.factory/mcp.json)
+  codex     Generate config for OpenAI Codex (~/.codex/config.toml)
   cursor    Generate config for Cursor (.cursor/mcp.json)
 
 Examples:
@@ -111,14 +112,79 @@ async function generateConfig(target, projectDir = '.') {
           ...content.mcpServers
         }
       })
+    },
+    codex: {
+      // Codex stores config in ~/.codex/config.toml (TOML format)
+      path: path.join(homeDir, '.codex/config.toml'),
+      // We generate TOML snippet to append, not JSON
+      content: null,
+      toml: `
+# AIWG MCP Server Configuration
+# Add this section to your ~/.codex/config.toml
+
+[mcp_servers.aiwg]
+command = "aiwg"
+args = ["mcp", "serve"]
+startup_timeout_sec = 10.0
+tool_timeout_sec = 60.0
+enabled_tools = [
+  "workflow-run",
+  "artifact-read",
+  "artifact-write",
+  "template-render",
+  "agent-list"
+]
+`,
+      // Custom handler for TOML
+      handler: async (configPath, tomlContent) => {
+        // Check if config.toml exists
+        let existing = '';
+        try {
+          existing = await fs.readFile(configPath, 'utf-8');
+        } catch {
+          // File doesn't exist
+        }
+
+        // Check if AIWG MCP already configured
+        if (existing.includes('[mcp_servers.aiwg]')) {
+          console.log('AIWG MCP already configured in ~/.codex/config.toml');
+          return true;
+        }
+
+        // Append TOML config
+        const updated = existing.trimEnd() + '\n' + tomlContent.trim() + '\n';
+
+        await fs.mkdir(path.dirname(configPath), { recursive: true });
+        await fs.writeFile(configPath, updated);
+        console.log(`MCP configuration appended to: ${configPath}`);
+        console.log(`\nTo use AIWG MCP server with Codex:`);
+        console.log(`  1. Restart Codex CLI`);
+        console.log(`  2. AIWG tools will be available via MCP`);
+        return true;
+      }
+    },
+    openai: {
+      // Alias for codex
+      path: path.join(homeDir, '.codex/config.toml'),
+      alias: 'codex'
     }
   };
 
-  const config = configs[target];
+  let config = configs[target];
   if (!config) {
     console.error(`Unknown target: ${target}`);
     console.error(`Available targets: ${Object.keys(configs).join(', ')}`);
     return false;
+  }
+
+  // Handle alias
+  if (config.alias) {
+    config = configs[config.alias];
+  }
+
+  // Handle custom handler (for TOML configs like Codex)
+  if (config.handler) {
+    return await config.handler(config.path, config.toml);
   }
 
   // Ensure directory exists
@@ -233,7 +299,9 @@ export async function main(args = process.argv.slice(2)) {
           cursor: '.cursor/mcp.json',
           factory: (projectDir === '.' || projectDir === 'global')
             ? path.join(homeDir, '.factory/mcp.json')
-            : path.join(projectDir, '.factory/mcp.json')
+            : path.join(projectDir, '.factory/mcp.json'),
+          codex: path.join(homeDir, '.codex/config.toml'),
+          openai: path.join(homeDir, '.codex/config.toml')
         };
         console.log(`[DRY RUN] Config file: ${configPaths[target] || 'unknown'}`);
         break;

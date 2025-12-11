@@ -1,0 +1,121 @@
+# Codex Configuration Template for AIWG Projects
+#
+# Copy to ~/.codex/config.toml or project-specific location
+# See https://github.com/openai/codex/blob/main/docs/config.md for full reference
+#
+# Usage:
+#   aiwg -init-profile codex  # Generate this template
+#   cp config.toml ~/.codex/config.toml
+
+################################################################################
+# Model Selection
+################################################################################
+
+# Primary model for Codex sessions
+model = "gpt-5.1-codex-max"
+
+# Model for /review command
+review_model = "gpt-5.1-codex-max"
+
+# Reasoning effort: minimal | low | medium | high | xhigh
+model_reasoning_effort = "medium"
+
+################################################################################
+# Approval & Sandbox
+################################################################################
+
+# When to ask for approval: untrusted | on-failure | on-request | never
+approval_policy = "on-request"
+
+# Sandbox mode: read-only | workspace-write | danger-full-access
+sandbox_mode = "workspace-write"
+
+# Allow network in workspace-write mode (for npm install, etc.)
+[sandbox_workspace_write]
+network_access = true
+writable_roots = []
+
+################################################################################
+# Project Documentation
+################################################################################
+
+# Max bytes from AGENTS.md to include in context
+project_doc_max_bytes = 32768
+
+# Fallback filenames when AGENTS.md is not found
+# Enables CLAUDE.md compatibility for hybrid projects
+project_doc_fallback_filenames = ["CLAUDE.md", "WARP.md"]
+
+################################################################################
+# Features
+################################################################################
+
+[features]
+# Enable web search capability
+web_search_request = true
+
+# Enable image viewing
+view_image_tool = true
+
+################################################################################
+# AIWG MCP Server (Optional)
+################################################################################
+
+# Uncomment to enable AIWG SDLC tools via MCP
+#
+# [mcp_servers.aiwg]
+# command = "node"
+# args = ["~/.local/share/ai-writing-guide/src/mcp/server.mjs"]
+# startup_timeout_sec = 10.0
+# tool_timeout_sec = 60.0
+# enabled_tools = [
+#   "workflow-run",
+#   "artifact-read",
+#   "artifact-write",
+#   "template-render",
+#   "agent-list"
+# ]
+
+################################################################################
+# Profiles
+################################################################################
+
+# AIWG SDLC profile - full autonomy for development
+[profiles.aiwg-sdlc]
+model = "gpt-5.1-codex-max"
+model_reasoning_effort = "high"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+# Read-only analysis profile
+[profiles.aiwg-readonly]
+model = "gpt-5.1"
+model_reasoning_effort = "medium"
+approval_policy = "on-request"
+sandbox_mode = "read-only"
+
+# Full autonomy profile (use with caution)
+[profiles.aiwg-auto]
+model = "gpt-5.1-codex-max"
+model_reasoning_effort = "high"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+################################################################################
+# UI Settings
+################################################################################
+
+[tui]
+# Desktop notifications
+notifications = true
+
+# Enable animations
+animations = true
+
+################################################################################
+# History
+################################################################################
+
+[history]
+# Save conversation history: save-all | none
+persistence = "save-all"
