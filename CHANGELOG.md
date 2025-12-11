@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | Windows + cross-platform fixes | Works on Windows out of the box |
 | Team directives preserved | No more lost custom rules on regenerate |
 | GitHub Pages docs | Temporary landing page while aiwg.io loads |
+| @-mention traceability wiring | Agents navigate codebase via logical paths |
+| Workspace cleanup commands | Prune stale files, archive completed plans |
 
 ### Added
 
@@ -24,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`aiwg doctor`** - Health check command that diagnoses installation issues and provides fix suggestions
 - **Postinstall PATH check** - Friendly warning with shell-specific fix instructions if `aiwg` isn't in PATH
 - **GitHub Pages** - Temporary documentation at https://jmagly.github.io/ai-writing-guide
+- **@-mention traceability** - Wired cross-references in 14 key files (source→test→requirements→architecture)
+- **`/workspace-prune-working`** - Clean up `.aiwg/working/` by promoting, archiving, or deleting stale files
+- **`/workspace-realign`** - Sync documentation with codebase changes, archive completed plans
 
 ### Changed
 
