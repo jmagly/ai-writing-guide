@@ -58,9 +58,10 @@ jobs:
       - name: Validate Metadata Schema
         run: |
           echo "Validating plugin metadata..."
-          node -e "
-            const { MetadataValidator } = require('./dist/src/plugin/metadata-validator.js');
-            const path = require('path');
+          node --input-type=module -e "
+            import { MetadataValidator } from './dist/src/plugin/metadata-validator.js';
+            import path from 'path';
+            import { fileURLToPath } from 'url';
 
             async function validateAll() {
               const validator = new MetadataValidator({
@@ -183,10 +184,10 @@ jobs:
       - name: Validate Registry Consistency
         run: |
           echo "Checking registry consistency..."
-          node -e "
-            const { RegistryValidator } = require('./dist/src/plugin/registry-validator.js');
-            const path = require('path');
-            const fs = require('fs');
+          node --input-type=module -e "
+            import { RegistryValidator } from './dist/src/plugin/registry-validator.js';
+            import path from 'path';
+            import fs from 'fs';
 
             async function validateRegistry() {
               const aiwgRoot = path.join(process.env.HOME, '.local/share/ai-writing-guide');
@@ -249,9 +250,9 @@ jobs:
           echo "Measuring validation performance..."
           START=$(date +%s%N)
 
-          node -e "
-            const { MetadataValidator } = require('./dist/src/plugin/metadata-validator.js');
-            const path = require('path');
+          node --input-type=module -e "
+            import { MetadataValidator } from './dist/src/plugin/metadata-validator.js';
+            import path from 'path';
 
             async function benchmark() {
               const validator = new MetadataValidator({ checkFileReferences: false });
