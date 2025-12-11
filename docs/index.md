@@ -14,6 +14,10 @@ npm i -g aiwg        # install globally
 aiwg demo            # try it in < 2 minutes
 ```
 
+[![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
+[![npm downloads](https://img.shields.io/npm/dm/aiwg?color=CB3837&logo=npm)](https://www.npmjs.com/package/aiwg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/jmagly/ai-writing-guide/blob/main/LICENSE)
+
 ## What is AIWG?
 
 AIWG is a modular framework toolkit that provides:
@@ -29,44 +33,69 @@ AIWG is a modular framework toolkit that provides:
 # Install globally
 npm install -g aiwg
 
-# Create a demo project
+# Create a demo project (recommended first step)
 aiwg demo
 cd ~/aiwg-demo
 
 # Or use on your existing project
 cd your-project
-aiwg use sdlc              # Deploy SDLC framework
-aiwg use marketing         # Deploy Marketing framework
+aiwg use sdlc              # Deploy SDLC framework (54 agents, 48 commands)
+aiwg use marketing         # Deploy Marketing framework (37 agents, 23 commands)
 aiwg use all               # Deploy everything
 ```
 
 ## Features
 
-### SDLC Framework
-- 54 agents covering full software development lifecycle
-- Phase transitions (Inception → Elaboration → Construction → Transition)
-- Security reviews, test strategy, architecture evolution
-- Risk management and compliance validation
+### SDLC Complete Framework
 
-### Marketing Framework
-- 37 agents for marketing automation
-- Campaign management, content strategy
-- Brand guidelines, creative workflows
+**Manage projects like an enterprise. Scale like a startup.**
 
-### Writing Quality
-- Voice profiles for consistent, authentic writing
-- AI pattern detection and remediation
-- Content validation and optimization
+- 53 SDLC agents — Requirements, architecture, testing, security, deployment
+- 48 workflow commands — Intake, phase gates, risk management, compliance
+- 156 templates — Every artifact from concept to production
+- Multi-agent orchestration — Parallel reviews, synthesis, automated quality gates
+
+### Media/Marketing Kit (MMK)
+
+**Run campaigns like an agency. Ship content faster.**
+
+- 37 marketing agents — Strategy, content, creative, analytics, compliance
+- 23 workflow commands — Campaign kickoff, content planning, brand review
+- 88 templates — 15 categories from intake to analytics
+- 5-phase lifecycle — Strategy → Creation → Review → Publication → Analysis
+
+### Writing Quality Addon
+
+**Control your voice. Write naturally.**
+
+- Voice Framework — 4 built-in voice profiles (technical, friendly, executive, casual)
+- 4 voice skills — Apply, create, blend, analyze voices
+- 3 specialized agents — Validate, optimize, diversify content
+
+## Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| **Claude Code** | ✅ Tested | Multi-agent orchestration |
+| **Warp Terminal** | ✅ Tested | Terminal-native workflows |
+| **Factory AI** | ✅ Tested | Native droid format |
+| **OpenAI/Codex** | 🟡 Experimental | Functional |
+| **Cursor** | 🟡 Experimental | Claude-compatible |
 
 ## Documentation
 
-Full documentation available at the [GitHub repository](https://github.com/jmagly/ai-writing-guide).
+- [**Quick Start Guide**](https://github.com/jmagly/ai-writing-guide/blob/main/USAGE_GUIDE.md)
+- [**SDLC Framework**](https://github.com/jmagly/ai-writing-guide/tree/main/agentic/code/frameworks/sdlc-complete)
+- [**Marketing Framework**](https://github.com/jmagly/ai-writing-guide/tree/main/agentic/code/frameworks/media-marketing-kit)
+- [**Voice Framework**](https://github.com/jmagly/ai-writing-guide/tree/main/agentic/code/addons/voice-framework)
+- [**CLI Reference**](https://github.com/jmagly/ai-writing-guide/blob/main/docs/CLI_USAGE.md)
 
 ## Community
 
 - **Discord**: [Join Server](https://discord.gg/BuAusFMxdA)
 - **Telegram**: [Join Group](https://t.me/+oJg9w2lE6A5lOGFh)
-- **GitHub Issues**: [Report Issues](https://github.com/jmagly/ai-writing-guide/issues)
+- **GitHub**: [Repository](https://github.com/jmagly/ai-writing-guide)
+- **Issues**: [Report Bugs](https://github.com/jmagly/ai-writing-guide/issues)
 
 ## License
 
@@ -74,4 +103,4 @@ MIT License - Free to use, modify, and distribute.
 
 ---
 
-*This is a temporary landing page. The full site at [aiwg.io](https://aiwg.io) is coming soon.*
+**Full README and source code**: [github.com/jmagly/ai-writing-guide](https://github.com/jmagly/ai-writing-guide)

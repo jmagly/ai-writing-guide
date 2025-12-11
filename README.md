@@ -19,6 +19,8 @@ aiwg demo            # try it in < 2 minutes
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/BuAusFMxdA)
 [![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white)](https://t.me/+oJg9w2lE6A5lOGFh)
 
+🌐 **Live demo & docs:** [https://jmagly.github.io/ai-writing-guide](https://jmagly.github.io/ai-writing-guide)
+
 </div>
 
 ---
