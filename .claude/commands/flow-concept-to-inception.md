@@ -903,37 +903,6 @@ This orchestration succeeds when:
 - Gate criteria pass rate
 - Cycle time: Concept to Inception (target: 2-4 weeks, orchestration: 10-15 min)
 
-
-## Post-Completion
-
-After this flow completes successfully:
-
-### Workspace Health Check (Recommended)
-
-Run a workspace health assessment to ensure alignment:
-
-```
-/project-status
-```
-
-Or ask: "check workspace health"
-
-This will:
-- Verify artifacts are properly archived
-- Check for stale files in .aiwg/working/
-- Confirm documentation alignment with current phase
-- Suggest any cleanup actions
-
-### Common Follow-up Actions
-
-**If workspace needs cleanup**:
-- `/workspace-prune-working` - Remove stale draft files
-- `/workspace-realign` - Reorganize misaligned documentation
-
-**If documentation is out of sync**:
-- `/aiwg-regenerate` - Regenerate context files
-- `/check-traceability` - Verify requirement links
-
 ## References
 
 **Templates** (via $AIWG_ROOT):

@@ -35,6 +35,7 @@ Framework Management:
 Project Setup:
   -new                  Create new project with SDLC templates
                         Options: --no-agents, --provider <...>
+  demo                  Create demo project in ~/aiwg-demo/ (try in < 2 min)
 
 Workspace Management:
   -status               Show workspace health and installed frameworks
@@ -56,6 +57,7 @@ Channel Management:
   --use-stable          Switch to stable channel (npm package)
 
 Maintenance:
+  doctor                Check installation health and diagnose issues
   -version              Show version and channel info
   -update               Check for and apply updates
   -help                 Show this help message
@@ -68,6 +70,8 @@ Examples:
   aiwg use sdlc                    Install SDLC framework
   aiwg use all --provider factory  Install all frameworks for Factory AI
   aiwg -new                        Create new project
+  aiwg demo                        Create instant demo project
+  aiwg doctor                      Check installation health
   aiwg --use-main                  Switch to bleeding edge mode
   aiwg mcp serve                   Start MCP server
   aiwg mcp install claude          Configure Claude Code to use AIWG MCP
@@ -208,6 +212,12 @@ export async function run(args, options = {}) {
       await runScript('tools/install/new-project.mjs', commandArgs);
       break;
 
+    case 'demo':
+    case '-demo':
+    case '--demo':
+      await runScript('tools/cli/demo.mjs', commandArgs);
+      break;
+
     // Workspace management
     case '-status':
     case '--status':
@@ -276,6 +286,12 @@ export async function run(args, options = {}) {
       break;
 
     // Maintenance
+    case 'doctor':
+    case '-doctor':
+    case '--doctor':
+      await runScript('tools/cli/doctor.mjs', commandArgs);
+      break;
+
     case '-version':
     case '--version':
     case 'version':

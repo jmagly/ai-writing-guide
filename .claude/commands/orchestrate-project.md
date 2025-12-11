@@ -1,7 +1,7 @@
 ---
 description: Plan iterations, delegate to SDLC agents, and compile iteration status
 category: sdlc-management
-argument-hint: <docs/sdlc/artifacts/project> [--guidance "text"] [--interactive]
+argument-hint: <docs/sdlc/artifacts/project>
 allowed-tools: Read, Write, Grep, Glob
 model: opus
 ---
@@ -24,27 +24,6 @@ Coordinate lifecycle work for the current phase/iteration:
 ## Outputs
 
 - `status-assessment.md` with gates, risks, and next iteration goals
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/orchestrate-project --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/orchestrate-project --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Notes
 

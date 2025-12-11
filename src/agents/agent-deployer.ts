@@ -2,6 +2,14 @@
  * Agent Deployer
  *
  * Core deployment engine for multi-platform agent deployment.
+ *
+ * @implements @.aiwg/requirements/use-cases/UC-002-deploy-sdlc-framework.md
+ * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 2.1 CLI Entry Point
+ * @nfr @.aiwg/requirements/nfr-modules/performance.md - NFR-PERF-002 (<10s deployment)
+ * @tests @test/unit/agents/agent-deployer.test.ts
+ * @depends @src/agents/agent-validator.ts
+ * @depends @src/agents/agent-packager.ts
+ * @agent-catalog @agentic/code/frameworks/sdlc-complete/agents/
  */
 
 import * as fs from 'fs/promises';

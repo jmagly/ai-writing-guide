@@ -1,7 +1,7 @@
 ---
 description: Generate comprehensive test suite for $ARGUMENTS following project testing conventions and best practices.
 category: code-analysis-testing
-argument-hint: "Specify test generation options" [--guidance "text"] [--interactive]
+argument-hint: "Specify test generation options"
 ---
 
 # Test Generator
@@ -72,23 +72,3 @@ I'll follow these steps:
 - Include boundary value testing
 
 I'll adapt to your project's testing framework (Jest, Vitest, Cypress, etc.) and follow established patterns.
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/generate-tests --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/generate-tests --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them

@@ -23,3 +23,11 @@ Positive, negative, and trade-offs. Operational impacts.
 ## Alternatives Considered
 
 Other options and why not chosen.
+
+## References
+
+Wire @-mentions for traceability:
+
+- @.aiwg/requirements/use-cases/UC-XXX.md - Driving requirement
+- @.aiwg/architecture/software-architecture-doc.md - Architecture context
+- @src/path/to/implementation.ts - Implementation (when applicable)

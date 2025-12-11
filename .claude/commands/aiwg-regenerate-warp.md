@@ -1,7 +1,6 @@
 ---
 name: aiwg-regenerate-warp
 description: Regenerate WARP.md for Warp Terminal with preserved team directives
-argument-hint: [--guidance "text"] [--interactive]
 args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
 ---
 
@@ -236,27 +235,6 @@ actual_command --with-flags
 # Full regeneration
 /aiwg-regenerate-warp --full
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/aiwg-regenerate-warp --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/aiwg-regenerate-warp --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Notes
 

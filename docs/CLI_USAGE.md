@@ -3,90 +3,190 @@
 ## Installation
 
 ```bash
-npm install -g ai-writing-guide
+npm install -g aiwg
 ```
 
 ## Quick Start
 
-### Validate Files
-
 ```bash
-# Validate single file
-aiwg validate article.md
+# Try AIWG in under 2 minutes
+aiwg demo
 
-# Validate multiple files
-aiwg validate docs/*.md
+# Check installation health
+aiwg doctor
 
-# Validate with custom threshold
-aiwg validate README.md --threshold 80
-
-# Validate with context
-aiwg validate technical-doc.md --context technical
+# Deploy SDLC framework to your project
+cd your-project
+aiwg use sdlc
 ```
 
-### Optimize Content
+## Core Commands
+
+### demo
+
+Create a complete demo project to explore AIWG.
 
 ```bash
-# Analyze and show optimization suggestions
-aiwg optimize prompt.txt
-
-# Apply optimization (creates .original backup)
-aiwg optimize prompt.txt --apply
-
-# Optimize with voice guidance
-aiwg optimize article.md --voice technical --apply
+aiwg demo
 ```
 
-### Full Workflow (Validate → Optimize → Re-validate)
+Creates `~/aiwg-demo/` with:
+- Full `.aiwg/` directory structure
+- Sample intake form and requirements
+- All SDLC agents and commands deployed
+- Ready for Claude Code or Cursor
+
+### doctor
+
+Check AIWG installation health and diagnose issues.
 
 ```bash
-# Run full workflow on files
-aiwg workflow docs/*.md
-
-# Auto-apply optimizations
-aiwg workflow docs/*.md --auto-fix
-
-# Custom threshold and output
-aiwg workflow src/**/*.md --threshold 75 --format json --output report.json
+aiwg doctor
 ```
 
-### Watch Mode
+Checks:
+- AIWG installation location
+- Version info
+- Project `.aiwg/` directory
+- Deployed agents and commands
+- Node.js version
+- MCP server availability
+- Skill Seekers (optional)
+
+### use
+
+Deploy a framework to your project.
 
 ```bash
-# Watch markdown files with auto-fix
-aiwg watch "**/*.md" --auto-fix
+# SDLC framework (software development)
+aiwg use sdlc
 
-# Watch with custom debounce
-aiwg watch "**/*.md" "**/*.txt" --debounce 1000
+# Marketing framework
+aiwg use marketing
 
-# Watch without auto-fix (validation only)
-aiwg watch "docs/**/*.md"
+# Writing addon (voice profiles)
+aiwg use writing
+
+# All frameworks
+aiwg use all
 ```
 
-### Initialize Project
+**Options:**
+- `--provider <name>`: Target platform (claude, factory, openai, warp)
+- `--no-utils`: Skip aiwg-utils addon
+- `--force`: Overwrite existing deployments
+
+### -new
+
+Create a new project with full SDLC scaffolding.
 
 ```bash
-# Create .aiwgrc.json config file
-aiwg init
-
-# Force overwrite existing config
-aiwg init --force
+aiwg -new my-project
+cd my-project
 ```
 
-### Git Hooks
+### -status
+
+Show workspace health and installed frameworks.
 
 ```bash
-# Install pre-commit hook
-aiwg install-hooks
+aiwg -status
+```
 
-# Install both pre-commit and pre-push
-aiwg install-hooks --pre-commit --pre-push
+### list
 
-# Force overwrite existing hooks
-aiwg install-hooks --force
+List installed frameworks and addons.
 
-# Append to existing hooks
-aiwg install-hooks --append
+```bash
+aiwg list
+```
+
+### remove
+
+Remove a framework or addon.
+
+```bash
+aiwg remove <id>
+```
+
+## MCP Server
+
+### mcp serve
+
+Start the AIWG MCP server.
+
+```bash
+aiwg mcp serve
+```
+
+### mcp install
+
+Generate MCP client configuration.
+
+```bash
+# For Claude Desktop
+aiwg mcp install claude
+
+# For Cursor IDE
+aiwg mcp install cursor
+
+# For Factory AI
+aiwg mcp install factory
+
+# Preview without writing
+aiwg mcp install claude --dry-run
+```
+
+### mcp info
+
+Show MCP server capabilities.
+
+```bash
+aiwg mcp info
+```
+
+## Channel Management
+
+### --use-main
+
+Switch to bleeding edge (tracks main branch).
+
+```bash
+aiwg --use-main
+```
+
+### --use-stable
+
+Switch back to stable (npm releases).
+
+```bash
+aiwg --use-stable
+```
+
+## Maintenance
+
+### -version
+
+Show version and channel info.
+
+```bash
+aiwg -version
+```
+
+### -update
+
+Check for and apply updates.
+
+```bash
+aiwg -update
+```
+
+### -help
+
+Show all available commands.
+
+```bash
+aiwg -help
 ```
 
 ## Commands

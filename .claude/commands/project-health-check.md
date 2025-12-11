@@ -1,6 +1,5 @@
 ---
 description: Analyze overall project health and metrics
-argument-hint: [--guidance "text"] [--interactive]
 category: project-task-management
 allowed-tools: Bash(git *), Bash(gh *), Bash(npm *)
 ---
@@ -267,27 +266,6 @@ Allow users to define additional metrics:
 4. Generate PR templates with health criteria
 5. Configure CI/CD health gates"
 ```
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/project-health-check --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/project-health-check --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Best Practices
 

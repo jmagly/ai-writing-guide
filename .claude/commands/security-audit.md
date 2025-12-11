@@ -1,33 +1,11 @@
 ---
 description: Perform comprehensive security assessment
-argument-hint: [--guidance "text"] [--interactive]
 category: security-quality
 ---
 
 # Security Audit Command
 
 Perform comprehensive security assessment
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/security-audit --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/security-audit --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Instructions
 

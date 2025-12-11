@@ -5,6 +5,11 @@
  * Follows MCP 2025-11-25 specification.
  *
  * @see https://modelcontextprotocol.io/specification/2025-11-25
+ * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 2.1 CLI Layer
+ * @reference @docs/references/REF-003-mcp-specification-2025.md
+ * @cli @docs/CLI_USAGE.md - mcp serve command
+ * @frameworks @agentic/code/frameworks/sdlc-complete/
+ * @frameworks @agentic/code/frameworks/media-marketing-kit/
  */
 
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -25,6 +30,31 @@ const FRAMEWORKS = {
   'sdlc-complete': path.join(AIWG_ROOT, 'agentic/code/frameworks/sdlc-complete'),
   'media-marketing-kit': path.join(AIWG_ROOT, 'agentic/code/frameworks/media-marketing-kit')
 };
+
+/**
+ * Find project root by walking up the directory tree looking for .aiwg directory
+ * @param {string} startDir - Directory to start searching from (defaults to cwd)
+ * @returns {Promise<string>} - Path to project root
+ * @throws {Error} - If no .aiwg directory found
+ */
+async function findProjectRoot(startDir = process.cwd()) {
+  let currentDir = startDir;
+
+  while (currentDir !== path.dirname(currentDir)) { // Stop at filesystem root
+    const aiwgPath = path.join(currentDir, '.aiwg');
+    try {
+      const stat = await fs.stat(aiwgPath);
+      if (stat.isDirectory()) {
+        return currentDir;
+      }
+    } catch {
+      // Directory doesn't exist, continue up
+    }
+    currentDir = path.dirname(currentDir);
+  }
+
+  throw new Error("No .aiwg directory found. Run from an AIWG project or `aiwg -new` first.");
+}
 
 /**
  * Create and configure the AIWG MCP Server
@@ -162,11 +192,13 @@ export function createServer() {
     description: 'Read artifact from .aiwg/ directory',
     inputSchema: {
       path: z.string().describe('Path relative to .aiwg/ (e.g., "requirements/UC-001.md")'),
-      project_dir: z.string().default('.').describe('Project directory path')
+      project_dir: z.string().optional().describe('Project directory path (defaults to auto-detected project root)')
     }
   }, async ({ path: artifactPath, project_dir }) => {
     try {
-      const fullPath = path.join(project_dir, '.aiwg', artifactPath);
+      // Auto-find project root if not specified
+      const projectRoot = project_dir || await findProjectRoot();
+      const fullPath = path.join(projectRoot, '.aiwg', artifactPath);
       const content = await fs.readFile(fullPath, 'utf-8');
       return {
         content: [{
@@ -192,11 +224,13 @@ export function createServer() {
     inputSchema: {
       path: z.string().describe('Path relative to .aiwg/'),
       content: z.string().describe('Artifact content'),
-      project_dir: z.string().default('.').describe('Project directory path')
+      project_dir: z.string().optional().describe('Project directory path (defaults to auto-detected project root)')
     }
   }, async ({ path: artifactPath, content, project_dir }) => {
     try {
-      const fullPath = path.join(project_dir, '.aiwg', artifactPath);
+      // Auto-find project root if not specified
+      const projectRoot = project_dir || await findProjectRoot();
+      const fullPath = path.join(projectRoot, '.aiwg', artifactPath);
       const dir = path.dirname(fullPath);
 
       // Ensure directory exists

@@ -19,7 +19,11 @@ on:
 jobs:
   validate-metadata:
     name: Validate Plugin Metadata
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
     steps:
@@ -29,7 +33,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
@@ -40,7 +44,16 @@ jobs:
           echo "Building TypeScript..."
           npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
           echo "Build completed. Checking dist directory..."
-          ls -la dist/src/plugin/ || echo "dist/src/plugin/ directory does not exist"
+        shell: bash
+
+      - name: Check dist directory (Unix)
+        if: runner.os != 'Windows'
+        run: ls -la dist/src/plugin/ || echo "dist/src/plugin/ directory does not exist"
+
+      - name: Check dist directory (Windows)
+        if: runner.os == 'Windows'
+        run: dir dist\src\plugin\ || echo "dist/src/plugin/ directory does not exist"
+        shell: cmd
 
       - name: Validate Metadata Schema
         run: |
@@ -118,9 +131,11 @@ jobs:
               process.exit(1);
             });
           "
+        shell: bash
 
       - name: Check TypeScript Types
         run: npx tsc --noEmit src/plugin/metadata-validator.ts src/plugin/registry-validator.ts 2>/dev/null || echo "Type check completed"
+        shell: bash
 
       - name: Report Failure
         if: failure()
@@ -138,6 +153,7 @@ jobs:
           echo "  - Invalid semver version format"
           echo ""
           exit 1
+        shell: bash
 
   validate-registry:
     name: Validate Plugin Registry

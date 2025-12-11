@@ -3,6 +3,14 @@
  *
  * Core validation engine that scans text for AI detection patterns, banned phrases,
  * and authenticity markers. Provides comprehensive scoring and issue reporting.
+ *
+ * @implements @.aiwg/requirements/use-cases/UC-001-validate-ai-generated-content.md
+ * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 5.1 WritingValidator
+ * @nfr @.aiwg/requirements/nfr-modules/performance.md - NFR-PERF-001 (<60s validation)
+ * @nfr @.aiwg/requirements/nfr-modules/accuracy.md - NFR-ACC-001 (<5% false positives)
+ * @tests @test/unit/writing/validation-engine.test.ts
+ * @depends @src/writing/validation-rules.ts
+ * @depends @src/writing/pattern-library.ts
  */
 
 import { readFile } from 'fs/promises';

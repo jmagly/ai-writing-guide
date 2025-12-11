@@ -6,6 +6,7 @@
  */
 
 import chokidar, { FSWatcher } from 'chokidar';
+import * as path from 'path';
 import { WatchConfig } from './config-loader.js';
 
 export interface WatchEvent {
@@ -172,7 +173,7 @@ export class WatchService {
 
     for (const [dir, fileList] of Object.entries(watched)) {
       for (const file of fileList) {
-        files.push(`${dir}/${file}`);
+        files.push(path.join(dir, file));
       }
     }
 

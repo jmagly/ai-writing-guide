@@ -48,9 +48,20 @@ Establish the overarching testing strategy, scope, resources, and schedule acros
 14. **Approvals**
     - Capture sign-off requirements and responsible parties.
 
+## References
+
+Wire @-mentions for traceability:
+
+- @.aiwg/requirements/use-cases/ - Use cases covered
+- @.aiwg/architecture/software-architecture-doc.md - Architecture under test
+- @.aiwg/requirements/nfr-modules/performance.md - Performance requirements
+- @test/ - Test implementation directory
+- @src/ - Source code under test
+
 ## Agent Notes
 
 - Keep terminology aligned with the Supplementary Specification and Risk List.
 - Link to iteration-level plans and evaluation summaries for traceability.
 - Update schedule and risks after each iteration assessment.
 - Verify the Automation Outputs entry is satisfied before signaling completion.
+- **Wire @-mentions** in References section when generating this document.

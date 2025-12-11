@@ -1,7 +1,7 @@
 ---
 description: Conduct comprehensive PR review from multiple perspectives (PM, Developer, QA, Security)
 category: version-control-git
-argument-hint: <pr_link_or_number> [--guidance "text"] [--interactive]
+argument-hint: <pr_link_or_number>
 allowed-tools: Bash(gh *), Read
 ---
 
@@ -46,27 +46,6 @@ allowed-tools: Bash(gh *), Read
 **Action**: Provide a detailed QA assessment, insisting any "future" improvements be completed right away.
 
 ---
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/pr-review --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/pr-review --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Task 4: Security Engineer Review
 

@@ -1,7 +1,7 @@
 ---
 description: Generate troubleshooting documentation
 category: documentation-changelogs
-argument-hint: 1. **System Overview and Architecture** [--guidance "text"] [--interactive]
+argument-hint: 1. **System Overview and Architecture**
 ---
 
 # Troubleshooting Guide Generator Command
@@ -359,23 +359,3 @@ Remember to:
 - Collect feedback from users and improve guides
 - Include screenshots and visual aids where helpful
 - Make guides searchable and well-organized
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/troubleshooting-guide --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/troubleshooting-guide --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them

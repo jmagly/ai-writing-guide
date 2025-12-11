@@ -1,7 +1,7 @@
 {
   "name": "aiwg",
-  "version": "2024.12.2",
-  "description": "AI Writing Guide - Framework for improving AI-generated content quality with SDLC lifecycle support",
+  "version": "2024.12.3",
+  "description": "Modular agentic framework for AI-powered SDLC, marketing automation, and workflow orchestration",
   "type": "module",
   "bin": {
     "aiwg": "bin/aiwg.mjs"
@@ -11,6 +11,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "postinstall": "node ./bin/postinstall.mjs",
     "validate-metadata": "node tools/cli/validate-metadata.mjs",
     "build": "tsc",
     "test": "vitest",
@@ -39,16 +40,20 @@
     "url": "git+https://github.com/jmagly/ai-writing-guide.git"
   },
   "keywords": [
-    "ai",
-    "writing",
-    "guide",
-    "sdlc",
-    "framework",
-    "claude",
-    "agents",
-    "cli",
-    "devtools",
-    "productivity"
+    "aiwg",
+    "agentic-ai",
+    "claude-skills",
+    "mcp-server",
+    "model-context-protocol",
+    "ai-writing",
+    "ai-sdlc",
+    "claude-desktop",
+    "cursor-ide",
+    "factory-ai",
+    "skill-seekers",
+    "ai-agents",
+    "workflow-automation",
+    "sdlc-framework"
   ],
   "author": "jmagly",
   "license": "MIT",

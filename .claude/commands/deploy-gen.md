@@ -1,7 +1,6 @@
 ---
 name: deploy-gen
 description: Generate deployment configurations (Docker, Kubernetes) for the current project
-argument-hint: [--guidance "text"] [--interactive]
 args: <type> [--output <dir>] [--app-name <name>] [--port <port>]
 ---
 
@@ -152,27 +151,6 @@ aiwg deploy-gen <type> [options]
 - `/project-health-check` - Analyze project before deployment
 - `/security-audit` - Security review before production
 - `/flow-deploy-to-production` - Full deployment workflow
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/deploy-gen --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/deploy-gen --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Success Metrics
 

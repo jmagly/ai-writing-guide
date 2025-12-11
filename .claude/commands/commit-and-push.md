@@ -1,7 +1,7 @@
 ---
 description: Create a well-formatted git commit and push to remote repository
 category: version-control
-argument-hint: [commit-message-summary] [--guidance "text"] [--interactive]
+argument-hint: [commit-message-summary]
 allowed-tools: Bash, Read, Grep
 model: sonnet
 ---
@@ -564,24 +564,3 @@ git push
 **Category**: Version Control
 **Required Tools**: Git
 **No AI Attribution Policy**: Enforced
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/commit-and-push --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/commit-and-push --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them

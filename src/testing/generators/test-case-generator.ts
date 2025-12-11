@@ -5,6 +5,12 @@
  * following TC-XXX format with test steps, expected results, and data requirements.
  *
  * @module src/testing/generators/test-case-generator
+ * @implements @.aiwg/requirements/use-cases/UC-009-generate-test-artifacts.md
+ * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 5.3 TestGenerator
+ * @nfr @.aiwg/requirements/nfr-modules/performance.md - NFR-TEST-01 (<10min for 100 reqs)
+ * @tests @test/unit/testing/test-case-generator.test.ts
+ * @depends @src/testing/generators/use-case-parser.ts
+ * @agent @agentic/code/frameworks/sdlc-complete/agents/test-engineer.md
  */
 
 import { UseCaseDocument, UseCaseScenario, UseCaseStep } from './use-case-parser.js';

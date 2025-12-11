@@ -1,5 +1,10 @@
 /**
  * Tests for WritingValidationEngine
+ *
+ * @source @src/writing/validation-engine.ts
+ * @requirement @.aiwg/requirements/use-cases/UC-001-validate-ai-generated-content.md
+ * @nfr @.aiwg/requirements/nfr-modules/accuracy.md - NFR-ACC-001 (<5% false positives)
+ * @nfr @.aiwg/requirements/nfr-modules/performance.md - NFR-PERF-001 (<60s validation)
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

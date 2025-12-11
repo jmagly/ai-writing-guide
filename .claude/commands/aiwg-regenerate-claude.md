@@ -1,21 +1,12 @@
 ---
 name: aiwg-regenerate-claude
-description: Regenerate CLAUDE.md for Claude Code with preserved team directives (modular structure)
-argument-hint: [--guidance "text"] [--interactive]
-args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--legacy]"
+description: Regenerate CLAUDE.md for Claude Code with preserved team directives
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
 ---
 
-# Regenerate CLAUDE.md (Modular Structure)
+# Regenerate CLAUDE.md
 
-Regenerate the CLAUDE.md file for Claude Code integration using the new **modular structure** with path-scoped rules. This keeps the core CLAUDE.md under 150 lines while loading additional context conditionally based on file paths.
-
-## New Modular Architecture
-
-**Core CLAUDE.md** (~100-150 lines): Essential info only
-**.claude/rules/**: Path-scoped rules loaded conditionally
-**docs/reference/**: Detailed docs loaded on-demand via @-mentions
-
-The old monolithic 1000+ line CLAUDE.md is deprecated. Use `--legacy` flag if you need the old format.
+Regenerate the CLAUDE.md file for Claude Code integration, analyzing current project state while preserving team directives and organizational requirements.
 
 ## Parameters
 
@@ -25,7 +16,6 @@ The old monolithic 1000+ line CLAUDE.md is deprecated. Use `--legacy` flag if yo
 | `--dry-run` | Preview changes without writing |
 | `--show-preserved` | List all detected preserved content and exit |
 | `--full` | Full regeneration, preserve nothing (destructive) |
-| `--legacy` | Generate old monolithic format (deprecated) |
 
 ## Execution Steps
 
@@ -167,129 +157,9 @@ Read `.claude/settings.local.json` if exists for:
 - Allowed write paths
 - Allowed bash commands
 
-### Step 5: Generate Modular Structure
+### Step 5: Generate CLAUDE.md
 
-**Unless `--legacy` flag is set**, generate the new modular structure:
-
-#### 5a: Generate Core CLAUDE.md (~100-150 lines)
-
-```markdown
-# {Project Name}
-
-{First paragraph from README.md or package.json description}
-
-## Quick Start
-
-```bash
-# {key development commands}
-{test command}
-{build command}
-{lint command}
-```
-
-## Repository Structure
-
-```
-{key directories with descriptions}
-```
-
-## Context Loading Strategy
-
-**Automatic (via path-scoped rules)**:
-
-| Working in... | Rules loaded |
-|---------------|--------------|
-| `.aiwg/**` | SDLC orchestration |
-| `**/*.md` | Voice framework |
-| `src/**`, `test/**` | Development conventions |
-| `.claude/agents/**` | Agent deployment |
-
-**On-demand (via @-mentions)**:
-
-Use `@path/to/file.md` to load specific documentation when needed.
-
-## Tech Stack
-
-- **Languages**: {detected languages}
-- **Runtime**: {Node.js version, Python version, etc.}
-- **Package Manager**: {npm, yarn, pip, etc.}
-- **Framework**: {React, FastAPI, etc. if detected}
-
-## Key References
-
-| Topic | Location |
-|-------|----------|
-| Full reference | `@docs/reference/` |
-| AIWG Framework | `@~/.local/share/ai-writing-guide/` |
-
----
-
-<!-- TEAM DIRECTIVES: Add project-specific guidance below this line -->
-
-{ALL PRESERVED CONTENT FROM STEP 2}
-```
-
-#### 5b: Generate .claude/rules/ Files
-
-Create path-scoped rules based on detected frameworks:
-
-**If SDLC framework detected**, generate `.claude/rules/sdlc-orchestration.md`:
-
-```yaml
----
-paths:
-  - ".aiwg/**"
-  - ".claude/commands/flow-*.md"
----
-
-# SDLC Orchestration Rules
-
-{Orchestrator role, natural language translations, available commands}
-{From template: ~/.local/share/ai-writing-guide/.claude/rules/sdlc-orchestration.md}
-```
-
-**If writing/content detected**, generate `.claude/rules/voice-framework.md`:
-
-```yaml
----
-paths:
-  - "**/*.md"
-  - "docs/**"
----
-
-# Voice Framework Rules
-
-{Voice profiles, writing principles}
-{From template: ~/.local/share/ai-writing-guide/.claude/rules/voice-framework.md}
-```
-
-**Always generate** `.claude/rules/development.md`:
-
-```yaml
----
-paths:
-  - "src/**"
-  - "test/**"
----
-
-# Development Rules
-
-{Project-specific conventions from analysis}
-```
-
-#### 5c: Generate docs/reference/ (If AIWG Project)
-
-For AIWG-integrated projects, also generate:
-
-- `docs/reference/ORCHESTRATOR_GUIDE.md` - Full orchestration reference
-- `docs/reference/AGENTS_CATALOG.md` - Available agents listing
-- `docs/reference/COMMANDS_REFERENCE.md` - Command reference
-
----
-
-### Step 5-Legacy: Generate Monolithic CLAUDE.md (--legacy flag)
-
-**Only if `--legacy` specified**, generate the old format:
+**Document Structure:**
 
 ```markdown
 # CLAUDE.md
@@ -404,65 +274,35 @@ See `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/
 **If `--dry-run`:**
 Display the generated content, do not write.
 
-**Otherwise (modular structure):**
-
-1. Write core `CLAUDE.md` (~100-150 lines)
-2. Create `.claude/rules/` directory if needed
-3. Write path-scoped rule files
-4. Create `docs/reference/` if needed
-5. Write reference documents
-6. Verify all writes succeeded
-7. Report summary
+**Otherwise:**
+1. Write generated content to `CLAUDE.md`
+2. Verify write succeeded
+3. Report summary
 
 ```
-CLAUDE.md Regenerated (Modular Structure)
-=========================================
+CLAUDE.md Regenerated
+=====================
 
 Backup: CLAUDE.md.backup-20251206-152233
 
 Preserved Content:
-  [OK] Team Conventions (18 lines)
-  [OK] Definition of Done (9 lines)
-  [OK] 2 inline directives
+  ✓ Team Conventions (18 lines)
+  ✓ Definition of Done (9 lines)
+  ✓ Security Requirements (7 lines)
+  ✓ 2 inline directives
 
-Generated Files:
-  [OK] CLAUDE.md (134 lines) - Core context
-  [OK] .claude/rules/sdlc-orchestration.md (180 lines)
-  [OK] .claude/rules/voice-framework.md (75 lines)
-  [OK] .claude/rules/development.md (85 lines)
-  [OK] docs/reference/ORCHESTRATOR_GUIDE.md (320 lines)
-
-Context Loading:
-  - Base load: 134 lines (was 1,018 lines) - 87% reduction
-  - Working in .aiwg/: +180 lines (SDLC rules)
-  - Working in **/*.md: +75 lines (voice rules)
-  - Working in src/: +85 lines (dev rules)
-
-AIWG Integration:
-  - sdlc-complete (54 agents, 42 commands)
-  - Centralized registry: agentic/code/config/registry.json
-```
-
-**Otherwise (legacy structure with --legacy):**
-
-1. Write monolithic `CLAUDE.md`
-2. Report summary
-
-```
-CLAUDE.md Regenerated (Legacy Format)
-=====================================
-
-Backup: CLAUDE.md.backup-20251206-152233
-
-Preserved Content:
-  [OK] Team Conventions (18 lines)
-  [OK] Definition of Done (9 lines)
-  [OK] 2 inline directives
+Regenerated Sections:
+  ✓ Repository Purpose
+  ✓ Tech Stack (TypeScript, Node.js 18+)
+  ✓ Development Commands (12 scripts)
+  ✓ Testing (Vitest)
+  ✓ Architecture
+  ✓ Important Files
+  ✓ AIWG Integration
+    - sdlc-complete (54 agents, 42 commands)
+    - aiwg-utils (1 agent, 4 commands)
 
 Output: CLAUDE.md (428 lines, 18,234 bytes)
-
-WARNING: Legacy format loads all context on every session.
-Consider migrating to modular structure for better performance.
 ```
 
 ## Examples
@@ -493,27 +333,6 @@ Consider migrating to modular structure for better performance.
 | Read error | Report error, suggest --full |
 | No AIWG detected | Generate project-only content, warn |
 | No package files | Generate minimal structure, warn |
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/aiwg-regenerate-claude --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/aiwg-regenerate-claude --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Notes
 

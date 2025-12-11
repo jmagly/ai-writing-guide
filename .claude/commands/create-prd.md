@@ -1,7 +1,7 @@
 ---
 description: Create a Product Requirements Document (PRD) for a product feature
 category: project-task-management
-argument-hint: "<feature description> [output-path]" [--guidance "text"] [--interactive]
+argument-hint: "<feature description> [output-path]"
 allowed-tools: Write, TodoWrite
 ---
 
@@ -30,27 +30,6 @@ Create a comprehensive Product Requirements Document (PRD) based on the feature 
    - User personas and their journey
 
 4. Use the TodoWrite tool to track PRD sections as you complete them
-
-
-## Optional Parameters
-
-### --guidance "text"
-Provide strategic context or constraints to guide the command execution:
-```
-/create-prd --guidance "Focus on security implications"
-```
-
-### --interactive
-Enable interactive mode for step-by-step confirmation and input:
-```
-/create-prd --interactive
-```
-
-When interactive mode is enabled, the command will:
-1. Confirm understanding of the task before proceeding
-2. Ask clarifying questions if requirements are ambiguous
-3. Present options for user decision at key branch points
-4. Summarize changes before applying them
 
 ## Example usage:
 - `/create-prd "Add dark mode toggle to settings"`

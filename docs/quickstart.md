@@ -168,3 +168,11 @@ aiwg use writing           # Add voice profiles to SDLC project
 1. Pick your framework: [SDLC](quickstart-sdlc.md) or [MMK](quickstart-mmk.md)
 2. Pick your platform: [Claude Code](integrations/claude-code-quickstart.md), [Factory](integrations/factory-quickstart.md), or [Warp](integrations/warp-terminal-quickstart.md)
 3. Start with intake - the framework guides you from there
+
+## References
+
+- @docs/CLI_USAGE.md - Full CLI command reference
+- @agentic/code/frameworks/sdlc-complete/README.md - SDLC Framework details
+- @agentic/code/frameworks/media-marketing-kit/README.md - Marketing Framework details
+- @agentic/code/addons/voice-framework/README.md - Voice Framework addon
+- @.aiwg/architecture/software-architecture-doc.md - System architecture
