@@ -1,0 +1,164 @@
+# AIWG Security Review with Codex
+#
+# Automated security scanning using OpenAI Codex CLI.
+# Runs on pull requests targeting main/master branches.
+#
+# Prerequisites:
+# - OPENAI_API_KEY secret configured
+#
+# Usage:
+# Copy this file to .github/workflows/aiwg-codex-security.yml
+
+name: AIWG Security Review (Codex)
+
+on:
+  pull_request:
+    branches: [main, master]
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Codex CLI
+        run: npm install -g @openai/codex
+
+      - name: Run Security Review
+        id: security
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          codex exec "Perform a comprehensive security review of this codebase.
+
+          Focus areas:
+          1. OWASP Top 10 vulnerabilities
+             - Injection (SQL, NoSQL, OS command, LDAP)
+             - Broken authentication/session management
+             - Sensitive data exposure
+             - XML External Entities (XXE)
+             - Broken access control
+             - Security misconfiguration
+             - Cross-Site Scripting (XSS)
+             - Insecure deserialization
+             - Components with known vulnerabilities
+             - Insufficient logging/monitoring
+
+          2. Authentication & Authorization
+             - Password handling
+             - Session management
+             - API key/token handling
+             - Role-based access control
+
+          3. Data Security
+             - Encryption at rest/transit
+             - PII handling
+             - Secrets in code
+             - .env file exposure
+
+          4. Infrastructure Security
+             - Dockerfile security
+             - CI/CD pipeline security
+             - Dependency vulnerabilities
+
+          Output format:
+          {
+            \"severity\": \"critical|high|medium|low|none\",
+            \"findings\": [
+              {
+                \"type\": \"vulnerability type\",
+                \"severity\": \"critical|high|medium|low\",
+                \"file\": \"path/to/file\",
+                \"line\": 123,
+                \"description\": \"what was found\",
+                \"recommendation\": \"how to fix\"
+              }
+            ],
+            \"summary\": \"overall assessment\"
+          }" \
+            --full-auto \
+            --sandbox read-only \
+            --output-schema security-schema.json \
+            -o security-results.json
+
+      - name: Process Results
+        id: process
+        run: |
+          if [ -f security-results.json ]; then
+            SEVERITY=$(jq -r '.severity' security-results.json)
+            FINDINGS_COUNT=$(jq '.findings | length' security-results.json)
+            echo "severity=$SEVERITY" >> $GITHUB_OUTPUT
+            echo "findings_count=$FINDINGS_COUNT" >> $GITHUB_OUTPUT
+          else
+            echo "severity=unknown" >> $GITHUB_OUTPUT
+            echo "findings_count=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Security Comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let results;
+            try {
+              results = JSON.parse(fs.readFileSync('security-results.json', 'utf8'));
+            } catch (e) {
+              results = { severity: 'unknown', findings: [], summary: 'Unable to parse results' };
+            }
+
+            const severityEmoji = {
+              critical: '🔴',
+              high: '🟠',
+              medium: '🟡',
+              low: '🟢',
+              none: '✅',
+              unknown: '❓'
+            };
+
+            let body = `## Security Review (Codex)\n\n`;
+            body += `**Severity**: ${severityEmoji[results.severity]} ${results.severity.toUpperCase()}\n\n`;
+
+            if (results.findings && results.findings.length > 0) {
+              body += `### Findings (${results.findings.length})\n\n`;
+              for (const finding of results.findings) {
+                body += `#### ${severityEmoji[finding.severity]} ${finding.type}\n`;
+                body += `- **File**: \`${finding.file}\`${finding.line ? `:${finding.line}` : ''}\n`;
+                body += `- **Description**: ${finding.description}\n`;
+                body += `- **Recommendation**: ${finding.recommendation}\n\n`;
+              }
+            } else {
+              body += `### No security issues found\n\n`;
+            }
+
+            body += `### Summary\n${results.summary}\n\n`;
+            body += `---\n*Automated security review by [AIWG](https://aiwg.io) + OpenAI Codex*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Fail on Critical
+        if: steps.process.outputs.severity == 'critical'
+        run: |
+          echo "Critical security issues found!"
+          exit 1

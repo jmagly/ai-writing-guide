@@ -22,12 +22,12 @@
  *   --skills-only            Deploy only skills (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, or factory
+ *   --provider <name>        Target provider: claude (default), openai, codex, or factory
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
  *   --efficiency-model <name> Override model for efficiency tasks
  *   --as-agents-md           Aggregate to single AGENTS.md (OpenAI)
- *   --create-agents-md       Create/update AGENTS.md template (Factory)
+ *   --create-agents-md       Create/update AGENTS.md template (Factory/Codex)
  *
  * Modes:
  *   general   - Deploy only writing-quality addon agents and commands (alias: writing)
@@ -515,6 +515,49 @@ function createFactoryAgentsMd(target, srcRoot, dryRun) {
   }
 }
 
+function createCodexAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'codex', 'AGENTS.md.aiwg-template');
+  const destPath = path.join(target, 'AGENTS.md');
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`Codex AGENTS.md template not found at ${templatePath}`);
+    return;
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf8');
+
+  // Check if AGENTS.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+
+    // Check if it already has AIWG section
+    if (existing.includes('AIWG SDLC Framework')) {
+      console.log('AGENTS.md already contains AIWG section, skipping');
+      return;
+    }
+
+    // Append AIWG section to existing AGENTS.md
+    const separator = '\n\n---\n\n<!-- AIWG SDLC Framework Integration -->\n\n';
+    const aiwgSection = template.split('<!-- AIWG SDLC Framework Integration -->')[1] || template;
+    const combined = existing.trimEnd() + separator + aiwgSection.trim() + '\n';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated AGENTS.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new AGENTS.md from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create AGENTS.md from Codex template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created AGENTS.md from Codex template');
+    }
+  }
+}
+
 /**
  * Initialize framework-scoped workspace structure
  * Creates .aiwg/frameworks/{framework-id}/ directories as specified in issue #53
@@ -813,7 +856,7 @@ function enableFactoryCustomDroids(dryRun) {
         if (files.length > 0) {
           const destDir = provider === 'factory'
             ? path.join(target, '.factory', 'droids')
-            : provider === 'openai'
+            : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
@@ -832,7 +875,7 @@ function enableFactoryCustomDroids(dryRun) {
         if (files.length > 0) {
           const destDir = provider === 'factory'
             ? path.join(target, '.factory', 'droids')
-            : provider === 'openai'
+            : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
@@ -852,7 +895,7 @@ function enableFactoryCustomDroids(dryRun) {
         if (files.length > 0) {
           const destDir = provider === 'factory'
             ? path.join(target, '.factory', 'droids')
-            : provider === 'openai'
+            : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
@@ -866,7 +909,34 @@ function enableFactoryCustomDroids(dryRun) {
   }
 
   // Deploy Commands (if --deploy-commands or --commands-only)
-  if (deployCommands || commandsOnly) {
+  // For Codex, use dedicated prompts deployment script
+  if ((deployCommands || commandsOnly) && provider === 'codex') {
+    console.log('\nDeploying commands as Codex prompts...');
+    const { execSync } = await import('child_process');
+    const promptsScript = path.join(scriptDir, '..', 'commands', 'deploy-prompts-codex.mjs');
+
+    // Determine mode for prompts deployment
+    let promptsMode = 'all';
+    if (mode === 'sdlc' || mode === 'both') promptsMode = 'sdlc';
+    else if (mode === 'marketing') promptsMode = 'marketing';
+    else if (mode === 'general' || mode === 'writing') promptsMode = 'general';
+
+    const promptsArgs = [
+      '--source', srcRoot,
+      '--mode', promptsMode
+    ];
+    if (dryRun) promptsArgs.push('--dry-run');
+    if (force) promptsArgs.push('--force');
+
+    try {
+      execSync(`node "${promptsScript}" ${promptsArgs.join(' ')}`, {
+        stdio: 'inherit',
+        cwd: srcRoot
+      });
+    } catch (err) {
+      console.error('Failed to deploy prompts to Codex:', err.message);
+    }
+  } else if (deployCommands || commandsOnly) {
     // Deploy general commands if mode is 'general', 'both', or 'all'
     if (mode === 'general' || mode === 'both' || mode === 'all') {
       const generalCommandsRoot = path.join(srcRoot, 'commands');
@@ -1034,14 +1104,45 @@ function enableFactoryCustomDroids(dryRun) {
     } catch (err) {
       console.error('Failed to deploy skills to Factory:', err.message);
     }
-  } else if ((deploySkills || skillsOnly) && provider === 'openai') {
-    console.log('\nNote: Skills are currently only supported for Claude Code and Factory providers');
+  } else if ((deploySkills || skillsOnly) && (provider === 'openai' || provider === 'codex')) {
+    // Deploy skills to Codex using the dedicated deploy-skills-codex.mjs
+    console.log('\nDeploying skills to Codex (~/.codex/skills/)...');
+    const { execSync } = await import('child_process');
+    const skillsScript = path.join(scriptDir, '..', 'skills', 'deploy-skills-codex.mjs');
+
+    // Determine mode for skills deployment
+    let skillsMode = 'all';
+    if (mode === 'sdlc' || mode === 'both') skillsMode = 'sdlc';
+    else if (mode === 'marketing') skillsMode = 'mmk';
+    else if (mode === 'general' || mode === 'writing') skillsMode = 'addons';
+
+    const skillsArgs = [
+      '--source', srcRoot,
+      '--mode', skillsMode
+    ];
+    if (dryRun) skillsArgs.push('--dry-run');
+    if (force) skillsArgs.push('--force');
+
+    try {
+      execSync(`node "${skillsScript}" ${skillsArgs.join(' ')}`, {
+        stdio: 'inherit',
+        cwd: srcRoot
+      });
+    } catch (err) {
+      console.error('Failed to deploy skills to Codex:', err.message);
+    }
   }
 
   // Create/update AGENTS.md for Factory provider
   if (provider === 'factory' && createAgentsMd) {
     console.log('\nCreating/updating AGENTS.md template for Factory...');
     createFactoryAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Create/update AGENTS.md for Codex provider
+  if ((provider === 'codex' || provider === 'openai') && createAgentsMd) {
+    console.log('\nCreating/updating AGENTS.md template for Codex...');
+    createCodexAgentsMd(target, srcRoot, dryRun);
   }
 
   // Enable Custom Droids in Factory settings (if deploying to Factory)
