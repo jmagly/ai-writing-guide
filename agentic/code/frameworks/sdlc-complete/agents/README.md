@@ -1,7 +1,5 @@
 # SDLC Agents
 
-## Overview
-
 Specialized agents that coordinate lifecycle work: orchestration, governance, security, privacy, traceability, and
 reliability.
 
