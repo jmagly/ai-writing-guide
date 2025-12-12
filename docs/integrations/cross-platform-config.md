@@ -29,6 +29,7 @@ While the configuration file is shared, each platform has its own deployment str
 | **Factory AI** | `AGENTS.md` | `.factory/droids/`, `.factory/commands/` | `aiwg -deploy-agents --provider factory` |
 | **OpenCode** | `AGENTS.md` | `.opencode/agent/`, `.opencode/command/` | `aiwg -deploy-agents --provider opencode` |
 | **Codex/OpenAI** | `AGENTS.md` | `.codex/agents/`, `.codex/prompts/` | `aiwg -deploy-agents --provider openai` |
+| **GitHub Copilot** | `copilot-instructions.md` | `.github/agents/*.yaml` | `aiwg -deploy-agents --provider copilot` |
 | **Cursor** | Context Rules | `.cursor/rules/`, `.cursor/agents/` | `aiwg -deploy-agents --provider cursor` |
 
 ## How It Works
@@ -65,6 +66,16 @@ Factory AI uses a different structure (`AGENTS.md` + `.factory/`), so it doesn't
 # Factory reads AGENTS.md (not CLAUDE.md)
 # Droids deployed to .factory/droids/*.md
 # Commands deployed to .factory/commands/*.md
+```
+
+### GitHub Copilot
+
+GitHub Copilot uses custom agents in `.github/agents/` with YAML format, plus global instructions in `.github/copilot-instructions.md`:
+
+```bash
+# Copilot reads copilot-instructions.md for global guidance
+# Custom agents deployed to .github/agents/*.yaml
+# Agents invoked via @agent-name in Copilot Chat
 ```
 
 ## Git and Symlinks
@@ -162,6 +173,7 @@ So Factory gets its own `AGENTS.md` template instead of reusing CLAUDE.md.
 - **Factory AI Setup**: [docs/integrations/factory-quickstart.md](factory-quickstart.md)
 - **OpenCode Setup**: [docs/integrations/opencode-quickstart.md](opencode-quickstart.md)
 - **Codex/OpenAI Setup**: [docs/integrations/codex-quickstart.md](codex-quickstart.md)
+- **GitHub Copilot Setup**: [docs/integrations/copilot-quickstart.md](copilot-quickstart.md)
 - **Cursor Setup**: [docs/integrations/cursor-quickstart.md](cursor-quickstart.md)
 - **CLAUDE.md Contents**: [/CLAUDE.md](../../CLAUDE.md)
 

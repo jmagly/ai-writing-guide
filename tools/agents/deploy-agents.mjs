@@ -22,7 +22,7 @@
  *   --skills-only            Deploy only skills (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, or factory
+ *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, or factory
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
  *   --efficiency-model <name> Override model for efficiency tasks
@@ -352,6 +352,16 @@ function transformIfNeeded(srcPath, content, provider, modelCfg, modelsConfig) {
     return transformToOpencodeAgent(content, modelCfg, modelsConfig);
   }
 
+  // GitHub Copilot uses YAML format with name, description, model, instructions, tools
+  if (provider === 'copilot') {
+    // Detect if this is a command (from commands directory) vs agent
+    const isCommand = srcPath.includes('/commands/') || srcPath.includes('/command/');
+    if (isCommand) {
+      return transformToCopilotCommand(content, modelCfg, modelsConfig);
+    }
+    return transformToCopilotAgent(content, modelCfg, modelsConfig);
+  }
+
   let destContent = content;
   // Determine target models by provider and overrides
   const defaults = provider === 'openai'
@@ -381,7 +391,11 @@ function deployFiles(files, destDir, opts) {
   const seen = new Set();
   const actions = [];
   for (const f of files) {
-    const base = path.basename(f);
+    let base = path.basename(f);
+    // Copilot uses .yaml extension for agent files
+    if (provider === 'copilot' && base.endsWith('.md')) {
+      base = base.replace(/\.md$/, '.yaml');
+    }
     let dest = path.join(destDir, base);
 
     // Check for duplicate destination in this batch
@@ -881,6 +895,225 @@ function getOpencodeAgentConfig(category, name) {
 }
 
 /**
+ * Transform AIWG agent to GitHub Copilot Custom Agent format (.yaml)
+ * GitHub Copilot uses: name, description, model, instructions, tools (optional)
+ */
+function transformToCopilotAgent(content, modelCfg, modelsConfig) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) return content;
+
+  const [, frontmatter, body] = fmMatch;
+
+  // Extract metadata
+  const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
+  const toolsMatch = frontmatter.match(/tools:\s*(.+)/)?.[1]?.trim();
+  const categoryMatch = frontmatter.match(/category:\s*(.+)/)?.[1]?.trim();
+
+  // Map model to Copilot format
+  const copilotModel = mapModelToCopilot(modelMatch, modelCfg, modelsConfig);
+
+  // Determine agent category for tool configuration
+  const category = categoryMatch || inferAgentCategory(name, body);
+
+  // Get Copilot-specific tools based on category
+  const copilotTools = getCopilotTools(category, toolsMatch);
+
+  // Generate Copilot agent YAML
+  let copilotYaml = `name: ${name || 'aiwg-agent'}
+description: ${description || 'AIWG SDLC agent'}
+model:
+  name: ${copilotModel}
+  temperature: ${category === 'analysis' ? 0.2 : category === 'documentation' ? 0.4 : 0.3}
+  max_tokens: ${category === 'implementation' ? 8000 : 4000}`;
+
+  // Add tools if applicable
+  if (copilotTools.length > 0) {
+    copilotYaml += `\ntools: ${JSON.stringify(copilotTools)}`;
+  }
+
+  // Add instructions from body
+  const cleanBody = body.trim();
+  if (cleanBody) {
+    // Escape special YAML characters in multiline string
+    const escapedBody = cleanBody.replace(/\\/g, '\\\\');
+    copilotYaml += `\ninstructions: |\n${escapedBody.split('\n').map(line => '  ' + line).join('\n')}`;
+  }
+
+  return copilotYaml;
+}
+
+function mapModelToCopilot(originalModel, modelCfg, modelsConfig) {
+  // GitHub Copilot typically uses GPT-4 or Claude models
+  const copilotModels = {
+    'opus': 'gpt-4',
+    'sonnet': 'gpt-4',
+    'haiku': 'gpt-4o-mini'
+  };
+
+  // Handle override models first
+  if (modelCfg.reasoningModel || modelCfg.codingModel || modelCfg.efficiencyModel) {
+    const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+    if (/opus/i.test(clean)) return modelCfg.reasoningModel || copilotModels.opus;
+    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || copilotModels.haiku;
+    return modelCfg.codingModel || copilotModels.sonnet;
+  }
+
+  const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+
+  // Match to Copilot model
+  for (const [key, value] of Object.entries(copilotModels)) {
+    if (clean.includes(key)) return value;
+  }
+
+  return copilotModels.sonnet; // default
+}
+
+function getCopilotTools(category, toolsString) {
+  // Map AIWG tools to GitHub Copilot tools
+  const toolMap = {
+    'Read': 'search',
+    'Write': 'createFile',
+    'MultiEdit': 'editFiles',
+    'Bash': 'runInTerminal',
+    'WebFetch': 'fetch',
+    'Glob': 'search',
+    'Grep': 'search',
+    'Task': 'runSubagent'
+  };
+
+  // Default tools by category
+  const categoryDefaults = {
+    analysis: ['search', 'fetch', 'githubRepo', 'problems'],
+    documentation: ['search', 'createFile', 'editFiles', 'fetch'],
+    planning: ['search', 'fetch', 'githubRepo', 'todos'],
+    implementation: ['createFile', 'createDirectory', 'editFiles', 'deleteFile', 'search', 'runInTerminal', 'fetch', 'runSubagent', 'todos', 'problems', 'changes']
+  };
+
+  // If tools specified, map them
+  if (toolsString) {
+    let originalTools = [];
+    if (toolsString.startsWith('[')) {
+      try {
+        originalTools = JSON.parse(toolsString);
+      } catch (e) {
+        originalTools = toolsString.replace(/[\[\]"']/g, '').split(/[,\s]+/).filter(Boolean);
+      }
+    } else {
+      originalTools = toolsString.split(/[,\s]+/).filter(Boolean);
+    }
+
+    const mappedTools = new Set();
+    for (const tool of originalTools) {
+      const mapped = toolMap[tool];
+      if (mapped) mappedTools.add(mapped);
+    }
+
+    // If we got any mapped tools, return them
+    if (mappedTools.size > 0) {
+      return Array.from(mappedTools);
+    }
+  }
+
+  // Fall back to category defaults
+  return categoryDefaults[category] || categoryDefaults.implementation;
+}
+
+/**
+ * Transform AIWG command to GitHub Copilot format
+ * Commands become part of copilot-instructions.md or separate agent files
+ */
+function transformToCopilotCommand(content, modelCfg, modelsConfig) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) {
+    // No frontmatter, create simple agent format
+    const firstLine = content.split('\n')[0];
+    const description = firstLine.replace(/^#\s*/, '').trim() || 'AIWG command';
+    const name = description.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    return `name: ${name}
+description: ${description}
+model:
+  name: gpt-4
+  temperature: 0.3
+  max_tokens: 4000
+instructions: |
+${content.split('\n').map(line => '  ' + line).join('\n')}`;
+  }
+
+  const [, frontmatter, body] = fmMatch;
+
+  // Extract metadata
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const name = (description || 'aiwg-command').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  // Build Copilot command as simple agent
+  return `name: ${name}
+description: ${description || 'AIWG command'}
+model:
+  name: gpt-4
+  temperature: 0.3
+  max_tokens: 4000
+instructions: |
+${body.trim().split('\n').map(line => '  ' + line).join('\n')}`;
+}
+
+function createCopilotAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'copilot', 'copilot-instructions.md.aiwg-template');
+  const destPath = path.join(target, '.github', 'copilot-instructions.md');
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`Copilot instructions template not found at ${templatePath}`);
+    return;
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf8');
+
+  // Ensure .github directory exists
+  const githubDir = path.join(target, '.github');
+  if (!dryRun && !fs.existsSync(githubDir)) {
+    fs.mkdirSync(githubDir, { recursive: true });
+  }
+
+  // Check if copilot-instructions.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+
+    // Check if it already has AIWG section
+    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
+        existing.includes('## AIWG SDLC Framework')) {
+      console.log('copilot-instructions.md already contains AIWG section, skipping');
+      return;
+    }
+
+    // Append AIWG section to existing file
+    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+    const aiwgSection = markerIndex !== -1
+      ? template.slice(markerIndex)
+      : template;
+    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing copilot-instructions.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated copilot-instructions.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new file from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create copilot-instructions.md from template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created copilot-instructions.md from template');
+    }
+  }
+}
+
+/**
  * Initialize framework-scoped workspace structure
  * Creates .aiwg/frameworks/{framework-id}/ directories as specified in issue #53
  */
@@ -1182,6 +1415,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.codex', 'agents')
             : provider === 'opencode'
             ? path.join(target, '.opencode', 'agent')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           const locationLabel = agentsRoot === writingAddonAgentsRoot ? 'writing-quality addon' : 'general-purpose';
@@ -1203,6 +1438,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.codex', 'agents')
             : provider === 'opencode'
             ? path.join(target, '.opencode', 'agent')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${files.length} SDLC framework agents to ${destDir} (provider=${provider})`);
@@ -1225,6 +1462,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.codex', 'agents')
             : provider === 'opencode'
             ? path.join(target, '.opencode', 'agent')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${files.length} Marketing framework agents to ${destDir} (provider=${provider})`);
@@ -1277,6 +1516,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.codex', 'commands')
             : provider === 'opencode'
             ? path.join(target, '.opencode', 'command')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')  // Copilot commands become agents
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} general-purpose commands to ${destDir} (provider=${provider})`);
@@ -1297,6 +1538,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.codex', 'commands')
             : provider === 'opencode'
             ? path.join(target, '.opencode', 'command')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')  // Copilot commands become agents
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} SDLC framework commands to ${destDir} (provider=${provider})`);
@@ -1319,6 +1562,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.codex', 'commands')
             : provider === 'opencode'
             ? path.join(target, '.opencode', 'command')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')  // Copilot commands become agents
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} Marketing framework commands to ${destDir} (provider=${provider})`);
@@ -1489,6 +1734,12 @@ function enableFactoryCustomDroids(dryRun) {
   if (provider === 'opencode' && createAgentsMd) {
     console.log('\nCreating/updating AGENTS.md template for OpenCode...');
     createOpencodeAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Create/update copilot-instructions.md for Copilot provider
+  if (provider === 'copilot' && createAgentsMd) {
+    console.log('\nCreating/updating copilot-instructions.md for GitHub Copilot...');
+    createCopilotAgentsMd(target, srcRoot, dryRun);
   }
 
   // Deploy rules for Cursor provider (instead of agents)
