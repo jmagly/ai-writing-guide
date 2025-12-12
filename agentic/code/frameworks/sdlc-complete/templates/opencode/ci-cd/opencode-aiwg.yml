@@ -1,0 +1,73 @@
+# OpenCode GitHub Integration for AIWG SDLC Framework
+#
+# This workflow enables AI-assisted issue triage, PR reviews, and implementation
+# via OpenCode integrated with AIWG SDLC agents and workflows.
+#
+# To install: Copy to .github/workflows/opencode-aiwg.yml
+# Configure: Set ANTHROPIC_API_KEY in repository secrets
+#
+# Usage in issues/PRs:
+#   /opencode explain this issue
+#   /opencode fix this
+#   /oc review this PR
+#   /oc implement the feature described
+
+name: OpenCode AIWG Integration
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  opencode:
+    if: |
+      contains(github.event.comment.body, '/oc') ||
+      contains(github.event.comment.body, '/opencode')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install AIWG CLI
+        run: npm install -g ai-writing-guide
+
+      - name: Deploy AIWG Agents to OpenCode
+        run: |
+          aiwg -deploy-agents --provider opencode --mode sdlc --deploy-commands
+
+      - name: Run OpenCode
+        uses: sst/opencode/github@latest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          model: anthropic/claude-sonnet-4-20250514
+          share: true
+          prompt: |
+            You have access to AIWG SDLC Framework agents deployed in .opencode/agent/.
+            Use @agent-name syntax to invoke specialized agents for:
+            - @security-architect for security review
+            - @test-engineer for test generation
+            - @code-reviewer for code review
+            - @technical-writer for documentation
+
+            AIWG commands are available in .opencode/command/:
+            - /project-status for current project state
+            - /flow-gate-check for phase validation
+            - /security-gate for security validation
+
+            SDLC artifacts should be stored in .aiwg/ directory.
+            Follow AIWG workflow patterns for comprehensive analysis.

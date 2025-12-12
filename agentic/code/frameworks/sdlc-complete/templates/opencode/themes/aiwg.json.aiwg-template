@@ -1,0 +1,221 @@
+{
+  "$schema": "https://opencode.ai/theme.json",
+  "defs": {
+    "aiwg-bg": "#1a1b26",
+    "aiwg-bg-panel": "#24283b",
+    "aiwg-bg-element": "#292e42",
+    "aiwg-fg": "#c0caf5",
+    "aiwg-fg-muted": "#565f89",
+    "aiwg-primary": "#7aa2f7",
+    "aiwg-secondary": "#bb9af7",
+    "aiwg-accent": "#7dcfff",
+    "aiwg-success": "#9ece6a",
+    "aiwg-warning": "#e0af68",
+    "aiwg-error": "#f7768e",
+    "aiwg-info": "#2ac3de",
+    "aiwg-border": "#3b4261",
+    "aiwg-border-active": "#7aa2f7"
+  },
+  "theme": {
+    "primary": {
+      "dark": "aiwg-primary",
+      "light": "#2563eb"
+    },
+    "secondary": {
+      "dark": "aiwg-secondary",
+      "light": "#7c3aed"
+    },
+    "accent": {
+      "dark": "aiwg-accent",
+      "light": "#0891b2"
+    },
+    "error": {
+      "dark": "aiwg-error",
+      "light": "#dc2626"
+    },
+    "warning": {
+      "dark": "aiwg-warning",
+      "light": "#d97706"
+    },
+    "success": {
+      "dark": "aiwg-success",
+      "light": "#16a34a"
+    },
+    "info": {
+      "dark": "aiwg-info",
+      "light": "#0284c7"
+    },
+    "text": {
+      "dark": "aiwg-fg",
+      "light": "#1e293b"
+    },
+    "textMuted": {
+      "dark": "aiwg-fg-muted",
+      "light": "#64748b"
+    },
+    "background": {
+      "dark": "aiwg-bg",
+      "light": "#ffffff"
+    },
+    "backgroundPanel": {
+      "dark": "aiwg-bg-panel",
+      "light": "#f8fafc"
+    },
+    "backgroundElement": {
+      "dark": "aiwg-bg-element",
+      "light": "#f1f5f9"
+    },
+    "border": {
+      "dark": "aiwg-border",
+      "light": "#e2e8f0"
+    },
+    "borderActive": {
+      "dark": "aiwg-border-active",
+      "light": "#2563eb"
+    },
+    "borderSubtle": {
+      "dark": "#2a2f42",
+      "light": "#f1f5f9"
+    },
+    "diffAdded": {
+      "dark": "aiwg-success",
+      "light": "#16a34a"
+    },
+    "diffRemoved": {
+      "dark": "aiwg-error",
+      "light": "#dc2626"
+    },
+    "diffContext": {
+      "dark": "aiwg-fg-muted",
+      "light": "#64748b"
+    },
+    "diffHunkHeader": {
+      "dark": "aiwg-secondary",
+      "light": "#7c3aed"
+    },
+    "diffHighlightAdded": {
+      "dark": "#3d5a3d",
+      "light": "#bbf7d0"
+    },
+    "diffHighlightRemoved": {
+      "dark": "#5a3d3d",
+      "light": "#fecaca"
+    },
+    "diffAddedBg": {
+      "dark": "#1a2f1a",
+      "light": "#dcfce7"
+    },
+    "diffRemovedBg": {
+      "dark": "#2f1a1a",
+      "light": "#fee2e2"
+    },
+    "diffContextBg": {
+      "dark": "aiwg-bg-panel",
+      "light": "#f8fafc"
+    },
+    "diffLineNumber": {
+      "dark": "aiwg-fg-muted",
+      "light": "#94a3b8"
+    },
+    "diffAddedLineNumberBg": {
+      "dark": "#1a2f1a",
+      "light": "#dcfce7"
+    },
+    "diffRemovedLineNumberBg": {
+      "dark": "#2f1a1a",
+      "light": "#fee2e2"
+    },
+    "markdownText": {
+      "dark": "aiwg-fg",
+      "light": "#1e293b"
+    },
+    "markdownHeading": {
+      "dark": "aiwg-primary",
+      "light": "#2563eb"
+    },
+    "markdownLink": {
+      "dark": "aiwg-accent",
+      "light": "#0891b2"
+    },
+    "markdownLinkText": {
+      "dark": "aiwg-primary",
+      "light": "#2563eb"
+    },
+    "markdownCode": {
+      "dark": "aiwg-success",
+      "light": "#16a34a"
+    },
+    "markdownBlockQuote": {
+      "dark": "aiwg-fg-muted",
+      "light": "#64748b"
+    },
+    "markdownEmph": {
+      "dark": "aiwg-warning",
+      "light": "#d97706"
+    },
+    "markdownStrong": {
+      "dark": "aiwg-error",
+      "light": "#dc2626"
+    },
+    "markdownHorizontalRule": {
+      "dark": "aiwg-border",
+      "light": "#e2e8f0"
+    },
+    "markdownListItem": {
+      "dark": "aiwg-primary",
+      "light": "#2563eb"
+    },
+    "markdownListEnumeration": {
+      "dark": "aiwg-secondary",
+      "light": "#7c3aed"
+    },
+    "markdownImage": {
+      "dark": "aiwg-accent",
+      "light": "#0891b2"
+    },
+    "markdownImageText": {
+      "dark": "aiwg-primary",
+      "light": "#2563eb"
+    },
+    "markdownCodeBlock": {
+      "dark": "aiwg-fg",
+      "light": "#1e293b"
+    },
+    "syntaxComment": {
+      "dark": "aiwg-fg-muted",
+      "light": "#64748b"
+    },
+    "syntaxKeyword": {
+      "dark": "aiwg-secondary",
+      "light": "#7c3aed"
+    },
+    "syntaxFunction": {
+      "dark": "aiwg-primary",
+      "light": "#2563eb"
+    },
+    "syntaxVariable": {
+      "dark": "aiwg-accent",
+      "light": "#0891b2"
+    },
+    "syntaxString": {
+      "dark": "aiwg-success",
+      "light": "#16a34a"
+    },
+    "syntaxNumber": {
+      "dark": "aiwg-warning",
+      "light": "#d97706"
+    },
+    "syntaxType": {
+      "dark": "aiwg-info",
+      "light": "#0284c7"
+    },
+    "syntaxOperator": {
+      "dark": "aiwg-secondary",
+      "light": "#7c3aed"
+    },
+    "syntaxPunctuation": {
+      "dark": "aiwg-fg",
+      "light": "#1e293b"
+    }
+  }
+}

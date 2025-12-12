@@ -22,7 +22,7 @@
  *   --skills-only            Deploy only skills (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, codex, cursor, or factory
+ *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, or factory
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
  *   --efficiency-model <name> Override model for efficiency tasks
@@ -341,7 +341,17 @@ function transformIfNeeded(srcPath, content, provider, modelCfg, modelsConfig) {
   if (provider === 'factory') {
     return transformToFactoryDroid(content, modelCfg, modelsConfig);
   }
-  
+
+  // OpenCode uses different format with mode, temperature, tools, permissions
+  if (provider === 'opencode') {
+    // Detect if this is a command (from commands directory) vs agent
+    const isCommand = srcPath.includes('/commands/') || srcPath.includes('/command/');
+    if (isCommand) {
+      return transformToOpencodeCommand(content, modelCfg, modelsConfig);
+    }
+    return transformToOpencodeAgent(content, modelCfg, modelsConfig);
+  }
+
   let destContent = content;
   // Determine target models by provider and overrides
   const defaults = provider === 'openai'
@@ -606,6 +616,268 @@ function createCursorAgentsMd(target, srcRoot, dryRun) {
       console.log('Created AGENTS.md from Cursor template');
     }
   }
+}
+
+function createOpencodeAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'opencode', 'AGENTS.md.aiwg-template');
+  const destPath = path.join(target, 'AGENTS.md');
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`OpenCode AGENTS.md template not found at ${templatePath}`);
+    return;
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf8');
+
+  // Check if AGENTS.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+
+    // Check if it already has AIWG section (look for the marker comment or header)
+    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
+        existing.includes('## AIWG SDLC Framework')) {
+      console.log('AGENTS.md already contains AIWG section, skipping');
+      return;
+    }
+
+    // Append AIWG section to existing AGENTS.md
+    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+    const aiwgSection = markerIndex !== -1
+      ? template.slice(markerIndex)
+      : template;
+    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated AGENTS.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new AGENTS.md from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create AGENTS.md from OpenCode template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created AGENTS.md from OpenCode template');
+    }
+  }
+}
+
+/**
+ * Transform AIWG agent to OpenCode agent format
+ * OpenCode uses: mode, model (full path), temperature, tools, permission, maxSteps
+ */
+function transformToOpencodeAgent(content, modelCfg, modelsConfig) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) return content;
+
+  const [, frontmatter, body] = fmMatch;
+
+  // Extract metadata
+  const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
+  const toolsMatch = frontmatter.match(/tools:\s*(.+)/)?.[1]?.trim();
+  const categoryMatch = frontmatter.match(/category:\s*(.+)/)?.[1]?.trim();
+  const orchestrationMatch = frontmatter.match(/orchestration:\s*(.+)/)?.[1]?.trim();
+
+  // Map model to OpenCode format (full provider/model path)
+  const opencodeModel = mapModelToOpencode(modelMatch, modelCfg, modelsConfig);
+
+  // Determine agent category for tool/permission configuration
+  const category = categoryMatch || inferAgentCategory(name, body);
+
+  // Configure tools and permissions based on agent category
+  const { tools, permission, temperature, maxSteps } = getOpencodeAgentConfig(category, name);
+
+  // All SDLC agents are subagents (invokable via @mention)
+  const mode = orchestrationMatch === 'true' ? 'primary' : 'subagent';
+
+  // Generate OpenCode agent frontmatter
+  let opencodeFrontmatter = `---
+description: ${description || 'AIWG SDLC agent'}
+mode: ${mode}
+model: ${opencodeModel}
+temperature: ${temperature}
+maxSteps: ${maxSteps}`;
+
+  // Add tools configuration
+  if (Object.keys(tools).length > 0) {
+    opencodeFrontmatter += `\ntools:`;
+    for (const [tool, enabled] of Object.entries(tools)) {
+      opencodeFrontmatter += `\n  ${tool}: ${enabled}`;
+    }
+  }
+
+  // Add permission configuration if needed
+  if (Object.keys(permission).length > 0) {
+    opencodeFrontmatter += `\npermission:`;
+    for (const [perm, value] of Object.entries(permission)) {
+      if (typeof value === 'object') {
+        opencodeFrontmatter += `\n  ${perm}:`;
+        for (const [cmd, action] of Object.entries(value)) {
+          opencodeFrontmatter += `\n    "${cmd}": ${action}`;
+        }
+      } else {
+        opencodeFrontmatter += `\n  ${perm}: ${value}`;
+      }
+    }
+  }
+
+  opencodeFrontmatter += `\n---`;
+
+  return `${opencodeFrontmatter}\n\n${body.trim()}`;
+}
+
+function mapModelToOpencode(originalModel, modelCfg, modelsConfig) {
+  // OpenCode uses full provider/model paths
+  const opencodeModels = {
+    'opus': 'anthropic/claude-opus-4-20250514',
+    'sonnet': 'anthropic/claude-sonnet-4-20250514',
+    'haiku': 'anthropic/claude-haiku-4-20250514'
+  };
+
+  // Handle override models first
+  if (modelCfg.reasoningModel || modelCfg.codingModel || modelCfg.efficiencyModel) {
+    const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+    if (/opus/i.test(clean)) return modelCfg.reasoningModel || opencodeModels.opus;
+    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || opencodeModels.haiku;
+    return modelCfg.codingModel || opencodeModels.sonnet;
+  }
+
+  const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+
+  // Match to OpenCode model
+  for (const [key, value] of Object.entries(opencodeModels)) {
+    if (clean.includes(key)) return value;
+  }
+
+  return opencodeModels.sonnet; // default
+}
+
+function inferAgentCategory(name, body) {
+  const normalizedName = (name || '').toLowerCase();
+  const normalizedBody = (body || '').toLowerCase();
+
+  // Analysis agents (read-only)
+  if (normalizedName.includes('security') || normalizedName.includes('review') ||
+      normalizedName.includes('analyst') || normalizedName.includes('auditor')) {
+    return 'analysis';
+  }
+
+  // Documentation agents
+  if (normalizedName.includes('writer') || normalizedName.includes('document') ||
+      normalizedName.includes('archivist')) {
+    return 'documentation';
+  }
+
+  // Planning agents
+  if (normalizedName.includes('architect') || normalizedName.includes('planner') ||
+      normalizedName.includes('requirements') || normalizedName.includes('designer')) {
+    return 'planning';
+  }
+
+  // Implementation agents (full access)
+  if (normalizedName.includes('implement') || normalizedName.includes('engineer') ||
+      normalizedName.includes('developer') || normalizedName.includes('test')) {
+    return 'implementation';
+  }
+
+  // Default to implementation for most flexibility
+  return 'implementation';
+}
+
+/**
+ * Transform AIWG command to OpenCode command format
+ * OpenCode commands use: description, agent (optional), model (optional), subtask (boolean)
+ */
+function transformToOpencodeCommand(content, modelCfg, modelsConfig) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) {
+    // No frontmatter, add minimal OpenCode frontmatter
+    const firstLine = content.split('\n')[0];
+    const description = firstLine.replace(/^#\s*/, '').trim() || 'AIWG command';
+    return `---\ndescription: ${description}\nsubtask: true\n---\n\n${content}`;
+  }
+
+  const [, frontmatter, body] = fmMatch;
+
+  // Extract metadata from existing frontmatter
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const agentMatch = frontmatter.match(/agent:\s*(.+)/)?.[1]?.trim();
+  const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
+
+  // Build OpenCode command frontmatter
+  let opencodeFrontmatter = `---\ndescription: ${description || 'AIWG command'}`;
+
+  // Add agent reference if specified
+  if (agentMatch) {
+    opencodeFrontmatter += `\nagent: ${agentMatch}`;
+  }
+
+  // Add model if specified
+  if (modelMatch) {
+    const opencodeModel = mapModelToOpencode(modelMatch, modelCfg, modelsConfig);
+    opencodeFrontmatter += `\nmodel: ${opencodeModel}`;
+  }
+
+  // Commands are subtasks by default (invoked via /command)
+  opencodeFrontmatter += `\nsubtask: true\n---`;
+
+  return `${opencodeFrontmatter}\n\n${body.trim()}`;
+}
+
+function getOpencodeAgentConfig(category, name) {
+  const configs = {
+    analysis: {
+      tools: { write: false, edit: false, patch: false, bash: true, webfetch: true },
+      permission: {
+        bash: {
+          'git *': 'allow',
+          'npm audit': 'allow',
+          'npm test': 'allow',
+          '*': 'ask'
+        }
+      },
+      temperature: 0.2,
+      maxSteps: 30
+    },
+    documentation: {
+      tools: { bash: false, patch: false },
+      permission: {},
+      temperature: 0.4,
+      maxSteps: 50
+    },
+    planning: {
+      tools: { write: false, edit: false, bash: false, patch: false, webfetch: true },
+      permission: {},
+      temperature: 0.3,
+      maxSteps: 40
+    },
+    implementation: {
+      tools: {},  // All tools enabled by default
+      permission: {
+        bash: {
+          'aiwg *': 'allow',
+          'git status': 'allow',
+          'git diff': 'allow',
+          'git log*': 'allow',
+          'npm test': 'allow',
+          'npm run *': 'allow',
+          'git push': 'ask',
+          'rm -rf': 'deny',
+          '*': 'ask'
+        }
+      },
+      temperature: 0.3,
+      maxSteps: 100
+    }
+  };
+
+  return configs[category] || configs.implementation;
 }
 
 /**
@@ -908,6 +1180,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'droids')
             : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'agent')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           const locationLabel = agentsRoot === writingAddonAgentsRoot ? 'writing-quality addon' : 'general-purpose';
@@ -927,6 +1201,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'droids')
             : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'agent')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${files.length} SDLC framework agents to ${destDir} (provider=${provider})`);
@@ -947,6 +1223,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'droids')
             : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'agent')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${files.length} Marketing framework agents to ${destDir} (provider=${provider})`);
@@ -997,6 +1275,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'commands')
             : provider === 'openai'
             ? path.join(target, '.codex', 'commands')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'command')
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} general-purpose commands to ${destDir} (provider=${provider})`);
@@ -1015,6 +1295,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'commands')
             : provider === 'openai'
             ? path.join(target, '.codex', 'commands')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'command')
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} SDLC framework commands to ${destDir} (provider=${provider})`);
@@ -1035,6 +1317,8 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'commands')
             : provider === 'openai'
             ? path.join(target, '.codex', 'commands')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'command')
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} Marketing framework commands to ${destDir} (provider=${provider})`);
@@ -1199,6 +1483,12 @@ function enableFactoryCustomDroids(dryRun) {
   if (provider === 'cursor' && createAgentsMd) {
     console.log('\nCreating/updating AGENTS.md template for Cursor...');
     createCursorAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Create/update AGENTS.md for OpenCode provider
+  if (provider === 'opencode' && createAgentsMd) {
+    console.log('\nCreating/updating AGENTS.md template for OpenCode...');
+    createOpencodeAgentsMd(target, srcRoot, dryRun);
   }
 
   // Deploy rules for Cursor provider (instead of agents)

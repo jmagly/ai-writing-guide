@@ -27,6 +27,9 @@ While the configuration file is shared, each platform has its own deployment str
 | **Claude Code** | `CLAUDE.md` | `.claude/agents/`, `.claude/commands/` | `aiwg -deploy-agents` |
 | **Warp Terminal** | `WARP.md` (→ CLAUDE.md) | Inline in WARP.md | `aiwg -deploy-agents --platform warp` |
 | **Factory AI** | `AGENTS.md` | `.factory/droids/`, `.factory/commands/` | `aiwg -deploy-agents --provider factory` |
+| **OpenCode** | `AGENTS.md` | `.opencode/agent/`, `.opencode/command/` | `aiwg -deploy-agents --provider opencode` |
+| **Codex/OpenAI** | `AGENTS.md` | `.codex/agents/`, `.codex/prompts/` | `aiwg -deploy-agents --provider openai` |
+| **Cursor** | Context Rules | `.cursor/rules/`, `.cursor/agents/` | `aiwg -deploy-agents --provider cursor` |
 
 ## How It Works
 
@@ -157,6 +160,9 @@ So Factory gets its own `AGENTS.md` template instead of reusing CLAUDE.md.
 - **Claude Code Setup**: [docs/integrations/claude-code-quickstart.md](claude-code-quickstart.md)
 - **Warp Terminal Setup**: [docs/integrations/warp-terminal-quickstart.md](warp-terminal-quickstart.md)
 - **Factory AI Setup**: [docs/integrations/factory-quickstart.md](factory-quickstart.md)
+- **OpenCode Setup**: [docs/integrations/opencode-quickstart.md](opencode-quickstart.md)
+- **Codex/OpenAI Setup**: [docs/integrations/codex-quickstart.md](codex-quickstart.md)
+- **Cursor Setup**: [docs/integrations/cursor-quickstart.md](cursor-quickstart.md)
 - **CLAUDE.md Contents**: [/CLAUDE.md](../../CLAUDE.md)
 
 ## Summary

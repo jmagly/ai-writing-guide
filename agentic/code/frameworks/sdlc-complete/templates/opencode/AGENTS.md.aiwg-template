@@ -1,0 +1,73 @@
+# AGENTS.md - OpenCode Integration
+
+This file provides project-specific guidance for OpenCode's AI coding agent.
+
+<!-- AIWG SDLC Framework Integration -->
+
+## AIWG SDLC Framework
+
+This project uses the AI Writing Guide (AIWG) SDLC Framework for software development lifecycle management.
+
+### Available Agents
+
+AIWG agents are deployed to `.opencode/agent/` and can be invoked via `@agent-name`:
+
+**Planning & Architecture**:
+- `@architecture-designer` - System architecture and design decisions
+- `@requirements-analyst` - Requirements gathering and analysis
+- `@api-designer` - API design and contract definitions
+
+**Implementation**:
+- `@software-implementer` - Production code implementation
+- `@test-engineer` - Test development and coverage
+- `@code-reviewer` - Code review and quality
+
+**Security & Quality**:
+- `@security-architect` - Security architecture and threat modeling
+- `@security-auditor` - Security review and vulnerability assessment
+- `@performance-engineer` - Performance optimization
+
+**Documentation**:
+- `@technical-writer` - Technical documentation
+- `@architecture-documenter` - Architecture documentation
+- `@documentation-synthesizer` - Multi-source documentation consolidation
+
+### Available Commands
+
+AIWG commands are deployed to `.opencode/command/` and can be invoked via `/command`:
+
+- `/project-status` - Current project status and next steps
+- `/flow-gate-check <phase>` - Validate phase gate criteria
+- `/security-gate` - Run security validation
+- `/generate-tests` - Generate test suite
+
+### SDLC Artifacts Location
+
+All SDLC artifacts are stored in `.aiwg/`:
+
+```
+.aiwg/
+├── intake/        # Project intake forms
+├── requirements/  # User stories, use cases
+├── architecture/  # SAD, ADRs
+├── planning/      # Phase plans
+├── risks/         # Risk register
+├── testing/       # Test strategy
+├── security/      # Threat models
+├── deployment/    # Deployment plans
+├── working/       # Temporary (safe to delete)
+└── reports/       # Generated reports
+```
+
+### Workflow Patterns
+
+**Multi-agent review**: For comprehensive artifact review, invoke multiple agents in parallel using the `aiwg-orchestrator` tool.
+
+**Phase transitions**: Use `/flow-inception-to-elaboration`, `/flow-elaboration-to-construction`, etc. for guided phase transitions.
+
+**Continuous validation**: Use `/flow-security-review-cycle`, `/flow-test-strategy-execution` for ongoing quality assurance.
+
+## Project-Specific Configuration
+
+<!-- Add project-specific instructions below this line -->
+

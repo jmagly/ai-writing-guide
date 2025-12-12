@@ -3,6 +3,7 @@ paths:
   - ".claude/agents/**"
   - ".factory/droids/**"
   - ".codex/agents/**"
+  - ".opencode/agent/**"
   - "agentic/**"
   - "AGENTS.md"
 ---
@@ -39,6 +40,12 @@ aiwg -deploy-agents --mode sdlc
 # Factory AI (creates .factory/droids/ + AGENTS.md)
 aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
 
+# OpenCode (creates .opencode/agent/ + AGENTS.md)
+aiwg -deploy-agents --provider opencode --mode sdlc --deploy-commands --create-agents-md
+
+# Cursor (creates .cursor/rules/ + AGENTS.md)
+aiwg -deploy-agents --provider cursor --mode sdlc --deploy-commands --create-agents-md
+
 # OpenAI/Codex (creates .codex/agents/)
 aiwg -deploy-agents --provider openai
 
@@ -60,6 +67,8 @@ aiwg -deploy-agents --provider factory \
 ### Provider-Specific Guidance
 
 - **Factory AI**: See `agentic/code/frameworks/sdlc-complete/agents/factory-compat.md`
+- **OpenCode**: See `docs/integrations/opencode-quickstart.md`
+- **Cursor**: See `docs/integrations/cursor-quickstart.md`
 - **OpenAI/Codex**: See `agentic/code/frameworks/sdlc-complete/agents/openai-compat.md`
 
 ## Agent Definition Format

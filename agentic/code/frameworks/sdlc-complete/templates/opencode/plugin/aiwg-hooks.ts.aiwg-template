@@ -1,0 +1,121 @@
+/**
+ * AIWG Event Hooks Plugin for OpenCode
+ *
+ * Integrates AIWG SDLC workflows with OpenCode's event system.
+ * Provides automated quality checks, artifact updates, and workflow triggers.
+ *
+ * @implements OpenCode Plugin API
+ * @see https://opencode.ai/docs/plugins
+ */
+
+import { plugin, defineHook } from "@opencode-ai/plugin";
+
+export default plugin({
+  name: "aiwg-hooks",
+  version: "1.0.0",
+  description: "AIWG SDLC integration hooks for automated quality and workflow management",
+
+  hooks: {
+    /**
+     * After session completes, update project status
+     */
+    "session.idle": defineHook({
+      execute: async (context) => {
+        // Log session completion for traceability
+        console.log(`[AIWG] Session idle - changes may require artifact updates`);
+
+        // Check if significant changes were made that might require SDLC updates
+        const { session } = context;
+        if (session.toolCalls > 10 || session.filesModified > 5) {
+          console.log(`[AIWG] Significant session activity detected:`);
+          console.log(`  - Tool calls: ${session.toolCalls}`);
+          console.log(`  - Files modified: ${session.filesModified}`);
+          console.log(`  - Consider running /project-status to update SDLC artifacts`);
+        }
+      }
+    }),
+
+    /**
+     * Before executing dangerous bash commands, check permissions
+     */
+    "tool.execute.before": defineHook({
+      filter: (event) => event.tool === "bash",
+      execute: async (context) => {
+        const { args } = context;
+        const command = args.command as string;
+
+        // Warn about potentially destructive commands
+        const destructivePatterns = [
+          /rm\s+-rf\s+\//,
+          /git\s+push\s+--force/,
+          /git\s+reset\s+--hard/,
+          /drop\s+database/i,
+          /truncate\s+table/i
+        ];
+
+        for (const pattern of destructivePatterns) {
+          if (pattern.test(command)) {
+            console.warn(`[AIWG Security] Potentially destructive command detected: ${command}`);
+            console.warn(`[AIWG Security] This command should be reviewed before execution.`);
+          }
+        }
+
+        // Track deployment-related commands for SDLC
+        if (command.includes("deploy") || command.includes("release")) {
+          console.log(`[AIWG] Deployment activity detected - consider updating deployment artifacts`);
+        }
+      }
+    }),
+
+    /**
+     * After file edits, check for SDLC-relevant changes
+     */
+    "file.edited": defineHook({
+      execute: async (context) => {
+        const { path } = context;
+
+        // Track changes to key areas for SDLC documentation
+        const sdlcRelevantPaths = [
+          { pattern: /src\/.*\.(ts|js|py|go|rs)$/, category: "implementation" },
+          { pattern: /test\/.*\.(test|spec)\.(ts|js|py)$/, category: "testing" },
+          { pattern: /\.github\/workflows\//, category: "deployment" },
+          { pattern: /Dockerfile|docker-compose/, category: "deployment" },
+          { pattern: /package\.json|requirements\.txt|go\.mod/, category: "dependencies" },
+          { pattern: /\.aiwg\//, category: "sdlc-artifacts" }
+        ];
+
+        for (const { pattern, category } of sdlcRelevantPaths) {
+          if (pattern.test(path)) {
+            console.log(`[AIWG] ${category} file modified: ${path}`);
+          }
+        }
+
+        // Special handling for architecture-relevant changes
+        if (path.includes("/api/") || path.includes("/schema/") || path.includes("/models/")) {
+          console.log(`[AIWG] Architecture-relevant file modified - consider ADR if significant`);
+        }
+      }
+    }),
+
+    /**
+     * Session finished - provide AIWG summary
+     */
+    "session.finished": defineHook({
+      execute: async (context) => {
+        const { session } = context;
+
+        console.log(`\n[AIWG Session Summary]`);
+        console.log(`  Duration: ${session.duration}ms`);
+        console.log(`  Tool calls: ${session.toolCalls}`);
+        console.log(`  Files modified: ${session.filesModified}`);
+
+        if (session.filesModified > 0) {
+          console.log(`\n[AIWG Recommendations]`);
+          console.log(`  - Run /project-status to review current state`);
+          console.log(`  - Consider updating relevant SDLC artifacts in .aiwg/`);
+          console.log(`  - Commit changes with descriptive message`);
+        }
+      }
+    })
+  }
+});

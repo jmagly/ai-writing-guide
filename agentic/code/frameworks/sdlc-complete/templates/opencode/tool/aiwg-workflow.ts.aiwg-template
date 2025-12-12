@@ -1,0 +1,176 @@
+/**
+ * AIWG Workflow Tool for OpenCode
+ *
+ * Provides AIWG SDLC workflow capabilities as a custom OpenCode tool.
+ *
+ * @implements Custom OpenCode Tool API
+ * @see https://opencode.ai/docs/custom-tools
+ */
+
+import { tool } from "@opencode-ai/plugin";
+import { z } from "zod";
+import { execSync } from "child_process";
+import * as fs from "fs";
+import * as path from "path";
+
+/**
+ * Execute AIWG workflow command
+ */
+export const runWorkflow = tool({
+  name: "aiwg-workflow",
+  description: "Execute an AIWG SDLC workflow command. Available workflows: project-status, gate-check, security-review, test-execution, deployment.",
+  parameters: z.object({
+    workflow: z.enum([
+      "project-status",
+      "gate-check",
+      "security-review",
+      "test-execution",
+      "deployment",
+      "risk-management",
+      "requirements-evolution"
+    ]).describe("The workflow to execute"),
+    phase: z.string().optional().describe("Phase name for gate-check workflow"),
+    iteration: z.number().optional().describe("Iteration number for iterative workflows"),
+    guidance: z.string().optional().describe("Optional strategic guidance for the workflow")
+  }),
+  execute: async ({ workflow, phase, iteration, guidance }) => {
+    const args = [];
+
+    switch (workflow) {
+      case "project-status":
+        args.push("project-status");
+        break;
+      case "gate-check":
+        args.push("gate-check", phase || "inception");
+        break;
+      case "security-review":
+        args.push("security-review");
+        if (iteration) args.push("--iteration", String(iteration));
+        break;
+      case "test-execution":
+        args.push("test-execution");
+        if (iteration) args.push("--iteration", String(iteration));
+        break;
+      case "deployment":
+        args.push("deploy-to-production");
+        break;
+      case "risk-management":
+        args.push("risk-management");
+        if (iteration) args.push("--iteration", String(iteration));
+        break;
+      case "requirements-evolution":
+        args.push("requirements-evolution");
+        if (iteration) args.push("--iteration", String(iteration));
+        break;
+    }
+
+    if (guidance) {
+      args.push("--guidance", guidance);
+    }
+
+    try {
+      const result = execSync(`npx aiwg ${args.join(" ")}`, {
+        encoding: "utf-8",
+        timeout: 300000 // 5 minutes
+      });
+      return { success: true, output: result };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      };
+    }
+  }
+});
+
+/**
+ * Read AIWG artifact
+ */
+export const readArtifact = tool({
+  name: "aiwg-artifact-read",
+  description: "Read an AIWG SDLC artifact from the .aiwg directory",
+  parameters: z.object({
+    category: z.enum([
+      "intake",
+      "requirements",
+      "architecture",
+      "planning",
+      "risks",
+      "testing",
+      "security",
+      "deployment",
+      "reports"
+    ]).describe("The artifact category"),
+    filename: z.string().describe("The artifact filename")
+  }),
+  execute: async ({ category, filename }) => {
+    const artifactPath = path.join(process.cwd(), ".aiwg", category, filename);
+
+    if (!fs.existsSync(artifactPath)) {
+      return {
+        success: false,
+        error: `Artifact not found: ${artifactPath}`
+      };
+    }
+
+    try {
+      const content = fs.readFileSync(artifactPath, "utf-8");
+      return { success: true, content };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      };
+    }
+  }
+});
+
+/**
+ * List AIWG artifacts
+ */
+export const listArtifacts = tool({
+  name: "aiwg-artifact-list",
+  description: "List all AIWG SDLC artifacts in a category",
+  parameters: z.object({
+    category: z.enum([
+      "intake",
+      "requirements",
+      "architecture",
+      "planning",
+      "risks",
+      "testing",
+      "security",
+      "deployment",
+      "reports"
+    ]).optional().describe("The artifact category (omit for all categories)")
+  }),
+  execute: async ({ category }) => {
+    const aiwgDir = path.join(process.cwd(), ".aiwg");
+
+    if (!fs.existsSync(aiwgDir)) {
+      return {
+        success: false,
+        error: "No .aiwg directory found. Initialize AIWG first."
+      };
+    }
+
+    const result: Record<string, string[]> = {};
+
+    const categories = category
+      ? [category]
+      : ["intake", "requirements", "architecture", "planning", "risks", "testing", "security", "deployment", "reports"];
+
+    for (const cat of categories) {
+      const catDir = path.join(aiwgDir, cat);
+      if (fs.existsSync(catDir)) {
+        const files = fs.readdirSync(catDir)
+          .filter(f => f.endsWith(".md") || f.endsWith(".json"));
+        if (files.length > 0) {
+          result[cat] = files;
+        }
+      }
+    }
+
+    return { success: true, artifacts: result };
+  }
+});

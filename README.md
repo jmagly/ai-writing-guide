@@ -84,6 +84,12 @@ aiwg use sdlc --provider warp
 # Factory AI (creates .factory/droids/ + AGENTS.md)
 aiwg use sdlc --provider factory
 
+# OpenCode (creates .opencode/agent/ + AGENTS.md)
+aiwg use sdlc --provider opencode
+
+# Cursor (creates .cursor/rules/ + AGENTS.md)
+aiwg use sdlc --provider cursor
+
 # OpenAI/Codex (experimental)
 aiwg use sdlc --provider openai
 ```
