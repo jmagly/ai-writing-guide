@@ -168,10 +168,14 @@ function transformToFactoryDroid(content, modelCfg, modelsConfig) {
   const [, frontmatter, body] = fmMatch;
 
   // Extract metadata
-  const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
+  const rawName = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
   const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
   const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
   const toolsMatch = frontmatter.match(/tools:\s*(.+)/)?.[1]?.trim();
+
+  // Convert name to kebab-case for Factory compatibility
+  // "Technical Researcher" -> "technical-researcher"
+  const name = toKebabCase(rawName);
 
   // Map model to Factory format
   const factoryModel = mapModelToFactory(modelMatch, modelCfg, modelsConfig);
@@ -188,6 +192,19 @@ tools: ${JSON.stringify(factoryTools)}
 ---`;
 
   return `${factoryFrontmatter}\n\n${body.trim()}`;
+}
+
+/**
+ * Convert a string to kebab-case
+ * "Technical Researcher" -> "technical-researcher"
+ * "Software Implementer" -> "software-implementer"
+ */
+function toKebabCase(str) {
+  if (!str) return str;
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric with hyphens
+    .replace(/^-+|-+$/g, '');      // Trim leading/trailing hyphens
 }
 
 function mapToolsToFactory(toolsString, agentName) {
@@ -210,33 +227,35 @@ function mapToolsToFactory(toolsString, agentName) {
   }
   
   // Tool mapping: Claude Code → Factory
+  // Note: MultiEdit doesn't exist in Factory - maps to Create, Edit, ApplyPatch
   const toolMap = {
     'Bash': 'Execute',
     'Write': 'Create',  // Will add Edit too
     'WebFetch': 'FetchUrl',
-    'MultiEdit': 'MultiEdit',
     'Read': 'Read',
     'Grep': 'Grep',
     'Glob': 'Glob',
     'LS': 'LS'
   };
-  
+
   const factoryTools = new Set();
-  
+
   // Map original tools
   for (const tool of originalTools) {
+    // Special handling for MultiEdit - Factory doesn't have it
+    // Map to Edit (the closest equivalent for multi-file editing)
+    if (tool === 'MultiEdit') {
+      factoryTools.add('Edit');
+      continue;
+    }
+
     const mapped = toolMap[tool] || tool;
     factoryTools.add(mapped);
-    
+
     // If Write is present, add both Create and Edit
     if (tool === 'Write') {
       factoryTools.add('Create');
       factoryTools.add('Edit');
-    }
-    
-    // If MultiEdit is present, also add ApplyPatch (related patch-based editing)
-    if (tool === 'MultiEdit') {
-      factoryTools.add('ApplyPatch');
     }
   }
   
