@@ -363,209 +363,7 @@ grep -r "audit.*log\|log.*audit\|event.*log" --include="*.{js,py}" | wc -l
 - No HIPAA or SOX requirements detected
 ```
 
-### Step 6: Test Quality & Remediation Analysis (REQUIRED for Brownfield)
-
-> **For brownfield projects, test analysis goes beyond coverage percentage.** This step assesses test quality, identifies gaps, and creates a remediation roadmap.
-
-**Commands**:
-```bash
-# Test file discovery
-find . -name "*.test.*" -o -name "*.spec.*" -o -name "*_test.*" | wc -l
-find . -path "*/test/*" -o -path "*/tests/*" -o -path "*/__tests__/*" | wc -l
-
-# Test framework detection
-grep -r "describe\|it\|test\|expect" --include="*.{js,ts}" | head -10
-grep -r "def test_\|pytest\|unittest" --include="*.py" | head -10
-grep -r "@Test\|@Before\|@After" --include="*.java" | head -10
-
-# Coverage configuration
-ls jest.config.* vitest.config.* .nycrc* coverage/ .coveragerc pytest.ini
-cat package.json | jq '.scripts | keys | map(select(test("test|coverage")))' 2>/dev/null
-
-# Test data and fixtures
-find . -path "*/fixtures/*" -o -path "*/mocks/*" -o -path "*/__mocks__/*" | wc -l
-find . -name "*.fixture.*" -o -name "*.mock.*" | wc -l
-
-# Flaky test indicators
-grep -r "skip\|xit\|xdescribe\|@Skip\|@Ignore\|pytest.mark.skip" --include="*.{js,ts,py,java}" | wc -l
-
-# Test assertions quality (simple vs. meaningful)
-grep -r "expect(true).toBe(true)\|assert True\|assertTrue(true)" --include="*.{js,ts,py,java}" | wc -l
-```
-
-**Analyze**:
-
-#### 6.1 Test Coverage Assessment
-
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| **Line Coverage** | `__%` | 80% | {Met/Gap} |
-| **Branch Coverage** | `__%` | 75% | {Met/Gap} |
-| **Function Coverage** | `__%` | 90% | {Met/Gap} |
-| **Test File Count** | `___` | 1:3 ratio to source | {Met/Gap} |
-
-#### 6.2 Test Quality Assessment
-
-**Test Health Indicators**:
-- **Skipped tests**: `___` (0 = Healthy, >10 = Warning, >50 = Critical)
-- **Flaky tests**: `___` (tracked in CI failures, retry patterns)
-- **Trivial assertions**: `___` (tests that always pass, e.g., `expect(true).toBe(true)`)
-- **Missing mocks**: `___` external dependencies called directly in tests
-- **Missing fixtures**: `___` hard-coded test data instead of factories/fixtures
-
-**Test Health Score**:
-- [ ] **Healthy** (>80% coverage, <5 skipped, no flaky, mocks/fixtures present)
-- [ ] **Moderate** (60-80% coverage, 5-20 skipped, some flaky tests)
-- [ ] **Poor** (40-60% coverage, 20-50 skipped, many flaky tests)
-- [ ] **Critical** (<40% coverage, >50 skipped, no CI enforcement)
-- [ ] **None** (no tests or tests don't run)
-
-#### 6.3 Test Gap Analysis
-
-**Missing Test Types**:
-- [ ] **Unit tests**: Individual functions/methods not tested
-- [ ] **Integration tests**: Component interactions not tested
-- [ ] **E2E tests**: User workflows not tested
-- [ ] **API tests**: Endpoints not tested
-- [ ] **Performance tests**: No load/stress testing
-- [ ] **Security tests**: No OWASP coverage
-
-**Untested Critical Paths**:
-```
-{List modules/features with 0% or <50% coverage that handle:}
-- Authentication/authorization
-- Payment/financial transactions
-- Data validation/sanitization
-- Error handling
-- Security-sensitive operations
-```
-
-**Test Debt Inventory**:
-```
-{Categorize test debt by severity:}
-
-Critical (must fix before release):
-- [ ] {path/to/untested-auth-module.ts} - Authentication logic, 0% coverage
-- [ ] {path/to/payment-service.ts} - Payment processing, no integration tests
-
-High (should fix within 2 iterations):
-- [ ] {path/to/api-handlers/} - API endpoints, 30% coverage
-- [ ] {path/to/data-validation.ts} - Validation logic, unit tests only
-
-Medium (plan to fix within 6 months):
-- [ ] {path/to/utils/} - Utility functions, missing edge case tests
-- [ ] {path/to/ui-components/} - Components, no E2E coverage
-
-Low (track but defer):
-- [ ] {path/to/internal-tools/} - Admin tools, low-risk
-- [ ] {path/to/deprecated-module/} - Scheduled for removal
-```
-
-#### 6.4 Test Infrastructure Assessment
-
-**CI/CD Test Integration**:
-- [ ] **No CI** - Tests not automated, manual execution only
-- [ ] **CI exists but doesn't run tests** - Pipeline present, tests not included
-- [ ] **Tests run but don't block** - Tests execute, failures don't prevent merge
-- [ ] **Tests block PRs** - Must pass before merge (minimum standard)
-- [ ] **Tests gate deployment** - Must pass before production release
-
-**Test Environment Quality**:
-- [ ] **No test environment** - Tests run against production or shared dev
-- [ ] **Shared test environment** - Single env, potential conflicts
-- [ ] **Isolated test environment** - Dedicated, but not production-like
-- [ ] **Production-like test environment** - Matches prod config
-
-**Test Data Strategy**:
-- [ ] **Hard-coded values** - Brittle, scattered throughout tests
-- [ ] **Fixtures only** - Static data, may become stale
-- [ ] **Factories present** - Dynamic data generation
-- [ ] **Comprehensive strategy** - Factories + fixtures + database seeds
-
-#### 6.5 Test Remediation Roadmap
-
-Based on the assessment above, generate a phased improvement plan:
-
-**Phase 1: Critical Path Protection (1-2 iterations)**
-```markdown
-Goal: Achieve 100% coverage on critical paths, establish CI gates
-
-Tasks:
-- [ ] Add tests for {critical-path-1}: {auth module}
-- [ ] Add tests for {critical-path-2}: {payment processing}
-- [ ] Configure CI to block PRs on test failure
-- [ ] Fix or remove all skipped tests in critical paths
-- [ ] Target: 100% coverage on critical paths, 60% overall
-
-Agents: Test Engineer, Software Implementer
-```
-
-**Phase 2: Test Infrastructure (2-4 iterations)**
-```markdown
-Goal: Establish test data strategy, mock external dependencies
-
-Tasks:
-- [ ] Create test data factories for: {User, Order, Product}
-- [ ] Create mocks for external services: {Stripe, SendGrid, S3}
-- [ ] Add integration tests for all API endpoints
-- [ ] Configure coverage reporting in CI
-- [ ] Target: Factories/mocks in place, 70% overall coverage
-
-Agents: Test Engineer, DevOps Engineer
-```
-
-**Phase 3: Comprehensive Coverage (4-8 iterations)**
-```markdown
-Goal: Achieve production-grade test coverage
-
-Tasks:
-- [ ] Add E2E tests for critical user flows
-- [ ] Add performance baseline tests
-- [ ] Add security tests (OWASP Top 10)
-- [ ] Reduce flaky test count to 0
-- [ ] Target: 80%+ overall coverage, all test types present
-
-Agents: Test Engineer, Test Architect, Security Auditor
-```
-
-**Phase 4: Excellence (ongoing)**
-```markdown
-Goal: Maintain and improve test quality
-
-Tasks:
-- [ ] Add accessibility tests
-- [ ] Implement mutation testing
-- [ ] Add visual regression tests (if UI)
-- [ ] Regular test debt review (quarterly)
-- [ ] Target: 90%+ coverage, comprehensive quality gates
-
-Agents: Test Architect, Metrics Analyst
-```
-
-**Output**: Test remediation summary
-```markdown
-## Test Remediation Summary
-
-**Current State**:
-- Coverage: {current}% (Target: 80%)
-- Test Health: {Healthy | Moderate | Poor | Critical | None}
-- CI Integration: {None | Exists | Blocking | Full Pipeline}
-- Test Data: {Hard-coded | Fixtures | Factories | Comprehensive}
-
-**Critical Gaps**:
-{list from 6.3}
-
-**Remediation Effort Estimate**:
-- Phase 1 (Critical): {X} developer-days
-- Phase 2 (Infrastructure): {Y} developer-days
-- Phase 3 (Coverage): {Z} developer-days
-- Total: {X+Y+Z} developer-days over {N} iterations
-
-**Recommended Starting Point**:
-{Based on current state, recommend which phase to start}
-```
-
-### Step 7: Team and Process Indicators
+### Step 6: Team and Process Indicators
 
 Analyze repository for team size, process maturity, and operational patterns.
 
@@ -621,7 +419,7 @@ grep -r "test\|spec" --include="*.{js,py}" | wc -l
 - Runbooks: Missing (operational gap)
 ```
 
-### Step 8: Interactive Clarification (Optional)
+### Step 7: Interactive Clarification (Optional)
 
 Ask targeted questions to clarify ambiguous or missing information.
 
@@ -682,7 +480,7 @@ Question 4/10: What are the biggest pain points or challenges with the system to
 Got it! Generating complete intake documents...
 ```
 
-### Step 9: Generate Complete Intake Documents
+### Step 8: Generate Complete Intake Documents
 
 Create three intake files documenting the existing system.
 
@@ -1352,7 +1150,7 @@ Add governance templates when team exceeds 5 people (coordination overhead, deci
 This option-matrix is **input** to analysis (capture reality), not **output** of analysis (prescribe solution).
 ```
 
-### Step 10: Generate Analysis Report
+### Step 9: Generate Analysis Report
 
 **Output**: Codebase analysis report
 ```markdown

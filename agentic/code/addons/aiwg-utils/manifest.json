@@ -34,6 +34,7 @@
     "prompts": "prompts/"
   },
   "commands": [
+    "aiwg-refresh",
     "aiwg-regenerate",
     "aiwg-regenerate-claude",
     "aiwg-regenerate-warp",

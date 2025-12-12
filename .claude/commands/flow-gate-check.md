@@ -483,92 +483,17 @@ elif gate == "reliability":
 elif gate == "test-coverage":
     Task(
         subagent_type="test-engineer",
-        description="Run comprehensive test coverage validation",
+        description="Run test coverage validation",
         prompt="""
-        **CRITICAL**: Test coverage gate is BLOCKING - failures prevent phase transitions.
+        Analyze test coverage:
+        - Unit test coverage
+        - Integration coverage
+        - Critical path coverage
+        - Error handling coverage
+        - Edge case coverage
 
-        ## Coverage Metrics Analysis
-
-        1. **Quantitative Coverage**:
-           - Line coverage: ≥80% REQUIRED (100% for critical paths)
-           - Branch coverage: ≥75% REQUIRED
-           - Function coverage: ≥90% REQUIRED
-           - Statement coverage: ≥80% REQUIRED
-
-        2. **Qualitative Assessment**:
-           - Test health score (skipped, flaky, trivial tests)
-           - Test data strategy (factories/fixtures/mocks present)
-           - Test documentation completeness
-
-        3. **Coverage by Test Level**:
-           - Unit tests: Coverage % and test count
-           - Integration tests: API endpoint coverage
-           - E2E tests: Critical path coverage
-           - Security tests: OWASP Top 10 coverage
-           - Performance tests: Baseline established
-
-        4. **Critical Path Analysis**:
-           - Authentication/authorization: 100% REQUIRED
-           - Payment/financial logic: 100% REQUIRED
-           - Data validation: 100% REQUIRED
-           - Error handlers: 100% REQUIRED
-           - Security-sensitive code: 100% REQUIRED
-
-        ## Gate Criteria (NON-NEGOTIABLE)
-
-        PASS criteria:
-        - Line coverage ≥80% overall
-        - Branch coverage ≥75% overall
-        - Critical paths 100% covered
-        - No skipped tests without documented justification
-        - Test data strategy in place (factories/mocks)
-        - All test levels present (unit + integration minimum)
-
-        FAIL criteria (ANY of these blocks):
-        - Line coverage <80% without documented exception
-        - Any critical path <100% coverage
-        - >10 skipped tests without justification
-        - No integration tests
-        - Trivial tests (assertions that always pass)
-        - Tests that don't run in CI
-
-        ## Output Format
-
-        Generate detailed test coverage report:
-
-        # Test Coverage Gate Report
-
-        ## Summary
-        - Overall Status: PASS | FAIL | CONDITIONAL
-        - Line Coverage: X% (target: 80%)
-        - Branch Coverage: X% (target: 75%)
-        - Critical Path Coverage: X% (target: 100%)
-
-        ## Coverage by Level
-        | Level | Coverage | Status |
-        |-------|----------|--------|
-        | Unit | X% | PASS/FAIL |
-        | Integration | X% | PASS/FAIL |
-        | E2E | X% | PASS/FAIL |
-        | Security | X% | PASS/FAIL |
-
-        ## Test Health
-        - Skipped tests: X (0 = Healthy)
-        - Flaky tests: X (0 = Healthy)
-        - Trivial assertions: X (0 = Healthy)
-        - Test data strategy: [Factories/Fixtures/Mocks/None]
-
-        ## Critical Path Coverage
-        - Authentication: X% (100% required)
-        - Authorization: X% (100% required)
-        - Data validation: X% (100% required)
-        - Error handling: X% (100% required)
-
-        ## Remediation (if FAIL)
-        - Priority areas for test coverage
-        - Estimated effort to reach threshold
-        - Test data/mock requirements
-
+        Pass criteria: Meet Master Test Plan thresholds
+        Generate coverage report
         Save to: .aiwg/gates/test-coverage-report.md
         """
     )

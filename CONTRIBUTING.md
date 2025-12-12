@@ -30,6 +30,18 @@ chmod +x .git/hooks/pre-commit
 
 Run `npm exec markdownlint-cli2 "**/*.md"` (Node ≥18) before PRs.
 
+## Testing Requirements
+
+Significant changes (new agents, commands, skills, CLI changes, framework modifications) require full regression
+testing across all supported providers before merging.
+
+See [Testing Requirements](docs/contributing/testing-requirements.md) for:
+
+- Full regression testing criteria
+- Provider validation matrix
+- Test categories and coverage thresholds
+- PR requirements checklist
+
 ## Scope
 
 - SDLC framework: `agentic/code/frameworks/sdlc-complete/`
