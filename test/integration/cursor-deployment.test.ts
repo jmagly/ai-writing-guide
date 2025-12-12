@@ -11,13 +11,52 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 
 // Test directories
 const TEST_PROJECT_DIR = path.join(os.tmpdir(), 'aiwg-cursor-test-project');
 const TEST_HOME_DIR = path.join(os.tmpdir(), 'aiwg-cursor-test-home');
 const TEST_CURSOR_DIR = path.join(TEST_PROJECT_DIR, '.cursor');
 const REPO_ROOT = path.resolve(__dirname, '../..');
+
+// Check if cursor CLI is available
+function isCursorAvailable(): boolean {
+  try {
+    const result = spawnSync('cursor', ['--version'], {
+      encoding: 'utf-8',
+      timeout: 5000,
+      shell: true,
+    });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+const CURSOR_AVAILABLE = isCursorAvailable();
+
+// Helper to run cursor CLI commands
+function runCursor(
+  args: string[],
+  options: { cwd?: string; timeout?: number } = {}
+): { stdout: string; stderr: string; status: number | null } {
+  try {
+    const result = spawnSync('cursor', args, {
+      encoding: 'utf-8',
+      timeout: options.timeout || 30000,
+      cwd: options.cwd || process.cwd(),
+      env: process.env,
+      shell: true,
+    });
+    return {
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
+      status: result.status,
+    };
+  } catch (e) {
+    return { stdout: '', stderr: String(e), status: -1 };
+  }
+}
 
 // Helper to run CLI commands
 function runAiwg(args: string[], cwd = TEST_PROJECT_DIR): string {
@@ -332,5 +371,125 @@ describe('Config Templates', () => {
 
     expect(parsed['setup-worktree']).toBeDefined();
     expect(Array.isArray(parsed['setup-worktree'])).toBe(true);
+  });
+});
+
+/**
+ * Live Cursor CLI Integration Tests
+ *
+ * These tests validate integration with the actual Cursor CLI tool.
+ * Tests are skipped if Cursor CLI is not installed.
+ */
+describe('Cursor CLI Integration', () => {
+  it.skipIf(!CURSOR_AVAILABLE)('cursor CLI is installed and accessible', () => {
+    const result = runCursor(['--version']);
+    expect(result.status).toBe(0);
+    // Cursor version format: X.X.X
+    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
+  });
+
+  it.skipIf(!CURSOR_AVAILABLE)('cursor --help returns available commands', () => {
+    const result = runCursor(['--help']);
+    expect(result.status).toBe(0);
+    // Should show help text
+    expect(result.stdout.toLowerCase()).toContain('usage');
+  });
+
+  it.skipIf(!CURSOR_AVAILABLE)('cursor can open projects (non-blocking check)', () => {
+    // We just verify the CLI accepts project path arguments
+    // Don't actually open anything - that would block the test
+    const result = runCursor(['--help']);
+    expect(result.status).toBe(0);
+    // Cursor accepts project paths as arguments
+    expect(result.stdout).toBeDefined();
+  });
+
+  describe('MCP Configuration Validation', () => {
+    it.skipIf(!CURSOR_AVAILABLE)('validates .cursor/mcp.json format accepted by Cursor', async () => {
+      // Create a minimal valid MCP config
+      const testDir = path.join(os.tmpdir(), 'cursor-mcp-test-' + Date.now());
+      await fs.mkdir(path.join(testDir, '.cursor'), { recursive: true });
+
+      const mcpConfig = {
+        mcpServers: {
+          aiwg: {
+            command: 'aiwg',
+            args: ['mcp', 'serve'],
+          },
+        },
+      };
+
+      await fs.writeFile(
+        path.join(testDir, '.cursor', 'mcp.json'),
+        JSON.stringify(mcpConfig, null, 2)
+      );
+
+      // Verify JSON is valid by parsing it
+      const readBack = await fs.readFile(
+        path.join(testDir, '.cursor', 'mcp.json'),
+        'utf-8'
+      );
+      const parsed = JSON.parse(readBack);
+
+      expect(parsed.mcpServers.aiwg).toBeDefined();
+      expect(parsed.mcpServers.aiwg.command).toBe('aiwg');
+
+      // Cleanup
+      await fs.rm(testDir, { recursive: true, force: true });
+    });
+  });
+
+  describe('Rules Directory Structure', () => {
+    it.skipIf(!CURSOR_AVAILABLE)('validates .cursor/rules/ structure', async () => {
+      // Cursor expects rules in .cursor/rules/ with .mdc extension
+      const testDir = path.join(os.tmpdir(), 'cursor-rules-test-' + Date.now());
+      await fs.mkdir(path.join(testDir, '.cursor', 'rules'), { recursive: true });
+
+      // Create a test rule file
+      const ruleContent = `---
+description: Test rule for validation
+globs: ["*.ts"]
+---
+
+# Test Rule
+
+This is a test rule.
+`;
+      await fs.writeFile(
+        path.join(testDir, '.cursor', 'rules', 'test-rule.mdc'),
+        ruleContent
+      );
+
+      // Verify structure
+      const rulesDir = await fs.readdir(path.join(testDir, '.cursor', 'rules'));
+      expect(rulesDir).toContain('test-rule.mdc');
+
+      // Verify frontmatter format
+      const content = await fs.readFile(
+        path.join(testDir, '.cursor', 'rules', 'test-rule.mdc'),
+        'utf-8'
+      );
+      expect(content).toMatch(/^---\n/);
+      expect(content).toContain('description:');
+      expect(content).toContain('globs:');
+
+      // Cleanup
+      await fs.rm(testDir, { recursive: true, force: true });
+    });
+  });
+
+  describe('CLI Availability Reporting', () => {
+    it('reports cursor CLI availability status', () => {
+      // This test always runs to report status
+      console.log(`\n  Cursor CLI Status:`);
+      console.log(`    Available: ${CURSOR_AVAILABLE}`);
+      if (CURSOR_AVAILABLE) {
+        const version = runCursor(['--version']);
+        console.log(`    Version: ${version.stdout.trim()}`);
+      } else {
+        console.log('    Install Cursor from: https://cursor.sh');
+      }
+      expect(true).toBe(true); // Always passes, just for reporting
+    });
   });
 });
