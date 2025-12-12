@@ -31,6 +31,53 @@
 - Maintainability: `low | medium | high`
 - Portability: `cloud-locked | portable`
 
+## Testing Strategy (REQUIRED)
+
+> Testing is a first-class requirement. This section MUST be completed before proceeding to Inception.
+
+### Test Coverage Requirements
+
+- **Minimum coverage threshold**: `60% | 70% | 80% | 90%` (default: 80% for production systems)
+- **Coverage measurement**: `Line | Branch | Both` (recommended: Both)
+- **Critical path coverage**: `100%` (non-negotiable for core business logic)
+
+### Test Levels Required
+
+| Level | Required | Target Coverage | Automation |
+|-------|----------|-----------------|------------|
+| Unit tests | `Yes/No` | `__%` | `Manual | Automated | CI-gated` |
+| Integration tests | `Yes/No` | `__%` | `Manual | Automated | CI-gated` |
+| E2E/System tests | `Yes/No` | `__%` | `Manual | Automated | CI-gated` |
+| Performance tests | `Yes/No` | `Baseline defined` | `Manual | Automated | CI-gated` |
+| Security tests | `Yes/No` | `OWASP Top 10` | `Manual | Automated | CI-gated` |
+| Accessibility tests | `Yes/No` | `WCAG level` | `Manual | Automated | CI-gated` |
+
+### Test Automation Strategy
+
+- **CI/CD integration**: `None | Tests run on PR | Tests block merge | Full pipeline`
+- **Test environment**: `Local only | Shared dev | Dedicated test | Production-like`
+- **Test data strategy**: `Fixtures | Factories | Snapshots | Production subset`
+
+### Test Maturity Profile
+
+Select the testing regime appropriate for project phase:
+
+- [ ] **Prototype/Spike**: Minimal testing (manual verification acceptable, <40% coverage)
+- [ ] **MVP**: Basic automation (unit tests required, 40-60% coverage, manual E2E)
+- [ ] **Production**: Full automation (all levels automated, 80%+ coverage, CI-gated)
+- [ ] **Enterprise**: Comprehensive (90%+ coverage, security/perf gates, audit trail)
+
+### Existing Test Assessment (Brownfield Only)
+
+> Complete this section if integrating with or enhancing existing codebase.
+
+- Current test coverage: `__%`
+- Test suite health: `Healthy | Flaky | Broken | None`
+- Test debt assessment: `Low | Medium | High | Critical`
+- Untested critical paths: `list or "None identified"`
+- Test improvement roadmap required: `Yes/No`
+- Target coverage by iteration: `Iteration N: __%, Iteration M: __%`
+
 ## Data
 
 - Classification: `Public | Internal | Confidential | Restricted`
