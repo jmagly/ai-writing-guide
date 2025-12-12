@@ -19,8 +19,6 @@ aiwg use sdlc        # deploy SDLC framework
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat-square)](https://discord.gg/BuAusFMxdA)
 [![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white&style=flat-square)](https://t.me/+oJg9w2lE6A5lOGFh)
 
-💬 **Shoutout:** [@Manitcor](https://x.com/Manitcor) on agent extraction tips
-
 🌐 **Live demo & docs:** [https://jmagly.github.io/ai-writing-guide](https://jmagly.github.io/ai-writing-guide)
 
 </div>
@@ -199,6 +197,31 @@ cd my-awesome-project
 </tr>
 </table>
 
+### 🧪 **Testing Quality Addon**
+
+**Enforce TDD. Validate quality.** Research-backed testing enforcement, quality metrics, and automation.
+
+<table>
+<tr>
+<td width="50%">
+
+- ✅ **TDD Enforcement** — Pre-commit hooks + CI coverage gates (80%+ target)
+- ✅ **Mutation Testing** — Validate tests beyond coverage (Stryker/PITest/mutmut)
+- ✅ **Flaky Test Detection** — Identify unreliable tests from CI history
+
+</td>
+<td width="50%">
+
+- ✅ **Flaky Test Fixes** — Pattern-based auto-repair (timing, async, state)
+- ✅ **Test Data Factories** — Auto-generate factories from schemas (Faker.js)
+- ✅ **Test Sync** — Detect orphaned tests, missing tests, code misalignment
+
+</td>
+</tr>
+</table>
+
+**Research Foundation:** Kent Beck (TDD), Google Testing Blog (80% coverage), FlaKat (flaky detection), UTRefactor (test maintenance)
+
 ---
 
 ## 🎬 See It In Action
@@ -298,9 +321,13 @@ aiwg/
 │   │   ├── examples/                     → Before/after rewrites
 │   │   └── context/                      → Quick-reference for different voices
 │   │
-│   └── voice-framework/                  → Voice profiles for consistent, natural writing
-│       ├── skills/ (4)                   → voice-apply, voice-create, voice-blend, voice-analyze
-│       └── voices/templates/             → Built-in profiles (technical, friendly, executive, casual)
+│   ├── voice-framework/                  → Voice profiles for consistent, natural writing
+│   │   ├── skills/ (4)                   → voice-apply, voice-create, voice-blend, voice-analyze
+│   │   └── voices/templates/             → Built-in profiles (technical, friendly, executive, casual)
+│   │
+│   └── testing-quality/                  → Research-backed testing enforcement
+│       ├── skills/ (6)                   → tdd-enforce, mutation-test, flaky-detect, flaky-fix, generate-factory, test-sync
+│       └── scripts/                      → TDD setup automation
 │
 ├── 🗂️ Workspace Management
 │   ├── Framework isolation               → Run SDLC + MMK + addons simultaneously

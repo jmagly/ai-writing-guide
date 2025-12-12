@@ -327,6 +327,253 @@ Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
     - Provide user-friendly diagnostic interfaces
     - Create chatbot integration for common issues
 
+21. **Regression Testing and Validation**
+
+    > **CRITICAL**: When troubleshooting issues, regression testing validates that fixes work and don't break existing functionality.
+
+    **When to Run Regression Tests:**
+    ```markdown
+    ### Regression Testing Triggers
+
+    **Mandatory Regression Testing:**
+    - After any bug fix (prove the fix works)
+    - After dependency updates (detect breaking changes)
+    - After configuration changes (validate system behavior)
+    - After infrastructure changes (verify integrations)
+    - Before any production deployment (final validation)
+
+    **Recommended Additional Testing:**
+    - After codebase refactoring
+    - After performance optimizations
+    - After security patches
+    - When onboarding brownfield projects
+    ```
+
+    **Regression Test Types:**
+    ```markdown
+    ### Test Suite Categories
+
+    **Smoke Tests (5-10 minutes):**
+    - Critical path validation
+    - Basic functionality check
+    - Use after quick fixes
+    ```bash
+    npm run test:smoke
+    pytest -m smoke
+    ```
+
+    **Core Regression (15-30 minutes):**
+    - Unit tests for changed components
+    - Integration tests for affected services
+    - Use for standard bug fixes
+    ```bash
+    npm run test:affected
+    pytest --lf  # last failed
+    ```
+
+    **Full Regression (1-2 hours):**
+    - Complete unit test suite
+    - All integration tests
+    - E2E critical paths
+    - Use before deployments
+    ```bash
+    npm run test:all
+    pytest --cov
+    ```
+
+    **Extended Validation (4-8 hours):**
+    - Performance baseline comparison
+    - Security scans
+    - Load testing
+    - Use for major releases
+    ```bash
+    npm run test:extended
+    ```
+    ```
+
+    **Regression Analysis Workflow:**
+    ```markdown
+    ### Post-Fix Validation Checklist
+
+    1. **Reproduce Original Issue**
+       - [ ] Confirm bug exists in affected branch
+       - [ ] Document exact reproduction steps
+       - [ ] Capture error logs/screenshots
+
+    2. **Write Regression Test**
+       - [ ] Create test that fails without fix
+       - [ ] Test covers the specific bug scenario
+       - [ ] Test includes edge cases
+
+    3. **Apply Fix and Validate**
+       - [ ] Regression test now passes
+       - [ ] Related tests still pass
+       - [ ] No new warnings or errors
+
+    4. **Run Extended Validation**
+       - [ ] Full unit test suite passes
+       - [ ] Integration tests pass
+       - [ ] Coverage not decreased
+       - [ ] No performance regression
+
+    5. **Document and Close**
+       - [ ] Update changelog
+       - [ ] Document root cause
+       - [ ] Link test to issue
+    ```
+
+    **Coverage Validation During Troubleshooting:**
+    ```markdown
+    ### Coverage Analysis Commands
+
+    **Check Current Coverage:**
+    ```bash
+    # Node.js
+    npm run test:coverage
+    npx vitest run --coverage
+
+    # Python
+    pytest --cov=src --cov-report=html
+    coverage report -m
+
+    # Java
+    mvn test jacoco:report
+    ```
+
+    **Compare Coverage Before/After Fix:**
+    ```bash
+    # Save baseline
+    npm run test:coverage -- --json > coverage-before.json
+
+    # After fix
+    npm run test:coverage -- --json > coverage-after.json
+
+    # Compare
+    diff coverage-before.json coverage-after.json
+    ```
+
+    **Identify Uncovered Code:**
+    ```bash
+    # Node.js - find uncovered lines
+    npx vitest run --coverage --reporter=json | jq '.coverage'
+
+    # Python - show missing lines
+    pytest --cov=src --cov-report=term-missing
+    ```
+    ```
+
+    **Test Health Assessment:**
+    ```markdown
+    ### Test Suite Health Check
+
+    **Identify Flaky Tests:**
+    ```bash
+    # Run tests multiple times to find flaky ones
+    for i in {1..10}; do npm test 2>&1 | grep -E "FAIL|PASS" >> test-results.log; done
+
+    # Analyze results
+    grep FAIL test-results.log | sort | uniq -c | sort -nr
+    ```
+
+    **Check for Skipped Tests:**
+    ```bash
+    # Node.js
+    npm test 2>&1 | grep -E "skipped|pending"
+
+    # Python
+    pytest --co -q | grep "skip"
+    ```
+
+    **Find Trivial Tests:**
+    ```bash
+    # Search for tests that always pass
+    grep -rn "expect(true).toBe(true)" test/
+    grep -rn "assert True" tests/
+    ```
+
+    **Test Data Validation:**
+    ```bash
+    # Verify test fixtures exist
+    ls -la test/fixtures/
+    find . -name "*.fixture.*" -o -name "*.mock.*"
+
+    # Check for hard-coded data
+    grep -rn "password123\|test@test.com\|12345" test/
+    ```
+    ```
+
+    **Brownfield Project Test Assessment:**
+    ```markdown
+    ### Existing Codebase Test Validation
+
+    When inheriting or troubleshooting a brownfield project:
+
+    **Step 1: Assess Current Test State**
+    ```bash
+    # Count test files
+    find . -name "*.test.*" -o -name "*.spec.*" | wc -l
+
+    # Check if tests run
+    npm test 2>&1 | head -50
+    pytest --collect-only 2>&1 | head -50
+
+    # Get coverage baseline
+    npm run test:coverage 2>&1 | tail -20
+    ```
+
+    **Step 2: Identify Critical Gaps**
+    - Authentication/authorization code without tests
+    - Payment processing without tests
+    - Data validation without tests
+    - Error handlers without tests
+
+    **Step 3: Create Test Remediation Plan**
+    - Phase 1: Critical path tests (authentication, payments)
+    - Phase 2: Test infrastructure (factories, mocks)
+    - Phase 3: Comprehensive coverage (80% target)
+    - Phase 4: Quality gates (CI integration)
+
+    **Step 4: Establish Baseline**
+    ```bash
+    # Document current state
+    echo "Test Coverage Baseline: $(date)" > .aiwg/testing/baseline.md
+    npm run test:coverage >> .aiwg/testing/baseline.md
+    ```
+    ```
+
+    **Automated Regression Prevention:**
+    ```markdown
+    ### CI/CD Regression Gates
+
+    **GitHub Actions Example:**
+    ```yaml
+    name: Regression Tests
+    on: [pull_request]
+    jobs:
+      regression:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - name: Run regression tests
+            run: npm run test:regression
+          - name: Coverage check
+            run: |
+              npm run test:coverage
+              if [ $(jq '.total.lines.pct' coverage/coverage-summary.json) -lt 80 ]; then
+                echo "Coverage below 80%"
+                exit 1
+              fi
+          - name: Upload coverage
+            uses: codecov/codecov-action@v3
+    ```
+
+    **Branch Protection Rules:**
+    - Require status checks to pass
+    - Require branches to be up to date
+    - Require linear history
+    - Include administrators in restrictions
+    ```
+
 **Advanced Troubleshooting Techniques:**
 
 **Log Analysis:**
@@ -351,6 +598,39 @@ vmstat 1 10
 # Application profiling
 strace -p [PID]
 perf record -p [PID]
+```
+
+**Test-Driven Debugging:**
+```markdown
+### Using Tests to Debug Issues
+
+1. **Write a failing test that reproduces the bug**
+   ```javascript
+   it('should handle edge case that caused bug #123', () => {
+     // Exact scenario that caused the issue
+     const result = functionUnderTest(bugTriggeringInput);
+     expect(result).not.toThrow();
+   });
+   ```
+
+2. **Run the test to confirm it fails**
+   ```bash
+   npm test -- --grep "bug #123"
+   ```
+
+3. **Debug with test runner**
+   ```bash
+   # Node.js with debugger
+   node --inspect-brk ./node_modules/.bin/vitest run --testNamePattern "bug #123"
+
+   # Python with pdb
+   pytest -s --pdb test_module.py::test_bug_123
+   ```
+
+4. **Fix and verify**
+   - Test now passes
+   - All other tests still pass
+   - Coverage not decreased
 ```
 
 Remember to:
