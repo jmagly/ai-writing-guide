@@ -56,6 +56,7 @@ Use `@path/to/file.md` in your message to load specific documentation:
 | Platform | Agent Location | Command |
 |----------|----------------|---------|
 | Claude Code | `.claude/agents/` | `aiwg -deploy-agents` |
+| GitHub Copilot | `.github/agents/` | `aiwg -deploy-agents --provider copilot` |
 | Warp Terminal | `WARP.md` | Symlinked to CLAUDE.md |
 | Factory AI | `.factory/droids/` | `aiwg -deploy-agents --provider factory` |
 | OpenCode | `.opencode/agent/` | `aiwg -deploy-agents --provider opencode` |
