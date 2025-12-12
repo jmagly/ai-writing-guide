@@ -6,19 +6,38 @@
  * - Tool mapping (MultiEdit -> Edit, Bash -> Execute, etc.)
  * - AGENTS.md generation
  * - Droid deployment to .factory/droids/
+ * - Live droid CLI validation (when available)
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 
 // Test directories
 const TEST_PROJECT_DIR = path.join(os.tmpdir(), 'aiwg-factory-test-project');
 const TEST_HOME_DIR = path.join(os.tmpdir(), 'aiwg-factory-test-home');
 const TEST_FACTORY_DIR = path.join(TEST_PROJECT_DIR, '.factory');
 const REPO_ROOT = path.resolve(__dirname, '../..');
+
+// Check if droid CLI is available
+function isDroidAvailable(): boolean {
+  try {
+    const result = spawnSync('droid', ['--version'], { encoding: 'utf-8', timeout: 5000 });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+// Check if FACTORY_API_KEY is set
+function hasFactoryApiKey(): boolean {
+  return !!process.env.FACTORY_API_KEY;
+}
+
+const DROID_AVAILABLE = isDroidAvailable();
+const HAS_API_KEY = hasFactoryApiKey();
 
 // Helper to run deployment scripts directly
 function runScript(scriptPath: string, args: string[] = []): string {
@@ -33,6 +52,30 @@ function runScript(scriptPath: string, args: string[] = []): string {
     env,
     encoding: 'utf-8',
   });
+}
+
+// Helper to run droid CLI commands
+function runDroid(args: string[], options: { cwd?: string; timeout?: number } = {}): { stdout: string; stderr: string; status: number | null } {
+  try {
+    const result = spawnSync('droid', args, {
+      encoding: 'utf-8',
+      timeout: options.timeout || 30000,
+      cwd: options.cwd || process.cwd(),
+      env: process.env,
+      shell: true,
+    });
+    return {
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
+      status: result.status,
+    };
+  } catch (e) {
+    return {
+      stdout: '',
+      stderr: String(e),
+      status: -1,
+    };
+  }
 }
 
 describe('Factory AI Integration', () => {
@@ -359,6 +402,135 @@ describe('Factory AI Integration', () => {
         for (const invalidTool of invalidTools) {
           expect(content).not.toContain(`"${invalidTool}"`);
         }
+      }
+    });
+  });
+});
+
+/**
+ * Live Factory CLI Tests
+ *
+ * These tests require the droid CLI to be installed and optionally
+ * FACTORY_API_KEY to be set for full integration testing.
+ *
+ * Run with: FACTORY_API_KEY=your-key npx vitest run test/integration/factory-deployment.test.ts
+ */
+describe('Factory CLI Integration', () => {
+  beforeAll(() => {
+    if (!DROID_AVAILABLE) {
+      console.log('⚠️  droid CLI not available - skipping CLI tests');
+    }
+    if (!HAS_API_KEY) {
+      console.log('⚠️  FACTORY_API_KEY not set - skipping API-dependent tests');
+    }
+  });
+
+  describe('CLI Installation', () => {
+    it.skipIf(!DROID_AVAILABLE)('droid CLI is installed and accessible', () => {
+      const result = runDroid(['--version']);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toMatch(/\d+\.\d+/); // Version number format
+    });
+
+    it.skipIf(!DROID_AVAILABLE)('droid exec --list-tools returns available tools', () => {
+      const result = runDroid(['exec', '--list-tools']);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain('Available tools');
+    });
+
+    it.skipIf(!DROID_AVAILABLE)('lists Factory-compatible tools (no Claude-specific tools)', () => {
+      const result = runDroid(['exec', '--list-tools']);
+
+      // Factory should have these tools
+      expect(result.stdout).toContain('Read');
+      expect(result.stdout).toContain('Edit');
+      expect(result.stdout).toContain('Create');
+      expect(result.stdout).toContain('Execute');
+
+      // Factory should NOT have these Claude-specific tools
+      expect(result.stdout).not.toContain('MultiEdit');
+      expect(result.stdout).not.toContain('Bash');
+    });
+  });
+
+  describe('Custom Droids Configuration', () => {
+    it.skipIf(!DROID_AVAILABLE)('custom droids are enabled in settings', async () => {
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const settingsPath = path.join(homeDir, '.factory', 'settings.json');
+
+      try {
+        const settings = await fs.readFile(settingsPath, 'utf-8');
+        expect(settings).toContain('enableCustomDroids');
+        expect(settings).toMatch(/"enableCustomDroids":\s*true/);
+      } catch {
+        // Settings file may not exist yet
+        console.log('Factory settings.json not found - droids may not be configured');
+      }
+    });
+
+    it.skipIf(!DROID_AVAILABLE)('droids directory exists in home', async () => {
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const droidsDir = path.join(homeDir, '.factory', 'droids');
+
+      const exists = await fs.access(droidsDir).then(() => true).catch(() => false);
+      // This is informational - may not exist if not deployed yet
+      if (!exists) {
+        console.log('No droids deployed to ~/.factory/droids/ yet');
+      }
+    });
+  });
+
+  describe('Live Droid Invocation', () => {
+    it.skipIf(!DROID_AVAILABLE || !HAS_API_KEY)('can invoke @technical-researcher droid', async () => {
+      // Deploy droids to home directory first
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const droidsDir = path.join(homeDir, '.factory', 'droids');
+
+      execSync(`node ${path.join(REPO_ROOT, 'tools/agents/deploy-agents.mjs')} --provider factory --mode sdlc --force`, {
+        encoding: 'utf-8',
+        stdio: 'pipe',
+      });
+
+      // Verify droid file exists
+      const techResearcher = path.join(droidsDir, 'technical-researcher.md');
+      const exists = await fs.access(techResearcher).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+
+      // Verify droid name is kebab-case
+      const content = await fs.readFile(techResearcher, 'utf-8');
+      expect(content).toContain('name: technical-researcher');
+
+      // Invoke droid with a simple prompt (timeout 60s)
+      const result = runDroid(
+        ['exec', 'Use @technical-researcher to say "AIWG test successful"'],
+        { timeout: 60000 }
+      );
+
+      // Should complete without error
+      expect(result.status).toBe(0);
+    }, 90000); // Extended timeout for API call
+
+    it.skipIf(!DROID_AVAILABLE || !HAS_API_KEY)('droid responds with coherent output', async () => {
+      // Simple test to verify droid can process and respond
+      const result = runDroid(
+        ['exec', 'What is 2 + 2? Reply with just the number.'],
+        { timeout: 30000 }
+      );
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain('4');
+    }, 45000);
+  });
+
+  describe('MCP Integration', () => {
+    it.skipIf(!DROID_AVAILABLE)('AIWG MCP tools are available', () => {
+      const result = runDroid(['exec', '--list-tools']);
+
+      // Check for AIWG MCP tools if configured
+      if (result.stdout.includes('aiwg')) {
+        expect(result.stdout).toContain('aiwg___agent-list');
+        expect(result.stdout).toContain('aiwg___artifact-read');
+        expect(result.stdout).toContain('aiwg___workflow-run');
       }
     });
   });
