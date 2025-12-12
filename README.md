@@ -33,12 +33,12 @@ aiwg use sdlc        # deploy SDLC framework
 # Install
 npm install -g aiwg
 
-# Try the demo (creates ~/aiwg-demo with everything set up)
-aiwg demo
-
-# Or activate on your existing project
+# Activate on your project
 cd your-project
 aiwg use sdlc
+
+# Or scaffold a new project with everything set up
+aiwg -new my-project
 ```
 
 <details>
