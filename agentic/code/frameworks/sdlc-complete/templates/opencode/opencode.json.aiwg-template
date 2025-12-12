@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-sonnet-4-20250514",
+  "provider": {
+    "anthropic": {
+      "disabled": false
+    }
+  },
+  "mcp": {
+    "aiwg": {
+      "type": "local",
+      "command": ["npx", "aiwg", "mcp", "serve"]
+    }
+  },
+  "instructions": [
+    "AGENTS.md",
+    ".aiwg/instructions.md"
+  ],
+  "formatter": {
+    "prettier": {
+      "extensions": [".js", ".ts", ".jsx", ".tsx", ".json", ".md"]
+    }
+  }
+}

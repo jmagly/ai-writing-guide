@@ -35,6 +35,7 @@ Targets for 'install':
   factory   Generate config for Factory AI (~/.factory/mcp.json)
   codex     Generate config for OpenAI Codex (~/.codex/config.toml)
   cursor    Generate config for Cursor (.cursor/mcp.json)
+  opencode  Generate config for OpenCode (opencode.json)
 
 Examples:
   # Start MCP server with stdio (default)
@@ -51,6 +52,9 @@ Examples:
 
   # Generate project-specific Factory MCP config
   aiwg mcp install factory /path/to/project
+
+  # Generate OpenCode MCP configuration
+  aiwg mcp install opencode
 
   # Show server capabilities
   aiwg mcp info
@@ -174,6 +178,72 @@ enabled_tools = [
       // Alias for codex
       path: path.join(homeDir, '.codex/config.toml'),
       alias: 'codex'
+    },
+    opencode: {
+      // OpenCode stores MCP config in opencode.json at project root or .opencode/
+      path: projectDir === '.' || projectDir === 'global'
+        ? path.join(process.cwd(), 'opencode.json')
+        : path.join(projectDir, 'opencode.json'),
+      content: {
+        mcp: {
+          aiwg: {
+            type: 'local',
+            command: ['aiwg', 'mcp', 'serve']
+          }
+        }
+      },
+      merge: (existing, content) => ({
+        ...existing,
+        mcp: {
+          ...(existing.mcp || {}),
+          ...content.mcp
+        }
+      }),
+      // Custom handler to handle both JSON and JSONC formats
+      handler: async (configPath, _, content, mergeFunc) => {
+        // Check multiple locations for opencode config
+        const locations = [
+          configPath,
+          path.join(path.dirname(configPath), '.opencode', 'opencode.jsonc'),
+          path.join(path.dirname(configPath), '.opencode', 'opencode.json')
+        ];
+
+        let targetPath = configPath;
+        let existing = {};
+
+        // Find existing config
+        for (const loc of locations) {
+          try {
+            const rawContent = await fs.readFile(loc, 'utf-8');
+            // Strip JSONC comments for parsing
+            const jsonContent = rawContent
+              .replace(/\/\/.*$/gm, '')
+              .replace(/\/\*[\s\S]*?\*\//g, '');
+            existing = JSON.parse(jsonContent);
+            targetPath = loc;
+            break;
+          } catch {
+            // Continue to next location
+          }
+        }
+
+        // Check if AIWG MCP already configured
+        if (existing.mcp && existing.mcp.aiwg) {
+          console.log('AIWG MCP already configured in OpenCode config');
+          return true;
+        }
+
+        // Merge configuration
+        const merged = mergeFunc(existing, content);
+
+        await fs.mkdir(path.dirname(targetPath), { recursive: true });
+        await fs.writeFile(targetPath, JSON.stringify(merged, null, 2));
+        console.log(`MCP configuration written to: ${targetPath}`);
+        console.log(`\nTo use AIWG MCP server with OpenCode:`);
+        console.log(`  1. Restart OpenCode`);
+        console.log(`  2. AIWG tools will be available via MCP`);
+        return true;
+      }
     }
   };
 
@@ -189,9 +259,9 @@ enabled_tools = [
     config = configs[config.alias];
   }
 
-  // Handle custom handler (for TOML configs like Codex)
+  // Handle custom handler (for TOML configs like Codex, or OpenCode JSON)
   if (config.handler) {
-    return await config.handler(config.path, config.toml);
+    return await config.handler(config.path, config.toml, config.content, config.merge);
   }
 
   // Ensure directory exists
@@ -308,7 +378,10 @@ export async function main(args = process.argv.slice(2)) {
             ? path.join(homeDir, '.factory/mcp.json')
             : path.join(projectDir, '.factory/mcp.json'),
           codex: path.join(homeDir, '.codex/config.toml'),
-          openai: path.join(homeDir, '.codex/config.toml')
+          openai: path.join(homeDir, '.codex/config.toml'),
+          opencode: (projectDir === '.' || projectDir === 'global')
+            ? 'opencode.json'
+            : path.join(projectDir, 'opencode.json')
         };
         console.log(`[DRY RUN] Config file: ${configPaths[target] || 'unknown'}`);
         break;
