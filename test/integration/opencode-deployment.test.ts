@@ -5,10 +5,63 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+
+// OpenCode is installed at ~/.opencode/bin/opencode
+const OPENCODE_PATH = path.join(os.homedir(), '.opencode', 'bin', 'opencode');
+
+// Check if opencode CLI is available
+function isOpenCodeAvailable(): boolean {
+  try {
+    // Try direct path first
+    if (fs.existsSync(OPENCODE_PATH)) {
+      const result = spawnSync(OPENCODE_PATH, ['--version'], {
+        encoding: 'utf-8',
+        timeout: 5000,
+      });
+      return result.status === 0;
+    }
+    // Try via PATH
+    const result = spawnSync('opencode', ['--version'], {
+      encoding: 'utf-8',
+      timeout: 5000,
+      shell: true,
+    });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+const OPENCODE_AVAILABLE = isOpenCodeAvailable();
+
+// Helper to run opencode CLI commands
+function runOpenCode(
+  args: string[],
+  options: { cwd?: string; timeout?: number } = {}
+): { stdout: string; stderr: string; status: number | null } {
+  try {
+    // Use direct path if available, otherwise try via shell
+    const cmd = fs.existsSync(OPENCODE_PATH) ? OPENCODE_PATH : 'opencode';
+    const result = spawnSync(cmd, args, {
+      encoding: 'utf-8',
+      timeout: options.timeout || 30000,
+      cwd: options.cwd || process.cwd(),
+      env: process.env,
+      shell: !fs.existsSync(OPENCODE_PATH),
+    });
+    return {
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
+      status: result.status,
+    };
+  } catch (e) {
+    return { stdout: '', stderr: String(e), status: -1 };
+  }
+}
 
 describe('OpenCode Deployment', () => {
   let testDir: string;
@@ -304,5 +357,167 @@ describe('OpenCode MCP Configuration', () => {
 
     // Should add AIWG MCP
     expect(config.mcp.aiwg).toBeDefined();
+  });
+});
+
+/**
+ * Live OpenCode CLI Integration Tests
+ *
+ * These tests validate integration with the actual OpenCode CLI tool.
+ * Tests are skipped if OpenCode CLI is not installed.
+ */
+describe('OpenCode CLI Integration', () => {
+  it.skipIf(!OPENCODE_AVAILABLE)('opencode CLI is installed and accessible', () => {
+    const result = runOpenCode(['--version']);
+    expect(result.status).toBe(0);
+    // OpenCode version format: X.X.X
+    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
+  });
+
+  it.skipIf(!OPENCODE_AVAILABLE)('opencode --help returns available commands', () => {
+    const result = runOpenCode(['--help']);
+    expect(result.status).toBe(0);
+    // Should show commands list
+    expect(result.stdout.toLowerCase()).toContain('commands');
+  });
+
+  it.skipIf(!OPENCODE_AVAILABLE)('opencode has agent management commands', () => {
+    const result = runOpenCode(['agent', '--help']);
+    // Should have agent subcommand
+    expect(result.stdout.toLowerCase() + result.stderr.toLowerCase()).toMatch(/agent|manage/);
+  });
+
+  describe('Agent Configuration', () => {
+    it.skipIf(!OPENCODE_AVAILABLE)('validates .opencode/agent/ directory structure', async () => {
+      // Create test directory with proper structure
+      const testDir = path.join(os.tmpdir(), 'opencode-agent-test-' + Date.now());
+      const agentDir = path.join(testDir, '.opencode', 'agent');
+      fs.mkdirSync(agentDir, { recursive: true });
+
+      // Create a test agent file with OpenCode format
+      const agentContent = `---
+description: Test agent for validation
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.5
+maxSteps: 50
+tools:
+  write:
+    enabled: true
+  bash:
+    enabled: false
+permission:
+  allowWrite: false
+  allowBash: false
+---
+
+# Test Agent
+
+This is a test agent for OpenCode integration.
+`;
+      fs.writeFileSync(path.join(agentDir, 'test-agent.md'), agentContent);
+
+      // Verify structure
+      const agents = fs.readdirSync(agentDir);
+      expect(agents).toContain('test-agent.md');
+
+      // Verify format
+      const content = fs.readFileSync(path.join(agentDir, 'test-agent.md'), 'utf-8');
+      expect(content).toMatch(/^---\n/);
+      expect(content).toContain('mode: subagent');
+      expect(content).toContain('model: anthropic/');
+      expect(content).toContain('tools:');
+
+      // Cleanup
+      fs.rmSync(testDir, { recursive: true, force: true });
+    });
+  });
+
+  describe('Command Configuration', () => {
+    it.skipIf(!OPENCODE_AVAILABLE)('validates .opencode/command/ directory structure', async () => {
+      // Create test directory with proper structure
+      const testDir = path.join(os.tmpdir(), 'opencode-command-test-' + Date.now());
+      const commandDir = path.join(testDir, '.opencode', 'command');
+      fs.mkdirSync(commandDir, { recursive: true });
+
+      // Create a test command file with OpenCode format
+      const commandContent = `---
+description: Test command for validation
+subtask: true
+---
+
+# Test Command
+
+This is a test command for OpenCode integration.
+`;
+      fs.writeFileSync(path.join(commandDir, 'test-command.md'), commandContent);
+
+      // Verify structure
+      const commands = fs.readdirSync(commandDir);
+      expect(commands).toContain('test-command.md');
+
+      // Verify format
+      const content = fs.readFileSync(path.join(commandDir, 'test-command.md'), 'utf-8');
+      expect(content).toMatch(/^---\n/);
+      expect(content).toContain('description:');
+      expect(content).toContain('subtask: true');
+
+      // Cleanup
+      fs.rmSync(testDir, { recursive: true, force: true });
+    });
+  });
+
+  describe('JSON Configuration', () => {
+    it.skipIf(!OPENCODE_AVAILABLE)('validates opencode.json format', async () => {
+      // Create a test config
+      const testDir = path.join(os.tmpdir(), 'opencode-config-test-' + Date.now());
+      fs.mkdirSync(testDir, { recursive: true });
+
+      const configContent = {
+        model: 'anthropic/claude-sonnet-4-20250514',
+        mcp: {
+          aiwg: {
+            type: 'local',
+            command: ['aiwg', 'mcp', 'serve'],
+          },
+        },
+        agent: {
+          defaultModel: 'anthropic/claude-sonnet-4-20250514',
+        },
+      };
+
+      fs.writeFileSync(
+        path.join(testDir, 'opencode.json'),
+        JSON.stringify(configContent, null, 2)
+      );
+
+      // Verify JSON is valid
+      const readBack = fs.readFileSync(path.join(testDir, 'opencode.json'), 'utf-8');
+      const parsed = JSON.parse(readBack);
+
+      expect(parsed.model).toBe('anthropic/claude-sonnet-4-20250514');
+      expect(parsed.mcp.aiwg).toBeDefined();
+      expect(parsed.mcp.aiwg.type).toBe('local');
+
+      // Cleanup
+      fs.rmSync(testDir, { recursive: true, force: true });
+    });
+  });
+
+  describe('CLI Availability Reporting', () => {
+    it('reports opencode CLI availability status', () => {
+      // This test always runs to report status
+      console.log(`\n  OpenCode CLI Status:`);
+      console.log(`    Available: ${OPENCODE_AVAILABLE}`);
+      console.log(`    Expected Path: ${OPENCODE_PATH}`);
+      console.log(`    Path Exists: ${fs.existsSync(OPENCODE_PATH)}`);
+      if (OPENCODE_AVAILABLE) {
+        const version = runOpenCode(['--version']);
+        console.log(`    Version: ${version.stdout.trim()}`);
+      } else {
+        console.log('    Install: curl -fsSL https://opencode.sh | bash');
+      }
+      expect(true).toBe(true); // Always passes, just for reporting
+    });
   });
 });

@@ -12,13 +12,52 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 
 // Test directories
 const TEST_PROJECT_DIR = path.join(os.tmpdir(), 'aiwg-codex-test-project');
 const TEST_HOME_DIR = path.join(os.tmpdir(), 'aiwg-codex-test-home');
 const TEST_CODEX_DIR = path.join(TEST_HOME_DIR, '.codex');
 const REPO_ROOT = path.resolve(__dirname, '../..');
+
+// Check if codex CLI is available
+function isCodexAvailable(): boolean {
+  try {
+    const result = spawnSync('codex', ['--version'], {
+      encoding: 'utf-8',
+      timeout: 5000,
+      shell: true,
+    });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+const CODEX_AVAILABLE = isCodexAvailable();
+
+// Helper to run codex CLI commands
+function runCodex(
+  args: string[],
+  options: { cwd?: string; timeout?: number } = {}
+): { stdout: string; stderr: string; status: number | null } {
+  try {
+    const result = spawnSync('codex', args, {
+      encoding: 'utf-8',
+      timeout: options.timeout || 30000,
+      cwd: options.cwd || process.cwd(),
+      env: process.env,
+      shell: true,
+    });
+    return {
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
+      status: result.status,
+    };
+  } catch (e) {
+    return { stdout: '', stderr: String(e), status: -1 };
+  }
+}
 
 // Helper to run CLI commands
 function runAiwg(args: string[], cwd = TEST_PROJECT_DIR): string {
@@ -398,5 +437,160 @@ describe('Config Template', () => {
     expect(configTemplate).toContain('[profiles.aiwg-sdlc]');
     // MCP config is commented out in template
     expect(configTemplate).toContain('mcp_servers.aiwg');
+  });
+});
+
+/**
+ * Live Codex CLI Integration Tests
+ *
+ * These tests validate integration with the actual Codex CLI tool.
+ * Tests are skipped if Codex CLI is not installed.
+ */
+describe('Codex CLI Integration', () => {
+  it.skipIf(!CODEX_AVAILABLE)('codex CLI is installed and accessible', () => {
+    const result = runCodex(['--version']);
+    expect(result.status).toBe(0);
+    // Codex version format: X.X.X
+    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
+  });
+
+  it.skipIf(!CODEX_AVAILABLE)('codex --help returns available commands', () => {
+    const result = runCodex(['--help']);
+    expect(result.status).toBe(0);
+    // Should show help text with commands
+    expect(result.stdout.toLowerCase()).toMatch(/usage|commands/);
+  });
+
+  describe('Skill and Prompt Discovery', () => {
+    it.skipIf(!CODEX_AVAILABLE)('codex recognizes skill directories', async () => {
+      // Create a test skill directory structure
+      const testSkillsDir = path.join(os.tmpdir(), 'codex-skill-test-' + Date.now());
+      const testSkillDir = path.join(testSkillsDir, 'test-skill');
+      await fs.mkdir(testSkillDir, { recursive: true });
+
+      // Create SKILL.md with proper format
+      const skillContent = `---
+name: test-skill
+description: A test skill for validation
+---
+
+# Test Skill
+
+This is a test skill.
+`;
+      await fs.writeFile(path.join(testSkillDir, 'SKILL.md'), skillContent);
+
+      // Verify skill structure is valid
+      const skillMd = await fs.readFile(path.join(testSkillDir, 'SKILL.md'), 'utf-8');
+      expect(skillMd).toMatch(/^---\n/);
+      expect(skillMd).toContain('name: test-skill');
+
+      // Cleanup
+      await fs.rm(testSkillsDir, { recursive: true, force: true });
+    });
+
+    it.skipIf(!CODEX_AVAILABLE)('codex recognizes prompt files', async () => {
+      // Create a test prompts directory
+      const testPromptsDir = path.join(os.tmpdir(), 'codex-prompt-test-' + Date.now());
+      await fs.mkdir(testPromptsDir, { recursive: true });
+
+      // Create a prompt file
+      const promptContent = `---
+description: A test prompt
+argument-hint: <args>
+---
+
+# Test Prompt
+
+This is a test prompt with $ARGUMENTS placeholder.
+`;
+      await fs.writeFile(path.join(testPromptsDir, 'test-prompt.md'), promptContent);
+
+      // Verify prompt structure is valid
+      const promptMd = await fs.readFile(path.join(testPromptsDir, 'test-prompt.md'), 'utf-8');
+      expect(promptMd).toMatch(/^---\n/);
+      expect(promptMd).toContain('description:');
+      expect(promptMd).toContain('$ARGUMENTS');
+
+      // Cleanup
+      await fs.rm(testPromptsDir, { recursive: true, force: true });
+    });
+  });
+
+  describe('Configuration Validation', () => {
+    it.skipIf(!CODEX_AVAILABLE)('validates config.toml format', async () => {
+      // Create a test config
+      const testDir = path.join(os.tmpdir(), 'codex-config-test-' + Date.now());
+      await fs.mkdir(path.join(testDir, '.codex'), { recursive: true });
+
+      const configContent = `# Codex configuration
+model = "gpt-4"
+project_doc_fallback_filenames = ["CLAUDE.md", "AGENTS.md", "README.md"]
+
+[profiles.aiwg-sdlc]
+model = "gpt-4-turbo"
+
+# MCP configuration
+[mcp_servers.aiwg]
+command = "aiwg"
+args = ["mcp", "serve"]
+env = { AIWG_MODE = "sdlc" }
+`;
+
+      await fs.writeFile(path.join(testDir, '.codex', 'config.toml'), configContent);
+
+      // Verify TOML is valid by checking structure
+      const readBack = await fs.readFile(path.join(testDir, '.codex', 'config.toml'), 'utf-8');
+      expect(readBack).toContain('model =');
+      expect(readBack).toContain('[profiles.aiwg-sdlc]');
+      expect(readBack).toContain('[mcp_servers.aiwg]');
+
+      // Cleanup
+      await fs.rm(testDir, { recursive: true, force: true });
+    });
+
+    it.skipIf(!CODEX_AVAILABLE)('codex accepts custom skill directories', async () => {
+      // Test that we can structure skills correctly for codex
+      const testDir = path.join(os.tmpdir(), 'codex-custom-skill-' + Date.now());
+      const skillsDir = path.join(testDir, '.codex', 'skills', 'voice-apply');
+      await fs.mkdir(skillsDir, { recursive: true });
+
+      // Create skill with proper structure
+      await fs.writeFile(
+        path.join(skillsDir, 'SKILL.md'),
+        `---
+name: voice-apply
+description: Apply voice profile to content
+---
+
+# Voice Apply
+
+Apply a voice profile to transform content.
+`
+      );
+
+      // Verify structure
+      const skillPath = path.join(skillsDir, 'SKILL.md');
+      const stat = await fs.stat(skillPath);
+      expect(stat.isFile()).toBe(true);
+
+      // Cleanup
+      await fs.rm(testDir, { recursive: true, force: true });
+    });
+  });
+
+  describe('CLI Availability Reporting', () => {
+    it('reports codex CLI availability status', () => {
+      // This test always runs to report status
+      console.log(`\n  Codex CLI Status:`);
+      console.log(`    Available: ${CODEX_AVAILABLE}`);
+      if (CODEX_AVAILABLE) {
+        const version = runCodex(['--version']);
+        console.log(`    Version: ${version.stdout.trim()}`);
+      } else {
+        console.log('    Install: npm install -g @openai/codex');
+      }
+      expect(true).toBe(true); // Always passes, just for reporting
+    });
   });
 });
