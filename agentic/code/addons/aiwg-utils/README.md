@@ -4,6 +4,27 @@ Core meta-utilities for AIWG management. This addon is automatically installed w
 
 ## Commands
 
+### Deployment Management
+
+#### `/aiwg-refresh`
+
+Update AIWG CLI and redeploy frameworks/tools to current project without leaving the session.
+
+```bash
+/aiwg-refresh                       # Check status only
+/aiwg-refresh --update-cli --all    # Update CLI and redeploy everything
+/aiwg-refresh --sdlc                # Redeploy SDLC framework only
+/aiwg-refresh --provider factory    # Switch to Factory AI deployment
+/aiwg-refresh --dry-run             # Preview without executing
+```
+
+**Use cases:**
+
+- Get latest features after AIWG updates
+- Restore canonical content after manual edits
+- Switch deployment platform (Claude → Factory)
+- Ensure consistency after branch switches
+
 ### Context Regeneration
 
 #### `/aiwg-regenerate`

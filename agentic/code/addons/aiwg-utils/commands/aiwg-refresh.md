@@ -1,12 +1,13 @@
 ---
 name: aiwg-refresh
 description: Update AIWG CLI and redeploy frameworks/tools to current project without leaving the session
-args: "[--update-cli] [--all] [--sdlc] [--marketing] [--utils] [--provider <claude|factory|openai|cursor|warp>] [--force] [--dry-run]"
+args: "[--update-cli] [--all] [--sdlc] [--marketing] [--utils] [--provider <name>] [--force] [--dry-run]"
 ---
 
 # Refresh AIWG Deployment
 
-Update the AIWG CLI and/or redeploy frameworks, agents, commands, and tools to the current project without leaving the agentic session.
+Update the AIWG CLI and/or redeploy frameworks, agents, commands, and tools to the current
+project without leaving the agentic session.
 
 ## Use Cases
 
@@ -39,7 +40,8 @@ aiwg -status
 ```
 
 Report:
-```
+
+```text
 AIWG Refresh - Current Status
 ==============================
 
@@ -64,7 +66,8 @@ aiwg -update
 ```
 
 Report update status:
-```
+
+```text
 Checking for updates...
   Current: 1.2.3
   Latest:  1.2.5
@@ -79,7 +82,8 @@ Changes in v1.2.5:
 ```
 
 If already up-to-date:
-```
+
+```text
 AIWG CLI is up-to-date (v1.2.3)
 ```
 
@@ -98,7 +102,7 @@ Based on flags, determine scope:
 
 If no framework flags and not `--dry-run`, ask user:
 
-```
+```text
 What would you like to refresh?
 
 [1] All frameworks (sdlc-complete, aiwg-utils)
@@ -120,7 +124,8 @@ If `--provider` not specified, auto-detect:
    - `.cursor/rules/` exists → cursor
 
 2. If multiple detected, ask user:
-   ```
+
+   ```text
    Multiple platforms detected:
    [1] Claude Code (.claude/)
    [2] Factory AI (.factory/)
@@ -131,7 +136,8 @@ If `--provider` not specified, auto-detect:
 3. If none detected, default to claude
 
 Report:
-```
+
+```text
 Target platform: Claude Code
 Deployment paths:
   - Agents: .claude/agents/
@@ -156,7 +162,7 @@ aiwg use marketing --provider <platform> --force
 **If `--dry-run`:**
 Show commands without executing:
 
-```
+```text
 Dry Run - Would execute:
 ========================
 
@@ -173,7 +179,7 @@ No changes made (dry run mode)
 
 **Progress Reporting:**
 
-```
+```text
 Refreshing AIWG Deployment
 ==========================
 
@@ -200,7 +206,8 @@ ls .claude/commands/*.md 2>/dev/null | wc -l
 ```
 
 Report:
-```
+
+```text
 Verification
 ============
 
@@ -217,7 +224,7 @@ All assets deployed successfully!
 
 ### Step 7: Summary Report
 
-```
+```text
 AIWG Refresh Complete
 =====================
 
@@ -265,6 +272,7 @@ Session ready - new features are now available!
 ## Natural Language Triggers
 
 This command should activate when user says:
+
 - "refresh aiwg" / "update aiwg"
 - "redeploy frameworks" / "redeploy agents"
 - "get latest aiwg features"
@@ -285,7 +293,7 @@ This command should activate when user says:
 
 After refresh, suggest:
 
-```
+```text
 Recommended next steps:
 1. Review new features: aiwg -help
 2. Check framework docs: /aiwg-kb sdlc
