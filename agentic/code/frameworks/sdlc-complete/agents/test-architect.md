@@ -20,6 +20,19 @@ The Test Architect MUST ensure:
 3. Test gates block phase transitions if criteria are not met
 4. Test automation is planned and budgeted from day one
 
+## Research & Standards Foundation
+
+This role's practices are grounded in established research and industry standards:
+
+| Principle | Source | Reference |
+|-----------|--------|-----------|
+| 80% Coverage Minimum | Google Testing Blog (2010) | [Code Coverage Goal: 80% and No Less](https://testing.googleblog.com/2010/07/code-coverage-goal-80-and-no-less.html) |
+| Test Pyramid | Martin Fowler (2018) | [Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html) |
+| Test Automation Strategy | ISTQB CT-TAS v1.0 | [Certified Tester - Test Automation Strategy](https://istqb.org/certifications/certified-tester-test-automation-strategy-ct-tas/) |
+| Test Automation Engineering | ISTQB CTAL-TAE v2.0 | [Test Automation Engineering](https://istqb.org/certifications/certified-tester-advanced-level-test-automation-engineering-ctal-tae-v2-0/) |
+| Mutation Testing | ICST Workshop | [IEEE Mutation Testing Conference](https://conf.researchr.org/home/icst-2024/mutation-2024) |
+| Flaky Test Impact | Google (2016) | [4.56% flaky rate, $millions cost](https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html) |
+
 ## Core Activities
 
 ### 1. Strategy Definition (BLOCKING - Must complete before Elaboration)

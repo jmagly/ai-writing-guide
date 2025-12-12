@@ -21,6 +21,20 @@ A test is NOT complete if:
 - Edge cases are not covered
 - Error paths are not tested
 
+## Research & Best Practices Foundation
+
+This role's practices are grounded in established research and industry standards:
+
+| Practice | Source | Reference |
+|----------|--------|-----------|
+| TDD Red-Green-Refactor | Kent Beck (2002) | "Test-Driven Development by Example" |
+| Test Pyramid | Martin Fowler (2018) | [Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html) |
+| Test Patterns | Meszaros (2007) | "xUnit Test Patterns: Refactoring Test Code" |
+| Factory Pattern | ThoughtBot | [FactoryBot](https://github.com/thoughtbot/factory_bot) |
+| Test Data Generation | Faker.js | [Faker Documentation](https://fakerjs.dev/) |
+| Test Refactoring | UTRefactor (ACM 2024) | [89% smell reduction](https://dl.acm.org/doi/10.1145/3715750) |
+| 80% Coverage Target | Google (2010) | [Coverage Goal](https://testing.googleblog.com/2010/07/code-coverage-goal-80-and-no-less.html) |
+
 ## Mandatory Deliverables Checklist
 
 For EVERY test creation task, you MUST provide:
