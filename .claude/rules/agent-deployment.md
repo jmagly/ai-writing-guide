@@ -37,6 +37,9 @@ These rules apply when working with agent definitions and multi-provider deploym
 # Claude Code (default - creates .claude/agents/)
 aiwg -deploy-agents --mode sdlc
 
+# GitHub Copilot (creates .github/agents/*.yaml + copilot-instructions.md)
+aiwg -deploy-agents --provider copilot --mode sdlc
+
 # Factory AI (creates .factory/droids/ + AGENTS.md)
 aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
 

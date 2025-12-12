@@ -29,7 +29,7 @@ aiwg use sdlc        # deploy SDLC framework
 
 ## 🚀 Quick Start
 
-> **Prerequisites:** Node.js ≥18.0.0 and an AI platform (Claude Code, Warp Terminal, or Factory AI)
+> **Prerequisites:** Node.js ≥18.0.0 and an AI platform (Claude Code, GitHub Copilot, Warp Terminal, or others)
 
 ```bash
 # Install
@@ -89,6 +89,9 @@ aiwg use sdlc --provider opencode
 
 # Cursor (creates .cursor/rules/ + AGENTS.md)
 aiwg use sdlc --provider cursor
+
+# GitHub Copilot (creates .github/agents/*.yaml + copilot-instructions.md)
+aiwg use sdlc --provider copilot
 
 # OpenAI/Codex (experimental)
 aiwg use sdlc --provider openai
