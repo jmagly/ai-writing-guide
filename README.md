@@ -6,7 +6,7 @@ Modular toolkit for AI-powered SDLC, marketing, and content workflows.
 
 ```bash
 npm i -g aiwg        # install globally
-aiwg demo            # try it in < 2 minutes
+aiwg use sdlc        # deploy SDLC framework
 ```
 
 [![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
@@ -19,8 +19,6 @@ aiwg demo            # try it in < 2 minutes
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat-square)](https://discord.gg/BuAusFMxdA)
 [![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white&style=flat-square)](https://t.me/+oJg9w2lE6A5lOGFh)
 
-💬 **Shoutout:** [@Manitcor](https://x.com/Manitcor) on agent extraction tips
-
 🌐 **Live demo & docs:** [https://jmagly.github.io/ai-writing-guide](https://jmagly.github.io/ai-writing-guide)
 
 </div>
@@ -29,18 +27,18 @@ aiwg demo            # try it in < 2 minutes
 
 ## 🚀 Quick Start
 
-> **Prerequisites:** Node.js ≥18.0.0 and an AI platform (Claude Code, Warp Terminal, or Factory AI)
+> **Prerequisites:** Node.js ≥18.0.0 and an AI platform (Claude Code, GitHub Copilot, Warp Terminal, or others)
 
 ```bash
 # Install
 npm install -g aiwg
 
-# Try the demo (creates ~/aiwg-demo with everything set up)
-aiwg demo
-
-# Or activate on your existing project
+# Activate on your project
 cd your-project
 aiwg use sdlc
+
+# Or scaffold a new project with everything set up
+aiwg -new my-project
 ```
 
 <details>
@@ -83,6 +81,15 @@ aiwg use sdlc --provider warp
 
 # Factory AI (creates .factory/droids/ + AGENTS.md)
 aiwg use sdlc --provider factory
+
+# OpenCode (creates .opencode/agent/ + AGENTS.md)
+aiwg use sdlc --provider opencode
+
+# Cursor (creates .cursor/rules/ + AGENTS.md)
+aiwg use sdlc --provider cursor
+
+# GitHub Copilot (creates .github/agents/*.yaml + copilot-instructions.md)
+aiwg use sdlc --provider copilot
 
 # OpenAI/Codex (experimental)
 aiwg use sdlc --provider openai
@@ -190,6 +197,31 @@ cd my-awesome-project
 </tr>
 </table>
 
+### 🧪 **Testing Quality Addon**
+
+**Enforce TDD. Validate quality.** Research-backed testing enforcement, quality metrics, and automation.
+
+<table>
+<tr>
+<td width="50%">
+
+- ✅ **TDD Enforcement** — Pre-commit hooks + CI coverage gates (80%+ target)
+- ✅ **Mutation Testing** — Validate tests beyond coverage (Stryker/PITest/mutmut)
+- ✅ **Flaky Test Detection** — Identify unreliable tests from CI history
+
+</td>
+<td width="50%">
+
+- ✅ **Flaky Test Fixes** — Pattern-based auto-repair (timing, async, state)
+- ✅ **Test Data Factories** — Auto-generate factories from schemas (Faker.js)
+- ✅ **Test Sync** — Detect orphaned tests, missing tests, code misalignment
+
+</td>
+</tr>
+</table>
+
+**Research Foundation:** Kent Beck (TDD), Google Testing Blog (80% coverage), FlaKat (flaky detection), UTRefactor (test maintenance)
+
 ---
 
 ## 🎬 See It In Action
@@ -289,9 +321,13 @@ aiwg/
 │   │   ├── examples/                     → Before/after rewrites
 │   │   └── context/                      → Quick-reference for different voices
 │   │
-│   └── voice-framework/                  → Voice profiles for consistent, natural writing
-│       ├── skills/ (4)                   → voice-apply, voice-create, voice-blend, voice-analyze
-│       └── voices/templates/             → Built-in profiles (technical, friendly, executive, casual)
+│   ├── voice-framework/                  → Voice profiles for consistent, natural writing
+│   │   ├── skills/ (4)                   → voice-apply, voice-create, voice-blend, voice-analyze
+│   │   └── voices/templates/             → Built-in profiles (technical, friendly, executive, casual)
+│   │
+│   └── testing-quality/                  → Research-backed testing enforcement
+│       ├── skills/ (6)                   → tdd-enforce, mutation-test, flaky-detect, flaky-fix, generate-factory, test-sync
+│       └── scripts/                      → TDD setup automation
 │
 ├── 🗂️ Workspace Management
 │   ├── Framework isolation               → Run SDLC + MMK + addons simultaneously
@@ -910,12 +946,16 @@ Get the best of all platforms:
 - **Claude Code:** Multi-agent orchestration, artifact generation
 - **Warp Terminal:** Command-line workflows, terminal-native AI
 - **Factory AI:** Custom droid workflows, native Factory format
+- **Cursor:** IDE-native rules, native AGENTS.md support
+- **Codex:** OpenAI's code assistant, prompts format
 
 ```bash
 # Deploy to all platforms
 aiwg use sdlc                      # Claude Code (default)
 aiwg use sdlc --provider warp      # Warp Terminal
 aiwg use sdlc --provider factory   # Factory AI
+aiwg use sdlc --provider cursor    # Cursor IDE
+aiwg use sdlc --provider openai    # OpenAI Codex
 ```
 
 ---
@@ -927,8 +967,8 @@ aiwg use sdlc --provider factory   # Factory AI
 | **Claude Code** | ✅ **Tested & Validated** | Multi-file (.claude/agents/*.md) | Multi-agent orchestration |
 | **Warp Terminal** | ✅ **Tested & Validated** | Single-file (WARP.md) | Terminal-native workflows |
 | **Factory AI** | ✅ **Tested & Validated** | Custom droids (.factory/droids/*.md) | Native droid format, AGENTS.md |
-| **OpenAI/Codex** | 🟡 Experimental | `--provider openai` | Functional but not fully tested |
-| **Cursor** | 🟡 Experimental | Claude-compatible | Should work, not validated |
+| **Cursor** | ✅ **Tested & Validated** | MDC rules (.cursor/rules/*.mdc) | Native rules format, AGENTS.md |
+| **OpenAI/Codex** | ✅ **Tested & Validated** | `--provider openai` | Native prompts format, AGENTS.md |
 | **Windsurf** | 🟡 Experimental | Claude-compatible | Should work, not validated |
 | **Zed** | 🟡 Experimental | Claude-compatible | Should work, not validated |
 
@@ -1010,6 +1050,8 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 - [**Warp Terminal Quick Start**](docs/integrations/warp-terminal-quickstart.md) — 3-5 minute setup for Warp Terminal
 - [**Warp Terminal Integration Guide**](docs/integrations/warp-terminal.md) — Comprehensive Warp documentation
 - [**Factory AI Quick Start**](docs/integrations/factory-quickstart.md) — 5-10 minute setup for Factory AI
+- [**Cursor Quick Start**](docs/integrations/cursor-quickstart.md) — 5-10 minute setup for Cursor IDE
+- [**Codex Quick Start**](docs/integrations/codex-quickstart.md) — 5-10 minute setup for OpenAI Codex
 - [**Cross-Platform Configuration**](docs/integrations/cross-platform-config.md) — Understanding the WARP.md → CLAUDE.md symlink
 
 ### Writing Quality

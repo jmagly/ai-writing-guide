@@ -33,7 +33,9 @@ Options:
 Targets for 'install':
   claude    Generate config for Claude Code (.claude/settings.local.json)
   factory   Generate config for Factory AI (~/.factory/mcp.json)
+  codex     Generate config for OpenAI Codex (~/.codex/config.toml)
   cursor    Generate config for Cursor (.cursor/mcp.json)
+  opencode  Generate config for OpenCode (opencode.json)
 
 Examples:
   # Start MCP server with stdio (default)
@@ -50,6 +52,9 @@ Examples:
 
   # Generate project-specific Factory MCP config
   aiwg mcp install factory /path/to/project
+
+  # Generate OpenCode MCP configuration
+  aiwg mcp install opencode
 
   # Show server capabilities
   aiwg mcp info
@@ -80,13 +85,20 @@ async function generateConfig(target, projectDir = '.') {
     cursor: {
       path: path.join(projectDir, '.cursor/mcp.json'),
       content: {
-        servers: {
+        mcpServers: {
           aiwg: {
             command: 'aiwg',
             args: ['mcp', 'serve']
           }
         }
-      }
+      },
+      merge: (existing, content) => ({
+        ...existing,
+        mcpServers: {
+          ...(existing.mcpServers || {}),
+          ...content.mcpServers
+        }
+      })
     },
     factory: {
       // Factory stores MCP config at user level in ~/.factory/mcp.json
@@ -111,14 +123,145 @@ async function generateConfig(target, projectDir = '.') {
           ...content.mcpServers
         }
       })
+    },
+    codex: {
+      // Codex stores config in ~/.codex/config.toml (TOML format)
+      path: path.join(homeDir, '.codex/config.toml'),
+      // We generate TOML snippet to append, not JSON
+      content: null,
+      toml: `
+# AIWG MCP Server Configuration
+# Add this section to your ~/.codex/config.toml
+
+[mcp_servers.aiwg]
+command = "aiwg"
+args = ["mcp", "serve"]
+startup_timeout_sec = 10.0
+tool_timeout_sec = 60.0
+enabled_tools = [
+  "workflow-run",
+  "artifact-read",
+  "artifact-write",
+  "template-render",
+  "agent-list"
+]
+`,
+      // Custom handler for TOML
+      handler: async (configPath, tomlContent) => {
+        // Check if config.toml exists
+        let existing = '';
+        try {
+          existing = await fs.readFile(configPath, 'utf-8');
+        } catch {
+          // File doesn't exist
+        }
+
+        // Check if AIWG MCP already configured
+        if (existing.includes('[mcp_servers.aiwg]')) {
+          console.log('AIWG MCP already configured in ~/.codex/config.toml');
+          return true;
+        }
+
+        // Append TOML config
+        const updated = existing.trimEnd() + '\n' + tomlContent.trim() + '\n';
+
+        await fs.mkdir(path.dirname(configPath), { recursive: true });
+        await fs.writeFile(configPath, updated);
+        console.log(`MCP configuration appended to: ${configPath}`);
+        console.log(`\nTo use AIWG MCP server with Codex:`);
+        console.log(`  1. Restart Codex CLI`);
+        console.log(`  2. AIWG tools will be available via MCP`);
+        return true;
+      }
+    },
+    openai: {
+      // Alias for codex
+      path: path.join(homeDir, '.codex/config.toml'),
+      alias: 'codex'
+    },
+    opencode: {
+      // OpenCode stores MCP config in opencode.json at project root or .opencode/
+      path: projectDir === '.' || projectDir === 'global'
+        ? path.join(process.cwd(), 'opencode.json')
+        : path.join(projectDir, 'opencode.json'),
+      content: {
+        mcp: {
+          aiwg: {
+            type: 'local',
+            command: ['aiwg', 'mcp', 'serve']
+          }
+        }
+      },
+      merge: (existing, content) => ({
+        ...existing,
+        mcp: {
+          ...(existing.mcp || {}),
+          ...content.mcp
+        }
+      }),
+      // Custom handler to handle both JSON and JSONC formats
+      handler: async (configPath, _, content, mergeFunc) => {
+        // Check multiple locations for opencode config
+        const locations = [
+          configPath,
+          path.join(path.dirname(configPath), '.opencode', 'opencode.jsonc'),
+          path.join(path.dirname(configPath), '.opencode', 'opencode.json')
+        ];
+
+        let targetPath = configPath;
+        let existing = {};
+
+        // Find existing config
+        for (const loc of locations) {
+          try {
+            const rawContent = await fs.readFile(loc, 'utf-8');
+            // Strip JSONC comments for parsing
+            const jsonContent = rawContent
+              .replace(/\/\/.*$/gm, '')
+              .replace(/\/\*[\s\S]*?\*\//g, '');
+            existing = JSON.parse(jsonContent);
+            targetPath = loc;
+            break;
+          } catch {
+            // Continue to next location
+          }
+        }
+
+        // Check if AIWG MCP already configured
+        if (existing.mcp && existing.mcp.aiwg) {
+          console.log('AIWG MCP already configured in OpenCode config');
+          return true;
+        }
+
+        // Merge configuration
+        const merged = mergeFunc(existing, content);
+
+        await fs.mkdir(path.dirname(targetPath), { recursive: true });
+        await fs.writeFile(targetPath, JSON.stringify(merged, null, 2));
+        console.log(`MCP configuration written to: ${targetPath}`);
+        console.log(`\nTo use AIWG MCP server with OpenCode:`);
+        console.log(`  1. Restart OpenCode`);
+        console.log(`  2. AIWG tools will be available via MCP`);
+        return true;
+      }
     }
   };
 
-  const config = configs[target];
+  let config = configs[target];
   if (!config) {
     console.error(`Unknown target: ${target}`);
     console.error(`Available targets: ${Object.keys(configs).join(', ')}`);
     return false;
+  }
+
+  // Handle alias
+  if (config.alias) {
+    config = configs[config.alias];
+  }
+
+  // Handle custom handler (for TOML configs like Codex, or OpenCode JSON)
+  if (config.handler) {
+    return await config.handler(config.path, config.toml, config.content, config.merge);
   }
 
   // Ensure directory exists
@@ -233,7 +376,12 @@ export async function main(args = process.argv.slice(2)) {
           cursor: '.cursor/mcp.json',
           factory: (projectDir === '.' || projectDir === 'global')
             ? path.join(homeDir, '.factory/mcp.json')
-            : path.join(projectDir, '.factory/mcp.json')
+            : path.join(projectDir, '.factory/mcp.json'),
+          codex: path.join(homeDir, '.codex/config.toml'),
+          openai: path.join(homeDir, '.codex/config.toml'),
+          opencode: (projectDir === '.' || projectDir === 'global')
+            ? 'opencode.json'
+            : path.join(projectDir, 'opencode.json')
         };
         console.log(`[DRY RUN] Config file: ${configPaths[target] || 'unknown'}`);
         break;

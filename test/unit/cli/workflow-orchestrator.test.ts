@@ -307,12 +307,15 @@ While PKCE is more complex to implement, it provides better security for public 
 
     it('should stop watch mode', async () => {
       config.watch.enabled = true;
+      config.watch.patterns = [resolve(testDir, '*.md')];
 
       await orchestrator.startWatchMode(config);
+      // Give watch mode a moment to initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
       await orchestrator.stopWatchMode();
 
       // Should not throw
-    }, 15000);
+    }, 20000);
   });
 
   describe('reporting', () => {

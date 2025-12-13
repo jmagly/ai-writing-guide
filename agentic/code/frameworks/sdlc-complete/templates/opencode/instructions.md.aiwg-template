@@ -1,0 +1,83 @@
+# AIWG SDLC Framework Instructions
+
+This file provides project-specific instructions for AI agents using the AIWG SDLC Framework.
+
+## Framework Overview
+
+The AI Writing Guide (AIWG) SDLC Framework provides structured software development lifecycle management through specialized agents and workflows.
+
+## Using AIWG Agents
+
+### Invoking Agents
+
+Use `@agent-name` to invoke specialized SDLC agents:
+
+```
+@security-architect Review the authentication implementation for vulnerabilities
+@test-engineer Generate unit tests for the user service
+@code-reviewer Review this PR for code quality and best practices
+```
+
+### Available Agent Categories
+
+**Planning & Design**:
+- `@requirements-analyst` - Requirements gathering and analysis
+- `@architecture-designer` - System architecture decisions
+- `@api-designer` - API contract definitions
+
+**Implementation**:
+- `@software-implementer` - Production code implementation
+- `@test-engineer` - Test development
+- `@code-reviewer` - Code review
+
+**Quality & Security**:
+- `@security-architect` - Security architecture
+- `@security-auditor` - Vulnerability assessment
+- `@performance-engineer` - Performance optimization
+
+**Documentation**:
+- `@technical-writer` - Technical documentation
+- `@documentation-synthesizer` - Multi-source consolidation
+
+## Using AIWG Commands
+
+Commands are invoked via `/command-name`:
+
+```
+/project-status
+/flow-gate-check elaboration
+/security-gate
+/generate-tests
+```
+
+## SDLC Phases
+
+1. **Inception** - Problem validation, vision, risks
+2. **Elaboration** - Requirements, architecture baseline
+3. **Construction** - Implementation, testing
+4. **Transition** - Deployment, UAT, handover
+
+## Artifact Management
+
+All SDLC artifacts are stored in `.aiwg/`:
+
+- `intake/` - Project intake forms
+- `requirements/` - User stories, use cases
+- `architecture/` - SAD, ADRs
+- `planning/` - Phase plans
+- `testing/` - Test strategy, plans
+- `security/` - Threat models
+- `deployment/` - Deployment plans
+
+## Best Practices
+
+1. **Use appropriate agents** - Match agent expertise to task
+2. **Follow workflows** - Use `/flow-*` commands for structured transitions
+3. **Maintain traceability** - Link requirements to code to tests
+4. **Document decisions** - Create ADRs for significant choices
+5. **Validate quality** - Run security and test gates regularly
+
+## Project-Specific Notes
+
+<!-- Add project-specific instructions below this line -->
+

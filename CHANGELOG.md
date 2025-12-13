@@ -5,11 +5,76 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2024.12.3] - 2025-12-14 – "It Just Works" Release
+## [2024.12.4] - 2025-12-12 – "Universal Providers" Release
 
 | What changed | Why you care |
 |--------------|--------------|
-| `aiwg demo` command | Try the whole thing in under 2 minutes |
+| 5 new providers | Deploy to Claude, Factory, OpenAI, Cursor, Copilot, OpenCode |
+| `/aiwg-refresh` command | Update frameworks in-session without leaving Claude Code |
+| Testing-quality addon | TDD enforcement, mutation testing, flaky detection (6 skills) |
+| Live provider tests | All providers validated with real CLI integration tests |
+| Testing requirements docs | Clear guidance on when full regression testing is required |
+
+### Added
+
+**Multi-Provider Support** (PRs #62, #63, #64, #65):
+
+- **OpenAI Codex CLI** - Full integration with `.codex/agents/` deployment
+- **Cursor IDE** - Native `.cursor/rules/*.mdc` format with AGENTS.md
+- **OpenCode** - `.opencode/agent/` structure with AGENTS.md
+- **GitHub Copilot** - `.github/agents/*.yaml` with `copilot-instructions.md`
+- All providers now deploy agents, commands, and skills consistently
+- Platform documentation for each provider in `docs/integrations/`
+
+**In-Session Update Command** (PR #69):
+
+- **`/aiwg-refresh`** - Update AIWG CLI and redeploy frameworks without leaving session
+  - `--update-cli` - Update the AIWG CLI itself
+  - `--all` / `--sdlc` / `--marketing` / `--utils` - Redeploy specific frameworks
+  - `--provider` - Target specific provider
+  - `--dry-run` - Preview changes without applying
+
+**Testing-Quality Addon** (PR #68):
+
+- 6 new skills for test enforcement:
+  - `tdd-enforce` - Pre-commit hooks + CI coverage gates
+  - `mutation-test` - Validate tests beyond coverage (Stryker/PITest)
+  - `flaky-detect` - Identify unreliable tests from CI history
+  - `flaky-fix` - Pattern-based auto-repair
+  - `generate-factory` - Auto-generate test data factories
+  - `test-sync` - Detect orphaned tests, missing tests
+- Research foundation: Kent Beck (TDD), Google Testing Blog, FlaKat, UTRefactor
+- `/setup-tdd` command for project TDD configuration
+
+**Testing Infrastructure** (PRs #66, #67):
+
+- Live CLI integration tests for all providers (Claude, Factory, OpenAI, Cursor, Copilot)
+- Factory AI deployment integration tests with real droid validation
+- Provider validation matrix in CI
+
+**Documentation**:
+
+- `docs/contributing/testing-requirements.md` - When full regression testing is required
+- `docs/development/file-placement-guide.md` - Where to put different file types
+- External research references to testing framework
+- GitHub Copilot quickstart guide
+
+### Fixed
+
+- **Factory agent mapping** - Correct agent names and tool assignments for Factory droids
+- **Codex integration tests** - Resolved test failures in OpenAI provider
+
+### Changed
+
+- Removed `aiwg demo` command in favor of comprehensive documentation
+- Testing now enforced as first-class requirement across SDLC framework
+
+---
+
+## [2024.12.3] - 2025-12-11 – "It Just Works" Release
+
+| What changed | Why you care |
+|--------------|--------------|
 | `aiwg doctor` command | Diagnose installation issues instantly |
 | npm discoverability + badges | Actually shows up when you search npm |
 | MCP server works from any folder | No more ".aiwg not found" errors |
@@ -22,7 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`aiwg demo`** - Creates a complete demo project in `~/aiwg-demo/` with agents, commands, and sample artifacts ready to explore
 - **`aiwg doctor`** - Health check command that diagnoses installation issues and provides fix suggestions
 - **Postinstall PATH check** - Friendly warning with shell-specific fix instructions if `aiwg` isn't in PATH
 - **GitHub Pages** - Temporary documentation at https://jmagly.github.io/ai-writing-guide
@@ -34,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **npm keywords** - Added 14 discoverable keywords (aiwg, agentic-ai, mcp-server, claude-skills, etc.)
 - **npm description** - Clear, searchable description
-- **README hero section** - Install command front and center with demo command
+- **README hero section** - Install command front and center
 - **MCP server** - Auto-finds project root from any subdirectory (walks up looking for `.aiwg/`)
 
 ### Fixed
@@ -733,4 +797,4 @@ For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
 ---
 
 **Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2025-12-10 (v2024.12.2)
+**Last Updated**: 2025-12-12 (v2024.12.4)

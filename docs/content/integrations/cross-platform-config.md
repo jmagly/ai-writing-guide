@@ -27,6 +27,10 @@ While the configuration file is shared, each platform has its own deployment str
 | **Claude Code** | `CLAUDE.md` | `.claude/agents/`, `.claude/commands/` | `aiwg -deploy-agents` |
 | **Warp Terminal** | `WARP.md` (→ CLAUDE.md) | Inline in WARP.md | `aiwg -deploy-agents --platform warp` |
 | **Factory AI** | `AGENTS.md` | `.factory/droids/`, `.factory/commands/` | `aiwg -deploy-agents --provider factory` |
+| **OpenCode** | `AGENTS.md` | `.opencode/agent/`, `.opencode/command/` | `aiwg -deploy-agents --provider opencode` |
+| **Codex/OpenAI** | `AGENTS.md` | `.codex/agents/`, `.codex/prompts/` | `aiwg -deploy-agents --provider openai` |
+| **GitHub Copilot** | `copilot-instructions.md` | `.github/agents/*.yaml` | `aiwg -deploy-agents --provider copilot` |
+| **Cursor** | Context Rules | `.cursor/rules/`, `.cursor/agents/` | `aiwg -deploy-agents --provider cursor` |
 
 ## How It Works
 
@@ -62,6 +66,16 @@ Factory AI uses a different structure (`AGENTS.md` + `.factory/`), so it doesn't
 # Factory reads AGENTS.md (not CLAUDE.md)
 # Droids deployed to .factory/droids/*.md
 # Commands deployed to .factory/commands/*.md
+```
+
+### GitHub Copilot
+
+GitHub Copilot uses custom agents in `.github/agents/` with YAML format, plus global instructions in `.github/copilot-instructions.md`:
+
+```bash
+# Copilot reads copilot-instructions.md for global guidance
+# Custom agents deployed to .github/agents/*.yaml
+# Agents invoked via @agent-name in Copilot Chat
 ```
 
 ## Git and Symlinks
@@ -154,9 +168,15 @@ So Factory gets its own `AGENTS.md` template instead of reusing CLAUDE.md.
 
 ## Related Documentation
 
-- **Claude Code Setup**: [Claude Code Quick Start](#integrations-claude-code)
-- **Warp Terminal Setup**: [Warp Terminal Quick Start](#integrations-warp)
-- **Factory AI Setup**: [Factory AI Quick Start](#integrations-factory)
+- **Claude Code Setup**: [Claude Code Quick Start](claude-code-quickstart.md)
+- **Warp Terminal Setup**: [Warp Terminal Quick Start](warp-terminal-quickstart.md)
+- **Factory AI Setup**: [Factory AI Quick Start](factory-quickstart.md)
+- **OpenCode Setup**: [OpenCode Quick Start](opencode-quickstart.md)
+- **Codex/OpenAI Setup**: [Codex Quick Start](codex-quickstart.md)
+- **GitHub Copilot Setup**: [Copilot Quick Start](copilot-quickstart.md)
+- **Cursor Setup**: [Cursor Quick Start](cursor-quickstart.md)
+- **Windsurf Setup**: [Windsurf Quick Start](windsurf-quickstart.md) (EXPERIMENTAL)
+- **CLAUDE.md Contents**: [/CLAUDE.md](../../CLAUDE.md)
 
 ## Summary
 

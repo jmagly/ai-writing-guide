@@ -22,12 +22,12 @@
  *   --skills-only            Deploy only skills (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, factory, or windsurf
+ *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, or windsurf
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
  *   --efficiency-model <name> Override model for efficiency tasks
  *   --as-agents-md           Aggregate to single AGENTS.md (OpenAI)
- *   --create-agents-md       Create/update AGENTS.md template (Factory)
+ *   --create-agents-md       Create/update AGENTS.md template (Factory/Codex)
  *
  * Modes:
  *   general   - Deploy only writing-quality addon agents and commands (alias: writing)
@@ -168,10 +168,14 @@ function transformToFactoryDroid(content, modelCfg, modelsConfig) {
   const [, frontmatter, body] = fmMatch;
 
   // Extract metadata
-  const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
+  const rawName = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
   const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
   const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
   const toolsMatch = frontmatter.match(/tools:\s*(.+)/)?.[1]?.trim();
+
+  // Convert name to kebab-case for Factory compatibility
+  // "Technical Researcher" -> "technical-researcher"
+  const name = toKebabCase(rawName);
 
   // Map model to Factory format
   const factoryModel = mapModelToFactory(modelMatch, modelCfg, modelsConfig);
@@ -188,6 +192,19 @@ tools: ${JSON.stringify(factoryTools)}
 ---`;
 
   return `${factoryFrontmatter}\n\n${body.trim()}`;
+}
+
+/**
+ * Convert a string to kebab-case
+ * "Technical Researcher" -> "technical-researcher"
+ * "Software Implementer" -> "software-implementer"
+ */
+function toKebabCase(str) {
+  if (!str) return str;
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric with hyphens
+    .replace(/^-+|-+$/g, '');      // Trim leading/trailing hyphens
 }
 
 function mapToolsToFactory(toolsString, agentName) {
@@ -210,33 +227,35 @@ function mapToolsToFactory(toolsString, agentName) {
   }
   
   // Tool mapping: Claude Code → Factory
+  // Note: MultiEdit doesn't exist in Factory - maps to Create, Edit, ApplyPatch
   const toolMap = {
     'Bash': 'Execute',
     'Write': 'Create',  // Will add Edit too
     'WebFetch': 'FetchUrl',
-    'MultiEdit': 'MultiEdit',
     'Read': 'Read',
     'Grep': 'Grep',
     'Glob': 'Glob',
     'LS': 'LS'
   };
-  
+
   const factoryTools = new Set();
-  
+
   // Map original tools
   for (const tool of originalTools) {
+    // Special handling for MultiEdit - Factory doesn't have it
+    // Map to Edit (the closest equivalent for multi-file editing)
+    if (tool === 'MultiEdit') {
+      factoryTools.add('Edit');
+      continue;
+    }
+
     const mapped = toolMap[tool] || tool;
     factoryTools.add(mapped);
-    
+
     // If Write is present, add both Create and Edit
     if (tool === 'Write') {
       factoryTools.add('Create');
       factoryTools.add('Edit');
-    }
-    
-    // If MultiEdit is present, also add ApplyPatch (related patch-based editing)
-    if (tool === 'MultiEdit') {
-      factoryTools.add('ApplyPatch');
     }
   }
   
@@ -345,6 +364,26 @@ function transformIfNeeded(srcPath, content, provider, modelCfg, modelsConfig) {
   // Windsurf uses aggregated AGENTS.md format - transformation handled separately
   if (provider === 'windsurf') {
     return transformToWindsurfAgent(content);
+  }
+
+  // OpenCode uses different format with mode, temperature, tools, permissions
+  if (provider === 'opencode') {
+    // Detect if this is a command (from commands directory) vs agent
+    const isCommand = srcPath.includes('/commands/') || srcPath.includes('/command/');
+    if (isCommand) {
+      return transformToOpencodeCommand(content, modelCfg, modelsConfig);
+    }
+    return transformToOpencodeAgent(content, modelCfg, modelsConfig);
+  }
+
+  // GitHub Copilot uses YAML format with name, description, model, instructions, tools
+  if (provider === 'copilot') {
+    // Detect if this is a command (from commands directory) vs agent
+    const isCommand = srcPath.includes('/commands/') || srcPath.includes('/command/');
+    if (isCommand) {
+      return transformToCopilotCommand(content, modelCfg, modelsConfig);
+    }
+    return transformToCopilotAgent(content, modelCfg, modelsConfig);
   }
 
   let destContent = content;
@@ -631,7 +670,11 @@ function deployFiles(files, destDir, opts) {
   const seen = new Set();
   const actions = [];
   for (const f of files) {
-    const base = path.basename(f);
+    let base = path.basename(f);
+    // Copilot uses .yaml extension for agent files
+    if (provider === 'copilot' && base.endsWith('.md')) {
+      base = base.replace(/\.md$/, '.yaml');
+    }
     let dest = path.join(destDir, base);
 
     // Check for duplicate destination in this batch
@@ -771,6 +814,580 @@ function createFactoryAgentsMd(target, srcRoot, dryRun) {
     } else {
       fs.writeFileSync(destPath, template, 'utf8');
       console.log('Created AGENTS.md from Factory template');
+    }
+  }
+}
+
+function createCodexAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'codex', 'AGENTS.md.aiwg-template');
+  const destPath = path.join(target, 'AGENTS.md');
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`Codex AGENTS.md template not found at ${templatePath}`);
+    return;
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf8');
+
+  // Check if AGENTS.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+
+    // Check if it already has AIWG section (look for the marker comment or header)
+    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
+        existing.includes('## AIWG SDLC Framework')) {
+      console.log('AGENTS.md already contains AIWG section, skipping');
+      return;
+    }
+
+    // Append AIWG section to existing AGENTS.md
+    // Extract just the AIWG section from the template (after the marker comment)
+    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+    const aiwgSection = markerIndex !== -1
+      ? template.slice(markerIndex)
+      : template;
+    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated AGENTS.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new AGENTS.md from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create AGENTS.md from Codex template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created AGENTS.md from Codex template');
+    }
+  }
+}
+
+function createCursorAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'cursor', 'AGENTS.md.aiwg-template');
+  const destPath = path.join(target, 'AGENTS.md');
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`Cursor AGENTS.md template not found at ${templatePath}`);
+    return;
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf8');
+
+  // Check if AGENTS.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+
+    // Check if it already has AIWG section (look for the marker comment or header)
+    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
+        existing.includes('## AIWG SDLC Framework')) {
+      console.log('AGENTS.md already contains AIWG section, skipping');
+      return;
+    }
+
+    // Append AIWG section to existing AGENTS.md
+    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+    const aiwgSection = markerIndex !== -1
+      ? template.slice(markerIndex)
+      : template;
+    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated AGENTS.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new AGENTS.md from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create AGENTS.md from Cursor template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created AGENTS.md from Cursor template');
+    }
+  }
+}
+
+function createOpencodeAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'opencode', 'AGENTS.md.aiwg-template');
+  const destPath = path.join(target, 'AGENTS.md');
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`OpenCode AGENTS.md template not found at ${templatePath}`);
+    return;
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf8');
+
+  // Check if AGENTS.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+
+    // Check if it already has AIWG section (look for the marker comment or header)
+    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
+        existing.includes('## AIWG SDLC Framework')) {
+      console.log('AGENTS.md already contains AIWG section, skipping');
+      return;
+    }
+
+    // Append AIWG section to existing AGENTS.md
+    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+    const aiwgSection = markerIndex !== -1
+      ? template.slice(markerIndex)
+      : template;
+    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated AGENTS.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new AGENTS.md from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create AGENTS.md from OpenCode template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created AGENTS.md from OpenCode template');
+    }
+  }
+}
+
+/**
+ * Transform AIWG agent to OpenCode agent format
+ * OpenCode uses: mode, model (full path), temperature, tools, permission, maxSteps
+ */
+function transformToOpencodeAgent(content, modelCfg, modelsConfig) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) return content;
+
+  const [, frontmatter, body] = fmMatch;
+
+  // Extract metadata
+  const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
+  const toolsMatch = frontmatter.match(/tools:\s*(.+)/)?.[1]?.trim();
+  const categoryMatch = frontmatter.match(/category:\s*(.+)/)?.[1]?.trim();
+  const orchestrationMatch = frontmatter.match(/orchestration:\s*(.+)/)?.[1]?.trim();
+
+  // Map model to OpenCode format (full provider/model path)
+  const opencodeModel = mapModelToOpencode(modelMatch, modelCfg, modelsConfig);
+
+  // Determine agent category for tool/permission configuration
+  const category = categoryMatch || inferAgentCategory(name, body);
+
+  // Configure tools and permissions based on agent category
+  const { tools, permission, temperature, maxSteps } = getOpencodeAgentConfig(category, name);
+
+  // All SDLC agents are subagents (invokable via @mention)
+  const mode = orchestrationMatch === 'true' ? 'primary' : 'subagent';
+
+  // Generate OpenCode agent frontmatter
+  let opencodeFrontmatter = `---
+description: ${description || 'AIWG SDLC agent'}
+mode: ${mode}
+model: ${opencodeModel}
+temperature: ${temperature}
+maxSteps: ${maxSteps}`;
+
+  // Add tools configuration
+  if (Object.keys(tools).length > 0) {
+    opencodeFrontmatter += `\ntools:`;
+    for (const [tool, enabled] of Object.entries(tools)) {
+      opencodeFrontmatter += `\n  ${tool}: ${enabled}`;
+    }
+  }
+
+  // Add permission configuration if needed
+  if (Object.keys(permission).length > 0) {
+    opencodeFrontmatter += `\npermission:`;
+    for (const [perm, value] of Object.entries(permission)) {
+      if (typeof value === 'object') {
+        opencodeFrontmatter += `\n  ${perm}:`;
+        for (const [cmd, action] of Object.entries(value)) {
+          opencodeFrontmatter += `\n    "${cmd}": ${action}`;
+        }
+      } else {
+        opencodeFrontmatter += `\n  ${perm}: ${value}`;
+      }
+    }
+  }
+
+  opencodeFrontmatter += `\n---`;
+
+  return `${opencodeFrontmatter}\n\n${body.trim()}`;
+}
+
+function mapModelToOpencode(originalModel, modelCfg, modelsConfig) {
+  // OpenCode uses full provider/model paths
+  const opencodeModels = {
+    'opus': 'anthropic/claude-opus-4-20250514',
+    'sonnet': 'anthropic/claude-sonnet-4-20250514',
+    'haiku': 'anthropic/claude-haiku-4-20250514'
+  };
+
+  // Handle override models first
+  if (modelCfg.reasoningModel || modelCfg.codingModel || modelCfg.efficiencyModel) {
+    const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+    if (/opus/i.test(clean)) return modelCfg.reasoningModel || opencodeModels.opus;
+    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || opencodeModels.haiku;
+    return modelCfg.codingModel || opencodeModels.sonnet;
+  }
+
+  const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+
+  // Match to OpenCode model
+  for (const [key, value] of Object.entries(opencodeModels)) {
+    if (clean.includes(key)) return value;
+  }
+
+  return opencodeModels.sonnet; // default
+}
+
+function inferAgentCategory(name, body) {
+  const normalizedName = (name || '').toLowerCase();
+  const normalizedBody = (body || '').toLowerCase();
+
+  // Analysis agents (read-only)
+  if (normalizedName.includes('security') || normalizedName.includes('review') ||
+      normalizedName.includes('analyst') || normalizedName.includes('auditor')) {
+    return 'analysis';
+  }
+
+  // Documentation agents
+  if (normalizedName.includes('writer') || normalizedName.includes('document') ||
+      normalizedName.includes('archivist')) {
+    return 'documentation';
+  }
+
+  // Planning agents
+  if (normalizedName.includes('architect') || normalizedName.includes('planner') ||
+      normalizedName.includes('requirements') || normalizedName.includes('designer')) {
+    return 'planning';
+  }
+
+  // Implementation agents (full access)
+  if (normalizedName.includes('implement') || normalizedName.includes('engineer') ||
+      normalizedName.includes('developer') || normalizedName.includes('test')) {
+    return 'implementation';
+  }
+
+  // Default to implementation for most flexibility
+  return 'implementation';
+}
+
+/**
+ * Transform AIWG command to OpenCode command format
+ * OpenCode commands use: description, agent (optional), model (optional), subtask (boolean)
+ */
+function transformToOpencodeCommand(content, modelCfg, modelsConfig) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) {
+    // No frontmatter, add minimal OpenCode frontmatter
+    const firstLine = content.split('\n')[0];
+    const description = firstLine.replace(/^#\s*/, '').trim() || 'AIWG command';
+    return `---\ndescription: ${description}\nsubtask: true\n---\n\n${content}`;
+  }
+
+  const [, frontmatter, body] = fmMatch;
+
+  // Extract metadata from existing frontmatter
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const agentMatch = frontmatter.match(/agent:\s*(.+)/)?.[1]?.trim();
+  const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
+
+  // Build OpenCode command frontmatter
+  let opencodeFrontmatter = `---\ndescription: ${description || 'AIWG command'}`;
+
+  // Add agent reference if specified
+  if (agentMatch) {
+    opencodeFrontmatter += `\nagent: ${agentMatch}`;
+  }
+
+  // Add model if specified
+  if (modelMatch) {
+    const opencodeModel = mapModelToOpencode(modelMatch, modelCfg, modelsConfig);
+    opencodeFrontmatter += `\nmodel: ${opencodeModel}`;
+  }
+
+  // Commands are subtasks by default (invoked via /command)
+  opencodeFrontmatter += `\nsubtask: true\n---`;
+
+  return `${opencodeFrontmatter}\n\n${body.trim()}`;
+}
+
+function getOpencodeAgentConfig(category, name) {
+  const configs = {
+    analysis: {
+      tools: { write: false, edit: false, patch: false, bash: true, webfetch: true },
+      permission: {
+        bash: {
+          'git *': 'allow',
+          'npm audit': 'allow',
+          'npm test': 'allow',
+          '*': 'ask'
+        }
+      },
+      temperature: 0.2,
+      maxSteps: 30
+    },
+    documentation: {
+      tools: { bash: false, patch: false },
+      permission: {},
+      temperature: 0.4,
+      maxSteps: 50
+    },
+    planning: {
+      tools: { write: false, edit: false, bash: false, patch: false, webfetch: true },
+      permission: {},
+      temperature: 0.3,
+      maxSteps: 40
+    },
+    implementation: {
+      tools: {},  // All tools enabled by default
+      permission: {
+        bash: {
+          'aiwg *': 'allow',
+          'git status': 'allow',
+          'git diff': 'allow',
+          'git log*': 'allow',
+          'npm test': 'allow',
+          'npm run *': 'allow',
+          'git push': 'ask',
+          'rm -rf': 'deny',
+          '*': 'ask'
+        }
+      },
+      temperature: 0.3,
+      maxSteps: 100
+    }
+  };
+
+  return configs[category] || configs.implementation;
+}
+
+/**
+ * Transform AIWG agent to GitHub Copilot Custom Agent format (.yaml)
+ * GitHub Copilot uses: name, description, model, instructions, tools (optional)
+ */
+function transformToCopilotAgent(content, modelCfg, modelsConfig) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) return content;
+
+  const [, frontmatter, body] = fmMatch;
+
+  // Extract metadata
+  const name = frontmatter.match(/name:\s*(.+)/)?.[1]?.trim();
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const modelMatch = frontmatter.match(/model:\s*(.+)/)?.[1]?.trim();
+  const toolsMatch = frontmatter.match(/tools:\s*(.+)/)?.[1]?.trim();
+  const categoryMatch = frontmatter.match(/category:\s*(.+)/)?.[1]?.trim();
+
+  // Map model to Copilot format
+  const copilotModel = mapModelToCopilot(modelMatch, modelCfg, modelsConfig);
+
+  // Determine agent category for tool configuration
+  const category = categoryMatch || inferAgentCategory(name, body);
+
+  // Get Copilot-specific tools based on category
+  const copilotTools = getCopilotTools(category, toolsMatch);
+
+  // Generate Copilot agent YAML
+  let copilotYaml = `name: ${name || 'aiwg-agent'}
+description: ${description || 'AIWG SDLC agent'}
+model:
+  name: ${copilotModel}
+  temperature: ${category === 'analysis' ? 0.2 : category === 'documentation' ? 0.4 : 0.3}
+  max_tokens: ${category === 'implementation' ? 8000 : 4000}`;
+
+  // Add tools if applicable
+  if (copilotTools.length > 0) {
+    copilotYaml += `\ntools: ${JSON.stringify(copilotTools)}`;
+  }
+
+  // Add instructions from body
+  const cleanBody = body.trim();
+  if (cleanBody) {
+    // Escape special YAML characters in multiline string
+    const escapedBody = cleanBody.replace(/\\/g, '\\\\');
+    copilotYaml += `\ninstructions: |\n${escapedBody.split('\n').map(line => '  ' + line).join('\n')}`;
+  }
+
+  return copilotYaml;
+}
+
+function mapModelToCopilot(originalModel, modelCfg, modelsConfig) {
+  // GitHub Copilot typically uses GPT-4 or Claude models
+  const copilotModels = {
+    'opus': 'gpt-4',
+    'sonnet': 'gpt-4',
+    'haiku': 'gpt-4o-mini'
+  };
+
+  // Handle override models first
+  if (modelCfg.reasoningModel || modelCfg.codingModel || modelCfg.efficiencyModel) {
+    const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+    if (/opus/i.test(clean)) return modelCfg.reasoningModel || copilotModels.opus;
+    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || copilotModels.haiku;
+    return modelCfg.codingModel || copilotModels.sonnet;
+  }
+
+  const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
+
+  // Match to Copilot model
+  for (const [key, value] of Object.entries(copilotModels)) {
+    if (clean.includes(key)) return value;
+  }
+
+  return copilotModels.sonnet; // default
+}
+
+function getCopilotTools(category, toolsString) {
+  // Map AIWG tools to GitHub Copilot tools
+  const toolMap = {
+    'Read': 'search',
+    'Write': 'createFile',
+    'MultiEdit': 'editFiles',
+    'Bash': 'runInTerminal',
+    'WebFetch': 'fetch',
+    'Glob': 'search',
+    'Grep': 'search',
+    'Task': 'runSubagent'
+  };
+
+  // Default tools by category
+  const categoryDefaults = {
+    analysis: ['search', 'fetch', 'githubRepo', 'problems'],
+    documentation: ['search', 'createFile', 'editFiles', 'fetch'],
+    planning: ['search', 'fetch', 'githubRepo', 'todos'],
+    implementation: ['createFile', 'createDirectory', 'editFiles', 'deleteFile', 'search', 'runInTerminal', 'fetch', 'runSubagent', 'todos', 'problems', 'changes']
+  };
+
+  // If tools specified, map them
+  if (toolsString) {
+    let originalTools = [];
+    if (toolsString.startsWith('[')) {
+      try {
+        originalTools = JSON.parse(toolsString);
+      } catch (e) {
+        originalTools = toolsString.replace(/[\[\]"']/g, '').split(/[,\s]+/).filter(Boolean);
+      }
+    } else {
+      originalTools = toolsString.split(/[,\s]+/).filter(Boolean);
+    }
+
+    const mappedTools = new Set();
+    for (const tool of originalTools) {
+      const mapped = toolMap[tool];
+      if (mapped) mappedTools.add(mapped);
+    }
+
+    // If we got any mapped tools, return them
+    if (mappedTools.size > 0) {
+      return Array.from(mappedTools);
+    }
+  }
+
+  // Fall back to category defaults
+  return categoryDefaults[category] || categoryDefaults.implementation;
+}
+
+/**
+ * Transform AIWG command to GitHub Copilot format
+ * Commands become part of copilot-instructions.md or separate agent files
+ */
+function transformToCopilotCommand(content, modelCfg, modelsConfig) {
+  // Parse existing frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) {
+    // No frontmatter, create simple agent format
+    const firstLine = content.split('\n')[0];
+    const description = firstLine.replace(/^#\s*/, '').trim() || 'AIWG command';
+    const name = description.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    return `name: ${name}
+description: ${description}
+model:
+  name: gpt-4
+  temperature: 0.3
+  max_tokens: 4000
+instructions: |
+${content.split('\n').map(line => '  ' + line).join('\n')}`;
+  }
+
+  const [, frontmatter, body] = fmMatch;
+
+  // Extract metadata
+  const description = frontmatter.match(/description:\s*(.+)/)?.[1]?.trim();
+  const name = (description || 'aiwg-command').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  // Build Copilot command as simple agent
+  return `name: ${name}
+description: ${description || 'AIWG command'}
+model:
+  name: gpt-4
+  temperature: 0.3
+  max_tokens: 4000
+instructions: |
+${body.trim().split('\n').map(line => '  ' + line).join('\n')}`;
+}
+
+function createCopilotAgentsMd(target, srcRoot, dryRun) {
+  const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'copilot', 'copilot-instructions.md.aiwg-template');
+  const destPath = path.join(target, '.github', 'copilot-instructions.md');
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`Copilot instructions template not found at ${templatePath}`);
+    return;
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf8');
+
+  // Ensure .github directory exists
+  const githubDir = path.join(target, '.github');
+  if (!dryRun && !fs.existsSync(githubDir)) {
+    fs.mkdirSync(githubDir, { recursive: true });
+  }
+
+  // Check if copilot-instructions.md already exists
+  if (fs.existsSync(destPath)) {
+    const existing = fs.readFileSync(destPath, 'utf8');
+
+    // Check if it already has AIWG section
+    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
+        existing.includes('## AIWG SDLC Framework')) {
+      console.log('copilot-instructions.md already contains AIWG section, skipping');
+      return;
+    }
+
+    // Append AIWG section to existing file
+    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+    const aiwgSection = markerIndex !== -1
+      ? template.slice(markerIndex)
+      : template;
+    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would update existing copilot-instructions.md with AIWG section`);
+    } else {
+      fs.writeFileSync(destPath, combined, 'utf8');
+      console.log('Updated copilot-instructions.md with AIWG SDLC framework section');
+    }
+  } else {
+    // Create new file from template
+    if (dryRun) {
+      console.log(`[dry-run] Would create copilot-instructions.md from template`);
+    } else {
+      fs.writeFileSync(destPath, template, 'utf8');
+      console.log('Created copilot-instructions.md from template');
     }
   }
 }
@@ -1095,8 +1712,12 @@ function enableFactoryCustomDroids(dryRun) {
         if (files.length > 0) {
           const destDir = provider === 'factory'
             ? path.join(target, '.factory', 'droids')
-            : provider === 'openai'
+            : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'agent')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           const locationLabel = agentsRoot === writingAddonAgentsRoot ? 'writing-quality addon' : 'general-purpose';
@@ -1114,8 +1735,12 @@ function enableFactoryCustomDroids(dryRun) {
         if (files.length > 0) {
           const destDir = provider === 'factory'
             ? path.join(target, '.factory', 'droids')
-            : provider === 'openai'
+            : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'agent')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${files.length} SDLC framework agents to ${destDir} (provider=${provider})`);
@@ -1134,8 +1759,12 @@ function enableFactoryCustomDroids(dryRun) {
         if (files.length > 0) {
           const destDir = provider === 'factory'
             ? path.join(target, '.factory', 'droids')
-            : provider === 'openai'
+            : (provider === 'openai' || provider === 'codex')
             ? path.join(target, '.codex', 'agents')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'agent')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')
             : path.join(target, '.claude', 'agents');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${files.length} Marketing framework agents to ${destDir} (provider=${provider})`);
@@ -1148,7 +1777,34 @@ function enableFactoryCustomDroids(dryRun) {
   }
 
   // Deploy Commands (if --deploy-commands or --commands-only)
-  if (deployCommands || commandsOnly) {
+  // For Codex, use dedicated prompts deployment script
+  if ((deployCommands || commandsOnly) && provider === 'codex') {
+    console.log('\nDeploying commands as Codex prompts...');
+    const { execSync } = await import('child_process');
+    const promptsScript = path.join(scriptDir, '..', 'commands', 'deploy-prompts-codex.mjs');
+
+    // Determine mode for prompts deployment
+    let promptsMode = 'all';
+    if (mode === 'sdlc' || mode === 'both') promptsMode = 'sdlc';
+    else if (mode === 'marketing') promptsMode = 'marketing';
+    else if (mode === 'general' || mode === 'writing') promptsMode = 'general';
+
+    const promptsArgs = [
+      '--source', srcRoot,
+      '--mode', promptsMode
+    ];
+    if (dryRun) promptsArgs.push('--dry-run');
+    if (force) promptsArgs.push('--force');
+
+    try {
+      execSync(`node "${promptsScript}" ${promptsArgs.join(' ')}`, {
+        stdio: 'inherit',
+        cwd: srcRoot
+      });
+    } catch (err) {
+      console.error('Failed to deploy prompts to Codex:', err.message);
+    }
+  } else if (deployCommands || commandsOnly) {
     // Deploy general commands if mode is 'general', 'both', or 'all'
     if (mode === 'general' || mode === 'both' || mode === 'all') {
       const generalCommandsRoot = path.join(srcRoot, 'commands');
@@ -1159,6 +1815,10 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'commands')
             : provider === 'openai'
             ? path.join(target, '.codex', 'commands')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'command')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')  // Copilot commands become agents
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} general-purpose commands to ${destDir} (provider=${provider})`);
@@ -1177,6 +1837,10 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'commands')
             : provider === 'openai'
             ? path.join(target, '.codex', 'commands')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'command')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')  // Copilot commands become agents
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} SDLC framework commands to ${destDir} (provider=${provider})`);
@@ -1197,6 +1861,10 @@ function enableFactoryCustomDroids(dryRun) {
             ? path.join(target, '.factory', 'commands')
             : provider === 'openai'
             ? path.join(target, '.codex', 'commands')
+            : provider === 'opencode'
+            ? path.join(target, '.opencode', 'command')
+            : provider === 'copilot'
+            ? path.join(target, '.github', 'agents')  // Copilot commands become agents
             : path.join(target, '.claude', 'commands');
           if (!dryRun) ensureDir(destDir);
           console.log(`\nDeploying ${commandFiles.length} Marketing framework commands to ${destDir} (provider=${provider})`);
@@ -1316,14 +1984,93 @@ function enableFactoryCustomDroids(dryRun) {
     } catch (err) {
       console.error('Failed to deploy skills to Factory:', err.message);
     }
-  } else if ((deploySkills || skillsOnly) && provider === 'openai') {
-    console.log('\nNote: Skills are currently only supported for Claude Code and Factory providers');
+  } else if ((deploySkills || skillsOnly) && (provider === 'openai' || provider === 'codex')) {
+    // Deploy skills to Codex using the dedicated deploy-skills-codex.mjs
+    console.log('\nDeploying skills to Codex (~/.codex/skills/)...');
+    const { execSync } = await import('child_process');
+    const skillsScript = path.join(scriptDir, '..', 'skills', 'deploy-skills-codex.mjs');
+
+    // Determine mode for skills deployment
+    let skillsMode = 'all';
+    if (mode === 'sdlc' || mode === 'both') skillsMode = 'sdlc';
+    else if (mode === 'marketing') skillsMode = 'mmk';
+    else if (mode === 'general' || mode === 'writing') skillsMode = 'addons';
+
+    const skillsArgs = [
+      '--source', srcRoot,
+      '--mode', skillsMode
+    ];
+    if (dryRun) skillsArgs.push('--dry-run');
+    if (force) skillsArgs.push('--force');
+
+    try {
+      execSync(`node "${skillsScript}" ${skillsArgs.join(' ')}`, {
+        stdio: 'inherit',
+        cwd: srcRoot
+      });
+    } catch (err) {
+      console.error('Failed to deploy skills to Codex:', err.message);
+    }
   }
 
   // Create/update AGENTS.md for Factory provider
   if (provider === 'factory' && createAgentsMd) {
     console.log('\nCreating/updating AGENTS.md template for Factory...');
     createFactoryAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Create/update AGENTS.md for Codex provider
+  if ((provider === 'codex' || provider === 'openai') && createAgentsMd) {
+    console.log('\nCreating/updating AGENTS.md template for Codex...');
+    createCodexAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Create/update AGENTS.md for Cursor provider
+  if (provider === 'cursor' && createAgentsMd) {
+    console.log('\nCreating/updating AGENTS.md template for Cursor...');
+    createCursorAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Create/update AGENTS.md for OpenCode provider
+  if (provider === 'opencode' && createAgentsMd) {
+    console.log('\nCreating/updating AGENTS.md template for OpenCode...');
+    createOpencodeAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Create/update copilot-instructions.md for Copilot provider
+  if (provider === 'copilot' && createAgentsMd) {
+    console.log('\nCreating/updating copilot-instructions.md for GitHub Copilot...');
+    createCopilotAgentsMd(target, srcRoot, dryRun);
+  }
+
+  // Deploy rules for Cursor provider (instead of agents)
+  if (provider === 'cursor' && (deployCommands || commandsOnly)) {
+    console.log('\nDeploying commands as Cursor rules...');
+    const { execSync } = await import('child_process');
+    const rulesScript = path.join(scriptDir, '..', 'rules', 'deploy-rules-cursor.mjs');
+
+    // Determine mode for rules deployment
+    let rulesMode = 'all';
+    if (mode === 'sdlc' || mode === 'both') rulesMode = 'sdlc';
+    else if (mode === 'marketing') rulesMode = 'marketing';
+    else if (mode === 'general' || mode === 'writing') rulesMode = 'general';
+
+    const rulesArgs = [
+      '--source', srcRoot,
+      '--target', path.join(target, '.cursor', 'rules'),
+      '--mode', rulesMode
+    ];
+    if (dryRun) rulesArgs.push('--dry-run');
+    if (force) rulesArgs.push('--force');
+
+    try {
+      execSync(`node "${rulesScript}" ${rulesArgs.join(' ')}`, {
+        stdio: 'inherit',
+        cwd: srcRoot
+      });
+    } catch (err) {
+      console.error('Failed to deploy rules to Cursor:', err.message);
+    }
   }
 
   // Enable Custom Droids in Factory settings (if deploying to Factory)

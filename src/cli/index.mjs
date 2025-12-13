@@ -28,14 +28,13 @@ Usage: aiwg <command> [options]
 
 Framework Management:
   use <framework>       Install and deploy framework (sdlc, marketing, writing, all)
-                        Options: --no-utils, --provider <claude|factory|openai|windsurf>, --force
+                        Options: --no-utils, --provider <claude|copilot|factory|openai|windsurf>, --force
   list                  List installed frameworks and addons
   remove <id>           Remove a framework or addon
 
 Project Setup:
   -new                  Create new project with SDLC templates
                         Options: --no-agents, --provider <...>
-  demo                  Create demo project in ~/aiwg-demo/ (try in < 2 min)
 
 Workspace Management:
   -status               Show workspace health and installed frameworks
@@ -44,7 +43,7 @@ Workspace Management:
 
 MCP Server:
   mcp serve             Start AIWG MCP server (stdio transport)
-  mcp install [target]  Generate MCP client config (claude, factory, cursor)
+  mcp install [target]  Generate MCP client config (claude, copilot, factory, cursor)
   mcp info              Show MCP server capabilities
 
 Utilities:
@@ -63,6 +62,7 @@ Maintenance:
   -help                 Show this help message
 
 Platform Options:
+  --provider copilot    Deploy for GitHub Copilot
   --provider factory    Deploy for Factory AI
   --provider openai     Deploy for OpenAI/Codex
   --provider windsurf   Deploy for Windsurf (EXPERIMENTAL)
@@ -71,7 +71,6 @@ Examples:
   aiwg use sdlc                    Install SDLC framework
   aiwg use all --provider factory  Install all frameworks for Factory AI
   aiwg -new                        Create new project
-  aiwg demo                        Create instant demo project
   aiwg doctor                      Check installation health
   aiwg --use-main                  Switch to bleeding edge mode
   aiwg mcp serve                   Start MCP server
@@ -211,12 +210,6 @@ export async function run(args, options = {}) {
     case '-new':
     case '--new':
       await runScript('tools/install/new-project.mjs', commandArgs);
-      break;
-
-    case 'demo':
-    case '-demo':
-    case '--demo':
-      await runScript('tools/cli/demo.mjs', commandArgs);
       break;
 
     // Workspace management

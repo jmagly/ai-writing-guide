@@ -1,0 +1,93 @@
+# Project Name
+
+> Project description here
+
+## Build & Test
+
+```bash
+# Add your build/test/run commands here
+npm test
+npm run build
+npm run lint
+```
+
+## Architecture
+
+<!-- Brief architecture overview -->
+
+---
+
+<!-- AIWG SDLC Framework Integration -->
+
+## AIWG SDLC Framework
+
+This project uses [AI Writing Guide](https://aiwg.io) for SDLC orchestration.
+
+### Install Skills
+
+Add AIWG skills to `~/.codex/skills/`:
+
+```bash
+aiwg -deploy-skills --provider codex
+```
+
+**Available Skills:**
+- `voice-apply` - Apply voice profiles to content
+- `ai-pattern-detection` - Detect AI-generated patterns
+- `project-awareness` - Understand project context
+- `claims-validator` - Validate factual claims
+
+### Install Prompts
+
+Add AIWG prompts to `~/.codex/prompts/`:
+
+```bash
+aiwg -deploy-commands --provider codex
+```
+
+**Available Prompts:**
+- `/aiwg:review` - Code review with AIWG standards
+- `/aiwg:security` - Security review workflow
+- `/aiwg:test` - Generate tests following conventions
+- `/aiwg:status` - Project status check
+
+### Artifacts
+
+SDLC artifacts stored in `.aiwg/`:
+
+```
+.aiwg/
+├── intake/        # Project intake forms
+├── requirements/  # User stories, use cases
+├── architecture/  # SAD, ADRs
+├── testing/       # Test strategy, plans
+├── security/      # Threat models
+└── deployment/    # Deployment plans
+```
+
+### Natural Language Workflows
+
+- "Review this code for security issues"
+- "Generate tests for this module"
+- "Create architecture decision record"
+- "What's the project status?"
+- "Run security review"
+
+### MCP Server (Optional)
+
+Enable AIWG MCP tools by adding to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.aiwg]
+command = "node"
+args = ["~/.local/share/ai-writing-guide/src/mcp/server.mjs"]
+startup_timeout_sec = 10.0
+tool_timeout_sec = 60.0
+```
+
+### Resources
+
+- Website: https://aiwg.io
+- Repository: https://github.com/jmagly/ai-writing-guide
+- Quick Start: `~/.local/share/ai-writing-guide/docs/integrations/codex-quickstart.md`
+- Redeploy: `aiwg -deploy-agents --provider codex --create-agents-md`

@@ -56,9 +56,12 @@ Use `@path/to/file.md` in your message to load specific documentation:
 | Platform | Agent Location | Command |
 |----------|----------------|---------|
 | Claude Code | `.claude/agents/` | `aiwg -deploy-agents` |
+| GitHub Copilot | `.github/agents/` | `aiwg -deploy-agents --provider copilot` |
 | Warp Terminal | `WARP.md` | Symlinked to CLAUDE.md |
 | Factory AI | `.factory/droids/` | `aiwg -deploy-agents --provider factory` |
-| OpenAI/Codex | `.codex/agents/` | `aiwg -deploy-agents --provider openai` |
+| OpenCode | `.opencode/agent/` | `aiwg -deploy-agents --provider opencode` |
+| Cursor | `.cursor/rules/` | `aiwg -deploy-agents --provider cursor` |
+| OpenAI/Codex | `~/.codex/skills/` | `aiwg -deploy-agents --provider codex` |
 
 ## Writing Principles
 
