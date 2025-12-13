@@ -38,8 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Documentation Updates**:
 
-- `docs/content/CLI_USAGE.md` - Full model selection, filter, and save flag documentation
-- `docs/content/configuration/model-configuration.md` - Updated with filter and persistence examples
+- `docs/CLI_USAGE.md` - Full model selection, filter, and save flag documentation
+- `docs/configuration/model-configuration.md` - Updated with filter and persistence examples
 - `README.md` - Added collapsible model selection section
 
 ### Fixed

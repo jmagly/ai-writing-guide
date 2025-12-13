@@ -117,7 +117,7 @@ aiwg use sdlc --filter "*architect*" --reasoning-model opus-4-2
 aiwg use sdlc --filter-role reasoning --reasoning-model custom-model
 ```
 
-See [Model Configuration Guide](docs/content/configuration/model-configuration.md) for details.
+See [Model Configuration Guide](docs/configuration/model-configuration.md) for details.
 
 </details>
 

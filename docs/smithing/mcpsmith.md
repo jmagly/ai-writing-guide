@@ -347,5 +347,5 @@ docker run -i --rm aiwg-mcp/<name>:<version>
 
 - MCPSmith Agent: `agentic/code/frameworks/sdlc-complete/agents/mcpsmith.md`
 - MCP Definition Command: `agentic/code/frameworks/sdlc-complete/commands/smith-mcpdef.md`
-- MCP Specification: `docs/content/references/REF-003-mcp-specification-2025.md`
+- MCP Specification: `docs/references/REF-003-mcp-specification-2025.md`
 - ToolSmith (sibling): `docs/smithing/README.md`
