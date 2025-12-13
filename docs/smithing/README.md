@@ -1,75 +1,222 @@
 # Smithing Framework
 
-The Smithing Framework enables agents to create runnable agentic assets on the fly. "Smith" agents specialize in creating specific types of assets - tools, templates, configurations - that can be cached and reused across workflows.
+The Smithing Framework enables agents to create runnable agentic assets on the fly. "Smith" agents specialize in creating specific types of assets - tools, MCP servers, agents, skills, commands - that can be cached and reused across workflows.
 
 ## Overview
 
-**Problem**: Tool creation during agentic workflows is constrained and impacts the main process. Agents need to create, reuse, and modify tools dynamically without disrupting their primary task flow.
+**Problem**: Asset creation during agentic workflows is constrained and impacts the main process. Agents need to create, reuse, and modify assets dynamically without disrupting their primary task flow.
 
 **Solution**: Specialized "Smith" agents handle asset creation independently. The orchestrating agent delegates to a Smith, which creates or returns cached assets, allowing the main workflow to continue uninterrupted.
 
 ## Available Smiths
 
-| Smith | Purpose | Assets Created |
-|-------|---------|----------------|
-| **ToolSmith** | Shell/OS tool creation | Shell scripts, tool specifications |
+| Smith | Purpose | Assets Created | Deploys To |
+|-------|---------|----------------|------------|
+| **ToolSmith** | Shell/OS tool creation | Shell scripts, tool specifications | `.aiwg/smiths/toolsmith/` |
+| **MCPSmith** | MCP server creation | Dockerized MCP servers | `.aiwg/smiths/mcpsmith/` |
+| **AgentSmith** | Agent definition creation | Agent markdown definitions | `.claude/agents/` |
+| **SkillSmith** | Skill definition creation | Skill directories with SKILL.md | `.claude/skills/` |
+| **CommandSmith** | Slash command creation | Command markdown definitions | `.claude/commands/` |
 
-*Future smiths may include: TemplateSmith, ConfigSmith, WorkflowSmith*
+### Smith Categories
+
+**Infrastructure Smiths** (ToolSmith, MCPSmith):
+- Create reusable infrastructure assets
+- Store in `.aiwg/smiths/` for catalog-based reuse
+- Assets invoked by the orchestrating agent
+
+**Agentic Smiths** (AgentSmith, SkillSmith, CommandSmith):
+- Create platform-native artifacts
+- Deploy directly to platform directories (`.claude/`)
+- Assets are immediately available to the AI platform
 
 ## Directory Structure
 
-All Smithing assets are stored in `.aiwg/smiths/`:
-
 ```
 .aiwg/smiths/
-├── system-definition.yaml      # OS info and tested commands
-└── toolsmith/
-    ├── catalog.yaml            # Index of all tools
-    ├── tools/                  # Tool specifications (YAML)
-    │   ├── find-duplicates.yaml
-    │   └── bulk-rename.yaml
-    └── scripts/                # Generated shell scripts
-        ├── find-duplicates.sh
-        └── bulk-rename.sh
+├── system-definition.yaml      # OS info for ToolSmith
+├── mcp-definition.yaml         # Container runtime info for MCPSmith
+├── agentic-definition.yaml     # Platform capabilities for Agentic Smiths
+├── toolsmith/
+│   ├── catalog.yaml            # Index of created tools
+│   ├── tools/                  # Tool specifications (YAML)
+│   │   └── find-duplicates.yaml
+│   └── scripts/                # Generated shell scripts
+│       └── find-duplicates.sh
+├── mcpsmith/
+│   ├── catalog.yaml            # Index of created MCP servers
+│   ├── servers/                # Server specifications (YAML)
+│   │   └── github-repo-analyzer.yaml
+│   └── containers/             # Dockerfile and server code
+│       └── github-repo-analyzer/
+│           ├── Dockerfile
+│           └── server.mjs
+├── agentsmith/
+│   ├── catalog.yaml            # Index of created agents
+│   └── specs/                  # Agent specifications (YAML)
+├── skillsmith/
+│   ├── catalog.yaml            # Index of created skills
+│   └── specs/                  # Skill specifications (YAML)
+└── commandsmith/
+    ├── catalog.yaml            # Index of created commands
+    └── specs/                  # Command specifications (YAML)
+
+.claude/                        # Platform deployment target
+├── agents/                     # AgentSmith deploys here
+├── skills/                     # SkillSmith deploys here
+└── commands/                   # CommandSmith deploys here
 ```
 
 ## Getting Started
 
-### 1. Generate System Definition
+### 1. Generate Grounding Definitions
 
-Before using ToolSmith, generate a system definition file:
+Before using Smiths, generate their respective definition files:
 
-```
+```bash
+# For ToolSmith - probes OS capabilities
 /smith-sysdef
+
+# For MCPSmith - probes container runtime
+/smith-mcpdef
+
+# For Agentic Smiths - probes platform capabilities
+/smith-agenticdef
 ```
 
-This probes your system and creates `.aiwg/smiths/system-definition.yaml` with:
-- Platform information (OS, kernel, architecture)
-- Shell details
-- Tested commands organized by category
+### 2. Request an Asset
 
-### 2. Request a Tool
-
-Orchestrating agents can request tools via the Task tool:
+Orchestrating agents can request assets via the Task tool:
 
 ```
-Task(ToolSmith) -> "Create a tool to find duplicate files by content hash in a directory"
+# ToolSmith - creates shell scripts
+Task(ToolSmith) -> "Create a tool to find duplicate files by content hash"
+
+# MCPSmith - creates MCP servers
+Task(MCPSmith) -> "Create an MCP server to analyze GitHub repositories"
+
+# AgentSmith - creates agent definitions
+Task(AgentSmith) -> "Create an agent that reviews code for accessibility issues"
+
+# SkillSmith - creates skill definitions
+Task(SkillSmith) -> "Create a skill that converts JSON to YAML"
+
+# CommandSmith - creates slash commands
+Task(CommandSmith) -> "Create a command to run ESLint with auto-fix"
 ```
 
-ToolSmith will:
-1. Check if a matching tool exists in the catalog
-2. If not, create the tool using available system commands
-3. Test the tool
-4. Register it in the catalog
-5. Return the tool path and usage instructions
+### 3. Use the Asset
 
-### 3. Use the Tool
-
-Tools are stored as executable shell scripts:
-
+**Tools** are executable scripts:
 ```bash
 .aiwg/smiths/toolsmith/scripts/find-duplicates.sh /path/to/directory
 ```
+
+**MCP Servers** run as Docker containers:
+```bash
+docker run -i aiwg-mcp-github-analyzer
+```
+
+**Agents** are invoked via Task:
+```
+Task(accessibility-reviewer) -> "Review src/components/"
+```
+
+**Skills** trigger on natural language:
+```
+"convert this JSON to YAML"
+```
+
+**Commands** use slash prefix:
+```
+/lint-fix src/ --fix
+```
+
+## Common Patterns
+
+### Operating Rhythm
+
+All Smiths follow a similar workflow:
+
+```
+┌─────────────────────┐
+│ Orchestrating Agent │
+└──────────┬──────────┘
+           │ "Need a..."
+           ▼
+┌─────────────────────┐
+│       Smith         │
+└──────────┬──────────┘
+           │
+     ┌─────┴─────┐
+     ▼           ▼
+┌─────────┐ ┌─────────┐
+│ Catalog │ │ Define  │
+│ Check   │ │ Check   │
+└────┬────┘ └────┬────┘
+     │           │
+     │  >80%     │  Verify
+     │  match?   │  capabilities
+     │           │
+     ├───────────┤
+     ▼           ▼
+┌─────────┐ ┌─────────┐
+│ Reuse   │ │ Create  │
+│ Existing│ │ New     │
+└────┬────┘ └────┬────┘
+     │           │
+     └─────┬─────┘
+           ▼
+┌─────────────────────┐
+│ Deploy/Register     │
+│ Return Instructions │
+└─────────────────────┘
+```
+
+### Catalog Reuse (80% Threshold)
+
+Before creating new assets, Smiths search their catalog:
+
+```yaml
+# catalog.yaml (common pattern)
+artifacts:
+  - name: asset-name
+    version: "1.0.0"
+    description: "Brief description"
+    capabilities:
+      - Capability 1
+      - Capability 2
+
+capability_index:
+  "natural language query": asset-name
+  "alternative query": asset-name
+```
+
+When a request semantic similarity exceeds 80%, existing assets are returned instead of creating duplicates.
+
+### Grounding Definitions
+
+Each Smith reads a definition file to understand available capabilities:
+
+| Smith | Definition File | Contents |
+|-------|-----------------|----------|
+| ToolSmith | `system-definition.yaml` | OS, shell, tested commands |
+| MCPSmith | `mcp-definition.yaml` | Container runtime, registries, ports |
+| Agentic Smiths | `agentic-definition.yaml` | Models, tools, deployment paths |
+
+## Detailed Documentation
+
+| Smith | Full Documentation |
+|-------|-------------------|
+| ToolSmith | This document (below) |
+| MCPSmith | [mcpsmith.md](./mcpsmith.md) |
+| Agentic Smiths | [agentic-smiths.md](./agentic-smiths.md) |
+
+---
+
+# ToolSmith Reference
+
+ToolSmith creates shell scripts for OS-level operations.
 
 ## System Definition
 
@@ -162,41 +309,6 @@ capability_index:
   "duplicate files": find-duplicates
 ```
 
-## Workflow
-
-```
-┌─────────────────────┐
-│ Orchestrating Agent │
-└──────────┬──────────┘
-           │
-           │ "Need a tool to..."
-           ▼
-┌─────────────────────┐
-│     ToolSmith       │
-└──────────┬──────────┘
-           │
-     ┌─────┴─────┐
-     ▼           ▼
-┌─────────┐ ┌─────────┐
-│ Catalog │ │ System  │
-│ Check   │ │ Def     │
-└────┬────┘ └────┬────┘
-     │           │
-     ├───────────┤
-     ▼           ▼
-┌─────────┐ ┌─────────┐
-│ Reuse   │ │ Create  │
-│ Tool    │ │ Tool    │
-└────┬────┘ └────┬────┘
-     │           │
-     └─────┬─────┘
-           ▼
-┌─────────────────────┐
-│ Return Tool Path    │
-│ + Usage Instructions│
-└─────────────────────┘
-```
-
 ## Commands
 
 ### /smith-sysdef
@@ -265,8 +377,27 @@ ToolSmith will attempt to debug and fix. If issues persist:
 2. Review man pages for platform-specific differences
 3. Manually inspect the generated script
 
+---
+
 ## References
 
+### Agent Definitions
 - ToolSmith Agent: `agentic/code/frameworks/sdlc-complete/agents/toolsmith-dynamic.md`
-- System Definition Command: `agentic/code/frameworks/sdlc-complete/commands/smith-sysdef.md`
-- Tool Catalog: `.aiwg/smiths/toolsmith/catalog.yaml`
+- MCPSmith Agent: `agentic/code/frameworks/sdlc-complete/agents/mcpsmith.md`
+- AgentSmith Agent: `agentic/code/frameworks/sdlc-complete/agents/agentsmith.md`
+- SkillSmith Agent: `agentic/code/frameworks/sdlc-complete/agents/skillsmith.md`
+- CommandSmith Agent: `agentic/code/frameworks/sdlc-complete/agents/commandsmith.md`
+
+### Commands
+- `/smith-sysdef`: `agentic/code/frameworks/sdlc-complete/commands/smith-sysdef.md`
+- `/smith-mcpdef`: `agentic/code/frameworks/sdlc-complete/commands/smith-mcpdef.md`
+- `/smith-agenticdef`: `agentic/code/frameworks/sdlc-complete/commands/smith-agenticdef.md`
+
+### Detailed Documentation
+- MCPSmith: `docs/smithing/mcpsmith.md`
+- Agentic Smiths: `docs/smithing/agentic-smiths.md`
+
+### Test Coverage
+- ToolSmith Tests: `test/unit/smithing/system-definition.test.ts`
+- MCPSmith Tests: `test/unit/smithing/mcp-definition.test.ts`
+- Agentic Smiths Tests: `test/unit/smithing/agentic-definition.test.ts`
