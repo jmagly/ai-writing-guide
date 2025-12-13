@@ -1,0 +1,161 @@
+/**
+ * SkillSmith Type Definitions
+ *
+ * Types for generating skills with platform-aware deployment.
+ *
+ * @module smiths/skillsmith
+ */
+
+import type { Platform } from '../../agents/types.js';
+
+/**
+ * Skill generation options
+ */
+export interface SkillOptions {
+  /** Skill name (kebab-case) */
+  name: string;
+
+  /** What the skill does */
+  description: string;
+
+  /** Target platform */
+  platform: Platform;
+
+  /** Where to deploy */
+  projectPath: string;
+
+  /** User guidance for generation */
+  guidance?: string;
+
+  /** Enable interactive mode */
+  interactive?: boolean;
+
+  /** Natural language triggers */
+  triggerPhrases?: string[];
+
+  /** Dry run (don't write files) */
+  dryRun?: boolean;
+
+  /** Skill version */
+  version?: string;
+
+  /** Tools this skill uses */
+  tools?: string[];
+
+  /** Whether to create references directory */
+  createReferences?: boolean;
+}
+
+/**
+ * Generated skill artifact
+ */
+export interface GeneratedSkill {
+  /** Skill name */
+  name: string;
+
+  /** Path where skill will be deployed */
+  path: string;
+
+  /** SKILL.md content */
+  content: string;
+
+  /** Target platform */
+  platform: Platform;
+
+  /** Supporting reference files */
+  references?: SkillReference[];
+
+  /** Skill version */
+  version: string;
+}
+
+/**
+ * Supporting reference file for a skill
+ */
+export interface SkillReference {
+  /** Reference filename (within references/) */
+  filename: string;
+
+  /** Reference content */
+  content: string;
+
+  /** Reference description */
+  description: string;
+}
+
+/**
+ * Skill frontmatter metadata
+ */
+export interface SkillFrontmatter {
+  /** Skill name (kebab-case) */
+  name: string;
+
+  /** Brief description */
+  description: string;
+
+  /** Skill version (semver) */
+  version: string;
+
+  /** Tools this skill uses (optional) */
+  tools?: string;
+}
+
+/**
+ * Platform-specific skill deployment configuration
+ */
+export interface PlatformSkillConfig {
+  /** Base directory for skills */
+  baseDir: string;
+
+  /** File extension for skill files */
+  extension: string;
+
+  /** Whether this platform supports skills natively */
+  supportsSkills: boolean;
+
+  /** Alternative deployment strategy if skills not supported */
+  alternativeStrategy?: 'command' | 'agent' | 'none';
+}
+
+/**
+ * Skill deployment result
+ */
+export interface SkillDeploymentResult {
+  /** Skill that was deployed */
+  skill: GeneratedSkill;
+
+  /** Whether deployment succeeded */
+  success: boolean;
+
+  /** Deployment path */
+  deployPath: string;
+
+  /** Any errors encountered */
+  error?: string;
+
+  /** Files created */
+  filesCreated: string[];
+}
+
+/**
+ * Interactive skill design prompts
+ */
+export interface InteractivePrompts {
+  /** Skill purpose */
+  purpose: string;
+
+  /** Trigger phrases */
+  triggerPhrases: string[];
+
+  /** Input requirements */
+  inputRequirements: string[];
+
+  /** Output format */
+  outputFormat: string;
+
+  /** Whether to create reference materials */
+  needsReferences: boolean;
+
+  /** Reference materials to create */
+  referenceMaterials?: string[];
+}
