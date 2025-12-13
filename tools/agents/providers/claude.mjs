@@ -22,7 +22,8 @@ import {
   deployFiles,
   deploySkillDir,
   parseFrontmatter,
-  initializeFrameworkWorkspace
+  initializeFrameworkWorkspace,
+  filterAgentFiles
 } from './base.mjs';
 
 // ============================================================================
@@ -324,8 +325,13 @@ export async function deploy(opts) {
 
   // Deploy based on flags
   if (!commandsOnly && !skillsOnly) {
-    console.log(`\nDeploying ${agentFiles.length} agents...`);
-    deployAgents(agentFiles, target, opts);
+    // Apply filters if specified
+    const filteredAgents = filterAgentFiles(agentFiles, opts);
+    if (opts.filter || opts.filterRole) {
+      console.log(`\nFiltered from ${agentFiles.length} to ${filteredAgents.length} agents`);
+    }
+    console.log(`\nDeploying ${filteredAgents.length} agents...`);
+    deployAgents(filteredAgents, target, opts);
   }
 
   if (shouldDeployCommands || commandsOnly) {

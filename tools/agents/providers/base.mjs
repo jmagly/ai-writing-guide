@@ -482,6 +482,90 @@ export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dry
 }
 
 // ============================================================================
+// Agent Filtering
+// ============================================================================
+
+/**
+ * Role mapping from model shorthand to role name
+ */
+const MODEL_TO_ROLE = {
+  'opus': 'reasoning',
+  'sonnet': 'coding',
+  'haiku': 'efficiency'
+};
+
+/**
+ * Check if an agent should be deployed based on filter options
+ * @param {string} agentPath - Path to agent file
+ * @param {object} metadata - Parsed frontmatter metadata
+ * @param {object} opts - Options including filter and filterRole
+ * @returns {boolean} - True if agent should be deployed
+ */
+export function shouldDeployAgent(agentPath, metadata, opts) {
+  const { filter, filterRole } = opts;
+
+  // No filters - deploy everything
+  if (!filter && !filterRole) return true;
+
+  // Filter by role (model tier)
+  if (filterRole) {
+    const model = (metadata.model || 'sonnet').toLowerCase();
+    const role = MODEL_TO_ROLE[model] || 'coding';
+    if (role !== filterRole.toLowerCase()) {
+      return false;
+    }
+  }
+
+  // Filter by glob pattern
+  if (filter) {
+    const agentName = path.basename(agentPath, '.md');
+    if (!matchesGlob(agentName, filter)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Simple glob pattern matching
+ * Supports * (match any characters) and ? (match single character)
+ * @param {string} str - String to match
+ * @param {string} pattern - Glob pattern
+ * @returns {boolean} - True if matches
+ */
+export function matchesGlob(str, pattern) {
+  // Convert glob to regex
+  const regexPattern = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&') // Escape regex special chars except * and ?
+    .replace(/\*/g, '.*')                  // * matches any characters
+    .replace(/\?/g, '.');                  // ? matches single character
+
+  const regex = new RegExp(`^${regexPattern}$`, 'i');
+  return regex.test(str);
+}
+
+/**
+ * Filter a list of agent files based on filter options
+ * @param {string[]} files - List of file paths
+ * @param {object} opts - Options including filter and filterRole
+ * @returns {string[]} - Filtered list of file paths
+ */
+export function filterAgentFiles(files, opts) {
+  const { filter, filterRole } = opts;
+
+  // No filters - return all
+  if (!filter && !filterRole) return files;
+
+  return files.filter(filePath => {
+    // Read and parse frontmatter to get metadata
+    const content = fs.readFileSync(filePath, 'utf8');
+    const { metadata } = parseFrontmatter(content);
+    return shouldDeployAgent(filePath, metadata, opts);
+  });
+}
+
+// ============================================================================
 // Provider Interface
 // ============================================================================
 

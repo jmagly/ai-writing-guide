@@ -67,9 +67,20 @@ Platform Options:
   --provider openai     Deploy for OpenAI/Codex
   --provider windsurf   Deploy for Windsurf (EXPERIMENTAL)
 
+Model Selection (for 'use' command):
+  --reasoning-model <name>   Override model for reasoning tier (opus-level agents)
+  --coding-model <name>      Override model for coding tier (sonnet-level agents)
+  --efficiency-model <name>  Override model for efficiency tier (haiku-level agents)
+  --filter <pattern>         Only deploy agents matching pattern (glob)
+  --filter-role <role>       Only deploy agents of role: reasoning|coding|efficiency
+  --save                     Save model selection to project models.json
+  --save-user                Save model selection to ~/.config/aiwg/models.json
+
 Examples:
   aiwg use sdlc                    Install SDLC framework
   aiwg use all --provider factory  Install all frameworks for Factory AI
+  aiwg use sdlc --reasoning-model opus-4-2   Deploy with custom reasoning model
+  aiwg use sdlc --coding-model sonnet-5 --save   Deploy with custom model and save
   aiwg -new                        Create new project
   aiwg doctor                      Check installation health
   aiwg --use-main                  Switch to bleeding edge mode
