@@ -27,7 +27,7 @@ export function ensureDir(d) {
  */
 export function listMdFiles(dir, excludePatterns = []) {
   if (!fs.existsSync(dir)) return [];
-  const defaultExcluded = ['README.md', 'manifest.md', 'agent-template.md', 'openai-compat.md', 'factory-compat.md', 'DEVELOPMENT_GUIDE.md'];
+  const defaultExcluded = ['README.md', 'manifest.md', 'agent-template.md', 'openai-compat.md', 'factory-compat.md', 'windsurf-compat.md', 'DEVELOPMENT_GUIDE.md'];
   const excluded = [...defaultExcluded, ...excludePatterns];
   return fs
     .readdirSync(dir, { withFileTypes: true })
@@ -40,7 +40,7 @@ export function listMdFiles(dir, excludePatterns = []) {
  */
 export function listMdFilesRecursive(dir, excludePatterns = []) {
   if (!fs.existsSync(dir)) return [];
-  const defaultExcluded = ['README.md', 'manifest.md', 'agent-template.md', 'openai-compat.md', 'factory-compat.md', 'DEVELOPMENT_GUIDE.md'];
+  const defaultExcluded = ['README.md', 'manifest.md', 'agent-template.md', 'openai-compat.md', 'factory-compat.md', 'windsurf-compat.md', 'DEVELOPMENT_GUIDE.md'];
   const excluded = [...defaultExcluded, ...excludePatterns];
   const results = [];
 

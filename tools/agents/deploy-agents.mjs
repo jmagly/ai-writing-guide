@@ -18,7 +18,7 @@
  *   --skills-only            Deploy only skills (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, or warp
+ *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, warp, or windsurf
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
  *   --efficiency-model <name> Override model for efficiency tasks
@@ -42,6 +42,7 @@
  *   copilot   - GitHub Copilot - .github/agents/ (YAML format)
  *   cursor    - Cursor IDE - .cursor/rules/ (MDC format)
  *   warp      - Warp Terminal - WARP.md (aggregated)
+ *   windsurf  - Windsurf (experimental) - AGENTS.md, .windsurfrules
  *
  * Defaults:
  *   --source resolves relative to this script's repo root (../..)
@@ -61,7 +62,7 @@ const PROVIDER_ALIASES = {
   'openai': 'codex'
 };
 
-const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'warp'];
+const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'warp', 'windsurf'];
 
 // ============================================================================
 // Argument Parsing
@@ -151,6 +152,8 @@ Providers:
               Paths: .cursor/rules/ (MDC format)
   warp      - Warp Terminal
               Output: WARP.md (aggregated)
+  windsurf  - Windsurf (EXPERIMENTAL)
+              Output: AGENTS.md, .windsurfrules, .windsurf/workflows/
 
 Modes:
   general   - Writing-quality addon agents and commands (alias: writing)
