@@ -1,7 +1,7 @@
 ---
 name: aiwg-refresh
 description: Update AIWG CLI and redeploy frameworks/tools to current project without leaving the session
-args: "[--update-cli] [--all] [--sdlc] [--marketing] [--utils] [--provider <name>] [--force] [--dry-run]"
+args: "[--update-cli] [--all] [--sdlc] [--marketing] [--utils] [--provider <name>] [--reasoning-model <name>] [--coding-model <name>] [--efficiency-model <name>] [--filter <pattern>] [--filter-role <role>] [--save] [--force] [--dry-run]"
 ---
 
 # Refresh AIWG Deployment
@@ -15,6 +15,7 @@ project without leaving the agentic session.
 - **After switching branches**: Ensure deployed content matches expectations
 - **After manual edits**: Restore canonical AIWG content
 - **Provider switch**: Redeploy for different platform (Claude → Factory)
+- **Model selection**: Redeploy with different AI models for each tier
 
 ## Parameters
 
@@ -26,6 +27,12 @@ project without leaving the agentic session.
 | `--marketing` | Redeploy Marketing framework only |
 | `--utils` | Redeploy aiwg-utils addon only |
 | `--provider <name>` | Target platform: claude, factory, openai, cursor, warp (default: auto-detect) |
+| `--reasoning-model <name>` | Override model for reasoning agents (opus tier) |
+| `--coding-model <name>` | Override model for coding agents (sonnet tier) |
+| `--efficiency-model <name>` | Override model for efficiency agents (haiku tier) |
+| `--filter <pattern>` | Only deploy agents matching glob pattern (e.g., `*architect*`) |
+| `--filter-role <role>` | Only deploy agents of specified role: reasoning, coding, efficiency |
+| `--save` | Persist model selection to project models.json |
 | `--force` | Force redeploy even if already up-to-date |
 | `--dry-run` | Show what would be done without executing |
 
@@ -150,14 +157,23 @@ For each framework to deploy:
 
 ```bash
 # SDLC Framework
-aiwg use sdlc --provider <platform> --force
+aiwg use sdlc --provider <platform> --force [model-flags] [filter-flags]
 
 # Marketing Framework
-aiwg use marketing --provider <platform> --force
+aiwg use marketing --provider <platform> --force [model-flags] [filter-flags]
 
 # Utils (included with sdlc)
 # No separate command needed
 ```
+
+**Model flags** (if specified):
+- `--reasoning-model <name>` - applies to all opus-tier agents
+- `--coding-model <name>` - applies to all sonnet-tier agents
+- `--efficiency-model <name>` - applies to all haiku-tier agents
+
+**Filter flags** (if specified):
+- `--filter <pattern>` - only deploys matching agents
+- `--filter-role <role>` - only deploys agents of specified role
 
 **If `--dry-run`:**
 Show commands without executing:
@@ -166,12 +182,12 @@ Show commands without executing:
 Dry Run - Would execute:
 ========================
 
-1. aiwg use sdlc --provider claude --force
-   → Deploy 58 agents to .claude/agents/
+1. aiwg use sdlc --provider claude --force --reasoning-model opus-4-2
+   → Deploy 58 agents to .claude/agents/ (reasoning tier with opus-4-2)
    → Deploy 48 commands to .claude/commands/
 
-2. aiwg use marketing --provider claude --force
-   → Deploy 37 agents to .claude/agents/
+2. aiwg use marketing --provider claude --force --reasoning-model opus-4-2
+   → Deploy 37 agents to .claude/agents/ (reasoning tier with opus-4-2)
    → Deploy 20 commands to .claude/commands/
 
 No changes made (dry run mode)
@@ -267,6 +283,21 @@ Session ready - new features are now available!
 
 # Force refresh even if up-to-date
 /aiwg-refresh --all --force
+
+# Redeploy with custom reasoning model
+/aiwg-refresh --all --reasoning-model claude-opus-4-2
+
+# Redeploy with custom models for all tiers
+/aiwg-refresh --all --reasoning-model opus-4-2 --coding-model sonnet-5 --efficiency-model haiku-4
+
+# Redeploy and save model selection for future deploys
+/aiwg-refresh --all --coding-model claude-sonnet-5-0 --save
+
+# Only update architect agents with new reasoning model
+/aiwg-refresh --sdlc --filter "*architect*" --reasoning-model opus-4-2
+
+# Only update reasoning-tier agents
+/aiwg-refresh --all --filter-role reasoning --reasoning-model custom-reasoning
 ```
 
 ## Natural Language Triggers
@@ -278,6 +309,9 @@ This command should activate when user says:
 - "get latest aiwg features"
 - "update my aiwg tools"
 - "sync aiwg deployment"
+- "change agent models" / "switch to opus" / "use different model"
+- "redeploy with custom models"
+- "update reasoning agents" / "update architect agents"
 
 ## Error Handling
 

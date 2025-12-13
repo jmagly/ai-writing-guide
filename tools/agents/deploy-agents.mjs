@@ -52,6 +52,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 // ============================================================================
@@ -85,7 +86,11 @@ function parseArgs() {
     deployCommands: false,
     deploySkills: false,
     commandsOnly: false,
-    skillsOnly: false
+    skillsOnly: false,
+    filter: null,           // Glob pattern for agent names
+    filterRole: null,       // Filter by role: reasoning|coding|efficiency
+    save: false,            // Save model config to project models.json
+    saveUser: false         // Save model config to ~/.config/aiwg/models.json
   };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -104,6 +109,10 @@ function parseArgs() {
     else if (a === '--deploy-skills') cfg.deploySkills = true;
     else if (a === '--commands-only') cfg.commandsOnly = true;
     else if (a === '--skills-only') cfg.skillsOnly = true;
+    else if (a === '--filter' && args[i + 1]) cfg.filter = args[++i];
+    else if (a === '--filter-role' && args[i + 1]) cfg.filterRole = args[++i];
+    else if (a === '--save') cfg.save = true;
+    else if (a === '--save-user') cfg.saveUser = true;
     else if (a === '--help' || a === '-h') {
       printHelp();
       process.exit(0);
@@ -134,6 +143,10 @@ Options:
   --reasoning-model <name> Override model for reasoning tasks
   --coding-model <name>    Override model for coding tasks
   --efficiency-model <name> Override model for efficiency tasks
+  --filter <pattern>       Only deploy agents matching pattern (glob)
+  --filter-role <role>     Only deploy agents of role: reasoning|coding|efficiency
+  --save                   Save model config to project models.json
+  --save-user              Save model config to ~/.config/aiwg/models.json
   --as-agents-md           Aggregate to single AGENTS.md (Codex)
   --create-agents-md       Create/update AGENTS.md template
 
@@ -212,6 +225,86 @@ async function loadProvider(providerName) {
 }
 
 // ============================================================================
+// Model Configuration Persistence
+// ============================================================================
+
+/**
+ * Save model configuration to project or user config file
+ * @param {object} cfg - Configuration with model overrides
+ * @param {string} providerName - Provider name for provider-specific config
+ */
+async function saveModelConfig(cfg, providerName) {
+  // Build config object with only the provided overrides
+  const modelConfig = {};
+
+  // Provider-specific tier configuration
+  if (cfg.reasoningModel || cfg.codingModel || cfg.efficiencyModel) {
+    modelConfig[providerName] = {};
+    if (cfg.reasoningModel) {
+      modelConfig[providerName].reasoning = { model: cfg.reasoningModel };
+    }
+    if (cfg.codingModel) {
+      modelConfig[providerName].coding = { model: cfg.codingModel };
+    }
+    if (cfg.efficiencyModel) {
+      modelConfig[providerName].efficiency = { model: cfg.efficiencyModel };
+    }
+  }
+
+  // Shorthand mappings
+  if (cfg.reasoningModel || cfg.codingModel || cfg.efficiencyModel) {
+    modelConfig.shorthand = {};
+    if (cfg.reasoningModel) modelConfig.shorthand.opus = cfg.reasoningModel;
+    if (cfg.codingModel) modelConfig.shorthand.sonnet = cfg.codingModel;
+    if (cfg.efficiencyModel) modelConfig.shorthand.haiku = cfg.efficiencyModel;
+  }
+
+  // Determine target path
+  let targetPath;
+  if (cfg.saveUser) {
+    const configDir = path.join(os.homedir(), '.config', 'aiwg');
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+    targetPath = path.join(configDir, 'models.json');
+  } else {
+    targetPath = path.join(cfg.target, 'models.json');
+  }
+
+  // Merge with existing config if it exists
+  let existingConfig = {};
+  if (fs.existsSync(targetPath)) {
+    try {
+      existingConfig = JSON.parse(fs.readFileSync(targetPath, 'utf8'));
+    } catch {
+      // Ignore parse errors, start fresh
+    }
+  }
+
+  // Deep merge: existing config + new overrides
+  const mergedConfig = deepMerge(existingConfig, modelConfig);
+
+  // Write the config
+  fs.writeFileSync(targetPath, JSON.stringify(mergedConfig, null, 2) + '\n', 'utf8');
+  console.log(`\nModel configuration saved to: ${targetPath}`);
+}
+
+/**
+ * Deep merge two objects
+ */
+function deepMerge(target, source) {
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = deepMerge(result[key] || {}, source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
+// ============================================================================
 // Main Entry Point
 // ============================================================================
 
@@ -244,6 +337,13 @@ async function loadProvider(providerName) {
   console.log(`Target: ${cfg.target}`);
   console.log(`Mode: ${cfg.mode}`);
   if (cfg.dryRun) console.log(`Dry run: enabled`);
+  if (cfg.filter) console.log(`Filter: ${cfg.filter}`);
+  if (cfg.filterRole) console.log(`Filter role: ${cfg.filterRole}`);
+  if (cfg.reasoningModel) console.log(`Reasoning model: ${cfg.reasoningModel}`);
+  if (cfg.codingModel) console.log(`Coding model: ${cfg.codingModel}`);
+  if (cfg.efficiencyModel) console.log(`Efficiency model: ${cfg.efficiencyModel}`);
+  if (cfg.save) console.log(`Save to project: enabled`);
+  if (cfg.saveUser) console.log(`Save to user config: enabled`);
 
   // Load provider module
   const provider = await loadProvider(cfg.provider);
@@ -264,12 +364,22 @@ async function loadProvider(providerName) {
     deployCommands: cfg.deployCommands,
     deploySkills: cfg.deploySkills,
     commandsOnly: cfg.commandsOnly,
-    skillsOnly: cfg.skillsOnly
+    skillsOnly: cfg.skillsOnly,
+    filter: cfg.filter,
+    filterRole: cfg.filterRole,
+    save: cfg.save,
+    saveUser: cfg.saveUser
   };
 
   // Delegate to provider
   try {
     await provider.deploy(opts);
+
+    // Save model configuration if requested
+    if ((cfg.save || cfg.saveUser) && !cfg.dryRun) {
+      await saveModelConfig(cfg, provider.name);
+    }
+
     console.log(`\n=== Deployment complete ===\n`);
   } catch (err) {
     console.error(`\nDeployment failed:`, err.message);
