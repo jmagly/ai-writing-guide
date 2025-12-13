@@ -6,10 +6,9 @@
 # MCPSmith-generated Docker containers with MCP servers.
 
 docker:
-  available: false
-  version: null
-  daemon_running: false
-  note: "Docker not available in WSL 2. Enable Docker Desktop WSL integration."
+  available: true
+  version: "29.0.1"
+  daemon_running: true
 
 node:
   available: true
@@ -25,7 +24,7 @@ mcp:
 base_images:
   node_alpine:
     image: "node:20-alpine"
-    cached: false
+    cached: true
   node_slim:
     image: "node:20-slim"
     cached: false
@@ -40,6 +39,5 @@ ports:
 
 # Capability summary
 capabilities:
-  can_build_containers: false
-  can_run_mcp_servers: false
-  reason: "Docker integration required. Enable WSL integration in Docker Desktop."
+  can_build_containers: true
+  can_run_mcp_servers: true
