@@ -765,14 +765,8 @@ Keyboard shortcuts:
 // ═══════════════════════════════════════════════════════════════════════════
 
 function init() {
-  // Navigate to default section only if no hash present
-  // Don't override deep links like #quickstart
-  if (!location.hash || location.hash === '#' || location.hash === '#/') {
-    // Use history.replaceState to avoid adding to browser history
-    history.replaceState(null, '', '#welcome');
-    // Trigger hashchange for dbbuilder to load the section
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
-  }
+  // Let dbbuilder handle routing - it already defaults to DEFAULT_SECTION
+  // Don't interfere with hash navigation here
 
   // Theme is already applied via inline script in <head>
   updateThemeButton();
