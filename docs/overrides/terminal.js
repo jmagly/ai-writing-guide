@@ -296,58 +296,60 @@ function showHelp() {
   appendLogEntry('HELP', `Available commands:\n\n${lines}\n\nTip: Type a search term to find docs.`);
 }
 
+// Store current search query for highlighting
+let currentSearchQuery = '';
+
 async function searchDocs(query) {
   if (!query.trim()) {
     appendLogEntry('SEARCH', 'Usage: search <query>\n\nExample: search agents');
     return;
   }
 
-  appendLogEntry('SEARCH', `Searching for "${query}"...`);
+  appendLogEntry('SEARCH', `Searching for "${query}"... (indexing on first search)`);
+  currentSearchQuery = query.trim();
 
   try {
     // Use dbbuilder's full-text search (searches content, not just titles)
     const results = await searchContent(MANIFEST, query);
 
-    // Display results as log entry
-    if (results.length === 0) {
-      appendLogEntry('SEARCH', `No results for "${query}"\n\nTry a different search term or browse the navigation.`);
-    } else if (results.length === 1) {
-      // Single result - navigate directly
-      appendLogEntry('SEARCH', `Found: ${results[0].title}`);
-      setTimeout(() => {
-        location.hash = `#${results[0].id}`;
-      }, 300);
-    } else {
-      // Multiple results - show list
-      const lines = results.slice(0, 10).map((r, i) =>
-        `  ${(i + 1).toString().padStart(2)}. ${r.title}${r.summary ? ` - ${r.summary}` : ''}`
-      ).join('\n');
-
-      const more = results.length > 10 ? `\n\n  ... and ${results.length - 10} more` : '';
-
-      appendLogEntry('SEARCH', `Found ${results.length} results for "${query}":\n\n${lines}${more}\n\nType a number to navigate, or refine your search.`);
-
-      // Store results for number navigation (use id instead of section)
-      window._searchResults = results.map(r => ({ section: r.id, title: r.title, summary: r.summary }));
-    }
+    displaySearchResults(results, query);
   } catch (err) {
+    console.error('Full-text search failed, falling back to title search:', err);
     // Fallback to quick filter if full search fails
     const results = filterSections(MANIFEST, query);
-
-    if (results.length === 0) {
-      appendLogEntry('SEARCH', `No results for "${query}"\n\nTry a different search term or browse the navigation.`);
-    } else {
-      const lines = results.slice(0, 10).map((r, i) =>
-        `  ${(i + 1).toString().padStart(2)}. ${r.title}${r.summary ? ` - ${r.summary}` : ''}`
-      ).join('\n');
-
-      const more = results.length > 10 ? `\n\n  ... and ${results.length - 10} more` : '';
-
-      appendLogEntry('SEARCH', `Found ${results.length} results for "${query}":\n\n${lines}${more}\n\nType a number to navigate, or refine your search.`);
-
-      window._searchResults = results.map(r => ({ section: r.id, title: r.title, summary: r.summary }));
-    }
+    displaySearchResults(results, query, true);
   }
+}
+
+function displaySearchResults(results, query, isFallback = false) {
+  const mode = isFallback ? ' (titles only)' : '';
+
+  if (results.length === 0) {
+    appendLogEntry('SEARCH', `No results for "${query}"${mode}\n\nTry a different search term or browse the navigation.`);
+    return;
+  }
+
+  // Always show list (don't auto-navigate even for single result)
+  const lines = results.slice(0, 15).map((r, i) =>
+    `  ${(i + 1).toString().padStart(2)}. ${r.title}${r.group && r.group !== r.title ? ` [${r.group}]` : ''}`
+  ).join('\n');
+
+  const more = results.length > 15 ? `\n\n  ... and ${results.length - 15} more` : '';
+
+  appendLogEntry('SEARCH', `Found ${results.length} results for "${query}"${mode}:\n\n${lines}${more}\n\nType a number to navigate (highlights will be applied).`);
+
+  // Store results for number navigation
+  window._searchResults = results.map(r => ({ section: r.id, title: r.title, summary: r.summary }));
+  window._searchQuery = query;
+}
+
+// Navigate to search result with highlighting
+function navigateWithHighlight(sectionId, query) {
+  // Store query in localStorage for dbbuilder's highlight system
+  if (query) {
+    localStorage.setItem('docs-toolkit-command-query', query);
+  }
+  location.hash = `#${sectionId}`;
 }
 
 function clearDisplay() {
@@ -374,9 +376,10 @@ async function processCommand(input) {
     const idx = num - 1;
     if (idx >= 0 && idx < window._searchResults.length) {
       const result = window._searchResults[idx];
-      appendLogEntry('NAV', `Navigating to: ${result.title}`);
-      location.hash = `#${result.section}`;
+      appendLogEntry('NAV', `Navigating to: ${result.title} (with highlights)`);
+      navigateWithHighlight(result.section, window._searchQuery);
       window._searchResults = null;
+      window._searchQuery = null;
       return;
     }
   }
