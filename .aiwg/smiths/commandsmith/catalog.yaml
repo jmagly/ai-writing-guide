@@ -1,0 +1,12 @@
+# CommandSmith Catalog
+# Auto-updated when commands are created/modified
+
+version: "1.0.0"
+last_updated: "2025-12-13"
+
+# List of created commands
+artifacts: []
+
+# Capability index for semantic matching
+# Maps natural language capabilities to command names
+capability_index: {}

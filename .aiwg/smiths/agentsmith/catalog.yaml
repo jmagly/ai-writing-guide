@@ -1,0 +1,12 @@
+# AgentSmith Catalog
+# Auto-updated when agents are created/modified
+
+version: "1.0.0"
+last_updated: "2025-12-13"
+
+# List of created agents
+artifacts: []
+
+# Capability index for semantic matching
+# Maps natural language capabilities to agent names
+capability_index: {}
