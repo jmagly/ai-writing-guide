@@ -765,9 +765,13 @@ Keyboard shortcuts:
 // ═══════════════════════════════════════════════════════════════════════════
 
 function init() {
-  // Navigate to default section if no hash present
-  if (!location.hash || location.hash === '#') {
-    location.hash = '#welcome';
+  // Navigate to default section only if no hash present
+  // Don't override deep links like #quickstart
+  if (!location.hash || location.hash === '#' || location.hash === '#/') {
+    // Use history.replaceState to avoid adding to browser history
+    history.replaceState(null, '', '#welcome');
+    // Trigger hashchange for dbbuilder to load the section
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
   }
 
   // Theme is already applied via inline script in <head>
