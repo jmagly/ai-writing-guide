@@ -298,15 +298,46 @@ function searchDocs(query) {
     return;
   }
 
-  // Open command palette with query
-  const palette = document.getElementById('commandPalette');
-  const palInput = document.getElementById('commandInput');
-  if (palette && palInput) {
-    palette.hidden = false;
-    palInput.value = query;
-    palInput.focus();
-    palInput.dispatchEvent(new Event('input'));
-    appendLogEntry('SEARCH', `Searching for "${query}"...`);
+  const lower = query.toLowerCase().trim();
+  const results = [];
+
+  // Search through nav items
+  const navItems = document.querySelectorAll('#nav button[data-section]');
+  navItems.forEach(item => {
+    const section = item.dataset.section;
+    const titleEl = item.querySelector('.nav-title');
+    const summaryEl = item.querySelector('.nav-summary');
+    const title = titleEl ? titleEl.textContent : item.textContent;
+    const summary = summaryEl ? summaryEl.textContent : '';
+
+    if (title.toLowerCase().includes(lower) ||
+        summary.toLowerCase().includes(lower) ||
+        section.toLowerCase().includes(lower)) {
+      results.push({ section, title: title.trim(), summary: summary.trim() });
+    }
+  });
+
+  // Display results as log entry
+  if (results.length === 0) {
+    appendLogEntry('SEARCH', `No results for "${query}"\n\nTry a different search term or browse the navigation.`);
+  } else if (results.length === 1) {
+    // Single result - navigate directly
+    appendLogEntry('SEARCH', `Found: ${results[0].title}`);
+    setTimeout(() => {
+      location.hash = `#${results[0].section}`;
+    }, 300);
+  } else {
+    // Multiple results - show list
+    const lines = results.slice(0, 10).map((r, i) =>
+      `  ${(i + 1).toString().padStart(2)}. ${r.title}${r.summary ? ` - ${r.summary}` : ''}`
+    ).join('\n');
+
+    const more = results.length > 10 ? `\n\n  ... and ${results.length - 10} more` : '';
+
+    appendLogEntry('SEARCH', `Found ${results.length} results for "${query}":\n\n${lines}${more}\n\nType a number to navigate, or refine your search.`);
+
+    // Store results for number navigation
+    window._searchResults = results;
   }
 }
 
@@ -327,6 +358,20 @@ function processCommand(input) {
   if (!input) return;
 
   const raw = input.trim();
+
+  // Check for number input (search result selection)
+  const num = parseInt(raw, 10);
+  if (!isNaN(num) && window._searchResults && window._searchResults.length > 0) {
+    const idx = num - 1;
+    if (idx >= 0 && idx < window._searchResults.length) {
+      const result = window._searchResults[idx];
+      appendLogEntry('NAV', `Navigating to: ${result.title}`);
+      location.hash = `#${result.section}`;
+      window._searchResults = null;
+      return;
+    }
+  }
+
   const [cmd, ...args] = raw.toLowerCase().split(/\s+/);
 
   if (COMMANDS[cmd]) {
