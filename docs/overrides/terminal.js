@@ -140,7 +140,7 @@ let contentObserver = null;
  */
 function wrapContentInLogEntry(container) {
   // Get current section from hash
-  const sectionId = location.hash.replace('#', '') || 'home';
+  const sectionId = location.hash.replace('#', '') || 'welcome';
 
   // Don't re-wrap the same section
   if (sectionId === lastSectionId) return;
@@ -254,7 +254,7 @@ const COMMANDS = {
   home: {
     description: 'Go to home page',
     handler: () => {
-      location.hash = '#home';
+      location.hash = '#welcome';
     },
   },
   version: {
@@ -583,6 +583,11 @@ function initConsole() {
   const input = document.getElementById('consoleInput');
   if (!input) return;
 
+  // Show welcome on first focus
+  input.addEventListener('focus', () => {
+    showWelcomeOnFirstInteraction();
+  }, { once: true });
+
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -601,7 +606,7 @@ function initContextIndicator() {
   if (!indicator) return;
 
   function updateContext() {
-    const hash = location.hash.replace('#', '') || 'home';
+    const hash = location.hash.replace('#', '') || 'welcome';
     indicator.textContent = `docs:${hash}`;
   }
 
@@ -719,23 +724,22 @@ function initThemeToggle() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Welcome Message
+// Welcome Message (shown on first CLI interaction)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function showWelcome() {
-  // Only show welcome if starting at home
-  if (location.hash && location.hash !== '#' && location.hash !== '#home') {
+const WELCOME_SHOWN_KEY = 'aiwg-welcome-shown';
+let welcomeShown = false;
+
+function showWelcomeOnFirstInteraction() {
+  // Check if already shown this session or previously
+  if (welcomeShown || sessionStorage.getItem(WELCOME_SHOWN_KEY)) {
     return;
   }
 
-  const app = document.getElementById('app');
-  if (!app) return;
+  welcomeShown = true;
+  sessionStorage.setItem(WELCOME_SHOWN_KEY, 'true');
 
-  // Wait for dbbuilder to load content first
-  setTimeout(() => {
-    // If dbbuilder didn't load anything, show welcome
-    if (app.children.length === 0 || !app.querySelector('.log-entry')) {
-      appendLogEntry('SYSTEM', `AIWG Documentation Terminal
+  appendLogEntry('SYSTEM', `AIWG Documentation Terminal
 
 Welcome to the AI Writing Guide documentation.
 
@@ -754,8 +758,6 @@ Keyboard shortcuts:
   t           Cycle themes
   gg          Scroll to top
   G           Scroll to bottom`);
-    }
-  }, 1000);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -774,9 +776,6 @@ function init() {
   initCopyButtons();
   initThemeToggle();
   initContentObserver();
-
-  // Show welcome after a delay to let dbbuilder load
-  setTimeout(showWelcome, 500);
 
   // Remove loading state
   document.body.classList.remove('loading');

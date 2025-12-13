@@ -101,6 +101,8 @@ kbd {
   --color-accent-blue: #60a5fa;
   --color-link: var(--color-accent-cyan);
   --color-link-hover: var(--color-accent-green);
+  /* Code text - slightly muted green for dark theme */
+  --color-code-text: #4ade80;
 
   /* Typography - System monospace fonts */
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", "Segoe UI Mono",
@@ -156,18 +158,29 @@ kbd {
   --color-accent-cyan: #0c0;
   --color-link: #0f0;
   --color-link-hover: #0c0;
+  --color-code-text: #0f0;
 }
 
 [data-theme="light"] {
-  --color-bg-page: #f5f5f5;
-  --color-bg-panel: #fff;
-  --color-bg-panel-alt: #fafafa;
-  --color-bg-input: #f0f0f0;
-  --color-border: #d0d0d0;
-  --color-border-subtle: #e0e0e0;
-  --color-text-primary: #1a1a1a;
-  --color-text-muted: #666;
-  --color-text-dim: #999;
+  /* OS/2 Warp inspired warm cream palette */
+  --color-bg-page: #e8e4d9;
+  --color-bg-panel: #f5f2e8;
+  --color-bg-panel-alt: #ebe7dc;
+  --color-bg-input: #ddd9ce;
+  --color-border: #b8b4a8;
+  --color-border-subtle: #ccc8bc;
+  --color-text-primary: #2a2520;
+  --color-text-muted: #5a554a;
+  --color-text-dim: #8a857a;
+  /* Softer accents for light mode */
+  --color-accent-cyan: #0088a0;
+  --color-accent-green: #2a7040;
+  --color-accent-yellow: #a07820;
+  --color-accent-red: #a03030;
+  --color-accent-blue: #3060a0;
+  --color-accent-purple: #704090;
+  /* Code text - darker for readability */
+  --color-code-text: #1a5030;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -490,28 +503,37 @@ body.drawer-open {
 /* Code Block with Copy Button */
 .code-block {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3);
+  padding-top: var(--space-5);
   background: var(--color-bg-input);
   border-radius: 4px;
   font-family: var(--font-mono);
   margin: var(--space-2) 0;
 }
 
+.code-block pre {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
 .code-block code {
-  flex: 1;
-  color: var(--color-accent-green);
+  color: var(--color-code-text, var(--color-accent-green));
 }
 
 .copy-btn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
   padding: var(--space-1) var(--space-2);
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
+  background: var(--color-bg-panel);
   border: 1px solid var(--color-border);
   border-radius: 2px;
   transition: var(--transition-fast);
+  cursor: pointer;
 }
 
 .copy-btn:hover {
@@ -826,7 +848,7 @@ body.loaded .sidebar {
   padding: 0.125em 0.375em;
   border-radius: 3px;
   font-size: 0.9em;
-  color: var(--color-accent-green);
+  color: var(--color-code-text);
 }
 
 .doc-content pre {
