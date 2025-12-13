@@ -5,8 +5,8 @@
   "brandSub": "Docs",
   "tagline": "Modular AI workflows for every team",
   "copyright": "AIWG Project",
-  "accentColor": "#6366F1",
-  "surfaceColor": "#F8FAFC",
+  "theme": "dark",
+  "navPosition": "right",
   "welcome": {
     "eyebrow": "AI Writing Guide",
     "headline": "Build with 93 AI Agents. Ship Faster.",
