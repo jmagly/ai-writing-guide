@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AIWG Documentation</title>
+    <meta name="description" content="AI-powered workflow guide for SDLC, marketing, and content teams" />
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+    <!-- Prevent flash of wrong theme -->
+    <script>
+      (function() {
+        const saved = localStorage.getItem('aiwg-theme');
+        if (saved && ['dark', 'light', 'matrix'].includes(saved)) {
+          document.documentElement.dataset.theme = saved;
+        }
+      })();
+    </script>
+  </head>
+  <body class="loading">
+    <a class="skip-link" href="#app">Skip to content</a>
+
+    <div class="page">
+      <!-- (A) Status Bar -->
+      <header class="status-bar">
+        <div class="status-bar__content">
+          <span class="brand">AIWG</span>
+          <span class="separator">*</span>
+          <span class="context" id="contextIndicator">docs:home</span>
+          <span class="separator">*</span>
+          <span class="mode">[LIVE]</span>
+          <div class="shortcuts">
+            <span><kbd>[?]</kbd> Help</span>
+            <span><kbd>[/]</kbd> Search</span>
+            <span><kbd>[t]</kbd> Theme</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: var(--space-2);">
+          <button type="button" id="commandToggle" class="theme-btn" aria-haspopup="dialog" aria-controls="commandPalette">
+            <span>Ctrl+K</span>
+          </button>
+          <button type="button" id="mobileMenuToggle" class="drawer-toggle" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="hamburger"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Body (2-column) -->
+      <div class="body">
+        <!-- (B) Main Panel -->
+        <main id="app" class="main-panel" tabindex="-1" aria-live="polite"></main>
+
+        <!-- (C) Sidebar -->
+        <aside id="sidebarPanel" class="sidebar" aria-label="Documentation sidebar">
+          <section class="sidebar__section">
+            <h2 class="sidebar__title">Keyboard</h2>
+            <ul class="help-list" id="helpList">
+              <li><kbd>[?]</kbd> <span>Toggle help</span></li>
+              <li><kbd>[/]</kbd> <span>Focus search</span></li>
+              <li><kbd>[t]</kbd> <span>Cycle theme</span></li>
+              <li><kbd>[gg]</kbd> <span>Scroll to top</span></li>
+              <li><kbd>[G]</kbd> <span>Scroll to bottom</span></li>
+              <li><kbd>[Esc]</kbd> <span>Close modals</span></li>
+            </ul>
+          </section>
+          <section class="sidebar__section">
+            <h2 class="sidebar__title">Navigation</h2>
+            <nav id="nav" class="nav" aria-label="Primary"></nav>
+          </section>
+          <section class="sidebar__section">
+            <h2 class="sidebar__title">Links</h2>
+            <ul class="link-list">
+              <li><a href="https://github.com/jmagly/ai-writing-guide" target="_blank" rel="noopener">> GitHub</a></li>
+              <li><a href="https://www.npmjs.com/package/aiwg" target="_blank" rel="noopener">> npm</a></li>
+              <li><a href="https://aiwg.io" target="_blank" rel="noopener">> aiwg.io</a></li>
+              <li><a href="https://discord.gg/BuAusFMxdA" target="_blank" rel="noopener">> Discord</a></li>
+            </ul>
+          </section>
+          <section class="sidebar__section">
+            <h2 class="sidebar__title">Stats</h2>
+            <div id="statsPanel" class="stats-panel">
+              <div class="stat-item">
+                <span class="stat-label">Agents</span>
+                <span class="stat-value">93</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Commands</span>
+                <span class="stat-value">95</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Providers</span>
+                <span class="stat-value">7</span>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <!-- Drawer Overlay -->
+      <div id="drawerOverlay" class="drawer-overlay"></div>
+
+      <!-- (D) Status Strip -->
+      <div class="status-strip">
+        <span id="sectionCount">--</span>
+        <span>MIT licensed | v2024.12.5</span>
+      </div>
+
+      <!-- (E) Footer / Console -->
+      <footer class="footer">
+        <div class="console">
+          <span class="console__prompt">[AIWG] ></span>
+          <input type="text" id="consoleInput" class="console__input"
+                 placeholder="search or type help..." autocomplete="off" />
+        </div>
+        <div class="footer__links">
+          <button type="button" id="themeToggle" class="theme-btn">[theme]</button>
+          <button type="button" id="exportBtn" class="theme-btn">[export]</button>
+          <span>&copy; 2025 AIWG Project</span>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Command Palette (Search) -->
+    <div id="commandPalette" class="cmd" role="dialog" aria-modal="true" aria-labelledby="commandLabel" hidden>
+      <div class="cmd-surface" role="document">
+        <div class="cmd-header">
+          <label id="commandLabel" class="cmd-title" for="commandInput">Jump to section</label>
+          <input id="commandInput" class="cmd-input" type="search" name="query" autocomplete="off" placeholder="Start typing..." />
+        </div>
+        <ul id="commandList" class="cmd-list" role="listbox"></ul>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+    <script type="module" src="./terminal.js"></script>
+  </body>
+</html>
