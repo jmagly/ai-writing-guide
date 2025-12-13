@@ -5,6 +5,55 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2024.12.5] - 2025-12-13 – "Flexible Models" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| Flexible model selection | Override models per tier when deploying agents |
+| Filter-based deployment | Deploy only specific agents by pattern or role |
+| Persistent model config | Save model preferences for future deployments |
+| Dry-run respects all flags | Preview changes accurately before applying |
+| Updated documentation | CLI, model config, and README fully documented |
+
+### Added
+
+**Flexible Model Selection** (PR #73):
+
+- **`--reasoning-model <name>`** - Override model for opus-tier agents (architecture, analysis)
+- **`--coding-model <name>`** - Override model for sonnet-tier agents (implementation, review)
+- **`--efficiency-model <name>`** - Override model for haiku-tier agents (simple tasks)
+- Works with `aiwg use` command for all providers
+
+**Filter-Based Deployment**:
+
+- **`--filter <pattern>`** - Deploy only agents matching glob pattern (e.g., `*architect*`)
+- **`--filter-role <role>`** - Deploy only agents of specified role: `reasoning`, `coding`, `efficiency`
+- Enables surgical updates to specific agent subsets
+
+**Model Persistence**:
+
+- **`--save`** - Save model configuration to project `models.json`
+- **`--save-user`** - Save to user-level `~/.config/aiwg/models.json`
+- Configurations apply to future deployments automatically
+
+**Documentation Updates**:
+
+- `docs/content/CLI_USAGE.md` - Full model selection, filter, and save flag documentation
+- `docs/content/configuration/model-configuration.md` - Updated with filter and persistence examples
+- `README.md` - Added collapsible model selection section
+
+### Fixed
+
+- **Dry-run flag in ensureDir** - Directory creation now respects `--dry-run` across all providers
+- **Skill deployment test** - Fixed test to use Claude provider (Factory doesn't support skills)
+
+### Changed
+
+- Updated `/aiwg-refresh` command to support model selection and filter flags
+- Command syntax standardized to use `aiwg use` instead of legacy `-deploy-agents`
+
+---
+
 ## [2024.12.4] - 2025-12-12 – "Universal Providers" Release
 
 | What changed | Why you care |
