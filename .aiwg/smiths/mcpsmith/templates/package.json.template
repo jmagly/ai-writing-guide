@@ -1,0 +1,25 @@
+{
+  "name": "aiwg-mcp-{{TOOL_NAME}}",
+  "version": "{{VERSION}}",
+  "description": "{{DESCRIPTION}}",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs",
+    "test": "node --test test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "zod": "^3.22.0"{{ADDITIONAL_DEPENDENCIES}}
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "MCPSmith",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "aiwg"{{KEYWORDS}}
+  ]
+}

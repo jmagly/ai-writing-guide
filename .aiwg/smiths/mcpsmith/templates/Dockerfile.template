@@ -1,0 +1,13 @@
+FROM {{BASE_IMAGE}}
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
+
+# Copy implementation
+COPY . .
+
+# MCP server runs on stdio by default
+CMD ["node", "index.mjs"]

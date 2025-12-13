@@ -1,0 +1,15 @@
+# MCPSmith Tool Catalog
+# Auto-updated when MCP tools are created/modified
+
+version: "1.0.0"
+last_updated: "2025-12-13"
+
+# List of available MCP tools
+tools: []
+
+# Currently running containers
+running_containers: []
+
+# Capability index for semantic matching
+# Maps natural language capabilities to tool names
+capability_index: {}
