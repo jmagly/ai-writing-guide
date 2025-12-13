@@ -765,6 +765,11 @@ Keyboard shortcuts:
 // ═══════════════════════════════════════════════════════════════════════════
 
 function init() {
+  // Navigate to default section if no hash present
+  if (!location.hash || location.hash === '#') {
+    location.hash = '#welcome';
+  }
+
   // Theme is already applied via inline script in <head>
   updateThemeButton();
 
