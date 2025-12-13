@@ -17,8 +17,11 @@ import path from 'path';
 
 /**
  * Ensure a directory exists, creating it recursively if needed
+ * @param {string} d - Directory path
+ * @param {boolean} dryRun - If true, skip actual directory creation
  */
-export function ensureDir(d) {
+export function ensureDir(d, dryRun = false) {
+  if (dryRun) return;
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 }
 
