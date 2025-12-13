@@ -1,0 +1,308 @@
+{
+  "default": "welcome",
+  "bottomNav": "mobile",
+  "sections": [
+    {
+      "id": "welcome",
+      "title": "Home",
+      "summary": "AIWG documentation home",
+      "file": "welcome.html"
+    },
+    {
+      "id": "quickstart",
+      "title": "Quick Start",
+      "summary": "Get started with AIWG",
+      "file": "quickstart.md"
+    },
+    {
+      "id": "quickstart-sdlc",
+      "title": "SDLC Quick Start",
+      "summary": "Get started with SDLC framework",
+      "file": "quickstart-sdlc.md"
+    },
+    {
+      "id": "quickstart-mmk",
+      "title": "Marketing Quick Start",
+      "summary": "Get started with Marketing Kit",
+      "file": "quickstart-mmk.md"
+    },
+    {
+      "id": "integrations",
+      "title": "Platform Integrations",
+      "summary": "Platform-specific setup guides",
+      "sections": [
+        {
+          "id": "integrations-overview",
+          "title": "Cross-Platform Overview",
+          "summary": "Feature matrix and platform comparison",
+          "file": "integrations/cross-platform-overview.md"
+        },
+        {
+          "id": "integrations-claude-code",
+          "title": "Claude Code",
+          "summary": "Claude Code integration guide",
+          "file": "integrations/claude-code-quickstart.md"
+        },
+        {
+          "id": "integrations-factory",
+          "title": "Factory AI",
+          "summary": "Factory AI integration guide",
+          "file": "integrations/factory-quickstart.md"
+        },
+        {
+          "id": "integrations-warp",
+          "title": "Warp Terminal",
+          "summary": "Warp Terminal integration guide",
+          "file": "integrations/warp-terminal-quickstart.md"
+        },
+        {
+          "id": "integrations-warp-details",
+          "title": "Warp Details",
+          "summary": "Detailed Warp integration",
+          "file": "integrations/warp-terminal.md"
+        },
+        {
+          "id": "integrations-cross-platform",
+          "title": "Symlink Details",
+          "summary": "WARP.md symlink configuration",
+          "file": "integrations/cross-platform-config.md"
+        }
+      ]
+    },
+    {
+      "id": "commands",
+      "title": "Commands",
+      "summary": "Slash command development",
+      "sections": [
+        {
+          "id": "cmd-overview",
+          "title": "Overview",
+          "summary": "Command development overview",
+          "file": "commands/README.md"
+        },
+        {
+          "id": "cmd-dev-guide",
+          "title": "Development Guide",
+          "summary": "Advanced command creation",
+          "file": "commands/DEVELOPMENT_GUIDE.md"
+        },
+        {
+          "id": "cmd-subagents",
+          "title": "Subagents Quick Ref",
+          "summary": "Subagent quick reference",
+          "file": "commands/subagents-README.md"
+        },
+        {
+          "id": "cmd-agents-commands",
+          "title": "Agents & Commands",
+          "summary": "Comprehensive guide",
+          "file": "commands/subagents-and-commands-guide.md"
+        }
+      ]
+    },
+    {
+      "id": "reference",
+      "title": "Reference",
+      "summary": "API and configuration reference",
+      "sections": [
+        {
+          "id": "ref-cli",
+          "title": "CLI Reference",
+          "summary": "Complete CLI command reference",
+          "file": "CLI_USAGE.md"
+        },
+        {
+          "id": "ref-agent-design",
+          "title": "Agent Design",
+          "summary": "The 10 Golden Rules",
+          "file": "AGENT-DESIGN.md"
+        },
+        {
+          "id": "ref-orchestrator",
+          "title": "Orchestrator Guide",
+          "summary": "Workflow orchestration patterns",
+          "file": "reference/ORCHESTRATOR_GUIDE.md"
+        },
+        {
+          "id": "ref-model-config",
+          "title": "Model Configuration",
+          "summary": "Model mapping and configuration",
+          "file": "configuration/model-configuration.md"
+        },
+        {
+          "id": "ref-production-grade",
+          "title": "Production Grade",
+          "summary": "Production-grade agent design",
+          "file": "production-grade-guide.md"
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "title": "Research",
+      "summary": "Academic research and specifications",
+      "sections": [
+        {
+          "id": "research-overview",
+          "title": "Overview",
+          "summary": "Research reference index",
+          "file": "references/README.md"
+        },
+        {
+          "id": "research-production-workflows",
+          "title": "Production Workflows",
+          "summary": "Bandara et al. (2024)",
+          "file": "references/REF-001-production-grade-agentic-workflows.md"
+        },
+        {
+          "id": "research-failure-modes",
+          "title": "Failure Modes",
+          "summary": "Roig (2025)",
+          "file": "references/REF-002-llm-failure-modes-agentic.md"
+        },
+        {
+          "id": "research-mcp-spec",
+          "title": "MCP Specification",
+          "summary": "Model Context Protocol",
+          "file": "references/REF-003-mcp-specification-2025.md"
+        }
+      ]
+    },
+    {
+      "id": "development",
+      "title": "Development",
+      "summary": "Extend and customize AIWG",
+      "sections": [
+        {
+          "id": "dev-overview",
+          "title": "DevKit Overview",
+          "summary": "Development kit introduction",
+          "file": "development/devkit-overview.md"
+        },
+        {
+          "id": "dev-addons",
+          "title": "Creating Addons",
+          "summary": "Create standalone addons",
+          "file": "development/addon-creation-guide.md"
+        },
+        {
+          "id": "dev-extensions",
+          "title": "Creating Extensions",
+          "summary": "Create framework extensions",
+          "file": "development/extension-creation-guide.md"
+        },
+        {
+          "id": "dev-frameworks",
+          "title": "Creating Frameworks",
+          "summary": "Create new frameworks",
+          "file": "development/framework-creation-guide.md"
+        },
+        {
+          "id": "dev-walkthrough",
+          "title": "Addon Walkthrough",
+          "summary": "Step-by-step addon creation",
+          "file": "development/walkthrough-create-addon.md"
+        }
+      ]
+    },
+    {
+      "id": "contributing",
+      "title": "Contributing",
+      "summary": "Contribute to AIWG",
+      "sections": [
+        {
+          "id": "contrib-quickstart",
+          "title": "Contributor Guide",
+          "summary": "Contributor quick start",
+          "file": "contributing/contributor-quickstart.md"
+        },
+        {
+          "id": "contrib-maintainer",
+          "title": "Maintainer Guide",
+          "summary": "Maintainer review standards",
+          "file": "contributing/maintainer-review-guide.md"
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Troubleshooting",
+      "summary": "Common issues and solutions",
+      "sections": [
+        {
+          "id": "ts-overview",
+          "title": "Overview",
+          "summary": "Troubleshooting hub",
+          "file": "troubleshooting/index.md"
+        },
+        {
+          "id": "ts-setup",
+          "title": "Setup Issues",
+          "summary": "Installation problems",
+          "file": "troubleshooting/setup-issues.md"
+        },
+        {
+          "id": "ts-deployment",
+          "title": "Deployment",
+          "summary": "Agent deployment issues",
+          "file": "troubleshooting/deployment-issues.md"
+        },
+        {
+          "id": "ts-paths",
+          "title": "Path Issues",
+          "summary": "Path and template errors",
+          "file": "troubleshooting/path-issues.md"
+        },
+        {
+          "id": "ts-platforms",
+          "title": "Platform Issues",
+          "summary": "Platform integration issues",
+          "file": "troubleshooting/platform-issues.md"
+        }
+      ]
+    },
+    {
+      "id": "releases",
+      "title": "Releases",
+      "summary": "Release notes and announcements",
+      "sections": [
+        {
+          "id": "release-v2024123",
+          "title": "v2024.12.3",
+          "summary": "It Just Works Release",
+          "file": "releases/v2024.12.3-announcement.md"
+        },
+        {
+          "id": "release-v2024122",
+          "title": "v2024.12.2",
+          "summary": "Skill Seekers Integration",
+          "file": "releases/v2024.12.2-announcement.md"
+        },
+        {
+          "id": "release-v2024121",
+          "title": "v2024.12.1",
+          "summary": "Production-Grade Reliability",
+          "file": "releases/v2024.12.1-announcement.md"
+        },
+        {
+          "id": "release-v091",
+          "title": "v0.9.1",
+          "summary": "Voice Framework & Skills System",
+          "file": "releases/v0.9.1-announcement.md"
+        }
+      ]
+    },
+    {
+      "title": "GitHub",
+      "url": "https://github.com/jmagly/ai-writing-guide"
+    },
+    {
+      "title": "Discord",
+      "url": "https://discord.gg/BuAusFMxdA"
+    },
+    {
+      "title": "npm",
+      "url": "https://www.npmjs.com/package/aiwg"
+    }
+  ]
+}

@@ -393,9 +393,12 @@ export class AgentDeployer {
 
     const platformDirs: Record<Platform, string> = {
       claude: '.claude/agents',
-      cursor: '.cursor/agents',
       codex: '.codex/agents',
+      copilot: '.github/agents',
+      cursor: '.cursor/agents',
+      factory: '.factory/droids',
       generic: 'agents',
+      windsurf: '.windsurf/agents',
     };
 
     return path.resolve(target.projectPath, platformDirs[target.platform]);

@@ -278,4 +278,120 @@ async function loadProvider(providerName) {
     }
     process.exit(1);
   }
+
+  // ============================================================================
+  // WINDSURF PROVIDER DEPLOYMENT
+  // ============================================================================
+  if (provider === 'windsurf') {
+    displayWindsurfWarning();
+
+    // Collect all agent files based on mode
+    const allAgentFiles = [];
+
+    // Writing agents
+    if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
+      const writingAddonAgentsRoot = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'agents');
+      const legacyAgentsRoot = path.join(srcRoot, 'agents');
+      const agentsRoot = fs.existsSync(writingAddonAgentsRoot) ? writingAddonAgentsRoot : legacyAgentsRoot;
+      if (fs.existsSync(agentsRoot)) {
+        allAgentFiles.push(...listMdFiles(agentsRoot));
+      }
+    }
+
+    // SDLC agents
+    if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
+      const sdlcAgentsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
+      if (fs.existsSync(sdlcAgentsRoot)) {
+        allAgentFiles.push(...listMdFiles(sdlcAgentsRoot));
+      }
+    }
+
+    // Marketing agents
+    if (mode === 'marketing' || mode === 'all') {
+      const marketingAgentsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'agents');
+      if (fs.existsSync(marketingAgentsRoot)) {
+        allAgentFiles.push(...listMdFiles(marketingAgentsRoot));
+      }
+    }
+
+    // Generate aggregated AGENTS.md (Windsurf reads this natively)
+    if (allAgentFiles.length > 0 && !commandsOnly && !skillsOnly) {
+      const agentsMdPath = path.join(target, 'AGENTS.md');
+      console.log(`\nGenerating AGENTS.md with ${allAgentFiles.length} agents for Windsurf...`);
+      generateWindsurfAgentsMd(allAgentFiles, agentsMdPath, deployOpts);
+    }
+
+    // Generate .windsurfrules with orchestration context
+    if (!commandsOnly && !skillsOnly) {
+      console.log('\nGenerating .windsurfrules orchestration file...');
+      generateWindsurfRules(srcRoot, target, deployOpts);
+    }
+
+    // Deploy commands as Windsurf workflows
+    if (deployCommands || commandsOnly) {
+      const workflowsDir = path.join(target, '.windsurf', 'workflows');
+      if (!dryRun) ensureDir(workflowsDir);
+
+      // Collect command files based on mode
+      const commandFiles = [];
+
+      if (mode === 'general' || mode === 'both' || mode === 'all') {
+        const generalCommandsRoot = path.join(srcRoot, 'commands');
+        if (fs.existsSync(generalCommandsRoot)) {
+          commandFiles.push(...listMdFilesRecursive(generalCommandsRoot));
+        }
+      }
+
+      if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
+        const sdlcCommandsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
+        if (fs.existsSync(sdlcCommandsRoot)) {
+          commandFiles.push(...listMdFilesRecursive(sdlcCommandsRoot));
+        }
+      }
+
+      if (mode === 'marketing' || mode === 'all') {
+        const marketingCommandsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'commands');
+        if (fs.existsSync(marketingCommandsRoot)) {
+          commandFiles.push(...listMdFilesRecursive(marketingCommandsRoot));
+        }
+      }
+
+      if (commandFiles.length > 0) {
+        console.log(`\nDeploying ${commandFiles.length} commands as Windsurf workflows to ${workflowsDir}...`);
+
+        for (const cmdFile of commandFiles) {
+          const content = fs.readFileSync(cmdFile, 'utf8');
+          const workflowContent = transformToWindsurfWorkflow(content);
+
+          // Check character limit (12000) - warn if exceeded
+          if (workflowContent.length > 12000) {
+            console.warn(`Warning: Workflow ${path.basename(cmdFile)} exceeds 12000 char limit (${workflowContent.length} chars)`);
+          }
+
+          const destFile = path.join(workflowsDir, path.basename(cmdFile));
+
+          if (dryRun) {
+            console.log(`[dry-run] deploy workflow: ${path.basename(cmdFile)}`);
+          } else {
+            fs.writeFileSync(destFile, workflowContent, 'utf8');
+            console.log(`deployed workflow: ${path.basename(cmdFile)}`);
+          }
+        }
+      }
+    }
+
+    // Note about skills
+    if (deploySkills || skillsOnly) {
+      console.log('\nNote: Skills are not directly supported for Windsurf. Reference skill files in prompts using @-mentions.');
+    }
+
+    console.log('\n' + '='.repeat(70));
+    console.log('Windsurf deployment complete. Generated files:');
+    console.log('  - AGENTS.md (agent catalog)');
+    console.log('  - .windsurfrules (orchestration context)');
+    if (deployCommands || commandsOnly) {
+      console.log('  - .windsurf/workflows/ (commands as workflows)');
+    }
+    console.log('='.repeat(70) + '\n');
+  }
 })();
