@@ -334,7 +334,5 @@ jq empty models.json && echo "Valid JSON" || echo "Invalid JSON"
 
 ## See Also
 
-- [Factory AI Quick Start](../integrations/factory-quickstart.md)
-- [Factory AI Compatibility](../../agentic/code/frameworks/sdlc-complete/agents/factory-compat.md)
-- [Deploy Agents Script](../../tools/agents/deploy-agents.mjs)
-- [Default Models Config](../../agentic/code/frameworks/sdlc-complete/config/models.json)
+- [Factory AI Quick Start](#integrations-factory)
+- [CLI Reference](#ref-cli)

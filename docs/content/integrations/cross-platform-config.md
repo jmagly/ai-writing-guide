@@ -154,10 +154,9 @@ So Factory gets its own `AGENTS.md` template instead of reusing CLAUDE.md.
 
 ## Related Documentation
 
-- **Claude Code Setup**: [docs/integrations/claude-code-quickstart.md](claude-code-quickstart.md)
-- **Warp Terminal Setup**: [docs/integrations/warp-terminal-quickstart.md](warp-terminal-quickstart.md)
-- **Factory AI Setup**: [docs/integrations/factory-quickstart.md](factory-quickstart.md)
-- **CLAUDE.md Contents**: [/CLAUDE.md](../../CLAUDE.md)
+- **Claude Code Setup**: [Claude Code Quick Start](#integrations-claude-code)
+- **Warp Terminal Setup**: [Warp Terminal Quick Start](#integrations-warp)
+- **Factory AI Setup**: [Factory AI Quick Start](#integrations-factory)
 
 ## Summary
 

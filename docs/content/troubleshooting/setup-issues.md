@@ -96,5 +96,5 @@ alias aiwg
 
 ## Related
 
-- [Deployment Issues](deployment-issues.md) - Agent/command deployment problems
-- [Path Issues](path-issues.md) - Template and file path errors
+- [Deployment Issues](#ts-deployment) - Agent/command deployment problems
+- [Path Issues](#ts-paths) - Template and file path errors

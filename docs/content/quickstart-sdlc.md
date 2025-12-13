@@ -144,8 +144,7 @@ Then use voice profiles when generating artifacts:
 
 ## Next Steps
 
-- **Full documentation**: [SDLC Complete README](../agentic/code/frameworks/sdlc-complete/README.md)
-- **Natural language commands**: [Simple Language Translations](../agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md)
-- **Templates**: [Template Library](../agentic/code/frameworks/sdlc-complete/templates/)
-- **Voice Framework**: [Voice Framework README](../agentic/code/addons/voice-framework/README.md)
-- **Platform setup**: [Claude Code](integrations/claude-code-quickstart.md) | [Factory AI](integrations/factory-quickstart.md) | [Warp](integrations/warp-terminal-quickstart.md)
+- **CLI Reference**: [Full CLI documentation](#ref-cli)
+- **Agent Design**: [The 10 Golden Rules](#ref-agent-design)
+- **Production Grade**: [Production-grade agent design](#ref-production-grade)
+- **Platform setup**: [Claude Code](#integrations-claude-code) | [Factory AI](#integrations-factory) | [Warp](#integrations-warp)

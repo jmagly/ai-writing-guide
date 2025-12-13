@@ -6,10 +6,10 @@ Quick solutions for common issues with the AI Writing Guide framework.
 
 | Issue | Guide |
 |-------|-------|
-| Installation problems | [Setup Issues](setup-issues.md) |
-| Agent/command not found | [Deployment Issues](deployment-issues.md) |
-| Template or path errors | [Path Issues](path-issues.md) |
-| Platform integration | [Platform Issues](platform-issues.md) |
+| Installation problems | [Setup Issues](#ts-setup) |
+| Agent/command not found | [Deployment Issues](#ts-deployment) |
+| Template or path errors | [Path Issues](#ts-paths) |
+| Platform integration | [Platform Issues](#ts-platforms) |
 
 ## Quick Help
 

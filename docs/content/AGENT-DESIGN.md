@@ -6,8 +6,8 @@ The definitive guide for designing reliable, production-grade AI agents in the A
 
 This guide synthesizes empirical findings from:
 
-- **[REF-001](./references/REF-001-production-grade-agentic-workflows.md)**: Bandara et al. (2024) "Production-Grade Agentic AI Workflows" - 9 best practices for production reliability
-- **[REF-002](./references/REF-002-llm-failure-modes-agentic.md)**: Roig (2025) "How Do LLMs Fail In Agentic Scenarios?" - 4 failure archetypes from 900 execution traces
+- **[REF-001](#research-production-workflows)**: Bandara et al. (2024) "Production-Grade Agentic AI Workflows" - 9 best practices for production reliability
+- **[REF-002](#research-failure-modes)**: Roig (2025) "How Do LLMs Fail In Agentic Scenarios?" - 4 failure archetypes from 900 execution traces
 
 **Key Empirical Finding**: Recovery capability—not model scale or initial correctness—is the dominant predictor of agentic task success. DeepSeek V3.1 achieves 92% success via post-training for verification/recovery, not architectural changes.
 
@@ -513,10 +513,9 @@ Actor (sonnet) → Executes chosen approach
 
 ## References
 
-- [REF-001: Production-Grade Agentic AI Workflows](./references/REF-001-production-grade-agentic-workflows.md)
-- [REF-002: How Do LLMs Fail In Agentic Scenarios?](./references/REF-002-llm-failure-modes-agentic.md)
-- [Unified Production Plan](../.aiwg/planning/production-grade-unified-plan.md)
-- [Roig Gap Analysis](../.aiwg/planning/roig-2025-gap-analysis.md)
+- [REF-001: Production-Grade Agentic AI Workflows](#research-production-workflows)
+- [REF-002: How Do LLMs Fail In Agentic Scenarios?](#research-failure-modes)
+- [Production-Grade Guide](#ref-production-grade)
 
 ## Revision History
 

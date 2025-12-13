@@ -1363,9 +1363,8 @@ If you encounter issues not covered here:
 
 1. **Check documentation:**
 
-   - [CONTRIBUTING.md](../../CONTRIBUTING.md)
-   - [PR Guidelines](pr-guidelines.md)
-   - [Using AIWG for Contributions](using-aiwg-for-contributions.md)
+   - [GitHub CONTRIBUTING.md](https://github.com/jmagly/ai-writing-guide/blob/main/CONTRIBUTING.md)
+   - [Maintainer Guide](#contrib-maintainer)
 
 2. **Search existing issues:**
 
@@ -1402,8 +1401,8 @@ Now that you understand the contributor workflow:
 
 2. **Read detailed guides:**
 
-   - [Using AIWG for Contributions](using-aiwg-for-contributions.md) - Deep dive into SDLC workflow
-   - [PR Guidelines](pr-guidelines.md) - PR standards and conventions
+   - [Maintainer Guide](#contrib-maintainer) - PR standards and review process
+   - [SDLC Framework](#quickstart-sdlc) - Deep dive into SDLC workflow
 
 3. **Start your first contribution:**
 

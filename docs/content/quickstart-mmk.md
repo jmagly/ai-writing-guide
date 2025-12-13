@@ -141,8 +141,8 @@ Then use voice profiles when generating content:
 
 ## Next Steps
 
-- **Full documentation**: [MMK README](../agentic/code/frameworks/media-marketing-kit/README.md)
+- **Quick Start**: [General Quick Start](#quickstart)
 - **37 Marketing agents**: Brand strategist, copywriter, SEO specialist, etc.
 - **87+ Templates**: Campaign strategy, content calendar, media kit, etc.
-- **Voice Framework**: [Voice Framework README](../agentic/code/addons/voice-framework/README.md)
-- **Platform setup**: [Claude Code](integrations/claude-code-quickstart.md) | [Factory AI](integrations/factory-quickstart.md) | [Warp](integrations/warp-terminal-quickstart.md)
+- **CLI Reference**: [Full CLI documentation](#ref-cli)
+- **Platform setup**: [Claude Code](#integrations-claude-code) | [Factory AI](#integrations-factory) | [Warp](#integrations-warp)

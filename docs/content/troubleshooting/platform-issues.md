@@ -177,5 +177,5 @@ aiwg -deploy-agents --provider factory --mode sdlc        # Factory
 
 ## Related
 
-- [Setup Issues](setup-issues.md) - Installation problems
-- [Deployment Issues](deployment-issues.md) - Agent deployment problems
+- [Setup Issues](#ts-setup) - Installation problems
+- [Deployment Issues](#ts-deployment) - Agent deployment problems

@@ -6,8 +6,8 @@ Choose your framework based on what you're building.
 
 | Framework | Purpose | Intake Methods |
 |-----------|---------|----------------|
-| **[SDLC Complete](quickstart-sdlc.md)** | Software development lifecycle | New project, existing codebase, manual |
-| **[Media/Marketing Kit](quickstart-mmk.md)** | Marketing campaign lifecycle | New campaign, existing assets, manual brief |
+| **[SDLC Complete](#quickstart-sdlc)** | Software development lifecycle | New project, existing codebase, manual |
+| **[Media/Marketing Kit](#quickstart-mmk)** | Marketing campaign lifecycle | New campaign, existing assets, manual brief |
 | **Writing Quality** | Voice profiles for authentic writing | Voice commands, profile creation |
 
 ## Platform Integration
@@ -16,9 +16,9 @@ Already know your AI platform? Jump to setup:
 
 | Platform | Setup Guide | Best For |
 |----------|-------------|----------|
-| **Claude Code** | [Quick Start](integrations/claude-code-quickstart.md) | Full multi-agent orchestration |
-| **Factory AI** | [Quick Start](integrations/factory-quickstart.md) | Native droid workflows |
-| **Warp Terminal** | [Quick Start](integrations/warp-terminal-quickstart.md) | Terminal-native workflows |
+| **Claude Code** | [Quick Start](#integrations-claude-code) | Full multi-agent orchestration |
+| **Factory AI** | [Quick Start](#integrations-factory) | Native droid workflows |
+| **Warp Terminal** | [Quick Start](#integrations-warp) | Terminal-native workflows |
 
 ## 60-Second Install
 
@@ -165,14 +165,12 @@ aiwg use writing           # Add voice profiles to SDLC project
 
 ## Next Steps
 
-1. Pick your framework: [SDLC](quickstart-sdlc.md) or [MMK](quickstart-mmk.md)
-2. Pick your platform: [Claude Code](integrations/claude-code-quickstart.md), [Factory](integrations/factory-quickstart.md), or [Warp](integrations/warp-terminal-quickstart.md)
+1. Pick your framework: [SDLC](#quickstart-sdlc) or [MMK](#quickstart-mmk)
+2. Pick your platform: [Claude Code](#integrations-claude-code), [Factory](#integrations-factory), or [Warp](#integrations-warp)
 3. Start with intake - the framework guides you from there
 
 ## References
 
-- @docs/CLI_USAGE.md - Full CLI command reference
-- @agentic/code/frameworks/sdlc-complete/README.md - SDLC Framework details
-- @agentic/code/frameworks/media-marketing-kit/README.md - Marketing Framework details
-- @agentic/code/addons/voice-framework/README.md - Voice Framework addon
-- @.aiwg/architecture/software-architecture-doc.md - System architecture
+- [CLI Reference](#ref-cli) - Full CLI command reference
+- [SDLC Framework](#quickstart-sdlc) - SDLC Framework details
+- [Marketing Framework](#quickstart-mmk) - Marketing Framework details

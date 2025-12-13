@@ -195,14 +195,13 @@ With `--fix`:
 
 Detailed guides:
 
-- [Creating Addons](./addon-creation-guide.md)
-- [Creating Extensions](./extension-creation-guide.md)
-- [Creating Frameworks](./framework-creation-guide.md)
-- [Agent Patterns](./agent-patterns.md)
-- [Command Patterns](./command-patterns.md)
+- [Creating Addons](#dev-addons)
+- [Creating Extensions](#dev-extensions)
+- [Creating Frameworks](#dev-frameworks)
+- [Addon Walkthrough](#dev-walkthrough)
 
 ## Related
 
-- [ADR-008: Plugin Type Taxonomy](../../.aiwg/architecture/decisions/ADR-008-plugin-type-taxonomy.md)
-- [ADR-009: DevKit Extends aiwg-utils](../../.aiwg/architecture/decisions/ADR-009-devkit-extends-aiwg-utils.md)
-- [SDLC Framework](../../agentic/code/frameworks/sdlc-complete/README.md)
+- [SDLC Framework Quick Start](#quickstart-sdlc)
+- [Agent Design Rules](#ref-agent-design)
+- [CLI Reference](#ref-cli)

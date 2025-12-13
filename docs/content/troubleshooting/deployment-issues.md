@@ -95,7 +95,7 @@ droid .
 # Press Enter to confirm
 ```
 
-See [Factory Quickstart](../integrations/factory-quickstart.md) for details.
+See [Factory Quickstart](#integrations-factory) for details.
 
 ## Warp Not Loading WARP.md
 
@@ -118,5 +118,5 @@ aiwg -deploy-agents --platform warp --mode sdlc
 
 ## Related
 
-- [Setup Issues](setup-issues.md) - Installation problems
-- [Platform Issues](platform-issues.md) - Platform-specific problems
+- [Setup Issues](#ts-setup) - Installation problems
+- [Platform Issues](#ts-platforms) - Platform-specific problems

@@ -6,12 +6,12 @@ This guide documents the production-grade improvements to AIWG based on academic
 
 AIWG production-grade features are grounded in peer-reviewed research:
 
-- **REF-001**: Bandara et al. (2024) ["Production-Grade Agentic AI Workflows"](./references/REF-001-production-grade-agentic-workflows.md) (arxiv 2512.08769)
-- **REF-002**: Roig (2025) ["How Do LLMs Fail In Agentic Scenarios?"](./references/REF-002-llm-failure-modes-agentic.md) (arxiv 2512.07497v2)
+- **REF-001**: Bandara et al. (2024) ["Production-Grade Agentic AI Workflows"](#research-production-workflows) (arxiv 2512.08769)
+- **REF-002**: Roig (2025) ["How Do LLMs Fail In Agentic Scenarios?"](#research-failure-modes) (arxiv 2512.07497v2)
 
 ## Agent Design Bible
 
-The [Agent Design Bible](./AGENT-DESIGN.md) defines 10 Golden Rules for building production-grade agents.
+The [Agent Design Bible](#ref-agent-design) defines 10 Golden Rules for building production-grade agents.
 
 ### Quick Reference
 
@@ -437,7 +437,7 @@ aiwg wire-mentions --interactive
 
 ## References
 
-- [Agent Design Bible](./AGENT-DESIGN.md) - 10 Golden Rules
-- [REF-001](./references/REF-001-production-grade-agentic-workflows.md) - Production-Grade Research
-- [REF-002](./references/REF-002-llm-failure-modes-agentic.md) - LLM Failure Modes
-- [SDLC Framework](../agentic/code/frameworks/sdlc-complete/README.md) - Complete lifecycle
+- [Agent Design Bible](#ref-agent-design) - 10 Golden Rules
+- [REF-001](#research-production-workflows) - Production-Grade Research
+- [REF-002](#research-failure-modes) - LLM Failure Modes
+- [SDLC Framework](#quickstart-sdlc) - Complete lifecycle

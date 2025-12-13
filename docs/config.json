@@ -1,0 +1,49 @@
+{
+  "title": "AIWG Documentation",
+  "description": "AI-powered workflow guide for SDLC, marketing, and content teams",
+  "brandMark": "AIWG",
+  "brandSub": "Docs",
+  "tagline": "Modular AI workflows for every team",
+  "copyright": "AIWG Project",
+  "accentColor": "#6366F1",
+  "surfaceColor": "#F8FAFC",
+  "welcome": {
+    "eyebrow": "AI Writing Guide",
+    "headline": "Build with 93 AI Agents. Ship Faster.",
+    "lead": "Deploy production-ready AI workflows for software development, marketing campaigns, and content creation in minutes.",
+    "pillars": [
+      "58 SDLC agents manage requirements to deployment",
+      "37 marketing agents run campaigns like an agency",
+      "Voice framework controls tone across all outputs"
+    ],
+    "checklist": [
+      "Install globally: npm i -g aiwg",
+      "Deploy to any project: aiwg use sdlc",
+      "Work naturally: just describe what you need"
+    ],
+    "quickLinks": [
+      { "label": "Get Started", "href": "#/quickstart" },
+      { "label": "SDLC Framework", "href": "#/quickstart-sdlc" },
+      { "label": "View on GitHub", "href": "https://github.com/jmagly/ai-writing-guide" }
+    ],
+    "quote": "Stop writing prompts. Start shipping software."
+  },
+  "seo": {
+    "enabled": true,
+    "siteUrl": "https://docs.aiwg.dev",
+    "generateSitemap": true,
+    "generateStaticPages": true,
+    "generateRobotsTxt": true,
+    "defaultChangeFreq": "weekly",
+    "structuredData": {
+      "organizationName": "AIWG Project",
+      "logoUrl": "https://docs.aiwg.dev/assets/favicon.svg"
+    }
+  },
+  "export": {
+    "logo": "embed",
+    "logoPath": "favicon.svg",
+    "showTagline": true,
+    "showDate": true
+  }
+}
