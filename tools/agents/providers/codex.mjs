@@ -148,7 +148,7 @@ export function transformCommand(srcPath, content, opts) {
  */
 export function deployAgents(agentFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.agents);
-  ensureDir(destDir);
+  ensureDir(destDir, opts.dryRun);
   return deployFiles(agentFiles, destDir, opts, transformAgent);
 }
 

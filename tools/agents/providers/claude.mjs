@@ -142,7 +142,7 @@ export function transformCommand(srcPath, content, opts) {
  */
 export function deployAgents(agentFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.agents);
-  ensureDir(destDir);
+  ensureDir(destDir, opts.dryRun);
   return deployFiles(agentFiles, destDir, opts, transformAgent);
 }
 
@@ -151,7 +151,7 @@ export function deployAgents(agentFiles, targetDir, opts) {
  */
 export function deployCommands(commandFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.commands);
-  ensureDir(destDir);
+  ensureDir(destDir, opts.dryRun);
   return deployFiles(commandFiles, destDir, opts, transformCommand);
 }
 
@@ -161,7 +161,7 @@ export function deployCommands(commandFiles, targetDir, opts) {
  */
 export function deploySkills(skillDirs, targetDir, opts) {
   const destDir = path.join(targetDir, paths.skills);
-  ensureDir(destDir);
+  ensureDir(destDir, opts.dryRun);
 
   for (const skillDir of skillDirs) {
     deploySkillDir(skillDir, destDir, opts);
@@ -174,7 +174,7 @@ export function deploySkills(skillDirs, targetDir, opts) {
  */
 export function deployRules(ruleFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.rules);
-  ensureDir(destDir);
+  ensureDir(destDir, opts.dryRun);
   return deployFiles(ruleFiles, destDir, opts, transformCommand);
 }
 

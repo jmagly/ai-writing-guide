@@ -242,7 +242,7 @@ ${body.trim().split('\n').map(line => '  ' + line).join('\n')}`;
  */
 export function deployAgents(agentFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.agents);
-  ensureDir(destDir);
+  ensureDir(destDir, opts.dryRun);
   return deployFiles(agentFiles, destDir, { ...opts, fileExtension: '.yaml' }, transformAgent);
 }
 
@@ -251,7 +251,7 @@ export function deployAgents(agentFiles, targetDir, opts) {
  */
 export function deployCommands(commandFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.commands);
-  ensureDir(destDir);
+  ensureDir(destDir, opts.dryRun);
   return deployFiles(commandFiles, destDir, { ...opts, fileExtension: '.yaml' }, transformCommand);
 }
 

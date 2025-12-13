@@ -208,15 +208,15 @@ describe('CLI Installation Smoke Tests', () => {
   });
 
   describe('smoke: provider skill support', () => {
-    it('should deploy skills to Factory provider', () => {
+    it('should deploy skills to Claude provider', () => {
       const result = execSync(
-        `node ${DEPLOY_SCRIPT} --target ${testDir} --provider factory --deploy-skills --dry-run 2>&1`,
+        `node ${DEPLOY_SCRIPT} --target ${testDir} --provider claude --deploy-skills --dry-run 2>&1`,
         { encoding: 'utf-8', timeout: 30000 }
       );
 
-      // Skills should deploy to Factory (multi-provider support)
-      expect(result).toMatch(/Deploying.*skills.*to.*factory/i);
-      expect(result).toMatch(/\.factory\/skills/);
+      // Skills should deploy to Claude (Factory doesn't support skills)
+      expect(result).toMatch(/Deploying.*skills/i);
+      expect(result).toMatch(/\.claude\/skills/);
     });
   });
 });
