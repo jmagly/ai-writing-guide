@@ -1,14 +1,38 @@
 /**
  * AIWG Docs - Terminal Enhancements
- * Adds terminal aesthetic features to dbbuilder docs
+ * Makes docs site work like aiwg.io with log entry pattern and console commands
  */
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Theme Switching
+// Constants
 // ═══════════════════════════════════════════════════════════════════════════
 
 const THEME_KEY = 'aiwg-theme';
 const THEMES = ['dark', 'light', 'matrix'];
+
+// Author categories for log entry styling
+const AUTHOR_MAP = {
+  'quickstart': 'INSTALL',
+  'getting-started': 'INSTALL',
+  'installation': 'INSTALL',
+  'cli': 'INSTALL',
+  'agents': 'FEATURES',
+  'commands': 'FEATURES',
+  'frameworks': 'FEATURES',
+  'sdlc': 'FEATURES',
+  'marketing': 'FEATURES',
+  'integrations': 'FEATURES',
+  'changelog': 'RELEASE',
+  'releases': 'RELEASE',
+  'announcements': 'RELEASE',
+  'troubleshooting': 'HELP',
+  'faq': 'HELP',
+  'support': 'HELP',
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Theme Switching
+// ═══════════════════════════════════════════════════════════════════════════
 
 function getTheme() {
   return document.documentElement.dataset.theme || 'dark';
@@ -36,6 +60,311 @@ function updateThemeButton() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Log Entry System
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get author category from section ID
+ */
+function getAuthorFromSection(sectionId) {
+  if (!sectionId) return 'SYSTEM';
+
+  const lower = sectionId.toLowerCase();
+  for (const [key, author] of Object.entries(AUTHOR_MAP)) {
+    if (lower.includes(key)) return author;
+  }
+  return 'DOCS';
+}
+
+/**
+ * Create a log entry element
+ */
+function createLogEntry(author, content, title = '') {
+  const entry = document.createElement('article');
+  entry.className = 'log-entry';
+  entry.dataset.author = author;
+
+  const header = document.createElement('header');
+  header.className = 'log-entry__header';
+  header.innerHTML = `
+    <span class="author">${author}</span>
+    <span class="timestamp">${title || new Date().toLocaleTimeString()}</span>
+  `;
+
+  const body = document.createElement('div');
+  body.className = 'log-entry__body';
+
+  if (typeof content === 'string') {
+    body.innerHTML = `<pre>${escapeHtml(content)}</pre>`;
+  } else if (content instanceof HTMLElement) {
+    body.appendChild(content);
+  } else {
+    body.innerHTML = content;
+  }
+
+  entry.appendChild(header);
+  entry.appendChild(body);
+  return entry;
+}
+
+/**
+ * Append a text log entry to the main panel
+ */
+function appendLogEntry(author, content, title = '') {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  const entry = createLogEntry(author, content, title);
+  app.appendChild(entry);
+  entry.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/**
+ * Escape HTML for safe display
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Content Wrapping
+// ═══════════════════════════════════════════════════════════════════════════
+
+let lastSectionId = null;
+let contentObserver = null;
+
+/**
+ * Wrap new content in log entry format
+ */
+function wrapContentInLogEntry(container) {
+  // Get current section from hash
+  const sectionId = location.hash.replace('#', '') || 'home';
+
+  // Don't re-wrap the same section
+  if (sectionId === lastSectionId) return;
+  lastSectionId = sectionId;
+
+  // Find the section element (dbbuilder creates <section> or content directly)
+  const section = container.querySelector('section') || container.querySelector('article');
+  if (!section) return;
+
+  // Check if already wrapped
+  if (section.closest('.log-entry')) return;
+
+  // Get title from first heading or section id
+  const heading = section.querySelector('h1, h2');
+  const title = heading ? heading.textContent : sectionId;
+
+  // Determine author category
+  const author = getAuthorFromSection(sectionId);
+
+  // Create wrapper
+  const wrapper = document.createElement('article');
+  wrapper.className = 'log-entry';
+  wrapper.dataset.author = author;
+
+  const header = document.createElement('header');
+  header.className = 'log-entry__header';
+  header.innerHTML = `
+    <span class="author">${author}</span>
+    <span class="timestamp">${title}</span>
+  `;
+
+  const body = document.createElement('div');
+  body.className = 'log-entry__body';
+
+  // Move all content into the body
+  while (container.firstChild) {
+    body.appendChild(container.firstChild);
+  }
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(body);
+  container.appendChild(wrapper);
+
+  // Scroll to top of new content
+  container.scrollTop = 0;
+  wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/**
+ * Initialize content observer to wrap loaded content
+ */
+function initContentObserver() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  contentObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        // Debounce to let dbbuilder finish rendering
+        setTimeout(() => wrapContentInLogEntry(app), 50);
+        break;
+      }
+    }
+  });
+
+  contentObserver.observe(app, { childList: true, subtree: false });
+
+  // Wrap initial content if present
+  if (app.children.length > 0) {
+    setTimeout(() => wrapContentInLogEntry(app), 100);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Console Commands
+// ═══════════════════════════════════════════════════════════════════════════
+
+const COMMANDS = {
+  help: {
+    description: 'Show available commands',
+    handler: () => showHelp(),
+  },
+  search: {
+    description: 'Search documentation',
+    handler: (args) => searchDocs(args.join(' ')),
+  },
+  theme: {
+    description: 'Switch theme: dark | light | matrix',
+    handler: (args) => {
+      const theme = args[0] || 'dark';
+      if (THEMES.includes(theme)) {
+        setTheme(theme);
+        appendLogEntry('THEME', `Switched to "${theme}" theme`);
+      } else {
+        cycleTheme();
+        appendLogEntry('THEME', `Switched to "${getTheme()}" theme`);
+      }
+    },
+  },
+  clear: {
+    description: 'Clear the display',
+    handler: () => clearDisplay(),
+  },
+  top: {
+    description: 'Scroll to top',
+    handler: () => {
+      scrollToTop();
+      appendLogEntry('NAV', 'Scrolled to top');
+    },
+  },
+  home: {
+    description: 'Go to home page',
+    handler: () => {
+      location.hash = '#home';
+    },
+  },
+  version: {
+    description: 'Show AIWG version',
+    handler: () => appendLogEntry('VERSION', 'AIWG Docs v2024.12.5'),
+  },
+  github: {
+    description: 'Open GitHub repo',
+    handler: () => {
+      window.open('https://github.com/jmagly/ai-writing-guide', '_blank');
+      appendLogEntry('NAV', 'Opened GitHub repository');
+    },
+  },
+  npm: {
+    description: 'Open npm package',
+    handler: () => {
+      window.open('https://www.npmjs.com/package/aiwg', '_blank');
+      appendLogEntry('NAV', 'Opened npm package');
+    },
+  },
+  discord: {
+    description: 'Open Discord community',
+    handler: () => {
+      window.open('https://discord.gg/BuAusFMxdA', '_blank');
+      appendLogEntry('NAV', 'Opened Discord community');
+    },
+  },
+};
+
+function showHelp() {
+  const lines = Object.entries(COMMANDS)
+    .map(([name, { description }]) => `  ${name.padEnd(12)} ${description}`)
+    .join('\n');
+
+  appendLogEntry('HELP', `Available commands:\n\n${lines}\n\nTip: Type a search term to find docs.`);
+}
+
+function searchDocs(query) {
+  if (!query.trim()) {
+    appendLogEntry('SEARCH', 'Usage: search <query>\n\nExample: search agents');
+    return;
+  }
+
+  // Open command palette with query
+  const palette = document.getElementById('commandPalette');
+  const palInput = document.getElementById('commandInput');
+  if (palette && palInput) {
+    palette.hidden = false;
+    palInput.value = query;
+    palInput.focus();
+    palInput.dispatchEvent(new Event('input'));
+    appendLogEntry('SEARCH', `Searching for "${query}"...`);
+  }
+}
+
+function clearDisplay() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  // Keep only the current section, remove log history
+  const entries = app.querySelectorAll('.log-entry');
+  entries.forEach((entry, index) => {
+    if (index > 0) entry.remove();
+  });
+
+  appendLogEntry('SYSTEM', 'Display cleared. Current section retained.');
+}
+
+function processCommand(input) {
+  if (!input) return;
+
+  const raw = input.trim();
+  const [cmd, ...args] = raw.toLowerCase().split(/\s+/);
+
+  if (COMMANDS[cmd]) {
+    COMMANDS[cmd].handler(args);
+    return;
+  }
+
+  // Try to match section navigation
+  if (tryNavigateToSection(raw)) {
+    return;
+  }
+
+  // Treat as search query
+  searchDocs(raw);
+}
+
+/**
+ * Try to navigate to a section by name
+ */
+function tryNavigateToSection(query) {
+  // Look for nav items matching the query
+  const navItems = document.querySelectorAll('#nav button[data-section]');
+  const lower = query.toLowerCase();
+
+  for (const item of navItems) {
+    const section = item.dataset.section;
+    const title = item.textContent.toLowerCase();
+
+    if (section.toLowerCase() === lower || title.includes(lower)) {
+      location.hash = `#${section}`;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Keyboard Shortcuts
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -55,8 +384,7 @@ function initKeyboard() {
       closeDrawer();
       const palette = document.getElementById('commandPalette');
       if (palette && !palette.hidden) {
-        // Let the palette handle its own escape
-        return;
+        return; // Let palette handle its own escape
       }
     }
 
@@ -93,6 +421,16 @@ function initKeyboard() {
         e.preventDefault();
         scrollToBottom();
         break;
+
+      case 'j':
+        e.preventDefault();
+        scrollDown();
+        break;
+
+      case 'k':
+        e.preventDefault();
+        scrollUp();
+        break;
     }
 
     lastKey = e.key;
@@ -126,6 +464,20 @@ function scrollToBottom() {
   const mainPanel = document.querySelector('.main-panel');
   if (mainPanel) {
     mainPanel.scrollTo({ top: mainPanel.scrollHeight, behavior: 'smooth' });
+  }
+}
+
+function scrollDown() {
+  const mainPanel = document.querySelector('.main-panel');
+  if (mainPanel) {
+    mainPanel.scrollBy({ top: 100, behavior: 'smooth' });
+  }
+}
+
+function scrollUp() {
+  const mainPanel = document.querySelector('.main-panel');
+  if (mainPanel) {
+    mainPanel.scrollBy({ top: -100, behavior: 'smooth' });
   }
 }
 
@@ -195,51 +547,6 @@ function initConsole() {
   });
 }
 
-function processCommand(cmd) {
-  if (!cmd) return;
-
-  const [command, ...args] = cmd.split(/\s+/);
-
-  switch (command.toLowerCase()) {
-    case 'help':
-      // Open command palette
-      document.getElementById('commandToggle')?.click();
-      break;
-
-    case 'theme':
-      const theme = args[0]?.toLowerCase();
-      if (THEMES.includes(theme)) {
-        setTheme(theme);
-      } else {
-        cycleTheme();
-      }
-      break;
-
-    case 'top':
-      scrollToTop();
-      break;
-
-    case 'bottom':
-      scrollToBottom();
-      break;
-
-    case 'clear':
-      // Nothing to clear in docs context
-      break;
-
-    default:
-      // Treat as search - open palette with query
-      const palette = document.getElementById('commandPalette');
-      const palInput = document.getElementById('commandInput');
-      if (palette && palInput) {
-        palette.hidden = false;
-        palInput.value = cmd;
-        palInput.focus();
-        palInput.dispatchEvent(new Event('input'));
-      }
-  }
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // Context Indicator
 // ═══════════════════════════════════════════════════════════════════════════
@@ -265,7 +572,6 @@ function initSectionCounter() {
   const counter = document.getElementById('sectionCount');
   if (!counter) return;
 
-  // Count nav items as proxy for sections
   function updateCount() {
     const nav = document.getElementById('nav');
     if (nav) {
@@ -274,7 +580,7 @@ function initSectionCounter() {
     }
   }
 
-  // Update after nav is built (small delay to let dbbuilder init)
+  // Update after nav is built
   setTimeout(updateCount, 500);
 }
 
@@ -368,12 +674,51 @@ function initThemeToggle() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Welcome Message
+// ═══════════════════════════════════════════════════════════════════════════
+
+function showWelcome() {
+  // Only show welcome if starting at home
+  if (location.hash && location.hash !== '#' && location.hash !== '#home') {
+    return;
+  }
+
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  // Wait for dbbuilder to load content first
+  setTimeout(() => {
+    // If dbbuilder didn't load anything, show welcome
+    if (app.children.length === 0 || !app.querySelector('.log-entry')) {
+      appendLogEntry('SYSTEM', `AIWG Documentation Terminal
+
+Welcome to the AI Writing Guide documentation.
+
+Type "help" for available commands.
+Use the navigation panel or search to explore.
+
+Quick commands:
+  help        Show all commands
+  search      Search documentation
+  theme       Switch theme (dark/light/matrix)
+  clear       Clear display
+
+Keyboard shortcuts:
+  ?           Toggle help panel
+  /           Focus search
+  t           Cycle themes
+  gg          Scroll to top
+  G           Scroll to bottom`);
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Initialize
 // ═══════════════════════════════════════════════════════════════════════════
 
 function init() {
   // Theme is already applied via inline script in <head>
-  // Just update the button text
   updateThemeButton();
 
   initKeyboard();
@@ -383,6 +728,10 @@ function init() {
   initSectionCounter();
   initCopyButtons();
   initThemeToggle();
+  initContentObserver();
+
+  // Show welcome after a delay to let dbbuilder load
+  setTimeout(showWelcome, 500);
 
   // Remove loading state
   document.body.classList.remove('loading');

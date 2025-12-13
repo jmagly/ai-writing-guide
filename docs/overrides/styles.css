@@ -468,6 +468,24 @@ body.drawer-open {
 .log-entry[data-author="FEATURES"] .author { color: var(--color-accent-blue); }
 .log-entry[data-author="RELEASE"] .author { color: var(--color-accent-red); }
 .log-entry[data-author="HELP"] .author { color: var(--color-text-muted); }
+.log-entry[data-author="DOCS"] .author { color: var(--color-accent-cyan); }
+.log-entry[data-author="NAV"] .author { color: var(--color-accent-green); }
+.log-entry[data-author="THEME"] .author { color: var(--color-accent-yellow); }
+.log-entry[data-author="VERSION"] .author { color: var(--color-accent-blue); }
+.log-entry[data-author="SEARCH"] .author { color: var(--color-accent-cyan); }
+
+/* Log entry pre for console output */
+.log-entry__body pre {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
 
 /* Code Block with Copy Button */
 .code-block {
