@@ -97,6 +97,30 @@ aiwg use sdlc --provider openai
 
 </details>
 
+<details>
+<summary><strong>Model selection options</strong></summary>
+
+```bash
+# Override model for reasoning-tier agents (opus)
+aiwg use sdlc --reasoning-model claude-opus-4-2
+
+# Override model for coding-tier agents (sonnet)
+aiwg use sdlc --coding-model claude-sonnet-5
+
+# Override multiple tiers and save for future deployments
+aiwg use sdlc --reasoning-model opus-4-2 --coding-model sonnet-5 --save
+
+# Only update specific agents
+aiwg use sdlc --filter "*architect*" --reasoning-model opus-4-2
+
+# Only update reasoning-tier agents
+aiwg use sdlc --filter-role reasoning --reasoning-model custom-model
+```
+
+See [Model Configuration Guide](docs/content/configuration/model-configuration.md) for details.
+
+</details>
+
 **Start a new project** — Full SDLC scaffolding in seconds:
 
 ```bash
