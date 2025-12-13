@@ -27,9 +27,3 @@ export {
   type FileStats
 } from './filesystem-sandbox';
 
-export {
-  GitSandbox,
-  type GitLogOptions,
-  type GitCommit,
-  type GitStatus
-} from './git-sandbox';

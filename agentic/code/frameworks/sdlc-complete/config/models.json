@@ -51,6 +51,22 @@
     }
   },
 
+  "windsurf": {
+    "_status": "EXPERIMENTAL",
+    "reasoning": {
+      "model": "claude-opus-4-1-20250805",
+      "description": "Windsurf uses Claude models via API (experimental)"
+    },
+    "coding": {
+      "model": "claude-sonnet-4-5-20250929",
+      "description": "Windsurf uses Claude models via API (experimental)"
+    },
+    "efficiency": {
+      "model": "claude-haiku-3-5",
+      "description": "Windsurf uses Claude models via API (experimental)"
+    }
+  },
+
   "shorthand": {
     "opus": "claude-opus-4-1-20250805",
     "sonnet": "claude-sonnet-4-5-20250929",

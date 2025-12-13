@@ -28,7 +28,7 @@ Usage: aiwg <command> [options]
 
 Framework Management:
   use <framework>       Install and deploy framework (sdlc, marketing, writing, all)
-                        Options: --no-utils, --provider <claude|copilot|factory|openai>, --force
+                        Options: --no-utils, --provider <claude|copilot|factory|openai|windsurf>, --force
   list                  List installed frameworks and addons
   remove <id>           Remove a framework or addon
 
@@ -65,6 +65,7 @@ Platform Options:
   --provider copilot    Deploy for GitHub Copilot
   --provider factory    Deploy for Factory AI
   --provider openai     Deploy for OpenAI/Codex
+  --provider windsurf   Deploy for Windsurf (EXPERIMENTAL)
 
 Examples:
   aiwg use sdlc                    Install SDLC framework
