@@ -3,6 +3,10 @@
  * Makes docs site work like aiwg.io with log entry pattern and console commands
  */
 
+// Import dbbuilder's search functionality
+import { MANIFEST } from './manifest.js';
+import { searchContent, filterSections } from './lib/search.js';
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
 // ═══════════════════════════════════════════════════════════════════════════
@@ -292,52 +296,57 @@ function showHelp() {
   appendLogEntry('HELP', `Available commands:\n\n${lines}\n\nTip: Type a search term to find docs.`);
 }
 
-function searchDocs(query) {
+async function searchDocs(query) {
   if (!query.trim()) {
     appendLogEntry('SEARCH', 'Usage: search <query>\n\nExample: search agents');
     return;
   }
 
-  const lower = query.toLowerCase().trim();
-  const results = [];
+  appendLogEntry('SEARCH', `Searching for "${query}"...`);
 
-  // Search through nav items
-  const navItems = document.querySelectorAll('#nav button[data-section]');
-  navItems.forEach(item => {
-    const section = item.dataset.section;
-    const titleEl = item.querySelector('.nav-title');
-    const summaryEl = item.querySelector('.nav-summary');
-    const title = titleEl ? titleEl.textContent : item.textContent;
-    const summary = summaryEl ? summaryEl.textContent : '';
+  try {
+    // Use dbbuilder's full-text search (searches content, not just titles)
+    const results = await searchContent(MANIFEST, query);
 
-    if (title.toLowerCase().includes(lower) ||
-        summary.toLowerCase().includes(lower) ||
-        section.toLowerCase().includes(lower)) {
-      results.push({ section, title: title.trim(), summary: summary.trim() });
+    // Display results as log entry
+    if (results.length === 0) {
+      appendLogEntry('SEARCH', `No results for "${query}"\n\nTry a different search term or browse the navigation.`);
+    } else if (results.length === 1) {
+      // Single result - navigate directly
+      appendLogEntry('SEARCH', `Found: ${results[0].title}`);
+      setTimeout(() => {
+        location.hash = `#${results[0].id}`;
+      }, 300);
+    } else {
+      // Multiple results - show list
+      const lines = results.slice(0, 10).map((r, i) =>
+        `  ${(i + 1).toString().padStart(2)}. ${r.title}${r.summary ? ` - ${r.summary}` : ''}`
+      ).join('\n');
+
+      const more = results.length > 10 ? `\n\n  ... and ${results.length - 10} more` : '';
+
+      appendLogEntry('SEARCH', `Found ${results.length} results for "${query}":\n\n${lines}${more}\n\nType a number to navigate, or refine your search.`);
+
+      // Store results for number navigation (use id instead of section)
+      window._searchResults = results.map(r => ({ section: r.id, title: r.title, summary: r.summary }));
     }
-  });
+  } catch (err) {
+    // Fallback to quick filter if full search fails
+    const results = filterSections(MANIFEST, query);
 
-  // Display results as log entry
-  if (results.length === 0) {
-    appendLogEntry('SEARCH', `No results for "${query}"\n\nTry a different search term or browse the navigation.`);
-  } else if (results.length === 1) {
-    // Single result - navigate directly
-    appendLogEntry('SEARCH', `Found: ${results[0].title}`);
-    setTimeout(() => {
-      location.hash = `#${results[0].section}`;
-    }, 300);
-  } else {
-    // Multiple results - show list
-    const lines = results.slice(0, 10).map((r, i) =>
-      `  ${(i + 1).toString().padStart(2)}. ${r.title}${r.summary ? ` - ${r.summary}` : ''}`
-    ).join('\n');
+    if (results.length === 0) {
+      appendLogEntry('SEARCH', `No results for "${query}"\n\nTry a different search term or browse the navigation.`);
+    } else {
+      const lines = results.slice(0, 10).map((r, i) =>
+        `  ${(i + 1).toString().padStart(2)}. ${r.title}${r.summary ? ` - ${r.summary}` : ''}`
+      ).join('\n');
 
-    const more = results.length > 10 ? `\n\n  ... and ${results.length - 10} more` : '';
+      const more = results.length > 10 ? `\n\n  ... and ${results.length - 10} more` : '';
 
-    appendLogEntry('SEARCH', `Found ${results.length} results for "${query}":\n\n${lines}${more}\n\nType a number to navigate, or refine your search.`);
+      appendLogEntry('SEARCH', `Found ${results.length} results for "${query}":\n\n${lines}${more}\n\nType a number to navigate, or refine your search.`);
 
-    // Store results for number navigation
-    window._searchResults = results;
+      window._searchResults = results.map(r => ({ section: r.id, title: r.title, summary: r.summary }));
+    }
   }
 }
 
@@ -354,7 +363,7 @@ function clearDisplay() {
   appendLogEntry('SYSTEM', 'Display cleared. Current section retained.');
 }
 
-function processCommand(input) {
+async function processCommand(input) {
   if (!input) return;
 
   const raw = input.trim();
@@ -375,7 +384,7 @@ function processCommand(input) {
   const [cmd, ...args] = raw.toLowerCase().split(/\s+/);
 
   if (COMMANDS[cmd]) {
-    COMMANDS[cmd].handler(args);
+    await COMMANDS[cmd].handler(args);
     return;
   }
 
@@ -384,8 +393,8 @@ function processCommand(input) {
     return;
   }
 
-  // Treat as search query
-  searchDocs(raw);
+  // Treat as search query (async)
+  await searchDocs(raw);
 }
 
 /**
