@@ -23,8 +23,19 @@ export class AgentPackager {
       case 'codex':
         content = this.convertToCodexFormat(agent);
         break;
+      case 'copilot':
+        // Copilot uses generic format - manual setup required
+        content = this.convertToGenericFormat(agent);
+        break;
+      case 'factory':
+        // Factory uses Claude format but deployment scripts transform tools/models separately
+        content = this.convertToClaudeFormat(agent);
+        break;
       case 'generic':
         content = this.convertToGenericFormat(agent);
+        break;
+      case 'windsurf':
+        content = this.convertToWindsurfFormat(agent);
         break;
       default:
         throw new Error(`Unknown platform: ${platform}`);
@@ -186,13 +197,58 @@ export class AgentPackager {
   }
 
   /**
+   * Convert to Windsurf format (plain markdown, no YAML frontmatter)
+   *
+   * Windsurf uses AGENTS.md for directory-scoped instructions.
+   * Individual agent definitions use clean markdown sections.
+   */
+  convertToWindsurfFormat(agent: AgentInfo): string {
+    const { metadata, content } = agent;
+    const lines: string[] = [];
+
+    // Windsurf prefers clean markdown without YAML frontmatter
+    lines.push(`### ${metadata.name}`);
+    lines.push('');
+
+    // Only add description if present
+    if (metadata.description) {
+      lines.push(`> ${metadata.description}`);
+      lines.push('');
+    }
+
+    // Include capabilities in a structured way
+    if (metadata.tools && metadata.tools.length > 0) {
+      lines.push('<capabilities>');
+      for (const tool of metadata.tools) {
+        lines.push(`- ${tool}`);
+      }
+      lines.push('</capabilities>');
+      lines.push('');
+    }
+
+    // Add model info if present
+    if (metadata.model) {
+      lines.push(`**Model**: ${metadata.model}`);
+      lines.push('');
+    }
+
+    // Add the agent's system instructions
+    lines.push(content);
+
+    return lines.join('\n');
+  }
+
+  /**
    * Get file extension for platform
    */
   getFileExtension(platform: Platform): string {
     switch (platform) {
       case 'claude':
       case 'codex':
+      case 'copilot':
+      case 'factory':
       case 'generic':
+      case 'windsurf':
         return '.md';
       case 'cursor':
         return '.json';

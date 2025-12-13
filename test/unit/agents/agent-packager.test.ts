@@ -175,6 +175,72 @@ describe('AgentPackager', () => {
     });
   });
 
+  describe('convertToWindsurfFormat', () => {
+    it('should convert to Windsurf markdown format without YAML frontmatter', () => {
+      const agent = createSampleAgent();
+      const result = packager.convertToWindsurfFormat(agent);
+
+      // Should NOT have YAML frontmatter
+      expect(result).not.toMatch(/^---/);
+
+      // Should have heading and description
+      expect(result).toContain('### test-agent');
+      expect(result).toContain('> A test agent for packaging');
+
+      // Should have capabilities block
+      expect(result).toContain('<capabilities>');
+      expect(result).toContain('- Read');
+      expect(result).toContain('- Write');
+      expect(result).toContain('- Bash');
+      expect(result).toContain('</capabilities>');
+
+      // Should have model info
+      expect(result).toContain('**Model**: sonnet');
+
+      // Should have content
+      expect(result).toContain('# Test Agent');
+      expect(result).toContain('You are a test agent.');
+    });
+
+    it('should handle agents without tools', () => {
+      const agent: AgentInfo = {
+        metadata: {
+          name: 'minimal-agent',
+          description: 'Minimal agent',
+        },
+        content: 'Agent content',
+        filePath: '/path/to/minimal.md',
+        fileName: 'minimal.md',
+      };
+
+      const result = packager.convertToWindsurfFormat(agent);
+
+      expect(result).toContain('### minimal-agent');
+      expect(result).toContain('> Minimal agent');
+      expect(result).not.toContain('<capabilities>');
+      expect(result).not.toContain('**Model**:');
+      expect(result).toContain('Agent content');
+    });
+
+    it('should handle agents without description', () => {
+      const agent: AgentInfo = {
+        metadata: {
+          name: 'no-desc-agent',
+          description: '',
+        },
+        content: 'Content here',
+        filePath: '/path/to/agent.md',
+        fileName: 'agent.md',
+      };
+
+      const result = packager.convertToWindsurfFormat(agent);
+
+      expect(result).toContain('### no-desc-agent');
+      expect(result).not.toContain('> '); // No empty description
+      expect(result).toContain('Content here');
+    });
+  });
+
   describe('getFileExtension', () => {
     it('should return .md for claude', () => {
       expect(packager.getFileExtension('claude')).toBe('.md');
@@ -191,6 +257,18 @@ describe('AgentPackager', () => {
     it('should return .md for generic', () => {
       expect(packager.getFileExtension('generic')).toBe('.md');
     });
+
+    it('should return .md for windsurf', () => {
+      expect(packager.getFileExtension('windsurf')).toBe('.md');
+    });
+
+    it('should return .md for factory', () => {
+      expect(packager.getFileExtension('factory')).toBe('.md');
+    });
+
+    it('should return .md for copilot', () => {
+      expect(packager.getFileExtension('copilot')).toBe('.md');
+    });
   });
 
   describe('getFileName', () => {
@@ -201,6 +279,9 @@ describe('AgentPackager', () => {
       expect(packager.getFileName(agent, 'cursor')).toBe('test-agent.json');
       expect(packager.getFileName(agent, 'codex')).toBe('test-agent.md');
       expect(packager.getFileName(agent, 'generic')).toBe('test-agent.md');
+      expect(packager.getFileName(agent, 'windsurf')).toBe('test-agent.md');
+      expect(packager.getFileName(agent, 'factory')).toBe('test-agent.md');
+      expect(packager.getFileName(agent, 'copilot')).toBe('test-agent.md');
     });
   });
 
@@ -236,6 +317,33 @@ describe('AgentPackager', () => {
       const packaged = await packager.package(agent, 'generic');
 
       expect(packaged.format).toBe('generic');
+      expect(packaged.content).toContain('<!--');
+    });
+
+    it('should package for windsurf platform', async () => {
+      const agent = createSampleAgent();
+      const packaged = await packager.package(agent, 'windsurf');
+
+      expect(packaged.format).toBe('windsurf');
+      expect(packaged.content).toContain('### test-agent');
+      expect(packaged.content).not.toMatch(/^---/); // No YAML frontmatter
+    });
+
+    it('should package for factory platform', async () => {
+      const agent = createSampleAgent();
+      const packaged = await packager.package(agent, 'factory');
+
+      expect(packaged.format).toBe('factory');
+      // Factory uses Claude format
+      expect(packaged.content).toContain('name: test-agent');
+    });
+
+    it('should package for copilot platform', async () => {
+      const agent = createSampleAgent();
+      const packaged = await packager.package(agent, 'copilot');
+
+      expect(packaged.format).toBe('copilot');
+      // Copilot uses generic format
       expect(packaged.content).toContain('<!--');
     });
 

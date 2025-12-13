@@ -4,7 +4,22 @@
  * Defines interfaces and types for multi-platform agent deployment.
  */
 
-export type Platform = 'claude' | 'cursor' | 'codex' | 'generic';
+/**
+ * Supported deployment platforms/providers.
+ *
+ * | Platform   | Agent Location           | Config File          | Status        |
+ * |------------|--------------------------|----------------------|---------------|
+ * | claude     | .claude/agents/          | CLAUDE.md            | ✅ Full       |
+ * | factory    | .factory/droids/         | AGENTS.md            | ✅ Full       |
+ * | cursor     | .cursor/agents/          | .cursorrules         | ✅ Full       |
+ * | codex      | .codex/agents/           | AGENTS.md            | ✅ Full       |
+ * | windsurf   | AGENTS.md (aggregated)   | .windsurfrules       | 🧪 Experimental |
+ * | copilot    | .github/                 | copilot-instructions | 📋 Manual     |
+ * | generic    | agents/                  | varies               | ✅ Full       |
+ *
+ * CLI usage: --provider <platform> or --platform <platform>
+ */
+export type Platform = 'claude' | 'codex' | 'copilot' | 'cursor' | 'factory' | 'generic' | 'windsurf';
 export type AgentCategory = 'writing-quality' | 'sdlc' | 'security' | 'testing' | 'architecture' | 'documentation' | 'general';
 
 /**
