@@ -1,0 +1,309 @@
+{
+  "$schema": "https://github.com/jmagly/ai-writing-guide/schemas/models-v2.schema.json",
+  "$id": "https://github.com/jmagly/ai-writing-guide/models-config-v2.json",
+  "title": "AIWG Model Configuration v2",
+  "description": "Enhanced model configuration with tier system for AIWG SDLC framework",
+  "version": "2.0.0",
+  "lastUpdated": "2025-12-12",
+
+  "defaults": {
+    "tier": "standard",
+    "provider": "claude"
+  },
+
+  "tiers": {
+    "economy": {
+      "description": "Fastest, lowest cost. For development, testing, simple tasks.",
+      "costMultiplier": 0.1,
+      "roleMapping": {
+        "reasoning": "efficiency",
+        "coding": "efficiency",
+        "efficiency": "efficiency"
+      }
+    },
+    "standard": {
+      "description": "Balanced speed, quality, cost. General production use.",
+      "costMultiplier": 1.0,
+      "roleMapping": {
+        "reasoning": "coding",
+        "coding": "coding",
+        "efficiency": "efficiency"
+      }
+    },
+    "premium": {
+      "description": "Higher quality for complex tasks. Critical production paths.",
+      "costMultiplier": 3.0,
+      "roleMapping": {
+        "reasoning": "reasoning",
+        "coding": "coding",
+        "efficiency": "coding"
+      }
+    },
+    "max-quality": {
+      "description": "Best available models. Architecture, security, critical decisions.",
+      "costMultiplier": 10.0,
+      "roleMapping": {
+        "reasoning": "reasoning",
+        "coding": "reasoning",
+        "efficiency": "reasoning"
+      }
+    }
+  },
+
+  "providers": {
+    "claude": {
+      "models": {
+        "reasoning": {
+          "default": "claude-opus-4-5-20251101",
+          "aliases": ["opus", "opus-4.5", "claude-opus"],
+          "capabilities": ["long-context", "reasoning", "code-generation", "vision", "tool-use"],
+          "contextWindow": 200000,
+          "costPer1kTokens": { "input": 0.015, "output": 0.075 }
+        },
+        "coding": {
+          "default": "claude-sonnet-4-5-20250929",
+          "aliases": ["sonnet", "sonnet-4.5", "claude-sonnet"],
+          "capabilities": ["code-generation", "reasoning", "vision", "tool-use"],
+          "contextWindow": 200000,
+          "costPer1kTokens": { "input": 0.003, "output": 0.015 }
+        },
+        "efficiency": {
+          "default": "claude-haiku-3-5",
+          "aliases": ["haiku", "haiku-3.5", "claude-haiku"],
+          "capabilities": ["code-generation", "fast-response", "tool-use"],
+          "contextWindow": 200000,
+          "costPer1kTokens": { "input": 0.00025, "output": 0.00125 }
+        }
+      },
+      "tierOverrides": {
+        "max-quality": {
+          "reasoning": "claude-opus-4-5-20251101",
+          "coding": "claude-opus-4-5-20251101",
+          "efficiency": "claude-sonnet-4-5-20250929"
+        }
+      }
+    },
+
+    "openai": {
+      "models": {
+        "reasoning": {
+          "default": "gpt-5",
+          "aliases": ["gpt5", "openai-reasoning", "o3"],
+          "capabilities": ["reasoning", "code-generation", "vision", "tool-use"],
+          "contextWindow": 128000,
+          "costPer1kTokens": { "input": 0.01, "output": 0.03 }
+        },
+        "coding": {
+          "default": "gpt-5-codex",
+          "aliases": ["codex", "openai-coding", "gpt5-codex"],
+          "capabilities": ["code-generation", "reasoning", "tool-use"],
+          "contextWindow": 128000,
+          "costPer1kTokens": { "input": 0.005, "output": 0.015 }
+        },
+        "efficiency": {
+          "default": "gpt-4o-mini",
+          "aliases": ["gpt4o-mini", "openai-fast", "mini"],
+          "capabilities": ["fast-response", "code-generation"],
+          "contextWindow": 128000,
+          "costPer1kTokens": { "input": 0.00015, "output": 0.0006 }
+        }
+      },
+      "tierOverrides": {
+        "max-quality": {
+          "reasoning": "gpt-5.2",
+          "coding": "gpt-5",
+          "efficiency": "gpt-5-codex"
+        },
+        "premium": {
+          "reasoning": "gpt-5",
+          "coding": "gpt-5-codex",
+          "efficiency": "gpt-4o"
+        }
+      }
+    },
+
+    "factory": {
+      "inherits": "claude",
+      "description": "Factory AI uses Claude models via API proxy"
+    },
+
+    "copilot": {
+      "models": {
+        "reasoning": {
+          "default": "claude-sonnet-4",
+          "aliases": ["copilot-reasoning", "sonnet"],
+          "capabilities": ["reasoning", "code-generation"],
+          "contextWindow": 128000
+        },
+        "coding": {
+          "default": "gpt-4o",
+          "aliases": ["copilot-coding", "gpt4o"],
+          "capabilities": ["code-generation", "fast-response"],
+          "contextWindow": 128000
+        },
+        "efficiency": {
+          "default": "gpt-4o-mini",
+          "aliases": ["copilot-fast", "mini"],
+          "capabilities": ["fast-response"],
+          "contextWindow": 128000
+        }
+      }
+    },
+
+    "windsurf": {
+      "_status": "EXPERIMENTAL",
+      "inherits": "claude",
+      "description": "Windsurf IDE uses Claude models (experimental support)"
+    },
+
+    "opencode": {
+      "models": {
+        "reasoning": {
+          "default": "anthropic:claude-sonnet-4-20250514",
+          "aliases": ["opencode-reasoning"],
+          "capabilities": ["reasoning", "code-generation"]
+        },
+        "coding": {
+          "default": "anthropic:claude-sonnet-4-20250514",
+          "aliases": ["opencode-coding"],
+          "capabilities": ["code-generation"]
+        },
+        "efficiency": {
+          "default": "anthropic:claude-haiku-3-5-20241022",
+          "aliases": ["opencode-fast"],
+          "capabilities": ["fast-response"]
+        }
+      }
+    }
+  },
+
+  "agentRoleAssignments": {
+    "orchestration": {
+      "agents": [
+        "executive-orchestrator",
+        "intake-coordinator",
+        "project-manager",
+        "deployment-manager"
+      ],
+      "defaultRole": "reasoning",
+      "minimumTier": "premium",
+      "rationale": "Orchestration agents coordinate complex multi-agent workflows requiring sophisticated reasoning"
+    },
+    "architecture": {
+      "agents": [
+        "architecture-designer",
+        "security-architect",
+        "cloud-architect",
+        "test-architect",
+        "api-designer"
+      ],
+      "defaultRole": "reasoning",
+      "minimumTier": "premium",
+      "rationale": "Architecture decisions have long-term impact and require deep analysis"
+    },
+    "analysis": {
+      "agents": [
+        "requirements-analyst",
+        "system-analyst",
+        "business-process-analyst",
+        "domain-expert",
+        "metrics-analyst"
+      ],
+      "defaultRole": "reasoning",
+      "minimumTier": "standard",
+      "rationale": "Analysis tasks benefit from strong reasoning but can use standard tier"
+    },
+    "implementation": {
+      "agents": [
+        "software-implementer",
+        "database-optimizer",
+        "devops-engineer",
+        "integration-engineer",
+        "performance-engineer"
+      ],
+      "defaultRole": "coding",
+      "minimumTier": "standard",
+      "rationale": "Implementation benefits from balanced quality and speed"
+    },
+    "review": {
+      "agents": [
+        "code-reviewer",
+        "security-auditor",
+        "requirements-reviewer",
+        "security-gatekeeper"
+      ],
+      "defaultRole": "coding",
+      "minimumTier": "standard",
+      "rationale": "Reviews need quality but benefit from throughput"
+    },
+    "documentation": {
+      "agents": [
+        "technical-writer",
+        "api-documenter",
+        "documentation-archivist",
+        "documentation-synthesizer",
+        "architecture-documenter",
+        "test-documenter",
+        "requirements-documenter"
+      ],
+      "defaultRole": "coding",
+      "minimumTier": "standard",
+      "rationale": "Documentation is important but typically iterative"
+    },
+    "testing": {
+      "agents": [
+        "test-engineer",
+        "test-architect",
+        "mutation-analyst",
+        "debugger"
+      ],
+      "defaultRole": "coding",
+      "minimumTier": "standard",
+      "rationale": "Testing requires good code generation capabilities"
+    },
+    "operational": {
+      "agents": [
+        "configuration-manager",
+        "environment-engineer",
+        "build-engineer",
+        "reliability-engineer",
+        "incident-responder"
+      ],
+      "defaultRole": "efficiency",
+      "minimumTier": "economy",
+      "rationale": "Operational tasks are often routine and benefit from speed"
+    },
+    "support": {
+      "agents": [
+        "context-librarian",
+        "traceability-manager",
+        "toolsmith",
+        "support-lead"
+      ],
+      "defaultRole": "efficiency",
+      "minimumTier": "economy",
+      "rationale": "Support roles handle routine coordination tasks"
+    }
+  },
+
+  "shorthand": {
+    "opus": "claude-opus-4-5-20251101",
+    "opus-4.1": "claude-opus-4-1-20250805",
+    "sonnet": "claude-sonnet-4-5-20250929",
+    "haiku": "claude-haiku-3-5",
+    "gpt5": "gpt-5",
+    "gpt5.2": "gpt-5.2",
+    "gpt4o": "gpt-4o",
+    "gpt4o-mini": "gpt-4o-mini",
+    "inherit": "inherit"
+  },
+
+  "_comments": {
+    "migration": "This v2 schema extends v1; existing configs remain compatible",
+    "tiersExplained": "Tiers abstract model selection: economy uses fast models, max-quality uses best available",
+    "minimumTier": "Agents with minimumTier set will not downgrade below that tier unless --ignore-minimums is used",
+    "providerInheritance": "Providers can inherit from others to reduce duplication",
+    "customTiers": "Users can define custom tiers in their personal or project config files",
+    "costEstimates": "costPer1kTokens are approximate and may change; used for estimation only"
+  }
+}

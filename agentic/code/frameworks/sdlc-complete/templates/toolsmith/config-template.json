@@ -1,0 +1,95 @@
+{
+  "$schema": "https://aiwg.io/schemas/toolsmith/config-v1.json",
+  "version": "1.0",
+  "discovery": {
+    "autoDiscoverOnInit": true,
+    "refreshIntervalHours": 24,
+    "categories": ["core", "languages", "utilities", "custom"],
+    "excludePatterns": [
+      "*-dev",
+      "*-dbg",
+      "*-doc",
+      "*.py",
+      "*.sh"
+    ],
+    "includeSystemPath": true,
+    "additionalPaths": [
+      "~/.local/bin",
+      "~/.cargo/bin",
+      "~/.npm-global/bin",
+      "/usr/local/go/bin"
+    ]
+  },
+  "generation": {
+    "preferLocalManPages": true,
+    "fetchRemoteDocs": false,
+    "includeExamples": true,
+    "exampleCount": 5,
+    "platformAdaptation": true
+  },
+  "caching": {
+    "enabled": true,
+    "ttlDays": 30,
+    "maxCacheSizeMb": 50,
+    "autoUpdateOnVersionChange": true
+  },
+  "output": {
+    "format": "markdown",
+    "includeFrontmatter": true,
+    "compactMode": false
+  },
+  "knownTools": {
+    "core": [
+      "bash",
+      "sh",
+      "git",
+      "curl",
+      "wget",
+      "ssh",
+      "scp",
+      "rsync",
+      "tar",
+      "gzip",
+      "unzip"
+    ],
+    "languages": [
+      "node",
+      "npm",
+      "npx",
+      "python",
+      "python3",
+      "pip",
+      "pip3",
+      "go",
+      "cargo",
+      "rustc",
+      "ruby",
+      "gem",
+      "java",
+      "javac",
+      "mvn",
+      "gradle"
+    ],
+    "utilities": [
+      "jq",
+      "yq",
+      "ripgrep",
+      "rg",
+      "fd",
+      "fzf",
+      "bat",
+      "exa",
+      "htop",
+      "tmux",
+      "vim",
+      "nvim",
+      "docker",
+      "docker-compose",
+      "kubectl",
+      "terraform",
+      "aws",
+      "gcloud",
+      "az"
+    ]
+  }
+}

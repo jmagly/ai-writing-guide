@@ -46,6 +46,19 @@ MCP Server:
   mcp install [target]  Generate MCP client config (claude, copilot, factory, cursor)
   mcp info              Show MCP server capabilities
 
+Toolsmith (Runtime Discovery):
+  runtime-info          Show runtime environment summary
+  runtime-info --discover        Full tool discovery and catalog generation
+  runtime-info --verify          Verify existing catalog accuracy
+  runtime-info --check <tool>    Check specific tool availability
+  runtime-info --json            Output as JSON
+
+Model Catalog:
+  catalog list          List all models in catalog
+  catalog info <id>     Show detailed model information
+  catalog search <q>    Search models by query
+                        Options: --provider, --status, --tag, --min-context
+
 Utilities:
   -prefill-cards        Prefill SDLC card metadata from team profile
   -contribute-start     Start AIWG contribution workflow
@@ -86,7 +99,10 @@ Examples:
   aiwg --use-main                  Switch to bleeding edge mode
   aiwg mcp serve                   Start MCP server
   aiwg mcp install claude          Configure Claude Code to use AIWG MCP
-  aiwg mcp install factory         Configure Factory AI to use AIWG MCP
+  aiwg runtime-info --discover     Discover installed tools
+  aiwg runtime-info --check git    Check if git is available
+  aiwg catalog list                List available models
+  aiwg catalog info opus           Show model details
 `);
 }
 
@@ -188,6 +204,119 @@ async function handleUse(args) {
 }
 
 /**
+ * Handle 'runtime-info' command - Toolsmith runtime discovery
+ */
+async function handleRuntimeInfo(args) {
+  const { RuntimeDiscovery } = await import('../smiths/toolsmith/runtime-discovery.mjs');
+  const discovery = new RuntimeDiscovery();
+
+  const hasDiscover = args.includes('--discover');
+  const hasVerify = args.includes('--verify');
+  const hasJson = args.includes('--json');
+  const checkIndex = args.indexOf('--check');
+  const hasCheck = checkIndex >= 0;
+
+  try {
+    if (hasDiscover) {
+      // Full discovery
+      const catalog = await discovery.discover();
+
+      if (hasJson) {
+        console.log(JSON.stringify(catalog, null, 2));
+      } else {
+        console.log(`\nDiscovery complete!`);
+        console.log(`Discovered ${catalog.tools.length} tools`);
+        console.log(`Unavailable: ${catalog.unavailable.length}`);
+        console.log(`\nCatalog saved to: ${path.join(discovery.basePath, 'runtime.json')}`);
+        console.log(`Human-readable: ${path.join(discovery.basePath, 'runtime-info.md')}`);
+      }
+    } else if (hasVerify) {
+      // Verify existing catalog
+      const result = await discovery.verify();
+
+      if (hasJson) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        console.log(`\nVerification complete!`);
+        console.log(`Valid: ${result.valid}/${result.total}`);
+
+        if (result.failed.length > 0) {
+          console.log(`\nFailed tools:`);
+          result.failed.forEach(tool => {
+            console.log(`  - ${tool.name} (${tool.id})`);
+          });
+        }
+      }
+    } else if (hasCheck) {
+      // Check specific tool
+      const toolName = args[checkIndex + 1];
+
+      if (!toolName) {
+        console.error('Error: Tool name required for --check');
+        process.exit(1);
+      }
+
+      const check = await discovery.checkTool(toolName);
+
+      if (hasJson) {
+        console.log(JSON.stringify(check, null, 2));
+      } else {
+        console.log(`\nTool: ${toolName}`);
+
+        if (check.available) {
+          console.log(`Status: Available`);
+          console.log(`Version: ${check.version}`);
+          console.log(`Path: ${check.path}`);
+          console.log(`Verified: ${check.lastVerified}`);
+        } else {
+          console.log(`Status: Not Available`);
+          console.log(`Install: ${check.installHint}`);
+        }
+      }
+    } else {
+      // Show summary (default)
+      const summary = await discovery.getSummary();
+
+      if (hasJson) {
+        console.log(JSON.stringify(summary, null, 2));
+      } else {
+        console.log(`\nRuntime Environment Summary`);
+        console.log(`===========================`);
+        console.log(`\nOS: ${summary.environment.os} (${summary.environment.osVersion}) ${summary.environment.arch}`);
+        console.log(`Shell: ${summary.environment.shell}`);
+        console.log(`Memory: ${summary.resources.memoryAvailableGb} GB available / ${summary.resources.memoryTotalGb} GB total`);
+        console.log(`Disk: ${summary.resources.diskFreeGb} GB free`);
+        console.log(`CPU Cores: ${summary.resources.cpuCores}`);
+
+        console.log(`\nTool Categories:`);
+        console.log(`  Core:       ${summary.toolCounts.core} tools`);
+        console.log(`  Languages:  ${summary.toolCounts.languages} tools`);
+        console.log(`  Utilities:  ${summary.toolCounts.utilities} tools`);
+        console.log(`  Custom:     ${summary.toolCounts.custom} tools`);
+
+        console.log(`\nTotal: ${summary.totalTools} verified tools`);
+        console.log(`\nLast Discovery: ${summary.lastDiscovery}`);
+        console.log(`Catalog: ${summary.catalogPath}`);
+
+        console.log(`\nRun 'aiwg runtime-info --discover' to refresh catalog`);
+        console.log(`\nRun 'aiwg runtime-info --check <tool>' to check a specific tool`);
+      }
+    }
+  } catch (error) {
+    if (error.message.includes('No catalog found')) {
+      console.log(`\nNo runtime catalog found.`);
+      console.log(`Run 'aiwg runtime-info --discover' to create one.`);
+    } else {
+      console.error(`\nError: ${error.message}`);
+      if (process.env.DEBUG) {
+        console.error(error.stack);
+      }
+      process.exit(1);
+    }
+  }
+}
+
+/**
  * Main CLI runner
  * @param {string[]} args - Command line arguments
  * @param {object} options - Options including packageRoot
@@ -244,6 +373,17 @@ export async function run(args, options = {}) {
     case 'mcp':
       const { main: mcpMain } = await import('../mcp/cli.mjs');
       await mcpMain(commandArgs);
+      break;
+
+    // Toolsmith - Runtime Discovery
+    case 'runtime-info':
+      await handleRuntimeInfo(commandArgs);
+      break;
+
+    // Model Catalog
+    case 'catalog':
+      const { main: catalogMain } = await import('../catalog/cli.mjs');
+      await catalogMain(commandArgs);
       break;
 
     // Utilities

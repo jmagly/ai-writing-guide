@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aiwg-builtin-models.json",
+  "title": "AIWG Built-in Model Catalog",
+  "description": "Core models shipped with AIWG, manually curated and verified",
+  "models": {
+    "claude-opus-4-5-20251101": {
+      "provider": "anthropic",
+      "displayName": "Claude Opus 4.5",
+      "releaseDate": "2025-11-01",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 8192,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "excellent",
+        "coding": "excellent",
+        "speed": "fair"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.015,
+        "outputPer1kTokens": 0.075,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["opus", "opus-4.5", "claude-opus"],
+      "tags": ["flagship", "reasoning", "long-context"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "claude-opus-4-1-20250805": {
+      "provider": "anthropic",
+      "displayName": "Claude Opus 4.1",
+      "releaseDate": "2025-08-05",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 8192,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "excellent",
+        "coding": "excellent",
+        "speed": "fair"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.015,
+        "outputPer1kTokens": 0.075,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["opus-4.1"],
+      "tags": ["reasoning", "long-context"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "claude-sonnet-4-5-20250929": {
+      "provider": "anthropic",
+      "displayName": "Claude Sonnet 4.5",
+      "releaseDate": "2025-09-29",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 8192,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "excellent",
+        "coding": "excellent",
+        "speed": "good"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.003,
+        "outputPer1kTokens": 0.015,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["sonnet", "sonnet-4.5", "claude-sonnet"],
+      "tags": ["balanced", "coding", "long-context"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "claude-sonnet-4-20250514": {
+      "provider": "anthropic",
+      "displayName": "Claude Sonnet 4",
+      "releaseDate": "2025-05-14",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 8192,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "good",
+        "coding": "excellent",
+        "speed": "good"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.003,
+        "outputPer1kTokens": 0.015,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["sonnet-4"],
+      "tags": ["coding", "long-context"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "claude-haiku-3-5": {
+      "provider": "anthropic",
+      "displayName": "Claude Haiku 3.5",
+      "releaseDate": "2024-11-01",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 8192,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "good",
+        "coding": "good",
+        "speed": "excellent"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.00025,
+        "outputPer1kTokens": 0.00125,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["haiku", "haiku-3.5", "claude-haiku"],
+      "tags": ["fast", "efficient", "long-context"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "claude-3-opus-20240229": {
+      "provider": "anthropic",
+      "displayName": "Claude 3 Opus",
+      "releaseDate": "2024-02-29",
+      "status": "deprecated",
+      "deprecated": true,
+      "deprecationDate": "2025-08-01",
+      "successorModel": "claude-opus-4-1-20250805",
+      "capabilities": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 4096,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "excellent",
+        "coding": "excellent",
+        "speed": "poor"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.015,
+        "outputPer1kTokens": 0.075,
+        "currency": "USD",
+        "lastUpdated": "2025-08-01"
+      },
+      "aliases": ["opus-3", "claude-3-opus"],
+      "tags": ["deprecated", "legacy"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "gpt-4o": {
+      "provider": "openai",
+      "displayName": "GPT-4o",
+      "releaseDate": "2024-05-13",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 4096,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "good",
+        "coding": "excellent",
+        "speed": "excellent"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.005,
+        "outputPer1kTokens": 0.015,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["gpt4o"],
+      "tags": ["multimodal", "fast", "coding"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "gpt-4o-mini": {
+      "provider": "openai",
+      "displayName": "GPT-4o Mini",
+      "releaseDate": "2024-07-18",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 4096,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "fair",
+        "coding": "good",
+        "speed": "excellent"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.00015,
+        "outputPer1kTokens": 0.0006,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["gpt4o-mini"],
+      "tags": ["efficient", "fast", "budget"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "gpt-4-turbo": {
+      "provider": "openai",
+      "displayName": "GPT-4 Turbo",
+      "releaseDate": "2024-04-09",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 4096,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "excellent",
+        "coding": "excellent",
+        "speed": "good"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.01,
+        "outputPer1kTokens": 0.03,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["gpt4-turbo"],
+      "tags": ["reasoning", "coding"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "o1": {
+      "provider": "openai",
+      "displayName": "OpenAI o1",
+      "releaseDate": "2024-09-12",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 32768,
+        "vision": false,
+        "toolUse": false,
+        "streaming": false,
+        "reasoning": "excellent",
+        "coding": "excellent",
+        "speed": "poor"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.015,
+        "outputPer1kTokens": 0.06,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": ["o1-preview"],
+      "tags": ["reasoning", "long-output"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "o1-mini": {
+      "provider": "openai",
+      "displayName": "OpenAI o1-mini",
+      "releaseDate": "2024-09-12",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 16384,
+        "vision": false,
+        "toolUse": false,
+        "streaming": false,
+        "reasoning": "good",
+        "coding": "excellent",
+        "speed": "good"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.003,
+        "outputPer1kTokens": 0.012,
+        "currency": "USD",
+        "lastUpdated": "2025-12-01"
+      },
+      "aliases": [],
+      "tags": ["reasoning", "coding", "efficient"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    },
+    "gemini-2.0-flash-exp": {
+      "provider": "google",
+      "displayName": "Gemini 2.0 Flash (Experimental)",
+      "releaseDate": "2024-12-11",
+      "status": "preview",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 8192,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "good",
+        "coding": "good",
+        "speed": "excellent"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0,
+        "outputPer1kTokens": 0,
+        "currency": "USD",
+        "lastUpdated": "2024-12-11"
+      },
+      "aliases": ["gemini-2-flash"],
+      "tags": ["preview", "long-context", "multimodal", "free"],
+      "source": "builtin",
+      "lastVerified": "2025-12-12"
+    }
+  },
+  "providers": {
+    "anthropic": {
+      "displayName": "Anthropic",
+      "apiEndpoint": "https://api.anthropic.com",
+      "modelsEndpoint": "https://api.anthropic.com/v1/models",
+      "docsUrl": "https://docs.anthropic.com",
+      "pricingUrl": "https://www.anthropic.com/pricing"
+    },
+    "openai": {
+      "displayName": "OpenAI",
+      "apiEndpoint": "https://api.openai.com",
+      "modelsEndpoint": "https://api.openai.com/v1/models",
+      "docsUrl": "https://platform.openai.com/docs",
+      "pricingUrl": "https://openai.com/pricing"
+    },
+    "google": {
+      "displayName": "Google AI",
+      "apiEndpoint": "https://generativelanguage.googleapis.com",
+      "modelsEndpoint": "https://generativelanguage.googleapis.com/v1/models",
+      "docsUrl": "https://ai.google.dev/docs",
+      "pricingUrl": "https://ai.google.dev/pricing"
+    },
+    "openrouter": {
+      "displayName": "OpenRouter",
+      "apiEndpoint": "https://openrouter.ai/api",
+      "modelsEndpoint": "https://openrouter.ai/api/v1/models",
+      "docsUrl": "https://openrouter.ai/docs",
+      "pricingUrl": "https://openrouter.ai/models"
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastRefresh": "2025-12-12T00:00:00Z",
+    "modelCount": 12,
+    "providerCount": 4
+  }
+}

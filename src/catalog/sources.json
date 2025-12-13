@@ -1,0 +1,41 @@
+{
+  "refreshSchedule": {
+    "automatic": false,
+    "intervalDays": 7,
+    "onStartup": false,
+    "notifyOnNew": true
+  },
+  "sources": {
+    "anthropic": {
+      "enabled": true,
+      "endpoint": "https://api.anthropic.com/v1/models",
+      "requiresAuth": true,
+      "authEnvVar": "ANTHROPIC_API_KEY",
+      "cacheDuration": "7d"
+    },
+    "openai": {
+      "enabled": true,
+      "endpoint": "https://api.openai.com/v1/models",
+      "requiresAuth": true,
+      "authEnvVar": "OPENAI_API_KEY",
+      "cacheDuration": "7d"
+    },
+    "openrouter": {
+      "enabled": true,
+      "endpoint": "https://openrouter.ai/api/v1/models",
+      "requiresAuth": false,
+      "cacheDuration": "1d"
+    },
+    "github-litellm": {
+      "enabled": true,
+      "endpoint": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+      "requiresAuth": false,
+      "cacheDuration": "3d"
+    }
+  },
+  "fallbackBehavior": {
+    "onSourceFailure": "use-cache",
+    "maxCacheAge": "30d",
+    "alertOnStale": true
+  }
+}
