@@ -199,18 +199,57 @@ cat > models.json <<'EOF'
 EOF
 
 # Deploy with project-specific models
-aiwg -deploy-agents --provider factory --mode sdlc
+aiwg use sdlc --provider factory
 ```
 
 ## Command-Line Overrides
 
-You can also override models on the command line (takes precedence over config files):
+You can override models on the command line (takes precedence over config files):
 
 ```bash
-aiwg -deploy-agents --provider factory --mode sdlc \
-  --reasoning-model my-reasoning-model \
-  --coding-model my-coding-model \
-  --efficiency-model my-efficiency-model
+# Override all model tiers
+aiwg use sdlc --reasoning-model opus-4-2 --coding-model sonnet-5 --efficiency-model haiku-4
+
+# Override just the reasoning tier
+aiwg use sdlc --reasoning-model claude-opus-4-2
+
+# Override and save for future deployments
+aiwg use sdlc --reasoning-model opus-4-2 --save
+```
+
+### Selective Deployment with Filters
+
+Apply model changes to specific agents using filters:
+
+```bash
+# Only update architect agents
+aiwg use sdlc --filter "*architect*" --reasoning-model opus-4-2
+
+# Only update reasoning-tier agents
+aiwg use sdlc --filter-role reasoning --reasoning-model custom-reasoning
+
+# Only update coding-tier agents
+aiwg use sdlc --filter-role coding --coding-model sonnet-5
+```
+
+### Persisting Model Selection
+
+Save your model choices for future deployments:
+
+```bash
+# Save to project models.json (version control this for team consistency)
+aiwg use sdlc --reasoning-model opus-4-2 --save
+
+# Save to user-level config (personal preference across all projects)
+aiwg use sdlc --reasoning-model opus-4-2 --save-user
+```
+
+### Preview Changes
+
+Use `--dry-run` to see what would be deployed without making changes:
+
+```bash
+aiwg use sdlc --reasoning-model opus-4-2 --filter "*architect*" --dry-run
 ```
 
 ## Precedence Order
@@ -229,7 +268,7 @@ To see which model configuration is being used:
 
 ```bash
 # Deploy with verbose output
-aiwg -deploy-agents --provider factory --mode sdlc
+aiwg use sdlc --provider factory
 
 # Look for line:
 # Model config loaded from: <source>
@@ -258,7 +297,7 @@ To update the default models for all users:
 vim models.json
 
 # Redeploy
-aiwg -deploy-agents --provider factory --mode sdlc --force
+aiwg use sdlc --provider factory --force
 ```
 
 ### Updating User Models
@@ -269,7 +308,7 @@ vim ~/.config/aiwg/models.json
 
 # Redeploy in any project
 cd /path/to/project
-aiwg -deploy-agents --provider factory --mode sdlc --force
+aiwg use sdlc --provider factory --force
 ```
 
 ## Troubleshooting
@@ -299,7 +338,7 @@ jq . models.json
 1. Check precedence order (command-line > project > user > defaults)
 2. Verify model configuration with `--dry-run`:
 ```bash
-aiwg -deploy-agents --provider factory --mode sdlc --dry-run
+aiwg use sdlc --provider factory --dry-run
 ```
 
 ### Model Not Available
