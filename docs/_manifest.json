@@ -45,9 +45,7 @@
     "commands",
     "commands/DEVELOPMENT_GUIDE",
     "commands/development-commands-examples",
-    "AGENT-DESIGN",
     "commands/subagents-and-commands-guide",
-    "production-grade-guide",
     "contributing",
     "contributing/contributor-quickstart",
     "contributing/maintainer-review-guide",
@@ -275,13 +273,6 @@
       "parent": "commands"
     },
     {
-      "id": "AGENT-DESIGN",
-      "title": "Agents",
-      "summary": "Design and build agents",
-      "file": "AGENT-DESIGN.md",
-      "parent": "development"
-    },
-    {
       "id": "commands/subagents-and-commands-guide",
       "title": "Subagents",
       "summary": "Work with subagents",
@@ -371,13 +362,6 @@
       "summary": "Where files go",
       "file": "development/file-placement-guide.md",
       "parent": "development"
-    },
-    {
-      "id": "production-grade-guide",
-      "title": "Production Guide",
-      "summary": "Production-ready systems",
-      "file": "production-grade-guide.md",
-      "parent": "customizing"
     },
     {
       "id": "contributing",
