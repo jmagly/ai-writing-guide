@@ -42,7 +42,7 @@ Option B - Intelligent integration (recommended):
 /aiwg-regenerate
 ```
 
-**Use `/aiwg-regenerate`** for production use - it analyzes your project, preserves team directives, and enables natural language commands like "run security review". See the [Regenerate Guide](#regenerate-guide) for details.
+**Use `/aiwg-regenerate`** - it analyzes your project, preserves team directives, and enables natural language commands like "run security review". See the [Regenerate Guide](#regenerate-guide) for details.
 
 **5. You're ready.** See the [Intake Guide](#intake-guide) for starting projects.
 
