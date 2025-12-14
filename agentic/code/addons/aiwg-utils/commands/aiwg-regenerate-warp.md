@@ -114,62 +114,54 @@ Copy-paste ready commands for common tasks:
 
 ---
 
-## AIWG Framework
+## Project Artifacts
 
-This project uses AIWG for development lifecycle management.
+{If .aiwg/ exists, list available project docs:}
+
+| Category | Location |
+|----------|----------|
+| Requirements | @.aiwg/requirements/ |
+| Architecture | @.aiwg/architecture/ |
+| Planning | @.aiwg/planning/ |
+
+{Only include rows for directories that exist}
+
+---
+
+## AIWG Integration
 
 ### Agents
 
-{For each deployed agent:}
-
-### {Agent Name}
-{Description}
-**Tools**: {tool list}
-
-### Architecture Designer
-Design system architecture and make technical decisions.
-**Tools**: Read, Write, Bash, Grep, Glob
-
-### Code Reviewer
-Review code for quality, security, and maintainability.
-**Tools**: Read, Grep, Glob
-
-### Test Engineer
-Create and maintain comprehensive test suites.
-**Tools**: Read, Write, Bash, Grep
-
-{... continue for key agents ...}
+{List deployed agents with brief descriptions}
 
 ### Commands
 
-{For each deployed command category:}
-
-#### Intake & Planning
-- `/intake-wizard` - Generate project intake forms
-- `/intake-from-codebase` - Analyze existing codebase
-- `/project-status` - Check current project state
-
-#### Phase Workflows
-- `/flow-inception-to-elaboration` - Transition phases
-- `/flow-gate-check <phase>` - Validate phase gate
-
-#### Continuous Processes
-- `/flow-security-review-cycle` - Security validation
-- `/flow-test-strategy-execution` - Test execution
-- `/flow-risk-management-cycle` - Risk management
-
-{... continue for key commands ...}
+{List deployed commands organized by category}
 
 ### Natural Language
-
-Common phrases understood by the orchestrator:
 
 | You Say | Executes |
 |---------|----------|
 | "transition to elaboration" | flow-inception-to-elaboration |
 | "run security review" | flow-security-review-cycle |
-| "check project status" | project-status |
-| "start iteration 5" | flow-iteration-dual-track |
+| "check status" | project-status |
+
+### Core References
+
+| Topic | Reference |
+|-------|-----------|
+| Orchestration | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/core/orchestrator.md |
+| Agent Design | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/agents/design-rules.md |
+| Error Recovery | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/reliability/resilience.md |
+
+{If SDLC framework installed:}
+
+### SDLC References
+
+| Topic | Reference |
+|-------|-----------|
+| Natural Language | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md |
+| Orchestration | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md |
 
 ---
 

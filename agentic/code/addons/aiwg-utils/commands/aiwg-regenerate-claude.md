@@ -223,48 +223,81 @@ This file provides guidance to Claude Code when working with this codebase.
 
 ---
 
-## AIWG Framework Integration
+## Project Documentation
 
-This project uses the AI Writing Guide SDLC framework for development lifecycle management.
+{If .aiwg/ directory exists, wire up project-specific docs:}
 
-### Installation
+### Project Artifacts
+
+| Category | Location | Purpose |
+|----------|----------|---------|
+| Requirements | @.aiwg/requirements/ | User stories, use cases, NFRs |
+| Architecture | @.aiwg/architecture/ | SAD, ADRs, component specs |
+| Planning | @.aiwg/planning/ | Phase plans, iteration plans |
+| Testing | @.aiwg/testing/ | Test strategy, test plans |
+| Security | @.aiwg/security/ | Threat models, security controls |
+
+{Only include rows for directories that exist}
+
+---
+
+## AIWG Integration
 
 AIWG is installed at: `~/.local/share/ai-writing-guide`
 
-### Installed Frameworks
+### Installed Components
 
-| Framework | Version | Agents | Commands |
-|-----------|---------|--------|----------|
-{table of installed frameworks}
-
-### Claude Code Configuration
-
-{Summary of .claude/settings.local.json if exists}
+| Component | Type | Count |
+|-----------|------|-------|
+{table of installed frameworks, addons - only if any installed}
 
 ### Available Agents
 
-{List of key agents with brief descriptions}
+{List of deployed agents from .claude/agents/ - brief descriptions}
 
 ### Available Commands
 
-{List of key commands organized by category}
+{List of deployed commands from .claude/commands/ - organized by category}
 
-### Orchestration Role
+### Orchestration
 
-You are the Core Orchestrator for SDLC workflows. When users request workflows:
+You are the Core Orchestrator. When users request workflows:
 
 1. Interpret natural language requests
 2. Map to appropriate flow commands
 3. Coordinate multi-agent workflows
 4. Report progress with clear indicators
 
-See `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md` for natural language mappings.
+### Core References (Always Available)
+
+Use @-mentions to load guidance as needed:
+
+| Topic | Reference |
+|-------|-----------|
+| Orchestration | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/core/orchestrator.md |
+| Agent Design | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/agents/design-rules.md |
+| Error Recovery | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/reliability/resilience.md |
+| Multi-Agent | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/core/multi-agent-pattern.md |
+
+{If SDLC framework installed, add:}
+
+### SDLC Framework References
+
+| Topic | Reference |
+|-------|-----------|
+| Natural Language | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md |
+| Orchestration (Full) | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md |
+| Multi-Agent Patterns | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/multi-agent-documentation-pattern.md |
+| Agent Design (Full) | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/agent-design.md |
+| Production Patterns | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/production-grade-guide.md |
+
+{If Marketing framework installed, add similar section}
 
 ---
 
 <!--
-  USER NOTES
-  Add team-specific directives, conventions, or notes below.
+  TEAM DIRECTIVES
+  Add project-specific guidance below this line.
   Use <!-- PRESERVE --> markers for content that must survive regeneration.
 -->
 ```

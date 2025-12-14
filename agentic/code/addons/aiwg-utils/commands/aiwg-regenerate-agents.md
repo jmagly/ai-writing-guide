@@ -167,11 +167,36 @@ The AI platform acts as Core Orchestrator for SDLC workflows:
 | "check status" | project-status |
 | "start iteration N" | flow-iteration-dual-track |
 
+## Project Artifacts
+
+{If .aiwg/ exists:}
+
+| Category | Location |
+|----------|----------|
+| Requirements | @.aiwg/requirements/ |
+| Architecture | @.aiwg/architecture/ |
+| Planning | @.aiwg/planning/ |
+
+## Core References
+
+| Topic | Reference |
+|-------|-----------|
+| Orchestration | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/core/orchestrator.md |
+| Agent Design | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/agents/design-rules.md |
+| Error Recovery | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/reliability/resilience.md |
+
+{If SDLC framework installed:}
+
+## SDLC References
+
+| Topic | Reference |
+|-------|-----------|
+| Natural Language | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md |
+| Orchestration | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md |
+
 ## Resources
 
 - **AIWG Installation**: `~/.local/share/ai-writing-guide`
-- **Framework Docs**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
-- **Agent Catalog**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/`
 
 ---
 
