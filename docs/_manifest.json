@@ -23,7 +23,6 @@
     "CLI_USAGE",
     "mention-utilities",
     "deploy-generators",
-    "reference/ORCHESTRATOR_GUIDE",
     "configuration/model-configuration",
     "troubleshooting",
     "troubleshooting/setup-issues",
@@ -205,13 +204,6 @@
       "title": "Deploy Generators",
       "summary": "Deployment configurations",
       "file": "deploy-generators.md",
-      "parent": "reference"
-    },
-    {
-      "id": "reference/ORCHESTRATOR_GUIDE",
-      "title": "Orchestrator Guide",
-      "summary": "How orchestration works",
-      "file": "reference/ORCHESTRATOR_GUIDE.md",
       "parent": "reference"
     },
     {
