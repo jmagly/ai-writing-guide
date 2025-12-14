@@ -1,0 +1,13 @@
+{
+  "title": "Releases",
+  "summary": "Release notes",
+  "collapsed": true,
+  "order": [
+    "v2024.12.5-announcement",
+    "v2024.12.4-announcement",
+    "v2024.12.3-announcement",
+    "v2024.12.2-announcement",
+    "v2024.12.1-announcement",
+    "v0.9.1-announcement"
+  ]
+}

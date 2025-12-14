@@ -42,17 +42,19 @@ aiwg -new my-project
 ```
 
 <details>
-<summary><strong>More installation options</strong></summary>
+<summary><strong>Alternative: Bleeding edge install</strong></summary>
 
-**Bash Script (Legacy):**
+**Direct from main branch** (latest features, may be experimental):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
 ```
 
-**Bleeding Edge Mode:**
+This installs directly from the HEAD of the main branch - you get the newest features first, but they may not be as stable as npm releases. Use this if you want to stay on the cutting edge.
+
+**Switch between modes** (after npm install):
 ```bash
-aiwg --use-main      # Track main branch
-aiwg --use-stable    # Back to npm releases
+aiwg --use-main      # Track main branch (bleeding edge)
+aiwg --use-stable    # Back to npm releases (recommended)
 ```
 
 </details>

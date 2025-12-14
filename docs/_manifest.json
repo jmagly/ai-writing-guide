@@ -3,52 +3,60 @@
   "bottomNav": "mobile",
   "order": [
     "welcome",
+    "getting-started",
     "quickstart",
-    "quickstart-sdlc",
-    "quickstart-mmk",
+    "intake-guide",
+    "regenerate-guide",
     "integrations",
     "integrations/cross-platform-overview",
     "integrations/claude-code-quickstart",
     "integrations/factory-quickstart",
-    "integrations/warp-terminal-quickstart",
-    "integrations/warp-terminal",
     "integrations/cursor-quickstart",
     "integrations/copilot-quickstart",
     "integrations/codex-quickstart",
     "integrations/opencode-quickstart",
+    "integrations/warp-terminal-quickstart",
     "integrations/cross-platform-config",
-    "commands",
-    "commands/README",
-    "commands/DEVELOPMENT_GUIDE",
-    "commands/subagents-README",
-    "commands/subagents-and-commands-guide",
+    "quickstart-sdlc",
+    "quickstart-mmk",
     "reference",
     "CLI_USAGE",
-    "AGENT-DESIGN",
     "reference/ORCHESTRATOR_GUIDE",
     "configuration/model-configuration",
-    "production-grade-guide",
-    "references",
-    "references/README",
-    "references/REF-001-production-grade-agentic-workflows",
-    "references/REF-002-llm-failure-modes-agentic",
-    "references/REF-003-mcp-specification-2025",
+    "troubleshooting",
+    "troubleshooting/setup-issues",
+    "troubleshooting/deployment-issues",
+    "troubleshooting/path-issues",
+    "troubleshooting/platform-issues",
+    "customizing",
+    "commands",
+    "commands/DEVELOPMENT_GUIDE",
+    "commands/development-commands-examples",
+    "AGENT-DESIGN",
+    "commands/subagents-and-commands-guide",
+    "smithing",
+    "smithing/mcpsmith",
+    "smithing/agentic-smiths",
+    "smithing/graduating-creations",
     "development",
     "development/devkit-overview",
     "development/addon-creation-guide",
     "development/extension-creation-guide",
     "development/framework-creation-guide",
     "development/walkthrough-create-addon",
+    "development/file-placement-guide",
+    "production-grade-guide",
     "contributing",
     "contributing/contributor-quickstart",
     "contributing/maintainer-review-guide",
-    "troubleshooting",
-    "troubleshooting/index",
-    "troubleshooting/setup-issues",
-    "troubleshooting/deployment-issues",
-    "troubleshooting/path-issues",
-    "troubleshooting/platform-issues",
+    "contributing/testing-requirements",
+    "references",
+    "references/REF-001-production-grade-agentic-workflows",
+    "references/REF-002-llm-failure-modes-agentic",
+    "references/REF-003-mcp-specification-2025",
     "releases",
+    "releases/v2024.12.5-announcement",
+    "releases/v2024.12.4-announcement",
     "releases/v2024.12.3-announcement",
     "releases/v2024.12.2-announcement",
     "releases/v2024.12.1-announcement",
@@ -62,70 +70,402 @@
       "file": "welcome.html"
     },
     {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "summary": "Install and use AIWG"
+    },
+    {
       "id": "quickstart",
       "title": "Quick Start",
-      "summary": "Get started with AIWG",
-      "file": "quickstart.md"
+      "summary": "Install and deploy",
+      "file": "quickstart.md",
+      "parent": "getting-started"
     },
     {
-      "id": "quickstart-sdlc",
-      "title": "SDLC Quick Start",
-      "summary": "Get started with SDLC framework",
-      "file": "quickstart-sdlc.md"
+      "id": "intake-guide",
+      "title": "Intake Guide",
+      "summary": "Start projects easily",
+      "file": "intake-guide.md",
+      "parent": "getting-started"
     },
     {
-      "id": "quickstart-mmk",
-      "title": "Marketing Quick Start",
-      "summary": "Get started with Marketing Kit",
-      "file": "quickstart-mmk.md"
+      "id": "regenerate-guide",
+      "title": "Regenerate Guide",
+      "summary": "Enable intelligent integration",
+      "file": "regenerate-guide.md",
+      "parent": "getting-started"
     },
     {
       "id": "integrations",
-      "title": "Platform Integrations",
-      "summary": "Platform-specific setup guides",
-      "collapsed": true
+      "title": "Platform Setup",
+      "summary": "Configure your AI platform",
+      "collapsed": true,
+      "parent": "getting-started"
     },
     {
-      "id": "commands",
-      "title": "Commands",
-      "summary": "Slash command development",
-      "collapsed": true
+      "id": "integrations/cross-platform-overview",
+      "title": "Overview",
+      "summary": "Cross-platform comparison",
+      "file": "integrations/cross-platform-overview.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/claude-code-quickstart",
+      "title": "Claude Code",
+      "summary": "Setup for Claude Code",
+      "file": "integrations/claude-code-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/factory-quickstart",
+      "title": "Factory AI",
+      "summary": "Setup for Factory",
+      "file": "integrations/factory-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/cursor-quickstart",
+      "title": "Cursor",
+      "summary": "Setup for Cursor",
+      "file": "integrations/cursor-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/copilot-quickstart",
+      "title": "GitHub Copilot",
+      "summary": "Setup for Copilot",
+      "file": "integrations/copilot-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/codex-quickstart",
+      "title": "OpenAI Codex",
+      "summary": "Setup for Codex CLI",
+      "file": "integrations/codex-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/opencode-quickstart",
+      "title": "OpenCode",
+      "summary": "Setup for OpenCode",
+      "file": "integrations/opencode-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/warp-terminal-quickstart",
+      "title": "Warp Terminal",
+      "summary": "Setup for Warp",
+      "file": "integrations/warp-terminal-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/cross-platform-config",
+      "title": "Configuration",
+      "summary": "Shared configuration",
+      "file": "integrations/cross-platform-config.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "quickstart-sdlc",
+      "title": "SDLC Framework",
+      "summary": "Software development workflows",
+      "file": "quickstart-sdlc.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "quickstart-mmk",
+      "title": "Marketing Kit",
+      "summary": "Marketing workflows",
+      "file": "quickstart-mmk.md",
+      "parent": "getting-started"
     },
     {
       "id": "reference",
       "title": "Reference",
-      "summary": "API and configuration reference",
+      "summary": "CLI and configuration docs"
+    },
+    {
+      "id": "CLI_USAGE",
+      "title": "CLI Reference",
+      "summary": "Command line usage",
+      "file": "CLI_USAGE.md",
+      "parent": "reference"
+    },
+    {
+      "id": "reference/ORCHESTRATOR_GUIDE",
+      "title": "Orchestrator Guide",
+      "summary": "How orchestration works",
+      "file": "reference/ORCHESTRATOR_GUIDE.md",
+      "parent": "reference"
+    },
+    {
+      "id": "configuration/model-configuration",
+      "title": "Model Configuration",
+      "summary": "Configure AI models",
+      "file": "configuration/model-configuration.md",
+      "parent": "reference"
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Troubleshooting",
+      "summary": "Fix common issues",
       "collapsed": true
     },
     {
-      "id": "references",
-      "title": "Research",
-      "summary": "Academic research and specifications",
-      "collapsed": true
+      "id": "troubleshooting/setup-issues",
+      "title": "Setup Issues",
+      "summary": "Installation problems",
+      "file": "troubleshooting/setup-issues.md",
+      "parent": "troubleshooting"
+    },
+    {
+      "id": "troubleshooting/deployment-issues",
+      "title": "Deployment Issues",
+      "summary": "Deployment problems",
+      "file": "troubleshooting/deployment-issues.md",
+      "parent": "troubleshooting"
+    },
+    {
+      "id": "troubleshooting/path-issues",
+      "title": "Path Issues",
+      "summary": "Path resolution problems",
+      "file": "troubleshooting/path-issues.md",
+      "parent": "troubleshooting"
+    },
+    {
+      "id": "troubleshooting/platform-issues",
+      "title": "Platform Issues",
+      "summary": "Platform-specific problems",
+      "file": "troubleshooting/platform-issues.md",
+      "parent": "troubleshooting"
+    },
+    {
+      "id": "customizing",
+      "title": "Customizing AIWG",
+      "summary": "Extend and build components"
+    },
+    {
+      "id": "commands",
+      "title": "Commands",
+      "summary": "Build slash commands",
+      "collapsed": true,
+      "parent": "customizing"
+    },
+    {
+      "id": "commands/DEVELOPMENT_GUIDE",
+      "title": "Development Guide",
+      "summary": "Creating commands",
+      "file": "commands/DEVELOPMENT_GUIDE.md",
+      "parent": "commands"
+    },
+    {
+      "id": "commands/development-commands-examples",
+      "title": "Examples",
+      "summary": "Command usage examples",
+      "file": "commands/development-commands-examples.md",
+      "parent": "commands"
+    },
+    {
+      "id": "AGENT-DESIGN",
+      "title": "Agents",
+      "summary": "Design and build agents",
+      "file": "AGENT-DESIGN.md",
+      "parent": "customizing"
+    },
+    {
+      "id": "commands/subagents-and-commands-guide",
+      "title": "Subagents",
+      "summary": "Work with subagents",
+      "file": "commands/subagents-and-commands-guide.md",
+      "parent": "customizing"
+    },
+    {
+      "id": "smithing",
+      "title": "Smithing",
+      "summary": "Generate tools and MCP servers",
+      "collapsed": true,
+      "parent": "customizing"
+    },
+    {
+      "id": "smithing/mcpsmith",
+      "title": "MCP Smith",
+      "summary": "Generate MCP servers",
+      "file": "smithing/mcpsmith.md",
+      "parent": "smithing"
+    },
+    {
+      "id": "smithing/agentic-smiths",
+      "title": "Agentic Smiths",
+      "summary": "Generate agents and skills",
+      "file": "smithing/agentic-smiths.md",
+      "parent": "smithing"
+    },
+    {
+      "id": "smithing/graduating-creations",
+      "title": "Graduating Creations",
+      "summary": "Promote to production",
+      "file": "smithing/graduating-creations.md",
+      "parent": "smithing"
     },
     {
       "id": "development",
-      "title": "Development",
-      "summary": "Extend and customize AIWG",
-      "collapsed": true
+      "title": "Addons & Extensions",
+      "summary": "Package reusable components",
+      "collapsed": true,
+      "parent": "customizing"
+    },
+    {
+      "id": "development/devkit-overview",
+      "title": "Devkit Overview",
+      "summary": "Development toolkit",
+      "file": "development/devkit-overview.md",
+      "parent": "development"
+    },
+    {
+      "id": "development/addon-creation-guide",
+      "title": "Creating Addons",
+      "summary": "Build addons",
+      "file": "development/addon-creation-guide.md",
+      "parent": "development"
+    },
+    {
+      "id": "development/extension-creation-guide",
+      "title": "Creating Extensions",
+      "summary": "Build extensions",
+      "file": "development/extension-creation-guide.md",
+      "parent": "development"
+    },
+    {
+      "id": "development/framework-creation-guide",
+      "title": "Creating Frameworks",
+      "summary": "Build frameworks",
+      "file": "development/framework-creation-guide.md",
+      "parent": "development"
+    },
+    {
+      "id": "development/walkthrough-create-addon",
+      "title": "Addon Walkthrough",
+      "summary": "Step-by-step tutorial",
+      "file": "development/walkthrough-create-addon.md",
+      "parent": "development"
+    },
+    {
+      "id": "development/file-placement-guide",
+      "title": "File Placement",
+      "summary": "Where files go",
+      "file": "development/file-placement-guide.md",
+      "parent": "development"
+    },
+    {
+      "id": "production-grade-guide",
+      "title": "Production Guide",
+      "summary": "Production-ready systems",
+      "file": "production-grade-guide.md",
+      "parent": "customizing"
     },
     {
       "id": "contributing",
       "title": "Contributing",
       "summary": "Contribute to AIWG",
-      "collapsed": true
+      "collapsed": true,
+      "parent": "customizing"
     },
     {
-      "id": "troubleshooting",
-      "title": "Troubleshooting",
-      "summary": "Common issues and solutions",
-      "collapsed": true
+      "id": "contributing/contributor-quickstart",
+      "title": "Contributor Guide",
+      "summary": "Getting started",
+      "file": "contributing/contributor-quickstart.md",
+      "parent": "contributing"
+    },
+    {
+      "id": "contributing/maintainer-review-guide",
+      "title": "Maintainer Guide",
+      "summary": "Review process",
+      "file": "contributing/maintainer-review-guide.md",
+      "parent": "contributing"
+    },
+    {
+      "id": "contributing/testing-requirements",
+      "title": "Testing Requirements",
+      "summary": "Test standards",
+      "file": "contributing/testing-requirements.md",
+      "parent": "contributing"
+    },
+    {
+      "id": "references",
+      "title": "Research",
+      "summary": "Papers and specifications",
+      "collapsed": true,
+      "parent": "customizing"
+    },
+    {
+      "id": "references/REF-001-production-grade-agentic-workflows",
+      "title": "REF-001: Production Workflows",
+      "summary": "Agentic workflow patterns",
+      "file": "references/REF-001-production-grade-agentic-workflows.md",
+      "parent": "references"
+    },
+    {
+      "id": "references/REF-002-llm-failure-modes-agentic",
+      "title": "REF-002: LLM Failure Modes",
+      "summary": "Failure analysis",
+      "file": "references/REF-002-llm-failure-modes-agentic.md",
+      "parent": "references"
+    },
+    {
+      "id": "references/REF-003-mcp-specification-2025",
+      "title": "REF-003: MCP Specification",
+      "summary": "MCP protocol spec",
+      "file": "references/REF-003-mcp-specification-2025.md",
+      "parent": "references"
     },
     {
       "id": "releases",
       "title": "Releases",
-      "summary": "Release notes and announcements",
+      "summary": "Release notes",
       "collapsed": true
+    },
+    {
+      "id": "releases/v2024.12.5-announcement",
+      "title": "v2024.12.5",
+      "summary": "Latest release",
+      "file": "releases/v2024.12.5-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2024.12.4-announcement",
+      "title": "v2024.12.4",
+      "summary": "Previous release",
+      "file": "releases/v2024.12.4-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2024.12.3-announcement",
+      "title": "v2024.12.3",
+      "summary": "Previous release",
+      "file": "releases/v2024.12.3-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2024.12.2-announcement",
+      "title": "v2024.12.2",
+      "summary": "Previous release",
+      "file": "releases/v2024.12.2-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2024.12.1-announcement",
+      "title": "v2024.12.1",
+      "summary": "Previous release",
+      "file": "releases/v2024.12.1-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v0.9.1-announcement",
+      "title": "v0.9.1",
+      "summary": "Initial release",
+      "file": "releases/v0.9.1-announcement.md",
+      "parent": "releases"
     },
     {
       "title": "GitHub",

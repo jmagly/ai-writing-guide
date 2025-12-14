@@ -5,17 +5,43 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2024.12.5] - 2025-12-13 – "Flexible Models" Release
+## [2024.12.5] - 2025-12-13 – "Flexible Models & Terminal Docs" Release
 
 | What changed | Why you care |
 |--------------|--------------|
+| Terminal docs site | CLI-style documentation with full-text search and themes |
+| Smithing Framework | Create agents, skills, commands, and MCP servers dynamically |
+| Windsurf provider | Deploy to Windsurf IDE |
 | Flexible model selection | Override models per tier when deploying agents |
 | Filter-based deployment | Deploy only specific agents by pattern or role |
 | Persistent model config | Save model preferences for future deployments |
-| Dry-run respects all flags | Preview changes accurately before applying |
-| Updated documentation | CLI, model config, and README fully documented |
 
 ### Added
+
+**Terminal Documentation Site**:
+
+- **CLI-style console** - Search and navigate via command input
+- **Full-text search** - Search all documentation content with highlighting via dbbuilder integration
+- **Log entry format** - Content displayed as categorized terminal log entries
+- **Three themes** - Dark, Light (OS/2 Warp inspired cream palette), and Matrix
+- **Clickable search results** - All results displayed as navigable links
+- **Keyboard shortcuts** - `?` help, `/` search, `t` theme, `gg` top, `G` bottom
+- Console commands: `help`, `search <query>`, `theme`, `clear`, `home`
+
+**Smithing Framework** (Preview):
+
+- **ToolSmith** - Create MCP tools from specifications
+- **MCPSmith** - Build complete MCP servers with Docker support
+- **AgentSmith** - Generate specialized agents from descriptions
+- **SkillSmith** - Create Claude Code skills
+- **CommandSmith** - Build slash commands
+- Located in `agentic/code/frameworks/sdlc-complete/agents/smiths/`
+
+**Windsurf Provider**:
+
+- New experimental provider for Windsurf IDE
+- `aiwg use sdlc --provider windsurf`
+- Provider modularization refactor for cleaner multi-provider architecture
 
 **Flexible Model Selection** (PR #73):
 
@@ -46,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dry-run flag in ensureDir** - Directory creation now respects `--dry-run` across all providers
 - **Skill deployment test** - Fixed test to use Claude provider (Factory doesn't support skills)
+- **Search auto-navigation** - Fixed search jumping to first result instead of showing clickable results list
+- **Deep linking** - Fixed hash-based navigation requiring missing DOM element
 
 ### Changed
 
@@ -846,4 +874,4 @@ For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
 ---
 
 **Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2025-12-12 (v2024.12.4)
+**Last Updated**: 2025-12-13 (v2024.12.5)

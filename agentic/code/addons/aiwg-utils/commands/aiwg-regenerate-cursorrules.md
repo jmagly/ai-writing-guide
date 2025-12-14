@@ -1,0 +1,193 @@
+---
+name: aiwg-regenerate-cursorrules
+description: Regenerate .cursorrules for Cursor with preserved team directives
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
+---
+
+# Regenerate .cursorrules
+
+Regenerate the `.cursorrules` file for Cursor IDE integration, analyzing current project state while preserving team directives and organizational requirements.
+
+## Parameters
+
+| Flag | Description |
+|------|-------------|
+| `--no-backup` | Skip creating backup file |
+| `--dry-run` | Preview changes without writing |
+| `--show-preserved` | List all detected preserved content and exit |
+| `--full` | Full regeneration, preserve nothing (destructive) |
+
+## Execution Steps
+
+### Step 1: Create Backup
+
+Unless `--no-backup` specified:
+
+1. Check if `.cursorrules` exists
+2. If exists, copy to `.cursorrules.backup-{YYYYMMDD-HHMMSS}`
+3. Report backup location
+
+### Step 2: Extract Preserved Content
+
+Same preservation patterns as other platforms:
+
+1. **Explicit Preserve Blocks**: `<!-- PRESERVE -->` ... `<!-- /PRESERVE -->`
+2. **Preserved Section Headings**: Team *, Org *, Definition of Done, etc.
+3. **Inline Directives**: Lines with directive keywords
+
+### Step 3: Analyze Project
+
+- Languages and package managers
+- Development commands
+- Test framework
+- CI/CD configuration
+- Directory structure
+- Cursor-specific configuration in `.cursor/`
+
+### Step 4: Detect AIWG State
+
+Check installed frameworks by scanning:
+- `.cursor/agents/` for deployed agents
+- `.cursor/rules/` for MDC rules
+- `.cursor/commands/` for commands
+
+Read registry for framework versions.
+
+### Step 5: Generate .cursorrules
+
+**Document Structure:**
+
+```markdown
+# .cursorrules
+
+Project rules for Cursor AI assistance.
+
+## Project Overview
+
+{Description from README.md or package.json}
+
+## Tech Stack
+
+- **Language**: {detected languages}
+- **Framework**: {detected frameworks}
+- **Package Manager**: {npm/yarn/pnpm/etc.}
+
+## Development Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm install` | Install dependencies |
+| `npm run build` | Build project |
+| `npm test` | Run tests |
+
+## Project Structure
+
+```
+src/           → Source code
+test/          → Test files
+docs/          → Documentation
+```
+
+## Code Conventions
+
+{Project-specific conventions}
+
+---
+
+## Team Directives
+
+<!-- PRESERVED SECTION -->
+
+{ALL PRESERVED CONTENT}
+
+<!-- /PRESERVED SECTION -->
+
+---
+
+## AIWG Framework Integration
+
+This project uses AIWG SDLC framework with Cursor.
+
+### Installed Frameworks
+
+| Framework | Agents | Commands |
+|-----------|--------|----------|
+| sdlc-complete | 54 | 42 |
+
+### Using Agents
+
+Invoke agents via @-mention in Cursor:
+
+```text
+@security-architect Review the authentication implementation
+@test-engineer Generate unit tests for the user service
+```
+
+### Natural Language Mappings
+
+| Request | Maps To |
+|---------|---------|
+| "run security review" | flow-security-review-cycle |
+| "check status" | project-status |
+| "start iteration N" | flow-iteration-dual-track |
+
+## Resources
+
+- **AIWG Installation**: `~/.local/share/ai-writing-guide`
+- **Framework Docs**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
+
+---
+
+<!--
+  Add team-specific notes below.
+  Content in preserved sections survives regeneration.
+-->
+```
+
+### Step 6: Write Output
+
+**If `--dry-run`:** Display content, do not write.
+
+**Otherwise:**
+1. Write to `.cursorrules`
+2. Report summary
+
+```
+.cursorrules Regenerated
+========================
+
+Backup: .cursorrules.backup-20251206-153512
+
+Preserved: 2 sections, 15 lines
+Regenerated: Project overview, structure, AIWG integration
+
+Output: .cursorrules (187 lines)
+```
+
+## Examples
+
+```bash
+# Regenerate .cursorrules
+/aiwg-regenerate-cursorrules
+
+# Preview changes
+/aiwg-regenerate-cursorrules --dry-run
+
+# Check preserved content
+/aiwg-regenerate-cursorrules --show-preserved
+
+# Full regeneration
+/aiwg-regenerate-cursorrules --full
+```
+
+## Related Commands
+
+| Command | Regenerates |
+|---------|-------------|
+| `/aiwg-regenerate-claude` | CLAUDE.md |
+| `/aiwg-regenerate-warp` | WARP.md |
+| `/aiwg-regenerate-agents` | AGENTS.md |
+| `/aiwg-regenerate-cursorrules` | .cursorrules |
+| `/aiwg-regenerate-windsurfrules` | .windsurfrules |
+| `/aiwg-regenerate-copilot` | copilot-instructions.md |
+| `/aiwg-regenerate` | Auto-detect |

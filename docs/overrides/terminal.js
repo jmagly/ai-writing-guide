@@ -329,16 +329,58 @@ function displaySearchResults(results, query, isFallback = false) {
     return;
   }
 
-  // Always show list (don't auto-navigate even for single result)
-  const lines = results.slice(0, 15).map((r, i) =>
-    `  ${(i + 1).toString().padStart(2)}. ${r.title}${r.group && r.group !== r.title ? ` [${r.group}]` : ''}`
-  ).join('\n');
+  // Create clickable results list
+  const container = document.createElement('div');
+  container.className = 'search-results';
 
-  const more = results.length > 15 ? `\n\n  ... and ${results.length - 15} more` : '';
+  const header = document.createElement('div');
+  header.textContent = `Found ${results.length} results for "${query}"${mode}:`;
+  header.style.marginBottom = 'var(--space-3)';
+  container.appendChild(header);
 
-  appendLogEntry('SEARCH', `Found ${results.length} results for "${query}"${mode}:\n\n${lines}${more}\n\nType a number to navigate (highlights will be applied).`);
+  const list = document.createElement('ul');
+  list.className = 'search-results-list';
 
-  // Store results for number navigation
+  results.forEach((r, i) => {
+    const item = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = `#${r.id}`;
+    link.className = 'search-result-link';
+    link.dataset.section = r.id;
+    link.dataset.query = query;
+
+    const num = document.createElement('span');
+    num.className = 'search-result-num';
+    num.textContent = `${(i + 1).toString().padStart(2)}.`;
+
+    const title = document.createElement('span');
+    title.className = 'search-result-title';
+    title.textContent = r.title;
+
+    link.appendChild(num);
+    link.appendChild(title);
+
+    if (r.group && r.group !== r.title) {
+      const group = document.createElement('span');
+      group.className = 'search-result-group';
+      group.textContent = `[${r.group}]`;
+      link.appendChild(group);
+    }
+
+    // Click handler for highlighting
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateWithHighlight(r.id, query);
+    });
+
+    item.appendChild(link);
+    list.appendChild(item);
+  });
+
+  container.appendChild(list);
+  appendLogEntry('SEARCH', container, `${results.length} results`);
+
+  // Still store for number navigation as fallback
   window._searchResults = results.map(r => ({ section: r.id, title: r.title, summary: r.summary }));
   window._searchQuery = query;
 }
@@ -391,34 +433,8 @@ async function processCommand(input) {
     return;
   }
 
-  // Try to match section navigation
-  if (tryNavigateToSection(raw)) {
-    return;
-  }
-
-  // Treat as search query (async)
+  // Treat as search query - always show results, don't auto-navigate
   await searchDocs(raw);
-}
-
-/**
- * Try to navigate to a section by name
- */
-function tryNavigateToSection(query) {
-  // Look for nav items matching the query
-  const navItems = document.querySelectorAll('#nav button[data-section]');
-  const lower = query.toLowerCase();
-
-  for (const item of navItems) {
-    const section = item.dataset.section;
-    const title = item.textContent.toLowerCase();
-
-    if (section.toLowerCase() === lower || title.includes(lower)) {
-      location.hash = `#${section}`;
-      return true;
-    }
-  }
-
-  return false;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

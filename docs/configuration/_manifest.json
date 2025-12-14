@@ -1,0 +1,7 @@
+{
+  "title": "Configuration",
+  "summary": "Configure AI models",
+  "order": [
+    "model-configuration"
+  ]
+}

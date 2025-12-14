@@ -2,113 +2,53 @@
 
 Build software with AI-assisted lifecycle management: Inception → Elaboration → Construction → Transition.
 
-## 3 Ways to Start
+---
 
-### 1. New Project (Greenfield)
+## Install & Deploy
+
+**1. Install**
 
 ```bash
-# Install CLI
-curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
-source ~/.bash_aliases
+npm install -g aiwg
+```
 
-# Create project scaffold
-cd /path/to/new/project
+**2. Deploy to your project**
+
+```bash
+cd /path/to/your/project
+
+# New project? Scaffold first:
 aiwg -new
 
-# Deploy SDLC framework
+# Then deploy framework:
 aiwg use sdlc
-
-# Open in Claude Code
-claude .
 ```
 
-```text
-# Integrate AIWG with platform (required for orchestration)
-You: "/aiwg-setup-project"
-
-# Then start intake
-You: "Start intake wizard for a customer portal with React and Node.js"
-```
-
-### 2. Existing Codebase (Brownfield)
+**3. Open in your AI platform**
 
 ```bash
-# Install and deploy
-curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
-source ~/.bash_aliases
-cd /path/to/existing/project
-aiwg use sdlc
-
-# Open in Claude Code
-claude .
+claude .                   # Claude Code
+cursor .                   # Cursor
+droid .                    # Factory AI
 ```
+
+**4. Integrate with platform context**
 
 ```text
-# Integrate AIWG with platform (required for orchestration)
-You: "/aiwg-setup-project"
-
-# Then analyze codebase
-You: "Analyze this codebase and generate intake documents"
+/aiwg-setup-project
 ```
 
-The framework scans your code, detects tech stack, and generates intake forms automatically.
-
-### 3. Manual Intake (Complex Requirements)
-
-For projects with specific compliance, security, or stakeholder requirements:
-
-```bash
-aiwg -new
-aiwg use sdlc
-# Edit .aiwg/intake/project-intake-form.md manually
-# Edit .aiwg/intake/solution-profile.md manually
-claude .
-```
+**5. Regenerate for intelligent integration**
 
 ```text
-# Integrate AIWG with platform (required for orchestration)
-You: "/aiwg-setup-project"
-
-# Then validate intake
-You: "Validate intake and start Inception"
-```
-
-## Basic Workflow
-
-| Phase | What You Say | What Happens |
-|-------|--------------|--------------|
-| **Start** | "Generate intake for..." | Creates project definition |
-| **Inception** | "Start Inception" | Vision, risks, architecture sketch |
-| **Elaboration** | "Transition to Elaboration" | SAD, ADRs, test strategy |
-| **Construction** | "Move to Construction" | Iteration planning, CI/CD |
-| **Transition** | "Deploy to production" | Deployment, hypercare |
-
-## Key Commands
-
-```text
-"Where are we?"                    → Project status
-"Run security review"              → Security audit
-"Create architecture document"     → Generate SAD
-"Check gate criteria"              → Phase validation
-"Transition to [phase]"            → Phase transition
-```
-
-## Regenerating CLAUDE.md
-
-When your project evolves, regenerate your context file to keep it current:
-
-```text
-# Preview what would change
-/aiwg-regenerate-claude --dry-run
-
-# See what content would be preserved
-/aiwg-regenerate-claude --show-preserved
-
-# Regenerate (creates backup automatically)
 /aiwg-regenerate-claude
 ```
 
-Team directives, conventions, and organizational requirements are automatically preserved.
+This step is critical - it enables natural language command mapping ("run security review" → workflow). Without it, advanced features won't work correctly. See the [Regenerate Guide](#regenerate-guide) for details.
+
+**6. You're ready.** See the [Intake Guide](#intake-guide) for starting projects.
+
+---
 
 ## Artifacts Location
 
@@ -124,27 +64,14 @@ All documents generated in `.aiwg/`:
 └── deployment/    # Runbooks
 ```
 
+---
+
 ## Voice Profiles for Documentation
 
-For consistent voice across your SDLC documentation, add the Writing Quality framework:
+For consistent voice across your SDLC documentation:
 
 ```bash
-aiwg use writing           # Add Voice Framework to your project
-```
-
-Then use voice profiles when generating artifacts:
-
-```text
-"Write the architecture document in technical-authority voice"
-"Make this README more friendly for beginners"
-"Create API documentation with precise, confident tone"
+aiwg use writing           # Add Voice Framework
 ```
 
 **Built-in profiles**: `technical-authority`, `friendly-explainer`, `executive-brief`, `casual-conversational`
-
-## Next Steps
-
-- **CLI Reference**: [Full CLI documentation](#ref-cli)
-- **Agent Design**: [The 10 Golden Rules](#ref-agent-design)
-- **Production Grade**: [Production-grade agent design](#ref-production-grade)
-- **Platform setup**: [Claude Code](#integrations-claude-code) | [Factory AI](#integrations-factory) | [Warp](#integrations-warp)

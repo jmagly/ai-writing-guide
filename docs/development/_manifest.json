@@ -1,0 +1,13 @@
+{
+  "title": "Addons & Extensions",
+  "summary": "Package reusable components",
+  "collapsed": true,
+  "order": [
+    "devkit-overview",
+    "addon-creation-guide",
+    "extension-creation-guide",
+    "framework-creation-guide",
+    "walkthrough-create-addon",
+    "file-placement-guide"
+  ]
+}

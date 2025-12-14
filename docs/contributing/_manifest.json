@@ -1,0 +1,10 @@
+{
+  "title": "Contributing",
+  "summary": "Contribute to AIWG",
+  "collapsed": true,
+  "order": [
+    "contributor-quickstart",
+    "maintainer-review-guide",
+    "testing-requirements"
+  ]
+}

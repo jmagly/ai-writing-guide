@@ -1,0 +1,11 @@
+{
+  "title": "Commands",
+  "summary": "Build slash commands",
+  "collapsed": true,
+  "order": [
+    "DEVELOPMENT_GUIDE",
+    "development-commands-examples",
+    "subagents-and-commands-guide"
+  ],
+  "exclude": ["README"]
+}

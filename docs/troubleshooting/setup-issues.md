@@ -11,15 +11,14 @@ Problems during AIWG installation or project setup.
 **Solution**:
 
 ```bash
-# Install AIWG
-curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
-
-# Reload shell
-source ~/.bash_aliases  # or ~/.zshrc
+# Install AIWG via npm (recommended)
+npm install -g aiwg
 
 # Verify
 aiwg -version
 ```
+
+**Bleeding edge:** `curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash`
 
 ## Installation Path Issues
 
@@ -54,7 +53,7 @@ aiwg -reinstall
 
 # Or manual cleanup
 rm -rf ~/.local/share/ai-writing-guide
-curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
+npm install -g aiwg
 ```
 
 ## Permission Denied

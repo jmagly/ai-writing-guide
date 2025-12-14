@@ -1,0 +1,11 @@
+{
+  "title": "Smithing",
+  "summary": "Generate tools and MCP servers",
+  "collapsed": true,
+  "order": [
+    "mcpsmith",
+    "agentic-smiths",
+    "graduating-creations"
+  ],
+  "exclude": ["README"]
+}

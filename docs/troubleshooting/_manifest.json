@@ -1,0 +1,12 @@
+{
+  "title": "Troubleshooting",
+  "summary": "Fix common issues",
+  "collapsed": true,
+  "order": [
+    "setup-issues",
+    "deployment-issues",
+    "path-issues",
+    "platform-issues"
+  ],
+  "exclude": ["index"]
+}

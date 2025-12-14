@@ -1,0 +1,11 @@
+{
+  "title": "Research",
+  "summary": "Papers and specifications",
+  "collapsed": true,
+  "order": [
+    "REF-001-production-grade-agentic-workflows",
+    "REF-002-llm-failure-modes-agentic",
+    "REF-003-mcp-specification-2025"
+  ],
+  "exclude": ["README"]
+}

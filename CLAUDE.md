@@ -74,8 +74,8 @@ Use `@path/to/file.md` in your message to load specific documentation:
 ## Installation
 
 ```bash
-# One-line install
-curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
+# Install via npm (recommended)
+npm install -g aiwg
 
 # CLI commands
 aiwg -version          # Show version

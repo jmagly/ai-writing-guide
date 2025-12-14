@@ -1,8 +1,8 @@
 # Agentic Smiths
 
-AgentSmith, SkillSmith, and CommandSmith are specialized Smith agents that create agentic artifacts on-demand and deploy them directly to platform directories for immediate use.
+Need a specialized agent for your project? A skill that triggers on specific phrases? A slash command for a repetitive task? Ask a Smith. The work happens in isolated context - you get a ready-to-use artifact deployed to your project.
 
-## Overview
+## What They Create
 
 | Smith | Creates | Deploys To | Invocation |
 |-------|---------|------------|------------|
@@ -10,7 +10,9 @@ AgentSmith, SkillSmith, and CommandSmith are specialized Smith agents that creat
 | **SkillSmith** | Skill definitions | `.claude/skills/` | `Task(SkillSmith)` |
 | **CommandSmith** | Slash commands | `.claude/commands/` | `Task(CommandSmith)` |
 
-**Key Difference from ToolSmith/MCPSmith**: These Smiths deploy to platform-native locations so the system picks them up immediately, rather than storing in `.aiwg/smiths/` for later use.
+**Immediate Availability**: Unlike ToolSmith/MCPSmith which store assets for manual invocation, Agentic Smiths deploy directly to platform directories. Your new agent, skill, or command is available immediately - no restart, no configuration.
+
+**Context Isolation**: The Smith figures out the right model, tools, and structure. It writes the definition, validates the format, and registers it. All that work happens via `Task()` in isolated context. You just get the result.
 
 ## Getting Started
 

@@ -1402,6 +1402,71 @@ mark.hl {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   Search Results (Terminal CLI)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.search-results {
+  font-family: var(--font-mono);
+}
+
+.search-results-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search-results-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.search-result-link {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
+
+.search-result-link:hover {
+  background: var(--color-bg-panel-alt);
+  color: var(--color-link);
+}
+
+.search-result-link:focus {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.search-result-num {
+  color: var(--color-text-dim);
+  font-size: var(--font-size-xs);
+  min-width: 2.5ch;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.search-result-title {
+  color: var(--color-accent-cyan);
+  font-weight: 500;
+}
+
+.search-result-link:hover .search-result-title {
+  color: var(--color-link-hover);
+}
+
+.search-result-group {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Bottom Navigation (Prev/Next)
    ═══════════════════════════════════════════════════════════════════════════ */
 

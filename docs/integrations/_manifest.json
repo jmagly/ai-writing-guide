@@ -1,0 +1,17 @@
+{
+  "title": "Platform Setup",
+  "summary": "Configure your AI platform",
+  "collapsed": true,
+  "order": [
+    "cross-platform-overview",
+    "claude-code-quickstart",
+    "factory-quickstart",
+    "cursor-quickstart",
+    "copilot-quickstart",
+    "codex-quickstart",
+    "opencode-quickstart",
+    "warp-terminal-quickstart",
+    "cross-platform-config"
+  ],
+  "exclude": ["warp-terminal"]
+}

@@ -1,12 +1,27 @@
 # Smithing Framework
 
-The Smithing Framework enables agents to create runnable agentic assets on the fly. "Smith" agents specialize in creating specific types of assets - tools, MCP servers, agents, skills, commands - that can be cached and reused across workflows.
+Smiths create tools, agents, and servers on-demand while you work. Need a script to find duplicates? An MCP server to analyze repos? A custom agent for accessibility reviews? Ask a Smith. You get the result without the work polluting your context.
 
-## Overview
+## Why Smithing?
 
-**Problem**: Asset creation during agentic workflows is constrained and impacts the main process. Agents need to create, reuse, and modify assets dynamically without disrupting their primary task flow.
+**The Problem**: During development, you need custom tools - shell scripts, MCP servers, specialized agents. Creating them yourself interrupts your flow. The back-and-forth of designing, testing, and debugging clutters your conversation context with implementation details you don't care about.
 
-**Solution**: Specialized "Smith" agents handle asset creation independently. The orchestrating agent delegates to a Smith, which creates or returns cached assets, allowing the main workflow to continue uninterrupted.
+**The Solution**: Delegate to Smiths. Each Smith is a specialized agent that:
+
+1. **Runs in isolated context** via `Task()` - the messy work stays out of your conversation
+2. **Creates project-local assets** in `.aiwg/smiths/` or `.claude/` - no global installation
+3. **Caches everything** - ask for something similar later, get it instantly
+4. **Only runs what's needed** - 100 definitions doesn't mean 100 running processes
+
+```
+You: "I need to find duplicate files by hash"
+     ↓
+Task(ToolSmith) → [designs script, tests on your OS, registers in catalog]
+     ↓
+You get: "Tool ready: .aiwg/smiths/toolsmith/scripts/find-duplicates.sh"
+```
+
+You asked for a tool. You got a tool. Your context stayed focused on your actual work.
 
 ## Available Smiths
 
@@ -206,11 +221,14 @@ Each Smith reads a definition file to understand available capabilities:
 
 ## Detailed Documentation
 
-| Smith | Full Documentation |
-|-------|-------------------|
+| Topic | Documentation |
+|-------|---------------|
 | ToolSmith | This document (below) |
 | MCPSmith | [mcpsmith.md](./mcpsmith.md) |
 | Agentic Smiths | [agentic-smiths.md](./agentic-smiths.md) |
+| **Making it Permanent** | [graduating-creations.md](./graduating-creations.md) |
+
+When a Smith creation proves valuable across projects, you can graduate it to a permanent addon, extension, or framework component. See the graduation guide for the path from project-local to ecosystem-wide.
 
 ---
 

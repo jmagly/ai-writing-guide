@@ -1512,7 +1512,7 @@ PR will automatically update.
 **A:** Yes. The contributor workflow uses AIWG's installation directory and tooling. Install first:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
+npm install -g aiwg
 ```
 
 ---

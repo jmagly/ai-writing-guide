@@ -1,18 +1,30 @@
 # MCPSmith
 
-MCPSmith is a specialized Smith agent that creates MCP (Model Context Protocol) servers dynamically using Docker containers. It enables on-demand creation of isolated MCP tools that can be spun up, cached, and reused across workflows.
+MCPSmith creates project-local MCP servers on-demand. When your workflow needs a custom tool - a GitHub analyzer, a database inspector, a file converter - MCPSmith builds it, runs it, and gives you the result. No global installation, no dependency conflicts, no context pollution.
 
-## Overview
+## Why MCPSmith Exists
 
-**Problem**: Custom MCP tools are needed on-demand during agentic workflows, but adding them to the main AIWG MCP server requires code changes, and custom tools may have conflicting dependencies.
+**The Problem You Face**: During development, you need specialized tools - analyze a repo, query an API, transform data. Installing MCP servers globally is heavyweight. Writing custom tools interrupts your flow. And the work of creating tools clutters your conversation context.
 
-**Solution**: MCPSmith creates Dockerized MCP servers dynamically:
-1. Receives tool request from orchestrating agent
-2. Checks catalog for existing container/tool
-3. Generates MCP implementation + Dockerfile
-4. Builds and runs container
-5. Registers in catalog for reuse
-6. Returns connection info to orchestrator
+**How MCPSmith Helps**:
+
+1. **Project-Local**: MCP servers live in your project's `.aiwg/smiths/` directory. They're part of your project, not your system.
+
+2. **On-Demand Execution**: Even with 100 tool definitions, only the ones you actually use get spun up. No resource waste.
+
+3. **Agent-Delegated**: MCPSmith runs as a separate agent via `Task()`. The work of building containers, writing code, and testing protocols happens in isolated context - you just get the result.
+
+4. **Cached & Reusable**: Once created, tools are cataloged. Ask for something similar later, get the existing tool instantly.
+
+```
+You: "I need to analyze GitHub repos for security issues"
+     ↓
+Task(MCPSmith) → [builds container, tests MCP protocol, registers in catalog]
+     ↓
+You get: "Tool ready. Use: docker run -i aiwg-mcp/github-security:1.0.0"
+```
+
+Your context stays clean. You asked for a tool, you got a tool.
 
 ## Getting Started
 
