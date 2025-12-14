@@ -34,8 +34,8 @@ Deep integration - analyzes your project and wires everything together.
 
 **What it does:**
 - Analyzes your project structure, dependencies, conventions
-- Preserves team directives and custom content
-- Links your rules to SDLC workflows
+- Intelligently preserves your team content
+- Links your rules to SDLC workflows via @-mentions
 - Enables natural language command mapping
 - Creates deep context integration
 
@@ -45,43 +45,48 @@ Deep integration - analyzes your project and wires everything together.
 
 ## How Regeneration Works
 
-When you run a regenerate command, AIWG performs these steps:
+Regeneration is an **intelligent merge**, not a blind replacement. The agent understands the difference between your team's content and AIWG-generated content.
 
-### Step 1: Create Backup
+### The Core Principle
 
-Your existing file is backed up with a timestamp:
-```
-CLAUDE.md → CLAUDE.md.backup-20251213-143512
-```
+**Your content is preserved. AIWG content is updated.**
 
-This happens automatically unless you use `--no-backup`.
+The regeneration agent:
+1. Reads your existing context file
+2. Identifies team-written sections (project rules, conventions, requirements)
+3. Identifies AIWG-generated sections (framework integration, agent definitions)
+4. Updates only the AIWG sections with fresh analysis
+5. Preserves your team content exactly as written
+6. Adds @-mentions to link your content with relevant AIWG resources
 
-### Step 2: Extract Preserved Content
+### What the Agent Recognizes as Team Content
 
-AIWG scans your file for content marked as preserved (see [What Gets Preserved](#what-gets-preserved) below). This content will be re-inserted into the regenerated file.
+The agent intelligently identifies content that belongs to your team:
 
-### Step 3: Analyze Your Project
+- **Project-specific rules** - API guidelines, coding standards, architectural decisions
+- **Team conventions** - Naming patterns, review processes, deployment procedures
+- **Business requirements** - Security policies, compliance needs, SLAs
+- **Custom workflows** - Team-specific processes not part of AIWG
+- **Historical context** - Why decisions were made, lessons learned
 
-AIWG examines:
-- **Languages and frameworks** - Detected from file extensions and config files
-- **Package manager** - npm, pip, cargo, etc.
-- **Development commands** - From package.json scripts, Makefile, etc.
-- **Test framework** - Vitest, Jest, pytest, etc.
-- **CI/CD configuration** - GitHub Actions, etc.
-- **Directory structure** - Source, test, docs locations
+This content is **never modified** during regeneration unless it's factually outdated.
 
-### Step 4: Detect AIWG State
+### What the Agent Updates
 
-AIWG checks what's installed:
-- Core AIWG utilities (always available)
-- SDLC framework (if installed)
-- Marketing Kit (if installed)
-- Deployed agents and commands
-- Project artifacts in `.aiwg/`
+AIWG-related sections are refreshed:
 
-### Step 5: Generate New File
+- Project overview (re-analyzed from codebase)
+- Tech stack and commands (re-detected)
+- AIWG framework references
+- Agent definitions and available commands
+- Natural language mappings
+- @-mention links to AIWG documentation
 
-The new file is built in layers (the "bootstrap pattern"):
+---
+
+## The Bootstrap Pattern
+
+The regenerated file is built in layers:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -89,131 +94,58 @@ The new file is built in layers (the "bootstrap pattern"):
 ├─────────────────────────────────────────────────┤
 │  1. PROJECT ANALYSIS                             │
 │     Tech stack, commands, structure              │
+│     (Re-detected each regeneration)              │
 ├─────────────────────────────────────────────────┤
-│  2. PROJECT ARTIFACTS (.aiwg/)                   │
-│     @-mentions to your requirements,             │
-│     architecture, and planning docs              │
+│  2. YOUR TEAM CONTENT                            │
+│     Rules, conventions, requirements             │
+│     (Preserved exactly as written)               │
 ├─────────────────────────────────────────────────┤
-│  3. CORE AIWG REFERENCES                         │
-│     Orchestration, agent design, error recovery  │
-│     (Always available - no framework required)   │
+│  3. PROJECT ARTIFACTS (.aiwg/)                   │
+│     @-mentions linking to your docs              │
 ├─────────────────────────────────────────────────┤
-│  4. FRAMEWORK REFERENCES (if installed)          │
-│     SDLC workflows, natural language mappings    │
-├─────────────────────────────────────────────────┤
-│  5. TEAM DIRECTIVES                              │
-│     Your preserved custom content                │
+│  4. AIWG REFERENCES                              │
+│     Core utilities + installed frameworks        │
+│     (Updated each regeneration)                  │
 └─────────────────────────────────────────────────┘
 ```
 
-### Step 6: Write and Report
-
-The file is written and you see a summary:
-
-```
-CLAUDE.md Regenerated
-=====================
-
-Backup: CLAUDE.md.backup-20251213-143512
-
-Preserved: 2 sections, 15 lines
-Regenerated: Project overview, structure, AIWG integration
-
-Output: CLAUDE.md (287 lines)
-```
-
 ---
 
-## What Gets Preserved
+## How @-Mentions Enhance Your Content
 
-Your custom content survives regeneration if marked properly.
+During regeneration, the agent can add @-mentions to link your team content with relevant AIWG resources. This happens **without modifying your words**.
 
-### Method 1: Preserve Blocks
-
-Wrap content in preserve comments:
-
+**Example - Your original content:**
 ```markdown
-<!-- PRESERVE -->
-## Our API Guidelines
-
-- All endpoints must use kebab-case
-- Authentication via Bearer tokens only
-- Rate limiting: 100 requests/minute
-<!-- /PRESERVE -->
-```
-
-### Method 2: Protected Section Names
-
-Sections with these heading prefixes are automatically preserved:
-
-- `Team *` (e.g., "Team Guidelines", "Team Standards")
-- `Org *` (e.g., "Org Requirements", "Org Policies")
-- `Definition of Done`
-- `Project Rules`
-- `Security Requirements`
-- `Custom *`
-
-```markdown
-## Team API Standards
-
-These standards are specific to our team and will survive regeneration.
-
-- Use TypeScript for all new code
-- 80% test coverage minimum
-- PR reviews required from 2 team members
-```
-
-### Method 3: Inline Directives
-
-Lines containing directive keywords are preserved:
-
-```markdown
-IMPORTANT: Never expose internal IDs in API responses
-REQUIRED: All database queries must use prepared statements
-DIRECTIVE: Use feature flags for all new functionality
-```
-
----
-
-## What Gets Updated
-
-The regenerate command **updates** (replaces with fresh analysis):
-
-- Project overview and tech stack
-- Development commands table
-- Project structure diagram
-- AIWG framework sections
-- Agent definitions and tool lists
-- Command mappings
-- Natural language translation patterns
-- @-mention references to AIWG docs
-
-Your preserved sections are then merged back in.
-
----
-
-## Why Intelligent Integration Works Better
-
-Without regeneration, you get a basic append. With regeneration:
-
-- **Natural language works** - "Run security review" → `/flow-security-review-cycle`
-- **Context linking** - Your project rules linked to SDLC workflows
-- **Content expansion** - Vague notes expanded with actionable details
-- **Deep integration** - Your existing content enriched, not replaced
-
-**Example transformation:**
-
-```markdown
-# Before (setup-project only)
 ## Security Requirements
 - Must comply with SOC2
+- All data encrypted at rest
+- Quarterly penetration testing required
+```
 
-# After (regenerate)
+**After regeneration - Enhanced with links:**
+```markdown
 ## Security Requirements
 - Must comply with SOC2
-  → Security validation: /flow-security-review-cycle
-  → Compliance framework: /flow-compliance-validation SOC2
+- All data encrypted at rest
+- Quarterly penetration testing required
+
+Related workflows: @.aiwg/security/, /flow-security-review-cycle, /flow-compliance-validation
 ```
+
+Your requirements are untouched. The agent simply adds helpful references below.
+
+---
+
+## Updating Outdated Information
+
+If the agent detects genuinely outdated information (e.g., old version numbers, deprecated patterns), it may update that specific content. This is rare and only happens when:
+
+- Version numbers are clearly stale
+- Referenced files no longer exist
+- Patterns have been officially deprecated
+
+The agent **does not** change your team's opinions, preferences, or decisions.
 
 ---
 
@@ -239,20 +171,16 @@ Each platform has its own regenerate command:
 
 ## Regenerate Options
 
-All regenerate commands support these flags:
-
 | Flag | Description |
 |------|-------------|
 | `--dry-run` | Preview changes without writing |
-| `--show-preserved` | List detected preserved content and exit |
 | `--no-backup` | Skip creating backup file |
-| `--full` | Full regeneration - loses ALL custom content |
+| `--full` | Full regeneration - replaces everything (destructive) |
 
 ```text
-/aiwg-regenerate --dry-run        # Preview changes
-/aiwg-regenerate --show-preserved # See what's kept
+/aiwg-regenerate --dry-run        # Preview what would change
 /aiwg-regenerate                  # Run regeneration
-/aiwg-regenerate --full           # Full regen (destructive!)
+/aiwg-regenerate --full           # Complete reset (use with caution)
 ```
 
 ---
@@ -268,7 +196,7 @@ All regenerate commands support these flags:
 - Natural language commands stop working
 
 **You don't need to regenerate when:**
-- Adding content to preserved sections
+- Adding team content to your context file
 - Making normal code changes
 - Updating `.aiwg/` artifacts (references are dynamic)
 
@@ -279,7 +207,7 @@ All regenerate commands support these flags:
 Every regeneration creates a timestamped backup:
 
 ```text
-CLAUDE.md.backup-20251213-143022
+CLAUDE.md → CLAUDE.md.backup-20251213-143022
 ```
 
 To restore:
@@ -287,25 +215,12 @@ To restore:
 cp CLAUDE.md.backup-20251213-143022 CLAUDE.md
 ```
 
-Old backups aren't automatically cleaned. Periodically remove them:
-```bash
-rm *.backup-* 2>/dev/null
-```
-
 ---
 
 ## Troubleshooting
 
-**Content not being preserved:**
-1. Check preserve markers are exactly `<!-- PRESERVE -->` and `<!-- /PRESERVE -->`
-2. Ensure section headings match protected patterns exactly
-3. Run with `--show-preserved` to see what's detected
-
 **Natural language not working:**
 Run the regenerate command for your platform to re-establish mappings.
-
-**"Command not recognized":**
-Run the appropriate regenerate command for your platform.
 
 **Agents not orchestrating:**
 Run the appropriate regenerate command for your platform.
@@ -318,6 +233,11 @@ aiwg use marketing              # Add marketing framework
 /aiwg-regenerate                # Re-integrate
 ```
 
+**Content unexpectedly changed:**
+1. Check your backup file
+2. Compare with `diff CLAUDE.md.backup-* CLAUDE.md`
+3. Report unexpected changes - the agent should preserve team content
+
 ---
 
 ## Quick Reference
@@ -327,7 +247,6 @@ aiwg use marketing              # Add marketing framework
 | Quick setup (append) | `/aiwg-setup-project` |
 | Intelligent integration | `/aiwg-regenerate` |
 | Preview changes | `/aiwg-regenerate --dry-run` |
-| See preserved content | `/aiwg-regenerate --show-preserved` |
 | Claude Code | `/aiwg-regenerate-claude` |
 | Warp Terminal | `/aiwg-regenerate-warp` |
 | Factory/OpenCode/Codex | `/aiwg-regenerate-agents` |
