@@ -36,6 +36,7 @@
     "AGENT-DESIGN",
     "commands/subagents-and-commands-guide",
     "smithing",
+    "smithing/toolsmith",
     "smithing/mcpsmith",
     "smithing/agentic-smiths",
     "smithing/graduating-creations",
@@ -293,6 +294,13 @@
       "summary": "Generate tools and MCP servers",
       "collapsed": true,
       "parent": "customizing"
+    },
+    {
+      "id": "smithing/toolsmith",
+      "title": "Toolsmith",
+      "summary": "Create automation tools",
+      "file": "smithing/toolsmith.md",
+      "parent": "smithing"
     },
     {
       "id": "smithing/mcpsmith",
