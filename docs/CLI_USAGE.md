@@ -175,5 +175,5 @@ aiwg -help
 ## Support
 
 - **GitHub Issues**: https://github.com/jmagly/ai-writing-guide/issues
-- **Documentation**: https://github.com/jmagly/ai-writing-guide/blob/main/README.md
+- **Documentation**: https://docs.aiwg.io
 - **Examples**: `.aiwgrc.example.json` in repository
