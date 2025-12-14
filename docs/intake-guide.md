@@ -1,6 +1,10 @@
 # Getting Started with Intake
 
-The fastest way to start a project. Just describe what you're building and let the system handle the rest.
+Intake is how AI agents learn about your project. It generates structured documents that guide all future operations - from architecture decisions to test strategies to deployment plans.
+
+These same documents serve your human team too: stakeholder alignment, onboarding new developers, planning sessions, and project documentation. One intake process, dual purpose.
+
+Just describe what you're building and let the system handle the rest.
 
 ---
 
