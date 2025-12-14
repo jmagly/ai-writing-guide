@@ -172,32 +172,6 @@ Show all available commands.
 aiwg -help
 ```
 
-## Agent Linting (Slash Command)
-
-Validate agent definitions against the AIWG Agent Design Bible (10 Golden Rules).
-
-Use the `/devkit-test` slash command to validate agent definitions:
-
-```text
-/devkit-test
-```
-
-**Rules Checked:**
-| Rule | Description | Severity |
-|------|-------------|----------|
-| R001 | Agent must have name field | error |
-| R002 | Agent must have description | error |
-| R003 | Single responsibility (description length) | warning |
-| R004 | Tool count (0-3 optimal) | warning |
-| R005 | Model tier appropriate to task | info |
-| R006 | Required frontmatter fields | error |
-| R007 | Tool naming convention | warning |
-| R008 | No circular dependencies | error |
-| R009 | Outputs clearly defined | info |
-| R010 | Error handling documented | info |
-
----
-
 ## @-Mention Utilities (Slash Commands)
 
 Manage traceability through @-mention references in code and documentation.
