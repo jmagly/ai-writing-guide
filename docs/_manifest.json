@@ -30,11 +30,6 @@
     "troubleshooting/path-issues",
     "troubleshooting/platform-issues",
     "customizing",
-    "commands",
-    "commands/DEVELOPMENT_GUIDE",
-    "commands/development-commands-examples",
-    "AGENT-DESIGN",
-    "commands/subagents-and-commands-guide",
     "development",
     "development/devkit-overview",
     "development/addon-creation-guide",
@@ -47,6 +42,11 @@
     "smithing/toolsmith",
     "smithing/mcpsmith",
     "smithing/graduating-creations",
+    "commands",
+    "commands/DEVELOPMENT_GUIDE",
+    "commands/development-commands-examples",
+    "AGENT-DESIGN",
+    "commands/subagents-and-commands-guide",
     "production-grade-guide",
     "contributing",
     "contributing/contributor-quickstart",
@@ -258,7 +258,7 @@
       "title": "Commands",
       "summary": "Build slash commands",
       "collapsed": true,
-      "parent": "customizing"
+      "parent": "development"
     },
     {
       "id": "commands/DEVELOPMENT_GUIDE",
@@ -279,14 +279,14 @@
       "title": "Agents",
       "summary": "Design and build agents",
       "file": "AGENT-DESIGN.md",
-      "parent": "customizing"
+      "parent": "development"
     },
     {
       "id": "commands/subagents-and-commands-guide",
       "title": "Subagents",
       "summary": "Work with subagents",
       "file": "commands/subagents-and-commands-guide.md",
-      "parent": "customizing"
+      "parent": "development"
     },
     {
       "id": "smithing",
