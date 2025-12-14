@@ -21,6 +21,8 @@
     "quickstart-mmk",
     "reference",
     "CLI_USAGE",
+    "mention-utilities",
+    "deploy-generators",
     "reference/ORCHESTRATOR_GUIDE",
     "configuration/model-configuration",
     "troubleshooting",
@@ -189,6 +191,20 @@
       "title": "CLI Reference",
       "summary": "Command line usage",
       "file": "CLI_USAGE.md",
+      "parent": "reference"
+    },
+    {
+      "id": "mention-utilities",
+      "title": "@-Mention Utilities",
+      "summary": "Traceability references",
+      "file": "mention-utilities.md",
+      "parent": "reference"
+    },
+    {
+      "id": "deploy-generators",
+      "title": "Deploy Generators",
+      "summary": "Deployment configurations",
+      "file": "deploy-generators.md",
       "parent": "reference"
     },
     {

@@ -172,34 +172,6 @@ Show all available commands.
 aiwg -help
 ```
 
-## @-Mention Utilities (Slash Commands)
-
-Manage traceability through @-mention references in code and documentation.
-
-| Command | Description |
-|---------|-------------|
-| `/mention-wire` | Inject @-mentions based on codebase analysis |
-| `/mention-validate` | Validate @-mentions resolve to existing files |
-| `/mention-lint` | Lint @-mentions for style consistency |
-| `/mention-report` | Generate traceability report |
-| `/mention-conventions` | Display naming conventions |
-
----
-
-## Deploy Generators (Slash Command)
-
-Generate production-ready deployment configurations using `/deploy-gen`:
-
-```text
-/deploy-gen docker --app-name myapp --port 3000
-/deploy-gen k8s --app-name myapp --port 3000
-/deploy-gen compose --app-name myapp --port 3000
-```
-
-Generates Docker, Kubernetes, or Docker Compose configurations with security best practices.
-
----
-
 ## Support
 
 - **GitHub Issues**: https://github.com/jmagly/ai-writing-guide/issues
