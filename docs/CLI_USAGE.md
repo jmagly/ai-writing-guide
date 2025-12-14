@@ -9,9 +9,6 @@ npm install -g aiwg
 ## Quick Start
 
 ```bash
-# Try AIWG in under 2 minutes
-aiwg demo
-
 # Check installation health
 aiwg doctor
 
@@ -21,20 +18,6 @@ aiwg use sdlc
 ```
 
 ## Core Commands
-
-### demo
-
-Create a complete demo project to explore AIWG.
-
-```bash
-aiwg demo
-```
-
-Creates `~/aiwg-demo/` with:
-- Full `.aiwg/` directory structure
-- Sample intake form and requirements
-- All SDLC agents and commands deployed
-- Ready for Claude Code or Cursor
 
 ### doctor
 
@@ -72,49 +55,9 @@ aiwg use all
 ```
 
 **Options:**
-
-| Flag | Description |
-|------|-------------|
-| `--provider <name>` | Target platform: claude, factory, openai, warp, cursor, copilot |
-| `--no-utils` | Skip aiwg-utils addon |
-| `--force` | Overwrite existing deployments |
-| `--dry-run` | Preview changes without writing files |
-
-**Model Selection:**
-
-| Flag | Description |
-|------|-------------|
-| `--reasoning-model <name>` | Override model for reasoning tier (opus-level agents) |
-| `--coding-model <name>` | Override model for coding tier (sonnet-level agents) |
-| `--efficiency-model <name>` | Override model for efficiency tier (haiku-level agents) |
-| `--save` | Save model selection to project `models.json` |
-| `--save-user` | Save model selection to `~/.config/aiwg/models.json` |
-
-**Filter Options:**
-
-| Flag | Description |
-|------|-------------|
-| `--filter <pattern>` | Only deploy agents matching glob pattern (e.g., `*architect*`) |
-| `--filter-role <role>` | Only deploy agents of specified role: reasoning, coding, efficiency |
-
-**Examples:**
-
-```bash
-# Deploy with custom reasoning model
-aiwg use sdlc --reasoning-model claude-opus-4-2
-
-# Deploy with all custom models and save for future deploys
-aiwg use sdlc --reasoning-model opus-4-2 --coding-model sonnet-5 --save
-
-# Only deploy architect agents with new model
-aiwg use sdlc --filter "*architect*" --reasoning-model opus-4-2
-
-# Only update reasoning-tier agents
-aiwg use sdlc --filter-role reasoning --reasoning-model custom-reasoning
-
-# Preview what would be deployed
-aiwg use sdlc --reasoning-model opus-4-2 --dry-run
-```
+- `--provider <name>`: Target platform (claude, factory, openai, warp)
+- `--no-utils`: Skip aiwg-utils addon
+- `--force`: Overwrite existing deployments
 
 ### -new
 
