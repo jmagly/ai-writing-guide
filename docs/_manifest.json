@@ -35,11 +35,6 @@
     "commands/development-commands-examples",
     "AGENT-DESIGN",
     "commands/subagents-and-commands-guide",
-    "smithing",
-    "smithing/agentic-smiths",
-    "smithing/toolsmith",
-    "smithing/mcpsmith",
-    "smithing/graduating-creations",
     "development",
     "development/devkit-overview",
     "development/addon-creation-guide",
@@ -47,6 +42,11 @@
     "development/framework-creation-guide",
     "development/walkthrough-create-addon",
     "development/file-placement-guide",
+    "smithing",
+    "smithing/agentic-smiths",
+    "smithing/toolsmith",
+    "smithing/mcpsmith",
+    "smithing/graduating-creations",
     "production-grade-guide",
     "contributing",
     "contributing/contributor-quickstart",
@@ -293,7 +293,7 @@
       "title": "Smithing",
       "summary": "Generate tools and MCP servers",
       "collapsed": true,
-      "parent": "customizing"
+      "parent": "development"
     },
     {
       "id": "smithing/agentic-smiths",
