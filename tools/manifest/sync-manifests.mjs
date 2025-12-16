@@ -3,16 +3,17 @@
  * Sync Manifests
  *
  * Combine generation and lint/fix for manifests. Works on a single target directory or the full
- * repository. Creates/updates manifest.json and optionally manifest.md.
+ * repository. Creates/updates manifest.json.
  *
  * Usage:
- *   node tools/manifest/sync-manifests.mjs [--target <path>|.] [--create] [--fix] [--write-md]
+ *   node tools/manifest/sync-manifests.mjs [--target <path>|.] [--create] [--fix]
  *
  * Defaults:
  *   --target .      # current repo
  *   --fix           # reconcile files in existing manifests
- *   --write-md      # generate/update manifest.md alongside manifest.json
  *   (omit --create to avoid creating new manifests everywhere)
+ *
+ * Note: manifest.md generation has been deprecated - manifest.json serves the same purpose.
  */
 
 import fs from 'fs';
@@ -23,7 +24,6 @@ function parseArgs() {
   let target = process.cwd();
   let create = false;
   let fix = false;
-  let writeMd = false;
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--target' && args[i + 1]) {
@@ -32,15 +32,12 @@ function parseArgs() {
       create = true;
     } else if (a === '--fix') {
       fix = true;
-    } else if (a === '--write-md') {
-      writeMd = true;
     }
   }
   // Defaults for convenience
   if (!create) create = false;
   if (!fix) fix = true;
-  if (!writeMd) writeMd = true;
-  return { target, create, fix, writeMd };
+  return { target, create, fix };
 }
 
 function listDirs(start, { includeAll }) {
@@ -74,7 +71,7 @@ function listFiles(dir) {
     .sort();
 }
 
-function syncDir(dir, { create, fix, writeMd }) {
+function syncDir(dir, { create, fix }) {
   const manifestPath = path.join(dir, 'manifest.json');
   const files = listFiles(dir);
   let json;
@@ -119,24 +116,11 @@ function syncDir(dir, { create, fix, writeMd }) {
     ignore: Array.from(ignore)
   };
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
-  let wroteMd = false;
-  if (writeMd) {
-    const md = [
-      '# Directory Manifest',
-      '',
-      '## Files',
-      '',
-      ...next.map(f => `- ${f}`),
-      ''
-    ].join('\n');
-    fs.writeFileSync(path.join(dir, 'manifest.md'), md + '\n', 'utf8');
-    wroteMd = true;
-  }
-  return { dir, created: !fs.existsSync(manifestPath) && !!create, updated: updated || wroteMd };
+  return { dir, created: !fs.existsSync(manifestPath) && !!create, updated };
 }
 
 (function main() {
-  const { target, create, fix, writeMd } = parseArgs();
+  const { target, create, fix } = parseArgs();
   if (!fs.existsSync(target)) {
     console.error('Target not found:', target);
     process.exit(1);
@@ -145,7 +129,7 @@ function syncDir(dir, { create, fix, writeMd }) {
   const dirs = listDirs(target, { includeAll });
   let count = 0;
   for (const d of dirs) {
-    const res = syncDir(d, { create, fix, writeMd });
+    const res = syncDir(d, { create, fix });
     if (res.updated || res.created) count++;
   }
   console.log(`Processed ${dirs.length} directories; updated ${count}.`);

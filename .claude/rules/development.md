@@ -110,14 +110,16 @@ Each documented directory has `manifest.json` tracking files:
 
 ```bash
 # Generate manifest
-node tools/manifest/generate-manifest.mjs <dir> [--write-md]
+node tools/manifest/generate-manifest.mjs <dir>
 
-# Enrich manifests
+# Enrich manifests with descriptions
 node tools/manifest/enrich-manifests.mjs --target . [--write]
 
 # Sync check
-node tools/manifest/sync-manifests.mjs --target . --fix --write-md
+node tools/manifest/sync-manifests.mjs --target . --fix
 ```
+
+Note: `manifest.md` files have been deprecated - `manifest.json` serves the same purpose.
 
 ## Agentic Development Anti-Patterns
 

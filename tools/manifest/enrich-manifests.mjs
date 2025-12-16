@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /**
- * Enrich manifest.json files with per-file descriptions and regenerate manifest.md.
+ * Enrich manifest.json files with per-file descriptions.
  *
  * - Walks target tree, finds directories containing manifest.json
  * - Adds/updates a `descriptions` object keyed by filename
- * - Writes a table to manifest.md with File | Description
  * - Skips hidden directories; ignores files listed under `ignore`
  *
  * Usage:
  *   node tools/manifest/enrich-manifests.mjs [--target <path>|.] [--write]
+ *
+ * Note: manifest.md generation has been deprecated - manifest.json serves the same purpose.
  */
 import fs from 'fs';
 import path from 'path';
@@ -142,14 +143,10 @@ function enrichManifest(dir, write) {
     }
   }
   if (changed) json.descriptions = descriptions;
-  // Always write manifest.md from current data
-  const rows = files.map(f => `| ${f} | ${(descriptions[f] || '').replace(/\|/g, '\\|')} |`);
-  const md = ['# Directory Manifest', '', '## Files', '', '| File | Description |', '| --- | --- |', ...rows, ''].join('\n');
-  if (write) {
-    if (changed) fs.writeFileSync(manifestPath, JSON.stringify(json, null, 2) + '\n', 'utf8');
-    fs.writeFileSync(path.join(dir, 'manifest.md'), md + '\n', 'utf8');
+  if (write && changed) {
+    fs.writeFileSync(manifestPath, JSON.stringify(json, null, 2) + '\n', 'utf8');
   }
-  return { dir, updated: write && changed, changed, wroteMd: write };
+  return { dir, updated: write && changed, changed };
 }
 
 (function main(){

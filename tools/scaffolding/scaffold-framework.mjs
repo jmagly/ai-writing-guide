@@ -58,9 +58,7 @@ Creates:
   ├── plan-act-<name>.md
   ├── actors-and-templates.md
   ├── agents/
-  │   └── manifest.md
   ├── commands/
-  │   └── manifest.md
   ├── templates/
   │   ├── manifest.json
   │   └── <phase>/  (for each phase)
@@ -518,8 +516,6 @@ async function main() {
     { path: join(frameworkPath, 'README.md'), content: generateReadme(name, { description, phases }), type: 'text' },
     { path: join(frameworkPath, `plan-act-${kebab}.md`), content: generatePlanAct(name, { phases }), type: 'text' },
     { path: join(frameworkPath, 'actors-and-templates.md'), content: generateActorsAndTemplates(name, { phases }), type: 'text' },
-    { path: join(frameworkPath, 'agents', 'manifest.md'), content: generateAgentManifest(name), type: 'text' },
-    { path: join(frameworkPath, 'commands', 'manifest.md'), content: generateCommandManifest(name), type: 'text' },
     { path: join(frameworkPath, 'templates', 'manifest.json'), content: generateTemplateManifest(name, { phases }), type: 'json' },
     { path: join(frameworkPath, 'metrics', 'tracking-catalog.md'), content: generateTrackingCatalog(name, { phases }), type: 'text' },
     { path: join(frameworkPath, 'config', 'models.json'), content: generateModelsConfig(name), type: 'json' },

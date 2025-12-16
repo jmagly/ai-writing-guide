@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 /**
- * Generate a manifest.json (and optional manifest.md) for a directory.
+ * Generate a manifest.json for a directory.
  *
  * Usage:
- *   node tools/manifest/generate-manifest.mjs <dir> [--write-md]
+ *   node tools/manifest/generate-manifest.mjs <dir>
+ *
+ * Note: manifest.md generation has been deprecated - manifest.json serves the same purpose.
  */
 
 import fs from 'fs';
 import path from 'path';
 
 const dirArg = process.argv[2];
-const writeMd = process.argv.includes('--write-md');
 if (!dirArg) {
-  console.error('Usage: node tools/manifest/generate-manifest.mjs <dir> [--write-md]');
+  console.error('Usage: node tools/manifest/generate-manifest.mjs <dir>');
   process.exit(1);
 }
 
@@ -38,17 +39,4 @@ const manifest = {
 const manifestPath = path.join(dir, 'manifest.json');
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
 console.log('Wrote', manifestPath);
-
-if (writeMd) {
-  const md = [
-    '# Directory Manifest',
-    '',
-    '## Files',
-    ...files.map(f => `- ${f}`),
-    ''
-  ].join('\n');
-  const mdPath = path.join(dir, 'manifest.md');
-  fs.writeFileSync(mdPath, md + '\n', 'utf8');
-  console.log('Wrote', mdPath);
-}
 
