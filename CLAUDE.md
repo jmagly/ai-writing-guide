@@ -14,7 +14,7 @@ Framework for improving AI-generated content quality with voice profiles, valida
 "where are we?"
 
 # Agent deployment
-aiwg -deploy-agents --mode sdlc
+aiwg use sdlc
 ```
 
 ## Repository Structure
@@ -55,13 +55,13 @@ Use `@path/to/file.md` in your message to load specific documentation:
 
 | Platform | Agent Location | Command |
 |----------|----------------|---------|
-| Claude Code | `.claude/agents/` | `aiwg -deploy-agents` |
-| GitHub Copilot | `.github/agents/` | `aiwg -deploy-agents --provider copilot` |
+| Claude Code | `.claude/agents/` | `aiwg use sdlc` |
+| GitHub Copilot | `.github/agents/` | `aiwg use sdlc --provider copilot` |
 | Warp Terminal | `WARP.md` | Symlinked to CLAUDE.md |
-| Factory AI | `.factory/droids/` | `aiwg -deploy-agents --provider factory` |
-| OpenCode | `.opencode/agent/` | `aiwg -deploy-agents --provider opencode` |
-| Cursor | `.cursor/rules/` | `aiwg -deploy-agents --provider cursor` |
-| OpenAI/Codex | `~/.codex/skills/` | `aiwg -deploy-agents --provider codex` |
+| Factory AI | `.factory/droids/` | `aiwg use sdlc --provider factory` |
+| OpenCode | `.opencode/agent/` | `aiwg use sdlc --provider opencode` |
+| Cursor | `.cursor/rules/` | `aiwg use sdlc --provider cursor` |
+| OpenAI/Codex | `~/.codex/skills/` | `aiwg use sdlc --provider codex` |
 
 ## Writing Principles
 
@@ -79,8 +79,9 @@ npm install -g aiwg
 
 # CLI commands
 aiwg -version          # Show version
-aiwg -deploy-agents    # Deploy agents to project
-aiwg -deploy-commands  # Deploy slash commands
+aiwg use sdlc          # Deploy SDLC framework
+aiwg use marketing     # Deploy marketing framework
+aiwg use all           # Deploy all frameworks
 aiwg -new              # Scaffold new project
 aiwg -help             # Show all commands
 ```

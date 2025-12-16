@@ -50,6 +50,13 @@ export interface SynthesisOptions {
   minConsensusThreshold?: number; // 0-1, default: 0.5 (50% agreement required)
 }
 
+/**
+ * Internal type extending ReviewComment with reviewer metadata for consolidation
+ */
+interface CommentWithReviewer extends ReviewComment {
+  _reviewer: string;
+}
+
 // ============================================================================
 // Review Synthesizer Class
 // ============================================================================
@@ -171,9 +178,8 @@ export class ReviewSynthesizer {
         }
         commentGroups.get(section)!.push({
           ...comment,
-          // @ts-ignore - add reviewer metadata
           _reviewer: review.agentType
-        });
+        } as CommentWithReviewer);
       }
     }
 
@@ -192,8 +198,7 @@ export class ReviewSynthesizer {
           section,
           consolidatedText: this.mergeCommentTexts(group),
           sources: group.map(c => ({
-            // @ts-ignore
-            reviewer: c._reviewer as string,
+            reviewer: (c as CommentWithReviewer)._reviewer,
             originalComment: c.comment
           })),
           actionItems: this.extractActionItems(group),

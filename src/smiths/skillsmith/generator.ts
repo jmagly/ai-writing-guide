@@ -287,21 +287,23 @@ function generateDefaultReferences(options: SkillOptions): SkillReference[] {
  * Generate usage examples content
  */
 function generateUsageExamplesContent(options: SkillOptions): string {
+  const triggers = options.triggerPhrases || [options.name];
   return `# Usage Examples: ${toTitleCase(options.name)}
 
 ## Basic Usage
 
 \`\`\`
-User: "${options.triggerPhrases?.[0] || options.name}"
+User: "${triggers[0]}"
 \`\`\`
 
-## Advanced Usage
+## Alternative Triggers
 
-TODO: Add advanced usage examples
+${triggers.slice(1).map(t => `- "${t}"`).join('\n') || '_No alternative triggers defined_'}
 
 ## Common Patterns
 
-TODO: Document common usage patterns
+This skill can be combined with other workflows for enhanced results.
+See the main README for integration examples.
 `;
 }
 
@@ -311,21 +313,21 @@ TODO: Document common usage patterns
 function generateConfigurationContent(options: SkillOptions): string {
   return `# Configuration: ${toTitleCase(options.name)}
 
-## Options
-
-TODO: Document configuration options
-
-## Environment Variables
-
-TODO: Document environment variables if applicable
-
-## Platform-Specific Notes
+## Platform Support
 
 **${options.platform}**: ${
     PlatformSkillResolver.supportsSkills(options.platform)
       ? 'Native skill support'
       : 'Skills mapped to commands'
   }
+
+## Options
+
+This skill uses default configuration. Custom options can be added to the skill manifest.
+
+## Environment Variables
+
+No environment variables required for basic operation.
 `;
 }
 

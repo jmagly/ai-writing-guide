@@ -27,10 +27,7 @@
     "tools/",
     "agentic/",
     "docs/",
-    "core/",
-    "validation/",
-    "context/",
-    "examples/",
+    "templates/",
     "CLAUDE.md",
     "USAGE_GUIDE.md",
     "AGENTS.md"
