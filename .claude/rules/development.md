@@ -118,3 +118,37 @@ node tools/manifest/enrich-manifests.mjs --target . [--write]
 # Sync check
 node tools/manifest/sync-manifests.mjs --target . --fix --write-md
 ```
+
+## Agentic Development Anti-Patterns
+
+**Reference**: `@docs/references/REF-003-agentic-development-antipatterns.md`
+
+Avoid these compensatory behaviors that lead to code cruft:
+
+| Anti-Pattern | Symptom | Mitigation |
+|--------------|---------|------------|
+| **Shotgun Fix** | Multiple variants of same solution | Diagnose root cause before fixing |
+| **Abandoned Experiment** | Deprecated code that still runs | Remove or make true no-op |
+| **Magic Number Accumulation** | Unexplained numeric constants | Document or extract to config |
+| **Defensive Duplication** | Same check in multiple places | Normalize at entry point |
+| **Cruft Accumulation** | Backup files, Zone.Identifier | Use `.aiwg/working/`, clean up |
+
+### Pre-Commit Checklist
+
+Before committing fixes:
+
+- [ ] Understood root cause (not just "it works now")
+- [ ] Single solution path (no experimental variants left)
+- [ ] Magic numbers documented or configurable
+- [ ] Temporary files deleted
+- [ ] Deprecated code removed (not just warned)
+
+### Recovery Protocol
+
+When stuck in an anti-pattern:
+
+1. **PAUSE** - Stop making more changes
+2. **INVENTORY** - List all variants/attempts created
+3. **IDENTIFY** - Which ONE actually solved it?
+4. **CLEAN** - Remove all others
+5. **DOCUMENT** - Why did the working solution work?

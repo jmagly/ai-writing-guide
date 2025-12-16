@@ -6,6 +6,7 @@
  */
 
 import { Voice, Perspective, Tone } from './content-diversifier.js';
+import { getScoringConfig } from './scoring-config-loader.js';
 
 export interface VoiceProfile {
   primaryVoice: Voice | 'mixed';
@@ -69,13 +70,14 @@ export class VoiceAnalyzer {
     const perspective = this.detectPerspective(content);
     const tone = this.detectTone(content);
 
+    const config = getScoringConfig();
     const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-    const primaryVoice = sortedScores[0][1] > sortedScores[1][1] * 1.5
+    const primaryVoice = sortedScores[0][1] > sortedScores[1][1] * config.voiceDetection.mixedVoiceThreshold
       ? (sortedScores[0][0] as Voice)
       : 'mixed';
 
     const confidence = primaryVoice === 'mixed'
-      ? 50
+      ? config.voiceDetection.defaultMixedConfidence
       : Math.round((sortedScores[0][1] / (sortedScores[0][1] + sortedScores[1][1])) * 100);
 
     const wordCount = this.countWords(content);
@@ -332,32 +334,35 @@ export class VoiceAnalyzer {
       casual: 0,
     };
 
+    const config = getScoringConfig();
+    const weights = config.voiceDetection.markerWeights;
+
     for (const [voice, patterns] of this.voicePatterns.entries()) {
-      // Strong markers worth 3 points
+      // Strong markers
       for (const pattern of patterns.strongMarkers) {
         // Preserve original flags and add 'g' for global matching
         const flags = pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g';
         const matches = content.match(new RegExp(pattern.source, flags));
         if (matches) {
-          scores[voice] += matches.length * 3;
+          scores[voice] += matches.length * weights.strong;
         }
       }
 
-      // Moderate markers worth 2 points
+      // Moderate markers
       for (const pattern of patterns.moderateMarkers) {
         const flags = pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g';
         const matches = content.match(new RegExp(pattern.source, flags));
         if (matches) {
-          scores[voice] += matches.length * 2;
+          scores[voice] += matches.length * weights.moderate;
         }
       }
 
-      // Weak markers worth 1 point
+      // Weak markers
       for (const pattern of patterns.weakMarkers) {
         const flags = pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g';
         const matches = content.match(new RegExp(pattern.source, flags));
         if (matches) {
-          scores[voice] += matches.length;
+          scores[voice] += matches.length * weights.weak;
         }
       }
     }

@@ -18,6 +18,58 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
+ * Command alias registry - maps all command variants to canonical form
+ * This eliminates the "shotgun fix" anti-pattern of handling -flag, --flag, flag separately
+ */
+const COMMAND_ALIASES = {
+  // Project setup
+  '-new': 'new',
+  '--new': 'new',
+
+  // Workspace management
+  '-status': 'status',
+  '--status': 'status',
+  '-migrate-workspace': 'migrate-workspace',
+  '--migrate-workspace': 'migrate-workspace',
+  '-rollback-workspace': 'rollback-workspace',
+  '--rollback-workspace': 'rollback-workspace',
+
+  // Utilities
+  '-prefill-cards': 'prefill-cards',
+  '--prefill-cards': 'prefill-cards',
+  '-contribute-start': 'contribute-start',
+  '--contribute-start': 'contribute-start',
+  '-validate-metadata': 'validate-metadata',
+  '--validate-metadata': 'validate-metadata',
+  '-install-plugin': 'install-plugin',
+  '--install-plugin': 'install-plugin',
+  '-uninstall-plugin': 'uninstall-plugin',
+  '--uninstall-plugin': 'uninstall-plugin',
+  '-plugin-status': 'plugin-status',
+  '--plugin-status': 'plugin-status',
+
+  // Maintenance
+  '-doctor': 'doctor',
+  '--doctor': 'doctor',
+  '-version': 'version',
+  '--version': 'version',
+  '-update': 'update',
+  '--update': 'update',
+  '-h': 'help',
+  '-help': 'help',
+  '--help': 'help',
+};
+
+/**
+ * Normalize command to canonical form
+ * @param {string} cmd - Raw command from CLI
+ * @returns {string} Canonical command name
+ */
+function normalizeCommand(cmd) {
+  return COMMAND_ALIASES[cmd] || cmd;
+}
+
+/**
  * Display help message
  */
 function displayHelp() {
@@ -322,7 +374,8 @@ async function handleRuntimeInfo(args) {
  * @param {object} options - Options including packageRoot
  */
 export async function run(args, options = {}) {
-  const command = args[0];
+  const rawCommand = args[0];
+  const command = normalizeCommand(rawCommand);
   const commandArgs = args.slice(1);
 
   // No command - show help
@@ -331,7 +384,7 @@ export async function run(args, options = {}) {
     return;
   }
 
-  // Route commands
+  // Route commands (using canonical forms only)
   switch (command) {
     // Framework management
     case 'use':
@@ -347,25 +400,20 @@ export async function run(args, options = {}) {
       break;
 
     // Project setup
-    case '-new':
-    case '--new':
+    case 'new':
       await runScript('tools/install/new-project.mjs', commandArgs);
       break;
 
     // Workspace management
-    case '-status':
-    case '--status':
     case 'status':
       await runScript('tools/cli/workspace-status.mjs', commandArgs);
       break;
 
-    case '-migrate-workspace':
-    case '--migrate-workspace':
+    case 'migrate-workspace':
       await runScript('tools/cli/workspace-migrate.mjs', commandArgs);
       break;
 
-    case '-rollback-workspace':
-    case '--rollback-workspace':
+    case 'rollback-workspace':
       await runScript('tools/cli/workspace-rollback.mjs', commandArgs);
       break;
 
@@ -387,78 +435,50 @@ export async function run(args, options = {}) {
       break;
 
     // Utilities
-    case '-prefill-cards':
-    case '--prefill-cards':
+    case 'prefill-cards':
       await runScript('tools/cards/prefill-cards.mjs', commandArgs);
       break;
 
-    case '-contribute-start':
-    case '--contribute-start':
+    case 'contribute-start':
       await runScript('tools/contrib/start-contribution.mjs', commandArgs);
       break;
 
-    case '-validate-metadata':
-    case '--validate-metadata':
+    case 'validate-metadata':
       await runScript('tools/cli/validate-metadata.mjs', commandArgs);
       break;
 
-    case '-install-plugin':
-    case '--install-plugin':
+    case 'install-plugin':
       await runScript('tools/plugin/plugin-installer-cli.mjs', commandArgs);
       break;
 
-    case '-uninstall-plugin':
-    case '--uninstall-plugin':
+    case 'uninstall-plugin':
       await runScript('tools/plugin/plugin-uninstaller-cli.mjs', commandArgs);
       break;
 
-    case '-plugin-status':
-    case '--plugin-status':
+    case 'plugin-status':
       await runScript('tools/plugin/plugin-status-cli.mjs', commandArgs);
-      break;
-
-    // Legacy commands (deprecated)
-    case '-deploy-agents':
-    case '--deploy-agents':
-      console.log('[DEPRECATED] Use: aiwg use <framework> instead');
-      await runScript('tools/agents/deploy-agents.mjs', commandArgs);
-      break;
-
-    case '-deploy-commands':
-    case '--deploy-commands':
-      console.log('[DEPRECATED] Use: aiwg use <framework> instead');
-      await runScript('tools/agents/deploy-agents.mjs', ['--deploy-commands', ...commandArgs]);
       break;
 
     // Maintenance
     case 'doctor':
-    case '-doctor':
-    case '--doctor':
       await runScript('tools/cli/doctor.mjs', commandArgs);
       break;
 
-    case '-version':
-    case '--version':
     case 'version':
       await displayVersion();
       break;
 
-    case '-update':
-    case '--update':
     case 'update':
       await forceUpdateCheck();
       break;
 
-    case '-h':
-    case '--help':
-    case '-help':
     case 'help':
       displayHelp();
       break;
 
     default:
-      console.error(`Unknown command: ${command}`);
-      console.log('Run `aiwg -help` for usage information.');
+      console.error(`Unknown command: ${rawCommand}`);
+      console.log('Run `aiwg help` for usage information.');
       process.exit(1);
   }
 }

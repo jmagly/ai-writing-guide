@@ -16,6 +16,7 @@
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { ValidationRuleLoader, RuleSet, ValidationContext, Severity } from './validation-rules.js';
+import { loadScoringConfig, getScoringConfig } from './scoring-config-loader.js';
 
 export interface ValidationIssue {
   type: 'banned_phrase' | 'ai_pattern' | 'missing_authenticity' | 'formulaic_structure';
@@ -78,6 +79,9 @@ export class WritingValidationEngine {
     if (this.initialized) {
       return;
     }
+
+    // Load scoring configuration
+    await loadScoringConfig();
 
     try {
       this.ruleSet = await this.ruleLoader.loadRuleSet();
@@ -332,10 +336,11 @@ export class WritingValidationEngine {
       missingMarkers.push('acknowledgment of challenges or problems');
     }
 
-    // Calculate authenticity score
-    const humanScore = humanMarkers.length * 10;
-    const aiPenalty = aiTells.length * 15;
-    const score = Math.max(0, Math.min(100, humanScore - aiPenalty + 30)); // Base of 30
+    // Calculate authenticity score using configured weights
+    const config = getScoringConfig();
+    const humanScore = humanMarkers.length * config.authenticity.humanMarkerWeight;
+    const aiPenalty = aiTells.length * config.authenticity.aiTellPenalty;
+    const score = Math.max(0, Math.min(100, humanScore - aiPenalty + config.authenticity.baseScore));
 
     return {
       score,
@@ -496,8 +501,9 @@ export class WritingValidationEngine {
     const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
 
     // Calculate AI pattern score (0-100, higher = more AI-like)
+    const config = getScoringConfig();
     const aiPatternCount = issues.filter(i => i.type === 'ai_pattern' || i.type === 'banned_phrase').length;
-    const aiPatternScore = Math.min(100, (aiPatternCount / Math.max(1, words.length / 100)) * 20);
+    const aiPatternScore = Math.min(100, (aiPatternCount / Math.max(1, words.length / 100)) * config.issueScoring.aiPatternNormalizer);
 
     return {
       totalIssues: issues.length,
@@ -512,17 +518,19 @@ export class WritingValidationEngine {
   }
 
   private calculateOverallScore(summary: ValidationSummary, authenticityAnalysis: AuthenticityAnalysis): number {
+    const config = getScoringConfig();
+
     // Start with authenticity score
     let score = authenticityAnalysis.score;
 
     // Deduct for critical issues (heavy penalty)
-    score -= summary.criticalCount * 10;
+    score -= summary.criticalCount * config.issueScoring.criticalPenalty;
 
     // Deduct for warnings (moderate penalty)
-    score -= summary.warningCount * 3;
+    score -= summary.warningCount * config.issueScoring.warningPenalty;
 
     // Deduct for high AI pattern score
-    score -= summary.aiPatternScore * 0.5;
+    score -= summary.aiPatternScore * config.issueScoring.aiPatternMultiplier;
 
     // Clamp to 0-100
     return Math.max(0, Math.min(100, score));
@@ -541,7 +549,8 @@ export class WritingValidationEngine {
     }
 
     // AI patterns
-    if (summary.aiPatternScore > 30) {
+    const config = getScoringConfig();
+    if (summary.aiPatternScore > config.thresholds.highAIPatternWarning) {
       suggestions.push('High AI pattern score - review formulaic transitions and vague intensifiers');
     }
 
@@ -563,7 +572,7 @@ export class WritingValidationEngine {
 
     // If score is low, provide general guidance
     const score = this.calculateOverallScore(summary, authenticityAnalysis);
-    if (score < 50) {
+    if (score < config.thresholds.lowScoreWarning) {
       suggestions.push('Consider adding: specific metrics, problem acknowledgments, and technical details');
     }
 
@@ -690,10 +699,12 @@ export class WritingValidationEngine {
     let totalScore = 0;
     let passed = 0;
     let failed = 0;
+    const config = getScoringConfig();
+    const passThreshold = config.thresholds.passScore;
 
     results.forEach((result) => {
       totalScore += result.score;
-      if (result.score >= 70) {
+      if (result.score >= passThreshold) {
         passed++;
       } else {
         failed++;
@@ -703,13 +714,13 @@ export class WritingValidationEngine {
     const avgScore = results.size > 0 ? totalScore / results.size : 0;
 
     lines.push(`Average Score: ${avgScore.toFixed(1)}/100`);
-    lines.push(`Passed (>=70): ${passed}`);
-    lines.push(`Failed (<70): ${failed}\n`);
+    lines.push(`Passed (>=${passThreshold}): ${passed}`);
+    lines.push(`Failed (<${passThreshold}): ${failed}\n`);
 
     lines.push('=== File Results ===\n');
 
     results.forEach((result, filePath) => {
-      const status = result.score >= 70 ? 'PASS' : 'FAIL';
+      const status = result.score >= passThreshold ? 'PASS' : 'FAIL';
       lines.push(`[${status}] ${filePath}: ${result.score}/100`);
       if (result.summary.criticalCount > 0) {
         lines.push(`  ${result.summary.criticalCount} critical issue(s)`);
@@ -720,7 +731,8 @@ export class WritingValidationEngine {
   }
 
   private generateHtmlReport(result: ValidationResult): string {
-    const statusColor = result.score >= 70 ? '#22c55e' : result.score >= 50 ? '#eab308' : '#ef4444';
+    const config = getScoringConfig();
+    const statusColor = result.score >= config.thresholds.passScore ? '#22c55e' : result.score >= config.thresholds.lowScoreWarning ? '#eab308' : '#ef4444';
 
     return `<!DOCTYPE html>
 <html>

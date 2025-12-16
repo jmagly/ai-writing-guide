@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AIWG Writing Validation Scoring Configuration",
+  "description": "Weights and thresholds for writing validation scoring. Adjust these to tune detection sensitivity.",
+  "version": "1.0.0",
+
+  "authenticity": {
+    "humanMarkerWeight": {
+      "value": 10,
+      "description": "Points added per human marker found (personal statements, specific metrics, trade-off acknowledgments)"
+    },
+    "aiTellPenalty": {
+      "value": 15,
+      "description": "Points deducted per AI tell found (buzzwords, formulaic transitions, excessive hedging)"
+    },
+    "baseScore": {
+      "value": 30,
+      "description": "Starting authenticity score before marker/tell adjustments. Provides a baseline so content isn't penalized to zero immediately."
+    }
+  },
+
+  "issueScoring": {
+    "criticalPenalty": {
+      "value": 10,
+      "description": "Points deducted per critical issue (banned phrases, severe AI patterns)"
+    },
+    "warningPenalty": {
+      "value": 3,
+      "description": "Points deducted per warning-level issue (minor patterns, style concerns)"
+    },
+    "aiPatternMultiplier": {
+      "value": 0.5,
+      "description": "Multiplier for AI pattern score impact on overall score. Lower = less impact from pattern density."
+    },
+    "aiPatternNormalizer": {
+      "value": 20,
+      "description": "Normalizer for AI pattern density calculation: (patternCount / (wordCount/100)) * normalizer. Higher = stricter."
+    }
+  },
+
+  "voiceDetection": {
+    "mixedVoiceThreshold": {
+      "value": 1.5,
+      "description": "Ratio threshold for voice detection. If top voice score is not 1.5x higher than second, classify as 'mixed'."
+    },
+    "defaultMixedConfidence": {
+      "value": 50,
+      "description": "Confidence percentage assigned when voice is classified as 'mixed'."
+    },
+    "markerWeights": {
+      "strong": {
+        "value": 3,
+        "description": "Points per strong voice marker match (distinctive phrases, key terminology)"
+      },
+      "moderate": {
+        "value": 2,
+        "description": "Points per moderate voice marker match (tone indicators, common patterns)"
+      },
+      "weak": {
+        "value": 1,
+        "description": "Points per weak voice marker match (general style hints)"
+      }
+    }
+  },
+
+  "thresholds": {
+    "passScore": {
+      "value": 70,
+      "description": "Minimum overall score to pass validation"
+    },
+    "lowScoreWarning": {
+      "value": 50,
+      "description": "Score below which to show low-score warnings"
+    },
+    "highAIPatternWarning": {
+      "value": 30,
+      "description": "AI pattern score above which to suggest reducing AI patterns"
+    }
+  },
+
+  "_notes": {
+    "tuning": "Higher penalties = stricter detection. Start with defaults and adjust based on false positive/negative rates.",
+    "rationale": "These defaults were established through iterative testing. The 10/15 human/AI weights create ~1.5x penalty for AI tells vs reward for human markers, reflecting that AI patterns are easier to produce accidentally."
+  }
+}
