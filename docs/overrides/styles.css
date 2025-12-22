@@ -149,6 +149,13 @@ kbd {
   --z-overlay: 45;
   --z-modal: 50;
   --z-toast: 60;
+
+  /* dbbuilder compatibility variables */
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-muted);
+  --surface: var(--color-bg-panel);
+  --grid-line: var(--color-border);
+  --accent: var(--color-accent-cyan);
 }
 
 /* Theme Variants */
@@ -318,7 +325,8 @@ kbd {
 }
 
 /* Mobile drawer mode */
-.sidebar--open {
+.sidebar--open,
+.sidebar.mobile-open {
   display: block;
   position: fixed;
   right: 0;
@@ -328,6 +336,15 @@ kbd {
   max-width: 320px;
   z-index: var(--z-drawer);
   animation: slide-in var(--transition-normal);
+}
+
+/* app.js menu-open body class overlay */
+body.menu-open::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 60%);
+  z-index: var(--z-overlay);
 }
 
 @keyframes slide-in {
