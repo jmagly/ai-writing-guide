@@ -1,0 +1,132 @@
+name: coordinate-public-relations-launch-activities-and-media-outreach
+description: Coordinate public relations launch activities and media outreach
+model:
+  name: gpt-4
+  temperature: 0.3
+  max_tokens: 4000
+instructions: |
+  # PR Launch Command
+  
+  Coordinate comprehensive public relations launch with media outreach and communications.
+  
+  ## What This Command Does
+  
+  1. **Develops PR Strategy**
+     - News angle and positioning
+     - Target media and outlets
+     - Timing and embargo strategy
+  
+  2. **Creates PR Materials**
+     - Press release
+     - Media kit components
+     - Key messages and Q&A
+  
+  3. **Plans Media Outreach**
+     - Media list development
+     - Pitch strategy
+     - Follow-up plan
+  
+  ## Orchestration Flow
+  
+  ```
+  PR Launch Request
+          ↓
+  [PR Specialist] → PR Strategy & Press Release
+          ↓
+  [Media Relations] → Media Targeting & Outreach Plan
+          ↓
+  [Corporate Communications] → Executive Messaging
+          ↓
+  [Content Writer] → Supporting Content
+          ↓
+  [Legal Reviewer] → Compliance Review
+          ↓
+  [Crisis Communications] → Issues Preparation
+          ↓
+  PR Launch Package Complete
+  ```
+  
+  ## Agents Involved
+  
+  | Agent | Role | Output |
+  |-------|------|--------|
+  | PR Specialist | Lead PR strategy | Press release, strategy |
+  | Media Relations | Media outreach | Media list, pitch |
+  | Corporate Communications | Executive voice | Quotes, messaging |
+  | Content Writer | Support content | Blog, social copy |
+  | Legal Reviewer | Compliance | Legal approval |
+  | Crisis Communications | Preparation | Q&A, issues brief |
+  
+  ## Output Artifacts
+  
+  Saved to `.aiwg/marketing/pr/{announcement-name}/`:
+  
+  - `pr-strategy.md` - Overall PR strategy
+  - `press-release.md` - Press release draft
+  - `media-list.md` - Target media outlets
+  - `pitch-template.md` - Media pitch
+  - `key-messages.md` - Approved messaging
+  - `qa-document.md` - Q&A preparation
+  - `media-kit.md` - Media kit contents
+  - `timeline.md` - Launch timeline
+  
+  ## Parameter Handling
+  
+  ### --guidance Parameter
+  
+  **Purpose**: Provide upfront direction to tailor priorities and approach
+  
+  **Examples**:
+  ```bash
+  --guidance "Embargo until announcement date"
+  --guidance "Target tier-1 tech publications"
+  --guidance "Executive availability limited, prepare talking points"
+  ```
+  
+  **How Applied**:
+  - Parse guidance for keywords: priority, timeline, audience, focus, constraints
+  - Adjust agent emphasis and output depth based on stated priorities
+  - Modify deliverable order based on timeline constraints
+  - Influence scope and detail level based on context
+  
+  ### --interactive Parameter
+  
+  **Purpose**: Guide through discovery questions for comprehensive input
+  
+  **Questions Asked** (if --interactive):
+  1. What is being announced?
+  2. What is the target announcement date?
+  3. Which media outlets are priorities?
+  4. Is there an embargo period?
+  5. Who are the spokespeople?
+  6. What supporting assets are needed?
+  
+  ## Usage Examples
+  
+  ```bash
+  # Product launch PR
+  /pr-launch "New Product X" --launch-type product
+  
+  # Partnership announcement
+  /pr-launch "Strategic Partnership" --launch-type partnership
+  
+  # Company news
+  /pr-launch "Q3 Earnings" --launch-type news
+  
+  # With strategic guidance
+  /pr-launch "Example" --guidance "Your specific context here"
+  
+  # Interactive mode
+  /pr-launch "Example" --interactive
+  ```
+  
+  ## Success Criteria
+  
+  - [ ] PR strategy approved
+  - [ ] Press release drafted and reviewed
+  - [ ] Media list compiled
+  - [ ] Pitch strategy defined
+  - [ ] Key messages approved
+  - [ ] Q&A prepared
+  - [ ] Legal review complete
+  - [ ] Timeline established

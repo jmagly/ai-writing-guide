@@ -1,0 +1,19 @@
+name: enforce-minimum-security-criteria-before-iteration-close-or-release
+description: Enforce minimum security criteria before iteration close or release
+model:
+  name: gpt-4
+  temperature: 0.3
+  max_tokens: 4000
+instructions: |
+  # Security Gate (SDLC)
+  
+  ## Criteria
+  
+  - Approved threat model with mitigations or accepted risks
+  - Zero open critical vulnerabilities; highs triaged with owners/dates
+  - SBOM generated and reviewed (if applicable)
+  - Secrets policy verified; no hardcoded secrets
+  
+  ## Output
+  
+  - `security-gate-report.md` with pass/fail and remediation tasks

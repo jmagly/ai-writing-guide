@@ -1,0 +1,140 @@
+---
+description: Project directory path (default current directory)
+---
+
+# Email Campaign Command
+
+Create comprehensive email marketing campaign with strategy, content, and automation planning.
+
+## What This Command Does
+
+1. **Develops Email Strategy**
+   - Campaign objectives
+   - Audience segmentation
+   - Email sequence planning
+
+2. **Creates Email Content**
+   - Subject lines and preview text
+   - Email body copy
+   - CTA strategy
+
+3. **Plans Technical Setup**
+   - Automation workflow
+   - Personalization strategy
+   - Testing plan
+
+## Orchestration Flow
+
+```
+Email Campaign Request
+        ↓
+[Email Marketer] → Campaign Strategy & Sequence
+        ↓
+[Copywriter] → Email Copy & Subject Lines
+        ↓
+[Graphic Designer] → Email Design Direction
+        ↓
+[Legal Reviewer] → CAN-SPAM Compliance
+        ↓
+[Quality Controller] → Email QC Checklist
+        ↓
+[Accessibility Checker] → Email Accessibility
+        ↓
+Email Campaign Package Complete
+```
+
+## Agents Involved
+
+| Agent | Role | Output |
+|-------|------|--------|
+| Email Marketer | Strategy lead | Sequence, automation |
+| Copywriter | Content | Copy, subject lines |
+| Graphic Designer | Design | Visual direction |
+| Legal Reviewer | Compliance | Legal review |
+| Quality Controller | QC | Pre-send checklist |
+| Accessibility Checker | Accessibility | Email accessibility |
+
+## Campaign Types
+
+| Type | Description | Typical Sequence |
+|------|-------------|------------------|
+| Nurture | Lead nurturing series | 5-7 emails over 2-4 weeks |
+| Promotional | Sales/offer campaign | 2-3 emails over 1 week |
+| Announcement | News/launch | 1-2 emails |
+| Automated | Trigger-based | Varies by trigger |
+
+## Output Artifacts
+
+Saved to `.aiwg/marketing/email/{campaign-name}/`:
+
+- `email-strategy.md` - Campaign strategy
+- `email-sequence.md` - Email sequence plan
+- `emails/` - Individual email content
+  - `email-1.md`
+  - `email-2.md`
+  - etc.
+- `subject-lines.md` - Subject line options
+- `automation-flow.md` - Automation workflow
+- `testing-plan.md` - A/B testing strategy
+- `compliance-checklist.md` - Legal compliance
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Nurture sequence for enterprise leads"
+--guidance "High personalization, segment by industry"
+--guidance "Mobile-first design, 60% mobile open rate"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What is the primary goal of this email campaign?
+2. Who is the target audience/segment?
+3. How many emails in the sequence?
+4. What is the timeline for sending?
+5. What offers or CTAs will be included?
+6. What automation triggers apply?
+
+## Usage Examples
+
+```bash
+# Nurture sequence
+/email-campaign "New Subscriber Welcome" --campaign-type nurture
+
+# Promotional campaign
+/email-campaign "Black Friday Sale" --campaign-type promotional
+
+# Product announcement
+/email-campaign "Feature Launch" --campaign-type announcement
+
+# With strategic guidance
+/email-campaign "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/email-campaign "Example" --interactive
+```
+
+## Success Criteria
+
+- [ ] Campaign strategy defined
+- [ ] Email sequence planned
+- [ ] All email copy drafted
+- [ ] Subject lines created with A/B variants
+- [ ] Automation workflow documented
+- [ ] Legal compliance verified
+- [ ] QC checklist completed
+- [ ] Accessibility reviewed

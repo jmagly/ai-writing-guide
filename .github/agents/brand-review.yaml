@@ -1,0 +1,128 @@
+name: conduct-brand-compliance-review-of-marketing-materials
+description: Conduct brand compliance review of marketing materials
+model:
+  name: gpt-4
+  temperature: 0.3
+  max_tokens: 4000
+instructions: |
+  # Brand Review Command
+  
+  Conduct thorough brand compliance review of marketing materials.
+  
+  ## What This Command Does
+  
+  1. **Reviews Brand Elements**
+     - Logo usage and placement
+     - Color palette compliance
+     - Typography adherence
+     - Visual style consistency
+  
+  2. **Evaluates Messaging**
+     - Voice and tone alignment
+     - Key message accuracy
+     - Value proposition clarity
+  
+  3. **Documents Findings**
+     - Compliance checklist
+     - Issues and severity
+     - Remediation guidance
+  
+  ## Orchestration Flow
+  
+  ```
+  Brand Review Request
+          ↓
+  [Brand Guardian] → Visual Identity Review
+          ↓
+  [Brand Guardian] → Verbal Identity Review
+          ↓
+  [Legal Reviewer] → Claims & Compliance
+          ↓
+  [Quality Controller] → Technical Specs
+          ↓
+  [Accessibility Checker] → Accessibility Compliance
+          ↓
+  Consolidated Brand Review Report
+  ```
+  
+  ## Agents Involved
+  
+  | Agent | Role | Output |
+  |-------|------|--------|
+  | Brand Guardian | Brand compliance | Visual/verbal review |
+  | Legal Reviewer | Legal compliance | Claims validation |
+  | Quality Controller | Quality check | Technical specs |
+  | Accessibility Checker | Accessibility | WCAG compliance |
+  
+  ## Review Types
+  
+  | Type | Scope | Timeline |
+  |------|-------|----------|
+  | Quick | Logo, colors, major elements | Same day |
+  | Comprehensive | All brand elements, messaging | 1-2 days |
+  | Pre-launch | Full review + legal + accessibility | 3-5 days |
+  
+  ## Output Artifacts
+  
+  Saved to `.aiwg/marketing/reviews/brand/`:
+  
+  - `{asset}-brand-review.md` - Brand compliance report
+  - `{asset}-issues.md` - Issues with remediation guidance
+  - `{asset}-approval.md` - Approval status and sign-off
+  
+  ## Parameter Handling
+  
+  ### --guidance Parameter
+  
+  **Purpose**: Provide upfront direction to tailor priorities and approach
+  
+  **Examples**:
+  ```bash
+  --guidance "Pre-launch review, flag any legal concerns"
+  --guidance "Focus on accessibility compliance"
+  --guidance "New brand guidelines, strict adherence required"
+  ```
+  
+  **How Applied**:
+  - Parse guidance for keywords: priority, timeline, audience, focus, constraints
+  - Adjust agent emphasis and output depth based on stated priorities
+  - Modify deliverable order based on timeline constraints
+  - Influence scope and detail level based on context
+  
+  ### --interactive Parameter
+  
+  **Purpose**: Guide through discovery questions for comprehensive input
+  
+  **Questions Asked** (if --interactive):
+  1. What assets are being reviewed?
+  2. What is the context (pre-launch, routine, issue)?
+  3. Are there specific brand elements of concern?
+  4. What is the approval deadline?
+  5. Who needs to sign off?
+  
+  ## Usage Examples
+  
+  ```bash
+  # Quick brand review
+  /brand-review "homepage-banner.md"
+  
+  # Comprehensive review
+  /brand-review "email-campaign/" --review-type comprehensive
+  
+  # Pre-launch review
+  /brand-review "product-launch-assets/" --review-type pre-launch
+  
+  # With strategic guidance
+  /brand-review "Example" --guidance "Your specific context here"
+  
+  # Interactive mode
+  /brand-review "Example" --interactive
+  ```
+  
+  ## Success Criteria
+  
+  - [ ] All brand elements reviewed
+  - [ ] Issues documented with severity
+  - [ ] Remediation guidance provided
+  - [ ] Approval/rejection decision made
+  - [ ] Sign-off documented

@@ -1,0 +1,137 @@
+---
+description: Project directory path (default current directory)
+---
+
+# Campaign Kickoff Command
+
+Initialize a new marketing campaign with comprehensive strategy and planning artifacts.
+
+## What This Command Does
+
+1. **Creates Campaign Structure**
+   - Sets up `.aiwg/marketing/campaigns/{campaign-name}/` directory
+   - Initializes campaign brief, strategy, and planning templates
+
+2. **Orchestrates Strategy Development**
+   - Campaign Strategist develops initial strategy
+   - Market Researcher provides competitive context
+   - Positioning Specialist refines messaging framework
+
+3. **Establishes Campaign Foundation**
+   - Campaign charter with objectives and KPIs
+   - Target audience definition
+   - Channel strategy outline
+   - Budget framework
+   - Timeline with milestones
+
+## Orchestration Flow
+
+```
+Campaign Kickoff Request
+        ↓
+[Create Directory Structure]
+        ↓
+[Campaign Strategist] → Campaign Brief Draft
+        ↓
+[Market Researcher] → Competitive Context
+        ↓
+[Positioning Specialist] → Messaging Framework
+        ↓
+[Campaign Orchestrator] → Integrated Plan
+        ↓
+[Project Manager] → Timeline & Resources
+        ↓
+Campaign Ready for Execution
+```
+
+## Agents Involved
+
+| Agent | Role | Output |
+|-------|------|--------|
+| Campaign Strategist | Primary strategy | Campaign brief, objectives |
+| Market Researcher | Context | Competitive landscape |
+| Positioning Specialist | Messaging | Value proposition, key messages |
+| Campaign Orchestrator | Integration | Channel plan, timeline |
+| Project Manager | Coordination | Resource plan, milestones |
+
+## Output Artifacts
+
+All artifacts saved to `.aiwg/marketing/campaigns/{campaign-name}/`:
+
+- `campaign-brief.md` - Campaign overview and strategy
+- `campaign-charter.md` - Formal campaign charter
+- `audience-definition.md` - Target audience profiles
+- `messaging-framework.md` - Key messages and positioning
+- `channel-strategy.md` - Channel mix and allocation
+- `campaign-timeline.md` - Milestones and schedule
+- `budget-plan.md` - Budget allocation and tracking
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "B2B focus, LinkedIn and email primary channels"
+--guidance "Aggressive timeline, 3 weeks to launch"
+--guidance "Limited budget, prioritize organic over paid"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What are the primary objectives for this campaign?
+2. Who is the target audience? (segments, personas)
+3. What is the available budget range?
+4. What are the key dates and constraints?
+5. Which channels are priorities?
+6. Who are the key stakeholders and approvers?
+
+## Usage Examples
+
+```bash
+# Basic campaign kickoff
+/campaign-kickoff "Spring Product Launch"
+
+# Specify campaign type
+/campaign-kickoff "Brand Awareness Q2" --campaign-type awareness
+
+# With custom project directory
+/campaign-kickoff "Holiday Campaign" --project-directory ./marketing
+
+# With strategic guidance
+/campaign-kickoff "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/campaign-kickoff "Example" --interactive
+```
+
+## Interactive Mode
+
+When run interactively, prompts for:
+- Campaign objectives (primary and secondary)
+- Target audience segments
+- Available budget range
+- Key dates and constraints
+- Stakeholder requirements
+
+## Success Criteria
+
+Campaign kickoff is complete when:
+- [ ] Campaign brief approved by stakeholders
+- [ ] Objectives and KPIs defined
+- [ ] Target audience documented
+- [ ] Channel strategy outlined
+- [ ] Timeline established
+- [ ] Budget allocated
+- [ ] Team assigned

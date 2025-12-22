@@ -1,0 +1,131 @@
+---
+name: marketing-status
+description: Generate comprehensive marketing status report across all active initiatives
+model: claude-sonnet-4-5-20250929
+tools: ["Read","LS","Grep","Glob","Edit","Create","Execute","Task","TodoWrite","WebSearch","FetchUrl"]
+---
+
+# Marketing Status Command
+
+Generate comprehensive status report across all active marketing initiatives.
+
+## What This Command Does
+
+1. **Aggregates Status**
+   - Active campaigns
+   - Content production
+   - Creative projects
+   - Analytics highlights
+
+2. **Identifies Issues**
+   - At-risk items
+   - Blockers
+   - Resource constraints
+
+3. **Provides Recommendations**
+   - Priority actions
+   - Resource reallocation
+   - Optimization opportunities
+
+## Orchestration Flow
+
+```
+Marketing Status Request
+        ↓
+[Project Manager] → Project Status Collection
+        ↓
+[Campaign Orchestrator] → Campaign Status
+        ↓
+[Production Coordinator] → Production Status
+        ↓
+[Marketing Analyst] → Performance Highlights
+        ↓
+[Reporting Specialist] → Report Generation
+        ↓
+Comprehensive Status Report
+```
+
+## Agents Involved
+
+| Agent | Role | Output |
+|-------|------|--------|
+| Project Manager | Overall status | Project tracking |
+| Campaign Orchestrator | Campaigns | Campaign status |
+| Production Coordinator | Production | Asset status |
+| Marketing Analyst | Analytics | Performance data |
+| Reporting Specialist | Reporting | Final report |
+
+## Report Types
+
+| Type | Audience | Content |
+|------|----------|---------|
+| Daily | Team | Quick metrics, blockers |
+| Weekly | Team + Management | Detailed status, actions |
+| Monthly | Leadership | Summary, trends, outlook |
+| Executive | C-suite | High-level, strategic |
+
+## Output Artifacts
+
+Saved to `.aiwg/marketing/reports/`:
+
+- `status-{date}.md` - Status report
+- `dashboards/` - Dashboard data
+- `action-items.md` - Priority actions
+- `risk-register.md` - Active risks
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Executive summary for leadership"
+--guidance "Focus on risks and blockers"
+--guidance "Include competitive context"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What is the reporting period?
+2. Who is the audience for this status?
+3. What level of detail is needed?
+4. Are there specific concerns to address?
+5. What format is preferred?
+
+## Usage Examples
+
+```bash
+# Weekly status
+/marketing-status --report-type weekly
+
+# Executive summary
+/marketing-status --report-type executive
+
+# Focus on campaigns
+/marketing-status --report-type weekly --focus-area campaigns
+
+# With strategic guidance
+/marketing-status "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/marketing-status "Example" --interactive
+```
+
+## Success Criteria
+
+- [ ] All active initiatives covered
+- [ ] Status accurately reflected
+- [ ] Issues and risks identified
+- [ ] Actions prioritized
+- [ ] Report delivered to stakeholders

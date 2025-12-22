@@ -1,0 +1,166 @@
+name: initialize-marketing-project-intake-with-discovery-and-requirements-gathering
+description: Initialize marketing project intake with discovery and requirements gathering
+model:
+  name: gpt-4
+  temperature: 0.3
+  max_tokens: 4000
+instructions: |
+  # Marketing Intake Command
+  
+  Initialize marketing project intake with comprehensive discovery and requirements gathering.
+  
+  ## What This Command Does
+  
+  1. **Gathers Project Information**
+     - Business objectives
+     - Target audience
+     - Budget and timeline
+     - Success criteria
+  
+  2. **Assesses Requirements**
+     - Deliverables needed
+     - Resource requirements
+     - Dependencies and constraints
+  
+  3. **Creates Project Foundation**
+     - Project brief
+     - Team assignments
+     - Initial planning documents
+  
+  ## Orchestration Flow
+  
+  ```
+  Marketing Intake Request
+          ↓
+  [Project Manager] → Intake Form Collection
+          ↓
+  [Campaign Strategist] → Strategic Assessment
+          ↓
+  [Budget Planner] → Budget Feasibility
+          ↓
+  [Production Coordinator] → Resource Assessment
+          ↓
+  [Workflow Coordinator] → Process Planning
+          ↓
+  Intake Package Complete
+  ```
+  
+  ## Agents Involved
+  
+  | Agent | Role | Output |
+  |-------|------|--------|
+  | Project Manager | Lead intake | Project setup |
+  | Campaign Strategist | Strategy | Strategic brief |
+  | Budget Planner | Budget | Budget framework |
+  | Production Coordinator | Resources | Resource plan |
+  | Workflow Coordinator | Process | Workflow setup |
+  
+  ## Intake Sections
+  
+  ### Business Context
+  - Business objectives
+  - Marketing goals
+  - Success metrics
+  - Key stakeholders
+  
+  ### Audience & Messaging
+  - Target audience segments
+  - Key messages
+  - Value proposition
+  - Competitive positioning
+  
+  ### Scope & Deliverables
+  - Required deliverables
+  - Channels and formats
+  - Quantity and specifications
+  
+  ### Timeline & Budget
+  - Key dates and milestones
+  - Budget range
+  - Resource availability
+  
+  ### Constraints & Dependencies
+  - Known constraints
+  - Dependencies
+  - Risks and concerns
+  
+  ## Output Artifacts
+  
+  Saved to `.aiwg/marketing/intake/`:
+  
+  - `project-intake.md` - Complete intake form
+  - `strategic-brief.md` - Strategic foundation
+  - `scope-definition.md` - Deliverables and scope
+  - `budget-framework.md` - Budget planning
+  - `timeline-draft.md` - Initial timeline
+  - `team-assignments.md` - Resource allocation
+  
+  ## Parameter Handling
+  
+  ### --guidance Parameter
+  
+  **Purpose**: Provide upfront direction to tailor priorities and approach
+  
+  **Examples**:
+  ```bash
+  --guidance "Rebrand project, comprehensive discovery needed"
+  --guidance "Quick campaign intake, 2-week timeline"
+  --guidance "Agency handoff, need complete documentation"
+  ```
+  
+  **How Applied**:
+  - Parse guidance for keywords: priority, timeline, audience, focus, constraints
+  - Adjust agent emphasis and output depth based on stated priorities
+  - Modify deliverable order based on timeline constraints
+  - Influence scope and detail level based on context
+  
+  ### --interactive Parameter
+  
+  **Purpose**: Guide through discovery questions for comprehensive input
+  
+  **Questions Asked** (if --interactive):
+  1. What type of project is this?
+  2. What are the business objectives?
+  3. Who is the target audience?
+  4. What is the budget range?
+  5. What is the timeline?
+  6. Who are the key stakeholders?
+  
+  ## Usage Examples
+  
+  ```bash
+  # Interactive intake
+  /marketing-intake --interactive
+  
+  # Campaign intake
+  /marketing-intake --project-type campaign
+  
+  # Custom directory
+  /marketing-intake --intake-directory ./my-project/intake
+  
+  # With strategic guidance
+  /marketing-intake "Example" --guidance "Your specific context here"
+  
+  # Interactive mode
+  /marketing-intake "Example" --interactive
+  ```
+  
+  ## Interactive Mode
+  
+  When run interactively, guides through:
+  1. Project type and scope
+  2. Business objectives
+  3. Target audience
+  4. Budget and timeline
+  5. Deliverable requirements
+  6. Team and stakeholder identification
+  
+  ## Success Criteria
+  
+  - [ ] Business objectives documented
+  - [ ] Target audience defined
+  - [ ] Deliverables specified
+  - [ ] Budget range established
+  - [ ] Timeline created
+  - [ ] Team assigned
+  - [ ] Kickoff ready
