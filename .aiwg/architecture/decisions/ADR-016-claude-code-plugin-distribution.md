@@ -28,6 +28,18 @@ AIWG currently distributes via npm package (`npm install -g aiwg`) with CLI-base
 5. **Skills**: Auto-triggering based on context
 6. **MCP integration**: Direct `.mcp.json` configuration
 
+### Distribution Model Characteristics
+
+Claude Code uses a **decentralized distribution model**:
+
+- **No central registry**: No account signup or approval process required
+- **Git-based**: Marketplaces are simply git repositories with `marketplace.json`
+- **Self-hosted**: Publishers host their own marketplace on GitHub/GitLab/etc.
+- **Direct access**: Users add marketplaces via repository URL
+- **No authentication**: Public repositories require no credentials to install from
+
+This differs from npm-style centralized registries. There's no "publishing" step - you commit your marketplace.json and it's immediately available to anyone who adds your repository.
+
 ### Constraints
 
 - Must maintain backward compatibility with npm users

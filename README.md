@@ -42,6 +42,8 @@ aiwg use sdlc        # deploy SDLC framework
 /plugin install voice@aiwg       # Voice profiles
 ```
 
+> **No account required** - Claude Code plugins use decentralized git-based distribution. No registry signup, no approval process - just add and install.
+
 ### Option B: npm Install (CLI + Multi-Platform)
 
 ```bash

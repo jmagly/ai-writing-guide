@@ -29,6 +29,8 @@ aiwg use sdlc                         # Deploy to current project
 aiwg use sdlc --provider factory      # Deploy for Factory AI
 ```
 
+> **No account required**: Claude Code plugin distribution is completely decentralized. There's no registry to sign up for, no approval process, and no login required. Marketplaces are simply git repositories with a `marketplace.json` file - users add them directly via URL.
+
 ---
 
 ## Important: Context Selection Strategy
