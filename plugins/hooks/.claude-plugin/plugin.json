@@ -1,0 +1,20 @@
+{
+  "name": "hooks",
+  "version": "1.0.0",
+  "description": "Claude Code hooks for workflow tracing, session management, and observability. Capture multi-agent workflow traces in JSONL format for analysis and debugging.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "license": "MIT",
+  "keywords": [
+    "hooks",
+    "tracing",
+    "observability",
+    "workflow",
+    "debugging",
+    "session"
+  ]
+}

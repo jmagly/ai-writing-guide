@@ -1,0 +1,24 @@
+{
+  "name": "sdlc",
+  "version": "2024.12.4",
+  "description": "Complete SDLC framework with 58 specialized agents for software development lifecycle management. Phase-based workflows (Inception→Elaboration→Construction→Transition), security reviews, testing orchestration, and deployment automation.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "license": "MIT",
+  "keywords": [
+    "sdlc",
+    "software-development",
+    "project-management",
+    "security",
+    "testing",
+    "architecture",
+    "devops",
+    "enterprise",
+    "agile",
+    "requirements"
+  ]
+}

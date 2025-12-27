@@ -1,0 +1,22 @@
+{
+  "name": "marketing",
+  "version": "2024.12.4",
+  "description": "Marketing automation framework with 37 specialized agents for campaign management, content strategy, brand compliance, and analytics. Full campaign lifecycle from strategy to measurement.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "license": "MIT",
+  "keywords": [
+    "marketing",
+    "campaigns",
+    "content",
+    "brand",
+    "social-media",
+    "analytics",
+    "copywriting",
+    "strategy"
+  ]
+}

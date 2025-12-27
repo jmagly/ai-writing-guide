@@ -1,0 +1,14 @@
+{
+  "name": "templates",
+  "path": "agentic/code/frameworks/sdlc-complete/commands/templates",
+  "files": [
+    "README.md",
+    "agent-command-template.md",
+    "basic-command-template.md",
+    "manifest.json",
+    "manifest.md"
+  ],
+  "ignore": [
+    "manifest.json"
+  ]
+}

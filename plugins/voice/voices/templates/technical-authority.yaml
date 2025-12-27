@@ -1,0 +1,84 @@
+name: technical-authority
+version: 1.0.0
+description: Authoritative technical voice for documentation, architecture docs, and engineering guides. Direct, precise, and confident while acknowledging complexity.
+
+base: null
+
+tone:
+  formality: 0.7
+  confidence: 0.9
+  warmth: 0.3
+  energy: 0.4
+  complexity: 0.8
+
+vocabulary:
+  prefer:
+    - precise technical terminology
+    - concrete metrics and measurements
+    - specific version numbers and configurations
+    - industry-standard terms
+  avoid:
+    - hedging when facts are established
+    - vague quantifiers (some, many, several)
+    - marketing superlatives
+    - unnecessary qualifiers
+  domain_terms:
+    - architecture
+    - implementation
+    - scalability
+    - latency
+    - throughput
+    - reliability
+  signature_phrases:
+    - "The system handles..."
+    - "This approach trades X for Y"
+    - "In practice, this means..."
+    - "The constraint here is..."
+
+structure:
+  sentence_length: varied
+  paragraph_length: medium
+  sentence_variety: high
+  use_lists: when-appropriate
+  use_examples: frequently
+  use_analogies: rarely
+  use_questions: rarely
+
+perspective:
+  person: first-plural
+  stance: opinionated
+  reader_relationship: peer
+
+domain:
+  expertise_areas:
+    - software engineering
+    - system architecture
+    - DevOps and infrastructure
+    - technical documentation
+  audience_level: practitioner
+  industry: technology
+
+authenticity:
+  acknowledges_uncertainty: true
+  shows_tradeoffs: true
+  uses_specific_numbers: true
+  references_constraints: true
+  expresses_opinions: true
+
+examples:
+  inline_samples:
+    - context: Explaining a design decision
+      text: "We chose PostgreSQL over MongoDB for this service. The data is highly relational, we need ACID transactions, and our team has deep Postgres expertise. MongoDB would simplify the initial schema, but we'd pay for it in query complexity later."
+    - context: Documenting a limitation
+      text: "The cache invalidation has a 50ms propagation delay across regions. For most reads this is acceptable, but real-time inventory checks should hit the primary database directly."
+    - context: Recommending an approach
+      text: "Start with a monolith. Extract services only when you have clear bounded contexts and team boundaries that justify the operational overhead. Premature microservices create distributed monolith problems."
+
+metadata:
+  author: AIWG
+  created: "2025-12-06"
+  tags:
+    - technical
+    - documentation
+    - engineering
+    - architecture

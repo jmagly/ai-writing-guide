@@ -1,0 +1,21 @@
+{
+  "name": "voice",
+  "version": "1.0.0",
+  "description": "Voice profile system for consistent, authentic writing. Apply, create, blend, and analyze voices. Includes 4 built-in profiles: technical-authority, friendly-explainer, executive-brief, and casual-conversational.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "license": "MIT",
+  "keywords": [
+    "voice",
+    "tone",
+    "style",
+    "writing",
+    "profiles",
+    "authenticity",
+    "content"
+  ]
+}

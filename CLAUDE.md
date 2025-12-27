@@ -73,8 +73,26 @@ Use `@path/to/file.md` in your message to load specific documentation:
 
 ## Installation
 
+### Claude Code Plugin (Recommended)
+
 ```bash
-# Install via npm (recommended)
+# Add AIWG marketplace (one-time)
+/plugin marketplace add jmagly/ai-writing-guide --path plugins
+
+# Install plugins
+/plugin install sdlc@aiwg        # 58 SDLC agents, 42+ commands
+/plugin install marketing@aiwg   # 37 marketing agents
+/plugin install utils@aiwg       # Core utilities
+/plugin install voice@aiwg       # Voice profiles
+
+# Verify
+/plugin list
+```
+
+### npm Install (CLI + Multi-Platform)
+
+```bash
+# Install via npm
 npm install -g aiwg
 
 # CLI commands

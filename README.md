@@ -29,6 +29,21 @@ aiwg use sdlc        # deploy SDLC framework
 
 > **Prerequisites:** Node.js ≥18.0.0 and an AI platform (Claude Code, GitHub Copilot, Warp Terminal, or others)
 
+### Option A: Claude Code Plugin (Recommended for Claude Code users)
+
+```bash
+# Add AIWG marketplace (one-time setup)
+/plugin marketplace add jmagly/ai-writing-guide --path plugins
+
+# Install the frameworks you need
+/plugin install sdlc@aiwg        # SDLC framework (58 agents)
+/plugin install marketing@aiwg   # Marketing framework (37 agents)
+/plugin install utils@aiwg       # Core utilities
+/plugin install voice@aiwg       # Voice profiles
+```
+
+### Option B: npm Install (CLI + Multi-Platform)
+
 ```bash
 # Install
 npm install -g aiwg
@@ -744,9 +759,44 @@ aiwg -install-addon gdpr-compliance
 
 > **⚠️ Early Access:** This framework is in active development. Expect evolving features and documentation.
 
-### Method 1: One-Line Install (Recommended)
+### Method 1: Claude Code Plugin (Recommended for Claude Code)
 
-**Install to `~/.local/share/ai-writing-guide` and activate CLI:**
+Native integration with Claude Code's plugin system. Install modular plugins directly in Claude Code.
+
+**Step 1: Add AIWG Marketplace**
+
+```bash
+/plugin marketplace add jmagly/ai-writing-guide --path plugins
+```
+
+**Step 2: Install Plugins**
+
+| Plugin | Command | Description |
+|--------|---------|-------------|
+| **sdlc** | `/plugin install sdlc@aiwg` | 58 SDLC agents, 42+ commands |
+| **marketing** | `/plugin install marketing@aiwg` | 37 marketing agents |
+| **utils** | `/plugin install utils@aiwg` | Core utilities, context regeneration |
+| **voice** | `/plugin install voice@aiwg` | Voice profiles for consistent writing |
+| **writing** | `/plugin install writing@aiwg` | AI pattern detection, writing validation |
+| **hooks** | `/plugin install hooks@aiwg` | Workflow tracing and observability |
+
+**Step 3: Verify Installation**
+
+```bash
+/plugin list
+```
+
+**Benefits of Plugin Installation:**
+- Native Claude Code integration
+- Modular: install only what you need
+- Automatic updates via marketplace
+- No global npm install required
+
+---
+
+### Method 2: npm Install (Recommended for CLI + Multi-Platform)
+
+**Global npm install for CLI access and multi-platform deployment:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/main/tools/install/install.sh | bash
@@ -762,7 +812,7 @@ aiwg -version
 
 ---
 
-### Method 2: Manual Clone
+### Method 3: Manual Clone (Development)
 
 **Clone repository directly:**
 

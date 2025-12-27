@@ -1,5 +1,36 @@
 # AI Writing Guide - Usage Guide
 
+## Installation Options
+
+### Claude Code Plugin (Recommended)
+
+Native Claude Code integration via the plugin marketplace:
+
+```bash
+# Add AIWG marketplace (one-time)
+/plugin marketplace add jmagly/ai-writing-guide --path plugins
+
+# Install plugins
+/plugin install sdlc@aiwg        # 58 SDLC agents
+/plugin install marketing@aiwg   # 37 marketing agents
+/plugin install utils@aiwg       # Core utilities
+/plugin install voice@aiwg       # Voice profiles
+/plugin install writing@aiwg     # AI pattern detection
+/plugin install hooks@aiwg       # Workflow tracing
+```
+
+### npm Install (CLI + Multi-Platform)
+
+For CLI access and deploying to other platforms:
+
+```bash
+npm install -g aiwg
+aiwg use sdlc                         # Deploy to current project
+aiwg use sdlc --provider factory      # Deploy for Factory AI
+```
+
+---
+
 ## Important: Context Selection Strategy
 
 **DO NOT include all documents in every context.** This guide provides targeted combinations for specific needs.

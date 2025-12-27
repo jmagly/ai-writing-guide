@@ -13,6 +13,8 @@
   "scripts": {
     "postinstall": "node ./bin/postinstall.mjs",
     "validate-metadata": "node tools/cli/validate-metadata.mjs",
+    "package-plugins": "node tools/plugin/package-plugins.mjs --all",
+    "package-plugins:clean": "node tools/plugin/package-plugins.mjs --all --clean",
     "build": "tsc",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
@@ -28,6 +30,7 @@
     "agentic/",
     "docs/",
     "templates/",
+    "plugins/",
     "CLAUDE.md",
     "USAGE_GUIDE.md",
     "AGENTS.md"
@@ -40,6 +43,7 @@
     "aiwg",
     "agentic-ai",
     "claude-skills",
+    "claude-code-plugin",
     "mcp-server",
     "model-context-protocol",
     "ai-writing",

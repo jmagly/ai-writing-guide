@@ -1,0 +1,20 @@
+{
+  "name": "writing",
+  "version": "1.0.0",
+  "description": "Writing quality validation and AI pattern detection. Identify AI-generated patterns, enhance authenticity, and enforce writing standards. Includes writing-validator agent and ai-pattern-detection skill.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "license": "MIT",
+  "keywords": [
+    "writing",
+    "quality",
+    "ai-detection",
+    "authenticity",
+    "editing",
+    "validation"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "name": "aiwg-utils-skills",
+  "description": "Cross-framework utility skills for AIWG orchestration",
+  "version": "1.0.0",
+  "type": "skills-catalog",
+  "skills": [
+    {
+      "name": "parallel-dispatch",
+      "description": "Generic parallel agent orchestration utility",
+      "triggers": ["launch parallel [agents]", "concurrent review", "parallel analysis"],
+      "scripts": ["scripts/parallel_dispatcher.py"]
+    },
+    {
+      "name": "artifact-metadata",
+      "description": "Artifact lifecycle tracking with versioning and ownership",
+      "triggers": ["track artifact", "update artifact status", "artifact metadata"],
+      "scripts": ["scripts/artifact_metadata.py"]
+    },
+    {
+      "name": "template-engine",
+      "description": "Template instantiation with context-aware variable substitution",
+      "triggers": ["use template", "instantiate template", "fill template"],
+      "scripts": ["scripts/template_engine.py"]
+    },
+    {
+      "name": "project-awareness",
+      "description": "Comprehensive project context detection",
+      "triggers": ["detect project", "project context", "what kind of project"],
+      "scripts": ["scripts/project_awareness.py"]
+    },
+    {
+      "name": "config-validator",
+      "description": "AIWG configuration validation and setup verification",
+      "triggers": ["validate config", "check configuration", "verify setup", "config issues"]
+    },
+    {
+      "name": "nl-router",
+      "description": "Natural language request routing to appropriate skills",
+      "triggers": ["(meta-router - processes unmatched natural language)"]
+    },
+    {
+      "name": "workspace-health",
+      "description": "Workspace alignment assessment and cleanup recommendations",
+      "triggers": ["check workspace health", "workspace status", "is my workspace aligned", "cleanup recommendations", "do I need to realign"]
+    },
+    {
+      "name": "claims-validator",
+      "description": "Validates factual claims against source documents",
+      "triggers": ["validate claims", "check facts", "verify statements"]
+    }
+  ],
+  "usage": "These skills are consumed by framework-specific skills and can be invoked directly for utility operations."
+}

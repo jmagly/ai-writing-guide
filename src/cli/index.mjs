@@ -47,6 +47,10 @@ const COMMAND_ALIASES = {
   '--uninstall-plugin': 'uninstall-plugin',
   '-plugin-status': 'plugin-status',
   '--plugin-status': 'plugin-status',
+  '-package-plugin': 'package-plugin',
+  '--package-plugin': 'package-plugin',
+  '-package-all-plugins': 'package-all-plugins',
+  '--package-all-plugins': 'package-all-plugins',
 
   // Maintenance
   '-doctor': 'doctor',
@@ -115,6 +119,11 @@ Utilities:
   -prefill-cards        Prefill SDLC card metadata from team profile
   -contribute-start     Start AIWG contribution workflow
   -validate-metadata    Validate plugin/agent metadata
+
+Plugin Packaging (for Claude Code marketplace):
+  -package-plugin <name>    Package specific plugin for Claude Code
+  -package-all-plugins      Package all plugins for Claude Code marketplace
+                            Options: --clean, --dry-run
 
 Channel Management:
   --use-main            Switch to edge channel (bleeding edge from main branch)
@@ -457,6 +466,14 @@ export async function run(args, options = {}) {
 
     case 'plugin-status':
       await runScript('tools/plugin/plugin-status-cli.mjs', commandArgs);
+      break;
+
+    case 'package-plugin':
+      await runScript('tools/plugin/package-plugins.mjs', ['--plugin', ...commandArgs]);
+      break;
+
+    case 'package-all-plugins':
+      await runScript('tools/plugin/package-plugins.mjs', ['--all', ...commandArgs]);
       break;
 
     // Maintenance
