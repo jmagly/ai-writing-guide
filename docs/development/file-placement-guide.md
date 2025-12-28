@@ -40,12 +40,14 @@ agentic/code/agents/                 ───────────>        .
 
 | Platform | Deployment Target | Created By |
 |----------|-------------------|------------|
-| Claude Code | `.claude/agents/`, `.claude/commands/` | `aiwg -deploy-agents` |
-| Factory AI | `.factory/droids/`, `AGENTS.md` | `aiwg -deploy-agents --provider factory` |
-| OpenAI/Codex | `.codex/agents/` | `aiwg -deploy-agents --provider openai` |
-| Cursor | `.cursor/rules/` | `aiwg -deploy-agents --provider cursor` |
-| OpenCode | `.opencode/agent/` | `aiwg -deploy-agents --provider opencode` |
-| Warp | `WARP.md` | `aiwg -deploy-agents --provider warp` |
+| Claude Code | `.claude/agents/`, `.claude/commands/` | `aiwg use sdlc` |
+| GitHub Copilot | `.github/agents/`, `copilot-instructions.md` | `aiwg use sdlc --provider copilot` |
+| Warp | `WARP.md` | `aiwg use sdlc --provider warp` |
+| Factory AI | `.factory/droids/`, `AGENTS.md` | `aiwg use sdlc --provider factory` |
+| OpenCode | `.opencode/agent/`, `AGENTS.md` | `aiwg use sdlc --provider opencode` |
+| Cursor | `.cursor/rules/`, `AGENTS.md` | `aiwg use sdlc --provider cursor` |
+| OpenAI/Codex | `.codex/agents/`, `AGENTS.md` | `aiwg use sdlc --provider codex` |
+| Windsurf | `.windsurfrules` | `aiwg use sdlc --provider windsurf` |
 
 ## Correct Workflow
 

@@ -19,12 +19,13 @@ The `WARP.md` file is a **symbolic link** to `CLAUDE.md`. This enables configura
 | Platform | Config File | Agents Location |
 |----------|-------------|-----------------|
 | Claude Code | CLAUDE.md | .claude/agents/ |
+| GitHub Copilot | copilot-instructions.md | .github/agents/ |
 | Warp Terminal | WARP.md → CLAUDE.md | Inline in WARP.md |
 | Factory AI | AGENTS.md | .factory/droids/ |
 | OpenCode | AGENTS.md | .opencode/agent/ |
-| Codex | AGENTS.md | .codex/agents/ |
-| Copilot | copilot-instructions.md | .github/agents/ |
-| Cursor | Context Rules | .cursor/rules/ |
+| Cursor | .cursorrules | .cursor/rules/ |
+| OpenAI/Codex | AGENTS.md | .codex/agents/ |
+| Windsurf | .windsurfrules | Inline |
 
 ---
 

@@ -9,13 +9,13 @@ AIWG works across multiple AI platforms. **One command deploys everything.**
 | Platform | Deploy Command | Context File |
 |----------|----------------|--------------|
 | Claude Code | `aiwg use sdlc` | CLAUDE.md |
-| Factory AI | `aiwg deploy --provider factory` | AGENTS.md |
-| Warp Terminal | `aiwg deploy --platform warp` | WARP.md |
-| Cursor | `aiwg deploy --platform cursor` | .cursorrules |
-| Windsurf | `aiwg deploy --platform windsurf` | .windsurfrules |
-| OpenCode | `aiwg deploy --provider opencode` | AGENTS.md |
-| Codex | `aiwg deploy --provider codex` | AGENTS.md |
-| GitHub Copilot | `aiwg deploy --provider copilot` | copilot-instructions.md |
+| GitHub Copilot | `aiwg use sdlc --provider copilot` | copilot-instructions.md |
+| Warp Terminal | `aiwg use sdlc --provider warp` | WARP.md |
+| Factory AI | `aiwg use sdlc --provider factory` | AGENTS.md |
+| OpenCode | `aiwg use sdlc --provider opencode` | AGENTS.md |
+| Cursor | `aiwg use sdlc --provider cursor` | .cursorrules |
+| OpenAI/Codex | `aiwg use sdlc --provider codex` | AGENTS.md |
+| Windsurf | `aiwg use sdlc --provider windsurf` | .windsurfrules |
 
 ---
 
@@ -31,13 +31,13 @@ All assets deploy automatically in each platform's native format.
 
 | Platform | Guide |
 |----------|-------|
-| Claude Code | [Setup Guide](#integrations/claude-code-quickstart) |
-| Factory AI | [Setup Guide](#integrations/factory-quickstart) |
-| Warp Terminal | [Setup Guide](#integrations/warp-terminal-quickstart) |
-| Cursor | [Setup Guide](#integrations/cursor-quickstart) |
-| GitHub Copilot | [Setup Guide](#integrations/copilot-quickstart) |
-| OpenCode | [Setup Guide](#integrations/opencode-quickstart) |
-| Codex | [Setup Guide](#integrations/codex-quickstart) |
+| Claude Code | [Setup Guide](claude-code-quickstart.md) |
+| GitHub Copilot | [Setup Guide](copilot-quickstart.md) |
+| Warp Terminal | [Setup Guide](warp-terminal-quickstart.md) |
+| Factory AI | [Setup Guide](factory-quickstart.md) |
+| OpenCode | [Setup Guide](opencode-quickstart.md) |
+| Cursor | [Setup Guide](cursor-quickstart.md) |
+| OpenAI/Codex | [Setup Guide](codex-quickstart.md) |
 
 ---
 

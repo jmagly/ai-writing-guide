@@ -1042,12 +1042,14 @@ aiwg use sdlc --provider openai    # OpenAI Codex
 
 | Platform | Status | Integration | Notes |
 |----------|--------|-------------|-------|
-| **Claude Code** | ✅ **Tested & Validated** | Multi-file (.claude/agents/*.md) | Multi-agent orchestration |
+| **Claude Code** | ✅ **Tested & Validated** | Plugin or .claude/agents/*.md | Multi-agent orchestration, native plugins |
+| **GitHub Copilot** | ✅ **Tested & Validated** | .github/agents/*.yaml | copilot-instructions.md |
 | **Warp Terminal** | ✅ **Tested & Validated** | Single-file (WARP.md) | Terminal-native workflows |
-| **Factory AI** | ✅ **Tested & Validated** | Custom droids (.factory/droids/*.md) | Native droid format, AGENTS.md |
-| **Cursor** | ✅ **Tested & Validated** | MDC rules (.cursor/rules/*.mdc) | Native rules format, AGENTS.md |
-| **OpenAI/Codex** | ✅ **Tested & Validated** | `--provider openai` | Native prompts format, AGENTS.md |
-| **Windsurf** | 🟡 Experimental | Claude-compatible | Should work, not validated |
+| **Factory AI** | ✅ **Tested & Validated** | .factory/droids/*.md | Native droid format, AGENTS.md |
+| **OpenCode** | ✅ **Tested & Validated** | .opencode/agent/ | AGENTS.md |
+| **Cursor** | ✅ **Tested & Validated** | .cursor/rules/*.mdc | Native rules format, AGENTS.md |
+| **OpenAI/Codex** | ✅ **Tested & Validated** | .codex/agents/ | Native prompts format, AGENTS.md |
+| **Windsurf** | 🟡 Experimental | .windsurfrules | Should work, not validated |
 | **Zed** | 🟡 Experimental | Claude-compatible | Should work, not validated |
 
 **Want to help?** We're actively seeking beta testers for other platforms! [Open a discussion](https://github.com/jmagly/ai-writing-guide/discussions) if you're interested.

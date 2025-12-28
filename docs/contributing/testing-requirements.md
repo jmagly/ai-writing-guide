@@ -27,11 +27,13 @@ All significant changes must be validated against these providers:
 
 | Provider | Deployment Target | Validation Command |
 |----------|-------------------|-------------------|
-| Claude Code | `.claude/agents/`, `.claude/commands/` | `aiwg use sdlc --provider claude` |
-| Factory AI | `.factory/droids/`, `.factory/commands/` | `aiwg use sdlc --provider factory` |
-| OpenAI/Codex | `.codex/agents/`, `.codex/commands/` | `aiwg use sdlc --provider openai` |
-| Cursor | `.cursor/rules/` | `aiwg use sdlc --provider cursor` |
+| Claude Code | `.claude/agents/`, `.claude/commands/` | `aiwg use sdlc` |
+| GitHub Copilot | `.github/agents/` | `aiwg use sdlc --provider copilot` |
 | Warp | `WARP.md` | `aiwg use sdlc --provider warp` |
+| Factory AI | `.factory/droids/` | `aiwg use sdlc --provider factory` |
+| OpenCode | `.opencode/agent/` | `aiwg use sdlc --provider opencode` |
+| Cursor | `.cursor/rules/` | `aiwg use sdlc --provider cursor` |
+| OpenAI/Codex | `.codex/agents/` | `aiwg use sdlc --provider codex` |
 
 ### Validation Checklist
 
