@@ -6,13 +6,31 @@ Build marketing campaigns with AI-assisted lifecycle: Strategy → Creation → 
 
 ## Install & Deploy
 
-**1. Install**
+### Option A: Claude Code Plugin (Recommended)
+
+Native Claude Code integration - no npm required:
+
+```bash
+# Add AIWG marketplace (one-time)
+/plugin marketplace add jmagly/ai-writing-guide --path plugins
+
+# Install marketing framework
+/plugin install marketing@aiwg   # 37 agents, 23+ commands
+/plugin install utils@aiwg       # Core utilities (recommended)
+/plugin install voice@aiwg       # Voice profiles (recommended)
+```
+
+> **No account required** - Plugin distribution is decentralized. No registry signup, no approval process.
+
+### Option B: npm + CLI (Multi-Platform)
+
+For CLI tools and deploying to other platforms:
 
 ```bash
 npm install -g aiwg
 ```
 
-**2. Deploy to your project**
+Deploy to your project:
 
 ```bash
 cd /path/to/your/project
@@ -21,7 +39,11 @@ cd /path/to/your/project
 aiwg use marketing
 ```
 
-**3. Open in your AI platform**
+---
+
+## After Installation
+
+**1. Open in your AI platform**
 
 ```bash
 claude .                   # Claude Code
@@ -29,13 +51,13 @@ cursor .                   # Cursor
 droid .                    # Factory AI
 ```
 
-**4. Integrate with platform context**
+**2. Integrate with platform context**
 
 ```text
 /aiwg-setup-project
 ```
 
-**5. Regenerate for intelligent integration**
+**3. Regenerate for intelligent integration**
 
 ```text
 /aiwg-regenerate-claude
@@ -43,7 +65,7 @@ droid .                    # Factory AI
 
 This step is critical - it enables natural language command mapping and deep integration. Without it, advanced features won't work correctly. See the [Regenerate Guide](#regenerate-guide) for details.
 
-**6. You're ready.** See the [Intake Guide](#intake-guide) for starting marketing campaigns.
+**4. You're ready.** See the [Intake Guide](#intake-guide) for starting marketing campaigns.
 
 ---
 

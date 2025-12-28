@@ -2,13 +2,32 @@
 
 ## Install & Deploy
 
-**1. Install**
+### Option A: Claude Code Plugin (Recommended)
+
+Native Claude Code integration - no npm required:
+
+```bash
+# Add AIWG marketplace (one-time)
+/plugin marketplace add jmagly/ai-writing-guide --path plugins
+
+# Install the frameworks you need
+/plugin install sdlc@aiwg        # SDLC framework (58 agents)
+/plugin install marketing@aiwg   # Marketing framework (37 agents)
+/plugin install utils@aiwg       # Core utilities
+/plugin install voice@aiwg       # Voice profiles
+```
+
+> **No account required** - Plugin distribution is decentralized. No registry signup, no approval process.
+
+### Option B: npm + CLI (Multi-Platform)
+
+For CLI tools and deploying to other platforms:
 
 ```bash
 npm install -g aiwg
 ```
 
-**2. Deploy to your project**
+Deploy to your project:
 
 ```bash
 cd /path/to/your/project
