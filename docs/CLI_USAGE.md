@@ -1,5 +1,7 @@
 # AIWG CLI Usage Guide
 
+> **Note:** The `aiwg` CLI command is only available when installed via npm (`npm install -g aiwg`). If you installed AIWG using Claude Code plugins (`/plugin install sdlc@aiwg`), you won't have access to the CLI - plugins provide agents, commands, and skills directly within Claude Code without requiring a separate CLI tool.
+
 ## Installation
 
 ```bash

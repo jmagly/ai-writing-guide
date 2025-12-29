@@ -81,7 +81,9 @@ Option B - Intelligent integration (recommended):
 
 ---
 
-## Framework Options
+## Framework Options (npm install only)
+
+> **Note:** These CLI commands require npm installation (`npm install -g aiwg`). Plugin users get the same agents and commands directly in Claude Code.
 
 | Framework | What It's For |
 |-----------|---------------|
@@ -92,7 +94,9 @@ Option B - Intelligent integration (recommended):
 
 ---
 
-## CLI Reference
+## CLI Reference (npm install only)
+
+> The `aiwg` CLI is only available via npm install. Plugin users access all functionality through Claude Code's native interface.
 
 ```bash
 aiwg -new                  # Scaffold new project
