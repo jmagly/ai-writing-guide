@@ -261,4 +261,4 @@ aiwg validate my-addon --fix
 - Simple addon: `agentic/code/addons/writing-quality/`
 - Complex addon: `agentic/code/addons/voice-framework/`
 - Core addon: `agentic/code/addons/aiwg-utils/`
-- Research-backed addon: `agentic/code/addons/guided-implementation/`
+- Skill-based addon: `agentic/code/addons/guided-implementation/`
