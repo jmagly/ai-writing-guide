@@ -25,6 +25,7 @@ Each reference document includes:
 |----|-------|---------|------|-----------|
 | REF-001 | [Production-Grade Agentic AI Workflows](#research-production-workflows) | Bandara et al. | 2024 | Multi-agent orchestration, production reliability |
 | REF-002 | [How Do LLMs Fail In Agentic Scenarios?](#research-failure-modes) | Roig | 2025 | Failure archetypes, recovery patterns, context management |
+| REF-004 | [MAGIS: Multi-Agent GitHub Issue Resolution](https://arxiv.org/abs/2403.17927) | Tao et al. | 2024 | Issue-to-code implementation, bounded iteration loops |
 
 ## Adding References
 

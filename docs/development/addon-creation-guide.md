@@ -254,9 +254,11 @@ aiwg validate my-addon --fix
 - `aiwg-utils` - Core utilities (context regeneration, workspace management)
 - `voice-framework` - Voice profiles and voice-apply skill
 - `writing-quality` - Banned patterns, validation rules
+- `guided-implementation` - Bounded iteration control for issue-to-code workflows
 
 ### Reference Implementations
 
 - Simple addon: `agentic/code/addons/writing-quality/`
 - Complex addon: `agentic/code/addons/voice-framework/`
 - Core addon: `agentic/code/addons/aiwg-utils/`
+- Research-backed addon: `agentic/code/addons/guided-implementation/`
