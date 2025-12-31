@@ -22,12 +22,12 @@ These rules apply when working with agent definitions and multi-provider deploym
 - `content-diversifier` - Generates varied examples and perspectives
 
 **SDLC Framework Agents** (`agentic/code/frameworks/sdlc-complete/agents/`):
-- 58 specialized agents covering all SDLC phases
-- See `@agentic/code/frameworks/sdlc-complete/agents/README.md` for complete list
+- 64 specialized agents covering all SDLC phases
+- See `@agentic/code/frameworks/sdlc-complete/agents/manifest.json` for complete list
 
 **Marketing Agents** (`agentic/code/frameworks/media-marketing-kit/agents/`):
 - 37 marketing-focused agents covering campaign lifecycle
-- See `@agentic/code/frameworks/media-marketing-kit/agents/README.md` for complete list
+- See `@agentic/code/frameworks/media-marketing-kit/agents/manifest.json` for complete list
 
 ## Multi-Provider Support
 

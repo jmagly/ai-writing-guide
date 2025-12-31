@@ -2,10 +2,10 @@
   "name": "Agent Tools",
   "path": "tools/agents",
   "files": [
-    "README.md",
-    "deploy-agents-old.mjs",
     "deploy-agents.mjs",
-    "manifest.md",
+    "deploy-skills.mjs",
+    "deploy-windsurf.mjs",
+    "providers",
     "update-agent-tools.mjs"
   ],
   "ignore": [

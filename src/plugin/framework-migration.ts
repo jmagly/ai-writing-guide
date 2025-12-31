@@ -467,11 +467,6 @@ export class FrameworkMigration {
   private async moveResource(sourcePath: string, targetPath: string, options: MigrationOptions): Promise<void> {
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
 
-    if (options.preserveGitHistory) {
-      // Try git mv first (if git is available)
-      // For stub implementation, just use regular move
-    }
-
     await fs.copyFile(sourcePath, targetPath);
     await fs.unlink(sourcePath);
   }

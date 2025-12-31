@@ -2,12 +2,9 @@
   "name": "manifest",
   "path": "tools/manifest",
   "files": [
-    "README.md",
     "check-manifests.mjs",
     "enrich-manifests.mjs",
     "generate-manifest.mjs",
-    "manifest.json",
-    "manifest.md",
     "pre-commit.sample",
     "sync-manifests.mjs"
   ],

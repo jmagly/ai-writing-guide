@@ -36,7 +36,7 @@ aiwg use sdlc        # deploy SDLC framework
 /plugin marketplace add jmagly/ai-writing-guide --path plugins
 
 # Install the frameworks you need
-/plugin install sdlc@aiwg        # SDLC framework (58 agents)
+/plugin install sdlc@aiwg        # SDLC framework (64 agents)
 /plugin install marketing@aiwg   # Marketing framework (37 agents)
 /plugin install utils@aiwg       # Core utilities
 /plugin install voice@aiwg       # Voice profiles
@@ -82,7 +82,7 @@ aiwg --use-stable    # Back to npm releases (recommended)
 cd your-project
 
 # Deploy SDLC framework (software development)
-aiwg use sdlc              # 54 agents, 42 commands, aiwg-utils
+aiwg use sdlc              # 64 agents, 97 commands, aiwg-utils
 
 # Deploy Marketing framework
 aiwg use marketing         # 37 agents, 23 commands
@@ -167,9 +167,9 @@ cd my-awesome-project
 
 **Manage projects like an enterprise. Scale like a startup.**
 
-- ✅ **53 SDLC agents** — Requirements, architecture, testing, security, deployment
-- ✅ **48 workflow commands** — Intake, phase gates, risk management, compliance
-- ✅ **156 templates** — Every artifact from concept to production
+- ✅ **64 SDLC agents** — Requirements, architecture, testing, security, deployment
+- ✅ **97 workflow commands** — Intake, phase gates, risk management, compliance
+- ✅ **172 templates** — Every artifact from concept to production
 - ✅ **Multi-agent orchestration** — Parallel reviews, synthesis, automated quality gates
 - ✅ **Extensions available** — GDPR compliance, legal frameworks
 
@@ -184,7 +184,7 @@ cd my-awesome-project
 
 - ✅ **37 marketing agents** — Strategy, content, creative, analytics, compliance
 - ✅ **23 workflow commands** — Campaign kickoff, content planning, brand review
-- ✅ **88 templates** — 15 categories from intake to analytics
+- ✅ **103 templates** — 15 categories from intake to analytics
 - ✅ **5-phase lifecycle** — Strategy → Creation → Review → Publication → Analysis
 - ✅ **Extensions available** — FTC compliance, industry-specific guidelines
 
@@ -343,16 +343,16 @@ aiwg/
 ├── 🏗️ Frameworks (Complete lifecycle solutions)
 │   │
 │   ├── sdlc-complete/                    → Enterprise software development
-│   │   ├── agents/ (53)                  → Requirements, architecture, testing, security, DevOps
-│   │   ├── commands/ (48)                → Intake, phase gates, deployments, compliance
-│   │   ├── templates/ (156)              → Every artifact from concept → production
+│   │   ├── agents/ (64)                  → Requirements, architecture, testing, security, DevOps
+│   │   ├── commands/ (97)                → Intake, phase gates, deployments, compliance
+│   │   ├── templates/ (172)              → Every artifact from concept → production
 │   │   ├── flows/                        → Phase workflows (Inception → Transition)
 │   │   └── extensions/                   → GDPR compliance, legal frameworks
 │   │
 │   └── media-marketing-kit/              → Marketing campaign management
 │       ├── agents/ (37)                  → Strategy, content, creative, analytics
 │       ├── commands/ (23)                → Campaign kickoff, content planning, brand review
-│       ├── templates/ (88)               → 15 categories from intake to analytics
+│       ├── templates/ (103)              → 15 categories from intake to analytics
 │       ├── flows/                        → 5-phase lifecycle (Strategy → Analysis)
 │       └── extensions/                   → FTC compliance, industry-specific
 │
@@ -775,7 +775,7 @@ Native integration with Claude Code's plugin system. Install modular plugins dir
 
 | Plugin | Command | Description |
 |--------|---------|-------------|
-| **sdlc** | `/plugin install sdlc@aiwg` | 58 SDLC agents, 42+ commands |
+| **sdlc** | `/plugin install sdlc@aiwg` | 64 SDLC agents, 97 commands |
 | **marketing** | `/plugin install marketing@aiwg` | 37 marketing agents |
 | **utils** | `/plugin install utils@aiwg` | Core utilities, context regeneration |
 | **voice** | `/plugin install voice@aiwg` | Voice profiles for consistent writing |
@@ -1145,9 +1145,9 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 ### SDLC Framework
 
 - [**Framework Overview**](agentic/code/frameworks/sdlc-complete/README.md) — Complete lifecycle guide
-- [**Agent Catalog**](docs/agents/README.md) — All 53 SDLC agents
-- [**Command Reference**](docs/commands/README.md) — All 48 workflow commands
-- [**Template Library**](agentic/code/frameworks/sdlc-complete/templates/) — 156 artifact templates
+- [**Agent Catalog**](agentic/code/frameworks/sdlc-complete/agents/) — All 64 SDLC agents
+- [**Command Reference**](agentic/code/frameworks/sdlc-complete/commands/) — All 97 workflow commands
+- [**Template Library**](agentic/code/frameworks/sdlc-complete/templates/) — 172 artifact templates
 - [**Phase Workflows**](agentic/code/frameworks/sdlc-complete/flows/) — Inception → Transition
 - [**Natural Language Guide**](agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md) — 70+ supported phrases
 
@@ -1156,7 +1156,7 @@ git --version && echo "✅ Git installed" || echo "ℹ️ Git optional (needed f
 - [**Framework Overview**](agentic/code/frameworks/media-marketing-kit/README.md) — Complete marketing lifecycle guide
 - [**Agent Catalog**](agentic/code/frameworks/media-marketing-kit/agents/) — All 37 marketing agents
 - [**Command Reference**](agentic/code/frameworks/media-marketing-kit/commands/) — All 23 marketing commands
-- [**Template Library**](agentic/code/frameworks/media-marketing-kit/templates/) — 88 templates in 15 categories
+- [**Template Library**](agentic/code/frameworks/media-marketing-kit/templates/) — 103 templates in 15 categories
 - [**Lifecycle Guide**](agentic/code/frameworks/media-marketing-kit/plan-act-mmk.md) — Strategy → Analysis phases
 
 ### Workspace Management

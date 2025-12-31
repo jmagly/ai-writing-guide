@@ -116,11 +116,10 @@ export class PerformanceMonitor extends EventEmitter {
   }
 
   /**
-   * Get CPU usage
+   * Get CPU usage (not implemented - returns 0)
    */
   private getCPUUsage(): number {
-    // Simplified placeholder
-    return Math.random() * 100;
+    return 0;
   }
 
   /**

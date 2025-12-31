@@ -62,6 +62,15 @@ const COMMAND_ALIASES = {
   '-h': 'help',
   '-help': 'help',
   '--help': 'help',
+
+  // Scaffolding
+  'add-agent': 'add-agent',
+  'add-command': 'add-command',
+  'add-skill': 'add-skill',
+  'add-template': 'add-template',
+  'scaffold-addon': 'scaffold-addon',
+  'scaffold-extension': 'scaffold-extension',
+  'scaffold-framework': 'scaffold-framework',
 };
 
 /**
@@ -124,6 +133,15 @@ Plugin Packaging (for Claude Code marketplace):
   -package-plugin <name>    Package specific plugin for Claude Code
   -package-all-plugins      Package all plugins for Claude Code marketplace
                             Options: --clean, --dry-run
+
+Scaffolding:
+  add-agent <name>          Add agent to addon/framework (--to <target>, --template <simple|complex|orchestrator>)
+  add-command <name>        Add command to addon/framework (--to <target>, --template <utility|transform|orchestration>)
+  add-skill <name>          Add skill to addon/framework (--to <target>)
+  add-template <name>       Add template to addon/framework (--to <target>, --category <category>)
+  scaffold-addon <name>     Create new addon package
+  scaffold-extension <name> Create new extension package
+  scaffold-framework <name> Create new framework package
 
 Channel Management:
   --use-main            Switch to edge channel (bleeding edge from main branch)
@@ -491,6 +509,35 @@ export async function run(args, options = {}) {
 
     case 'help':
       displayHelp();
+      break;
+
+    // Scaffolding
+    case 'add-agent':
+      await runScript('tools/scaffolding/add-agent.mjs', commandArgs);
+      break;
+
+    case 'add-command':
+      await runScript('tools/scaffolding/add-command.mjs', commandArgs);
+      break;
+
+    case 'add-skill':
+      await runScript('tools/scaffolding/add-skill.mjs', commandArgs);
+      break;
+
+    case 'add-template':
+      await runScript('tools/scaffolding/add-template.mjs', commandArgs);
+      break;
+
+    case 'scaffold-addon':
+      await runScript('tools/scaffolding/scaffold-addon.mjs', commandArgs);
+      break;
+
+    case 'scaffold-extension':
+      await runScript('tools/scaffolding/scaffold-extension.mjs', commandArgs);
+      break;
+
+    case 'scaffold-framework':
+      await runScript('tools/scaffolding/scaffold-framework.mjs', commandArgs);
       break;
 
     default:

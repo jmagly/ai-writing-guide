@@ -8,6 +8,3 @@
  */
 
 export * from './types.js';
-// export * from './runtime-discovery.js';
-// export * from './spec-generator.js';
-// export * from './tool-index.js';

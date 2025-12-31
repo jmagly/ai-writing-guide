@@ -1,0 +1,19 @@
+{
+  "name": "Media Marketing Kit",
+  "path": "agentic/code/frameworks/media-marketing-kit",
+  "files": [
+    "README.md",
+    "plan-act-mmk.md",
+    "project-claude-template.md"
+  ],
+  "directories": [
+    "agents",
+    "commands",
+    "config",
+    "skills",
+    "templates"
+  ],
+  "ignore": [
+    "manifest.json"
+  ]
+}

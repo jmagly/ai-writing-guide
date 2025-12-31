@@ -744,15 +744,8 @@ export class VoiceCalibration {
   /**
    * Import voice profiles
    */
-  importVoiceProfiles(data: string, format: 'json' | 'yaml'): void {
-    let profiles: any[];
-
-    if (format === 'json') {
-      profiles = JSON.parse(data);
-    } else {
-      // Simple YAML parsing (for basic structure)
-      throw new Error('YAML import not fully implemented in this version');
-    }
+  importVoiceProfiles(data: string, format: 'json'): void {
+    const profiles = JSON.parse(data);
 
     for (const profileData of profiles) {
       const voice = profileData.voice;

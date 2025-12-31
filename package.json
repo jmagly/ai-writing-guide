@@ -32,8 +32,7 @@
     "templates/",
     "plugins/",
     "CLAUDE.md",
-    "USAGE_GUIDE.md",
-    "AGENTS.md"
+    "USAGE_GUIDE.md"
   ],
   "repository": {
     "type": "git",
