@@ -210,9 +210,13 @@ def _score_to_grade(score: int) -> str:
 
 def main():
     """CLI entry point."""
-    if len(sys.argv) < 2:
-        print("Usage: python pattern_scanner.py <file> | --text 'text'")
-        sys.exit(1)
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
+        print(__doc__)
+        print("Options:")
+        print("  <file>           Path to file to scan")
+        print("  --text 'text'    Inline text to scan")
+        print("  --help, -h       Show this help message")
+        sys.exit(0)
 
     if sys.argv[1] == "--text":
         text = " ".join(sys.argv[2:])

@@ -214,6 +214,10 @@ def main():
     """CLI entry point."""
     args = sys.argv[1:]
 
+    if '--help' in args or '-h' in args:
+        print(__doc__)
+        sys.exit(0)
+
     if '--list' in args:
         profiles = list_available_profiles()
         print(json.dumps(profiles, indent=2))
@@ -231,7 +235,8 @@ def main():
     if not profile_name:
         print("Usage: python voice_loader.py --profile <name> [--format json|yaml]")
         print("       python voice_loader.py --list")
-        sys.exit(1)
+        print("       python voice_loader.py --help")
+        sys.exit(0)
 
     profile = load_profile(profile_name)
 

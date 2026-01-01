@@ -249,13 +249,25 @@ block_on_decrease: true
 ## Script Reference
 
 ### tdd_setup.py
+
 Configure TDD enforcement for project:
+
 ```bash
-python scripts/tdd_setup.py --level standard --threshold 80
+# Standard enforcement (80% line, 75% branch)
+python scripts/tdd_setup.py --level standard
+
+# Custom thresholds
+python scripts/tdd_setup.py --threshold 90 --branch-threshold 85
+
+# Gradual adoption for brownfield projects
+python scripts/tdd_setup.py --level gradual
+
+# Preview without making changes
+python scripts/tdd_setup.py --dry-run
 ```
 
-### coverage_gate.py
-Check coverage against thresholds:
-```bash
-python scripts/coverage_gate.py --min-line 80 --min-branch 75
-```
+Options:
+- `--level`: Enforcement level (strict, standard, gradual, audit)
+- `--threshold`: Line coverage threshold (default: 80)
+- `--branch-threshold`: Branch coverage threshold (default: 75)
+- `--dry-run`: Show what would be done without making changes
