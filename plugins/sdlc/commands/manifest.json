@@ -46,7 +46,8 @@
     "retrospective-analyzer.md",
     "security-audit.md",
     "security-gate.md",
-    "troubleshooting-guide.md"
+    "troubleshooting-guide.md",
+    "gap-analysis.md"
   ],
   "ignore": [
     "manifest.json"
