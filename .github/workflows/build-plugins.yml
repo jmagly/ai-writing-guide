@@ -103,7 +103,7 @@ jobs:
           echo "Plugins are now available for Claude Code installation:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "/plugin marketplace add jmagly/ai-writing-guide --path plugins" >> $GITHUB_STEP_SUMMARY
+          echo "/plugin marketplace add jmagly/ai-writing-guide" >> $GITHUB_STEP_SUMMARY
           echo "/plugin install sdlc@aiwg" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

@@ -33,7 +33,7 @@ aiwg use sdlc        # deploy SDLC framework
 
 ```bash
 # Add AIWG marketplace (one-time setup)
-/plugin marketplace add jmagly/ai-writing-guide --path plugins
+/plugin marketplace add jmagly/ai-writing-guide
 
 # Install the frameworks you need
 /plugin install sdlc@aiwg        # SDLC framework (64 agents)
@@ -768,7 +768,7 @@ Native integration with Claude Code's plugin system. Install modular plugins dir
 **Step 1: Add AIWG Marketplace**
 
 ```bash
-/plugin marketplace add jmagly/ai-writing-guide --path plugins
+/plugin marketplace add jmagly/ai-writing-guide
 ```
 
 **Step 2: Install Plugins**

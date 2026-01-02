@@ -8,7 +8,7 @@ Native Claude Code integration via the plugin marketplace:
 
 ```bash
 # Add AIWG marketplace (one-time)
-/plugin marketplace add jmagly/ai-writing-guide --path plugins
+/plugin marketplace add jmagly/ai-writing-guide
 
 # Install plugins
 /plugin install sdlc@aiwg        # 58 SDLC agents

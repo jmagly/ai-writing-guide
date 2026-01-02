@@ -77,7 +77,7 @@ Use `@path/to/file.md` in your message to load specific documentation:
 
 ```bash
 # Add AIWG marketplace (one-time)
-/plugin marketplace add jmagly/ai-writing-guide --path plugins
+/plugin marketplace add jmagly/ai-writing-guide
 
 # Install plugins
 /plugin install sdlc@aiwg        # 64 SDLC agents, 97 commands

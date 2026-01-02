@@ -59,7 +59,7 @@ Implement **dual distribution** model:
 2. **Claude Code plugin distribution** (new): `/plugin install sdlc@aiwg`
    - Native Claude Code integration
    - Modular plugins (6 separate plugins)
-   - Marketplace at `jmagly/ai-writing-guide --path plugins`
+   - Marketplace at `jmagly/ai-writing-guide`
 
 ### Plugin Architecture
 
@@ -134,7 +134,7 @@ Create `jmagly/aiwg-marketplace` separate from main repo.
 - Version sync complexity
 - Can be done later if needed
 
-Using `--path plugins` in main repo is simpler initially.
+Using `.claude-plugin/` at repo root is the standard approach.
 
 ## Consequences
 

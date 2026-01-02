@@ -12,7 +12,7 @@ Native Claude Code integration - no npm required:
 
 ```bash
 # Add AIWG marketplace (one-time)
-/plugin marketplace add jmagly/ai-writing-guide --path plugins
+/plugin marketplace add jmagly/ai-writing-guide
 
 # Install marketing framework
 /plugin install marketing@aiwg   # 37 agents, 23+ commands

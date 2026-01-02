@@ -11,12 +11,12 @@
     "repository": "https://github.com/jmagly/ai-writing-guide",
     "documentation": "https://docs.aiwg.io",
     "discord": "https://discord.gg/BuAusFMxdA",
-    "pluginRoot": "./"
+    "pluginRoot": "./plugins"
   },
   "plugins": [
     {
       "name": "sdlc",
-      "source": "./sdlc",
+      "source": "./plugins/sdlc",
       "description": "Complete SDLC framework with 58 specialized agents for software development lifecycle management. Phase-based workflows, security reviews, testing orchestration.",
       "version": "2024.12.4",
       "author": {
@@ -28,7 +28,7 @@
     },
     {
       "name": "marketing",
-      "source": "./marketing",
+      "source": "./plugins/marketing",
       "description": "Marketing automation framework with 37 specialized agents for campaign management, content strategy, brand compliance.",
       "version": "2024.12.4",
       "author": {
@@ -40,7 +40,7 @@
     },
     {
       "name": "voice",
-      "source": "./voice",
+      "source": "./plugins/voice",
       "description": "Voice profile system for consistent, authentic writing. 4 built-in profiles plus custom voice creation.",
       "version": "1.0.0",
       "author": {
@@ -52,7 +52,7 @@
     },
     {
       "name": "writing",
-      "source": "./writing",
+      "source": "./plugins/writing",
       "description": "Writing quality validation and AI pattern detection. Identify AI-generated patterns and enhance authenticity.",
       "version": "1.0.0",
       "author": {
@@ -64,7 +64,7 @@
     },
     {
       "name": "utils",
-      "source": "./utils",
+      "source": "./plugins/utils",
       "description": "Core AIWG utilities for context regeneration, workspace management, development kit, and traceability.",
       "version": "1.5.0",
       "author": {
@@ -76,7 +76,7 @@
     },
     {
       "name": "hooks",
-      "source": "./hooks",
+      "source": "./plugins/hooks",
       "description": "Claude Code hooks for workflow tracing, session management, and observability.",
       "version": "1.0.0",
       "author": {
