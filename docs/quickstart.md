@@ -1,25 +1,21 @@
 # Quick Start
 
-## Install & Deploy
+## Claude Code
 
-### Option A: Claude Code Plugin (Recommended)
-
-Native Claude Code integration - no npm required:
+Get started in seconds with the Claude Code plugin:
 
 ```bash
-# Add AIWG marketplace (one-time)
 /plugin marketplace add jmagly/ai-writing-guide
-
-# Install the frameworks you need
-/plugin install sdlc@aiwg        # SDLC framework (58 agents)
-/plugin install marketing@aiwg   # Marketing framework (37 agents)
-/plugin install utils@aiwg       # Core utilities
-/plugin install voice@aiwg       # Voice profiles
+/plugin install sdlc@aiwg
 ```
 
-> **No account required** - Plugin distribution is decentralized. No registry signup, no approval process.
+That's it. You now have 58 SDLC agents and 42+ workflow commands.
 
-### Option B: npm + CLI (Multi-Platform)
+**[Full Claude Code Setup Guide](#integrations/claude-code-quickstart)** - troubleshooting, all plugins, regeneration commands
+
+---
+
+## npm + CLI (Multi-Platform)
 
 For CLI tools and deploying to other platforms:
 
@@ -41,37 +37,23 @@ aiwg use marketing         # Marketing campaigns
 aiwg use all               # Everything
 ```
 
-**3. Open in your AI platform**
+Open in your AI platform and integrate:
 
 ```bash
-claude .                   # Claude Code
 cursor .                   # Cursor
 droid .                    # Factory AI
 ```
 
-**4. Integrate with platform context** (choose one)
+Then run `/aiwg-regenerate` to enable natural language commands. See the [Regenerate Guide](#regenerate-guide) for details.
 
-Option A - Quick setup (appends AIWG scaffold):
-```text
-/aiwg-setup-project
-```
-
-Option B - Intelligent integration (recommended):
-```text
-/aiwg-regenerate
-```
-
-**Use `/aiwg-regenerate`** - it analyzes your project, preserves team directives, and enables natural language commands like "run security review". See the [Regenerate Guide](#regenerate-guide) for details.
-
-**5. You're ready.** See the [Intake Guide](#intake-guide) for starting projects.
+**You're ready.** See the [Intake Guide](#intake-guide) for starting projects.
 
 ---
 
-## Platform-Specific Setup
+## Other Platforms
 
 | Platform | Guide |
 |----------|-------|
-| Claude Code | [Setup Guide](#integrations/claude-code-quickstart) |
 | Factory AI | [Setup Guide](#integrations/factory-quickstart) |
 | Warp Terminal | [Setup Guide](#integrations/warp-terminal-quickstart) |
 | Cursor | [Setup Guide](#integrations/cursor-quickstart) |
