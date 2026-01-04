@@ -1196,6 +1196,10 @@ aiwg mcp info
 
 - [**MCP Specification Research**](docs/references/REF-003-mcp-specification-2025.md) — MCP 2025-11-25 implementation details
 
+### Sponsors & Support
+
+- [**Our Sponsors**](docs/sponsors.md) — Organizations making AIWG possible
+
 ### Advanced Topics
 
 - [**Multi-Agent Orchestration**](agentic/code/frameworks/sdlc-complete/docs/multi-agent-documentation-pattern.md) — Parallel reviews and synthesis
@@ -1422,6 +1426,46 @@ This framework is in **active development** (Phase 1: Validation). Expect:
 - ⚠️ Only two process frameworks currently available (Writing Quality + SDLC Complete)
 
 **Report Issues:** [GitHub Issues](https://github.com/jmagly/ai-writing-guide/issues)
+
+---
+
+## ❤️ Sponsors
+
+**AIWG would not be possible without the generous support of our sponsors.**
+
+<table>
+<tr>
+<td width="33%" align="center">
+
+### [Roko Network](https://roko.network)
+
+**The Temporal Layer for Web3**
+
+Building enterprise-grade timing infrastructure for blockchain applications. Roko Network enables developers to create decentralized systems with nanosecond-level precision—solving one of distributed computing's hardest problems.
+
+</td>
+<td width="33%" align="center">
+
+### [Selfient](https://selfient.xyz)
+
+**No-Code Smart Contracts for Everyone**
+
+Democratizing Web3 by making blockchain-based agreements accessible to all. Selfient empowers creators, freelancers, and businesses to create enforceable smart contracts without writing a single line of code.
+
+</td>
+<td width="33%" align="center">
+
+### [Integro Labs](https://integrolabs.io)
+
+**AI-Powered Automation Solutions**
+
+Harnessing the transformative potential of AI and blockchain to shape digital automation. Integro Labs delivers custom solutions that help individuals and businesses thrive in the age of intelligent systems.
+
+</td>
+</tr>
+</table>
+
+**Interested in sponsoring?** [Contact us](https://github.com/jmagly/ai-writing-guide/discussions) to learn how your organization can support open-source AI tooling.
 
 ---
 
