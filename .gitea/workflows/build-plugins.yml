@@ -21,17 +21,12 @@ jobs:
   build:
     name: Package Plugins
     runs-on: ubuntu-latest
+    container: node:20
     timeout-minutes: 15
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -73,31 +68,26 @@ jobs:
 
       - name: Build summary
         run: |
-          echo "## Plugin Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Built Plugins:" >> $GITHUB_STEP_SUMMARY
+          echo "## Plugin Build Complete"
+          echo ""
+          echo "### Built Plugins:"
           for plugin in plugins/*/; do
             if [ -d "$plugin" ]; then
-              echo "- $(basename $plugin)" >> $GITHUB_STEP_SUMMARY
+              echo "- $(basename $plugin)"
             fi
           done
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Note**: npm publishing happens via GitHub Actions." >> $GITHUB_STEP_SUMMARY
+          echo ""
+          echo "**Note**: npm publishing happens via GitHub Actions."
 
   validate:
     name: Validate Build
     runs-on: ubuntu-latest
+    container: node:20
     needs: build
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci

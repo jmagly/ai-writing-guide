@@ -15,21 +15,12 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    container: node:20
     timeout-minutes: 15
-
-    strategy:
-      matrix:
-        node-version: [18, 20]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -40,27 +31,34 @@ jobs:
       - name: Run tests
         run: npm test -- --run
 
-      - name: Report test results
-        if: always()
-        run: |
-          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Node.js ${{ matrix.node-version }} tests completed." >> $GITHUB_STEP_SUMMARY
-
-  lint:
-    name: Lint
+  test-node18:
+    name: Test (Node 18)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    container: node:18
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --run
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    container: node:20
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: npm ci
@@ -72,18 +70,13 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    container: node:20
     timeout-minutes: 10
     needs: test
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
