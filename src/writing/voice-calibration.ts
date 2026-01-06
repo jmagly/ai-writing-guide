@@ -744,7 +744,7 @@ export class VoiceCalibration {
   /**
    * Import voice profiles
    */
-  importVoiceProfiles(data: string, format: 'json'): void {
+  importVoiceProfiles(data: string, _format: 'json'): void {
     const profiles = JSON.parse(data);
 
     for (const profileData of profiles) {

@@ -464,7 +464,7 @@ export class FrameworkMigration {
     return backupPath;
   }
 
-  private async moveResource(sourcePath: string, targetPath: string, options: MigrationOptions): Promise<void> {
+  private async moveResource(sourcePath: string, targetPath: string, _options: MigrationOptions): Promise<void> {
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
 
     await fs.copyFile(sourcePath, targetPath);
