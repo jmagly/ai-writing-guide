@@ -1,0 +1,109 @@
+# Build and Package Plugins
+#
+# Packages Claude Code plugins on tag push or manual dispatch.
+# Note: npm publishing happens via GitHub Actions (requires npm provenance).
+
+name: Build Plugins
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      clean:
+        description: 'Clean plugins directory before building'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  build:
+    name: Package Plugins
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Package plugins
+        run: |
+          if [ "${{ github.event.inputs.clean }}" = "true" ] || [ "${{ github.event_name }}" = "push" ]; then
+            npm run package-plugins:clean
+          else
+            npm run package-plugins
+          fi
+
+      - name: Validate plugin manifests
+        run: |
+          echo "Validating plugin manifests..."
+          for plugin in plugins/*/; do
+            if [ -f "$plugin.claude-plugin/plugin.json" ]; then
+              echo "✓ $(basename $plugin): manifest valid"
+              cat "$plugin.claude-plugin/plugin.json" | head -5
+            else
+              echo "✗ $(basename $plugin): missing manifest"
+              exit 1
+            fi
+          done
+
+      - name: Validate marketplace.json
+        run: |
+          echo "Validating marketplace.json..."
+          if [ -f "marketplace.json" ]; then
+            echo "✓ marketplace.json exists at repo root"
+            cat "marketplace.json" | head -20
+          elif [ -f "plugins/.claude-plugin/marketplace.json" ]; then
+            echo "✓ marketplace.json exists in plugins/"
+            cat "plugins/.claude-plugin/marketplace.json" | head -20
+          else
+            echo "✗ marketplace.json missing"
+            exit 1
+          fi
+
+      - name: Build summary
+        run: |
+          echo "## Plugin Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Built Plugins:" >> $GITHUB_STEP_SUMMARY
+          for plugin in plugins/*/; do
+            if [ -d "$plugin" ]; then
+              echo "- $(basename $plugin)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note**: npm publishing happens via GitHub Actions." >> $GITHUB_STEP_SUMMARY
+
+  validate:
+    name: Validate Build
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --run

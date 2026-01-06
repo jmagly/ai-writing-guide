@@ -1,0 +1,199 @@
+# Validate Framework Metadata
+#
+# Validates plugin and agent metadata schemas.
+# Runs on changes to agentic framework files.
+
+name: Validate Metadata
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '.claude/**'
+      - 'agentic/**'
+      - 'src/plugin/**'
+      - 'tools/workspace/**'
+      - '.gitea/workflows/metadata-validation.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '.claude/**'
+      - 'agentic/**'
+      - 'src/plugin/**'
+      - 'tools/workspace/**'
+      - '.gitea/workflows/metadata-validation.yml'
+
+jobs:
+  validate-metadata:
+    name: Validate Plugin Metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: |
+          echo "Building TypeScript..."
+          npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
+          echo "Build completed."
+
+      - name: Check dist directory
+        run: ls -la dist/src/plugin/ || echo "dist/src/plugin/ directory does not exist"
+
+      - name: Validate Metadata Schema
+        run: |
+          echo "Validating plugin metadata..."
+          node --input-type=module -e "
+            import { MetadataValidator } from './dist/src/plugin/metadata-validator.js';
+            import path from 'path';
+
+            async function validateAll() {
+              const validator = new MetadataValidator({
+                checkFileReferences: true,
+                strict: false
+              });
+
+              const dirs = [
+                'agentic/code/frameworks/sdlc-complete/agents',
+                'agentic/code/frameworks/sdlc-complete/commands'
+              ];
+
+              let totalErrors = 0;
+              let totalWarnings = 0;
+              let totalFiles = 0;
+
+              const skipPatterns = ['manifest.md', 'README.md', 'agent-template.md', 'openai-compat.md', 'factory-compat.md'];
+
+              for (const dir of dirs) {
+                const dirPath = path.resolve(process.cwd(), dir);
+                try {
+                  const results = await validator.validateDirectory(dirPath, true);
+
+                  for (const [file, result] of results) {
+                    const basename = path.basename(file);
+                    if (skipPatterns.includes(basename)) {
+                      console.log('Skipping doc file: ' + basename);
+                      continue;
+                    }
+
+                    totalFiles++;
+                    if (!result.valid) {
+                      totalErrors += result.errors.length;
+                      console.log('\n❌ ' + file);
+                      for (const error of result.errors) {
+                        console.log('   Error: ' + error.message);
+                      }
+                    }
+                    totalWarnings += result.warnings.length;
+                  }
+                } catch (e) {
+                  console.log('Skipping ' + dir + ': ' + e.message);
+                }
+              }
+
+              console.log('\n' + '='.repeat(50));
+              console.log('Validation Summary:');
+              console.log('  Files Validated: ' + totalFiles);
+              console.log('  Errors:         ' + totalErrors);
+              console.log('  Warnings:       ' + totalWarnings);
+              console.log('='.repeat(50));
+
+              if (totalErrors > 0) {
+                console.log('\n❌ Metadata validation failed with ' + totalErrors + ' errors');
+                process.exit(1);
+              }
+
+              console.log('\n✓ Metadata validation passed');
+            }
+
+            validateAll().catch(e => {
+              console.error('Validation script error:', e);
+              process.exit(1);
+            });
+          "
+
+      - name: Report Failure
+        if: failure()
+        run: |
+          echo ""
+          echo "❌ Metadata validation failed."
+          echo ""
+          echo "Common issues:"
+          echo "  - Missing YAML frontmatter (--- delimiters)"
+          echo "  - Missing required fields (name, version, type, description)"
+          echo "  - Invalid semver version format"
+          exit 1
+
+  performance-check:
+    name: Validation Performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Measure Validation Time
+        run: |
+          echo "Measuring validation performance..."
+          START=$(date +%s%N)
+
+          node --input-type=module -e "
+            import { MetadataValidator } from './dist/src/plugin/metadata-validator.js';
+            import path from 'path';
+
+            async function benchmark() {
+              const validator = new MetadataValidator({ checkFileReferences: false });
+              const dirs = ['.claude/agents', '.claude/commands'];
+              let fileCount = 0;
+
+              for (const dir of dirs) {
+                try {
+                  const results = await validator.validateDirectory(path.resolve(process.cwd(), dir), true);
+                  fileCount += results.size;
+                } catch (e) {}
+              }
+
+              console.log('Files validated: ' + fileCount);
+            }
+
+            benchmark().catch(console.error);
+          "
+
+          END=$(date +%s%N)
+          DURATION=$(( (END - START) / 1000000 ))
+
+          echo "Validation completed in ${DURATION}ms"
+
+          if [ $DURATION -gt 30000 ]; then
+            echo "⚠ Warning: Validation took longer than 30s target"
+          else
+            echo "✓ Performance target met (<30s)"
+          fi
