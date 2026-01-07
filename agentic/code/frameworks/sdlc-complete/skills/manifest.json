@@ -1,61 +1,10 @@
 {
-  "name": "sdlc-skills",
-  "description": "Model-invoked skills for SDLC framework orchestration",
-  "version": "1.0.0",
-  "type": "skills-catalog",
-  "skills": [
-    {
-      "name": "artifact-orchestration",
-      "description": "Multi-agent artifact generation with Primary Author → Reviewers → Synthesizer pattern",
-      "triggers": ["generate [artifact]", "create [SAD/test plan/deployment plan]", "draft [artifact]"]
-    },
-    {
-      "name": "gate-evaluation",
-      "description": "Phase gate validation with multi-agent review (LOM, ABM, IOC, PRM)",
-      "triggers": ["check gate", "can we transition", "validate [milestone]", "phase readiness"]
-    },
-    {
-      "name": "security-assessment",
-      "description": "STRIDE threat modeling, OWASP checks, and security control validation",
-      "triggers": ["security review", "threat model", "security scan", "check vulnerabilities"]
-    },
-    {
-      "name": "traceability-check",
-      "description": "Bidirectional traceability verification (requirements ↔ code ↔ tests)",
-      "triggers": ["check traceability", "validate requirements coverage", "find orphan requirements"]
-    },
-    {
-      "name": "decision-support",
-      "description": "Data-driven decisions with weighted matrices and ADR generation",
-      "triggers": ["help me decide", "compare options", "trade-off analysis", "decision matrix"]
-    },
-    {
-      "name": "incident-triage",
-      "description": "Rapid incident classification, severity assessment, and response coordination",
-      "triggers": ["production incident", "system down", "triage incident", "P0", "SEV1"]
-    },
-    {
-      "name": "test-coverage",
-      "description": "Coverage analysis, gap identification, and test recommendations",
-      "triggers": ["analyze test coverage", "what's not tested", "coverage report", "test gaps"]
-    },
-    {
-      "name": "architecture-evolution",
-      "description": "Architecture change management with impact analysis and migration planning",
-      "triggers": ["evolve architecture", "architecture change", "deprecate [component]", "migration plan"]
-    },
-    {
-      "name": "risk-cycle",
-      "description": "Continuous risk management throughout SDLC phases",
-      "triggers": ["risk review", "update risks", "new risk", "mitigate risk", "retire risk"]
-    },
-    {
-      "name": "sdlc-reports",
-      "description": "Iteration, phase, and executive reporting with metrics dashboards",
-      "triggers": ["iteration report", "sprint summary", "project report", "executive summary"]
-    }
+  "name": "skills",
+  "path": "agentic/code/frameworks/sdlc-complete/skills",
+  "files": [
+    "manifest.json"
   ],
-  "dependencies": {
-    "utilities": ["parallel-dispatch", "artifact-metadata", "template-engine", "project-awareness"]
-  }
+  "ignore": [
+    "manifest.json"
+  ]
 }

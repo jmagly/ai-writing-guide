@@ -1,0 +1,161 @@
+---
+name: sales-enablement
+description: Create sales enablement materials and resources for sales team
+argument-hint: "[--material-type value] [--product-focus value] [--project-directory value] [--guidance "text"] [--interactive]"
+arguments:
+  - name: material-type
+    description: Type of material (all, presentations, battlecards, case-studies, playbooks)
+    required: false
+  - name: product-focus
+    description: Specific product or solution focus
+    required: false
+  - name: guidance
+    description: Strategic guidance to tailor priorities and approach
+    required: false
+  - name: interactive
+    description: Enable interactive mode with discovery questions
+    required: false
+
+  - name: project-directory
+    description: Project directory path (default current directory)
+    required: false
+---
+
+# Sales Enablement Command
+
+Create comprehensive sales enablement materials to support sales team effectiveness.
+
+## What This Command Does
+
+1. **Develops Sales Content**
+   - Product presentations
+   - Competitive battlecards
+   - Case studies and proof points
+
+2. **Creates Sales Tools**
+   - Sales playbooks
+   - Objection handling guides
+   - ROI calculators
+
+3. **Organizes Resources**
+   - Content library
+   - Usage guidelines
+   - Training materials
+
+## Orchestration Flow
+
+```
+Sales Enablement Request
+        ↓
+[Content Strategist] → Content Strategy
+        ↓
+[Copywriter] → Sales Copy
+        ↓
+[Technical Marketing Writer] → Technical Content
+        ↓
+[Graphic Designer] → Visual Materials
+        ↓
+[Market Researcher] → Competitive Intelligence
+        ↓
+[Positioning Specialist] → Messaging Alignment
+        ↓
+[Asset Manager] → Content Organization
+        ↓
+Sales Enablement Package Complete
+```
+
+## Agents Involved
+
+| Agent | Role | Output |
+|-------|------|--------|
+| Content Strategist | Strategy | Content plan |
+| Copywriter | Copy | Sales messaging |
+| Technical Marketing Writer | Technical | Product content |
+| Graphic Designer | Design | Visual materials |
+| Market Researcher | Research | Competitive intel |
+| Positioning Specialist | Messaging | Value props |
+| Asset Manager | Organization | Content library |
+
+## Material Types
+
+| Type | Purpose | Typical Format |
+|------|---------|----------------|
+| Presentations | Customer meetings | PPT/Google Slides |
+| Battlecards | Competitive selling | 1-2 page PDF |
+| Case Studies | Proof of value | PDF/Web |
+| Playbooks | Sales process | PDF/Wiki |
+| One-pagers | Quick reference | 1-page PDF |
+
+## Output Artifacts
+
+Saved to `.aiwg/marketing/sales-enablement/`:
+
+- `content-inventory.md` - All materials index
+- `presentations/` - Sales presentations
+- `battlecards/` - Competitive materials
+- `case-studies/` - Customer success stories
+- `playbooks/` - Sales playbooks
+- `one-pagers/` - Quick reference guides
+- `objection-handling.md` - Objection responses
+- `roi-tools/` - ROI calculators
+- `training-guide.md` - How to use materials
+
+## Parameter Handling
+
+### --guidance Parameter
+
+**Purpose**: Provide upfront direction to tailor priorities and approach
+
+**Examples**:
+```bash
+--guidance "Enterprise sales focus, long sales cycle"
+--guidance "Competitive battlecard priority"
+--guidance "Technical audience, detailed specs needed"
+```
+
+**How Applied**:
+- Parse guidance for keywords: priority, timeline, audience, focus, constraints
+- Adjust agent emphasis and output depth based on stated priorities
+- Modify deliverable order based on timeline constraints
+- Influence scope and detail level based on context
+
+### --interactive Parameter
+
+**Purpose**: Guide through discovery questions for comprehensive input
+
+**Questions Asked** (if --interactive):
+1. What sales challenges are you addressing?
+2. What materials are highest priority?
+3. Who is the target buyer persona?
+4. What is the typical sales cycle length?
+5. What competitive situations are most common?
+6. What objections need addressing?
+
+## Usage Examples
+
+```bash
+# Full sales enablement package
+/sales-enablement --material-type all
+
+# Specific material type
+/sales-enablement --material-type battlecards
+
+# Product-focused
+/sales-enablement --material-type all --product-focus "Enterprise Plan"
+
+# With strategic guidance
+/sales-enablement "Example" --guidance "Your specific context here"
+
+# Interactive mode
+/sales-enablement "Example" --interactive
+```
+
+## Success Criteria
+
+- [ ] Content strategy aligned with sales needs
+- [ ] Key materials created
+- [ ] Competitive intelligence current
+- [ ] Materials properly branded
+- [ ] Content library organized
+- [ ] Training documentation provided
+- [ ] Sales team briefed

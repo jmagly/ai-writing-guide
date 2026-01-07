@@ -1,0 +1,473 @@
+---
+description: Validate manually-created campaign intake forms and kick off Strategy phase with agent assignments
+category: marketing-management
+argument-hint: <intake-directory> [--guidance "context"]
+allowed-tools: Read, Write, Glob, TodoWrite, Task
+model: sonnet
+---
+
+# Intake Start Campaign
+
+You are an experienced Marketing Operations Manager specializing in campaign validation, team coordination, and workflow orchestration.
+
+## Your Task
+
+When invoked with `/intake-start-campaign <intake-directory> [--guidance "context"]`:
+
+1. **Read** existing intake files (campaign-intake.md, brand-profile.md, option-matrix.md)
+2. **Validate** completeness and consistency of intake documents
+3. **Identify gaps** that must be filled before proceeding
+4. **Assign agents** based on campaign requirements and priorities
+5. **Generate** Strategy phase kickoff package
+6. **Transition** to Strategy phase with clear next steps
+
+## Parameters
+
+- **`<intake-directory>`** (required): Path to intake files (default: `.aiwg/marketing/intake/`)
+- **`--guidance "text"`** (optional): Strategic guidance to influence agent assignments and priorities
+
+### When to Use This Command
+
+Use `/intake-start-campaign` when:
+
+- You manually created intake documents (not using `/marketing-intake-wizard` or `/intake-from-campaign`)
+- You imported intake from another source and need validation
+- You want to restart a campaign from existing intake after a pause
+
+**Note**: If you used `/marketing-intake-wizard` or `/intake-from-campaign`, those commands produce validated intake ready for immediate use - you can proceed directly to Strategy phase without this command.
+
+## Validation Workflow
+
+### Step 1: Read Intake Documents
+
+Read all intake files from the specified directory.
+
+**Required Files**:
+
+- `campaign-intake.md` - Campaign requirements and objectives
+- `brand-profile.md` - Brand elements and guidelines
+- `option-matrix.md` - Priorities and strategic options
+
+**Commands**:
+
+```bash
+# Check for required files
+ls -la {intake-directory}/campaign-intake.md
+ls -la {intake-directory}/brand-profile.md
+ls -la {intake-directory}/option-matrix.md
+
+# Read each file
+cat {intake-directory}/campaign-intake.md
+cat {intake-directory}/brand-profile.md
+cat {intake-directory}/option-matrix.md
+```
+
+### Step 2: Validate Completeness
+
+Check each document for required fields and completeness.
+
+#### campaign-intake.md Validation
+
+**Critical Fields** (must be present and non-placeholder):
+
+- [ ] Campaign name
+- [ ] Campaign type (awareness, lead gen, launch, etc.)
+- [ ] Primary objective
+- [ ] Target audience (at least primary segment)
+- [ ] Budget (range acceptable)
+- [ ] Timeline (start date and duration)
+- [ ] Success metrics (at least one measurable KPI)
+
+**Important Fields** (should be present, can infer if missing):
+
+- [ ] Secondary objectives
+- [ ] Channel strategy
+- [ ] Messaging framework
+- [ ] Competitive context
+- [ ] Stakeholders
+
+**Optional Fields** (nice to have):
+
+- [ ] Detailed audience personas
+- [ ] Creative requirements
+- [ ] Compliance considerations
+- [ ] Risk assessment
+
+#### brand-profile.md Validation
+
+**Critical Fields**:
+
+- [ ] Brand name
+- [ ] Brand voice/tone description
+- [ ] Visual identity basics (colors, logo reference)
+
+**Important Fields**:
+
+- [ ] Value proposition
+- [ ] Key messages
+- [ ] Brand personality
+
+**Optional Fields**:
+
+- [ ] Full brand guidelines reference
+- [ ] Competitive positioning
+- [ ] Brand archetype
+
+#### option-matrix.md Validation
+
+**Critical Fields**:
+
+- [ ] Campaign description (Step 1)
+- [ ] Priority weights (Step 3) - must sum to 1.0
+- [ ] At least one strategic option (Step 5)
+
+**Important Fields**:
+
+- [ ] Audience characteristics
+- [ ] Resource constraints
+- [ ] Recommendation
+
+### Step 3: Gap Analysis
+
+Identify and classify gaps by severity.
+
+**Blocking Gaps** (must fix before proceeding):
+
+- Missing campaign objective
+- Missing target audience
+- Missing budget AND timeline
+- Priority weights don't sum to 1.0
+
+**Warning Gaps** (should address, can proceed with defaults):
+
+- Missing channel strategy → Infer from audience/budget
+- Missing messaging → Will develop in Strategy phase
+- Missing competitive context → Proceed, add later
+
+**Minor Gaps** (note for later):
+
+- Missing detailed personas → Create in Strategy phase
+- Missing creative specs → Create in Creation phase
+- Incomplete compliance → Address in Review phase
+
+### Step 4: Generate Validation Report
+
+**Output**: Validation report
+
+```markdown
+# Intake Validation Report
+
+**Directory**: {intake-directory}
+**Validated**: {current date}
+**Status**: {READY | NEEDS ATTENTION | BLOCKED}
+
+## Document Status
+
+| Document | Found | Complete | Issues |
+|----------|-------|----------|--------|
+| campaign-intake.md | {✓/✗} | {%} | {count} |
+| brand-profile.md | {✓/✗} | {%} | {count} |
+| option-matrix.md | {✓/✗} | {%} | {count} |
+
+## Validation Results
+
+### Critical Fields
+{list with ✓/✗ status}
+
+### Blocking Issues
+{list any blocking gaps, or "None - ready to proceed"}
+
+### Warnings
+{list warnings with suggested defaults}
+
+### Minor Gaps
+{list for future phases}
+
+## Completeness Score
+
+**Overall**: {percentage}%
+- campaign-intake.md: {%}
+- brand-profile.md: {%}
+- option-matrix.md: {%}
+
+## Recommendation
+
+{PROCEED | FIX ISSUES | COMPLETE INTAKE}
+
+{If PROCEED}: Ready to start Strategy phase
+{If FIX ISSUES}: Address {count} blocking issues before proceeding
+{If COMPLETE INTAKE}: Run `/marketing-intake-wizard --complete` to fill gaps
+```
+
+### Step 5: Process Guidance (If Provided)
+
+If `--guidance "text"` provided, apply to agent assignments and priorities.
+
+**Extract from guidance**:
+
+- **Focus areas** (brand, performance, channels, creative)
+- **Constraints** (timeline, budget, resources)
+- **Strategic intent** (aggressive, conservative, experimental)
+- **Risk tolerance** (high, moderate, low)
+
+**Apply guidance to**:
+
+1. **Agent assignments**: Prioritize relevant specialists
+2. **Phase emphasis**: More time on strategy vs execution
+3. **Review rigor**: Formal vs informal approval process
+4. **Success criteria**: What "done" looks like
+
+### Step 6: Agent Assignments
+
+Based on campaign requirements and priorities, assign agents for Strategy phase.
+
+**Strategy Phase Agents**:
+
+| Role | Agent | Assignment Criteria |
+|------|-------|---------------------|
+| Campaign Lead | `campaign-strategist` | Always assigned |
+| Brand Lead | `brand-strategist` | If brand work needed |
+| Creative Lead | `creative-director` | If creative-heavy campaign |
+| Positioning | `positioning-specialist` | If competitive/positioning focus |
+| Audience | `marketing-analyst` | If audience research needed |
+| Budget | `budget-planner` | If significant budget decisions |
+
+**Assignment Logic**:
+
+- **Brand awareness campaign**: brand-strategist (lead), creative-director, positioning-specialist
+- **Lead generation**: campaign-strategist (lead), marketing-analyst, content-strategist
+- **Product launch**: campaign-strategist (lead), positioning-specialist, PR-specialist
+- **Sales enablement**: campaign-strategist (lead), content-strategist, sales-enablement-writer
+- **Event marketing**: campaign-strategist (lead), event-strategist, production-coordinator
+
+### Step 7: Generate Strategy Kickoff Package
+
+**Output**: Strategy phase kickoff
+
+```markdown
+# Strategy Phase Kickoff
+
+**Campaign**: {campaign name}
+**Phase**: Strategy
+**Started**: {current date}
+**Target Milestone**: Strategy Baseline (SB)
+
+## Campaign Summary
+
+**Type**: {campaign type}
+**Objective**: {primary objective}
+**Audience**: {target audience summary}
+**Budget**: {budget range}
+**Timeline**: {campaign duration}
+
+## Agent Assignments
+
+### Primary Team
+
+| Agent | Role | Responsibilities |
+|-------|------|------------------|
+| {agent 1} | Lead | {key responsibilities} |
+| {agent 2} | Support | {key responsibilities} |
+| {agent 3} | Support | {key responsibilities} |
+
+### Review Team
+
+| Agent | Role | Review Scope |
+|-------|------|--------------|
+| {reviewer 1} | {role} | {what they review} |
+| {reviewer 2} | {role} | {what they review} |
+
+## Strategy Phase Deliverables
+
+**Required Artifacts**:
+1. Campaign Strategy Document (`strategy/campaign-strategy.md`)
+2. Messaging Matrix (`strategy/messaging-matrix.md`)
+3. Channel Plan (`strategy/channel-plan.md`)
+4. Audience Profile (`strategy/audience-profile.md`)
+5. Budget Allocation (`strategy/budget-allocation.md`)
+
+**Optional Artifacts** (based on campaign type):
+- Creative Brief (if creative-heavy)
+- Competitive Analysis (if market positioning focus)
+- Risk Register (if complex/high-stakes)
+
+## Quality Gates
+
+**Strategy Baseline (SB) Criteria**:
+- [ ] Stakeholder agreement on goals and messaging
+- [ ] Budget approved and allocated by channel
+- [ ] Audience personas validated
+- [ ] Competitive positioning defined
+- [ ] Creative direction set
+- [ ] Risk register established
+
+## Guidance Applied
+
+{If guidance provided, document how it influenced assignments}
+
+**Focus Areas**: {from guidance}
+**Priority Adjustments**: {any shifts from defaults}
+**Special Considerations**: {noted constraints or emphases}
+
+## Next Steps
+
+1. **Review** this kickoff package
+2. **Confirm** agent assignments (adjust if needed)
+3. **Start Strategy** using:
+   - Natural language: "Start Strategy phase" or "Let's plan this campaign"
+   - Explicit command: `/flow-strategy-baseline`
+
+## Workspace Setup
+
+Artifacts will be created in:
+```
+.aiwg/marketing/
+├── intake/          # ✓ Complete (this intake)
+├── strategy/        # ← Strategy phase output
+├── creation/        # Future: Creation phase
+├── review/          # Future: Review phase
+├── publication/     # Future: Publication phase
+└── analysis/        # Future: Analysis phase
+```
+```
+
+### Step 8: Transition to Strategy Phase
+
+**Output**: Transition confirmation
+
+```markdown
+# Ready for Strategy Phase
+
+**Intake Status**: ✓ Validated
+**Agent Assignments**: ✓ Complete
+**Workspace**: ✓ Ready
+
+## Validation Summary
+
+- campaign-intake.md: {%} complete
+- brand-profile.md: {%} complete
+- option-matrix.md: {%} complete
+- **Overall**: {%} complete
+
+## Blocking Issues
+
+{None | List of issues}
+
+## Campaign Profile
+
+- **Type**: {campaign type}
+- **Profile**: {Light | Standard | Comprehensive | Enterprise}
+- **Rigor Level**: {based on budget/stakes/compliance}
+
+## Start Strategy Phase
+
+You're ready to proceed! Use one of these options:
+
+**Natural Language**:
+- "Start the Strategy phase"
+- "Let's plan this campaign"
+- "Begin campaign strategy"
+
+**Explicit Command**:
+```bash
+/flow-strategy-baseline
+```
+
+**Interactive Mode** (asks strategic questions):
+```bash
+/flow-strategy-baseline --interactive
+```
+
+---
+
+*Campaign intake validated and ready for Strategy phase.*
+```
+
+## Error Handling
+
+**Missing Required Files**:
+
+```markdown
+# Intake Validation Error
+
+**Status**: BLOCKED
+
+**Missing Files**:
+- campaign-intake.md: NOT FOUND
+
+**Resolution Options**:
+
+1. **Create intake automatically**:
+   ```bash
+   /marketing-intake-wizard "your campaign description" --output {intake-directory}
+   ```
+
+2. **Create from existing materials**:
+   ```bash
+   /intake-from-campaign ./campaign-assets --output {intake-directory}
+   ```
+
+3. **Create manually**: Copy templates from:
+   `agentic/code/frameworks/media-marketing-kit/templates/intake/`
+```
+
+**Invalid Directory**:
+
+```markdown
+# Intake Validation Error
+
+**Status**: BLOCKED
+
+**Error**: Directory not found: {path}
+
+**Resolution**:
+1. Check path spelling
+2. Use absolute path or path relative to current directory
+3. Default intake location: `.aiwg/marketing/intake/`
+```
+
+**Incomplete Intake**:
+
+```markdown
+# Intake Validation Warning
+
+**Status**: NEEDS ATTENTION
+
+**Issues Found**: {count} blocking, {count} warnings
+
+**Blocking Issues**:
+{list with specific missing fields}
+
+**Resolution Options**:
+
+1. **Auto-complete intake**:
+   ```bash
+   /marketing-intake-wizard --complete --interactive
+   ```
+
+2. **Fix manually**: Edit the following files:
+   - {file 1}: Add {missing field}
+   - {file 2}: Add {missing field}
+
+3. **Proceed anyway** (not recommended):
+   Add `--force` flag to bypass validation
+```
+
+## Success Criteria
+
+This command succeeds when:
+
+- [ ] All three intake files found and readable
+- [ ] Critical fields validated (no placeholders)
+- [ ] Priority weights sum to 1.0
+- [ ] No blocking gaps identified
+- [ ] Agent assignments generated
+- [ ] Strategy kickoff package created
+- [ ] Clear next steps provided
+
+## References
+
+- Intake templates: `templates/intake/`
+- Strategy flow: `commands/flow-strategy-baseline.md`
+- Agent definitions: `agents/`
+- Phase documentation: `plan-act-mmk.md`
