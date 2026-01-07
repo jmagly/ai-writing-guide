@@ -1,0 +1,14 @@
+{
+  "name": "droid-bridge",
+  "path": "agentic/code/addons/droid-bridge",
+  "files": [
+    "CLAUDE-ADDON.md",
+    "README.md",
+    "package-lock.json",
+    "package.json",
+    "server.js"
+  ],
+  "ignore": [
+    "manifest.json"
+  ]
+}

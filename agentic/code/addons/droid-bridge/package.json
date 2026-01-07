@@ -1,0 +1,16 @@
+{
+  "name": "droid-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server that bridges Claude Code to Factory Droid",
+  "type": "module",
+  "main": "server.js",
+  "bin": {
+    "droid-mcp": "./server.js"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
