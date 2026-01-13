@@ -9,7 +9,7 @@ Get started in seconds with the Claude Code plugin:
 /plugin install sdlc@aiwg
 ```
 
-That's it. You now have 58 SDLC agents and 42+ workflow commands.
+That's it. You now have the full SDLC framework with agents and workflow commands.
 
 **[Full Claude Code Setup Guide](#integrations/claude-code-quickstart)** - troubleshooting, all plugins, regeneration commands
 
@@ -69,9 +69,9 @@ Then run `/aiwg-regenerate` to enable natural language commands. See the [Regene
 
 | Framework | What It's For |
 |-----------|---------------|
-| `aiwg use sdlc` | Software development lifecycle (54 agents, 42 commands) |
-| `aiwg use marketing` | Marketing campaigns (37 agents) |
-| `aiwg use writing` | Voice profiles, authentic content (3 agents, 5 skills) |
+| `aiwg use sdlc` | Software development lifecycle |
+| `aiwg use marketing` | Marketing campaigns |
+| `aiwg use writing` | Voice profiles, authentic content |
 | `aiwg use all` | All frameworks |
 
 ---

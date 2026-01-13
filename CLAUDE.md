@@ -22,11 +22,11 @@ aiwg use sdlc
 ```
 agentic/code/
 ├── frameworks/
-│   ├── sdlc-complete/       # 64 SDLC agents, 97 commands
-│   └── media-marketing-kit/ # 37 marketing agents
+│   ├── sdlc-complete/       # Complete SDLC coverage
+│   └── media-marketing-kit/ # Full marketing operations
 ├── addons/
 │   └── voice-framework/     # Voice profiles
-└── agents/                  # 4 writing agents
+└── agents/                  # Writing quality agents
 
 src/                         # CLI and MCP server implementation
 test/                        # Test suites and fixtures
@@ -80,8 +80,8 @@ Use `@path/to/file.md` in your message to load specific documentation:
 /plugin marketplace add jmagly/ai-writing-guide
 
 # Install plugins
-/plugin install sdlc@aiwg        # 64 SDLC agents, 97 commands
-/plugin install marketing@aiwg   # 37 marketing agents
+/plugin install sdlc@aiwg        # Full SDLC framework
+/plugin install marketing@aiwg   # Marketing operations framework
 /plugin install utils@aiwg       # Core utilities
 /plugin install voice@aiwg       # Voice profiles
 

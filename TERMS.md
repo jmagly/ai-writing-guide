@@ -9,7 +9,7 @@ The AI Writing Guide framework ("the Software") is an **agent toolset and prompt
 
 **Current Features:**
 - **Writing Quality utilities** — Remove AI detection patterns, validate content
-- **SDLC Complete framework** — 64 agents, 97 commands, 172 templates for software lifecycle management
+- **SDLC Complete framework** — Comprehensive agents, commands, and templates for software lifecycle management
 
 **Future Expansion:**
 - Additional process frameworks (business analysis, content strategy, research synthesis, decision-making, etc.)

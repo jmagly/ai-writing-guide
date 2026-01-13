@@ -15,7 +15,7 @@ Native Claude Code integration - no npm required:
 /plugin marketplace add jmagly/ai-writing-guide
 
 # Install SDLC framework
-/plugin install sdlc@aiwg        # 58 agents, 42+ commands
+/plugin install sdlc@aiwg        # Full SDLC framework
 /plugin install utils@aiwg       # Core utilities (recommended)
 ```
 

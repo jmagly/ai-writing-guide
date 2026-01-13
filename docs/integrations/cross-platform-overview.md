@@ -21,7 +21,7 @@ AIWG works across multiple AI platforms. **One command deploys everything.**
 
 ## What Gets Deployed
 
-**95 agents** - **100+ commands** - **49 skills** - **157 templates** - **5 voice profiles**
+**Comprehensive agents** - **Full command set** - **Skills** - **Templates** - **Voice profiles**
 
 All assets deploy automatically in each platform's native format.
 

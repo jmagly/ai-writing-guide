@@ -362,7 +362,7 @@ Frameworks are distributed via the AIWG repository:
 
 ## Reference Implementations
 
-- `sdlc-complete`: Software development lifecycle (53 agents, 48 commands, 100+ templates)
-- `media-marketing-kit`: Marketing campaign lifecycle (37 agents, marketing templates)
+- `sdlc-complete`: Software development lifecycle (comprehensive coverage)
+- `media-marketing-kit`: Marketing campaign lifecycle (full marketing operations)
 
 Study these implementations before creating new frameworks.

@@ -41,7 +41,7 @@ This step is critical - it enables natural language command mapping ("run securi
 ## What Gets Created
 
 ```text
-WARP.md          # Project context (58 agents, 42+ commands embedded)
+WARP.md          # Project context (agents, commands embedded)
 .aiwg/           # SDLC artifacts
 ```
 

@@ -15,7 +15,7 @@ Native Claude Code integration - no npm required:
 /plugin marketplace add jmagly/ai-writing-guide
 
 # Install marketing framework
-/plugin install marketing@aiwg   # 37 agents, 23+ commands
+/plugin install marketing@aiwg   # Full marketing framework
 /plugin install utils@aiwg       # Core utilities (recommended)
 /plugin install voice@aiwg       # Voice profiles (recommended)
 ```

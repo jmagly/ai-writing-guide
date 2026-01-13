@@ -137,7 +137,7 @@ aiwg -update-warp --target /path/to/project
 ### Requirements Analyst
 ### Architecture Designer
 ...
-{All 58 agents aggregated}
+{All agents aggregated}
 
 ---
 
@@ -237,9 +237,9 @@ cp WARP.md.backup-2025-10-17T20-43-24-831Z WARP.md
 ### Mode: `both` (Default)
 
 Deploys both general-purpose and SDLC agents:
-- **3 general agents**: writing-validator, prompt-optimizer, content-diversifier
-- **58 SDLC agents**: Full lifecycle coverage
-- **Total**: 61 agents + 42+ commands
+- **General agents**: writing-validator, prompt-optimizer, content-diversifier
+- **SDLC agents**: Full lifecycle coverage
+- **Total**: All agents + commands
 
 ```bash
 aiwg -setup-warp --mode both
@@ -248,8 +248,8 @@ aiwg -setup-warp --mode both
 ### Mode: `sdlc`
 
 Deploys only SDLC framework agents:
-- **58 SDLC agents**: Intake → Inception → Elaboration → Construction → Transition
-- **42+ commands**: Full SDLC workflow orchestration
+- **SDLC agents**: Intake → Inception → Elaboration → Construction → Transition
+- **Full commands**: Full SDLC workflow orchestration
 
 ```bash
 aiwg -setup-warp --mode sdlc
@@ -258,7 +258,7 @@ aiwg -setup-warp --mode sdlc
 ### Mode: `general`
 
 Deploys only general-purpose agents:
-- **3 general agents**: Writing quality, prompt optimization, content generation
+- **General agents**: Writing quality, prompt optimization, content generation
 
 ```bash
 aiwg -setup-warp --mode general

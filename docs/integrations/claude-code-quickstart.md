@@ -12,8 +12,8 @@ Native Claude Code integration - no npm required:
 # Add AIWG marketplace (one-time)
 /plugin marketplace add jmagly/ai-writing-guide 
 # Install the frameworks you need
-/plugin install sdlc@aiwg        # SDLC framework (58 agents)
-/plugin install marketing@aiwg   # Marketing framework (37 agents)
+/plugin install sdlc@aiwg        # Full SDLC framework
+/plugin install marketing@aiwg   # Full marketing framework
 /plugin install utils@aiwg       # Core utilities
 /plugin install voice@aiwg       # Voice profiles
 ```
@@ -65,8 +65,8 @@ This enables natural language command mapping ("run security review" → workflo
 
 ```text
 .claude/
-├── agents/      # 58 SDLC agents
-├── commands/    # 42+ workflow commands
+├── agents/      # SDLC agents
+├── commands/    # Workflow commands
 └── skills/      # Voice and utility skills
 
 CLAUDE.md        # Project context
@@ -149,8 +149,8 @@ aiwg -version
 
 | Plugin | Description | Install |
 |--------|-------------|---------|
-| `sdlc@aiwg` | 58 SDLC agents, 42+ commands | `/plugin install sdlc@aiwg` |
-| `marketing@aiwg` | 37 marketing agents | `/plugin install marketing@aiwg` |
+| `sdlc@aiwg` | Full SDLC framework | `/plugin install sdlc@aiwg` |
+| `marketing@aiwg` | Full marketing framework | `/plugin install marketing@aiwg` |
 | `utils@aiwg` | Core utilities, regenerate commands | `/plugin install utils@aiwg` |
 | `voice@aiwg` | Voice profiles for consistent writing | `/plugin install voice@aiwg` |
 | `writing@aiwg` | AI pattern detection, validation | `/plugin install writing@aiwg` |
