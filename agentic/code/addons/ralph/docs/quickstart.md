@@ -2,6 +2,23 @@
 
 Get started with iterative AI task execution in 5 minutes.
 
+## Before You Start: Is Ralph Right for This Task?
+
+**Ralph is a power tool.** Before invoking it, ask yourself:
+
+| Question | If NO |
+|----------|-------|
+| Is my task well-defined with clear requirements? | Document requirements first |
+| Can I write a command that verifies success? | Ralph can't help with subjective goals |
+| Do I have tests/linting to validate correctness? | Add verification first |
+| Is this implementation work, not exploration? | Use Discovery Track for research |
+
+**The token-burning trap**: Ralph excels at HOW to implement but thrashes on WHAT to build. If you don't have clear requirements, Ralph will hallucinate features, contradict itself, and burn tokens producing junk.
+
+**Safe to proceed?** Read on. **Unsure?** See [When to Use Ralph](when-to-use-ralph.md) first.
+
+---
+
 ## What is Ralph?
 
 Ralph (from the "Ralph Wiggum methodology") executes AI tasks in a loop until completion criteria are met:
@@ -183,6 +200,7 @@ Ralph stores state and reports in `.aiwg/ralph/`:
 
 ## Next Steps
 
+- Read [When to Use Ralph](when-to-use-ralph.md) to understand Ralph's sweet spot
 - Read [Best Practices](best-practices.md) for effective prompt engineering
 - See [Examples](examples/) for common patterns
 - Check [Troubleshooting](troubleshooting.md) if you get stuck

@@ -143,11 +143,28 @@ See `docs/examples/` for detailed walkthroughs:
 
 Ralph inverts traditional AI optimization from "unpredictable success" to "predictable failure with automatic recovery."
 
+## Important: When to Use Ralph
+
+**Ralph is a power tool.** Used correctly, it delivers overnight. Used incorrectly, it burns tokens producing junk.
+
+| Situation | Use Ralph? | Instead |
+|-----------|------------|---------|
+| Greenfield with no docs | **NO** | Use AIWG intake/flows first |
+| Vague requirements | **NO** | Write use cases first |
+| Clear spec, need implementation | **YES** | - |
+| Tests failing, need fixes | **YES** | - |
+| Migration with clear rules | **YES** | - |
+
+**The key insight**: Ralph excels at HOW to build, but thrashes on WHAT to build. Define your requirements first, then let Ralph implement.
+
+See [When to Use Ralph](docs/when-to-use-ralph.md) for detailed guidance on avoiding the token-burning trap.
+
 ## Related
 
-- [Quickstart Guide](docs/quickstart.md)
-- [Best Practices](docs/best-practices.md)
-- [Troubleshooting](docs/troubleshooting.md)
+- [When to Use Ralph](docs/when-to-use-ralph.md) - **Start here** - Understanding Ralph's sweet spot
+- [Quickstart Guide](docs/quickstart.md) - Getting started
+- [Best Practices](docs/best-practices.md) - Writing effective tasks
+- [Troubleshooting](docs/troubleshooting.md) - Common issues
 
 ## Credits
 
