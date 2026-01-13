@@ -5,7 +5,7 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2026.01.1] - 2026-01-13 – "Issue Management & Security" Release
+## [2026.01.2] - 2026-01-13 – "Issue Management & Security" Release
 
 | What changed | Why you care |
 |--------------|--------------|
@@ -972,4 +972,4 @@ For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
 ---
 
 **Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2026-01-13 (v2026.01.1)
+**Last Updated**: 2026-01-13 (v2026.01.2)
