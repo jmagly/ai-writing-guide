@@ -1,14 +1,42 @@
 {
-  "name": "droid-bridge",
-  "path": "agentic/code/addons/droid-bridge",
-  "files": [
-    "CLAUDE-ADDON.md",
-    "README.md",
-    "package-lock.json",
-    "package.json",
-    "server.js"
+  "id": "droid-bridge",
+  "type": "addon",
+  "name": "Droid Bridge",
+  "version": "2.0.0",
+  "description": "MCP server bridging Claude Code to Factory Droid for batch operations and automated fixes",
+  "core": false,
+  "autoInstall": false,
+  "author": "ataraxismaximus",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "keywords": [
+    "mcp",
+    "factory-droid",
+    "bridge",
+    "automation",
+    "batch-operations"
   ],
-  "ignore": [
-    "manifest.json"
-  ]
+  "entry": {
+    "mcp": "server.js"
+  },
+  "mcp": {
+    "server": "server.js",
+    "transport": "stdio",
+    "tools": [
+      "droid_exec",
+      "droid_analyze",
+      "droid_status"
+    ]
+  },
+  "dependencies": {
+    "required": [],
+    "optional": [],
+    "external": ["droid"]
+  },
+  "configuration": {
+    "defaults": {
+      "autoLevel": "medium",
+      "timeout": 300000
+    }
+  }
 }
