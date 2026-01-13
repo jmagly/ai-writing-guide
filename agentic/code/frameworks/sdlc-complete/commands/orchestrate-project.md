@@ -1,7 +1,7 @@
 ---
 description: Plan iterations, delegate to SDLC agents, and compile iteration status
 category: sdlc-management
-argument-hint: <docs/sdlc/artifacts/project>
+argument-hint: <docs/sdlc/artifacts/project> [--interactive] [--guidance "text"]
 allowed-tools: Read, Write, Grep, Glob
 model: opus
 ---

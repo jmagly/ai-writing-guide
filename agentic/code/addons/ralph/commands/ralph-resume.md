@@ -1,7 +1,7 @@
 ---
 description: Resume an interrupted Ralph loop from last checkpoint
 category: automation
-argument-hint: [--max-iterations N] [--timeout M]
+argument-hint: [--max-iterations N] [--timeout M --interactive --guidance "text"]
 allowed-tools: Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit
 orchestration: true
 model: opus

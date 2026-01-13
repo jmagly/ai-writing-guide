@@ -1,7 +1,7 @@
 ---
 name: aiwg-refresh
 description: Update AIWG CLI and redeploy frameworks/tools to current project without leaving the session
-args: "[--update-cli] [--all] [--sdlc] [--marketing] [--utils] [--provider <name>] [--reasoning-model <name>] [--coding-model <name>] [--efficiency-model <name>] [--filter <pattern>] [--filter-role <role>] [--save] [--force] [--dry-run]"
+args: "[--update-cli] [--all] [--sdlc] [--marketing] [--utils] [--provider <name>] [--reasoning-model <name>] [--coding-model <name>] [--efficiency-model <name>] [--filter <pattern>] [--filter-role <role>] [--save] [--force] [--dry-run] [--interactive] [--guidance "text"]"
 ---
 
 # Refresh AIWG Deployment

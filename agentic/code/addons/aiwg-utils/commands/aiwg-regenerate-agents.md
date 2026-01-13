@@ -1,7 +1,7 @@
 ---
 name: aiwg-regenerate-agents
 description: Regenerate AGENTS.md with preserved team directives
-args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--interactive] [--guidance "text"]"
 ---
 
 # Regenerate AGENTS.md

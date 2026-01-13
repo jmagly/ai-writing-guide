@@ -1,7 +1,7 @@
 ---
 description: Generate or update the agentic environment definition for AgentSmith, SkillSmith, and CommandSmith
 category: smithing
-argument-hint: "[--verify-only] [--update]"
+argument-hint: "[--verify-only] [--update] [--interactive] [--guidance "text"]"
 allowed-tools: Read, Write, Glob, Bash
 model: haiku
 ---

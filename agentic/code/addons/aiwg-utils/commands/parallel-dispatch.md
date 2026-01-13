@@ -1,7 +1,7 @@
 ---
 name: parallel-dispatch
 description: Dispatch multiple agents in parallel with dependency-aware coordination
-args: <task-file> [--max-parallel <n>] [--timeout <ms>] [--output <dir>]
+args: <task-file> [--max-parallel <n>] [--timeout <ms>] [--output <dir> --interactive --guidance "text"]
 ---
 
 # Parallel Dispatch

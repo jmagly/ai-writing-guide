@@ -1,7 +1,7 @@
 ---
 name: eval-agent
 description: Run evaluation tests against an agent to assess quality and archetype resistance
-args: <agent-name> [--category <type>] [--scenario <name>] [--verbose] [--output <path>]
+args: <agent-name> [--category <type>] [--scenario <name>] [--verbose] [--output <path> --interactive --guidance "text"]
 ---
 
 # Agent Evaluation

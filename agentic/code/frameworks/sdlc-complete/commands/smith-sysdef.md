@@ -1,7 +1,7 @@
 ---
 description: Generate system definition file for ToolSmith with tested OS commands
 category: smithing
-argument-hint: [--categories <list>] [--output <path>] [--verify-only] [--update]
+argument-hint: [--categories <list>] [--output <path>] [--verify-only] [--update --interactive --guidance "text"]
 allowed-tools: Bash, Read, Write, Glob
 model: haiku
 ---

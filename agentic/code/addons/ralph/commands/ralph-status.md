@@ -1,7 +1,7 @@
 ---
 description: Check status of current or previous Ralph loop
 category: automation
-argument-hint: [--verbose] [--latest] [--all]
+argument-hint: [--verbose] [--latest] [--all --interactive --guidance "text"]
 allowed-tools: Read, Glob, Bash
 model: haiku
 ---

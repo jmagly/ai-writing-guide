@@ -1,7 +1,7 @@
 ---
 name: mention-report
 description: Generate traceability report from @-mentions
-args: [--target <dir>] [--format <md|json|csv>] [--output <file>]
+args: [--target <dir>] [--format <md|json|csv>] [--output <file> --interactive --guidance "text"]
 ---
 
 # @-Mention Traceability Report

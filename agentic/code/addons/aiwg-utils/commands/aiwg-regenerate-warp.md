@@ -1,7 +1,7 @@
 ---
 name: aiwg-regenerate-warp
 description: Regenerate WARP.md for Warp Terminal with preserved team directives
-args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--interactive] [--guidance "text"]"
 ---
 
 # Regenerate WARP.md

@@ -1,7 +1,7 @@
 ---
 description: Abort a running Ralph loop and optionally revert changes
 category: automation
-argument-hint: [--keep-changes] [--revert] [--force]
+argument-hint: [--keep-changes] [--revert] [--force --interactive --guidance "text"]
 allowed-tools: Read, Write, Bash
 model: sonnet
 ---

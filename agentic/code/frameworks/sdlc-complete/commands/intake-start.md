@@ -1,7 +1,7 @@
 ---
 description: Ingest the Project Intake Form and kick off Concept → Inception with agent assignments, accepts optional guidance to tailor process
 category: sdlc-management
-argument-hint: <path-to-intake-folder-or-form> [--guidance "context"]
+argument-hint: <path-to-intake-folder-or-form> [--guidance "context" --interactive]
 allowed-tools: Read, Write, Glob, Grep
 model: sonnet
 ---

@@ -1,7 +1,7 @@
 ---
 description: Update project CLAUDE.md with AIWG framework context and configuration
 category: sdlc-setup
-argument-hint: [project-directory]
+argument-hint: [project-directory --interactive --guidance "text"]
 allowed-tools: Read, Write, Edit, Glob, Bash
 model: sonnet
 ---

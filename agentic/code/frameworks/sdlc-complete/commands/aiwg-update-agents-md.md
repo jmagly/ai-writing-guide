@@ -1,7 +1,7 @@
 ---
 description: Update AGENTS.md with project-specific context for Factory AI based on codebase analysis
 category: sdlc-setup
-argument-hint: [project-directory] [--provider factory]
+argument-hint: [project-directory] [--provider factory --interactive --guidance "text"]
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, TodoWrite
 model: sonnet
 ---

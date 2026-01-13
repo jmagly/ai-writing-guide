@@ -1,7 +1,7 @@
 ---
 name: devkit-test
 description: Test an AIWG package (addon, extension, or framework)
-args:
+args: [--interactive] [--guidance "text"]
   - name: path
     description: Path to package directory
     required: true

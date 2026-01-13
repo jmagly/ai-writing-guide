@@ -1,7 +1,7 @@
 ---
 description: One-command TDD infrastructure setup with pre-commit hooks and CI coverage gates
 category: testing
-argument-hint: [--level strict|standard|gradual|audit] [--threshold 80]
+argument-hint: [--level strict|standard|gradual|audit] [--threshold 80 --interactive --guidance "text"]
 ---
 
 # Setup TDD Command

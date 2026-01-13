@@ -1,7 +1,7 @@
 ---
 name: devkit-create-command
 description: Create a new slash command with AI-guided behavior definition
-args: <name> --to <target> [--template <type>] [--interactive]
+args: <name> --to <target> [--template <type>] [--interactive --guidance "text"]
 ---
 
 # Create AIWG Command
@@ -95,7 +95,7 @@ When `--interactive` is specified, I will ask:
 ---
 name: command-name
 description: Command description
-args: [arg1] [--option value]
+args: [arg1] [--option value --guidance "text"]
 ---
 
 # Command Title

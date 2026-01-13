@@ -1,7 +1,7 @@
 ---
 description: Execute iterative task loop until completion criteria are met - iteration beats perfection
 category: automation
-argument-hint: "<task>" --completion "<criteria>" [--max-iterations N] [--timeout M] [--interactive]
+argument-hint: "<task>" --completion "<criteria>" [--max-iterations N] [--timeout M] [--interactive --guidance "text"]
 allowed-tools: Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit
 orchestration: true
 model: opus

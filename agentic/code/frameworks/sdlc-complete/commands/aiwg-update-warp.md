@@ -1,7 +1,7 @@
 ---
 description: Update existing project WARP.md with latest AIWG orchestration guidance
 category: sdlc-setup
-argument-hint: [project-directory]
+argument-hint: [project-directory --interactive --guidance "text"]
 allowed-tools: Read, Write, Edit, Bash
 model: sonnet
 ---

@@ -1,7 +1,7 @@
 ---
 name: aiwg-regenerate-claude
 description: Regenerate CLAUDE.md for Claude Code with intelligent content preservation
-args: "[--no-backup] [--dry-run] [--full]"
+args: "[--no-backup] [--dry-run] [--full] [--interactive] [--guidance "text"]"
 ---
 
 # Regenerate CLAUDE.md

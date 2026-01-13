@@ -1,7 +1,7 @@
 ---
 name: devkit-validate
 description: Validate addon, framework, or extension structure and manifest
-args: <path> [--fix] [--verbose]
+args: <path> [--fix] [--verbose --interactive --guidance "text"]
 ---
 
 # Validate AIWG Package

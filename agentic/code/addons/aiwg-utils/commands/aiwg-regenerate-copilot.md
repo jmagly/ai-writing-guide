@@ -1,7 +1,7 @@
 ---
 name: aiwg-regenerate-copilot
 description: Regenerate copilot-instructions.md for GitHub Copilot with preserved team directives
-args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--interactive] [--guidance "text"]"
 ---
 
 # Regenerate copilot-instructions.md

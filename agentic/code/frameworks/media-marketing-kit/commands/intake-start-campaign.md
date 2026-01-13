@@ -1,7 +1,7 @@
 ---
 description: Validate manually-created campaign intake forms and kick off Strategy phase with agent assignments
 category: marketing-management
-argument-hint: <intake-directory> [--guidance "context"]
+argument-hint: <intake-directory> [--guidance "context" --interactive]
 allowed-tools: Read, Write, Glob, TodoWrite, Task
 model: sonnet
 ---
