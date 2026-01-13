@@ -1,14 +1,20 @@
 ---
 name: aiwg-regenerate-agents
-description: Regenerate AGENTS.md with preserved team directives
-args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
+description: Regenerate AGENTS.md with vendor-neutral content for multi-platform support
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--interactive] [--guidance "text"]"
 ---
 
 # Regenerate AGENTS.md
 
 Regenerate the AGENTS.md file, analyzing current project state while preserving team directives and organizational requirements.
 
-**Used by:** Factory AI, Cursor, OpenCode, Codex, and other platforms that use AGENTS.md.
+**Used by:** Factory AI, Cursor, OpenCode, Codex, and other platforms that use AGENTS.md for configuration.
+
+**Vendor-neutral:** This file provides generic agent descriptions and natural language patterns suitable for any platform.
+
+## Core Principle
+
+**Team content is preserved. AIWG content is updated. Content is vendor-neutral.**
 
 ## Parameters
 
@@ -62,11 +68,21 @@ Read registry for framework versions.
 ```markdown
 # AGENTS.md
 
-Project configuration for AI assistance.
+Project configuration for AI assistance platforms.
 
-## Project Commands
+## Project Overview
 
-Commands detected from this codebase:
+{Description from README.md or package.json}
+
+## Tech Stack
+
+- **Language**: {detected languages}
+- **Runtime**: {Node.js, Python, etc.}
+- **Framework**: {detected frameworks}
+- **Test Framework**: {detected test framework}
+- **Package Manager**: {npm/yarn/pip/etc.}
+
+## Development Commands
 
 | Command | Description |
 |---------|-------------|
@@ -78,20 +94,12 @@ Commands detected from this codebase:
 ## Project Structure
 
 ```
-src/           → TypeScript source code
-test/          → Test files (Vitest)
+src/           → Source code
+test/          → Test files
 tools/         → CLI tools and scripts
 docs/          → Documentation
-.github/       → GitHub Actions workflows
+.github/       → CI/CD workflows
 ```
-
-## Tech Stack
-
-- **Language**: TypeScript
-- **Runtime**: Node.js 18+
-- **Test Framework**: Vitest
-- **Linting**: ESLint
-- **CI/CD**: GitHub Actions
 
 ---
 
@@ -105,67 +113,97 @@ docs/          → Documentation
 
 ---
 
-## AIWG Framework Agents
+## AIWG Framework
 
-This project uses AIWG SDLC framework.
+This project uses the AI Writing Guide (AIWG) SDLC framework for software development workflows.
 
-### architecture-designer
+### Available Agents
 
-Design system architecture and make technical decisions for software projects.
+**Architecture & Design:**
+- `architecture-designer` - System architecture and technical decisions
+- `database-architect` - Database design and optimization
+- `api-designer` - RESTful/GraphQL API design
 
-**Model**: claude-sonnet-4-5-20250929
-**Tools**: Read, Edit, Write, Bash, Grep, Glob
+**Development & Implementation:**
+- `software-implementer` - Test-first development (TDD)
+- `integrator` - Component integration and build management
+- `test-engineer` - Comprehensive test suite creation
+- `test-architect` - Test strategy and framework design
 
-### code-reviewer
+**Quality & Security:**
+- `code-reviewer` - Code quality and security review
+- `security-architect` - Security design and threat modeling
+- `qa-engineer` - Quality assurance and testing
+- `performance-engineer` - Performance optimization
 
-Perform comprehensive code reviews focusing on quality, security, performance, and maintainability.
+**Operations & Release:**
+- `devops-engineer` - CI/CD and deployment automation
+- `sre` - Site reliability and monitoring
+- `release-manager` - Release coordination and rollout
 
-**Model**: claude-sonnet-4-5-20250929
-**Tools**: Read, Grep, Glob
+**Management & Coordination:**
+- `project-manager` - Project planning and tracking
+- `product-owner` - Product vision and requirements
+- `scrum-master` - Agile process facilitation
+- `business-analyst` - Requirements gathering and analysis
 
-### test-engineer
+**Specialized:**
+- `technical-writer` - Documentation and content
+- `ux-designer` - User experience and interface design
+- `data-engineer` - Data pipelines and analytics
 
-Create comprehensive test suites including unit, integration, and end-to-end tests.
+**Deployment:** Agents are deployed to platform-specific directories:
+- Claude Code: `.claude/agents/`
+- GitHub Copilot: `.github/agents/`
+- Factory AI: `.factory/droids/`
+- Cursor: `.cursor/rules/`
 
-**Model**: claude-sonnet-4-5-20250929
-**Tools**: Read, Edit, Write, Bash, Grep, Glob
+**Full catalog:** @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/
 
-{... additional agents based on deployment ...}
+### Workflow Commands
 
-## AIWG Commands
-
-### Intake & Planning
-- `intake-wizard` - Generate project intake forms interactively
+**Intake & Planning:**
+- `intake-wizard` - Generate project intake forms
 - `intake-from-codebase` - Analyze codebase to generate intake
-- `project-status` - Check current project phase and status
+- `project-status` - Check current project phase
+- `project-health-check` - Comprehensive health assessment
 
-### Phase Transitions
-- `flow-inception-to-elaboration` - Transition to Elaboration phase
-- `flow-elaboration-to-construction` - Transition to Construction phase
+**Phase Transitions:**
+- `flow-inception-to-elaboration` - Transition to Elaboration
+- `flow-elaboration-to-construction` - Transition to Construction
+- `flow-construction-to-transition` - Transition to Transition
 - `flow-gate-check` - Validate phase gate criteria
 
-### Continuous Workflows
-- `flow-security-review-cycle` - Security validation workflow
-- `flow-test-strategy-execution` - Test execution workflow
-- `flow-risk-management-cycle` - Risk management workflow
+**Continuous Workflows:**
+- `flow-security-review-cycle` - Security validation
+- `flow-test-strategy-execution` - Test execution
+- `flow-risk-management-cycle` - Risk management
+- `flow-retrospective-cycle` - Retrospective analysis
 
-## Orchestration
+**Development:**
+- `flow-guided-implementation` - Step-by-step implementation
+- `generate-tests` - Generate test suite
+- `setup-tdd` - Set up test-driven development
+- `pr-review` - Pull request review
 
-The AI platform acts as Core Orchestrator for SDLC workflows:
+**Full workflow catalog:** @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/commands/
 
-1. Interpret natural language workflow requests
-2. Map to appropriate flow commands
-3. Coordinate multi-agent workflows
-4. Report progress with clear indicators
+### Natural Language Requests
 
-### Natural Language Mappings
+Use natural language to request workflows:
 
 | Request | Maps To |
 |---------|---------|
 | "transition to elaboration" | flow-inception-to-elaboration |
 | "run security review" | flow-security-review-cycle |
-| "check status" | project-status |
+| "check project status" | project-status |
 | "start iteration N" | flow-iteration-dual-track |
+| "generate tests for module" | generate-tests + test-engineer |
+| "review this PR" | pr-review + code-reviewer |
+| "design authentication API" | api-designer |
+| "optimize database queries" | database-architect + performance-engineer |
+
+**Natural language guide:** @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md
 
 ## Project Artifacts
 
@@ -176,27 +214,31 @@ The AI platform acts as Core Orchestrator for SDLC workflows:
 | Requirements | @.aiwg/requirements/ |
 | Architecture | @.aiwg/architecture/ |
 | Planning | @.aiwg/planning/ |
+| Testing | @.aiwg/testing/ |
+| Security | @.aiwg/security/ |
+| Deployment | @.aiwg/deployment/ |
 
-## Core References
+## Full Reference
 
-| Topic | Reference |
-|-------|-----------|
-| Orchestration | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/core/orchestrator.md |
-| Agent Design | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/agents/design-rules.md |
-| Error Recovery | @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/reliability/resilience.md |
+**AIWG Installation:** `~/.local/share/ai-writing-guide/`
 
-{If SDLC framework installed:}
+**Framework Documentation:**
+- SDLC Complete: @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md
+- All Workflows: @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/commands/
+- All Agents: @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/
+- Orchestration: @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md
 
-## SDLC References
+**Core References:**
+- Orchestrator: @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/core/orchestrator.md
+- Agent Design: @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/agents/design-rules.md
+- Error Recovery: @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/prompts/reliability/resilience.md
 
-| Topic | Reference |
-|-------|-----------|
-| Natural Language | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md |
-| Orchestration | @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md |
-
-## Resources
-
-- **AIWG Installation**: `~/.local/share/ai-writing-guide`
+**Platform-specific configurations:**
+- Claude Code: CLAUDE.md
+- GitHub Copilot: .github/copilot-instructions.md
+- Cursor: .cursorrules
+- Windsurf: .windsurfrules
+- Warp: WARP.md
 
 ---
 
@@ -218,13 +260,62 @@ The AI platform acts as Core Orchestrator for SDLC workflows:
 AGENTS.md Regenerated
 =====================
 
-Backup: AGENTS.md.backup-20251206-153512
+Backup: AGENTS.md.backup-20260113-153512
 
-Preserved: 2 sections, 21 lines
-Regenerated: Project commands, structure, AIWG agents
+Team Content Preserved:
+  ✓ Team Directives (2 sections, 21 lines)
+
+AIWG Content Updated:
+  ✓ Project commands and structure
+  ✓ Agent descriptions (20 agents)
+  ✓ Workflow patterns (natural language)
+  ✓ Full references included
+
+Vendor-Neutral Content:
+  ✓ Generic agent descriptions
+  ✓ Natural language patterns
+  ✓ No platform-specific syntax
+  ✓ Context size optimized: 287 lines
 
 Output: AGENTS.md (287 lines)
 ```
+
+## Vendor-Neutral Content Rules
+
+**INCLUDE (generic descriptions):**
+- Agent purposes and capabilities
+- Natural language workflow patterns
+- Project structure and commands
+- Framework references
+
+**EXCLUDE (platform-specific):**
+- Claude Code slash command syntax
+- Copilot @-mention examples
+- Cursor rule patterns
+- Platform-specific invocation methods
+
+**REFERENCE (link to all):**
+- Full workflow catalog
+- Full agent catalog
+- Platform-specific context files
+- Framework documentation
+
+**Target size:** 250-350 lines (excluding team content)
+
+## Multi-Platform Support
+
+AGENTS.md serves as a fallback for platforms without dedicated context files:
+
+| Platform | Primary Context | Fallback |
+|----------|----------------|----------|
+| Claude Code | CLAUDE.md | AGENTS.md |
+| GitHub Copilot | .github/copilot-instructions.md | AGENTS.md |
+| Cursor | .cursorrules | AGENTS.md |
+| Windsurf | .windsurfrules | AGENTS.md |
+| Warp | WARP.md | AGENTS.md |
+| Factory AI | .factory/README.md | AGENTS.md |
+| OpenCode | .opencode/README.md | AGENTS.md |
+| Codex | ~/.codex/config | AGENTS.md |
 
 ## Examples
 
@@ -246,7 +337,17 @@ Output: AGENTS.md (287 lines)
 
 | Command | Regenerates |
 |---------|-------------|
-| `/aiwg-regenerate-claude` | CLAUDE.md |
-| `/aiwg-regenerate-warp` | WARP.md |
-| `/aiwg-regenerate-agents` | AGENTS.md |
-| `/aiwg-regenerate` | Auto-detect |
+| `/aiwg-regenerate-claude` | CLAUDE.md (Claude Code) |
+| `/aiwg-regenerate-copilot` | copilot-instructions.md (GitHub Copilot) |
+| `/aiwg-regenerate-cursorrules` | .cursorrules (Cursor) |
+| `/aiwg-regenerate-windsurfrules` | .windsurfrules (Windsurf) |
+| `/aiwg-regenerate-warp` | WARP.md (Warp Terminal) |
+| `/aiwg-regenerate-factory` | .factory/README.md (Factory AI) |
+| `/aiwg-regenerate-agents` | AGENTS.md (Multi-vendor) |
+| `/aiwg-regenerate` | Auto-detect vendor |
+
+## References
+
+- Base Template: @agentic/code/frameworks/sdlc-complete/templates/regenerate-base.md
+- Vendor Detection: @agentic/code/frameworks/sdlc-complete/docs/vendor-detection.md
+- @implements @.aiwg/requirements/use-cases/UC-019-regenerate-vendor-specific.md

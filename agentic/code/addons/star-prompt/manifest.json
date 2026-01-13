@@ -1,0 +1,26 @@
+{
+  "id": "star-prompt",
+  "type": "addon",
+  "name": "Star Prompt",
+  "version": "1.0.0",
+  "description": "Tasteful prompt to encourage users to star the repository after successful command completion",
+  "core": false,
+  "autoInstall": true,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "keywords": [
+    "engagement",
+    "github",
+    "stars",
+    "feedback",
+    "community"
+  ],
+  "entry": {
+    "skills": "skills/"
+  },
+  "skills": [
+    "star-prompt"
+  ],
+  "dependencies": []
+}

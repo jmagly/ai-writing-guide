@@ -53,6 +53,11 @@
       "name": "sdlc-reports",
       "description": "Iteration, phase, and executive reporting with metrics dashboards",
       "triggers": ["iteration report", "sprint summary", "project report", "executive summary"]
+    },
+    {
+      "name": "issue-auto-sync",
+      "description": "Automatic issue tracking synchronization from commits and artifacts",
+      "triggers": ["sync issues", "update linked issues", "check issue references", "auto-update issues", "post-commit issue sync"]
     }
   ],
   "dependencies": {
