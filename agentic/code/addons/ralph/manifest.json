@@ -1,0 +1,68 @@
+{
+  "id": "ralph",
+  "type": "addon",
+  "name": "Ralph Loop",
+  "version": "1.0.0",
+  "description": "Iterative AI coding loops with automatic recovery - iteration beats perfection",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "keywords": [
+    "ralph",
+    "iteration",
+    "loop",
+    "autonomous",
+    "batch",
+    "refactor",
+    "migration",
+    "wiggum"
+  ],
+  "researchFoundation": {
+    "REF-001": "Ralph Wiggum methodology - iterative AI execution with stop hooks",
+    "REF-002": "BP-6 - Recovery requires execution history",
+    "REF-003": "Predictable failure with automatic recovery beats unpredictable success"
+  },
+  "entry": {
+    "commands": "commands/",
+    "skills": "skills/",
+    "agents": "agents/",
+    "hooks": "hooks/",
+    "templates": "templates/",
+    "docs": "docs/"
+  },
+  "commands": [
+    "ralph",
+    "ralph-status",
+    "ralph-abort",
+    "ralph-resume"
+  ],
+  "skills": [
+    "ralph-loop"
+  ],
+  "agents": [
+    "ralph-loop",
+    "ralph-verifier"
+  ],
+  "hooks": [
+    "ralph-loop",
+    "ralph-commit"
+  ],
+  "templates": [
+    "ralph-task",
+    "ralph-completion"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": ["aiwg-hooks", "aiwg-utils"]
+  },
+  "configuration": {
+    "defaults": {
+      "maxIterations": 10,
+      "timeoutMinutes": 60,
+      "autoCommit": true,
+      "verboseTrace": false
+    }
+  }
+}

@@ -71,6 +71,14 @@ const COMMAND_ALIASES = {
   'scaffold-addon': 'scaffold-addon',
   'scaffold-extension': 'scaffold-extension',
   'scaffold-framework': 'scaffold-framework',
+
+  // Ralph Loop
+  'ralph': 'ralph',
+  '-ralph': 'ralph',
+  '--ralph': 'ralph',
+  'ralph-status': 'ralph-status',
+  'ralph-abort': 'ralph-abort',
+  'ralph-resume': 'ralph-resume',
 };
 
 /**
@@ -168,6 +176,14 @@ Model Selection (for 'use' command):
   --save                     Save model selection to project models.json
   --save-user                Save model selection to ~/.config/aiwg/models.json
 
+Ralph Loop (Iterative Execution):
+  ralph "<task>" --completion "<criteria>"
+                        Execute iterative task loop until criteria met
+                        Options: --max-iterations N, --timeout M, --interactive
+  ralph-status          Check current Ralph loop status
+  ralph-abort           Abort running Ralph loop
+  ralph-resume          Resume interrupted Ralph loop
+
 Examples:
   aiwg use sdlc                    Install SDLC framework
   aiwg use all --provider factory  Install all frameworks for Factory AI
@@ -182,6 +198,7 @@ Examples:
   aiwg runtime-info --check git    Check if git is available
   aiwg catalog list                List available models
   aiwg catalog info opus           Show model details
+  aiwg ralph "fix tests" --completion "npm test passes"   Run Ralph loop
 `);
 }
 
@@ -538,6 +555,23 @@ export async function run(args, options = {}) {
 
     case 'scaffold-framework':
       await runScript('tools/scaffolding/scaffold-framework.mjs', commandArgs);
+      break;
+
+    // Ralph Loop (iterative execution)
+    case 'ralph':
+      await runScript('tools/ralph/ralph-cli.mjs', commandArgs);
+      break;
+
+    case 'ralph-status':
+      await runScript('tools/ralph/ralph-status.mjs', commandArgs);
+      break;
+
+    case 'ralph-abort':
+      await runScript('tools/ralph/ralph-abort.mjs', commandArgs);
+      break;
+
+    case 'ralph-resume':
+      await runScript('tools/ralph/ralph-resume.mjs', commandArgs);
       break;
 
     default:
