@@ -1,15 +1,13 @@
-# npm Package Publishing to Gitea Registry
+# npm Package Publishing to Gitea and Public npm Registries
 #
-# Publishes the package to Gitea's npm registry when a version tag is pushed.
-# Uses CalVer versioning: vYYYY.MM.PATCH (e.g., v2024.12.0)
+# Publishes the package to both Gitea's npm registry and public npmjs.org
+# when a version tag is pushed. Uses CalVer versioning: vYYYY.MM.PATCH
 #
 # REQUIRED SECRETS:
-#   NPM_TOKEN - Gitea access token with package:write scope
-#                     Generate at: Settings > Applications > Access Tokens
-#                     Required scopes: package:write
-#
-# ENVIRONMENT:
-#   Build server should have NPM_CONFIG_REGISTRY set to Gitea registry
+#   GITEA_TOKEN - Gitea access token with package:write scope
+#                 Generate at: Settings > Applications > Access Tokens
+#   NPM_TOKEN - npmjs.org automation token
+#                      Generate at: https://www.npmjs.com/settings/<user>/tokens
 #
 # To publish a new version:
 #   1. Update version in package.json
@@ -17,7 +15,7 @@
 #   3. Tag: git tag v2024.12.0
 #   4. Push: git push origin main --tags
 
-name: Publish to Gitea npm
+name: Publish to npm registries
 
 on:
   push:
@@ -27,6 +25,11 @@ on:
     inputs:
       dry_run:
         description: 'Dry run (do not publish)'
+        required: false
+        default: 'false'
+        type: boolean
+      publish_public:
+        description: 'Also publish to public npmjs.org'
         required: false
         default: 'false'
         type: boolean
@@ -51,7 +54,7 @@ jobs:
           # Create .npmrc with Gitea registry configuration
           cat > .npmrc << EOF
           @roctinam:registry=${{ env.GITEA_NPM_REGISTRY }}
-          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${{ secrets.NPM_TOKEN }}
+          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${{ secrets.GITEA_TOKEN }}
           EOF
           echo "Configured npm for Gitea registry"
 
@@ -105,6 +108,17 @@ jobs:
           # Publish with scoped package name for Gitea
           npm publish --registry=${{ env.GITEA_NPM_REGISTRY }}
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITEA_TOKEN }}
+
+      - name: Publish to public npm registry
+        if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.publish_public == 'true' }}
+        run: |
+          # Reconfigure for public npm
+          cat > .npmrc << EOF
+          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+          EOF
+          npm publish --access public
+        env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Dry run - would publish
@@ -122,7 +136,7 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
 
           curl -X POST \
-            -H "Authorization: token ${{ secrets.NPM_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}" \
             -H "Content-Type: application/json" \
             "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases" \
             -d "{
