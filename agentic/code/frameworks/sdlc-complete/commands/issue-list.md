@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Glob, Bash
 model: sonnet
 ---
 
-# Ticket List
+# Issue List
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Given optional filter parameters:
 
 ## Inputs
 
-**Configuration sources** (same as `/ticket-create` and `/ticket-update`):
+**Configuration sources** (same as `/issue-create` and `/issue-update`):
 1. `.aiwg/config.yaml` - Project-level configuration
 2. `CLAUDE.md` - User-level configuration
 3. Default: `local` provider
@@ -50,9 +50,9 @@ Given optional filter parameters:
 ┌──────────┬────────────────────────┬────────────┬──────────┬──────────┬────────────┐
 │ ID       │ Title                  │ Status     │ Priority │ Assignee │ Labels     │
 ├──────────┼────────────────────────┼────────────┼──────────┼──────────┼────────────┤
-│ TICKET-1 │ Implement user auth    │ in_progress│ high     │ johndoe  │ feature,ui │
-│ TICKET-2 │ Add dark mode          │ open       │ medium   │ janedoe  │ feature    │
-│ TICKET-3 │ Fix navigation bug     │ closed     │ critical │ johndoe  │ bug        │
+│ ISSUE-1 │ Implement user auth    │ in_progress│ high     │ johndoe  │ feature,ui │
+│ ISSUE-2 │ Add dark mode          │ open       │ medium   │ janedoe  │ feature    │
+│ ISSUE-3 │ Fix navigation bug     │ closed     │ critical │ johndoe  │ bug        │
 └──────────┴────────────────────────┴────────────┴──────────┴──────────┴────────────┘
 
 Summary: 3 tickets (1 open, 1 in_progress, 1 closed)
@@ -60,18 +60,18 @@ Summary: 3 tickets (1 open, 1 in_progress, 1 closed)
 
 **Compact Format**:
 ```
-TICKET-1  [in_progress] [high]     Implement user auth          @johndoe  [feature,ui]
-TICKET-2  [open]        [medium]   Add dark mode                @janedoe  [feature]
-TICKET-3  [closed]      [critical] Fix navigation bug           @johndoe  [bug]
+ISSUE-1  [in_progress] [high]     Implement user auth          @johndoe  [feature,ui]
+ISSUE-2  [open]        [medium]   Add dark mode                @janedoe  [feature]
+ISSUE-3  [closed]      [critical] Fix navigation bug           @johndoe  [bug]
 
 Summary: 3 tickets (1 open, 1 in_progress, 1 closed)
 ```
 
 **Markdown Format**:
 ```markdown
-# Tickets
+# Issues
 
-## TICKET-1: Implement user auth
+## ISSUE-1: Implement user auth
 
 **Status**: in_progress
 **Priority**: high
@@ -82,7 +82,7 @@ Summary: 3 tickets (1 open, 1 in_progress, 1 closed)
 
 ---
 
-## TICKET-2: Add dark mode
+## ISSUE-2: Add dark mode
 
 **Status**: open
 **Priority**: medium
@@ -103,7 +103,7 @@ Summary: 3 tickets (1 open, 1 in_progress, 1 closed)
 {
   "tickets": [
     {
-      "id": "TICKET-1",
+      "id": "ISSUE-1",
       "title": "Implement user auth",
       "status": "in_progress",
       "priority": "high",
@@ -114,7 +114,7 @@ Summary: 3 tickets (1 open, 1 in_progress, 1 closed)
       "url": "https://git.integrolabs.net/roctinam/ai-writing-guide/issues/1"
     },
     {
-      "id": "TICKET-2",
+      "id": "ISSUE-2",
       "title": "Add dark mode",
       "status": "open",
       "priority": "medium",
@@ -142,37 +142,37 @@ Extract from command invocation:
 
 ```bash
 # List all open tickets (default)
-/ticket-list
+/issue-list
 
 # List all tickets (including closed)
-/ticket-list --status all
+/issue-list --status all
 
 # Filter by status
-/ticket-list --status in_progress
-/ticket-list --status closed
+/issue-list --status in_progress
+/issue-list --status closed
 
 # Filter by label
-/ticket-list --label bug
-/ticket-list --label feature --label high-priority
+/issue-list --label bug
+/issue-list --label feature --label high-priority
 
 # Filter by assignee
-/ticket-list --assignee johndoe
-/ticket-list --assignee unassigned
+/issue-list --assignee johndoe
+/issue-list --assignee unassigned
 
 # Combine filters
-/ticket-list --status open --label bug --assignee johndoe
+/issue-list --status open --label bug --assignee johndoe
 
 # Limit results
-/ticket-list --limit 10
+/issue-list --limit 10
 
 # Sort by field
-/ticket-list --sort updated
-/ticket-list --sort priority
+/issue-list --sort updated
+/issue-list --sort priority
 
 # Change format
-/ticket-list --format compact
-/ticket-list --format json
-/ticket-list --format markdown
+/issue-list --format compact
+/issue-list --format json
+/issue-list --format markdown
 ```
 
 **Parameter extraction**:
@@ -181,7 +181,7 @@ Extract from command invocation:
 
 ### Step 2: Load Configuration
 
-Same as `/ticket-create` command:
+Same as `/issue-create` command:
 
 1. Check `.aiwg/config.yaml`
 2. Fallback to `CLAUDE.md`
@@ -189,7 +189,7 @@ Same as `/ticket-create` command:
 
 Override with `--provider` if specified.
 
-### Step 3: Fetch Tickets (Provider-Specific)
+### Step 3: Fetch Issues (Provider-Specific)
 
 #### Gitea
 
@@ -227,7 +227,7 @@ curl -s -H "Authorization: token $(cat ~/.config/gitea/token)" \
 
 **Map to internal format**:
 ```bash
-ID="TICKET-${number}"
+ID="ISSUE-${number}"
 TITLE="${title}"
 STATUS="${state}"  # map to generic status
 PRIORITY="${extracted from body or labels}"
@@ -418,11 +418,11 @@ URL="${url}"
 
 #### Local
 
-Read files from `.aiwg/tickets/`:
+Read files from `.aiwg/issues/`:
 
 ```bash
 # Find all ticket files
-TICKET_FILES=(.aiwg/tickets/TICKET-*.md)
+TICKET_FILES=(.aiwg/issues/ISSUE-*.md)
 
 # Read each file
 for TICKET_FILE in "${TICKET_FILES[@]}"; do
@@ -451,7 +451,7 @@ ASSIGNEE="${assignee}"
 LABELS="${labels}"
 CREATED="${created}"
 UPDATED="${updated}"
-URL=".aiwg/tickets/${ID}.md"  # file path
+URL=".aiwg/issues/${ID}.md"  # file path
 ```
 
 ### Step 4: Apply Filters
@@ -553,7 +553,7 @@ done
 #### Markdown Format
 
 ```bash
-echo "# Tickets"
+echo "# Issues"
 echo ""
 
 for TICKET in "${FINAL_TICKETS[@]}"; do
@@ -628,11 +628,11 @@ fi
 
 ## Examples
 
-### Example 1: List All Open Tickets (Default)
+### Example 1: List All Open Issues (Default)
 
 **Command**:
 ```bash
-/ticket-list
+/issue-list
 ```
 
 **Config** (`.aiwg/config.yaml`):
@@ -649,19 +649,19 @@ ticketing:
 ┌──────────┬────────────────────────┬────────────┬──────────┬──────────┬────────────┐
 │ ID       │ Title                  │ Status     │ Priority │ Assignee │ Labels     │
 ├──────────┼────────────────────────┼────────────┼──────────┼──────────┼────────────┤
-│ TICKET-1 │ Implement user auth    │ in_progress│ high     │ johndoe  │ feature,ui │
-│ TICKET-2 │ Add dark mode          │ open       │ medium   │ janedoe  │ feature    │
-│ TICKET-4 │ Security audit         │ open       │ critical │ security │ security   │
+│ ISSUE-1 │ Implement user auth    │ in_progress│ high     │ johndoe  │ feature,ui │
+│ ISSUE-2 │ Add dark mode          │ open       │ medium   │ janedoe  │ feature    │
+│ ISSUE-4 │ Security audit         │ open       │ critical │ security │ security   │
 └──────────┴────────────────────────┴────────────┴──────────┴──────────┴────────────┘
 
 Summary: 3 tickets (2 open, 1 in_progress, 0 closed)
 ```
 
-### Example 2: List Closed Tickets
+### Example 2: List Closed Issues
 
 **Command**:
 ```bash
-/ticket-list --status closed
+/issue-list --status closed
 ```
 
 **Output**:
@@ -669,8 +669,8 @@ Summary: 3 tickets (2 open, 1 in_progress, 0 closed)
 ┌──────────┬────────────────────────┬────────────┬──────────┬──────────┬────────────┐
 │ ID       │ Title                  │ Status     │ Priority │ Assignee │ Labels     │
 ├──────────┼────────────────────────┼────────────┼──────────┼──────────┼────────────┤
-│ TICKET-3 │ Fix navigation bug     │ closed     │ critical │ johndoe  │ bug        │
-│ TICKET-5 │ Update documentation   │ closed     │ low      │ janedoe  │ docs       │
+│ ISSUE-3 │ Fix navigation bug     │ closed     │ critical │ johndoe  │ bug        │
+│ ISSUE-5 │ Update documentation   │ closed     │ low      │ janedoe  │ docs       │
 └──────────┴────────────────────────┴────────────┴──────────┴──────────┴────────────┘
 
 Summary: 2 tickets (0 open, 0 in_progress, 2 closed)
@@ -681,7 +681,7 @@ Filtered by status: closed
 
 **Command**:
 ```bash
-/ticket-list --label bug --assignee johndoe
+/issue-list --label bug --assignee johndoe
 ```
 
 **Output**:
@@ -689,8 +689,8 @@ Filtered by status: closed
 ┌──────────┬────────────────────────┬────────────┬──────────┬──────────┬────────────┐
 │ ID       │ Title                  │ Status     │ Priority │ Assignee │ Labels     │
 ├──────────┼────────────────────────┼────────────┼──────────┼──────────┼────────────┤
-│ TICKET-3 │ Fix navigation bug     │ closed     │ critical │ johndoe  │ bug        │
-│ TICKET-6 │ Fix auth timeout       │ open       │ high     │ johndoe  │ bug        │
+│ ISSUE-3 │ Fix navigation bug     │ closed     │ critical │ johndoe  │ bug        │
+│ ISSUE-6 │ Fix auth timeout       │ open       │ high     │ johndoe  │ bug        │
 └──────────┴────────────────────────┴────────────┴──────────┴──────────┴────────────┘
 
 Summary: 2 tickets (1 open, 0 in_progress, 1 closed)
@@ -698,28 +698,28 @@ Filtered by label: bug
 Filtered by assignee: johndoe
 ```
 
-### Example 4: List Unassigned Tickets (Compact Format)
+### Example 4: List Unassigned Issues (Compact Format)
 
 **Command**:
 ```bash
-/ticket-list --assignee unassigned --format compact
+/issue-list --assignee unassigned --format compact
 ```
 
 **Output**:
 ```
-TICKET-2   [open]        [medium]   Add dark mode                @unassigned  [feature]
-TICKET-7   [open]        [low]      Refactor API module          @unassigned  [refactor]
-TICKET-8   [blocked]     [high]     Deploy to staging            @unassigned  [deployment,blocked]
+ISSUE-2   [open]        [medium]   Add dark mode                @unassigned  [feature]
+ISSUE-7   [open]        [low]      Refactor API module          @unassigned  [refactor]
+ISSUE-8   [blocked]     [high]     Deploy to staging            @unassigned  [deployment,blocked]
 
 Summary: 3 tickets (2 open, 0 in_progress, 0 closed, 1 blocked)
 Filtered by assignee: unassigned
 ```
 
-### Example 5: List All Tickets (JSON Format)
+### Example 5: List All Issues (JSON Format)
 
 **Command**:
 ```bash
-/ticket-list --status all --format json --limit 2
+/issue-list --status all --format json --limit 2
 ```
 
 **Output**:
@@ -727,7 +727,7 @@ Filtered by assignee: unassigned
 {
   "tickets": [
     {
-      "id": "TICKET-1",
+      "id": "ISSUE-1",
       "title": "Implement user auth",
       "status": "in_progress",
       "priority": "high",
@@ -738,7 +738,7 @@ Filtered by assignee: unassigned
       "url": "https://git.integrolabs.net/roctinam/ai-writing-guide/issues/1"
     },
     {
-      "id": "TICKET-2",
+      "id": "ISSUE-2",
       "title": "Add dark mode",
       "status": "open",
       "priority": "medium",
@@ -760,16 +760,16 @@ Filtered by assignee: unassigned
 }
 ```
 
-### Example 6: List High-Priority Tickets (Markdown Format)
+### Example 6: List High-Priority Issues (Markdown Format)
 
 **Command**:
 ```bash
-/ticket-list --status all --format markdown | grep -A10 "Priority\*\*: high"
+/issue-list --status all --format markdown | grep -A10 "Priority\*\*: high"
 ```
 
 **Output**:
 ```markdown
-## TICKET-1: Implement user auth
+## ISSUE-1: Implement user auth
 
 **Status**: in_progress
 **Priority**: high
@@ -780,7 +780,7 @@ Filtered by assignee: unassigned
 
 ---
 
-## TICKET-6: Fix auth timeout
+## ISSUE-6: Fix auth timeout
 
 **Status**: open
 **Priority**: high
@@ -794,7 +794,7 @@ Filtered by assignee: unassigned
 
 ## Error Handling
 
-### No Tickets Found
+### No Issues Found
 
 ```
 No tickets found.
@@ -805,9 +805,9 @@ Filters applied:
 - Assignee: johndoe
 
 Try:
-- Remove filters: /ticket-list
-- Change status: /ticket-list --status all
-- Create ticket: /ticket-create "title"
+- Remove filters: /issue-list
+- Change status: /issue-list --status all
+- Create ticket: /issue-create "title"
 ```
 
 ### Provider Error
@@ -835,7 +835,7 @@ Valid status values:
 - review
 - all
 
-Example: /ticket-list --status in_progress
+Example: /issue-list --status in_progress
 ```
 
 ## Best Practices
@@ -854,52 +854,52 @@ Example: /ticket-list --status in_progress
 **Daily Standup**:
 ```bash
 # What am I working on?
-/ticket-list --assignee me --status in_progress
+/issue-list --assignee me --status in_progress
 
 # What's blocked?
-/ticket-list --status blocked
+/issue-list --status blocked
 ```
 
 **Sprint Planning**:
 ```bash
 # What's in the backlog?
-/ticket-list --status open --sort priority
+/issue-list --status open --sort priority
 
 # What's unassigned?
-/ticket-list --assignee unassigned --label feature
+/issue-list --assignee unassigned --label feature
 ```
 
 **Bug Triage**:
 ```bash
 # Critical bugs
-/ticket-list --label bug --status open --sort priority
+/issue-list --label bug --status open --sort priority
 
 # Unassigned bugs
-/ticket-list --label bug --assignee unassigned
+/issue-list --label bug --assignee unassigned
 ```
 
 **Security Review**:
 ```bash
 # Security tickets
-/ticket-list --label security --status all
+/issue-list --label security --status all
 
 # Security vulnerabilities
-/ticket-list --label vulnerability --status open
+/issue-list --label vulnerability --status open
 ```
 
 **Retrospective**:
 ```bash
 # Closed this sprint
-/ticket-list --status closed --sort updated --limit 20
+/issue-list --status closed --sort updated --limit 20
 
 # Blocked items
-/ticket-list --status blocked
+/issue-list --status blocked
 ```
 
 ## References
 
-- @agentic/code/frameworks/sdlc-complete/config/ticketing-config.md - Configuration schema
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-create.md - Create ticket command
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-update.md - Update ticket command
+- @agentic/code/frameworks/sdlc-complete/config/issueing-config.md - Configuration schema
+- @agentic/code/frameworks/sdlc-complete/commands/issue-create.md - Create ticket command
+- @agentic/code/frameworks/sdlc-complete/commands/issue-update.md - Update ticket command
 - @.aiwg/config.yaml - Project ticketing configuration
 - @CLAUDE.md - User ticketing configuration

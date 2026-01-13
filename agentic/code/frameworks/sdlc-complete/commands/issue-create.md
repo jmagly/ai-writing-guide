@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Glob, Bash, mcp__gitea__create_issue
 model: sonnet
 ---
 
-# Ticket Create
+# Issue Create
 
 ## Purpose
 
@@ -65,18 +65,18 @@ Given a ticket title and optional description:
 
 **Required for Local**:
 - Provider: `local`
-- Directory: `.aiwg/tickets/` (created if missing)
+- Directory: `.aiwg/issues/` (created if missing)
 
 ## Outputs
 
 **Gitea/GitHub/Jira/Linear**:
-- Ticket created on remote system
+- Issue created on remote system
 - Issue number returned
 - URL to view ticket
 
 **Local**:
-- File created: `.aiwg/tickets/TICKET-{num}.md`
-- Ticket number returned
+- File created: `.aiwg/issues/ISSUE-{num}.md`
+- Issue number returned
 - File path returned
 
 ## Workflow
@@ -87,19 +87,19 @@ Extract from command invocation:
 
 ```bash
 # Basic usage
-/ticket-create "Implement user auth"
+/issue-create "Implement user auth"
 
 # With description
-/ticket-create "Fix navigation bug" "Nav menu not showing on mobile devices"
+/issue-create "Fix navigation bug" "Nav menu not showing on mobile devices"
 
 # With labels
-/ticket-create "Add dark mode" "Implement theme toggle" --labels "feature,ui"
+/issue-create "Add dark mode" "Implement theme toggle" --labels "feature,ui"
 
 # With assignee
-/ticket-create "Security audit" "Run penetration test" --assignee "security-team" --priority high
+/issue-create "Security audit" "Run penetration test" --assignee "security-team" --priority high
 
 # Override provider
-/ticket-create "Local task" "Quick reminder" --provider local
+/issue-create "Local task" "Quick reminder" --provider local
 ```
 
 **Parameter extraction**:
@@ -124,7 +124,7 @@ Extract from command invocation:
 
 2. `CLAUDE.md` (if `.aiwg/config.yaml` not found):
    ```markdown
-   ## Ticketing Configuration
+   ## Issueing Configuration
 
    - **Provider**: gitea
    - **URL**: https://git.integrolabs.net
@@ -170,14 +170,14 @@ Extract from command invocation:
 - [ ] `LINEAR_API_TOKEN` environment variable set
 
 **Local**:
-- [ ] `.aiwg/tickets/` directory exists or can be created
+- [ ] `.aiwg/issues/` directory exists or can be created
 - [ ] Directory is writable
 
 **Error handling**:
 - If validation fails, report error and suggest fix
 - Optionally fall back to `local` provider with warning
 
-### Step 4: Create Ticket (Provider-Specific)
+### Step 4: Create Issue (Provider-Specific)
 
 #### Gitea
 
@@ -208,14 +208,14 @@ fi
 **MCP Tool Parameters**:
 - `owner`: Organization/user name
 - `repo`: Repository name
-- `title`: Ticket title
-- `body`: Ticket description (markdown)
+- `title`: Issue title
+- `body`: Issue description (markdown)
 - `assignee`: Username (optional)
 - `labels`: Array of label names (optional)
 
 **Return format**:
 ```
-✅ Ticket created: TICKET-42
+✅ Issue created: ISSUE-42
 
 View at: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
 
@@ -259,7 +259,7 @@ gh issue create \
 
 **Return format**:
 ```
-✅ Ticket created: #42
+✅ Issue created: #42
 
 View at: https://github.com/jmagly/ai-writing-guide/issues/42
 
@@ -315,7 +315,7 @@ curl -X POST "${JIRA_URL}/rest/api/3/issue" \
 
 **Return format**:
 ```
-✅ Ticket created: PROJECT-42
+✅ Issue created: PROJECT-42
 
 View at: https://yourcompany.atlassian.net/browse/PROJECT-42
 
@@ -350,7 +350,7 @@ curl -X POST https://api.linear.app/graphql \
 
 **Return format**:
 ```
-✅ Ticket created: ENG-42
+✅ Issue created: ENG-42
 
 View at: https://linear.app/team/issue/ENG-42
 
@@ -361,15 +361,15 @@ Priority: High
 
 #### Local
 
-Create markdown file in `.aiwg/tickets/`:
+Create markdown file in `.aiwg/issues/`:
 
 ```bash
 # Determine next ticket number
-mkdir -p .aiwg/tickets
-NEXT_NUM=$(ls .aiwg/tickets/TICKET-*.md 2>/dev/null | wc -l)
+mkdir -p .aiwg/issues
+NEXT_NUM=$(ls .aiwg/issues/ISSUE-*.md 2>/dev/null | wc -l)
 NEXT_NUM=$((NEXT_NUM + 1))
-TICKET_ID=$(printf "TICKET-%03d" $NEXT_NUM)
-TICKET_FILE=".aiwg/tickets/${TICKET_ID}.md"
+TICKET_ID=$(printf "ISSUE-%03d" $NEXT_NUM)
+TICKET_FILE=".aiwg/issues/${TICKET_ID}.md"
 
 # Create ticket file
 cat > "${TICKET_FILE}" <<EOF
@@ -404,27 +404,27 @@ ${DESCRIPTION}
 
 ### $(date +%Y-%m-%d\ %H:%M)
 
-Ticket created.
+Issue created.
 EOF
 ```
 
 **Return format**:
 ```
-✅ Ticket created: TICKET-001
+✅ Issue created: ISSUE-001
 
-File: .aiwg/tickets/TICKET-001.md
+File: .aiwg/issues/ISSUE-001.md
 
 Title: Implement user auth
 Status: open
 Priority: medium
 ```
 
-### Step 5: Return Ticket Reference
+### Step 5: Return Issue Reference
 
 **Output format** (consistent across providers):
 
 ```markdown
-✅ Ticket created: {ticket-id}
+✅ Issue created: {ticket-id}
 
 {view-url-or-file-path}
 
@@ -437,9 +437,9 @@ Priority: medium
 ## Next Steps
 
 - View ticket: {url-or-command}
-- Update status: `/ticket-update {ticket-id} --status in_progress`
-- Add comment: `/ticket-update {ticket-id} --comment "Working on implementation"`
-- List tickets: `/ticket-list`
+- Update status: `/issue-update {ticket-id} --status in_progress`
+- Add comment: `/issue-update {ticket-id} --comment "Working on implementation"`
+- List tickets: `/issue-list`
 ```
 
 ## Examples
@@ -448,7 +448,7 @@ Priority: medium
 
 **Command**:
 ```bash
-/ticket-create "Add dark mode" "Implement theme toggle for light/dark mode preferences" --labels "feature,ui" --priority high
+/issue-create "Add dark mode" "Implement theme toggle for light/dark mode preferences" --labels "feature,ui" --priority high
 ```
 
 **Config** (`.aiwg/config.yaml`):
@@ -462,7 +462,7 @@ ticketing:
 
 **Output**:
 ```
-✅ Ticket created: TICKET-42
+✅ Issue created: ISSUE-42
 
 View at: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
 
@@ -475,23 +475,23 @@ View at: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
 ## Next Steps
 
 - View ticket: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
-- Update status: `/ticket-update TICKET-42 --status in_progress`
-- Add comment: `/ticket-update TICKET-42 --comment "Started implementation"`
-- List tickets: `/ticket-list --label feature`
+- Update status: `/issue-update ISSUE-42 --status in_progress`
+- Add comment: `/issue-update ISSUE-42 --comment "Started implementation"`
+- List tickets: `/issue-list --label feature`
 ```
 
 ### Example 2: Create Bug Report (Local)
 
 **Command**:
 ```bash
-/ticket-create "Fix navigation bug" "Nav menu not showing on mobile devices (iOS Safari)" --priority critical --provider local
+/issue-create "Fix navigation bug" "Nav menu not showing on mobile devices (iOS Safari)" --priority critical --provider local
 ```
 
 **Output**:
 ```
-✅ Ticket created: TICKET-003
+✅ Issue created: ISSUE-003
 
-File: .aiwg/tickets/TICKET-003.md
+File: .aiwg/issues/ISSUE-003.md
 
 **Title**: Fix navigation bug
 **Status**: open
@@ -501,22 +501,22 @@ File: .aiwg/tickets/TICKET-003.md
 
 ## Next Steps
 
-- View ticket: cat .aiwg/tickets/TICKET-003.md
-- Update status: `/ticket-update TICKET-003 --status in_progress`
-- Add comment: `/ticket-update TICKET-003 --comment "Reproduced on iOS 17"`
-- List tickets: `/ticket-list`
+- View ticket: cat .aiwg/issues/ISSUE-003.md
+- Update status: `/issue-update ISSUE-003 --status in_progress`
+- Add comment: `/issue-update ISSUE-003 --comment "Reproduced on iOS 17"`
+- List tickets: `/issue-list`
 ```
 
 ### Example 3: Create Task with Assignee (GitHub)
 
 **Command**:
 ```bash
-/ticket-create "Security audit" "Run penetration test on authentication endpoints" --assignee security-team --labels "security,high-priority" --milestone "Q1-2026"
+/issue-create "Security audit" "Run penetration test on authentication endpoints" --assignee security-team --labels "security,high-priority" --milestone "Q1-2026"
 ```
 
 **Config** (`CLAUDE.md`):
 ```markdown
-## Ticketing Configuration
+## Issueing Configuration
 
 - **Provider**: github
 - **Owner**: jmagly
@@ -525,7 +525,7 @@ File: .aiwg/tickets/TICKET-003.md
 
 **Output**:
 ```
-✅ Ticket created: #128
+✅ Issue created: #128
 
 View at: https://github.com/jmagly/ai-writing-guide/issues/128
 
@@ -539,9 +539,9 @@ View at: https://github.com/jmagly/ai-writing-guide/issues/128
 ## Next Steps
 
 - View ticket: gh issue view 128
-- Update status: `/ticket-update 128 --status in_progress`
-- Add comment: `/ticket-update 128 --comment "Starting audit tomorrow"`
-- List tickets: `/ticket-list --label security`
+- Update status: `/issue-update 128 --status in_progress`
+- Add comment: `/issue-update 128 --comment "Starting audit tomorrow"`
+- List tickets: `/issue-list --label security`
 ```
 
 ## Error Handling
@@ -551,7 +551,7 @@ View at: https://github.com/jmagly/ai-writing-guide/issues/128
 ```
 ⚠️ No ticketing configuration found.
 
-Using default: local file-based tracking (.aiwg/tickets/)
+Using default: local file-based tracking (.aiwg/issues/)
 
 To configure a provider, create .aiwg/config.yaml:
 
@@ -563,7 +563,7 @@ ticketing:
 
 Or add to CLAUDE.md:
 
-## Ticketing Configuration
+## Issueing Configuration
 
 - **Provider**: gitea
 - **URL**: https://git.integrolabs.net
@@ -611,14 +611,14 @@ Proceeding with local provider...
 ### Missing Title
 
 ```
-❌ Ticket title is required.
+❌ Issue title is required.
 
-Usage: /ticket-create <title> [description] [options]
+Usage: /issue-create <title> [description] [options]
 
 Examples:
-- /ticket-create "Implement user auth"
-- /ticket-create "Fix bug" "Nav menu broken on mobile"
-- /ticket-create "Add feature" "Dark mode toggle" --labels "feature,ui"
+- /issue-create "Implement user auth"
+- /issue-create "Fix bug" "Nav menu broken on mobile"
+- /issue-create "Add feature" "Dark mode toggle" --labels "feature,ui"
 ```
 
 ### Provider-Specific Errors
@@ -643,7 +643,7 @@ Error: gh: command not found
 - Install GitHub CLI: brew install gh (or platform equivalent)
 - Authenticate: gh auth login
 
-Or use local provider: /ticket-create "title" --provider local
+Or use local provider: /issue-create "title" --provider local
 ```
 
 **Jira API Error**:
@@ -662,9 +662,9 @@ Falling back to local provider...
 ```
 ❌ Failed to create local ticket file:
 
-Error: Permission denied - .aiwg/tickets/
+Error: Permission denied - .aiwg/issues/
 - Check directory permissions: ls -la .aiwg/
-- Ensure writable: chmod 755 .aiwg/tickets/
+- Ensure writable: chmod 755 .aiwg/issues/
 
 Cannot create ticket.
 ```
@@ -685,37 +685,37 @@ Cannot create ticket.
 **Requirements Phase**:
 ```bash
 # Create tickets from use cases
-/ticket-create "Implement UC-001: User Login" "See @.aiwg/requirements/use-cases/UC-001-login.md" --labels "requirement,feature"
+/issue-create "Implement UC-001: User Login" "See @.aiwg/requirements/use-cases/UC-001-login.md" --labels "requirement,feature"
 ```
 
 **Architecture Phase**:
 ```bash
 # Create tickets from ADR decisions
-/ticket-create "Implement ADR-003: Use PostgreSQL" "Migrate from SQLite to PostgreSQL per @.aiwg/architecture/adrs/003-use-postgresql.md" --labels "architecture,database"
+/issue-create "Implement ADR-003: Use PostgreSQL" "Migrate from SQLite to PostgreSQL per @.aiwg/architecture/adrs/003-use-postgresql.md" --labels "architecture,database"
 ```
 
 **Testing Phase**:
 ```bash
 # Create tickets from test failures
-/ticket-create "Fix failing test: auth.test.ts" "Test failure in authentication module" --priority high --labels "bug,testing"
+/issue-create "Fix failing test: auth.test.ts" "Test failure in authentication module" --priority high --labels "bug,testing"
 ```
 
 **Security Review**:
 ```bash
 # Create tickets from security audit findings
-/ticket-create "Fix SQL injection vulnerability" "Parameterize queries in auth module" --priority critical --labels "security,vulnerability"
+/issue-create "Fix SQL injection vulnerability" "Parameterize queries in auth module" --priority critical --labels "security,vulnerability"
 ```
 
 **Retrospectives**:
 ```bash
 # Create tickets from retro action items
-/ticket-create "Improve CI/CD pipeline" "Reduce build time from 10min to 5min" --labels "process-improvement,devops"
+/issue-create "Improve CI/CD pipeline" "Reduce build time from 10min to 5min" --labels "process-improvement,devops"
 ```
 
 ## References
 
-- @agentic/code/frameworks/sdlc-complete/config/ticketing-config.md - Configuration schema
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-update.md - Update ticket command
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-list.md - List tickets command
+- @agentic/code/frameworks/sdlc-complete/config/issueing-config.md - Configuration schema
+- @agentic/code/frameworks/sdlc-complete/commands/issue-update.md - Update ticket command
+- @agentic/code/frameworks/sdlc-complete/commands/issue-list.md - List tickets command
 - @.aiwg/config.yaml - Project ticketing configuration
 - @CLAUDE.md - User ticketing configuration

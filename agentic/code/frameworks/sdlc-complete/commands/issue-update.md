@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Glob, Bash, mcp__gitea__edit_issue, mcp__gitea__crea
 model: sonnet
 ---
 
-# Ticket Update
+# Issue Update
 
 ## Purpose
 
@@ -23,7 +23,7 @@ Given a ticket ID and update parameters:
 
 ## Parameters
 
-- **`<ticket-id>`** (required): Ticket identifier (e.g., `TICKET-001`, `#42`, `PROJECT-123`, `ENG-456`)
+- **`<ticket-id>`** (required): Issue identifier (e.g., `ISSUE-001`, `#42`, `PROJECT-123`, `ENG-456`)
 - **`--status STATE`** (optional): Update ticket status
   - Valid states: `open`, `in_progress`, `closed`, `blocked`, `review`
   - Provider-specific mappings applied automatically
@@ -38,7 +38,7 @@ Given a ticket ID and update parameters:
 
 ## Inputs
 
-**Configuration sources** (same as `/ticket-create`):
+**Configuration sources** (same as `/issue-create`):
 1. `.aiwg/config.yaml` - Project-level configuration
 2. `CLAUDE.md` - User-level configuration
 3. Default: `local` provider
@@ -58,38 +58,38 @@ Extract from command invocation:
 
 ```bash
 # Update status
-/ticket-update TICKET-001 --status in_progress
+/issue-update ISSUE-001 --status in_progress
 
 # Add comment
-/ticket-update TICKET-001 --comment "Completed authentication module, working on authorization next"
+/issue-update ISSUE-001 --comment "Completed authentication module, working on authorization next"
 
 # Update status with comment
-/ticket-update TICKET-001 --status closed --comment "Fixed in commit abc123"
+/issue-update ISSUE-001 --status closed --comment "Fixed in commit abc123"
 
 # Assign ticket
-/ticket-update TICKET-001 --assignee johndoe
+/issue-update ISSUE-001 --assignee johndoe
 
 # Update multiple fields
-/ticket-update TICKET-001 --status in_progress --assignee johndoe --priority high --comment "Started implementation"
+/issue-update ISSUE-001 --status in_progress --assignee johndoe --priority high --comment "Started implementation"
 
 # Add labels without replacing
-/ticket-update TICKET-001 --add-labels "urgent,needs-review"
+/issue-update ISSUE-001 --add-labels "urgent,needs-review"
 
 # Remove labels
-/ticket-update TICKET-001 --remove-labels "wip,blocked"
+/issue-update ISSUE-001 --remove-labels "wip,blocked"
 
 # Replace all labels
-/ticket-update TICKET-001 --labels "completed,tested"
+/issue-update ISSUE-001 --labels "completed,tested"
 ```
 
 **Parameter extraction**:
-- Ticket ID: First argument (required)
+- Issue ID: First argument (required)
 - Flags: Parse `--flag value` pairs
 - At least one update flag required (status, comment, assignee, labels, priority)
 
 ### Step 2: Load Configuration
 
-Same as `/ticket-create` command:
+Same as `/issue-create` command:
 
 1. Check `.aiwg/config.yaml`
 2. Fallback to `CLAUDE.md`
@@ -97,7 +97,7 @@ Same as `/ticket-create` command:
 
 Override with `--provider` if specified.
 
-### Step 3: Validate Ticket Exists
+### Step 3: Validate Issue Exists
 
 **Gitea**:
 ```bash
@@ -138,22 +138,22 @@ curl -s -X POST https://api.linear.app/graphql \
 **Local**:
 ```bash
 # Check if file exists
-if [ -f ".aiwg/tickets/${TICKET_ID}.md" ]; then
-  echo "Ticket exists"
+if [ -f ".aiwg/issues/${TICKET_ID}.md" ]; then
+  echo "Issue exists"
 else
-  echo "Ticket not found"
+  echo "Issue not found"
 fi
 ```
 
 **Error if not found**:
 ```
-❌ Ticket not found: TICKET-001
+❌ Issue not found: ISSUE-001
 
 Available tickets:
-- TICKET-002: Add dark mode
-- TICKET-003: Fix navigation bug
+- ISSUE-002: Add dark mode
+- ISSUE-003: Fix navigation bug
 
-List all tickets: /ticket-list
+List all tickets: /issue-list
 ```
 
 ### Step 4: Map Status to Provider-Specific Values
@@ -203,7 +203,7 @@ esac
 
 **Note**: Gitea and GitHub don't have separate "in_progress" state - use labels instead (e.g., add "in-progress" label when status changes to `in_progress`)
 
-### Step 5: Update Ticket (Provider-Specific)
+### Step 5: Update Issue (Provider-Specific)
 
 #### Gitea
 
@@ -384,11 +384,11 @@ curl -X POST https://api.linear.app/graphql \
 
 #### Local
 
-Update markdown file in `.aiwg/tickets/`:
+Update markdown file in `.aiwg/issues/`:
 
 **Read existing ticket**:
 ```bash
-TICKET_FILE=".aiwg/tickets/${TICKET_ID}.md"
+TICKET_FILE=".aiwg/issues/${TICKET_ID}.md"
 
 # Extract current metadata from frontmatter
 CURRENT_STATUS=$(grep "^status:" "${TICKET_FILE}" | awk '{print $2}')
@@ -442,7 +442,7 @@ EOF
 **Output format** (consistent across providers):
 
 ```markdown
-✅ Ticket updated: {ticket-id}
+✅ Issue updated: {ticket-id}
 
 {view-url-or-file-path}
 
@@ -456,9 +456,9 @@ EOF
 ## Next Steps
 
 - View ticket: {url-or-command}
-- Add another comment: `/ticket-update {ticket-id} --comment "text"`
-- Close ticket: `/ticket-update {ticket-id} --status closed`
-- List tickets: `/ticket-list`
+- Add another comment: `/issue-update {ticket-id} --comment "text"`
+- Close ticket: `/issue-update {ticket-id} --status closed`
+- List tickets: `/issue-list`
 ```
 
 ## Examples
@@ -467,7 +467,7 @@ EOF
 
 **Command**:
 ```bash
-/ticket-update TICKET-042 --status in_progress --comment "Started implementation, created auth module"
+/issue-update ISSUE-042 --status in_progress --comment "Started implementation, created auth module"
 ```
 
 **Config** (`.aiwg/config.yaml`):
@@ -481,7 +481,7 @@ ticketing:
 
 **Output**:
 ```
-✅ Ticket updated: TICKET-042
+✅ Issue updated: ISSUE-042
 
 View at: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
 
@@ -492,22 +492,22 @@ View at: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
 ## Next Steps
 
 - View ticket: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
-- Update status: `/ticket-update TICKET-042 --status closed`
-- Add comment: `/ticket-update TICKET-042 --comment "Progress update"`
+- Update status: `/issue-update ISSUE-042 --status closed`
+- Add comment: `/issue-update ISSUE-042 --comment "Progress update"`
 ```
 
-### Example 2: Close Ticket with Comment (Local)
+### Example 2: Close Issue with Comment (Local)
 
 **Command**:
 ```bash
-/ticket-update TICKET-003 --status closed --comment "Fixed in commit abc123. Tested on iOS Safari 17."
+/issue-update ISSUE-003 --status closed --comment "Fixed in commit abc123. Tested on iOS Safari 17."
 ```
 
 **Output**:
 ```
-✅ Ticket updated: TICKET-003
+✅ Issue updated: ISSUE-003
 
-File: .aiwg/tickets/TICKET-003.md
+File: .aiwg/issues/ISSUE-003.md
 
 **Updates**:
 - Status: in_progress → closed
@@ -515,21 +515,21 @@ File: .aiwg/tickets/TICKET-003.md
 
 ## Next Steps
 
-- View ticket: cat .aiwg/tickets/TICKET-003.md
-- Reopen if needed: `/ticket-update TICKET-003 --status open`
-- List closed tickets: `/ticket-list --status closed`
+- View ticket: cat .aiwg/issues/ISSUE-003.md
+- Reopen if needed: `/issue-update ISSUE-003 --status open`
+- List closed tickets: `/issue-list --status closed`
 ```
 
-### Example 3: Reassign Ticket (GitHub)
+### Example 3: Reassign Issue (GitHub)
 
 **Command**:
 ```bash
-/ticket-update #128 --assignee security-team --priority critical --comment "Escalating to security team due to severity"
+/issue-update #128 --assignee security-team --priority critical --comment "Escalating to security team due to severity"
 ```
 
 **Config** (`CLAUDE.md`):
 ```markdown
-## Ticketing Configuration
+## Issueing Configuration
 
 - **Provider**: github
 - **Owner**: jmagly
@@ -538,7 +538,7 @@ File: .aiwg/tickets/TICKET-003.md
 
 **Output**:
 ```
-✅ Ticket updated: #128
+✅ Issue updated: #128
 
 View at: https://github.com/jmagly/ai-writing-guide/issues/128
 
@@ -550,20 +550,20 @@ View at: https://github.com/jmagly/ai-writing-guide/issues/128
 ## Next Steps
 
 - View ticket: gh issue view 128
-- Track progress: `/ticket-update 128 --comment "Status update"`
-- Close when resolved: `/ticket-update 128 --status closed`
+- Track progress: `/issue-update 128 --comment "Status update"`
+- Close when resolved: `/issue-update 128 --status closed`
 ```
 
 ### Example 4: Add Labels Without Replacing (Gitea)
 
 **Command**:
 ```bash
-/ticket-update TICKET-042 --add-labels "urgent,needs-review" --comment "Ready for code review"
+/issue-update ISSUE-042 --add-labels "urgent,needs-review" --comment "Ready for code review"
 ```
 
 **Output**:
 ```
-✅ Ticket updated: TICKET-042
+✅ Issue updated: ISSUE-042
 
 View at: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
 
@@ -574,21 +574,21 @@ View at: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
 ## Next Steps
 
 - View ticket: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
-- Remove label after review: `/ticket-update TICKET-042 --remove-labels "needs-review"`
+- Remove label after review: `/issue-update ISSUE-042 --remove-labels "needs-review"`
 ```
 
 ### Example 5: Multiple Field Updates (Local)
 
 **Command**:
 ```bash
-/ticket-update TICKET-005 --status blocked --assignee unassigned --priority high --labels "blocked,needs-discussion" --comment "Blocked on architecture decision ADR-003. Need team discussion."
+/issue-update ISSUE-005 --status blocked --assignee unassigned --priority high --labels "blocked,needs-discussion" --comment "Blocked on architecture decision ADR-003. Need team discussion."
 ```
 
 **Output**:
 ```
-✅ Ticket updated: TICKET-005
+✅ Issue updated: ISSUE-005
 
-File: .aiwg/tickets/TICKET-005.md
+File: .aiwg/issues/ISSUE-005.md
 
 **Updates**:
 - Status: in_progress → blocked
@@ -599,29 +599,29 @@ File: .aiwg/tickets/TICKET-005.md
 
 ## Next Steps
 
-- View ticket: cat .aiwg/tickets/TICKET-005.md
-- Unblock: `/ticket-update TICKET-005 --status in_progress --comment "Decision made, resuming work"`
-- List blocked tickets: `/ticket-list --status blocked`
+- View ticket: cat .aiwg/issues/ISSUE-005.md
+- Unblock: `/issue-update ISSUE-005 --status in_progress --comment "Decision made, resuming work"`
+- List blocked tickets: `/issue-list --status blocked`
 ```
 
 ## Error Handling
 
-### Ticket Not Found
+### Issue Not Found
 
 ```
-❌ Ticket not found: TICKET-999
+❌ Issue not found: ISSUE-999
 
 Searched in:
 - Provider: gitea
 - Repository: roctinam/ai-writing-guide
 
 Available tickets:
-- TICKET-001: Implement user auth (open)
-- TICKET-002: Add dark mode (in_progress)
-- TICKET-003: Fix navigation bug (closed)
+- ISSUE-001: Implement user auth (open)
+- ISSUE-002: Add dark mode (in_progress)
+- ISSUE-003: Fix navigation bug (closed)
 
-List all tickets: /ticket-list
-Create new ticket: /ticket-create "title"
+List all tickets: /issue-list
+Create new ticket: /issue-create "title"
 ```
 
 ### Invalid Status
@@ -636,7 +636,7 @@ Valid statuses:
 - blocked
 - review
 
-Example: /ticket-update TICKET-001 --status in_progress
+Example: /issue-update ISSUE-001 --status in_progress
 ```
 
 ### No Updates Specified
@@ -653,7 +653,7 @@ At least one update parameter required:
 - --remove-labels "label1,label2"
 - --priority LEVEL
 
-Example: /ticket-update TICKET-001 --status in_progress --comment "Started work"
+Example: /issue-update ISSUE-001 --status in_progress --comment "Started work"
 ```
 
 ### Provider-Specific Errors
@@ -685,9 +685,9 @@ Cannot update ticket.
 ```
 ❌ Failed to update local ticket file:
 
-Error: Permission denied - .aiwg/tickets/TICKET-001.md
-- Check file permissions: ls -la .aiwg/tickets/TICKET-001.md
-- Ensure writable: chmod 644 .aiwg/tickets/TICKET-001.md
+Error: Permission denied - .aiwg/issues/ISSUE-001.md
+- Check file permissions: ls -la .aiwg/issues/ISSUE-001.md
+- Ensure writable: chmod 644 .aiwg/issues/ISSUE-001.md
 
 Cannot update ticket.
 ```
@@ -708,52 +708,52 @@ Cannot update ticket.
 **Construction Phase (Development)**:
 ```bash
 # Start work
-/ticket-update TICKET-001 --status in_progress --comment "Started implementation"
+/issue-update ISSUE-001 --status in_progress --comment "Started implementation"
 
 # Progress update
-/ticket-update TICKET-001 --comment "Completed authentication module, 3 tests passing"
+/issue-update ISSUE-001 --comment "Completed authentication module, 3 tests passing"
 
 # Ready for review
-/ticket-update TICKET-001 --add-labels "needs-review" --comment "Ready for code review, see PR #45"
+/issue-update ISSUE-001 --add-labels "needs-review" --comment "Ready for code review, see PR #45"
 
 # Close after merge
-/ticket-update TICKET-001 --status closed --comment "Merged in PR #45, deployed to staging"
+/issue-update ISSUE-001 --status closed --comment "Merged in PR #45, deployed to staging"
 ```
 
 **Testing Phase**:
 ```bash
 # Found bug during testing
-/ticket-update TICKET-001 --status blocked --assignee qa-team --comment "Failed QA: auth broken on Safari"
+/issue-update ISSUE-001 --status blocked --assignee qa-team --comment "Failed QA: auth broken on Safari"
 
 # Bug fixed
-/ticket-update TICKET-001 --status in_progress --assignee dev-team --comment "Fix deployed, ready for retest"
+/issue-update ISSUE-001 --status in_progress --assignee dev-team --comment "Fix deployed, ready for retest"
 
 # Passed testing
-/ticket-update TICKET-001 --status closed --comment "Passed QA, deployed to production"
+/issue-update ISSUE-001 --status closed --comment "Passed QA, deployed to production"
 ```
 
 **Security Review**:
 ```bash
 # Start security review
-/ticket-update TICKET-001 --status review --assignee security-team --add-labels "security-review"
+/issue-update ISSUE-001 --status review --assignee security-team --add-labels "security-review"
 
 # Findings identified
-/ticket-update TICKET-001 --status blocked --comment "Security review found SQL injection risk, see TICKET-042"
+/issue-update ISSUE-001 --status blocked --comment "Security review found SQL injection risk, see ISSUE-042"
 
 # Resolved
-/ticket-update TICKET-001 --status closed --remove-labels "security-review" --comment "Security issues resolved, review passed"
+/issue-update ISSUE-001 --status closed --remove-labels "security-review" --comment "Security issues resolved, review passed"
 ```
 
 **Retrospectives**:
 ```bash
 # Action item from retro
-/ticket-update TICKET-001 --add-labels "process-improvement" --comment "Retro action: Add automated tests for this pattern"
+/issue-update ISSUE-001 --add-labels "process-improvement" --comment "Retro action: Add automated tests for this pattern"
 ```
 
 ## References
 
-- @agentic/code/frameworks/sdlc-complete/config/ticketing-config.md - Configuration schema
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-create.md - Create ticket command
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-list.md - List tickets command
+- @agentic/code/frameworks/sdlc-complete/config/issueing-config.md - Configuration schema
+- @agentic/code/frameworks/sdlc-complete/commands/issue-create.md - Create ticket command
+- @agentic/code/frameworks/sdlc-complete/commands/issue-list.md - List tickets command
 - @.aiwg/config.yaml - Project ticketing configuration
 - @CLAUDE.md - User ticketing configuration

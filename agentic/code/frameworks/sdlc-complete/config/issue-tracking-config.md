@@ -1,8 +1,8 @@
-# Ticketing Configuration
+# Issue Tracking Configuration
 
 ## Purpose
 
-Defines the backend provider for ticket/issue management across SDLC workflows. This allows teams to integrate with their preferred issue tracking system (Gitea, GitHub, Jira, Linear) or use local file-based tracking.
+Defines the backend provider for issue management across SDLC workflows. This allows teams to integrate with their preferred issue tracking system (Gitea, GitHub, Jira, Linear) or use local file-based tracking.
 
 ## Configuration Schema
 
@@ -16,7 +16,7 @@ Configuration can be defined in two places (checked in order):
 ### Schema (YAML)
 
 ```yaml
-ticketing:
+issue_tracking:
   # Provider: gitea | github | jira | linear | local
   provider: gitea
 
@@ -44,7 +44,7 @@ ticketing:
 If using `CLAUDE.md` instead of `.aiwg/config.yaml`, add this section:
 
 ```markdown
-## Ticketing Configuration
+## Issue Tracking Configuration
 
 - **Provider**: gitea
 - **URL**: https://git.integrolabs.net
@@ -58,7 +58,7 @@ If using `CLAUDE.md` instead of `.aiwg/config.yaml`, add this section:
 ### Gitea
 
 ```yaml
-ticketing:
+issue_tracking:
   provider: gitea
   url: https://git.integrolabs.net
   owner: roctinam
@@ -68,8 +68,8 @@ ticketing:
 ```
 
 **MCP Tools Used**:
-- `mcp__gitea__create_issue` - Create new ticket
-- `mcp__gitea__edit_issue` - Update ticket status/fields
+- `mcp__gitea__create_issue` - Create new issue
+- `mcp__gitea__edit_issue` - Update issue status/fields
 - `mcp__gitea__create_issue_comment` - Add comments
 
 **Token Setup**:
@@ -80,7 +80,7 @@ ticketing:
 ### GitHub
 
 ```yaml
-ticketing:
+issue_tracking:
   provider: github
   owner: jmagly
   repo: ai-writing-guide
@@ -89,8 +89,8 @@ ticketing:
 ```
 
 **CLI Tools Used**:
-- `gh issue create` - Create new ticket
-- `gh issue edit` - Update ticket status/fields
+- `gh issue create` - Create new issue
+- `gh issue edit` - Update issue status/fields
 - `gh issue comment` - Add comments
 
 **Authentication**:
@@ -101,7 +101,7 @@ ticketing:
 ### Jira
 
 ```yaml
-ticketing:
+issue_tracking:
   provider: jira
   url: https://yourcompany.atlassian.net
   owner: PROJECT_KEY  # Jira project key
@@ -122,7 +122,7 @@ ticketing:
 ### Linear
 
 ```yaml
-ticketing:
+issue_tracking:
   provider: linear
   url: https://api.linear.app
   owner: TEAM_ID  # Linear team identifier
@@ -143,18 +143,18 @@ ticketing:
 ### Local (File-Based)
 
 ```yaml
-ticketing:
+issue_tracking:
   provider: local
   # No URL/owner/repo needed
 ```
 
-**Storage Location**: `.aiwg/tickets/`
+**Storage Location**: `.aiwg/issues/`
 
-**File Format**: `TICKET-{num}.md`
+**File Format**: `ISSUE-{num}.md`
 
 ```markdown
 ---
-id: TICKET-001
+id: ISSUE-001
 title: Implement user authentication
 status: open
 created: 2026-01-13
@@ -163,7 +163,7 @@ assignee: unassigned
 labels: feature, high-priority
 ---
 
-# TICKET-001: Implement user authentication
+# ISSUE-001: Implement user authentication
 
 **Status**: open
 **Created**: 2026-01-13
@@ -191,7 +191,7 @@ Started implementation. Created auth module.
 Completed registration endpoint. Working on login next.
 ```
 
-**Ticket Numbering**: Auto-incremented based on existing ticket count
+**Issue Numbering**: Auto-incremented based on existing issue count
 
 ## Configuration Precedence
 
@@ -207,7 +207,7 @@ Completed registration endpoint. Working on login next.
 Create `.aiwg/config.yaml`:
 
 ```yaml
-ticketing:
+issue_tracking:
   provider: gitea
   url: https://git.integrolabs.net
   owner: roctinam
@@ -219,13 +219,13 @@ ticketing:
 Commands will automatically use Gitea:
 
 ```bash
-/ticket-create "Implement user auth" "Need login/logout functionality"
+/issue-create "Implement user auth" "Need login/logout functionality"
 # → Creates issue on Gitea
 
-/ticket-list
+/issue-list
 # → Lists issues from Gitea
 
-/ticket-update TICKET-001 --status in_progress --comment "Started implementation"
+/issue-update ISSUE-001 --status in_progress --comment "Started implementation"
 # → Updates issue on Gitea
 ```
 
@@ -234,7 +234,7 @@ Commands will automatically use Gitea:
 Add to project `CLAUDE.md`:
 
 ```markdown
-## Ticketing Configuration
+## Issue Tracking Configuration
 
 - **Provider**: local
 ```
@@ -242,14 +242,14 @@ Add to project `CLAUDE.md`:
 Commands will use local files:
 
 ```bash
-/ticket-create "Fix navigation bug" "Nav menu not showing on mobile"
-# → Creates .aiwg/tickets/TICKET-001.md
+/issue-create "Fix navigation bug" "Nav menu not showing on mobile"
+# → Creates .aiwg/issues/ISSUE-001.md
 
-/ticket-list
-# → Lists files from .aiwg/tickets/
+/issue-list
+# → Lists files from .aiwg/issues/
 
-/ticket-update TICKET-001 --status closed --comment "Fixed in commit abc123"
-# → Updates .aiwg/tickets/TICKET-001.md
+/issue-update ISSUE-001 --status closed --comment "Fixed in commit abc123"
+# → Updates .aiwg/issues/ISSUE-001.md
 ```
 
 ### Multi-Repo Team Using GitHub (User Config)
@@ -257,7 +257,7 @@ Commands will use local files:
 Add to project `CLAUDE.md`:
 
 ```markdown
-## Ticketing Configuration
+## Issue Tracking Configuration
 
 - **Provider**: github
 - **Owner**: jmagly
@@ -267,13 +267,13 @@ Add to project `CLAUDE.md`:
 Commands will use GitHub:
 
 ```bash
-/ticket-create "Add dark mode" "Implement dark mode theme toggle"
+/issue-create "Add dark mode" "Implement dark mode theme toggle"
 # → Creates GitHub issue
 
-/ticket-list --label feature
+/issue-list --label feature
 # → Lists GitHub issues with 'feature' label
 
-/ticket-update 42 --status closed --comment "Merged in PR #43"
+/issue-update 42 --status closed --comment "Merged in PR #43"
 # → Closes GitHub issue #42
 ```
 
@@ -293,7 +293,7 @@ When loading configuration, validate:
    - `github`: `gh` CLI installed and authenticated
    - `jira`: Environment variable set
    - `linear`: Environment variable set
-   - `local`: `.aiwg/tickets/` directory writable
+   - `local`: `.aiwg/issues/` directory writable
 
 ## Error Handling
 
@@ -304,11 +304,11 @@ If no configuration found:
 ```
 ⚠️ No ticketing configuration found.
 
-Using default: local file-based tracking (.aiwg/tickets/)
+Using default: local file-based tracking (.aiwg/issues/)
 
 To configure a provider, create .aiwg/config.yaml or add to CLAUDE.md:
 
-ticketing:
+issue_tracking:
   provider: gitea
   url: https://git.integrolabs.net
   owner: roctinam
@@ -348,7 +348,7 @@ Falling back to local file-based tracking.
 # Export local tickets to Gitea
 aiwg ticket-migrate --from local --to gitea
 
-# Reads .aiwg/tickets/*.md
+# Reads .aiwg/issues/*.md
 # Creates issues on Gitea
 # Preserves ticket numbers as issue references
 ```
@@ -366,7 +366,7 @@ aiwg ticket-migrate --from github --to jira
 
 ## References
 
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-create.md - Create ticket command
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-update.md - Update ticket command
-- @agentic/code/frameworks/sdlc-complete/commands/ticket-list.md - List tickets command
+- @agentic/code/frameworks/sdlc-complete/commands/issue-create.md - Create ticket command
+- @agentic/code/frameworks/sdlc-complete/commands/issue-update.md - Update ticket command
+- @agentic/code/frameworks/sdlc-complete/commands/issue-list.md - List tickets command
 - @~/.config/gitea/token - Gitea authentication token (user-specific)
