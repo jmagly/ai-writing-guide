@@ -157,3 +157,40 @@ npm exec markdownlint-cli2 "**/*.md"
 
 <!-- TEAM DIRECTIVES: Add project-specific guidance below this line -->
 
+## Release Documentation Requirements
+
+**CRITICAL**: Every release MUST be documented in ALL of these locations:
+
+| Location | Purpose | Format |
+|----------|---------|--------|
+| `CHANGELOG.md` | Technical changelog | Keep a Changelog format with highlights table |
+| `docs/releases/vX.X.X-announcement.md` | Release announcement | Full feature documentation with examples |
+| `package.json` | Version bump | CalVer: `YYYY.MM.PATCH` |
+| GitHub Release | Public release notes | Condensed highlights + install instructions |
+| Gitea Release | Internal release notes | Same as GitHub |
+
+### Release Checklist
+
+Before pushing a version tag:
+
+1. **Update `package.json`** - Bump version following CalVer
+2. **Update `CHANGELOG.md`** - Add new version section with:
+   - Highlights table (What changed | Why you care)
+   - Detailed Added/Changed/Fixed sections
+   - Link to previous version
+3. **Create `docs/releases/vX.X.X-announcement.md`** - Full release document with:
+   - Feature highlights
+   - Code examples
+   - Migration notes (if applicable)
+   - Links to relevant documentation
+4. **Commit and tag** - `git tag -m "vX.X.X" vX.X.X`
+5. **Push to both remotes** - `git push origin main --tags && git push github main --tags`
+6. **Update GitHub Release** - Add proper release notes via `gh release edit`
+7. **Create Gitea Release** - Via MCP tool or web UI
+
+### Version Format
+
+- **CalVer**: `YYYY.MM.PATCH` (e.g., `2026.01.3`)
+- PATCH resets each month
+- Tag format: `vYYYY.MM.PATCH` (e.g., `v2026.01.3`)
+
