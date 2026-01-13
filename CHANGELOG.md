@@ -5,6 +5,104 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.01.1] - 2026-01-13 – "Issue Management & Security" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| Unified issue management | Create, update, list, sync issues across Gitea/GitHub/Jira/Linear or local files |
+| Issue auto-sync | Commits with "Fixes #X" automatically update and close issues |
+| Token security patterns | Secure token loading via env vars and files, never direct access |
+| Vendor-specific regenerate | 30-40% smaller context files, only loads relevant platform commands |
+| Star prompt addon | Tasteful repo starring prompt after intake/regenerate commands |
+
+### Added
+
+**Issue Management System** (Issues #16, #17):
+
+- **`/issue-create`** - Create issues with multi-provider support:
+  - Gitea (MCP tools), GitHub (gh CLI), Jira (REST API), Linear (GraphQL)
+  - Local fallback to `.aiwg/issues/` when no provider configured
+  - Config via `.aiwg/config.yaml` or CLAUDE.md
+- **`/issue-update`** - Update issue status, assignee, labels, add comments
+- **`/issue-list`** - List and filter issues by status, label, assignee
+- **`/issue-sync`** - Detect issue refs in commits ("Fixes #X", "Closes #X")
+- **`/issue-close`** - Close issues with completion summary
+- **`/issue-comment`** - Add structured comments using templates
+- **Issue comment templates**:
+  - `task-completed.md` - Completion summary with deliverables
+  - `feedback-needed.md` - Request review with specific questions
+  - `blocker-found.md` - Blocker notification with impact assessment
+  - `progress-update.md` - Status update with metrics
+- **`issue-auto-sync` skill** - Post-commit automation for issue updates
+
+**Token Security** (Issue #18):
+
+- **Security addon** (`agentic/code/addons/security/`):
+  - `secure-token-load.md` - Patterns for secure token loading
+  - Single-line, heredoc, and environment variable patterns
+- **Token loading priority**: Environment variables → Secure files → Vault
+- **Token security rules** (`.claude/rules/token-security.md`):
+  - Never hard-code tokens
+  - Never pass tokens as command arguments
+  - Use heredoc for multi-line operations
+  - Enforce file permissions (mode 600)
+- Updated DevOps Engineer and Security Auditor agents with security guidance
+- Comprehensive documentation at `docs/token-security.md`
+
+**Vendor-Specific Regenerate** (Issue #19):
+
+- **Vendor detection** (`docs/vendor-detection.md`):
+  - Claude Code: CLAUDE.md, .claude/ directory
+  - GitHub Copilot: copilot-instructions.md, .github/agents/
+  - Cursor: .cursor/ directory
+  - Windsurf: WARP.md
+- **Regenerate base template** (`templates/regenerate-base.md`):
+  - Common structure for all regenerate commands
+  - Vendor-specific section placeholders
+- **Context reduction**: 30-40% smaller files by platform filtering
+- Only inline ~15-20 most-used commands/agents per vendor
+- Full catalogs linked instead of inlined
+
+**Star Prompt Addon** (Issue #14):
+
+- **`star-prompt` addon** (`agentic/code/addons/star-prompt/`):
+  - Tasteful "Yes, star the repo" / "No thanks" prompt
+  - Auto-star via `gh api -X PUT /user/starred/jmagly/ai-writing-guide`
+  - Fallback to manual link if gh CLI unavailable
+- Integrated into all intake and regenerate commands
+- Non-intrusive, shown only once per command
+
+### Changed
+
+- Consolidated `/ticket-*` commands to `/issue-*` for git ecosystem consistency
+- Renamed `ticketing-config.md` to `issue-tracking-config.md`
+- Changed `.aiwg/tickets/` to `.aiwg/issues/` for local tracking
+- Updated command manifests with new issue commands
+
+### Fixed
+
+- Standardized terminology across SDLC framework (issue vs ticket)
+
+---
+
+## [2026.01.0] - 2026-01-07 – "CalVer Migration" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| CalVer versioning | Version now reflects release date (YYYY.MM.PATCH) |
+| Addon directory fix | Claude provider correctly handles addon-style directories |
+
+### Changed
+
+- **CalVer versioning**: Migrated from SemVer (0.x.x, 2024.12.x) to pure CalVer (2026.01.x)
+- Version format: `YYYY.MM.PATCH` where PATCH resets each month
+
+### Fixed
+
+- **Addon directory deployment**: Claude provider now supports addon-style directory structures during deployment
+
+---
+
 ## [2024.12.5] - 2025-12-13 – "Flexible Models & Terminal Docs" Release
 
 | What changed | Why you care |
@@ -874,4 +972,4 @@ For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
 ---
 
 **Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2025-12-13 (v2024.12.5)
+**Last Updated**: 2026-01-13 (v2026.01.1)
