@@ -297,6 +297,19 @@ async function handleUse(args) {
       '--deploy-skills',
     ]);
   }
+
+  // Deploy ralph addon (iterative execution loops)
+  if (!skipUtils) {
+    console.log('');
+    console.log('Deploying ralph addon...');
+    const frameworkRoot = await getFrameworkRoot();
+    const ralphSource = path.join(frameworkRoot, 'agentic/code/addons/ralph');
+    await runScript('tools/agents/deploy-agents.mjs', [
+      '--source', ralphSource,
+      '--deploy-commands',
+      '--deploy-skills',
+    ]);
+  }
 }
 
 /**
