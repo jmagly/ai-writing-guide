@@ -253,6 +253,34 @@ export async function deploy(opts) {
   const commandFiles = [];
   const skillDirs = [];
 
+  // Check for addon-style directory structure (direct agents/, commands/, skills/ subdirs)
+  // This handles deployment when --source points to an addon directory
+  const isAddonSource = fs.existsSync(path.join(srcRoot, 'agents')) ||
+                        fs.existsSync(path.join(srcRoot, 'commands')) ||
+                        fs.existsSync(path.join(srcRoot, 'skills'));
+
+  if (isAddonSource) {
+    // Deploy from addon-style directory structure
+    const addonAgentsDir = path.join(srcRoot, 'agents');
+    if (fs.existsSync(addonAgentsDir)) {
+      agentFiles.push(...listMdFiles(addonAgentsDir));
+    }
+
+    if (shouldDeployCommands || commandsOnly) {
+      const addonCommandsDir = path.join(srcRoot, 'commands');
+      if (fs.existsSync(addonCommandsDir)) {
+        commandFiles.push(...listMdFiles(addonCommandsDir));
+      }
+    }
+
+    if (shouldDeploySkills || skillsOnly) {
+      const addonSkillsDir = path.join(srcRoot, 'skills');
+      if (fs.existsSync(addonSkillsDir)) {
+        skillDirs.push(...listSkillDirs(addonSkillsDir));
+      }
+    }
+  }
+
   // Writing/general agents
   if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
     const writingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'agents');
