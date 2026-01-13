@@ -5,17 +5,62 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2026.01.2] - 2026-01-13 – "Issue Management & Security" Release
+## [2026.01.3] - 2026-01-13 – "Ralph Loop & Issue Management" Release
 
 | What changed | Why you care |
 |--------------|--------------|
+| **Ralph Loop** | Iterative AI task execution - "iteration beats perfection" methodology |
+| **--interactive & --guidance** | All commands now support interactive mode and custom guidance |
 | Unified issue management | Create, update, list, sync issues across Gitea/GitHub/Jira/Linear or local files |
 | Issue auto-sync | Commits with "Fixes #X" automatically update and close issues |
 | Token security patterns | Secure token loading via env vars and files, never direct access |
 | Vendor-specific regenerate | 30-40% smaller context files, only loads relevant platform commands |
-| Star prompt addon | Tasteful repo starring prompt after intake/regenerate commands |
+| Man page support | `man aiwg` works after npm global install |
 
 ### Added
+
+**Ralph Loop - Iterative AI Task Execution**:
+
+- **`/ralph` command** - Execute tasks iteratively until completion criteria met
+  - Parse task definition and verification criteria
+  - Execute → Verify → Learn → Iterate cycle
+  - Errors become learning data, not session-ending failures
+  - Configurable max iterations and timeout
+- **`/ralph-status`** - Check status of current or previous Ralph loop
+- **`/ralph-resume`** - Resume interrupted loop from last checkpoint
+- **`/ralph-abort`** - Abort running loop and optionally revert changes
+- **Ralph addon** (`agentic/code/addons/ralph/`):
+  - Complete methodology documentation
+  - Loop state persistence in `.aiwg/ralph/`
+  - Completion reports with iteration history
+- **Natural language triggers**: "ralph this", "loop until", "keep trying until"
+- Philosophy: "Iteration beats perfection" - inspired by Ralph Wiggum methodology
+
+**Command Enhancements**:
+
+- **`--interactive` flag** - All commands now support interactive mode
+  - Asks clarifying questions before execution
+  - Validates assumptions with user
+  - Gathers preferences for ambiguous choices
+- **`--guidance <text>` flag** - Provide custom guidance to tailor command behavior
+  - Pass project-specific context
+  - Override default behaviors
+  - Focus on specific aspects of the task
+- **Man page** - `man aiwg` now works after `npm install -g aiwg`
+
+**Gap Analysis & Guided Implementation**:
+
+- **`/gap-analysis` command** - Unified gap analysis with natural language routing
+- **Guided implementation addon** (`agentic/code/addons/guided-implementation/`):
+  - Iteration control for complex implementations
+  - Step-by-step guidance with checkpoints
+  - REF-004 MAGIS reference integration
+
+**Droid Bridge MCP Integration**:
+
+- **`droid-bridge` addon** - MCP integration for Claude Desktop and other MCP clients
+- Bridge between agentic framework and MCP protocol
+- Enables AIWG agents in MCP-compatible environments
 
 **Issue Management System** (Issues #16, #17):
 
