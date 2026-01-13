@@ -1,0 +1,113 @@
+.TH AIWG 1 "January 2026" "aiwg 2026.01.0" "AIWG Manual"
+.SH NAME
+aiwg \- Agentic AI Workflow Guide CLI
+.SH SYNOPSIS
+.B aiwg
+[\fIcommand\fR]
+[\fIoptions\fR]
+.SH DESCRIPTION
+.B aiwg
+is a modular toolkit for AI-powered SDLC, marketing, and content workflows.
+It provides specialized AI agents, workflow commands, and templates for
+software development lifecycle management, marketing campaigns, and content
+creation.
+.SH COMMANDS
+.TP
+.B use \fIframework\fR
+Deploy a framework to the current project. Available frameworks: sdlc, marketing, all.
+.TP
+.B list
+List installed frameworks and their status.
+.TP
+.B remove \fIid\fR
+Remove an installed framework.
+.TP
+.B mcp serve
+Start the MCP server for tool integration.
+.TP
+.B mcp install \fItarget\fR
+Install MCP config for a target (claude, cursor).
+.TP
+.B mcp info
+Display MCP server information.
+.SH OPTIONS
+.TP
+.B \-version, \-V
+Display version information.
+.TP
+.B \-help, \-h
+Display help information.
+.TP
+.B \-new \fIname\fR
+Scaffold a new project with AIWG framework.
+.TP
+.B \-update
+Update AIWG to the latest version.
+.TP
+.B \-status
+Display health status of installed frameworks.
+.TP
+.B \-\-provider \fIprovider\fR
+Target platform for deployment. Options: claude (default), warp, factory,
+cursor, copilot, opencode, openai, windsurf.
+.TP
+.B \-\-force
+Force overwrite existing files.
+.TP
+.B \-\-dry\-run
+Preview changes without writing files.
+.SH EXAMPLES
+.TP
+Deploy SDLC framework:
+.B aiwg use sdlc
+.TP
+Deploy to Warp Terminal:
+.B aiwg use sdlc --provider warp
+.TP
+Scaffold new project:
+.B aiwg -new my-project
+.TP
+Check framework status:
+.B aiwg -status
+.SH FRAMEWORKS
+.TP
+.B sdlc
+Complete software development lifecycle with agents for requirements,
+architecture, testing, security, and deployment.
+.TP
+.B marketing
+Full marketing campaign management from strategy to analytics.
+.TP
+.B all
+Deploy all available frameworks.
+.SH FILES
+.TP
+.I .aiwg/
+Project artifacts directory created by AIWG commands.
+.TP
+.I .claude/agents/
+Agent definitions for Claude Code (default provider).
+.TP
+.I WARP.md
+Project context file for Warp Terminal provider.
+.SH ENVIRONMENT
+.TP
+.B AIWG_ROOT
+Override the AIWG installation directory.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+General error.
+.SH BUGS
+Report bugs at https://github.com/jmagly/ai-writing-guide/issues
+.SH AUTHOR
+Joseph Magly <https://github.com/jmagly>
+.SH SEE ALSO
+Full documentation: https://aiwg.io
+.PP
+GitHub: https://github.com/jmagly/ai-writing-guide
+.PP
+Discord: https://discord.gg/BuAusFMxdA

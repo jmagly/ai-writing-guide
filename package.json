@@ -6,6 +6,7 @@
   "bin": {
     "aiwg": "bin/aiwg.mjs"
   },
+  "man": "./man/aiwg.1",
   "main": "src/cli/index.mjs",
   "engines": {
     "node": ">=18.0.0"
@@ -31,6 +32,7 @@
     "docs/",
     "templates/",
     "plugins/",
+    "man/",
     "CLAUDE.md",
     "USAGE_GUIDE.md"
   ],

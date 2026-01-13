@@ -19,19 +19,30 @@ Analyze current project state and regenerate the platform context file (CLAUDE.m
 
 ## Platform Detection
 
-Detect current platform automatically:
+Detect current platform automatically by checking for existing context files:
 
-1. Check environment/runtime context
-2. Check existing files:
-   - `CLAUDE.md` exists → Claude Code
-   - `WARP.md` exists → Warp Terminal
-   - `.factory/` exists → Factory AI
-3. If ambiguous, ask user
+| Priority | Check | Platform | Command |
+|----------|-------|----------|---------|
+| 1 | `CLAUDE.md` exists | Claude Code | `/aiwg-regenerate-claude` |
+| 2 | `WARP.md` exists | Warp Terminal | `/aiwg-regenerate-warp` |
+| 3 | `.cursorrules` exists | Cursor | `/aiwg-regenerate-cursorrules` |
+| 4 | `.windsurfrules` exists | Windsurf | `/aiwg-regenerate-windsurfrules` |
+| 5 | `.github/copilot-instructions.md` exists | GitHub Copilot | `/aiwg-regenerate-copilot` |
+| 6 | `AGENTS.md` exists | Factory/OpenCode/Codex | `/aiwg-regenerate-agents` |
+| 7 | `.factory/` exists | Factory AI | `/aiwg-regenerate-agents` |
+| 8 | `.cursor/` exists | Cursor | `/aiwg-regenerate-cursorrules` |
+| 9 | `.windsurf/` exists | Windsurf | `/aiwg-regenerate-windsurfrules` |
+| 10 | `.github/agents/` exists | GitHub Copilot | `/aiwg-regenerate-copilot` |
+
+If multiple files exist, use priority order. If ambiguous, ask user.
 
 For explicit platform targeting, use:
-- `/aiwg-regenerate-claude`
-- `/aiwg-regenerate-warp`
-- `/aiwg-regenerate-factory`
+- `/aiwg-regenerate-claude` → CLAUDE.md
+- `/aiwg-regenerate-warp` → WARP.md
+- `/aiwg-regenerate-agents` → AGENTS.md
+- `/aiwg-regenerate-cursorrules` → .cursorrules
+- `/aiwg-regenerate-windsurfrules` → .windsurfrules
+- `/aiwg-regenerate-copilot` → copilot-instructions.md
 
 ## Execution Steps
 
