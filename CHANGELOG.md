@@ -5,6 +5,50 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.1.5] - 2026-01-14 – "Dynamic Addon Discovery" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **Dynamic addon discovery** | All providers now automatically pick up new addons like Ralph |
+| **No more hardcoded paths** | New addons work across all 8 providers without code changes |
+| **Ralph addon support** | Ralph loop agents, commands, and skills now deploy everywhere |
+
+### Fixed
+
+**Addon Discovery for All Providers** (Issue #22):
+
+- **Dynamic Addon Discovery** - All providers now automatically discover and deploy all addons
+  - Previously, providers hardcoded specific addons (writing-quality, aiwg-utils)
+  - New addons like Ralph were not deployed because they weren't in the hardcoded list
+  - Now uses `getAddonAgentFiles()`, `getAddonCommandFiles()`, `getAddonSkillDirs()` from base.mjs
+
+- **Updated Providers**:
+  - `claude.mjs` - Now discovers all addons dynamically
+  - `codex.mjs` - Now discovers all addons dynamically
+  - `copilot.mjs` - Now discovers all addons dynamically
+  - `opencode.mjs` - Now discovers all addons dynamically
+  - `factory.mjs` - Now discovers all addons dynamically
+  - `windsurf.mjs` - Now discovers all addons dynamically
+
+### Added
+
+**Addon Discovery Functions in base.mjs**:
+
+- `discoverAddons(srcRoot)` - Discovers all addons from `agentic/code/addons/` with manifests
+- `getAddonAgentFiles(srcRoot, excludeAddons)` - Gets all agent files from all addons
+- `getAddonCommandFiles(srcRoot, excludeAddons)` - Gets all command files from all addons
+- `getAddonSkillDirs(srcRoot, excludeAddons)` - Gets all skill directories from all addons
+- `getAddonFiles(srcRoot, options)` - Combined function for all addon files
+
+### Addons Now Auto-Discovered
+
+All addons in `agentic/code/addons/` are now automatically deployed:
+- aiwg-evals, aiwg-hooks, aiwg-utils
+- context-curator, testing-quality, voice-framework, writing-quality
+- guided-implementation, ralph, droid-bridge, star-prompt
+
+---
+
 ## [2026.01.4] - 2026-01-14 – "Provider File Locations Fix" Release
 
 | What changed | Why you care |
