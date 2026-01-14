@@ -276,24 +276,6 @@ function getCommandDirectories(srcRoot, mode) {
   return dirs;
 }
 
-/**
- * Priority commands to deploy (most useful for Cursor users)
- */
-const PRIORITY_COMMANDS = [
-  'pr-review',
-  'security-audit',
-  'security-gate',
-  'generate-tests',
-  'create-prd',
-  'project-status',
-  'project-health-check',
-  'build-poc',
-  'deploy-gen',
-  'flow-gate-check',
-  'intake-wizard',
-  'check-traceability'
-];
-
 (async function main() {
   const cfg = parseArgs();
   const { source, target, mode, dryRun, force, prefix } = cfg;
@@ -325,17 +307,9 @@ const PRIORITY_COMMANDS = [
     const commandFiles = listCommandFiles(dir);
     if (commandFiles.length === 0) continue;
 
-    // Filter to priority commands for better UX (avoid overwhelming users)
-    const priorityFiles = commandFiles.filter(f => {
-      const name = path.basename(f, '.md');
-      return PRIORITY_COMMANDS.includes(name);
-    });
+    console.log(`\n${label} (${commandFiles.length} rules):`);
 
-    const filesToDeploy = priorityFiles.length > 0 ? priorityFiles : commandFiles.slice(0, 15);
-
-    console.log(`\n${label} (${filesToDeploy.length} rules):`);
-
-    for (const commandFile of filesToDeploy) {
+    for (const commandFile of commandFiles) {
       try {
         const rule = transformToCursorRule(commandFile, prefix);
         const result = deployRule(rule, target, { force, dryRun });

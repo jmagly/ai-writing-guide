@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2026.1.6",
+  "version": "2026.1.7",
   "description": "Modular agentic framework for AI-powered SDLC, marketing automation, and workflow orchestration",
   "type": "module",
   "bin": {

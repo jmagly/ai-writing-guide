@@ -188,72 +188,80 @@ function deployPrompt(prompt, targetDir, opts) {
 }
 
 /**
+ * Load addon manifest if it exists
+ */
+function loadAddonManifest(addonPath) {
+  const manifestPath = path.join(addonPath, 'manifest.json');
+  if (fs.existsSync(manifestPath)) {
+    try {
+      return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    } catch (e) {
+      console.warn(`  Warning: Could not parse manifest at ${manifestPath}`);
+    }
+  }
+  return {};
+}
+
+/**
  * Get command directories based on mode
+ * Returns objects with: dir, label, isCore (whether to deploy all commands)
  */
 function getCommandDirectories(srcRoot, mode) {
   const dirs = [];
 
-  // General commands
+  // General commands (not core - apply priority filter)
   if (mode === 'general' || mode === 'all') {
     const generalCommandsDir = path.join(srcRoot, 'commands');
     if (fs.existsSync(generalCommandsDir)) {
-      dirs.push({ dir: generalCommandsDir, label: 'general' });
+      dirs.push({ dir: generalCommandsDir, label: 'general', isCore: false });
     }
   }
 
   // Addon commands (dynamically discovered)
+  // Check manifest for core/autoInstall flags
   if (mode === 'general' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
     const addonsRoot = path.join(srcRoot, 'agentic', 'code', 'addons');
     if (fs.existsSync(addonsRoot)) {
-      const addonDirs = fs.readdirSync(addonsRoot, { withFileTypes: true })
-        .filter(e => e.isDirectory())
-        .map(e => path.join(addonsRoot, e.name, 'commands'));
+      const addonEntries = fs.readdirSync(addonsRoot, { withFileTypes: true })
+        .filter(e => e.isDirectory());
 
-      for (const addonCommandsDir of addonDirs) {
+      for (const entry of addonEntries) {
+        const addonPath = path.join(addonsRoot, entry.name);
+        const addonCommandsDir = path.join(addonPath, 'commands');
+
         if (fs.existsSync(addonCommandsDir)) {
-          dirs.push({ dir: addonCommandsDir, label: path.basename(path.dirname(addonCommandsDir)) });
+          const manifest = loadAddonManifest(addonPath);
+          // Core addons (core: true or autoInstall: true) deploy ALL commands
+          const isCore = manifest.core === true || manifest.autoInstall === true;
+
+          dirs.push({
+            dir: addonCommandsDir,
+            label: entry.name,
+            isCore
+          });
         }
       }
     }
   }
 
-  // SDLC framework commands
+  // SDLC framework commands (not core - apply priority filter)
   if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
     const sdlcCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
     if (fs.existsSync(sdlcCommandsDir)) {
-      dirs.push({ dir: sdlcCommandsDir, label: 'sdlc-complete' });
+      dirs.push({ dir: sdlcCommandsDir, label: 'sdlc-complete', isCore: false });
     }
   }
 
-  // Marketing framework commands
+  // Marketing framework commands (not core - apply priority filter)
   if (mode === 'marketing' || mode === 'all') {
     const mmkCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'commands');
     if (fs.existsSync(mmkCommandsDir)) {
-      dirs.push({ dir: mmkCommandsDir, label: 'media-marketing-kit' });
+      dirs.push({ dir: mmkCommandsDir, label: 'media-marketing-kit', isCore: false });
     }
   }
 
   return dirs;
 }
-
-/**
- * Priority commands to deploy (most useful for Codex users)
- */
-const PRIORITY_COMMANDS = [
-  'pr-review',
-  'security-audit',
-  'security-gate',
-  'generate-tests',
-  'create-prd',
-  'project-status',
-  'project-health-check',
-  'build-poc',
-  'deploy-gen',
-  'flow-gate-check',
-  'flow-security-review-cycle',
-  'intake-wizard',
-  'check-traceability'
-];
 
 (async function main() {
   const cfg = parseArgs();
@@ -286,17 +294,9 @@ const PRIORITY_COMMANDS = [
     const commandFiles = listCommandFiles(dir);
     if (commandFiles.length === 0) continue;
 
-    // Filter to priority commands for better UX (avoid overwhelming users)
-    const priorityFiles = commandFiles.filter(f => {
-      const name = path.basename(f, '.md');
-      return PRIORITY_COMMANDS.includes(name);
-    });
+    console.log(`\n${label} (${commandFiles.length} prompts):`);
 
-    const filesToDeploy = priorityFiles.length > 0 ? priorityFiles : commandFiles.slice(0, 15);
-
-    console.log(`\n${label} (${filesToDeploy.length} prompts):`);
-
-    for (const commandFile of filesToDeploy) {
+    for (const commandFile of commandFiles) {
       try {
         const prompt = transformToCodexPrompt(commandFile, prefix);
         const result = deployPrompt(prompt, target, { force, dryRun });

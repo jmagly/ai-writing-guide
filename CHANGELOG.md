@@ -5,6 +5,28 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.1.7] - 2026-01-14 – "Deploy All Commands" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **Removed priority filtering** | ALL commands now deploy (not just a curated subset) |
+| **aiwg-utils commands work** | `aiwg-regenerate*`, `devkit-*`, `mention-*` commands now deploy to Codex/Cursor |
+
+### Fixed
+
+**Command Deployment**:
+
+- Removed `PRIORITY_COMMANDS` filtering from `deploy-prompts-codex.mjs`
+- Removed `PRIORITY_COMMANDS` filtering from `deploy-rules-cursor.mjs`
+- Core addons (with `core: true` or `autoInstall: true`) now deploy ALL commands
+- The `aiwg-utils` addon now deploys all 30 commands including:
+  - `aiwg-regenerate*` (context regeneration)
+  - `devkit-*` (scaffolding)
+  - `mention-*` (traceability)
+  - `workspace-*` (maintenance)
+
+---
+
 ## [2026.1.6] - 2026-01-14 – "Complete Addon Discovery" Release
 
 | What changed | Why you care |
