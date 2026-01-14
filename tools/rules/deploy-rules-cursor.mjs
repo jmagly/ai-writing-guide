@@ -24,13 +24,13 @@
 import fs from 'fs';
 import path from 'path';
 
-const DEFAULT_TARGET = '.cursor/rules';
+const RULES_SUBDIR = '.cursor/rules';
 
 function parseArgs() {
   const args = process.argv.slice(2);
   const cfg = {
     source: null,
-    target: DEFAULT_TARGET,
+    target: null,  // Will be resolved to .cursor/rules/ in the appropriate project
     mode: 'all',
     dryRun: false,
     force: false,
@@ -40,11 +40,21 @@ function parseArgs() {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--source' && args[i + 1]) cfg.source = path.resolve(args[++i]);
-    else if (a === '--target' && args[i + 1]) cfg.target = path.resolve(args[++i]);
+    else if (a === '--target' && args[i + 1]) {
+      // --target is the PROJECT root, not the final destination
+      // We always deploy to <project>/.cursor/rules/
+      const projectRoot = path.resolve(args[++i]);
+      cfg.target = path.join(projectRoot, RULES_SUBDIR);
+    }
     else if (a === '--mode' && args[i + 1]) cfg.mode = String(args[++i]).toLowerCase();
     else if (a === '--dry-run') cfg.dryRun = true;
     else if (a === '--force') cfg.force = true;
     else if (a === '--prefix' && args[i + 1]) cfg.prefix = args[++i];
+  }
+
+  // Default to .cursor/rules/ in current working directory
+  if (!cfg.target) {
+    cfg.target = path.resolve(RULES_SUBDIR);
   }
 
   return cfg;

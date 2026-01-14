@@ -188,14 +188,15 @@ describe('Cursor Integration', () => {
 
   describe('Rules Deployment', () => {
     it('deploys rules to .cursor/rules/', async () => {
+      // Note: --target is the PROJECT ROOT, script appends .cursor/rules/
       const output = runScript('tools/rules/deploy-rules-cursor.mjs', [
-        '--target', path.join(TEST_CURSOR_DIR, 'rules')
+        '--target', TEST_PROJECT_DIR
       ]);
 
       expect(output).toContain('Deploying commands as Cursor rules');
 
-      // Check rules directory was created
-      const rulesDir = path.join(TEST_CURSOR_DIR, 'rules');
+      // Check rules directory was created at .cursor/rules/
+      const rulesDir = path.join(TEST_PROJECT_DIR, '.cursor', 'rules');
       const rules = await fs.readdir(rulesDir);
 
       expect(rules.length).toBeGreaterThan(0);
@@ -204,10 +205,10 @@ describe('Cursor Integration', () => {
 
     it('formats rule with correct MDC frontmatter', async () => {
       runScript('tools/rules/deploy-rules-cursor.mjs', [
-        '--target', path.join(TEST_CURSOR_DIR, 'rules')
+        '--target', TEST_PROJECT_DIR
       ]);
 
-      const rulesDir = path.join(TEST_CURSOR_DIR, 'rules');
+      const rulesDir = path.join(TEST_PROJECT_DIR, '.cursor', 'rules');
       const rules = await fs.readdir(rulesDir);
 
       // Find a rule file
@@ -227,10 +228,10 @@ describe('Cursor Integration', () => {
 
     it('includes globs for applicable rules', async () => {
       runScript('tools/rules/deploy-rules-cursor.mjs', [
-        '--target', path.join(TEST_CURSOR_DIR, 'rules')
+        '--target', TEST_PROJECT_DIR
       ]);
 
-      const rulesDir = path.join(TEST_CURSOR_DIR, 'rules');
+      const rulesDir = path.join(TEST_PROJECT_DIR, '.cursor', 'rules');
 
       // Check security-audit rule has globs
       const securityRulePath = path.join(rulesDir, 'aiwg-security-audit.mdc');

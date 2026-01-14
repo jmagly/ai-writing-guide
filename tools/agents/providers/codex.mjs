@@ -5,15 +5,15 @@
  * to prompts format via external script.
  *
  * Deployment paths:
- *   - Agents: .codex/agents/
- *   - Commands: .codex/commands/ (via deploy-prompts-codex.mjs)
- *   - Skills: ~/.codex/skills/ (home directory)
+ *   - Agents: <project>/.codex/agents/ (project-local)
+ *   - Commands: ~/.codex/prompts/ (home directory, NOT project)
+ *   - Skills: ~/.codex/skills/ (home directory, NOT project)
  *
  * Special features:
  *   - Model replacement (opus/sonnet/haiku -> gpt variants)
  *   - --as-agents-md aggregation option
- *   - Delegates commands to deploy-prompts-codex.mjs
- *   - Delegates skills to deploy-skills-codex.mjs
+ *   - Delegates commands to deploy-prompts-codex.mjs (deploys to ~/.codex/prompts/)
+ *   - Delegates skills to deploy-skills-codex.mjs (deploys to ~/.codex/skills/)
  */
 
 import fs from 'fs';
@@ -38,8 +38,8 @@ export const aliases = ['openai'];
 
 export const paths = {
   agents: '.codex/agents/',
-  commands: '.codex/commands/',
-  skills: null,  // Skills go to ~/.codex/skills/
+  commands: null,  // Commands go to ~/.codex/prompts/ (home directory)
+  skills: null,    // Skills go to ~/.codex/skills/ (home directory)
   rules: null
 };
 
@@ -154,6 +154,10 @@ export function deployAgents(agentFiles, targetDir, opts) {
 
 /**
  * Deploy commands via external script
+ *
+ * NOTE: Codex prompts/commands go to ~/.codex/prompts/ (home directory)
+ * not to the project directory. We do NOT pass --target to let the
+ * script use its default home directory location.
  */
 export async function deployCommands(targetDir, srcRoot, opts) {
   const scriptPath = path.join(srcRoot, 'tools', 'commands', 'deploy-prompts-codex.mjs');
@@ -163,10 +167,11 @@ export async function deployCommands(targetDir, srcRoot, opts) {
     return;
   }
 
-  console.log('Delegating command deployment to deploy-prompts-codex.mjs...');
+  console.log('Delegating command deployment to deploy-prompts-codex.mjs (~/.codex/prompts/)...');
 
   return new Promise((resolve, reject) => {
-    const args = ['--target', targetDir, '--source', srcRoot];
+    // NOTE: Do NOT pass --target - Codex prompts belong in ~/.codex/prompts/ (home)
+    const args = ['--source', srcRoot];
     if (opts.dryRun) args.push('--dry-run');
     if (opts.force) args.push('--force');
     if (opts.mode) args.push('--mode', opts.mode);

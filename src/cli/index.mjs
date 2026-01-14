@@ -283,7 +283,18 @@ async function handleUse(args) {
   const skipUtils = remainingArgs.includes('--no-utils');
   const filteredArgs = deployArgs.filter(a => a !== '--no-utils');
 
+  // Extract provider and target from remainingArgs to pass to addon deployments
+  const providerIdx = remainingArgs.findIndex(a => a === '--provider' || a === '--platform');
+  const provider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : null;
+  const targetIdx = remainingArgs.findIndex(a => a === '--target');
+  const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : null;
+
   await runScript('tools/agents/deploy-agents.mjs', filteredArgs);
+
+  // Build common args for addon deployments (inherit provider and target)
+  const addonBaseArgs = ['--deploy-commands', '--deploy-skills'];
+  if (provider) addonBaseArgs.push('--provider', provider);
+  if (target) addonBaseArgs.push('--target', target);
 
   // Deploy aiwg-utils unless --no-utils
   if (!skipUtils) {
@@ -293,8 +304,7 @@ async function handleUse(args) {
     const utilsSource = path.join(frameworkRoot, 'agentic/code/addons/aiwg-utils');
     await runScript('tools/agents/deploy-agents.mjs', [
       '--source', utilsSource,
-      '--deploy-commands',
-      '--deploy-skills',
+      ...addonBaseArgs,
     ]);
   }
 
@@ -306,8 +316,7 @@ async function handleUse(args) {
     const ralphSource = path.join(frameworkRoot, 'agentic/code/addons/ralph');
     await runScript('tools/agents/deploy-agents.mjs', [
       '--source', ralphSource,
-      '--deploy-commands',
-      '--deploy-skills',
+      ...addonBaseArgs,
     ]);
   }
 }

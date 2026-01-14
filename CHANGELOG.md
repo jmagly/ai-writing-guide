@@ -5,6 +5,65 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.01.4] - 2026-01-14 – "Provider File Locations Fix" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **Provider deployment fixes** | `aiwg use --provider X` now correctly places files in provider-specific directories |
+| **Codex home directory paths** | Codex prompts/skills deploy to `~/.codex/` (home) not project directory |
+| **Cursor rules location** | Cursor rules now deploy to `.cursor/rules/` not project root |
+| **CLI addon provider pass-through** | `--provider` flag now correctly propagates to addon deployments |
+| **Dead code removal** | Removed 115 lines of unreachable Windsurf code from deploy-agents.mjs |
+| **Comprehensive test suite** | New `provider-file-locations.test.ts` validates all 8 providers |
+
+### Fixed
+
+**Provider File Location Issues** (Issue #21):
+
+- **CLI `handleUse()`** - Now passes `--provider` to addon deployments (aiwg-utils, ralph)
+  - Previously, addons always deployed to Claude Code format regardless of `--provider`
+  - Now correctly creates provider-specific directories (`.codex/`, `.factory/`, etc.)
+
+- **Codex Provider** - Fixed command/skill deployment paths
+  - Prompts now deploy to `~/.codex/prompts/` (home directory)
+  - Skills now deploy to `~/.codex/skills/` (home directory)
+  - Previously incorrectly deployed to project directory
+
+- **Cursor Provider** - Fixed rules deployment path
+  - Rules now deploy to `<project>/.cursor/rules/`
+  - Previously deployed `.mdc` files directly to project root
+  - Script now treats `--target` as project root and appends `.cursor/rules/`
+
+- **Dead Code Removal** - Removed unreachable Windsurf code from `deploy-agents.mjs`
+  - 115 lines of code that checked `if (provider === 'windsurf')` never executed
+  - Provider was an object, not a string, so condition was always false
+
+### Added
+
+**Provider Deployment Test Suite**:
+
+- New `test/integration/provider-file-locations.test.ts`
+  - Tests all 8 providers: claude, codex, factory, copilot, cursor, opencode, warp, windsurf
+  - Validates correct directory creation for each provider
+  - Validates no forbidden paths (e.g., no `.claude/` when using codex)
+  - Validates correct file extensions per provider
+  - Tests `aiwg use --provider` CLI integration
+
+### Provider File Locations Reference
+
+| Provider | Project Directories | Home Directories | Root Files |
+|----------|---------------------|------------------|------------|
+| Claude | `.claude/agents/`, `.claude/commands/`, `.claude/skills/` | - | - |
+| Codex | `.codex/agents/` | `~/.codex/prompts/`, `~/.codex/skills/` | - |
+| Factory | `.factory/droids/`, `.factory/commands/` | - | - |
+| Copilot | `.github/agents/` | - | - |
+| Cursor | `.cursor/rules/` | - | - |
+| OpenCode | `.opencode/agent/`, `.opencode/command/` | - | - |
+| Warp | - | - | `WARP.md` |
+| Windsurf | `.windsurf/workflows/` | - | `AGENTS.md`, `.windsurfrules` |
+
+---
+
 ## [2026.01.3] - 2026-01-13 – "Ralph Loop & Issue Management" Release
 
 | What changed | Why you care |
