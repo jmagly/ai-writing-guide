@@ -1,7 +1,7 @@
 ---
 description: Simulate project outcomes with variable modeling, risk assessment, and resource optimization scenarios.
 category: project-task-management
-argument-hint: "Specify project timeline parameters"
+argument-hint: "Specify project timeline parameters [--interactive] [--guidance "text"]"
 allowed-tools: Bash(gh *), Read
 ---
 

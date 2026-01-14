@@ -1,7 +1,7 @@
 ---
 name: devkit-create-framework
 description: Create a new AIWG framework with AI-guided design
-args:
+args: [--interactive] [--guidance "text"]
   - name: name
     description: Framework name (kebab-case)
     required: true

@@ -5,6 +5,39 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.1.6] - 2026-01-14 – "Complete Addon Discovery" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **Complete addon discovery** | ALL deployment scripts now discover addons dynamically |
+| **Codex commands fixed** | `~/.codex/prompts/` now includes Ralph and all addon commands |
+| **Cursor rules fixed** | `.cursor/rules/` now includes addon commands |
+| **Warp/Windsurf fixed** | WARP.md and standalone scripts include all addons |
+| **Versioning docs** | Clear CalVer documentation prevents npm update failures |
+
+### Fixed
+
+**Complete Addon Discovery Across All Tools**:
+
+- `tools/commands/deploy-prompts-codex.mjs` - Codex prompts now discover addon commands
+- `tools/rules/deploy-rules-cursor.mjs` - Cursor rules now discover addon commands
+- `tools/warp/setup-warp.mjs` - Warp WARP.md now includes addon agents/commands
+- `tools/agents/deploy-windsurf.mjs` - Standalone Windsurf script now discovers addons
+
+### Added
+
+**Versioning Documentation**:
+
+- `docs/contributing/versioning.md` - Comprehensive CalVer guide
+- `.claude/rules/versioning.md` - AI agent enforcement rules
+- Updated CLAUDE.md with correct version format examples
+
+**CalVer Format**: `YYYY.M.PATCH` (no leading zeros!)
+- Correct: `2026.1.6`, `2026.12.0`
+- Wrong: `2026.01.6` (npm rejects leading zeros)
+
+---
+
 ## [2026.1.5] - 2026-01-14 – "Dynamic Addon Discovery" Release
 
 | What changed | Why you care |

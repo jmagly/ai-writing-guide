@@ -1,7 +1,7 @@
 ---
 description: Conduct comprehensive PR review from multiple perspectives (PM, Developer, QA, Security)
 category: version-control-git
-argument-hint: <pr_link_or_number>
+argument-hint: <pr_link_or_number> [--interactive] [--guidance "text"]
 allowed-tools: Bash(gh *), Read
 ---
 

@@ -1,7 +1,7 @@
 ---
 description: Generate troubleshooting documentation
 category: documentation-changelogs
-argument-hint: 1. **System Overview and Architecture**
+argument-hint: 1. **System Overview and Architecture** [--interactive] [--guidance "text"]
 ---
 
 # Troubleshooting Guide Generator Command

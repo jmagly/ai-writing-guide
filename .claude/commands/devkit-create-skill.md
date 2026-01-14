@@ -1,7 +1,7 @@
 ---
 name: devkit-create-skill
 description: Create a new AIWG skill with AI-guided design
-args:
+args: [--interactive] [--guidance "text"]
   - name: name
     description: Skill name (kebab-case)
     required: true

@@ -1,7 +1,7 @@
 ---
 name: aiwg-regenerate
 description: Regenerate platform context file with preserved team directives
-args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--interactive] [--guidance "text"]"
 ---
 
 # Regenerate Platform Context File

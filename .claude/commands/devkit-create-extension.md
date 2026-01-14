@@ -1,7 +1,7 @@
 ---
 name: devkit-create-extension
 description: Create a new AIWG extension (framework expansion pack) with AI-guided setup
-args: <name> --for <framework> [--interactive]
+args: <name> --for <framework> [--interactive --guidance "text"]
 ---
 
 # Create AIWG Extension

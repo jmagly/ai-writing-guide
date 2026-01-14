@@ -1,7 +1,7 @@
 ---
 description: Summarize key SDLC artifacts and produce short digests for agent context
 category: documentation-tracking
-argument-hint: <docs/sdlc/artifacts/project>
+argument-hint: <docs/sdlc/artifacts/project> [--interactive] [--guidance "text"]
 allowed-tools: Read, Write, Glob, Grep
 model: sonnet
 ---

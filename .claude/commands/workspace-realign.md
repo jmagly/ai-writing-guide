@@ -1,7 +1,7 @@
 ---
 name: workspace-realign
 description: Reorganize and update .aiwg/ documentation to reflect current project reality
-args: "[project-directory] [--archive-stale] [--delete-stale] [--dry-run] [--since <commit>]"
+args: "[project-directory] [--archive-stale] [--delete-stale] [--dry-run] [--since <commit>] [--interactive] [--guidance "text"]"
 ---
 
 # Workspace Realign

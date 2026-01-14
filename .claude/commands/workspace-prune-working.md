@@ -1,7 +1,7 @@
 ---
 name: workspace-prune-working
 description: Clean up .aiwg/working/ by promoting, archiving, or deleting temporary files
-args: "[project-directory] [--promote-all] [--archive-all] [--delete-all] [--dry-run] [--interactive]"
+args: "[project-directory] [--promote-all] [--archive-all] [--delete-all] [--dry-run] [--interactive] [--guidance "text"]"
 ---
 
 # Workspace Prune Working

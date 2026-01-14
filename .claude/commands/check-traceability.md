@@ -1,7 +1,7 @@
 ---
 description: Verify links from use cases and requirements to design, code, tests, and releases
 category: documentation-tracking
-argument-hint: <path-to-traceability-csv>
+argument-hint: <path-to-traceability-csv> [--interactive] [--guidance "text"]
 allowed-tools: Read, Write, Glob, Grep
 model: sonnet
 ---

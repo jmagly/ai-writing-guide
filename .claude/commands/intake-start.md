@@ -1,7 +1,7 @@
 ---
 description: Ingest the Project Intake Form and kick off Concept → Inception with agent assignments, accepts optional guidance to tailor process
 category: sdlc-management
-argument-hint: <path-to-intake-folder-or-form> [--guidance "context"]
+argument-hint: <path-to-intake-folder-or-form> [--guidance "context" --interactive]
 allowed-tools: Read, Write, Glob, Grep
 model: sonnet
 ---
@@ -809,3 +809,42 @@ This will activate the Executive Orchestrator and assigned agents to begin Incep
 4. **Cross-reference documents** - Pull risks from solution-profile, priorities from option-matrix, architecture from project-intake
 5. **Tailor to profile** - Prototype gets lightweight plan, Enterprise gets comprehensive plan
 6. **Document guidance impact** - Explicitly show how guidance influenced phase plan (transparency builds trust)
+
+## Star the Repository
+
+After successfully validating and generating phase plans, offer the user an opportunity to star the repository:
+
+**Prompt**:
+```
+The AI Writing Guide is an open-source project that helps improve AI-generated content.
+If you found this helpful, would you like to star the repository on GitHub?
+
+Options:
+- Yes, star the repo
+- No thanks
+```
+
+**If user selects "Yes, star the repo"**:
+
+1. Check if `gh` CLI is available:
+   ```bash
+   which gh
+   ```
+
+2. If `gh` is available, attempt to star:
+   ```bash
+   gh api -X PUT /user/starred/jmagly/ai-writing-guide
+   ```
+   - If successful: "⭐ Thank you for starring the AI Writing Guide! Your support helps the project grow."
+   - If fails: "Could not star via gh CLI. You can star manually at: https://github.com/jmagly/ai-writing-guide"
+
+3. If `gh` is not available:
+   ```
+   GitHub CLI (gh) not found. You can star the repository at:
+   https://github.com/jmagly/ai-writing-guide
+   ```
+
+**If user selects "No thanks"**:
+```
+No problem! Thanks for using the AI Writing Guide.
+```

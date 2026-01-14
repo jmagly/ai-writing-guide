@@ -1,0 +1,121 @@
+---
+description: Check status of current or previous Ralph loop
+category: automation
+argument-hint: [--verbose] [--latest] [--all --interactive --guidance "text"]
+allowed-tools: Read, Glob, Bash
+model: haiku
+---
+
+# Ralph Status
+
+Check the status of Ralph loops.
+
+## Usage
+
+```
+/ralph-status              # Current loop status
+/ralph-status --verbose    # Detailed iteration history
+/ralph-status --latest     # Show latest completion report
+/ralph-status --all        # List all completion reports
+```
+
+## Your Actions
+
+### Default (Current Loop)
+
+1. Read `.aiwg/ralph/current-loop.json`
+2. Display status summary
+
+**If active loop exists**:
+```
+Ralph Loop: ACTIVE
+
+Task: {task}
+Completion: {completion}
+Progress: {current}/{max} iterations
+Duration: {elapsed}
+Status: {running | paused}
+
+Last iteration:
+  Result: {result}
+  Learnings: {learnings}
+
+Use /ralph-resume to continue or /ralph-abort to stop.
+```
+
+**If no active loop**:
+```
+No active Ralph loop.
+
+Use /ralph "task" --completion "criteria" to start one.
+```
+
+### --verbose
+
+Include full iteration history:
+
+```
+Ralph Loop: ACTIVE
+
+Task: {task}
+Completion: {completion}
+Progress: {current}/{max} iterations
+
+Iteration History:
+| # | Time | Action | Result | Learnings |
+|---|------|--------|--------|-----------|
+| 1 | 10:30 | Initial attempt | 3 failures | Need auth mocks |
+| 2 | 10:32 | Added mocks | 1 failure | Date edge case |
+| 3 | 10:34 | Fixed date | In progress... | - |
+```
+
+### --latest
+
+Read and display most recent completion report:
+
+1. Find latest `completion-*.md` in `.aiwg/ralph/`
+2. Display contents
+
+### --all
+
+List all completion reports:
+
+```
+Ralph Loop History
+
+| Date | Task | Status | Iterations |
+|------|------|--------|------------|
+| 2025-01-15 10:45 | Fix auth tests | SUCCESS | 3 |
+| 2025-01-14 15:20 | Migrate to ESM | SUCCESS | 8 |
+| 2025-01-13 09:00 | Add coverage | MAX_ITER | 10 |
+
+View report: /ralph-status --report 2025-01-15
+```
+
+## State File Location
+
+- Current loop: `.aiwg/ralph/current-loop.json`
+- Iterations: `.aiwg/ralph/iterations/`
+- Reports: `.aiwg/ralph/completion-*.md`
+
+## Error Handling
+
+**No state directory**:
+```
+Ralph has not been used in this project yet.
+
+Get started with:
+  /ralph "your task" --completion "verification command"
+
+Or:
+  /ralph --interactive
+```
+
+**Corrupted state**:
+```
+Ralph state file is corrupted.
+
+Options:
+1. Delete and start fresh: rm -rf .aiwg/ralph/
+2. Check file manually: cat .aiwg/ralph/current-loop.json
+```
