@@ -190,7 +190,9 @@ Before pushing a version tag:
 
 ### Version Format
 
-- **CalVer**: `YYYY.MM.PATCH` (e.g., `2026.01.3`)
+- **CalVer**: `YYYY.M.PATCH` (e.g., `2026.1.5`, `2026.12.0`)
+- **CRITICAL**: No leading zeros! npm semver rejects `01`, `02`, etc.
 - PATCH resets each month
-- Tag format: `vYYYY.MM.PATCH` (e.g., `v2026.01.3`)
+- Tag format: `vYYYY.M.PATCH` (e.g., `v2026.1.5`)
+- See `@docs/contributing/versioning.md` for full details
 
