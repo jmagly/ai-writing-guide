@@ -23,7 +23,10 @@ import {
   deploySkillDir,
   parseFrontmatter,
   initializeFrameworkWorkspace,
-  filterAgentFiles
+  filterAgentFiles,
+  getAddonAgentFiles,
+  getAddonCommandFiles,
+  getAddonSkillDirs
 } from './base.mjs';
 
 // ============================================================================
@@ -281,19 +284,16 @@ export async function deploy(opts) {
     }
   }
 
-  // Writing/general agents
-  if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
-    const writingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'agents');
-    agentFiles.push(...listMdFiles(writingAgentsDir));
+  // All addons (dynamically discovered)
+  if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+    agentFiles.push(...getAddonAgentFiles(srcRoot));
 
     if (shouldDeployCommands || commandsOnly) {
-      const writingCommandsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'commands');
-      commandFiles.push(...listMdFiles(writingCommandsDir));
+      commandFiles.push(...getAddonCommandFiles(srcRoot));
     }
 
     if (shouldDeploySkills || skillsOnly) {
-      const writingSkillsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'skills');
-      skillDirs.push(...listSkillDirs(writingSkillsDir));
+      skillDirs.push(...getAddonSkillDirs(srcRoot));
     }
   }
 
@@ -327,28 +327,6 @@ export async function deploy(opts) {
       const marketingSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'skills');
       skillDirs.push(...listSkillDirs(marketingSkillsDir));
     }
-  }
-
-  // Utils addon (always deployed with sdlc or all)
-  if (mode === 'sdlc' || mode === 'all') {
-    const utilsAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'agents');
-    agentFiles.push(...listMdFiles(utilsAgentsDir));
-
-    if (shouldDeployCommands || commandsOnly) {
-      const utilsCommandsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'commands');
-      commandFiles.push(...listMdFiles(utilsCommandsDir));
-    }
-
-    if (shouldDeploySkills || skillsOnly) {
-      const utilsSkillsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'skills');
-      skillDirs.push(...listSkillDirs(utilsSkillsDir));
-    }
-  }
-
-  // Voice framework skills (always deployed)
-  if (shouldDeploySkills || skillsOnly) {
-    const voiceSkillsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'voice-framework', 'skills');
-    skillDirs.push(...listSkillDirs(voiceSkillsDir));
   }
 
   // Deploy based on flags

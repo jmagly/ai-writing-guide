@@ -26,7 +26,9 @@ import {
   toKebabCase,
   stripJsonComments,
   createAgentsMdFromTemplate,
-  initializeFrameworkWorkspace
+  initializeFrameworkWorkspace,
+  getAddonAgentFiles,
+  getAddonCommandFiles
 } from './base.mjs';
 
 // ============================================================================
@@ -455,14 +457,12 @@ export async function deploy(opts) {
   const agentFiles = [];
   const commandFiles = [];
 
-  // Writing/general agents
-  if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
-    const writingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'agents');
-    agentFiles.push(...listMdFiles(writingAgentsDir));
+  // All addons (dynamically discovered)
+  if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+    agentFiles.push(...getAddonAgentFiles(srcRoot));
 
     if (shouldDeployCommands || commandsOnly) {
-      const writingCommandsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'commands');
-      commandFiles.push(...listMdFiles(writingCommandsDir));
+      commandFiles.push(...getAddonCommandFiles(srcRoot));
     }
   }
 
@@ -485,17 +485,6 @@ export async function deploy(opts) {
     if (shouldDeployCommands || commandsOnly) {
       const marketingCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'commands');
       commandFiles.push(...listMdFilesRecursive(marketingCommandsDir));
-    }
-  }
-
-  // Utils addon
-  if (mode === 'sdlc' || mode === 'all') {
-    const utilsAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'agents');
-    agentFiles.push(...listMdFiles(utilsAgentsDir));
-
-    if (shouldDeployCommands || commandsOnly) {
-      const utilsCommandsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'commands');
-      commandFiles.push(...listMdFiles(utilsCommandsDir));
     }
   }
 

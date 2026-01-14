@@ -22,7 +22,9 @@ import {
   ensureDir,
   listMdFiles,
   listMdFilesRecursive,
-  initializeFrameworkWorkspace
+  initializeFrameworkWorkspace,
+  getAddonAgentFiles,
+  getAddonCommandFiles
 } from './base.mjs';
 
 // ============================================================================
@@ -400,28 +402,20 @@ export async function deploy(opts) {
   // Collect all agent files based on mode
   const allAgentFiles = [];
 
-  // Writing agents
-  if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
-    const writingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'agents');
-    allAgentFiles.push(...listMdFiles(writingAgentsDir));
+  // All addons (dynamically discovered)
+  if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+    allAgentFiles.push(...getAddonAgentFiles(srcRoot));
   }
 
-  // SDLC agents
+  // Frameworks
   if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
     const sdlcAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
     allAgentFiles.push(...listMdFiles(sdlcAgentsDir));
   }
 
-  // Marketing agents
   if (mode === 'marketing' || mode === 'all') {
     const marketingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'agents');
     allAgentFiles.push(...listMdFiles(marketingAgentsDir));
-  }
-
-  // Utils addon agents
-  if (mode === 'sdlc' || mode === 'all') {
-    const utilsAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'agents');
-    allAgentFiles.push(...listMdFiles(utilsAgentsDir));
   }
 
   // Generate aggregated AGENTS.md
@@ -442,11 +436,12 @@ export async function deploy(opts) {
     // Collect command files based on mode
     const commandFiles = [];
 
-    if (mode === 'general' || mode === 'both' || mode === 'all') {
-      const writingCommandsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'commands');
-      commandFiles.push(...listMdFiles(writingCommandsDir));
+    // All addons (dynamically discovered)
+    if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+      commandFiles.push(...getAddonCommandFiles(srcRoot));
     }
 
+    // Frameworks
     if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
       const sdlcCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
       commandFiles.push(...listMdFilesRecursive(sdlcCommandsDir));

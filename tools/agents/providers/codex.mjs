@@ -26,7 +26,10 @@ import {
   writeFile,
   deployFiles,
   createAgentsMdFromTemplate,
-  initializeFrameworkWorkspace
+  initializeFrameworkWorkspace,
+  getAddonAgentFiles,
+  getAddonCommandFiles,
+  getAddonSkillDirs
 } from './base.mjs';
 
 // ============================================================================
@@ -298,28 +301,20 @@ export async function deploy(opts) {
   // Collect source files based on mode
   const agentFiles = [];
 
-  // Writing/general agents
-  if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
-    const writingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'agents');
-    agentFiles.push(...listMdFiles(writingAgentsDir));
-  }
-
-  // SDLC framework
+  // Frameworks
   if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
     const sdlcAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
     agentFiles.push(...listMdFiles(sdlcAgentsDir));
   }
 
-  // Marketing framework
   if (mode === 'marketing' || mode === 'all') {
     const marketingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'agents');
     agentFiles.push(...listMdFiles(marketingAgentsDir));
   }
 
-  // Utils addon
-  if (mode === 'sdlc' || mode === 'all') {
-    const utilsAgentsDir = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'agents');
-    agentFiles.push(...listMdFiles(utilsAgentsDir));
+  // All addons (dynamically discovered)
+  if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+    agentFiles.push(...getAddonAgentFiles(srcRoot));
   }
 
   // Deploy based on flags
