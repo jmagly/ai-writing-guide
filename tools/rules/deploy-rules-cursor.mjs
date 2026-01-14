@@ -241,6 +241,22 @@ function getCommandDirectories(srcRoot, mode) {
     }
   }
 
+  // Addon commands (dynamically discovered)
+  if (mode === 'general' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+    const addonsRoot = path.join(srcRoot, 'agentic', 'code', 'addons');
+    if (fs.existsSync(addonsRoot)) {
+      const addonDirs = fs.readdirSync(addonsRoot, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => path.join(addonsRoot, e.name, 'commands'));
+
+      for (const addonCommandsDir of addonDirs) {
+        if (fs.existsSync(addonCommandsDir)) {
+          dirs.push({ dir: addonCommandsDir, label: path.basename(path.dirname(addonCommandsDir)) });
+        }
+      }
+    }
+  }
+
   // SDLC framework commands
   if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
     const sdlcCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');

@@ -606,17 +606,24 @@ async function main() {
   // Collect agent files based on mode
   const agentFiles = [];
 
-  // Writing/General agents
-  if (mode === 'general' || mode === 'writing' || mode === 'both' || mode === 'all') {
-    const writingAddonAgentsRoot = path.join(srcRoot, 'agentic', 'code', 'addons', 'writing-quality', 'agents');
-    const legacyAgentsRoot = path.join(srcRoot, 'agents');
-    const agentsRoot = fs.existsSync(writingAddonAgentsRoot) ? writingAddonAgentsRoot : legacyAgentsRoot;
+  // All addons (dynamically discovered)
+  if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+    const addonsRoot = path.join(srcRoot, 'agentic', 'code', 'addons');
+    if (fs.existsSync(addonsRoot)) {
+      let addonAgentCount = 0;
+      const addonDirs = fs.readdirSync(addonsRoot, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => path.join(addonsRoot, e.name, 'agents'));
 
-    if (fs.existsSync(agentsRoot)) {
-      const files = listMdFiles(agentsRoot);
-      if (files.length > 0) {
-        console.log(`Found ${files.length} writing/general agents`);
-        agentFiles.push(...files);
+      for (const addonAgentsDir of addonDirs) {
+        if (fs.existsSync(addonAgentsDir)) {
+          const files = listMdFiles(addonAgentsDir);
+          agentFiles.push(...files);
+          addonAgentCount += files.length;
+        }
+      }
+      if (addonAgentCount > 0) {
+        console.log(`Found ${addonAgentCount} addon agents`);
       }
     }
   }
@@ -693,6 +700,20 @@ async function main() {
   // Collect skills count for .windsurfrules
   let skillCount = 0;
   if (deploySkills) {
+    // Addon skills (dynamically discovered)
+    const addonsRoot = path.join(srcRoot, 'agentic', 'code', 'addons');
+    if (fs.existsSync(addonsRoot)) {
+      const addonDirs = fs.readdirSync(addonsRoot, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => path.join(addonsRoot, e.name, 'skills'));
+
+      for (const addonSkillsDir of addonDirs) {
+        if (fs.existsSync(addonSkillsDir)) {
+          skillCount += listSkillDirs(addonSkillsDir).length;
+        }
+      }
+    }
+
     // SDLC skills
     if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
       const sdlcSkillsRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'skills');
@@ -701,16 +722,9 @@ async function main() {
       }
     }
 
-    // Utils addon skills
-    const utilsSkillsRoot = path.join(srcRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'skills');
-    if (fs.existsSync(utilsSkillsRoot)) {
-      skillCount += listSkillDirs(utilsSkillsRoot).length;
-    }
-
     if (skillCount > 0) {
       console.log(`\n[NOTE] Skills (${skillCount} found) are not directly deployed to Windsurf.`);
-      console.log('Reference skill files in prompts using @-mentions:');
-      console.log('  @~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-utils/skills/<skill>/SKILL.md');
+      console.log('Reference skill files in prompts using @-mentions.');
     }
   }
 

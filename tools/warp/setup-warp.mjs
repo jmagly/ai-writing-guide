@@ -279,6 +279,21 @@ function generateAIWGContent(aiwgRoot, mode) {
       agentPaths.push(...listMdFiles(generalAgents));
     }
   }
+
+  // Addon agents (dynamically discovered)
+  const addonsRoot = path.join(aiwgRoot, 'agentic', 'code', 'addons');
+  if (fs.existsSync(addonsRoot)) {
+    const addonDirs = fs.readdirSync(addonsRoot, { withFileTypes: true })
+      .filter(e => e.isDirectory())
+      .map(e => path.join(addonsRoot, e.name, 'agents'));
+
+    for (const addonAgentsDir of addonDirs) {
+      if (fs.existsSync(addonAgentsDir)) {
+        agentPaths.push(...listMdFiles(addonAgentsDir));
+      }
+    }
+  }
+
   if (mode === 'sdlc' || mode === 'both') {
     const sdlcAgents = path.join(aiwgRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
     if (fs.existsSync(sdlcAgents)) {
@@ -304,6 +319,20 @@ function generateAIWGContent(aiwgRoot, mode) {
       commandPaths.push(...listMdFiles(generalCommands));
     }
   }
+
+  // Addon commands (dynamically discovered)
+  if (fs.existsSync(addonsRoot)) {
+    const addonCommandDirs = fs.readdirSync(addonsRoot, { withFileTypes: true })
+      .filter(e => e.isDirectory())
+      .map(e => path.join(addonsRoot, e.name, 'commands'));
+
+    for (const addonCommandsDir of addonCommandDirs) {
+      if (fs.existsSync(addonCommandsDir)) {
+        commandPaths.push(...listMdFiles(addonCommandsDir));
+      }
+    }
+  }
+
   if (mode === 'sdlc' || mode === 'both') {
     const sdlcCommands = path.join(aiwgRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
     if (fs.existsSync(sdlcCommands)) {
