@@ -24,6 +24,7 @@ coverage/
 dist/
 build/
 *.egg-info/
+*.tgz
 
 # Temporary files
 *.tmp
