@@ -157,6 +157,55 @@ npm exec markdownlint-cli2 "**/*.md"
 
 <!-- TEAM DIRECTIVES: Add project-specific guidance below this line -->
 
+## What AIWG Is
+
+**AI Writing Guide (AIWG)** is a framework that provides AI coding assistants with structured workflows, specialized agents, and artifact management. It's not just documentation - it's an operational system that:
+
+1. **Deploys agents** - Specialized AI personas (Test Engineer, Security Auditor, etc.) with defined tools and expertise
+2. **Manages artifacts** - All project documents (requirements, architecture, tests) live in `.aiwg/`
+3. **Orchestrates workflows** - SDLC phases, handoffs, and quality gates
+4. **Tracks state** - Framework registry, project status, iteration history
+
+### The `.aiwg/` Directory
+
+This is the **artifact directory** - the heart of AIWG's project management:
+
+```
+.aiwg/
+├── intake/           # Project intake forms, solution profiles
+├── requirements/     # Use cases, user stories, NFRs
+├── architecture/     # SAD, ADRs, diagrams
+├── planning/         # Phase plans, iteration plans
+├── risks/            # Risk register, mitigations
+├── testing/          # Test strategy, test plans
+├── security/         # Threat models, security gates
+├── deployment/       # Deployment plans, runbooks
+├── working/          # Temporary files (safe to delete)
+├── reports/          # Generated status reports
+├── ralph/            # Internal Ralph loop state
+├── ralph-external/   # External Ralph loop state
+└── frameworks/       # Installed framework registry
+    ├── registry.json
+    ├── sdlc-complete/
+    └── media-marketing-kit/
+```
+
+**Whether to commit `.aiwg/` is the developer's choice** - it contains valuable project artifacts but also working state. Many teams commit everything except `working/`.
+
+### Dogfooding Context
+
+**This repository is both the AIWG source code AND a project using AIWG.** We're dogfooding:
+
+- The `.aiwg/` directory here contains real artifacts for developing AIWG itself
+- The `tools/ralph-external/` implementation uses AIWG's own patterns
+- Agents, commands, and workflows are tested by using them to build more of the system
+
+When working in this repo, you're simultaneously:
+1. **Developing AIWG** - Writing code in `src/`, `tools/`, `agentic/`
+2. **Using AIWG** - Following workflows, creating artifacts in `.aiwg/`
+
+This is intentional - issues found while dogfooding become improvements to the framework.
+
 ## Release Documentation Requirements
 
 **CRITICAL**: Every release MUST be documented in ALL of these locations:
