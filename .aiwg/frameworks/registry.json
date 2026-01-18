@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "created": "2026-01-13T20:38:34.334Z",
+  "frameworks": [
+    {
+      "id": "sdlc-complete",
+      "installed": "2026-01-13T20:38:34.334Z",
+      "version": "1.0.0"
+    },
+    {
+      "id": "media-marketing-kit",
+      "installed": "2026-01-13T20:38:34.334Z",
+      "version": "1.0.0"
+    }
+  ]
+}
