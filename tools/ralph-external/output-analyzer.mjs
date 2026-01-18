@@ -135,7 +135,20 @@ export class OutputAnalyzer {
       // Try to extract JSON from the output
       const jsonMatch = output.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(jsonMatch[0]);
+        // Merge with defaults to ensure all fields are present
+        return {
+          completed: false,
+          success: null,
+          failureClass: null,
+          completionPercentage: 0,
+          shouldContinue: true,
+          learnings: '',
+          artifactsModified: [],
+          blockers: [],
+          nextApproach: 'Continue with accumulated context',
+          ...parsed,
+        };
       }
 
       return null;

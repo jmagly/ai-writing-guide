@@ -383,5 +383,48 @@ describe('OutputAnalyzer', () => {
       analyzeWithClaudeSpy.mockRestore();
       consoleLog.mockRestore();
     });
+
+    it('should always return all required fields even with partial Claude response', async () => {
+      writeFileSync(stdoutPath, 'some output');
+      writeFileSync(stderrPath, '');
+
+      // Mock analyzeWithClaude to return partial JSON
+      const analyzeWithClaudeSpy = vi
+        .spyOn(analyzer, 'analyzeWithClaude')
+        .mockReturnValue({
+          completed: true,
+          success: true,
+          // Other fields should come from defaults via merging
+          completionPercentage: 100,
+          shouldContinue: false,
+          learnings: 'Done',
+          artifactsModified: ['file.ts'],
+          blockers: [],
+          nextApproach: '',
+        });
+
+      const result = await analyzer.analyze({
+        stdoutPath,
+        stderrPath,
+        exitCode: 0,
+        context: {
+          objective: 'Test',
+          criteria: 'Done',
+        },
+        useClaude: true,
+      });
+
+      // All required fields should be defined
+      expect(result.completed).toBeDefined();
+      expect(result.success).toBeDefined();
+      expect(result.shouldContinue).toBeDefined();
+      expect(result.completionPercentage).toBeDefined();
+      expect(result.learnings).toBeDefined();
+      expect(Array.isArray(result.artifactsModified)).toBe(true);
+      expect(Array.isArray(result.blockers)).toBe(true);
+      expect(result.nextApproach).toBeDefined();
+
+      analyzeWithClaudeSpy.mockRestore();
+    });
   });
 });
