@@ -8,9 +8,10 @@
  */
 
 import { spawn } from 'child_process';
-import { createWriteStream, mkdirSync, existsSync } from 'fs';
-import { dirname } from 'path';
+import { createWriteStream, mkdirSync, existsSync, readFileSync, copyFileSync } from 'fs';
+import { dirname, join } from 'path';
 import { EventEmitter } from 'events';
+import { homedir } from 'os';
 
 /**
  * @typedef {Object} LaunchOptions
@@ -18,11 +19,14 @@ import { EventEmitter } from 'events';
  * @property {string} sessionId - Session UUID for tracking
  * @property {string} [model='opus'] - Claude model to use
  * @property {number} [budget] - Budget per iteration in USD
+ * @property {number} [maxTurns] - Maximum number of turns (requires Claude CLI support)
+ * @property {boolean} [verbose=false] - Enable verbose output
  * @property {string} [systemPrompt] - System prompt to append
  * @property {Object} [mcpConfig] - MCP server configuration
  * @property {string} workingDir - Working directory for session
  * @property {string} stdoutPath - Path to capture stdout
  * @property {string} stderrPath - Path to capture stderr
+ * @property {string} outputDir - Directory for session artifacts
  * @property {number} [timeoutMs] - Timeout in milliseconds
  */
 
@@ -31,9 +35,20 @@ import { EventEmitter } from 'events';
  * @property {number} exitCode - Process exit code
  * @property {string} stdoutPath - Path to stdout log
  * @property {string} stderrPath - Path to stderr log
+ * @property {string} [transcriptPath] - Path to session transcript (if available)
+ * @property {string} [parsedEventsPath] - Path to parsed stream events (if available)
  * @property {number} duration - Duration in milliseconds
  * @property {boolean} timedOut - Whether session timed out
  * @property {string} stdoutBuffer - Last portion of stdout
+ * @property {number} [toolCallCount] - Number of tool calls detected
+ * @property {number} [errorCount] - Number of errors detected
+ */
+
+/**
+ * @typedef {Object} StreamEvent
+ * @property {string} type - Event type (e.g., 'tool_call', 'completion', 'error')
+ * @property {number} timestamp - Unix timestamp
+ * @property {Object} data - Event data
  */
 
 export class SessionLauncher extends EventEmitter {
@@ -56,6 +71,11 @@ export class SessionLauncher extends EventEmitter {
       '--session-id', options.sessionId,
     ];
 
+    // Verbose mode
+    if (options.verbose) {
+      args.push('--verbose');
+    }
+
     // Model selection
     if (options.model) {
       args.push('--model', options.model);
@@ -64,6 +84,11 @@ export class SessionLauncher extends EventEmitter {
     // Budget control
     if (options.budget) {
       args.push('--max-budget-usd', String(options.budget));
+    }
+
+    // Max turns control (if supported by Claude CLI)
+    if (options.maxTurns) {
+      args.push('--max-turns', String(options.maxTurns));
     }
 
     // MCP configuration
@@ -90,11 +115,29 @@ export class SessionLauncher extends EventEmitter {
    * @param {LaunchOptions} options
    * @returns {Promise<SessionResult>}
    */
-  launch(options) {
+  async launch(options) {
+    const sessionResult = await this._launchSession(options);
+
+    // Post-session artifact capture
+    await this._captureSessionArtifacts(options, sessionResult);
+
+    return sessionResult;
+  }
+
+  /**
+   * Internal method to launch session and capture basic output
+   * @private
+   * @param {LaunchOptions} options
+   * @returns {Promise<SessionResult>}
+   */
+  _launchSession(options) {
     return new Promise((resolve, reject) => {
       // Ensure output directories exist
       mkdirSync(dirname(options.stdoutPath), { recursive: true });
       mkdirSync(dirname(options.stderrPath), { recursive: true });
+      if (options.outputDir) {
+        mkdirSync(options.outputDir, { recursive: true });
+      }
 
       const args = this.buildArgs(options);
       this.startTime = Date.now();
@@ -199,6 +242,210 @@ export class SessionLauncher extends EventEmitter {
 
       this.emit('started', { pid: child.pid, args });
     });
+  }
+
+  /**
+   * Capture session artifacts after completion
+   * @private
+   * @param {LaunchOptions} options
+   * @param {SessionResult} result
+   */
+  async _captureSessionArtifacts(options, result) {
+    if (!options.outputDir) {
+      return; // No output directory specified
+    }
+
+    try {
+      // Copy session transcript if available
+      const transcriptPath = await this.copySessionTranscript(
+        options.sessionId,
+        options.workingDir,
+        options.outputDir
+      );
+      if (transcriptPath) {
+        result.transcriptPath = transcriptPath;
+      }
+
+      // Parse stream events from stdout
+      const { path: eventsPath, stats } = await this.parseStreamEvents(
+        options.stdoutPath,
+        options.outputDir
+      );
+      if (eventsPath) {
+        result.parsedEventsPath = eventsPath;
+        result.toolCallCount = stats.toolCallCount;
+        result.errorCount = stats.errorCount;
+      }
+    } catch (err) {
+      // Log but don't fail the session
+      this.emit('artifact-error', err);
+    }
+  }
+
+  /**
+   * Copy session transcript from Claude's project directory
+   *
+   * Claude stores session transcripts at:
+   * ~/.claude/projects/{encoded-path}/{session-id}.jsonl
+   *
+   * Path encoding: Replace `/` with `-`, prepend `-`
+   * Example: /foo/bar → -foo-bar
+   *
+   * @param {string} sessionId - Session UUID
+   * @param {string} workingDir - Working directory path
+   * @param {string} outputDir - Destination directory
+   * @returns {Promise<string|null>} Path to copied transcript or null if not found
+   */
+  async copySessionTranscript(sessionId, workingDir, outputDir) {
+    try {
+      // Encode working directory path
+      const encodedPath = workingDir.replace(/\//g, '-');
+
+      // Build source path
+      const sourcePath = join(
+        homedir(),
+        '.claude',
+        'projects',
+        encodedPath,
+        `${sessionId}.jsonl`
+      );
+
+      // Check if transcript exists
+      if (!existsSync(sourcePath)) {
+        this.emit('transcript-not-found', { sourcePath });
+        return null;
+      }
+
+      // Copy to output directory
+      const destPath = join(outputDir, 'session-transcript.jsonl');
+      copyFileSync(sourcePath, destPath);
+
+      this.emit('transcript-copied', { sourcePath, destPath });
+      return destPath;
+    } catch (err) {
+      this.emit('transcript-error', err);
+      return null;
+    }
+  }
+
+  /**
+   * Parse stream-json events from stdout capture
+   *
+   * Extracts structured events from Claude's stream-json output format.
+   * Tracks tool calls, completions, and errors.
+   *
+   * @param {string} stdoutPath - Path to stdout capture file
+   * @param {string} outputDir - Directory to save parsed events
+   * @returns {Promise<{path: string|null, stats: Object}>} Parsed events path and statistics
+   */
+  async parseStreamEvents(stdoutPath, outputDir) {
+    const stats = {
+      toolCallCount: 0,
+      errorCount: 0,
+      completionCount: 0,
+      totalEvents: 0,
+    };
+
+    try {
+      // Read stdout file
+      const content = readFileSync(stdoutPath, 'utf-8');
+
+      // Parse stream-json events (each line is a JSON object)
+      const events = [];
+      const lines = content.split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        try {
+          const event = JSON.parse(line);
+
+          // Categorize event
+          const eventType = this._categorizeStreamEvent(event);
+
+          const structuredEvent = {
+            type: eventType,
+            timestamp: Date.now(), // Could extract from event if available
+            data: event,
+          };
+
+          events.push(structuredEvent);
+          stats.totalEvents++;
+
+          // Update stats
+          if (eventType === 'tool_call') {
+            stats.toolCallCount++;
+          } else if (eventType === 'error') {
+            stats.errorCount++;
+          } else if (eventType === 'completion') {
+            stats.completionCount++;
+          }
+        } catch (parseErr) {
+          // Skip malformed lines
+          continue;
+        }
+      }
+
+      // Save parsed events
+      const eventsPath = join(outputDir, 'parsed-events.json');
+      const eventsData = {
+        stats,
+        events,
+        parsedAt: new Date().toISOString(),
+      };
+
+      mkdirSync(dirname(eventsPath), { recursive: true });
+      const fs = await import('fs/promises');
+      await fs.writeFile(eventsPath, JSON.stringify(eventsData, null, 2));
+
+      this.emit('events-parsed', { eventsPath, stats });
+      return { path: eventsPath, stats };
+    } catch (err) {
+      this.emit('parse-error', err);
+      return { path: null, stats };
+    }
+  }
+
+  /**
+   * Categorize a stream-json event
+   * @private
+   * @param {Object} event - Raw event object
+   * @returns {string} Event type
+   */
+  _categorizeStreamEvent(event) {
+    // Check for tool-related events first (before checking type field)
+    // This handles events like { type: 'tool_use', name: 'read_file' }
+    if (event.type === 'tool_use' || event.tool || event.tool_use || event.name?.includes('tool')) {
+      return 'tool_call';
+    }
+
+    // Check for error events
+    // Note: message can be a string or object, so check type before calling includes
+    if (event.type === 'error' || event.error || (typeof event.message === 'string' && event.message.includes('error'))) {
+      return 'error';
+    }
+
+    // Check for other common type fields
+    if (event.type) {
+      return event.type;
+    }
+
+    // Heuristic categorization based on content
+    if (event.stop_reason || event.content?.some?.(c => c.type === 'text')) {
+      return 'completion';
+    }
+
+    if (event.delta || event.content_block_delta) {
+      return 'content_delta';
+    }
+
+    if (event.message_start || event.content_block_start) {
+      return 'start';
+    }
+
+    if (event.message_stop || event.content_block_stop) {
+      return 'stop';
+    }
+
+    return 'unknown';
   }
 
   /**

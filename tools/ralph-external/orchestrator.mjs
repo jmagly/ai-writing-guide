@@ -4,6 +4,12 @@
  * Main loop logic that coordinates session launching, output analysis,
  * and state management for the external Ralph supervisor.
  *
+ * Enhanced with comprehensive state capture for long-running sessions (6-8 hours):
+ * - Pre/post session snapshots (git, .aiwg, file hashes)
+ * - Periodic checkpoints during sessions
+ * - Two-phase state assessment (orient + prompt generation)
+ * - Session transcript and stream-json capture
+ *
  * @implements @.aiwg/requirements/design-ralph-external.md
  */
 
@@ -13,6 +19,9 @@ import { StateManager } from './state-manager.mjs';
 import { SessionLauncher } from './session-launcher.mjs';
 import { OutputAnalyzer } from './output-analyzer.mjs';
 import { PromptGenerator } from './prompt-generator.mjs';
+import { SnapshotManager } from './snapshot-manager.mjs';
+import { CheckpointManager } from './checkpoint-manager.mjs';
+import { StateAssessor } from './state-assessor.mjs';
 
 /**
  * @typedef {Object} OrchestratorConfig
@@ -25,6 +34,12 @@ import { PromptGenerator } from './prompt-generator.mjs';
  * @property {Object} [mcpConfig] - MCP server configuration
  * @property {string} [workingDir] - Working directory
  * @property {Object} [giteaIntegration] - Gitea issue tracking
+ * @property {boolean} [verbose=false] - Enable verbose Claude output
+ * @property {number} [checkpointIntervalMinutes=30] - Checkpoint interval
+ * @property {boolean} [enableCheckpoints=true] - Enable periodic checkpoints
+ * @property {boolean} [enableSnapshots=true] - Enable pre/post session snapshots
+ * @property {boolean} [useClaudeAssessment=false] - Use Claude for state assessment
+ * @property {string[]} [keyFiles=[]] - Key files to track hashes
  */
 
 /**
@@ -45,7 +60,11 @@ export class Orchestrator {
     this.sessionLauncher = new SessionLauncher();
     this.outputAnalyzer = new OutputAnalyzer();
     this.promptGenerator = new PromptGenerator();
+    this.snapshotManager = new SnapshotManager({ projectRoot });
+    this.checkpointManager = null; // Created per-session with config
+    this.stateAssessor = new StateAssessor({ projectRoot });
     this.aborted = false;
+    this.currentPreSnapshot = null;
   }
 
   /**
@@ -54,7 +73,7 @@ export class Orchestrator {
    * @returns {Promise<OrchestratorResult>}
    */
   async execute(config) {
-    // Initialize state
+    // Initialize state with enhanced capture options
     const state = this.stateManager.initialize({
       objective: config.objective,
       completionCriteria: config.completionCriteria,
@@ -65,11 +84,24 @@ export class Orchestrator {
       mcpConfig: config.mcpConfig,
       workingDir: config.workingDir || this.projectRoot,
       giteaIntegration: config.giteaIntegration,
+      // Enhanced capture options
+      verbose: config.verbose || false,
+      checkpointIntervalMinutes: config.checkpointIntervalMinutes || 30,
+      enableCheckpoints: config.enableCheckpoints !== false,
+      enableSnapshots: config.enableSnapshots !== false,
+      useClaudeAssessment: config.useClaudeAssessment || false,
+      keyFiles: config.keyFiles || [],
     });
 
     console.log(`[External Ralph] Starting loop ${state.loopId}`);
     console.log(`[External Ralph] Objective: ${config.objective}`);
     console.log(`[External Ralph] Max iterations: ${state.maxIterations}`);
+    if (state.config.enableSnapshots) {
+      console.log('[External Ralph] Pre/post session snapshots: ENABLED');
+    }
+    if (state.config.enableCheckpoints) {
+      console.log(`[External Ralph] Periodic checkpoints: ENABLED (${state.config.checkpointIntervalMinutes} min)`);
+    }
 
     return this.runLoop(state);
   }
@@ -114,38 +146,105 @@ export class Orchestrator {
       this.stateManager.update({ currentIteration: state.currentIteration });
       console.log(`\n[External Ralph] === Iteration ${state.currentIteration}/${state.maxIterations} ===`);
 
+      // Get output paths and iteration directory
+      const outputPaths = this.stateManager.getOutputPaths(state.currentIteration);
+      const iterationDir = dirname(outputPaths.stdout);
+      mkdirSync(iterationDir, { recursive: true });
+
       try {
-        // Generate prompt
+        // ========== PRE-SESSION SNAPSHOT ==========
+        if (state.config.enableSnapshots) {
+          console.log('[External Ralph] Capturing pre-session snapshot...');
+          this.currentPreSnapshot = await this.snapshotManager.capturePreSnapshot({
+            sessionId: state.sessionId,
+            iteration: state.currentIteration,
+            objective: state.objective,
+            keyFiles: state.config.keyFiles,
+          });
+          // Save snapshot to iteration directory
+          writeFileSync(
+            join(iterationDir, 'pre-snapshot.json'),
+            JSON.stringify(this.currentPreSnapshot, null, 2)
+          );
+        }
+
+        // ========== GENERATE PROMPT ==========
+        let prompt, systemPrompt;
         const promptType = state.currentIteration === 1 ? 'initial' : 'continuation';
         const lastIteration = state.iterations[state.iterations.length - 1];
 
-        const { prompt, systemPrompt } = this.promptGenerator.build({
-          type: promptType,
-          objective: state.objective,
-          completionCriteria: state.completionCriteria,
-          iteration: state.currentIteration,
-          maxIterations: state.maxIterations,
-          loopId: state.loopId,
-          sessionId: state.sessionId,
-          learnings: state.accumulatedLearnings,
-          filesModified: state.filesModified,
-          previousStatus: lastIteration?.analysis?.success ? 'partial' : 'incomplete',
-          previousOutput: lastIteration?.analysis?.learnings,
-          lastAnalysis: lastIteration?.analysis?.nextApproach,
-        });
+        if (promptType === 'continuation' && state.config.useClaudeAssessment) {
+          // Use two-phase state assessment for continuation prompts
+          console.log('[External Ralph] Performing two-phase state assessment...');
+          const assessment = await this.stateAssessor.assess({
+            stdoutPath: lastIteration?.stdoutFile,
+            stderrPath: lastIteration?.stderrFile,
+            exitCode: lastIteration?.exitCode || 0,
+            timedOut: false,
+            preSnapshot: this.currentPreSnapshot,
+            postSnapshot: lastIteration?.postSnapshot,
+            objective: state.objective,
+            completionCriteria: state.completionCriteria,
+            iteration: state.currentIteration,
+            maxIterations: state.maxIterations,
+            accumulatedLearnings: state.accumulatedLearnings,
+            outputDir: iterationDir,
+          });
+
+          // Save assessment to iteration directory
+          writeFileSync(
+            join(iterationDir, 'state-assessment.json'),
+            JSON.stringify(assessment, null, 2)
+          );
+
+          prompt = assessment.prompt;
+          systemPrompt = this.promptGenerator.buildSystemPrompt({
+            objective: state.objective,
+            completionCriteria: state.completionCriteria,
+            iteration: state.currentIteration,
+            maxIterations: state.maxIterations,
+            loopId: state.loopId,
+          });
+        } else {
+          // Use standard prompt generator
+          const generated = this.promptGenerator.build({
+            type: promptType,
+            objective: state.objective,
+            completionCriteria: state.completionCriteria,
+            iteration: state.currentIteration,
+            maxIterations: state.maxIterations,
+            loopId: state.loopId,
+            sessionId: state.sessionId,
+            learnings: state.accumulatedLearnings,
+            filesModified: state.filesModified,
+            previousStatus: lastIteration?.analysis?.success ? 'partial' : 'incomplete',
+            previousOutput: lastIteration?.analysis?.learnings,
+            lastAnalysis: lastIteration?.analysis?.nextApproach,
+          });
+          prompt = generated.prompt;
+          systemPrompt = generated.systemPrompt;
+        }
 
         // Save prompt for debugging
         const promptPath = this.stateManager.getPromptPath(state.currentIteration);
         mkdirSync(dirname(promptPath), { recursive: true });
         writeFileSync(promptPath, prompt);
 
-        // Get output paths
-        const outputPaths = this.stateManager.getOutputPaths(state.currentIteration);
+        // ========== START CHECKPOINT MANAGER ==========
+        if (state.config.enableCheckpoints) {
+          console.log('[External Ralph] Starting checkpoint manager...');
+          this.checkpointManager = new CheckpointManager({
+            stateDir: iterationDir,
+            projectRoot: this.projectRoot,
+            interval: state.config.checkpointIntervalMinutes * 60 * 1000,
+            sessionId: state.sessionId,
+          });
+          this.checkpointManager.start();
+        }
 
-        // Launch session
+        // ========== LAUNCH SESSION ==========
         console.log('[External Ralph] Launching Claude session...');
         const startTime = Date.now();
-
         this.stateManager.setCurrentPid(null);
 
         const sessionResult = await this.sessionLauncher.launch({
@@ -158,13 +257,50 @@ export class Orchestrator {
           workingDir: state.config.workingDir,
           stdoutPath: outputPaths.stdout,
           stderrPath: outputPaths.stderr,
+          outputDir: iterationDir,
           timeoutMs: state.config.timeoutMinutes * 60 * 1000,
+          verbose: state.config.verbose,
         });
 
         const duration = Date.now() - startTime;
-        console.log(`[External Ralph] Session completed (${Math.round(duration / 1000)}s, exit: ${sessionResult.exitCode})`);
 
-        // Analyze output
+        // ========== STOP CHECKPOINT MANAGER ==========
+        let checkpointSummary = null;
+        if (this.checkpointManager) {
+          console.log('[External Ralph] Stopping checkpoint manager...');
+          checkpointSummary = this.checkpointManager.stop();
+          this.checkpointManager = null;
+        }
+
+        console.log(`[External Ralph] Session completed (${Math.round(duration / 1000)}s, exit: ${sessionResult.exitCode})`);
+        if (sessionResult.toolCallCount) {
+          console.log(`[External Ralph] Tool calls: ${sessionResult.toolCallCount}, errors: ${sessionResult.errorCount || 0}`);
+        }
+
+        // ========== POST-SESSION SNAPSHOT ==========
+        let postSnapshot = null;
+        if (state.config.enableSnapshots && this.currentPreSnapshot) {
+          console.log('[External Ralph] Capturing post-session snapshot...');
+          postSnapshot = await this.snapshotManager.capturePostSnapshot(this.currentPreSnapshot);
+
+          // Save snapshot and diff
+          writeFileSync(
+            join(iterationDir, 'post-snapshot.json'),
+            JSON.stringify(postSnapshot, null, 2)
+          );
+
+          const snapshotDiff = this.snapshotManager.calculateDiff(this.currentPreSnapshot, postSnapshot);
+          writeFileSync(
+            join(iterationDir, 'snapshot-diff.json'),
+            JSON.stringify(snapshotDiff, null, 2)
+          );
+
+          if (snapshotDiff.summary.totalChanges > 0) {
+            console.log(`[External Ralph] Changes detected: ${snapshotDiff.summary.totalChanges} (git: ${snapshotDiff.summary.gitChanges}, aiwg: ${snapshotDiff.summary.aiwgChanges})`);
+          }
+        }
+
+        // ========== ANALYZE OUTPUT ==========
         console.log('[External Ralph] Analyzing output...');
         const analysis = await this.outputAnalyzer.analyze({
           stdoutPath: outputPaths.stdout,
@@ -179,7 +315,7 @@ export class Orchestrator {
         // Save analysis
         this.stateManager.saveAnalysis(state.currentIteration, analysis);
 
-        // Update state with iteration record
+        // ========== UPDATE STATE ==========
         state = this.stateManager.addIteration({
           number: state.currentIteration,
           sessionId: state.sessionId,
@@ -193,11 +329,19 @@ export class Orchestrator {
           learnings: analysis.learnings ? [analysis.learnings] : [],
           filesModified: analysis.artifactsModified || [],
           progress: analysis.nextApproach,
+          // Enhanced capture data
+          preSnapshot: this.currentPreSnapshot,
+          postSnapshot,
+          checkpointSummary,
+          transcriptPath: sessionResult.transcriptPath,
+          parsedEventsPath: sessionResult.parsedEventsPath,
+          toolCallCount: sessionResult.toolCallCount,
+          errorCount: sessionResult.errorCount,
         });
 
         console.log(`[External Ralph] Analysis: completed=${analysis.completed}, success=${analysis.success}, progress=${analysis.completionPercentage}%`);
 
-        // Check completion
+        // ========== CHECK COMPLETION ==========
         if (analysis.completed && analysis.success) {
           state.status = 'completed';
           this.stateManager.save(state);
@@ -230,6 +374,16 @@ export class Orchestrator {
       } catch (error) {
         console.error(`[External Ralph] Iteration ${state.currentIteration} error:`, error.message);
 
+        // Stop checkpoint manager if running
+        if (this.checkpointManager) {
+          try {
+            this.checkpointManager.stop();
+          } catch (e) {
+            // Ignore stop errors
+          }
+          this.checkpointManager = null;
+        }
+
         // Save error state
         this.stateManager.addIteration({
           number: state.currentIteration,
@@ -241,6 +395,7 @@ export class Orchestrator {
           learnings: [`Error: ${error.message}`],
           filesModified: [],
           progress: 'Error recovery needed',
+          preSnapshot: this.currentPreSnapshot,
         });
 
         // Continue to next iteration (crash recovery)
@@ -250,6 +405,16 @@ export class Orchestrator {
 
     // Loop ended without success
     if (this.aborted) {
+      // Stop checkpoint manager if running
+      if (this.checkpointManager) {
+        try {
+          this.checkpointManager.stop();
+        } catch (e) {
+          // Ignore stop errors
+        }
+        this.checkpointManager = null;
+      }
+
       state.status = 'aborted';
       this.stateManager.save(state);
 

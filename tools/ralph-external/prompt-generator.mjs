@@ -178,6 +178,15 @@ export class PromptGenerator {
   }
 
   /**
+   * Build system prompt only (for use with StateAssessor)
+   * @param {Object} context - System prompt context
+   * @returns {string} System prompt
+   */
+  buildSystemPrompt(context) {
+    return buildSystemPrompt(context);
+  }
+
+  /**
    * Build analysis prompt for output analyzer
    * @param {Object} params
    * @param {string} params.stdout - Session stdout
