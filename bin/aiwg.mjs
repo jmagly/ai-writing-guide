@@ -7,15 +7,21 @@
  * It handles:
  * - Channel detection (stable vs edge mode)
  * - Background update checking
- * - Command routing to appropriate handlers
+ * - Command routing to appropriate handlers (via facade)
+ *
+ * The facade allows switching between legacy and new routers via:
+ * - AIWG_USE_NEW_ROUTER environment variable
+ * - --experimental-router or --legacy-router CLI flags
  *
  * @module bin/aiwg
- * @version 2024.12.0
+ * @version 2026.1.7
+ * @implements @.aiwg/requirements/use-cases/UC-004-extension-system.md
+ * @source @src/cli/facade.mjs
  */
 
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { run } from '../src/cli/index.mjs';
+import { run } from '../src/cli/facade.mjs';
 import { checkForUpdates } from '../src/update/checker.mjs';
 import { getChannel, getPackageRoot } from '../src/channel/manager.mjs';
 
@@ -46,8 +52,11 @@ async function main() {
     // Silently ignore update check failures
   });
 
-  // Run the CLI with the package root context
-  await run(args, { packageRoot });
+  // Run the CLI via facade (supports both legacy and new routers)
+  // The facade will determine which router to use based on:
+  // - AIWG_USE_NEW_ROUTER environment variable
+  // - --experimental-router or --legacy-router flags
+  await run(args, { cwd: process.cwd() });
 }
 
 main().catch((error) => {
