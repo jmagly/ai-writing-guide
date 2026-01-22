@@ -89,24 +89,24 @@ AIWG-related sections are refreshed:
 The regenerated file is built in layers:
 
 ```
-┌─────────────────────────────────────────────────┐
-│           Your Context File                      │
-├─────────────────────────────────────────────────┤
-│  1. PROJECT ANALYSIS                             │
-│     Tech stack, commands, structure              │
-│     (Re-detected each regeneration)              │
-├─────────────────────────────────────────────────┤
-│  2. YOUR TEAM CONTENT                            │
-│     Rules, conventions, requirements             │
-│     (Preserved exactly as written)               │
-├─────────────────────────────────────────────────┤
-│  3. PROJECT ARTIFACTS (.aiwg/)                   │
-│     @-mentions linking to your docs              │
-├─────────────────────────────────────────────────┤
-│  4. AIWG REFERENCES                              │
-│     Core utilities + installed frameworks        │
-│     (Updated each regeneration)                  │
-└─────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────┐
+│               Your Context File                   │
+├───────────────────────────────────────────────────┤
+│  1. PROJECT ANALYSIS                              │
+│     Tech stack, commands, structure               │
+│     (Re-detected each regeneration)               │
+├───────────────────────────────────────────────────┤
+│  2. YOUR TEAM CONTENT                             │
+│     Rules, conventions, requirements              │
+│     (Preserved exactly as written)                │
+├───────────────────────────────────────────────────┤
+│  3. PROJECT ARTIFACTS (.aiwg/)                    │
+│     @-mentions linking to your docs               │
+├───────────────────────────────────────────────────┤
+│  4. AIWG REFERENCES                               │
+│     Core utilities + installed frameworks         │
+│     (Updated each regeneration)                   │
+└───────────────────────────────────────────────────┘
 ```
 
 ---
