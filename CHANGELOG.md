@@ -5,6 +5,63 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+**External Ralph Loop - Crash-Resilient Task Execution**:
+
+- **`/ralph-external` command** - External supervisor for long-running sessions (6-8 hours)
+  - Wraps Claude Code sessions with crash recovery and cross-session persistence
+  - Pre/post session snapshots capture git status, .aiwg state, file hashes
+  - Periodic checkpoints during session (configurable interval, default 30 min)
+  - Two-phase state assessment: Orient (understand what happened) → Generate (intelligent continuation)
+  - Comprehensive output capture: stdout, stderr, session transcript, parsed events
+- **`/ralph-external-status`** - Check external loop status
+- **`/ralph-external-abort`** - Abort external loop and cleanup
+- **Ralph External addon** (`tools/ralph-external/`):
+  - `orchestrator.mjs` - Main loop coordination (~450 lines)
+  - `session-launcher.mjs` - Claude CLI wrapper with capture (39 tests)
+  - `output-analyzer.mjs` - Session output analysis (29 tests)
+  - `snapshot-manager.mjs` - Pre/post session snapshots (23 tests)
+  - `checkpoint-manager.mjs` - Periodic state checkpoints (22 tests)
+  - `state-assessor.mjs` - Two-phase assessment system
+  - `recovery-engine.mjs` - Crash detection and recovery (25 tests)
+  - **166 passing tests** total
+- State directory: `.aiwg/ralph-external/` with full iteration history
+
+**When to Use External vs Internal Ralph**:
+
+| Feature | Internal (`/ralph`) | External (`/ralph-external`) |
+|---------|---------------------|------------------------------|
+| Session duration | Single session | Multi-session (6-8 hours) |
+| Crash recovery | Limited | Full supervisor recovery |
+| State capture | Basic | Comprehensive snapshots |
+| Context corruption | Risk exists | External state preserved |
+
+**Example Usage**:
+
+```bash
+# Long-running migration
+/ralph-external "Migrate codebase to TypeScript" \
+  --completion "npx tsc --noEmit exits 0" \
+  --max-iterations 20 \
+  --checkpoint-interval 20
+
+# With enhanced capture
+/ralph-external "Implement feature X" \
+  --completion "npm test passes" \
+  --verbose \
+  --use-claude-assessment
+```
+
+### Changed
+
+- **AIWG framework context** - Added dogfooding explanation to CLAUDE.md documenting how this repository uses AIWG to develop itself
+- **Framework registry tracking** - `.aiwg/frameworks/` now tracked for framework installation state
+
+---
+
 ## [2026.1.7] - 2026-01-14 – "Deploy All Commands" Release
 
 | What changed | Why you care |
@@ -1175,4 +1232,4 @@ For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
 ---
 
 **Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2026-01-13 (v2026.01.2)
+**Last Updated**: 2026-01-22 (Unreleased)

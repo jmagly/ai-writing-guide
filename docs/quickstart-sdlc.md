@@ -96,3 +96,28 @@ aiwg use writing           # Add Voice Framework
 ```
 
 **Built-in profiles**: `technical-authority`, `friendly-explainer`, `executive-brief`, `casual-conversational`
+
+---
+
+## Iterative Task Execution with Ralph
+
+For tasks that need multiple attempts or long-running operations:
+
+```bash
+# Fix all failing tests (internal loop)
+/ralph "Fix all failing tests" --completion "npm test passes"
+
+# Long-running migration with crash recovery (external loop)
+/ralph-external "Migrate to TypeScript" --completion "npx tsc --noEmit exits 0"
+```
+
+See the [Ralph Guide](ralph-guide.md) for detailed documentation.
+
+---
+
+## What's Next?
+
+- [Intake Guide](intake-guide.md) - Starting your first project
+- [Ralph Guide](ralph-guide.md) - Iterative task execution
+- [CLI Usage](CLI_USAGE.md) - Full command reference
+- [SDLC Framework Docs](../agentic/code/frameworks/sdlc-complete/README.md) - Complete agent catalog

@@ -75,6 +75,7 @@ aiwg -new my-project
 
 ### Reliability Patterns
 
+- **[Ralph Loop](docs/ralph-guide.md)** — Iterative task execution with automatic recovery
 - **[Agent Design Bible](docs/AGENT-DESIGN.md)** — 10 Golden Rules based on academic research
 - **[@-Mention Traceability](docs/CLI_USAGE.md#-mention-utilities)** — Wire live doc references in code
 - **[Production-Grade Guide](docs/production-grade-guide.md)** — Research-backed failure mode mitigations
@@ -90,8 +91,11 @@ aiwg -new my-project
 # Phase transition with automated gate check
 /flow-inception-to-elaboration
 
-# Multi-agent architecture document
-"Create Software Architecture Document"
+# Iterative task execution - "iteration beats perfection"
+/ralph "Fix all failing tests" --completion "npm test passes"
+
+# Long-running tasks with crash recovery (6-8 hours)
+/ralph-external "Migrate to TypeScript" --completion "npx tsc --noEmit exits 0"
 
 # Deploy to production
 /flow-deploy-to-production
@@ -149,6 +153,7 @@ See [Platform Integration Guides](docs/integrations/) for setup instructions.
 
 ### Advanced Topics
 
+- **[Ralph Loop](docs/ralph-guide.md)** — Iterative task execution with crash recovery
 - **[Workspace Architecture](docs/architecture/workspace-architecture.md)** — Multi-framework isolation
 - **[Multi-Agent Orchestration](agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md)** — Parallel reviews and synthesis
 - **[MCP Server](docs/mcp/)** — Model Context Protocol integration

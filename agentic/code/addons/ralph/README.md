@@ -159,9 +159,29 @@ Ralph inverts traditional AI optimization from "unpredictable success" to "predi
 
 See [When to Use Ralph](docs/when-to-use-ralph.md) for detailed guidance on avoiding the token-burning trap.
 
+## External Ralph
+
+For long-running tasks (6-8 hours) that need crash recovery and cross-session persistence, see **External Ralph**:
+
+```bash
+/ralph-external "Migrate codebase to TypeScript" \
+  --completion "npx tsc --noEmit exits 0" \
+  --max-iterations 20 \
+  --checkpoint-interval 20
+```
+
+External Ralph provides:
+- Pre/post session snapshots
+- Periodic checkpoints during execution
+- Two-phase state assessment
+- Crash recovery and resume
+
+See [Ralph Guide](../../../../docs/ralph-guide.md) for full documentation on both internal and external Ralph.
+
 ## Related
 
-- [When to Use Ralph](docs/when-to-use-ralph.md) - **Start here** - Understanding Ralph's sweet spot
+- [Ralph Guide](../../../../docs/ralph-guide.md) - **Complete documentation** for both internal and external Ralph
+- [When to Use Ralph](docs/when-to-use-ralph.md) - Understanding Ralph's sweet spot
 - [Quickstart Guide](docs/quickstart.md) - Getting started
 - [Best Practices](docs/best-practices.md) - Writing effective tasks
 - [Troubleshooting](docs/troubleshooting.md) - Common issues
