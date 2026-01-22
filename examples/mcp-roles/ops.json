@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "gitea": {
+      "type": "http",
+      "url": "https://mcp-gitea.example.com/mcp"
+    },
+    "cmdb": {
+      "type": "http",
+      "url": "https://mcp-cmdb.example.com/"
+    },
+    "memory": {
+      "type": "http",
+      "url": "https://mcp-memory.example.com/mcp"
+    }
+  }
+}

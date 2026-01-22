@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gitea": {
+      "type": "http",
+      "url": "https://mcp-gitea.example.com/mcp"
+    }
+  }
+}
