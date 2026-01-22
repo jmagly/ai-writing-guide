@@ -244,6 +244,29 @@ instructions: |
       JWT_SECRET: AgDK4mP9y...
   ```
   
+  ### Token Security for CI/CD
+  
+  When implementing API authentication in CI/CD pipelines, always use environment variables:
+  
+  ```yaml
+  # GitHub Actions - Secure token usage
+  jobs:
+    deploy:
+      steps:
+        - name: API Call
+          env:
+            GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          run: |
+            curl -s -H "Authorization: token ${GITEA_TOKEN}" \\
+              "https://git.integrolabs.net/api/v1/user"
+  ```
+  
+  **Security Notes**:
+  - Never hard-code tokens in workflow files
+  - Store tokens in repository secrets
+  - Use environment variables for token access
+  - See @agentic/code/frameworks/sdlc-complete/docs/token-security.md for comprehensive guidance
+  
   ## Performance Metrics
   
   - Build time: 3 minutes 45 seconds
@@ -272,7 +295,7 @@ instructions: |
   - Health checks and probes
   - Service mesh integration
   
-  ### CI/CD Pipeline (2)
+  ### CI/CD Pipeline
   
   Design GitHub Actions pipeline for:
   
@@ -500,245 +523,8 @@ instructions: |
   - Change failure rate: 15% → 2%
   - Infrastructure cost: -35%
   
-  ## Usage Examples (2)
+  ## References
   
-  ### Kubernetes Setup (2)
-  
-  ```text
-  Create complete Kubernetes deployment:
-  - Multi-environment setup (dev/staging/prod)
-  - Auto-scaling configuration
-  - Resource limits and requests
-  - Health checks and probes
-  - Service mesh integration
-  ```
-  
-  ### CI/CD Pipeline (3)
-  
-  ```text
-  Design GitHub Actions pipeline for:
-  - Node.js microservices
-  - Automated testing
-  - Docker build and push
-  - Kubernetes deployment
-  - Rollback capability
-  ```
-  
-  ### Infrastructure Migration (2)
-  
-  ```text
-  Plan AWS infrastructure:
-  - Migrate from EC2 to EKS
-  - Setup RDS with read replicas
-  - Configure CloudFront CDN
-  - Implement WAF rules
-  - Estimate costs
-  ```
-  
-  ## Common Patterns (2)
-  
-  ### Container Orchestration (2)
-  
-  ```yaml
-  # Kubernetes Deployment
-  apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    name: app
-  spec:
-    replicas: 3
-    strategy:
-      type: RollingUpdate
-      rollingUpdate:
-        maxSurge: 1
-        maxUnavailable: 0
-    template:
-      spec:
-        containers:
-        - name: app
-          image: app:latest
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 5
-  ```
-  
-  ### GitOps Workflow (2)
-  
-  ```yaml
-  # ArgoCD Application
-  apiVersion: argoproj.io/v1alpha1
-  kind: Application
-  metadata:
-    name: production
-  spec:
-    source:
-      repoURL: https://github.com/company/k8s-configs
-      path: production
-      targetRevision: main
-    destination:
-      server: https://kubernetes.default.svc
-      namespace: production
-    syncPolicy:
-      automated:
-        prune: true
-        selfHeal: true
-  ```
-  
-  ## Monitoring Stack (2)
-  
-  ### Metrics Collection (2)
-  
-  - **Prometheus**: Time-series metrics
-  - **Grafana**: Visualization dashboards
-  - **AlertManager**: Alert routing
-  - **PagerDuty**: Incident management
-  
-  ### Log Management (2)
-  
-  - **Fluentd**: Log collection
-  - **Elasticsearch**: Log storage
-  - **Kibana**: Log analysis
-  - **S3**: Long-term archive
-  
-  ## Security Practices (2)
-  
-  ### Supply Chain Security (2)
-  
-  ```yaml
-  # Trivy scan in pipeline
-  - name: Security Scan
-    run: |
-      trivy image --severity HIGH,CRITICAL app:latest
-      grype app:latest --fail-on high
-      snyk test --all-projects
-  ```
-  
-  ### Network Security (2)
-  
-  ```yaml
-  # Network Policy
-  apiVersion: networking.k8s.io/v1
-  kind: NetworkPolicy
-  metadata:
-    name: app-netpol
-  spec:
-    podSelector:
-      matchLabels:
-        app: backend
-    policyTypes:
-    - Ingress
-    - Egress
-    ingress:
-    - from:
-      - podSelector:
-          matchLabels:
-            app: frontend
-      ports:
-      - port: 8080
-  ```
-  
-  ## Disaster Recovery (2)
-  
-  ### Backup Strategy (2)
-  
-  ```bash
-  # Automated backup script
-  #!/bin/bash
-  # Database backup to S3
-  pg_dump $DATABASE_URL | gzip | aws s3 cp - s3://backups/db/$(date +%Y%m%d_%H%M%S).sql.gz
-  
-  # Kubernetes state backup
-  velero backup create prod-$(date +%Y%m%d) --include-namespaces production
-  
-  # Application data sync
-  aws s3 sync /data s3://backups/app-data/ --delete
-  ```
-  
-  ### Recovery Procedures (2)
-  
-  1. **RTO**: 1 hour
-  2. **RPO**: 15 minutes
-  3. **Automated failover**: Yes
-  4. **Cross-region replication**: Enabled
-  5. **Tested quarterly**: Last test 10/15/2023
-  
-  ## Cost Management (2)
-  
-  ### Resource Optimization (2)
-  
-  ```yaml
-  # Cluster Autoscaler
-  apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: cluster-autoscaler-status
-  data:
-    scale-down-utilization-threshold: "0.5"
-    scale-down-unneeded-time: "10m"
-    skip-nodes-with-local-storage: "false"
-    max-node-provision-time: "15m"
-  ```
-  
-  ### Cost Allocation (2)
-  
-  ```hcl
-  # Tagging strategy
-  locals {
-    common_tags = {
-      Environment = var.environment
-      Team        = var.team
-      CostCenter  = var.cost_center
-      Project     = var.project
-      ManagedBy   = "Terraform"
-    }
-  }
-  ```
-  
-  ## Performance Tuning (2)
-  
-  ### Build Optimization (2)
-  
-  - Docker layer caching: 70% faster
-  - Parallel test execution: 50% reduction
-  - Dependency caching: 3min saved
-  - Multi-stage builds: 60% smaller images
-  
-  ### Deployment Speed (2)
-  
-  - Canary rollout: 5% → 25% → 100%
-  - Health check tuning: 30s faster detection
-  - PreStop hooks: Graceful shutdown
-  - Connection draining: Zero downtime
-  
-  ## Troubleshooting Guide (2)
-  
-  ### Common Issues (2)
-  
-  1. **Pod CrashLooping**: Check logs, resource limits
-  2. **High memory usage**: Profile application, adjust limits
-  3. **Slow deployments**: Optimize image size, parallelize
-  4. **Failed health checks**: Increase timeout, check endpoints
-  
-  ## Success Metrics (2)
-  
-  - Deployment frequency: 15/day → 50/day
-  - Lead time: 3 days → 4 hours
-  - MTTR: 4 hours → 15 minutes
-  - Change failure rate: 15% → 2%
-  - Infrastructure cost: -35%
+  - @agentic/code/frameworks/sdlc-complete/docs/token-security.md - Token and secret management
+  - @agentic/code/addons/security/secure-token-load.md - Secure token loading patterns
+  - @.claude/rules/token-security.md - Security enforcement rules

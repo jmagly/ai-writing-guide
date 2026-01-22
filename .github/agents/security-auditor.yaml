@@ -436,6 +436,73 @@ instructions: |
   });
   ```
   
+  ### 7. Token and Secret Management Security
+  
+  **CRITICAL**: All API tokens, secrets, and credentials MUST be handled securely.
+  
+  #### Token Storage Best Practices
+  
+  ```javascript
+  // NEVER hardcode tokens
+  // BAD:
+  const GITEA_TOKEN = "abc123def456...";
+  
+  // GOOD: Load from environment
+  const GITEA_TOKEN = process.env.GITEA_TOKEN;
+  if (!GITEA_TOKEN) {
+    throw new Error('GITEA_TOKEN environment variable not set');
+  }
+  ```
+  
+  #### File-Based Token Loading (Development)
+  
+  ```bash
+  # Secure token loading pattern for scripts
+  bash <<'EOF'
+  TOKEN=$(cat ~/.config/gitea/token)
+  curl -s -H "Authorization: token ${TOKEN}" \\
+    "https://git.integrolabs.net/api/v1/user"
+  EOF
+  ```
+  
+  #### Token Security Checklist
+  
+  - [ ] **Never hardcode tokens** in any tracked file
+  - [ ] **Load from environment variables** (CI/CD) or secure files (development)
+  - [ ] **Use heredoc pattern** for multi-line shell operations with tokens
+  - [ ] **Enforce file permissions** mode 600 for token files
+  - [ ] **Never log token values** in application logs or console output
+  - [ ] **Rotate tokens regularly** and after any potential exposure
+  - [ ] **Use different tokens** for different privilege levels (admin vs standard)
+  
+  #### Example: Secure API Authentication
+  
+  ```bash
+  # Single API call - inline token load
+  curl -s -H "Authorization: token $(cat ~/.config/gitea/token)" \\
+    "https://git.integrolabs.net/api/v1/repos/owner/repo/issues"
+  
+  # Multiple API calls - heredoc pattern
+  bash <<'EOF'
+  TOKEN=$(cat ~/.config/gitea/token)
+  
+  REPOS=$(curl -s -H "Authorization: token ${TOKEN}" \\
+    "https://git.integrolabs.net/api/v1/users/roctinam/repos")
+  
+  ISSUES=$(curl -s -H "Authorization: token ${TOKEN}" \\
+    "https://git.integrolabs.net/api/v1/repos/roctinam/sysops/issues")
+  
+  echo "Repositories found: $(echo "${REPOS}" | jq length)"
+  echo "Issues found: $(echo "${ISSUES}" | jq length)"
+  EOF
+  ```
+  
+  **Security Notes**:
+  - Token loaded within heredoc scope only
+  - Not visible in shell history
+  - Not exposed in process list
+  - Automatically cleaned up after execution
+  
   ## Integration with SDLC Templates
   
   ### Reference These Templates
@@ -498,3 +565,11 @@ instructions: |
   - **Dependency Health**: Zero known CVEs in production dependencies
   - **Compliance**: 100% compliance with relevant standards (OWASP, PCI DSS, etc.)
   - **Incident Rate**: <1 security incident per quarter
+  
+  ## References
+  
+  - @agentic/code/frameworks/sdlc-complete/docs/token-security.md - Comprehensive token security guide
+  - @agentic/code/addons/security/secure-token-load.md - Token loading patterns
+  - @.claude/rules/token-security.md - Security enforcement rules
+  - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+  - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
