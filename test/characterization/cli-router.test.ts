@@ -1,13 +1,12 @@
 /**
  * CLI Router Characterization Tests
  *
- * These tests capture the CURRENT behavior of the CLI router (src/cli/index.mjs)
- * before refactoring to the unified extension system. They serve as a safety net
- * to ensure the refactoring preserves existing functionality.
+ * These tests capture the behavioral contract of the CLI router to ensure
+ * refactoring preserves existing functionality.
  *
  * @implements @.aiwg/architecture/unified-extension-system-implementation-plan.md
- * @source @src/cli/index.mjs
- * @tests Characterization tests for CLI refactoring
+ * @source @src/cli/router.ts
+ * @tests Characterization tests for CLI behavior
  *
  * Issue: #61 - Write characterization tests for existing CLI behavior
  */
@@ -15,11 +14,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { execSync, spawn, ChildProcess } from 'child_process';
 import { resolve, join } from 'path';
-import { existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 
 const PROJECT_ROOT = resolve(__dirname, '../..');
-const CLI_PATH = join(PROJECT_ROOT, 'src/cli/index.mjs');
 const BIN_PATH = join(PROJECT_ROOT, 'bin/aiwg.mjs');
 
 /**
@@ -400,179 +398,5 @@ describe('CLI Router Characterization Tests', () => {
       // Should pass --dry-run to deploy handler
       expect(result.stdout + result.stderr).toMatch(/dry.?run|preview/i);
     });
-  });
-});
-
-describe('CLI Module Structure Characterization', () => {
-  /**
-   * Documents the current module structure that the refactoring must accommodate.
-   */
-
-  describe('exports', () => {
-    it('should export run function', async () => {
-      const module = await import(CLI_PATH);
-      expect(typeof module.run).toBe('function');
-    });
-  });
-
-  describe('dependencies', () => {
-    it('should have expected imports in CLI module', () => {
-      const cliContent = readFileSync(CLI_PATH, 'utf-8');
-
-      // Core imports
-      expect(cliContent).toMatch(/import.*fileURLToPath.*from.*url/);
-      expect(cliContent).toMatch(/import.*path.*from.*path/);
-      expect(cliContent).toMatch(/import.*spawn.*from.*child_process/);
-
-      // Internal imports
-      expect(cliContent).toMatch(/import.*getFrameworkRoot.*from.*channel\/manager/);
-      expect(cliContent).toMatch(/import.*getVersionInfo.*from.*channel\/manager/);
-      expect(cliContent).toMatch(/import.*forceUpdateCheck.*from.*update\/checker/);
-    });
-  });
-});
-
-describe('COMMAND_ALIASES Constant Characterization', () => {
-  /**
-   * Documents the exact alias mappings that must be migrated to the registry.
-   */
-
-  it('should capture all current alias mappings', () => {
-    const cliContent = readFileSync(CLI_PATH, 'utf-8');
-
-    // Extract COMMAND_ALIASES from source
-    const aliasMatch = cliContent.match(/const COMMAND_ALIASES = \{[\s\S]*?\n\};/);
-    expect(aliasMatch).not.toBeNull();
-
-    const aliasBlock = aliasMatch![0];
-
-    // Project setup
-    expect(aliasBlock).toMatch(/'-new': 'new'/);
-    expect(aliasBlock).toMatch(/'--new': 'new'/);
-
-    // Workspace
-    expect(aliasBlock).toMatch(/'-status': 'status'/);
-    expect(aliasBlock).toMatch(/'-migrate-workspace': 'migrate-workspace'/);
-    expect(aliasBlock).toMatch(/'-rollback-workspace': 'rollback-workspace'/);
-
-    // Utilities
-    expect(aliasBlock).toMatch(/'-prefill-cards': 'prefill-cards'/);
-    expect(aliasBlock).toMatch(/'-contribute-start': 'contribute-start'/);
-    expect(aliasBlock).toMatch(/'-validate-metadata': 'validate-metadata'/);
-    expect(aliasBlock).toMatch(/'-install-plugin': 'install-plugin'/);
-    expect(aliasBlock).toMatch(/'-uninstall-plugin': 'uninstall-plugin'/);
-    expect(aliasBlock).toMatch(/'-plugin-status': 'plugin-status'/);
-    expect(aliasBlock).toMatch(/'-package-plugin': 'package-plugin'/);
-    expect(aliasBlock).toMatch(/'-package-all-plugins': 'package-all-plugins'/);
-
-    // Maintenance
-    expect(aliasBlock).toMatch(/'-doctor': 'doctor'/);
-    expect(aliasBlock).toMatch(/'-version': 'version'/);
-    expect(aliasBlock).toMatch(/'-update': 'update'/);
-    expect(aliasBlock).toMatch(/'-h': 'help'/);
-    expect(aliasBlock).toMatch(/'-help': 'help'/);
-    expect(aliasBlock).toMatch(/'--help': 'help'/);
-
-    // Scaffolding
-    expect(aliasBlock).toMatch(/'add-agent': 'add-agent'/);
-    expect(aliasBlock).toMatch(/'add-command': 'add-command'/);
-    expect(aliasBlock).toMatch(/'add-skill': 'add-skill'/);
-    expect(aliasBlock).toMatch(/'add-template': 'add-template'/);
-    expect(aliasBlock).toMatch(/'scaffold-addon': 'scaffold-addon'/);
-    expect(aliasBlock).toMatch(/'scaffold-extension': 'scaffold-extension'/);
-    expect(aliasBlock).toMatch(/'scaffold-framework': 'scaffold-framework'/);
-
-    // Ralph
-    expect(aliasBlock).toMatch(/'ralph': 'ralph'/);
-    expect(aliasBlock).toMatch(/'-ralph': 'ralph'/);
-    expect(aliasBlock).toMatch(/'--ralph': 'ralph'/);
-    expect(aliasBlock).toMatch(/'ralph-status': 'ralph-status'/);
-    expect(aliasBlock).toMatch(/'ralph-abort': 'ralph-abort'/);
-    expect(aliasBlock).toMatch(/'ralph-resume': 'ralph-resume'/);
-  });
-});
-
-describe('Switch Case Routing Characterization', () => {
-  /**
-   * Documents the exact routing that must be replicated by the registry.
-   */
-
-  it('should capture all switch cases in CLI', () => {
-    const cliContent = readFileSync(CLI_PATH, 'utf-8');
-
-    // Framework management
-    expect(cliContent).toMatch(/case 'use':/);
-    expect(cliContent).toMatch(/case 'list':/);
-    expect(cliContent).toMatch(/case 'remove':/);
-
-    // Project setup
-    expect(cliContent).toMatch(/case 'new':/);
-
-    // Workspace
-    expect(cliContent).toMatch(/case 'status':/);
-    expect(cliContent).toMatch(/case 'migrate-workspace':/);
-    expect(cliContent).toMatch(/case 'rollback-workspace':/);
-
-    // MCP
-    expect(cliContent).toMatch(/case 'mcp':/);
-
-    // Toolsmith
-    expect(cliContent).toMatch(/case 'runtime-info':/);
-
-    // Catalog
-    expect(cliContent).toMatch(/case 'catalog':/);
-
-    // Utilities
-    expect(cliContent).toMatch(/case 'prefill-cards':/);
-    expect(cliContent).toMatch(/case 'contribute-start':/);
-    expect(cliContent).toMatch(/case 'validate-metadata':/);
-    expect(cliContent).toMatch(/case 'install-plugin':/);
-    expect(cliContent).toMatch(/case 'uninstall-plugin':/);
-    expect(cliContent).toMatch(/case 'plugin-status':/);
-    expect(cliContent).toMatch(/case 'package-plugin':/);
-    expect(cliContent).toMatch(/case 'package-all-plugins':/);
-
-    // Maintenance
-    expect(cliContent).toMatch(/case 'doctor':/);
-    expect(cliContent).toMatch(/case 'version':/);
-    expect(cliContent).toMatch(/case 'update':/);
-    expect(cliContent).toMatch(/case 'help':/);
-
-    // Scaffolding
-    expect(cliContent).toMatch(/case 'add-agent':/);
-    expect(cliContent).toMatch(/case 'add-command':/);
-    expect(cliContent).toMatch(/case 'add-skill':/);
-    expect(cliContent).toMatch(/case 'add-template':/);
-    expect(cliContent).toMatch(/case 'scaffold-addon':/);
-    expect(cliContent).toMatch(/case 'scaffold-extension':/);
-    expect(cliContent).toMatch(/case 'scaffold-framework':/);
-
-    // Ralph
-    expect(cliContent).toMatch(/case 'ralph':/);
-    expect(cliContent).toMatch(/case 'ralph-status':/);
-    expect(cliContent).toMatch(/case 'ralph-abort':/);
-    expect(cliContent).toMatch(/case 'ralph-resume':/);
-
-    // Default
-    expect(cliContent).toMatch(/default:/);
-  });
-});
-
-describe('Handler Function Characterization', () => {
-  /**
-   * Documents which handlers exist and their signatures.
-   */
-
-  it('should have expected helper functions', () => {
-    const cliContent = readFileSync(CLI_PATH, 'utf-8');
-
-    // Functions that must be preserved/migrated
-    expect(cliContent).toMatch(/function normalizeCommand\(cmd\)/);
-    expect(cliContent).toMatch(/function displayHelp\(\)/);
-    expect(cliContent).toMatch(/async function displayVersion\(\)/);
-    expect(cliContent).toMatch(/async function runScript\(scriptPath, args.*options/);
-    expect(cliContent).toMatch(/async function handleUse\(args\)/);
-    expect(cliContent).toMatch(/async function handleRuntimeInfo\(args\)/);
-    expect(cliContent).toMatch(/export async function run\(args, options/);
   });
 });

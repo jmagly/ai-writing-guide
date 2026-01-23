@@ -6,7 +6,7 @@
  *
  * @implements @.aiwg/architecture/decisions/ADR-001-unified-extension-system.md
  * @implements #56, #57
- * @source @src/cli/index.mjs
+ * @source @src/cli/router.ts
  * @issue #33
  */
 

@@ -4,7 +4,7 @@
  * Defines the interface for CLI command handlers extracted from the monolithic router.
  *
  * @implements @.aiwg/architecture/decisions/ADR-001-unified-extension-system.md
- * @source @src/cli/index.mjs
+ * @source @src/cli/router.ts
  * @issue #33
  */
 

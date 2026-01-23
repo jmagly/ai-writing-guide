@@ -2,11 +2,11 @@
  * Subcommand Handlers
  *
  * Handlers for MCP, catalog, plugin, and other subcommands.
- * Extracted from src/cli/index.mjs.
+ * Handles CLI subcommand routing.
  *
  * @implements @.aiwg/architecture/decisions/ADR-001-unified-extension-system.md
  * @implements #56, #57
- * @source @src/cli/index.mjs
+ * @source @src/cli/router.ts
  * @tests @test/unit/cli/handlers/subcommands.test.ts
  * @issue #33
  */

@@ -2,10 +2,10 @@
  * Script Runner
  *
  * Utility for running framework scripts from handlers.
- * Extracted from src/cli/index.mjs runScript function.
+ * Script execution utility for CLI handlers.
  *
  * @implements @.aiwg/architecture/decisions/ADR-001-unified-extension-system.md
- * @source @src/cli/index.mjs
+ * @source @src/cli/router.ts
  * @issue #33
  */
 

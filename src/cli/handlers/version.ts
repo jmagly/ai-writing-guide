@@ -4,7 +4,7 @@
  * Displays version and channel information for the AIWG installation.
  *
  * @implements @.aiwg/architecture/decisions/ADR-001-unified-extension-system.md
- * @source @src/cli/index.mjs
+ * @source @src/cli/router.ts
  * @issue #33
  */
 
