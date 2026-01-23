@@ -55,9 +55,9 @@
       "triggers": ["iteration report", "sprint summary", "project report", "executive summary"]
     },
     {
-      "name": "gap-analysis",
-      "description": "Unified gap analysis with natural language routing to specialized skills",
-      "triggers": ["gap analysis", "find gaps", "what's missing", "coverage gaps", "audit gaps", "compliance gaps"]
+      "name": "issue-auto-sync",
+      "description": "Automatic issue tracking synchronization from commits and artifacts",
+      "triggers": ["sync issues", "update linked issues", "check issue references", "auto-update issues", "post-commit issue sync"]
     }
   ],
   "dependencies": {

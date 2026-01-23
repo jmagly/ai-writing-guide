@@ -1,7 +1,7 @@
 ---
 name: devkit-create-agent
 description: Create a new agent with AI-guided expertise definition following the Agent Design Bible
-args: <name> --to <target> [--template <type>] [--interactive]
+args: <name> --to <target> [--template <type>] [--interactive --guidance "text"]
 ---
 
 # Create AIWG Agent

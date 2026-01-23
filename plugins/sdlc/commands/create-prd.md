@@ -1,7 +1,7 @@
 ---
 description: Create a Product Requirements Document (PRD) for a product feature
 category: project-task-management
-argument-hint: "<feature description> [output-path]"
+argument-hint: "<feature description> [output-path] [--interactive] [--guidance "text"]"
 allowed-tools: Write, TodoWrite
 ---
 

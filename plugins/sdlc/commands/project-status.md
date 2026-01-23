@@ -1,7 +1,7 @@
 ---
 description: Analyze project state from .aiwg/ artifacts and provide contextual status with recommended next steps
 category: sdlc-management
-argument-hint: [project-directory=.]
+argument-hint: [project-directory=. --interactive --guidance "text"]
 allowed-tools: Read, Glob, Grep, Bash
 model: sonnet
 ---

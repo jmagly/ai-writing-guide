@@ -1,7 +1,7 @@
 ---
 description: Enforce minimum security criteria before iteration close or release
 category: security-quality
-argument-hint: <docs/sdlc/artifacts/project>
+argument-hint: <docs/sdlc/artifacts/project> [--interactive] [--guidance "text"]
 allowed-tools: Read, Write, Glob, Grep
 model: sonnet
 ---

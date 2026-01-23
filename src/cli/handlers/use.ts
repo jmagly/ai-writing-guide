@@ -2,9 +2,10 @@
  * Use Command Handler
  *
  * Deploys AIWG frameworks (SDLC, Marketing, Writing) to the current project.
- * Extracted from src/cli/index.mjs handleUse function.
+ * After deployment, registers deployed extensions in the extension registry.
  *
  * @implements @.aiwg/architecture/decisions/ADR-001-unified-extension-system.md
+ * @implements #56, #57
  * @source @src/cli/index.mjs
  * @issue #33
  */
@@ -13,6 +14,8 @@ import path from 'path';
 import { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
+import { getRegistry } from '../../extensions/registry.js';
+import { registerDeployedExtensions } from '../../extensions/deployment-registration.js';
 
 /**
  * Valid framework identifiers
@@ -32,9 +35,46 @@ const MODE_MAP: Record<Framework, string> = {
 };
 
 /**
+ * Provider to deployment paths mapping
+ */
+const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands: string }> = {
+  claude: {
+    agents: '.claude/agents',
+    skills: '.claude/skills',
+    commands: '.claude/commands',
+  },
+  factory: {
+    agents: '.factory/droids',
+    skills: '.factory/skills',
+    commands: '.factory/commands',
+  },
+  codex: {
+    agents: '.codex/agents',
+    skills: '.codex/skills',
+    commands: '.codex/commands',
+  },
+  opencode: {
+    agents: '.opencode/agent',
+    skills: '.opencode/skills',
+    commands: '.opencode/command',
+  },
+  copilot: {
+    agents: '.github/agents',
+    skills: '.github/skills',
+    commands: '.github/commands',
+  },
+  cursor: {
+    agents: '.cursor/agents',
+    skills: '.cursor/skills',
+    commands: '.cursor/commands',
+  },
+};
+
+/**
  * Use command handler
  *
- * Deploys framework agents, commands, and skills to the current project.
+ * Deploys framework agents, commands, and skills to the current project,
+ * then registers them in the extension registry for discovery.
  */
 export class UseHandler implements CommandHandler {
   id = 'use';
@@ -72,9 +112,9 @@ export class UseHandler implements CommandHandler {
 
     // Extract provider and target from remainingArgs to pass to addon deployments
     const providerIdx = remainingArgs.findIndex(a => a === '--provider' || a === '--platform');
-    const provider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : null;
+    const provider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : 'claude';
     const targetIdx = remainingArgs.findIndex(a => a === '--target');
-    const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : null;
+    const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
 
     // Deploy main framework
     const runner = createScriptRunner(ctx.frameworkRoot);
@@ -119,6 +159,27 @@ export class UseHandler implements CommandHandler {
       if (ralphResult.exitCode !== 0) {
         return ralphResult;
       }
+    }
+
+    // Register deployed extensions in the registry
+    console.log('');
+    console.log('Registering deployed extensions...');
+    try {
+      const registry = getRegistry();
+      const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+
+      await registerDeployedExtensions(registry, {
+        agentsPath: paths.agents,
+        skillsPath: paths.skills,
+        commandsPath: paths.commands,
+        provider,
+        cwd: target,
+      });
+
+      console.log('Extension registration complete');
+    } catch (error) {
+      console.error('Warning: Failed to register extensions:', error instanceof Error ? error.message : String(error));
+      // Don't fail the deployment if registration fails
     }
 
     return {

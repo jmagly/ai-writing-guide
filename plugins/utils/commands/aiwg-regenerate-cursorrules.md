@@ -1,7 +1,7 @@
 ---
 name: aiwg-regenerate-cursorrules
 description: Regenerate .cursorrules for Cursor with preserved team directives
-args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--interactive] [--guidance "text"]"
 ---
 
 # Regenerate .cursorrules

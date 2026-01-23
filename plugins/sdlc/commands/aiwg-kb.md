@@ -1,7 +1,7 @@
 ---
 description: Search AIWG knowledge base for help, documentation, and troubleshooting
 category: sdlc-help
-argument-hint: "<topic>"
+argument-hint: "<topic> [--interactive] [--guidance "text"]"
 allowed-tools: Read, Glob, Grep
 model: haiku
 ---

@@ -1,7 +1,7 @@
 ---
 description: Generate MCP environment definition for MCPSmith with Docker and Node.js verification
 category: smithing
-argument-hint: [--output <path>] [--verify-only] [--update] [--create-network]
+argument-hint: [--output <path>] [--verify-only] [--update] [--create-network --interactive --guidance "text"]
 allowed-tools: Bash, Read, Write, Glob
 model: haiku
 ---

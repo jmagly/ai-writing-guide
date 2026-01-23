@@ -2,9 +2,9 @@
   "name": "Agents (Shared)",
   "path": "agentic/code/frameworks/sdlc-complete/agents",
   "files": [
-    "README.md",
     "accessibility-specialist.md",
     "agent-template.md",
+    "agentsmith.md",
     "api-designer.md",
     "api-documenter.md",
     "architecture-designer.md",
@@ -13,6 +13,7 @@
     "business-process-analyst.md",
     "cloud-architect.md",
     "code-reviewer.md",
+    "commandsmith.md",
     "component-owner.md",
     "configuration-manager.md",
     "context-librarian.md",
@@ -26,13 +27,15 @@
     "domain-expert.md",
     "environment-engineer.md",
     "executive-orchestrator.md",
+    "factory-compat.md",
     "incident-responder.md",
     "intake-coordinator.md",
     "integration-engineer.md",
     "legacy-modernizer.md",
     "legal-liaison.md",
-    "manifest.md",
+    "mcpsmith.md",
     "metrics-analyst.md",
+    "mutation-analyst.md",
     "openai-compat.md",
     "performance-engineer.md",
     "privacy-officer.md",
@@ -47,6 +50,7 @@
     "security-architect.md",
     "security-auditor.md",
     "security-gatekeeper.md",
+    "skillsmith.md",
     "software-implementer.md",
     "support-lead.md",
     "system-analyst.md",
@@ -56,12 +60,14 @@
     "test-documenter.md",
     "test-engineer.md",
     "toolsmith.md",
+    "toolsmith-dynamic.md",
+    "toolsmith-provider.md",
     "traceability-manager.md",
     "ux-lead.md",
-    "vision-owner.md"
+    "vision-owner.md",
+    "windsurf-compat.md"
   ],
   "ignore": [
-    "manifest.json",
-    "sdlc"
+    "manifest.json"
   ]
 }

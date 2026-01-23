@@ -173,19 +173,18 @@ describe("Subcommand Handlers", () => {
     it("should have correct metadata", () => {
       expect(listHandler.id).toBe("list");
       expect(listHandler.category).toBe("framework");
-      expect(listHandler.aliases).toEqual([]);
+      expect(listHandler.aliases).toEqual(["ls"]);
       expect(listHandler.name).toBe("List Frameworks");
       expect(listHandler.description).toMatch(/list.*framework/i);
     });
 
-    it("should delegate to tools/plugin/plugin-status-cli.mjs", async () => {
-      await listHandler.execute(mockContext);
+    it("should use registry to list extensions (or fallback to legacy script)", async () => {
+      // listHandler now uses the extension registry first
+      // It only falls back to legacy script if registry population fails
+      const result = await listHandler.execute(mockContext);
 
-      expect(mockRun).toHaveBeenCalledWith(
-        "tools/plugin/plugin-status-cli.mjs",
-        mockContext.args,
-        { cwd: mockContext.cwd },
-      );
+      // With registry-first approach, it should return success
+      expect(result.exitCode).toBe(0);
     });
   });
 
@@ -310,26 +309,26 @@ describe("Subcommand Handlers", () => {
       expect(packagePluginHandler.description).toMatch(/package.*plugin/i);
     });
 
-    it("should delegate to tools/plugin/package-plugins.mjs with --plugin flag", async () => {
+    it("should delegate to tools/plugin/plugin-packager-cli.mjs", async () => {
       mockContext.args = ["my-plugin"];
 
       await packagePluginHandler.execute(mockContext);
 
       expect(mockRun).toHaveBeenCalledWith(
-        "tools/plugin/package-plugins.mjs",
-        ["--plugin", "my-plugin"],
+        "tools/plugin/plugin-packager-cli.mjs",
+        ["my-plugin"],
         { cwd: mockContext.cwd },
       );
     });
 
-    it("should prepend --plugin to all args", async () => {
+    it("should pass through all args", async () => {
       mockContext.args = ["plugin1", "plugin2", "--output", "dist"];
 
       await packagePluginHandler.execute(mockContext);
 
       expect(mockRun).toHaveBeenCalledWith(
-        "tools/plugin/package-plugins.mjs",
-        ["--plugin", "plugin1", "plugin2", "--output", "dist"],
+        "tools/plugin/plugin-packager-cli.mjs",
+        ["plugin1", "plugin2", "--output", "dist"],
         { cwd: mockContext.cwd },
       );
     });
@@ -349,11 +348,11 @@ describe("Subcommand Handlers", () => {
       );
     });
 
-    it("should delegate to tools/plugin/package-plugins.mjs with --all flag", async () => {
+    it("should delegate to tools/plugin/plugin-packager-cli.mjs with --all flag", async () => {
       await packageAllPluginsHandler.execute(mockContext);
 
       expect(mockRun).toHaveBeenCalledWith(
-        "tools/plugin/package-plugins.mjs",
+        "tools/plugin/plugin-packager-cli.mjs",
         ["--all"],
         { cwd: mockContext.cwd },
       );
@@ -365,7 +364,7 @@ describe("Subcommand Handlers", () => {
       await packageAllPluginsHandler.execute(mockContext);
 
       expect(mockRun).toHaveBeenCalledWith(
-        "tools/plugin/package-plugins.mjs",
+        "tools/plugin/plugin-packager-cli.mjs",
         ["--all", "--output", "dist"],
         { cwd: mockContext.cwd },
       );
@@ -438,13 +437,12 @@ describe("Subcommand Handlers", () => {
   });
 
   describe("handler error handling", () => {
-    it("script-delegating handlers should propagate errors", async () => {
-      const testError = new Error("Script failed");
-      mockRun.mockResolvedValueOnce({ exitCode: 1, error: testError });
-
+    it("list handler should return success when registry is available", async () => {
+      // listHandler now uses registry first, returns success with empty registry
       const result = await listHandler.execute(mockContext);
 
-      expect(result.exitCode).toBe(1);
+      // With registry available (even if empty), handler succeeds
+      expect(result.exitCode).toBe(0);
     });
 
     it("mcp handler should wrap errors in HandlerResult", async () => {

@@ -42,7 +42,7 @@ aiwg use marketing         # Marketing framework
 aiwg use all               # All frameworks
 
 # Or scaffold a new project
-aiwg -new my-project
+aiwg new my-project
 ```
 
 ### Claude Code Plugin (Alternative)
@@ -77,7 +77,7 @@ aiwg -new my-project
 
 - **[Ralph Loop](docs/ralph-guide.md)** — Iterative task execution with automatic recovery
 - **[Agent Design Bible](docs/AGENT-DESIGN.md)** — 10 Golden Rules based on academic research
-- **[@-Mention Traceability](docs/CLI_USAGE.md#-mention-utilities)** — Wire live doc references in code
+- **[@-Mention Traceability](docs/mention-utilities.md)** — Wire live doc references in code
 - **[Production-Grade Guide](docs/production-grade-guide.md)** — Research-backed failure mode mitigations
 
 ---
@@ -135,7 +135,7 @@ See [Platform Integration Guides](docs/integrations/) for setup instructions.
 
 - **[Quick Start Guide](USAGE_GUIDE.md)** — Context selection and basic usage
 - **[Prerequisites](docs/getting-started/prerequisites.md)** — Node.js, AI platforms, OS support
-- **[CLI Reference](docs/CLI_USAGE.md)** — All `aiwg` commands
+- **[CLI Reference](docs/cli-reference.md)** — All 31 `aiwg` commands with examples
 
 ### Platform Guides
 
@@ -150,6 +150,23 @@ See [Platform Integration Guides](docs/integrations/) for setup instructions.
 - **[SDLC Framework](agentic/code/frameworks/sdlc-complete/README.md)** — Agents, commands, templates, flows
 - **[Marketing Kit](agentic/code/frameworks/media-marketing-kit/README.md)** — Campaign lifecycle guide
 - **[Voice Framework](agentic/code/addons/voice-framework/)** — Voice profiles and skills
+
+### Extension System
+
+AIWG's unified extension system enables dynamic discovery, semantic search, and cross-platform deployment:
+
+- **[Extension System Overview](docs/extensions/overview.md)** — Architecture and capabilities
+- **[Creating Extensions](docs/extensions/creating-extensions.md)** — Build custom agents, commands, skills
+- **[Extension Types Reference](docs/extensions/extension-types.md)** — Complete type definitions
+
+**Extension types:**
+- **Agents** (35+): Specialized AI personas (API Designer, Test Engineer, Security Auditor)
+- **Commands** (31): CLI and slash commands (`aiwg use sdlc`, `/mention-wire`)
+- **Skills**: Natural language workflows (project awareness, voice application)
+- **Hooks**: Lifecycle event handlers (pre-session, post-write)
+- **Tools**: External utilities (git, jq, npm)
+- **Frameworks**: Complete workflows (SDLC, Marketing)
+- **Addons**: Feature bundles (Voice, Testing Quality)
 
 ### Advanced Topics
 

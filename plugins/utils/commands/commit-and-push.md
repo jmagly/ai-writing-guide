@@ -1,7 +1,7 @@
 ---
 description: Create a well-formatted git commit and push to remote repository
 category: version-control
-argument-hint: [commit-message-summary]
+argument-hint: [commit-message-summary --interactive --guidance "text"]
 allowed-tools: Bash, Read, Grep
 model: sonnet
 ---

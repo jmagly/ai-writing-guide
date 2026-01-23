@@ -1,7 +1,7 @@
 ---
 name: mention-validate
 description: Validate all @-mentions resolve to existing files
-args: [--target <dir>] [--strict] [--output <file>]
+args: [--target <dir>] [--strict] [--output <file> --interactive --guidance "text"]
 ---
 
 # @-Mention Validation

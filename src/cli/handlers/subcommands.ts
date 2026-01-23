@@ -5,6 +5,7 @@
  * Extracted from src/cli/index.mjs.
  *
  * @implements @.aiwg/architecture/decisions/ADR-001-unified-extension-system.md
+ * @implements #56, #57
  * @source @src/cli/index.mjs
  * @tests @test/unit/cli/handlers/subcommands.test.ts
  * @issue #33
@@ -13,6 +14,8 @@
 import type { CommandHandler, HandlerContext, HandlerResult } from "./types.js";
 import { createScriptRunner } from "./script-runner.js";
 import { getFrameworkRoot } from "../../channel/manager.mjs";
+import { getRegistry } from "../../extensions/registry.js";
+import { registerDeployedExtensions } from "../../extensions/deployment-registration.js";
 
 /**
  * MCP server command handler
@@ -81,22 +84,132 @@ export const catalogHandler: CommandHandler = {
 /**
  * List frameworks handler
  *
- * Delegates to tools/plugin/plugin-status-cli.mjs
+ * Lists deployed extensions from the registry.
+ * Falls back to legacy plugin-status script if needed.
  */
 export const listHandler: CommandHandler = {
   id: "list",
   name: "List Frameworks",
   description: "List installed frameworks and plugins",
   category: "framework",
-  aliases: [],
+  aliases: ["ls"],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    const frameworkRoot = await getFrameworkRoot();
-    const runner = createScriptRunner(frameworkRoot);
+    const filterType = ctx.args[0]; // Optional: 'agents', 'skills', 'commands', 'all'
 
-    return runner.run("tools/plugin/plugin-status-cli.mjs", ctx.args, {
-      cwd: ctx.cwd,
-    });
+    // Ensure registry is populated with deployed extensions
+    const registry = getRegistry();
+
+    // If registry is empty, try to populate it
+    if (registry.size === 0) {
+      try {
+        await registerDeployedExtensions(registry, {
+          agentsPath: '.claude/agents',
+          skillsPath: '.claude/skills',
+          commandsPath: '.claude/commands',
+          provider: 'claude',
+          cwd: ctx.cwd,
+        });
+      } catch (error) {
+        // If registry population fails, fall back to legacy script
+        const frameworkRoot = await getFrameworkRoot();
+        const runner = createScriptRunner(frameworkRoot);
+        return runner.run("tools/plugin/plugin-status-cli.mjs", ctx.args, {
+          cwd: ctx.cwd,
+        });
+      }
+    }
+
+    // Determine what to show
+    const showAgents = !filterType || filterType === 'agents' || filterType === 'all';
+    const showSkills = !filterType || filterType === 'skills' || filterType === 'all';
+    const showCommands = !filterType || filterType === 'commands' || filterType === 'all';
+
+    let output = '';
+
+    if (showAgents) {
+      const agents = registry.getByType('agent');
+      output += `\nAgents (${agents.length}):\n`;
+      output += '─'.repeat(60) + '\n';
+
+      if (agents.length === 0) {
+        output += '  No agents deployed\n';
+      } else {
+        for (const agent of agents.slice(0, 20)) { // Limit to 20 for readability
+          output += `  ${agent.name}\n`;
+          output += `    ID: ${agent.id}\n`;
+          output += `    Description: ${agent.description.slice(0, 80)}${agent.description.length > 80 ? '...' : ''}\n`;
+          if (agent.installation) {
+            output += `    Path: ${agent.installation.installedPath}\n`;
+          }
+          output += '\n';
+        }
+        if (agents.length > 20) {
+          output += `  ... and ${agents.length - 20} more\n`;
+        }
+      }
+    }
+
+    if (showSkills) {
+      const skills = registry.getByType('skill');
+      output += `\nSkills (${skills.length}):\n`;
+      output += '─'.repeat(60) + '\n';
+
+      if (skills.length === 0) {
+        output += '  No skills deployed\n';
+      } else {
+        for (const skill of skills.slice(0, 20)) {
+          output += `  ${skill.name}\n`;
+          output += `    ID: ${skill.id}\n`;
+          output += `    Description: ${skill.description.slice(0, 80)}${skill.description.length > 80 ? '...' : ''}\n`;
+          if (skill.installation) {
+            output += `    Path: ${skill.installation.installedPath}\n`;
+          }
+          output += '\n';
+        }
+        if (skills.length > 20) {
+          output += `  ... and ${skills.length - 20} more\n`;
+        }
+      }
+    }
+
+    if (showCommands) {
+      const commands = registry.getByType('command');
+      output += `\nCommands (${commands.length}):\n`;
+      output += '─'.repeat(60) + '\n';
+
+      if (commands.length === 0) {
+        output += '  No commands registered\n';
+      } else {
+        for (const command of commands.slice(0, 20)) {
+          output += `  ${command.name}\n`;
+          output += `    ID: ${command.id}\n`;
+          output += `    Description: ${command.description.slice(0, 80)}${command.description.length > 80 ? '...' : ''}\n`;
+          output += '\n';
+        }
+        if (commands.length > 20) {
+          output += `  ... and ${commands.length - 20} more\n`;
+        }
+      }
+    }
+
+    // Summary
+    const totalAgents = registry.getByType('agent').length;
+    const totalSkills = registry.getByType('skill').length;
+    const totalCommands = registry.getByType('command').length;
+    const total = totalAgents + totalSkills + totalCommands;
+
+    output += '\n' + '═'.repeat(60) + '\n';
+    output += `Total: ${total} extensions (${totalAgents} agents, ${totalSkills} skills, ${totalCommands} commands)\n`;
+
+    if (total === 0) {
+      output += '\nTip: Deploy a framework with "aiwg use sdlc" to get started\n';
+    }
+
+    return {
+      exitCode: 0,
+      message: output,
+    };
   },
 };
 
@@ -213,12 +326,12 @@ export const pluginStatusHandler: CommandHandler = {
 /**
  * Package plugin handler
  *
- * Delegates to tools/plugin/package-plugins.mjs with --plugin flag
+ * Delegates to tools/plugin/plugin-packager-cli.mjs
  */
 export const packagePluginHandler: CommandHandler = {
   id: "package-plugin",
   name: "Package Plugin",
-  description: "Package a specific plugin for distribution",
+  description: "Package a plugin for distribution",
   category: "plugin",
   aliases: ["-package-plugin", "--package-plugin"],
 
@@ -226,10 +339,7 @@ export const packagePluginHandler: CommandHandler = {
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 
-    // Prepend --plugin to args
-    const scriptArgs = ["--plugin", ...ctx.args];
-
-    return runner.run("tools/plugin/package-plugins.mjs", scriptArgs, {
+    return runner.run("tools/plugin/plugin-packager-cli.mjs", ctx.args, {
       cwd: ctx.cwd,
     });
   },
@@ -238,7 +348,7 @@ export const packagePluginHandler: CommandHandler = {
 /**
  * Package all plugins handler
  *
- * Delegates to tools/plugin/package-plugins.mjs with --all flag
+ * Delegates to tools/plugin/plugin-packager-cli.mjs with --all flag
  */
 export const packageAllPluginsHandler: CommandHandler = {
   id: "package-all-plugins",
@@ -251,10 +361,7 @@ export const packageAllPluginsHandler: CommandHandler = {
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 
-    // Prepend --all to args
-    const scriptArgs = ["--all", ...ctx.args];
-
-    return runner.run("tools/plugin/package-plugins.mjs", scriptArgs, {
+    return runner.run("tools/plugin/plugin-packager-cli.mjs", ["--all", ...ctx.args], {
       cwd: ctx.cwd,
     });
   },

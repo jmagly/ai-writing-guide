@@ -1,7 +1,7 @@
 ---
 name: mention-wire
 description: Analyze codebase and inject @-mentions for traceability
-args: [--target <dir>] [--dry-run] [--interactive] [--auto] [--confidence <threshold>]
+args: [--target <dir>] [--dry-run] [--interactive] [--auto] [--confidence <threshold> --guidance "text"]
 ---
 
 # @-Mention Wiring

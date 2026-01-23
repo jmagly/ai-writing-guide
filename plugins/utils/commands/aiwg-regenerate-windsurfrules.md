@@ -1,7 +1,7 @@
 ---
 name: aiwg-regenerate-windsurfrules
 description: Regenerate .windsurfrules for Windsurf with preserved team directives
-args: "[--no-backup] [--dry-run] [--show-preserved] [--full]"
+args: "[--no-backup] [--dry-run] [--show-preserved] [--full] [--interactive] [--guidance "text"]"
 ---
 
 # Regenerate .windsurfrules

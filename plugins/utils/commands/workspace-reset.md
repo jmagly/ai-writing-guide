@@ -1,7 +1,7 @@
 ---
 name: workspace-reset
 description: Wipe .aiwg/ directory and optionally restart with fresh intake
-args: "[project-directory] [--backup] [--keep-intake] [--keep-team] [--reinitialize] [--force]"
+args: "[project-directory] [--backup] [--keep-intake] [--keep-team] [--reinitialize] [--force] [--interactive] [--guidance "text"]"
 ---
 
 # Workspace Reset

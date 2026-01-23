@@ -1,7 +1,7 @@
 ---
 name: devkit-create-addon
 description: Create a new AIWG addon with AI-guided setup
-args: <name> [--interactive]
+args: <name> [--interactive --guidance "text"]
 ---
 
 # Create AIWG Addon

@@ -1,7 +1,7 @@
 ---
 name: mention-conventions
 description: Display @-mention naming conventions and placement rules
-args: [--section <name>]
+args: [--section <name> --interactive --guidance "text"]
 ---
 
 # @-Mention Conventions

@@ -1,7 +1,7 @@
 ---
 name: deploy-gen
 description: Generate deployment configurations (Docker, Kubernetes) for the current project
-args: <type> [--output <dir>] [--app-name <name>] [--port <port>]
+args: <type> [--output <dir>] [--app-name <name>] [--port <port> --interactive --guidance "text"]
 ---
 
 # Deploy Generator

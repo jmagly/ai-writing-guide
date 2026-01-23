@@ -1,7 +1,7 @@
 ---
 description: Setup Warp Terminal with AIWG framework context (preserves existing content)
 category: sdlc-setup
-argument-hint: [project-directory]
+argument-hint: [project-directory --interactive --guidance "text"]
 allowed-tools: Read, Write, Edit, Glob, Bash
 model: sonnet
 ---

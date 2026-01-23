@@ -34,13 +34,13 @@ describe('facade', () => {
 
   describe('shouldUseNewRouter', () => {
     describe('default behavior', () => {
-      it('should default to legacy router (false)', () => {
-        expect(shouldUseNewRouter([])).toBe(false);
+      it('should default to new router (true)', () => {
+        expect(shouldUseNewRouter([])).toBe(true);
       });
 
-      it('should be false with no env var or flags', () => {
+      it('should be true with no env var or flags', () => {
         delete process.env.AIWG_USE_NEW_ROUTER;
-        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(false);
+        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(true);
       });
     });
 
@@ -55,24 +55,24 @@ describe('facade', () => {
         expect(shouldUseNewRouter([])).toBe(false);
       });
 
-      it('should default to false with invalid env value', () => {
+      it('should default to true with invalid env value', () => {
         process.env.AIWG_USE_NEW_ROUTER = 'invalid';
-        expect(shouldUseNewRouter([])).toBe(false);
+        expect(shouldUseNewRouter([])).toBe(true);
       });
 
-      it('should default to false with empty env value', () => {
+      it('should default to true with empty env value', () => {
         process.env.AIWG_USE_NEW_ROUTER = '';
-        expect(shouldUseNewRouter([])).toBe(false);
+        expect(shouldUseNewRouter([])).toBe(true);
       });
 
-      it('should handle "1" as invalid (not "true")', () => {
+      it('should handle "1" as invalid (defaults to true)', () => {
         process.env.AIWG_USE_NEW_ROUTER = '1';
-        expect(shouldUseNewRouter([])).toBe(false);
+        expect(shouldUseNewRouter([])).toBe(true);
       });
 
-      it('should handle "0" as invalid (not "false")', () => {
+      it('should handle "0" as invalid (defaults to true)', () => {
         process.env.AIWG_USE_NEW_ROUTER = '0';
-        expect(shouldUseNewRouter([])).toBe(false);
+        expect(shouldUseNewRouter([])).toBe(true);
       });
     });
 
@@ -115,18 +115,18 @@ describe('facade', () => {
       });
     });
 
-    describe('backward compatibility', () => {
-      it('should default to legacy for existing scripts', () => {
-        // No env var, no flags → legacy
-        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(false);
+    describe('new router as default', () => {
+      it('should default to new router for all commands', () => {
+        // No env var, no flags → new router
+        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(true);
       });
 
-      it('should not break existing workflows', () => {
-        // Common commands should default to legacy
-        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(false);
-        expect(shouldUseNewRouter(['list'])).toBe(false);
-        expect(shouldUseNewRouter(['-new'])).toBe(false);
-        expect(shouldUseNewRouter(['--help'])).toBe(false);
+      it('should use new router for all common commands', () => {
+        // All commands use new router by default
+        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(true);
+        expect(shouldUseNewRouter(['list'])).toBe(true);
+        expect(shouldUseNewRouter(['-new'])).toBe(true);
+        expect(shouldUseNewRouter(['--help'])).toBe(true);
       });
     });
   });
@@ -191,14 +191,14 @@ describe('facade', () => {
 
   describe('run', () => {
     describe('router delegation', () => {
-      it('should delegate to legacy router by default', async () => {
+      it('should delegate to new router by default', async () => {
         // Mock both routers to track which was called
         const legacySpy = vi.fn().mockResolvedValue(undefined);
         const newSpy = vi.fn().mockResolvedValue(undefined);
 
         // We can't directly mock the imports, but we can verify the delegation logic
-        // This test verifies shouldUseNewRouter returns false by default
-        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(false);
+        // This test verifies shouldUseNewRouter returns true by default
+        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(true);
       });
 
       it('should delegate to new router with --experimental-router', async () => {
@@ -244,14 +244,14 @@ describe('facade', () => {
       });
     });
 
-    describe('backward compatibility guarantees', () => {
-      it('should preserve legacy behavior by default', () => {
-        // No env, no flags → legacy
-        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(false);
+    describe('new router as default', () => {
+      it('should use new router by default', () => {
+        // No env, no flags → new router
+        expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(true);
       });
 
-      it('should not change behavior for existing scripts', () => {
-        // Common command patterns should use legacy
+      it('should use new router for all common commands', () => {
+        // All common commands now use new router by default
         const commonCommands = [
           ['use', 'sdlc'],
           ['list'],
@@ -262,7 +262,7 @@ describe('facade', () => {
         ];
 
         commonCommands.forEach((cmd) => {
-          expect(shouldUseNewRouter(cmd)).toBe(false);
+          expect(shouldUseNewRouter(cmd)).toBe(true);
         });
       });
     });
@@ -339,23 +339,23 @@ describe('facade', () => {
       expect(() => shouldUseNewRouter([])).not.toThrow();
     });
 
-    it('should handle null-like env values', () => {
+    it('should handle null-like env values (defaults to new)', () => {
       process.env.AIWG_USE_NEW_ROUTER = 'null';
-      expect(shouldUseNewRouter([])).toBe(false);
+      expect(shouldUseNewRouter([])).toBe(true);
 
       process.env.AIWG_USE_NEW_ROUTER = 'undefined';
-      expect(shouldUseNewRouter([])).toBe(false);
+      expect(shouldUseNewRouter([])).toBe(true);
     });
   });
 
   describe('migration scenarios', () => {
-    it('should support gradual rollout via env var', () => {
-      // Developer sets env var for their terminal
-      process.env.AIWG_USE_NEW_ROUTER = 'true';
+    it('should support opt-out via env var', () => {
+      // Everyone uses new router by default
+      delete process.env.AIWG_USE_NEW_ROUTER;
       expect(shouldUseNewRouter([])).toBe(true);
 
-      // Others without env var use legacy
-      delete process.env.AIWG_USE_NEW_ROUTER;
+      // Can opt-out with env var
+      process.env.AIWG_USE_NEW_ROUTER = 'false';
       expect(shouldUseNewRouter([])).toBe(false);
     });
 
@@ -368,12 +368,12 @@ describe('facade', () => {
       expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(false);
     });
 
-    it('should support testing new router for specific commands', () => {
-      // User can test new router for a single command
-      expect(shouldUseNewRouter(['use', 'sdlc', '--experimental-router'])).toBe(true);
+    it('should support testing legacy router for specific commands', () => {
+      // New router is default
+      expect(shouldUseNewRouter(['list'])).toBe(true);
 
-      // But default to legacy for other commands
-      expect(shouldUseNewRouter(['list'])).toBe(false);
+      // User can force legacy for a single command
+      expect(shouldUseNewRouter(['use', 'sdlc', '--legacy-router'])).toBe(false);
     });
 
     it('should support safe rollback via flag', () => {
@@ -393,9 +393,9 @@ describe('facade', () => {
       expect(shouldUseNewRouter(['--experimental-router'])).toBe(true);
       expect(shouldUseNewRouter(['--legacy-router'])).toBe(false);
 
-      // Default (backward compatible)
+      // Default (new router)
       delete process.env.AIWG_USE_NEW_ROUTER;
-      expect(shouldUseNewRouter([])).toBe(false);
+      expect(shouldUseNewRouter([])).toBe(true);
     });
 
     it('should work as documented in cleanArgs examples', () => {
@@ -408,12 +408,15 @@ describe('facade', () => {
     });
 
     it('should work as documented in run examples', () => {
-      // Verify routing logic for examples
+      // Default is now new router
       delete process.env.AIWG_USE_NEW_ROUTER;
-      expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(false);
+      expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(true);
 
+      // Flags still work
       expect(shouldUseNewRouter(['use', 'sdlc', '--experimental-router'])).toBe(true);
+      expect(shouldUseNewRouter(['use', 'sdlc', '--legacy-router'])).toBe(false);
 
+      // Env var still works
       process.env.AIWG_USE_NEW_ROUTER = 'true';
       expect(shouldUseNewRouter(['use', 'sdlc'])).toBe(true);
     });

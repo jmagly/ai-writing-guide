@@ -1,7 +1,7 @@
 ---
 description: Build a Proof of Concept (PoC) to validate technical feasibility and retire architectural risks
 category: development
-argument-hint: <feature-or-risk-to-validate> [--scope minimal|standard|comprehensive]
+argument-hint: <feature-or-risk-to-validate> [--scope minimal|standard|comprehensive --interactive --guidance "text"]
 allowed-tools: Read, Write, Bash, Grep, Glob, TodoWrite
 model: sonnet
 ---

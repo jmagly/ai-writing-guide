@@ -29,8 +29,18 @@ agentic/code/
 └── agents/                  # Writing quality agents
 
 src/                         # CLI and MCP server implementation
+├── extensions/              # Unified extension system
+│   ├── types.ts            # Extension type definitions
+│   ├── commands/           # Command extension definitions
+│   └── registry.ts         # Extension registry
 test/                        # Test suites and fixtures
 tools/                       # Build and deployment scripts
+docs/                        # Documentation
+├── cli-reference.md         # All 31 CLI commands
+├── extensions/              # Extension system docs
+│   ├── overview.md
+│   ├── creating-extensions.md
+│   └── extension-types.md
 ```
 
 ## Context Loading Strategy
@@ -50,6 +60,8 @@ Use `@path/to/file.md` in your message to load specific documentation:
 - `@agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md` - Full orchestration details
 - `@agentic/code/frameworks/sdlc-complete/agents/manifest.json` - SDLC agent listing
 - `@.aiwg/requirements/UC-*.md` - Specific requirements
+- `@docs/cli-reference.md` - Complete CLI command reference
+- `@docs/extensions/overview.md` - Extension system architecture
 
 ## Multi-Platform Support
 
@@ -96,12 +108,15 @@ Use `@path/to/file.md` in your message to load specific documentation:
 npm install -g aiwg
 
 # CLI commands
-aiwg -version          # Show version
+aiwg version           # Show version
 aiwg use sdlc          # Deploy SDLC framework
 aiwg use marketing     # Deploy marketing framework
 aiwg use all           # Deploy all frameworks
-aiwg -new              # Scaffold new project
-aiwg -help             # Show all commands
+aiwg new my-project    # Scaffold new project
+aiwg help              # Show all commands
+aiwg doctor            # Check installation health
+
+# See @docs/cli-reference.md for all 31 commands
 ```
 
 ## Project Artifacts (.aiwg/)
@@ -122,15 +137,111 @@ All SDLC artifacts stored in `.aiwg/`:
 └── reports/       # Generated reports
 ```
 
+## Extension System
+
+AIWG uses a unified extension system for all extension types:
+
+**Extension Types:**
+- **agent** - Specialized AI personas (API Designer, Test Engineer)
+- **command** - CLI and slash commands (`aiwg use sdlc`, `/mention-wire`)
+- **skill** - Natural language workflows (project awareness)
+- **hook** - Lifecycle event handlers (pre-session, post-write)
+- **tool** - External utilities (git, jq, npm)
+- **mcp-server** - MCP protocol servers
+- **framework** - Complete workflows (SDLC, Marketing)
+- **addon** - Feature bundles (Voice, Testing Quality)
+- **template** - Document templates (use case, ADR)
+- **prompt** - Reusable prompts
+
+**Key Features:**
+- Dynamic discovery and registration
+- Capability-based semantic search
+- Multi-platform deployment
+- Dependency management
+- Validation and type safety
+
+**Documentation:**
+- `@docs/extensions/overview.md` - Architecture and capabilities
+- `@docs/extensions/creating-extensions.md` - Build custom extensions
+- `@docs/extensions/extension-types.md` - Complete type reference
+- `@src/extensions/types.ts` - TypeScript type definitions
+- `@src/extensions/commands/definitions.ts` - All 31 command definitions
+
+## CLI Commands (31 Total)
+
+**See `@docs/cli-reference.md` for complete documentation.**
+
+### Categories
+
+| Category | Commands |
+|----------|----------|
+| **Maintenance** (4) | help, version, doctor, update |
+| **Framework** (3) | use, list, remove |
+| **Project** (1) | new |
+| **Workspace** (3) | status, migrate-workspace, rollback-workspace |
+| **MCP** (1) | mcp (serve, install, info) |
+| **Catalog** (1) | catalog (list, info, search) |
+| **Toolsmith** (1) | runtime-info |
+| **Utility** (3) | prefill-cards, contribute-start, validate-metadata |
+| **Plugin** (5) | install-plugin, uninstall-plugin, plugin-status, package-plugin, package-all-plugins |
+| **Scaffolding** (7) | add-agent, add-command, add-skill, add-template, scaffold-addon, scaffold-extension, scaffold-framework |
+| **Ralph** (4) | ralph, ralph-status, ralph-abort, ralph-resume |
+
+### Quick Reference
+
+```bash
+# Maintenance
+aiwg help                    # Show all commands
+aiwg version                 # Show version and channel
+aiwg doctor                  # Check installation health
+aiwg update                  # Check for updates
+
+# Framework management
+aiwg use sdlc                # Deploy SDLC framework
+aiwg use sdlc --provider copilot  # Deploy to GitHub Copilot
+aiwg list                    # List installed frameworks
+aiwg remove sdlc             # Remove framework
+
+# Project setup
+aiwg new my-project          # Create new project with scaffolding
+
+# Workspace
+aiwg status                  # Show workspace health
+aiwg migrate-workspace       # Migrate to framework-scoped structure
+aiwg rollback-workspace      # Rollback migration
+
+# MCP
+aiwg mcp serve               # Start MCP server
+aiwg mcp install claude      # Configure Claude Desktop
+aiwg mcp info                # Show capabilities
+
+# Utilities
+aiwg runtime-info            # Show runtime environment
+aiwg prefill-cards           # Fill SDLC card metadata
+aiwg validate-metadata       # Validate extension metadata
+
+# Ralph (iterative task execution)
+aiwg ralph "Fix all tests" --completion "npm test passes"
+aiwg ralph-status            # Show loop status
+aiwg ralph-abort             # Stop loop
+aiwg ralph-resume            # Resume paused loop
+```
+
 ## Key References
 
 | Topic | Location |
 |-------|----------|
-| SDLC Framework | `@~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md` |
-| Voice Profiles | `@agentic/code/addons/voice-framework/voices/templates/` |
-| Natural Language Patterns | `@~/.local/share/ai-writing-guide/docs/simple-language-translations.md` |
-| Agent Catalog | `@~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/agents/` |
-| Templates | `@~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/` |
+| **CLI Reference** | `@docs/cli-reference.md` |
+| **Extension System** | `@docs/extensions/overview.md` |
+| **Creating Extensions** | `@docs/extensions/creating-extensions.md` |
+| **Extension Types** | `@docs/extensions/extension-types.md` |
+| **SDLC Framework** | `@agentic/code/frameworks/sdlc-complete/README.md` |
+| **Voice Profiles** | `@agentic/code/addons/voice-framework/voices/templates/` |
+| **Natural Language Patterns** | `@docs/simple-language-translations.md` |
+| **Agent Catalog** | `@agentic/code/frameworks/sdlc-complete/agents/` |
+| **Templates** | `@agentic/code/frameworks/sdlc-complete/templates/` |
+| **Command Definitions** | `@src/extensions/commands/definitions.ts` |
+| **Extension Types** | `@src/extensions/types.ts` |
 
 ## Development
 
@@ -143,6 +254,12 @@ npx tsc --noEmit
 
 # Lint markdown
 npm exec markdownlint-cli2 "**/*.md"
+
+# Validate extension metadata
+aiwg validate-metadata
+
+# Check installation health
+aiwg doctor
 ```
 
 ## Support
@@ -244,4 +361,3 @@ Before pushing a version tag:
 - PATCH resets each month
 - Tag format: `vYYYY.M.PATCH` (e.g., `v2026.1.5`)
 - See `@docs/contributing/versioning.md` for full details
-

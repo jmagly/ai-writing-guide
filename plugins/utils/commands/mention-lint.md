@@ -1,7 +1,7 @@
 ---
 name: mention-lint
 description: Lint @-mentions for style consistency and correctness
-args: [--target <dir>] [--fix] [--strict] [--rules <rule-ids>]
+args: [--target <dir>] [--fix] [--strict] [--rules <rule-ids> --interactive --guidance "text"]
 ---
 
 # @-Mention Linting
