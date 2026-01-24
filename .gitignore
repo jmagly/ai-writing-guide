@@ -60,3 +60,4 @@ _agent-temp/
 
 # SDLC artifacts (use locally, don't commit)
 # .aiwg/
+docs/references/pdfs/*.pdf
