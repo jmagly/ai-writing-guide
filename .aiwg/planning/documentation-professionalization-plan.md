@@ -2,7 +2,7 @@
 
 **Epic:** [#67 - Documentation Professionalization: Research-Backed Framing](https://git.integrolabs.net/roctinam/ai-writing-guide/issues/67)
 **Date:** 2026-01-24
-**Status:** AWAITING APPROVAL
+**Status:** ✅ APPROVED (2026-01-24)
 
 ---
 
@@ -445,108 +445,109 @@ This isn't just prompt templates—it's structured memory, ensemble validation, 
 
 ---
 
-## Decisions Requiring Approval
+## Decisions ✅ APPROVED
 
-### Decision 1: Terminology Strategy
+All decisions finalized 2026-01-24.
 
-**Question:** How to handle dual terminology?
+### Decision 1: Terminology Strategy ✅
 
-**Options:**
-- A) Replace informal terms with professional terms
-- B) Keep informal terms, add professional terms in parentheses
-- C) Use professional terms in headers, informal in body
+**Choice:** Dual inline - professional term with informal in parentheses
 
-**Recommendation:** Option B - Preserves accessibility while adding credibility.
-
-**Example:**
+**Format:**
 > "AIWG implements **structured semantic memory** (context stacks) to maintain..."
 
-### Decision 2: Documentation Restructure
+**Rationale:** Preserves accessibility for practitioners while adding credibility for researchers.
 
-**Question:** Reorganize docs/ directory structure?
+### Decision 2: Documentation Structure ✅
 
-**Options:**
-- A) Keep flat structure, add new files only
-- B) Create `overview/`, `guides/`, `research/` subdirectories
-- C) Full reorganization with redirects
+**Choice:** Use existing Pagenary `research/` section
 
-**Recommendation:** Option B - Minimal disruption, clear audience separation.
+**Constraints:**
+- Docs already migrated to Pagenary - don't break existing structure
+- New content goes in `content/research/` per Pagenary plan
+- Glossary goes in `content/research/glossary.md`
 
-### Decision 3: README Length
+**Rationale:** Aligns with existing `.aiwg/planning/docs-pagenary-refactor-plan.md`.
 
-**Question:** How much detail in README vs linking to docs?
+### Decision 3: README Depth ✅
 
-**Options:**
-- A) Keep README concise, link to docs for depth
-- B) Comprehensive README with all key info
-- C) README as executive summary + detailed sections
+**Choice:** Brief explanation (3-5 sentences) + link to docs/research/
 
-**Recommendation:** Option C - Multiple entry points for different readers.
+**Specifications:**
+- No citations in README
+- "What AIWG Is" section: 3-5 sentences defining cognitive architecture
+- Link to `docs/research/` for full explanation
+- Keep README scannable
 
-### Decision 4: Name Strategy
+**Rationale:** Quick install focus, depth for those who want it.
 
-**Question:** Address "AI Writing Guide" naming limitation?
+### Decision 4: Name Strategy ✅
 
-**Options:**
-- A) Keep name, no changes
-- B) Keep acronym "AIWG", de-emphasize full name
-- C) Backronym: "AI Workflow & Governance"
-- D) Full rebrand
+**Choice:** Keep acronym "AIWG", phase out "AI Writing Guide" from prominent positions
 
-**Recommendation:** Option B - Least disruption, positioning does the work.
+**Specifications:**
+- Hero/title: Just "AIWG"
+- Positioning statement does the explaining
+- "AI Writing Guide" stays only in package.json name and legal docs
+- Don't mention full name in README hero
 
-### Decision 5: Citation Depth
+**Rationale:** Let positioning do the work, avoid confusing name.
 
-**Question:** How heavily to cite in practitioner docs?
+### Decision 5: Citation Strategy ✅
 
-**Options:**
-- A) Light citations (author year) in body, full refs in research/
-- B) Footnotes with full citations
-- C) No citations in practitioner docs, only in research/
+**Choice:** Tiered citation approach
 
-**Recommendation:** Option A - Credibility without clutter.
+| Location | Citations |
+|----------|-----------|
+| README | None |
+| Practitioner docs | None |
+| `docs/research/` | Mixed format: `(Roig, 2025)` + link to `REF-XXX` |
+| Glossary | Table format: Informal \| Professional \| Citation |
+
+**Rationale:** Clean practitioner experience, academic rigor where expected.
 
 ---
 
 ## Files to Create
 
+**Note:** Paths follow existing Pagenary structure. `docs/` is the source that compiles to Pagenary `content/`.
+
 | File | Issue | Priority |
 |------|-------|----------|
-| `docs/glossary.md` | #68 | High |
+| `docs/research/glossary.md` | #68 | High |
 | `docs/research/research-background.md` | #73 | High |
-| `docs/overview/executive-brief.md` | #71 | Medium |
-| `docs/overview/what-is-aiwg.md` | #71 | Medium |
-| `docs/research/architecture-rationale.md` | #71 | Low |
-| `docs/research/failure-mode-mitigation.md` | #71 | Low |
+| `docs/research/architecture-rationale.md` | #71 | Medium |
+| `docs/research/failure-mode-mitigation.md` | #71 | Medium |
 | `docs/research/evaluation.md` | #71 | Low |
-| `docs/references/REF-005-millers-law-cognitive-limits.md` | #69 | Medium |
-| `docs/references/REF-006-cognitive-load-theory.md` | #69 | Medium |
-| `docs/references/REF-007-mixture-of-experts.md` | #69 | Low |
-| `docs/references/REF-008-retrieval-augmented-generation.md` | #69 | Low |
+| `docs/references/REF-005-millers-law-cognitive-limits.md` | #69 | High |
+| `docs/references/REF-006-cognitive-load-theory.md` | #69 | High |
+| `docs/references/REF-007-mixture-of-experts.md` | #69 | Medium |
+| `docs/references/REF-008-retrieval-augmented-generation.md` | #69 | Medium |
+| `docs/references/REF-009-stage-gate-systems.md` | #69 | Medium |
+| `docs/references/REF-010-traceability-problem.md` | #69 | Low |
 
 ## Files to Modify
 
 | File | Issue | Changes |
 |------|-------|---------|
-| `README.md` | #70, #72 | Major restructure |
-| `docs/ralph-guide.md` | #68, #69 | Add research section |
-| `docs/extensions/overview.md` | #68, #69 | Add rationale section |
-| `docs/quickstart.md` | #71 | Add conceptual intro |
-| `docs/references/README.md` | #69 | Add bibliography |
-| `package.json` | #72 | Update description |
+| `README.md` | #70, #72 | Add "What AIWG Is" (3-5 sentences), link to research/, de-emphasize "AI Writing Guide" |
+| `docs/references/README.md` | #69 | Add full bibliography with all REF-XXX entries |
+| `package.json` | #72 | Update description to "cognitive architecture" positioning |
+
+**Note:** Per Decision 5, practitioner docs (`ralph-guide.md`, `quickstart.md`, `extensions/overview.md`) get NO changes - all academic content goes in `docs/research/` only.
 
 ---
 
 ## Success Criteria
 
 - [ ] All 10 core concepts have professional terminology documented
-- [ ] README explains "what AIWG actually is" clearly
-- [ ] Three audience perspectives exist (executive, practitioner, researcher)
-- [ ] Key claims have citations (light in practice docs, full in research/)
-- [ ] Glossary maps informal ↔ professional terminology
+- [ ] README explains "what AIWG actually is" in 3-5 sentences (no citations)
+- [ ] Glossary uses table format: Informal | Professional | Citation
+- [ ] All citations in `docs/research/` only (not in practitioner docs)
 - [ ] Research background document exists with honest limitations
+- [ ] "AIWG" acronym prominent, "AI Writing Guide" de-emphasized
 - [ ] Marketing copy reflects cognitive architecture positioning
-- [ ] No changes to `.aiwg/` or core system behavior
+- [ ] Pagenary structure preserved (no breaking changes)
 - [ ] All existing documentation links still work
 
 ---
