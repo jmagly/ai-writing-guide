@@ -26,6 +26,16 @@ This glossary maps AIWG's informal terminology to professional/academic equivale
 | **Doc-code validation** | Dual-Representation Consistency | Formal verification | Cross-checking documentation against implementation for divergence detection |
 | **Context pollution** | Distractor-Induced Interference | Roig (2025) | Irrelevant context degrading reasoning quality (Archetype 3) |
 | **Grounding checkpoint** | Source-of-Truth Verification | Roig (2025) | Validating assumptions against actual data before acting (Archetype 1 mitigation) |
+| **Structured reasoning** | Chain-of-Thought (CoT) | Wei et al. (2022) | Step-by-step intermediate reasoning traces improving complex task performance |
+| **Multi-path validation** | Self-Consistency Decoding | Wang et al. (2023) | Sampling diverse reasoning paths and selecting most consistent answer |
+| **Deliberate planning** | Tree of Thoughts (ToT) | Yao et al. (2023) | Branching exploration with lookahead and backtracking |
+| **Tool-augmented reasoning** | ReAct Pattern | Yao et al. (2023) | Interleaved reasoning traces with external tool actions |
+| **Search-based planning** | Language Agent Tree Search | Zhou et al. (2024) | MCTS adapted for agent task execution |
+| **Verbal learning** | Reflexion | Shinn et al. (2023) | Learning from episodic memory of self-reflections |
+| **Principle-based review** | Constitutional AI | Bai et al. (2022) | Self-critique against explicit principles/rules |
+| **LLM orchestration** | Task Controller Pattern | Shen et al. (2023) | LLM as meta-coordinator for specialized models |
+| **Conversation coordination** | Multi-Agent Conversation | Wu et al. (2023) | Natural language as agent coordination protocol |
+| **Few-shot examples** | In-Context Learning | Dong et al. (2024) | Learning from demonstrations in prompt without training |
 
 ## Category Index
 

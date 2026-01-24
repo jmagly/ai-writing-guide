@@ -9,46 +9,74 @@ This directory contains references to academic papers, industry research, and fo
 - Identify opportunities for iterative self-improvement based on published research
 - Provide citations for AIWG's theoretical underpinnings
 
-## Reference Format
+## Reference Summary
 
-Each reference document includes:
+| Category | Count | Key Papers |
+|----------|-------|------------|
+| Foundational (pre-2020) | 6 | Miller, Sweller, Jacobs, Cooper, Gotel, Graves |
+| Multi-Agent Systems | 6 | ChatDev, MetaGPT, AutoGen, HuggingGPT, MAGIS, MoE |
+| Reasoning & Prompting | 4 | CoT, Self-Consistency, ICL Survey, ToT |
+| Tool Use & Acting | 3 | ReAct, Toolformer, SWE-bench |
+| Iteration & Recovery | 4 | Self-Refine, Reflexion, LATS, Constitutional AI |
+| Failure & Production | 2 | Roig, Bandara |
+| **Total** | **26** | |
 
-- **Citation**: Full academic citation
-- **Summary**: Key concepts and contributions
-- **AIWG Alignment**: Where AIWG already embodies the research
-- **Improvement Opportunities**: Where AIWG could adapt or extend concepts
-- **Implementation Notes**: Actionable items for AIWG enhancement
+## References by Category
 
-## References
-
-### Foundational Research (Classic)
+### Tier 1: Foundational Research (Classic)
 
 | ID | Title | Authors | Year | AIWG Relevance |
 |----|-------|---------|------|----------------|
-| REF-005 | [The Magical Number Seven, Plus or Minus Two](REF-005-millers-law-cognitive-limits.md) | Miller | 1956 | Task decomposition, cognitive limits |
+| REF-005 | [The Magical Number Seven](REF-005-millers-law-cognitive-limits.md) | Miller | 1956 | Task decomposition, 7±2 rule |
 | REF-006 | [Cognitive Load Theory](REF-006-cognitive-load-theory.md) | Sweller | 1988 | Template design, worked examples |
-| REF-007 | [Adaptive Mixtures of Local Experts](REF-007-mixture-of-experts.md) | Jacobs et al. | 1991 | Multi-agent architecture |
+| REF-007 | [Adaptive Mixtures of Local Experts](REF-007-mixture-of-experts.md) | Jacobs et al. | 1991 | Multi-agent architecture foundation |
 | REF-009 | [Neural Turing Machines](REF-009-neural-turing-machines.md) | Graves et al. | 2014 | External memory patterns |
 | REF-010 | [Stage-Gate Systems](REF-010-stage-gate-systems.md) | Cooper | 1990 | Phase gates, milestones |
 | REF-011 | [Requirements Traceability](REF-011-requirements-traceability.md) | Gotel & Finkelstein | 1994 | @-mentions, bidirectional links |
 
-### Modern AI Research (2020+)
+### Tier 1: Modern Multi-Agent Frameworks (2020+)
 
 | ID | Title | Authors | Year | AIWG Relevance |
 |----|-------|---------|------|----------------|
 | REF-008 | [Retrieval-Augmented Generation](REF-008-retrieval-augmented-generation.md) | Lewis et al. | 2020 | .aiwg/ memory, context stacks |
-| REF-015 | [Self-Refine: Iterative Refinement](REF-015-self-refine-iterative-refinement.md) | Madaan et al. | 2023 | Ralph loop foundation |
-| REF-012 | [ChatDev: Communicative Agents](REF-012-chatdev-multi-agent-software.md) | Qian et al. | 2024 | Multi-agent communication |
+| REF-012 | [ChatDev: Communicative Agents](REF-012-chatdev-multi-agent-software.md) | Qian et al. | 2024 | Role-based communication |
 | REF-013 | [MetaGPT: Multi-Agent Framework](REF-013-metagpt-multi-agent-framework.md) | Hong et al. | 2024 | SOPs, assembly line paradigm |
-| REF-014 | [SWE-bench: GitHub Issue Resolution](REF-014-swe-bench-evaluation.md) | Jimenez et al. | 2024 | Evaluation methodology |
-| REF-004 | [MAGIS: Multi-Agent GitHub Issues](https://arxiv.org/abs/2403.17927) | Tao et al. | 2024 | Issue-to-code, bounded iteration |
+| REF-022 | [AutoGen: Multi-Agent Conversation](REF-022-autogen-multi-agent-conversation.md) | Wu et al. | 2023 | Conversation coordination |
+| REF-023 | [HuggingGPT/JARVIS](REF-023-hugginggpt-task-planning.md) | Shen et al. | 2023 | LLM as orchestrator |
+| REF-004 | [MAGIS: Multi-Agent GitHub Issues](https://arxiv.org/abs/2403.17927) | Tao et al. | 2024 | Issue-to-code implementation |
 
-### Production & Failure Research
+### Tier 2: Reasoning & Prompting
 
 | ID | Title | Authors | Year | AIWG Relevance |
 |----|-------|---------|------|----------------|
-| REF-001 | [Production-Grade Agentic AI Workflows](REF-001-production-agentic-workflows.md) | Bandara et al. | 2024 | Multi-agent orchestration |
-| REF-002 | [How Do LLMs Fail In Agentic Scenarios?](REF-002-llm-failure-modes-agentic.md) | Roig | 2025 | Failure archetypes, recovery |
+| REF-016 | [Chain-of-Thought Prompting](REF-016-chain-of-thought-prompting.md) | Wei et al. | 2022 | Structured reasoning |
+| REF-017 | [Self-Consistency](REF-017-self-consistency-reasoning.md) | Wang et al. | 2023 | Multi-path validation |
+| REF-020 | [Tree of Thoughts](REF-020-tree-of-thoughts-planning.md) | Yao et al. | 2023 | Deliberate planning |
+| REF-026 | [In-Context Learning Survey](REF-026-in-context-learning-survey.md) | Dong et al. | 2024 | Template/example design |
+
+### Tier 2: Tool Use & Acting
+
+| ID | Title | Authors | Year | AIWG Relevance |
+|----|-------|---------|------|----------------|
+| REF-018 | [ReAct: Reasoning + Acting](REF-018-react-reasoning-acting.md) | Yao et al. | 2023 | Agent tool use patterns |
+| REF-019 | [Toolformer](REF-019-toolformer-self-taught-tools.md) | Schick et al. | 2023 | Self-taught tool use |
+| REF-014 | [SWE-bench Evaluation](REF-014-swe-bench-evaluation.md) | Jimenez et al. | 2024 | Real-world coding benchmark |
+
+### Tier 2: Iteration & Recovery
+
+| ID | Title | Authors | Year | AIWG Relevance |
+|----|-------|---------|------|----------------|
+| REF-015 | [Self-Refine](REF-015-self-refine-iterative-refinement.md) | Madaan et al. | 2023 | Ralph loop foundation |
+| REF-021 | [Reflexion](REF-021-reflexion-verbal-reinforcement.md) | Shinn et al. | 2023 | Verbal reinforcement learning |
+| REF-024 | [LATS: Language Agent Tree Search](REF-024-lats-language-agent-tree-search.md) | Zhou et al. | 2024 | MCTS for agent planning |
+| REF-025 | [Constitutional AI](REF-025-constitutional-ai-harmlessness.md) | Bai et al. | 2022 | Principle-based review |
+
+### Tier 2: Failure Modes & Production
+
+| ID | Title | Authors | Year | AIWG Relevance |
+|----|-------|---------|------|----------------|
+| REF-001 | [Production-Grade Agentic Workflows](REF-001-production-agentic-workflows.md) | Bandara et al. | 2024 | Production reliability |
+| REF-002 | [LLM Failure Modes in Agentic Scenarios](REF-002-llm-failure-modes-agentic.md) | Roig | 2025 | Failure archetypes, recovery |
 
 ## Category Index
 
@@ -60,11 +88,23 @@ Each reference document includes:
 - REF-007: Jacobs et al. (1991) - Mixture of Experts
 - REF-012: Qian et al. (2024) - ChatDev
 - REF-013: Hong et al. (2024) - MetaGPT
+- REF-022: Wu et al. (2023) - AutoGen
+- REF-023: Shen et al. (2023) - HuggingGPT
 - REF-004: Tao et al. (2024) - MAGIS
 
 ### Cognitive Science
 - REF-005: Miller (1956) - Magical Number Seven
 - REF-006: Sweller (1988) - Cognitive Load Theory
+
+### Reasoning & Prompting
+- REF-016: Wei et al. (2022) - Chain-of-Thought
+- REF-017: Wang et al. (2023) - Self-Consistency
+- REF-020: Yao et al. (2023) - Tree of Thoughts
+- REF-026: Dong et al. (2024) - In-Context Learning
+
+### Tool Use & Acting
+- REF-018: Yao et al. (2023) - ReAct
+- REF-019: Schick et al. (2023) - Toolformer
 
 ### Process Management
 - REF-010: Cooper (1990) - Stage-Gate Systems
@@ -72,6 +112,9 @@ Each reference document includes:
 
 ### Iteration & Recovery
 - REF-015: Madaan et al. (2023) - Self-Refine
+- REF-021: Shinn et al. (2023) - Reflexion
+- REF-024: Zhou et al. (2024) - LATS
+- REF-025: Bai et al. (2022) - Constitutional AI
 - REF-002: Roig (2025) - LLM Failure Modes
 
 ### Evaluation & Benchmarks
@@ -91,8 +134,10 @@ When adding a new reference:
 
 - **Terminology Glossary**: `docs/research/glossary.md` - Maps informal terms to professional equivalents
 - **Claims Index**: `.aiwg/research/citable-claims-index.md` - Tracks which claims need citations
+- **Gap Analysis**: `.aiwg/research/research-gap-analysis.md` - Identifies priority research areas
 
 ---
 
 *Last updated: 2026-01-24*
 *Issue: #74 Research Acquisition*
+*Total references: 26*
