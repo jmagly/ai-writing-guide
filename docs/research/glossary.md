@@ -2,6 +2,8 @@
 
 This glossary maps AIWG's informal terminology to professional/academic equivalents with research citations.
 
+> **Full Paper Documentation**: [roctinam/research-papers](https://git.integrolabs.net/roctinam/research-papers)
+
 ## Terminology Mapping
 
 | Informal Term | Professional Term | Citation | Definition |

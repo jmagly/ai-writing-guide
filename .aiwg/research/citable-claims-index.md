@@ -2,6 +2,10 @@
 
 This document tracks claims made in AIWG documentation that require or benefit from academic citations.
 
+## Research Corpus
+
+Full paper documentation available at: **[roctinam/research-papers](https://git.integrolabs.net/roctinam/research-papers)**
+
 ## Purpose
 
 - Map AIWG claims to supporting research

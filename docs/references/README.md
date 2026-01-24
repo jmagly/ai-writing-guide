@@ -1,6 +1,8 @@
 # Research References
 
-This directory contains references to academic papers, industry research, and foundational works that inform AIWG's design and evolution.
+> **Full Research Corpus**: [roctinam/research-papers](https://git.integrolabs.net/roctinam/research-papers)
+>
+> This directory contains AIWG-specific reference summaries. The comprehensive paper documentation, PDFs, and supporting indices are maintained in the shared research-papers repository.
 
 ## Purpose
 
@@ -132,9 +134,15 @@ When adding a new reference:
 
 ## Cross-References
 
+**AIWG-Specific (this repo)**:
+- **Claims Index**: `.aiwg/research/citable-claims-index.md` - Tracks which AIWG claims need citations
+- **Gap Analysis**: `.aiwg/research/research-gap-analysis.md` - Identifies AIWG priority research areas
 - **Terminology Glossary**: `docs/research/glossary.md` - Maps informal terms to professional equivalents
-- **Claims Index**: `.aiwg/research/citable-claims-index.md` - Tracks which claims need citations
-- **Gap Analysis**: `.aiwg/research/research-gap-analysis.md` - Identifies priority research areas
+
+**Shared Research Corpus** ([research-papers](https://git.integrolabs.net/roctinam/research-papers)):
+- **Full Paper Documentation**: `documentation/references/REF-XXX-*.md`
+- **PDFs**: `pdfs/full/` and `pdfs/chunks/`
+- **Master Index**: `INDEX.md` - Topic and relevance lookups
 
 ---
 

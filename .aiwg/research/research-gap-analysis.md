@@ -2,6 +2,10 @@
 
 This document identifies areas where AIWG concepts lack sufficient academic grounding and prioritizes research acquisition.
 
+## Research Corpus
+
+Full paper documentation available at: **[roctinam/research-papers](https://git.integrolabs.net/roctinam/research-papers)**
+
 ## Current Coverage
 
 ### Well-Supported Areas (3+ citations)
