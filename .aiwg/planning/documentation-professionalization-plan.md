@@ -18,6 +18,8 @@ This plan updates AIWG's external documentation to reflect its actual sophistica
 
 **Critical constraint:** NO changes to `.aiwg/` directory or core system behavior.
 
+**Pre-requisite:** Research acquisition must complete before documentation work begins (Issue #74).
+
 ---
 
 ## Scope
@@ -40,6 +42,53 @@ This plan updates AIWG's external documentation to reflect its actual sophistica
 | `agentic/code/` | Agent definitions work fine, just need better external docs |
 | `src/` | Implementation code - no changes |
 | `CLAUDE.md` | Project instructions - separate concern |
+
+---
+
+## Phase 0: Research Acquisition (Issue #74) ⚠️ PRE-REQUISITE
+
+**BLOCKS ALL OTHER PHASES** - Must complete before any documentation work begins.
+
+### Overview
+
+Before updating documentation with professional terminology and citations, we must:
+
+1. **Acquire** peer-reviewed research papers backing AIWG techniques
+2. **Review** thoroughly and extract citable claims, insights, and findings
+3. **Compile** into reusable reference set with standardized format
+4. **Identify gaps** - techniques we use that lack research backing
+5. **Plan placement** - detailed map of where citations go
+
+### Target Papers (HIGH Priority)
+
+| Category | Paper | Status |
+|----------|-------|--------|
+| **Cognitive Load** | Miller (1956) "The Magical Number Seven" | TO ACQUIRE |
+| **Cognitive Load** | Sweller (1988) Cognitive Load Theory | TO ACQUIRE |
+| **Multi-Agent** | Jacobs et al. (1991) Mixture of Experts | TO ACQUIRE |
+| **Memory/RAG** | Lewis et al. (2020) RAG for NLP | TO ACQUIRE |
+| **Memory** | Graves et al. (2016) Neural Turing Machines | TO ACQUIRE |
+| **Stage-Gate** | Cooper (1990) Stage-Gate Systems | TO ACQUIRE |
+| **Traceability** | Gotel & Finkelstein (1994) Traceability Problem | TO ACQUIRE |
+| **LLM Failures** | Roig (2025) LLM Failure Modes | HAVE (REF-002) |
+| **Multi-Agent** | Tao et al. (2024) MAGIS | HAVE (REF-004) |
+
+### Deliverables
+
+1. **Reference files** (`docs/references/REF-005` through `REF-011+`)
+2. **Claims index** (`.aiwg/research/citable-claims-index.md`)
+3. **Gap analysis** (`.aiwg/research/research-gap-analysis.md`)
+4. **Citation placement plan** (`.aiwg/planning/citation-placement-plan.md`)
+
+### Success Criteria
+
+- [ ] All HIGH priority papers acquired and reviewed
+- [ ] Reference entries created for each paper
+- [ ] Claims index with 50+ citable claims
+- [ ] Gap analysis completed
+- [ ] Citation placement plan covers all target docs
+
+**Full details:** [Issue #74](https://git.integrolabs.net/roctinam/ai-writing-guide/issues/74)
 
 ---
 
@@ -362,28 +411,37 @@ This isn't just prompt templates—it's structured memory, ensemble validation, 
 
 ## Implementation Order
 
-### Wave 1: Foundation (Can parallelize)
-1. Create `docs/glossary.md` (#68)
-2. Create `docs/research/research-background.md` (#73)
-3. Add new reference files (#69)
+### Wave 0: Research Acquisition (BLOCKING - #74)
+1. Acquire peer-reviewed papers (HIGH priority first)
+2. Create reference entries (REF-005 through REF-011+)
+3. Extract citable claims into index
+4. Complete gap analysis
+5. Create citation placement plan
+
+**Must complete before any documentation work begins.**
+
+### Wave 1: Foundation (Can parallelize, after Wave 0)
+6. Create `docs/glossary.md` (#68)
+7. Create `docs/research/research-background.md` (#73)
+8. Add new reference files (#69)
 
 ### Wave 2: README (Depends on Wave 1)
-4. Restructure `README.md` (#70)
+9. Restructure `README.md` (#70)
 
 ### Wave 3: Documentation Tiers (Depends on Wave 1)
-5. Create `docs/overview/executive-brief.md` (#71)
-6. Create `docs/overview/what-is-aiwg.md` (#71)
-7. Create `docs/research/` additional files (#71)
-8. Move/reorganize existing docs (#71)
+10. Create `docs/overview/executive-brief.md` (#71)
+11. Create `docs/overview/what-is-aiwg.md` (#71)
+12. Create `docs/research/` additional files (#71)
+13. Move/reorganize existing docs (#71)
 
 ### Wave 4: Enhancements (Depends on Waves 1-3)
-9. Enhance `docs/ralph-guide.md` (#68, #69)
-10. Enhance `docs/extensions/overview.md` (#68, #69)
-11. Enhance `docs/quickstart.md` (#71)
+14. Enhance `docs/ralph-guide.md` (#68, #69)
+15. Enhance `docs/extensions/overview.md` (#68, #69)
+16. Enhance `docs/quickstart.md` (#71)
 
 ### Wave 5: Marketing (Depends on Wave 2)
-12. Update `package.json` description (#72)
-13. Update repository descriptions (#72)
+17. Update `package.json` description (#72)
+18. Update repository descriptions (#72)
 
 ---
 
@@ -523,12 +581,13 @@ This isn't just prompt templates—it's structured memory, ensemble validation, 
 
 ## Gitea Issues Created
 
-| Issue | Title | URL |
-|-------|-------|-----|
-| #67 | [Epic] Documentation Professionalization | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/67 |
-| #68 | Terminology Mapping & Standardization | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/68 |
-| #69 | Academic Citation Integration | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/69 |
-| #70 | README Restructuring for Multiple Audiences | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/70 |
-| #71 | Multi-Audience Documentation Levels | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/71 |
-| #72 | Marketing Copy Professionalization | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/72 |
-| #73 | Create Research Background Document | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/73 |
+| Issue | Title | URL | Notes |
+|-------|-------|-----|-------|
+| #67 | [Epic] Documentation Professionalization | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/67 | Parent epic |
+| **#74** | **Research Acquisition & Citation Integration** | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/74 | **⚠️ PRE-REQ - Blocks all others** |
+| #68 | Terminology Mapping & Standardization | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/68 | Blocked by #74 |
+| #69 | Academic Citation Integration | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/69 | Blocked by #74 |
+| #70 | README Restructuring for Multiple Audiences | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/70 | Blocked by #74 |
+| #71 | Multi-Audience Documentation Levels | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/71 | Blocked by #74 |
+| #72 | Marketing Copy Professionalization | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/72 | Blocked by #74 |
+| #73 | Create Research Background Document | https://git.integrolabs.net/roctinam/ai-writing-guide/issues/73 | Blocked by #74 |
