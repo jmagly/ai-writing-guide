@@ -1,49 +1,40 @@
 {
-  "id": "ralph-doc-prof-2026-01-25",
-  "task": "Execute Documentation Professionalization Plan - Complete all phases, comment and close issues",
+  "id": "ralph-research-issues-2026-01-25",
+  "task": "Create Gitea issues for ALL implementation opportunities from research documents",
   "completion_criteria": [
-    "Issue #68 (Terminology) closed with glossary.md created",
-    "Issue #69 (Citations) closed with references integrated",
-    "Issue #70 (README) closed with restructured README",
-    "Issue #71 (Multi-Audience) closed with executive-brief and what-is-aiwg created",
-    "Issue #72 (Marketing) closed with package.json updated",
-    "Issue #73 (Research Background) closed with research-background.md created"
+    "All 158 implementation opportunities have corresponding Gitea issues with labels and implementation proposals"
   ],
-  "max_iterations": 50,
+  "max_iterations": 100,
   "checkpoint_frequency": 5,
-  "current_iteration": 5,
+  "current_iteration": 3,
   "status": "completed",
-  "flow_track": "documentation-professionalization",
-  "started_at": "2026-01-25T16:10:00Z",
-  "completed_at": "2026-01-25T16:37:00Z",
-  "phases": {
-    "phase_1_foundation": "completed",
-    "phase_2_readme": "completed",
-    "phase_3_multi_audience": "completed",
-    "phase_4_marketing": "completed"
+  "flow_track": "research-implementation",
+  "started_at": "2026-01-25T17:00:00Z",
+  "completed_at": "2026-01-25T17:45:00Z",
+  "metrics": {
+    "issues_created": 158,
+    "top_10_issues": 10,
+    "round_2_issues": 61,
+    "round_3_issues": 87,
+    "issue_range": "#95-#252",
+    "labels_created": 8,
+    "agents_used": 12,
+    "parallel_batches": 6
   },
-  "issues": {
-    "67": "closed",
-    "68": "closed",
-    "69": "closed",
-    "70": "closed",
-    "71": "closed",
-    "72": "closed",
-    "73": "closed"
+  "labels": {
+    "priority:top-10": 139,
+    "priority:round-2": 140,
+    "priority:round-3": 141,
+    "research-backed": 142,
+    "performance": 143,
+    "quality": 144,
+    "efficiency": 145,
+    "reliability": 146
   },
   "learnings": [
-    "Parallel agent dispatch significantly accelerates multi-phase work",
-    "Technical Writer agent effective for glossary and documentation creation",
-    "Requirements Analyst agent effective for claims extraction",
-    "Architecture Designer agent effective for rationale documentation"
-  ],
-  "metrics": {
-    "files_created": 13,
-    "files_modified": 8,
-    "issues_closed": 7,
-    "comments_added": 8,
-    "terms_mapped": 80,
-    "claims_indexed": 55,
-    "papers_analyzed": 16
-  }
+    "Parallel agent dispatch significantly accelerates batch issue creation",
+    "Gitea API handles concurrent requests well with proper batching",
+    "Research gap analysis maps cleanly to issue categories",
+    "Implementation proposals benefit from code examples in comments"
+  ]
 }
