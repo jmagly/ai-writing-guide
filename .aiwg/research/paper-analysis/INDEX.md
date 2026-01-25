@@ -263,19 +263,305 @@ When validating outputs, use:
 
 ---
 
+---
+
+## Research Management & Standards Papers (REF-056 - REF-066)
+
+The following analyses cover foundational standards and research management frameworks that provide professional terminology and implementation patterns for AIWG's artifact management, provenance tracking, and quality assurance systems.
+
+---
+
+### REF-056: FAIR Guiding Principles
+**File**: `REF-056-aiwg-analysis.md`
+**Source**: Wilkinson et al. (2016) - The FAIR Guiding Principles for Scientific Data Management and Stewardship
+**Priority**: CRITICAL
+
+**Key AIWG Applications**:
+- Persistent identifier strategy (REF-XXX system)
+- Metadata persistence and machine-readability
+- Provenance tracking requirements
+- Artifact cross-references and linking
+
+**Implementation Areas**:
+- F1: Unique, persistent identifiers → REF-XXX system
+- A1: Open protocol retrieval → Git/URL access
+- I1: Knowledge representation → YAML/JSON artifacts
+- R1: Rich metadata → Document Profile section
+
+**Standards Endorsement**: G20, EU Horizon 2020, NIH, UKRI - global research infrastructure standard
+
+**When to Apply**: All artifact management, research acquisition, cross-referencing
+
+---
+
+### REF-057: Agent Laboratory
+**File**: `REF-057-aiwg-analysis.md`
+**Source**: Schmidgall et al. (2025) - Agent Laboratory: Using LLM Agents as Research Assistants
+**Priority**: HIGH
+
+**Key AIWG Applications**:
+- Human-in-the-loop validation pattern
+- Draft-then-edit workflow
+- Cost optimization (84% reduction with HITL)
+- Multi-agent specialization patterns
+
+**Implementation Areas**:
+- Human gates at phase transitions
+- Quality gates with explicit criteria
+- Tiered agent assignments
+- Edit-based refinement loops
+
+**Key Statistic**: 84% cost reduction with human-in-the-loop vs fully autonomous
+
+**When to Apply**: Cost-sensitive workflows, high-stakes decisions, quality assurance
+
+---
+
+### REF-058: R-LAM Reproducibility
+**File**: `REF-058-aiwg-analysis.md`
+**Source**: Sureshkumar et al. (2026) - R-LAM: Reproducibility in AI Workflows
+**Priority**: CRITICAL
+
+**Key AIWG Applications**:
+- Deterministic execution constraints
+- Configuration tracking and versioning
+- Checkpoint/recovery patterns
+- Ralph loop reproducibility requirements
+
+**Implementation Areas**:
+- 5 reproducibility components (provenance, versioning, determinism, checkpoints, dependencies)
+- Workflow reproducibility validation
+- Seed management for deterministic outputs
+- Configuration capture at execution time
+
+**Key Statistic**: 47% of workflows produce different outputs without constraints; 8-12% overhead acceptable
+
+**When to Apply**: All workflow execution, Ralph loops, CI/CD pipelines
+
+---
+
+### REF-059: LitLLM Anti-Hallucination
+**File**: `REF-059-aiwg-analysis.md`
+**Source**: ServiceNow Research (2025) - LitLLM for Scientific Literature Reviews
+**Priority**: HIGH
+
+**Key AIWG Applications**:
+- Retrieval-first architecture (never generate without retrieval)
+- Citation verification pipeline
+- Anti-hallucination prompt patterns
+- Grounded generation requirements
+
+**Implementation Areas**:
+- Citation whitelist in agent prompts
+- Post-generation citation audit
+- Page number requirements for quotes
+- DOI/URL verification steps
+
+**Core Principle**: Never generate citations without retrieval - prevents fabricated references
+
+**When to Apply**: All citation generation, research documentation, key quotes
+
+---
+
+### REF-060: GRADE Evidence Quality
+**File**: `REF-060-aiwg-analysis.md`
+**Source**: GRADE Working Group (2004-2025) - GRADE Handbook
+**Priority**: HIGH
+
+**Key AIWG Applications**:
+- Evidence quality assessment (High/Moderate/Low/Very Low)
+- Source type baseline classification
+- Downgrade/upgrade factor evaluation
+- Citation guidance by quality level
+
+**Implementation Areas**:
+- Source type classification (peer-reviewed → High, preprint → Moderate, blog → Low)
+- Five downgrade factors (bias, inconsistency, indirectness, imprecision, publication bias)
+- Three upgrade factors (large effect, dose-response, confounding)
+- Quality-aware citation guidelines
+
+**Adoption Validation**: 100+ organizations (WHO, Cochrane, NICE)
+
+**When to Apply**: Research source evaluation, citation decisions, evidence documentation
+
+---
+
+### REF-061: OAIS Reference Model
+**File**: `REF-061-aiwg-analysis.md`
+**Source**: CCSDS (2024) - Reference Model for an Open Archival Information System. ISO 14721:2025
+**Priority**: MEDIUM
+
+**Key AIWG Applications**:
+- SIP/AIP/DIP information package model
+- Six archival functions (Ingest, Storage, Data Management, Access, Administration, Preservation Planning)
+- Preservation Description Information (PDI) categories
+- Package structure standardization
+
+**Implementation Areas**:
+- SIP (PDF/URL intake) → AIP (REF-XXX.md) → DIP (BibTeX export, citable claims)
+- PDI categories: Reference, Provenance, Context, Fixity, Access Rights
+- Fixity checking (checksum verification)
+- Processing history tracking
+
+**Standards Alignment**: ISO 14721:2025 - international archival standard
+
+**When to Apply**: Research artifact management, long-term preservation, export formats
+
+---
+
+### REF-062: W3C PROV Data Model
+**File**: `REF-062-aiwg-analysis.md`
+**Source**: W3C (2013) - PROV-DM: The PROV Data Model. W3C Recommendation
+**Priority**: MEDIUM
+
+**Key AIWG Applications**:
+- Entity-Activity-Agent triangle model
+- Provenance relations (wasDerivedFrom, wasGeneratedBy, wasAssociatedWith)
+- Derivation chain tracking
+- PROV-N human-readable notation
+
+**Implementation Areas**:
+- Entity (artifacts) → Activity (operations) → Agent (researchers/agents)
+- PROV-compliant YAML schema for records
+- Derivation chain queries
+- PROV-JSON export for tools
+
+**Standards Alignment**: W3C Recommendation (2013) - semantic web standard
+
+**When to Apply**: Provenance tracking, audit trails, artifact lineage
+
+---
+
+### REF-066: MCP Specification
+**File**: `REF-066-aiwg-analysis.md`
+**Source**: Agentic AI Foundation (2025) - Model Context Protocol Specification 2025-11-25
+**Priority**: HIGH
+
+**Key AIWG Applications**:
+- Three primitives: Tools (actions), Resources (read-only), Prompts (templates)
+- MCP Tasks for async operations (Ralph loops)
+- Server discovery via `.well-known/mcp.json`
+- OAuth 2.1 security integration
+
+**Implementation Areas**:
+- AIWG MCP server design (workflow_run, artifact_read, template_render)
+- Resource exposure (agents catalog, templates, voices, prompts)
+- Ralph loops as MCP Tasks (async pattern)
+- Single-responsibility server design (0-3 tools per server)
+
+**Ecosystem Scale**: 10,000+ active MCP servers; industry standard
+
+**When to Apply**: AI-tool integration, external orchestrator access, API design
+
+---
+
+## Extended Cross-Cutting Themes
+
+### Standards & Research Management Patterns
+
+| Pattern | Papers | AIWG Use |
+|---------|--------|----------|
+| **Persistent Identifiers** | REF-056 | REF-XXX system, DOI capture |
+| **Provenance Tracking** | REF-056, REF-058, REF-062 | Derivation chains, agent attribution |
+| **Information Packages** | REF-061 | SIP→AIP→DIP workflow |
+| **Quality Assessment** | REF-060 | Source evaluation, citation guidance |
+| **Anti-Hallucination** | REF-059 | Retrieval-first, citation verification |
+| **Human-in-the-Loop** | REF-057 | Phase gates, cost optimization |
+| **Protocol Standards** | REF-066 | MCP integration, tool exposure |
+
+### Professional Terminology
+
+These papers provide vocabulary for documentation professionalization:
+
+| Domain | Professional Terms | Papers |
+|--------|-------------------|--------|
+| **Data Management** | FAIR principles, persistent identifiers, metadata schema | REF-056 |
+| **Archival Science** | SIP/AIP/DIP, PDI, Ingest function, fixity | REF-061 |
+| **Provenance** | Entity-Activity-Agent, wasDerivedFrom, PROV-N | REF-062 |
+| **Evidence Quality** | GRADE levels, downgrade/upgrade factors, baseline quality | REF-060 |
+| **Reproducibility** | Deterministic execution, configuration tracking, checkpoints | REF-058 |
+| **AI Protocols** | Tools/Resources/Prompts primitives, MCP Tasks | REF-066 |
+
+### Implementation Priority Updates
+
+#### Immediate (Research Framework)
+- [x] FAIR-aligned REF-XXX system (REF-056)
+- [x] Key Quotes with page numbers (REF-059)
+- [x] Document Profile metadata (REF-056, REF-061)
+- [ ] Retrieval-first citation policy (REF-059)
+- [ ] Quality assessment schema (REF-060)
+
+#### Short-Term (Infrastructure)
+- [ ] Provenance directory structure (REF-062)
+- [ ] Fixity checking system (REF-061)
+- [ ] GRADE-style quality fields in REF-XXX template (REF-060)
+- [ ] Anti-hallucination prompt rules (REF-059)
+
+#### Medium-Term (Standards Compliance)
+- [ ] PROV-JSON export (REF-062)
+- [ ] MCP Tasks for Ralph loops (REF-066)
+- [ ] Full PDI implementation (REF-061)
+- [ ] Human-in-the-loop gate patterns (REF-057)
+- [ ] BibTeX/citation DIP generation (REF-061)
+
+---
+
+## Usage Guidance (Extended)
+
+### For Research Framework Developers
+
+When building research acquisition systems, apply:
+1. **REF-056** for FAIR compliance (persistent IDs, metadata, provenance)
+2. **REF-059** for retrieval-first architecture (never generate citations without retrieval)
+3. **REF-060** for source quality assessment (baseline by type, explicit criteria)
+4. **REF-061** for package structure (SIP→AIP→DIP transformation)
+5. **REF-062** for provenance tracking (Entity-Activity-Agent model)
+
+### For MCP Server Developers
+
+When building AIWG MCP integration, apply:
+1. **REF-066** for three primitives (Tools, Resources, Prompts)
+2. **REF-066** for single-responsibility design (0-3 tools per server)
+3. **REF-066** for OAuth 2.1 security patterns
+4. **REF-058** for reproducibility in Ralph-as-Task implementations
+
+### For Documentation Professionalizers
+
+When upgrading documentation vocabulary, reference:
+1. **REF-056** for data management terminology (FAIR vocabulary)
+2. **REF-061** for archival terminology (OAIS vocabulary)
+3. **REF-062** for provenance terminology (W3C PROV vocabulary)
+4. **REF-060** for evidence quality terminology (GRADE vocabulary)
+
+### For Quality Engineers (Extended)
+
+When validating research artifacts, use:
+1. **REF-060** GRADE levels for source quality
+2. **REF-059** citation verification for hallucination prevention
+3. **REF-058** reproducibility validation for workflow consistency
+4. **REF-061** PDI completeness for archive quality
+
+---
+
 ## Document Status
 
 **Created**: 2026-01-24
-**Source Repository**: `/tmp/research-papers`
-**Coverage**: 5 papers (REF-016, REF-017, REF-018, REF-019, REF-020)
-**Next Update**: When new tier 2 papers are added to research-papers
+**Updated**: 2026-01-25
+**Source Repository**: `docs/references/` (local) + `/tmp/research-papers` (external)
+**Coverage**: 13 papers
+- Reasoning patterns: REF-016, REF-017, REF-018, REF-019, REF-020
+- Standards & research management: REF-056, REF-057, REF-058, REF-059, REF-060, REF-061, REF-062, REF-066
+
+**Reserved Range**: REF-027 through REF-055 (future additions)
 
 ---
 
 ## References
 
-All analysis files reference source papers in:
-`/tmp/research-papers/documentation/references/`
+Analysis files reference source papers in:
+- `docs/references/` - Reference documents (REF-XXX.md)
+- `docs/references/pdfs/` - Full paper PDFs
 
-Full paper PDFs available in:
-`/tmp/research-papers/documentation/references/pdfs/`
+External research papers:
+- `/tmp/research-papers/documentation/references/` - Reasoning research
+- `/tmp/research-papers/documentation/references/pdfs/` - PDFs

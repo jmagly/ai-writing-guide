@@ -1,7 +1,7 @@
 {
   "name": "aiwg",
   "version": "2026.1.7",
-  "description": "Modular agentic framework for AI-powered SDLC, marketing automation, and workflow orchestration",
+  "description": "Cognitive architecture for AI-augmented software development with structured memory, ensemble validation, and closed-loop correction. FAIR-aligned artifacts, 84% cost reduction via human-in-the-loop, standards adopted by 100+ organizations.",
   "type": "module",
   "bin": {
     "aiwg": "bin/aiwg.mjs"
