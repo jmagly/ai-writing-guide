@@ -1,4 +1,4 @@
-# REF-003: Model Context Protocol (MCP) Specification 2025
+# REF-066: Model Context Protocol (MCP) Specification 2025
 
 ## Citation
 
