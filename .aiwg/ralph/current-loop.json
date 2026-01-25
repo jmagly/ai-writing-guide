@@ -1,0 +1,37 @@
+{
+  "id": "ralph-rf-2026-01-25",
+  "task": "Design and document the complete AIWG Research Framework from Inception through Elaboration phase",
+  "completion_criteria": [
+    "Inception Phase Complete: intake, solution profile, stakeholders, vision, risks",
+    "Elaboration Phase Complete: UC-RF-001+, NFR-RF-001+, SAD, ADRs, agents, commands",
+    "Issues/tickets created with effort estimates",
+    "Gate checks passed (Inception→Elaboration, Elaboration completion)"
+  ],
+  "max_iterations": 50,
+  "checkpoint_frequency": 5,
+  "current_iteration": 8,
+  "status": "completed",
+  "flow_track": "research-framework",
+  "started_at": "2026-01-25T12:00:00Z",
+  "completed_at": "2026-01-25T04:15:00Z",
+  "checkpoints": [
+    {
+      "iteration": 5,
+      "timestamp": "2026-01-25T03:30:00Z",
+      "file": "iterations/iteration-005-checkpoint.md"
+    }
+  ],
+  "learnings": [
+    "Parallel expert teams significantly accelerate artifact creation",
+    "Gate checks ensure quality before phase transitions",
+    "AIWG patterns (agent specs, use case templates) provide consistency",
+    "Flow tracks with explicit artifacts enable comprehensive status tracking",
+    "Issues with effort estimates and dependencies support project planning"
+  ],
+  "metrics": {
+    "artifacts_created": 56,
+    "issues_created": 9,
+    "gate_checks_passed": 3,
+    "total_effort_hours": 500
+  }
+}

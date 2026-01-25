@@ -1,0 +1,217 @@
+# Research Framework Flow Track
+# Flow: Concept → Inception → Elaboration → Construction → Transition
+# Current: Elaboration Phase COMPLETE - Ready for Construction
+
+flow_id: research-framework
+flow_name: "Research Framework Development"
+created: 2026-01-25
+last_updated: 2026-01-25
+
+current_phase: elaboration
+next_phase: construction
+
+phase_history:
+  - phase: concept
+    status: completed
+    completed_date: 2026-01-25
+    notes: "Research findings compiled in .aiwg/research/research-framework-findings.md"
+
+  - phase: inception
+    status: completed
+    started_date: 2026-01-25
+    completed_date: 2026-01-25
+    artifacts:
+      - inception/project-intake.md
+      - inception/solution-profile.md
+      - inception/stakeholder-analysis.md
+      - inception/vision-document.md
+      - inception/initial-risk-assessment.md
+
+  - phase: elaboration
+    status: completed
+    started_date: 2026-01-25
+    completed_date: 2026-01-25
+    artifacts:
+      # Use Cases
+      - elaboration/use-cases/UC-RF-001-discover-research-papers.md
+      - elaboration/use-cases/UC-RF-002-acquire-research-source.md
+      - elaboration/use-cases/UC-RF-003-document-research-paper.md
+      - elaboration/use-cases/UC-RF-004-integrate-citations.md
+      - elaboration/use-cases/UC-RF-005-track-provenance.md
+      - elaboration/use-cases/UC-RF-006-assess-source-quality.md
+      - elaboration/use-cases/UC-RF-007-archive-research-artifacts.md
+      - elaboration/use-cases/UC-RF-008-execute-research-workflow.md
+      - elaboration/use-cases/UC-RF-009-perform-gap-analysis.md
+      - elaboration/use-cases/UC-RF-010-export-research-artifacts.md
+      # NFRs
+      - elaboration/nfr/NFR-RF-specifications.md
+      # Architecture
+      - elaboration/architecture/software-architecture-doc.md
+      - elaboration/architecture/adrs/ADR-RF-001-agent-orchestration-pattern.md
+      - elaboration/architecture/adrs/ADR-RF-002-provenance-storage-format.md
+      - elaboration/architecture/adrs/ADR-RF-003-quality-assessment-model.md
+      - elaboration/architecture/adrs/ADR-RF-004-artifact-storage-structure.md
+      - elaboration/architecture/adrs/ADR-RF-005-external-api-integration.md
+      # Agents
+      - elaboration/agents/discovery-agent-spec.md
+      - elaboration/agents/acquisition-agent-spec.md
+      - elaboration/agents/documentation-agent-spec.md
+      - elaboration/agents/citation-agent-spec.md
+      - elaboration/agents/archival-agent-spec.md
+      - elaboration/agents/quality-agent-spec.md
+      - elaboration/agents/provenance-agent-spec.md
+      - elaboration/agents/workflow-agent-spec.md
+      - elaboration/agents/README.md
+      # Commands
+      - elaboration/commands/research-discover.md
+      - elaboration/commands/research-acquire.md
+      - elaboration/commands/research-document.md
+      - elaboration/commands/research-cite.md
+      - elaboration/commands/research-archive.md
+      - elaboration/commands/research-quality.md
+      - elaboration/commands/research-gap-analysis.md
+      - elaboration/commands/research-workflow.md
+      - elaboration/commands/research-export.md
+      - elaboration/commands/research-status.md
+      - elaboration/commands/README.md
+      - elaboration/commands/DELIVERABLE-SUMMARY.md
+      # Templates
+      - elaboration/templates/REF-XXX-template.md
+      - elaboration/templates/literature-note-template.md
+      - elaboration/templates/claims-index-template.md
+      - elaboration/templates/gap-analysis-report-template.md
+      - elaboration/templates/quality-assessment-template.md
+      - elaboration/templates/provenance-record-template.json
+      - elaboration/templates/workflow-status-template.md
+      - elaboration/templates/oais-export-package-template.md
+      - elaboration/templates/README.md
+      # Other
+      - elaboration/test-strategy.md
+      - elaboration/api-integration-specs.md
+
+phase_gates:
+  concept_to_inception:
+    status: passed
+    date: 2026-01-25
+    checklist:
+      - name: "Research findings documented"
+        status: passed
+        evidence: ".aiwg/research/research-framework-findings.md"
+      - name: "Problem statement clear"
+        status: passed
+        evidence: "15 topic areas researched, 50+ sources"
+      - name: "Initial scope identified"
+        status: passed
+        evidence: "Framework scope: discovery through archival"
+
+  inception_to_elaboration:
+    status: passed
+    date: 2026-01-25
+    evidence: "gate-checks/inception-to-elaboration.md"
+    checklist:
+      - name: "Project intake validated"
+        status: passed
+        evidence: "inception/project-intake.md (23KB)"
+      - name: "Solution profile complete"
+        status: passed
+        evidence: "inception/solution-profile.md (28KB)"
+      - name: "Stakeholders identified"
+        status: passed
+        evidence: "inception/stakeholder-analysis.md (30KB)"
+      - name: "Vision approved"
+        status: passed
+        evidence: "inception/vision-document.md (48KB)"
+      - name: "Risks assessed"
+        status: passed
+        evidence: "inception/initial-risk-assessment.md (73KB)"
+
+  elaboration_complete:
+    status: passed
+    date: 2026-01-25
+    evidence: "gate-checks/elaboration-complete.md"
+    checklist:
+      - name: "Use cases specified (UC-RF-*)"
+        status: passed
+        evidence: "10 use cases (UC-RF-001 through UC-RF-010)"
+      - name: "NFRs defined (NFR-RF-*)"
+        status: passed
+        evidence: "45 NFRs across 9 categories"
+      - name: "Architecture documented (SAD)"
+        status: passed
+        evidence: "SAD with 4 views, C4 diagrams"
+      - name: "ADRs for key decisions"
+        status: passed
+        evidence: "5 ADRs (ADR-RF-001 through ADR-RF-005)"
+      - name: "Agent specifications complete"
+        status: passed
+        evidence: "8 agent specifications"
+      - name: "Command definitions complete"
+        status: passed
+        evidence: "10 command definitions"
+      - name: "Template designs complete"
+        status: passed
+        evidence: "8 template designs"
+      - name: "Test strategy defined"
+        status: passed
+        evidence: "423 tests, 90% coverage target"
+      - name: "API integration specs"
+        status: passed
+        evidence: "4 API clients with caching/security"
+      - name: "Issues/tickets created"
+        status: passed
+        evidence: "Gitea #85-#93 (Epic + 8 issues)"
+
+  elaboration_to_construction:
+    status: not_started
+    target_date: 2026-02-01
+    notes: "Pending start of Construction phase"
+
+metrics:
+  iteration_count: 8
+  artifacts_created: 56
+  issues_created: 9
+  gate_checks_passed: 3
+  total_effort_hours: 500
+  phases_completed: 3  # concept, inception, elaboration
+
+issues:
+  epic: 85
+  implementation:
+    - number: 86
+      title: "[RF-001] Foundation Infrastructure"
+      effort: 80
+      phase: 1
+    - number: 87
+      title: "[RF-002] Discovery Agent"
+      effort: 60
+      phase: 2
+    - number: 88
+      title: "[RF-003] Acquisition Agent"
+      effort: 50
+      phase: 2
+    - number: 89
+      title: "[RF-004] Documentation Agent"
+      effort: 70
+      phase: 3
+    - number: 90
+      title: "[RF-005] Citation & Quality Agents"
+      effort: 80
+      phase: 3-4
+    - number: 91
+      title: "[RF-006] Archival & Provenance Agents"
+      effort: 60
+      phase: 4
+    - number: 92
+      title: "[RF-007] Workflow Agent & Orchestration"
+      effort: 50
+      phase: 5
+    - number: 93
+      title: "[RF-008] Testing, Documentation & Release"
+      effort: 50
+      phase: 6
+
+ralph_loop:
+  id: ralph-rf-2026-01-25
+  status: completed
+  iterations_used: 8
+  iterations_max: 50

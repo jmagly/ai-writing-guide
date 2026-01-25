@@ -1,0 +1,378 @@
+{
+  "$schema": "http://www.w3.org/ns/prov#",
+  "prefix": {
+    "prov": "http://www.w3.org/ns/prov#",
+    "aiwg": "https://aiwg.io/research#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "_comment": "W3C PROV-JSON provenance record template for AIWG Research Framework",
+  "entity": {
+    "aiwg:artifact-id": {
+      "prov:type": "prov:Entity",
+      "aiwg:entityType": "SourceMetadata | SearchResults | Summary | LiteratureNote | Extraction",
+      "aiwg:filePath": ".aiwg/research/[category]/[filename]",
+      "aiwg:checksum": "[SHA-256 hash]",
+      "aiwg:mimeType": "application/json | text/markdown | application/pdf",
+      "prov:generatedAtTime": "YYYY-MM-DDTHH:MM:SSZ",
+      "aiwg:size": 12345,
+      "aiwg:metadata": {
+        "ref_id": "REF-XXX",
+        "title": "[Artifact title]",
+        "version": "1.0.0"
+      }
+    }
+  },
+  "activity": {
+    "aiwg:operation-id": {
+      "prov:type": "prov:Activity",
+      "aiwg:activityType": "Discovery | Acquisition | Documentation | Citation | QualityAssessment | GapAnalysis | Archive",
+      "aiwg:command": "aiwg research [command] [args]",
+      "aiwg:workflowStage": "discovery | acquisition | documentation | integration | archival",
+      "prov:startTime": "YYYY-MM-DDTHH:MM:SSZ",
+      "prov:endTime": "YYYY-MM-DDTHH:MM:SSZ",
+      "aiwg:duration": "PT5M30S",
+      "aiwg:exitCode": 0,
+      "aiwg:parameters": {
+        "query": "[Search query]",
+        "limit": 10,
+        "model": "claude-opus-4"
+      }
+    }
+  },
+  "agent": {
+    "aiwg:user-id": {
+      "prov:type": "prov:Person",
+      "aiwg:agentType": "HumanUser",
+      "aiwg:username": "jmagly",
+      "aiwg:email": "user@example.com",
+      "aiwg:role": "researcher"
+    },
+    "aiwg:software-agent-id": {
+      "prov:type": "prov:SoftwareAgent",
+      "aiwg:agentType": "DiscoveryAgent | AcquisitionAgent | DocumentationAgent | CitationAgent | QualityAgent | GapAnalysisAgent | ProvenanceAgent | WorkflowAgent | ArchivalAgent",
+      "aiwg:version": "1.0.0",
+      "aiwg:implementation": "aiwg-research-framework",
+      "aiwg:modelUsed": "claude-opus-4 | claude-sonnet-4 | local-llm"
+    },
+    "aiwg:external-service-id": {
+      "prov:type": "prov:SoftwareAgent",
+      "aiwg:agentType": "ExternalAPI",
+      "aiwg:serviceName": "SemanticScholar | ArXiv | OpenAlex | GoogleScholar",
+      "aiwg:version": "v1",
+      "aiwg:endpoint": "https://api.semanticscholar.org/v1"
+    }
+  },
+  "wasGeneratedBy": {
+    "_:wgb1": {
+      "prov:entity": "aiwg:artifact-id",
+      "prov:activity": "aiwg:operation-id",
+      "prov:time": "YYYY-MM-DDTHH:MM:SSZ",
+      "prov:role": "output"
+    }
+  },
+  "used": {
+    "_:u1": {
+      "prov:activity": "aiwg:operation-id",
+      "prov:entity": "aiwg:input-artifact-id",
+      "prov:time": "YYYY-MM-DDTHH:MM:SSZ",
+      "prov:role": "input"
+    }
+  },
+  "wasAssociatedWith": {
+    "_:waw1": {
+      "prov:activity": "aiwg:operation-id",
+      "prov:agent": "aiwg:software-agent-id",
+      "prov:plan": "aiwg:workflow-plan-id",
+      "prov:role": "executor"
+    },
+    "_:waw2": {
+      "prov:activity": "aiwg:operation-id",
+      "prov:agent": "aiwg:user-id",
+      "prov:role": "initiator"
+    }
+  },
+  "wasAttributedTo": {
+    "_:wat1": {
+      "prov:entity": "aiwg:artifact-id",
+      "prov:agent": "aiwg:external-service-id"
+    }
+  },
+  "wasDerivedFrom": {
+    "_:wdf1": {
+      "prov:generatedEntity": "aiwg:artifact-id",
+      "prov:usedEntity": "aiwg:source-artifact-id",
+      "prov:activity": "aiwg:operation-id",
+      "prov:type": "prov:Derivation | prov:Revision | prov:Quotation"
+    }
+  },
+  "wasInformedBy": {
+    "_:wib1": {
+      "prov:informed": "aiwg:operation-id",
+      "prov:informant": "aiwg:previous-operation-id",
+      "prov:comment": "Documentation triggered by acquisition completion"
+    }
+  },
+  "plan": {
+    "aiwg:workflow-plan-id": {
+      "prov:type": "prov:Plan",
+      "aiwg:planType": "5StageResearchWorkflow | DocumentationPipeline",
+      "aiwg:description": "AIWG Research Framework 5-stage workflow",
+      "aiwg:stages": [
+        "discovery",
+        "acquisition",
+        "documentation",
+        "integration",
+        "archival"
+      ],
+      "aiwg:version": "1.0.0"
+    }
+  },
+  "bundle": {
+    "aiwg:session-bundle-id": {
+      "prov:type": "prov:Bundle",
+      "aiwg:sessionId": "session-YYYYMMDD-HHMMSS",
+      "aiwg:description": "All provenance records for research session",
+      "prov:generatedAtTime": "YYYY-MM-DDTHH:MM:SSZ"
+    }
+  },
+  "collection": {
+    "aiwg:research-corpus-id": {
+      "prov:type": "prov:Collection",
+      "aiwg:collectionType": "ResearchCorpus",
+      "aiwg:members": [
+        "aiwg:REF-001",
+        "aiwg:REF-002",
+        "aiwg:REF-XXX"
+      ],
+      "aiwg:size": 25,
+      "prov:generatedAtTime": "YYYY-MM-DDTHH:MM:SSZ"
+    }
+  },
+  "hadMember": {
+    "_:hm1": {
+      "prov:collection": "aiwg:research-corpus-id",
+      "prov:entity": "aiwg:artifact-id"
+    }
+  },
+  "_validation": {
+    "_comment": "Validation metadata (not part of W3C PROV standard)",
+    "w3c_prov_compliant": true,
+    "schema_version": "W3C PROV-JSON 1.0",
+    "validated_at": "YYYY-MM-DDTHH:MM:SSZ",
+    "validation_tool": "prov-validator v1.0.0"
+  },
+  "_examples": {
+    "_comment": "Example provenance records for common AIWG operations",
+    "example_discovery": {
+      "entity": {
+        "aiwg:search-results-2026-01-25T10-30-00": {
+          "prov:type": "prov:Entity",
+          "aiwg:entityType": "SearchResults",
+          "aiwg:filePath": ".aiwg/research/discovery/search-results-2026-01-25T10-30-00.json",
+          "aiwg:checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "prov:generatedAtTime": "2026-01-25T10:30:00Z",
+          "aiwg:metadata": {
+            "query": "OAuth2 security best practices",
+            "source": "semantic-scholar",
+            "results_count": 15
+          }
+        }
+      },
+      "activity": {
+        "aiwg:discovery-search-001": {
+          "prov:type": "prov:Activity",
+          "aiwg:activityType": "Discovery",
+          "aiwg:command": "aiwg research search \"OAuth2 security best practices\"",
+          "prov:startTime": "2026-01-25T10:29:50Z",
+          "prov:endTime": "2026-01-25T10:30:05Z",
+          "aiwg:duration": "PT15S"
+        }
+      },
+      "agent": {
+        "aiwg:discovery-agent": {
+          "prov:type": "prov:SoftwareAgent",
+          "aiwg:agentType": "DiscoveryAgent",
+          "aiwg:version": "1.0.0"
+        },
+        "aiwg:semantic-scholar-api": {
+          "prov:type": "prov:SoftwareAgent",
+          "aiwg:agentType": "ExternalAPI",
+          "aiwg:serviceName": "SemanticScholar",
+          "aiwg:endpoint": "https://api.semanticscholar.org/v1"
+        }
+      },
+      "wasGeneratedBy": {
+        "_:wgb-discovery": {
+          "prov:entity": "aiwg:search-results-2026-01-25T10-30-00",
+          "prov:activity": "aiwg:discovery-search-001"
+        }
+      },
+      "wasAssociatedWith": {
+        "_:waw-discovery": {
+          "prov:activity": "aiwg:discovery-search-001",
+          "prov:agent": "aiwg:discovery-agent"
+        }
+      },
+      "wasAttributedTo": {
+        "_:wat-discovery": {
+          "prov:entity": "aiwg:search-results-2026-01-25T10-30-00",
+          "prov:agent": "aiwg:semantic-scholar-api"
+        }
+      }
+    },
+    "example_documentation": {
+      "entity": {
+        "aiwg:REF-025-summary": {
+          "prov:type": "prov:Entity",
+          "aiwg:entityType": "Summary",
+          "aiwg:filePath": ".aiwg/research/knowledge/summaries/REF-025-summary.md",
+          "aiwg:checksum": "f7c3bc1d808e04732adf679965ccc34ca7ae3441",
+          "prov:generatedAtTime": "2026-01-25T16:00:00Z",
+          "aiwg:metadata": {
+            "ref_id": "REF-025",
+            "llm_model": "claude-opus-4",
+            "summary_type": "full"
+          }
+        },
+        "aiwg:REF-025-pdf": {
+          "prov:type": "prov:Entity",
+          "aiwg:entityType": "SourcePDF",
+          "aiwg:filePath": ".aiwg/research/sources/pdfs/REF-025-constitutional-ai.pdf",
+          "aiwg:checksum": "a3f8c9e2d1b4567890abcdef1234567890abcdef",
+          "aiwg:mimeType": "application/pdf"
+        }
+      },
+      "activity": {
+        "aiwg:documentation-summarize-REF-025": {
+          "prov:type": "prov:Activity",
+          "aiwg:activityType": "Documentation",
+          "aiwg:command": "aiwg research summarize REF-025",
+          "prov:startTime": "2026-01-25T15:55:00Z",
+          "prov:endTime": "2026-01-25T16:00:00Z",
+          "aiwg:duration": "PT5M",
+          "aiwg:parameters": {
+            "llm_model": "claude-opus-4",
+            "temperature": 0.3,
+            "hallucination_check": true
+          }
+        }
+      },
+      "agent": {
+        "aiwg:documentation-agent": {
+          "prov:type": "prov:SoftwareAgent",
+          "aiwg:agentType": "DocumentationAgent",
+          "aiwg:version": "1.0.0",
+          "aiwg:modelUsed": "claude-opus-4"
+        }
+      },
+      "wasGeneratedBy": {
+        "_:wgb-doc": {
+          "prov:entity": "aiwg:REF-025-summary",
+          "prov:activity": "aiwg:documentation-summarize-REF-025"
+        }
+      },
+      "used": {
+        "_:u-doc": {
+          "prov:activity": "aiwg:documentation-summarize-REF-025",
+          "prov:entity": "aiwg:REF-025-pdf"
+        }
+      },
+      "wasAssociatedWith": {
+        "_:waw-doc": {
+          "prov:activity": "aiwg:documentation-summarize-REF-025",
+          "prov:agent": "aiwg:documentation-agent"
+        }
+      },
+      "wasDerivedFrom": {
+        "_:wdf-doc": {
+          "prov:generatedEntity": "aiwg:REF-025-summary",
+          "prov:usedEntity": "aiwg:REF-025-pdf",
+          "prov:activity": "aiwg:documentation-summarize-REF-025",
+          "prov:type": "prov:Derivation"
+        }
+      }
+    },
+    "example_citation": {
+      "entity": {
+        "aiwg:architecture-doc-v1.2": {
+          "prov:type": "prov:Entity",
+          "aiwg:entityType": "ArchitectureDocument",
+          "aiwg:filePath": ".aiwg/architecture/software-architecture-doc.md",
+          "prov:generatedAtTime": "2026-01-25T17:00:00Z",
+          "aiwg:metadata": {
+            "version": "1.2",
+            "claims_backed": 25,
+            "total_claims": 25,
+            "coverage": "100%"
+          }
+        },
+        "aiwg:REF-025-extraction": {
+          "prov:type": "prov:Entity",
+          "aiwg:entityType": "Extraction",
+          "aiwg:filePath": ".aiwg/research/knowledge/extractions/REF-025-extraction.json"
+        }
+      },
+      "activity": {
+        "aiwg:citation-integration-001": {
+          "prov:type": "prov:Activity",
+          "aiwg:activityType": "Citation",
+          "aiwg:command": "aiwg research cite --doc architecture-doc.md --claim 'Constitutional AI reduces harmful outputs'",
+          "prov:startTime": "2026-01-25T16:55:00Z",
+          "prov:endTime": "2026-01-25T17:00:00Z"
+        }
+      },
+      "agent": {
+        "aiwg:citation-agent": {
+          "prov:type": "prov:SoftwareAgent",
+          "aiwg:agentType": "CitationAgent",
+          "aiwg:version": "1.0.0"
+        }
+      },
+      "wasGeneratedBy": {
+        "_:wgb-cite": {
+          "prov:entity": "aiwg:architecture-doc-v1.2",
+          "prov:activity": "aiwg:citation-integration-001"
+        }
+      },
+      "used": {
+        "_:u-cite": {
+          "prov:activity": "aiwg:citation-integration-001",
+          "prov:entity": "aiwg:REF-025-extraction"
+        }
+      },
+      "wasAssociatedWith": {
+        "_:waw-cite": {
+          "prov:activity": "aiwg:citation-integration-001",
+          "prov:agent": "aiwg:citation-agent"
+        }
+      },
+      "wasDerivedFrom": {
+        "_:wdf-cite": {
+          "prov:generatedEntity": "aiwg:architecture-doc-v1.2",
+          "prov:usedEntity": "aiwg:architecture-doc-v1.1",
+          "prov:activity": "aiwg:citation-integration-001",
+          "prov:type": "prov:Revision"
+        }
+      }
+    }
+  },
+  "_agent_mapping": {
+    "_comment": "Which agents produce which provenance records",
+    "DiscoveryAgent": "Discovery activity (search, filter, rank)",
+    "AcquisitionAgent": "Acquisition activity (download, validate checksum)",
+    "DocumentationAgent": "Documentation activity (summarize, extract, create notes)",
+    "CitationAgent": "Citation activity (map claims, add inline citations)",
+    "QualityAgent": "QualityAssessment activity (score, GRADE, FAIR)",
+    "GapAnalysisAgent": "GapAnalysis activity (identify gaps, generate recommendations)",
+    "ArchivalAgent": "Archive activity (package, validate, export)",
+    "ProvenanceAgent": "Provenance activity (log all operations)",
+    "WorkflowAgent": "Workflow activity (orchestrate stages)"
+  },
+  "_usage_notes": {
+    "validation": "Validate using W3C PROV-JSON schema before appending to log",
+    "log_rotation": "New log file every 30 days or 10,000 records",
+    "retention": "Keep provenance logs for 5 years (academic standard)",
+    "privacy": "Redact sensitive user data (emails, internal URLs) before sharing reproducibility packages",
+    "interoperability": "PROV-JSON can be converted to PROV-N (textual) or PROV-XML for tools compatibility"
+  }
+}
