@@ -21,7 +21,8 @@
 | Tool Use & Acting | 3 | ReAct, Toolformer, SWE-bench |
 | Iteration & Recovery | 4 | Self-Refine, Reflexion, LATS, Constitutional AI |
 | Failure & Production | 2 | Roig, Bandara |
-| **Total** | **26** | |
+| Research Management | 7 | FAIR, OAIS, PROV, GRADE, R-LAM, LitLLM, Agent Lab |
+| **Total** | **33** | |
 
 ## References by Category
 
@@ -80,6 +81,18 @@
 | REF-001 | [Production-Grade Agentic Workflows](REF-001-production-agentic-workflows.md) | Bandara et al. | 2024 | Production reliability |
 | REF-002 | [LLM Failure Modes in Agentic Scenarios](REF-002-llm-failure-modes-agentic.md) | Roig | 2025 | Failure archetypes, recovery |
 
+### Tier 2: Research Management & Reproducibility
+
+| ID | Title | Authors | Year | AIWG Relevance |
+|----|-------|---------|------|----------------|
+| REF-056 | [FAIR Guiding Principles](REF-056-fair-guiding-principles.md) | Wilkinson et al. | 2016 | Findable, Accessible, Interoperable, Reusable data |
+| REF-057 | [Agent Laboratory](REF-057-agent-laboratory.md) | Schmidgall et al. | 2025 | Multi-agent research automation |
+| REF-058 | [R-LAM Reproducibility](REF-058-rlam-reproducibility.md) | Sureshkumar et al. | 2026 | Workflow reproducibility, provenance |
+| REF-059 | [LitLLM Literature Review](REF-059-litllm-literature-review.md) | ServiceNow | 2025 | RAG-based citation, anti-hallucination |
+| REF-060 | [GRADE Evidence Quality](REF-060-grade-evidence-quality.md) | GRADE Working Group | 2004-2025 | Evidence quality assessment framework |
+| REF-061 | [OAIS Reference Model](REF-061-oais-reference-model.md) | CCSDS/ISO | 2002-2024 | Digital preservation, SIP/AIP/DIP lifecycle |
+| REF-062 | [W3C PROV](REF-062-w3c-prov.md) | W3C | 2013 | Provenance tracking, Entity-Activity-Agent |
+
 ## Category Index
 
 ### Memory & Retrieval
@@ -122,6 +135,15 @@
 ### Evaluation & Benchmarks
 - REF-014: Jimenez et al. (2024) - SWE-bench
 
+### Research Management & Reproducibility
+- REF-056: Wilkinson et al. (2016) - FAIR Guiding Principles
+- REF-057: Schmidgall et al. (2025) - Agent Laboratory
+- REF-058: Sureshkumar et al. (2026) - R-LAM Reproducibility
+- REF-059: ServiceNow (2025) - LitLLM Literature Review
+- REF-060: GRADE Working Group (2004-2025) - Evidence Quality
+- REF-061: CCSDS/ISO (2002-2024) - OAIS Reference Model
+- REF-062: W3C (2013) - PROV Data Model
+
 ## Adding References
 
 When adding a new reference:
@@ -146,6 +168,6 @@ When adding a new reference:
 
 ---
 
-*Last updated: 2026-01-24*
+*Last updated: 2026-01-25*
 *Issue: #74 Research Acquisition*
-*Total references: 26*
+*Total references: 33*
