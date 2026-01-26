@@ -1,0 +1,462 @@
+# Grounding Agent Schema
+# Based on REF-022 AutoGen (ALFChat case study)
+# Issue: #184
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/grounding-agents/v1"
+title: "Grounding Agent Schema"
+description: |
+  Schema for specialized grounding agents that inject domain-specific
+  knowledge into conversations, improving accuracy and reducing hallucination
+  per REF-022 AutoGen ALFChat case study.
+
+type: object
+required:
+  - version
+  - grounding_config
+  - knowledge_bases
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  grounding_config:
+    $ref: "#/$defs/GroundingConfig"
+
+  knowledge_bases:
+    $ref: "#/$defs/KnowledgeBases"
+
+  verification:
+    $ref: "#/$defs/VerificationConfig"
+
+$defs:
+  GroundingConfig:
+    type: object
+    description: "Global grounding configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      injection_mode:
+        type: string
+        enum:
+          - automatic      # Ground all agent messages
+          - on_request     # Ground when explicitly requested
+          - on_detection   # Ground when claims detected
+        default: automatic
+
+      trigger_patterns:
+        type: array
+        items:
+          type: string
+        default:
+          - "should be"
+          - "must be"
+          - "is required"
+          - "according to"
+          - "best practice"
+        description: "Patterns that trigger grounding verification"
+
+      confidence_threshold:
+        type: number
+        minimum: 0
+        maximum: 1
+        default: 0.7
+        description: "Minimum confidence to accept unverified claims"
+
+  KnowledgeBases:
+    type: object
+    description: "Domain knowledge base configurations"
+    properties:
+      storage_path:
+        type: string
+        default: ".aiwg/knowledge/"
+
+      domains:
+        type: array
+        items:
+          $ref: "#/$defs/KnowledgeDomain"
+
+  KnowledgeDomain:
+    type: object
+    required:
+      - name
+      - sources
+    properties:
+      name:
+        type: string
+        description: "Domain identifier (security, performance, compliance)"
+
+      sources:
+        type: array
+        items:
+          $ref: "#/$defs/KnowledgeSource"
+
+      embedding_model:
+        type: string
+        default: "text-embedding-3-small"
+        description: "Model for semantic search"
+
+      update_frequency:
+        type: string
+        enum: [manual, daily, weekly]
+        default: manual
+
+  KnowledgeSource:
+    type: object
+    required:
+      - name
+      - type
+      - location
+    properties:
+      name:
+        type: string
+      type:
+        type: string
+        enum:
+          - json_file      # Structured knowledge file
+          - markdown       # Documentation
+          - external_api   # External knowledge API
+          - embedded       # Pre-embedded vectors
+      location:
+        type: string
+      priority:
+        type: integer
+        default: 100
+        description: "Lower = higher priority for conflicts"
+
+  VerificationConfig:
+    type: object
+    description: "Claim verification settings"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      claim_extraction:
+        type: object
+        properties:
+          patterns:
+            type: array
+            items:
+              type: string
+            default:
+              - "\\b(?:must|should|is required to|needs to)\\b"
+              - "\\b(?:according to|per|as per)\\b"
+              - "\\b(?:best practice|standard|guideline)\\b"
+          min_claim_length:
+            type: integer
+            default: 10
+
+      verification_result:
+        type: object
+        properties:
+          include_sources:
+            type: boolean
+            default: true
+          include_confidence:
+            type: boolean
+            default: true
+          include_correction:
+            type: boolean
+            default: true
+
+# Pre-built grounding agent definitions
+grounding_agents:
+  security:
+    name: "security-grounding-agent"
+    domain: "security"
+    description: "Verifies security claims against OWASP, CWE, and best practices"
+    knowledge_sources:
+      - name: "OWASP Top 10"
+        type: json_file
+        location: ".aiwg/knowledge/security/owasp-top-10.json"
+        priority: 10
+      - name: "CWE Database"
+        type: json_file
+        location: ".aiwg/knowledge/security/cwe-database.json"
+        priority: 20
+      - name: "Security Best Practices"
+        type: json_file
+        location: ".aiwg/knowledge/security/best-practices.json"
+        priority: 50
+    verification_keywords:
+      - "vulnerability"
+      - "secure"
+      - "encrypt"
+      - "authenticate"
+      - "authorize"
+      - "injection"
+      - "XSS"
+      - "CSRF"
+    applies_to_agents:
+      - architect
+      - software-implementer
+      - code-reviewer
+
+  performance:
+    name: "performance-grounding-agent"
+    domain: "performance"
+    description: "Verifies performance claims and suggests optimizations"
+    knowledge_sources:
+      - name: "Performance Patterns"
+        type: json_file
+        location: ".aiwg/knowledge/performance/patterns.json"
+        priority: 10
+      - name: "Benchmarks"
+        type: json_file
+        location: ".aiwg/knowledge/performance/benchmarks.json"
+        priority: 30
+    verification_keywords:
+      - "O(n)"
+      - "complexity"
+      - "latency"
+      - "throughput"
+      - "cache"
+      - "optimize"
+    applies_to_agents:
+      - architect
+      - software-implementer
+      - performance-engineer
+
+  compliance:
+    name: "compliance-grounding-agent"
+    domain: "compliance"
+    description: "Verifies compliance claims for GDPR, HIPAA, SOC2"
+    knowledge_sources:
+      - name: "GDPR Requirements"
+        type: json_file
+        location: ".aiwg/knowledge/compliance/gdpr.json"
+        priority: 10
+      - name: "HIPAA Requirements"
+        type: json_file
+        location: ".aiwg/knowledge/compliance/hipaa.json"
+        priority: 10
+      - name: "SOC2 Controls"
+        type: json_file
+        location: ".aiwg/knowledge/compliance/soc2.json"
+        priority: 10
+    verification_keywords:
+      - "GDPR"
+      - "HIPAA"
+      - "SOC2"
+      - "PII"
+      - "consent"
+      - "data retention"
+    applies_to_agents:
+      - architect
+      - requirements-analyst
+      - legal-liaison
+
+  technology:
+    name: "technology-grounding-agent"
+    domain: "technology"
+    description: "Verifies API usage and framework best practices"
+    knowledge_sources:
+      - name: "Framework Patterns"
+        type: json_file
+        location: ".aiwg/knowledge/technology/framework-patterns.json"
+        priority: 30
+      - name: "API References"
+        type: json_file
+        location: ".aiwg/knowledge/technology/api-references.json"
+        priority: 20
+    verification_keywords:
+      - "API"
+      - "method"
+      - "function"
+      - "deprecated"
+      - "version"
+    applies_to_agents:
+      - software-implementer
+      - test-engineer
+
+# Knowledge entry schema
+knowledge_entry:
+  type: object
+  required:
+    - id
+    - topic
+    - content
+    - source
+  properties:
+    id:
+      type: string
+      pattern: "^[A-Z]+-\\d{3}$"
+      description: "Unique identifier (e.g., SEC-001, PERF-042)"
+    topic:
+      type: string
+    content:
+      type: string
+      description: "The factual content"
+    source:
+      type: string
+      description: "Authoritative source"
+    url:
+      type: string
+      format: uri
+    embedding:
+      type: array
+      items:
+        type: number
+      description: "Vector embedding for semantic search"
+    related:
+      type: array
+      items:
+        type: string
+      description: "Related entry IDs"
+    tags:
+      type: array
+      items:
+        type: string
+    confidence:
+      type: number
+      minimum: 0
+      maximum: 1
+      default: 1.0
+    last_verified:
+      type: string
+      format: date
+
+# Verification result schema
+verification_result:
+  type: object
+  required:
+    - claim
+    - verified
+  properties:
+    claim:
+      type: string
+    verified:
+      type: boolean
+    confidence:
+      type: number
+      minimum: 0
+      maximum: 1
+    sources:
+      type: array
+      items:
+        type: object
+        properties:
+          entry_id:
+            type: string
+          content_excerpt:
+            type: string
+          relevance:
+            type: number
+    correction:
+      type: string
+      description: "Suggested correction if claim is incorrect"
+    related_entries:
+      type: array
+      items:
+        type: string
+
+# Grounding message schema
+grounding_message:
+  type: object
+  required:
+    - type
+    - verifications
+  properties:
+    type:
+      type: string
+      const: "grounding"
+    original_message_id:
+      type: string
+    verifications:
+      type: array
+      items:
+        $ref: "#/$defs/verification_result"
+    injected_knowledge:
+      type: array
+      items:
+        type: object
+        properties:
+          topic:
+            type: string
+          content:
+            type: string
+          source:
+            type: string
+    summary:
+      type: string
+      description: "Human-readable summary of grounding"
+
+# Agent protocol
+agent_protocol:
+  ground_message:
+    description: "Ground a message before delivery"
+    triggers:
+      - message_generated
+      - explicit_request
+    steps:
+      - extract_claims_from_message
+      - filter_by_domain_relevance
+      - for_each_claim:
+          - search_knowledge_base
+          - verify_against_sources
+          - if_not_verified:
+              - flag_for_correction
+              - retrieve_correct_information
+      - if_claims_found:
+          - generate_grounding_message
+          - inject_into_conversation
+      - log_grounding_activity
+
+  verify_artifact:
+    description: "Verify claims in generated artifacts"
+    triggers:
+      - artifact_generated
+    steps:
+      - load_artifact_content
+      - extract_all_claims
+      - verify_batch
+      - generate_verification_report
+      - if_unverified_claims:
+          - flag_artifact
+          - suggest_corrections
+
+# CLI integration
+cli_commands:
+  knowledge_add:
+    command: "aiwg knowledge add <domain> <source-file>"
+    description: "Add knowledge source to domain"
+
+  knowledge_update:
+    command: "aiwg knowledge update <domain>"
+    description: "Update knowledge base embeddings"
+
+  knowledge_search:
+    command: "aiwg knowledge search <query> --domain <domain>"
+    description: "Search knowledge base"
+
+  knowledge_verify:
+    command: "aiwg knowledge verify <claim>"
+    description: "Verify a specific claim"
+
+# Storage
+storage:
+  knowledge_path: ".aiwg/knowledge/"
+  embeddings_path: ".aiwg/knowledge/embeddings/"
+  verification_log: ".aiwg/logs/grounding-verifications.jsonl"
+
+# Research targets (from REF-022)
+research_targets:
+  accuracy_improvement: "+40% domain accuracy vs ungrounded"
+  hallucination_reduction: "-35% factually incorrect claims"
+  verification_speed: "<500ms per claim"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-022-autogen.md"
+  implementation:
+    - "#184"
+  related:
+    - "@.claude/rules/conversable-agent-interface.md"
+    - "@.claude/rules/auto-reply-chains.md"
+    - "@.aiwg/flows/schemas/tool-grounding.yaml"

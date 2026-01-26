@@ -1,0 +1,427 @@
+# Ensemble Review Schema
+# Based on REF-017 Self-Consistency Research
+# Issues: #159, #160
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ensemble-review/v1"
+title: "Ensemble Review Configuration Schema"
+description: |
+  Schema for configurable ensemble review patterns with voting
+  thresholds and confidence scoring per REF-017 Self-Consistency.
+
+type: object
+required:
+  - version
+  - patterns
+  - confidence_scoring
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  patterns:
+    type: object
+    additionalProperties:
+      $ref: "#/$defs/ReviewPattern"
+
+  confidence_scoring:
+    $ref: "#/$defs/ConfidenceConfig"
+
+  escalation:
+    $ref: "#/$defs/EscalationConfig"
+
+$defs:
+  ReviewPattern:
+    type: object
+    required:
+      - panel_size
+      - threshold
+    properties:
+      panel_size:
+        type: integer
+        enum: [3, 5, 7]
+        description: "Number of independent reviewers"
+
+      threshold:
+        type: number
+        minimum: 0.5
+        maximum: 1.0
+        description: "Agreement threshold for acceptance"
+
+      description:
+        type: string
+
+      use_cases:
+        type: array
+        items:
+          type: string
+        description: "When to use this pattern"
+
+  ConfidenceConfig:
+    type: object
+    description: "Confidence scoring from reviewer agreement"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      levels:
+        type: object
+        properties:
+          high:
+            type: object
+            properties:
+              threshold:
+                type: number
+                default: 0.8
+              action:
+                type: string
+                default: "accept"
+          medium:
+            type: object
+            properties:
+              threshold:
+                type: number
+                default: 0.6
+              action:
+                type: string
+                default: "accept_with_note"
+          low:
+            type: object
+            properties:
+              threshold:
+                type: number
+                default: 0.5
+              action:
+                type: string
+                default: "flag_for_review"
+          escalate:
+            type: object
+            properties:
+              threshold:
+                type: number
+                default: 0.5
+              below_threshold_action:
+                type: string
+                default: "require_human_decision"
+
+      metadata_injection:
+        type: boolean
+        default: true
+        description: "Add confidence metadata to reviewed artifacts"
+
+  EscalationConfig:
+    type: object
+    description: "Automatic escalation rules"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      rules:
+        type: array
+        items:
+          type: object
+          properties:
+            trigger:
+              type: string
+              enum:
+                - low_confidence
+                - escalate_confidence
+                - dissent_detected
+                - critical_artifact
+            action:
+              type: string
+              enum:
+                - expand_panel
+                - human_review
+                - additional_analysis
+            target_panel_size:
+              type: integer
+
+# Default review patterns
+default_patterns:
+  quick_check:
+    panel_size: 3
+    threshold: 0.67
+    description: "Fast review for low-risk changes"
+    use_cases:
+      - "Documentation updates"
+      - "Minor bug fixes"
+      - "Configuration changes"
+
+  standard_review:
+    panel_size: 5
+    threshold: 0.60
+    description: "Standard review for typical changes"
+    use_cases:
+      - "Feature implementation"
+      - "Test additions"
+      - "Refactoring"
+
+  critical_review:
+    panel_size: 5
+    threshold: 0.80
+    description: "Thorough review for important changes"
+    use_cases:
+      - "Architecture decisions"
+      - "Security-sensitive code"
+      - "API contracts"
+
+  unanimous_required:
+    panel_size: 5
+    threshold: 1.00
+    description: "All reviewers must agree"
+    use_cases:
+      - "Breaking changes"
+      - "Public API changes"
+      - "Compliance-related changes"
+
+# Confidence scoring tables
+confidence_tables:
+  panel_5:
+    - agreement: "5/5 (100%)"
+      score: 1.00
+      confidence: HIGH
+      action: "Accept"
+    - agreement: "4/5 (80%)"
+      score: 0.80
+      confidence: MEDIUM
+      action: "Accept with note"
+    - agreement: "3/5 (60%)"
+      score: 0.60
+      confidence: LOW
+      action: "Flag for human review"
+    - agreement: "<3/5 (<60%)"
+      score: "<0.60"
+      confidence: ESCALATE
+      action: "Require human decision"
+
+  panel_3:
+    - agreement: "3/3 (100%)"
+      score: 1.00
+      confidence: HIGH
+      action: "Accept"
+    - agreement: "2/3 (67%)"
+      score: 0.67
+      confidence: MEDIUM
+      action: "Accept with note"
+    - agreement: "<2/3 (<67%)"
+      score: "<0.67"
+      confidence: LOW
+      action: "Escalate to 5-panel"
+
+# Review result schema
+review_result:
+  type: object
+  required:
+    - artifact_path
+    - pattern_used
+    - panel_size
+    - agreement
+    - confidence
+  properties:
+    artifact_path:
+      type: string
+    pattern_used:
+      type: string
+    panel_size:
+      type: integer
+    timestamp:
+      type: string
+      format: date-time
+    reviewers:
+      type: array
+      items:
+        type: object
+        properties:
+          reviewer_id:
+            type: string
+          decision:
+            type: string
+            enum: [approve, reject, abstain]
+          reasoning:
+            type: string
+    agreement:
+      type: string
+      description: "e.g., '4/5 (80%)'"
+    agreement_score:
+      type: number
+    confidence:
+      type: string
+      enum: [HIGH, MEDIUM, LOW, ESCALATE]
+    confidence_score:
+      type: number
+    consensus_decision:
+      type: string
+    dissenting_opinions:
+      type: array
+      items:
+        type: object
+        properties:
+          reviewer_id:
+            type: string
+          opinion:
+            type: string
+    reasoning_comparison:
+      type: object
+      properties:
+        common_themes:
+          type: array
+          items:
+            type: string
+        divergent_approaches:
+          type: array
+          items:
+            type: string
+    escalation_required:
+      type: boolean
+    human_override:
+      type: object
+      properties:
+        applied:
+          type: boolean
+        decision:
+          type: string
+        reasoning:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+# Artifact metadata injection
+metadata_template:
+  yaml: |
+    review:
+      pattern: {pattern_name}
+      panel_size: {panel_size}
+      agreement: {agreement}
+      confidence: {confidence}
+      confidence_score: {confidence_score}
+      timestamp: {timestamp}
+      escalation_required: {escalation_required}
+
+# CLI interface
+cli:
+  command: "aiwg review-ensemble"
+  options:
+    - name: "--artifact"
+      required: true
+      description: "Path to artifact to review"
+    - name: "--pattern"
+      required: false
+      default: "standard_review"
+      description: "Review pattern to use"
+    - name: "--agent"
+      required: false
+      description: "Agent type for reviewers"
+
+  examples:
+    - command: |
+        aiwg review-ensemble \
+          --artifact ".aiwg/architecture/adr-001.md" \
+          --pattern "critical_review" \
+          --agent "architect"
+      description: "Critical review of architecture decision"
+
+    - command: |
+        aiwg review-ensemble \
+          --artifact "src/auth/login.ts" \
+          --pattern "standard_review"
+      description: "Standard code review"
+
+# Report template
+report_template:
+  markdown: |
+    # Ensemble Review Results
+
+    **Artifact:** {artifact_path}
+    **Pattern:** {pattern_name}
+    **Timestamp:** {timestamp}
+
+    ## Summary
+
+    | Metric | Value |
+    |--------|-------|
+    | Panel Size | {panel_size} reviewers |
+    | Threshold | {threshold} |
+    | Agreement | {agreement} |
+    | Confidence | {confidence} |
+
+    ## Consensus Decision
+
+    {consensus_decision}
+
+    ## Reviewer Breakdown
+
+    {reviewer_table}
+
+    ## Reasoning Comparison
+
+    ### Common Themes
+    {common_themes}
+
+    ### Divergent Approaches
+    {divergent_approaches}
+
+    ## Dissenting Opinions
+
+    {dissenting_opinions}
+
+    ## Recommendation
+
+    {recommendation}
+
+# Agent protocol
+agent_protocol:
+  run_ensemble_review:
+    description: "Execute ensemble review"
+    steps:
+      - load_artifact
+      - select_pattern
+      - spawn_reviewer_agents
+      - collect_independent_reviews
+      - calculate_agreement
+      - determine_confidence
+      - synthesize_consensus
+      - identify_dissent
+      - compare_reasoning
+      - check_escalation
+      - inject_metadata
+      - generate_report
+
+  escalation_workflow:
+    description: "Handle escalation"
+    triggers:
+      - confidence_below_threshold
+      - dissent_detected
+    steps:
+      - log_escalation
+      - expand_panel_or_human_review
+      - notify_stakeholders
+      - await_resolution
+
+# Performance targets (from REF-017)
+research_targets:
+  accuracy_improvement: "17.9 percentage points on arithmetic"
+  consensus_correlation: "Agreement level correlates with correctness"
+  optimal_panel_size: "5 reviewers balances cost and accuracy"
+
+# Storage
+storage:
+  config_path: ".aiwg/config/ensemble-review.yml"
+  results_path: ".aiwg/.reviews/"
+  report_path: ".aiwg/reports/reviews/"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-017-self-consistency.md"
+  implementation:
+    - "#159"  # Ensemble review patterns
+    - "#160"  # Confidence scoring
+  related:
+    - "@tools/ralph-external/"
+    - "@.aiwg/research/synthesis/topic-05-verification.md"

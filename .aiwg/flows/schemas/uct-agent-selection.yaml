@@ -1,0 +1,343 @@
+# UCT-Based Agent Selection Schema
+# Based on REF-024 LATS Research
+# Issue: #166
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/uct-agent-selection/v1"
+title: "UCT Agent Selection Schema"
+description: |
+  Schema for Monte Carlo Tree Search inspired agent selection using
+  Upper Confidence Bound for Trees (UCT) algorithm to balance
+  exploration vs exploitation per REF-024 LATS.
+
+type: object
+required:
+  - version
+  - uct_config
+  - performance_tracking
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  uct_config:
+    $ref: "#/$defs/UCTConfig"
+
+  performance_tracking:
+    $ref: "#/$defs/PerformanceTracking"
+
+  task_classification:
+    $ref: "#/$defs/TaskClassification"
+
+$defs:
+  UCTConfig:
+    type: object
+    description: "UCT algorithm configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      exploration_constant:
+        type: number
+        default: 1.414
+        description: "c parameter (typically sqrt(2))"
+
+      minimum_attempts:
+        type: integer
+        default: 3
+        description: "Force exploration until each agent tried N times"
+
+      neutral_prior:
+        type: number
+        default: 0.5
+        description: "Success rate for untried agent/task combinations"
+
+      decay_factor:
+        type: number
+        default: 0.95
+        description: "Decay old performance data (optional)"
+
+      formula:
+        type: string
+        default: "Q(agent,task_type) + c * sqrt(ln(N_total) / N_agent)"
+        description: |
+          UCT formula:
+          - Q(agent,task_type) = Average success rate
+          - N_total = Total attempts across all agents
+          - N_agent = Attempts by this agent
+          - c = Exploration constant
+
+  PerformanceTracking:
+    type: object
+    description: "Agent performance statistics"
+    properties:
+      storage_path:
+        type: string
+        default: ".aiwg/agent-selection/performance-stats.json"
+
+      metrics:
+        type: array
+        items:
+          type: string
+        default:
+          - attempts
+          - successes
+          - failures
+          - average_completion_time
+          - average_quality_score
+
+      retention_days:
+        type: integer
+        default: 90
+        description: "Keep performance data for N days"
+
+  TaskClassification:
+    type: object
+    description: "Task type classification for agent routing"
+    properties:
+      classification_method:
+        type: string
+        enum:
+          - keyword_matching
+          - embedding_similarity
+          - rule_based
+        default: keyword_matching
+
+      task_types:
+        type: array
+        items:
+          type: object
+          properties:
+            type:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+            preferred_agents:
+              type: array
+              items:
+                type: string
+            capable_agents:
+              type: array
+              items:
+                type: string
+        default:
+          - type: security
+            keywords: [security, auth, crypto, vulnerability, permission]
+            preferred_agents: [security-auditor, architect]
+            capable_agents: [test-engineer, code-reviewer]
+
+          - type: testing
+            keywords: [test, coverage, validation, assertion, mock]
+            preferred_agents: [test-engineer]
+            capable_agents: [software-implementer, security-auditor]
+
+          - type: architecture
+            keywords: [architecture, design, adr, structure, pattern]
+            preferred_agents: [architect, api-designer]
+            capable_agents: [requirements-analyst]
+
+          - type: implementation
+            keywords: [implement, code, function, feature, build]
+            preferred_agents: [software-implementer]
+            capable_agents: [test-engineer, architect]
+
+          - type: requirements
+            keywords: [requirement, story, use case, acceptance, criteria]
+            preferred_agents: [requirements-analyst]
+            capable_agents: [product-manager, architect]
+
+          - type: deployment
+            keywords: [deploy, release, ci, cd, pipeline, docker]
+            preferred_agents: [devops-engineer]
+            capable_agents: [software-implementer]
+
+          - type: documentation
+            keywords: [document, readme, guide, api docs, comment]
+            preferred_agents: [technical-writer]
+            capable_agents: [software-implementer, architect]
+
+          - type: general
+            keywords: []
+            preferred_agents: [software-implementer]
+            capable_agents: [all]
+
+# Agent performance record schema
+agent_stats:
+  type: object
+  required:
+    - agent_name
+    - task_type
+  properties:
+    agent_name:
+      type: string
+    task_type:
+      type: string
+    attempts:
+      type: integer
+      default: 0
+    successes:
+      type: integer
+      default: 0
+    failures:
+      type: integer
+      default: 0
+    success_rate:
+      type: number
+      description: "Calculated: successes / attempts"
+    average_completion_time:
+      type: number
+      description: "Seconds"
+    average_quality_score:
+      type: number
+      minimum: 0
+      maximum: 1
+    last_updated:
+      type: string
+      format: date-time
+
+# Selection result schema
+selection_result:
+  type: object
+  required:
+    - task
+    - selected_agent
+    - uct_score
+  properties:
+    task:
+      type: object
+      properties:
+        description:
+          type: string
+        classified_type:
+          type: string
+    available_agents:
+      type: array
+      items:
+        type: string
+    selected_agent:
+      type: string
+    uct_score:
+      type: number
+    exploitation_term:
+      type: number
+      description: "Q value (success rate)"
+    exploration_term:
+      type: number
+      description: "Exploration bonus"
+    selection_reason:
+      type: string
+      description: "Human-readable explanation"
+    all_scores:
+      type: array
+      items:
+        type: object
+        properties:
+          agent:
+            type: string
+          score:
+            type: number
+          reason:
+            type: string
+    timestamp:
+      type: string
+      format: date-time
+
+# Agent protocol
+agent_protocol:
+  select_agent:
+    description: "Select agent using UCT algorithm"
+    steps:
+      - classify_task_type
+      - load_performance_stats
+      - calculate_total_attempts
+      - for_each_available_agent:
+          - get_success_rate
+          - get_attempt_count
+          - if_below_minimum_attempts:
+              - return_infinity_score
+          - else:
+              - calculate_exploitation_term
+              - calculate_exploration_term
+              - sum_for_uct_score
+      - sort_by_uct_score_descending
+      - select_highest_score
+      - log_selection_reasoning
+      - return_selected_agent
+
+  record_outcome:
+    description: "Update performance after task completion"
+    triggers:
+      - task_completed
+      - task_failed
+    steps:
+      - identify_agent_and_task_type
+      - load_existing_stats
+      - increment_attempts
+      - update_success_or_failure
+      - update_rolling_averages
+      - persist_updated_stats
+
+  generate_report:
+    description: "Generate agent performance report"
+    triggers:
+      - manual_request
+      - scheduled_weekly
+    steps:
+      - load_all_performance_stats
+      - calculate_per_agent_metrics
+      - compare_to_baseline
+      - identify_optimal_routing
+      - generate_recommendations
+      - output_report
+
+# CLI integration
+cli_options:
+  selection_strategy:
+    name: "--agent-selection"
+    type: string
+    choices: ["uct", "round-robin", "fixed", "random"]
+    default: "uct"
+    help: "Agent selection strategy"
+
+  exploration_constant:
+    name: "--exploration-constant"
+    short: "-c"
+    type: number
+    default: 1.414
+    help: "UCT exploration constant (higher = more exploration)"
+
+  show_selection:
+    name: "--show-selection"
+    type: boolean
+    default: false
+    help: "Display agent selection reasoning"
+
+# Performance targets (from REF-024)
+research_targets:
+  improvement_vs_random: "+8pp success rate"
+  improvement_vs_round_robin: "+5pp success rate"
+  time_reduction: "-18% avg task time"
+  rework_reduction: "-10pp rework rate"
+  optimal_exploration_constant: "1.414 (sqrt(2))"
+
+# Storage
+storage:
+  stats_path: ".aiwg/agent-selection/performance-stats.json"
+  selection_log_path: ".aiwg/agent-selection/selection-log.jsonl"
+  reports_path: ".aiwg/reports/agent-selection/"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-024-lats.md"
+  implementation:
+    - "#166"
+  related:
+    - "@.aiwg/flows/schemas/agent-capability-matrix.yaml"
+    - "@.claude/rules/agent-fallback.md"
+    - "@.aiwg/research/synthesis/topic-06-structured-exploration.md"

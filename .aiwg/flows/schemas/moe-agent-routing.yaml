@@ -1,0 +1,472 @@
+# Mixture of Experts Agent Routing Schema
+# Based on REF-007 Mixture of Experts
+# Issues: #190, #191, #194
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/moe-agent-routing/v1"
+title: "MoE Agent Routing and Sparse Activation Schema"
+description: |
+  Schema for Mixture of Experts inspired routing, sparse agent activation,
+  and selective invocation based on task characteristics per REF-007 MoE.
+
+type: object
+required:
+  - version
+  - routing_config
+  - activation_policy
+  - pre_filter
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  routing_config:
+    $ref: "#/$defs/RoutingConfig"
+
+  activation_policy:
+    $ref: "#/$defs/ActivationPolicy"
+
+  pre_filter:
+    $ref: "#/$defs/PreFilterConfig"
+
+$defs:
+  RoutingConfig:
+    type: object
+    description: "MoE-inspired routing configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      top_k:
+        type: integer
+        default: 3
+        description: "Number of agents to activate per task"
+
+      scoring_weights:
+        type: object
+        properties:
+          domain_match:
+            type: number
+            default: 0.40
+          operation_match:
+            type: number
+            default: 0.30
+          complexity_fit:
+            type: number
+            default: 0.20
+          artifact_match:
+            type: number
+            default: 0.10
+
+      load_balancing:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          min_utilization:
+            type: number
+            default: 0.2
+          max_utilization:
+            type: number
+            default: 0.8
+          prefer_underutilized:
+            type: boolean
+            default: true
+
+  ActivationPolicy:
+    type: object
+    description: "Sparse activation policy"
+    properties:
+      max_active:
+        type: integer
+        default: 5
+        description: "Maximum agents in memory"
+
+      ttl_seconds:
+        type: integer
+        default: 300
+        description: "Time-to-live for inactive agents"
+
+      preload:
+        type: array
+        items:
+          type: string
+        default:
+          - orchestrator
+        description: "Always-active agents"
+
+      eager_load:
+        type: array
+        items:
+          type: string
+        default: []
+        description: "Load at session start"
+
+      lazy_load:
+        type: boolean
+        default: true
+        description: "Load agents on first use"
+
+  PreFilterConfig:
+    type: object
+    description: "Task pre-filtering configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      complexity_levels:
+        type: object
+        properties:
+          trivial:
+            type: object
+            properties:
+              max_words:
+                type: integer
+                default: 10
+              handler:
+                type: string
+                default: "direct"
+              description:
+                type: string
+                default: "Handle directly, no agent needed"
+
+          simple:
+            type: object
+            properties:
+              max_agents:
+                type: integer
+                default: 1
+              context_level:
+                type: string
+                default: "minimal"
+              description:
+                type: string
+                default: "Single agent, minimal context"
+
+          moderate:
+            type: object
+            properties:
+              max_agents:
+                type: integer
+                default: 2
+              context_level:
+                type: string
+                default: "standard"
+              description:
+                type: string
+                default: "1-2 agents, standard context"
+
+          complex:
+            type: object
+            properties:
+              max_agents:
+                type: integer
+                default: 5
+              context_level:
+                type: string
+                default: "full"
+              description:
+                type: string
+                default: "Multiple agents, full context"
+
+# Task feature extraction
+task_features:
+  type: object
+  properties:
+    domain:
+      type: string
+      enum:
+        - requirements
+        - architecture
+        - implementation
+        - testing
+        - security
+        - deployment
+        - documentation
+        - general
+    operation:
+      type: string
+      enum:
+        - create
+        - review
+        - analyze
+        - refactor
+        - test
+        - deploy
+        - document
+        - debug
+    complexity:
+      type: integer
+      minimum: 1
+      maximum: 10
+    artifacts:
+      type: array
+      items:
+        type: string
+      description: "Referenced artifact types"
+    context_tags:
+      type: array
+      items:
+        type: string
+      description: "Project tags, tech stack"
+    word_count:
+      type: integer
+    has_artifact_references:
+      type: boolean
+    has_multiple_phases:
+      type: boolean
+
+# Agent capability profile
+agent_capability:
+  type: object
+  required:
+    - agent_name
+    - domains
+    - operations
+  properties:
+    agent_name:
+      type: string
+    domains:
+      type: object
+      additionalProperties:
+        type: number
+        minimum: 0
+        maximum: 1
+      description: "Domain → expertise score"
+    operations:
+      type: object
+      additionalProperties:
+        type: number
+        minimum: 0
+        maximum: 1
+      description: "Operation → proficiency"
+    complexity_range:
+      type: object
+      properties:
+        min:
+          type: integer
+          default: 1
+        max:
+          type: integer
+          default: 10
+        optimal:
+          type: integer
+          default: 5
+    artifact_types:
+      type: array
+      items:
+        type: string
+    tags:
+      type: array
+      items:
+        type: string
+
+# Pre-filter heuristics
+heuristics:
+  trivial_patterns:
+    - pattern: "^(what is|define|explain) \\w+$"
+      handler: "direct-answer"
+    - pattern: "^(list|show|display) (agents|commands|frameworks)"
+      handler: "query-registry"
+    - pattern: "^(status|where are we)"
+      handler: "status-query"
+
+  simple_patterns:
+    - pattern: "^create (use case|user story)"
+      agents: ["requirements-analyst"]
+    - pattern: "^write (test|tests) for"
+      agents: ["test-engineer"]
+
+  moderate_patterns:
+    - pattern: "^review .+ for (security|performance)"
+      agents: ["security-auditor", "performance-engineer"]
+
+  complex_patterns:
+    - pattern: "^(design|architect|implement) .+"
+      handler: "full-routing"
+    - pattern: "^(refactor|migrate) .+"
+      handler: "full-routing"
+
+# Routing result schema
+routing_result:
+  type: object
+  required:
+    - task
+    - complexity
+    - selected_agents
+  properties:
+    task:
+      type: string
+    features:
+      $ref: "#/$defs/task_features"
+    complexity:
+      type: string
+      enum: [trivial, simple, moderate, complex]
+    confidence:
+      type: number
+      minimum: 0
+      maximum: 1
+    reasoning:
+      type: string
+    selected_agents:
+      type: array
+      items:
+        type: object
+        properties:
+          agent:
+            type: string
+          score:
+            type: number
+          reasoning:
+            type: string
+    direct_handler:
+      type: string
+      description: "Handler for trivial tasks"
+    context_level:
+      type: string
+      enum: [none, minimal, standard, full]
+    routing_time_ms:
+      type: number
+
+# Agent activation state
+activation_state:
+  type: object
+  properties:
+    active_agents:
+      type: array
+      items:
+        type: object
+        properties:
+          agent:
+            type: string
+          loaded_at:
+            type: string
+            format: date-time
+          last_used:
+            type: string
+            format: date-time
+          task_count:
+            type: integer
+          memory_mb:
+            type: number
+    total_active:
+      type: integer
+    max_allowed:
+      type: integer
+    preloaded:
+      type: array
+      items:
+        type: string
+
+# Agent protocol
+agent_protocol:
+  extract_features:
+    description: "Extract features from task description"
+    steps:
+      - tokenize_task
+      - identify_domain_keywords
+      - identify_operation_keywords
+      - estimate_complexity
+      - detect_artifact_references
+      - extract_context_tags
+      - return_features
+
+  route_task:
+    description: "Route task to appropriate agents"
+    steps:
+      - extract_features
+      - check_trivial_patterns
+      - if_trivial:
+          - return_direct_handler
+      - else:
+          - load_agent_capabilities
+          - for_each_agent:
+              - calculate_domain_score
+              - calculate_operation_score
+              - calculate_complexity_fit
+              - calculate_artifact_match
+              - compute_total_score
+          - apply_load_balancing
+          - select_top_k_agents
+          - return_routing_result
+
+  activate_agents:
+    description: "Activate selected agents"
+    steps:
+      - get_current_active
+      - for_each_selected:
+          - if_not_loaded:
+              - load_agent
+              - add_to_active
+      - prune_inactive
+      - return_activated_agents
+
+  prune_inactive:
+    description: "Deactivate stale agents"
+    steps:
+      - get_current_time
+      - for_each_active:
+          - if_ttl_exceeded:
+              - if_not_preloaded:
+                  - unload_agent
+                  - remove_from_active
+
+  update_quality_feedback:
+    description: "Update routing weights from outcomes"
+    triggers:
+      - task_completed
+    steps:
+      - get_task_result
+      - get_selected_agents
+      - calculate_quality_score
+      - update_agent_scores
+      - persist_metrics
+
+# CLI commands
+cli_commands:
+  route_explain:
+    command: "aiwg route-explain <task>"
+    description: "Show routing decision for task"
+
+  agents_active:
+    command: "aiwg agents active"
+    description: "Show currently active agents"
+
+  agents_stats:
+    command: "aiwg agents stats"
+    description: "Show agent utilization statistics"
+
+  route_override:
+    command: "aiwg task <task> --agents <list>"
+    description: "Override automatic routing"
+
+# Performance targets (from REF-007)
+research_targets:
+  routing_latency: "<50ms per decision"
+  memory_reduction: "60%+ vs full load"
+  activation_latency: "<100ms per agent"
+  quality_maintenance: "Equal or better vs. all-agents"
+
+# Storage
+storage:
+  capabilities_path: ".aiwg/agent-selection/capabilities.json"
+  metrics_path: ".aiwg/agent-selection/routing-metrics.json"
+  activation_log: ".aiwg/logs/agent-activation.jsonl"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-007-mixture-of-experts.md"
+    - "@.aiwg/research/findings/REF-019-toolformer.md"
+  implementation:
+    - "#190"
+    - "#191"
+    - "#194"
+  related:
+    - "@.aiwg/flows/schemas/uct-agent-selection.yaml"
+    - "@.aiwg/flows/schemas/semantic-agent-discovery.yaml"

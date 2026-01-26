@@ -1,0 +1,463 @@
+# SDLC Structured Output Schemas
+# Based on REF-013 MetaGPT Research
+# Issue: #156
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/sdlc-output-schemas/v1"
+title: "SDLC Role Output Schemas"
+description: |
+  Structured output schemas for each SDLC role to improve
+  inter-agent communication per REF-013 MetaGPT.
+
+type: object
+required:
+  - version
+  - schemas
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  validation:
+    $ref: "#/$defs/ValidationConfig"
+
+  schemas:
+    type: object
+    additionalProperties:
+      $ref: "#/$defs/RoleSchema"
+
+$defs:
+  ValidationConfig:
+    type: object
+    properties:
+      enabled:
+        type: boolean
+        default: true
+      strict_mode:
+        type: boolean
+        default: false
+        description: "Fail on any validation error"
+      auto_format:
+        type: boolean
+        default: true
+        description: "Attempt to fix formatting issues"
+      report_path:
+        type: string
+        default: ".aiwg/.validation/"
+
+  RoleSchema:
+    type: object
+    required:
+      - role
+      - output_type
+      - schema
+    properties:
+      role:
+        type: string
+      output_type:
+        type: string
+      schema:
+        type: object
+        description: "JSON Schema for output validation"
+      examples:
+        type: array
+        items:
+          type: object
+
+# Product Manager Output: PRD
+schemas:
+  product_requirements:
+    role: "Product Manager"
+    output_type: "PRD"
+    schema:
+      type: object
+      required:
+        - title
+        - version
+        - goals
+        - requirements
+      properties:
+        title:
+          type: string
+          description: "Product/feature name"
+        version:
+          type: string
+          pattern: "^\\d+\\.\\d+$"
+        status:
+          type: string
+          enum: [draft, review, approved]
+        goals:
+          type: array
+          items:
+            type: object
+            required: [id, description, success_criteria]
+            properties:
+              id:
+                type: string
+                pattern: "^GOAL-\\d{3}$"
+              description:
+                type: string
+              success_criteria:
+                type: array
+                items:
+                  type: string
+        requirements:
+          type: array
+          items:
+            $ref: "#/$defs/Requirement"
+        constraints:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [technical, business, regulatory, resource]
+              description:
+                type: string
+        stakeholders:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+              responsibilities:
+                type: array
+                items:
+                  type: string
+
+  Requirement:
+    type: object
+    required:
+      - id
+      - title
+      - priority
+    properties:
+      id:
+        type: string
+        pattern: "^REQ-\\d{3}$"
+      title:
+        type: string
+      description:
+        type: string
+      priority:
+        type: string
+        enum: [must, should, could, wont]
+      acceptance_criteria:
+        type: array
+        items:
+          type: string
+      traces_to:
+        type: array
+        items:
+          type: string
+          description: "IDs of related artifacts"
+
+  # Architect Output: System Design
+  system_design:
+    role: "Architect"
+    output_type: "SystemDesign"
+    schema:
+      type: object
+      required:
+        - title
+        - components
+        - decisions
+      properties:
+        title:
+          type: string
+        version:
+          type: string
+        components:
+          type: array
+          items:
+            $ref: "#/$defs/Component"
+        decisions:
+          type: array
+          items:
+            $ref: "#/$defs/ArchitectureDecision"
+        interfaces:
+          type: array
+          items:
+            $ref: "#/$defs/Interface"
+        quality_attributes:
+          type: object
+          properties:
+            performance:
+              type: object
+            scalability:
+              type: object
+            security:
+              type: object
+            maintainability:
+              type: object
+
+  Component:
+    type: object
+    required:
+      - id
+      - name
+      - responsibility
+    properties:
+      id:
+        type: string
+        pattern: "^COMP-\\d{3}$"
+      name:
+        type: string
+      responsibility:
+        type: string
+      technology:
+        type: string
+      dependencies:
+        type: array
+        items:
+          type: string
+      interfaces:
+        type: array
+        items:
+          type: string
+
+  ArchitectureDecision:
+    type: object
+    required:
+      - id
+      - title
+      - decision
+      - rationale
+    properties:
+      id:
+        type: string
+        pattern: "^ADR-\\d{3}$"
+      title:
+        type: string
+      status:
+        type: string
+        enum: [proposed, accepted, deprecated, superseded]
+      context:
+        type: string
+      decision:
+        type: string
+      rationale:
+        type: string
+      consequences:
+        type: array
+        items:
+          type: string
+      alternatives_considered:
+        type: array
+        items:
+          type: object
+          properties:
+            option:
+              type: string
+            pros:
+              type: array
+              items:
+                type: string
+            cons:
+              type: array
+              items:
+                type: string
+
+  Interface:
+    type: object
+    required:
+      - id
+      - name
+      - type
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+        enum: [api, event, file, database]
+      contract:
+        type: object
+
+  # Project Manager Output: Task List
+  task_list:
+    role: "Project Manager"
+    output_type: "TaskList"
+    schema:
+      type: object
+      required:
+        - title
+        - tasks
+      properties:
+        title:
+          type: string
+        iteration:
+          type: string
+        tasks:
+          type: array
+          items:
+            $ref: "#/$defs/Task"
+        milestones:
+          type: array
+          items:
+            $ref: "#/$defs/Milestone"
+        dependencies:
+          type: array
+          items:
+            type: object
+            properties:
+              from:
+                type: string
+              to:
+                type: string
+              type:
+                type: string
+                enum: [finish_to_start, start_to_start, finish_to_finish]
+
+  Task:
+    type: object
+    required:
+      - id
+      - title
+      - assignee_role
+    properties:
+      id:
+        type: string
+        pattern: "^TASK-\\d{3}$"
+      title:
+        type: string
+      description:
+        type: string
+      assignee_role:
+        type: string
+      status:
+        type: string
+        enum: [todo, in_progress, review, done]
+      priority:
+        type: string
+        enum: [critical, high, medium, low]
+      acceptance_criteria:
+        type: array
+        items:
+          type: string
+      traces_to:
+        type: array
+        items:
+          type: string
+
+  Milestone:
+    type: object
+    required:
+      - id
+      - name
+      - criteria
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      criteria:
+        type: array
+        items:
+          type: string
+
+  # Engineer Output: Code
+  code_artifact:
+    role: "Engineer"
+    output_type: "Code"
+    schema:
+      type: object
+      required:
+        - files
+      properties:
+        summary:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: "#/$defs/CodeFile"
+        tests:
+          type: array
+          items:
+            $ref: "#/$defs/TestFile"
+        traces_to:
+          type: array
+          items:
+            type: string
+            description: "Requirement/task IDs implemented"
+
+  CodeFile:
+    type: object
+    required:
+      - path
+      - action
+    properties:
+      path:
+        type: string
+      action:
+        type: string
+        enum: [create, modify, delete]
+      description:
+        type: string
+      implements:
+        type: array
+        items:
+          type: string
+
+  TestFile:
+    type: object
+    required:
+      - path
+      - test_type
+    properties:
+      path:
+        type: string
+      test_type:
+        type: string
+        enum: [unit, integration, e2e]
+      covers:
+        type: array
+        items:
+          type: string
+
+# Validation protocol
+agent_protocol:
+  validate_output:
+    description: "Validate agent output against schema"
+    triggers:
+      - agent_output_complete
+    steps:
+      - identify_role
+      - load_schema
+      - validate_structure
+      - validate_required_fields
+      - validate_patterns
+      - report_errors
+      - attempt_auto_fix_if_enabled
+
+  format_output:
+    description: "Format output to match schema"
+    triggers:
+      - validation_failed
+      - auto_format_requested
+    steps:
+      - parse_freeform_output
+      - map_to_schema_structure
+      - fill_missing_fields
+      - validate_result
+      - return_formatted
+
+# Storage paths
+storage:
+  schema_path: "agentic/code/frameworks/sdlc-complete/schemas/"
+  validation_reports: ".aiwg/.validation/"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+  implementation:
+    - "#156"
+  related:
+    - "@agentic/code/frameworks/sdlc-complete/agents/"
+    - "@agentic/code/frameworks/sdlc-complete/templates/"

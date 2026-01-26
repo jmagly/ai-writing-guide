@@ -1,0 +1,716 @@
+# Agent Efficiency Framework Schema
+# Based on REF-013 MetaGPT, REF-021 Reflexion, REF-022 AutoGen
+# Issues: #221 (Subscriptions), #222 (Grounding), #223 (Reflexion), #224 (Token Tracking)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/agent-efficiency/v1"
+title: "Agent Efficiency Framework Schema"
+description: |
+  Comprehensive agent efficiency framework implementing subscription-based activation,
+  grounding validation, cross-task learning, and token efficiency tracking per
+  REF-013 MetaGPT, REF-021 Reflexion, and REF-022 AutoGen.
+
+type: object
+required:
+  - version
+  - subscriptions
+  - grounding
+  - reflections
+  - token_tracking
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  subscriptions:
+    $ref: "#/$defs/SubscriptionConfig"
+
+  grounding:
+    $ref: "#/$defs/GroundingConfig"
+
+  reflections:
+    $ref: "#/$defs/ReflectionConfig"
+
+  token_tracking:
+    $ref: "#/$defs/TokenTrackingConfig"
+
+$defs:
+  SubscriptionConfig:
+    type: object
+    description: "Subscription-based agent activation per REF-013 MetaGPT"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      event_types:
+        type: array
+        items:
+          type: string
+        default:
+          - create
+          - update
+          - delete
+          - review
+
+      agent_subscriptions:
+        type: array
+        items:
+          $ref: "#/$defs/AgentSubscription"
+        default:
+          - agent: "requirements-analyst"
+            artifact_types: ["intake", "user-story"]
+            file_patterns: [".aiwg/intake/**", ".aiwg/requirements/user-stories.md"]
+            events: ["create", "update"]
+            priority: 10
+
+          - agent: "architecture-designer"
+            artifact_types: ["requirement", "use-case"]
+            file_patterns: [".aiwg/requirements/**"]
+            events: ["create", "review"]
+            priority: 9
+
+          - agent: "test-engineer"
+            artifact_types: ["use-case", "code"]
+            file_patterns: [".aiwg/requirements/use-cases/**", "src/**/*.ts"]
+            events: ["create", "review"]
+            priority: 5
+
+          - agent: "security-auditor"
+            artifact_types: ["architecture", "code"]
+            file_patterns: [".aiwg/architecture/**", "src/**"]
+            events: ["create", "update", "review"]
+            priority: 8
+
+          - agent: "api-designer"
+            artifact_types: ["architecture", "interface"]
+            file_patterns: [".aiwg/architecture/**", "src/api/**"]
+            events: ["create", "update"]
+            priority: 7
+
+          - agent: "devops-engineer"
+            artifact_types: ["deployment", "infrastructure"]
+            file_patterns: [".aiwg/deployment/**", "docker/**", ".github/**"]
+            events: ["create", "update"]
+            priority: 6
+
+      watcher_config:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          watch_paths:
+            type: array
+            items:
+              type: string
+            default:
+              - ".aiwg/**"
+              - "src/**"
+          ignore_paths:
+            type: array
+            items:
+              type: string
+            default:
+              - ".aiwg/working/**"
+              - ".aiwg/ralph/**"
+              - "node_modules/**"
+
+  AgentSubscription:
+    type: object
+    required:
+      - agent
+      - artifact_types
+      - events
+    properties:
+      agent:
+        type: string
+      artifact_types:
+        type: array
+        items:
+          type: string
+      file_patterns:
+        type: array
+        items:
+          type: string
+      events:
+        type: array
+        items:
+          type: string
+      priority:
+        type: integer
+        default: 5
+        minimum: 1
+        maximum: 10
+
+  GroundingConfig:
+    type: object
+    description: "Grounding agent for domain rules enforcement per REF-022 AutoGen"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      enforcement:
+        type: string
+        enum: [strict, advisory, disabled]
+        default: "strict"
+
+      rule_sources:
+        type: array
+        items:
+          type: string
+        default:
+          - ".claude/rules/token-security.md"
+          - ".claude/rules/versioning.md"
+          - ".claude/rules/mention-wiring.md"
+          - ".aiwg/quality/code-standards.md"
+
+      validation_categories:
+        type: object
+        properties:
+          security:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              rules:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "no-hardcoded-tokens"
+                  - "no-tokens-in-args"
+                  - "heredoc-pattern"
+                  - "file-permissions-600"
+
+          quality:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              rules:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "mentions-wired"
+                  - "tests-before-impl"
+                  - "coverage-threshold"
+                  - "docs-updated"
+
+          versioning:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              rules:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "no-leading-zeros"
+                  - "calver-format"
+                  - "changelog-updated"
+                  - "tag-format-match"
+
+          architecture:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              rules:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "follows-patterns"
+                  - "adr-referenced"
+                  - "dependencies-declared"
+                  - "interfaces-typed"
+
+      on_violation:
+        type: object
+        properties:
+          critical:
+            type: object
+            properties:
+              action:
+                type: string
+                default: "block"
+              notify:
+                type: boolean
+                default: true
+          error:
+            type: object
+            properties:
+              action:
+                type: string
+                default: "block"
+              notify:
+                type: boolean
+                default: true
+          warning:
+            type: object
+            properties:
+              action:
+                type: string
+                default: "annotate"
+              notify:
+                type: boolean
+                default: false
+
+  ReflectionConfig:
+    type: object
+    description: "Cross-task learning via reflections per REF-021 Reflexion"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      storage:
+        type: object
+        properties:
+          path:
+            type: string
+            default: ".aiwg/learning/reflections.jsonl"
+          max_reflections:
+            type: integer
+            default: 1000
+          retention_days:
+            type: integer
+            default: 90
+
+      embedding:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          provider:
+            type: string
+            enum: [openai, anthropic, local]
+            default: "local"
+          model:
+            type: string
+            default: "all-MiniLM-L6-v2"
+          dimension:
+            type: integer
+            default: 384
+
+      retrieval:
+        type: object
+        properties:
+          max_results:
+            type: integer
+            default: 5
+          similarity_threshold:
+            type: number
+            default: 0.7
+          include_failures:
+            type: boolean
+            default: true
+            description: "Include failed task reflections"
+
+      capture:
+        type: object
+        properties:
+          on_task_complete:
+            type: boolean
+            default: true
+          min_lessons:
+            type: integer
+            default: 1
+          max_lessons:
+            type: integer
+            default: 5
+
+  TokenTrackingConfig:
+    type: object
+    description: "Token efficiency tracking per REF-013 MetaGPT (124 tok/line benchmark)"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      benchmark:
+        type: object
+        properties:
+          metagpt_baseline:
+            type: number
+            default: 124
+            description: "MetaGPT benchmark: 124 tokens per line of code"
+          target_efficiency:
+            type: number
+            default: 150
+            description: "Target: < 150 tokens per line"
+          warning_threshold:
+            type: number
+            default: 200
+            description: "Warning if > 200 tokens per line"
+
+      tracking:
+        type: object
+        properties:
+          per_agent:
+            type: boolean
+            default: true
+          per_operation:
+            type: boolean
+            default: true
+          per_file:
+            type: boolean
+            default: true
+
+      metrics:
+        type: object
+        properties:
+          tokens_per_line:
+            type: boolean
+            default: true
+          tokens_per_artifact:
+            type: boolean
+            default: true
+          total_session_tokens:
+            type: boolean
+            default: true
+          efficiency_ratio:
+            type: boolean
+            default: true
+            description: "Useful output / total tokens"
+
+      storage:
+        type: object
+        properties:
+          path:
+            type: string
+            default: ".aiwg/telemetry/token-efficiency/"
+          retention_days:
+            type: integer
+            default: 90
+
+# Reflection schema
+reflection:
+  type: object
+  required:
+    - id
+    - timestamp
+    - task
+    - outcome
+    - lessons
+  properties:
+    id:
+      type: string
+      format: uuid
+    timestamp:
+      type: string
+      format: date-time
+    task:
+      type: string
+      description: "Task description"
+    outcome:
+      type: string
+      enum: [success, failure, partial]
+    lessons:
+      type: array
+      items:
+        type: string
+      minItems: 1
+      maxItems: 5
+    context:
+      type: object
+      properties:
+        agent:
+          type: string
+        operation:
+          type: string
+        artifacts:
+          type: array
+          items:
+            type: string
+        duration_ms:
+          type: integer
+    embedding:
+      type: array
+      items:
+        type: number
+      description: "Semantic embedding vector"
+
+# Grounding validation result
+grounding_result:
+  type: object
+  properties:
+    passed:
+      type: boolean
+    categories_checked:
+      type: array
+      items:
+        type: string
+    violations:
+      type: array
+      items:
+        type: object
+        properties:
+          category:
+            type: string
+          rule:
+            type: string
+          severity:
+            type: string
+            enum: [critical, error, warning]
+          line:
+            type: integer
+          message:
+            type: string
+          rule_ref:
+            type: string
+            description: "@-mention to rule file"
+          suggestion:
+            type: string
+
+# Token efficiency record
+token_efficiency_record:
+  type: object
+  properties:
+    timestamp:
+      type: string
+      format: date-time
+    agent:
+      type: string
+    operation:
+      type: string
+    file_path:
+      type: string
+    metrics:
+      type: object
+      properties:
+        tokens_input:
+          type: integer
+        tokens_output:
+          type: integer
+        lines_generated:
+          type: integer
+        tokens_per_line:
+          type: number
+        efficiency_ratio:
+          type: number
+    benchmark_comparison:
+      type: object
+      properties:
+        vs_metagpt:
+          type: number
+          description: "Ratio vs 124 tok/line baseline"
+        status:
+          type: string
+          enum: [excellent, good, acceptable, warning, poor]
+
+# CLI commands
+cli_commands:
+  subscriptions_list:
+    command: "aiwg subscriptions list"
+    description: "List all agent subscriptions"
+
+  subscriptions_test:
+    command: "aiwg subscriptions test <file>"
+    description: "Show which agents would be activated for a file"
+
+  watch:
+    command: "aiwg watch"
+    description: "Start artifact watcher for subscription-based activation"
+
+  ground_check:
+    command: "aiwg ground-check <file>"
+    description: "Validate file against grounding rules"
+    options:
+      - name: "--category"
+        description: "Specific category to check"
+      - name: "--fix"
+        description: "Auto-fix where possible"
+
+  ground_rules:
+    command: "aiwg ground-rules"
+    description: "List all grounding validation rules"
+
+  reflect:
+    command: "aiwg reflect"
+    description: "Store a reflection manually"
+    options:
+      - name: "--task"
+        description: "Task description"
+      - name: "--outcome"
+        description: "success, failure, or partial"
+      - name: "--lessons"
+        description: "Comma-separated lessons"
+
+  reflect_search:
+    command: "aiwg reflect-search <query>"
+    description: "Search past reflections semantically"
+
+  reflect_list:
+    command: "aiwg reflect-list"
+    description: "List all stored reflections"
+
+  token_report:
+    command: "aiwg token-report"
+    description: "Generate token efficiency report"
+    options:
+      - name: "--agent"
+        description: "Filter by agent"
+      - name: "--since"
+        description: "Date range start"
+      - name: "--benchmark"
+        description: "Compare against MetaGPT baseline"
+
+# Agent protocol
+agent_protocol:
+  process_subscription_event:
+    description: "Handle artifact event for subscribed agents"
+    triggers:
+      - file_create
+      - file_update
+      - file_delete
+    steps:
+      - detect_artifact_type
+      - load_subscriptions
+      - match_subscriptions
+      - sort_by_priority
+      - for_each_matched_agent:
+          - load_agent_definition
+          - provide_artifact_context
+          - activate_agent
+
+  validate_grounding:
+    description: "Validate output against grounding rules"
+    triggers:
+      - pre_write_hook
+    steps:
+      - load_rule_sources
+      - parse_rules
+      - for_each_category:
+          - apply_security_rules
+          - apply_quality_rules
+          - apply_versioning_rules
+          - apply_architecture_rules
+      - collect_violations
+      - determine_action
+      - if_block:
+          - report_violations
+          - request_revision
+      - if_allow:
+          - annotate_warnings
+          - proceed_with_write
+
+  capture_reflection:
+    description: "Capture post-task reflection"
+    triggers:
+      - task_complete
+    steps:
+      - analyze_task_outcome
+      - extract_lessons
+      - generate_embedding
+      - store_reflection
+      - log_capture
+
+  retrieve_reflections:
+    description: "Retrieve relevant past reflections"
+    triggers:
+      - pre_task
+    steps:
+      - embed_task_description
+      - query_reflection_store
+      - filter_by_similarity
+      - format_lessons
+      - augment_task_context
+
+  track_token_efficiency:
+    description: "Track token efficiency metrics"
+    triggers:
+      - post_write_hook
+    steps:
+      - count_tokens_used
+      - count_lines_generated
+      - calculate_efficiency
+      - compare_to_benchmark
+      - store_record
+      - if_warning_threshold:
+          - log_warning
+          - suggest_optimization
+
+# Storage
+storage:
+  subscriptions: ".aiwg/agents/subscriptions.json"
+  grounding_rules: ".claude/rules/"
+  reflections: ".aiwg/learning/reflections.jsonl"
+  token_metrics: ".aiwg/telemetry/token-efficiency/"
+
+# Research targets
+research_targets:
+  ref_013_metagpt:
+    - "Subscription-based agent activation"
+    - "124 tokens/line efficiency benchmark"
+    - "Shared environment communication"
+  ref_021_reflexion:
+    - "Cross-task learning via reflections"
+    - "Semantic retrieval of past experiences"
+    - "Lesson application to new tasks"
+  ref_022_autogen:
+    - "Grounding agent for validation"
+    - "+15% task success rate"
+    - "Domain rules enforcement"
+
+# Example grounding report
+example_grounding_report: |
+  ================================================================================
+                         GROUNDING VALIDATION REPORT
+  ================================================================================
+
+  File: src/api/gitea-client.ts
+  Agent: api-designer
+  Timestamp: 2026-01-25T14:30:00Z
+
+  Categories Checked: [security, quality, versioning, architecture]
+
+  VIOLATIONS:
+
+  1. [CRITICAL] Security: Hard-coded token detected
+     Line: 23
+     Rule: @.claude/rules/token-security.md#rule-1
+     Fix: Use $(cat ~/.config/gitea/token) pattern
+
+  2. [ERROR] Quality: Missing @-mention wiring
+     Rule: @.claude/rules/mention-wiring.md
+     Fix: Add @implements tag to file header
+
+  3. [WARNING] Architecture: ADR not referenced
+     Rule: .aiwg/quality/code-standards.md#adr
+     Fix: Reference relevant ADR in comments
+
+  Summary:
+    Critical: 1
+    Errors: 1
+    Warnings: 1
+
+  Status: BLOCKED - Fix critical violations before proceeding
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+    - "@.aiwg/research/findings/REF-021-reflexion.md"
+    - "@.aiwg/research/findings/REF-022-autogen.md"
+  implementation:
+    - "#221"
+    - "#222"
+    - "#223"
+    - "#224"
+  related:
+    - "@.claude/rules/"
+    - "@src/agents/"
+    - "@.aiwg/learning/"
+    - "@agentic/code/frameworks/sdlc-complete/agents/"

@@ -1,0 +1,334 @@
+# Tool Grounding Requirements Schema
+# Based on REF-018 ReAct Research
+# Issue: #163
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/tool-grounding/v1"
+title: "Tool Grounding Requirements Schema"
+description: |
+  Schema defining tool grounding requirements to prevent hallucinations
+  and ensure factual accuracy per REF-018 ReAct methodology.
+
+type: object
+required:
+  - version
+  - grounding_rules
+  - verification_protocol
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  grounding_rules:
+    $ref: "#/$defs/GroundingRules"
+
+  verification_protocol:
+    $ref: "#/$defs/VerificationProtocol"
+
+  claim_types:
+    $ref: "#/$defs/ClaimTypes"
+
+$defs:
+  GroundingRules:
+    type: object
+    description: "Rules for grounding claims in tool observations"
+    properties:
+      mandatory_grounding:
+        type: array
+        description: "Claims that MUST be grounded via tool use"
+        items:
+          type: string
+        default:
+          - file_contents
+          - file_existence
+          - file_location
+          - code_behavior
+          - test_results
+          - error_messages
+          - api_responses
+          - configuration_values
+          - dependency_versions
+          - git_state
+
+      recommended_grounding:
+        type: array
+        description: "Claims that SHOULD be grounded when possible"
+        items:
+          type: string
+        default:
+          - performance_characteristics
+          - code_patterns
+          - architecture_decisions
+          - historical_changes
+
+      grounding_not_required:
+        type: array
+        description: "Claims that don't require tool grounding"
+        items:
+          type: string
+        default:
+          - general_programming_knowledge
+          - language_syntax
+          - well_known_patterns
+          - mathematical_facts
+
+  VerificationProtocol:
+    type: object
+    description: "Protocol for verifying grounded claims"
+    properties:
+      before_claim:
+        type: object
+        properties:
+          check_required:
+            type: boolean
+            default: true
+          verification_steps:
+            type: array
+            items:
+              type: string
+            default:
+              - "Identify claim type"
+              - "Determine if grounding required"
+              - "Select appropriate verification tool"
+              - "Execute verification action"
+              - "Wait for observation"
+              - "Make claim based on observation"
+
+      claim_format:
+        type: object
+        properties:
+          include_source:
+            type: boolean
+            default: true
+            description: "Include source reference in claim"
+          include_timestamp:
+            type: boolean
+            default: false
+            description: "Include when claim was verified"
+          format_template:
+            type: string
+            default: "[Claim] (Source: [tool/observation])"
+
+      on_verification_failure:
+        type: object
+        properties:
+          actions:
+            type: array
+            items:
+              type: string
+            default:
+              - "Do not make the claim"
+              - "Report verification failure"
+              - "Suggest alternative approach"
+          allow_unverified_claim:
+            type: boolean
+            default: false
+
+  ClaimTypes:
+    type: object
+    description: "Specific claim types and their grounding requirements"
+    properties:
+      file_claims:
+        type: object
+        properties:
+          existence:
+            type: object
+            properties:
+              required_tool:
+                type: string
+                default: "Glob"
+              verification:
+                type: string
+                default: "File path appears in glob results"
+              example:
+                type: string
+                default: "File src/auth.ts exists (verified via Glob '**/*.ts')"
+
+          content:
+            type: object
+            properties:
+              required_tool:
+                type: string
+                default: "Read"
+              verification:
+                type: string
+                default: "Content directly observed via Read tool"
+              example:
+                type: string
+                default: "Line 42 contains 'const TTL = 60' (Read src/config.ts)"
+
+          location:
+            type: object
+            properties:
+              required_tool:
+                type: string
+                default: "Grep"
+              verification:
+                type: string
+                default: "Pattern found at specified location"
+              example:
+                type: string
+                default: "authenticate() defined at src/auth.ts:15 (Grep 'function authenticate')"
+
+      code_claims:
+        type: object
+        properties:
+          behavior:
+            type: object
+            properties:
+              required_tool:
+                type: string
+                default: "Bash (test runner)"
+              verification:
+                type: string
+                default: "Behavior confirmed via test execution"
+              example:
+                type: string
+                default: "Function returns error on invalid input (npm test --grep 'invalid input')"
+
+          syntax:
+            type: object
+            properties:
+              required_tool:
+                type: string
+                default: "Bash (type checker/linter)"
+              verification:
+                type: string
+                default: "No syntax errors from checker"
+              example:
+                type: string
+                default: "Code compiles without errors (tsc --noEmit passed)"
+
+      state_claims:
+        type: object
+        properties:
+          git_state:
+            type: object
+            properties:
+              required_tool:
+                type: string
+                default: "Bash (git commands)"
+              verification:
+                type: string
+                default: "Git command output confirms state"
+              example:
+                type: string
+                default: "Working directory clean (git status shows 'nothing to commit')"
+
+          dependency_state:
+            type: object
+            properties:
+              required_tool:
+                type: string
+                default: "Read (package.json) or Bash (npm list)"
+              verification:
+                type: string
+                default: "Version confirmed in manifest or npm output"
+              example:
+                type: string
+                default: "lodash@4.17.21 installed (npm list lodash)"
+
+# Grounding validation protocol
+grounding_validation:
+  pre_claim_check:
+    description: "Validate claim grounding before making assertion"
+    steps:
+      - identify_claim_type
+      - check_if_grounding_required
+      - if_required:
+          - verify_tool_observation_exists
+          - verify_observation_supports_claim
+          - format_claim_with_source
+      - if_not_required:
+          - make_claim_directly
+
+  post_claim_audit:
+    description: "Audit claims for proper grounding"
+    checks:
+      - claim_has_source_reference
+      - source_matches_observation
+      - observation_timestamp_recent
+      - no_extrapolation_beyond_observation
+
+# Hallucination prevention
+hallucination_prevention:
+  high_risk_patterns:
+    description: "Patterns that frequently lead to hallucination"
+    patterns:
+      - pattern: "Assuming file contents without reading"
+        mitigation: "Always Read before claiming content"
+
+      - pattern: "Assuming code behavior without testing"
+        mitigation: "Run tests to verify behavior"
+
+      - pattern: "Assuming error causes without observing"
+        mitigation: "Check actual error messages"
+
+      - pattern: "Assuming configuration without checking"
+        mitigation: "Read config files directly"
+
+      - pattern: "Assuming git state without status"
+        mitigation: "Run git status/diff/log"
+
+  forbidden_claim_patterns:
+    description: "Claim patterns that are forbidden"
+    patterns:
+      - "The file probably contains..."
+      - "This should work because..."
+      - "The error is likely..."
+      - "I assume the config has..."
+      - "Based on typical patterns..."
+
+  required_claim_patterns:
+    description: "Required claim patterns"
+    patterns:
+      - "The file contains [X] (Read src/file.ts:42)"
+      - "The test passes (npm test output: 'PASS')"
+      - "The error message is [X] (observed in output)"
+      - "Config value is [X] (Read .env)"
+
+# Agent protocol integration
+agent_protocol:
+  before_any_claim:
+    description: "Protocol before making factual claims"
+    steps:
+      - determine_claim_type
+      - check_grounding_requirement
+      - if_required_and_not_grounded:
+          - execute_verification_tool
+          - wait_for_observation
+          - extract_relevant_facts
+      - make_grounded_claim
+
+  during_tao_loop:
+    description: "Integration with TAO loop"
+    integration:
+      - thought_phase: "Identify what claims need grounding"
+      - action_phase: "Execute grounding verification tools"
+      - observation_phase: "Extract facts for grounded claims"
+
+  metrics:
+    description: "Grounding metrics to track"
+    metrics:
+      - grounding_rate: "% of claims properly grounded"
+      - hallucination_rate: "% of claims without grounding"
+      - verification_success_rate: "% of verifications that succeed"
+      - false_claim_rate: "% of grounded claims that are wrong"
+
+# Storage
+storage:
+  grounding_logs: ".aiwg/ralph/{loop_id}/grounding/"
+  audit_reports: ".aiwg/reports/grounding/"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-018-react.md"
+  implementation:
+    - "#163"
+  related:
+    - "@.claude/rules/tao-loop.md"
+    - "@.claude/rules/thought-protocol.md"
+    - "@.aiwg/research/synthesis/topic-04-tool-grounding.md"

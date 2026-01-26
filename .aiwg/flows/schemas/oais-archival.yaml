@@ -1,0 +1,679 @@
+# OAIS Archival Information Package Schema
+# Based on REF-061 OAIS Reference Model
+# Issues: #208 (AIP), #209 (DIP/BibTeX), #210 (Fixity)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/oais-archival/v1"
+title: "OAIS Archival Information Package Schema"
+description: |
+  Schema for OAIS-compliant Archival Information Packages (AIP),
+  Dissemination Information Packages (DIP), and fixity verification
+  per REF-061 OAIS Reference Model.
+
+type: object
+required:
+  - version
+  - aip_config
+  - dip_config
+  - fixity_config
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  aip_config:
+    $ref: "#/$defs/AIPConfig"
+
+  dip_config:
+    $ref: "#/$defs/DIPConfig"
+
+  fixity_config:
+    $ref: "#/$defs/FixityConfig"
+
+$defs:
+  AIPConfig:
+    type: object
+    description: "Archival Information Package configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      storage_path:
+        type: string
+        default: "docs/references/aips/"
+
+      structure:
+        type: object
+        description: "AIP directory structure"
+        properties:
+          manifest:
+            type: string
+            default: "manifest.xml"
+          content_dir:
+            type: string
+            default: "content/"
+          metadata_dir:
+            type: string
+            default: "metadata/"
+          checksums_file:
+            type: string
+            default: "checksums.txt"
+
+      metadata_schemas:
+        type: object
+        properties:
+          mets:
+            type: boolean
+            default: true
+            description: "Include METS manifest"
+          dublin_core:
+            type: boolean
+            default: true
+            description: "Include Dublin Core descriptive metadata"
+          premis:
+            type: boolean
+            default: true
+            description: "Include PREMIS preservation metadata"
+
+  DIPConfig:
+    type: object
+    description: "Dissemination Information Package configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      export_path:
+        type: string
+        default: "docs/references/exports/"
+
+      formats:
+        type: array
+        items:
+          type: string
+        default:
+          - bibtex
+          - ris
+          - json
+          - markdown
+
+      filtering:
+        type: object
+        properties:
+          by_topic:
+            type: boolean
+            default: true
+          by_priority:
+            type: boolean
+            default: true
+          by_year:
+            type: boolean
+            default: true
+
+  FixityConfig:
+    type: object
+    description: "Fixity checking configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      algorithm:
+        type: string
+        enum: [sha256, sha512, md5]
+        default: "sha256"
+
+      verification:
+        type: object
+        properties:
+          on_access:
+            type: boolean
+            default: false
+            description: "Verify on every access"
+          scheduled:
+            type: boolean
+            default: true
+            description: "Scheduled verification"
+          schedule:
+            type: string
+            default: "weekly"
+            description: "cron schedule for verification"
+
+      logging:
+        type: object
+        properties:
+          log_path:
+            type: string
+            default: ".aiwg/logs/fixity/"
+          retention_days:
+            type: integer
+            default: 365
+
+# AIP structure schema
+aip_structure:
+  type: object
+  description: "Single AIP package structure"
+  required:
+    - ref_id
+    - manifest
+    - content
+    - metadata
+  properties:
+    ref_id:
+      type: string
+      pattern: "^REF-\\d{3}$"
+    path:
+      type: string
+      description: "Path to AIP directory"
+    manifest:
+      $ref: "#/$defs/METSManifest"
+    content:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              mime_type:
+                type: string
+              size_bytes:
+                type: integer
+              checksum:
+                type: string
+    metadata:
+      type: object
+      properties:
+        dublin_core:
+          $ref: "#/$defs/DublinCore"
+        premis:
+          $ref: "#/$defs/PREMIS"
+        provenance:
+          $ref: "#/$defs/Provenance"
+    checksums:
+      type: object
+      additionalProperties:
+        type: string
+      description: "filename -> checksum mapping"
+
+  METSManifest:
+    type: object
+    description: "METS metadata schema"
+    properties:
+      mets_version:
+        type: string
+        default: "1.12"
+      profile:
+        type: string
+        default: "AIWG-AIP-1.0"
+      objid:
+        type: string
+        description: "Object identifier (REF-XXX)"
+      label:
+        type: string
+        description: "Human-readable title"
+      create_date:
+        type: string
+        format: date-time
+      last_mod_date:
+        type: string
+        format: date-time
+      file_sec:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            mimetype:
+              type: string
+            size:
+              type: integer
+            checksum:
+              type: string
+            checksum_type:
+              type: string
+            href:
+              type: string
+      struct_map:
+        type: array
+        items:
+          type: object
+          properties:
+            type:
+              type: string
+            label:
+              type: string
+            fileid:
+              type: string
+
+  DublinCore:
+    type: object
+    description: "Dublin Core descriptive metadata"
+    properties:
+      title:
+        type: string
+      creator:
+        type: array
+        items:
+          type: string
+      subject:
+        type: array
+        items:
+          type: string
+      description:
+        type: string
+      publisher:
+        type: string
+      contributor:
+        type: array
+        items:
+          type: string
+      date:
+        type: string
+      type:
+        type: string
+        enum: [Article, Book, Report, Preprint]
+      format:
+        type: string
+      identifier:
+        type: string
+        description: "DOI, arXiv ID, etc."
+      source:
+        type: string
+      language:
+        type: string
+        default: "en"
+      relation:
+        type: array
+        items:
+          type: string
+      coverage:
+        type: string
+      rights:
+        type: string
+
+  PREMIS:
+    type: object
+    description: "PREMIS preservation metadata"
+    properties:
+      object:
+        type: object
+        properties:
+          objectIdentifier:
+            type: string
+          objectCategory:
+            type: string
+            enum: [file, representation, bitstream]
+          objectCharacteristics:
+            type: object
+            properties:
+              compositionLevel:
+                type: integer
+              fixity:
+                type: object
+                properties:
+                  messageDigestAlgorithm:
+                    type: string
+                  messageDigest:
+                    type: string
+                  messageDigestOriginator:
+                    type: string
+              size:
+                type: integer
+              format:
+                type: object
+                properties:
+                  formatDesignation:
+                    type: string
+                  formatRegistry:
+                    type: string
+      event:
+        type: array
+        items:
+          type: object
+          properties:
+            eventIdentifier:
+              type: string
+            eventType:
+              type: string
+              enum: [creation, ingestion, migration, validation]
+            eventDateTime:
+              type: string
+              format: date-time
+            eventOutcome:
+              type: string
+            linkingAgentIdentifier:
+              type: string
+      agent:
+        type: array
+        items:
+          type: object
+          properties:
+            agentIdentifier:
+              type: string
+            agentName:
+              type: string
+            agentType:
+              type: string
+              enum: [person, organization, software]
+
+  Provenance:
+    type: object
+    description: "Acquisition and processing provenance"
+    properties:
+      acquisition:
+        type: object
+        properties:
+          date:
+            type: string
+            format: date-time
+          source:
+            type: string
+          method:
+            type: string
+            enum: [download, manual, api]
+          agent:
+            type: string
+      processing:
+        type: array
+        items:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date-time
+            action:
+              type: string
+            agent:
+              type: string
+            notes:
+              type: string
+
+# DIP export schemas
+bibtex_entry:
+  type: object
+  required:
+    - entry_type
+    - cite_key
+    - title
+    - author
+    - year
+  properties:
+    entry_type:
+      type: string
+      enum: [article, book, inproceedings, techreport, misc]
+    cite_key:
+      type: string
+    title:
+      type: string
+    author:
+      type: string
+    year:
+      type: integer
+    journal:
+      type: string
+    booktitle:
+      type: string
+    volume:
+      type: string
+    number:
+      type: string
+    pages:
+      type: string
+    publisher:
+      type: string
+    doi:
+      type: string
+    url:
+      type: string
+    note:
+      type: string
+    keywords:
+      type: string
+    abstract:
+      type: string
+
+bibtex_template: |
+  @{entry_type}{{{cite_key},
+    title = {{{title}}},
+    author = {{{author}}},
+    year = {{{year}}},
+    {optional_fields}
+    note = {{AIWG Reference {ref_id}. Priority: {priority}}}
+  }}
+
+ris_entry:
+  type: object
+  properties:
+    TY:
+      type: string
+      description: "Type"
+    TI:
+      type: string
+      description: "Title"
+    AU:
+      type: array
+      items:
+        type: string
+      description: "Authors"
+    PY:
+      type: string
+      description: "Year"
+    JO:
+      type: string
+      description: "Journal"
+    VL:
+      type: string
+      description: "Volume"
+    SP:
+      type: string
+      description: "Start page"
+    EP:
+      type: string
+      description: "End page"
+    DO:
+      type: string
+      description: "DOI"
+    UR:
+      type: string
+      description: "URL"
+    N1:
+      type: string
+      description: "Notes"
+
+# Fixity verification schema
+fixity_record:
+  type: object
+  required:
+    - ref_id
+    - timestamp
+    - status
+  properties:
+    ref_id:
+      type: string
+    timestamp:
+      type: string
+      format: date-time
+    status:
+      type: string
+      enum: [verified, failed, missing]
+    algorithm:
+      type: string
+    files:
+      type: array
+      items:
+        type: object
+        properties:
+          path:
+            type: string
+          expected:
+            type: string
+          actual:
+            type: string
+          match:
+            type: boolean
+    errors:
+      type: array
+      items:
+        type: string
+
+fixity_report:
+  type: object
+  properties:
+    timestamp:
+      type: string
+      format: date-time
+    total_packages:
+      type: integer
+    verified:
+      type: integer
+    failed:
+      type: integer
+    missing:
+      type: integer
+    details:
+      type: array
+      items:
+        $ref: "#/$defs/fixity_record"
+
+# CLI commands
+cli_commands:
+  aip_create:
+    command: "aiwg research package <ref-id>"
+    description: "Create AIP for reference"
+    options:
+      - name: "--source"
+        description: "Path to source PDF/file"
+      - name: "--metadata"
+        description: "Path to metadata YAML"
+
+  aip_validate:
+    command: "aiwg research validate <ref-id>"
+    description: "Validate AIP completeness"
+
+  aip_list:
+    command: "aiwg research list-packages"
+    description: "List all AIPs"
+
+  dip_export:
+    command: "aiwg research export"
+    description: "Export references as DIP"
+    options:
+      - name: "--format"
+        description: "Export format (bibtex, ris, json, markdown)"
+      - name: "--topic"
+        description: "Filter by topic"
+      - name: "--priority"
+        description: "Filter by priority"
+      - name: "--output"
+        description: "Output file path"
+
+  fixity_check:
+    command: "aiwg research verify-fixity"
+    description: "Verify all package checksums"
+    options:
+      - name: "--ref"
+        description: "Check specific reference only"
+      - name: "--report"
+        description: "Generate detailed report"
+
+  fixity_generate:
+    command: "aiwg research generate-checksums"
+    description: "Generate checksums for all packages"
+
+# Agent protocol
+agent_protocol:
+  create_aip:
+    description: "Create Archival Information Package"
+    steps:
+      - validate_ref_id_format
+      - create_aip_directory
+      - copy_source_content
+      - extract_metadata_from_source
+      - generate_dublin_core
+      - generate_premis_record
+      - generate_mets_manifest
+      - calculate_checksums
+      - create_checksums_file
+      - validate_aip_completeness
+      - return_aip_path
+
+  export_dip:
+    description: "Generate Dissemination Information Package"
+    steps:
+      - load_all_aips
+      - apply_filters
+      - for_each_format:
+          - if_bibtex:
+              - extract_bibtex_fields
+              - format_bibtex_entry
+          - if_ris:
+              - extract_ris_fields
+              - format_ris_entry
+          - if_json:
+              - extract_json_fields
+          - if_markdown:
+              - generate_markdown_table
+      - write_export_file
+      - return_export_path
+
+  verify_fixity:
+    description: "Verify package checksums"
+    steps:
+      - load_aip_list
+      - for_each_aip:
+          - load_checksums_file
+          - for_each_file:
+              - calculate_current_checksum
+              - compare_with_stored
+              - record_result
+          - update_premis_event
+      - generate_fixity_report
+      - if_failures:
+          - alert_administrators
+      - persist_verification_log
+
+# Storage paths
+storage:
+  aips: "docs/references/aips/"
+  exports: "docs/references/exports/"
+  logs: ".aiwg/logs/archival/"
+  reports: ".aiwg/reports/fixity/"
+
+# Research targets (from REF-061 OAIS)
+research_targets:
+  aip_compliance: "Full OAIS AIP structure with METS/Dublin Core/PREMIS"
+  dip_generation: "BibTeX and multi-format exports"
+  fixity_assurance: "SHA-256 checksums with scheduled verification"
+  preservation: "Long-term preservation of research corpus"
+
+# Example AIP structure
+example_aip: |
+  docs/references/aips/REF-001-aip/
+  ├── manifest.xml           # METS manifest
+  ├── content/
+  │   └── paper.pdf          # Original source document
+  ├── metadata/
+  │   ├── dublin-core.xml    # Descriptive metadata
+  │   ├── premis.xml         # Preservation metadata
+  │   └── provenance.yaml    # Acquisition/processing history
+  └── checksums.txt          # SHA-256 checksums
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-061-oais.md"
+  implementation:
+    - "#208"
+    - "#209"
+    - "#210"
+  related:
+    - "@docs/references/"
+    - "@.aiwg/flows/schemas/provenance-system.yaml"
+    - "@.aiwg/flows/schemas/revision-history.yaml"

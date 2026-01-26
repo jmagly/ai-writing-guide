@@ -1,0 +1,384 @@
+# Episodic Memory Schema
+# Based on REF-021 Reflexion: Language Agents with Verbal Reinforcement Learning
+# Issue: #251
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/episodic-memory/v1"
+title: "Episodic Memory Schema"
+description: |
+  Structured directory layout for Ralph task execution history enabling
+  reflection-based learning and task replay per REF-021 Reflexion.
+
+type: object
+required:
+  - version
+  - directory_structure
+  - data_schemas
+  - reflection_system
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  directory_structure:
+    $ref: "#/$defs/DirectoryStructure"
+
+  data_schemas:
+    $ref: "#/$defs/DataSchemas"
+
+  reflection_system:
+    $ref: "#/$defs/ReflectionSystem"
+
+$defs:
+  DirectoryStructure:
+    type: object
+    description: "Structured directory layout for episodic memory"
+    properties:
+      base_path:
+        type: string
+        default: ".aiwg/ralph/"
+
+      layout:
+        type: string
+        default: |
+          .aiwg/ralph/
+          ├── tasks/
+          │   ├── task-001/
+          │   │   ├── metadata.json          # Task metadata
+          │   │   ├── trajectory.json        # Full execution trace
+          │   │   ├── reflections.jsonl      # Reflections after each attempt
+          │   │   ├── attempts/
+          │   │   │   ├── 001/
+          │   │   │   │   ├── attempt.json   # Attempt metadata
+          │   │   │   │   ├── plan.md        # Attempt plan
+          │   │   │   │   ├── actions.jsonl  # Actions taken
+          │   │   │   │   ├── results/       # Iteration results
+          │   │   │   │   │   ├── iter-001/
+          │   │   │   │   │   ├── iter-002/
+          │   │   │   │   │   └── iter-003/
+          │   │   │   │   └── outcome.json   # Final outcome
+          │   │   │   ├── 002/
+          │   │   │   └── 003/
+          │   │   └── summary.json           # Task summary
+          │   ├── task-002/
+          │   └── task-003/
+          └── index/
+              ├── by-status.json             # Tasks by status
+              ├── by-agent.json              # Tasks by agent
+              └── embeddings/                # Semantic task index
+
+      file_descriptions:
+        type: object
+        properties:
+          metadata.json: { type: string, default: "Task configuration and current state" }
+          trajectory.json: { type: string, default: "Complete execution trace across all attempts" }
+          reflections.jsonl: { type: string, default: "Learning reflections after each attempt" }
+          attempt.json: { type: string, default: "Individual attempt metadata and outcome" }
+          plan.md: { type: string, default: "Planning document for the attempt" }
+          actions.jsonl: { type: string, default: "Detailed action log with reasoning" }
+          outcome.json: { type: string, default: "Final outcome and learnings" }
+          summary.json: { type: string, default: "Aggregated task summary" }
+
+  DataSchemas:
+    type: object
+    description: "JSON schemas for memory files"
+    properties:
+      task_metadata:
+        type: object
+        properties:
+          id: { type: string }
+          description: { type: string }
+          completion_criteria: { type: string }
+          created: { type: string, format: "date-time" }
+          updated: { type: string, format: "date-time" }
+          completed: { type: string, format: "date-time" }
+          status:
+            type: string
+            enum: [running, paused, completed, failed]
+          current_attempt: { type: integer }
+          total_attempts: { type: integer }
+          tags: { type: array, items: { type: string } }
+          related_tasks: { type: array, items: { type: string } }
+
+      trajectory:
+        type: object
+        properties:
+          task_id: { type: string }
+          attempts:
+            type: array
+            items:
+              type: object
+              properties:
+                attempt_id: { type: integer }
+                started: { type: string, format: "date-time" }
+                ended: { type: string, format: "date-time" }
+                outcome:
+                  type: string
+                  enum: [success, failure, timeout]
+                plan: { type: string }
+                actions: { type: integer }
+                iterations: { type: integer }
+                milestones:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      timestamp: { type: string, format: "date-time" }
+                      event: { type: string }
+                      details: { type: string }
+                final_quality: { type: number }
+                completion_percent: { type: number }
+
+      reflection:
+        type: object
+        properties:
+          timestamp: { type: string, format: "date-time" }
+          attempt_id: { type: integer }
+          observation: { type: string, description: "What happened" }
+          analysis: { type: string, description: "Why it happened" }
+          learning: { type: string, description: "What to do differently" }
+          action_items:
+            type: array
+            items: { type: string }
+          triggered_by:
+            type: string
+            enum: [failure, success, timeout, manual]
+          reflection_type:
+            type: string
+            enum: [error-analysis, success-pattern, process-improvement]
+
+      attempt:
+        type: object
+        properties:
+          id: { type: integer }
+          task_id: { type: string }
+          started: { type: string, format: "date-time" }
+          ended: { type: string, format: "date-time" }
+          plan:
+            type: object
+            properties:
+              approach: { type: string }
+              steps: { type: array, items: { type: string } }
+              estimated_iterations: { type: integer }
+          execution:
+            type: object
+            properties:
+              agent: { type: string }
+              iterations: { type: integer }
+              actions_performed: { type: integer }
+              quality_history:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    iteration: { type: integer }
+                    quality: { type: number }
+                    delta: { type: number }
+          outcome:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [success, failure, timeout]
+              reason: { type: string }
+              final_quality: { type: number }
+              completion_percent: { type: number }
+          what_worked: { type: array, items: { type: string } }
+          what_didnt_work: { type: array, items: { type: string } }
+          suggestions_for_next_time: { type: array, items: { type: string } }
+
+      action:
+        type: object
+        properties:
+          timestamp: { type: string, format: "date-time" }
+          iteration: { type: integer }
+          type:
+            type: string
+            enum: [read, write, bash, grep, glob, task, edit]
+          tool: { type: string }
+          params: { type: object }
+          success: { type: boolean }
+          output: { type: string }
+          error: { type: string }
+          reasoning: { type: string }
+          expected_outcome: { type: string }
+
+  ReflectionSystem:
+    type: object
+    description: "Reflection-based learning system"
+    properties:
+      research_backing:
+        type: object
+        properties:
+          source: { type: string, default: "REF-021" }
+          finding: { type: string, default: "Agents that reflect on past failures show 20% improvement on retry" }
+          mechanism: { type: string, default: "Verbal reinforcement learning through structured reflection" }
+
+      reflection_triggers:
+        type: array
+        items:
+          type: object
+          properties:
+            trigger: { type: string }
+            reflection_type: { type: string }
+            auto_generate: { type: boolean }
+        default:
+          - trigger: "attempt_failure"
+            reflection_type: "error-analysis"
+            auto_generate: true
+          - trigger: "attempt_success"
+            reflection_type: "success-pattern"
+            auto_generate: true
+          - trigger: "attempt_timeout"
+            reflection_type: "process-improvement"
+            auto_generate: true
+          - trigger: "task_completion"
+            reflection_type: "process-improvement"
+            auto_generate: true
+
+      reflection_template:
+        type: string
+        default: |
+          ## Reflection on Attempt {attempt_id}
+
+          **Observation**: What happened during this attempt?
+          {observation}
+
+          **Analysis**: Why did this happen?
+          {analysis}
+
+          **Learning**: What should be done differently?
+          {learning}
+
+          **Action Items**:
+          {action_items}
+
+      learning_application:
+        type: object
+        properties:
+          on_retry:
+            type: string
+            default: "Load reflections from previous attempts and incorporate learnings into plan"
+          on_similar_task:
+            type: string
+            default: "Search for similar past tasks and apply relevant learnings"
+          improvement_tracking:
+            type: string
+            default: "Track success rate improvement across retries with reflections"
+
+# CLI commands
+cli_commands:
+  ralph_history:
+    command: "aiwg ralph-history <task-id>"
+    description: "View task execution history"
+    options:
+      - name: "--attempt"
+        description: "View specific attempt"
+      - name: "--reflections"
+        description: "View reflections only"
+      - name: "--export"
+        description: "Export history to file"
+
+  ralph_replay:
+    command: "aiwg ralph-replay <task-id> --attempt <n>"
+    description: "Replay an attempt for debugging"
+
+  ralph_search:
+    command: "aiwg ralph-search <query>"
+    description: "Search task history"
+
+# Agent protocol
+agent_protocol:
+  init_task:
+    description: "Initialize new task in episodic memory"
+    steps:
+      - generate_task_id
+      - create_task_directory
+      - write_metadata_json
+      - initialize_trajectory
+      - return_task_id
+
+  start_attempt:
+    description: "Start new attempt for task"
+    steps:
+      - load_task_metadata
+      - increment_attempt_count
+      - create_attempt_directory
+      - load_previous_reflections
+      - generate_plan_incorporating_learnings
+      - write_plan_md
+      - write_attempt_json
+      - return_attempt_id
+
+  log_action:
+    description: "Log action to attempt history"
+    steps:
+      - format_action_record
+      - append_to_actions_jsonl
+      - update_attempt_metrics
+
+  complete_attempt:
+    description: "Complete attempt and generate reflection"
+    steps:
+      - finalize_attempt_metrics
+      - determine_outcome
+      - extract_learnings
+      - write_outcome_json
+      - generate_reflection
+      - append_to_reflections_jsonl
+      - update_trajectory
+      - update_task_metadata
+
+  query_history:
+    description: "Query task history for learnings"
+    steps:
+      - load_task_metadata
+      - load_all_attempts
+      - load_reflections
+      - filter_by_criteria
+      - return_history
+
+# Storage
+storage:
+  tasks: ".aiwg/ralph/tasks/"
+  index: ".aiwg/ralph/index/"
+  embeddings: ".aiwg/ralph/index/embeddings/"
+
+# Success metrics
+success_metrics:
+  tracking_coverage: "100% of Ralph tasks tracked in structured memory"
+  read_latency: "<50ms read latency for task history"
+  retry_improvement: "20% improvement in retry success rate via reflections"
+  audit_trail: "Full audit trail for all task executions"
+
+# Example reflection
+example_reflection: |
+  ## Reflection on Attempt 2
+
+  **Observation**: Test suite failed with 3 type errors related to
+  missing properties on the AuthConfig interface.
+
+  **Analysis**: The implementation was updated to add new OAuth
+  properties, but the interface definition was not updated first.
+  This caused type mismatches when tests ran.
+
+  **Learning**: When adding new properties to configuration objects,
+  update the interface definition BEFORE implementing the feature.
+  This follows the "types first" pattern.
+
+  **Action Items**:
+  1. Update AuthConfig interface with oauth_enabled, oauth_provider properties
+  2. Re-run type check before implementation
+  3. Add interface update to standard checklist
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-021-reflexion.md"
+  implementation:
+    - "#251"
+  related:
+    - "@tools/ralph-external/episodic-memory.ts"
+    - "@.aiwg/flows/schemas/iteration-analytics.yaml"

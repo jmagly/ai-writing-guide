@@ -1,0 +1,489 @@
+# MCP Extensions Schema
+# Based on REF-066 Model Context Protocol
+# Issues: #196 (Prompts), #197 (Discovery), #198 (OAuth)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/mcp-extensions/v1"
+title: "MCP Extensions Schema"
+description: |
+  Comprehensive schema for MCP prompts, server discovery, and OAuth 2.1
+  authentication per REF-066 Model Context Protocol specification.
+
+type: object
+required:
+  - version
+  - prompts_catalog
+  - server_discovery
+  - authentication
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  prompts_catalog:
+    $ref: "#/$defs/PromptsCatalog"
+
+  server_discovery:
+    $ref: "#/$defs/ServerDiscovery"
+
+  authentication:
+    $ref: "#/$defs/Authentication"
+
+$defs:
+  PromptsCatalog:
+    type: object
+    description: "MCP Prompts catalog per REF-066"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      base_uri:
+        type: string
+        default: "aiwg://prompts"
+
+      categories:
+        type: object
+        properties:
+          sdlc:
+            type: object
+            description: "SDLC phase transition prompts"
+            properties:
+              prompts:
+                type: array
+                items:
+                  $ref: "#/$defs/PromptDefinition"
+                default:
+                  - name: "phase-transition"
+                    description: "Orchestrate SDLC phase transition"
+                    arguments:
+                      - name: "from_phase"
+                        required: true
+                      - name: "to_phase"
+                        required: true
+                  - name: "phase-kickoff"
+                    description: "Initialize new SDLC phase"
+                    arguments:
+                      - name: "phase"
+                        required: true
+                  - name: "phase-review"
+                    description: "Review phase completion"
+                    arguments:
+                      - name: "phase"
+                        required: true
+
+          voice:
+            type: object
+            description: "Voice profile application prompts"
+            properties:
+              prompts:
+                type: array
+                items:
+                  $ref: "#/$defs/PromptDefinition"
+                default:
+                  - name: "apply-voice"
+                    description: "Apply voice profile to content"
+                    arguments:
+                      - name: "voice"
+                        required: true
+                        enum: [technical-authority, friendly-explainer, executive-brief, casual-conversational]
+                      - name: "content"
+                        required: true
+                  - name: "analyze-voice"
+                    description: "Analyze voice characteristics of content"
+                    arguments:
+                      - name: "content"
+                        required: true
+                  - name: "voice-comparison"
+                    description: "Compare content against voice profile"
+                    arguments:
+                      - name: "content"
+                        required: true
+                      - name: "voice"
+                        required: true
+
+          testing:
+            type: object
+            description: "Test generation prompts"
+            properties:
+              prompts:
+                type: array
+                items:
+                  $ref: "#/$defs/PromptDefinition"
+                default:
+                  - name: "generate-unit-tests"
+                    description: "Generate unit tests for code"
+                    arguments:
+                      - name: "source_file"
+                        required: true
+                      - name: "framework"
+                        required: false
+                        default: "jest"
+                  - name: "generate-integration-tests"
+                    description: "Generate integration tests"
+                    arguments:
+                      - name: "component"
+                        required: true
+                  - name: "mutation-analysis"
+                    description: "Analyze test quality via mutation testing"
+                    arguments:
+                      - name: "test_file"
+                        required: true
+
+          security:
+            type: object
+            description: "Security review prompts"
+            properties:
+              prompts:
+                type: array
+                items:
+                  $ref: "#/$defs/PromptDefinition"
+                default:
+                  - name: "security-review"
+                    description: "Security review for artifact"
+                    arguments:
+                      - name: "artifact"
+                        required: true
+                      - name: "standards"
+                        required: false
+                        default: ["OWASP-Top-10"]
+                  - name: "threat-model"
+                    description: "Generate threat model"
+                    arguments:
+                      - name: "component"
+                        required: true
+                      - name: "framework"
+                        required: false
+                        default: "STRIDE"
+
+  PromptDefinition:
+    type: object
+    required:
+      - name
+      - description
+    properties:
+      name:
+        type: string
+        description: "Unique prompt name"
+      description:
+        type: string
+        description: "Human-readable description"
+      arguments:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            required:
+              type: boolean
+              default: false
+            default:
+              description: "Default value if not provided"
+            enum:
+              type: array
+              items:
+                type: string
+      template:
+        type: string
+        description: "Prompt template with {arg} placeholders"
+
+  ServerDiscovery:
+    type: object
+    description: "MCP server discovery via .well-known per REF-066"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      well_known_path:
+        type: string
+        default: ".well-known/mcp.json"
+
+      schema:
+        type: object
+        description: ".well-known/mcp.json schema"
+        properties:
+          name:
+            type: string
+            default: "aiwg"
+          version:
+            type: string
+            default: "1.0.0"
+          description:
+            type: string
+            default: "AI Writing Guide MCP Server"
+          capabilities:
+            type: array
+            items:
+              type: string
+            default:
+              - tools
+              - resources
+              - prompts
+          endpoints:
+            type: object
+            properties:
+              stdio:
+                type: string
+                default: "npx -y aiwg mcp serve"
+              http:
+                type: string
+                description: "Optional HTTP endpoint"
+          authentication:
+            type: object
+            properties:
+              required:
+                type: boolean
+                default: false
+              types:
+                type: array
+                items:
+                  type: string
+                default:
+                  - oauth2
+                  - bearer
+
+      discovery_protocol:
+        type: object
+        properties:
+          steps:
+            type: array
+            items:
+              type: string
+            default:
+              - "Client requests https://domain/.well-known/mcp.json"
+              - "Server returns discovery document"
+              - "Client parses capabilities and endpoints"
+              - "Client initiates connection via preferred endpoint"
+              - "If auth required, client starts OAuth flow"
+
+  Authentication:
+    type: object
+    description: "OAuth 2.1 authentication for MCP per REF-066"
+    properties:
+      enabled:
+        type: boolean
+        default: false
+
+      oauth21:
+        type: object
+        properties:
+          authorization_endpoint:
+            type: string
+            default: "/oauth/authorize"
+          token_endpoint:
+            type: string
+            default: "/oauth/token"
+          revocation_endpoint:
+            type: string
+            default: "/oauth/revoke"
+
+          grant_types:
+            type: array
+            items:
+              type: string
+            default:
+              - authorization_code
+              - refresh_token
+              - client_credentials
+
+          pkce_required:
+            type: boolean
+            default: true
+            description: "PKCE required per OAuth 2.1"
+
+          scopes:
+            type: object
+            description: "Scope definitions"
+            additionalProperties:
+              type: string
+            default:
+              tools:read: "Read tool definitions"
+              tools:execute: "Execute tools"
+              resources:read: "Read resources"
+              resources:write: "Write resources"
+              prompts:read: "Read prompt definitions"
+              prompts:execute: "Execute prompts"
+              admin: "Full administrative access"
+
+      token_management:
+        type: object
+        properties:
+          access_token_lifetime:
+            type: integer
+            default: 3600
+            description: "Access token TTL in seconds"
+          refresh_token_lifetime:
+            type: integer
+            default: 604800
+            description: "Refresh token TTL in seconds"
+          token_rotation:
+            type: boolean
+            default: true
+            description: "Rotate refresh tokens on use"
+
+      middleware:
+        type: object
+        description: "Auth middleware configuration"
+        properties:
+          validate_bearer:
+            type: boolean
+            default: true
+          enforce_scopes:
+            type: boolean
+            default: true
+          rate_limiting:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              requests_per_minute:
+                type: integer
+                default: 60
+
+# Prompt templates
+prompt_templates:
+  phase_transition: |
+    You are orchestrating an SDLC phase transition from {from_phase} to {to_phase}.
+
+    Review the following artifacts from {from_phase}:
+    - Check completion criteria
+    - Validate quality gates
+    - Identify blockers
+
+    Then prepare for {to_phase}:
+    - Create phase kickoff document
+    - Assign initial tasks
+    - Update project status
+
+  apply_voice: |
+    Transform the following content using the {voice} voice profile:
+
+    Original content:
+    {content}
+
+    Voice characteristics for {voice}:
+    - Tone and register
+    - Vocabulary preferences
+    - Sentence structure patterns
+    - Authenticity markers
+
+    Output the transformed content maintaining the original meaning.
+
+  security_review: |
+    Conduct a security review of {artifact} against {standards}.
+
+    Check for:
+    - Authentication/authorization issues
+    - Input validation gaps
+    - Data exposure risks
+    - Cryptographic weaknesses
+    - Configuration vulnerabilities
+
+    Output findings in threat model format.
+
+# CLI commands
+cli_commands:
+  prompt_list:
+    command: "aiwg mcp prompts list"
+    description: "List available prompts"
+    options:
+      - name: "--category"
+        description: "Filter by category"
+
+  prompt_get:
+    command: "aiwg mcp prompts get <name>"
+    description: "Get prompt details"
+
+  prompt_run:
+    command: "aiwg mcp prompts run <name> [args...]"
+    description: "Execute prompt"
+
+  token_create:
+    command: "aiwg mcp token create"
+    description: "Create access token"
+    options:
+      - name: "--scopes"
+        description: "Comma-separated scopes"
+      - name: "--expires"
+        description: "Expiration time"
+
+  token_revoke:
+    command: "aiwg mcp token revoke <token-id>"
+    description: "Revoke access token"
+
+  token_list:
+    command: "aiwg mcp token list"
+    description: "List active tokens"
+
+# Agent protocol
+agent_protocol:
+  list_prompts:
+    description: "List available prompts"
+    steps:
+      - load_prompt_catalog
+      - filter_by_category
+      - format_prompt_list
+      - return_response
+
+  execute_prompt:
+    description: "Execute a prompt"
+    steps:
+      - validate_prompt_exists
+      - validate_arguments
+      - load_prompt_template
+      - substitute_arguments
+      - execute_prompt
+      - return_result
+
+  authenticate:
+    description: "OAuth authentication flow"
+    steps:
+      - check_if_auth_required
+      - if_auth_required:
+          - initiate_oauth_flow
+          - get_authorization_code
+          - exchange_for_token
+          - store_tokens_securely
+      - validate_token_scopes
+      - proceed_with_request
+
+  discover_server:
+    description: "Discover MCP server"
+    steps:
+      - request_well_known
+      - parse_discovery_document
+      - check_capabilities
+      - select_endpoint
+      - initiate_connection
+
+# Storage
+storage:
+  prompts_path: ".aiwg/mcp/prompts/"
+  tokens_path: "~/.config/aiwg/tokens/"
+  discovery_path: ".well-known/mcp.json"
+
+# Research targets (from REF-066)
+research_targets:
+  prompts: "Expose all framework prompts as MCP primitives"
+  discovery: "Enable zero-config server discovery"
+  authentication: "Secure multi-tenant access with OAuth 2.1"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-066-mcp.md"
+  implementation:
+    - "#196"
+    - "#197"
+    - "#198"
+  related:
+    - "@src/mcp-server/index.ts"
+    - "@agentic/code/frameworks/sdlc-complete/prompts/"
+    - "@agentic/code/addons/voice-framework/prompts/"

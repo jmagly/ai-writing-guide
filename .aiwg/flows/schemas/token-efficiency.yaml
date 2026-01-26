@@ -1,0 +1,428 @@
+# Token Efficiency Tracking Schema
+# Based on REF-013 MetaGPT Research
+# Issue: #173
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/token-efficiency/v1"
+title: "Token Efficiency Tracking Schema"
+description: |
+  Schema for tracking token efficiency metrics (tokens per line of output)
+  with benchmark comparison to MetaGPT's 124 tokens/line target per REF-013.
+
+type: object
+required:
+  - version
+  - benchmark
+  - metrics_config
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  benchmark:
+    $ref: "#/$defs/BenchmarkConfig"
+
+  metrics_config:
+    $ref: "#/$defs/MetricsConfig"
+
+  thresholds:
+    $ref: "#/$defs/ThresholdConfig"
+
+$defs:
+  BenchmarkConfig:
+    type: object
+    description: "Benchmark targets from research"
+    properties:
+      tokens_per_line:
+        type: number
+        default: 124
+        description: "MetaGPT achieved 124 tokens/line on HumanEval"
+
+      baseline_comparison:
+        type: number
+        default: 200
+        description: "Typical LLM baseline (~200 tokens/line)"
+
+      improvement_target:
+        type: number
+        default: 0.38
+        description: "38% improvement over baseline"
+
+  MetricsConfig:
+    type: object
+    description: "Metrics collection configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      tokenizer:
+        type: string
+        enum: [tiktoken, anthropic, auto]
+        default: auto
+        description: "Tokenizer to use for counting"
+
+      count_input_tokens:
+        type: boolean
+        default: true
+        description: "Track input (prompt) tokens"
+
+      count_output_tokens:
+        type: boolean
+        default: true
+        description: "Track output tokens"
+
+      line_counting:
+        type: object
+        properties:
+          exclude_blank_lines:
+            type: boolean
+            default: true
+          exclude_comments:
+            type: boolean
+            default: false
+          use_logical_lines:
+            type: boolean
+            default: false
+            description: "Count logical vs physical lines for code"
+
+      storage:
+        type: object
+        properties:
+          path:
+            type: string
+            default: ".aiwg/metrics/tokens/"
+          daily_aggregation:
+            type: boolean
+            default: true
+          retention_days:
+            type: integer
+            default: 90
+
+  ThresholdConfig:
+    type: object
+    description: "Efficiency thresholds and actions"
+    properties:
+      levels:
+        type: object
+        properties:
+          green:
+            type: object
+            properties:
+              max_tokens_per_line:
+                type: number
+                default: 124
+              status:
+                type: string
+                default: "Meeting benchmark"
+              action:
+                type: string
+                default: "none"
+
+          yellow:
+            type: object
+            properties:
+              max_tokens_per_line:
+                type: number
+                default: 150
+              status:
+                type: string
+                default: "Review for optimization"
+              action:
+                type: string
+                default: "flag_for_review"
+
+          red:
+            type: object
+            properties:
+              max_tokens_per_line:
+                type: number
+                default: 999999
+              status:
+                type: string
+                default: "Requires optimization"
+              action:
+                type: string
+                default: "generate_recommendations"
+
+# Artifact metrics schema
+artifact_metrics:
+  type: object
+  required:
+    - artifact_path
+    - agent
+    - timestamp
+    - tokens
+  properties:
+    artifact_path:
+      type: string
+    artifact_type:
+      type: string
+    agent:
+      type: string
+    timestamp:
+      type: string
+      format: date-time
+    tokens:
+      type: object
+      properties:
+        input_tokens:
+          type: integer
+          description: "Tokens in prompts/context"
+        output_tokens:
+          type: integer
+          description: "Tokens in generated output"
+        total_tokens:
+          type: integer
+        lines_generated:
+          type: integer
+        tokens_per_line:
+          type: number
+        cost_usd:
+          type: number
+          description: "Estimated cost if pricing available"
+    quality_score:
+      type: number
+      description: "Quality score for efficiency/quality trade-off"
+    threshold_status:
+      type: string
+      enum: [green, yellow, red]
+
+# Agent efficiency summary schema
+agent_efficiency:
+  type: object
+  required:
+    - agent_name
+    - period
+  properties:
+    agent_name:
+      type: string
+    period:
+      type: string
+      description: "e.g., '2026-01', 'last-7d'"
+    metrics:
+      type: object
+      properties:
+        total_artifacts:
+          type: integer
+        total_tokens:
+          type: integer
+        total_lines:
+          type: integer
+        avg_tokens_per_line:
+          type: number
+        variance:
+          type: number
+        min_tokens_per_line:
+          type: number
+        max_tokens_per_line:
+          type: number
+    benchmark_comparison:
+      type: object
+      properties:
+        vs_benchmark:
+          type: number
+          description: "Percentage vs 124 tokens/line"
+        vs_baseline:
+          type: number
+          description: "Percentage vs 200 tokens/line"
+    trend:
+      type: string
+      enum: [improving, stable, degrading]
+    threshold_status:
+      type: string
+      enum: [green, yellow, red]
+
+# Efficiency report schema
+efficiency_report:
+  type: object
+  required:
+    - period
+    - benchmark
+    - agents
+  properties:
+    period:
+      type: string
+    benchmark:
+      type: number
+      default: 124
+    summary:
+      type: object
+      properties:
+        total_artifacts:
+          type: integer
+        total_tokens:
+          type: integer
+        total_lines:
+          type: integer
+        overall_tokens_per_line:
+          type: number
+        total_cost_usd:
+          type: number
+    agents:
+      type: array
+      items:
+        $ref: "#/$defs/AgentEfficiencySummary"
+    recommendations:
+      type: array
+      items:
+        type: object
+        properties:
+          agent:
+            type: string
+          issue:
+            type: string
+          recommendation:
+            type: string
+          priority:
+            type: string
+            enum: [low, medium, high]
+
+  AgentEfficiencySummary:
+    type: object
+    properties:
+      name:
+        type: string
+      avg_tokens_per_line:
+        type: number
+      vs_benchmark:
+        type: string
+        description: "e.g., '-4.8%' or '+25.8%'"
+      status:
+        type: string
+        enum: [green, yellow, red]
+      trend:
+        type: string
+        enum: [improving, stable, degrading]
+
+# Report template
+report_template:
+  markdown: |
+    # Token Efficiency Report
+
+    **Period:** {period}
+    **Benchmark:** {benchmark} tokens/line (MetaGPT)
+    **Total Artifacts:** {total_artifacts}
+
+    ## Summary
+
+    | Metric | Value |
+    |--------|-------|
+    | Total Tokens | {total_tokens} |
+    | Total Lines | {total_lines} |
+    | Overall Efficiency | {overall_tokens_per_line} tokens/line |
+    | Total Cost | ${total_cost_usd} |
+
+    ## Agent Efficiency
+
+    | Agent | Tokens/Line | vs Benchmark | Status |
+    |-------|-------------|--------------|--------|
+    {agent_rows}
+
+    ## Threshold Legend
+
+    - ✓ Green: ≤ 124 tokens/line (meeting benchmark)
+    - ⚠ Yellow: 125-150 tokens/line (review for optimization)
+    - ✗ Red: > 150 tokens/line (requires optimization)
+
+    ## Recommendations
+
+    {recommendations}
+
+    ## Optimization Guidelines
+
+    ### For Red Agents
+    1. Review prompt verbosity
+    2. Ensure structured schemas in use
+    3. Check for unnecessary explanations
+    4. Verify output format requirements
+
+    ### For Yellow Agents
+    1. Monitor for degradation
+    2. Consider prompt refinement
+    3. Compare with green agents
+
+# Agent protocol
+agent_protocol:
+  collect_metrics:
+    description: "Collect token metrics after artifact generation"
+    triggers:
+      - artifact_saved
+    steps:
+      - load_artifact_content
+      - count_tokens
+      - count_lines
+      - calculate_efficiency
+      - determine_threshold_status
+      - persist_metrics
+      - if_red_status:
+          - generate_alert
+          - add_to_recommendations
+
+  generate_report:
+    description: "Generate efficiency report"
+    triggers:
+      - manual_request
+      - daily_scheduled
+    steps:
+      - load_metrics_for_period
+      - aggregate_by_agent
+      - calculate_trends
+      - compare_to_benchmark
+      - generate_recommendations
+      - output_report
+
+  optimize_agent:
+    description: "Suggest optimizations for inefficient agents"
+    triggers:
+      - red_threshold_detected
+    steps:
+      - analyze_output_patterns
+      - identify_verbosity_sources
+      - compare_with_efficient_agents
+      - generate_specific_recommendations
+
+# CLI integration
+cli_commands:
+  metrics_tokens:
+    command: "aiwg metrics tokens"
+    options:
+      - name: "--agent"
+        type: string
+        help: "Filter by agent name"
+      - name: "--since"
+        type: string
+        help: "Time range (e.g., '7d', '30d')"
+      - name: "--compare-benchmark"
+        type: boolean
+        help: "Show benchmark comparison"
+      - name: "--export"
+        type: string
+        help: "Export to CSV/JSON"
+
+# Storage
+storage:
+  metrics_path: ".aiwg/metrics/tokens/"
+  daily_path: ".aiwg/metrics/tokens/{year}-{month}/"
+  reports_path: ".aiwg/reports/efficiency/"
+  summary_file: ".aiwg/metrics/tokens/summary.json"
+
+# Research targets (from REF-013)
+research_targets:
+  metagpt_benchmark: "124 tokens/line"
+  baseline_llm: "~200 tokens/line"
+  improvement: "38% more efficient than baseline"
+  correlation: "Lower tokens/line correlates with higher quality"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+  implementation:
+    - "#173"
+  related:
+    - "@.aiwg/flows/schemas/sdlc-output-schemas.yaml"
+    - "@.aiwg/ralph/schemas/iteration-analytics.yaml"
+    - "@docs/cli-reference.md#metrics"

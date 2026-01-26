@@ -1,0 +1,541 @@
+# FAIR Extensions Schema
+# Based on REF-056 FAIR Data Principles
+# Issues: #237 (Qualified Cross-References), #238 (License Tracking)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/fair-extensions/v1"
+title: "FAIR Extensions Schema"
+description: |
+  Extensions to @-mention system for qualified cross-references (FAIR I3) and
+  structured license tracking (FAIR R1.1) per REF-056 FAIR Data Principles.
+
+type: object
+required:
+  - version
+  - qualified_references
+  - license_tracking
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  qualified_references:
+    $ref: "#/$defs/QualifiedReferences"
+
+  license_tracking:
+    $ref: "#/$defs/LicenseTracking"
+
+$defs:
+  QualifiedReferences:
+    type: object
+    description: "Qualified cross-references per FAIR I3"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      fair_principle:
+        type: string
+        default: "FAIR I3 - (Meta)data include qualified references to other (meta)data"
+
+      syntax:
+        type: object
+        properties:
+          current:
+            type: string
+            default: "@path/to/file.md"
+            description: "Plain @-mention syntax"
+
+          qualified:
+            type: string
+            default: "@qualifier @path/to/file.md"
+            description: "Qualified @-mention syntax"
+
+          examples:
+            type: array
+            items: { type: string }
+            default:
+              - "@implements @.aiwg/requirements/UC-001.md"
+              - "@extends @src/auth/base-auth.ts"
+              - "@contradicts @docs/archived/old-approach.md"
+              - "@cites @docs/research/REF-056.md"
+              - "@supersedes @.aiwg/architecture/v1/sad.md"
+              - "@depends @src/utils/validator.ts"
+              - "@tests @test/unit/auth/login.test.ts"
+              - "@source @src/auth/login.ts"
+              - "@architecture @.aiwg/architecture/sad.md"
+              - "@nfr @.aiwg/requirements/nfr-modules/security.md"
+
+      qualifiers:
+        type: object
+        description: "Supported relationship qualifiers"
+        properties:
+          implements:
+            type: object
+            properties:
+              meaning: { type: string, default: "Code implements this requirement" }
+              use_case: { type: string, default: "Source → Requirement" }
+              inverse: { type: string, default: "implemented_by" }
+
+          extends:
+            type: object
+            properties:
+              meaning: { type: string, default: "Builds upon this artifact" }
+              use_case: { type: string, default: "Derived → Base" }
+              inverse: { type: string, default: "extended_by" }
+
+          contradicts:
+            type: object
+            properties:
+              meaning: { type: string, default: "Conflicts with this approach" }
+              use_case: { type: string, default: "New → Old" }
+              inverse: { type: string, default: "contradicted_by" }
+
+          cites:
+            type: object
+            properties:
+              meaning: { type: string, default: "References this research" }
+              use_case: { type: string, default: "Doc → Paper" }
+              inverse: { type: string, default: "cited_by" }
+
+          supersedes:
+            type: object
+            properties:
+              meaning: { type: string, default: "Replaces this artifact" }
+              use_case: { type: string, default: "New → Deprecated" }
+              inverse: { type: string, default: "superseded_by" }
+
+          depends:
+            type: object
+            properties:
+              meaning: { type: string, default: "Requires this dependency" }
+              use_case: { type: string, default: "Code → Dependency" }
+              inverse: { type: string, default: "depended_on_by" }
+
+          tests:
+            type: object
+            properties:
+              meaning: { type: string, default: "Test coverage for" }
+              use_case: { type: string, default: "Test → Source" }
+              inverse: { type: string, default: "tested_by" }
+
+          source:
+            type: object
+            properties:
+              meaning: { type: string, default: "Source code tested by" }
+              use_case: { type: string, default: "Source → Test" }
+              inverse: { type: string, default: "tests" }
+
+          architecture:
+            type: object
+            properties:
+              meaning: { type: string, default: "Architectural context" }
+              use_case: { type: string, default: "Code → Architecture" }
+              inverse: { type: string, default: "architecturally_defines" }
+
+          nfr:
+            type: object
+            properties:
+              meaning: { type: string, default: "Non-functional requirement" }
+              use_case: { type: string, default: "Code → NFR" }
+              inverse: { type: string, default: "nfr_implemented_by" }
+
+          documents:
+            type: object
+            properties:
+              meaning: { type: string, default: "Documentation for" }
+              use_case: { type: string, default: "Doc → Code" }
+              inverse: { type: string, default: "documented_by" }
+
+          derives_from:
+            type: object
+            properties:
+              meaning: { type: string, default: "Derived from this source" }
+              use_case: { type: string, default: "Output → Input" }
+              inverse: { type: string, default: "derived_to" }
+
+      parser:
+        type: object
+        properties:
+          pattern:
+            type: string
+            default: "@(\\w+)?\\s*@([^\\s]+)"
+            description: "Regex to match qualified mentions"
+
+          interface:
+            type: string
+            default: |
+              interface QualifiedMention {
+                qualifier?: string;  // "implements", "extends", etc.
+                target: string;      // Path to referenced artifact
+                line: number;
+                column: number;
+              }
+
+      validation:
+        type: object
+        properties:
+          check_qualifier_vocabulary:
+            type: boolean
+            default: true
+            description: "Ensure qualifier is from allowed set"
+
+          check_target_exists:
+            type: boolean
+            default: true
+            description: "Verify target path exists"
+
+          check_relationship_semantics:
+            type: boolean
+            default: false
+            description: "Validate relationship logic (e.g., supersedes target is older)"
+
+      migration:
+        type: object
+        properties:
+          preserve_existing:
+            type: boolean
+            default: true
+            description: "Keep plain @-mentions valid"
+
+          auto_qualify:
+            type: boolean
+            default: false
+            description: "Auto-detect and add qualifiers"
+
+  LicenseTracking:
+    type: object
+    description: "Structured license tracking per FAIR R1.1"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      fair_principle:
+        type: string
+        default: "FAIR R1.1 - (Meta)data are released with a clear and accessible data usage license"
+
+      license_schema:
+        type: object
+        properties:
+          identifier:
+            type: object
+            properties:
+              type: { type: string, default: "string" }
+              description: { type: string, default: "SPDX license identifier" }
+              examples:
+                type: array
+                default: ["Apache-2.0", "MIT", "GPL-3.0", "BSD-3-Clause"]
+              reference: { type: string, default: "https://spdx.org/licenses/" }
+
+          url:
+            type: object
+            properties:
+              type: { type: string, default: "string" }
+              format: { type: string, default: "uri" }
+              description: { type: string, default: "Link to license text" }
+
+          permissions:
+            type: object
+            properties:
+              attribution:
+                type: object
+                properties:
+                  type: { type: string, default: "boolean" }
+                  description: { type: string, default: "Attribution required" }
+
+              commercial_use:
+                type: object
+                properties:
+                  type: { type: string, default: "boolean" }
+                  description: { type: string, default: "Commercial use allowed" }
+
+              modifications:
+                type: object
+                properties:
+                  type: { type: string, default: "boolean" }
+                  description: { type: string, default: "Modifications allowed" }
+
+              distribution:
+                type: object
+                properties:
+                  type: { type: string, default: "boolean" }
+                  description: { type: string, default: "Distribution allowed" }
+
+              patent_grant:
+                type: object
+                properties:
+                  type: { type: string, default: "boolean" }
+                  description: { type: string, default: "Patent rights granted" }
+
+              private_use:
+                type: object
+                properties:
+                  type: { type: string, default: "boolean" }
+                  description: { type: string, default: "Private use allowed" }
+
+          conditions:
+            type: object
+            properties:
+              copyleft:
+                type: object
+                properties:
+                  type: { type: string, default: "string" }
+                  enum: { type: array, default: ["none", "weak", "strong"] }
+
+              state_changes:
+                type: object
+                properties:
+                  type: { type: string, default: "boolean" }
+                  description: { type: string, default: "Must document changes" }
+
+      extension_types:
+        type: object
+        description: "License metadata for each extension type"
+        properties:
+          agent:
+            type: string
+            default: |
+              # .claude/agents/test-engineer.md
+              ---
+              name: Test Engineer
+              version: 1.0.0
+              license:
+                identifier: Apache-2.0
+                url: https://spdx.org/licenses/Apache-2.0.html
+                attribution: true
+                commercial_use: true
+                modifications: true
+                distribution: true
+                patent_grant: true
+              ---
+
+          command:
+            type: string
+            default: |
+              // src/extensions/commands/definitions.ts
+              {
+                name: "use",
+                license: {
+                  identifier: "Apache-2.0",
+                  url: "https://spdx.org/licenses/Apache-2.0.html",
+                  attribution: true,
+                  commercialUse: true,
+                  modifications: true,
+                  distribution: true,
+                  patentGrant: true,
+                },
+              }
+
+          framework:
+            type: string
+            default: |
+              # agentic/code/frameworks/sdlc-complete/manifest.json
+              {
+                "name": "sdlc-complete",
+                "version": "1.0.0",
+                "license": {
+                  "identifier": "Apache-2.0",
+                  "url": "https://spdx.org/licenses/Apache-2.0.html"
+                }
+              }
+
+      defaults:
+        type: object
+        properties:
+          aiwg_core:
+            type: string
+            default: "Apache-2.0"
+
+          third_party:
+            type: string
+            default: "See NOTICE file"
+
+      common_licenses:
+        type: object
+        properties:
+          apache_2:
+            type: object
+            properties:
+              identifier: { type: string, default: "Apache-2.0" }
+              attribution: { type: boolean, default: true }
+              commercial_use: { type: boolean, default: true }
+              modifications: { type: boolean, default: true }
+              distribution: { type: boolean, default: true }
+              patent_grant: { type: boolean, default: true }
+              copyleft: { type: string, default: "none" }
+
+          mit:
+            type: object
+            properties:
+              identifier: { type: string, default: "MIT" }
+              attribution: { type: boolean, default: true }
+              commercial_use: { type: boolean, default: true }
+              modifications: { type: boolean, default: true }
+              distribution: { type: boolean, default: true }
+              patent_grant: { type: boolean, default: false }
+              copyleft: { type: string, default: "none" }
+
+          gpl_3:
+            type: object
+            properties:
+              identifier: { type: string, default: "GPL-3.0" }
+              attribution: { type: boolean, default: true }
+              commercial_use: { type: boolean, default: true }
+              modifications: { type: boolean, default: true }
+              distribution: { type: boolean, default: true }
+              patent_grant: { type: boolean, default: true }
+              copyleft: { type: string, default: "strong" }
+
+# CLI commands
+cli_commands:
+  mentions_validate:
+    command: "aiwg mentions validate [path]"
+    description: "Validate @-mentions including qualifiers"
+    options:
+      - name: "--strict"
+        description: "Require qualifiers on all mentions"
+
+  mentions_graph:
+    command: "aiwg mentions graph [path]"
+    description: "Generate relationship graph"
+    options:
+      - name: "--format"
+        description: "mermaid, dot, json"
+
+  license_list:
+    command: "aiwg license list"
+    description: "List all licenses in use"
+
+  license_audit:
+    command: "aiwg license audit"
+    description: "Check for missing/invalid licenses"
+
+  license_report:
+    command: "aiwg license report"
+    description: "Generate NOTICE file for distribution"
+
+# Agent protocol
+agent_protocol:
+  parse_qualified_mentions:
+    description: "Parse qualified @-mentions from content"
+    steps:
+      - read_file_content
+      - apply_qualified_pattern
+      - for_each_match:
+          - extract_qualifier
+          - extract_target_path
+          - record_line_column
+      - return_qualified_mentions
+
+  validate_mentions:
+    description: "Validate all mentions in file"
+    steps:
+      - parse_qualified_mentions
+      - for_each_mention:
+          - if_has_qualifier:
+              - check_qualifier_vocabulary
+          - check_target_exists
+          - if_semantic_check_enabled:
+              - validate_relationship_semantics
+      - return_validation_result
+
+  audit_licenses:
+    description: "Audit licenses across all extensions"
+    steps:
+      - discover_all_extensions
+      - for_each_extension:
+          - extract_license_metadata
+          - if_missing:
+              - record_missing_license
+          - if_present:
+              - validate_spdx_identifier
+              - check_compatibility
+      - generate_audit_report
+
+  generate_notice:
+    description: "Generate NOTICE file"
+    steps:
+      - collect_all_licenses
+      - group_by_license_type
+      - format_notice_header
+      - for_each_license:
+          - list_artifacts_using_license
+          - include_license_text_if_required
+      - write_notice_file
+
+# Storage
+storage:
+  mention_index: ".aiwg/mentions/index.json"
+  relationship_graph: ".aiwg/mentions/graph.json"
+  license_registry: ".aiwg/licenses/registry.json"
+  notice_file: "NOTICE"
+
+# Research targets (from REF-056 FAIR)
+research_targets:
+  fair_i3: "Qualified references with relationship types"
+  fair_r1_1: "Clear and accessible license metadata"
+
+# Example qualified references
+example_qualified_references: |
+  ## References
+
+  - @implements @.aiwg/requirements/UC-001-user-authentication.md
+  - @extends @src/auth/base-authenticator.ts
+  - @tests @test/unit/auth/login.test.ts
+  - @architecture @.aiwg/architecture/software-architecture-doc.md#section-5
+  - @nfr @.aiwg/requirements/nfr-modules/security.md
+  - @cites @.aiwg/research/corpus/REF-056-fair-principles.md
+
+# Example license metadata
+example_license_metadata: |
+  ---
+  name: Voice Consistency Validator
+  version: 1.2.0
+  license:
+    identifier: Apache-2.0
+    url: https://spdx.org/licenses/Apache-2.0.html
+    attribution: true
+    commercial_use: true
+    modifications: true
+    distribution: true
+    patent_grant: true
+  ---
+
+# Example NOTICE file
+example_notice_file: |
+  NOTICE
+  ======
+
+  AI Writing Guide (AIWG)
+  Copyright 2026 jmagly
+
+  This product includes software developed under the Apache License 2.0.
+
+  Third-Party Components
+  ----------------------
+
+  The following third-party components are included:
+
+  1. SDLC Complete Framework
+     License: Apache-2.0
+
+  2. Voice Framework Addon
+     License: Apache-2.0
+
+  See individual component LICENSE files for full license text.
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-056-fair-principles.md"
+  implementation:
+    - "#237"
+    - "#238"
+  related:
+    - "@.claude/rules/mention-wiring.md"
+    - "@src/utils/mention-parser.ts"
+    - "@LICENSE"
+    - "@src/extensions/types.ts"

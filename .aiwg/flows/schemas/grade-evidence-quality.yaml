@@ -1,0 +1,724 @@
+# GRADE Evidence Quality Framework Schema
+# Based on REF-060 GRADE (Grading of Recommendations Assessment, Development and Evaluation)
+# Issues: #226 (Baseline), #227 (Downgrades), #228 (Upgrades), #229 (Rationale), #230 (Citation Guidance)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/grade-evidence-quality/v1"
+title: "GRADE Evidence Quality Framework Schema"
+description: |
+  Comprehensive evidence quality assessment framework implementing GRADE methodology
+  for source type classification, downgrade/upgrade factors, quality rationale
+  documentation, and quality-based citation guidance per REF-060.
+
+type: object
+required:
+  - version
+  - baseline_classification
+  - downgrade_factors
+  - upgrade_factors
+  - quality_rationale
+  - citation_guidance
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  baseline_classification:
+    $ref: "#/$defs/BaselineClassification"
+
+  downgrade_factors:
+    $ref: "#/$defs/DowngradeFactors"
+
+  upgrade_factors:
+    $ref: "#/$defs/UpgradeFactors"
+
+  quality_rationale:
+    $ref: "#/$defs/QualityRationale"
+
+  citation_guidance:
+    $ref: "#/$defs/CitationGuidance"
+
+$defs:
+  BaselineClassification:
+    type: object
+    description: "Source type baseline classification per GRADE"
+    properties:
+      source_types:
+        type: object
+        properties:
+          peer_reviewed_journal:
+            type: object
+            properties:
+              baseline: { type: string, default: "high" }
+              description: { type: string, default: "Published in peer-reviewed venue" }
+          conference_proceedings:
+            type: object
+            properties:
+              baseline: { type: string, default: "moderate" }
+              description: { type: string, default: "Peer-reviewed conference paper" }
+          preprint:
+            type: object
+            properties:
+              baseline: { type: string, default: "moderate" }
+              description: { type: string, default: "arXiv, bioRxiv, etc. without peer review" }
+          industry_blog:
+            type: object
+            properties:
+              baseline: { type: string, default: "low" }
+              description: { type: string, default: "Company blog or industry publication" }
+          thesis:
+            type: object
+            properties:
+              baseline: { type: string, default: "moderate" }
+              description: { type: string, default: "PhD or Masters thesis" }
+          book:
+            type: object
+            properties:
+              baseline: { type: string, default: "moderate" }
+              description: { type: string, default: "Academic textbook or monograph" }
+          technical_report:
+            type: object
+            properties:
+              baseline: { type: string, default: "low" }
+              description: { type: string, default: "White paper or technical report" }
+
+      evidence_levels:
+        type: object
+        properties:
+          empirical_study:
+            type: object
+            properties:
+              modifier: { type: integer, default: 0 }
+              description: { type: string, default: "Controlled experiments with data" }
+          systematic_review:
+            type: object
+            properties:
+              modifier: { type: integer, default: 1 }
+              description: { type: string, default: "Systematic review of multiple studies" }
+          meta_analysis:
+            type: object
+            properties:
+              modifier: { type: integer, default: 1 }
+              description: { type: string, default: "Statistical synthesis of studies" }
+          case_study:
+            type: object
+            properties:
+              modifier: { type: integer, default: -1 }
+              description: { type: string, default: "Single case or observational" }
+          opinion_piece:
+            type: object
+            properties:
+              modifier: { type: integer, default: -2 }
+              description: { type: string, default: "Expert opinion without data" }
+          tutorial:
+            type: object
+            properties:
+              modifier: { type: integer, default: -1 }
+              description: { type: string, default: "Educational content" }
+
+      classification_matrix:
+        type: array
+        items:
+          type: object
+          properties:
+            source_type: { type: string }
+            evidence_level: { type: string }
+            baseline_quality: { type: string }
+        default:
+          - { source_type: "peer_reviewed_journal", evidence_level: "empirical_study", baseline_quality: "high" }
+          - { source_type: "peer_reviewed_journal", evidence_level: "systematic_review", baseline_quality: "high" }
+          - { source_type: "peer_reviewed_journal", evidence_level: "meta_analysis", baseline_quality: "high" }
+          - { source_type: "conference_proceedings", evidence_level: "empirical_study", baseline_quality: "moderate" }
+          - { source_type: "preprint", evidence_level: "empirical_study", baseline_quality: "moderate" }
+          - { source_type: "industry_blog", evidence_level: "case_study", baseline_quality: "low" }
+          - { source_type: "opinion_piece", evidence_level: "opinion_piece", baseline_quality: "very_low" }
+
+  DowngradeFactors:
+    type: object
+    description: "GRADE downgrade factors that reduce quality"
+    properties:
+      factors:
+        type: object
+        properties:
+          risk_of_bias:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Study design limitations, conflicts of interest"
+              serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Undisclosed industry funding"
+                  - "Proprietary methods not reproducible"
+                  - "Selection bias in sample"
+              very_serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Fabricated data suspected"
+                  - "Peer review manipulation"
+                  - "Retracted paper"
+
+          inconsistency:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Conflicting results across studies"
+              serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Some studies show opposite effect"
+                  - "Heterogeneous effect sizes (I²>50%)"
+              very_serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Majority of studies conflict"
+                  - "Cannot explain heterogeneity"
+
+          indirectness:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Evidence from different population/intervention"
+              serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Different model version (GPT-3 vs GPT-4)"
+                  - "Different task domain"
+                  - "Different user population"
+              very_serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Completely different technology"
+                  - "Non-analogous use case"
+
+          imprecision:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Wide confidence intervals, small samples"
+              serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Sample size 10-30"
+                  - "Wide confidence intervals crossing null"
+                  - "High variance in results"
+              very_serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Sample size <10"
+                  - "Single participant"
+                  - "No variance reported"
+
+          publication_bias:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Missing negative results"
+              serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Only positive results published"
+                  - "Funnel plot asymmetry"
+              very_serious_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Known suppressed negative studies"
+                  - "Selective reporting confirmed"
+
+      severity_impacts:
+        type: object
+        properties:
+          serious:
+            type: object
+            properties:
+              levels_reduced: { type: integer, default: 1 }
+              symbol: { type: string, default: "⊖" }
+          very_serious:
+            type: object
+            properties:
+              levels_reduced: { type: integer, default: 2 }
+              symbol: { type: string, default: "⊖⊖" }
+
+  UpgradeFactors:
+    type: object
+    description: "GRADE upgrade factors for observational studies"
+    properties:
+      eligibility:
+        type: string
+        default: "Only applies to observational studies starting at LOW baseline"
+
+      factors:
+        type: object
+        properties:
+          large_effect:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Large magnitude of effect"
+              serious_threshold:
+                type: string
+                default: "RR > 2 or < 0.5 (2x-5x effect)"
+              very_serious_threshold:
+                type: string
+                default: "RR > 5 or < 0.2 (>5x effect)"
+              aiwg_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "90% vs 10% baseline (9x effect)"
+                  - "Cohen's d > 2.0"
+                  - "Effect size clearly above noise"
+
+          dose_response:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Clear relationship between exposure and outcome"
+              serious_threshold:
+                type: string
+                default: "Monotonic trend across levels"
+              very_serious_threshold:
+                type: string
+                default: "Strong linear relationship (R² > 0.8)"
+              aiwg_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Quality improves with each prompt iteration"
+                  - "More context = better output"
+
+          plausible_confounding:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Confounders would reduce observed effect"
+              serious_threshold:
+                type: string
+                default: "Plausible confounders identified"
+              very_serious_threshold:
+                type: string
+                default: "Demonstrated reduction after controlling"
+              aiwg_examples:
+                type: array
+                items: { type: string }
+                default:
+                  - "Selection bias would reduce, not inflate, effect"
+                  - "Conservative measurement approach"
+
+      severity_impacts:
+        type: object
+        properties:
+          serious:
+            type: object
+            properties:
+              levels_increased: { type: integer, default: 1 }
+              symbol: { type: string, default: "⊕" }
+          very_serious:
+            type: object
+            properties:
+              levels_increased: { type: integer, default: 2 }
+              symbol: { type: string, default: "⊕⊕" }
+
+  QualityRationale:
+    type: object
+    description: "Systematic quality rationale documentation"
+    properties:
+      required_elements:
+        type: array
+        items: { type: string }
+        default:
+          - rationale
+          - evidence
+          - reviewer
+          - date
+
+      assessment_schema:
+        type: object
+        properties:
+          baseline:
+            type: object
+            properties:
+              level: { type: string, enum: ["high", "moderate", "low", "very_low"] }
+              rationale: { type: string }
+              assessed_by: { type: string }
+              assessed_date: { type: string, format: "date" }
+
+          downgrades_applied:
+            type: array
+            items:
+              type: object
+              properties:
+                factor: { type: string }
+                severity: { type: string, enum: ["serious", "very_serious"] }
+                rationale: { type: string }
+                evidence: { type: string }
+                reviewer: { type: string }
+
+          upgrades_applied:
+            type: array
+            items:
+              type: object
+              properties:
+                factor: { type: string }
+                magnitude: { type: string, enum: ["serious", "very_serious"] }
+                rationale: { type: string }
+                evidence: { type: string }
+                reviewer: { type: string }
+
+          final_quality:
+            type: object
+            properties:
+              level: { type: string, enum: ["high", "moderate", "low", "very_low"] }
+              calculation: { type: string }
+              confidence: { type: string }
+              notes: { type: string }
+
+      decision_tree:
+        type: array
+        items: { type: string }
+        default:
+          - "1. Determine baseline quality (source type + evidence level)"
+          - "2. Assess each downgrade factor (5 factors)"
+          - "3. Assess each upgrade factor (3 factors, only if observational)"
+          - "4. Calculate final quality (baseline ± adjustments)"
+          - "5. Document calculation and confidence"
+
+  CitationGuidance:
+    type: object
+    description: "Quality-based citation language guidance"
+    properties:
+      quality_language_mapping:
+        type: object
+        properties:
+          high:
+            type: object
+            properties:
+              certainty: { type: string, default: "High certainty" }
+              verbs:
+                type: array
+                items: { type: string }
+                default:
+                  - "shows"
+                  - "demonstrates"
+                  - "establishes"
+                  - "confirms"
+              phrases:
+                type: array
+                items: { type: string }
+                default:
+                  - "Research shows that..."
+                  - "Studies demonstrate..."
+                  - "Evidence establishes..."
+                  - "X improves Y"
+              example:
+                type: string
+                default: "Voice consistency shows significant quality improvements (Cohen d=2.1, p<0.001) [REF-043]."
+
+          moderate:
+            type: object
+            properties:
+              certainty: { type: string, default: "Moderate certainty" }
+              verbs:
+                type: array
+                items: { type: string }
+                default:
+                  - "suggests"
+                  - "indicates"
+                  - "supports"
+              phrases:
+                type: array
+                items: { type: string }
+                default:
+                  - "Research suggests that..."
+                  - "Studies indicate..."
+                  - "Evidence supports..."
+                  - "X appears to improve Y"
+              example:
+                type: string
+                default: "Voice profiles suggest improved consistency, though effect sizes vary [REF-018]."
+
+          low:
+            type: object
+            properties:
+              certainty: { type: string, default: "Low certainty" }
+              verbs:
+                type: array
+                items: { type: string }
+                default:
+                  - "may indicate"
+                  - "preliminary"
+                  - "limited"
+              phrases:
+                type: array
+                items: { type: string }
+                default:
+                  - "Preliminary evidence indicates..."
+                  - "Early studies suggest..."
+                  - "X may improve Y"
+                  - "Limited evidence shows..."
+              example:
+                type: string
+                default: "Prompt iteration may improve output quality, though sample sizes remain small [REF-009]."
+
+          very_low:
+            type: object
+            properties:
+              certainty: { type: string, default: "Very low certainty" }
+              verbs:
+                type: array
+                items: { type: string }
+                default:
+                  - "insufficient"
+                  - "unclear"
+                  - "anecdotal"
+              phrases:
+                type: array
+                items: { type: string }
+                default:
+                  - "Evidence is insufficient to..."
+                  - "Unclear whether..."
+                  - "Anecdotal reports suggest..."
+              example:
+                type: string
+                default: "While some practitioners report benefits, evidence remains insufficient [REF-014]."
+              recommendation:
+                type: string
+                default: "Consider not citing at all"
+
+      validation_rules:
+        type: array
+        items:
+          type: object
+          properties:
+            condition: { type: string }
+            severity: { type: string }
+            message: { type: string }
+        default:
+          - condition: "HIGH evidence + weak language"
+            severity: "info"
+            message: "Consider strengthening claim to match evidence quality"
+          - condition: "LOW evidence + strong language"
+            severity: "critical"
+            message: "Over-confident claim - weaken language or remove citation"
+          - condition: "VERY_LOW evidence + any definitive claim"
+            severity: "critical"
+            message: "Evidence insufficient for this claim"
+
+# Paper metadata schema with GRADE fields
+paper_metadata:
+  type: object
+  required:
+    - source_type
+    - evidence_level
+    - baseline_quality
+  properties:
+    source_type:
+      type: string
+      enum: [peer_reviewed_journal, conference_proceedings, preprint, industry_blog, thesis, book, technical_report]
+    evidence_level:
+      type: string
+      enum: [empirical_study, systematic_review, meta_analysis, case_study, opinion_piece, tutorial]
+    baseline_quality:
+      type: string
+      enum: [high, moderate, low, very_low]
+    quality_assessment:
+      type: object
+      properties:
+        baseline:
+          type: object
+          properties:
+            level: { type: string }
+            rationale: { type: string }
+            assessed_by: { type: string }
+            assessed_date: { type: string }
+        downgrades:
+          type: array
+          items:
+            type: object
+            properties:
+              factor: { type: string }
+              severity: { type: string }
+              rationale: { type: string }
+              evidence: { type: string }
+        upgrades:
+          type: array
+          items:
+            type: object
+            properties:
+              factor: { type: string }
+              magnitude: { type: string }
+              rationale: { type: string }
+              evidence: { type: string }
+        final:
+          type: object
+          properties:
+            level: { type: string }
+            calculation: { type: string }
+
+# CLI commands
+cli_commands:
+  quality_assess:
+    command: "aiwg research quality-assess <ref-id>"
+    description: "Assess evidence quality for a paper"
+    options:
+      - name: "--baseline"
+        description: "Set baseline quality"
+      - name: "--downgrade"
+        description: "Apply downgrade factor"
+      - name: "--upgrade"
+        description: "Apply upgrade factor"
+
+  quality_report:
+    command: "aiwg research quality-report"
+    description: "Generate quality assessment report"
+    options:
+      - name: "--summary"
+        description: "Summary statistics only"
+
+  citation_check:
+    command: "aiwg citation-check <file>"
+    description: "Check citation language against quality"
+
+# Agent protocol
+agent_protocol:
+  assess_baseline:
+    description: "Determine baseline quality from source type"
+    steps:
+      - identify_source_type
+      - identify_evidence_level
+      - lookup_baseline_quality
+      - document_rationale
+      - return_baseline_assessment
+
+  apply_downgrades:
+    description: "Assess and apply downgrade factors"
+    steps:
+      - for_each_downgrade_factor:
+          - check_if_present
+          - if_present:
+              - determine_severity
+              - document_rationale_and_evidence
+              - calculate_impact
+      - sum_downgrade_levels
+      - return_downgrade_assessment
+
+  apply_upgrades:
+    description: "Assess and apply upgrade factors (observational only)"
+    steps:
+      - check_upgrade_eligibility
+      - if_eligible:
+          - for_each_upgrade_factor:
+              - check_if_present
+              - if_present:
+                  - determine_magnitude
+                  - document_rationale_and_evidence
+                  - calculate_impact
+      - sum_upgrade_levels
+      - return_upgrade_assessment
+
+  calculate_final_quality:
+    description: "Calculate final quality level"
+    steps:
+      - get_baseline_level
+      - subtract_downgrade_levels
+      - add_upgrade_levels
+      - clamp_to_valid_range
+      - document_calculation
+      - return_final_quality
+
+  validate_citation_language:
+    description: "Check citation language matches quality"
+    steps:
+      - extract_citation_quality
+      - extract_claim_language
+      - lookup_allowed_language
+      - check_alignment
+      - if_misaligned:
+          - generate_warning
+          - suggest_alternative
+      - return_validation_result
+
+# Storage
+storage:
+  quality_assessments: ".aiwg/research/quality/"
+  assessment_index: ".aiwg/research/quality/index.json"
+
+# Research targets (from REF-060 GRADE)
+research_targets:
+  baseline_classification: "GRADE-style source type baseline"
+  downgrade_tracking: "Five downgrade factors with rationale"
+  upgrade_tracking: "Three upgrade factors for observational studies"
+  rationale_documentation: "Transparent quality decision trail"
+  citation_guidance: "Quality-based hedging language"
+
+# Example quality assessment
+example_assessment: |
+  ---
+  Quality Assessment:
+    Baseline:
+      Level: high
+      Rationale: "Peer-reviewed empirical study in top-tier NLP venue"
+      Assessed By: @jmagly
+      Assessed Date: 2026-01-25
+
+    Downgrades Applied:
+      - Factor: risk-of-bias
+        Severity: serious
+        Rationale: "Industry-funded, proprietary training data"
+        Evidence: "Funding section p.2; Data description p.4"
+        Reviewer: @jmagly
+
+      - Factor: indirectness
+        Severity: serious
+        Rationale: "Study used GPT-3.5, we need GPT-4 evidence"
+        Evidence: "Model section p.4"
+        Reviewer: @jmagly
+
+    Upgrades Applied:
+      - Factor: large-effect
+        Magnitude: very-serious
+        Rationale: "90% improvement vs 10% baseline (9x effect)"
+        Evidence: "Table 3 p.15; Cohen d=2.8"
+        Reviewer: @jmagly
+
+    Final Quality:
+      Level: moderate
+      Calculation: "HIGH (baseline) - serious (bias) - serious (indirectness) + very-serious (large effect) = MODERATE"
+      Confidence: "High confidence in assessment"
+      Notes: "Effect size compensates for methodological limitations"
+  ---
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-060-grade-quality-evidence.md"
+  implementation:
+    - "#226"
+    - "#227"
+    - "#228"
+    - "#229"
+    - "#230"
+  related:
+    - "@.aiwg/research/corpus/"
+    - "@agentic/code/addons/voice-framework/docs/"
+    - "@agentic/code/agents/writing-validator.md"

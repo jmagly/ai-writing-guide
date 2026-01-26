@@ -1,0 +1,419 @@
+# Auto-Retrieval Schema
+# Based on REF-008 RAG for Knowledge-Intensive NLP Tasks
+# Issues: #248 (Automatic context retrieval), #249 (Two-stage retrieval)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/auto-retrieval/v1"
+title: "Auto-Retrieval Schema"
+description: |
+  Automatic context retrieval for agents with two-stage hybrid retrieval
+  (keyword + semantic reranking) per REF-008 RAG.
+
+type: object
+required:
+  - version
+  - artifact_index
+  - retrieval_pipeline
+  - agent_integration
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  artifact_index:
+    $ref: "#/$defs/ArtifactIndex"
+
+  retrieval_pipeline:
+    $ref: "#/$defs/RetrievalPipeline"
+
+  agent_integration:
+    $ref: "#/$defs/AgentIntegration"
+
+$defs:
+  ArtifactIndex:
+    type: object
+    description: "Semantic artifact index for retrieval"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      index_schema:
+        type: object
+        properties:
+          path: { type: string, description: "Artifact file path" }
+          embedding: { type: array, items: { type: number }, description: "Vector embedding" }
+          type:
+            type: string
+            enum: [requirement, architecture, test, code, documentation, research]
+          last_modified: { type: string, format: "date-time" }
+          metadata:
+            type: object
+            properties:
+              tags: { type: array, items: { type: string } }
+              phase: { type: string }
+              references: { type: array, items: { type: string } }
+              summary: { type: string }
+
+      indexable_paths:
+        type: array
+        items: { type: string }
+        default:
+          - ".aiwg/requirements/**/*.md"
+          - ".aiwg/architecture/**/*.md"
+          - "src/**/*.ts"
+          - "test/**/*.ts"
+          - "docs/**/*.md"
+          - ".aiwg/research/**/*.md"
+
+      embedding_config:
+        type: object
+        properties:
+          model: { type: string, default: "text-embedding-3-small" }
+          dimensions: { type: integer, default: 1536 }
+          chunk_size: { type: integer, default: 512 }
+          chunk_overlap: { type: integer, default: 50 }
+
+      storage:
+        type: object
+        properties:
+          index_path: { type: string, default: ".aiwg/retrieval/artifact-index.json" }
+          embeddings_path: { type: string, default: ".aiwg/retrieval/embeddings/" }
+
+  RetrievalPipeline:
+    type: object
+    description: "Two-stage hybrid retrieval pipeline"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      research_backing:
+        type: object
+        properties:
+          source: { type: string, default: "REF-008" }
+          finding: { type: string, default: "Hybrid retrieval (BM25 + dense embeddings) outperforms either method alone" }
+          improvement: { type: string, default: "Balances speed and semantic understanding" }
+
+      stage_1_keyword:
+        type: object
+        description: "Fast keyword search (high recall)"
+        properties:
+          method: { type: string, default: "bm25" }
+          top_k: { type: integer, default: 100 }
+          target_latency: { type: string, default: "<50ms" }
+          fields:
+            type: array
+            items: { type: string }
+            default:
+              - "title"
+              - "content"
+              - "tags"
+              - "summary"
+          bm25_params:
+            type: object
+            properties:
+              k1: { type: number, default: 1.2, description: "Term frequency saturation" }
+              b: { type: number, default: 0.75, description: "Length normalization" }
+
+      stage_2_semantic:
+        type: object
+        description: "Semantic reranking (high precision)"
+        properties:
+          method: { type: string, default: "dense-embedding" }
+          top_k: { type: integer, default: 10 }
+          target_latency: { type: string, default: "<150ms" }
+          batch_size: { type: integer, default: 32 }
+          similarity_metric: { type: string, default: "cosine" }
+
+      performance_comparison:
+        type: object
+        properties:
+          bm25_only:
+            type: object
+            properties:
+              recall_at_100: { type: string, default: "85%" }
+              precision_at_10: { type: string, default: "60%" }
+              latency: { type: string, default: "50ms" }
+          semantic_only:
+            type: object
+            properties:
+              recall_at_100: { type: string, default: "70%" }
+              precision_at_10: { type: string, default: "80%" }
+              latency: { type: string, default: "200ms" }
+          two_stage:
+            type: object
+            properties:
+              recall_at_100: { type: string, default: "85%" }
+              precision_at_10: { type: string, default: "82%" }
+              latency: { type: string, default: "150ms" }
+
+      caching:
+        type: object
+        properties:
+          candidate_cache:
+            type: object
+            properties:
+              max_size: { type: integer, default: 1000 }
+              ttl_minutes: { type: integer, default: 5 }
+          embedding_cache:
+            type: object
+            properties:
+              max_size: { type: integer, default: 5000 }
+              ttl_minutes: { type: integer, default: 30 }
+
+  AgentIntegration:
+    type: object
+    description: "Agent-specific retrieval configuration"
+    properties:
+      auto_retrieve_on_start:
+        type: boolean
+        default: true
+        description: "Automatically retrieve context when agent starts task"
+
+      agent_strategies:
+        type: object
+        description: "Agent-specific retrieval strategies"
+        properties:
+          test_engineer:
+            type: object
+            properties:
+              context_types:
+                type: array
+                items: { type: string }
+                default: [requirement, architecture, code]
+              top_k: { type: integer, default: 15 }
+              threshold: { type: number, default: 0.65 }
+              phase_filter:
+                type: array
+                items: { type: string }
+                default: [elaboration, construction]
+
+          security_auditor:
+            type: object
+            properties:
+              context_types:
+                type: array
+                items: { type: string }
+                default: [architecture, code]
+              top_k: { type: integer, default: 10 }
+              threshold: { type: number, default: 0.70 }
+              tag_filter:
+                type: array
+                items: { type: string }
+                default: [security, authentication, authorization]
+
+          api_designer:
+            type: object
+            properties:
+              context_types:
+                type: array
+                items: { type: string }
+                default: [requirement, architecture]
+              top_k: { type: integer, default: 8 }
+              threshold: { type: number, default: 0.75 }
+
+          integrator:
+            type: object
+            properties:
+              context_types:
+                type: array
+                items: { type: string }
+                default: [architecture, test, documentation]
+              top_k: { type: integer, default: 12 }
+              threshold: { type: number, default: 0.65 }
+
+          default:
+            type: object
+            properties:
+              context_types:
+                type: array
+                items: { type: string }
+                default: [requirement, architecture, code, test]
+              top_k: { type: integer, default: 10 }
+              threshold: { type: number, default: 0.70 }
+
+      context_injection:
+        type: object
+        properties:
+          format: { type: string, default: "markdown" }
+          include_metadata: { type: boolean, default: true }
+          include_references: { type: boolean, default: true }
+          max_context_tokens: { type: integer, default: 50000 }
+
+# Retrieval result schema
+retrieval_result:
+  type: object
+  properties:
+    query:
+      type: string
+    agent_type:
+      type: string
+    phase:
+      type: string
+    artifacts:
+      type: array
+      items:
+        type: object
+        properties:
+          path: { type: string }
+          type: { type: string }
+          score: { type: number }
+          content: { type: string }
+          metadata:
+            type: object
+    references:
+      type: array
+      items: { type: string }
+      description: "@-mention paths for retrieved artifacts"
+    confidence:
+      type: object
+      properties:
+        overall: { type: number }
+        per_artifact: { type: array, items: { type: number } }
+    latency_ms:
+      type: integer
+
+# CLI commands
+cli_commands:
+  index_build:
+    command: "aiwg index build"
+    description: "Build or rebuild artifact index"
+    options:
+      - name: "--watch"
+        description: "Watch for file changes and update index"
+      - name: "--force"
+        description: "Force full rebuild"
+
+  index_status:
+    command: "aiwg index status"
+    description: "Show index status and statistics"
+
+  search:
+    command: "aiwg search <query>"
+    description: "Search artifacts with two-stage retrieval"
+    options:
+      - name: "--method"
+        description: "Retrieval method (bm25, semantic, two-stage)"
+        default: "two-stage"
+      - name: "--stage1-topk"
+        description: "Stage 1 candidate pool size"
+        default: "100"
+      - name: "--stage2-topk"
+        description: "Stage 2 result count"
+        default: "10"
+      - name: "--agent"
+        description: "Use agent-specific retrieval strategy"
+
+  benchmark:
+    command: "aiwg benchmark retrieval"
+    description: "Benchmark retrieval methods"
+    options:
+      - name: "--methods"
+        description: "Methods to benchmark (comma-separated)"
+      - name: "--queries"
+        description: "File with test queries"
+
+# Agent protocol
+agent_protocol:
+  build_index:
+    description: "Build artifact index"
+    steps:
+      - discover_indexable_files
+      - for_each_file:
+          - read_file_content
+          - extract_metadata
+          - chunk_content
+          - generate_embeddings
+          - store_in_index
+      - build_bm25_index
+      - persist_indexes
+      - return_index_stats
+
+  retrieve_context:
+    description: "Retrieve context for agent task"
+    steps:
+      - parse_task_description
+      - determine_agent_strategy
+      - stage_1_keyword_search:
+          - tokenize_query
+          - compute_bm25_scores
+          - select_top_k_candidates
+      - stage_2_semantic_rerank:
+          - embed_query
+          - batch_embed_candidates
+          - compute_similarities
+          - select_top_k_results
+      - apply_filters:
+          - filter_by_type
+          - filter_by_phase
+          - filter_by_tags
+      - format_context:
+          - generate_references
+          - include_metadata
+          - truncate_to_budget
+      - return_retrieval_result
+
+  auto_inject_context:
+    description: "Auto-inject context when agent starts"
+    steps:
+      - on_agent_task_start
+      - retrieve_context
+      - inject_into_agent_prompt
+      - log_retrieval_metrics
+
+# Storage
+storage:
+  artifact_index: ".aiwg/retrieval/artifact-index.json"
+  bm25_index: ".aiwg/retrieval/bm25-index.json"
+  embeddings: ".aiwg/retrieval/embeddings/"
+  retrieval_logs: ".aiwg/logs/retrieval/"
+
+# Performance targets
+performance_targets:
+  retrieval_latency: "<150ms for 10,000 documents"
+  precision_at_10: ">80% relevant documents in top-10"
+  recall_at_10: ">70% of relevant documents found"
+  index_build_time: "<5s for 10,000 documents"
+  memory_usage: "<500MB index for 10k documents"
+
+# Success metrics
+success_metrics:
+  manual_mention_reduction: "50% reduction in manual @-mention specification"
+  task_completion_improvement: "30% improvement in agent task completion rate"
+  user_satisfaction: "80% satisfaction with auto-retrieved context"
+  latency_p95: "<200ms p95 retrieval latency"
+
+# Example retrieval output
+example_retrieval_output: |
+  $ aiwg search "user authentication" --agent test-engineer
+
+  Two-stage retrieval for: "user authentication"
+  Agent strategy: test-engineer (types: requirement, architecture, code)
+
+  Stage 1 (BM25): 100 candidates (48ms)
+  Stage 2 (Semantic): 15 results (87ms)
+
+  Results:
+  1. .aiwg/requirements/use-cases/UC-001-user-authentication.md (0.92)
+  2. src/auth/login-service.ts (0.89)
+  3. .aiwg/architecture/sad.md#authentication (0.85)
+  4. src/auth/session-manager.ts (0.82)
+  5. test/unit/auth/login.test.ts (0.81)
+  ...
+
+  Total latency: 135ms
+  References: @.aiwg/requirements/use-cases/UC-001.md, @src/auth/login-service.ts, ...
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-008-rag-for-nlp.md"
+  implementation:
+    - "#248"
+    - "#249"
+  related:
+    - "@.aiwg/flows/schemas/rag-context-management.yaml"
+    - "@docs/architecture/retrieval-system.md"

@@ -1,0 +1,353 @@
+# Agent Capability Matrix Schema
+# Based on REF-001 Production Agentic Systems
+# Issue: #141
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/agent-capability-matrix/v1"
+title: "Agent Capability Matrix Schema"
+description: |
+  Schema for defining agent capabilities, fallback chains, and
+  graceful degradation routing per REF-001.
+
+type: object
+required:
+  - version
+  - capabilities
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  capabilities:
+    type: object
+    additionalProperties:
+      $ref: "#/$defs/Capability"
+
+$defs:
+  Capability:
+    type: object
+    required:
+      - description
+      - primary_agent
+    properties:
+      description:
+        type: string
+        description: "What this capability enables"
+
+      tools_required:
+        type: array
+        items:
+          type: string
+          enum:
+            - Read
+            - Write
+            - Edit
+            - Bash
+            - Glob
+            - Grep
+            - Task
+            - WebSearch
+            - WebFetch
+        description: "Tools needed to perform this capability"
+
+      primary_agent:
+        type: string
+        description: "Primary agent for this capability"
+
+      fallbacks:
+        type: array
+        items:
+          $ref: "#/$defs/FallbackAgent"
+        description: "Ordered fallback chain"
+
+      generic_fallback:
+        type: string
+        default: "general-purpose"
+        description: "Last resort agent"
+
+  FallbackAgent:
+    type: object
+    required:
+      - agent
+      - capability_coverage
+    properties:
+      agent:
+        type: string
+        description: "Fallback agent name"
+
+      capability_coverage:
+        type: number
+        minimum: 0
+        maximum: 100
+        description: "Percentage of primary capability this agent covers"
+
+      limitations:
+        type: array
+        items:
+          type: string
+        description: "Specific limitations vs primary"
+
+      recommended_for:
+        type: array
+        items:
+          type: string
+        description: "Task types this fallback handles well"
+
+# Default capability matrix
+default_matrix:
+  requirements:
+    description: "Gathering, analyzing, and documenting requirements"
+    tools_required: [Read, Write, Grep]
+    primary_agent: "Requirements Analyst"
+    fallbacks:
+      - agent: "System Analyst"
+        capability_coverage: 85
+        limitations:
+          - "Less stakeholder focus"
+          - "More technical orientation"
+      - agent: "Product Strategist"
+        capability_coverage: 60
+        limitations:
+          - "High-level only"
+          - "No detailed specifications"
+      - agent: "general-purpose"
+        capability_coverage: 40
+
+  architecture:
+    description: "System design and architectural decisions"
+    tools_required: [Read, Write, Grep, Glob]
+    primary_agent: "Architecture Designer"
+    fallbacks:
+      - agent: "Technical Researcher"
+        capability_coverage: 70
+        limitations:
+          - "Analysis focus, less synthesis"
+      - agent: "Domain Expert"
+        capability_coverage: 50
+        limitations:
+          - "Domain-specific only"
+      - agent: "general-purpose"
+        capability_coverage: 35
+
+  testing:
+    description: "Test creation, execution, and validation"
+    tools_required: [Read, Write, Bash, Grep]
+    primary_agent: "Test Engineer"
+    fallbacks:
+      - agent: "Test Architect"
+        capability_coverage: 80
+        limitations:
+          - "Strategy focus, less implementation"
+      - agent: "Debugger"
+        capability_coverage: 60
+        limitations:
+          - "Diagnostic focus"
+      - agent: "general-purpose"
+        capability_coverage: 30
+
+  security:
+    description: "Security analysis, auditing, and compliance"
+    tools_required: [Read, Write, Grep, Bash]
+    primary_agent: "Security Auditor"
+    fallbacks:
+      - agent: "Security Architect"
+        capability_coverage: 85
+        limitations:
+          - "Design focus, less operational"
+      - agent: "Security Gatekeeper"
+        capability_coverage: 70
+        limitations:
+          - "Gate checks only"
+      - agent: "general-purpose"
+        capability_coverage: 25
+
+  code:
+    description: "Code implementation and modification"
+    tools_required: [Read, Write, Edit, Bash]
+    primary_agent: "Software Implementer"
+    fallbacks:
+      - agent: "Debugger"
+        capability_coverage: 75
+        limitations:
+          - "Fix focus, less new code"
+      - agent: "Code Reviewer"
+        capability_coverage: 50
+        limitations:
+          - "Review focus, less writing"
+      - agent: "general-purpose"
+        capability_coverage: 40
+
+  documentation:
+    description: "Creating and maintaining documentation"
+    tools_required: [Read, Write, Grep]
+    primary_agent: "Technical Writer"
+    fallbacks:
+      - agent: "Documentation Synthesizer"
+        capability_coverage: 80
+        limitations:
+          - "Synthesis focus"
+      - agent: "API Documenter"
+        capability_coverage: 60
+        limitations:
+          - "API-specific only"
+      - agent: "general-purpose"
+        capability_coverage: 45
+
+  devops:
+    description: "CI/CD, deployment, and infrastructure"
+    tools_required: [Read, Write, Bash, Glob]
+    primary_agent: "DevOps Engineer"
+    fallbacks:
+      - agent: "Build Engineer"
+        capability_coverage: 75
+        limitations:
+          - "Build focus, less deploy"
+      - agent: "Cloud Architect"
+        capability_coverage: 65
+        limitations:
+          - "Infrastructure focus"
+      - agent: "general-purpose"
+        capability_coverage: 30
+
+  review:
+    description: "Code and artifact review"
+    tools_required: [Read, Grep, Glob]
+    primary_agent: "Code Reviewer"
+    fallbacks:
+      - agent: "Security Auditor"
+        capability_coverage: 70
+        limitations:
+          - "Security focus only"
+      - agent: "Test Engineer"
+        capability_coverage: 60
+        limitations:
+          - "Testability focus"
+      - agent: "general-purpose"
+        capability_coverage: 40
+
+# Fallback triggers configuration
+fallback_triggers:
+  unavailable:
+    description: "Agent type not found in registry"
+    action: immediate_fallback
+    log_level: warning
+
+  timeout:
+    description: "Agent execution exceeded time limit"
+    threshold_ms: 300000
+    action: cancel_and_fallback
+    retry_count: 1
+    log_level: warning
+
+  error_threshold:
+    description: "Too many consecutive errors"
+    max_consecutive_errors: 3
+    action: switch_to_fallback
+    cooldown_ms: 60000
+    log_level: error
+
+  quality_threshold:
+    description: "Output quality below acceptable level"
+    min_quality_score: 70
+    action: try_alternative
+    max_alternatives: 2
+    log_level: warning
+
+  permission_denied:
+    description: "Required tool not authorized"
+    action: downgrade_capability
+    log_level: info
+
+# Degradation modes
+degradation_modes:
+  full:
+    description: "All specialized agents available"
+    available_capabilities: "all"
+    quality_expectation: 95
+    user_notice: null
+
+  reduced:
+    description: "Some specialists unavailable"
+    trigger_condition: "1-2 specialists unavailable"
+    quality_expectation: 80
+    user_notice: "Some specialized agents unavailable. Using fallbacks."
+
+  minimal:
+    description: "Only generic agents available"
+    trigger_condition: ">50% specialists unavailable"
+    quality_expectation: 60
+    user_notice: "Operating in degraded mode. Quality may be reduced."
+
+  emergency:
+    description: "Critical agents unavailable"
+    trigger_condition: "Critical path agents unavailable"
+    quality_expectation: 40
+    user_notice: "Emergency mode: Only essential operations available."
+    actions:
+      - disable_non_critical_workflows
+      - alert_operators
+      - log_emergency_state
+
+# Agent protocol
+agent_protocol:
+  pre_invocation:
+    steps:
+      - check_agent_registry
+      - verify_tool_permissions
+      - check_cooldown_status
+      - prepare_fallback_chain
+      - set_timeout_timer
+
+  during_execution:
+    monitors:
+      - progress_tracking
+      - error_counting
+      - quality_signals
+      - timeout_watch
+
+  on_failure:
+    steps:
+      - capture_failure_context
+      - log_failure_event
+      - select_fallback_agent
+      - notify_user_if_degraded
+      - retry_with_fallback
+      - update_agent_health_status
+
+# Logging schema
+logging:
+  fallback_event:
+    required_fields:
+      - timestamp
+      - original_agent
+      - fallback_agent
+      - trigger
+      - capability
+      - capability_coverage
+      - degradation_mode
+      - task_context
+
+  metrics:
+    daily_aggregations:
+      - total_fallback_activations
+      - fallback_by_trigger_type
+      - fallback_by_capability
+      - average_capability_coverage
+      - emergency_mode_entries
+
+    alert_thresholds:
+      frequent_fallbacks: ">10/hour for same agent"
+      cascading_failures: ">3 consecutive fallbacks"
+      emergency_mode: "any entry"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-001-production-agentic.md"
+  implementation:
+    - "#141"
+  related:
+    - "@.claude/rules/agent-fallback.md"
+    - "@.claude/rules/failure-mitigation.md"

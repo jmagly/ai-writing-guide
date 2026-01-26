@@ -1,0 +1,555 @@
+# HITL Cost Tracking Schema
+# Based on REF-057 Agent Laboratory
+# Issues: #206 (Cost Tracking), #207 (84% Reduction Measurement)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/hitl-cost-tracking/v1"
+title: "HITL Cost Tracking Schema"
+description: |
+  Schema for tracking and benchmarking Human-in-the-Loop costs
+  per REF-057 Agent Laboratory (84% cost reduction claim).
+
+type: object
+required:
+  - version
+  - cost_config
+  - metrics
+  - benchmarks
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  cost_config:
+    $ref: "#/$defs/CostConfig"
+
+  metrics:
+    $ref: "#/$defs/CostMetrics"
+
+  benchmarks:
+    $ref: "#/$defs/BenchmarkConfig"
+
+$defs:
+  CostConfig:
+    type: object
+    description: "Cost tracking configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      tracking:
+        type: object
+        properties:
+          tokens:
+            type: boolean
+            default: true
+            description: "Track API token usage"
+          human_time:
+            type: boolean
+            default: true
+            description: "Track time at human gates"
+          iterations:
+            type: boolean
+            default: true
+            description: "Track iteration counts"
+          failures:
+            type: boolean
+            default: true
+            description: "Track failure/retry costs"
+
+      pricing:
+        type: object
+        description: "Cost calculation parameters"
+        properties:
+          token_cost_input:
+            type: number
+            default: 0.003
+            description: "Cost per 1K input tokens (USD)"
+          token_cost_output:
+            type: number
+            default: 0.015
+            description: "Cost per 1K output tokens (USD)"
+          human_hourly_rate:
+            type: number
+            default: 75
+            description: "Human review cost per hour (USD)"
+
+      storage:
+        type: object
+        properties:
+          path:
+            type: string
+            default: ".aiwg/ralph/cost-tracking/"
+          retention_days:
+            type: integer
+            default: 90
+
+  CostMetrics:
+    type: object
+    description: "Cost metric definitions"
+    properties:
+      per_iteration:
+        type: object
+        properties:
+          tokens_input:
+            type: integer
+            description: "Input tokens consumed"
+          tokens_output:
+            type: integer
+            description: "Output tokens generated"
+          token_cost:
+            type: number
+            description: "Token cost in USD"
+          human_gate_time_ms:
+            type: integer
+            description: "Time spent at human gates"
+          human_cost:
+            type: number
+            description: "Human review cost in USD"
+          api_calls:
+            type: integer
+            description: "Number of API calls"
+          tool_invocations:
+            type: integer
+            description: "Number of tool calls"
+
+      per_session:
+        type: object
+        properties:
+          total_iterations:
+            type: integer
+          successful_iterations:
+            type: integer
+          failed_iterations:
+            type: integer
+          total_tokens_input:
+            type: integer
+          total_tokens_output:
+            type: integer
+          total_token_cost:
+            type: number
+          total_human_time_ms:
+            type: integer
+          total_human_cost:
+            type: number
+          total_cost:
+            type: number
+          duration_ms:
+            type: integer
+          efficiency_ratio:
+            type: number
+            description: "Successful / Total iterations"
+
+      comparative:
+        type: object
+        description: "HITL vs Autonomous comparison"
+        properties:
+          hitl_total_cost:
+            type: number
+          autonomous_estimated_cost:
+            type: number
+          cost_reduction_percent:
+            type: number
+          quality_improvement_percent:
+            type: number
+
+  BenchmarkConfig:
+    type: object
+    description: "Benchmark task configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      baseline_mode:
+        type: string
+        enum: [autonomous, hitl]
+        default: "autonomous"
+        description: "Baseline for comparison"
+
+      tasks:
+        type: array
+        items:
+          $ref: "#/$defs/BenchmarkTask"
+        default:
+          - name: "requirements-generation"
+            description: "Generate use cases from description"
+            category: "sdlc"
+            success_criteria:
+              - "All use cases cover requirements"
+              - "Acceptance criteria are testable"
+            max_iterations: 10
+
+          - name: "architecture-design"
+            description: "Create SAD from requirements"
+            category: "sdlc"
+            success_criteria:
+              - "All components documented"
+              - "ADRs created for decisions"
+            max_iterations: 15
+
+          - name: "test-generation"
+            description: "Generate test suite for module"
+            category: "testing"
+            success_criteria:
+              - "Coverage >= 80%"
+              - "All tests pass"
+            max_iterations: 10
+
+          - name: "code-review"
+            description: "Review PR for issues"
+            category: "quality"
+            success_criteria:
+              - "All critical issues identified"
+              - "Actionable feedback provided"
+            max_iterations: 5
+
+  BenchmarkTask:
+    type: object
+    required:
+      - name
+      - description
+      - success_criteria
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      category:
+        type: string
+        enum: [sdlc, testing, quality, documentation]
+      success_criteria:
+        type: array
+        items:
+          type: string
+      max_iterations:
+        type: integer
+        default: 10
+      timeout_minutes:
+        type: integer
+        default: 30
+
+# Session cost record schema
+session_cost_record:
+  type: object
+  required:
+    - session_id
+    - task
+    - mode
+    - started_at
+  properties:
+    session_id:
+      type: string
+    task:
+      type: string
+    mode:
+      type: string
+      enum: [hitl, autonomous]
+    started_at:
+      type: string
+      format: date-time
+    completed_at:
+      type: string
+      format: date-time
+    status:
+      type: string
+      enum: [running, completed, failed, aborted]
+    iterations:
+      type: array
+      items:
+        $ref: "#/$defs/IterationCost"
+    totals:
+      type: object
+      properties:
+        iterations:
+          type: integer
+        tokens_input:
+          type: integer
+        tokens_output:
+          type: integer
+        token_cost_usd:
+          type: number
+        human_time_ms:
+          type: integer
+        human_cost_usd:
+          type: number
+        total_cost_usd:
+          type: number
+        duration_ms:
+          type: integer
+
+  IterationCost:
+    type: object
+    properties:
+      iteration:
+        type: integer
+      started_at:
+        type: string
+        format: date-time
+      completed_at:
+        type: string
+        format: date-time
+      tokens_input:
+        type: integer
+      tokens_output:
+        type: integer
+      token_cost_usd:
+        type: number
+      human_gate:
+        type: object
+        properties:
+          entered_at:
+            type: string
+            format: date-time
+          exited_at:
+            type: string
+            format: date-time
+          duration_ms:
+            type: integer
+          action:
+            type: string
+            enum: [approve, revise, abort, delegate]
+          cost_usd:
+            type: number
+      api_calls:
+        type: integer
+      tool_calls:
+        type: integer
+      status:
+        type: string
+        enum: [success, failure, skipped]
+      error:
+        type: string
+
+# Benchmark result schema
+benchmark_result:
+  type: object
+  required:
+    - task
+    - autonomous_run
+    - hitl_run
+  properties:
+    task:
+      type: string
+    autonomous_run:
+      type: object
+      properties:
+        session_id:
+          type: string
+        iterations:
+          type: integer
+        total_cost:
+          type: number
+        quality_score:
+          type: number
+        success:
+          type: boolean
+        duration_ms:
+          type: integer
+    hitl_run:
+      type: object
+      properties:
+        session_id:
+          type: string
+        iterations:
+          type: integer
+        total_cost:
+          type: number
+        quality_score:
+          type: number
+        success:
+          type: boolean
+        duration_ms:
+          type: integer
+        human_interventions:
+          type: integer
+        human_time_ms:
+          type: integer
+    comparison:
+      type: object
+      properties:
+        cost_reduction_percent:
+          type: number
+        iteration_reduction_percent:
+          type: number
+        quality_improvement_percent:
+          type: number
+        time_increase_percent:
+          type: number
+          description: "Additional time for human review"
+        verdict:
+          type: string
+          enum: [hitl_better, autonomous_better, comparable]
+
+# Cost report template
+cost_report_template: |
+  # HITL Cost Report
+
+  **Session:** {session_id}
+  **Task:** {task}
+  **Mode:** {mode}
+  **Duration:** {duration}
+
+  ## Cost Breakdown
+
+  | Category | Value | Cost (USD) |
+  |----------|-------|------------|
+  | Input Tokens | {tokens_input} | ${token_input_cost} |
+  | Output Tokens | {tokens_output} | ${token_output_cost} |
+  | Human Review | {human_time} | ${human_cost} |
+  | **Total** | | **${total_cost}** |
+
+  ## Iteration Summary
+
+  - Total iterations: {iterations}
+  - Successful: {successful}
+  - Failed: {failed}
+  - Human interventions: {interventions}
+
+  ## Efficiency
+
+  - Cost per successful iteration: ${cost_per_success}
+  - Efficiency ratio: {efficiency}%
+
+  {comparison_section}
+
+# Comparison section template
+comparison_template: |
+  ## Comparison (vs Autonomous)
+
+  | Metric | Autonomous | HITL | Difference |
+  |--------|------------|------|------------|
+  | Total Cost | ${autonomous_cost} | ${hitl_cost} | {cost_diff}% |
+  | Iterations | {autonomous_iterations} | {hitl_iterations} | {iter_diff}% |
+  | Quality Score | {autonomous_quality} | {hitl_quality} | {quality_diff}% |
+  | Duration | {autonomous_duration} | {hitl_duration} | {time_diff}% |
+
+  **Verdict:** {verdict}
+
+  **REF-057 Claim (84% reduction):** {claim_validation}
+
+# CLI commands
+cli_commands:
+  ralph_status_cost:
+    command: "aiwg ralph-status --cost"
+    description: "Show current loop costs"
+    output:
+      - "Current iteration cost"
+      - "Cumulative session cost"
+      - "Projected total cost"
+
+  cost_report:
+    command: "aiwg cost report <session-id>"
+    description: "Generate cost report for session"
+    options:
+      - name: "--format"
+        description: "Output format (text, json, markdown)"
+      - name: "--compare"
+        description: "Compare with autonomous baseline"
+
+  cost_history:
+    command: "aiwg cost history"
+    description: "Show cost history across sessions"
+    options:
+      - name: "--since"
+        description: "Show costs since date"
+      - name: "--task"
+        description: "Filter by task type"
+
+  benchmark_run:
+    command: "aiwg benchmark run <task>"
+    description: "Run benchmark task in both modes"
+    options:
+      - name: "--mode"
+        description: "Run only hitl or autonomous"
+      - name: "--iterations"
+        description: "Override max iterations"
+
+  benchmark_report:
+    command: "aiwg benchmark report"
+    description: "Generate benchmark comparison report"
+
+# Agent protocol
+agent_protocol:
+  track_iteration:
+    description: "Track costs for single iteration"
+    triggers:
+      - ralph_iteration_start
+      - ralph_iteration_end
+    steps:
+      - record_start_time
+      - capture_token_counts
+      - if_human_gate:
+          - record_gate_entry
+          - wait_for_gate_exit
+          - record_gate_duration
+          - calculate_human_cost
+      - record_completion
+      - calculate_iteration_cost
+      - update_session_totals
+      - persist_cost_record
+
+  generate_report:
+    description: "Generate cost report"
+    steps:
+      - load_session_record
+      - calculate_totals
+      - if_comparison_requested:
+          - load_autonomous_baseline
+          - calculate_differences
+          - validate_ref057_claim
+      - format_report
+      - return_output
+
+  run_benchmark:
+    description: "Run benchmark comparison"
+    steps:
+      - load_benchmark_task
+      - run_autonomous_mode
+      - capture_autonomous_results
+      - run_hitl_mode
+      - capture_hitl_results
+      - compare_results
+      - calculate_reduction_percent
+      - generate_benchmark_report
+
+# REF-057 validation
+ref057_validation:
+  claim: "84% cost reduction with HITL"
+  validation_threshold: 0.70
+  validation_criteria:
+    - "HITL cost < 0.16 * autonomous cost for equivalent quality"
+    - "Quality score equal or higher in HITL mode"
+    - "Task completes within max iterations"
+  note: |
+    The 84% claim is from the Agent Laboratory paper.
+    Actual reduction varies by task complexity.
+    Validation considers both cost AND quality.
+
+# Storage
+storage:
+  cost_records: ".aiwg/ralph/cost-tracking/sessions/"
+  benchmarks: ".aiwg/ralph/cost-tracking/benchmarks/"
+  reports: ".aiwg/reports/cost/"
+
+# Research targets (from REF-057)
+research_targets:
+  cost_tracking: "Per-iteration and cumulative cost visibility"
+  comparison: "HITL vs autonomous cost comparison"
+  validation: "Validate 84% cost reduction claim"
+  optimization: "Identify cost optimization opportunities"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-057-agent-laboratory.md"
+  implementation:
+    - "#206"
+    - "#207"
+  related:
+    - "@.claude/rules/hitl-patterns.md"
+    - "@tools/ralph-external/"
+    - "@.aiwg/ralph/"

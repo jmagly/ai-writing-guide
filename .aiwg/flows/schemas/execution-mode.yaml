@@ -1,0 +1,221 @@
+# Execution Mode Schema
+# Based on REF-058 R-LAM (Reproducible LLM Agent Workflows)
+# Issue: #114
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/execution-mode/v1"
+title: "Execution Mode Configuration Schema"
+description: |
+  Execution mode system with strict, seeded, logged, and default modes
+  to control reproducibility vs creativity tradeoff. Based on R-LAM findings
+  that 47% of agent workflows produce different outputs on re-run.
+
+type: object
+required:
+  - mode
+
+properties:
+  mode:
+    type: string
+    enum:
+      - strict    # Full determinism: temperature=0, fixed seed
+      - seeded    # Fixed seed with normal temperature
+      - logged    # Captures all randomness sources
+      - default   # Standard non-deterministic execution
+    description: "Execution mode controlling reproducibility"
+
+  strict:
+    type: object
+    description: "Configuration for strict mode"
+    properties:
+      temperature:
+        type: number
+        const: 0
+        description: "Zero temperature for determinism"
+      seed:
+        type: integer
+        description: "Fixed random seed"
+      sampling:
+        type: string
+        const: "greedy"
+        description: "Greedy decoding only"
+      max_tokens:
+        type: integer
+        description: "Fixed max tokens"
+
+  seeded:
+    type: object
+    description: "Configuration for seeded mode"
+    properties:
+      seed:
+        type: integer
+        description: "Fixed random seed"
+      temperature:
+        type: number
+        default: 0.7
+        description: "Normal temperature"
+      log_seed:
+        type: boolean
+        default: true
+        description: "Log seed in provenance"
+
+  logged:
+    type: object
+    description: "Configuration for logged mode"
+    properties:
+      capture_sources:
+        type: array
+        items:
+          type: string
+          enum:
+            - model_response
+            - tool_outputs
+            - external_calls
+            - timestamps
+            - file_contents
+        default:
+          - model_response
+          - tool_outputs
+        description: "What randomness sources to capture"
+      log_location:
+        type: string
+        default: ".aiwg/provenance/"
+        description: "Where to store logs"
+
+  default:
+    type: object
+    description: "Configuration for default mode"
+    properties:
+      temperature:
+        type: number
+        default: 0.7
+      allow_creativity:
+        type: boolean
+        default: true
+
+# Mode selection guidance
+mode_selection:
+  strict:
+    use_when:
+      - "Testing and validation workflows"
+      - "Compliance-critical operations"
+      - "Debugging and bisection"
+      - "CI/CD pipelines"
+    tradeoff: "Maximum reproducibility, minimum creativity"
+    overhead: "Minimal"
+
+  seeded:
+    use_when:
+      - "Need some reproducibility but allow variation"
+      - "A/B testing with controlled randomness"
+      - "Development iteration"
+    tradeoff: "Balanced reproducibility and creativity"
+    overhead: "Minimal"
+
+  logged:
+    use_when:
+      - "Need audit trail without restricting creativity"
+      - "Post-hoc analysis requirements"
+      - "Regulatory compliance"
+    tradeoff: "Full creativity with complete logging"
+    overhead: "Moderate (storage)"
+
+  default:
+    use_when:
+      - "Normal interactive use"
+      - "Creative tasks"
+      - "Exploratory work"
+    tradeoff: "Maximum creativity, no reproducibility guarantee"
+    overhead: "None"
+
+# Agent configuration
+agent_mode_config:
+  description: "How to configure modes per agent"
+
+  in_agent_definition: |
+    # In agent .md frontmatter
+    ---
+    execution:
+      default_mode: strict
+      allowed_modes: [strict, seeded]
+    ---
+
+  in_manifest: |
+    # In manifest.json
+    {
+      "agents": {
+        "test-engineer": {
+          "execution_mode": "strict"
+        }
+      }
+    }
+
+  cli_override: |
+    # CLI flag overrides agent default
+    aiwg flow run --mode strict
+    aiwg ralph "task" --mode seeded
+
+# Provenance integration
+provenance_fields:
+  description: "Fields added to provenance records"
+  fields:
+    - name: execution_mode
+      type: string
+      required: true
+    - name: temperature
+      type: number
+      required: true
+    - name: seed
+      type: integer
+      required_if: "mode in [strict, seeded]"
+    - name: randomness_log
+      type: string
+      required_if: "mode == logged"
+
+# Validation rules
+validation:
+  strict_mode:
+    - require: "temperature == 0"
+      message: "Strict mode requires temperature=0"
+    - require: "seed is set"
+      message: "Strict mode requires fixed seed"
+
+  seeded_mode:
+    - require: "seed is set"
+      message: "Seeded mode requires fixed seed"
+
+# Examples
+examples:
+  - name: "Test workflow with strict mode"
+    mode: strict
+    strict:
+      temperature: 0
+      seed: 42
+      sampling: greedy
+      max_tokens: 4096
+
+  - name: "Development with seeded mode"
+    mode: seeded
+    seeded:
+      seed: 12345
+      temperature: 0.7
+      log_seed: true
+
+  - name: "Compliance workflow with logging"
+    mode: logged
+    logged:
+      capture_sources:
+        - model_response
+        - tool_outputs
+        - external_calls
+      log_location: ".aiwg/provenance/"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-058-r-lam.md"
+  implementation:
+    - "#114"
+  related:
+    - "@.aiwg/ralph/schemas/checkpoint.yaml"
+    - "@.aiwg/research/provenance/schemas/prov-record.yaml"

@@ -1,0 +1,450 @@
+# MCP Research Resources Schema
+# Based on REF-066 Model Context Protocol
+# Issue: #195
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/mcp-research-resources/v1"
+title: "MCP Research Resources Schema"
+description: |
+  Schema for exposing research corpus (REF-001 through REF-066) as MCP
+  Resources for AI assistant discovery per REF-066 Model Context Protocol.
+
+type: object
+required:
+  - version
+  - resource_config
+  - templates
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  resource_config:
+    $ref: "#/$defs/ResourceConfig"
+
+  templates:
+    $ref: "#/$defs/ResourceTemplates"
+
+  filtering:
+    $ref: "#/$defs/FilteringConfig"
+
+$defs:
+  ResourceConfig:
+    type: object
+    description: "MCP resource configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      base_uri:
+        type: string
+        default: "aiwg://research"
+
+      corpus_path:
+        type: string
+        default: ".aiwg/research/findings/"
+
+      metadata_path:
+        type: string
+        default: ".aiwg/research/catalog.json"
+
+      refresh_on_startup:
+        type: boolean
+        default: true
+
+  ResourceTemplates:
+    type: object
+    description: "Resource template definitions"
+    properties:
+      reference:
+        type: object
+        properties:
+          uri_pattern:
+            type: string
+            default: "aiwg://research/{ref_id}"
+          mime_type:
+            type: string
+            default: "text/markdown"
+
+      bibtex:
+        type: object
+        properties:
+          uri_pattern:
+            type: string
+            default: "aiwg://research/{ref_id}/bibtex"
+          mime_type:
+            type: string
+            default: "application/x-bibtex"
+
+      summary:
+        type: object
+        properties:
+          uri_pattern:
+            type: string
+            default: "aiwg://research/{ref_id}/summary"
+          mime_type:
+            type: string
+            default: "text/plain"
+
+  FilteringConfig:
+    type: object
+    description: "Resource filtering options"
+    properties:
+      by_topic:
+        type: object
+        properties:
+          uri_pattern:
+            type: string
+            default: "aiwg://research?topic={topic}"
+          supported_topics:
+            type: array
+            items:
+              type: string
+            default:
+              - multi-agent
+              - memory
+              - reasoning
+              - tool-use
+              - prompting
+              - evaluation
+              - architecture
+              - cognitive
+              - testing
+              - security
+
+      by_priority:
+        type: object
+        properties:
+          uri_pattern:
+            type: string
+            default: "aiwg://research?priority={level}"
+          levels:
+            type: array
+            items:
+              type: string
+            default:
+              - high
+              - medium
+              - low
+
+      by_year:
+        type: object
+        properties:
+          uri_pattern:
+            type: string
+            default: "aiwg://research?year={year}"
+
+# Research reference schema
+research_reference:
+  type: object
+  required:
+    - ref_id
+    - title
+    - authors
+    - publication
+  properties:
+    ref_id:
+      type: string
+      pattern: "^REF-\\d{3}$"
+      description: "Reference ID (REF-001 through REF-066)"
+
+    title:
+      type: string
+      description: "Paper title"
+
+    authors:
+      type: array
+      items:
+        type: string
+      description: "Author list"
+
+    publication:
+      type: object
+      properties:
+        venue:
+          type: string
+          description: "Conference, journal, or arXiv"
+        year:
+          type: integer
+        url:
+          type: string
+          format: uri
+
+    abstract:
+      type: string
+      maxLength: 1000
+
+    topics:
+      type: array
+      items:
+        type: string
+      description: "Topic tags"
+
+    priority:
+      type: string
+      enum: [high, medium, low]
+      description: "Implementation priority"
+
+    key_findings:
+      type: array
+      items:
+        type: string
+      description: "Main takeaways"
+
+    aiwg_applications:
+      type: array
+      items:
+        type: string
+      description: "How this applies to AIWG"
+
+    related_issues:
+      type: array
+      items:
+        type: integer
+      description: "Implementation issue numbers"
+
+    file_path:
+      type: string
+      description: "Path to findings document"
+
+# MCP resource response
+mcp_resource:
+  type: object
+  required:
+    - uri
+    - name
+    - mimeType
+    - contents
+  properties:
+    uri:
+      type: string
+      format: uri
+    name:
+      type: string
+    description:
+      type: string
+    mimeType:
+      type: string
+    contents:
+      type: array
+      items:
+        type: object
+        properties:
+          uri:
+            type: string
+          mimeType:
+            type: string
+          text:
+            type: string
+
+# Resource list response
+resource_list:
+  type: object
+  properties:
+    resources:
+      type: array
+      items:
+        type: object
+        properties:
+          uri:
+            type: string
+          name:
+            type: string
+          description:
+            type: string
+          mimeType:
+            type: string
+
+# BibTeX template
+bibtex_template: |
+  @{entry_type}{{ref_id},
+    title = {{{title}}},
+    author = {{{authors}}},
+    year = {{{year}}},
+    {venue_field} = {{{venue}}},
+    url = {{{url}}},
+    note = {{AIWG Priority: {priority}}}
+  }}
+
+# Topic mapping
+topic_mapping:
+  multi-agent:
+    description: "Multi-agent systems and collaboration"
+    refs:
+      - REF-013  # MetaGPT
+      - REF-022  # AutoGen
+      - REF-023  # ChatDev
+      - REF-025  # AgentVerse
+
+  memory:
+    description: "Memory and context management"
+    refs:
+      - REF-009  # Neural Turing Machines
+      - REF-021  # Reflexion
+      - REF-027  # MemGPT
+
+  reasoning:
+    description: "Reasoning and planning"
+    refs:
+      - REF-014  # Chain-of-Thought
+      - REF-017  # Self-Consistency
+      - REF-020  # Tree-of-Thoughts
+      - REF-024  # LATS
+
+  tool-use:
+    description: "Tool use and external resources"
+    refs:
+      - REF-018  # ReAct
+      - REF-019  # Toolformer
+      - REF-066  # MCP
+
+  prompting:
+    description: "Prompting techniques"
+    refs:
+      - REF-014  # Chain-of-Thought
+      - REF-015  # Self-Refine
+      - REF-016  # Constitutional AI
+
+  evaluation:
+    description: "Evaluation and quality assessment"
+    refs:
+      - REF-030  # LLM Judge
+      - REF-031  # G-Eval
+      - REF-032  # RAGAS
+
+  architecture:
+    description: "System architecture patterns"
+    refs:
+      - REF-007  # Mixture of Experts
+      - REF-008  # Transformer
+      - REF-061  # SOA
+
+  cognitive:
+    description: "Cognitive science foundations"
+    refs:
+      - REF-006  # Cognitive Load Theory
+      - REF-010  # Working Memory
+
+  testing:
+    description: "Testing and verification"
+    refs:
+      - REF-040  # Mutation Testing
+      - REF-041  # Property Testing
+
+  security:
+    description: "Security and safety"
+    refs:
+      - REF-050  # Prompt Injection
+      - REF-051  # AI Red Team
+
+# Agent protocol
+agent_protocol:
+  list_resources:
+    description: "List available research resources"
+    steps:
+      - load_catalog
+      - filter_by_query_params
+      - format_as_resource_list
+      - return_response
+
+  get_resource:
+    description: "Get specific research reference"
+    steps:
+      - parse_uri
+      - extract_ref_id
+      - load_reference
+      - determine_format
+      - if_bibtex:
+          - generate_bibtex
+      - if_summary:
+          - extract_summary
+      - else:
+          - return_full_content
+      - format_response
+
+  search_resources:
+    description: "Search research corpus"
+    steps:
+      - parse_query
+      - search_by_keywords
+      - search_by_topics
+      - rank_by_relevance
+      - return_matching_resources
+
+# MCP server integration
+mcp_integration:
+  server_name: "aiwg-research"
+  capabilities:
+    - resources
+    - resource_templates
+
+  resource_handlers:
+    - pattern: "aiwg://research/{ref_id}"
+      handler: "get_reference"
+    - pattern: "aiwg://research/{ref_id}/bibtex"
+      handler: "get_bibtex"
+    - pattern: "aiwg://research/{ref_id}/summary"
+      handler: "get_summary"
+    - pattern: "aiwg://research?topic={topic}"
+      handler: "filter_by_topic"
+    - pattern: "aiwg://research?priority={level}"
+      handler: "filter_by_priority"
+
+# CLI commands
+cli_commands:
+  research_list:
+    command: "aiwg research list"
+    description: "List research references"
+    options:
+      - name: "--topic"
+        description: "Filter by topic"
+      - name: "--priority"
+        description: "Filter by priority"
+
+  research_get:
+    command: "aiwg research get <ref-id>"
+    description: "Get research reference details"
+    options:
+      - name: "--bibtex"
+        description: "Output as BibTeX"
+      - name: "--summary"
+        description: "Output summary only"
+
+  research_search:
+    command: "aiwg research search <query>"
+    description: "Search research corpus"
+
+  research_export:
+    command: "aiwg research export"
+    description: "Export all references"
+    options:
+      - name: "--format"
+        description: "bibtex, json, or markdown"
+
+# Storage
+storage:
+  catalog_path: ".aiwg/research/catalog.json"
+  findings_path: ".aiwg/research/findings/"
+  references_path: ".aiwg/research/references/"
+  cache_path: ".aiwg/research/cache/"
+
+# Research targets
+research_targets:
+  total_references: 66
+  coverage: "All REF-001 through REF-066 exposed"
+  filtering: "By topic, priority, year"
+  export_formats: "BibTeX, JSON, Markdown"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-066-mcp.md"
+  implementation:
+    - "#195"
+  related:
+    - "@src/mcp-server/index.ts"
+    - "@.aiwg/research/research-gap-analysis.md"
+    - "@docs/references/"
