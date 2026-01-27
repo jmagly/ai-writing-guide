@@ -359,3 +359,4 @@ See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the 
 - @.claude/commands/generate-tests.md
 - @.claude/commands/flow-test-strategy-execution.md
 - @.claude/rules/executable-feedback.md
+- @.aiwg/flows/schemas/executable-feedback.yaml — Executable feedback loop for test-driven validation

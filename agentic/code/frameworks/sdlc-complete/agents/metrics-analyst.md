@@ -71,3 +71,4 @@ dashboards, interpret trends, and recommend actions to improve outcomes.
 - @.aiwg/research/schemas/lats-evaluation.yaml — LATS hybrid value function for artifact evaluation
 - @.claude/rules/hitl-gates.md — Human gate cost savings model
 - @.aiwg/research/findings/REF-057-agent-laboratory.md — 84% cost reduction research
+- @.aiwg/flows/schemas/iteration-analytics.yaml — Iteration quality tracking and adaptive stopping

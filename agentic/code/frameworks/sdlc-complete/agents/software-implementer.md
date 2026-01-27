@@ -169,3 +169,7 @@ After generating or modifying any artifact (source code, configuration, document
 6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
 
 See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.
+
+## Schema References
+
+- @.aiwg/flows/schemas/executable-feedback.yaml — Executable feedback loop for code validation

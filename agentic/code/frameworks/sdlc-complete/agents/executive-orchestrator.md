@@ -97,3 +97,4 @@ Idea → Inception → Elaboration → Construction (iterative) → Transition �
 - @.aiwg/flows/schemas/hitl-gate.yaml — Human-in-the-loop gate definitions for phase transitions
 - @.aiwg/flows/schemas/hitl-cost-tracking.yaml — HITL cost tracking and efficiency measurement
 - @.aiwg/flows/schemas/agent-pubsub.yaml — Subscription-based agent activation and event routing
+- @.aiwg/flows/schemas/agent-capability-matrix.yaml — Agent capability matching for fallback routing

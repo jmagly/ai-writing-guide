@@ -432,3 +432,6 @@ See @.claude/rules/citation-policy.md for complete requirements.
 - @.aiwg/flows/schemas/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
 - @.aiwg/flows/schemas/rag-context-management.yaml — RAG context window management
 - @.aiwg/flows/schemas/grounding-agents.yaml — Agent grounding and tool use patterns
+- @.aiwg/flows/schemas/hallucination-detection.yaml — Hallucination detection for research claims
+- @.aiwg/flows/schemas/quality-assessment.yaml — GRADE quality assessment methodology
+- @.aiwg/flows/schemas/tool-grounding.yaml — Tool grounding patterns for research validation

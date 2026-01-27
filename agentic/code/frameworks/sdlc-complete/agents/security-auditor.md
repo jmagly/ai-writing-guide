@@ -572,6 +572,7 @@ For each security engagement:
 - @.claude/rules/token-security.md - Security enforcement rules
 - @.aiwg/flows/schemas/quality-assurance.yaml — Quality assurance and hallucination detection
 - @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for security findings
+- @.aiwg/flows/schemas/hallucination-detection.yaml — Hallucination detection for security claims
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 

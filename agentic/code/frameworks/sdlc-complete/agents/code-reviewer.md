@@ -186,3 +186,5 @@ See @.claude/rules/executable-feedback.md for complete requirements.
 - @.aiwg/flows/schemas/quality-assurance.yaml — Quality assurance and hallucination detection
 - @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback format for review findings
 - @.aiwg/research/schemas/lats-evaluation.yaml — LATS hybrid value function for artifact quality assessment
+- @.aiwg/flows/schemas/ensemble-review.yaml — Ensemble review patterns and panel sizing
+- @.aiwg/flows/schemas/quality-assessment.yaml — GRADE quality assessment methodology

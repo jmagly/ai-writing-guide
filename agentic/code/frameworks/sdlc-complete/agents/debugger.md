@@ -338,3 +338,5 @@ See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the 
 - @.aiwg/flows/schemas/reproducibility-framework.yaml — Workflow reproducibility validation
 - @.aiwg/flows/schemas/reliability-patterns.yaml — Reliability and fault tolerance patterns
 - @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for debug findings
+- @.aiwg/flows/schemas/episodic-memory.yaml — Episodic memory for Reflexion-based learning
+- @.aiwg/flows/schemas/error-handling.yaml — Error recovery and fault tolerance patterns

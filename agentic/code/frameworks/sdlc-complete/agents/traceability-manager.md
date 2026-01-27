@@ -37,3 +37,4 @@ records. Expose gaps early.
 - @.aiwg/flows/schemas/fair-extensions.yaml — FAIR principle extensions for traceability
 - @.aiwg/flows/schemas/citation-integrity.yaml — Citation integrity policy enforcement
 - @.aiwg/flows/schemas/fair-metadata.yaml — FAIR metadata compliance
+- @.aiwg/flows/schemas/citation-verification.yaml — Automated citation verification pipeline

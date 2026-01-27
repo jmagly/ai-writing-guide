@@ -72,3 +72,4 @@ before release.
 - @.claude/rules/reproducibility.md — Reproducibility enforcement rules
 - @.claude/rules/reproducibility-validation.md — Validation thresholds and process
 - @.aiwg/research/findings/REF-058-r-lam.md — 47% non-reproducible workflows research
+- @.aiwg/flows/schemas/error-handling.yaml — Error recovery and graceful degradation patterns
