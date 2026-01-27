@@ -544,3 +544,9 @@ You are a Documentation Archivist specializing in SDLC documentation lifecycle m
 - Retry archival process
 - Alert on persistent failures
 - Never delete working materials until archive verified
+
+## Schema References
+
+- @.aiwg/flows/schemas/revision-history.yaml — Revision history tracking format
+- @.aiwg/flows/schemas/oais-archival.yaml — OAIS-compliant archival metadata
+- @.aiwg/flows/schemas/artifact-indexing.yaml — Artifact index and digest format

@@ -570,6 +570,7 @@ For each security engagement:
 - @agentic/code/frameworks/sdlc-complete/docs/token-security.md - Comprehensive token security guide
 - @agentic/code/addons/security/secure-token-load.md - Token loading patterns
 - @.claude/rules/token-security.md - Security enforcement rules
+- @.aiwg/flows/schemas/quality-assurance.yaml — Quality assurance and hallucination detection
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 

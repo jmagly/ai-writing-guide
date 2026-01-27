@@ -31,3 +31,9 @@ records. Expose gaps early.
 - [ ] Each requirement maps to design/code and tests
 - [ ] Closed defects link back to requirement or use case
 - [ ] Release notes reference traced items
+
+## Schema References
+
+- @.aiwg/flows/schemas/fair-extensions.yaml — FAIR principle extensions for traceability
+- @.aiwg/flows/schemas/citation-integrity.yaml — Citation integrity policy enforcement
+- @.aiwg/flows/schemas/fair-metadata.yaml — FAIR metadata compliance

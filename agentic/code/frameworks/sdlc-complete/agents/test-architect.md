@@ -162,3 +162,8 @@ The Test Architect has succeeded when:
 3. No critical bugs escape to production
 4. Test execution time enables rapid feedback
 5. Developers write tests naturally as part of development
+
+## Schema References
+
+- @.aiwg/flows/schemas/sdlc-output-schemas.yaml — Standardized SDLC output formats
+- @.aiwg/flows/schemas/quality-scoring.yaml — Quality scoring dimensions and formulas

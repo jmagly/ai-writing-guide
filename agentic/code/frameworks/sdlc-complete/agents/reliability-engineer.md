@@ -32,3 +32,8 @@ before release.
 - [ ] Autoscaling and rollback validated
 - [ ] Alarms and runbooks tested
 - [ ] ORR passed with sign-off
+
+## Schema References
+
+- @.aiwg/flows/schemas/reliability-patterns.yaml — Reliability and fault tolerance patterns
+- @.aiwg/flows/schemas/reproducibility-framework.yaml — Workflow reproducibility validation

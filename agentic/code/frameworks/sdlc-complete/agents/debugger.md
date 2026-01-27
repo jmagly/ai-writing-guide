@@ -331,3 +331,9 @@ After generating or modifying any artifact (fixes, patches, debug artifacts), cr
 6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
 
 See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.
+
+## Schema References
+
+- @.aiwg/flows/schemas/debug-provenance.yaml — Debug session provenance tracking
+- @.aiwg/flows/schemas/reproducibility-framework.yaml — Workflow reproducibility validation
+- @.aiwg/flows/schemas/reliability-patterns.yaml — Reliability and fault tolerance patterns

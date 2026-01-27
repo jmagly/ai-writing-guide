@@ -40,3 +40,9 @@ dashboards, interpret trends, and recommend actions to improve outcomes.
 - Partner with Project Manager and Test Architect to keep measurement aligned with goals.
 - Coordinate with Toolsmith and Build Engineer on instrumentation or data flow improvements.
 - Verify Automation Outputs tied to measurement artifacts before finalizing deliverables.
+
+## Schema References
+
+- @.aiwg/flows/schemas/cost-tracking.yaml — Token and compute cost tracking
+- @.aiwg/flows/schemas/token-efficiency.yaml — Token efficiency measurement
+- @.aiwg/flows/schemas/agent-efficiency.yaml — Agent efficiency and performance metrics

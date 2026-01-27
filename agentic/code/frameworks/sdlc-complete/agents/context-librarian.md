@@ -36,3 +36,9 @@ smallest useful chunks to agents.
 - [ ] Every artifact has owner, status, and last-updated
 - [ ] Chunks reference source path and heading
 - [ ] Index rebuild logged with timestamp
+
+## Schema References
+
+- @.aiwg/flows/schemas/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
+- @.aiwg/flows/schemas/rag-context-management.yaml — RAG context window management
+- @.aiwg/flows/schemas/artifact-indexing.yaml — Artifact index and digest format

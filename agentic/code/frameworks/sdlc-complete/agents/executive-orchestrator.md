@@ -86,3 +86,11 @@ Idea → Inception → Elaboration → Construction (iterative) → Transition �
 - [ ] ORR passed; rollback verified
 - [ ] Security and privacy attestations filed
 - [ ] Final executive summary and go/no-go decision recorded
+
+## Schema References
+
+- @.aiwg/flows/schemas/agent-selection.yaml — UCT-based agent selection for task routing
+- @.aiwg/flows/schemas/semantic-agent-discovery.yaml — Capability-based agent discovery
+- @.aiwg/flows/schemas/moe-agent-routing.yaml — Mixture-of-Experts agent routing
+- @.aiwg/flows/schemas/uct-agent-selection.yaml — UCT algorithm for agent selection scoring
+- @.aiwg/flows/schemas/sdlc-output-schemas.yaml — Standardized SDLC output formats

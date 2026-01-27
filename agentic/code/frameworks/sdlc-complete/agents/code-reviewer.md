@@ -179,3 +179,8 @@ When reviewing code, verify execution evidence:
 4. **Record review session** in debug memory if code modifications made
 
 See @.claude/rules/executable-feedback.md for complete requirements.
+
+## Schema References
+
+- @.aiwg/flows/schemas/quality-scoring.yaml — Quality scoring dimensions and formulas
+- @.aiwg/flows/schemas/quality-assurance.yaml — Quality assurance and hallucination detection

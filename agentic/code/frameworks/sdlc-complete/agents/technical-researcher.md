@@ -424,3 +424,11 @@ When conducting research and generating findings:
 5. **Document evidence gaps** - Add uncitable claims to `.aiwg/research/TODO.md`
 
 See @.claude/rules/citation-policy.md for complete requirements.
+
+## Schema References
+
+- @.aiwg/flows/schemas/grade-evidence-quality.yaml — GRADE evidence quality assessment
+- @.aiwg/flows/schemas/fair-metadata.yaml — FAIR metadata compliance
+- @.aiwg/flows/schemas/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
+- @.aiwg/flows/schemas/rag-context-management.yaml — RAG context window management
+- @.aiwg/flows/schemas/grounding-agents.yaml — Agent grounding and tool use patterns
