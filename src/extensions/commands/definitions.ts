@@ -860,12 +860,188 @@ export const ralphResumeCommand: Extension = {
   } satisfies CommandMetadata,
 };
 
+// Cost & Metrics Commands
+
+export const costReportCommand: Extension = {
+  id: 'cost-report',
+  type: 'command',
+  name: 'Cost Report',
+  description: 'Generate cost tracking report for agentic workflow execution',
+  version: '1.0.0',
+  capabilities: ['cli', 'metrics', 'cost-tracking', 'reporting'],
+  keywords: ['cost', 'report', 'tokens', 'spending', 'budget', 'metrics'],
+  category: 'metrics',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    allowedTools: ['Read', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
+export const costHistoryCommand: Extension = {
+  id: 'cost-history',
+  type: 'command',
+  name: 'Cost History',
+  description: 'Show historical cost data across workflow sessions',
+  version: '1.0.0',
+  capabilities: ['cli', 'metrics', 'cost-tracking', 'history'],
+  keywords: ['cost', 'history', 'trends', 'spending', 'budget'],
+  category: 'metrics',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    allowedTools: ['Read'],
+  } satisfies CommandMetadata,
+};
+
+export const metricsTokensCommand: Extension = {
+  id: 'metrics-tokens',
+  type: 'command',
+  name: 'Metrics Tokens',
+  description: 'Analyze token efficiency against MetaGPT baseline (124 tokens/line)',
+  version: '1.0.0',
+  capabilities: ['cli', 'metrics', 'token-efficiency', 'analysis'],
+  keywords: ['metrics', 'tokens', 'efficiency', 'baseline', 'metagpt'],
+  category: 'metrics',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    allowedTools: ['Read', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
+// Reproducibility Commands
+
+export const executionModeCommand: Extension = {
+  id: 'execution-mode',
+  type: 'command',
+  name: 'Execution Mode',
+  description: 'Configure workflow execution mode (strict, seeded, logged, default)',
+  version: '1.0.0',
+  capabilities: ['cli', 'reproducibility', 'configuration', 'execution-mode'],
+  keywords: ['execution', 'mode', 'strict', 'seeded', 'reproducibility', 'determinism'],
+  category: 'reproducibility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<mode> [--seed <value>]',
+    allowedTools: ['Read', 'Write'],
+  } satisfies CommandMetadata,
+};
+
+export const snapshotCommand: Extension = {
+  id: 'snapshot',
+  type: 'command',
+  name: 'Snapshot',
+  description: 'Manage execution snapshots for workflow replay and reproducibility',
+  version: '1.0.0',
+  capabilities: ['cli', 'reproducibility', 'snapshot', 'replay'],
+  keywords: ['snapshot', 'replay', 'capture', 'execution', 'reproducibility'],
+  category: 'reproducibility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<list|show|capture> [options]',
+    allowedTools: ['Read', 'Write', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
+export const checkpointCommand: Extension = {
+  id: 'checkpoint',
+  type: 'command',
+  name: 'Checkpoint',
+  description: 'Manage workflow checkpoints for recovery and state preservation',
+  version: '1.0.0',
+  capabilities: ['cli', 'reproducibility', 'checkpoint', 'recovery'],
+  keywords: ['checkpoint', 'recovery', 'restore', 'state', 'reproducibility'],
+  category: 'reproducibility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<list|recover|create> [options]',
+    allowedTools: ['Read', 'Write', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
+export const reproducibilityValidateCommand: Extension = {
+  id: 'reproducibility-validate',
+  type: 'command',
+  name: 'Reproducibility Validate',
+  description: 'Validate workflow reproducibility by comparing outputs across runs',
+  version: '1.0.0',
+  capabilities: ['cli', 'reproducibility', 'validation', 'compliance'],
+  keywords: ['reproducibility', 'validate', 'verify', 'compare', 'compliance'],
+  category: 'reproducibility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<workflow-id> [--runs <count>] [--threshold <value>]',
+    allowedTools: ['Read', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
 // ============================================
 // Aggregated Exports
 // ============================================
 
 /**
- * All command definitions (31 total)
+ * All command definitions (40 total)
  *
  * Organized by category:
  * - Maintenance (4): help, version, doctor, update
@@ -879,6 +1055,8 @@ export const ralphResumeCommand: Extension = {
  * - Plugin (5): install-plugin, uninstall-plugin, plugin-status, package-plugin, package-all-plugins
  * - Scaffolding (7): add-agent, add-command, add-skill, add-template, scaffold-addon, scaffold-extension, scaffold-framework
  * - Ralph (4): ralph, ralph-status, ralph-abort, ralph-resume
+ * - Metrics (3): cost-report, cost-history, metrics-tokens
+ * - Reproducibility (4): execution-mode, snapshot, checkpoint, reproducibility-validate
  */
 export const commandDefinitions: Extension[] = [
   // Maintenance (4)
@@ -935,6 +1113,17 @@ export const commandDefinitions: Extension[] = [
   ralphStatusCommand,
   ralphAbortCommand,
   ralphResumeCommand,
+
+  // Metrics (3)
+  costReportCommand,
+  costHistoryCommand,
+  metricsTokensCommand,
+
+  // Reproducibility (4)
+  executionModeCommand,
+  snapshotCommand,
+  checkpointCommand,
+  reproducibilityValidateCommand,
 ];
 
 // ============================================

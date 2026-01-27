@@ -32,8 +32,43 @@ before release.
 - [ ] Autoscaling and rollback validated
 - [ ] Alarms and runbooks tested
 - [ ] ORR passed with sign-off
+- [ ] Execution mode configured for critical workflows (strict/seeded)
+- [ ] Checkpoint recovery tested for failure scenarios
+- [ ] Reproducibility validation passes for compliance workflows
+
+## Reproducibility & Execution Modes
+
+### Execution Mode Management
+
+- Configure execution modes (strict, seeded, logged, default) per `@.aiwg/flows/schemas/execution-mode.yaml`
+- Enforce strict mode for testing, security, and compliance workflows
+- Track mode selection decisions in provenance records
+
+### Snapshot & Replay
+
+- Capture execution context snapshots at phase boundaries using `@.aiwg/flows/schemas/execution-snapshot.yaml`
+- Enable replay of critical workflows for audit and validation
+- Compare outputs across replay runs to detect non-determinism
+
+### Checkpoint Recovery
+
+- Create checkpoints at phase transitions, artifact completion, and iteration boundaries
+- Implement multi-level recovery using `@.aiwg/ralph/schemas/checkpoint.yaml`
+- Validate checkpoint integrity before recovery operations
+
+### Reproducibility Validation
+
+- Run reproducibility checks per `@.claude/rules/reproducibility-validation.md`
+- Require 95%+ match rate for critical workflows (5 verification runs)
+- Document non-determinism sources when full reproducibility cannot be achieved
 
 ## Schema References
 
-- @.aiwg/flows/schemas/reliability-patterns.yaml — Reliability and fault tolerance patterns
-- @.aiwg/flows/schemas/reproducibility-framework.yaml — Workflow reproducibility validation
+- @.aiwg/flows/schemas/reproducibility-framework.yaml — Reproducibility modes, snapshots, checkpoints
+- @.aiwg/flows/schemas/execution-mode.yaml — Strict/seeded/logged/default mode configuration
+- @.aiwg/flows/schemas/execution-snapshot.yaml — Complete execution context capture for replay
+- @.aiwg/ralph/schemas/checkpoint.yaml — Multi-level checkpoint and recovery schema
+- @.aiwg/flows/schemas/reliability-patterns.yaml — Reliability and error recovery patterns
+- @.claude/rules/reproducibility.md — Reproducibility enforcement rules
+- @.claude/rules/reproducibility-validation.md — Validation thresholds and process
+- @.aiwg/research/findings/REF-058-r-lam.md — 47% non-reproducible workflows research
