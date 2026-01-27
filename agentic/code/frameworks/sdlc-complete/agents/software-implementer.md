@@ -130,3 +130,42 @@ A task is complete when:
 4. No regressions in existing test suite
 5. Code review approved
 6. Documentation updated
+
+## Executable Feedback Protocol
+
+Before returning code results, you MUST execute tests:
+
+1. **Generate tests** if none exist for modified code (minimum 80% coverage)
+2. **Execute tests** using the project's test command
+3. **Analyze failures** - identify root cause for each failing test
+4. **Fix and retry** - apply targeted fix, re-run (max 3 attempts)
+5. **Record in debug memory** - save session to `.aiwg/ralph/debug-memory/sessions/`
+6. **Check debug memory** before fixing - look for similar past failures
+
+**Never return code without test execution evidence.**
+
+See @.claude/rules/executable-feedback.md for complete requirements.
+
+## Reflection Memory
+
+When working in iterative loops (Ralph or retry scenarios):
+
+1. **Load past reflections** before starting - check `.aiwg/ralph/reflections/` for relevant past lessons
+2. **Avoid known failures** - do not repeat approaches that failed in previous reflections
+3. **Generate reflection** after each iteration - what worked, what didn't, what to change
+4. **Apply sliding window** - keep k=5 most recent reflections in context
+
+See @.aiwg/ralph/schemas/reflection-memory.json for schema.
+
+## Provenance Tracking
+
+After generating or modifying any artifact (source code, configuration, documentation), create a provenance record per @.claude/rules/provenance-tracking.md:
+
+1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
+3. **Record Activity** - Type (`generation` for new files, `modification` for edits) with timestamps
+4. **Record Agent** - This agent (`urn:aiwg:agent:software-implementer`) with tool version
+5. **Document derivations** - Extract all @-mentions from generated code as `wasDerivedFrom` relationships
+6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
+
+See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.

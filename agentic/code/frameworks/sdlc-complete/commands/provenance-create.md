@@ -1,0 +1,61 @@
+---
+description: Create a W3C PROV-compliant provenance record for an artifact
+category: provenance
+---
+
+# Provenance Create Command
+
+Create a provenance record for a new or existing artifact, establishing its Entity-Activity-Agent chain.
+
+## Instructions
+
+When invoked, create provenance record:
+
+1. **Read artifact**
+   - Load file at specified path
+   - Compute SHA-256 content hash
+   - Extract @-mentions for derivation sources
+
+2. **Determine metadata**
+   - Activity type: generation (new) or modification (existing)
+   - Agent: from `--agent` flag or infer from context
+   - Derivation sources: from @-mentions or `--derived-from` flags
+
+3. **Generate URN identifiers**
+   - Entity: `urn:aiwg:artifact:<relative-path>`
+   - Activity: `urn:aiwg:activity:<type>:<name>:<sequence>`
+   - Agent: `urn:aiwg:agent:<agent-name>`
+
+4. **Create provenance record**
+   - Generate YAML conforming to `@.aiwg/research/provenance/schemas/prov-record.yaml`
+   - Include entity, activity, agent, and relationships
+   - Include timestamps and content hash
+
+5. **Validate record**
+   - Verify schema compliance
+   - Check all referenced entities exist
+   - Verify derivation sources are valid paths
+
+6. **Save record**
+   - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
+   - Update provenance index if it exists
+
+7. **Report**
+   - Display created record summary
+   - Show derivation chain
+
+## Arguments
+
+- `[artifact-path]` - Path to artifact (required)
+- `--derived-from [paths...]` - Explicit derivation sources
+- `--activity [type]` - Activity type: generation, modification, refactoring, testing, review, derivation (default: generation)
+- `--agent [name]` - Agent that created the artifact (default: inferred)
+- `--output [path]` - Custom output path for provenance record
+- `--no-validate` - Skip schema validation
+
+## References
+
+- @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md - Provenance Manager agent
+- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
+- @.aiwg/research/provenance/docs/provenance-guide.md - Provenance guide
+- @.claude/rules/provenance-tracking.md - Provenance tracking rules

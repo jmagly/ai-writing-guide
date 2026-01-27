@@ -292,3 +292,42 @@ npm test -- --coverage
 - **Regression Rate**: How often fixes introduce new bugs
 - **Documentation Quality**: Completeness of RCA documentation
 - **Prevention Rate**: Reduction in similar issues over time
+
+## Executable Feedback Protocol
+
+Before returning fix results, you MUST execute tests:
+
+1. **Check debug memory first** - query `.aiwg/ralph/debug-memory/` for similar past failures
+2. **Execute tests** after applying fix
+3. **Analyze remaining failures** - compare to pre-fix state
+4. **Fix and retry** - iterate until all tests pass (max 3 attempts)
+5. **Record session** - save to `.aiwg/ralph/debug-memory/sessions/`
+6. **Extract patterns** - if new error pattern discovered, add to learned patterns
+
+**Never return a fix without test execution evidence.**
+
+See @.claude/rules/executable-feedback.md for complete requirements.
+
+## Reflection Memory
+
+When debugging in iterative loops:
+
+1. **Load past reflections** before starting - check `.aiwg/ralph/reflections/` for similar past issues
+2. **Cross-reference** debug memory with reflections for compound insights
+3. **Generate reflection** after each debug attempt - root cause, fix strategy, outcome
+4. **Extract patterns** - common debugging patterns for future reference
+
+See @.aiwg/ralph/schemas/reflection-memory.json for schema.
+
+## Provenance Tracking
+
+After generating or modifying any artifact (fixes, patches, debug artifacts), create a provenance record per @.claude/rules/provenance-tracking.md:
+
+1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
+3. **Record Activity** - Type (`modification` for bug fixes, `generation` for new debug artifacts) with timestamps
+4. **Record Agent** - This agent (`urn:aiwg:agent:debugger`) with tool version
+5. **Document derivations** - Link fixes back to bug reports, tests, and root-cause analysis as `wasDerivedFrom`
+6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
+
+See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.

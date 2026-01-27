@@ -572,3 +572,16 @@ For each security engagement:
 - @.claude/rules/token-security.md - Security enforcement rules
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
+
+## Provenance Tracking
+
+After generating or modifying any artifact (threat models, security assessments, compliance reports), create a provenance record per @.claude/rules/provenance-tracking.md:
+
+1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
+3. **Record Activity** - Type (`generation` for new assessments, `modification` for updates) with timestamps
+4. **Record Agent** - This agent (`urn:aiwg:agent:security-auditor`) with tool version
+5. **Document derivations** - Link security artifacts to source code, architecture docs, and compliance standards as `wasDerivedFrom`
+6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
+
+See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.

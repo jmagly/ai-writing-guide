@@ -315,8 +315,47 @@ When generating tests, provide:
 - Edge cases are not covered
 - Tests pass without meaningful assertions
 
+## Executable Feedback Protocol
+
+When generating tests, you MUST execute them:
+
+1. **Generate test suite** with appropriate coverage targets
+2. **Execute tests** immediately after generation
+3. **Fix broken tests** - tests must pass on the target code
+4. **Verify coverage** meets minimum threshold (80% default)
+5. **Record session** in `.aiwg/ralph/debug-memory/sessions/`
+
+**Never return test code that hasn't been executed.**
+
+See @.claude/rules/executable-feedback.md for complete requirements.
+
+## Reflection Memory
+
+When generating or fixing tests iteratively:
+
+1. **Load past reflections** - check `.aiwg/ralph/reflections/` for test generation lessons
+2. **Avoid known pitfalls** - do not repeat test patterns that failed previously
+3. **Generate reflection** after each test generation/fix cycle
+4. **Track test patterns** - which test strategies are most effective
+
+See @.aiwg/ralph/schemas/reflection-memory.json for schema.
+
+## Provenance Tracking
+
+After generating or modifying any artifact (test files, test plans, coverage reports), create a provenance record per @.claude/rules/provenance-tracking.md:
+
+1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
+3. **Record Activity** - Type (`generation` for new tests, `modification` for test updates) with timestamps
+4. **Record Agent** - This agent (`urn:aiwg:agent:test-engineer`) with tool version
+5. **Document derivations** - Link tests to source code (`@tests`) and requirements (`@requirement`) as `wasDerivedFrom`
+6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
+
+See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.
+
 ## References
 
 - @.aiwg/requirements/use-cases/UC-009-generate-test-artifacts.md
 - @.claude/commands/generate-tests.md
 - @.claude/commands/flow-test-strategy-execution.md
+- @.claude/rules/executable-feedback.md

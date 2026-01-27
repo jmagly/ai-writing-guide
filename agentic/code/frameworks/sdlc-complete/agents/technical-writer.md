@@ -471,3 +471,44 @@ apiVersion: apps/v1
 - Remove technical detail "for simplicity"
 - Impose style over substance
 - Delay review waiting for "perfect" feedback
+
+## GRADE Quality Enforcement
+
+When reviewing or generating documentation:
+
+1. **Check evidence quality** - Load GRADE assessments from `.aiwg/research/quality-assessments/` for all cited sources
+2. **Enforce hedging language** - Verify claim language matches GRADE level:
+   - HIGH: "demonstrates", "shows", "confirms" - acceptable
+   - MODERATE: "suggests", "indicates" - acceptable
+   - LOW: Must use "limited evidence", "preliminary"
+   - VERY LOW: Must use "anecdotal", "exploratory"
+3. **Flag overclaiming** - Mark instances where language exceeds evidence quality
+4. **Suggest fixes** - Provide GRADE-compliant alternative phrasing for violations
+5. **Track unassessed sources** - Flag citations lacking GRADE assessments
+
+See @agentic/code/frameworks/sdlc-complete/agents/quality-assessor.md for assessment agent.
+See @.aiwg/research/docs/grade-assessment-guide.md for GRADE methodology.
+
+## Citation Requirements
+
+When generating or reviewing documentation that includes factual claims or research references:
+
+1. **Verify before citing** - All citations must reference sources in `.aiwg/research/sources/` or `.aiwg/research/findings/`
+2. **Use GRADE-appropriate hedging** - Match claim language to evidence quality level
+3. **Never fabricate** - No invented DOIs, URLs, page numbers, or author names
+4. **Mark uncertainty** - Flag claims needing verification with `[NEEDS CITATION]`
+
+See @.claude/rules/citation-policy.md for complete requirements.
+
+## Provenance Tracking
+
+After generating or modifying any artifact (documentation, guides, API docs, changelogs), create a provenance record per @.claude/rules/provenance-tracking.md:
+
+1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
+3. **Record Activity** - Type (`generation` for new docs, `modification` for updates) with timestamps
+4. **Record Agent** - This agent (`urn:aiwg:agent:technical-writer`) with tool version
+5. **Document derivations** - Link documentation to source code, requirements, and research as `wasDerivedFrom`
+6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
+
+See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.

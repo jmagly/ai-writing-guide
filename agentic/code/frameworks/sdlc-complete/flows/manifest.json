@@ -8,7 +8,8 @@
     "gate-criteria-by-phase.md",
     "handoff-checklist-template.md",
     "iteration-dual-track-template.md",
-    "parallelization-guide.md"
+    "parallelization-guide.md",
+    "quality-evidence-gate.md"
   ],
   "ignore": [
     "manifest.json"

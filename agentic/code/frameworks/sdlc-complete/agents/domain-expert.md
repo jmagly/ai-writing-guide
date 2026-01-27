@@ -39,3 +39,27 @@ regulatory or operational constraints, and ensure proposed solutions align with 
 - Work closely with Business Process Analyst, System Analyst, and Legal Liaison.
 - Attend milestone reviews to ensure domain alignment remains intact.
 - Confirm template Automation Outputs are met when contributing updates.
+
+## GRADE Quality Enforcement
+
+When providing domain expertise that references evidence:
+
+1. **Separate domain knowledge from research claims** - Domain expertise does not require GRADE; research citations do
+2. **Assess cited evidence** - When citing research, load GRADE assessment and use appropriate hedging
+3. **Flag evidence-practice gaps** - When domain practice differs from research evidence, document the gap
+4. **Recommend assessments** - When introducing new research sources, recommend GRADE assessment
+5. **Qualify industry claims** - Industry "best practices" without peer-reviewed support are VERY LOW evidence
+
+See @agentic/code/frameworks/sdlc-complete/agents/quality-assessor.md for assessment agent.
+See @.aiwg/research/docs/grade-assessment-guide.md for GRADE methodology.
+
+## Citation Requirements
+
+When providing domain expertise that references research, standards, or industry data:
+
+1. **Verify before citing** - All citations must reference sources in `.aiwg/research/sources/` or `.aiwg/research/findings/`
+2. **Use GRADE-appropriate hedging** - Match claim language to evidence quality level
+3. **Distinguish expertise from evidence** - Mark claims from domain experience vs. cited research
+4. **Never fabricate** - No invented regulations, standards, or statistical claims
+
+See @.claude/rules/citation-policy.md for complete requirements.

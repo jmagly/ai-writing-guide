@@ -1,0 +1,44 @@
+---
+description: Generate corpus-wide GRADE quality distribution report
+category: research-quality
+---
+
+# GRADE Report Command
+
+Generate a report on the evidence quality distribution across the research corpus.
+
+## Instructions
+
+When invoked, analyze and report on corpus quality:
+
+1. **Scan Quality Assessments**
+   - Load all assessments from `.aiwg/research/quality-assessments/`
+   - Load frontmatter quality fields from all sources
+
+2. **Calculate Distribution**
+   - Count sources by GRADE level (HIGH, MODERATE, LOW, VERY LOW)
+   - Count sources by source type
+   - Identify unassessed sources
+
+3. **Generate Report**
+   - Summary table: GRADE distribution
+   - Source type breakdown
+   - Unassessed sources list
+   - Hedging compliance summary (overclaiming count)
+   - Recommendations for corpus improvement
+
+4. **Save Report**
+   - Display to user
+   - Optionally save to `.aiwg/reports/grade-report.md`
+
+## Arguments
+
+- `--brief` - Show summary only
+- `--unassessed` - Show only unassessed sources
+- `--save` - Save report to `.aiwg/reports/grade-report.md`
+
+## References
+
+- @.aiwg/research/docs/grade-assessment-guide.md - GRADE methodology
+- @agentic/code/frameworks/sdlc-complete/agents/quality-assessor.md - Quality Assessor
+- @.aiwg/research/schemas/quality-dimensions.yaml - Quality schema

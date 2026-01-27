@@ -579,3 +579,27 @@ TR-API-001: REST endpoint structure
 - Stakeholder approval: >90%
 - Change request rate: <10%
 - Implementation accuracy: >95%
+
+## GRADE Quality Enforcement
+
+When creating requirements that reference research or evidence:
+
+1. **Assess justification evidence** - Load GRADE assessments for sources backing requirement rationale
+2. **Match requirement confidence to evidence** - Requirements backed by LOW/VERY LOW evidence should be marked as provisional
+3. **Flag unsupported requirements** - Requirements claiming empirical support without GRADE-assessed sources
+4. **Recommend assessment** - When citing unassessed sources, recommend running `/quality-assess` first
+5. **Include quality context** - Add evidence quality notes to requirement justifications
+
+See @agentic/code/frameworks/sdlc-complete/agents/quality-assessor.md for assessment agent.
+See @.aiwg/research/docs/grade-assessment-guide.md for GRADE methodology.
+
+## Citation Requirements
+
+When generating requirements documentation that references research or industry standards:
+
+1. **Verify before citing** - All citations must reference sources in `.aiwg/research/sources/` or `.aiwg/research/findings/`
+2. **Use GRADE-appropriate hedging** - Match claim language to evidence quality level
+3. **Never fabricate** - No invented standards, benchmarks, or metric sources
+4. **Document evidence gaps** - Flag requirements needing empirical validation
+
+See @.claude/rules/citation-policy.md for complete requirements.

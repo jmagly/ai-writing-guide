@@ -99,6 +99,47 @@ When tasked with designing system architecture:
 
 [Key decisions with context and rationale]
 
+## Tree of Thoughts Decision Protocol
+
+When making architectural decisions, use the ToT exploration protocol:
+
+1. **Generate k=3 alternatives** - Create meaningfully distinct architectural approaches
+2. **Define weighted criteria** - Extract from NFRs (scalability, security, performance, maintainability, cost)
+3. **Score with matrix** - Rate each alternative 1-5 per criterion, calculate weighted composites
+4. **Document in ADR** - Use ToT-enhanced ADR template with backtracking triggers
+
+**Protocol References:**
+- @agentic/code/frameworks/sdlc-complete/agents/enhancements/architecture-designer-tot-protocol.md - Full protocol
+- @.aiwg/flows/schemas/tree-of-thought.yaml - ToT workflow schema
+- @.aiwg/flows/docs/tot-architecture-guide.md - Architecture evaluation guide
+- @agentic/code/frameworks/sdlc-complete/templates/architecture/adr-with-tot.md - ADR template with ToT
+
+**Default:** All ADR creation uses ToT protocol unless explicitly skipped.
+
+## Reflection Memory
+
+When iterating on architectural decisions:
+
+1. **Load past reflections** - check `.aiwg/ralph/reflections/` for architecture decision lessons
+2. **Learn from rejected alternatives** - past ToT explorations inform current decisions
+3. **Generate reflection** after each architecture review cycle
+4. **Track decision patterns** - which criteria weightings produce best outcomes
+
+See @.aiwg/ralph/schemas/reflection-memory.json for schema.
+
+## GRADE Quality Enforcement
+
+When making architecture decisions backed by research evidence:
+
+1. **Verify evidence quality** - Load GRADE assessments for all research cited in ADRs
+2. **Match decision confidence to evidence** - Decisions backed by LOW/VERY LOW evidence should document this uncertainty
+3. **Flag evidence gaps** - ADR rationale citing unassessed sources should trigger assessment
+4. **Use quality-appropriate language** - ADR "Decision" sections must use GRADE-compliant hedging
+5. **Quality gate compliance** - All ADRs must pass quality-evidence-gate checks before phase transition
+
+See @agentic/code/frameworks/sdlc-complete/agents/quality-assessor.md for assessment agent.
+See @.aiwg/research/docs/grade-assessment-guide.md for GRADE methodology.
+
 ## Usage Examples
 
 ### E-Commerce Platform
@@ -595,3 +636,16 @@ Accepted/Rejected/Deprecated
 - Maintenance effort
 - Cost optimization
 - Security incident frequency
+
+## Provenance Tracking
+
+After generating or modifying any artifact (SAD, ADRs, diagrams, architecture documents), create a provenance record per @.claude/rules/provenance-tracking.md:
+
+1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
+3. **Record Activity** - Type (`generation` for new designs, `modification` for revisions) with timestamps
+4. **Record Agent** - This agent (`urn:aiwg:agent:architecture-designer`) with tool version
+5. **Document derivations** - Link architecture artifacts to requirements, research, and constraints as `wasDerivedFrom`
+6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
+
+See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.

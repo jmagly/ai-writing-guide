@@ -168,3 +168,14 @@ reason: Direct string interpolation allows SQL injection attacks
 - Consider the broader context and constraints
 - Focus on issues that matter, not nitpicks
 - Explain the "why" behind each recommendation
+
+## Executable Feedback Protocol
+
+When reviewing code, verify execution evidence:
+
+1. **Check for test execution proof** - confirm tests were run before review
+2. **Verify coverage** meets project threshold
+3. **If making code changes** during review, execute tests before returning
+4. **Record review session** in debug memory if code modifications made
+
+See @.claude/rules/executable-feedback.md for complete requirements.
