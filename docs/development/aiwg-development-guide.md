@@ -1,0 +1,421 @@
+# AIWG Development Guide
+
+The authoritative reference for enhancing, expanding, and developing AIWG components. Read this before designing any new capability.
+
+## What AIWG Actually Is
+
+AIWG is an **operational framework**, not a documentation project. It deploys specialized agents, manages artifacts, orchestrates workflows, and tracks state. Every component must be integrated into this operational system to function.
+
+Writing a guide, schema, or rule file is **necessary but not sufficient**. A component exists in AIWG only when it is:
+
+1. **Created** in the correct source location
+2. **Registered** in the appropriate manifest or registry
+3. **Wired** into agents, commands, or hooks that invoke it
+4. **Deployable** via `aiwg use` to platform-specific folders
+
+If you create a schema file but no agent references it, it does nothing. If you write a rule but no hook enforces it, it's aspirational prose. Integration is the whole point.
+
+## Architecture Mental Model
+
+### Three-Tier Plugin Taxonomy
+
+| Tier | Scale | Standalone | Source Location | Example |
+|------|-------|------------|-----------------|---------|
+| **Framework** | Large (50+ agents) | Yes | `agentic/code/frameworks/` | sdlc-complete, media-marketing-kit |
+| **Extension** | Medium (5-20 agents) | No (requires parent framework) | `frameworks/{id}/extensions/` | gdpr, hipaa, sox |
+| **Addon** | Small (1-10 agents) | Yes | `agentic/code/addons/` | aiwg-utils, voice-framework |
+
+**When to use each:**
+
+- **Framework**: Complete lifecycle solution (e.g., full SDLC, marketing operations)
+- **Extension**: Domain-specific additions to an existing framework (e.g., HIPAA compliance for SDLC)
+- **Addon**: Standalone utilities that work anywhere (e.g., voice profiles, validation tools)
+
+For full details: @docs/development/devkit-overview.md
+
+### 10 Extension Types
+
+| Type | Purpose | Key Characteristic |
+|------|---------|-------------------|
+| **agent** | Specialized AI personas | Has role, model tier, tools |
+| **command** | CLI and slash commands | User-invocable action |
+| **skill** | Natural language workflows | Auto-triggered by patterns |
+| **hook** | Lifecycle event handlers | Fires on events (pre-session, post-write) |
+| **tool** | External utilities | Shell commands, scripts |
+| **mcp-server** | MCP protocol servers | Standalone server process |
+| **framework** | Complete workflows | Contains agents, commands, templates |
+| **addon** | Feature bundles | Standalone package |
+| **template** | Document templates | Scaffolding for artifacts |
+| **prompt** | Reusable prompts | Parameterized prompt text |
+
+For full schema details: @docs/extensions/overview.md and @docs/extensions/extension-types.md
+
+### Source vs Deployment (The Golden Rule)
+
+**Never directly edit platform-specific folders** (`.claude/`, `.factory/`, `.codex/`, `.cursor/`, `.opencode/`).
+
+```
+Source (you edit)                    CLI Deploy              Platform (don't edit)
+────────────────                     ──────────              ────────────────────
+agentic/code/frameworks/      →     aiwg use sdlc     →    .claude/agents/
+agentic/code/addons/          →     aiwg use sdlc     →    .factory/droids/
+agentic/code/agents/          →     aiwg use sdlc     →    .cursor/rules/
+```
+
+For complete placement rules: @docs/development/file-placement-guide.md
+
+## The Component Lifecycle
+
+Every AIWG component follows this lifecycle:
+
+```
+Design → Scaffold → Implement → Wire → Test → Deploy
+```
+
+**The common mistake** is stopping after Implement. Issues #94-#104 demonstrated this pattern: schemas, guides, and rules were written but never wired into the operational system. The result was inert documentation.
+
+### Stage 1: Design
+
+Decide what you're building and where it fits:
+
+- What extension type(s) does this require?
+- Which framework or addon does it belong to?
+- What agents need to know about it?
+- How will users invoke it?
+
+### Stage 2: Scaffold
+
+Use tooling to create the file structure:
+
+```bash
+# CLI scaffolding (outside sessions)
+aiwg scaffold-addon my-addon
+aiwg add-agent my-agent --to my-addon
+aiwg add-command my-command --to my-addon
+
+# In-session commands (inside Claude Code)
+/devkit-create-agent my-agent --to my-addon
+/devkit-create-command my-command --to my-addon
+```
+
+For all scaffolding commands: @docs/development/devkit-overview.md
+
+### Stage 3: Implement
+
+Write the actual content — agent definitions, command logic, schema files, rule files, templates.
+
+### Stage 4: Wire (THE CRITICAL STAGE)
+
+This is where most implementations fail. See the next section for details.
+
+### Stage 5: Test
+
+- Deploy with `aiwg use` and verify components appear
+- Invoke commands and confirm behavior
+- Check that agents reference new capabilities
+- Validate with `aiwg validate-metadata`
+
+### Stage 6: Deploy
+
+```bash
+aiwg use sdlc                        # Deploy to Claude Code
+aiwg use sdlc --provider copilot     # Deploy to GitHub Copilot
+aiwg use sdlc --provider cursor      # Deploy to Cursor
+```
+
+## What "Wired" Means
+
+A component is wired when it is connected to the operational system so that agents, commands, or hooks can actually use it. Here is what wiring looks like for each integration point:
+
+### Agent Wiring
+
+Agents are the primary consumers of AIWG capabilities. If you create a schema, rule, or template, at least one agent must know about it.
+
+**What to do:**
+
+1. Update the relevant agent definition(s) in `agentic/code/frameworks/{framework}/agents/`
+2. Add references in the agent's `## References` section
+3. Add relevant rules to the agent's instruction set
+4. Update `manifest.json` if adding new agent capabilities
+
+**Example:** You create a new schema `.aiwg/flows/schemas/tree-of-thought.yaml`. To wire it:
+
+```markdown
+# In agentic/code/frameworks/sdlc-complete/agents/architecture-designer.md
+
+## Schemas
+- @.aiwg/flows/schemas/tree-of-thought.yaml — Tree-of-thought exploration for architecture decisions
+
+## Instructions
+When evaluating architecture alternatives with >3 options, use the Tree-of-Thought
+schema to structure parallel exploration...
+```
+
+### Command Wiring
+
+If a capability should be user-invocable, it needs a command.
+
+**What to do:**
+
+1. Create command definition in `agentic/code/frameworks/{framework}/commands/` or `agentic/code/addons/{addon}/commands/`
+2. Add to `manifest.json` commands array
+3. Ensure the command references the underlying implementation
+
+**Example:** You create a GRADE assessment guide. To make it invocable:
+
+```markdown
+# agentic/code/frameworks/sdlc-complete/commands/grade-assess.md
+
+# /grade-assess
+
+Assess evidence quality using GRADE methodology.
+
+## Behavior
+1. Load @.aiwg/research/docs/grade-assessment-guide.md
+2. Load target artifact
+3. Apply GRADE assessment framework
+4. Output quality rating with justification
+```
+
+### Schema Wiring
+
+Schemas define data contracts. They must be referenced by the agents or commands that produce/consume them.
+
+**What to do:**
+
+1. Create schema in appropriate location (`.aiwg/flows/schemas/`, `.aiwg/ralph/schemas/`, `.aiwg/research/schemas/`)
+2. Reference from agent definitions that produce/consume this data
+3. Reference from any validation commands
+4. Add to relevant rule files that enforce the schema
+
+### Rule Wiring
+
+Rules in `.claude/rules/` are path-scoped and auto-loaded, but they are only effective if agents are instructed to follow them.
+
+**What to do:**
+
+1. Create rule file in `.claude/rules/`
+2. Reference from relevant agent definitions
+3. If rule requires enforcement, create or update a hook
+4. Add to quality gate checks if applicable
+
+### Template Wiring
+
+Templates provide scaffolding for artifacts.
+
+**What to do:**
+
+1. Create template in `agentic/code/frameworks/{framework}/templates/`
+2. Register in `manifest.json` templates array
+3. Reference from agents that generate this artifact type
+4. Ensure `aiwg add-template` can find it
+
+### Hook Wiring
+
+Hooks fire on lifecycle events (pre-session, post-write, etc.).
+
+**What to do:**
+
+1. Define hook in addon or framework
+2. Register trigger conditions
+3. Add to `manifest.json` hooks array
+4. Test that the hook fires on the expected event
+
+### The Anti-Pattern: Documentation-Only
+
+This is what issues #94-#104 produced:
+
+```
+Created:
+  ✓ .aiwg/flows/schemas/tree-of-thought.yaml
+  ✓ .aiwg/flows/docs/tot-architecture-guide.md
+  ✓ .claude/rules/tot-exploration.md
+
+Missing (the wiring):
+  ✗ No agent definition references the schema
+  ✗ No command invokes the guide
+  ✗ No hook enforces the rule
+  ✗ No manifest.json entry
+  ✗ No test verifies integration
+```
+
+The schema exists but nothing uses it. The guide exists but no agent reads it. The rule exists but nothing enforces it. This is documentation, not integration.
+
+## Creation Guides by Type
+
+| Creating... | Detailed Guide | Key Files |
+|-------------|---------------|-----------|
+| Agent | @docs/extensions/creating-extensions.md | `agents/*.md`, `manifest.json` |
+| Command | @docs/extensions/creating-extensions.md | `commands/*.md`, `manifest.json` |
+| Skill | @docs/development/skill-creation-guide.md | `skills/*/SKILL.md` |
+| Addon | @docs/development/addon-creation-guide.md | `manifest.json`, `README.md`, `agents/`, `commands/` |
+| Framework | @docs/development/framework-creation-guide.md | `manifest.json`, `agents/`, `commands/`, `templates/` |
+| Extension (expansion pack) | @docs/development/extension-creation-guide.md | Parent framework's `extensions/` directory |
+| Template | @docs/extensions/creating-extensions.md | `templates/*.md` |
+
+For a complete end-to-end walkthrough: @docs/development/walkthrough-create-addon.md
+
+## Tooling
+
+### CLI Scaffolding (Outside Sessions)
+
+```bash
+# Create packages
+aiwg scaffold-addon <name>                          # New standalone addon
+aiwg scaffold-extension <name> --for <framework>    # New extension for framework
+aiwg scaffold-framework <name>                      # New complete framework
+
+# Add components to packages
+aiwg add-agent <name> --to <target>                 # Add agent definition
+aiwg add-command <name> --to <target>               # Add command definition
+aiwg add-skill <name> --to <target>                 # Add skill definition
+aiwg add-template <name> --to <target>              # Add document template
+
+# Validate
+aiwg validate-metadata                              # Check all extension metadata
+```
+
+### In-Session Commands (Inside Claude Code)
+
+```bash
+/devkit-create-addon <name>                         # Interactive addon creation
+/devkit-create-agent <name> --to <target>           # Interactive agent creation
+/devkit-create-command <name> --to <target>         # Interactive command creation
+/devkit-create-skill <name>                         # Interactive skill creation
+/devkit-validate <path>                             # Validate package structure
+```
+
+### Smithing (On-Demand Creation)
+
+Smiths create assets on-demand during a session without polluting your conversation context:
+
+| Smith | Creates | Deploys To |
+|-------|---------|------------|
+| ToolSmith | Shell scripts, OS tools | `.aiwg/smiths/toolsmith/` |
+| MCPSmith | Dockerized MCP servers | `.aiwg/smiths/mcpsmith/` |
+| AgentSmith | Agent definitions | `.claude/agents/` |
+| SkillSmith | Skill definitions | `.claude/skills/` |
+| CommandSmith | Command definitions | `.claude/commands/` |
+
+For full smithing docs: @docs/smithing/README.md
+
+## Integration Checklist
+
+Use this checklist for every new component. Not all items apply to every type — use judgment.
+
+### Source & Structure
+
+- [ ] Files created in correct source location (not platform folders)
+- [ ] `manifest.json` updated with new entries (if package-level change)
+- [ ] README updated to document new capability
+
+### Wiring
+
+- [ ] At least one agent definition references the new component
+- [ ] Command or skill created if capability should be user-invocable
+- [ ] Rule file created if behavioral constraint applies
+- [ ] Hook defined if automatic enforcement needed
+- [ ] Template added if artifact scaffolding needed
+- [ ] Schema registered if data contract defined
+
+### Cross-References
+
+- [ ] @-mentions added connecting new files to related artifacts
+- [ ] Bidirectional links established (forward and backward)
+- [ ] References section in new files points to dependencies
+
+### Validation & Deployment
+
+- [ ] `aiwg validate-metadata` passes
+- [ ] `aiwg use sdlc` deploys without errors
+- [ ] Component appears in deployed platform folder
+- [ ] Command/skill/agent is invocable after deployment
+
+## Platform Deployment
+
+Components flow from source to platform-specific folders via `aiwg use`:
+
+| Platform | Command | Deployment Target |
+|----------|---------|-------------------|
+| Claude Code | `aiwg use sdlc` | `.claude/agents/`, `.claude/commands/` |
+| GitHub Copilot | `aiwg use sdlc --provider copilot` | `.github/agents/`, `copilot-instructions.md` |
+| Cursor | `aiwg use sdlc --provider cursor` | `.cursor/rules/` |
+| Factory AI | `aiwg use sdlc --provider factory` | `.factory/droids/`, `AGENTS.md` |
+| Warp Terminal | `aiwg use sdlc --provider warp` | `WARP.md` |
+| OpenAI/Codex | `aiwg use sdlc --provider codex` | `.codex/agents/` |
+| OpenCode | `aiwg use sdlc --provider opencode` | `.opencode/agent/` |
+| Windsurf | `aiwg use sdlc --provider windsurf` | `.windsurfrules` |
+
+For cross-platform details: @docs/integrations/cross-platform-overview.md
+
+## Existing Documentation Index
+
+All development documentation, organized by topic.
+
+### Architecture & Concepts
+
+| Document | Description |
+|----------|-------------|
+| @docs/extensions/overview.md | Unified extension schema, 10 types, platform compatibility |
+| @docs/extensions/extension-types.md | Complete TypeScript schema reference for all types |
+| @docs/development/devkit-overview.md | Three-tier taxonomy, CLI and in-session tooling |
+| @docs/development/file-placement-guide.md | Source vs deployment locations, the golden rule |
+
+### Creation Guides
+
+| Document | Description |
+|----------|-------------|
+| @docs/extensions/creating-extensions.md | Step-by-step creation for agents, commands, skills, templates |
+| @docs/development/addon-creation-guide.md | Standalone addon creation and distribution |
+| @docs/development/framework-creation-guide.md | Complete framework lifecycle (phases, agents, commands) |
+| @docs/development/extension-creation-guide.md | Expansion packs for existing frameworks |
+| @docs/development/skill-creation-guide.md | Auto-triggering skills with pattern matching |
+| @docs/development/walkthrough-create-addon.md | End-to-end walkthrough building a code-metrics addon |
+
+### Smithing & On-Demand Creation
+
+| Document | Description |
+|----------|-------------|
+| @docs/smithing/README.md | Smithing framework overview and all smith types |
+| @docs/smithing/toolsmith.md | Shell/OS tool creation |
+| @docs/smithing/mcpsmith.md | Dockerized MCP server creation |
+| @docs/smithing/agentic-smiths.md | AgentSmith, SkillSmith, CommandSmith |
+| @docs/smithing/graduating-creations.md | Promoting smith creations to permanent packages |
+
+### Commands & Agents
+
+| Document | Description |
+|----------|-------------|
+| @docs/cli-reference.md | All 31 CLI commands with usage |
+| @docs/commands/DEVELOPMENT_GUIDE.md | Advanced command development, testing, optimization |
+| @docs/commands/subagents-and-commands-guide.md | Subagent patterns for command implementations |
+| @docs/development/skill-inventory.md | Catalog of available skills |
+
+### Contributing & Integration
+
+| Document | Description |
+|----------|-------------|
+| @docs/contributing/contributor-quickstart.md | First-time contributor onboarding |
+| @docs/integrations/claude-code-quickstart.md | Claude Code plugin installation |
+| @docs/integrations/cross-platform-overview.md | Multi-platform deployment overview |
+| @docs/integrations/cross-platform-config.md | Platform-specific configuration |
+
+### Source Code Reference
+
+| File | Description |
+|------|-------------|
+| @src/extensions/types.ts | Core TypeScript type definitions (1,328 lines) |
+| @src/extensions/registry.ts | Extension registry with O(1) lookup |
+| @src/extensions/commands/definitions.ts | All 31 command definitions |
+| @src/extensions/validation.ts | Extension validation rules |
+| @src/extensions/capability-index.ts | Semantic search by capability |
+| @src/extensions/loader.ts | Extension discovery and loading |
+
+## References
+
+- @docs/extensions/overview.md - Extension system architecture
+- @docs/development/devkit-overview.md - Development Kit overview
+- @docs/development/file-placement-guide.md - Source vs deployment locations
+- @docs/smithing/README.md - On-demand asset creation
+- @docs/cli-reference.md - Complete CLI command reference
+- @src/extensions/types.ts - Core type definitions

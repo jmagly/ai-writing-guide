@@ -231,6 +231,7 @@ aiwg ralph-resume            # Resume paused loop
 
 | Topic | Location |
 |-------|----------|
+| **AIWG Development Guide** | `@docs/development/aiwg-development-guide.md` |
 | **CLI Reference** | `@docs/cli-reference.md` |
 | **Extension System** | `@docs/extensions/overview.md` |
 | **Creating Extensions** | `@docs/extensions/creating-extensions.md` |
