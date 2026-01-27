@@ -1,0 +1,321 @@
+# Actionable Feedback Schema
+# Based on REF-015 Self-Refine (NeurIPS 2023)
+# Finding: 94% of failures due to bad feedback, not bad refinement
+# Issue: #95
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/actionable-feedback/v1"
+title: "Actionable Feedback Schema"
+description: |
+  Structured format for iteration feedback following Self-Refine principles.
+  Key insight: "Specific, actionable feedback yields superior results"
+
+type: object
+required:
+  - id
+  - timestamp
+  - iteration
+  - target
+  - feedback_items
+  - overall_assessment
+
+properties:
+  id:
+    type: string
+    format: uuid
+    description: "Unique feedback identifier"
+
+  timestamp:
+    type: string
+    format: date-time
+    description: "When feedback was generated"
+
+  iteration:
+    type: object
+    required: [number, max, phase]
+    properties:
+      number:
+        type: integer
+        minimum: 1
+        description: "Current iteration number"
+      max:
+        type: integer
+        minimum: 1
+        description: "Maximum allowed iterations"
+      phase:
+        type: string
+        enum: [initial, refinement, final]
+        description: "Current refinement phase"
+
+  target:
+    type: object
+    required: [type, path]
+    properties:
+      type:
+        type: string
+        enum: [code, document, artifact, configuration, test, schema]
+        description: "Type of artifact being reviewed"
+      path:
+        type: string
+        description: "File path or artifact identifier"
+      version:
+        type: string
+        description: "Version or commit hash"
+      context:
+        type: string
+        description: "Additional context about the target"
+
+  feedback_items:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/FeedbackItem"
+    description: "List of specific feedback items"
+
+  overall_assessment:
+    type: object
+    required: [score, verdict, summary]
+    properties:
+      score:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Overall quality score (0-1)"
+      verdict:
+        type: string
+        enum: [accept, refine, reject, escalate]
+        description: "Recommended action"
+      summary:
+        type: string
+        minLength: 50
+        maxLength: 500
+        description: "Brief summary of assessment"
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Confidence in this assessment"
+
+  quality_tracking:
+    type: object
+    description: "Feedback quality metrics"
+    properties:
+      feedback_followed:
+        type: boolean
+        description: "Was this feedback followed in next iteration?"
+      improvement_observed:
+        type: boolean
+        description: "Did following feedback improve the artifact?"
+      improvement_delta:
+        type: number
+        description: "Score change from following feedback"
+      feedback_clarity_score:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "How clear was this feedback? (retrospective)"
+
+$defs:
+  FeedbackItem:
+    type: object
+    required:
+      - aspect
+      - severity
+      - issue
+      - location
+      - suggestion
+    properties:
+      aspect:
+        type: string
+        enum:
+          - correctness
+          - completeness
+          - clarity
+          - consistency
+          - efficiency
+          - security
+          - style
+          - documentation
+          - testability
+          - maintainability
+        description: "Quality aspect being addressed"
+
+      severity:
+        type: string
+        enum: [critical, major, minor, suggestion]
+        description: "Impact severity"
+
+      score:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Score for this aspect (0=poor, 1=excellent)"
+
+      issue:
+        type: string
+        minLength: 20
+        maxLength: 500
+        description: |
+          Clear description of the problem.
+          MUST be specific, not vague.
+          BAD: "Code could be better"
+          GOOD: "Function lacks input validation for null parameters"
+
+      location:
+        type: object
+        required: [type, reference]
+        description: |
+          REQUIRED: Specific location of the issue.
+          Self-Refine finding: Location specificity correlates with fix success.
+        properties:
+          type:
+            type: string
+            enum: [line, range, function, section, element, path]
+          reference:
+            type: string
+            description: "Line number, function name, section heading, etc."
+          context_before:
+            type: string
+            description: "Text/code immediately before the issue"
+          context_after:
+            type: string
+            description: "Text/code immediately after the issue"
+
+      suggestion:
+        type: object
+        required: [action, rationale]
+        description: |
+          REQUIRED: Actionable suggestion for improvement.
+          Self-Refine finding: Suggestions must be actionable, not advisory.
+        properties:
+          action:
+            type: string
+            minLength: 20
+            maxLength: 1000
+            description: |
+              Specific action to take.
+              BAD: "Consider improving this"
+              GOOD: "Replace the for loop with Array.map() for better readability"
+          rationale:
+            type: string
+            minLength: 20
+            maxLength: 500
+            description: "Why this action will improve the artifact"
+          example:
+            type: string
+            description: "Optional: Example of the improved version"
+          priority:
+            type: integer
+            minimum: 1
+            maximum: 10
+            description: "Priority order for addressing (1=highest)"
+
+      evidence:
+        type: object
+        description: "Supporting evidence for this feedback"
+        properties:
+          test_result:
+            type: string
+            description: "Relevant test output"
+          metric:
+            type: string
+            description: "Relevant metric value"
+          reference:
+            type: string
+            description: "Reference to best practice or standard"
+
+# Examples demonstrating proper usage
+examples:
+  - id: "fb-001-example"
+    timestamp: "2026-01-25T15:00:00Z"
+    iteration:
+      number: 2
+      max: 5
+      phase: refinement
+    target:
+      type: code
+      path: "src/auth/validate.ts"
+      version: "abc123"
+    feedback_items:
+      - aspect: security
+        severity: critical
+        score: 0.3
+        issue: "Function validateToken() does not sanitize input before regex evaluation, creating potential ReDoS vulnerability"
+        location:
+          type: function
+          reference: "validateToken()"
+          context_before: "export function validateToken(token: string)"
+        suggestion:
+          action: "Add input length check (max 1000 chars) and use linear-time validation instead of regex"
+          rationale: "Prevents exponential backtracking in regex engine on malicious input"
+          example: |
+            if (token.length > 1000) throw new ValidationError('Token too long');
+            return token.split('.').length === 3;
+          priority: 1
+      - aspect: completeness
+        severity: major
+        score: 0.5
+        issue: "Missing validation for token expiration timestamp"
+        location:
+          type: line
+          reference: "42-48"
+        suggestion:
+          action: "Add exp claim validation with configurable clock skew tolerance"
+          rationale: "Expired tokens should be rejected to prevent replay attacks"
+          priority: 2
+    overall_assessment:
+      score: 0.4
+      verdict: refine
+      summary: "Critical security issues must be addressed before acceptance. Token validation lacks input sanitization and expiration checking."
+      confidence: 0.9
+
+# Validation rules for feedback quality
+validation_rules:
+  issue_specificity:
+    description: "Issue descriptions must be specific, not vague"
+    forbidden_patterns:
+      - "could be better"
+      - "needs improvement"
+      - "consider changing"
+      - "might want to"
+      - "should probably"
+    required_elements:
+      - specific_problem: "What exactly is wrong"
+      - observable_effect: "What happens as a result"
+
+  suggestion_actionability:
+    description: "Suggestions must be actionable, not advisory"
+    forbidden_patterns:
+      - "think about"
+      - "consider"
+      - "maybe"
+      - "perhaps"
+      - "you might"
+    required_elements:
+      - concrete_action: "Specific change to make"
+      - expected_outcome: "What will improve"
+
+  location_requirement:
+    description: "Location is REQUIRED, not optional"
+    enforcement: strict
+    rationale: "Self-Refine research shows location specificity correlates with successful refinement"
+
+# Integration with Ralph loop
+ralph_integration:
+  memory_key: "feedback_history"
+  window_size: 5
+  quality_tracking:
+    track_follow_rate: true
+    track_improvement_rate: true
+    alert_on_repeated_issues: true
+    alert_threshold: 3
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-015-self-refine.md"
+  implementation:
+    - "#95"
+  related_schemas:
+    - "@.aiwg/ralph/schemas/reflection-memory.json"
+    - "@.aiwg/research/schemas/quality-assessment.yaml"

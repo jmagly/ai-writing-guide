@@ -1,0 +1,339 @@
+# Ralph Iteration Analytics Schema
+# Based on REF-015 Self-Refine Research
+# Issues: #152, #153
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-iteration-analytics/v1"
+title: "Ralph Iteration Analytics Schema"
+description: |
+  Schema for tracking iteration improvement metrics, detecting
+  diminishing returns, and selecting best output per REF-015.
+
+type: object
+required:
+  - version
+  - analytics
+  - best_output_selection
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  analytics:
+    $ref: "#/$defs/AnalyticsConfig"
+
+  best_output_selection:
+    $ref: "#/$defs/BestOutputConfig"
+
+  diminishing_returns:
+    $ref: "#/$defs/DiminishingReturnsConfig"
+
+$defs:
+  AnalyticsConfig:
+    type: object
+    description: "Iteration improvement tracking configuration"
+    properties:
+      storage_path:
+        type: string
+        default: ".aiwg/ralph/analytics/"
+
+      metrics_tracked:
+        type: array
+        items:
+          type: string
+        default:
+          - quality_score
+          - quality_delta
+          - token_count
+          - token_cost
+          - execution_time_ms
+          - verification_status
+
+      export_formats:
+        type: array
+        items:
+          type: string
+          enum: [json, csv, markdown]
+        default: [json, markdown]
+
+  BestOutputConfig:
+    type: object
+    description: "Best output selection (non-monotonic quality handling)"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+        description: "Select best output, not final output"
+
+      selection_criteria:
+        type: string
+        enum:
+          - highest_quality
+          - highest_quality_verified
+          - most_recent_above_threshold
+        default: highest_quality_verified
+
+      quality_threshold:
+        type: number
+        minimum: 0
+        maximum: 100
+        default: 70
+        description: "Minimum quality to consider"
+
+      storage:
+        type: object
+        properties:
+          keep_all_iterations:
+            type: boolean
+            default: true
+          snapshot_format:
+            type: string
+            default: "{loop_id}/iterations/iteration-{n:03d}.json"
+
+  DiminishingReturnsConfig:
+    type: object
+    description: "Diminishing returns detection"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      detection_method:
+        type: string
+        enum:
+          - absolute_threshold
+          - percentage_threshold
+          - moving_average
+          - consecutive_low_delta
+        default: consecutive_low_delta
+
+      thresholds:
+        type: object
+        properties:
+          absolute_delta:
+            type: number
+            default: 5
+            description: "Improvement below this is 'diminishing'"
+          percentage_delta:
+            type: number
+            default: 0.05
+            description: "5% improvement threshold"
+          consecutive_count:
+            type: integer
+            default: 2
+            description: "Stop after N consecutive low-delta iterations"
+
+      recommendation:
+        type: object
+        properties:
+          suggest_stop:
+            type: boolean
+            default: true
+          auto_stop:
+            type: boolean
+            default: false
+          notify_user:
+            type: boolean
+            default: true
+
+# Iteration record schema
+iteration_record:
+  type: object
+  required:
+    - iteration_number
+    - timestamp
+    - quality_score
+  properties:
+    iteration_number:
+      type: integer
+      minimum: 1
+    timestamp:
+      type: string
+      format: date-time
+    quality_score:
+      type: number
+      minimum: 0
+      maximum: 100
+    quality_delta:
+      type: number
+      description: "Change from previous iteration"
+    tokens_used:
+      type: integer
+    token_cost_usd:
+      type: number
+    execution_time_ms:
+      type: integer
+    verification_status:
+      type: string
+      enum: [passed, failed, skipped]
+    output_snapshot_path:
+      type: string
+    reflections:
+      type: array
+      items:
+        type: string
+
+# Loop analytics summary schema
+loop_analytics:
+  type: object
+  required:
+    - loop_id
+    - iterations
+  properties:
+    loop_id:
+      type: string
+    task_description:
+      type: string
+    start_time:
+      type: string
+      format: date-time
+    end_time:
+      type: string
+      format: date-time
+    iterations:
+      type: array
+      items:
+        $ref: "#/iteration_record"
+    total_iterations:
+      type: integer
+    optimal_iteration:
+      type: integer
+      description: "Iteration with highest quality"
+    final_iteration:
+      type: integer
+    selected_iteration:
+      type: integer
+      description: "Iteration returned as output"
+    selection_reason:
+      type: string
+    total_tokens:
+      type: integer
+    total_cost_usd:
+      type: number
+    total_time_ms:
+      type: integer
+    diminishing_returns_detected:
+      type: boolean
+    diminishing_returns_iteration:
+      type: integer
+    quality_trajectory:
+      type: string
+      enum: [improving, stable, declining, fluctuating]
+
+# Report template
+report_template:
+  markdown: |
+    # Ralph Loop Analytics: {loop_id}
+
+    **Task:** {task_description}
+    **Duration:** {start_time} → {end_time}
+
+    ## Summary
+
+    | Metric | Value |
+    |--------|-------|
+    | Total Iterations | {total_iterations} |
+    | Selected Iteration | {selected_iteration} |
+    | Final Quality Score | {final_quality} |
+    | Total Tokens | {total_tokens} |
+    | Total Cost | ${total_cost_usd:.4f} |
+
+    ## Iteration History
+
+    | # | Quality | Delta | Tokens | Cost | Verified |
+    |---|---------|-------|--------|------|----------|
+    {iteration_rows}
+
+    ## Quality Trajectory
+
+    ```
+    {quality_chart}
+    ```
+
+    ## Analysis
+
+    **Best Output:** Iteration {optimal_iteration} (quality: {optimal_quality})
+    **Selected:** Iteration {selected_iteration} ({selection_reason})
+
+    {diminishing_returns_note}
+
+    ## Recommendations
+
+    {recommendations}
+
+# Agent protocol
+agent_protocol:
+  track_iteration:
+    description: "Record metrics for each iteration"
+    triggers:
+      - iteration_complete
+    steps:
+      - capture_quality_score
+      - calculate_delta
+      - count_tokens
+      - record_timing
+      - check_verification
+      - save_output_snapshot
+      - update_analytics
+
+  detect_diminishing_returns:
+    description: "Check for diminishing returns"
+    triggers:
+      - iteration_complete
+    steps:
+      - load_iteration_history
+      - calculate_recent_deltas
+      - apply_detection_method
+      - generate_recommendation
+      - notify_if_detected
+
+  select_best_output:
+    description: "Select best output on loop completion"
+    triggers:
+      - loop_complete
+    steps:
+      - load_all_iterations
+      - filter_by_threshold
+      - rank_by_quality
+      - apply_verification_filter
+      - select_best
+      - log_selection
+
+  generate_report:
+    description: "Generate analytics report"
+    triggers:
+      - loop_complete
+      - manual_request
+    steps:
+      - load_analytics
+      - calculate_summary
+      - generate_trajectory
+      - format_report
+      - save_report
+
+# Performance targets (from REF-015)
+research_targets:
+  optimal_iterations: 3-4
+  diminishing_returns_threshold: "5% improvement"
+  quality_fluctuation_expected: true
+  best_vs_final_selection: "mandatory"
+
+# Default configuration
+defaults:
+  analytics_path: ".aiwg/ralph/analytics/{loop_id}.json"
+  report_path: ".aiwg/ralph/analytics/{loop_id}-report.md"
+  snapshot_path: ".aiwg/ralph/{loop_id}/iterations/"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-015-self-refine.md"
+  implementation:
+    - "#152"  # Iteration analytics
+    - "#153"  # Best output tracking
+  related:
+    - "@tools/ralph-external/"
+    - "@.aiwg/ralph/"
+    - "@.aiwg/research/schemas/quality-dimensions.yaml"

@@ -1,0 +1,528 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/ralph/reflection-memory.json",
+  "title": "Reflexion Episodic Memory Schema",
+  "description": "Structured episodic memory for Ralph loops following Reflexion's three-model architecture (Actor, Evaluator, Self-Reflection). See REF-021 for theoretical foundation.",
+  "type": "object",
+  "required": [
+    "loop_id",
+    "iteration",
+    "timestamp",
+    "actor_output",
+    "evaluator_output",
+    "self_reflection",
+    "memory_metadata"
+  ],
+  "properties": {
+    "loop_id": {
+      "type": "string",
+      "description": "Unique identifier for the Ralph loop (e.g., 'ralph-research-issues-2026-01-25')",
+      "pattern": "^ralph-[a-z0-9-]+$"
+    },
+    "iteration": {
+      "type": "integer",
+      "description": "Zero-indexed iteration number (0 = first attempt)",
+      "minimum": 0
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when reflection was generated"
+    },
+    "task_description": {
+      "type": "string",
+      "description": "Natural language description of the task being attempted"
+    },
+    "actor_output": {
+      "type": "object",
+      "description": "Output from Actor model (Ma): actions taken and code changes made",
+      "required": ["actions", "rationale"],
+      "properties": {
+        "actions": {
+          "type": "array",
+          "description": "Sequence of actions taken in this iteration",
+          "items": {
+            "type": "object",
+            "required": ["type", "description"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "code_modification",
+                  "file_creation",
+                  "file_deletion",
+                  "test_execution",
+                  "command_execution",
+                  "api_call",
+                  "other"
+                ],
+                "description": "Type of action performed"
+              },
+              "description": {
+                "type": "string",
+                "description": "Natural language description of the action"
+              },
+              "file_path": {
+                "type": "string",
+                "description": "Path to file affected by this action (if applicable)"
+              },
+              "changes": {
+                "type": "object",
+                "description": "Details of code changes made",
+                "properties": {
+                  "additions": {
+                    "type": "integer",
+                    "description": "Lines of code added"
+                  },
+                  "deletions": {
+                    "type": "integer",
+                    "description": "Lines of code deleted"
+                  },
+                  "diff": {
+                    "type": "string",
+                    "description": "Unified diff format of changes"
+                  }
+                }
+              },
+              "command": {
+                "type": "string",
+                "description": "Command executed (if type is command_execution)"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When this specific action was taken"
+              }
+            }
+          }
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Actor's reasoning for chosen actions and approach"
+        },
+        "strategy": {
+          "type": "string",
+          "description": "High-level strategy employed in this iteration"
+        },
+        "files_modified": {
+          "type": "array",
+          "description": "List of all files touched in this iteration",
+          "items": {
+            "type": "string"
+          }
+        },
+        "total_changes": {
+          "type": "object",
+          "description": "Aggregate statistics for this iteration",
+          "properties": {
+            "files_changed": {
+              "type": "integer"
+            },
+            "lines_added": {
+              "type": "integer"
+            },
+            "lines_deleted": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "evaluator_output": {
+      "type": "object",
+      "description": "Output from Evaluator model (Me): verification results and error signals",
+      "required": ["passed", "verification_type"],
+      "properties": {
+        "passed": {
+          "type": "boolean",
+          "description": "Whether the iteration passed verification (true = success, false = retry needed)"
+        },
+        "verification_type": {
+          "type": "string",
+          "enum": [
+            "unit_tests",
+            "integration_tests",
+            "type_check",
+            "lint",
+            "compilation",
+            "heuristic",
+            "external_api",
+            "manual_review",
+            "combined"
+          ],
+          "description": "Type of verification performed (follows Reflexion paper Section 3.2)"
+        },
+        "results": {
+          "type": "array",
+          "description": "Individual verification results from external tools",
+          "items": {
+            "type": "object",
+            "required": ["tool", "status"],
+            "properties": {
+              "tool": {
+                "type": "string",
+                "description": "Name of verification tool (e.g., 'npm test', 'tsc', 'eslint')"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pass", "fail", "error", "skip"],
+                "description": "Result status"
+              },
+              "exit_code": {
+                "type": "integer",
+                "description": "Exit code from tool execution"
+              },
+              "stdout": {
+                "type": "string",
+                "description": "Standard output from tool"
+              },
+              "stderr": {
+                "type": "string",
+                "description": "Standard error from tool"
+              },
+              "duration_ms": {
+                "type": "integer",
+                "description": "Execution time in milliseconds"
+              }
+            }
+          }
+        },
+        "errors": {
+          "type": "array",
+          "description": "Structured error information for failed verifications",
+          "items": {
+            "type": "object",
+            "required": ["type", "message"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "syntax_error",
+                  "type_error",
+                  "test_failure",
+                  "lint_error",
+                  "runtime_error",
+                  "logic_error",
+                  "timeout",
+                  "other"
+                ],
+                "description": "Category of error"
+              },
+              "message": {
+                "type": "string",
+                "description": "Error message from verification tool"
+              },
+              "file": {
+                "type": "string",
+                "description": "File where error occurred"
+              },
+              "line": {
+                "type": "integer",
+                "description": "Line number where error occurred"
+              },
+              "column": {
+                "type": "integer",
+                "description": "Column number where error occurred"
+              },
+              "stack_trace": {
+                "type": "string",
+                "description": "Stack trace if available"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["error", "warning", "info"],
+                "description": "Severity level"
+              },
+              "rule": {
+                "type": "string",
+                "description": "Linter rule or test name that failed"
+              }
+            }
+          }
+        },
+        "reward_signal": {
+          "type": "number",
+          "description": "Scalar reward (0.0 = complete failure, 1.0 = complete success). Following Reflexion paper Section 3.2.",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Quantitative metrics from verification",
+          "properties": {
+            "tests_passed": {
+              "type": "integer"
+            },
+            "tests_failed": {
+              "type": "integer"
+            },
+            "tests_total": {
+              "type": "integer"
+            },
+            "coverage_percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "lint_errors": {
+              "type": "integer"
+            },
+            "lint_warnings": {
+              "type": "integer"
+            },
+            "type_errors": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "self_reflection": {
+      "type": "object",
+      "description": "Output from Self-Reflection model (Msr): verbal analysis of what went wrong and lessons learned. This is the core of Reflexion's episodic memory (see REF-021 Section 3.3).",
+      "required": ["reflection_text"],
+      "properties": {
+        "reflection_text": {
+          "type": "string",
+          "description": "Natural language self-reflection following Reflexion pattern: (1) credit assignment - which actions failed, (2) causal reasoning - why they failed, (3) actionable insights - what to do differently. Written in first person."
+        },
+        "credit_assignment": {
+          "type": "object",
+          "description": "Identification of specific failing actions in trajectory",
+          "properties": {
+            "failing_action_indices": {
+              "type": "array",
+              "description": "Indices of actions in actor_output.actions that caused failure",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "root_cause": {
+              "type": "string",
+              "description": "Identified root cause of failure"
+            },
+            "failure_category": {
+              "type": "string",
+              "enum": [
+                "hallucination",
+                "inefficient_planning",
+                "incorrect_assumption",
+                "incomplete_implementation",
+                "edge_case_miss",
+                "integration_error",
+                "configuration_error",
+                "logic_error",
+                "other"
+              ],
+              "description": "Category of failure (inspired by Reflexion AlfWorld error analysis)"
+            }
+          }
+        },
+        "causal_reasoning": {
+          "type": "string",
+          "description": "Explanation of why the identified actions led to failure"
+        },
+        "actionable_insights": {
+          "type": "array",
+          "description": "Specific concrete steps to take in next iteration",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lessons_learned": {
+          "type": "array",
+          "description": "General lessons applicable to future similar tasks",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Self-assessed confidence in this reflection's accuracy (0.0 = low, 1.0 = high)",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "related_reflections": {
+          "type": "array",
+          "description": "References to previous reflections that informed this one",
+          "items": {
+            "type": "integer",
+            "description": "Iteration number of related reflection"
+          }
+        }
+      }
+    },
+    "memory_metadata": {
+      "type": "object",
+      "description": "Metadata about the episodic memory sliding window (Ω capacity from Reflexion paper)",
+      "required": ["omega_capacity", "current_memory_size"],
+      "properties": {
+        "omega_capacity": {
+          "type": "integer",
+          "description": "Maximum number of reflections to keep in memory (Ω parameter from Reflexion). Typical values: 1 for programming, 3 for decision-making/reasoning.",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3
+        },
+        "current_memory_size": {
+          "type": "integer",
+          "description": "Current number of reflections in sliding window",
+          "minimum": 0
+        },
+        "reflections_in_context": {
+          "type": "array",
+          "description": "Iteration numbers of reflections currently in memory window",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "window_policy": {
+          "type": "string",
+          "enum": ["fifo", "recency", "relevance_weighted"],
+          "description": "Policy for sliding window maintenance",
+          "default": "fifo"
+        },
+        "total_reflections_generated": {
+          "type": "integer",
+          "description": "Total reflections generated across all iterations (may exceed Ω)",
+          "minimum": 0
+        }
+      }
+    },
+    "context_injected": {
+      "type": "boolean",
+      "description": "Whether previous reflections from memory window were injected into this iteration's context",
+      "default": false
+    },
+    "previous_reflections_used": {
+      "type": "array",
+      "description": "Iteration numbers of previous reflections that informed this attempt",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "performance_delta": {
+      "type": "object",
+      "description": "Performance comparison to previous iteration",
+      "properties": {
+        "reward_change": {
+          "type": "number",
+          "description": "Change in reward signal from previous iteration (positive = improvement)"
+        },
+        "error_count_change": {
+          "type": "integer",
+          "description": "Change in error count from previous iteration (negative = improvement)"
+        },
+        "is_improvement": {
+          "type": "boolean",
+          "description": "Whether this iteration showed measurable improvement"
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional free-form notes about this iteration"
+    }
+  },
+  "examples": [
+    {
+      "loop_id": "ralph-test-coverage-2026-01-25",
+      "iteration": 1,
+      "timestamp": "2026-01-25T10:30:00Z",
+      "task_description": "Increase test coverage to 80% for authentication module",
+      "actor_output": {
+        "actions": [
+          {
+            "type": "code_modification",
+            "description": "Added unit tests for login function",
+            "file_path": "/test/unit/auth/login.test.ts",
+            "changes": {
+              "additions": 45,
+              "deletions": 0,
+              "diff": "..."
+            },
+            "timestamp": "2026-01-25T10:25:00Z"
+          },
+          {
+            "type": "test_execution",
+            "description": "Ran npm test to verify new tests",
+            "command": "npm test",
+            "timestamp": "2026-01-25T10:28:00Z"
+          }
+        ],
+        "rationale": "I added comprehensive tests for the login function including edge cases for empty inputs and invalid credentials.",
+        "strategy": "Test-first development: write failing tests, then implement fixes",
+        "files_modified": ["/test/unit/auth/login.test.ts"],
+        "total_changes": {
+          "files_changed": 1,
+          "lines_added": 45,
+          "lines_deleted": 0
+        }
+      },
+      "evaluator_output": {
+        "passed": false,
+        "verification_type": "unit_tests",
+        "results": [
+          {
+            "tool": "npm test",
+            "status": "fail",
+            "exit_code": 1,
+            "stderr": "TypeError: Cannot read property 'map' of undefined",
+            "duration_ms": 2340
+          }
+        ],
+        "errors": [
+          {
+            "type": "test_failure",
+            "message": "should handle empty API response",
+            "file": "/test/unit/auth/login.test.ts",
+            "line": 34,
+            "severity": "error",
+            "rule": "login-empty-response"
+          }
+        ],
+        "reward_signal": 0.3,
+        "metrics": {
+          "tests_passed": 3,
+          "tests_failed": 2,
+          "tests_total": 5,
+          "coverage_percentage": 65
+        }
+      },
+      "self_reflection": {
+        "reflection_text": "In my previous attempt, I tried to map over userData without checking if it exists. The error occurred because the API response was empty in the test case. I should add a null check before the map operation. In the next attempt, I will verify userData exists and return an empty array if it doesn't.",
+        "credit_assignment": {
+          "failing_action_indices": [0],
+          "root_cause": "Missing null check for API response",
+          "failure_category": "edge_case_miss"
+        },
+        "causal_reasoning": "The test case 'should handle empty API response' failed because I assumed userData would always be defined. When the API returns empty, userData is undefined and calling .map() throws TypeError.",
+        "actionable_insights": [
+          "Add null check: if (!userData) return []",
+          "Add test case for undefined userData first",
+          "Review other API response handlers for same pattern"
+        ],
+        "lessons_learned": [
+          "Always validate API responses before processing",
+          "Empty responses are a common edge case in authentication flows"
+        ],
+        "confidence": 0.9,
+        "related_reflections": []
+      },
+      "memory_metadata": {
+        "omega_capacity": 3,
+        "current_memory_size": 1,
+        "reflections_in_context": [1],
+        "window_policy": "fifo",
+        "total_reflections_generated": 1
+      },
+      "context_injected": false,
+      "previous_reflections_used": [],
+      "performance_delta": {
+        "reward_change": -0.2,
+        "error_count_change": 2,
+        "is_improvement": false
+      }
+    }
+  ]
+}

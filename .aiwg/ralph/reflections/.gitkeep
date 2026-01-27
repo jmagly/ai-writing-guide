@@ -1,0 +1,55 @@
+# Reflexion Episodic Memory Storage
+
+This directory stores structured reflections following the Reflexion framework (REF-021).
+
+## Directory Structure
+
+```
+.aiwg/ralph/reflections/
+├── .gitkeep                    # This file
+├── example/                    # Example reflection demonstrating schema
+│   └── 001.json
+└── <loop-id>/                  # Per-loop reflection storage
+    ├── 001.json                # First reflection (iteration 0 failure)
+    ├── 002.json                # Second reflection (iteration 1 failure)
+    └── 003.json                # Third reflection (sliding window Ω=3)
+```
+
+## Naming Convention
+
+- **Directory name**: `<loop-id>` matching the Ralph loop identifier (e.g., `ralph-research-issues-2026-01-25`)
+- **File name**: `<iteration-number>.json` zero-padded to 3 digits (e.g., `001.json`, `002.json`, `010.json`)
+- Iteration numbers correspond to the **failed attempt** that generated the reflection
+
+## Sliding Window Behavior
+
+When memory capacity (Ω) is reached, older reflections remain on disk but are excluded from context:
+
+**Example with Ω=3:**
+```
+reflections/ralph-task-123/
+├── 001.json  # Iteration 0 failure - EXCLUDED (outside window)
+├── 002.json  # Iteration 1 failure - EXCLUDED (outside window)
+├── 003.json  # Iteration 2 failure - IN CONTEXT
+├── 004.json  # Iteration 3 failure - IN CONTEXT
+└── 005.json  # Iteration 4 failure - IN CONTEXT (most recent)
+```
+
+The `memory_metadata.reflections_in_context` field tracks which reflections are active.
+
+## Schema
+
+All reflection files MUST conform to `.aiwg/ralph/schemas/reflection-memory.json`.
+
+## Querying Reflections
+
+See `.aiwg/ralph/docs/reflection-memory-guide.md` for:
+- How to query past reflections for cross-task learning
+- Reflection injection patterns for retry attempts
+- Performance analysis using reflection data
+
+## References
+
+- @.aiwg/ralph/schemas/reflection-memory.json - JSON Schema
+- @.aiwg/ralph/docs/reflection-memory-guide.md - Usage guide
+- @docs/references/REF-021-reflexion-verbal-reinforcement.md - Theoretical foundation

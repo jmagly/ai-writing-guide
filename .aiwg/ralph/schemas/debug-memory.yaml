@@ -1,0 +1,480 @@
+# Debug Memory Schema for Executable Feedback Loop
+# Based on REF-013 MetaGPT
+# Finding: Debug memory pattern enables cross-session learning
+# Issue: #101
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/debug-memory/v1"
+title: "Debug Memory Schema"
+description: |
+  Structured storage for execution history, enabling learning from
+  past failures and fixes. Core to the executable feedback loop.
+
+type: object
+required:
+  - session_id
+  - file_path
+  - executions
+
+properties:
+  session_id:
+    type: string
+    format: uuid
+    description: "Unique session identifier"
+
+  file_path:
+    type: string
+    description: "Primary file being worked on"
+
+  created_at:
+    type: string
+    format: date-time
+
+  updated_at:
+    type: string
+    format: date-time
+
+  status:
+    type: string
+    enum: [in_progress, passed, failed, escalated]
+    description: "Current status of this debug session"
+
+  executions:
+    type: array
+    items:
+      $ref: "#/$defs/Execution"
+    description: "History of execution attempts"
+
+  learnings:
+    $ref: "#/$defs/Learnings"
+    description: "Patterns and learnings from this session"
+
+  metadata:
+    type: object
+    properties:
+      agent:
+        type: string
+        description: "Agent that created this memory"
+      task_id:
+        type: string
+        description: "Associated task ID"
+      ralph_iteration:
+        type: integer
+        description: "Ralph loop iteration if applicable"
+
+$defs:
+  Execution:
+    type: object
+    required:
+      - attempt
+      - timestamp
+      - code_hash
+      - test_results
+    properties:
+      attempt:
+        type: integer
+        minimum: 1
+        description: "Attempt number"
+
+      timestamp:
+        type: string
+        format: date-time
+
+      code_hash:
+        type: string
+        description: "SHA-256 hash of code at this attempt"
+
+      code_snapshot:
+        type: string
+        description: "Optional: full code at this attempt"
+
+      environment:
+        type: object
+        properties:
+          runtime:
+            type: string
+            description: "e.g., node, python, go"
+          runtime_version:
+            type: string
+          test_framework:
+            type: string
+            description: "e.g., jest, pytest, go test"
+          os:
+            type: string
+          additional:
+            type: object
+            additionalProperties: true
+
+      test_results:
+        type: object
+        required: [total, passed, failed]
+        properties:
+          total:
+            type: integer
+            minimum: 0
+          passed:
+            type: integer
+            minimum: 0
+          failed:
+            type: integer
+            minimum: 0
+          errors:
+            type: integer
+            minimum: 0
+            description: "Runtime errors (not assertion failures)"
+          skipped:
+            type: integer
+            minimum: 0
+          duration_ms:
+            type: integer
+            minimum: 0
+          coverage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+
+      failures:
+        type: array
+        items:
+          $ref: "#/$defs/Failure"
+
+      analysis:
+        $ref: "#/$defs/Analysis"
+
+      fix_applied:
+        $ref: "#/$defs/Fix"
+
+  Failure:
+    type: object
+    required:
+      - test_name
+      - error_type
+      - error_message
+    properties:
+      test_name:
+        type: string
+        description: "Name/description of failing test"
+
+      test_file:
+        type: string
+        description: "Path to test file"
+
+      test_line:
+        type: integer
+        description: "Line number in test file"
+
+      error_type:
+        type: string
+        enum:
+          - AssertionError
+          - TypeError
+          - ReferenceError
+          - SyntaxError
+          - RuntimeError
+          - TimeoutError
+          - NetworkError
+          - ValidationError
+          - Other
+        description: "Category of error"
+
+      error_message:
+        type: string
+        description: "Full error message"
+
+      stack_trace:
+        type: string
+        description: "Stack trace if available"
+
+      expected:
+        type: string
+        description: "Expected value (for assertions)"
+
+      actual:
+        type: string
+        description: "Actual value (for assertions)"
+
+      source_location:
+        type: object
+        properties:
+          file:
+            type: string
+          line:
+            type: integer
+          function:
+            type: string
+        description: "Location in source code that caused failure"
+
+  Analysis:
+    type: object
+    required:
+      - root_cause
+      - fix_strategy
+    properties:
+      root_cause:
+        type: string
+        minLength: 20
+        description: "Identified root cause of failure(s)"
+
+      root_cause_category:
+        type: string
+        enum:
+          - null_undefined_access
+          - type_mismatch
+          - missing_validation
+          - logic_error
+          - off_by_one
+          - race_condition
+          - resource_leak
+          - missing_error_handling
+          - api_misuse
+          - configuration_error
+          - dependency_issue
+          - other
+        description: "Category of root cause"
+
+      fix_strategy:
+        type: string
+        minLength: 20
+        description: "Strategy to fix the issue"
+
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Confidence in the analysis"
+
+      related_failures:
+        type: array
+        items:
+          type: string
+        description: "Other failures with same root cause"
+
+      similar_past_issues:
+        type: array
+        items:
+          type: object
+          properties:
+            session_id:
+              type: string
+            file:
+              type: string
+            resolution:
+              type: string
+        description: "Similar issues from debug memory"
+
+  Fix:
+    type: object
+    required:
+      - description
+    properties:
+      description:
+        type: string
+        description: "What was changed"
+
+      diff_summary:
+        type: string
+        description: "e.g., '+5/-2 lines'"
+
+      files_changed:
+        type: array
+        items:
+          type: string
+        description: "List of modified files"
+
+      diff:
+        type: string
+        description: "Actual diff if available"
+
+      verification:
+        type: string
+        enum: [pending, passed, failed]
+        description: "Was the fix verified?"
+
+  Learnings:
+    type: object
+    description: "Accumulated learnings from this session"
+    properties:
+      patterns_identified:
+        type: array
+        items:
+          type: object
+          required: [pattern, frequency]
+          properties:
+            pattern:
+              type: string
+              description: "Identified error pattern"
+            category:
+              type: string
+            frequency:
+              type: integer
+              minimum: 1
+              description: "How many times seen"
+            fix_template:
+              type: string
+              description: "Template for fixing this pattern"
+            effectiveness:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: "How often the fix template works"
+
+      recurring_failures:
+        type: array
+        items:
+          type: object
+          properties:
+            test:
+              type: string
+            occurrences:
+              type: integer
+            resolution:
+              type: string
+              enum: [resolved, pending, wont_fix, escalated]
+            notes:
+              type: string
+
+      code_quality_issues:
+        type: array
+        items:
+          type: object
+          properties:
+            issue:
+              type: string
+            location:
+              type: string
+            severity:
+              type: string
+              enum: [critical, major, minor]
+            addressed:
+              type: boolean
+
+      recommendations:
+        type: array
+        items:
+          type: string
+        description: "Recommendations for future development"
+
+# Index configuration for efficient querying
+indexing:
+  primary_key: session_id
+  secondary_indexes:
+    - file_path
+    - status
+    - "executions.failures.error_type"
+    - "executions.analysis.root_cause_category"
+    - "learnings.patterns_identified.pattern"
+
+# Retention policy
+retention:
+  default_days: 30
+  on_escalation: 90
+  on_learning_identified: 60
+
+# Query patterns
+queries:
+  find_similar_failures: |
+    SELECT * FROM debug_memory
+    WHERE executions.failures.error_type = $error_type
+    AND executions.failures.source_location.file LIKE $file_pattern
+    ORDER BY updated_at DESC
+    LIMIT 10
+
+  get_fix_templates: |
+    SELECT learnings.patterns_identified
+    FROM debug_memory
+    WHERE learnings.patterns_identified.category = $category
+    AND learnings.patterns_identified.effectiveness > 0.7
+
+  recent_escalations: |
+    SELECT * FROM debug_memory
+    WHERE status = 'escalated'
+    AND updated_at > $since
+    ORDER BY updated_at DESC
+
+# Integration hooks
+hooks:
+  on_failure:
+    - check_similar_past_issues
+    - apply_known_fix_template
+  on_success:
+    - update_fix_effectiveness
+    - extract_learnings
+  on_escalation:
+    - notify_human
+    - preserve_full_context
+
+# Examples
+examples:
+  - session_id: "dm-001-example"
+    file_path: "src/auth/validate.ts"
+    status: passed
+    executions:
+      - attempt: 1
+        timestamp: "2026-01-25T15:00:00Z"
+        code_hash: "abc123"
+        environment:
+          runtime: node
+          runtime_version: "20.11.0"
+          test_framework: jest
+        test_results:
+          total: 10
+          passed: 8
+          failed: 2
+          errors: 0
+          duration_ms: 1500
+          coverage_percent: 75
+        failures:
+          - test_name: "should reject null input"
+            test_file: "test/auth/validate.test.ts"
+            test_line: 42
+            error_type: TypeError
+            error_message: "Cannot read property 'length' of null"
+            source_location:
+              file: "src/auth/validate.ts"
+              line: 15
+              function: "validateInput"
+        analysis:
+          root_cause: "validateInput() accesses input.length without null check"
+          root_cause_category: null_undefined_access
+          fix_strategy: "Add null/undefined check at function entry"
+          confidence: 0.95
+        fix_applied:
+          description: "Added early return for null/undefined input"
+          diff_summary: "+3/-0 lines"
+          verification: passed
+
+      - attempt: 2
+        timestamp: "2026-01-25T15:01:30Z"
+        code_hash: "def456"
+        environment:
+          runtime: node
+          runtime_version: "20.11.0"
+          test_framework: jest
+        test_results:
+          total: 10
+          passed: 10
+          failed: 0
+          errors: 0
+          duration_ms: 1450
+          coverage_percent: 82
+
+    learnings:
+      patterns_identified:
+        - pattern: "null_access_without_check"
+          category: null_undefined_access
+          frequency: 1
+          fix_template: "Add null check: if (!input) return/throw"
+          effectiveness: 1.0
+      recommendations:
+        - "Consider using TypeScript strict null checks"
+        - "Add input validation layer for all public functions"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+  implementation:
+    - "#101"
+  related:
+    - "@.claude/rules/executable-feedback.md"
+    - "@.aiwg/ralph/schemas/reflection-memory.json"
