@@ -324,6 +324,20 @@ When working in this repo, you're simultaneously:
 
 This is intentional - issues found while dogfooding become improvements to the framework.
 
+> **CRITICAL FOR AGENTS: The `.aiwg/` Boundary**
+>
+> `.aiwg/` is **project-local output**, not framework source. It stores SDLC artifacts generated during project development (requirements, architecture docs, test plans, schemas, etc.). Nothing from `.aiwg/` is deployed to other systems via `aiwg use`.
+>
+> **The boundary:**
+> - `agentic/code/` = Framework source (editable, deployable, ships to users)
+> - `.aiwg/` = Project output (generated at runtime, local to this project)
+>
+> **Adding files to `.aiwg/` does NOT implement framework features.** Creating a schema in `.aiwg/flows/schemas/` is creating a project artifact, not adding a framework capability. Framework schemas belong in `agentic/code/frameworks/{name}/schemas/`.
+>
+> **`@.aiwg/` references in agent definitions** point to project-local files that will not exist in user projects. If an agent definition references `@.aiwg/flows/schemas/foo.yaml`, that reference only works in the AIWG repository itself — it is invisible to any other project that installs AIWG.
+>
+> Because AIWG dogfoods itself, the `.aiwg/` directory here has substantial content that may look like framework source. It is not. See `@docs/development/aiwg-development-guide.md` for the full source vs output distinction.
+
 ## Release Documentation Requirements
 
 **CRITICAL**: Every release MUST be documented in ALL of these locations:

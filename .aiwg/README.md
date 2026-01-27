@@ -2,6 +2,15 @@
 
 This directory contains all SDLC artifacts, project documentation, and operational state for the AI Writing Guide project.
 
+## Important: Project-Local Directory
+
+This directory is **project-local extended memory** — it stores SDLC artifacts generated during project development. Key facts:
+
+- **Nothing from `.aiwg/` is deployed to other systems** via `aiwg use`. The CLI deploys from `agentic/code/`, not from here.
+- **`.aiwg/` is populated by AIWG agents at runtime** when users work on their projects. It is output, not source.
+- **For the AIWG repository specifically**: this directory contains artifacts from AIWG's own development (dogfooding). These files may look like framework source — schemas, research docs, flow definitions — but they are project-local artifacts, not deployable framework components.
+- **Framework source code lives in `agentic/code/`** — see `docs/development/aiwg-development-guide.md` for the full source vs output distinction.
+
 ## Directory Structure
 
 ### Standard SDLC Directories

@@ -64,6 +64,20 @@ agentic/code/agents/          →     aiwg use sdlc     →    .cursor/rules/
 
 For complete placement rules: @docs/development/file-placement-guide.md
 
+### Where Does `.aiwg/` Fit?
+
+`.aiwg/` is neither source nor deployment — it is **project-local runtime output**. AIWG agents populate it when users work on their projects.
+
+```
+Source (you edit)          →    CLI Deploy           →    Platform (don't edit)
+agentic/code/              →    aiwg use sdlc        →    .claude/agents/
+
+Project output (AIWG creates during use):
+.aiwg/                     ←    Agent output          ←    .claude/agents/ (at runtime)
+```
+
+Do not place framework components (schemas, templates, agent definitions) in `.aiwg/`. That directory stores project artifacts like requirements docs, architecture decisions, and test plans that are generated during development. Framework source belongs in `agentic/code/`.
+
 ## The Component Lifecycle
 
 Every AIWG component follows this lifecycle:
@@ -138,18 +152,20 @@ Agents are the primary consumers of AIWG capabilities. If you create a schema, r
 3. Add relevant rules to the agent's instruction set
 4. Update `manifest.json` if adding new agent capabilities
 
-**Example:** You create a new schema `.aiwg/flows/schemas/tree-of-thought.yaml`. To wire it:
+**Example:** You create a new schema `agentic/code/frameworks/sdlc-complete/schemas/tree-of-thought.yaml`. To wire it:
 
 ```markdown
 # In agentic/code/frameworks/sdlc-complete/agents/architecture-designer.md
 
 ## Schemas
-- @.aiwg/flows/schemas/tree-of-thought.yaml — Tree-of-thought exploration for architecture decisions
+- @agentic/code/frameworks/sdlc-complete/schemas/tree-of-thought.yaml — Tree-of-thought exploration for architecture decisions
 
 ## Instructions
 When evaluating architecture alternatives with >3 options, use the Tree-of-Thought
 schema to structure parallel exploration...
 ```
+
+> **Note:** Schemas belong in `agentic/code/` (framework source), not in `.aiwg/` (project output). References to `@.aiwg/` paths in agent definitions point to project-local files that won't exist in user projects after deployment.
 
 ### Command Wiring
 
@@ -183,7 +199,10 @@ Schemas define data contracts. They must be referenced by the agents or commands
 
 **What to do:**
 
-1. Create schema in appropriate location (`.aiwg/flows/schemas/`, `.aiwg/ralph/schemas/`, `.aiwg/research/schemas/`)
+1. Create schema in the framework or addon source location:
+   - `agentic/code/frameworks/{framework}/schemas/` for framework schemas
+   - `agentic/code/addons/{addon}/schemas/` for addon schemas
+   - **Note:** `.aiwg/` directories are output locations where user projects store generated artifacts at runtime — they are NOT source locations for framework components
 2. Reference from agent definitions that produce/consume this data
 3. Reference from any validation commands
 4. Add to relevant rule files that enforce the schema
@@ -240,6 +259,28 @@ Missing (the wiring):
 ```
 
 The schema exists but nothing uses it. The guide exists but no agent reads it. The rule exists but nothing enforces it. This is documentation, not integration.
+
+### The `.aiwg/` Confusion Anti-Pattern
+
+A more subtle variant of the documentation-only anti-pattern is placing framework components in `.aiwg/` instead of `agentic/code/`. This happened with 62 schema files created across prior sessions:
+
+```
+Created (in the wrong place):
+  ✗ .aiwg/flows/schemas/tree-of-thought.yaml
+  ✗ .aiwg/ralph/schemas/actionable-feedback.yaml
+  ✗ .aiwg/research/schemas/frontmatter-schema.yaml
+
+Should have been (in framework source):
+  ✓ agentic/code/frameworks/sdlc-complete/schemas/tree-of-thought.yaml
+  ✓ agentic/code/frameworks/sdlc-complete/schemas/actionable-feedback.yaml
+  ✓ agentic/code/frameworks/sdlc-complete/schemas/frontmatter-schema.yaml
+```
+
+**Why this happens**: AIWG dogfoods itself, so the `.aiwg/` directory has real content. It is easy to mistake `.aiwg/` for a framework source location because it contains schemas, research docs, and flow definitions. But `.aiwg/` is **project-local output** — it stores artifacts generated during project development. Nothing from `.aiwg/` is deployed to other systems via `aiwg use`.
+
+**Why it matters**: Agent definitions that reference `@.aiwg/flows/schemas/foo.yaml` work only inside the AIWG repository. When a user installs AIWG into their project and runs `aiwg use sdlc`, the deployed agents will reference paths that do not exist because `.aiwg/` is not part of the deployment payload.
+
+**The fix**: Framework schemas, templates, and docs belong in `agentic/code/frameworks/{framework}/` or `agentic/code/addons/{addon}/`. Project-local artifacts (requirements, architecture docs, test plans generated during development) belong in `.aiwg/`.
 
 ## Creation Guides by Type
 
