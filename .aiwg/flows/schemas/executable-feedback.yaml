@@ -1,0 +1,639 @@
+# Executable Feedback Loop Workflow Schema
+# Based on REF-013 MetaGPT
+# Finding: +4.2% HumanEval improvement, -63% human revision cost
+# Issue: #101
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/executable-feedback/v1"
+title: "Executable Feedback Loop Schema"
+description: |
+  Workflow schema for the execute-before-return pattern in code-generating
+  agents. Implements MetaGPT's executable feedback loop where generated
+  code is tested before being returned to the user, with structured debug
+  memory for cross-session learning.
+
+  Key findings from REF-013 MetaGPT:
+  - +4.2% HumanEval improvement from execution feedback
+  - -63% human revision cost (2.25 → 0.83 cycles)
+  - Debug memory enables learning from past failures
+
+type: object
+required:
+  - workflow_id
+  - agent
+  - code_artifact
+  - execution_config
+  - loop_state
+
+properties:
+  workflow_id:
+    type: string
+    format: uuid
+    description: "Unique workflow execution identifier"
+
+  agent:
+    type: object
+    required: [name, type]
+    properties:
+      name:
+        type: string
+        description: "Name of the code-generating agent"
+      type:
+        type: string
+        enum:
+          - software_implementer
+          - test_engineer
+          - debugger
+          - code_reviewer
+        description: "Agent type in the SDLC framework"
+      version:
+        type: string
+        description: "Agent version"
+
+  code_artifact:
+    $ref: "#/$defs/CodeArtifact"
+    description: "The code being generated and tested"
+
+  execution_config:
+    $ref: "#/$defs/ExecutionConfig"
+    description: "Configuration for test execution"
+
+  retry_policy:
+    $ref: "#/$defs/RetryPolicy"
+    description: "Policy for retrying failed executions"
+
+  coverage_requirements:
+    $ref: "#/$defs/CoverageRequirements"
+    description: "Minimum test coverage requirements by code type"
+
+  escalation_policy:
+    $ref: "#/$defs/EscalationPolicy"
+    description: "When and how to escalate to human review"
+
+  loop_state:
+    $ref: "#/$defs/LoopState"
+    description: "Current state of the feedback loop"
+
+  debug_memory_ref:
+    type: string
+    description: "Path to debug memory file for this session"
+    pattern: "^\\.aiwg/ralph/debug-memory/"
+
+  ralph_integration:
+    $ref: "#/$defs/RalphIntegration"
+    description: "Integration with Ralph loop if running within one"
+
+  timestamps:
+    type: object
+    properties:
+      started_at:
+        type: string
+        format: date-time
+      completed_at:
+        type: string
+        format: date-time
+      last_attempt_at:
+        type: string
+        format: date-time
+
+$defs:
+  CodeArtifact:
+    type: object
+    required: [path, language]
+    properties:
+      path:
+        type: string
+        description: "File path of the generated code"
+      language:
+        type: string
+        enum: [typescript, javascript, python, go, rust, java, other]
+        description: "Programming language"
+      code_type:
+        type: string
+        enum:
+          - new_function     # New function or module
+          - bug_fix          # Fix for existing bug
+          - refactor         # Restructuring existing code
+          - api_endpoint     # New API endpoint
+          - integration      # Integration with external system
+        description: "Type of code change"
+      content_hash:
+        type: string
+        description: "SHA-256 hash of current code content"
+      test_files:
+        type: array
+        items:
+          type: string
+        description: "Associated test file paths"
+      requirements_ref:
+        type: array
+        items:
+          type: string
+        description: "@-mention paths to requirements this code implements"
+
+  ExecutionConfig:
+    type: object
+    required: [test_framework, test_command]
+    properties:
+      test_framework:
+        type: string
+        enum: [jest, vitest, pytest, go_test, cargo_test, junit, mocha, other]
+        description: "Test framework being used"
+      test_command:
+        type: string
+        description: "Shell command to execute tests"
+        examples:
+          - "npm test -- --grep auth"
+          - "pytest tests/unit/auth/"
+          - "go test ./auth/..."
+      timeout_seconds:
+        type: integer
+        minimum: 5
+        maximum: 600
+        default: 120
+        description: "Maximum time for test execution"
+      environment:
+        type: object
+        additionalProperties:
+          type: string
+        description: "Environment variables for test execution"
+      working_directory:
+        type: string
+        description: "Working directory for test execution"
+      fail_fast:
+        type: boolean
+        default: false
+        description: "Stop on first failure"
+      verbose:
+        type: boolean
+        default: true
+        description: "Verbose test output for better analysis"
+
+  RetryPolicy:
+    type: object
+    properties:
+      max_attempts:
+        type: integer
+        minimum: 1
+        maximum: 10
+        default: 3
+        description: "Maximum number of fix-and-retry attempts"
+      backoff:
+        type: string
+        enum: [none, linear, exponential]
+        default: none
+        description: "Backoff strategy between attempts"
+      escalation_on_max:
+        type: boolean
+        default: true
+        description: "Escalate to human when max attempts reached"
+      abort_on_regression:
+        type: boolean
+        default: true
+        description: "Stop if previously passing tests start failing"
+
+  CoverageRequirements:
+    type: object
+    description: "Minimum test coverage requirements by code type"
+    properties:
+      new_function:
+        type: object
+        properties:
+          minimum_coverage:
+            type: number
+            minimum: 0
+            maximum: 100
+            default: 80
+          required_tests:
+            type: array
+            items:
+              type: string
+            default:
+              - "happy_path"
+              - "edge_cases"
+              - "error_handling"
+      bug_fix:
+        type: object
+        properties:
+          minimum_coverage:
+            type: number
+            default: 100
+            description: "100% coverage of the fix"
+          required_tests:
+            type: array
+            default:
+              - "regression_test"
+              - "original_bug_reproduction"
+      refactor:
+        type: object
+        properties:
+          minimum_coverage:
+            type: number
+            default: -1
+            description: "Must match original coverage (-1 = match)"
+          required_tests:
+            type: array
+            default:
+              - "existing_tests_pass"
+      api_endpoint:
+        type: object
+        properties:
+          minimum_coverage:
+            type: number
+            default: 90
+          required_tests:
+            type: array
+            default:
+              - "happy_path"
+              - "error_cases"
+              - "integration_test"
+              - "validation_test"
+
+  EscalationPolicy:
+    type: object
+    properties:
+      triggers:
+        type: array
+        items:
+          type: object
+          required: [condition, action]
+          properties:
+            condition:
+              type: string
+              enum:
+                - max_attempts_reached
+                - regression_detected
+                - security_issue_found
+                - coverage_threshold_unmet
+                - timeout_exceeded
+                - unknown_error_type
+              description: "Condition that triggers escalation"
+            action:
+              type: string
+              enum:
+                - human_review
+                - senior_agent
+                - abort_with_report
+                - flag_and_continue
+              description: "Action to take on trigger"
+            include_in_report:
+              type: array
+              items:
+                type: string
+                enum:
+                  - original_code
+                  - all_test_results
+                  - failure_analyses
+                  - fix_attempts
+                  - debug_memory_summary
+                  - stack_traces
+              description: "What to include in escalation report"
+      notification:
+        type: object
+        properties:
+          channel:
+            type: string
+            enum: [issue_comment, cli, slack, email]
+            default: issue_comment
+          template:
+            type: string
+            description: "Notification template"
+
+  LoopState:
+    type: object
+    required: [phase, attempt_number, status]
+    properties:
+      phase:
+        type: string
+        enum:
+          - generate_code        # Initial code generation
+          - generate_tests       # Test generation for new code
+          - execute_tests        # Running test suite
+          - analyze_failures     # Analyzing test failures
+          - apply_fix            # Applying fix based on analysis
+          - verify_fix           # Re-running tests after fix
+          - complete             # All tests passing
+          - escalated            # Escalated to human
+          - aborted              # Aborted due to regression or error
+        description: "Current phase of the feedback loop"
+      attempt_number:
+        type: integer
+        minimum: 1
+        description: "Current attempt number"
+      status:
+        type: string
+        enum: [in_progress, passed, failed, escalated, aborted]
+        description: "Overall loop status"
+      test_results:
+        $ref: "#/$defs/TestResults"
+      attempts:
+        type: array
+        items:
+          $ref: "#/$defs/ExecutionAttempt"
+        description: "History of all execution attempts"
+
+  TestResults:
+    type: object
+    properties:
+      total:
+        type: integer
+        minimum: 0
+      passed:
+        type: integer
+        minimum: 0
+      failed:
+        type: integer
+        minimum: 0
+      errors:
+        type: integer
+        minimum: 0
+      skipped:
+        type: integer
+        minimum: 0
+      duration_ms:
+        type: number
+        minimum: 0
+      coverage_percent:
+        type: number
+        minimum: 0
+        maximum: 100
+
+  ExecutionAttempt:
+    type: object
+    required: [attempt_number, timestamp, phase, test_results]
+    properties:
+      attempt_number:
+        type: integer
+        minimum: 1
+      timestamp:
+        type: string
+        format: date-time
+      phase:
+        type: string
+        description: "Phase when this attempt occurred"
+      code_hash:
+        type: string
+        description: "SHA-256 of code at time of attempt"
+      test_results:
+        $ref: "#/$defs/TestResults"
+      failures:
+        type: array
+        items:
+          type: object
+          required: [test_name, error_type, error_message]
+          properties:
+            test_name:
+              type: string
+            test_file:
+              type: string
+            error_type:
+              type: string
+              description: "Error class (TypeError, AssertionError, etc.)"
+            error_message:
+              type: string
+            stack_trace:
+              type: string
+            line_number:
+              type: integer
+      analysis:
+        type: object
+        properties:
+          root_cause:
+            type: string
+            description: "Identified root cause of failure"
+          fix_strategy:
+            type: string
+            description: "Strategy for fixing the failure"
+          confidence:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: "Agent's confidence in the analysis"
+          patterns_matched:
+            type: array
+            items:
+              type: string
+            description: "Known patterns from debug memory that matched"
+      fix_applied:
+        type: object
+        properties:
+          description:
+            type: string
+          diff_summary:
+            type: string
+            description: "Summary of changes (e.g., +5/-2 lines)"
+          files_modified:
+            type: array
+            items:
+              type: string
+
+  RalphIntegration:
+    type: object
+    description: "Integration with Ralph loop when running within one"
+    properties:
+      loop_id:
+        type: string
+        description: "Ralph loop ID if applicable"
+      iteration:
+        type: integer
+        description: "Current Ralph iteration"
+      execution_gate:
+        type: object
+        properties:
+          require_passing_tests:
+            type: boolean
+            default: true
+          allow_skip:
+            type: boolean
+            default: false
+      debug_memory:
+        type: object
+        properties:
+          persist_per_iteration:
+            type: boolean
+            default: true
+          cross_iteration_learning:
+            type: boolean
+            default: true
+      progress_metric:
+        type: object
+        properties:
+          include_test_pass_rate:
+            type: boolean
+            default: true
+          weight:
+            type: number
+            default: 0.3
+            description: "Weight of test pass rate in overall progress"
+
+# Workflow Protocol
+#
+# The executable feedback loop follows this protocol:
+#
+# 1. GENERATE code based on requirements
+#    └─ Agent produces initial code artifact
+#
+# 2. GENERATE tests (if not present)
+#    ├─ Happy path tests
+#    ├─ Edge case tests
+#    └─ Error handling tests
+#
+# 3. EXECUTE tests
+#    ├─ Capture all output
+#    └─ Record in debug memory
+#
+# 4. IF tests PASS:
+#    ├─ Record success in debug memory
+#    ├─ Check coverage requirements
+#    └─ Return code to user
+#
+# 5. IF tests FAIL:
+#    a. ANALYZE failures
+#    │  ├─ Parse error messages
+#    │  ├─ Identify root cause
+#    │  └─ Check debug memory for known patterns
+#    │
+#    b. APPLY fix
+#    │  ├─ Generate targeted fix
+#    │  └─ Update code
+#    │
+#    c. INCREMENT attempt counter
+#    │
+#    d. IF attempts < max_attempts:
+#    │  └─ GOTO step 3
+#    │
+#    e. ELSE:
+#       ├─ ESCALATE to human
+#       └─ Include debug memory context
+
+# Pre-Generation Protocol
+#
+# Before generating code, agents SHOULD:
+# 1. Check debug memory for similar past failures
+# 2. Load patterns from .aiwg/ralph/debug-memory/
+# 3. Apply learnings to avoid known failure patterns
+# 4. Set appropriate coverage requirements for code type
+
+# Metrics
+#
+# Track these metrics for continuous improvement:
+#
+# | Metric                  | Target | Purpose                        |
+# |-------------------------|--------|--------------------------------|
+# | first_attempt_pass_rate | >70%   | Code generation quality        |
+# | average_attempts        | <2.0   | Iteration efficiency           |
+# | escalation_rate         | <10%   | Self-sufficiency               |
+# | debug_memory_reuse      | >30%   | Learning effectiveness         |
+# | coverage_met_rate       | >90%   | Test completeness              |
+
+# Examples
+examples:
+  simple_function:
+    workflow_id: "ef-001"
+    agent:
+      name: "software-implementer"
+      type: software_implementer
+    code_artifact:
+      path: "src/utils/validate.ts"
+      language: typescript
+      code_type: new_function
+      test_files: ["test/unit/utils/validate.test.ts"]
+    execution_config:
+      test_framework: jest
+      test_command: "npx jest test/unit/utils/validate.test.ts"
+      timeout_seconds: 30
+    retry_policy:
+      max_attempts: 3
+      escalation_on_max: true
+    coverage_requirements:
+      new_function:
+        minimum_coverage: 80
+        required_tests: [happy_path, edge_cases, error_handling]
+    loop_state:
+      phase: complete
+      attempt_number: 2
+      status: passed
+      test_results:
+        total: 8
+        passed: 8
+        failed: 0
+        errors: 0
+        skipped: 0
+        duration_ms: 450
+        coverage_percent: 92
+      attempts:
+        - attempt_number: 1
+          timestamp: "2026-01-25T10:00:00Z"
+          phase: execute_tests
+          test_results:
+            total: 8
+            passed: 6
+            failed: 2
+            errors: 0
+            skipped: 0
+          failures:
+            - test_name: "should reject empty string"
+              error_type: "TypeError"
+              error_message: "Cannot read property 'length' of null"
+          analysis:
+            root_cause: "Missing null check in validateInput()"
+            fix_strategy: "Add null/undefined guard at function entry"
+            confidence: 0.95
+          fix_applied:
+            description: "Added null check: if (!input) return { valid: false }"
+            diff_summary: "+3/-0 lines"
+        - attempt_number: 2
+          timestamp: "2026-01-25T10:00:30Z"
+          phase: verify_fix
+          test_results:
+            total: 8
+            passed: 8
+            failed: 0
+            errors: 0
+            skipped: 0
+
+  bug_fix_escalated:
+    workflow_id: "ef-002"
+    agent:
+      name: "debugger"
+      type: debugger
+    code_artifact:
+      path: "src/auth/token.ts"
+      language: typescript
+      code_type: bug_fix
+    execution_config:
+      test_framework: jest
+      test_command: "npx jest test/unit/auth/token.test.ts"
+    retry_policy:
+      max_attempts: 3
+      escalation_on_max: true
+    loop_state:
+      phase: escalated
+      attempt_number: 3
+      status: escalated
+
+# Validation Rules
+#
+# Before returning code to user:
+# - [ ] Tests generated for new code
+# - [ ] Tests executed (not skipped)
+# - [ ] All tests passing
+# - [ ] Debug memory updated
+# - [ ] Failures analyzed (if any occurred)
+# - [ ] Coverage meets minimum for code type
+# - [ ] Learnings recorded in debug memory
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+  schemas:
+    - "@.aiwg/ralph/schemas/debug-memory.yaml"
+    - "@.aiwg/ralph/schemas/actionable-feedback.yaml"
+    - "@.aiwg/ralph/schemas/iteration-analytics.yaml"
+  rules:
+    - "@.claude/rules/executable-feedback.md"
+  implementation:
+    - "#101"
+  guide:
+    - "@.aiwg/ralph/docs/executable-feedback-guide.md"
