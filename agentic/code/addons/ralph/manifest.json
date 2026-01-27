@@ -36,10 +36,16 @@
     "ralph",
     "ralph-status",
     "ralph-abort",
-    "ralph-resume"
+    "ralph-resume",
+    "ralph-reflect",
+    "ralph-analytics",
+    "debug-memory",
+    "execute-feedback"
   ],
   "skills": [
-    "ralph-loop"
+    "ralph-loop",
+    "reflection-injection",
+    "auto-test-execution"
   ],
   "agents": [
     "ralph-loop",
@@ -47,7 +53,9 @@
   ],
   "hooks": [
     "ralph-loop",
-    "ralph-commit"
+    "ralph-commit",
+    "post-iteration-reflect",
+    "pre-return-execution-gate"
   ],
   "templates": [
     "ralph-task",

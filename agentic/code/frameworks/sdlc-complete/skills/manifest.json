@@ -70,16 +70,6 @@
       "triggers": ["check citations", "verify sources", "citation guard", "source check"]
     },
     {
-      "name": "auto-test-execution",
-      "description": "Automatic test execution before returning code results with debug memory tracking",
-      "triggers": ["run tests", "execute feedback", "test before return", "validate code"]
-    },
-    {
-      "name": "reflection-injection",
-      "description": "Inject episodic memory reflections into Ralph loop iterations for learning from past attempts",
-      "triggers": ["reflect on iteration", "load reflections", "what did we learn", "past failures"]
-    },
-    {
       "name": "grade-on-ingest",
       "description": "Auto-trigger GRADE quality assessment when new research sources are added to corpus",
       "triggers": ["assess quality", "grade source", "evaluate evidence", "quality check"]

@@ -2,13 +2,11 @@
   "name": "hooks",
   "path": "agentic/code/frameworks/sdlc-complete/hooks",
   "files": [
-    "post-iteration-reflect.md",
     "post-write-citation-check.md",
     "post-write-provenance.md",
     "pre-architecture-decision.md",
     "pre-cite-grade-check.md",
-    "pre-commit-provenance-check.md",
-    "pre-return-execution-gate.md"
+    "pre-commit-provenance-check.md"
   ],
   "ignore": [
     "manifest.json"
