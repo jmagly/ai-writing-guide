@@ -1,0 +1,491 @@
+# Ralph Tree Search Expansion Schema
+# Based on REF-020 Tree-of-Thoughts and REF-024 LATS
+# Issue: #165
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-tree-search/v1"
+title: "Ralph Tree Search Expansion Schema"
+description: |
+  Schema for tree search expansion on failures, implementing Tree-of-Thoughts
+  and LATS (Language Agent Tree Search) for systematic solution exploration.
+
+type: object
+required:
+  - version
+  - tree_config
+  - expansion_rules
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  tree_config:
+    $ref: "#/$defs/TreeConfig"
+
+  expansion_rules:
+    $ref: "#/$defs/ExpansionRules"
+
+  search_strategies:
+    $ref: "#/$defs/SearchStrategies"
+
+  failure_recovery:
+    $ref: "#/$defs/FailureRecovery"
+
+$defs:
+  TreeConfig:
+    type: object
+    description: "Configuration for tree search structure"
+    properties:
+      enabled:
+        type: boolean
+        default: false
+        description: "Tree search disabled by default (use linear for simple tasks)"
+
+      max_depth:
+        type: integer
+        default: 5
+        minimum: 2
+        maximum: 10
+        description: "Maximum tree depth"
+
+      max_branches:
+        type: integer
+        default: 3
+        minimum: 2
+        maximum: 5
+        description: "Maximum branches per node"
+
+      max_total_nodes:
+        type: integer
+        default: 50
+        description: "Hard limit on total nodes explored"
+
+      node_timeout_ms:
+        type: integer
+        default: 60000
+        description: "Timeout for evaluating single node"
+
+      pruning:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          score_threshold:
+            type: number
+            default: 0.3
+            description: "Prune branches scoring below this"
+          consecutive_failures:
+            type: integer
+            default: 2
+            description: "Prune after N consecutive failures in branch"
+
+  ExpansionRules:
+    type: object
+    description: "Rules for when to expand search tree"
+    properties:
+      trigger_conditions:
+        type: array
+        description: "Conditions that trigger tree expansion"
+        items:
+          type: object
+          properties:
+            condition:
+              type: string
+              enum:
+                - linear_approach_failed
+                - quality_below_threshold
+                - consecutive_failures
+                - timeout_approaching
+                - complex_task_detected
+            threshold:
+              type: number
+            action:
+              type: string
+              enum:
+                - expand_alternatives
+                - increase_branch_factor
+                - backtrack_to_checkpoint
+                - switch_strategy
+        default:
+          - condition: linear_approach_failed
+            threshold: 2
+            action: expand_alternatives
+          - condition: quality_below_threshold
+            threshold: 0.5
+            action: expand_alternatives
+          - condition: consecutive_failures
+            threshold: 3
+            action: backtrack_to_checkpoint
+
+      branch_generation:
+        type: object
+        properties:
+          method:
+            type: string
+            enum:
+              - propose_alternatives
+              - decompose_problem
+              - vary_parameters
+              - combine_approaches
+            default: propose_alternatives
+
+          alternative_prompts:
+            type: array
+            items:
+              type: string
+            default:
+              - "What are 3 alternative approaches to solve this?"
+              - "How could this be solved differently?"
+              - "What if we tried the opposite approach?"
+
+  SearchStrategies:
+    type: object
+    description: "Available search strategies"
+    properties:
+      default_strategy:
+        type: string
+        enum:
+          - breadth_first
+          - depth_first
+          - best_first
+          - monte_carlo
+        default: best_first
+
+      strategies:
+        type: object
+        properties:
+          breadth_first:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Explore all branches at each level before going deeper"
+              best_for:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "Well-defined problems"
+                  - "When optimal solution needed"
+                  - "Shallow solution space"
+
+          depth_first:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Follow one branch deeply before backtracking"
+              best_for:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "When any solution is acceptable"
+                  - "Deep solution space"
+                  - "Memory-constrained scenarios"
+
+          best_first:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Always expand the most promising node"
+              best_for:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "Most tasks (default)"
+                  - "When good heuristic available"
+                  - "Time-constrained scenarios"
+              scoring_function:
+                type: string
+                default: "quality_score * 0.6 + progress_score * 0.4"
+
+          monte_carlo:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Random sampling with UCB selection (LATS approach)"
+              best_for:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "Very large solution spaces"
+                  - "When evaluation is cheap"
+                  - "Exploration-heavy problems"
+              exploration_constant:
+                type: number
+                default: 1.41
+                description: "UCB exploration constant (sqrt(2))"
+
+  FailureRecovery:
+    type: object
+    description: "Recovery strategies for tree search failures"
+    properties:
+      on_branch_failure:
+        type: object
+        properties:
+          actions:
+            type: array
+            items:
+              type: string
+            default:
+              - log_failure_reason
+              - update_branch_score
+              - check_sibling_branches
+              - backtrack_if_all_failed
+
+          learning:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              store_failure_pattern:
+                type: boolean
+                default: true
+              adjust_heuristics:
+                type: boolean
+                default: true
+
+      on_tree_exhaustion:
+        type: object
+        properties:
+          description:
+            type: string
+            default: "All branches exhausted without success"
+          actions:
+            type: array
+            items:
+              type: string
+            default:
+              - select_best_partial_solution
+              - request_human_guidance
+              - expand_search_parameters
+              - report_failure_analysis
+
+      checkpoint_restoration:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          checkpoint_frequency:
+            type: integer
+            default: 3
+            description: "Save checkpoint every N successful nodes"
+          restore_on:
+            type: array
+            items:
+              type: string
+            default:
+              - branch_exhausted
+              - quality_regression
+              - invalid_state_detected
+
+# Tree node schema
+tree_node:
+  type: object
+  required:
+    - node_id
+    - parent_id
+    - depth
+    - state
+  properties:
+    node_id:
+      type: string
+      format: uuid
+    parent_id:
+      type: string
+      description: "null for root node"
+    depth:
+      type: integer
+    state:
+      type: object
+      description: "Agent state at this node"
+    action_taken:
+      type: string
+      description: "Action that led to this node"
+    observation:
+      type: string
+      description: "Result of action"
+    quality_score:
+      type: number
+      minimum: 0
+      maximum: 1
+    visits:
+      type: integer
+      description: "Times this node was visited (for MCTS)"
+    children:
+      type: array
+      items:
+        type: string
+        description: "Child node IDs"
+    status:
+      type: string
+      enum:
+        - active
+        - expanded
+        - pruned
+        - terminal_success
+        - terminal_failure
+    created_at:
+      type: string
+      format: date-time
+    metadata:
+      type: object
+      properties:
+        iteration:
+          type: integer
+        approach:
+          type: string
+        failure_reason:
+          type: string
+
+# Search tree schema
+search_tree:
+  type: object
+  required:
+    - tree_id
+    - task
+    - root_node
+  properties:
+    tree_id:
+      type: string
+      format: uuid
+    task:
+      type: string
+    strategy:
+      type: string
+    root_node:
+      type: string
+      description: "Root node ID"
+    nodes:
+      type: object
+      additionalProperties:
+        $ref: "#/$defs/TreeNode"
+    current_node:
+      type: string
+    best_node:
+      type: string
+    statistics:
+      type: object
+      properties:
+        total_nodes:
+          type: integer
+        max_depth_reached:
+          type: integer
+        branches_pruned:
+          type: integer
+        successful_paths:
+          type: integer
+        failed_paths:
+          type: integer
+    created_at:
+      type: string
+      format: date-time
+    completed_at:
+      type: string
+      format: date-time
+
+# Agent protocol
+agent_protocol:
+  initialize_tree:
+    description: "Create search tree for complex task"
+    triggers:
+      - complex_task_detected
+      - linear_approach_failed
+    steps:
+      - create_root_node
+      - generate_initial_branches
+      - select_first_branch
+      - begin_exploration
+
+  expand_node:
+    description: "Generate child nodes for current node"
+    steps:
+      - evaluate_current_state
+      - if_terminal_return
+      - generate_alternatives
+      - score_alternatives
+      - create_child_nodes
+      - prune_low_scoring
+      - select_next_node
+
+  select_next_node:
+    description: "Choose next node to explore"
+    by_strategy:
+      breadth_first: "Select leftmost unvisited at shallowest depth"
+      depth_first: "Select leftmost unvisited child of current"
+      best_first: "Select highest scoring unvisited node"
+      monte_carlo: "Select by UCB formula: score + c*sqrt(ln(parent_visits)/visits)"
+
+  backtrack:
+    description: "Return to previous decision point"
+    steps:
+      - mark_current_branch_exhausted
+      - find_nearest_unexplored_sibling
+      - if_found_continue
+      - else_backtrack_to_parent
+      - if_at_root_tree_exhausted
+
+  tree_to_linear:
+    description: "Extract best path as linear solution"
+    steps:
+      - identify_best_terminal_node
+      - trace_path_to_root
+      - extract_action_sequence
+      - return_as_linear_plan
+
+# CLI integration
+cli_options:
+  tree_search_flag:
+    name: "--tree-search"
+    short: "-t"
+    type: boolean
+    default: false
+    help: "Enable tree search for complex tasks"
+
+  strategy_flag:
+    name: "--search-strategy"
+    type: string
+    choices: ["breadth_first", "depth_first", "best_first", "monte_carlo"]
+    default: "best_first"
+    help: "Search strategy to use"
+
+  max_branches_flag:
+    name: "--max-branches"
+    type: integer
+    default: 3
+    help: "Maximum branches per decision point"
+
+# Performance targets (from REF-020, REF-024)
+research_targets:
+  improvement_over_linear: "20-70% on complex tasks"
+  optimal_branching_factor: "2-5 depending on task"
+  best_first_efficiency: "70% fewer nodes than BFS"
+  mcts_exploration_benefit: "Better coverage of solution space"
+
+# Storage
+storage:
+  tree_path: ".aiwg/ralph/{loop_id}/tree/"
+  checkpoint_path: ".aiwg/ralph/{loop_id}/checkpoints/"
+  visualization_path: ".aiwg/reports/tree-search/"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-020-tree-of-thoughts.md"
+    - "@.aiwg/research/findings/REF-024-lats.md"
+  implementation:
+    - "#165"
+  related:
+    - "@.aiwg/ralph/schemas/iteration-analytics.yaml"
+    - "@.aiwg/ralph/schemas/cross-task-memory.yaml"
+    - "@tools/ralph-external/"

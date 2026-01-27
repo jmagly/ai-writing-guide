@@ -1,0 +1,427 @@
+# Agent Learning Schema
+# Based on REF-013 MetaGPT Research
+# Issue: #146
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/agent-learning/v1"
+title: "Agent Constraint Learning Schema"
+description: |
+  Schema for collecting agent feedback and updating constraints
+  based on project learnings per REF-013 MetaGPT.
+
+type: object
+required:
+  - version
+  - feedback_collection
+  - learning_pipeline
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  feedback_collection:
+    $ref: "#/$defs/FeedbackCollectionConfig"
+
+  learning_pipeline:
+    $ref: "#/$defs/LearningPipelineConfig"
+
+  prompt_evolution:
+    $ref: "#/$defs/PromptEvolutionConfig"
+
+$defs:
+  FeedbackCollectionConfig:
+    type: object
+    description: "How feedback is collected from agent executions"
+    properties:
+      storage_path:
+        type: string
+        default: ".aiwg/.feedback/"
+
+      sources:
+        type: array
+        items:
+          $ref: "#/$defs/FeedbackSource"
+
+      retention:
+        type: object
+        properties:
+          max_entries_per_agent:
+            type: integer
+            default: 1000
+          max_age_days:
+            type: integer
+            default: 90
+
+  FeedbackSource:
+    type: object
+    required:
+      - type
+    properties:
+      type:
+        type: string
+        enum:
+          - validation_failure
+          - review_rejection
+          - quality_score
+          - human_correction
+          - test_failure
+          - security_finding
+
+      auto_collect:
+        type: boolean
+        default: true
+
+      severity_threshold:
+        type: string
+        enum: [all, medium_and_above, high_only]
+        default: all
+
+  LearningPipelineConfig:
+    type: object
+    description: "How learnings are extracted from feedback"
+    properties:
+      analysis:
+        type: object
+        properties:
+          min_samples:
+            type: integer
+            default: 5
+            description: "Min feedback entries to trigger analysis"
+
+          clustering:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              algorithm:
+                type: string
+                default: "semantic_similarity"
+              min_cluster_size:
+                type: integer
+                default: 3
+
+          pattern_detection:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              frequency_threshold:
+                type: number
+                default: 0.1
+                description: "Pattern must occur in >10% of feedback"
+
+      lesson_extraction:
+        type: object
+        properties:
+          llm_driven:
+            type: boolean
+            default: true
+          template:
+            type: string
+            description: "Prompt template for lesson extraction"
+
+  PromptEvolutionConfig:
+    type: object
+    description: "How agent prompts are updated"
+    properties:
+      storage_path:
+        type: string
+        default: ".aiwg/.prompts/"
+
+      versioning:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          format:
+            type: string
+            default: "v{N}.md"
+
+      approval_gate:
+        type: object
+        properties:
+          required:
+            type: boolean
+            default: true
+          approvers:
+            type: array
+            items:
+              type: string
+            default: ["human"]
+
+      rollback:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          max_versions:
+            type: integer
+            default: 10
+
+# Feedback entry schema
+feedback_entry:
+  type: object
+  required:
+    - id
+    - agent
+    - timestamp
+    - type
+  properties:
+    id:
+      type: string
+      format: uuid
+    agent:
+      type: string
+      description: "Agent that produced the feedback"
+    timestamp:
+      type: string
+      format: date-time
+    type:
+      type: string
+      enum:
+        - validation_failure
+        - review_rejection
+        - quality_score
+        - human_correction
+        - test_failure
+        - security_finding
+    severity:
+      type: string
+      enum: [low, medium, high, critical]
+    context:
+      type: object
+      properties:
+        task:
+          type: string
+        artifact_path:
+          type: string
+        iteration:
+          type: integer
+    details:
+      type: object
+      properties:
+        error_message:
+          type: string
+        expected:
+          type: string
+        actual:
+          type: string
+        correction:
+          type: string
+        quality_scores:
+          type: object
+    tags:
+      type: array
+      items:
+        type: string
+
+# Lesson schema
+lesson:
+  type: object
+  required:
+    - id
+    - agent
+    - lesson_text
+    - source_feedback
+  properties:
+    id:
+      type: string
+      format: uuid
+    agent:
+      type: string
+    lesson_text:
+      type: string
+      description: "Natural language lesson learned"
+    constraint_update:
+      type: string
+      description: "Proposed constraint addition/modification"
+    source_feedback:
+      type: array
+      items:
+        type: string
+      description: "Feedback IDs this lesson derived from"
+    confidence:
+      type: number
+      minimum: 0
+      maximum: 1
+    frequency:
+      type: number
+      description: "How often this issue occurred"
+    impact:
+      type: string
+      enum: [low, medium, high]
+    status:
+      type: string
+      enum: [proposed, approved, rejected, applied]
+      default: proposed
+    approved_by:
+      type: string
+    applied_at:
+      type: string
+      format: date-time
+
+# Prompt version schema
+prompt_version:
+  type: object
+  required:
+    - agent
+    - version
+    - content
+    - created_at
+  properties:
+    agent:
+      type: string
+    version:
+      type: integer
+    content:
+      type: string
+      description: "Full prompt content"
+    created_at:
+      type: string
+      format: date-time
+    applied_lessons:
+      type: array
+      items:
+        type: string
+      description: "Lesson IDs incorporated"
+    changes:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [addition, modification, removal]
+          section:
+            type: string
+          old_text:
+            type: string
+          new_text:
+            type: string
+    approved_by:
+      type: string
+    performance:
+      type: object
+      properties:
+        quality_before:
+          type: number
+        quality_after:
+          type: number
+        error_rate_before:
+          type: number
+        error_rate_after:
+          type: number
+
+# Agent protocol
+agent_protocol:
+  feedback_collection:
+    description: "Collect feedback from agent execution"
+    triggers:
+      - validation_failure
+      - review_rejection
+      - human_correction
+      - low_quality_score
+    steps:
+      - capture_context
+      - extract_details
+      - assign_severity
+      - tag_feedback
+      - store_entry
+
+  lesson_extraction:
+    description: "Extract lessons from accumulated feedback"
+    triggers:
+      - feedback_threshold_reached
+      - scheduled_analysis
+      - manual_request
+    steps:
+      - load_recent_feedback
+      - cluster_by_similarity
+      - detect_patterns
+      - generate_lessons
+      - propose_constraints
+      - submit_for_approval
+
+  prompt_update:
+    description: "Update agent prompts with approved lessons"
+    triggers:
+      - lesson_approved
+    steps:
+      - load_current_prompt
+      - apply_constraint_updates
+      - generate_new_version
+      - store_version
+      - notify_operators
+      - track_performance
+
+  rollback:
+    description: "Rollback to previous prompt version"
+    triggers:
+      - performance_degradation
+      - manual_request
+    steps:
+      - identify_rollback_target
+      - restore_previous_version
+      - log_rollback
+      - notify_operators
+
+# Performance tracking
+performance_tracking:
+  metrics:
+    - error_rate_by_agent
+    - average_quality_by_agent
+    - lessons_applied_count
+    - prompt_versions_count
+    - rollback_frequency
+
+  comparison:
+    description: "A/B comparison of prompt versions"
+    sample_size: 20
+    metrics:
+      - quality_score
+      - error_rate
+      - task_completion_rate
+
+# Human approval gate
+approval_gate:
+  display_template: |
+    ╭─────────────────────────────────────────────────────────╮
+    │ Prompt Update Proposal                                  │
+    │ Agent: {agent_name}                                     │
+    │ Version: {old_version} → {new_version}                  │
+    ├─────────────────────────────────────────────────────────┤
+    │ Lessons Applied:                                        │
+    │ {lessons_list}                                          │
+    │                                                          │
+    │ Changes:                                                │
+    │ {changes_diff}                                          │
+    │                                                          │
+    │ Source Feedback: {feedback_count} entries               │
+    │ Confidence: {confidence}%                               │
+    ├─────────────────────────────────────────────────────────┤
+    │ [a] Approve  [r] Reject  [v] View Full  [q] Defer       │
+    ╰─────────────────────────────────────────────────────────╯
+
+# Storage paths
+storage:
+  feedback_dir: ".aiwg/.feedback/{agent}/"
+  feedback_file: "{timestamp}-{id}.json"
+  lessons_dir: ".aiwg/.lessons/{agent}/"
+  prompts_dir: ".aiwg/.prompts/{agent}/"
+  prompt_file: "v{version}.md"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+  implementation:
+    - "#146"
+  related:
+    - "@.claude/agents/"
+    - "@.claude/rules/failure-mitigation.md"

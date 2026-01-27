@@ -1,0 +1,354 @@
+# Semantic Retrieval Schema
+# Based on REF-008 RAG Research
+# Issues: #142, #143, #144
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/semantic-retrieval/v1"
+title: "Semantic Retrieval Configuration Schema"
+description: |
+  Schema for semantic retrieval, hybrid search, and context budget
+  management per REF-008 RAG research.
+
+type: object
+required:
+  - version
+  - embedding
+  - retrieval
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  embedding:
+    $ref: "#/$defs/EmbeddingConfig"
+
+  retrieval:
+    $ref: "#/$defs/RetrievalConfig"
+
+  context_budget:
+    $ref: "#/$defs/ContextBudgetConfig"
+
+  hybrid_search:
+    $ref: "#/$defs/HybridSearchConfig"
+
+$defs:
+  EmbeddingConfig:
+    type: object
+    description: "Embedding model configuration"
+    properties:
+      model:
+        type: string
+        default: "all-MiniLM-L6-v2"
+        description: "Embedding model identifier"
+
+      dimensions:
+        type: integer
+        default: 384
+        description: "Embedding vector dimensions"
+
+      cache_path:
+        type: string
+        default: ".aiwg/.cache/embeddings/"
+        description: "Where to store cached embeddings"
+
+      index_on_write:
+        type: boolean
+        default: true
+        description: "Index artifacts when written"
+
+      batch_size:
+        type: integer
+        default: 32
+        description: "Batch size for embedding generation"
+
+      indexed_paths:
+        type: array
+        items:
+          type: string
+        default:
+          - ".aiwg/requirements/"
+          - ".aiwg/architecture/"
+          - ".aiwg/research/"
+          - "src/"
+          - "docs/"
+        description: "Paths to index for retrieval"
+
+      excluded_patterns:
+        type: array
+        items:
+          type: string
+        default:
+          - "*.lock"
+          - "node_modules/**"
+          - ".git/**"
+          - "*.min.js"
+        description: "Patterns to exclude from indexing"
+
+  RetrievalConfig:
+    type: object
+    description: "Retrieval settings"
+    properties:
+      top_k:
+        type: integer
+        default: 10
+        description: "Number of results to return"
+
+      similarity_threshold:
+        type: number
+        minimum: 0
+        maximum: 1
+        default: 0.7
+        description: "Minimum similarity score to include"
+
+      max_retrieval_time_ms:
+        type: integer
+        default: 2000
+        description: "Maximum time for retrieval (ms)"
+
+      rerank:
+        type: boolean
+        default: true
+        description: "Apply reranking to results"
+
+      rerank_model:
+        type: string
+        default: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        description: "Model for reranking"
+
+      prioritize_explicit_mentions:
+        type: boolean
+        default: true
+        description: "Prioritize explicitly @-mentioned files"
+
+      recency_boost:
+        type: number
+        minimum: 0
+        maximum: 2
+        default: 1.2
+        description: "Boost factor for recently modified files"
+
+  ContextBudgetConfig:
+    type: object
+    description: "Token budget management per REF-008"
+    properties:
+      total_budget_tokens:
+        type: integer
+        default: 200000
+        description: "Total available context tokens"
+
+      allocation:
+        type: object
+        properties:
+          system_prompt:
+            type: number
+            default: 0.05
+            description: "Fraction for system prompt"
+          retrieved_context:
+            type: number
+            default: 0.65
+            description: "Fraction for retrieved artifacts"
+          generation:
+            type: number
+            default: 0.30
+            description: "Fraction reserved for generation"
+        description: "Budget allocation ratios (must sum to 1.0)"
+
+      prioritization:
+        type: object
+        properties:
+          explicit_mentions:
+            type: integer
+            default: 100
+            description: "Priority score for explicit @-mentions"
+          high_similarity:
+            type: integer
+            default: 80
+            description: "Priority for high similarity (>0.9)"
+          recent_modification:
+            type: integer
+            default: 60
+            description: "Priority for recently modified (<24h)"
+          same_directory:
+            type: integer
+            default: 40
+            description: "Priority for same directory as task"
+        description: "Priority scoring weights"
+
+      overflow_strategy:
+        type: string
+        enum:
+          - truncate_oldest
+          - summarize_low_priority
+          - exclude_low_similarity
+          - hybrid
+        default: hybrid
+        description: "Strategy when budget exceeded"
+
+      summarization:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          threshold_tokens:
+            type: integer
+            default: 5000
+            description: "Summarize if artifact exceeds this"
+          summary_target_tokens:
+            type: integer
+            default: 500
+            description: "Target size for summaries"
+
+      warnings:
+        type: object
+        properties:
+          budget_warning_threshold:
+            type: number
+            default: 0.9
+            description: "Warn when this fraction used"
+          log_truncations:
+            type: boolean
+            default: true
+
+  HybridSearchConfig:
+    type: object
+    description: "Two-stage hybrid retrieval per REF-008"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      stage1_keyword:
+        type: object
+        properties:
+          algorithm:
+            type: string
+            enum: [bm25, ripgrep, combined]
+            default: ripgrep
+          candidate_count:
+            type: integer
+            default: 100
+            description: "Candidates from keyword stage"
+          max_time_ms:
+            type: integer
+            default: 500
+            description: "Max time for keyword search"
+
+      stage2_semantic:
+        type: object
+        properties:
+          rerank_count:
+            type: integer
+            default: 10
+            description: "Final results after reranking"
+          max_time_ms:
+            type: integer
+            default: 1500
+            description: "Max time for semantic rerank"
+
+      fusion:
+        type: object
+        properties:
+          method:
+            type: string
+            enum: [rrf, weighted_sum, max_score]
+            default: rrf
+            description: "Score fusion method (Reciprocal Rank Fusion)"
+          keyword_weight:
+            type: number
+            default: 0.4
+          semantic_weight:
+            type: number
+            default: 0.6
+
+# Agent protocol for retrieval
+agent_protocol:
+  auto_retrieval:
+    description: "Automatic context retrieval when agent starts"
+    triggers:
+      - agent_task_start
+      - context_refresh_request
+    steps:
+      - extract_task_query
+      - run_hybrid_search
+      - apply_context_budget
+      - inject_into_context
+      - log_retrieval_stats
+
+  embedding_maintenance:
+    description: "Keep embeddings current"
+    triggers:
+      - artifact_write
+      - artifact_delete
+      - manual_reindex
+    steps:
+      - detect_changed_files
+      - generate_embeddings
+      - update_index
+      - prune_stale_entries
+
+  budget_enforcement:
+    description: "Enforce token budget"
+    steps:
+      - calculate_current_usage
+      - check_against_budget
+      - apply_overflow_strategy_if_needed
+      - log_budget_state
+
+# Performance targets
+performance_targets:
+  embedding_generation:
+    per_file_ms: 100
+    batch_throughput: "10 files/second"
+
+  keyword_search:
+    latency_p50_ms: 100
+    latency_p99_ms: 500
+    corpus_size: "10000 files"
+
+  semantic_search:
+    latency_p50_ms: 500
+    latency_p99_ms: 2000
+    corpus_size: "10000 files"
+
+  combined_pipeline:
+    total_latency_ms: 2000
+    accuracy_target: "85% relevant in top 10"
+
+# Telemetry
+telemetry:
+  metrics:
+    - retrieval_latency_ms
+    - keyword_candidates_count
+    - final_results_count
+    - average_similarity_score
+    - budget_utilization_percent
+    - truncation_frequency
+    - cache_hit_rate
+
+  logging:
+    - query_text
+    - retrieved_paths
+    - similarity_scores
+    - budget_state
+    - overflow_actions
+
+# Default configuration
+defaults:
+  storage_path: ".aiwg/.cache/retrieval/"
+  index_file: "embeddings.index"
+  metadata_file: "embeddings.meta.json"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-008-rag.md"
+  implementation:
+    - "#142"  # Auto-retrieve artifacts
+    - "#143"  # Hybrid retrieval
+    - "#144"  # Token budget
+  related:
+    - "@src/core/context-manager.ts"
+    - "@src/core/retrieval-pipeline.ts"
