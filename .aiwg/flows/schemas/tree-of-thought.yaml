@@ -1,0 +1,735 @@
+# Tree-of-Thought (ToT) Pattern Schema
+#
+# Research Basis: REF-020 Tree of Thoughts (Yao et al., NeurIPS 2023)
+# Performance: 18.5x improvement on planning tasks (4% → 74% success rate)
+# Pattern: Generate k alternatives → Evaluate → Select best b → Backtrack on failure
+#
+# This schema defines the ToT deliberate planning pattern for architecture
+# decision-making, enabling systematic exploration and evaluation of alternatives.
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/tree-of-thought.yaml"
+
+title: "Tree-of-Thought Workflow Schema"
+description: |
+  Defines the structure for deliberate planning using Tree-of-Thought patterns,
+  enabling generation of multiple alternatives, systematic evaluation, pruning,
+  and backtracking for architecture decisions.
+
+type: object
+required:
+  - tot_id
+  - task
+  - root_state
+  - search_strategy
+  - evaluation_criteria
+  - thought_tree
+  - termination_conditions
+
+properties:
+  tot_id:
+    type: string
+    description: "Unique identifier for this ToT workflow execution"
+    pattern: "^tot-[0-9]{3}$"
+    examples:
+      - "tot-001"
+      - "tot-042"
+
+  task:
+    type: object
+    description: "The decision task being addressed"
+    required:
+      - description
+      - decision_type
+      - complexity
+    properties:
+      description:
+        type: string
+        description: "Clear statement of the decision to be made"
+        examples:
+          - "Select API architecture (REST vs GraphQL vs gRPC)"
+          - "Determine authentication strategy (JWT vs Sessions vs OAuth2)"
+          - "Choose deployment pattern (Monolith vs Microservices vs Serverless)"
+
+      decision_type:
+        type: string
+        enum:
+          - architecture_style
+          - technology_selection
+          - design_pattern
+          - deployment_strategy
+          - security_approach
+          - data_model
+          - integration_pattern
+        description: "Category of architectural decision"
+
+      complexity:
+        type: string
+        enum: [low, moderate, high, critical]
+        description: |
+          Complexity level determines k (alternatives) and b (beam width):
+          - low: k=3, b=2
+          - moderate: k=5, b=3
+          - high: k=7, b=4
+          - critical: k=10, b=5
+
+      context:
+        type: object
+        properties:
+          requirements:
+            type: array
+            items:
+              type: string
+            description: "Relevant requirements and constraints"
+          nfrs:
+            type: array
+            items:
+              type: string
+            description: "Non-functional requirements to evaluate against"
+          existing_decisions:
+            type: array
+            items:
+              type: string
+            description: "Prior architectural decisions that constrain options"
+
+  root_state:
+    type: object
+    description: "Initial state before deliberation begins"
+    required:
+      - state_id
+      - input
+    properties:
+      state_id:
+        type: string
+        pattern: "^s0$"
+        const: "s0"
+        description: "Root state always has ID 's0'"
+
+      input:
+        type: string
+        description: "Initial problem statement or decision prompt"
+
+      context:
+        type: object
+        description: "Supporting context available at start"
+
+  search_strategy:
+    type: object
+    description: "Algorithm for exploring the thought tree"
+    required:
+      - algorithm
+      - parameters
+    properties:
+      algorithm:
+        type: string
+        enum:
+          - breadth_first_search
+          - depth_first_search
+          - beam_search
+          - best_first
+          - a_star
+        description: |
+          Search algorithm selection:
+          - BFS: Explore all options at each level (depth ≤ 3)
+          - DFS: Deep exploration with backtracking (depth > 3)
+          - Beam: Keep top b candidates at each level (most common)
+          - Best-first: Always expand highest-scored node
+          - A-star: Heuristic-guided search (requires h function)
+
+      parameters:
+        type: object
+        properties:
+          k:
+            type: integer
+            minimum: 3
+            maximum: 10
+            description: "Number of alternative thoughts to generate per state"
+
+          b:
+            type: integer
+            minimum: 1
+            maximum: 5
+            description: "Beam width - number of top candidates to keep"
+
+          max_depth:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 3
+            description: "Maximum depth of the thought tree"
+
+          pruning_threshold:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.3
+            description: "Minimum score to avoid pruning (0-1 scale)"
+
+          backtrack_enabled:
+            type: boolean
+            default: true
+            description: "Allow backtracking to earlier states on dead ends"
+
+  evaluation_criteria:
+    type: object
+    description: "Criteria for scoring architectural alternatives"
+    required:
+      - dimensions
+      - scoring_method
+    properties:
+      dimensions:
+        type: array
+        minItems: 3
+        items:
+          type: object
+          required:
+            - name
+            - weight
+            - scale
+          properties:
+            name:
+              type: string
+              description: "Dimension name (e.g., 'scalability', 'security')"
+
+            description:
+              type: string
+              description: "What this dimension measures"
+
+            weight:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: "Importance weight (all weights must sum to 1.0)"
+
+            scale:
+              type: string
+              enum: ["1-10", "1-5", "low-medium-high", "binary"]
+              default: "1-10"
+
+            evaluation_prompt:
+              type: string
+              description: "Prompt template for evaluating this dimension"
+
+        examples:
+          - - name: "scalability"
+              weight: 0.30
+              scale: "1-10"
+              description: "Ability to handle increasing load"
+              evaluation_prompt: "Rate from 1-10: How well does this option scale to 10x current load?"
+            - name: "security"
+              weight: 0.25
+              scale: "1-10"
+              description: "Security posture and attack surface"
+            - name: "maintainability"
+              weight: 0.20
+              scale: "1-10"
+              description: "Ease of ongoing maintenance and evolution"
+            - name: "cost"
+              weight: 0.15
+              scale: "1-10"
+              description: "Total cost of ownership (1=expensive, 10=cheap)"
+            - name: "team_fit"
+              weight: 0.10
+              scale: "1-10"
+              description: "Match with team skills and experience"
+
+      scoring_method:
+        type: string
+        enum:
+          - independent_evaluation
+          - comparative_voting
+          - hybrid
+        description: |
+          Evaluation approach:
+          - independent: Score each option in isolation
+          - comparative_voting: Vote among options
+          - hybrid: Independent scoring + comparative ranking
+
+      normalization:
+        type: string
+        enum: ["min-max", "z-score", "none"]
+        default: "min-max"
+        description: "How to normalize scores across dimensions"
+
+  thought_tree:
+    type: object
+    description: "The complete tree of explored thoughts"
+    required:
+      - nodes
+      - edges
+    properties:
+      nodes:
+        type: array
+        items:
+          $ref: "#/$defs/thought_node"
+        description: "All nodes in the thought tree"
+
+      edges:
+        type: array
+        items:
+          type: object
+          required:
+            - from_node
+            - to_node
+            - branch_type
+          properties:
+            from_node:
+              type: string
+              description: "Parent node ID"
+            to_node:
+              type: string
+              description: "Child node ID"
+            branch_type:
+              type: string
+              enum: [explore, expand, prune, backtrack]
+        description: "Edges connecting nodes (parent-child relationships)"
+
+      current_state:
+        type: string
+        description: "Node ID of current exploration state"
+
+      best_path:
+        type: array
+        items:
+          type: string
+        description: "Node IDs of the best path from root to selected solution"
+
+  termination_conditions:
+    type: object
+    description: "Conditions that end the ToT search"
+    properties:
+      max_iterations:
+        type: integer
+        default: 100
+        description: "Maximum search iterations before forced termination"
+
+      solution_found:
+        type: boolean
+        description: "Set to true when acceptable solution identified"
+
+      score_threshold:
+        type: number
+        minimum: 0
+        maximum: 1
+        default: 0.80
+        description: "Minimum score to consider a solution acceptable"
+
+      time_budget_seconds:
+        type: integer
+        description: "Maximum wall-clock time for search"
+
+      all_paths_exhausted:
+        type: boolean
+        description: "True when no remaining paths to explore"
+
+  synthesis:
+    type: object
+    description: "Final synthesis of the deliberation process"
+    properties:
+      selected_node:
+        type: string
+        description: "Node ID of the selected solution"
+
+      selected_alternative:
+        type: string
+        description: "Human-readable description of selected option"
+
+      overall_score:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Final weighted score of selected alternative"
+
+      dimension_scores:
+        type: object
+        additionalProperties:
+          type: number
+        description: "Breakdown of scores by evaluation dimension"
+
+      rationale:
+        type: string
+        description: "Explanation of why this option was selected"
+
+      trade_offs:
+        type: array
+        items:
+          type: string
+        description: "Trade-offs accepted by selecting this option"
+
+      rejected_alternatives:
+        type: array
+        items:
+          type: object
+          properties:
+            alternative:
+              type: string
+            score:
+              type: number
+            rejection_reason:
+              type: string
+        description: "Alternatives considered but not selected"
+
+      backtrack_history:
+        type: array
+        items:
+          type: object
+          properties:
+            from_node:
+              type: string
+            reason:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+        description: "Record of backtracking events during search"
+
+      adr_reference:
+        type: string
+        description: "Path to the ADR documenting this decision"
+        pattern: "^\\.aiwg/architecture/adr-.*\\.md$"
+
+  integration:
+    type: object
+    description: "Integration with other AIWG patterns"
+    properties:
+      thought_protocol_types:
+        type: array
+        items:
+          type: string
+          enum: [goal, progress, extraction, reasoning, exception, synthesis]
+        description: "Thought types used during ToT execution"
+
+      hitl_gates:
+        type: array
+        items:
+          type: string
+        description: "Human-in-the-loop gate IDs triggered during ToT"
+
+      ensemble_review:
+        type: boolean
+        description: "Whether to use ensemble review for final selection"
+
+      ralph_loop_integration:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+          use_tot_for_recovery:
+            type: boolean
+            description: "Use ToT to generate recovery strategies on Ralph failure"
+
+$defs:
+  thought_node:
+    type: object
+    description: "A single node in the thought tree representing one alternative"
+    required:
+      - node_id
+      - depth
+      - content
+      - evaluation
+    properties:
+      node_id:
+        type: string
+        pattern: "^s[0-9]+$"
+        description: "Unique state identifier (e.g., 's1', 's2')"
+        examples: ["s0", "s1", "s2a", "s3b"]
+
+      depth:
+        type: integer
+        minimum: 0
+        description: "Depth in the tree (root is depth 0)"
+
+      parent_id:
+        type: string
+        description: "Parent node ID (null for root)"
+
+      content:
+        type: object
+        required:
+          - alternative
+          - description
+        properties:
+          alternative:
+            type: string
+            description: "Name of this architectural alternative"
+            examples:
+              - "REST API with OpenAPI"
+              - "GraphQL with Apollo"
+              - "gRPC with Protocol Buffers"
+
+          description:
+            type: string
+            description: "Detailed description of this alternative"
+
+          key_characteristics:
+            type: array
+            items:
+              type: string
+            description: "Important properties of this approach"
+
+          implementation_notes:
+            type: string
+            description: "How this would be implemented"
+
+      evaluation:
+        type: object
+        required:
+          - status
+        properties:
+          status:
+            type: string
+            enum:
+              - not_evaluated
+              - evaluating
+              - evaluated
+              - selected
+              - pruned
+              - dead_end
+            description: "Current evaluation status"
+
+          overall_score:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: "Weighted overall score (0-1)"
+
+          dimension_scores:
+            type: object
+            additionalProperties:
+              type: number
+            description: "Scores for each evaluation dimension"
+
+          evaluation_timestamp:
+            type: string
+            format: date-time
+
+          evaluation_notes:
+            type: string
+            description: "Detailed evaluation reasoning"
+
+          strengths:
+            type: array
+            items:
+              type: string
+            description: "Identified strengths of this alternative"
+
+          weaknesses:
+            type: array
+            items:
+              type: string
+            description: "Identified weaknesses or risks"
+
+          lookahead_projection:
+            type: string
+            description: "Projection of how this would work in practice"
+
+          projected_success_rate:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: "Estimated probability of success (0-1)"
+
+      children:
+        type: array
+        items:
+          type: string
+        description: "Child node IDs (for refinements or sub-decisions)"
+
+      pruned:
+        type: boolean
+        default: false
+        description: "Whether this branch was pruned"
+
+      prune_reason:
+        type: string
+        description: "Why this branch was pruned (if applicable)"
+
+      visited:
+        type: boolean
+        default: false
+        description: "Whether this node has been explored"
+
+examples:
+  - tot_id: "tot-001"
+    task:
+      description: "Select API architecture for e-commerce platform"
+      decision_type: "architecture_style"
+      complexity: "high"
+      context:
+        requirements:
+          - "Support mobile and web clients"
+          - "Real-time inventory updates"
+          - "Complex product queries with filters"
+        nfrs:
+          - "Response time < 200ms p95"
+          - "99.9% uptime SLA"
+          - "Support 10K concurrent users"
+
+    root_state:
+      state_id: "s0"
+      input: "Choose API architecture for e-commerce platform with mobile/web clients and real-time inventory"
+
+    search_strategy:
+      algorithm: "beam_search"
+      parameters:
+        k: 5
+        b: 3
+        max_depth: 3
+        pruning_threshold: 0.4
+        backtrack_enabled: true
+
+    evaluation_criteria:
+      dimensions:
+        - name: "performance"
+          weight: 0.30
+          scale: "1-10"
+          description: "Response time and throughput"
+        - name: "developer_experience"
+          weight: 0.25
+          scale: "1-10"
+          description: "Ease of development and tooling"
+        - name: "flexibility"
+          weight: 0.20
+          scale: "1-10"
+          description: "Ability to evolve and adapt"
+        - name: "client_support"
+          weight: 0.15
+          scale: "1-10"
+          description: "Mobile/web client integration ease"
+        - name: "ecosystem_maturity"
+          weight: 0.10
+          scale: "1-10"
+          description: "Tooling, libraries, community support"
+      scoring_method: "independent_evaluation"
+      normalization: "min-max"
+
+    thought_tree:
+      nodes:
+        - node_id: "s0"
+          depth: 0
+          parent_id: null
+          content:
+            alternative: "Root State"
+            description: "Initial decision point"
+          evaluation:
+            status: "evaluated"
+
+        - node_id: "s1"
+          depth: 1
+          parent_id: "s0"
+          content:
+            alternative: "REST API with OpenAPI"
+            description: "Traditional REST architecture with OpenAPI spec"
+            key_characteristics:
+              - "Resource-based endpoints"
+              - "HTTP verbs for operations"
+              - "JSON responses"
+              - "OpenAPI for documentation"
+          evaluation:
+            status: "evaluated"
+            overall_score: 0.72
+            dimension_scores:
+              performance: 7
+              developer_experience: 8
+              flexibility: 6
+              client_support: 8
+              ecosystem_maturity: 9
+            strengths:
+              - "Mature ecosystem"
+              - "Universal client support"
+              - "Simple mental model"
+            weaknesses:
+              - "Over-fetching/under-fetching"
+              - "Multiple round trips for complex queries"
+
+        - node_id: "s2"
+          depth: 1
+          parent_id: "s0"
+          content:
+            alternative: "GraphQL with Apollo"
+            description: "GraphQL API with Apollo Server and Client"
+            key_characteristics:
+              - "Single endpoint"
+              - "Client-specified queries"
+              - "Type-safe schema"
+              - "Real-time subscriptions"
+          evaluation:
+            status: "evaluated"
+            overall_score: 0.81
+            dimension_scores:
+              performance: 8
+              developer_experience: 9
+              flexibility: 9
+              client_support: 7
+              ecosystem_maturity: 8
+            strengths:
+              - "Efficient data fetching"
+              - "Strongly typed"
+              - "Built-in real-time support"
+            weaknesses:
+              - "Learning curve"
+              - "Caching complexity"
+
+        - node_id: "s3"
+          depth: 1
+          parent_id: "s0"
+          content:
+            alternative: "gRPC with Protocol Buffers"
+            description: "High-performance gRPC API"
+            key_characteristics:
+              - "Binary protocol"
+              - "HTTP/2 multiplexing"
+              - "Strong typing"
+              - "Streaming support"
+          evaluation:
+            status: "pruned"
+            overall_score: 0.58
+            prune_reason: "Poor web browser support, high complexity for e-commerce use case"
+
+      edges:
+        - from_node: "s0"
+          to_node: "s1"
+          branch_type: "explore"
+        - from_node: "s0"
+          to_node: "s2"
+          branch_type: "explore"
+        - from_node: "s0"
+          to_node: "s3"
+          branch_type: "prune"
+
+      best_path: ["s0", "s2"]
+
+    termination_conditions:
+      solution_found: true
+      score_threshold: 0.80
+
+    synthesis:
+      selected_node: "s2"
+      selected_alternative: "GraphQL with Apollo"
+      overall_score: 0.81
+      dimension_scores:
+        performance: 8
+        developer_experience: 9
+        flexibility: 9
+        client_support: 7
+        ecosystem_maturity: 8
+      rationale: |
+        GraphQL selected based on highest overall score (0.81) and strong performance
+        in key dimensions: developer experience (9/10) and flexibility (9/10).
+
+        The ability to specify exact data requirements eliminates over-fetching,
+        critical for mobile clients. Built-in subscription support addresses
+        real-time inventory requirement. Strong typing improves development
+        velocity and reduces bugs.
+      trade_offs:
+        - "Caching more complex than REST (requires normalization)"
+        - "Steeper learning curve for team (estimated 2-3 weeks ramp-up)"
+        - "Slightly lower browser support than REST (though Apollo abstracts this)"
+      rejected_alternatives:
+        - alternative: "REST API with OpenAPI"
+          score: 0.72
+          rejection_reason: "Over-fetching/under-fetching inefficient for mobile; multiple round trips for complex queries"
+        - alternative: "gRPC with Protocol Buffers"
+          score: 0.58
+          rejection_reason: "Poor web browser support; overkill for e-commerce domain"
+      adr_reference: ".aiwg/architecture/adr-003-graphql-api.md"
