@@ -30,7 +30,7 @@ When triggered, this skill:
 
 3. **Format for injection**:
    - Convert reflections to natural language summary
-   - Use @agentic/code/frameworks/sdlc-complete/templates/ralph/self-reflection-prompt.md template
+   - Use @agentic/code/addons/ralph/templates/self-reflection-prompt.md template
    - Prepend to agent context
 
 4. **Track usage**:
@@ -67,5 +67,5 @@ This skill uses:
 
 - @.aiwg/ralph/schemas/reflection-memory.json - Schema
 - @.aiwg/ralph/docs/reflection-memory-guide.md - Guide
-- @agentic/code/frameworks/sdlc-complete/templates/ralph/self-reflection-prompt.md - Prompt template
+- @agentic/code/addons/ralph/templates/self-reflection-prompt.md - Prompt template
 - @.aiwg/research/findings/REF-021-reflexion.md - Research foundation

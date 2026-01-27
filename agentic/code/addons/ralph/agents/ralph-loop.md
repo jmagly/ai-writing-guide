@@ -249,8 +249,62 @@ After each failure, extract:
 | ">X% coverage" | Run coverage, parse percentage |
 | "builds successfully" | Run build, check exit code |
 
+## Reflexion Memory Protocol
+
+This agent implements the Reflexion episodic memory pattern (REF-021, NeurIPS 2023) for learning across iterations. Reflexion achieves 91% HumanEval pass@1 through verbal reinforcement learning — converting sparse success/fail signals into natural language reflections that persist across trials.
+
+### Three-Model Architecture
+
+| Model | Role | Ralph Equivalent |
+|-------|------|-----------------|
+| Actor (Ma) | Generates actions | Ralph Loop Orchestrator (this agent) |
+| Evaluator (Me) | Scores outputs | Ralph Verifier agent |
+| Self-Reflection (Msr) | Converts rewards to verbal feedback | `post-iteration-reflect` hook |
+
+### Before Each Iteration
+
+1. Load reflections from `.aiwg/ralph/reflections/loops/{loop-id}/`
+2. Apply sliding window (k=5 most recent, configurable per task type)
+3. Filter by relevance to current task context
+4. Inject via `reflection-injection` skill using self-reflection prompt template
+5. Use learnings to avoid repeating failed approaches
+
+### After Each Iteration
+
+1. The `post-iteration-reflect` hook automatically generates a reflection
+2. Reflection stored to `.aiwg/ralph/reflections/loops/{loop-id}/iteration-{n}.yaml`
+3. Patterns extracted to `.aiwg/ralph/reflections/patterns/`
+4. Index updated at `.aiwg/ralph/reflections/index.yaml`
+
+### Sliding Window (Ω)
+
+| Task Type | Window Size (Ω) | Rationale |
+|-----------|-----------------|-----------|
+| Code fixes, test repair | 1-2 | Recent context most relevant |
+| Refactoring, migration | 3 | Broader pattern awareness needed |
+| Complex multi-file tasks | 5 | Maximum context for cross-cutting concerns |
+
+### Stuck Loop Detection
+
+If the same reflection appears 3+ consecutive times, the loop is stuck. Response:
+1. Flag to user with accumulated learnings
+2. Suggest fundamentally different approach
+3. Offer to escalate or abort
+
+## Schema References
+
+- @.aiwg/ralph/schemas/reflection-memory.json — Episodic reflection memory schema (REF-021)
+- @.aiwg/ralph/schemas/cross-task-memory.yaml — Cross-task learning patterns with Ω presets
+- @.aiwg/ralph/reflections/index.yaml — Auto-populated reflection index
+- @.aiwg/ralph/docs/reflection-memory-guide.md — Comprehensive reflection memory guide
+
 ## References
 
 - @.aiwg/ralph/ - Ralph workspace and state
 - @agentic/code/addons/ralph/docs/ - User documentation
+- @agentic/code/addons/ralph/commands/ralph-reflect.md — View and manage reflections
+- @agentic/code/addons/ralph/skills/reflection-injection/SKILL.md — Auto-inject past reflections
+- @agentic/code/addons/ralph/hooks/post-iteration-reflect.md — Generate reflections after iterations
+- @agentic/code/addons/ralph/templates/self-reflection-prompt.md — Prompt template for reflection injection
+- @.aiwg/research/findings/REF-021-reflexion.md — Research foundation
 - Original methodology: Ralph Wiggum - iteration beats perfection

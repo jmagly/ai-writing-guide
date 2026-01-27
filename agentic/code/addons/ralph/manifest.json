@@ -59,7 +59,8 @@
   ],
   "templates": [
     "ralph-task",
-    "ralph-completion"
+    "ralph-completion",
+    "self-reflection-prompt"
   ],
   "dependencies": {
     "required": [],
