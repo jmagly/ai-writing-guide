@@ -1,0 +1,196 @@
+# Example Provenance Record: Artifact Creation
+# This record demonstrates W3C PROV-compliant provenance tracking for the
+# creation of the provenance-tracking.md rule document.
+
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-01-25T19:45:00Z"
+  description: "Provenance record for creation of provenance-tracking.md rule document"
+
+# ==============================================================================
+# ENTITY: The artifact being tracked
+# ==============================================================================
+
+entity:
+  id: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+  type: "document"
+  created_at: "2026-01-25T19:45:00Z"
+  checksum: "sha256:a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+  size_bytes: 15234
+  attributes:
+    document_type: "enforcement_rule"
+    enforcement_level: "HIGH"
+    scope: "All artifact generation"
+
+# ==============================================================================
+# ACTIVITY: The operation that created the entity
+# ==============================================================================
+
+activity:
+  id: "urn:aiwg:activity:generation:provenance-tracking:001"
+  type: "generation"
+  started_at: "2026-01-25T19:30:00Z"
+  ended_at: "2026-01-25T19:45:00Z"
+  duration_seconds: 900
+  description: "Generate provenance tracking rule document following token-security.md pattern, implementing UC-104 requirements"
+  attributes:
+    command: "implement issue #104"
+    session_id: "20260125-1930"
+    artifacts_generated: 4
+
+# ==============================================================================
+# AGENT: Who performed the activity
+# ==============================================================================
+
+agent:
+  id: "urn:aiwg:agent:software-implementer"
+  type: "aiwg_agent"
+  name: "Software Implementer Agent"
+  version: "1.0.0"
+  tool: "claude-sonnet-4.5"
+  attributes:
+    role: "Software Implementer"
+    expertise:
+      - "document_generation"
+      - "rule_enforcement"
+      - "provenance_tracking"
+    model_version: "claude-sonnet-4-5-20250929"
+
+# ==============================================================================
+# RELATIONSHIPS: How entity, activity, and agent connect
+# ==============================================================================
+
+relationships:
+
+  # Entity was created by this activity
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+    activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+    time: "2026-01-25T19:45:00Z"
+
+  # Activity used these inputs
+  used:
+    - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+      entity: "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-104-provenance.md"
+      role: "source_requirement"
+
+    - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+      entity: "urn:aiwg:artifact:.claude/rules/token-security.md"
+      role: "pattern_template"
+
+    - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+      entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      role: "schema_specification"
+
+    - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+      entity: "urn:aiwg:artifact:.claude/rules/mention-wiring.md"
+      role: "reference_documentation"
+
+  # Entity was derived from these sources
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+      source: "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-104-provenance.md"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+
+    - entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+      source: "urn:aiwg:artifact:.claude/rules/token-security.md"
+      derivation_type: "follows_pattern"
+      activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+
+    - entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+      source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+
+  # Activity was performed by this agent
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+    agent: "urn:aiwg:agent:software-implementer"
+    role: "primary_implementer"
+
+  # Entity is attributed to this agent
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+    agent: "urn:aiwg:agent:software-implementer"
+
+  # Agent delegation (AIWG agent acts on behalf of base LLM)
+  actedOnBehalfOf:
+    delegate: "urn:aiwg:agent:software-implementer"
+    responsible: "urn:aiwg:agent:claude-sonnet-4.5"
+    activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+
+# ==============================================================================
+# NOTES
+# ==============================================================================
+
+notes:
+  - "This example demonstrates complete W3C PROV Entity-Activity-Agent model"
+  - "All required fields present per prov-record.yaml schema"
+  - "Derivation types are specific (implements, follows_pattern, documents)"
+  - "Timestamps in ISO 8601 format with UTC timezone"
+  - "URN format uses project-relative paths"
+  - "Multiple source derivations recorded (UC-104, token-security.md, prov-record.yaml)"
+  - "Agent delegation shows AIWG agent acting on behalf of Claude model"
+
+# ==============================================================================
+# VALIDATION CHECKLIST
+# ==============================================================================
+
+validation:
+  required_fields_present:
+    entity: true  # id, type, created_at all present
+    activity: true  # id, type, started_at, ended_at all present
+    agent: true  # id, type present
+
+  urn_format_valid:
+    entity_id: true  # Matches ^urn:aiwg:artifact:.+
+    activity_id: true  # Matches ^urn:aiwg:activity:[^:]+:[^:]+:\d+$
+    agent_id: true  # Matches ^urn:aiwg:agent:.+
+
+  timestamp_constraints:
+    activity_duration_valid: true  # ended_at >= started_at
+    entity_creation_valid: true  # created_at within activity timespan
+
+  relationship_integrity:
+    wasGeneratedBy_present: true
+    wasAttributedTo_present: true
+    all_referenced_entities_exist: true
+
+  derivation_chain:
+    all_sources_documented: true
+    no_circular_derivations: true
+    specific_derivation_types: true
+
+# ==============================================================================
+# QUERY EXAMPLES
+# ==============================================================================
+
+query_examples:
+  find_implementations_of_uc104:
+    query: "grep -r 'UC-104-provenance.md' .aiwg/research/provenance/records/ | grep 'derivation_type: \"implements\"'"
+    expected_result: "This record and other UC-104 implementations"
+
+  find_artifacts_following_token_security_pattern:
+    query: "grep -r 'token-security.md' .aiwg/research/provenance/records/ | grep 'derivation_type: \"follows_pattern\"'"
+    expected_result: "This record (provenance-tracking.md) and potentially others"
+
+  find_all_software_implementer_creations:
+    query: "grep -r 'software-implementer' .aiwg/research/provenance/records/ | grep 'wasAttributedTo'"
+    expected_result: "All artifacts created by Software Implementer agent"
+
+  timeline_reconstruction:
+    query: "yq eval '.activity.started_at' .aiwg/research/provenance/records/*.prov.yaml | sort"
+    expected_result: "Chronological list of artifact creation times"
+
+# ==============================================================================
+# REFERENCES
+# ==============================================================================
+
+references:
+  - "REF-062: W3C PROV-DM (W3C Recommendation 2013)"
+  - "@.claude/rules/provenance-tracking.md - Provenance tracking enforcement rules"
+  - "@.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema"
+  - "@.aiwg/research/provenance/docs/provenance-guide.md - Usage guide"
+  - "@.aiwg/requirements/use-cases/UC-104-provenance.md - Source requirement"
+  - "@https://www.w3.org/TR/prov-dm/ - W3C PROV-DM specification"

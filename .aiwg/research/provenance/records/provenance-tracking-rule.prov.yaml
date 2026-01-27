@@ -1,0 +1,66 @@
+# Provenance Record: provenance-tracking.md Rule Document
+
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-01-25T19:45:00Z"
+  description: "Provenance tracking enforcement rule document"
+
+entity:
+  id: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+  type: "document"
+  created_at: "2026-01-25T19:45:00Z"
+
+activity:
+  id: "urn:aiwg:activity:generation:provenance-tracking:001"
+  type: "generation"
+  started_at: "2026-01-25T19:30:00Z"
+  ended_at: "2026-01-25T19:45:00Z"
+  duration_seconds: 900
+  description: "Generate provenance tracking rule document following token-security.md pattern"
+
+agent:
+  id: "urn:aiwg:agent:software-implementer"
+  type: "aiwg_agent"
+  version: "1.0.0"
+  tool: "claude-sonnet-4.5"
+
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+    activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+    time: "2026-01-25T19:45:00Z"
+
+  used:
+    - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+      entity: "urn:aiwg:artifact:.claude/rules/token-security.md"
+      role: "pattern_template"
+    - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+      entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      role: "schema_specification"
+    - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+      entity: "urn:aiwg:artifact:.claude/rules/mention-wiring.md"
+      role: "reference_documentation"
+
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+      source: "urn:aiwg:artifact:.claude/rules/token-security.md"
+      derivation_type: "follows_pattern"
+      activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+    - entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+      source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:provenance-tracking:001"
+    agent: "urn:aiwg:agent:software-implementer"
+    role: "primary_implementer"
+
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+    agent: "urn:aiwg:agent:software-implementer"
+
+  actedOnBehalfOf:
+    delegate: "urn:aiwg:agent:software-implementer"
+    responsible: "urn:aiwg:agent:claude-sonnet-4.5"
+    activity: "urn:aiwg:activity:generation:provenance-tracking:001"

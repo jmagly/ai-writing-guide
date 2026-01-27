@@ -1,0 +1,636 @@
+# W3C PROV-Compliant Provenance Record Schema
+# Version: 1.0.0
+# Purpose: Define structure for recording artifact provenance in AIWG
+# Based on: W3C PROV-DM (REF-062) Entity-Activity-Agent model
+
+# ==============================================================================
+# ENTITY STRUCTURE
+# ==============================================================================
+# An entity is an artifact (document, code, test, schema) with a provenance record
+
+entity:
+  description: "Immutable or mutable thing tracked in provenance system"
+  required_fields:
+    - id
+    - type
+    - created_at
+
+  fields:
+    id:
+      type: string
+      format: "urn:aiwg:artifact:<project-relative-path>"
+      description: "Unique identifier for entity using URN schema"
+      examples:
+        - "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-104-provenance.md"
+        - "urn:aiwg:artifact:src/provenance/tracker.ts"
+        - "urn:aiwg:artifact:test/unit/provenance/tracker.test.ts"
+        - "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+      constraints:
+        - "MUST use project-relative path (not absolute)"
+        - "MUST be unique across project"
+        - "MUST match actual file location"
+
+    type:
+      type: string
+      enum:
+        - document          # Markdown, text files
+        - schema            # YAML, JSON schemas
+        - code              # Source code (.ts, .js, .py)
+        - test              # Test files
+        - configuration     # Config files (.json, .yaml)
+        - agent_definition  # Agent markdown files
+        - command_definition # Command/skill definitions
+        - template          # Document templates
+        - data              # Data files, fixtures
+        - artifact_bundle   # Collection of related artifacts
+      description: "Type of artifact for categorization"
+      examples:
+        - "document"
+        - "code"
+        - "test"
+
+    created_at:
+      type: string
+      format: "ISO 8601 timestamp (RFC 3339)"
+      description: "When entity was first created"
+      examples:
+        - "2026-01-25T19:30:00Z"
+        - "2026-01-25T19:30:00-05:00"
+      constraints:
+        - "MUST be valid ISO 8601 format"
+        - "SHOULD use UTC timezone (Z suffix) when possible"
+
+    updated_at:
+      type: string
+      format: "ISO 8601 timestamp"
+      description: "When entity was last modified (optional, for mutable entities)"
+      examples:
+        - "2026-01-25T20:15:00Z"
+      constraints:
+        - "MUST be >= created_at"
+        - "Only include if entity modified after creation"
+
+    checksum:
+      type: string
+      format: "sha256:<hex-digest>"
+      description: "Content hash for integrity verification (optional)"
+      examples:
+        - "sha256:a3c8f9e2b1d4567890abcdef1234567890abcdef1234567890abcdef12345678"
+      constraints:
+        - "MUST be SHA-256 hash of file contents"
+        - "Hex digest MUST be lowercase"
+
+    size_bytes:
+      type: integer
+      description: "File size in bytes (optional)"
+      examples:
+        - 4096
+        - 1048576
+
+    attributes:
+      type: object
+      description: "Additional metadata specific to entity type (optional)"
+      examples:
+        - language: "typescript"
+          test_framework: "vitest"
+        - voice_profile: "technical-authority"
+          word_count: 1523
+
+# ==============================================================================
+# ACTIVITY STRUCTURE
+# ==============================================================================
+# An activity is an operation that creates, modifies, or uses entities
+
+activity:
+  description: "Something that occurs over time and acts upon or with entities"
+  required_fields:
+    - id
+    - type
+    - started_at
+    - ended_at
+
+  fields:
+    id:
+      type: string
+      format: "urn:aiwg:activity:<type>:<artifact-name>:<sequence>"
+      description: "Unique identifier for activity"
+      examples:
+        - "urn:aiwg:activity:generation:provenance-guide:001"
+        - "urn:aiwg:activity:modification:tracker:003"
+        - "urn:aiwg:activity:testing:tracker:001"
+      constraints:
+        - "MUST be unique across project"
+        - "Sequence number increments for repeated activities on same artifact"
+
+    type:
+      type: string
+      enum:
+        - generation      # New artifact created
+        - modification    # Existing artifact updated
+        - refactoring     # Code restructured without behavior change
+        - testing         # Tests written or executed
+        - review          # Artifact reviewed for quality
+        - merge           # Multiple artifacts combined
+        - derivation      # New artifact derived from sources
+        - validation      # Artifact validated against schema/requirements
+        - deployment      # Artifact deployed to environment
+      description: "Type of activity performed"
+      examples:
+        - "generation"
+        - "testing"
+
+    started_at:
+      type: string
+      format: "ISO 8601 timestamp"
+      description: "When activity began"
+      examples:
+        - "2026-01-25T19:29:45Z"
+      constraints:
+        - "MUST be valid ISO 8601 format"
+        - "MUST be before ended_at"
+
+    ended_at:
+      type: string
+      format: "ISO 8601 timestamp"
+      description: "When activity completed"
+      examples:
+        - "2026-01-25T19:30:00Z"
+      constraints:
+        - "MUST be valid ISO 8601 format"
+        - "MUST be after started_at"
+
+    duration_seconds:
+      type: integer
+      description: "Activity duration in seconds (optional, computed from timestamps)"
+      examples:
+        - 15
+        - 120
+      constraints:
+        - "MUST equal (ended_at - started_at) in seconds"
+
+    description:
+      type: string
+      description: "Human-readable description of activity (optional)"
+      examples:
+        - "Generate provenance tracking rule document following token-security.md pattern"
+        - "Implement ProvenanceTracker class based on UC-104 requirements"
+
+    attributes:
+      type: object
+      description: "Additional metadata specific to activity type (optional)"
+      examples:
+        - command: "aiwg use sdlc"
+          user_prompt: "implement issue #104"
+        - test_framework: "vitest"
+          tests_written: 12
+          tests_passing: 12
+
+# ==============================================================================
+# AGENT STRUCTURE
+# ==============================================================================
+# An agent is something that bears responsibility for activities
+
+agent:
+  description: "Something that bears some responsibility for activity taking place"
+  required_fields:
+    - id
+    - type
+
+  fields:
+    id:
+      type: string
+      format: "urn:aiwg:agent:<agent-identifier>"
+      description: "Unique identifier for agent"
+      examples:
+        - "urn:aiwg:agent:claude-sonnet-4.5"
+        - "urn:aiwg:agent:software-implementer"
+        - "urn:aiwg:agent:test-engineer"
+        - "urn:aiwg:agent:human:developer@example.com"
+        - "urn:aiwg:agent:tool:eslint"
+      constraints:
+        - "MUST be unique and stable across sessions"
+        - "Use descriptive identifiers"
+
+    type:
+      type: string
+      enum:
+        - ai_assistant        # Base LLM (Claude, GPT)
+        - aiwg_agent          # AIWG specialized agent (Software Implementer, Test Engineer)
+        - human               # Human developer or user
+        - automated_tool      # Script, CLI tool, linter
+        - ci_system           # CI/CD pipeline (GitHub Actions, GitLab CI)
+      description: "Category of agent"
+      examples:
+        - "ai_assistant"
+        - "aiwg_agent"
+
+    name:
+      type: string
+      description: "Human-readable agent name (optional)"
+      examples:
+        - "Claude Sonnet 4.5"
+        - "Software Implementer Agent"
+        - "John Developer"
+
+    version:
+      type: string
+      description: "Agent version identifier (optional but recommended)"
+      examples:
+        - "claude-sonnet-4-5-20250929"
+        - "1.0.0"
+        - "v2026.1.5"
+      constraints:
+        - "For AI models: use model ID"
+        - "For AIWG agents: use semantic version"
+
+    tool:
+      type: string
+      description: "Underlying tool or platform (optional, for aiwg_agent)"
+      examples:
+        - "claude-sonnet-4.5"
+        - "gpt-4-turbo"
+      constraints:
+        - "Record base AI model when AIWG agent powered by LLM"
+
+    attributes:
+      type: object
+      description: "Additional metadata specific to agent type (optional)"
+      examples:
+        - role: "backend_developer"
+          expertise: ["typescript", "testing", "provenance"]
+        - organization: "AIWG Development Team"
+
+# ==============================================================================
+# RELATIONSHIPS STRUCTURE
+# ==============================================================================
+# Relationships connect entities, activities, and agents following W3C PROV model
+
+relationships:
+  description: "PROV relations establishing provenance chains"
+
+  # Entity-Activity Relations
+  wasGeneratedBy:
+    description: "Entity was created by activity"
+    structure:
+      entity: "urn:aiwg:artifact:<path>"
+      activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+      time: "ISO 8601 timestamp (optional)"
+    examples:
+      - entity: "urn:aiwg:artifact:src/provenance/tracker.ts"
+        activity: "urn:aiwg:activity:generation:tracker:001"
+        time: "2026-01-25T19:30:00Z"
+    cardinality: "one entity : one activity"
+
+  used:
+    description: "Activity used entity as input"
+    structure:
+      activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+      entity: "urn:aiwg:artifact:<path>"
+      role: "string (optional - how entity was used)"
+    examples:
+      - activity: "urn:aiwg:activity:generation:tracker:001"
+        entity: "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-104-provenance.md"
+        role: "source_requirement"
+      - activity: "urn:aiwg:activity:generation:tracker:001"
+        entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+        role: "schema_definition"
+    cardinality: "one activity : many entities"
+
+  # Entity-Entity Relations
+  wasDerivedFrom:
+    description: "Entity was created from or based on another entity"
+    structure:
+      entity: "urn:aiwg:artifact:<path>"
+      source: "urn:aiwg:artifact:<source-path>"
+      derivation_type: "string (implements|conforms_to|follows_pattern|extends|tests|documents|refines|derives_from)"
+      activity: "urn:aiwg:activity:<type>:<name>:<seq> (optional - which activity performed derivation)"
+    examples:
+      - entity: "urn:aiwg:artifact:src/provenance/tracker.ts"
+        source: "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-104-provenance.md"
+        derivation_type: "implements"
+        activity: "urn:aiwg:activity:generation:tracker:001"
+      - entity: "urn:aiwg:artifact:test/unit/provenance/tracker.test.ts"
+        source: "urn:aiwg:artifact:src/provenance/tracker.ts"
+        derivation_type: "tests"
+    cardinality: "one entity : many source entities"
+    constraints:
+      - "Use specific derivation_type rather than generic 'derives_from' when possible"
+      - "Record ALL source entities, not just primary one"
+
+  # Activity-Agent Relations
+  wasAssociatedWith:
+    description: "Activity was performed by agent"
+    structure:
+      activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+      agent: "urn:aiwg:agent:<identifier>"
+      role: "string (optional - agent's role in activity)"
+    examples:
+      - activity: "urn:aiwg:activity:generation:tracker:001"
+        agent: "urn:aiwg:agent:software-implementer"
+        role: "primary_implementer"
+      - activity: "urn:aiwg:activity:review:tracker:001"
+        agent: "urn:aiwg:agent:human:developer@example.com"
+        role: "code_reviewer"
+    cardinality: "one activity : many agents"
+
+  # Agent-Entity Relations
+  wasAttributedTo:
+    description: "Entity is attributed to agent (who is responsible)"
+    structure:
+      entity: "urn:aiwg:artifact:<path>"
+      agent: "urn:aiwg:agent:<identifier>"
+    examples:
+      - entity: "urn:aiwg:artifact:src/provenance/tracker.ts"
+        agent: "urn:aiwg:agent:software-implementer"
+    cardinality: "one entity : many agents"
+
+  # Agent-Agent Relations
+  actedOnBehalfOf:
+    description: "Agent acted on behalf of another agent (delegation)"
+    structure:
+      delegate: "urn:aiwg:agent:<identifier>"
+      responsible: "urn:aiwg:agent:<identifier>"
+      activity: "urn:aiwg:activity:<type>:<name>:<seq> (optional)"
+    examples:
+      - delegate: "urn:aiwg:agent:software-implementer"
+        responsible: "urn:aiwg:agent:claude-sonnet-4.5"
+        activity: "urn:aiwg:activity:generation:tracker:001"
+    notes: "AIWG agents act on behalf of base LLM"
+
+# ==============================================================================
+# DERIVATION TYPE VOCABULARY
+# ==============================================================================
+# Standard vocabulary for wasDerivedFrom.derivation_type
+
+derivation_types:
+  implements:
+    description: "Code implements requirement or specification"
+    examples:
+      - "src/auth.ts implements .aiwg/requirements/UC-001-auth.md"
+
+  conforms_to:
+    description: "Artifact follows schema or standard"
+    examples:
+      - "provenance-record.yaml conforms to prov-record.yaml schema"
+
+  follows_pattern:
+    description: "Artifact uses template or established pattern"
+    examples:
+      - "provenance-tracking.md follows token-security.md structure"
+
+  extends:
+    description: "Artifact extends or builds upon base"
+    examples:
+      - "advanced-agent.md extends base-agent.md"
+
+  tests:
+    description: "Test artifact verifies code artifact"
+    examples:
+      - "tracker.test.ts tests tracker.ts"
+
+  documents:
+    description: "Documentation describes implementation"
+    examples:
+      - "api-docs.md documents api.ts"
+
+  refines:
+    description: "Artifact refines earlier version"
+    examples:
+      - "v2-spec.md refines v1-spec.md"
+
+  derives_from:
+    description: "General derivation (use when specific type unclear)"
+    examples:
+      - "summary.md derives from research-findings.md"
+
+# ==============================================================================
+# ACTIVITY TYPE VOCABULARY
+# ==============================================================================
+# Standard vocabulary for activity.type
+
+activity_types:
+  generation:
+    description: "New artifact created from scratch or templates"
+    typical_inputs: ["requirements", "schemas", "templates"]
+    typical_outputs: ["new documents", "new code", "new tests"]
+
+  modification:
+    description: "Existing artifact updated or edited"
+    typical_inputs: ["existing artifact", "change requirements"]
+    typical_outputs: ["updated artifact"]
+
+  refactoring:
+    description: "Code restructured without behavior change"
+    typical_inputs: ["existing code"]
+    typical_outputs: ["restructured code"]
+
+  testing:
+    description: "Tests written or executed"
+    typical_inputs: ["code to test", "requirements"]
+    typical_outputs: ["test files", "test results"]
+
+  review:
+    description: "Artifact reviewed for quality, security, or compliance"
+    typical_inputs: ["artifact to review", "review criteria"]
+    typical_outputs: ["review comments", "approval/rejection"]
+
+  merge:
+    description: "Multiple artifacts combined"
+    typical_inputs: ["multiple source artifacts"]
+    typical_outputs: ["merged artifact"]
+
+  derivation:
+    description: "New artifact derived from existing sources"
+    typical_inputs: ["source artifacts", "transformation rules"]
+    typical_outputs: ["derived artifact"]
+
+  validation:
+    description: "Artifact validated against schema or requirements"
+    typical_inputs: ["artifact to validate", "schema/requirements"]
+    typical_outputs: ["validation report"]
+
+  deployment:
+    description: "Artifact deployed to environment"
+    typical_inputs: ["artifact to deploy", "deployment config"]
+    typical_outputs: ["deployed artifact", "deployment log"]
+
+# ==============================================================================
+# AGENT TYPE VOCABULARY
+# ==============================================================================
+# Standard vocabulary for agent.type
+
+agent_types:
+  ai_assistant:
+    description: "Base large language model (Claude, GPT, etc.)"
+    examples:
+      - "claude-sonnet-4.5"
+      - "gpt-4-turbo"
+    attributes:
+      - model_id
+      - provider
+      - version
+
+  aiwg_agent:
+    description: "AIWG specialized agent with defined role and tools"
+    examples:
+      - "software-implementer"
+      - "test-engineer"
+      - "security-auditor"
+    attributes:
+      - role
+      - expertise
+      - tool (underlying AI model)
+
+  human:
+    description: "Human developer, user, or reviewer"
+    examples:
+      - "human:developer@example.com"
+      - "human:john-smith"
+    attributes:
+      - email
+      - name
+      - role
+
+  automated_tool:
+    description: "Script, CLI tool, linter, formatter"
+    examples:
+      - "tool:eslint"
+      - "tool:prettier"
+      - "tool:aiwg-cli"
+    attributes:
+      - version
+      - configuration
+
+  ci_system:
+    description: "CI/CD pipeline or automation system"
+    examples:
+      - "ci:github-actions"
+      - "ci:gitlab-ci"
+    attributes:
+      - workflow_id
+      - run_number
+
+# ==============================================================================
+# COMPLETE RECORD TEMPLATE
+# ==============================================================================
+# Example of a complete provenance record
+
+record_template:
+  metadata:
+    schema_version: "1.0.0"
+    created_at: "2026-01-25T19:30:00Z"
+    description: "Provenance record for artifact creation"
+
+  entity:
+    id: "urn:aiwg:artifact:<project-relative-path>"
+    type: "document|schema|code|test|configuration|agent_definition|command_definition|template|data|artifact_bundle"
+    created_at: "2026-01-25T19:30:00Z"
+    updated_at: "2026-01-25T20:15:00Z"  # Optional
+    checksum: "sha256:abc123..."  # Optional
+    size_bytes: 4096  # Optional
+    attributes: {}  # Optional
+
+  activity:
+    id: "urn:aiwg:activity:<type>:<artifact-name>:<sequence>"
+    type: "generation|modification|refactoring|testing|review|merge|derivation|validation|deployment"
+    started_at: "2026-01-25T19:29:45Z"
+    ended_at: "2026-01-25T19:30:00Z"
+    duration_seconds: 15  # Optional
+    description: "Human-readable activity description"  # Optional
+    attributes: {}  # Optional
+
+  agent:
+    id: "urn:aiwg:agent:<identifier>"
+    type: "ai_assistant|aiwg_agent|human|automated_tool|ci_system"
+    name: "Agent Name"  # Optional
+    version: "1.0.0"  # Optional but recommended
+    tool: "claude-sonnet-4.5"  # Optional, for aiwg_agent
+    attributes: {}  # Optional
+
+  relationships:
+    wasGeneratedBy:
+      entity: "urn:aiwg:artifact:<path>"
+      activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+      time: "2026-01-25T19:30:00Z"  # Optional
+
+    used:
+      - activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+        entity: "urn:aiwg:artifact:<source-path-1>"
+        role: "source_requirement"
+      - activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+        entity: "urn:aiwg:artifact:<source-path-2>"
+        role: "schema_definition"
+
+    wasDerivedFrom:
+      - entity: "urn:aiwg:artifact:<path>"
+        source: "urn:aiwg:artifact:<source-path-1>"
+        derivation_type: "implements"
+        activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+      - entity: "urn:aiwg:artifact:<path>"
+        source: "urn:aiwg:artifact:<source-path-2>"
+        derivation_type: "conforms_to"
+
+    wasAssociatedWith:
+      activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+      agent: "urn:aiwg:agent:<identifier>"
+      role: "primary_implementer"  # Optional
+
+    wasAttributedTo:
+      entity: "urn:aiwg:artifact:<path>"
+      agent: "urn:aiwg:agent:<identifier>"
+
+    actedOnBehalfOf:  # Optional
+      delegate: "urn:aiwg:agent:software-implementer"
+      responsible: "urn:aiwg:agent:claude-sonnet-4.5"
+      activity: "urn:aiwg:activity:<type>:<name>:<seq>"
+
+# ==============================================================================
+# VALIDATION RULES
+# ==============================================================================
+# Rules for validating provenance records
+
+validation_rules:
+  required_fields:
+    entity: ["id", "type", "created_at"]
+    activity: ["id", "type", "started_at", "ended_at"]
+    agent: ["id", "type"]
+    relationships: ["wasGeneratedBy", "wasAttributedTo"]
+
+  urn_format:
+    entity_id: "^urn:aiwg:artifact:.+"
+    activity_id: "^urn:aiwg:activity:[^:]+:[^:]+:\\d+$"
+    agent_id: "^urn:aiwg:agent:.+"
+
+  timestamp_constraints:
+    - "activity.ended_at >= activity.started_at"
+    - "entity.updated_at >= entity.created_at (if present)"
+    - "activity.started_at <= entity.created_at"
+
+  relationship_integrity:
+    - "All entity references must exist in system"
+    - "All activity references must exist in record or other records"
+    - "All agent references must be defined in record or registry"
+
+  derivation_chain:
+    - "wasDerivedFrom.source entities should have own provenance records"
+    - "Circular derivations not allowed"
+
+# ==============================================================================
+# NOTES
+# ==============================================================================
+
+notes:
+  - "This schema is based on W3C PROV-DM (REF-062)"
+  - "URN format chosen for stable, project-relative identifiers"
+  - "ISO 8601 timestamps ensure unambiguous temporal ordering"
+  - "All fields marked 'optional' improve record quality but not strictly required"
+  - "Provenance records stored in .aiwg/research/provenance/records/"
+  - "File naming: <artifact-name>.prov.yaml"
+  - "Schema version in record.metadata.schema_version for evolution"
+
+references:
+  - "REF-062: W3C PROV-DM (W3C Recommendation 2013)"
+  - "@.claude/rules/provenance-tracking.md - Provenance tracking enforcement rules"
+  - "@.aiwg/research/provenance/docs/provenance-guide.md - Usage guide"
+  - "@.aiwg/research/provenance/examples/ - Example records"
+  - "@https://www.w3.org/TR/prov-dm/ - W3C PROV-DM specification"
