@@ -94,3 +94,6 @@ Idea → Inception → Elaboration → Construction (iterative) → Transition �
 - @.aiwg/flows/schemas/moe-agent-routing.yaml — Mixture-of-Experts agent routing
 - @.aiwg/flows/schemas/uct-agent-selection.yaml — UCT algorithm for agent selection scoring
 - @.aiwg/flows/schemas/sdlc-output-schemas.yaml — Standardized SDLC output formats
+- @.aiwg/flows/schemas/hitl-gate.yaml — Human-in-the-loop gate definitions for phase transitions
+- @.aiwg/flows/schemas/hitl-cost-tracking.yaml — HITL cost tracking and efficiency measurement
+- @.aiwg/flows/schemas/agent-pubsub.yaml — Subscription-based agent activation and event routing

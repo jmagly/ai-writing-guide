@@ -46,3 +46,5 @@ dashboards, interpret trends, and recommend actions to improve outcomes.
 - @.aiwg/flows/schemas/cost-tracking.yaml — Token and compute cost tracking
 - @.aiwg/flows/schemas/token-efficiency.yaml — Token efficiency measurement
 - @.aiwg/flows/schemas/agent-efficiency.yaml — Agent efficiency and performance metrics
+- @.aiwg/ralph/schemas/iteration-analytics.yaml — Iteration quality tracking and best output selection
+- @.aiwg/research/schemas/lats-evaluation.yaml — LATS hybrid value function for artifact evaluation

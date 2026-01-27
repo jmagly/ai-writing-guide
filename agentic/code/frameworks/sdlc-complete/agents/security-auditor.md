@@ -571,6 +571,7 @@ For each security engagement:
 - @agentic/code/addons/security/secure-token-load.md - Token loading patterns
 - @.claude/rules/token-security.md - Security enforcement rules
 - @.aiwg/flows/schemas/quality-assurance.yaml — Quality assurance and hallucination detection
+- @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for security findings
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 

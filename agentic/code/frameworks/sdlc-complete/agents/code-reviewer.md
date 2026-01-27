@@ -184,3 +184,5 @@ See @.claude/rules/executable-feedback.md for complete requirements.
 
 - @.aiwg/flows/schemas/quality-scoring.yaml — Quality scoring dimensions and formulas
 - @.aiwg/flows/schemas/quality-assurance.yaml — Quality assurance and hallucination detection
+- @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback format for review findings
+- @.aiwg/research/schemas/lats-evaluation.yaml — LATS hybrid value function for artifact quality assessment

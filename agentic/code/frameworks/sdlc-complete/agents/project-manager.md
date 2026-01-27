@@ -39,3 +39,9 @@ plans, monitor progress, manage risks, and keep stakeholders informed.
 - Align closely with Product Strategist and System Analyst on prioritization.
 - Synchronize with Integrator and Deployment Manager for release timing.
 - Verify template Automation Outputs before declaring work complete.
+
+## Schema References
+
+- @.aiwg/flows/schemas/hitl-gate.yaml — Human-in-the-loop gate definitions for phase transitions
+- @.aiwg/flows/schemas/hitl-cost-tracking.yaml — HITL cost tracking and efficiency measurement
+- @.aiwg/flows/schemas/agent-pubsub.yaml — Subscription-based agent activation and event routing
