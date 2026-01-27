@@ -1,0 +1,508 @@
+# GRADE-Style Evidence Quality Assessment Schema
+# Version: 1.0.0
+# Purpose: Systematic evaluation of research source quality for AIWG citations
+# Based on: REF-060 (GRADE Handbook), adapted for AI/software research
+
+# ==============================================================================
+# SOURCE TYPE BASELINES
+# ==============================================================================
+# Starting quality level determined by source type before applying factors
+
+source_types:
+  peer_reviewed_journal:
+    baseline: HIGH
+    description: "Published in peer-reviewed academic journal with rigorous review process"
+    examples:
+      - "Nature, Science, JMLR, Neural Computation"
+    verification:
+      - "Journal listed in recognized index (e.g., DBLP, PubMed)"
+      - "Multiple rounds of peer review documented"
+
+  peer_reviewed_conference:
+    baseline: HIGH
+    description: "Accepted to top-tier peer-reviewed conference (acceptance rate <25%)"
+    examples:
+      - "NeurIPS, ICML, ICLR, AAAI, ACL"
+    verification:
+      - "Conference proceedings published"
+      - "Acceptance rate documented and selective"
+      - "Program committee includes recognized experts"
+
+  preprint_arxiv:
+    baseline: MODERATE
+    description: "Self-published preprint on arXiv or similar repository"
+    examples:
+      - "arXiv.org, bioRxiv, SSRN"
+    verification:
+      - "Preprint service has basic quality controls"
+      - "Authors affiliated with recognized institutions"
+    notes: "Can be upgraded if later peer-reviewed or highly cited"
+
+  workshop_paper:
+    baseline: MODERATE
+    description: "Accepted to academic workshop or non-archival venue"
+    examples:
+      - "NeurIPS workshops, ICML workshops, EMNLP findings"
+    verification:
+      - "Workshop has program committee"
+      - "Some peer review process documented"
+
+  technical_report:
+    baseline: MODERATE
+    description: "Technical report from reputable institution or organization"
+    examples:
+      - "OpenAI technical reports, Google AI blog with experiments"
+    verification:
+      - "Organization has research track record"
+      - "Methods and results documented"
+
+  industry_blog:
+    baseline: LOW
+    description: "Blog post or informal publication from industry practitioner"
+    examples:
+      - "Company engineering blogs, Medium posts"
+    verification:
+      - "Author has verifiable expertise"
+      - "Claims supported by evidence or links"
+    notes: "Can be upgraded if includes rigorous experiments"
+
+  standards_body:
+    baseline: HIGH
+    description: "Official standard or recommendation from recognized body"
+    examples:
+      - "W3C recommendations, ISO standards, IEEE standards"
+    verification:
+      - "Published through formal standardization process"
+      - "Consensus-based approval"
+
+  book_academic:
+    baseline: HIGH
+    description: "Academic textbook or research monograph from reputable publisher"
+    examples:
+      - "MIT Press, Springer, Cambridge University Press"
+    verification:
+      - "Publisher has academic editorial board"
+      - "Peer review or editorial review documented"
+
+  book_trade:
+    baseline: MODERATE
+    description: "Trade book from practitioner or industry expert"
+    examples:
+      - "O'Reilly, Pragmatic Programmers"
+    verification:
+      - "Author has documented expertise"
+      - "Technical review process"
+
+# ==============================================================================
+# DOWNGRADE FACTORS
+# ==============================================================================
+# Criteria that reduce evidence quality (can apply multiple)
+
+downgrade_factors:
+  risk_of_bias:
+    description: "Systematic bias in study design, execution, or reporting that threatens validity"
+    severity_levels:
+      serious:
+        impact: -1  # Downgrade one level (HIGH → MODERATE, MODERATE → LOW, LOW → VERY_LOW)
+        criteria:
+          - "Study funded by party with financial interest in outcome"
+          - "Author conflicts of interest not disclosed"
+          - "Cherry-picked data or selective reporting"
+          - "Comparison only to weak baselines"
+          - "Evaluation metrics favor proposed approach"
+        examples:
+          - "Company-funded study comparing only to own prior work"
+          - "Benchmark results omit important competing methods"
+      very_serious:
+        impact: -2  # Downgrade two levels
+        criteria:
+          - "No control group or baseline comparison"
+          - "Undisclosed data selection or preprocessing"
+          - "Results contradict independently reproduced attempts"
+          - "Methodology designed to favor specific outcome"
+        examples:
+          - "Study with no comparison to existing methods"
+          - "Results cannot be reproduced by independent teams"
+
+  inconsistency:
+    description: "Variability in results across studies, experiments, or replications"
+    severity_levels:
+      serious:
+        impact: -1
+        criteria:
+          - "Large variance in reported metrics (>20% relative)"
+          - "Results differ significantly across runs/seeds"
+          - "Contradictory findings from similar studies"
+          - "Statistical significance marginal (p near 0.05)"
+        examples:
+          - "Accuracy varies from 72% to 89% across runs"
+          - "Two papers on same topic report opposite findings"
+      very_serious:
+        impact: -2
+        criteria:
+          - "Results not reproducible at all"
+          - "Extreme variance making conclusions unreliable"
+          - "Directly contradicted by multiple independent studies"
+        examples:
+          - "Independent reproduction attempts fail completely"
+          - "Three studies report 45%, 78%, and 61% on same task"
+
+  indirectness:
+    description: "Mismatch between study context and AIWG application domain"
+    severity_levels:
+      serious:
+        impact: -1
+        criteria:
+          - "Different task domain (e.g., vision vs. text)"
+          - "Different model architecture (e.g., CNN vs. Transformer)"
+          - "Synthetic/toy data rather than real-world"
+          - "Different evaluation criteria than AIWG uses"
+        examples:
+          - "Image classification study cited for code generation"
+          - "Game-playing AI cited for document workflow"
+      very_serious:
+        impact: -2
+        criteria:
+          - "Completely different field (e.g., biology for software)"
+          - "Theoretical work with no empirical validation"
+          - "Historical study with outdated assumptions"
+        examples:
+          - "1990s neural network study for modern LLMs"
+          - "Mathematical proof with no practical implementation"
+
+  imprecision:
+    description: "Insufficient evidence due to small sample size, wide confidence intervals, or lack of statistical rigor"
+    severity_levels:
+      serious:
+        impact: -1
+        criteria:
+          - "Small sample size (n < 30 for quantitative, < 5 for qualitative)"
+          - "Wide confidence intervals spanning both benefit and harm"
+          - "No statistical significance testing"
+          - "Single anecdotal example"
+        examples:
+          - "User study with 3 participants"
+          - "95% CI: [-5%, +25%] for claimed improvement"
+      very_serious:
+        impact: -2
+        criteria:
+          - "Extremely small sample (n < 5 for quantitative)"
+          - "No quantitative data, only qualitative claims"
+          - "Confidence intervals not reported for critical claims"
+        examples:
+          - "One case study with no quantitative data"
+          - "Claimed speedup with no measurements"
+
+  publication_bias:
+    description: "Selective publication or reporting that distorts available evidence"
+    severity_levels:
+      serious:
+        impact: -1
+        criteria:
+          - "Only positive results published (file drawer problem)"
+          - "Multiple versions with different results"
+          - "Gray literature or unpublished work"
+          - "Negative results not reported"
+        examples:
+          - "Ten experiments run, only best three reported"
+          - "Failed approaches not documented"
+      very_serious:
+        impact: -2
+        criteria:
+          - "Evidence of suppressed negative results"
+          - "Systematic omission of failures across research program"
+          - "Retracted or corrected with major changes"
+        examples:
+          - "Paper retracted after independent scrutiny"
+          - "Author admits unreported negative results in correction"
+
+# ==============================================================================
+# UPGRADE FACTORS
+# ==============================================================================
+# Criteria that increase evidence quality (rare, require strong justification)
+
+upgrade_factors:
+  large_magnitude_effect:
+    description: "Effect size so large that confounding factors unlikely to explain it"
+    criteria:
+      - "Improvement >2x over baseline (e.g., 100% relative improvement)"
+      - "Effect size remains large even with conservative assumptions"
+      - "Dose-response gradient observed (more X → more Y)"
+    examples:
+      - "MetaGPT 85.9% vs GPT-4 baseline 67.0% (28% relative improvement)"
+      - "ToT 74% vs CoT 4% (18.5x improvement)"
+    impact: +1  # Upgrade one level (MODERATE → HIGH, LOW → MODERATE)
+    notes: "Only apply if bias and confounding can be ruled out"
+
+  independent_replication:
+    description: "Multiple independent teams reproduce core findings"
+    criteria:
+      - "≥2 independent reproductions by different teams"
+      - "Reproductions use different codebases/implementations"
+      - "Findings consistent across replications (within 10%)"
+      - "Replication teams have no conflicts of interest"
+    examples:
+      - "Chain-of-Thought benefits replicated by 5+ independent papers"
+      - "Transformer architecture validated across hundreds of studies"
+    impact: +1
+    notes: "Rare in fast-moving AI research"
+
+  opposing_confounders:
+    description: "Plausible confounders would reduce observed effect, yet effect still seen"
+    criteria:
+      - "Biases identified that would work against finding"
+      - "Effect persists despite conservative assumptions"
+      - "Sensitivity analysis shows robust results"
+    examples:
+      - "Benefit observed despite suboptimal hyperparameters"
+      - "Improvement seen even with handicapped implementation"
+    impact: +1
+    notes: "Requires deep methodological understanding"
+
+# ==============================================================================
+# QUALITY LEVELS
+# ==============================================================================
+# Final quality rating after applying all factors
+
+quality_levels:
+  HIGH:
+    symbol: "⊕⊕⊕⊕"
+    definition: "Very confident that true effect is close to estimated effect"
+    citation_guidance: "Can make strong claims. Use for primary evidence."
+    interpretation: "Further research very unlikely to change confidence in estimate"
+    examples:
+      - "Well-executed RCT or meta-analysis"
+      - "Highly replicated phenomenon (Chain-of-Thought)"
+      - "Industry standard (W3C PROV, ISO 9001)"
+
+  MODERATE:
+    symbol: "⊕⊕⊕○"
+    definition: "Moderately confident. True effect likely close to estimated, but could be substantially different."
+    citation_guidance: "Can cite with appropriate caveats. Combine with other evidence."
+    interpretation: "Further research likely to impact confidence and may change estimate"
+    examples:
+      - "Single well-designed study"
+      - "Preprint from reputable team awaiting peer review"
+      - "Replicated once but limited data"
+
+  LOW:
+    symbol: "⊕⊕○○"
+    definition: "Limited confidence. True effect may be substantially different from estimated effect."
+    citation_guidance: "Use cautiously. Flag uncertainty explicitly. Avoid strong claims."
+    interpretation: "Further research very likely to impact confidence and likely to change estimate"
+    examples:
+      - "Industry blog with limited evaluation"
+      - "Single small-scale study"
+      - "High-quality source applied to different domain"
+
+  VERY_LOW:
+    symbol: "⊕○○○"
+    definition: "Very little confidence. True effect likely substantially different from estimated effect."
+    citation_guidance: "Avoid citing as evidence. Use only for background/context."
+    interpretation: "Estimate very uncertain"
+    examples:
+      - "Anecdotal reports"
+      - "Speculative blog posts"
+      - "Heavily biased or methodologically flawed studies"
+
+# ==============================================================================
+# ASSESSMENT WORKFLOW
+# ==============================================================================
+# Process for assessing a new source
+
+assessment_process:
+  step_1_determine_baseline:
+    description: "Identify source type and assign baseline quality level"
+    outputs:
+      - source_type
+      - baseline_quality
+      - rationale
+
+  step_2_evaluate_downgrade_factors:
+    description: "Assess each downgrade factor and determine severity"
+    outputs:
+      - risk_of_bias: {severity: none|serious|very_serious, rationale: string}
+      - inconsistency: {severity: none|serious|very_serious, rationale: string}
+      - indirectness: {severity: none|serious|very_serious, rationale: string}
+      - imprecision: {severity: none|serious|very_serious, rationale: string}
+      - publication_bias: {severity: none|serious|very_serious, rationale: string}
+
+  step_3_evaluate_upgrade_factors:
+    description: "Check if upgrade factors apply (rare)"
+    outputs:
+      - large_magnitude_effect: {applies: boolean, rationale: string}
+      - independent_replication: {applies: boolean, rationale: string}
+      - opposing_confounders: {applies: boolean, rationale: string}
+
+  step_4_calculate_final_quality:
+    description: "Apply all adjustments to baseline quality"
+    formula: |
+      final_quality = baseline_quality
+                      - sum(downgrade_impacts)
+                      + sum(upgrade_impacts)
+      # Clamp to [VERY_LOW, HIGH]
+
+  step_5_document_rationale:
+    description: "Write clear justification for assessment"
+    required_elements:
+      - "Why this baseline quality?"
+      - "Which factors applied and why?"
+      - "Key evidence for/against quality?"
+      - "Implications for AIWG citation policy"
+
+# ==============================================================================
+# CITATION POLICY INTEGRATION
+# ==============================================================================
+# How quality assessment affects citation guidance
+
+citation_policy:
+  HIGH_quality_sources:
+    allowed_uses:
+      - "Primary evidence for core claims"
+      - "Direct citations without heavy qualification"
+      - "Foundation for architectural decisions"
+      - "Marketing materials and public claims"
+    example_phrasing:
+      - "Research shows that [claim] (REF-XXX)"
+      - "MetaGPT achieves 85.9% on HumanEval (Hong et al., 2024)"
+
+  MODERATE_quality_sources:
+    allowed_uses:
+      - "Supporting evidence when combined with other sources"
+      - "Citations with appropriate context"
+      - "Preliminary findings requiring validation"
+      - "Technical documentation with caveats"
+    example_phrasing:
+      - "Early evidence suggests [claim] (REF-XXX)"
+      - "One study found [result], though replication needed (Author, Year)"
+    required_qualifiers:
+      - State limitations explicitly
+      - Combine with other evidence when possible
+
+  LOW_quality_sources:
+    allowed_uses:
+      - "Background information and context"
+      - "Illustrative examples"
+      - "Motivation for future research"
+      - "Internal documentation only (not public claims)"
+    example_phrasing:
+      - "Practitioners report [observation] (REF-XXX)"
+      - "Anecdotal evidence suggests [possibility]"
+    required_qualifiers:
+      - Flag as exploratory/preliminary
+      - Never use alone for critical claims
+
+  VERY_LOW_quality_sources:
+    allowed_uses:
+      - "Historical context only"
+      - "Identifying gaps for future research"
+      - "Explicitly flagged as speculative"
+    restrictions:
+      - "Do NOT cite as evidence"
+      - "Do NOT use in marketing materials"
+      - "Do NOT base architectural decisions on"
+
+# ==============================================================================
+# METADATA STRUCTURE
+# ==============================================================================
+# Template for quality assessment YAML files
+
+assessment_template:
+  reference_id: "REF-XXX"
+  title: "Full paper/source title"
+  authors: "Author list"
+  year: 2024
+
+  source_classification:
+    type: "peer_reviewed_conference"  # From source_types above
+    baseline_quality: "HIGH"
+    rationale: "Published at ICLR 2024, acceptance rate 24%, rigorous peer review"
+
+  downgrade_assessment:
+    risk_of_bias:
+      severity: "none"  # none | serious | very_serious
+      impact: 0
+      rationale: "No conflicts of interest. Comparison to multiple strong baselines. Open-source implementation."
+
+    inconsistency:
+      severity: "none"
+      impact: 0
+      rationale: "Results consistent across 164 HumanEval tasks and 427 MBPP tasks. Low variance."
+
+    indirectness:
+      severity: "none"
+      impact: 0
+      rationale: "Directly applicable to AIWG use case: multi-agent software development."
+
+    imprecision:
+      severity: "none"
+      impact: 0
+      rationale: "Large sample sizes (164, 427 tasks). Multiple metrics reported. Statistical significance clear."
+
+    publication_bias:
+      severity: "none"
+      impact: 0
+      rationale: "Ablation studies document what doesn't work. Limitations section present."
+
+  upgrade_assessment:
+    large_magnitude_effect:
+      applies: true
+      impact: +1
+      rationale: "85.9% vs 67.0% baseline = 28% relative improvement, well beyond noise"
+
+    independent_replication:
+      applies: false
+      impact: 0
+      rationale: "Recent publication (2024), awaiting independent replications"
+
+    opposing_confounders:
+      applies: false
+      impact: 0
+      rationale: "No obvious opposing confounders identified"
+
+  final_quality:
+    level: "HIGH"  # VERY_LOW | LOW | MODERATE | HIGH
+    symbol: "⊕⊕⊕⊕"
+    confidence: "Very confident that multi-agent SOP approach improves code generation"
+
+  quality_adjustments_summary:
+    baseline: "HIGH"
+    downgrades: 0  # Sum of downgrade impacts
+    upgrades: 1    # Sum of upgrade impacts (large magnitude effect)
+    final: "HIGH"  # Baseline still HIGH (already at top)
+
+  citation_guidance:
+    strength: "PRIMARY_EVIDENCE"
+    allowed_uses:
+      - "Core architectural justification"
+      - "Marketing claims about multi-agent benefits"
+      - "Direct citation without heavy qualification"
+    restrictions: []
+    example_citations:
+      - "MetaGPT demonstrates that structured multi-agent workflows achieve 85.9% on HumanEval (Hong et al., 2024)"
+      - "Research validates SOP-driven agent collaboration (REF-013)"
+
+  assessment_metadata:
+    assessed_by: "Research Analyst"
+    assessment_date: "2026-01-25"
+    grade_version: "1.0.0"
+    notes: "Exemplar high-quality source for AIWG multi-agent architecture validation"
+
+# ==============================================================================
+# NOTES
+# ==============================================================================
+
+notes:
+  - "This schema is adapted from GRADE (Grading of Recommendations Assessment, Development and Evaluation)"
+  - "GRADE originally designed for clinical evidence, adapted for AI/software research"
+  - "Quality assessment is judgment-intensive - document rationale clearly"
+  - "When uncertain between severity levels, be conservative (downgrade more)"
+  - "Upgrade factors are rare - require strong justification"
+  - "Reassess quality if new evidence emerges (replications, retractions)"
+  - "Quality assessment is separate from AIWG Relevance rating"
+
+references:
+  - "REF-060: GRADE Handbook for Grading Quality of Evidence"
+  - "REF-059: Can LLMs cite like scholars? (Citation integrity)"
+  - "AIWG Citation Policy: .aiwg/research/docs/citation-policy.md (planned)"
+  - "Research Gap Analysis: .aiwg/research/research-gap-analysis.md"

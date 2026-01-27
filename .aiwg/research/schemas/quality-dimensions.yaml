@@ -1,0 +1,424 @@
+# Quality Dimensions Schema
+# Based on REF-015 Self-Refine Research
+# Issues: #147, #148, #149
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/quality-dimensions/v1"
+title: "Multi-Dimensional Quality Scoring Schema"
+description: |
+  Schema for tracking quality across multiple dimensions per artifact,
+  measuring feedback accuracy, and early stopping per REF-015.
+
+type: object
+required:
+  - version
+  - dimensions
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  dimensions:
+    type: array
+    items:
+      $ref: "#/$defs/QualityDimension"
+
+  scoring:
+    $ref: "#/$defs/ScoringConfig"
+
+  feedback:
+    $ref: "#/$defs/FeedbackConfig"
+
+  early_stopping:
+    $ref: "#/$defs/EarlyStoppingConfig"
+
+$defs:
+  QualityDimension:
+    type: object
+    required:
+      - id
+      - name
+      - description
+    properties:
+      id:
+        type: string
+        pattern: "^[a-z][a-z0-9_]*$"
+        description: "Dimension identifier"
+
+      name:
+        type: string
+        description: "Human-readable name"
+
+      description:
+        type: string
+        description: "What this dimension measures"
+
+      weight:
+        type: number
+        minimum: 0
+        maximum: 1
+        default: 1.0
+        description: "Weight in aggregate score"
+
+      artifact_types:
+        type: array
+        items:
+          type: string
+        description: "Artifact types this applies to (empty = all)"
+
+      evaluation_prompt:
+        type: string
+        description: "Prompt template for LLM-based scoring"
+
+      automated_checks:
+        type: array
+        items:
+          type: string
+        description: "Automated validation checks"
+
+  ScoringConfig:
+    type: object
+    properties:
+      scale:
+        type: object
+        properties:
+          min:
+            type: integer
+            default: 0
+          max:
+            type: integer
+            default: 100
+
+      thresholds:
+        type: object
+        properties:
+          excellent:
+            type: integer
+            default: 90
+          good:
+            type: integer
+            default: 75
+          acceptable:
+            type: integer
+            default: 60
+          poor:
+            type: integer
+            default: 40
+
+      aggregate_method:
+        type: string
+        enum: [weighted_average, minimum, geometric_mean]
+        default: weighted_average
+
+      storage_path:
+        type: string
+        default: ".aiwg/.quality/"
+
+  FeedbackConfig:
+    type: object
+    description: "Feedback accuracy tracking per REF-015"
+    properties:
+      ab_testing:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          sample_rate:
+            type: number
+            default: 0.2
+            description: "Fraction of artifacts in test group"
+
+      accuracy_metrics:
+        type: object
+        properties:
+          track_quality_delta:
+            type: boolean
+            default: true
+          track_false_positives:
+            type: boolean
+            default: true
+          track_false_negatives:
+            type: boolean
+            default: true
+
+      feedback_sources:
+        type: array
+        items:
+          type: string
+          enum:
+            - self_critique
+            - peer_review
+            - human_review
+            - automated_validation
+
+      storage_path:
+        type: string
+        default: ".aiwg/.telemetry/feedback/"
+
+  EarlyStoppingConfig:
+    type: object
+    description: "Early stopping configuration per REF-015"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      conditions:
+        type: object
+        properties:
+          confidence_threshold:
+            type: integer
+            default: 90
+            description: "Min aggregate quality score"
+          all_verifications_pass:
+            type: boolean
+            default: true
+          min_iterations:
+            type: integer
+            default: 1
+            description: "Minimum iterations before early stop"
+          max_iterations:
+            type: integer
+            default: 10
+            description: "Hard limit if confidence never reached"
+
+      verifications:
+        type: array
+        items:
+          type: string
+        default:
+          - tests_pass
+          - lint_clean
+          - type_check_clean
+          - security_scan_clean
+
+      user_override:
+        type: boolean
+        default: true
+        description: "Allow user to continue despite high confidence"
+
+      telemetry:
+        type: object
+        properties:
+          track_early_stops:
+            type: boolean
+            default: true
+          track_iterations_saved:
+            type: boolean
+            default: true
+
+# Default quality dimensions
+default_dimensions:
+  - id: correctness
+    name: "Correctness"
+    description: "Does the artifact correctly implement requirements?"
+    weight: 1.0
+    evaluation_prompt: |
+      Evaluate correctness of this {artifact_type}:
+      - Does it meet stated requirements?
+      - Are there logical errors?
+      - Does it handle edge cases?
+      Score 0-100 with justification.
+    automated_checks:
+      - tests_pass
+      - no_runtime_errors
+
+  - id: completeness
+    name: "Completeness"
+    description: "Does the artifact cover all required aspects?"
+    weight: 0.9
+    evaluation_prompt: |
+      Evaluate completeness of this {artifact_type}:
+      - Are all requirements addressed?
+      - Are there missing features or sections?
+      - Is documentation complete?
+      Score 0-100 with justification.
+    automated_checks:
+      - no_todo_markers
+      - all_sections_present
+
+  - id: efficiency
+    name: "Efficiency"
+    description: "Is the artifact optimally implemented?"
+    weight: 0.7
+    artifact_types:
+      - source_code
+      - test
+      - script
+    evaluation_prompt: |
+      Evaluate efficiency of this code:
+      - Are there performance issues?
+      - Is there unnecessary complexity?
+      - Could this be optimized?
+      Score 0-100 with justification.
+    automated_checks:
+      - no_obvious_inefficiencies
+      - complexity_within_limits
+
+  - id: readability
+    name: "Readability"
+    description: "Is the artifact easy to understand?"
+    weight: 0.8
+    evaluation_prompt: |
+      Evaluate readability of this {artifact_type}:
+      - Is the structure clear?
+      - Are names descriptive?
+      - Is formatting consistent?
+      Score 0-100 with justification.
+    automated_checks:
+      - lint_clean
+      - formatting_consistent
+
+  - id: maintainability
+    name: "Maintainability"
+    description: "Can the artifact be easily modified and extended?"
+    weight: 0.8
+    evaluation_prompt: |
+      Evaluate maintainability of this {artifact_type}:
+      - Is it modular and well-organized?
+      - Are dependencies clear?
+      - Would changes be straightforward?
+      Score 0-100 with justification.
+    automated_checks:
+      - low_coupling
+      - high_cohesion
+
+  - id: security
+    name: "Security"
+    description: "Does the artifact follow security best practices?"
+    weight: 1.0
+    artifact_types:
+      - source_code
+      - configuration
+      - script
+    evaluation_prompt: |
+      Evaluate security of this {artifact_type}:
+      - Are there vulnerabilities (OWASP)?
+      - Is input validated?
+      - Are secrets properly handled?
+      Score 0-100 with justification.
+    automated_checks:
+      - security_scan_clean
+      - no_hardcoded_secrets
+
+# Quality profile schema (stored per artifact)
+quality_profile:
+  artifact_path:
+    type: string
+  artifact_type:
+    type: string
+  timestamp:
+    type: string
+    format: date-time
+  iteration:
+    type: integer
+  scores:
+    type: object
+    description: "Dimension ID -> score (0-100)"
+  aggregate_score:
+    type: number
+  confidence:
+    type: number
+    description: "Overall confidence level"
+  feedback:
+    type: array
+    items:
+      type: object
+      properties:
+        dimension:
+          type: string
+        suggestion:
+          type: string
+        priority:
+          type: string
+          enum: [high, medium, low]
+  history:
+    type: array
+    description: "Previous quality profiles for trend tracking"
+
+# Feedback accuracy tracking
+feedback_accuracy:
+  feedback_id:
+    type: string
+  source:
+    type: string
+    enum: [self_critique, peer_review, human_review, automated]
+  artifact_path:
+    type: string
+  dimension:
+    type: string
+  suggestion:
+    type: string
+  applied:
+    type: boolean
+  quality_before:
+    type: number
+  quality_after:
+    type: number
+  delta:
+    type: number
+  was_helpful:
+    type: boolean
+    description: "delta > 0"
+
+# Agent protocol
+agent_protocol:
+  quality_scoring:
+    description: "Score artifact on all dimensions"
+    steps:
+      - identify_artifact_type
+      - select_applicable_dimensions
+      - run_automated_checks
+      - generate_llm_scores
+      - calculate_aggregate
+      - generate_feedback
+      - store_profile
+
+  feedback_validation:
+    description: "Validate feedback effectiveness"
+    steps:
+      - record_pre_quality
+      - apply_feedback
+      - record_post_quality
+      - calculate_delta
+      - update_accuracy_metrics
+
+  early_stop_check:
+    description: "Check if iteration can stop early"
+    steps:
+      - get_latest_quality_profile
+      - check_confidence_threshold
+      - run_verification_checks
+      - decide_stop_or_continue
+      - log_decision
+
+# Telemetry
+telemetry:
+  metrics:
+    - average_quality_by_dimension
+    - quality_trend_over_iterations
+    - feedback_accuracy_rate
+    - false_positive_rate
+    - early_stop_frequency
+    - iterations_saved
+
+  alerts:
+    - quality_degradation: "aggregate_score drops >10 points"
+    - low_feedback_accuracy: "<50% feedback helpful"
+    - no_early_stops: "0 early stops in 10 iterations"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-015-self-refine.md"
+  implementation:
+    - "#147"  # Multi-dimensional quality
+    - "#148"  # Feedback accuracy
+    - "#149"  # Early stopping
+  related:
+    - "@src/quality/scorer.ts"
+    - "@src/quality/feedback-validator.ts"
+    - "@src/iteration/early-stop.ts"
