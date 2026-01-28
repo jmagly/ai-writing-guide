@@ -19,6 +19,11 @@ import { resolve } from 'path';
 import { Orchestrator } from './orchestrator.mjs';
 import { StateManager } from './state-manager.mjs';
 import { isClaudeAvailable, getClaudeVersion } from './session-launcher.mjs';
+import { MemoryManager } from './memory-manager.mjs';
+import { BestOutputTracker } from './best-output-tracker.mjs';
+import { IterationAnalytics } from './iteration-analytics.mjs';
+import { EarlyStopping } from './early-stopping.mjs';
+import { CrossTaskLearner } from './cross-task-learner.mjs';
 
 /**
  * Parse command line arguments
@@ -39,6 +44,12 @@ function parseArgs(args) {
     status: false,
     abort: false,
     help: false,
+    // New research-backed options (#149, #154, #167, #168, #170)
+    memory: 3,                    // Memory capacity Ω (#170)
+    crossTask: true,              // Cross-task learning (#154)
+    enableAnalytics: true,        // Iteration analytics (#167)
+    enableBestOutput: true,       // Best output tracking (#168)
+    enableEarlyStopping: true,    // Early stopping (#149)
   };
 
   let i = 0;
@@ -67,6 +78,19 @@ function parseArgs(args) {
       options.mcpConfig = JSON.parse(args[++i]);
     } else if (arg === '--gitea-issue') {
       options.giteaIssue = true;
+    } else if (arg === '--memory' || arg === '-m') {
+      const memArg = args[++i];
+      options.memory = isNaN(parseInt(memArg)) ? memArg : parseInt(memArg, 10);
+    } else if (arg === '--cross-task') {
+      options.crossTask = true;
+    } else if (arg === '--no-cross-task') {
+      options.crossTask = false;
+    } else if (arg === '--no-analytics') {
+      options.enableAnalytics = false;
+    } else if (arg === '--no-best-output') {
+      options.enableBestOutput = false;
+    } else if (arg === '--no-early-stopping') {
+      options.enableEarlyStopping = false;
     } else if (!arg.startsWith('-') && !options.objective) {
       options.objective = arg;
     }
@@ -101,6 +125,16 @@ OPTIONS:
   --timeout <min>         Timeout per iteration in minutes (default: 60)
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
+
+RESEARCH-BACKED OPTIONS (REF-015, REF-021):
+  -m, --memory <n|preset>  Memory capacity Ω: 1-10 or preset name
+                          Presets: simple(1), moderate(3), complex(5), maximum(10)
+                          Default: 3 (moderate)
+  --cross-task            Enable cross-task learning (default: true)
+  --no-cross-task         Disable cross-task learning
+  --no-analytics          Disable iteration analytics
+  --no-best-output        Disable best output selection (use final)
+  --no-early-stopping     Disable early stopping on high confidence
 
 COMMANDS:
   -r, --resume            Resume interrupted loop
@@ -266,4 +300,18 @@ async function main() {
 // Run if executed directly
 main().catch(console.error);
 
-export { parseArgs, printHelp, printStatus };
+// Export all modules for programmatic use
+export {
+  parseArgs,
+  printHelp,
+  printStatus,
+  // Core modules
+  Orchestrator,
+  StateManager,
+  // New research-backed modules (#149, #154, #167, #168, #170)
+  MemoryManager,
+  BestOutputTracker,
+  IterationAnalytics,
+  EarlyStopping,
+  CrossTaskLearner,
+};

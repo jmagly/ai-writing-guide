@@ -1,40 +1,42 @@
 {
-  "id": "ralph-research-issues-2026-01-25",
-  "task": "Create Gitea issues for ALL implementation opportunities from research documents",
+  "id": "ralph-external-enhancements-2026-01-28",
+  "task": "Implement Ralph loop enhancements for issues #149, #154, #167, #168, #170",
   "completion_criteria": [
-    "All 158 implementation opportunities have corresponding Gitea issues with labels and implementation proposals"
+    "All 5 Ralph issues implemented: schemas created, JavaScript implementations, CLI flags documented, tests pass, issues closed"
   ],
-  "max_iterations": 100,
+  "max_iterations": 10,
   "checkpoint_frequency": 5,
   "current_iteration": 3,
   "status": "completed",
   "flow_track": "research-implementation",
-  "started_at": "2026-01-25T17:00:00Z",
-  "completed_at": "2026-01-25T17:45:00Z",
+  "started_at": "2026-01-28T14:00:00Z",
+  "completed_at": "2026-01-28T15:02:40Z",
   "metrics": {
-    "issues_created": 158,
-    "top_10_issues": 10,
-    "round_2_issues": 61,
-    "round_3_issues": 87,
-    "issue_range": "#95-#252",
-    "labels_created": 8,
-    "agents_used": 12,
-    "parallel_batches": 6
+    "issues_closed": 5,
+    "implementations_created": 5,
+    "tests_passing": 44,
+    "test_files_created": 4,
+    "cli_flags_added": 6
   },
-  "labels": {
-    "priority:top-10": 139,
-    "priority:round-2": 140,
-    "priority:round-3": 141,
-    "research-backed": 142,
-    "performance": 143,
-    "quality": 144,
-    "efficiency": 145,
-    "reliability": 146
+  "implementations": {
+    "#149": "tools/ralph-external/early-stopping.mjs (12KB, 19 tests)",
+    "#154": "tools/ralph-external/cross-task-learner.mjs (22KB, 24 tests)",
+    "#167": "tools/ralph-external/iteration-analytics.mjs (18KB, 10 tests)",
+    "#168": "tools/ralph-external/best-output-tracker.mjs (21KB, 18 tests)",
+    "#170": "tools/ralph-external/memory-manager.mjs (15KB)"
+  },
+  "cli_flags": {
+    "--memory / -m": "Memory capacity Ω (1-10 or preset)",
+    "--cross-task": "Enable cross-task learning (default: true)",
+    "--no-cross-task": "Disable cross-task learning",
+    "--no-analytics": "Disable iteration analytics",
+    "--no-best-output": "Disable best output selection",
+    "--no-early-stopping": "Disable early stopping"
   },
   "learnings": [
-    "Parallel agent dispatch significantly accelerates batch issue creation",
-    "Gitea API handles concurrent requests well with proper batching",
-    "Research gap analysis maps cleanly to issue categories",
-    "Implementation proposals benefit from code examples in comments"
+    "Schema-first design with existing YAML schemas accelerated implementation",
+    "Parallel task dispatch for independent modules maximizes throughput",
+    "Test-driven recovery: using test file as specification when implementation corrupted",
+    "Research references (REF-015, REF-021) provided clear implementation guidance"
   ]
 }
