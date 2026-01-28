@@ -1,20 +1,19 @@
 # Mixture of Experts Agent Routing Schema
 # Based on REF-007 Mixture of Experts
-# Issues: #190, #191, #194
+# Issues: #190, #191
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "https://aiwg.io/schemas/moe-agent-routing/v1"
 title: "MoE Agent Routing and Sparse Activation Schema"
 description: |
-  Schema for Mixture of Experts inspired routing, sparse agent activation,
-  and selective invocation based on task characteristics per REF-007 MoE.
+  Schema for Mixture of Experts inspired routing and sparse agent activation
+  per REF-007 MoE.
 
 type: object
 required:
   - version
   - routing_config
   - activation_policy
-  - pre_filter
 
 properties:
   version:
@@ -27,9 +26,6 @@ properties:
 
   activation_policy:
     $ref: "#/$defs/ActivationPolicy"
-
-  pre_filter:
-    $ref: "#/$defs/PreFilterConfig"
 
 $defs:
   RoutingConfig:
@@ -110,69 +106,6 @@ $defs:
         type: boolean
         default: true
         description: "Load agents on first use"
-
-  PreFilterConfig:
-    type: object
-    description: "Task pre-filtering configuration"
-    properties:
-      enabled:
-        type: boolean
-        default: true
-
-      complexity_levels:
-        type: object
-        properties:
-          trivial:
-            type: object
-            properties:
-              max_words:
-                type: integer
-                default: 10
-              handler:
-                type: string
-                default: "direct"
-              description:
-                type: string
-                default: "Handle directly, no agent needed"
-
-          simple:
-            type: object
-            properties:
-              max_agents:
-                type: integer
-                default: 1
-              context_level:
-                type: string
-                default: "minimal"
-              description:
-                type: string
-                default: "Single agent, minimal context"
-
-          moderate:
-            type: object
-            properties:
-              max_agents:
-                type: integer
-                default: 2
-              context_level:
-                type: string
-                default: "standard"
-              description:
-                type: string
-                default: "1-2 agents, standard context"
-
-          complex:
-            type: object
-            properties:
-              max_agents:
-                type: integer
-                default: 5
-              context_level:
-                type: string
-                default: "full"
-              description:
-                type: string
-                default: "Multiple agents, full context"
 
 # Task feature extraction
 task_features:
@@ -266,47 +199,17 @@ agent_capability:
       items:
         type: string
 
-# Pre-filter heuristics
-heuristics:
-  trivial_patterns:
-    - pattern: "^(what is|define|explain) \\w+$"
-      handler: "direct-answer"
-    - pattern: "^(list|show|display) (agents|commands|frameworks)"
-      handler: "query-registry"
-    - pattern: "^(status|where are we)"
-      handler: "status-query"
-
-  simple_patterns:
-    - pattern: "^create (use case|user story)"
-      agents: ["requirements-analyst"]
-    - pattern: "^write (test|tests) for"
-      agents: ["test-engineer"]
-
-  moderate_patterns:
-    - pattern: "^review .+ for (security|performance)"
-      agents: ["security-auditor", "performance-engineer"]
-
-  complex_patterns:
-    - pattern: "^(design|architect|implement) .+"
-      handler: "full-routing"
-    - pattern: "^(refactor|migrate) .+"
-      handler: "full-routing"
-
 # Routing result schema
 routing_result:
   type: object
   required:
     - task
-    - complexity
     - selected_agents
   properties:
     task:
       type: string
     features:
       $ref: "#/$defs/task_features"
-    complexity:
-      type: string
-      enum: [trivial, simple, moderate, complex]
     confidence:
       type: number
       minimum: 0
@@ -324,12 +227,6 @@ routing_result:
             type: number
           reasoning:
             type: string
-    direct_handler:
-      type: string
-      description: "Handler for trivial tasks"
-    context_level:
-      type: string
-      enum: [none, minimal, standard, full]
     routing_time_ms:
       type: number
 
@@ -380,20 +277,16 @@ agent_protocol:
     description: "Route task to appropriate agents"
     steps:
       - extract_features
-      - check_trivial_patterns
-      - if_trivial:
-          - return_direct_handler
-      - else:
-          - load_agent_capabilities
-          - for_each_agent:
-              - calculate_domain_score
-              - calculate_operation_score
-              - calculate_complexity_fit
-              - calculate_artifact_match
-              - compute_total_score
-          - apply_load_balancing
-          - select_top_k_agents
-          - return_routing_result
+      - load_agent_capabilities
+      - for_each_agent:
+          - calculate_domain_score
+          - calculate_operation_score
+          - calculate_complexity_fit
+          - calculate_artifact_match
+          - compute_total_score
+      - apply_load_balancing
+      - select_top_k_agents
+      - return_routing_result
 
   activate_agents:
     description: "Activate selected agents"
@@ -462,11 +355,9 @@ storage:
 references:
   research:
     - "@.aiwg/research/findings/REF-007-mixture-of-experts.md"
-    - "@.aiwg/research/findings/REF-019-toolformer.md"
   implementation:
     - "#190"
     - "#191"
-    - "#194"
   related:
     - "@agentic/code/frameworks/sdlc-complete/schemas/flows/uct-agent-selection.yaml"
     - "@agentic/code/frameworks/sdlc-complete/schemas/flows/semantic-agent-discovery.yaml"

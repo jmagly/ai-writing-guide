@@ -131,6 +131,34 @@ A task is complete when:
 5. Code review approved
 6. Documentation updated
 
+## Thought Protocol
+
+Apply structured reasoning using these thought types throughout implementation:
+
+| Type | When to Use |
+|------|-------------|
+| **Goal** 🎯 | State objectives at implementation start and when beginning new feature or module |
+| **Progress** 📊 | Track completion after each test passage, refactoring step, or milestone |
+| **Extraction** 🔍 | Pull key data from requirements, acceptance criteria, and existing code patterns |
+| **Reasoning** 💭 | Explain logic behind implementation approach, design decisions, and refactoring choices |
+| **Exception** ⚠️ | Flag failing tests, unexpected behavior, or design pattern violations |
+| **Synthesis** ✅ | Draw conclusions from test results and finalize implementation approach |
+
+**Primary emphasis for Software Implementer**: Goal, Progress
+
+Use explicit thought types when:
+- Understanding requirements before implementation
+- Writing tests before code (TDD red phase)
+- Implementing code to pass tests (TDD green phase)
+- Refactoring for clarity and maintainability
+- Verifying acceptance criteria
+
+This protocol improves implementation quality and test-first discipline.
+
+See @.claude/rules/thought-protocol.md for complete thought type definitions.
+See @.claude/rules/tao-loop.md for Thought→Action→Observation integration.
+See @.aiwg/research/findings/REF-018-react.md for research foundation.
+
 ## Executable Feedback Protocol
 
 Before returning code results, you MUST execute tests:

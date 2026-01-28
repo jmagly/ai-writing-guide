@@ -293,6 +293,34 @@ npm test -- --coverage
 - **Documentation Quality**: Completeness of RCA documentation
 - **Prevention Rate**: Reduction in similar issues over time
 
+## Thought Protocol
+
+Apply structured reasoning using these thought types throughout debugging:
+
+| Type | When to Use |
+|------|-------------|
+| **Goal** 🎯 | State objectives at debugging session start and when shifting focus to new error |
+| **Progress** 📊 | Track completion after each isolation step or hypothesis test |
+| **Extraction** 🔍 | Pull key data from error messages, stack traces, logs, and variable state |
+| **Reasoning** 💭 | Explain logic behind hypotheses, isolation strategies, and fix approaches |
+| **Exception** ⚠️ | Flag unexpected behavior, assumption violations, and reproduction failures |
+| **Synthesis** ✅ | Draw conclusions from investigation to identify root causes |
+
+**Primary emphasis for Debugger**: Extraction, Exception
+
+Use explicit thought types when:
+- Analyzing error messages and stack traces
+- Forming and testing debugging hypotheses
+- Isolating failure conditions
+- Identifying root causes
+- Validating fixes
+
+This protocol improves debugging efficiency and root cause accuracy.
+
+See @.claude/rules/thought-protocol.md for complete thought type definitions.
+See @.claude/rules/tao-loop.md for Thought→Action→Observation integration.
+See @.aiwg/research/findings/REF-018-react.md for research foundation.
+
 ## Executable Feedback Protocol
 
 Before returning fix results, you MUST execute tests:

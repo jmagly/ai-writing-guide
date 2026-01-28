@@ -24,7 +24,9 @@
   - Dependencies: `US-{id}` (upstream stories)
   - Architecture: `ADR-{id}`, `ARCH-{id}`
 
-## Story
+## Phase 1: Story Core (ESSENTIAL)
+
+Complete these fields immediately when creating a user story:
 
 ### User Story Statement
 
@@ -32,41 +34,66 @@
 **I want** [capability/feature/action]
 **So that** [business value/benefit/outcome]
 
-**Example**:
+<!-- EXAMPLE:
 **As a** job seeker
 **I want** to filter job listings by salary range
 **So that** I only see jobs that meet my compensation expectations
+-->
+
+<!-- ANTI-PATTERN:
+**As a** user
+**I want** better search
+**So that** things work better
+(Too vague - specify user type, exact capability, measurable benefit)
+-->
 
 ### Story Context
 
 **Problem**: [Brief description of the problem or pain point this story addresses]
 
+<!-- EXAMPLE: Job seekers waste time reviewing positions that don't meet their salary expectations, leading to frustration and abandonment of the job search process. -->
+
 **Value**: [Why this matters to users and the business - quantify if possible]
+
+<!-- EXAMPLE: Expected to reduce time-to-application by 40% and increase conversion rate by 15% based on competitor analysis and user research. -->
 
 **Scope**: [What this story includes and explicitly excludes]
 
+<!-- EXAMPLE:
+INCLUDES: Salary range slider, real-time filtering, URL parameter persistence
+EXCLUDES: Saving filters to user profile (separate story US-PLATFORM-044)
+-->
+
 **User Persona**: [Primary user type this story serves - link to persona if available]
 
-### Supporting Information
+<!-- EXAMPLE: Sarah the Career Changer - mid-career professional seeking new opportunities with specific compensation requirements -->
 
-**User Journey**: [Where in the user journey does this story fit?]
+### INVEST Check
 
-**Frequency**: [How often will users perform this action? Daily, weekly, rarely?]
+Before accepting this story for sprint planning, verify:
 
-**Current Workaround**: [How do users solve this problem today? What's broken?]
+- [ ] **Independent**: Can be developed without depending on other stories in same sprint
+- [ ] **Negotiable**: Details can be refined during implementation
+- [ ] **Valuable**: Delivers value to users or business
+- [ ] **Estimable**: Team can estimate effort required
+- [ ] **Small**: Can complete in one sprint
+- [ ] **Testable**: Clear pass/fail criteria
 
-## Acceptance Criteria
+<!-- EXAMPLE:
+✓ Independent: No dependencies on other current sprint stories
+✓ Negotiable: Slider UI details can be refined with UX
+✓ Valuable: Increases conversion by 15% (validated in prototype)
+✓ Estimable: Team estimates 5 story points
+✓ Small: Can complete in 3-5 days
+✓ Testable: Clear acceptance criteria defined below
+-->
+
+## Phase 2: Acceptance Criteria (EXPAND WHEN READY)
+
+<details>
+<summary>Click to expand detailed acceptance criteria and test scenarios</summary>
 
 Define clear, testable conditions that must be met for this story to be considered "done."
-
-**INVEST Check** (Is this story ready?):
-
-- **Independent**: Can be developed without depending on other stories in same sprint
-- **Negotiable**: Details can be refined during implementation
-- **Valuable**: Delivers value to users or business
-- **Estimable**: Team can estimate effort required
-- **Small**: Can complete in one sprint
-- **Testable**: Clear pass/fail criteria
 
 ### Criterion 1: [Name of the behavior or capability]
 
@@ -75,11 +102,14 @@ Define clear, testable conditions that must be met for this story to be consider
 **Then** [expected outcome/result]
 **And** [additional outcome, if needed]
 
-**Example**:
+<!-- EXAMPLE:
+### Criterion 1: Apply Salary Filter
+
 **Given** I am viewing the job search page
 **When** I adjust the salary range slider to $80K-$120K
 **Then** the job list updates to show only positions within that range
 **And** the URL updates with the filter parameter for bookmarking
+-->
 
 ### Criterion 2: [Name of the behavior or capability]
 
@@ -87,16 +117,29 @@ Define clear, testable conditions that must be met for this story to be consider
 **When** [action/event]
 **Then** [expected outcome]
 
+<!-- EXAMPLE:
+### Criterion 2: Clear Salary Filter
+
+**Given** I have applied a salary filter
+**When** I click the "Clear Filters" button
+**Then** the salary slider resets to full range (min-max)
+**And** all jobs are displayed again
+-->
+
 ### Criterion 3: [Edge Cases and Error Handling]
 
 **Given** [error condition or boundary case]
 **When** [triggering action]
 **Then** [graceful handling or error message]
 
-**Example**:
+<!-- EXAMPLE:
+### Criterion 3: No Results Found
+
 **Given** no jobs exist in the selected salary range
 **When** I apply the salary filter
 **Then** the system displays "No jobs found - try adjusting your filters"
+**And** the filter remains applied (no auto-reset)
+-->
 
 ### Acceptance Criteria Checklist
 
@@ -107,199 +150,282 @@ Define clear, testable conditions that must be met for this story to be consider
 - [ ] Security requirements included (if applicable)
 - [ ] Accessibility requirements specified (if applicable)
 
-## Non-Functional Requirements
+</details>
+
+## Phase 3: Technical Details (ADVANCED)
+
+<details>
+<summary>Click to expand technical considerations, NFRs, and implementation guidance</summary>
+
+### Non-Functional Requirements
 
 Constraints and quality attributes specific to this story:
 
-### Performance
+#### Performance
 
 - **Response Time**: [e.g., "Filter results update within 500ms"]
+
+<!-- EXAMPLE: Filter results update within 500ms on median connection -->
+
 - **Throughput**: [e.g., "Support 100 concurrent filter operations"]
+
+<!-- EXAMPLE: Support 100 concurrent filter operations without degradation -->
+
 - **Data Volume**: [e.g., "Handle up to 50,000 job listings"]
 
-### Security
+<!-- EXAMPLE: Handle up to 50,000 job listings efficiently -->
+
+#### Security
 
 - **Authentication**: [e.g., "No authentication required for public search"]
+
+<!-- EXAMPLE: No authentication required for public job search -->
+
 - **Authorization**: [e.g., "Premium filters require authenticated users"]
+
+<!-- EXAMPLE: Basic salary filter available to all; advanced filters require login -->
+
 - **Data Protection**: [e.g., "Do not log salary filter selections (PII)"]
 
-### Usability
+<!-- EXAMPLE: Do not log salary filter values to analytics (potential PII) -->
+
+#### Usability
 
 - **User Experience**: [e.g., "Slider provides visual feedback during drag"]
+
+<!-- EXAMPLE: Slider provides visual feedback during drag, with current range displayed -->
+
 - **Accessibility**: [e.g., "WCAG 2.1 Level AA - keyboard navigable"]
+
+<!-- EXAMPLE: WCAG 2.1 Level AA compliant - keyboard navigable, screen reader announced -->
+
 - **Mobile**: [e.g., "Touch-friendly on screens >320px wide"]
 
-### Reliability
+<!-- EXAMPLE: Touch-friendly slider on screens ≥320px wide -->
+
+#### Reliability
 
 - **Uptime**: [e.g., "Degrades gracefully if search service is down"]
+
+<!-- EXAMPLE: Show cached results if search service unavailable -->
+
 - **Error Handling**: [e.g., "Display user-friendly error, not stack trace"]
 
-### Scalability
+<!-- EXAMPLE: Display user-friendly error messages, never expose stack traces -->
+
+#### Scalability
 
 - **Expected Load**: [e.g., "10,000 searches/day"]
+
+<!-- EXAMPLE: Expected 10,000 filtered searches per day -->
+
 - **Growth**: [e.g., "Scale to 100,000 searches/day within 6 months"]
 
-### Compliance
+<!-- EXAMPLE: Must scale to 100,000 searches/day within 6 months -->
+
+#### Compliance
 
 - **Regulatory**: [e.g., "GDPR-compliant - no tracking without consent"]
+
+<!-- EXAMPLE: GDPR-compliant - no salary filter tracking without explicit consent -->
+
 - **Policy**: [e.g., "Company policy: no salary discrimination"]
 
-## Dependencies
+<!-- EXAMPLE: Company policy: ensure salary filtering does not enable discriminatory practices -->
 
-### Upstream Dependencies
+### Dependencies
+
+#### Upstream Dependencies
 
 Stories, features, or technical work that must be completed before this story:
 
 - **`US-{id}`**: [Brief description of dependency and why it's needed]
-- **`FEAT-{id}`**: [Feature this story depends on]
-- **`TECH-{id}`**: [Infrastructure or technical prerequisite]
 
-**Example**:
+<!-- EXAMPLE:
+- **US-PLATFORM-040**: Search API must support salary range parameters
+- **TECH-012**: Database must have indexed salary_min and salary_max columns
+-->
 
-- **`US-PLATFORM-040`**: Search API must support salary range parameters
-- **`TECH-012`**: Database must have indexed salary_min and salary_max columns
-
-### Downstream Impact
+#### Downstream Impact
 
 Stories or features that depend on this story being completed:
 
 - **`US-{id}`**: [How this story enables another]
 
-**Example**:
+<!-- EXAMPLE:
+- **US-PLATFORM-044**: Saved search feature requires functional salary filters
+-->
 
-- **`US-PLATFORM-044`**: Saved search feature needs salary filters to be functional
-
-### External Dependencies
+#### External Dependencies
 
 Third-party services, data sources, or external teams:
 
 - **[System/Team]**: [Nature of dependency, expected delivery date]
 
-**Example**:
-
-- **Design Team**: Salary slider component design (expected Oct 10)
+<!-- EXAMPLE:
+- **Design Team**: Salary slider component design (expected Jan 10)
 - **Data Team**: Salary data cleanup and validation (in progress)
+-->
 
-## Technical Considerations
+### Technical Considerations
 
 **Note**: This section provides guidance and context, not prescriptive solutions. Implementation teams determine specific approaches.
 
-### Integration Points
+#### Integration Points
 
 **Systems**: [What systems/services does this story interact with?]
 
+<!-- EXAMPLE:
 - Backend search API
 - Job listings database
 - Analytics tracking service
+-->
 
 **Data**: [What data is created, read, updated, or deleted?]
 
-- Read: job listings with salary_min, salary_max
+<!-- EXAMPLE:
+- Read: job listings with salary_min, salary_max fields
 - Update: user search filter preferences (if saving searches)
+-->
 
 **APIs**: [What interfaces are involved?]
 
+<!-- EXAMPLE:
 - GET /api/jobs?salary_min={min}&salary_max={max}
 - POST /api/search/save (if persisting filters)
+-->
 
-### Implementation Guidance
+#### Implementation Guidance
 
 **Frontend**:
 
-- Use accessible range slider component
+<!-- EXAMPLE:
+- Use accessible range slider component from design system
 - Debounce API calls (wait 300ms after user stops dragging)
 - Handle loading state and errors gracefully
+- Update URL parameters for bookmarkable searches
+-->
 
 **Backend**:
 
-- Index salary columns for fast filtering
-- Validate min < max, reject invalid ranges
-- Return 400 Bad Request for invalid parameters
+<!-- EXAMPLE:
+- Index salary_min and salary_max columns for fast filtering
+- Validate min < max, reject invalid ranges with 400 Bad Request
+- Return sorted results (highest salary first by default)
+-->
 
 **Testing**:
 
-- Unit tests: salary filter logic
+<!-- EXAMPLE:
+- Unit tests: salary filter logic validation
 - Integration tests: API contract validation
-- E2E tests: user flow from filter to results
+- E2E tests: complete user flow from filter to results
+- Performance tests: response time under load
+-->
 
-### Constraints
+#### Constraints
 
 **Platform**: [Operating environments, browser/device support]
 
+<!-- EXAMPLE:
 - Browsers: Chrome, Firefox, Safari, Edge (latest 2 versions)
-- Devices: Desktop and mobile responsive
+- Devices: Desktop and mobile responsive design
+-->
 
 **Technology**: [Required frameworks, libraries, or standards]
 
+<!-- EXAMPLE:
 - Must use existing design system slider component
 - Follow REST API conventions
+- Adhere to React coding standards
+-->
 
 **Data**: [Data format, structure, or storage requirements]
 
-- Salary stored as integer (cents or dollars)
+<!-- EXAMPLE:
+- Salary stored as integer (annual USD, no decimals)
 - NULL salary values excluded from filtered results
+- Min salary ≥ 0, max salary ≤ 1000000
+-->
 
 **Legal**: [Compliance, privacy, or regulatory constraints]
 
+<!-- EXAMPLE:
 - GDPR: Salary filter selections not logged without consent
-- CCPA: Users can request deletion of saved filters
+- CCPA: Users can request deletion of saved filter preferences
+- Fair hiring: Ensure filtering doesn't enable discriminatory practices
+-->
 
-### Risks
+#### Risks
 
 **Technical Risk**: [Complexity, unknowns, or technical challenges]
 
-- Risk: Database query performance degrades with complex filters
-- Mitigation: Load testing, query optimization, caching
+<!-- EXAMPLE:
+- Risk: Database query performance degrades with complex salary filters
+- Mitigation: Load testing, query optimization, consider caching strategy
+-->
 
 **Business Risk**: [Market, customer, or competitive considerations]
 
-- Risk: Users confused by salary range (annual vs hourly)
-- Mitigation: UX research, clear labeling, toggle option
+<!-- EXAMPLE:
+- Risk: Users confused by salary range display (annual vs hourly)
+- Mitigation: UX research, clear labeling, optional toggle for hourly calculation
+-->
 
 **Data Quality Risk**: [Incomplete or inaccurate data]
 
-- Risk: 30% of jobs missing salary data
-- Mitigation: Allow "Include jobs without salary" checkbox
+<!-- EXAMPLE:
+- Risk: 30% of job listings missing salary data
+- Mitigation: Provide "Include jobs without salary" checkbox option
+-->
 
-## Task Breakdown
+### Task Breakdown
 
 Break story into implementation tasks (during sprint planning):
 
+<!-- EXAMPLE:
 - [ ] [Frontend] Design and implement salary range slider UI - 4h
 - [ ] [Frontend] Integrate slider with search API - 2h
 - [ ] [Backend] Add salary range filtering to search endpoint - 3h
 - [ ] [Backend] Optimize database query with salary indexes - 2h
 - [ ] [Testing] Write unit tests for filter logic - 2h
-- [ ] [Testing] Write integration tests for API - 2h
+- [ ] [Testing] Write integration tests for API contract - 2h
 - [ ] [Testing] Write E2E tests for user flow - 3h
 - [ ] [Docs] Update API documentation - 1h
 - [ ] [Review] Code review and refinement - 2h
 
 **Total Estimated Hours**: 21h
 **Story Points**: 5 (based on team velocity)
+-->
 
-## Notes & Attachments
+### Notes & Attachments
 
-### Conversation Log
+#### Conversation Log
 
 Track key decisions, questions, and clarifications:
 
-- **YYYY-MM-DD**: Decided to use Material UI slider component (ADR-034)
-- **YYYY-MM-DD**: Product Owner confirmed salary should be annual, not hourly
-- **YYYY-MM-DD**: UX research shows users prefer $10K increments (not $5K)
+<!-- EXAMPLE:
+- **2026-01-15**: Decided to use Material UI slider component (ADR-034)
+- **2026-01-16**: Product Owner confirmed salary should be annual, not hourly
+- **2026-01-17**: UX research shows users prefer $10K increments (not $5K)
+-->
 
-### Attachments
+#### Attachments
 
 - **Wireframes**: [Link or reference to design mockups]
 - **Mockups**: [Link to interactive prototypes]
 - **Research**: [Link to user research findings or A/B test results]
 - **Specifications**: [Link to detailed technical specs or API contracts]
 
-### Open Questions
+#### Open Questions
 
+<!-- EXAMPLE:
 - [x] Should we support hourly salary filtering? (Resolved: No, annual only)
 - [ ] What happens if user sets min > max? (Pending UX decision)
 - [ ] Do we track salary filter for analytics? (Pending legal review)
+-->
+
+</details>
 
 ## Definition of Ready
 
@@ -364,6 +490,7 @@ This story is complete when:
 - Verify story scope is appropriate for single sprint (3-5 days of work)
 - If story is too large (>8 points), split into smaller stories
 - Trace story back to epic, feature, or business requirement
+- Progressive disclosure: Focus on Phase 1 during inception, expand Phases 2-3 during sprint planning
 
 ### For Test Engineer
 
@@ -402,12 +529,11 @@ This story is complete when:
 
 ## Related Templates
 
-- `/docs/sdlc/templates/management/epic-card.md` - Parent epic for this story
-- `/docs/sdlc/templates/management/product-backlog-template.md` - Story lives in backlog
-- `/docs/sdlc/templates/management/sprint-backlog-template.md` - Story committed to sprint
-- `/docs/sdlc/templates/requirements/feature-specification-template.md` - Feature this story belongs to
-- `/docs/sdlc/templates/test/test-case-template.md` - Tests derived from acceptance criteria
-- `/docs/sdlc/templates/management/task-slice-card.md` - Tasks broken down from this story
+- @agentic/code/frameworks/sdlc-complete/templates/management/epic-card.md - Parent epic for this story
+- @agentic/code/frameworks/sdlc-complete/templates/management/product-backlog-template.md - Story lives in backlog
+- @agentic/code/frameworks/sdlc-complete/templates/management/sprint-backlog-template.md - Story committed to sprint
+- @agentic/code/frameworks/sdlc-complete/templates/test/test-case-card.md - Tests derived from acceptance criteria
+- @agentic/code/frameworks/sdlc-complete/templates/implementation/task-slice-card.md - Tasks broken down from this story
 
 ## Quality Gates
 
@@ -427,10 +553,11 @@ This story is complete when:
 
 ## Version Control
 
-**Version**: 1.1
-**Last Updated**: 2025-10-15
+**Version**: 1.2
+**Last Updated**: 2026-01-28
 **Owner**: Requirements Analyst + Product Designer
 **Change History**:
 
-- 2025-10-15: Enhanced template with INVEST checklist, task breakdown, open questions, and improved agent notes (v1.1)
+- 2026-01-28: Added progressive disclosure with phase labels and collapsible sections (v1.2)
+- 2025-10-15: Enhanced template with INVEST checklist, task breakdown, open questions (v1.1)
 - 2025-10-15: Initial template created (v1.0)
