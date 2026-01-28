@@ -427,11 +427,11 @@ See @.claude/rules/citation-policy.md for complete requirements.
 
 ## Schema References
 
-- @.aiwg/flows/schemas/grade-evidence-quality.yaml — GRADE evidence quality assessment
-- @.aiwg/flows/schemas/fair-metadata.yaml — FAIR metadata compliance
-- @.aiwg/flows/schemas/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
-- @.aiwg/flows/schemas/rag-context-management.yaml — RAG context window management
-- @.aiwg/flows/schemas/grounding-agents.yaml — Agent grounding and tool use patterns
-- @.aiwg/flows/schemas/hallucination-detection.yaml — Hallucination detection for research claims
-- @.aiwg/flows/schemas/quality-assessment.yaml — GRADE quality assessment methodology
-- @.aiwg/flows/schemas/tool-grounding.yaml — Tool grounding patterns for research validation
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/grade-evidence-quality.yaml — GRADE evidence quality assessment
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/fair-metadata.yaml — FAIR metadata compliance
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/rag-context-management.yaml — RAG context window management
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/grounding-agents.yaml — Agent grounding and tool use patterns
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/hallucination-detection.yaml — Hallucination detection for research claims
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/quality-assessment.yaml — GRADE quality assessment methodology
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/tool-grounding.yaml — Tool grounding patterns for research validation

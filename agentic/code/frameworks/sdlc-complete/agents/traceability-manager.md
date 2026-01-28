@@ -34,7 +34,7 @@ records. Expose gaps early.
 
 ## Schema References
 
-- @.aiwg/flows/schemas/fair-extensions.yaml — FAIR principle extensions for traceability
-- @.aiwg/flows/schemas/citation-integrity.yaml — Citation integrity policy enforcement
-- @.aiwg/flows/schemas/fair-metadata.yaml — FAIR metadata compliance
-- @.aiwg/flows/schemas/citation-verification.yaml — Automated citation verification pipeline
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/fair-extensions.yaml — FAIR principle extensions for traceability
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/citation-integrity.yaml — Citation integrity policy enforcement
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/fair-metadata.yaml — FAIR metadata compliance
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/citation-verification.yaml — Automated citation verification pipeline

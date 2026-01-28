@@ -46,5 +46,5 @@ When invoked, perform systematic GRADE assessment:
 
 - @.aiwg/research/docs/grade-assessment-guide.md - GRADE methodology
 - @agentic/code/frameworks/sdlc-complete/agents/quality-assessor.md - Quality Assessor agent
-- @.aiwg/research/schemas/quality-dimensions.yaml - Quality schema
+- @agentic/code/frameworks/sdlc-complete/schemas/research/quality-dimensions.yaml - Quality schema
 - @.claude/rules/citation-policy.md - Hedging language rules

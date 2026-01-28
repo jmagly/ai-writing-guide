@@ -1,6 +1,6 @@
 # Reflexion Episodic Memory Index
 # Auto-populated by post-iteration-reflect hook
-# Schema: @.aiwg/ralph/schemas/reflection-memory.json
+# Schema: @agentic/code/addons/ralph/schemas/reflection-memory.json
 
 loops: {}
   # Example:

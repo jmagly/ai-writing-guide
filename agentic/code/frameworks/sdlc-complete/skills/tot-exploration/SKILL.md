@@ -27,7 +27,7 @@ When triggered, this skill:
    - Verify this is an architectural/technical decision (not stylistic)
 
 2. **Loads ToT protocol**:
-   - Load @.aiwg/flows/schemas/tree-of-thought.yaml schema
+   - Load @agentic/code/frameworks/sdlc-complete/schemas/flows/tree-of-thought.yaml schema
    - Load @.aiwg/flows/docs/tot-architecture-guide.md guidance
    - Load @agentic/code/frameworks/sdlc-complete/agents/enhancements/architecture-designer-tot-protocol.md protocol
 
@@ -101,7 +101,7 @@ agents:
 
 ## References
 
-- @.aiwg/flows/schemas/tree-of-thought.yaml - ToT workflow schema
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/tree-of-thought.yaml - ToT workflow schema
 - @.aiwg/flows/docs/tot-architecture-guide.md - Architecture guide
 - @agentic/code/frameworks/sdlc-complete/agents/enhancements/architecture-designer-tot-protocol.md - Agent protocol
 - @agentic/code/frameworks/sdlc-complete/templates/architecture/adr-with-tot.md - ADR template

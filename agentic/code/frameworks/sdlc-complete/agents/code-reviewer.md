@@ -182,9 +182,9 @@ See @.claude/rules/executable-feedback.md for complete requirements.
 
 ## Schema References
 
-- @.aiwg/flows/schemas/quality-scoring.yaml — Quality scoring dimensions and formulas
-- @.aiwg/flows/schemas/quality-assurance.yaml — Quality assurance and hallucination detection
-- @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback format for review findings
-- @.aiwg/research/schemas/lats-evaluation.yaml — LATS hybrid value function for artifact quality assessment
-- @.aiwg/flows/schemas/ensemble-review.yaml — Ensemble review patterns and panel sizing
-- @.aiwg/flows/schemas/quality-assessment.yaml — GRADE quality assessment methodology
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/quality-scoring.yaml — Quality scoring dimensions and formulas
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/quality-assurance.yaml — Quality assurance and hallucination detection
+- @agentic/code/addons/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback format for review findings
+- @agentic/code/frameworks/sdlc-complete/schemas/research/lats-evaluation.yaml — LATS hybrid value function for artifact quality assessment
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/ensemble-review.yaml — Ensemble review patterns and panel sizing
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/quality-assessment.yaml — GRADE quality assessment methodology

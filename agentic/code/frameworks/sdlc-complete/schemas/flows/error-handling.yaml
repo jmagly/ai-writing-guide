@@ -1,0 +1,360 @@
+# Flow Error Handling Configuration Schema
+# Based on REF-001 Production Agentic (error handling patterns)
+# Issue: #110
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/error-handling/v1"
+title: "Flow Error Handling Configuration Schema"
+description: |
+  Structured error handling configuration for flow commands, enabling retry patterns,
+  fallback agents, and graceful degradation. Based on production agentic best practices.
+
+type: object
+required:
+  - strategy
+  - classification
+
+properties:
+  strategy:
+    type: string
+    enum:
+      - retry_then_escalate   # Retry, then escalate to human
+      - retry_then_fallback   # Retry, then use fallback agent
+      - fail_fast             # Fail immediately, no retry
+      - graceful_degrade      # Continue with reduced functionality
+      - checkpoint_recover    # Restore from last checkpoint
+    description: "Primary error handling strategy"
+
+  classification:
+    type: object
+    required: [categories]
+    description: "How to classify errors"
+    properties:
+      categories:
+        type: array
+        items:
+          $ref: "#/$defs/ErrorCategory"
+      default_category:
+        type: string
+        default: "unknown"
+
+  retry:
+    $ref: "#/$defs/RetryConfig"
+    description: "Retry configuration"
+
+  fallback:
+    $ref: "#/$defs/FallbackConfig"
+    description: "Fallback agent configuration"
+
+  escalation:
+    $ref: "#/$defs/EscalationConfig"
+    description: "Human escalation configuration"
+
+  checkpoint:
+    $ref: "#/$defs/CheckpointConfig"
+    description: "Checkpoint and recovery configuration"
+
+  logging:
+    type: object
+    properties:
+      level:
+        type: string
+        enum: [error, warn, info, debug]
+        default: error
+      include_stack:
+        type: boolean
+        default: true
+      include_context:
+        type: boolean
+        default: true
+      destination:
+        type: string
+        default: ".aiwg/logs/errors.log"
+    description: "Error logging configuration"
+
+$defs:
+  ErrorCategory:
+    type: object
+    required:
+      - id
+      - pattern
+      - type
+    properties:
+      id:
+        type: string
+        description: "Category identifier"
+      pattern:
+        type: string
+        description: "Regex pattern to match error messages"
+      type:
+        type: string
+        enum:
+          - transient      # Temporary failures (network, rate limit)
+          - permanent      # Unrecoverable (invalid input, missing resource)
+          - user           # User action needed
+          - system         # System/infrastructure error
+          - timeout        # Operation timed out
+          - validation     # Validation failure
+          - permission     # Permission denied
+        description: "Error type for handling decision"
+      severity:
+        type: string
+        enum: [critical, high, medium, low]
+        default: medium
+      action:
+        type: string
+        enum: [retry, fallback, escalate, abort, ignore]
+        description: "Default action for this category"
+      message_template:
+        type: string
+        description: "User-friendly message template"
+
+  RetryConfig:
+    type: object
+    properties:
+      enabled:
+        type: boolean
+        default: true
+      max_attempts:
+        type: integer
+        minimum: 1
+        maximum: 10
+        default: 3
+        description: "Maximum retry attempts"
+      initial_delay_ms:
+        type: integer
+        minimum: 0
+        default: 1000
+        description: "Initial delay before first retry"
+      backoff_strategy:
+        type: string
+        enum:
+          - none          # No delay increase
+          - linear        # Add fixed delay each retry
+          - exponential   # Double delay each retry
+          - fibonacci     # Fibonacci sequence delays
+        default: exponential
+      max_delay_ms:
+        type: integer
+        default: 30000
+        description: "Maximum delay between retries"
+      jitter:
+        type: boolean
+        default: true
+        description: "Add random jitter to delays"
+      retry_on:
+        type: array
+        items:
+          type: string
+        default: ["transient", "timeout"]
+        description: "Error types to retry on"
+
+  FallbackConfig:
+    type: object
+    properties:
+      enabled:
+        type: boolean
+        default: false
+      agents:
+        type: array
+        items:
+          type: object
+          properties:
+            primary:
+              type: string
+              description: "Primary agent"
+            fallback:
+              type: string
+              description: "Fallback agent"
+            conditions:
+              type: array
+              items:
+                type: string
+              description: "When to trigger fallback"
+        description: "Agent fallback mappings"
+      model_fallback:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: false
+          primary:
+            type: string
+            enum: [opus, sonnet, haiku]
+          fallback:
+            type: string
+            enum: [opus, sonnet, haiku]
+        description: "Model tier fallback"
+
+  EscalationConfig:
+    type: object
+    properties:
+      enabled:
+        type: boolean
+        default: true
+      trigger_after:
+        type: integer
+        default: 3
+        description: "Escalate after N failures"
+      channels:
+        type: array
+        items:
+          type: string
+          enum: [cli, issue_comment, slack, email]
+        default: [cli, issue_comment]
+      include_context:
+        type: boolean
+        default: true
+        description: "Include error context in escalation"
+      template:
+        type: string
+        description: "Escalation message template"
+      auto_create_issue:
+        type: boolean
+        default: false
+        description: "Auto-create tracking issue"
+
+  CheckpointConfig:
+    type: object
+    properties:
+      enabled:
+        type: boolean
+        default: true
+      auto_checkpoint:
+        type: boolean
+        default: true
+        description: "Automatically checkpoint before risky operations"
+      checkpoint_dir:
+        type: string
+        default: ".aiwg/checkpoints/"
+      retention_count:
+        type: integer
+        default: 5
+        description: "Number of checkpoints to retain"
+      checkpoint_on:
+        type: array
+        items:
+          type: string
+          enum:
+            - phase_start
+            - artifact_complete
+            - before_external_call
+            - iteration_boundary
+        default: [phase_start, artifact_complete]
+      recovery_strategy:
+        type: string
+        enum:
+          - last_checkpoint     # Restore most recent
+          - select_checkpoint   # Let user choose
+          - smart_rollback      # Analyze and select best
+        default: last_checkpoint
+
+# Predefined error patterns
+common_patterns:
+  network_errors:
+    id: "network"
+    pattern: "(ECONNREFUSED|ETIMEDOUT|ENOTFOUND|network|socket)"
+    type: transient
+    severity: medium
+    action: retry
+
+  rate_limit:
+    id: "rate_limit"
+    pattern: "(rate.?limit|429|too.?many.?requests)"
+    type: transient
+    severity: low
+    action: retry
+
+  auth_errors:
+    id: "auth"
+    pattern: "(unauthorized|403|401|permission.?denied|access.?denied)"
+    type: permission
+    severity: high
+    action: escalate
+
+  validation_errors:
+    id: "validation"
+    pattern: "(invalid|validation.?failed|schema.?error|type.?error)"
+    type: validation
+    severity: medium
+    action: escalate
+
+  timeout_errors:
+    id: "timeout"
+    pattern: "(timeout|timed.?out|deadline.?exceeded)"
+    type: timeout
+    severity: medium
+    action: retry
+
+  resource_errors:
+    id: "resource"
+    pattern: "(not.?found|404|missing|does.?not.?exist)"
+    type: permanent
+    severity: high
+    action: escalate
+
+# Flow integration
+flow_integration:
+  description: "How to add error handling to flow YAML"
+
+  example: |
+    # In flow command definition
+    flow:
+      name: my-flow
+      error_handling:
+        strategy: retry_then_escalate
+        retry:
+          max_attempts: 3
+          backoff_strategy: exponential
+        escalation:
+          channels: [cli, issue_comment]
+        checkpoint:
+          auto_checkpoint: true
+          checkpoint_on: [phase_start]
+
+# Ralph integration
+ralph_integration:
+  description: "Error handling in Ralph loops"
+
+  on_iteration_failure:
+    - increment_failure_count: true
+    - check_retry_budget: true
+    - checkpoint_state: true
+    - analyze_error_pattern: true
+
+  recovery_actions:
+    transient: retry_with_backoff
+    validation: adjust_and_retry
+    permanent: skip_or_escalate
+    timeout: extend_timeout_and_retry
+
+# Examples
+examples:
+  - name: "Standard flow error handling"
+    strategy: retry_then_escalate
+    classification:
+      categories:
+        - id: "api_error"
+          pattern: "(API|api).*(error|failed)"
+          type: transient
+          action: retry
+      default_category: unknown
+    retry:
+      enabled: true
+      max_attempts: 3
+      backoff_strategy: exponential
+      initial_delay_ms: 1000
+    escalation:
+      enabled: true
+      trigger_after: 3
+      channels: [cli, issue_comment]
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-001-production-agentic.md"
+  implementation:
+    - "#110"
+  related:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-gate.yaml"
+    - "@agentic/code/addons/ralph/schemas/reflection-memory.json"

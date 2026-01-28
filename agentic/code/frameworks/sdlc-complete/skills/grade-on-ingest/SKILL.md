@@ -143,7 +143,7 @@ skill:
 
 - @agentic/code/frameworks/sdlc-complete/agents/quality-assessor.md - Assessment agent
 - @.aiwg/research/docs/grade-assessment-guide.md - GRADE methodology
-- @.aiwg/research/schemas/quality-dimensions.yaml - Quality schema
+- @agentic/code/frameworks/sdlc-complete/schemas/research/quality-dimensions.yaml - Quality schema
 - @.claude/rules/research-metadata.md - Metadata requirements
 - @.claude/rules/citation-policy.md - Citation policy
 - @agentic/code/frameworks/sdlc-complete/skills/citation-guard/SKILL.md - Citation guard

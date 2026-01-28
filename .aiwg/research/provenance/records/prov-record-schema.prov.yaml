@@ -6,7 +6,7 @@ metadata:
   description: "W3C PROV-compliant provenance record schema definition"
 
 entity:
-  id: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+  id: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
   type: "schema"
   created_at: "2026-01-25T19:50:00Z"
 
@@ -26,25 +26,25 @@ agent:
 
 relationships:
   wasGeneratedBy:
-    entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+    entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
     activity: "urn:aiwg:activity:generation:prov-record-schema:001"
     time: "2026-01-25T19:50:00Z"
 
   used:
     - activity: "urn:aiwg:activity:generation:prov-record-schema:001"
-      entity: "urn:aiwg:artifact:.aiwg/research/schemas/quality-assessment.yaml"
+      entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/research/quality-assessment.yaml"
       role: "schema_pattern"
     - activity: "urn:aiwg:activity:generation:prov-record-schema:001"
       entity: "urn:external:w3c:prov-dm:2013"
       role: "standard_specification"
 
   wasDerivedFrom:
-    - entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+    - entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       source: "urn:external:w3c:prov-dm:2013"
       derivation_type: "conforms_to"
       activity: "urn:aiwg:activity:generation:prov-record-schema:001"
-    - entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
-      source: "urn:aiwg:artifact:.aiwg/research/schemas/quality-assessment.yaml"
+    - entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
+      source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/research/quality-assessment.yaml"
       derivation_type: "follows_pattern"
       activity: "urn:aiwg:activity:generation:prov-record-schema:001"
 
@@ -54,7 +54,7 @@ relationships:
     role: "primary_implementer"
 
   wasAttributedTo:
-    entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+    entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
     agent: "urn:aiwg:agent:software-implementer"
 
   actedOnBehalfOf:

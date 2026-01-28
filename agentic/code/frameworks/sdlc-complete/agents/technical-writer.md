@@ -504,7 +504,7 @@ See @.claude/rules/citation-policy.md for complete requirements.
 
 After generating or modifying any artifact (documentation, guides, API docs, changelogs), create a provenance record per @.claude/rules/provenance-tracking.md:
 
-1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+1. **Create provenance record** - Use @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml format
 2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
 3. **Record Activity** - Type (`generation` for new docs, `modification` for updates) with timestamps
 4. **Record Agent** - This agent (`urn:aiwg:agent:technical-writer`) with tool version

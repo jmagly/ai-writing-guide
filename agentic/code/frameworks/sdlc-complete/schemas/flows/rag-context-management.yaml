@@ -1,0 +1,630 @@
+# RAG Context Management Schema
+# Based on REF-008 RAG Survey
+# Issue: #225 (Context Budget Management)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/rag-context-management/v1"
+title: "RAG Context Management Schema"
+description: |
+  Context budget management for RAG operations with token prioritization,
+  relevance scoring, and hierarchical summarization per REF-008 RAG Survey.
+
+type: object
+required:
+  - version
+  - budget_config
+  - relevance_scoring
+  - summarization
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  budget_config:
+    $ref: "#/$defs/BudgetConfig"
+
+  relevance_scoring:
+    $ref: "#/$defs/RelevanceScoring"
+
+  summarization:
+    $ref: "#/$defs/SummarizationConfig"
+
+$defs:
+  BudgetConfig:
+    type: object
+    description: "Context budget allocation configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      total_budget:
+        type: object
+        properties:
+          max_tokens:
+            type: integer
+            default: 100000
+            description: "Maximum context tokens"
+          reserve_for_output:
+            type: integer
+            default: 8000
+            description: "Reserved for generation"
+          reserve_for_system:
+            type: integer
+            default: 2000
+            description: "Reserved for system prompts"
+
+      allocation:
+        type: object
+        description: "Budget allocation by content type"
+        properties:
+          primary_context:
+            type: object
+            properties:
+              percentage:
+                type: number
+                default: 50
+              description:
+                type: string
+                default: "Main files directly relevant to task"
+          supporting_context:
+            type: object
+            properties:
+              percentage:
+                type: number
+                default: 30
+              description:
+                type: string
+                default: "Related files, dependencies"
+          reference_context:
+            type: object
+            properties:
+              percentage:
+                type: number
+                default: 15
+              description:
+                type: string
+                default: "Documentation, examples"
+          history_context:
+            type: object
+            properties:
+              percentage:
+                type: number
+                default: 5
+              description:
+                type: string
+                default: "Conversation history"
+
+      overflow_strategy:
+        type: string
+        enum: [truncate, summarize, prioritize, error]
+        default: "prioritize"
+        description: |
+          truncate: Cut off excess content
+          summarize: Generate summaries for overflow
+          prioritize: Keep only highest relevance
+          error: Fail and request reduction
+
+  RelevanceScoring:
+    type: object
+    description: "Relevance scoring for context prioritization"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      scoring_method:
+        type: string
+        enum: [keyword, semantic, hybrid]
+        default: "hybrid"
+
+      factors:
+        type: object
+        properties:
+          task_alignment:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.4
+              description:
+                type: string
+                default: "How directly relevant to current task"
+
+          recency:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.2
+              description:
+                type: string
+                default: "Recently modified/accessed files"
+              decay_days:
+                type: integer
+                default: 7
+
+          mention_density:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.2
+              description:
+                type: string
+                default: "Number of @-mentions to this file"
+
+          dependency_depth:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.1
+              description:
+                type: string
+                default: "Distance in dependency graph"
+              max_depth:
+                type: integer
+                default: 3
+
+          file_type:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.1
+              description:
+                type: string
+                default: "Priority by file type"
+              priorities:
+                type: object
+                properties:
+                  source_code:
+                    type: number
+                    default: 1.0
+                  test_code:
+                    type: number
+                    default: 0.9
+                  requirements:
+                    type: number
+                    default: 0.8
+                  documentation:
+                    type: number
+                    default: 0.7
+                  config:
+                    type: number
+                    default: 0.6
+
+      thresholds:
+        type: object
+        properties:
+          include_minimum:
+            type: number
+            default: 0.3
+            description: "Minimum score to include"
+          primary_threshold:
+            type: number
+            default: 0.7
+            description: "Score for primary context"
+          supporting_threshold:
+            type: number
+            default: 0.5
+            description: "Score for supporting context"
+
+  SummarizationConfig:
+    type: object
+    description: "Hierarchical summarization configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      levels:
+        type: object
+        properties:
+          full:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Complete file content"
+              token_limit:
+                type: integer
+                default: -1
+                description: "-1 = no limit"
+              use_when:
+                type: string
+                default: "Primary context, sufficient budget"
+
+          detailed:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Key sections with structure preserved"
+              token_limit:
+                type: integer
+                default: 2000
+              use_when:
+                type: string
+                default: "Supporting context"
+              preserve:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "function signatures"
+                  - "class definitions"
+                  - "interface types"
+                  - "comments/docstrings"
+
+          summary:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Paragraph summary of purpose and contents"
+              token_limit:
+                type: integer
+                default: 500
+              use_when:
+                type: string
+                default: "Reference context, budget constrained"
+
+          stub:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Existence marker with metadata"
+              token_limit:
+                type: integer
+                default: 100
+              use_when:
+                type: string
+                default: "Overflow, lowest relevance"
+              include:
+                type: array
+                items:
+                  type: string
+                default:
+                  - "file path"
+                  - "file type"
+                  - "last modified"
+                  - "line count"
+
+      caching:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          cache_path:
+            type: string
+            default: ".aiwg/rag/summaries/"
+          invalidate_on_change:
+            type: boolean
+            default: true
+          max_age_hours:
+            type: integer
+            default: 24
+
+# Context budget record
+context_budget_record:
+  type: object
+  properties:
+    timestamp:
+      type: string
+      format: date-time
+    task:
+      type: string
+    total_budget:
+      type: integer
+    allocation:
+      type: object
+      properties:
+        primary:
+          type: object
+          properties:
+            files:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  tokens:
+                    type: integer
+                  level:
+                    type: string
+                  relevance_score:
+                    type: number
+            total_tokens:
+              type: integer
+        supporting:
+          type: object
+          properties:
+            files:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  tokens:
+                    type: integer
+                  level:
+                    type: string
+                  relevance_score:
+                    type: number
+            total_tokens:
+              type: integer
+        reference:
+          type: object
+          properties:
+            files:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  tokens:
+                    type: integer
+                  level:
+                    type: string
+                  relevance_score:
+                    type: number
+            total_tokens:
+              type: integer
+    overflow:
+      type: object
+      properties:
+        occurred:
+          type: boolean
+        strategy_applied:
+          type: string
+        files_affected:
+          type: array
+          items:
+            type: string
+    metrics:
+      type: object
+      properties:
+        utilization:
+          type: number
+          description: "Used / Total budget"
+        efficiency:
+          type: number
+          description: "Relevant content / Total content"
+
+# Agent prompt pattern for budget-aware retrieval
+agent_pattern:
+  context_budget_protocol: |
+    ## Context Budget Management
+
+    **CRITICAL: Respect context budget limits**
+
+    ### Before Retrieving Context:
+
+    1. **Assess Task Requirements**:
+       - What context is absolutely necessary?
+       - What would be helpful but optional?
+       - What can be summarized vs. read in full?
+
+    2. **Check Budget**:
+       ```
+       Total Budget: {max_tokens} tokens
+       Reserved: {reserve_tokens} tokens
+       Available: {available_tokens} tokens
+       ```
+
+    3. **Prioritize by Relevance**:
+       - Score each potential @-mention
+       - Allocate to primary/supporting/reference
+       - Apply appropriate summarization level
+
+    ### Retrieval Order:
+
+    1. **Primary Context** (50% budget):
+       - Files directly modified by task
+       - Current implementation being changed
+       - Immediate dependencies
+
+    2. **Supporting Context** (30% budget):
+       - Related modules
+       - Test files for implementation
+       - Architecture documentation
+
+    3. **Reference Context** (15% budget):
+       - Examples and patterns
+       - Project conventions
+       - Historical context
+
+    4. **History** (5% budget):
+       - Relevant conversation history
+       - Previous attempts
+
+    ### On Budget Overflow:
+
+    If context exceeds budget:
+    1. Summarize lowest-relevance files
+    2. Drop stub entries for files < 0.3 relevance
+    3. Request user guidance if still over
+
+    ### Example:
+
+    ```
+    Task: "Update authentication to use JWT"
+
+    Budget Assessment:
+    - Primary: src/auth/*.ts (full) - 3000 tokens
+    - Supporting: test/auth/*.ts (detailed) - 1500 tokens
+    - Supporting: .aiwg/requirements/UC-003.md (detailed) - 800 tokens
+    - Reference: docs/security.md (summary) - 500 tokens
+
+    Total: 5800 tokens (within 50000 budget)
+    ```
+
+# CLI commands
+cli_commands:
+  context_budget:
+    command: "aiwg context-budget <task>"
+    description: "Calculate context budget for task"
+    options:
+      - name: "--max-tokens"
+        description: "Override max tokens"
+      - name: "--show-allocation"
+        description: "Show detailed allocation"
+
+  context_score:
+    command: "aiwg context-score <file>"
+    description: "Show relevance score for file"
+    options:
+      - name: "--task"
+        description: "Task context for scoring"
+
+  summarize:
+    command: "aiwg summarize <file>"
+    description: "Generate summary at specified level"
+    options:
+      - name: "--level"
+        description: "full, detailed, summary, stub"
+      - name: "--cache"
+        description: "Cache the result"
+
+  context_report:
+    command: "aiwg context-report"
+    description: "Show context usage report"
+    options:
+      - name: "--session"
+        description: "Specific session ID"
+
+# Agent protocol
+agent_protocol:
+  calculate_budget:
+    description: "Calculate context budget for task"
+    steps:
+      - get_total_budget
+      - reserve_output_tokens
+      - reserve_system_tokens
+      - calculate_available
+      - allocate_by_percentage
+      - return_budget_allocation
+
+  score_relevance:
+    description: "Score file relevance for task"
+    steps:
+      - extract_task_keywords
+      - calculate_task_alignment
+      - calculate_recency_score
+      - calculate_mention_density
+      - calculate_dependency_depth
+      - get_file_type_priority
+      - combine_weighted_scores
+      - return_relevance_score
+
+  select_context:
+    description: "Select and prioritize context files"
+    steps:
+      - collect_candidate_files
+      - score_all_candidates
+      - sort_by_relevance
+      - allocate_to_tiers
+      - check_budget_fit
+      - if_overflow:
+          - apply_summarization
+          - recalculate_tokens
+      - return_selected_context
+
+  apply_summarization:
+    description: "Apply appropriate summarization level"
+    steps:
+      - determine_target_tokens
+      - select_summarization_level
+      - if_cached:
+          - return_cached_summary
+      - generate_summary
+      - cache_result
+      - return_summarized_content
+
+# Storage
+storage:
+  summaries: ".aiwg/rag/summaries/"
+  budget_records: ".aiwg/rag/budget-records/"
+  relevance_cache: ".aiwg/rag/relevance-cache/"
+
+# Research targets (from REF-008 RAG Survey)
+research_targets:
+  context_budget: "Dynamic budget allocation by content type"
+  relevance_scoring: "Multi-factor relevance scoring"
+  hierarchical_summarization: "Tiered summarization for budget fit"
+  overflow_handling: "Graceful degradation on budget overflow"
+
+# Example budget allocation
+example_budget_allocation: |
+  ================================================================================
+                         CONTEXT BUDGET ALLOCATION
+  ================================================================================
+
+  Task: "Add OAuth 2.1 support to API client"
+  Model: claude-3-opus
+  Total Budget: 100,000 tokens
+
+  ALLOCATION:
+
+  Reserved:
+    - Output generation: 8,000 tokens
+    - System prompts: 2,000 tokens
+    - Available: 90,000 tokens
+
+  PRIMARY CONTEXT (50% = 45,000 tokens):
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │ File                                   │ Level    │ Tokens │ Relevance │
+    ├─────────────────────────────────────────────────────────────────────────┤
+    │ src/api/auth/oauth.ts                  │ full     │ 2,500  │ 0.95      │
+    │ src/api/auth/token-manager.ts          │ full     │ 1,800  │ 0.92      │
+    │ src/api/client.ts                      │ full     │ 3,200  │ 0.88      │
+    │ .aiwg/requirements/UC-015-oauth.md     │ full     │ 1,200  │ 0.85      │
+    └─────────────────────────────────────────────────────────────────────────┘
+    Subtotal: 8,700 tokens (19% of allocation)
+
+  SUPPORTING CONTEXT (30% = 27,000 tokens):
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │ File                                   │ Level    │ Tokens │ Relevance │
+    ├─────────────────────────────────────────────────────────────────────────┤
+    │ test/api/auth/oauth.test.ts            │ detailed │ 1,500  │ 0.75      │
+    │ src/api/types.ts                       │ detailed │ 800    │ 0.72      │
+    │ .aiwg/architecture/api-design.md       │ detailed │ 1,200  │ 0.68      │
+    └─────────────────────────────────────────────────────────────────────────┘
+    Subtotal: 3,500 tokens (13% of allocation)
+
+  REFERENCE CONTEXT (15% = 13,500 tokens):
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │ File                                   │ Level    │ Tokens │ Relevance │
+    ├─────────────────────────────────────────────────────────────────────────┤
+    │ docs/security/oauth-patterns.md        │ summary  │ 500    │ 0.55      │
+    │ agentic/code/frameworks/sdlc-complete/schemas/flows/mcp-extensions.yaml│ summary  │ 400    │ 0.52      │
+    └─────────────────────────────────────────────────────────────────────────┘
+    Subtotal: 900 tokens (7% of allocation)
+
+  SUMMARY:
+    Total Used: 13,100 tokens
+    Total Available: 90,000 tokens
+    Utilization: 14.6%
+    Efficiency: High (all content relevant)
+
+  Status: ✓ Within budget, no overflow handling needed
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-008-rag-survey.md"
+  implementation:
+    - "#225"
+  related:
+    - "@.claude/rules/mention-wiring.md"
+    - "@src/rag/"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/quality-assurance.yaml"

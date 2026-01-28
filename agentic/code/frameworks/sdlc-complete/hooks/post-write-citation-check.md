@@ -94,5 +94,5 @@ hook:
 
 - @.claude/rules/citation-policy.md - Citation policy rules
 - @agentic/code/frameworks/sdlc-complete/agents/citation-verifier.md - Verifier agent
-- @.aiwg/research/schemas/hallucination-detection.yaml - Detection schema
+- @agentic/code/frameworks/sdlc-complete/schemas/research/hallucination-detection.yaml - Detection schema
 - @.aiwg/research/docs/grade-assessment-guide.md - GRADE levels

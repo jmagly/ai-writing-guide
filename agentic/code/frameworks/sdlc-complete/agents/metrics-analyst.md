@@ -45,30 +45,30 @@ dashboards, interpret trends, and recommend actions to improve outcomes.
 
 ### Token Cost Analysis
 
-- Track per-phase and per-agent token costs using `@.aiwg/flows/schemas/cost-tracking.yaml`
-- Compare against MetaGPT baselines from `@.aiwg/flows/schemas/token-efficiency.yaml`
+- Track per-phase and per-agent token costs using `@agentic/code/frameworks/sdlc-complete/schemas/flows/cost-tracking.yaml`
+- Compare against MetaGPT baselines from `@agentic/code/frameworks/sdlc-complete/schemas/flows/token-efficiency.yaml`
 - Report cost anomalies when agent token usage exceeds thresholds
 
 ### HITL Cost Optimization
 
 - Apply REF-057 Agent Laboratory findings (84% cost reduction with human-in-the-loop)
-- Track HITL gate effectiveness using `@.aiwg/flows/schemas/hitl-cost-tracking.yaml`
+- Track HITL gate effectiveness using `@agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-cost-tracking.yaml`
 - Monitor revision cycle counts (target: 0.83 per gate vs 4.2 without)
 
 ### Agent Efficiency Scoring
 
 - Score agents on grounding accuracy, tool utilization, and output quality
-- Track efficiency trends across iterations using `@.aiwg/flows/schemas/agent-efficiency.yaml`
+- Track efficiency trends across iterations using `@agentic/code/frameworks/sdlc-complete/schemas/flows/agent-efficiency.yaml`
 - Flag underperforming agents for review or replacement
 
 ## Schema References
 
-- @.aiwg/flows/schemas/cost-tracking.yaml — Per-phase and per-agent cost tracking schema
-- @.aiwg/flows/schemas/hitl-cost-tracking.yaml — HITL cost optimization with REF-057 benchmarks
-- @.aiwg/flows/schemas/token-efficiency.yaml — Token efficiency thresholds and MetaGPT baseline
-- @.aiwg/flows/schemas/agent-efficiency.yaml — Agent grounding, subscriptions, and reflection tracking
-- @.aiwg/ralph/schemas/iteration-analytics.yaml — Iteration quality tracking and best output selection
-- @.aiwg/research/schemas/lats-evaluation.yaml — LATS hybrid value function for artifact evaluation
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/cost-tracking.yaml — Per-phase and per-agent cost tracking schema
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-cost-tracking.yaml — HITL cost optimization with REF-057 benchmarks
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/token-efficiency.yaml — Token efficiency thresholds and MetaGPT baseline
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/agent-efficiency.yaml — Agent grounding, subscriptions, and reflection tracking
+- @agentic/code/addons/ralph/schemas/iteration-analytics.yaml — Iteration quality tracking and best output selection
+- @agentic/code/frameworks/sdlc-complete/schemas/research/lats-evaluation.yaml — LATS hybrid value function for artifact evaluation
 - @.claude/rules/hitl-gates.md — Human gate cost savings model
 - @.aiwg/research/findings/REF-057-agent-laboratory.md — 84% cost reduction research
-- @.aiwg/flows/schemas/iteration-analytics.yaml — Iteration quality tracking and adaptive stopping
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/iteration-analytics.yaml — Iteration quality tracking and adaptive stopping

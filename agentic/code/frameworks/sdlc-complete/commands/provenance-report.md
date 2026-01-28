@@ -51,6 +51,6 @@ When invoked, generate provenance report:
 ## References
 
 - @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md - Provenance Manager agent
-- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
 - @.aiwg/research/provenance/docs/provenance-guide.md - Provenance guide
 - @.claude/rules/provenance-tracking.md - Provenance tracking rules

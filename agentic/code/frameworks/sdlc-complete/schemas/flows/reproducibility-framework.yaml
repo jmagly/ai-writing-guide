@@ -1,0 +1,742 @@
+# Reproducibility Framework Schema
+# Based on REF-058 R-LAM (Retrieval-Augmented Language Agent Memory)
+# Issues: #211 (Modes), #212 (Snapshots), #213 (Checkpoints), #214 (Dependencies), #215 (Validation)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/reproducibility-framework/v1"
+title: "Reproducibility Framework Schema"
+description: |
+  Comprehensive schema for execution mode switching, configuration snapshots,
+  checkpoint/recovery, dependency tracking, and reproducibility validation
+  per REF-058 R-LAM.
+
+type: object
+required:
+  - version
+  - execution_modes
+  - snapshots
+  - checkpoints
+  - dependencies
+  - validation
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  execution_modes:
+    $ref: "#/$defs/ExecutionModes"
+
+  snapshots:
+    $ref: "#/$defs/SnapshotConfig"
+
+  checkpoints:
+    $ref: "#/$defs/CheckpointConfig"
+
+  dependencies:
+    $ref: "#/$defs/DependencyConfig"
+
+  validation:
+    $ref: "#/$defs/ValidationConfig"
+
+$defs:
+  ExecutionModes:
+    type: object
+    description: "Formal execution mode definitions"
+    properties:
+      default_mode:
+        type: string
+        enum: [strict, seeded, logged, default]
+        default: "default"
+
+      modes:
+        type: object
+        properties:
+          strict:
+            type: object
+            description: "Fully deterministic execution"
+            properties:
+              temperature:
+                type: number
+                const: 0
+              seed:
+                type: string
+                default: "aiwg-strict-mode"
+              log_level:
+                type: string
+                default: "info"
+              capture_context:
+                type: boolean
+                const: true
+              reproducibility_guarantee:
+                type: string
+                default: "Byte-for-byte identical outputs"
+
+          seeded:
+            type: object
+            description: "Reproducible with explicit seed"
+            properties:
+              temperature:
+                type: number
+                default: 0.7
+              seed:
+                type: string
+                description: "Required - must be provided"
+              log_level:
+                type: string
+                default: "info"
+              capture_context:
+                type: boolean
+                default: true
+              reproducibility_guarantee:
+                type: string
+                default: "Reproducible with same seed"
+
+          logged:
+            type: object
+            description: "Full operation logging for replay"
+            properties:
+              temperature:
+                type: number
+                default: 1.0
+              log_level:
+                type: string
+                default: "debug"
+              capture_context:
+                type: boolean
+                const: true
+              capture_all_outputs:
+                type: boolean
+                const: true
+              reproducibility_guarantee:
+                type: string
+                default: "Full replay capability"
+
+          default:
+            type: object
+            description: "Standard non-deterministic execution"
+            properties:
+              temperature:
+                type: number
+                default: 0.7
+              log_level:
+                type: string
+                default: "warn"
+              capture_context:
+                type: boolean
+                default: false
+
+  SnapshotConfig:
+    type: object
+    description: "Execution configuration snapshot settings"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      auto_capture:
+        type: boolean
+        default: true
+        description: "Automatically snapshot on execution start"
+
+      storage_path:
+        type: string
+        default: ".aiwg/snapshots/"
+
+      retention:
+        type: object
+        properties:
+          max_snapshots:
+            type: integer
+            default: 100
+          max_age_days:
+            type: integer
+            default: 30
+
+      capture_fields:
+        type: array
+        items:
+          type: string
+        default:
+          - version
+          - timestamp
+          - git_state
+          - execution_config
+          - environment
+          - agents
+          - models
+          - dependencies
+
+      sensitive_filters:
+        type: array
+        items:
+          type: string
+        default:
+          - token
+          - apiKey
+          - secret
+          - password
+          - credential
+
+  CheckpointConfig:
+    type: object
+    description: "Checkpoint and recovery configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      storage_path:
+        type: string
+        default: ".aiwg/checkpoints/"
+
+      levels:
+        type: object
+        description: "Checkpoint granularity levels"
+        properties:
+          operation:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: false
+              description:
+                type: string
+                default: "Single API call"
+          task:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              description:
+                type: string
+                default: "Single Ralph iteration"
+          workflow:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              description:
+                type: string
+                default: "Complete workflow phase"
+          session:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+              description:
+                type: string
+                default: "Entire user session"
+
+      pruning:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          max_age_days:
+            type: integer
+            default: 30
+          keep_completed:
+            type: boolean
+            default: true
+          keep_failed:
+            type: boolean
+            default: true
+
+  DependencyConfig:
+    type: object
+    description: "Operation-level dependency tracking"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      tracking_scope:
+        type: array
+        items:
+          type: string
+        default:
+          - npm
+          - system
+          - mcp-server
+          - agent
+          - tool
+
+      manifest_path:
+        type: string
+        default: ".claude/agents/{agent}.json"
+
+      conflict_resolution:
+        type: object
+        properties:
+          strategy:
+            type: string
+            enum: [prefer-newer, prefer-older, isolate, error]
+            default: "prefer-newer"
+          log_conflicts:
+            type: boolean
+            default: true
+
+  ValidationConfig:
+    type: object
+    description: "Reproducibility validation configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      types:
+        type: object
+        properties:
+          exact:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Byte-for-byte match"
+              threshold:
+                type: number
+                const: 1.0
+          semantic:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Functionally equivalent"
+              threshold:
+                type: number
+                default: 0.95
+          approximate:
+            type: object
+            properties:
+              description:
+                type: string
+                default: "Within tolerance"
+              threshold:
+                type: number
+                default: 0.90
+
+      default_ignore_patterns:
+        type: array
+        items:
+          type: string
+        default:
+          - "*.log"
+          - "node_modules/**"
+          - ".aiwg/working/**"
+          - "*.timestamp"
+
+# Snapshot schema
+execution_snapshot:
+  type: object
+  required:
+    - version
+    - timestamp
+    - git_state
+    - execution
+  properties:
+    version:
+      type: string
+      description: "AIWG version"
+    timestamp:
+      type: string
+      format: date-time
+    git_state:
+      type: object
+      properties:
+        commit:
+          type: string
+        branch:
+          type: string
+        dirty:
+          type: boolean
+        remotes:
+          type: object
+          additionalProperties:
+            type: string
+    execution:
+      type: object
+      properties:
+        mode:
+          type: string
+        command:
+          type: string
+        args:
+          type: array
+          items:
+            type: string
+        options:
+          type: object
+    environment:
+      type: object
+      properties:
+        node:
+          type: string
+        platform:
+          type: string
+        arch:
+          type: string
+        cwd:
+          type: string
+        vars:
+          type: object
+          description: "Filtered environment variables"
+    agents:
+      type: object
+      properties:
+        active:
+          type: array
+          items:
+            type: string
+        configs:
+          type: object
+    models:
+      type: object
+      properties:
+        provider:
+          type: string
+        model:
+          type: string
+        temperature:
+          type: number
+        seed:
+          type: string
+    dependencies:
+      type: object
+      properties:
+        npm:
+          type: object
+        system:
+          type: object
+
+# Checkpoint schema
+checkpoint:
+  type: object
+  required:
+    - id
+    - level
+    - status
+    - timestamp
+    - state
+  properties:
+    id:
+      type: string
+      format: uuid
+    level:
+      type: string
+      enum: [operation, task, workflow, session]
+    status:
+      type: string
+      enum: [created, in-progress, completed, failed, rolled-back]
+    timestamp:
+      type: string
+      format: date-time
+    parent_id:
+      type: string
+      format: uuid
+    state:
+      type: object
+      properties:
+        artifacts:
+          type: object
+          description: "Files created/modified"
+        variables:
+          type: object
+          description: "Runtime variables"
+        context:
+          type: object
+          description: "Execution context"
+        results:
+          type: object
+          description: "Operation results"
+    metadata:
+      type: object
+      properties:
+        command:
+          type: string
+        args:
+          type: array
+          items:
+            type: string
+        options:
+          type: object
+        snapshot:
+          type: string
+          description: "Path to execution snapshot"
+        duration:
+          type: integer
+          description: "Execution time in ms"
+        error:
+          type: string
+
+# Dependency manifest schema
+dependency_manifest:
+  type: object
+  properties:
+    agent:
+      type: string
+    operation:
+      type: string
+    dependencies:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [npm, system, mcp-server, agent, tool]
+          name:
+            type: string
+          version:
+            type: string
+          required:
+            type: boolean
+            default: true
+          source:
+            type: string
+          alternatives:
+            type: array
+            items:
+              type: string
+    conflicts:
+      type: array
+      items:
+        type: object
+        properties:
+          with:
+            type: string
+          resolution:
+            type: string
+            enum: [prefer-newer, prefer-older, isolate]
+          reason:
+            type: string
+
+# Validation result schema
+validation_result:
+  type: object
+  required:
+    - reproducible
+    - score
+  properties:
+    reproducible:
+      type: boolean
+    score:
+      type: number
+      minimum: 0
+      maximum: 1
+    differences:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [file-missing, file-added, content-diff, metadata-diff, output-diff]
+          path:
+            type: string
+          original:
+            description: "Original value"
+          reproduced:
+            description: "Reproduced value"
+          impact:
+            type: string
+            enum: [critical, major, minor]
+    summary:
+      type: object
+      properties:
+        total_artifacts:
+          type: integer
+        matched:
+          type: integer
+        added:
+          type: integer
+        removed:
+          type: integer
+        modified:
+          type: integer
+        execution_time:
+          type: integer
+        original_time:
+          type: integer
+
+# CLI commands
+cli_commands:
+  mode_set:
+    command: "aiwg ralph <task> --mode <mode>"
+    description: "Execute with specific mode"
+    options:
+      - name: "--mode"
+        values: [strict, seeded, logged, default]
+      - name: "--seed"
+        description: "Random seed (required for seeded mode)"
+
+  mode_show:
+    command: "aiwg execution-mode"
+    description: "Show current execution mode"
+
+  snapshot_list:
+    command: "aiwg snapshot list"
+    description: "List execution snapshots"
+    options:
+      - name: "--since"
+        description: "Show snapshots since date"
+
+  snapshot_show:
+    command: "aiwg snapshot show <id>"
+    description: "Show snapshot details"
+
+  checkpoint_list:
+    command: "aiwg checkpoint list"
+    description: "List checkpoints"
+    options:
+      - name: "--level"
+        description: "Filter by level"
+      - name: "--status"
+        description: "Filter by status"
+
+  checkpoint_recover:
+    command: "aiwg checkpoint recover <id>"
+    description: "Recover from checkpoint"
+
+  checkpoint_rollback:
+    command: "aiwg checkpoint rollback <id>"
+    description: "Rollback to checkpoint"
+
+  checkpoint_prune:
+    command: "aiwg checkpoint prune"
+    description: "Remove old checkpoints"
+    options:
+      - name: "--older-than"
+        description: "Days threshold"
+
+  deps_check:
+    command: "aiwg deps check <agent>"
+    description: "Check agent dependencies"
+
+  deps_list:
+    command: "aiwg deps list"
+    description: "List all resolved dependencies"
+
+  deps_install:
+    command: "aiwg deps install <agent>"
+    description: "Install agent dependencies"
+
+  workflow_validate:
+    command: "aiwg workflow validate <snapshot>"
+    description: "Validate reproducibility"
+    options:
+      - name: "--type"
+        values: [exact, semantic, approximate]
+      - name: "--ignore"
+        description: "Patterns to ignore"
+      - name: "--tolerance"
+        description: "Tolerance for approximate validation"
+
+# Agent protocol
+agent_protocol:
+  set_execution_mode:
+    description: "Configure execution mode"
+    steps:
+      - parse_mode_option
+      - validate_mode_requirements
+      - if_seeded_without_seed:
+          - error_seed_required
+      - apply_mode_defaults
+      - configure_temperature
+      - configure_logging
+      - return_config
+
+  capture_snapshot:
+    description: "Capture execution snapshot"
+    triggers:
+      - execution_start
+    steps:
+      - get_aiwg_version
+      - get_timestamp
+      - capture_git_state
+      - capture_execution_config
+      - capture_environment
+      - capture_agent_state
+      - capture_model_config
+      - capture_dependencies
+      - filter_sensitive_data
+      - persist_snapshot
+      - return_snapshot_path
+
+  create_checkpoint:
+    description: "Create execution checkpoint"
+    steps:
+      - generate_checkpoint_id
+      - determine_level
+      - capture_state
+      - link_to_parent
+      - persist_checkpoint
+      - return_checkpoint
+
+  recover_from_checkpoint:
+    description: "Recover execution from checkpoint"
+    steps:
+      - load_checkpoint
+      - validate_checkpoint
+      - restore_state
+      - update_status
+      - return_state
+
+  check_dependencies:
+    description: "Check agent dependencies"
+    steps:
+      - load_agent_manifest
+      - for_each_dependency:
+          - check_availability
+          - check_version
+          - record_result
+      - detect_conflicts
+      - return_check_result
+
+  validate_reproducibility:
+    description: "Validate workflow reproducibility"
+    steps:
+      - load_snapshot
+      - restore_environment
+      - re_execute_workflow
+      - collect_artifacts
+      - compare_results
+      - calculate_score
+      - determine_verdict
+      - return_validation_result
+
+# Storage
+storage:
+  snapshots: ".aiwg/snapshots/"
+  checkpoints: ".aiwg/checkpoints/"
+  dependencies: ".aiwg/dependencies/"
+  validation: ".aiwg/validation/"
+
+# Research targets (from REF-058 R-LAM)
+research_targets:
+  execution_modes: "Named modes with reproducibility guarantees"
+  snapshots: "Complete execution context capture"
+  checkpoints: "Multi-level checkpoint/recovery"
+  dependencies: "Per-agent dependency tracking"
+  validation: "Automated reproducibility verification"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-058-r-lam.md"
+    - "@.aiwg/research/gap-analysis/REPRODUCIBILITY.md"
+  implementation:
+    - "#211"
+    - "#212"
+    - "#213"
+    - "#214"
+    - "#215"
+  related:
+    - "@tools/ralph-external/"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/provenance-system.yaml"
+    - "@.claude/agents/"

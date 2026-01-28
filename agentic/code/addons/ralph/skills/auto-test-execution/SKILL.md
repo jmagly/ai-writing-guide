@@ -77,5 +77,5 @@ This skill uses:
 
 - @.claude/rules/executable-feedback.md - Feedback rules
 - @.aiwg/ralph/docs/executable-feedback-guide.md - Guide
-- @.aiwg/ralph/schemas/debug-memory.yaml - Memory schema
+- @agentic/code/addons/ralph/schemas/debug-memory.yaml - Memory schema
 - @.aiwg/research/findings/REF-013-metagpt.md - Research foundation

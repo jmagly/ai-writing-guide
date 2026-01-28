@@ -397,5 +397,5 @@ cross_references:
     - "agentic/code/frameworks/sdlc-complete/agents/manifest.json"
     - ".aiwg/requirements/use-cases/UC-XXX-structured-handoffs.md"
 
-  quality_schema: ".aiwg/research/schemas/quality-assessment.yaml"
+  quality_schema: "agentic/code/frameworks/sdlc-complete/schemas/research/quality-assessment.yaml"
   usage_guide: ".aiwg/research/docs/grade-assessment-guide.md"

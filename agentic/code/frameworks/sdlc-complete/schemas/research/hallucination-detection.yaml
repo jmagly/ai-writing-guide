@@ -1,0 +1,292 @@
+# Hallucination Detection Schema
+# Based on REF-059 LitLLM (hallucination patterns)
+# Issue: #131
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/hallucination-detection/v1"
+title: "Hallucination Detection Schema"
+description: |
+  Schema for pattern-based hallucination detection in AI-generated content.
+  Identifies factual inconsistencies, unsupported claims, and fabrications.
+
+type: object
+required:
+  - detection_id
+  - target
+  - results
+
+properties:
+  detection_id:
+    type: string
+    format: uuid
+
+  timestamp:
+    type: string
+    format: date-time
+
+  target:
+    type: object
+    required: [path]
+    properties:
+      path:
+        type: string
+      content_type:
+        type: string
+        enum: [markdown, code, requirements, architecture, test]
+      hash:
+        type: string
+
+  results:
+    type: object
+    required:
+      - total_claims
+      - verified
+      - suspicious
+      - hallucinated
+    properties:
+      total_claims:
+        type: integer
+        minimum: 0
+      verified:
+        type: integer
+        minimum: 0
+      suspicious:
+        type: integer
+        minimum: 0
+      hallucinated:
+        type: integer
+        minimum: 0
+      confidence_score:
+        type: number
+        minimum: 0
+        maximum: 1
+
+  detections:
+    type: array
+    items:
+      $ref: "#/$defs/Detection"
+
+  recommendations:
+    type: array
+    items:
+      type: string
+
+$defs:
+  Detection:
+    type: object
+    required:
+      - type
+      - severity
+      - location
+    properties:
+      type:
+        type: string
+        enum:
+          # Factual hallucinations
+          - fabricated_citation     # Non-existent paper/author
+          - incorrect_statistic     # Made-up numbers
+          - false_attribution       # Wrong author/source
+          - temporal_inconsistency  # Impossible dates
+          - nonexistent_entity      # Fake companies/products
+          # Logical hallucinations
+          - contradiction           # Self-contradictory claims
+          - scope_creep            # Claims beyond scope
+          - unsupported_inference  # Conclusions not from evidence
+          # Technical hallucinations
+          - invalid_api            # Non-existent API/function
+          - impossible_syntax      # Language features that don't exist
+          - version_mismatch       # Features from wrong version
+          # Reference hallucinations
+          - broken_reference       # Links to non-existent files
+          - misquoted_source       # Incorrect quote attribution
+          - phantom_requirement    # References non-existent requirement
+
+      severity:
+        type: string
+        enum:
+          - critical    # Definitely false, high impact
+          - high        # Likely false, significant impact
+          - medium      # Suspicious, needs verification
+          - low         # Minor inconsistency
+
+      location:
+        type: object
+        properties:
+          line:
+            type: integer
+          column:
+            type: integer
+          context:
+            type: string
+            description: "Surrounding text"
+
+      claim:
+        type: string
+        description: "The suspicious claim"
+
+      evidence:
+        type: object
+        properties:
+          expected:
+            type: string
+            description: "What should be true"
+          actual:
+            type: string
+            description: "What was claimed"
+          source:
+            type: string
+            description: "How we know"
+
+      suggestion:
+        type: string
+        description: "How to fix"
+
+# Detection patterns
+detection_patterns:
+  citation_patterns:
+    description: "Patterns indicating fabricated citations"
+    indicators:
+      - pattern: "REF-\\d{3}"
+        check: "file_exists"
+        failure: fabricated_citation
+      - pattern: "\\(\\d{4}\\)"
+        check: "year_reasonable"
+        failure: temporal_inconsistency
+      - pattern: "et al\\."
+        check: "author_verifiable"
+        failure: false_attribution
+
+  statistic_patterns:
+    description: "Patterns for suspicious statistics"
+    indicators:
+      - pattern: "\\d+%"
+        check: "has_source"
+        failure: incorrect_statistic
+      - pattern: "\\d+x faster"
+        check: "has_benchmark"
+        failure: unsupported_inference
+      - pattern: "studies show"
+        check: "has_citation"
+        failure: unsupported_inference
+
+  technical_patterns:
+    description: "Patterns for technical hallucinations"
+    indicators:
+      - pattern: "import .* from"
+        check: "package_exists"
+        failure: invalid_api
+      - pattern: "\\.\\w+\\("
+        check: "method_exists"
+        failure: invalid_api
+
+  reference_patterns:
+    description: "Patterns for reference hallucinations"
+    indicators:
+      - pattern: "@[\\w./]+"
+        check: "file_exists"
+        failure: broken_reference
+      - pattern: "#\\d+"
+        check: "issue_exists"
+        failure: broken_reference
+      - pattern: "UC-\\d{3}"
+        check: "use_case_exists"
+        failure: phantom_requirement
+
+# Verification methods
+verification_methods:
+  file_exists:
+    description: "Check if referenced file exists"
+    implementation: "fs.existsSync(path)"
+
+  year_reasonable:
+    description: "Check if year is plausible"
+    implementation: "year >= 1900 && year <= currentYear + 1"
+
+  package_exists:
+    description: "Check if npm/pip package exists"
+    implementation: "npm view <package> || pip show <package>"
+
+  has_source:
+    description: "Check if statistic has citation"
+    implementation: "nearby_text_contains_citation"
+
+  issue_exists:
+    description: "Check if issue number exists"
+    implementation: "gitea_api.get_issue(number)"
+
+# Agent protocol
+agent_protocol:
+  pre_generation:
+    description: "Before generating content"
+    actions:
+      - load_corpus_refs
+      - load_valid_statistics
+      - load_api_documentation
+
+  post_generation:
+    description: "After generating content"
+    actions:
+      - scan_for_patterns
+      - verify_citations
+      - check_technical_claims
+      - validate_references
+      - report_detections
+
+  on_detection:
+    critical:
+      action: block_and_fix
+      require_human: true
+    high:
+      action: warn_and_suggest
+      require_human: false
+    medium:
+      action: flag_for_review
+    low:
+      action: log_only
+
+# Integration with citation-audit
+integration:
+  citation_audit:
+    description: "Extends citation-audit.yaml"
+    shared_patterns:
+      - REF-XXX verification
+      - DOI validation
+      - File existence checks
+
+# Examples
+examples:
+  fabricated_citation:
+    type: fabricated_citation
+    severity: critical
+    location:
+      line: 42
+      context: "According to Smith et al. (2024), this approach..."
+    claim: "Smith et al. (2024)"
+    evidence:
+      expected: "Citation should exist in corpus"
+      actual: "No matching REF-XXX found"
+      source: "Corpus search"
+    suggestion: "Remove citation or add paper to corpus"
+
+  impossible_statistic:
+    type: incorrect_statistic
+    severity: high
+    location:
+      line: 15
+      context: "This improves performance by 500%"
+    claim: "500% improvement"
+    evidence:
+      expected: "Benchmark data with citation"
+      actual: "No supporting evidence found"
+      source: "Pattern analysis"
+    suggestion: "Add benchmark citation or remove claim"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-059-litllm.md"
+  implementation:
+    - "#131"
+  related:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/research/citation-audit.yaml"
+    - "@.claude/rules/research-metadata.md"

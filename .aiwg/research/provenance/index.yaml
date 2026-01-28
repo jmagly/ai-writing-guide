@@ -38,7 +38,7 @@ records:
     created_at: "2026-01-25T19:30:00Z"
 
   - record_path: ".aiwg/research/provenance/records/prov-record-schema.prov.yaml"
-    entity_urn: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+    entity_urn: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
     entity_type: "schema"
     agent_urn: "urn:aiwg:agent:provenance-manager"
     activity_type: "generation"

@@ -1,0 +1,597 @@
+# Citation Verification Pipeline Schema
+# Based on REF-059 LitLLM Citation Processing
+# Issue: #236
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/citation-verification/v1"
+title: "Citation Verification Pipeline Schema"
+description: |
+  Automated citation verification pipeline for corpus maintenance implementing
+  DOI resolution, URL accessibility, metadata consistency, and format compliance
+  per REF-059 LitLLM.
+
+type: object
+required:
+  - version
+  - verification_pipeline
+  - verification_checks
+  - ci_integration
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  verification_pipeline:
+    $ref: "#/$defs/VerificationPipeline"
+
+  verification_checks:
+    $ref: "#/$defs/VerificationChecks"
+
+  ci_integration:
+    $ref: "#/$defs/CIIntegration"
+
+$defs:
+  VerificationPipeline:
+    type: object
+    description: "Citation verification pipeline architecture"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      triggers:
+        type: array
+        items: { type: string }
+        default:
+          - "pr_touching_corpus"
+          - "manual_audit"
+          - "scheduled_health_check"
+
+      pipeline_flow:
+        type: string
+        default: |
+          Trigger: PR touching .aiwg/research/corpus/
+            ↓
+          Extract citations from changed files
+            ↓
+          Run verification checks:
+            1. DOI resolution
+            2. URL accessibility
+            3. Metadata consistency
+            4. Format compliance
+            5. Page number validation
+            ↓
+          Generate report:
+            ✓ PASS: All checks passed
+            ✗ FAIL: Errors found, PR blocked
+            ⚠ WARN: Non-critical issues
+            ↓
+          Comment on PR with results
+
+      status_codes:
+        type: object
+        properties:
+          pass:
+            type: object
+            properties:
+              symbol: { type: string, default: "✓" }
+              description: { type: string, default: "All checks passed" }
+              action: { type: string, default: "allow_merge" }
+
+          fail:
+            type: object
+            properties:
+              symbol: { type: string, default: "✗" }
+              description: { type: string, default: "Errors found" }
+              action: { type: string, default: "block_merge" }
+
+          warn:
+            type: object
+            properties:
+              symbol: { type: string, default: "⚠" }
+              description: { type: string, default: "Non-critical issues" }
+              action: { type: string, default: "allow_with_warning" }
+
+  VerificationChecks:
+    type: object
+    description: "Individual verification checks"
+    properties:
+      doi_resolution:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          description:
+            type: string
+            default: "Verify DOI exists and resolves"
+
+          endpoint:
+            type: string
+            default: "https://doi.org/{doi}"
+
+          timeout_ms:
+            type: integer
+            default: 5000
+
+          accept_header:
+            type: string
+            default: "application/json"
+
+          success_criteria:
+            type: string
+            default: "HTTP 200 response"
+
+          on_failure:
+            type: object
+            properties:
+              severity: { type: string, default: "error" }
+              message: { type: string, default: "DOI does not resolve" }
+
+          validation_pattern:
+            type: string
+            default: "^10\\.\\d{4,}/[^\\s]+$"
+            description: "Valid DOI format pattern"
+
+      url_accessibility:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          description:
+            type: string
+            default: "Verify URL is accessible"
+
+          method:
+            type: string
+            default: "HEAD"
+
+          timeout_ms:
+            type: integer
+            default: 5000
+
+          success_criteria:
+            type: string
+            default: "HTTP status < 400"
+
+          on_failure:
+            type: object
+            properties:
+              severity: { type: string, default: "error" }
+              message: { type: string, default: "URL not accessible" }
+
+          retry:
+            type: object
+            properties:
+              max_attempts: { type: integer, default: 2 }
+              delay_ms: { type: integer, default: 1000 }
+
+      metadata_consistency:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          description:
+            type: string
+            default: "Verify metadata matches DOI record"
+
+          checks:
+            type: array
+            items: { type: string }
+            default:
+              - "title_match"
+              - "year_match"
+              - "authors_match"
+
+          normalization:
+            type: object
+            properties:
+              title:
+                type: string
+                default: "lowercase, remove punctuation"
+              authors:
+                type: string
+                default: "last name only comparison"
+
+          similarity_threshold:
+            type: number
+            default: 0.9
+            description: "Minimum similarity for title match"
+
+          on_mismatch:
+            type: object
+            properties:
+              severity: { type: string, default: "error" }
+              message: { type: string, default: "Metadata does not match DOI record" }
+
+      format_compliance:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          description:
+            type: string
+            default: "Verify required fields present"
+
+          required_fields:
+            type: array
+            items: { type: string }
+            default:
+              - "Title"
+              - "Authors"
+              - "Year"
+              - "Venue"
+              - "URL"
+              - "Summary"
+              - "Key Quotes"
+              - "AIWG Relevance"
+
+          on_missing:
+            type: object
+            properties:
+              severity: { type: string, default: "error" }
+              message: { type: string, default: "Missing required fields" }
+
+      page_validation:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          description:
+            type: string
+            default: "Verify page numbers are valid"
+
+          checks:
+            type: array
+            items: { type: string }
+            default:
+              - "page_within_range"
+              - "section_consistency"
+
+          on_invalid:
+            type: object
+            properties:
+              severity: { type: string, default: "warning" }
+              message: { type: string, default: "Page number may be invalid" }
+
+      cross_reference:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          description:
+            type: string
+            default: "Verify cross-references resolve"
+
+          pattern:
+            type: string
+            default: "REF-\\d{3}"
+
+          on_unresolved:
+            type: object
+            properties:
+              severity: { type: string, default: "error" }
+              message: { type: string, default: "Cross-reference does not resolve" }
+
+  CIIntegration:
+    type: object
+    description: "CI/CD integration configuration"
+    properties:
+      github_actions:
+        type: object
+        properties:
+          workflow_name:
+            type: string
+            default: "Citation Verification"
+
+          trigger:
+            type: object
+            properties:
+              event: { type: string, default: "pull_request" }
+              paths:
+                type: array
+                items: { type: string }
+                default:
+                  - ".aiwg/research/corpus/**"
+
+          workflow_template:
+            type: string
+            default: |
+              name: Citation Verification
+
+              on:
+                pull_request:
+                  paths:
+                    - ".aiwg/research/corpus/**"
+
+              jobs:
+                verify-citations:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+
+                    - name: Setup Node.js
+                      uses: actions/setup-node@v4
+                      with:
+                        node-version: "20"
+
+                    - name: Install AIWG
+                      run: npm install -g aiwg
+
+                    - name: Run citation verification
+                      id: verify
+                      run: |
+                        aiwg verify-citations --corpus .aiwg/research/corpus/ \
+                          --format github \
+                          --output verification-report.md
+
+                    - name: Comment on PR
+                      uses: actions/github-script@v7
+                      with:
+                        script: |
+                          const fs = require("fs");
+                          const report = fs.readFileSync("verification-report.md", "utf8");
+
+                          github.rest.issues.createComment({
+                            issue_number: context.issue.number,
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            body: report
+                          });
+
+                    - name: Fail if errors found
+                      if: steps.verify.outputs.errors > 0
+                      run: exit 1
+
+      pre_commit_hook:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: false
+
+          script:
+            type: string
+            default: |
+              #!/bin/bash
+              # Verify citations in staged corpus files
+              STAGED=$(git diff --cached --name-only | grep -E "\.aiwg/research/corpus/")
+
+              if [ -n "$STAGED" ]; then
+                for FILE in $STAGED; do
+                  if ! aiwg verify-citation "$FILE" --quiet; then
+                    echo "ERROR: Citation verification failed for $FILE"
+                    exit 1
+                  fi
+                done
+              fi
+
+      scheduled_audit:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          cron:
+            type: string
+            default: "0 0 * * 0"
+            description: "Weekly on Sunday"
+
+          workflow_template:
+            type: string
+            default: |
+              name: Corpus Health Check
+
+              on:
+                schedule:
+                  - cron: "0 0 * * 0"
+                workflow_dispatch:
+
+              jobs:
+                health-check:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+
+                    - name: Run full corpus verification
+                      run: |
+                        aiwg verify-citations --corpus .aiwg/research/corpus/ \
+                          --all \
+                          --output corpus-health-report.md
+
+                    - name: Upload report
+                      uses: actions/upload-artifact@v4
+                      with:
+                        name: corpus-health-report
+                        path: corpus-health-report.md
+
+# Verification result schema
+verification_result:
+  type: object
+  properties:
+    file:
+      type: string
+    ref_id:
+      type: string
+    status:
+      type: string
+      enum: [pass, fail, warn]
+    checks:
+      type: object
+      properties:
+        doi_resolution:
+          type: object
+          properties:
+            passed: { type: boolean }
+            message: { type: string }
+        url_accessibility:
+          type: object
+          properties:
+            passed: { type: boolean }
+            status_code: { type: integer }
+            message: { type: string }
+        metadata_consistency:
+          type: object
+          properties:
+            passed: { type: boolean }
+            mismatches: { type: array }
+        format_compliance:
+          type: object
+          properties:
+            passed: { type: boolean }
+            missing_fields: { type: array }
+        page_validation:
+          type: object
+          properties:
+            passed: { type: boolean }
+            issues: { type: array }
+    error_count:
+      type: integer
+    warning_count:
+      type: integer
+
+# CLI commands
+cli_commands:
+  verify_citations:
+    command: "aiwg verify-citations [path]"
+    description: "Verify citations in corpus"
+    options:
+      - name: "--corpus"
+        description: "Path to corpus directory"
+      - name: "--all"
+        description: "Verify entire corpus"
+      - name: "--format"
+        description: "Output format (text, github, json)"
+      - name: "--output"
+        description: "Write report to file"
+      - name: "--strict"
+        description: "Fail on warnings"
+
+  verify_citation:
+    command: "aiwg verify-citation <file>"
+    description: "Verify single citation file"
+    options:
+      - name: "--quiet"
+        description: "Only output on failure"
+
+  corpus_health:
+    command: "aiwg corpus-health"
+    description: "Full corpus health check"
+    options:
+      - name: "--check-urls"
+        description: "Include URL accessibility checks"
+      - name: "--check-dois"
+        description: "Include DOI resolution checks"
+
+# Agent protocol
+agent_protocol:
+  verify_citation:
+    description: "Verify single citation file"
+    steps:
+      - read_citation_file
+      - extract_metadata
+      - if_has_doi:
+          - verify_doi_resolution
+          - verify_metadata_consistency
+      - if_has_url:
+          - verify_url_accessibility
+      - verify_format_compliance
+      - verify_page_numbers
+      - verify_cross_references
+      - aggregate_results
+      - return_verification_result
+
+  verify_corpus:
+    description: "Verify entire corpus"
+    steps:
+      - discover_corpus_files
+      - for_each_file:
+          - verify_citation
+          - record_result
+      - aggregate_results
+      - generate_report
+      - return_corpus_health
+
+  generate_report:
+    description: "Generate verification report"
+    steps:
+      - collect_all_results
+      - calculate_summary
+      - format_by_output_type
+      - include_recommendations
+      - return_report
+
+# Storage
+storage:
+  verification_logs: ".aiwg/logs/citation-verification/"
+  health_reports: ".aiwg/reports/corpus-health/"
+
+# Research targets (from REF-059)
+research_targets:
+  doi_validation: "Verify DOIs exist and resolve correctly"
+  url_health: "Ensure all URLs are accessible"
+  metadata_accuracy: "Confirm metadata matches source records"
+  format_compliance: "Enforce required field presence"
+  page_validation: "Validate page number accuracy"
+
+# Example verification report
+example_verification_report: |
+  ## Citation Verification Report
+
+  **Status**: ✗ FAILED (2 errors, 1 warning)
+
+  ### REF-043-voice-consistency-quality.md
+
+  ✓ DOI resolves (10.1145/3586183.3606763)
+  ✓ URL accessible (200)
+  ✓ Metadata matches DOI record
+  ✓ Format compliance
+  ✓ Page numbers valid (24 total)
+
+  **Status**: PASS
+
+  ### REF-999-new-paper.md
+
+  ✗ DOI does not resolve (10.1234/fake.doi)
+  ✓ URL accessible (200)
+  ✗ Metadata mismatch: Year 2024 vs 2023 in DOI record
+  ⚠ Missing field: "AIWG Relevance"
+  ✓ Page numbers valid (15 total)
+
+  **Status**: FAIL (2 errors, 1 warning)
+
+  ---
+
+  **Summary**:
+  - Total files: 2
+  - Passed: 1
+  - Failed: 1
+  - Errors: 2
+  - Warnings: 1
+
+  **Action Required**: Fix 2 errors before merge.
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-059-litllm-citation-processing.md"
+  implementation:
+    - "#236"
+  related:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/citation-integrity.yaml"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/fair-metadata.yaml"
+    - "@.aiwg/research/corpus/"

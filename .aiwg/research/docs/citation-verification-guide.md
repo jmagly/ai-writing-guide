@@ -300,5 +300,5 @@ Use this checklist before finalizing any document with citations:
 - @.claude/rules/citation-policy.md — Mandatory citation rules
 - @.aiwg/research/docs/grade-assessment-guide.md — GRADE assessment methodology
 - @.aiwg/research/TODO.md — Research gaps tracker
-- @.aiwg/research/schemas/hallucination-detection.yaml — Hallucination detection patterns
-- @.aiwg/research/schemas/citation-audit.yaml — Citation audit schema
+- @agentic/code/frameworks/sdlc-complete/schemas/research/hallucination-detection.yaml — Hallucination detection patterns
+- @agentic/code/frameworks/sdlc-complete/schemas/research/citation-audit.yaml — Citation audit schema

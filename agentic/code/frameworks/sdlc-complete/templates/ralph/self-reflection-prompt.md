@@ -64,6 +64,6 @@ Based on these reflections:
 
 ## References
 
-- @.aiwg/ralph/schemas/reflection-memory.json - Reflection schema
+- @agentic/code/addons/ralph/schemas/reflection-memory.json - Reflection schema
 - @.aiwg/ralph/docs/reflection-memory-guide.md - Guide
 - @.aiwg/research/findings/REF-021-reflexion.md - Research foundation

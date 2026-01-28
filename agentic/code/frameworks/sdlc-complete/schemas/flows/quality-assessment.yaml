@@ -1,0 +1,548 @@
+# Quality Assessment CLI Schema
+# Based on REF-060 GRADE Methodology
+# Issue: #245
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/quality-assessment/v1"
+title: "Quality Assessment CLI Schema"
+description: |
+  CLI command specification for research artifact quality assessment
+  implementing GRADE-inspired criteria per REF-060.
+
+type: object
+required:
+  - version
+  - assessment_criteria
+  - cli_interface
+  - output_formats
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  assessment_criteria:
+    $ref: "#/$defs/AssessmentCriteria"
+
+  cli_interface:
+    $ref: "#/$defs/CLIInterface"
+
+  output_formats:
+    $ref: "#/$defs/OutputFormats"
+
+$defs:
+  AssessmentCriteria:
+    type: object
+    description: "GRADE-inspired quality assessment criteria"
+    properties:
+      methodology:
+        type: string
+        default: "GRADE-inspired"
+
+      factors:
+        type: object
+        properties:
+          study_design:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.4
+              description:
+                type: string
+                default: "Quality of study methodology"
+              scoring:
+                type: object
+                properties:
+                  systematic_review:
+                    type: object
+                    properties:
+                      score: { type: number, default: 5 }
+                      description: { type: string, default: "Systematic review or meta-analysis" }
+                  rct:
+                    type: object
+                    properties:
+                      score: { type: number, default: 5 }
+                      description: { type: string, default: "Randomized controlled trial" }
+                  observational:
+                    type: object
+                    properties:
+                      score: { type: number, default: 3 }
+                      description: { type: string, default: "Well-designed observational study" }
+                  case_study:
+                    type: object
+                    properties:
+                      score: { type: number, default: 2 }
+                      description: { type: string, default: "Case study or case series" }
+                  opinion:
+                    type: object
+                    properties:
+                      score: { type: number, default: 1 }
+                      description: { type: string, default: "Expert opinion or commentary" }
+
+          consistency:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.2
+              description:
+                type: string
+                default: "Agreement with other sources"
+              scoring:
+                type: object
+                properties:
+                  multiple_corroborate:
+                    type: object
+                    properties:
+                      score: { type: number, default: 5 }
+                      description: { type: string, default: "Multiple independent sources agree" }
+                  mostly_agree:
+                    type: object
+                    properties:
+                      score: { type: number, default: 4 }
+                      description: { type: string, default: "Most sources agree with minor differences" }
+                  mixed:
+                    type: object
+                    properties:
+                      score: { type: number, default: 3 }
+                      description: { type: string, default: "Mixed evidence, some disagreement" }
+                  contradictory:
+                    type: object
+                    properties:
+                      score: { type: number, default: 1 }
+                      description: { type: string, default: "Significant contradictions in evidence" }
+
+          directness:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.2
+              description:
+                type: string
+                default: "Applicability to AIWG context"
+              scoring:
+                type: object
+                properties:
+                  directly_applicable:
+                    type: object
+                    properties:
+                      score: { type: number, default: 5 }
+                      description: { type: string, default: "Directly applicable to AIWG use cases" }
+                  related_domain:
+                    type: object
+                    properties:
+                      score: { type: number, default: 3 }
+                      description: { type: string, default: "Related domain, requires adaptation" }
+                  tangential:
+                    type: object
+                    properties:
+                      score: { type: number, default: 1 }
+                      description: { type: string, default: "Tangentially related" }
+
+          precision:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.1
+              description:
+                type: string
+                default: "Specificity of findings"
+              scoring:
+                type: object
+                properties:
+                  quantitative:
+                    type: object
+                    properties:
+                      score: { type: number, default: 5 }
+                      description: { type: string, default: "Quantitative metrics with confidence intervals" }
+                  qualitative_detailed:
+                    type: object
+                    properties:
+                      score: { type: number, default: 3 }
+                      description: { type: string, default: "Qualitative with detailed explanation" }
+                  vague:
+                    type: object
+                    properties:
+                      score: { type: number, default: 1 }
+                      description: { type: string, default: "Vague or unsupported claims" }
+
+          publication_bias:
+            type: object
+            properties:
+              weight:
+                type: number
+                default: 0.1
+              description:
+                type: string
+                default: "Publication venue quality"
+              scoring:
+                type: object
+                properties:
+                  peer_reviewed:
+                    type: object
+                    properties:
+                      score: { type: number, default: 5 }
+                      description: { type: string, default: "Peer-reviewed journal" }
+                  conference:
+                    type: object
+                    properties:
+                      score: { type: number, default: 4 }
+                      description: { type: string, default: "Peer-reviewed conference" }
+                  preprint:
+                    type: object
+                    properties:
+                      score: { type: number, default: 3 }
+                      description: { type: string, default: "Preprint (arXiv, etc.)" }
+                  blog:
+                    type: object
+                    properties:
+                      score: { type: number, default: 2 }
+                      description: { type: string, default: "Industry blog or white paper" }
+                  opinion:
+                    type: object
+                    properties:
+                      score: { type: number, default: 1 }
+                      description: { type: string, default: "Opinion piece or informal" }
+
+      rating_thresholds:
+        type: object
+        properties:
+          high:
+            type: object
+            properties:
+              min: { type: number, default: 4.0 }
+              max: { type: number, default: 5.0 }
+              description: { type: string, default: "Strong confidence, prioritize for implementation" }
+              recommendation: { type: string, default: "Prioritize findings for implementation" }
+
+          moderate:
+            type: object
+            properties:
+              min: { type: number, default: 2.5 }
+              max: { type: number, default: 3.9 }
+              description: { type: string, default: "Moderate confidence, implement with validation" }
+              recommendation: { type: string, default: "Implement with additional validation" }
+
+          low:
+            type: object
+            properties:
+              min: { type: number, default: 1.0 }
+              max: { type: number, default: 2.4 }
+              description: { type: string, default: "Limited confidence, use cautiously" }
+              recommendation: { type: string, default: "Use cautiously, seek additional evidence" }
+
+      calculation:
+        type: string
+        default: |
+          overall = (
+            study_design * 0.4 +
+            consistency * 0.2 +
+            directness * 0.2 +
+            precision * 0.1 +
+            publication_bias * 0.1
+          )
+
+  CLIInterface:
+    type: object
+    description: "CLI command interface specification"
+    properties:
+      command:
+        type: string
+        default: "aiwg research assess-quality"
+
+      subcommands:
+        type: object
+        properties:
+          single:
+            type: object
+            properties:
+              usage: { type: string, default: "aiwg research assess-quality <path>" }
+              description: { type: string, default: "Assess quality of single research artifact" }
+              arguments:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name: { type: string }
+                    required: { type: boolean }
+                    description: { type: string }
+                default:
+                  - name: "path"
+                    required: true
+                    description: "Path to REF-XXX document"
+
+          bulk:
+            type: object
+            properties:
+              usage: { type: string, default: "aiwg research assess-quality --all" }
+              description: { type: string, default: "Assess quality of all research artifacts" }
+
+      options:
+        type: array
+        items:
+          type: object
+          properties:
+            name: { type: string }
+            short: { type: string }
+            description: { type: string }
+            default: { type: string }
+        default:
+          - name: "--all"
+            short: "-a"
+            description: "Assess all REF-XXX documents in corpus"
+
+          - name: "--output"
+            short: "-o"
+            description: "Write report to file"
+
+          - name: "--format"
+            short: "-f"
+            description: "Output format (text, json, markdown)"
+            default: "text"
+
+          - name: "--min-quality"
+            description: "Filter results by minimum quality rating"
+            default: "low"
+
+          - name: "--interactive"
+            short: "-i"
+            description: "Interactively assess with prompts for each factor"
+
+          - name: "--rationale"
+            short: "-r"
+            description: "Include detailed rationale for scores"
+
+  OutputFormats:
+    type: object
+    description: "Output format specifications"
+    properties:
+      text:
+        type: object
+        properties:
+          description: { type: string, default: "Human-readable text output" }
+          template:
+            type: string
+            default: |
+              Assessing quality: {ref} ({title})
+
+              Study Design: {stars} ({score}/5.0) - {rationale}
+              Consistency: {stars} ({score}/5.0) - {rationale}
+              Directness: {stars} ({score}/5.0) - {rationale}
+              Precision: {stars} ({score}/5.0) - {rationale}
+              Publication Bias: {stars} ({score}/5.0) - {rationale}
+
+              Overall Quality: {stars} ({overall}/5.0) - {rating}
+
+              Recommendation: {recommendation}
+              Applicable Gaps: {gaps}
+
+          star_symbols:
+            type: object
+            properties:
+              full: { type: string, default: "⭐" }
+              empty: { type: string, default: "☆" }
+
+      json:
+        type: object
+        properties:
+          description: { type: string, default: "Machine-readable JSON output" }
+          schema:
+            type: object
+            properties:
+              assessmentDate: { type: string, format: "date-time" }
+              methodology: { type: string }
+              artifacts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    ref: { type: string }
+                    title: { type: string }
+                    quality:
+                      type: object
+                      properties:
+                        overall: { type: number }
+                        rating: { type: string }
+                        factors:
+                          type: object
+                          properties:
+                            studyDesign: { type: number }
+                            consistency: { type: number }
+                            directness: { type: number }
+                            precision: { type: number }
+                            publicationBias: { type: number }
+                    rationale: { type: object }
+                    recommendation: { type: string }
+              summary:
+                type: object
+                properties:
+                  high: { type: integer }
+                  moderate: { type: integer }
+                  low: { type: integer }
+
+      markdown:
+        type: object
+        properties:
+          description: { type: string, default: "Markdown report format" }
+          template:
+            type: string
+            default: |
+              # Quality Assessment Report
+
+              **Date**: {date}
+              **Methodology**: GRADE-inspired
+
+              ## Summary
+
+              | Rating | Count |
+              |--------|-------|
+              | High | {high_count} |
+              | Moderate | {moderate_count} |
+              | Low | {low_count} |
+
+              ## High Confidence ({high_count})
+
+              {high_items}
+
+              ## Moderate Confidence ({moderate_count})
+
+              {moderate_items}
+
+              ## Low Confidence ({low_count})
+
+              {low_items}
+
+# Agent protocol
+agent_protocol:
+  assess_single:
+    description: "Assess quality of single research artifact"
+    steps:
+      - read_artifact
+      - extract_metadata
+      - assess_study_design
+      - assess_consistency
+      - assess_directness
+      - assess_precision
+      - assess_publication_bias
+      - calculate_weighted_overall
+      - determine_rating
+      - generate_rationale
+      - generate_recommendation
+      - return_assessment
+
+  assess_all:
+    description: "Assess quality of all research artifacts"
+    steps:
+      - discover_ref_documents
+      - for_each_document:
+          - assess_single
+          - record_result
+      - group_by_rating
+      - generate_summary
+      - return_bulk_assessment
+
+  generate_report:
+    description: "Generate quality assessment report"
+    steps:
+      - collect_assessments
+      - select_format_template
+      - if_text:
+          - render_text_report
+      - if_json:
+          - serialize_json_report
+      - if_markdown:
+          - render_markdown_report
+      - return_report
+
+# Storage
+storage:
+  assessments: ".aiwg/research/quality-assessments/"
+  reports: ".aiwg/reports/quality-assessment/"
+
+# Integration with gap analysis
+gap_analysis_integration:
+  type: object
+  properties:
+    annotate_gaps:
+      type: boolean
+      default: true
+      description: "Add quality ratings to gap analysis output"
+
+    filter_by_quality:
+      type: boolean
+      default: true
+      description: "Allow filtering gaps by source quality"
+
+    prioritization:
+      type: object
+      properties:
+        high_quality_gaps:
+          type: string
+          default: "Round 1 priority"
+        moderate_quality_gaps:
+          type: string
+          default: "Round 2 priority"
+        low_quality_gaps:
+          type: string
+          default: "Round 3 or defer"
+
+# Research targets (from REF-060)
+research_targets:
+  grade_assessment: "GRADE-inspired quality assessment for research artifacts"
+  cli_interface: "Command-line interface for quality assessment"
+  gap_integration: "Integration with gap analysis for prioritization"
+
+# Example single assessment
+example_single_assessment: |
+  $ aiwg research assess-quality docs/research/REF-001-agentic-ai-production.md
+
+  Assessing quality: REF-001 (Agentic AI in Production)
+
+  Study Design: ⭐⭐⭐⭐⭐ (5.0) - Systematic industry survey
+  Consistency: ⭐⭐⭐⭐ (4.0) - Corroborated by REF-002, REF-058
+  Directness: ⭐⭐⭐⭐⭐ (5.0) - Directly applicable to agentic frameworks
+  Precision: ⭐⭐⭐⭐ (4.0) - Quantitative failure rates provided
+  Publication Bias: ⭐⭐⭐⭐ (4.0) - Peer-reviewed conference paper
+
+  Overall Quality: ⭐⭐⭐⭐ (4.4/5.0) - HIGH CONFIDENCE
+
+  Recommendation: Prioritize findings for implementation.
+  Applicable Gaps: Error recovery patterns, retry configuration
+
+# Example bulk assessment
+example_bulk_assessment: |
+  $ aiwg research assess-quality --all
+
+  Assessing all REF-XXX documents...
+
+  High Confidence (8):
+    ✓ REF-001: Agentic AI in Production (4.4/5.0)
+    ✓ REF-056: FAIR Data Principles (4.6/5.0)
+    ✓ REF-062: W3C PROV (5.0/5.0) - W3C standard
+    ✓ REF-060: GRADE Methodology (4.8/5.0)
+    ...
+
+  Moderate Confidence (4):
+    ~ REF-045: AI Writing Patterns (3.2/5.0)
+    ~ REF-047: Prompt Engineering (3.5/5.0)
+    ...
+
+  Low Confidence (1):
+    ⚠ REF-023: Informal Survey Results (2.1/5.0)
+
+  Recommendation: Focus on High Confidence findings for Round 2.
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-060-grade-methodology.md"
+  implementation:
+    - "#245"
+  related:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/grade-evidence-quality.yaml"
+    - "@.aiwg/research/findings/research-gap-analysis.md"
+    - "@docs/cli-reference.md"

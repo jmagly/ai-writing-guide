@@ -1,0 +1,350 @@
+# MCP Discovery Schema
+# Based on REF-066 MCP Specification 2024-11-05
+# Issues: #134, #135, #137
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/mcp-discovery/v1"
+title: "MCP Server Discovery Schema"
+description: |
+  Schema for MCP server discovery via .well-known/mcp.json.
+  Enables automatic capability discovery and version negotiation.
+
+type: object
+required:
+  - name
+  - version
+  - capabilities
+
+properties:
+  name:
+    type: string
+    default: "aiwg-mcp"
+    description: "Server name"
+
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    description: "Server version"
+
+  description:
+    type: string
+    default: "AI Writing Guide MCP Server"
+
+  protocol_version:
+    type: string
+    default: "2024-11-05"
+    description: "MCP protocol version"
+
+  homepage:
+    type: string
+    format: uri
+    default: "https://aiwg.io"
+
+  capabilities:
+    type: object
+    properties:
+      resources:
+        type: boolean
+        default: true
+      prompts:
+        type: boolean
+        default: true
+      tools:
+        type: boolean
+        default: true
+      logging:
+        type: boolean
+        default: true
+      sampling:
+        type: boolean
+        default: false
+
+  resources:
+    type: array
+    items:
+      $ref: "#/$defs/ResourceDefinition"
+    description: "Available resources"
+
+  prompts:
+    type: array
+    items:
+      $ref: "#/$defs/PromptDefinition"
+    description: "Available prompts"
+
+  tools:
+    type: array
+    items:
+      $ref: "#/$defs/ToolDefinition"
+    description: "Available tools"
+
+$defs:
+  ResourceDefinition:
+    type: object
+    required:
+      - uri
+      - name
+    properties:
+      uri:
+        type: string
+        description: "Resource URI pattern"
+      name:
+        type: string
+        description: "Human-readable name"
+      description:
+        type: string
+      mimeType:
+        type: string
+      examples:
+        type: array
+        items:
+          type: string
+
+  PromptDefinition:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: "Prompt identifier"
+      description:
+        type: string
+      arguments:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            required:
+              type: boolean
+              default: false
+
+  ToolDefinition:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: "Tool identifier"
+      description:
+        type: string
+      inputSchema:
+        type: object
+        description: "JSON Schema for input"
+
+# AIWG Resource Definitions
+aiwg_resources:
+  research:
+    uri_pattern: "aiwg://research/{ref_id}"
+    description: "Research corpus entries"
+    examples:
+      - "aiwg://research/REF-056"
+      - "aiwg://research/REF-057"
+    content_type: "application/json"
+    operations:
+      - list
+      - read
+      - search
+
+  voices:
+    uri_pattern: "aiwg://voices/{voice_id}"
+    description: "Voice profile definitions"
+    examples:
+      - "aiwg://voices/technical-authority"
+      - "aiwg://voices/friendly-explainer"
+    content_type: "application/json"
+    operations:
+      - list
+      - read
+
+  artifacts:
+    uri_pattern: "aiwg://artifacts/{path}"
+    description: "SDLC artifacts"
+    examples:
+      - "aiwg://artifacts/requirements/UC-001.md"
+      - "aiwg://artifacts/architecture/sad.md"
+    content_type: "text/markdown"
+    operations:
+      - list
+      - read
+      - write
+
+  templates:
+    uri_pattern: "aiwg://templates/{template_id}"
+    description: "Document templates"
+    examples:
+      - "aiwg://templates/use-case"
+      - "aiwg://templates/adr"
+    content_type: "text/markdown"
+    operations:
+      - list
+      - read
+
+  agents:
+    uri_pattern: "aiwg://agents/{agent_id}"
+    description: "Agent definitions"
+    examples:
+      - "aiwg://agents/requirements-analyst"
+      - "aiwg://agents/test-engineer"
+    content_type: "application/json"
+    operations:
+      - list
+      - read
+
+# AIWG Prompt Definitions
+aiwg_prompts:
+  sdlc_phases:
+    - name: "sdlc-concept"
+      description: "Start concept phase for new project"
+      arguments:
+        - name: project_name
+          description: "Name of the project"
+          required: true
+
+    - name: "sdlc-inception"
+      description: "Begin inception phase"
+      arguments:
+        - name: intake_form
+          description: "Path to intake form"
+          required: false
+
+    - name: "sdlc-elaboration"
+      description: "Begin elaboration phase"
+      arguments: []
+
+    - name: "sdlc-construction"
+      description: "Begin construction phase"
+      arguments: []
+
+    - name: "sdlc-transition"
+      description: "Begin transition phase"
+      arguments: []
+
+  voice_prompts:
+    - name: "apply-voice"
+      description: "Apply voice profile to content"
+      arguments:
+        - name: voice
+          description: "Voice profile ID"
+          required: true
+        - name: content
+          description: "Content to transform"
+          required: true
+
+    - name: "analyze-voice"
+      description: "Analyze content voice characteristics"
+      arguments:
+        - name: content
+          description: "Content to analyze"
+          required: true
+
+  workflow_prompts:
+    - name: "run-flow"
+      description: "Execute a workflow"
+      arguments:
+        - name: flow
+          description: "Flow identifier"
+          required: true
+
+    - name: "ralph"
+      description: "Start Ralph iterative loop"
+      arguments:
+        - name: objective
+          description: "Task objective"
+          required: true
+        - name: completion_criteria
+          description: "How to know when done"
+          required: true
+
+# .well-known/mcp.json template
+wellknown_template:
+  description: "Template for .well-known/mcp.json"
+  content: |
+    {
+      "name": "aiwg-mcp",
+      "version": "{{version}}",
+      "description": "AI Writing Guide MCP Server",
+      "protocol_version": "2024-11-05",
+      "homepage": "https://aiwg.io",
+      "capabilities": {
+        "resources": true,
+        "prompts": true,
+        "tools": true,
+        "logging": true
+      },
+      "resources": [
+        {
+          "uri": "aiwg://research/*",
+          "name": "Research Corpus",
+          "description": "Access research papers and findings"
+        },
+        {
+          "uri": "aiwg://voices/*",
+          "name": "Voice Profiles",
+          "description": "Access voice profile definitions"
+        },
+        {
+          "uri": "aiwg://artifacts/*",
+          "name": "SDLC Artifacts",
+          "description": "Access project artifacts"
+        }
+      ],
+      "prompts": [
+        {
+          "name": "sdlc-inception",
+          "description": "Start SDLC inception phase"
+        },
+        {
+          "name": "apply-voice",
+          "description": "Apply voice profile to content"
+        },
+        {
+          "name": "ralph",
+          "description": "Start iterative task loop"
+        }
+      ]
+    }
+
+# Agent protocol
+agent_protocol:
+  discovery_generation:
+    description: "Auto-generate discovery manifest"
+    triggers:
+      - framework_install
+      - framework_update
+      - on_demand
+    steps:
+      - scan_installed_frameworks
+      - collect_resources
+      - collect_prompts
+      - collect_tools
+      - generate_manifest
+      - write_wellknown
+
+  version_negotiation:
+    description: "Handle protocol version negotiation"
+    supported_versions:
+      - "2024-11-05"
+    fallback: "2024-11-05"
+
+# Storage
+storage:
+  manifest_path: ".well-known/mcp.json"
+  cache_ttl: 3600
+  auto_update: true
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-066-mcp-spec.md"
+  implementation:
+    - "#134"
+    - "#135"
+    - "#137"
+  related:
+    - "@agentic/code/addons/ralph/schemas/mcp-task.yaml"
+    - "@src/mcp/server.ts"

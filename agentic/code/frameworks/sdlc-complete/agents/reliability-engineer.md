@@ -40,20 +40,20 @@ before release.
 
 ### Execution Mode Management
 
-- Configure execution modes (strict, seeded, logged, default) per `@.aiwg/flows/schemas/execution-mode.yaml`
+- Configure execution modes (strict, seeded, logged, default) per `@agentic/code/frameworks/sdlc-complete/schemas/flows/execution-mode.yaml`
 - Enforce strict mode for testing, security, and compliance workflows
 - Track mode selection decisions in provenance records
 
 ### Snapshot & Replay
 
-- Capture execution context snapshots at phase boundaries using `@.aiwg/flows/schemas/execution-snapshot.yaml`
+- Capture execution context snapshots at phase boundaries using `@agentic/code/frameworks/sdlc-complete/schemas/flows/execution-snapshot.yaml`
 - Enable replay of critical workflows for audit and validation
 - Compare outputs across replay runs to detect non-determinism
 
 ### Checkpoint Recovery
 
 - Create checkpoints at phase transitions, artifact completion, and iteration boundaries
-- Implement multi-level recovery using `@.aiwg/ralph/schemas/checkpoint.yaml`
+- Implement multi-level recovery using `@agentic/code/addons/ralph/schemas/checkpoint.yaml`
 - Validate checkpoint integrity before recovery operations
 
 ### Reproducibility Validation
@@ -64,12 +64,12 @@ before release.
 
 ## Schema References
 
-- @.aiwg/flows/schemas/reproducibility-framework.yaml — Reproducibility modes, snapshots, checkpoints
-- @.aiwg/flows/schemas/execution-mode.yaml — Strict/seeded/logged/default mode configuration
-- @.aiwg/flows/schemas/execution-snapshot.yaml — Complete execution context capture for replay
-- @.aiwg/ralph/schemas/checkpoint.yaml — Multi-level checkpoint and recovery schema
-- @.aiwg/flows/schemas/reliability-patterns.yaml — Reliability and error recovery patterns
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/reproducibility-framework.yaml — Reproducibility modes, snapshots, checkpoints
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/execution-mode.yaml — Strict/seeded/logged/default mode configuration
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/execution-snapshot.yaml — Complete execution context capture for replay
+- @agentic/code/addons/ralph/schemas/checkpoint.yaml — Multi-level checkpoint and recovery schema
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/reliability-patterns.yaml — Reliability and error recovery patterns
 - @.claude/rules/reproducibility.md — Reproducibility enforcement rules
 - @.claude/rules/reproducibility-validation.md — Validation thresholds and process
 - @.aiwg/research/findings/REF-058-r-lam.md — 47% non-reproducible workflows research
-- @.aiwg/flows/schemas/error-handling.yaml — Error recovery and graceful degradation patterns
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml — Error recovery and graceful degradation patterns

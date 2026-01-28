@@ -65,6 +65,6 @@ When invoked, query provenance graph:
 ## References
 
 - @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md - Provenance Manager agent
-- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
-- @.aiwg/research/provenance/schemas/prov-query.yaml - Query schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-query.yaml - Query schema
 - @.claude/rules/provenance-tracking.md - Provenance tracking rules

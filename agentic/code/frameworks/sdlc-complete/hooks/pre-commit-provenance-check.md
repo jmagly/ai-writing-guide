@@ -94,5 +94,5 @@ hook:
 
 - @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md - Provenance Manager agent
 - @agentic/code/frameworks/sdlc-complete/commands/provenance-validate.md - Validation command
-- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
 - @.claude/rules/provenance-tracking.md - Provenance tracking rules

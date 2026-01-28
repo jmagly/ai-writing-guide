@@ -1,0 +1,322 @@
+# Iteration Analytics Schema
+# Based on REF-015 Self-Refine: Iterative Refinement with Self-Feedback
+# Issue: #250
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/iteration-analytics/v1"
+title: "Iteration Analytics Schema"
+description: |
+  Iteration quality tracking and adaptive stopping criteria to prevent
+  unnecessary refinement cycles per REF-015 Self-Refine.
+
+type: object
+required:
+  - version
+  - quality_tracking
+  - stopping_criteria
+  - ralph_integration
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  quality_tracking:
+    $ref: "#/$defs/QualityTracking"
+
+  stopping_criteria:
+    $ref: "#/$defs/StoppingCriteria"
+
+  ralph_integration:
+    $ref: "#/$defs/RalphIntegration"
+
+$defs:
+  QualityTracking:
+    type: object
+    description: "Iteration-over-iteration quality measurement"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      research_backing:
+        type: object
+        properties:
+          source: { type: string, default: "REF-015" }
+          finding: { type: string, default: "Iterative refinement shows diminishing returns after 2-3 iterations" }
+          recommendation: { type: string, default: "Stop when improvement < 5% to prevent wasted compute" }
+
+      metrics_schema:
+        type: object
+        properties:
+          iteration: { type: integer }
+          timestamp: { type: string, format: "date-time" }
+          scores:
+            type: object
+            properties:
+              tests_passing:
+                type: number
+                description: "Percentage of tests passing (0-1)"
+              code_quality:
+                type: number
+                description: "Linter score normalized (0-1)"
+              coverage:
+                type: number
+                description: "Test coverage percentage (0-1)"
+              complexity:
+                type: number
+                description: "Inverse complexity score (0-1)"
+          quality:
+            type: number
+            description: "Weighted aggregate quality score"
+          delta:
+            type: object
+            properties:
+              quality: { type: number }
+              tests_passing: { type: number }
+              code_quality: { type: number }
+              coverage: { type: number }
+              complexity: { type: number }
+          cumulative:
+            type: object
+            properties:
+              total_improvement: { type: number }
+              plateau_count: { type: integer }
+              regression_count: { type: integer }
+
+      quality_weights:
+        type: object
+        description: "Weights for aggregate quality calculation"
+        properties:
+          tests_passing: { type: number, default: 0.4 }
+          code_quality: { type: number, default: 0.3 }
+          coverage: { type: number, default: 0.2 }
+          complexity: { type: number, default: 0.1 }
+
+      scoring_methods:
+        type: object
+        properties:
+          tests_passing:
+            type: string
+            default: "passed / total tests"
+          code_quality:
+            type: string
+            default: "1 - (avg_severity / max_severity)"
+          coverage:
+            type: string
+            default: "line_coverage / 100"
+          complexity:
+            type: string
+            default: "max(0, 1 - (cyclomatic_complexity / threshold))"
+
+  StoppingCriteria:
+    type: object
+    description: "Adaptive stopping rules"
+    properties:
+      quality_threshold:
+        type: object
+        properties:
+          description: { type: string, default: "Stop if quality exceeds threshold" }
+          value: { type: number, default: 0.95 }
+          enabled: { type: boolean, default: true }
+
+      improvement_threshold:
+        type: object
+        properties:
+          description: { type: string, default: "Stop if improvement falls below threshold" }
+          value: { type: number, default: 0.05 }
+          enabled: { type: boolean, default: true }
+
+      iteration_limits:
+        type: object
+        properties:
+          min: { type: integer, default: 2, description: "Always run at least this many" }
+          max: { type: integer, default: 10, description: "Hard limit" }
+
+      plateau_detection:
+        type: object
+        properties:
+          description: { type: string, default: "Stop if average improvement plateaus" }
+          window: { type: integer, default: 3, description: "Iterations to check" }
+          threshold: { type: number, default: 0.03, description: "Minimum avg improvement" }
+          enabled: { type: boolean, default: true }
+
+      regression_protection:
+        type: object
+        properties:
+          allow_regression: { type: boolean, default: false }
+          max_regressions: { type: integer, default: 2 }
+          enabled: { type: boolean, default: true }
+
+      stopping_decision_flow:
+        type: string
+        default: |
+          1. Check hard iteration limits
+          2. If min_iterations not met → continue
+          3. If max_iterations reached → stop
+          4. Check quality threshold → stop if exceeded
+          5. Check improvement threshold → stop if below
+          6. Check plateau detection → stop if plateaued
+          7. Check regression protection → stop if exceeded
+          8. Continue iterating
+
+  RalphIntegration:
+    type: object
+    description: "Integration with Ralph loop"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      hook_points:
+        type: object
+        properties:
+          after_iteration:
+            type: string
+            default: "Score iteration and check stopping criteria"
+          on_stop:
+            type: string
+            default: "Log final analytics and stopping reason"
+          on_regression:
+            type: string
+            default: "Log warning and consider rollback"
+
+      config_path:
+        type: string
+        default: ".aiwg/ralph/analytics-config.json"
+
+      output_paths:
+        type: object
+        properties:
+          iteration_history: { type: string, default: ".aiwg/ralph/tasks/{task_id}/analytics.json" }
+          quality_chart: { type: string, default: ".aiwg/ralph/tasks/{task_id}/quality-chart.txt" }
+
+# Analytics result schema
+analytics_result:
+  type: object
+  properties:
+    task_id:
+      type: string
+    iterations:
+      type: integer
+    stopping_reason:
+      type: string
+    final_quality:
+      type: number
+    total_improvement:
+      type: number
+    history:
+      type: array
+      items:
+        $ref: "#/$defs/QualityTracking/properties/metrics_schema"
+    time_saved_estimate:
+      type: string
+      description: "Estimated time saved by adaptive stopping"
+
+# CLI commands
+cli_commands:
+  ralph_analytics:
+    command: "aiwg ralph-analytics <task-id>"
+    description: "View iteration analytics for a task"
+    options:
+      - name: "--export"
+        description: "Export analytics to file"
+      - name: "--format"
+        description: "Output format (text, json, csv)"
+        default: "text"
+
+  config_stopping:
+    command: "aiwg config set ralph.<key> <value>"
+    description: "Configure stopping criteria"
+    examples:
+      - "aiwg config set ralph.minIterations 2"
+      - "aiwg config set ralph.maxIterations 10"
+      - "aiwg config set ralph.improvementThreshold 0.05"
+
+# Agent protocol
+agent_protocol:
+  score_iteration:
+    description: "Score quality of current iteration"
+    steps:
+      - collect_test_results
+      - collect_lint_results
+      - collect_coverage_results
+      - analyze_complexity
+      - compute_weighted_quality
+      - compute_delta_from_previous
+      - update_cumulative_stats
+      - return_iteration_metrics
+
+  check_stopping:
+    description: "Evaluate stopping criteria"
+    steps:
+      - check_iteration_limits
+      - if_min_not_met:
+          - continue
+      - if_max_reached:
+          - stop_with_reason
+      - check_quality_threshold
+      - check_improvement_threshold
+      - check_plateau_detection
+      - check_regression_protection
+      - return_decision
+
+  generate_visualization:
+    description: "Generate quality progression chart"
+    steps:
+      - load_iteration_history
+      - calculate_axis_ranges
+      - render_ascii_chart
+      - include_stopping_annotations
+      - return_visualization
+
+# Storage
+storage:
+  analytics_data: ".aiwg/ralph/analytics/"
+  quality_history: ".aiwg/ralph/tasks/{task_id}/quality-history.jsonl"
+  stopping_log: ".aiwg/logs/ralph-stopping.jsonl"
+
+# Success metrics
+success_metrics:
+  iteration_reduction: "30% fewer iterations on average"
+  quality_maintained: "No regression in final output quality"
+  time_savings: "40% reduction in total Ralph execution time"
+  stopping_accuracy: "90% of stops occur within 1 iteration of human judgment"
+
+# Example analytics output
+example_analytics_output: |
+  $ aiwg ralph-analytics task-001
+
+  Iteration Analytics: task-001
+  ═══════════════════════════════════
+
+  Quality Over Iterations
+  ───────────────────────
+  1: ████████████████████████████████ 0.65 (+0.650)
+  2: ███████████████████████████████████████ 0.78 (+0.130)
+  3: █████████████████████████████████████████ 0.82 (+0.040)
+
+  Stopping: Improvement below threshold (0.04 < 0.05)
+
+  ───────────────────────
+  Final Quality: 0.82
+  Total Iterations: 3
+  Total Improvement: +0.17
+  Time Saved: ~7 iterations avoided
+
+  Breakdown:
+  - Tests Passing: 95% → 100% (+5%)
+  - Code Quality: 0.72 → 0.85 (+13%)
+  - Coverage: 78% → 85% (+7%)
+  - Complexity: 0.60 → 0.65 (+5%)
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-015-self-refine.md"
+  implementation:
+    - "#250"
+  related:
+    - "@tools/ralph-external/loop-executor.ts"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/reliability-patterns.yaml"

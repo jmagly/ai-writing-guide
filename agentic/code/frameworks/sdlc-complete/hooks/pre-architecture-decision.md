@@ -74,7 +74,7 @@ hook:
 
 ## References
 
-- @.aiwg/flows/schemas/tree-of-thought.yaml - ToT schema
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/tree-of-thought.yaml - ToT schema
 - @.aiwg/flows/docs/tot-architecture-guide.md - Guide
 - @agentic/code/frameworks/sdlc-complete/commands/tot-decide.md - ToT command
 - @agentic/code/frameworks/sdlc-complete/skills/tot-exploration/SKILL.md - ToT skill

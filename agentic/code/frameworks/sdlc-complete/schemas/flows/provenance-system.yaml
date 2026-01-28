@@ -1,0 +1,720 @@
+# W3C PROV-DM Compliant Provenance System Schema
+# Based on REF-062 (W3C PROV-DM), REF-056 (FAIR), REF-058 (R-LAM)
+# Issues: #201 (Hooks), #202 (Records), #203 (Queries), #204 (Execution)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/provenance-system/v1"
+title: "W3C PROV-DM Compliant Provenance System"
+description: |
+  Comprehensive provenance system implementing W3C PROV-DM for artifact
+  lifecycle tracking, derivation chains, and execution logging per
+  REF-062, REF-056, and REF-058.
+
+type: object
+required:
+  - version
+  - prov_config
+  - entity_types
+  - activity_types
+  - agent_types
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  prov_config:
+    $ref: "#/$defs/ProvConfig"
+
+  entity_types:
+    $ref: "#/$defs/EntityTypes"
+
+  activity_types:
+    $ref: "#/$defs/ActivityTypes"
+
+  agent_types:
+    $ref: "#/$defs/AgentTypes"
+
+  hooks:
+    $ref: "#/$defs/ProvenanceHooks"
+
+  query_system:
+    $ref: "#/$defs/QuerySystem"
+
+$defs:
+  ProvConfig:
+    type: object
+    description: "Provenance system configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      auto_capture:
+        type: boolean
+        default: true
+        description: "Automatically capture provenance on operations"
+
+      storage:
+        type: object
+        properties:
+          format:
+            type: string
+            enum: [prov-json, prov-n, prov-xml]
+            default: "prov-json"
+          path:
+            type: string
+            default: ".aiwg/provenance/"
+          index_path:
+            type: string
+            default: ".aiwg/provenance/index.json"
+
+      validation:
+        type: object
+        properties:
+          validate_on_write:
+            type: boolean
+            default: true
+          prov_constraints:
+            type: boolean
+            default: true
+            description: "Validate against W3C PROV-CONSTRAINTS"
+
+  EntityTypes:
+    type: object
+    description: "PROV Entity type definitions"
+    properties:
+      artifact:
+        type: object
+        description: "SDLC artifacts (documents, code, tests)"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - prov:label
+              - aiwg:artifactType
+              - aiwg:phase
+              - aiwg:version
+
+      document:
+        type: object
+        description: "Documentation entities"
+        properties:
+          extends:
+            type: string
+            default: "artifact"
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - aiwg:format
+              - aiwg:wordCount
+
+      code:
+        type: object
+        description: "Source code entities"
+        properties:
+          extends:
+            type: string
+            default: "artifact"
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - aiwg:language
+              - aiwg:lineCount
+              - aiwg:complexity
+
+      collection:
+        type: object
+        description: "Entity collections (bundles)"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - aiwg:memberCount
+
+  ActivityTypes:
+    type: object
+    description: "PROV Activity type definitions"
+    properties:
+      generation:
+        type: object
+        description: "Artifact creation activities"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - prov:startTime
+              - prov:endTime
+              - aiwg:triggerType
+              - aiwg:inputCount
+              - aiwg:outputCount
+
+      modification:
+        type: object
+        description: "Artifact update activities"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - prov:startTime
+              - prov:endTime
+              - aiwg:changeType
+              - aiwg:linesChanged
+
+      derivation:
+        type: object
+        description: "Artifact transformation activities"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - aiwg:derivationType
+              - aiwg:transformationRule
+
+      execution:
+        type: object
+        description: "Agent execution activities"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - prov:startTime
+              - prov:endTime
+              - aiwg:agentName
+              - aiwg:taskDescription
+              - aiwg:exitStatus
+              - aiwg:tokenCount
+
+  AgentTypes:
+    type: object
+    description: "PROV Agent type definitions"
+    properties:
+      human:
+        type: object
+        description: "Human agents"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - prov:label
+              - aiwg:userId
+              - aiwg:role
+
+      ai_agent:
+        type: object
+        description: "AI agents"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - prov:label
+              - aiwg:agentId
+              - aiwg:framework
+              - aiwg:modelVersion
+
+      command:
+        type: object
+        description: "CLI commands and scripts"
+        properties:
+          attributes:
+            type: array
+            items:
+              type: string
+            default:
+              - prov:type
+              - prov:label
+              - aiwg:commandName
+              - aiwg:version
+
+  ProvenanceHooks:
+    type: object
+    description: "Automatic provenance capture hooks"
+    properties:
+      on_write:
+        type: object
+        description: "Capture on file write"
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          capture:
+            type: array
+            items:
+              type: string
+            default:
+              - entity_id
+              - activity_generation
+              - agent_attribution
+              - timestamp
+              - input_entities
+
+      on_edit:
+        type: object
+        description: "Capture on file edit"
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          capture:
+            type: array
+            items:
+              type: string
+            default:
+              - entity_revision
+              - activity_modification
+              - change_summary
+              - previous_version
+
+      on_agent_invoke:
+        type: object
+        description: "Capture on agent invocation"
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          capture:
+            type: array
+            items:
+              type: string
+            default:
+              - activity_execution
+              - agent_association
+              - input_entities
+              - output_entities
+              - duration
+              - token_usage
+
+      on_command:
+        type: object
+        description: "Capture on command execution"
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          capture:
+            type: array
+            items:
+              type: string
+            default:
+              - activity_execution
+              - command_agent
+              - arguments
+              - exit_status
+
+  QuerySystem:
+    type: object
+    description: "Derivation chain query system"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      query_types:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            syntax:
+              type: string
+        default:
+          - name: "forward"
+            description: "What was derived from this entity?"
+            syntax: "aiwg provenance trace <entity> --forward"
+          - name: "backward"
+            description: "What was this entity derived from?"
+            syntax: "aiwg provenance trace <entity> --backward"
+          - name: "chain"
+            description: "Full derivation chain between entities"
+            syntax: "aiwg provenance chain <from> <to>"
+          - name: "agent"
+            description: "What did this agent produce?"
+            syntax: "aiwg provenance by-agent <agent>"
+          - name: "activity"
+            description: "What entities were involved in this activity?"
+            syntax: "aiwg provenance activity <activity-id>"
+
+# PROV-JSON Schema
+prov_json_schema:
+  type: object
+  properties:
+    prefix:
+      type: object
+      description: "Namespace prefixes"
+      default:
+        prov: "http://www.w3.org/ns/prov#"
+        aiwg: "https://aiwg.io/ns/prov#"
+        xsd: "http://www.w3.org/2001/XMLSchema#"
+
+    entity:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          prov:type:
+            type: string
+          prov:label:
+            type: string
+          prov:value:
+            type: string
+          prov:location:
+            type: string
+
+    activity:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          prov:type:
+            type: string
+          prov:label:
+            type: string
+          prov:startTime:
+            type: string
+            format: date-time
+          prov:endTime:
+            type: string
+            format: date-time
+
+    agent:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          prov:type:
+            type: string
+          prov:label:
+            type: string
+
+    wasGeneratedBy:
+      type: object
+      description: "Entity was generated by Activity"
+      additionalProperties:
+        type: object
+        properties:
+          prov:entity:
+            type: string
+          prov:activity:
+            type: string
+          prov:time:
+            type: string
+            format: date-time
+
+    used:
+      type: object
+      description: "Activity used Entity"
+      additionalProperties:
+        type: object
+        properties:
+          prov:activity:
+            type: string
+          prov:entity:
+            type: string
+          prov:time:
+            type: string
+            format: date-time
+
+    wasAttributedTo:
+      type: object
+      description: "Entity was attributed to Agent"
+      additionalProperties:
+        type: object
+        properties:
+          prov:entity:
+            type: string
+          prov:agent:
+            type: string
+
+    wasAssociatedWith:
+      type: object
+      description: "Activity was associated with Agent"
+      additionalProperties:
+        type: object
+        properties:
+          prov:activity:
+            type: string
+          prov:agent:
+            type: string
+          prov:role:
+            type: string
+
+    wasDerivedFrom:
+      type: object
+      description: "Entity was derived from Entity"
+      additionalProperties:
+        type: object
+        properties:
+          prov:generatedEntity:
+            type: string
+          prov:usedEntity:
+            type: string
+          prov:activity:
+            type: string
+          prov:type:
+            type: string
+            enum:
+              - prov:Revision
+              - prov:Quotation
+              - prov:PrimarySource
+
+    actedOnBehalfOf:
+      type: object
+      description: "Agent acted on behalf of Agent"
+      additionalProperties:
+        type: object
+        properties:
+          prov:delegate:
+            type: string
+          prov:responsible:
+            type: string
+          prov:activity:
+            type: string
+
+# Example PROV-JSON record
+example_prov_record:
+  prefix:
+    prov: "http://www.w3.org/ns/prov#"
+    aiwg: "https://aiwg.io/ns/prov#"
+  entity:
+    "aiwg:artifact/sad-v1":
+      prov:type: "aiwg:Document"
+      prov:label: "Software Architecture Document v1"
+      prov:location: ".aiwg/architecture/sad.md"
+      aiwg:phase: "elaboration"
+      aiwg:version: "1.0.0"
+  activity:
+    "aiwg:activity/gen-sad-001":
+      prov:type: "aiwg:Generation"
+      prov:label: "Generate SAD"
+      prov:startTime: "2026-01-25T10:00:00Z"
+      prov:endTime: "2026-01-25T10:30:00Z"
+      aiwg:tokenCount: 4500
+  agent:
+    "aiwg:agent/architecture-designer":
+      prov:type: "aiwg:AIAgent"
+      prov:label: "Architecture Designer"
+      aiwg:framework: "sdlc-complete"
+  wasGeneratedBy:
+    "_:gen1":
+      prov:entity: "aiwg:artifact/sad-v1"
+      prov:activity: "aiwg:activity/gen-sad-001"
+      prov:time: "2026-01-25T10:30:00Z"
+  wasAssociatedWith:
+    "_:assoc1":
+      prov:activity: "aiwg:activity/gen-sad-001"
+      prov:agent: "aiwg:agent/architecture-designer"
+      prov:role: "generator"
+
+# Execution log schema (REF-058 R-LAM)
+execution_log_schema:
+  type: object
+  description: "PROV-compliant execution log"
+  required:
+    - activity_id
+    - agent
+    - start_time
+  properties:
+    activity_id:
+      type: string
+      pattern: "^aiwg:activity/"
+    agent:
+      type: string
+      pattern: "^aiwg:agent/"
+    task:
+      type: string
+      description: "Task description"
+    start_time:
+      type: string
+      format: date-time
+    end_time:
+      type: string
+      format: date-time
+    duration_ms:
+      type: integer
+    inputs:
+      type: array
+      items:
+        type: object
+        properties:
+          entity:
+            type: string
+          role:
+            type: string
+    outputs:
+      type: array
+      items:
+        type: object
+        properties:
+          entity:
+            type: string
+          relation:
+            type: string
+            enum: [generated, modified, derived]
+    metrics:
+      type: object
+      properties:
+        token_input:
+          type: integer
+        token_output:
+          type: integer
+        api_calls:
+          type: integer
+        cost_usd:
+          type: number
+    status:
+      type: string
+      enum: [success, failure, partial, cancelled]
+    error:
+      type: string
+      description: "Error message if failed"
+
+# CLI commands
+cli_commands:
+  prov_trace:
+    command: "aiwg provenance trace <artifact>"
+    description: "Trace derivation chain for artifact"
+    options:
+      - name: "--forward"
+        description: "Show derived artifacts"
+      - name: "--backward"
+        description: "Show source artifacts"
+      - name: "--depth"
+        description: "Maximum chain depth"
+      - name: "--format"
+        description: "Output format (text, json, dot)"
+
+  prov_show:
+    command: "aiwg provenance show <artifact>"
+    description: "Show provenance record for artifact"
+
+  prov_graph:
+    command: "aiwg provenance graph"
+    description: "Generate provenance graph visualization"
+    options:
+      - name: "--scope"
+        description: "Scope (all, phase, artifact)"
+      - name: "--output"
+        description: "Output file (svg, png, dot)"
+
+  prov_export:
+    command: "aiwg provenance export"
+    description: "Export provenance records"
+    options:
+      - name: "--format"
+        description: "Format (prov-json, prov-n, prov-xml)"
+
+  prov_validate:
+    command: "aiwg provenance validate"
+    description: "Validate provenance against PROV-CONSTRAINTS"
+
+# Agent protocol
+agent_protocol:
+  capture_generation:
+    description: "Capture artifact generation provenance"
+    triggers:
+      - file_write
+      - artifact_create
+    steps:
+      - create_entity_record
+      - create_activity_record
+      - get_active_agent
+      - link_wasGeneratedBy
+      - link_wasAssociatedWith
+      - if_has_inputs:
+          - link_used_relations
+          - link_wasDerivedFrom
+      - persist_prov_record
+
+  capture_execution:
+    description: "Capture agent execution provenance"
+    triggers:
+      - agent_invoke_start
+      - agent_invoke_end
+    steps:
+      - on_start:
+          - create_activity_record
+          - record_start_time
+          - capture_inputs
+      - on_end:
+          - record_end_time
+          - capture_outputs
+          - calculate_metrics
+          - persist_execution_log
+
+  query_derivation:
+    description: "Query derivation chain"
+    steps:
+      - load_prov_index
+      - parse_query_parameters
+      - traverse_wasDerivedFrom_relations
+      - build_chain_graph
+      - if_forward:
+          - follow_derived_entities
+      - if_backward:
+          - follow_source_entities
+      - format_output
+      - return_results
+
+# Storage
+storage:
+  prov_records: ".aiwg/provenance/records/"
+  execution_logs: ".aiwg/provenance/execution/"
+  index: ".aiwg/provenance/index.json"
+  graphs: ".aiwg/provenance/graphs/"
+
+# Research targets
+research_targets:
+  ref_062: "Full W3C PROV-DM compliance"
+  ref_056: "FAIR R1.2 detailed provenance"
+  ref_058: "Execution trace memory for agents"
+  hooks: "Automatic capture without manual annotation"
+  queries: "Bidirectional derivation chain traversal"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-062-w3c-prov-dm.md"
+    - "@.aiwg/research/findings/REF-056-fair-principles.md"
+    - "@.aiwg/research/findings/REF-058-r-lam.md"
+    - "@.aiwg/research/findings/15-provenance-lineage.md"
+  implementation:
+    - "#201"
+    - "#202"
+    - "#203"
+    - "#204"
+  related:
+    - "@.claude/rules/mention-wiring.md"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/artifact-indexing.yaml"
+    - "@tools/ralph-external/"

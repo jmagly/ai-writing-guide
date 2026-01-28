@@ -570,9 +570,9 @@ For each security engagement:
 - @agentic/code/frameworks/sdlc-complete/docs/token-security.md - Comprehensive token security guide
 - @agentic/code/addons/security/secure-token-load.md - Token loading patterns
 - @.claude/rules/token-security.md - Security enforcement rules
-- @.aiwg/flows/schemas/quality-assurance.yaml — Quality assurance and hallucination detection
-- @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for security findings
-- @.aiwg/flows/schemas/hallucination-detection.yaml — Hallucination detection for security claims
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/quality-assurance.yaml — Quality assurance and hallucination detection
+- @agentic/code/addons/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for security findings
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/hallucination-detection.yaml — Hallucination detection for security claims
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 
@@ -580,7 +580,7 @@ For each security engagement:
 
 After generating or modifying any artifact (threat models, security assessments, compliance reports), create a provenance record per @.claude/rules/provenance-tracking.md:
 
-1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+1. **Create provenance record** - Use @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml format
 2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
 3. **Record Activity** - Type (`generation` for new assessments, `modification` for updates) with timestamps
 4. **Record Agent** - This agent (`urn:aiwg:agent:security-auditor`) with tool version

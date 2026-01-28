@@ -16,7 +16,7 @@ When invoked, validate provenance:
    - If specific path provided, validate only that record
 
 2. **Schema validation**
-   - Validate each record against `@.aiwg/research/provenance/schemas/prov-record.yaml`
+   - Validate each record against `@agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml`
    - Check required fields: entity.id, activity.id, agent.id
    - Verify URN format compliance
    - Verify timestamps are valid ISO-8601
@@ -57,5 +57,5 @@ When invoked, validate provenance:
 ## References
 
 - @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md - Provenance Manager agent
-- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
 - @.claude/rules/provenance-tracking.md - Provenance tracking rules

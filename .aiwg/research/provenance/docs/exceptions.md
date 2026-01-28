@@ -88,5 +88,5 @@ Exceptions are audited:
 ## References
 
 - @.claude/rules/provenance-tracking.md - Base provenance rules
-- @.aiwg/research/provenance/schemas/prov-record.yaml - Record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - Record schema
 - @.aiwg/research/provenance/docs/provenance-guide.md - Implementation guide

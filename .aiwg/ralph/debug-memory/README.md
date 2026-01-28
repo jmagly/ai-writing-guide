@@ -16,7 +16,7 @@ debug-memory/
 
 ## Schema
 
-All sessions conform to @.aiwg/ralph/schemas/debug-memory.yaml
+All sessions conform to @agentic/code/addons/ralph/schemas/debug-memory.yaml
 
 ## Usage
 
@@ -28,5 +28,5 @@ All sessions conform to @.aiwg/ralph/schemas/debug-memory.yaml
 ## References
 
 - @.claude/rules/executable-feedback.md - Rules
-- @.aiwg/ralph/schemas/debug-memory.yaml - Schema
+- @agentic/code/addons/ralph/schemas/debug-memory.yaml - Schema
 - @.aiwg/ralph/docs/executable-feedback-guide.md - Guide

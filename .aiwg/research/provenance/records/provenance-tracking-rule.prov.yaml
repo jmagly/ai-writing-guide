@@ -35,7 +35,7 @@ relationships:
       entity: "urn:aiwg:artifact:.claude/rules/token-security.md"
       role: "pattern_template"
     - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
-      entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       role: "schema_specification"
     - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
       entity: "urn:aiwg:artifact:.claude/rules/mention-wiring.md"
@@ -47,7 +47,7 @@ relationships:
       derivation_type: "follows_pattern"
       activity: "urn:aiwg:activity:generation:provenance-tracking:001"
     - entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
-      source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       derivation_type: "documents"
       activity: "urn:aiwg:activity:generation:provenance-tracking:001"
 

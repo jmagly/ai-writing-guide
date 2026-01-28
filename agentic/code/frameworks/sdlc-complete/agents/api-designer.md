@@ -33,7 +33,7 @@ Architecture Designer, and Implementers to ensure interface clarity and evolutio
 
 After generating or modifying any artifact (API contracts, interface definitions, versioning docs), create a provenance record per @.claude/rules/provenance-tracking.md:
 
-1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+1. **Create provenance record** - Use @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml format
 2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
 3. **Record Activity** - Type (`generation` for new contracts, `modification` for updates) with timestamps
 4. **Record Agent** - This agent (`urn:aiwg:agent:api-designer`) with tool version

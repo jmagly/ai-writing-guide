@@ -167,6 +167,6 @@ hedging_recommendations:
 
 - @.aiwg/research/docs/grade-assessment-guide.md - GRADE methodology guide
 - @.aiwg/research/findings/REF-060-grade-handbook.md - GRADE Handbook reference
-- @.aiwg/research/schemas/quality-dimensions.yaml - Quality dimensions schema
+- @agentic/code/frameworks/sdlc-complete/schemas/research/quality-dimensions.yaml - Quality dimensions schema
 - @.claude/rules/citation-policy.md - Citation policy (GRADE hedging rules)
 - @.claude/rules/research-metadata.md - Research metadata requirements

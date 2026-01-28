@@ -19,8 +19,6 @@ aiwg use sdlc        # deploy SDLC framework
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat-square)](https://discord.gg/BuAusFMxdA)
 [![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white&style=flat-square)](https://t.me/+oJg9w2lE6A5lOGFh)
 
-🌐 **Live demo & docs:** [https://aiwg.io](https://aiwg.io)
-
 </div>
 
 ---

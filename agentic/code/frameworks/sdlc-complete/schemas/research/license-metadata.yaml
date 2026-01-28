@@ -1,0 +1,251 @@
+# License Metadata Schema
+# Based on REF-056 FAIR Principles (R1.1 - Clear License)
+# Issue: #129
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/license-metadata/v1"
+title: "License Metadata Schema"
+description: |
+  Schema for structured license tracking in research sources.
+  Ensures clear, accessible usage licenses per FAIR R1.1.
+
+type: object
+required:
+  - type
+  - commercial
+  - derivative
+  - attribution
+
+properties:
+  type:
+    type: string
+    description: "SPDX license identifier"
+    enum:
+      # Creative Commons
+      - CC0-1.0
+      - CC-BY-4.0
+      - CC-BY-SA-4.0
+      - CC-BY-NC-4.0
+      - CC-BY-NC-SA-4.0
+      - CC-BY-ND-4.0
+      - CC-BY-NC-ND-4.0
+      # Open Source
+      - MIT
+      - Apache-2.0
+      - GPL-3.0-only
+      - GPL-3.0-or-later
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - ISC
+      - MPL-2.0
+      # Academic/Research
+      - arXiv-License
+      - ACM-License
+      - IEEE-License
+      # Other
+      - All-Rights-Reserved
+      - Public-Domain
+      - Custom
+    examples:
+      - "CC-BY-4.0"
+      - "MIT"
+      - "Apache-2.0"
+
+  url:
+    type: string
+    format: uri
+    description: "URL to full license text"
+    examples:
+      - "https://creativecommons.org/licenses/by/4.0/"
+      - "https://opensource.org/licenses/MIT"
+
+  commercial:
+    type: boolean
+    description: "Whether commercial use is permitted"
+
+  derivative:
+    type: boolean
+    description: "Whether derivative works are permitted"
+
+  share_alike:
+    type: boolean
+    default: false
+    description: "Whether derivatives must use same license"
+
+  attribution:
+    type: string
+    enum:
+      - required
+      - optional
+      - none
+    description: "Attribution requirement level"
+
+  attribution_text:
+    type: string
+    description: "Specific attribution text required"
+
+  restrictions:
+    type: array
+    items:
+      type: string
+    description: "Additional restrictions or notes"
+    examples:
+      - "No endorsement claims"
+      - "Acknowledge source dataset"
+
+  usage_notes:
+    type: string
+    description: "Human-readable usage guidance"
+
+# License compatibility matrix
+compatibility_matrix:
+  CC0-1.0:
+    compatible_with: ["*"]
+    notes: "Public domain, maximally permissive"
+  CC-BY-4.0:
+    compatible_with: ["CC-BY-4.0", "CC-BY-SA-4.0", "MIT", "Apache-2.0"]
+    notes: "Requires attribution"
+  CC-BY-SA-4.0:
+    compatible_with: ["CC-BY-SA-4.0"]
+    notes: "Share-alike requirement limits compatibility"
+  CC-BY-NC-4.0:
+    compatible_with: ["CC-BY-NC-4.0", "CC-BY-NC-SA-4.0"]
+    notes: "Non-commercial only"
+  MIT:
+    compatible_with: ["*"]
+    notes: "Permissive, requires attribution"
+  Apache-2.0:
+    compatible_with: ["Apache-2.0", "MIT", "CC-BY-4.0"]
+    notes: "Patent grant, requires attribution"
+
+# License quick reference
+license_reference:
+  CC0-1.0:
+    name: "Creative Commons Zero"
+    commercial: true
+    derivative: true
+    attribution: none
+    url: "https://creativecommons.org/publicdomain/zero/1.0/"
+  CC-BY-4.0:
+    name: "Creative Commons Attribution 4.0"
+    commercial: true
+    derivative: true
+    attribution: required
+    url: "https://creativecommons.org/licenses/by/4.0/"
+  CC-BY-SA-4.0:
+    name: "Creative Commons Attribution ShareAlike 4.0"
+    commercial: true
+    derivative: true
+    share_alike: true
+    attribution: required
+    url: "https://creativecommons.org/licenses/by-sa/4.0/"
+  CC-BY-NC-4.0:
+    name: "Creative Commons Attribution NonCommercial 4.0"
+    commercial: false
+    derivative: true
+    attribution: required
+    url: "https://creativecommons.org/licenses/by-nc/4.0/"
+  MIT:
+    name: "MIT License"
+    commercial: true
+    derivative: true
+    attribution: required
+    url: "https://opensource.org/licenses/MIT"
+  Apache-2.0:
+    name: "Apache License 2.0"
+    commercial: true
+    derivative: true
+    attribution: required
+    url: "https://www.apache.org/licenses/LICENSE-2.0"
+  arXiv-License:
+    name: "arXiv Non-exclusive License"
+    commercial: false
+    derivative: true
+    attribution: required
+    url: "https://arxiv.org/licenses/nonexclusive-distrib/1.0/"
+    notes: "Preprint distribution, check final publication"
+  All-Rights-Reserved:
+    name: "All Rights Reserved"
+    commercial: false
+    derivative: false
+    attribution: required
+    notes: "Contact author for permissions"
+
+# Agent protocol
+agent_protocol:
+  license_check:
+    description: "How agents verify license compatibility"
+    steps:
+      - load_research_license
+      - check_project_usage (commercial, derivative)
+      - verify_attribution_requirements
+      - generate_warnings_if_incompatible
+
+  attribution_generation:
+    description: "Generate proper attribution"
+    template: |
+      {{authors}} ({{year}}). {{title}}.
+      {{#if doi}}DOI: {{doi}}{{/if}}
+      Licensed under {{license.type}}.
+
+  usage_warning:
+    triggers:
+      - commercial_project_with_nc_source
+      - missing_attribution
+      - share_alike_violation
+    severity: warning
+
+# Validation rules
+validation:
+  required_for_research:
+    - type
+    - commercial
+    - derivative
+    - attribution
+  recommended:
+    - url
+    - usage_notes
+
+# Examples
+examples:
+  cc_by_paper:
+    type: CC-BY-4.0
+    url: "https://creativecommons.org/licenses/by/4.0/"
+    commercial: true
+    derivative: true
+    attribution: required
+    usage_notes: |
+      Standard academic paper license.
+      Cite as per journal requirements.
+
+  arxiv_preprint:
+    type: arXiv-License
+    url: "https://arxiv.org/licenses/nonexclusive-distrib/1.0/"
+    commercial: false
+    derivative: true
+    attribution: required
+    usage_notes: |
+      Preprint license. Check for published version
+      with potentially different license.
+
+  proprietary_whitepaper:
+    type: All-Rights-Reserved
+    commercial: false
+    derivative: false
+    attribution: required
+    restrictions:
+      - "Do not reproduce without permission"
+      - "Contact legal@company.com for licensing"
+    usage_notes: |
+      Reference only. Cannot quote extensively
+      without permission from copyright holder.
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-056-fair-principles.md"
+  implementation:
+    - "#129"
+  related:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/research/frontmatter-schema.yaml"
+    - "@.claude/rules/research-metadata.md"

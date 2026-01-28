@@ -101,6 +101,6 @@ hook:
 ## References
 
 - @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md - Provenance Manager agent
-- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
 - @.claude/rules/provenance-tracking.md - Provenance tracking rules
 - @.claude/rules/mention-wiring.md - @-mention patterns for derivation

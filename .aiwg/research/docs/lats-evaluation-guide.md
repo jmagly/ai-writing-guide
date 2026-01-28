@@ -298,15 +298,15 @@ When implementing LATS evaluation:
 
 All evaluations MUST conform to:
 ```
-@.aiwg/research/schemas/lats-evaluation.yaml
+@agentic/code/frameworks/sdlc-complete/schemas/research/lats-evaluation.yaml
 ```
 
 ## References
 
 - @.aiwg/research/findings/REF-024-lats.md - Research paper summary
-- @.aiwg/research/schemas/lats-evaluation.yaml - Schema definition
-- @.aiwg/research/schemas/quality-assessment.yaml - Quality assessment
-- @.aiwg/ralph/schemas/actionable-feedback.yaml - Feedback format
+- @agentic/code/frameworks/sdlc-complete/schemas/research/lats-evaluation.yaml - Schema definition
+- @agentic/code/frameworks/sdlc-complete/schemas/research/quality-assessment.yaml - Quality assessment
+- @agentic/code/addons/ralph/schemas/actionable-feedback.yaml - Feedback format
 - #98 - Implementation issue
 
 ---

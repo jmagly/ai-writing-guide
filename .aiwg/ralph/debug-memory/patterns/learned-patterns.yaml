@@ -1,6 +1,6 @@
 # Learned Debug Patterns
 # Auto-populated from executable feedback sessions
-# Schema: @.aiwg/ralph/schemas/debug-memory.yaml
+# Schema: @agentic/code/addons/ralph/schemas/debug-memory.yaml
 
 patterns: []
 

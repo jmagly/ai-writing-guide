@@ -1293,7 +1293,7 @@ Reassess quality when:
 
 ### Schema and Templates
 
-- **Quality Schema**: `.aiwg/research/schemas/quality-assessment.yaml`
+- **Quality Schema**: `agentic/code/frameworks/sdlc-complete/schemas/research/quality-assessment.yaml`
 - **Example Assessment**: `.aiwg/research/quality-assessments/REF-013-metagpt-assessment.yaml`
 - **Assessment Template**: Copy REF-013 and modify
 

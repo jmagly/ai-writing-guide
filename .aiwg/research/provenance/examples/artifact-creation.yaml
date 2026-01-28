@@ -79,7 +79,7 @@ relationships:
       role: "pattern_template"
 
     - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
-      entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       role: "schema_specification"
 
     - activity: "urn:aiwg:activity:generation:provenance-tracking:001"
@@ -99,7 +99,7 @@ relationships:
       activity: "urn:aiwg:activity:generation:provenance-tracking:001"
 
     - entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
-      source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       derivation_type: "documents"
       activity: "urn:aiwg:activity:generation:provenance-tracking:001"
 
@@ -190,7 +190,7 @@ query_examples:
 references:
   - "REF-062: W3C PROV-DM (W3C Recommendation 2013)"
   - "@.claude/rules/provenance-tracking.md - Provenance tracking enforcement rules"
-  - "@.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema"
+  - "@agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema"
   - "@.aiwg/research/provenance/docs/provenance-guide.md - Usage guide"
   - "@.aiwg/requirements/use-cases/UC-104-provenance.md - Source requirement"
   - "@https://www.w3.org/TR/prov-dm/ - W3C PROV-DM specification"

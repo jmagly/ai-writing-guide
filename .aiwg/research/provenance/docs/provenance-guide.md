@@ -72,7 +72,7 @@ Provenance records MUST be created for:
    - Skills in `.claude/skills/`
 
 5. **Research artifacts**
-   - Schemas in `.aiwg/research/schemas/`
+   - Schemas in `agentic/code/frameworks/sdlc-complete/schemas/research/`
    - Quality assessments in `.aiwg/research/quality-assessments/`
    - Documentation in `.aiwg/research/docs/`
 
@@ -107,7 +107,7 @@ Include @-mentions in the artifact to reference sources:
 ## References
 
 - @.aiwg/requirements/use-cases/UC-104-provenance.md - Source requirement
-- @.aiwg/research/provenance/schemas/prov-record.yaml - Schema specification
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - Schema specification
 - @.claude/rules/mention-wiring.md - Wiring conventions
 ```
 
@@ -115,7 +115,7 @@ Include @-mentions in the artifact to reference sources:
 ```typescript
 /**
  * @implements @.aiwg/requirements/use-cases/UC-104-provenance.md
- * @schema @.aiwg/research/provenance/schemas/prov-record.yaml
+ * @schema @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml
  * @tests @test/unit/provenance/tracker.test.ts
  */
 ```
@@ -164,7 +164,7 @@ relationships:
       entity: "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-104-provenance.md"
       role: "source_requirement"
     - activity: "urn:aiwg:activity:generation:tracker:001"
-      entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       role: "schema_definition"
 
   wasDerivedFrom:
@@ -173,7 +173,7 @@ relationships:
       derivation_type: "implements"
       activity: "urn:aiwg:activity:generation:tracker:001"
     - entity: "urn:aiwg:artifact:src/provenance/tracker.ts"
-      source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       derivation_type: "conforms_to"
 
   wasAssociatedWith:
@@ -223,7 +223,7 @@ AIWG's @-mention system directly corresponds to W3C PROV relationships:
 ```typescript
 /**
  * @implements @.aiwg/requirements/use-cases/UC-104-provenance.md
- * @schema @.aiwg/research/provenance/schemas/prov-record.yaml
+ * @schema @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml
  * @tests @test/unit/provenance/tracker.test.ts
  */
 ```
@@ -236,7 +236,7 @@ relationships:
       source: "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-104-provenance.md"
       derivation_type: "implements"
     - entity: "urn:aiwg:artifact:src/provenance/tracker.ts"
-      source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       derivation_type: "conforms_to"
 
   # Note: @tests is a forward reference, recorded in test's provenance instead
@@ -371,7 +371,7 @@ Each implementation records:
 ```yaml
 relationships:
   wasDerivedFrom:
-    - source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+    - source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       derivation_type: "conforms_to"
 ```
 
@@ -467,7 +467,7 @@ If an artifact derives from multiple sources, record all of them:
 wasDerivedFrom:
   - source: "urn:aiwg:artifact:.aiwg/requirements/UC-104.md"
     derivation_type: "implements"
-  - source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+  - source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
     derivation_type: "conforms_to"
   - source: "urn:aiwg:artifact:.claude/rules/mention-wiring.md"
     derivation_type: "follows_pattern"
@@ -675,7 +675,7 @@ Planned improvements to AIWG provenance tracking:
 ## References
 
 - @.claude/rules/provenance-tracking.md - Provenance tracking enforcement rules
-- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
 - @.aiwg/research/provenance/examples/artifact-creation.yaml - Example record
 - @.claude/rules/mention-wiring.md - @-mention wiring conventions
 - @https://www.w3.org/TR/prov-dm/ - W3C PROV-DM specification
@@ -686,7 +686,7 @@ Planned improvements to AIWG provenance tracking:
 If you encounter issues or have questions about provenance tracking:
 
 1. Review examples in `.aiwg/research/provenance/examples/`
-2. Consult the schema at `.aiwg/research/provenance/schemas/prov-record.yaml`
+2. Consult the schema at `agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml`
 3. Check the W3C PROV Primer for conceptual explanations
 4. File an issue at the AIWG repository
 

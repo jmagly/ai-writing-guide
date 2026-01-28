@@ -17,7 +17,7 @@ When invoked, perform structured Tree of Thoughts exploration for architecture d
    - Load existing architectural constraints from `.aiwg/architecture/`
 
 2. **Load ToT Protocol**
-   - Reference @.aiwg/flows/schemas/tree-of-thought.yaml for workflow schema
+   - Reference @agentic/code/frameworks/sdlc-complete/schemas/flows/tree-of-thought.yaml for workflow schema
    - Reference @.aiwg/flows/docs/tot-architecture-guide.md for evaluation patterns
    - Reference @agentic/code/frameworks/sdlc-complete/agents/enhancements/architecture-designer-tot-protocol.md for agent protocol
 
@@ -115,7 +115,7 @@ ADR saved: .aiwg/architecture/adr-auth-approach.md
 
 ## References
 
-- @.aiwg/flows/schemas/tree-of-thought.yaml - ToT workflow schema
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/tree-of-thought.yaml - ToT workflow schema
 - @.aiwg/flows/docs/tot-architecture-guide.md - Architecture evaluation guide
 - @agentic/code/frameworks/sdlc-complete/agents/enhancements/architecture-designer-tot-protocol.md - Agent enhancement
 - @agentic/code/frameworks/sdlc-complete/templates/architecture/adr-with-tot.md - ADR template

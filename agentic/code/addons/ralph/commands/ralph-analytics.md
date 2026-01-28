@@ -43,6 +43,6 @@ When invoked, analyze Ralph loop data and present metrics:
 
 ## References
 
-- @.aiwg/ralph/schemas/reflection-memory.json - Reflection schema
-- @.aiwg/ralph/schemas/debug-memory.yaml - Debug memory schema
+- @agentic/code/addons/ralph/schemas/reflection-memory.json - Reflection schema
+- @agentic/code/addons/ralph/schemas/debug-memory.yaml - Debug memory schema
 - @.aiwg/ralph/docs/reflection-memory-guide.md - Guide

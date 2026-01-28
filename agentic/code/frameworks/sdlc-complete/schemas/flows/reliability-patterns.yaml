@@ -1,0 +1,632 @@
+# Reliability Patterns Framework Schema
+# Based on REF-001 Agentic AI in Production
+# Issues: #239 (Retry Patterns), #240 (Checkpoints), #241 (Fallbacks)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/reliability-patterns/v1"
+title: "Reliability Patterns Framework Schema"
+description: |
+  Production reliability patterns for agentic systems implementing structured retry
+  configuration, comprehensive checkpointing, and fallback agent assignments per
+  REF-001 Agentic AI in Production.
+
+type: object
+required:
+  - version
+  - retry_patterns
+  - checkpoint_artifacts
+  - fallback_assignments
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  retry_patterns:
+    $ref: "#/$defs/RetryPatterns"
+
+  checkpoint_artifacts:
+    $ref: "#/$defs/CheckpointArtifacts"
+
+  fallback_assignments:
+    $ref: "#/$defs/FallbackAssignments"
+
+$defs:
+  RetryPatterns:
+    type: object
+    description: "Structured retry pattern configuration per REF-001"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      policy_schema:
+        type: object
+        properties:
+          max_attempts:
+            type: object
+            properties:
+              type: { type: string, default: "integer" }
+              default: { type: integer, default: 3 }
+              min: { type: integer, default: 1 }
+              max: { type: integer, default: 10 }
+
+          backoff:
+            type: object
+            properties:
+              strategy:
+                type: object
+                properties:
+                  type: { type: string, default: "string" }
+                  enum:
+                    type: array
+                    default: ["constant", "linear", "exponential"]
+                  default: { type: string, default: "exponential" }
+
+              initial_delay:
+                type: object
+                properties:
+                  type: { type: string, default: "string" }
+                  pattern: { type: string, default: "^\\d+(ms|s|m)$" }
+                  default: { type: string, default: "1s" }
+
+              max_delay:
+                type: object
+                properties:
+                  type: { type: string, default: "string" }
+                  default: { type: string, default: "30s" }
+
+              multiplier:
+                type: object
+                properties:
+                  type: { type: string, default: "number" }
+                  default: { type: number, default: 2.0 }
+                  description: { type: string, default: "Exponential backoff multiplier" }
+
+              jitter:
+                type: object
+                properties:
+                  type: { type: string, default: "number" }
+                  min: { type: number, default: 0 }
+                  max: { type: number, default: 1 }
+                  default: { type: number, default: 0.1 }
+                  description: { type: string, default: "Randomization factor to prevent thundering herd" }
+
+          circuit_breaker:
+            type: object
+            properties:
+              failure_threshold:
+                type: object
+                properties:
+                  type: { type: string, default: "integer" }
+                  default: { type: integer, default: 5 }
+                  description: { type: string, default: "Consecutive failures before opening circuit" }
+
+              timeout:
+                type: object
+                properties:
+                  type: { type: string, default: "string" }
+                  default: { type: string, default: "60s" }
+                  description: { type: string, default: "Time in open state before half-open" }
+
+              half_open_requests:
+                type: object
+                properties:
+                  type: { type: string, default: "integer" }
+                  default: { type: integer, default: 3 }
+                  description: { type: string, default: "Test requests in half-open state" }
+
+          error_classification:
+            type: object
+            properties:
+              retryable_errors:
+                type: array
+                items: { type: string }
+                default:
+                  - "RateLimitError"
+                  - "NetworkTimeoutError"
+                  - "TemporaryAPIError"
+                  - "ServiceUnavailableError"
+                  - "GatewayTimeoutError"
+
+              non_retryable_errors:
+                type: array
+                items: { type: string }
+                default:
+                  - "AuthenticationError"
+                  - "ValidationError"
+                  - "NotFoundError"
+                  - "PermissionDeniedError"
+                  - "InvalidInputError"
+
+          context_preservation:
+            type: object
+            properties:
+              type: { type: string, default: "string" }
+              enum:
+                type: array
+                default: ["full", "partial", "none"]
+              default: { type: string, default: "full" }
+              descriptions:
+                type: object
+                properties:
+                  full: { type: string, default: "Preserve all context including conversation history" }
+                  partial: { type: string, default: "Preserve task state, discard conversation details" }
+                  none: { type: string, default: "Start fresh on retry" }
+
+      default_policies:
+        type: object
+        properties:
+          agent_task:
+            type: object
+            properties:
+              max_attempts: { type: integer, default: 3 }
+              backoff: { type: string, default: "exponential" }
+              initial_delay: { type: string, default: "2s" }
+              context_preservation: { type: string, default: "full" }
+
+          api_call:
+            type: object
+            properties:
+              max_attempts: { type: integer, default: 5 }
+              backoff: { type: string, default: "exponential" }
+              initial_delay: { type: string, default: "1s" }
+              max_delay: { type: string, default: "30s" }
+              jitter: { type: number, default: 0.1 }
+
+          ralph_loop:
+            type: object
+            properties:
+              max_attempts: { type: integer, default: 5 }
+              backoff: { type: string, default: "exponential" }
+              initial_delay: { type: string, default: "5s" }
+              max_delay: { type: string, default: "60s" }
+              context_preservation: { type: string, default: "full" }
+              budget_per_task: { type: integer, default: 3 }
+
+      agent_metadata_extension:
+        type: string
+        default: |
+          # Agent retry policy extension
+          ---
+          name: Test Engineer
+          retry-policy:
+            max-attempts: 3
+            backoff:
+              strategy: exponential
+              initial-delay: 1s
+              max-delay: 30s
+              multiplier: 2
+            circuit-breaker:
+              failure-threshold: 5
+              timeout: 60s
+              half-open-requests: 3
+            retryable-errors:
+              - RateLimitError
+              - NetworkTimeoutError
+            non-retryable-errors:
+              - AuthenticationError
+              - ValidationError
+          ---
+
+  CheckpointArtifacts:
+    type: object
+    description: "Comprehensive checkpoint artifacts per REF-001"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      triggers:
+        type: array
+        items: { type: string }
+        default:
+          - "task-completion"
+          - "error"
+          - "manual"
+          - "periodic"
+          - "phase-transition"
+
+      checkpoint_schema:
+        type: object
+        properties:
+          checkpoint:
+            type: object
+            properties:
+              id:
+                type: object
+                properties:
+                  type: { type: string, default: "string" }
+                  format: { type: string, default: "ckpt-YYYYMMDD-HHMMSS" }
+              iteration: { type: string, default: "integer" }
+              timestamp: { type: string, default: "date-time" }
+              trigger: { type: string, default: "string" }
+
+          execution:
+            type: object
+            properties:
+              current_phase: { type: string, default: "string" }
+              current_agent: { type: string, default: "string" }
+              task_stack:
+                type: string
+                default: "array of {id, description, status, startedAt}"
+              completed_tasks:
+                type: string
+                default: "array of {id, completedAt}"
+
+          artifacts:
+            type: object
+            properties:
+              created:
+                type: string
+                default: "array of {path, hash, size}"
+              modified:
+                type: string
+                default: "array of {path, hash, previousHash}"
+
+          context:
+            type: object
+            properties:
+              environment:
+                type: string
+                default: "{cwd, node, aiwg}"
+              variables:
+                type: string
+                default: "key-value pairs"
+
+          tool_outputs:
+            type: string
+            default: "array of {tool, invocation, output, exitCode, timestamp}"
+
+          agent_memory:
+            type: object
+            properties:
+              conversation_history:
+                type: string
+                default: "array of {role, content}"
+              working_memory:
+                type: string
+                default: "agent-specific state"
+
+          provenance:
+            type: object
+            properties:
+              parent_checkpoint: { type: string, default: "string" }
+              derived_from:
+                type: string
+                default: "array of {artifact, relationship}"
+
+      storage:
+        type: object
+        properties:
+          path:
+            type: string
+            default: ".aiwg/ralph/checkpoints/"
+          format:
+            type: string
+            default: "json"
+          compression:
+            type: boolean
+            default: true
+          retention:
+            type: object
+            properties:
+              max_checkpoints: { type: integer, default: 50 }
+              max_age_days: { type: integer, default: 30 }
+
+      modes:
+        type: object
+        properties:
+          full:
+            type: object
+            properties:
+              description: { type: string, default: "Complete state snapshot" }
+              includes:
+                type: array
+                items: { type: string }
+                default:
+                  - "execution"
+                  - "artifacts"
+                  - "context"
+                  - "tool_outputs"
+                  - "agent_memory"
+                  - "provenance"
+
+          incremental:
+            type: object
+            properties:
+              description: { type: string, default: "Only changes since last checkpoint" }
+              includes:
+                type: array
+                items: { type: string }
+                default:
+                  - "execution"
+                  - "artifacts.modified"
+                  - "tool_outputs.recent"
+
+  FallbackAssignments:
+    type: object
+    description: "Fallback agent assignments per REF-001"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      fallback_schema:
+        type: object
+        properties:
+          primary:
+            type: object
+            properties:
+              type: { type: string, default: "string" }
+              description: { type: string, default: "First fallback agent to try" }
+
+          secondary:
+            type: object
+            properties:
+              type: { type: string, default: "string" }
+              description: { type: string, default: "Second fallback if primary unavailable" }
+
+          ultimate:
+            type: object
+            properties:
+              type: { type: string, default: "string" }
+              default: { type: string, default: "Generalist-Agent" }
+              description: { type: string, default: "Last resort fallback" }
+
+          strategy:
+            type: object
+            properties:
+              preserve_context:
+                type: object
+                properties:
+                  type: { type: string, default: "boolean" }
+                  default: { type: boolean, default: true }
+
+              skill_subset:
+                type: object
+                properties:
+                  type: { type: string, default: "array" }
+                  description: { type: string, default: "Skills fallback must support" }
+
+              degraded_mode:
+                type: object
+                properties:
+                  description: { type: string, default: "Warning about reduced capability" }
+                  acceptable: { type: boolean, default: true }
+
+      default_chains:
+        type: object
+        description: "Default fallback chains for SDLC agents"
+        properties:
+          test_engineer:
+            type: array
+            items: { type: string }
+            default:
+              - "QA-Specialist"
+              - "Software-Engineer"
+              - "Generalist-Agent"
+
+          security_auditor:
+            type: array
+            items: { type: string }
+            default:
+              - "Software-Engineer"
+              - "Generalist-Agent"
+
+          deployment_engineer:
+            type: array
+            items: { type: string }
+            default:
+              - "DevOps-Engineer"
+              - "Software-Engineer"
+              - "Generalist-Agent"
+
+          requirements_analyst:
+            type: array
+            items: { type: string }
+            default:
+              - "System-Analyst"
+              - "Software-Engineer"
+              - "Generalist-Agent"
+
+          architecture_designer:
+            type: array
+            items: { type: string }
+            default:
+              - "Software-Engineer"
+              - "Generalist-Agent"
+
+      agent_metadata_extension:
+        type: string
+        default: |
+          # Agent fallback extension
+          ---
+          name: Test Engineer
+          role: testing
+          specialization: unit-testing
+          fallback:
+            primary: QA-Specialist
+            secondary: Software-Engineer
+            ultimate: Generalist-Agent
+          fallback-strategy:
+            preserve-context: true
+            skill-subset:
+              - test-writing
+              - test-execution
+            degraded-mode:
+              description: "Fallback may not validate coverage rigorously"
+              acceptable: true
+          ---
+
+# CLI commands
+cli_commands:
+  retry_config:
+    command: "aiwg retry-config <agent>"
+    description: "Show retry configuration for agent"
+    options:
+      - name: "--set"
+        description: "Update retry policy"
+
+  checkpoint_list:
+    command: "aiwg checkpoints list"
+    description: "List available checkpoints"
+    options:
+      - name: "--since"
+        description: "Filter by date"
+
+  checkpoint_inspect:
+    command: "aiwg checkpoints inspect <id>"
+    description: "Show checkpoint details"
+
+  checkpoint_restore:
+    command: "aiwg ralph-resume --checkpoint <id>"
+    description: "Resume from specific checkpoint"
+
+  fallback_chain:
+    command: "aiwg agents fallback-chain <agent>"
+    description: "Show fallback chain for agent"
+
+# Agent protocol
+agent_protocol:
+  execute_with_retry:
+    description: "Execute task with retry policy"
+    steps:
+      - load_retry_policy
+      - initialize_circuit_breaker
+      - for_attempt_in_max_attempts:
+          - check_circuit_breaker_state
+          - if_open_fail_fast
+          - if_half_open_test_request
+          - execute_task
+          - if_success:
+              - record_success
+              - return_result
+          - if_retryable_error:
+              - record_failure
+              - calculate_backoff_delay
+              - apply_jitter
+              - wait_delay
+              - preserve_context
+          - if_non_retryable_error:
+              - fail_immediately
+      - circuit_breaker_trip_if_threshold
+
+  create_checkpoint:
+    description: "Create comprehensive checkpoint"
+    triggers:
+      - task_completion
+      - error_recovery
+      - manual_request
+      - periodic_timer
+    steps:
+      - determine_checkpoint_mode
+      - capture_execution_state
+      - capture_artifact_hashes
+      - capture_context_variables
+      - capture_recent_tool_outputs
+      - serialize_agent_memory
+      - link_provenance_chain
+      - compress_if_configured
+      - persist_checkpoint
+      - prune_old_checkpoints
+
+  resolve_fallback:
+    description: "Resolve agent fallback chain"
+    triggers:
+      - agent_unavailable
+      - agent_task_failure
+    steps:
+      - get_primary_agent
+      - verify_agent_available
+      - if_unavailable:
+          - load_fallback_chain
+          - for_each_fallback:
+              - verify_fallback_available
+              - check_skill_subset_match
+              - transfer_context
+              - log_degraded_mode_warning
+              - return_fallback_agent
+          - if_all_unavailable:
+              - fail_with_no_agents_error
+
+# Storage
+storage:
+  retry_policies: ".aiwg/agents/retry-policies/"
+  checkpoints: ".aiwg/ralph/checkpoints/"
+  fallback_chains: ".aiwg/agents/fallback-chains/"
+
+# Research targets (from REF-001)
+research_targets:
+  retry_patterns: "Structured retry with exponential backoff and circuit breakers"
+  checkpoint_artifacts: "Comprehensive state snapshots for full recovery"
+  fallback_assignments: "Agent hierarchies for graceful degradation"
+
+# Example retry configuration
+example_retry_config: |
+  # .aiwg/agents/retry-policies/test-engineer.yaml
+  agent: test-engineer
+  policy:
+    max_attempts: 3
+    backoff:
+      strategy: exponential
+      initial_delay: 2s
+      max_delay: 30s
+      multiplier: 2
+      jitter: 0.1
+    circuit_breaker:
+      failure_threshold: 5
+      timeout: 60s
+      half_open_requests: 3
+    retryable_errors:
+      - RateLimitError
+      - NetworkTimeoutError
+    context_preservation: full
+
+# Example checkpoint
+example_checkpoint: |
+  {
+    "checkpoint": {
+      "id": "ckpt-20260125-143022",
+      "iteration": 5,
+      "timestamp": "2026-01-25T14:30:22Z",
+      "trigger": "task-completion"
+    },
+    "execution": {
+      "currentPhase": "elaboration",
+      "currentAgent": "Requirements-Analyst",
+      "taskStack": [
+        {
+          "id": "task-003",
+          "description": "Elaborate NFR-Security module",
+          "status": "in-progress",
+          "startedAt": "2026-01-25T14:28:15Z"
+        }
+      ]
+    },
+    "artifacts": {
+      "created": [
+        {
+          "path": ".aiwg/requirements/nfr-modules/security.md",
+          "hash": "sha256:abc123..."
+        }
+      ]
+    },
+    "provenance": {
+      "parentCheckpoint": "ckpt-20260125-142000"
+    }
+  }
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-001-agentic-ai-production.md"
+  implementation:
+    - "#239"
+    - "#240"
+    - "#241"
+  related:
+    - "@tools/ralph-external/loop.ts"
+    - "@agentic/code/frameworks/sdlc-complete/agents/"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/agent-efficiency.yaml"

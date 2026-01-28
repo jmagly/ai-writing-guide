@@ -155,13 +155,13 @@ When working in iterative loops (Ralph or retry scenarios):
 3. **Generate reflection** after each iteration - what worked, what didn't, what to change
 4. **Apply sliding window** - keep k=5 most recent reflections in context
 
-See @.aiwg/ralph/schemas/reflection-memory.json for schema.
+See @agentic/code/addons/ralph/schemas/reflection-memory.json for schema.
 
 ## Provenance Tracking
 
 After generating or modifying any artifact (source code, configuration, documentation), create a provenance record per @.claude/rules/provenance-tracking.md:
 
-1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+1. **Create provenance record** - Use @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml format
 2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
 3. **Record Activity** - Type (`generation` for new files, `modification` for edits) with timestamps
 4. **Record Agent** - This agent (`urn:aiwg:agent:software-implementer`) with tool version
@@ -172,4 +172,4 @@ See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the 
 
 ## Schema References
 
-- @.aiwg/flows/schemas/executable-feedback.yaml — Executable feedback loop for code validation
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/executable-feedback.yaml — Executable feedback loop for code validation

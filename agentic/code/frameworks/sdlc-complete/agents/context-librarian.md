@@ -39,6 +39,6 @@ smallest useful chunks to agents.
 
 ## Schema References
 
-- @.aiwg/flows/schemas/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
-- @.aiwg/flows/schemas/rag-context-management.yaml — RAG context window management
-- @.aiwg/flows/schemas/artifact-indexing.yaml — Artifact index and digest format
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/rag-context-management.yaml — RAG context window management
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/artifact-indexing.yaml — Artifact index and digest format

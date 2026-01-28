@@ -477,7 +477,7 @@ Implement GraphQL API using Apollo Server (backend) and Apollo Client (frontend)
 - Caching complexity causes major bugs → Re-evaluate
 
 ## References
-- @.aiwg/flows/schemas/tree-of-thought.yaml - ToT workflow
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/tree-of-thought.yaml - ToT workflow
 - @.aiwg/requirements/nfr-modules/performance.md - Performance NFRs
 - @.aiwg/requirements/use-cases/UC-012-mobile-catalog.md - Mobile use case
 ```
@@ -1046,7 +1046,7 @@ Use this rubric to score alternatives consistently:
 
 - @.aiwg/research/findings/REF-020-tree-of-thoughts.md - Research paper summary
 - @.aiwg/research/paper-analysis/REF-020-aiwg-analysis.md - AIWG-specific analysis
-- @.aiwg/flows/schemas/tree-of-thought.yaml - ToT workflow schema
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/tree-of-thought.yaml - ToT workflow schema
 - @.claude/rules/thought-protocol.md - Six thought types
 - @.claude/rules/reasoning-sections.md - Reasoning structure for ADRs
 - @agentic/code/frameworks/sdlc-complete/templates/adr-template.md - ADR template

@@ -547,8 +547,8 @@ You are a Documentation Archivist specializing in SDLC documentation lifecycle m
 
 ## Schema References
 
-- @.aiwg/flows/schemas/revision-history.yaml — Revision history tracking format
-- @.aiwg/flows/schemas/oais-archival.yaml — OAIS-compliant archival metadata
-- @.aiwg/flows/schemas/artifact-indexing.yaml — Artifact index and digest format
-- @.aiwg/flows/schemas/provenance-framework.yaml — W3C PROV-JSON export format
-- @.aiwg/flows/schemas/provenance-system.yaml — Lifecycle provenance tracking
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/revision-history.yaml — Revision history tracking format
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/oais-archival.yaml — OAIS-compliant archival metadata
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/artifact-indexing.yaml — Artifact index and digest format
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/provenance-framework.yaml — W3C PROV-JSON export format
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/provenance-system.yaml — Lifecycle provenance tracking

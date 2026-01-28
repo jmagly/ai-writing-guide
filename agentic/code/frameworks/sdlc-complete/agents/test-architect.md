@@ -165,7 +165,7 @@ The Test Architect has succeeded when:
 
 ## Schema References
 
-- @.aiwg/flows/schemas/sdlc-output-schemas.yaml — Standardized SDLC output formats
-- @.aiwg/flows/schemas/quality-scoring.yaml — Quality scoring dimensions and formulas
-- @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for test result reporting
-- @.aiwg/research/schemas/lats-evaluation.yaml — LATS hybrid value function for test coverage evaluation
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/sdlc-output-schemas.yaml — Standardized SDLC output formats
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/quality-scoring.yaml — Quality scoring dimensions and formulas
+- @agentic/code/addons/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for test result reporting
+- @agentic/code/frameworks/sdlc-complete/schemas/research/lats-evaluation.yaml — LATS hybrid value function for test coverage evaluation

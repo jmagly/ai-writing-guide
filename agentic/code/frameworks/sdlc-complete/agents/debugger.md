@@ -317,13 +317,13 @@ When debugging in iterative loops:
 3. **Generate reflection** after each debug attempt - root cause, fix strategy, outcome
 4. **Extract patterns** - common debugging patterns for future reference
 
-See @.aiwg/ralph/schemas/reflection-memory.json for schema.
+See @agentic/code/addons/ralph/schemas/reflection-memory.json for schema.
 
 ## Provenance Tracking
 
 After generating or modifying any artifact (fixes, patches, debug artifacts), create a provenance record per @.claude/rules/provenance-tracking.md:
 
-1. **Create provenance record** - Use @.aiwg/research/provenance/schemas/prov-record.yaml format
+1. **Create provenance record** - Use @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml format
 2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
 3. **Record Activity** - Type (`modification` for bug fixes, `generation` for new debug artifacts) with timestamps
 4. **Record Agent** - This agent (`urn:aiwg:agent:debugger`) with tool version
@@ -334,9 +334,9 @@ See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the 
 
 ## Schema References
 
-- @.aiwg/flows/schemas/debug-provenance.yaml — Debug session provenance tracking
-- @.aiwg/flows/schemas/reproducibility-framework.yaml — Workflow reproducibility validation
-- @.aiwg/flows/schemas/reliability-patterns.yaml — Reliability and fault tolerance patterns
-- @.aiwg/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for debug findings
-- @.aiwg/flows/schemas/episodic-memory.yaml — Episodic memory for Reflexion-based learning
-- @.aiwg/flows/schemas/error-handling.yaml — Error recovery and fault tolerance patterns
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/debug-provenance.yaml — Debug session provenance tracking
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/reproducibility-framework.yaml — Workflow reproducibility validation
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/reliability-patterns.yaml — Reliability and fault tolerance patterns
+- @agentic/code/addons/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for debug findings
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/episodic-memory.yaml — Episodic memory for Reflexion-based learning
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml — Error recovery and fault tolerance patterns

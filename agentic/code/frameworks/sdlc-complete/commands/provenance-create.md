@@ -27,7 +27,7 @@ When invoked, create provenance record:
    - Agent: `urn:aiwg:agent:<agent-name>`
 
 4. **Create provenance record**
-   - Generate YAML conforming to `@.aiwg/research/provenance/schemas/prov-record.yaml`
+   - Generate YAML conforming to `@agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml`
    - Include entity, activity, agent, and relationships
    - Include timestamps and content hash
 
@@ -56,6 +56,6 @@ When invoked, create provenance record:
 ## References
 
 - @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md - Provenance Manager agent
-- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
 - @.aiwg/research/provenance/docs/provenance-guide.md - Provenance guide
 - @.claude/rules/provenance-tracking.md - Provenance tracking rules

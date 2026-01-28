@@ -57,6 +57,6 @@ Clear debug memory (with confirmation).
 
 ## References
 
-- @.aiwg/ralph/schemas/debug-memory.yaml - Debug memory schema
+- @agentic/code/addons/ralph/schemas/debug-memory.yaml - Debug memory schema
 - @.claude/rules/executable-feedback.md - Executable feedback rules
 - @.aiwg/ralph/docs/executable-feedback-guide.md - Guide

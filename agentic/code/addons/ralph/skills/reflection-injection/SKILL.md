@@ -65,7 +65,7 @@ This skill uses:
 
 ## References
 
-- @.aiwg/ralph/schemas/reflection-memory.json - Schema
+- @agentic/code/addons/ralph/schemas/reflection-memory.json - Schema
 - @.aiwg/ralph/docs/reflection-memory-guide.md - Guide
 - @agentic/code/addons/ralph/templates/self-reflection-prompt.md - Prompt template
 - @.aiwg/research/findings/REF-021-reflexion.md - Research foundation

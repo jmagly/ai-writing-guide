@@ -1,0 +1,517 @@
+# Semantic Agent Discovery Schema
+# Based on REF-061 Papazoglou SOA
+# Issue: #185
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/semantic-agent-discovery/v1"
+title: "Semantic Agent Discovery Schema"
+description: |
+  Schema for service-oriented architecture patterns enabling semantic agent
+  discovery based on capabilities rather than fixed registry positions,
+  per REF-061 Papazoglou SOA (2003) patterns.
+
+type: object
+required:
+  - version
+  - discovery_config
+  - capability_registry
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  discovery_config:
+    $ref: "#/$defs/DiscoveryConfig"
+
+  capability_registry:
+    $ref: "#/$defs/CapabilityRegistry"
+
+  query_interface:
+    $ref: "#/$defs/QueryInterface"
+
+$defs:
+  DiscoveryConfig:
+    type: object
+    description: "Discovery service configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      index_path:
+        type: string
+        default: ".aiwg/agent-discovery/capability-index.json"
+
+      refresh_strategy:
+        type: string
+        enum:
+          - on_startup        # Build index at session start
+          - on_demand         # Build when first query made
+          - continuous        # Watch for agent changes
+        default: on_startup
+
+      embedding_model:
+        type: string
+        default: "text-embedding-3-small"
+        description: "Model for semantic capability matching"
+
+      cache_ttl_seconds:
+        type: integer
+        default: 3600
+        description: "How long to cache discovery results"
+
+      performance_target_ms:
+        type: integer
+        default: 100
+        description: "Target query response time"
+
+  CapabilityRegistry:
+    type: object
+    description: "Registry of agent capabilities"
+    properties:
+      sources:
+        type: array
+        items:
+          type: string
+        default:
+          - ".claude/agents/"
+          - "agentic/code/frameworks/sdlc-complete/agents/"
+        description: "Paths to scan for agent manifests"
+
+      schema:
+        $ref: "#/$defs/AgentCapabilitySchema"
+
+  AgentCapabilitySchema:
+    type: object
+    description: "Schema for agent capability descriptions"
+    required:
+      - agent_name
+      - capabilities
+    properties:
+      agent_name:
+        type: string
+
+      display_name:
+        type: string
+
+      description:
+        type: string
+        description: "Human-readable agent description"
+
+      domains:
+        type: array
+        items:
+          type: string
+        description: "Knowledge domains (security, testing, architecture)"
+
+      operations:
+        type: array
+        items:
+          $ref: "#/$defs/Operation"
+        description: "Operations this agent can perform"
+
+      inputs:
+        type: array
+        items:
+          $ref: "#/$defs/ArtifactType"
+        description: "Artifact types this agent accepts"
+
+      outputs:
+        type: array
+        items:
+          $ref: "#/$defs/ArtifactType"
+        description: "Artifact types this agent produces"
+
+      quality_metrics:
+        type: object
+        additionalProperties:
+          type: number
+        description: "Quality scores from performance tracking"
+
+      semantic_embedding:
+        type: array
+        items:
+          type: number
+        description: "Vector embedding of capabilities"
+
+  Operation:
+    type: object
+    required:
+      - name
+      - description
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      synonyms:
+        type: array
+        items:
+          type: string
+        description: "Alternative ways to describe this operation"
+      examples:
+        type: array
+        items:
+          type: string
+        description: "Example queries that match this operation"
+
+  ArtifactType:
+    type: object
+    required:
+      - type
+    properties:
+      type:
+        type: string
+      schema_ref:
+        type: string
+      description:
+        type: string
+
+  QueryInterface:
+    type: object
+    description: "Query interface configuration"
+    properties:
+      query_types:
+        type: array
+        items:
+          $ref: "#/$defs/QueryType"
+
+  QueryType:
+    type: object
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      parameters:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            type:
+              type: string
+            required:
+              type: boolean
+            description:
+              type: string
+
+# Standard query types
+query_types:
+  - name: "semantic"
+    description: "Natural language capability query"
+    parameters:
+      - name: query
+        type: string
+        required: true
+        description: "Natural language description of needed capability"
+      - name: top_k
+        type: integer
+        required: false
+        description: "Number of results to return (default: 5)"
+    examples:
+      - "find agents that can review code for security vulnerabilities"
+      - "who can design database schemas"
+      - "agent for writing API documentation"
+
+  - name: "domain"
+    description: "Query by knowledge domain"
+    parameters:
+      - name: domain
+        type: string
+        required: true
+        description: "Domain name (security, testing, architecture, etc.)"
+      - name: min_quality
+        type: number
+        required: false
+        description: "Minimum quality score (0-1)"
+    examples:
+      - domain: "security"
+      - domain: "testing", min_quality: 0.8
+
+  - name: "operation"
+    description: "Query by operation type"
+    parameters:
+      - name: operation
+        type: string
+        required: true
+        description: "Operation name or description"
+      - name: input_type
+        type: string
+        required: false
+        description: "Required input artifact type"
+      - name: output_type
+        type: string
+        required: false
+        description: "Required output artifact type"
+    examples:
+      - operation: "review"
+      - operation: "generate", output_type: "TestSuite"
+
+  - name: "artifact_transform"
+    description: "Find agents that transform artifact A to B"
+    parameters:
+      - name: input_type
+        type: string
+        required: true
+      - name: output_type
+        type: string
+        required: true
+    examples:
+      - input_type: "PRD", output_type: "SystemDesign"
+      - input_type: "Implementation", output_type: "TestSuite"
+
+# Discovery result schema
+discovery_result:
+  type: object
+  required:
+    - query
+    - results
+    - timestamp
+  properties:
+    query:
+      type: object
+      description: "Original query"
+    results:
+      type: array
+      items:
+        type: object
+        properties:
+          agent_name:
+            type: string
+          relevance_score:
+            type: number
+            minimum: 0
+            maximum: 1
+          match_explanation:
+            type: string
+          capabilities_matched:
+            type: array
+            items:
+              type: string
+          quality_score:
+            type: number
+    total_matches:
+      type: integer
+    query_time_ms:
+      type: number
+    timestamp:
+      type: string
+      format: date-time
+
+# Capability index schema
+capability_index:
+  type: object
+  required:
+    - version
+    - agents
+    - last_updated
+  properties:
+    version:
+      type: string
+    agents:
+      type: array
+      items:
+        $ref: "#/$defs/IndexedAgent"
+    domain_index:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      description: "Domain -> agent names mapping"
+    operation_index:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      description: "Operation -> agent names mapping"
+    input_index:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      description: "Input type -> agent names mapping"
+    output_index:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      description: "Output type -> agent names mapping"
+    last_updated:
+      type: string
+      format: date-time
+
+  IndexedAgent:
+    type: object
+    properties:
+      name:
+        type: string
+      manifest_path:
+        type: string
+      capability_hash:
+        type: string
+        description: "Hash to detect changes"
+      embedding:
+        type: array
+        items:
+          type: number
+
+# Agent protocol
+agent_protocol:
+  build_index:
+    description: "Build capability index from agent manifests"
+    triggers:
+      - startup
+      - manual_request
+      - manifest_change_detected
+    steps:
+      - scan_agent_directories
+      - for_each_agent_manifest:
+          - parse_capability_metadata
+          - extract_domains
+          - extract_operations
+          - extract_input_output_types
+          - generate_semantic_embedding
+      - build_domain_index
+      - build_operation_index
+      - build_artifact_type_indices
+      - persist_capability_index
+
+  discover_agents:
+    description: "Find agents matching query"
+    steps:
+      - parse_query_type
+      - if_semantic_query:
+          - generate_query_embedding
+          - compute_similarity_scores
+          - rank_by_relevance
+      - if_domain_query:
+          - lookup_domain_index
+          - filter_by_quality
+      - if_operation_query:
+          - lookup_operation_index
+          - filter_by_artifact_types
+      - if_artifact_transform_query:
+          - intersect_input_output_indices
+      - sort_results_by_relevance
+      - apply_quality_weighting
+      - return_top_k_results
+
+  update_quality_scores:
+    description: "Update agent quality scores from performance data"
+    triggers:
+      - task_completion
+      - performance_report_generated
+    steps:
+      - load_performance_stats
+      - update_agent_quality_metrics
+      - recalculate_rankings
+      - persist_updated_index
+
+# Quality weighting
+quality_weighting:
+  enabled: true
+  factors:
+    relevance_score:
+      weight: 0.60
+      description: "Semantic match to query"
+    success_rate:
+      weight: 0.25
+      description: "Historical task success rate"
+    efficiency:
+      weight: 0.15
+      description: "Token efficiency vs benchmark"
+
+# Pre-computed capability embeddings
+standard_capabilities:
+  security_review:
+    text: "review code for security vulnerabilities, OWASP compliance, threat modeling"
+    domains: [security]
+    operations: [review, analyze, audit]
+
+  architecture_design:
+    text: "design system architecture, create ADRs, evaluate technical approaches"
+    domains: [architecture]
+    operations: [design, evaluate, document]
+
+  test_generation:
+    text: "generate test suites, create test plans, ensure code coverage"
+    domains: [testing]
+    operations: [generate, create, verify]
+
+  code_review:
+    text: "review code quality, identify bugs, suggest improvements"
+    domains: [quality]
+    operations: [review, analyze, suggest]
+
+  documentation:
+    text: "write technical documentation, API docs, user guides"
+    domains: [documentation]
+    operations: [write, document, explain]
+
+  requirements_analysis:
+    text: "analyze requirements, create user stories, define acceptance criteria"
+    domains: [requirements]
+    operations: [analyze, create, define]
+
+  deployment:
+    text: "deploy applications, configure CI/CD, manage infrastructure"
+    domains: [devops]
+    operations: [deploy, configure, automate]
+
+# CLI integration
+cli_commands:
+  discover:
+    command: "aiwg agent discover <query>"
+    description: "Find agents matching natural language query"
+    options:
+      - name: "--domain"
+        description: "Filter by domain"
+      - name: "--min-quality"
+        description: "Minimum quality score"
+      - name: "--top"
+        description: "Number of results"
+
+  index:
+    command: "aiwg agent index"
+    description: "Rebuild capability index"
+    options:
+      - name: "--force"
+        description: "Force full rebuild"
+
+  capabilities:
+    command: "aiwg agent capabilities <agent-name>"
+    description: "Show agent capabilities"
+
+# Storage
+storage:
+  index_path: ".aiwg/agent-discovery/capability-index.json"
+  embeddings_path: ".aiwg/agent-discovery/embeddings/"
+  query_cache_path: ".aiwg/agent-discovery/cache/"
+  query_log_path: ".aiwg/logs/discovery-queries.jsonl"
+
+# Performance targets (from REF-061 SOA principles)
+research_targets:
+  query_response_time: "<100ms"
+  index_build_time: "<5s for 100 agents"
+  relevance_accuracy: ">85% top-3 precision"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/references/REF-061-papazoglou-soa.md"
+    - "@.aiwg/research/gap-analysis.md"
+  implementation:
+    - "#185"
+  related:
+    - "@src/extensions/registry.ts"
+    - "@src/extensions/types.ts"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/uct-agent-selection.yaml"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/agent-pubsub.yaml"

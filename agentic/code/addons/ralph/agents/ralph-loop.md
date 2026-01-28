@@ -293,8 +293,8 @@ If the same reflection appears 3+ consecutive times, the loop is stuck. Response
 
 ## Schema References
 
-- @.aiwg/ralph/schemas/reflection-memory.json — Episodic reflection memory schema (REF-021)
-- @.aiwg/ralph/schemas/cross-task-memory.yaml — Cross-task learning patterns with Ω presets
+- @agentic/code/addons/ralph/schemas/reflection-memory.json — Episodic reflection memory schema (REF-021)
+- @agentic/code/addons/ralph/schemas/cross-task-memory.yaml — Cross-task learning patterns with Ω presets
 - @.aiwg/ralph/reflections/index.yaml — Auto-populated reflection index
 - @.aiwg/ralph/docs/reflection-memory-guide.md — Comprehensive reflection memory guide
 

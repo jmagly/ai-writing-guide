@@ -41,4 +41,4 @@ When invoked, analyze and report on corpus quality:
 
 - @.aiwg/research/docs/grade-assessment-guide.md - GRADE methodology
 - @agentic/code/frameworks/sdlc-complete/agents/quality-assessor.md - Quality Assessor
-- @.aiwg/research/schemas/quality-dimensions.yaml - Quality schema
+- @agentic/code/frameworks/sdlc-complete/schemas/research/quality-dimensions.yaml - Quality schema

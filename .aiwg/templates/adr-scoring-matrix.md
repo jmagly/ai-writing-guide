@@ -236,7 +236,7 @@ From REF-020 Tree-of-Thoughts (Yao et al., 2023):
 
 - @.aiwg/research/findings/REF-020-tree-of-thoughts.md - ToT methodology
 - @.claude/rules/reasoning-sections.md - Reasoning requirements
-- @.aiwg/flows/schemas/ensemble-review.yaml - Review patterns
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/ensemble-review.yaml - Review patterns
 - #164 - Implementation issue
 
 ---

@@ -24,7 +24,7 @@ When tasked with provenance operations:
    - Activity: `urn:aiwg:activity:<type>:<artifact-name>:<sequence>`
    - Agent: `urn:aiwg:agent:<agent-name>`
 6. Compute content hash (SHA-256)
-7. Create provenance record conforming to `@.aiwg/research/provenance/schemas/prov-record.yaml`
+7. Create provenance record conforming to `@agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml`
 8. Save to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
 9. Validate record against schema
 
@@ -144,7 +144,7 @@ Trace the full provenance chain for `.aiwg/architecture/adr-005-caching.md`
 │   └── derives from: .aiwg/intake/project-intake.md (derives_from)
 ├── derives from: .aiwg/architecture/software-architecture-doc.md (extends)
 │   └── derives from: .aiwg/requirements/supplementary-spec.md (implements)
-└── conforms to: .aiwg/research/provenance/schemas/prov-record.yaml (conforms_to)
+└── conforms to: agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml (conforms_to)
 ```
 
 ### Forward Trace (what derives from this)
@@ -167,7 +167,7 @@ Trace the full provenance chain for `.aiwg/architecture/adr-005-caching.md`
 
 ## References
 
-- @.aiwg/research/provenance/schemas/prov-record.yaml - PROV record schema
+- @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
 - @.aiwg/research/provenance/docs/provenance-guide.md - Detailed guidance
 - @.aiwg/research/provenance/examples/artifact-creation.yaml - Example record
 - @.claude/rules/provenance-tracking.md - Provenance tracking rules

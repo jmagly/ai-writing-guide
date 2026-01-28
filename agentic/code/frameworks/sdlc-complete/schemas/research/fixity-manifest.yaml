@@ -1,0 +1,231 @@
+# Fixity Manifest Schema
+# Based on REF-061 OAIS (Fixity Information)
+# Issue: #108
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/fixity-manifest/v1"
+title: "Fixity Manifest Schema"
+description: |
+  Checksum generation and verification for research PDFs and critical artifacts.
+  Implements OAIS Fixity Information to ensure integrity over time.
+
+type: object
+required:
+  - manifest_version
+  - created_at
+  - entries
+
+properties:
+  manifest_version:
+    type: string
+    const: "1.0"
+    description: "Schema version"
+
+  created_at:
+    type: string
+    format: date-time
+    description: "Manifest creation timestamp"
+
+  updated_at:
+    type: string
+    format: date-time
+    description: "Last update timestamp"
+
+  verified_at:
+    type: string
+    format: date-time
+    description: "Last full verification timestamp"
+
+  algorithm:
+    type: string
+    default: "sha256"
+    enum: ["sha256", "sha384", "sha512", "md5"]
+    description: "Hash algorithm used (SHA-256 recommended)"
+
+  entries:
+    type: array
+    items:
+      $ref: "#/$defs/FixityEntry"
+    description: "Artifact entries with checksums"
+
+  statistics:
+    type: object
+    properties:
+      total_entries:
+        type: integer
+      total_size_bytes:
+        type: integer
+      verified_count:
+        type: integer
+      failed_count:
+        type: integer
+      unverified_count:
+        type: integer
+    description: "Summary statistics"
+
+$defs:
+  FixityEntry:
+    type: object
+    required:
+      - path
+      - checksum
+      - size_bytes
+      - added_at
+    properties:
+      path:
+        type: string
+        description: "Relative path from repository root"
+
+      checksum:
+        type: string
+        pattern: "^[a-f0-9]{64}$"
+        description: "SHA-256 hash of file content"
+
+      size_bytes:
+        type: integer
+        minimum: 0
+        description: "File size in bytes"
+
+      added_at:
+        type: string
+        format: date-time
+        description: "When entry was added to manifest"
+
+      verified_at:
+        type: string
+        format: date-time
+        description: "Last successful verification"
+
+      verification_status:
+        type: string
+        enum:
+          - verified      # Checksum matches
+          - failed        # Checksum mismatch (corruption/tampering)
+          - pending       # Not yet verified
+          - missing       # File not found
+        default: pending
+        description: "Current verification status"
+
+      content_type:
+        type: string
+        enum:
+          - pdf           # Research paper PDFs
+          - schema        # YAML/JSON schemas
+          - template      # Document templates
+          - rule          # Agent rules
+          - artifact      # Other critical artifacts
+        description: "Type of content"
+
+      ref_id:
+        type: string
+        pattern: "^REF-[0-9]{3}$"
+        description: "Associated REF-XXX ID if applicable"
+
+      metadata:
+        type: object
+        properties:
+          title:
+            type: string
+          source_url:
+            type: string
+            format: uri
+          download_date:
+            type: string
+            format: date
+        description: "Additional metadata"
+
+      history:
+        type: array
+        items:
+          type: object
+          properties:
+            action:
+              type: string
+              enum: [added, verified, failed, replaced]
+            timestamp:
+              type: string
+              format: date-time
+            previous_checksum:
+              type: string
+            notes:
+              type: string
+        description: "Change history for audit"
+
+# Verification workflow
+verification_workflow:
+  trigger:
+    - on_access: false      # Verify when file is accessed
+    - on_commit: true       # Verify in pre-commit hook
+    - scheduled: "weekly"   # Scheduled verification
+
+  on_failure:
+    - log_to: ".aiwg/research/integrity-failures.log"
+    - notify: issue_comment
+    - quarantine: true      # Move to quarantine directory
+
+  recovery:
+    - check_backup: ".aiwg/research/backups/"
+    - attempt_redownload: true
+    - escalate_if_unrecoverable: true
+
+# Agent integration
+agent_protocol:
+  description: "How agents interact with fixity checking"
+
+  on_pdf_download:
+    - compute_checksum: sha256
+    - add_to_manifest: true
+    - verify_source: check_doi_match
+
+  on_artifact_create:
+    - add_critical_artifacts: true
+    - exclude_patterns:
+        - "*.log"
+        - "*.tmp"
+        - ".aiwg/working/**"
+
+  before_citation:
+    - verify_source_exists: true
+    - check_integrity: warn_on_fail
+
+# Example manifest
+examples:
+  - manifest_version: "1.0"
+    created_at: "2026-01-25T15:00:00Z"
+    updated_at: "2026-01-25T15:00:00Z"
+    algorithm: sha256
+    entries:
+      - path: ".aiwg/research/pdfs/REF-013-metagpt.pdf"
+        checksum: "a1b2c3d4e5f6...64chars..."
+        size_bytes: 1548923
+        added_at: "2026-01-20T10:00:00Z"
+        verified_at: "2026-01-25T15:00:00Z"
+        verification_status: verified
+        content_type: pdf
+        ref_id: "REF-013"
+        metadata:
+          title: "MetaGPT: Meta Programming for Multi-Agent Systems"
+          source_url: "https://arxiv.org/abs/2308.00352"
+          download_date: "2026-01-20"
+    statistics:
+      total_entries: 37
+      total_size_bytes: 45234567
+      verified_count: 37
+      failed_count: 0
+      unverified_count: 0
+
+# Storage location
+storage:
+  manifest_path: ".aiwg/research/fixity-manifest.json"
+  backup_path: ".aiwg/research/backups/fixity/"
+  failure_log: ".aiwg/research/integrity-failures.log"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-061-oais.md"
+  implementation:
+    - "#108"
+  related:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/research/frontmatter-schema.yaml"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"

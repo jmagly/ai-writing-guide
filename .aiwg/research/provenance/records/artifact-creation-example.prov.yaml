@@ -32,7 +32,7 @@ relationships:
 
   used:
     - activity: "urn:aiwg:activity:generation:artifact-creation-example:001"
-      entity: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       role: "schema_specification"
     - activity: "urn:aiwg:activity:generation:artifact-creation-example:001"
       entity: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
@@ -40,7 +40,7 @@ relationships:
 
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:.aiwg/research/provenance/examples/artifact-creation.yaml"
-      source: "urn:aiwg:artifact:.aiwg/research/provenance/schemas/prov-record.yaml"
+      source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
       derivation_type: "conforms_to"
       activity: "urn:aiwg:activity:generation:artifact-creation-example:001"
     - entity: "urn:aiwg:artifact:.aiwg/research/provenance/examples/artifact-creation.yaml"

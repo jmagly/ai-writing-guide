@@ -474,16 +474,16 @@ escalation_on_max: true  # Human takes over
 ## Schema Reference
 
 The executable feedback loop conforms to:
-- `@.aiwg/flows/schemas/executable-feedback.yaml` — Workflow schema
-- `@.aiwg/ralph/schemas/debug-memory.yaml` — Debug memory schema
-- `@.aiwg/ralph/schemas/actionable-feedback.yaml` — Feedback schema
-- `@.aiwg/ralph/schemas/iteration-analytics.yaml` — Analytics schema
+- `@agentic/code/frameworks/sdlc-complete/schemas/flows/executable-feedback.yaml` — Workflow schema
+- `@agentic/code/addons/ralph/schemas/debug-memory.yaml` — Debug memory schema
+- `@agentic/code/addons/ralph/schemas/actionable-feedback.yaml` — Feedback schema
+- `@agentic/code/addons/ralph/schemas/iteration-analytics.yaml` — Analytics schema
 
 ## References
 
 - @.aiwg/research/findings/REF-013-metagpt.md — MetaGPT research findings
 - @.claude/rules/executable-feedback.md — Executable feedback rules
-- @.aiwg/flows/schemas/executable-feedback.yaml — Workflow schema
-- @.aiwg/ralph/schemas/debug-memory.yaml — Debug memory schema
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/executable-feedback.yaml — Workflow schema
+- @agentic/code/addons/ralph/schemas/debug-memory.yaml — Debug memory schema
 - @.aiwg/ralph/docs/reflection-memory-guide.md — Related: Reflexion memory guide
 - #101 — Implementation issue

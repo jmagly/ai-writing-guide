@@ -1,0 +1,320 @@
+# Debug Provenance Schema
+# Based on REF-058 R-LAM Provenance-Assisted LLM
+# Issue: #246
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/debug-provenance/v1"
+title: "Debug Provenance Schema"
+description: |
+  Provenance-assisted debugging workflow that reduces debug time by 35-50%
+  through instant access to artifact derivation chains per REF-058.
+
+type: object
+required:
+  - version
+  - debug_contexts
+  - provenance_queries
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  debug_contexts:
+    $ref: "#/$defs/DebugContexts"
+
+  provenance_queries:
+    $ref: "#/$defs/ProvenanceQueries"
+
+$defs:
+  DebugContexts:
+    type: object
+    description: "Context building for debugging scenarios"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      research_backing:
+        type: object
+        properties:
+          source: { type: string, default: "REF-058" }
+          finding: { type: string, default: "Provenance tracking reduces debugging time by 35-50%" }
+          mechanism: { type: string, default: "Instant access to artifact derivation chains" }
+
+      context_types:
+        type: object
+        properties:
+          test_failure:
+            type: object
+            properties:
+              description: { type: string, default: "Analyze test failure with provenance chain" }
+              workflow:
+                type: array
+                items: { type: string }
+                default:
+                  - "Parse test failure output"
+                  - "Identify failing test file and line"
+                  - "Trace backward to source implementation"
+                  - "Trace further to requirement specification"
+                  - "Identify mismatches between requirement and implementation"
+                  - "Suggest fix based on provenance analysis"
+
+              context_schema:
+                type: object
+                properties:
+                  test_file: { type: string, description: "Path to failing test" }
+                  test_line: { type: integer, description: "Line number of failure" }
+                  source_file: { type: string, description: "Implementation file" }
+                  requirement: { type: string, description: "Related requirement artifact" }
+                  nfr_constraint: { type: string, description: "Relevant NFR constraint" }
+                  mismatch: { type: string, description: "Identified mismatch" }
+                  suggested_fix:
+                    type: object
+                    properties:
+                      file: { type: string }
+                      line: { type: integer }
+                      change: { type: string }
+                      reason: { type: string }
+
+          architecture_context:
+            type: object
+            properties:
+              description: { type: string, default: "Provide architectural context for code" }
+              workflow:
+                type: array
+                items: { type: string }
+                default:
+                  - "Identify file being examined"
+                  - "Find related Architecture Decision Records (ADRs)"
+                  - "Extract relevant NFRs"
+                  - "Summarize design rationale"
+                  - "Show recent change history"
+
+              context_schema:
+                type: object
+                properties:
+                  artifact: { type: string }
+                  adrs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        title: { type: string }
+                        rationale: { type: string }
+                        date: { type: string }
+                  nfrs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        category: { type: string }
+                        constraint: { type: string }
+                  change_history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date: { type: string }
+                        agent: { type: string }
+                        change: { type: string }
+                        reason: { type: string }
+
+          impact_analysis:
+            type: object
+            properties:
+              description: { type: string, default: "Analyze impact of changing an artifact" }
+              workflow:
+                type: array
+                items: { type: string }
+                default:
+                  - "Load artifact being considered for change"
+                  - "Trace forward to find all dependents"
+                  - "Categorize by type (code, test, doc)"
+                  - "Identify affected agents"
+                  - "Generate impact summary"
+
+              context_schema:
+                type: object
+                properties:
+                  artifact: { type: string }
+                  direct_dependencies:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path: { type: string }
+                        type: { type: string, enum: [code, test, doc, requirement] }
+                        relationship: { type: string }
+                  transitive_dependencies:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path: { type: string }
+                        type: { type: string }
+                        depth: { type: integer }
+                  affected_agents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        agent: { type: string }
+                        owns: { type: string }
+                  recommendation: { type: string }
+
+      time_savings:
+        type: object
+        properties:
+          target: { type: string, default: "35-50% reduction in debugging time" }
+          metrics:
+            type: array
+            items: { type: string }
+            default:
+              - "Average time to identify bug root cause (before/after)"
+              - "Average time to find relevant requirements (before/after)"
+              - "Number of incorrect fixes avoided via provenance"
+
+  ProvenanceQueries:
+    type: object
+    description: "Provenance query patterns for debugging"
+    properties:
+      backward_trace:
+        type: object
+        properties:
+          description: { type: string, default: "Find origin artifacts for given target" }
+          query_types:
+            type: array
+            items: { type: string }
+            default:
+              - "What requirement does this code implement?"
+              - "What ADR explains this design choice?"
+              - "What NFR constrains this behavior?"
+              - "When was this code created and by whom?"
+
+      forward_trace:
+        type: object
+        properties:
+          description: { type: string, default: "Find dependent artifacts for given source" }
+          query_types:
+            type: array
+            items: { type: string }
+            default:
+              - "What code implements this requirement?"
+              - "What tests cover this implementation?"
+              - "What documentation describes this feature?"
+              - "Who would be affected by changing this?"
+
+      mismatch_detection:
+        type: object
+        properties:
+          description: { type: string, default: "Find inconsistencies in derivation chain" }
+          checks:
+            type: array
+            items: { type: string }
+            default:
+              - "Requirement specifies X, but implementation does Y"
+              - "NFR constraint violated by implementation"
+              - "Test expects behavior inconsistent with requirement"
+              - "Documentation out of sync with implementation"
+
+# CLI commands
+cli_commands:
+  debug:
+    command: "aiwg debug <path> [line]"
+    description: "Debug artifact with provenance context"
+    options:
+      - name: "--line"
+        short: "-l"
+        description: "Specific line number for context"
+      - name: "--impact"
+        short: "-i"
+        description: "Show impact analysis instead of debug context"
+      - name: "--format"
+        short: "-f"
+        description: "Output format (text, json, mermaid)"
+        default: "text"
+
+# Agent protocol
+agent_protocol:
+  build_debug_context:
+    description: "Build debugging context for artifact"
+    steps:
+      - parse_error_or_artifact_path
+      - if_test_failure:
+          - extract_test_file_and_line
+          - trace_backward_to_source
+          - trace_backward_to_requirement
+          - trace_to_nfr_constraints
+          - identify_mismatches
+          - generate_fix_suggestions
+      - if_code_context:
+          - find_related_adrs
+          - find_related_nfrs
+          - get_change_history
+          - summarize_design_rationale
+      - if_impact_analysis:
+          - trace_forward_all_dependents
+          - categorize_by_type
+          - identify_affected_agents
+          - generate_impact_summary
+      - format_output
+      - return_debug_context
+
+  suggest_fix:
+    description: "Generate fix suggestion based on provenance"
+    steps:
+      - load_provenance_chain
+      - identify_mismatch_location
+      - extract_correct_specification
+      - generate_code_change
+      - validate_against_requirements
+      - return_suggestion
+
+# Storage
+storage:
+  debug_sessions: ".aiwg/logs/debug-sessions/"
+  provenance_cache: ".aiwg/provenance/debug-cache.json"
+
+# Example debug session
+example_debug_session: |
+  $ aiwg debug test/unit/auth/login.test.ts:42
+
+  Analyzing failure context for: test/unit/auth/login.test.ts:42
+
+  Test: "should reject invalid password"
+  Source: @src/auth/login-service.ts
+
+  Provenance chain:
+    Problem Statement (.aiwg/intake/solution-profile.md)
+      ↓ derived-from
+    User Story (.aiwg/requirements/user-stories.md#US-003)
+      ↓ elaborated-to
+    Use Case (.aiwg/requirements/use-cases/UC-001.md)
+      ↓ specified-in
+    NFR Constraint (.aiwg/requirements/nfr-modules/security.md#password-policy)
+      "Passwords MUST be at least 12 characters" ← **Mismatch!**
+      ↓ implemented-by
+    Implementation (src/auth/login-service.ts:validatePassword)
+      Current: minLength = 8  ← **Bug found**
+
+  Suggested fix:
+    File: src/auth/login-service.ts
+    Line: 25
+    Change: const minLength = 8; → const minLength = 12;
+    Reason: NFR-Security requires 12 character minimum
+
+  Time saved: ~12 minutes
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-058-r-lam.md"
+    - "@.aiwg/research/findings/REF-062-w3c-prov.md"
+  implementation:
+    - "#246"
+  related:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/provenance-framework.yaml"
+    - "@.claude/rules/mention-wiring.md"
