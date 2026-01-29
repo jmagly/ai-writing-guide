@@ -1,0 +1,1157 @@
+# Regression Metrics Dashboard Schema
+# Based on REF-013 MetaGPT
+# Finding: Executable feedback and metrics enable continuous quality improvement
+# Issue: #101
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/regression-dashboard/v1"
+title: "Regression Metrics Dashboard Schema"
+description: |
+  Schema for regression metrics dashboard that tracks and visualizes regression
+  testing health. Integrates with regression.yaml to provide actionable insights
+  for Metrics Analyst agent.
+
+  Key principles:
+  - Real-time visibility into regression health
+  - Trend analysis to detect quality degradation
+  - Actionable alerts for intervention
+  - Component-level breakdown for targeted improvement
+
+type: object
+required:
+  - dashboard_config
+  - metrics_definitions
+  - alerts_config
+  - data_sources
+
+properties:
+  dashboard_config:
+    $ref: "#/$defs/DashboardConfig"
+    description: "Dashboard layout and configuration"
+
+  metrics_definitions:
+    $ref: "#/$defs/MetricsDefinitions"
+    description: "Definitions for all tracked metrics"
+
+  alerts_config:
+    $ref: "#/$defs/AlertsConfig"
+    description: "Alert thresholds and notification settings"
+
+  data_sources:
+    $ref: "#/$defs/DataSources"
+    description: "Where to pull data from"
+
+  current_snapshot:
+    $ref: "#/$defs/DashboardSnapshot"
+    description: "Current dashboard state"
+
+$defs:
+  DashboardConfig:
+    type: object
+    required:
+      - layout
+      - refresh_rate
+      - time_range
+    properties:
+      layout:
+        type: object
+        properties:
+          sections:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  enum:
+                    - summary_cards
+                    - trend_charts
+                    - heatmap
+                    - leaderboard
+                    - recent_regressions
+                    - alert_banner
+                order:
+                  type: integer
+                  description: "Display order (1 = top)"
+                visible:
+                  type: boolean
+                  default: true
+                size:
+                  type: string
+                  enum: [small, medium, large, full_width]
+            description: "Dashboard sections in display order"
+
+          theme:
+            type: string
+            enum: [light, dark, auto]
+            default: auto
+
+          compact_mode:
+            type: boolean
+            default: false
+            description: "Use compact layout for more data density"
+
+      refresh_rate:
+        type: object
+        properties:
+          auto_refresh:
+            type: boolean
+            default: true
+          interval_seconds:
+            type: integer
+            default: 300
+            minimum: 30
+            description: "Auto-refresh interval"
+          real_time_metrics:
+            type: array
+            items:
+              type: string
+            description: "Metrics that update in real-time (e.g., active regressions)"
+
+      time_range:
+        type: object
+        properties:
+          default_range:
+            type: string
+            enum:
+              - last_24h
+              - last_week
+              - last_sprint
+              - last_month
+              - last_quarter
+              - custom
+            default: last_week
+
+          custom_range:
+            type: object
+            properties:
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+
+          comparison_mode:
+            type: boolean
+            default: true
+            description: "Show comparison to previous period"
+
+          granularity:
+            type: string
+            enum: [hourly, daily, weekly, sprint]
+            default: daily
+
+  MetricsDefinitions:
+    type: object
+    required:
+      - regression_rate
+      - mttd
+      - mttf
+      - escape_rate
+      - recurrence_rate
+      - coverage_by_type
+    properties:
+      regression_rate:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Regressions detected per time period"
+
+      mttd:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Mean Time to Detect (hours)"
+
+      mttf:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Mean Time to Fix (hours)"
+
+      escape_rate:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Percentage of regressions reaching production"
+
+      recurrence_rate:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Percentage of regressions recurring"
+
+      coverage_by_type:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Test coverage breakdown by regression type"
+
+      velocity_impact:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Regression impact on sprint velocity"
+
+      false_positive_rate:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Percentage of regression detections that were false positives"
+
+      test_effectiveness:
+        $ref: "#/$defs/MetricDefinition"
+        description: "Percentage of regressions caught by automated tests"
+
+  MetricDefinition:
+    type: object
+    required:
+      - metric_id
+      - display_name
+      - unit
+      - calculation
+    properties:
+      metric_id:
+        type: string
+        description: "Unique identifier for this metric"
+
+      display_name:
+        type: string
+        description: "Human-readable name"
+
+      description:
+        type: string
+        description: "Explanation of what this metric measures"
+
+      unit:
+        type: string
+        enum:
+          - count
+          - percentage
+          - hours
+          - days
+          - rate
+          - ratio
+        description: "Unit of measurement"
+
+      calculation:
+        type: object
+        required:
+          - formula
+        properties:
+          formula:
+            type: string
+            description: "Calculation formula in plain text"
+            examples:
+              - "total_regressions / total_commits"
+              - "(detection_timestamp - introduction_timestamp) / 3600000"
+              - "(production_regressions / total_regressions) * 100"
+
+          aggregation:
+            type: string
+            enum: [sum, average, median, p95, p99, count, max, min]
+            default: average
+
+          filters:
+            type: object
+            properties:
+              severity:
+                type: array
+                items:
+                  type: string
+                  enum: [critical, high, medium, low]
+              status:
+                type: array
+                items:
+                  type: string
+              regression_type:
+                type: array
+                items:
+                  type: string
+
+      thresholds:
+        type: object
+        properties:
+          excellent:
+            type: number
+            description: "Value considered excellent (green)"
+          good:
+            type: number
+            description: "Value considered good (light green)"
+          acceptable:
+            type: number
+            description: "Value considered acceptable (yellow)"
+          concerning:
+            type: number
+            description: "Value considered concerning (orange)"
+          critical:
+            type: number
+            description: "Value considered critical (red)"
+
+      trend:
+        type: object
+        properties:
+          direction:
+            type: string
+            enum: [improving, stable, degrading]
+          change_percent:
+            type: number
+            description: "Percentage change from previous period"
+          previous_value:
+            type: number
+
+      visualization:
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+              - number_card
+              - line_chart
+              - bar_chart
+              - heatmap
+              - pie_chart
+              - gauge
+            default: number_card
+          color_scheme:
+            type: string
+            enum: [traffic_light, gradient, monochrome]
+            default: traffic_light
+
+  AlertsConfig:
+    type: object
+    required:
+      - thresholds
+      - notification_channels
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      thresholds:
+        type: object
+        properties:
+          regression_rate:
+            type: object
+            properties:
+              critical:
+                type: number
+                default: 10
+                description: "Regressions per week threshold"
+              high:
+                type: number
+                default: 5
+
+          mttd:
+            type: object
+            properties:
+              critical:
+                type: number
+                default: 72
+                description: "Hours threshold"
+              high:
+                type: number
+                default: 48
+
+          mttf:
+            type: object
+            properties:
+              critical:
+                type: number
+                default: 120
+                description: "Hours threshold"
+              high:
+                type: number
+                default: 72
+
+          escape_rate:
+            type: object
+            properties:
+              critical:
+                type: number
+                default: 10
+                description: "Percentage threshold"
+              high:
+                type: number
+                default: 5
+
+          recurrence_rate:
+            type: object
+            properties:
+              critical:
+                type: number
+                default: 5
+                description: "Percentage threshold"
+              high:
+                type: number
+                default: 2
+
+          active_critical_regressions:
+            type: object
+            properties:
+              critical:
+                type: number
+                default: 1
+                description: "Count threshold"
+
+      notification_channels:
+        type: array
+        items:
+          type: object
+          properties:
+            channel:
+              type: string
+              enum:
+                - dashboard_banner
+                - email
+                - slack
+                - issue_comment
+                - webhook
+            severity_levels:
+              type: array
+              items:
+                type: string
+                enum: [critical, high, medium, low]
+              default: [critical, high]
+            config:
+              type: object
+              description: "Channel-specific configuration"
+
+      escalation:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          rules:
+            type: array
+            items:
+              type: object
+              properties:
+                condition:
+                  type: string
+                  description: "Condition that triggers escalation"
+                  examples:
+                    - "critical_regression_open > 24h"
+                    - "mttf_weekly > 120h"
+                    - "escape_rate > 10%"
+                escalate_to:
+                  type: array
+                  items:
+                    type: string
+                  description: "Who to escalate to"
+                notification_template:
+                  type: string
+
+      alert_suppression:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          cooldown_minutes:
+            type: integer
+            default: 60
+            description: "Minimum time between duplicate alerts"
+
+  DataSources:
+    type: object
+    required:
+      - regression_records
+    properties:
+      regression_records:
+        type: object
+        properties:
+          path:
+            type: string
+            default: ".aiwg/testing/regressions/"
+            description: "Path to regression records"
+          schema:
+            type: string
+            default: "@agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml"
+
+      git_history:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          repository_path:
+            type: string
+            default: "."
+          commit_range:
+            type: string
+            description: "Git commit range to analyze"
+
+      ci_cd_pipeline:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+          api_endpoint:
+            type: string
+          metrics:
+            type: array
+            items:
+              type: string
+            description: "Metrics to pull from CI/CD"
+            examples:
+              - "test_pass_rate"
+              - "build_duration"
+              - "pipeline_failures"
+
+      test_results:
+        type: object
+        properties:
+          path:
+            type: string
+            default: ".aiwg/testing/results/"
+          format:
+            type: string
+            enum: [junit, json, tap]
+            default: junit
+
+      issue_tracker:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: false
+          api_endpoint:
+            type: string
+          label_filter:
+            type: array
+            items:
+              type: string
+            default: ["regression", "bug"]
+
+      production_monitoring:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: false
+          api_endpoint:
+            type: string
+          metrics:
+            type: array
+            items:
+              type: string
+
+  DashboardSnapshot:
+    type: object
+    description: "Current state of the dashboard"
+    properties:
+      snapshot_id:
+        type: string
+        format: uuid
+
+      generated_at:
+        type: string
+        format: date-time
+
+      time_period:
+        type: object
+        properties:
+          start:
+            type: string
+            format: date-time
+          end:
+            type: string
+            format: date-time
+          label:
+            type: string
+            description: "Human-readable label (e.g., 'Last Week')"
+
+      summary_cards:
+        $ref: "#/$defs/SummaryCards"
+
+      trend_charts:
+        $ref: "#/$defs/TrendCharts"
+
+      heatmap:
+        $ref: "#/$defs/ComponentHeatmap"
+
+      leaderboard:
+        $ref: "#/$defs/ProblemAreaLeaderboard"
+
+      recent_regressions:
+        $ref: "#/$defs/RecentRegressions"
+
+      alerts:
+        type: array
+        items:
+          $ref: "#/$defs/Alert"
+
+  SummaryCards:
+    type: object
+    description: "Key metrics displayed as summary cards"
+    properties:
+      regression_rate:
+        $ref: "#/$defs/MetricCard"
+
+      mttd:
+        $ref: "#/$defs/MetricCard"
+
+      mttf:
+        $ref: "#/$defs/MetricCard"
+
+      escape_rate:
+        $ref: "#/$defs/MetricCard"
+
+      active_regressions:
+        $ref: "#/$defs/MetricCard"
+
+      recurrence_rate:
+        $ref: "#/$defs/MetricCard"
+
+  MetricCard:
+    type: object
+    properties:
+      value:
+        type: number
+        description: "Current value"
+
+      unit:
+        type: string
+
+      trend:
+        type: object
+        properties:
+          direction:
+            type: string
+            enum: [up, down, stable]
+          change_percent:
+            type: number
+          previous_value:
+            type: number
+
+      status:
+        type: string
+        enum: [excellent, good, acceptable, concerning, critical]
+        description: "Status based on thresholds"
+
+      sparkline:
+        type: array
+        items:
+          type: number
+        description: "Mini chart data for last N periods"
+
+  TrendCharts:
+    type: object
+    description: "Time-series trend visualizations"
+    properties:
+      regression_rate_over_time:
+        $ref: "#/$defs/TimeSeriesData"
+
+      mttd_over_time:
+        $ref: "#/$defs/TimeSeriesData"
+
+      mttf_over_time:
+        $ref: "#/$defs/TimeSeriesData"
+
+      severity_distribution:
+        $ref: "#/$defs/TimeSeriesData"
+
+      type_distribution:
+        $ref: "#/$defs/TimeSeriesData"
+
+  TimeSeriesData:
+    type: object
+    properties:
+      data_points:
+        type: array
+        items:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            value:
+              type: number
+            label:
+              type: string
+
+      comparison_data:
+        type: array
+        items:
+          type: object
+        description: "Data from previous period for comparison"
+
+      annotations:
+        type: array
+        items:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            label:
+              type: string
+            type:
+              type: string
+              enum: [release, incident, milestone]
+        description: "Notable events marked on chart"
+
+  ComponentHeatmap:
+    type: object
+    description: "Heatmap showing which components have most regressions"
+    properties:
+      components:
+        type: array
+        items:
+          type: object
+          required:
+            - component_name
+            - regression_count
+          properties:
+            component_name:
+              type: string
+              description: "Component or module name"
+
+            regression_count:
+              type: integer
+              description: "Number of regressions in this component"
+
+            severity_breakdown:
+              type: object
+              properties:
+                critical:
+                  type: integer
+                high:
+                  type: integer
+                medium:
+                  type: integer
+                low:
+                  type: integer
+
+            trend:
+              type: string
+              enum: [improving, stable, degrading]
+
+            color_intensity:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: "Heat intensity (0 = cold, 1 = hot)"
+
+      layout:
+        type: string
+        enum: [grid, treemap, sunburst]
+        default: grid
+
+  ProblemAreaLeaderboard:
+    type: object
+    description: "Top problematic areas ranked by regression frequency"
+    properties:
+      ranking_metric:
+        type: string
+        enum:
+          - regression_count
+          - severity_weighted_count
+          - mttf
+          - recurrence_rate
+        default: severity_weighted_count
+
+      top_areas:
+        type: array
+        items:
+          type: object
+          required:
+            - rank
+            - area
+            - score
+          properties:
+            rank:
+              type: integer
+              minimum: 1
+
+            area:
+              type: string
+              description: "Component, module, or feature area"
+
+            score:
+              type: number
+              description: "Calculated score based on ranking metric"
+
+            regression_count:
+              type: integer
+
+            critical_count:
+              type: integer
+
+            average_mttf:
+              type: number
+              description: "Average time to fix (hours)"
+
+            recurrence_count:
+              type: integer
+
+            trend:
+              type: string
+              enum: [improving, stable, degrading]
+
+            recommended_actions:
+              type: array
+              items:
+                type: string
+              description: "Suggested improvements for this area"
+
+      max_displayed:
+        type: integer
+        default: 10
+        description: "Maximum number of areas to show"
+
+  RecentRegressions:
+    type: object
+    description: "List of recent regression detections"
+    properties:
+      regressions:
+        type: array
+        items:
+          type: object
+          required:
+            - regression_id
+            - type
+            - severity
+            - status
+            - detected_at
+          properties:
+            regression_id:
+              type: string
+
+            type:
+              type: string
+
+            severity:
+              type: string
+
+            status:
+              type: string
+
+            detected_at:
+              type: string
+              format: date-time
+
+            age_hours:
+              type: number
+              description: "Hours since detection"
+
+            component:
+              type: string
+
+            introduced_by:
+              type: object
+              properties:
+                commit:
+                  type: string
+                author:
+                  type: string
+
+            link:
+              type: string
+              description: "Link to full regression record"
+
+      max_displayed:
+        type: integer
+        default: 20
+
+      filters:
+        type: object
+        properties:
+          severity:
+            type: array
+            items:
+              type: string
+          status:
+            type: array
+            items:
+              type: string
+          time_range:
+            type: string
+
+  Alert:
+    type: object
+    required:
+      - alert_id
+      - severity
+      - message
+      - triggered_at
+    properties:
+      alert_id:
+        type: string
+        format: uuid
+
+      severity:
+        type: string
+        enum: [critical, high, medium, low]
+
+      message:
+        type: string
+        description: "Alert message"
+
+      triggered_at:
+        type: string
+        format: date-time
+
+      metric:
+        type: string
+        description: "Metric that triggered the alert"
+
+      current_value:
+        type: number
+
+      threshold_value:
+        type: number
+
+      recommended_action:
+        type: string
+        description: "Suggested remediation"
+
+      status:
+        type: string
+        enum: [active, acknowledged, resolved, suppressed]
+        default: active
+
+      acknowledged_by:
+        type: string
+
+      acknowledged_at:
+        type: string
+        format: date-time
+
+# Protocol for Dashboard Usage
+#
+# 1. DATA COLLECTION
+#    - Pull regression records from .aiwg/testing/regressions/
+#    - Pull test results from CI/CD pipeline
+#    - Pull git commit history
+#    - Optional: Pull production monitoring data
+#
+# 2. METRIC CALCULATION
+#    - Calculate all defined metrics per formulas
+#    - Apply filters and aggregations
+#    - Compute trends vs previous period
+#    - Classify status based on thresholds
+#
+# 3. VISUALIZATION GENERATION
+#    - Render summary cards with current values and trends
+#    - Generate trend charts with time-series data
+#    - Build component heatmap
+#    - Compile problem area leaderboard
+#    - List recent regressions
+#
+# 4. ALERT EVALUATION
+#    - Check metric values against alert thresholds
+#    - Generate alerts for threshold violations
+#    - Apply suppression rules
+#    - Send notifications via configured channels
+#
+# 5. DASHBOARD REFRESH
+#    - Auto-refresh at configured interval
+#    - On-demand refresh via manual trigger
+#    - Real-time updates for critical metrics
+#
+# 6. ACTION WORKFLOW
+#    - User clicks metric for drill-down
+#    - User investigates regression from recent list
+#    - User acknowledges alerts
+#    - User exports data for reporting
+
+# Integration with Metrics Analyst Agent
+#
+# The Metrics Analyst agent (@.claude/agents/metrics-analyst.md):
+# - Monitors this dashboard for threshold violations
+# - Generates periodic regression reports
+# - Identifies trends requiring intervention
+# - Recommends process improvements based on metrics
+# - Escalates critical issues to relevant agents
+
+# Metrics Formulas
+#
+# regression_rate = total_regressions / time_period_commits
+# mttd = avg(detection_timestamp - introduction_timestamp) in hours
+# mttf = avg(fix_timestamp - detection_timestamp) in hours
+# escape_rate = (production_regressions / total_regressions) * 100
+# recurrence_rate = (recurring_regressions / total_regressions) * 100
+# coverage_by_type = count_by_type / total_regressions * 100
+# velocity_impact = (story_points_lost_to_regressions / total_story_points) * 100
+# false_positive_rate = (false_positives / total_detections) * 100
+# test_effectiveness = (automated_detections / total_detections) * 100
+
+# Threshold Recommendations
+#
+# | Metric              | Excellent | Good | Acceptable | Concerning | Critical |
+# |---------------------|-----------|------|------------|------------|----------|
+# | regression_rate     | <1/wk     | <3   | <5         | <10        | >=10     |
+# | mttd (hours)        | <12       | <24  | <48        | <72        | >=72     |
+# | mttf (hours)        | <24       | <48  | <72        | <120       | >=120    |
+# | escape_rate (%)     | <1        | <3   | <5         | <10        | >=10     |
+# | recurrence_rate (%) | 0         | <1   | <2         | <5         | >=5      |
+# | test_effectiveness  | >95       | >90  | >80        | >70        | <=70     |
+
+# Examples
+examples:
+  weekly_dashboard:
+    dashboard_config:
+      layout:
+        sections:
+          - id: alert_banner
+            order: 1
+            visible: true
+            size: full_width
+          - id: summary_cards
+            order: 2
+            visible: true
+            size: full_width
+          - id: trend_charts
+            order: 3
+            visible: true
+            size: large
+          - id: heatmap
+            order: 4
+            visible: true
+            size: medium
+          - id: leaderboard
+            order: 5
+            visible: true
+            size: medium
+          - id: recent_regressions
+            order: 6
+            visible: true
+            size: full_width
+      refresh_rate:
+        auto_refresh: true
+        interval_seconds: 300
+      time_range:
+        default_range: last_week
+        comparison_mode: true
+
+    metrics_definitions:
+      regression_rate:
+        metric_id: "regression_rate"
+        display_name: "Regression Rate"
+        description: "Number of regressions detected per week"
+        unit: rate
+        calculation:
+          formula: "total_regressions / weeks_in_period"
+          aggregation: average
+        thresholds:
+          excellent: 1
+          good: 3
+          acceptable: 5
+          concerning: 10
+          critical: 15
+        visualization:
+          type: number_card
+          color_scheme: traffic_light
+
+    alerts_config:
+      enabled: true
+      thresholds:
+        regression_rate:
+          critical: 10
+          high: 5
+        mttd:
+          critical: 72
+          high: 48
+        mttf:
+          critical: 120
+          high: 72
+        escape_rate:
+          critical: 10
+          high: 5
+        active_critical_regressions:
+          critical: 1
+      notification_channels:
+        - channel: dashboard_banner
+          severity_levels: [critical, high]
+        - channel: slack
+          severity_levels: [critical]
+          config:
+            webhook_url: "https://hooks.slack.com/services/..."
+            channel: "#engineering-alerts"
+
+    data_sources:
+      regression_records:
+        path: ".aiwg/testing/regressions/"
+        schema: "@agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml"
+      git_history:
+        enabled: true
+        repository_path: "."
+      ci_cd_pipeline:
+        enabled: true
+        api_endpoint: "https://ci.example.com/api"
+      test_results:
+        path: ".aiwg/testing/results/"
+        format: junit
+
+  current_snapshot_example:
+    snapshot_id: "snapshot-2026-01-25-143000"
+    generated_at: "2026-01-25T14:30:00Z"
+    time_period:
+      start: "2026-01-18T00:00:00Z"
+      end: "2026-01-25T00:00:00Z"
+      label: "Last Week (Jan 18-25)"
+    summary_cards:
+      regression_rate:
+        value: 3
+        unit: "per week"
+        trend:
+          direction: down
+          change_percent: -25
+          previous_value: 4
+        status: good
+      mttd:
+        value: 18
+        unit: "hours"
+        trend:
+          direction: down
+          change_percent: -10
+          previous_value: 20
+        status: excellent
+      mttf:
+        value: 36
+        unit: "hours"
+        trend:
+          direction: down
+          change_percent: -20
+          previous_value: 45
+        status: good
+      escape_rate:
+        value: 2
+        unit: "percent"
+        trend:
+          direction: stable
+          change_percent: 0
+          previous_value: 2
+        status: good
+      active_regressions:
+        value: 2
+        unit: "count"
+        trend:
+          direction: down
+          change_percent: -50
+          previous_value: 4
+        status: acceptable
+    alerts:
+      - alert_id: "alert-001"
+        severity: high
+        message: "MTTF for security regressions exceeds 72h threshold"
+        triggered_at: "2026-01-25T10:00:00Z"
+        metric: "mttf"
+        current_value: 84
+        threshold_value: 72
+        recommended_action: "Prioritize security regression fixes. Consider dedicated security engineer assignment."
+        status: active
+
+# Validation Checklist
+#
+# Before deploying dashboard:
+# - [ ] All data sources configured and accessible
+# - [ ] Metric formulas validated against test data
+# - [ ] Thresholds calibrated to project context
+# - [ ] Alert channels tested
+# - [ ] Dashboard sections render correctly
+# - [ ] Auto-refresh working
+# - [ ] Drill-down navigation functional
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+  schemas:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml"
+    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"
+  agents:
+    - "@.claude/agents/metrics-analyst.md"
+  rules:
+    - "@.claude/rules/executable-feedback.md"
+  implementation:
+    - "#101"

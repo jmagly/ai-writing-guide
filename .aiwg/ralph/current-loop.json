@@ -2,44 +2,53 @@
   "id": "ralph-regression-testing-2026-01-28",
   "task": "Implement comprehensive regression testing capability for AIWG (Issue #254)",
   "completion_criteria": [
-    "All files created: regression.yaml schema AND regression-check.md command AND regression-analyst.md agent AND templates AND skills"
+    "Phase 1: Core infrastructure (schema, command, agent, templates, skills)",
+    "Phase 2: SDLC integration (issue-create, pr-review, deploy, incident-response)",
+    "Phase 3: Advanced features (git bisect, performance, API contract)",
+    "Phase 4: Automation (CI/CD hooks, auto-baseline, cross-task learning)"
   ],
   "max_iterations": 10,
-  "current_iteration": 1,
-  "status": "completed",
+  "current_iteration": 2,
+  "status": "in_progress",
   "started_at": "2026-01-28T23:05:00Z",
-  "completed_at": "2026-01-28T23:12:00Z",
+  "phases_completed": ["phase-1", "phase-2"],
+  "phases_pending": ["phase-3", "phase-4"],
   "metrics": {
-    "files_created": 9,
-    "parallel_agents_used": 5,
-    "total_size_kb": 140
+    "phase_1": {
+      "files_created": 9,
+      "parallel_agents_used": 5,
+      "total_size_kb": 140,
+      "commit": "bf13b15"
+    },
+    "phase_2": {
+      "commands_enhanced": 4,
+      "parallel_agents_used": 4,
+      "lines_added": 1504,
+      "commit": "ee639a9"
+    }
   },
   "implementations": {
-    "schema": "agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml (23KB)",
-    "command": "agentic/code/frameworks/sdlc-complete/commands/regression-check.md (11KB)",
-    "agent": "agentic/code/frameworks/sdlc-complete/agents/regression-analyst.md (37KB)",
-    "templates": [
-      "agentic/code/frameworks/sdlc-complete/templates/test/regression-report.md (15KB)",
-      "agentic/code/frameworks/sdlc-complete/templates/test/regression-register.md (15KB)"
-    ],
-    "skills": [
-      "agentic/code/frameworks/sdlc-complete/skills/regression-bisect/SKILL.md",
-      "agentic/code/frameworks/sdlc-complete/skills/regression-baseline/SKILL.md",
-      "agentic/code/frameworks/sdlc-complete/skills/regression-metrics/SKILL.md",
-      "agentic/code/frameworks/sdlc-complete/skills/regression-report/SKILL.md"
-    ]
+    "phase_1": {
+      "schema": "agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml",
+      "command": "agentic/code/frameworks/sdlc-complete/commands/regression-check.md",
+      "agent": "agentic/code/frameworks/sdlc-complete/agents/regression-analyst.md",
+      "templates": [
+        "agentic/code/frameworks/sdlc-complete/templates/test/regression-report.md",
+        "agentic/code/frameworks/sdlc-complete/templates/test/regression-register.md"
+      ],
+      "skills": [
+        "agentic/code/frameworks/sdlc-complete/skills/regression-bisect/SKILL.md",
+        "agentic/code/frameworks/sdlc-complete/skills/regression-baseline/SKILL.md",
+        "agentic/code/frameworks/sdlc-complete/skills/regression-metrics/SKILL.md",
+        "agentic/code/frameworks/sdlc-complete/skills/regression-report/SKILL.md"
+      ]
+    },
+    "phase_2": {
+      "issue-create": "Auto-detect regression for bugs, priority escalation",
+      "pr-review": "Regression gate, block merge on regression",
+      "flow-deploy-to-production": "Staging + production gates, auto-rollback",
+      "flow-incident-response": "Regression triage, bisect, rollback vs hotfix"
+    }
   },
-  "agents_used": [
-    "API Designer - Created regression schema",
-    "Software Implementer - Created regression-check command",
-    "Architecture Designer - Created regression-analyst agent",
-    "Technical Writer - Created templates",
-    "Test Engineer - Created 4 skills"
-  ],
-  "learnings": [
-    "Parallel agent dispatch for independent artifacts maximizes throughput",
-    "All 5 agents completed in single iteration",
-    "Existing patterns (test-engineer, mutation-analyst) provided clear templates"
-  ],
   "issue": "#254"
 }
