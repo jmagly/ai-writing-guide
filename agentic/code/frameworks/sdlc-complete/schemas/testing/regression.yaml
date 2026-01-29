@@ -1,0 +1,769 @@
+# Regression Testing Schema
+# Based on REF-013 MetaGPT
+# Finding: Executable feedback prevents cascading regressions
+# Issue: #101
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/regression-testing/v1"
+title: "Regression Testing Schema"
+description: |
+  Schema for tracking and managing regression test cases that prevent
+  previously fixed bugs from reoccurring. Implements MetaGPT's executable
+  feedback pattern extended to regression prevention.
+
+  Key principles:
+  - Every bug fix generates a regression test
+  - Regression tests are never removed
+  - Baselines are preserved for comparison
+  - Failures trigger immediate investigation
+
+type: object
+required:
+  - regression_id
+  - record
+  - baseline
+
+properties:
+  regression_id:
+    type: string
+    pattern: "^REG-[0-9]{4}$"
+    description: "Unique regression test identifier (REG-XXXX format)"
+    examples:
+      - "REG-0001"
+      - "REG-0042"
+
+  record:
+    $ref: "#/$defs/RegressionRecord"
+    description: "The regression test record"
+
+  baseline:
+    $ref: "#/$defs/RegressionBaseline"
+    description: "Baseline snapshot for comparison"
+
+  report:
+    $ref: "#/$defs/RegressionReport"
+    description: "Generated regression report"
+
+  metadata:
+    type: object
+    properties:
+      created_at:
+        type: string
+        format: date-time
+      created_by:
+        type: string
+        description: "Agent or human who created this record"
+      last_updated:
+        type: string
+        format: date-time
+      tags:
+        type: array
+        items:
+          type: string
+        description: "Tags for categorization"
+
+$defs:
+  RegressionRecord:
+    type: object
+    required:
+      - id
+      - type
+      - severity
+      - status
+      - introduced_by
+      - baseline
+      - current
+      - impact_analysis
+    properties:
+      id:
+        type: string
+        pattern: "^REG-[0-9]{4}$"
+        description: "Regression identifier matching parent"
+
+      type:
+        type: string
+        enum:
+          - functional       # Functional behavior changed
+          - performance      # Performance degraded
+          - behavioral       # Behavioral change detected
+          - visual           # UI/visual change detected
+          - security         # Security regression
+          - api              # API contract changed
+          - data             # Data format or schema changed
+        description: "Type of regression detected"
+
+      severity:
+        type: string
+        enum:
+          - critical    # System unusable or security breach
+          - high        # Major functionality broken
+          - medium      # Partial functionality broken
+          - low         # Minor issue or edge case
+        description: "Severity of the regression"
+
+      status:
+        type: string
+        enum:
+          - detected    # Regression detected, not yet investigated
+          - confirmed   # Regression confirmed as actual issue
+          - analyzing   # Root cause analysis in progress
+          - fixing      # Fix in development
+          - fixed       # Fix implemented and tested
+          - verified    # Fix verified in production
+          - false_positive  # Not actually a regression
+          - wont_fix    # Acknowledged but won't fix
+        description: "Current status of the regression"
+
+      introduced_by:
+        type: object
+        required: [commit, timestamp]
+        properties:
+          commit:
+            type: string
+            description: "Git commit hash that introduced the regression"
+          timestamp:
+            type: string
+            format: date-time
+          author:
+            type: string
+            description: "Author of the commit"
+          pull_request:
+            type: string
+            description: "PR number if applicable"
+          agent:
+            type: string
+            description: "Agent that generated the code if applicable"
+
+      baseline:
+        type: object
+        required: [snapshot_id, timestamp]
+        properties:
+          snapshot_id:
+            type: string
+            description: "Reference to baseline snapshot"
+          timestamp:
+            type: string
+            format: date-time
+          commit:
+            type: string
+            description: "Git commit of baseline"
+          behavior:
+            type: string
+            description: "Description of expected baseline behavior"
+          artifacts:
+            type: array
+            items:
+              type: string
+            description: "Paths to baseline artifacts (screenshots, logs, etc.)"
+
+      current:
+        type: object
+        required: [snapshot_id, timestamp]
+        properties:
+          snapshot_id:
+            type: string
+            description: "Reference to current snapshot"
+          timestamp:
+            type: string
+            format: date-time
+          commit:
+            type: string
+            description: "Git commit where regression detected"
+          behavior:
+            type: string
+            description: "Description of observed current behavior"
+          artifacts:
+            type: array
+            items:
+              type: string
+            description: "Paths to current artifacts showing regression"
+
+      impact_analysis:
+        type: object
+        required: [user_impact, business_impact]
+        properties:
+          user_impact:
+            type: string
+            enum:
+              - blocking      # Users cannot complete tasks
+              - degraded      # Users experience reduced functionality
+              - annoying      # Users experience inconvenience
+              - minimal       # Most users won't notice
+            description: "Impact on user experience"
+          business_impact:
+            type: string
+            enum:
+              - critical      # Revenue loss or legal risk
+              - high          # Customer satisfaction at risk
+              - medium        # Minor customer complaints expected
+              - low           # Minimal business impact
+            description: "Impact on business operations"
+          affected_features:
+            type: array
+            items:
+              type: string
+            description: "List of features affected by this regression"
+          affected_users:
+            type: object
+            properties:
+              percentage:
+                type: number
+                minimum: 0
+                maximum: 100
+                description: "Percentage of users affected"
+              segments:
+                type: array
+                items:
+                  type: string
+                description: "User segments affected (e.g., 'premium', 'mobile')"
+          workaround:
+            type: object
+            properties:
+              exists:
+                type: boolean
+              description:
+                type: string
+              effort:
+                type: string
+                enum: [trivial, easy, moderate, difficult, impossible]
+
+      detection:
+        type: object
+        properties:
+          method:
+            type: string
+            enum:
+              - automated_test  # Detected by automated test suite
+              - manual_test     # Detected by manual testing
+              - production      # Detected in production
+              - code_review     # Detected during code review
+              - ci_cd           # Detected by CI/CD pipeline
+            description: "How the regression was detected"
+          detected_at:
+            type: string
+            format: date-time
+          detected_by:
+            type: string
+            description: "Agent, user, or system that detected it"
+          test_case:
+            type: string
+            description: "Test case that caught the regression if applicable"
+
+      resolution:
+        type: object
+        properties:
+          root_cause:
+            type: string
+            description: "Root cause analysis of the regression"
+          fix_description:
+            type: string
+            description: "Description of the fix applied"
+          fix_commit:
+            type: string
+            description: "Git commit hash of the fix"
+          fix_applied_at:
+            type: string
+            format: date-time
+          verification:
+            type: object
+            properties:
+              verified_by:
+                type: string
+              verified_at:
+                type: string
+                format: date-time
+              verification_method:
+                type: string
+                enum: [automated, manual, production_monitoring]
+          prevention:
+            type: object
+            properties:
+              test_added:
+                type: boolean
+                description: "Regression test added to prevent recurrence"
+              test_path:
+                type: string
+                description: "Path to the regression test"
+              guardrails_added:
+                type: array
+                items:
+                  type: string
+                description: "Additional guardrails to prevent similar regressions"
+
+  RegressionBaseline:
+    type: object
+    required:
+      - snapshot_id
+      - timestamp
+      - artifacts
+    description: "Baseline snapshot for regression comparison"
+    properties:
+      snapshot_id:
+        type: string
+        description: "Unique identifier for this baseline"
+        pattern: "^baseline-[0-9]{4}-[a-f0-9]{8}$"
+        examples:
+          - "baseline-0001-a1b2c3d4"
+
+      timestamp:
+        type: string
+        format: date-time
+        description: "When this baseline was created"
+
+      commit:
+        type: string
+        description: "Git commit of the baseline"
+
+      artifacts:
+        type: object
+        properties:
+          functional:
+            type: array
+            items:
+              type: object
+              properties:
+                path:
+                  type: string
+                  description: "Path to functional test output"
+                checksum:
+                  type: string
+                  description: "SHA-256 checksum for integrity"
+                description:
+                  type: string
+            description: "Functional test outputs"
+
+          performance:
+            type: array
+            items:
+              type: object
+              properties:
+                metric:
+                  type: string
+                  description: "Performance metric name"
+                value:
+                  type: number
+                unit:
+                  type: string
+                threshold:
+                  type: object
+                  properties:
+                    max_degradation_percent:
+                      type: number
+                      description: "Maximum acceptable degradation %"
+            description: "Performance benchmarks"
+
+          visual:
+            type: array
+            items:
+              type: object
+              properties:
+                path:
+                  type: string
+                  description: "Path to screenshot or visual snapshot"
+                checksum:
+                  type: string
+                viewport:
+                  type: object
+                  properties:
+                    width:
+                      type: integer
+                    height:
+                      type: integer
+            description: "Visual snapshots (screenshots)"
+
+          api:
+            type: array
+            items:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                request:
+                  type: object
+                response:
+                  type: object
+                  properties:
+                    status:
+                      type: integer
+                    body:
+                      type: object
+                    headers:
+                      type: object
+            description: "API contract snapshots"
+
+          data:
+            type: array
+            items:
+              type: object
+              properties:
+                schema_path:
+                  type: string
+                sample_data_path:
+                  type: string
+                validation_rules:
+                  type: array
+                  items:
+                    type: string
+            description: "Data format snapshots"
+
+      environment:
+        type: object
+        properties:
+          platform:
+            type: string
+            description: "Platform or OS"
+          runtime_version:
+            type: string
+            description: "Runtime version (Node, Python, etc.)"
+          dependencies:
+            type: object
+            description: "Key dependency versions"
+
+      metadata:
+        type: object
+        properties:
+          created_by:
+            type: string
+          label:
+            type: string
+            description: "Human-readable label (e.g., 'v2.1.0 release baseline')"
+          notes:
+            type: string
+
+  RegressionReport:
+    type: object
+    description: "Generated regression test report"
+    properties:
+      report_id:
+        type: string
+        description: "Unique report identifier"
+
+      generated_at:
+        type: string
+        format: date-time
+
+      period:
+        type: object
+        properties:
+          start:
+            type: string
+            format: date-time
+          end:
+            type: string
+            format: date-time
+
+      summary:
+        type: object
+        required:
+          - total_regressions
+          - by_status
+          - by_severity
+          - by_type
+        properties:
+          total_regressions:
+            type: integer
+            minimum: 0
+
+          by_status:
+            type: object
+            properties:
+              detected:
+                type: integer
+              confirmed:
+                type: integer
+              analyzing:
+                type: integer
+              fixing:
+                type: integer
+              fixed:
+                type: integer
+              verified:
+                type: integer
+              false_positive:
+                type: integer
+              wont_fix:
+                type: integer
+
+          by_severity:
+            type: object
+            properties:
+              critical:
+                type: integer
+              high:
+                type: integer
+              medium:
+                type: integer
+              low:
+                type: integer
+
+          by_type:
+            type: object
+            properties:
+              functional:
+                type: integer
+              performance:
+                type: integer
+              behavioral:
+                type: integer
+              visual:
+                type: integer
+              security:
+                type: integer
+              api:
+                type: integer
+              data:
+                type: integer
+
+      critical_regressions:
+        type: array
+        items:
+          type: object
+          properties:
+            regression_id:
+              type: string
+            type:
+              type: string
+            severity:
+              type: string
+            status:
+              type: string
+            introduced_by:
+              type: object
+            impact:
+              type: string
+        description: "List of critical severity regressions"
+
+      trends:
+        type: object
+        properties:
+          regression_rate:
+            type: object
+            properties:
+              current_period:
+                type: number
+                description: "Regressions per commit in current period"
+              previous_period:
+                type: number
+              trend:
+                type: string
+                enum: [improving, stable, degrading]
+
+          mean_time_to_detect:
+            type: object
+            properties:
+              current_hours:
+                type: number
+              previous_hours:
+                type: number
+              trend:
+                type: string
+                enum: [improving, stable, degrading]
+
+          mean_time_to_fix:
+            type: object
+            properties:
+              current_hours:
+                type: number
+              previous_hours:
+                type: number
+              trend:
+                type: string
+                enum: [improving, stable, degrading]
+
+      recommendations:
+        type: array
+        items:
+          type: object
+          properties:
+            category:
+              type: string
+              enum:
+                - test_coverage
+                - code_review
+                - automation
+                - process
+                - tooling
+            recommendation:
+              type: string
+            priority:
+              type: string
+              enum: [high, medium, low]
+            estimated_impact:
+              type: string
+
+# Protocol for Regression Testing
+#
+# 1. BASELINE CREATION
+#    - Create baseline after each stable release
+#    - Capture all artifact types (functional, performance, visual, API, data)
+#    - Store baselines with checksums for integrity
+#    - Label baselines clearly (e.g., "v2.1.0 release")
+#
+# 2. REGRESSION DETECTION
+#    - Run regression suite on every commit (CI/CD)
+#    - Compare current state to baseline
+#    - Automatically create regression record if deviation detected
+#    - Classify by type and severity
+#
+# 3. REGRESSION ANALYSIS
+#    - Bisect commits to find introduction point
+#    - Analyze root cause
+#    - Assess user and business impact
+#    - Determine if workaround exists
+#
+# 4. REGRESSION FIX
+#    - Fix the regression
+#    - Add regression test to prevent recurrence
+#    - Verify fix against baseline
+#    - Update regression record to "verified"
+#
+# 5. REPORTING
+#    - Generate regression reports periodically
+#    - Track trends (regression rate, time to detect, time to fix)
+#    - Surface critical regressions immediately
+#    - Provide actionable recommendations
+
+# Integration with Executable Feedback
+#
+# This schema integrates with executable-feedback.yaml:
+# - Every bug fix MUST generate a regression test
+# - Regression tests are added to the test suite
+# - Executable feedback loop ensures regression tests pass
+# - Debug memory tracks regression patterns
+
+# Metrics
+#
+# Track these metrics for regression management:
+#
+# | Metric                    | Target   | Purpose                          |
+# |---------------------------|----------|----------------------------------|
+# | regression_rate           | <1/100   | Regressions per commit           |
+# | mean_time_to_detect       | <24h     | How quickly regressions found    |
+# | mean_time_to_fix          | <48h     | How quickly regressions resolved |
+# | false_positive_rate       | <5%      | Accuracy of detection            |
+# | test_effectiveness        | >95%     | % regressions caught by tests    |
+# | recurrence_rate           | <1%      | Same regression occurring twice  |
+
+# Examples
+examples:
+  functional_regression:
+    regression_id: "REG-0001"
+    record:
+      id: "REG-0001"
+      type: functional
+      severity: high
+      status: fixed
+      introduced_by:
+        commit: "a1b2c3d4"
+        timestamp: "2026-01-24T15:30:00Z"
+        author: "software-implementer-agent"
+        pull_request: "#142"
+      baseline:
+        snapshot_id: "baseline-0001-a1b2c3d4"
+        timestamp: "2026-01-20T10:00:00Z"
+        commit: "e5f6g7h8"
+        behavior: "User can log in with valid credentials"
+      current:
+        snapshot_id: "current-0001-x9y8z7w6"
+        timestamp: "2026-01-24T16:00:00Z"
+        commit: "a1b2c3d4"
+        behavior: "Login fails with valid credentials"
+      impact_analysis:
+        user_impact: blocking
+        business_impact: critical
+        affected_features: ["user authentication", "session management"]
+        affected_users:
+          percentage: 100
+          segments: ["all users"]
+      detection:
+        method: automated_test
+        detected_at: "2026-01-24T16:00:00Z"
+        detected_by: "ci-pipeline"
+        test_case: "test/integration/auth/login.test.ts"
+      resolution:
+        root_cause: "Password validation logic inverted (! operator added incorrectly)"
+        fix_description: "Removed erroneous negation in password check"
+        fix_commit: "i9j8k7l6"
+        fix_applied_at: "2026-01-24T17:00:00Z"
+        verification:
+          verified_by: "test-engineer-agent"
+          verified_at: "2026-01-24T17:05:00Z"
+          verification_method: automated
+        prevention:
+          test_added: true
+          test_path: "test/regression/REG-0001-login-validation.test.ts"
+    baseline:
+      snapshot_id: "baseline-0001-a1b2c3d4"
+      timestamp: "2026-01-20T10:00:00Z"
+      commit: "e5f6g7h8"
+      artifacts:
+        functional:
+          - path: ".aiwg/testing/baselines/auth-login-success.json"
+            checksum: "sha256:abc123..."
+            description: "Expected login success response"
+
+  performance_regression:
+    regression_id: "REG-0002"
+    record:
+      id: "REG-0002"
+      type: performance
+      severity: medium
+      status: analyzing
+      introduced_by:
+        commit: "b2c3d4e5"
+        timestamp: "2026-01-25T09:00:00Z"
+      baseline:
+        snapshot_id: "baseline-perf-0002"
+        timestamp: "2026-01-20T10:00:00Z"
+        behavior: "API response time <200ms at p95"
+      current:
+        snapshot_id: "current-perf-0002"
+        timestamp: "2026-01-25T09:15:00Z"
+        behavior: "API response time 850ms at p95"
+      impact_analysis:
+        user_impact: degraded
+        business_impact: medium
+        affected_features: ["search API"]
+        affected_users:
+          percentage: 30
+          segments: ["power users", "API consumers"]
+      detection:
+        method: ci_cd
+        detected_at: "2026-01-25T09:15:00Z"
+        detected_by: "performance-monitoring"
+    baseline:
+      snapshot_id: "baseline-perf-0002"
+      timestamp: "2026-01-20T10:00:00Z"
+      artifacts:
+        performance:
+          - metric: "api_response_p95"
+            value: 185
+            unit: "milliseconds"
+            threshold:
+              max_degradation_percent: 20
+
+# Validation Rules
+#
+# Before marking a regression as verified:
+# - [ ] Root cause identified and documented
+# - [ ] Fix implemented and committed
+# - [ ] Regression test added to test suite
+# - [ ] All tests (including new regression test) passing
+# - [ ] Baseline comparison shows regression eliminated
+# - [ ] Impact analysis completed
+# - [ ] Fix verified in production (if applicable)
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+  schemas:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/executable-feedback.yaml"
+    - "@agentic/code/addons/ralph/schemas/debug-memory.yaml"
+    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"
+  rules:
+    - "@.claude/rules/executable-feedback.md"
+  implementation:
+    - "#101"
+  guide:
+    - "@.aiwg/testing/docs/regression-testing-guide.md"

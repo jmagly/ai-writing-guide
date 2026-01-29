@@ -1,42 +1,45 @@
 {
-  "id": "ralph-external-enhancements-2026-01-28",
-  "task": "Implement Ralph loop enhancements for issues #149, #154, #167, #168, #170",
+  "id": "ralph-regression-testing-2026-01-28",
+  "task": "Implement comprehensive regression testing capability for AIWG (Issue #254)",
   "completion_criteria": [
-    "All 5 Ralph issues implemented: schemas created, JavaScript implementations, CLI flags documented, tests pass, issues closed"
+    "All files created: regression.yaml schema AND regression-check.md command AND regression-analyst.md agent AND templates AND skills"
   ],
   "max_iterations": 10,
-  "checkpoint_frequency": 5,
-  "current_iteration": 3,
+  "current_iteration": 1,
   "status": "completed",
-  "flow_track": "research-implementation",
-  "started_at": "2026-01-28T14:00:00Z",
-  "completed_at": "2026-01-28T15:02:40Z",
+  "started_at": "2026-01-28T23:05:00Z",
+  "completed_at": "2026-01-28T23:12:00Z",
   "metrics": {
-    "issues_closed": 5,
-    "implementations_created": 5,
-    "tests_passing": 44,
-    "test_files_created": 4,
-    "cli_flags_added": 6
+    "files_created": 9,
+    "parallel_agents_used": 5,
+    "total_size_kb": 140
   },
   "implementations": {
-    "#149": "tools/ralph-external/early-stopping.mjs (12KB, 19 tests)",
-    "#154": "tools/ralph-external/cross-task-learner.mjs (22KB, 24 tests)",
-    "#167": "tools/ralph-external/iteration-analytics.mjs (18KB, 10 tests)",
-    "#168": "tools/ralph-external/best-output-tracker.mjs (21KB, 18 tests)",
-    "#170": "tools/ralph-external/memory-manager.mjs (15KB)"
+    "schema": "agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml (23KB)",
+    "command": "agentic/code/frameworks/sdlc-complete/commands/regression-check.md (11KB)",
+    "agent": "agentic/code/frameworks/sdlc-complete/agents/regression-analyst.md (37KB)",
+    "templates": [
+      "agentic/code/frameworks/sdlc-complete/templates/test/regression-report.md (15KB)",
+      "agentic/code/frameworks/sdlc-complete/templates/test/regression-register.md (15KB)"
+    ],
+    "skills": [
+      "agentic/code/frameworks/sdlc-complete/skills/regression-bisect/SKILL.md",
+      "agentic/code/frameworks/sdlc-complete/skills/regression-baseline/SKILL.md",
+      "agentic/code/frameworks/sdlc-complete/skills/regression-metrics/SKILL.md",
+      "agentic/code/frameworks/sdlc-complete/skills/regression-report/SKILL.md"
+    ]
   },
-  "cli_flags": {
-    "--memory / -m": "Memory capacity Ω (1-10 or preset)",
-    "--cross-task": "Enable cross-task learning (default: true)",
-    "--no-cross-task": "Disable cross-task learning",
-    "--no-analytics": "Disable iteration analytics",
-    "--no-best-output": "Disable best output selection",
-    "--no-early-stopping": "Disable early stopping"
-  },
+  "agents_used": [
+    "API Designer - Created regression schema",
+    "Software Implementer - Created regression-check command",
+    "Architecture Designer - Created regression-analyst agent",
+    "Technical Writer - Created templates",
+    "Test Engineer - Created 4 skills"
+  ],
   "learnings": [
-    "Schema-first design with existing YAML schemas accelerated implementation",
-    "Parallel task dispatch for independent modules maximizes throughput",
-    "Test-driven recovery: using test file as specification when implementation corrupted",
-    "Research references (REF-015, REF-021) provided clear implementation guidance"
-  ]
+    "Parallel agent dispatch for independent artifacts maximizes throughput",
+    "All 5 agents completed in single iteration",
+    "Existing patterns (test-engineer, mutation-analyst) provided clear templates"
+  ],
+  "issue": "#254"
 }
