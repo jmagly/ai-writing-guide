@@ -1,0 +1,1154 @@
+# Regression Automation Schema
+# Based on REF-013 MetaGPT
+# Finding: Executable feedback + automation prevents regression cascades
+# Issue: #101
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/regression-automation/v1"
+title: "Regression Automation Schema"
+description: |
+  Schema for configuring automated regression testing workflows across
+  CI/CD pipelines, environments, and learning systems.
+
+  Key principles:
+  - Automated detection prevents regression escape
+  - Multi-environment validation catches environment-specific issues
+  - Learning from regression patterns improves test prioritization
+  - Configurable blocking ensures quality gates
+
+type: object
+required:
+  - automation_config
+  - cicd_config
+  - baseline_config
+
+properties:
+  automation_config:
+    $ref: "#/$defs/AutomationConfig"
+    description: "Overall automation configuration"
+
+  cicd_config:
+    $ref: "#/$defs/CICDConfig"
+    description: "CI/CD pipeline integration"
+
+  baseline_config:
+    $ref: "#/$defs/BaselineConfig"
+    description: "Baseline management configuration"
+
+  learning_config:
+    $ref: "#/$defs/LearningConfig"
+    description: "Regression pattern learning configuration"
+
+  alert_config:
+    $ref: "#/$defs/AlertConfig"
+    description: "Alert and notification configuration"
+
+  environments:
+    type: array
+    items:
+      $ref: "#/$defs/Environment"
+    minItems: 1
+    description: "Environments to run regression tests in"
+
+  metadata:
+    type: object
+    properties:
+      created_at:
+        type: string
+        format: date-time
+      last_updated:
+        type: string
+        format: date-time
+      version:
+        type: string
+        pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+
+$defs:
+  AutomationConfig:
+    type: object
+    required:
+      - enabled
+      - mode
+    properties:
+      enabled:
+        type: boolean
+        default: true
+        description: "Enable automated regression testing"
+
+      mode:
+        type: string
+        enum:
+          - passive   # Run tests but don't block
+          - active    # Block on regression detection
+          - strict    # Block + require human approval
+        default: active
+        description: "Automation behavior mode"
+
+      triggers:
+        type: object
+        properties:
+          on_commit:
+            type: boolean
+            default: true
+            description: "Run on every commit"
+
+          on_pull_request:
+            type: boolean
+            default: true
+            description: "Run on pull request creation/update"
+
+          on_merge:
+            type: boolean
+            default: true
+            description: "Run after merge to protected branch"
+
+          on_schedule:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: false
+              cron:
+                type: string
+                description: "Cron expression for scheduled runs"
+                examples:
+                  - "0 2 * * *"  # Daily at 2am
+                  - "0 */6 * * *"  # Every 6 hours
+
+          on_release:
+            type: boolean
+            default: true
+            description: "Run before release creation"
+
+      scope:
+        type: object
+        properties:
+          full_suite:
+            type: boolean
+            default: false
+            description: "Run all regression tests"
+
+          changed_components_only:
+            type: boolean
+            default: true
+            description: "Run tests for changed components"
+
+          smart_selection:
+            type: boolean
+            default: true
+            description: "Use learning to select likely-failing tests"
+
+          minimum_coverage:
+            type: number
+            minimum: 0
+            maximum: 100
+            default: 80
+            description: "Minimum % of regression tests to run"
+
+      parallelization:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          max_parallel_jobs:
+            type: integer
+            minimum: 1
+            default: 4
+
+          split_by:
+            type: string
+            enum: [file, suite, component, type]
+            default: component
+
+      retry:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          max_attempts:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 3
+
+          retry_on:
+            type: array
+            items:
+              type: string
+              enum: [timeout, infrastructure_failure, flaky_test]
+            default: [timeout, infrastructure_failure]
+
+  CICDConfig:
+    type: object
+    required:
+      - provider
+      - regression_stage
+    properties:
+      provider:
+        type: string
+        enum:
+          - github
+          - gitlab
+          - gitea
+          - jenkins
+          - circleci
+          - travis
+          - azure_devops
+          - custom
+        description: "CI/CD platform provider"
+
+      workflow_path:
+        type: string
+        description: "Path to CI/CD workflow file"
+        examples:
+          - ".github/workflows/regression.yml"
+          - ".gitlab-ci.yml"
+          - "Jenkinsfile"
+
+      regression_stage:
+        type: object
+        required:
+          - name
+          - order
+        properties:
+          name:
+            type: string
+            default: "regression-testing"
+            description: "Stage name in pipeline"
+
+          order:
+            type: integer
+            minimum: 1
+            description: "Stage execution order (1 = first)"
+
+          depends_on:
+            type: array
+            items:
+              type: string
+            description: "Stages that must complete first"
+            examples:
+              - ["build", "unit-tests"]
+
+          timeout_minutes:
+            type: integer
+            minimum: 1
+            default: 60
+            description: "Maximum stage runtime"
+
+          retry_policy:
+            type: object
+            properties:
+              max_retries:
+                type: integer
+                minimum: 0
+                maximum: 3
+                default: 1
+
+              retry_on_failure_only:
+                type: boolean
+                default: true
+
+      blocking:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+            description: "Block merge on regression failure"
+
+          severity_threshold:
+            type: string
+            enum: [any, high, critical]
+            default: high
+            description: "Minimum severity to block on"
+
+          allow_override:
+            type: boolean
+            default: false
+            description: "Allow manual override of block"
+
+          override_requires_approval:
+            type: boolean
+            default: true
+            description: "Require approval for override"
+
+      reporting:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          formats:
+            type: array
+            items:
+              type: string
+              enum: [junit, json, markdown, html]
+            default: [junit, markdown]
+
+          publish_to:
+            type: array
+            items:
+              type: string
+              enum: [pr_comment, check_run, artifact, wiki]
+            default: [pr_comment, check_run]
+
+          attach_artifacts:
+            type: boolean
+            default: true
+            description: "Attach screenshots, logs, etc."
+
+      integration:
+        type: object
+        properties:
+          status_checks:
+            type: boolean
+            default: true
+            description: "Create GitHub/GitLab status checks"
+
+          labels:
+            type: object
+            properties:
+              add_on_regression:
+                type: array
+                items:
+                  type: string
+                default: ["regression-detected"]
+
+              remove_on_pass:
+                type: array
+                items:
+                  type: string
+                default: ["regression-detected"]
+
+          issue_creation:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                default: true
+                description: "Auto-create issues for regressions"
+
+              template:
+                type: string
+                description: "Path to issue template"
+
+              labels:
+                type: array
+                items:
+                  type: string
+                default: ["regression", "bug", "automated"]
+
+              assignees:
+                type: array
+                items:
+                  type: string
+                description: "Default assignees"
+
+  BaselineConfig:
+    type: object
+    required:
+      - storage_type
+      - storage_path
+      - retention_count
+    properties:
+      storage_type:
+        type: string
+        enum:
+          - local              # Store in .aiwg/testing/baselines/
+          - git_lfs            # Use Git LFS for large files
+          - s3                 # AWS S3
+          - gcs                # Google Cloud Storage
+          - azure_blob         # Azure Blob Storage
+          - artifact_registry  # CI/CD artifact registry
+        default: local
+        description: "Where to store baseline artifacts"
+
+      storage_path:
+        type: string
+        description: "Path or URL for baseline storage"
+        examples:
+          - ".aiwg/testing/baselines/"
+          - "s3://my-bucket/baselines/"
+          - "gs://my-bucket/baselines/"
+
+      retention_count:
+        type: integer
+        minimum: 1
+        default: 10
+        description: "Number of baseline versions to retain"
+
+      auto_update_triggers:
+        type: array
+        items:
+          type: string
+          enum:
+            - release_tag       # Update on release tag
+            - stable_branch     # Update from stable branch
+            - manual_approval   # Require manual approval
+            - schedule          # Scheduled updates
+            - quality_gate      # Update after quality gate passes
+        default: [release_tag, manual_approval]
+        description: "When to automatically update baselines"
+
+      approval_required:
+        type: boolean
+        default: true
+        description: "Require human approval for baseline updates"
+
+      versioning:
+        type: object
+        properties:
+          strategy:
+            type: string
+            enum: [semver, timestamp, commit_hash, auto_increment]
+            default: commit_hash
+
+          tag_prefix:
+            type: string
+            default: "baseline-"
+
+      comparison:
+        type: object
+        properties:
+          strict_mode:
+            type: boolean
+            default: false
+            description: "Exact match required vs threshold-based"
+
+          image_diff_threshold:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.05
+            description: "Visual diff threshold (5% by default)"
+
+          performance_tolerance:
+            type: number
+            minimum: 0
+            maximum: 100
+            default: 10
+            description: "Performance degradation tolerance %"
+
+  LearningConfig:
+    type: object
+    properties:
+      enabled:
+        type: boolean
+        default: true
+        description: "Enable regression pattern learning"
+
+      storage_path:
+        type: string
+        default: ".aiwg/ralph/regression-learning/"
+        description: "Where to store learned patterns"
+
+      pattern_detection:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          min_occurrences:
+            type: integer
+            minimum: 2
+            default: 3
+            description: "Minimum occurrences to identify pattern"
+
+          lookback_window:
+            type: integer
+            minimum: 1
+            default: 90
+            description: "Days of history to analyze"
+
+          patterns_tracked:
+            type: array
+            items:
+              type: string
+              enum:
+                - component_hotspots    # Components with frequent regressions
+                - code_patterns         # Code constructs that often regress
+                - author_patterns       # Author-specific regression patterns
+                - time_patterns         # Time-of-day/week patterns
+                - change_size_patterns  # Correlation with change size
+            default: [component_hotspots, code_patterns, change_size_patterns]
+
+      test_prioritization:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+            description: "Prioritize tests based on learned patterns"
+
+          strategy:
+            type: string
+            enum:
+              - risk_based       # Highest risk areas first
+              - failure_history  # Previously failed tests first
+              - changed_code     # Tests for changed code first
+              - composite        # Combination of strategies
+            default: composite
+
+          top_n_priority:
+            type: integer
+            minimum: 1
+            default: 50
+            description: "Number of high-priority tests to run first"
+
+      confidence_threshold:
+        type: number
+        minimum: 0
+        maximum: 1
+        default: 0.7
+        description: "Minimum confidence to apply learned patterns"
+
+      feedback_loop:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          update_frequency:
+            type: string
+            enum: [realtime, daily, weekly, monthly]
+            default: daily
+
+          incorporate_false_positives:
+            type: boolean
+            default: true
+            description: "Learn from false positive detections"
+
+      metrics_tracked:
+        type: array
+        items:
+          type: string
+          enum:
+            - prediction_accuracy
+            - time_to_first_failure
+            - test_efficiency
+            - pattern_stability
+        default: [prediction_accuracy, test_efficiency]
+
+  AlertConfig:
+    type: object
+    required:
+      - channels
+      - severity_thresholds
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      channels:
+        type: array
+        items:
+          type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - dashboard_banner
+                - email
+                - slack
+                - teams
+                - discord
+                - issue_comment
+                - webhook
+                - pager_duty
+                - opsgenie
+              description: "Notification channel type"
+
+            config:
+              type: object
+              description: "Channel-specific configuration"
+              properties:
+                webhook_url:
+                  type: string
+                  format: uri
+
+                channel:
+                  type: string
+                  description: "Slack channel, email list, etc."
+
+                recipients:
+                  type: array
+                  items:
+                    type: string
+
+                severity_filter:
+                  type: array
+                  items:
+                    type: string
+                    enum: [critical, high, medium, low]
+                  default: [critical, high]
+
+            enabled:
+              type: boolean
+              default: true
+        minItems: 1
+        description: "Notification channels for regression alerts"
+
+      severity_thresholds:
+        type: object
+        properties:
+          critical:
+            type: object
+            properties:
+              count:
+                type: integer
+                default: 1
+                description: "Number of critical regressions to alert"
+
+              notify_immediately:
+                type: boolean
+                default: true
+
+          high:
+            type: object
+            properties:
+              count:
+                type: integer
+                default: 3
+
+              notify_immediately:
+                type: boolean
+                default: true
+
+          medium:
+            type: object
+            properties:
+              count:
+                type: integer
+                default: 5
+
+              notify_immediately:
+                type: boolean
+                default: false
+
+          low:
+            type: object
+            properties:
+              count:
+                type: integer
+                default: 10
+
+              notify_immediately:
+                type: boolean
+                default: false
+
+      escalation_rules:
+        type: array
+        items:
+          type: object
+          required:
+            - condition
+            - escalate_to
+          properties:
+            condition:
+              type: string
+              description: "Condition that triggers escalation"
+              examples:
+                - "critical_regression_open > 4h"
+                - "high_regression_count > 5"
+                - "escape_rate > 10%"
+
+            escalate_to:
+              type: array
+              items:
+                type: string
+              description: "Who/where to escalate to"
+
+            delay_hours:
+              type: number
+              default: 0
+              description: "Hours before escalation"
+
+            notification_template:
+              type: string
+              description: "Custom notification template"
+
+      quiet_hours:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: false
+
+          timezone:
+            type: string
+            default: "UTC"
+
+          periods:
+            type: array
+            items:
+              type: object
+              properties:
+                start_time:
+                  type: string
+                  pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  examples: ["22:00"]
+
+                end_time:
+                  type: string
+                  pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  examples: ["08:00"]
+
+                severity_override:
+                  type: array
+                  items:
+                    type: string
+                    enum: [critical]
+                  description: "Severities that bypass quiet hours"
+                  default: [critical]
+
+      deduplication:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+
+          window_minutes:
+            type: integer
+            default: 60
+            description: "Deduplication window"
+
+          group_by:
+            type: array
+            items:
+              type: string
+              enum: [component, severity, type, regression_id]
+            default: [component, severity]
+
+  Environment:
+    type: object
+    required:
+      - name
+      - baseline_ref
+      - test_scope
+    properties:
+      name:
+        type: string
+        description: "Environment name"
+        examples:
+          - "production"
+          - "staging"
+          - "qa"
+          - "development"
+
+      description:
+        type: string
+        description: "Environment description"
+
+      baseline_ref:
+        type: string
+        description: "Branch, tag, or commit for baseline"
+        examples:
+          - "main"
+          - "v2.1.0"
+          - "stable"
+          - "abc123def"
+
+      test_scope:
+        type: string
+        enum:
+          - full        # All regression tests
+          - smoke       # Critical path only
+          - critical    # Critical + high severity
+          - targeted    # Based on changes
+        default: full
+        description: "Scope of tests to run in this environment"
+
+      performance_thresholds:
+        type: object
+        properties:
+          response_time_p95:
+            type: object
+            properties:
+              value:
+                type: number
+                description: "Milliseconds"
+
+              tolerance_percent:
+                type: number
+                default: 20
+
+          throughput:
+            type: object
+            properties:
+              value:
+                type: number
+                description: "Requests per second"
+
+              tolerance_percent:
+                type: number
+                default: 15
+
+          error_rate:
+            type: object
+            properties:
+              max_percent:
+                type: number
+                default: 1
+
+          memory_usage:
+            type: object
+            properties:
+              max_mb:
+                type: number
+
+              tolerance_percent:
+                type: number
+                default: 25
+
+      custom_tests:
+        type: array
+        items:
+          type: string
+          pattern: "^.*\\.(test|spec)\\.(ts|js|py|rb)$"
+        description: "Additional tests specific to this environment"
+
+      variables:
+        type: object
+        additionalProperties:
+          type: string
+        description: "Environment-specific variables"
+
+      enabled:
+        type: boolean
+        default: true
+
+      run_order:
+        type: integer
+        minimum: 1
+        description: "Execution order (1 = first)"
+
+      depends_on:
+        type: array
+        items:
+          type: string
+        description: "Environments that must pass first"
+
+      continue_on_failure:
+        type: boolean
+        default: false
+        description: "Continue to next environment if this fails"
+
+# Protocol for Regression Automation
+#
+# 1. CONFIGURATION
+#    - Define automation mode (passive/active/strict)
+#    - Configure CI/CD integration
+#    - Set up baseline storage
+#    - Enable learning systems
+#    - Configure alert channels
+#
+# 2. BASELINE MANAGEMENT
+#    - Create initial baselines from stable releases
+#    - Store baselines per configured storage type
+#    - Update baselines on approved triggers
+#    - Maintain retention policy
+#
+# 3. AUTOMATED EXECUTION
+#    - Trigger on configured events (commit, PR, merge, schedule)
+#    - Select tests based on scope and learning
+#    - Run tests across configured environments
+#    - Compare results to baselines
+#    - Detect regressions
+#
+# 4. REGRESSION HANDLING
+#    - Create regression records for detected issues
+#    - Apply blocking rules based on severity
+#    - Send alerts via configured channels
+#    - Create GitHub/GitLab issues
+#    - Update PR with regression report
+#
+# 5. LEARNING LOOP
+#    - Analyze regression patterns
+#    - Update test prioritization
+#    - Refine baseline comparison thresholds
+#    - Improve prediction accuracy
+#    - Feed insights back to system
+#
+# 6. REPORTING
+#    - Generate regression reports
+#    - Update dashboard metrics
+#    - Track automation effectiveness
+#    - Provide actionable recommendations
+
+# Integration Points
+#
+# This schema integrates with:
+# - @agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml
+# - @agentic/code/frameworks/sdlc-complete/schemas/testing/regression-dashboard.yaml
+# - @agentic/code/frameworks/sdlc-complete/schemas/flows/executable-feedback.yaml
+# - @agentic/code/addons/ralph/schemas/debug-memory.yaml
+
+# Metrics
+#
+# Track these metrics for automation effectiveness:
+#
+# | Metric                      | Target   | Purpose                          |
+# |-----------------------------|----------|----------------------------------|
+# | automation_coverage         | >95%     | % of commits with regression run |
+# | detection_latency           | <30min   | Time from commit to detection    |
+# | false_positive_rate         | <5%      | Accuracy of automated detection  |
+# | learning_accuracy           | >80%     | Test selection prediction rate   |
+# | time_to_baseline_update     | <24h     | Baseline freshness               |
+# | alert_response_time         | <1h      | Time to acknowledge alerts       |
+# | blocking_effectiveness      | >99%     | % regressions blocked from prod  |
+
+# Examples
+examples:
+  production_automation:
+    automation_config:
+      enabled: true
+      mode: strict
+      triggers:
+        on_commit: true
+        on_pull_request: true
+        on_merge: true
+        on_release: true
+        on_schedule:
+          enabled: true
+          cron: "0 2 * * *"  # Daily at 2am
+      scope:
+        full_suite: false
+        changed_components_only: true
+        smart_selection: true
+        minimum_coverage: 80
+      parallelization:
+        enabled: true
+        max_parallel_jobs: 8
+        split_by: component
+
+    cicd_config:
+      provider: github
+      workflow_path: ".github/workflows/regression.yml"
+      regression_stage:
+        name: "regression-testing"
+        order: 3
+        depends_on: ["build", "unit-tests"]
+        timeout_minutes: 60
+      blocking:
+        enabled: true
+        severity_threshold: high
+        allow_override: false
+      reporting:
+        enabled: true
+        formats: [junit, markdown, html]
+        publish_to: [pr_comment, check_run, artifact]
+        attach_artifacts: true
+      integration:
+        status_checks: true
+        issue_creation:
+          enabled: true
+          template: ".github/ISSUE_TEMPLATE/regression.md"
+          labels: ["regression", "bug", "automated"]
+
+    baseline_config:
+      storage_type: git_lfs
+      storage_path: ".aiwg/testing/baselines/"
+      retention_count: 10
+      auto_update_triggers: [release_tag, manual_approval]
+      approval_required: true
+      versioning:
+        strategy: commit_hash
+        tag_prefix: "baseline-"
+      comparison:
+        strict_mode: false
+        image_diff_threshold: 0.05
+        performance_tolerance: 15
+
+    learning_config:
+      enabled: true
+      storage_path: ".aiwg/ralph/regression-learning/"
+      pattern_detection:
+        enabled: true
+        min_occurrences: 3
+        lookback_window: 90
+        patterns_tracked:
+          - component_hotspots
+          - code_patterns
+          - change_size_patterns
+      test_prioritization:
+        enabled: true
+        strategy: composite
+        top_n_priority: 50
+      confidence_threshold: 0.7
+      feedback_loop:
+        enabled: true
+        update_frequency: daily
+        incorporate_false_positives: true
+
+    alert_config:
+      enabled: true
+      channels:
+        - type: slack
+          config:
+            webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+            channel: "#engineering-alerts"
+            severity_filter: [critical, high]
+          enabled: true
+        - type: issue_comment
+          config:
+            severity_filter: [critical, high, medium]
+          enabled: true
+        - type: email
+          config:
+            recipients: ["team@example.com"]
+            severity_filter: [critical]
+          enabled: true
+      severity_thresholds:
+        critical:
+          count: 1
+          notify_immediately: true
+        high:
+          count: 3
+          notify_immediately: true
+      escalation_rules:
+        - condition: "critical_regression_open > 4h"
+          escalate_to: ["engineering-manager", "on-call"]
+          delay_hours: 0
+        - condition: "high_regression_count > 5"
+          escalate_to: ["team-lead"]
+          delay_hours: 2
+      quiet_hours:
+        enabled: true
+        timezone: "America/Los_Angeles"
+        periods:
+          - start_time: "22:00"
+            end_time: "08:00"
+            severity_override: [critical]
+
+    environments:
+      - name: "production"
+        description: "Production environment baseline"
+        baseline_ref: "v2.1.0"
+        test_scope: critical
+        performance_thresholds:
+          response_time_p95:
+            value: 200
+            tolerance_percent: 10
+          throughput:
+            value: 1000
+            tolerance_percent: 15
+          error_rate:
+            max_percent: 0.5
+        enabled: true
+        run_order: 1
+
+      - name: "staging"
+        description: "Staging environment for full suite"
+        baseline_ref: "main"
+        test_scope: full
+        performance_thresholds:
+          response_time_p95:
+            value: 300
+            tolerance_percent: 20
+        enabled: true
+        run_order: 2
+        depends_on: ["production"]
+
+      - name: "qa"
+        description: "QA environment for comprehensive testing"
+        baseline_ref: "stable"
+        test_scope: full
+        enabled: true
+        run_order: 3
+        depends_on: ["production", "staging"]
+        continue_on_failure: false
+
+  minimal_automation:
+    automation_config:
+      enabled: true
+      mode: passive
+      triggers:
+        on_pull_request: true
+      scope:
+        changed_components_only: true
+        minimum_coverage: 50
+
+    cicd_config:
+      provider: github
+      workflow_path: ".github/workflows/regression.yml"
+      regression_stage:
+        name: "regression-testing"
+        order: 2
+        timeout_minutes: 30
+      blocking:
+        enabled: false
+
+    baseline_config:
+      storage_type: local
+      storage_path: ".aiwg/testing/baselines/"
+      retention_count: 5
+      auto_update_triggers: [manual_approval]
+      approval_required: true
+
+    alert_config:
+      enabled: true
+      channels:
+        - type: issue_comment
+          enabled: true
+      severity_thresholds:
+        critical:
+          count: 1
+          notify_immediately: true
+
+    environments:
+      - name: "development"
+        baseline_ref: "main"
+        test_scope: smoke
+        enabled: true
+        run_order: 1
+
+# Validation Rules
+#
+# Before deploying automation:
+# - [ ] At least one environment configured
+# - [ ] Storage path is valid and accessible
+# - [ ] Retention count >= 1
+# - [ ] Timeout >= 1 minute
+# - [ ] At least one alert channel configured
+# - [ ] CI/CD workflow file exists at specified path
+# - [ ] Baseline storage accessible and writable
+# - [ ] Learning storage path writable (if enabled)
+#
+# For strict mode:
+# - [ ] Manual approval workflow configured
+# - [ ] Override permissions properly restricted
+# - [ ] Critical regression alerts configured
+#
+# For learning:
+# - [ ] Sufficient historical data available (>30 days)
+# - [ ] Pattern detection thresholds calibrated
+# - [ ] Confidence threshold appropriate (0.6-0.8 recommended)
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+  schemas:
+    - "@agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/testing/regression-dashboard.yaml"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/flows/executable-feedback.yaml"
+    - "@agentic/code/addons/ralph/schemas/debug-memory.yaml"
+  agents:
+    - "@.claude/agents/test-engineer.md"
+    - "@.claude/agents/metrics-analyst.md"
+  rules:
+    - "@.claude/rules/executable-feedback.md"
+  implementation:
+    - "#101"
+  guide:
+    - "@.aiwg/testing/docs/regression-automation-guide.md"

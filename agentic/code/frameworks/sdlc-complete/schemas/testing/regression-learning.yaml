@@ -1,0 +1,830 @@
+# Regression Learning Schema
+# Based on REF-013 MetaGPT and REF-015 Self-Refine
+# Finding: Cross-task learning improves regression detection over time
+# Integrates with Ralph's debug memory for continuous improvement
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/regression-learning/v1"
+title: "Regression Learning Schema"
+description: |
+  Schema for cross-task learning that improves regression detection through
+  pattern recognition, test prioritization, and historical analysis. Stores
+  accumulated knowledge from past regressions to prevent future occurrences.
+
+  Key principles:
+  - Learn from every regression
+  - Build pattern taxonomy
+  - Prioritize high-value tests
+  - Predict regression risk
+  - Share knowledge across projects
+
+type: object
+required:
+  - learning_id
+  - patterns
+  - hotspots
+  - test_effectiveness
+
+properties:
+  learning_id:
+    type: string
+    format: uuid
+    description: "Unique identifier for this learning session"
+
+  created_at:
+    type: string
+    format: date-time
+
+  last_updated:
+    type: string
+    format: date-time
+
+  patterns:
+    type: array
+    items:
+      $ref: "#/$defs/RegressionPattern"
+    description: "Learned regression patterns"
+
+  hotspots:
+    type: array
+    items:
+      $ref: "#/$defs/CodeHotspot"
+    description: "High-risk code areas"
+
+  test_effectiveness:
+    type: array
+    items:
+      $ref: "#/$defs/TestEffectiveness"
+    description: "Test value metrics"
+
+  fix_templates:
+    type: array
+    items:
+      $ref: "#/$defs/FixTemplate"
+    description: "Reusable fix patterns"
+
+  predictions:
+    type: array
+    items:
+      $ref: "#/$defs/RegressionPrediction"
+    description: "Risk predictions for code changes"
+
+  metadata:
+    type: object
+    properties:
+      project:
+        type: string
+        description: "Project identifier"
+      agent:
+        type: string
+        description: "Agent that performed learning"
+      total_regressions_analyzed:
+        type: integer
+      learning_confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+
+$defs:
+  RegressionPattern:
+    type: object
+    required:
+      - pattern_id
+      - pattern_name
+      - category
+      - occurrences
+    description: "Identified recurring regression pattern"
+    properties:
+      pattern_id:
+        type: string
+        pattern: "^RP-[0-9]{3}$"
+        description: "Pattern identifier (RP-XXX format)"
+        examples:
+          - "RP-001"
+          - "RP-042"
+
+      pattern_name:
+        type: string
+        description: "Human-readable pattern name"
+        examples:
+          - "null_access_without_check"
+          - "type_mismatch_string_number"
+          - "off_by_one_array_bounds"
+
+      category:
+        type: string
+        enum:
+          - null_undefined_access
+          - type_mismatch
+          - off_by_one
+          - race_condition
+          - missing_validation
+          - logic_error
+          - resource_leak
+          - missing_error_handling
+          - api_misuse
+          - configuration_error
+          - dependency_issue
+          - other
+        description: "Pattern category"
+
+      occurrences:
+        type: array
+        items:
+          type: object
+          required:
+            - regression_id
+            - file
+            - root_cause
+            - fix
+          properties:
+            regression_id:
+              type: string
+              pattern: "^REG-[0-9]{4}$"
+              description: "Reference to regression record"
+
+            file:
+              type: string
+              description: "File where regression occurred"
+
+            line:
+              type: integer
+              description: "Line number"
+
+            function:
+              type: string
+              description: "Function/method name"
+
+            root_cause:
+              type: string
+              description: "Root cause description"
+
+            fix:
+              type: string
+              description: "How it was fixed"
+
+            effectiveness:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: "Fix success rate (0-1)"
+
+            fix_time_hours:
+              type: number
+              description: "Time to fix in hours"
+
+            recurred:
+              type: boolean
+              description: "Did this regression recur?"
+
+      statistics:
+        type: object
+        properties:
+          total_occurrences:
+            type: integer
+            minimum: 1
+
+          avg_fix_time_hours:
+            type: number
+            description: "Average time to fix"
+
+          recurrence_rate:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: "Rate of recurrence after fix"
+
+          detection_methods:
+            type: object
+            properties:
+              automated_test:
+                type: integer
+              manual_test:
+                type: integer
+              production:
+                type: integer
+              code_review:
+                type: integer
+              ci_cd:
+                type: integer
+
+      fix_template:
+        type: object
+        properties:
+          pattern:
+            type: string
+            description: "Template code showing fix pattern"
+
+          applicability_rules:
+            type: array
+            items:
+              type: object
+              properties:
+                rule_type:
+                  type: string
+                  enum: [language, error_pattern, context, file_pattern]
+                value:
+                  type: string
+            description: "When this template applies"
+
+          examples:
+            type: array
+            items:
+              type: object
+              properties:
+                before:
+                  type: string
+                after:
+                  type: string
+                explanation:
+                  type: string
+
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Confidence in this pattern (based on occurrences)"
+
+      last_updated:
+        type: string
+        format: date-time
+
+  CodeHotspot:
+    type: object
+    required:
+      - file
+      - risk_score
+      - regression_history
+    description: "High-risk code location"
+    properties:
+      file:
+        type: string
+        description: "File path"
+
+      risk_score:
+        type: number
+        minimum: 0
+        maximum: 10
+        description: "Risk score (0-10 scale)"
+
+      regression_history:
+        type: array
+        items:
+          type: object
+          properties:
+            regression_id:
+              type: string
+            category:
+              type: string
+            severity:
+              type: string
+            detected_at:
+              type: string
+              format: date-time
+        description: "Past regressions in this file"
+
+      metrics:
+        type: object
+        properties:
+          total_regressions:
+            type: integer
+
+          regressions_per_kloc:
+            type: number
+            description: "Regressions per 1000 lines of code"
+
+          recent_changes:
+            type: object
+            properties:
+              last_30_days:
+                type: integer
+              last_7_days:
+                type: integer
+
+          complexity_score:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: "Code complexity (cyclomatic)"
+
+          test_coverage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+
+          contributors:
+            type: integer
+            description: "Number of contributors"
+
+      risk_factors:
+        type: object
+        properties:
+          high_complexity:
+            type: boolean
+          frequent_changes:
+            type: boolean
+          multiple_regressions:
+            type: boolean
+          low_test_coverage:
+            type: boolean
+          critical_path:
+            type: boolean
+          many_contributors:
+            type: boolean
+
+      recommended_actions:
+        type: array
+        items:
+          type: string
+        description: "Actionable recommendations"
+
+      test_priority:
+        type: string
+        enum: [critical, high, medium, low]
+        description: "Test execution priority"
+
+  TestEffectiveness:
+    type: object
+    required:
+      - test_path
+      - regression_detection_rate
+    description: "Effectiveness metrics for a test"
+    properties:
+      test_path:
+        type: string
+        description: "Path to test file"
+
+      regression_detection_rate:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Percentage of regressions caught (0-1)"
+
+      detected_regressions:
+        type: array
+        items:
+          type: string
+          pattern: "^REG-[0-9]{4}$"
+        description: "Regressions this test caught"
+
+      missed_regressions:
+        type: array
+        items:
+          type: object
+          properties:
+            regression_id:
+              type: string
+            reason:
+              type: string
+              description: "Why test missed this regression"
+        description: "Regressions this test should have caught"
+
+      false_positive_rate:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Rate of false alarms"
+
+      execution_stats:
+        type: object
+        properties:
+          avg_duration_ms:
+            type: number
+            description: "Average execution time"
+
+          success_rate:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: "Rate of passing (stability)"
+
+          flakiness_score:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: "Test flakiness (0=stable, 1=very flaky)"
+
+      priority_score:
+        type: number
+        minimum: 0
+        maximum: 10
+        description: "Test value score (0-10)"
+
+      recommendations:
+        type: array
+        items:
+          type: string
+        description: "How to improve this test"
+
+  FixTemplate:
+    type: object
+    required:
+      - template_id
+      - name
+      - pattern
+    description: "Reusable fix pattern"
+    properties:
+      template_id:
+        type: string
+        pattern: "^FT-[0-9]{3}$"
+        description: "Fix template identifier"
+
+      name:
+        type: string
+        description: "Template name"
+        examples:
+          - "null-check"
+          - "type-validation"
+          - "error-handling"
+
+      pattern:
+        type: string
+        description: "Template code"
+
+      applies_to:
+        type: object
+        properties:
+          categories:
+            type: array
+            items:
+              type: string
+          languages:
+            type: array
+            items:
+              type: string
+          error_patterns:
+            type: array
+            items:
+              type: string
+
+      examples:
+        type: array
+        items:
+          type: object
+          properties:
+            before:
+              type: string
+            after:
+              type: string
+            context:
+              type: string
+
+      effectiveness:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Success rate when applied"
+
+      usage_count:
+        type: integer
+        description: "Times this template was used"
+
+  RegressionPrediction:
+    type: object
+    required:
+      - prediction_id
+      - file
+      - risk_level
+      - confidence
+    description: "Prediction of regression risk"
+    properties:
+      prediction_id:
+        type: string
+        format: uuid
+
+      timestamp:
+        type: string
+        format: date-time
+
+      file:
+        type: string
+        description: "File being analyzed"
+
+      change_type:
+        type: string
+        enum: [addition, modification, deletion, rename]
+
+      lines_changed:
+        type: integer
+
+      risk_level:
+        type: string
+        enum: [critical, high, medium, low]
+        description: "Predicted risk level"
+
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Confidence in prediction"
+
+      risk_factors:
+        type: array
+        items:
+          type: object
+          properties:
+            factor:
+              type: string
+              description: "Risk factor description"
+            weight:
+              type: number
+              minimum: 0
+              maximum: 1
+        description: "Factors contributing to risk"
+
+      similar_past_changes:
+        type: array
+        items:
+          type: object
+          properties:
+            commit:
+              type: string
+            lines_changed:
+              type: integer
+            result:
+              type: string
+              enum: [clean, regression]
+            regression_id:
+              type: string
+            time_to_detect_hours:
+              type: number
+        description: "Similar changes from history"
+
+      recommendations:
+        type: array
+        items:
+          type: string
+        description: "Recommended actions"
+
+      suggested_tests:
+        type: array
+        items:
+          type: string
+        description: "Tests to run for this change"
+
+      actual_outcome:
+        type: object
+        properties:
+          regression_occurred:
+            type: boolean
+          regression_id:
+            type: string
+          prediction_correct:
+            type: boolean
+        description: "Actual outcome (for learning)"
+
+# Test Prioritization Algorithm
+
+test_prioritization:
+  description: "Algorithm for prioritizing test execution"
+
+  factors:
+    code_change_correlation:
+      weight: 0.30
+      description: "How often this test catches changes in affected code"
+
+    historical_regression_detection:
+      weight: 0.25
+      description: "Past regression detection rate"
+
+    code_hotspot_coverage:
+      weight: 0.20
+      description: "Whether test covers high-risk areas"
+
+    recent_failure_trend:
+      weight: 0.15
+      description: "Recent failure patterns"
+
+    execution_efficiency:
+      weight: 0.10
+      description: "Test execution speed"
+
+  priority_levels:
+    critical:
+      threshold: 8.0
+      description: "Run first, never skip"
+
+    high:
+      threshold: 6.0
+      description: "Run early"
+
+    medium:
+      threshold: 4.0
+      description: "Standard priority"
+
+    low:
+      threshold: 0.0
+      description: "Run if time allows, may skip in fast mode"
+
+# Cross-Project Learning
+
+cross_project_learning:
+  description: "Share learning across projects"
+
+  shared_patterns:
+    - null_undefined_access
+    - type_mismatch
+    - missing_validation
+    - off_by_one
+    - race_condition
+    - logic_error
+    - resource_leak
+    - missing_error_handling
+    - api_misuse
+    - configuration_error
+
+  privacy:
+    anonymize_file_paths: true
+    anonymize_business_logic: true
+    share_only_patterns: true
+    require_opt_in: true
+
+  storage:
+    location: "~/.aiwg/global-learning/"
+    format: yaml
+    encryption: optional
+
+# Metrics
+
+metrics:
+  learning_effectiveness:
+    pattern_accuracy:
+      description: "Pattern matching accuracy"
+      target: 0.85
+      calculation: "correct_matches / total_matches"
+
+    fix_template_success_rate:
+      description: "Fix template effectiveness"
+      target: 0.90
+      calculation: "successful_fixes / total_applications"
+
+    prediction_accuracy:
+      description: "Risk prediction accuracy"
+      target: 0.75
+      calculation: "correct_predictions / total_predictions"
+
+    test_prioritization_efficiency:
+      description: "Time saved by prioritization"
+      target: 0.50
+      calculation: "time_saved / baseline_time"
+
+    false_positive_rate:
+      description: "Rate of spurious alerts"
+      target: 0.10
+      calculation: "false_positives / total_predictions"
+
+    cross_project_reuse:
+      description: "Pattern reuse across projects"
+      target: 0.30
+      calculation: "patterns_reused / total_patterns"
+
+# Integration Hooks
+
+integration:
+  ralph_hooks:
+    on_test_failure:
+      - query_similar_past_failures
+      - retrieve_fix_templates
+      - apply_learned_patterns
+      - update_pattern_effectiveness
+
+    on_test_success:
+      - record_successful_fix
+      - increment_fix_effectiveness
+      - update_confidence_scores
+
+    on_regression_detected:
+      - create_regression_record
+      - analyze_root_cause
+      - store_in_learning_memory
+      - update_hotspot_scores
+      - adjust_test_priorities
+
+  debug_memory:
+    enabled: true
+    integration_path: "@agentic/code/addons/ralph/schemas/debug-memory.yaml"
+    cross_session_learning: true
+
+  regression_schema:
+    enabled: true
+    integration_path: "@agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml"
+    baseline_integration: true
+
+# Storage Structure
+
+storage:
+  paths:
+    patterns: ".aiwg/ralph/learning/regression-patterns.yaml"
+    hotspots: ".aiwg/ralph/learning/code-hotspots.yaml"
+    test_effectiveness: ".aiwg/ralph/learning/test-effectiveness.yaml"
+    fix_templates: ".aiwg/ralph/learning/fix-templates/"
+    predictions: ".aiwg/ralph/learning/predictions/"
+    analytics: ".aiwg/ralph/learning/analytics/"
+
+  retention:
+    regression_records: 365  # days
+    pattern_library: -1      # forever
+    effectiveness_metrics: 180
+    predictions: 90
+
+  indexing:
+    by_pattern_category: true
+    by_file_path: true
+    by_regression_id: true
+    by_risk_score: true
+
+# Examples
+
+examples:
+  pattern_example:
+    pattern_id: "RP-001"
+    pattern_name: "null_access_without_check"
+    category: null_undefined_access
+    occurrences:
+      - regression_id: "REG-0023"
+        file: "src/auth/validate.ts"
+        line: 15
+        function: "validateInput"
+        root_cause: "Missing null check before property access"
+        fix: "Added early return for null/undefined"
+        effectiveness: 1.0
+        fix_time_hours: 1.2
+        recurred: false
+    statistics:
+      total_occurrences: 3
+      avg_fix_time_hours: 1.5
+      recurrence_rate: 0.0
+    confidence: 0.95
+
+  hotspot_example:
+    file: "src/auth/validate.ts"
+    risk_score: 8.5
+    regression_history:
+      - regression_id: "REG-0023"
+        category: null_undefined_access
+        severity: high
+    metrics:
+      total_regressions: 3
+      regressions_per_kloc: 2.1
+      test_coverage_percent: 65
+    risk_factors:
+      high_complexity: true
+      frequent_changes: true
+      multiple_regressions: true
+    test_priority: critical
+
+  prediction_example:
+    prediction_id: "pred-12345678"
+    file: "src/payments/process.ts"
+    change_type: modification
+    lines_changed: 45
+    risk_level: high
+    confidence: 0.82
+    risk_factors:
+      - factor: "Known hotspot (REG-0034, REG-0067)"
+        weight: 0.35
+      - factor: "Large change (45 lines)"
+        weight: 0.25
+    recommendations:
+      - "Run full payment test suite"
+      - "Add integration tests for new code paths"
+    suggested_tests:
+      - "test/payments/process.test.ts"
+      - "test/integration/payment-flow.test.ts"
+
+# Validation Rules
+
+validation:
+  pattern_creation:
+    min_occurrences: 2
+    min_confidence: 0.70
+
+  hotspot_scoring:
+    factors_required: 3
+    min_risk_score: 0.0
+    max_risk_score: 10.0
+
+  prediction_acceptance:
+    min_confidence: 0.60
+    require_similar_history: false
+
+# References
+
+references:
+  research:
+    - "@.aiwg/research/findings/REF-013-metagpt.md"
+    - "@.aiwg/research/findings/REF-015-self-refine.md"
+
+  schemas:
+    - "@agentic/code/addons/ralph/schemas/debug-memory.yaml"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml"
+    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"
+
+  rules:
+    - "@.claude/rules/executable-feedback.md"
+    - "@.claude/rules/best-output-selection.md"
+
+  skills:
+    - "@agentic/code/frameworks/sdlc-complete/skills/regression-learning/SKILL.md"
+    - "@agentic/code/frameworks/sdlc-complete/skills/regression-baseline/SKILL.md"
+    - "@agentic/code/frameworks/sdlc-complete/skills/regression-bisect/SKILL.md"
