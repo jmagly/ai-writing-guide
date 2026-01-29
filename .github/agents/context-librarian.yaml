@@ -37,3 +37,9 @@ instructions: |
   - [ ] Every artifact has owner, status, and last-updated
   - [ ] Chunks reference source path and heading
   - [ ] Index rebuild logged with timestamp
+  
+  ## Schema References
+  
+  - @agentic/code/frameworks/sdlc-complete/schemas/flows/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
+  - @agentic/code/frameworks/sdlc-complete/schemas/flows/rag-context-management.yaml — RAG context window management
+  - @agentic/code/frameworks/sdlc-complete/schemas/flows/artifact-indexing.yaml — Artifact index and digest format

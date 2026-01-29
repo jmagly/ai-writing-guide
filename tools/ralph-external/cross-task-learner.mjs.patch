@@ -1,0 +1,68 @@
+--- a/tools/ralph-external/cross-task-learner.mjs
++++ b/tools/ralph-external/cross-task-learner.mjs
+@@ -268,15 +268,27 @@ export class CrossTaskLearner {
+   extractTags(description) {
+     const tags = [];
+     const lower = description.toLowerCase();
+ 
+     // Common task patterns
+     const patterns = {
+       fix: ['fix', 'bug', 'error', 'issue'],
+       implement: ['implement', 'add', 'create', 'build'],
+       refactor: ['refactor', 'clean', 'restructure'],
+       test: ['test', 'testing', 'coverage'],
+       document: ['document', 'docs', 'readme'],
+       debug: ['debug', 'debugging', 'investigate'],
+       optimize: ['optimize', 'performance', 'speed'],
+       security: ['security', 'auth', 'authentication', 'authorization'],
++      jwt: ['jwt', 'token'],
++      oauth: ['oauth'],
++      api: ['api', 'endpoint'],
++      login: ['login', 'signin'],
++      user: ['user'],
++      database: ['database', 'db', 'schema'],
++      payment: ['payment', 'billing'],
+     };
+ 
+     for (const [tag, keywords] of Object.entries(patterns)) {
+       if (keywords.some(keyword => lower.includes(keyword))) {
+         tags.push(tag);
+       }
+     }
++    
++    // Also add important words as tags (>= 4 chars, not common)
++    const stopWords = new Set(['this', 'that', 'with', 'from', 'have', 'been', 'were', 'will', 'them', 'their']);
++    const words = this.tokenize(lower);
++    for (const word of words) {
++      if (word.length >= 4 && !stopWords.has(word) && !tags.includes(word)) {
++        tags.push(word);
++      }
++    }
+ 
+     return tags;
+   }
+@@ -354,9 +366,16 @@ export class CrossTaskLearner {
+   calculateSimilarity(words1, tags1, description2, tags2) {
+     const words2 = this.tokenize(description2.toLowerCase());
+ 
+-    // Tag overlap (weighted 0.5)
+-    const tagOverlap = this.jaccardSimilarity(tags1, tags2);
+-
+-    // Word overlap (weighted 0.5)
++    // Tag overlap (weighted 0.6 - tags are more meaningful)
++    const tagOverlap = this.jaccardSimilarity(tags1, tags2);
++    
++    // Word overlap (weighted 0.4)
+     const wordOverlap = this.jaccardSimilarity(words1, words2);
+ 
+     // Combined score
+-    return (tagOverlap * 0.5) + (wordOverlap * 0.5);
++    const score = (tagOverlap * 0.6) + (wordOverlap * 0.4);
++    
++    // Boost if both have some overlap
++    if (tagOverlap > 0 && wordOverlap > 0) {
++      return Math.min(1.0, score * 1.1); // 10% boost
++    }
++    
++    return score;
+   }

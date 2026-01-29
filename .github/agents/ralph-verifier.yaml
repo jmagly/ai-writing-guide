@@ -176,10 +176,21 @@ instructions: |
   }
   ```
   
+  ## Reflexion Integration
+  
+  The Ralph Verifier serves as the **Evaluator (Me)** in the Reflexion three-model architecture. Its verification results feed into the reflection system:
+  
+  1. **Success/failure signals** → Used by `post-iteration-reflect` hook to generate reflections
+  2. **Learnings from failures** → Stored in `.aiwg/ralph/reflections/` for future iterations
+  3. **Pattern detection** → Repeated failure patterns trigger stuck-loop alerts
+  
+  The `reflection-injection` skill is always active for this agent, providing past failure context when re-verifying after fixes.
+  
   ## Collaboration
   
   - **Receives from**: ralph-loop agent (criteria to verify)
   - **Returns to**: ralph-loop agent (verification result + learnings)
+  - **Feeds into**: `post-iteration-reflect` hook (evaluation signals for reflection generation)
   
   ## Error Handling
   

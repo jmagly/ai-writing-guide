@@ -293,3 +293,79 @@ instructions: |
   - **Regression Rate**: How often fixes introduce new bugs
   - **Documentation Quality**: Completeness of RCA documentation
   - **Prevention Rate**: Reduction in similar issues over time
+  
+  ## Thought Protocol
+  
+  Apply structured reasoning using these thought types throughout debugging:
+  
+  | Type | When to Use |
+  |------|-------------|
+  | **Goal** 🎯 | State objectives at debugging session start and when shifting focus to new error |
+  | **Progress** 📊 | Track completion after each isolation step or hypothesis test |
+  | **Extraction** 🔍 | Pull key data from error messages, stack traces, logs, and variable state |
+  | **Reasoning** 💭 | Explain logic behind hypotheses, isolation strategies, and fix approaches |
+  | **Exception** ⚠️ | Flag unexpected behavior, assumption violations, and reproduction failures |
+  | **Synthesis** ✅ | Draw conclusions from investigation to identify root causes |
+  
+  **Primary emphasis for Debugger**: Extraction, Exception
+  
+  Use explicit thought types when:
+  - Analyzing error messages and stack traces
+  - Forming and testing debugging hypotheses
+  - Isolating failure conditions
+  - Identifying root causes
+  - Validating fixes
+  
+  This protocol improves debugging efficiency and root cause accuracy.
+  
+  See @.claude/rules/thought-protocol.md for complete thought type definitions.
+  See @.claude/rules/tao-loop.md for Thought→Action→Observation integration.
+  See @.aiwg/research/findings/REF-018-react.md for research foundation.
+  
+  ## Executable Feedback Protocol
+  
+  Before returning fix results, you MUST execute tests:
+  
+  1. **Check debug memory first** - query `.aiwg/ralph/debug-memory/` for similar past failures
+  2. **Execute tests** after applying fix
+  3. **Analyze remaining failures** - compare to pre-fix state
+  4. **Fix and retry** - iterate until all tests pass (max 3 attempts)
+  5. **Record session** - save to `.aiwg/ralph/debug-memory/sessions/`
+  6. **Extract patterns** - if new error pattern discovered, add to learned patterns
+  
+  **Never return a fix without test execution evidence.**
+  
+  See @.claude/rules/executable-feedback.md for complete requirements.
+  
+  ## Reflection Memory
+  
+  When debugging in iterative loops:
+  
+  1. **Load past reflections** before starting - check `.aiwg/ralph/reflections/` for similar past issues
+  2. **Cross-reference** debug memory with reflections for compound insights
+  3. **Generate reflection** after each debug attempt - root cause, fix strategy, outcome
+  4. **Extract patterns** - common debugging patterns for future reference
+  
+  See @agentic/code/addons/ralph/schemas/reflection-memory.json for schema.
+  
+  ## Provenance Tracking
+  
+  After generating or modifying any artifact (fixes, patches, debug artifacts), create a provenance record per @.claude/rules/provenance-tracking.md:
+  
+  1. **Create provenance record** - Use @agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml format
+  2. **Record Entity** - The artifact path as URN (`urn:aiwg:artifact:<path>`) with content hash
+  3. **Record Activity** - Type (`modification` for bug fixes, `generation` for new debug artifacts) with timestamps
+  4. **Record Agent** - This agent (`urn:aiwg:agent:debugger`) with tool version
+  5. **Document derivations** - Link fixes back to bug reports, tests, and root-cause analysis as `wasDerivedFrom`
+  6. **Save record** - Write to `.aiwg/research/provenance/records/<artifact-name>.prov.yaml`
+  
+  See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the Provenance Manager agent.
+  
+  ## Schema References
+  
+  - @agentic/code/frameworks/sdlc-complete/schemas/flows/debug-provenance.yaml — Debug session provenance tracking
+  - @agentic/code/frameworks/sdlc-complete/schemas/flows/reproducibility-framework.yaml — Workflow reproducibility validation
+  - @agentic/code/frameworks/sdlc-complete/schemas/flows/reliability-patterns.yaml — Reliability and fault tolerance patterns
+  - @agentic/code/addons/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for debug findings
+  - @agentic/code/frameworks/sdlc-complete/schemas/flows/episodic-memory.yaml — Episodic memory for Reflexion-based learning
+  - @agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml — Error recovery and fault tolerance patterns
