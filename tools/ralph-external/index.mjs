@@ -108,6 +108,26 @@ function printHelp() {
   console.log(`
 External Ralph Loop - Crash-resilient iterative task execution
 
+================================================================================
+                           SECURITY WARNING
+================================================================================
+This tool spawns Claude Code with --dangerously-skip-permissions, which
+BYPASSES ALL PERMISSION PROMPTS. Sessions can:
+
+  - Read/write ANY file without confirmation
+  - Execute ANY shell command without approval
+  - Run for hours without human oversight
+
+BEFORE USING: Read docs/ralph-external-security.md
+
+REQUIRED PRECAUTIONS:
+  - Clean git state (for rollback)
+  - Set budget limits (--budget)
+  - Set iteration limits (--max-iterations)
+  - Monitor session progress
+  - Be ready to abort if needed
+================================================================================
+
 USAGE:
   ralph-external "<objective>" --completion "<criteria>" [options]
   ralph-external --resume [options]

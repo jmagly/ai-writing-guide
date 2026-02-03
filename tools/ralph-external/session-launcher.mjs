@@ -5,6 +5,30 @@
  * construction and output capture.
  *
  * @implements @.aiwg/requirements/design-ralph-external.md
+ * @security docs/ralph-external-security.md
+ *
+ * SECURITY WARNING
+ * ================
+ * This module spawns Claude Code with --dangerously-skip-permissions which
+ * BYPASSES ALL PERMISSION PROMPTS. The spawned session can:
+ *
+ * - Read ANY file the process user can read
+ * - Write/modify ANY file the process user can write
+ * - Execute ANY shell command
+ * - Make network requests
+ * - Install packages
+ * - Modify system configuration
+ *
+ * This is required for headless/daemon operation but carries significant
+ * security implications. Sessions run autonomously for extended periods
+ * without human oversight.
+ *
+ * BEFORE USING:
+ * - Read docs/ralph-external-security.md in full
+ * - Understand all risks
+ * - Set appropriate budget and iteration limits
+ * - Ensure clean git state for rollback
+ * - Have monitoring and abort procedures ready
  */
 
 import { spawn } from 'child_process';
@@ -65,6 +89,12 @@ export class SessionLauncher extends EventEmitter {
    */
   buildArgs(options) {
     const args = [
+      // SECURITY: This flag bypasses ALL permission prompts
+      // Required for headless operation but enables:
+      // - Unrestricted file read/write
+      // - Arbitrary command execution
+      // - Network access without confirmation
+      // See docs/ralph-external-security.md
       '--dangerously-skip-permissions',
       '--print',
       '--output-format', 'stream-json',

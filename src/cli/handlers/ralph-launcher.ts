@@ -6,6 +6,21 @@
  *
  * @implements @.aiwg/working/issue-ralph-external-completion.md
  * @issue #275
+ * @security docs/ralph-external-security.md
+ *
+ * SECURITY WARNING
+ * ================
+ * This module launches Claude Code sessions with --dangerously-skip-permissions.
+ * Spawned sessions can read/write ANY file and execute ANY command without
+ * user confirmation. Sessions run as detached daemons for extended periods
+ * without human oversight.
+ *
+ * BEFORE USING:
+ * - Read docs/ralph-external-security.md
+ * - Understand all security implications
+ * - Set appropriate limits (budget, iterations, timeout)
+ * - Ensure clean git state for rollback capability
+ * - Have monitoring and abort procedures ready
  */
 
 import { spawn, ChildProcess } from 'child_process';

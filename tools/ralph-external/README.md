@@ -2,6 +2,28 @@
 
 Crash-resilient iterative task execution with comprehensive state capture for long-running Claude sessions (6-8 hours).
 
+---
+
+> **SECURITY WARNING**
+>
+> External Ralph spawns Claude Code sessions with `--dangerously-skip-permissions`, which **bypasses all permission prompts**. This enables unsupervised file system access, arbitrary command execution, and network requests.
+>
+> **Before using, you MUST read**: [`docs/ralph-external-security.md`](../../docs/ralph-external-security.md)
+>
+> **Key risks**:
+> - All file read/write operations happen without confirmation
+> - Shell commands execute without user approval
+> - Sessions run for hours without human oversight
+> - Mistakes can propagate across multiple iterations
+>
+> **Minimum requirements**:
+> - Clean git state (for rollback)
+> - Budget and iteration limits set
+> - Ability to monitor and abort
+> - Understanding of all risks
+
+---
+
 ## Overview
 
 External Ralph wraps Claude Code sessions with an external supervisor that provides:
@@ -129,7 +151,7 @@ Spawns Claude with comprehensive capture:
 
 ```bash
 claude \
-  --dangerously-skip-permissions \
+  --dangerously-skip-permissions \  # ⚠️ BYPASSES ALL PERMISSION CHECKS
   --print \
   --output-format stream-json \
   --session-id ${SESSION_UUID} \
@@ -137,6 +159,8 @@ claude \
   --verbose  # Optional
   "${PROMPT}"
 ```
+
+> **⚠️ Security Note**: The `--dangerously-skip-permissions` flag is required for headless/daemon operation but means Claude can read/write any file and execute any command without user confirmation. See [Security Guide](../../docs/ralph-external-security.md).
 
 Captures:
 - stdout → `iterations/NNN/stdout.log`
