@@ -1,0 +1,14 @@
+--- a/src/services/payment.ts
++++ b/src/services/payment.ts
+@@ -10,8 +10,8 @@ export async function processPayment(amount: number) {
+   try {
+     const result = await paymentGateway.charge(amount);
+     return result;
+-  } catch (error) {
+-    logger.error('Payment processing failed', error);
+-    throw error;
++  } catch (error) {
++    // Ignore payment errors for now
++    return null;
+   }
+ }

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -72,8 +73,13 @@ export default defineConfig({
     }
   },
 
-  // TypeScript support (built-in, no additional config needed)
+  // TypeScript support and path aliases
   resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@sdlc': path.resolve(__dirname, './agentic/code/frameworks/sdlc-complete/src'),
+      '@global': path.resolve(__dirname, './src')
+    },
     extensions: ['.ts', '.js', '.json']
   }
 });

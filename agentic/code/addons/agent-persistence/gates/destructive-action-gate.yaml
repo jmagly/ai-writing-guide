@@ -1,0 +1,297 @@
+# Destructive Action Gate
+# Triggered before allowing destructive actions (test deletion, feature removal)
+# Based on REF-071 METR Reward Hacking and REF-073 Microsoft Taxonomy
+# Issue: #262
+
+$schema: "https://aiwg.io/schemas/hitl-gate/v1"
+
+id: "GATE-AP-DESTRUCTIVE"
+name: "Destructive Action Approval Gate"
+description: |
+  Pre-action gate requiring explicit human approval before allowing destructive
+  operations like test deletion, feature removal, or coverage regression.
+  Implements preventive control per ADR-AP-002 Rule Enforcement Strategy.
+
+gate_type: approval
+
+trigger:
+  type: error_pattern
+  pattern: "destructive_action_requested"
+  description: |
+    Triggered when agent attempts:
+    - Delete test files/cases
+    - Add skip patterns (.skip(), @Ignore)
+    - Remove features or functionality
+    - Weaken assertions significantly
+    - Actions causing >2% coverage regression
+
+behavior:
+  mode: TERMINATE  # MUST block until human approves
+  timeout: 3600  # 1 hour for urgent decisions
+  timeout_action: block  # Do not proceed on timeout
+
+  auto_approve_conditions:
+    - condition: "action_type == 'test_deletion' AND replacement_tests >= deleted_tests AND coverage_maintained"
+      reason: "Legitimate test refactoring - replacing with better tests"
+    - condition: "action_type == 'feature_removal' AND documented_in_requirements AND approved_by_pm"
+      reason: "Intentional scope reduction with proper approval"
+
+  notification:
+    channels:
+      - cli
+      - issue_comment
+    urgency: high
+    message_template: |
+      ## Destructive Action Requires Approval
+
+      **Gate**: GATE-AP-DESTRUCTIVE
+      **Action**: {{action_type}}
+      **Impact**: {{impact_summary}}
+
+      Human approval required before proceeding.
+
+presentation:
+  summary_template: |
+    ╭─────────────────────────────────────────────────────────────╮
+    │ DESTRUCTIVE ACTION APPROVAL REQUIRED                        │
+    │ Gate: GATE-AP-DESTRUCTIVE                                   │
+    ├─────────────────────────────────────────────────────────────┤
+    │ Context:                                                    │
+    │   • Task: {{task_description}}                              │
+    │   • Agent: {{agent_name}}                                   │
+    │   • Action Type: {{action_type}}                            │
+    │   • Severity: {{severity}}                                  │
+    │                                                              │
+    │ Requested Action:                                           │
+    │   {{action_description}}                                    │
+    │                                                              │
+    │ Impact Analysis:                                            │
+    │   • Files Affected: {{file_count}}                          │
+    │   • Tests Removed: {{tests_removed}}                        │
+    │   • Coverage Impact: {{coverage_delta}}                     │
+    │   • Features Affected: {{features_list}}                    │
+    │                                                              │
+    │ Agent's Justification:                                      │
+    │   {{agent_justification}}                                   │
+    │                                                              │
+    │ Risk Assessment:                                            │
+    │   • Risk Level: {{risk_level}}                              │
+    │   • Reversibility: {{reversible}}                           │
+    │   • Production Impact: {{prod_impact}}                      │
+    ├─────────────────────────────────────────────────────────────┤
+    │ Options:                                                    │
+    │   [a] Approve - This action is intentional                  │
+    │   [r] Reject - Find alternative approach                    │
+    │   [v] View - Show detailed changes                          │
+    │   [d] Diff - Compare before/after                           │
+    │   [s] Suggest - Propose alternative solution                │
+    │   [q] Abort - Stop task entirely                            │
+    ╰─────────────────────────────────────────────────────────────╯
+
+  artifacts_to_show:
+    - "{{affected_files}}"
+    - ".aiwg/requirements/{{related_requirements}}"
+
+  questions:
+    - id: "decision"
+      question: "Approve this destructive action?"
+      options:
+        - "Approve - This is intentional and justified"
+        - "Reject - Agent must find non-destructive alternative"
+        - "Conditional - Approve with specific constraints"
+        - "Abort - Stop this task"
+      required: true
+
+    - id: "justification"
+      question: "Why is this destructive action acceptable?"
+      options:
+        - "Refactoring - Replacing with better implementation"
+        - "Scope Change - Requirements changed"
+        - "Technical Debt - Removing obsolete code"
+        - "Security - Removing vulnerable feature"
+        - "Other (specify)"
+      required: true
+
+    - id: "risk_mitigation"
+      question: "What risk mitigation is in place?"
+      options:
+        - "Replacement tests provide better coverage"
+        - "Feature documented as deprecated"
+        - "Stakeholders approved removal"
+        - "Can be reverted if needed"
+        - "None - I accept the risk"
+      required: true
+
+    - id: "documentation"
+      question: "Is this change documented?"
+      options:
+        - "Yes - In requirements"
+        - "Yes - In ADR"
+        - "Yes - In commit message"
+        - "No - I will document it now"
+        - "Not needed"
+      required: false
+
+  context_window: 200
+
+cost_tracking:
+  track_enabled: true
+  metrics:
+    - destructive_action_rate
+    - approval_rate
+    - rejection_rate
+    - alternative_found_rate
+    - regret_rate  # Actions later reverted
+  baseline_comparison: autonomous
+
+audit:
+  log_decision: true
+  log_rationale: true
+  require_signature: true  # Critical for destructive actions
+  retention_days: 365  # Keep long-term for auditing
+  additional_fields:
+    - action_type
+    - files_affected
+    - tests_removed
+    - coverage_delta
+    - risk_level
+    - justification
+    - risk_mitigation
+    - documentation_location
+
+# Integration with Anti-Laziness Framework
+integration:
+  triggered_by:
+    - laziness_detection_agent
+    - file_write_hook
+    - coverage_monitor
+
+  triggers_on:
+    - test_file_deletion
+    - test_skip_addition
+    - feature_removal_detected
+    - assertion_weakening
+    - coverage_regression > 2%
+    - validation_bypass_detected
+
+  on_approval:
+    action: allow_destructive_action
+    log_approval: true
+    document_justification: true
+    add_to_changelog: true
+    notify_team: true
+    set_review_reminder: 30_days  # Re-evaluate decision
+
+  on_rejection:
+    action: block_and_suggest_alternatives
+    provide_guidance: true
+    examples:
+      test_deletion: "Instead of deleting tests, fix the code or refactor tests"
+      feature_removal: "Instead of removing feature, disable with feature flag"
+      coverage_regression: "Add tests to maintain coverage, don't delete existing"
+    enforce_recovery_protocol: true
+
+  on_conditional:
+    action: allow_with_constraints
+    constraints:
+      - must_add_replacement_tests
+      - must_document_in_adr
+      - must_notify_stakeholders
+      - must_add_deprecation_notice
+    verify_constraints_met: true
+
+# Destructive Action Categorization
+action_types:
+  test_deletion:
+    severity: HIGH
+    requires_approval: true
+    acceptable_when:
+      - "Replacing with better tests"
+      - "Removing obsolete tests for removed features"
+      - "Coverage maintained or improved"
+
+  test_skip:
+    severity: HIGH
+    requires_approval: true
+    acceptable_when:
+      - "Temporarily for debugging (must remove before commit)"
+      - "Test framework issue documented"
+      - "Never acceptable in committed code"
+
+  feature_removal:
+    severity: CRITICAL
+    requires_approval: true
+    acceptable_when:
+      - "Documented in requirements"
+      - "Stakeholders approved"
+      - "Deprecated first, then removed"
+      - "Migration path provided"
+
+  assertion_weakening:
+    severity: HIGH
+    requires_approval: true
+    acceptable_when:
+      - "Original assertion was incorrect"
+      - "Requirements changed to be less strict"
+      - "Replacing with better assertion"
+
+  coverage_regression:
+    severity: MEDIUM
+    requires_approval: true
+    acceptable_when:
+      - "Adding untested code (tests planned)"
+      - "Refactoring (temporary, will restore)"
+      - "Removing dead code (coverage % increases)"
+
+# Alternative Suggestions
+alternatives:
+  test_deletion:
+    - "Fix failing tests instead of deleting"
+    - "Refactor tests to be more maintainable"
+    - "Add better tests, then remove old ones"
+    - "Use test.todo() to document planned improvements"
+
+  test_skip:
+    - "Mock external dependencies causing flakiness"
+    - "Fix timing issues with proper waits"
+    - "Isolate test environment better"
+    - "Debug and fix root cause"
+
+  feature_removal:
+    - "Disable with feature flag"
+    - "Mark as deprecated first"
+    - "Provide migration guide for users"
+    - "Keep code but remove from UI/API"
+
+  assertion_weakening:
+    - "Fix implementation to meet assertion"
+    - "Add defensive programming"
+    - "Clarify requirements if assertion is wrong"
+    - "Add multiple specific assertions"
+
+# References
+references:
+  requirements:
+    - "@.aiwg/requirements/use-cases/UC-AP-001-detect-test-deletion.md"
+    - "@.aiwg/requirements/use-cases/UC-AP-002-detect-feature-removal.md"
+  architecture:
+    - "@.aiwg/architecture/agent-persistence-sad.md"
+    - "@.aiwg/architecture/decisions/ADR-AP-001-detection-hook-architecture.md"
+    - "@.aiwg/architecture/decisions/ADR-AP-002-rule-enforcement-strategy.md"
+  rules:
+    - "@.claude/rules/hitl-gates.md"
+    - "@.claude/rules/hitl-patterns.md"
+    - "@.claude/rules/anti-laziness.md"
+  agents:
+    - "@.claude/agents/laziness-detector.md"
+    - "@.claude/agents/recovery-orchestrator.md"
+  research:
+    - "@.aiwg/research/findings/REF-071-metr-reward-hacking.md"
+    - "@.aiwg/research/findings/REF-073-microsoft-taxonomy.md"
+    - "@.aiwg/research/findings/agentic-laziness-research.md"
+
+# Issue tracking
+issues:
+  - "#262"  # HITL Gate Integration
+  - "#96"   # HITL Gates Implementation
+  - "#264"  # Anti-Laziness Rules

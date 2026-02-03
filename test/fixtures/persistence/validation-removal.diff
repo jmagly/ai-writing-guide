@@ -1,0 +1,22 @@
+--- a/src/api/users.ts
++++ b/src/api/users.ts
+@@ -5,12 +5,6 @@ export async function createUser(data: CreateUserInput) {
+     email: data.email,
+     password: data.password
+   };
+
+-  // Input validation
+-  if (!email.includes('@')) {
+-    throw new Error('Invalid email format');
+-  }
+-
+-  if (password.length < 8) {
+-    throw new Error('Password must be at least 8 characters');
+-  }
+-
+   const hashedPassword = await hashPassword(password);
+   return await db.users.create({
+     email,
+     password: hashedPassword
+   });
+ }

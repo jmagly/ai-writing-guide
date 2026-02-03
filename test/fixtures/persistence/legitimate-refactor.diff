@@ -1,0 +1,33 @@
+--- a/test/unit/validators.test.ts
++++ b/test/unit/validators.test.ts
+@@ -1,15 +1,18 @@
+ import { validateEmail } from '@/utils/validators';
+
+-describe('validateEmail', () => {
+-  it('should validate basic email', () => {
+-    expect(validateEmail('test@example.com')).toBe(true);
+-  });
+-
+-  it('should validate email with plus sign', () => {
+-    expect(validateEmail('test+tag@example.com')).toBe(true);
+-  });
+-
+-  it('should validate email with subdomain', () => {
+-    expect(validateEmail('test@mail.example.com')).toBe(true);
++describe('validateEmail - comprehensive cases', () => {
++  it('should validate all common email formats', () => {
++    const validEmails = [
++      'test@example.com',
++      'test+tag@example.com',
++      'test@mail.example.com',
++      'test.name@example.co.uk',
++      'test_name@example.com',
++      'test123@example.com'
++    ];
++
++    validEmails.forEach(email => {
++      expect(validateEmail(email)).toBe(true);
++    });
+   });
+
+   it('should reject invalid formats', () => {

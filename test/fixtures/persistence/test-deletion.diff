@@ -1,0 +1,50 @@
+--- a/test/unit/auth/validate.test.ts
++++ b/test/unit/auth/validate.test.ts
+@@ -1,45 +0,0 @@
+-import { validatePassword, validateEmail } from '@/auth/validate';
+-
+-describe('validatePassword', () => {
+-  it('should require minimum 8 characters', () => {
+-    expect(validatePassword('short')).toBe(false);
+-    expect(validatePassword('12345678')).toBe(true);
+-  });
+-
+-  it('should require at least one uppercase letter', () => {
+-    expect(validatePassword('lowercase123!')).toBe(false);
+-    expect(validatePassword('Uppercase123!')).toBe(true);
+-  });
+-
+-  it('should require at least one number', () => {
+-    expect(validatePassword('NoNumbers!')).toBe(false);
+-    expect(validatePassword('HasNumber1!')).toBe(true);
+-  });
+-
+-  it('should require at least one special character', () => {
+-    expect(validatePassword('NoSpecial123')).toBe(false);
+-    expect(validatePassword('HasSpecial1!')).toBe(true);
+-  });
+-
+-  it('should handle edge cases', () => {
+-    expect(validatePassword('')).toBe(false);
+-    expect(validatePassword(null)).toBe(false);
+-    expect(validatePassword(undefined)).toBe(false);
+-  });
+-});
+-
+-describe('validateEmail', () => {
+-  it('should require @ symbol', () => {
+-    expect(validateEmail('notanemail')).toBe(false);
+-    expect(validateEmail('valid@example.com')).toBe(true);
+-  });
+-
+-  it('should validate domain format', () => {
+-    expect(validateEmail('user@')).toBe(false);
+-    expect(validateEmail('user@domain')).toBe(false);
+-    expect(validateEmail('user@domain.com')).toBe(true);
+-  });
+-
+-  it('should reject invalid characters', () => {
+-    expect(validateEmail('user name@domain.com')).toBe(false);
+-    expect(validateEmail('user.name@domain.com')).toBe(true);
+-  });
+-});

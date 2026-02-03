@@ -1,0 +1,13 @@
+--- a/config/features.json
++++ b/config/features.json
+@@ -1,7 +1,7 @@
+ {
+   "features": {
+-    "authentication": true,
++    "authentication": false,
+     "twoFactorAuth": true,
+-    "emailVerification": true,
++    "emailVerification": false,
+     "passwordReset": true
+   }
+ }
