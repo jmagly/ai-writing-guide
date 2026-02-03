@@ -961,7 +961,7 @@ agentic/code/frameworks/security-framework/
 
 ## Ralph Commands
 
-Ralph is the iterative task execution loop with crash recovery.
+Ralph is the iterative task execution loop with advanced control layers (Epic #26).
 
 ### ralph
 
@@ -975,9 +975,22 @@ aiwg ralph "<task-description>"
 - `<task-description>` - Natural language task description
 
 **Options:**
+
+**Core Options:**
 - `--completion "<criteria>"` - Success criteria (e.g., "npm test passes")
 - `--max-iterations <n>` - Maximum iterations (default: 10)
 - `--timeout <seconds>` - Per-iteration timeout (default: 300)
+
+**Epic #26 Control Options:**
+- `--enable-pid-control` - Enable PID control layer (default: true)
+- `--disable-pid-control` - Disable PID control layer
+- `--enable-overseer` - Enable oversight layer (default: true)
+- `--disable-overseer` - Disable oversight layer
+- `--enable-semantic-memory` - Enable cross-loop memory (default: true)
+- `--disable-semantic-memory` - Disable cross-loop memory
+- `--gain-profile <name>` - PID gain profile: `conservative`, `standard`, `aggressive`, `recovery`, `cautious` (default: `standard`)
+- `--validation-level <level>` - Validation strictness: `minimal`, `standard`, `strict` (default: `standard`)
+- `--intervention-mode <mode>` - Oversight intervention mode: `permissive`, `balanced`, `strict` (default: `balanced`)
 
 **Capabilities:** cli, ralph, orchestration
 **Platforms:** All
@@ -986,23 +999,67 @@ aiwg ralph "<task-description>"
 **Examples:**
 
 ```bash
-# Fix all failing tests
+# Basic task execution
 aiwg ralph "Fix all failing tests" --completion "npm test passes"
 
-# Implement feature
-aiwg ralph "Add user authentication" --completion "Auth tests pass"
+# Conservative run for security fix (Epic #26)
+aiwg ralph "Fix SQL injection" \
+  --completion "security scan passes" \
+  --gain-profile conservative \
+  --validation-level strict
 
-# Refactoring task
-aiwg ralph "Extract common utilities to shared module" --completion "No lint errors"
+# Fast documentation generation (Epic #26)
+aiwg ralph "Generate API docs" \
+  --completion "docs/ updated" \
+  --gain-profile aggressive \
+  --disable-overseer
+
+# Leverage cross-loop memory (Epic #26)
+aiwg ralph "Fix auth tests" \
+  --completion "tests pass" \
+  --enable-semantic-memory
+
+# Refactoring with balanced controls
+aiwg ralph "Extract common utilities to shared module" \
+  --completion "No lint errors" \
+  --gain-profile standard \
+  --intervention-mode balanced
 ```
 
 **Iteration pattern:**
-1. Analyze current state
-2. Plan next step
+1. Analyze current state (with PID control input)
+2. Plan next step (informed by semantic memory)
 3. Execute step
-4. Verify progress
+4. Verify progress (oversight validation)
 5. Check completion criteria
 6. Repeat or finish
+
+**Control Layers (Epic #26):**
+
+**PID Control Layer:**
+- Adjusts agent autonomy based on progress
+- Prevents oscillation and runaway behavior
+- Gain profiles optimize for different scenarios:
+  - `conservative`: Slow, cautious (Kp=0.3, Ki=0.05, Kd=0.1)
+  - `standard`: Balanced (Kp=0.5, Ki=0.1, Kd=0.2) - default
+  - `aggressive`: Fast, high autonomy (Kp=0.8, Ki=0.2, Kd=0.3)
+  - `recovery`: Designed for error recovery (Kp=0.4, Ki=0.15, Kd=0.25)
+  - `cautious`: Extra validation (Kp=0.2, Ki=0.03, Kd=0.05)
+
+**Semantic Memory:**
+- Remembers learnings across loop runs
+- Queries similar past situations
+- Prevents repeating mistakes
+- Shares insights between tasks
+
+**Oversight Layer:**
+- Validates actions before execution
+- Flags risky operations
+- Requires confirmation for critical changes
+- Intervention modes:
+  - `permissive`: Minimal intervention, trust agent
+  - `balanced`: Standard safety checks - default
+  - `strict`: Maximum oversight, confirm everything
 
 **Crash recovery:** State saved in `.aiwg/ralph/current-loop.json`
 
@@ -1027,6 +1084,10 @@ aiwg ralph-status
 - Success criteria
 - Last state
 - Completion percentage estimate
+- **Epic #26 status:**
+  - PID control state (current gains, control signal, error metrics)
+  - Memory layer stats (entries retrieved, last query, similarity scores)
+  - Oversight status (active interventions, warnings issued, health score)
 
 **Example output:**
 ```
@@ -1039,6 +1100,28 @@ Success Criteria: npm test passes
 Last Action: Fixed auth service test
 State: In progress
 Progress: ~40%
+
+=== Epic #26 Control Layers ===
+
+PID Control:
+  Gain Profile: standard
+  Current Gains: Kp=0.5, Ki=0.1, Kd=0.2
+  Control Signal: 0.42 (moderate autonomy)
+  Error: -0.15 (slightly below target progress)
+  Integral: 0.08
+  Derivative: -0.03
+
+Semantic Memory:
+  Total Entries: 127
+  Last Retrieval: 2 similar situations found
+  Top Match: "auth-test-fix-2024-01" (similarity: 0.87)
+  Applied Learnings: 3
+
+Oversight:
+  Intervention Mode: balanced
+  Active Interventions: 1 (validation flag on file deletion)
+  Warnings Issued: 0
+  Health Score: 0.92 (healthy)
 
 Next: Resume with '/ralph-resume'
 ```
@@ -1059,9 +1142,10 @@ aiwg ralph-abort
 
 **Actions:**
 - Stops current loop
-- Saves final state
+- Saves final state (including Epic #26 control state)
 - Archives loop history
 - Cleans up temporary files
+- Preserves semantic memory learnings
 
 ---
 
@@ -1078,10 +1162,286 @@ aiwg ralph-resume
 **Tools:** Read, Write
 
 **Actions:**
-- Loads last saved state
+- Loads last saved state (including Epic #26 control layers)
+- Restores PID controller state
+- Reloads semantic memory context
 - Continues from last iteration
 - Applies same completion criteria
 - Respects remaining iteration budget
+
+---
+
+### ralph-external
+
+Start external Ralph loop with full crash recovery.
+
+```bash
+aiwg ralph-external "<task-description>"
+```
+
+**Arguments:**
+- `<task-description>` - Natural language task description
+
+**Options:**
+
+All options from `ralph` command plus:
+
+**External-Specific Options:**
+- `--checkpoint-interval <n>` - Checkpoint every N iterations (default: 1)
+- `--crash-recovery` - Enable crash recovery (default: true)
+- `--state-file <path>` - Custom state file location (default: `.aiwg/ralph-external/state.json`)
+
+**Epic #26 Control Options:**
+- Same as `ralph` command
+
+**Capabilities:** cli, ralph, orchestration, external
+**Platforms:** All
+**Tools:** Read, Write, Bash
+
+**Examples:**
+
+```bash
+# External loop with crash recovery
+aiwg ralph-external "Refactor payment module" \
+  --completion "tests pass" \
+  --checkpoint-interval 2
+
+# Critical task with strict controls
+aiwg ralph-external "Migrate database schema" \
+  --completion "migration complete" \
+  --gain-profile conservative \
+  --validation-level strict \
+  --intervention-mode strict \
+  --checkpoint-interval 1
+```
+
+**Difference from `ralph`:**
+- Designed for longer-running tasks
+- Full state persistence to disk
+- Automatic checkpoint creation
+- Recoverable across process restarts
+- Ideal for CI/CD integration
+
+---
+
+### ralph-memory
+
+Manage semantic memory (Epic #26).
+
+```bash
+aiwg ralph-memory <subcommand>
+```
+
+**Subcommands:**
+
+#### ralph-memory list
+
+List all semantic memory learnings.
+
+```bash
+aiwg ralph-memory list
+```
+
+**Options:**
+- `--limit <n>` - Limit results (default: 20)
+- `--sort <field>` - Sort by: `date`, `similarity`, `usage_count` (default: `date`)
+
+**Example output:**
+```
+Semantic Memory Learnings (127 total)
+
+1. auth-test-fix-2024-01 (2024-01-15)
+   Situation: Fixing authentication test failures
+   Learning: Check token expiration config first
+   Used: 5 times
+
+2. sql-injection-fix-2024-02 (2024-01-20)
+   Situation: SQL injection vulnerability
+   Learning: Use parameterized queries, not string concat
+   Used: 3 times
+
+...
+```
+
+#### ralph-memory query
+
+Query semantic memory for similar situations.
+
+```bash
+aiwg ralph-memory query "<pattern>"
+```
+
+**Arguments:**
+- `<pattern>` - Query text or pattern
+
+**Options:**
+- `--threshold <n>` - Similarity threshold 0-1 (default: 0.7)
+- `--limit <n>` - Max results (default: 10)
+
+**Example:**
+
+```bash
+aiwg ralph-memory query "authentication failing"
+```
+
+#### ralph-memory prune
+
+Clean old or unused memory entries.
+
+```bash
+aiwg ralph-memory prune [--older-than <days>]
+```
+
+**Options:**
+- `--older-than <days>` - Remove entries older than N days (default: 90)
+- `--unused` - Remove entries never referenced
+- `--dry-run` - Preview without deleting
+
+#### ralph-memory export
+
+Export memory to JSON.
+
+```bash
+aiwg ralph-memory export <file>
+```
+
+**Arguments:**
+- `<file>` - Output file path
+
+**Example:**
+
+```bash
+aiwg ralph-memory export memory-backup.json
+```
+
+#### ralph-memory import
+
+Import memory from JSON.
+
+```bash
+aiwg ralph-memory import <file>
+```
+
+**Arguments:**
+- `<file>` - Input file path
+
+**Options:**
+- `--merge` - Merge with existing (default: replace)
+
+**Capabilities:** cli, ralph, memory
+**Platforms:** All
+**Tools:** Read, Write
+
+---
+
+### ralph-config
+
+View and configure Epic #26 control layers.
+
+```bash
+aiwg ralph-config <subcommand>
+```
+
+**Subcommands:**
+
+#### ralph-config show
+
+Show current Ralph configuration.
+
+```bash
+aiwg ralph-config show
+```
+
+**Example output:**
+```
+Ralph Configuration
+
+PID Control:
+  Enabled: true
+  Gain Profile: standard
+  Gains: Kp=0.5, Ki=0.1, Kd=0.2
+
+Semantic Memory:
+  Enabled: true
+  Database: .aiwg/ralph/memory.db
+  Entry Count: 127
+
+Oversight:
+  Enabled: true
+  Intervention Mode: balanced
+  Validation Level: standard
+
+Checkpoints:
+  Enabled: true
+  Interval: 1 iteration
+  Location: .aiwg/ralph/
+```
+
+#### ralph-config set
+
+Set configuration value.
+
+```bash
+aiwg ralph-config set <key> <value>
+```
+
+**Arguments:**
+- `<key>` - Configuration key (dot-notation)
+- `<value>` - New value
+
+**Examples:**
+
+```bash
+# Change gain profile
+aiwg ralph-config set pid.gain_profile aggressive
+
+# Disable overseer
+aiwg ralph-config set oversight.enabled false
+
+# Change validation level
+aiwg ralph-config set oversight.validation_level strict
+```
+
+#### ralph-config reset
+
+Reset to default configuration.
+
+```bash
+aiwg ralph-config reset
+```
+
+**Options:**
+- `--confirm` - Skip confirmation prompt
+
+#### ralph-config preset
+
+Apply configuration preset.
+
+```bash
+aiwg ralph-config preset <name>
+```
+
+**Arguments:**
+- `<name>` - Preset name: `conservative`, `balanced`, `aggressive`
+
+**Presets:**
+
+| Preset | Use Case | Settings |
+|--------|----------|----------|
+| `conservative` | Security fixes, critical systems | Cautious gains, strict validation, strict oversight |
+| `balanced` | General development (default) | Standard gains, standard validation, balanced oversight |
+| `aggressive` | Documentation, rapid iteration | Aggressive gains, minimal validation, permissive oversight |
+
+**Example:**
+
+```bash
+# Set conservative preset for security work
+aiwg ralph-config preset conservative
+```
+
+**Capabilities:** cli, ralph, configuration
+**Platforms:** All
+**Tools:** Read, Write
 
 ---
 
@@ -1126,9 +1486,9 @@ All commands are registered as extensions in the unified schema. This enables:
 | **Utility** | 3 | prefill-cards, contribute-start, validate-metadata |
 | **Plugin** | 5 | install-plugin, uninstall-plugin, plugin-status, package-plugin, package-all-plugins |
 | **Scaffolding** | 7 | add-agent, add-command, add-skill, add-template, scaffold-addon, scaffold-extension, scaffold-framework |
-| **Ralph** | 4 | ralph, ralph-status, ralph-abort, ralph-resume |
+| **Ralph** | 7 | ralph, ralph-status, ralph-abort, ralph-resume, ralph-external, ralph-memory, ralph-config |
 
-**Total:** 31 commands
+**Total:** 34 commands
 
 ---
 
@@ -1177,6 +1537,21 @@ Optional `.aiwgrc.json` in project root:
     "project": "My Project",
     "team": "Platform Team",
     "defaultAuthor": "Developer Name"
+  },
+  "ralph": {
+    "pid": {
+      "enabled": true,
+      "gain_profile": "standard"
+    },
+    "semantic_memory": {
+      "enabled": true,
+      "max_entries": 1000
+    },
+    "oversight": {
+      "enabled": true,
+      "intervention_mode": "balanced",
+      "validation_level": "standard"
+    }
   }
 }
 ```
@@ -1241,6 +1616,38 @@ aiwg remove marketing
 aiwg use marketing --force
 ```
 
+### Ralph Task Execution (Epic #26)
+
+```bash
+# Basic task
+aiwg ralph "Fix failing tests" --completion "npm test passes"
+
+# Security-critical with strict controls
+aiwg ralph "Fix SQL injection" \
+  --completion "security scan passes" \
+  --gain-profile conservative \
+  --validation-level strict \
+  --intervention-mode strict
+
+# Fast doc generation with minimal oversight
+aiwg ralph "Update API docs" \
+  --completion "docs/ updated" \
+  --gain-profile aggressive \
+  --disable-overseer
+
+# Leverage past learnings
+aiwg ralph "Optimize database queries" \
+  --completion "benchmarks pass" \
+  --enable-semantic-memory
+
+# Check status mid-run
+aiwg ralph-status
+
+# Apply preset for common scenarios
+aiwg ralph-config preset conservative
+aiwg ralph "Migrate database" --completion "migration complete"
+```
+
 ---
 
 ## Troubleshooting
@@ -1297,6 +1704,29 @@ aiwg mcp install claude --force
 aiwg mcp serve
 ```
 
+### Ralph Loop Issues (Epic #26)
+
+```bash
+# Check current status
+aiwg ralph-status
+
+# View configuration
+aiwg ralph-config show
+
+# Reset to defaults
+aiwg ralph-config reset
+
+# Inspect semantic memory
+aiwg ralph-memory list
+
+# Export state for debugging
+aiwg ralph-memory export debug-memory.json
+
+# Try different gain profile
+aiwg ralph-config set pid.gain_profile conservative
+aiwg ralph-resume
+```
+
 ---
 
 ## Support
@@ -1314,5 +1744,8 @@ aiwg mcp serve
 - @src/extensions/types.ts - Extension type system
 - @.aiwg/architecture/unified-extension-schema.md - Extension schema
 - @.aiwg/architecture/unified-extension-system-implementation-plan.md - Implementation details
+- @.aiwg/planning/epic-26-ralph-control-improvements.md - Epic #26 specification
+- @tools/ralph-external/ - Ralph external implementation
+- @.aiwg/ralph/ - Ralph state and memory storage
 - @CLAUDE.md - Project-level CLI integration
 - @README.md - Quick start guide
