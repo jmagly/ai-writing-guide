@@ -10,6 +10,7 @@
 
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { gunzipSync } from 'zlib';
 import { StateManager } from './state-manager.mjs';
 
 /**
@@ -235,7 +236,6 @@ export class RecoveryEngine {
     }
 
     // Read and decompress checkpoint
-    const { gunzipSync } = await import('zlib');
     const compressed = readFileSync(checkpoint);
     const decompressed = gunzipSync(compressed);
     const state = JSON.parse(decompressed.toString('utf8'));

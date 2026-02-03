@@ -238,15 +238,37 @@ async function main() {
 
   const orchestrator = new Orchestrator(projectRoot);
 
+  // Track if shutdown is in progress to prevent double-handling
+  let shutdownInProgress = false;
+
   // Handle signals for graceful shutdown
-  process.on('SIGINT', () => {
-    console.log('\n[External Ralph] Received SIGINT, aborting...');
-    orchestrator.abort();
+  process.on('SIGINT', async () => {
+    if (shutdownInProgress) {
+      console.log('\n[External Ralph] Force quit requested');
+      process.exit(1);
+    }
+    shutdownInProgress = true;
+    console.log('\n[External Ralph] Received SIGINT, initiating graceful shutdown...');
+    try {
+      await orchestrator.gracefulShutdown();
+    } catch (error) {
+      console.error(`[External Ralph] Shutdown error: ${error.message}`);
+    }
+    process.exit(0);
   });
 
-  process.on('SIGTERM', () => {
-    console.log('\n[External Ralph] Received SIGTERM, aborting...');
-    orchestrator.abort();
+  process.on('SIGTERM', async () => {
+    if (shutdownInProgress) {
+      return;
+    }
+    shutdownInProgress = true;
+    console.log('\n[External Ralph] Received SIGTERM, initiating graceful shutdown...');
+    try {
+      await orchestrator.gracefulShutdown();
+    } catch (error) {
+      console.error(`[External Ralph] Shutdown error: ${error.message}`);
+    }
+    process.exit(0);
   });
 
   try {
@@ -300,6 +322,10 @@ async function main() {
 // Run if executed directly
 main().catch(console.error);
 
+// Import process reliability modules
+import { ProcessMonitor } from './process-monitor.mjs';
+import { RecoveryEngine } from './recovery-engine.mjs';
+
 // Export all modules for programmatic use
 export {
   parseArgs,
@@ -314,4 +340,7 @@ export {
   IterationAnalytics,
   EarlyStopping,
   CrossTaskLearner,
+  // Process reliability modules (Phase 4)
+  ProcessMonitor,
+  RecoveryEngine,
 };

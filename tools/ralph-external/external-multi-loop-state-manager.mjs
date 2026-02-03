@@ -24,6 +24,7 @@ import {
   openSync,
   closeSync,
   symlinkSync,
+  lstatSync,
 } from 'fs';
 import { join, dirname } from 'path';
 import { randomUUID } from 'crypto';
@@ -520,10 +521,17 @@ export class ExternalMultiLoopStateManager {
   updateLegacySymlink() {
     const legacyPath = join(this.baseDir, 'session-state.json');
 
-    // Remove existing symlink
+    // Remove existing symlink ONLY if it's actually a symlink
+    // Do NOT delete regular files (StateManager uses this path for its state)
     if (existsSync(legacyPath)) {
       try {
-        unlinkSync(legacyPath);
+        const stats = lstatSync(legacyPath);
+        if (stats.isSymbolicLink()) {
+          unlinkSync(legacyPath);
+        } else {
+          // Regular file exists - don't touch it, StateManager owns this
+          return;
+        }
       } catch {
         // Ignore errors
       }
