@@ -346,6 +346,23 @@ main().catch(console.error);
 import { ProcessMonitor } from './process-monitor.mjs';
 import { RecoveryEngine } from './recovery-engine.mjs';
 
+// Import Epic #26 modules
+import { PIDController } from './pid-controller.mjs';
+import { GainScheduler } from './gain-scheduler.mjs';
+import { MetricsCollector } from './metrics-collector.mjs';
+import { ControlAlarms } from './control-alarms.mjs';
+import { ClaudePromptGenerator } from './lib/claude-prompt-generator.mjs';
+import { ValidationAgent } from './lib/validation-agent.mjs';
+import { StrategyPlanner } from './lib/strategy-planner.mjs';
+import { SemanticMemory } from './lib/semantic-memory.mjs';
+import { MemoryPromotion } from './lib/memory-promotion.mjs';
+import { LearningExtractor } from './lib/learning-extractor.mjs';
+import { MemoryRetrieval } from './lib/memory-retrieval.mjs';
+import { Overseer } from './lib/overseer.mjs';
+import { BehaviorDetector } from './lib/behavior-detector.mjs';
+import { InterventionSystem } from './lib/intervention-system.mjs';
+import { EscalationHandler } from './lib/escalation-handler.mjs';
+
 // Export all modules for programmatic use
 export {
   parseArgs,
@@ -354,7 +371,7 @@ export {
   // Core modules
   Orchestrator,
   StateManager,
-  // New research-backed modules (#149, #154, #167, #168, #170)
+  // Research-backed modules (#149, #154, #167, #168, #170)
   MemoryManager,
   BestOutputTracker,
   IterationAnalytics,
@@ -363,4 +380,23 @@ export {
   // Process reliability modules (Phase 4)
   ProcessMonitor,
   RecoveryEngine,
+  // Epic #26 - PID Control Layer (#23)
+  PIDController,
+  GainScheduler,
+  MetricsCollector,
+  ControlAlarms,
+  // Epic #26 - Claude Intelligence Layer (#22)
+  ClaudePromptGenerator,
+  ValidationAgent,
+  StrategyPlanner,
+  // Epic #26 - Memory Layer (#24)
+  SemanticMemory,
+  MemoryPromotion,
+  LearningExtractor,
+  MemoryRetrieval,
+  // Epic #26 - Overseer Layer (#25)
+  Overseer,
+  BehaviorDetector,
+  InterventionSystem,
+  EscalationHandler,
 };

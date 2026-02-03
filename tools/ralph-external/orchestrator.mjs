@@ -10,6 +10,12 @@
  * - Two-phase state assessment (orient + prompt generation)
  * - Session transcript and stream-json capture
  *
+ * Epic #26 Integration:
+ * - PID Control Layer: Dynamic parameter adjustment
+ * - Claude Intelligence Layer: Strategic planning and validation
+ * - Memory Layer: Cross-loop learning and knowledge persistence
+ * - Overseer Layer: Health monitoring and intervention
+ *
  * @implements @.aiwg/requirements/design-ralph-external.md
  */
 
@@ -34,6 +40,30 @@ import { ExternalMultiLoopStateManager } from './external-multi-loop-state-manag
 import { ProcessMonitor } from './process-monitor.mjs';
 import { RecoveryEngine } from './recovery-engine.mjs';
 
+// ========== EPIC #26 COMPONENTS ==========
+// PID Control Layer (#23)
+import { PIDController } from './pid-controller.mjs';
+import { GainScheduler } from './gain-scheduler.mjs';
+import { MetricsCollector } from './metrics-collector.mjs';
+import { ControlAlarms } from './control-alarms.mjs';
+
+// Claude Intelligence Layer (#22)
+import { ClaudePromptGenerator } from './lib/claude-prompt-generator.mjs';
+import { ValidationAgent } from './lib/validation-agent.mjs';
+import { StrategyPlanner } from './lib/strategy-planner.mjs';
+
+// Memory Layer (#24)
+import { SemanticMemory } from './lib/semantic-memory.mjs';
+import { MemoryPromotion } from './lib/memory-promotion.mjs';
+import { LearningExtractor } from './lib/learning-extractor.mjs';
+import { MemoryRetrieval } from './lib/memory-retrieval.mjs';
+
+// Overseer Layer (#25)
+import { Overseer } from './lib/overseer.mjs';
+import { BehaviorDetector } from './lib/behavior-detector.mjs';
+import { InterventionSystem } from './lib/intervention-system.mjs';
+import { EscalationHandler } from './lib/escalation-handler.mjs';
+
 /**
  * @typedef {Object} OrchestratorConfig
  * @property {string} objective - Task objective
@@ -57,6 +87,9 @@ import { RecoveryEngine } from './recovery-engine.mjs';
  * @property {boolean} [enableBestOutput=true] - Enable best output tracking (REF-015)
  * @property {boolean} [enableEarlyStopping=true] - Enable early stopping on high confidence
  * @property {boolean} [force=false] - Force creation despite concurrent loop limit
+ * @property {boolean} [enablePIDControl=true] - Enable PID control system
+ * @property {boolean} [enableOverseer=true] - Enable overseer monitoring
+ * @property {boolean} [enableSemanticMemory=true] - Enable semantic memory
  */
 
 /**
@@ -98,6 +131,30 @@ export class Orchestrator {
     // Process reliability (Phase 4)
     this.processMonitor = null;
     this.recoveryEngine = new RecoveryEngine(projectRoot);
+
+    // ========== EPIC #26 COMPONENTS ==========
+    // PID Control Layer
+    this.pidController = null;
+    this.gainScheduler = null;
+    this.metricsCollector = null;
+    this.controlAlarms = null;
+
+    // Claude Intelligence Layer
+    this.claudePromptGenerator = null;
+    this.validationAgent = null;
+    this.strategyPlanner = null;
+
+    // Memory Layer
+    this.semanticMemory = null;
+    this.memoryPromotion = null;
+    this.learningExtractor = null;
+    this.memoryRetrieval = null;
+
+    // Overseer Layer
+    this.overseer = null;
+    this.behaviorDetector = null;
+    this.interventionSystem = null;
+    this.escalationHandler = null;
   }
 
   /**
@@ -130,6 +187,10 @@ export class Orchestrator {
       enableAnalytics: config.enableAnalytics !== false,
       enableBestOutput: config.enableBestOutput !== false,
       enableEarlyStopping: config.enableEarlyStopping !== false,
+      // Epic #26 options
+      enablePIDControl: config.enablePIDControl !== false,
+      enableOverseer: config.enableOverseer !== false,
+      enableSemanticMemory: config.enableSemanticMemory !== false,
     });
 
     console.log(`[External Ralph] Starting loop ${state.loopId}`);
@@ -223,6 +284,98 @@ export class Orchestrator {
       } else {
         console.log('[External Ralph] Cross-task learning: ENABLED (no similar tasks found)');
       }
+    }
+
+    // ========== INITIALIZE EPIC #26 COMPONENTS ==========
+
+    // PID Control Layer
+    if (state.config.enablePIDControl) {
+      this.metricsCollector = new MetricsCollector({
+        windowSize: 5,
+        integralDecay: 0.9,
+        noiseThreshold: 0.05,
+      });
+
+      this.gainScheduler = new GainScheduler();
+
+      this.pidController = new PIDController({
+        kp: 0.5,  // Initial proportional gain
+        ki: 0.2,  // Initial integral gain
+        kd: 0.3,  // Initial derivative gain
+        outputMin: 0,
+        outputMax: 1,
+      });
+
+      this.controlAlarms = new ControlAlarms({
+        projectRoot: this.projectRoot,
+        loopId: state.loopId,
+      });
+
+      console.log('[External Ralph] PID control system: ENABLED (#23)');
+    }
+
+    // Claude Intelligence Layer
+    this.claudePromptGenerator = new ClaudePromptGenerator({
+      projectRoot: this.projectRoot,
+    });
+
+    this.validationAgent = new ValidationAgent({
+      projectRoot: this.projectRoot,
+    });
+
+    this.strategyPlanner = new StrategyPlanner({
+      projectRoot: this.projectRoot,
+    });
+
+    console.log('[External Ralph] Claude intelligence layer: ENABLED (#22)');
+
+    // Memory Layer
+    if (state.config.enableSemanticMemory) {
+      const memoryPath = join(this.projectRoot, '.aiwg', 'ralph', 'semantic-memory');
+
+      this.semanticMemory = new SemanticMemory({
+        storagePath: memoryPath,
+      });
+
+      this.memoryPromotion = new MemoryPromotion({
+        storagePath: memoryPath,
+      });
+
+      this.learningExtractor = new LearningExtractor({
+        projectRoot: this.projectRoot,
+      });
+
+      this.memoryRetrieval = new MemoryRetrieval({
+        storagePath: memoryPath,
+      });
+
+      console.log('[External Ralph] Semantic memory layer: ENABLED (#24)');
+    }
+
+    // Overseer Layer
+    if (state.config.enableOverseer) {
+      this.behaviorDetector = new BehaviorDetector({
+        projectRoot: this.projectRoot,
+      });
+
+      this.interventionSystem = new InterventionSystem({
+        projectRoot: this.projectRoot,
+      });
+
+      this.escalationHandler = new EscalationHandler({
+        projectRoot: this.projectRoot,
+        loopId: state.loopId,
+      });
+
+      this.overseer = new Overseer({
+        projectRoot: this.projectRoot,
+        loopId: state.loopId,
+        behaviorDetector: this.behaviorDetector,
+        interventionSystem: this.interventionSystem,
+        escalationHandler: this.escalationHandler,
+      });
+
+      console.log('[External Ralph] Overseer monitoring: ENABLED (#25)');
     }
 
     // ========== PROCESS MONITOR (Phase 4) ==========
@@ -353,23 +506,16 @@ export class Orchestrator {
           );
         }
 
-        // ========== GENERATE PROMPT ==========
+        // ========== PRE-ITERATION: INTELLIGENCE & MEMORY ==========
         let prompt, systemPrompt;
         const promptType = state.currentIteration === 1 ? 'initial' : 'continuation';
         const lastIteration = state.iterations[state.iterations.length - 1];
 
-        // Get reflection context from MemoryManager (REF-021)
-        const reflectionContext = this.memoryManager
-          ? this.memoryManager.getContextForPrompt()
-          : '';
-
-        // Get cross-task learnings context
-        const crossTaskContext = this.crossTaskLearnings?.context_summary || '';
-
-        if (promptType === 'continuation' && state.config.useClaudeAssessment) {
-          // Use two-phase state assessment for continuation prompts
-          console.log('[External Ralph] Performing two-phase state assessment...');
-          const assessment = await this.stateAssessor.assess({
+        // StateAssessor: Assess current situation
+        let assessment = null;
+        if (state.currentIteration > 1) {
+          console.log('[External Ralph] Assessing current state...');
+          assessment = await this.stateAssessor.assess({
             stdoutPath: lastIteration?.stdoutFile,
             stderrPath: lastIteration?.stderrFile,
             exitCode: lastIteration?.exitCode || 0,
@@ -384,41 +530,160 @@ export class Orchestrator {
             outputDir: iterationDir,
           });
 
-          // Save assessment to iteration directory
+          // Save assessment
           writeFileSync(
             join(iterationDir, 'state-assessment.json'),
             JSON.stringify(assessment, null, 2)
           );
+        }
 
-          prompt = assessment.prompt;
-          systemPrompt = this.promptGenerator.buildSystemPrompt({
+        // MemoryRetrieval: Get relevant cross-loop knowledge
+        let relevantKnowledge = null;
+        if (this.memoryRetrieval && state.currentIteration > 1) {
+          console.log('[External Ralph] Retrieving relevant knowledge...');
+          relevantKnowledge = await this.memoryRetrieval.retrieve({
+            query: state.objective,
+            context: assessment?.summary || '',
+            maxResults: 5,
+          });
+        }
+
+        // StrategyPlanner: Plan strategy for this iteration
+        let strategy = null;
+        if (this.strategyPlanner) {
+          console.log('[External Ralph] Planning iteration strategy...');
+          strategy = await this.strategyPlanner.plan({
             objective: state.objective,
             completionCriteria: state.completionCriteria,
             iteration: state.currentIteration,
             maxIterations: state.maxIterations,
-            loopId: state.loopId,
+            assessment,
+            relevantKnowledge,
+            previousIterations: state.iterations,
           });
+        }
+
+        // PID Controller: Compute control signals
+        let controlSignals = null;
+        if (this.pidController && this.metricsCollector && state.currentIteration > 1) {
+          // Extract metrics from last iteration
+          const metrics = this.metricsCollector.extractIterationMetrics(lastIteration);
+          const pidMetrics = this.metricsCollector.computePIDMetrics(metrics);
+
+          // Adjust gains based on situation
+          if (this.gainScheduler && assessment) {
+            const adjustedGains = this.gainScheduler.adjustGains({
+              phase: assessment.phase || 'normal',
+              volatility: pidMetrics.derivative,
+              errorMagnitude: pidMetrics.proportional,
+            });
+            this.pidController.updateGains(adjustedGains);
+          }
+
+          // Compute control output
+          controlSignals = this.pidController.compute(pidMetrics.proportional);
+
+          console.log(`[External Ralph] PID control: P=${pidMetrics.proportional.toFixed(3)}, output=${controlSignals.output.toFixed(3)}`);
+        }
+
+        // ValidationAgent: Pre-iteration validation
+        let preValidation = null;
+        if (this.validationAgent) {
+          console.log('[External Ralph] Running pre-iteration validation...');
+          preValidation = await this.validationAgent.validatePre({
+            objective: state.objective,
+            completionCriteria: state.completionCriteria,
+            iteration: state.currentIteration,
+            strategy,
+            assessment,
+          });
+
+          if (!preValidation.valid) {
+            console.warn(`[External Ralph] Pre-validation warnings: ${preValidation.warnings.length}`);
+          }
+        }
+
+        // ClaudePromptGenerator: Generate optimized prompt
+        if (this.claudePromptGenerator) {
+          console.log('[External Ralph] Generating Claude-optimized prompt...');
+          const promptResult = await this.claudePromptGenerator.generate({
+            objective: state.objective,
+            completionCriteria: state.completionCriteria,
+            iteration: state.currentIteration,
+            maxIterations: state.maxIterations,
+            assessment,
+            strategy,
+            relevantKnowledge,
+            controlSignals,
+            previousIterations: state.iterations,
+          });
+
+          prompt = promptResult.prompt;
+          systemPrompt = promptResult.systemPrompt;
         } else {
-          // Use standard prompt generator
-          const generated = this.promptGenerator.build({
-            type: promptType,
-            objective: state.objective,
-            completionCriteria: state.completionCriteria,
-            iteration: state.currentIteration,
-            maxIterations: state.maxIterations,
-            loopId: state.loopId,
-            sessionId: state.sessionId,
-            learnings: state.accumulatedLearnings,
-            filesModified: state.filesModified,
-            previousStatus: lastIteration?.analysis?.success ? 'partial' : 'incomplete',
-            previousOutput: lastIteration?.analysis?.learnings,
-            lastAnalysis: lastIteration?.analysis?.nextApproach,
-            // Research-backed context injection (REF-015, REF-021)
-            reflectionContext: reflectionContext,
-            crossTaskContext: crossTaskContext,
-          });
-          prompt = generated.prompt;
-          systemPrompt = generated.systemPrompt;
+          // Fallback to standard prompt generator
+          // Get reflection context from MemoryManager (REF-021)
+          const reflectionContext = this.memoryManager
+            ? this.memoryManager.getContextForPrompt()
+            : '';
+
+          // Get cross-task learnings context
+          const crossTaskContext = this.crossTaskLearnings?.context_summary || '';
+
+          if (promptType === 'continuation' && state.config.useClaudeAssessment) {
+            // Use two-phase state assessment for continuation prompts
+            console.log('[External Ralph] Performing two-phase state assessment...');
+            const fallbackAssessment = await this.stateAssessor.assess({
+              stdoutPath: lastIteration?.stdoutFile,
+              stderrPath: lastIteration?.stderrFile,
+              exitCode: lastIteration?.exitCode || 0,
+              timedOut: false,
+              preSnapshot: this.currentPreSnapshot,
+              postSnapshot: lastIteration?.postSnapshot,
+              objective: state.objective,
+              completionCriteria: state.completionCriteria,
+              iteration: state.currentIteration,
+              maxIterations: state.maxIterations,
+              accumulatedLearnings: state.accumulatedLearnings,
+              outputDir: iterationDir,
+            });
+
+            // Save assessment to iteration directory
+            writeFileSync(
+              join(iterationDir, 'state-assessment.json'),
+              JSON.stringify(fallbackAssessment, null, 2)
+            );
+
+            prompt = fallbackAssessment.prompt;
+            systemPrompt = this.promptGenerator.buildSystemPrompt({
+              objective: state.objective,
+              completionCriteria: state.completionCriteria,
+              iteration: state.currentIteration,
+              maxIterations: state.maxIterations,
+              loopId: state.loopId,
+            });
+          } else {
+            // Use standard prompt generator
+            const generated = this.promptGenerator.build({
+              type: promptType,
+              objective: state.objective,
+              completionCriteria: state.completionCriteria,
+              iteration: state.currentIteration,
+              maxIterations: state.maxIterations,
+              loopId: state.loopId,
+              sessionId: state.sessionId,
+              learnings: state.accumulatedLearnings,
+              filesModified: state.filesModified,
+              previousStatus: lastIteration?.analysis?.success ? 'partial' : 'incomplete',
+              previousOutput: lastIteration?.analysis?.learnings,
+              lastAnalysis: lastIteration?.analysis?.nextApproach,
+              // Research-backed context injection (REF-015, REF-021)
+              reflectionContext: reflectionContext,
+              crossTaskContext: crossTaskContext,
+            });
+            prompt = generated.prompt;
+            systemPrompt = generated.systemPrompt;
+          }
         }
 
         // Save prompt for debugging
@@ -519,6 +784,75 @@ export class Orchestrator {
         // Save analysis
         this.stateManager.saveAnalysis(state.currentIteration, analysis);
 
+        // ========== POST-ITERATION: VALIDATION & OVERSIGHT ==========
+
+        // ValidationAgent: Post-iteration validation
+        let postValidation = null;
+        if (this.validationAgent) {
+          console.log('[External Ralph] Running post-iteration validation...');
+          postValidation = await this.validationAgent.validatePost({
+            objective: state.objective,
+            completionCriteria: state.completionCriteria,
+            iteration: state.currentIteration,
+            analysis,
+            sessionResult,
+            preValidation,
+          });
+
+          if (!postValidation.valid) {
+            console.warn(`[External Ralph] Post-validation issues: ${postValidation.errors.length}`);
+          }
+        }
+
+        // Overseer: Health check and intervention
+        let healthReport = null;
+        let interventionResult = null;
+        if (this.overseer) {
+          console.log('[External Ralph] Running overseer health check...');
+          healthReport = await this.overseer.check({
+            iteration: state.currentIteration,
+            analysis,
+            validation: postValidation,
+            metrics: this.metricsCollector ? this.metricsCollector.extractIterationMetrics({
+              analysis,
+              ...sessionResult,
+            }) : null,
+          });
+
+          // Handle interventions
+          if (healthReport.intervention !== 'NONE') {
+            console.log(`[External Ralph] Intervention triggered: ${healthReport.intervention}`);
+            interventionResult = await this.interventionSystem.intervene(healthReport);
+
+            // Check if we need to pause/abort
+            if (healthReport.intervention === 'PAUSE' || healthReport.intervention === 'ABORT') {
+              const escalation = await this.escalationHandler.escalate({
+                level: healthReport.intervention === 'ABORT' ? 'critical' : 'high',
+                reason: healthReport.reason,
+                context: {
+                  iteration: state.currentIteration,
+                  healthReport,
+                  analysis,
+                },
+              });
+
+              if (healthReport.intervention === 'ABORT') {
+                state.status = 'aborted';
+                state.abortReason = healthReport.reason;
+                this.stateManager.save(state);
+                await this.completeMultiLoop('aborted');
+
+                return {
+                  success: false,
+                  reason: `Aborted by overseer: ${healthReport.reason}`,
+                  iterations: state.currentIteration,
+                  loopId: state.loopId,
+                };
+              }
+            }
+          }
+        }
+
         // ========== UPDATE STATE ==========
         state = this.stateManager.addIteration({
           number: state.currentIteration,
@@ -541,6 +875,14 @@ export class Orchestrator {
           parsedEventsPath: sessionResult.parsedEventsPath,
           toolCallCount: sessionResult.toolCallCount,
           errorCount: sessionResult.errorCount,
+          // Epic #26 data
+          assessment,
+          strategy,
+          controlSignals,
+          preValidation,
+          postValidation,
+          healthReport,
+          interventionResult,
         });
 
         console.log(`[External Ralph] Analysis: completed=${analysis.completed}, success=${analysis.success}, progress=${analysis.completionPercentage}%`);
@@ -590,6 +932,24 @@ export class Orchestrator {
             output_snapshot_path: outputPaths.stdout,
             reflections: analysis.learnings ? [analysis.learnings] : [],
           });
+        }
+
+        // LearningExtractor & MemoryPromotion
+        if (this.learningExtractor && this.memoryPromotion && verificationPassed) {
+          console.log('[External Ralph] Extracting and promoting learnings...');
+          const learnings = await this.learningExtractor.extract({
+            iteration: state.currentIteration,
+            analysis,
+            strategy,
+            outcome: 'success',
+          });
+
+          if (learnings.length > 0) {
+            await this.memoryPromotion.promote({
+              learnings,
+              source: `loop-${state.loopId}-iteration-${state.currentIteration}`,
+            });
+          }
         }
 
         // ========== CHECK EARLY STOPPING ==========
@@ -946,6 +1306,31 @@ ${state.filesModified.length > 0 ? state.filesModified.map(f => `- ${f}`).join('
   async recordTaskCompletion(state, outcome) {
     console.log(`[External Ralph] Recording task completion (outcome: ${outcome})...`);
 
+    // Extract final learnings for semantic memory
+    if (this.learningExtractor && this.semanticMemory && state.iterations.length > 0) {
+      try {
+        const allLearnings = await this.learningExtractor.extractFromLoop({
+          loopId: state.loopId,
+          objective: state.objective,
+          iterations: state.iterations,
+          outcome,
+        });
+
+        if (allLearnings.length > 0) {
+          await this.semanticMemory.store({
+            type: 'loop-completion',
+            objective: state.objective,
+            outcome,
+            learnings: allLearnings,
+            loopId: state.loopId,
+          });
+          console.log(`[External Ralph] Stored ${allLearnings.length} learnings in semantic memory`);
+        }
+      } catch (error) {
+        console.warn('[External Ralph] Semantic memory storage failed:', error.message);
+      }
+    }
+
     // Record to CrossTaskLearner for future similar tasks
     if (this.crossTaskLearner) {
       try {
@@ -965,14 +1350,14 @@ ${state.filesModified.length > 0 ? state.filesModified.map(f => `- ${f}`).join('
           : [];
 
         await this.crossTaskLearner.recordTaskCompletion({
-          task_description: this.options.objective,
+          task_description: state.objective,
           task_type: 'ralph-loop',
           outcome,
           iterations: state.currentIteration,
           final_quality: state.lastAnalysis?.completionPercentage / 100 || 0,
           reflections,
           key_learnings: keyLearnings,
-          tags: ['external-ralph', this.loopId],
+          tags: ['external-ralph', state.loopId],
         });
 
         console.log('[External Ralph] Task recorded for cross-task learning');
@@ -985,7 +1370,7 @@ ${state.filesModified.length > 0 ? state.filesModified.map(f => `- ${f}`).join('
     if (this.iterationAnalytics) {
       try {
         const report = this.iterationAnalytics.generateReport();
-        const reportPath = join(this.stateDir, 'iteration-analytics-report.json');
+        const reportPath = join(this.stateManager.getStateDir(), 'iteration-analytics-report.json');
         writeFileSync(reportPath, JSON.stringify(report, null, 2));
         console.log(`[External Ralph] Analytics report saved to: ${reportPath}`);
 

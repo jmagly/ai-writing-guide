@@ -7,6 +7,8 @@ export default defineConfig({
     include: [
       'test/**/*.test.ts',
       'test/**/*.spec.ts',
+      'test/**/*.test.mjs',
+      'test/**/*.test.js',
       'agentic/code/frameworks/*/test/**/*.test.ts',
       'agentic/code/frameworks/*/test/**/*.spec.ts'
     ],
