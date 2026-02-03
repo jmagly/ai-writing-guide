@@ -1,0 +1,289 @@
+# Multi-Loop Registry Schema
+# Based on REF-086 Coordination Tax, REF-088 Multi-Agent Guide
+# Issue: #266
+#
+# Tracks all active Ralph loops in a repository to enable:
+# - Concurrent loop execution without state conflicts
+# - MAX_CONCURRENT_LOOPS enforcement (research-backed limit)
+# - Cross-loop coordination and learning
+# - Recovery from crashed loops
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/multi-loop-registry/v1"
+title: "Multi-Loop Registry Schema"
+description: |
+  Central registry for tracking multiple concurrent Ralph loops.
+  Enforces MAX_CONCURRENT_LOOPS=4 based on coordination tax research.
+
+type: object
+required:
+  - version
+  - max_concurrent_loops
+  - updated_at
+  - active_loops
+  - total_active
+
+properties:
+  version:
+    type: string
+    const: "2.0.0"
+    description: "Registry schema version"
+
+  max_concurrent_loops:
+    type: integer
+    const: 4
+    description: |
+      Maximum concurrent loops (REF-086, REF-088).
+      Research shows 3-4 loops optimal, >4 creates excessive
+      coordination overhead (n*(n-1)/2 communication paths).
+
+  updated_at:
+    type: string
+    format: date-time
+    description: "Last registry update timestamp"
+
+  active_loops:
+    type: array
+    maxItems: 5  # Allow 1 over for --force override
+    items:
+      $ref: "#/$defs/LoopEntry"
+    description: "Currently active loops"
+
+  total_active:
+    type: integer
+    minimum: 0
+    description: "Count of active loops (auto-calculated)"
+
+  total_completed:
+    type: integer
+    minimum: 0
+    default: 0
+    description: "Lifetime completed loops count"
+
+  total_aborted:
+    type: integer
+    minimum: 0
+    default: 0
+    description: "Lifetime aborted loops count"
+
+$defs:
+  LoopEntry:
+    type: object
+    required:
+      - loop_id
+      - task_summary
+      - status
+      - started_at
+    properties:
+      loop_id:
+        type: string
+        pattern: "^ralph-[a-z0-9-]+-[a-f0-9]{8}$"
+        description: "Unique loop identifier (ralph-{slug}-{short-uuid})"
+        examples:
+          - "ralph-fix-all-tests-a1b2c3d4"
+          - "ralph-typescript-migration-e5f6g7h8"
+
+      task_summary:
+        type: string
+        maxLength: 200
+        description: "Brief description of the task"
+
+      status:
+        type: string
+        enum:
+          - running      # Currently executing
+          - paused       # Temporarily suspended
+          - waiting      # Waiting for resources/dependencies
+          - completing   # Finishing up
+        description: "Current loop status"
+
+      started_at:
+        type: string
+        format: date-time
+        description: "When loop was started"
+
+      owner:
+        type: string
+        description: "Agent or user that owns this loop"
+        examples:
+          - "agent-1"
+          - "software-implementer"
+          - "user:jmagly"
+
+      pid:
+        type: ["integer", "null"]
+        description: "Process ID if running (null if paused)"
+
+      iteration:
+        type: integer
+        minimum: 0
+        description: "Current iteration number"
+
+      max_iterations:
+        type: integer
+        minimum: 1
+        description: "Maximum iterations for this loop"
+
+      completion_criteria:
+        type: string
+        description: "Verification command for completion"
+
+      priority:
+        type: string
+        enum: [low, medium, high, critical]
+        default: medium
+        description: "Loop priority for resource allocation"
+
+      tags:
+        type: array
+        items:
+          type: string
+        description: "Tags for categorization and filtering"
+
+# Coordination metrics (REF-086, REF-088)
+coordination:
+  communication_paths:
+    formula: "n * (n - 1) / 2"
+    description: "Number of potential inter-loop communication paths"
+    examples:
+      2_loops: 1
+      3_loops: 3
+      4_loops: 6
+      5_loops: 10
+      7_loops: 21
+
+  complexity_levels:
+    trivial: 1-2     # 1 path, simple parallel
+    manageable: 3-6  # 3-4 loops, RECOMMENDED
+    significant: 10-21  # 5-7 loops, complex workflows only
+    excessive: 28+   # 8+ loops, AVOID
+
+  overhead_factors:
+    independent_error_amplification: 17.2  # REF-086
+    centralized_error_amplification: 4.4   # REF-086
+    recommendation: "Use centralized coordination (registry pattern)"
+
+# Loop lifecycle
+lifecycle:
+  creation:
+    - validate_max_concurrent_loops
+    - generate_unique_loop_id
+    - create_loop_directory
+    - register_in_registry
+    - initialize_state
+
+  execution:
+    - update_iteration_count
+    - update_status
+    - checkpoint_periodically
+    - coordinate_with_registry
+
+  completion:
+    - mark_completed
+    - unregister_from_active
+    - archive_loop_directory
+    - extract_learnings
+    - increment_total_completed
+
+  abortion:
+    - mark_aborted
+    - unregister_from_active
+    - preserve_state_for_analysis
+    - increment_total_aborted
+
+# File locking strategy (REF-082, Kleppmann)
+locking:
+  mechanism: lease_based
+  lease_duration_ms: 30000
+  retry_interval_ms: 100
+  max_attempts: 300
+  stale_detection:
+    - check_lease_expiry
+    - check_process_exists
+  fencing_tokens: true
+
+# Storage configuration
+storage:
+  registry_path: ".aiwg/ralph/registry.json"
+  loops_dir: ".aiwg/ralph/loops/"
+  archive_dir: ".aiwg/ralph/archive/"
+  shared_dir: ".aiwg/ralph/shared/"
+
+  loop_structure: |
+    .aiwg/ralph/loops/{loop-id}/
+    ├── state.json              # Loop state
+    ├── iterations/             # Per-iteration artifacts
+    │   ├── iteration-1.json
+    │   └── ...
+    ├── checkpoints/            # Recovery checkpoints
+    │   ├── checkpoint-1.json.gz
+    │   └── ...
+    └── debug-memory/           # Debug/learning data
+        └── ...
+
+# Example registry
+examples:
+  - version: "2.0.0"
+    max_concurrent_loops: 4
+    updated_at: "2026-02-02T15:00:00Z"
+    active_loops:
+      - loop_id: "ralph-fix-tests-a1b2c3d4"
+        task_summary: "Fix all failing tests"
+        status: "running"
+        started_at: "2026-02-02T14:00:00Z"
+        owner: "software-implementer"
+        pid: 12345
+        iteration: 3
+        max_iterations: 10
+        completion_criteria: "npm test passes"
+        priority: "high"
+
+      - loop_id: "ralph-typescript-e5f6g7h8"
+        task_summary: "Migrate to TypeScript"
+        status: "paused"
+        started_at: "2026-02-02T13:00:00Z"
+        owner: "software-implementer"
+        pid: null
+        iteration: 7
+        max_iterations: 20
+        completion_criteria: "npx tsc --noEmit exits 0"
+        priority: "medium"
+        tags: ["migration", "typescript"]
+
+    total_active: 2
+    total_completed: 15
+    total_aborted: 3
+
+# CLI integration
+cli_commands:
+  create:
+    command: "aiwg ralph <task> --completion <criteria>"
+    output: "Loop started: {loop-id}"
+
+  status:
+    single: "aiwg ralph-status --loop-id <id>"
+    all: "aiwg ralph-status --all"
+
+  abort:
+    command: "aiwg ralph-abort --loop-id <id>"
+
+  resume:
+    command: "aiwg ralph-resume --loop-id <id>"
+
+  list:
+    command: "aiwg ralph list"
+    description: "Show all active loops"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-086-multi-agent-coordination-tax.md"
+    - "@.aiwg/research/findings/REF-088-dev-multi-agent-guide-2026.md"
+    - "@.aiwg/research/findings/REF-082-multi-agent-orchestration.md"
+  planning:
+    - "@.aiwg/working/multi-loop-ralph-plan.md"
+  implementation:
+    - "#266"
+  related:
+    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
+    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"
