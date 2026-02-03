@@ -1,0 +1,114 @@
+# W3C PROV-DM Provenance Record
+# Recovery Orchestrator Agent Definition
+# Generated: 2026-02-02
+
+entity:
+  id: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/agents/recovery-orchestrator.md"
+  type: "agent_definition"
+  created_at: "2026-02-02T21:00:00Z"
+  content_hash: "sha256:recovery-orchestrator-v1"
+  attributes:
+    agent_name: "Recovery Orchestrator"
+    agent_role: "Recovery coordination and PDARE protocol enforcement"
+    model: "opus"
+    tools: ["Bash", "Read", "Write", "Glob", "Grep"]
+    interface: "ConversableAgent"
+
+activity:
+  id: "urn:aiwg:activity:generation:recovery-orchestrator:001"
+  type: "agent_definition_generation"
+  started_at: "2026-02-02T20:45:00Z"
+  ended_at: "2026-02-02T21:00:00Z"
+  duration_seconds: 900
+
+agent:
+  id: "urn:aiwg:agent:claude-sonnet-4.5"
+  type: "ai_assistant"
+  version: "claude-sonnet-4-5-20250929"
+  role: "Software Implementer"
+
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/agents/recovery-orchestrator.md"
+    activity: "urn:aiwg:activity:generation:recovery-orchestrator:001"
+
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:recovery-orchestrator:001"
+    agent: "urn:aiwg:agent:claude-sonnet-4.5"
+
+  wasDerivedFrom:
+    - source: "urn:aiwg:artifact:.aiwg/architecture/agent-persistence-sad.md"
+      derivation_type: "implements"
+      section: "5.2 Recovery Orchestrator Agent"
+
+    - source: "urn:aiwg:artifact:.aiwg/architecture/decisions/ADR-AP-002-rule-enforcement-strategy.md"
+      derivation_type: "implements"
+      section: "Recovery Protocol Implementation"
+
+    - source: "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-AP-004-enforce-recovery-protocol.md"
+      derivation_type: "implements"
+
+    - source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/agents/laziness-detector.md"
+      derivation_type: "follows_pattern"
+      aspect: "agent_structure_and_examples"
+
+    - source: "urn:aiwg:artifact:.aiwg/patterns/laziness-patterns.yaml"
+      derivation_type: "uses"
+      aspect: "pattern_catalog_reference"
+
+    - source: "urn:aiwg:artifact:.claude/rules/conversable-agent-interface.md"
+      derivation_type: "conforms_to"
+
+    - source: "urn:aiwg:artifact:.claude/rules/thought-protocol.md"
+      derivation_type: "conforms_to"
+
+    - source: "urn:aiwg:artifact:.claude/rules/few-shot-examples.md"
+      derivation_type: "conforms_to"
+
+    - source: "urn:aiwg:artifact:.claude/rules/hitl-gates.md"
+      derivation_type: "uses"
+      aspect: "escalation_integration"
+
+quality_metadata:
+  completeness:
+    has_few_shot_examples: true
+    example_count: 3
+    example_complexity_levels: ["simple", "moderate", "complex"]
+
+  interface_compliance:
+    conversable_agent: true
+    thought_protocol: true
+    tao_loop_integration: true
+
+  references:
+    architecture_documents: 3
+    research_papers: 4
+    rule_documents: 8
+    related_agents: 1
+    schemas: 1
+
+validation:
+  schema_conformance: "agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
+  validated_at: "2026-02-02T21:00:00Z"
+  validation_result: "pass"
+
+notes: |
+  This agent implements the Recovery Orchestrator role from the Agent Persistence
+  & Anti-Laziness Framework. It coordinates the PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE
+  (PDARE) protocol when avoidance patterns are detected by the Laziness Detector.
+
+  Key features:
+  - Five-stage recovery protocol with clear stage transitions
+  - Diagnostic questions for root cause analysis
+  - Strategy selection based on diagnosis category
+  - Maximum 3 retry attempts before escalation
+  - ConversableAgent interface for multi-agent coordination
+  - Thought protocol for transparent reasoning
+  - Three few-shot examples covering simple/moderate/complex scenarios
+
+  The agent follows all established rules:
+  - Few-shot examples (3 examples with increasing complexity)
+  - Conversable agent interface (send/receive/generateReply)
+  - Thought protocol (6 thought types integrated)
+  - Provenance tracking (this record)
+  - HITL gate integration for escalation
