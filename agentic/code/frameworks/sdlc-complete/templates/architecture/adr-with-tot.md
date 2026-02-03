@@ -1,10 +1,35 @@
 # Architectural Decision Record (ADR) with Tree of Thoughts
 
-**Template Version:** 2.0 (Tree of Thoughts Enhanced)
+---
+template_id: adr-with-tot
+version: 2.1.0
+reasoning_required: true
+---
+
+**Template Version:** 2.1 (Tree of Thoughts Enhanced + Reasoning Section)
 **Status:** [Proposed | Accepted | Rejected | Deprecated | Superseded]
 **Date:** YYYY-MM-DD
 **Deciders:** [List key decision makers]
 **Decision ID:** ADR-XXX
+
+## Reasoning
+
+> Complete this section BEFORE detailed evaluation. Per @.claude/rules/reasoning-sections.md
+
+1. **Context Analysis**: What architectural concern does this address?
+   > [Describe the specific architectural problem or opportunity driving this decision]
+
+2. **Force Identification**: What forces are in tension?
+   > [List competing concerns: performance vs maintainability, security vs usability, etc.]
+
+3. **Option Evaluation**: What alternatives were considered with trade-offs?
+   > [Brief overview of k options to be evaluated in detail below]
+
+4. **Decision Justification**: Why is this the best choice given constraints?
+   > [High-level rationale that will be supported by detailed scoring]
+
+5. **Consequence Assessment**: What are the positive and negative impacts?
+   > [Anticipated outcomes of this decision on the system and team]
 
 ## Context
 

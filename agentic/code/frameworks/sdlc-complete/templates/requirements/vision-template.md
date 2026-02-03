@@ -1,9 +1,34 @@
 # Vision Template
 
+---
+template_id: vision-document
+version: 2.0.0
+reasoning_required: true
+---
+
 ## Purpose
 
 Define the system-level goals, features, and constraints that align business objectives with solution scope. Use this
 document to anchor prioritization and stakeholder expectations throughout Inception and Elaboration.
+
+## Reasoning
+
+> Complete this section BEFORE writing the detailed vision. Per @.claude/rules/reasoning-sections.md
+
+1. **Need Justification**: Why is this product/system necessary?
+   > [Describe the market need, business opportunity, or problem being solved]
+
+2. **Stakeholder Impact**: Who benefits from this solution?
+   > [Identify primary stakeholders and how they gain value]
+
+3. **Feasibility Assessment**: Is this technically and commercially achievable?
+   > [Assess technical feasibility, market timing, resource availability]
+
+4. **Priority Rationale**: Why now? Why this scope?
+   > [Explain urgency, competitive factors, strategic alignment]
+
+5. **Verification Strategy**: How will we know we've succeeded?
+   > [Define measurable success criteria, KPIs, validation approach]
 
 ## Ownership & Collaboration
 

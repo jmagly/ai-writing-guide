@@ -1,8 +1,33 @@
 # Master Test Plan Template
 
+---
+template_id: master-test-plan
+version: 2.0.0
+reasoning_required: true
+---
+
 ## Purpose
 
 Establish the overarching testing strategy, scope, resources, and schedule across all phases of the project.
+
+## Reasoning
+
+> Complete this section BEFORE writing the detailed plan. Per @.claude/rules/reasoning-sections.md
+
+1. **Test Scope**: What functionality is being validated?
+   > [Define what the test plan covers - features, components, integration points, user workflows]
+
+2. **Risk Priority**: What are the highest-risk areas to test?
+   > [Identify critical paths, complex integrations, security-sensitive areas, performance bottlenecks]
+
+3. **Coverage Strategy**: How do we achieve adequate coverage?
+   > [Describe approach - unit test %, integration points, E2E scenarios, edge cases]
+
+4. **Resource Assessment**: What resources and data are needed?
+   > [Environments, test data, tools, team skills, timeline constraints]
+
+5. **Quality Criteria**: What constitutes passing vs failing?
+   > [Define thresholds - coverage %, defect density, performance benchmarks, security requirements]
 
 ## Ownership & Collaboration
 

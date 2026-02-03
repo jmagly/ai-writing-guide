@@ -1,4 +1,29 @@
+---
+template_id: user-story-card
+version: 2.0.0
+reasoning_required: true
+---
+
 # User Story Card
+
+## Reasoning
+
+> Complete this section BEFORE writing the detailed story. Per @.claude/rules/reasoning-sections.md
+
+1. **User Need**: Why does the user need this capability?
+   > [Describe the user's problem, pain point, or goal that this story addresses]
+
+2. **Value Proposition**: What value does this deliver?
+   > [Quantify business value: conversion, efficiency, retention, revenue impact]
+
+3. **Acceptance Definition**: How will we know this is complete?
+   > [Define the core pass/fail criteria that make this story testable]
+
+4. **Implementation Consideration**: What technical approach is suggested?
+   > [High-level technical direction, integration points, known constraints]
+
+5. **Risk Identification**: What could prevent successful delivery?
+   > [Identify dependencies, unknowns, technical risks, timeline concerns]
 
 ## Metadata
 

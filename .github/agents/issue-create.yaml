@@ -17,8 +17,9 @@ instructions: |
   
   1. **Load configuration** from `.aiwg/config.yaml` or project `CLAUDE.md`
   2. **Validate configuration** and authenticate with provider
-  3. **Create ticket** using appropriate backend (MCP, CLI, or local file)
-  4. **Return ticket reference** (issue number, URL, or file path)
+  3. **Check for regressions** (if bug report with `--check-regression`)
+  4. **Create ticket** using appropriate backend (MCP, CLI, or local file)
+  5. **Return ticket reference** (issue number, URL, or file path)
   
   ## Parameters
   
@@ -29,6 +30,7 @@ instructions: |
   - **`--assignee USER`** (optional): Assign to specific user
   - **`--priority LEVEL`** (optional): Priority level (low|medium|high|critical)
   - **`--milestone NAME`** (optional): Associate with milestone (provider-dependent)
+  - **`--check-regression`** (optional): Run regression check for bug reports (auto-runs if labels include "bug" or "regression")
   
   ## Inputs
   
@@ -97,6 +99,9 @@ instructions: |
   # With assignee
   /issue-create "Security audit" "Run penetration test" --assignee "security-team" --priority high
   
+  # Bug report with regression check
+  /issue-create "Login broken after deployment" "Users can't login" --labels "bug,critical" --check-regression
+  
   # Override provider
   /issue-create "Local task" "Quick reminder" --provider local
   ```
@@ -142,7 +147,60 @@ instructions: |
   - If `--provider` specified, use that instead of configured provider
   - Warning if override differs from config: "⚠️ Using --provider local (configured: gitea)"
   
-  ### Step 3: Validate Configuration
+  ### Step 3: Regression Detection (for Bug Reports)
+  
+  **Trigger conditions**:
+  - Explicit: `--check-regression` flag provided
+  - Automatic: `--labels` contains "bug" OR "regression"
+  - Type: Issue is categorized as bug/defect
+  
+  **Regression check process**:
+  
+  ```bash
+  # Detect if regression check should run
+  if [[ "$LABELS" == *"bug"* ]] || [[ "$LABELS" == *"regression"* ]] || [[ "$CHECK_REGRESSION" == "true" ]]; then
+    echo "⏳ Running regression check..."
+  
+    # Run regression check against main branch
+    /regression-check --baseline main --scope changed-files --format summary > /tmp/regression-results.md
+  
+    # Parse results
+    REGRESSION_DETECTED=$(grep "REGRESSIONS DETECTED" /tmp/regression-results.md)
+  
+    if [ -n "$REGRESSION_DETECTED" ]; then
+      # Escalate priority and add labels
+      PRIORITY="critical"
+      LABELS="${LABELS},regression-confirmed"
+  
+      # Extract regression details for issue body
+      REGRESSION_SUMMARY=$(sed -n '/### Critical Regressions/,/###/p' /tmp/regression-results.md)
+  
+      # Append to description
+      DESCRIPTION="${DESCRIPTION}
+  
+  ---
+  
+  ## Regression Analysis
+  
+  ${REGRESSION_SUMMARY}
+  
+  **Full Report**: See attached regression-results.md"
+    else
+      # No regression detected
+      LABELS="${LABELS},no-regression"
+    fi
+  fi
+  ```
+  
+  **Impact on issue creation**:
+  
+  | Regression Status | Priority | Labels | Action |
+  |-------------------|----------|--------|--------|
+  | REGRESSION DETECTED | Critical | bug, regression-confirmed | Escalate, include analysis |
+  | NO REGRESSION | Original | bug, no-regression | Standard bug workflow |
+  | CHECK FAILED | Original | bug, regression-check-failed | Create issue, note failure |
+  
+  ### Step 4: Validate Configuration
   
   **For each provider, validate required fields**:
   
@@ -176,7 +234,7 @@ instructions: |
   - If validation fails, report error and suggest fix
   - Optionally fall back to `local` provider with warning
   
-  ### Step 4: Create Issue (Provider-Specific)
+  ### Step 5: Create Issue (Provider-Specific)
   
   #### Gitea
   
@@ -418,7 +476,22 @@ instructions: |
   Priority: medium
   ```
   
-  ### Step 5: Return Issue Reference
+  ### Step 6: Attach Regression Report (if applicable)
+  
+  If regression check was run and regression detected:
+  
+  ```bash
+  # Save regression report alongside issue
+  if [ -f /tmp/regression-results.md ]; then
+    cp /tmp/regression-results.md ".aiwg/issues/${TICKET_ID}-regression-report.md"
+  
+    # Add reference to issue body (provider-specific)
+    # For local: already included in DESCRIPTION above
+    # For Gitea/GitHub: attach as comment or file
+  fi
+  ```
+  
+  ### Step 7: Return Issue Reference
   
   **Output format** (consistent across providers):
   
@@ -432,6 +505,9 @@ instructions: |
   **Priority**: {priority}
   **Labels**: {labels}
   **Assignee**: {assignee}
+  
+  {If regression detected:}
+  ⚠️ **Regression Detected**: Critical regressions found and documented in issue
   
   ## Next Steps
   
@@ -479,31 +555,41 @@ instructions: |
   - List tickets: `/issue-list --label feature`
   ```
   
-  ### Example 2: Create Bug Report (Local)
+  ### Example 2: Create Bug Report with Regression Check (Local)
   
   **Command**:
   ```bash
-  /issue-create "Fix navigation bug" "Nav menu not showing on mobile devices (iOS Safari)" --priority critical --provider local
+  /issue-create "Login broken after deployment" "Users unable to authenticate since v2.1.4 deployment" --labels "bug,critical" --check-regression
   ```
   
   **Output**:
   ```
+  ⏳ Running regression check...
+  ✓ Regression analysis complete: 2 critical regressions detected
+  
   ✅ Issue created: ISSUE-003
   
   File: .aiwg/issues/ISSUE-003.md
   
-  **Title**: Fix navigation bug
+  **Title**: Login broken after deployment
   **Status**: open
   **Priority**: critical
-  **Labels**: none
+  **Labels**: bug, critical, regression-confirmed
   **Assignee**: unassigned
+  
+  ⚠️ **Regression Detected**: 2 critical regressions found
+     - Authentication validation failing at token refresh
+     - Session state not persisting across requests
+  
+  **Regression Report**: .aiwg/issues/ISSUE-003-regression-report.md
   
   ## Next Steps
   
   - View ticket: cat .aiwg/issues/ISSUE-003.md
+  - View regression details: cat .aiwg/issues/ISSUE-003-regression-report.md
   - Update status: `/issue-update ISSUE-003 --status in_progress`
-  - Add comment: `/issue-update ISSUE-003 --comment "Reproduced on iOS 17"`
-  - List tickets: `/issue-list`
+  - Run regression analysis: `/regression-check --baseline v2.1.3 --format detailed`
+  - List regression issues: `/issue-list --label regression-confirmed`
   ```
   
   ### Example 3: Create Task with Assignee (GitHub)
@@ -541,6 +627,47 @@ instructions: |
   - Update status: `/issue-update 128 --status in_progress`
   - Add comment: `/issue-update 128 --comment "Starting audit tomorrow"`
   - List tickets: `/issue-list --label security`
+  ```
+  
+  ### Example 4: Bug Report with Auto-Detected Regression Check
+  
+  **Command**:
+  ```bash
+  /issue-create "Payment calculation incorrect" "Discount not applying for orders > $1000" --labels "bug,payments"
+  ```
+  
+  **Output**:
+  ```
+  ℹ️ Bug report detected, running automatic regression check...
+  ⏳ Running regression check against baseline main...
+  ✓ Regression confirmed: Introduced in commit abc1234
+  
+  ✅ Issue created: ISSUE-025
+  
+  **Title**: Payment calculation incorrect
+  **Status**: open
+  **Priority**: critical (escalated due to regression)
+  **Labels**: bug, payments, regression-confirmed
+  **Assignee**: unassigned
+  
+  ⚠️ **Regression Confirmed**:
+     - Introduced in: commit abc1234 (2026-01-15)
+     - Root cause: Integer division in discount calculation
+     - Blast radius: 12 unit tests, 3 integration tests affected
+  
+  **Actions**:
+     - Priority escalated to CRITICAL
+     - Regression analyst assigned
+     - Full report attached
+  
+  **Regression Report**: .aiwg/issues/ISSUE-025-regression-report.md
+  
+  ## Next Steps
+  
+  - View regression analysis: cat .aiwg/issues/ISSUE-025-regression-report.md
+  - Assign to developer: `/issue-update ISSUE-025 --assignee developer-name`
+  - Review introducing commit: git show abc1234
+  - Run targeted regression tests: npm test -- --grep "discount calculation"
   ```
   
   ## Error Handling
@@ -605,6 +732,20 @@ instructions: |
   3. Run command again
   
   Proceeding with local provider...
+  ```
+  
+  ### Regression Check Failed
+  
+  ```
+  ⚠️ Regression check failed to complete:
+  
+  Error: Baseline branch 'main' not found
+  Possible causes:
+  - Fresh repository without baseline
+  - Branch name incorrect
+  
+  Creating issue without regression analysis.
+  Use `/regression-check` manually after issue creation to verify.
   ```
   
   ### Missing Title
@@ -678,6 +819,8 @@ instructions: |
   6. **Link to artifacts** - Reference related files (`@.aiwg/requirements/UC-001.md`)
   7. **Use milestones** - Group related work with `--milestone`
   8. **Test authentication** - Verify provider connectivity before creating many tickets
+  9. **Enable regression checks** - Use `--check-regression` for bug reports to detect regressions early
+  10. **Review regression reports** - Always examine attached regression analysis before starting work
   
   ## Integration with SDLC Workflows
   
@@ -695,8 +838,8 @@ instructions: |
   
   **Testing Phase**:
   ```bash
-  # Create tickets from test failures
-  /issue-create "Fix failing test: auth.test.ts" "Test failure in authentication module" --priority high --labels "bug,testing"
+  # Create tickets from test failures with regression check
+  /issue-create "Fix failing test: auth.test.ts" "Test failure in authentication module" --priority high --labels "bug,testing" --check-regression
   ```
   
   **Security Review**:
@@ -711,10 +854,18 @@ instructions: |
   /issue-create "Improve CI/CD pipeline" "Reduce build time from 10min to 5min" --labels "process-improvement,devops"
   ```
   
+  **Regression Detection**:
+  ```bash
+  # Create issue from detected regression
+  /issue-create "Performance regression in API" "p99 latency increased from 200ms to 450ms" --labels "bug,performance,regression" --check-regression
+  ```
+  
   ## References
   
   - @agentic/code/frameworks/sdlc-complete/config/issueing-config.md - Configuration schema
   - @agentic/code/frameworks/sdlc-complete/commands/issue-update.md - Update ticket command
   - @agentic/code/frameworks/sdlc-complete/commands/issue-list.md - List tickets command
+  - @agentic/code/frameworks/sdlc-complete/commands/regression-check.md - Regression detection command
+  - @agentic/code/frameworks/sdlc-complete/agents/regression-analyst.md - Regression analysis agent
   - @.aiwg/config.yaml - Project ticketing configuration
   - @CLAUDE.md - User ticketing configuration

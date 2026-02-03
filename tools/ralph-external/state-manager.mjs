@@ -331,4 +331,7 @@ export class StateManager {
   }
 }
 
+// Re-export multi-loop manager for backward compatibility and future use
+export { ExternalMultiLoopStateManager } from './external-multi-loop-state-manager.mjs';
+
 export default StateManager;

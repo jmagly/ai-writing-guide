@@ -1,8 +1,33 @@
 # Software Architecture Document Template
 
+---
+template_id: software-architecture-doc
+version: 2.0.0
+reasoning_required: true
+---
+
 ## Purpose
 
 Describe the architectural baseline, including views, decisions, and rationale that guide implementation and evolution.
+
+## Reasoning
+
+> Complete this section BEFORE writing the detailed document. Per @.claude/rules/reasoning-sections.md
+
+1. **Problem Analysis**: What is the core architectural challenge?
+   > [Describe the system context, scale, complexity factors driving architecture decisions]
+
+2. **Constraint Identification**: What are the key constraints?
+   > [Technical: performance, compatibility; Business: timeline, budget; Organizational: team skills]
+
+3. **Alternative Consideration**: What architectural approaches were evaluated?
+   > [List major patterns considered: microservices vs monolith, event-driven vs request-response]
+
+4. **Decision Rationale**: Why this architecture?
+   > [Explain why chosen approach best balances constraints and requirements]
+
+5. **Risk Assessment**: What architectural risks exist?
+   > [Identify scalability, security, maintainability risks and planned mitigations]
 
 ## Ownership & Collaboration
 

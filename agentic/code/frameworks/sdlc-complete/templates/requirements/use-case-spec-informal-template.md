@@ -1,5 +1,11 @@
 # Informal Use-Case Specification Template
 
+---
+template_id: use-case-spec-informal
+version: 2.0.0
+reasoning_required: true
+---
+
 ## Ownership & Collaboration
 
 - Document Owner: System Analyst
@@ -15,6 +21,25 @@
 ## Brief Description
 
 > Provide a concise summary of the user goal and value.
+
+## Reasoning
+
+> Complete this section BEFORE writing the detailed content. Per @.claude/rules/reasoning-sections.md
+
+1. **Actor Analysis**: Who are the stakeholders and what are their goals?
+   > [Describe primary and secondary actors, their objectives, and why they need this capability]
+
+2. **Scope Definition**: What is in/out of scope for this use case?
+   > [Clearly delineate boundaries - what this use case covers and explicitly does not cover]
+
+3. **Flow Identification**: What is the primary success path?
+   > [Outline the "happy path" that achieves the actor's goal]
+
+4. **Exception Handling**: What can go wrong and how should we handle it?
+   > [Identify error conditions, edge cases, and their recovery strategies]
+
+5. **Dependency Analysis**: What other use cases or systems are involved?
+   > [List dependencies on other use cases, external systems, or preconditions]
 
 ## Actor Brief Descriptions
 
