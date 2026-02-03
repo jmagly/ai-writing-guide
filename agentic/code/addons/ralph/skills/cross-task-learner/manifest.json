@@ -1,0 +1,89 @@
+{
+  "name": "cross-task-learner",
+  "version": "2.0.0",
+  "type": "skill",
+  "description": "Enable Ralph loops to learn from similar past tasks and share patterns across loops",
+  "provider": "aiwg",
+  "capabilities": [
+    "semantic_task_matching",
+    "pattern_extraction",
+    "pattern_injection",
+    "cross_loop_learning",
+    "multi_loop_awareness"
+  ],
+  "triggers": {
+    "automatic": [
+      "ralph_loop_start",
+      "ralph_loop_completion"
+    ],
+    "manual": [
+      "aiwg ralph-extract-patterns",
+      "aiwg ralph-inject-patterns",
+      "aiwg ralph-patterns list",
+      "aiwg ralph-patterns show",
+      "aiwg ralph-patterns prune"
+    ]
+  },
+  "dependencies": {
+    "schemas": [
+      "@agentic/code/addons/ralph/schemas/shared-patterns.yaml",
+      "@agentic/code/addons/ralph/schemas/cross-task-memory.yaml",
+      "@agentic/code/addons/ralph/schemas/debug-memory.yaml"
+    ],
+    "skills": [
+      "ralph-loop"
+    ]
+  },
+  "configuration": {
+    "extraction": {
+      "enabled": true,
+      "auto_extract_on_completion": true,
+      "min_success_rate_threshold": 0.6,
+      "min_usage_count_for_evaluation": 3,
+      "extract_code_templates": true,
+      "merge_similar_patterns": true,
+      "similarity_threshold": 0.80
+    },
+    "injection": {
+      "enabled": true,
+      "top_k_patterns": 5,
+      "min_success_rate": 0.6,
+      "max_patterns_injected": 10,
+      "include_error_patterns": true,
+      "include_success_patterns": true,
+      "include_anti_patterns": true,
+      "include_code_templates": true
+    },
+    "pruning": {
+      "auto_prune": true,
+      "prune_interval_days": 7,
+      "min_success_rate": 0.5,
+      "max_age_days": 90,
+      "archive_instead_of_delete": true
+    }
+  },
+  "storage": {
+    "patterns_path": ".aiwg/ralph/shared/patterns/",
+    "memory_path": ".aiwg/ralph/memory/",
+    "archive_path": ".aiwg/ralph/shared/archive/"
+  },
+  "research_basis": {
+    "reference": "REF-013",
+    "paper": "MetaGPT: Meta Programming for Multi-Agent Collaborative Framework",
+    "key_finding": "159% improvement with shared state across agents",
+    "pattern": "publish-subscribe for shared memory"
+  },
+  "metadata": {
+    "author": "AIWG Team",
+    "created": "2026-01-25",
+    "updated": "2026-02-02",
+    "tags": [
+      "ralph",
+      "learning",
+      "patterns",
+      "cross-task",
+      "multi-loop"
+    ],
+    "issue": "#269"
+  }
+}

@@ -1,0 +1,786 @@
+# Ralph State Extension Schema - Agent Persistence
+# Extends loop-state.yaml with agent persistence tracking fields
+# Issue: #261
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-persistence-extension/v1"
+title: "Ralph Persistence Extension Schema"
+description: |
+  Extension to loop-state.yaml adding agent persistence tracking:
+  - Baseline metrics for regression detection
+  - Iteration history with quality scores
+  - Best output selection tracking
+  - Regression event log
+  - Reinforcement escalation state
+  - Recovery attempt tracking
+
+type: object
+description: "Extends properties object in loop-state.yaml"
+
+properties:
+  # ============================================================================
+  # Baseline Metrics
+  # ============================================================================
+
+  baseline_metrics:
+    type: object
+    description: |
+      Snapshot of codebase health at loop start.
+      Used for regression detection throughout loop execution.
+    required:
+      - captured_at
+      - test_count
+      - coverage_percentage
+    properties:
+      captured_at:
+        type: string
+        format: date-time
+        description: "When baseline was captured"
+
+      test_count:
+        type: integer
+        minimum: 0
+        description: "Total number of tests"
+
+      coverage_percentage:
+        type: number
+        minimum: 0
+        maximum: 100
+        description: "Overall code coverage percentage"
+
+      typescript_errors:
+        type: integer
+        minimum: 0
+        nullable: true
+        description: "TypeScript compilation errors (if applicable)"
+
+      lint_errors:
+        type: integer
+        minimum: 0
+        nullable: true
+        description: "Linting errors"
+
+      lint_warnings:
+        type: integer
+        minimum: 0
+        nullable: true
+        description: "Linting warnings"
+
+      file_count:
+        type: integer
+        minimum: 0
+        description: "Total files in codebase"
+
+      lines_of_code:
+        type: integer
+        minimum: 0
+        description: "Total lines of code"
+
+      custom_metrics:
+        type: object
+        additionalProperties: true
+        description: "Project-specific baseline metrics"
+
+  # ============================================================================
+  # Iteration History
+  # ============================================================================
+
+  iteration_history:
+    type: array
+    description: |
+      Complete history of all iterations with quality scores.
+      Enables best output selection per REF-015 Self-Refine.
+    items:
+      type: object
+      required:
+        - iteration
+        - timestamp
+        - quality_score
+        - artifacts
+      properties:
+        iteration:
+          type: integer
+          minimum: 1
+          description: "Iteration number (1-based)"
+
+        timestamp:
+          type: string
+          format: date-time
+          description: "When iteration completed"
+
+        quality_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: |
+            Overall quality score for this iteration.
+            Weighted combination of:
+            - Validation (30%)
+            - Completeness (25%)
+            - Correctness (25%)
+            - Readability (10%)
+            - Efficiency (10%)
+
+        quality_delta:
+          type: number
+          description: "Change from previous iteration"
+
+        quality_breakdown:
+          type: object
+          description: "Individual quality dimension scores"
+          properties:
+            validation:
+              type: number
+              minimum: 0
+              maximum: 100
+            completeness:
+              type: number
+              minimum: 0
+              maximum: 100
+            correctness:
+              type: number
+              minimum: 0
+              maximum: 100
+            readability:
+              type: number
+              minimum: 0
+              maximum: 100
+            efficiency:
+              type: number
+              minimum: 0
+              maximum: 100
+
+        artifacts:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              hash:
+                type: string
+              size_bytes:
+                type: integer
+          description: "Files created/modified in this iteration"
+
+        snapshot_path:
+          type: string
+          description: |
+            Path to full iteration snapshot.
+            Multi-loop: .aiwg/ralph/loops/{loop_id}/iterations/iteration-{n:03d}.json
+            Legacy: .aiwg/ralph/iterations/iteration-{n:03d}.json
+
+        test_results:
+          type: object
+          nullable: true
+          properties:
+            total:
+              type: integer
+            passed:
+              type: integer
+            failed:
+              type: integer
+            skipped:
+              type: integer
+            coverage:
+              type: number
+              minimum: 0
+              maximum: 100
+
+        metrics_snapshot:
+          type: object
+          description: "All metrics at iteration completion"
+          properties:
+            test_count:
+              type: integer
+            coverage_percentage:
+              type: number
+            typescript_errors:
+              type: integer
+            lint_errors:
+              type: integer
+
+        regression_detected:
+          type: boolean
+          default: false
+          description: "Whether regression was detected in this iteration"
+
+        recovery_attempted:
+          type: boolean
+          default: false
+          description: "Whether recovery protocol was invoked"
+
+  # ============================================================================
+  # Best Output Tracking
+  # ============================================================================
+
+  best_iteration:
+    type: object
+    description: |
+      Tracks the highest quality iteration for final output selection.
+      Per REF-015, final iteration is not always the best.
+    nullable: true
+    properties:
+      iteration:
+        type: integer
+        minimum: 1
+        description: "Iteration number with highest quality"
+
+      quality_score:
+        type: number
+        minimum: 0
+        maximum: 100
+        description: "Quality score of best iteration"
+
+      snapshot_path:
+        type: string
+        description: "Path to best iteration snapshot"
+
+      updated_at:
+        type: string
+        format: date-time
+        description: "When best iteration was last updated"
+
+      selection_reason:
+        type: string
+        description: "Why this iteration is best"
+        examples:
+          - "Highest quality score (85%)"
+          - "Passed all validation and highest completeness"
+
+  # ============================================================================
+  # Regression Events
+  # ============================================================================
+
+  regression_events:
+    type: array
+    description: "Log of all detected regressions"
+    items:
+      type: object
+      required:
+        - timestamp
+        - iteration
+        - regression_type
+        - severity
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: "Unique event identifier"
+
+        timestamp:
+          type: string
+          format: date-time
+          description: "When regression was detected"
+
+        iteration:
+          type: integer
+          minimum: 1
+          description: "Iteration where regression occurred"
+
+        regression_type:
+          type: string
+          enum:
+            - test_deletion
+            - test_skipping
+            - feature_removal
+            - coverage_regression
+            - validation_bypass
+            - assertion_weakening
+            - error_suppression
+          description: "Type of regression detected"
+
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+          description: "Severity level"
+
+        details:
+          type: object
+          description: "Regression-specific details"
+          properties:
+            baseline_value:
+              description: "Value before regression"
+            current_value:
+              description: "Value after regression"
+            diff:
+              type: object
+              description: "Detailed diff information"
+
+        recovery_protocol_invoked:
+          type: boolean
+          default: false
+          description: "Whether recovery was triggered"
+
+        recovery_outcome:
+          type: string
+          enum: [success, failed, escalated, skipped]
+          nullable: true
+          description: "Outcome of recovery attempt"
+
+        human_gate_invoked:
+          type: boolean
+          default: false
+          description: "Whether human gate was triggered"
+
+        human_decision:
+          type: string
+          enum: [approve, reject, abort]
+          nullable: true
+          description: "Human decision if gate was invoked"
+
+  # ============================================================================
+  # Reinforcement State
+  # ============================================================================
+
+  reinforcement_level:
+    type: string
+    enum: [OFF, MINIMAL, STANDARD, AGGRESSIVE, ADAPTIVE]
+    default: MINIMAL
+    description: |
+      Current prompt reinforcement intensity level.
+      Escalates based on iteration count and quality trajectory.
+
+  reinforcement_history:
+    type: array
+    description: "History of reinforcement level changes"
+    items:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        iteration:
+          type: integer
+        from_level:
+          type: string
+        to_level:
+          type: string
+        reason:
+          type: string
+          examples:
+            - "Iteration 5 threshold reached"
+            - "Quality plateau detected (3 iterations < 5% delta)"
+            - "Regression detected in iteration 7"
+
+  # ============================================================================
+  # Recovery Attempts
+  # ============================================================================
+
+  recovery_attempts:
+    type: integer
+    minimum: 0
+    default: 0
+    description: "Total recovery protocol invocations"
+
+  recovery_history:
+    type: array
+    description: "Detailed recovery attempt log"
+    items:
+      type: object
+      required:
+        - timestamp
+        - iteration
+        - trigger
+      properties:
+        recovery_id:
+          type: string
+          format: uuid
+          description: "Unique recovery attempt ID"
+
+        timestamp:
+          type: string
+          format: date-time
+          description: "When recovery was initiated"
+
+        iteration:
+          type: integer
+          minimum: 1
+          description: "Iteration where recovery was triggered"
+
+        trigger:
+          type: string
+          description: "What triggered recovery"
+          examples:
+            - "regression_detected: test_deletion"
+            - "stuck_loop_detected: 3 consecutive failures"
+
+        protocol_steps:
+          type: object
+          description: "PDARE protocol execution"
+          properties:
+            pause:
+              type: object
+              properties:
+                executed_at:
+                  type: string
+                  format: date-time
+                actions:
+                  type: array
+                  items:
+                    type: string
+
+            diagnose:
+              type: object
+              properties:
+                executed_at:
+                  type: string
+                  format: date-time
+                root_cause:
+                  type: string
+                confidence:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+
+            adapt:
+              type: object
+              properties:
+                executed_at:
+                  type: string
+                  format: date-time
+                strategy:
+                  type: string
+                changes_made:
+                  type: array
+                  items:
+                    type: string
+
+            retry:
+              type: object
+              properties:
+                executed_at:
+                  type: string
+                  format: date-time
+                retry_iteration:
+                  type: integer
+                outcome:
+                  type: string
+                  enum: [success, failed]
+
+            escalate:
+              type: object
+              nullable: true
+              properties:
+                executed_at:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+                human_decision:
+                  type: string
+
+        outcome:
+          type: string
+          enum: [success, failed, escalated, aborted]
+          description: "Overall recovery outcome"
+
+  # ============================================================================
+  # Detection State
+  # ============================================================================
+
+  detection_enabled:
+    type: boolean
+    default: false
+    description: "Whether laziness detection is active"
+
+  detected_patterns:
+    type: array
+    description: "All detected laziness patterns in this loop"
+    items:
+      type: object
+      properties:
+        pattern_id:
+          type: string
+          description: "Pattern identifier (e.g., LP-001)"
+        pattern_name:
+          type: string
+        iteration:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        false_positive:
+          type: boolean
+          default: false
+          description: "Human-marked false positive"
+
+  # ============================================================================
+  # Performance Metrics
+  # ============================================================================
+
+  persistence_metrics:
+    type: object
+    description: "Agent persistence framework performance metrics"
+    properties:
+      detection_latency_p95_ms:
+        type: integer
+        description: "95th percentile detection latency"
+
+      detection_latency_p99_ms:
+        type: integer
+        description: "99th percentile detection latency"
+
+      integration_overhead_percentage:
+        type: number
+        description: "Percentage increase in iteration time due to hooks"
+
+      false_positive_rate:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "False positives / total detections"
+
+      true_positive_count:
+        type: integer
+        minimum: 0
+        description: "Confirmed laziness patterns detected"
+
+      false_positive_count:
+        type: integer
+        minimum: 0
+        description: "False alarms"
+
+# ============================================================================
+# Integration with loop-state.yaml
+# ============================================================================
+
+integration:
+  description: |
+    These fields extend the loop-state.yaml properties object.
+
+    Full loop state structure:
+    {
+      version: "2.0.0",
+      loop_id: "ralph-fix-tests-a1b2c3d4",
+      status: "running",
+      iteration: 5,
+      ...
+      // Standard loop-state fields above
+
+      // Agent persistence extension fields below
+      baseline_metrics: {...},
+      iteration_history: [...],
+      best_iteration: {...},
+      regression_events: [...],
+      reinforcement_level: "STANDARD",
+      ...
+    }
+
+  merge_strategy: "shallow_merge"
+  conflict_resolution: "persistence_extension_wins"
+
+# ============================================================================
+# State Update Protocol
+# ============================================================================
+
+state_updates:
+  on_loop_start:
+    - set: baseline_metrics
+      from: "progress-tracker.baseline"
+    - set: detection_enabled
+      value: true
+    - set: reinforcement_level
+      value: "MINIMAL"
+    - initialize: iteration_history
+      value: []
+    - initialize: regression_events
+      value: []
+
+  on_iteration_complete:
+    - append: iteration_history
+      from: "iteration_metrics"
+    - update: best_iteration
+      from: "best-output-tracker.best"
+    - increment: metrics.total_iterations
+
+  on_regression_detected:
+    - append: regression_events
+      from: "regression_record"
+    - increment: recovery_attempts
+
+  on_loop_complete:
+    - set: detection_enabled
+      value: false
+    - finalize: best_iteration
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+examples:
+  full_state_with_persistence:
+    # Standard loop-state fields
+    version: "2.0.0"
+    loop_id: "ralph-fix-tests-a1b2c3d4"
+    status: "running"
+    iteration: 7
+    task: "Fix all TypeScript errors"
+    completion_criteria: "npx tsc --noEmit passes"
+    started_at: "2026-02-02T21:00:00Z"
+    last_updated: "2026-02-02T21:15:00Z"
+
+    # Agent persistence extension fields
+    baseline_metrics:
+      captured_at: "2026-02-02T21:00:00Z"
+      test_count: 150
+      coverage_percentage: 85
+      typescript_errors: 12
+      lines_of_code: 15000
+
+    iteration_history:
+      - iteration: 1
+        timestamp: "2026-02-02T21:02:00Z"
+        quality_score: 60
+        quality_delta: 0
+        artifacts:
+          - path: "src/auth/login.ts"
+            hash: "abc123"
+        snapshot_path: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/iterations/iteration-001.json"
+        metrics_snapshot:
+          test_count: 150
+          coverage_percentage: 85
+          typescript_errors: 10
+        regression_detected: false
+
+      - iteration: 2
+        timestamp: "2026-02-02T21:05:00Z"
+        quality_score: 85
+        quality_delta: 25
+        artifacts:
+          - path: "src/auth/login.ts"
+            hash: "def456"
+        snapshot_path: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/iterations/iteration-002.json"
+        metrics_snapshot:
+          test_count: 150
+          coverage_percentage: 87
+          typescript_errors: 5
+        regression_detected: false
+
+      - iteration: 7
+        timestamp: "2026-02-02T21:15:00Z"
+        quality_score: 70
+        quality_delta: -15
+        artifacts:
+          - path: "src/auth/login.ts"
+            hash: "ghi789"
+        snapshot_path: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/iterations/iteration-007.json"
+        metrics_snapshot:
+          test_count: 148  # REGRESSION
+          coverage_percentage: 84  # REGRESSION
+          typescript_errors: 0
+        regression_detected: true
+        recovery_attempted: true
+
+    best_iteration:
+      iteration: 2
+      quality_score: 85
+      snapshot_path: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/iterations/iteration-002.json"
+      updated_at: "2026-02-02T21:05:00Z"
+      selection_reason: "Highest quality score (85%)"
+
+    regression_events:
+      - event_id: "reg-001"
+        timestamp: "2026-02-02T21:15:05Z"
+        iteration: 7
+        regression_type: "test_deletion"
+        severity: "critical"
+        details:
+          baseline_value: 150
+          current_value: 148
+          diff:
+            deleted_tests:
+              - "test/unit/auth/login.test.ts: should validate email format"
+              - "test/unit/auth/login.test.ts: should reject weak passwords"
+        recovery_protocol_invoked: true
+        recovery_outcome: "escalated"
+        human_gate_invoked: true
+        human_decision: "reject"
+
+    reinforcement_level: "AGGRESSIVE"
+
+    reinforcement_history:
+      - timestamp: "2026-02-02T21:00:00Z"
+        iteration: 1
+        from_level: "OFF"
+        to_level: "MINIMAL"
+        reason: "Loop initialization"
+      - timestamp: "2026-02-02T21:10:00Z"
+        iteration: 5
+        from_level: "MINIMAL"
+        to_level: "STANDARD"
+        reason: "Iteration 5 threshold reached"
+      - timestamp: "2026-02-02T21:15:05Z"
+        iteration: 7
+        from_level: "STANDARD"
+        to_level: "AGGRESSIVE"
+        reason: "Regression detected in iteration 7"
+
+    recovery_attempts: 1
+
+    recovery_history:
+      - recovery_id: "rec-001"
+        timestamp: "2026-02-02T21:15:05Z"
+        iteration: 7
+        trigger: "regression_detected: test_deletion"
+        protocol_steps:
+          pause:
+            executed_at: "2026-02-02T21:15:05Z"
+            actions:
+              - "Blocked pending file operations"
+              - "Snapshot created: checkpoint-007"
+          diagnose:
+            executed_at: "2026-02-02T21:15:10Z"
+            root_cause: "Agent deleted failing tests instead of fixing validation logic"
+            confidence: 0.95
+          adapt:
+            executed_at: "2026-02-02T21:15:15Z"
+            strategy: "Escalate to human gate - critical regression"
+            changes_made: []
+          escalate:
+            executed_at: "2026-02-02T21:15:20Z"
+            reason: "Critical regression: test deletion"
+            human_decision: "reject - revert iteration 7"
+        outcome: "escalated"
+
+    detection_enabled: true
+
+    detected_patterns:
+      - pattern_id: "LP-001"
+        pattern_name: "Test Deletion"
+        iteration: 7
+        timestamp: "2026-02-02T21:15:05Z"
+        severity: "critical"
+        false_positive: false
+
+    persistence_metrics:
+      detection_latency_p95_ms: 450
+      detection_latency_p99_ms: 850
+      integration_overhead_percentage: 8.5
+      false_positive_rate: 0.03
+      true_positive_count: 1
+      false_positive_count: 0
+
+# ============================================================================
+# References
+# ============================================================================
+
+references:
+  base_schema:
+    - "@agentic/code/addons/ralph/schemas/loop-state.yaml"
+
+  related_schemas:
+    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
+    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"
+    - "@agentic/code/addons/ralph/hooks/persistence-hooks.yaml"
+
+  requirements:
+    - "@.aiwg/requirements/nfr-modules/agent-persistence-nfrs.md"
+
+  research:
+    - "@.aiwg/research/findings/REF-015-self-refine.md"  # Best output selection
+    - "@.aiwg/research/findings/REF-058-r-lam.md"  # Checkpointing
+    - "@.aiwg/research/findings/agentic-laziness-research.md"  # Laziness patterns

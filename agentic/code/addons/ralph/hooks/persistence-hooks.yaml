@@ -1,0 +1,587 @@
+# Agent Persistence Hooks Configuration
+# Integration layer for Agent Persistence Framework with Ralph loops
+# Issue: #261
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-persistence-hooks/v1"
+title: "Ralph Persistence Hooks"
+description: |
+  Event hooks for Agent Persistence Framework integration with Ralph loops.
+  Enables laziness detection, regression monitoring, and recovery enforcement
+  at strategic execution points.
+
+# Hook Definitions
+hooks:
+  # ============================================================================
+  # Loop Lifecycle Hooks
+  # ============================================================================
+
+  loop_start:
+    description: "Invoked when Ralph loop begins execution"
+    trigger: "Ralph loop initialization"
+    timing: before_first_iteration
+    agents_to_invoke:
+      - agent: progress-tracker
+        purpose: "Initialize baseline metrics"
+        required: true
+        inputs:
+          task_description: "{task}"
+          completion_criteria: "{completion}"
+          working_directory: "{cwd}"
+
+      - agent: laziness-detector
+        purpose: "Enable laziness pattern detection"
+        required: true
+        inputs:
+          detection_mode: "standard"
+          patterns_enabled: ["test_deletion", "feature_removal", "coverage_regression"]
+
+    actions:
+      - initialize_baseline_metrics
+      - snapshot_codebase_state
+      - enable_file_watchers
+      - log_loop_start
+
+    state_updates:
+      - set: "baseline_metrics"
+        from: "progress-tracker.baseline"
+      - set: "detection_enabled"
+        value: true
+      - set: "reinforcement_level"
+        value: "MINIMAL"
+
+  loop_complete:
+    description: "Invoked when Ralph loop completes (success or failure)"
+    trigger: "Loop reaches terminal state"
+    timing: after_final_iteration
+    agents_to_invoke:
+      - agent: progress-tracker
+        purpose: "Generate final progress report"
+        required: true
+        inputs:
+          loop_id: "{loop_id}"
+          final_status: "{status}"
+
+      - agent: best-output-selector
+        purpose: "Select highest quality iteration output"
+        required: true
+        inputs:
+          iteration_history: "{iterations}"
+          quality_metric: "overall_quality_score"
+
+    actions:
+      - select_best_output
+      - archive_iteration_history
+      - generate_completion_report
+      - disable_file_watchers
+      - log_loop_complete
+
+    state_updates:
+      - set: "selected_iteration"
+        from: "best-output-selector.iteration"
+      - set: "completion_report_path"
+        from: "progress-tracker.report_path"
+      - set: "detection_enabled"
+        value: false
+
+  # ============================================================================
+  # Iteration Lifecycle Hooks
+  # ============================================================================
+
+  pre_iteration:
+    description: "Invoked before each Ralph iteration"
+    trigger: "Iteration N starts"
+    timing: before_iteration_execution
+    agents_to_invoke:
+      - agent: prompt-reinforcement
+        purpose: "Inject iteration-aware anti-laziness prompts"
+        required: true
+        inputs:
+          iteration_number: "{iteration}"
+          task_context: "{task}"
+          error_history: "{errors}"
+          risk_patterns: "{detected_risks}"
+
+    actions:
+      - snapshot_pre_iteration_state
+      - calculate_reinforcement_level
+      - inject_reinforcement_prompts
+      - log_iteration_start
+
+    state_updates:
+      - increment: "iteration_count"
+      - set: "reinforcement_level"
+        from: "prompt-reinforcement.level"
+      - set: "pre_iteration_snapshot"
+        from: "snapshot_path"
+
+  post_iteration:
+    description: "Invoked after each Ralph iteration completes"
+    trigger: "Iteration N completes"
+    timing: after_iteration_execution
+    agents_to_invoke:
+      - agent: progress-tracker
+        purpose: "Capture iteration metrics"
+        required: true
+        inputs:
+          iteration: "{iteration}"
+          artifacts: "{modified_files}"
+          test_results: "{test_output}"
+
+      - agent: regression-detector
+        purpose: "Check for quality regression"
+        required: true
+        inputs:
+          baseline: "{baseline_metrics}"
+          current: "{current_metrics}"
+          iteration: "{iteration}"
+
+      - agent: best-output-tracker
+        purpose: "Update best iteration tracker"
+        required: true
+        inputs:
+          iteration: "{iteration}"
+          quality_score: "{quality}"
+          artifacts: "{iteration_artifacts}"
+
+    actions:
+      - capture_iteration_metrics
+      - check_regression
+      - update_best_output
+      - update_iteration_history
+      - check_completion_criteria
+      - log_iteration_complete
+
+    state_updates:
+      - append: "iteration_history"
+        from: "iteration_metrics"
+      - set: "best_iteration"
+        from: "best-output-tracker.best_iteration"
+      - set: "regression_detected"
+        from: "regression-detector.detected"
+      - set: "last_iteration_quality"
+        from: "quality_score"
+
+    conditional_actions:
+      - condition: "regression_detected == true"
+        action: trigger_hook
+        hook: regression_detected
+
+      - condition: "iteration >= 5 AND quality_delta < 0.05"
+        action: trigger_hook
+        hook: reinforcement_escalation
+
+  # ============================================================================
+  # Tool Call Hooks
+  # ============================================================================
+
+  pre_tool_call:
+    description: "Invoked before executing high-risk tool operations"
+    trigger: "Destructive tool call detected"
+    timing: before_tool_execution
+    risk_patterns:
+      - tool: Write
+        file_pattern: "**/test/**/*"
+        risk: "test_file_modification"
+      - tool: Write
+        file_pattern: "**/*.test.{ts,js,py}"
+        risk: "test_file_modification"
+      - tool: Bash
+        command_pattern: "rm -rf*"
+        risk: "bulk_deletion"
+      - tool: Bash
+        command_pattern: "git rm*"
+        risk: "version_control_deletion"
+
+    agents_to_invoke:
+      - agent: prompt-reinforcement
+        purpose: "Inject pre-action warning"
+        required: true
+        inputs:
+          tool: "{tool_name}"
+          target: "{tool_target}"
+          risk_level: "{risk}"
+
+      - agent: laziness-detector
+        purpose: "Pre-action validation"
+        required: false  # Non-blocking
+        inputs:
+          action_type: "{tool_name}"
+          target_path: "{tool_target}"
+
+    actions:
+      - log_risky_action
+      - inject_warning_prompt
+      - create_rollback_checkpoint
+
+    state_updates:
+      - append: "risky_actions"
+        from: "action_log"
+      - set: "last_risky_action"
+        from: "action_description"
+
+  post_tool_call:
+    description: "Invoked after high-risk tool operations complete"
+    trigger: "Destructive tool call completed"
+    timing: after_tool_execution
+    agents_to_invoke:
+      - agent: regression-detector
+        purpose: "Immediate regression check"
+        required: true
+        inputs:
+          baseline: "{baseline_metrics}"
+          current: "{current_metrics}"
+          tool: "{tool_name}"
+
+    actions:
+      - capture_post_action_metrics
+      - compare_against_baseline
+      - log_action_impact
+
+    state_updates:
+      - append: "tool_call_history"
+        from: "tool_call_record"
+
+    conditional_actions:
+      - condition: "regression_detected == true"
+        action: trigger_hook
+        hook: regression_detected
+
+  # ============================================================================
+  # Error Handling Hooks
+  # ============================================================================
+
+  on_error:
+    description: "Invoked when iteration encounters error"
+    trigger: "Error during iteration execution"
+    timing: immediate_on_error
+    agents_to_invoke:
+      - agent: prompt-reinforcement
+        purpose: "Inject post-error guidance"
+        required: true
+        inputs:
+          error_type: "{error.type}"
+          error_message: "{error.message}"
+          iteration: "{iteration}"
+          previous_errors: "{error_history}"
+
+    actions:
+      - log_error
+      - increment_error_count
+      - inject_recovery_guidance
+      - check_for_stuck_loop
+
+    state_updates:
+      - append: "error_history"
+        from: "error_record"
+      - increment: "error_count"
+      - set: "last_error"
+        from: "error_record"
+
+    conditional_actions:
+      - condition: "error_count >= 3 AND same_error_repeated"
+        action: trigger_hook
+        hook: stuck_loop_detected
+
+  # ============================================================================
+  # Regression Detection Hooks
+  # ============================================================================
+
+  regression_detected:
+    description: "Invoked when regression is detected"
+    trigger: "Regression detector signals violation"
+    timing: immediate
+    agents_to_invoke:
+      - agent: recovery-orchestrator
+        purpose: "Enforce recovery protocol"
+        required: true
+        inputs:
+          regression_type: "{regression.type}"
+          severity: "{regression.severity}"
+          iteration: "{iteration}"
+          diff: "{regression.diff}"
+
+    actions:
+      - pause_execution
+      - log_regression_event
+      - invoke_recovery_protocol
+      - notify_human_if_critical
+
+    state_updates:
+      - append: "regression_events"
+        from: "regression_record"
+      - set: "recovery_in_progress"
+        value: true
+      - increment: "recovery_attempts"
+
+    recovery_protocol:
+      steps:
+        - PAUSE: "Block pending file operations"
+        - DIAGNOSE: "Analyze root cause"
+        - ADAPT: "Modify approach based on diagnosis"
+        - RETRY: "Re-attempt with adapted approach"
+        - ESCALATE: "Human gate if max retries exceeded"
+
+      escalation_conditions:
+        - condition: "recovery_attempts >= 3"
+          action: "invoke_human_gate"
+        - condition: "severity == 'critical'"
+          action: "invoke_human_gate"
+        - condition: "regression.type == 'test_deletion'"
+          action: "invoke_human_gate"
+
+  # ============================================================================
+  # Reinforcement Escalation Hooks
+  # ============================================================================
+
+  reinforcement_escalation:
+    description: "Invoked to escalate reinforcement intensity"
+    trigger: "Iteration count threshold or quality plateau"
+    timing: before_next_iteration
+    thresholds:
+      iteration_3: "STANDARD"
+      iteration_5: "AGGRESSIVE"
+      quality_plateau: "AGGRESSIVE"  # 3 iterations with delta < 5%
+
+    agents_to_invoke:
+      - agent: prompt-reinforcement
+        purpose: "Escalate reinforcement level"
+        required: true
+        inputs:
+          current_level: "{reinforcement_level}"
+          iteration: "{iteration}"
+          quality_trajectory: "{quality_history}"
+
+    actions:
+      - escalate_reinforcement_level
+      - log_escalation
+      - inject_escalated_prompts
+
+    state_updates:
+      - set: "reinforcement_level"
+        from: "prompt-reinforcement.escalated_level"
+      - append: "escalation_history"
+        from: "escalation_record"
+
+  stuck_loop_detected:
+    description: "Invoked when loop appears stuck (repeated failures)"
+    trigger: "3+ consecutive errors or same issue repeated"
+    timing: immediate
+    agents_to_invoke:
+      - agent: recovery-orchestrator
+        purpose: "Force escalation to human"
+        required: true
+        inputs:
+          error_pattern: "{error_pattern}"
+          iteration: "{iteration}"
+          attempts: "{recovery_attempts}"
+
+    actions:
+      - pause_execution
+      - log_stuck_loop
+      - invoke_human_gate
+      - generate_diagnostic_report
+
+    state_updates:
+      - set: "stuck_loop_detected"
+        value: true
+      - set: "recovery_in_progress"
+        value: true
+
+    human_gate:
+      type: "TERMINATE"
+      timeout: null  # Block indefinitely
+      message: |
+        🚨 STUCK LOOP DETECTED - Iteration {iteration}
+
+        The loop has encountered the same issue repeatedly:
+        {error_pattern}
+
+        Recovery attempts: {recovery_attempts}
+
+        Human guidance required to proceed.
+
+      options:
+        - id: "continue"
+          label: "Continue loop with modified approach"
+          action: "resume_with_new_strategy"
+        - id: "abort"
+          label: "Abort loop"
+          action: "abort_loop"
+        - id: "manual_fix"
+          label: "Manually fix and resume"
+          action: "pause_for_manual_intervention"
+
+# ============================================================================
+# Hook Execution Configuration
+# ============================================================================
+
+execution:
+  async_hooks:
+    description: "Hooks that can run asynchronously"
+    hooks:
+      - post_tool_call  # Non-blocking validation
+
+  blocking_hooks:
+    description: "Hooks that must complete before proceeding"
+    hooks:
+      - pre_tool_call
+      - regression_detected
+      - stuck_loop_detected
+
+  timeout_ms:
+    default: 5000
+    pre_tool_call: 2000   # Fast pre-action check
+    regression_detected: 10000  # Allow time for recovery
+    stuck_loop_detected: null  # No timeout, blocks until human
+
+  error_handling:
+    on_hook_failure:
+      default: log_and_continue
+      critical_hooks:
+        - hook: regression_detected
+          on_failure: abort_iteration
+        - hook: stuck_loop_detected
+          on_failure: force_pause
+
+# ============================================================================
+# State Extension Schema Reference
+# ============================================================================
+
+state_extension_schema: "@agentic/code/addons/ralph/schemas/persistence-extension.yaml"
+
+# ============================================================================
+# Integration with ConversableAgent
+# ============================================================================
+
+conversable_agent_protocol:
+  description: |
+    All agents invoked via hooks use ConversableAgent interface.
+
+    Hook → send(message) → Agent
+    Agent → generateReply() → Response
+    Response → receive() → Hook Handler
+
+  message_format:
+    role: "user"
+    content: "{hook_description}"
+    metadata:
+      hook_name: "{hook}"
+      loop_id: "{loop_id}"
+      iteration: "{iteration}"
+      inputs: "{hook_inputs}"
+
+  response_format:
+    role: "assistant"
+    content: "{agent_output}"
+    metadata:
+      verdict: "{verdict}"  # For detection agents
+      recommendations: "{recommendations}"
+      artifacts: "{generated_paths}"
+
+# ============================================================================
+# Performance Requirements
+# ============================================================================
+
+performance:
+  detection_latency:
+    target_p95_ms: 500
+    target_p99_ms: 1000
+    measurement: "from hook trigger to completion"
+
+  integration_overhead:
+    max_percentage: 10
+    baseline: "Ralph iteration without hooks"
+    measurement: "total iteration time increase"
+
+  false_positive_rate:
+    target: "<5%"
+    measurement: "false detections / total detections"
+
+# ============================================================================
+# Audit Trail
+# ============================================================================
+
+audit:
+  log_all_hook_invocations: true
+  log_location: ".aiwg/ralph/loops/{loop_id}/hook-log.jsonl"
+
+  log_format:
+    timestamp: "ISO-8601"
+    hook_name: "string"
+    loop_id: "string"
+    iteration: "integer"
+    agents_invoked: "array"
+    outcomes: "array"
+    state_changes: "object"
+
+  retention_days: 90
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+examples:
+  loop_start_invocation:
+    hook: loop_start
+    loop_id: "ralph-fix-tests-a1b2c3d4"
+    task: "Fix all TypeScript errors"
+    completion: "npx tsc --noEmit passes"
+    agents_invoked:
+      - progress-tracker:
+          baseline_metrics:
+            test_count: 150
+            coverage_percentage: 85
+            typescript_errors: 12
+      - laziness-detector:
+          patterns_enabled: ["test_deletion", "feature_removal"]
+          detection_mode: "standard"
+
+  regression_detected_invocation:
+    hook: regression_detected
+    loop_id: "ralph-fix-tests-a1b2c3d4"
+    iteration: 7
+    regression:
+      type: "test_deletion"
+      severity: "critical"
+      diff:
+        before_test_count: 150
+        after_test_count: 148
+        deleted_tests:
+          - "test/unit/auth/login.test.ts: should validate email format"
+          - "test/unit/auth/login.test.ts: should reject weak passwords"
+    agents_invoked:
+      - recovery-orchestrator:
+          recovery_protocol: "PDARE"
+          diagnosis: "Agent deleted failing tests instead of fixing code"
+          recommended_action: "ESCALATE to human gate"
+
+# ============================================================================
+# References
+# ============================================================================
+
+references:
+  requirements:
+    - "@.aiwg/requirements/use-cases/UC-AP-001-detect-test-deletion.md"
+    - "@.aiwg/requirements/use-cases/UC-AP-003-detect-coverage-regression.md"
+    - "@.aiwg/requirements/use-cases/UC-AP-004-enforce-recovery-protocol.md"
+    - "@.aiwg/requirements/use-cases/UC-AP-005-prompt-reinforcement.md"
+    - "@.aiwg/requirements/nfr-modules/agent-persistence-nfrs.md"
+
+  architecture:
+    - "@.aiwg/architecture/decisions/ADR-AP-001-detection-hook-architecture.md"
+    - "@.aiwg/architecture/decisions/ADR-AP-002-rule-enforcement-strategy.md"
+    - "@.aiwg/architecture/decisions/ADR-AP-003-prompt-injection-points.md"
+
+  schemas:
+    - "@agentic/code/addons/ralph/schemas/persistence-extension.yaml"
+    - "@agentic/code/addons/ralph/schemas/loop-state.yaml"
+    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
+
+  research:
+    - "@.aiwg/research/findings/agentic-laziness-research.md"
+
+  rules:
+    - "@.claude/rules/conversable-agent-interface.md"
+    - "@.claude/rules/executable-feedback.md"
+    - "@.claude/rules/actionable-feedback.md"

@@ -1,0 +1,743 @@
+# Shared Patterns Schema for Cross-Loop Learning
+# Based on REF-013 MetaGPT
+# Finding: 159% improvement with shared state across agents
+# Issue: #269
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-shared-patterns/v1"
+title: "Ralph Shared Patterns Schema"
+description: |
+  Schema for shared learning patterns across multiple Ralph loops.
+  Enables cross-loop knowledge transfer through error patterns,
+  success patterns, and anti-patterns based on MetaGPT's publish-subscribe
+  pattern for shared state.
+
+type: object
+required:
+  - version
+  - pattern_registry
+
+properties:
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  pattern_registry:
+    $ref: "#/$defs/PatternRegistry"
+
+  effectiveness_metrics:
+    $ref: "#/$defs/EffectivenessMetrics"
+
+  pruning_policy:
+    $ref: "#/$defs/PruningPolicy"
+
+$defs:
+  PatternRegistry:
+    type: object
+    description: "Central registry of all shared patterns"
+    properties:
+      error_patterns:
+        type: array
+        items:
+          $ref: "#/$defs/ErrorPattern"
+        description: "Error → fix patterns discovered across loops"
+
+      success_patterns:
+        type: array
+        items:
+          $ref: "#/$defs/SuccessPattern"
+        description: "Successful approaches by task type"
+
+      anti_patterns:
+        type: array
+        items:
+          $ref: "#/$defs/AntiPattern"
+        description: "Approaches that consistently fail"
+
+      code_templates:
+        type: array
+        items:
+          $ref: "#/$defs/CodeTemplate"
+        description: "Reusable code patterns"
+
+  ErrorPattern:
+    type: object
+    description: "Pattern linking error signatures to effective fixes"
+    required:
+      - pattern_id
+      - error_signature
+      - fix_approach
+      - success_rate
+      - usage_count
+    properties:
+      pattern_id:
+        type: string
+        pattern: "^pat-error-[a-z0-9-]+-\\d{3}$"
+        description: "Unique pattern identifier"
+        examples:
+          - "pat-error-null-check-001"
+          - "pat-error-type-mismatch-002"
+
+      error_signature:
+        type: object
+        required:
+          - error_type
+          - error_pattern
+        properties:
+          error_type:
+            type: string
+            enum:
+              - TypeError
+              - ReferenceError
+              - AssertionError
+              - SyntaxError
+              - RuntimeError
+              - TimeoutError
+              - ValidationError
+              - Other
+          error_pattern:
+            type: string
+            description: "Regex or exact match pattern for error message"
+          error_location_hints:
+            type: array
+            items:
+              type: string
+            description: "Common file/function locations for this error"
+
+      fix_approach:
+        type: object
+        required:
+          - description
+          - fix_category
+        properties:
+          description:
+            type: string
+            minLength: 20
+            description: "What to do to fix this error"
+          fix_category:
+            type: string
+            enum:
+              - add_null_check
+              - add_type_validation
+              - add_error_handling
+              - fix_logic_error
+              - add_import
+              - update_dependency
+              - refactor_code_structure
+              - other
+          code_template:
+            type: string
+            description: "Template code showing fix pattern"
+          code_template_language:
+            type: string
+            description: "Programming language for template"
+          diff_pattern:
+            type: string
+            description: "Example diff showing the fix"
+
+      source_loops:
+        type: array
+        items:
+          type: object
+          properties:
+            loop_id:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+            contributed_by:
+              type: string
+              description: "Agent or human who discovered this pattern"
+        description: "Loops that contributed to this pattern"
+
+      success_rate:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "How often this fix resolves the error (0-1)"
+
+      usage_count:
+        type: integer
+        minimum: 0
+        description: "Number of times this pattern has been applied"
+
+      last_used:
+        type: string
+        format: date-time
+
+      first_discovered:
+        type: string
+        format: date-time
+
+      effectiveness_trend:
+        type: array
+        items:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            success_rate_snapshot:
+              type: number
+            sample_size:
+              type: integer
+        description: "Tracking effectiveness over time"
+
+      related_patterns:
+        type: array
+        items:
+          type: string
+        description: "IDs of related error or success patterns"
+
+      tags:
+        type: array
+        items:
+          type: string
+        description: "Searchable tags for categorization"
+        examples:
+          - ["typescript", "null-safety"]
+          - ["async", "promise-handling"]
+
+  SuccessPattern:
+    type: object
+    description: "Successful approaches by task type"
+    required:
+      - pattern_id
+      - task_category
+      - approach
+      - success_rate
+      - usage_count
+    properties:
+      pattern_id:
+        type: string
+        pattern: "^pat-success-[a-z0-9-]+-\\d{3}$"
+        examples:
+          - "pat-success-test-generation-001"
+          - "pat-success-refactor-module-002"
+
+      task_category:
+        type: string
+        enum:
+          - implementation
+          - debugging
+          - refactoring
+          - testing
+          - documentation
+          - architecture
+          - migration
+          - optimization
+        description: "Type of task this pattern applies to"
+
+      task_description_pattern:
+        type: string
+        description: "Regex pattern matching task descriptions that benefit from this"
+
+      approach:
+        type: object
+        required:
+          - description
+          - steps
+        properties:
+          description:
+            type: string
+            description: "High-level description of the approach"
+          steps:
+            type: array
+            items:
+              type: string
+            description: "Ordered steps to execute"
+          tools_used:
+            type: array
+            items:
+              type: string
+            description: "Tools/commands used in this approach"
+          typical_iterations:
+            type: object
+            properties:
+              average:
+                type: number
+              minimum:
+                type: number
+              maximum:
+                type: number
+            description: "Expected iteration counts for this approach"
+
+      source_loops:
+        type: array
+        items:
+          type: object
+          properties:
+            loop_id:
+              type: string
+            outcome:
+              type: string
+              enum: [success, partial, failure]
+            iterations_required:
+              type: integer
+            timestamp:
+              type: string
+              format: date-time
+
+      success_rate:
+        type: number
+        minimum: 0
+        maximum: 1
+
+      usage_count:
+        type: integer
+        minimum: 0
+
+      average_iterations:
+        type: number
+        description: "Average iterations to complete using this pattern"
+
+      preconditions:
+        type: array
+        items:
+          type: string
+        description: "Conditions that must be true for this pattern to apply"
+
+      benefits:
+        type: array
+        items:
+          type: string
+        description: "Why this approach works well"
+
+      limitations:
+        type: array
+        items:
+          type: string
+        description: "When this approach may not work"
+
+      tags:
+        type: array
+        items:
+          type: string
+
+  AntiPattern:
+    type: object
+    description: "Approaches that consistently fail or degrade quality"
+    required:
+      - pattern_id
+      - approach_description
+      - failure_mode
+      - failure_rate
+      - occurrence_count
+    properties:
+      pattern_id:
+        type: string
+        pattern: "^pat-anti-[a-z0-9-]+-\\d{3}$"
+        examples:
+          - "pat-anti-premature-optimization-001"
+          - "pat-anti-over-abstraction-002"
+
+      approach_description:
+        type: string
+        description: "What was attempted that failed"
+
+      failure_mode:
+        type: string
+        enum:
+          - infinite_loop
+          - quality_degradation
+          - scope_creep
+          - repeated_same_error
+          - incorrect_fix
+          - breaking_change
+          - performance_regression
+        description: "How this approach fails"
+
+      failure_symptoms:
+        type: array
+        items:
+          type: string
+        description: "Observable symptoms of this anti-pattern"
+
+      why_it_fails:
+        type: string
+        description: "Root cause of failure"
+
+      better_alternative:
+        type: object
+        properties:
+          description:
+            type: string
+          success_pattern_id:
+            type: string
+            description: "Reference to recommended success pattern"
+        description: "What to do instead"
+
+      source_loops:
+        type: array
+        items:
+          type: object
+          properties:
+            loop_id:
+              type: string
+            failure_iteration:
+              type: integer
+            timestamp:
+              type: string
+              format: date-time
+
+      failure_rate:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "How often this approach leads to failure (0-1)"
+
+      occurrence_count:
+        type: integer
+        minimum: 0
+        description: "Number of times this anti-pattern has been observed"
+
+      tags:
+        type: array
+        items:
+          type: string
+
+  CodeTemplate:
+    type: object
+    description: "Reusable code patterns from successful loops"
+    required:
+      - template_id
+      - language
+      - template_code
+      - usage_count
+    properties:
+      template_id:
+        type: string
+        pattern: "^tmpl-[a-z0-9-]+-\\d{3}$"
+
+      language:
+        type: string
+        enum:
+          - typescript
+          - javascript
+          - python
+          - go
+          - rust
+          - java
+          - other
+
+      template_code:
+        type: string
+        description: "Template with placeholders like {{variable}}"
+
+      description:
+        type: string
+
+      placeholders:
+        type: object
+        additionalProperties:
+          type: string
+        description: "Documentation for each placeholder"
+
+      use_case:
+        type: string
+        description: "When to use this template"
+
+      source_loops:
+        type: array
+        items:
+          type: string
+        description: "Loops that successfully used this template"
+
+      usage_count:
+        type: integer
+
+      success_rate:
+        type: number
+
+      tags:
+        type: array
+        items:
+          type: string
+
+  EffectivenessMetrics:
+    type: object
+    description: "Track overall effectiveness of pattern sharing"
+    properties:
+      total_patterns:
+        type: integer
+        description: "Total patterns in registry"
+
+      patterns_by_type:
+        type: object
+        properties:
+          error_patterns:
+            type: integer
+          success_patterns:
+            type: integer
+          anti_patterns:
+            type: integer
+          code_templates:
+            type: integer
+
+      pattern_usage_stats:
+        type: object
+        properties:
+          total_applications:
+            type: integer
+          successful_applications:
+            type: integer
+          failed_applications:
+            type: integer
+          overall_success_rate:
+            type: number
+
+      cross_loop_benefit:
+        type: object
+        properties:
+          loops_with_pattern_injection:
+            type: integer
+          loops_without_pattern_injection:
+            type: integer
+          average_iterations_with:
+            type: number
+          average_iterations_without:
+            type: number
+          improvement_percentage:
+            type: number
+            description: "Percentage reduction in iterations"
+        description: "Measure impact of pattern sharing"
+
+      last_updated:
+        type: string
+        format: date-time
+
+  PruningPolicy:
+    type: object
+    description: "Rules for removing stale or ineffective patterns"
+    properties:
+      min_success_rate:
+        type: number
+        default: 0.5
+        description: "Patterns below this success rate are candidates for removal"
+
+      min_usage_count:
+        type: number
+        default: 3
+        description: "Patterns must be used at least this many times before evaluation"
+
+      max_age_days:
+        type: integer
+        default: 90
+        description: "Patterns unused for this long may be archived"
+
+      archive_instead_of_delete:
+        type: boolean
+        default: true
+
+      archive_path:
+        type: string
+        default: ".aiwg/ralph/shared/archive/"
+
+      auto_prune:
+        type: boolean
+        default: true
+
+      prune_interval_days:
+        type: integer
+        default: 7
+
+# Pattern extraction protocol
+pattern_extraction:
+  description: "How patterns are extracted from completed loops"
+  triggers:
+    - ralph_loop_completion
+  steps:
+    - analyze_loop_history
+    - identify_error_fix_pairs
+    - identify_successful_approaches
+    - identify_failure_patterns
+    - check_for_duplicate_patterns
+    - compute_pattern_effectiveness
+    - store_in_registry
+    - update_effectiveness_metrics
+
+# Pattern injection protocol
+pattern_injection:
+  description: "How patterns are injected into new loops"
+  triggers:
+    - ralph_loop_start
+  steps:
+    - analyze_task_description
+    - search_error_patterns_by_similarity
+    - search_success_patterns_by_task_category
+    - filter_by_min_success_rate
+    - sort_by_effectiveness
+    - inject_top_k_patterns
+    - track_pattern_usage
+  configuration:
+    top_k_patterns: 5
+    min_success_rate: 0.6
+    max_patterns_injected: 10
+
+# Storage configuration
+storage:
+  patterns_path: ".aiwg/ralph/shared/patterns/"
+  error_patterns_file: "error-patterns.json"
+  success_patterns_file: "success-patterns.json"
+  anti_patterns_file: "anti-patterns.json"
+  code_templates_file: "code-templates.json"
+  metrics_file: "effectiveness-metrics.json"
+
+# Integration with cross-task memory
+cross_task_integration:
+  enabled: true
+  description: |
+    Patterns are stored in the cross-task memory alongside
+    reflections and task embeddings. This enables semantic
+    retrieval of relevant patterns for similar tasks.
+  storage:
+    memory_path: ".aiwg/ralph/memory/"
+    patterns_index: "patterns-index.json"
+
+# CLI integration
+cli_support:
+  commands:
+    list_patterns:
+      command: "aiwg ralph-patterns list"
+      options:
+        - "--type error|success|anti|template"
+        - "--min-success-rate 0.7"
+        - "--tag typescript"
+
+    show_pattern:
+      command: "aiwg ralph-patterns show {pattern_id}"
+
+    prune_patterns:
+      command: "aiwg ralph-patterns prune"
+      options:
+        - "--dry-run"
+        - "--min-success-rate 0.6"
+
+    export_patterns:
+      command: "aiwg ralph-patterns export --output patterns-backup.json"
+
+# Examples
+examples:
+  error_pattern_example:
+    pattern_id: "pat-error-null-check-001"
+    error_signature:
+      error_type: "TypeError"
+      error_pattern: "Cannot read property '.*' of null"
+      error_location_hints:
+        - "*.ts:validateInput"
+        - "*.ts:processData"
+    fix_approach:
+      description: "Add null check before property access"
+      fix_category: "add_null_check"
+      code_template: |
+        if ({{variable}} != null) {
+          // access property
+          const value = {{variable}}.{{property}};
+        }
+      code_template_language: "typescript"
+    source_loops:
+      - loop_id: "ralph-fix-auth-a1b2c3d4"
+        timestamp: "2026-02-01T10:00:00Z"
+        contributed_by: "software-implementer"
+      - loop_id: "ralph-fix-validation-b2c3d4e5"
+        timestamp: "2026-02-02T14:30:00Z"
+        contributed_by: "debugger"
+    success_rate: 0.92
+    usage_count: 12
+    last_used: "2026-02-02T15:00:00Z"
+    first_discovered: "2026-02-01T10:00:00Z"
+    tags:
+      - "typescript"
+      - "null-safety"
+      - "defensive-programming"
+
+  success_pattern_example:
+    pattern_id: "pat-success-test-generation-001"
+    task_category: "testing"
+    task_description_pattern: "(?i)(add|write|generate).*tests?"
+    approach:
+      description: "Generate tests using test-driven approach"
+      steps:
+        - "Analyze function signature and purpose"
+        - "Identify edge cases and boundary conditions"
+        - "Generate test cases for happy path"
+        - "Generate test cases for error conditions"
+        - "Run tests to verify they fail appropriately"
+        - "Implement/fix code to pass tests"
+      tools_used:
+        - "Read"
+        - "Write"
+        - "Bash (npm test)"
+      typical_iterations:
+        average: 2.5
+        minimum: 1
+        maximum: 5
+    source_loops:
+      - loop_id: "ralph-add-auth-tests-c3d4e5f6"
+        outcome: "success"
+        iterations_required: 3
+        timestamp: "2026-02-01T12:00:00Z"
+      - loop_id: "ralph-test-api-d4e5f6a7"
+        outcome: "success"
+        iterations_required: 2
+        timestamp: "2026-02-02T09:00:00Z"
+    success_rate: 0.88
+    usage_count: 8
+    average_iterations: 2.5
+    preconditions:
+      - "Test framework is configured"
+      - "Source code exists"
+    benefits:
+      - "Ensures tests are meaningful before implementation"
+      - "Catches edge cases early"
+      - "Forces thinking about failure modes"
+    tags:
+      - "testing"
+      - "tdd"
+      - "best-practices"
+
+  anti_pattern_example:
+    pattern_id: "pat-anti-premature-optimization-001"
+    approach_description: "Optimizing code before tests pass or requirements are met"
+    failure_mode: "scope_creep"
+    failure_symptoms:
+      - "Iteration count increases without progress on core task"
+      - "Original goal becomes unclear"
+      - "Complexity increases without measurable benefit"
+    why_it_fails: "Optimization distracts from primary goal and adds complexity"
+    better_alternative:
+      description: "Complete primary task first, then optimize if needed"
+      success_pattern_id: "pat-success-refactor-module-002"
+    source_loops:
+      - loop_id: "ralph-optimize-early-e5f6a7b8"
+        failure_iteration: 12
+        timestamp: "2026-02-01T16:00:00Z"
+    failure_rate: 0.85
+    occurrence_count: 4
+    tags:
+      - "optimization"
+      - "scope-management"
+      - "anti-pattern"
+
+# Research targets (from REF-013)
+research_targets:
+  cross_loop_improvement: "159% improvement with shared state"
+  pattern_types:
+    - error_fix_pairs
+    - successful_approaches
+    - anti_patterns
+    - code_templates
+  publish_subscribe_pattern: "Agents publish learnings, subscribe to relevant patterns"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/paper-analysis/REF-013-aiwg-analysis.md"
+    - "@.aiwg/research/quality-assessments/REF-013-metagpt-assessment.yaml"
+  implementation:
+    - "#269"  # Cross-loop learning
+  related:
+    - "@agentic/code/addons/ralph/schemas/cross-task-memory.yaml"
+    - "@agentic/code/addons/ralph/schemas/debug-memory.yaml"
+    - "@agentic/code/addons/ralph/schemas/multi-loop-registry.yaml"
