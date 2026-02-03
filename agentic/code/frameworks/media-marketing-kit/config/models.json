@@ -4,12 +4,12 @@
   "title": "AIWG MMK Model Configuration",
   "description": "Default model mappings for AIWG Media Marketing Kit framework deployment. Users can customize these values for their specific needs.",
   "version": "1.0.0",
-  "lastUpdated": "2025-11-28",
+  "lastUpdated": "2026-02-03",
 
   "claude": {
     "reasoning": {
-      "model": "claude-opus-4-1-20250805",
-      "description": "Claude Opus 4.1 - Best for complex reasoning, strategic planning, brand architecture"
+      "model": "claude-opus-4-5-20251101",
+      "description": "Claude Opus 4.5 - Best for complex reasoning, strategic planning, brand architecture"
     },
     "coding": {
       "model": "claude-sonnet-4-5-20250929",
@@ -23,7 +23,7 @@
 
   "factory": {
     "reasoning": {
-      "model": "claude-opus-4-1-20250805",
+      "model": "claude-opus-4-5-20251101",
       "description": "Factory AI uses full Claude model identifiers"
     },
     "coding": {
@@ -52,7 +52,7 @@
   },
 
   "shorthand": {
-    "opus": "claude-opus-4-1-20250805",
+    "opus": "claude-opus-4-5-20251101",
     "sonnet": "claude-sonnet-4-5-20250929",
     "haiku": "claude-haiku-3-5",
     "inherit": "inherit"

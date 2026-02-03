@@ -1,7 +1,7 @@
 name: Graphic Designer
 description: Creates visual assets including ads, social graphics, infographics, and presentation designs
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

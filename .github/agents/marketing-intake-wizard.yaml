@@ -1,7 +1,7 @@
 name: generate-or-complete-marketing-intake-forms-campaign-intake-brand-profile-option-matrix-with-interactive-questioning-and-optional-guidance
 description: Generate or complete marketing intake forms (campaign-intake, brand-profile, option-matrix) with interactive questioning and optional guidance
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

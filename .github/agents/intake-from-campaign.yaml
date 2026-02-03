@@ -1,7 +1,7 @@
 name: scan-existing-campaign-materials-media-kit-or-marketing-assets-and-generate-intake-documents-by-analyzing-content-brand-elements-and-performance-data
 description: Scan existing campaign materials, media kit, or marketing assets and generate intake documents by analyzing content, brand elements, and performance data
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

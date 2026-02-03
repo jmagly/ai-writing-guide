@@ -1,7 +1,7 @@
 name: create-comprehensive-email-marketing-campaign-with-content-and-automation
 description: Create comprehensive email marketing campaign with content and automation
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

@@ -1,7 +1,7 @@
 name: conduct-retrospective-analysis-of-marketing-initiatives-for-continuous-improvement
 description: Conduct retrospective analysis of marketing initiatives for continuous improvement
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

@@ -1,7 +1,7 @@
 name: Internal Communications Specialist
 description: Creates employee communications, internal announcements, and company-wide messaging
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

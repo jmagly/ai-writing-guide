@@ -1,7 +1,7 @@
 name: Production Coordinator
 description: Manages creative production workflows, coordinates timelines, and ensures on-time delivery of marketing assets
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

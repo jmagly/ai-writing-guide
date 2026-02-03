@@ -1,7 +1,7 @@
 name: initialize-a-new-marketing-campaign-with-strategy-planning-and-team-coordination
 description: Initialize a new marketing campaign with strategy, planning, and team coordination
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

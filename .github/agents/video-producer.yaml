@@ -1,7 +1,7 @@
 name: Video Producer
 description: Plans and coordinates video production including pre-production, production logistics, and post-production workflow
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

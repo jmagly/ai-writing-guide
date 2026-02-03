@@ -1,7 +1,7 @@
 name: Market Researcher
 description: Conducts market analysis, competitive intelligence, and audience research to inform marketing strategy
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

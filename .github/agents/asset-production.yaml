@@ -1,7 +1,7 @@
 name: coordinate-marketing-asset-production-from-brief-through-delivery
 description: Coordinate marketing asset production from brief through delivery
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

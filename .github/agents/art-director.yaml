@@ -1,7 +1,7 @@
 name: Art Director
 description: Develops visual concepts, designs layouts, and ensures visual brand consistency across creative assets
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

@@ -1,7 +1,7 @@
 name: Marketing Analyst
 description: Analyzes marketing performance data, identifies trends, and provides actionable insights to optimize campaigns
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.2
   max_tokens: 4000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

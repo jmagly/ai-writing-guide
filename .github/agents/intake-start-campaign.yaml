@@ -1,7 +1,7 @@
 name: validate-manually-created-campaign-intake-forms-and-kick-off-strategy-phase-with-agent-assignments
 description: Validate manually-created campaign intake forms and kick off Strategy phase with agent assignments
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

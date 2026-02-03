@@ -1,7 +1,7 @@
 name: create-comprehensive-content-strategy-and-editorial-calendar
 description: Create comprehensive content strategy and editorial calendar
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

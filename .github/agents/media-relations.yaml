@@ -1,7 +1,7 @@
 name: Media Relations Specialist
 description: Manages journalist relationships, coordinates interviews, and handles media inquiries
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

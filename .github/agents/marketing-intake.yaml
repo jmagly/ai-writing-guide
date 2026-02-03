@@ -1,7 +1,7 @@
 name: initialize-marketing-project-intake-with-discovery-and-requirements-gathering
 description: Initialize marketing project intake with discovery and requirements gathering
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

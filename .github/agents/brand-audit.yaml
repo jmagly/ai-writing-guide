@@ -1,7 +1,7 @@
 name: conduct-comprehensive-brand-health-audit-across-all-touchpoints
 description: Conduct comprehensive brand health audit across all touchpoints
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

@@ -1,7 +1,7 @@
 name: generate-comprehensive-creative-brief-for-design-and-content-projects
 description: Generate comprehensive creative brief for design and content projects
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

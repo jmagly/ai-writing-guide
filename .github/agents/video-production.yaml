@@ -1,7 +1,7 @@
 name: plan-and-coordinate-video-marketing-production-from-concept-to-delivery
 description: Plan and coordinate video marketing production from concept to delivery
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

@@ -1,7 +1,7 @@
 name: Content Strategist
 description: Plans content ecosystems, editorial calendars, and content distribution strategies across channels
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

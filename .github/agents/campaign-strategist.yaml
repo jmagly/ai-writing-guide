@@ -1,7 +1,7 @@
 name: Campaign Strategist
 description: Designs comprehensive campaign architectures, channel strategies, and measurement frameworks for marketing initiatives
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]

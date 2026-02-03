@@ -1,7 +1,7 @@
 name: create-sales-enablement-materials-and-resources-for-sales-team
 description: Create sales enablement materials and resources for sales team
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 4000
 instructions: |

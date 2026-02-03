@@ -1,7 +1,7 @@
 name: Traffic Manager
 description: Routes work assignments, balances workloads, and optimizes creative team productivity
 model:
-  name: gpt-4
+  name: gpt-4o
   temperature: 0.3
   max_tokens: 8000
 tools: ["search","createFile","editFiles","runInTerminal","fetch"]
