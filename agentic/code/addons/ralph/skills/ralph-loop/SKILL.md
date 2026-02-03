@@ -1,7 +1,7 @@
 ---
 name: ralph-loop
 description: Detect requests for iterative AI task loops and invoke the Ralph command
-version: 1.0.0
+version: 2.0.0
 triggers:
   - "ralph this"
   - "ralph:"
@@ -119,6 +119,117 @@ What task should I repeat until success?
 What command tells me when it's done?
 ```
 
+## Multi-Loop Support
+
+**Version 2.0** adds concurrent loop execution with registry tracking.
+
+### Concurrency Limits
+
+- **MAX_CONCURRENT_LOOPS**: 4 (per REF-086)
+- **Research basis**: 17.2x error trap beyond 4 concurrent agents
+- **Communication overhead**: n*(n-1)/2 paths = 6 at max capacity
+
+### Loop ID Format
+
+All loops have unique identifiers:
+- Pattern: `ralph-{slug}-{uuid8}`
+- Example: `ralph-fix-tests-a1b2c3d4`
+
+### --loop-id Parameter
+
+Users can optionally specify a loop ID:
+
+```
+/ralph "fix tests" --completion "npm test passes" --loop-id ralph-my-fixes-12345678
+```
+
+If not provided, ID is auto-generated from task description.
+
+### Registry Tracking
+
+All active loops tracked in `.aiwg/ralph/registry.json`:
+
+```json
+{
+  "version": "2.0.0",
+  "max_concurrent_loops": 4,
+  "active_loops": [
+    {
+      "loop_id": "ralph-fix-tests-a1b2c3d4",
+      "status": "running",
+      "iteration": 5,
+      "task": "fix all TypeScript errors",
+      "started_at": "2026-02-02T21:00:00Z",
+      "pid": 12345
+    }
+  ]
+}
+```
+
+### Concurrent Loop Behavior
+
+**When starting a new loop**:
+
+1. Check registry: `active_loops.length < 4`
+2. If at limit: Show error with active loop list
+3. If space available: Register new loop and start
+
+**User sees**:
+
+```
+Error: Maximum concurrent loops (4) reached
+
+Active loops:
+1. ralph-fix-tests-a1b2c3d4 (iteration 5) - fix TypeScript errors
+2. ralph-add-docs-b2c3d4e5 (iteration 3) - add JSDoc comments
+3. ralph-refactor-c3d4e5f6 (iteration 8) - refactor API module
+4. ralph-migrate-d4e5f6a7 (iteration 2) - migrate to ESM
+
+Abort one with: aiwg ralph-abort {loop_id}
+```
+
+### Loop Status Commands
+
+**Check all active loops**:
+```
+aiwg ralph-status --all
+```
+
+**Check specific loop**:
+```
+aiwg ralph-status ralph-fix-tests-a1b2c3d4
+```
+
+**Abort a loop**:
+```
+aiwg ralph-abort ralph-fix-tests-a1b2c3d4
+```
+
+**Resume a paused loop**:
+```
+aiwg ralph-resume ralph-fix-tests-a1b2c3d4
+```
+
+### Directory Structure
+
+Multi-loop structure per loop:
+
+```
+.aiwg/ralph/
+├── registry.json                    # Multi-loop registry
+└── loops/
+    ├── ralph-fix-tests-a1b2c3d4/
+    │   ├── state.json
+    │   ├── checkpoints/
+    │   │   ├── iteration-001.json.gz
+    │   │   └── iteration-002.json.gz
+    │   └── analytics/
+    │       └── analytics.json
+    └── ralph-add-docs-b2c3d4e5/
+        ├── state.json
+        └── ...
+```
+
 ## Invocation
 
 Once task and completion are extracted/confirmed:
@@ -131,6 +242,30 @@ With optional parameters if the user specified them:
 - `--max-iterations N` if user mentioned iteration limit
 - `--timeout M` if user mentioned time limit
 - `--interactive` if task needs clarification
+- `--loop-id {id}` if user wants custom loop ID
+
+### Multi-Loop Examples
+
+**Parallel bug fixes**:
+```
+User: "ralph: fix TypeScript errors in src/"
+→ Loop 1: ralph-fix-ts-errors-a1b2c3d4
+
+User: "also ralph: add missing tests in lib/"
+→ Loop 2: ralph-add-tests-b2c3d4e5
+
+Both running in parallel until completion criteria met.
+```
+
+**Sequential with manual abort**:
+```
+User: "ralph: refactor entire auth module"
+→ Loop 1: ralph-refactor-auth-c3d4e5f6 (running)
+
+User: "actually, abort that and just fix the login bug"
+→ aiwg ralph-abort ralph-refactor-auth-c3d4e5f6
+→ Loop 2: ralph-fix-login-d4e5f6a7 (running)
+```
 
 ## Integration Notes
 
@@ -138,9 +273,20 @@ With optional parameters if the user specified them:
 - The skill is **exclusive** - once triggered, handle the entire request
 - Always confirm extraction before invoking if there's ambiguity
 - Prefer inferring completion criteria over asking (ask only if truly unclear)
+- Check registry capacity before starting new loops
+- Show helpful errors with active loop list when at capacity
 
 ## Related
 
 - `/ralph` command - the actual loop executor
 - `/ralph-status` - check loop progress
 - `/ralph-resume` - continue interrupted loops
+- `/ralph-abort` - abort active loops
+- `@agentic/code/addons/ralph/schemas/loop-registry.yaml` - Registry schema
+- `@agentic/code/addons/ralph/schemas/loop-state.yaml` - Loop state schema
+- `@.aiwg/research/findings/REF-086-cognitive-load-limits.md` - Concurrency research
+
+## Version History
+
+- **2.0.0**: Added multi-loop support with registry tracking (Issue #268)
+- **1.0.0**: Initial single-loop implementation

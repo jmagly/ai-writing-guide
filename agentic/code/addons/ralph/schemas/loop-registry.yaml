@@ -1,0 +1,290 @@
+# Ralph Multi-Loop Registry Schema
+# Based on REF-086 (17.2x error trap beyond 4 concurrent agents)
+# Based on REF-088 (n*(n-1)/2 communication paths formula)
+# Issue: #268
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-loop-registry/v2"
+title: "Ralph Multi-Loop Registry Schema"
+description: |
+  Schema for multi-loop registry tracking concurrent Ralph loops.
+  Enforces MAX_CONCURRENT_LOOPS=4 constraint per REF-086 research.
+
+type: object
+required:
+  - version
+  - max_concurrent_loops
+  - active_loops
+
+properties:
+  version:
+    type: string
+    pattern: "^2\\.\\d+\\.\\d+$"
+    default: "2.0.0"
+    description: "Registry schema version (v2 for multi-loop support)"
+
+  max_concurrent_loops:
+    type: integer
+    const: 4
+    description: |
+      Maximum concurrent loops allowed (REF-086: 17.2x error trap beyond 4).
+      Communication overhead: n*(n-1)/2 paths = 4*3/2 = 6 paths at max.
+
+  active_loops:
+    type: array
+    maxItems: 4
+    items:
+      $ref: "#/$defs/ActiveLoopEntry"
+    description: "Currently active Ralph loops"
+
+  registry_path:
+    type: string
+    default: ".aiwg/ralph/registry.json"
+    description: "Path to this registry file"
+
+  last_updated:
+    type: string
+    format: date-time
+    description: "Last registry update timestamp"
+
+$defs:
+  ActiveLoopEntry:
+    type: object
+    required:
+      - loop_id
+      - status
+      - iteration
+      - started_at
+    properties:
+      loop_id:
+        type: string
+        pattern: "^ralph-[a-z0-9-]+-[a-f0-9]{8}$"
+        description: |
+          Loop ID format: ralph-{slug}-{uuid8}
+          Example: ralph-fix-tests-a1b2c3d4
+
+      status:
+        type: string
+        enum:
+          - running      # Actively iterating
+          - paused       # Paused by user
+          - completing   # Final verification in progress
+          - crashed      # Abnormal termination detected
+        description: "Current loop status"
+
+      iteration:
+        type: integer
+        minimum: 0
+        description: "Current iteration number (0-based)"
+
+      task:
+        type: string
+        description: "Task description"
+
+      completion_criteria:
+        type: string
+        description: "Completion criteria command or description"
+
+      started_at:
+        type: string
+        format: date-time
+        description: "Loop start timestamp"
+
+      last_active:
+        type: string
+        format: date-time
+        description: "Last activity timestamp (heartbeat)"
+
+      pid:
+        type: integer
+        nullable: true
+        description: "Process ID of controlling process (null if orphaned)"
+
+      owner:
+        type: string
+        description: "User or system that started the loop"
+
+      working_directory:
+        type: string
+        description: "Working directory for this loop"
+
+      state_file:
+        type: string
+        pattern: "^\\.aiwg/ralph/loops/[^/]+/state\\.json$"
+        description: "Path to loop's state.json file"
+
+      max_iterations:
+        type: integer
+        minimum: 1
+        default: 200
+        description: "Maximum iterations allowed"
+
+      timeout_minutes:
+        type: integer
+        nullable: true
+        description: "Overall timeout in minutes (null = no timeout)"
+
+# Registry Operations
+operations:
+  register_loop:
+    description: "Add new loop to registry"
+    preconditions:
+      - "active_loops.length < max_concurrent_loops"
+    validation:
+      - check_loop_id_unique
+      - validate_loop_id_pattern
+      - verify_state_file_exists
+    steps:
+      - generate_loop_id
+      - create_state_file
+      - add_to_active_loops
+      - update_last_updated
+      - persist_registry
+
+  deregister_loop:
+    description: "Remove loop from registry"
+    validation:
+      - loop_exists_in_registry
+    steps:
+      - remove_from_active_loops
+      - update_last_updated
+      - persist_registry
+      - optionally_archive_state
+
+  update_heartbeat:
+    description: "Update loop's last_active timestamp"
+    validation:
+      - loop_exists_in_registry
+    steps:
+      - find_loop_entry
+      - update_last_active
+      - persist_registry
+
+  check_stale_loops:
+    description: "Detect and handle stale/crashed loops"
+    trigger: periodic
+    interval: "5 minutes"
+    steps:
+      - for_each_active_loop:
+          - check_last_active_age
+          - if_stale: check_pid_alive
+          - if_pid_dead: mark_crashed
+          - if_crashed: optionally_cleanup
+
+# Concurrency Management
+concurrency:
+  enforcement_points:
+    - before_register: "Check active_loops.length < 4"
+    - on_register_attempt_when_full: "Return error with active loop list"
+
+  strategies:
+    queue_mode:
+      enabled: false
+      description: "Do not queue loops - fail fast if at limit"
+
+    interactive_override:
+      enabled: true
+      description: "Allow user to abort an active loop to free slot"
+
+  communication_overhead:
+    formula: "n*(n-1)/2"
+    at_max_4_loops: 6
+    threshold_warning: "Beyond 4 loops, error rate increases 17.2x (REF-086)"
+
+# Stale Detection
+stale_detection:
+  heartbeat_interval: 60  # seconds
+  stale_threshold: 300    # 5 minutes without heartbeat
+  crash_detection:
+    check_pid: true
+    check_state_file_updated: true
+    mark_crashed_after: 300  # seconds
+
+# Example registry
+examples:
+  - version: "2.0.0"
+    max_concurrent_loops: 4
+    active_loops:
+      - loop_id: "ralph-fix-tests-a1b2c3d4"
+        status: running
+        iteration: 5
+        task: "fix all TypeScript errors"
+        completion_criteria: "npx tsc --noEmit passes"
+        started_at: "2026-02-02T21:00:00Z"
+        last_active: "2026-02-02T21:05:30Z"
+        pid: 12345
+        owner: "roctinam"
+        working_directory: "/mnt/dev-inbox/jmagly/ai-writing-guide"
+        state_file: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/state.json"
+        max_iterations: 200
+
+      - loop_id: "ralph-add-docs-b2c3d4e5"
+        status: paused
+        iteration: 3
+        task: "add JSDoc comments to all exported functions"
+        completion_criteria: "npm run docs succeeds"
+        started_at: "2026-02-02T20:30:00Z"
+        last_active: "2026-02-02T20:45:00Z"
+        pid: 12346
+        owner: "roctinam"
+        working_directory: "/mnt/dev-inbox/jmagly/ai-writing-guide"
+        state_file: ".aiwg/ralph/loops/ralph-add-docs-b2c3d4e5/state.json"
+        max_iterations: 100
+
+    registry_path: ".aiwg/ralph/registry.json"
+    last_updated: "2026-02-02T21:05:30Z"
+
+# CLI Integration
+cli_commands:
+  list_active:
+    command: "aiwg ralph-status --all"
+    description: "List all active loops from registry"
+    output: "Table of active loops with status"
+
+  register:
+    command: "aiwg ralph --loop-id {id}"
+    description: "Start new loop and register"
+    validation: "Fail if max_concurrent_loops reached"
+
+  deregister:
+    command: "aiwg ralph-abort {loop_id}"
+    description: "Abort loop and deregister"
+
+  check_stale:
+    command: "aiwg ralph-status --check-stale"
+    description: "Check for and report stale loops"
+
+# Migration from Single-Loop
+migration:
+  from_version: "1.x"
+  to_version: "2.0.0"
+  backward_compatibility:
+    single_loop_mode: |
+      If no registry exists, create one with single active loop entry.
+      Legacy .aiwg/ralph/current-loop.json maps to registry with one entry.
+  migration_steps:
+    - create_registry_if_missing
+    - migrate_current_loop_to_registry
+    - update_state_file_paths
+    - update_checkpoint_paths
+
+# Storage
+storage:
+  registry_file: ".aiwg/ralph/registry.json"
+  state_files: ".aiwg/ralph/loops/{loop_id}/state.json"
+  lock_file: ".aiwg/ralph/registry.lock"
+  locking:
+    mechanism: file_lock
+    timeout_ms: 5000
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-086-cognitive-load-limits.md"
+    - "@.aiwg/research/findings/REF-088-communication-overhead.md"
+  implementation:
+    - "#268"  # Multi-loop registry schemas
+  related:
+    - "@agentic/code/addons/ralph/schemas/loop-state.yaml"
+    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
+    - "@tools/ralph-external/"

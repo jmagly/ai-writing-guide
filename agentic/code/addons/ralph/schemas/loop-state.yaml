@@ -1,0 +1,396 @@
+# Ralph Loop State Schema
+# Per-loop state tracking for multi-loop support
+# Issue: #268
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-loop-state/v2"
+title: "Ralph Loop State Schema"
+description: |
+  Schema for per-loop state.json file. Each active loop has its own
+  state file in .aiwg/ralph/loops/{loop_id}/state.json
+
+type: object
+required:
+  - version
+  - loop_id
+  - status
+  - iteration
+
+properties:
+  version:
+    type: string
+    pattern: "^2\\.\\d+\\.\\d+$"
+    default: "2.0.0"
+    description: "State schema version"
+
+  loop_id:
+    type: string
+    pattern: "^ralph-[a-z0-9-]+-[a-f0-9]{8}$"
+    description: |
+      Unique loop identifier matching registry entry.
+      Format: ralph-{slug}-{uuid8}
+
+  status:
+    type: string
+    enum:
+      - running       # Actively iterating
+      - paused        # Paused by user (ralph-pause)
+      - completing    # Final verification/cleanup
+      - completed     # Successfully finished
+      - failed        # Failed to meet completion criteria
+      - aborted       # User aborted (ralph-abort)
+      - crashed       # Abnormal termination
+    description: "Current loop status"
+
+  iteration:
+    type: integer
+    minimum: 0
+    description: "Current iteration number (0-based)"
+
+  task:
+    type: string
+    description: "Task description from ralph command"
+
+  completion_criteria:
+    type: string
+    description: "Completion criteria (command or description)"
+
+  started_at:
+    type: string
+    format: date-time
+    description: "Loop start timestamp"
+
+  last_updated:
+    type: string
+    format: date-time
+    description: "Last state update timestamp"
+
+  completed_at:
+    type: string
+    format: date-time
+    nullable: true
+    description: "Completion timestamp (null if not completed)"
+
+  owner:
+    type: string
+    description: "User or system that started the loop"
+
+  pid:
+    type: integer
+    nullable: true
+    description: "Process ID of controlling process (null if orphaned)"
+
+  working_directory:
+    type: string
+    description: "Working directory for this loop"
+
+  configuration:
+    $ref: "#/$defs/LoopConfiguration"
+
+  progress:
+    $ref: "#/$defs/ProgressTracking"
+
+  metrics:
+    $ref: "#/$defs/LoopMetrics"
+
+  last_checkpoint:
+    type: string
+    nullable: true
+    description: "Path to most recent checkpoint"
+
+  error_context:
+    type: object
+    nullable: true
+    description: "Error details if status is failed/crashed"
+    properties:
+      error_message:
+        type: string
+      error_timestamp:
+        type: string
+        format: date-time
+      stack_trace:
+        type: string
+      recovery_attempted:
+        type: boolean
+
+$defs:
+  LoopConfiguration:
+    type: object
+    description: "Loop execution configuration"
+    properties:
+      max_iterations:
+        type: integer
+        minimum: 1
+        default: 200
+
+      timeout_minutes:
+        type: integer
+        nullable: true
+        description: "Overall timeout (null = no timeout)"
+
+      interactive:
+        type: boolean
+        default: false
+        description: "Interactive mode (prompt for decisions)"
+
+      auto_test:
+        type: boolean
+        default: true
+        description: "Automatically run tests before completion"
+
+      checkpoint_interval:
+        type: integer
+        default: 1
+        description: "Create checkpoint every N iterations"
+
+      execution_mode:
+        type: string
+        enum: [strict, seeded, logged, default]
+        default: default
+
+  ProgressTracking:
+    type: object
+    description: "Progress and completion tracking"
+    properties:
+      completion_checks:
+        type: array
+        items:
+          type: object
+          properties:
+            iteration:
+              type: integer
+            timestamp:
+              type: string
+              format: date-time
+            passed:
+              type: boolean
+            output:
+              type: string
+        description: "History of completion criteria checks"
+
+      last_completion_check:
+        type: object
+        nullable: true
+        properties:
+          iteration:
+            type: integer
+          timestamp:
+            type: string
+            format: date-time
+          passed:
+            type: boolean
+          output:
+            type: string
+
+      estimated_completion:
+        type: string
+        nullable: true
+        description: "Estimated completion time (if predictable)"
+
+  LoopMetrics:
+    type: object
+    description: "Execution metrics"
+    properties:
+      total_iterations:
+        type: integer
+        description: "Total iterations executed"
+
+      successful_iterations:
+        type: integer
+        description: "Iterations that made progress"
+
+      failed_iterations:
+        type: integer
+        description: "Iterations that failed"
+
+      total_tokens:
+        type: integer
+        description: "Total tokens consumed"
+
+      total_cost_usd:
+        type: number
+        description: "Total cost in USD"
+
+      total_duration_seconds:
+        type: integer
+        description: "Total execution time"
+
+      average_iteration_time_seconds:
+        type: number
+        description: "Average time per iteration"
+
+# State Transitions
+state_transitions:
+  allowed:
+    running:
+      - paused
+      - completing
+      - aborted
+      - crashed
+      - failed
+
+    paused:
+      - running
+      - aborted
+
+    completing:
+      - completed
+      - failed
+      - crashed
+
+    completed:
+      - []  # Terminal state
+
+    failed:
+      - []  # Terminal state
+
+    aborted:
+      - []  # Terminal state
+
+    crashed:
+      - []  # Terminal state
+
+# Operations
+operations:
+  create_state:
+    description: "Initialize state for new loop"
+    steps:
+      - generate_loop_id
+      - create_directory: ".aiwg/ralph/loops/{loop_id}/"
+      - initialize_state_object
+      - write_state_file
+      - register_in_registry
+
+  update_state:
+    description: "Update state during execution"
+    validation:
+      - loop_id_exists
+      - valid_status_transition
+    steps:
+      - load_current_state
+      - apply_updates
+      - update_last_updated
+      - write_state_file
+      - update_registry_heartbeat
+
+  transition_status:
+    description: "Change loop status"
+    validation:
+      - valid_status_transition
+    steps:
+      - load_current_state
+      - validate_transition
+      - update_status
+      - update_last_updated
+      - write_state_file
+      - update_registry
+
+  record_completion_check:
+    description: "Record completion criteria check result"
+    steps:
+      - load_current_state
+      - append_to_completion_checks
+      - update_last_completion_check
+      - if_passed: transition_to_completing
+      - write_state_file
+
+# File Layout
+file_layout:
+  structure: |
+    .aiwg/ralph/
+    ├── registry.json                           # Multi-loop registry
+    └── loops/
+        ├── ralph-fix-tests-a1b2c3d4/
+        │   ├── state.json                      # Loop state
+        │   ├── checkpoints/
+        │   │   ├── iteration-001.json.gz
+        │   │   └── iteration-002.json.gz
+        │   └── analytics/
+        │       └── analytics.json
+        └── ralph-add-docs-b2c3d4e5/
+            ├── state.json
+            └── ...
+
+# Example state file
+examples:
+  - version: "2.0.0"
+    loop_id: "ralph-fix-tests-a1b2c3d4"
+    status: running
+    iteration: 5
+    task: "fix all TypeScript errors"
+    completion_criteria: "npx tsc --noEmit passes"
+    started_at: "2026-02-02T21:00:00Z"
+    last_updated: "2026-02-02T21:05:30Z"
+    completed_at: null
+    owner: "roctinam"
+    pid: 12345
+    working_directory: "/mnt/dev-inbox/jmagly/ai-writing-guide"
+    configuration:
+      max_iterations: 200
+      timeout_minutes: 60
+      interactive: false
+      auto_test: true
+      checkpoint_interval: 1
+      execution_mode: default
+    progress:
+      completion_checks:
+        - iteration: 3
+          timestamp: "2026-02-02T21:03:00Z"
+          passed: false
+          output: "Found 12 errors"
+        - iteration: 5
+          timestamp: "2026-02-02T21:05:00Z"
+          passed: false
+          output: "Found 8 errors"
+      last_completion_check:
+        iteration: 5
+        timestamp: "2026-02-02T21:05:00Z"
+        passed: false
+        output: "Found 8 errors"
+    metrics:
+      total_iterations: 5
+      successful_iterations: 5
+      failed_iterations: 0
+      total_tokens: 25000
+      total_cost_usd: 0.125
+      total_duration_seconds: 330
+      average_iteration_time_seconds: 66
+    last_checkpoint: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/checkpoints/iteration-005.json.gz"
+
+# CLI Integration
+cli_commands:
+  view_state:
+    command: "aiwg ralph-status {loop_id}"
+    description: "View loop state"
+
+  pause:
+    command: "aiwg ralph-pause {loop_id}"
+    description: "Transition to paused status"
+
+  resume:
+    command: "aiwg ralph-resume {loop_id}"
+    description: "Transition from paused to running"
+
+  abort:
+    command: "aiwg ralph-abort {loop_id}"
+    description: "Transition to aborted status"
+
+# Backward Compatibility
+backward_compatibility:
+  single_loop_mode:
+    legacy_path: ".aiwg/ralph/current-loop.json"
+    migration: |
+      If only one loop active and legacy path exists:
+      - Read legacy current-loop.json
+      - Convert to new state format
+      - Write to .aiwg/ralph/loops/{loop_id}/state.json
+      - Keep legacy file for tools that expect it
+
+# References
+references:
+  implementation:
+    - "#268"  # Multi-loop state schemas
+  related:
+    - "@agentic/code/addons/ralph/schemas/loop-registry.yaml"
+    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
+    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"

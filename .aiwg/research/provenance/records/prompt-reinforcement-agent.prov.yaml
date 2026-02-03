@@ -1,0 +1,163 @@
+# Provenance Record: Prompt Reinforcement Agent
+# W3C PROV-DM Compliant
+# Created: 2026-02-02
+
+entity:
+  id: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/agents/prompt-reinforcement.md"
+  type: "agent_definition"
+  created_at: "2026-02-02T00:00:00Z"
+  content_hash: "sha256:d23c80c58095781f0496a4eb112a5fe503db9a974a02564ad30bc74bb1f0c83a"
+  format: "markdown"
+  description: "Prompt Reinforcement Agent for preventing destructive avoidance behaviors"
+
+activity:
+  id: "urn:aiwg:activity:generation:prompt-reinforcement-agent:001"
+  type: "generation"
+  started_at: "2026-02-02T00:00:00Z"
+  ended_at: "2026-02-02T00:00:00Z"
+  duration_seconds: 180
+  description: "Agent definition created with ConversableAgent interface, thought protocol, and few-shot examples"
+
+agent:
+  id: "urn:aiwg:agent:software-implementer"
+  type: "aiwg_agent"
+  version: "1.0.0"
+  tool: "claude-sonnet-4.5"
+  model_id: "claude-sonnet-4-5-20250929"
+
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/agents/prompt-reinforcement.md"
+    activity: "urn:aiwg:activity:generation:prompt-reinforcement-agent:001"
+
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:prompt-reinforcement-agent:001"
+    agent: "urn:aiwg:agent:software-implementer"
+
+  wasDerivedFrom:
+    - source: "urn:aiwg:artifact:.aiwg/architecture/decisions/ADR-AP-003-prompt-injection-points.md"
+      derivation_type: "implements"
+      description: "Implements injection point architecture from ADR-AP-003"
+
+    - source: "urn:aiwg:artifact:.aiwg/requirements/use-cases/UC-AP-005-prompt-reinforcement.md"
+      derivation_type: "implements"
+      description: "Implements use case UC-AP-005 requirements"
+
+    - source: "urn:aiwg:artifact:.aiwg/research/findings/agentic-laziness-research.md"
+      derivation_type: "applies_research"
+      description: "Applies findings on RLHF reward hacking and sycophancy"
+
+    - source: "urn:aiwg:artifact:docs/references/REF-015-self-refine-iterative-refinement.md"
+      derivation_type: "applies_research"
+      description: "Applies Self-Refine graduated intensity pattern"
+
+    - source: "urn:aiwg:artifact:.claude/rules/conversable-agent-interface.md"
+      derivation_type: "conforms_to"
+      description: "Implements ConversableAgent interface per rules"
+
+    - source: "urn:aiwg:artifact:.claude/rules/thought-protocol.md"
+      derivation_type: "conforms_to"
+      description: "Integrates six thought types per protocol"
+
+    - source: "urn:aiwg:artifact:.claude/rules/few-shot-examples.md"
+      derivation_type: "conforms_to"
+      description: "Includes 3 examples (simple, moderate, complex) per rules"
+
+    - source: "urn:aiwg:artifact:.claude/rules/provenance-tracking.md"
+      derivation_type: "conforms_to"
+      description: "Follows provenance tracking requirements"
+
+    - source: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/agents/software-implementer.md"
+      derivation_type: "follows_pattern"
+      description: "Uses Software Implementer as structural template"
+
+metadata:
+  compliance:
+    conversable_agent_interface: true
+    thought_protocol: true
+    few_shot_examples: 3
+    provenance_tracking: true
+
+  features:
+    injection_points: 6
+    intensity_levels: 5
+    graduated_escalation: true
+    context_aware: true
+    research_grounded: true
+
+  deliverables:
+    agent_definition: "agentic/code/frameworks/sdlc-complete/agents/prompt-reinforcement.md"
+    configuration_schema: ".aiwg/config/reinforcement-config.yaml"
+    provenance_record: ".aiwg/research/provenance/records/prompt-reinforcement-agent.prov.yaml"
+
+validation:
+  rules_compliance:
+    - rule: "few-shot-examples"
+      status: "PASS"
+      note: "3 examples provided (simple, moderate, complex)"
+
+    - rule: "conversable-agent-interface"
+      status: "PASS"
+      note: "send(), receive(), generateReply(), initiateChat() documented"
+
+    - rule: "thought-protocol"
+      status: "PASS"
+      note: "Six thought types integrated with emphasis on Extraction, Reasoning"
+
+    - rule: "provenance-tracking"
+      status: "PASS"
+      note: "Provenance section included, record created"
+
+  acceptance_criteria:
+    - criterion: "Injects at all 6 strategic points"
+      status: "MET"
+      evidence: "session_init, pre_tool_call, post_error, iteration_boundary, regression_detected, pre_commit"
+
+    - criterion: "Supports 5 intensity levels"
+      status: "MET"
+      evidence: "OFF, MINIMAL, STANDARD, AGGRESSIVE, ADAPTIVE"
+
+    - criterion: "Adapts intensity based on iteration count"
+      status: "MET"
+      evidence: "Graduated escalation: 1-3=MINIMAL, 4-6=STANDARD, 7-9=AGGRESSIVE, 10+=ADAPTIVE"
+
+    - criterion: "Context-aware directive selection"
+      status: "MET"
+      evidence: "Templates vary by task type, agent role, error type, iteration count"
+
+    - criterion: "Minimal context window consumption (<500 tokens)"
+      status: "MET"
+      evidence: "Token budgets: MINIMAL=100, STANDARD=300, AGGRESSIVE=500"
+
+    - criterion: "Logs all injections for analysis"
+      status: "MET"
+      evidence: "Audit trail section with injection_log schema"
+
+# References
+references:
+  architecture:
+    - ADR-AP-003: "Prompt Injection Points"
+    - ADR-AP-001: "Detection Hook Architecture"
+    - ADR-AP-002: "Rule Enforcement Strategy"
+
+  requirements:
+    - UC-AP-005: "Prompt Reinforcement Injection"
+
+  research:
+    - REF-015: "Self-Refine - Iterative Refinement"
+    - "Agentic Laziness Research": "RLHF reward hacking, sycophancy, shortcut learning"
+    - REF-072: "Anthropic Inoculation Prompting"
+    - REF-074: "LLMs as Lazy Learners"
+
+  rules:
+    - conversable-agent-interface
+    - thought-protocol
+    - few-shot-examples
+    - provenance-tracking
+
+# Quality Assurance
+qa:
+  code_review: "pending"
+  testing: "pending"
+  documentation_review: "pending"
+  integration_testing: "pending"

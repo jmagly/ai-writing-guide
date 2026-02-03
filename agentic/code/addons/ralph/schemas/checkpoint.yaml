@@ -1,13 +1,14 @@
 # Workflow Checkpoint Schema
 # Based on REF-058 R-LAM (systematic checkpoint/recovery)
-# Issue: #112
+# Issue: #112, #268 (multi-loop support)
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://aiwg.io/schemas/checkpoint/v1"
+$id: "https://aiwg.io/schemas/checkpoint/v2"
 title: "Workflow Checkpoint Schema"
 description: |
   Systematic checkpoint and recovery for workflows to enable resumption
   from last good state after failures. Based on R-LAM findings.
+  Version 2 adds multi-loop support with loop_id field.
 
 type: object
 required:
@@ -25,6 +26,15 @@ properties:
   workflow_id:
     type: string
     description: "ID of the workflow being checkpointed"
+
+  loop_id:
+    type: string
+    pattern: "^ralph-[a-z0-9-]+-[a-f0-9]{8}$"
+    nullable: true
+    description: |
+      Loop ID for multi-loop support (v2). Required for ralph_loop workflows.
+      Format: ralph-{slug}-{uuid8}
+      Null for non-Ralph or legacy single-loop checkpoints.
 
   workflow_type:
     type: string
@@ -139,6 +149,11 @@ properties:
         type: array
         items:
           type: string
+      schema_version:
+        type: string
+        enum: ["1.0", "2.0"]
+        default: "2.0"
+        description: "Schema version for migration tracking"
     description: "Checkpoint metadata"
 
 $defs:
@@ -230,15 +245,94 @@ lifecycle:
 
 # Storage configuration
 storage:
-  location: ".aiwg/checkpoints/"
+  # Multi-loop path structure (v2)
+  multi_loop_location: ".aiwg/ralph/loops/{loop_id}/checkpoints/"
+  multi_loop_naming: "iteration-{iteration:03d}.json.gz"
+
+  # Legacy single-loop path (v1, deprecated)
+  legacy_location: ".aiwg/checkpoints/"
+  legacy_naming: "{workflow_id}-{timestamp}-{trigger}.json.gz"
+
+  # Active format
   format: json
   compression: gzip
-  naming: "{workflow_id}-{timestamp}-{trigger}.json.gz"
 
-# Example checkpoint
+# Path Resolution
+path_resolution:
+  rules:
+    - if_loop_id_present: use_multi_loop_location
+    - if_workflow_type_ralph_loop_and_no_loop_id: use_legacy_location
+    - else: use_legacy_location
+
+  examples:
+    multi_loop: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/checkpoints/iteration-005.json.gz"
+    legacy: ".aiwg/checkpoints/ralph-research-impl-2026-01-25T15-00-00Z-iteration.json.gz"
+
+# Backward Compatibility
+backward_compatibility:
+  single_loop_checkpoints:
+    description: |
+      Checkpoints without loop_id are valid for single-loop workflows.
+      When loading, if loop_id is null and workflow_type is ralph_loop,
+      treat as legacy single-loop checkpoint.
+
+    migration_on_read:
+      - if_loop_id_null_and_ralph_loop: treat_as_single_loop
+      - load_from_legacy_location
+      - no_automatic_migration_to_multi_loop
+
+    migration_on_write:
+      - if_loop_id_provided: use_multi_loop_path
+      - if_loop_id_null: use_legacy_path
+      - set_metadata.schema_version: "2.0"
+
+  validation:
+    # Validate loop_id if workflow_type is ralph_loop in multi-loop mode
+    ralph_loop_requires_loop_id_in_multi_loop: true
+    allow_null_loop_id_for_legacy: true
+
+# Example checkpoints
 examples:
-  - checkpoint_id: "cp-001-example"
+  # Multi-loop checkpoint (v2)
+  - checkpoint_id: "cp-001-multi-loop"
+    workflow_id: "ralph-fix-tests-a1b2c3d4"
+    loop_id: "ralph-fix-tests-a1b2c3d4"
+    workflow_type: ralph_loop
+    created_at: "2026-02-02T21:05:00Z"
+    trigger: iteration
+    state:
+      phase: construction
+      step: implement_issue
+      progress:
+        total_steps: 200
+        completed_steps: 5
+        percentage: 2.5
+      iteration:
+        current: 5
+        max: 200
+        failures: 0
+      artifacts:
+        - path: "src/auth/login.ts"
+          hash: "abc123..."
+          status: modified
+      variables:
+        current_issue: "#268"
+        implementation_approach: "multi-loop"
+    execution_config:
+      model: "claude-sonnet-4.5"
+      temperature: 0
+      execution_mode: strict
+      agent: "Software Implementer"
+    metadata:
+      size_bytes: 4096
+      compression: gzip
+      retention_days: 30
+      schema_version: "2.0"
+
+  # Legacy single-loop checkpoint (v1, backward compatible)
+  - checkpoint_id: "cp-002-legacy"
     workflow_id: "ralph-research-impl"
+    loop_id: null
     workflow_type: ralph_loop
     created_at: "2026-01-25T15:00:00Z"
     trigger: iteration
@@ -269,13 +363,33 @@ examples:
       size_bytes: 4096
       compression: gzip
       retention_days: 30
+      schema_version: "1.0"
+
+# Migration Guide
+migration_guide:
+  from_v1_to_v2:
+    description: "Adding multi-loop support"
+    breaking_changes: false
+    steps:
+      - add_loop_id_field_nullable
+      - update_storage_path_logic
+      - maintain_legacy_path_support
+      - no_automatic_migration_required
+
+    compatibility:
+      v1_checkpoints_readable: true
+      v2_checkpoints_backward_compatible: true
+      mixed_versions_supported: true
 
 # References
 references:
   research:
     - "@.aiwg/research/findings/REF-058-r-lam.md"
   implementation:
-    - "#112"
+    - "#112"  # Original checkpoint implementation
+    - "#268"  # Multi-loop support
   related:
     - "@agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml"
     - "@agentic/code/addons/ralph/schemas/reflection-memory.json"
+    - "@agentic/code/addons/ralph/schemas/loop-registry.yaml"
+    - "@agentic/code/addons/ralph/schemas/loop-state.yaml"
