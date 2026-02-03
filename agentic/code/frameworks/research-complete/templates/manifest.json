@@ -1,0 +1,154 @@
+{
+  "framework": "research-complete",
+  "version": "1.0.0",
+  "template_count": 8,
+  "last_updated": "2026-02-03",
+  "templates": [
+    {
+      "template_id": "literature-note",
+      "filename": "literature-note.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Zettelkasten-style literature note for research papers",
+      "use_case": "Capture key insights, findings, and connections from research papers",
+      "primary_agent": "Discovery Agent",
+      "progressive_disclosure": true,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "summary",
+      "filename": "summary.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Multi-level summary (1-sentence, 1-paragraph, 1-page)",
+      "use_case": "Create tiered summaries for different audiences and time constraints",
+      "primary_agent": "Discovery Agent",
+      "progressive_disclosure": true,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "extraction",
+      "filename": "extraction.yaml",
+      "type": "data",
+      "format": "yaml",
+      "description": "Structured extraction of claims, methods, and findings",
+      "use_case": "Machine-readable extraction for citation networks and synthesis",
+      "primary_agent": "Discovery Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "gap-report",
+      "filename": "gap-report.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Research gap analysis report",
+      "use_case": "Identify unstudied areas and plan research priorities",
+      "primary_agent": "Discovery Agent",
+      "progressive_disclosure": true,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "citation-network",
+      "filename": "citation-network.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Citation network visualization and analysis",
+      "use_case": "Map intellectual lineage and identify influential papers",
+      "primary_agent": "Discovery Agent",
+      "progressive_disclosure": true,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "quality-assessment",
+      "filename": "quality-assessment.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "GRADE quality assessment report",
+      "use_case": "Evaluate research quality using GRADE framework",
+      "primary_agent": "Quality Agent",
+      "progressive_disclosure": true,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "provenance-record",
+      "filename": "provenance-record.yaml",
+      "type": "data",
+      "format": "yaml",
+      "description": "W3C PROV-compliant provenance record",
+      "use_case": "Track artifact derivation chains and attribution",
+      "primary_agent": "Provenance Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "acquisition-report",
+      "filename": "acquisition-report.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Paper acquisition summary with FAIR scores",
+      "use_case": "Document paper acquisition with verification and compliance",
+      "primary_agent": "Acquisition Agent",
+      "progressive_disclosure": true,
+      "reasoning_required": true
+    }
+  ],
+  "categories": {
+    "note-taking": ["literature-note", "summary"],
+    "analysis": ["extraction", "gap-report", "citation-network", "quality-assessment"],
+    "metadata": ["provenance-record", "acquisition-report"]
+  },
+  "usage_sequence": [
+    {
+      "step": 1,
+      "template": "acquisition-report",
+      "description": "Acquire paper and document provenance"
+    },
+    {
+      "step": 2,
+      "template": "provenance-record",
+      "description": "Create W3C PROV record for paper"
+    },
+    {
+      "step": 3,
+      "template": "literature-note",
+      "description": "Create Zettelkasten-style note capturing insights"
+    },
+    {
+      "step": 4,
+      "template": "summary",
+      "description": "Generate multi-level summary"
+    },
+    {
+      "step": 5,
+      "template": "extraction",
+      "description": "Extract structured data for machine processing"
+    },
+    {
+      "step": 6,
+      "template": "quality-assessment",
+      "description": "Assess research quality using GRADE"
+    },
+    {
+      "step": 7,
+      "template": "citation-network",
+      "description": "Analyze citation relationships (when corpus sufficient)"
+    },
+    {
+      "step": 8,
+      "template": "gap-report",
+      "description": "Identify research gaps (periodic synthesis activity)"
+    }
+  ],
+  "references": {
+    "framework_readme": "@agentic/code/frameworks/research-complete/README.md",
+    "agents": "@agentic/code/frameworks/research-complete/agents/",
+    "schemas": "@agentic/code/frameworks/sdlc-complete/schemas/research/",
+    "rules": [
+      "@.claude/rules/progressive-disclosure.md",
+      "@.claude/rules/reasoning-sections.md",
+      "@.claude/rules/provenance-tracking.md",
+      "@.claude/rules/research-metadata.md"
+    ]
+  }
+}

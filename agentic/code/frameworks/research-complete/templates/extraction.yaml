@@ -1,0 +1,433 @@
+# Structured Extraction Template
+# Machine-readable extraction of claims, methods, findings from research papers
+
+---
+template_id: extraction
+version: 1.0.0
+reasoning_required: true
+framework: research-complete
+format: yaml
+---
+
+# USAGE NOTES:
+# This template extracts structured data from papers for machine processing.
+# Complete REASONING section in markdown comment first, then populate YAML fields.
+# Use this for: citation networks, claim verification, method comparison, finding synthesis.
+
+# REASONING (Complete before extraction):
+#
+# 1. **Extraction Scope**: What information do we need from this paper?
+#    > [Define which claims, methods, findings are relevant to AIWG - not everything]
+#
+#    EXAMPLE:
+#    For REF-018 ReAct, extract: TAO loop structure, performance metrics on tool-use tasks,
+#    hallucination reduction data, reasoning trace format. Skip: Benchmark-specific details
+#    not applicable to SDLC workflows.
+#
+# 2. **Claim Classification**: How do we categorize extracted claims?
+#    > [Decide taxonomy: empirical vs theoretical, quantitative vs qualitative, causal vs correlational]
+#
+#    EXAMPLE:
+#    - Empirical claims: "ReAct reduces hallucinations to 0%" (measured)
+#    - Theoretical claims: "Reasoning traces enable better oversight" (proposed)
+#    - Causal claims: "TAO loop CAUSES performance improvement" (proven causation)
+#    - Correlational claims: "TAO loop ASSOCIATED with fewer errors" (correlation observed)
+#
+# 3. **Evidence Strength Assessment**: How do we rate evidence quality?
+#    > [Use GRADE levels: HIGH/MODERATE/LOW/VERY LOW based on methodology]
+#
+#    EXAMPLE:
+#    HIGH: Controlled experiment, multiple baselines, reproducible = "34% improvement"
+#    MODERATE: Single comparison, limited scope = "Improved performance observed"
+#    LOW: Case study, no controls = "Practitioner reports benefits"
+#
+# 4. **Method Abstraction**: What level of detail for methods?
+#    > [Balance: enough detail to evaluate applicability, not so much it's unusable]
+#
+#    EXAMPLE:
+#    Extract: Core algorithm (TAO loop), key parameters (max iterations), evaluation approach
+#    Skip: Benchmark-specific implementation details, dataset preprocessing minutiae
+#
+# 5. **Applicability Mapping**: How does this apply to AIWG?
+#    > [For each extraction, note AIWG component(s) affected]
+#
+#    EXAMPLE:
+#    TAO loop → All tool-using agents (@.claude/rules/tao-loop.md)
+#    Thought types → Agent reasoning (@.claude/rules/thought-protocol.md)
+#    Hallucination reduction → Citation verification (@.claude/rules/citation-policy.md)
+
+metadata:
+  extraction_id: "extraction-REF-XXX"
+  paper_ref: "REF-XXX"
+  paper_title: "Full Paper Title"
+  authors:
+    - "Author 1"
+    - "Author 2"
+  year: YYYY
+  extraction_date: "YYYY-MM-DD"
+  extractor: "Agent or Human Name"
+  extraction_confidence: 0.95  # 0-1 scale
+
+  # EXAMPLE:
+  # extraction_id: "extraction-REF-018"
+  # paper_ref: "REF-018"
+  # paper_title: "ReAct: Synergizing Reasoning and Acting in Language Models"
+  # authors:
+  #   - "Yao, S."
+  #   - "Zhao, J."
+  #   - "Yu, D."
+  # year: 2022
+  # extraction_date: "2026-02-03"
+  # extractor: "Discovery Agent"
+  # extraction_confidence: 0.95
+
+claims:
+  # List of specific claims made in the paper with evidence
+  # Each claim is independently verifiable
+
+  - claim_id: "claim-001"
+    claim_text: "[Exact claim or close paraphrase]"
+    claim_type: "empirical"  # empirical | theoretical | methodological
+    evidence_type: "quantitative"  # quantitative | qualitative | mixed
+    causality: "causal"  # causal | correlational | descriptive
+
+    # EXAMPLE:
+    # claim_id: "claim-001"
+    # claim_text: "ReAct improves success rate by 34% on HotpotQA compared to Act-only baseline"
+    # claim_type: "empirical"
+    # evidence_type: "quantitative"
+    # causality: "causal"
+
+    evidence:
+      data_points:
+        - metric: "[Metric name]"
+          baseline: "[Baseline value]"
+          result: "[Result value]"
+          improvement: "[% or absolute improvement]"
+          # EXAMPLE:
+          # metric: "HotpotQA Success Rate"
+          # baseline: "49%"
+          # result: "66%"
+          # improvement: "+34% relative"
+
+      source_location:
+        page: "X"
+        section: "Section Name"
+        figure_table: "Figure/Table Y"
+        # EXAMPLE:
+        # page: "4"
+        # section: "4.1 Question Answering Results"
+        # figure_table: "Table 1"
+
+      quote: "[Exact quote from paper if available]"
+      # EXAMPLE:
+      # quote: "ReAct achieves 66% success rate on HotpotQA, compared to 49% for Act-only, representing a 34% relative improvement"
+
+    grade_quality: "HIGH"  # HIGH | MODERATE | LOW | VERY_LOW
+    quality_rationale: "[Why this quality rating?]"
+    # EXAMPLE:
+    # grade_quality: "HIGH"
+    # quality_rationale: "Controlled experiment, clear baselines, multiple task evaluation, reproducible methodology"
+
+    applicability_to_aiwg:
+      relevance: "HIGH"  # HIGH | MODERATE | LOW | NONE
+      affected_components:
+        - "@.claude/rules/tao-loop.md"
+        - "@agentic/code/frameworks/sdlc-complete/agents/*.md"
+      implementation_notes: "[How this applies to AIWG]"
+      # EXAMPLE:
+      # relevance: "HIGH"
+      # affected_components:
+      #   - "@.claude/rules/tao-loop.md"
+      #   - "@agentic/code/frameworks/sdlc-complete/agents/requirements-analyst.md"
+      # implementation_notes: "Standardize TAO loop across all tool-using agents to achieve similar performance gains"
+
+    limitations:
+      - "[Limitation 1 of this claim]"
+      - "[Limitation 2 of this claim]"
+      # EXAMPLE:
+      # - "Tested only on QA tasks, not full SDLC workflows"
+      # - "Single-agent context, multi-agent coordination not evaluated"
+
+  # ANTI-PATTERN EXAMPLE:
+  # - claim_id: "claim-bad"
+  #   claim_text: "The method works well"  # Too vague
+  #   claim_type: "empirical"
+  #   evidence_type: "qualitative"
+  #   causality: "descriptive"
+  #   evidence:
+  #     quote: "It improved performance"  # No specifics
+  #   grade_quality: "LOW"
+
+  # BETTER:
+  # - claim_id: "claim-good"
+  #   claim_text: "ReAct reduces hallucination rate from 56% to 0% on FEVER fact verification"
+  #   claim_type: "empirical"
+  #   evidence_type: "quantitative"
+  #   causality: "causal"
+  #   evidence:
+  #     data_points:
+  #       - metric: "Hallucination Rate"
+  #         baseline: "56%"
+  #         result: "0%"
+  #         improvement: "100% reduction"
+  #     source_location:
+  #       page: "6"
+  #       figure_table: "Figure 3"
+
+methods:
+  # Methodologies, algorithms, techniques introduced or used
+
+  - method_id: "method-001"
+    method_name: "[Short descriptive name]"
+    method_type: "algorithm"  # algorithm | framework | evaluation_protocol | experimental_design
+
+    # EXAMPLE:
+    # method_id: "method-001"
+    # method_name: "ReAct Loop (Thought→Action→Observation)"
+    # method_type: "algorithm"
+
+    description: "[Detailed description of the method]"
+    # EXAMPLE:
+    # description: "Iterative loop interleaving reasoning traces with tool actions and observations. Each iteration: 1) THOUGHT - reasoning about current state, 2) ACTION - tool invocation, 3) OBSERVATION - result capture."
+
+    pseudocode: |
+      # Optional: pseudocode representation
+      # EXAMPLE:
+      # while not task_complete and iterations < max:
+      #   thought = generate_reasoning(state)
+      #   action = select_tool_and_params(thought)
+      #   observation = execute_tool(action)
+      #   state = update_state(observation)
+
+    key_parameters:
+      - param: "[Parameter name]"
+        value: "[Value or range]"
+        description: "[What this parameter controls]"
+        # EXAMPLE:
+        # param: "max_iterations"
+        # value: "5-10"
+        # description: "Maximum TAO loop iterations before termination"
+
+      - param: "[Parameter name]"
+        value: "[Value or range]"
+        description: "[What this parameter controls]"
+        # EXAMPLE:
+        # param: "temperature"
+        # value: "0.7"
+        # description: "LLM sampling temperature for thought generation"
+
+    evaluation:
+      benchmarks:
+        - name: "[Benchmark name]"
+          result: "[Result on this benchmark]"
+          # EXAMPLE:
+          # name: "HotpotQA"
+          # result: "66% success rate"
+
+      baselines:
+        - name: "[Baseline name]"
+          result: "[Baseline result]"
+          comparison: "[How method compares]"
+          # EXAMPLE:
+          # name: "Act-only (no reasoning)"
+          # result: "49% success rate"
+          # comparison: "+34% improvement with ReAct"
+
+    reproducibility:
+      code_available: true  # true | false
+      code_url: "https://github.com/..."
+      data_available: true  # true | false
+      data_url: "https://..."
+      # EXAMPLE:
+      # code_available: true
+      # code_url: "https://github.com/ysymyth/ReAct"
+      # data_available: true
+      # data_url: "https://hotpotqa.github.io/"
+
+    applicability_to_aiwg:
+      can_implement: true  # true | false | partial
+      implementation_complexity: "moderate"  # low | moderate | high
+      dependencies:
+        - "[Dependency 1]"
+        - "[Dependency 2]"
+      # EXAMPLE:
+      # can_implement: true
+      # implementation_complexity: "moderate"
+      # dependencies:
+      #   - "LLM API (GPT-4, Claude, etc.)"
+      #   - "Tool execution environment (Bash, Read, Write, etc.)"
+
+      implementation_status:
+        - component: "[AIWG component]"
+          status: "implemented"  # planned | in_progress | implemented | not_applicable
+          reference: "@path/to/implementation"
+          # EXAMPLE:
+          # component: "TAO Loop Standardization"
+          # status: "implemented"
+          # reference: "@.claude/rules/tao-loop.md"
+
+findings:
+  # Key findings, insights, discoveries from the research
+
+  - finding_id: "finding-001"
+    finding_text: "[Clear statement of the finding]"
+    finding_type: "performance"  # performance | insight | limitation | recommendation
+
+    # EXAMPLE:
+    # finding_id: "finding-001"
+    # finding_text: "Tool grounding (external observations) reduces hallucinations to near-zero"
+    # finding_type: "insight"
+
+    supporting_evidence:
+      - claim_ref: "claim-001"  # Reference to claim ID above
+      - claim_ref: "claim-002"
+      # EXAMPLE:
+      # - claim_ref: "claim-002"  # (hypothetical) "0% hallucinations with tool use"
+
+    significance: "HIGH"  # HIGH | MODERATE | LOW
+    significance_rationale: "[Why this finding matters]"
+    # EXAMPLE:
+    # significance: "HIGH"
+    # significance_rationale: "Directly addresses critical failure mode in LLM systems. Provides actionable pattern for reducing fabricated information."
+
+    implications:
+      - domain: "[Domain this affects]"
+        implication: "[What this means for that domain]"
+        # EXAMPLE:
+        # domain: "Agent Reliability"
+        # implication: "Agents must ground claims in tool observations (Read, Grep results) rather than generating from parametric knowledge alone"
+
+      - domain: "[Domain this affects]"
+        implication: "[What this means for that domain]"
+        # EXAMPLE:
+        # domain: "Citation Verification"
+        # implication: "Before citing sources, agents must use Read tool to verify file exists and extract exact quote"
+
+    limitations:
+      - "[Limitation 1]"
+      - "[Limitation 2]"
+      # EXAMPLE:
+      # - "Finding based on QA tasks; applicability to code generation unknown"
+      # - "Tool reliability assumed; unreliable tools may introduce new errors"
+
+    future_work:
+      - "[Research gap 1]"
+      - "[Research gap 2]"
+      # EXAMPLE:
+      # - "Evaluate tool grounding in multi-agent coordination scenarios"
+      # - "Develop tool reliability metrics and selection strategies"
+
+relationships:
+  # Connections to other papers in the corpus
+
+  builds_on:
+    - paper_ref: "REF-XXX"
+      relationship: "[How this builds on that paper]"
+      # EXAMPLE:
+      # paper_ref: "REF-016"
+      # relationship: "Extends Chain-of-Thought by adding action execution and observation phases"
+
+  extends:
+    - paper_ref: "REF-XXX"
+      relationship: "[How this extends that paper]"
+      # EXAMPLE:
+      # paper_ref: "REF-019"
+      # relationship: "Extends Toolformer by adding explicit reasoning traces before tool use"
+
+  contradicts:
+    - paper_ref: "REF-XXX"
+      relationship: "[How this contradicts that paper]"
+      contradiction_type: "methodology"  # methodology | findings | interpretation
+      # EXAMPLE:
+      # paper_ref: "REF-XXX"
+      # relationship: "Contradicts assumption that more tool use always improves performance; shows reasoning-first is critical"
+      # contradiction_type: "findings"
+
+  cited_by:
+    - paper_ref: "REF-XXX"
+      relationship: "[How that paper uses this work]"
+      # EXAMPLE:
+      # paper_ref: "REF-022"
+      # relationship: "AutoGen adopts ReAct patterns for agent communication"
+
+synthesis:
+  # High-level synthesis across claims, methods, findings
+
+  core_contribution: "[The single most important contribution of this paper]"
+  # EXAMPLE:
+  # core_contribution: "Demonstrates that interleaving reasoning with actions significantly improves LLM task performance and enables tool grounding that eliminates hallucinations"
+
+  practical_takeaways:
+    - "[Actionable takeaway 1]"
+    - "[Actionable takeaway 2]"
+    - "[Actionable takeaway 3]"
+    # EXAMPLE:
+    # - "Implement TAO loop structure in all agents that use tools"
+    # - "Track thought types (goal, progress, extraction, reasoning, exception, synthesis)"
+    # - "Require agents to ground claims in tool observations before stating facts"
+
+  open_questions:
+    - "[Unanswered question 1]"
+    - "[Unanswered question 2]"
+    # EXAMPLE:
+    # - "How does TAO loop scale to 10+ iteration sessions (Ralph loops)?"
+    # - "Can reasoning quality be measured automatically?"
+    # - "How do multiple agents coordinate with ReAct patterns?"
+
+  confidence_assessment:
+    overall_confidence: 0.90  # 0-1 scale
+    confidence_factors:
+      methodology_rigor: 0.95
+      evidence_strength: 0.90
+      generalizability: 0.85
+    confidence_notes: "[Why this confidence level?]"
+    # EXAMPLE:
+    # overall_confidence: 0.90
+    # confidence_factors:
+    #   methodology_rigor: 0.95  # Excellent experimental design
+    #   evidence_strength: 0.90  # Strong quantitative results
+    #   generalizability: 0.85  # QA tasks, not full SDLC workflows
+    # confidence_notes: "High confidence in findings for tool-use tasks; moderate confidence for complex SDLC workflows"
+
+references:
+  # Links to related artifacts
+  literature_note: "@.aiwg/research/findings/REF-XXX.md"
+  summary: "@.aiwg/research/summaries/REF-XXX-summary.md"
+  source_pdf: "@.aiwg/research/sources/REF-XXX.pdf"
+  provenance_record: "@.aiwg/research/provenance/records/REF-XXX.prov.yaml"
+
+  aiwg_implementations:
+    - "@.claude/rules/tao-loop.md"
+    - "@.claude/rules/thought-protocol.md"
+    - "@agentic/code/frameworks/sdlc-complete/agents/*.md"
+
+  # EXAMPLE:
+  # literature_note: "@.aiwg/research/findings/REF-018-react.md"
+  # summary: "@.aiwg/research/summaries/REF-018-summary.md"
+  # source_pdf: "@.aiwg/research/sources/yao-2022-react.pdf"
+  # provenance_record: "@.aiwg/research/provenance/records/REF-018.prov.yaml"
+  # aiwg_implementations:
+  #   - "@.claude/rules/tao-loop.md"
+  #   - "@.claude/rules/thought-protocol.md"
+
+metadata_schema_version: "1.0.0"
+extraction_schema: "@agentic/code/frameworks/research-complete/schemas/extraction-schema.yaml"
+
+# VALIDATION CHECKLIST (verify before finalizing):
+# [ ] All claims have evidence with source location
+# [ ] All claims have GRADE quality assessment
+# [ ] All methods have applicability to AIWG
+# [ ] All findings reference supporting claims
+# [ ] Relationships to other papers documented
+# [ ] Confidence assessment completed with rationale
+# [ ] References to AIWG implementations included
+# [ ] No vague claims ("improves performance" → specify metric and magnitude)
+# [ ] No unsupported quality ratings (justify HIGH/MODERATE/LOW)
+
+# ANTI-PATTERNS TO AVOID:
+# ❌ Extracting every claim (focus on AIWG-relevant only)
+# ❌ Vague evidence ("page 5" without specific quote or data)
+# ❌ Missing quality assessment (every claim needs GRADE level)
+# ❌ Copy-pasting abstract (synthesize, don't duplicate)
+# ❌ No applicability notes (always map to AIWG components)

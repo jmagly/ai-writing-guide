@@ -1,0 +1,489 @@
+# W3C PROV Provenance Record Template
+# Tracks full derivation chain for research artifacts per @.claude/rules/provenance-tracking.md
+
+---
+template_id: provenance-record
+version: 1.0.0
+reasoning_required: true
+framework: research-complete
+format: yaml
+schema: "@agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
+---
+
+# USAGE NOTES:
+# This template creates W3C PROV-compliant provenance records for research artifacts.
+# Complete REASONING section in markdown comment first, then populate YAML fields.
+# Use for: paper acquisitions, literature notes, extractions, summaries, gap reports.
+
+# REASONING (Complete before filling record):
+#
+# 1. **Entity Identification**: What artifact are we tracking provenance for?
+#    > [Define the primary entity and its type clearly]
+#
+#    EXAMPLE:
+#    Entity: Literature note for REF-018 (ReAct paper)
+#    Type: document (markdown literature note)
+#    Purpose: Capture key insights for AIWG implementation
+#
+# 2. **Activity Definition**: What process created this artifact?
+#    > [Describe the creation/modification activity in detail]
+#
+#    EXAMPLE:
+#    Activity: Generation of literature note by Discovery Agent
+#    Type: synthesis (reading paper, extracting insights, drafting note)
+#    Tools used: Read (PDF), Write (markdown)
+#    Duration: ~30 minutes
+#
+# 3. **Agent Attribution**: Who/what created this artifact?
+#    > [Identify all agents involved: AI, human, automated tools]
+#
+#    EXAMPLE:
+#    Primary agent: Discovery Agent (aiwg_agent)
+#    Supporting agent: Claude Sonnet 4.5 (ai_assistant base model)
+#    Human oversight: Research Lead (human reviewer)
+#
+# 4. **Derivation Chain**: What sources did this derive from?
+#    > [List all inputs that contributed to this artifact]
+#
+#    EXAMPLE:
+#    Direct sources:
+#    - REF-018 PDF (original paper)
+#    - Literature note template (structural template)
+#    Indirect sources:
+#    - REF-016 (cited by REF-018, provides context)
+#    - AIWG requirements (informs relevance assessment)
+#
+# 5. **Usage Tracking**: What artifacts use/depend on this?
+#    > [Identify downstream artifacts that derive from this entity]
+#
+#    EXAMPLE:
+#    Used by:
+#    - @.claude/rules/tao-loop.md (implementation based on findings)
+#    - @.aiwg/research/synthesis/topic-04-tool-grounding.md (synthesis)
+#    - @agentic/code/frameworks/sdlc-complete/agents/*.md (all tool-using agents)
+
+# ==============================================================================
+# PROV-DM Core Structure
+# ==============================================================================
+
+metadata:
+  provenance_id: "prov-REF-XXX-YYYY-MM-DD"
+  created_at: "YYYY-MM-DDTHH:MM:SSZ"
+  schema_version: "1.0.0"
+  prov_model: "W3C PROV-DM"
+  prov_namespace: "urn:aiwg:prov"
+
+  # EXAMPLE:
+  # provenance_id: "prov-REF-018-2026-02-03"
+  # created_at: "2026-02-03T15:30:00Z"
+  # schema_version: "1.0.0"
+  # prov_model: "W3C PROV-DM"
+  # prov_namespace: "urn:aiwg:prov"
+
+# ==============================================================================
+# Entity (What was created/modified)
+# ==============================================================================
+
+entity:
+  id: "urn:aiwg:artifact:[project-relative-path]"
+  type: "document"  # document | code | data | schema | test | configuration
+  label: "[Human-readable name]"
+
+  # EXAMPLE:
+  # id: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+  # type: "document"
+  # label: "Literature Note: REF-018 ReAct"
+
+  location:
+    path: "[project-relative-path]"
+    format: "markdown"  # markdown | yaml | json | typescript | python | pdf
+    encoding: "UTF-8"
+
+    # EXAMPLE:
+    # path: ".aiwg/research/findings/REF-018-react.md"
+    # format: "markdown"
+    # encoding: "UTF-8"
+
+  attributes:
+    size_bytes: 0
+    line_count: 0
+    created_at: "YYYY-MM-DDTHH:MM:SSZ"
+    modified_at: "YYYY-MM-DDTHH:MM:SSZ"
+    checksum:
+      algorithm: "SHA-256"
+      value: "[SHA-256 hash]"
+
+    # EXAMPLE:
+    # size_bytes: 15234
+    # line_count: 342
+    # created_at: "2026-02-03T15:30:00Z"
+    # modified_at: "2026-02-03T15:30:00Z"
+    # checksum:
+    #   algorithm: "SHA-256"
+    #   value: "a1b2c3d4e5f6789..."
+
+  content_metadata:
+    title: "[Artifact title]"
+    description: "[Brief description of artifact]"
+    keywords:
+      - "[keyword1]"
+      - "[keyword2]"
+
+    # EXAMPLE:
+    # title: "Literature Note: ReAct - Synergizing Reasoning and Acting"
+    # description: "Zettelkasten-style note capturing key insights from ReAct paper for AIWG implementation"
+    # keywords:
+    #   - "reasoning"
+    #   - "tool-use"
+    #   - "agent-architecture"
+    #   - "TAO-loop"
+
+# ==============================================================================
+# Activity (What process created it)
+# ==============================================================================
+
+activity:
+  id: "urn:aiwg:activity:[activity-type]:[artifact-name]:[sequence]"
+  type: "generation"  # generation | modification | derivation | review | validation
+  label: "[Human-readable activity name]"
+
+  # EXAMPLE:
+  # id: "urn:aiwg:activity:generation:REF-018-note:001"
+  # type: "generation"
+  # label: "Generate literature note for REF-018"
+
+  timing:
+    started_at: "YYYY-MM-DDTHH:MM:SSZ"
+    ended_at: "YYYY-MM-DDTHH:MM:SSZ"
+    duration_seconds: 0
+
+    # EXAMPLE:
+    # started_at: "2026-02-03T15:00:00Z"
+    # ended_at: "2026-02-03T15:30:00Z"
+    # duration_seconds: 1800
+
+  execution_context:
+    mode: "interactive"  # strict | seeded | logged | default | interactive
+    temperature: 0.7
+    seed: null  # Fixed seed if seeded mode, null otherwise
+    model_id: "claude-sonnet-4-5-20250929"
+
+    # EXAMPLE:
+    # mode: "interactive"
+    # temperature: 0.7
+    # seed: null
+    # model_id: "claude-sonnet-4-5-20250929"
+
+  inputs:
+    prompt: "[User prompt or task description]"
+    context_files:
+      - "[Path to context file 1]"
+      - "[Path to context file 2]"
+
+    # EXAMPLE:
+    # prompt: "Create literature note for REF-018 ReAct paper focusing on TAO loop pattern and tool grounding"
+    # context_files:
+    #   - ".aiwg/research/sources/yao-2022-react.pdf"
+    #   - "agentic/code/frameworks/research-complete/templates/literature-note.md"
+
+  outputs:
+    artifacts:
+      - "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+    quality_score: 0.85  # 0-1 scale
+    validation_status: "passed"  # passed | failed | warning
+
+    # EXAMPLE:
+    # artifacts:
+    #   - "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+    # quality_score: 0.90
+    # validation_status: "passed"
+
+# ==============================================================================
+# Agent (Who/what performed the activity)
+# ==============================================================================
+
+agent:
+  id: "urn:aiwg:agent:[agent-name]"
+  type: "aiwg_agent"  # aiwg_agent | ai_assistant | human | automated_tool | ci_system
+  label: "[Human-readable agent name]"
+
+  # EXAMPLE:
+  # id: "urn:aiwg:agent:discovery-agent"
+  # type: "aiwg_agent"
+  # label: "Discovery Agent"
+
+  attributes:
+    version: "1.0.0"
+    tool: "claude-sonnet-4-5-20250929"  # Base LLM used
+    capabilities:
+      - "[capability1]"
+      - "[capability2]"
+
+    # EXAMPLE:
+    # version: "1.0.0"
+    # tool: "claude-sonnet-4-5-20250929"
+    # capabilities:
+    #   - "literature-review"
+    #   - "insight-extraction"
+    #   - "citation-analysis"
+
+  human_oversight:
+    reviewer: "[Human name or 'none']"
+    review_type: "post-generation"  # none | concurrent | post-generation
+    modifications_made: false
+
+    # EXAMPLE:
+    # reviewer: "Research Lead"
+    # review_type: "post-generation"
+    # modifications_made: false
+
+# ==============================================================================
+# Relationships (PROV Relations)
+# ==============================================================================
+
+relationships:
+  # wasGeneratedBy: Entity was generated by Activity
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+    activity: "urn:aiwg:activity:generation:REF-018-note:001"
+    time: "2026-02-03T15:30:00Z"
+
+    # EXAMPLE:
+    # entity: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+    # activity: "urn:aiwg:activity:generation:REF-018-note:001"
+    # time: "2026-02-03T15:30:00Z"
+
+  # wasAssociatedWith: Activity was performed by Agent
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:REF-018-note:001"
+    agent: "urn:aiwg:agent:discovery-agent"
+    role: "primary_generator"
+
+    # EXAMPLE:
+    # activity: "urn:aiwg:activity:generation:REF-018-note:001"
+    # agent: "urn:aiwg:agent:discovery-agent"
+    # role: "primary_generator"
+
+  # used: Activity used Entity as input
+  used:
+    - activity: "urn:aiwg:activity:generation:REF-018-note:001"
+      entity: "urn:aiwg:artifact:.aiwg/research/sources/yao-2022-react.pdf"
+      role: "source_paper"
+
+    - activity: "urn:aiwg:activity:generation:REF-018-note:001"
+      entity: "urn:aiwg:artifact:agentic/code/frameworks/research-complete/templates/literature-note.md"
+      role: "template"
+
+    # EXAMPLE:
+    # - activity: "urn:aiwg:activity:generation:REF-018-note:001"
+    #   entity: "urn:aiwg:artifact:.aiwg/research/sources/yao-2022-react.pdf"
+    #   role: "source_paper"
+    # - activity: "urn:aiwg:activity:generation:REF-018-note:001"
+    #   entity: "urn:aiwg:artifact:agentic/code/frameworks/research-complete/templates/literature-note.md"
+    #   role: "template"
+
+  # wasDerivedFrom: Entity was derived from other Entity
+  wasDerivedFrom:
+    - derived: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+      source: "urn:aiwg:artifact:.aiwg/research/sources/yao-2022-react.pdf"
+      derivation_type: "synthesis"  # synthesis | transformation | extraction | implementation
+
+    - derived: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+      source: "urn:aiwg:artifact:agentic/code/frameworks/research-complete/templates/literature-note.md"
+      derivation_type: "follows_pattern"
+
+    # EXAMPLE:
+    # - derived: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+    #   source: "urn:aiwg:artifact:.aiwg/research/sources/yao-2022-react.pdf"
+    #   derivation_type: "synthesis"
+    # - derived: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+    #   source: "urn:aiwg:artifact:agentic/code/frameworks/research-complete/templates/literature-note.md"
+    #   derivation_type: "follows_pattern"
+
+  # wasAttributedTo: Entity was attributed to Agent (final responsibility)
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+    agent: "urn:aiwg:agent:discovery-agent"
+    attribution_type: "generation"
+
+    # EXAMPLE:
+    # entity: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+    # agent: "urn:aiwg:agent:discovery-agent"
+    # attribution_type: "generation"
+
+  # wasInformedBy: Activity was informed by another Activity (optional)
+  wasInformedBy: []
+    # EXAMPLE: If this note informed later synthesis
+    # - informed: "urn:aiwg:activity:synthesis:tool-grounding:001"
+    #   informing: "urn:aiwg:activity:generation:REF-018-note:001"
+
+# ==============================================================================
+# Derivation Chain (Full lineage)
+# ==============================================================================
+
+derivation_chain:
+  # List all sources in order of derivation depth
+  depth_0:  # Original sources (no further derivation)
+    - entity: "urn:aiwg:artifact:.aiwg/research/sources/yao-2022-react.pdf"
+      label: "Original ReAct paper"
+      type: "source_document"
+
+  depth_1:  # Direct derivatives
+    - entity: "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+      label: "Literature note"
+      derived_from:
+        - "urn:aiwg:artifact:.aiwg/research/sources/yao-2022-react.pdf"
+
+  depth_2:  # Second-order derivatives
+    - entity: "urn:aiwg:artifact:.claude/rules/tao-loop.md"
+      label: "TAO Loop Standardization Rule"
+      derived_from:
+        - "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+
+    - entity: "urn:aiwg:artifact:.aiwg/research/synthesis/topic-04-tool-grounding.md"
+      label: "Tool Grounding Synthesis"
+      derived_from:
+        - "urn:aiwg:artifact:.aiwg/research/findings/REF-018-react.md"
+
+  # EXAMPLE shows full chain:
+  # PDF → Literature Note → (Rule + Synthesis)
+
+# ==============================================================================
+# Usage Tracking (Downstream artifacts)
+# ==============================================================================
+
+usage:
+  # What artifacts use/depend on this entity?
+  used_by:
+    - entity: "urn:aiwg:artifact:.claude/rules/tao-loop.md"
+      relationship: "implements"
+      description: "TAO loop rule implements patterns from this research"
+
+    - entity: "urn:aiwg:artifact:.aiwg/research/synthesis/topic-04-tool-grounding.md"
+      relationship: "synthesizes"
+      description: "Synthesis topic includes findings from this note"
+
+    # EXAMPLE:
+    # - entity: "urn:aiwg:artifact:.claude/rules/tao-loop.md"
+    #   relationship: "implements"
+    #   description: "TAO loop rule implements ReAct patterns"
+    # - entity: "urn:aiwg:artifact:agentic/code/frameworks/sdlc-complete/agents/requirements-analyst.md"
+    #   relationship: "applies_pattern"
+    #   description: "Requirements Analyst uses TAO loop from this research"
+
+  citations:
+    # Where is this entity cited?
+    - citing_document: "@.claude/rules/tao-loop.md"
+      citation_context: "Research foundation"
+      citation_line: 15
+
+    # EXAMPLE:
+    # - citing_document: "@.claude/rules/tao-loop.md"
+    #   citation_context: "Research foundation section"
+    #   citation_line: 15
+
+# ==============================================================================
+# Audit Trail
+# ==============================================================================
+
+audit:
+  created_by: "urn:aiwg:agent:discovery-agent"
+  created_at: "2026-02-03T15:30:00Z"
+  last_modified_by: "urn:aiwg:agent:discovery-agent"
+  last_modified_at: "2026-02-03T15:30:00Z"
+
+  # EXAMPLE:
+  # created_by: "urn:aiwg:agent:discovery-agent"
+  # created_at: "2026-02-03T15:30:00Z"
+  # last_modified_by: "human:research-lead"
+  # last_modified_at: "2026-02-03T16:00:00Z"  # Human review
+
+  change_log:
+    - timestamp: "2026-02-03T15:30:00Z"
+      actor: "urn:aiwg:agent:discovery-agent"
+      action: "created"
+      description: "Initial generation of literature note"
+
+    # EXAMPLE of subsequent change:
+    # - timestamp: "2026-02-03T16:00:00Z"
+    #   actor: "human:research-lead"
+    #   action: "modified"
+    #   description: "Added applicability notes for SDLC context"
+
+  access_log: []
+    # Optional: Track who accessed this artifact
+    # - timestamp: "2026-02-04T10:00:00Z"
+    #   actor: "human:architect"
+    #   action: "read"
+    #   purpose: "Architecture design research"
+
+# ==============================================================================
+# Validation
+# ==============================================================================
+
+validation:
+  schema_valid: true
+  completeness_check:
+    required_fields_present: true
+    derivation_chain_complete: true
+    citations_verified: true
+
+  quality_check:
+    integrity_verified: true
+    checksum_matches: true
+    relationships_consistent: true
+
+  last_validated: "2026-02-03T15:35:00Z"
+  validator: "urn:aiwg:tool:provenance-validator"
+
+  # EXAMPLE:
+  # schema_valid: true
+  # completeness_check:
+  #   required_fields_present: true
+  #   derivation_chain_complete: true
+  #   citations_verified: true
+  # quality_check:
+  #   integrity_verified: true
+  #   checksum_matches: true
+  #   relationships_consistent: true
+  # last_validated: "2026-02-03T15:35:00Z"
+  # validator: "urn:aiwg:tool:provenance-validator"
+
+# ==============================================================================
+# References
+# ==============================================================================
+
+references:
+  w3c_prov: "https://www.w3.org/TR/prov-dm/"
+  schema_definition: "@agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml"
+  provenance_rules: "@.claude/rules/provenance-tracking.md"
+  related_records:
+    - "@.aiwg/research/provenance/records/REF-017.prov.yaml"
+    - "@.aiwg/research/provenance/records/REF-019.prov.yaml"
+
+# ==============================================================================
+# VALIDATION CHECKLIST (verify before finalizing)
+# ==============================================================================
+# [ ] Entity URN follows urn:aiwg:artifact:<path> format
+# [ ] Activity URN follows urn:aiwg:activity:<type>:<name>:<seq> format
+# [ ] Agent URN follows urn:aiwg:agent:<agent-name> format
+# [ ] All timestamps in ISO-8601 format (YYYY-MM-DDTHH:MM:SSZ)
+# [ ] Checksum calculated and recorded
+# [ ] Derivation relationships documented (wasDerivedFrom)
+# [ ] Usage relationships documented (used_by)
+# [ ] Activity used relationships documented (used)
+# [ ] Attribution clear (wasAttributedTo)
+# [ ] No orphan relationships (all referenced URNs exist)
+# [ ] Derivation chain complete (all depths populated)
+# [ ] Audit trail initialized
+
+# ==============================================================================
+# ANTI-PATTERNS TO AVOID
+# ==============================================================================
+# ❌ Using relative paths in URNs (use project-relative absolute paths)
+# ❌ Missing derivation relationships (always track sources)
+# ❌ Vague activity descriptions ("processed file" → specify type)
+# ❌ No checksum recorded (critical for integrity verification)
+# ❌ Incomplete derivation chain (must trace to original sources)
+# ❌ No usage tracking (prevents understanding downstream impact)
+# ❌ Missing human oversight documentation (if human reviewed, record it)

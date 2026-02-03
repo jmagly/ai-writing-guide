@@ -11,3 +11,4 @@ export * from './clients/crossref.js';
 export * from './clients/arxiv.js';
 export * from './clients/unpaywall.js';
 export * from './cache/manager.js';
+export * from './services/index.js';

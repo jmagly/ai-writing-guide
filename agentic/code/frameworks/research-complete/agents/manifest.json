@@ -1,0 +1,181 @@
+{
+  "framework": "research-complete",
+  "version": "1.0.0",
+  "description": "Complete research framework with 8 specialized agents for literature review, source management, and knowledge synthesis",
+  "agents": [
+    {
+      "id": "research-discovery-agent",
+      "name": "Discovery Agent",
+      "file": "discovery-agent.md",
+      "description": "Search and discover research papers across multiple academic databases",
+      "stage": "discovery",
+      "capabilities": [
+        "multi_database_search",
+        "query_translation",
+        "result_ranking",
+        "deduplication"
+      ],
+      "tools": ["Bash", "Glob", "Grep", "Read", "WebFetch", "Write"],
+      "model": "sonnet"
+    },
+    {
+      "id": "research-acquisition-agent",
+      "name": "Acquisition Agent",
+      "file": "acquisition-agent.md",
+      "description": "Download and organize research papers with metadata extraction",
+      "stage": "acquisition",
+      "capabilities": [
+        "pdf_download",
+        "metadata_extraction",
+        "doi_resolution",
+        "local_storage"
+      ],
+      "tools": ["Bash", "Glob", "Grep", "Read", "WebFetch", "Write"],
+      "model": "sonnet"
+    },
+    {
+      "id": "research-documentation-agent",
+      "name": "Documentation Agent",
+      "file": "documentation-agent.md",
+      "description": "Generate summaries, extract key findings, and create literature notes",
+      "stage": "documentation",
+      "capabilities": [
+        "paper_summarization",
+        "key_findings_extraction",
+        "literature_notes",
+        "concept_mapping"
+      ],
+      "tools": ["Bash", "Glob", "Grep", "Read", "WebFetch", "Write"],
+      "model": "sonnet"
+    },
+    {
+      "id": "research-citation-agent",
+      "name": "Citation Agent",
+      "file": "citation-agent.md",
+      "description": "Format citations in 9,000+ styles, build citation networks, and manage bibliographies",
+      "stage": "integration",
+      "capabilities": [
+        "citation_formatting",
+        "claims_backing",
+        "bibliography_management",
+        "citation_networks",
+        "bibtex_export"
+      ],
+      "tools": ["Bash", "Glob", "Grep", "Read", "WebFetch", "Write"],
+      "model": "sonnet"
+    },
+    {
+      "id": "research-quality-agent",
+      "name": "Quality Agent",
+      "file": "quality-agent.md",
+      "description": "Assess source quality using GRADE framework and validate FAIR compliance",
+      "stage": "quality_assessment",
+      "capabilities": [
+        "multi_dimensional_scoring",
+        "grade_assessment",
+        "fair_validation",
+        "quality_reporting",
+        "quality_gates"
+      ],
+      "tools": ["Bash", "Glob", "Grep", "Read", "WebFetch", "Write"],
+      "model": "sonnet"
+    },
+    {
+      "id": "research-archival-agent",
+      "name": "Archival Agent",
+      "file": "archival-agent.md",
+      "description": "Package research artifacts following OAIS standards with integrity verification",
+      "stage": "archival",
+      "capabilities": [
+        "sip_creation",
+        "aip_generation",
+        "dip_production",
+        "checksum_verification",
+        "remote_backup"
+      ],
+      "tools": ["Bash", "Glob", "Grep", "Read", "Write"],
+      "model": "sonnet"
+    },
+    {
+      "id": "research-provenance-agent",
+      "name": "Provenance Agent",
+      "file": "provenance-agent.md",
+      "description": "Track research operations with W3C PROV compliance and enable reproducibility",
+      "stage": "cross_cutting",
+      "capabilities": [
+        "w3c_prov_logging",
+        "lineage_tracking",
+        "integrity_verification",
+        "reproducibility_packages",
+        "time_travel_queries"
+      ],
+      "tools": ["Bash", "Glob", "Grep", "Read", "Write"],
+      "model": "sonnet"
+    },
+    {
+      "id": "research-workflow-agent",
+      "name": "Workflow Agent",
+      "file": "workflow-agent.md",
+      "description": "Orchestrate multi-stage research pipelines with DAG-based task dependencies",
+      "stage": "orchestration",
+      "capabilities": [
+        "dag_construction",
+        "stage_orchestration",
+        "parallel_execution",
+        "progress_tracking",
+        "failure_recovery"
+      ],
+      "tools": ["Bash", "Glob", "Grep", "Read", "Task", "Write"],
+      "model": "sonnet"
+    }
+  ],
+  "workflow_stages": [
+    {
+      "stage": "discovery",
+      "agents": ["research-discovery-agent"],
+      "description": "Search for and identify relevant research papers"
+    },
+    {
+      "stage": "acquisition",
+      "agents": ["research-acquisition-agent"],
+      "description": "Download and organize discovered papers"
+    },
+    {
+      "stage": "documentation",
+      "agents": ["research-documentation-agent"],
+      "description": "Generate summaries and extract key findings"
+    },
+    {
+      "stage": "quality_assessment",
+      "agents": ["research-quality-agent"],
+      "description": "Assess source quality and validate FAIR compliance"
+    },
+    {
+      "stage": "integration",
+      "agents": ["research-citation-agent"],
+      "description": "Format citations, back claims, generate bibliography"
+    },
+    {
+      "stage": "archival",
+      "agents": ["research-archival-agent"],
+      "description": "Package artifacts with integrity verification and backup"
+    },
+    {
+      "stage": "orchestration",
+      "agents": ["research-workflow-agent"],
+      "description": "Coordinate multi-stage research workflows"
+    },
+    {
+      "stage": "cross_cutting",
+      "agents": ["research-provenance-agent"],
+      "description": "Track provenance across all research operations"
+    }
+  ],
+  "metadata": {
+    "created": "2026-02-03",
+    "last_updated": "2026-02-03",
+    "version": "1.0.0",
+    "total_agents": 8,
+    "status": "active"
+  }
+}

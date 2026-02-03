@@ -1,0 +1,167 @@
+{
+  "name": "research-complete-commands",
+  "version": "1.0.0",
+  "description": "Slash commands for research corpus management",
+  "framework": "research-complete",
+  "commands": [
+    {
+      "name": "research-discover",
+      "trigger": "/research-discover",
+      "file": "research-discover.md",
+      "category": "research-discovery",
+      "description": "Search for research papers across academic databases",
+      "agent": "discovery-agent",
+      "example": "/research-discover \"agentic workflows LLM\" --limit 10"
+    },
+    {
+      "name": "research-acquire",
+      "trigger": "/research-acquire",
+      "file": "research-acquire.md",
+      "category": "research-acquisition",
+      "description": "Download research papers and extract metadata",
+      "agent": "acquisition-agent",
+      "example": "/research-acquire 10.48550/arXiv.2308.08155"
+    },
+    {
+      "name": "research-document",
+      "trigger": "/research-document",
+      "file": "research-document.md",
+      "category": "research-documentation",
+      "description": "Generate summaries and literature notes from research papers",
+      "agent": "documentation-agent",
+      "example": "/research-document REF-022 --depth standard"
+    },
+    {
+      "name": "research-cite",
+      "trigger": "/research-cite",
+      "file": "research-cite.md",
+      "category": "research-citation",
+      "description": "Format citations and generate bibliographies",
+      "agent": "citation-agent",
+      "example": "/research-cite REF-022 --page 4"
+    },
+    {
+      "name": "research-quality",
+      "trigger": "/research-quality",
+      "file": "research-quality.md",
+      "category": "research-quality",
+      "description": "Assess source quality using GRADE methodology",
+      "agent": "quality-agent",
+      "example": "/research-quality REF-022 --update-frontmatter"
+    },
+    {
+      "name": "research-archive",
+      "trigger": "/research-archive",
+      "file": "research-archive.md",
+      "category": "research-archival",
+      "description": "Package research artifacts for long-term archival",
+      "agent": "archival-agent",
+      "example": "/research-archive REF-022 --format bagit --verify"
+    },
+    {
+      "name": "research-provenance",
+      "trigger": "/research-provenance",
+      "file": "research-provenance.md",
+      "category": "research-provenance",
+      "description": "Query provenance chains and artifact relationships",
+      "agent": "provenance-agent",
+      "example": "/research-provenance REF-022 --query what-derives"
+    },
+    {
+      "name": "research-workflow",
+      "trigger": "/research-workflow",
+      "file": "research-workflow.md",
+      "category": "research-workflows",
+      "description": "Execute multi-stage research workflows",
+      "agent": "workflow-agent",
+      "example": "/research-workflow discovery-to-corpus"
+    },
+    {
+      "name": "research-status",
+      "trigger": "/research-status",
+      "file": "research-status.md",
+      "category": "research-monitoring",
+      "description": "Show research corpus health and statistics",
+      "agent": "workflow-agent",
+      "example": "/research-status --detailed"
+    },
+    {
+      "name": "research-gap",
+      "trigger": "/research-gap",
+      "file": "research-gap.md",
+      "category": "research-analysis",
+      "description": "Analyze gaps in research coverage",
+      "agent": "workflow-agent",
+      "example": "/research-gap --suggest-queries"
+    }
+  ],
+  "workflows": [
+    "discovery-to-corpus",
+    "paper-acquisition",
+    "quality-assessment",
+    "corpus-maintenance",
+    "synthesis-report",
+    "citation-audit"
+  ],
+  "categories": {
+    "research-discovery": {
+      "name": "Discovery",
+      "description": "Find and identify research papers",
+      "icon": "🔍"
+    },
+    "research-acquisition": {
+      "name": "Acquisition",
+      "description": "Download and import papers",
+      "icon": "⬇️"
+    },
+    "research-documentation": {
+      "name": "Documentation",
+      "description": "Create summaries and notes",
+      "icon": "📝"
+    },
+    "research-citation": {
+      "name": "Citation",
+      "description": "Format citations and bibliographies",
+      "icon": "📚"
+    },
+    "research-quality": {
+      "name": "Quality",
+      "description": "Assess evidence quality",
+      "icon": "⭐"
+    },
+    "research-archival": {
+      "name": "Archival",
+      "description": "Long-term preservation",
+      "icon": "📦"
+    },
+    "research-provenance": {
+      "name": "Provenance",
+      "description": "Track artifact lineage",
+      "icon": "🔗"
+    },
+    "research-workflows": {
+      "name": "Workflows",
+      "description": "Multi-stage operations",
+      "icon": "⚙️"
+    },
+    "research-monitoring": {
+      "name": "Monitoring",
+      "description": "Corpus health and status",
+      "icon": "📊"
+    },
+    "research-analysis": {
+      "name": "Analysis",
+      "description": "Coverage and gap analysis",
+      "icon": "🔬"
+    }
+  },
+  "dependencies": {
+    "research-complete-agents": "^1.0.0",
+    "research-schemas": "^1.0.0"
+  },
+  "references": [
+    "@agentic/code/frameworks/research-complete/agents/manifest.json",
+    "@src/research/index.ts",
+    "@.aiwg/research/README.md"
+  ]
+}
