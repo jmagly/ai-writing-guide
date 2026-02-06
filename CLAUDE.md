@@ -244,12 +244,48 @@ aiwg ralph-resume            # Resume paused loop
 | **Command Definitions** | `@src/extensions/commands/definitions.ts` |
 | **Extension Types** | `@src/extensions/types.ts` |
 
+## Core Enforcement Rules
+
+<!-- AIWG Core Rules - These 7 rules are non-negotiable defaults deployed to every AIWG installation -->
+
+### No Attribution (CRITICAL)
+
+Never add AI tool attribution to commits, PRs, docs, or code. No `Co-Authored-By`, no "Generated with", no "Written by [AI tool]". The AI is a tool like a compiler - tools don't sign their output. This applies to ALL platforms.
+
+### Token Security (CRITICAL)
+
+Never hard-code tokens, pass tokens as CLI arguments, or log token values. Load tokens from secure files or environment variables. Use scoped operations (heredoc pattern) to limit token lifetime.
+
+### Versioning (CRITICAL)
+
+CalVer format: `YYYY.M.PATCH`. Never use leading zeros (`2026.01.5` is wrong, `2026.1.5` is correct). Tags use `v` prefix.
+
+### Citation Policy (CRITICAL)
+
+Never fabricate citations, DOIs, URLs, or page numbers. Only cite sources that exist in the research corpus. Use quality-appropriate hedging per GRADE methodology.
+
+### Anti-Laziness (HIGH)
+
+Never delete tests to make them pass. Never skip tests. Never remove features instead of fixing them. Never weaken assertions. Escalate to human after 3 failed attempts.
+
+### Executable Feedback (HIGH)
+
+Execute tests before returning code. Track execution history. Retry on failure with root cause analysis (max 3 attempts).
+
+### Failure Mitigation (HIGH)
+
+Apply mitigations for known LLM failure archetypes: hallucination, context loss, instruction drift, consistency violations, and technical errors.
+
+### Rules Reference
+
+Full rule documentation: `agentic/code/frameworks/sdlc-complete/rules/`
+Manifest: `agentic/code/frameworks/sdlc-complete/rules/manifest.json`
+
 ## Commit and Output Conventions
 
 - Follow conventional commits: `type(scope): subject`
 - Use imperative mood ("add feature" not "added feature")
-- **No AI attribution** - never add Co-Authored-By, "Generated with", "Written by", or any tool branding to commits, PRs, docs, or code. This applies to every AI platform (Claude Code, Codex, Copilot, Cursor, etc.). The AI is a tool, not an author.
-- See `@.claude/rules/no-attribution.md` for full enforcement details
+- **No AI attribution** - covered by Core Enforcement Rules above
 
 ## Development
 

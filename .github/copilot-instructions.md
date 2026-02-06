@@ -65,6 +65,42 @@ All SDLC artifacts are stored in `.aiwg/`:
 
 **Code review**: Use Copilot code review to get AI-powered feedback on pull requests.
 
+## Core Enforcement Rules
+
+<!-- AIWG Core Rules - These 7 rules are non-negotiable defaults deployed to every AIWG installation -->
+
+### No Attribution (CRITICAL)
+
+Never add AI tool attribution to commits, PRs, docs, or code. No `Co-Authored-By`, no "Generated with", no "Written by [AI tool]". The AI is a tool like a compiler - tools don't sign their output. This applies to ALL platforms: Copilot, Claude Code, Codex, Cursor, etc.
+
+### Token Security (CRITICAL)
+
+Never hard-code tokens, pass tokens as CLI arguments, or log token values. Load tokens from secure files or environment variables. Use scoped operations to limit token lifetime. See `agentic/code/frameworks/sdlc-complete/rules/token-security.md` for patterns.
+
+### Versioning (CRITICAL)
+
+CalVer format: `YYYY.M.PATCH`. Never use leading zeros (`2026.01.5` is wrong, `2026.1.5` is correct). Tags use `v` prefix (`v2026.1.5`). PATCH resets each month.
+
+### Citation Policy (CRITICAL)
+
+Never fabricate citations, DOIs, URLs, or page numbers. Only cite sources that exist in the research corpus. Use quality-appropriate hedging (HIGH evidence: "demonstrates"; LOW evidence: "limited evidence suggests"). When no source exists, acknowledge the gap rather than inventing a reference.
+
+### Anti-Laziness (HIGH)
+
+Never delete tests to make them pass. Never skip tests with `.skip()` or `@Ignore`. Never remove features instead of fixing them. Never weaken assertions. If stuck after 3 attempts, escalate to human with full context rather than taking shortcuts.
+
+### Executable Feedback (HIGH)
+
+Execute tests before returning code. Track execution history for debugging. Retry on failure with root cause analysis (max 3 attempts). Never return code without running the test suite first.
+
+### Failure Mitigation (HIGH)
+
+Apply mitigations for known LLM failure archetypes: hallucination (verify all references), context loss (maintain summaries), instruction drift (echo constraints), consistency violations (track claims), and technical errors (validate syntax). See `agentic/code/frameworks/sdlc-complete/rules/failure-mitigation.md` for the full taxonomy.
+
+### Rules Reference
+
+Full rule documentation lives in `agentic/code/frameworks/sdlc-complete/rules/`. The manifest at `agentic/code/frameworks/sdlc-complete/rules/manifest.json` lists all 28 rules across core, sdlc, and research tiers.
+
 ## Project-Specific Configuration
 
 <!-- Add project-specific instructions below this line -->
