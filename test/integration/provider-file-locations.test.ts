@@ -22,9 +22,24 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
+
+// Check if tsx is available (needed for bin/aiwg.mjs which goes through router-loader)
+function isTsxAvailable(): boolean {
+  try {
+    const result = spawnSync('npx', ['tsx', '--version'], {
+      encoding: 'utf-8',
+      timeout: 15000,
+    });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+const TSX_AVAILABLE = isTsxAvailable();
 const TEST_BASE = path.join(os.tmpdir(), 'aiwg-provider-tests');
 
 interface ProviderConfig {
@@ -335,7 +350,9 @@ describe('Provider File Locations', () => {
   });
 
   describe('aiwg use Command Integration', () => {
-    it('aiwg use --provider passes provider to all deployments', async () => {
+    // This test uses bin/aiwg.mjs which goes through router-loader → npx tsx
+    // Skip if tsx is not available (e.g., in Docker CI containers)
+    it.skipIf(!TSX_AVAILABLE)('aiwg use --provider passes provider to all deployments', async () => {
       const { projectDir, homeDir } = await createTestEnv('cli-integration');
 
       try {

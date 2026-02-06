@@ -36,6 +36,21 @@ function isCodexAvailable(): boolean {
 
 const CODEX_AVAILABLE = isCodexAvailable();
 
+// Check if tsx is available (needed for runAiwg which goes through router-loader)
+function isTsxAvailable(): boolean {
+  try {
+    const result = spawnSync('npx', ['tsx', '--version'], {
+      encoding: 'utf-8',
+      timeout: 15000,
+    });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+const TSX_AVAILABLE = isTsxAvailable();
+
 // Helper to run codex CLI commands
 function runCodex(
   args: string[],
@@ -303,14 +318,16 @@ describe('Codex Integration', () => {
   });
 
   describe('MCP Configuration', () => {
-    it('generates valid TOML config snippet for Codex', async () => {
+    // These tests use runAiwg which goes through router-loader → npx tsx
+    // Skip if tsx is not available (e.g., in Docker CI containers)
+    it.skipIf(!TSX_AVAILABLE)('generates valid TOML config snippet for Codex', async () => {
       const output = runAiwg(['mcp', 'install', 'codex', '--dry-run']);
 
       expect(output).toContain('[DRY RUN]');
       expect(output).toContain('.codex/config.toml');
     });
 
-    it('includes all AIWG MCP tools', async () => {
+    it.skipIf(!TSX_AVAILABLE)('includes all AIWG MCP tools', async () => {
       // Create initial config.toml
       await fs.writeFile(
         path.join(TEST_CODEX_DIR, 'config.toml'),
@@ -332,7 +349,7 @@ describe('Codex Integration', () => {
       expect(config).toContain('agent-list');
     });
 
-    it('does not duplicate MCP config on re-run', async () => {
+    it.skipIf(!TSX_AVAILABLE)('does not duplicate MCP config on re-run', async () => {
       await fs.writeFile(
         path.join(TEST_CODEX_DIR, 'config.toml'),
         '# Config\n'

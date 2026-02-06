@@ -35,6 +35,21 @@ function isCursorAvailable(): boolean {
 
 const CURSOR_AVAILABLE = isCursorAvailable();
 
+// Check if tsx is available (needed for runAiwg which goes through router-loader)
+function isTsxAvailable(): boolean {
+  try {
+    const result = spawnSync('npx', ['tsx', '--version'], {
+      encoding: 'utf-8',
+      timeout: 15000,
+    });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+const TSX_AVAILABLE = isTsxAvailable();
+
 // Helper to run cursor CLI commands
 function runCursor(
   args: string[],
@@ -244,14 +259,16 @@ describe('Cursor Integration', () => {
   });
 
   describe('MCP Configuration', () => {
-    it('generates valid JSON config for Cursor', async () => {
+    // These tests use runAiwg which goes through router-loader → npx tsx
+    // Skip if tsx is not available (e.g., in Docker CI containers)
+    it.skipIf(!TSX_AVAILABLE)('generates valid JSON config for Cursor', async () => {
       const output = runAiwg(['mcp', 'install', 'cursor', '--dry-run']);
 
       expect(output).toContain('[DRY RUN]');
       expect(output).toContain('.cursor/mcp.json');
     });
 
-    it('includes all AIWG MCP tools', async () => {
+    it.skipIf(!TSX_AVAILABLE)('includes all AIWG MCP tools', async () => {
       runAiwg(['mcp', 'install', 'cursor']);
 
       const config = await fs.readFile(
@@ -268,7 +285,7 @@ describe('Cursor Integration', () => {
       expect(parsed.mcpServers.aiwg.args).toContain('serve');
     });
 
-    it('does not duplicate MCP config on re-run', async () => {
+    it.skipIf(!TSX_AVAILABLE)('does not duplicate MCP config on re-run', async () => {
       // Create initial config
       await fs.writeFile(
         path.join(TEST_CURSOR_DIR, 'mcp.json'),
