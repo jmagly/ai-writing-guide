@@ -191,6 +191,7 @@ export class Orchestrator {
       enablePIDControl: config.enablePIDControl !== false,
       enableOverseer: config.enableOverseer !== false,
       enableSemanticMemory: config.enableSemanticMemory !== false,
+      enableClaudeIntelligence: config.enableClaudeIntelligence !== false,
     });
 
     console.log(`[External Ralph] Starting loop ${state.loopId}`);
@@ -315,19 +316,21 @@ export class Orchestrator {
     }
 
     // Claude Intelligence Layer
-    this.claudePromptGenerator = new ClaudePromptGenerator({
-      projectRoot: this.projectRoot,
-    });
+    if (state.config.enableClaudeIntelligence !== false) {
+      this.claudePromptGenerator = new ClaudePromptGenerator({
+        projectRoot: this.projectRoot,
+      });
 
-    this.validationAgent = new ValidationAgent({
-      projectRoot: this.projectRoot,
-    });
+      this.validationAgent = new ValidationAgent({
+        projectRoot: this.projectRoot,
+      });
 
-    this.strategyPlanner = new StrategyPlanner({
-      projectRoot: this.projectRoot,
-    });
+      this.strategyPlanner = new StrategyPlanner({
+        projectRoot: this.projectRoot,
+      });
 
-    console.log('[External Ralph] Claude intelligence layer: ENABLED (#22)');
+      console.log('[External Ralph] Claude intelligence layer: ENABLED (#22)');
+    }
 
     // Memory Layer
     if (state.config.enableSemanticMemory) {

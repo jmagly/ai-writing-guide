@@ -111,8 +111,6 @@ export class ArxivClient extends BaseClient {
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         throw new ResearchError(
           ResearchErrorCode.RF_200,
@@ -122,8 +120,6 @@ export class ArxivClient extends BaseClient {
 
       return await response.text();
     } catch (error) {
-      clearTimeout(timeoutId);
-
       if (error instanceof Error && error.name === 'AbortError') {
         throw new ResearchError(
           ResearchErrorCode.RF_104,
@@ -133,6 +129,8 @@ export class ArxivClient extends BaseClient {
       }
 
       throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

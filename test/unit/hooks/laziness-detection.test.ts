@@ -256,7 +256,6 @@ describe('LazinessDetectionHook', () => {
 + // const sessionToken = generateToken();
 + // await database.saveSession(sessionToken);
 + // return sessionToken;
-+ // Additional commented code
         `.trim(),
         linesAdded: 11,
         linesDeleted: 0,

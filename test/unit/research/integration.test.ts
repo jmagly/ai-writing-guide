@@ -12,6 +12,10 @@ import {
   UnpaywallClient,
   CacheManager,
 } from '../../../src/research/index.js';
+import {
+  ResearchErrorCode,
+  ResearchError,
+} from '../../../src/research/types.js';
 
 describe('Research Framework Integration', () => {
   const testCacheDir = join(process.cwd(), '.test-integration-cache');
@@ -169,8 +173,6 @@ describe('Research Framework Integration', () => {
 
   describe('Error code consistency', () => {
     it('should have consistent error codes', () => {
-      const { ResearchErrorCode, ResearchError } = require('../../../src/research/types.js');
-
       const error = new ResearchError(
         ResearchErrorCode.RF_100,
         'Test error'

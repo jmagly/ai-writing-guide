@@ -49,10 +49,6 @@ export interface FileChange {
  * Analyzes pending file changes for avoidance patterns.
  */
 export class LazinessDetectionHook {
-  private patterns: any;
-  private baselineCoverage: number = 0;
-  private baselineTestCount: number = 0;
-
   constructor(patternsPath?: string) {
     const defaultPath = path.join(
       __dirname,
@@ -62,10 +58,10 @@ export class LazinessDetectionHook {
 
     try {
       const content = fs.readFileSync(patternFile, 'utf8');
-      this.patterns = yaml.load(content);
+      yaml.load(content); // Validate patterns file loads
     } catch (error) {
       throw new Error(
-        `Failed to load laziness patterns from ${patternFile}: ${error.message}`
+        `Failed to load laziness patterns from ${patternFile}: ${(error as Error).message}`
       );
     }
   }
@@ -113,6 +109,7 @@ export class LazinessDetectionHook {
       detected.push(...this.detectErrorHandlerDeletion(change));
       detected.push(...this.detectHardcodedBypass(change));
       detected.push(...this.detectErrorSuppression(change));
+      detected.push(...this.detectTodoAccumulation(change));
     }
 
     // Config changes
@@ -162,12 +159,13 @@ export class LazinessDetectionHook {
       /^\+.*test\.skip\(/,
       /^\+.*xit\(/,
       /^\+.*xtest\(/,
-      /^\+.*@Ignore/,
+      /^\+\s*@Ignore/,  // Fixed: allows leading whitespace
       /^\+.*@pytest\.mark\.skip/,
     ];
 
     let skipCount = 0;
     let isSuiteSkip = false;
+    let isIgnoreAnnotation = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -181,15 +179,21 @@ export class LazinessDetectionHook {
             isSuiteSkip = true;
           }
 
+          // Check if it's @Ignore annotation
+          if (/@Ignore/.test(line)) {
+            isIgnoreAnnotation = true;
+          }
+
           // Only record individual occurrences if threshold not met
           if (skipCount === 1) {
             detected.push({
-              id: isSuiteSkip ? 'LP-002' : 'LP-003',
-              name: isSuiteSkip
-                ? 'Test Suite Disabling'
-                : 'Individual Test Disabling',
+              id: isSuiteSkip || isIgnoreAnnotation ? 'LP-002' : 'LP-003',
+              name:
+                isSuiteSkip || isIgnoreAnnotation
+                  ? 'Test Suite Disabling'
+                  : 'Individual Test Disabling',
               category: 'test_deletion',
-              severity: isSuiteSkip ? 'HIGH' : 'MEDIUM',
+              severity: isSuiteSkip || isIgnoreAnnotation ? 'HIGH' : 'MEDIUM',
               file: change.path,
               line: i + 1,
               match: line.trim(),
@@ -261,10 +265,21 @@ export class LazinessDetectionHook {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // Detect lines changed to comments
+      // Detect lines changed to comments (added lines that start with //)
       if (line.startsWith('+') && /^\+\s*\/\//.test(line)) {
-        commentedLineCount++;
-        commentedBlocks.push(i + 1);
+        // Filter out documentation comments (descriptive text, not code)
+        const commentContent = line.replace(/^\+\s*\/\/\s*/, '').trim();
+        // Skip if it looks like pure documentation (long explanatory sentences)
+        // But count TODO/FIXME/code-like comments
+        const isDocumentation =
+          /^(This function|This class|This method|Parameters:|Returns:|@param|@returns)/i.test(
+            commentContent
+          );
+
+        if (!isDocumentation) {
+          commentedLineCount++;
+          commentedBlocks.push(i + 1);
+        }
       }
     }
 
@@ -287,6 +302,44 @@ export class LazinessDetectionHook {
   }
 
   /**
+   * Pattern: TODO/FIXME Accumulation (MEDIUM severity)
+   */
+  private detectTodoAccumulation(change: FileChange): DetectedPattern[] {
+    const lines = change.diff.split('\n');
+    let todoCount = 0;
+    const todoLines: number[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (
+        line.startsWith('+') &&
+        /(TODO|FIXME|HACK|XXX|NOTE|WARNING):/i.test(line)
+      ) {
+        todoCount++;
+        todoLines.push(i + 1);
+      }
+    }
+
+    if (todoCount > 3) {
+      return [
+        {
+          id: 'LP-TODO',
+          name: 'TODO/FIXME Accumulation',
+          category: 'incomplete_work',
+          severity: 'MEDIUM',
+          file: change.path,
+          line: todoLines[0],
+          match: `${todoCount} TODO/FIXME markers added`,
+          confidence: 0.8,
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  /**
    * Pattern: LP-006 - Validation Removal
    */
   private detectValidationRemoval(change: FileChange): DetectedPattern[] {
@@ -296,7 +349,8 @@ export class LazinessDetectionHook {
     const validationPatterns = [
       /^-\s*if\s*\(!/,
       /^-\s*validate\(/,
-      /^-\s*sanitize\(/,
+      /^-\s*(const|let|var)\s+\w+\s*=\s*sanitize\(/,  // Fixed: detect variable assignment
+      /^-\s*sanitize\(/,  // Also detect direct call
       /^-\s*\.includes\('@'\)/,
     ];
 
@@ -480,6 +534,8 @@ export class LazinessDetectionHook {
     if (criticalPatterns.length > 0) {
       return {
         block: true,
+        warn: true,  // Also set warn for completeness
+        log: true,
         reason: `CRITICAL avoidance patterns detected: ${criticalPatterns.map((p) => p.name).join(', ')}`,
         recovery: 'FIX_ROOT_CAUSE',
         patterns,
@@ -491,7 +547,24 @@ export class LazinessDetectionHook {
     if (highPatterns.length > 2) {
       return {
         block: true,
+        warn: true,
+        log: true,
         reason: `Multiple HIGH-severity patterns detected (compound avoidance): ${highPatterns.map((p) => p.name).join(', ')}`,
+        recovery: 'FIX_ALL_ISSUES',
+        patterns,
+      };
+    }
+
+    // Check for multiple MEDIUM patterns across files (compound avoidance)
+    const mediumPatterns = patterns.filter((p) => p.severity === 'MEDIUM');
+    const uniqueFiles = new Set(mediumPatterns.map((p) => p.file));
+    if (mediumPatterns.length > 2 && uniqueFiles.size > 1) {
+      // Multiple MEDIUM patterns across multiple files = compound avoidance
+      return {
+        block: true,
+        warn: true,
+        log: true,
+        reason: `Multiple MEDIUM-severity patterns across files (compound avoidance): ${mediumPatterns.map((p) => p.name).join(', ')}`,
         recovery: 'FIX_ALL_ISSUES',
         patterns,
       };
@@ -502,18 +575,19 @@ export class LazinessDetectionHook {
       return {
         block: true,
         warn: true,
+        log: true,
         reason: `HIGH-severity pattern detected: ${highPatterns[0].name}`,
         recovery: 'PROVIDE_JUSTIFICATION_OR_FIX',
         patterns,
       };
     }
 
-    // MEDIUM patterns - warn but allow
-    const mediumPatterns = patterns.filter((p) => p.severity === 'MEDIUM');
+    // MEDIUM patterns (not compound) - warn but allow
     if (mediumPatterns.length > 0) {
       return {
         block: false,
-        warn: true,
+        warn: true,  // Fixed: explicitly set warn: true
+        log: true,
         reason: `MEDIUM-severity patterns detected: ${mediumPatterns.map((p) => p.name).join(', ')}`,
         patterns,
       };
@@ -522,7 +596,8 @@ export class LazinessDetectionHook {
     // LOW patterns - log only
     return {
       block: false,
-      log: true,
+      warn: false,
+      log: true,  // Fixed: explicitly set log: true
       reason: `LOW-severity patterns detected: ${patterns.map((p) => p.name).join(', ')}`,
       patterns,
     };
@@ -533,10 +608,11 @@ export class LazinessDetectionHook {
    */
   private isTestFile(filePath: string): boolean {
     return (
-      /test.*\.(ts|js|py)$/.test(filePath) ||
-      /\.test\.(ts|js|py)$/.test(filePath) ||
-      /\.spec\.(ts|js|py)$/.test(filePath) ||
-      /_test\.py$/.test(filePath)
+      /test.*\.(ts|js|py|java)$/.test(filePath) ||
+      /\.test\.(ts|js|py|java)$/.test(filePath) ||
+      /\.spec\.(ts|js|py|java)$/.test(filePath) ||
+      /_test\.py$/.test(filePath) ||
+      /Test\.java$/.test(filePath)  // Added: Java test files
     );
   }
 
@@ -565,10 +641,7 @@ export class LazinessDetectionHook {
    * Capture baseline metrics for comparison
    */
   private async captureBaseline(): Promise<void> {
-    // This would integrate with actual coverage tooling
-    // For now, stubbed
-    this.baselineCoverage = 0;
-    this.baselineTestCount = 0;
+    // Stub - will integrate with actual coverage tooling
   }
 }
 

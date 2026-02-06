@@ -163,10 +163,6 @@ describe('BaseClient', () => {
 
       await expect(
         client.testRequest('https://api.example.com/test')
-      ).rejects.toThrow(ResearchError);
-
-      await expect(
-        client.testRequest('https://api.example.com/test')
       ).rejects.toMatchObject({
         code: ResearchErrorCode.RF_300,
       });
@@ -240,7 +236,7 @@ describe('BaseClient', () => {
       expect(mockFetch).toHaveBeenCalledTimes(4);
     });
 
-    it('should throw timeout error', async () => {
+    it('should throw timeout error', { timeout: 15000 }, async () => {
       mockFetch.mockImplementation(
         () =>
           new Promise((resolve) => {

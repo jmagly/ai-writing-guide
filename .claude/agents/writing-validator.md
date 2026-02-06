@@ -2,7 +2,6 @@
 name: Writing Validator
 description: Validates content against AI Writing Guide principles, detecting AI patterns and ensuring authentic writing
 model: sonnet
-memory: user
 tools: Bash, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

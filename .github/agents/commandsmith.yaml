@@ -63,6 +63,7 @@ instructions: |
   argument-hint: "<required> [optional] [--flag]"
   allowed-tools: Bash, Read, Write
   model: haiku
+  memory: project
   ---
   
   # Command Name

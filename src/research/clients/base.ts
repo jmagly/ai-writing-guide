@@ -21,7 +21,7 @@ export class RateLimiter {
 
   constructor(private config: RateLimitConfig) {
     this.tokens = config.currentTokens;
-    this.lastRefill = Date.now();
+    this.lastRefill = config.lastRefill; // Use config value, not Date.now()
   }
 
   /**
@@ -103,21 +103,39 @@ export abstract class BaseClient {
   private async executeWithRetry<T>(
     url: string,
     options: RequestInit,
-    attempt = 0
+    attempt = 0,
+    firstError?: ResearchError
   ): Promise<T> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(
-        () => controller.abort(),
-        this.config.timeout
-      );
+    const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | undefined;
 
-      const response = await fetch(url, {
+    try {
+      // Create timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          controller.abort();
+          reject(
+            new ResearchError(
+              ResearchErrorCode.RF_104,
+              `Request timeout after ${this.config.timeout}ms`
+            )
+          );
+        }, this.config.timeout);
+      });
+
+      // Create fetch promise
+      const fetchPromise = fetch(url, {
         ...options,
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
+      // Race between fetch and timeout
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+
+      // Clear timeout if fetch completed first
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
       if (!response.ok) {
         const error = await this.handleHttpError(response);
@@ -126,6 +144,11 @@ export abstract class BaseClient {
 
       return (await response.json()) as T;
     } catch (error) {
+      // Clear timeout on error
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
       // Handle abort (timeout)
       if (error instanceof Error && error.name === 'AbortError') {
         throw new ResearchError(
@@ -135,13 +158,22 @@ export abstract class BaseClient {
         );
       }
 
+      // Track the first error for better error reporting
+      const currentFirstError =
+        firstError || (error instanceof ResearchError ? error : undefined);
+
       // Don't retry ResearchErrors (they're already handled)
       if (error instanceof ResearchError) {
         // Retry on transient errors
         if (this.isRetriable(error) && attempt < this.retryConfig.maxRetries) {
           const delay = this.calculateBackoff(attempt);
           await this.sleep(delay);
-          return this.executeWithRetry<T>(url, options, attempt + 1);
+          return this.executeWithRetry<T>(
+            url,
+            options,
+            attempt + 1,
+            currentFirstError
+          );
         }
         throw error;
       }
@@ -150,7 +182,17 @@ export abstract class BaseClient {
       if (attempt < this.retryConfig.maxRetries) {
         const delay = this.calculateBackoff(attempt);
         await this.sleep(delay);
-        return this.executeWithRetry<T>(url, options, attempt + 1);
+        return this.executeWithRetry<T>(
+          url,
+          options,
+          attempt + 1,
+          currentFirstError
+        );
+      }
+
+      // If we have a first error from an HTTP response, throw that instead of generic network error
+      if (currentFirstError) {
+        throw currentFirstError;
       }
 
       throw new ResearchError(
@@ -167,17 +209,17 @@ export abstract class BaseClient {
   private async handleHttpError(response: Response): Promise<ResearchError> {
     const status = response.status;
 
-    if (status === 429) {
-      return new ResearchError(
-        ResearchErrorCode.RF_103,
-        'Rate limit exceeded'
-      );
-    }
-
     if (status === 404) {
       return new ResearchError(
         ResearchErrorCode.RF_300,
         'Resource not found'
+      );
+    }
+
+    if (status === 429) {
+      return new ResearchError(
+        ResearchErrorCode.RF_103,
+        'Rate limit exceeded'
       );
     }
 
@@ -206,11 +248,8 @@ export abstract class BaseClient {
    */
   private isRetriable(error: unknown): boolean {
     if (error instanceof ResearchError) {
-      // Retry on server errors and rate limits
-      return (
-        error.code === ResearchErrorCode.RF_200 ||
-        error.code === ResearchErrorCode.RF_103
-      );
+      // Only retry on server errors (not rate limits or client errors)
+      return error.code === ResearchErrorCode.RF_200;
     }
 
     // Retry on network errors

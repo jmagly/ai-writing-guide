@@ -127,7 +127,7 @@ export class SemanticScholarClient extends BaseClient {
       papers: response.data.map((paper) => this.transformResponse(paper)),
       offset: response.offset,
       limit,
-      hasMore: response.offset + response.data.length < response.total,
+      hasMore: response.offset + limit < response.total,
     };
   }
 

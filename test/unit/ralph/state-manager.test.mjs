@@ -3,6 +3,7 @@
  * Tests for loop-scoped state isolation
  */
 
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import { strict as assert } from 'assert';
 import fs from 'fs';
 import path from 'path';

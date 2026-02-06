@@ -411,6 +411,8 @@ describe('PluginRegistry', () => {
 
     it('should list backups', async () => {
       await registry.createBackup('backup 1');
+      // Small delay to ensure unique timestamps in backup filenames
+      await new Promise(resolve => setTimeout(resolve, 10));
       await registry.createBackup('backup 2');
 
       const backups = await registry.listBackups();

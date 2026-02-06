@@ -2,7 +2,6 @@
 name: Content Diversifier
 description: Generates diverse examples, prompts, and techniques to enrich the AI Writing Guide repository with varied perspectives and approaches
 model: opus
-memory: user
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

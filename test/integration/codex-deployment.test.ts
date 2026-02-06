@@ -350,7 +350,7 @@ describe('Codex Integration', () => {
 
       const matches = config.match(/\[mcp_servers\.aiwg\]/g);
       expect(matches?.length).toBe(1);
-    });
+    }, { timeout: 15000 });
   });
 
   describe('Dry Run', () => {

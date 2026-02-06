@@ -1,61 +1,67 @@
 /**
- * Metrics Collector for PID Control System
+ * Metrics Collector for PID Control
  *
- * Extracts Proportional, Integral, and Derivative metrics from
- * Ralph loop iteration data for adaptive control decisions.
+ * Implements research-backed PID control metrics for External Ralph Loop.
  *
- * @implements Issue #23 - PID-inspired Control Feedback Loop
- * @references REF-015 Self-Refine, REF-021 Reflexion
+ * **Proportional (P)**: Current error (completion gap + quality penalty + error penalty)
+ * - Measures how far we are from task completion
+ * - Combines completion percentage, code quality, and error count
+ * - Normalized to 0.0-1.0 range (0=complete, 1=no progress)
  *
- * Metric Definitions:
- * - Proportional (P): Current completion gap (1.0 - completion_percentage)
- * - Integral (I): Accumulated learnings and repeated issues
- * - Derivative (D): Rate of progress change (velocity)
+ * **Integral (I)**: Accumulated error over time (weighted by repeated issues)
+ * - Tracks persistent/recurring problems
+ * - Increased by repeated similar errors (same root cause)
+ * - Decreased by accumulated learnings from reflection
+ * - Anti-windup mechanism prevents unbounded accumulation
+ *
+ * **Derivative (D)**: Rate of change of error
+ * - Predicts future error based on current trend
+ * - Positive = error decreasing (improving)
+ * - Negative = error increasing (regressing)
+ * - Smoothed over sliding window to reduce noise
+ *
+ * @implements PID control theory for agentic task completion
  */
 
 /**
  * @typedef {Object} IterationMetrics
- * @property {number} completionPercentage - 0.0 to 1.0
- * @property {number} qualityScore - 0.0 to 1.0
+ * @property {number} completionPercentage - 0.0-1.0
+ * @property {number} qualityScore - 0.0-1.0
  * @property {number} errorCount - Number of errors
- * @property {number} testsPassing - Number of passing tests
- * @property {number} testsFailing - Number of failing tests
- * @property {string[]} learnings - Extracted learnings
- * @property {string[]} blockers - Current blockers
- * @property {number} duration - Duration in ms
+ * @property {number} testsPassing - Tests passing count
+ * @property {number} testsFailing - Tests failing count
+ * @property {string[]} learnings - Learnings from iteration
+ * @property {string[]} blockers - Blockers encountered
+ * @property {number} duration - Iteration duration ms
+ * @property {string[]} filesModified - Files modified
+ * @property {number} toolCallCount - Tool calls made
  */
 
 /**
  * @typedef {Object} PIDMetrics
- * @property {number} proportional - Current error (completion gap)
- * @property {number} integral - Accumulated error over time
- * @property {number} derivative - Rate of change of error
- * @property {number} timestamp - When metrics were calculated
- * @property {Object} raw - Raw metrics data
- */
-
-/**
- * @typedef {Object} MetricsHistory
- * @property {PIDMetrics[]} metrics - Array of historical metrics
- * @property {number} windowSize - Number of iterations to consider
+ * @property {number} proportional - Current error (P term)
+ * @property {number} integral - Accumulated error (I term)
+ * @property {number} derivative - Error rate of change (D term)
+ * @property {number} timestamp - Metric timestamp
+ * @property {number} iterationNumber - Iteration number
+ * @property {IterationMetrics} raw - Raw metrics
  */
 
 export class MetricsCollector {
-  /**
-   * @param {Object} options
-   * @param {number} [options.windowSize=5] - Number of iterations for derivative calculation
-   * @param {number} [options.integralDecay=0.9] - Decay factor for integral accumulation
-   * @param {number} [options.noiseThreshold=0.05] - Deadband threshold for noise filtering
-   */
   constructor(options = {}) {
-    this.windowSize = options.windowSize || 5;
-    this.integralDecay = options.integralDecay || 0.9;
-    this.noiseThreshold = options.noiseThreshold || 0.05;
+    // Sliding window size for derivative calculation
+    this.windowSize = options.windowSize || 3;
 
-    // Historical data for derivative calculation
+    // Integral decay factor (prevents infinite accumulation)
+    this.integralDecay = options.integralDecay || 0.9;
+
+    // Deadband threshold (ignore small fluctuations)
+    this.noiseThreshold = options.noiseThreshold || 0.01;
+
+    // History of PID metrics
     this.history = [];
 
-    // Accumulated integral value
+    // Integral accumulator (tracks persistent errors)
     this.integralAccumulator = 0;
 
     // Track repeated issues for integral component
@@ -159,95 +165,86 @@ export class MetricsCollector {
     // Secondary: Quality adjustment
     const qualityPenalty = (1.0 - metrics.qualityScore) * 0.2;
 
-    // Error penalty (normalized)
+    // Tertiary: Error count penalty
     const errorPenalty = Math.min(metrics.errorCount * 0.05, 0.3);
 
     // Combined proportional error
+    // Weight: completion (1.0) + quality (0.2) + errors (0.05 each, max 0.3)
     const rawP = completionGap + qualityPenalty + errorPenalty;
 
-    // Apply deadband filter
     return this.applyDeadband(Math.min(rawP, 1.0));
   }
 
   /**
    * Calculate Integral component (accumulated error)
    * @param {IterationMetrics} metrics
-   * @param {number} proportional - Current proportional error
+   * @param {number} proportional - Current P value
    * @returns {number}
    */
   calculateIntegral(metrics, proportional) {
-    // Decay previous integral (prevents windup)
-    this.integralAccumulator *= this.integralDecay;
-
-    // Add current error contribution
+    // Accumulate proportional error
     this.integralAccumulator += proportional;
 
-    // Track repeated blockers (increases integral)
+    // Track issue frequency
     for (const blocker of metrics.blockers) {
       const key = this.normalizeIssueKey(blocker);
       const count = (this.issueFrequency.get(key) || 0) + 1;
       this.issueFrequency.set(key, count);
 
-      // Repeated issues add to integral
+      // Weight repeated issues more heavily
       if (count > 1) {
         this.integralAccumulator += 0.1 * count;
       }
     }
 
-    // Learnings reduce integral (positive feedback)
+    // Reduce integral for learnings (negative feedback)
     this.learningsWeight = Math.min(
-      this.learningsWeight + metrics.learnings.length * 0.05,
-      0.5
+      this.learningsWeight + (metrics.learnings.length * 0.05),
+      1.0
     );
 
-    // Apply anti-windup bounds
     return this.applyAntiWindup(this.integralAccumulator - this.learningsWeight);
   }
 
   /**
    * Calculate Derivative component (rate of change)
    * @param {IterationMetrics} metrics
-   * @param {number} proportional - Current proportional error
+   * @param {number} proportional - Current P value
    * @returns {number}
    */
   calculateDerivative(metrics, proportional) {
     if (this.history.length === 0) {
-      return 0;
+      return 0; // No history yet
     }
 
-    // Get recent history
+    // Use sliding window for smoothing
     const recent = this.history.slice(-this.windowSize);
 
     if (recent.length < 2) {
-      // Not enough history for derivative
-      const last = recent[recent.length - 1];
-      return proportional - last.proportional;
+      return 0; // Not enough history
     }
 
-    // Calculate weighted moving average of error changes
-    let sumWeightedChange = 0;
-    let sumWeights = 0;
+    // Calculate average rate of change
+    // Positive derivative = error decreasing (good)
+    // Negative derivative = error increasing (bad)
+    let totalChange = 0;
 
     for (let i = 1; i < recent.length; i++) {
-      const weight = i / recent.length; // More recent = higher weight
-      const change = recent[i].proportional - recent[i - 1].proportional;
-      sumWeightedChange += change * weight;
-      sumWeights += weight;
+      const change = recent[i - 1].proportional - recent[i].proportional;
+      totalChange += change;
     }
 
-    // Add current change
-    const currentChange = proportional - recent[recent.length - 1].proportional;
-    sumWeightedChange += currentChange * 1.0;
-    sumWeights += 1.0;
+    const averageChange = totalChange / (recent.length - 1);
 
-    const derivative = sumWeightedChange / sumWeights;
+    // Also factor in current change vs most recent
+    const currentChange = recent[recent.length - 1].proportional - proportional;
+    const derivative = (averageChange + currentChange) / 2;
 
-    // Apply deadband filter
     return this.applyDeadband(derivative);
   }
 
   /**
-   * Apply deadband filter to remove noise
+   * Apply deadband to filter noise
    * @param {number} value
    * @returns {number}
    */
@@ -259,12 +256,12 @@ export class MetricsCollector {
   }
 
   /**
-   * Apply anti-windup bounds to integral
+   * Apply anti-windup to integral
    * @param {number} integral
    * @returns {number}
    */
   applyAntiWindup(integral) {
-    const maxIntegral = 5.0;  // Upper bound
+    const maxIntegral = 2.0; // Upper bound
     const minIntegral = -1.0; // Lower bound (allow some negative for learnings)
 
     return Math.max(minIntegral, Math.min(integral, maxIntegral));
@@ -312,7 +309,13 @@ export class MetricsCollector {
       this.history = this.history.slice(-this.windowSize * 2);
     }
 
-    return pidMetrics;
+    // Add trend information (calculated after adding to history)
+    const trendInfo = this.getTrend();
+    return {
+      ...pidMetrics,
+      trend: trendInfo.trend,
+      velocity: trendInfo.velocity,
+    };
   }
 
   /**
@@ -428,19 +431,12 @@ export class MetricsCollector {
    * @param {Object} state
    */
   importState(state) {
-    if (state.history) {
-      this.history = state.history;
-    }
-    if (typeof state.integralAccumulator === 'number') {
-      this.integralAccumulator = state.integralAccumulator;
-    }
-    if (state.issueFrequency) {
-      this.issueFrequency = new Map(state.issueFrequency);
-    }
-    if (typeof state.learningsWeight === 'number') {
-      this.learningsWeight = state.learningsWeight;
-    }
+    this.history = state.history || [];
+    this.integralAccumulator = state.integralAccumulator || 0;
+    this.issueFrequency = new Map(state.issueFrequency || []);
+    this.learningsWeight = state.learningsWeight || 0;
+    this.windowSize = state.windowSize || this.windowSize;
+    this.integralDecay = state.integralDecay || this.integralDecay;
+    this.noiseThreshold = state.noiseThreshold || this.noiseThreshold;
   }
 }
-
-export default MetricsCollector;

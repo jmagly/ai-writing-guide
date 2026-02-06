@@ -33,13 +33,11 @@ export interface AcquisitionConfig {
  */
 export class AcquisitionService {
   private unpaywall: UnpaywallClient;
-  private arxiv: ArxivClient;
   private downloadDir: string;
   private downloadTimeout: number;
 
   constructor(config: AcquisitionConfig = {}) {
     this.unpaywall = config.unpaywall || new UnpaywallClient({ email: config.email });
-    this.arxiv = config.arxiv || new ArxivClient();
     this.downloadDir = config.downloadDir || '.aiwg/research/sources';
     this.downloadTimeout = config.downloadTimeout || 300000; // 5 minutes
   }

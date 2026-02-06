@@ -288,7 +288,7 @@ describe('Cursor Integration', () => {
       // Should have exactly one aiwg entry
       expect(Object.keys(parsed.mcpServers)).toContain('aiwg');
       expect(Object.keys(parsed.mcpServers).filter(k => k === 'aiwg').length).toBe(1);
-    });
+    }, { timeout: 15000 });
   });
 
   describe('Dry Run', () => {

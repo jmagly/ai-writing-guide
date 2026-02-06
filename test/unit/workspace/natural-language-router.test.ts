@@ -6,13 +6,15 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { resolve } from 'path';
 import { NaturalLanguageRouter, TranslationLoadError } from '../../../tools/workspace/natural-language-router.mjs';
 
 describe('NaturalLanguageRouter', () => {
   let router: InstanceType<typeof NaturalLanguageRouter>;
 
   beforeEach(() => {
-    router = new NaturalLanguageRouter();
+    const translationsPath = resolve(process.cwd(), 'agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md');
+    router = new NaturalLanguageRouter(translationsPath);
   });
 
   describe('Basic Routing', () => {
@@ -294,7 +296,8 @@ describe('NaturalLanguageRouter', () => {
 
   describe('Custom Configuration', () => {
     it('should respect custom confidence threshold', async () => {
-      const strictRouter = new NaturalLanguageRouter(null, { confidenceThreshold: 0.99 });
+      const translationsPath = resolve(process.cwd(), 'agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md');
+      const strictRouter = new NaturalLanguageRouter(translationsPath, { confidenceThreshold: 0.99 });
 
       // Fuzzy match that would normally pass 0.7 threshold (typo: transision vs transition)
       const result = await strictRouter.route('transision to elaboration');

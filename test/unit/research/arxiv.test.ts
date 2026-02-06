@@ -228,14 +228,37 @@ describe('ArxivClient', () => {
     });
 
     it('should throw on timeout', async () => {
+      // Create a client with a very short timeout for this test
+      const timeoutClient = new ArxivClient({
+        timeout: 100, // 100ms timeout
+        rateLimit: {
+          maxTokens: 3,
+          refillRate: 1,
+          currentTokens: 3,
+          lastRefill: Date.now(),
+        },
+      });
+
+      // Mock fetch to check abort signal and reject properly
       mockFetch.mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(() => resolve({ ok: true, text: async () => '' }), 40000);
+        (_url: string, options?: RequestInit) =>
+          new Promise((resolve, reject) => {
+            const signal = options?.signal as AbortSignal | undefined;
+
+            if (signal) {
+              signal.addEventListener('abort', () => {
+                const error = new Error('The operation was aborted');
+                error.name = 'AbortError';
+                reject(error);
+              });
+            }
+
+            // Long delay that should be interrupted by abort
+            setTimeout(() => resolve({ ok: true, text: async () => '' }), 5000);
           })
       );
 
-      await expect(client.getPaperById('test')).rejects.toMatchObject({
+      await expect(timeoutClient.getPaperById('test')).rejects.toMatchObject({
         code: ResearchErrorCode.RF_104,
       });
     });

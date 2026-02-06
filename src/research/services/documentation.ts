@@ -21,19 +21,15 @@ export interface DocumentationConfig {
  * Documentation service for generating summaries and notes
  */
 export class DocumentationService {
-  private templateDir: string;
-  private outputDir: string;
-
-  constructor(config: DocumentationConfig = {}) {
-    this.templateDir = config.templateDir || '.aiwg/research/templates';
-    this.outputDir = config.outputDir || '.aiwg/research/findings';
+  constructor(_config: DocumentationConfig = {}) {
+    // Config values will be used when stub methods are fully implemented
   }
 
   /**
    * Generate structured summary from paper
    * Note: Full implementation would use LLM or PDF parsing
    */
-  async summarize(paperPath: string): Promise<PaperSummary> {
+  async summarize(_paperPath: string): Promise<PaperSummary> {
     // Stub implementation - full version would parse PDF
     return {
       refId: 'REF-XXX',
@@ -65,7 +61,7 @@ export class DocumentationService {
    * Extract claims from paper
    * Note: Full implementation would use NLP/LLM
    */
-  async extractClaims(paperPath: string): Promise<Claim[]> {
+  async extractClaims(_paperPath: string): Promise<Claim[]> {
     // Stub implementation - full version would use NLP
     return [
       {

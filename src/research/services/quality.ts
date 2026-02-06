@@ -20,12 +20,8 @@ export interface QualityConfig {
  * Quality service for assessing and reporting on source quality
  */
 export class QualityService {
-  private minFAIRScore: number;
-  private minQualityScore: number;
-
-  constructor(config: QualityConfig = {}) {
-    this.minFAIRScore = config.minFAIRScore || 0.7;
-    this.minQualityScore = config.minQualityScore || 0.6;
+  constructor(_config: QualityConfig = {}) {
+    // Config values will be used when threshold checking is implemented
   }
 
   /**

@@ -104,6 +104,24 @@ export class StateManager {
         timeoutMinutes: config.timeoutMinutes || 60,
         mcpConfig: config.mcpConfig || null,
         workingDir: config.workingDir || this.projectRoot,
+        // Enhanced capture options
+        verbose: config.verbose || false,
+        checkpointIntervalMinutes: config.checkpointIntervalMinutes || 30,
+        enableCheckpoints: config.enableCheckpoints !== false,
+        enableSnapshots: config.enableSnapshots !== false,
+        useClaudeAssessment: config.useClaudeAssessment || false,
+        keyFiles: config.keyFiles || [],
+        // Research-backed options
+        memory: config.memory || 3,
+        crossTask: config.crossTask !== false,
+        enableAnalytics: config.enableAnalytics !== false,
+        enableBestOutput: config.enableBestOutput !== false,
+        enableEarlyStopping: config.enableEarlyStopping !== false,
+        // Epic #26 options
+        enablePIDControl: config.enablePIDControl !== false,
+        enableOverseer: config.enableOverseer !== false,
+        enableSemanticMemory: config.enableSemanticMemory !== false,
+        enableClaudeIntelligence: config.enableClaudeIntelligence !== false,
       },
     };
 

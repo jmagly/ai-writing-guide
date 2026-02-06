@@ -5,7 +5,7 @@
  */
 
 import { promises as fs } from 'fs';
-import { join } from 'path';
+
 import { ResearchPaper } from '../types.js';
 import { CitationStyle, CitationNetwork } from './types.js';
 

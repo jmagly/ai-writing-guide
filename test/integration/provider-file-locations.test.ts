@@ -308,7 +308,7 @@ describe('Provider File Locations', () => {
         cursor: ['.cursor'],
         opencode: ['.opencode'],
         warp: [],  // Only WARP.md
-        windsurf: ['.windsurf'],
+        windsurf: ['.windsurf', '.windsurfrules'],
       };
 
       for (const [provider, expectedDirs] of Object.entries(providerDirs)) {

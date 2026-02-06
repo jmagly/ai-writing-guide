@@ -7,10 +7,16 @@ export default defineConfig({
     include: [
       'test/**/*.test.ts',
       'test/**/*.spec.ts',
-      'test/**/*.test.mjs',
       'test/**/*.test.js',
       'agentic/code/frameworks/*/test/**/*.test.ts',
       'agentic/code/frameworks/*/test/**/*.spec.ts'
+    ],
+
+    // Exclude .mjs test files that use node:test runner (run with `node --test`)
+    exclude: [
+      'test/**/*.test.mjs',
+      'node_modules/**',
+      'dist/**'
     ],
 
     // Environment configuration

@@ -12,10 +12,7 @@
 
 import { z } from 'zod';
 import type {
-  Extension,
   ExtensionType,
-  ExtensionStatus,
-  PlatformSupport,
 } from './types.js';
 
 // ============================================

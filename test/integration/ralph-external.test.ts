@@ -61,6 +61,16 @@ describe('External Ralph Loop Integration', () => {
         objective: 'Create a test file',
         completionCriteria: 'Test file exists',
         maxIterations: 5,
+        enablePIDControl: false,
+        enableOverseer: false,
+        enableSemanticMemory: false,
+        crossTask: false,
+        enableAnalytics: false,
+        enableBestOutput: false,
+        enableEarlyStopping: false,
+        enableClaudeIntelligence: false,
+        enableSnapshots: false,
+        enableCheckpoints: false,
       });
 
       expect(result.success).toBe(true);
@@ -119,6 +129,16 @@ describe('External Ralph Loop Integration', () => {
         objective: 'Complex task',
         completionCriteria: 'All tests pass',
         maxIterations: 5,
+        enablePIDControl: false,
+        enableOverseer: false,
+        enableSemanticMemory: false,
+        crossTask: false,
+        enableAnalytics: false,
+        enableBestOutput: false,
+        enableEarlyStopping: false,
+        enableClaudeIntelligence: false,
+        enableSnapshots: false,
+        enableCheckpoints: false,
       });
 
       expect(result.success).toBe(true);
@@ -161,6 +181,16 @@ describe('External Ralph Loop Integration', () => {
         objective: 'Impossible task',
         completionCriteria: 'Never achievable',
         maxIterations: 3,
+        enablePIDControl: false,
+        enableOverseer: false,
+        enableSemanticMemory: false,
+        crossTask: false,
+        enableAnalytics: false,
+        enableBestOutput: false,
+        enableEarlyStopping: false,
+        enableClaudeIntelligence: false,
+        enableSnapshots: false,
+        enableCheckpoints: false,
       });
 
       expect(result.success).toBe(false);
@@ -200,6 +230,16 @@ describe('External Ralph Loop Integration', () => {
         objective: 'Task that exceeds budget',
         completionCriteria: 'Complete',
         maxIterations: 10,
+        enablePIDControl: false,
+        enableOverseer: false,
+        enableSemanticMemory: false,
+        crossTask: false,
+        enableAnalytics: false,
+        enableBestOutput: false,
+        enableEarlyStopping: false,
+        enableClaudeIntelligence: false,
+        enableSnapshots: false,
+        enableCheckpoints: false,
       });
 
       expect(result.success).toBe(false);
@@ -243,6 +283,16 @@ describe('External Ralph Loop Integration', () => {
         objective: 'Task with recovery',
         completionCriteria: 'Complete',
         maxIterations: 5,
+        enablePIDControl: false,
+        enableOverseer: false,
+        enableSemanticMemory: false,
+        crossTask: false,
+        enableAnalytics: false,
+        enableBestOutput: false,
+        enableEarlyStopping: false,
+        enableClaudeIntelligence: false,
+        enableSnapshots: false,
+        enableCheckpoints: false,
       });
 
       expect(result.success).toBe(true);
@@ -268,6 +318,16 @@ describe('External Ralph Loop Integration', () => {
         objective: 'Resumable task',
         completionCriteria: 'Done',
         maxIterations: 5,
+        enablePIDControl: false,
+        enableOverseer: false,
+        enableSemanticMemory: false,
+        crossTask: false,
+        enableAnalytics: false,
+        enableBestOutput: false,
+        enableEarlyStopping: false,
+        enableClaudeIntelligence: false,
+        enableSnapshots: false,
+        enableCheckpoints: false,
       });
 
       orchestrator.stateManager.update({ status: 'paused', currentIteration: 1 });
@@ -369,6 +429,16 @@ describe('External Ralph Loop Integration', () => {
         objective: 'Implement feature',
         completionCriteria: 'Tests pass',
         maxIterations: 5,
+        enablePIDControl: false,
+        enableOverseer: false,
+        enableSemanticMemory: false,
+        crossTask: false,
+        enableAnalytics: false,
+        enableBestOutput: false,
+        enableEarlyStopping: false,
+        enableClaudeIntelligence: false,
+        enableSnapshots: false,
+        enableCheckpoints: false,
       });
 
       const reportPath = join(testDir, '.aiwg', 'ralph-external', 'completion-report.md');

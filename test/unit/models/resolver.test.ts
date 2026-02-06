@@ -19,9 +19,12 @@ describe('ModelResolver', () => {
   beforeEach(async () => {
     testDir = resolve(process.cwd(), 'test-temp-models');
     await mkdir(testDir, { recursive: true });
+    // Point AIWG_HOME to project root so ConfigLoader finds models-v2.json
+    process.env.AIWG_HOME = process.cwd();
   });
 
   afterEach(async () => {
+    delete process.env.AIWG_HOME;
     try {
       await rm(testDir, { recursive: true, force: true });
     } catch {

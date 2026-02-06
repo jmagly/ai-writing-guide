@@ -21,27 +21,27 @@ describe('Agent Schema Wiring - Cost', () => {
 
   it('should have References section', async () => {
     const content = await readFile(agentPath, 'utf-8');
-    expect(content).toContain('## References');
+    expect(content).toContain('## Schema References');
   });
 
   it('should reference cost-tracking schema', async () => {
     const content = await readFile(agentPath, 'utf-8');
-    expect(content).toContain('@.aiwg/flows/schemas/cost-tracking.yaml');
+    expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/cost-tracking.yaml');
   });
 
   it('should reference hitl-cost-tracking schema', async () => {
     const content = await readFile(agentPath, 'utf-8');
-    expect(content).toContain('@.aiwg/flows/schemas/hitl-cost-tracking.yaml');
+    expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-cost-tracking.yaml');
   });
 
   it('should reference token-efficiency schema', async () => {
     const content = await readFile(agentPath, 'utf-8');
-    expect(content).toContain('@.aiwg/flows/schemas/token-efficiency.yaml');
+    expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/token-efficiency.yaml');
   });
 
   it('should reference agent-efficiency schema', async () => {
     const content = await readFile(agentPath, 'utf-8');
-    expect(content).toContain('@.aiwg/flows/schemas/agent-efficiency.yaml');
+    expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/agent-efficiency.yaml');
   });
 
   it('should have Cost & Efficiency Tracking section', async () => {
@@ -56,27 +56,27 @@ describe('Agent Schema Wiring - Reproducibility', () => {
 
     it('should have References section', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('## References');
+      expect(content).toContain('## Schema References');
     });
 
     it('should reference reproducibility-framework schema', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('@.aiwg/flows/schemas/reproducibility-framework.yaml');
+      expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/reproducibility-framework.yaml');
     });
 
     it('should reference execution-mode schema', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('@.aiwg/flows/schemas/execution-mode.yaml');
+      expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/execution-mode.yaml');
     });
 
     it('should reference execution-snapshot schema', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('@.aiwg/flows/schemas/execution-snapshot.yaml');
+      expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/execution-snapshot.yaml');
     });
 
     it('should reference checkpoint schema', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('@.aiwg/ralph/schemas/checkpoint.yaml');
+      expect(content).toContain('@agentic/code/addons/ralph/schemas/checkpoint.yaml');
     });
 
     it('should have Reproducibility & Execution Modes section', async () => {
@@ -86,7 +86,7 @@ describe('Agent Schema Wiring - Reproducibility', () => {
 
     it('should have reproducibility checks', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('reproducibility validation');
+      expect(content).toContain('Reproducibility validation');
     });
   });
 
@@ -95,27 +95,27 @@ describe('Agent Schema Wiring - Reproducibility', () => {
 
     it('should have References section', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('## References');
+      expect(content).toContain('## Schema References');
     });
 
     it('should reference debug-provenance schema', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('@.aiwg/flows/schemas/debug-provenance.yaml');
+      expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/debug-provenance.yaml');
     });
 
     it('should reference reproducibility-framework schema', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('@.aiwg/flows/schemas/reproducibility-framework.yaml');
+      expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/reproducibility-framework.yaml');
     });
 
     it('should reference reliability-patterns schema', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('@.aiwg/flows/schemas/reliability-patterns.yaml');
+      expect(content).toContain('@agentic/code/frameworks/sdlc-complete/schemas/flows/reliability-patterns.yaml');
     });
 
     it('should reference checkpoint schema', async () => {
       const content = await readFile(agentPath, 'utf-8');
-      expect(content).toContain('@.aiwg/ralph/schemas/checkpoint.yaml');
+      expect(content).toContain('@agentic/code/addons/ralph/schemas/checkpoint.yaml');
     });
   });
 });

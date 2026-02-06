@@ -369,3 +369,4 @@ See @agentic/code/frameworks/sdlc-complete/agents/provenance-manager.md for the 
 - @agentic/code/addons/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for debug findings
 - @agentic/code/frameworks/sdlc-complete/schemas/flows/episodic-memory.yaml — Episodic memory for Reflexion-based learning
 - @agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml — Error recovery and fault tolerance patterns
+- @agentic/code/addons/ralph/schemas/checkpoint.yaml — Checkpoint and state persistence for debugging sessions

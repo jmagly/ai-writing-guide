@@ -35,14 +35,12 @@ export class DiscoveryService {
   private crossref: CrossRefClient;
   private arxiv: ArxivClient;
   private cache: CacheManager;
-  private corpusPath: string;
 
   constructor(config: DiscoveryConfig = {}) {
     this.semanticScholar = config.semanticScholar || new SemanticScholarClient();
     this.crossref = config.crossref || new CrossRefClient();
     this.arxiv = config.arxiv || new ArxivClient();
     this.cache = config.cache || new CacheManager();
-    this.corpusPath = config.corpusPath || '.aiwg/research/sources';
   }
 
   /**
@@ -140,7 +138,7 @@ export class DiscoveryService {
   /**
    * Analyze gaps in research corpus
    */
-  async analyzeGaps(corpusRefIds: string[]): Promise<GapReport> {
+  async analyzeGaps(_corpusRefIds: string[]): Promise<GapReport> {
     // For now, return a basic report structure
     // In a full implementation, this would analyze corpus metadata
     return {
@@ -323,7 +321,7 @@ export class DiscoveryService {
     paperId: string,
     remainingDepth: number,
     visited: Set<string>,
-    results: ResearchPaper[]
+    _results: ResearchPaper[]
   ): Promise<void> {
     if (remainingDepth === 0 || visited.has(paperId)) {
       return;
