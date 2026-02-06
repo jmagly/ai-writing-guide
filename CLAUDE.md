@@ -244,6 +244,13 @@ aiwg ralph-resume            # Resume paused loop
 | **Command Definitions** | `@src/extensions/commands/definitions.ts` |
 | **Extension Types** | `@src/extensions/types.ts` |
 
+## Commit and Output Conventions
+
+- Follow conventional commits: `type(scope): subject`
+- Use imperative mood ("add feature" not "added feature")
+- **No AI attribution** - never add Co-Authored-By, "Generated with", "Written by", or any tool branding to commits, PRs, docs, or code. This applies to every AI platform (Claude Code, Codex, Copilot, Cursor, etc.). The AI is a tool, not an author.
+- See `@.claude/rules/no-attribution.md` for full enforcement details
+
 ## Development
 
 ```bash
