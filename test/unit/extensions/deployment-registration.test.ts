@@ -117,17 +117,20 @@ describe('Deployment Registration', () => {
         provider: 'claude',
       });
 
-      const firstCount = registry.size;
+      const firstAgents = registry.getByType('agent');
+      const firstAgentIds = firstAgents.map(a => a.id).sort();
 
       await registerDeployedExtensions(registry, {
         agentsPath: '.claude/agents',
         provider: 'claude',
       });
 
-      const secondCount = registry.size;
+      const secondAgents = registry.getByType('agent');
+      const secondAgentIds = secondAgents.map(a => a.id).sort();
 
-      // Should replace, not duplicate
-      expect(secondCount).toBe(firstCount);
+      // Should replace, not duplicate - same agent IDs after re-registration
+      expect(secondAgentIds).toEqual(firstAgentIds);
+      expect(secondAgents.length).toBe(firstAgents.length);
     });
   });
 
