@@ -1,0 +1,284 @@
+{
+  "$schema": "https://aiwg.io/schemas/rules-manifest.json",
+  "version": "1.0.0",
+  "description": "AIWG SDLC framework rules - deployable enforcement policies",
+  "deployment": {
+    "platforms": {
+      "claude-code": {
+        "target": ".claude/rules/",
+        "mechanism": "file-copy",
+        "supported": true
+      },
+      "cursor": {
+        "target": ".cursor/rules/",
+        "mechanism": "file-copy",
+        "supported": true
+      },
+      "copilot": {
+        "target": ".github/copilot-instructions.md",
+        "mechanism": "content-injection",
+        "supported": true
+      },
+      "codex": {
+        "target": "~/.codex/instructions.md",
+        "mechanism": "content-injection",
+        "supported": true
+      },
+      "warp": {
+        "target": "WARP.md",
+        "mechanism": "content-injection",
+        "supported": true
+      },
+      "factory": {
+        "target": ".factory/rules/",
+        "mechanism": "file-copy",
+        "supported": true
+      },
+      "opencode": {
+        "target": ".opencode/rules/",
+        "mechanism": "file-copy",
+        "supported": true
+      }
+    }
+  },
+  "tiers": {
+    "core": {
+      "description": "Universal rules deployed to ALL platforms. Non-negotiable defaults every AIWG user can count on.",
+      "deploy": "always"
+    },
+    "sdlc": {
+      "description": "Rules specific to SDLC workflow enforcement. Deployed with `aiwg use sdlc`.",
+      "deploy": "with-framework"
+    },
+    "research": {
+      "description": "Rules for research corpus management. Deployed when research features are active.",
+      "deploy": "optional"
+    }
+  },
+  "rules": [
+    {
+      "name": "no-attribution",
+      "file": "no-attribution.md",
+      "enforcement": "critical",
+      "tier": "core",
+      "description": "Zero AI attribution in commits, PRs, docs, and code across all platforms",
+      "issue": "#295"
+    },
+    {
+      "name": "token-security",
+      "file": "token-security.md",
+      "enforcement": "critical",
+      "tier": "core",
+      "description": "Secure token handling - never hardcode, log, or expose tokens",
+      "issue": "#18"
+    },
+    {
+      "name": "versioning",
+      "file": "versioning.md",
+      "enforcement": "critical",
+      "tier": "core",
+      "description": "CalVer format enforcement - no leading zeros",
+      "issue": null
+    },
+    {
+      "name": "citation-policy",
+      "file": "citation-policy.md",
+      "enforcement": "critical",
+      "tier": "core",
+      "description": "Never fabricate citations, DOIs, URLs, or page numbers",
+      "issue": "#100"
+    },
+    {
+      "name": "anti-laziness",
+      "file": "anti-laziness.md",
+      "enforcement": "high",
+      "tier": "core",
+      "description": "Prevent test deletion, feature removal, and premature task abandonment",
+      "issue": "#264"
+    },
+    {
+      "name": "executable-feedback",
+      "file": "executable-feedback.md",
+      "enforcement": "high",
+      "tier": "core",
+      "description": "Execute tests before returning code - MetaGPT feedback loop",
+      "issue": "#101"
+    },
+    {
+      "name": "actionable-feedback",
+      "file": "actionable-feedback.md",
+      "enforcement": "high",
+      "tier": "sdlc",
+      "description": "Structured feedback with location, action, and rationale",
+      "issue": "#95"
+    },
+    {
+      "name": "mention-wiring",
+      "file": "mention-wiring.md",
+      "enforcement": "high",
+      "tier": "sdlc",
+      "description": "Wire @-mentions during artifact creation for traceability",
+      "issue": null
+    },
+    {
+      "name": "hitl-gates",
+      "file": "hitl-gates.md",
+      "enforcement": "high",
+      "tier": "sdlc",
+      "description": "Human-in-the-loop gates at SDLC phase transitions",
+      "issue": "#96"
+    },
+    {
+      "name": "hitl-patterns",
+      "file": "hitl-patterns.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Draft-then-edit workflow and human gate interaction patterns",
+      "issue": "#199"
+    },
+    {
+      "name": "human-gate-display",
+      "file": "human-gate-display.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Rich display format for human approval gates",
+      "issue": "#139"
+    },
+    {
+      "name": "failure-mitigation",
+      "file": "failure-mitigation.md",
+      "enforcement": "high",
+      "tier": "core",
+      "description": "Mitigation strategies for LLM failure archetypes",
+      "issue": "#140"
+    },
+    {
+      "name": "agent-fallback",
+      "file": "agent-fallback.md",
+      "enforcement": "high",
+      "tier": "sdlc",
+      "description": "Graceful degradation when agents fail or are unavailable",
+      "issue": "#141"
+    },
+    {
+      "name": "provenance-tracking",
+      "file": "provenance-tracking.md",
+      "enforcement": "high",
+      "tier": "sdlc",
+      "description": "W3C PROV-compliant provenance for all artifacts",
+      "issue": "#104"
+    },
+    {
+      "name": "tao-loop",
+      "file": "tao-loop.md",
+      "enforcement": "high",
+      "tier": "sdlc",
+      "description": "Thought-Action-Observation loop standardization",
+      "issue": "#162"
+    },
+    {
+      "name": "thought-protocol",
+      "file": "thought-protocol.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Six thought types for enhanced reasoning transparency",
+      "issue": "#158"
+    },
+    {
+      "name": "reasoning-sections",
+      "file": "reasoning-sections.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Explicit reasoning sections in artifact templates",
+      "issue": "#157"
+    },
+    {
+      "name": "few-shot-examples",
+      "file": "few-shot-examples.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "2-3 concrete examples in every agent system prompt",
+      "issue": "#193"
+    },
+    {
+      "name": "best-output-selection",
+      "file": "best-output-selection.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Select best iteration output, not just the final one",
+      "issue": "#168"
+    },
+    {
+      "name": "reproducibility",
+      "file": "reproducibility.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Reproducibility practices for agentic workflows",
+      "issue": "#112"
+    },
+    {
+      "name": "reproducibility-validation",
+      "file": "reproducibility-validation.md",
+      "enforcement": "high",
+      "tier": "sdlc",
+      "description": "Validate workflow reproducibility and detect non-determinism",
+      "issue": "#125"
+    },
+    {
+      "name": "progressive-disclosure",
+      "file": "progressive-disclosure.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Incremental artifact section revelation to reduce cognitive load",
+      "issue": "#188"
+    },
+    {
+      "name": "conversable-agent-interface",
+      "file": "conversable-agent-interface.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Standardized send/receive/reply agent interface",
+      "issue": "#174"
+    },
+    {
+      "name": "auto-reply-chains",
+      "file": "auto-reply-chains.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Decentralized auto-reply conversation patterns",
+      "issue": "#183"
+    },
+    {
+      "name": "criticality-panel-sizing",
+      "file": "criticality-panel-sizing.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Task criticality determines ensemble review panel size",
+      "issue": "#161"
+    },
+    {
+      "name": "qualified-references",
+      "file": "qualified-references.md",
+      "enforcement": "medium",
+      "tier": "sdlc",
+      "description": "Semantic relationship qualifiers for @-mentions",
+      "issue": "#116"
+    },
+    {
+      "name": "research-metadata",
+      "file": "research-metadata.md",
+      "enforcement": "high",
+      "tier": "research",
+      "description": "FAIR-compliant metadata for research documents",
+      "issue": "#105"
+    },
+    {
+      "name": "index-generation",
+      "file": "index-generation.md",
+      "enforcement": "medium",
+      "tier": "research",
+      "description": "Auto-generate INDEX.md from YAML frontmatter",
+      "issue": "#136"
+    }
+  ]
+}
