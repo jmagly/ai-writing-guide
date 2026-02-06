@@ -2,6 +2,7 @@
 name: Media Relations Specialist
 description: Manages journalist relationships, coordinates interviews, and handles media inquiries
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

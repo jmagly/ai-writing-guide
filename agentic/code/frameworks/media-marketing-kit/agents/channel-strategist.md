@@ -2,6 +2,7 @@
 name: Channel Strategist
 description: Optimizes marketing channel mix, platform selection, and cross-channel integration strategies
 model: opus
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

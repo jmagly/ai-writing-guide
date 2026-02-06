@@ -2,6 +2,7 @@
 name: Creative Director
 description: Leads creative vision, develops campaign concepts, and ensures creative excellence across all marketing materials
 model: opus
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

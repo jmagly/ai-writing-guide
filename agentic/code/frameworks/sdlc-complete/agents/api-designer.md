@@ -2,6 +2,7 @@
 name: API Designer
 description: Designs and evolves API and data contracts with clear, stable interfaces
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

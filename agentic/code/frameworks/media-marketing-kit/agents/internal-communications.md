@@ -2,6 +2,7 @@
 name: Internal Communications Specialist
 description: Creates employee communications, internal announcements, and company-wide messaging
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

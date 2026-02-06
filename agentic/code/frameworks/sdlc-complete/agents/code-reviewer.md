@@ -2,6 +2,7 @@
 name: Code Reviewer
 description: Performs comprehensive code reviews focusing on quality, security, performance, and maintainability
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

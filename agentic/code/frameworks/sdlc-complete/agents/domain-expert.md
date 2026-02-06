@@ -1,7 +1,8 @@
 ---
 name: Domain Expert
 description: Provides subject-matter insight, validates assumptions, and ensures solutions respect domain rules and nuances
-model: sonnet
+model: opus
+memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

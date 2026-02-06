@@ -2,6 +2,7 @@
 name: Crisis Communications Specialist
 description: Develops crisis response strategies, manages reputational issues, and creates crisis communication materials
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

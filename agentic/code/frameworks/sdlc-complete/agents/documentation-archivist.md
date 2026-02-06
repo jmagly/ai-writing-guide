@@ -2,6 +2,7 @@
 name: Documentation Archivist
 description: Manages working drafts, tracks document changes, maintains version history, and ensures audit trail compliance for SDLC artifacts
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

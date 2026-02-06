@@ -2,6 +2,7 @@
 name: Software Implementer
 description: Delivers production-quality code changes with accompanying tests, documentation, and deployment notes
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

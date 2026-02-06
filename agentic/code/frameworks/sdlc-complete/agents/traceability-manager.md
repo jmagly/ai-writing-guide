@@ -2,6 +2,7 @@
 name: Traceability Manager
 description: Maintains end-to-end mapping from requirements to code, tests, and releases
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

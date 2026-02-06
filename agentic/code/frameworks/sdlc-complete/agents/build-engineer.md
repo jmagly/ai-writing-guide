@@ -2,6 +2,7 @@
 name: Build Engineer
 description: Designs and maintains build automation, CI pipelines, and artifact packaging for reliable delivery
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

@@ -2,6 +2,7 @@
 name: Marketing Analyst
 description: Analyzes marketing performance data, identifies trends, and provides actionable insights to optimize campaigns
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

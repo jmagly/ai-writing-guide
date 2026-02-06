@@ -2,6 +2,7 @@
 name: Business Process Analyst
 description: Models current and target-state business processes, stakeholders, and value flows to ground product requirements
 model: sonnet
+memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

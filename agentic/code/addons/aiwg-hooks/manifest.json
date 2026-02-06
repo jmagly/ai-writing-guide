@@ -2,8 +2,8 @@
   "id": "aiwg-hooks",
   "type": "addon",
   "name": "AIWG Hooks",
-  "version": "1.0.0",
-  "description": "Claude Code hook templates for workflow tracing, permissions, and session management",
+  "version": "1.1.0",
+  "description": "Claude Code hook templates for workflow tracing, permissions, session management, context injection, and quality gates",
   "core": false,
   "autoInstall": false,
   "author": "AIWG Contributors",
@@ -15,11 +15,19 @@
     "trace",
     "permissions",
     "session",
-    "observability"
+    "observability",
+    "context-injection",
+    "quality-gates",
+    "pretooluse",
+    "security"
   ],
   "researchFoundation": {
     "REF-001": "BP-6 Observability - Production workflows require trace capture",
-    "REF-002": "Archetype 4 - Recovery requires execution history"
+    "REF-002": "Archetype 4 - Recovery requires execution history",
+    "REF-071": "METR Reward Hacking - Test deletion prevention",
+    "REF-072": "Anthropic Misalignment - Sabotage detection",
+    "REF-013": "MetaGPT Executable Feedback - Tests before return",
+    "REF-015": "Self-Refine - Quality enforcement in iteration loops"
   },
   "entry": {
     "hooks": "hooks/",
@@ -27,12 +35,101 @@
     "templates": "templates/"
   },
   "hooks": [
-    "aiwg-trace",
-    "aiwg-permissions",
-    "aiwg-session"
+    {
+      "id": "aiwg-trace",
+      "type": "executable",
+      "description": "Workflow trace capture for debugging and reproducibility",
+      "file": "hooks/aiwg-trace.js"
+    },
+    {
+      "id": "aiwg-permissions",
+      "type": "executable",
+      "description": "Tool permission validation and enforcement",
+      "file": "hooks/aiwg-permissions.js"
+    },
+    {
+      "id": "aiwg-session",
+      "type": "executable",
+      "description": "Session state management and context preservation",
+      "file": "hooks/aiwg-session.js"
+    },
+    {
+      "id": "pretooluse-context",
+      "type": "documentation",
+      "description": "PreToolUse hook templates for targeted context injection (Claude Code v2.1.9+)",
+      "file": "hooks/pretooluse-context.md",
+      "issues": ["#284"],
+      "patterns": [
+        "aiwg-artifact-guard",
+        "bash-security-guard",
+        "voice-profile-reminder",
+        "research-citation-guard"
+      ]
+    },
+    {
+      "id": "quality-gates",
+      "type": "documentation",
+      "description": "Quality gate hook templates for comprehensive validation (Claude Code v2.1.3+)",
+      "file": "hooks/quality-gates.md",
+      "issues": ["#289", "#264"],
+      "patterns": [
+        "pre-commit-tests",
+        "security-gate",
+        "pre-push-validation",
+        "anti-laziness-gate"
+      ]
+    }
   ],
   "scripts": [
     "trace-viewer",
     "trace-export"
+  ],
+  "features": {
+    "observability": {
+      "description": "Workflow trace capture and session management",
+      "hooks": ["aiwg-trace", "aiwg-session"]
+    },
+    "security": {
+      "description": "Tool permissions and security pattern enforcement",
+      "hooks": ["aiwg-permissions", "bash-security-guard", "security-gate"]
+    },
+    "context-injection": {
+      "description": "Smart context loading at point of tool use",
+      "hooks": ["pretooluse-context"],
+      "requires": "Claude Code v2.1.9+"
+    },
+    "quality-gates": {
+      "description": "Pre-commit/pre-push validation and anti-laziness detection",
+      "hooks": ["quality-gates"],
+      "requires": "Claude Code v2.1.3+"
+    }
+  },
+  "platformSupport": {
+    "claude-code": {
+      "version": "2.1.3+",
+      "features": ["all"],
+      "notes": "Full support for PreToolUse, quality gates with 10-minute timeout"
+    },
+    "cursor": {
+      "features": ["observability"],
+      "notes": "Use .cursor/rules/ for path-scoped context, native git hooks for quality gates"
+    },
+    "copilot": {
+      "features": ["observability"],
+      "notes": "Use .github/copilot/ for context, GitHub Actions for quality gates"
+    },
+    "generic": {
+      "features": ["observability"],
+      "notes": "Use CLAUDE.md for context, native git hooks or CI/CD for quality gates"
+    }
+  },
+  "installation": {
+    "recommended": "Add hook configurations to .claude/settings.json (project or user-wide)",
+    "alternative": "Use native git hooks (.git/hooks/) for cross-platform compatibility"
+  },
+  "documentation": [
+    "hooks/pretooluse-context.md - PreToolUse context injection patterns",
+    "hooks/quality-gates.md - Quality gate hook templates",
+    "README.md - Addon overview and setup"
   ]
 }

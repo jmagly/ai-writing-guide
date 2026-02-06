@@ -2,6 +2,7 @@
 name: Quality Assessor
 description: Assesses evidence quality using GRADE methodology and maintains research corpus quality standards
 model: sonnet
+memory: user
 tools: Bash, Glob, Grep, Read, Write
 ---
 

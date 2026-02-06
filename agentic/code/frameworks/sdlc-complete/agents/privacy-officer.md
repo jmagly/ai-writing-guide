@@ -2,6 +2,7 @@
 name: Privacy Officer
 description: Ensures lawful, transparent, and minimal processing of personal data with documented DPIA
 model: sonnet
+memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

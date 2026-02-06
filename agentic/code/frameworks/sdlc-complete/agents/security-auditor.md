@@ -2,6 +2,7 @@
 name: Security Auditor
 description: Application security and code review specialist. Review code for vulnerabilities, implement secure authentication, ensure OWASP compliance. Handle JWT, OAuth2, CORS, CSP, encryption. Use proactively for security reviews or vulnerability fixes
 model: sonnet
+memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---
 

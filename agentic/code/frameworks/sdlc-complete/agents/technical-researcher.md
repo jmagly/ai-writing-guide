@@ -2,6 +2,7 @@
 name: Technical Researcher
 description: Technical research and evaluation specialist. Analyze code repositories, technical documentation, implementation details. Use proactively for evaluating technical solutions, reviewing APIs, or assessing code quality
 model: sonnet
+memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---
 

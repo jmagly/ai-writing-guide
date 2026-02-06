@@ -2,6 +2,7 @@
 name: PR Specialist
 description: Develops public relations strategies, writes press releases, and manages media relations
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

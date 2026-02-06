@@ -2,6 +2,7 @@
 name: Database Optimizer
 description: Database performance and schema optimization specialist. Optimize queries, design indexes, handle migrations, solve N+1 problems. Use proactively for database performance issues or schema optimization
 model: sonnet
+memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---
 

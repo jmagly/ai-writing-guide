@@ -2,6 +2,7 @@
 name: Reporting Specialist
 description: Creates comprehensive marketing reports, dashboards, and data visualizations for stakeholders
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

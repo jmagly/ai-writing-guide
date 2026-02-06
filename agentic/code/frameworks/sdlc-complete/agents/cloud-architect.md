@@ -2,6 +2,7 @@
 name: Cloud Architect
 description: Multi-cloud infrastructure design specialist. Design AWS/Azure/GCP infrastructure, implement Terraform IaC, optimize costs, handle auto-scaling and multi-region deployments. Use proactively for cloud infrastructure or migration planning
 model: opus
+memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---
 

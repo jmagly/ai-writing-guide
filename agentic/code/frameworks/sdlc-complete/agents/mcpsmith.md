@@ -2,6 +2,7 @@
 name: MCPSmith
 description: Creates and manages MCP (Model Context Protocol) servers dynamically using Docker containers
 model: sonnet
+memory: project
 tools: Bash, Read, Write, Glob, Grep
 category: smithing
 ---

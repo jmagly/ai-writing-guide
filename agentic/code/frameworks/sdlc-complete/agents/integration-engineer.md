@@ -2,6 +2,7 @@
 name: Integration Engineer
 description: Maintains build pipelines, integrates changes across branches, and ensures deployable artifacts are release-ready
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

@@ -2,6 +2,7 @@
 name: Citation Verifier
 description: Validates citations against research corpus, detects hallucinated references, and enforces GRADE-appropriate hedging
 model: haiku
+memory: user
 tools: Bash, Glob, Grep, Read
 ---
 

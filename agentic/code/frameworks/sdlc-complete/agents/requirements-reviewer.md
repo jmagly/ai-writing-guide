@@ -2,6 +2,7 @@
 name: Requirements Reviewer
 description: Evaluates requirements artifacts for completeness, consistency, risk, and testability before downstream work begins
 model: sonnet
+memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

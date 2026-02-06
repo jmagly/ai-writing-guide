@@ -2,6 +2,7 @@
 name: Project Manager
 description: Plans, tracks, and steers delivery to hit scope, schedule, quality, and risk targets
 model: sonnet
+memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

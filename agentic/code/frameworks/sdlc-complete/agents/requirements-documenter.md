@@ -2,6 +2,7 @@
 name: Requirements Documenter
 description: Specializes in documenting requirements artifacts (use cases, specs, NFRs) with clarity, completeness, and traceability
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

@@ -2,6 +2,7 @@
 name: Market Researcher
 description: Conducts market analysis, competitive intelligence, and audience research to inform marketing strategy
 model: opus
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

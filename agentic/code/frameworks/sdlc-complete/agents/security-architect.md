@@ -2,6 +2,7 @@
 name: Security Architect
 description: Leads threat modeling, security requirements, and gates across the lifecycle
 model: opus
+memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

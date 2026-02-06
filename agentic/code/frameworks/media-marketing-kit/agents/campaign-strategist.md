@@ -2,6 +2,7 @@
 name: Campaign Strategist
 description: Designs comprehensive campaign architectures, channel strategies, and measurement frameworks for marketing initiatives
 model: opus
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 
