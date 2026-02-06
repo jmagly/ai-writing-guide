@@ -213,7 +213,10 @@ describe('CacheManager', () => {
   });
 
   describe('error handling', () => {
-    it('should throw ResearchError on write failure', async () => {
+    // Root can write to read-only directories, so skip in CI Docker containers
+    const isRoot = process.getuid?.() === 0;
+
+    it.skipIf(isRoot)('should throw ResearchError on write failure', async () => {
       // Create a read-only cache directory
       const readOnlyDir = join(testCacheDir, 'readonly');
       await fs.mkdir(readOnlyDir, { recursive: true });
