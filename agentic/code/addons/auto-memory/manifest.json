@@ -1,0 +1,149 @@
+{
+  "name": "auto-memory",
+  "version": "1.0.0",
+  "description": "Automatic memory seed templates for AIWG projects",
+  "type": "addon",
+  "platform": {
+    "primary": "claude-code",
+    "minimum_version": "2.1.32",
+    "cross_platform": "Memory concepts are transferable; implementation is platform-specific",
+    "compatibility": {
+      "claude-code": {
+        "supported": true,
+        "version": "2.1.32+",
+        "notes": "Native automatic memory support"
+      },
+      "cursor": {
+        "supported": "partial",
+        "notes": "Has project memory but different file structure; manual adaptation required"
+      },
+      "github-copilot": {
+        "supported": false,
+        "notes": "No automatic memory feature; use workspace context instead"
+      },
+      "warp": {
+        "supported": false,
+        "notes": "No equivalent feature"
+      },
+      "opencode": {
+        "supported": "partial",
+        "notes": "Custom memory implementation; concepts transferable"
+      }
+    }
+  },
+  "files": [
+    "seeds/MEMORY.md",
+    "seeds/testing.md",
+    "seeds/debugging.md",
+    "seeds/architecture.md",
+    "README.md"
+  ],
+  "integration": {
+    "scaffolding": {
+      "command": "aiwg new",
+      "trigger": "automatic",
+      "conditions": [
+        "Claude Code v2.1.32+ detected",
+        "Project name provided"
+      ],
+      "target_directory": "~/.claude/projects/<project-name>/memory/",
+      "action": "copy_seeds"
+    },
+    "manual_installation": {
+      "command": "cp agentic/code/addons/auto-memory/seeds/*.md ~/.claude/projects/<project>/memory/",
+      "when": "Manual setup or non-Claude Code platform"
+    }
+  },
+  "related_mechanisms": {
+    "claude_md": {
+      "path": "CLAUDE.md",
+      "purpose": "Static project instructions",
+      "versioned": true,
+      "scope": "team-wide"
+    },
+    "agent_definitions": {
+      "path": ".claude/agents/",
+      "purpose": "Specialized AI personas",
+      "versioned": true,
+      "scope": "task-specific"
+    },
+    "ralph_debug_memory": {
+      "path": ".aiwg/ralph/debug-memory/",
+      "purpose": "Loop iteration debugging",
+      "versioned": false,
+      "scope": "per-loop, ephemeral"
+    }
+  },
+  "memory_topics": [
+    {
+      "file": "MEMORY.md",
+      "topic": "project-overview",
+      "content": [
+        "AIWG framework concepts",
+        "Artifact structure",
+        "Key commands",
+        "Team conventions (auto-populated)"
+      ]
+    },
+    {
+      "file": "testing.md",
+      "topic": "testing-patterns",
+      "content": [
+        "Test framework detection",
+        "Common patterns (TDD, coverage)",
+        "Known gotchas (async, flaky tests)",
+        "Debug strategies"
+      ]
+    },
+    {
+      "file": "debugging.md",
+      "topic": "debugging-strategies",
+      "content": [
+        "Common issues and resolutions",
+        "Systematic debugging process",
+        "Stack-specific error patterns",
+        "Performance debugging"
+      ]
+    },
+    {
+      "file": "architecture.md",
+      "topic": "architecture-decisions",
+      "content": [
+        "Key design choices",
+        "Patterns used",
+        "Technology stack justifications",
+        "Cross-cutting concerns"
+      ]
+    }
+  ],
+  "maintenance": {
+    "pruning": {
+      "frequency": "monthly or quarterly",
+      "triggers": [
+        "File exceeds 500 lines",
+        "Patterns no longer applicable",
+        "After major architectural changes"
+      ]
+    },
+    "quality_guidelines": [
+      "Specific over general",
+      "Actionable with reproduction steps",
+      "Accurate and up-to-date",
+      "Concise, high signal-to-noise"
+    ]
+  },
+  "evolution": {
+    "seed_state": "Structured templates with AIWG guidance",
+    "learned_state": "Project-specific patterns and conventions",
+    "migration_path": "Promote stable patterns to CLAUDE.md or ADRs"
+  },
+  "tags": [
+    "memory",
+    "learning",
+    "context",
+    "scaffolding",
+    "claude-code"
+  ],
+  "dependencies": [],
+  "license": "MIT"
+}
