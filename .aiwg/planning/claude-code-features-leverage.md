@@ -685,9 +685,339 @@ aiwg trace-session "inception-elaboration"
 4. **Named Session Persistence**: How long do named sessions persist?
    - Action: Test and document lifecycle
 
+---
+
+## Phase 2: Features Leverage (v2.0.73 → v2.1.33)
+
+Review of Claude Code changelog (v2.0.73 → v2.1.33, Dec 2025 – Feb 2026) for AIWG optimization opportunities.
+
+### 12. Opus 4.6 Model (v2.1.32)
+
+**Feature**: Claude Opus 4.6 now available as the most capable model.
+
+**Impact on AIWG**: **HIGH** - Our orchestration and complex multi-agent workflows benefit from the most capable model.
+
+**AIWG Actions**:
+1. Update agent definitions to use `opus` for complex orchestration agents (architecture designer, executive orchestrator)
+2. Keep `sonnet` for high-volume agents (code reviewer, test engineer)
+3. Keep `haiku` for lightweight tasks (Explore subagents, quick lookups)
+4. Document model selection guidance in Agent Design Bible
+
+### 13. Agent Teams (v2.1.32)
+
+**Feature**: Multi-agent collaboration via tmux sessions with TeammateIdle and TaskCompleted hooks.
+
+**Impact on AIWG**: **CRITICAL** - Native multi-agent coordination could replace or augment our orchestrator patterns.
+
+**Current Pattern** (sequential orchestration):
+```
+Orchestrator → Task(agent-1) → wait → Task(agent-2) → wait → synthesize
+```
+
+**New Pattern** (team collaboration):
+```
+Agent-1 ←→ Agent-2 ←→ Agent-3
+    ↓ TeammateIdle    ↓ TaskCompleted
+         Orchestrator
+```
+
+**AIWG Actions**:
+1. Evaluate agent teams for SDLC phase workflows (requirements ↔ architecture ↔ security)
+2. Create hook handlers for TeammateIdle/TaskCompleted events
+3. Document token cost vs benefit for team-based workflows
+4. Consider team-based code review (reviewer + security auditor + test engineer)
+
+**Status**: Experimental (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`). Monitor for stability before adoption.
+
+### 14. Automatic Memory (v2.1.32)
+
+**Feature**: Claude automatically records and recalls memories as it works. Memory stored in `~/.claude/projects/<project>/memory/`.
+
+**Impact on AIWG**: **HIGH** - Enables cross-session learning for AIWG workflows without manual memory management.
+
+**AIWG Actions**:
+1. Seed MEMORY.md with AIWG-specific patterns and conventions
+2. Use auto-memory for tracking recurring issues across Ralph loops
+3. Document memory management best practices for AIWG users
+4. Consider pre-seeding project memory during `aiwg new` scaffolding
+
+### 15. Agent Memory Frontmatter (v2.1.33)
+
+**Feature**: `memory` field in agent frontmatter with `user`, `project`, or `local` scope.
+
+**Impact on AIWG**: **HIGH** - Agents can now accumulate domain knowledge across sessions.
+
+**AIWG Actions**:
+1. Add `memory: project` to all SDLC agents that learn from project context:
+   - Architecture Designer, Requirements Analyst, Domain Expert
+2. Add `memory: user` to cross-project agents:
+   - Security Auditor (remembers org-wide security patterns)
+   - Technical Writer (remembers style preferences)
+3. Document memory scope selection criteria in Agent Design Bible
+4. Update agent template with memory field
+
+**Example**:
+```yaml
+---
+name: "Architecture Designer"
+model: "opus"
+memory: project
+tools:
+  allow: [Read, Write, Grep, Glob, Task(Explore)]
+---
+```
+
+### 16. Task(agent_type) Restriction (v2.1.33)
+
+**Feature**: Restrict which sub-agents an agent can spawn via `Task(agent_type)` in tools frontmatter.
+
+**Impact on AIWG**: **HIGH** - Enables security-scoped agent hierarchies. Prevents agents from spawning unrestricted subagents.
+
+**AIWG Actions**:
+1. Add Task restrictions to all agent definitions:
+   - Analyst agents: `Task(Explore)` only
+   - Implementation agents: `Task(Explore)`, `Task(Bash)`
+   - Orchestrator agents: Full `Task` access
+2. Create permission tier matrix mapping agent roles to allowed subagent types
+3. Update Agent Design Bible with subagent restriction patterns
+
+**Example**:
+```yaml
+---
+name: "Security Auditor"
+tools:
+  allow:
+    - Read
+    - Grep
+    - Glob
+    - Task(Explore)        # Can explore codebase
+  deny:
+    - Write                # Read-only
+    - Bash                 # No shell access
+    - Task(Bash)           # Can't spawn Bash subagents
+---
+```
+
+### 17. Task Management System (v2.1.16)
+
+**Feature**: Built-in task tracking with dependency management (TaskCreate, TaskUpdate, TaskGet, TaskList, TaskStop).
+
+**Impact on AIWG**: **HIGH** - Native dependency-aware task tracking for SDLC workflows.
+
+**Current Pattern**: Manual tracking in `.aiwg/working/` files.
+
+**New Pattern**: Use built-in tasks for iteration tracking within sessions.
+
+**AIWG Actions**:
+1. Use TaskCreate at flow start to create phase checklist
+2. Track artifact completion status via TaskUpdate
+3. Use dependency tracking (blocks/blockedBy) for ordered deliverables
+4. Integrate with Ralph loop iteration tracking
+5. Document task management patterns for SDLC flows
+
+### 18. Merged Skills and Commands (v2.1.3)
+
+**Feature**: Slash commands and skills unified into a single concept. Both `.claude/commands/` and `.claude/skills/` work identically.
+
+**Impact on AIWG**: Simplifies our distribution model - no need to differentiate between commands and skills.
+
+**AIWG Actions**:
+1. Consolidate documentation to refer to "skills" uniformly
+2. Verify all AIWG skills work from both directories
+3. Update plugin manifests if needed
+
+### 19. Indexed Arguments (v2.1.19)
+
+**Feature**: `$ARGUMENTS[0]`, `$ARGUMENTS[1]` for accessing individual arguments.
+
+**Impact on AIWG**: Enables more structured skill arguments.
+
+**AIWG Actions**:
+1. Update skills that accept structured arguments to use indexed syntax
+2. Document indexed argument patterns for AIWG skill developers
+
+### 20. Plugin System (v2.1.14+)
+
+**Feature**: Full plugin marketplace with discovery, installation, pinning to git SHAs, and auto-update.
+
+**Impact on AIWG**: **CRITICAL** - This is AIWG's primary distribution mechanism.
+
+**AIWG Actions**:
+1. Ensure AIWG plugins are properly registered in marketplace
+2. Pin stable releases to git commit SHAs
+3. Test auto-update behavior for AIWG plugins
+4. Document marketplace publishing workflow
+
+### 21. MCP Tool Search Auto Mode (v2.1.7)
+
+**Feature**: MCP tool descriptions automatically deferred when exceeding 10% of context window.
+
+**Impact on AIWG**: **HIGH** - AIWG MCP servers (Gitea, Hound, IT Assets, Fortemi) can have many tools without context bloat.
+
+**AIWG Actions**:
+1. Verify our MCP servers work correctly with auto-deferred tool discovery
+2. Optimize tool descriptions for ToolSearch discoverability
+3. Document `auto:N` threshold configuration for AIWG users
+4. Test MCP server behavior when tools are loaded on demand vs upfront
+
+### 22. PreToolUse additionalContext (v2.1.9)
+
+**Feature**: PreToolUse hooks can return `additionalContext` that gets injected into the model's context.
+
+**Impact on AIWG**: **HIGH** - Enables dynamic context injection without bloating CLAUDE.md.
+
+**AIWG Actions**:
+1. Create PreToolUse hook that injects AIWG conventions when writing to `.aiwg/`:
+   - Template format requirements
+   - Naming conventions
+   - Required @-mention patterns
+2. Inject security rules when Bash tool is invoked
+3. Inject voice profile when Write tool is used for content files
+4. This is a lighter-weight alternative to loading everything into CLAUDE.md
+
+**Example Hook**:
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write(.aiwg/**)",
+        "hooks": [{
+          "type": "command",
+          "command": "echo '{\"additionalContext\": \"Follow AIWG artifact conventions: include frontmatter, references section, @-mentions.\"}'"
+        }]
+      }
+    ]
+  }
+}
+```
+
+### 23. Hook Timeout Increase (v2.1.3)
+
+**Feature**: Hook execution timeout increased from 60 seconds to 10 minutes.
+
+**Impact on AIWG**: Test suites and security scans can now run as hooks without timeout risk.
+
+**AIWG Actions**:
+1. Enable pre-commit hooks that run full test suites
+2. Add security gate hooks that run comprehensive scans
+3. Update hook documentation with new timeout limits
+
+### 24. PDF Page Ranges (v2.1.30)
+
+**Feature**: Read tool supports `pages` parameter for PDFs. Large PDFs return lightweight references when @-mentioned.
+
+**Impact on AIWG**: Research corpus PDFs can be selectively read without consuming full context.
+
+**AIWG Actions**:
+1. Update research tools to use page ranges when reading research papers
+2. Document page range patterns for citation verification workflows
+3. Update corpus health tools to leverage lightweight PDF references
+
+### 25. Session-PR Linking (v2.1.27)
+
+**Feature**: Sessions auto-link to PRs from `gh pr create`. `--from-pr` flag for resuming.
+
+**Impact on AIWG**: Enables PR-centric workflows with automatic session tracking.
+
+**AIWG Actions**:
+1. Document PR-linked session patterns for code review flows
+2. Add `--from-pr` to PR review skill workflow
+3. Leverage session URL attribution in commits
+
+### 26. Large Tool Outputs to Disk (v2.1.2)
+
+**Feature**: Large bash/tool outputs saved to disk instead of truncated, accessible via file references.
+
+**Impact on AIWG**: Full build outputs, test results, and log files are now accessible without truncation.
+
+**AIWG Actions**:
+1. Update Ralph loop patterns to read full test output from disk references
+2. Improve debug memory with complete error context
+3. Update executable feedback patterns to handle disk-based outputs
+
+### 27. Partial Summarization (v2.1.32)
+
+**Feature**: "Summarize from here" message selector for partial conversation summarization.
+
+**Impact on AIWG**: Better context management for long SDLC sessions.
+
+**AIWG Actions**:
+1. Document partial summarization as a context management strategy
+2. Use in long-running flows to preserve recent work while compacting history
+
+### 28. Skills from Additional Directories (v2.1.32)
+
+**Feature**: Skills from `--add-dir` directories auto-loaded. Nested `.claude/skills/` directories auto-discovered.
+
+**Impact on AIWG**: AIWG skills deployed to multiple directories are automatically available.
+
+**AIWG Actions**:
+1. Verify AIWG skills in monorepo setups work with nested discovery
+2. Document `--add-dir` patterns for multi-project AIWG deployments
+
+### 29. Security Fixes (v2.1.2, v2.1.6, v2.1.7)
+
+**Features**: Fixed permission bypass via shell line continuation, wildcard permission matching with shell operators, command injection in bash processing.
+
+**Impact on AIWG**: Improved security baseline for our permission-based agent isolation.
+
+**AIWG Actions**:
+1. Audit AIWG permission patterns against fixed vulnerabilities
+2. Update security documentation for agents
+3. Verify agent isolation still works correctly after permission system changes
+
+## Feature → AIWG Impact Matrix (v2.0.73 → v2.1.33)
+
+| Feature | Version | Impact | Priority | Status |
+|---------|---------|--------|----------|--------|
+| Opus 4.6 | v2.1.32 | HIGH | P0 | Available |
+| Agent Teams | v2.1.32 | CRITICAL | P1 | Experimental |
+| Automatic Memory | v2.1.32 | HIGH | P0 | Available |
+| Agent Memory Frontmatter | v2.1.33 | HIGH | P0 | Available |
+| Task(agent_type) Restriction | v2.1.33 | HIGH | P0 | Available |
+| Task Management | v2.1.16 | HIGH | P1 | Available |
+| Merged Skills/Commands | v2.1.3 | MEDIUM | P2 | Available |
+| Indexed Arguments | v2.1.19 | LOW | P2 | Available |
+| Plugin System | v2.1.14 | CRITICAL | P0 | Available |
+| MCP Auto Mode | v2.1.7 | HIGH | P1 | Available |
+| PreToolUse additionalContext | v2.1.9 | HIGH | P1 | Available |
+| Hook Timeout 10min | v2.1.3 | MEDIUM | P2 | Available |
+| PDF Page Ranges | v2.1.30 | MEDIUM | P2 | Available |
+| Session-PR Linking | v2.1.27 | MEDIUM | P2 | Available |
+| Large Outputs to Disk | v2.1.2 | HIGH | P1 | Available |
+| Partial Summarization | v2.1.32 | MEDIUM | P2 | Available |
+| Skills from --add-dir | v2.1.32 | MEDIUM | P2 | Available |
+| Security Fixes | Various | HIGH | P0 | Complete |
+
+## Immediate Action Items (P0)
+
+1. **Update agent definitions** with `memory: project/user` and `Task(agent_type)` restrictions
+2. **Verify plugin marketplace** registration and SHA pinning
+3. **Update model references** to include Opus 4.6 where appropriate
+4. **Seed auto-memory** with AIWG patterns for new projects
+5. **Audit permissions** against security fixes
+
+## Near-Term Action Items (P1)
+
+1. **Evaluate agent teams** for SDLC workflows (when stable)
+2. **Create PreToolUse hooks** for AIWG context injection
+3. **Leverage MCP auto mode** for large MCP tool sets
+4. **Adopt task management** for flow tracking within sessions
+5. **Update executable feedback** for disk-based tool outputs
+
+## Open Questions (Updated)
+
+1. **Agent Teams Stability**: When will teams exit experimental? Monitor releases.
+2. **Memory Persistence**: How does auto-memory interact with `.aiwg/` artifacts? Test overlap.
+3. **MCP Auto Mode Thresholds**: What's the optimal `auto:N` value for our tool count? Benchmark.
+4. **Task Management vs Ralph**: How do built-in tasks complement Ralph loop tracking? Design integration.
+5. **Hook Performance**: Does additionalContext injection add latency? Benchmark.
+
 ## Revision History
 
 | Date | Author | Changes |
 |------|--------|---------|
 | 2025-12-10 | AIWG Analysis | Initial feature leverage analysis from changelog review |
 | 2025-12-10 | AIWG Analysis | Added @-mention wiring utilities to aiwg-utils addon plan |
+| 2026-02-06 | AIWG Analysis | Phase 2 analysis: v2.0.73 → v2.1.33 (18 new feature assessments) |
