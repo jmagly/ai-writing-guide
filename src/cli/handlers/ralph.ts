@@ -41,6 +41,7 @@ function parseRalphArgs(args: string[]): {
   internal?: boolean;
   help?: boolean;
   loopId?: string;
+  provider?: string;
 } {
   const result: ReturnType<typeof parseRalphArgs> = {};
   let i = 0;
@@ -81,6 +82,8 @@ function parseRalphArgs(args: string[]): {
       result.enableEarlyStopping = false;
     } else if (arg === '--loop-id') {
       result.loopId = args[++i];
+    } else if (arg === '--provider') {
+      result.provider = args[++i];
     } else if (!arg.startsWith('-') && !result.objective) {
       result.objective = arg;
     }
@@ -154,6 +157,7 @@ export class RalphHandler implements CommandHandler {
         enableBestOutput: parsed.enableBestOutput,
         enableEarlyStopping: parsed.enableEarlyStopping,
         loopId: parsed.loopId,
+        provider: parsed.provider,
       };
 
       const result = await launchExternalRalph(ctx.frameworkRoot, process.cwd(), options);
@@ -193,6 +197,7 @@ OPTIONS:
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
   --loop-id <id>          Use specific loop ID
+  --provider <name>       CLI provider: claude (default), codex
 
 RESEARCH-BACKED OPTIONS (REF-015, REF-021):
   -m, --memory <n>        Memory capacity Ω (default: 3)

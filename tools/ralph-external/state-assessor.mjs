@@ -57,6 +57,16 @@ export class StateAssessor {
    */
   constructor(projectRoot) {
     this.projectRoot = projectRoot;
+    /** @type {import('./lib/provider-adapter.mjs').ProviderAdapter|null} */
+    this.providerAdapter = null;
+  }
+
+  /**
+   * Set the provider adapter for CLI abstraction
+   * @param {import('./lib/provider-adapter.mjs').ProviderAdapter} adapter
+   */
+  setProviderAdapter(adapter) {
+    this.providerAdapter = adapter;
   }
 
   /**
@@ -196,13 +206,22 @@ export class StateAssessor {
     try {
       const analysisPrompt = this._buildClaudeAnalysisPrompt(context, orientation);
 
-      const result = spawnSync('claude', [
-        '--dangerously-skip-permissions',
-        '--print',
-        '--output-format', 'json',
-        '--model', 'sonnet',
-        analysisPrompt,
-      ], {
+      // Use adapter for binary and args if available
+      const binary = this.providerAdapter ? this.providerAdapter.getBinary() : 'claude';
+      const args = this.providerAdapter
+        ? this.providerAdapter.buildAnalysisArgs({
+            prompt: analysisPrompt,
+            model: 'sonnet',
+          })
+        : [
+            '--dangerously-skip-permissions',
+            '--print',
+            '--output-format', 'json',
+            '--model', 'sonnet',
+            analysisPrompt,
+          ];
+
+      const result = spawnSync(binary, args, {
         encoding: 'utf8',
         timeout: 120000, // 2 minute timeout
         cwd: this.projectRoot,

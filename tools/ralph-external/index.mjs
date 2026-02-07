@@ -19,6 +19,7 @@ import { resolve } from 'path';
 import { Orchestrator } from './orchestrator.mjs';
 import { StateManager } from './state-manager.mjs';
 import { isClaudeAvailable, getClaudeVersion } from './session-launcher.mjs';
+import { createProvider, hasProvider } from './lib/provider-adapter.mjs';
 import { MemoryManager } from './memory-manager.mjs';
 import { BestOutputTracker } from './best-output-tracker.mjs';
 import { IterationAnalytics } from './iteration-analytics.mjs';
@@ -50,6 +51,7 @@ function parseArgs(args) {
     enableAnalytics: true,        // Iteration analytics (#167)
     enableBestOutput: true,       // Best output tracking (#168)
     enableEarlyStopping: true,    // Early stopping (#149)
+    provider: 'claude',           // CLI provider (claude, codex)
   };
 
   let i = 0;
@@ -91,6 +93,8 @@ function parseArgs(args) {
       options.enableBestOutput = false;
     } else if (arg === '--no-early-stopping') {
       options.enableEarlyStopping = false;
+    } else if (arg === '--provider') {
+      options.provider = args[++i];
     } else if (!arg.startsWith('-') && !options.objective) {
       options.objective = arg;
     }
@@ -145,6 +149,7 @@ OPTIONS:
   --timeout <min>         Timeout per iteration in minutes (default: 60)
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
+  --provider <name>       CLI provider: claude (default), codex
 
 RESEARCH-BACKED OPTIONS (REF-015, REF-021):
   -m, --memory <n|preset>  Memory capacity Ω: 1-10 or preset name
@@ -246,15 +251,22 @@ async function main() {
     process.exit(0);
   }
 
-  // Check Claude availability
-  const claudeAvailable = await isClaudeAvailable();
-  if (!claudeAvailable) {
-    console.error('Error: Claude CLI not found. Please install Claude Code.');
+  // Check provider availability
+  const providerName = options.provider || 'claude';
+  if (!hasProvider(providerName)) {
+    console.error(`Error: Unknown provider '${providerName}'. Available: claude, codex`);
     process.exit(1);
   }
 
-  const version = await getClaudeVersion();
-  console.log(`Claude Code version: ${version}`);
+  const adapter = createProvider(providerName);
+  const providerAvailable = await adapter.isAvailable();
+  if (!providerAvailable) {
+    console.error(`Error: ${providerName} CLI not found. Please install it.`);
+    process.exit(1);
+  }
+
+  const version = await adapter.getVersion();
+  console.log(`${providerName} CLI version: ${version}`);
 
   const orchestrator = new Orchestrator(projectRoot);
 
@@ -321,6 +333,7 @@ async function main() {
         timeoutMinutes: options.timeoutMinutes,
         mcpConfig: options.mcpConfig,
         giteaIntegration: options.giteaIssue ? { enabled: true } : null,
+        provider: options.provider,
       });
     }
 

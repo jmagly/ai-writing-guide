@@ -46,6 +46,7 @@ export interface RalphLaunchOptions {
   enableEarlyStopping?: boolean;
   loopId?: string;
   force?: boolean;
+  provider?: string;
 }
 
 /**
@@ -73,6 +74,7 @@ export interface LoopRegistryEntry {
   iteration: number;
   maxIterations: number;
   outputFile: string;
+  provider?: string;
 }
 
 /**
@@ -150,6 +152,9 @@ export function buildArgs(options: RalphLaunchOptions): string[] {
   if (options.enableEarlyStopping === false) {
     args.push('--no-early-stopping');
   }
+  if (options.provider && options.provider !== 'claude') {
+    args.push('--provider', options.provider);
+  }
 
   return args;
 }
@@ -194,6 +199,7 @@ export async function launchExternalRalph(
       ...process.env,
       RALPH_LOOP_ID: loopId,
       RALPH_DETACHED: 'true',
+      ...(options.provider ? { RALPH_PROVIDER: options.provider } : {}),
     },
   });
 
@@ -219,6 +225,7 @@ export async function launchExternalRalph(
     iteration: 0,
     maxIterations: options.maxIterations || 5,
     outputFile,
+    provider: options.provider,
   };
   saveLauncherRegistry(projectRoot, launcherRegistry);
 

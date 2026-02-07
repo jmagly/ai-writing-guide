@@ -49,6 +49,16 @@ export class ClaudePromptGenerator {
     this.model = options.model || 'sonnet';
     this.timeout = options.timeout || 90000;
     this.verbose = options.verbose || false;
+    /** @type {import('./provider-adapter.mjs').ProviderAdapter|null} */
+    this.providerAdapter = null;
+  }
+
+  /**
+   * Set the provider adapter for CLI abstraction
+   * @param {import('./provider-adapter.mjs').ProviderAdapter} adapter
+   */
+  setProviderAdapter(adapter) {
+    this.providerAdapter = adapter;
   }
 
   /**
@@ -65,14 +75,22 @@ export class ClaudePromptGenerator {
       // Build analysis prompt for Claude
       const analysisPrompt = this._buildAnalysisPrompt(context);
 
-      // Invoke Claude to generate structured prompt
-      const result = spawnSync('claude', [
-        '--dangerously-skip-permissions',
-        '--print',
-        '--output-format', 'json',
-        '--model', this.model,
-        analysisPrompt,
-      ], {
+      // Use adapter for binary and args if available
+      const binary = this.providerAdapter ? this.providerAdapter.getBinary() : 'claude';
+      const args = this.providerAdapter
+        ? this.providerAdapter.buildAnalysisArgs({
+            prompt: analysisPrompt,
+            model: this.model,
+          })
+        : [
+            '--dangerously-skip-permissions',
+            '--print',
+            '--output-format', 'json',
+            '--model', this.model,
+            analysisPrompt,
+          ];
+
+      const result = spawnSync(binary, args, {
         encoding: 'utf8',
         timeout: this.timeout,
       });

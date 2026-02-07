@@ -64,6 +64,9 @@ import { BehaviorDetector } from './lib/behavior-detector.mjs';
 import { InterventionSystem } from './lib/intervention-system.mjs';
 import { EscalationHandler } from './lib/escalation-handler.mjs';
 
+// Multi-Provider Support
+import { createProvider } from './lib/provider-adapter.mjs';
+
 /**
  * @typedef {Object} OrchestratorConfig
  * @property {string} objective - Task objective
@@ -90,6 +93,7 @@ import { EscalationHandler } from './lib/escalation-handler.mjs';
  * @property {boolean} [enablePIDControl=true] - Enable PID control system
  * @property {boolean} [enableOverseer=true] - Enable overseer monitoring
  * @property {boolean} [enableSemanticMemory=true] - Enable semantic memory
+ * @property {string} [provider='claude'] - CLI provider (claude, codex)
  */
 
 /**
@@ -203,6 +207,14 @@ export class Orchestrator {
     if (state.config.enableCheckpoints) {
       console.log(`[External Ralph] Periodic checkpoints: ENABLED (${state.config.checkpointIntervalMinutes} min)`);
     }
+
+    // ========== MULTI-PROVIDER SUPPORT ==========
+    const providerName = config.provider || 'claude';
+    this.providerAdapter = createProvider(providerName);
+    this.sessionLauncher.setProviderAdapter(this.providerAdapter);
+    this.outputAnalyzer.setProviderAdapter(this.providerAdapter);
+    this.stateAssessor.setProviderAdapter(this.providerAdapter);
+    console.log(`[External Ralph] Provider: ${providerName}`);
 
     // ========== MULTI-LOOP COORDINATION (REF-086, REF-088) ==========
     try {
@@ -320,6 +332,9 @@ export class Orchestrator {
       this.claudePromptGenerator = new ClaudePromptGenerator({
         projectRoot: this.projectRoot,
       });
+      if (this.providerAdapter) {
+        this.claudePromptGenerator.setProviderAdapter(this.providerAdapter);
+      }
 
       this.validationAgent = new ValidationAgent({
         projectRoot: this.projectRoot,

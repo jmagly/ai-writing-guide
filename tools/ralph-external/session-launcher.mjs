@@ -80,6 +80,16 @@ export class SessionLauncher extends EventEmitter {
     super();
     this.currentProcess = null;
     this.startTime = null;
+    /** @type {import('./lib/provider-adapter.mjs').ProviderAdapter|null} */
+    this.providerAdapter = null;
+  }
+
+  /**
+   * Set the provider adapter for CLI abstraction
+   * @param {import('./lib/provider-adapter.mjs').ProviderAdapter} adapter
+   */
+  setProviderAdapter(adapter) {
+    this.providerAdapter = adapter;
   }
 
   /**
@@ -169,7 +179,19 @@ export class SessionLauncher extends EventEmitter {
         mkdirSync(options.outputDir, { recursive: true });
       }
 
-      const args = this.buildArgs(options);
+      // Use adapter for args if available, otherwise use legacy buildArgs
+      const args = this.providerAdapter
+        ? this.providerAdapter.buildSessionArgs({
+            prompt: options.prompt,
+            sessionId: options.sessionId,
+            model: options.model,
+            budget: options.budget,
+            maxTurns: options.maxTurns,
+            verbose: options.verbose,
+            systemPrompt: options.systemPrompt,
+            mcpConfig: options.mcpConfig,
+          })
+        : this.buildArgs(options);
       this.startTime = Date.now();
 
       // Create write streams for output capture
@@ -180,13 +202,15 @@ export class SessionLauncher extends EventEmitter {
       let stdoutBuffer = '';
       const maxBufferSize = 100000; // 100KB
 
-      // Spawn Claude process
-      this.currentProcess = spawn('claude', args, {
+      // Spawn process using provider adapter or legacy Claude defaults
+      const binary = this.providerAdapter ? this.providerAdapter.getBinary() : 'claude';
+      const envOverrides = this.providerAdapter ? this.providerAdapter.getEnvOverrides() : { CI: 'true' };
+
+      this.currentProcess = spawn(binary, args, {
         cwd: options.workingDir,
         env: {
           ...process.env,
-          // Ensure Claude uses non-interactive mode
-          CI: 'true',
+          ...envOverrides,
         },
       });
 
@@ -328,17 +352,26 @@ export class SessionLauncher extends EventEmitter {
    */
   async copySessionTranscript(sessionId, workingDir, outputDir) {
     try {
-      // Encode working directory path
-      const encodedPath = workingDir.replace(/\//g, '-');
-
-      // Build source path
-      const sourcePath = join(
-        homedir(),
-        '.claude',
-        'projects',
-        encodedPath,
-        `${sessionId}.jsonl`
-      );
+      // Use adapter for transcript path if available
+      let sourcePath;
+      if (this.providerAdapter) {
+        sourcePath = this.providerAdapter.getTranscriptPath(sessionId, workingDir);
+        if (!sourcePath) {
+          // Provider doesn't support transcripts
+          this.emit('transcript-not-found', { reason: 'Provider does not support transcripts' });
+          return null;
+        }
+      } else {
+        // Legacy Claude-specific path
+        const encodedPath = workingDir.replace(/\//g, '-');
+        sourcePath = join(
+          homedir(),
+          '.claude',
+          'projects',
+          encodedPath,
+          `${sessionId}.jsonl`
+        );
+      }
 
       // Check if transcript exists
       if (!existsSync(sourcePath)) {

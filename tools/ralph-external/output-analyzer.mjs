@@ -77,6 +77,16 @@ const FAILURE_PATTERNS = {
 export class OutputAnalyzer {
   constructor() {
     this.promptGenerator = new PromptGenerator();
+    /** @type {import('./lib/provider-adapter.mjs').ProviderAdapter|null} */
+    this.providerAdapter = null;
+  }
+
+  /**
+   * Set the provider adapter for CLI abstraction
+   * @param {import('./lib/provider-adapter.mjs').ProviderAdapter} adapter
+   */
+  setProviderAdapter(adapter) {
+    this.providerAdapter = adapter;
   }
 
   /**
@@ -112,14 +122,24 @@ export class OutputAnalyzer {
     });
 
     try {
-      const result = spawnSync('claude', [
-        '--dangerously-skip-permissions',
-        '--print',
-        '--output-format', 'json',
-        '--model', options.model || 'sonnet',
-        '--agent', 'ralph-output-analyzer',
-        analysisPrompt,
-      ], {
+      // Use adapter for binary and args if available
+      const binary = this.providerAdapter ? this.providerAdapter.getBinary() : 'claude';
+      const args = this.providerAdapter
+        ? this.providerAdapter.buildAnalysisArgs({
+            prompt: analysisPrompt,
+            model: options.model || 'sonnet',
+            agent: 'ralph-output-analyzer',
+          })
+        : [
+            '--dangerously-skip-permissions',
+            '--print',
+            '--output-format', 'json',
+            '--model', options.model || 'sonnet',
+            '--agent', 'ralph-output-analyzer',
+            analysisPrompt,
+          ];
+
+      const result = spawnSync(binary, args, {
         encoding: 'utf8',
         timeout: 60000, // 1 minute timeout for analysis
       });
