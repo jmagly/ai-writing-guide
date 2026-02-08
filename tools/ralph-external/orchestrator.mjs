@@ -65,7 +65,7 @@ import { InterventionSystem } from './lib/intervention-system.mjs';
 import { EscalationHandler } from './lib/escalation-handler.mjs';
 
 // Multi-Provider Support
-import { createProvider } from './lib/provider-adapter.mjs';
+import { createProvider, ensureProvidersRegistered } from './lib/provider-adapter.mjs';
 
 /**
  * @typedef {Object} OrchestratorConfig
@@ -209,6 +209,7 @@ export class Orchestrator {
     }
 
     // ========== MULTI-PROVIDER SUPPORT ==========
+    await ensureProvidersRegistered();
     const providerName = config.provider || 'claude';
     this.providerAdapter = createProvider(providerName);
     this.sessionLauncher.setProviderAdapter(this.providerAdapter);

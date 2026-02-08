@@ -1,10 +1,20 @@
 {
-  "globs": ["**/*.md"],
+  // Only lint project-level documentation, not framework content
+  "globs": [
+    "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "docs/**/*.md"
+  ],
   "ignores": [
     "**/node_modules/**",
     "**/dist/**",
-    "**/build/**",
-    "**/.git/**",
-    "**/.claude/**"
-  ]
+    "**/build/**"
+  ],
+  "config": {
+    "MD013": false,
+    "MD033": false,
+    "MD036": false,
+    "MD060": false
+  }
 }

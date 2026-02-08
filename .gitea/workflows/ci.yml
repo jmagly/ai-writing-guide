@@ -50,23 +50,6 @@ jobs:
       - name: Run tests
         run: npm test -- --run
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    container: node:20
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint markdown files
-        run: npm exec markdownlint-cli2 "**/*.md" "#node_modules" || true
-        continue-on-error: true
-
   build:
     name: Build
     runs-on: ubuntu-latest

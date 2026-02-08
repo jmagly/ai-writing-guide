@@ -274,7 +274,15 @@ async function registerBuiltinProviders() {
   } catch { /* ignore if not found */ }
 }
 
-// Run registration (non-blocking, adapters self-register on import)
-registerBuiltinProviders();
+// Run registration — store promise so callers can await it
+const _registrationPromise = registerBuiltinProviders();
+
+/**
+ * Ensure all built-in providers are registered before use.
+ * Must be awaited before calling createProvider().
+ */
+export async function ensureProvidersRegistered() {
+  await _registrationPromise;
+}
 
 export default ProviderAdapter;
