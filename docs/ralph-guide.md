@@ -47,13 +47,18 @@ Ralph transforms single-pass AI execution into iterative completion loops. Inste
 /ralph-external "Migrate codebase to TypeScript" \
   --completion "npx tsc --noEmit exits 0" \
   --max-iterations 20 \
-  --checkpoint-interval 20
+  --budget 5.0
 
-# With verbose output and Claude assessment
+# With Codex provider instead of Claude
 /ralph-external "Implement auth feature" \
   --completion "npm test -- --testPathPattern=auth passes" \
-  --verbose \
-  --use-claude-assessment
+  --provider codex
+
+# With enhanced memory and cross-task learning
+/ralph-external "Fix all failing tests" \
+  --completion "npm test passes" \
+  --memory complex \
+  --cross-task
 ```
 
 ## Commands Reference
@@ -142,29 +147,66 @@ External Ralph provides additional capabilities:
 
 | Feature | Description |
 |---------|-------------|
+| **Multi-Provider Support** | Target Claude or Codex via `--provider` |
 | **Pre/Post Snapshots** | Captures git status, .aiwg state before/after each session |
-| **Periodic Checkpoints** | State snapshots every N minutes during session |
-| **Session Transcript** | Full Claude transcript capture |
+| **Session Transcript** | Full CLI transcript capture |
 | **Two-Phase Assessment** | Orient (understand) → Generate (continue) |
 | **Crash Recovery** | Resume from last checkpoint on failure |
+| **Research-Backed Options** | Memory capacity, cross-task learning, best output selection, early stopping |
+| **Provider Adapter** | Capability-based degradation across providers |
 
 ### Configuration Options
 
 ```bash
 /ralph-external "<task>" --completion "<criteria>" [options]
 
-Options:
-  --max-iterations N           Max external iterations (default: 5)
-  --model <name>              Claude model (default: opus)
-  --budget N                  Budget per iteration USD (default: 2.0)
-  --timeout N                 Minutes per iteration (default: 60)
-  --verbose                   Enable verbose Claude output
-  --checkpoint-interval N     Checkpoint interval minutes (default: 30)
-  --no-snapshots              Disable pre/post session snapshots
-  --no-checkpoints            Disable periodic checkpoints
-  --use-claude-assessment     Use Claude for state assessment
-  --key-files <list>          Comma-separated key files to track
+Core Options:
+  --max-iterations <n>         Max external iterations (default: 5)
+  --model <name>               Model to use (default: opus)
+  --budget <usd>               Budget per iteration in USD (default: 2.0)
+  --timeout <min>              Timeout per iteration in minutes (default: 60)
+  --mcp-config <json>          MCP server configuration JSON
+  --gitea-issue                Create/link Gitea issue for tracking
+  --provider <name>            CLI provider: claude (default), codex
+
+Research-Backed Options (REF-015, REF-021):
+  -m, --memory <n|preset>      Memory capacity Ω: 1-10 or preset name
+                               Presets: simple(1), moderate(3), complex(5), maximum(10)
+                               Default: 3 (moderate)
+  --cross-task                 Enable cross-task learning (default: true)
+  --no-cross-task              Disable cross-task learning
+  --no-analytics               Disable iteration analytics
+  --no-best-output             Disable best output selection (use final)
+  --no-early-stopping          Disable early stopping on high confidence
+
+Commands:
+  -r, --resume                 Resume interrupted loop
+  -s, --status                 Show current loop status
+  --abort                      Abort current loop
 ```
+
+### Multi-Provider Support
+
+Ralph loops can target different CLI providers via `--provider`. Each provider maps AIWG model names to provider-specific models:
+
+| AIWG Model | Claude | Codex |
+|------------|--------|-------|
+| `opus` | claude-opus-4-6 | gpt-5.3-codex |
+| `sonnet` | claude-sonnet-4-5 | codex-mini-latest |
+| `haiku` | claude-haiku-4-5 | gpt-5-codex-mini |
+
+```bash
+# Run with Codex instead of Claude
+/ralph-external "Migrate to TypeScript" \
+  --completion "npx tsc --noEmit exits 0" \
+  --provider codex \
+  --budget 3.0
+
+# Default (Claude)
+/ralph-external "Fix tests" --completion "npm test passes"
+```
+
+The provider adapter handles capability differences automatically. If the target provider lacks a capability (e.g., MCP support), Ralph degrades gracefully and logs a warning.
 
 ## State & Artifacts
 

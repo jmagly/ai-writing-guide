@@ -21,8 +21,8 @@ npm install -g aiwg
 ```bash
 cd /path/to/your/project
 
-# Deploy agents and commands:
-aiwg -deploy-agents --provider opencode --mode sdlc --deploy-commands --create-agents-md
+# Deploy all 4 artifact types for OpenCode
+aiwg use sdlc --provider opencode
 ```
 
 **4. Configure MCP (optional)**
@@ -47,12 +47,16 @@ This step is critical - it enables natural language command mapping ("run securi
 
 ```text
 .opencode/
-├── agent/       # AIWG SDLC agents
-└── command/     # AIWG commands
+├── agent/       # SDLC agents (Requirements Analyst, Architecture Designer, etc.)
+├── command/     # Workflow commands (/project-status, /security-gate, etc.)
+├── skill/       # Skill directories (voice profiles, project awareness, etc.)
+└── rule/        # Context rules (token security, citation policy, etc.)
 
 AGENTS.md        # Project context
 .aiwg/           # SDLC artifacts
 ```
+
+> **Note:** OpenCode uses singular directory names (`agent/`, `command/`, `skill/`, `rule/`).
 
 ---
 
@@ -77,6 +81,18 @@ Invoke via @-mention:
 
 ---
 
+## Ralph Iterative Loops
+
+Ralph loops support multi-provider execution. While OpenCode agents are deployed via AIWG, Ralph task loops run through the CLI:
+
+```bash
+aiwg ralph "Fix all tests" --completion "npm test passes"
+```
+
+See [Ralph Guide](../ralph-guide.md) for full documentation including `--provider` options.
+
+---
+
 ## Troubleshooting
 
 **Natural language not working?** Run regenerate:
@@ -86,7 +102,7 @@ Invoke via @-mention:
 
 **Agents not appearing?** Redeploy:
 ```bash
-aiwg -deploy-agents --provider opencode --force
+aiwg use sdlc --provider opencode --force
 ```
 
 **MCP not connecting?** Test directly:

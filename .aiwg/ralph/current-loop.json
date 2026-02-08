@@ -1,94 +1,51 @@
 {
-  "id": "ralph-regression-testing-2026-01-28",
-  "task": "Implement comprehensive regression testing capability for AIWG (Issue #254)",
+  "id": "ralph-agent-persistence-2026-02-02",
+  "task": "Create complete SDLC documentation for Agent Persistence & Anti-Laziness Framework",
   "completion_criteria": [
-    "Phase 1: Core infrastructure (schema, command, agent, templates, skills)",
-    "Phase 2: SDLC integration (issue-create, pr-review, deploy, incident-response)",
-    "Phase 3: Advanced features (git bisect, performance, API contract)",
-    "Phase 4: Automation (CI/CD hooks, auto-baseline, cross-task learning)"
+    "Phase 1: Inception artifacts (intake form, solution profile, risks, stakeholders)",
+    "Phase 2: Elaboration use cases (UC-AP-001 through UC-AP-006)",
+    "Phase 3: NFRs, user stories, architecture (SAD, ADRs)",
+    "Phase 4: Test strategy, security threat model",
+    "Phase 5: Gate validation (GATE-I2E, GATE-E2C pass)"
   ],
-  "max_iterations": 10,
-  "current_iteration": 4,
+  "max_iterations": 25,
+  "current_iteration": 5,
   "status": "completed",
-  "started_at": "2026-01-28T23:05:00Z",
-  "completed_at": "2026-01-29T04:46:00Z",
-  "phases_completed": ["phase-1", "phase-2", "phase-3", "phase-4"],
+  "started_at": "2026-02-02T12:00:00Z",
+  "completed_at": "2026-02-02T13:15:00Z",
+  "phases_completed": ["phase-1", "phase-2", "phase-3", "phase-4", "phase-5"],
   "phases_pending": [],
-  "metrics": {
-    "phase_1": {
-      "files_created": 9,
-      "parallel_agents_used": 5,
-      "total_size_kb": 140,
-      "commit": "bf13b15"
+  "research_refs": {
+    "new": ["REF-071", "REF-072", "REF-073", "REF-074", "REF-075", "REF-076"],
+    "existing": ["REF-001", "REF-002", "REF-013", "REF-015", "REF-057", "REF-058"]
+  },
+  "deliverables": {
+    "inception": {
+      "intake_form": ".aiwg/intake/agent-persistence-intake.md",
+      "solution_profile": ".aiwg/intake/agent-persistence-solution-profile.md",
+      "risk_register": ".aiwg/risks/agent-persistence-risks.md",
+      "stakeholder_analysis": ".aiwg/intake/agent-persistence-stakeholders.md"
     },
-    "phase_2": {
-      "commands_enhanced": 4,
-      "parallel_agents_used": 4,
-      "lines_added": 1504,
-      "commit": "ee639a9"
-    },
-    "phase_3": {
-      "files_created": 4,
-      "parallel_agents_used": 4,
-      "lines_added": 3852,
-      "commit": "c7e44f2"
-    },
-    "phase_4": {
-      "files_created": 5,
-      "parallel_agents_used": 4,
-      "lines_added": 4430,
-      "commit": "2477af1"
+    "elaboration": {
+      "use_cases": [
+        ".aiwg/requirements/use-cases/UC-AP-001-detect-test-deletion.md",
+        ".aiwg/requirements/use-cases/UC-AP-002-detect-feature-removal.md",
+        ".aiwg/requirements/use-cases/UC-AP-003-detect-coverage-regression.md",
+        ".aiwg/requirements/use-cases/UC-AP-004-enforce-recovery-protocol.md",
+        ".aiwg/requirements/use-cases/UC-AP-005-prompt-reinforcement.md",
+        ".aiwg/requirements/use-cases/UC-AP-006-progress-tracking.md"
+      ],
+      "user_stories": ".aiwg/requirements/user-stories/agent-persistence-stories.md",
+      "nfrs": ".aiwg/requirements/nfr-modules/agent-persistence-nfrs.md",
+      "sad": ".aiwg/architecture/agent-persistence-sad.md",
+      "adrs": [
+        ".aiwg/architecture/decisions/ADR-AP-001-detection-hook-architecture.md",
+        ".aiwg/architecture/decisions/ADR-AP-002-rule-enforcement-strategy.md",
+        ".aiwg/architecture/decisions/ADR-AP-003-prompt-injection-points.md"
+      ],
+      "test_strategy": ".aiwg/testing/agent-persistence-test-strategy.md",
+      "threat_model": ".aiwg/security/agent-persistence-threat-model.md"
     }
   },
-  "totals": {
-    "files_created": 22,
-    "lines_added": 11986,
-    "commits": 4,
-    "parallel_agents_used": 17
-  },
-  "implementations": {
-    "phase_1": {
-      "schema": "agentic/code/frameworks/sdlc-complete/schemas/testing/regression.yaml",
-      "command": "agentic/code/frameworks/sdlc-complete/commands/regression-check.md",
-      "agent": "agentic/code/frameworks/sdlc-complete/agents/regression-analyst.md",
-      "templates": [
-        "agentic/code/frameworks/sdlc-complete/templates/test/regression-report.md",
-        "agentic/code/frameworks/sdlc-complete/templates/test/regression-register.md"
-      ],
-      "skills": [
-        "agentic/code/frameworks/sdlc-complete/skills/regression-bisect/SKILL.md",
-        "agentic/code/frameworks/sdlc-complete/skills/regression-baseline/SKILL.md",
-        "agentic/code/frameworks/sdlc-complete/skills/regression-metrics/SKILL.md",
-        "agentic/code/frameworks/sdlc-complete/skills/regression-report/SKILL.md"
-      ]
-    },
-    "phase_2": {
-      "issue-create": "Auto-detect regression for bugs, priority escalation",
-      "pr-review": "Regression gate, block merge on regression",
-      "flow-deploy-to-production": "Staging + production gates, auto-rollback",
-      "flow-incident-response": "Regression triage, bisect, rollback vs hotfix"
-    },
-    "phase_3": {
-      "skills": [
-        "agentic/code/frameworks/sdlc-complete/skills/regression-performance/SKILL.md",
-        "agentic/code/frameworks/sdlc-complete/skills/regression-api-contract/SKILL.md",
-        "agentic/code/frameworks/sdlc-complete/skills/regression-visual/SKILL.md"
-      ],
-      "schemas": [
-        "agentic/code/frameworks/sdlc-complete/schemas/testing/regression-dashboard.yaml"
-      ]
-    },
-    "phase_4": {
-      "skills": [
-        "agentic/code/frameworks/sdlc-complete/skills/regression-cicd-hooks/SKILL.md",
-        "agentic/code/frameworks/sdlc-complete/skills/regression-auto-baseline/SKILL.md",
-        "agentic/code/frameworks/sdlc-complete/skills/regression-learning/SKILL.md"
-      ],
-      "schemas": [
-        "agentic/code/frameworks/sdlc-complete/schemas/testing/regression-automation.yaml",
-        "agentic/code/frameworks/sdlc-complete/schemas/testing/regression-learning.yaml"
-      ]
-    }
-  },
-  "issue": "#254"
+  "issue": "#TBD"
 }

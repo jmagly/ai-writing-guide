@@ -191,7 +191,7 @@ See [Platform Integration Guides](docs/integrations/) for setup instructions.
 
 - **[Quick Start Guide](USAGE_GUIDE.md)** — Context selection and basic usage
 - **[Prerequisites](docs/getting-started/prerequisites.md)** — Node.js, AI platforms, OS support
-- **[CLI Reference](docs/cli-reference.md)** — All 31 `aiwg` commands with examples
+- **[CLI Reference](docs/cli-reference.md)** — All 40 `aiwg` commands with examples
 
 ### By Audience Level
 

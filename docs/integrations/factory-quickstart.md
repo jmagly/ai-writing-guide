@@ -18,8 +18,8 @@ npm install -g aiwg
 ```bash
 cd /path/to/your/project
 
-# Deploy droids and commands:
-aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --create-agents-md
+# Deploy all 4 artifact types (Factory calls agents "droids")
+aiwg use sdlc --provider factory
 ```
 
 **3. Import droids (required)**
@@ -46,12 +46,26 @@ This step is critical - it enables natural language command mapping ("run securi
 
 ```text
 .factory/
-├── droids/      # 53 SDLC droids
-└── commands/    # 42+ workflow commands
+├── droids/      # SDLC agents (Factory calls them droids)
+├── commands/    # Workflow commands (/project-status, /security-gate, etc.)
+├── skills/      # Skill directories (voice profiles, project awareness, etc.)
+└── rules/       # Context rules (token security, citation policy, etc.)
 
 AGENTS.md        # Project context
 .aiwg/           # SDLC artifacts
 ```
+
+---
+
+## Ralph Iterative Loops
+
+Ralph loops support multi-provider execution. While Factory droids are deployed via AIWG, Ralph task loops run through the CLI:
+
+```bash
+aiwg ralph "Fix all tests" --completion "npm test passes"
+```
+
+See [Ralph Guide](../ralph-guide.md) for full documentation including `--provider` options.
 
 ---
 
@@ -64,6 +78,6 @@ AGENTS.md        # Project context
 
 **Droids not found?** Redeploy and reimport:
 ```bash
-aiwg -deploy-agents --provider factory --mode sdlc --force
+aiwg use sdlc --provider factory --force
 # Then: droid . → /droids → I → A → Enter
 ```

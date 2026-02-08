@@ -30,6 +30,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **166 passing tests** total
 - State directory: `.aiwg/ralph-external/` with full iteration history
 
+**Multi-Provider Support for External Ralph**:
+
+- **`--provider` flag** - Target different CLI providers (claude, codex)
+  - Provider adapter pattern with capability-based degradation
+  - Model mapping: opus→gpt-5.3-codex, sonnet→codex-mini-latest, haiku→gpt-5-codex-mini
+  - Graceful fallback when provider lacks capabilities (e.g., MCP support)
+
+**Research-Backed Options (REF-015, REF-021)**:
+
+- **`--memory <n|preset>`** - Memory capacity Ω with presets: simple(1), moderate(3), complex(5), maximum(10)
+- **`--cross-task` / `--no-cross-task`** - Cross-task learning from similar past loops
+- **`--no-analytics`** - Disable iteration analytics collection
+- **`--no-best-output`** - Disable best output selection (use final iteration instead of peak quality)
+- **`--no-early-stopping`** - Disable early stopping on high confidence
+
 **When to Use External vs Internal Ralph**:
 
 | Feature | Internal (`/ralph`) | External (`/ralph-external`) |
@@ -46,13 +61,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 /ralph-external "Migrate codebase to TypeScript" \
   --completion "npx tsc --noEmit exits 0" \
   --max-iterations 20 \
-  --checkpoint-interval 20
+  --budget 5.0
 
-# With enhanced capture
+# With Codex provider
 /ralph-external "Implement feature X" \
   --completion "npm test passes" \
-  --verbose \
-  --use-claude-assessment
+  --provider codex
+
+# With research-backed options
+/ralph-external "Fix all tests" \
+  --completion "npm test passes" \
+  --memory complex \
+  --cross-task
 ```
 
 ### Changed
@@ -349,13 +369,13 @@ All addons in `agentic/code/addons/` are now automatically deployed:
 
 | What changed | Why you care |
 |--------------|--------------|
-| CalVer versioning | Version now reflects release date (YYYY.MM.PATCH) |
+| CalVer versioning | Version now reflects release date (YYYY.M.PATCH) |
 | Addon directory fix | Claude provider correctly handles addon-style directories |
 
 ### Changed
 
 - **CalVer versioning**: Migrated from SemVer (0.x.x, 2024.12.x) to pure CalVer (2026.01.x)
-- Version format: `YYYY.MM.PATCH` where PATCH resets each month
+- Version format: `YYYY.M.PATCH` where PATCH resets each month (no leading zeros)
 
 ### Fixed
 

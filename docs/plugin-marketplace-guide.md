@@ -69,7 +69,7 @@ Check installed plugins:
 Expected output:
 ```
 Installed Plugins:
-  ✓ sdlc@aiwg v2026.2.0 (35 agents, 31 commands)
+  ✓ sdlc@aiwg v2026.2.0 (35 agents, 40 commands)
   ✓ utils@aiwg v2026.2.0 (5 agents, 10 commands)
 
 Status: Active

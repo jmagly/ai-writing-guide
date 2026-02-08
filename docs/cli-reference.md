@@ -354,7 +354,7 @@ Workspace: /home/user/customer-portal
 Git: clean (main branch)
 
 Frameworks:
-  ✓ sdlc-complete v1.0.0 (35 agents, 31 commands)
+  ✓ sdlc-complete v1.0.0 (35 agents, 40 commands)
   ✓ aiwg-utils v1.0.0
 
 Artifacts:
@@ -980,6 +980,17 @@ aiwg ralph "<task-description>"
 - `--completion "<criteria>"` - Success criteria (e.g., "npm test passes")
 - `--max-iterations <n>` - Maximum iterations (default: 10)
 - `--timeout <seconds>` - Per-iteration timeout (default: 300)
+- `--provider <name>` - CLI provider: claude (default), codex
+- `--budget <usd>` - Budget per iteration in USD (default: 2.0)
+- `--gitea-issue` - Create/link Gitea issue for tracking
+- `--mcp-config <json>` - MCP server configuration JSON
+
+**Research-Backed Options (REF-015, REF-021):**
+- `-m, --memory <n|preset>` - Memory capacity Ω: 1-10 or preset (simple, moderate, complex, maximum). Default: 3
+- `--cross-task` / `--no-cross-task` - Enable/disable cross-task learning (default: enabled)
+- `--no-analytics` - Disable iteration analytics
+- `--no-best-output` - Disable best output selection (use final iteration)
+- `--no-early-stopping` - Disable early stopping on high confidence
 
 **Epic #26 Control Options:**
 - `--enable-pid-control` - Enable PID control layer (default: true)
@@ -1024,6 +1035,18 @@ aiwg ralph "Extract common utilities to shared module" \
   --completion "No lint errors" \
   --gain-profile standard \
   --intervention-mode balanced
+
+# Multi-provider: run with Codex
+aiwg ralph "Migrate utils to TypeScript" \
+  --completion "npx tsc --noEmit exits 0" \
+  --provider codex \
+  --budget 3.0
+
+# Research-backed: enhanced memory with cross-task learning
+aiwg ralph "Fix all integration tests" \
+  --completion "npm test passes" \
+  --memory complex \
+  --cross-task
 ```
 
 **Iteration pattern:**

@@ -10,7 +10,7 @@ Native Claude Code integration - no npm required:
 
 ```bash
 # Add AIWG marketplace (one-time)
-/plugin marketplace add jmagly/ai-writing-guide 
+/plugin marketplace add jmagly/ai-writing-guide
 # Install the frameworks you need
 /plugin install sdlc@aiwg        # Full SDLC framework
 /plugin install marketing@aiwg   # Full marketing framework
@@ -65,13 +65,16 @@ This enables natural language command mapping ("run security review" → workflo
 
 ```text
 .claude/
-├── agents/      # SDLC agents
-├── commands/    # Workflow commands
-└── skills/      # Voice and utility skills
+├── agents/      # SDLC agents (Requirements Analyst, Architecture Designer, etc.)
+├── commands/    # Slash commands (/project-status, /security-gate, etc.)
+├── skills/      # Skill directories (voice profiles, project awareness, etc.)
+└── rules/       # Context rules (token security, citation policy, etc.)
 
 CLAUDE.md        # Project context
 .aiwg/           # SDLC artifacts
 ```
+
+Claude Code deploys all 4 artifact types natively: agents, commands, skills, and rules.
 
 ---
 
@@ -142,6 +145,19 @@ aiwg use sdlc
 ```bash
 aiwg -version
 ```
+
+---
+
+## Ralph Iterative Loops
+
+Ralph loops support multi-provider execution via `--provider`:
+
+```bash
+aiwg ralph "Fix all tests" --completion "npm test passes"
+aiwg ralph "Migrate to TS" --completion "tsc passes" --provider codex
+```
+
+See [Ralph Guide](../ralph-guide.md) for full documentation.
 
 ---
 

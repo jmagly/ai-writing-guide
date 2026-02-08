@@ -15,8 +15,8 @@ npm install -g aiwg
 ```bash
 cd /path/to/your/project
 
-# Deploy agents for Copilot:
-aiwg -deploy-agents --provider copilot --mode sdlc --deploy-commands --create-agents-md
+# Deploy all 4 artifact types for Copilot
+aiwg use sdlc --provider copilot
 ```
 
 **3. Commit and push**
@@ -43,11 +43,15 @@ This step is critical - it enables natural language command mapping ("run securi
 
 ```text
 .github/
-├── agents/                  # AIWG custom agents (YAML)
+├── agents/                  # SDLC agents (Requirements Analyst, Architecture Designer, etc.)
+├── skills/                  # Skill directories (voice profiles, project awareness, etc.)
+├── copilot-rules/           # Context rules (token security, citation policy, etc.)
 └── copilot-instructions.md  # Global instructions
 
 .aiwg/                       # SDLC artifacts
 ```
+
+> **Note:** GitHub Copilot converts AIWG commands to YAML agent format. Commands appear alongside agents in `.github/agents/` as workflow-triggering agents.
 
 ---
 
@@ -73,6 +77,18 @@ Assign issues directly to Copilot:
 
 ---
 
+## Ralph Iterative Loops
+
+Ralph loops support multi-provider execution. While Copilot agents are deployed via AIWG, Ralph task loops run through the CLI:
+
+```bash
+aiwg ralph "Fix all tests" --completion "npm test passes"
+```
+
+See [Ralph Guide](../ralph-guide.md) for full documentation including `--provider` options.
+
+---
+
 ## Troubleshooting
 
 **Natural language not working?** Run regenerate:
@@ -88,5 +104,5 @@ git push
 
 **Redeploy if needed:**
 ```bash
-aiwg -deploy-agents --provider copilot --force
+aiwg use sdlc --provider copilot --force
 ```

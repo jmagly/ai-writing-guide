@@ -36,7 +36,7 @@ src/                         # CLI and MCP server implementation
 test/                        # Test suites and fixtures
 tools/                       # Build and deployment scripts
 docs/                        # Documentation
-├── cli-reference.md         # All 31 CLI commands
+├── cli-reference.md         # All 40 CLI commands
 ├── extensions/              # Extension system docs
 │   ├── overview.md
 │   ├── creating-extensions.md
@@ -65,15 +65,24 @@ Use `@path/to/file.md` in your message to load specific documentation:
 
 ## Multi-Platform Support
 
-| Platform | Agent Location | Command |
-|----------|----------------|---------|
-| Claude Code | `.claude/agents/` | `aiwg use sdlc` |
-| GitHub Copilot | `.github/agents/` | `aiwg use sdlc --provider copilot` |
-| Warp Terminal | `WARP.md` | Symlinked to CLAUDE.md |
-| Factory AI | `.factory/droids/` | `aiwg use sdlc --provider factory` |
-| OpenCode | `.opencode/agent/` | `aiwg use sdlc --provider opencode` |
-| Cursor | `.cursor/rules/` | `aiwg use sdlc --provider cursor` |
-| OpenAI/Codex | `~/.codex/skills/` | `aiwg use sdlc --provider codex` |
+All 8 providers receive all 4 artifact types (agents, commands, skills, rules). Support level indicates how the platform discovers artifacts: **native** (auto-discovered), **conventional** (AIWG directory), **aggregated** (single-file + discrete).
+
+| Platform | Agents | Commands | Skills | Rules | Command |
+|----------|--------|----------|--------|-------|---------|
+| Claude Code | `.claude/agents/` | `.claude/commands/` | `.claude/skills/` | `.claude/rules/` | `aiwg use sdlc` |
+| OpenAI/Codex | `.codex/agents/` | `~/.codex/prompts/` | `~/.codex/skills/` | `.codex/rules/` | `aiwg use sdlc --provider codex` |
+| GitHub Copilot | `.github/agents/` | `.github/agents/` | `.github/skills/` | `.github/copilot-rules/` | `aiwg use sdlc --provider copilot` |
+| Factory AI | `.factory/droids/` | `.factory/commands/` | `.factory/skills/` | `.factory/rules/` | `aiwg use sdlc --provider factory` |
+| Cursor | `.cursor/agents/` | `.cursor/commands/` | `.cursor/skills/` | `.cursor/rules/` | `aiwg use sdlc --provider cursor` |
+| OpenCode | `.opencode/agent/` | `.opencode/command/` | `.opencode/skill/` | `.opencode/rule/` | `aiwg use sdlc --provider opencode` |
+| Warp Terminal | `.warp/agents/` + WARP.md | `.warp/commands/` | `.warp/skills/` | `.warp/rules/` | `aiwg use sdlc --provider warp` |
+| Windsurf | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` | `.windsurf/rules/` | `aiwg use sdlc --provider windsurf` |
+
+**Special cases:**
+- **Codex**: Commands and skills deploy to home directory (`~/.codex/prompts/`, `~/.codex/skills/`) for user-level availability across all projects
+- **Copilot**: Commands are converted to YAML agent format and deployed alongside agents in `.github/agents/`
+- **Warp**: Agents and commands are also aggregated into `WARP.md` for single-file context loading
+- **Windsurf**: Agents are aggregated into `AGENTS.md` at project root
 
 ## Writing Principles
 
@@ -116,7 +125,7 @@ aiwg new my-project    # Scaffold new project
 aiwg help              # Show all commands
 aiwg doctor            # Check installation health
 
-# See @docs/cli-reference.md for all 31 commands
+# See @docs/cli-reference.md for all 40 commands
 ```
 
 ## Project Artifacts (.aiwg/)
@@ -165,9 +174,9 @@ AIWG uses a unified extension system for all extension types:
 - `@docs/extensions/creating-extensions.md` - Build custom extensions
 - `@docs/extensions/extension-types.md` - Complete type reference
 - `@src/extensions/types.ts` - TypeScript type definitions
-- `@src/extensions/commands/definitions.ts` - All 31 command definitions
+- `@src/extensions/commands/definitions.ts` - All 40 command definitions
 
-## CLI Commands (31 Total)
+## CLI Commands (40 Total)
 
 **See `@docs/cli-reference.md` for complete documentation.**
 
@@ -186,6 +195,8 @@ AIWG uses a unified extension system for all extension types:
 | **Plugin** (5) | install-plugin, uninstall-plugin, plugin-status, package-plugin, package-all-plugins |
 | **Scaffolding** (7) | add-agent, add-command, add-skill, add-template, scaffold-addon, scaffold-extension, scaffold-framework |
 | **Ralph** (4) | ralph, ralph-status, ralph-abort, ralph-resume |
+| **Metrics** (3) | cost-report, cost-history, metrics-tokens |
+| **Reproducibility** (4) | execution-mode, snapshot, checkpoint, reproducibility-validate |
 
 ### Quick Reference
 
@@ -225,6 +236,17 @@ aiwg ralph "Fix all tests" --completion "npm test passes"
 aiwg ralph-status            # Show loop status
 aiwg ralph-abort             # Stop loop
 aiwg ralph-resume            # Resume paused loop
+
+# Metrics
+aiwg cost-report             # Show cost report for session
+aiwg cost-history            # Show historical cost data
+aiwg metrics-tokens          # Show token usage metrics
+
+# Reproducibility
+aiwg execution-mode          # Show/set execution mode
+aiwg snapshot                # Create execution snapshot
+aiwg checkpoint              # Create workflow checkpoint
+aiwg reproducibility-validate  # Validate workflow reproducibility
 ```
 
 ## Key References
@@ -389,7 +411,7 @@ This is intentional - issues found while dogfooding become improvements to the f
 |----------|---------|--------|
 | `CHANGELOG.md` | Technical changelog | Keep a Changelog format with highlights table |
 | `docs/releases/vX.X.X-announcement.md` | Release announcement | Full feature documentation with examples |
-| `package.json` | Version bump | CalVer: `YYYY.MM.PATCH` |
+| `package.json` | Version bump | CalVer: `YYYY.M.PATCH` |
 | GitHub Release | Public release notes | Condensed highlights + install instructions |
 | Gitea Release | Internal release notes | Same as GitHub |
 

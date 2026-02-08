@@ -427,7 +427,7 @@ All development documentation, organized by topic.
 
 | Document | Description |
 |----------|-------------|
-| @docs/cli-reference.md | All 31 CLI commands with usage |
+| @docs/cli-reference.md | All 40 CLI commands with usage |
 | @docs/commands/DEVELOPMENT_GUIDE.md | Advanced command development, testing, optimization |
 | @docs/commands/subagents-and-commands-guide.md | Subagent patterns for command implementations |
 | @docs/development/skill-inventory.md | Catalog of available skills |
@@ -447,7 +447,7 @@ All development documentation, organized by topic.
 |------|-------------|
 | @src/extensions/types.ts | Core TypeScript type definitions (1,328 lines) |
 | @src/extensions/registry.ts | Extension registry with O(1) lookup |
-| @src/extensions/commands/definitions.ts | All 31 command definitions |
+| @src/extensions/commands/definitions.ts | All 40 command definitions |
 | @src/extensions/validation.ts | Extension validation rules |
 | @src/extensions/capability-index.ts | Semantic search by capability |
 | @src/extensions/loader.ts | Extension discovery and loading |

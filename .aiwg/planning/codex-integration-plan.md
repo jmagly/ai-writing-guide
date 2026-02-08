@@ -2,45 +2,63 @@
 
 ## Executive Summary
 
-This plan establishes full AIWG integration with OpenAI Codex CLI (December 2025), enabling SDLC orchestration, voice framework, and all AIWG capabilities to work seamlessly with Codex users.
+This plan tracks AIWG integration with OpenAI Codex CLI, the Codex App, and the Codex API. Originally drafted December 2025, most core integration work is complete. This document now serves as a living reference for ongoing Codex feature adoption.
 
-**Current State**: AIWG supports Claude Code (primary) and Factory AI (secondary)
-**Target State**: Full Codex support with Skills, Prompts, AGENTS.md, MCP, SDK, and `codex exec` automation
+**Current State**: AIWG has full Codex provider support with agents, skills, prompts, AGENTS.md, and config profiles
+**Next Targets**: Cloud task integration, Automations support, updated model mappings, `.agents/skills/` project-level deployment
 
 ## Gap Analysis
 
-### Codex CLI Current Features (December 2025)
+### Codex Features vs AIWG Support (Updated February 2026)
 
-| Feature | Codex Docs Location | AIWG Current Support | Gap |
-|---------|---------------------|---------------------|-----|
-| AGENTS.md | `/docs/agents_md.md` | ❌ Not deployed for Codex | **HIGH** |
-| Skills | `/docs/skills.md` | ❌ Not deployed | **HIGH** |
-| Custom Prompts | `/docs/prompts.md` | ❌ Not mapped | **HIGH** |
-| MCP Servers | `/docs/config.md#mcp-integration` | ⚠️ Exists but not configured | **MEDIUM** |
-| `codex exec` | `/docs/exec.md` | ❌ Not integrated | **MEDIUM** |
-| Codex SDK | `/sdk/typescript/` | ❌ Not utilized | **LOW** |
-| Profiles | `/docs/config.md#profiles` | ❌ Not generated | **LOW** |
-| Sandbox Modes | `/docs/sandbox.md` | N/A (runtime config) | None |
+| Feature | Codex Status | AIWG Support | Gap |
+|---------|-------------|--------------|-----|
+| AGENTS.md | Stable | ✅ Deployed via `--provider codex` | None |
+| Skills (`~/.codex/skills/`) | Stable | ✅ Deployed via `deploy-skills-codex.mjs` | None |
+| Skills (`.agents/skills/` in repo) | Stable (new) | ⚠️ Not deployed to project-level | **MEDIUM** |
+| Custom Prompts | Stable | ✅ Deployed via `deploy-prompts-codex.mjs` | None |
+| MCP Servers | Stable | ✅ Config template available | None |
+| `codex exec` | Stable | ✅ CI workflow templates created | None |
+| Profiles | Stable | ✅ Config template with 4 profiles | None |
+| GPT-5.3-Codex model | New (Feb 5, 2026) | ✅ Updated in models.json, codex.mjs | None |
+| codex-mini-latest model | Stable | ✅ Updated in models.json, codex.mjs | None |
+| GPT-5-Codex-Mini model | Stable | ✅ Updated in models.json, codex.mjs | None |
+| `codex cloud` command | New | ❌ Not integrated | **LOW** |
+| Codex App (macOS) | New (Feb 2, 2026) | ⚠️ Documented in quickstart | **LOW** |
+| Automations | New | ❌ Not integrated | **LOW** |
+| Mid-turn steering | Stable | N/A (runtime feature) | None |
+| `/review` built-in | Stable | N/A (Codex-native) | None |
+| Web search | Stable | ✅ Config template enables it | None |
+| Image attachments | Stable | N/A (runtime feature) | None |
+| Feature flags | Stable | N/A (runtime feature) | None |
+| `/model` switching | Stable | N/A (runtime feature) | None |
+| `/debug-config` | Stable | ⚠️ Documented in quickstart | None |
+| Memory/thread summaries | Stable | ✅ Config template includes section | None |
+| `$skill-creator` | Stable | ⚠️ Mentioned in docs | None |
+| GitHub Copilot integration | New | ⚠️ Documented, separate provider | None |
+| Codex SDK | Stable | ❌ Not utilized | **LOW** |
 
-### Platform Comparison
+### Platform Comparison (Updated)
 
-| Platform | Config Dir | Agents Dir | Commands/Prompts | Context File | Conflicts |
-|----------|-----------|------------|------------------|--------------|-----------|
-| Claude Code | `.claude/` | `.claude/agents/` | `.claude/commands/` | `CLAUDE.md` | None |
-| Factory | `.factory/` | `.factory/droids/` | `.factory/commands/` | `AGENTS.md` | None* |
-| **Codex** | `.codex/` (user) | N/A (no custom agents) | `~/.codex/prompts/` | `AGENTS.md` | AGENTS.md shared |
-| Warp Terminal | N/A | N/A | N/A | `WARP.md` | None |
+| Platform | Config Dir | Agents Dir | Commands/Prompts | Context File | Skills Location |
+|----------|-----------|------------|------------------|--------------|-----------------|
+| Claude Code | `.claude/` | `.claude/agents/` | `.claude/commands/` | `CLAUDE.md` | `.claude/skills/` |
+| Factory | `.factory/` | `.factory/droids/` | `.factory/commands/` | `AGENTS.md` | N/A |
+| **Codex** | `.codex/` | `.codex/agents/` | `~/.codex/prompts/` | `AGENTS.md` | `~/.codex/skills/` + `.agents/skills/` |
+| Warp Terminal | N/A | N/A | N/A | `WARP.md` | N/A |
+| Cursor | `.cursor/` | `.cursor/rules/` | N/A | `.cursorrules` | N/A |
 
-*AGENTS.md is shared between Factory and Codex but can have different content.
+### Key Codex Architecture Notes
 
-### Key Codex Architecture Differences
-
-1. **No Custom Agents**: Codex uses a single agent model, not multi-agent orchestration
-2. **Skills are User-Level**: Located in `~/.codex/skills/`, not project-level
+1. **Agent definitions**: Deployed to `.codex/agents/` (project-local)
+2. **Skills are dual-location**: `~/.codex/skills/` (user-level) AND `.agents/skills/` (project-level in repos)
 3. **Prompts Replace Commands**: Similar to slash commands but with different syntax
-4. **MCP via config.toml**: Not JSON like other platforms
+4. **MCP via config.toml**: TOML-based, not JSON like other platforms
 5. **SDK for Automation**: TypeScript SDK wraps CLI for programmatic use
-6. **Built-in Tools Only**: No custom tool definitions, MCP extends capabilities
+6. **Built-in Tools**: shell, read, write, apply_patch, view_image, web_search — MCP extends capabilities
+7. **Models**: GPT-5.3-Codex (most capable), codex-mini-latest (default CLI), GPT-5-Codex-Mini (cost-effective)
+8. **Codex App**: Native macOS app for parallel agents, long-running tasks, and automations
+9. **Cloud Tasks**: `codex cloud` for managing cloud-based task execution with 12hr container caching
 
 ---
 
@@ -495,13 +513,13 @@ const turn = await thread.run("Generate architecture decision record for caching
 # ~/.codex/config.toml profiles section
 
 [profiles.aiwg-sdlc]
-model = "gpt-5.1-codex-max"
+model = "gpt-5.3-codex"
 model_reasoning_effort = "high"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 
 [profiles.aiwg-readonly]
-model = "gpt-5.1"
+model = "gpt-5-codex-mini"
 model_reasoning_effort = "medium"
 approval_policy = "on-request"
 sandbox_mode = "read-only"
@@ -567,32 +585,42 @@ describe('Codex Integration', () => {
 
 ## Implementation Order
 
-### Sprint 1: Core Integration
-1. [ ] Create AGENTS.md.codex.template
-2. [ ] Implement `--provider codex` in deploy-agents
-3. [ ] Create deploy-skills-codex.mjs
-4. [ ] Create deploy-prompts-codex.mjs
-5. [ ] Test basic deployment
+### Sprint 1: Core Integration (COMPLETE)
+1. [x] Create AGENTS.md.codex.template
+2. [x] Implement `--provider codex` in deploy-agents
+3. [x] Create deploy-skills-codex.mjs
+4. [x] Create deploy-prompts-codex.mjs
+5. [x] Test basic deployment
 
-### Sprint 2: MCP & Documentation
-1. [ ] Add `aiwg mcp install codex` command
-2. [ ] Create codex-quickstart.md
-3. [ ] Create codex-skills.md
-4. [ ] Create codex-prompts.md
-5. [ ] Update README with Codex support
+### Sprint 2: MCP & Documentation (COMPLETE)
+1. [x] Add `aiwg mcp install codex` command
+2. [x] Create codex-quickstart.md
+3. [x] Create codex-skills.md
+4. [x] Create codex-prompts.md
+5. [x] Update README with Codex support
 
-### Sprint 3: Automation & CI
-1. [ ] Create GitHub Actions workflow templates
-2. [ ] Implement `aiwg exec --via codex`
-3. [ ] Create codex-exec.md documentation
-4. [ ] Add structured output schemas
+### Sprint 3: Automation & CI (COMPLETE)
+1. [x] Create CI workflow templates (Gitea + GitHub Actions)
+2. [x] Implement `codex exec` integration
+3. [x] Create codex-exec.md documentation
+4. [x] Add structured output schemas
 
-### Sprint 4: Polish & Testing
-1. [ ] Complete test suite
-2. [ ] Create AIWG profiles for Codex
-3. [ ] SDK integration examples
-4. [ ] Update CHANGELOG
-5. [ ] Publish npm update
+### Sprint 4: Polish & Testing (COMPLETE)
+1. [x] Complete test suite (codex-deployment.test.ts)
+2. [x] Create AIWG profiles for Codex (config.toml template)
+3. [x] SDK integration examples
+4. [x] Update CHANGELOG
+5. [x] Publish npm update
+
+### Sprint 5: February 2026 Model & Feature Updates (IN PROGRESS)
+1. [x] Update models.json with GPT-5.3-Codex, codex-mini-latest, GPT-5-Codex-Mini
+2. [x] Update codex.mjs provider model mappings
+3. [x] Update config.toml.aiwg-template with new models and features
+4. [x] Rewrite codex-quickstart.md with comprehensive feature coverage
+5. [x] Update this integration plan gap analysis
+6. [ ] Add `.agents/skills/` project-level skill deployment option
+7. [ ] Evaluate `codex cloud` integration for AIWG workflows
+8. [ ] Evaluate Automations integration for scheduled AIWG tasks
 
 ---
 

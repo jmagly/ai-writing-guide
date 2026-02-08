@@ -196,7 +196,7 @@ aiwg use sdlc
 - **What is AIWG?** `docs/overview/what-is-aiwg.md` (conceptual overview)
 - **Quick Start:** `docs/overview/quickstart.md` (hands-on tutorial)
 - **Research Foundations:** `docs/research/research-background.md` (academic framing)
-- **Full CLI Reference:** `docs/cli-reference.md` (all 31 commands)
+- **Full CLI Reference:** `docs/cli-reference.md` (all 40 commands)
 
 **Engage:**
 - **Website:** https://aiwg.io

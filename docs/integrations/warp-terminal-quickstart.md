@@ -41,9 +41,17 @@ This step is critical - it enables natural language command mapping ("run securi
 ## What Gets Created
 
 ```text
-WARP.md          # Project context (agents, commands embedded)
-.aiwg/           # SDLC artifacts
+WARP.md              # Aggregated agents + commands (single context file)
+.warp/
+├── agents/          # Discrete SDLC agents (Requirements Analyst, etc.)
+├── commands/        # Discrete workflow commands (/project-status, /security-gate, etc.)
+├── skills/          # Skill directories (voice profiles, project awareness, etc.)
+└── rules/           # Context rules (token security, citation policy, etc.)
+
+.aiwg/               # SDLC artifacts
 ```
+
+> **Note:** Warp uses both discrete files (in `.warp/`) and an aggregated `WARP.md` that combines agents and commands for platforms that prefer a single context file.
 
 ---
 
@@ -66,6 +74,18 @@ Natural language works directly:
 /init              # Re-index project (reload WARP.md)
 /open-project-rules # Open WARP.md in editor
 ```
+
+---
+
+## Ralph Iterative Loops
+
+Ralph loops support multi-provider execution. While Warp context is deployed via AIWG, Ralph task loops run through the CLI:
+
+```bash
+aiwg ralph "Fix all tests" --completion "npm test passes"
+```
+
+See [Ralph Guide](../ralph-guide.md) for full documentation including `--provider` options.
 
 ---
 

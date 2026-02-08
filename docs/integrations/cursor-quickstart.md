@@ -15,8 +15,8 @@ npm install -g aiwg
 ```bash
 cd /path/to/your/project
 
-# Deploy for Cursor:
-aiwg -deploy-agents --provider cursor --deploy-commands --create-agents-md
+# Deploy all 4 artifact types for Cursor
+aiwg use sdlc --provider cursor
 ```
 
 **3. Configure MCP (optional)**
@@ -47,12 +47,17 @@ This step is critical - it enables natural language command mapping ("run securi
 
 ```text
 .cursor/
-├── rules/       # AIWG rules (MDC format)
+├── agents/      # SDLC agents (Requirements Analyst, Architecture Designer, etc.)
+├── commands/    # Slash commands (/project-status, /security-gate, etc.)
+├── skills/      # Skill directories (voice profiles, project awareness, etc.)
+├── rules/       # Context rules (token security, citation policy, etc.) — MDC format
 └── mcp.json     # MCP config (if enabled)
 
 AGENTS.md        # Project context
 .aiwg/           # SDLC artifacts
 ```
+
+> **Note:** Cursor uses `.mdc` extension for rules (Cursor's MDC format for context rules).
 
 ---
 
@@ -67,6 +72,18 @@ Invoke via @-mention in Cursor:
 
 ---
 
+## Ralph Iterative Loops
+
+Ralph loops support multi-provider execution. While Cursor agents are deployed via AIWG, Ralph task loops run through the CLI:
+
+```bash
+aiwg ralph "Fix all tests" --completion "npm test passes"
+```
+
+See [Ralph Guide](../ralph-guide.md) for full documentation including `--provider` options.
+
+---
+
 ## Troubleshooting
 
 **Natural language not working?** Run regenerate:
@@ -78,5 +95,5 @@ Invoke via @-mention in Cursor:
 
 **Redeploy if needed:**
 ```bash
-aiwg -deploy-agents --provider cursor --force
+aiwg use sdlc --provider cursor --force
 ```
