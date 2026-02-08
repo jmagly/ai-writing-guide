@@ -5,6 +5,14 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.2.1] - 2026-02-08
+
+### Fixed
+
+- **Automated npm publishing** - CI now publishes to both Gitea and public npmjs.org on tag push using separate `NPMJS_TOKEN` secret (granular access token bypasses 2FA)
+
+---
+
 ## [2026.2.0] - 2026-02-08 – "Universal Deploy" Release
 
 | What changed | Why you care |
