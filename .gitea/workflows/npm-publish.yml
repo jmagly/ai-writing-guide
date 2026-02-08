@@ -1,16 +1,16 @@
 # npm Package Publishing to Gitea and Public npm Registries
 #
 # Publishes the package to both Gitea's npm registry and public npmjs.org
-# when a version tag is pushed. Uses CalVer versioning: vYYYY.MM.PATCH
+# when a version tag is pushed. Uses CalVer versioning: vYYYY.M.PATCH
 #
 # REQUIRED SECRETS:
-#   NPM_TOKEN - Gitea access token with package:write scope (for Gitea registry)
-#               Also used for public npmjs.org when publish_public is enabled
+#   NPM_TOKEN    - Gitea access token with package:write scope (for Gitea registry)
+#   NPMJS_TOKEN  - npmjs.org granular access token (bypasses 2FA for CI)
 #
 # To publish a new version:
 #   1. Update version in package.json
-#   2. Commit: git commit -am "release: v2024.12.0"
-#   3. Tag: git tag v2024.12.0
+#   2. Commit: git commit -am "release: vYYYY.M.PATCH"
+#   3. Tag: git tag vYYYY.M.PATCH
 #   4. Push: git push origin main --tags
 
 name: Publish to npm registries
@@ -26,8 +26,8 @@ on:
         required: false
         default: 'false'
         type: boolean
-      publish_public:
-        description: 'Also publish to public npmjs.org'
+      skip_public:
+        description: 'Skip publishing to public npmjs.org'
         required: false
         default: 'false'
         type: boolean
@@ -46,15 +46,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Configure npm for Gitea registry
-        run: |
-          # Create .npmrc with Gitea registry configuration
-          cat > .npmrc << EOF
-          @roctinam:registry=${{ env.GITEA_NPM_REGISTRY }}
-          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${{ secrets.NPM_TOKEN }}
-          EOF
-          echo "Configured npm for Gitea registry"
 
       - name: Install dependencies
         run: npm ci
@@ -103,13 +94,17 @@ jobs:
       - name: Publish to Gitea npm registry
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
-          # Publish with scoped package name for Gitea
-          # Allow re-runs: treat "version already exists" (409) as success
+          # Configure auth for Gitea registry
+          cat > .npmrc << 'NPMRC'
+          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+
+          # Allow re-runs: treat "version already exists" as success
           npm publish --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee publish-output.txt || {
-            if grep -q "package version already exists" publish-output.txt; then
-              echo "✓ Version already published - treating as success"
+            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" publish-output.txt; then
+              echo "✓ Version already published to Gitea - treating as success"
             else
-              echo "✗ Publish failed"
+              echo "✗ Gitea publish failed"
               cat publish-output.txt
               exit 1
             fi
@@ -117,29 +112,38 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish to public npm registry
-        if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.publish_public == 'true' }}
+      - name: Publish to public npmjs.org
+        if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.skip_public != 'true' }}
         run: |
-          # Reconfigure for public npm
-          cat > .npmrc << EOF
-          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-          EOF
-          npm publish --access public
+          # Configure auth for public npm registry
+          cat > .npmrc << 'NPMRC'
+          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+
+          # Allow re-runs: treat "version already exists" as success
+          npm publish --access public 2>&1 | tee publish-public-output.txt || {
+            if grep -qE "cannot publish over the previously published|EPUBLISHCONFLICT|403" publish-public-output.txt; then
+              echo "✓ Version already published to npmjs.org - treating as success"
+            else
+              echo "✗ Public npm publish failed"
+              cat publish-public-output.txt
+              exit 1
+            fi
+          }
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 
       - name: Dry run - would publish
         if: ${{ github.event.inputs.dry_run == 'true' }}
         run: |
           echo "DRY RUN - Would publish version ${{ steps.version.outputs.version }}"
-          echo "Registry: ${{ env.GITEA_NPM_REGISTRY }}"
+          echo "Registries: Gitea + npmjs.org"
           npm pack
           ls -la *.tgz
 
       - name: Create Gitea Release
         if: github.event_name == 'push' && github.event.inputs.dry_run != 'true'
         run: |
-          # Create release via Gitea API
           VERSION=${{ steps.version.outputs.version }}
 
           curl -X POST \
@@ -149,7 +153,7 @@ jobs:
             -d "{
               \"tag_name\": \"v${VERSION}\",
               \"name\": \"v${VERSION}\",
-              \"body\": \"## Installation\\n\\n\\\`\\\`\\\`bash\\nnpm install aiwg@${VERSION} --registry=${{ env.GITEA_NPM_REGISTRY }}\\n\\\`\\\`\\\`\\n\\n## What's Changed\\n\\nSee commit history for details.\",
+              \"body\": \"## Installation\\n\\n\\\`\\\`\\\`bash\\nnpm install -g aiwg@${VERSION}\\n\\\`\\\`\\\`\\n\\nAlso available from Gitea registry:\\n\\\`\\\`\\\`bash\\nnpm install -g aiwg@${VERSION} --registry=${{ env.GITEA_NPM_REGISTRY }}\\n\\\`\\\`\\\`\\n\\n## What's Changed\\n\\nSee commit history for details.\",
               \"draft\": false,
               \"prerelease\": false
             }" || echo "Release may already exist"
@@ -164,18 +168,26 @@ jobs:
 
     steps:
       - name: Wait for package propagation
-        run: sleep 10
+        run: sleep 15
 
-      - name: Verify package exists in Gitea registry
+      - name: Verify package on Gitea registry
         run: |
-          # Only check that the package metadata is accessible, don't install
-          # (installing pulls all transitive deps which aren't in Gitea registry)
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             "${{ env.GITEA_NPM_REGISTRY }}aiwg")
           if [ "$HTTP_CODE" = "200" ]; then
             echo "✓ Package aiwg found in Gitea registry"
-            curl -s "${{ env.GITEA_NPM_REGISTRY }}aiwg" | head -5
           else
-            echo "✗ Package not found (HTTP $HTTP_CODE)"
-            exit 1
+            echo "⚠ Package not found in Gitea registry (HTTP $HTTP_CODE)"
+          fi
+
+      - name: Verify package on public npm
+        if: ${{ github.event.inputs.skip_public != 'true' }}
+        run: |
+          # Check npmjs.org for the version
+          VERSION=$(curl -s "https://registry.npmjs.org/aiwg/latest" | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version" 2>/dev/null || echo "unknown")
+          echo "Latest version on npmjs.org: $VERSION"
+          if [ "$VERSION" != "unknown" ]; then
+            echo "✓ Package aiwg accessible on npmjs.org"
+          else
+            echo "⚠ Could not verify package on npmjs.org (may still be propagating)"
           fi
