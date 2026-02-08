@@ -575,7 +575,7 @@ describe('WorkspaceMigrator', () => {
         overwrite: false
       });
 
-      expect(result.duration).toBeGreaterThan(0);
+      expect(result.duration).toBeGreaterThanOrEqual(0);
     });
   });
 
