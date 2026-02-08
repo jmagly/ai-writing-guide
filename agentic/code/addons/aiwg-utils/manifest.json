@@ -29,6 +29,7 @@
   "entry": {
     "agents": "agents/",
     "commands": "commands/",
+    "rules": "rules/",
     "skills": "skills/",
     "templates": "templates/",
     "prompts": "prompts/"

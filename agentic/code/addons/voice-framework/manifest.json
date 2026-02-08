@@ -18,6 +18,7 @@
     "customization"
   ],
   "entry": {
+    "rules": "rules/",
     "skills": "skills/",
     "voices": "voices/templates/",
     "schemas": "schemas/"

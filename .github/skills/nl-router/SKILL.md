@@ -166,6 +166,119 @@ marketing_patterns:
     extract: [competitor_name]
 ```
 
+### Research & Investigation
+
+```yaml
+research_patterns:
+  lookup:
+    patterns:
+      - "look up {topic}"
+      - "what does {thing} do"
+      - "how does {thing} work"
+      - "find documentation for {topic}"
+      - "search for {query}"
+      - "check the docs for {topic}"
+      - "read about {topic}"
+      - "research {topic}"
+    routes_to: research-investigation
+    extract: [topic, scope]
+    rule_activation: research-before-decision
+
+  codebase_exploration:
+    patterns:
+      - "how is {feature} implemented"
+      - "where is {thing} defined"
+      - "find {pattern} in the codebase"
+      - "what pattern does this project use for {thing}"
+      - "show me examples of {pattern}"
+    routes_to: codebase-exploration
+    extract: [feature, pattern]
+    rule_activation: research-before-decision
+
+  error_investigation:
+    patterns:
+      - "why is {thing} failing"
+      - "investigate {error}"
+      - "debug {issue}"
+      - "what's causing {problem}"
+      - "root cause of {error}"
+    routes_to: error-diagnosis
+    extract: [error, context]
+    rule_activation: research-before-decision
+```
+
+### Planning & Strategy
+
+```yaml
+planning_patterns:
+  approach_planning:
+    patterns:
+      - "plan how to {task}"
+      - "design approach for {task}"
+      - "think through {task}"
+      - "strategize {task}"
+      - "how should I approach {task}"
+      - "what's the best way to {task}"
+    routes_to: approach-planning
+    extract: [task, constraints]
+
+  implementation_planning:
+    patterns:
+      - "plan the implementation of {feature}"
+      - "break down {task}"
+      - "outline the steps for {task}"
+      - "what do I need to do for {task}"
+    routes_to: implementation-planning
+    extract: [feature, scope]
+
+  decision_support:
+    patterns:
+      - "help me decide between {options}"
+      - "compare {a} and {b}"
+      - "trade-off analysis for {topic}"
+      - "which should I choose"
+      - "pros and cons of {approach}"
+    routes_to: decision-support
+    extract: [decision_topic, options]
+```
+
+### Clarification & Recovery
+
+```yaml
+clarification_patterns:
+  re_read:
+    patterns:
+      - "re-read my instructions"
+      - "that's not what I asked"
+      - "I said {correction}"
+      - "go back and read what I wrote"
+      - "you missed {thing}"
+      - "I already told you {thing}"
+    routes_to: instruction-reparse
+    rule_activation: instruction-comprehension
+    priority: high
+
+  confusion:
+    patterns:
+      - "I'm confused about {topic}"
+      - "can you explain {thing}"
+      - "what do you mean by {thing}"
+      - "I don't understand {thing}"
+    routes_to: clarification
+    extract: [topic]
+
+  correction:
+    patterns:
+      - "no, I meant {correction}"
+      - "not {wrong}, use {right}"
+      - "change that to {correction}"
+      - "that's wrong, it should be {correction}"
+    routes_to: instruction-correction
+    rule_activation: instruction-comprehension
+    priority: high
+    extract: [correction]
+```
+
 ### Utility Operations
 
 ```yaml
@@ -230,6 +343,20 @@ action_verbs:
   analyze:
     words: [analyze, understand, explain, investigate, explore]
     intent: analysis
+
+  research:
+    words: [research, look up, find out, search for, read about, check docs]
+    intent: investigation
+    rule_activation: research-before-decision
+
+  plan:
+    words: [plan, design, strategize, outline, think through, approach]
+    intent: planning
+
+  clarify:
+    words: [clarify, re-read, explain, what did I, I said, not what I asked]
+    intent: clarification
+    rule_activation: instruction-comprehension
 
   transition:
     words: [transition, move, progress, advance, start, begin]

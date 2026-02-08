@@ -7,23 +7,25 @@
 
 ## Overview
 
-These rules integrate six thought types from ReAct methodology into agent system prompts for enhanced reasoning transparency and tool usage.
+These rules integrate seven thought types from ReAct methodology into agent system prompts for enhanced reasoning transparency and tool usage.
 
 ## Research Foundation
 
 From REF-018 ReAct (Yao et al., 2022):
 - ReAct improves success rates by 34% on HotpotQA
 - Reduces hallucinations to 0% with tool grounding (vs 56% without)
-- Six distinct thought types structure reasoning effectively
+- Seven distinct thought types structure reasoning effectively
 - Explicit thought types enable better monitoring and debugging
+- Research thought type prevents uninformed action (addresses top user complaint)
 
-## Six Thought Types
+## Seven Thought Types
 
 ### Type Definitions
 
 | Type | Purpose | Example |
 |------|---------|---------|
 | **Goal** | State the objective | "I need to implement user authentication" |
+| **Research** | Identify what to look up before acting | "I need to find out how this project handles auth before proceeding" |
 | **Progress** | Track completion | "So far I have created the login component" |
 | **Extraction** | Pull key data from observations | "From the error log, the key issue is missing token" |
 | **Reasoning** | Explain logic | "This means I should add token validation because..." |
@@ -41,6 +43,13 @@ For each step, express your thinking using appropriate thought types:
 - Format: "Goal: I need to accomplish [objective]"
 - Use: At start of task and when switching sub-goals
 - Example: "Goal: I need to fix the failing authentication tests"
+
+**Research Thought** 🔬
+- Format: "Research: I need to find out [information] because [reason]"
+- Use: Before making technical decisions, when encountering unfamiliar APIs/patterns, before choosing an approach
+- Example: "Research: I need to find out how this project handles token refresh before I modify the auth middleware"
+- Triggers: Search, read, grep, glob, or web search actions — NOT code modifications
+- See: @agentic/code/addons/aiwg-utils/rules/research-before-decision.md
 
 **Progress Thought** 📊
 - Format: "Progress: So far I have completed [items]"
@@ -80,11 +89,12 @@ Add to all tool-using agent system prompts:
 When working on tasks, express your thinking explicitly using thought types:
 
 1. **Goal** 🎯 - State what you're trying to achieve
-2. **Progress** 📊 - Summarize what's been done
-3. **Extraction** 🔍 - Pull key data from observations
-4. **Reasoning** 💭 - Explain your logic
-5. **Exception** ⚠️ - Flag surprises or inconsistencies
-6. **Synthesis** ✅ - Draw conclusions from evidence
+2. **Research** 🔬 - Identify what to look up before acting
+3. **Progress** 📊 - Summarize what's been done
+4. **Extraction** 🔍 - Pull key data from observations
+5. **Reasoning** 💭 - Explain your logic
+6. **Exception** ⚠️ - Flag surprises or inconsistencies
+7. **Synthesis** ✅ - Draw conclusions from evidence
 
 This protocol helps maintain clarity and enables better oversight.
 ```
@@ -95,11 +105,13 @@ Different agents may emphasize different thought types:
 
 | Agent | Primary Thoughts | Secondary Thoughts |
 |-------|-----------------|-------------------|
-| Architecture Designer | Reasoning, Synthesis | Goal, Exception |
-| Requirements Analyst | Extraction, Reasoning | Goal, Progress |
-| Test Engineer | Goal, Extraction | Exception, Synthesis |
-| Security Auditor | Exception, Reasoning | Extraction, Synthesis |
-| Debugger | Extraction, Exception | Reasoning, Synthesis |
+| Architecture Designer | Research, Reasoning, Synthesis | Goal, Exception |
+| Requirements Analyst | Research, Extraction, Reasoning | Goal, Progress |
+| Technical Researcher | Research, Extraction | Reasoning, Synthesis |
+| Test Engineer | Goal, Extraction | Research, Exception, Synthesis |
+| Security Auditor | Research, Exception, Reasoning | Extraction, Synthesis |
+| Debugger | Research, Extraction, Exception | Reasoning, Synthesis |
+| Software Implementer | Research, Goal | Reasoning, Progress |
 
 ## Thought Formatting
 
@@ -109,6 +121,9 @@ For simple thoughts within conversation:
 
 ```
 Goal: Fix the authentication bug in login.ts
+
+Research: I need to check how the token parsing works in this project
+before I change anything. Let me read the auth module.
 
 Extraction: From the error log:
 - Error: "JWT malformed"
@@ -130,6 +145,11 @@ For complex tasks, use structured blocks:
 ```markdown
 ### Thought: Goal
 I need to implement the user registration flow per UC-002.
+
+### Thought: Research
+Before implementing, I need to check how the existing user model is
+structured and what email service the project uses. Let me read the
+user module and search for email-related code.
 
 ### Thought: Progress
 ✓ Created user model
@@ -202,6 +222,9 @@ Track thought type distribution:
 agent_execution:
   steps:
     - express_goal_thought
+    - express_research_thought  # What do I need to look up?
+    - perform_research_actions  # Search, read, grep — NOT modify
+    - express_extraction_thought
     - execute_step:
         - express_reasoning_thought
         - perform_action
@@ -248,6 +271,8 @@ The following agents MUST include thought protocol:
 
 Before executing complex tasks, verify agent has:
 - [ ] Expressed Goal thought
+- [ ] Expressed Research thought (what needs to be looked up)
+- [ ] Performed research actions (search/read/grep)
 - [ ] Identified key constraints (Extraction/Reasoning)
 - [ ] Planned approach (Reasoning)
 
@@ -261,10 +286,11 @@ After completing tasks, verify:
 ## Benefits
 
 1. **Reduced Hallucinations**: Tool grounding via Extraction thoughts
-2. **Better Debugging**: Thought logs enable tracing decisions
-3. **Quality Improvement**: Exception thoughts catch errors early
-4. **Knowledge Transfer**: Reasoning thoughts document decisions
-5. **Human Oversight**: Thought protocol enables effective review
+2. **Fewer Blind Retries**: Research thoughts force investigation before action
+3. **Better Debugging**: Thought logs enable tracing decisions
+4. **Quality Improvement**: Exception thoughts catch errors early
+5. **Knowledge Transfer**: Reasoning thoughts document decisions
+6. **Human Oversight**: Thought protocol enables effective review
 
 ## References
 
@@ -272,9 +298,11 @@ After completing tasks, verify:
 - @agentic/code/frameworks/sdlc-complete/agents/ - Agent definitions
 - @.aiwg/research/synthesis/topic-04-tool-grounding.md - Tool grounding
 - @.claude/rules/reasoning-sections.md - Reasoning patterns
+- @agentic/code/addons/aiwg-utils/rules/research-before-decision.md - Research enforcement
+- @agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md - Instruction following
 - #158 - Implementation issue
 
 ---
 
 **Rule Status**: ACTIVE
-**Last Updated**: 2026-01-25
+**Last Updated**: 2026-02-08

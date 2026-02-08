@@ -181,7 +181,7 @@
       "file": "thought-protocol.md",
       "enforcement": "medium",
       "tier": "sdlc",
-      "description": "Six thought types for enhanced reasoning transparency",
+      "description": "Seven thought types for enhanced reasoning transparency (includes Research)",
       "issue": "#158"
     },
     {
@@ -279,6 +279,14 @@
       "tier": "research",
       "description": "Auto-generate INDEX.md from YAML frontmatter",
       "issue": "#136"
+    },
+    {
+      "name": "sdlc-orchestration",
+      "file": "sdlc-orchestration.md",
+      "enforcement": "high",
+      "tier": "sdlc",
+      "description": "SDLC workflow orchestration patterns and natural language command translation",
+      "issue": null
     }
   ]
 }
