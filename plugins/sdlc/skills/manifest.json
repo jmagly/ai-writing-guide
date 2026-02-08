@@ -80,9 +80,54 @@
       "triggers": ["create provenance", "track artifact", "record provenance", "audit trail", "trace artifact"]
     },
     {
+      "name": "regression-api-contract",
+      "description": "Detect breaking changes in API contracts across REST, GraphQL, and gRPC interfaces",
+      "triggers": ["API breaking change", "contract regression", "schema compatibility", "API compatibility check", "backward compatibility"]
+    },
+    {
+      "name": "regression-auto-baseline",
+      "description": "Automatically manage regression test baseline lifecycle with triggers for releases, deployments, and quality gates",
+      "triggers": ["auto-update baselines", "automatic baseline management", "baseline on release", "baseline lifecycle"]
+    },
+    {
+      "name": "regression-baseline",
+      "description": "Create and maintain regression test baselines for comparison and drift detection",
+      "triggers": ["create regression baseline", "update baseline", "baseline the tests", "capture current state", "set new baseline"]
+    },
+    {
+      "name": "regression-bisect",
+      "description": "Automatically identify the commit that introduced a regression using git bisect",
+      "triggers": ["find regression commit", "bisect the regression", "when did this break", "which commit broke", "identify breaking commit"]
+    },
+    {
+      "name": "regression-cicd-hooks",
+      "description": "Integrate regression testing into CI/CD pipelines with automated baseline comparison, merge blocking, and multi-platform support",
+      "triggers": ["add regression checks to CI", "setup regression pipeline", "configure regression gates", "block merge on regression"]
+    },
+    {
       "name": "regression-learning",
       "description": "Cross-task learning for improving regression detection through pattern recognition, test prioritization, and historical analysis",
       "triggers": ["learn from regressions", "improve regression detection", "analyze regression patterns", "prioritize regression tests", "what tests should I run", "predict regression risk", "similar past failures"]
+    },
+    {
+      "name": "regression-metrics",
+      "description": "Track and analyze regression statistics, trends, and health indicators",
+      "triggers": ["regression metrics", "show regression stats", "regression trends", "regression health", "regression dashboard"]
+    },
+    {
+      "name": "regression-performance",
+      "description": "Detect performance regressions by comparing benchmarks across versions with statistical significance testing",
+      "triggers": ["performance regression", "check latency", "benchmark comparison", "detect slowdown", "throughput degradation"]
+    },
+    {
+      "name": "regression-report",
+      "description": "Generate comprehensive regression analysis reports combining bisect, baseline, and metrics data",
+      "triggers": ["regression report", "generate regression analysis", "full regression report", "regression summary", "regression postmortem"]
+    },
+    {
+      "name": "regression-visual",
+      "description": "Detect visual and UI regressions through screenshot comparison and pixel-diff analysis",
+      "triggers": ["visual regression", "UI diff", "screenshot comparison", "visual testing", "pixel diff", "layout regression"]
     }
   ],
   "dependencies": {

@@ -120,7 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Thought Protocols and Agent Enhancements**:
 
-- 6 thought types standardized: Goal 🎯, Progress 📊, Extraction 🔍, Reasoning 💭, Exception ⚠️, Synthesis ✅
+- 7 thought types standardized: Goal 🎯, Research 🔬, Progress 📊, Extraction 🔍, Reasoning 💭, Exception ⚠️, Synthesis ✅
 - Few-shot examples required for all agent definitions (2-3 per agent)
 - New specialized agents: Regression Analyst, Laziness Detector, Recovery Orchestrator, Progress Tracker, Prompt Reinforcement Agent
 - Memory frontmatter for Claude Code feature adoption
