@@ -120,44 +120,33 @@ describe('Documentation Service', () => {
   });
 
   describe('Paper Summarization', () => {
-    it('should generate one-sentence summary', async () => {
+    it('should generate complete summary with all required fields', async () => {
       const summary = await service.summarizePaper(mockPaper);
 
+      // One-sentence summary
       expect(summary.oneSentence).toBeDefined();
       expect(summary.oneSentence.length).toBeGreaterThan(10);
       expect(summary.oneSentence).toContain(mockPaper.title);
-    });
 
-    it('should extract key contributions', async () => {
-      const summary = await service.summarizePaper(mockPaper);
-
+      // Contributions
       expect(summary.contributions).toBeDefined();
       expect(summary.contributions.length).toBeGreaterThanOrEqual(3);
       expect(summary.contributions.length).toBeLessThanOrEqual(5);
-    });
 
-    it('should describe methodology', async () => {
-      const summary = await service.summarizePaper(mockPaper);
-
+      // Methodology
       expect(summary.methodology).toBeDefined();
       expect(summary.methodology.length).toBeGreaterThan(10);
-    });
 
-    it('should list main findings', async () => {
-      const summary = await service.summarizePaper(mockPaper);
-
+      // Findings
       expect(summary.findings).toBeDefined();
       expect(summary.findings.length).toBeGreaterThan(0);
-    });
 
-    it('should note limitations', async () => {
-      const summary = await service.summarizePaper(mockPaper);
-
+      // Limitations
       expect(summary.limitations).toBeDefined();
       expect(summary.limitations.length).toBeGreaterThan(0);
     });
 
-    it('should assess AIWG relevance', async () => {
+    it('should assess AIWG relevance with valid values', async () => {
       const summary = await service.summarizePaper(mockPaper);
 
       expect(summary.aiwgRelevance).toBeDefined();
@@ -168,46 +157,38 @@ describe('Documentation Service', () => {
   });
 
   describe('Claims Extraction', () => {
-    it('should extract empirical claims from content', () => {
-      const content = 'Our experiments show a 35% improvement in reasoning tasks.';
-      const claims = service.extractClaims(content);
+    it('should extract and validate empirical claims with metadata', () => {
+      const testCases = [
+        { content: 'Our experiments show a 35% improvement in reasoning tasks.', expectClaims: true },
+        { content: 'Chain-of-thought prompting yields 35% gains.', expectClaims: true },
+        { content: 'We observe a 35% improvement.', expectClaims: true },
+        { content: 'Prompting improves reasoning by 35%.', expectClaims: true },
+        { content: 'This is an introduction section.', expectClaims: false },
+      ];
 
-      expect(claims.length).toBeGreaterThan(0);
-      expect(claims[0].type).toBe('empirical');
+      for (const testCase of testCases) {
+        const claims = service.extractClaims(testCase.content);
+
+        if (testCase.expectClaims) {
+          expect(claims.length).toBeGreaterThan(0);
+          expect(claims[0].type).toBe('empirical');
+
+          // Evidence validation
+          expect(claims[0].evidence).toBeDefined();
+          expect(claims[0].evidence.length).toBeGreaterThan(0);
+          expect(claims[0].evidence[0].sourceRefId).toBe('REF-001');
+
+          // Confidence and tags
+          expect(claims[0].confidence).toMatch(/high|medium|low/);
+          expect(claims[0].tags).toBeDefined();
+          expect(claims[0].tags.length).toBeGreaterThan(0);
+        } else {
+          expect(claims).toEqual([]);
+        }
+      }
     });
 
-    it('should include supporting evidence for claims', () => {
-      const content = 'Chain-of-thought prompting yields 35% gains.';
-      const claims = service.extractClaims(content);
-
-      expect(claims[0].evidence).toBeDefined();
-      expect(claims[0].evidence.length).toBeGreaterThan(0);
-      expect(claims[0].evidence[0].sourceRefId).toBe('REF-001');
-    });
-
-    it('should assign confidence levels to claims', () => {
-      const content = 'We observe a 35% improvement.';
-      const claims = service.extractClaims(content);
-
-      expect(claims[0].confidence).toMatch(/high|medium|low/);
-    });
-
-    it('should tag claims for categorization', () => {
-      const content = 'Prompting improves reasoning by 35%.';
-      const claims = service.extractClaims(content);
-
-      expect(claims[0].tags).toBeDefined();
-      expect(claims[0].tags.length).toBeGreaterThan(0);
-    });
-
-    it('should handle content with no extractable claims', () => {
-      const content = 'This is an introduction section.';
-      const claims = service.extractClaims(content);
-
-      expect(claims).toEqual([]);
-    });
-
-    it('should extract page numbers when available', () => {
+    it('should extract page numbers when present in content', () => {
       const content = 'As shown on pages 4-6, we achieve 35% gains.';
       const claims = service.extractClaims(content);
 
@@ -216,102 +197,74 @@ describe('Documentation Service', () => {
   });
 
   describe('Zettelkasten Note Generation', () => {
-    it('should generate literature note from summary', async () => {
+    it('should generate complete literature note with all components', async () => {
       const summary = await service.summarizePaper(mockPaper);
       const note = service.generateLiteratureNote(mockPaper, summary);
 
+      // Basic structure
       expect(note.id).toBeDefined();
       expect(note.content).toBeDefined();
       expect(note.tags).toBeDefined();
-    });
 
-    it('should include REF-ID in note', async () => {
-      const summary = await service.summarizePaper(mockPaper);
-      const note = service.generateLiteratureNote(mockPaper, summary);
-
+      // Content validation
       expect(note.content).toContain('REF-001');
-    });
-
-    it('should include paper title in note', async () => {
-      const summary = await service.summarizePaper(mockPaper);
-      const note = service.generateLiteratureNote(mockPaper, summary);
-
       expect(note.content).toContain(mockPaper.title);
-    });
 
-    it('should include key findings in note', async () => {
-      const summary = await service.summarizePaper(mockPaper);
-      const note = service.generateLiteratureNote(mockPaper, summary);
-
-      summary.findings.forEach((finding) => {
+      // Key findings inclusion
+      for (const finding of summary.findings) {
         expect(note.content).toContain(finding);
-      });
-    });
+      }
 
-    it('should tag notes appropriately', async () => {
-      const summary = await service.summarizePaper(mockPaper);
-      const note = service.generateLiteratureNote(mockPaper, summary);
-
+      // Tags validation
       expect(note.tags).toContain('research');
       expect(note.tags.length).toBeGreaterThan(1);
     });
   });
 
   describe('GRADE Assessment', () => {
-    it('should assign HIGH quality to peer-reviewed journals', () => {
-      const grade = service.assessGRADE('peer_reviewed_journal');
+    it('should assign correct quality levels by source type', () => {
+      const testCases = [
+        { sourceType: 'peer_reviewed_journal', expected: 'HIGH', shouldHaveStartingQuality: true },
+        { sourceType: 'peer_reviewed_conference', expected: 'HIGH', shouldHaveStartingQuality: false },
+        { sourceType: 'preprint', expected: 'MODERATE', shouldHaveStartingQuality: true },
+        { sourceType: 'blog_post', expected: 'LOW', shouldHaveStartingQuality: false },
+        { sourceType: 'anecdotal', expected: 'VERY_LOW', shouldHaveStartingQuality: false },
+      ];
 
-      expect(grade.level).toBe('HIGH');
-      expect(grade.startingQuality).toBe('HIGH');
+      for (const testCase of testCases) {
+        const grade = service.assessGRADE(testCase.sourceType);
+
+        expect(grade.level).toBe(testCase.expected);
+
+        if (testCase.shouldHaveStartingQuality) {
+          expect(grade.startingQuality).toBe(testCase.expected);
+        }
+      }
     });
 
-    it('should assign HIGH quality to peer-reviewed conferences', () => {
-      const grade = service.assessGRADE('peer_reviewed_conference');
+    it('should include justification and support rating adjustments', () => {
+      const gradeBasic = service.assessGRADE('peer_reviewed_journal');
 
-      expect(grade.level).toBe('HIGH');
-    });
+      expect(gradeBasic.justification).toBeDefined();
+      expect(gradeBasic.justification.length).toBeGreaterThan(10);
 
-    it('should assign MODERATE quality to preprints', () => {
-      const grade = service.assessGRADE('preprint');
-
-      expect(grade.level).toBe('MODERATE');
-      expect(grade.startingQuality).toBe('MODERATE');
-    });
-
-    it('should assign LOW quality to blog posts', () => {
-      const grade = service.assessGRADE('blog_post');
-
-      expect(grade.level).toBe('LOW');
-    });
-
-    it('should assign VERY_LOW quality to anecdotal evidence', () => {
-      const grade = service.assessGRADE('anecdotal');
-
-      expect(grade.level).toBe('VERY_LOW');
-    });
-
-    it('should include justification for rating', () => {
-      const grade = service.assessGRADE('peer_reviewed_journal');
-
-      expect(grade.justification).toBeDefined();
-      expect(grade.justification.length).toBeGreaterThan(10);
-    });
-
-    it('should track rating upgrades when applicable', () => {
-      const grade = service.assessGRADE('preprint', {
+      // Test upgrades
+      const gradeUpgrade = service.assessGRADE('preprint', {
         largeSampleSize: true,
         reproducible: true,
       });
+      expect(gradeUpgrade.ratingUp).toBeDefined();
 
-      expect(grade.ratingUp).toBeDefined();
-    });
-
-    it('should track rating downgrades when applicable', () => {
-      const grade = service.assessGRADE('peer_reviewed_journal', {
+      // Test downgrades
+      const gradeDowngrade = service.assessGRADE('peer_reviewed_journal', {
         conflictOfInterest: true,
       });
+      expect(gradeDowngrade.ratingDown).toBeDefined();
+    });
 
-      expect(grade.ratingDown).toBeDefined();
+    it('should handle unknown source types with default rating', () => {
+      const grade = service.assessGRADE('unknown_type');
+      expect(grade.level).toBe('MODERATE'); // Default fallback
     });
   });
 
@@ -343,28 +296,18 @@ describe('Documentation Service', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle papers with missing abstract', async () => {
+    it('should handle various edge cases gracefully', async () => {
+      // Missing abstract
       const noAbstract = { ...mockPaper, abstract: undefined };
-
       await expect(service.summarizePaper(noAbstract)).resolves.toBeDefined();
-    });
 
-    it('should handle papers with incomplete metadata', async () => {
+      // Incomplete metadata
       const incomplete = { ...mockPaper, venue: undefined, type: undefined };
-
       await expect(service.summarizePaper(incomplete)).resolves.toBeDefined();
-    });
 
-    it('should handle empty content for claims extraction', () => {
-      const claims = service.extractClaims('');
-
-      expect(claims).toEqual([]);
-    });
-
-    it('should handle unknown source types for GRADE', () => {
-      const grade = service.assessGRADE('unknown_type');
-
-      expect(grade.level).toBe('MODERATE'); // Default fallback
+      // Empty content for claims
+      const emptyClaimsResult = service.extractClaims('');
+      expect(emptyClaimsResult).toEqual([]);
     });
   });
 });

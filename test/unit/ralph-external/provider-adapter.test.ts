@@ -62,35 +62,33 @@ describe('ProviderAdapter (base class)', () => {
 // ============================================================================
 
 describe('Provider Registry', () => {
-  it('has claude registered', () => {
-    expect(hasProvider('claude')).toBe(true);
+  it('has all core providers registered', () => {
+    const providers = ['claude', 'codex'];
+    for (const provider of providers) {
+      expect(hasProvider(provider)).toBe(true);
+    }
+
+    const providerList = listProviders();
+    for (const provider of providers) {
+      expect(providerList).toContain(provider);
+    }
   });
 
-  it('has codex registered', () => {
-    expect(hasProvider('codex')).toBe(true);
-  });
+  it('creates correct adapter instances via factory', () => {
+    const tests = [
+      { name: 'claude', Class: ClaudeAdapter, caseName: 'Claude' },
+      { name: 'codex', Class: CodexAdapter, caseName: 'CODEX' },
+    ];
 
-  it('lists registered providers', () => {
-    const providers = listProviders();
-    expect(providers).toContain('claude');
-    expect(providers).toContain('codex');
-  });
+    for (const { name, Class, caseName } of tests) {
+      const adapter = createProvider(name);
+      expect(adapter).toBeInstanceOf(Class);
+      expect(adapter.getName()).toBe(name);
 
-  it('creates claude adapter via factory', () => {
-    const adapter = createProvider('claude');
-    expect(adapter).toBeInstanceOf(ClaudeAdapter);
-    expect(adapter.getName()).toBe('claude');
-  });
-
-  it('creates codex adapter via factory', () => {
-    const adapter = createProvider('codex');
-    expect(adapter).toBeInstanceOf(CodexAdapter);
-    expect(adapter.getName()).toBe('codex');
-  });
-
-  it('factory is case-insensitive', () => {
-    expect(createProvider('Claude')).toBeInstanceOf(ClaudeAdapter);
-    expect(createProvider('CODEX')).toBeInstanceOf(CodexAdapter);
+      // Test case-insensitivity
+      const caseAdapter = createProvider(caseName);
+      expect(caseAdapter).toBeInstanceOf(Class);
+    }
   });
 
   it('throws on unknown provider', () => {
@@ -111,11 +109,8 @@ describe('ClaudeAdapter', () => {
   });
 
   describe('identity', () => {
-    it('returns correct binary', () => {
+    it('returns correct binary and name', () => {
       expect(adapter.getBinary()).toBe('claude');
-    });
-
-    it('returns correct name', () => {
       expect(adapter.getName()).toBe('claude');
     });
   });
@@ -123,30 +118,29 @@ describe('ClaudeAdapter', () => {
   describe('capabilities', () => {
     it('supports all capabilities', () => {
       const caps = adapter.getCapabilities();
-      expect(caps.streamJson).toBe(true);
-      expect(caps.sessionResume).toBe(true);
-      expect(caps.budgetControl).toBe(true);
-      expect(caps.systemPrompt).toBe(true);
-      expect(caps.agentMode).toBe(true);
-      expect(caps.mcpConfig).toBe(true);
-      expect(caps.maxTurns).toBe(true);
-    });
+      const expectedCaps = [
+        'streamJson',
+        'sessionResume',
+        'budgetControl',
+        'systemPrompt',
+        'agentMode',
+        'mcpConfig',
+        'maxTurns',
+      ];
 
-    it('hasCapability returns true for all', () => {
-      expect(adapter.hasCapability('streamJson')).toBe(true);
-      expect(adapter.hasCapability('budgetControl')).toBe(true);
+      for (const cap of expectedCaps) {
+        expect(caps[cap]).toBe(true);
+        expect(adapter.hasCapability(cap)).toBe(true);
+      }
     });
   });
 
   describe('model mapping', () => {
-    it('passes through Claude model names', () => {
-      expect(adapter.mapModel('opus')).toBe('opus');
-      expect(adapter.mapModel('sonnet')).toBe('sonnet');
-      expect(adapter.mapModel('haiku')).toBe('haiku');
-    });
-
-    it('passes through arbitrary model names', () => {
-      expect(adapter.mapModel('claude-3.5-sonnet')).toBe('claude-3.5-sonnet');
+    it('passes through all model names unchanged', () => {
+      const models = ['opus', 'sonnet', 'haiku', 'claude-3.5-sonnet', 'arbitrary-model'];
+      for (const model of models) {
+        expect(adapter.mapModel(model)).toBe(model);
+      }
     });
   });
 
@@ -160,67 +154,25 @@ describe('ClaudeAdapter', () => {
       expect(args[args.length - 1]).toBe('test task');
     });
 
-    it('includes session ID when provided', () => {
-      const args = adapter.buildSessionArgs({
-        prompt: 'task',
-        sessionId: 'abc-123',
-      });
-      expect(args).toContain('--session-id');
-      expect(args).toContain('abc-123');
-    });
-
-    it('includes model when provided', () => {
-      const args = adapter.buildSessionArgs({
-        prompt: 'task',
-        model: 'opus',
-      });
-      expect(args).toContain('--model');
-      expect(args).toContain('opus');
-    });
-
-    it('includes budget when provided', () => {
-      const args = adapter.buildSessionArgs({
-        prompt: 'task',
-        budget: 2.5,
-      });
-      expect(args).toContain('--max-budget-usd');
-      expect(args).toContain('2.5');
-    });
-
-    it('includes max turns when provided', () => {
-      const args = adapter.buildSessionArgs({
-        prompt: 'task',
-        maxTurns: 50,
-      });
-      expect(args).toContain('--max-turns');
-      expect(args).toContain('50');
-    });
-
-    it('includes verbose flag', () => {
-      const args = adapter.buildSessionArgs({
-        prompt: 'task',
-        verbose: true,
-      });
-      expect(args).toContain('--verbose');
-    });
-
-    it('includes MCP config as JSON', () => {
+    it('handles all optional parameters correctly', () => {
       const mcpConfig = { servers: { test: { command: 'test' } } };
-      const args = adapter.buildSessionArgs({
-        prompt: 'task',
-        mcpConfig,
-      });
-      expect(args).toContain('--mcp-config');
-      expect(args).toContain(JSON.stringify(mcpConfig));
-    });
+      const optionTests = [
+        { option: { sessionId: 'abc-123' }, flag: '--session-id', value: 'abc-123' },
+        { option: { model: 'opus' }, flag: '--model', value: 'opus' },
+        { option: { budget: 2.5 }, flag: '--max-budget-usd', value: '2.5' },
+        { option: { maxTurns: 50 }, flag: '--max-turns', value: '50' },
+        { option: { verbose: true }, flag: '--verbose', value: null },
+        { option: { mcpConfig }, flag: '--mcp-config', value: JSON.stringify(mcpConfig) },
+        { option: { systemPrompt: 'You are helpful' }, flag: '--append-system-prompt', value: 'You are helpful' },
+      ];
 
-    it('includes system prompt', () => {
-      const args = adapter.buildSessionArgs({
-        prompt: 'task',
-        systemPrompt: 'You are helpful',
-      });
-      expect(args).toContain('--append-system-prompt');
-      expect(args).toContain('You are helpful');
+      for (const { option, flag, value } of optionTests) {
+        const args = adapter.buildSessionArgs({ prompt: 'task', ...option });
+        expect(args).toContain(flag);
+        if (value !== null) {
+          expect(args).toContain(value);
+        }
+      }
     });
 
     it('puts prompt last', () => {
@@ -244,22 +196,17 @@ describe('ClaudeAdapter', () => {
       expect(args[args.length - 1]).toBe('analyze this');
     });
 
-    it('includes model when provided', () => {
-      const args = adapter.buildAnalysisArgs({
-        prompt: 'analyze',
-        model: 'sonnet',
-      });
-      expect(args).toContain('--model');
-      expect(args).toContain('sonnet');
-    });
+    it('includes optional parameters when provided', () => {
+      const optionTests = [
+        { option: { model: 'sonnet' }, flag: '--model', value: 'sonnet' },
+        { option: { agent: 'ralph-output-analyzer' }, flag: '--agent', value: 'ralph-output-analyzer' },
+      ];
 
-    it('includes agent when provided', () => {
-      const args = adapter.buildAnalysisArgs({
-        prompt: 'analyze',
-        agent: 'ralph-output-analyzer',
-      });
-      expect(args).toContain('--agent');
-      expect(args).toContain('ralph-output-analyzer');
+      for (const { option, flag, value } of optionTests) {
+        const args = adapter.buildAnalysisArgs({ prompt: 'analyze', ...option });
+        expect(args).toContain(flag);
+        expect(args).toContain(value);
+      }
     });
   });
 
@@ -279,17 +226,16 @@ describe('ClaudeAdapter', () => {
   });
 
   describe('output parsing', () => {
-    it('extracts JSON from stdout', () => {
-      const result = adapter.parseOutput('Some text {"key": "value"} more text');
-      expect(result).toEqual({ key: 'value' });
-    });
+    it('handles all parsing scenarios', () => {
+      const tests = [
+        { input: 'Some text {"key": "value"} more text', expected: { key: 'value' } },
+        { input: 'no json here', expected: null },
+        { input: '', expected: null },
+      ];
 
-    it('returns null for non-JSON', () => {
-      expect(adapter.parseOutput('no json here')).toBeNull();
-    });
-
-    it('returns null for empty string', () => {
-      expect(adapter.parseOutput('')).toBeNull();
+      for (const { input, expected } of tests) {
+        expect(adapter.parseOutput(input)).toEqual(expected);
+      }
     });
   });
 });
@@ -306,11 +252,8 @@ describe('CodexAdapter', () => {
   });
 
   describe('identity', () => {
-    it('returns correct binary', () => {
+    it('returns correct binary and name', () => {
       expect(adapter.getBinary()).toBe('codex');
-    });
-
-    it('returns correct name', () => {
       expect(adapter.getName()).toBe('codex');
     });
   });
@@ -318,42 +261,43 @@ describe('CodexAdapter', () => {
   describe('capabilities', () => {
     it('reports limited capabilities', () => {
       const caps = adapter.getCapabilities();
-      expect(caps.streamJson).toBe(false);
-      expect(caps.sessionResume).toBe(false);
-      expect(caps.budgetControl).toBe(false);
-      expect(caps.systemPrompt).toBe(false);
-      expect(caps.agentMode).toBe(false);
-      expect(caps.mcpConfig).toBe(false);
-      expect(caps.maxTurns).toBe(false);
-    });
+      const unsupportedCaps = [
+        'streamJson',
+        'sessionResume',
+        'budgetControl',
+        'systemPrompt',
+        'agentMode',
+        'mcpConfig',
+        'maxTurns',
+      ];
 
-    it('hasCapability returns false for unsupported', () => {
-      expect(adapter.hasCapability('streamJson')).toBe(false);
-      expect(adapter.hasCapability('budgetControl')).toBe(false);
+      for (const cap of unsupportedCaps) {
+        expect(caps[cap]).toBe(false);
+        expect(adapter.hasCapability(cap)).toBe(false);
+      }
     });
   });
 
   describe('model mapping', () => {
-    it('maps opus to gpt-5.3-codex', () => {
-      expect(adapter.mapModel('opus')).toBe('gpt-5.3-codex');
-    });
+    it('maps generic model names to Codex models', () => {
+      const mappings = [
+        { input: 'opus', expected: 'gpt-5.3-codex' },
+        { input: 'sonnet', expected: 'codex-mini-latest' },
+        { input: 'haiku', expected: 'gpt-5-codex-mini' },
+        { input: 'OPUS', expected: 'gpt-5.3-codex' }, // case-insensitive
+        { input: 'Sonnet', expected: 'codex-mini-latest' }, // case-insensitive
+      ];
 
-    it('maps sonnet to codex-mini-latest', () => {
-      expect(adapter.mapModel('sonnet')).toBe('codex-mini-latest');
-    });
-
-    it('maps haiku to gpt-5-codex-mini', () => {
-      expect(adapter.mapModel('haiku')).toBe('gpt-5-codex-mini');
-    });
-
-    it('is case-insensitive', () => {
-      expect(adapter.mapModel('OPUS')).toBe('gpt-5.3-codex');
-      expect(adapter.mapModel('Sonnet')).toBe('codex-mini-latest');
+      for (const { input, expected } of mappings) {
+        expect(adapter.mapModel(input)).toBe(expected);
+      }
     });
 
     it('passes through unknown model names', () => {
-      expect(adapter.mapModel('gpt-5.3-codex')).toBe('gpt-5.3-codex');
-      expect(adapter.mapModel('custom-model')).toBe('custom-model');
+      const models = ['gpt-5.3-codex', 'custom-model'];
+      for (const model of models) {
+        expect(adapter.mapModel(model)).toBe(model);
+      }
     });
   });
 
@@ -391,21 +335,16 @@ describe('CodexAdapter', () => {
       expect(args[args.length - 1]).toBe('do stuff');
     });
 
-    it('warns on unsupported budget', () => {
+    it('warns on unsupported features', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      adapter.buildSessionArgs({ prompt: 'task', budget: 5 });
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Budget control')
-      );
-      warnSpy.mockRestore();
-    });
 
-    it('warns on unsupported MCP config', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      adapter.buildSessionArgs({ prompt: 'task', budget: 5 });
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Budget control'));
+
+      warnSpy.mockClear();
       adapter.buildSessionArgs({ prompt: 'task', mcpConfig: {} });
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('MCP configuration')
-      );
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('MCP configuration'));
+
       warnSpy.mockRestore();
     });
   });
@@ -418,20 +357,14 @@ describe('CodexAdapter', () => {
       expect(args).not.toContain('--dangerously-skip-permissions');
     });
 
-    it('maps model names', () => {
+    it('maps model names and silently skips unsupported agent flag', () => {
       const args = adapter.buildAnalysisArgs({
         prompt: 'analyze',
         model: 'sonnet',
+        agent: 'ralph-output-analyzer',
       });
       expect(args).toContain('--model');
       expect(args).toContain('codex-mini-latest');
-    });
-
-    it('silently skips agent flag', () => {
-      const args = adapter.buildAnalysisArgs({
-        prompt: 'analyze',
-        agent: 'ralph-output-analyzer',
-      });
       expect(args).not.toContain('--agent');
     });
   });
@@ -449,13 +382,15 @@ describe('CodexAdapter', () => {
   });
 
   describe('output parsing', () => {
-    it('extracts JSON from plain text output', () => {
-      const result = adapter.parseOutput('Result: {"completed": true}');
-      expect(result).toEqual({ completed: true });
-    });
+    it('handles all parsing scenarios', () => {
+      const tests = [
+        { input: 'Result: {"completed": true}', expected: { completed: true } },
+        { input: 'just plain text', expected: null },
+      ];
 
-    it('returns null for non-JSON', () => {
-      expect(adapter.parseOutput('just plain text')).toBeNull();
+      for (const { input, expected } of tests) {
+        expect(adapter.parseOutput(input)).toEqual(expected);
+      }
     });
   });
 });
@@ -486,18 +421,18 @@ describe('Cross-Provider Consistency', () => {
     }
   });
 
-  it('both produce prompt as last argument in session args', () => {
-    const claudeArgs = claude.buildSessionArgs({ prompt: 'test' });
-    const codexArgs = codex.buildSessionArgs({ prompt: 'test' });
-    expect(claudeArgs[claudeArgs.length - 1]).toBe('test');
-    expect(codexArgs[codexArgs.length - 1]).toBe('test');
-  });
+  it('both produce prompt as last argument', () => {
+    const promptTests = [
+      { method: 'buildSessionArgs', prompt: 'test' },
+      { method: 'buildAnalysisArgs', prompt: 'analyze' },
+    ];
 
-  it('both produce prompt as last argument in analysis args', () => {
-    const claudeArgs = claude.buildAnalysisArgs({ prompt: 'analyze' });
-    const codexArgs = codex.buildAnalysisArgs({ prompt: 'analyze' });
-    expect(claudeArgs[claudeArgs.length - 1]).toBe('analyze');
-    expect(codexArgs[codexArgs.length - 1]).toBe('analyze');
+    for (const { method, prompt } of promptTests) {
+      const claudeArgs = claude[method]({ prompt });
+      const codexArgs = codex[method]({ prompt });
+      expect(claudeArgs[claudeArgs.length - 1]).toBe(prompt);
+      expect(codexArgs[codexArgs.length - 1]).toBe(prompt);
+    }
   });
 
   it('both handle the same generic model names', () => {

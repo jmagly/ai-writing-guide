@@ -153,35 +153,20 @@ describe('Quality Service', () => {
   });
 
   describe('GRADE Level Assessment', () => {
-    it('should assign HIGH to systematic reviews', () => {
-      const grade = service.assessGRADE('systematic_review');
+    it('should assign correct baseline GRADE levels by source type', () => {
+      const testCases: Array<{ sourceType: string; expectedLevel: GRADELevel }> = [
+        { sourceType: 'systematic_review', expectedLevel: 'HIGH' },
+        { sourceType: 'rct', expectedLevel: 'HIGH' },
+        { sourceType: 'cohort_study', expectedLevel: 'MODERATE' },
+        { sourceType: 'case_series', expectedLevel: 'LOW' },
+        { sourceType: 'expert_opinion', expectedLevel: 'VERY_LOW' },
+      ];
 
-      expect(grade.level).toBe('HIGH');
-      expect(grade.startingQuality).toBe('HIGH');
-    });
-
-    it('should assign HIGH to RCTs', () => {
-      const grade = service.assessGRADE('rct');
-
-      expect(grade.level).toBe('HIGH');
-    });
-
-    it('should assign MODERATE to cohort studies', () => {
-      const grade = service.assessGRADE('cohort_study');
-
-      expect(grade.level).toBe('MODERATE');
-    });
-
-    it('should assign LOW to case series', () => {
-      const grade = service.assessGRADE('case_series');
-
-      expect(grade.level).toBe('LOW');
-    });
-
-    it('should assign VERY_LOW to expert opinion', () => {
-      const grade = service.assessGRADE('expert_opinion');
-
-      expect(grade.level).toBe('VERY_LOW');
+      for (const testCase of testCases) {
+        const grade = service.assessGRADE(testCase.sourceType);
+        expect(grade.level).toBe(testCase.expectedLevel);
+        expect(grade.startingQuality).toBe(testCase.expectedLevel);
+      }
     });
 
     it('should upgrade for large sample size', () => {
@@ -207,46 +192,26 @@ describe('Quality Service', () => {
   });
 
   describe('FAIR Dimension Validation', () => {
-    it('should accept FAIR score >= 0.7', () => {
-      const fairScore: FAIRScore = {
-        overall: 0.85,
-        findable: { score: 1.0, criteria: [] },
-        accessible: { score: 1.0, criteria: [] },
-        interoperable: { score: 0.8, criteria: [] },
-        reusable: { score: 0.7, criteria: [] },
-        notes: [],
-      };
+    it('should validate FAIR scores based on threshold', () => {
+      const testCases: Array<{ overall: number; expected: boolean; description: string }> = [
+        { overall: 0.85, expected: true, description: 'accept score >= 0.7' },
+        { overall: 0.65, expected: false, description: 'reject score < 0.7' },
+        { overall: 0.7, expected: true, description: 'accept edge case at exactly 0.7' },
+      ];
 
-      const isValid = service.validateFAIR(fairScore);
-      expect(isValid).toBe(true);
-    });
+      for (const testCase of testCases) {
+        const fairScore: FAIRScore = {
+          overall: testCase.overall,
+          findable: { score: testCase.overall, criteria: [] },
+          accessible: { score: testCase.overall, criteria: [] },
+          interoperable: { score: testCase.overall, criteria: [] },
+          reusable: { score: testCase.overall, criteria: [] },
+          notes: [],
+        };
 
-    it('should reject FAIR score < 0.7', () => {
-      const fairScore: FAIRScore = {
-        overall: 0.65,
-        findable: { score: 0.6, criteria: [] },
-        accessible: { score: 0.7, criteria: [] },
-        interoperable: { score: 0.6, criteria: [] },
-        reusable: { score: 0.7, criteria: [] },
-        notes: [],
-      };
-
-      const isValid = service.validateFAIR(fairScore);
-      expect(isValid).toBe(false);
-    });
-
-    it('should handle edge case at exactly 0.7', () => {
-      const fairScore: FAIRScore = {
-        overall: 0.7,
-        findable: { score: 0.7, criteria: [] },
-        accessible: { score: 0.7, criteria: [] },
-        interoperable: { score: 0.7, criteria: [] },
-        reusable: { score: 0.7, criteria: [] },
-        notes: [],
-      };
-
-      const isValid = service.validateFAIR(fairScore);
-      expect(isValid).toBe(true);
+        const isValid = service.validateFAIR(fairScore);
+        expect(isValid).toBe(testCase.expected);
+      }
     });
   });
 
@@ -281,53 +246,29 @@ describe('Quality Service', () => {
       notes: [],
     };
 
-    it('should calculate overall quality score', () => {
+    it('should calculate overall quality score within valid range', () => {
       const score = service.calculateQualityScore(mockPaper, mockGrade, mockFAIR);
 
       expect(score.overall).toBeGreaterThan(0);
       expect(score.overall).toBeLessThanOrEqual(1);
     });
 
-    it('should calculate methodological dimension from GRADE', () => {
+    it('should calculate all quality dimensions correctly', () => {
       const score = service.calculateQualityScore(mockPaper, mockGrade, mockFAIR);
 
+      // Check all dimensions exist and are valid
       expect(score.dimensions.methodological).toBe(1.0); // HIGH = 1.0
-    });
-
-    it('should calculate evidential dimension from citation count', () => {
-      const score = service.calculateQualityScore(mockPaper, mockGrade, mockFAIR);
-
       expect(score.dimensions.evidential).toBeGreaterThan(0);
       expect(score.dimensions.evidential).toBeLessThanOrEqual(1);
+      expect(score.dimensions.transparency).toBe(1.0); // Has abstract
+      expect(score.dimensions.reproducibility).toBe(1.0); // Has DOI
+      expect(score.dimensions.fairCompliance).toBe(0.85); // From FAIR score
     });
 
-    it('should calculate transparency from abstract presence', () => {
-      const score = service.calculateQualityScore(mockPaper, mockGrade, mockFAIR);
-
-      expect(score.dimensions.transparency).toBe(1.0);
-    });
-
-    it('should calculate reproducibility from DOI presence', () => {
-      const score = service.calculateQualityScore(mockPaper, mockGrade, mockFAIR);
-
-      expect(score.dimensions.reproducibility).toBe(1.0);
-    });
-
-    it('should use FAIR overall score for FAIR dimension', () => {
-      const score = service.calculateQualityScore(mockPaper, mockGrade, mockFAIR);
-
-      expect(score.dimensions.fairCompliance).toBe(0.85);
-    });
-
-    it('should include GRADE level in score', () => {
+    it('should include GRADE level and source type in score', () => {
       const score = service.calculateQualityScore(mockPaper, mockGrade, mockFAIR);
 
       expect(score.gradeLevel).toBe('HIGH');
-    });
-
-    it('should include source type in score', () => {
-      const score = service.calculateQualityScore(mockPaper, mockGrade, mockFAIR);
-
       expect(score.sourceType).toBe('journal');
     });
   });
@@ -375,10 +316,12 @@ describe('Quality Service', () => {
       },
     ];
 
-    it('should count total sources analyzed', () => {
+    it('should count total sources and generate timestamp', () => {
       const report = service.generateQualityReport(mockScores);
 
       expect(report.totalSources).toBe(3);
+      expect(report.generatedAt).toBeDefined();
+      expect(new Date(report.generatedAt).getTime()).toBeGreaterThan(0);
     });
 
     it('should distribute sources by GRADE level', () => {
@@ -397,42 +340,34 @@ describe('Quality Service', () => {
       expect(report.sourceTypeDistribution.conference).toBe(1);
     });
 
-    it('should calculate average overall score', () => {
+    it('should calculate average scores for all dimensions', () => {
       const report = service.generateQualityReport(mockScores);
 
       const expectedAverage = (0.9 + 0.7 + 0.85) / 3;
       expect(report.averageScores.overall).toBeCloseTo(expectedAverage, 2);
+
+      // Check all dimension averages exist and are valid
+      const dimensions = [
+        'methodological',
+        'evidential',
+        'transparency',
+        'reproducibility',
+        'fairCompliance',
+      ] as const;
+
+      for (const dimension of dimensions) {
+        expect(report.averageScores[dimension]).toBeGreaterThan(0);
+        expect(report.averageScores[dimension]).toBeLessThanOrEqual(1);
+      }
     });
 
-    it('should calculate average dimension scores', () => {
-      const report = service.generateQualityReport(mockScores);
-
-      expect(report.averageScores.methodological).toBeGreaterThan(0);
-      expect(report.averageScores.evidential).toBeGreaterThan(0);
-      expect(report.averageScores.transparency).toBeGreaterThan(0);
-      expect(report.averageScores.reproducibility).toBeGreaterThan(0);
-      expect(report.averageScores.fairCompliance).toBeGreaterThan(0);
-    });
-
-    it('should include summary', () => {
+    it('should include summary and recommendations', () => {
       const report = service.generateQualityReport(mockScores);
 
       expect(report.summary).toBeDefined();
       expect(report.summary).toContain('3 sources');
-    });
-
-    it('should include recommendations', () => {
-      const report = service.generateQualityReport(mockScores);
-
       expect(report.recommendations).toBeDefined();
       expect(report.recommendations.length).toBeGreaterThan(0);
-    });
-
-    it('should include generation timestamp', () => {
-      const report = service.generateQualityReport(mockScores);
-
-      expect(report.generatedAt).toBeDefined();
-      expect(new Date(report.generatedAt).getTime()).toBeGreaterThan(0);
     });
   });
 

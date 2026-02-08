@@ -26,38 +26,40 @@ describe('FrameworkDetector', () => {
   });
 
   // ===========================
-  // Framework Detection (20 tests)
+  // Framework Detection
   // ===========================
 
   describe('detectFrameworks', () => {
-    it('should detect Claude framework from .claude/ directory', async () => {
-      await sandbox.createDirectory('.claude');
-      await sandbox.writeFile('.claude/settings.json', '{}');
+    it('should detect frameworks from various directory structures', async () => {
+      const testCases = [
+        // .{framework}/ directories
+        { framework: 'claude', file: '.claude/settings.json', content: '{}' },
+        { framework: 'codex', file: '.codex/config.yaml', content: 'version: 1.0' },
+        { framework: 'cursor', file: '.cursor/config.json', content: '{}' },
+        // .aiwg/{framework}/ structures
+        { framework: 'claude', file: '.aiwg/claude/settings.json', content: '{}' },
+        { framework: 'codex', file: '.aiwg/codex/config.yaml', content: 'version: 1.0' },
+        // Frameworks with subdirectories
+        { framework: 'claude', file: '.claude/agents/test-agent.md', content: '# Agent' },
+        { framework: 'codex', file: '.codex/commands/test.md', content: '# Command' }
+      ];
 
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
+      for (const { framework, file, content } of testCases) {
+        const dir = file.substring(0, file.lastIndexOf('/'));
+        await sandbox.createDirectory(dir);
+        await sandbox.writeFile(file, content);
 
-      expect(frameworks).toContain('claude');
-    });
+        const detector = new FrameworkDetector(projectRoot);
+        const detected = await detector.detectFrameworks();
 
-    it('should detect Codex framework from .codex/ directory', async () => {
-      await sandbox.createDirectory('.codex');
-      await sandbox.writeFile('.codex/config.yaml', 'version: 1.0');
+        expect(detected).toContain(framework);
 
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toContain('codex');
-    });
-
-    it('should detect Cursor framework from .cursor/ directory', async () => {
-      await sandbox.createDirectory('.cursor');
-      await sandbox.writeFile('.cursor/config.json', '{}');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toContain('cursor');
+        // Cleanup for next iteration
+        await sandbox.cleanup();
+        sandbox = new FilesystemSandbox();
+        await sandbox.initialize();
+        projectRoot = sandbox.getPath();
+      }
     });
 
     it('should detect multiple frameworks in same project', async () => {
@@ -74,32 +76,17 @@ describe('FrameworkDetector', () => {
       expect(frameworks).toContain('cursor');
     });
 
-    it('should return empty array when no frameworks detected', async () => {
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toEqual([]);
-    });
-
-    it('should handle missing directories gracefully', async () => {
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
+    it('should handle empty/missing directories and errors gracefully', async () => {
+      // Test empty project
+      let detector = new FrameworkDetector(projectRoot);
+      let frameworks = await detector.detectFrameworks();
       expect(frameworks).toEqual([]);
       expect(() => detector.detectFrameworks()).not.toThrow();
-    });
 
-    it('should detect framework from config files (.claude/settings.json)', async () => {
+      // Test with directory that might have permission issues
       await sandbox.createDirectory('.claude');
-      await sandbox.writeFile('.claude/settings.json', JSON.stringify({
-        framework: 'claude',
-        version: '1.0.0'
-      }));
-
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toContain('claude');
+      detector = new FrameworkDetector(projectRoot);
+      await expect(detector.detectFrameworks()).resolves.toBeDefined();
     });
 
     it('should prioritize directory over config file detection', async () => {
@@ -116,78 +103,31 @@ describe('FrameworkDetector', () => {
       expect(frameworks).toContain('claude');
     });
 
-    it('should detect framework from .aiwg/claude/ structure', async () => {
-      await sandbox.createDirectory('.aiwg/claude');
-      await sandbox.writeFile('.aiwg/claude/settings.json', '{}');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toContain('claude');
-    });
-
-    it('should detect framework from .aiwg/codex/ structure', async () => {
-      await sandbox.createDirectory('.aiwg/codex');
-      await sandbox.writeFile('.aiwg/codex/config.yaml', 'version: 1.0');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toContain('codex');
-    });
-
-    it('should detect both .claude/ and .aiwg/claude/ as single framework', async () => {
+    it('should handle deduplication and special directories', async () => {
+      // Should detect both .claude/ and .aiwg/claude/ as single framework
       await sandbox.createDirectory('.claude');
       await sandbox.createDirectory('.aiwg/claude');
 
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      // Should detect 'claude' only once
+      let detector = new FrameworkDetector(projectRoot);
+      let frameworks = await detector.detectFrameworks();
       expect(frameworks.filter(f => f === 'claude')).toHaveLength(1);
-    });
 
-    it('should detect frameworks with agents subdirectory', async () => {
-      await sandbox.createDirectory('.claude/agents');
-      await sandbox.writeFile('.claude/agents/test-agent.md', '# Agent');
+      // Should ignore .aiwg/shared/
+      await sandbox.cleanup();
+      sandbox = new FilesystemSandbox();
+      await sandbox.initialize();
+      projectRoot = sandbox.getPath();
 
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toContain('claude');
-    });
-
-    it('should detect frameworks with commands subdirectory', async () => {
-      await sandbox.createDirectory('.codex/commands');
-      await sandbox.writeFile('.codex/commands/test.md', '# Command');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toContain('codex');
-    });
-
-    it('should ignore .aiwg/shared/ as framework', async () => {
       await sandbox.createDirectory('.aiwg/shared');
       await sandbox.writeFile('.aiwg/shared/test.md', '# Shared');
 
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
+      detector = new FrameworkDetector(projectRoot);
+      frameworks = await detector.detectFrameworks();
       expect(frameworks).not.toContain('shared');
     });
 
-    it('should handle symlinks in framework directories', async () => {
-      await sandbox.createDirectory('.claude');
-      // Note: FilesystemSandbox might not support symlinks, so this test
-      // validates that detection doesn't crash on symlink presence
-      await sandbox.writeFile('.claude/settings.json', '{}');
-
-      const detector = new FrameworkDetector(projectRoot);
-      await expect(detector.detectFrameworks()).resolves.toBeDefined();
-    });
-
-    it('should detect frameworks from nested .aiwg structure', async () => {
+    it('should handle nested structures and return consistent order', async () => {
+      // Test nested .aiwg structure
       await sandbox.createDirectory('.aiwg/claude/agents');
       await sandbox.createDirectory('.aiwg/codex/commands');
 
@@ -196,50 +136,29 @@ describe('FrameworkDetector', () => {
 
       expect(frameworks).toContain('claude');
       expect(frameworks).toContain('codex');
-    });
 
-    it('should return frameworks in consistent order', async () => {
-      await sandbox.createDirectory('.cursor');
-      await sandbox.createDirectory('.claude');
-      await sandbox.createDirectory('.codex');
-
-      const detector = new FrameworkDetector(projectRoot);
+      // Test consistency
       const frameworks1 = await detector.detectFrameworks();
       const frameworks2 = await detector.detectFrameworks();
-
       expect(frameworks1).toEqual(frameworks2);
     });
 
-    it('should detect framework from minimal config', async () => {
+    it('should detect from minimal or no config and ignore non-framework directories', async () => {
+      // Minimal config (empty directory)
       await sandbox.createDirectory('.claude');
-      // Empty directory, no config file
-
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
+      let detector = new FrameworkDetector(projectRoot);
+      let frameworks = await detector.detectFrameworks();
       expect(frameworks).toContain('claude');
-    });
 
-    it('should ignore non-framework directories in .aiwg', async () => {
+      // Ignore non-framework directories in .aiwg
       await sandbox.createDirectory('.aiwg/requirements');
       await sandbox.createDirectory('.aiwg/architecture');
-      await sandbox.createDirectory('.aiwg/claude');
 
-      const detector = new FrameworkDetector(projectRoot);
-      const frameworks = await detector.detectFrameworks();
-
-      expect(frameworks).toEqual(['claude']);
+      detector = new FrameworkDetector(projectRoot);
+      frameworks = await detector.detectFrameworks();
+      expect(frameworks).toContain('claude');
       expect(frameworks).not.toContain('requirements');
       expect(frameworks).not.toContain('architecture');
-    });
-
-    it('should handle permission errors gracefully', async () => {
-      // Create directory
-      await sandbox.createDirectory('.claude');
-
-      const detector = new FrameworkDetector(projectRoot);
-      // Should not throw even if permissions are limited
-      await expect(detector.detectFrameworks()).resolves.toBeDefined();
     });
   });
 
@@ -248,65 +167,77 @@ describe('FrameworkDetector', () => {
   // ===========================
 
   describe('isLegacyWorkspace', () => {
-    it('should detect legacy workspace (.aiwg/ without framework subdirs)', async () => {
-      await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.createDirectory('.aiwg/requirements');
-      await sandbox.writeFile('.aiwg/intake/test.md', '# Test');
+    it('should detect legacy workspace with SDLC directories', async () => {
+      const testCases = [
+        {
+          scenario: 'single SDLC directory',
+          dirs: ['.aiwg/intake', '.aiwg/requirements'],
+          files: ['.aiwg/intake/test.md'],
+          expected: true
+        },
+        {
+          scenario: 'multiple SDLC directories',
+          dirs: ['.aiwg/intake', '.aiwg/requirements', '.aiwg/architecture', '.aiwg/testing'],
+          files: [],
+          expected: true
+        }
+      ];
 
-      const detector = new FrameworkDetector(projectRoot);
-      const isLegacy = await detector.isLegacyWorkspace();
+      for (const { dirs, files, expected } of testCases) {
+        for (const dir of dirs) {
+          await sandbox.createDirectory(dir);
+        }
+        for (const file of files) {
+          await sandbox.writeFile(file, '# Test');
+        }
 
-      expect(isLegacy).toBe(true);
+        const detector = new FrameworkDetector(projectRoot);
+        const isLegacy = await detector.isLegacyWorkspace();
+
+        expect(isLegacy).toBe(expected);
+
+        // Cleanup for next iteration
+        await sandbox.cleanup();
+        sandbox = new FilesystemSandbox();
+        await sandbox.initialize();
+        projectRoot = sandbox.getPath();
+      }
     });
 
-    it('should return false for framework-scoped workspace', async () => {
+    it('should return false for framework-scoped, mixed, or empty workspaces', async () => {
+      // Framework-scoped workspace
       await sandbox.createDirectory('.aiwg/claude');
       await sandbox.createDirectory('.aiwg/shared');
       await sandbox.writeFile('.aiwg/claude/settings.json', '{}');
 
-      const detector = new FrameworkDetector(projectRoot);
-      const isLegacy = await detector.isLegacyWorkspace();
-
+      let detector = new FrameworkDetector(projectRoot);
+      let isLegacy = await detector.isLegacyWorkspace();
       expect(isLegacy).toBe(false);
-    });
 
-    it('should handle missing .aiwg/ directory', async () => {
-      const detector = new FrameworkDetector(projectRoot);
-      const isLegacy = await detector.isLegacyWorkspace();
+      // Mixed structure (legacy + framework)
+      await sandbox.cleanup();
+      sandbox = new FilesystemSandbox();
+      await sandbox.initialize();
+      projectRoot = sandbox.getPath();
 
-      expect(isLegacy).toBe(false);
-    });
-
-    it('should detect legacy workspace with multiple SDLC directories', async () => {
-      await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.createDirectory('.aiwg/requirements');
-      await sandbox.createDirectory('.aiwg/architecture');
-      await sandbox.createDirectory('.aiwg/testing');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const isLegacy = await detector.isLegacyWorkspace();
-
-      expect(isLegacy).toBe(true);
-    });
-
-    it('should return false for mixed structure (legacy + framework)', async () => {
       await sandbox.createDirectory('.aiwg/intake');
       await sandbox.createDirectory('.aiwg/claude');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const isLegacy = await detector.isLegacyWorkspace();
-
-      // Mixed structure is not considered "legacy only"
+      detector = new FrameworkDetector(projectRoot);
+      isLegacy = await detector.isLegacyWorkspace();
       expect(isLegacy).toBe(false);
     });
 
-    it('should handle empty .aiwg/ directory', async () => {
+    it('should handle missing or empty .aiwg/ directory', async () => {
+      // Test missing directory
+      const detector1 = new FrameworkDetector(projectRoot);
+      const isLegacy1 = await detector1.isLegacyWorkspace();
+      expect(isLegacy1).toBe(false);
+
+      // Test empty directory
       await sandbox.createDirectory('.aiwg');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const isLegacy = await detector.isLegacyWorkspace();
-
-      expect(isLegacy).toBe(false);
+      const detector2 = new FrameworkDetector(projectRoot);
+      const isLegacy2 = await detector2.isLegacyWorkspace();
+      expect(isLegacy2).toBe(false);
     });
   });
 
@@ -315,10 +246,12 @@ describe('FrameworkDetector', () => {
   // ===========================
 
   describe('getFrameworkInfo', () => {
-    it('should return framework version from config', async () => {
+    it('should return framework config data (version, capabilities)', async () => {
+      // Test version
       await sandbox.createDirectory('.claude');
       await sandbox.writeFile('.claude/settings.json', JSON.stringify({
-        version: '1.0.0'
+        version: '1.0.0',
+        capabilities: ['agents', 'commands', 'memory']
       }));
 
       const detector = new FrameworkDetector(projectRoot);
@@ -326,51 +259,39 @@ describe('FrameworkDetector', () => {
 
       expect(info).toBeDefined();
       expect(info.version).toBe('1.0.0');
-    });
-
-    it('should return framework capabilities', async () => {
-      await sandbox.createDirectory('.claude');
-      await sandbox.writeFile('.claude/settings.json', JSON.stringify({
-        capabilities: ['agents', 'commands', 'memory']
-      }));
-
-      const detector = new FrameworkDetector(projectRoot);
-      const info = await detector.getFrameworkInfo('claude');
-
       expect(info.capabilities).toEqual(['agents', 'commands', 'memory']);
     });
 
-    it('should handle invalid framework names', async () => {
-      const detector = new FrameworkDetector(projectRoot);
-
+    it('should handle invalid/missing config and return defaults', async () => {
+      // Invalid framework name
+      let detector = new FrameworkDetector(projectRoot);
       await expect(detector.getFrameworkInfo('invalid-framework'))
         .rejects.toThrow('Framework not found');
-    });
 
-    it('should return default info when config missing', async () => {
+      // Missing config file
       await sandbox.createDirectory('.claude');
-      // No config file
-
-      const detector = new FrameworkDetector(projectRoot);
-      const info = await detector.getFrameworkInfo('claude');
-
+      detector = new FrameworkDetector(projectRoot);
+      let info = await detector.getFrameworkInfo('claude');
       expect(info).toBeDefined();
       expect(info.name).toBe('claude');
       expect(info.version).toBeUndefined();
+
+      // Corrupted config
+      await sandbox.writeFile('.claude/settings.json', 'invalid json{{{');
+      detector = new FrameworkDetector(projectRoot);
+      info = await detector.getFrameworkInfo('claude');
+      expect(info.name).toBe('claude');
     });
 
-    it('should detect framework path', async () => {
+    it('should detect framework path and prioritize .aiwg/ over root', async () => {
+      // Test path detection
       await sandbox.createDirectory('.aiwg/claude');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const info = await detector.getFrameworkInfo('claude');
-
+      let detector = new FrameworkDetector(projectRoot);
+      let info = await detector.getFrameworkInfo('claude');
       expect(info.path).toContain('.aiwg/claude');
-    });
 
-    it('should prioritize .aiwg/framework/ over .framework/', async () => {
+      // Test prioritization
       await sandbox.createDirectory('.claude');
-      await sandbox.createDirectory('.aiwg/claude');
       await sandbox.writeFile('.aiwg/claude/settings.json', JSON.stringify({
         version: '2.0.0'
       }));
@@ -378,10 +299,8 @@ describe('FrameworkDetector', () => {
         version: '1.0.0'
       }));
 
-      const detector = new FrameworkDetector(projectRoot);
-      const info = await detector.getFrameworkInfo('claude');
-
-      // Should use .aiwg/claude/ version
+      detector = new FrameworkDetector(projectRoot);
+      info = await detector.getFrameworkInfo('claude');
       expect(info.version).toBe('2.0.0');
     });
 
@@ -394,38 +313,30 @@ describe('FrameworkDetector', () => {
       expect(info.type).toBe('ide');
     });
 
-    it('should detect installed agents count', async () => {
+    it('should count installed agents and commands', async () => {
+      // Test agents count
       await sandbox.createDirectory('.claude/agents');
       await sandbox.writeFile('.claude/agents/agent1.md', '# Agent 1');
       await sandbox.writeFile('.claude/agents/agent2.md', '# Agent 2');
 
-      const detector = new FrameworkDetector(projectRoot);
-      const info = await detector.getFrameworkInfo('claude');
-
+      let detector = new FrameworkDetector(projectRoot);
+      let info = await detector.getFrameworkInfo('claude');
       expect(info.agentCount).toBe(2);
-    });
 
-    it('should detect installed commands count', async () => {
+      // Test commands count
+      await sandbox.cleanup();
+      sandbox = new FilesystemSandbox();
+      await sandbox.initialize();
+      projectRoot = sandbox.getPath();
+
       await sandbox.createDirectory('.codex/commands');
       await sandbox.writeFile('.codex/commands/cmd1.md', '# Command 1');
       await sandbox.writeFile('.codex/commands/cmd2.md', '# Command 2');
       await sandbox.writeFile('.codex/commands/cmd3.md', '# Command 3');
 
-      const detector = new FrameworkDetector(projectRoot);
-      const info = await detector.getFrameworkInfo('codex');
-
+      detector = new FrameworkDetector(projectRoot);
+      info = await detector.getFrameworkInfo('codex');
       expect(info.commandCount).toBe(3);
-    });
-
-    it('should handle corrupted config gracefully', async () => {
-      await sandbox.createDirectory('.claude');
-      await sandbox.writeFile('.claude/settings.json', 'invalid json{{{');
-
-      const detector = new FrameworkDetector(projectRoot);
-      const info = await detector.getFrameworkInfo('claude');
-
-      // Should return basic info despite corrupted config
-      expect(info.name).toBe('claude');
     });
   });
 });

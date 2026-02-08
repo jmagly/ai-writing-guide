@@ -26,35 +26,20 @@ describe('WorkspaceCreator', () => {
   });
 
   // ===========================
-  // Framework Workspace Creation (25 tests)
+  // Framework Workspace Creation
   // ===========================
 
   describe('createFrameworkWorkspace', () => {
-    it('should create Claude workspace structure', async () => {
+    it('should create workspace structure for all supported frameworks', async () => {
       const creator = new WorkspaceCreator(projectRoot);
-      await creator.createFrameworkWorkspace('claude');
+      const frameworks = ['claude', 'codex', 'cursor'];
 
-      expect(await sandbox.directoryExists('.aiwg/claude')).toBe(true);
-      expect(await sandbox.directoryExists('.aiwg/claude/agents')).toBe(true);
-      expect(await sandbox.directoryExists('.aiwg/claude/commands')).toBe(true);
-    });
-
-    it('should create Codex workspace structure', async () => {
-      const creator = new WorkspaceCreator(projectRoot);
-      await creator.createFrameworkWorkspace('codex');
-
-      expect(await sandbox.directoryExists('.aiwg/codex')).toBe(true);
-      expect(await sandbox.directoryExists('.aiwg/codex/agents')).toBe(true);
-      expect(await sandbox.directoryExists('.aiwg/codex/commands')).toBe(true);
-    });
-
-    it('should create Cursor workspace structure', async () => {
-      const creator = new WorkspaceCreator(projectRoot);
-      await creator.createFrameworkWorkspace('cursor');
-
-      expect(await sandbox.directoryExists('.aiwg/cursor')).toBe(true);
-      expect(await sandbox.directoryExists('.aiwg/cursor/agents')).toBe(true);
-      expect(await sandbox.directoryExists('.aiwg/cursor/commands')).toBe(true);
+      for (const framework of frameworks) {
+        await creator.createFrameworkWorkspace(framework);
+        expect(await sandbox.directoryExists(`.aiwg/${framework}`)).toBe(true);
+        expect(await sandbox.directoryExists(`.aiwg/${framework}/agents`)).toBe(true);
+        expect(await sandbox.directoryExists(`.aiwg/${framework}/commands`)).toBe(true);
+      }
     });
 
     it('should create shared/ directory for all frameworks', async () => {
@@ -99,28 +84,32 @@ describe('WorkspaceCreator', () => {
       expect(stats.isDirectory).toBe(true);
     });
 
-    it('should create memory subdirectory for Claude', async () => {
+    it('should create framework-specific subdirectories', async () => {
       const creator = new WorkspaceCreator(projectRoot);
+
+      // Claude-specific
       await creator.createFrameworkWorkspace('claude');
-
       expect(await sandbox.directoryExists('.aiwg/claude/memory')).toBe(true);
-    });
 
-    it('should create context subdirectory for frameworks', async () => {
-      const creator = new WorkspaceCreator(projectRoot);
+      // Codex-specific
       await creator.createFrameworkWorkspace('codex');
-
       expect(await sandbox.directoryExists('.aiwg/codex/context')).toBe(true);
     });
 
-    it('should create README in framework directory', async () => {
+    it('should create README and .gitignore in framework directory', async () => {
       const creator = new WorkspaceCreator(projectRoot);
       await creator.createFrameworkWorkspace('claude');
 
+      // README
       expect(await sandbox.fileExists('.aiwg/claude/README.md')).toBe(true);
-
       const readme = await sandbox.readFile('.aiwg/claude/README.md');
       expect(readme).toContain('Claude Framework Workspace');
+
+      // .gitignore
+      expect(await sandbox.fileExists('.aiwg/claude/.gitignore')).toBe(true);
+      const gitignore = await sandbox.readFile('.aiwg/claude/.gitignore');
+      expect(gitignore).toContain('*.log');
+      expect(gitignore).toContain('memory/');
     });
 
     it('should throw error for unsupported framework', async () => {
@@ -128,17 +117,6 @@ describe('WorkspaceCreator', () => {
 
       await expect(creator.createFrameworkWorkspace('unsupported'))
         .rejects.toThrow('Unsupported framework');
-    });
-
-    it('should create .gitignore in framework workspace', async () => {
-      const creator = new WorkspaceCreator(projectRoot);
-      await creator.createFrameworkWorkspace('claude');
-
-      expect(await sandbox.fileExists('.aiwg/claude/.gitignore')).toBe(true);
-
-      const gitignore = await sandbox.readFile('.aiwg/claude/.gitignore');
-      expect(gitignore).toContain('*.log');
-      expect(gitignore).toContain('memory/');
     });
 
     it('should create all standard SDLC subdirs in shared/', async () => {
@@ -227,7 +205,7 @@ describe('WorkspaceCreator', () => {
       expect(sharedCount).toBe(1);
     });
 
-    it('should merge configs when adding framework', async () => {
+    it('should merge configs and update registry when adding framework', async () => {
       const creator = new WorkspaceCreator(projectRoot);
 
       await creator.createFrameworkWorkspace('claude');
@@ -235,13 +213,20 @@ describe('WorkspaceCreator', () => {
         frameworks: ['claude']
       }));
 
+      // addFrameworkToProject updates both workspace.json and registry.json
       await creator.addFrameworkToProject('codex');
 
+      // Check workspace.json
       const workspaceConfig = JSON.parse(
         await sandbox.readFile('.aiwg/workspace.json')
       );
       expect(workspaceConfig.frameworks).toContain('claude');
       expect(workspaceConfig.frameworks).toContain('codex');
+
+      // Check registry.json
+      expect(await sandbox.fileExists('.aiwg/registry.json')).toBe(true);
+      const registry = JSON.parse(await sandbox.readFile('.aiwg/registry.json'));
+      expect(registry.frameworks).toContain('codex');
     });
 
     it('should handle adding already-existing framework gracefully', async () => {
@@ -252,20 +237,6 @@ describe('WorkspaceCreator', () => {
 
       // Should not throw error
       expect(await sandbox.directoryExists('.aiwg/claude')).toBe(true);
-    });
-
-    it('should update workspace registry when adding framework', async () => {
-      const creator = new WorkspaceCreator(projectRoot);
-
-      // addFrameworkToProject updates registry, createFrameworkWorkspace does not
-      await creator.addFrameworkToProject('claude');
-      await creator.addFrameworkToProject('codex');
-
-      expect(await sandbox.fileExists('.aiwg/registry.json')).toBe(true);
-
-      const registry = JSON.parse(await sandbox.readFile('.aiwg/registry.json'));
-      expect(registry.frameworks).toContain('claude');
-      expect(registry.frameworks).toContain('codex');
     });
 
     it('should preserve framework-specific files when adding new framework', async () => {
@@ -349,23 +320,18 @@ describe('WorkspaceCreator', () => {
       expect(config.custom).toBe('data');
     });
 
-    it('should create .gitignore in .aiwg/', async () => {
+    it('should create .gitignore and README in .aiwg/', async () => {
       const creator = new WorkspaceCreator(projectRoot);
       await creator.initializeWorkspace();
 
+      // .gitignore
       expect(await sandbox.fileExists('.aiwg/.gitignore')).toBe(true);
-
       const gitignore = await sandbox.readFile('.aiwg/.gitignore');
       expect(gitignore).toContain('*.log');
       expect(gitignore).toContain('working/');
-    });
 
-    it('should create README in .aiwg/', async () => {
-      const creator = new WorkspaceCreator(projectRoot);
-      await creator.initializeWorkspace();
-
+      // README
       expect(await sandbox.fileExists('.aiwg/README.md')).toBe(true);
-
       const readme = await sandbox.readFile('.aiwg/README.md');
       expect(readme).toContain('AIWG Workspace');
     });
@@ -377,19 +343,12 @@ describe('WorkspaceCreator', () => {
       await expect(creator.initializeWorkspace()).resolves.not.toThrow();
     });
 
-    it('should create working/ directory for temporary files', async () => {
+    it('should create working/ and reports/ directories', async () => {
       const creator = new WorkspaceCreator(projectRoot);
       await creator.initializeWorkspace();
 
       // SDLC directories are created under shared/
       expect(await sandbox.directoryExists('.aiwg/shared/working')).toBe(true);
-    });
-
-    it('should create reports/ directory', async () => {
-      const creator = new WorkspaceCreator(projectRoot);
-      await creator.initializeWorkspace();
-
-      // SDLC directories are created under shared/
       expect(await sandbox.directoryExists('.aiwg/shared/reports')).toBe(true);
     });
   });

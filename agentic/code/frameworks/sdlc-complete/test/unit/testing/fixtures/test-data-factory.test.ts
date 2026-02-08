@@ -50,7 +50,7 @@ describe('TestDataFactory', () => {
       expect(useCase1).not.toEqual(useCase2);
     });
 
-    it('should allow seed to be set after construction', () => {
+    it('should allow seed to be set after construction and produce varied but consistent output', () => {
       const factory1 = new TestDataFactory();
       const factory2 = new TestDataFactory();
 
@@ -61,11 +61,9 @@ describe('TestDataFactory', () => {
       const useCase2 = factory2.generateUseCase();
 
       expect(useCase1).toEqual(useCase2);
-    });
 
-    it('should produce varied but consistent output', () => {
+      // Verify varied output with same seed
       factory.seed(42);
-
       const useCases: UseCase[] = [];
       for (let i = 0; i < 5; i++) {
         useCases.push(factory.generateUseCase());
@@ -88,110 +86,89 @@ describe('TestDataFactory', () => {
   });
 
   describe('Use Case Generation', () => {
-    it('should generate valid use case with default options', () => {
+    it('should generate valid use case with default options and respect custom options', () => {
+      // Default generation
       const useCase = factory.generateUseCase();
-
       expect(useCase.id).toMatch(/^UC-\d{3}$/);
       expect(useCase.title).toBeTruthy();
       expect(useCase.actors.length).toBeGreaterThan(0);
       expect(useCase.preconditions.length).toBeGreaterThan(0);
       expect(useCase.mainScenario.length).toBeGreaterThan(0);
       expect(useCase.acceptanceCriteria.length).toBeGreaterThan(0);
+
+      // Custom options
+      const customActors = ['Actor1', 'Actor2', 'Actor3'];
+      const custom = factory.generateUseCase({
+        id: 'UC-CUSTOM',
+        title: 'Custom Title',
+        actors: customActors,
+        scenarioStepCount: 10,
+        alternateFlowCount: 3
+      });
+      expect(custom.id).toBe('UC-CUSTOM');
+      expect(custom.title).toBe('Custom Title');
+      expect(custom.actors).toEqual(customActors);
+      expect(custom.mainScenario).toHaveLength(10);
+      expect(custom.alternateFlows).toHaveLength(3);
     });
 
-    it('should respect custom id option', () => {
-      const useCase = factory.generateUseCase({ id: 'UC-CUSTOM' });
-      expect(useCase.id).toBe('UC-CUSTOM');
-    });
+    it('should generate properly formatted scenario steps, alternate flows, and acceptance criteria', () => {
+      const useCase = factory.generateUseCase({ alternateFlowCount: 2 });
 
-    it('should respect custom title option', () => {
-      const useCase = factory.generateUseCase({ title: 'Custom Title' });
-      expect(useCase.title).toBe('Custom Title');
-    });
-
-    it('should respect custom actors option', () => {
-      const actors = ['Actor1', 'Actor2', 'Actor3'];
-      const useCase = factory.generateUseCase({ actors });
-      expect(useCase.actors).toEqual(actors);
-    });
-
-    it('should respect scenario step count option', () => {
-      const useCase = factory.generateUseCase({ scenarioStepCount: 10 });
-      expect(useCase.mainScenario).toHaveLength(10);
-    });
-
-    it('should respect alternate flow count option', () => {
-      const useCase = factory.generateUseCase({ alternateFlowCount: 3 });
-      expect(useCase.alternateFlows).toHaveLength(3);
-    });
-
-    it('should generate main scenario with numbered steps', () => {
-      const useCase = factory.generateUseCase();
+      // Main scenario numbered steps
       useCase.mainScenario.forEach((step, index) => {
         expect(step).toMatch(new RegExp(`^${index + 1}\\.`));
       });
-    });
 
-    it('should generate alternate flows as nested arrays', () => {
-      const useCase = factory.generateUseCase({ alternateFlowCount: 2 });
+      // Alternate flows as nested arrays
       expect(Array.isArray(useCase.alternateFlows)).toBe(true);
       useCase.alternateFlows.forEach(flow => {
         expect(Array.isArray(flow)).toBe(true);
         expect(flow.length).toBeGreaterThan(0);
       });
-    });
 
-    it('should generate acceptance criteria with identifiers', () => {
-      const useCase = factory.generateUseCase();
+      // Acceptance criteria with identifiers
       useCase.acceptanceCriteria.forEach(ac => {
         expect(ac).toMatch(/^AC\d+:/);
       });
     });
 
-    it('should handle edge case: zero alternate flows', () => {
-      const useCase = factory.generateUseCase({ alternateFlowCount: 0 });
-      expect(useCase.alternateFlows).toHaveLength(0);
-    });
+    it('should handle edge cases for use case generation', () => {
+      const zeroFlows = factory.generateUseCase({ alternateFlowCount: 0 });
+      expect(zeroFlows.alternateFlows).toHaveLength(0);
 
-    it('should handle edge case: minimum scenario steps', () => {
-      const useCase = factory.generateUseCase({ scenarioStepCount: 1 });
-      expect(useCase.mainScenario).toHaveLength(1);
+      const minSteps = factory.generateUseCase({ scenarioStepCount: 1 });
+      expect(minSteps.mainScenario).toHaveLength(1);
     });
   });
 
   describe('NFR Generation', () => {
-    const categories: NFRCategory[] = ['Performance', 'Security', 'Reliability', 'Usability', 'Scalability'];
+    it('should generate valid NFRs for all categories with proper structure and custom options', () => {
+      const categories: NFRCategory[] = ['Performance', 'Security', 'Reliability', 'Usability', 'Scalability'];
 
-    categories.forEach(category => {
-      it(`should generate valid NFR for ${category}`, () => {
+      for (const category of categories) {
         const nfr = factory.generateNFR(category);
+        expect(nfr.id, `NFR id format failed for ${category}`).toMatch(/^NFR-[A-Z]{4}-\d{3}$/);
+        expect(nfr.category, `Category mismatch for ${category}`).toBe(category);
+        expect(nfr.description, `Description missing for ${category}`).toBeTruthy();
+        expect(nfr.target, `Target missing for ${category}`).toBeTruthy();
+        expect(nfr.measurement, `Measurement missing for ${category}`).toBeTruthy();
+        expect(['P0', 'P1', 'P2'], `Invalid priority for ${category}`).toContain(nfr.priority);
+      }
 
-        expect(nfr.id).toMatch(/^NFR-[A-Z]{4}-\d{3}$/);
-        expect(nfr.category).toBe(category);
-        expect(nfr.description).toBeTruthy();
-        expect(nfr.target).toBeTruthy();
-        expect(nfr.measurement).toBeTruthy();
-        expect(['P0', 'P1', 'P2']).toContain(nfr.priority);
+      // Custom options
+      const custom = factory.generateNFR('Performance', {
+        id: 'NFR-CUSTOM',
+        description: 'Custom description',
+        priority: 'P0'
       });
-    });
-
-    it('should respect custom id option', () => {
-      const nfr = factory.generateNFR('Performance', { id: 'NFR-CUSTOM' });
-      expect(nfr.id).toBe('NFR-CUSTOM');
-    });
-
-    it('should respect custom description option', () => {
-      const nfr = factory.generateNFR('Security', { description: 'Custom description' });
-      expect(nfr.description).toBe('Custom description');
-    });
-
-    it('should respect custom priority option', () => {
-      const nfr = factory.generateNFR('Reliability', { priority: 'P0' });
-      expect(nfr.priority).toBe('P0');
+      expect(custom.id).toBe('NFR-CUSTOM');
+      expect(custom.description).toBe('Custom description');
+      expect(custom.priority).toBe('P0');
     });
 
     it('should generate category-specific content', () => {
-      factory.seed(42); // Ensure reproducibility
+      factory.seed(42);
       const perfNFR = factory.generateNFR('Performance');
       const secNFR = factory.generateNFR('Security');
 
@@ -215,40 +192,34 @@ describe('TestDataFactory', () => {
   });
 
   describe('Supplemental Spec Generation', () => {
-    it('should generate supplemental spec with default NFR count', () => {
+    it('should generate supplemental spec with valid NFRs and handle custom counts', () => {
+      // Default
       const spec = factory.generateSupplementalSpec();
-
       expect(spec.id).toMatch(/^SUPP-\d{3}$/);
       expect(spec.title).toBe('Supplemental Specification');
       expect(spec.nfrs).toHaveLength(5);
       expect(spec.createdAt).toBeTruthy();
-    });
-
-    it('should respect custom NFR count', () => {
-      const spec = factory.generateSupplementalSpec(10);
-      expect(spec.nfrs).toHaveLength(10);
-    });
-
-    it('should generate valid NFRs within spec', () => {
-      const spec = factory.generateSupplementalSpec(3);
 
       spec.nfrs.forEach(nfr => {
         expect(nfr.id).toBeTruthy();
         expect(nfr.category).toBeTruthy();
         expect(nfr.description).toBeTruthy();
       });
-    });
 
-    it('should handle edge case: zero NFRs', () => {
-      const spec = factory.generateSupplementalSpec(0);
-      expect(spec.nfrs).toHaveLength(0);
+      // Custom count
+      const custom = factory.generateSupplementalSpec(10);
+      expect(custom.nfrs).toHaveLength(10);
+
+      // Edge case
+      const empty = factory.generateSupplementalSpec(0);
+      expect(empty.nfrs).toHaveLength(0);
     });
   });
 
   describe('ADR Generation', () => {
-    it('should generate valid ADR with default options', () => {
+    it('should generate valid ADR with proper structure and custom options', () => {
+      // Default
       const adr = factory.generateADR();
-
       expect(adr.number).toBeGreaterThan(0);
       expect(adr.title).toBeTruthy();
       expect(['Proposed', 'Accepted', 'Deprecated', 'Superseded']).toContain(adr.status);
@@ -257,95 +228,77 @@ describe('TestDataFactory', () => {
       expect(adr.consequences.length).toBeGreaterThan(0);
       expect(adr.alternatives.length).toBeGreaterThan(0);
       expect(adr.date).toBeTruthy();
+
+      // Valid ISO date
+      const date = new Date(adr.date);
+      expect(date.toString()).not.toBe('Invalid Date');
+
+      // Custom options
+      const custom = factory.generateADR({
+        number: 42,
+        title: 'Custom ADR Title',
+        status: 'Deprecated'
+      });
+      expect(custom.number).toBe(42);
+      expect(custom.title).toBe('Custom ADR Title');
+      expect(custom.status).toBe('Deprecated');
     });
 
-    it('should respect custom number option', () => {
-      const adr = factory.generateADR({ number: 42 });
-      expect(adr.number).toBe(42);
-    });
-
-    it('should respect custom title option', () => {
-      const adr = factory.generateADR({ title: 'Custom ADR Title' });
-      expect(adr.title).toBe('Custom ADR Title');
-    });
-
-    it('should respect custom status option', () => {
-      const adr = factory.generateADR({ status: 'Deprecated' });
-      expect(adr.status).toBe('Deprecated');
-    });
-
-    it('should generate consequences with positive/negative markers', () => {
+    it('should generate properly formatted consequences and alternatives', () => {
       const adr = factory.generateADR();
+
+      // Consequences with positive/negative markers
       adr.consequences.forEach(consequence => {
         expect(
           consequence.startsWith('Positive:') || consequence.startsWith('Negative:')
         ).toBe(true);
       });
-    });
 
-    it('should generate alternatives with labels', () => {
-      const adr = factory.generateADR();
+      // Alternatives with labels
       adr.alternatives.forEach(alt => {
         expect(alt).toMatch(/^Alternative \d+:/);
       });
     });
-
-    it('should generate valid ISO date', () => {
-      const adr = factory.generateADR();
-      const date = new Date(adr.date);
-      expect(date.toString()).not.toBe('Invalid Date');
-    });
   });
 
   describe('SAD Section Generation', () => {
-    const sections = [
-      'overview', 'goals', 'constraints', 'principles',
-      'components', 'deployment', 'security', 'performance'
-    ] as const;
+    it('should generate all SAD sections with proper formatting', () => {
+      const sections = [
+        'overview', 'goals', 'constraints', 'principles',
+        'components', 'deployment', 'security', 'performance'
+      ] as const;
 
-    sections.forEach(section => {
-      it(`should generate ${section} section`, () => {
+      for (const section of sections) {
         const content = factory.generateSADSection(section);
+        expect(content, `Content missing for ${section}`).toBeTruthy();
+        expect(typeof content, `Wrong type for ${section}`).toBe('string');
+        expect(content.length, `Content too short for ${section}`).toBeGreaterThan(10);
+      }
 
-        expect(content).toBeTruthy();
-        expect(typeof content).toBe('string');
-        expect(content.length).toBeGreaterThan(10);
-      });
-    });
+      // Section-specific formatting checks
+      const overview = factory.generateSADSection('overview');
+      expect(overview).toContain('# Architecture Overview');
 
-    it('should generate overview with heading', () => {
-      const content = factory.generateSADSection('overview');
-      expect(content).toContain('# Architecture Overview');
-    });
+      const goals = factory.generateSADSection('goals');
+      expect(goals).toContain('# Architecture Goals');
+      expect(goals).toMatch(/\d+\./);
 
-    it('should generate goals as numbered list', () => {
-      const content = factory.generateSADSection('goals');
-      expect(content).toContain('# Architecture Goals');
-      expect(content).toMatch(/\d+\./);
-    });
+      const constraints = factory.generateSADSection('constraints');
+      expect(constraints).toContain('# Constraints');
+      expect(constraints).toContain('-');
 
-    it('should generate constraints as bullet list', () => {
-      const content = factory.generateSADSection('constraints');
-      expect(content).toContain('# Constraints');
-      expect(content).toContain('-');
-    });
-
-    it('should generate principles with known values', () => {
-      const content = factory.generateSADSection('principles');
+      const principles = factory.generateSADSection('principles');
       const knownPrinciples = ['Separation of Concerns', 'DRY', 'SOLID', 'KISS', 'YAGNI'];
-      const containsSome = knownPrinciples.some(p => content.includes(p));
-      expect(containsSome).toBe(true);
-    });
+      expect(knownPrinciples.some(p => principles.includes(p))).toBe(true);
 
-    it('should generate components with subheadings', () => {
-      const content = factory.generateSADSection('components');
-      expect(content).toContain('# Components');
-      expect(content).toContain('##');
+      const components = factory.generateSADSection('components');
+      expect(components).toContain('# Components');
+      expect(components).toContain('##');
     });
   });
 
   describe('Component Design Generation', () => {
-    it('should generate component design with valid structure', () => {
+    it('should generate component design with valid structure and proper interface naming', () => {
       const component = factory.generateComponentDesign('UserService');
 
       expect(component.name).toBe('UserService');
@@ -353,114 +306,89 @@ describe('TestDataFactory', () => {
       expect(component.responsibilities.length).toBeGreaterThan(0);
       expect(component.interfaces.length).toBeGreaterThan(0);
       expect(component.dependencies.length).toBeGreaterThan(0);
-    });
 
-    it('should generate interfaces with proper naming convention', () => {
-      const component = factory.generateComponentDesign('TestComponent');
-
+      // Interface naming convention
       component.interfaces.forEach(iface => {
         expect(iface).toMatch(/^I[A-Z]/);
       });
-    });
 
-    it('should handle different component names', () => {
+      // Different component names
       const names = ['AuthService', 'DataRepository', 'APIGateway'];
-
-      names.forEach(name => {
-        const component = factory.generateComponentDesign(name);
-        expect(component.name).toBe(name);
-      });
+      for (const name of names) {
+        const comp = factory.generateComponentDesign(name);
+        expect(comp.name, `Name mismatch for ${name}`).toBe(name);
+      }
     });
   });
 
   describe('Test Case Generation', () => {
-    it('should generate valid test case with default options', () => {
+    it('should generate valid test case with proper structure and custom options', () => {
+      // Default
       const testCase = factory.generateTestCase();
-
       expect(testCase.id).toMatch(/^TC-\d{3}$/);
       expect(testCase.title).toBeTruthy();
       expect(testCase.preconditions.length).toBeGreaterThan(0);
       expect(testCase.steps.length).toBeGreaterThan(0);
       expect(testCase.expectedResults.length).toBeGreaterThan(0);
       expect(['P0', 'P1', 'P2']).toContain(testCase.priority);
+
+      // Step-to-result correspondence
+      expect(testCase.steps.length).toBe(testCase.expectedResults.length);
+
+      // Custom options
+      const custom = factory.generateTestCase({
+        id: 'TC-CUSTOM',
+        title: 'Custom Test',
+        priority: 'P0',
+        stepCount: 8
+      });
+      expect(custom.id).toBe('TC-CUSTOM');
+      expect(custom.title).toBe('Custom Test');
+      expect(custom.priority).toBe('P0');
+      expect(custom.steps).toHaveLength(8);
+      expect(custom.expectedResults).toHaveLength(8);
     });
 
-    it('should respect custom id option', () => {
-      const testCase = factory.generateTestCase({ id: 'TC-CUSTOM' });
-      expect(testCase.id).toBe('TC-CUSTOM');
-    });
-
-    it('should respect custom title option', () => {
-      const testCase = factory.generateTestCase({ title: 'Custom Test' });
-      expect(testCase.title).toBe('Custom Test');
-    });
-
-    it('should respect custom priority option', () => {
-      const testCase = factory.generateTestCase({ priority: 'P0' });
-      expect(testCase.priority).toBe('P0');
-    });
-
-    it('should respect step count option', () => {
-      const testCase = factory.generateTestCase({ stepCount: 8 });
-      expect(testCase.steps).toHaveLength(8);
-      expect(testCase.expectedResults).toHaveLength(8);
-    });
-
-    it('should generate steps with labels', () => {
+    it('should generate properly formatted steps and expected results', () => {
       const testCase = factory.generateTestCase();
+
+      // Steps with labels
       testCase.steps.forEach((step, index) => {
         expect(step).toMatch(new RegExp(`^Step ${index + 1}:`));
       });
-    });
 
-    it('should generate expected results with labels', () => {
-      const testCase = factory.generateTestCase();
+      // Expected results with labels
       testCase.expectedResults.forEach(result => {
         expect(result).toMatch(/^Expected:/);
       });
     });
-
-    it('should maintain step-to-result correspondence', () => {
-      const testCase = factory.generateTestCase();
-      expect(testCase.steps.length).toBe(testCase.expectedResults.length);
-    });
   });
 
   describe('Test Plan Generation', () => {
-    it('should generate valid test plan with default test case count', () => {
+    it('should generate valid test plan with valid test cases and handle custom counts', () => {
+      // Default
       const plan = factory.generateTestPlan();
-
       expect(plan.id).toMatch(/^TP-\d{3}$/);
       expect(plan.title).toBe('Test Plan');
       expect(plan.objectives.length).toBeGreaterThan(0);
       expect(plan.scope).toBeTruthy();
       expect(plan.testCases).toHaveLength(5);
       expect(plan.schedule).toBeTruthy();
-    });
-
-    it('should respect custom test case count', () => {
-      const plan = factory.generateTestPlan(10);
-      expect(plan.testCases).toHaveLength(10);
-    });
-
-    it('should generate valid test cases within plan', () => {
-      const plan = factory.generateTestPlan(3);
+      expect(plan.schedule).toMatch(/^Week \d+$/);
 
       plan.testCases.forEach(tc => {
         expect(tc.id).toBeTruthy();
         expect(tc.title).toBeTruthy();
         expect(tc.steps.length).toBeGreaterThan(0);
       });
-    });
 
-    it('should handle edge case: zero test cases', () => {
-      const plan = factory.generateTestPlan(0);
-      expect(plan.testCases).toHaveLength(0);
-    });
+      // Custom count
+      const custom = factory.generateTestPlan(10);
+      expect(custom.testCases).toHaveLength(10);
 
-    it('should generate schedule with week reference', () => {
-      const plan = factory.generateTestPlan();
-      expect(plan.schedule).toMatch(/^Week \d+$/);
+      // Edge case
+      const empty = factory.generateTestPlan(0);
+      expect(empty.testCases).toHaveLength(0);
     });
   });
 
@@ -471,7 +399,7 @@ describe('TestDataFactory', () => {
       testCase = factory.generateTestCase();
     });
 
-    it('should generate passed result', () => {
+    it('should generate passed result with proper structure', () => {
       const result = factory.generateTestResult(testCase, true);
 
       expect(result.testCaseId).toBe(testCase.id);
@@ -479,100 +407,81 @@ describe('TestDataFactory', () => {
       expect(result.executionTime).toBeGreaterThan(0);
       expect(result.message).toBeUndefined();
       expect(result.timestamp).toBeTruthy();
+
+      // Valid ISO timestamp
+      const date = new Date(result.timestamp);
+      expect(date.toString()).not.toBe('Invalid Date');
+
+      // Realistic execution time
+      expect(result.executionTime).toBeGreaterThanOrEqual(10);
+      expect(result.executionTime).toBeLessThanOrEqual(5000);
     });
 
-    it('should generate failed or skipped result', () => {
+    it('should generate failed or skipped result with error messages', () => {
       const result = factory.generateTestResult(testCase, false);
 
       expect(result.testCaseId).toBe(testCase.id);
       expect(['failed', 'skipped']).toContain(result.status);
       expect(result.executionTime).toBeGreaterThan(0);
       expect(result.timestamp).toBeTruthy();
-    });
 
-    it('should include error message for failed tests', () => {
+      // Error message for failed tests
       factory.seed(12345);
-      const result = factory.generateTestResult(testCase, false);
-
-      if (result.status === 'failed') {
-        expect(result.message).toBeTruthy();
-        expect(result.message).toContain('Assertion failed:');
+      const failedResult = factory.generateTestResult(testCase, false);
+      if (failedResult.status === 'failed') {
+        expect(failedResult.message).toBeTruthy();
+        expect(failedResult.message).toContain('Assertion failed:');
       }
-    });
-
-    it('should generate valid ISO timestamp', () => {
-      const result = factory.generateTestResult(testCase, true);
-      const date = new Date(result.timestamp);
-      expect(date.toString()).not.toBe('Invalid Date');
-    });
-
-    it('should generate realistic execution times', () => {
-      const result = factory.generateTestResult(testCase, true);
-      expect(result.executionTime).toBeGreaterThanOrEqual(10);
-      expect(result.executionTime).toBeLessThanOrEqual(5000);
     });
   });
 
   describe('Git Commit Generation', () => {
-    it('should generate valid git commit with default options', () => {
+    it('should generate valid git commit with proper structure and custom options', () => {
+      // Default
       const commit = factory.generateGitCommit();
-
       expect(commit.hash).toMatch(/^[a-f0-9]{40}$/);
       expect(commit.author).toBeTruthy();
       expect(commit.email).toMatch(/.+@.+\..+/);
       expect(commit.date).toBeTruthy();
       expect(commit.message).toBeTruthy();
       expect(commit.files.length).toBeGreaterThan(0);
-    });
 
-    it('should respect custom author option', () => {
-      const commit = factory.generateGitCommit({ author: 'John Doe' });
-      expect(commit.author).toBe('John Doe');
-      expect(commit.email).toContain('john.doe');
-    });
-
-    it('should respect custom message option', () => {
-      const commit = factory.generateGitCommit({ message: 'feat: custom message' });
-      expect(commit.message).toBe('feat: custom message');
-    });
-
-    it('should respect file count option', () => {
-      const commit = factory.generateGitCommit({ fileCount: 7 });
-      expect(commit.files).toHaveLength(7);
-    });
-
-    it('should generate unique commit hashes', () => {
-      const commit1 = factory.generateGitCommit();
+      // Unique hashes
       const commit2 = factory.generateGitCommit();
+      expect(commit.hash).not.toBe(commit2.hash);
 
-      expect(commit1.hash).not.toBe(commit2.hash);
+      // Custom options
+      const custom = factory.generateGitCommit({
+        author: 'John Doe',
+        message: 'feat: custom message',
+        fileCount: 7
+      });
+      expect(custom.author).toBe('John Doe');
+      expect(custom.email).toContain('john.doe');
+      expect(custom.message).toBe('feat: custom message');
+      expect(custom.files).toHaveLength(7);
     });
 
-    it('should generate email from author name', () => {
+    it('should generate proper email from author name and conventional commit messages', () => {
       const commit = factory.generateGitCommit({ author: 'Alice Johnson' });
       expect(commit.email).toContain('alice.johnson');
-    });
 
-    it('should generate file paths with directories', () => {
-      const commit = factory.generateGitCommit();
+      // Conventional commit format
+      const prefixes = ['feat', 'fix', 'docs', 'refactor', 'test', 'chore'];
+      const hasValidPrefix = prefixes.some(prefix => commit.message.startsWith(prefix + ':'));
+      expect(hasValidPrefix).toBe(true);
 
+      // File paths with directories
       commit.files.forEach(file => {
         expect(file).toMatch(/^[^/]+\/.+\.[a-z]+$/);
       });
     });
-
-    it('should generate conventional commit messages', () => {
-      const commit = factory.generateGitCommit();
-      const prefixes = ['feat', 'fix', 'docs', 'refactor', 'test', 'chore'];
-      const hasValidPrefix = prefixes.some(prefix => commit.message.startsWith(prefix + ':'));
-      expect(hasValidPrefix).toBe(true);
-    });
   });
 
   describe('Pull Request Generation', () => {
-    it('should generate valid pull request with default options', () => {
+    it('should generate valid pull request with proper structure and custom options', () => {
+      // Default
       const pr = factory.generatePullRequest();
-
       expect(pr.number).toBeGreaterThan(0);
       expect(pr.title).toBeTruthy();
       expect(pr.description).toBeTruthy();
@@ -580,27 +489,20 @@ describe('TestDataFactory', () => {
       expect(['open', 'merged', 'closed']).toContain(pr.status);
       expect(pr.commits.length).toBeGreaterThan(0);
       expect(pr.createdAt).toBeTruthy();
-    });
 
-    it('should respect custom number option', () => {
-      const pr = factory.generatePullRequest({ number: 123 });
-      expect(pr.number).toBe(123);
-    });
-
-    it('should respect custom title option', () => {
-      const pr = factory.generatePullRequest({ title: 'Custom PR Title' });
-      expect(pr.title).toBe('Custom PR Title');
-    });
-
-    it('should respect commit count option', () => {
-      const pr = factory.generatePullRequest({ commitCount: 8 });
-      expect(pr.commits).toHaveLength(8);
-    });
-
-    it('should generate description with sections', () => {
-      const pr = factory.generatePullRequest();
+      // Description sections
       expect(pr.description).toContain('## Changes');
       expect(pr.description).toContain('-');
+
+      // Custom options
+      const custom = factory.generatePullRequest({
+        number: 123,
+        title: 'Custom PR Title',
+        commitCount: 8
+      });
+      expect(custom.number).toBe(123);
+      expect(custom.title).toBe('Custom PR Title');
+      expect(custom.commits).toHaveLength(8);
     });
 
     it('should use same author for all commits in PR', () => {
@@ -613,77 +515,54 @@ describe('TestDataFactory', () => {
   });
 
   describe('Git History Generation', () => {
-    it('should generate specified number of commits', () => {
+    it('should generate specified number of valid commits and handle edge cases', () => {
+      // Standard
       const history = factory.generateGitHistory(10);
       expect(history).toHaveLength(10);
-    });
-
-    it('should generate valid commits', () => {
-      const history = factory.generateGitHistory(5);
 
       history.forEach(commit => {
         expect(commit.hash).toBeTruthy();
         expect(commit.author).toBeTruthy();
         expect(commit.message).toBeTruthy();
       });
-    });
 
-    it('should handle edge case: zero commits', () => {
-      const history = factory.generateGitHistory(0);
-      expect(history).toHaveLength(0);
-    });
+      // Edge cases
+      const empty = factory.generateGitHistory(0);
+      expect(empty).toHaveLength(0);
 
-    it('should handle edge case: single commit', () => {
-      const history = factory.generateGitHistory(1);
-      expect(history).toHaveLength(1);
+      const single = factory.generateGitHistory(1);
+      expect(single).toHaveLength(1);
     });
   });
 
   describe('Project Intake Generation', () => {
-    it('should generate valid project intake with default options', () => {
+    it('should generate valid project intake with proper structure and custom options', () => {
+      // Default
       const intake = factory.generateProjectIntake();
-
       expect(intake.projectName).toBeTruthy();
       expect(intake.description).toBeTruthy();
       expect(intake.stakeholders.length).toBeGreaterThan(0);
       expect(intake.objectives.length).toBeGreaterThan(0);
       expect(intake.constraints.length).toBeGreaterThan(0);
       expect(intake.risks.length).toBeGreaterThan(0);
-    });
 
-    it('should respect custom project name option', () => {
-      const intake = factory.generateProjectIntake({ projectName: 'Custom Project' });
-      expect(intake.projectName).toBe('Custom Project');
-    });
-
-    it('should respect stakeholder count option', () => {
-      const intake = factory.generateProjectIntake({ stakeholderCount: 7 });
-      expect(intake.stakeholders).toHaveLength(7);
-    });
-
-    it('should generate unique stakeholders', () => {
-      const intake = factory.generateProjectIntake({ stakeholderCount: 5 });
-      // Note: May have duplicates due to random selection from limited pool
-      expect(intake.stakeholders.length).toBe(5);
+      // Custom options
+      const custom = factory.generateProjectIntake({
+        projectName: 'Custom Project',
+        stakeholderCount: 7
+      });
+      expect(custom.projectName).toBe('Custom Project');
+      expect(custom.stakeholders).toHaveLength(7);
     });
   });
 
   describe('Risk Register Generation', () => {
-    it('should generate valid risk register with default risk count', () => {
+    it('should generate valid risk register with valid risks and handle custom counts', () => {
+      // Default
       const register = factory.generateRiskRegister();
-
       expect(register.id).toMatch(/^RR-\d{3}$/);
       expect(register.risks).toHaveLength(5);
       expect(register.createdAt).toBeTruthy();
-    });
-
-    it('should respect custom risk count', () => {
-      const register = factory.generateRiskRegister(10);
-      expect(register.risks).toHaveLength(10);
-    });
-
-    it('should generate valid risks', () => {
-      const register = factory.generateRiskRegister(3);
 
       register.risks.forEach(risk => {
         expect(risk.id).toMatch(/^RISK-\d{3}$/);
@@ -692,16 +571,19 @@ describe('TestDataFactory', () => {
         expect(['High', 'Medium', 'Low']).toContain(risk.probability);
         expect(risk.mitigation).toBeTruthy();
       });
-    });
 
-    it('should handle edge case: zero risks', () => {
-      const register = factory.generateRiskRegister(0);
-      expect(register.risks).toHaveLength(0);
+      // Custom count
+      const custom = factory.generateRiskRegister(10);
+      expect(custom.risks).toHaveLength(10);
+
+      // Edge case
+      const empty = factory.generateRiskRegister(0);
+      expect(empty.risks).toHaveLength(0);
     });
   });
 
   describe('Iteration Plan Generation', () => {
-    it('should generate valid iteration plan', () => {
+    it('should generate valid iteration plan with user story IDs and handle different weeks', () => {
       const plan = factory.generateIterationPlan(2);
 
       expect(plan.id).toMatch(/^ITER-\d{3}$/);
@@ -710,100 +592,72 @@ describe('TestDataFactory', () => {
       expect(plan.endDate).toBeTruthy();
       expect(plan.objectives.length).toBeGreaterThan(0);
       expect(plan.stories.length).toBeGreaterThan(0);
-    });
 
-    it('should generate user story IDs', () => {
-      const plan = factory.generateIterationPlan(1);
-
+      // User story IDs
       plan.stories.forEach(story => {
         expect(story).toMatch(/^US-\d{3}$/);
       });
-    });
 
-    it('should handle different week counts', () => {
+      // Different week counts
       const plan1 = factory.generateIterationPlan(1);
-      const plan2 = factory.generateIterationPlan(4);
-
+      const plan4 = factory.generateIterationPlan(4);
       expect(plan1.startDate).toBeTruthy();
-      expect(plan2.startDate).toBeTruthy();
+      expect(plan4.startDate).toBeTruthy();
     });
   });
 
   describe('Utility Methods', () => {
-    describe('generateRandomText', () => {
-      it('should generate text with specified word count', () => {
-        const text = factory.generateRandomText(10);
-        const words = text.split(/\s+/);
-        expect(words.length).toBe(10);
-      });
+    it('should generate random text with specified word count and proper formatting', () => {
+      const text = factory.generateRandomText(10);
+      const words = text.split(/\s+/);
+      expect(words.length).toBe(10);
 
-      it('should capitalize first word', () => {
-        const text = factory.generateRandomText(5);
-        expect(text.charAt(0)).toBe(text.charAt(0).toUpperCase());
-      });
+      // Capitalization and punctuation
+      expect(text.charAt(0)).toBe(text.charAt(0).toUpperCase());
+      expect(text.endsWith('.')).toBe(true);
 
-      it('should end with period', () => {
-        const text = factory.generateRandomText(5);
-        expect(text.endsWith('.')).toBe(true);
-      });
+      // Edge cases
+      const single = factory.generateRandomText(1);
+      expect(single).toBeTruthy();
+      expect(single.endsWith('.')).toBe(true);
 
-      it('should handle edge case: single word', () => {
-        const text = factory.generateRandomText(1);
-        expect(text).toBeTruthy();
-        expect(text.endsWith('.')).toBe(true);
-      });
-
-      it('should handle edge case: zero words', () => {
-        const text = factory.generateRandomText(0);
-        expect(text).toBe('.');
-      });
+      const empty = factory.generateRandomText(0);
+      expect(empty).toBe('.');
     });
 
-    describe('generateDate', () => {
-      it('should generate current date with daysAgo=0', () => {
-        const dateStr = factory.generateDate(0);
-        const date = new Date(dateStr);
-        const now = new Date();
+    it('should generate dates with proper formatting and handle day offsets', () => {
+      // Current date
+      const dateStr = factory.generateDate(0);
+      const date = new Date(dateStr);
+      const now = new Date();
+      expect(date.getDate()).toBe(now.getDate());
 
-        // Within same day
-        expect(date.getDate()).toBe(now.getDate());
-      });
+      // Past date
+      const pastStr = factory.generateDate(7);
+      const past = new Date(pastStr);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      expect(past.getDate()).toBe(weekAgo.getDate());
 
-      it('should generate past date with positive daysAgo', () => {
-        const dateStr = factory.generateDate(7);
-        const date = new Date(dateStr);
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-
-        expect(date.getDate()).toBe(weekAgo.getDate());
-      });
-
-      it('should return ISO 8601 format', () => {
-        const dateStr = factory.generateDate();
-        expect(dateStr).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
-      });
+      // ISO 8601 format
+      expect(dateStr).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     });
 
-    describe('generateId', () => {
-      it('should generate ID with specified prefix', () => {
-        const id = factory.generateId('TEST');
-        expect(id).toMatch(/^TEST-\d{3}$/);
-      });
+    it('should generate IDs with specified prefix and proper formatting', () => {
+      const id = factory.generateId('TEST');
+      expect(id).toMatch(/^TEST-\d{3}$/);
 
-      it('should generate zero-padded numbers', () => {
-        factory.seed(12345);
-        const id = factory.generateId('ID');
-        expect(id).toMatch(/^ID-\d{3}$/);
-      });
+      // Zero-padded numbers
+      factory.seed(12345);
+      const zeroId = factory.generateId('ID');
+      expect(zeroId).toMatch(/^ID-\d{3}$/);
 
-      it('should support different prefixes', () => {
-        const prefixes = ['UC', 'TC', 'NFR', 'ADR'];
-
-        prefixes.forEach(prefix => {
-          const id = factory.generateId(prefix);
-          expect(id.startsWith(prefix + '-')).toBe(true);
-        });
-      });
+      // Different prefixes
+      const prefixes = ['UC', 'TC', 'NFR', 'ADR'];
+      for (const prefix of prefixes) {
+        const prefixId = factory.generateId(prefix);
+        expect(prefixId.startsWith(prefix + '-'), `Failed for prefix ${prefix}`).toBe(true);
+      }
     });
   });
 

@@ -43,13 +43,16 @@ describe('TrendAnalyzer', () => {
       expect(result[3]).toBeCloseTo(25, 5); // (10+20+30+40)/4
     });
 
-    it('should throw error for invalid window size', () => {
-      expect(() => analyzer.calculateMovingAverage([1, 2, 3], 0)).toThrow('Window size must be positive');
-      expect(() => analyzer.calculateMovingAverage([1, 2, 3], -1)).toThrow('Window size must be positive');
-    });
+    it('should throw errors for invalid window sizes', () => {
+      const testCases = [
+        { windowSize: 0, errorMsg: 'Window size must be positive' },
+        { windowSize: -1, errorMsg: 'Window size must be positive' },
+        { windowSize: 5, errorMsg: 'Window size cannot exceed sample count' },
+      ];
 
-    it('should throw error when window exceeds sample count', () => {
-      expect(() => analyzer.calculateMovingAverage([1, 2, 3], 5)).toThrow('Window size cannot exceed sample count');
+      for (const { windowSize, errorMsg } of testCases) {
+        expect(() => analyzer.calculateMovingAverage([1, 2, 3], windowSize)).toThrow(errorMsg);
+      }
     });
 
     it('should handle single sample', () => {
@@ -67,9 +70,15 @@ describe('TrendAnalyzer', () => {
       expect(result[4]).toBeGreaterThan(result[0]); // Should trend upward
     });
 
-    it('should throw error for invalid alpha', () => {
-      expect(() => analyzer.calculateExponentialMovingAverage([1, 2, 3], 0)).toThrow('Alpha must be between 0 and 1');
-      expect(() => analyzer.calculateExponentialMovingAverage([1, 2, 3], 1.5)).toThrow('Alpha must be between 0 and 1');
+    it('should throw errors for invalid alpha values', () => {
+      const testCases = [
+        { alpha: 0, errorMsg: 'Alpha must be between 0 and 1' },
+        { alpha: 1.5, errorMsg: 'Alpha must be between 0 and 1' },
+      ];
+
+      for (const { alpha, errorMsg } of testCases) {
+        expect(() => analyzer.calculateExponentialMovingAverage([1, 2, 3], alpha)).toThrow(errorMsg);
+      }
     });
   });
 
@@ -115,45 +124,55 @@ describe('TrendAnalyzer', () => {
   });
 
   describe('Trend Line Fitting', () => {
-    it('should fit linear trend line to increasing data', () => {
-      const data: TimeSeries = [
-        { timestamp: 1000, value: 10 },
-        { timestamp: 2000, value: 20 },
-        { timestamp: 3000, value: 30 },
-        { timestamp: 4000, value: 40 },
+    it('should fit linear trend lines to different data patterns', () => {
+      const testCases = [
+        {
+          name: 'increasing data',
+          data: [
+            { timestamp: 1000, value: 10 },
+            { timestamp: 2000, value: 20 },
+            { timestamp: 3000, value: 30 },
+            { timestamp: 4000, value: 40 },
+          ],
+          expectedSlope: 'positive',
+          expectedRSquared: 1,
+        },
+        {
+          name: 'decreasing data',
+          data: [
+            { timestamp: 1000, value: 40 },
+            { timestamp: 2000, value: 30 },
+            { timestamp: 3000, value: 20 },
+            { timestamp: 4000, value: 10 },
+          ],
+          expectedSlope: 'negative',
+          expectedRSquared: 1,
+        },
+        {
+          name: 'constant data',
+          data: [
+            { timestamp: 1000, value: 25 },
+            { timestamp: 2000, value: 25 },
+            { timestamp: 3000, value: 25 },
+          ],
+          expectedSlope: 'zero',
+          expectedRSquared: 1,
+        },
       ];
 
-      const trend = analyzer.fitTrendLine(data);
+      for (const { data, expectedSlope, expectedRSquared } of testCases) {
+        const trend = analyzer.fitTrendLine(data);
 
-      expect(trend.slope).toBeGreaterThan(0); // Positive slope
-      expect(trend.rSquared).toBeCloseTo(1, 5); // Perfect fit
-    });
+        if (expectedSlope === 'positive') {
+          expect(trend.slope).toBeGreaterThan(0);
+        } else if (expectedSlope === 'negative') {
+          expect(trend.slope).toBeLessThan(0);
+        } else if (expectedSlope === 'zero') {
+          expect(Math.abs(trend.slope)).toBeLessThan(0.001);
+        }
 
-    it('should fit linear trend line to decreasing data', () => {
-      const data: TimeSeries = [
-        { timestamp: 1000, value: 40 },
-        { timestamp: 2000, value: 30 },
-        { timestamp: 3000, value: 20 },
-        { timestamp: 4000, value: 10 },
-      ];
-
-      const trend = analyzer.fitTrendLine(data);
-
-      expect(trend.slope).toBeLessThan(0); // Negative slope
-      expect(trend.rSquared).toBeCloseTo(1, 5); // Perfect fit
-    });
-
-    it('should fit horizontal line to constant data', () => {
-      const data: TimeSeries = [
-        { timestamp: 1000, value: 25 },
-        { timestamp: 2000, value: 25 },
-        { timestamp: 3000, value: 25 },
-      ];
-
-      const trend = analyzer.fitTrendLine(data);
-
-      expect(Math.abs(trend.slope)).toBeLessThan(0.001); // Near-zero slope
-      expect(trend.rSquared).toBeCloseTo(1, 1); // Good fit for constant
+        expect(trend.rSquared).toBeCloseTo(expectedRSquared, expectedSlope === 'zero' ? 1 : 5);
+      }
     });
 
     it('should calculate R-squared for noisy data', () => {
@@ -319,20 +338,31 @@ describe('TrendAnalyzer', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle very small values', () => {
-      const samples = [0.001, 0.002, 0.003];
-      const avg = analyzer.calculateMovingAverage(samples, 2);
+    it('should handle extreme value ranges', () => {
+      const testCases = [
+        {
+          name: 'very small values',
+          samples: [0.001, 0.002, 0.003],
+          windowSize: 2,
+          expectedAtIndex: 1,
+          expectedValue: 0.0015,
+          precision: 6,
+        },
+        {
+          name: 'very large values',
+          samples: [1e9, 2e9, 3e9],
+          windowSize: 2,
+          expectedAtIndex: 1,
+          expectedValue: 1.5e9,
+          precision: 0,
+        },
+      ];
 
-      expect(avg).toHaveLength(3);
-      expect(avg[1]).toBeCloseTo(0.0015, 6);
-    });
-
-    it('should handle very large values', () => {
-      const samples = [1e9, 2e9, 3e9];
-      const avg = analyzer.calculateMovingAverage(samples, 2);
-
-      expect(avg).toHaveLength(3);
-      expect(avg[1]).toBeCloseTo(1.5e9, 0);
+      for (const { samples, windowSize, expectedAtIndex, expectedValue, precision } of testCases) {
+        const avg = analyzer.calculateMovingAverage(samples, windowSize);
+        expect(avg).toHaveLength(3);
+        expect(avg[expectedAtIndex]).toBeCloseTo(expectedValue, precision);
+      }
     });
 
     it('should handle negative values', () => {

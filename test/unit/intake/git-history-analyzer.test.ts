@@ -99,36 +99,28 @@ def456|Jane Smith|jane@example.com|1700100000|Add feature`;
       expect(commits[0].message).toBe('Initial commit');
     });
 
-    it('should handle empty log', () => {
-      const commits = analyzer.parseCommitLog('');
-      expect(commits).toHaveLength(0);
-    });
+    it('should handle edge cases', () => {
+      // Test empty log
+      expect(analyzer.parseCommitLog('')).toHaveLength(0);
 
-    it('should handle messages with pipe characters', () => {
-      const logOutput = `abc123|John|john@example.com|1700000000|Fix: update | operator`;
+      // Test messages with pipe characters
+      const withPipe = `abc123|John|john@example.com|1700000000|Fix: update | operator`;
+      const pipeCommits = analyzer.parseCommitLog(withPipe);
+      expect(pipeCommits[0].message).toBe('Fix: update | operator');
 
-      const commits = analyzer.parseCommitLog(logOutput);
-
-      expect(commits[0].message).toBe('Fix: update | operator');
-    });
-
-    it('should skip malformed lines', () => {
-      const logOutput = `abc123|John|john@example.com|1700000000|Valid commit
+      // Test malformed lines
+      const malformed = `abc123|John|john@example.com|1700000000|Valid commit
 invalid line with no pipes
 def456|Jane|jane@example.com|1700100000|Another commit`;
+      const malformedCommits = analyzer.parseCommitLog(malformed);
+      expect(malformedCommits).toHaveLength(2);
 
-      const commits = analyzer.parseCommitLog(logOutput);
-      expect(commits).toHaveLength(2);
-    });
-
-    it('should convert timestamp to Date', () => {
+      // Test timestamp conversion
       const timestamp = 1700000000;
-      const logOutput = `abc123|John|john@example.com|${timestamp}|Test`;
-
-      const commits = analyzer.parseCommitLog(logOutput);
-
-      expect(commits[0].timestamp).toBe(timestamp);
-      expect(commits[0].date.getTime()).toBe(timestamp * 1000);
+      const timestampLog = `abc123|John|john@example.com|${timestamp}|Test`;
+      const timestampCommits = analyzer.parseCommitLog(timestampLog);
+      expect(timestampCommits[0].timestamp).toBe(timestamp);
+      expect(timestampCommits[0].date.getTime()).toBe(timestamp * 1000);
     });
   });
 
@@ -210,25 +202,56 @@ def456|Jane|jane@example.com|1700100000|Another commit`;
   });
 
   describe('classifyMaturity', () => {
-    it('should classify nascent project', () => {
+    it.each([
+      {
+        level: 'nascent' as const,
+        ageMonths: 2,
+        totalCommits: 30,
+        checkAge: true,
+        description: 'nascent project'
+      },
+      {
+        level: 'mvp' as const,
+        ageMonths: 4,
+        totalCommits: 100,
+        checkAge: false,
+        description: 'MVP project'
+      },
+      {
+        level: 'production' as const,
+        ageMonths: 8,
+        totalCommits: 500,
+        checkAge: false,
+        description: 'production project'
+      },
+      {
+        level: 'mature' as const,
+        ageMonths: 24,
+        totalCommits: 2000,
+        checkAge: false,
+        description: 'mature project'
+      }
+    ])('should classify $description', ({ level, ageMonths, totalCommits, checkAge }) => {
       const now = new Date();
-      const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+      const pastDate = new Date(now.getTime() - ageMonths * 30 * 24 * 60 * 60 * 1000);
 
-      const commits: CommitInfo[] = Array(30).fill(null).map((_, i) => ({
-        hash: `h${i}`,
-        author: 'A',
-        email: 'a@x.com',
-        timestamp: Math.floor(twoMonthsAgo.getTime() / 1000) + i * 1000,
-        message: `Commit ${i}`,
-        date: new Date(twoMonthsAgo.getTime() + i * 1000)
-      }));
+      const commits: CommitInfo[] = level === 'nascent'
+        ? Array(totalCommits).fill(null).map((_, i) => ({
+            hash: `h${i}`,
+            author: 'A',
+            email: 'a@x.com',
+            timestamp: Math.floor(pastDate.getTime() / 1000) + i * 1000,
+            message: `Commit ${i}`,
+            date: new Date(pastDate.getTime() + i * 1000)
+          }))
+        : [];
 
       const repository = {
         path: '/test',
         name: 'test',
-        firstCommitDate: twoMonthsAgo,
+        firstCommitDate: pastDate,
         lastCommitDate: now,
-        totalCommits: 30,
+        totalCommits,
         branches: [],
         defaultBranch: 'main',
         hasRemote: false
@@ -236,69 +259,15 @@ def456|Jane|jane@example.com|1700100000|Another commit`;
 
       const maturity = analyzer.classifyMaturity(commits, repository);
 
-      expect(maturity.level).toBe('nascent');
-      expect(maturity.ageMonths).toBeLessThan(3);
-    });
+      expect(maturity.level).toBe(level);
 
-    it('should classify MVP project', () => {
-      const now = new Date();
-      const fourMonthsAgo = new Date(now.getTime() - 120 * 24 * 60 * 60 * 1000);
+      if (checkAge) {
+        expect(maturity.ageMonths).toBeLessThan(3);
+      }
 
-      const repository = {
-        path: '/test',
-        name: 'test',
-        firstCommitDate: fourMonthsAgo,
-        lastCommitDate: now,
-        totalCommits: 100,
-        branches: [],
-        defaultBranch: 'main',
-        hasRemote: false
-      };
-
-      const maturity = analyzer.classifyMaturity([], repository);
-
-      expect(maturity.level).toBe('mvp');
-    });
-
-    it('should classify production project', () => {
-      const now = new Date();
-      const eightMonthsAgo = new Date(now.getTime() - 240 * 24 * 60 * 60 * 1000);
-
-      const repository = {
-        path: '/test',
-        name: 'test',
-        firstCommitDate: eightMonthsAgo,
-        lastCommitDate: now,
-        totalCommits: 500,
-        branches: [],
-        defaultBranch: 'main',
-        hasRemote: false
-      };
-
-      const maturity = analyzer.classifyMaturity([], repository);
-
-      expect(maturity.level).toBe('production');
-    });
-
-    it('should classify mature project', () => {
-      const now = new Date();
-      const twoYearsAgo = new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000);
-
-      const repository = {
-        path: '/test',
-        name: 'test',
-        firstCommitDate: twoYearsAgo,
-        lastCommitDate: now,
-        totalCommits: 2000,
-        branches: [],
-        defaultBranch: 'main',
-        hasRemote: false
-      };
-
-      const maturity = analyzer.classifyMaturity([], repository);
-
-      expect(maturity.level).toBe('mature');
-      expect(maturity.indicators).toContain('Mature project with established history');
+      if (level === 'mature') {
+        expect(maturity.indicators).toContain('Mature project with established history');
+      }
     });
 
     it('should include indicators', () => {
@@ -349,11 +318,14 @@ def456|Jane|jane@example.com|1700100000|Another commit`;
       expect(team.teamSize).toBe('solo');
     });
 
-    it('should categorize team sizes correctly', () => {
+    it.each([
+      { teamSize: 'small' as const, authorCount: 3, description: 'Small team (2-5)' },
+      { teamSize: 'medium' as const, authorCount: 10, description: 'Medium team (6-15)' },
+      { teamSize: 'large' as const, authorCount: 20, description: 'Large team (>15)' }
+    ])('should categorize $description', ({ teamSize, authorCount }) => {
       const now = Math.floor(Date.now() / 1000);
 
-      // Small team (2-5)
-      const smallTeam: CommitInfo[] = Array(3).fill(null).map((_, i) => ({
+      const commits: CommitInfo[] = Array(authorCount).fill(null).map((_, i) => ({
         hash: `h${i}`,
         author: `Author${i}`,
         email: `author${i}@x.com`,
@@ -362,31 +334,7 @@ def456|Jane|jane@example.com|1700100000|Another commit`;
         date: new Date(now * 1000)
       }));
 
-      expect(analyzer.extractTeamInfo(smallTeam).teamSize).toBe('small');
-
-      // Medium team (6-15)
-      const mediumTeam: CommitInfo[] = Array(10).fill(null).map((_, i) => ({
-        hash: `h${i}`,
-        author: `Author${i}`,
-        email: `author${i}@x.com`,
-        timestamp: now,
-        message: 'm',
-        date: new Date(now * 1000)
-      }));
-
-      expect(analyzer.extractTeamInfo(mediumTeam).teamSize).toBe('medium');
-
-      // Large team (>15)
-      const largeTeam: CommitInfo[] = Array(20).fill(null).map((_, i) => ({
-        hash: `h${i}`,
-        author: `Author${i}`,
-        email: `author${i}@x.com`,
-        timestamp: now,
-        message: 'm',
-        date: new Date(now * 1000)
-      }));
-
-      expect(analyzer.extractTeamInfo(largeTeam).teamSize).toBe('large');
+      expect(analyzer.extractTeamInfo(commits).teamSize).toBe(teamSize);
     });
 
     it('should count active authors correctly', () => {
@@ -470,12 +418,10 @@ def456|Jane|jane@example.com|1700100000|Another commit`;
   });
 
   describe('Options', () => {
-    it('should respect maxCommits option', () => {
+    it('should respect constructor options', () => {
       const limitedAnalyzer = new GitHistoryAnalyzer(testRepoPath, { maxCommits: 5 });
       expect(limitedAnalyzer).toBeDefined();
-    });
 
-    it('should respect sinceMonths option', () => {
       const recentAnalyzer = new GitHistoryAnalyzer(testRepoPath, { sinceMonths: 1 });
       expect(recentAnalyzer).toBeDefined();
     });

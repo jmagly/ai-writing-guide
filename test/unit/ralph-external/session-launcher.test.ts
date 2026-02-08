@@ -29,12 +29,9 @@ describe('SessionLauncher', () => {
   });
 
   describe('constructor', () => {
-    it('should initialize with null currentProcess and startTime', () => {
+    it('should initialize correctly and be an EventEmitter', () => {
       expect(launcher.currentProcess).toBeNull();
       expect(launcher.startTime).toBeNull();
-    });
-
-    it('should be an EventEmitter', () => {
       expect(typeof launcher.on).toBe('function');
       expect(typeof launcher.emit).toBe('function');
     });
@@ -50,7 +47,7 @@ describe('SessionLauncher', () => {
       outputDir: '/tmp/output',
     };
 
-    it('should include required flags', () => {
+    it('should include required flags and prompt', () => {
       const args = launcher.buildArgs(baseOptions);
 
       expect(args).toContain('--dangerously-skip-permissions');
@@ -59,96 +56,44 @@ describe('SessionLauncher', () => {
       expect(args).toContain('stream-json');
       expect(args).toContain('--session-id');
       expect(args).toContain('test-session-123');
-    });
-
-    it('should include prompt at the end', () => {
-      const args = launcher.buildArgs(baseOptions);
       expect(args[args.length - 1]).toBe('Fix the bug');
     });
 
-    it('should include verbose flag when specified', () => {
-      const args = launcher.buildArgs({
-        ...baseOptions,
-        verbose: true,
-      });
+    it('should handle verbose flag correctly', () => {
+      const verboseArgs = launcher.buildArgs({ ...baseOptions, verbose: true });
+      expect(verboseArgs).toContain('--verbose');
 
-      expect(args).toContain('--verbose');
+      const nonVerboseArgs = launcher.buildArgs({ ...baseOptions, verbose: false });
+      expect(nonVerboseArgs).not.toContain('--verbose');
     });
 
-    it('should not include verbose flag when false', () => {
-      const args = launcher.buildArgs({
-        ...baseOptions,
-        verbose: false,
-      });
+    it('should include optional arguments when specified', () => {
+      const testCases = [
+        { option: { maxTurns: 10 }, flag: '--max-turns', value: '10' },
+        { option: { model: 'sonnet' }, flag: '--model', value: 'sonnet' },
+        { option: { budget: 5.0 }, flag: '--max-budget-usd', value: '5' },
+        { option: { systemPrompt: 'You are an expert developer' }, flag: '--append-system-prompt', value: 'You are an expert developer' },
+      ];
 
-      expect(args).not.toContain('--verbose');
+      testCases.forEach(({ option, flag, value }) => {
+        const args = launcher.buildArgs({ ...baseOptions, ...option });
+        const flagIndex = args.indexOf(flag);
+        expect(flagIndex).toBeGreaterThan(-1);
+        expect(args[flagIndex + 1]).toBe(value);
+      });
     });
 
-    it('should include max-turns when specified', () => {
-      const args = launcher.buildArgs({
-        ...baseOptions,
-        maxTurns: 10,
-      });
-
-      const turnsIndex = args.indexOf('--max-turns');
-      expect(turnsIndex).toBeGreaterThan(-1);
-      expect(args[turnsIndex + 1]).toBe('10');
-    });
-
-    it('should include model when specified', () => {
-      const args = launcher.buildArgs({
-        ...baseOptions,
-        model: 'sonnet',
-      });
-
-      const modelIndex = args.indexOf('--model');
-      expect(modelIndex).toBeGreaterThan(-1);
-      expect(args[modelIndex + 1]).toBe('sonnet');
-    });
-
-    it('should include budget when specified', () => {
-      const args = launcher.buildArgs({
-        ...baseOptions,
-        budget: 5.0,
-      });
-
-      const budgetIndex = args.indexOf('--max-budget-usd');
-      expect(budgetIndex).toBeGreaterThan(-1);
-      expect(args[budgetIndex + 1]).toBe('5');
-    });
-
-    it('should include MCP config as JSON string', () => {
+    it('should handle MCP config as object or string', () => {
       const mcpConfig = { 'mcp-hound': { url: 'http://localhost:3000' } };
-      const args = launcher.buildArgs({
-        ...baseOptions,
-        mcpConfig,
-      });
+      const argsWithObject = launcher.buildArgs({ ...baseOptions, mcpConfig });
+      const mcpIndexObject = argsWithObject.indexOf('--mcp-config');
+      expect(mcpIndexObject).toBeGreaterThan(-1);
+      expect(argsWithObject[mcpIndexObject + 1]).toBe(JSON.stringify(mcpConfig));
 
-      const mcpIndex = args.indexOf('--mcp-config');
-      expect(mcpIndex).toBeGreaterThan(-1);
-      expect(args[mcpIndex + 1]).toBe(JSON.stringify(mcpConfig));
-    });
-
-    it('should pass MCP config string as-is', () => {
       const mcpConfigStr = '{"mcp-server": {}}';
-      const args = launcher.buildArgs({
-        ...baseOptions,
-        mcpConfig: mcpConfigStr,
-      });
-
-      const mcpIndex = args.indexOf('--mcp-config');
-      expect(args[mcpIndex + 1]).toBe(mcpConfigStr);
-    });
-
-    it('should include system prompt when specified', () => {
-      const args = launcher.buildArgs({
-        ...baseOptions,
-        systemPrompt: 'You are an expert developer',
-      });
-
-      const sysIndex = args.indexOf('--append-system-prompt');
-      expect(sysIndex).toBeGreaterThan(-1);
-      expect(args[sysIndex + 1]).toBe('You are an expert developer');
+      const argsWithString = launcher.buildArgs({ ...baseOptions, mcpConfig: mcpConfigStr });
+      const mcpIndexString = argsWithString.indexOf('--mcp-config');
+      expect(argsWithString[mcpIndexString + 1]).toBe(mcpConfigStr);
     });
 
     it('should not include optional args when not specified', () => {
@@ -241,45 +186,93 @@ describe('SessionLauncher', () => {
   });
 
   describe('_categorizeStreamEvent', () => {
-    it('should categorize by type field', () => {
-      expect(launcher._categorizeStreamEvent({ type: 'message_start' })).toBe('message_start');
-      expect(launcher._categorizeStreamEvent({ type: 'error' })).toBe('error');
+    it('should categorize events by type field', () => {
+      const typeTests = [
+        { event: { type: 'message_start' }, expected: 'message_start' },
+        { event: { type: 'error' }, expected: 'error' },
+      ];
+
+      typeTests.forEach(({ event, expected }) => {
+        expect(launcher._categorizeStreamEvent(event)).toBe(expected);
+      });
     });
 
-    it('should detect tool calls', () => {
-      expect(launcher._categorizeStreamEvent({ tool: 'read' })).toBe('tool_call');
-      expect(launcher._categorizeStreamEvent({ tool_use: true })).toBe('tool_call');
-      expect(launcher._categorizeStreamEvent({ name: 'tool_something' })).toBe('tool_call');
+    it('should detect tool calls from multiple patterns', () => {
+      const toolTests = [
+        { tool: 'read' },
+        { tool_use: true },
+        { name: 'tool_something' },
+      ];
+
+      toolTests.forEach(event => {
+        expect(launcher._categorizeStreamEvent(event)).toBe('tool_call');
+      });
     });
 
-    it('should detect errors', () => {
-      expect(launcher._categorizeStreamEvent({ error: 'failure' })).toBe('error');
-      expect(launcher._categorizeStreamEvent({ message: 'error occurred' })).toBe('error');
+    it('should detect errors from multiple patterns', () => {
+      const errorTests = [
+        { error: 'failure' },
+        { message: 'error occurred' },
+      ];
+
+      errorTests.forEach(event => {
+        expect(launcher._categorizeStreamEvent(event)).toBe('error');
+      });
     });
 
-    it('should detect completions', () => {
-      expect(launcher._categorizeStreamEvent({ stop_reason: 'end_turn' })).toBe('completion');
-      expect(launcher._categorizeStreamEvent({ content: [{ type: 'text' }] })).toBe('completion');
+    it('should detect completions from multiple patterns', () => {
+      const completionTests = [
+        { stop_reason: 'end_turn' },
+        { content: [{ type: 'text' }] },
+      ];
+
+      completionTests.forEach(event => {
+        expect(launcher._categorizeStreamEvent(event)).toBe('completion');
+      });
     });
 
-    it('should detect deltas', () => {
-      expect(launcher._categorizeStreamEvent({ delta: {} })).toBe('content_delta');
-      expect(launcher._categorizeStreamEvent({ content_block_delta: {} })).toBe('content_delta');
+    it('should detect deltas from multiple patterns', () => {
+      const deltaTests = [
+        { delta: {} },
+        { content_block_delta: {} },
+      ];
+
+      deltaTests.forEach(event => {
+        expect(launcher._categorizeStreamEvent(event)).toBe('content_delta');
+      });
     });
 
-    it('should detect start events', () => {
-      expect(launcher._categorizeStreamEvent({ message_start: {} })).toBe('start');
-      expect(launcher._categorizeStreamEvent({ content_block_start: {} })).toBe('start');
+    it('should detect start events from multiple patterns', () => {
+      const startTests = [
+        { message_start: {} },
+        { content_block_start: {} },
+      ];
+
+      startTests.forEach(event => {
+        expect(launcher._categorizeStreamEvent(event)).toBe('start');
+      });
     });
 
-    it('should detect stop events', () => {
-      expect(launcher._categorizeStreamEvent({ message_stop: {} })).toBe('stop');
-      expect(launcher._categorizeStreamEvent({ content_block_stop: {} })).toBe('stop');
+    it('should detect stop events from multiple patterns', () => {
+      const stopTests = [
+        { message_stop: {} },
+        { content_block_stop: {} },
+      ];
+
+      stopTests.forEach(event => {
+        expect(launcher._categorizeStreamEvent(event)).toBe('stop');
+      });
     });
 
     it('should return unknown for unrecognized events', () => {
-      expect(launcher._categorizeStreamEvent({ random: 'data' })).toBe('unknown');
-      expect(launcher._categorizeStreamEvent({})).toBe('unknown');
+      const unknownTests = [
+        { random: 'data' },
+        {},
+      ];
+
+      unknownTests.forEach(event => {
+        expect(launcher._categorizeStreamEvent(event)).toBe('unknown');
+      });
     });
   });
 
@@ -303,7 +296,12 @@ describe('SessionLauncher', () => {
       expect(emittedPath).toContain(sessionId);
     });
 
-    it('should return null when transcript does not exist', async () => {
+    it('should return null and emit event when transcript does not exist', async () => {
+      const emittedEvents: any[] = [];
+      launcher.on('transcript-not-found', (data) => {
+        emittedEvents.push(data);
+      });
+
       const result = await launcher.copySessionTranscript(
         'nonexistent-session',
         '/some/path',
@@ -311,93 +309,58 @@ describe('SessionLauncher', () => {
       );
 
       expect(result).toBeNull();
-    });
-
-    it('should emit transcript-not-found event', async () => {
-      const emittedEvents: any[] = [];
-      launcher.on('transcript-not-found', (data) => {
-        emittedEvents.push(data);
-      });
-
-      await launcher.copySessionTranscript('test', '/path', testDir);
-
       expect(emittedEvents.length).toBeGreaterThan(0);
       expect(emittedEvents[0].sourcePath).toBeDefined();
     });
   });
 
-  describe('getPid', () => {
-    it('should return null when no process', () => {
+  describe('process state management', () => {
+    it('should track getPid correctly', () => {
       expect(launcher.getPid()).toBeNull();
-    });
 
-    it('should return pid when process exists', () => {
       // @ts-ignore - mock
       launcher.currentProcess = { pid: 12345 };
       expect(launcher.getPid()).toBe(12345);
     });
-  });
 
-  describe('isRunning', () => {
-    it('should return false when no process', () => {
+    it('should track isRunning correctly', () => {
       expect(launcher.isRunning()).toBe(false);
-    });
 
-    it('should return false when process is killed', () => {
       // @ts-ignore - mock
       launcher.currentProcess = { pid: 12345, killed: true };
       expect(launcher.isRunning()).toBe(false);
-    });
 
-    it('should return true when process is running', () => {
       // @ts-ignore - mock
       launcher.currentProcess = { pid: 12345, killed: false };
       expect(launcher.isRunning()).toBe(true);
     });
-  });
 
-  describe('kill', () => {
-    it('should not throw when no process', () => {
+    it('should handle kill correctly in all states', () => {
       expect(() => launcher.kill()).not.toThrow();
-    });
 
-    it('should call kill on process with default signal', () => {
       const killMock = vi.fn();
       // @ts-ignore - mock
       launcher.currentProcess = { killed: false, kill: killMock };
 
       launcher.kill();
-
       expect(killMock).toHaveBeenCalledWith('SIGTERM');
-    });
 
-    it('should call kill on process with custom signal', () => {
-      const killMock = vi.fn();
-      // @ts-ignore - mock
-      launcher.currentProcess = { killed: false, kill: killMock };
-
+      killMock.mockClear();
       launcher.kill('SIGKILL');
-
       expect(killMock).toHaveBeenCalledWith('SIGKILL');
-    });
 
-    it('should not call kill when process already killed', () => {
-      const killMock = vi.fn();
+      killMock.mockClear();
       // @ts-ignore - mock
-      launcher.currentProcess = { killed: true, kill: killMock };
-
+      launcher.currentProcess.killed = true;
       launcher.kill();
-
       expect(killMock).not.toHaveBeenCalled();
     });
   });
 
   describe('getElapsed', () => {
-    it('should return null when not started', () => {
+    it('should return null when not started and elapsed time when started', () => {
       expect(launcher.getElapsed()).toBeNull();
-    });
 
-    it('should return elapsed time when started', () => {
       const now = Date.now();
       launcher.startTime = now - 5000; // Started 5 seconds ago
 

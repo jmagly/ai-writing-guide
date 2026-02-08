@@ -40,102 +40,92 @@ describe('ExtensionRegistry', () => {
   });
 
   describe('register()', () => {
-    it('should register a new extension', () => {
-      const ext = createTestExtension('test-cmd');
-      registry.register(ext);
-
+    it('should register extensions and maintain indices', () => {
+      // Register a single extension
+      const ext1 = createTestExtension('test-cmd');
+      registry.register(ext1);
       expect(registry.has('test-cmd')).toBe(true);
       expect(registry.size).toBe(1);
-    });
 
-    it('should store extension by ID', () => {
-      const ext = createTestExtension('test-cmd');
-      registry.register(ext);
-
+      // Verify stored values match
       const retrieved = registry.get('test-cmd');
       expect(retrieved).toBeDefined();
       expect(retrieved?.id).toBe('test-cmd');
       expect(retrieved?.name).toBe('Test test-cmd');
-    });
 
-    it('should overwrite existing extension with same ID', () => {
-      const ext1 = createTestExtension('test-cmd');
+      // Overwrite should replace, not duplicate
       const ext2 = { ...ext1, name: 'Updated Name' };
-
-      registry.register(ext1);
       registry.register(ext2);
-
       expect(registry.size).toBe(1);
       expect(registry.get('test-cmd')?.name).toBe('Updated Name');
     });
 
-    it('should index extension by type', () => {
+    it('should index extensions by type and handle multiple entries', () => {
       const cmd = createTestExtension('test-cmd', 'command');
       const agent = createTestExtension('test-agent', 'agent');
-
       registry.register(cmd);
       registry.register(agent);
 
+      // Single type retrieval
       const commands = registry.getByType('command');
       expect(commands).toHaveLength(1);
       expect(commands[0].id).toBe('test-cmd');
-    });
 
-    it('should handle multiple extensions of same type', () => {
-      const cmd1 = createTestExtension('cmd-1', 'command');
+      // Multiple extensions of same type
       const cmd2 = createTestExtension('cmd-2', 'command');
       const cmd3 = createTestExtension('cmd-3', 'command');
-
-      registry.register(cmd1);
       registry.register(cmd2);
       registry.register(cmd3);
 
-      const commands = registry.getByType('command');
-      expect(commands).toHaveLength(3);
-      expect(commands.map((c) => c.id).sort()).toEqual(['cmd-1', 'cmd-2', 'cmd-3']);
+      const allCommands = registry.getByType('command');
+      expect(allCommands).toHaveLength(3);
+      expect(allCommands.map((c) => c.id).sort()).toEqual(['cmd-2', 'cmd-3', 'test-cmd']);
     });
 
-    it('should register command aliases if metadata includes them', () => {
+    it('should register command aliases from metadata', () => {
       const ext = createTestExtension('mention-wire', 'command');
-      // Add alias metadata
       (ext.metadata as any).aliases = ['wire', 'link'];
-
       registry.register(ext);
 
-      // Aliases should be registered
-      expect(registry.resolveCommand('wire')).toBe('mention-wire');
-      expect(registry.resolveCommand('link')).toBe('mention-wire');
-      expect(registry.resolveCommand('mention-wire')).toBe('mention-wire');
+      // All aliases should resolve to primary ID
+      const aliasesToTest = ['wire', 'link', 'mention-wire'];
+      for (const alias of aliasesToTest) {
+        expect(registry.resolveCommand(alias)).toBe('mention-wire');
+      }
     });
   });
 
-  describe('get()', () => {
-    it('should return extension by ID', () => {
+  describe('get() and has()', () => {
+    it('should retrieve registered extensions and report existence correctly', () => {
       const ext = createTestExtension('test-cmd');
       registry.register(ext);
 
+      // get() returns the extension
       const retrieved = registry.get('test-cmd');
       expect(retrieved).toBeDefined();
       expect(retrieved?.id).toBe('test-cmd');
-    });
 
-    it('should return undefined for non-existent ID', () => {
+      // has() reports true for registered
+      expect(registry.has('test-cmd')).toBe(true);
+
+      // Both return false/undefined for non-existent
       expect(registry.get('non-existent')).toBeUndefined();
+      expect(registry.has('non-existent')).toBe(false);
     });
   });
 
   describe('getByType()', () => {
-    it('should return empty array for type with no extensions', () => {
-      const result = registry.getByType('agent');
-      expect(result).toEqual([]);
-    });
+    it('should filter extensions by type', () => {
+      // Empty type returns empty array
+      expect(registry.getByType('agent')).toEqual([]);
 
-    it('should return all extensions of specified type', () => {
+      // Register mixed types
       registry.register(createTestExtension('cmd-1', 'command'));
       registry.register(createTestExtension('agent-1', 'agent'));
       registry.register(createTestExtension('cmd-2', 'command'));
       registry.register(createTestExtension('skill-1', 'skill'));
 
+      // Filter returns only matching type
       const commands = registry.getByType('command');
       expect(commands).toHaveLength(2);
       expect(commands.every((e) => e.type === 'command')).toBe(true);
@@ -155,77 +145,61 @@ describe('ExtensionRegistry', () => {
         'prompt',
       ];
 
-      types.forEach((type) => {
+      // Register one of each type
+      for (const type of types) {
         registry.register(createTestExtension(`test-${type}`, type));
-      });
+      }
 
-      types.forEach((type) => {
+      // Verify all types are retrievable
+      for (const type of types) {
         const results = registry.getByType(type);
         expect(results).toHaveLength(1);
         expect(results[0].type).toBe(type);
-      });
+      }
     });
   });
 
-  describe('resolveCommand()', () => {
-    it('should resolve command by primary ID', () => {
+  describe('resolveCommand() and registerAlias()', () => {
+    it('should resolve commands by primary ID and aliases', () => {
       const ext = createTestExtension('mention-wire', 'command');
       registry.register(ext);
 
+      // Primary ID resolves
       expect(registry.resolveCommand('mention-wire')).toBe('mention-wire');
-    });
 
-    it('should resolve command by alias', () => {
-      const ext = createTestExtension('mention-wire', 'command');
-      registry.registerAlias('wire', 'mention-wire');
-
-      expect(registry.resolveCommand('wire')).toBe('mention-wire');
-    });
-
-    it('should return undefined for unknown command', () => {
+      // Unknown command returns undefined
       expect(registry.resolveCommand('unknown-cmd')).toBeUndefined();
-    });
 
-    it('should handle multiple aliases for same command', () => {
-      registry.registerAlias('w', 'mention-wire');
+      // Register an alias
       registry.registerAlias('wire', 'mention-wire');
-      registry.registerAlias('link', 'mention-wire');
-
-      expect(registry.resolveCommand('w')).toBe('mention-wire');
       expect(registry.resolveCommand('wire')).toBe('mention-wire');
-      expect(registry.resolveCommand('link')).toBe('mention-wire');
-    });
-  });
 
-  describe('registerAlias()', () => {
-    it('should register a command alias', () => {
-      registry.registerAlias('wire', 'mention-wire');
-
-      expect(registry.resolveCommand('wire')).toBe('mention-wire');
-    });
-
-    it('should overwrite existing alias', () => {
-      registry.registerAlias('wire', 'old-command');
+      // Overwriting alias updates resolution
       registry.registerAlias('wire', 'new-command');
-
       expect(registry.resolveCommand('wire')).toBe('new-command');
     });
 
-    it('should allow multiple aliases to same extension', () => {
-      registry.registerAlias('w', 'mention-wire');
-      registry.registerAlias('wire', 'mention-wire');
+    it('should handle multiple aliases for same command', () => {
+      const aliases = ['w', 'wire', 'link'];
 
-      expect(registry.resolveCommand('w')).toBe('mention-wire');
-      expect(registry.resolveCommand('wire')).toBe('mention-wire');
+      // Register all aliases
+      for (const alias of aliases) {
+        registry.registerAlias(alias, 'mention-wire');
+      }
+
+      // Verify all resolve correctly
+      for (const alias of aliases) {
+        expect(registry.resolveCommand(alias)).toBe('mention-wire');
+      }
     });
   });
 
   describe('getAll()', () => {
-    it('should return empty array when registry is empty', () => {
+    it('should return all registered extensions as a new array', () => {
+      // Empty registry
       expect(registry.getAll()).toEqual([]);
-    });
 
-    it('should return all registered extensions', () => {
+      // Register multiple
       registry.register(createTestExtension('ext-1', 'command'));
       registry.register(createTestExtension('ext-2', 'agent'));
       registry.register(createTestExtension('ext-3', 'skill'));
@@ -233,25 +207,16 @@ describe('ExtensionRegistry', () => {
       const all = registry.getAll();
       expect(all).toHaveLength(3);
       expect(all.map((e) => e.id).sort()).toEqual(['ext-1', 'ext-2', 'ext-3']);
-    });
 
-    it('should return a new array (not internal state)', () => {
-      registry.register(createTestExtension('ext-1'));
-
-      const all1 = registry.getAll();
+      // Each call returns a new array instance
       const all2 = registry.getAll();
-
-      expect(all1).not.toBe(all2); // Different array instances
-      expect(all1).toEqual(all2); // Same content
+      expect(all).not.toBe(all2);
+      expect(all).toEqual(all2);
     });
   });
 
   describe('size', () => {
-    it('should return 0 for empty registry', () => {
-      expect(registry.size).toBe(0);
-    });
-
-    it('should return count of registered extensions', () => {
+    it('should track the number of registered extensions', () => {
       expect(registry.size).toBe(0);
 
       registry.register(createTestExtension('ext-1'));
@@ -262,72 +227,41 @@ describe('ExtensionRegistry', () => {
 
       registry.register(createTestExtension('ext-3'));
       expect(registry.size).toBe(3);
-    });
 
-    it('should not increase when overwriting existing extension', () => {
+      // Overwriting should not increase size
       registry.register(createTestExtension('ext-1'));
-      expect(registry.size).toBe(1);
-
-      registry.register(createTestExtension('ext-1')); // Overwrite
-      expect(registry.size).toBe(1);
-    });
-  });
-
-  describe('has()', () => {
-    it('should return false for empty registry', () => {
-      expect(registry.has('any-id')).toBe(false);
-    });
-
-    it('should return true for registered extension', () => {
-      registry.register(createTestExtension('test-cmd'));
-
-      expect(registry.has('test-cmd')).toBe(true);
-    });
-
-    it('should return false for non-existent extension', () => {
-      registry.register(createTestExtension('test-cmd'));
-
-      expect(registry.has('non-existent')).toBe(false);
+      expect(registry.size).toBe(3);
     });
   });
 
   describe('clear()', () => {
-    it('should clear all extensions', () => {
-      registry.register(createTestExtension('ext-1'));
-      registry.register(createTestExtension('ext-2'));
-      registry.register(createTestExtension('ext-3'));
-
-      expect(registry.size).toBe(3);
-
-      registry.clear();
-
-      expect(registry.size).toBe(0);
-      expect(registry.getAll()).toEqual([]);
-    });
-
-    it('should clear type index', () => {
+    it('should clear all extensions, type index, and alias map', () => {
       registry.register(createTestExtension('cmd-1', 'command'));
       registry.register(createTestExtension('agent-1', 'agent'));
-
-      registry.clear();
-
-      expect(registry.getByType('command')).toEqual([]);
-      expect(registry.getByType('agent')).toEqual([]);
-    });
-
-    it('should clear alias map', () => {
       registry.registerAlias('wire', 'mention-wire');
       registry.registerAlias('link', 'mention-wire');
 
+      expect(registry.size).toBe(2);
+
       registry.clear();
 
+      // Main registry cleared
+      expect(registry.size).toBe(0);
+      expect(registry.getAll()).toEqual([]);
+
+      // Type index cleared
+      expect(registry.getByType('command')).toEqual([]);
+      expect(registry.getByType('agent')).toEqual([]);
+
+      // Alias map cleared
       expect(registry.resolveCommand('wire')).toBeUndefined();
       expect(registry.resolveCommand('link')).toBeUndefined();
     });
   });
 
   describe('type index integrity', () => {
-    it('should maintain type index when registering multiple types', () => {
+    it('should maintain type index correctly when registering and overwriting', () => {
+      // Register multiple types
       registry.register(createTestExtension('cmd-1', 'command'));
       registry.register(createTestExtension('agent-1', 'agent'));
       registry.register(createTestExtension('skill-1', 'skill'));
@@ -336,17 +270,12 @@ describe('ExtensionRegistry', () => {
       expect(registry.getByType('command')).toHaveLength(2);
       expect(registry.getByType('agent')).toHaveLength(1);
       expect(registry.getByType('skill')).toHaveLength(1);
-    });
 
-    it('should update type index when overwriting extension', () => {
-      registry.register(createTestExtension('test-ext', 'command'));
+      // Overwrite with different type updates index
+      registry.register(createTestExtension('cmd-1', 'agent'));
+
       expect(registry.getByType('command')).toHaveLength(1);
-
-      const updated = createTestExtension('test-ext', 'agent');
-      registry.register(updated);
-
-      expect(registry.getByType('command')).toHaveLength(0);
-      expect(registry.getByType('agent')).toHaveLength(1);
+      expect(registry.getByType('agent')).toHaveLength(2);
     });
   });
 
@@ -384,19 +313,16 @@ describe('ExtensionRegistry', () => {
 });
 
 describe('createRegistry()', () => {
-  it('should create a new registry instance', () => {
+  it('should create independent registry instances', () => {
     const reg1 = createRegistry();
     const reg2 = createRegistry();
 
+    // Different instances
     expect(reg1).not.toBe(reg2);
     expect(reg1).toBeInstanceOf(ExtensionRegistry);
     expect(reg2).toBeInstanceOf(ExtensionRegistry);
-  });
 
-  it('should create independent registries', () => {
-    const reg1 = createRegistry();
-    const reg2 = createRegistry();
-
+    // Truly independent state
     const ext = {
       id: 'test-cmd',
       type: 'command' as const,
@@ -418,20 +344,15 @@ describe('createRegistry()', () => {
 });
 
 describe('getRegistry()', () => {
-  it('should return a singleton instance', () => {
+  it('should return a singleton instance that shares state', () => {
     const reg1 = getRegistry();
     const reg2 = getRegistry();
 
+    // Singleton pattern
     expect(reg1).toBe(reg2);
-  });
+    expect(reg1).toBeInstanceOf(ExtensionRegistry);
 
-  it('should return an ExtensionRegistry instance', () => {
-    const reg = getRegistry();
-    expect(reg).toBeInstanceOf(ExtensionRegistry);
-  });
-
-  it('should share state across calls', () => {
-    const reg1 = getRegistry();
+    // Shared state across calls
     const ext = {
       id: 'test-cmd',
       type: 'command' as const,
@@ -447,7 +368,7 @@ describe('getRegistry()', () => {
 
     reg1.register(ext);
 
-    const reg2 = getRegistry();
-    expect(reg2.has('test-cmd')).toBe(true);
+    const reg3 = getRegistry();
+    expect(reg3.has('test-cmd')).toBe(true);
   });
 });

@@ -58,7 +58,8 @@ describe('WorkflowOrchestrator', () => {
   });
 
   describe('processFile', () => {
-    it('should run validate → optimize → revalidate workflow', async () => {
+    it('should run validate → optimize → revalidate workflow and handle errors', async () => {
+      // Test basic workflow
       const filePath = resolve(testDir, 'test.md');
       await writeFile(filePath, 'Write about testing. Make it comprehensive and robust.', 'utf-8');
 
@@ -71,9 +72,16 @@ describe('WorkflowOrchestrator', () => {
       expect(result.optimization).toBeDefined();
       expect(result.validation.after).toBeDefined();
       expect(result.duration).toBeGreaterThan(0);
+      expect(result.duration).toBeLessThan(10000); // Should be under 10s
+
+      // Test file not found error
+      const nonexistentPath = resolve(testDir, 'nonexistent.md');
+      const errorResult = await orchestrator.processFile(nonexistentPath, config);
+      expect(errorResult.error).toBeDefined();
+      expect(errorResult.error).toContain('not found');
     }, 10000);
 
-    it('should skip optimization if score above threshold', async () => {
+    it('should handle high-quality content and skip optimization when appropriate', async () => {
       // Content with human markers (specific metrics, technology names, trade-offs)
       const filePath = resolve(testDir, 'good.md');
       await writeFile(
@@ -92,65 +100,42 @@ While PKCE is more complex to implement, it provides better security for public 
       // Optimization may still run if autoApply is true
     });
 
-    it('should apply auto-fix when configured', async () => {
-      const filePath = resolve(testDir, 'autofix.md');
-      await writeFile(filePath, 'Write about authentication. Make it comprehensive.', 'utf-8');
+    it('should apply auto-fix when configured and create backups', async () => {
+      const scenarios = [
+        { name: 'autofix', content: 'Write about authentication. Make it comprehensive.' },
+        { name: 'backup', content: 'Write about security. Comprehensive guide.' }
+      ];
 
-      config.optimization.autoApply = true;
+      for (const scenario of scenarios) {
+        const filePath = resolve(testDir, `${scenario.name}.md`);
+        await writeFile(filePath, scenario.content, 'utf-8');
 
-      const result = await orchestrator.processFile(filePath, config);
+        config.optimization.autoApply = true;
+        config.optimization.createBackup = true;
 
-      expect(result.applied).toBe(true);
-      expect(result.optimization).toBeDefined();
+        const result = await orchestrator.processFile(filePath, config);
 
-      // Backup should exist
-      const backupPath = `${filePath}.original`;
-      const fs = await import('fs');
-      expect(fs.existsSync(backupPath)).toBe(true);
+        expect(result.applied).toBe(true);
+        expect(result.optimization).toBeDefined();
+
+        // Backup should exist
+        const backupPath = `${filePath}.original`;
+        const fs = await import('fs');
+        expect(fs.existsSync(backupPath)).toBe(true);
+
+        // For backup scenario, verify content matches
+        if (scenario.name === 'backup') {
+          const backupContent = await import('fs/promises').then(m =>
+            m.readFile(backupPath, 'utf-8')
+          );
+          expect(backupContent).toBe(scenario.content);
+        }
+      }
     }, 10000);
-
-    it('should create backup before auto-fix', async () => {
-      const filePath = resolve(testDir, 'backup.md');
-      const originalContent = 'Write about security. Comprehensive guide.';
-      await writeFile(filePath, originalContent, 'utf-8');
-
-      config.optimization.autoApply = true;
-      config.optimization.createBackup = true;
-
-      await orchestrator.processFile(filePath, config);
-
-      const fs = await import('fs');
-      const backupPath = `${filePath}.original`;
-      expect(fs.existsSync(backupPath)).toBe(true);
-
-      const backupContent = await import('fs/promises').then(m =>
-        m.readFile(backupPath, 'utf-8')
-      );
-      expect(backupContent).toBe(originalContent);
-    }, 10000);
-
-    it('should handle file not found error', async () => {
-      const filePath = resolve(testDir, 'nonexistent.md');
-
-      const result = await orchestrator.processFile(filePath, config);
-
-      expect(result.error).toBeDefined();
-      expect(result.error).toContain('not found');
-    });
-
-    it('should return duration in result', async () => {
-      const filePath = resolve(testDir, 'duration.md');
-      await writeFile(filePath, 'Write about testing', 'utf-8');
-
-      const result = await orchestrator.processFile(filePath, config);
-
-      expect(result.duration).toBeGreaterThan(0);
-      expect(result.duration).toBeLessThan(10000); // Should be under 10s
-    });
   });
 
   describe('processBatch', () => {
-    it('should process multiple files', async () => {
+    it('should process multiple files with progress tracking', async () => {
       const files = [
         resolve(testDir, 'file1.md'),
         resolve(testDir, 'file2.md'),
@@ -167,20 +152,19 @@ While PKCE is more complex to implement, it provides better security for public 
       for (const file of files) {
         expect(results.has(file)).toBe(true);
       }
-    }, 15000);
 
-    it('should call progress callback', async () => {
-      const files = [
+      // Test progress callback
+      const progressFiles = [
         resolve(testDir, 'progress1.md'),
         resolve(testDir, 'progress2.md')
       ];
 
-      for (const file of files) {
+      for (const file of progressFiles) {
         await writeFile(file, 'Write about testing', 'utf-8');
       }
 
       const progressCalls: any[] = [];
-      await orchestrator.processBatch(files, config, (progress) => {
+      await orchestrator.processBatch(progressFiles, config, (progress) => {
         progressCalls.push({ ...progress });
       });
 
@@ -189,7 +173,7 @@ While PKCE is more complex to implement, it provides better security for public 
       expect(progressCalls[progressCalls.length - 1].total).toBe(2);
     }, 15000);
 
-    it('should handle mixed success and errors', async () => {
+    it('should handle mixed success and errors with correct progress', async () => {
       const files = [
         resolve(testDir, 'success.md'),
         resolve(testDir, 'nonexistent.md'),
@@ -205,21 +189,20 @@ While PKCE is more complex to implement, it provides better security for public 
       expect(results.get(files[0])?.error).toBeUndefined();
       expect(results.get(files[1])?.error).toBeDefined();
       expect(results.get(files[2])?.error).toBeUndefined();
-    }, 15000);
 
-    it('should update progress correctly', async () => {
-      const files = [
+      // Test progress update correctness
+      const progressFiles = [
         resolve(testDir, 'p1.md'),
         resolve(testDir, 'p2.md'),
         resolve(testDir, 'p3.md')
       ];
 
-      for (const file of files) {
+      for (const file of progressFiles) {
         await writeFile(file, 'Write about testing', 'utf-8');
       }
 
       let finalProgress: any = null;
-      await orchestrator.processBatch(files, config, (progress) => {
+      await orchestrator.processBatch(progressFiles, config, (progress) => {
         finalProgress = progress;
       });
 
@@ -229,52 +212,51 @@ While PKCE is more complex to implement, it provides better security for public 
     }, 15000);
   });
 
-  describe('validateStep', () => {
-    it('should validate content', async () => {
-      const content = 'Write about testing with specific examples';
+  describe('validation and optimization steps', () => {
+    it('should validate content with context from config', async () => {
+      const scenarios = [
+        { content: 'Write about testing with specific examples', context: undefined },
+        { content: 'Technical content about OAuth 2.0', context: 'technical' }
+      ];
 
-      const result = await orchestrator.validateStep(content, config);
+      for (const scenario of scenarios) {
+        if (scenario.context) {
+          config.validation.context = scenario.context;
+        }
 
-      expect(result).toBeDefined();
-      expect(result.score).toBeGreaterThanOrEqual(0);
-      expect(result.score).toBeLessThanOrEqual(100);
+        const result = await orchestrator.validateStep(scenario.content, config);
+
+        expect(result).toBeDefined();
+        expect(result.score).toBeGreaterThanOrEqual(0);
+        expect(result.score).toBeLessThanOrEqual(100);
+      }
     });
 
-    it('should use context from config', async () => {
-      config.validation.context = 'technical';
-      const content = 'Technical content about OAuth 2.0';
+    it('should optimize content and use context for optimization', async () => {
+      const scenarios = [
+        { content: 'Write about testing', context: undefined },
+        { content: 'Write about authentication', context: 'technical' }
+      ];
 
-      const result = await orchestrator.validateStep(content, config);
+      for (const scenario of scenarios) {
+        if (scenario.context) {
+          config.validation.context = scenario.context;
+        }
 
-      expect(result).toBeDefined();
+        const result = await orchestrator.optimizeStep(scenario.content, config);
+
+        expect(result).toBeDefined();
+        expect(result.originalPrompt).toBe(scenario.content);
+        expect(result.optimizedPrompt).toBeDefined();
+        expect(result.score.before).toBeDefined();
+        expect(result.score.after).toBeDefined();
+
+        if (scenario.context) {
+          expect(result.optimizedPrompt).toContain('technical');
+        }
+      }
     });
-  });
 
-  describe('optimizeStep', () => {
-    it('should optimize content', async () => {
-      const content = 'Write about testing';
-
-      const result = await orchestrator.optimizeStep(content, config);
-
-      expect(result).toBeDefined();
-      expect(result.originalPrompt).toBe(content);
-      expect(result.optimizedPrompt).toBeDefined();
-      expect(result.score.before).toBeDefined();
-      expect(result.score.after).toBeDefined();
-    });
-
-    it('should use context for optimization', async () => {
-      config.validation.context = 'technical';
-      const content = 'Write about authentication';
-
-      const result = await orchestrator.optimizeStep(content, config);
-
-      expect(result).toBeDefined();
-      expect(result.optimizedPrompt).toContain('technical');
-    });
-  });
-
-  describe('revalidateStep', () => {
     it('should revalidate optimized content', async () => {
       const content = 'Write a 1,500-word technical article about OAuth 2.0';
 
@@ -286,7 +268,7 @@ While PKCE is more complex to implement, it provides better security for public 
   });
 
   describe('watch mode', () => {
-    it('should start watch mode', async () => {
+    it('should start and stop watch mode correctly', async () => {
       config.watch.enabled = true;
       config.watch.patterns = [resolve(testDir, '*.md')];
 
@@ -295,7 +277,15 @@ While PKCE is more complex to implement, it provides better security for public 
       // Verify watch started (service should be running)
       // Stop immediately
       await orchestrator.stopWatchMode();
-    }, 5000);
+
+      // Test stopping after initialization
+      await orchestrator.startWatchMode(config);
+      // Give watch mode a moment to initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await orchestrator.stopWatchMode();
+
+      // Should not throw
+    }, 20000);
 
     it('should throw if watch not enabled', async () => {
       config.watch.enabled = false;
@@ -304,72 +294,44 @@ While PKCE is more complex to implement, it provides better security for public 
         'Watch mode is not enabled'
       );
     });
-
-    it('should stop watch mode', async () => {
-      config.watch.enabled = true;
-      config.watch.patterns = [resolve(testDir, '*.md')];
-
-      await orchestrator.startWatchMode(config);
-      // Give watch mode a moment to initialize
-      await new Promise(resolve => setTimeout(resolve, 100));
-      await orchestrator.stopWatchMode();
-
-      // Should not throw
-    }, 20000);
   });
 
   describe('reporting', () => {
-    it('should generate text report', async () => {
-      const files = [resolve(testDir, 'report.md')];
-      await writeFile(files[0], 'Content', 'utf-8');
+    it('should generate reports in all formats and save to file', async () => {
+      const reportFormats = [
+        { format: 'text' as const, checks: ['AIWG Workflow Report', 'Total Files: 1'] },
+        { format: 'json' as const, checks: [] },
+        { format: 'html' as const, checks: ['<!DOCTYPE html>', 'AIWG Workflow Report'] },
+        { format: 'junit' as const, checks: ['<?xml version', '<testsuites>', '<testsuite'] }
+      ];
 
-      const results = await orchestrator.processBatch(files, config);
-      const report = orchestrator.generateReport(results, 'text');
+      for (const { format, checks } of reportFormats) {
+        const fileName = `${format}.md`;
+        const filePath = resolve(testDir, fileName);
+        await writeFile(filePath, 'Content', 'utf-8');
 
-      expect(report).toContain('AIWG Workflow Report');
-      expect(report).toContain('Total Files: 1');
-      expect(report).toContain(files[0]);
-    }, 10000);
+        const results = await orchestrator.processBatch([filePath], config);
+        const report = orchestrator.generateReport(results, format);
 
-    it('should generate JSON report', async () => {
-      const files = [resolve(testDir, 'json.md')];
-      await writeFile(files[0], 'Content', 'utf-8');
+        if (format === 'json') {
+          const parsed = JSON.parse(report);
+          expect(parsed[filePath]).toBeDefined();
+        } else {
+          for (const check of checks) {
+            expect(report).toContain(check);
+          }
+        }
 
-      const results = await orchestrator.processBatch(files, config);
-      const report = orchestrator.generateReport(results, 'json');
+        if (format === 'text') {
+          expect(report).toContain(filePath);
+        }
+      }
 
-      const parsed = JSON.parse(report);
-      expect(parsed[files[0]]).toBeDefined();
-    }, 10000);
+      // Test saving report to file
+      const saveFile = resolve(testDir, 'save.md');
+      await writeFile(saveFile, 'Content', 'utf-8');
 
-    it('should generate HTML report', async () => {
-      const files = [resolve(testDir, 'html.md')];
-      await writeFile(files[0], 'Content', 'utf-8');
-
-      const results = await orchestrator.processBatch(files, config);
-      const report = orchestrator.generateReport(results, 'html');
-
-      expect(report).toContain('<!DOCTYPE html>');
-      expect(report).toContain('AIWG Workflow Report');
-    }, 10000);
-
-    it('should generate JUnit XML report', async () => {
-      const files = [resolve(testDir, 'junit.md')];
-      await writeFile(files[0], 'Content', 'utf-8');
-
-      const results = await orchestrator.processBatch(files, config);
-      const report = orchestrator.generateReport(results, 'junit');
-
-      expect(report).toContain('<?xml version');
-      expect(report).toContain('<testsuites>');
-      expect(report).toContain('<testsuite');
-    }, 10000);
-
-    it('should save report to file', async () => {
-      const files = [resolve(testDir, 'save.md')];
-      await writeFile(files[0], 'Content', 'utf-8');
-
-      const results = await orchestrator.processBatch(files, config);
+      const results = await orchestrator.processBatch([saveFile], config);
       const report = orchestrator.generateReport(results, 'text');
 
       const reportPath = resolve(testDir, 'report.txt');
@@ -381,71 +343,66 @@ While PKCE is more complex to implement, it provides better security for public 
   });
 
   describe('expandGlob', () => {
-    it('should expand glob patterns', async () => {
+    it('should expand glob patterns, remove duplicates, and handle no matches', async () => {
       await writeFile(resolve(testDir, 'file1.md'), 'Content', 'utf-8');
       await writeFile(resolve(testDir, 'file2.md'), 'Content', 'utf-8');
       await writeFile(resolve(testDir, 'file3.txt'), 'Content', 'utf-8');
 
+      // Test basic glob expansion
       const files = await orchestrator.expandGlob([resolve(testDir, '*.md')]);
 
       expect(files.length).toBe(2);
       expect(files.every(f => f.endsWith('.md'))).toBe(true);
-    });
 
-    it('should remove duplicate files', async () => {
+      // Test duplicate removal
       await writeFile(resolve(testDir, 'dup.md'), 'Content', 'utf-8');
 
-      const files = await orchestrator.expandGlob([
+      const dupFiles = await orchestrator.expandGlob([
         resolve(testDir, 'dup.md'),
         resolve(testDir, '*.md')
       ]);
 
       // Should have only one instance
-      const dupCount = files.filter(f => f.endsWith('dup.md')).length;
+      const dupCount = dupFiles.filter(f => f.endsWith('dup.md')).length;
       expect(dupCount).toBe(1);
-    });
 
-    it('should handle no matches', async () => {
-      const files = await orchestrator.expandGlob([resolve(testDir, '*.nonexistent')]);
-
-      expect(files).toEqual([]);
+      // Test no matches
+      const noMatch = await orchestrator.expandGlob([resolve(testDir, '*.nonexistent')]);
+      expect(noMatch).toEqual([]);
     });
   });
 
   describe('loadConfig', () => {
-    it('should load configuration', async () => {
+    it('should load and cache configuration', async () => {
       const config = await orchestrator.loadConfig();
 
       expect(config).toBeDefined();
       expect(config.version).toBeDefined();
       expect(config.validation).toBeDefined();
       expect(config.optimization).toBeDefined();
-    });
 
-    it('should cache loaded configuration', async () => {
-      const config1 = await orchestrator.loadConfig();
+      // Test caching
       const config2 = await orchestrator.loadConfig();
-
-      expect(config1).toBe(config2); // Same reference
+      expect(config).toBe(config2); // Same reference
     });
   });
 
   describe('validateConfig', () => {
-    it('should validate valid config', () => {
+    it('should validate config and reject invalid thresholds', async () => {
+      // Test valid config
       const result = orchestrator.validateConfig(config);
 
       expect(result.valid).toBe(true);
       expect(result.errors).toEqual([]);
-    });
 
-    it('should reject invalid threshold', () => {
+      // Test invalid threshold
       const invalidConfig = { ...config };
       invalidConfig.validation.threshold = 150;
 
-      const result = orchestrator.validateConfig(invalidConfig);
+      const invalidResult = orchestrator.validateConfig(invalidConfig);
 
-      expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
+      expect(invalidResult.valid).toBe(false);
+      expect(invalidResult.errors.length).toBeGreaterThan(0);
     });
   });
 });

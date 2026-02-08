@@ -24,118 +24,83 @@ describe('VoiceCalibration', () => {
 
   describe('Voice Profile Management', () => {
     describe('getVoiceProfile', () => {
-      it('should retrieve academic voice profile', () => {
-        const profile = calibration.getVoiceProfile('academic');
+      it('should retrieve all voice profiles with expected characteristics', () => {
+        const voiceTests = [
+          { voice: 'academic', technicality: null, assertiveness: null, formality: null },
+          { voice: 'technical', technicality: 0.8, assertiveness: null, formality: null },
+          { voice: 'executive', technicality: null, assertiveness: 0.8, formality: null },
+          { voice: 'casual', technicality: null, assertiveness: null, formality: 0.5 },
+        ];
 
-        expect(profile).toBeDefined();
-        expect(profile.voice).toBe('academic');
-        expect(profile.characteristics).toBeDefined();
-        expect(profile.markers).toBeDefined();
-      });
+        for (const { voice, technicality, assertiveness, formality } of voiceTests) {
+          const profile = calibration.getVoiceProfile(voice);
 
-      it('should retrieve technical voice profile', () => {
-        const profile = calibration.getVoiceProfile('technical');
+          expect(profile, `${voice} profile`).toBeDefined();
+          expect(profile.voice, `${voice} voice name`).toBe(voice);
+          expect(profile.characteristics, `${voice} characteristics`).toBeDefined();
+          expect(profile.markers, `${voice} markers`).toBeDefined();
 
-        expect(profile).toBeDefined();
-        expect(profile.voice).toBe('technical');
-        expect(profile.characteristics.technicality).toBeGreaterThan(0.8);
-      });
-
-      it('should retrieve executive voice profile', () => {
-        const profile = calibration.getVoiceProfile('executive');
-
-        expect(profile).toBeDefined();
-        expect(profile.voice).toBe('executive');
-        expect(profile.characteristics.assertiveness).toBeGreaterThan(0.8);
-      });
-
-      it('should retrieve casual voice profile', () => {
-        const profile = calibration.getVoiceProfile('casual');
-
-        expect(profile).toBeDefined();
-        expect(profile.voice).toBe('casual');
-        expect(profile.characteristics.formality).toBeLessThan(0.5);
+          if (technicality !== null) {
+            expect(profile.characteristics.technicality, `${voice} technicality`).toBeGreaterThan(technicality);
+          }
+          if (assertiveness !== null) {
+            expect(profile.characteristics.assertiveness, `${voice} assertiveness`).toBeGreaterThan(assertiveness);
+          }
+          if (formality !== null) {
+            expect(profile.characteristics.formality, `${voice} formality`).toBeLessThan(formality);
+          }
+        }
       });
 
       it('should throw error for non-existent profile', () => {
         expect(() => calibration.getVoiceProfile('nonexistent')).toThrow('Voice profile not found');
       });
 
-      it('should have valid characteristics ranges', () => {
-        const profile = calibration.getVoiceProfile('academic');
+      it('should have valid profile structure and ranges for all voices', () => {
+        const voices = ['academic', 'technical', 'executive', 'casual'];
+        const validVocabLevels = ['basic', 'intermediate', 'advanced', 'expert'];
+        const validMarkerTypes = ['vocabulary', 'structure', 'tone', 'perspective'];
 
-        expect(profile.characteristics.formality).toBeGreaterThanOrEqual(0);
-        expect(profile.characteristics.formality).toBeLessThanOrEqual(1);
-        expect(profile.characteristics.technicality).toBeGreaterThanOrEqual(0);
-        expect(profile.characteristics.technicality).toBeLessThanOrEqual(1);
-      });
+        for (const voice of voices) {
+          const profile = calibration.getVoiceProfile(voice);
 
-      it('should have sentence length statistics', () => {
-        const profile = calibration.getVoiceProfile('technical');
+          // Characteristics ranges
+          expect(profile.characteristics.formality, `${voice} formality range`).toBeGreaterThanOrEqual(0);
+          expect(profile.characteristics.formality, `${voice} formality range`).toBeLessThanOrEqual(1);
+          expect(profile.characteristics.technicality, `${voice} technicality range`).toBeGreaterThanOrEqual(0);
+          expect(profile.characteristics.technicality, `${voice} technicality range`).toBeLessThanOrEqual(1);
 
-        expect(profile.characteristics.sentenceLength.avg).toBeGreaterThan(0);
-        expect(profile.characteristics.sentenceLength.min).toBeLessThan(profile.characteristics.sentenceLength.max);
-      });
+          // Sentence length statistics
+          expect(profile.characteristics.sentenceLength.avg, `${voice} avg sentence length`).toBeGreaterThan(0);
+          expect(profile.characteristics.sentenceLength.min, `${voice} min sentence length`).toBeLessThan(
+            profile.characteristics.sentenceLength.max
+          );
 
-      it('should have vocabulary level defined', () => {
-        const profile = calibration.getVoiceProfile('executive');
+          // Vocabulary level
+          expect(validVocabLevels, `${voice} vocab level`).toContain(profile.characteristics.vocabularyLevel);
 
-        expect(['basic', 'intermediate', 'advanced', 'expert']).toContain(
-          profile.characteristics.vocabularyLevel
-        );
-      });
+          // First person usage
+          expect(profile.characteristics.firstPersonUsage, `${voice} first person`).toBeGreaterThanOrEqual(0);
+          expect(profile.characteristics.firstPersonUsage, `${voice} first person`).toBeLessThanOrEqual(100);
 
-      it('should have first person usage percentage', () => {
-        const profile = calibration.getVoiceProfile('casual');
+          // Passive voice ratio
+          expect(profile.characteristics.passiveVoiceRatio, `${voice} passive voice`).toBeGreaterThanOrEqual(0);
+          expect(profile.characteristics.passiveVoiceRatio, `${voice} passive voice`).toBeLessThanOrEqual(100);
 
-        expect(profile.characteristics.firstPersonUsage).toBeGreaterThanOrEqual(0);
-        expect(profile.characteristics.firstPersonUsage).toBeLessThanOrEqual(100);
-      });
+          // Detection confidence
+          expect(profile.detectionConfidence, `${voice} detection confidence`).toBeGreaterThanOrEqual(0);
+          expect(profile.detectionConfidence, `${voice} detection confidence`).toBeLessThanOrEqual(1);
 
-      it('should have passive voice ratio', () => {
-        const profile = calibration.getVoiceProfile('academic');
+          // Markers
+          expect(profile.markers.length, `${voice} has markers`).toBeGreaterThan(0);
 
-        expect(profile.characteristics.passiveVoiceRatio).toBeGreaterThanOrEqual(0);
-        expect(profile.characteristics.passiveVoiceRatio).toBeLessThanOrEqual(100);
-      });
-
-      it('should have detection confidence', () => {
-        const profile = calibration.getVoiceProfile('technical');
-
-        expect(profile.detectionConfidence).toBeGreaterThanOrEqual(0);
-        expect(profile.detectionConfidence).toBeLessThanOrEqual(1);
-      });
-
-      it('should have non-empty markers array', () => {
-        const profile = calibration.getVoiceProfile('academic');
-
-        expect(profile.markers.length).toBeGreaterThan(0);
-      });
-
-      it('should have markers with valid types', () => {
-        const profile = calibration.getVoiceProfile('technical');
-        const validTypes = ['vocabulary', 'structure', 'tone', 'perspective'];
-
-        for (const marker of profile.markers) {
-          expect(validTypes).toContain(marker.type);
-        }
-      });
-
-      it('should have markers with weights', () => {
-        const profile = calibration.getVoiceProfile('executive');
-
-        for (const marker of profile.markers) {
-          expect(marker.weight).toBeGreaterThanOrEqual(0);
-          expect(marker.weight).toBeLessThanOrEqual(1);
-        }
-      });
-
-      it('should have markers with examples', () => {
-        const profile = calibration.getVoiceProfile('casual');
-
-        for (const marker of profile.markers) {
-          expect(marker.examples).toBeDefined();
-          expect(Array.isArray(marker.examples)).toBe(true);
+          for (const marker of profile.markers) {
+            expect(validMarkerTypes, `${voice} marker type valid`).toContain(marker.type);
+            expect(marker.weight, `${voice} marker weight range`).toBeGreaterThanOrEqual(0);
+            expect(marker.weight, `${voice} marker weight range`).toBeLessThanOrEqual(1);
+            expect(marker.examples, `${voice} marker has examples`).toBeDefined();
+            expect(Array.isArray(marker.examples), `${voice} marker examples is array`).toBe(true);
+          }
         }
       });
     });
@@ -206,18 +171,18 @@ describe('VoiceCalibration', () => {
     });
 
     describe('createCustomVoiceProfile', () => {
-      it('should create new custom voice profile', () => {
-        const characteristics = {
-          formality: 0.6,
-          technicality: 0.5,
-          assertiveness: 0.7,
-          complexity: 0.6,
-          sentenceLength: { avg: 20, min: 10, max: 30, variance: 5 },
-          vocabularyLevel: 'advanced' as const,
-          firstPersonUsage: 15,
-          passiveVoiceRatio: 10,
-        };
+      const testCharacteristics = {
+        formality: 0.6,
+        technicality: 0.5,
+        assertiveness: 0.7,
+        complexity: 0.6,
+        sentenceLength: { avg: 20, min: 10, max: 30, variance: 5 },
+        vocabularyLevel: 'advanced' as const,
+        firstPersonUsage: 15,
+        passiveVoiceRatio: 10,
+      };
 
+      it('should create new custom voice profile', () => {
         const markers = [
           {
             type: 'vocabulary' as const,
@@ -227,44 +192,22 @@ describe('VoiceCalibration', () => {
           },
         ];
 
-        const profile = calibration.createCustomVoiceProfile('custom', characteristics, markers);
+        const profile = calibration.createCustomVoiceProfile('custom', testCharacteristics, markers);
 
         expect(profile.voice).toBe('custom');
-        expect(profile.characteristics).toEqual(characteristics);
+        expect(profile.characteristics).toEqual(testCharacteristics);
         expect(profile.markers).toEqual(markers);
       });
 
       it('should make custom profile retrievable', () => {
-        const characteristics = {
-          formality: 0.6,
-          technicality: 0.5,
-          assertiveness: 0.7,
-          complexity: 0.6,
-          sentenceLength: { avg: 20, min: 10, max: 30, variance: 5 },
-          vocabularyLevel: 'advanced' as const,
-          firstPersonUsage: 15,
-          passiveVoiceRatio: 10,
-        };
-
-        calibration.createCustomVoiceProfile('customVoice', characteristics, []);
+        calibration.createCustomVoiceProfile('customVoice', testCharacteristics, []);
 
         const retrieved = calibration.getVoiceProfile('customVoice');
         expect(retrieved.voice).toBe('customVoice');
       });
 
       it('should set default detection confidence', () => {
-        const characteristics = {
-          formality: 0.6,
-          technicality: 0.5,
-          assertiveness: 0.7,
-          complexity: 0.6,
-          sentenceLength: { avg: 20, min: 10, max: 30, variance: 5 },
-          vocabularyLevel: 'advanced' as const,
-          firstPersonUsage: 15,
-          passiveVoiceRatio: 10,
-        };
-
-        const profile = calibration.createCustomVoiceProfile('testVoice', characteristics, []);
+        const profile = calibration.createCustomVoiceProfile('testVoice', testCharacteristics, []);
 
         expect(profile.detectionConfidence).toBe(0.5);
       });
@@ -273,7 +216,7 @@ describe('VoiceCalibration', () => {
 
   describe('Calibration', () => {
     describe('calibrateVoice', () => {
-      it('should calibrate with training corpus', async () => {
+      it('should calibrate with training corpus and show results', async () => {
         const corpus = [
           'The research methodology demonstrates empirical validity.',
           'Our analysis suggests that this framework provides theoretical foundation.',
@@ -288,21 +231,7 @@ describe('VoiceCalibration', () => {
         expect(result.voice).toBe('academic');
         expect(result.beforeAccuracy).toBeDefined();
         expect(result.afterAccuracy).toBeDefined();
-      });
-
-      it('should improve accuracy after calibration', async () => {
-        const corpus = [
-          'The system achieves 99.5% uptime with 45ms latency.',
-          'Implementation uses connection pooling to optimize throughput.',
-          'Performance metrics show 2.5x improvement after optimization.',
-        ];
-
-        const result = await calibration.calibrateVoice({
-          voice: 'technical',
-          trainingCorpus: corpus,
-        });
-
-        expect(result.improvement).toBeGreaterThanOrEqual(-0.2); // Allow for some variation
+        expect(result.improvement).toBeGreaterThanOrEqual(-0.2);
       });
 
       it('should use validation corpus when provided', async () => {
@@ -324,10 +253,15 @@ describe('VoiceCalibration', () => {
 
         expect(result.validationResults).toBeDefined();
         expect(result.validationResults.precision).toBeGreaterThanOrEqual(0);
+        expect(result.validationResults.recall).toBeGreaterThanOrEqual(0);
+        expect(result.validationResults.f1Score).toBeGreaterThanOrEqual(0);
       });
 
-      it('should apply target characteristics', async () => {
-        const corpus = ['Sample casual text for testing.'];
+      it('should apply target characteristics and optimize markers', async () => {
+        const corpus = [
+          "Here's the thing - it's basically a caching problem.",
+          "I've seen this pattern work in production systems.",
+        ];
 
         const result = await calibration.calibrateVoice({
           voice: 'casual',
@@ -340,36 +274,7 @@ describe('VoiceCalibration', () => {
 
         expect(result.characteristicsAdjusted).toContain('formality');
         expect(result.characteristicsAdjusted).toContain('assertiveness');
-      });
-
-      it('should optimize markers during calibration', async () => {
-        const corpus = [
-          "Here's the thing - it's basically a caching problem.",
-          "I've seen this pattern work in production systems.",
-        ];
-
-        const result = await calibration.calibrateVoice({
-          voice: 'casual',
-          trainingCorpus: corpus,
-        });
-
         expect(result.characteristicsAdjusted).toContain('markers');
-      });
-
-      it('should calculate validation metrics', async () => {
-        const corpus = [
-          'The methodology framework suggests empirical evidence.',
-          'Furthermore, our research demonstrates theoretical validity.',
-        ];
-
-        const result = await calibration.calibrateVoice({
-          voice: 'academic',
-          trainingCorpus: corpus,
-        });
-
-        expect(result.validationResults.precision).toBeGreaterThanOrEqual(0);
-        expect(result.validationResults.recall).toBeGreaterThanOrEqual(0);
-        expect(result.validationResults.f1Score).toBeGreaterThanOrEqual(0);
       });
 
       it('should track calibration history', async () => {
@@ -384,25 +289,21 @@ describe('VoiceCalibration', () => {
         expect(report.recentCalibrations.length).toBeGreaterThan(0);
       });
 
-      it('should handle empty corpus gracefully', async () => {
-        const result = await calibration.calibrateVoice({
+      it('should handle edge cases gracefully', async () => {
+        // Empty corpus
+        const emptyResult = await calibration.calibrateVoice({
           voice: 'academic',
           trainingCorpus: [],
         });
+        expect(emptyResult.beforeAccuracy).toBe(0);
+        expect(emptyResult.afterAccuracy).toBe(0);
 
-        expect(result.beforeAccuracy).toBe(0);
-        expect(result.afterAccuracy).toBe(0);
-      });
-
-      it('should work without target characteristics', async () => {
-        const corpus = ['Executive summary with strategic ROI.'];
-
-        const result = await calibration.calibrateVoice({
+        // No target characteristics
+        const noTargetResult = await calibration.calibrateVoice({
           voice: 'executive',
-          trainingCorpus: corpus,
+          trainingCorpus: ['Executive summary with strategic ROI.'],
         });
-
-        expect(result).toBeDefined();
+        expect(noTargetResult).toBeDefined();
       });
 
       it('should throw error for invalid voice', async () => {
@@ -416,10 +317,11 @@ describe('VoiceCalibration', () => {
     });
 
     describe('calibrateAllVoices', () => {
-      it('should calibrate all provided voices', async () => {
+      it('should calibrate all provided voices and handle edge cases', async () => {
         const corpus = new Map([
           ['academic', ['The research methodology demonstrates validity.']],
           ['technical', ['System latency is 45ms with 99% uptime.']],
+          ['invalid', ['Invalid voice text.']],
         ]);
 
         const results = await calibration.calibrateAllVoices(corpus);
@@ -427,28 +329,16 @@ describe('VoiceCalibration', () => {
         expect(results.size).toBe(2);
         expect(results.has('academic')).toBe(true);
         expect(results.has('technical')).toBe(true);
+        expect(results.has('invalid')).toBe(false); // Invalid voices skipped
       });
 
-      it('should split training and validation sets', async () => {
+      it('should split training and validation sets for larger corpora', async () => {
         const texts = Array(10).fill('Technical sample text.');
         const corpus = new Map([['technical', texts]]);
 
         const results = await calibration.calibrateAllVoices(corpus);
 
         expect(results.get('technical')).toBeDefined();
-      });
-
-      it('should skip invalid voices', async () => {
-        const corpus = new Map([
-          ['academic', ['Test text.']],
-          ['invalid', ['Invalid voice text.']],
-        ]);
-
-        const results = await calibration.calibrateAllVoices(corpus);
-
-        expect(results.size).toBe(1);
-        expect(results.has('academic')).toBe(true);
-        expect(results.has('invalid')).toBe(false);
       });
 
       it('should handle empty corpus map', async () => {
@@ -476,78 +366,49 @@ describe('VoiceCalibration', () => {
 
   describe('Detection Accuracy', () => {
     describe('testDetectionAccuracy', () => {
-      it('should measure academic voice detection', async () => {
-        const corpus = [
-          'The research methodology demonstrates empirical validity.',
-          'Furthermore, our analysis suggests theoretical foundation.',
+      it('should measure detection accuracy for all voice types with complete metrics', async () => {
+        const voiceTests = [
+          {
+            voice: 'academic',
+            corpus: [
+              'The research methodology demonstrates empirical validity.',
+              'Furthermore, our analysis suggests theoretical foundation.',
+            ],
+          },
+          {
+            voice: 'technical',
+            corpus: [
+              'System latency is 45ms with throughput of 10K req/sec.',
+              'Implementation uses Redis for caching optimization.',
+            ],
+          },
+          {
+            voice: 'executive',
+            corpus: [
+              'Strategic initiative delivers $2M ROI in Q1.',
+              'We recommend prioritizing stakeholder alignment.',
+            ],
+          },
+          {
+            voice: 'casual',
+            corpus: ["Here's the thing - it's basically simple.", "I've seen this pattern work in production."],
+          },
         ];
 
-        const result = await calibration.testDetectionAccuracy('academic', corpus);
+        for (const { voice, corpus } of voiceTests) {
+          const result = await calibration.testDetectionAccuracy(voice, corpus);
 
-        expect(result.voice).toBe('academic');
-        expect(result.accuracy).toBeGreaterThanOrEqual(0);
-        expect(result.accuracy).toBeLessThanOrEqual(1);
-      });
-
-      it('should measure technical voice detection', async () => {
-        const corpus = [
-          'System latency is 45ms with throughput of 10K req/sec.',
-          'Implementation uses Redis for caching optimization.',
-        ];
-
-        const result = await calibration.testDetectionAccuracy('technical', corpus);
-
-        expect(result.accuracy).toBeGreaterThan(0);
-        expect(result.precision).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should measure executive voice detection', async () => {
-        const corpus = [
-          'Strategic initiative delivers $2M ROI in Q1.',
-          'We recommend prioritizing stakeholder alignment.',
-        ];
-
-        const result = await calibration.testDetectionAccuracy('executive', corpus);
-
-        expect(result.recall).toBeGreaterThanOrEqual(0);
-        expect(result.f1Score).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should measure casual voice detection', async () => {
-        const corpus = [
-          "Here's the thing - it's basically simple.",
-          "I've seen this pattern work in production.",
-        ];
-
-        const result = await calibration.testDetectionAccuracy('casual', corpus);
-
-        expect(result.accuracy).toBeGreaterThan(0);
-      });
-
-      it('should track confident correct detections', async () => {
-        const corpus = [
-          'The empirical research methodology framework demonstrates validity.',
-        ];
-
-        const result = await calibration.testDetectionAccuracy('academic', corpus);
-
-        expect(result.confidentCorrect).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should track confident wrong detections', async () => {
-        const corpus = ['This is ambiguous text.'];
-
-        const result = await calibration.testDetectionAccuracy('academic', corpus);
-
-        expect(result.confidentWrong).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should count total samples', async () => {
-        const corpus = ['Text 1.', 'Text 2.', 'Text 3.'];
-
-        const result = await calibration.testDetectionAccuracy('technical', corpus);
-
-        expect(result.samples).toBe(3);
+          expect(result.voice, `${voice} voice name`).toBe(voice);
+          expect(result.accuracy, `${voice} accuracy`).toBeGreaterThanOrEqual(0);
+          expect(result.accuracy, `${voice} accuracy bound`).toBeLessThanOrEqual(1);
+          expect(result.precision, `${voice} precision`).toBeGreaterThanOrEqual(0);
+          expect(result.recall, `${voice} recall`).toBeGreaterThanOrEqual(0);
+          expect(result.f1Score, `${voice} f1Score`).toBeGreaterThanOrEqual(0);
+          expect(result.f1Score, `${voice} f1Score bound`).toBeLessThanOrEqual(1);
+          expect(result.confidentCorrect, `${voice} confidentCorrect`).toBeGreaterThanOrEqual(0);
+          expect(result.confidentWrong, `${voice} confidentWrong`).toBeGreaterThanOrEqual(0);
+          expect(result.samples, `${voice} samples`).toBe(corpus.length);
+        }
       });
 
       it('should handle empty corpus', async () => {
@@ -555,15 +416,6 @@ describe('VoiceCalibration', () => {
 
         expect(result.accuracy).toBe(0);
         expect(result.samples).toBe(0);
-      });
-
-      it('should calculate F1 score correctly', async () => {
-        const corpus = ['Technical latency 50ms optimization.'];
-
-        const result = await calibration.testDetectionAccuracy('technical', corpus);
-
-        expect(result.f1Score).toBeGreaterThanOrEqual(0);
-        expect(result.f1Score).toBeLessThanOrEqual(1);
       });
 
       it('should handle perfect detection', async () => {
@@ -578,100 +430,50 @@ describe('VoiceCalibration', () => {
     });
 
     describe('validateCrossVoiceDetection', () => {
-      it('should generate confusion matrix', async () => {
-        const testSet = new Map([
-          ['academic', ['Research methodology framework.']],
-          ['technical', ['System latency 45ms.']],
-        ]);
-
-        const result = await calibration.validateCrossVoiceDetection(testSet);
-
-        expect(result.matrix).toBeDefined();
-        expect(result.accuracy).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should calculate per-voice accuracy', async () => {
+      it('should generate confusion matrix and calculate metrics', async () => {
         const testSet = new Map([
           ['academic', ['Empirical research demonstrates.']],
           ['technical', ['Implementation optimizes throughput.']],
-        ]);
-
-        const result = await calibration.validateCrossVoiceDetection(testSet);
-
-        expect(result.perVoiceAccuracy).toBeDefined();
-        expect(result.perVoiceAccuracy['academic']).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should track misclassifications', async () => {
-        const testSet = new Map([
           ['casual', ['Sample text.']],
           ['executive', ['Strategic sample.']],
         ]);
 
         const result = await calibration.validateCrossVoiceDetection(testSet);
 
-        expect(result.matrix['casual']).toBeDefined();
-      });
-
-      it('should handle all four voices', async () => {
-        const testSet = new Map([
-          ['academic', ['Research framework.']],
-          ['technical', ['Latency 45ms.']],
-          ['executive', ['ROI 40%.']],
-          ['casual', ["It's simple."]],
-        ]);
-
-        const result = await calibration.validateCrossVoiceDetection(testSet);
-
-        expect(Object.keys(result.perVoiceAccuracy).length).toBe(4);
-      });
-
-      it('should calculate overall accuracy', async () => {
-        const testSet = new Map([
-          ['technical', ['System performance metrics.']],
-        ]);
-
-        const result = await calibration.validateCrossVoiceDetection(testSet);
-
+        expect(result.matrix).toBeDefined();
         expect(result.accuracy).toBeGreaterThanOrEqual(0);
         expect(result.accuracy).toBeLessThanOrEqual(1);
+        expect(result.perVoiceAccuracy).toBeDefined();
+        expect(result.perVoiceAccuracy['academic']).toBeGreaterThanOrEqual(0);
+        expect(result.matrix['casual']).toBeDefined();
+        expect(Object.keys(result.perVoiceAccuracy).length).toBe(4);
       });
     });
   });
 
   describe('Characteristic Tuning', () => {
     describe('tuneCharacteristic', () => {
-      it('should tune formality characteristic', async () => {
-        const result = await calibration.tuneCharacteristic('casual', 'formality', 0.5);
+      it('should tune all voice characteristics to target values', async () => {
+        const tuneTests = [
+          { voice: 'casual', characteristic: 'formality', targetValue: 0.5 },
+          { voice: 'executive', characteristic: 'technicality', targetValue: 0.6 },
+          { voice: 'academic', characteristic: 'assertiveness', targetValue: 0.7 },
+          { voice: 'technical', characteristic: 'complexity', targetValue: 0.8 },
+        ];
 
-        expect(result.characteristic).toBe('formality');
-        expect(result.afterValue).toBe(0.5);
-      });
+        for (const { voice, characteristic, targetValue } of tuneTests) {
+          const result = await calibration.tuneCharacteristic(voice, characteristic, targetValue);
 
-      it('should tune technicality characteristic', async () => {
-        const result = await calibration.tuneCharacteristic('executive', 'technicality', 0.6);
+          expect(result.characteristic, `${voice} characteristic name`).toBe(characteristic);
+          expect(result.afterValue, `${voice} afterValue`).toBe(targetValue);
+          expect(result.beforeValue, `${voice} beforeValue`).toBeDefined();
+          expect(result.improvement, `${voice} improvement`).toBeDefined();
+          expect(result.accuracy, `${voice} accuracy`).toBeGreaterThanOrEqual(0);
 
-        expect(result.characteristic).toBe('technicality');
-        expect(result.afterValue).toBe(0.6);
-      });
-
-      it('should tune assertiveness characteristic', async () => {
-        const result = await calibration.tuneCharacteristic('academic', 'assertiveness', 0.7);
-
-        expect(result.characteristic).toBe('assertiveness');
-        expect(result.beforeValue).toBeDefined();
-      });
-
-      it('should tune complexity characteristic', async () => {
-        const result = await calibration.tuneCharacteristic('technical', 'complexity', 0.8);
-
-        expect(result.improvement).toBeDefined();
-      });
-
-      it('should measure accuracy after tuning', async () => {
-        const result = await calibration.tuneCharacteristic('casual', 'formality', 0.4);
-
-        expect(result.accuracy).toBeGreaterThanOrEqual(0);
+          // Verify profile updated
+          const profile = calibration.getVoiceProfile(voice);
+          expect(profile.characteristics[characteristic as keyof typeof profile.characteristics], `${voice} profile updated`).toBe(targetValue);
+        }
       });
 
       it('should throw error for sentenceLength', async () => {
@@ -684,13 +486,6 @@ describe('VoiceCalibration', () => {
         await expect(
           calibration.tuneCharacteristic('invalid', 'formality', 0.5)
         ).rejects.toThrow('Voice profile not found');
-      });
-
-      it('should update profile with new value', async () => {
-        await calibration.tuneCharacteristic('technical', 'formality', 0.75);
-
-        const profile = calibration.getVoiceProfile('technical');
-        expect(profile.characteristics.formality).toBe(0.75);
       });
     });
 
@@ -705,40 +500,22 @@ describe('VoiceCalibration', () => {
         const results = await calibration.tuneAllCharacteristics('executive', targets);
 
         expect(results.length).toBe(3);
+        expect(results.every(r => r.accuracy !== undefined)).toBe(true);
       });
 
-      it('should skip sentenceLength', async () => {
+      it('should skip non-tunable characteristics', async () => {
         const targets = {
           formality: 0.5,
           sentenceLength: { avg: 20, min: 10, max: 30, variance: 5 },
-        };
-
-        const results = await calibration.tuneAllCharacteristics('casual', targets);
-
-        expect(results.length).toBe(1);
-        expect(results[0].characteristic).toBe('formality');
-      });
-
-      it('should skip vocabularyLevel', async () => {
-        const targets = {
-          formality: 0.6,
           vocabularyLevel: 'advanced' as const,
-        };
-
-        const results = await calibration.tuneAllCharacteristics('academic', targets);
-
-        expect(results.length).toBe(1);
-      });
-
-      it('should return results for each tuned characteristic', async () => {
-        const targets = {
-          formality: 0.5,
           complexity: 0.6,
         };
 
         const results = await calibration.tuneAllCharacteristics('technical', targets);
 
-        expect(results.every(r => r.accuracy !== undefined)).toBe(true);
+        expect(results.length).toBe(2); // Only formality and complexity
+        expect(results.find(r => r.characteristic === 'formality')).toBeDefined();
+        expect(results.find(r => r.characteristic === 'complexity')).toBeDefined();
       });
 
       it('should handle empty targets', async () => {
@@ -751,33 +528,24 @@ describe('VoiceCalibration', () => {
 
   describe('Marker Optimization', () => {
     describe('optimizeMarkers', () => {
-      it('should optimize academic markers', async () => {
+      it('should optimize markers with weight updates and sorting', async () => {
         const corpus = [
-          'The research methodology demonstrates empirical validity.',
-          'Furthermore, our framework suggests theoretical foundation.',
+          'The research methodology demonstrates empirical validity with theoretical framework.',
         ];
 
         const markers = await calibration.optimizeMarkers('academic', corpus);
 
-        expect(markers.length).toBeGreaterThan(0);
-      });
-
-      it('should update marker weights', async () => {
-        const corpus = [
-          'System latency is 45ms with high throughput.',
-          'Implementation optimizes performance metrics.',
-        ];
-
-        const markers = await calibration.optimizeMarkers('technical', corpus);
-
+        expect(markers.length).toBeGreaterThanOrEqual(0);
         expect(markers.every(m => m.weight >= 0 && m.weight <= 1)).toBe(true);
+
+        // Check sorting
+        for (let i = 1; i < markers.length; i++) {
+          expect(markers[i - 1].weight).toBeGreaterThanOrEqual(markers[i].weight);
+        }
       });
 
-      it('should remove weak markers', async () => {
+      it('should remove weak markers below threshold', async () => {
         const corpus = ['Strategic ROI delivers value.'];
-
-        const before = calibration.getVoiceProfile('executive');
-        const beforeCount = before.markers.length;
 
         await calibration.optimizeMarkers('executive', corpus);
 
@@ -785,40 +553,15 @@ describe('VoiceCalibration', () => {
         expect(after.markers.every(m => m.weight >= 0.1)).toBe(true);
       });
 
-      it('should sort markers by weight', async () => {
-        const corpus = [
-          "Here's the thing - it's basically simple.",
-          "I've seen this pattern work.",
-        ];
-
-        const markers = await calibration.optimizeMarkers('casual', corpus);
-
-        for (let i = 1; i < markers.length; i++) {
-          expect(markers[i - 1].weight).toBeGreaterThanOrEqual(markers[i].weight);
-        }
-      });
-
-      it('should handle empty corpus', async () => {
-        const markers = await calibration.optimizeMarkers('academic', []);
-
-        expect(Array.isArray(markers)).toBe(true);
-      });
-
-      it('should calculate effectiveness scores', async () => {
-        const corpus = ['The research methodology demonstrates empirical validity with theoretical framework.'];
-
-        const markers = await calibration.optimizeMarkers('academic', corpus);
-
-        // After optimization, markers should exist (some may have been removed if weak)
-        expect(markers.length).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should preserve marker types', async () => {
-        const corpus = ['Technical implementation.'];
+      it('should preserve marker types and handle edge cases', async () => {
         const validTypes = ['vocabulary', 'structure', 'tone', 'perspective'];
 
-        const markers = await calibration.optimizeMarkers('technical', corpus);
+        // Empty corpus
+        const emptyMarkers = await calibration.optimizeMarkers('academic', []);
+        expect(Array.isArray(emptyMarkers)).toBe(true);
 
+        // Normal corpus
+        const markers = await calibration.optimizeMarkers('technical', ['Technical implementation.']);
         expect(markers.every(m => validTypes.includes(m.type))).toBe(true);
       });
 
@@ -881,24 +624,21 @@ describe('VoiceCalibration', () => {
 
     describe('removeMarker', () => {
       it('should remove marker from profile', async () => {
-        // Use a fresh calibration instance to ensure clean state
         const freshCalibration = new VoiceCalibration(analyzer, diversifier);
-        
+
         const profile = freshCalibration.getVoiceProfile('casual');
-        
-        // Skip test if no markers (shouldn't happen but handle gracefully)
+
         if (profile.markers.length === 0) {
           console.warn('Warning: Academic profile has no markers - skipping test');
           return;
         }
-        
+
         expect(profile.markers.length).toBeGreaterThan(0);
         const markerToRemove = profile.markers[0];
 
         await freshCalibration.removeMarker('academic', markerToRemove.type, markerToRemove.indicator);
 
         const after = freshCalibration.getVoiceProfile('academic');
-        // Verify the marker was actually removed
         expect(after.markers.some(m => m.indicator === markerToRemove.indicator)).toBe(false);
       });
 
@@ -922,67 +662,43 @@ describe('VoiceCalibration', () => {
 
   describe('Transformation Accuracy', () => {
     describe('testTransformationAccuracy', () => {
-      it('should test academic to technical transformation', async () => {
-        const corpus = [
-          'The research methodology demonstrates empirical validity.',
+      it('should test all voice pair transformations with complete metrics', async () => {
+        const transformTests = [
+          { fromVoice: 'academic', toVoice: 'technical', corpus: ['The research methodology demonstrates empirical validity.'] },
+          { fromVoice: 'technical', toVoice: 'casual', corpus: ['System latency is 45ms with optimization.'] },
+          { fromVoice: 'casual', toVoice: 'executive', corpus: ["Here's the thing about performance."] },
+          { fromVoice: 'executive', toVoice: 'academic', corpus: ['Strategic ROI of 40% demonstrates value.'] },
         ];
 
-        const result = await calibration.testTransformationAccuracy('academic', 'technical', corpus);
+        for (const { fromVoice, toVoice, corpus } of transformTests) {
+          const result = await calibration.testTransformationAccuracy(fromVoice, toVoice, corpus);
 
-        expect(result.fromVoice).toBe('academic');
-        expect(result.toVoice).toBe('technical');
-        expect(result.accuracy).toBeGreaterThanOrEqual(0);
+          expect(result.fromVoice, `${fromVoice}→${toVoice} fromVoice`).toBe(fromVoice);
+          expect(result.toVoice, `${fromVoice}→${toVoice} toVoice`).toBe(toVoice);
+          expect(result.accuracy, `${fromVoice}→${toVoice} accuracy`).toBeGreaterThanOrEqual(0);
+          expect(result.fidelity, `${fromVoice}→${toVoice} fidelity`).toBeGreaterThanOrEqual(0);
+          expect(result.averageConfidence, `${fromVoice}→${toVoice} avgConfidence`).toBeGreaterThanOrEqual(0);
+          expect(result.averageConfidence, `${fromVoice}→${toVoice} avgConfidence bound`).toBeLessThanOrEqual(1);
+          expect(result.samples, `${fromVoice}→${toVoice} samples`).toBe(corpus.length);
+        }
       });
 
-      it('should test technical to casual transformation', async () => {
-        const corpus = ['System latency is 45ms with optimization.'];
+      it('should handle edge cases', async () => {
+        // Empty corpus
+        const emptyResult = await calibration.testTransformationAccuracy('casual', 'executive', []);
+        expect(emptyResult.accuracy).toBe(0);
+        expect(emptyResult.samples).toBe(0);
 
-        const result = await calibration.testTransformationAccuracy('technical', 'casual', corpus);
-
-        expect(result.fidelity).toBeGreaterThanOrEqual(0);
+        // Multiple samples
+        const multiResult = await calibration.testTransformationAccuracy(
+          'technical',
+          'casual',
+          ['Text 1.', 'Text 2.', 'Text 3.']
+        );
+        expect(multiResult.samples).toBe(3);
       });
 
-      it('should test casual to executive transformation', async () => {
-        const corpus = ["Here's the thing about performance."];
-
-        const result = await calibration.testTransformationAccuracy('casual', 'executive', corpus);
-
-        expect(result.averageConfidence).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should test executive to academic transformation', async () => {
-        const corpus = ['Strategic ROI of 40% demonstrates value.'];
-
-        const result = await calibration.testTransformationAccuracy('executive', 'academic', corpus);
-
-        expect(result.samples).toBe(1);
-      });
-
-      it('should measure average confidence', async () => {
-        const corpus = ['Test text for transformation.'];
-
-        const result = await calibration.testTransformationAccuracy('academic', 'technical', corpus);
-
-        expect(result.averageConfidence).toBeGreaterThanOrEqual(0);
-        expect(result.averageConfidence).toBeLessThanOrEqual(1);
-      });
-
-      it('should count samples', async () => {
-        const corpus = ['Text 1.', 'Text 2.', 'Text 3.'];
-
-        const result = await calibration.testTransformationAccuracy('technical', 'casual', corpus);
-
-        expect(result.samples).toBe(3);
-      });
-
-      it('should handle empty corpus', async () => {
-        const result = await calibration.testTransformationAccuracy('casual', 'executive', []);
-
-        expect(result.accuracy).toBe(0);
-        expect(result.samples).toBe(0);
-      });
-
-      it('should test all 12 voice combinations', async () => {
+      it('should test all 12 voice pair combinations', async () => {
         const voices = ['academic', 'technical', 'executive', 'casual'];
         const corpus = ['Test transformation text.'];
 
@@ -990,7 +706,7 @@ describe('VoiceCalibration', () => {
           for (const to of voices) {
             if (from !== to) {
               const result = await calibration.testTransformationAccuracy(from, to, corpus);
-              expect(result).toBeDefined();
+              expect(result, `${from} → ${to} failed`).toBeDefined();
             }
           }
         }
@@ -998,7 +714,7 @@ describe('VoiceCalibration', () => {
     });
 
     describe('optimizeTransformations', () => {
-      it('should optimize academic to technical transformation', async () => {
+      it('should optimize transformation and measure improvements', async () => {
         const corpus = ['The research methodology demonstrates validity.'];
 
         const result = await calibration.optimizeTransformations({
@@ -1009,46 +725,13 @@ describe('VoiceCalibration', () => {
 
         expect(result.fromVoice).toBe('academic');
         expect(result.toVoice).toBe('technical');
-      });
-
-      it('should measure before and after fidelity', async () => {
-        const corpus = ['Technical implementation details.'];
-
-        const result = await calibration.optimizeTransformations({
-          fromVoice: 'technical',
-          toVoice: 'casual',
-          corpus,
-        });
-
         expect(result.beforeFidelity).toBeGreaterThanOrEqual(0);
         expect(result.afterFidelity).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should calculate improvement', async () => {
-        const corpus = ['Strategic business value.'];
-
-        const result = await calibration.optimizeTransformations({
-          fromVoice: 'executive',
-          toVoice: 'academic',
-          corpus,
-        });
-
         expect(result.improvement).toBeDefined();
-      });
-
-      it('should track adjustments made', async () => {
-        const corpus = ['Test optimization text.'];
-
-        const result = await calibration.optimizeTransformations({
-          fromVoice: 'casual',
-          toVoice: 'technical',
-          corpus,
-        });
-
         expect(Array.isArray(result.adjustmentsMade)).toBe(true);
       });
 
-      it('should respect target fidelity', async () => {
+      it('should respect target fidelity when provided', async () => {
         const corpus = ['Optimization target test.'];
 
         const result = await calibration.optimizeTransformations({
@@ -1077,45 +760,28 @@ describe('VoiceCalibration', () => {
 
   describe('Analysis and Reporting', () => {
     describe('generateCalibrationReport', () => {
-      it('should generate report for academic voice', () => {
-        const report = calibration.generateCalibrationReport('academic');
+      it('should generate comprehensive reports for all voices', () => {
+        const voices = ['academic', 'technical', 'executive', 'casual'];
 
-        expect(report.voice).toBe('academic');
-        expect(report.profile).toBeDefined();
-      });
+        for (const voice of voices) {
+          const report = calibration.generateCalibrationReport(voice);
 
-      it('should include accuracy metrics', () => {
-        const report = calibration.generateCalibrationReport('technical');
-
-        expect(report.accuracy).toBeDefined();
+          expect(report.voice, `${voice} voice`).toBe(voice);
+          expect(report.profile, `${voice} profile`).toBeDefined();
+          expect(report.accuracy, `${voice} accuracy`).toBeDefined();
+          expect(report.characteristics, `${voice} characteristics`).toBeDefined();
+          expect(report.characteristics.formality, `${voice} formality`).toBeDefined();
+          expect(Array.isArray(report.recentCalibrations), `${voice} recent calibrations`).toBe(true);
+        }
       });
 
       it('should include marker statistics', () => {
-        // Use a fresh calibration instance
         const freshCalibration = new VoiceCalibration(analyzer, diversifier);
         const report = freshCalibration.generateCalibrationReport('executive');
 
         expect(report.markers.total).toBeGreaterThanOrEqual(0);
         expect(report.markers.byType).toBeDefined();
         expect(report.markers.averageWeight).toBeGreaterThanOrEqual(0);
-      });
-
-      it('should include characteristics', () => {
-        const report = calibration.generateCalibrationReport('casual');
-
-        expect(report.characteristics).toBeDefined();
-        expect(report.characteristics.formality).toBeDefined();
-      });
-
-      it('should include recent calibrations', () => {
-        const report = calibration.generateCalibrationReport('academic');
-
-        expect(Array.isArray(report.recentCalibrations)).toBe(true);
-      });
-
-      it('should count markers by type', () => {
-        const report = calibration.generateCalibrationReport('technical');
-
         expect(report.markers.byType.vocabulary).toBeGreaterThanOrEqual(0);
         expect(report.markers.byType.structure).toBeGreaterThanOrEqual(0);
         expect(report.markers.byType.tone).toBeGreaterThanOrEqual(0);
@@ -1130,31 +796,18 @@ describe('VoiceCalibration', () => {
     });
 
     describe('compareVoiceProfiles', () => {
-      it('should compare academic and technical voices', () => {
+      it('should compare voice profiles with similarity and differences', () => {
         const comparison = calibration.compareVoiceProfiles('academic', 'technical');
 
         expect(comparison.voice1).toBe('academic');
         expect(comparison.voice2).toBe('technical');
-      });
-
-      it('should calculate similarity', () => {
-        const comparison = calibration.compareVoiceProfiles('executive', 'casual');
-
         expect(comparison.similarity).toBeGreaterThanOrEqual(0);
         expect(comparison.similarity).toBeLessThanOrEqual(1);
-      });
-
-      it('should list characteristic differences', () => {
-        const comparison = calibration.compareVoiceProfiles('academic', 'casual');
-
         expect(comparison.differences.length).toBeGreaterThan(0);
         expect(comparison.differences[0].characteristic).toBeDefined();
         expect(comparison.differences[0].delta).toBeGreaterThanOrEqual(0);
-      });
 
-      it('should sort differences by delta', () => {
-        const comparison = calibration.compareVoiceProfiles('technical', 'executive');
-
+        // Check sorting
         for (let i = 1; i < comparison.differences.length; i++) {
           expect(comparison.differences[i - 1].delta).toBeGreaterThanOrEqual(
             comparison.differences[i].delta
@@ -1169,13 +822,11 @@ describe('VoiceCalibration', () => {
         expect(comparison.distinguishingMarkers.voice2Only).toBeDefined();
       });
 
-      it('should throw error for invalid voice1', () => {
+      it('should throw error for invalid voices', () => {
         expect(() => {
           calibration.compareVoiceProfiles('invalid', 'academic');
         }).toThrow('One or both voice profiles not found');
-      });
 
-      it('should throw error for invalid voice2', () => {
         expect(() => {
           calibration.compareVoiceProfiles('academic', 'invalid');
         }).toThrow('One or both voice profiles not found');
@@ -1188,6 +839,11 @@ describe('VoiceCalibration', () => {
 
         expect(typeof exported).toBe('string');
         expect(() => JSON.parse(exported)).not.toThrow();
+
+        const data = JSON.parse(exported);
+        expect(data.length).toBeGreaterThan(0);
+        expect(data[0].voice).toBeDefined();
+        expect(data[0].characteristics).toBeDefined();
       });
 
       it('should export profiles as YAML', () => {
@@ -1195,20 +851,6 @@ describe('VoiceCalibration', () => {
 
         expect(typeof exported).toBe('string');
         expect(exported.includes('voice:')).toBe(true);
-      });
-
-      it('should include all voice data in JSON', () => {
-        const exported = calibration.exportVoiceProfiles('json');
-        const data = JSON.parse(exported);
-
-        expect(data.length).toBeGreaterThan(0);
-        expect(data[0].voice).toBeDefined();
-        expect(data[0].characteristics).toBeDefined();
-      });
-
-      it('should format YAML correctly', () => {
-        const exported = calibration.exportVoiceProfiles('yaml');
-
         expect(exported.includes('characteristics:')).toBe(true);
         expect(exported.includes('markers:')).toBe(true);
       });

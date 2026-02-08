@@ -114,33 +114,17 @@ const validSkillExtension: Extension = {
 // ============================================
 
 describe('PlatformCompatibilitySchema', () => {
-  it('accepts valid platform compatibility', () => {
-    const valid = {
-      claude: 'full' as const,
-      cursor: 'partial' as const,
-      copilot: 'experimental' as const,
-    };
-    expect(PlatformCompatibilitySchema.safeParse(valid).success).toBe(true);
-  });
+  it('validates platform compatibility with various configurations', () => {
+    const testCases = [
+      { input: { claude: 'full' as const, cursor: 'partial' as const, copilot: 'experimental' as const }, expected: true, desc: 'multiple platforms' },
+      { input: { claude: 'full' as const }, expected: true, desc: 'single platform' },
+      { input: {}, expected: false, desc: 'empty platforms' },
+      { input: { claude: 'invalid-level' }, expected: false, desc: 'invalid support level' },
+    ];
 
-  it('requires at least one platform', () => {
-    const result = PlatformCompatibilitySchema.safeParse({});
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects invalid support levels', () => {
-    const invalid = {
-      claude: 'invalid-level',
-    };
-    const result = PlatformCompatibilitySchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('accepts single platform', () => {
-    const valid = {
-      claude: 'full' as const,
-    };
-    expect(PlatformCompatibilitySchema.safeParse(valid).success).toBe(true);
+    testCases.forEach(({ input, expected, desc }) => {
+      expect(PlatformCompatibilitySchema.safeParse(input).success).toBe(expected, `failed for ${desc}`);
+    });
   });
 });
 
@@ -149,27 +133,26 @@ describe('PlatformCompatibilitySchema', () => {
 // ============================================
 
 describe('DeploymentConfigSchema', () => {
-  it('accepts valid deployment config', () => {
-    const valid = {
-      pathTemplate: '.{platform}/agents/{id}.md',
-      pathOverrides: {
-        claude: '.claude/agents/custom.md',
+  it('validates deployment config and rejects invalid cases', () => {
+    const testCases = [
+      {
+        input: {
+          pathTemplate: '.{platform}/agents/{id}.md',
+          pathOverrides: { claude: '.claude/agents/custom.md' },
+          additionalFiles: ['references/patterns.md'],
+          autoInstall: true,
+          core: true,
+        },
+        expected: true,
+        desc: 'valid full config'
       },
-      additionalFiles: ['references/patterns.md'],
-      autoInstall: true,
-      core: true,
-    };
-    expect(DeploymentConfigSchema.safeParse(valid).success).toBe(true);
-  });
+      { input: {}, expected: false, desc: 'missing pathTemplate' },
+      { input: { pathTemplate: '' }, expected: false, desc: 'empty pathTemplate' },
+    ];
 
-  it('requires pathTemplate', () => {
-    const result = DeploymentConfigSchema.safeParse({});
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects empty pathTemplate', () => {
-    const result = DeploymentConfigSchema.safeParse({ pathTemplate: '' });
-    expect(result.success).toBe(false);
+    testCases.forEach(({ input, expected, desc }) => {
+      expect(DeploymentConfigSchema.safeParse(input).success).toBe(expected, `failed for ${desc}`);
+    });
   });
 
   it('sets default values', () => {
@@ -186,51 +169,24 @@ describe('DeploymentConfigSchema', () => {
 // ============================================
 
 describe('AgentMetadataSchema', () => {
-  it('accepts valid agent metadata', () => {
-    const valid = {
-      type: 'agent' as const,
-      role: 'API Designer',
-      model: {
-        tier: 'sonnet' as const,
-      },
-      tools: ['Read', 'Write'],
-    };
-    expect(AgentMetadataSchema.safeParse(valid).success).toBe(true);
-  });
-
-  it('requires at least one tool', () => {
-    const invalid = {
+  it('validates agent metadata with various model and tool configurations', () => {
+    const baseMetadata = {
       type: 'agent' as const,
       role: 'API Designer',
       model: { tier: 'sonnet' as const },
-      tools: [],
+      tools: ['Read', 'Write'],
     };
-    const result = AgentMetadataSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
 
-  it('accepts model override', () => {
-    const valid = {
-      type: 'agent' as const,
-      role: 'API Designer',
-      model: {
-        tier: 'sonnet' as const,
-        override: 'claude-opus-4-5-20251101',
-      },
-      tools: ['Read'],
-    };
-    expect(AgentMetadataSchema.safeParse(valid).success).toBe(true);
-  });
+    const testCases = [
+      { input: baseMetadata, expected: true, desc: 'basic valid metadata' },
+      { input: { ...baseMetadata, tools: [] }, expected: false, desc: 'empty tools array' },
+      { input: { ...baseMetadata, model: { tier: 'sonnet' as const, override: 'claude-opus-4-5-20251101' } }, expected: true, desc: 'model override' },
+      { input: { ...baseMetadata, model: { tier: 'invalid' } }, expected: false, desc: 'invalid model tier' },
+    ];
 
-  it('rejects invalid model tier', () => {
-    const invalid = {
-      type: 'agent' as const,
-      role: 'API Designer',
-      model: { tier: 'invalid' },
-      tools: ['Read'],
-    };
-    const result = AgentMetadataSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    testCases.forEach(({ input, expected, desc }) => {
+      expect(AgentMetadataSchema.safeParse(input).success).toBe(expected, `failed for ${desc}`);
+    });
   });
 
   it('accepts optional fields', () => {
@@ -255,72 +211,54 @@ describe('AgentMetadataSchema', () => {
 // ============================================
 
 describe('CommandMetadataSchema', () => {
-  it('accepts valid command metadata', () => {
-    const valid = {
+  it('validates command metadata with arguments and options', () => {
+    const baseCommand = {
       type: 'command' as const,
       template: 'utility' as const,
     };
-    expect(CommandMetadataSchema.safeParse(valid).success).toBe(true);
-  });
 
-  it('accepts command with arguments', () => {
-    const valid = {
-      type: 'command' as const,
-      template: 'utility' as const,
-      arguments: [
-        {
-          name: 'file',
-          description: 'Input file',
-          required: true,
-          type: 'string' as const,
-          position: 0,
-        },
-      ],
+    const withArguments = {
+      ...baseCommand,
+      arguments: [{
+        name: 'file',
+        description: 'Input file',
+        required: true,
+        type: 'string' as const,
+        position: 0,
+      }],
     };
-    expect(CommandMetadataSchema.safeParse(valid).success).toBe(true);
-  });
 
-  it('accepts command with options', () => {
-    const valid = {
-      type: 'command' as const,
-      template: 'utility' as const,
-      options: [
-        {
-          name: 'verbose',
-          description: 'Verbose output',
-          type: 'boolean' as const,
-          short: 'v',
-          long: 'verbose',
-        },
-      ],
+    const withOptions = {
+      ...baseCommand,
+      options: [{
+        name: 'verbose',
+        description: 'Verbose output',
+        type: 'boolean' as const,
+        short: 'v',
+        long: 'verbose',
+      }],
     };
-    expect(CommandMetadataSchema.safeParse(valid).success).toBe(true);
-  });
 
-  it('rejects invalid template type', () => {
-    const invalid = {
+    const invalidTemplate = {
       type: 'command' as const,
       template: 'invalid',
     };
-    const result = CommandMetadataSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
 
-  it('rejects short option with multiple characters', () => {
-    const invalid = {
-      type: 'command' as const,
-      template: 'utility' as const,
-      options: [
-        {
-          name: 'verbose',
-          description: 'Verbose output',
-          type: 'boolean' as const,
-          short: 'vb', // Should be single character
-        },
-      ],
+    const invalidShort = {
+      ...baseCommand,
+      options: [{
+        name: 'verbose',
+        description: 'Verbose output',
+        type: 'boolean' as const,
+        short: 'vb', // Should be single character
+      }],
     };
-    const result = CommandMetadataSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+
+    expect(CommandMetadataSchema.safeParse(baseCommand).success).toBe(true, 'basic command');
+    expect(CommandMetadataSchema.safeParse(withArguments).success).toBe(true, 'with arguments');
+    expect(CommandMetadataSchema.safeParse(withOptions).success).toBe(true, 'with options');
+    expect(CommandMetadataSchema.safeParse(invalidTemplate).success).toBe(false, 'invalid template');
+    expect(CommandMetadataSchema.safeParse(invalidShort).success).toBe(false, 'multi-char short option');
   });
 });
 
@@ -329,49 +267,39 @@ describe('CommandMetadataSchema', () => {
 // ============================================
 
 describe('SkillMetadataSchema', () => {
-  it('accepts valid skill metadata', () => {
-    const valid = {
-      type: 'skill' as const,
-      triggerPhrases: ["what's next?", 'status'],
-    };
-    expect(SkillMetadataSchema.safeParse(valid).success).toBe(true);
+  it('validates skill metadata with trigger phrases', () => {
+    const testCases = [
+      { input: { type: 'skill' as const, triggerPhrases: ["what's next?", 'status'] }, expected: true, desc: 'valid basic' },
+      { input: { type: 'skill' as const, triggerPhrases: [] }, expected: false, desc: 'empty trigger phrases' },
+    ];
+
+    testCases.forEach(({ input, expected, desc }) => {
+      expect(SkillMetadataSchema.safeParse(input).success).toBe(expected, `failed for ${desc}`);
+    });
   });
 
-  it('requires at least one trigger phrase', () => {
-    const invalid = {
-      type: 'skill' as const,
-      triggerPhrases: [],
-    };
-    const result = SkillMetadataSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('sets default autoTrigger', () => {
+  it('accepts optional fields and sets defaults', () => {
     const result = SkillMetadataSchema.parse({
       type: 'skill' as const,
       triggerPhrases: ['status'],
     });
     expect(result.autoTrigger).toBe(false);
-  });
 
-  it('accepts all optional fields', () => {
-    const valid = {
+    const withOptionals = {
       type: 'skill' as const,
       triggerPhrases: ['status'],
       autoTrigger: true,
       autoTriggerConditions: ['phase === "implementation"'],
       tools: ['Read', 'Grep'],
-      references: [
-        {
-          filename: 'status.md',
-          description: 'Status guide',
-          path: 'docs/status.md',
-        },
-      ],
+      references: [{
+        filename: 'status.md',
+        description: 'Status guide',
+        path: 'docs/status.md',
+      }],
       inputRequirements: ['current phase'],
       outputFormat: 'markdown table',
     };
-    expect(SkillMetadataSchema.safeParse(valid).success).toBe(true);
+    expect(SkillMetadataSchema.safeParse(withOptionals).success).toBe(true);
   });
 });
 
@@ -380,100 +308,64 @@ describe('SkillMetadataSchema', () => {
 // ============================================
 
 describe('ExtensionSchema', () => {
-  it('accepts valid agent extension', () => {
-    const result = ExtensionSchema.safeParse(validAgentExtension);
-    expect(result.success).toBe(true);
+  it('validates all extension types', () => {
+    [
+      { input: validAgentExtension, type: 'agent' },
+      { input: validCommandExtension, type: 'command' },
+      { input: validSkillExtension, type: 'skill' },
+    ].forEach(({ input, type }) => {
+      const result = ExtensionSchema.safeParse(input);
+      expect(result.success).toBe(true, `failed for ${type} extension`);
+    });
   });
 
-  it('accepts valid command extension', () => {
-    const result = ExtensionSchema.safeParse(validCommandExtension);
-    expect(result.success).toBe(true);
+  it('validates ID and version formats', () => {
+    const testCases = [
+      { input: { ...validAgentExtension, id: 'InvalidID' }, expected: false, desc: 'non-kebab-case ID' },
+      { input: { ...validAgentExtension, id: '1-invalid' }, expected: false, desc: 'ID starts with number' },
+      { input: { ...validAgentExtension, version: 'v1.0' }, expected: false, desc: 'invalid version format' },
+      { input: { ...validCommandExtension, version: '2026.1.5' }, expected: true, desc: 'CalVer format' },
+    ];
+
+    testCases.forEach(({ input, expected, desc }) => {
+      expect(ExtensionSchema.safeParse(input).success).toBe(expected, `failed for ${desc}`);
+    });
   });
 
-  it('accepts valid skill extension', () => {
-    const result = ExtensionSchema.safeParse(validSkillExtension);
-    expect(result.success).toBe(true);
-  });
-
-  it('requires valid ID format (kebab-case)', () => {
-    const invalid = {
-      ...validAgentExtension,
-      id: 'InvalidID', // Not kebab-case
-    };
-    const result = ExtensionSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('requires ID to start with lowercase letter', () => {
-    const invalid = {
-      ...validAgentExtension,
-      id: '1-invalid', // Starts with number
-    };
-    const result = ExtensionSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('requires valid version format', () => {
-    const invalid = {
-      ...validAgentExtension,
-      version: 'v1.0', // Invalid format
-    };
-    const result = ExtensionSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('accepts CalVer format', () => {
-    const valid = {
-      ...validCommandExtension,
-      version: '2026.1.5',
-    };
-    const result = ExtensionSchema.safeParse(valid);
-    expect(result.success).toBe(true);
-  });
-
-  it('requires at least one capability', () => {
-    const invalid = {
-      ...validAgentExtension,
-      capabilities: [],
-    };
-    const result = ExtensionSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('requires at least one keyword', () => {
-    const invalid = {
-      ...validAgentExtension,
-      keywords: [],
-    };
-    const result = ExtensionSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('validates type matches metadata type', () => {
-    const invalid = {
-      ...validAgentExtension,
-      type: 'command' as const, // Mismatch
-      metadata: {
-        type: 'agent' as const,
-        role: 'API Designer',
-        model: { tier: 'sonnet' as const },
-        tools: ['Read'],
+  it('validates required arrays and type consistency', () => {
+    const testCases = [
+      { input: { ...validAgentExtension, capabilities: [] }, expected: false, desc: 'empty capabilities' },
+      { input: { ...validAgentExtension, keywords: [] }, expected: false, desc: 'empty keywords' },
+      {
+        input: {
+          ...validAgentExtension,
+          type: 'command' as const,
+          metadata: {
+            type: 'agent' as const,
+            role: 'API Designer',
+            model: { tier: 'sonnet' as const },
+            tools: ['Read'],
+          },
+        },
+        expected: false,
+        desc: 'type mismatch'
       },
-    };
-    const result = ExtensionSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    ];
+
+    testCases.forEach(({ input, expected, desc }) => {
+      expect(ExtensionSchema.safeParse(input).success).toBe(expected, `failed for ${desc}`);
+    });
   });
 
-  it('validates URL fields', () => {
+  it('validates URLs', () => {
     const invalid = {
       ...validAgentExtension,
       repository: 'not-a-url',
     };
-    const result = ExtensionSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    expect(ExtensionSchema.safeParse(invalid).success).toBe(false);
   });
 
-  it('accepts all optional metadata fields', () => {
+  it('accepts optional metadata fields and sets defaults', () => {
     const valid: Extension = {
       ...validAgentExtension,
       author: 'John Magly',
@@ -495,41 +387,46 @@ describe('ExtensionSchema', () => {
     };
     const result = ExtensionSchema.safeParse(valid);
     expect(result.success).toBe(true);
+
+    const parsed = ExtensionSchema.parse(validAgentExtension);
+    expect(parsed.status).toBe('stable', 'default status');
   });
 
-  it('sets default status to stable', () => {
-    const result = ExtensionSchema.parse(validAgentExtension);
-    expect(result.status).toBe('stable');
-  });
-
-  it('accepts deprecation metadata', () => {
-    const valid = {
-      ...validAgentExtension,
-      status: 'deprecated' as const,
-      deprecation: {
-        date: '2026-01-13T12:00:00Z',
-        successor: 'api-designer-v2',
-        reason: 'Replaced by improved version',
+  it('validates deprecation metadata', () => {
+    const testCases = [
+      {
+        input: {
+          ...validAgentExtension,
+          status: 'deprecated' as const,
+          deprecation: {
+            date: '2026-01-13T12:00:00Z',
+            successor: 'api-designer-v2',
+            reason: 'Replaced by improved version',
+          },
+        },
+        expected: true,
+        desc: 'valid deprecation'
       },
-    };
-    const result = ExtensionSchema.safeParse(valid);
-    expect(result.success).toBe(true);
-  });
-
-  it('requires ISO 8601 date in deprecation', () => {
-    const invalid = {
-      ...validAgentExtension,
-      deprecation: {
-        date: '2026-01-13', // Missing time
-        reason: 'Deprecated',
+      {
+        input: {
+          ...validAgentExtension,
+          deprecation: {
+            date: '2026-01-13', // Missing time
+            reason: 'Deprecated',
+          },
+        },
+        expected: false,
+        desc: 'invalid date format'
       },
-    };
-    const result = ExtensionSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    ];
+
+    testCases.forEach(({ input, expected, desc }) => {
+      expect(ExtensionSchema.safeParse(input).success).toBe(expected, `failed for ${desc}`);
+    });
   });
 
-  it('accepts installation state', () => {
-    const valid = {
+  it('accepts installation state and signature metadata', () => {
+    const withInstallation = {
       ...validAgentExtension,
       installation: {
         installedAt: '2026-01-13T12:00:00Z',
@@ -538,12 +435,9 @@ describe('ExtensionSchema', () => {
         enabled: true,
       },
     };
-    const result = ExtensionSchema.safeParse(valid);
-    expect(result.success).toBe(true);
-  });
+    expect(ExtensionSchema.safeParse(withInstallation).success).toBe(true, 'installation state');
 
-  it('accepts signature metadata', () => {
-    const valid = {
+    const withSignature = {
       ...validAgentExtension,
       checksum: 'sha256:abc123...',
       signature: {
@@ -552,8 +446,7 @@ describe('ExtensionSchema', () => {
         publicKey: 'public-key-data',
       },
     };
-    const result = ExtensionSchema.safeParse(valid);
-    expect(result.success).toBe(true);
+    expect(ExtensionSchema.safeParse(withSignature).success).toBe(true, 'signature metadata');
   });
 });
 
@@ -562,56 +455,43 @@ describe('ExtensionSchema', () => {
 // ============================================
 
 describe('validateExtension', () => {
-  it('returns success for valid extension', () => {
-    const result = validateExtension(validAgentExtension);
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.id).toBe('api-designer');
-      expect(result.data.type).toBe('agent');
+  it('validates extensions and returns appropriate results', () => {
+    const validResult = validateExtension(validAgentExtension);
+    expect(validResult.success).toBe(true);
+    if (validResult.success) {
+      expect(validResult.data.id).toBe('api-designer');
+      expect(validResult.data.type).toBe('agent');
     }
-  });
 
-  it('returns errors for invalid extension', () => {
-    const invalid = {
-      ...validAgentExtension,
-      id: 'Invalid-ID',
-      version: 'invalid',
-    };
-    const result = validateExtension(invalid);
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.errors).toBeInstanceOf(ZodError);
-      expect(result.errors.issues.length).toBeGreaterThan(0);
-    }
-  });
+    const invalidCases = [
+      { input: { ...validAgentExtension, id: 'Invalid-ID', version: 'invalid' }, desc: 'multiple errors' },
+      { input: { invalid: 'data' }, desc: 'completely invalid' },
+      { input: null, desc: 'null' },
+      { input: undefined, desc: 'undefined' },
+    ];
 
-  it('handles completely invalid data', () => {
-    const result = validateExtension({ invalid: 'data' });
-    expect(result.success).toBe(false);
-  });
-
-  it('handles null and undefined', () => {
-    expect(validateExtension(null).success).toBe(false);
-    expect(validateExtension(undefined).success).toBe(false);
+    invalidCases.forEach(({ input, desc }) => {
+      const result = validateExtension(input);
+      expect(result.success).toBe(false, `failed for ${desc}`);
+      if (!result.success) {
+        expect(result.errors).toBeInstanceOf(ZodError);
+      }
+    });
   });
 });
 
 describe('isValidExtension', () => {
-  it('returns true for valid extension', () => {
-    expect(isValidExtension(validAgentExtension)).toBe(true);
-    expect(isValidExtension(validCommandExtension)).toBe(true);
-    expect(isValidExtension(validSkillExtension)).toBe(true);
-  });
+  it('validates and acts as type guard', () => {
+    [validAgentExtension, validCommandExtension, validSkillExtension].forEach((ext) => {
+      expect(isValidExtension(ext)).toBe(true, `failed for ${ext.type}`);
+    });
 
-  it('returns false for invalid extension', () => {
     const invalid = { ...validAgentExtension, id: 'Invalid-ID' };
     expect(isValidExtension(invalid)).toBe(false);
-  });
 
-  it('acts as type guard', () => {
+    // Type guard check
     const data: unknown = validAgentExtension;
     if (isValidExtension(data)) {
-      // TypeScript should know data is ValidatedExtension
       expect(data.id).toBe('api-designer');
       expect(data.name).toBe('API Designer');
     }
@@ -619,38 +499,35 @@ describe('isValidExtension', () => {
 });
 
 describe('validateExtensionStrict', () => {
-  it('returns validated data for valid extension', () => {
+  it('returns validated data or throws', () => {
     const result = validateExtensionStrict(validAgentExtension);
     expect(result.id).toBe('api-designer');
     expect(result.type).toBe('agent');
-  });
 
-  it('throws ZodError for invalid extension', () => {
     const invalid = { ...validAgentExtension, id: 'Invalid-ID' };
     expect(() => validateExtensionStrict(invalid)).toThrow(ZodError);
   });
 });
 
 describe('validateExtensionMetadata', () => {
-  it('validates agent metadata', () => {
-    const result = validateExtensionMetadata(validAgentExtension.metadata);
-    expect(result.success).toBe(true);
-    if (result.success && result.data) {
-      expect(result.data.type).toBe('agent');
-    }
-  });
+  it('validates metadata for all extension types', () => {
+    const testCases = [
+      { input: validAgentExtension.metadata, expectedType: 'agent', desc: 'agent metadata' },
+      { input: validCommandExtension.metadata, expectedType: 'command', desc: 'command metadata' },
+      { input: { type: 'invalid' }, expectedType: null, desc: 'invalid metadata' },
+    ];
 
-  it('validates command metadata', () => {
-    const result = validateExtensionMetadata(validCommandExtension.metadata);
-    expect(result.success).toBe(true);
-    if (result.success && result.data) {
-      expect(result.data.type).toBe('command');
-    }
-  });
-
-  it('rejects invalid metadata', () => {
-    const result = validateExtensionMetadata({ type: 'invalid' });
-    expect(result.success).toBe(false);
+    testCases.forEach(({ input, expectedType, desc }) => {
+      const result = validateExtensionMetadata(input);
+      if (expectedType) {
+        expect(result.success).toBe(true, `failed for ${desc}`);
+        if (result.success && result.data) {
+          expect(result.data.type).toBe(expectedType);
+        }
+      } else {
+        expect(result.success).toBe(false, `failed for ${desc}`);
+      }
+    });
   });
 });
 
@@ -684,20 +561,14 @@ describe('formatValidationErrors', () => {
 });
 
 describe('isExtensionType', () => {
-  it('returns true for matching type', () => {
-    const validated = validateExtensionStrict(validAgentExtension);
-    expect(isExtensionType(validated, 'agent')).toBe(true);
-  });
-
-  it('returns false for non-matching type', () => {
-    const validated = validateExtensionStrict(validAgentExtension);
-    expect(isExtensionType(validated, 'command')).toBe(false);
-  });
-
   it('validates type consistency', () => {
-    const validated = validateExtensionStrict(validCommandExtension);
-    expect(isExtensionType(validated, 'command')).toBe(true);
-    expect(isExtensionType(validated, 'agent')).toBe(false);
+    const agentValidated = validateExtensionStrict(validAgentExtension);
+    expect(isExtensionType(agentValidated, 'agent')).toBe(true);
+    expect(isExtensionType(agentValidated, 'command')).toBe(false);
+
+    const commandValidated = validateExtensionStrict(validCommandExtension);
+    expect(isExtensionType(commandValidated, 'command')).toBe(true);
+    expect(isExtensionType(commandValidated, 'agent')).toBe(false);
   });
 });
 
@@ -706,68 +577,56 @@ describe('isExtensionType', () => {
 // ============================================
 
 describe('Edge Cases', () => {
-  it('handles empty strings in required fields', () => {
-    const invalid = {
+  it('rejects empty strings and invalid numeric values', () => {
+    const emptyStrings = {
       ...validAgentExtension,
       name: '',
       description: '',
     };
-    const result = validateExtension(invalid);
-    expect(result.success).toBe(false);
-  });
+    expect(validateExtension(emptyStrings).success).toBe(false, 'empty strings');
 
-  it('handles negative numbers where positive required', () => {
-    const invalid = {
+    const negativeNumber = {
       ...validAgentExtension,
       metadata: {
         ...validAgentExtension.metadata,
         maxTools: -1,
       },
     };
-    const result = validateExtension(invalid);
-    expect(result.success).toBe(false);
+    expect(validateExtension(negativeNumber).success).toBe(false, 'negative maxTools');
   });
 
-  it('handles malformed URLs', () => {
-    const invalid = {
+  it('validates URLs and platform requirements', () => {
+    const malformedUrls = {
       ...validAgentExtension,
       repository: 'not a url',
       homepage: 'also not a url',
     };
-    const result = validateExtension(invalid);
-    expect(result.success).toBe(false);
+    expect(validateExtension(malformedUrls).success).toBe(false, 'malformed URLs');
+
+    const emptyPlatforms = {
+      ...validAgentExtension,
+      platforms: {},
+    };
+    expect(validateExtension(emptyPlatforms).success).toBe(false, 'empty platforms');
   });
 
-  it('requires type consistency across extension', () => {
-    const invalid = {
+  it('enforces type consistency and deployment requirements', () => {
+    const typeMismatch = {
       ...validAgentExtension,
       type: 'agent' as const,
       metadata: {
-        type: 'command' as const, // Mismatch
+        type: 'command' as const,
         template: 'utility' as const,
       },
     };
-    const result = validateExtension(invalid);
-    expect(result.success).toBe(false);
-  });
+    expect(validateExtension(typeMismatch).success).toBe(false, 'type mismatch');
 
-  it('validates platform compatibility has at least one platform', () => {
-    const invalid = {
-      ...validAgentExtension,
-      platforms: {}, // Empty
-    };
-    const result = validateExtension(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('validates pathTemplate is not empty', () => {
-    const invalid = {
+    const emptyPathTemplate = {
       ...validAgentExtension,
       deployment: {
-        pathTemplate: '', // Empty
+        pathTemplate: '',
       },
     };
-    const result = validateExtension(invalid);
-    expect(result.success).toBe(false);
+    expect(validateExtension(emptyPathTemplate).success).toBe(false, 'empty pathTemplate');
   });
 });

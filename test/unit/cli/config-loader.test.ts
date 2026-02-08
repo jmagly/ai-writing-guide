@@ -27,178 +27,162 @@ describe('ConfigLoader', () => {
   });
 
   describe('load', () => {
-    it('should load defaults when no config file exists', async () => {
-      const config = await loader.load();
-
+    it('should handle loading, merging, validation, and caching', async () => {
+      // Test 1: Load defaults when no config exists
+      let config = await loader.load();
       expect(config).toBeDefined();
       expect(config.version).toBe('1.0');
       expect(config.validation.threshold).toBe(70);
-    });
 
-    it('should load from specified file path', async () => {
+      // Test 2: Load from specified file path
+      loader.clearCache();
       const configPath = resolve(testDir, '.aiwgrc.json');
-      const customConfig = {
+      await writeFile(configPath, JSON.stringify({
         version: '1.0',
         validation: { threshold: 85 }
-      };
+      }), 'utf-8');
 
-      await writeFile(configPath, JSON.stringify(customConfig), 'utf-8');
-
-      const config = await loader.load(configPath);
-
+      config = await loader.load(configPath);
       expect(config.validation.threshold).toBe(85);
-    });
 
-    it('should merge with defaults', async () => {
-      const configPath = resolve(testDir, '.aiwgrc.json');
-      const customConfig = {
+      // Cleanup for next test
+      loader.clearCache();
+      await rm(configPath);
+
+      // Test 3: Merge with defaults
+      await writeFile(configPath, JSON.stringify({
         validation: { threshold: 80 }
-      };
+      }), 'utf-8');
 
-      await writeFile(configPath, JSON.stringify(customConfig), 'utf-8');
-
-      const config = await loader.load(configPath);
-
+      config = await loader.load(configPath);
       expect(config.validation.threshold).toBe(80);
       expect(config.version).toBe('1.0'); // From defaults
       expect(config.optimization).toBeDefined(); // From defaults
-    });
 
-    it('should throw on invalid config', async () => {
-      const configPath = resolve(testDir, '.aiwgrc.json');
-      const invalidConfig = {
+      // Cleanup for next test
+      loader.clearCache();
+      await rm(configPath);
+
+      // Test 4: Throw on invalid config
+      await writeFile(configPath, JSON.stringify({
         version: '1.0',
         validation: { threshold: 150 } // Invalid
-      };
-
-      await writeFile(configPath, JSON.stringify(invalidConfig), 'utf-8');
+      }), 'utf-8');
 
       await expect(loader.load(configPath)).rejects.toThrow('Invalid configuration');
-    });
 
-    it('should cache loaded config', async () => {
+      // Cleanup for next test
+      loader.clearCache();
+      await rm(configPath);
+
+      // Test 5: Cache loaded config
       const config1 = await loader.load();
       const config2 = await loader.load();
-
       expect(config1).toBe(config2);
     });
   });
 
   describe('loadFromFile', () => {
-    it('should load config from file', async () => {
+    it('should load from file, handle nonexistent files, and reject invalid JSON', async () => {
+      // Test 1: Load config from file
       const configPath = resolve(testDir, 'config.json');
-      const customConfig = {
+      await writeFile(configPath, JSON.stringify({
         version: '1.0',
         validation: { threshold: 90 }
-      };
+      }), 'utf-8');
 
-      await writeFile(configPath, JSON.stringify(customConfig), 'utf-8');
-
-      const config = await loader.loadFromFile(configPath);
-
+      let config = await loader.loadFromFile(configPath);
       expect(config).toBeDefined();
       expect(config?.validation?.threshold).toBe(90);
-    });
 
-    it('should return null for nonexistent file', async () => {
-      const config = await loader.loadFromFile(resolve(testDir, 'nonexistent.json'));
-
+      // Test 2: Return null for nonexistent file
+      config = await loader.loadFromFile(resolve(testDir, 'nonexistent.json'));
       expect(config).toBeNull();
-    });
 
-    it('should throw on invalid JSON', async () => {
-      const configPath = resolve(testDir, 'invalid.json');
-      await writeFile(configPath, 'not valid json', 'utf-8');
-
-      await expect(loader.loadFromFile(configPath)).rejects.toThrow();
+      // Test 3: Throw on invalid JSON
+      const invalidPath = resolve(testDir, 'invalid.json');
+      await writeFile(invalidPath, 'not valid json', 'utf-8');
+      await expect(loader.loadFromFile(invalidPath)).rejects.toThrow();
     });
   });
 
   describe('loadFromPackageJson', () => {
-    it('should load from package.json aiwg field', async () => {
+    it('should load from package.json aiwg field or return null', async () => {
       const pkgPath = resolve(testDir, 'package.json');
-      const pkg = {
+
+      // Test 1: Load from aiwg field
+      await writeFile(pkgPath, JSON.stringify({
         name: 'test',
         aiwg: {
           validation: { threshold: 75 }
         }
-      };
+      }), 'utf-8');
 
-      await writeFile(pkgPath, JSON.stringify(pkg), 'utf-8');
-
-      const config = await loader.loadFromPackageJson(pkgPath);
-
+      let config = await loader.loadFromPackageJson(pkgPath);
       expect(config).toBeDefined();
       expect(config?.validation?.threshold).toBe(75);
-    });
 
-    it('should return null if no aiwg field', async () => {
-      const pkgPath = resolve(testDir, 'package.json');
+      // Test 2: Return null if no aiwg field
       await writeFile(pkgPath, JSON.stringify({ name: 'test' }), 'utf-8');
-
-      const config = await loader.loadFromPackageJson(pkgPath);
-
+      config = await loader.loadFromPackageJson(pkgPath);
       expect(config).toBeNull();
     });
   });
 
   describe('findConfigFile', () => {
-    it('should find config in current directory', async () => {
+    it('should find config in current and parent directories, or return null', async () => {
+      // Test 1: Find in current directory
       const configPath = resolve(testDir, '.aiwgrc.json');
       await writeFile(configPath, JSON.stringify({ version: '1.0' }), 'utf-8');
 
-      const config = await loader.findConfigFile(testDir);
-
+      let config = await loader.findConfigFile(testDir);
       expect(config).toBeDefined();
-    });
 
-    it('should find config in parent directory', async () => {
+      // Cleanup for next test
+      await rm(configPath);
+
+      // Test 2: Find in parent directory
       const parentConfig = resolve(testDir, '.aiwgrc.json');
       await writeFile(parentConfig, JSON.stringify({ version: '1.0' }), 'utf-8');
 
       const subDir = resolve(testDir, 'sub', 'dir');
       await mkdir(subDir, { recursive: true });
 
-      const config = await loader.findConfigFile(subDir);
-
+      config = await loader.findConfigFile(subDir);
       expect(config).toBeDefined();
-    });
 
-    it('should return null if no config found', async () => {
-      const config = await loader.findConfigFile(testDir);
+      // Cleanup for next test
+      await rm(parentConfig);
 
+      // Test 3: Return null if not found
+      config = await loader.findConfigFile(testDir);
       expect(config).toBeNull();
     });
   });
 
   describe('merge', () => {
-    it('should merge partial configs', () => {
+    it('should merge configs, override with later values, and preserve unmerged fields', () => {
       const base = loader.getDefaults();
+
+      // Test 1: Merge partial configs
       const override1 = { validation: { threshold: 80 } };
       const override2 = { optimization: { autoApply: true } };
 
-      const merged = loader.merge([base, override1, override2]);
-
+      let merged = loader.merge([base, override1, override2]);
       expect(merged.validation.threshold).toBe(80);
       expect(merged.optimization.autoApply).toBe(true);
       expect(merged.version).toBe(base.version);
-    });
 
-    it('should override with later configs', () => {
+      // Test 2: Override with later configs
       const config1 = { validation: { threshold: 70 } };
       const config2 = { validation: { threshold: 85 } };
 
-      const merged = loader.merge([loader.getDefaults(), config1, config2]);
-
+      merged = loader.merge([loader.getDefaults(), config1, config2]);
       expect(merged.validation.threshold).toBe(85);
-    });
 
-    it('should preserve unmerged fields', () => {
-      const base = loader.getDefaults();
+      // Test 3: Preserve unmerged fields
       const override = { validation: { threshold: 80 } };
-
-      const merged = loader.merge([base, override]);
-
+      merged = loader.merge([base, override]);
       expect(merged.optimization).toEqual(base.optimization);
       expect(merged.output).toEqual(base.output);
     });
@@ -214,105 +198,96 @@ describe('ConfigLoader', () => {
       expect(result.errors).toEqual([]);
     });
 
-    it('should reject invalid version', () => {
-      const config = loader.getDefaults();
-      config.version = 'invalid';
+    it('should reject invalid config values', () => {
+      const invalidCases = [
+        {
+          name: 'invalid version',
+          mutate: (cfg: AiwgConfig) => { cfg.version = 'invalid'; },
+          errorIncludes: 'version'
+        },
+        {
+          name: 'invalid threshold',
+          mutate: (cfg: AiwgConfig) => { cfg.validation.threshold = 150; },
+          errorIncludes: 'threshold'
+        },
+        {
+          name: 'invalid context',
+          mutate: (cfg: AiwgConfig) => { (cfg.validation.context as any) = 'invalid'; },
+          errorIncludes: 'context'
+        },
+        {
+          name: 'invalid format',
+          mutate: (cfg: AiwgConfig) => { (cfg.output.format as any) = 'invalid'; },
+          errorIncludes: 'format'
+        },
+        {
+          name: 'negative debounce',
+          mutate: (cfg: AiwgConfig) => { cfg.watch.debounce = -100; },
+          errorIncludes: 'debounce'
+        }
+      ];
 
-      const result = loader.validate(config);
+      for (const testCase of invalidCases) {
+        const config = loader.getDefaults();
+        testCase.mutate(config);
 
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.includes('version'))).toBe(true);
+        const result = loader.validate(config);
+
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.includes(testCase.errorIncludes))).toBe(true);
+      }
     });
 
-    it('should reject invalid threshold', () => {
-      const config = loader.getDefaults();
-      config.validation.threshold = 150;
+    it('should generate warnings for problematic config values', () => {
+      const warningCases = [
+        {
+          name: 'unknown strategies',
+          mutate: (cfg: AiwgConfig) => { cfg.optimization.strategies.push('unknown_strategy'); },
+          warningIncludes: 'unknown_strategy'
+        },
+        {
+          name: 'empty watch patterns',
+          mutate: (cfg: AiwgConfig) => { cfg.watch.patterns = []; },
+          warningIncludes: 'patterns'
+        }
+      ];
 
-      const result = loader.validate(config);
+      for (const testCase of warningCases) {
+        const config = loader.getDefaults();
+        testCase.mutate(config);
 
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.includes('threshold'))).toBe(true);
-    });
+        const result = loader.validate(config);
 
-    it('should reject invalid context', () => {
-      const config = loader.getDefaults();
-      (config.validation.context as any) = 'invalid';
-
-      const result = loader.validate(config);
-
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.includes('context'))).toBe(true);
-    });
-
-    it('should reject invalid format', () => {
-      const config = loader.getDefaults();
-      (config.output.format as any) = 'invalid';
-
-      const result = loader.validate(config);
-
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.includes('format'))).toBe(true);
-    });
-
-    it('should reject negative debounce', () => {
-      const config = loader.getDefaults();
-      config.watch.debounce = -100;
-
-      const result = loader.validate(config);
-
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.includes('debounce'))).toBe(true);
-    });
-
-    it('should warn on unknown strategies', () => {
-      const config = loader.getDefaults();
-      config.optimization.strategies.push('unknown_strategy');
-
-      const result = loader.validate(config);
-
-      expect(result.warnings.some(w => w.includes('unknown_strategy'))).toBe(true);
-    });
-
-    it('should warn on empty watch patterns', () => {
-      const config = loader.getDefaults();
-      config.watch.patterns = [];
-
-      const result = loader.validate(config);
-
-      expect(result.warnings.some(w => w.includes('patterns'))).toBe(true);
+        expect(result.warnings.some(w => w.includes(testCase.warningIncludes))).toBe(true);
+      }
     });
   });
 
   describe('getDefaults', () => {
-    it('should return valid default config', () => {
+    it('should return valid default config as new object each time', () => {
+      // Test 1: Valid default config
       const defaults = loader.getDefaults();
-
       expect(defaults.version).toBe('1.0');
       expect(defaults.validation.threshold).toBe(70);
       expect(defaults.optimization.strategies).toContain('specificity');
       expect(defaults.watch.patterns).toContain('**/*.md');
-    });
 
-    it('should return new object each time', () => {
+      // Test 2: New object each time
       const defaults1 = loader.getDefaults();
       const defaults2 = loader.getDefaults();
-
       expect(defaults1).not.toBe(defaults2);
       expect(defaults1).toEqual(defaults2);
     });
   });
 
   describe('generateExample', () => {
-    it('should generate valid JSON', () => {
+    it('should generate valid formatted JSON', () => {
       const example = loader.generateExample();
 
       const parsed = JSON.parse(example);
       expect(parsed.version).toBe('1.0');
-    });
 
-    it('should be formatted', () => {
-      const example = loader.generateExample();
-
+      // Should be formatted
       expect(example).toContain('\n');
       expect(example).toContain('  ');
     });
@@ -329,23 +304,19 @@ describe('ConfigLoader', () => {
   });
 
   describe('override', () => {
-    it('should override config values', () => {
+    it('should override config values without modifying original', () => {
       const config = loader.getDefaults();
+      const originalThreshold = config.validation.threshold;
       const overrides = {
         validation: { threshold: 85 }
       };
 
       const overridden = loader.override(config, overrides);
 
+      // Should override
       expect(overridden.validation.threshold).toBe(85);
-    });
 
-    it('should not modify original config', () => {
-      const config = loader.getDefaults();
-      const originalThreshold = config.validation.threshold;
-
-      loader.override(config, { validation: { threshold: 90 } });
-
+      // Should not modify original
       expect(config.validation.threshold).toBe(originalThreshold);
     });
   });

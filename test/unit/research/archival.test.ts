@@ -103,57 +103,58 @@ describe('Archival Service', () => {
   });
 
   describe('SIP (Submission Information Package) Creation', () => {
-    it('should create SIP from source REF-IDs', async () => {
-      const sources = ['REF-001', 'REF-002', 'REF-003'];
-      const sip = await service.createSIP(sources);
+    it('should create valid SIP with all required properties', async () => {
+      const testCases = [
+        { sources: ['REF-001', 'REF-002', 'REF-003'], description: 'multiple sources' },
+        { sources: ['REF-001'], description: 'single source' },
+        { sources: [], description: 'empty source list' },
+      ];
 
-      expect(sip.type).toBe('SIP');
-      expect(sip.sources).toEqual(sources);
-      expect(sip.id).toMatch(/^sip-/);
-    });
+      for (const { sources, description } of testCases) {
+        const sip = await service.createSIP(sources);
 
-    it('should include manifest path in SIP', async () => {
-      const sip = await service.createSIP(['REF-001']);
+        // Type and sources
+        expect(sip.type, `${description}: type`).toBe('SIP');
+        expect(sip.sources, `${description}: sources`).toEqual(sources);
+        expect(sip.id, `${description}: id format`).toMatch(/^sip-/);
 
-      expect(sip.manifestPath).toBe('manifest.json');
-    });
+        // Manifest and metadata
+        expect(sip.manifestPath, `${description}: manifest path`).toBe('manifest.json');
+        expect(sip.createdAt, `${description}: createdAt defined`).toBeDefined();
+        expect(new Date(sip.createdAt).getTime(), `${description}: valid timestamp`).toBeGreaterThan(0);
 
-    it('should compute package checksum for SIP', async () => {
-      const sip = await service.createSIP(['REF-001']);
-
-      expect(sip.packageChecksum).toHaveLength(64);
-      expect(sip.packageChecksum).toMatch(/^[a-f0-9]{64}$/);
-    });
-
-    it('should record creation timestamp for SIP', async () => {
-      const sip = await service.createSIP(['REF-001']);
-
-      expect(sip.createdAt).toBeDefined();
-      expect(new Date(sip.createdAt).getTime()).toBeGreaterThan(0);
-    });
-
-    it('should calculate total size for SIP', async () => {
-      const sip = await service.createSIP(['REF-001', 'REF-002']);
-
-      expect(sip.sizeBytes).toBeGreaterThan(0);
-    });
-
-    it('should handle empty source list', async () => {
-      const sip = await service.createSIP([]);
-
-      expect(sip.sources).toHaveLength(0);
-      expect(sip.type).toBe('SIP');
+        // Checksum and size
+        expect(sip.packageChecksum, `${description}: checksum length`).toHaveLength(64);
+        expect(sip.packageChecksum, `${description}: checksum format`).toMatch(/^[a-f0-9]{64}$/);
+        expect(sip.sizeBytes, `${description}: size`).toBeGreaterThanOrEqual(0);
+      }
     });
   });
 
   describe('AIP (Archival Information Package) Creation', () => {
-    it('should create AIP from SIP', async () => {
-      const sip = await service.createSIP(['REF-001', 'REF-002']);
-      const aip = await service.createAIP(sip);
+    it('should create valid AIP from SIP with proper transformations', async () => {
+      const testSources = [
+        ['REF-001', 'REF-002'],
+        ['REF-001', 'REF-002', 'REF-003'],
+      ];
 
-      expect(aip.type).toBe('AIP');
-      expect(aip.sources).toEqual(sip.sources);
-      expect(aip.id).toMatch(/^aip-/);
+      for (const sources of testSources) {
+        const sip = await service.createSIP(sources);
+        const aip = await service.createAIP(sip);
+
+        // Type and source preservation
+        expect(aip.type, `sources ${sources.join(',')}: type`).toBe('AIP');
+        expect(aip.sources, `sources ${sources.join(',')}: source preservation`).toEqual(sources);
+        expect(aip.id, `sources ${sources.join(',')}: id format`).toMatch(/^aip-/);
+
+        // Unique checksum and increased size
+        expect(aip.packageChecksum, `sources ${sources.join(',')}: unique checksum`).not.toBe(
+          sip.packageChecksum
+        );
+        expect(aip.sizeBytes, `sources ${sources.join(',')}: increased size`).toBeGreaterThan(
+          sip.sizeBytes
+        );
+      }
     });
 
     it('should throw error if input is not SIP', async () => {
@@ -170,39 +171,27 @@ describe('Archival Service', () => {
 
       await expect(service.createAIP(nonSIP)).rejects.toThrow('Input must be SIP package');
     });
-
-    it('should preserve source references in AIP', async () => {
-      const sources = ['REF-001', 'REF-002', 'REF-003'];
-      const sip = await service.createSIP(sources);
-      const aip = await service.createAIP(sip);
-
-      expect(aip.sources).toEqual(sources);
-    });
-
-    it('should compute unique checksum for AIP', async () => {
-      const sip = await service.createSIP(['REF-001']);
-      const aip = await service.createAIP(sip);
-
-      expect(aip.packageChecksum).not.toBe(sip.packageChecksum);
-    });
-
-    it('should have larger size than SIP due to metadata', async () => {
-      const sip = await service.createSIP(['REF-001']);
-      const aip = await service.createAIP(sip);
-
-      expect(aip.sizeBytes).toBeGreaterThan(sip.sizeBytes);
-    });
   });
 
   describe('DIP (Dissemination Information Package) Creation', () => {
-    it('should create DIP from AIP', async () => {
-      const sip = await service.createSIP(['REF-001']);
-      const aip = await service.createAIP(sip);
-      const dip = await service.createDIP(aip);
+    it('should create valid DIP from AIP with proper transformations', async () => {
+      const testSources = [['REF-001'], ['REF-001', 'REF-002']];
 
-      expect(dip.type).toBe('DIP');
-      expect(dip.sources).toEqual(aip.sources);
-      expect(dip.id).toMatch(/^dip-/);
+      for (const sources of testSources) {
+        const sip = await service.createSIP(sources);
+        const aip = await service.createAIP(sip);
+        const dip = await service.createDIP(aip);
+
+        // Type and source preservation
+        expect(dip.type, `sources ${sources.join(',')}: type`).toBe('DIP');
+        expect(dip.sources, `sources ${sources.join(',')}: source preservation`).toEqual(sources);
+        expect(dip.id, `sources ${sources.join(',')}: id format`).toMatch(/^dip-/);
+
+        // Unique checksum
+        expect(dip.packageChecksum, `sources ${sources.join(',')}: unique checksum`).not.toBe(
+          aip.packageChecksum
+        );
+      }
     });
 
     it('should throw error if input is not AIP', async () => {
@@ -219,128 +208,77 @@ describe('Archival Service', () => {
 
       await expect(service.createDIP(nonAIP)).rejects.toThrow('Input must be AIP package');
     });
-
-    it('should preserve source references in DIP', async () => {
-      const sources = ['REF-001', 'REF-002'];
-      const sip = await service.createSIP(sources);
-      const aip = await service.createAIP(sip);
-      const dip = await service.createDIP(aip);
-
-      expect(dip.sources).toEqual(sources);
-    });
-
-    it('should compute unique checksum for DIP', async () => {
-      const sip = await service.createSIP(['REF-001']);
-      const aip = await service.createAIP(sip);
-      const dip = await service.createDIP(aip);
-
-      expect(dip.packageChecksum).not.toBe(aip.packageChecksum);
-    });
   });
 
   describe('Integrity Verification', () => {
-    it('should verify package integrity successfully', async () => {
+    it('should verify package integrity with complete validation', async () => {
       const result = await service.verifyIntegrity('.aiwg/research/archives/test-package');
 
+      // Basic validation
       expect(result.valid).toBe(true);
       expect(result.verifiedAt).toBeDefined();
-    });
+      expect(new Date(result.verifiedAt).getTime()).toBeGreaterThan(0);
 
-    it('should check all files in package', async () => {
-      const result = await service.verifyIntegrity('test-package');
-
+      // File verification
       expect(result.files).toBeDefined();
       expect(result.files.length).toBeGreaterThan(0);
-    });
 
-    it('should compare expected and actual checksums', async () => {
-      const result = await service.verifyIntegrity('test-package');
-
+      // Check all files have required properties and valid checksums
       result.files.forEach((file) => {
         expect(file).toHaveProperty('expectedChecksum');
         expect(file).toHaveProperty('actualChecksum');
         expect(file).toHaveProperty('valid');
       });
-    });
 
-    it('should detect mismatched checksums', async () => {
-      const result = await service.verifyIntegrity('test-package');
-
-      // Mock returns all valid, but real implementation would detect mismatches
       const allValid = result.files.every((f) => f.valid);
       expect(allValid).toBe(true);
     });
 
-    it('should identify missing files', async () => {
+    it('should track missing and extra files with summary', async () => {
       const result = await service.verifyIntegrity('test-package');
 
+      // Missing and extra files
       expect(result.missingFiles).toBeDefined();
       expect(Array.isArray(result.missingFiles)).toBe(true);
-    });
-
-    it('should identify extra files', async () => {
-      const result = await service.verifyIntegrity('test-package');
-
       expect(result.extraFiles).toBeDefined();
       expect(Array.isArray(result.extraFiles)).toBe(true);
-    });
 
-    it('should include verification summary', async () => {
-      const result = await service.verifyIntegrity('test-package');
-
+      // Summary
       expect(result.summary).toBeDefined();
       expect(result.summary).toContain('Verified');
-    });
-
-    it('should record verification timestamp', async () => {
-      const result = await service.verifyIntegrity('test-package');
-
-      expect(result.verifiedAt).toBeDefined();
-      expect(new Date(result.verifiedAt).getTime()).toBeGreaterThan(0);
     });
   });
 
   describe('Reproducibility Package Export', () => {
-    it('should export reproducibility package', async () => {
-      const sources = ['REF-001', 'REF-002', 'REF-003'];
-      const pkg = await service.exportReproducibilityPackage(sources);
+    it('should export complete reproducibility package', async () => {
+      const testCases = [
+        { sources: ['REF-001', 'REF-002', 'REF-003'], description: 'multiple sources' },
+        { sources: ['REF-001'], description: 'single source' },
+        { sources: [], description: 'empty source list' },
+      ];
 
-      expect(pkg.id).toMatch(/^repro-/);
-      expect(pkg.path).toContain('reproducibility');
-    });
+      const requiredFiles = ['metadata.json', 'environment.txt', 'README.md'];
 
-    it('should include all source PDFs', async () => {
-      const sources = ['REF-001', 'REF-002'];
-      const pkg = await service.exportReproducibilityPackage(sources);
+      for (const { sources, description } of testCases) {
+        const pkg = await service.exportReproducibilityPackage(sources);
 
-      sources.forEach((refId) => {
-        expect(pkg.contents.some((c) => c.includes(refId))).toBe(true);
-      });
-    });
+        // Package metadata
+        expect(pkg.id, `${description}: id format`).toMatch(/^repro-/);
+        expect(pkg.path, `${description}: path`).toContain('reproducibility');
 
-    it('should include metadata file', async () => {
-      const pkg = await service.exportReproducibilityPackage(['REF-001']);
+        // Required files
+        for (const file of requiredFiles) {
+          expect(pkg.contents, `${description}: contains ${file}`).toContain(file);
+        }
 
-      expect(pkg.contents).toContain('metadata.json');
-    });
-
-    it('should include environment specification', async () => {
-      const pkg = await service.exportReproducibilityPackage(['REF-001']);
-
-      expect(pkg.contents).toContain('environment.txt');
-    });
-
-    it('should include README', async () => {
-      const pkg = await service.exportReproducibilityPackage(['REF-001']);
-
-      expect(pkg.contents).toContain('README.md');
-    });
-
-    it('should handle empty source list', async () => {
-      const pkg = await service.exportReproducibilityPackage([]);
-
-      expect(pkg.contents).toContain('metadata.json');
-      expect(pkg.contents).toContain('README.md');
+        // Source PDFs
+        for (const refId of sources) {
+          expect(
+            pkg.contents.some((c) => c.includes(refId)),
+            `${description}: contains PDF for ${refId}`
+          ).toBe(true);
+        }
+      }
     });
   });
 

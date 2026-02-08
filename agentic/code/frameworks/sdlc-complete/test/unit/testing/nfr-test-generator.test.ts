@@ -135,8 +135,9 @@ describe('NFRTestGenerator', () => {
   });
 
   describe('generatePerformanceTest', () => {
-    it('should generate valid performance test with p95 target', () => {
-      const target: PerformanceTarget = {
+    it('should generate valid performance tests with various configurations', () => {
+      // Test p95 target with baseline validation
+      const p95Target: PerformanceTarget = {
         nfrId: 'NFR-PERF-001',
         targetValue: 5000,
         unit: 'ms',
@@ -144,29 +145,23 @@ describe('NFRTestGenerator', () => {
         tolerance: 10,
         baseline: 4850,
       };
+      const p95Test = generator.generatePerformanceTest('NFR-PERF-001', p95Target);
 
-      const testCode = generator.generatePerformanceTest('NFR-PERF-001', target);
-
-      // Verify test structure
-      expect(testCode).toContain("describe('NFR-PERF-001: Content Validation Time'");
-      expect(testCode).toContain("it('should complete in <5000ms (95th percentile)'");
-      expect(testCode).toContain('new PerformanceProfiler');
-      expect(testCode).toContain('measureAsync');
-
-      // Verify assertions
-      expect(testCode).toContain('expect(result.p95).toBeLessThan(5000)');
+      // Verify p95 test structure
+      expect(p95Test).toContain("describe('NFR-PERF-001: Content Validation Time'");
+      expect(p95Test).toContain("it('should complete in <5000ms (95th percentile)'");
+      expect(p95Test).toContain('new PerformanceProfiler');
+      expect(p95Test).toContain('measureAsync');
+      expect(p95Test).toContain('expect(result.p95).toBeLessThan(5000)');
 
       // Verify baseline validation with tolerance
-      expect(testCode).toContain('Ground truth baseline: 4850ms (±10%)');
-      expect(testCode).toContain('expect(result.p95).toBeGreaterThan(4365)'); // 4850 * 0.9
-      expect(testCode).toContain('expect(result.p95).toBeLessThan(5335)'); // 4850 * 1.1
+      expect(p95Test).toContain('Ground truth baseline: 4850ms (±10%)');
+      expect(p95Test).toContain('expect(result.p95).toBeGreaterThan(4365)'); // 4850 * 0.9
+      expect(p95Test).toContain('expect(result.p95).toBeLessThan(5335)'); // 4850 * 1.1
+      expect(p95Test).toContain('confidenceInterval');
 
-      // Verify statistical confidence
-      expect(testCode).toContain('confidenceInterval');
-    });
-
-    it('should generate test with p99 target', () => {
-      const target: PerformanceTarget = {
+      // Test p99 target
+      const p99Target: PerformanceTarget = {
         nfrId: 'NFR-PERF-002',
         targetValue: 10000,
         unit: 'ms',
@@ -174,26 +169,20 @@ describe('NFRTestGenerator', () => {
         tolerance: 15,
         baseline: 7000,
       };
+      const p99Test = generator.generatePerformanceTest('NFR-PERF-002', p99Target);
+      expect(p99Test).toContain('99th percentile');
+      expect(p99Test).toContain('expect(result.p99).toBeLessThan(10000)');
 
-      const testCode = generator.generatePerformanceTest('NFR-PERF-002', target);
-
-      expect(testCode).toContain('99th percentile');
-      expect(testCode).toContain('expect(result.p99).toBeLessThan(10000)');
-    });
-
-    it('should omit baseline validation in strict mode', () => {
-      const target: PerformanceTarget = {
+      // Test strict mode (no tolerance)
+      const strictTarget: PerformanceTarget = {
         nfrId: 'NFR-PERF-001',
         targetValue: 5000,
         unit: 'ms',
         percentile: 95,
-        tolerance: 0, // Strict mode (no tolerance)
+        tolerance: 0, // Strict mode
       };
-
-      const testCode = generator.generatePerformanceTest('NFR-PERF-001', target);
-
-      // Should not contain baseline bounds
-      expect(testCode).not.toContain('toBeGreaterThan');
+      const strictTest = generator.generatePerformanceTest('NFR-PERF-001', strictTarget);
+      expect(strictTest).not.toContain('toBeGreaterThan'); // No baseline bounds
     });
 
     it('should throw error for unknown NFR ID', () => {
@@ -211,224 +200,170 @@ describe('NFRTestGenerator', () => {
   });
 
   describe('generateAccuracyTest', () => {
-    it('should generate accuracy validation test', () => {
-      const target: AccuracyTarget = {
+    it('should generate accuracy validation tests with optional rate assertions', () => {
+      // Basic accuracy test
+      const basicTarget: AccuracyTarget = {
         nfrId: 'NFR-ACC-001',
         expectedAccuracy: 0.95,
         sampleSize: 1000,
       };
+      const basicTest = generator.generateAccuracyTest('NFR-ACC-001', basicTarget);
 
-      const testCode = generator.generateAccuracyTest('NFR-ACC-001', target);
+      expect(basicTest).toContain("describe('NFR-ACC-001: AI Pattern False Positive Rate'");
+      expect(basicTest).toContain('should maintain 95.0% accuracy');
+      expect(basicTest).toContain('loadValidationCorpus');
+      expect(basicTest).toContain('getSamples(1000)');
+      expect(basicTest).toContain('correctPredictions');
+      expect(basicTest).toContain('falsePositives');
+      expect(basicTest).toContain('falseNegatives');
+      expect(basicTest).toContain('expect(accuracy).toBeGreaterThanOrEqual(0.95)');
+      expect(basicTest).toContain('max 50 errors'); // 1000 * 0.05 = 50
 
-      // Verify test structure
-      expect(testCode).toContain("describe('NFR-ACC-001: AI Pattern False Positive Rate'");
-      expect(testCode).toContain('should maintain 95.0% accuracy');
-      expect(testCode).toContain('loadValidationCorpus');
-      expect(testCode).toContain('getSamples(1000)');
-
-      // Verify accuracy calculation
-      expect(testCode).toContain('correctPredictions');
-      expect(testCode).toContain('falsePositives');
-      expect(testCode).toContain('falseNegatives');
-
-      // Verify assertions
-      expect(testCode).toContain('expect(accuracy).toBeGreaterThanOrEqual(0.95)');
-      expect(testCode).toContain('max 50 errors'); // 1000 * 0.05 = 50
-    });
-
-    it('should include false positive rate assertion when specified', () => {
-      const target: AccuracyTarget = {
+      // Test with false positive rate
+      const fpTarget: AccuracyTarget = {
         nfrId: 'NFR-ACC-001',
         expectedAccuracy: 0.95,
         falsePositiveRate: 0.03,
         sampleSize: 1000,
       };
+      const fpTest = generator.generateAccuracyTest('NFR-ACC-001', fpTarget);
+      expect(fpTest).toContain('False positive rate target: 3.0%');
+      expect(fpTest).toContain('expect(fpRate).toBeLessThanOrEqual(0.03)');
 
-      const testCode = generator.generateAccuracyTest('NFR-ACC-001', target);
-
-      expect(testCode).toContain('False positive rate target: 3.0%');
-      expect(testCode).toContain('expect(fpRate).toBeLessThanOrEqual(0.03)');
-    });
-
-    it('should include false negative rate assertion when specified', () => {
-      const target: AccuracyTarget = {
+      // Test with false negative rate
+      const fnTarget: AccuracyTarget = {
         nfrId: 'NFR-ACC-001',
         expectedAccuracy: 0.95,
         falseNegativeRate: 0.02,
         sampleSize: 1000,
       };
+      const fnTest = generator.generateAccuracyTest('NFR-ACC-001', fnTarget);
+      expect(fnTest).toContain('False negative rate target: 2.0%');
+      expect(fnTest).toContain('expect(fnRate).toBeLessThanOrEqual(0.02)');
 
-      const testCode = generator.generateAccuracyTest('NFR-ACC-001', target);
-
-      expect(testCode).toContain('False negative rate target: 2.0%');
-      expect(testCode).toContain('expect(fnRate).toBeLessThanOrEqual(0.02)');
-    });
-
-    it('should use default sample size if not specified', () => {
-      const target: AccuracyTarget = {
+      // Test default sample size
+      const defaultTarget: AccuracyTarget = {
         nfrId: 'NFR-ACC-002',
         expectedAccuracy: 0.90,
       };
-
-      const testCode = generator.generateAccuracyTest('NFR-ACC-002', target);
-
-      // Default sample size is 1000
-      expect(testCode).toContain('getSamples(1000)');
+      const defaultTest = generator.generateAccuracyTest('NFR-ACC-002', defaultTarget);
+      expect(defaultTest).toContain('getSamples(1000)'); // Default
     });
   });
 
   describe('generateReliabilityTest', () => {
-    it('should generate reliability test with success rate', () => {
-      const target: ReliabilityTarget = {
+    it('should generate reliability tests with retry and timeout configuration', () => {
+      // Full configuration
+      const fullTarget: ReliabilityTarget = {
         nfrId: 'NFR-REL-001',
         successRate: 0.99,
         retryCount: 3,
         timeoutMs: 30000,
       };
+      const fullTest = generator.generateReliabilityTest('NFR-REL-001', fullTarget);
 
-      const testCode = generator.generateReliabilityTest('NFR-REL-001', target);
+      expect(fullTest).toContain("describe('NFR-REL-001: Plugin Deployment Success Rate'");
+      expect(fullTest).toContain('should maintain 99.0% success rate');
+      expect(fullTest).toContain('executeOperationWithRetry');
+      expect(fullTest).toContain('const testRuns = 100');
+      expect(fullTest).toContain('for (let i = 0; i < testRuns; i++)');
+      expect(fullTest).toContain('maxRetries: 3');
+      expect(fullTest).toContain('timeoutMs: 30000');
+      expect(fullTest).toContain('expect(actualSuccessRate).toBeGreaterThanOrEqual(0.99)');
+      expect(fullTest).toContain('Minimum 99 successes out of 100 runs');
+      expect(fullTest).toContain('expect(successCount).toBeGreaterThanOrEqual(99)');
+      expect(fullTest).toContain('expect(failureCount).toBeLessThanOrEqual(1)');
 
-      // Verify test structure
-      expect(testCode).toContain("describe('NFR-REL-001: Plugin Deployment Success Rate'");
-      expect(testCode).toContain('should maintain 99.0% success rate');
-      expect(testCode).toContain('executeOperationWithRetry');
-
-      // Verify test runs
-      expect(testCode).toContain('const testRuns = 100');
-      expect(testCode).toContain('for (let i = 0; i < testRuns; i++)');
-
-      // Verify retry configuration
-      expect(testCode).toContain('maxRetries: 3');
-      expect(testCode).toContain('timeoutMs: 30000');
-
-      // Verify assertions
-      expect(testCode).toContain('expect(actualSuccessRate).toBeGreaterThanOrEqual(0.99)');
-      expect(testCode).toContain('Minimum 99 successes out of 100 runs');
-      expect(testCode).toContain('expect(successCount).toBeGreaterThanOrEqual(99)');
-      expect(testCode).toContain('expect(failureCount).toBeLessThanOrEqual(1)');
-    });
-
-    it('should use default retry count if not specified', () => {
-      const target: ReliabilityTarget = {
+      // Test defaults
+      const defaultTarget: ReliabilityTarget = {
         nfrId: 'NFR-REL-001',
         successRate: 0.99,
       };
-
-      const testCode = generator.generateReliabilityTest('NFR-REL-001', target);
-
-      expect(testCode).toContain('maxRetries: 3'); // Default
-    });
-
-    it('should use default timeout if not specified', () => {
-      const target: ReliabilityTarget = {
-        nfrId: 'NFR-REL-001',
-        successRate: 0.99,
-      };
-
-      const testCode = generator.generateReliabilityTest('NFR-REL-001', target);
-
-      expect(testCode).toContain('timeoutMs: 30000'); // Default 30 seconds
+      const defaultTest = generator.generateReliabilityTest('NFR-REL-001', defaultTarget);
+      expect(defaultTest).toContain('maxRetries: 3'); // Default retry
+      expect(defaultTest).toContain('timeoutMs: 30000'); // Default timeout
     });
   });
 
   describe('generateTestSuite', () => {
-    it('should generate complete test suite for multiple NFRs', () => {
+    it('should generate complete test suite with various configurations', () => {
       const nfrIds = ['NFR-PERF-001', 'NFR-ACC-001', 'NFR-REL-001'];
-      const testCode = generator.generateTestSuite(nfrIds, {
+
+      // Full suite with comments and ground truth
+      const fullSuite = generator.generateTestSuite(nfrIds, {
         includeComments: true,
         includeGroundTruth: true,
         strictMode: false,
         tolerance: 10,
       });
 
-      // Verify file structure
-      expect(testCode).toContain('Auto-generated NFR Acceptance Tests');
-      expect(testCode).toContain('Corpus version: 1.0.0');
-      expect(testCode).toContain('Last updated: 2025-10-23');
+      expect(fullSuite).toContain('Auto-generated NFR Acceptance Tests');
+      expect(fullSuite).toContain('Corpus version: 1.0.0');
+      expect(fullSuite).toContain('Last updated: 2025-10-23');
+      expect(fullSuite).toContain("import { describe, it, expect } from 'vitest'");
+      expect(fullSuite).toContain("import { PerformanceProfiler }");
+      expect(fullSuite).toContain('simulateWorkload');
+      expect(fullSuite).toContain('loadValidationCorpus');
+      expect(fullSuite).toContain('executeOperationWithRetry');
+      expect(fullSuite).toContain('NFR-PERF-001');
+      expect(fullSuite).toContain('NFR-ACC-001');
+      expect(fullSuite).toContain('NFR-REL-001');
+      expect(fullSuite).toContain("describe('NFR Acceptance Tests'");
 
-      // Verify imports
-      expect(testCode).toContain("import { describe, it, expect } from 'vitest'");
-      expect(testCode).toContain("import { PerformanceProfiler }");
-      expect(testCode).toContain('simulateWorkload');
-      expect(testCode).toContain('loadValidationCorpus');
-      expect(testCode).toContain('executeOperationWithRetry');
-
-      // Verify all NFRs included
-      expect(testCode).toContain('NFR-PERF-001');
-      expect(testCode).toContain('NFR-ACC-001');
-      expect(testCode).toContain('NFR-REL-001');
-
-      // Verify main describe block
-      expect(testCode).toContain("describe('NFR Acceptance Tests'");
-    });
-
-    it('should omit comments when includeComments is false', () => {
-      const testCode = generator.generateTestSuite(['NFR-PERF-001'], {
+      // Without comments
+      const noComments = generator.generateTestSuite(['NFR-PERF-001'], {
         includeComments: false,
       });
+      expect(noComments).not.toContain('Auto-generated NFR Acceptance Tests');
+      expect(noComments).not.toContain('DO NOT EDIT MANUALLY');
 
-      expect(testCode).not.toContain('Auto-generated NFR Acceptance Tests');
-      expect(testCode).not.toContain('DO NOT EDIT MANUALLY');
-    });
-
-    it('should apply strict mode to all NFRs', () => {
-      const testCode = generator.generateTestSuite(['NFR-PERF-001'], {
+      // Strict mode
+      const strict = generator.generateTestSuite(['NFR-PERF-001'], {
         strictMode: true,
       });
+      expect(strict).not.toContain('Baseline validation');
 
-      // Strict mode means no baseline tolerance bounds
-      expect(testCode).not.toContain('Baseline validation');
+      // Mixed categories
+      const mixed = generator.generateTestSuite([
+        'NFR-PERF-001',
+        'NFR-ACC-001',
+        'NFR-REL-001',
+        'NFR-USE-001',
+      ]);
+      expect(mixed).toContain('NFR-PERF-001'); // Performance
+      expect(mixed).toContain('NFR-ACC-001'); // Accuracy
+      expect(mixed).toContain('NFR-REL-001'); // Reliability
+      expect(mixed).toContain('NFR-USE-001'); // Usability
     });
-
 
     it('should throw error for unknown NFR ID in suite', () => {
       expect(() => generator.generateTestSuite(['NFR-UNKNOWN-999'])).toThrow(
         'NFR NFR-UNKNOWN-999 not found in ground truth corpus'
       );
     });
-
-    it('should handle mixed NFR categories', () => {
-      const testCode = generator.generateTestSuite([
-        'NFR-PERF-001',
-        'NFR-ACC-001',
-        'NFR-REL-001',
-        'NFR-USE-001',
-      ]);
-
-      // All categories should be present
-      expect(testCode).toContain('NFR-PERF-001'); // Performance
-      expect(testCode).toContain('NFR-ACC-001'); // Accuracy
-      expect(testCode).toContain('NFR-REL-001'); // Reliability
-      expect(testCode).toContain('NFR-USE-001'); // Usability (generic)
-    });
   });
 
   describe('generateTestFile', () => {
-    it('should write test code to file', async () => {
+    it('should write test code to file and create nested directories', async () => {
       const mockMkdir = vi.mocked(fs.mkdir).mockResolvedValue(undefined);
       const mockWriteFile = vi.mocked(fs.writeFile).mockResolvedValue();
 
+      // Test basic file write
       await generator.generateTestFile(
         ['NFR-PERF-001'],
         '/test/output/nfr-perf.test.ts',
         { includeComments: true }
       );
 
-      // Verify directory creation
       expect(mockMkdir).toHaveBeenCalledWith('/test/output', { recursive: true });
-
-      // Verify file write
       expect(mockWriteFile).toHaveBeenCalledWith(
         '/test/output/nfr-perf.test.ts',
         expect.stringContaining('NFR-PERF-001'),
         'utf-8'
       );
-    });
 
-    it('should create nested directories', async () => {
-      const mockMkdir = vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs.writeFile).mockResolvedValue();
-
+      // Test nested directory creation
+      vi.clearAllMocks();
       await generator.generateTestFile(
         ['NFR-ACC-001'],
         '/deep/nested/path/nfr-acc.test.ts'
@@ -439,7 +374,7 @@ describe('NFRTestGenerator', () => {
   });
 
   describe('generateAllNFRTests', () => {
-    it('should generate one file per NFR category', async () => {
+    it('should generate one file per NFR category and create output directory', async () => {
       const mockMkdir = vi.mocked(fs.mkdir).mockResolvedValue(undefined);
       const mockWriteFile = vi.mocked(fs.writeFile).mockResolvedValue();
 
@@ -449,49 +384,32 @@ describe('NFRTestGenerator', () => {
       expect(fileCount).toBe(4);
 
       // Verify file creation for each category
-      expect(mockWriteFile).toHaveBeenCalledWith(
-        '/test/output/nfr-performance.test.ts',
-        expect.stringContaining('NFR-PERF-001'),
-        'utf-8'
-      );
+      const expectedFiles = [
+        { path: '/test/output/nfr-performance.test.ts', content: 'NFR-PERF-001' },
+        { path: '/test/output/nfr-accuracy.test.ts', content: 'NFR-ACC-001' },
+        { path: '/test/output/nfr-reliability.test.ts', content: 'NFR-REL-001' },
+        { path: '/test/output/nfr-usability.test.ts', content: 'NFR-USE-001' },
+      ];
 
-      expect(mockWriteFile).toHaveBeenCalledWith(
-        '/test/output/nfr-accuracy.test.ts',
-        expect.stringContaining('NFR-ACC-001'),
-        'utf-8'
-      );
+      for (const file of expectedFiles) {
+        expect(mockWriteFile).toHaveBeenCalledWith(
+          file.path,
+          expect.stringContaining(file.content),
+          'utf-8'
+        );
+      }
 
-      expect(mockWriteFile).toHaveBeenCalledWith(
-        '/test/output/nfr-reliability.test.ts',
-        expect.stringContaining('NFR-REL-001'),
-        'utf-8'
-      );
-
-      expect(mockWriteFile).toHaveBeenCalledWith(
-        '/test/output/nfr-usability.test.ts',
-        expect.stringContaining('NFR-USE-001'),
-        'utf-8'
-      );
-    });
-
-    it('should create output directory if it does not exist', async () => {
-      const mockMkdir = vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs.writeFile).mockResolvedValue();
-
+      // Test new directory creation
+      vi.clearAllMocks();
       await generator.generateAllNFRTests('/new/test/output');
-
-      // Each category triggers mkdir
       expect(mockMkdir).toHaveBeenCalledWith('/new/test/output', { recursive: true });
     });
   });
 
   describe('generated code syntax validation', () => {
-    it('should generate syntactically valid TypeScript', () => {
+    it('should generate syntactically valid TypeScript with balanced braces and parens', () => {
       const testCode = generator.generateTestSuite(['NFR-PERF-001']);
-      // Cannot use Function() with ES6 imports, but we can validate structure
 
-
-      // Check balanced braces/parens
       const openBraces = (testCode.match(/{/g) || []).length;
       const closeBraces = (testCode.match(/}/g) || []).length;
       expect(openBraces).toBe(closeBraces);
@@ -504,7 +422,6 @@ describe('NFRTestGenerator', () => {
     it('should generate valid Vitest test structure', () => {
       const testCode = generator.generateTestSuite(['NFR-PERF-001', 'NFR-ACC-001']);
 
-      // Required Vitest patterns
       expect(testCode).toMatch(/describe\(['"].*['"],\s*\(\)\s*=>\s*{/);
       expect(testCode).toMatch(/it\(['"].*['"],\s*async\s*\(\)\s*=>\s*{/);
       expect(testCode).toMatch(/expect\(.*\)\./);
@@ -513,106 +430,82 @@ describe('NFRTestGenerator', () => {
     it('should generate importable module', () => {
       const testCode = generator.generateTestSuite(['NFR-PERF-001']);
 
-      // Should start with imports
       expect(testCode).toMatch(/^\/\*\*[\s\S]*?\*\/\s*import/);
-
-      // Should have ES6 import syntax
       expect(testCode).toMatch(/import\s+{[^}]+}\s+from\s+['"][^'"]+['"]/);
     });
   });
 
   describe('baseline integration', () => {
-    it('should use corpus baseline values', () => {
-      const testCode = generator.generateTestSuite(['NFR-PERF-001']);
+    it('should integrate corpus baseline values with tolerance calculations', () => {
+      // Test baseline usage
+      const baselineTest = generator.generateTestSuite(['NFR-PERF-001']);
+      expect(baselineTest).toContain('Ground truth baseline: 4850ms');
 
-      // NFR-PERF-001 has baseline 4850ms in corpus
-      expect(testCode).toContain('Ground truth baseline: 4850ms');
-    });
-
-    it('should calculate tolerance bounds from baseline', () => {
-      const testCode = generator.generateTestSuite(['NFR-PERF-001'], {
+      // Test tolerance bounds calculation
+      const toleranceTest = generator.generateTestSuite(['NFR-PERF-001'], {
         tolerance: 10,
       });
-
       // Baseline 4850ms, 10% tolerance
       // Lower: 4850 * 0.9 = 4365
       // Upper: 4850 * 1.1 = 5335
-      expect(testCode).toContain('4365');
-      expect(testCode).toContain('5335');
-    });
+      expect(toleranceTest).toContain('4365');
+      expect(toleranceTest).toContain('5335');
 
-    it('should respect NFR-specific tolerance from corpus', () => {
-      // NFR-PERF-002 has 15% tolerance in corpus
-      const testCode = generator.generateTestSuite(['NFR-PERF-002']);
+      // Test NFR-specific tolerance from corpus
+      const nfrTolerance = generator.generateTestSuite(['NFR-PERF-002']);
+      expect(nfrTolerance).toContain('±15%'); // NFR-PERF-002 has 15% tolerance
 
-      expect(testCode).toContain('±15%');
-    });
+      // Test description inclusion
+      const description = generator.generateTestSuite(['NFR-PERF-001']);
+      expect(description).toContain('Content Validation Time');
 
-    it('should include NFR description from corpus', () => {
-      const testCode = generator.generateTestSuite(['NFR-PERF-001']);
-
-      expect(testCode).toContain('Content Validation Time');
-    });
-
-    it('should include corpus version in header', () => {
-      const testCode = generator.generateTestSuite(['NFR-PERF-001'], {
+      // Test corpus version in header
+      const version = generator.generateTestSuite(['NFR-PERF-001'], {
         includeComments: true,
       });
-
-      expect(testCode).toContain('Corpus version: 1.0.0');
-      expect(testCode).toContain('Last updated: 2025-10-23');
+      expect(version).toContain('Corpus version: 1.0.0');
+      expect(version).toContain('Last updated: 2025-10-23');
     });
   });
 
   describe('edge cases', () => {
-    it('should handle empty NFR list', () => {
-      const testCode = generator.generateTestSuite([]);
+    it('should handle various edge cases correctly', () => {
+      // Empty NFR list
+      const empty = generator.generateTestSuite([]);
+      expect(empty).toContain("describe('NFR Acceptance Tests'");
+      expect(empty).toContain('import');
 
-      expect(testCode).toContain("describe('NFR Acceptance Tests'");
-      expect(testCode).toContain('import');
-    });
+      // Single NFR
+      const single = generator.generateTestSuite(['NFR-PERF-001']);
+      expect(single).toContain('NFR-PERF-001');
+      expect(single).toContain('describe');
+      expect(single).toContain('it(');
 
-    it('should handle single NFR', () => {
-      const testCode = generator.generateTestSuite(['NFR-PERF-001']);
-
-      expect(testCode).toContain('NFR-PERF-001');
-      expect(testCode).toContain('describe');
-      expect(testCode).toContain('it(');
-    });
-
-    it('should handle NFR with zero tolerance', () => {
-      const testCode = generator.generateTestSuite(['NFR-PERF-001'], {
+      // Zero tolerance
+      const zeroTolerance = generator.generateTestSuite(['NFR-PERF-001'], {
         strictMode: true,
         tolerance: 0,
       });
+      expect(zeroTolerance).not.toContain('Baseline validation');
 
-      // Should not include baseline validation
-      expect(testCode).not.toContain('Baseline validation');
-    });
-
-    it('should handle NFR with 100% success rate', () => {
-      const target: ReliabilityTarget = {
+      // 100% success rate
+      const perfectSuccess: ReliabilityTarget = {
         nfrId: 'NFR-REL-001',
         successRate: 1.0,
       };
+      const perfectTest = generator.generateReliabilityTest('NFR-REL-001', perfectSuccess);
+      expect(perfectTest).toContain('100.0% success rate');
+      expect(perfectTest).toContain('expect(actualSuccessRate).toBeGreaterThanOrEqual(1)');
 
-      const testCode = generator.generateReliabilityTest('NFR-REL-001', target);
-
-      expect(testCode).toContain('100.0% success rate');
-      expect(testCode).toContain('expect(actualSuccessRate).toBeGreaterThanOrEqual(1)');
-    });
-
-    it('should handle NFR with very small sample size', () => {
-      const target: AccuracyTarget = {
+      // Very small sample size
+      const smallSample: AccuracyTarget = {
         nfrId: 'NFR-ACC-001',
         expectedAccuracy: 0.95,
         sampleSize: 10,
       };
-
-      const testCode = generator.generateAccuracyTest('NFR-ACC-001', target);
-
-      expect(testCode).toContain('getSamples(10)');
-      expect(testCode).toContain('max 0 errors'); // 10 * 0.05 = 0.5 -> floor to 0
+      const smallTest = generator.generateAccuracyTest('NFR-ACC-001', smallSample);
+      expect(smallTest).toContain('getSamples(10)');
+      expect(smallTest).toContain('max 0 errors'); // 10 * 0.05 = 0.5 -> floor to 0
     });
   });
 });

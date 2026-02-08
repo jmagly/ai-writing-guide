@@ -17,7 +17,7 @@ describe('PerformanceProfiler', () => {
   });
 
   describe('measureSync', () => {
-    it('should measure synchronous operation performance', () => {
+    it('should measure synchronous operation performance with correct statistical metrics', () => {
       const result = profiler.measureSync(() => {
         // Simulate work with a deterministic operation
         let sum = 0;
@@ -26,6 +26,7 @@ describe('PerformanceProfiler', () => {
         }
       }, 100);
 
+      // Validate all statistical properties
       expect(result.iterations).toBe(100);
       expect(result.samples).toHaveLength(100);
       expect(result.mean).toBeGreaterThan(0);
@@ -38,13 +39,12 @@ describe('PerformanceProfiler', () => {
     });
 
     it('should throw error for non-positive iterations', () => {
-      expect(() => {
-        profiler.measureSync(() => {}, 0);
-      }).toThrow('Iterations must be positive');
-
-      expect(() => {
-        profiler.measureSync(() => {}, -1);
-      }).toThrow('Iterations must be positive');
+      const invalidIterations = [0, -1];
+      for (const iterations of invalidIterations) {
+        expect(() => {
+          profiler.measureSync(() => {}, iterations);
+        }).toThrow('Iterations must be positive');
+      }
     });
 
     it('should complete warmup iterations before measurement', () => {
@@ -61,28 +61,25 @@ describe('PerformanceProfiler', () => {
       expect(callCount).toBe(warmupIterations + measurementIterations);
     });
 
-    it('should measure sub-millisecond operations with precision', () => {
-      // Very fast operation
-      const result = profiler.measureSync(() => {
+    it('should measure operations of varying durations correctly', () => {
+      // Test sub-millisecond operations
+      const fastResult = profiler.measureSync(() => {
         Math.sqrt(42);
       }, 1000);
 
-      expect(result.mean).toBeGreaterThan(0);
-      // Should have sub-millisecond precision
-      expect(result.mean).toBeLessThan(1);
-    });
+      expect(fastResult.mean).toBeGreaterThan(0);
+      expect(fastResult.mean).toBeLessThan(1); // Sub-millisecond
 
-    it('should handle longer operations correctly', () => {
-      const result = profiler.measureSync(() => {
-        // Simulate longer operation
+      // Test longer operations
+      const slowResult = profiler.measureSync(() => {
         const start = Date.now();
         while (Date.now() - start < 10) {
           // Busy wait for ~10ms
         }
       }, 10);
 
-      expect(result.mean).toBeGreaterThan(9);
-      expect(result.mean).toBeLessThan(50); // Allow variance for CI environments
+      expect(slowResult.mean).toBeGreaterThan(9);
+      expect(slowResult.mean).toBeLessThan(50); // Allow variance for CI
     });
   });
 
@@ -101,16 +98,15 @@ describe('PerformanceProfiler', () => {
     });
 
     it('should throw error for non-positive iterations', async () => {
-      await expect(
-        profiler.measureAsync(async () => {}, 0)
-      ).rejects.toThrow('Iterations must be positive');
-
-      await expect(
-        profiler.measureAsync(async () => {}, -1)
-      ).rejects.toThrow('Iterations must be positive');
+      const invalidIterations = [0, -1];
+      for (const iterations of invalidIterations) {
+        await expect(
+          profiler.measureAsync(async () => {}, iterations)
+        ).rejects.toThrow('Iterations must be positive');
+      }
     });
 
-    it('should complete warmup iterations before measurement', async () => {
+    it('should complete warmup iterations and measure Promise-based operations', async () => {
       const warmupIterations = 5;
       const measurementIterations = 10;
       let callCount = 0;
@@ -119,11 +115,9 @@ describe('PerformanceProfiler', () => {
       const fn = async () => { callCount++; };
 
       await profilerWithWarmup.measureAsync(fn, measurementIterations);
-
       expect(callCount).toBe(warmupIterations + measurementIterations);
-    });
 
-    it('should measure Promise-based async operations', async () => {
+      // Also test Promise-based operations
       const result = await profiler.measureAsync(async () => {
         return await Promise.resolve(42);
       }, 100);
@@ -135,55 +129,55 @@ describe('PerformanceProfiler', () => {
   });
 
   describe('calculatePercentile', () => {
-    it('should calculate percentiles correctly', () => {
+    it('should calculate percentiles correctly for various values', () => {
       const samples = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-      expect(profiler.calculatePercentile(samples, 0)).toBe(1);
-      expect(profiler.calculatePercentile(samples, 50)).toBe(5.5);
-      expect(profiler.calculatePercentile(samples, 100)).toBe(10);
+      // Test multiple percentile values
+      const percentileTests = [
+        { percentile: 0, expected: 1 },
+        { percentile: 50, expected: 5.5 },
+        { percentile: 100, expected: 10 },
+      ];
+
+      for (const { percentile, expected } of percentileTests) {
+        expect(profiler.calculatePercentile(samples, percentile)).toBe(expected);
+      }
     });
 
-    it('should calculate 95th percentile correctly', () => {
+    it('should calculate 95th percentile and handle interpolation', () => {
       const samples = Array.from({ length: 100 }, (_, i) => i + 1);
-
       const p95 = profiler.calculatePercentile(samples, 95);
       expect(p95).toBeCloseTo(95.05, 1);
+
+      // Test interpolation for non-integer indices
+      const smallSamples = [1, 2, 3, 4, 5];
+      expect(profiler.calculatePercentile(smallSamples, 25)).toBe(2);
+      expect(profiler.calculatePercentile(smallSamples, 75)).toBe(4);
     });
 
-    it('should handle interpolation for non-integer indices', () => {
-      const samples = [1, 2, 3, 4, 5];
-
-      const p25 = profiler.calculatePercentile(samples, 25);
-      expect(p25).toBe(2);
-
-      const p75 = profiler.calculatePercentile(samples, 75);
-      expect(p75).toBe(4);
-    });
-
-    it('should throw error for empty samples', () => {
+    it('should throw error for empty samples or invalid percentile values', () => {
+      // Test empty samples
       expect(() => {
         profiler.calculatePercentile([], 50);
       }).toThrow('Cannot calculate percentile of empty sample set');
-    });
 
-    it('should throw error for invalid percentile values', () => {
+      // Test invalid percentile values
       const samples = [1, 2, 3];
-
-      expect(() => {
-        profiler.calculatePercentile(samples, -1);
-      }).toThrow('Percentile must be between 0 and 100');
-
-      expect(() => {
-        profiler.calculatePercentile(samples, 101);
-      }).toThrow('Percentile must be between 0 and 100');
+      const invalidPercentiles = [-1, 101];
+      for (const percentile of invalidPercentiles) {
+        expect(() => {
+          profiler.calculatePercentile(samples, percentile);
+        }).toThrow('Percentile must be between 0 and 100');
+      }
     });
 
-    it('should handle single-element array', () => {
+    it('should handle single-element array for all percentiles', () => {
       const samples = [42];
+      const percentiles = [0, 50, 100];
 
-      expect(profiler.calculatePercentile(samples, 0)).toBe(42);
-      expect(profiler.calculatePercentile(samples, 50)).toBe(42);
-      expect(profiler.calculatePercentile(samples, 100)).toBe(42);
+      for (const percentile of percentiles) {
+        expect(profiler.calculatePercentile(samples, percentile)).toBe(42);
+      }
     });
   });
 
@@ -199,14 +193,12 @@ describe('PerformanceProfiler', () => {
     });
 
     it('should calculate narrower relative intervals for larger sample sizes', () => {
-      // Use same mean/stddev but different sample sizes to test CI narrowing
       // Small sample: 10 values around 50
       const smallSamples = [48, 49, 50, 50, 50, 50, 51, 52, 48, 52];
 
       // Large sample: 1000 values with similar distribution
       const largeSamples = Array.from({ length: 1000 }, (_, i) => {
-        // Generate values around 50 with similar variance
-        const noise = (Math.random() - 0.5) * 4; // Similar range to small sample
+        const noise = (Math.random() - 0.5) * 4;
         return 50 + noise;
       });
 
@@ -216,45 +208,33 @@ describe('PerformanceProfiler', () => {
       const smallMean = smallSamples.reduce((a, b) => a + b, 0) / smallSamples.length;
       const largeMean = largeSamples.reduce((a, b) => a + b, 0) / largeSamples.length;
 
-      // Calculate relative widths (as percentage of mean)
+      // Calculate relative widths
       const smallRelativeWidth = ((smallUpper - smallLower) / smallMean) * 100;
       const largeRelativeWidth = ((largeUpper - largeLower) / largeMean) * 100;
 
-      // Larger sample should have narrower relative CI
       expect(largeRelativeWidth).toBeLessThan(smallRelativeWidth);
     });
 
-    it('should throw error for insufficient samples', () => {
-      expect(() => {
-        profiler.calculateConfidenceInterval([1], 0.95);
-      }).toThrow('Need at least 2 samples to calculate confidence interval');
+    it('should throw error for insufficient samples or invalid confidence levels', () => {
+      // Test insufficient samples
+      const insufficientSamples = [[1], []];
+      for (const samples of insufficientSamples) {
+        expect(() => {
+          profiler.calculateConfidenceInterval(samples, 0.95);
+        }).toThrow('Need at least 2 samples to calculate confidence interval');
+      }
 
-      expect(() => {
-        profiler.calculateConfidenceInterval([], 0.95);
-      }).toThrow('Need at least 2 samples to calculate confidence interval');
-    });
-
-    it('should throw error for invalid confidence levels', () => {
+      // Test invalid confidence levels
       const samples = [1, 2, 3, 4, 5];
-
-      expect(() => {
-        profiler.calculateConfidenceInterval(samples, 0);
-      }).toThrow('Confidence level must be between 0 and 1');
-
-      expect(() => {
-        profiler.calculateConfidenceInterval(samples, 1);
-      }).toThrow('Confidence level must be between 0 and 1');
-
-      expect(() => {
-        profiler.calculateConfidenceInterval(samples, -0.5);
-      }).toThrow('Confidence level must be between 0 and 1');
-
-      expect(() => {
-        profiler.calculateConfidenceInterval(samples, 1.5);
-      }).toThrow('Confidence level must be between 0 and 1');
+      const invalidLevels = [0, 1, -0.5, 1.5];
+      for (const level of invalidLevels) {
+        expect(() => {
+          profiler.calculateConfidenceInterval(samples, level);
+        }).toThrow('Confidence level must be between 0 and 1');
+      }
     });
 
-    it('should calculate different confidence levels', () => {
+    it('should calculate different confidence levels with expected width relationships', () => {
       const samples = Array.from({ length: 100 }, (_, i) => i + 1);
 
       const [lower90, upper90] = profiler.calculateConfidenceInterval(samples, 0.90);
@@ -272,47 +252,39 @@ describe('PerformanceProfiler', () => {
   });
 
   describe('measureMemory', () => {
-    it('should measure memory usage of operation', () => {
+    it('should measure memory usage with all required properties', () => {
       const result = profiler.measureMemory(() => {
-        // Allocate some memory
         const arr = new Array(10000).fill(0);
         arr.reduce((sum, val) => sum + val, 0);
       });
 
-      expect(result).toHaveProperty('heapUsed');
-      expect(result).toHaveProperty('heapTotal');
-      expect(result).toHaveProperty('external');
-      expect(result).toHaveProperty('arrayBuffers');
-
-      expect(typeof result.heapUsed).toBe('number');
-      expect(typeof result.heapTotal).toBe('number');
-      expect(typeof result.external).toBe('number');
-      expect(typeof result.arrayBuffers).toBe('number');
+      // Validate all memory properties exist and are numbers
+      const expectedProps = ['heapUsed', 'heapTotal', 'external', 'arrayBuffers'];
+      for (const prop of expectedProps) {
+        expect(result).toHaveProperty(prop);
+        expect(typeof result[prop as keyof typeof result]).toBe('number');
+      }
     });
 
-    it('should detect memory allocation', () => {
-      const result = profiler.measureMemory(() => {
-        // Allocate significant memory
+    it('should detect memory allocation including ArrayBuffers', () => {
+      // Test heap allocation
+      const heapResult = profiler.measureMemory(() => {
         const largeArray = new Array(100000).fill({ data: 'test' });
         largeArray.length; // Access to prevent optimization
       });
+      expect(heapResult.heapUsed).toBeGreaterThan(0);
 
-      // Should show some memory was allocated
-      expect(result.heapUsed).toBeGreaterThan(0);
-    });
-
-    it('should measure ArrayBuffer memory separately', () => {
-      const result = profiler.measureMemory(() => {
+      // Test ArrayBuffer allocation
+      const bufferResult = profiler.measureMemory(() => {
         const buffer = new ArrayBuffer(10000);
         buffer.byteLength; // Access to prevent optimization
       });
-
-      expect(typeof result.arrayBuffers).toBe('number');
+      expect(typeof bufferResult.arrayBuffers).toBe('number');
     });
   });
 
   describe('generateReport', () => {
-    it('should generate formatted report for single result', () => {
+    it('should generate formatted report for single result with all metrics', () => {
       const result: PerformanceResult = {
         mean: 5.123,
         median: 5.001,
@@ -328,19 +300,26 @@ describe('PerformanceProfiler', () => {
 
       const report = profiler.generateReport([result]);
 
-      expect(report).toContain('Performance Profiler Report');
-      expect(report).toContain('Iterations:     100');
-      expect(report).toContain('Mean:           5.123 ms');
-      expect(report).toContain('Median:         5.001 ms');
-      expect(report).toContain('P95:            7.456 ms');
-      expect(report).toContain('P99:            8.789 ms');
-      expect(report).toContain('Min:            3.111 ms');
-      expect(report).toContain('Max:            9.999 ms');
-      expect(report).toContain('Std Dev:        1.234 ms');
-      expect(report).toContain('95% CI:         [4.500, 5.700] ms');
+      // Verify all metrics are present
+      const expectedContent = [
+        'Performance Profiler Report',
+        'Iterations:     100',
+        'Mean:           5.123 ms',
+        'Median:         5.001 ms',
+        'P95:            7.456 ms',
+        'P99:            8.789 ms',
+        'Min:            3.111 ms',
+        'Max:            9.999 ms',
+        'Std Dev:        1.234 ms',
+        '95% CI:         [4.500, 5.700] ms',
+      ];
+
+      for (const content of expectedContent) {
+        expect(report).toContain(content);
+      }
     });
 
-    it('should generate report for multiple results', () => {
+    it('should generate report for multiple results and include outlier information', () => {
       const results: PerformanceResult[] = [
         {
           mean: 5.0,
@@ -365,6 +344,7 @@ describe('PerformanceProfiler', () => {
           confidenceInterval: [8.0, 12.0],
           samples: [10.0],
           iterations: 200,
+          outliersRemoved: 5,
         },
       ];
 
@@ -374,107 +354,72 @@ describe('PerformanceProfiler', () => {
       expect(report).toContain('Measurement 2:');
       expect(report).toContain('Iterations:     100');
       expect(report).toContain('Iterations:     200');
-    });
-
-    it('should include outlier information when present', () => {
-      const result: PerformanceResult = {
-        mean: 5.0,
-        median: 5.0,
-        p95: 7.0,
-        p99: 8.0,
-        min: 3.0,
-        max: 9.0,
-        stddev: 1.0,
-        confidenceInterval: [4.0, 6.0],
-        samples: [5.0],
-        iterations: 100,
-        outliersRemoved: 5,
-      };
-
-      const report = profiler.generateReport([result]);
-
       expect(report).toContain('Outliers:       5 removed');
     });
 
     it('should handle empty results array', () => {
       const report = profiler.generateReport([]);
-
       expect(report).toBe('No performance results to report');
     });
   });
 
   describe('outlier filtering', () => {
-    it('should filter outliers when enabled', () => {
+    it('should filter outliers when enabled and not filter by default', () => {
       const profilerWithFiltering = new PerformanceProfiler({
         filterOutliers: true,
       });
 
-      // Create data with outliers: mostly 1ms, but some 100ms
+      // Create data with outliers
       let iterationCount = 0;
-      const result = profilerWithFiltering.measureSync(() => {
+      const resultWithFiltering = profilerWithFiltering.measureSync(() => {
         iterationCount++;
         if (iterationCount === 5 || iterationCount === 15) {
-          // Simulate outlier
           const start = Date.now();
           while (Date.now() - start < 10) {
-            // Busy wait
+            // Busy wait to create outlier
           }
         } else {
-          // Fast operation
           Math.sqrt(42);
         }
       }, 20);
 
-      expect(result.outliersRemoved).toBeGreaterThan(0);
-    });
+      expect(resultWithFiltering.outliersRemoved).toBeGreaterThan(0);
 
-    it('should not filter outliers by default', () => {
-      const result = profiler.measureSync(() => {
+      // Test default (no filtering)
+      const resultNoFiltering = profiler.measureSync(() => {
         Math.sqrt(42);
       }, 100);
 
-      expect(result.outliersRemoved).toBeUndefined();
+      expect(resultNoFiltering.outliersRemoved).toBeUndefined();
     });
   });
 
   describe('options configuration', () => {
-    it('should use default options when not specified', () => {
+    it('should use default and custom options correctly', () => {
+      // Test default warmup
       const defaultProfiler = new PerformanceProfiler();
-      let callCount = 0;
+      let defaultCallCount = 0;
+      defaultProfiler.measureSync(() => { defaultCallCount++; }, 10);
+      expect(defaultCallCount).toBe(20); // 10 warmup + 10 measurement
 
-      defaultProfiler.measureSync(() => { callCount++; }, 10);
+      // Test custom warmup
+      const customProfiler = new PerformanceProfiler({ warmupIterations: 5 });
+      let customCallCount = 0;
+      customProfiler.measureSync(() => { customCallCount++; }, 10);
+      expect(customCallCount).toBe(15); // 5 warmup + 10 measurement
 
-      // Default warmup is 10
-      expect(callCount).toBe(20); // 10 warmup + 10 measurement
-    });
-
-    it('should use custom warmup iterations', () => {
-      const customProfiler = new PerformanceProfiler({
-        warmupIterations: 5,
-      });
-      let callCount = 0;
-
-      customProfiler.measureSync(() => { callCount++; }, 10);
-
-      expect(callCount).toBe(15); // 5 warmup + 10 measurement
-    });
-
-    it('should use custom confidence level', () => {
-      const customProfiler = new PerformanceProfiler({
-        confidenceLevel: 0.99,
-      });
-
+      // Test custom confidence level
+      const confProfiler = new PerformanceProfiler({ confidenceLevel: 0.99 });
       const samples = Array.from({ length: 100 }, (_, i) => i + 1);
-      const [lower, upper] = customProfiler.calculateConfidenceInterval(samples, 0.99);
-
+      const [lower, upper] = confProfiler.calculateConfidenceInterval(samples, 0.99);
       expect(upper - lower).toBeGreaterThan(0);
     });
   });
 
   describe('statistical accuracy', () => {
-    it('should calculate mean correctly', () => {
+    it('should calculate mean and median correctly for various sample sizes', () => {
+      // Test mean calculation
       const result = profiler.measureSync(() => {
-        // Deterministic operation
         for (let i = 0; i < 100; i++) {
           Math.sqrt(i);
         }
@@ -482,71 +427,59 @@ describe('PerformanceProfiler', () => {
 
       const manualMean = result.samples.reduce((sum, val) => sum + val, 0) / result.samples.length;
       expect(result.mean).toBeCloseTo(manualMean, 10);
+
+      // Test median for odd count
+      const oddSamples = [1, 2, 3, 4, 5];
+      const oddMedian = profiler.calculatePercentile(oddSamples, 50);
+      expect(oddMedian).toBe(3);
+
+      // Test median for even count
+      const evenSamples = [1, 2, 3, 4, 5, 6];
+      const evenMedian = profiler.calculatePercentile(evenSamples, 50);
+      expect(evenMedian).toBe(3.5);
     });
 
-    it('should calculate median correctly for odd sample count', () => {
-      // Manual test with known values
-      const samples = [1, 2, 3, 4, 5];
-      const median = profiler.calculatePercentile(samples, 50);
-      expect(median).toBe(3);
-    });
-
-    it('should calculate median correctly for even sample count', () => {
-      const samples = [1, 2, 3, 4, 5, 6];
-      const median = profiler.calculatePercentile(samples, 50);
-      expect(median).toBe(3.5);
-    });
-
-    it('should have min <= median <= max', () => {
+    it('should maintain statistical invariants (min <= median <= max, mean in CI)', () => {
       const result = profiler.measureSync(() => {
         Math.random();
       }, 100);
 
+      // Test ordering invariant
       expect(result.min).toBeLessThanOrEqual(result.median);
       expect(result.median).toBeLessThanOrEqual(result.max);
-    });
 
-    it('should have mean within confidence interval', () => {
-      const result = profiler.measureSync(() => {
-        Math.random();
-      }, 100);
-
+      // Test confidence interval contains mean
       const [lower, upper] = result.confidenceInterval;
-
-      // Mean should typically be within CI (95% confidence)
-      expect(result.mean).toBeGreaterThanOrEqual(lower - 0.001); // Small epsilon for floating point
+      expect(result.mean).toBeGreaterThanOrEqual(lower - 0.001);
       expect(result.mean).toBeLessThanOrEqual(upper + 0.001);
     });
   });
 
   describe('edge cases', () => {
-    it('should handle very fast operations', () => {
-      const result = profiler.measureSync(() => {
-        // Almost instant
+    it('should handle very fast operations and high-variance operations', () => {
+      // Test very fast operations
+      const fastResult = profiler.measureSync(() => {
         1 + 1;
       }, 1000);
 
-      expect(result.mean).toBeGreaterThanOrEqual(0);
-      expect(result.samples).toHaveLength(1000);
-    });
+      expect(fastResult.mean).toBeGreaterThanOrEqual(0);
+      expect(fastResult.samples).toHaveLength(1000);
 
-    it('should handle operations with high variance', () => {
+      // Test high variance
       let toggle = false;
-      const result = profiler.measureSync(() => {
+      const variableResult = profiler.measureSync(() => {
         toggle = !toggle;
         if (toggle) {
-          // Fast
           Math.sqrt(42);
         } else {
-          // Slower
           for (let i = 0; i < 1000; i++) {
             Math.sqrt(i);
           }
         }
       }, 100);
 
-      expect(result.stddev).toBeGreaterThan(0);
-      expect(result.max).toBeGreaterThan(result.min);
+      expect(variableResult.stddev).toBeGreaterThan(0);
+      expect(variableResult.max).toBeGreaterThan(variableResult.min);
     });
   });
 });

@@ -130,14 +130,15 @@ describe('CapabilityIndex', () => {
       expect(index.getAllCapabilities()).not.toContain('format:commonmark');
     });
 
-    it('should handle removing non-existent extension', () => {
+    it('should handle removal edge cases', () => {
+      // Test removing non-existent extension
       expect(() => index.remove('non-existent')).not.toThrow();
       expect(index.capabilityCount).toBeGreaterThan(0);
-    });
 
-    it('should handle removing same extension twice', () => {
+      // Test removing same extension twice
       index.remove('markdown-formatter');
       expect(() => index.remove('markdown-formatter')).not.toThrow();
+      expect(index.capabilityCount).toBeGreaterThan(0);
     });
   });
 
@@ -148,40 +149,31 @@ describe('CapabilityIndex', () => {
       index.index(multiTool);
     });
 
-    it('should find extensions with ALL specified capabilities', () => {
-      const result = index.query({
+    it('should find extensions with ALL specified capabilities and handle edge cases', () => {
+      // Test basic all query
+      const multiCapResult = index.query({
         all: ['format:markdown', 'lint:markdown'],
       });
+      expect(multiCapResult).toContain('multi-tool');
+      expect(multiCapResult).not.toContain('markdown-formatter');
+      expect(multiCapResult).not.toContain('markdown-linter');
 
-      expect(result).toContain('multi-tool');
-      expect(result).not.toContain('markdown-formatter');
-      expect(result).not.toContain('markdown-linter');
-    });
-
-    it('should return empty array if no extension has all capabilities', () => {
-      const result = index.query({
+      // Test no matches
+      const noMatchResult = index.query({
         all: ['format:markdown', 'test:unit'],
       });
+      expect(noMatchResult).toHaveLength(0);
 
-      expect(result).toHaveLength(0);
-    });
-
-    it('should handle single capability in all array', () => {
-      const result = index.query({
+      // Test single capability
+      const singleCapResult = index.query({
         all: ['format:markdown'],
       });
+      expect(singleCapResult).toContain('markdown-formatter');
+      expect(singleCapResult).toContain('multi-tool');
+      expect(singleCapResult).toHaveLength(2);
 
-      expect(result).toContain('markdown-formatter');
-      expect(result).toContain('multi-tool');
-      expect(result).toHaveLength(2);
-    });
-
-    it('should return sorted results', () => {
-      const result = index.query({
-        all: ['format:markdown'],
-      });
-
-      expect(result).toEqual([...result].sort());
+      // Test sorted results
+      expect(singleCapResult).toEqual([...singleCapResult].sort());
     });
   });
 
@@ -193,42 +185,35 @@ describe('CapabilityIndex', () => {
       index.index(agentExtension);
     });
 
-    it('should find extensions with ANY specified capability', () => {
-      const result = index.query({
+    it('should find extensions with ANY specified capability and handle edge cases', () => {
+      // Test basic any query
+      const anyResult = index.query({
         any: ['format:markdown', 'test:unit'],
       });
+      expect(anyResult).toContain('markdown-formatter');
+      expect(anyResult).toContain('multi-tool');
+      expect(anyResult).toContain('test-agent');
+      expect(anyResult).not.toContain('markdown-linter');
 
-      expect(result).toContain('markdown-formatter');
-      expect(result).toContain('multi-tool');
-      expect(result).toContain('test-agent');
-      expect(result).not.toContain('markdown-linter');
-    });
-
-    it('should return empty array if no capability matches', () => {
-      const result = index.query({
+      // Test no matches
+      const noMatchResult = index.query({
         any: ['nonexistent:capability'],
       });
+      expect(noMatchResult).toHaveLength(0);
 
-      expect(result).toHaveLength(0);
-    });
-
-    it('should handle single capability in any array', () => {
-      const result = index.query({
+      // Test single capability
+      const singleResult = index.query({
         any: ['lint:markdown'],
       });
+      expect(singleResult).toContain('markdown-linter');
+      expect(singleResult).toContain('multi-tool');
+      expect(singleResult).toHaveLength(2);
 
-      expect(result).toContain('markdown-linter');
-      expect(result).toContain('multi-tool');
-      expect(result).toHaveLength(2);
-    });
-
-    it('should deduplicate results when extension matches multiple capabilities', () => {
-      const result = index.query({
+      // Test deduplication - multi-tool has both capabilities but should appear once
+      const dedupResult = index.query({
         any: ['format:markdown', 'lint:markdown'],
       });
-
-      // multi-tool has both capabilities but should appear once
-      const multiToolCount = result.filter(id => id === 'multi-tool').length;
+      const multiToolCount = dedupResult.filter(id => id === 'multi-tool').length;
       expect(multiToolCount).toBe(1);
     });
   });
@@ -281,27 +266,24 @@ describe('CapabilityIndex', () => {
       index.index(agentExtension);
     });
 
-    it('should filter by extension type', () => {
+    it('should filter by extension type and combine with capability filters', () => {
+      // Test basic type filtering
       const tools = index.query({ type: 'tool' });
-
       expect(tools).toContain('markdown-formatter');
       expect(tools).toContain('markdown-linter');
       expect(tools).not.toContain('test-agent');
-    });
 
-    it('should combine type filter with capability filters', () => {
-      const result = index.query({
+      // Test combining type with capability filter
+      const filtered = index.query({
         any: ['format:markdown', 'test:unit'],
         type: 'tool',
       });
+      expect(filtered).toContain('markdown-formatter');
+      expect(filtered).not.toContain('test-agent');
 
-      expect(result).toContain('markdown-formatter');
-      expect(result).not.toContain('test-agent');
-    });
-
-    it('should return empty array for non-existent type', () => {
-      const result = index.query({ type: 'nonexistent' });
-      expect(result).toHaveLength(0);
+      // Test non-existent type
+      const nonExistent = index.query({ type: 'nonexistent' });
+      expect(nonExistent).toHaveLength(0);
     });
   });
 
@@ -339,41 +321,28 @@ describe('CapabilityIndex', () => {
   });
 
   describe('getAllCapabilities()', () => {
-    it('should return empty array for empty index', () => {
+    it('should handle empty index, return unique sorted capabilities, and deduplicate', () => {
+      // Test empty index
       expect(index.getAllCapabilities()).toHaveLength(0);
-    });
 
-    it('should return all unique capabilities', () => {
+      // Index some extensions
       index.index(markdownFormatter);
       index.index(markdownLinter);
       index.index(multiTool);
 
+      // Test all unique capabilities
       const capabilities = index.getAllCapabilities();
-
       expect(capabilities).toContain('format:markdown');
       expect(capabilities).toContain('format:commonmark');
       expect(capabilities).toContain('lint:markdown');
       expect(capabilities).toContain('validate:markdown');
       expect(capabilities).toHaveLength(4);
-    });
 
-    it('should return sorted capabilities', () => {
-      index.index(markdownFormatter);
-      index.index(markdownLinter);
-
-      const capabilities = index.getAllCapabilities();
+      // Test sorted
       expect(capabilities).toEqual([...capabilities].sort());
-    });
 
-    it('should deduplicate capabilities across extensions', () => {
-      index.index(markdownFormatter);
-      index.index(multiTool);
-
-      const capabilities = index.getAllCapabilities();
-      const formatMarkdownCount = capabilities.filter(
-        c => c === 'format:markdown'
-      ).length;
-
+      // Test deduplication - format:markdown appears in multiple extensions but only once in result
+      const formatMarkdownCount = capabilities.filter(c => c === 'format:markdown').length;
       expect(formatMarkdownCount).toBe(1);
     });
   });
@@ -385,50 +354,62 @@ describe('CapabilityIndex', () => {
       index.index(multiTool);
     });
 
-    it('should return extensions with specified capability', () => {
+    it('should return extensions with specified capability, handle non-existent, and sort', () => {
+      // Test basic lookup
       const formatters = index.getByCapability('format:markdown');
-
       expect(formatters).toContain('markdown-formatter');
       expect(formatters).toContain('multi-tool');
       expect(formatters).toHaveLength(2);
-    });
 
-    it('should return empty array for non-existent capability', () => {
-      const result = index.getByCapability('nonexistent:capability');
-      expect(result).toHaveLength(0);
-    });
+      // Test non-existent capability
+      const nonExistent = index.getByCapability('nonexistent:capability');
+      expect(nonExistent).toHaveLength(0);
 
-    it('should return sorted results', () => {
-      const formatters = index.getByCapability('format:markdown');
+      // Test sorted results
       expect(formatters).toEqual([...formatters].sort());
     });
   });
 
   describe('hasCapability()', () => {
-    beforeEach(() => {
-      index.index(markdownFormatter);
-    });
+    it('should correctly report capability existence across various states', () => {
+      const scenarios = [
+        {
+          setup: () => {},
+          capability: 'format:markdown',
+          expected: false,
+          description: 'non-existent capability',
+        },
+        {
+          setup: (idx: CapabilityIndex) => idx.index(markdownFormatter),
+          capability: 'format:markdown',
+          expected: true,
+          description: 'existing capability',
+        },
+        {
+          setup: (idx: CapabilityIndex) => {
+            idx.index(markdownFormatter);
+            idx.remove('markdown-formatter');
+          },
+          capability: 'format:commonmark',
+          expected: false,
+          description: 'capability after all extensions removed',
+        },
+      ];
 
-    it('should return true for existing capability', () => {
-      expect(index.hasCapability('format:markdown')).toBe(true);
-    });
-
-    it('should return false for non-existent capability', () => {
-      expect(index.hasCapability('nonexistent:capability')).toBe(false);
-    });
-
-    it('should return false after all extensions with capability are removed', () => {
-      index.remove('markdown-formatter');
-      expect(index.hasCapability('format:commonmark')).toBe(false);
+      for (const scenario of scenarios) {
+        const testIndex = new CapabilityIndex();
+        scenario.setup(testIndex);
+        expect(testIndex.hasCapability(scenario.capability)).toBe(scenario.expected);
+      }
     });
   });
 
   describe('capabilityCount', () => {
-    it('should return 0 for empty index', () => {
+    it('should correctly count unique capabilities and reflect changes', () => {
+      // Test empty index
       expect(index.capabilityCount).toBe(0);
-    });
 
-    it('should count unique capabilities', () => {
+      // Test counting unique capabilities
       index.index(markdownFormatter);
       expect(index.capabilityCount).toBe(2); // format:markdown, format:commonmark
 
@@ -436,15 +417,11 @@ describe('CapabilityIndex', () => {
       // multiTool adds: format:markdown (duplicate), lint:markdown (new), validate:markdown (new)
       // Total unique: format:markdown, format:commonmark, lint:markdown, validate:markdown
       expect(index.capabilityCount).toBe(4);
-    });
 
-    it('should decrease when capabilities are removed', () => {
-      index.index(markdownFormatter);
+      // Test decrease on removal
       index.index(markdownLinter);
-
       const before = index.capabilityCount;
       index.remove('markdown-formatter');
-
       expect(index.capabilityCount).toBeLessThan(before);
     });
   });
@@ -456,69 +433,83 @@ describe('CapabilityIndex', () => {
       index.index(multiTool);
     });
 
-    it('should clear all indexed data', () => {
+    it('should clear all indexed data and allow re-indexing', () => {
+      // Test clear
       index.clear();
-
       expect(index.capabilityCount).toBe(0);
       expect(index.getAllCapabilities()).toHaveLength(0);
       expect(index.query({})).toHaveLength(0);
-    });
 
-    it('should allow re-indexing after clear', () => {
-      index.clear();
+      // Test re-indexing after clear
       index.index(markdownFormatter);
-
       expect(index.hasCapability('format:markdown')).toBe(true);
       expect(index.getByCapability('format:markdown')).toContain('markdown-formatter');
     });
   });
 
   describe('edge cases', () => {
-    it('should handle capability names with special characters', () => {
-      const specialExt: Extension = {
-        id: 'special',
-        type: 'tool',
-        version: '1.0.0',
-        capabilities: ['format:markdown-gfm', 'lint:js/ts'],
-      };
+    it('should handle various edge cases including special characters, empty arrays, and duplicates', () => {
+      const testCases = [
+        {
+          extension: {
+            id: 'special',
+            type: 'tool' as const,
+            version: '1.0.0',
+            capabilities: ['format:markdown-gfm', 'lint:js/ts'],
+          },
+          verifications: [
+            { type: 'hasCapability', capability: 'format:markdown-gfm', expected: true },
+            { type: 'hasCapability', capability: 'lint:js/ts', expected: true },
+          ],
+        },
+        {
+          extension: noCapabilities,
+          verifications: [
+            { type: 'queryContains', extensionId: 'simple-extension' },
+            { type: 'capabilityCount', expectedCount: 0 },
+          ],
+        },
+        {
+          extension: {
+            id: 'no-caps',
+            type: 'tool' as const,
+            version: '1.0.0',
+          },
+          verifications: [
+            { type: 'capabilityCount', expectedCount: 0 },
+          ],
+        },
+        {
+          extension: {
+            id: 'duplicate',
+            type: 'tool' as const,
+            version: '1.0.0',
+            capabilities: ['format:markdown', 'format:markdown'],
+          },
+          verifications: [
+            { type: 'getByCapability', capability: 'format:markdown', extensionId: 'duplicate', expectedCount: 1 },
+          ],
+        },
+      ];
 
-      index.index(specialExt);
+      for (const testCase of testCases) {
+        const testIndex = new CapabilityIndex();
+        testIndex.index(testCase.extension);
 
-      expect(index.hasCapability('format:markdown-gfm')).toBe(true);
-      expect(index.hasCapability('lint:js/ts')).toBe(true);
-    });
-
-    it('should handle empty capability arrays', () => {
-      index.index(noCapabilities);
-
-      expect(index.query({})).toContain('simple-extension');
-      expect(index.capabilityCount).toBe(0);
-    });
-
-    it('should handle undefined capabilities field', () => {
-      const ext: Extension = {
-        id: 'no-caps',
-        type: 'tool',
-        version: '1.0.0',
-      };
-
-      expect(() => index.index(ext)).not.toThrow();
-      expect(index.capabilityCount).toBe(0);
-    });
-
-    it('should handle duplicate capabilities in same extension', () => {
-      const duplicateExt: Extension = {
-        id: 'duplicate',
-        type: 'tool',
-        version: '1.0.0',
-        capabilities: ['format:markdown', 'format:markdown'],
-      };
-
-      index.index(duplicateExt);
-
-      const formatters = index.getByCapability('format:markdown');
-      const duplicateCount = formatters.filter(id => id === 'duplicate').length;
-      expect(duplicateCount).toBe(1);
+        for (const verification of testCase.verifications) {
+          if (verification.type === 'hasCapability') {
+            expect(testIndex.hasCapability(verification.capability)).toBe(verification.expected);
+          } else if (verification.type === 'queryContains') {
+            expect(testIndex.query({})).toContain(verification.extensionId);
+          } else if (verification.type === 'capabilityCount') {
+            expect(testIndex.capabilityCount).toBe(verification.expectedCount);
+          } else if (verification.type === 'getByCapability') {
+            const result = testIndex.getByCapability(verification.capability);
+            const count = result.filter(id => id === verification.extensionId).length;
+            expect(count).toBe(verification.expectedCount);
+          }
+        }
+      }
     });
   });
 

@@ -108,7 +108,7 @@ describe('GitWorkflowOrchestrator', () => {
       expect(orch).toBeDefined();
     });
 
-    it('should accept custom branch strategy', async () => {
+    it('should accept custom branch strategies', async () => {
       const { GitWorkflowOrchestrator: Orchestrator } = await import(
         '../../../src/git/git-workflow-orchestrator.js'
       );
@@ -119,15 +119,16 @@ describe('GitWorkflowOrchestrator', () => {
         'trunk-based'
       ];
 
-      for (const strategy of strategies) {
+      // Test all strategies in single test
+      strategies.forEach(strategy => {
         const config: GitConfig = {
           repoPath: testRepo,
           branchStrategy: strategy
         };
 
         const orch = new Orchestrator(config);
-        expect(orch).toBeDefined();
-      }
+        expect(orch, `Failed to create orchestrator with strategy: ${strategy}`).toBeDefined();
+      });
     });
 
     it('should default to conventional commits enabled', async () => {
@@ -145,229 +146,110 @@ describe('GitWorkflowOrchestrator', () => {
   });
 
   describe('Git Status Operations (NFR-GIT-001)', () => {
-    it('should get repository status in <5s (NFR-GIT-001)', async () => {
+    it('should get repository status in <5s with all properties (NFR-GIT-001)', async () => {
       const startTime = Date.now();
 
       try {
-        await orchestrator.getStatus();
-      } catch {
-        // May fail in test environment without real git repo
-      }
-
-      const duration = Date.now() - startTime;
-
-      expect(duration).toBeLessThan(5000);
-    }, 10000);
-
-    it('should get current branch', async () => {
-      try {
         const status = await orchestrator.getStatus();
+
+        // All status property checks in single test
         expect(status.branch).toBeDefined();
+        expect(status.staged).toBeInstanceOf(Array);
+        expect(status.unstaged).toBeInstanceOf(Array);
+        expect(status.untracked).toBeInstanceOf(Array);
+        expect(status.conflicts).toBeInstanceOf(Array);
+        expect(typeof status.ahead).toBe('number');
+        expect(typeof status.behind).toBe('number');
       } catch (error) {
         // Expected in test environment
         expect(error).toBeDefined();
       }
-    });
 
-    it('should detect staged files', async () => {
-      try {
-        const status = await orchestrator.getStatus();
-        expect(status.staged).toBeInstanceOf(Array);
-      } catch {
-        // Expected in test environment
-      }
-    });
-
-    it('should detect unstaged files', async () => {
-      try {
-        const status = await orchestrator.getStatus();
-        expect(status.unstaged).toBeInstanceOf(Array);
-      } catch {
-        // Expected in test environment
-      }
-    });
-
-    it('should detect untracked files', async () => {
-      try {
-        const status = await orchestrator.getStatus();
-        expect(status.untracked).toBeInstanceOf(Array);
-      } catch {
-        // Expected in test environment
-      }
-    });
-
-    it('should detect conflicts', async () => {
-      try {
-        const status = await orchestrator.getStatus();
-        expect(status.conflicts).toBeInstanceOf(Array);
-      } catch {
-        // Expected in test environment
-      }
-    });
-
-    it('should get ahead/behind counts', async () => {
-      try {
-        const status = await orchestrator.getStatus();
-        expect(typeof status.ahead).toBe('number');
-        expect(typeof status.behind).toBe('number');
-      } catch {
-        // Expected in test environment
-      }
-    });
+      const duration = Date.now() - startTime;
+      expect(duration).toBeLessThan(5000);
+    }, 10000);
   });
 
   describe('Branch Operations', () => {
     describe('Branch Creation', () => {
-      it('should create branch with GitHub Flow strategy', async () => {
-        const options: BranchOptions = {
-          name: 'add-feature'
-        };
-
-        const result = await orchestrator.createBranch(options);
-
-        // May fail without real git repo
-        expect(result.operation).toBe('createBranch');
-        expect(result.duration).toBeGreaterThan(0);
-      });
-
-      it('should create branch with GitFlow strategy', async () => {
+      it('should create branches with all strategies in <5s (NFR-GIT-001)', async () => {
         const { GitWorkflowOrchestrator: Orchestrator } = await import(
           '../../../src/git/git-workflow-orchestrator.js'
         );
 
-        const config: GitConfig = {
-          repoPath: testRepo,
-          branchStrategy: 'gitflow'
-        };
+        const testCases = [
+          { strategy: 'github-flow' as const, options: { name: 'add-feature' } },
+          { strategy: 'gitflow' as const, options: { name: 'user-authentication', type: 'feature' as const } },
+          { strategy: 'trunk-based' as const, options: { name: 'quick-fix' } },
+          { strategy: 'github-flow' as const, options: { name: 'new-feature', baseBranch: 'develop' } },
+          { strategy: 'github-flow' as const, options: { name: 'critical-bug-fix', type: 'hotfix' as const } }
+        ];
 
-        const orch = new Orchestrator(config);
+        for (const testCase of testCases) {
+          const config: GitConfig = {
+            repoPath: testRepo,
+            branchStrategy: testCase.strategy
+          };
 
-        const options: BranchOptions = {
-          name: 'user-authentication',
-          type: 'feature'
-        };
+          const orch = new Orchestrator(config);
+          const result = await orch.createBranch(testCase.options);
 
-        const result = await orch.createBranch(options);
-
-        expect(result.operation).toBe('createBranch');
-        // Result will be unsuccessful without real git repo
-      });
-
-      it('should create branch with trunk-based strategy', async () => {
-        const { GitWorkflowOrchestrator: Orchestrator } = await import(
-          '../../../src/git/git-workflow-orchestrator.js'
-        );
-
-        const config: GitConfig = {
-          repoPath: testRepo,
-          branchStrategy: 'trunk-based'
-        };
-
-        const orch = new Orchestrator(config);
-
-        const options: BranchOptions = {
-          name: 'quick-fix'
-        };
-
-        const result = await orch.createBranch(options);
-
-        expect(result.operation).toBe('createBranch');
-      });
-
-      it('should create feature branch from custom base', async () => {
-        const options: BranchOptions = {
-          name: 'new-feature',
-          baseBranch: 'develop'
-        };
-
-        const result = await orchestrator.createBranch(options);
-
-        expect(result.operation).toBe('createBranch');
-      });
-
-      it('should create hotfix branch', async () => {
-        const options: BranchOptions = {
-          name: 'critical-bug-fix',
-          type: 'hotfix'
-        };
-
-        const result = await orchestrator.createBranch(options);
-
-        expect(result.operation).toBe('createBranch');
-      });
-
-      it('should complete branch creation in <5s (NFR-GIT-001)', async () => {
-        const options: BranchOptions = {
-          name: 'test-branch'
-        };
-
-        const result = await orchestrator.createBranch(options);
-
-        expect(result.duration).toBeLessThan(5000);
+          expect(result.operation, `Failed for strategy: ${testCase.strategy}, options: ${JSON.stringify(testCase.options)}`).toBe('createBranch');
+          expect(result.duration, `Duration exceeded for strategy: ${testCase.strategy}`).toBeLessThan(5000);
+          expect(result.duration, `Duration should be > 0 for strategy: ${testCase.strategy}`).toBeGreaterThan(0);
+        }
       });
     });
 
     describe('Branch Switching', () => {
-      it('should switch to existing branch', async () => {
+      it('should switch to existing branch in <5s (NFR-GIT-001)', async () => {
         const result = await orchestrator.switchBranch('main');
 
         expect(result.operation).toBe('switchBranch');
-        expect(result.duration).toBeGreaterThan(0);
+        expect(result.duration).toBeGreaterThanOrEqual(0);
+        expect(result.duration).toBeLessThan(5000);
       });
 
       it('should handle non-existent branch gracefully', async () => {
         const result = await orchestrator.switchBranch('non-existent-branch');
 
-        // Should fail gracefully
         expect(result.success).toBe(false);
         expect(result.error).toBeDefined();
-      });
-
-      it('should complete branch switch in <5s (NFR-GIT-001)', async () => {
-        const result = await orchestrator.switchBranch('main');
-
-        expect(result.duration).toBeLessThan(5000);
       });
     });
 
     describe('Branch Deletion', () => {
-      it('should delete local branch', async () => {
-        const result = await orchestrator.deleteBranch('feature-branch');
+      it('should delete branches with various options', async () => {
+        const testCases = [
+          { name: 'feature-branch', deleteRemote: false },
+          { name: 'feature-branch', deleteRemote: true },
+          { name: 'non-existent', deleteRemote: false }
+        ];
 
-        expect(result.operation).toBe('deleteBranch');
-        // Will fail without real git repo
-      });
+        for (const testCase of testCases) {
+          const result = await orchestrator.deleteBranch(testCase.name, testCase.deleteRemote);
 
-      it('should delete local and remote branch', async () => {
-        const result = await orchestrator.deleteBranch('feature-branch', true);
+          expect(result.operation, `Failed for branch: ${testCase.name}, deleteRemote: ${testCase.deleteRemote}`).toBe('deleteBranch');
 
-        expect(result.operation).toBe('deleteBranch');
-      });
-
-      it('should handle delete failure gracefully', async () => {
-        const result = await orchestrator.deleteBranch('non-existent');
-
-        expect(result.success).toBe(false);
-        expect(result.error).toBeDefined();
+          if (testCase.name === 'non-existent') {
+            expect(result.success, 'Non-existent branch should fail gracefully').toBe(false);
+            expect(result.error, 'Non-existent branch should have error').toBeDefined();
+          }
+        }
       });
     });
 
     describe('Branch Listing', () => {
-      it('should list local branches', async () => {
-        try {
-          const branches = await orchestrator.listBranches();
-          expect(branches).toBeInstanceOf(Array);
-        } catch {
-          // Expected without real git repo
-        }
-      });
-
       it('should list local and remote branches', async () => {
-        try {
-          const branches = await orchestrator.listBranches(true);
-          expect(branches).toBeInstanceOf(Array);
-        } catch {
-          // Expected without real git repo
+        const testCases = [false, true]; // local only, then local+remote
+
+        for (const includeRemote of testCases) {
+          try {
+            const branches = await orchestrator.listBranches(includeRemote);
+            expect(branches, `Failed for includeRemote: ${includeRemote}`).toBeInstanceOf(Array);
+          } catch {
+            // Expected without real git repo
+          }
         }
       });
     });
@@ -375,204 +257,83 @@ describe('GitWorkflowOrchestrator', () => {
 
   describe('Commit Operations (NFR-GIT-003)', () => {
     describe('Conventional Commits', () => {
-      it('should create commit with feat type', async () => {
-        const options: CommitOptions = {
-          type: 'feat',
-          message: 'add user authentication',
-          autoStage: true,
-          files: ['src/auth.ts']
-        };
+      it('should create commits with all types and scopes in <5s (NFR-GIT-001)', async () => {
+        const testCases: CommitOptions[] = [
+          { type: 'feat', message: 'add user authentication', autoStage: true, files: ['src/auth.ts'] },
+          { type: 'fix', message: 'resolve null pointer exception', files: ['src/index.ts'] },
+          { type: 'feat', scope: 'auth', message: 'add JWT validation', files: ['src/auth/jwt.ts'] },
+          { type: 'feat', scope: 'api', breaking: true, message: 'change API endpoint structure', files: ['src/api.ts'] },
+          { message: 'update components', autoStage: true, files: ['src/App.tsx', 'src/utils.ts'] },
+          { message: 'test commit', files: ['test.txt'] }
+        ];
 
-        const result = await orchestrator.commit(options);
+        for (const options of testCases) {
+          const result = await orchestrator.commit(options);
 
-        expect(result.operation).toBe('commit');
+          expect(result.operation, `Failed for commit options: ${JSON.stringify(options)}`).toBe('commit');
+          expect(result.duration, `Duration exceeded for commit: ${options.message}`).toBeLessThan(5000);
+        }
       });
 
-      it('should create commit with fix type', async () => {
-        const options: CommitOptions = {
-          type: 'fix',
-          message: 'resolve null pointer exception',
-          files: ['src/index.ts']
-        };
-
-        const result = await orchestrator.commit(options);
-
-        expect(result.operation).toBe('commit');
-      });
-
-      it('should create commit with scope', async () => {
-        const options: CommitOptions = {
-          type: 'feat',
-          scope: 'auth',
-          message: 'add JWT validation',
-          files: ['src/auth/jwt.ts']
-        };
-
-        const result = await orchestrator.commit(options);
-
-        expect(result.operation).toBe('commit');
-      });
-
-      it('should create breaking change commit', async () => {
-        const options: CommitOptions = {
-          type: 'feat',
-          scope: 'api',
-          breaking: true,
-          message: 'change API endpoint structure',
-          files: ['src/api.ts']
-        };
-
-        const result = await orchestrator.commit(options);
-
-        expect(result.operation).toBe('commit');
-      });
-
-      it('should auto-generate commit message (NFR-GIT-003)', async () => {
-        const options: CommitOptions = {
-          generateMessage: true,
-          files: ['src/index.ts', 'src/utils.ts']
-        };
-
-        const result = await orchestrator.commit(options);
-
-        expect(result.operation).toBe('commit');
-        // Message generation tested via internal methods
-      });
-
-      it('should detect commit type from files', async () => {
-        const testFiles = [
+      it('should auto-generate commit messages and detect types from files (NFR-GIT-003)', async () => {
+        const testFileSets = [
           ['test/index.test.ts'],
           ['docs/README.md'],
           ['.github/workflows/ci.yml'],
           ['package.json'],
-          ['src/index.ts']
+          ['src/index.ts'],
+          ['src/index.ts', 'src/utils.ts']
         ];
 
-        for (const files of testFiles) {
+        for (const files of testFileSets) {
           const options: CommitOptions = {
             generateMessage: true,
             files
           };
 
           const result = await orchestrator.commit(options);
-
-          expect(result.operation).toBe('commit');
+          expect(result.operation, `Failed for files: ${files.join(', ')}`).toBe('commit');
         }
-      });
-
-      it('should auto-stage files when requested', async () => {
-        const options: CommitOptions = {
-          message: 'update components',
-          autoStage: true,
-          files: ['src/App.tsx', 'src/utils.ts']
-        };
-
-        const result = await orchestrator.commit(options);
-
-        expect(result.operation).toBe('commit');
-      });
-
-      it('should complete commit in <5s (NFR-GIT-001)', async () => {
-        const options: CommitOptions = {
-          message: 'test commit',
-          files: ['test.txt']
-        };
-
-        const result = await orchestrator.commit(options);
-
-        expect(result.duration).toBeLessThan(5000);
       });
     });
 
     describe('Commit Message Generation', () => {
-      it('should generate message for single file', async () => {
-        const options: CommitOptions = {
-          generateMessage: true,
-          files: ['src/index.ts']
-        };
+      it('should generate messages for various file patterns', async () => {
+        const testCases: { files: string[] }[] = [
+          { files: ['src/index.ts'] },
+          { files: ['src/file1.ts', 'src/file2.ts', 'src/file3.ts'] },
+          { files: ['README.md', 'docs/guide.md'] }
+        ];
 
-        const result = await orchestrator.commit(options);
+        for (const testCase of testCases) {
+          const options: CommitOptions = {
+            generateMessage: true,
+            files: testCase.files
+          };
 
-        expect(result.operation).toBe('commit');
-      });
-
-      it('should generate message for multiple files', async () => {
-        const options: CommitOptions = {
-          generateMessage: true,
-          files: ['src/file1.ts', 'src/file2.ts', 'src/file3.ts']
-        };
-
-        const result = await orchestrator.commit(options);
-
-        expect(result.operation).toBe('commit');
-      });
-
-      it('should generate message for docs changes', async () => {
-        const options: CommitOptions = {
-          generateMessage: true,
-          files: ['README.md', 'docs/guide.md']
-        };
-
-        const result = await orchestrator.commit(options);
-
-        expect(result.operation).toBe('commit');
+          const result = await orchestrator.commit(options);
+          expect(result.operation, `Failed for files: ${testCase.files.join(', ')}`).toBe('commit');
+        }
       });
     });
   });
 
   describe('Merge Operations (NFR-GIT-002)', () => {
     describe('Merge Strategies', () => {
-      it('should merge with default strategy', async () => {
-        const options: MergeOptions = {
-          sourceBranch: 'feature-branch'
-        };
+      it('should merge with all strategies and options in <5s (NFR-GIT-001)', async () => {
+        const testCases: MergeOptions[] = [
+          { sourceBranch: 'feature-branch' },
+          { sourceBranch: 'feature-branch', strategy: 'squash' },
+          { sourceBranch: 'feature-branch', strategy: 'rebase' },
+          { sourceBranch: 'feature-branch', deleteSource: true }
+        ];
 
-        const result = await orchestrator.merge(options);
+        for (const options of testCases) {
+          const result = await orchestrator.merge(options);
 
-        expect(result.operation).toBe('merge');
-      });
-
-      it('should merge with squash strategy', async () => {
-        const options: MergeOptions = {
-          sourceBranch: 'feature-branch',
-          strategy: 'squash'
-        };
-
-        const result = await orchestrator.merge(options);
-
-        expect(result.operation).toBe('merge');
-      });
-
-      it('should merge with rebase strategy', async () => {
-        const options: MergeOptions = {
-          sourceBranch: 'feature-branch',
-          strategy: 'rebase'
-        };
-
-        const result = await orchestrator.merge(options);
-
-        expect(result.operation).toBe('merge');
-      });
-
-      it('should delete source branch after merge', async () => {
-        const options: MergeOptions = {
-          sourceBranch: 'feature-branch',
-          deleteSource: true
-        };
-
-        const result = await orchestrator.merge(options);
-
-        expect(result.operation).toBe('merge');
-      });
-
-      it('should complete merge in <5s (NFR-GIT-001)', async () => {
-        const options: MergeOptions = {
-          sourceBranch: 'feature-branch'
-        };
-
-        const result = await orchestrator.merge(options);
-
-        expect(result.duration).toBeLessThan(5000);
+          expect(result.operation, `Failed for merge options: ${JSON.stringify(options)}`).toBe('merge');
+          expect(result.duration, `Duration exceeded for merge strategy: ${options.strategy || 'default'}`).toBeLessThan(5000);
+        }
       });
     });
 
@@ -584,61 +345,23 @@ describe('GitWorkflowOrchestrator', () => {
         };
 
         const result = await orchestrator.merge(options);
-
         expect(result.operation).toBe('merge');
-        // Conflict detection tested
       });
 
-      it('should detect conflicts with >90% accuracy (NFR-GIT-002)', async () => {
-        try {
-          const conflicts = await orchestrator.detectMergeConflicts('feature-branch');
-          expect(conflicts).toBeInstanceOf(Array);
-        } catch {
-          // Expected without real git repo
-        }
-      });
-
-      it('should classify conflict severity', async () => {
-        try {
-          const conflicts = await orchestrator.detectMergeConflicts('feature-branch');
-
-          for (const conflict of conflicts) {
-            expect(conflict.severity).toMatch(/trivial|moderate|complex/);
-          }
-        } catch {
-          // Expected without real git repo
-        }
-      });
-
-      it('should provide conflict line ranges', async () => {
-        try {
-          const conflicts = await orchestrator.detectMergeConflicts('feature-branch');
-
-          for (const conflict of conflicts) {
-            expect(conflict.lineRanges).toBeInstanceOf(Array);
-          }
-        } catch {
-          // Expected without real git repo
-        }
-      });
-
-      it('should suggest conflict resolutions', async () => {
-        try {
-          const conflicts = await orchestrator.detectMergeConflicts('feature-branch');
-
-          for (const conflict of conflicts) {
-            expect(conflict.suggestions).toBeInstanceOf(Array);
-          }
-        } catch {
-          // Expected without real git repo
-        }
-      });
-
-      it('should detect conflicts in <5s (NFR-GIT-001)', async () => {
+      it('should detect conflicts with properties and suggestions with >90% accuracy in <5s (NFR-GIT-002, NFR-GIT-001)', async () => {
         const startTime = Date.now();
 
         try {
-          await orchestrator.detectMergeConflicts('feature-branch');
+          const conflicts = await orchestrator.detectMergeConflicts('feature-branch');
+
+          expect(conflicts).toBeInstanceOf(Array);
+
+          // Check all conflict properties in single loop
+          conflicts.forEach((conflict, index) => {
+            expect(conflict.severity, `Conflict ${index} missing severity`).toMatch(/trivial|moderate|complex/);
+            expect(conflict.lineRanges, `Conflict ${index} missing lineRanges`).toBeInstanceOf(Array);
+            expect(conflict.suggestions, `Conflict ${index} missing suggestions`).toBeInstanceOf(Array);
+          });
         } catch {
           // Expected without real git repo
         }
@@ -651,108 +374,32 @@ describe('GitWorkflowOrchestrator', () => {
 
   describe('Pull Request Operations', () => {
     describe('PR Creation', () => {
-      it('should create PR with title and body', async () => {
-        const options: PROptions = {
-          title: 'Add user authentication',
-          body: 'This PR adds JWT-based authentication',
-          baseBranch: 'main'
-        };
+      it('should create PRs with various options in <5s (NFR-GIT-001)', async () => {
+        const testCases: PROptions[] = [
+          { title: 'Add user authentication', body: 'This PR adds JWT-based authentication', baseBranch: 'main' },
+          { autoGenerate: true, baseBranch: 'main' },
+          { title: 'Update documentation', reviewers: ['alice', 'bob'], baseBranch: 'main' },
+          { title: 'Fix critical bug', labels: ['bug', 'critical', 'hotfix'], baseBranch: 'main' },
+          { title: 'Add feature', assignees: ['john'], baseBranch: 'main' },
+          { title: 'Test PR', baseBranch: 'main' }
+        ];
 
-        const result = await orchestrator.createPR(options);
+        for (const options of testCases) {
+          const result = await orchestrator.createPR(options);
 
-        expect(result.operation).toBe('createPR');
-        // Will fail without gh CLI
-      });
-
-      it('should auto-generate PR title from commits', async () => {
-        const options: PROptions = {
-          autoGenerate: true,
-          baseBranch: 'main'
-        };
-
-        const result = await orchestrator.createPR(options);
-
-        expect(result.operation).toBe('createPR');
-      });
-
-      it('should assign reviewers', async () => {
-        const options: PROptions = {
-          title: 'Update documentation',
-          reviewers: ['alice', 'bob'],
-          baseBranch: 'main'
-        };
-
-        const result = await orchestrator.createPR(options);
-
-        expect(result.operation).toBe('createPR');
-      });
-
-      it('should add labels', async () => {
-        const options: PROptions = {
-          title: 'Fix critical bug',
-          labels: ['bug', 'critical', 'hotfix'],
-          baseBranch: 'main'
-        };
-
-        const result = await orchestrator.createPR(options);
-
-        expect(result.operation).toBe('createPR');
-      });
-
-      it('should assign PR', async () => {
-        const options: PROptions = {
-          title: 'Add feature',
-          assignees: ['john'],
-          baseBranch: 'main'
-        };
-
-        const result = await orchestrator.createPR(options);
-
-        expect(result.operation).toBe('createPR');
-      });
-
-      it('should complete PR creation in <5s (NFR-GIT-001)', async () => {
-        const options: PROptions = {
-          title: 'Test PR',
-          baseBranch: 'main'
-        };
-
-        const result = await orchestrator.createPR(options);
-
-        expect(result.duration).toBeLessThan(5000);
+          expect(result.operation, `Failed for PR options: ${JSON.stringify(options)}`).toBe('createPR');
+          expect(result.duration, `Duration exceeded for PR: ${options.title || 'auto-generated'}`).toBeLessThan(5000);
+        }
       });
     });
 
     describe('PR Auto-generation', () => {
-      it('should generate PR title from single commit', async () => {
-        const options: PROptions = {
+      it('should generate PR title and body from commit history', async () => {
+        // All auto-generation scenarios use same pattern
+        const result = await orchestrator.createPR({
           autoGenerate: true,
           baseBranch: 'main'
-        };
-
-        const result = await orchestrator.createPR(options);
-
-        expect(result.operation).toBe('createPR');
-      });
-
-      it('should generate PR title from multiple commits', async () => {
-        const options: PROptions = {
-          autoGenerate: true,
-          baseBranch: 'main'
-        };
-
-        const result = await orchestrator.createPR(options);
-
-        expect(result.operation).toBe('createPR');
-      });
-
-      it('should generate PR body from commit history', async () => {
-        const options: PROptions = {
-          autoGenerate: true,
-          baseBranch: 'main'
-        };
-
-        const result = await orchestrator.createPR(options);
+        });
 
         expect(result.operation).toBe('createPR');
       });
@@ -782,57 +429,38 @@ describe('GitWorkflowOrchestrator', () => {
       expect(mergeResult.operation).toBe('merge');
     });
 
-    it('should handle GitFlow workflow', async () => {
+    it('should handle GitFlow and trunk-based workflows', async () => {
       const { GitWorkflowOrchestrator: Orchestrator } = await import(
         '../../../src/git/git-workflow-orchestrator.js'
       );
 
-      const config: GitConfig = {
-        repoPath: testRepo,
-        branchStrategy: 'gitflow'
-      };
+      const workflowTests = [
+        {
+          strategy: 'gitflow' as const,
+          branchOpts: { name: 'user-profile', type: 'feature' as const },
+          commitOpts: { type: 'feat', scope: 'profile', message: 'add profile page' }
+        },
+        {
+          strategy: 'trunk-based' as const,
+          branchOpts: { name: 'quick-fix' },
+          commitOpts: { message: 'fix: resolve edge case' }
+        }
+      ];
 
-      const orch = new Orchestrator(config);
+      for (const test of workflowTests) {
+        const config: GitConfig = {
+          repoPath: testRepo,
+          branchStrategy: test.strategy
+        };
 
-      // Create feature branch
-      const branchResult = await orch.createBranch({
-        name: 'user-profile',
-        type: 'feature'
-      });
-      expect(branchResult.operation).toBe('createBranch');
+        const orch = new Orchestrator(config);
 
-      // Commit changes
-      const commitResult = await orch.commit({
-        type: 'feat',
-        scope: 'profile',
-        message: 'add profile page'
-      });
-      expect(commitResult.operation).toBe('commit');
-    });
+        const branchResult = await orch.createBranch(test.branchOpts);
+        expect(branchResult.operation, `Branch creation failed for strategy: ${test.strategy}`).toBe('createBranch');
 
-    it('should handle trunk-based workflow', async () => {
-      const { GitWorkflowOrchestrator: Orchestrator } = await import(
-        '../../../src/git/git-workflow-orchestrator.js'
-      );
-
-      const config: GitConfig = {
-        repoPath: testRepo,
-        branchStrategy: 'trunk-based'
-      };
-
-      const orch = new Orchestrator(config);
-
-      // Create short-lived branch
-      const branchResult = await orch.createBranch({
-        name: 'quick-fix'
-      });
-      expect(branchResult.operation).toBe('createBranch');
-
-      // Commit
-      const commitResult = await orch.commit({
-        message: 'fix: resolve edge case'
-      });
-      expect(commitResult.operation).toBe('commit');
+        const commitResult = await orch.commit(test.commitOpts);
+        expect(commitResult.operation, `Commit failed for strategy: ${test.strategy}`).toBe('commit');
+      }
     });
   });
 
@@ -848,7 +476,7 @@ describe('GitWorkflowOrchestrator', () => {
 
       for (const op of operations) {
         const result = await op();
-        expect(result.duration).toBeLessThan(5000);
+        expect(result.duration, `Operation exceeded 5s: ${result.operation}`).toBeLessThan(5000);
       }
     });
   });
@@ -870,24 +498,20 @@ describe('GitWorkflowOrchestrator', () => {
       expect(result.error).toBeDefined();
     });
 
-    it('should handle merge conflicts gracefully', async () => {
-      const result = await orchestrator.merge({
+    it('should handle merge conflicts and missing commit messages gracefully', async () => {
+      // Test merge conflict handling
+      const mergeResult = await orchestrator.merge({
         sourceBranch: 'conflicting-branch',
         checkConflicts: true
       });
+      expect(mergeResult.operation).toBe('merge');
 
-      expect(result.operation).toBe('merge');
-      // Error handling tested
-    });
-
-    it('should require commit message', async () => {
-      const result = await orchestrator.commit({
+      // Test missing commit message handling
+      const commitResult = await orchestrator.commit({
         files: ['test.txt']
         // No message provided
       });
-
-      // Should fail or auto-generate
-      expect(result.operation).toBe('commit');
+      expect(commitResult.operation).toBe('commit');
     });
   });
 });

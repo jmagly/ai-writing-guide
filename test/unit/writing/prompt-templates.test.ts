@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, test } from 'vitest';
 import { PromptTemplateLibrary, PromptTemplate } from '../../../src/writing/prompt-templates.ts';
 
 describe('PromptTemplateLibrary', () => {
@@ -9,40 +9,15 @@ describe('PromptTemplateLibrary', () => {
   });
 
   describe('Template Loading', () => {
-    it('should load built-in templates', () => {
+    it('should load built-in templates with unique IDs and complete metadata', () => {
       const templates = library.listAll();
+
       expect(templates.length).toBeGreaterThan(10);
-    });
 
-    it('should load technical templates', () => {
-      const technical = library.listByCategory('technical');
-      expect(technical.length).toBeGreaterThan(5);
-    });
-
-    it('should load executive templates', () => {
-      const executive = library.listByCategory('executive');
-      expect(executive.length).toBeGreaterThan(0);
-    });
-
-    it('should load academic templates', () => {
-      const academic = library.listByCategory('academic');
-      expect(academic.length).toBeGreaterThan(0);
-    });
-
-    it('should load creative templates', () => {
-      const creative = library.listByCategory('creative');
-      expect(creative.length).toBeGreaterThan(0);
-    });
-
-    it('should have unique template IDs', () => {
-      const templates = library.listAll();
       const ids = templates.map(t => t.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(ids.length);
-    });
 
-    it('should have complete template metadata', () => {
-      const templates = library.listAll();
       templates.forEach(t => {
         expect(t.id).toBeTruthy();
         expect(t.name).toBeTruthy();
@@ -53,49 +28,53 @@ describe('PromptTemplateLibrary', () => {
         expect(Array.isArray(t.principles)).toBe(true);
       });
     });
+
+    it('should load templates in all categories', () => {
+      const technical = library.listByCategory('technical');
+      expect(technical.length).toBeGreaterThan(5);
+
+      const executive = library.listByCategory('executive');
+      expect(executive.length).toBeGreaterThan(0);
+
+      const academic = library.listByCategory('academic');
+      expect(academic.length).toBeGreaterThan(0);
+
+      const creative = library.listByCategory('creative');
+      expect(creative.length).toBeGreaterThan(0);
+    });
   });
 
   describe('Template Retrieval', () => {
-    it('should get template by ID', () => {
+    it('should get template by ID or return undefined', () => {
       const template = library.getTemplate('technical-deep-dive');
       expect(template).toBeDefined();
       expect(template?.id).toBe('technical-deep-dive');
-    });
 
-    it('should return undefined for non-existent template', () => {
-      const template = library.getTemplate('non-existent');
-      expect(template).toBeUndefined();
+      const nonExistent = library.getTemplate('non-existent');
+      expect(nonExistent).toBeUndefined();
     });
 
     it('should list templates by category', () => {
       const technical = library.listByCategory('technical');
       expect(technical.every(t => t.category === 'technical')).toBe(true);
-    });
 
-    it('should return empty array for non-existent category', () => {
       const result = library.listByCategory('non-existent');
       expect(result).toEqual([]);
     });
 
-    it('should search templates by keyword', () => {
-      const results = library.search('security');
-      expect(results.length).toBeGreaterThan(0);
-      expect(results.some(t => t.id.includes('security') || t.template.includes('security'))).toBe(true);
-    });
+    it('should search templates by keyword case-insensitively', () => {
+      const securityResults = library.search('security');
+      expect(securityResults.length).toBeGreaterThan(0);
+      expect(securityResults.some(t => t.id.includes('security') || t.template.includes('security'))).toBe(true);
 
-    it('should search case-insensitively', () => {
-      const results = library.search('TECHNICAL');
-      expect(results.length).toBeGreaterThan(0);
-    });
+      const upperResults = library.search('TECHNICAL');
+      expect(upperResults.length).toBeGreaterThan(0);
 
-    it('should search in template content', () => {
-      const results = library.search('OAuth');
-      expect(results.length).toBeGreaterThan(0);
-    });
+      const contentResults = library.search('OAuth');
+      expect(contentResults.length).toBeGreaterThan(0);
 
-    it('should return empty array for no matches', () => {
-      const results = library.search('xyzabc123notfound');
-      expect(results).toEqual([]);
+      const noResults = library.search('xyzabc123notfound');
+      expect(noResults).toEqual([]);
     });
   });
 
@@ -113,23 +92,20 @@ describe('PromptTemplateLibrary', () => {
       expect(result).toContain('senior backend developers');
     });
 
-    it('should throw error for missing template', () => {
+    it('should throw errors for missing template or variables', () => {
       expect(() => {
         library.instantiate('non-existent', {});
       }).toThrow('Template not found');
-    });
 
-    it('should throw error for missing variables', () => {
       expect(() => {
         library.instantiate('technical-deep-dive', {
           word_count: '1500'
-          // missing other required variables
         });
       }).toThrow('Missing template variables');
     });
 
-    it('should replace all occurrences of variable', () => {
-      const template: PromptTemplate = {
+    it('should replace all occurrences and handle special characters', () => {
+      const multiTemplate: PromptTemplate = {
         id: 'test-multi',
         name: 'Test Multiple',
         category: 'technical',
@@ -138,16 +114,13 @@ describe('PromptTemplateLibrary', () => {
         example: 'test',
         principles: []
       };
+      library.addTemplate(multiTemplate);
 
-      library.addTemplate(template);
-      const result = library.instantiate('test-multi', { topic: 'testing' });
-
-      const matches = result.match(/testing/g);
+      const multiResult = library.instantiate('test-multi', { topic: 'testing' });
+      const matches = multiResult.match(/testing/g);
       expect(matches?.length).toBe(3);
-    });
 
-    it('should handle special characters in values', () => {
-      const template: PromptTemplate = {
+      const specialTemplate: PromptTemplate = {
         id: 'test-special',
         name: 'Test Special',
         category: 'technical',
@@ -156,11 +129,10 @@ describe('PromptTemplateLibrary', () => {
         example: 'test',
         principles: []
       };
+      library.addTemplate(specialTemplate);
 
-      library.addTemplate(template);
-      const result = library.instantiate('test-special', { topic: 'C++ & Rust' });
-
-      expect(result).toContain('C++ & Rust');
+      const specialResult = library.instantiate('test-special', { topic: 'C++ & Rust' });
+      expect(specialResult).toContain('C++ & Rust');
     });
 
     it('should preserve template formatting', () => {
@@ -177,7 +149,7 @@ describe('PromptTemplateLibrary', () => {
   });
 
   describe('Custom Templates', () => {
-    it('should add custom template', () => {
+    it('should add and remove custom templates', () => {
       const custom: PromptTemplate = {
         id: 'custom-test',
         name: 'Custom Test',
@@ -190,12 +162,9 @@ describe('PromptTemplateLibrary', () => {
 
       library.addTemplate(custom);
       const retrieved = library.getTemplate('custom-test');
-
       expect(retrieved).toEqual(custom);
-    });
 
-    it('should remove template', () => {
-      const custom: PromptTemplate = {
+      const toRemove: PromptTemplate = {
         id: 'to-remove',
         name: 'To Remove',
         category: 'technical',
@@ -204,18 +173,15 @@ describe('PromptTemplateLibrary', () => {
         example: 'test',
         principles: []
       };
-
-      library.addTemplate(custom);
+      library.addTemplate(toRemove);
       expect(library.getTemplate('to-remove')).toBeDefined();
 
       const removed = library.removeTemplate('to-remove');
       expect(removed).toBe(true);
       expect(library.getTemplate('to-remove')).toBeUndefined();
-    });
 
-    it('should return false when removing non-existent template', () => {
-      const removed = library.removeTemplate('non-existent');
-      expect(removed).toBe(false);
+      const removedNonExistent = library.removeTemplate('non-existent');
+      expect(removedNonExistent).toBe(false);
     });
 
     it('should overwrite existing template when adding', () => {
@@ -249,70 +215,35 @@ describe('PromptTemplateLibrary', () => {
   });
 
   describe('Template Structure Validation', () => {
-    it('should have technical-deep-dive template', () => {
-      const template = library.getTemplate('technical-deep-dive');
+    test.each([
+      { id: 'technical-deep-dive', category: 'technical', contentMatch: null },
+      { id: 'technical-tutorial', category: null, contentMatch: 'tutorial' },
+      { id: 'architecture-analysis', category: null, contentMatch: 'architecture' },
+      { id: 'executive-brief', category: 'executive', contentMatch: null },
+      { id: 'academic-analysis', category: 'academic', contentMatch: null },
+      { id: 'performance-report', category: null, contentMatch: 'performance' },
+      { id: 'api-documentation', category: null, contentMatch: 'api' },
+      { id: 'security-analysis', category: null, contentMatch: 'security' },
+      { id: 'incident-postmortem', category: null, contentMatch: 'incident' },
+      { id: 'code-review-guide', category: null, contentMatch: 'code review' }
+    ])('should have template $id with correct properties', ({ id, category, contentMatch }) => {
+      const template = library.getTemplate(id);
       expect(template).toBeDefined();
-      expect(template?.category).toBe('technical');
-    });
 
-    it('should have technical-tutorial template', () => {
-      const template = library.getTemplate('technical-tutorial');
-      expect(template).toBeDefined();
-      expect(template?.template).toContain('tutorial');
-    });
+      if (category) {
+        expect(template?.category).toBe(category);
+      }
 
-    it('should have architecture-analysis template', () => {
-      const template = library.getTemplate('architecture-analysis');
-      expect(template).toBeDefined();
-      expect(template?.template.toLowerCase()).toContain('architecture');
-    });
-
-    it('should have executive-brief template', () => {
-      const template = library.getTemplate('executive-brief');
-      expect(template).toBeDefined();
-      expect(template?.category).toBe('executive');
-    });
-
-    it('should have academic-analysis template', () => {
-      const template = library.getTemplate('academic-analysis');
-      expect(template).toBeDefined();
-      expect(template?.category).toBe('academic');
-    });
-
-    it('should have performance-report template', () => {
-      const template = library.getTemplate('performance-report');
-      expect(template).toBeDefined();
-      expect(template?.template.toLowerCase()).toContain('performance');
-    });
-
-    it('should have api-documentation template', () => {
-      const template = library.getTemplate('api-documentation');
-      expect(template).toBeDefined();
-      expect(template?.template.toLowerCase()).toContain('api');
-    });
-
-    it('should have security-analysis template', () => {
-      const template = library.getTemplate('security-analysis');
-      expect(template).toBeDefined();
-      expect(template?.template.toLowerCase()).toContain('security');
-    });
-
-    it('should have incident-postmortem template', () => {
-      const template = library.getTemplate('incident-postmortem');
-      expect(template).toBeDefined();
-      expect(template?.template.toLowerCase()).toContain('incident');
-    });
-
-    it('should have code-review-guide template', () => {
-      const template = library.getTemplate('code-review-guide');
-      expect(template).toBeDefined();
-      expect(template?.template.toLowerCase()).toContain('code review');
+      if (contentMatch) {
+        expect(template?.template.toLowerCase()).toContain(contentMatch);
+      }
     });
   });
 
   describe('Template Content Quality', () => {
-    it('should include AI pattern avoidance in templates', () => {
+    it('should include AI pattern avoidance and specific examples', () => {
       const templates = library.listAll();
+
       const withPatternGuidance = templates.filter(t =>
         t.template.toLowerCase().includes('avoid') &&
         (t.template.toLowerCase().includes('seamless') ||
@@ -320,34 +251,20 @@ describe('PromptTemplateLibrary', () => {
          t.template.toLowerCase().includes('robust'))
       );
       expect(withPatternGuidance.length).toBeGreaterThan(5);
-    });
 
-    it('should include specific examples in templates', () => {
-      const templates = library.listAll();
-      templates.forEach(t => {
-        expect(t.example.length).toBeGreaterThan(10);
-      });
-    });
+      const allHaveExamples = templates.every(t => t.example.length > 10);
+      expect(allHaveExamples).toBe(true);
 
-    it('should include principles for each template', () => {
-      const templates = library.listAll();
-      templates.forEach(t => {
-        expect(t.principles.length).toBeGreaterThan(0);
-      });
+      const allHavePrinciples = templates.every(t => t.principles.length > 0);
+      expect(allHavePrinciples).toBe(true);
     });
 
     it('should avoid AI patterns in template text', () => {
       const templates = library.listAll();
-      // Only check for patterns that would appear in actual output, not instructional text
-      const aiPatterns = [
-        'Moreover,',
-        'Furthermore,',
-        'In conclusion,'
-      ];
+      const aiPatterns = ['Moreover,', 'Furthermore,', 'In conclusion,'];
 
       templates.forEach(t => {
         aiPatterns.forEach(pattern => {
-          // Skip patterns that are clearly instructional (preceded by "no", "avoid", or in quotes)
           const lowerTemplate = t.template.toLowerCase();
           const lowerPattern = pattern.toLowerCase();
           const idx = lowerTemplate.indexOf(lowerPattern);
@@ -362,15 +279,13 @@ describe('PromptTemplateLibrary', () => {
       });
     });
 
-    it('should include requirements sections', () => {
+    it('should include requirements sections and specific guidance', () => {
       const technicalTemplates = library.listByCategory('technical');
       const withRequirements = technicalTemplates.filter(t =>
         t.template.includes('Requirements:') || t.template.includes('Constraints:')
       );
       expect(withRequirements.length).toBeGreaterThan(5);
-    });
 
-    it('should include specific guidance not generic', () => {
       const template = library.getTemplate('technical-deep-dive');
       expect(template?.template).toContain('Avoid');
       expect(template?.template).toContain('Include');
@@ -379,140 +294,130 @@ describe('PromptTemplateLibrary', () => {
   });
 
   describe('Category Coverage', () => {
-    it('should have multiple technical templates', () => {
+    it('should have minimum templates in each category', () => {
       const technical = library.listByCategory('technical');
       expect(technical.length).toBeGreaterThanOrEqual(7);
-    });
 
-    it('should have executive templates', () => {
       const executive = library.listByCategory('executive');
       expect(executive.length).toBeGreaterThanOrEqual(2);
-    });
 
-    it('should have academic templates', () => {
       const academic = library.listByCategory('academic');
       expect(academic.length).toBeGreaterThanOrEqual(1);
-    });
 
-    it('should have creative templates', () => {
       const creative = library.listByCategory('creative');
       expect(creative.length).toBeGreaterThanOrEqual(1);
     });
   });
 
   describe('Template Variables', () => {
-    it('should declare all required variables', () => {
+    it('should declare all required variables with consistent naming', () => {
       const templates = library.listAll();
-      templates.forEach(t => {
+
+      const allVariablesValid = templates.every(t => {
         const placeholders = t.template.match(/\{([^}]+)\}/g) || [];
         const uniquePlaceholders = new Set(
           placeholders.map(p => p.replace(/[{}]/g, ''))
         );
 
-        expect(t.variables.length).toBeGreaterThanOrEqual(uniquePlaceholders.size);
-      });
-    });
+        const hasRequiredVariables = t.variables.length >= uniquePlaceholders.size;
+        const hasConsistentNaming = t.variables.every(v => /^[a-z_0-9]+$/.test(v));
+        const hasExamples = t.example.length > 0;
 
-    it('should have consistent variable naming', () => {
-      const templates = library.listAll();
-      templates.forEach(t => {
-        t.variables.forEach(v => {
-          expect(v).toMatch(/^[a-z_0-9]+$/); // Allow lowercase, underscores, and digits
-        });
+        return hasRequiredVariables && hasConsistentNaming && hasExamples;
       });
-    });
 
-    it('should document variable usage in examples', () => {
-      const templates = library.listAll();
-      templates.forEach(t => {
-        expect(t.example.length).toBeGreaterThan(0);
-      });
+      expect(allVariablesValid).toBe(true);
     });
   });
 
   describe('Template Completeness', () => {
-    it('should have complete technical-deep-dive template', () => {
-      const template = library.getTemplate('technical-deep-dive');
-      expect(template?.variables).toContain('word_count');
-      expect(template?.variables).toContain('topic');
-      expect(template?.variables).toContain('audience');
-      expect(template?.template).toContain('Requirements:');
-      expect(template?.template.toLowerCase()).toContain('avoid ai detection');
-    });
+    test.each([
+      {
+        id: 'technical-deep-dive',
+        variables: ['word_count', 'topic', 'audience'],
+        contentChecks: [
+          { pattern: 'Requirements:', exact: true },
+          { pattern: 'avoid ai detection', exact: false }
+        ]
+      },
+      {
+        id: 'executive-brief',
+        variables: ['topic', 'stakeholders', 'word_count'],
+        contentChecks: [
+          { pattern: 'bottom-line', exact: false }
+        ]
+      },
+      {
+        id: 'academic-analysis',
+        variables: ['topic', 'theoretical_framework'],
+        contentChecks: [
+          { pattern: 'cite', exact: false },
+          { pattern: 'peer-reviewed', exact: false }
+        ]
+      },
+      {
+        id: 'security-analysis',
+        variables: ['system', 'threat_model'],
+        contentChecks: [
+          { pattern: 'threat', exact: false },
+          { pattern: 'vulnerabilit', exact: false }
+        ]
+      },
+      {
+        id: 'incident-postmortem',
+        variables: ['incident_title', 'severity'],
+        contentChecks: [
+          { pattern: 'timeline', exact: false },
+          { pattern: 'root cause', exact: false }
+        ]
+      }
+    ])('should have complete definition for $id', ({ id, variables, contentChecks }) => {
+      const template = library.getTemplate(id);
 
-    it('should have complete executive-brief template', () => {
-      const template = library.getTemplate('executive-brief');
-      expect(template?.variables).toContain('topic');
-      expect(template?.variables).toContain('stakeholders');
-      expect(template?.variables).toContain('word_count');
-      expect(template?.template.toLowerCase()).toContain('bottom-line');
-    });
+      variables.forEach(variable => {
+        expect(template?.variables).toContain(variable);
+      });
 
-    it('should have complete academic-analysis template', () => {
-      const template = library.getTemplate('academic-analysis');
-      expect(template?.variables).toContain('topic');
-      expect(template?.variables).toContain('theoretical_framework');
-      expect(template?.template.toLowerCase()).toContain('cite');
-      expect(template?.template.toLowerCase()).toContain('peer-reviewed');
-    });
-
-    it('should have complete security-analysis template', () => {
-      const template = library.getTemplate('security-analysis');
-      expect(template?.variables).toContain('system');
-      expect(template?.variables).toContain('threat_model');
-      expect(template?.template.toLowerCase()).toContain('threat');
-      expect(template?.template.toLowerCase()).toContain('vulnerabilit'); // matches vulnerability/vulnerabilities
-    });
-
-    it('should have complete incident-postmortem template', () => {
-      const template = library.getTemplate('incident-postmortem');
-      expect(template?.variables).toContain('incident_title');
-      expect(template?.variables).toContain('severity');
-      expect(template?.template.toLowerCase()).toContain('timeline');
-      expect(template?.template.toLowerCase()).toContain('root cause');
+      contentChecks.forEach(({ pattern, exact }) => {
+        if (exact) {
+          expect(template?.template).toContain(pattern);
+        } else {
+          expect(template?.template.toLowerCase()).toContain(pattern);
+        }
+      });
     });
   });
 
   describe('Search Functionality', () => {
-    it('should find templates by partial ID match', () => {
-      const results = library.search('technical');
-      expect(results.length).toBeGreaterThan(0);
-      expect(results.some(t => t.id.includes('technical'))).toBe(true);
-    });
+    it('should find templates by various criteria', () => {
+      const idResults = library.search('technical');
+      expect(idResults.length).toBeGreaterThan(0);
+      expect(idResults.some(t => t.id.includes('technical'))).toBe(true);
 
-    it('should find templates by name', () => {
-      const results = library.search('Deep Dive');
-      expect(results.length).toBeGreaterThan(0);
-    });
+      const nameResults = library.search('Deep Dive');
+      expect(nameResults.length).toBeGreaterThan(0);
 
-    it('should find templates by content keywords', () => {
-      const results = library.search('authentication');
-      expect(results.length).toBeGreaterThan(0);
-    });
+      const contentResults = library.search('authentication');
+      expect(contentResults.length).toBeGreaterThan(0);
 
-    it('should handle empty search string', () => {
-      const results = library.search('');
-      expect(results.length).toBe(library.listAll().length);
-    });
+      const emptyResults = library.search('');
+      expect(emptyResults.length).toBe(library.listAll().length);
 
-    it('should handle whitespace in search', () => {
-      const results = library.search('  technical  ');
-      expect(results.length).toBeGreaterThan(0);
+      const whitespaceResults = library.search('  technical  ');
+      expect(whitespaceResults.length).toBeGreaterThan(0);
     });
   });
 
   describe('List Operations', () => {
-    it('should list all templates without duplicates', () => {
+    it('should list all templates without duplicates and return different instances', () => {
       const all = library.listAll();
       const ids = all.map(t => t.id);
       const uniqueIds = new Set(ids);
       expect(ids.length).toBe(uniqueIds.size);
-    });
 
-    it('should return different instances on each call', () => {
       const list1 = library.listAll();
       const list2 = library.listAll();
-      expect(list1).not.toBe(list2); // Different array instances
+      expect(list1).not.toBe(list2);
       expect(list1.length).toBe(list2.length);
     });
 
@@ -527,8 +432,9 @@ describe('PromptTemplateLibrary', () => {
   });
 
   describe('Template Principles', () => {
-    it('should emphasize specificity over vagueness', () => {
+    it('should emphasize key writing principles', () => {
       const templates = library.listAll();
+
       const withSpecificity = templates.filter(t =>
         t.principles.some(p =>
           p.toLowerCase().includes('specific') ||
@@ -537,18 +443,12 @@ describe('PromptTemplateLibrary', () => {
         )
       );
       expect(withSpecificity.length).toBeGreaterThan(5);
-    });
 
-    it('should encourage examples in principles', () => {
-      const templates = library.listAll();
       const withExamples = templates.filter(t =>
         t.principles.some(p => p.toLowerCase().includes('example'))
       );
       expect(withExamples.length).toBeGreaterThan(3);
-    });
 
-    it('should promote authentic voice', () => {
-      const templates = library.listAll();
       const withAuthenticity = templates.filter(t =>
         t.principles.some(p =>
           p.toLowerCase().includes('authentic') ||
@@ -561,7 +461,7 @@ describe('PromptTemplateLibrary', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle malformed variable placeholders gracefully', () => {
+    it('should handle malformed placeholders and provide helpful errors', () => {
       const template: PromptTemplate = {
         id: 'test-malformed',
         name: 'Test',
@@ -577,9 +477,7 @@ describe('PromptTemplateLibrary', () => {
       expect(() => {
         library.instantiate('test-malformed', { topic: 'test', more: 'test' });
       }).not.toThrow();
-    });
 
-    it('should provide helpful error messages', () => {
       expect(() => {
         library.instantiate('technical-deep-dive', {});
       }).toThrow(/Missing template variables/);
@@ -587,7 +485,7 @@ describe('PromptTemplateLibrary', () => {
   });
 
   describe('Template Reusability', () => {
-    it('should allow same template to be instantiated multiple times', () => {
+    it('should allow multiple instantiations without modifying original', () => {
       const result1 = library.instantiate('technical-deep-dive', {
         word_count: '1500',
         topic: 'OAuth',
@@ -605,9 +503,7 @@ describe('PromptTemplateLibrary', () => {
       expect(result1).not.toBe(result2);
       expect(result1).toContain('OAuth');
       expect(result2).toContain('JWT');
-    });
 
-    it('should not modify original template', () => {
       const original = library.getTemplate('technical-deep-dive');
       const originalTemplate = original?.template;
 

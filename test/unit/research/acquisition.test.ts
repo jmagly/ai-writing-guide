@@ -129,14 +129,22 @@ describe('Acquisition Service', () => {
   });
 
   describe('Paper Download', () => {
-    it('should download paper and return acquired source', async () => {
+    it('should download paper with complete acquired source metadata', async () => {
       const acquired = await service.downloadPaper(mockPaper);
 
+      // Core metadata
       expect(acquired.paper).toEqual(mockPaper);
       expect(acquired.filePath).toMatch(/\.aiwg\/research\/pdfs\/REF-\d{3}\.pdf/);
       expect(acquired.checksum).toHaveLength(64);
       expect(acquired.refId).toMatch(/^REF-\d{3}$/);
       expect(acquired.acquiredAt).toBeDefined();
+
+      // File properties
+      expect(acquired.sizeBytes).toBeGreaterThan(0);
+
+      // FAIR compliance
+      expect(acquired.fairScore).toBeDefined();
+      expect(acquired.fairScore?.overall).toBeGreaterThan(0);
     });
 
     it('should throw error when PDF URL missing', async () => {
@@ -144,70 +152,56 @@ describe('Acquisition Service', () => {
 
       await expect(service.downloadPaper(noPdfPaper)).rejects.toThrow('No PDF URL');
     });
-
-    it('should compute file size in bytes', async () => {
-      const acquired = await service.downloadPaper(mockPaper);
-
-      expect(acquired.sizeBytes).toBeGreaterThan(0);
-    });
-
-    it('should include FAIR score in acquisition', async () => {
-      const acquired = await service.downloadPaper(mockPaper);
-
-      expect(acquired.fairScore).toBeDefined();
-      expect(acquired.fairScore?.overall).toBeGreaterThan(0);
-    });
   });
 
   describe('Metadata Extraction', () => {
-    it('should extract metadata from PDF', async () => {
-      const metadata = await service.extractMetadata('test.pdf');
+    it('should extract metadata from PDFs including DOI when present', async () => {
+      const testCases = [
+        { file: 'test.pdf', expectDOI: true },
+        { file: 'unreadable.pdf', expectDOI: false },
+      ];
 
-      expect(metadata.title).toBeDefined();
-      expect(metadata.authors).toBeDefined();
-      expect(metadata.year).toBeDefined();
-    });
+      for (const { file, expectDOI } of testCases) {
+        const metadata = await service.extractMetadata(file);
 
-    it('should extract DOI when present in PDF', async () => {
-      const metadata = await service.extractMetadata('test.pdf');
+        // All PDFs should return metadata structure
+        expect(metadata).toBeDefined();
+        expect(metadata.title).toBeDefined();
+        expect(metadata.authors).toBeDefined();
+        expect(metadata.year).toBeDefined();
 
-      expect(metadata.doi).toBeDefined();
-      expect(metadata.doi).toMatch(/^10\./);
-    });
-
-    it('should handle PDFs without extractable metadata', async () => {
-      const metadata = await service.extractMetadata('unreadable.pdf');
-
-      expect(metadata).toBeDefined();
+        if (expectDOI) {
+          expect(metadata.doi).toBeDefined();
+          expect(metadata.doi).toMatch(/^10\./);
+        }
+      }
     });
   });
 
   describe('Checksum Computation', () => {
-    it('should compute SHA-256 checksum', async () => {
+    it('should compute consistent SHA-256 checksums', async () => {
+      // Single file checksum
       const checksum = await service.computeChecksum('test.pdf');
-
       expect(checksum).toHaveLength(64);
       expect(checksum).toMatch(/^[a-f0-9]{64}$/);
-    });
 
-    it('should produce consistent checksums for same file', async () => {
+      // Consistency check
       const checksum1 = await service.computeChecksum('test.pdf');
       const checksum2 = await service.computeChecksum('test.pdf');
-
       expect(checksum1).toBe(checksum2);
-    });
 
-    it('should produce different checksums for different files', async () => {
-      const checksum1 = await service.computeChecksum('file1.pdf');
-      const checksum2 = await service.computeChecksum('file2.pdf');
-
-      // In real implementation, these would differ
-      expect(checksum1).toBe(checksum2); // Mock returns same
+      // Different files (in real implementation would differ)
+      const fileChecksum1 = await service.computeChecksum('file1.pdf');
+      const fileChecksum2 = await service.computeChecksum('file2.pdf');
+      expect(fileChecksum1).toBe(fileChecksum2); // Mock returns same
     });
   });
 
   describe('REF-ID Assignment', () => {
-    it('should assign sequential REF-IDs', () => {
+    it('should assign sequential zero-padded unique REF-IDs', () => {
+      const ids = new Set<string>();
+
+      // First three IDs should be sequential
       const id1 = service.assignRefId();
       const id2 = service.assignRefId();
       const id3 = service.assignRefId();
@@ -215,17 +209,15 @@ describe('Acquisition Service', () => {
       expect(id1).toBe('REF-001');
       expect(id2).toBe('REF-002');
       expect(id3).toBe('REF-003');
-    });
 
-    it('should pad numbers with zeros', () => {
-      const id = service.assignRefId();
+      // All IDs should match pattern
+      [id1, id2, id3].forEach(id => {
+        expect(id).toMatch(/^REF-\d{3}$/);
+        ids.add(id);
+      });
 
-      expect(id).toMatch(/^REF-\d{3}$/);
-    });
-
-    it('should never assign duplicate IDs', () => {
-      const ids = new Set<string>();
-      for (let i = 0; i < 100; i++) {
+      // Generate many more to test uniqueness
+      for (let i = 0; i < 97; i++) {
         ids.add(service.assignRefId());
       }
 
@@ -234,129 +226,114 @@ describe('Acquisition Service', () => {
   });
 
   describe('FAIR Compliance Validation', () => {
-    it('should validate all FAIR dimensions', () => {
+    it('should validate all FAIR dimensions with criteria', () => {
       const score = service.calculateFAIRScore(mockPaper);
 
+      // All dimensions present
       expect(score.findable).toBeDefined();
       expect(score.accessible).toBeDefined();
       expect(score.interoperable).toBeDefined();
       expect(score.reusable).toBeDefined();
+
+      // Check specific criteria across dimensions
+      const criteriaChecks = [
+        { dimension: score.findable, id: 'F1', description: 'unique identifier' },
+        { dimension: score.accessible, id: 'A1', description: 'retrievability' },
+        { dimension: score.interoperable, id: 'I2', description: 'vocabularies' },
+        { dimension: score.reusable, id: 'R1.2', description: 'provenance' },
+      ];
+
+      for (const { dimension, id } of criteriaChecks) {
+        const criterion = dimension.criteria.find((c) => c.id === id);
+        expect(criterion).toBeDefined();
+        if (id === 'F1' || id === 'A1') {
+          expect(criterion?.met).toBe(true);
+        }
+      }
     });
 
-    it('should give high score for papers with DOI', () => {
-      const score = service.calculateFAIRScore(mockPaper);
-
-      expect(score.overall).toBeGreaterThan(0.7);
-      expect(score.findable.score).toBe(1.0);
-    });
-
-    it('should give lower score for papers without DOI', () => {
+    it('should score papers differently based on DOI presence', () => {
+      const withDOI = service.calculateFAIRScore(mockPaper);
       const noDOIPaper = { ...mockPaper, doi: undefined };
-      const score = service.calculateFAIRScore(noDOIPaper);
+      const withoutDOI = service.calculateFAIRScore(noDOIPaper);
 
-      expect(score.overall).toBeLessThan(0.7);
-      expect(score.notes.length).toBeGreaterThan(0);
-    });
+      // Papers with DOI score higher
+      expect(withDOI.overall).toBeGreaterThan(0.7);
+      expect(withDOI.findable.score).toBe(1.0);
 
-    it('should check F1 criterion for unique identifier', () => {
-      const score = service.calculateFAIRScore(mockPaper);
+      // Papers without DOI score lower with notes
+      expect(withoutDOI.overall).toBeLessThan(0.7);
+      expect(withoutDOI.notes.length).toBeGreaterThan(0);
 
-      const f1 = score.findable.criteria.find((c) => c.id === 'F1');
-      expect(f1).toBeDefined();
-      expect(f1?.met).toBe(true);
-    });
-
-    it('should check A1 criterion for retrievability', () => {
-      const score = service.calculateFAIRScore(mockPaper);
-
-      const a1 = score.accessible.criteria.find((c) => c.id === 'A1');
-      expect(a1).toBeDefined();
-      expect(a1?.met).toBe(true);
-    });
-
-    it('should check I2 criterion for vocabularies', () => {
-      const score = service.calculateFAIRScore(mockPaper);
-
-      const i2 = score.interoperable.criteria.find((c) => c.id === 'I2');
-      expect(i2).toBeDefined();
-    });
-
-    it('should check R1.2 criterion for provenance', () => {
-      const score = service.calculateFAIRScore(mockPaper);
-
-      const r12 = score.reusable.criteria.find((c) => c.id === 'R1.2');
-      expect(r12).toBeDefined();
+      // Overall comparison
+      expect(withDOI.overall).toBeGreaterThan(withoutDOI.overall);
     });
   });
 
   describe('FAIR Score Calculation', () => {
-    it('should calculate overall score from dimensions', () => {
-      const score = service.calculateFAIRScore(mockPaper);
+    it('should calculate normalized scores with explanatory notes', () => {
+      const scoreWithDOI = service.calculateFAIRScore(mockPaper);
+      const scoreWithoutDOI = service.calculateFAIRScore({ ...mockPaper, doi: undefined });
 
-      expect(score.overall).toBeGreaterThan(0);
-      expect(score.overall).toBeLessThanOrEqual(1);
-    });
+      // Score bounds
+      expect(scoreWithDOI.overall).toBeGreaterThan(0);
+      expect(scoreWithDOI.overall).toBeLessThanOrEqual(1);
 
-    it('should weight findability highly', () => {
-      const withDOI = service.calculateFAIRScore(mockPaper);
-      const withoutDOI = service.calculateFAIRScore({ ...mockPaper, doi: undefined });
+      // Findability heavily weighted
+      expect(scoreWithDOI.overall).toBeGreaterThan(scoreWithoutDOI.overall);
 
-      expect(withDOI.overall).toBeGreaterThan(withoutDOI.overall);
-    });
-
-    it('should include explanatory notes', () => {
-      const score = service.calculateFAIRScore({ ...mockPaper, doi: undefined });
-
-      expect(score.notes).toBeDefined();
-      expect(score.notes.length).toBeGreaterThan(0);
+      // Notes provided for issues
+      expect(scoreWithoutDOI.notes).toBeDefined();
+      expect(scoreWithoutDOI.notes.length).toBeGreaterThan(0);
     });
   });
 
   describe('Deduplication', () => {
-    it('should detect duplicate by DOI', async () => {
-      service.markAsAcquired(mockPaper);
+    it('should detect duplicates by DOI, arXiv ID, or title fallback', async () => {
+      const testCases = [
+        { paper: mockPaper, description: 'DOI matching' },
+        { paper: { ...mockPaper, doi: undefined, arxivId: 'arXiv:2210.03629' }, description: 'arXiv ID matching' },
+        { paper: { ...mockPaper, doi: undefined, arxivId: undefined }, description: 'title fallback' },
+      ];
 
-      const isDuplicate = await service.checkDuplicate(mockPaper);
-      expect(isDuplicate).toBe(true);
-    });
+      for (const { paper, description } of testCases) {
+        // Before marking, should not be duplicate
+        let isDuplicate = await service.checkDuplicate(paper);
+        expect(isDuplicate).toBe(false);
 
-    it('should detect duplicate by arXiv ID', async () => {
-      const arxivPaper = { ...mockPaper, doi: undefined, arxivId: 'arXiv:2210.03629' };
-      service.markAsAcquired(arxivPaper);
+        // After marking, should be duplicate
+        service.markAsAcquired(paper);
+        isDuplicate = await service.checkDuplicate(paper);
+        expect(isDuplicate).toBe(true);
 
-      const isDuplicate = await service.checkDuplicate(arxivPaper);
-      expect(isDuplicate).toBe(true);
-    });
-
-    it('should fall back to title matching', async () => {
-      const noIdPaper = { ...mockPaper, doi: undefined, arxivId: undefined };
-      service.markAsAcquired(noIdPaper);
-
-      const isDuplicate = await service.checkDuplicate(noIdPaper);
-      expect(isDuplicate).toBe(true);
-    });
-
-    it('should not flag unique papers as duplicates', async () => {
-      const isDuplicate = await service.checkDuplicate(mockPaper);
-      expect(isDuplicate).toBe(false);
+        // Reset for next test
+        service = new MockAcquisitionService();
+      }
     });
   });
 
   describe('Error Handling', () => {
-    it('should handle download failures gracefully', async () => {
-      const badPaper = { ...mockPaper, pdfUrl: 'https://invalid.url/404.pdf' };
+    it('should handle various failure scenarios gracefully', async () => {
+      const scenarios = [
+        {
+          operation: () => service.downloadPaper({ ...mockPaper, pdfUrl: 'https://invalid.url/404.pdf' }),
+          description: 'download failures',
+        },
+        {
+          operation: () => service.extractMetadata('corrupted.pdf'),
+          description: 'extraction failures on corrupted PDFs',
+        },
+        {
+          operation: () => service.computeChecksum('nonexistent.pdf'),
+          description: 'checksum computation on missing files',
+        },
+      ];
 
-      // Real implementation would handle network errors
-      await expect(service.downloadPaper(badPaper)).resolves.toBeDefined();
-    });
-
-    it('should handle extraction failures on corrupted PDFs', async () => {
-      await expect(service.extractMetadata('corrupted.pdf')).resolves.toBeDefined();
-    });
-
-    it('should handle checksum computation on missing files', async () => {
-      // Real implementation would throw error
-      await expect(service.computeChecksum('nonexistent.pdf')).resolves.toBeDefined();
+      for (const { operation, description } of scenarios) {
+        // Real implementation would handle these appropriately
+        // Mock implementation resolves all
+        await expect(operation()).resolves.toBeDefined();
+      }
     });
   });
 });

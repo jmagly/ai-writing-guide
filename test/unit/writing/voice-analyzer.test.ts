@@ -17,36 +17,31 @@ describe('VoiceAnalyzer', () => {
   });
 
   describe('Voice Analysis', () => {
-    it('should analyze academic voice', () => {
-      const content = 'Recent research (Smith, 2023) suggests that performance optimization may demonstrate significant benefits. Furthermore, studies indicate various approaches merit consideration.';
-      const profile = analyzer.analyzeVoice(content);
+    it('should analyze all voice types and provide complete profile data', () => {
+      const voiceTests = [
+        {
+          type: 'academic',
+          content: 'Recent research (Smith, 2023) suggests that performance optimization may demonstrate significant benefits. Furthermore, studies indicate various approaches merit consideration.',
+        },
+        {
+          type: 'technical',
+          content: 'The implementation reduces latency by 40ms through connection pooling. System throughput increases by 30% with the optimized payload structure.',
+        },
+        {
+          type: 'executive',
+          content: 'This approach delivers $500K annual savings with 30% ROI. We recommend strategic adoption to maximize value for stakeholders.',
+        },
+        {
+          type: 'casual',
+          content: "Here's the thing - it's really important. I've seen this pattern work before. Don't overthink it.",
+        },
+      ];
 
-      expect(profile.primaryVoice).toBe('academic');
-      expect(profile.characteristics.academic).toBeGreaterThan(0);
-    });
-
-    it('should analyze technical voice', () => {
-      const content = 'The implementation reduces latency by 40ms through connection pooling. System throughput increases by 30% with the optimized payload structure.';
-      const profile = analyzer.analyzeVoice(content);
-
-      expect(profile.primaryVoice).toBe('technical');
-      expect(profile.characteristics.technical).toBeGreaterThan(0);
-    });
-
-    it('should analyze executive voice', () => {
-      const content = 'This approach delivers $500K annual savings with 30% ROI. We recommend strategic adoption to maximize value for stakeholders.';
-      const profile = analyzer.analyzeVoice(content);
-
-      expect(profile.primaryVoice).toBe('executive');
-      expect(profile.characteristics.executive).toBeGreaterThan(0);
-    });
-
-    it('should analyze casual voice', () => {
-      const content = "Here's the thing - it's really important. I've seen this pattern work before. Don't overthink it.";
-      const profile = analyzer.analyzeVoice(content);
-
-      expect(profile.primaryVoice).toBe('casual');
-      expect(profile.characteristics.casual).toBeGreaterThan(0);
+      voiceTests.forEach(({ type, content }) => {
+        const profile = analyzer.analyzeVoice(content);
+        expect(profile.primaryVoice, `failed to detect ${type} voice`).toBe(type);
+        expect(profile.characteristics[type], `${type} characteristics should be present`).toBeGreaterThan(0);
+      });
     });
 
     it('should detect mixed voice', () => {
@@ -59,26 +54,19 @@ describe('VoiceAnalyzer', () => {
       expect(profile.characteristics.executive).toBeGreaterThan(0);
     });
 
-    it('should provide confidence score', () => {
-      const content = 'The implementation optimizes performance through caching with 50ms latency reduction.';
+    it('should provide confidence score, markers, and metadata', () => {
+      const content = 'This is a test. It has multiple sentences. Each sentence contributes to the analysis with performance optimization through caching.';
       const profile = analyzer.analyzeVoice(content);
 
+      // Confidence
       expect(profile.confidence).toBeGreaterThanOrEqual(0);
       expect(profile.confidence).toBeLessThanOrEqual(100);
-    });
 
-    it('should detect voice markers', () => {
-      const content = 'Research suggests that latency reduction improves user experience.';
-      const profile = analyzer.analyzeVoice(content);
-
+      // Markers
       expect(profile.markers).toBeTruthy();
       expect(Array.isArray(profile.markers)).toBe(true);
-    });
 
-    it('should provide metadata', () => {
-      const content = 'This is a test. It has multiple sentences. Each sentence contributes to the analysis.';
-      const profile = analyzer.analyzeVoice(content);
-
+      // Metadata
       expect(profile.metadata.wordCount).toBeGreaterThan(0);
       expect(profile.metadata.sentenceCount).toBeGreaterThan(0);
       expect(profile.metadata.averageSentenceLength).toBeGreaterThan(0);
@@ -86,32 +74,30 @@ describe('VoiceAnalyzer', () => {
   });
 
   describe('Voice Detection', () => {
-    it('should detect academic voice', () => {
-      const content = 'Studies (Jones, 2022) demonstrate that the approach may yield benefits.';
-      const voice = analyzer.detectVoice(content);
+    it('should detect all voice types correctly', () => {
+      const voiceTests = [
+        {
+          type: 'academic',
+          content: 'Studies (Jones, 2022) demonstrate that the approach may yield benefits.',
+        },
+        {
+          type: 'technical',
+          content: 'The API endpoint returns JSON with 200 status in 15ms average latency.',
+        },
+        {
+          type: 'executive',
+          content: 'Strategic adoption will deliver 25% cost reduction and $1M annual savings.',
+        },
+        {
+          type: 'casual',
+          content: "Look, here's what I think - it's pretty straightforward. Just don't overthink it.",
+        },
+      ];
 
-      expect(voice).toBe('academic');
-    });
-
-    it('should detect technical voice', () => {
-      const content = 'The API endpoint returns JSON with 200 status in 15ms average latency.';
-      const voice = analyzer.detectVoice(content);
-
-      expect(voice).toBe('technical');
-    });
-
-    it('should detect executive voice', () => {
-      const content = 'Strategic adoption will deliver 25% cost reduction and $1M annual savings.';
-      const voice = analyzer.detectVoice(content);
-
-      expect(voice).toBe('executive');
-    });
-
-    it('should detect casual voice', () => {
-      const content = "Look, here's what I think - it's pretty straightforward. Just don't overthink it.";
-      const voice = analyzer.detectVoice(content);
-
-      expect(voice).toBe('casual');
+      voiceTests.forEach(({ type, content }) => {
+        const voice = analyzer.detectVoice(content);
+        expect(voice, `failed to detect ${type} voice`).toBe(type);
+      });
     });
 
     it('should detect mixed voice when appropriate', () => {
@@ -160,16 +146,9 @@ describe('VoiceAnalyzer', () => {
       expect(score).toBeGreaterThan(40);
     });
 
-    it('should handle single variation', () => {
-      const score = analyzer.scoreDiversity(['Single variation']);
-
-      expect(score).toBe(0);
-    });
-
-    it('should handle empty array', () => {
-      const score = analyzer.scoreDiversity([]);
-
-      expect(score).toBe(0);
+    it('should handle edge cases', () => {
+      expect(analyzer.scoreDiversity(['Single variation'])).toBe(0);
+      expect(analyzer.scoreDiversity([])).toBe(0);
     });
   });
 
@@ -223,28 +202,29 @@ describe('VoiceAnalyzer', () => {
       expect(result.similarity).toBeGreaterThan(90);
     });
 
-    it('should detect length changes', () => {
-      const short = 'Brief content.';
-      const long = 'This is much longer content with significantly more detail and explanation of various concepts and approaches.';
-      const result = analyzer.compareVariations(short, long);
+    it('should detect specific change types', () => {
+      const changeTests = [
+        {
+          type: 'length',
+          original: 'Brief content.',
+          variation: 'This is much longer content with significantly more detail and explanation of various concepts and approaches.',
+        },
+        {
+          type: 'perspective',
+          original: 'I implemented the solution.',
+          variation: 'One implements the solution.',
+        },
+        {
+          type: 'tone',
+          original: 'The implementation demonstrates efficacy.',
+          variation: "It's working great!",
+        },
+      ];
 
-      expect(result.differences.some(d => d.description.match(/length/i))).toBe(true);
-    });
-
-    it('should detect perspective changes', () => {
-      const firstPerson = 'I implemented the solution.';
-      const thirdPerson = 'One implements the solution.';
-      const result = analyzer.compareVariations(firstPerson, thirdPerson);
-
-      expect(result.differences.some(d => d.description.match(/perspective/i))).toBe(true);
-    });
-
-    it('should detect tone changes', () => {
-      const formal = 'The implementation demonstrates efficacy.';
-      const casual = "It's working great!";
-      const result = analyzer.compareVariations(formal, casual);
-
-      expect(result.differences.some(d => d.description.match(/tone/i))).toBe(true);
+      changeTests.forEach(({ type, original, variation }) => {
+        const result = analyzer.compareVariations(original, variation);
+        expect(result.differences.some(d => d.description.match(new RegExp(type, 'i'))), `failed to detect ${type} change`).toBe(true);
+      });
     });
   });
 
@@ -279,32 +259,30 @@ describe('VoiceAnalyzer', () => {
   });
 
   describe('Tone Detection', () => {
-    it('should detect formal tone', () => {
-      const content = 'Furthermore, the implementation demonstrates considerable efficacy. Nevertheless, certain limitations merit acknowledgment.';
-      const tone = analyzer.detectTone(content);
+    it('should detect all tone types', () => {
+      const toneTests = [
+        {
+          tone: 'formal',
+          content: 'Furthermore, the implementation demonstrates considerable efficacy. Nevertheless, certain limitations merit acknowledgment.',
+        },
+        {
+          tone: 'conversational',
+          content: "Look, here's the thing - it's pretty simple. Just don't overthink it, really.",
+        },
+        {
+          tone: 'enthusiastic',
+          content: 'This is amazing! The results are fantastic! Absolutely brilliant work!',
+        },
+        {
+          tone: 'matter-of-fact',
+          content: 'The system works. Performance is acceptable. Results meet requirements.',
+        },
+      ];
 
-      expect(tone).toBe('formal');
-    });
-
-    it('should detect conversational tone', () => {
-      const content = "Look, here's the thing - it's pretty simple. Just don't overthink it, really.";
-      const tone = analyzer.detectTone(content);
-
-      expect(tone).toBe('conversational');
-    });
-
-    it('should detect enthusiastic tone', () => {
-      const content = 'This is amazing! The results are fantastic! Absolutely brilliant work!';
-      const tone = analyzer.detectTone(content);
-
-      expect(tone).toBe('enthusiastic');
-    });
-
-    it('should detect matter-of-fact tone', () => {
-      const content = 'The system works. Performance is acceptable. Results meet requirements.';
-      const tone = analyzer.detectTone(content);
-
-      expect(tone).toBe('matter-of-fact');
+      toneTests.forEach(({ tone, content }) => {
+        const detected = analyzer.detectTone(content);
+        expect(detected, `failed to detect ${tone} tone`).toBe(tone);
+      });
     });
   });
 
@@ -368,22 +346,17 @@ describe('VoiceAnalyzer', () => {
       expect(count).toBe(3);
     });
 
-    it('should calculate Levenshtein distance', () => {
-      const distance = analyzer['levenshteinDistance']('kitten', 'sitting');
+    it('should calculate Levenshtein distance for various cases', () => {
+      const distanceTests = [
+        { str1: 'kitten', str2: 'sitting', expected: 3 },
+        { str1: 'test', str2: 'test', expected: 0 },
+        { str1: '', str2: 'test', expected: 4 },
+      ];
 
-      expect(distance).toBe(3);
-    });
-
-    it('should handle identical strings', () => {
-      const distance = analyzer['levenshteinDistance']('test', 'test');
-
-      expect(distance).toBe(0);
-    });
-
-    it('should handle empty strings', () => {
-      const distance = analyzer['levenshteinDistance']('', 'test');
-
-      expect(distance).toBe(4);
+      distanceTests.forEach(({ str1, str2, expected }) => {
+        const distance = analyzer['levenshteinDistance'](str1, str2);
+        expect(distance, `failed for '${str1}' vs '${str2}'`).toBe(expected);
+      });
     });
 
     it('should split content into sections', () => {
@@ -402,39 +375,34 @@ describe('VoiceAnalyzer', () => {
   });
 
   describe('Voice Markers', () => {
-    it('should detect strong academic markers', () => {
-      const content = 'Research (Smith, 2023) furthermore demonstrates that approaches may suggest benefits.';
-      const profile = analyzer.analyzeVoice(content);
+    it('should detect all voice marker types', () => {
+      const markerTests = [
+        {
+          type: 'academic',
+          content: 'Research (Smith, 2023) furthermore demonstrates that approaches may suggest benefits.',
+        },
+        {
+          type: 'technical',
+          content: 'System latency reduced by 40ms with 30% throughput improvement via payload optimization.',
+        },
+        {
+          type: 'executive',
+          content: '$500K annual savings with 30% ROI improvement. Strategic priority for Q3.',
+        },
+        {
+          type: 'casual',
+          content: "Here's the thing - it's really great! Don't worry, I've got this.",
+        },
+      ];
 
-      const academicMarkers = profile.markers.filter(m => m.type === 'academic');
-      expect(academicMarkers.length).toBeGreaterThan(0);
+      markerTests.forEach(({ type, content }) => {
+        const profile = analyzer.analyzeVoice(content);
+        const typeMarkers = profile.markers.filter(m => m.type === type);
+        expect(typeMarkers.length, `failed to detect ${type} markers`).toBeGreaterThan(0);
+      });
     });
 
-    it('should detect strong technical markers', () => {
-      const content = 'System latency reduced by 40ms with 30% throughput improvement via payload optimization.';
-      const profile = analyzer.analyzeVoice(content);
-
-      const technicalMarkers = profile.markers.filter(m => m.type === 'technical');
-      expect(technicalMarkers.length).toBeGreaterThan(0);
-    });
-
-    it('should detect strong executive markers', () => {
-      const content = '$500K annual savings with 30% ROI improvement. Strategic priority for Q3.';
-      const profile = analyzer.analyzeVoice(content);
-
-      const executiveMarkers = profile.markers.filter(m => m.type === 'executive');
-      expect(executiveMarkers.length).toBeGreaterThan(0);
-    });
-
-    it('should detect strong casual markers', () => {
-      const content = "Here's the thing - it's really great! Don't worry, I've got this.";
-      const profile = analyzer.analyzeVoice(content);
-
-      const casualMarkers = profile.markers.filter(m => m.type === 'casual');
-      expect(casualMarkers.length).toBeGreaterThan(0);
-    });
-
-    it('should track marker positions', () => {
+    it('should track marker positions correctly', () => {
       const content = 'First part. Research (Smith, 2023) in middle. End part.';
       const profile = analyzer.analyzeVoice(content);
 
@@ -455,102 +423,109 @@ describe('VoiceAnalyzer', () => {
   });
 
   describe('Structural Change Detection', () => {
-    it('should detect bullet point addition', () => {
-      const original = 'First point. Second point.';
-      const variation = '- First point\n- Second point';
-      const result = analyzer.compareVariations(original, variation);
+    it('should detect all structural change types', () => {
+      const structureTests = [
+        {
+          type: 'Converted to bullet point format',
+          original: 'First point. Second point.',
+          variation: '- First point\n- Second point',
+        },
+        {
+          type: 'Converted from bullet points to narrative',
+          original: '- First point\n- Second point',
+          variation: 'First point. Second point.',
+        },
+        {
+          type: 'Added section headings',
+          original: 'Plain content here.',
+          variation: '## Heading\n\nPlain content here.',
+        },
+        {
+          type: 'Converted to Q&A format',
+          original: 'Statement about topic.',
+          variation: 'Q: What about topic?\n\nA: Statement about topic.\n\nQ: More questions?\n\nA: More answers.',
+        },
+        {
+          type: 'Added code examples',
+          original: 'Text content.',
+          variation: 'Text content.\n\n```typescript\nconst x = 10;\n```',
+        },
+      ];
 
-      expect(result.structuralChanges).toContain('Converted to bullet point format');
-    });
-
-    it('should detect bullet point removal', () => {
-      const original = '- First point\n- Second point';
-      const variation = 'First point. Second point.';
-      const result = analyzer.compareVariations(original, variation);
-
-      expect(result.structuralChanges).toContain('Converted from bullet points to narrative');
-    });
-
-    it('should detect heading addition', () => {
-      const original = 'Plain content here.';
-      const variation = '## Heading\n\nPlain content here.';
-      const result = analyzer.compareVariations(original, variation);
-
-      expect(result.structuralChanges).toContain('Added section headings');
-    });
-
-    it('should detect Q&A format conversion', () => {
-      const original = 'Statement about topic.';
-      const variation = 'Q: What about topic?\n\nA: Statement about topic.\n\nQ: More questions?\n\nA: More answers.';
-      const result = analyzer.compareVariations(original, variation);
-
-      expect(result.structuralChanges).toContain('Converted to Q&A format');
-    });
-
-    it('should detect code example addition', () => {
-      const original = 'Text content.';
-      const variation = 'Text content.\n\n```typescript\nconst x = 10;\n```';
-      const result = analyzer.compareVariations(original, variation);
-
-      expect(result.structuralChanges).toContain('Added code examples');
+      structureTests.forEach(({ type, original, variation }) => {
+        const result = analyzer.compareVariations(original, variation);
+        expect(result.structuralChanges, `failed to detect: ${type}`).toContain(type);
+      });
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty content', () => {
-      const profile = analyzer.analyzeVoice('');
+    it('should handle various edge cases correctly', () => {
+      const edgeCases = [
+        {
+          name: 'empty content',
+          content: '',
+          checks: (profile: VoiceProfile) => {
+            expect(profile.primaryVoice).toBeTruthy();
+            expect(profile.metadata.wordCount).toBe(0);
+          },
+        },
+        {
+          name: 'very short content',
+          content: 'OK.',
+          checks: (profile: VoiceProfile) => {
+            expect(profile).toBeTruthy();
+            expect(profile.metadata.wordCount).toBe(1);
+          },
+        },
+        {
+          name: 'very long content',
+          content: 'This is a long sentence. '.repeat(1000),
+          checks: (profile: VoiceProfile) => {
+            expect(profile.metadata.sentenceCount).toBe(1000);
+          },
+        },
+        {
+          name: 'no punctuation',
+          content: 'content without any punctuation marks at all',
+          checks: (profile: VoiceProfile) => {
+            expect(profile).toBeTruthy();
+          },
+        },
+        {
+          name: 'special characters',
+          content: 'Test with $pecial @nd #unusual characters!',
+          checks: (profile: VoiceProfile) => {
+            expect(profile.metadata.wordCount).toBeGreaterThan(0);
+          },
+        },
+        {
+          name: 'multiple consecutive spaces',
+          content: 'Words    with    extra     spaces.',
+          checks: (profile: VoiceProfile) => {
+            expect(profile.metadata.wordCount).toBe(4);
+          },
+        },
+        {
+          name: 'unicode characters',
+          content: 'Content with émojis 🚀 and special chars ñ ü.',
+          checks: (profile: VoiceProfile) => {
+            expect(profile).toBeTruthy();
+          },
+        },
+        {
+          name: 'newlines and formatting',
+          content: 'Line one.\n\nLine two.\n\nLine three.',
+          checks: (profile: VoiceProfile) => {
+            expect(profile.metadata.sentenceCount).toBe(3);
+          },
+        },
+      ];
 
-      expect(profile.primaryVoice).toBeTruthy();
-      expect(profile.metadata.wordCount).toBe(0);
-    });
-
-    it('should handle very short content', () => {
-      const profile = analyzer.analyzeVoice('OK.');
-
-      expect(profile).toBeTruthy();
-      expect(profile.metadata.wordCount).toBe(1);
-    });
-
-    it('should handle very long content', () => {
-      const longContent = 'This is a long sentence. '.repeat(1000);
-      const profile = analyzer.analyzeVoice(longContent);
-
-      expect(profile.metadata.sentenceCount).toBe(1000);
-    });
-
-    it('should handle content with no punctuation', () => {
-      const content = 'content without any punctuation marks at all';
-      const profile = analyzer.analyzeVoice(content);
-
-      expect(profile).toBeTruthy();
-    });
-
-    it('should handle content with special characters', () => {
-      const content = 'Test with $pecial @nd #unusual characters!';
-      const profile = analyzer.analyzeVoice(content);
-
-      expect(profile.metadata.wordCount).toBeGreaterThan(0);
-    });
-
-    it('should handle multiple consecutive spaces', () => {
-      const content = 'Words    with    extra     spaces.';
-      const profile = analyzer.analyzeVoice(content);
-
-      expect(profile.metadata.wordCount).toBe(4);
-    });
-
-    it('should handle unicode characters', () => {
-      const content = 'Content with émojis 🚀 and special chars ñ ü.';
-      const profile = analyzer.analyzeVoice(content);
-
-      expect(profile).toBeTruthy();
-    });
-
-    it('should handle newlines and formatting', () => {
-      const content = 'Line one.\n\nLine two.\n\nLine three.';
-      const profile = analyzer.analyzeVoice(content);
-
-      expect(profile.metadata.sentenceCount).toBe(3);
+      edgeCases.forEach(({ name, content, checks }) => {
+        const profile = analyzer.analyzeVoice(content);
+        checks(profile);
+      });
     });
   });
 });

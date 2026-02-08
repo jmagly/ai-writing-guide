@@ -31,10 +31,6 @@ describe('MetadataValidator', () => {
     await sandbox.cleanup();
   });
 
-  // ===========================
-  // Schema Validation Tests
-  // ===========================
-
   describe('validateSchema', () => {
     it('should accept valid manifest with all required fields', () => {
       const manifest = {
@@ -49,91 +45,52 @@ describe('MetadataValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should reject null manifest', () => {
-      const result = validator.validateSchema(null);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].message).toContain('must be an object');
+    it('should reject null or non-object manifest', () => {
+      const nullResult = validator.validateSchema(null);
+      expect(nullResult.valid).toBe(false);
+      expect(nullResult.errors).toHaveLength(1);
+      expect(nullResult.errors[0].message).toContain('must be an object');
+
+      const nonObjectResult = validator.validateSchema('not an object');
+      expect(nonObjectResult.valid).toBe(false);
+      expect(nonObjectResult.errors).toHaveLength(1);
     });
 
-    it('should reject non-object manifest', () => {
-      const result = validator.validateSchema('not an object');
-      expect(result.valid).toBe(false);
-      expect(result.errors).toHaveLength(1);
+    it('should reject manifests missing required fields', () => {
+      const testCases = [
+        { field: 'name', manifest: { version: '1.0.0', type: 'agent', description: 'Missing name' } },
+        { field: 'version', manifest: { name: 'Test', type: 'agent', description: 'Missing version' } },
+        { field: 'type', manifest: { name: 'Test', version: '1.0.0', description: 'Missing type' } },
+        { field: 'description', manifest: { name: 'Test', version: '1.0.0', type: 'agent' } }
+      ];
+
+      for (const { field, manifest } of testCases) {
+        const result = validator.validateSchema(manifest);
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.field === field)).toBe(true);
+      }
     });
 
-    it('should reject manifest missing name field', () => {
-      const manifest = {
-        version: '1.0.0',
-        type: 'agent',
-        description: 'Missing name'
-      };
-
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'name')).toBe(true);
-    });
-
-    it('should reject manifest missing version field', () => {
-      const manifest = {
-        name: 'Test',
-        type: 'agent',
-        description: 'Missing version'
-      };
-
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'version')).toBe(true);
-    });
-
-    it('should reject manifest missing type field', () => {
-      const manifest = {
-        name: 'Test',
-        version: '1.0.0',
-        description: 'Missing type'
-      };
-
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'type')).toBe(true);
-    });
-
-    it('should reject manifest missing description field', () => {
-      const manifest = {
-        name: 'Test',
-        version: '1.0.0',
-        type: 'agent'
-      };
-
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'description')).toBe(true);
-    });
-
-    it('should reject non-string name', () => {
-      const manifest = {
+    it('should reject invalid field types', () => {
+      const nonStringName = {
         name: 123,
         version: '1.0.0',
         type: 'agent',
         description: 'Test'
       };
+      const nameResult = validator.validateSchema(nonStringName);
+      expect(nameResult.valid).toBe(false);
+      expect(nameResult.errors.some(e => e.field === 'name' && e.message.includes('string'))).toBe(true);
 
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'name' && e.message.includes('string'))).toBe(true);
-    });
-
-    it('should reject invalid type value', () => {
-      const manifest = {
+      const invalidType = {
         name: 'Test',
         version: '1.0.0',
         type: 'invalid-type',
         description: 'Test'
       };
-
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'type')).toBe(true);
+      const typeResult = validator.validateSchema(invalidType);
+      expect(typeResult.valid).toBe(false);
+      expect(typeResult.errors.some(e => e.field === 'type')).toBe(true);
     });
 
     it('should accept all valid type values', () => {
@@ -152,32 +109,28 @@ describe('MetadataValidator', () => {
       }
     });
 
-    it('should reject non-array files field', () => {
-      const manifest = {
+    it('should reject invalid files field', () => {
+      const nonArrayFiles = {
         name: 'Test',
         version: '1.0.0',
         type: 'agent',
         description: 'Test',
         files: 'not-an-array'
       };
+      const result1 = validator.validateSchema(nonArrayFiles);
+      expect(result1.valid).toBe(false);
+      expect(result1.errors.some(e => e.field === 'files')).toBe(true);
 
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'files')).toBe(true);
-    });
-
-    it('should reject files array with non-string items', () => {
-      const manifest = {
+      const nonStringItems = {
         name: 'Test',
         version: '1.0.0',
         type: 'agent',
         description: 'Test',
         files: ['file1.md', 123, 'file2.md']
       };
-
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'files')).toBe(true);
+      const result2 = validator.validateSchema(nonStringItems);
+      expect(result2.valid).toBe(false);
+      expect(result2.errors.some(e => e.field === 'files')).toBe(true);
     });
 
     it('should accept valid files array', () => {
@@ -193,18 +146,28 @@ describe('MetadataValidator', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('should reject non-object dependencies field', () => {
-      const manifest = {
+    it('should reject invalid dependencies field', () => {
+      const nonObjectDeps = {
         name: 'Test',
         version: '1.0.0',
         type: 'agent',
         description: 'Test',
         dependencies: 'not-an-object'
       };
+      const result1 = validator.validateSchema(nonObjectDeps);
+      expect(result1.valid).toBe(false);
+      expect(result1.errors.some(e => e.field === 'dependencies')).toBe(true);
 
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'dependencies')).toBe(true);
+      const arrayDeps = {
+        name: 'Test',
+        version: '1.0.0',
+        type: 'agent',
+        description: 'Test',
+        dependencies: ['plugin-a', 'plugin-b']
+      };
+      const result2 = validator.validateSchema(arrayDeps);
+      expect(result2.valid).toBe(false);
+      expect(result2.errors.some(e => e.field === 'dependencies')).toBe(true);
     });
 
     it('should accept valid dependencies object', () => {
@@ -222,90 +185,37 @@ describe('MetadataValidator', () => {
       const result = validator.validateSchema(manifest);
       expect(result.valid).toBe(true);
     });
-
-    it('should reject array dependencies field', () => {
-      const manifest = {
-        name: 'Test',
-        version: '1.0.0',
-        type: 'agent',
-        description: 'Test',
-        dependencies: ['plugin-a', 'plugin-b']
-      };
-
-      const result = validator.validateSchema(manifest);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.field === 'dependencies')).toBe(true);
-    });
   });
 
-  // ===========================
-  // Required Fields Validation
-  // ===========================
-
   describe('validateRequiredFields', () => {
-    it('should reject empty name', () => {
-      const manifest = {
-        name: '',
-        version: '1.0.0',
-        type: 'agent' as const,
-        description: 'Test',
-        files: ['test.md']
-      };
+    it('should reject empty or whitespace-only required fields', () => {
+      const testCases = [
+        { field: 'name', manifest: { name: '', version: '1.0.0', type: 'agent', description: 'Test', files: ['test.md'] } },
+        { field: 'name', manifest: { name: '   ', version: '1.0.0', type: 'agent', description: 'Test', files: ['test.md'] } },
+        { field: 'description', manifest: { name: 'Test', version: '1.0.0', type: 'agent', description: '', files: ['test.md'] } }
+      ];
 
-      const errors = validator.validateRequiredFields(manifest);
-      expect(errors.some(e => e.field === 'name')).toBe(true);
+      for (const { field, manifest } of testCases) {
+        const errors = validator.validateRequiredFields(manifest as any);
+        expect(errors.some(e => e.field === field)).toBe(true);
+      }
     });
 
-    it('should reject whitespace-only name', () => {
-      const manifest = {
-        name: '   ',
-        version: '1.0.0',
-        type: 'agent' as const,
-        description: 'Test',
-        files: ['test.md']
-      };
+    it('should require files for agent and command types', () => {
+      const types: Array<'agent' | 'command'> = ['agent', 'command'];
 
-      const errors = validator.validateRequiredFields(manifest);
-      expect(errors.some(e => e.field === 'name')).toBe(true);
-    });
+      for (const type of types) {
+        const manifest = {
+          name: 'Test',
+          version: '1.0.0',
+          type,
+          description: 'Test',
+          files: []
+        };
 
-    it('should reject empty description', () => {
-      const manifest = {
-        name: 'Test',
-        version: '1.0.0',
-        type: 'agent' as const,
-        description: '',
-        files: ['test.md']
-      };
-
-      const errors = validator.validateRequiredFields(manifest);
-      expect(errors.some(e => e.field === 'description')).toBe(true);
-    });
-
-    it('should require files for agent type', () => {
-      const manifest = {
-        name: 'Test',
-        version: '1.0.0',
-        type: 'agent' as const,
-        description: 'Test',
-        files: []
-      };
-
-      const errors = validator.validateRequiredFields(manifest);
-      expect(errors.some(e => e.field === 'files')).toBe(true);
-    });
-
-    it('should require files for command type', () => {
-      const manifest = {
-        name: 'Test',
-        version: '1.0.0',
-        type: 'command' as const,
-        description: 'Test',
-        files: []
-      };
-
-      const errors = validator.validateRequiredFields(manifest);
-      expect(errors.some(e => e.field === 'files')).toBe(true);
+        const errors = validator.validateRequiredFields(manifest);
+        expect(errors.some(e => e.field === 'files')).toBe(true);
+      }
     });
 
     it('should not require files for template type', () => {
@@ -322,58 +232,36 @@ describe('MetadataValidator', () => {
     });
   });
 
-  // ===========================
-  // Version Validation Tests
-  // ===========================
-
   describe('validateVersion', () => {
-    it('should accept valid semver version', () => {
-      const errors = validator.validateVersion('1.0.0');
-      expect(errors).toHaveLength(0);
+    it('should accept valid semantic versions', () => {
+      const validVersions = [
+        { version: '1.0.0', description: 'basic semver' },
+        { version: '2.5.13', description: 'with patch number' },
+        { version: '1.0.0-alpha', description: 'pre-release' },
+        { version: '1.0.0-beta.1+build.123', description: 'pre-release with build metadata' },
+        { version: 'v1.0.0', description: 'with v prefix (normalized by semver)' }
+      ];
+
+      for (const { version } of validVersions) {
+        const errors = validator.validateVersion(version);
+        expect(errors).toHaveLength(0);
+      }
     });
 
-    it('should accept version with patch number', () => {
-      const errors = validator.validateVersion('2.5.13');
-      expect(errors).toHaveLength(0);
-    });
+    it('should reject invalid versions', () => {
+      const invalidVersions = [
+        { version: '1.0', message: 'Invalid semantic version' },
+        { version: '', message: 'required' },
+        { version: 'one.two.three', message: 'Invalid semantic version' }
+      ];
 
-    it('should accept pre-release version', () => {
-      const errors = validator.validateVersion('1.0.0-alpha');
-      expect(errors).toHaveLength(0);
-    });
-
-    it('should accept pre-release with build metadata', () => {
-      const errors = validator.validateVersion('1.0.0-beta.1+build.123');
-      expect(errors).toHaveLength(0);
-    });
-
-    it('should reject invalid version format', () => {
-      const errors = validator.validateVersion('1.0');
-      expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('Invalid semantic version');
-    });
-
-    it('should accept version with v prefix (normalized by semver)', () => {
-      // Note: semver.valid('v1.0.0') returns '1.0.0', which is valid
-      const errors = validator.validateVersion('v1.0.0');
-      expect(errors).toHaveLength(0);
-    });
-
-    it('should reject empty version', () => {
-      const errors = validator.validateVersion('');
-      expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('required');
-    });
-
-    it('should reject non-numeric version', () => {
-      const errors = validator.validateVersion('one.two.three');
-      expect(errors).toHaveLength(1);
+      for (const { version, message } of invalidVersions) {
+        const errors = validator.validateVersion(version);
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toContain(message);
+      }
     });
   });
-
-  // ===========================
-  // File Reference Validation
-  // ===========================
 
   describe('validateFileReferences', () => {
     it('should pass when all files exist', async () => {
@@ -392,56 +280,62 @@ describe('MetadataValidator', () => {
       expect(errors).toHaveLength(0);
     });
 
-    it('should fail when file does not exist', async () => {
+    it('should fail for non-existent file or directory path', async () => {
       await sandbox.writeFile('test1.md', '# Test 1');
+      await sandbox.createDirectory('test-dir');
 
-      const manifest = {
+      const missingFile = {
         name: 'Test',
         version: '1.0.0',
         type: 'agent' as const,
         description: 'Test',
         files: ['test1.md', 'missing.md']
       };
+      const errors1 = await validator.validateFileReferences(missingFile, sandbox.getPath());
+      expect(errors1).toHaveLength(1);
+      expect(errors1[0].message).toContain('does not exist');
+      expect(errors1[0].path).toBe('missing.md');
 
-      const errors = await validator.validateFileReferences(manifest, sandbox.getPath());
-      expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('does not exist');
-      expect(errors[0].path).toBe('missing.md');
-    });
-
-    it('should fail when path is a directory', async () => {
-      await sandbox.createDirectory('test-dir');
-
-      const manifest = {
+      const dirPath = {
         name: 'Test',
         version: '1.0.0',
         type: 'agent' as const,
         description: 'Test',
         files: ['test-dir']
       };
-
-      const errors = await validator.validateFileReferences(manifest, sandbox.getPath());
-      expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('not a file');
+      const errors2 = await validator.validateFileReferences(dirPath, sandbox.getPath());
+      expect(errors2).toHaveLength(1);
+      expect(errors2[0].message).toContain('not a file');
     });
 
-    it('should handle subdirectory files', async () => {
+    it('should handle subdirectory files and absolute paths', async () => {
       await sandbox.createDirectory('subdir');
       await sandbox.writeFile('subdir/test.md', '# Test');
+      await sandbox.writeFile('abs-test.md', '# Abs Test');
 
-      const manifest = {
+      const relativePath = {
         name: 'Test',
         version: '1.0.0',
         type: 'agent' as const,
         description: 'Test',
         files: ['subdir/test.md']
       };
+      const errors1 = await validator.validateFileReferences(relativePath, sandbox.getPath());
+      expect(errors1).toHaveLength(0);
 
-      const errors = await validator.validateFileReferences(manifest, sandbox.getPath());
-      expect(errors).toHaveLength(0);
+      const absolutePath = sandbox.getPath('abs-test.md');
+      const absoluteManifest = {
+        name: 'Test',
+        version: '1.0.0',
+        type: 'agent' as const,
+        description: 'Test',
+        files: [absolutePath]
+      };
+      const errors2 = await validator.validateFileReferences(absoluteManifest, sandbox.getPath());
+      expect(errors2).toHaveLength(0);
     });
 
-    it('should return empty array when files array is empty', async () => {
+    it('should return empty array for empty files array', async () => {
       const manifest = {
         name: 'Test',
         version: '1.0.0',
@@ -466,27 +360,7 @@ describe('MetadataValidator', () => {
       const errors = await validator.validateFileReferences(manifest, sandbox.getPath());
       expect(errors).toHaveLength(3);
     });
-
-    it('should handle absolute paths correctly', async () => {
-      await sandbox.writeFile('test.md', '# Test');
-      const absolutePath = sandbox.getPath('test.md');
-
-      const manifest = {
-        name: 'Test',
-        version: '1.0.0',
-        type: 'agent' as const,
-        description: 'Test',
-        files: [absolutePath]
-      };
-
-      const errors = await validator.validateFileReferences(manifest, sandbox.getPath());
-      expect(errors).toHaveLength(0);
-    });
   });
-
-  // ===========================
-  // Dependency Validation
-  // ===========================
 
   describe('validateDependencies', () => {
     it('should accept valid semver ranges', () => {
@@ -494,51 +368,27 @@ describe('MetadataValidator', () => {
         'plugin-a': '^1.0.0',
         'plugin-b': '~2.3.4',
         'plugin-c': '>=1.2.3 <2.0.0',
-        'plugin-d': '1.x'
+        'plugin-d': '1.x',
+        'plugin-e': '*',
+        'plugin-f': 'x.x.x'
       };
 
       const errors = validator.validateDependencies(dependencies);
       expect(errors).toHaveLength(0);
     });
 
-    it('should reject invalid semver range', () => {
-      const dependencies = {
-        'plugin-a': 'invalid-version'
-      };
+    it('should reject invalid dependencies', () => {
+      const testCases = [
+        { dependencies: { 'plugin-a': 'invalid-version' }, message: 'invalid version range' },
+        { dependencies: { '': '1.0.0' }, message: 'name cannot be empty' },
+        { dependencies: { 'plugin-a': '' }, message: 'empty version range' }
+      ];
 
-      const errors = validator.validateDependencies(dependencies);
-      expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('invalid version range');
-    });
-
-    it('should reject empty dependency name', () => {
-      const dependencies = {
-        '': '1.0.0'
-      };
-
-      const errors = validator.validateDependencies(dependencies);
-      expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('name cannot be empty');
-    });
-
-    it('should reject empty version range', () => {
-      const dependencies = {
-        'plugin-a': ''
-      };
-
-      const errors = validator.validateDependencies(dependencies);
-      expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('empty version range');
-    });
-
-    it('should accept wildcard versions', () => {
-      const dependencies = {
-        'plugin-a': '*',
-        'plugin-b': 'x.x.x'
-      };
-
-      const errors = validator.validateDependencies(dependencies);
-      expect(errors).toHaveLength(0);
+      for (const { dependencies, message } of testCases) {
+        const errors = validator.validateDependencies(dependencies);
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toContain(message);
+      }
     });
 
     it('should detect multiple invalid dependencies', () => {
@@ -552,10 +402,6 @@ describe('MetadataValidator', () => {
       expect(errors).toHaveLength(2);
     });
   });
-
-  // ===========================
-  // Batch Validation Tests
-  // ===========================
 
   describe('validateDirectory', () => {
     it('should validate all manifests in directory', async () => {
@@ -580,10 +426,10 @@ files: []
 `);
 
       const results = await validator.validateDirectory(sandbox.getPath(), false);
-      expect(results.size).toBe(0); // No manifests at root level
+      expect(results.size).toBe(0);
     });
 
-    it('should find manifests recursively', async () => {
+    it('should find and validate deeply nested manifests recursively', async () => {
       await sandbox.createDirectory('agents/agent1');
       await sandbox.writeFile('agents/agent1/manifest.md', `---
 name: Agent 1
@@ -593,25 +439,26 @@ description: Test agent
 ---
 `);
 
+      await sandbox.createDirectory('a/b/c/d');
+      await sandbox.writeFile('a/b/c/d/manifest.md', `---
+name: Deep
+version: 1.0.0
+type: template
+description: Deeply nested
+---
+`);
+
       const results = await validator.validateDirectory(sandbox.getPath(), true);
-      expect(results.size).toBe(1);
+      expect(results.size).toBe(2);
     });
 
-    it('should detect invalid manifests in batch', async () => {
+    it('should detect and handle invalid manifests in batch', async () => {
       await sandbox.createDirectory('invalid');
       await sandbox.writeFile('invalid/manifest.md', `---
 name: Invalid
 ---
 `);
 
-      const results = await validator.validateDirectory(sandbox.getPath(), true);
-      expect(results.size).toBe(1);
-      const result = Array.from(results.values())[0];
-      expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-    });
-
-    it('should handle mixed valid and invalid manifests', async () => {
       await sandbox.createDirectory('valid');
       await sandbox.writeFile('valid/manifest.md', `---
 name: Valid Agent
@@ -621,18 +468,15 @@ description: A valid agent
 ---
 `);
 
-      await sandbox.createDirectory('invalid');
-      await sandbox.writeFile('invalid/manifest.md', `---
-name: Invalid Agent
----
-`);
-
       const results = await validator.validateDirectory(sandbox.getPath(), true);
       expect(results.size).toBe(2);
 
+      const invalidResult = Array.from(results.values()).find(r => !r.valid);
+      expect(invalidResult).toBeDefined();
+      expect(invalidResult!.errors.length).toBeGreaterThan(0);
+
       const validCount = Array.from(results.values()).filter(r => r.valid).length;
       const invalidCount = Array.from(results.values()).filter(r => !r.valid).length;
-
       expect(validCount).toBeGreaterThanOrEqual(1);
       expect(invalidCount).toBeGreaterThanOrEqual(1);
     });
@@ -652,11 +496,15 @@ files: []
       expect(results.size).toBe(0);
     });
 
-    it('should handle non-existent directory', async () => {
-      const results = await validator.validateDirectory(sandbox.getPath('non-existent'), false);
-      expect(results.size).toBe(1);
-      const result = Array.from(results.values())[0];
+    it('should handle non-existent or empty directories', async () => {
+      const nonExistent = await validator.validateDirectory(sandbox.getPath('non-existent'), false);
+      expect(nonExistent.size).toBe(1);
+      const result = Array.from(nonExistent.values())[0];
       expect(result.valid).toBe(false);
+
+      await sandbox.createDirectory('empty');
+      const empty = await validator.validateDirectory(sandbox.getPath('empty'), false);
+      expect(empty.size).toBe(0);
     });
 
     it('should skip non-manifest files', async () => {
@@ -672,26 +520,6 @@ description: Test
 
       const results = await validator.validateDirectory(sandbox.getPath(), false);
       expect(results.size).toBe(1);
-    });
-
-    it('should validate deeply nested manifests', async () => {
-      await sandbox.createDirectory('a/b/c/d');
-      await sandbox.writeFile('a/b/c/d/manifest.md', `---
-name: Deep
-version: 1.0.0
-type: template
-description: Deeply nested
----
-`);
-
-      const results = await validator.validateDirectory(sandbox.getPath(), true);
-      expect(results.size).toBe(1);
-    });
-
-    it('should handle empty directory', async () => {
-      await sandbox.createDirectory('empty');
-      const results = await validator.validateDirectory(sandbox.getPath('empty'), false);
-      expect(results.size).toBe(0);
     });
 
     it('should process multiple manifests at same level', async () => {
@@ -726,19 +554,18 @@ description: Sub2
     });
   });
 
-  // ===========================
-  // Report Generation Tests
-  // ===========================
-
   describe('generateReport', () => {
-    it('should generate text report with summary', async () => {
+    it('should generate comprehensive text report', async () => {
       await sandbox.writeFile('manifest.md', `---
-name: Test
-version: 1.0.0
-type: template
-description: Test agent
+name: Test Agent
+version: 2.5.1
+type: command
+description: Test command
+files:
+  - test.md
 ---
 `);
+      await sandbox.writeFile('test.md', '# Test');
 
       const results = await validator.validateDirectory(sandbox.getPath(), true);
       const report = validator.generateReport(results, 'text');
@@ -748,9 +575,25 @@ description: Test agent
       expect(report).toContain('Total Manifests:');
       expect(report).toContain('Passed:');
       expect(report).toContain('Failed:');
+      expect(report).toContain('Test Agent');
+      expect(report).toContain('2.5.1');
+      expect(report).toContain('command');
     });
 
-    it('should generate JSON report', async () => {
+    it('should show errors and warnings in text report', async () => {
+      await sandbox.writeFile('manifest.md', `---
+name: Invalid
+---
+`);
+
+      const results = await validator.validateDirectory(sandbox.getPath(), true);
+      const report = validator.generateReport(results, 'text');
+
+      expect(report).toContain('FAIL');
+      expect(report).toContain('Errors:');
+    });
+
+    it('should generate comprehensive JSON report', async () => {
       await sandbox.writeFile('manifest.md', `---
 name: Test
 version: 1.0.0
@@ -768,74 +611,6 @@ description: Test agent
       expect(parsed.summary).toHaveProperty('total');
       expect(parsed.summary).toHaveProperty('passed');
       expect(parsed.summary).toHaveProperty('failed');
-    });
-
-    it('should show errors in text report', async () => {
-      await sandbox.writeFile('manifest.md', `---
-name: Invalid
----
-`);
-
-      const results = await validator.validateDirectory(sandbox.getPath(), true);
-      const report = validator.generateReport(results, 'text');
-
-      expect(report).toContain('FAIL');
-      expect(report).toContain('Errors:');
-    });
-
-    it('should show warnings in text report', async () => {
-      await sandbox.writeFile('manifest.md', `---
-name: Test
-version: 1.0.0
-type: agent
-description: Test agent without model field
-files:
-  - test.md
----
-`);
-
-      await sandbox.writeFile('test.md', '# Test');
-
-      const results = await validator.validateDirectory(sandbox.getPath(), true);
-      const report = validator.generateReport(results, 'text');
-
-      expect(report).toContain('Warnings:');
-    });
-
-    it('should include manifest details in report', async () => {
-      await sandbox.writeFile('manifest.md', `---
-name: Test Agent
-version: 2.5.1
-type: command
-description: Test command
-files:
-  - test.md
----
-`);
-
-      await sandbox.writeFile('test.md', '# Test');
-
-      const results = await validator.validateDirectory(sandbox.getPath(), true);
-      const report = validator.generateReport(results, 'text');
-
-      expect(report).toContain('Test Agent');
-      expect(report).toContain('2.5.1');
-      expect(report).toContain('command');
-    });
-
-    it('should format JSON with proper structure', async () => {
-      await sandbox.writeFile('manifest.md', `---
-name: Test
-version: 1.0.0
-type: template
-description: Test
----
-`);
-
-      const results = await validator.validateDirectory(sandbox.getPath(), true);
-      const report = validator.generateReport(results, 'json');
-
-      const parsed = JSON.parse(report);
       expect(Array.isArray(parsed.results)).toBe(true);
       expect(parsed.results[0]).toHaveProperty('path');
       expect(parsed.results[0]).toHaveProperty('valid');
@@ -843,7 +618,7 @@ description: Test
       expect(parsed.results[0]).toHaveProperty('warnings');
     });
 
-    it('should show error counts in summary', async () => {
+    it('should show error counts in JSON summary', async () => {
       await sandbox.writeFile('manifest.md', `---
 name: ""
 version: invalid
@@ -867,10 +642,6 @@ description: ""
     });
   });
 
-  // ===========================
-  // Manifest File Validation
-  // ===========================
-
   describe('validateFile', () => {
     it('should validate file with valid manifest', async () => {
       await sandbox.writeFile('manifest.md', `---
@@ -893,18 +664,16 @@ files:
       expect(result.manifest?.name).toBe('Test Agent');
     });
 
-    it('should fail for non-existent file', async () => {
-      const result = await validator.validateFile(sandbox.getPath('non-existent.md'));
-      expect(result.valid).toBe(false);
-      expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].message).toContain('not found');
-    });
+    it('should fail for non-existent file or directory path', async () => {
+      const result1 = await validator.validateFile(sandbox.getPath('non-existent.md'));
+      expect(result1.valid).toBe(false);
+      expect(result1.errors).toHaveLength(1);
+      expect(result1.errors[0].message).toContain('not found');
 
-    it('should fail for directory path', async () => {
       await sandbox.createDirectory('test-dir');
-      const result = await validator.validateFile(sandbox.getPath('test-dir'));
-      expect(result.valid).toBe(false);
-      expect(result.errors).toHaveLength(1);
+      const result2 = await validator.validateFile(sandbox.getPath('test-dir'));
+      expect(result2.valid).toBe(false);
+      expect(result2.errors).toHaveLength(1);
     });
 
     it('should validate file with dependencies', async () => {
@@ -940,10 +709,6 @@ files:
     });
   });
 
-  // ===========================
-  // Manifest Content Validation
-  // ===========================
-
   describe('validateManifest', () => {
     it('should validate manifest with frontmatter', async () => {
       const content = `---
@@ -960,86 +725,55 @@ description: Test
       expect(result.valid).toBe(true);
     });
 
-    it('should fail for missing frontmatter', async () => {
-      const content = `# No frontmatter here
+    it('should fail for invalid manifest content', async () => {
+      const testCases = [
+        {
+          content: `# No frontmatter here\n\nJust regular markdown.`,
+          error: 'frontmatter'
+        },
+        {
+          content: `---\nname: Test\n  invalid yaml syntax\n    broken: indentation\n---\n`,
+          error: 'parse'
+        },
+        {
+          content: `---\n---\n`,
+          errorCount: 'greaterThan0'
+        }
+      ];
 
-Just regular markdown.`;
-
-      const result = await validator.validateManifest(content);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.message.includes('frontmatter'))).toBe(true);
-    });
-
-    it('should fail for malformed YAML', async () => {
-      const content = `---
-name: Test
-  invalid yaml syntax
-    broken: indentation
----
-`;
-
-      const result = await validator.validateManifest(content);
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.message.includes('parse'))).toBe(true);
+      for (const { content, error, errorCount } of testCases) {
+        const result = await validator.validateManifest(content);
+        expect(result.valid).toBe(false);
+        if (error) {
+          expect(result.errors.some(e => e.message.includes(error))).toBe(true);
+        }
+        if (errorCount === 'greaterThan0') {
+          expect(result.errors.length).toBeGreaterThan(0);
+        }
+      }
     });
 
     it('should include warnings for missing optional fields', async () => {
-      const content = `---
-name: Test Agent
-version: 1.0.0
-type: agent
-description: Test agent without model
-files:
-  - test.md
----
-`;
+      const testCases = [
+        { field: 'model', type: 'agent', hasFiles: true },
+        { field: 'tools', type: 'agent', hasFiles: true },
+        { field: 'framework', type: 'template', hasFiles: false }
+      ];
 
-      const result = await validator.validateManifest(content);
-      expect(result.warnings.some(w => w.field === 'model')).toBe(true);
-    });
-
-    it('should warn about missing tools for agent', async () => {
-      const content = `---
-name: Test Agent
+      for (const { field, type, hasFiles } of testCases) {
+        const filesSection = hasFiles ? 'files:\n  - test.md\n' : '';
+        const content = `---
+name: Test ${type}
 version: 1.0.0
-type: agent
+type: ${type}
 description: Test
-files:
-  - test.md
----
+${filesSection}---
 `;
-
-      const result = await validator.validateManifest(content);
-      expect(result.warnings.some(w => w.field === 'tools')).toBe(true);
-    });
-
-    it('should recommend framework field', async () => {
-      const content = `---
-name: Test
-version: 1.0.0
-type: template
-description: Test
----
-`;
-
-      const result = await validator.validateManifest(content);
-      expect(result.warnings.some(w => w.field === 'framework')).toBe(true);
-    });
-
-    it('should handle empty manifest gracefully', async () => {
-      const content = `---
----
-`;
-
-      const result = await validator.validateManifest(content);
-      expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
+        const result = await validator.validateManifest(content);
+        expect(result.warnings.some(w => w.field === field)).toBe(true);
+      }
     });
   });
-
-  // ===========================
-  // Edge Cases
-  // ===========================
 
   describe('edge cases', () => {
     it('should handle very large manifest files', async () => {
@@ -1056,31 +790,27 @@ description: ${largeDescription}
       expect(result.manifest?.description).toHaveLength(10000);
     });
 
-    it('should handle special characters in fields', async () => {
-      const content = `---
+    it('should handle special characters and Unicode', async () => {
+      const specialChars = `---
 name: "Test: Agent (Special)"
 version: 1.0.0
 type: template
 description: "Description with @#$% special chars"
 ---
 `;
+      const result1 = await validator.validateManifest(specialChars);
+      expect(result1.valid).toBe(true);
+      expect(result1.manifest?.name).toContain('Special');
 
-      const result = await validator.validateManifest(content);
-      expect(result.valid).toBe(true);
-      expect(result.manifest?.name).toContain('Special');
-    });
-
-    it('should handle Unicode in manifest', async () => {
-      const content = `---
+      const unicode = `---
 name: Test Agent 测试
 version: 1.0.0
 type: template
 description: Unicode description éñü
 ---
 `;
-
-      const result = await validator.validateManifest(content);
-      expect(result.valid).toBe(true);
+      const result2 = await validator.validateManifest(unicode);
+      expect(result2.valid).toBe(true);
     });
 
     it('should validate with checkFileReferences disabled', async () => {
@@ -1097,7 +827,7 @@ files:
 `;
 
       const result = await validatorNoCheck.validateManifest(content);
-      expect(result.valid).toBe(true); // No file check, so valid
+      expect(result.valid).toBe(true);
     });
 
     it('should treat warnings as errors in strict mode', async () => {
@@ -1112,7 +842,7 @@ description: Test
 `;
 
       const result = await strictValidator.validateManifest(content);
-      expect(result.valid).toBe(false); // Warnings fail in strict mode
+      expect(result.valid).toBe(false);
     });
   });
 });

@@ -38,114 +38,108 @@ describe('doc-intelligence addon', () => {
   });
 
   describe('skill structure validation', () => {
-    for (const skill of SKILLS) {
-      describe(`${skill} skill`, () => {
+    it('should have SKILL.md files for all skills', async () => {
+      await Promise.all(SKILLS.map(async (skill) => {
         const skillPath = join(ADDON_PATH, 'skills', skill, 'SKILL.md');
+        await expect(access(skillPath, constants.F_OK)).resolves.toBeUndefined();
+      }));
+    });
 
-        it('should have SKILL.md file', async () => {
-          await expect(access(skillPath, constants.F_OK)).resolves.toBeUndefined();
-        });
+    it('should have valid frontmatter in all skills', async () => {
+      const requiredFields = ['name: ', 'description: ', 'tools: '];
 
-        it('should have valid frontmatter', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toMatch(/^---\n/);
-          expect(content).toMatch(/name: /);
-          expect(content).toMatch(/description: /);
-          expect(content).toMatch(/tools: /);
-        });
+      await Promise.all(SKILLS.map(async (skill) => {
+        const skillPath = join(ADDON_PATH, 'skills', skill, 'SKILL.md');
+        const content = await readFile(skillPath, 'utf-8');
 
-        it('should have Grounding Checkpoint section', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toContain('Grounding Checkpoint');
-          expect(content).toContain('Archetype 1');
+        expect(content).toMatch(/^---\n/);
+        requiredFields.forEach(field => {
+          expect(content, `${skill} missing "${field}"`).toContain(field);
         });
+      }));
+    });
 
-        it('should have Uncertainty Escalation section', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toContain('Uncertainty Escalation');
-          expect(content).toContain('Archetype 2');
-        });
+    it('should have all required archetype sections', async () => {
+      const requiredSections = [
+        { name: 'Grounding Checkpoint', marker: 'Archetype 1' },
+        { name: 'Uncertainty Escalation', marker: 'Archetype 2' },
+        { name: 'Context Scope', marker: 'Archetype 3' },
+        { name: 'Recovery Protocol', marker: 'Archetype 4' }
+      ];
 
-        it('should have Context Scope section', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toContain('Context Scope');
-          expect(content).toContain('Archetype 3');
-        });
+      await Promise.all(SKILLS.map(async (skill) => {
+        const skillPath = join(ADDON_PATH, 'skills', skill, 'SKILL.md');
+        const content = await readFile(skillPath, 'utf-8');
 
-        it('should have Recovery Protocol section', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toContain('Recovery Protocol');
-          expect(content).toContain('Archetype 4');
+        requiredSections.forEach(({ name, marker }) => {
+          expect(content, `${skill} missing section "${name}"`).toContain(name);
+          expect(content, `${skill} missing marker "${marker}"`).toContain(marker);
         });
+      }));
+    });
 
-        it('should have Checkpoint Support section', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toContain('Checkpoint Support');
-          expect(content).toContain('.aiwg/working/checkpoints/');
-        });
+    it('should have checkpoint support section', async () => {
+      await Promise.all(SKILLS.map(async (skill) => {
+        const skillPath = join(ADDON_PATH, 'skills', skill, 'SKILL.md');
+        const content = await readFile(skillPath, 'utf-8');
 
-        it('should have workflow steps', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toMatch(/### Step \d+:/);
-        });
+        expect(content, `${skill} missing Checkpoint Support`).toContain('Checkpoint Support');
+        expect(content, `${skill} missing checkpoint path`).toContain('.aiwg/working/checkpoints/');
+      }));
+    });
 
-        it('should have code examples', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toMatch(/```(bash|python|json|markdown)/);
-        });
+    it('should have workflow steps, code examples, and research references', async () => {
+      await Promise.all(SKILLS.map(async (skill) => {
+        const skillPath = join(ADDON_PATH, 'skills', skill, 'SKILL.md');
+        const content = await readFile(skillPath, 'utf-8');
 
-        it('should reference research papers', async () => {
-          const content = await readFile(skillPath, 'utf-8');
-          expect(content).toMatch(/REF-001|REF-002/);
-        });
-      });
-    }
+        expect(content, `${skill} missing workflow steps`).toMatch(/### Step \d+:/);
+        expect(content, `${skill} missing code examples`).toMatch(/```(bash|python|json|markdown)/);
+        expect(content, `${skill} missing research references`).toMatch(/REF-001|REF-002/);
+      }));
+    });
   });
 
   describe('agent structure validation', () => {
-    for (const agent of AGENTS) {
-      describe(`${agent} agent`, () => {
+    it('should have agent files', async () => {
+      await Promise.all(AGENTS.map(async (agent) => {
         const agentPath = join(ADDON_PATH, 'agents', `${agent}.md`);
+        await expect(access(agentPath, constants.F_OK)).resolves.toBeUndefined();
+      }));
+    });
 
-        it('should have agent file', async () => {
-          await expect(access(agentPath, constants.F_OK)).resolves.toBeUndefined();
-        });
+    it('should have valid frontmatter and required fields', async () => {
+      const requiredFields = ['name: ', 'description: ', 'model: ', 'tools: '];
 
-        it('should have valid frontmatter', async () => {
-          const content = await readFile(agentPath, 'utf-8');
-          expect(content).toMatch(/^---\n/);
-          expect(content).toMatch(/name: /);
-          expect(content).toMatch(/description: /);
-          expect(content).toMatch(/model: /);
-          expect(content).toMatch(/tools: /);
-        });
+      await Promise.all(AGENTS.map(async (agent) => {
+        const agentPath = join(ADDON_PATH, 'agents', `${agent}.md`);
+        const content = await readFile(agentPath, 'utf-8');
 
-        it('should be marked as orchestrator', async () => {
-          const content = await readFile(agentPath, 'utf-8');
-          expect(content).toContain('orchestration: true');
+        expect(content, `${agent} missing frontmatter start`).toMatch(/^---\n/);
+        requiredFields.forEach(field => {
+          expect(content, `${agent} missing "${field}"`).toContain(field);
         });
+        expect(content, `${agent} not marked as orchestrator`).toContain('orchestration: true');
+      }));
+    });
 
-        it('should have decision tree', async () => {
-          const content = await readFile(agentPath, 'utf-8');
-          expect(content).toContain('Decision Tree');
-        });
+    it('should have required agent sections', async () => {
+      const requiredSections = [
+        'Decision Tree',
+        'Available Skills',
+        'Workflow Patterns',
+        'Archetype Mitigations'
+      ];
 
-        it('should list available skills', async () => {
-          const content = await readFile(agentPath, 'utf-8');
-          expect(content).toContain('Available Skills');
-        });
+      await Promise.all(AGENTS.map(async (agent) => {
+        const agentPath = join(ADDON_PATH, 'agents', `${agent}.md`);
+        const content = await readFile(agentPath, 'utf-8');
 
-        it('should have workflow patterns', async () => {
-          const content = await readFile(agentPath, 'utf-8');
-          expect(content).toContain('Workflow Patterns');
+        requiredSections.forEach(section => {
+          expect(content, `${agent} missing section "${section}"`).toContain(section);
         });
-
-        it('should reference archetype mitigations', async () => {
-          const content = await readFile(agentPath, 'utf-8');
-          expect(content).toContain('Archetype Mitigations');
-        });
-      });
-    }
+      }));
+    });
   });
 
   describe('evaluation plan', () => {
@@ -157,18 +151,15 @@ describe('doc-intelligence addon', () => {
 
     it('should define test scenarios for all skills', async () => {
       const content = await readFile(evalPath, 'utf-8');
-      for (const skill of SKILLS) {
-        expect(content).toContain(skill);
-      }
+
+      SKILLS.forEach(skill => {
+        expect(content, `EVALUATION.md missing skill "${skill}"`).toContain(skill);
+      });
     });
 
-    it('should have quality gates', async () => {
+    it('should have quality gates and compliance checklist', async () => {
       const content = await readFile(evalPath, 'utf-8');
       expect(content).toContain('Quality Gates');
-    });
-
-    it('should have compliance checklist', async () => {
-      const content = await readFile(evalPath, 'utf-8');
       expect(content).toContain('Archetype Mitigation Checklist');
     });
   });

@@ -236,40 +236,41 @@ describe('PluginRegistry', () => {
       });
     });
 
-    it('should check if plugin is installed', async () => {
-      expect(await registry.isInstalled('framework-1')).toBe(true);
-      expect(await registry.isInstalled('non-existent')).toBe(false);
-    });
+    it('should perform all query operations correctly', async () => {
+      // Test installation checks
+      const installChecks = [
+        { id: 'framework-1', expected: true },
+        { id: 'non-existent', expected: false }
+      ];
+      for (const check of installChecks) {
+        expect(await registry.isInstalled(check.id)).toBe(check.expected);
+      }
 
-    it('should get plugins by type', async () => {
-      const frameworks = await registry.getByType('framework');
-      expect(frameworks.length).toBe(1);
-      expect(frameworks[0].id).toBe('framework-1');
+      // Test type queries
+      const typeQueries = [
+        { type: 'framework', expectedCount: 1, expectedId: 'framework-1' },
+        { type: 'add-on', expectedCount: 1, expectedId: 'addon-1' }
+      ];
+      for (const query of typeQueries) {
+        const results = await registry.getByType(query.type);
+        expect(results.length).toBe(query.expectedCount);
+        expect(results[0].id).toBe(query.expectedId);
+      }
 
-      const addOns = await registry.getByType('add-on');
-      expect(addOns.length).toBe(1);
-      expect(addOns[0].id).toBe('addon-1');
-    });
-
-    it('should get healthy plugins', async () => {
+      // Test health queries
       const healthy = await registry.getHealthy();
       expect(healthy.length).toBe(1);
       expect(healthy[0].id).toBe('framework-1');
-    });
 
-    it('should get plugins with errors', async () => {
       const errors = await registry.getErrors();
       expect(errors.length).toBe(1);
       expect(errors[0].id).toBe('extension-1');
-    });
 
-    it('should get add-ons for framework', async () => {
+      // Test relationship queries
       const addOns = await registry.getAddOnsFor('framework-1');
       expect(addOns.length).toBe(1);
       expect(addOns[0].id).toBe('addon-1');
-    });
 
-    it('should get extensions for framework', async () => {
       const extensions = await registry.getExtensionsFor('framework-1');
       expect(extensions.length).toBe(1);
       expect(extensions[0].id).toBe('extension-1');
@@ -396,27 +397,26 @@ describe('PluginRegistry', () => {
       });
     });
 
-    it('should create backup', async () => {
-      const backupPath = await registry.createBackup('test backup');
+    it('should create and list backups', async () => {
+      // Create first backup
+      const backupPath1 = await registry.createBackup('backup 1');
+      expect(backupPath1).toContain('registry-');
+      expect(backupPath1).toContain('.json');
 
-      expect(backupPath).toContain('registry-');
-      expect(backupPath).toContain('.json');
+      const backupContent1 = await fs.readFile(backupPath1, 'utf-8');
+      const backup1 = JSON.parse(backupContent1);
+      expect(backup1.plugins.length).toBe(1);
+      expect(backup1._backup.reason).toBe('backup 1');
 
-      const backupContent = await fs.readFile(backupPath, 'utf-8');
-      const backup = JSON.parse(backupContent);
-
-      expect(backup.plugins.length).toBe(1);
-      expect(backup._backup.reason).toBe('test backup');
-    });
-
-    it('should list backups', async () => {
-      await registry.createBackup('backup 1');
-      // Small delay to ensure unique timestamps in backup filenames
+      // Small delay to ensure unique timestamps
       await new Promise(resolve => setTimeout(resolve, 10));
-      await registry.createBackup('backup 2');
 
+      // Create second backup
+      const backupPath2 = await registry.createBackup('backup 2');
+      expect(backupPath2).toContain('registry-');
+
+      // List backups
       const backups = await registry.listBackups();
-
       expect(backups.length).toBe(2);
       expect(backups[0].filename).toContain('registry-');
     });
@@ -491,8 +491,10 @@ describe('PluginRegistry', () => {
       expect(result.method).toBe('backup');
     });
 
-    it('should check integrity', async () => {
+    it('should check integrity and detect issues', async () => {
       await registry.initialize();
+
+      // First check with valid plugin
       await registry.addPlugin({
         id: 'test-plugin',
         type: 'framework',
@@ -502,14 +504,9 @@ describe('PluginRegistry', () => {
         'repo-path': 'test/'
       });
 
-      const integrity = await registry.checkIntegrity();
-
-      expect(integrity.valid).toBe(true);
-      expect(integrity.errors.length).toBe(0);
-    });
-
-    it('should detect orphaned add-ons in integrity check', async () => {
-      await registry.initialize();
+      const validIntegrity = await registry.checkIntegrity();
+      expect(validIntegrity.valid).toBe(true);
+      expect(validIntegrity.errors.length).toBe(0);
 
       // Add orphan add-on (parent framework doesn't exist)
       await registry.addPlugin({
@@ -522,10 +519,9 @@ describe('PluginRegistry', () => {
         'parent-framework': 'non-existent-framework'
       });
 
-      const integrity = await registry.checkIntegrity();
-
-      expect(integrity.valid).toBe(false);
-      expect(integrity.errors.some(e => e.includes('non-existent parent framework'))).toBe(true);
+      const invalidIntegrity = await registry.checkIntegrity();
+      expect(invalidIntegrity.valid).toBe(false);
+      expect(invalidIntegrity.errors.some(e => e.includes('non-existent parent framework'))).toBe(true);
     });
   });
 
@@ -538,58 +534,59 @@ describe('PluginRegistry', () => {
       await registry.initialize();
     });
 
-    it('should validate plugin ID format', async () => {
-      await expect(
-        registry.addPlugin({
-          id: 'Invalid_Plugin_ID',
-          type: 'framework',
-          name: 'Test',
-          version: '1.0.0',
-          'install-date': new Date().toISOString(),
-          'repo-path': 'test/'
-        })
-      ).rejects.toThrow();
-    });
+    it('should validate plugin schema requirements', async () => {
+      const invalidPlugins = [
+        {
+          description: 'invalid ID format',
+          plugin: {
+            id: 'Invalid_Plugin_ID',
+            type: 'framework',
+            name: 'Test',
+            version: '1.0.0',
+            'install-date': new Date().toISOString(),
+            'repo-path': 'test/'
+          }
+        },
+        {
+          description: 'invalid version format',
+          plugin: {
+            id: 'test-plugin',
+            type: 'framework',
+            name: 'Test',
+            version: 'invalid-version',
+            'install-date': new Date().toISOString(),
+            'repo-path': 'test/'
+          }
+        },
+        {
+          description: 'missing parent-framework for add-on',
+          plugin: {
+            id: 'test-addon',
+            type: 'add-on',
+            name: 'Test Add-on',
+            version: '1.0.0',
+            'install-date': new Date().toISOString(),
+            'repo-path': 'test/'
+          }
+        },
+        {
+          description: 'missing extends for extension',
+          plugin: {
+            id: 'test-extension',
+            type: 'extension',
+            name: 'Test Extension',
+            version: '1.0.0',
+            'install-date': new Date().toISOString(),
+            'repo-path': 'test/'
+          }
+        }
+      ];
 
-    it('should validate version format', async () => {
-      await expect(
-        registry.addPlugin({
-          id: 'test-plugin',
-          type: 'framework',
-          name: 'Test',
-          version: 'invalid-version',
-          'install-date': new Date().toISOString(),
-          'repo-path': 'test/'
-        })
-      ).rejects.toThrow();
-    });
-
-    it('should require parent-framework for add-ons', async () => {
-      await expect(
-        registry.addPlugin({
-          id: 'test-addon',
-          type: 'add-on',
-          name: 'Test Add-on',
-          version: '1.0.0',
-          'install-date': new Date().toISOString(),
-          'repo-path': 'test/'
-          // Missing parent-framework
-        })
-      ).rejects.toThrow();
-    });
-
-    it('should require extends for extensions', async () => {
-      await expect(
-        registry.addPlugin({
-          id: 'test-extension',
-          type: 'extension',
-          name: 'Test Extension',
-          version: '1.0.0',
-          'install-date': new Date().toISOString(),
-          'repo-path': 'test/'
-          // Missing extends
-        })
-      ).rejects.toThrow();
+      for (const testCase of invalidPlugins) {
+        await expect(
+          registry.addPlugin(testCase.plugin)
+        ).rejects.toThrow();
+      }
     });
   });
 });

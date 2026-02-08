@@ -19,220 +19,239 @@ describe('ContentDiversifier', () => {
   describe('Voice Transformation', () => {
     const testContent = 'This system provides improved performance for data processing tasks.';
 
-    it('should transform to academic voice', () => {
-      const result = diversifier.toAcademicVoice(testContent);
+    it('should transform to all voice types with appropriate markers', () => {
+      const voiceTests = [
+        {
+          voice: 'academic' as const,
+          transform: (c: string) => diversifier.toAcademicVoice(c),
+          pattern: /(suggests?|appears?|may|might|furthermore|moreover|limitations|warrant|investigation|noted)/
+        },
+        {
+          voice: 'technical' as const,
+          transform: (c: string) => diversifier.toTechnicalVoice(c),
+          pattern: /(\d+%|\d+ms|latency|throughput|payload|implementation)/i
+        },
+        {
+          voice: 'executive' as const,
+          transform: (c: string) => diversifier.toExecutiveVoice(c),
+          pattern: /(\$|ROI|recommend|strategic|priority|optimal|approach|requires)/i
+        },
+        {
+          voice: 'casual' as const,
+          transform: (c: string) => diversifier.toCasualVoice(c),
+          pattern: /(don't|can't|it's|here's|thing|think of|like a|conveyor|belt|you)/i
+        }
+      ];
 
-      expect(result).toBeTruthy();
-      expect(result).not.toBe(testContent);
-      // Should contain academic markers (limitations acknowledgment, hedging, or formal transitions)
-      expect(result.toLowerCase()).toMatch(/(suggests?|appears?|may|might|furthermore|moreover|limitations|warrant|investigation|noted)/);
-    });
-
-    it('should transform to technical voice', () => {
-      const result = diversifier.toTechnicalVoice(testContent);
-
-      expect(result).toBeTruthy();
-      expect(result).not.toBe(testContent);
-      // Should contain technical metrics or terminology
-      expect(result).toMatch(/(\d+%|\d+ms|latency|throughput|payload|implementation)/i);
-    });
-
-    it('should transform to executive voice', () => {
-      const result = diversifier.toExecutiveVoice(testContent);
-
-      expect(result).toBeTruthy();
-      expect(result).not.toBe(testContent);
-      // Should contain business metrics, decision language, or executive framing
-      expect(result).toMatch(/(\$|ROI|recommend|strategic|priority|optimal|approach|requires)/i);
-    });
-
-    it('should transform to casual voice', () => {
-      const result = diversifier.toCasualVoice(testContent);
-
-      expect(result).toBeTruthy();
-      expect(result).not.toBe(testContent);
-      // Should contain contractions, casual language, or conversational framing (like analogies)
-      expect(result).toMatch(/(don't|can't|it's|here's|thing|think of|like a|conveyor|belt|you)/i);
-    });
-
-    it('should preserve core message across voices', () => {
-      const voices: Voice[] = ['academic', 'technical', 'executive', 'casual'];
-      const results = voices.map(voice => diversifier.transformVoice(testContent, 'technical', voice));
-
-      // All should mention system/performance
-      results.forEach(result => {
-        expect(result.toLowerCase()).toMatch(/(system|performance|process)/);
+      voiceTests.forEach(({ voice, transform, pattern }) => {
+        const result = transform(testContent);
+        expect(result, `${voice} voice should produce output`).toBeTruthy();
+        expect(result, `${voice} voice should differ from original`).not.toBe(testContent);
+        expect(result.toLowerCase(), `${voice} voice should match expected pattern`).toMatch(pattern);
       });
     });
 
-    it('should detect source voice before transforming', () => {
-      const academicContent = 'Recent studies (Smith, 2023) suggest that performance optimization may demonstrate significant benefits.';
-      const voice = diversifier.detectVoice(academicContent);
+    it('should add voice-specific enhancements (citations, metrics, business values, examples)', () => {
+      const enhancements = [
+        {
+          name: 'academic citations',
+          transform: () => diversifier.toAcademicVoice(testContent),
+          pattern: /(\([A-Z]\w+,?\s*\d{4}\)|limitations|warrant|investigation|noted)/
+        },
+        {
+          name: 'technical metrics',
+          transform: () => diversifier.toTechnicalVoice('The system is faster.'),
+          pattern: /\d+(\.\d+)?\s*(ms|%|x|MB|GB|seconds)/
+        },
+        {
+          name: 'business metrics',
+          transform: () => diversifier.toExecutiveVoice('This saves money.'),
+          pattern: /(\$\d+|\d+%|optimal|approach|requires|strategic|recommend)/i
+        },
+        {
+          name: 'personal examples',
+          transform: () => diversifier.toCasualVoice(testContent),
+          pattern: /(I've|we|you|here's|thing|think of|like a)/i
+        }
+      ];
 
-      // May detect as academic or mixed depending on marker scoring
-      expect(['academic', 'mixed']).toContain(voice);
+      enhancements.forEach(({ name, transform, pattern }) => {
+        const result = transform();
+        expect(result, `should add ${name}`).toMatch(pattern);
+      });
     });
 
-    it('should handle mixed voice content', () => {
-      const mixedContent = 'The system (Jones, 2023) reduces latency by 30ms. We recommend strategic adoption.';
-      const voice = diversifier.detectVoice(mixedContent);
-
-      // Should detect as mixed or one of the voices
-      expect(['academic', 'technical', 'executive', 'mixed']).toContain(voice);
-    });
-
-    it('should add citations to academic voice', () => {
-      const result = diversifier.toAcademicVoice(testContent);
-
-      // Should have citation-like patterns OR limitations/formal additions
-      // Citations are randomly applied, so check for any academic marker
-      expect(result).toMatch(/(\([A-Z]\w+,?\s*\d{4}\)|limitations|warrant|investigation|noted)/);
-    });
-
-    it('should add metrics to technical voice', () => {
-      const result = diversifier.toTechnicalVoice('The system is faster.');
-
-      // Should add specific measurements
-      expect(result).toMatch(/\d+(\.\d+)?\s*(ms|%|x|MB|GB|seconds)/);
-    });
-
-    it('should add business metrics to executive voice', () => {
-      const result = diversifier.toExecutiveVoice('This saves money.');
-
-      // Should add dollar amounts, percentages, or executive framing
-      expect(result).toMatch(/(\$\d+|\d+%|optimal|approach|requires|strategic|recommend)/i);
-    });
-
-    it('should add personal examples to casual voice', () => {
-      const result = diversifier.toCasualVoice(testContent);
-
-      // Should have personal or conversational elements (analogies, direct address, etc.)
-      expect(result).toMatch(/(I've|we|you|here's|thing|think of|like a)/i);
-    });
-
-    it('should remove hedging in executive voice', () => {
+    it('should adjust tone appropriately (remove hedging for executive, add contractions for casual)', () => {
       const hedgedContent = 'We might possibly consider this approach.';
-      const result = diversifier.toExecutiveVoice(hedgedContent);
+      const executiveResult = diversifier.toExecutiveVoice(hedgedContent);
+      expect(executiveResult, 'executive voice should be decisive').toMatch(/(will|must|recommend|optimal|approach|requires|strategic)/i);
 
-      // Executive voice should be more decisive - either remove hedging or add decisive framing
-      // Check that the result contains some executive marker
-      expect(result).toMatch(/(will|must|recommend|optimal|approach|requires|strategic)/i);
-    });
-
-    it('should add contractions to casual voice', () => {
       const formalContent = 'We do not think it is necessary.';
-      const result = diversifier.toCasualVoice(formalContent);
-
-      // Should add contractions or casual framing elements
-      expect(result).toMatch(/(don't|isn't|think of|like a|you)/i);
+      const casualResult = diversifier.toCasualVoice(formalContent);
+      expect(casualResult, 'casual voice should add contractions or casual framing').toMatch(/(don't|isn't|think of|like a|you)/i);
     });
 
-    it('should maintain technical accuracy in transformations', () => {
+    it('should preserve core message and technical accuracy across voices', () => {
+      const voices: Voice[] = ['academic', 'technical', 'executive', 'casual'];
+      const results = voices.map(voice => diversifier.transformVoice(testContent, 'technical', voice));
+
+      results.forEach((result, idx) => {
+        expect(result.toLowerCase(), `${voices[idx]} voice should preserve core concept`).toMatch(/(system|performance|process)/);
+      });
+
       const technicalContent = 'The API endpoint returns JSON with 200 status code.';
-      const result = diversifier.toAcademicVoice(technicalContent);
-
-      // Should preserve technical terms
-      expect(result).toMatch(/API|endpoint|JSON|200/i);
+      const academicResult = diversifier.toAcademicVoice(technicalContent);
+      expect(academicResult, 'should preserve technical terms').toMatch(/API|endpoint|JSON|200/i);
     });
 
-    it('should handle empty content gracefully', () => {
-      const result = diversifier.toAcademicVoice('');
-      expect(result).toBe('');
+    it('should detect voice correctly including mixed content', () => {
+      const voiceDetectionTests = [
+        {
+          content: 'Recent studies (Smith, 2023) suggest that performance optimization may demonstrate significant benefits.',
+          expectedVoices: ['academic', 'mixed']
+        },
+        {
+          content: 'The system (Jones, 2023) reduces latency by 30ms. We recommend strategic adoption.',
+          expectedVoices: ['academic', 'technical', 'executive', 'mixed']
+        }
+      ];
+
+      voiceDetectionTests.forEach(({ content, expectedVoices }) => {
+        const detected = diversifier.detectVoice(content);
+        expect(expectedVoices, `should detect voice in: ${content.substring(0, 50)}...`).toContain(detected);
+      });
     });
 
-    it('should handle single sentence content', () => {
+    it('should handle edge cases (empty content, single sentence)', () => {
+      const emptyResult = diversifier.toAcademicVoice('');
+      expect(emptyResult).toBe('');
+
       const shortContent = 'This works well.';
-      const result = diversifier.toTechnicalVoice(shortContent);
-
-      expect(result).toBeTruthy();
-      expect(result.length).toBeGreaterThan(0);
+      const shortResult = diversifier.toTechnicalVoice(shortContent);
+      expect(shortResult).toBeTruthy();
+      expect(shortResult.length).toBeGreaterThan(0);
     });
   });
 
   describe('Perspective Shifting', () => {
-    it('should convert to first-person', () => {
-      const content = 'One should consider the implications carefully.';
-      const result = diversifier.toFirstPerson(content);
+    it('should convert between perspectives correctly', () => {
+      const perspectiveTests = [
+        {
+          name: 'first-person',
+          content: 'One should consider the implications carefully.',
+          transform: (c: string) => diversifier.toFirstPerson(c),
+          shouldMatch: /\b(I|my|we)\b/,
+          shouldNotMatch: /\bone\b/
+        },
+        {
+          name: 'third-person',
+          content: 'I think we should implement this approach.',
+          transform: (c: string) => diversifier.toThirdPerson(c),
+          shouldMatch: /\b(one|they|their)\b/,
+          shouldNotMatch: /\b(I|we|my|our)\b/g
+        },
+        {
+          name: 'neutral',
+          content: 'I can configure the system to handle your requests.',
+          transform: (c: string) => diversifier.toNeutral(c),
+          shouldMatch: /(system|approach|users?)/i,
+          shouldNotMatch: /\b(I|you|we|my|your)\b/
+        }
+      ];
 
-      expect(result).toMatch(/\b(I|my|we)\b/);
-      expect(result).not.toMatch(/\bone\b/);
-    });
-
-    it('should convert to third-person', () => {
-      const content = 'I think we should implement this approach.';
-      const result = diversifier.toThirdPerson(content);
-
-      expect(result).not.toMatch(/\b(I|we|my|our)\b/g);
-      expect(result).toMatch(/\b(one|they|their)\b/);
-    });
-
-    it('should convert to neutral', () => {
-      const content = 'I can configure the system to handle your requests.';
-      const result = diversifier.toNeutral(content);
-
-      expect(result).not.toMatch(/\b(I|you|we|my|your)\b/);
-      expect(result).toMatch(/(system|approach|users?)/i);
-    });
-
-    it('should handle existing perspective markers', () => {
-      const firstPersonContent = 'I believe this works.';
-      const result = diversifier.changePerspective(firstPersonContent, 'third-person');
-
-      expect(result).not.toMatch(/\bI\b/);
+      perspectiveTests.forEach(({ name, content, transform, shouldMatch, shouldNotMatch }) => {
+        const result = transform(content);
+        expect(result, `${name} should match expected pattern`).toMatch(shouldMatch);
+        expect(result, `${name} should not match original markers`).not.toMatch(shouldNotMatch);
+      });
     });
 
     it('should preserve meaning when changing perspective', () => {
-      const content = 'I implemented the caching layer.';
-      const result = diversifier.toThirdPerson(content);
+      const tests = [
+        { content: 'I believe this works.', transform: (c: string) => diversifier.changePerspective(c, 'third-person'), checkRemoval: /\bI\b/ },
+        { content: 'I implemented the caching layer.', transform: (c: string) => diversifier.toThirdPerson(c), checkPreservation: [/caching|cache/i, /implement/i] }
+      ];
 
-      expect(result).toMatch(/caching|cache/i);
-      expect(result).toMatch(/implement/i);
+      tests.forEach(test => {
+        const result = test.transform(test.content);
+        if (test.checkRemoval) {
+          expect(result).not.toMatch(test.checkRemoval);
+        }
+        if (test.checkPreservation) {
+          test.checkPreservation.forEach(pattern => {
+            expect(result).toMatch(pattern);
+          });
+        }
+      });
     });
   });
 
   describe('Structure Variation', () => {
     const narrativeContent = 'First, we analyze the problem. Then we design a solution. Finally, we implement the code.';
 
-    it('should convert to bullet points', () => {
-      const result = diversifier.toBulletPoints(narrativeContent);
+    it('should convert to all structure formats', () => {
+      const structureTests = [
+        {
+          name: 'bullet points',
+          transform: () => diversifier.toBulletPoints(narrativeContent),
+          checks: [
+            { pattern: /^-\s+/m, description: 'should start with bullet marker' },
+            { custom: (result: string) => result.split('\n').filter(line => line.startsWith('-')).length > 0, description: 'should have bullet items' }
+          ]
+        },
+        {
+          name: 'narrative',
+          transform: () => {
+            const bulletContent = '- First point\n- Second point\n- Third point';
+            return diversifier.toNarrative(bulletContent);
+          },
+          checks: [
+            { negativePattern: /^-\s+/m, description: 'should not have bullet markers' },
+            { pattern: /(furthermore|additionally|moreover|also|next|then)/i, description: 'should have transitional words' }
+          ]
+        },
+        {
+          name: 'Q&A format',
+          transform: () => diversifier.toQA(narrativeContent),
+          checks: [
+            { pattern: /Q:/, description: 'should have questions' },
+            { pattern: /A:/, description: 'should have answers' },
+            { custom: (result: string) => (result.match(/Q:/g) || []).length > 0, description: 'should have multiple Q markers' }
+          ]
+        },
+        {
+          name: 'tutorial format',
+          transform: () => diversifier.toTutorial(narrativeContent),
+          checks: [
+            { pattern: /#{1,3}\s*Step\s+\d+/, description: 'should have step headers' },
+            { pattern: /Step 1/, description: 'should start with Step 1' }
+          ]
+        },
+        {
+          name: 'comparison format',
+          transform: () => diversifier.toComparison(narrativeContent),
+          checks: [
+            { pattern: /#{1,3}\s*Approach [AB]/, description: 'should have approach headers' },
+            { pattern: /Approach A/, description: 'should have Approach A' },
+            { pattern: /Approach B/, description: 'should have Approach B' }
+          ]
+        }
+      ];
 
-      expect(result).toMatch(/^-\s+/m);
-      const bullets = result.split('\n').filter(line => line.startsWith('-'));
-      expect(bullets.length).toBeGreaterThan(0);
-    });
-
-    it('should convert to narrative', () => {
-      const bulletContent = '- First point\n- Second point\n- Third point';
-      const result = diversifier.toNarrative(bulletContent);
-
-      expect(result).not.toMatch(/^-\s+/m);
-      // Should use transitional words between sentences
-      expect(result).toMatch(/(furthermore|additionally|moreover|also|next|then)/i);
-    });
-
-    it('should convert to Q&A format', () => {
-      const result = diversifier.toQA(narrativeContent);
-
-      expect(result).toMatch(/Q:/);
-      expect(result).toMatch(/A:/);
-      const questions = result.match(/Q:/g);
-      expect(questions).toBeTruthy();
-      expect(questions!.length).toBeGreaterThan(0);
-    });
-
-    it('should convert to tutorial format', () => {
-      const result = diversifier.toTutorial(narrativeContent);
-
-      expect(result).toMatch(/#{1,3}\s*Step\s+\d+/);
-      expect(result).toMatch(/Step 1/);
-    });
-
-    it('should convert to comparison format', () => {
-      const result = diversifier.toComparison(narrativeContent);
-
-      expect(result).toMatch(/#{1,3}\s*Approach [AB]/);
-      expect(result).toMatch(/Approach A/);
-      expect(result).toMatch(/Approach B/);
+      structureTests.forEach(({ name, transform, checks }) => {
+        const result = transform();
+        checks.forEach(check => {
+          if (check.pattern) {
+            expect(result, `${name}: ${check.description}`).toMatch(check.pattern);
+          }
+          if (check.negativePattern) {
+            expect(result, `${name}: ${check.description}`).not.toMatch(check.negativePattern);
+          }
+          if (check.custom) {
+            expect(check.custom(result), `${name}: ${check.description}`).toBe(true);
+          }
+        });
+      });
     });
 
     it('should preserve content when restructuring', () => {
@@ -245,83 +264,63 @@ describe('ContentDiversifier', () => {
   });
 
   describe('Tone Adjustment', () => {
-    const casualContent = "Here's the thing - it's really great!";
-
-    it('should convert to formal tone', () => {
+    it('should convert to formal tone (expand contractions, remove casual language)', () => {
+      const casualContent = "Here's the thing - it's really great!";
       const result = diversifier.toFormal(casualContent);
 
-      expect(result).not.toMatch(/(here's|it's|really)/i);
-      expect(result).toMatch(/\w+\s+is\b/);
+      expect(result, 'formal tone should remove contractions and casual phrases').not.toMatch(/(here's|it's|really)/i);
+      expect(result, 'formal tone should use full forms').toMatch(/\w+\s+is\b/);
+
+      const withContractions = "Don't worry, it's fine.";
+      const formalResult = diversifier.toFormal(withContractions);
+      expect(formalResult, 'should expand do not').toMatch(/do not/i);
+      expect(formalResult, 'should expand it is').toMatch(/it is/i);
     });
 
     it('should convert to conversational tone', () => {
       const formalContent = 'The implementation demonstrates efficacy.';
       const result = diversifier.toConversational(formalContent);
 
-      expect(result).toMatch(/(well|so|now|see)/i);
+      expect(result, 'conversational tone should add casual markers').toMatch(/(well|so|now|see)/i);
     });
 
     it('should convert to enthusiastic tone', () => {
       const plainContent = 'This approach is effective.';
       const result = diversifier.toEnthusiastic(plainContent);
 
-      // Should add exclamation points or enthusiastic modifiers
-      expect(result).toMatch(/(!|amazing|fantastic|excellent|great|outstanding|brilliant)/i);
+      expect(result, 'enthusiastic tone should add excitement markers').toMatch(/(!|amazing|fantastic|excellent|great|outstanding|brilliant)/i);
     });
 
-    it('should convert to matter-of-fact tone', () => {
+    it('should convert to matter-of-fact tone (remove emphasis and exclamations)', () => {
       const enthusiasticContent = 'This is absolutely amazing! Really fantastic work!';
       const result = diversifier.toMatterOfFact(enthusiasticContent);
 
-      expect(result).not.toMatch(/!/);
-      expect(result).not.toMatch(/(really|very|extremely|absolutely)/i);
-    });
+      expect(result, 'matter-of-fact should remove exclamations').not.toMatch(/!/);
+      expect(result, 'matter-of-fact should remove emphatic words').not.toMatch(/(really|very|extremely|absolutely)/i);
 
-    it('should expand contractions in formal tone', () => {
-      const result = diversifier.toFormal("Don't worry, it's fine.");
-
-      expect(result).toMatch(/do not/i);
-      expect(result).toMatch(/it is/i);
-    });
-
-    it('should remove emphatic words in matter-of-fact tone', () => {
-      const result = diversifier.toMatterOfFact('This is clearly very important.');
-
-      expect(result).not.toMatch(/(clearly|very)/i);
+      const emphatic = 'This is clearly very important.';
+      const matterOfFactResult = diversifier.toMatterOfFact(emphatic);
+      expect(matterOfFactResult, 'should remove clearly and very').not.toMatch(/(clearly|very)/i);
     });
   });
 
   describe('Length Variation', () => {
     const longContent = 'This is a comprehensive explanation. It covers multiple aspects. Each aspect requires detailed discussion. The implementation involves several steps. Testing is crucial for quality. Documentation ensures maintainability.';
 
-    it('should shorten content', () => {
-      const result = diversifier.toConcise(longContent);
+    it('should shorten and expand content while maintaining core message', () => {
+      const conciseResult = diversifier.toConcise(longContent);
+      expect(conciseResult.length, 'concise should be shorter').toBeLessThan(longContent.length);
+      expect(conciseResult, 'concise should keep content').toMatch(/\w+/);
+      expect(conciseResult, 'concise should keep first/last sentences').toMatch(/comprehensive explanation/i);
 
-      expect(result.length).toBeLessThan(longContent.length);
-      // Should keep key sentences
-      expect(result).toMatch(/\w+/);
-    });
-
-    it('should expand content', () => {
       const shortContent = 'This works well. It is efficient.';
-      const result = diversifier.toComprehensive(shortContent);
+      const comprehensiveResult = diversifier.toComprehensive(shortContent);
+      expect(comprehensiveResult.length, 'comprehensive should maintain or increase length').toBeGreaterThanOrEqual(shortContent.length);
 
-      // Should expand OR maintain length (implementation may vary)
-      expect(result.length).toBeGreaterThanOrEqual(shortContent.length);
-    });
-
-    it('should maintain core message when adjusting length', () => {
       const content = 'Caching improves performance.';
       const expanded = diversifier.toComprehensive(content);
-
-      expect(expanded).toMatch(/cach/i);
-      expect(expanded).toMatch(/performance/i);
-    });
-
-    it('should keep first and last sentences when shortening', () => {
-      const result = diversifier.toConcise(longContent);
-
-      expect(result).toMatch(/comprehensive explanation/i);
+      expect(expanded, 'should preserve key terms: caching').toMatch(/cach/i);
+      expect(expanded, 'should preserve key terms: performance').toMatch(/performance/i);
     });
   });
 
@@ -337,72 +336,67 @@ describe('ContentDiversifier', () => {
       expect(result.before).not.toBe(result.after);
     });
 
-    it('should generate diverse scenarios', async () => {
+    it('should generate diverse scenarios with variations', async () => {
       const concept = 'API rate limiting';
       const count = 3;
       const scenarios = await diversifier.generateDiverseScenarios(concept, count);
 
       expect(scenarios).toHaveLength(count);
       scenarios.forEach(scenario => {
-        expect(scenario).toBeTruthy();
-        expect(scenario).toMatch(/API|rate|limit/i);
+        expect(scenario, 'scenario should have content').toBeTruthy();
+        expect(scenario, 'scenario should match concept').toMatch(/API|rate|limit/i);
       });
-    });
 
-    it('should create variations with different voices in scenarios', async () => {
-      const scenarios = await diversifier.generateDiverseScenarios('caching', 4);
-
-      // Scenarios should be different from each other
-      const unique = new Set(scenarios);
-      expect(unique.size).toBeGreaterThan(1);
+      const cachingScenarios = await diversifier.generateDiverseScenarios('caching', 4);
+      const unique = new Set(cachingScenarios);
+      expect(unique.size, 'scenarios should be different').toBeGreaterThan(1);
     });
   });
 
   describe('Diversity Analysis', () => {
-    it('should score authenticity with specific metrics', () => {
+    it('should score authenticity based on metrics and AI patterns', () => {
       const contentWithMetrics = 'The system reduces latency by 30ms and costs $500K annually.';
-      const result = diversifier['scoreAuthenticity'](contentWithMetrics);
+      const authenticResult = diversifier['scoreAuthenticity'](contentWithMetrics);
+      expect(authenticResult, 'specific metrics should score high').toBeGreaterThan(50);
 
-      expect(result).toBeGreaterThan(50);
-    });
-
-    it('should penalize AI detection patterns', () => {
       const aiContent = 'It is important to note that we should delve into this. At the end of the day, it is crucial.';
-      const result = diversifier['scoreAuthenticity'](aiContent);
-
-      expect(result).toBeLessThan(50);
+      const aiResult = diversifier['scoreAuthenticity'](aiContent);
+      expect(aiResult, 'AI patterns should score low').toBeLessThan(50);
     });
 
-    it('should calculate diversity between variations', () => {
-      const original = 'This is a test.';
-      const variation = 'This is a completely different test with more content.';
-      const diversity = diversifier['scoreDiversity'](original, variation);
+    it('should calculate diversity between variations correctly', () => {
+      const diversityTests = [
+        {
+          name: 'different content',
+          content1: 'This is a test.',
+          content2: 'This is a completely different test with more content.',
+          expectation: (score: number) => score > 0 && score <= 100
+        },
+        {
+          name: 'similar content',
+          content1: 'This is a test.',
+          content2: 'This is a test!',
+          expectation: (score: number) => score < 20
+        },
+        {
+          name: 'very different content',
+          content1: 'Short.',
+          content2: 'This is a completely different and much longer piece of content with various details.',
+          expectation: (score: number) => score > 50
+        }
+      ];
 
-      expect(diversity).toBeGreaterThan(0);
-      expect(diversity).toBeLessThanOrEqual(100);
-    });
-
-    it('should give low diversity for similar content', () => {
-      const content1 = 'This is a test.';
-      const content2 = 'This is a test!';
-      const diversity = diversifier['scoreDiversity'](content1, content2);
-
-      expect(diversity).toBeLessThan(20);
-    });
-
-    it('should give high diversity for very different content', () => {
-      const content1 = 'Short.';
-      const content2 = 'This is a completely different and much longer piece of content with various details.';
-      const diversity = diversifier['scoreDiversity'](content1, content2);
-
-      expect(diversity).toBeGreaterThan(50);
+      diversityTests.forEach(({ name, content1, content2, expectation }) => {
+        const score = diversifier['scoreDiversity'](content1, content2);
+        expect(expectation(score), `${name} should meet diversity expectations (score: ${score})`).toBe(true);
+      });
     });
   });
 
   describe('Full Diversification Flow', () => {
     const testContent = 'API rate limiting prevents abuse and ensures fair resource allocation.';
 
-    it('should diversify with multiple options', async () => {
+    it('should diversify with multiple options and track metadata', async () => {
       const options: DiversificationOptions[] = [
         { voice: 'academic' },
         { voice: 'technical' },
@@ -416,7 +410,7 @@ describe('ContentDiversifier', () => {
       expect(result.metadata.variationsGenerated).toBe(3);
     });
 
-    it('should generate variations with all options combined', async () => {
+    it('should generate variations with all options combined and track changes', async () => {
       const options: DiversificationOptions = {
         voice: 'technical',
         perspective: 'first-person',
@@ -431,24 +425,17 @@ describe('ContentDiversifier', () => {
       expect(result.changes.length).toBeGreaterThan(0);
       expect(result.score.authenticity).toBeGreaterThanOrEqual(0);
       expect(result.score.diversity).toBeGreaterThanOrEqual(0);
-    });
 
-    it('should track changes made', async () => {
-      const options: DiversificationOptions = {
-        voice: 'academic',
-        tone: 'formal',
-      };
-
-      const result = await diversifier.generateVariation(testContent, options);
-
-      expect(result.changes).toBeTruthy();
-      expect(result.changes.length).toBeGreaterThan(0);
-      result.changes.forEach(change => {
+      const trackingOptions: DiversificationOptions = { voice: 'academic', tone: 'formal' };
+      const trackingResult = await diversifier.generateVariation(testContent, trackingOptions);
+      expect(trackingResult.changes).toBeTruthy();
+      expect(trackingResult.changes.length).toBeGreaterThan(0);
+      trackingResult.changes.forEach(change => {
         expect(change).toMatch(/voice|tone|perspective|structure|length/i);
       });
     });
 
-    it('should maintain authenticity in variations', async () => {
+    it('should maintain authenticity and create diverse variations', async () => {
       const options: DiversificationOptions[] = [
         { voice: 'technical', tone: 'conversational' },
         { voice: 'executive', tone: 'formal' },
@@ -456,33 +443,27 @@ describe('ContentDiversifier', () => {
 
       const result = await diversifier.diversify(testContent, options);
 
-      result.variations.forEach(variation => {
-        expect(variation.score.authenticity).toBeGreaterThan(30);
+      result.variations.forEach((variation, idx) => {
+        expect(variation.score.authenticity, `variation ${idx} should be authentic`).toBeGreaterThan(30);
       });
-    });
 
-    it('should create diverse variations', async () => {
-      const options: DiversificationOptions[] = [
+      const diverseOptions: DiversificationOptions[] = [
         { voice: 'academic' },
         { voice: 'casual' },
       ];
-
-      const result = await diversifier.diversify(testContent, options);
-
-      expect(result.variations[0].content).not.toBe(result.variations[1].content);
-      expect(result.variations[0].score.diversity).toBeGreaterThan(0);
+      const diverseResult = await diversifier.diversify(testContent, diverseOptions);
+      expect(diverseResult.variations[0].content).not.toBe(diverseResult.variations[1].content);
+      expect(diverseResult.variations[0].score.diversity).toBeGreaterThan(0);
     });
   });
 
   describe('Helper Methods', () => {
-    it('should split content into sentences', () => {
+    it('should split content into sentences correctly', () => {
       const content = 'First sentence. Second sentence! Third sentence?';
       const sentences = diversifier['splitIntoSentences'](content);
 
       expect(sentences.length).toBe(3);
-      sentences.forEach(sentence => {
-        expect(sentence).toMatch(/[.!?]$/);
-      });
+      expect(sentences.every(s => /[.!?]$/.test(s)), 'all sentences should end with punctuation').toBe(true);
     });
 
     it('should convert statements to questions', () => {
@@ -490,7 +471,6 @@ describe('ContentDiversifier', () => {
       const question = diversifier['statementToQuestion'](statement);
 
       expect(question).toMatch(/\?$/);
-      // Should form a valid question (what/how/why/when/is)
       expect(question).toMatch(/what|how|why|when|is/i);
     });
 
@@ -508,60 +488,67 @@ describe('ContentDiversifier', () => {
       expect(content).toMatch(/authentication/);
     });
 
-    it('should calculate Levenshtein distance', () => {
+    it('should calculate Levenshtein distance including edge cases', () => {
       const distance = diversifier['levenshteinDistance']('kitten', 'sitting');
-
       expect(distance).toBe(3);
-    });
 
-    it('should handle empty strings in Levenshtein', () => {
-      const distance = diversifier['levenshteinDistance']('', 'test');
-
-      expect(distance).toBe(4);
+      const emptyDistance = diversifier['levenshteinDistance']('', 'test');
+      expect(emptyDistance).toBe(4);
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle very short content', async () => {
-      const shortContent = 'OK.';
-      const result = await diversifier.generateVariation(shortContent, { voice: 'academic' });
+    it('should handle various content edge cases', async () => {
+      const edgeCases = [
+        {
+          name: 'very short content',
+          content: 'OK.',
+          test: async () => {
+            const result = await diversifier.generateVariation('OK.', { voice: 'academic' });
+            return result.content;
+          },
+          check: (result: string) => result.length > 0
+        },
+        {
+          name: 'very long content',
+          content: 'This is a test. '.repeat(100),
+          test: async () => {
+            const longContent = 'This is a test. '.repeat(100);
+            const result = await diversifier.generateVariation(longContent, { length: 'concise' });
+            return { content: result.content, originalLength: longContent.length };
+          },
+          check: (result: any) => result.content.length < result.originalLength
+        },
+        {
+          name: 'content without punctuation',
+          content: 'no punctuation here',
+          test: async () => diversifier.toBulletPoints('no punctuation here'),
+          check: (result: string) => result.length > 0
+        },
+        {
+          name: 'content with special characters',
+          content: 'Test with $pecial ch@racters & symbols!',
+          test: async () => diversifier.toAcademicVoice('Test with $pecial ch@racters & symbols!'),
+          check: (result: string) => result.length > 0
+        },
+        {
+          name: 'multiple consecutive spaces',
+          content: 'Content   with    extra   spaces.',
+          test: async () => diversifier.toFormal('Content   with    extra   spaces.'),
+          check: (result: string) => !/\s{2,}/.test(result)
+        },
+        {
+          name: 'content with code blocks',
+          content: 'Here is code: `const x = 10;` and more text.',
+          test: async () => diversifier.toTechnicalVoice('Here is code: `const x = 10;` and more text.'),
+          check: (result: string) => result.includes('`const x = 10;`')
+        }
+      ];
 
-      expect(result.content).toBeTruthy();
-    });
-
-    it('should handle very long content', async () => {
-      const longContent = 'This is a test. '.repeat(100);
-      const result = await diversifier.generateVariation(longContent, { length: 'concise' });
-
-      expect(result.content.length).toBeLessThan(longContent.length);
-    });
-
-    it('should handle content without punctuation', () => {
-      const content = 'no punctuation here';
-      const result = diversifier.toBulletPoints(content);
-
-      expect(result).toBeTruthy();
-    });
-
-    it('should handle content with special characters', () => {
-      const content = 'Test with $pecial ch@racters & symbols!';
-      const result = diversifier.toAcademicVoice(content);
-
-      expect(result).toBeTruthy();
-    });
-
-    it('should handle multiple consecutive spaces', () => {
-      const content = 'Content   with    extra   spaces.';
-      const result = diversifier.toFormal(content);
-
-      expect(result).not.toMatch(/\s{2,}/);
-    });
-
-    it('should handle content with code blocks', () => {
-      const content = 'Here is code: `const x = 10;` and more text.';
-      const result = diversifier.toTechnicalVoice(content);
-
-      expect(result).toContain('`const x = 10;`');
+      for (const { name, test, check } of edgeCases) {
+        const result = await test();
+        expect(check(result), `should handle ${name}`).toBe(true);
+      }
     });
   });
 });

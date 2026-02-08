@@ -18,96 +18,82 @@ describe('NaturalLanguageRouter', () => {
   });
 
   describe('Basic Routing', () => {
-    it('should return correct command for exact phrase match', async () => {
-      const result = await router.route('transition to elaboration');
+    it('should route phrases correctly with exact, fuzzy, and case-insensitive matches', async () => {
+      // Exact phrase match
+      const exactResult = await router.route('transition to elaboration');
+      expect(exactResult).not.toBeNull();
+      expect(exactResult?.commandId).toBe('flow-inception-to-elaboration');
+      expect(exactResult?.framework).toBe('sdlc-complete');
+      expect(exactResult?.confidence).toBe(1.0);
+      expect(exactResult?.category).toBe('phase-transitions');
 
-      expect(result).not.toBeNull();
-      expect(result?.commandId).toBe('flow-inception-to-elaboration');
-      expect(result?.framework).toBe('sdlc-complete');
-      expect(result?.confidence).toBe(1.0);
-      expect(result?.category).toBe('phase-transitions');
-    });
+      // Case-insensitive matching
+      const caseResult = await router.route('TRANSITION TO ELABORATION');
+      expect(caseResult).not.toBeNull();
+      expect(caseResult?.commandId).toBe('flow-inception-to-elaboration');
+      expect(caseResult?.confidence).toBe(1.0);
 
-    it('should handle case-insensitive matching', async () => {
-      const result = await router.route('TRANSITION TO ELABORATION');
+      // Normalize punctuation and whitespace
+      const punctResult = await router.route('  Transition  to   Elaboration!  ');
+      expect(punctResult).not.toBeNull();
+      expect(punctResult?.commandId).toBe('flow-inception-to-elaboration');
+      expect(punctResult?.confidence).toBe(1.0);
 
-      expect(result).not.toBeNull();
-      expect(result?.commandId).toBe('flow-inception-to-elaboration');
-      expect(result?.confidence).toBe(1.0);
-    });
+      // Fuzzy match with typos (Levenshtein ≤2)
+      const fuzzyResult = await router.route('transision to elaboration'); // 1 typo
+      expect(fuzzyResult).not.toBeNull();
+      expect(fuzzyResult?.commandId).toBe('flow-inception-to-elaboration');
+      expect(fuzzyResult?.confidence).toBeGreaterThanOrEqual(0.7);
+      expect(fuzzyResult?.confidence).toBeLessThan(1.0);
 
-    it('should normalize punctuation and whitespace', async () => {
-      const result = await router.route('  Transition  to   Elaboration!  ');
-
-      expect(result).not.toBeNull();
-      expect(result?.commandId).toBe('flow-inception-to-elaboration');
-      expect(result?.confidence).toBe(1.0);
-    });
-
-    it('should handle fuzzy match with typos (Levenshtein ≤2)', async () => {
-      const result = await router.route('transision to elaboration'); // 1 typo
-
-      expect(result).not.toBeNull();
-      expect(result?.commandId).toBe('flow-inception-to-elaboration');
-      expect(result?.confidence).toBeGreaterThanOrEqual(0.7);
-      expect(result?.confidence).toBeLessThan(1.0);
-    });
-
-    it('should return null for low confidence matches (<0.7)', async () => {
-      const result = await router.route('completely different phrase');
-
-      expect(result).toBeNull();
+      // Low confidence matches (<0.7) return null
+      const lowConfidenceResult = await router.route('completely different phrase');
+      expect(lowConfidenceResult).toBeNull();
     });
   });
 
   describe('Translation Management', () => {
-    it('should load translations from markdown file', async () => {
+    it('should load, reload, and track translations with metadata', async () => {
+      // Initial load
       await router.loadTranslations();
-
       const count = router.getTranslationCount();
       expect(count).toBeGreaterThan(0);
       expect(router.translationMetadata.version).toBeDefined();
       expect(router.translationMetadata.loadedAt).toBeDefined();
-    });
 
-    it('should reload translations and maintain count', async () => {
-      await router.loadTranslations();
+      // Reload and maintain count
       const countBefore = router.getTranslationCount();
-
       await router.reloadTranslations();
       const countAfter = router.getTranslationCount();
-
       expect(countBefore).toBe(countAfter);
-    });
 
-    it('should have at least 50 translations loaded', async () => {
-      await router.loadTranslations();
-
-      const count = router.getTranslationCount();
+      // At least 50 translations loaded
       expect(count).toBeGreaterThanOrEqual(50);
+
+      // Metadata populated after loading
+      expect(router.translationMetadata.totalTranslations).toBeGreaterThan(0);
+      expect(router.translationMetadata.categories).toBeDefined();
+      expect(router.translationMetadata.categories.size).toBeGreaterThan(0);
     });
   });
 
   describe('Filtering and Queries', () => {
-    it('should get translations by category', async () => {
+    it('should filter translations by category and framework', async () => {
+      // Get by category
       const transitions = await router.getByCategory('phase-transitions');
-
       expect(Array.isArray(transitions)).toBe(true);
       expect(transitions.length).toBeGreaterThan(0);
       expect(transitions.every(t => t.category === 'phase-transitions')).toBe(true);
-    });
 
-    it('should get translations by framework', async () => {
+      // Get by framework
       const sdlcTranslations = await router.getByFramework('sdlc-complete');
-
       expect(Array.isArray(sdlcTranslations)).toBe(true);
       expect(sdlcTranslations.length).toBeGreaterThan(0);
       expect(sdlcTranslations.every(t => t.framework === 'sdlc-complete')).toBe(true);
     });
 
-    it('should get suggestions for ambiguous phrase', async () => {
+    it('should get suggestions sorted by confidence', async () => {
       const suggestions = await router.getSuggestions('start', 5);
-
       expect(Array.isArray(suggestions)).toBe(true);
       expect(suggestions.length).toBeGreaterThan(0);
       expect(suggestions.length).toBeLessThanOrEqual(5);
@@ -145,31 +131,25 @@ describe('NaturalLanguageRouter', () => {
   });
 
   describe('Fuzzy Matching Algorithm', () => {
-    it('should calculate correct similarity scores', () => {
-      // Exact match
-      const exact = router.fuzzyMatch('test', 'test');
-      expect(exact).toBe(1.0);
+    it('should calculate similarity scores and find best matches', () => {
+      // Test various similarity cases in one test
+      const testCases = [
+        { str1: 'test', str2: 'test', expectedMin: 1.0, expectedMax: 1.0, desc: 'exact match' },
+        { str1: 'test', str2: 'text', expectedMin: 0.7, expectedMax: 1.0, desc: 'single char diff' },
+        { str1: 'abc', str2: 'xyz', expectedMin: 0.0, expectedMax: 0.5, desc: 'completely different' },
+        { str1: 'kitten', str2: 'sitting', expectedMin: 0.4, expectedMax: 1.0, desc: 'Levenshtein distance' },
+        { str1: 'abc', str2: 'abc', expectedMin: 1.0, expectedMax: 1.0, desc: 'exact match 2' }
+      ];
 
-      // Single character difference
-      const close = router.fuzzyMatch('test', 'text');
-      expect(close).toBeGreaterThan(0.7);
-      expect(close).toBeLessThan(1.0);
-
-      // Completely different
-      const different = router.fuzzyMatch('abc', 'xyz');
-      expect(different).toBeLessThan(0.5);
+      for (const { str1, str2, expectedMin, expectedMax, desc } of testCases) {
+        const score = router.fuzzyMatch(str1, str2);
+        expect(score, `${desc}: fuzzyMatch('${str1}', '${str2}')`).toBeGreaterThanOrEqual(expectedMin);
+        expect(score, `${desc}: fuzzyMatch('${str1}', '${str2}')`).toBeLessThanOrEqual(expectedMax);
+      }
     });
 
-    it('should handle Levenshtein distance calculation', () => {
-      const score1 = router.fuzzyMatch('kitten', 'sitting');
-      expect(score1).toBeGreaterThan(0.4);
-
-      const score2 = router.fuzzyMatch('abc', 'abc');
-      expect(score2).toBe(1.0);
-    });
-
-    it('should find best match from candidates', () => {
-      // Use lower threshold for findBestMatch
+    it('should find best match from candidates or return null', () => {
+      // Best match from candidates
       const customRouter = new NaturalLanguageRouter(null, { confidenceThreshold: 0.6 });
       const candidates = [
         'run security review',
@@ -178,99 +158,68 @@ describe('NaturalLanguageRouter', () => {
       ];
 
       const best = customRouter.findBestMatch('run security', candidates);
-
       expect(best).not.toBeNull();
       expect(best?.phrase).toBe('run security review');
       expect(best?.confidence).toBeGreaterThanOrEqual(0.6);
-    });
 
-    it('should return null for no matching candidates', () => {
-      const candidates = ['apple', 'banana', 'cherry'];
-
-      const best = router.findBestMatch('xyz completely different', candidates);
-
-      expect(best).toBeNull();
+      // No matching candidates
+      const candidatesNoMatch = ['apple', 'banana', 'cherry'];
+      const noMatch = router.findBestMatch('xyz completely different', candidatesNoMatch);
+      expect(noMatch).toBeNull();
     });
   });
 
   describe('Edge Cases', () => {
-    it('should return null for unknown phrase', async () => {
-      const result = await router.route('this phrase does not exist anywhere');
+    it('should return null for invalid or unknown phrases', async () => {
+      const edgeCases = [
+        { phrase: 'this phrase does not exist anywhere', desc: 'unknown phrase' },
+        { phrase: null, desc: 'null phrase' },
+        { phrase: '', desc: 'empty phrase' },
+        { phrase: undefined, desc: 'undefined phrase' }
+      ];
 
-      expect(result).toBeNull();
-    });
-
-    it('should return null for null phrase', async () => {
-      const result = await router.route(null as any);
-
-      expect(result).toBeNull();
-    });
-
-    it('should return null for empty phrase', async () => {
-      const result = await router.route('');
-
-      expect(result).toBeNull();
-    });
-
-    it('should return null for undefined phrase', async () => {
-      const result = await router.route(undefined as any);
-
-      expect(result).toBeNull();
+      for (const { phrase, desc } of edgeCases) {
+        const result = await router.route(phrase as any);
+        expect(result, desc).toBeNull();
+      }
     });
 
     it('should return empty array for getSuggestions with null phrase', async () => {
       const suggestions = await router.getSuggestions(null as any);
-
       expect(suggestions).toEqual([]);
     });
   });
 
   describe('Normalization', () => {
-    it('should normalize to lowercase', () => {
-      const normalized = router.normalize('HELLO WORLD');
-      expect(normalized).toBe('hello world');
-    });
+    it('should normalize various input formats', () => {
+      const normalizationCases = [
+        { input: 'HELLO WORLD', expected: 'hello world', desc: 'lowercase' },
+        { input: '  hello  ', expected: 'hello', desc: 'trim whitespace' },
+        { input: 'hello, world!', expected: 'hello world', desc: 'remove punctuation' },
+        { input: 'hello    world', expected: 'hello world', desc: 'collapse multiple spaces' },
+        { input: '', expected: '', desc: 'empty input' },
+        { input: null, expected: '', desc: 'null input' }
+      ];
 
-    it('should trim whitespace', () => {
-      const normalized = router.normalize('  hello  ');
-      expect(normalized).toBe('hello');
-    });
-
-    it('should remove punctuation', () => {
-      const normalized = router.normalize('hello, world!');
-      expect(normalized).toBe('hello world');
-    });
-
-    it('should collapse multiple spaces', () => {
-      const normalized = router.normalize('hello    world');
-      expect(normalized).toBe('hello world');
-    });
-
-    it('should handle empty input', () => {
-      const normalized = router.normalize('');
-      expect(normalized).toBe('');
-    });
-
-    it('should handle null input', () => {
-      const normalized = router.normalize(null as any);
-      expect(normalized).toBe('');
+      for (const { input, expected, desc } of normalizationCases) {
+        const normalized = router.normalize(input as any);
+        expect(normalized, desc).toBe(expected);
+      }
     });
   });
 
   describe('Token Extraction', () => {
-    it('should extract tokens from phrase', () => {
-      const tokens = router.extractTokens('transition to elaboration');
-      expect(tokens).toEqual(['transition', 'to', 'elaboration']);
-    });
+    it('should extract tokens correctly from various inputs', () => {
+      const tokenCases = [
+        { input: 'transition to elaboration', expected: ['transition', 'to', 'elaboration'], desc: 'extract tokens from phrase' },
+        { input: null, expected: [], desc: 'return empty array for null input' },
+        { input: '  hello   world  ', expected: ['hello', 'world'], desc: 'filter out empty tokens' }
+      ];
 
-    it('should return empty array for null input', () => {
-      const tokens = router.extractTokens(null as any);
-      expect(tokens).toEqual([]);
-    });
-
-    it('should filter out empty tokens', () => {
-      const tokens = router.extractTokens('  hello   world  ');
-      expect(tokens).toEqual(['hello', 'world']);
+      for (const { input, expected, desc } of tokenCases) {
+        const tokens = router.extractTokens(input as any);
+        expect(tokens, desc).toEqual(expected);
+      }
     });
   });
 
@@ -295,37 +244,20 @@ describe('NaturalLanguageRouter', () => {
   });
 
   describe('Custom Configuration', () => {
-    it('should respect custom confidence threshold', async () => {
+    it('should respect custom and default configuration values', async () => {
       const translationsPath = resolve(process.cwd(), 'agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md');
+
+      // Custom strict threshold
       const strictRouter = new NaturalLanguageRouter(translationsPath, { confidenceThreshold: 0.99 });
+      const strictResult = await strictRouter.route('transision to elaboration');
+      expect(strictResult).toBeNull(); // Should fail strict 0.99 threshold
 
-      // Fuzzy match that would normally pass 0.7 threshold (typo: transision vs transition)
-      const result = await strictRouter.route('transision to elaboration');
-
-      // Should fail strict 0.99 threshold (actual confidence ~0.96)
-      expect(result).toBeNull();
-    });
-
-    it('should use default confidence threshold of 0.7', () => {
+      // Default confidence threshold of 0.7
       const defaultRouter = new NaturalLanguageRouter();
       expect(defaultRouter.confidenceThreshold).toBe(0.7);
-    });
 
-    it('should use default cache TTL of 5 minutes', () => {
-      const defaultRouter = new NaturalLanguageRouter();
+      // Default cache TTL of 5 minutes
       expect(defaultRouter.cacheTTL).toBe(300000);
-    });
-  });
-
-  describe('Translation Metadata', () => {
-    it('should populate metadata after loading', async () => {
-      await router.loadTranslations();
-
-      expect(router.translationMetadata.version).toBeDefined();
-      expect(router.translationMetadata.loadedAt).toBeDefined();
-      expect(router.translationMetadata.totalTranslations).toBeGreaterThan(0);
-      expect(router.translationMetadata.categories).toBeDefined();
-      expect(router.translationMetadata.categories.size).toBeGreaterThan(0);
     });
   });
 });

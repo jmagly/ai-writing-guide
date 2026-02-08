@@ -96,37 +96,20 @@ describe('TestCodeGenerator', () => {
   });
 
   describe('File Generation', () => {
-    it('should generate unit test file', () => {
-      const testCase = createMockTestCase({ level: 'unit' });
-      const suite = createMockTestSuite([testCase]);
+    it('should generate test files for each level', () => {
+      // Test all three levels in one test
+      const levels: Array<'unit' | 'integration' | 'e2e'> = ['unit', 'integration', 'e2e'];
+      const filenameSuffixes = ['.unit.test.ts', '.integration.test.ts', '.e2e.test.ts'];
 
-      const result = generator.generate(suite);
+      for (let i = 0; i < levels.length; i++) {
+        const testCase = createMockTestCase({ level: levels[i] });
+        const suite = createMockTestSuite([testCase]);
+        const result = generator.generate(suite);
 
-      const unitFile = result.files.find(f => f.testLevel === 'unit');
-      expect(unitFile).toBeDefined();
-      expect(unitFile?.filename).toContain('.unit.test.ts');
-    });
-
-    it('should generate integration test file', () => {
-      const testCase = createMockTestCase({ level: 'integration' });
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-
-      const integrationFile = result.files.find(f => f.testLevel === 'integration');
-      expect(integrationFile).toBeDefined();
-      expect(integrationFile?.filename).toContain('.integration.test.ts');
-    });
-
-    it('should generate E2E test file', () => {
-      const testCase = createMockTestCase({ level: 'e2e' });
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-
-      const e2eFile = result.files.find(f => f.testLevel === 'e2e');
-      expect(e2eFile).toBeDefined();
-      expect(e2eFile?.filename).toContain('.e2e.test.ts');
+        const file = result.files.find(f => f.testLevel === levels[i]);
+        expect(file).toBeDefined();
+        expect(file?.filename).toContain(filenameSuffixes[i]);
+      }
     });
 
     it('should not generate file for level with no tests', () => {
@@ -151,24 +134,16 @@ describe('TestCodeGenerator', () => {
       });
     });
 
-    it('should include vitest imports', () => {
+    it('should include vitest imports and structure', () => {
       const testCase = createMockTestCase();
       const suite = createMockTestSuite([testCase]);
 
       const result = generator.generate(suite);
       const content = result.files[0].content;
 
+      // Check all vitest patterns
       expect(content).toContain("import { describe, it, expect");
       expect(content).toContain("from 'vitest'");
-    });
-
-    it('should use describe and it blocks', () => {
-      const testCase = createMockTestCase();
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
-
       expect(content).toContain('describe(');
       expect(content).toContain('it(');
     });
@@ -191,14 +166,12 @@ describe('TestCodeGenerator', () => {
   });
 
   describe('Jest Output', () => {
-    beforeEach(() => {
+    it('should include jest imports', () => {
       generator = new TestCodeGenerator({
         framework: 'jest',
         language: 'typescript'
       });
-    });
 
-    it('should include jest imports', () => {
       const testCase = createMockTestCase();
       const suite = createMockTestSuite([testCase]);
 
@@ -217,33 +190,16 @@ describe('TestCodeGenerator', () => {
       });
     });
 
-    it('should include playwright imports for E2E', () => {
+    it('should include playwright imports and structure for E2E', () => {
       const testCase = createMockTestCase({ level: 'e2e' });
       const suite = createMockTestSuite([testCase]);
 
       const result = generator.generate(suite);
       const content = result.files[0].content;
 
+      // Check all playwright patterns
       expect(content).toContain("from '@playwright/test'");
-    });
-
-    it('should use test.describe instead of describe', () => {
-      const testCase = createMockTestCase({ level: 'e2e' });
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
-
       expect(content).toContain('test.describe(');
-    });
-
-    it('should include page parameter', () => {
-      const testCase = createMockTestCase({ level: 'e2e' });
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
-
       expect(content).toContain('{ page }');
     });
 
@@ -266,14 +222,12 @@ describe('TestCodeGenerator', () => {
   });
 
   describe('JavaScript Output', () => {
-    beforeEach(() => {
+    it('should generate .js file extension', () => {
       generator = new TestCodeGenerator({
         framework: 'vitest',
         language: 'javascript'
       });
-    });
 
-    it('should generate .js file extension', () => {
       const testCase = createMockTestCase();
       const suite = createMockTestSuite([testCase]);
 
@@ -296,38 +250,17 @@ describe('TestCodeGenerator', () => {
       expect(content).toContain('// Assert');
     });
 
-    it('should include test case metadata in comments', () => {
+    it('should include test case metadata and conditions in comments', () => {
       generator = new TestCodeGenerator({
         framework: 'vitest',
         language: 'typescript',
         includeComments: true
       });
 
-      const testCase = createMockTestCase({ id: 'TC-001-005', priority: 'critical' });
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
-
-      expect(content).toContain('TC-001-005');
-      expect(content).toContain('critical');
-    });
-
-    it('should include preconditions as comments', () => {
       const testCase = createMockTestCase({
-        preconditions: ['User is authenticated', 'System is online']
-      });
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
-
-      expect(content).toContain('User is authenticated');
-      expect(content).toContain('System is online');
-    });
-
-    it('should include postconditions as comments', () => {
-      const testCase = createMockTestCase({
+        id: 'TC-001-005',
+        priority: 'critical',
+        preconditions: ['User is authenticated', 'System is online'],
         postconditions: ['Data is persisted', 'User is notified']
       });
       const suite = createMockTestSuite([testCase]);
@@ -335,6 +268,11 @@ describe('TestCodeGenerator', () => {
       const result = generator.generate(suite);
       const content = result.files[0].content;
 
+      // Check all metadata and conditions
+      expect(content).toContain('TC-001-005');
+      expect(content).toContain('critical');
+      expect(content).toContain('User is authenticated');
+      expect(content).toContain('System is online');
       expect(content).toContain('Data is persisted');
       expect(content).toContain('User is notified');
     });
@@ -356,36 +294,26 @@ describe('TestCodeGenerator', () => {
   });
 
   describe('Setup and Teardown', () => {
-    it('should include beforeEach when enabled', () => {
-      generator = new TestCodeGenerator({
-        framework: 'vitest',
-        language: 'typescript',
-        includeSetup: true
-      });
+    it('should include beforeEach and afterEach when enabled', () => {
+      const configs = [
+        { includeSetup: true, includeTeardown: false, expected: 'beforeEach' },
+        { includeSetup: false, includeTeardown: true, expected: 'afterEach' }
+      ];
 
-      const testCase = createMockTestCase();
-      const suite = createMockTestSuite([testCase]);
+      for (const config of configs) {
+        generator = new TestCodeGenerator({
+          framework: 'vitest',
+          language: 'typescript',
+          ...config
+        });
 
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
+        const testCase = createMockTestCase();
+        const suite = createMockTestSuite([testCase]);
+        const result = generator.generate(suite);
+        const content = result.files[0].content;
 
-      expect(content).toContain('beforeEach');
-    });
-
-    it('should include afterEach when enabled', () => {
-      generator = new TestCodeGenerator({
-        framework: 'vitest',
-        language: 'typescript',
-        includeTeardown: true
-      });
-
-      const testCase = createMockTestCase();
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
-
-      expect(content).toContain('afterEach');
+        expect(content).toContain(config.expected);
+      }
     });
 
     it('should not include setup when disabled', () => {
@@ -409,37 +337,31 @@ describe('TestCodeGenerator', () => {
   });
 
   describe('Comment Options', () => {
-    it('should include file header comments when enabled', () => {
-      generator = new TestCodeGenerator({
-        framework: 'vitest',
-        language: 'typescript',
-        includeComments: true
-      });
+    it('should include or exclude file header comments based on option', () => {
+      const configs = [
+        { includeComments: true, shouldContain: true },
+        { includeComments: false, shouldContain: false }
+      ];
 
-      const testCase = createMockTestCase();
-      const suite = createMockTestSuite([testCase]);
+      for (const config of configs) {
+        generator = new TestCodeGenerator({
+          framework: 'vitest',
+          language: 'typescript',
+          includeComments: config.includeComments
+        });
 
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
+        const testCase = createMockTestCase();
+        const suite = createMockTestSuite([testCase]);
+        const result = generator.generate(suite);
+        const content = result.files[0].content;
 
-      expect(content).toContain('/**');
-      expect(content).toContain('@module');
-    });
-
-    it('should not include comments when disabled', () => {
-      generator = new TestCodeGenerator({
-        framework: 'vitest',
-        language: 'typescript',
-        includeComments: false
-      });
-
-      const testCase = createMockTestCase();
-      const suite = createMockTestSuite([testCase]);
-
-      const result = generator.generate(suite);
-      const content = result.files[0].content;
-
-      expect(content).not.toContain('/**');
+        if (config.shouldContain) {
+          expect(content).toContain('/**');
+          expect(content).toContain('@module');
+        } else {
+          expect(content).not.toContain('/**');
+        }
+      }
     });
   });
 

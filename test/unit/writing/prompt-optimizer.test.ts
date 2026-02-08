@@ -9,46 +9,58 @@ describe('PromptOptimizer', () => {
   });
 
   describe('Prompt Analysis', () => {
-    it('should detect vague prompts', () => {
-      const result = optimizer.analyzePrompt('Write about authentication');
-      expect(result.score).toBeLessThan(50);
-      expect(result.issues.some(i => i.category === 'specificity')).toBe(true);
+    it('should detect various prompt issues and categorize them', () => {
+      const testCases = [
+        {
+          prompt: 'Write about authentication',
+          checks: [
+            { fn: (r: any) => r.score < 50, desc: 'vague prompt has low score' },
+            { fn: (r: any) => r.issues.some(i => i.category === 'specificity'), desc: 'detects lack of specificity' }
+          ]
+        },
+        {
+          prompt: 'Write an article about security',
+          checks: [
+            { fn: (r: any) => r.issues.some(i => i.category === 'constraints'), desc: 'detects missing constraints' }
+          ]
+        },
+        {
+          prompt: 'Explain JWT tokens',
+          checks: [
+            { fn: (r: any) => r.issues.some(i => i.category === 'examples'), desc: 'detects missing examples' }
+          ]
+        },
+        {
+          prompt: 'Write about microservices',
+          checks: [
+            { fn: (r: any) => r.score < 40, desc: 'vague prompts score very low' }
+          ]
+        },
+        {
+          prompt: 'Write a comprehensive guide about security',
+          checks: [
+            { fn: (r: any) => r.antiPatterns.length > 0, desc: 'identifies anti-patterns' },
+            { fn: (r: any) => r.antiPatterns.some(p => p.pattern === 'ai_trigger_word'), desc: 'detects AI trigger words' }
+          ]
+        }
+      ];
+
+      testCases.forEach(({ prompt, checks }) => {
+        const result = optimizer.analyzePrompt(prompt);
+        checks.forEach(({ fn, desc }) => {
+          expect(fn(result), `${desc} for: "${prompt}"`).toBe(true);
+        });
+      });
     });
 
-    it('should detect missing constraints', () => {
-      const result = optimizer.analyzePrompt('Write an article about security');
-      expect(result.issues.some(i => i.category === 'constraints')).toBe(true);
-    });
-
-    it('should detect missing examples', () => {
-      const result = optimizer.analyzePrompt('Explain JWT tokens');
-      expect(result.issues.some(i => i.category === 'examples')).toBe(true);
-    });
-
-    it('should score specific prompts high', () => {
-      const prompt = `Write a 1500-word technical article about OAuth 2.0 for senior developers.
+    it('should score specific and well-formed prompts high', () => {
+      const specificPrompt = `Write a 1500-word technical article about OAuth 2.0 for senior developers.
 Requirements:
 - Avoid "delve into" and "seamlessly"
 - Include code examples
 Example: Show PKCE flow implementation`;
 
-      const result = optimizer.analyzePrompt(prompt);
-      expect(result.score).toBeGreaterThan(70);
-    });
-
-    it('should score vague prompts low', () => {
-      const result = optimizer.analyzePrompt('Write about microservices');
-      expect(result.score).toBeLessThan(40);
-    });
-
-    it('should identify anti-patterns', () => {
-      const result = optimizer.analyzePrompt('Write a comprehensive guide about security');
-      expect(result.antiPatterns.length).toBeGreaterThan(0);
-      expect(result.antiPatterns.some(p => p.pattern === 'ai_trigger_word')).toBe(true);
-    });
-
-    it('should recognize well-formed prompts', () => {
-      const prompt = `Write a 2000-word technical deep-dive about database indexing for backend engineers.
+      const wellFormedPrompt = `Write a 2000-word technical deep-dive about database indexing for backend engineers.
 
 Requirements:
 - Avoid AI patterns (no "seamlessly", "comprehensive", "robust")
@@ -63,20 +75,27 @@ Example structure:
 4. Benchmarks (real numbers from production)
 5. Trade-offs (storage, write latency)`;
 
-      const result = optimizer.analyzePrompt(prompt);
-      expect(result.score).toBeGreaterThan(80);
-      expect(result.strengths.length).toBeGreaterThan(3);
+      const specificResult = optimizer.analyzePrompt(specificPrompt);
+      expect(specificResult.score).toBeGreaterThan(70);
+
+      const wellFormedResult = optimizer.analyzePrompt(wellFormedPrompt);
+      expect(wellFormedResult.score).toBeGreaterThan(80);
+      expect(wellFormedResult.strengths.length).toBeGreaterThan(3);
     });
 
-    it('should detect missing audience specification', () => {
-      const result = optimizer.analyzePrompt('Write about API design');
-      expect(result.issues.some(i => i.category === 'audience')).toBe(true);
-      expect(result.suggestions).toContain('Specify target audience or expertise level');
-    });
+    it('should detect missing audience and format specifications', () => {
+      const cases = [
+        { prompt: 'Write about API design', category: 'audience', suggestion: 'Specify target audience or expertise level' },
+        { prompt: 'Explain containers', category: 'format' }
+      ];
 
-    it('should detect missing format specification', () => {
-      const result = optimizer.analyzePrompt('Explain containers');
-      expect(result.issues.some(i => i.category === 'format')).toBe(true);
+      cases.forEach(({ prompt, category, suggestion }) => {
+        const result = optimizer.analyzePrompt(prompt);
+        expect(result.issues.some(i => i.category === category), `failed for ${category}`).toBe(true);
+        if (suggestion) {
+          expect(result.suggestions, `suggestion check failed for ${category}`).toContain(suggestion);
+        }
+      });
     });
 
     it('should recognize format when specified', () => {
@@ -84,186 +103,195 @@ Example structure:
       expect(result.issues.some(i => i.category === 'format')).toBe(false);
     });
 
-    it('should detect AI trigger words', () => {
+    it('should detect multiple AI trigger words and generic tone', () => {
       const patterns = optimizer.detectAntiPatterns('Write a comprehensive, robust solution using cutting-edge technology');
       expect(patterns.length).toBeGreaterThan(2);
-      expect(patterns.some(p => p.description.includes('comprehensive'))).toBe(true);
-      expect(patterns.some(p => p.description.includes('robust'))).toBe(true);
-      expect(patterns.some(p => p.description.includes('cutting-edge'))).toBe(true);
+
+      const triggerWords = ['comprehensive', 'robust', 'cutting-edge'];
+      triggerWords.forEach(word => {
+        expect(patterns.some(p => p.description.includes(word)), `failed to detect: ${word}`).toBe(true);
+      });
+
+      const genericTonePatterns = optimizer.detectAntiPatterns('Write in a professional tone about testing');
+      expect(genericTonePatterns.some(p => p.pattern === 'generic_tone')).toBe(true);
     });
 
-    it('should detect generic tone requests', () => {
-      const patterns = optimizer.detectAntiPatterns('Write in a professional tone about testing');
-      expect(patterns.some(p => p.pattern === 'generic_tone')).toBe(true);
-    });
-
-    it('should provide actionable suggestions', () => {
+    it('should provide actionable suggestions and categorize issues by severity', () => {
       const result = optimizer.analyzePrompt('Write about APIs');
       expect(result.suggestions.length).toBeGreaterThan(0);
       expect(result.suggestions.every(s => s.length > 0)).toBe(true);
-    });
 
-    it('should categorize issues by severity', () => {
-      const result = optimizer.analyzePrompt('Write a comprehensive guide');
-      const critical = result.issues.filter(i => i.severity === 'critical');
-      const warnings = result.issues.filter(i => i.severity === 'warning');
+      const criticalResult = optimizer.analyzePrompt('Write a comprehensive guide');
+      const critical = criticalResult.issues.filter(i => i.severity === 'critical');
+      const warnings = criticalResult.issues.filter(i => i.severity === 'warning');
       expect(critical.length + warnings.length).toBeGreaterThan(0);
     });
 
-    it('should score prompts with metrics higher', () => {
-      const withoutMetrics = optimizer.scorePromptQuality('Write about performance optimization');
-      const withMetrics = optimizer.scorePromptQuality('Write about reducing latency from 500ms to 50ms with caching');
-      expect(withMetrics).toBeGreaterThan(withoutMetrics);
+    it('should score prompts with quality indicators appropriately', () => {
+      const comparisons = [
+        {
+          without: 'Write about performance optimization',
+          with: 'Write about reducing latency from 500ms to 50ms with caching',
+          label: 'metrics'
+        },
+        {
+          without: 'Write about authentication',
+          with: 'Write about OAuth 2.0 and JWT authentication',
+          label: 'specific technologies'
+        },
+        {
+          without: 'Write about database design',
+          with: 'Write about database design, moreover ensure seamless integration',
+          label: 'banned phrases (inverse)',
+          inverse: true
+        }
+      ];
+
+      comparisons.forEach(({ without, with: withFeature, label, inverse }) => {
+        const score1 = optimizer.scorePromptQuality(without);
+        const score2 = optimizer.scorePromptQuality(withFeature);
+
+        if (inverse) {
+          expect(score1, `failed for ${label}`).toBeGreaterThan(score2);
+        } else {
+          expect(score2, `failed for ${label}`).toBeGreaterThan(score1);
+        }
+      });
     });
 
-    it('should score prompts with specific technologies higher', () => {
-      const generic = optimizer.scorePromptQuality('Write about authentication');
-      const specific = optimizer.scorePromptQuality('Write about OAuth 2.0 and JWT authentication');
-      expect(specific).toBeGreaterThan(generic);
-    });
+    it('should handle edge case prompts gracefully', () => {
+      const emptyResult = optimizer.analyzePrompt('');
+      expect(emptyResult.score).toBe(0);
+      expect(emptyResult.issues.length).toBeGreaterThan(0);
 
-    it('should penalize banned phrases', () => {
-      const clean = optimizer.scorePromptQuality('Write about database design');
-      const withBanned = optimizer.scorePromptQuality('Write about database design, moreover ensure seamless integration');
-      expect(clean).toBeGreaterThan(withBanned);
-    });
-
-    it('should handle empty prompts gracefully', () => {
-      const result = optimizer.analyzePrompt('');
-      expect(result.score).toBe(0);
-      expect(result.issues.length).toBeGreaterThan(0);
-    });
-
-    it('should handle very long prompts', () => {
       const longPrompt = 'Write about '.repeat(1000) + 'testing';
-      const result = optimizer.analyzePrompt(longPrompt);
-      expect(result.score).toBeDefined();
-      expect(result.score).toBeGreaterThanOrEqual(0);
-      expect(result.score).toBeLessThanOrEqual(100);
+      const longResult = optimizer.analyzePrompt(longPrompt);
+      expect(longResult.score).toBeDefined();
+      expect(longResult.score).toBeGreaterThanOrEqual(0);
+      expect(longResult.score).toBeLessThanOrEqual(100);
     });
 
     it('should identify anti-pattern locations', () => {
       const patterns = optimizer.detectAntiPatterns('Use cutting-edge technology and seamless integration');
       expect(patterns.length).toBeGreaterThan(0);
-      // AI trigger words should have specific locations, but structural issues (like no_constraints) may not
       const triggerWordPatterns = patterns.filter(p => p.pattern === 'ai_trigger_word');
       expect(triggerWordPatterns.every(p => p.locations.length > 0)).toBe(true);
     });
   });
 
   describe('Optimization Strategies', () => {
-    it('should add specificity to vague prompts', async () => {
-      const result = await optimizer.optimize('Write about authentication');
-      expect(result.optimizedPrompt).not.toBe(result.originalPrompt);
-      expect(result.improvements.some(i => i.type === 'specificity')).toBe(true);
-      expect(result.score.after).toBeGreaterThan(result.score.before);
+    it('should apply various optimization strategies', async () => {
+      const testCases = [
+        {
+          prompt: 'Write about authentication',
+          checks: [
+            { fn: (r: any) => r.optimizedPrompt !== r.originalPrompt, desc: 'adds specificity' },
+            { fn: (r: any) => r.improvements.some(i => i.type === 'specificity'), desc: 'tracks specificity improvement' },
+            { fn: (r: any) => r.score.after > r.score.before, desc: 'improves score' }
+          ]
+        },
+        {
+          prompt: 'Write an article about security',
+          checks: [
+            { fn: (r: any) => r.improvements.some(i => i.type === 'constraints'), desc: 'adds constraints' },
+            { fn: (r: any) => r.optimizedPrompt.toLowerCase().includes('avoid'), desc: 'includes AIWG constraints' }
+          ]
+        },
+        {
+          prompt: 'Write a comprehensive guide using robust solutions',
+          checks: [
+            { fn: (r: any) => r.improvements.some(i => i.description.includes('vague')), desc: 'detects vagueness' },
+            { fn: (r: any) => !r.optimizedPrompt.includes('comprehensive'), desc: 'removes filler words' }
+          ]
+        },
+        {
+          prompt: 'Write about microservices',
+          checks: [
+            { fn: (r: any) => r.improvements.some(i => i.type === 'anti_pattern' || i.type === 'specificity'), desc: 'fixes vague requests' },
+            { fn: (r: any) => r.score.after > r.score.before, desc: 'improves score for vague prompts' }
+          ]
+        },
+        {
+          prompt: 'Write a comprehensive and robust article',
+          checks: [
+            { fn: (r: any) => !r.optimizedPrompt.toLowerCase().includes('comprehensive'), desc: 'removes "comprehensive"' },
+            { fn: (r: any) => !r.optimizedPrompt.toLowerCase().includes('robust'), desc: 'removes "robust"' }
+          ]
+        }
+      ];
+
+      for (const { prompt, checks } of testCases) {
+        const result = await optimizer.optimize(prompt);
+        checks.forEach(({ fn, desc }) => {
+          expect(fn(result), `${desc} for: "${prompt}"`).toBe(true);
+        });
+      }
     });
 
-    it('should inject examples into generic requests', async () => {
-      const result = await optimizer.optimize('Explain JWT tokens', { domain: 'technical' });
-      expect(result.improvements.some(i => i.type === 'examples')).toBe(true);
-      expect(result.optimizedPrompt).toContain('example');
+    it('should inject examples and voice guidance based on context', async () => {
+      const examplesResult = await optimizer.optimize('Explain JWT tokens', { domain: 'technical' });
+      expect(examplesResult.improvements.some(i => i.type === 'examples')).toBe(true);
+      expect(examplesResult.optimizedPrompt).toContain('example');
+
+      const voiceContexts = [
+        { voice: 'technical', prompt: 'Write about databases', expectedText: 'technical' },
+        { voice: 'academic', prompt: 'Analyze social media impact', expectedText: 'academic' },
+        { voice: 'executive', prompt: 'Write brief about cloud migration', expectedText: 'executive' }
+      ];
+
+      for (const { voice, prompt, expectedText } of voiceContexts) {
+        const result = await optimizer.optimize(prompt, { voice });
+        expect(result.improvements.some(i => i.type === 'voice'), `failed for voice: ${voice}`).toBe(true);
+        expect(result.optimizedPrompt.toLowerCase(), `failed to find text for: ${voice}`).toContain(expectedText);
+      }
     });
 
-    it('should add AI Writing Guide constraints', async () => {
-      const result = await optimizer.optimize('Write an article about security');
-      expect(result.improvements.some(i => i.type === 'constraints')).toBe(true);
-      expect(result.optimizedPrompt.toLowerCase()).toContain('avoid');
-    });
-
-    it('should inject voice guidance for technical context', async () => {
-      const result = await optimizer.optimize('Write about databases', { voice: 'technical' });
-      expect(result.improvements.some(i => i.type === 'voice')).toBe(true);
-      expect(result.optimizedPrompt).toContain('technical');
-    });
-
-    it('should inject voice guidance for academic context', async () => {
-      const result = await optimizer.optimize('Analyze social media impact', { voice: 'academic' });
-      expect(result.improvements.some(i => i.type === 'voice')).toBe(true);
-      expect(result.optimizedPrompt.toLowerCase()).toContain('academic');
-    });
-
-    it('should inject voice guidance for executive context', async () => {
-      const result = await optimizer.optimize('Write brief about cloud migration', { voice: 'executive' });
-      expect(result.improvements.some(i => i.type === 'voice')).toBe(true);
-      expect(result.optimizedPrompt.toLowerCase()).toContain('executive');
-    });
-
-    it('should remove filler words and vagueness', async () => {
-      const result = await optimizer.optimize('Write a comprehensive guide using robust solutions');
-      expect(result.improvements.some(i => i.description.includes('vague'))).toBe(true);
-      expect(result.optimizedPrompt).not.toContain('comprehensive');
-    });
-
-    it('should preserve good parts of original prompt', async () => {
+    it('should preserve good parts of original prompt and avoid duplication', async () => {
       const original = 'Write a 1500-word article for senior developers about OAuth 2.0';
       const result = await optimizer.optimize(original);
       expect(result.optimizedPrompt).toContain('1500-word');
       expect(result.optimizedPrompt).toContain('senior developers');
       expect(result.optimizedPrompt).toContain('OAuth 2.0');
-    });
 
-    it('should add word count when provided in context', async () => {
-      const result = await optimizer.optimize('Write about testing', { targetLength: 2000 });
-      expect(result.optimizedPrompt).toContain('2000');
-    });
+      const wordCountResult = await optimizer.optimize('Write about testing', { targetLength: 2000 });
+      expect(wordCountResult.optimizedPrompt).toContain('2000');
 
-    it('should not duplicate constraints', async () => {
-      const original = `Write about APIs
+      const duplicateTest = `Write about APIs
 Requirements:
 - Avoid "seamlessly"
 - Include examples`;
-      const result = await optimizer.optimize(original);
-      const requirementsCount = (result.optimizedPrompt.match(/Requirements:/g) || []).length;
+      const duplicateResult = await optimizer.optimize(duplicateTest);
+      const requirementsCount = (duplicateResult.optimizedPrompt.match(/Requirements:/g) || []).length;
       expect(requirementsCount).toBeLessThanOrEqual(1);
     });
 
-    it('should fix vague request anti-pattern', async () => {
-      const result = await optimizer.optimize('Write about microservices');
-      expect(result.improvements.some(i => i.type === 'anti_pattern' || i.type === 'specificity')).toBe(true);
-      expect(result.score.after).toBeGreaterThan(result.score.before);
+    it('should add domain-specific constraints based on context', async () => {
+      const domainTests = [
+        { domain: 'technical', prompt: 'Write about security', expectedText: 'implementation' },
+        { domain: 'academic', prompt: 'Analyze topic', expectedText: 'cite' },
+        { domain: 'executive', prompt: 'Write brief', expectedText: 'impact' }
+      ];
+
+      for (const { domain, prompt, expectedText } of domainTests) {
+        const result = await optimizer.optimize(prompt, { domain });
+        expect(result.optimizedPrompt.toLowerCase(), `failed for domain: ${domain}`).toContain(expectedText);
+      }
     });
 
-    it('should remove AI trigger words', async () => {
-      const result = await optimizer.optimize('Write a comprehensive and robust article');
-      expect(result.optimizedPrompt.toLowerCase()).not.toContain('comprehensive');
-      expect(result.optimizedPrompt.toLowerCase()).not.toContain('robust');
-    });
-
-    it('should add domain-specific constraints', async () => {
-      const result = await optimizer.optimize('Write about security', { domain: 'technical' });
-      expect(result.optimizedPrompt.toLowerCase()).toContain('implementation');
-    });
-
-    it('should add academic constraints for academic domain', async () => {
-      const result = await optimizer.optimize('Analyze topic', { domain: 'academic' });
-      expect(result.optimizedPrompt.toLowerCase()).toContain('cite');
-    });
-
-    it('should add executive constraints for executive domain', async () => {
-      const result = await optimizer.optimize('Write brief', { domain: 'executive' });
-      expect(result.optimizedPrompt.toLowerCase()).toContain('impact');
-    });
-
-    it('should generate detailed reasoning', async () => {
+    it('should generate detailed reasoning and track improvements', async () => {
       const result = await optimizer.optimize('Write about APIs');
       expect(result.reasoning).toBeTruthy();
       expect(result.reasoning.length).toBeGreaterThan(50);
       expect(result.reasoning).toContain('score');
-    });
 
-    it('should track improvement types', async () => {
-      const result = await optimizer.optimize('Write about databases');
       const types = new Set(result.improvements.map(i => i.type));
       expect(types.size).toBeGreaterThan(0);
+
+      const impactResult = await optimizer.optimize('Write a comprehensive article');
+      expect(impactResult.improvements.every(i => ['high', 'medium', 'low'].includes(i.impact))).toBe(true);
     });
 
-    it('should assign impact levels', async () => {
-      const result = await optimizer.optimize('Write a comprehensive article');
-      expect(result.improvements.every(i => ['high', 'medium', 'low'].includes(i.impact))).toBe(true);
-    });
-
-    it('should handle already-optimized prompts', async () => {
+    it('should handle already-optimized prompts with minimal changes', async () => {
       const optimized = `Write a 1500-word technical article about Redis caching for backend engineers.
 
 Requirements:
@@ -284,7 +312,7 @@ Write for senior developers with production experience.`;
       expect(result.improvements.length).toBeLessThan(3);
     });
 
-    it('should handle prompts with code blocks', async () => {
+    it('should preserve special formatting and provide before/after snippets', async () => {
       const prompt = `Write about authentication
 \`\`\`javascript
 const token = jwt.sign(payload, secret);
@@ -292,10 +320,7 @@ const token = jwt.sign(payload, secret);
       const result = await optimizer.optimize(prompt);
       expect(result.optimizedPrompt).toContain('```');
       expect(result.optimizedPrompt).toContain('jwt.sign');
-    });
 
-    it('should provide before/after snippets in improvements', async () => {
-      const result = await optimizer.optimize('Write a comprehensive guide');
       expect(result.improvements.length).toBeGreaterThan(0);
       expect(result.improvements[0].before).toBeDefined();
       expect(result.improvements[0].after).toBeDefined();
@@ -317,87 +342,89 @@ const token = jwt.sign(payload, secret);
   });
 
   describe('Prompt Comparison', () => {
-    it('should show before/after differences', () => {
-      const original = 'Write about authentication';
-      const optimized = `Write a 1500-word article about OAuth 2.0 authentication for senior developers.
+    it('should analyze before/after differences and improvements', () => {
+      const testCases = [
+        {
+          original: 'Write about authentication',
+          optimized: `Write a 1500-word article about OAuth 2.0 authentication for senior developers.
 
 Requirements:
 - Avoid AI patterns
-- Include code examples`;
-
-      const comparison = optimizer.comparePrompts(original, optimized);
-      expect(comparison.differences.length).toBeGreaterThan(0);
-    });
-
-    it('should quantify improvement (score delta)', () => {
-      const original = 'Write about APIs';
-      const optimized = 'Write a 2000-word technical guide about REST API design for backend developers with code examples and avoid "seamlessly"';
-
-      const comparison = optimizer.comparePrompts(original, optimized);
-      expect(comparison.improvement).toBeGreaterThan(0);
-    });
-
-    it('should list specific improvements made', () => {
-      const original = 'Write about testing';
-      const optimized = `Write about integration testing with pytest
+- Include code examples`,
+          checks: [
+            { fn: (c: any) => c.differences.length > 0, desc: 'shows differences' },
+            { fn: (c: any) => c.improvement > 0, desc: 'quantifies improvement' }
+          ]
+        },
+        {
+          original: 'Write about testing',
+          optimized: `Write about integration testing with pytest
 
 Requirements:
 - Avoid "comprehensive"
-- Include code examples`;
+- Include code examples`,
+          checks: [
+            { fn: (c: any) => c.differences.some(d => d.type === 'added'), desc: 'lists specific improvements' }
+          ]
+        },
+        {
+          original: 'Write a comprehensive, robust guide',
+          optimized: 'Write a detailed guide about specific topic',
+          checks: [
+            { fn: (c: any) => c.differences.some(d => d.type === 'modified'), desc: 'highlights removed anti-patterns' }
+          ]
+        },
+        {
+          original: 'Write about databases',
+          optimized: 'Write a 1500-word article about PostgreSQL indexing for DBAs',
+          checks: [
+            { fn: (c: any) => c.summary && c.summary.length > 20, desc: 'generates summary' }
+          ]
+        }
+      ];
 
-      const comparison = optimizer.comparePrompts(original, optimized);
-      expect(comparison.differences.some(d => d.type === 'added')).toBe(true);
+      testCases.forEach(({ original, optimized, checks }) => {
+        const comparison = optimizer.comparePrompts(original, optimized);
+        checks.forEach(({ fn, desc }) => {
+          expect(fn(comparison), `${desc} for comparison`).toBe(true);
+        });
+      });
     });
 
-    it('should highlight removed anti-patterns', () => {
-      const original = 'Write a comprehensive, robust guide';
-      const optimized = 'Write a detailed guide about specific topic';
-
-      const comparison = optimizer.comparePrompts(original, optimized);
-      expect(comparison.differences.some(d => d.type === 'modified')).toBe(true);
-    });
-
-    it('should generate comparison summary', () => {
-      const original = 'Write about databases';
-      const optimized = 'Write a 1500-word article about PostgreSQL indexing for DBAs';
-
-      const comparison = optimizer.comparePrompts(original, optimized);
-      expect(comparison.summary).toBeTruthy();
-      expect(comparison.summary.length).toBeGreaterThan(20);
-    });
-
-    it('should track added sections', () => {
-      const original = 'Write about APIs';
-      const optimized = `Write about APIs
+    it('should track section changes (added/removed/modified)', () => {
+      const changeTests = [
+        {
+          original: 'Write about APIs',
+          optimized: `Write about APIs
 
 Requirements:
-- Avoid AI patterns`;
+- Avoid AI patterns`,
+          type: 'added',
+          label: 'added sections'
+        },
+        {
+          original: `Write about APIs
+Use comprehensive approach`,
+          optimized: 'Write about APIs',
+          type: 'removed',
+          label: 'removed sections'
+        },
+        {
+          original: 'Write about authentication',
+          optimized: 'Write about OAuth 2.0 authentication',
+          type: 'modified',
+          label: 'modified sections'
+        }
+      ];
 
-      const comparison = optimizer.comparePrompts(original, optimized);
-      const added = comparison.differences.filter(d => d.type === 'added');
-      expect(added.length).toBeGreaterThan(0);
+      changeTests.forEach(({ original, optimized, type, label }) => {
+        const comparison = optimizer.comparePrompts(original, optimized);
+        const changes = comparison.differences.filter(d => d.type === type);
+        expect(changes.length, `failed for ${label}`).toBeGreaterThan(0);
+      });
     });
 
-    it('should track removed sections', () => {
-      const original = `Write about APIs
-Use comprehensive approach`;
-      const optimized = 'Write about APIs';
-
-      const comparison = optimizer.comparePrompts(original, optimized);
-      const removed = comparison.differences.filter(d => d.type === 'removed');
-      expect(removed.length).toBeGreaterThan(0);
-    });
-
-    it('should track modified sections', () => {
-      const original = 'Write about authentication';
-      const optimized = 'Write about OAuth 2.0 authentication';
-
-      const comparison = optimizer.comparePrompts(original, optimized);
-      const modified = comparison.differences.filter(d => d.type === 'modified');
-      expect(modified.length).toBeGreaterThan(0);
-    });
-
-    it('should provide reasons for changes', () => {
+    it('should provide reasons for all changes', () => {
       const original = 'Write comprehensive guide';
       const optimized = 'Write detailed guide with examples';
 
@@ -407,7 +434,7 @@ Use comprehensive approach`;
   });
 
   describe('Batch Optimization', () => {
-    it('should optimize multiple prompts in parallel', async () => {
+    it('should optimize multiple prompts in parallel and handle mixed quality', async () => {
       const prompts = [
         'Write about testing',
         'Write about databases',
@@ -419,16 +446,14 @@ Use comprehensive approach`;
       prompts.forEach(p => {
         expect(results.has(p)).toBe(true);
       });
-    });
 
-    it('should handle mixed quality prompts', async () => {
-      const prompts = [
+      const mixedPrompts = [
         'Write about APIs', // vague
         'Write a 1500-word technical article about GraphQL for senior developers' // specific
       ];
 
-      const results = await optimizer.optimizeBatch(prompts);
-      const scores = Array.from(results.values()).map(r => r.score.before);
+      const mixedResults = await optimizer.optimizeBatch(mixedPrompts);
+      const scores = Array.from(mixedResults.values()).map(r => r.score.before);
       expect(Math.max(...scores)).toBeGreaterThan(Math.min(...scores));
     });
 
@@ -458,74 +483,52 @@ Use comprehensive approach`;
   });
 
   describe('Edge Cases', () => {
-    it('should handle prompts with special characters', async () => {
-      const prompt = 'Write about C++ & Rust: performance comparison';
-      const result = await optimizer.optimize(prompt);
-      expect(result.optimizedPrompt).toContain('C++');
-      expect(result.optimizedPrompt).toContain('Rust');
-    });
-
-    it('should handle multi-line prompts', async () => {
-      const prompt = `Write about testing
+    it('should handle prompts with special formatting and characters', async () => {
+      const edgeCases = [
+        { prompt: 'Write about C++ & Rust: performance comparison', expected: ['C++', 'Rust'], label: 'special characters' },
+        { prompt: `Write about testing
 
 Must include:
 - Unit tests
-- Integration tests`;
-
-      const result = await optimizer.optimize(prompt);
-      expect(result.optimizedPrompt).toContain('Unit tests');
-    });
-
-    it('should handle prompts with URLs', async () => {
-      const prompt = 'Write about https://api.example.com REST API';
-      const result = await optimizer.optimize(prompt);
-      expect(result.optimizedPrompt).toContain('https://api.example.com');
-    });
-
-    it('should handle prompts with numbers', async () => {
-      const prompt = 'Write about reducing latency from 500ms to 50ms';
-      const result = await optimizer.optimize(prompt);
-      expect(result.optimizedPrompt).toContain('500ms');
-      expect(result.optimizedPrompt).toContain('50ms');
-    });
-
-    it('should handle prompts with bullet points', async () => {
-      const prompt = `Write about security:
+- Integration tests`, expected: ['Unit tests'], label: 'multi-line prompts' },
+        { prompt: 'Write about https://api.example.com REST API', expected: ['https://api.example.com'], label: 'URLs' },
+        { prompt: 'Write about reducing latency from 500ms to 50ms', expected: ['500ms', '50ms'], label: 'numbers' },
+        { prompt: `Write about security:
 • Authentication
 • Authorization
-• Encryption`;
+• Encryption`, expected: ['•'], label: 'bullet points' },
+        { prompt: 'Write about testing with émojis 🚀', expected: ['🚀'], label: 'unicode' }
+      ];
 
-      const result = await optimizer.optimize(prompt);
-      expect(result.optimizedPrompt).toContain('•');
+      for (const { prompt, expected, label } of edgeCases) {
+        const result = await optimizer.optimize(prompt);
+        expected.forEach(exp => {
+          expect(result.optimizedPrompt, `failed for ${label}: missing "${exp}"`).toContain(exp);
+        });
+      }
     });
 
-    it('should handle very short prompts', async () => {
-      const result = await optimizer.optimize('APIs');
-      expect(result.optimizedPrompt.length).toBeGreaterThan(10);
-      expect(result.score.after).toBeGreaterThan(result.score.before);
+    it('should handle very short prompts and mixed case', async () => {
+      const shortResult = await optimizer.optimize('APIs');
+      expect(shortResult.optimizedPrompt.length).toBeGreaterThan(10);
+      expect(shortResult.score.after).toBeGreaterThan(shortResult.score.before);
+
+      const mixedCasePrompt = 'WRITE ABOUT TESTING';
+      const mixedCaseResult = await optimizer.optimize(mixedCasePrompt);
+      expect(mixedCaseResult.optimizedPrompt).toBeTruthy();
     });
 
-    it('should handle prompts with mixed case', async () => {
-      const prompt = 'WRITE ABOUT TESTING';
-      const result = await optimizer.optimize(prompt);
-      expect(result.optimizedPrompt).toBeTruthy();
-    });
+    it('should handle undefined and empty context gracefully', async () => {
+      const contexts = [
+        { context: undefined, label: 'undefined context' },
+        { context: {}, label: 'empty context' }
+      ];
 
-    it('should handle prompts with unicode', async () => {
-      const prompt = 'Write about testing with émojis 🚀';
-      const result = await optimizer.optimize(prompt);
-      expect(result.optimizedPrompt).toContain('🚀');
-    });
-
-    it('should not break on undefined context', async () => {
-      const result = await optimizer.optimize('Write about testing', undefined);
-      expect(result).toBeTruthy();
-      expect(result.score.after).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should handle empty context object', async () => {
-      const result = await optimizer.optimize('Write about APIs', {});
-      expect(result).toBeTruthy();
+      for (const { context, label } of contexts) {
+        const result = await optimizer.optimize('Write about testing', context);
+        expect(result, `failed for ${label}`).toBeTruthy();
+        expect(result.score.after, `failed score check for ${label}`).toBeGreaterThanOrEqual(0);
+      }
     });
   });
 
@@ -537,13 +540,11 @@ Must include:
       expect(score1).toBe(score2);
     });
 
-    it('should never score below 0', () => {
+    it('should enforce score boundaries (0-100)', () => {
       const worst = 'Write a comprehensive robust cutting-edge seamless innovative solution moreover furthermore';
-      const score = optimizer.scorePromptQuality(worst);
-      expect(score).toBeGreaterThanOrEqual(0);
-    });
+      const worstScore = optimizer.scorePromptQuality(worst);
+      expect(worstScore).toBeGreaterThanOrEqual(0);
 
-    it('should never score above 100', () => {
       const best = `Write a 2000-word technical analysis of PostgreSQL B-tree indexing for senior DBAs.
 
 Requirements:
@@ -562,8 +563,8 @@ Write for database administrators with production PostgreSQL experience.
 Reference real-world scenarios from high-traffic applications.
 Include what goes wrong (bloat, unused indexes, over-indexing).`;
 
-      const score = optimizer.scorePromptQuality(best);
-      expect(score).toBeLessThanOrEqual(100);
+      const bestScore = optimizer.scorePromptQuality(best);
+      expect(bestScore).toBeLessThanOrEqual(100);
     });
 
     it('should score comprehensively optimized prompts high', () => {

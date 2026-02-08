@@ -7,15 +7,15 @@
  *
  * Issue #21: Fix provider deployment file locations
  *
- * Expected locations by provider:
+ * Expected locations by provider (universal deployment - all 4 artifact types):
  * - Claude:   .claude/agents/, .claude/commands/, .claude/skills/, .claude/rules/
- * - Codex:    .codex/agents/, ~/.codex/prompts/, ~/.codex/skills/
- * - Factory:  .factory/droids/, .factory/commands/
- * - Copilot:  .github/agents/
- * - Cursor:   .cursor/rules/
- * - OpenCode: .opencode/agent/, .opencode/command/
- * - Warp:     WARP.md (aggregated)
- * - Windsurf: AGENTS.md, .windsurfrules, .windsurf/workflows/
+ * - Codex:    .codex/agents/, .codex/rules/ (project) + ~/.codex/prompts/, ~/.codex/skills/ (home)
+ * - Factory:  .factory/droids/, .factory/commands/, .factory/skills/, .factory/rules/
+ * - Copilot:  .github/agents/ (agents+commands as YAML), .github/skills/, .github/copilot-rules/
+ * - Cursor:   .cursor/agents/, .cursor/commands/, .cursor/skills/, .cursor/rules/
+ * - OpenCode: .opencode/agent/, .opencode/command/, .opencode/skill/, .opencode/rule/
+ * - Warp:     .warp/agents/, .warp/commands/, .warp/skills/, .warp/rules/ + WARP.md
+ * - Windsurf: .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/ + AGENTS.md (aggregated agents), .windsurfrules
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -55,14 +55,14 @@ interface ProviderConfig {
 const PROVIDERS: Record<string, ProviderConfig> = {
   claude: {
     name: 'claude',
-    projectPaths: ['.claude/agents', '.claude/commands', '.claude/skills'],
+    projectPaths: ['.claude/agents', '.claude/commands', '.claude/skills', '.claude/rules'],
     forbiddenPaths: [],
     fileExtension: '.md',
     minArtifacts: 10,
   },
   codex: {
     name: 'codex',
-    projectPaths: ['.codex/agents'],
+    projectPaths: ['.codex/agents', '.codex/rules'],  // Commands → ~/.codex/prompts/, Skills → ~/.codex/skills/ (home dir)
     homePaths: ['~/.codex/prompts', '~/.codex/skills'],
     forbiddenPaths: ['.claude'],  // Should NOT create Claude dirs
     fileExtension: '.md',
@@ -70,47 +70,47 @@ const PROVIDERS: Record<string, ProviderConfig> = {
   },
   factory: {
     name: 'factory',
-    projectPaths: ['.factory/droids', '.factory/commands'],
+    projectPaths: ['.factory/droids', '.factory/commands', '.factory/skills', '.factory/rules'],
     forbiddenPaths: ['.claude', '.codex'],
     fileExtension: '.md',
     minArtifacts: 5,
   },
   copilot: {
     name: 'copilot',
-    projectPaths: ['.github/agents'],
+    projectPaths: ['.github/agents', '.github/skills', '.github/copilot-rules'],  // Commands → .github/agents/ (converted to agent YAML)
     forbiddenPaths: ['.claude', '.codex', '.factory'],
     fileExtension: '.yaml',  // Copilot uses .yaml not .yml
     minArtifacts: 5,
   },
   cursor: {
     name: 'cursor',
-    projectPaths: ['.cursor/rules'],
+    projectPaths: ['.cursor/agents', '.cursor/commands', '.cursor/skills', '.cursor/rules'],
     forbiddenPaths: ['.claude', '.codex', '.factory', '.github/agents'],
-    fileExtension: '.mdc',
+    fileExtension: '.md',  // Most artifacts are .md; rules are .mdc
     minArtifacts: 5,
   },
   opencode: {
     name: 'opencode',
-    projectPaths: ['.opencode/agent', '.opencode/command'],
+    projectPaths: ['.opencode/agent', '.opencode/command', '.opencode/skill', '.opencode/rule'],
     forbiddenPaths: ['.claude', '.codex', '.cursor'],
     fileExtension: '.md',
     minArtifacts: 5,
   },
   warp: {
     name: 'warp',
-    projectPaths: [],
+    projectPaths: ['.warp/agents', '.warp/commands', '.warp/skills', '.warp/rules'],
     rootFiles: ['WARP.md'],
-    forbiddenPaths: ['.claude/agents', '.warp'],  // Warp uses aggregated WARP.md, not a directory
+    forbiddenPaths: ['.claude/agents'],
     fileExtension: '.md',
-    minArtifacts: 0,  // Aggregated file, not individual artifacts
+    minArtifacts: 5,
   },
   windsurf: {
     name: 'windsurf',
-    projectPaths: ['.windsurf/workflows'],
+    projectPaths: ['.windsurf/workflows', '.windsurf/skills', '.windsurf/rules'],  // Agents → aggregated AGENTS.md (root file)
     rootFiles: ['AGENTS.md', '.windsurfrules'],
     forbiddenPaths: ['.claude/agents', '.codex'],
     fileExtension: '.md',
-    minArtifacts: 0,  // Aggregated files
+    minArtifacts: 5,
   },
 };
 
@@ -154,6 +154,7 @@ function runDeploy(
     '--target', projectDir,
     '--deploy-commands',
     '--deploy-skills',
+    '--deploy-rules',
     ...extraArgs,
   ];
 
@@ -263,7 +264,7 @@ describe('Provider File Locations', () => {
     }
 
     if (config.minArtifacts > 0) {
-      it(`deploys at least ${config.minArtifacts} artifacts with correct extension`, async () => {
+      it(`deploys at least ${config.minArtifacts} artifacts`, async () => {
         runDeploy(config.name, projectDir, homeDir);
 
         let totalArtifacts = 0;
@@ -271,7 +272,10 @@ describe('Provider File Locations', () => {
         for (const projectPath of config.projectPaths) {
           const fullPath = path.join(projectDir, projectPath);
           const files = await listFilesRecursive(fullPath);
-          const matchingFiles = files.filter(f => f.endsWith(config.fileExtension));
+          // Count all artifact files (providers may use mixed extensions)
+          const matchingFiles = files.filter(f =>
+            f.endsWith('.md') || f.endsWith('.mdc') || f.endsWith('.yaml') || f.endsWith('.json')
+          );
           totalArtifacts += matchingFiles.length;
         }
 
@@ -322,7 +326,7 @@ describe('Provider File Locations', () => {
         copilot: ['.github'],
         cursor: ['.cursor'],
         opencode: ['.opencode'],
-        warp: [],  // Only WARP.md
+        warp: ['.warp'],  // Discrete files + WARP.md aggregated
         windsurf: ['.windsurf', '.windsurfrules'],
       };
 

@@ -29,7 +29,8 @@ describe('AgentPackager', () => {
   });
 
   describe('convertToClaudeFormat', () => {
-    it('should convert to Claude Code format with frontmatter', () => {
+    it('should convert to Claude Code format with frontmatter and handle minimal metadata', () => {
+      // Test full metadata
       const agent = createSampleAgent();
       const result = packager.convertToClaudeFormat(agent);
 
@@ -42,10 +43,10 @@ describe('AgentPackager', () => {
       expect(result).toContain('version: 1.0.0');
       expect(result).toContain('dependencies: helper-agent');
       expect(result).toContain('# Test Agent');
-    });
+      expect(result).toContain('You are a test agent.');
 
-    it('should handle minimal metadata', () => {
-      const agent: AgentInfo = {
+      // Test minimal metadata
+      const minimalAgent: AgentInfo = {
         metadata: {
           name: 'minimal-agent',
           description: 'Minimal agent',
@@ -55,50 +56,33 @@ describe('AgentPackager', () => {
         fileName: 'minimal.md',
       };
 
-      const result = packager.convertToClaudeFormat(agent);
+      const minimalResult = packager.convertToClaudeFormat(minimalAgent);
 
-      expect(result).toContain('name: minimal-agent');
-      expect(result).toContain('description: Minimal agent');
-      expect(result).not.toContain('model:');
-      expect(result).not.toContain('tools:');
-    });
-
-    it('should preserve agent content', () => {
-      const agent = createSampleAgent();
-      const result = packager.convertToClaudeFormat(agent);
-
-      expect(result).toContain('# Test Agent');
-      expect(result).toContain('You are a test agent.');
+      expect(minimalResult).toContain('name: minimal-agent');
+      expect(minimalResult).toContain('description: Minimal agent');
+      expect(minimalResult).not.toContain('model:');
+      expect(minimalResult).not.toContain('tools:');
     });
   });
 
   describe('convertToCursorFormat', () => {
-    it('should convert to JSON format', () => {
+    it('should convert to JSON format with lowercased tools and handle minimal metadata', () => {
+      // Test full metadata
       const agent = createSampleAgent();
       const result = packager.convertToCursorFormat(agent);
-
       const parsed = JSON.parse(result);
 
       expect(parsed.name).toBe('test-agent');
       expect(parsed.description).toBe('A test agent for packaging');
       expect(parsed.prompt).toBe('# Test Agent\n\nYou are a test agent.');
       expect(parsed.tools).toEqual(['read', 'write', 'bash']);
+      expect(parsed.tools).not.toContain('Read');
       expect(parsed.model).toBe('sonnet');
       expect(parsed.category).toBe('testing');
       expect(parsed.version).toBe('1.0.0');
-    });
 
-    it('should lowercase tool names', () => {
-      const agent = createSampleAgent();
-      const result = packager.convertToCursorFormat(agent);
-      const parsed = JSON.parse(result);
-
-      expect(parsed.tools).toEqual(['read', 'write', 'bash']);
-      expect(parsed.tools).not.toContain('Read');
-    });
-
-    it('should handle minimal metadata', () => {
-      const agent: AgentInfo = {
+      // Test minimal metadata
+      const minimalAgent: AgentInfo = {
         metadata: {
           name: 'minimal-agent',
           description: 'Minimal agent',
@@ -108,17 +92,17 @@ describe('AgentPackager', () => {
         fileName: 'minimal.md',
       };
 
-      const result = packager.convertToCursorFormat(agent);
-      const parsed = JSON.parse(result);
+      const minimalResult = packager.convertToCursorFormat(minimalAgent);
+      const minimalParsed = JSON.parse(minimalResult);
 
-      expect(parsed.name).toBe('minimal-agent');
-      expect(parsed.description).toBe('Minimal agent');
-      expect(parsed.model).toBeUndefined();
+      expect(minimalParsed.name).toBe('minimal-agent');
+      expect(minimalParsed.description).toBe('Minimal agent');
+      expect(minimalParsed.model).toBeUndefined();
     });
   });
 
   describe('convertToCodexFormat', () => {
-    it('should convert to Codex YAML format', () => {
+    it('should convert to Codex YAML format with lowercased capabilities and system instructions header', () => {
       const agent = createSampleAgent();
       const result = packager.convertToCodexFormat(agent);
 
@@ -129,29 +113,15 @@ describe('AgentPackager', () => {
       expect(result).toContain('  - read');
       expect(result).toContain('  - write');
       expect(result).toContain('  - bash');
-      expect(result).toContain('preferred_model: sonnet');
-      expect(result).toContain('# System Instructions');
-    });
-
-    it('should lowercase capabilities', () => {
-      const agent = createSampleAgent();
-      const result = packager.convertToCodexFormat(agent);
-
-      expect(result).toContain('  - read');
       expect(result).not.toContain('  - Read');
-    });
-
-    it('should add system instructions header', () => {
-      const agent = createSampleAgent();
-      const result = packager.convertToCodexFormat(agent);
-
+      expect(result).toContain('preferred_model: sonnet');
       expect(result).toContain('# System Instructions');
       expect(result.indexOf('# System Instructions')).toBeGreaterThan(result.indexOf('---'));
     });
   });
 
   describe('convertToGenericFormat', () => {
-    it('should create generic markdown format', () => {
+    it('should create generic markdown format with metadata as comments', () => {
       const agent = createSampleAgent();
       const result = packager.convertToGenericFormat(agent);
 
@@ -160,18 +130,10 @@ describe('AgentPackager', () => {
       expect(result).toContain('description: A test agent for packaging');
       expect(result).toContain('<!--');
       expect(result).toContain('Category: testing');
-      expect(result).toContain('Tools: Read, Write, Bash');
-      expect(result).toContain('-->');
-    });
-
-    it('should include metadata as comments', () => {
-      const agent = createSampleAgent();
-      const result = packager.convertToGenericFormat(agent);
-
-      expect(result).toContain('Category: testing');
       expect(result).toContain('Preferred Model: sonnet');
       expect(result).toContain('Tools: Read, Write, Bash');
       expect(result).toContain('Dependencies: helper-agent');
+      expect(result).toContain('-->');
     });
   });
 
@@ -202,8 +164,9 @@ describe('AgentPackager', () => {
       expect(result).toContain('You are a test agent.');
     });
 
-    it('should handle agents without tools', () => {
-      const agent: AgentInfo = {
+    it('should handle agents without tools, model, or description', () => {
+      // Test without tools
+      const agentNoTools: AgentInfo = {
         metadata: {
           name: 'minimal-agent',
           description: 'Minimal agent',
@@ -213,17 +176,16 @@ describe('AgentPackager', () => {
         fileName: 'minimal.md',
       };
 
-      const result = packager.convertToWindsurfFormat(agent);
+      const resultNoTools = packager.convertToWindsurfFormat(agentNoTools);
 
-      expect(result).toContain('### minimal-agent');
-      expect(result).toContain('> Minimal agent');
-      expect(result).not.toContain('<capabilities>');
-      expect(result).not.toContain('**Model**:');
-      expect(result).toContain('Agent content');
-    });
+      expect(resultNoTools).toContain('### minimal-agent');
+      expect(resultNoTools).toContain('> Minimal agent');
+      expect(resultNoTools).not.toContain('<capabilities>');
+      expect(resultNoTools).not.toContain('**Model**:');
+      expect(resultNoTools).toContain('Agent content');
 
-    it('should handle agents without description', () => {
-      const agent: AgentInfo = {
+      // Test without description
+      const agentNoDesc: AgentInfo = {
         metadata: {
           name: 'no-desc-agent',
           description: '',
@@ -233,41 +195,29 @@ describe('AgentPackager', () => {
         fileName: 'agent.md',
       };
 
-      const result = packager.convertToWindsurfFormat(agent);
+      const resultNoDesc = packager.convertToWindsurfFormat(agentNoDesc);
 
-      expect(result).toContain('### no-desc-agent');
-      expect(result).not.toContain('> '); // No empty description
-      expect(result).toContain('Content here');
+      expect(resultNoDesc).toContain('### no-desc-agent');
+      expect(resultNoDesc).not.toContain('> '); // No empty description
+      expect(resultNoDesc).toContain('Content here');
     });
   });
 
   describe('getFileExtension', () => {
-    it('should return .md for claude', () => {
-      expect(packager.getFileExtension('claude')).toBe('.md');
-    });
+    it('should return correct file extension for all platforms', () => {
+      const testCases = [
+        { platform: 'claude', expected: '.md' },
+        { platform: 'cursor', expected: '.json' },
+        { platform: 'codex', expected: '.md' },
+        { platform: 'generic', expected: '.md' },
+        { platform: 'windsurf', expected: '.md' },
+        { platform: 'factory', expected: '.md' },
+        { platform: 'copilot', expected: '.md' },
+      ];
 
-    it('should return .json for cursor', () => {
-      expect(packager.getFileExtension('cursor')).toBe('.json');
-    });
-
-    it('should return .md for codex', () => {
-      expect(packager.getFileExtension('codex')).toBe('.md');
-    });
-
-    it('should return .md for generic', () => {
-      expect(packager.getFileExtension('generic')).toBe('.md');
-    });
-
-    it('should return .md for windsurf', () => {
-      expect(packager.getFileExtension('windsurf')).toBe('.md');
-    });
-
-    it('should return .md for factory', () => {
-      expect(packager.getFileExtension('factory')).toBe('.md');
-    });
-
-    it('should return .md for copilot', () => {
-      expect(packager.getFileExtension('copilot')).toBe('.md');
+      for (const { platform, expected } of testCases) {
+        expect(packager.getFileExtension(platform as any)).toBe(expected);
+      }
     });
   });
 
@@ -286,65 +236,38 @@ describe('AgentPackager', () => {
   });
 
   describe('package', () => {
-    it('should package for claude platform', async () => {
+    it('should package for all platforms with correct format and content', async () => {
       const agent = createSampleAgent();
-      const packaged = await packager.package(agent, 'claude');
 
-      expect(packaged.agent).toBe(agent);
-      expect(packaged.format).toBe('claude');
-      expect(packaged.content).toContain('name: test-agent');
-    });
+      const testCases = [
+        { platform: 'claude', expectedContent: 'name: test-agent', noContent: null },
+        { platform: 'cursor', expectedContent: null, noContent: null, parseJson: true, jsonField: 'name', jsonValue: 'test-agent' },
+        { platform: 'codex', expectedContent: 'agent_name: test-agent', noContent: null },
+        { platform: 'generic', expectedContent: '<!--', noContent: null },
+        { platform: 'windsurf', expectedContent: '### test-agent', noContent: '---' },
+        { platform: 'factory', expectedContent: 'name: test-agent', noContent: null },
+        { platform: 'copilot', expectedContent: '<!--', noContent: null },
+      ];
 
-    it('should package for cursor platform', async () => {
-      const agent = createSampleAgent();
-      const packaged = await packager.package(agent, 'cursor');
+      for (const { platform, expectedContent, noContent, parseJson, jsonField, jsonValue } of testCases) {
+        const packaged = await packager.package(agent, platform as any);
 
-      expect(packaged.format).toBe('cursor');
-      const parsed = JSON.parse(packaged.content);
-      expect(parsed.name).toBe('test-agent');
-    });
+        expect(packaged.agent).toBe(agent);
+        expect(packaged.format).toBe(platform);
 
-    it('should package for codex platform', async () => {
-      const agent = createSampleAgent();
-      const packaged = await packager.package(agent, 'codex');
+        if (parseJson && jsonField && jsonValue) {
+          const parsed = JSON.parse(packaged.content);
+          expect(parsed[jsonField]).toBe(jsonValue);
+        }
 
-      expect(packaged.format).toBe('codex');
-      expect(packaged.content).toContain('agent_name: test-agent');
-    });
+        if (expectedContent) {
+          expect(packaged.content).toContain(expectedContent);
+        }
 
-    it('should package for generic platform', async () => {
-      const agent = createSampleAgent();
-      const packaged = await packager.package(agent, 'generic');
-
-      expect(packaged.format).toBe('generic');
-      expect(packaged.content).toContain('<!--');
-    });
-
-    it('should package for windsurf platform', async () => {
-      const agent = createSampleAgent();
-      const packaged = await packager.package(agent, 'windsurf');
-
-      expect(packaged.format).toBe('windsurf');
-      expect(packaged.content).toContain('### test-agent');
-      expect(packaged.content).not.toMatch(/^---/); // No YAML frontmatter
-    });
-
-    it('should package for factory platform', async () => {
-      const agent = createSampleAgent();
-      const packaged = await packager.package(agent, 'factory');
-
-      expect(packaged.format).toBe('factory');
-      // Factory uses Claude format
-      expect(packaged.content).toContain('name: test-agent');
-    });
-
-    it('should package for copilot platform', async () => {
-      const agent = createSampleAgent();
-      const packaged = await packager.package(agent, 'copilot');
-
-      expect(packaged.format).toBe('copilot');
-      // Copilot uses generic format
-      expect(packaged.content).toContain('<!--');
+        if (noContent) {
+          expect(packaged.content).not.toMatch(new RegExp(`^${noContent}`));
+        }
+      }
     });
 
     it('should throw on unknown platform', async () => {
@@ -378,7 +301,7 @@ describe('AgentPackager', () => {
   });
 
   describe('createCombinedFile', () => {
-    it('should create combined AGENTS.md file', async () => {
+    it('should create combined AGENTS.md file with multiple agents', async () => {
       const agents: AgentInfo[] = [
         createSampleAgent(),
         {
@@ -400,19 +323,13 @@ describe('AgentPackager', () => {
       expect(combined).toContain('---'); // Separator between agents
     });
 
-    it('should handle single agent', async () => {
-      const agents = [createSampleAgent()];
-      const combined = await packager.createCombinedFile(agents, 'claude');
+    it('should handle single agent and include full content', async () => {
+      const agent = createSampleAgent();
+      const combined = await packager.createCombinedFile([agent], 'claude');
 
       expect(combined).toContain('Total Agents: 1');
       expect(combined).toContain('## test-agent');
       expect(combined).not.toContain('---\n\n## '); // No separator for single agent
-    });
-
-    it('should include full agent content in combined file', async () => {
-      const agent = createSampleAgent();
-      const combined = await packager.createCombinedFile([agent], 'claude');
-
       expect(combined).toContain('name: test-agent');
       expect(combined).toContain('# Test Agent');
       expect(combined).toContain('You are a test agent.');

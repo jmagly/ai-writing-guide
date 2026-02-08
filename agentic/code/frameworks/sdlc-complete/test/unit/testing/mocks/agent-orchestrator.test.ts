@@ -151,72 +151,61 @@ const TIMING_TOLERANCE = 10;
   });
 
   describe('Delay Simulation', () => {
-    it('should apply behavior delay', async () => {
-      orchestrator.registerAgent('slow-agent', {
-        responseGenerator: () => 'Result',
-        delay: 100
-      });
-
-      const start = Date.now();
-      await orchestrator.executeAgent('slow-agent', 'Test');
-      const duration = Date.now() - start;
-
-      expect(duration).toBeGreaterThanOrEqual(100 - TIMING_TOLERANCE);
-    });
-
-    it('should apply global delay', async () => {
-      orchestrator.registerAgent('fast-agent', {
-        responseGenerator: () => 'Result'
-      });
-      orchestrator.setGlobalDelay(80);
-
-      const start = Date.now();
-      await orchestrator.executeAgent('fast-agent', 'Test');
-      const duration = Date.now() - start;
-
-      expect(duration).toBeGreaterThanOrEqual(80 - TIMING_TOLERANCE);
-    });
-
-    it('should combine global and behavior delays', async () => {
-      orchestrator.registerAgent('slow-agent', {
-        responseGenerator: () => 'Result',
-        delay: 50
-      });
-      orchestrator.setGlobalDelay(50);
-
-      const start = Date.now();
-      await orchestrator.executeAgent('slow-agent', 'Test');
-      const duration = Date.now() - start;
-
-      expect(duration).toBeGreaterThanOrEqual(100 - TIMING_TOLERANCE);
-    });
-
-    it('should apply injected delay', async () => {
+    // Parameterized test for basic delay scenarios
+    it.each([
+      {
+        name: 'behavior delay',
+        behaviorDelay: 100,
+        globalDelay: 0,
+        injectedDelay: 0,
+        expectedMin: 100
+      },
+      {
+        name: 'global delay',
+        behaviorDelay: 0,
+        globalDelay: 80,
+        injectedDelay: 0,
+        expectedMin: 80
+      },
+      {
+        name: 'combined global and behavior delays',
+        behaviorDelay: 50,
+        globalDelay: 50,
+        injectedDelay: 0,
+        expectedMin: 100
+      },
+      {
+        name: 'injected delay',
+        behaviorDelay: 0,
+        globalDelay: 0,
+        injectedDelay: 75,
+        expectedMin: 75
+      },
+      {
+        name: 'all delay sources combined',
+        behaviorDelay: 30,
+        globalDelay: 30,
+        injectedDelay: 30,
+        expectedMin: 90
+      }
+    ])('should apply $name correctly', async ({ behaviorDelay, globalDelay, injectedDelay, expectedMin }) => {
       orchestrator.registerAgent('agent', {
-        responseGenerator: () => 'Result'
+        responseGenerator: () => 'Result',
+        delay: behaviorDelay
       });
-      orchestrator.injectDelay('agent', 75);
+
+      if (globalDelay > 0) {
+        orchestrator.setGlobalDelay(globalDelay);
+      }
+      if (injectedDelay > 0) {
+        orchestrator.injectDelay('agent', injectedDelay);
+      }
 
       const start = Date.now();
       await orchestrator.executeAgent('agent', 'Test');
       const duration = Date.now() - start;
 
-      expect(duration).toBeGreaterThanOrEqual(75 - TIMING_TOLERANCE);
-    });
-
-    it('should combine all delay sources', async () => {
-      orchestrator.registerAgent('agent', {
-        responseGenerator: () => 'Result',
-        delay: 30
-      });
-      orchestrator.setGlobalDelay(30);
-      orchestrator.injectDelay('agent', 30);
-
-      const start = Date.now();
-      await orchestrator.executeAgent('agent', 'Test');
-      const duration = Date.now() - start;
-
-      expect(duration).toBeGreaterThanOrEqual(90 - TIMING_TOLERANCE);
+      expect(duration).toBeGreaterThanOrEqual(expectedMin - TIMING_TOLERANCE);
     });
 
     it('should clear injected delay after first use', async () => {
@@ -238,16 +227,16 @@ const TIMING_TOLERANCE = 10;
       expect(duration2).toBeLessThan(50);
     });
 
-    it('should throw error for negative global delay', () => {
-      expect(() => orchestrator.setGlobalDelay(-10)).toThrow(
-        'Global delay must be non-negative'
-      );
-    });
-
-    it('should throw error for negative injected delay', () => {
-      expect(() => orchestrator.injectDelay('agent', -5)).toThrow(
-        'Injected delay must be non-negative'
-      );
+    // Consolidated negative validation tests
+    it.each([
+      { type: 'global', value: -10, method: 'setGlobalDelay', message: 'Global delay must be non-negative' },
+      { type: 'injected', value: -5, method: 'injectDelay', message: 'Injected delay must be non-negative' }
+    ])('should throw error for negative $type delay', ({ value, method, message }) => {
+      if (method === 'setGlobalDelay') {
+        expect(() => orchestrator.setGlobalDelay(value)).toThrow(message);
+      } else {
+        expect(() => orchestrator.injectDelay('agent', value)).toThrow(message);
+      }
     });
   });
 
@@ -350,31 +339,22 @@ const TIMING_TOLERANCE = 10;
       expect(responses).toHaveLength(3);
     });
 
-    it('should maintain request order in responses', async () => {
+    // Consolidated request order and history tracking
+    it('should maintain request order in responses and record in history', async () => {
       const requests: AgentRequest[] = [
         { agentType: 'agent-1', prompt: 'First' },
-        { agentType: 'agent-2', prompt: 'Second' },
-        { agentType: 'agent-3', prompt: 'Third' }
+        { agentType: 'agent-2', prompt: 'Second' }
       ];
 
       const responses = await orchestrator.executeParallel(requests);
 
+      // Check order
       expect(responses[0].agentType).toBe('agent-1');
       expect(responses[0].output).toBe('Agent 1: First');
       expect(responses[1].agentType).toBe('agent-2');
       expect(responses[1].output).toBe('Agent 2: Second');
-      expect(responses[2].agentType).toBe('agent-3');
-      expect(responses[2].output).toBe('Agent 3: Third');
-    });
 
-    it('should record all parallel executions in history', async () => {
-      const requests: AgentRequest[] = [
-        { agentType: 'agent-1', prompt: 'A' },
-        { agentType: 'agent-2', prompt: 'B' }
-      ];
-
-      await orchestrator.executeParallel(requests);
-
+      // Check history
       const history = orchestrator.getExecutionHistory();
       expect(history).toHaveLength(2);
     });
@@ -480,54 +460,33 @@ const TIMING_TOLERANCE = 10;
       });
     });
 
-    it('should clear execution history', async () => {
+    // Consolidated reset tests using single test with assertions
+    it('should clear history, errors, delays, and global delay but preserve agents', async () => {
+      // Setup state
       await orchestrator.executeAgent('test-agent', 'Test 1');
       await orchestrator.executeAgent('test-agent', 'Test 2');
-
-      orchestrator.reset();
-
-      expect(orchestrator.getExecutionHistory()).toHaveLength(0);
-    });
-
-    it('should clear error injections', async () => {
       orchestrator.injectError('test-agent', new Error('Test error'));
-
-      orchestrator.reset();
-
-      const response = await orchestrator.executeAgent('test-agent', 'Test');
-      expect(response.output).toBe('Result');
-    });
-
-    it('should clear delay injections', async () => {
       orchestrator.injectDelay('test-agent', 100);
-
-      orchestrator.reset();
-
-      const start = Date.now();
-      await orchestrator.executeAgent('test-agent', 'Test');
-      const duration = Date.now() - start;
-
-      expect(duration).toBeLessThan(50);
-    });
-
-    it('should reset global delay', async () => {
       orchestrator.setGlobalDelay(100);
 
+      // Reset
       orchestrator.reset();
 
-      const start = Date.now();
-      await orchestrator.executeAgent('test-agent', 'Test');
-      const duration = Date.now() - start;
+      // Verify history cleared
+      expect(orchestrator.getExecutionHistory()).toHaveLength(0);
 
-      expect(duration).toBeLessThan(50);
-    });
-
-    it('should NOT clear registered agents', async () => {
-      orchestrator.reset();
-
+      // Verify agents preserved
       expect(orchestrator.hasAgent('test-agent')).toBe(true);
+
+      // Verify errors cleared
       const response = await orchestrator.executeAgent('test-agent', 'Test');
       expect(response.output).toBe('Result');
+
+      // Verify delays cleared
+      const start = Date.now();
+      await orchestrator.executeAgent('test-agent', 'Test 2');
+      const duration = Date.now() - start;
+      expect(duration).toBeLessThan(50);
     });
   });
 

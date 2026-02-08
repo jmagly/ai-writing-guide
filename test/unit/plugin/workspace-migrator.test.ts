@@ -36,14 +36,17 @@ describe('WorkspaceMigrator', () => {
   // ===========================
 
   describe('constructor', () => {
-    it('should initialize with project root', () => {
-      const migrator = new WorkspaceMigrator(projectRoot);
-      expect(migrator).toBeDefined();
-    });
+    it('should initialize with absolute or relative path', () => {
+      // Test both absolute and relative paths in single test
+      const paths = [
+        { desc: 'absolute path', path: projectRoot },
+        { desc: 'relative path', path: '.' }
+      ];
 
-    it('should resolve relative paths to absolute', () => {
-      const migrator = new WorkspaceMigrator('.');
-      expect(migrator).toBeDefined();
+      for (const { desc, path } of paths) {
+        const migrator = new WorkspaceMigrator(path);
+        expect(migrator).toBeDefined();
+      }
     });
   });
 
@@ -127,27 +130,31 @@ describe('WorkspaceMigrator', () => {
       expect(result?.size).toBeGreaterThanOrEqual(2000);
     });
 
-    it('should detect git repository in workspace', async () => {
-      await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.createDirectory('.aiwg/.git');
-      await sandbox.writeFile('.aiwg/intake/test.md', '# Test');
+    it('should detect git repository correctly', async () => {
+      // Test both with and without git in single test
+      const scenarios = [
+        { createGit: true, expectedHasGit: true },
+        { createGit: false, expectedHasGit: false }
+      ];
 
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
+      for (const { createGit, expectedHasGit } of scenarios) {
+        // Clean sandbox for each scenario
+        await sandbox.cleanup();
+        await sandbox.initialize();
+        projectRoot = sandbox.getPath();
 
-      const result = await migrator.detectLegacyWorkspace();
-      expect(result?.hasGit).toBe(true);
-    });
+        await sandbox.createDirectory('.aiwg/intake');
+        if (createGit) {
+          await sandbox.createDirectory('.aiwg/.git');
+        }
+        await sandbox.writeFile('.aiwg/intake/test.md', '# Test');
 
-    it('should detect no git repository when .git missing', async () => {
-      await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.writeFile('.aiwg/intake/test.md', '# Test');
+        const migrator = new WorkspaceMigrator(projectRoot);
+        await migrator.initialize();
 
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
-
-      const result = await migrator.detectLegacyWorkspace();
-      expect(result?.hasGit).toBe(false);
+        const result = await migrator.detectLegacyWorkspace();
+        expect(result?.hasGit).toBe(expectedHasGit);
+      }
     });
   });
 
@@ -168,47 +175,57 @@ describe('WorkspaceMigrator', () => {
       expect(frameworks[0].name).toBe('sdlc-complete');
     });
 
-    it('should detect sdlc-complete from architecture artifacts', async () => {
-      await sandbox.createDirectory('.aiwg/architecture');
-      await sandbox.writeFile('.aiwg/architecture/software-architecture-doc.md', '# SAD');
-      await sandbox.createDirectory('.aiwg/requirements/use-cases');
-      await sandbox.writeFile('.aiwg/requirements/use-cases/uc-001.md', '# UC-001');
+    it('should detect different frameworks from artifact patterns', async () => {
+      // Test all framework detection patterns in single test
+      const frameworkScenarios = [
+        {
+          name: 'sdlc-complete',
+          artifacts: [
+            { dir: '.aiwg/architecture', file: 'software-architecture-doc.md', content: '# SAD' },
+            { dir: '.aiwg/requirements/use-cases', file: 'uc-001.md', content: '# UC-001' }
+          ],
+          checkCount: true
+        },
+        {
+          name: 'marketing-flow',
+          artifacts: [
+            { dir: '.aiwg/campaigns', file: 'q1-campaign.md', content: '# Q1 Campaign' },
+            { dir: '.aiwg/content', file: 'blog-posts.md', content: '# Blog Posts' }
+          ],
+          checkCount: false
+        },
+        {
+          name: 'agile-complete',
+          artifacts: [
+            { dir: '.aiwg/backlog', file: 'user-stories.md', content: '# User Stories' },
+            { dir: '.aiwg/sprints', file: 'sprint-1.md', content: '# Sprint 1' }
+          ],
+          checkCount: false
+        }
+      ];
 
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
+      for (const scenario of frameworkScenarios) {
+        // Clean sandbox for each framework scenario
+        await sandbox.cleanup();
+        await sandbox.initialize();
+        projectRoot = sandbox.getPath();
 
-      const frameworks = await migrator.detectFrameworks();
-      expect(frameworks).toHaveLength(1);
-      expect(frameworks[0].name).toBe('sdlc-complete');
-      expect(frameworks[0].artifactCount).toBeGreaterThan(0);
-    });
+        for (const artifact of scenario.artifacts) {
+          await sandbox.createDirectory(artifact.dir);
+          await sandbox.writeFile(`${artifact.dir}/${artifact.file}`, artifact.content);
+        }
 
-    it('should detect marketing-flow from campaign artifacts', async () => {
-      await sandbox.createDirectory('.aiwg/campaigns');
-      await sandbox.writeFile('.aiwg/campaigns/q1-campaign.md', '# Q1 Campaign');
-      await sandbox.createDirectory('.aiwg/content');
-      await sandbox.writeFile('.aiwg/content/blog-posts.md', '# Blog Posts');
+        const migrator = new WorkspaceMigrator(projectRoot);
+        await migrator.initialize();
 
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
+        const frameworks = await migrator.detectFrameworks();
+        const hasFramework = frameworks.some(f => f.name === scenario.name);
+        expect(hasFramework).toBe(true);
 
-      const frameworks = await migrator.detectFrameworks();
-      const hasMarketing = frameworks.some(f => f.name === 'marketing-flow');
-      expect(hasMarketing).toBe(true);
-    });
-
-    it('should detect agile-complete from backlog artifacts', async () => {
-      await sandbox.createDirectory('.aiwg/backlog');
-      await sandbox.writeFile('.aiwg/backlog/user-stories.md', '# User Stories');
-      await sandbox.createDirectory('.aiwg/sprints');
-      await sandbox.writeFile('.aiwg/sprints/sprint-1.md', '# Sprint 1');
-
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
-
-      const frameworks = await migrator.detectFrameworks();
-      const hasAgile = frameworks.some(f => f.name === 'agile-complete');
-      expect(hasAgile).toBe(true);
+        if (scenario.checkCount) {
+          expect(frameworks[0].artifactCount).toBeGreaterThan(0);
+        }
+      }
     });
 
     it('should include target path in framework info', async () => {
@@ -345,58 +362,50 @@ describe('WorkspaceMigrator', () => {
   // ===========================
 
   describe('migrate', () => {
-    it('should successfully migrate files in dry-run mode', async () => {
-      await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.writeFile('.aiwg/intake/test.md', '# Test');
-      await sandbox.writeFile('.aiwg/intake/test2.md', '# Test 2');
+    it('should successfully migrate files in both dry-run and actual execution', async () => {
+      // Test both dry-run and actual execution in single test
+      const scenarios = [
+        { dryRun: true, expectFiles: false, expectContent: false },
+        { dryRun: false, expectFiles: true, expectContent: true }
+      ];
 
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
+      for (const { dryRun, expectFiles, expectContent } of scenarios) {
+        // Clean sandbox for each scenario
+        await sandbox.cleanup();
+        await sandbox.initialize();
+        projectRoot = sandbox.getPath();
 
-      const result = await migrator.migrate({
-        source: sandbox.getPath('.aiwg'),
-        target: sandbox.getPath('.aiwg/frameworks/sdlc-complete/projects/default'),
-        framework: 'sdlc-complete',
-        backup: false,
-        dryRun: true,
-        overwrite: false
-      });
+        await sandbox.createDirectory('.aiwg/intake');
+        await sandbox.writeFile('.aiwg/intake/test.md', '# Test Content');
+        if (!dryRun) {
+          await sandbox.writeFile('.aiwg/intake/test2.md', '# Test 2');
+        }
 
-      expect(result.success).toBe(true);
-      expect(result.filesCopiedCount).toBeGreaterThan(0);
-      expect(result.backupPath).toBeUndefined();
+        const migrator = new WorkspaceMigrator(projectRoot);
+        await migrator.initialize();
 
-      // Verify no actual files were created
-      const targetExists = await sandbox.directoryExists('.aiwg/frameworks/sdlc-complete/projects/default/intake');
-      expect(targetExists).toBe(false);
-    });
+        const result = await migrator.migrate({
+          source: sandbox.getPath('.aiwg'),
+          target: sandbox.getPath('.aiwg/frameworks/sdlc-complete/projects/default'),
+          framework: 'sdlc-complete',
+          backup: false,
+          dryRun,
+          overwrite: false
+        });
 
-    it('should actually migrate files when not in dry-run mode', async () => {
-      await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.writeFile('.aiwg/intake/test.md', '# Test Content');
+        expect(result.success).toBe(true);
+        expect(result.filesCopiedCount).toBeGreaterThan(0);
+        expect(result.backupPath).toBeUndefined();
 
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
+        const targetFile = '.aiwg/frameworks/sdlc-complete/projects/default/intake/test.md';
+        const exists = await sandbox.fileExists(targetFile);
+        expect(exists).toBe(expectFiles);
 
-      const result = await migrator.migrate({
-        source: sandbox.getPath('.aiwg'),
-        target: sandbox.getPath('.aiwg/frameworks/sdlc-complete/projects/default'),
-        framework: 'sdlc-complete',
-        backup: false,
-        dryRun: false,
-        overwrite: false
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.filesCopiedCount).toBeGreaterThan(0);
-
-      // Verify files were actually created
-      const targetFile = '.aiwg/frameworks/sdlc-complete/projects/default/intake/test.md';
-      const exists = await sandbox.fileExists(targetFile);
-      expect(exists).toBe(true);
-
-      const content = await sandbox.readFile(targetFile);
-      expect(content).toBe('# Test Content');
+        if (expectContent) {
+          const content = await sandbox.readFile(targetFile);
+          expect(content).toBe('# Test Content');
+        }
+      }
     });
 
     it('should create backup when backup option is true', async () => {
@@ -423,61 +432,58 @@ describe('WorkspaceMigrator', () => {
       expect(backupExists).toBe(true);
     });
 
-    it('should skip existing files when overwrite is false', async () => {
-      await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.writeFile('.aiwg/intake/test.md', '# Test');
+    it('should handle overwrite option correctly', async () => {
+      // Test both overwrite true and false in single test
+      const scenarios = [
+        {
+          overwrite: false,
+          expectedContent: '# Existing',
+          countField: 'filesSkippedCount' as const,
+          expectWarning: true
+        },
+        {
+          overwrite: true,
+          expectedContent: '# New Content',
+          countField: 'filesCopiedCount' as const,
+          expectWarning: false
+        }
+      ];
 
-      // Create existing file in target
-      const targetPath = '.aiwg/frameworks/sdlc-complete/projects/default';
-      await sandbox.createDirectory(targetPath + '/intake');
-      await sandbox.writeFile(targetPath + '/intake/test.md', '# Existing');
+      for (const { overwrite, expectedContent, countField, expectWarning } of scenarios) {
+        // Clean sandbox for each scenario
+        await sandbox.cleanup();
+        await sandbox.initialize();
+        projectRoot = sandbox.getPath();
 
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
+        await sandbox.createDirectory('.aiwg/intake');
+        await sandbox.writeFile('.aiwg/intake/test.md', '# New Content');
 
-      const result = await migrator.migrate({
-        source: sandbox.getPath('.aiwg'),
-        target: sandbox.getPath(targetPath),
-        framework: 'sdlc-complete',
-        backup: false,
-        dryRun: false,
-        overwrite: false
-      });
+        // Create existing file in target
+        const targetPath = '.aiwg/frameworks/sdlc-complete/projects/default';
+        await sandbox.createDirectory(targetPath + '/intake');
+        await sandbox.writeFile(targetPath + '/intake/test.md', '# Existing');
 
-      expect(result.filesSkippedCount).toBeGreaterThan(0);
-      expect(result.errors.some(e => e.severity === 'warning')).toBe(true);
+        const migrator = new WorkspaceMigrator(projectRoot);
+        await migrator.initialize();
 
-      // Verify original content preserved
-      const content = await sandbox.readFile(targetPath + '/intake/test.md');
-      expect(content).toBe('# Existing');
-    });
+        const result = await migrator.migrate({
+          source: sandbox.getPath('.aiwg'),
+          target: sandbox.getPath(targetPath),
+          framework: 'sdlc-complete',
+          backup: false,
+          dryRun: false,
+          overwrite
+        });
 
-    it('should overwrite existing files when overwrite is true', async () => {
-      await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.writeFile('.aiwg/intake/test.md', '# New Content');
+        expect(result[countField]).toBeGreaterThan(0);
+        if (expectWarning) {
+          expect(result.errors.some(e => e.severity === 'warning')).toBe(true);
+        }
 
-      // Create existing file in target
-      const targetPath = '.aiwg/frameworks/sdlc-complete/projects/default';
-      await sandbox.createDirectory(targetPath + '/intake');
-      await sandbox.writeFile(targetPath + '/intake/test.md', '# Old Content');
-
-      const migrator = new WorkspaceMigrator(projectRoot);
-      await migrator.initialize();
-
-      const result = await migrator.migrate({
-        source: sandbox.getPath('.aiwg'),
-        target: sandbox.getPath(targetPath),
-        framework: 'sdlc-complete',
-        backup: false,
-        dryRun: false,
-        overwrite: true
-      });
-
-      expect(result.filesCopiedCount).toBeGreaterThan(0);
-
-      // Verify content was overwritten
-      const content = await sandbox.readFile(targetPath + '/intake/test.md');
-      expect(content).toBe('# New Content');
+        // Verify content
+        const content = await sandbox.readFile(targetPath + '/intake/test.md');
+        expect(content).toBe(expectedContent);
+      }
     });
 
     it('should return error for non-existent source', async () => {

@@ -167,22 +167,13 @@ describe('Provenance Service', () => {
       expect(record.agent).toBeDefined();
     });
 
-    it('should use URN format for entity IDs', () => {
-      const record = service.generatePROVRecord('REF-001', 'acquisition', 'test-agent');
-
-      expect(record.entity.id).toMatch(/^urn:aiwg:entity:/);
-    });
-
-    it('should use URN format for activity IDs', () => {
-      const record = service.generatePROVRecord('REF-001', 'transformation', 'test-agent');
-
-      expect(record.activity.id).toMatch(/^urn:aiwg:activity:/);
-    });
-
-    it('should use URN format for agent IDs', () => {
-      const record = service.generatePROVRecord('REF-001', 'analysis', 'test-agent');
-
-      expect(record.agent.id).toMatch(/^urn:aiwg:agent:/);
+    it.each([
+      { component: 'entity', pattern: /^urn:aiwg:entity:/, activityType: 'acquisition' as const },
+      { component: 'activity', pattern: /^urn:aiwg:activity:/, activityType: 'transformation' as const },
+      { component: 'agent', pattern: /^urn:aiwg:agent:/, activityType: 'analysis' as const },
+    ])('should use URN format for $component IDs', ({ component, pattern, activityType }) => {
+      const record = service.generatePROVRecord('REF-001', activityType, 'test-agent');
+      expect(record[component].id).toMatch(pattern);
     });
 
     it('should record activity type', () => {
@@ -233,13 +224,13 @@ describe('Provenance Service', () => {
       expect(service).toBeDefined();
     });
 
-    it('should support different derivation types', () => {
-      const types = ['transformation', 'aggregation', 'extraction', 'synthesis'];
-
-      types.forEach((type) => {
-        service.trackDerivation(`entity-${type}`, [{ source: 'base', type }]);
-      });
-
+    it.each([
+      { type: 'transformation' },
+      { type: 'aggregation' },
+      { type: 'extraction' },
+      { type: 'synthesis' },
+    ])('should support derivation type: $type', ({ type }) => {
+      service.trackDerivation(`entity-${type}`, [{ source: 'base', type }]);
       expect(service).toBeDefined();
     });
 
@@ -359,43 +350,23 @@ describe('Provenance Service', () => {
   });
 
   describe('PROV-JSON Export', () => {
-    it('should export record in PROV-JSON format', () => {
+    it('should export record in PROV-JSON format with all components', () => {
       const record = service.generatePROVRecord('REF-001', 'acquisition', 'test-agent');
       const json = service.exportPROVJSON(record);
+      const parsed = JSON.parse(json);
 
       expect(json).toBeDefined();
-      const parsed = JSON.parse(json);
       expect(parsed).toHaveProperty('entity');
       expect(parsed).toHaveProperty('activity');
       expect(parsed).toHaveProperty('agent');
-    });
 
-    it('should include entity in PROV-JSON', () => {
-      const record = service.generatePROVRecord('REF-001', 'acquisition', 'test-agent');
-      const json = service.exportPROVJSON(record);
-      const parsed = JSON.parse(json);
-
-      expect(parsed.entity).toBeDefined();
+      // Verify URN formats for all components
       const entityId = Object.keys(parsed.entity)[0];
       expect(entityId).toMatch(/^urn:aiwg:entity:/);
-    });
 
-    it('should include activity in PROV-JSON', () => {
-      const record = service.generatePROVRecord('REF-001', 'transformation', 'test-agent');
-      const json = service.exportPROVJSON(record);
-      const parsed = JSON.parse(json);
-
-      expect(parsed.activity).toBeDefined();
       const activityId = Object.keys(parsed.activity)[0];
       expect(activityId).toMatch(/^urn:aiwg:activity:/);
-    });
 
-    it('should include agent in PROV-JSON', () => {
-      const record = service.generatePROVRecord('REF-001', 'acquisition', 'test-agent');
-      const json = service.exportPROVJSON(record);
-      const parsed = JSON.parse(json);
-
-      expect(parsed.agent).toBeDefined();
       const agentId = Object.keys(parsed.agent)[0];
       expect(agentId).toMatch(/^urn:aiwg:agent:/);
     });
@@ -435,26 +406,20 @@ describe('Provenance Service', () => {
   });
 
   describe('Timestamp Handling', () => {
-    it('should use ISO 8601 timestamps', () => {
+    it('should use ISO 8601 timestamps with millisecond precision and valid duration', () => {
       const record = service.generatePROVRecord('REF-001', 'acquisition', 'test-agent');
 
+      // Verify ISO 8601 format
       expect(record.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
       expect(record.activity.startedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
-    });
 
-    it('should record activity duration', () => {
-      const record = service.generatePROVRecord('REF-001', 'acquisition', 'test-agent');
+      // Verify millisecond precision
+      expect(record.timestamp).toContain('.');
 
+      // Verify activity duration is valid
       const start = new Date(record.activity.startedAt).getTime();
       const end = new Date(record.activity.endedAt).getTime();
-
       expect(end).toBeGreaterThanOrEqual(start);
-    });
-
-    it('should preserve millisecond precision', () => {
-      const record = service.generatePROVRecord('REF-001', 'acquisition', 'test-agent');
-
-      expect(record.timestamp).toContain('.');
     });
   });
 

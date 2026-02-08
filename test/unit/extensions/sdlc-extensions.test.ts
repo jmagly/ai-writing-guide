@@ -29,152 +29,93 @@ const EXTENSIONS: Record<string, { skills: string[]; agents: string[] }> = {
 
 describe('SDLC Extensions', () => {
   describe('extension structure', () => {
-    for (const [extName, extConfig] of Object.entries(EXTENSIONS)) {
-      describe(`${extName} extension`, () => {
+    it('should have valid extension.json files for all extensions', async () => {
+      for (const [extName, extConfig] of Object.entries(EXTENSIONS)) {
+        const extPath = join(EXTENSIONS_PATH, extName);
+        const content = await readFile(join(extPath, 'extension.json'), 'utf-8');
+        const extensionConfig = JSON.parse(content);
+
+        expect(extensionConfig.name).toBe(extName);
+        expect(extensionConfig.type).toBeDefined();
+        expect(extensionConfig.skills).toBeDefined();
+        expect(Array.isArray(extensionConfig.skills)).toBe(true);
+        expect(extensionConfig.agents).toBeDefined();
+        expect(Array.isArray(extensionConfig.agents)).toBe(true);
+        expect(extensionConfig.researchCompliance).toBeDefined();
+        expect(extensionConfig.researchCompliance['REF-001']).toBeDefined();
+        expect(extensionConfig.researchCompliance['REF-002']).toBeDefined();
+      }
+    });
+
+    it('should have complete skill structures for all skills in all extensions', async () => {
+      for (const [extName, extConfig] of Object.entries(EXTENSIONS)) {
         const extPath = join(EXTENSIONS_PATH, extName);
 
-        describe('extension.json', () => {
-          let extensionConfig: Extension;
+        for (const skill of extConfig.skills) {
+          const skillPath = join(extPath, 'skills', skill, 'SKILL.md');
 
-          beforeAll(async () => {
-            const content = await readFile(join(extPath, 'extension.json'), 'utf-8');
-            extensionConfig = JSON.parse(content);
-          });
+          await expect(access(skillPath, constants.F_OK)).resolves.toBeUndefined();
 
-          it('should have valid extension metadata', () => {
-            expect(extensionConfig.name).toBe(extName);
-            expect(extensionConfig.type).toBeDefined();
-          });
+          const content = await readFile(skillPath, 'utf-8');
 
-          it('should declare skills', () => {
-            expect(extensionConfig.skills).toBeDefined();
-            expect(Array.isArray(extensionConfig.skills)).toBe(true);
-          });
+          expect(content).toMatch(/^---\n/);
+          expect(content).toMatch(/name: /);
+          expect(content).toMatch(/description: /);
+          expect(content).toMatch(/tools: /);
+          expect(content).toContain('Grounding Checkpoint');
+          expect(content).toContain('Recovery Protocol');
+          expect(content).toContain('Checkpoint Support');
+          expect(content).toMatch(/### Step \d+:/);
+        }
+      }
+    });
 
-          it('should declare agents', () => {
-            expect(extensionConfig.agents).toBeDefined();
-            expect(Array.isArray(extensionConfig.agents)).toBe(true);
-          });
+    it('should have complete agent structures for all agents in all extensions', async () => {
+      for (const [extName, extConfig] of Object.entries(EXTENSIONS)) {
+        const extPath = join(EXTENSIONS_PATH, extName);
 
-          it('should have research compliance', async () => {
-            const content = await readFile(join(extPath, 'extension.json'), 'utf-8');
-            const config = JSON.parse(content);
-            expect(config.researchCompliance).toBeDefined();
-            expect(config.researchCompliance['REF-001']).toBeDefined();
-            expect(config.researchCompliance['REF-002']).toBeDefined();
-          });
-        });
+        for (const agent of extConfig.agents) {
+          const agentPath = join(extPath, 'agents', `${agent}.md`);
 
-        describe('skills', () => {
-          for (const skill of extConfig.skills) {
-            describe(`${skill}`, () => {
-              const skillPath = join(extPath, 'skills', skill, 'SKILL.md');
+          await expect(access(agentPath, constants.F_OK)).resolves.toBeUndefined();
 
-              it('should have SKILL.md file', async () => {
-                await expect(access(skillPath, constants.F_OK)).resolves.toBeUndefined();
-              });
+          const content = await readFile(agentPath, 'utf-8');
 
-              it('should have valid frontmatter', async () => {
-                const content = await readFile(skillPath, 'utf-8');
-                expect(content).toMatch(/^---\n/);
-                expect(content).toMatch(/name: /);
-                expect(content).toMatch(/description: /);
-                expect(content).toMatch(/tools: /);
-              });
-
-              it('should have Grounding Checkpoint', async () => {
-                const content = await readFile(skillPath, 'utf-8');
-                expect(content).toContain('Grounding Checkpoint');
-              });
-
-              it('should have Recovery Protocol', async () => {
-                const content = await readFile(skillPath, 'utf-8');
-                expect(content).toContain('Recovery Protocol');
-              });
-
-              it('should have Checkpoint Support', async () => {
-                const content = await readFile(skillPath, 'utf-8');
-                expect(content).toContain('Checkpoint Support');
-              });
-
-              it('should have workflow steps', async () => {
-                const content = await readFile(skillPath, 'utf-8');
-                expect(content).toMatch(/### Step \d+:/);
-              });
-            });
-          }
-        });
-
-        describe('agents', () => {
-          for (const agent of extConfig.agents) {
-            describe(`${agent}`, () => {
-              const agentPath = join(extPath, 'agents', `${agent}.md`);
-
-              it('should have agent file', async () => {
-                await expect(access(agentPath, constants.F_OK)).resolves.toBeUndefined();
-              });
-
-              it('should have valid frontmatter', async () => {
-                const content = await readFile(agentPath, 'utf-8');
-                expect(content).toMatch(/^---\n/);
-                expect(content).toMatch(/name: /);
-                expect(content).toMatch(/orchestration: true/);
-              });
-
-              it('should have decision tree', async () => {
-                const content = await readFile(agentPath, 'utf-8');
-                expect(content).toContain('Decision Tree');
-              });
-
-              it('should have workflow patterns', async () => {
-                const content = await readFile(agentPath, 'utf-8');
-                expect(content).toContain('Workflow Patterns');
-              });
-
-              it('should have quality gates', async () => {
-                const content = await readFile(agentPath, 'utf-8');
-                expect(content).toContain('Quality Gates');
-              });
-            });
-          }
-        });
-      });
-    }
+          expect(content).toMatch(/^---\n/);
+          expect(content).toMatch(/name: /);
+          expect(content).toMatch(/orchestration: true/);
+          expect(content).toContain('Decision Tree');
+          expect(content).toContain('Workflow Patterns');
+          expect(content).toContain('Quality Gates');
+        }
+      }
+    });
   });
 
   describe('evaluation plan', () => {
     const evalPath = join(EXTENSIONS_PATH, 'EVALUATION.md');
 
-    it('should have evaluation plan', async () => {
+    it('should have evaluation plan with all required sections', async () => {
       await expect(access(evalPath, constants.F_OK)).resolves.toBeUndefined();
-    });
 
-    it('should cover all extensions', async () => {
       const content = await readFile(evalPath, 'utf-8');
+
       for (const extName of Object.keys(EXTENSIONS)) {
         expect(content.toLowerCase()).toContain(extName);
       }
-    });
 
-    it('should have compliance validation', async () => {
-      const content = await readFile(evalPath, 'utf-8');
       expect(content).toContain('Research Compliance');
-    });
-
-    it('should have test scenarios', async () => {
-      const content = await readFile(evalPath, 'utf-8');
       expect(content).toContain('Test Case');
     });
   });
 
   describe('cross-extension consistency', () => {
-    it('should have consistent skill structure across extensions', async () => {
+    it('should have consistent skill structure across all extensions', async () => {
       for (const [extName, extConfig] of Object.entries(EXTENSIONS)) {
         for (const skill of extConfig.skills) {
           const skillPath = join(EXTENSIONS_PATH, extName, 'skills', skill, 'SKILL.md');
           const content = await readFile(skillPath, 'utf-8');
 
-          // All skills should have these sections
           expect(content).toContain('## Purpose');
           expect(content).toContain('Grounding Checkpoint');
           expect(content).toContain('Uncertainty Escalation');
@@ -185,13 +126,12 @@ describe('SDLC Extensions', () => {
       }
     });
 
-    it('should have consistent agent structure across extensions', async () => {
+    it('should have consistent agent structure across all extensions', async () => {
       for (const [extName, extConfig] of Object.entries(EXTENSIONS)) {
         for (const agent of extConfig.agents) {
           const agentPath = join(EXTENSIONS_PATH, extName, 'agents', `${agent}.md`);
           const content = await readFile(agentPath, 'utf-8');
 
-          // All agents should have these sections
           expect(content).toContain('## Role');
           expect(content).toContain('Available Skills');
           expect(content).toContain('Decision Tree');

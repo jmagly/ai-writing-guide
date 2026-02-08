@@ -160,114 +160,121 @@ describe('CodebaseAnalyzer', () => {
   });
 
   describe('Technology Detection (NFR-ANAL-001)', () => {
-    it('should detect React framework', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          name: 'test-app',
-          dependencies: {
-            'react': '^18.2.0',
-            'react-dom': '^18.2.0'
-          }
-        }),
-        'src/App.tsx': `
-          import React from 'react';
-          export function App() {
-            return <div>Hello</div>;
-          }
-        `
-      });
+    // Consolidated framework detection tests
+    it('should detect multiple frameworks', async () => {
+      const frameworks = [
+        {
+          name: 'React',
+          packageJson: {
+            dependencies: {
+              'react': '^18.2.0',
+              'react-dom': '^18.2.0'
+            }
+          },
+          files: {
+            'src/App.tsx': `
+              import React from 'react';
+              export function App() {
+                return <div>Hello</div>;
+              }
+            `
+          },
+          minConfidence: 0.85
+        },
+        {
+          name: 'Vue',
+          packageJson: {
+            dependencies: { 'vue': '^3.0.0' }
+          },
+          files: {
+            'src/App.vue': `
+              <template><div>{{ msg }}</div></template>
+              <script setup>
+              import { ref } from 'vue';
+              const msg = ref('Hello');
+              </script>
+            `
+          },
+          minConfidence: 0
+        },
+        {
+          name: 'Angular',
+          packageJson: {
+            dependencies: {
+              '@angular/core': '^16.0.0',
+              '@angular/common': '^16.0.0'
+            }
+          },
+          files: {
+            'src/app.component.ts': `
+              import { Component } from '@angular/core';
+              @Component({
+                selector: 'app-root',
+                template: '<div>Hello</div>'
+              })
+              export class AppComponent {}
+            `
+          },
+          minConfidence: 0
+        },
+        {
+          name: 'Express',
+          packageJson: {
+            dependencies: { 'express': '^4.18.0' }
+          },
+          files: {
+            'server.js': `
+              const express = require('express');
+              const app = express();
+              app.listen(3000);
+            `
+          },
+          minConfidence: 0
+        },
+        {
+          name: 'Django',
+          packageJson: null,
+          files: {
+            'requirements.txt': 'Django==4.2.0\ndjango-rest-framework==3.14.0',
+            'manage.py': `
+              #!/usr/bin/env python
+              import os
+              import sys
+              if __name__ == '__main__':
+                  os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
+            `,
+            'project/settings.py': `
+              INSTALLED_APPS = [
+                  'django.contrib.admin',
+                  'rest_framework',
+              ]
+            `
+          },
+          minConfidence: 0
+        }
+      ];
 
-      const result = await analyzer.analyze({ path: testDir });
+      for (const { name, packageJson, files, minConfidence } of frameworks) {
+        const structure: Record<string, string> = { ...files };
+        if (packageJson) {
+          structure['package.json'] = JSON.stringify({ name: 'test-app', ...packageJson });
+        }
 
-      expect(hasFramework(result.technologies, 'React')).toBe(true);
-      expect(getFrameworkConfidence(result.technologies, 'React')).toBeGreaterThanOrEqual(0.85);
+        await createTestProject(structure);
+        const result = await analyzer.analyze({ path: testDir });
+
+        expect(hasFramework(result.technologies, name)).toBe(true);
+        if (minConfidence > 0) {
+          expect(getFrameworkConfidence(result.technologies, name)).toBeGreaterThanOrEqual(minConfidence);
+        }
+
+        // Clean up for next framework test
+        await fs.rm(testDir, { recursive: true, force: true });
+        await fs.mkdir(testDir, { recursive: true });
+      }
     });
 
-    it('should detect Vue framework', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: { 'vue': '^3.0.0' }
-        }),
-        'src/App.vue': `
-          <template><div>{{ msg }}</div></template>
-          <script setup>
-          import { ref } from 'vue';
-          const msg = ref('Hello');
-          </script>
-        `
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(hasFramework(result.technologies, 'Vue')).toBe(true);
-    });
-
-    it('should detect Angular framework', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: {
-            '@angular/core': '^16.0.0',
-            '@angular/common': '^16.0.0'
-          }
-        }),
-        'src/app.component.ts': `
-          import { Component } from '@angular/core';
-          @Component({
-            selector: 'app-root',
-            template: '<div>Hello</div>'
-          })
-          export class AppComponent {}
-        `
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(hasFramework(result.technologies, 'Angular')).toBe(true);
-    });
-
-    it('should detect Express backend', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: { 'express': '^4.18.0' }
-        }),
-        'server.js': `
-          const express = require('express');
-          const app = express();
-          app.listen(3000);
-        `
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(hasFramework(result.technologies, 'Express')).toBe(true);
-    });
-
-    it('should detect Django backend', async () => {
-      await createTestProject({
-        'requirements.txt': 'Django==4.2.0\ndjango-rest-framework==3.14.0',
-        'manage.py': `
-          #!/usr/bin/env python
-          import os
-          import sys
-          if __name__ == '__main__':
-              os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
-        `,
-        'project/settings.py': `
-          INSTALLED_APPS = [
-              'django.contrib.admin',
-              'rest_framework',
-          ]
-        `
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(hasFramework(result.technologies, 'Django')).toBe(true);
-    });
-
-    it('should detect databases', async () => {
-      // Implementation detects databases from config files, not package.json
-      // It looks for database.yml, .env, docker-compose.yml and searches for db keywords
+    it('should detect databases, build tools, test frameworks, and CI/CD', async () => {
       await createTestProject({
         'docker-compose.yml': `
           services:
@@ -282,58 +289,11 @@ describe('CodebaseAnalyzer', () => {
           DATABASE_URL=postgres://localhost:5432/db
           MONGODB_URI=mongodb://localhost:27017
           REDIS_URL=redis://localhost:6379
-        `
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(result.technologies.databases.length).toBeGreaterThan(0);
-      expect(hasDatabase(result.technologies, 'PostgreSQL')).toBe(true);
-    });
-
-    it('should detect build tools', async () => {
-      await createTestProject({
+        `,
         'vite.config.ts': 'export default { build: {} }',
         'webpack.config.js': 'module.exports = {}',
-        'package.json': JSON.stringify({
-          devDependencies: {
-            'vite': '^4.0.0',
-            'webpack': '^5.0.0'
-          }
-        })
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(result.technologies.buildTools.length).toBeGreaterThan(0);
-      expect(result.technologies.buildTools.some(tool =>
-        tool.toLowerCase().includes('vite') || tool.toLowerCase().includes('webpack')
-      )).toBe(true);
-    });
-
-    it('should detect test frameworks', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          devDependencies: {
-            'vitest': '^1.0.0',
-            'jest': '^29.0.0',
-            'playwright': '^1.40.0'
-          }
-        }),
         'vitest.config.ts': 'export default {}',
-        'tests/example.test.ts': 'import { describe, it } from "vitest";'
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(result.technologies.testFrameworks.length).toBeGreaterThan(0);
-      expect(result.technologies.testFrameworks.some(t =>
-        t.toLowerCase().includes('vitest')
-      )).toBe(true);
-    });
-
-    it('should detect CI/CD platforms', async () => {
-      await createTestProject({
+        'tests/example.test.ts': 'import { describe, it } from "vitest";',
         '.github/workflows/ci.yml': `
           name: CI
           on: [push]
@@ -349,11 +309,37 @@ describe('CodebaseAnalyzer', () => {
           pipeline {
             agent any
           }
-        `
+        `,
+        'package.json': JSON.stringify({
+          devDependencies: {
+            'vite': '^4.0.0',
+            'webpack': '^5.0.0',
+            'vitest': '^1.0.0',
+            'jest': '^29.0.0',
+            'playwright': '^1.40.0'
+          }
+        })
       });
 
       const result = await analyzer.analyze({ path: testDir });
 
+      // Databases
+      expect(result.technologies.databases.length).toBeGreaterThan(0);
+      expect(hasDatabase(result.technologies, 'PostgreSQL')).toBe(true);
+
+      // Build tools
+      expect(result.technologies.buildTools.length).toBeGreaterThan(0);
+      expect(result.technologies.buildTools.some(tool =>
+        tool.toLowerCase().includes('vite') || tool.toLowerCase().includes('webpack')
+      )).toBe(true);
+
+      // Test frameworks
+      expect(result.technologies.testFrameworks.length).toBeGreaterThan(0);
+      expect(result.technologies.testFrameworks.some(t =>
+        t.toLowerCase().includes('vitest')
+      )).toBe(true);
+
+      // CI/CD
       expect(result.technologies.cicd.length).toBeGreaterThan(0);
       expect(result.technologies.cicd.some(c =>
         c.toLowerCase().includes('github')
@@ -398,12 +384,13 @@ describe('CodebaseAnalyzer', () => {
   });
 
   describe('Dependency Scanning (NFR-ANAL-003)', () => {
-    it('should scan npm dependencies in <30s (NFR-ANAL-003)', async () => {
+    it('should scan npm dependencies in <30s and identify direct dependencies (NFR-ANAL-003)', async () => {
       await createTestProject({
         'package.json': JSON.stringify({
           dependencies: {
             'react': '^18.2.0',
-            'lodash': '^4.17.21'
+            'lodash': '^4.17.21',
+            'axios': '^1.6.0'
           },
           devDependencies: {
             'vitest': '^1.0.0'
@@ -418,25 +405,11 @@ describe('CodebaseAnalyzer', () => {
       expect(duration).toBeLessThan(30000);
       // Implementation returns flat dependencies array
       expect(result.dependencies.length).toBeGreaterThan(0);
-    }, 35000);
-
-    it('should identify direct dependencies', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: {
-            'react': '^18.2.0',
-            'axios': '^1.6.0'
-          }
-        })
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
       expect(result.dependencies.some(d => d.name === 'react')).toBe(true);
       expect(result.dependencies.some(d => d.name === 'axios')).toBe(true);
-    });
+    }, 35000);
 
-    it('should detect outdated dependencies', async () => {
+    it('should detect outdated dependencies and track versions', async () => {
       await createTestProject({
         'package.json': JSON.stringify({
           dependencies: {
@@ -500,80 +473,72 @@ describe('CodebaseAnalyzer', () => {
   });
 
   describe('Architecture Detection', () => {
-    it('should detect MVC pattern', async () => {
-      // Implementation requires models/, views/, controllers/ at ROOT level (not in src/)
-      await createTestProject({
-        'models/User.ts': 'export class User {}',
-        'views/UserView.tsx': 'export function UserView() {}',
-        'controllers/UserController.ts': 'export class UserController {}'
-      });
+    it('should detect multiple architecture patterns', async () => {
+      const patterns = [
+        {
+          name: 'MVC',
+          structure: {
+            // Implementation requires models/, views/, controllers/ at ROOT level
+            'models/User.ts': 'export class User {}',
+            'views/UserView.tsx': 'export function UserView() {}',
+            'controllers/UserController.ts': 'export class UserController {}'
+          },
+          expectedPattern: 'mvc'
+        },
+        {
+          name: 'Microservices',
+          structure: {
+            'services/auth/index.ts': 'export const authService = {};',
+            'services/payment/index.ts': 'export const paymentService = {};',
+            'services/user/index.ts': 'export const userService = {};',
+            'docker-compose.yml': `
+              version: '3'
+              services:
+                auth:
+                  build: ./services/auth
+                payment:
+                  build: ./services/payment
+            `
+          },
+          expectedPattern: 'microservice'
+        },
+        {
+          name: 'Monorepo',
+          structure: {
+            'package.json': JSON.stringify({
+              workspaces: ['packages/*']
+            }),
+            'packages/core/package.json': JSON.stringify({ name: '@app/core' }),
+            'packages/ui/package.json': JSON.stringify({ name: '@app/ui' }),
+            'services/api/index.ts': 'export default {}' // Add services dir for microservices detection
+          },
+          expectedPattern: 'monolithic|microservices'
+        },
+        {
+          name: 'Layered',
+          structure: {
+            // Implementation detects layered architecture when src/lib/app directories exist at root
+            'src/index.ts': 'export default {};',
+            'lib/utils.ts': 'export const utils = {};',
+            'app/main.ts': 'export class App {}'
+          },
+          expectedPattern: 'layer'
+        }
+      ];
 
-      const result = await analyzer.analyze({ path: testDir });
+      for (const { name, structure, expectedPattern } of patterns) {
+        await createTestProject(structure);
+        const result = await analyzer.analyze({ path: testDir });
 
-      // Architecture is array of ArchitecturePattern objects
-      // Implementation returns "MVC (Model-View-Controller)"
-      expect(result.architecture.some(a =>
-        a.pattern.toLowerCase().includes('mvc')
-      )).toBe(true);
-    });
+        const patternRegex = new RegExp(expectedPattern, 'i');
+        expect(result.architecture.some(a =>
+          patternRegex.test(a.pattern)
+        )).toBe(true);
 
-    it('should detect microservices pattern', async () => {
-      await createTestProject({
-        'services/auth/index.ts': 'export const authService = {};',
-        'services/payment/index.ts': 'export const paymentService = {};',
-        'services/user/index.ts': 'export const userService = {};',
-        'docker-compose.yml': `
-          version: '3'
-          services:
-            auth:
-              build: ./services/auth
-            payment:
-              build: ./services/payment
-        `
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(result.architecture.some(a =>
-        a.pattern.toLowerCase().includes('microservice')
-      )).toBe(true);
-    });
-
-    it('should detect monorepo structure', async () => {
-      // Implementation detects workspaces as microservices pattern
-      // since it has multiple subdirectory package.json files
-      await createTestProject({
-        'package.json': JSON.stringify({
-          workspaces: ['packages/*']
-        }),
-        'packages/core/package.json': JSON.stringify({ name: '@app/core' }),
-        'packages/ui/package.json': JSON.stringify({ name: '@app/ui' }),
-        'services/api/index.ts': 'export default {}' // Add services dir for microservices detection
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      // Implementation detects either microservices or monolithic pattern
-      expect(result.architecture.some(a =>
-        a.pattern.toLowerCase().includes('monolithic') ||
-        a.pattern.toLowerCase().includes('microservices')
-      )).toBe(true);
-    });
-
-    it('should detect layered architecture', async () => {
-      // Implementation detects layered architecture when src/lib/app directories exist at root
-      await createTestProject({
-        'src/index.ts': 'export default {};',
-        'lib/utils.ts': 'export const utils = {};',
-        'app/main.ts': 'export class App {}'
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      // Should detect layered architecture based on src/lib/app directories
-      expect(result.architecture.some(a =>
-        a.pattern.toLowerCase().includes('layer')
-      )).toBe(true);
+        // Clean up for next pattern test
+        await fs.rm(testDir, { recursive: true, force: true });
+        await fs.mkdir(testDir, { recursive: true });
+      }
     });
 
     it('should identify architecture components', async () => {
@@ -593,7 +558,9 @@ describe('CodebaseAnalyzer', () => {
   });
 
   describe('Technical Debt Detection', () => {
-    it('should detect TODO comments', async () => {
+    it('should detect TODO comments, large files, and missing tests', async () => {
+      const largeFile = 'const x = 1;\n'.repeat(600); // 600 lines
+
       await createTestProject({
         'src/index.ts': `
           // TODO: Refactor this function
@@ -601,17 +568,33 @@ describe('CodebaseAnalyzer', () => {
             // TODO: Add error handling
             return 42;
           }
-        `
+        `,
+        'src/massive.ts': largeFile,
+        'src/util.ts': 'export function helper() { return true; }',
+        'src/api.ts': 'export function endpoint() { return {}; }'
+        // No test files
       });
 
       const result = await analyzer.analyze({ path: testDir });
 
-      // Technical debt uses 'category' not 'type'
-      const todoDebt = result.technicalDebt.find(d => d.category === 'complexity' || d.description.toLowerCase().includes('todo'));
+      // TODO comments
+      const todoDebt = result.technicalDebt.find(d =>
+        d.category === 'complexity' || d.description.toLowerCase().includes('todo')
+      );
       expect(todoDebt).toBeDefined();
+
+      // Large files
+      const largeFilesDebt = result.technicalDebt.find(d =>
+        d.category === 'complexity' || d.description.toLowerCase().includes('large')
+      );
+      expect(largeFilesDebt).toBeDefined();
+      expect(['medium', 'high', 'critical']).toContain(largeFilesDebt!.severity);
+
+      // Missing tests
+      expect(result.technicalDebt.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('should detect deprecated code', async () => {
+    it('should detect deprecated code and calculate technical debt score', async () => {
       // Note: Implementation currently doesn't scan file contents for @deprecated
       // It detects technical debt based on structure (file count, pre-1.0 deps, etc.)
       // Create project with pre-1.0 dependencies to trigger outdated debt detection
@@ -632,50 +615,6 @@ describe('CodebaseAnalyzer', () => {
         d.category === 'outdated' || d.description.toLowerCase().includes('pre-1.0')
       );
       expect(outdatedDebt).toBeDefined();
-    });
-
-    it('should detect large files', async () => {
-      const largeFile = 'const x = 1;\n'.repeat(600); // 600 lines
-
-      await createTestProject({
-        'src/massive.ts': largeFile
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      const largeFilesDebt = result.technicalDebt.find(d =>
-        d.category === 'complexity' || d.description.toLowerCase().includes('large')
-      );
-      expect(largeFilesDebt).toBeDefined();
-      expect(['medium', 'high', 'critical']).toContain(largeFilesDebt!.severity);
-    });
-
-    it('should detect missing tests', async () => {
-      await createTestProject({
-        'src/index.ts': 'export function important() { return 42; }',
-        'src/util.ts': 'export function helper() { return true; }',
-        'src/api.ts': 'export function endpoint() { return {}; }'
-        // No test files
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      // Missing tests could be detected as any debt item
-      // Implementation may not have specific 'missing-tests' category
-      expect(result.technicalDebt.length).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should calculate technical debt score', async () => {
-      await createTestProject({
-        'src/index.ts': `
-          // TODO: Fix this
-          export function legacy() {
-            return 42;
-          }
-        `
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
 
       // Technical debt has estimatedEffort as string (e.g., "2 hours")
       if (result.technicalDebt.length > 0) {
@@ -685,65 +624,64 @@ describe('CodebaseAnalyzer', () => {
   });
 
   describe('Complexity Estimation', () => {
-    it('should estimate simple project as low complexity', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: {
-            'lodash': '^4.17.21'
-          }
-        }),
-        'src/index.ts': 'export const x = 1;'
-      });
+    it('should estimate complexity levels based on project size', async () => {
+      const scenarios = [
+        {
+          desc: 'simple project',
+          complexity: 'simple',
+          packageJson: {
+            dependencies: { 'lodash': '^4.17.21' }
+          },
+          fileCount: 1,
+          expectedComplexities: ['simple', 'moderate']
+        },
+        {
+          desc: 'medium complexity',
+          complexity: 'moderate',
+          packageJson: {
+            dependencies: {
+              'react': '^18.0.0',
+              'express': '^4.18.0'
+            }
+          },
+          fileCount: 15,
+          expectedComplexities: ['simple', 'moderate', 'complex']
+        },
+        {
+          desc: 'high complexity',
+          complexity: 'complex',
+          packageJson: {
+            dependencies: {
+              'react': '^18.0.0',
+              'express': '^4.18.0',
+              '@angular/core': '^16.0.0'
+            }
+          },
+          fileCount: 60,
+          expectedComplexities: ['moderate', 'complex', 'enterprise']
+        }
+      ];
 
-      const result = await analyzer.analyze({ path: testDir });
-
-      // estimatedComplexity is a string, not an object
-      expect(['simple', 'moderate']).toContain(result.estimatedComplexity);
-    });
-
-    it('should estimate medium complexity correctly', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: {
-            'react': '^18.0.0',
-            'express': '^4.18.0'
-          }
-        })
-      });
-
-      // Create 15 files
-      for (let i = 0; i < 15; i++) {
+      for (const { packageJson, fileCount, expectedComplexities } of scenarios) {
         await createTestProject({
-          [`src/component${i}.ts`]: `export const Component${i} = () => {};`
+          'package.json': JSON.stringify(packageJson)
         });
+
+        // Create specified number of files
+        for (let i = 0; i < fileCount; i++) {
+          await createTestProject({
+            [`src/module${i}.ts`]: `export const Module${i} = ${i};\n`.repeat(fileCount > 50 ? 50 : 1)
+          });
+        }
+
+        const result = await analyzer.analyze({ path: testDir });
+
+        expect(expectedComplexities).toContain(result.estimatedComplexity);
+
+        // Clean up for next scenario
+        await fs.rm(testDir, { recursive: true, force: true });
+        await fs.mkdir(testDir, { recursive: true });
       }
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(['simple', 'moderate', 'complex']).toContain(result.estimatedComplexity);
-    });
-
-    it('should estimate high complexity for large projects', async () => {
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: {
-            'react': '^18.0.0',
-            'express': '^4.18.0',
-            '@angular/core': '^16.0.0'
-          }
-        })
-      });
-
-      // Create 60 files
-      for (let i = 0; i < 60; i++) {
-        await createTestProject({
-          [`src/module${i}.ts`]: 'export const x = 1;\n'.repeat(50)
-        });
-      }
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(['moderate', 'complex', 'enterprise']).toContain(result.estimatedComplexity);
     });
 
     it('should provide complexity breakdown', async () => {
@@ -765,77 +703,65 @@ describe('CodebaseAnalyzer', () => {
   });
 
   describe('Recommendations', () => {
-    it('should recommend modern frameworks for legacy projects', async () => {
-      // Implementation checks for: outdated deps, no test framework, no CI/CD
-      // Use pre-1.0 dependencies to trigger outdated recommendation
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: {
-            'legacy-lib': '^0.9.0' // Pre-1.0 version triggers "outdated" detection
-          }
-        })
-      });
+    it('should recommend appropriate improvements based on project state', async () => {
+      const scenarios = [
+        {
+          desc: 'modern frameworks for legacy projects',
+          structure: {
+            'package.json': JSON.stringify({
+              dependencies: {
+                'legacy-lib': '^0.9.0' // Pre-1.0 version triggers "outdated" detection
+              }
+            })
+          },
+          expectedKeyword: ['update', 'outdated']
+        },
+        {
+          desc: 'adding tests when missing',
+          structure: {
+            'src/index.ts': 'export function critical() { return 42; }',
+            'src/api.ts': 'export function endpoint() { return {}; }'
+            // No tests
+          },
+          expectedKeyword: ['test']
+        },
+        {
+          desc: 'security improvements',
+          structure: {
+            'src/auth.ts': 'export function authenticate() {}',
+            'package.json': JSON.stringify({
+              dependencies: { 'express': '^4.0.0' }
+            })
+            // No .github/workflows, .gitlab-ci.yml, etc. = no CI/CD detected
+          },
+          expectedKeyword: ['ci/cd', 'pipeline', 'automated']
+        },
+        {
+          desc: 'dependency updates',
+          structure: {
+            'package.json': JSON.stringify({
+              dependencies: {
+                'old-lib': '^0.5.0' // Pre-1.0 = detected as outdated
+              }
+            })
+          },
+          expectedKeyword: ['update', 'outdated']
+        }
+      ];
 
-      const result = await analyzer.analyze({ path: testDir });
+      for (const { structure, expectedKeyword } of scenarios) {
+        await createTestProject(structure);
+        const result = await analyzer.analyze({ path: testDir });
 
-      // Implementation recommends "Update outdated dependencies to improve security and performance"
-      expect(result.recommendations.length).toBeGreaterThan(0);
-      expect(result.recommendations.some(r =>
-        r.toLowerCase().includes('update') || r.toLowerCase().includes('outdated')
-      )).toBe(true);
-    });
+        expect(result.recommendations.length).toBeGreaterThan(0);
+        expect(result.recommendations.some(r =>
+          expectedKeyword.some(keyword => r.toLowerCase().includes(keyword))
+        )).toBe(true);
 
-    it('should recommend adding tests when missing', async () => {
-      await createTestProject({
-        'src/index.ts': 'export function critical() { return 42; }',
-        'src/api.ts': 'export function endpoint() { return {}; }'
-        // No tests
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(result.recommendations.some(r =>
-        r.toLowerCase().includes('test')
-      )).toBe(true);
-    });
-
-    it('should recommend security improvements', async () => {
-      // Implementation recommends CI/CD pipeline when none detected
-      // "Implement CI/CD pipeline for automated testing and deployment"
-      await createTestProject({
-        'src/auth.ts': 'export function authenticate() {}',
-        'package.json': JSON.stringify({
-          dependencies: { 'express': '^4.0.0' }
-        })
-        // No .github/workflows, .gitlab-ci.yml, etc. = no CI/CD detected
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      // Implementation recommends CI/CD for deployment security
-      expect(result.recommendations.some(r =>
-        r.toLowerCase().includes('ci/cd') ||
-        r.toLowerCase().includes('pipeline') ||
-        r.toLowerCase().includes('automated')
-      )).toBe(true);
-    });
-
-    it('should recommend dependency updates', async () => {
-      // Implementation detects pre-1.0 dependencies as outdated
-      await createTestProject({
-        'package.json': JSON.stringify({
-          dependencies: {
-            'old-lib': '^0.5.0' // Pre-1.0 = detected as outdated
-          }
-        })
-      });
-
-      const result = await analyzer.analyze({ path: testDir });
-
-      // Implementation recommends: "Update outdated dependencies to improve security and performance"
-      expect(result.recommendations.some(r =>
-        r.toLowerCase().includes('update') || r.toLowerCase().includes('outdated')
-      )).toBe(true);
+        // Clean up for next scenario
+        await fs.rm(testDir, { recursive: true, force: true });
+        await fs.mkdir(testDir, { recursive: true });
+      }
     });
 
     it('should prioritize recommendations', async () => {
@@ -939,26 +865,22 @@ describe('CodebaseAnalyzer', () => {
       )).toBe(true);
     });
 
-    it('should handle empty project gracefully', async () => {
-      const result = await analyzer.analyze({ path: testDir });
+    it('should handle empty project and errors gracefully', async () => {
+      // Empty project
+      const emptyResult = await analyzer.analyze({ path: testDir });
+      expect(emptyResult.metrics.totalFiles).toBe(0);
+      expect(emptyResult.technologies.frameworks.length).toBe(0);
+      expect(emptyResult.estimatedComplexity).toBe('simple');
 
-      expect(result.metrics.totalFiles).toBe(0);
-      // Empty project should return empty frameworks array
-      expect(result.technologies.frameworks.length).toBe(0);
-      expect(result.estimatedComplexity).toBe('simple');
-    });
-
-    it('should handle project with errors gracefully', async () => {
+      // Project with errors
       await createTestProject({
         'package.json': 'INVALID JSON{{{',
         'src/index.ts': 'export const x = 1;'
       });
 
-      // Should not throw
-      const result = await analyzer.analyze({ path: testDir });
-
-      expect(result).toBeDefined();
-      expect(result.metrics.totalFiles).toBeGreaterThanOrEqual(1);
+      const errorResult = await analyzer.analyze({ path: testDir });
+      expect(errorResult).toBeDefined();
+      expect(errorResult.metrics.totalFiles).toBeGreaterThanOrEqual(1);
     });
   });
 
