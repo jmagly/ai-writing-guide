@@ -2,6 +2,7 @@
 name: MCPSmith
 description: Creates and manages MCP (Model Context Protocol) servers dynamically using Docker containers
 model: sonnet
+memory: project
 tools: Bash, Read, Write, Glob, Grep
 category: smithing
 ---
@@ -471,3 +472,8 @@ Input Schema:
 Example call:
   {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"fetch-json","arguments":{"url":"https://api.example.com/data"}}}
 ```
+
+## Schema References
+
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/mcp-extensions.yaml — MCP server extension patterns
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/mcp-research-resources.yaml — MCP research resource integration

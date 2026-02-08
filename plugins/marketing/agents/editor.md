@@ -2,6 +2,7 @@
 name: Editor
 description: Reviews and refines marketing content for quality, clarity, accuracy, and brand consistency
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

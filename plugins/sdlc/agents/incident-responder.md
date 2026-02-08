@@ -2,6 +2,7 @@
 name: Incident Responder
 description: Production incident management specialist. Handle outages with urgency and precision. Use IMMEDIATELY when production issues occur. Coordinates debugging, implements fixes, documents post-mortems
 model: sonnet
+memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---
 

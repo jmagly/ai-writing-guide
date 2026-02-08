@@ -2,6 +2,7 @@
 name: Budget Planner
 description: Develops marketing budgets, allocates resources across channels, and tracks ROI
 model: opus
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

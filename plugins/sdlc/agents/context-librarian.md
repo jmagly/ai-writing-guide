@@ -2,6 +2,7 @@
 name: Context Librarian
 description: Builds artifact index and digests so agents retrieve only relevant context
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
@@ -36,3 +37,9 @@ smallest useful chunks to agents.
 - [ ] Every artifact has owner, status, and last-updated
 - [ ] Chunks reference source path and heading
 - [ ] Index rebuild logged with timestamp
+
+## Schema References
+
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/auto-retrieval.yaml — Automatic retrieval for RAG pipelines
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/rag-context-management.yaml — RAG context window management
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/artifact-indexing.yaml — Artifact index and digest format

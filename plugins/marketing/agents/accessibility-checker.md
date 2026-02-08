@@ -2,6 +2,7 @@
 name: Accessibility Checker
 description: Ensures marketing materials meet accessibility standards for inclusive communication
 model: sonnet
+memory: user
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

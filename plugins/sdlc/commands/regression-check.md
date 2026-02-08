@@ -1,0 +1,441 @@
+---
+description: Compare current behavior against baseline to detect regressions
+category: code-analysis-testing
+argument-hint: "[--baseline <branch|tag|commit|timestamp>] [--scope <full|module|changed-files>] [--format <summary|detailed|json>] [--bug-report <path>]"
+allowed-tools: Read, Write, Bash, Grep, Glob
+model: sonnet
+---
+
+# Regression Check Command
+
+Compare current system behavior against a baseline to detect regressions using executable feedback patterns.
+
+## Task
+
+I'll perform comprehensive regression detection by:
+
+1. Establishing baseline comparison point (branch, tag, commit, or timestamp)
+2. Identifying scope of changes to test
+3. Executing relevant test suites with baseline comparison
+4. Analyzing execution feedback for behavioral changes
+5. Reporting detected regressions with severity and impact
+6. Optionally correlating with bug reports
+
+## Arguments
+
+- `--baseline <ref>` - Comparison baseline (branch name, git tag, commit hash, or ISO timestamp)
+  - Examples: `--baseline main`, `--baseline v2026.1.4`, `--baseline abc123`, `--baseline 2026-01-20T10:00:00Z`
+  - Default: `main` branch or most recent release tag
+
+- `--scope <level>` - Testing scope
+  - `full` - Run complete test suite (default)
+  - `module <name>` - Test specific module/component
+  - `changed-files` - Test only files changed since baseline
+  - Example: `--scope module auth`
+
+- `--format <type>` - Output format
+  - `summary` - High-level regression report (default)
+  - `detailed` - Full execution logs with diffs
+  - `json` - Machine-readable format for CI/CD integration
+
+- `--bug-report <path>` - Correlate with bug report
+  - Verifies bug fix doesn't introduce regressions
+  - Cross-references test failures with reported issues
+  - Example: `--bug-report .aiwg/bugs/BUG-042.md`
+
+- `--save-baseline` - Save current execution as new baseline
+  - Useful after confirming changes are intentional
+  - Updates regression detection baseline for future runs
+
+## Process
+
+### Step 1: Baseline Establishment
+
+```bash
+# Determine baseline reference
+BASELINE_REF="${--baseline:-main}"
+
+# Checkout baseline (in temporary worktree)
+git worktree add /tmp/baseline-check "$BASELINE_REF"
+
+# Capture baseline test results
+cd /tmp/baseline-check
+npm test -- --json > /tmp/baseline-results.json
+```
+
+### Step 2: Scope Identification
+
+**Full Scope**:
+- Run entire test suite in both baseline and current
+- Compare all test outcomes
+
+**Module Scope**:
+- Identify module-specific tests
+- Run subset of test suite
+- Focus regression detection on specified component
+
+**Changed Files Scope**:
+```bash
+# Identify changed files
+git diff --name-only "$BASELINE_REF" > /tmp/changed-files.txt
+
+# Map to test files
+# Example: src/auth/login.ts → test/unit/auth/login.test.ts
+
+# Run only affected tests
+```
+
+### Step 3: Execution Comparison
+
+Execute tests in current state:
+```bash
+# Run tests with same configuration as baseline
+npm test -- --json > /tmp/current-results.json
+
+# Capture additional metrics
+# - Performance timing
+# - Code coverage deltas
+# - Error types and frequencies
+```
+
+### Step 4: Regression Analysis
+
+Compare execution results:
+
+```yaml
+regression_detection:
+  new_failures:
+    - test: "test/unit/auth/login.test.ts::validateCredentials"
+      baseline_status: PASS
+      current_status: FAIL
+      error: "Expected 200, received 401"
+      severity: CRITICAL
+
+  behavior_changes:
+    - test: "test/integration/api/users.test.ts::createUser"
+      baseline_output: "User created in 150ms"
+      current_output: "User created in 450ms"
+      delta: +200%
+      severity: MAJOR
+
+  fixed_tests:
+    - test: "test/unit/utils/parser.test.ts::edgeCase"
+      baseline_status: FAIL
+      current_status: PASS
+      note: "Intentional fix"
+```
+
+### Step 5: Reporting
+
+**Summary Format**:
+```markdown
+## Regression Check Report
+
+**Baseline**: main (commit abc123)
+**Scope**: full
+**Date**: 2026-01-25T15:30:00Z
+
+### Summary
+
+- **New Failures**: 3 tests
+- **Behavior Changes**: 5 tests (performance degradation)
+- **Fixed Tests**: 2 tests
+- **Overall**: ⚠️ REGRESSIONS DETECTED
+
+### Critical Regressions
+
+1. **auth/login.test.ts::validateCredentials**
+   - Status: PASS → FAIL
+   - Error: "Expected 200, received 401"
+   - Impact: Breaks user authentication
+   - Action: BLOCK MERGE
+
+2. **payments/process.test.ts::chargeCard**
+   - Status: PASS → FAIL
+   - Error: "Transaction timeout"
+   - Impact: Payment processing broken
+   - Action: BLOCK MERGE
+
+### Behavior Changes
+
+1. **api/users.test.ts::createUser**
+   - Performance: 150ms → 450ms (+200%)
+   - Severity: MAJOR
+   - Action: INVESTIGATE
+
+[... detailed report continues ...]
+```
+
+**JSON Format**:
+```json
+{
+  "baseline": {
+    "ref": "main",
+    "commit": "abc123",
+    "timestamp": "2026-01-20T10:00:00Z"
+  },
+  "current": {
+    "commit": "def456",
+    "timestamp": "2026-01-25T15:30:00Z"
+  },
+  "summary": {
+    "new_failures": 3,
+    "behavior_changes": 5,
+    "fixed_tests": 2,
+    "total_tests": 247
+  },
+  "regressions": [
+    {
+      "test": "auth/login.test.ts::validateCredentials",
+      "type": "failure",
+      "severity": "critical",
+      "baseline_status": "PASS",
+      "current_status": "FAIL",
+      "error": "Expected 200, received 401",
+      "action": "block"
+    }
+  ],
+  "verdict": "FAIL"
+}
+```
+
+## Bug Report Integration
+
+When `--bug-report` is provided:
+
+```bash
+# Load bug report
+BUG_REPORT=$(cat .aiwg/bugs/BUG-042.md)
+
+# Extract:
+# - Bug description
+# - Affected components
+# - Expected fix behavior
+
+# Cross-reference regression results:
+# 1. Did fix resolve reported bug? (test now passes)
+# 2. Did fix introduce new failures? (regressions)
+# 3. Did fix change behavior elsewhere? (side effects)
+
+# Generate correlation report:
+```
+
+**Example Output**:
+```markdown
+## Bug Fix Verification: BUG-042
+
+**Bug**: Login fails for users with special characters in email
+
+**Fix Verification**: ✅ PASS
+- Test `auth/login.test.ts::specialCharactersInEmail` now passes
+- Previously failing with "Email validation error"
+
+**Regression Check**: ⚠️ WARNING
+- **New failure detected**: `auth/login.test.ts::standardLogin`
+  - Error: "Unexpected character escape"
+  - Likely caused by overly aggressive input sanitization
+  - **Action**: Refine fix to avoid breaking standard login flow
+
+**Recommendation**: REFINE FIX before merge
+```
+
+## Baseline Modes
+
+### Branch Baseline
+
+```bash
+# Compare against branch
+/regression-check --baseline develop --scope changed-files
+
+# Use case: Feature branch testing
+# Ensures changes don't break existing functionality
+```
+
+### Tag Baseline
+
+```bash
+# Compare against release
+/regression-check --baseline v2026.1.4 --format detailed
+
+# Use case: Release regression testing
+# Verifies new version doesn't break previous release behavior
+```
+
+### Commit Baseline
+
+```bash
+# Compare against specific commit
+/regression-check --baseline abc123def --scope module auth
+
+# Use case: Pinpoint regression introduction
+# Identifies exact commit that introduced regression
+```
+
+### Timestamp Baseline
+
+```bash
+# Compare against point in time
+/regression-check --baseline 2026-01-20T10:00:00Z
+
+# Use case: Time-based regression detection
+# Finds when behavior changed over time
+```
+
+## Executable Feedback Pattern
+
+Implements REF-013 MetaGPT executable feedback loop:
+
+```yaml
+executable_feedback_loop:
+  1_execute_baseline:
+    - checkout_baseline_ref
+    - run_test_suite
+    - capture_execution_results
+
+  2_execute_current:
+    - run_test_suite_current
+    - capture_execution_results
+
+  3_compare_feedback:
+    - detect_new_failures
+    - detect_behavior_changes
+    - detect_performance_regressions
+
+  4_analyze_root_cause:
+    - diff_source_changes
+    - identify_likely_culprits
+    - suggest_fixes
+
+  5_iterate_or_report:
+    - if_regressions_critical: block_merge
+    - if_regressions_minor: warn_and_document
+    - if_no_regressions: approve
+```
+
+## Usage Examples
+
+### Example 1: Pre-Merge Regression Check
+
+```bash
+# Before merging feature branch
+/regression-check --baseline main --scope changed-files --format summary
+
+# Expected outcome:
+# - Fast execution (only changed files tested)
+# - Summary of any regressions introduced
+# - Recommendation: merge/block/investigate
+```
+
+### Example 2: Bug Fix Verification
+
+```bash
+# After implementing bug fix
+/regression-check --baseline v2026.1.4 --bug-report .aiwg/bugs/BUG-042.md
+
+# Expected outcome:
+# - Verifies bug is fixed (test now passes)
+# - Checks for side effects (new failures)
+# - Provides merge recommendation
+```
+
+### Example 3: Release Regression Testing
+
+```bash
+# Before cutting release
+/regression-check --baseline main --scope full --format detailed
+
+# Expected outcome:
+# - Comprehensive test suite comparison
+# - Detailed logs for all detected regressions
+# - Complete report for release decision
+```
+
+### Example 4: Module-Specific Testing
+
+```bash
+# After refactoring auth module
+/regression-check --baseline main --scope module auth --format json
+
+# Expected outcome:
+# - Focused regression detection
+# - JSON output for CI/CD integration
+# - Fast feedback on module changes
+```
+
+### Example 5: Performance Regression Detection
+
+```bash
+# Detect performance regressions
+/regression-check --baseline v2026.1.3 --format detailed
+
+# Expected outcome:
+# - Timing comparisons for all tests
+# - Flags tests with >20% performance degradation
+# - Detailed analysis of slow tests
+```
+
+## Integration with CI/CD
+
+```yaml
+# .github/workflows/regression-check.yml
+name: Regression Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Full history for baseline comparison
+
+      - name: Run regression check
+        run: |
+          aiwg regression-check \
+            --baseline main \
+            --scope changed-files \
+            --format json \
+            > regression-results.json
+
+      - name: Post results
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const results = require('./regression-results.json');
+            // Post comment to PR with regression report
+```
+
+## Output Artifacts
+
+Generated files:
+
+```
+.aiwg/testing/regression-reports/
+├── regression-{timestamp}.md         # Human-readable report
+├── regression-{timestamp}.json       # Machine-readable results
+├── baseline-execution.log           # Baseline test output
+├── current-execution.log            # Current test output
+└── diff-analysis.md                 # Source code diff analysis
+```
+
+## Exit Codes
+
+```bash
+0  - No regressions detected
+1  - Critical regressions (blocking)
+2  - Major regressions (warning)
+3  - Minor regressions (informational)
+4  - Execution error (baseline/current test failure)
+```
+
+## References
+
+- @docs/references/REF-013-metagpt-multi-agent-framework.md - Executable feedback pattern
+- @.claude/rules/executable-feedback.md - Feedback loop implementation rules
+- @agentic/code/frameworks/sdlc-complete/templates/test/regression-test-set-card.md - Regression test template
+- @.aiwg/testing/ - Test artifacts location
+- @.claude/rules/test-first-development.md - Test-first principles

@@ -2,6 +2,7 @@
 name: Email Marketer
 description: Designs email campaigns, writes email copy, develops automation sequences, and optimizes email performance
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

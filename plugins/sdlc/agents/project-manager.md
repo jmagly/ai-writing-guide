@@ -2,6 +2,7 @@
 name: Project Manager
 description: Plans, tracks, and steers delivery to hit scope, schedule, quality, and risk targets
 model: sonnet
+memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
@@ -39,3 +40,9 @@ plans, monitor progress, manage risks, and keep stakeholders informed.
 - Align closely with Product Strategist and System Analyst on prioritization.
 - Synchronize with Integrator and Deployment Manager for release timing.
 - Verify template Automation Outputs before declaring work complete.
+
+## Schema References
+
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-gate.yaml — Human-in-the-loop gate definitions for phase transitions
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-cost-tracking.yaml — HITL cost tracking and efficiency measurement
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/agent-pubsub.yaml — Subscription-based agent activation and event routing

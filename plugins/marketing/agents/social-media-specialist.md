@@ -2,6 +2,7 @@
 name: Social Media Specialist
 description: Creates platform-native social content, manages community engagement, and develops social media strategies
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

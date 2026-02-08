@@ -2,6 +2,7 @@
 name: Campaign Orchestrator
 description: Coordinates multi-channel marketing campaigns, ensuring alignment and seamless execution across all touchpoints
 model: opus
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

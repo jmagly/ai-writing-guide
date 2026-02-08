@@ -2,6 +2,7 @@
 name: Content Writer
 description: Creates long-form content including blog posts, articles, case studies, whitepapers, and thought leadership pieces
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

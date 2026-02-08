@@ -2,6 +2,7 @@
 name: Traceability Manager
 description: Maintains end-to-end mapping from requirements to code, tests, and releases
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
@@ -31,3 +32,10 @@ records. Expose gaps early.
 - [ ] Each requirement maps to design/code and tests
 - [ ] Closed defects link back to requirement or use case
 - [ ] Release notes reference traced items
+
+## Schema References
+
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/fair-extensions.yaml — FAIR principle extensions for traceability
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/citation-integrity.yaml — Citation integrity policy enforcement
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/fair-metadata.yaml — FAIR metadata compliance
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/citation-verification.yaml — Automated citation verification pipeline

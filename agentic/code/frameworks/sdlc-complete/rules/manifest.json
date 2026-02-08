@@ -287,6 +287,22 @@
       "tier": "sdlc",
       "description": "SDLC workflow orchestration patterns and natural language command translation",
       "issue": null
+    },
+    {
+      "name": "research-before-decision",
+      "file": "research-before-decision.md",
+      "enforcement": "high",
+      "tier": "core",
+      "description": "Research codebase, docs, and sources before making technical decisions",
+      "issue": null
+    },
+    {
+      "name": "instruction-comprehension",
+      "file": "instruction-comprehension.md",
+      "enforcement": "high",
+      "tier": "core",
+      "description": "Parse and confirm understanding of all instructions before acting",
+      "issue": null
     }
   ]
 }

@@ -121,6 +121,7 @@ Based on your answers, I'll adjust:
 - **Incident Record**: Initial detection and classification → `.aiwg/incidents/{incident-id}/incident-record.md`
 - **Incident Timeline**: Chronological event log → `.aiwg/incidents/{incident-id}/timeline.md`
 - **Triage Assessment**: Impact and urgency analysis → `.aiwg/incidents/{incident-id}/triage-assessment.md`
+- **Regression Analysis**: Regression triage results → `.aiwg/incidents/{incident-id}/regression-analysis.md`
 - **Root Cause Analysis**: 5 Whys and fishbone → `.aiwg/incidents/{incident-id}/root-cause-analysis.md`
 - **Mitigation Report**: Resolution strategy and validation → `.aiwg/incidents/{incident-id}/mitigation-report.md`
 - **Post-Incident Review (PIR)**: Blameless retrospective → `.aiwg/incidents/{incident-id}/post-incident-review.md`
@@ -222,7 +223,342 @@ Based on your answers, I'll adjust:
 ```
 ✓ Incident {incident-id} logged
 ✓ Initial record created
-⏳ Proceeding to triage and prioritization...
+⏳ Proceeding to regression triage...
+```
+
+### Step 1.5: Regression Triage
+
+**Purpose**: Determine if incident is a regression from recent changes to guide rollback decisions
+
+**Your Actions**:
+
+1. **Launch Regression Detection Agent**:
+   ```
+   Task(
+       subagent_type="regression-analyst",
+       description="Determine if incident is a regression from recent changes",
+       prompt="""
+       Read incident record: .aiwg/incidents/{incident-id}/incident-record.md
+
+       Execute Regression Triage:
+
+       ## Step 1: Identify Recent Deployments
+
+       Check for recent deployments/changes:
+       - Use command: /regression-check --baseline last-deployment
+       - Review git log for last 24-48 hours
+       - Check deployment history from CI/CD
+       - Review configuration changes
+       - Check infrastructure updates
+
+       Document all recent changes with timestamps.
+
+       ## Step 2: Symptom Correlation
+
+       Compare incident symptoms against baseline:
+
+       **Symptom Pattern Matching**:
+       - Did this functionality work before? {YES | NO | UNKNOWN}
+       - When did it last work? {timestamp | UNKNOWN}
+       - What changed between working and broken? {specific change | UNKNOWN}
+
+       **Regression Indicators** (Check all that apply):
+       - [ ] Functionality worked in previous version
+       - [ ] Issue appeared immediately after deployment
+       - [ ] Issue correlates with specific commit/PR
+       - [ ] Similar pattern in staging/canary deployment
+       - [ ] Metrics show clear inflection point at deployment time
+
+       ## Step 3: Regression Verdict
+
+       **Is this a regression?**: {CONFIRMED | LIKELY | POSSIBLE | UNLIKELY | NOT_REGRESSION}
+
+       **Confidence**: {HIGH (>90%) | MEDIUM (70-90%) | LOW (<70%)}
+
+       **Evidence**:
+       1. {evidence point 1}
+       2. {evidence point 2}
+       3. {evidence point 3}
+
+       Save initial assessment to: .aiwg/incidents/{incident-id}/regression-analysis.md (Step 1-3)
+
+       Append timeline:
+       | {HH:MM UTC} | Regression triage initiated | regression-analyst | Verdict: {CONFIRMED|LIKELY|POSSIBLE|UNLIKELY|NOT_REGRESSION} |
+       """
+   )
+   ```
+
+2. **If Regression Confirmed/Likely, Launch Regression Bisect**:
+   ```
+   # Only if regression verdict is CONFIRMED or LIKELY
+   Task(
+       subagent_type="regression-analyst",
+       description="Identify introducing change via bisect",
+       prompt="""
+       Read regression analysis: .aiwg/incidents/{incident-id}/regression-analysis.md
+
+       Since regression is {CONFIRMED|LIKELY}, identify introducing change:
+
+       ## Step 4: Bisect to Find Introducing Commit
+
+       Use command: /regression-bisect
+
+       Execute bisect process:
+       - Start: {last-known-good-commit}
+       - End: {current-broken-commit}
+       - Test: {reproduction steps or test case}
+
+       Document bisect process and result:
+
+       **Bisect Results**:
+       - **Introducing Commit**: {SHA}
+       - **Author**: {name}
+       - **Timestamp**: {YYYY-MM-DD HH:MM:SS}
+       - **PR/MR**: {PR-number} - {PR-title}
+       - **Commit Message**: {message}
+       - **Files Changed**: {count} files
+       - **Risk Assessment**: {LOW | MEDIUM | HIGH based on scope}
+
+       **Commit Details**:
+       ```
+       {git show {SHA} --stat output}
+       ```
+
+       **Related Changes**:
+       - [ ] Code changes in affected component
+       - [ ] Configuration changes
+       - [ ] Database migrations
+       - [ ] Dependency updates
+       - [ ] Infrastructure changes
+
+       Append to: .aiwg/incidents/{incident-id}/regression-analysis.md (Step 4)
+
+       Append timeline:
+       | {HH:MM UTC} | Introducing commit identified | regression-analyst | Commit: {SHA}, PR: {PR-number} |
+       """
+   )
+   ```
+
+3. **Rollback Feasibility Assessment**:
+   ```
+   Task(
+       subagent_type="reliability-engineer",
+       description="Assess rollback feasibility and calculate blast radius",
+       prompt="""
+       Read regression analysis: .aiwg/incidents/{incident-id}/regression-analysis.md
+
+       Since introducing change identified, assess rollback options:
+
+       ## Step 5: Rollback Feasibility
+
+       **Rollback Options**:
+
+       ### Option A: Full Rollback to Previous Version
+       - **Target Version**: {version before introducing commit}
+       - **Feasibility**: {SAFE | RISKY | BLOCKED}
+       - **Risk Factors**:
+         - [ ] Database migrations in between (incompatible schema)
+         - [ ] External API contract changes (breaking)
+         - [ ] Data written in new format (can't be read by old version)
+         - [ ] Dependent services already updated (coordination required)
+       - **Rollback Time**: {estimated minutes}
+       - **Data Loss Risk**: {NONE | MINIMAL | SIGNIFICANT}
+
+       ### Option B: Revert Specific Commit(s)
+       - **Commits to Revert**: {SHA1, SHA2, ...}
+       - **Feasibility**: {SAFE | RISKY | BLOCKED}
+       - **Conflicts**: {count} potential merge conflicts
+       - **Testing Required**: {minimal | moderate | extensive}
+       - **Revert + Deploy Time**: {estimated minutes}
+
+       ### Option C: Feature Flag Disable
+       - **Applicable**: {YES | NO}
+       - **Feature Flags Involved**: {flag-names}
+       - **Disable Time**: {estimated minutes} (near-instant)
+       - **Partial Rollback**: {which features disabled}
+
+       ### Option D: Hotfix Forward
+       - **Feasibility**: {VIABLE | NOT_VIABLE}
+       - **Fix Complexity**: {SIMPLE | MODERATE | COMPLEX}
+       - **Estimated Fix Time**: {minutes}
+       - **Testing Time**: {minutes}
+       - **Total Time**: {minutes}
+
+       **Recommended Option**: {A | B | C | D}
+       **Rationale**: {why this option is best given constraints}
+
+       ## Step 6: Blast Radius Calculation
+
+       **Scope of Introducing Change**:
+       - **Components Affected**: {list all components touched by change}
+       - **Services Impacted**: {list all services}
+       - **Dependencies**: {downstream systems affected}
+       - **Users Impacted**: {estimated count or percentage}
+       - **Geographic Scope**: {all regions | specific regions}
+       - **User Segments**: {all users | specific segments}
+
+       **Rollback Impact Assessment**:
+       - **Services Affected by Rollback**: {list}
+       - **Data Loss Risk**: {NONE | MINIMAL | ACCEPTABLE | UNACCEPTABLE}
+       - **Downtime Required**: {NONE | <5 min | 5-15 min | >15 min}
+       - **Coordination Required**: {list teams/services needing notification}
+
+       **Blast Radius Score**: {LOW | MEDIUM | HIGH}
+
+       Append to: .aiwg/incidents/{incident-id}/regression-analysis.md (Steps 5-6)
+
+       Append timeline:
+       | {HH:MM UTC} | Rollback feasibility assessed | reliability-engineer | Recommended: {option}, Blast radius: {score} |
+       """
+   )
+   ```
+
+4. **Immediate Action Recommendation**:
+   ```
+   Task(
+       subagent_type="regression-analyst",
+       description="Recommend immediate action based on regression analysis",
+       prompt="""
+       Read complete regression analysis: .aiwg/incidents/{incident-id}/regression-analysis.md
+
+       ## Step 7: Immediate Action Decision Matrix
+
+       Use decision matrix to recommend action:
+
+       | Regression Confidence | Rollback Risk | User Impact | Recommendation |
+       |-----------------------|---------------|-------------|----------------|
+       | CONFIRMED + HIGH      | LOW           | HIGH        | **ROLLBACK IMMEDIATELY** |
+       | CONFIRMED + HIGH      | LOW           | MEDIUM      | **ROLLBACK** |
+       | CONFIRMED + HIGH      | MEDIUM        | HIGH        | **ROLLBACK with validation** |
+       | CONFIRMED + HIGH      | HIGH          | HIGH        | **HOTFIX (rollback blocked)** |
+       | LIKELY + MEDIUM       | LOW           | HIGH        | **ROLLBACK after quick validation** |
+       | LIKELY + MEDIUM       | MEDIUM        | HIGH        | **INVESTIGATE + prepare rollback** |
+       | POSSIBLE + LOW        | ANY           | HIGH        | **INVESTIGATE (parallel to Tier 1)** |
+       | UNLIKELY              | ANY           | ANY         | **STANDARD TRIAGE (continue to Step 2)** |
+
+       **Current Situation**:
+       - Regression Confidence: {from Step 3}
+       - Rollback Risk: {from Step 5}
+       - User Impact: {from incident record}
+
+       **Recommended Immediate Action**: {action from matrix}
+
+       **Action Details**:
+       - **Action Type**: {ROLLBACK | HOTFIX | INVESTIGATE | STANDARD_TRIAGE}
+       - **Urgency**: {IMMEDIATE (<5 min) | URGENT (<15 min) | NORMAL (standard SLA)}
+       - **Prerequisites**: {any validation or approval needed}
+       - **Execution Steps**: {high-level steps}
+       - **Fallback Plan**: {if this action fails}
+
+       **Communication**:
+       - Notify Incident Commander: {key finding summary}
+       - Notify Deployment Manager: {rollback decision if applicable}
+       - Update status: "Regression {CONFIRMED|LIKELY|POSSIBLE}, {action} in progress"
+
+       Append to: .aiwg/incidents/{incident-id}/regression-analysis.md (Step 7)
+
+       Append timeline:
+       | {HH:MM UTC} | Immediate action recommended | regression-analyst | Action: {ROLLBACK|HOTFIX|INVESTIGATE|STANDARD_TRIAGE} |
+       """
+   )
+   ```
+
+5. **Update Regression Register**:
+   ```
+   Task(
+       subagent_type="regression-analyst",
+       description="Record regression in regression register",
+       prompt="""
+       If regression is CONFIRMED or LIKELY, update regression register:
+
+       Read regression analysis: .aiwg/incidents/{incident-id}/regression-analysis.md
+
+       Update regression register with incident:
+
+       **Regression Entry**:
+       ```yaml
+       regression_id: REG-{YYYY-MM-DD}-{sequence}
+       incident_id: {incident-id}
+       detection_date: {YYYY-MM-DD}
+       severity: {P0|P1|P2|P3}
+
+       introducing_change:
+         commit_sha: {SHA}
+         pr_number: {PR-number}
+         author: {name}
+         merge_date: {YYYY-MM-DD}
+         deployment_date: {YYYY-MM-DD}
+
+       regression_category: {functional | performance | security | data-integrity}
+
+       affected_functionality:
+         component: {component-name}
+         feature: {feature-name}
+         user_facing: {YES|NO}
+
+       detection_gap:
+         escaped_testing: {unit | integration | e2e | manual | staging}
+         detection_time: {hours from deployment to detection}
+         reason: {why tests didn't catch this}
+
+       mitigation_action: {rollback | hotfix | feature-flag-disable}
+       mitigation_time: {minutes from detection to resolution}
+
+       preventive_actions:
+         - {action 1 to prevent recurrence}
+         - {action 2 to improve detection}
+
+       status: {OPEN | MITIGATED | ANALYZED | CLOSED}
+       ```
+
+       Save to: .aiwg/regression/register/{regression-id}.yaml
+
+       Also update regression summary:
+       Append one-line entry to: .aiwg/regression/regression-register-summary.md
+
+       | {regression-id} | {incident-id} | {YYYY-MM-DD} | {P0|P1|P2} | {commit-SHA} | {category} | {status} |
+
+       Cross-reference in incident:
+       Append to: .aiwg/incidents/{incident-id}/regression-analysis.md
+
+       ## Regression Register Entry
+
+       This incident has been registered as: **{regression-id}**
+
+       See: @.aiwg/regression/register/{regression-id}.yaml
+
+       Append timeline:
+       | {HH:MM UTC} | Regression registered | regression-analyst | Registered as: {regression-id} |
+       """
+   )
+   ```
+
+**Decision Flow**:
+```
+Regression Triage Decision Tree:
+
+1. Is this a regression?
+   ├─ CONFIRMED/LIKELY → Proceed to rollback assessment
+   │   ├─ Rollback SAFE + HIGH user impact → Execute rollback immediately
+   │   ├─ Rollback RISKY or BLOCKED → Proceed to hotfix path
+   │   └─ Rollback SAFE + LOW user impact → Prepare rollback, investigate in parallel
+   │
+   ├─ POSSIBLE → Continue standard triage in parallel with regression investigation
+   │
+   └─ UNLIKELY/NOT_REGRESSION → Continue to standard triage (Step 2)
+```
+
+**Communicate Progress**:
+```
+✓ Incident logged
+⏳ Regression triage in progress...
+  ✓ Recent deployments identified: {count} in last {hours}h
+  ✓ Regression verdict: {CONFIRMED|LIKELY|POSSIBLE|UNLIKELY|NOT_REGRESSION}
+  {✓ Introducing commit identified: {SHA}, PR: {PR-number}}
+  {✓ Rollback feasibility: {SAFE|RISKY|BLOCKED}}
+  ✓ Recommended action: {ROLLBACK|HOTFIX|INVESTIGATE|STANDARD_TRIAGE}
+  {✓ Regression registered: {regression-id}}
+⏳ {Executing immediate rollback | Proceeding to hotfix development | Continuing to standard triage}...
 ```
 
 ### Step 2: Triage and Severity Assessment
@@ -967,6 +1303,7 @@ Based on your answers, I'll adjust:
        - .aiwg/incidents/{incident-id}/incident-record.md
        - .aiwg/incidents/{incident-id}/timeline.md
        - .aiwg/incidents/{incident-id}/triage-assessment.md
+       - .aiwg/incidents/{incident-id}/regression-analysis.md (if exists)
        - .aiwg/incidents/{incident-id}/root-cause-analysis.md
        - .aiwg/incidents/{incident-id}/mitigation-report.md
 
@@ -988,6 +1325,15 @@ Based on your answers, I'll adjust:
 
        ## Timeline
        {Copy detailed timeline from timeline.md}
+
+       ## Regression Analysis (if applicable)
+
+       {If regression-analysis.md exists, include summary:}
+       - **Regression Detected**: {YES|NO}
+       - **Introducing Change**: {commit SHA, PR number}
+       - **Regression Category**: {functional|performance|security|data-integrity}
+       - **Detection Gap**: {why tests didn't catch this}
+       - **Regression Register Entry**: @.aiwg/regression/register/{regression-id}.yaml
 
        ## Root Cause
        {Copy 5 Whys analysis and contributing factors}
@@ -1138,22 +1484,156 @@ Based on your answers, I'll adjust:
    )
    ```
 
+5. **Link to Regression-Analyst for Deep Analysis** (if regression):
+   ```
+   Task(
+       subagent_type="regression-analyst",
+       description="Conduct deep regression analysis for PIR",
+       prompt="""
+       If incident was a regression (regression-analysis.md exists):
+
+       Read all regression artifacts:
+       - .aiwg/incidents/{incident-id}/regression-analysis.md
+       - .aiwg/regression/register/{regression-id}.yaml
+
+       Conduct deep regression analysis for PIR:
+
+       ## Regression Deep Dive
+
+       ### Test Gap Analysis
+
+       **Why Did Tests Not Catch This?**:
+       - [ ] Unit test coverage gap: {specific scenario not covered}
+       - [ ] Integration test coverage gap: {interaction not tested}
+       - [ ] E2E test coverage gap: {user journey not validated}
+       - [ ] Manual test coverage gap: {not in test plan}
+       - [ ] Staging environment gap: {differs from production}
+
+       **Specific Missing Test**:
+       - Test name: {suggested test name}
+       - Test type: {unit | integration | e2e}
+       - Test scenario: {what should be tested}
+       - Test location: {where test should live}
+
+       ### PR Review Analysis
+
+       **PR Review Questions**:
+       - Was this PR reviewed? {YES|NO}
+       - Number of reviewers: {count}
+       - Did reviewers identify risk? {YES|NO}
+       - What could reviewers have caught? {specific issues}
+
+       **Review Process Improvement**:
+       - [ ] Add specific checklist item: {item}
+       - [ ] Require domain expert review for {type of change}
+       - [ ] Add automated check: {what to check}
+
+       ### Deployment Process Analysis
+
+       **Deployment Safety**:
+       - Was this deployed via canary? {YES|NO}
+       - Canary duration: {minutes}
+       - Canary detection: {what metrics were monitored}
+       - Why didn't canary catch this? {specific reason}
+
+       **Deployment Improvement**:
+       - [ ] Add canary metric: {metric to monitor}
+       - [ ] Increase canary duration to: {minutes}
+       - [ ] Add canary validation test: {test}
+
+       ### Pattern Analysis
+
+       **Similar Regressions**:
+       Query regression register for similar patterns:
+       - Same component: {count} previous regressions
+       - Same category: {count} in last 90 days
+       - Same author: {count} (blameless - for learning)
+
+       **Emerging Patterns**:
+       - Is this component high-risk? {YES|NO - based on regression frequency}
+       - Should this component require stricter gates? {YES|NO}
+       - Should this component have dedicated ownership? {YES|NO}
+
+       Append to PIR: .aiwg/incidents/{incident-id}/post-incident-review.md (Regression Deep Dive section)
+
+       Update regression register with analysis:
+       .aiwg/regression/register/{regression-id}.yaml
+       """
+   )
+   ```
+
 **Communicate Progress**:
 ```
 ✓ Incident RESOLVED
 ⏳ Conducting post-incident review...
   ✓ PIR meeting scheduled: {date/time}
   ✓ PIR document generated
+  {✓ Regression deep dive completed (regression incident)}
   ✓ Preventive actions identified: {count} immediate, {count} short-term, {count} long-term
   ✓ Runbook updates recommended
   ✓ Knowledge base article drafted
 ✓ Post-incident review complete: .aiwg/incidents/{incident-id}/post-incident-review.md
 ```
 
+## Regression vs New Issue Decision Tree
+
+Use this decision tree during Step 1.5:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Did this functionality work before?                     │
+└───┬───────────────────────────────────────────────┬─────┘
+    │ YES                                           │ NO/UNKNOWN
+    │                                               │
+    v                                               v
+┌───────────────────────────────────┐    ┌──────────────────────┐
+│ Was there a recent change?        │    │ NOT A REGRESSION     │
+│ (deployment, config, infra)       │    │ → Standard Triage    │
+└───┬────────────────────────┬──────┘    └──────────────────────┘
+    │ YES (<48h)             │ NO
+    │                        │
+    v                        v
+┌───────────────────┐   ┌────────────────────────────┐
+│ LIKELY REGRESSION │   │ Check for:                 │
+│ → Bisect          │   │ - Traffic pattern change   │
+│ → Rollback eval   │   │ - External dependency      │
+└───────────────────┘   │ - Data growth              │
+                        │ POSSIBLE REGRESSION        │
+                        │ → Investigate in parallel  │
+                        └────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│ Rollback vs Hotfix Decision Matrix                     │
+├─────────────────┬──────────────┬─────────────┬─────────┤
+│ Rollback Risk   │ User Impact  │ Confidence  │ Action  │
+├─────────────────┼──────────────┼─────────────┼─────────┤
+│ SAFE            │ HIGH         │ CONFIRMED   │ ROLLBACK│
+│ SAFE            │ MEDIUM/HIGH  │ LIKELY      │ ROLLBACK│
+│ RISKY           │ HIGH         │ CONFIRMED   │ HOTFIX  │
+│ BLOCKED         │ ANY          │ CONFIRMED   │ HOTFIX  │
+│ SAFE            │ LOW          │ LIKELY      │ INVESTI-│
+│                 │              │             │ GATE    │
+└─────────────────┴──────────────┴─────────────┴─────────┘
+```
+
+## Rollback vs Hotfix Decision Matrix
+
+| Rollback Feasibility | User Impact | Regression Confidence | Recommended Action |
+|----------------------|-------------|-----------------------|--------------------|
+| SAFE (no schema/data issues) | HIGH (P0) | CONFIRMED (>90%) | **Execute rollback immediately** |
+| SAFE | HIGH (P0) | LIKELY (70-90%) | **Rollback after quick validation (5 min)** |
+| SAFE | MEDIUM (P1) | CONFIRMED | **Rollback** |
+| RISKY (schema/data concerns) | HIGH (P0) | CONFIRMED | **Hotfix (rollback too risky)** |
+| BLOCKED (breaking changes) | HIGH (P0) | CONFIRMED | **Emergency hotfix** |
+| SAFE | LOW (P2) | LIKELY | **Investigate, prepare rollback as backup** |
+| RISKY | MEDIUM (P1) | LIKELY | **Investigate + parallel hotfix dev** |
+| ANY | HIGH (P0) | POSSIBLE (<70%) | **Investigate (Tier 1) + prepare rollback** |
+
 ## Quality Gates
 
 Before marking workflow complete, verify:
 - [ ] Incident detected and logged within 5 minutes
+- [ ] Regression triage completed within 10 minutes (if recent deployment)
 - [ ] Triage and prioritization completed within 15 minutes
 - [ ] Incident Commander assigned (P0/P1)
 - [ ] Functional escalation executed per timers (Tier 1 → 2 → 3)
@@ -1164,6 +1644,7 @@ Before marking workflow complete, verify:
 - [ ] Incident resolved within SLA (P0 = 1-2h, P1 = 4h, P2 = 24h)
 - [ ] Post-incident review completed within 24-48h (P0/P1)
 - [ ] Preventive actions identified and tracked
+- [ ] Regression registered (if applicable)
 
 ## User Communication
 
@@ -1178,6 +1659,7 @@ Initial assessment:
 - Expected resolution SLA: {time}
 
 I'll coordinate incident response across:
+- Regression triage (if recent deployment)
 - Tier 1 → Tier 2 → Tier 3 escalation
 - Management/executive notification (if warranted)
 - Root cause analysis
@@ -1211,6 +1693,12 @@ Incident Response Complete: {incident-id}
 **Duration**: {HH:MM} (Detection → Resolution)
 **Resolution SLA**: {MET | MISSED by {time}}
 
+**Regression Analysis** (if applicable):
+- Regression Detected: {YES|NO}
+- Introducing Commit: {SHA} (PR #{PR-number})
+- Rollback Executed: {YES|NO}
+- Regression Register: @.aiwg/regression/register/{regression-id}.yaml
+
 **Resolution Summary**:
 - Root Cause: {one-sentence root cause}
 - Mitigation: {strategy applied}
@@ -1218,6 +1706,7 @@ Incident Response Complete: {incident-id}
 
 **Response Metrics**:
 - Detection Time: {minutes} (SLA: <5 min)
+- Regression Triage: {minutes} (for deployment-related incidents)
 - Acknowledgment: {minutes} (SLA: {immediate|5 min|30 min})
 - Time to Engage: {minutes} (SLA: {15|30|240} min)
 - Time to Resolve: {HH:MM} (SLA: {1-2h|4h|24h})
@@ -1233,6 +1722,7 @@ Incident Response Complete: {incident-id}
 - Incident Record (.aiwg/incidents/{incident-id}/incident-record.md)
 - Timeline (.aiwg/incidents/{incident-id}/timeline.md)
 - Triage Assessment (.aiwg/incidents/{incident-id}/triage-assessment.md)
+- Regression Analysis (.aiwg/incidents/{incident-id}/regression-analysis.md) {if regression}
 - Root Cause Analysis (.aiwg/incidents/{incident-id}/root-cause-analysis.md)
 - Mitigation Report (.aiwg/incidents/{incident-id}/mitigation-report.md)
 - Post-Incident Review (.aiwg/incidents/{incident-id}/post-incident-review.md)
@@ -1243,6 +1733,7 @@ Incident Response Complete: {incident-id}
 - Preventive actions: {count} tracked ({immediate|short-term|long-term})
 - Runbook updates: Review .aiwg/incidents/{incident-id}/runbook-update-recommendation.md
 - Knowledge base: Publish .aiwg/incidents/{incident-id}/knowledge-base-article.md
+{- Regression deep dive: .aiwg/regression/register/{regression-id}.yaml}
 
 ─────────────────────────────────────────────
 ```
@@ -1362,6 +1853,7 @@ Extended PIR with security-specific preventive actions required.
 
 This orchestration succeeds when:
 - [ ] Incident detected within 5 minutes
+- [ ] Regression triage completed within 10 minutes (if applicable)
 - [ ] Triage and prioritization completed within 15 minutes
 - [ ] Incident Commander assigned (P0/P1)
 - [ ] Functional escalation executed per timers (Tier 1 → 2 → 3)
@@ -1373,15 +1865,19 @@ This orchestration succeeds when:
 - [ ] Post-incident review completed within 24-48h (P0/P1)
 - [ ] Preventive actions identified and tracked
 - [ ] Runbooks and knowledge base updated
+- [ ] Regression registered and analyzed (if applicable)
 
 ## Metrics to Track
 
 **During orchestration, track**:
 - Mean Time to Detect (MTTD): <5 minutes
+- Mean Time to Regression Triage (MTTRT): <10 minutes (deployment-related)
 - Mean Time to Acknowledge (MTTA): P0 = immediate, P1 = 5 min, P2 = 30 min
 - Mean Time to Engage (MTTE): P0 = 15 min, P1 = 30 min
 - Mean Time to Resolve (MTTR): P0 = 1-2h, P1 = 4h, P2 = 24h
 - Resolution Rate by Tier: Tier 1 = 60-80%, Tier 2 = 15-30%, Tier 3 = 5-10%
+- Regression Detection Rate: % of deployment-related incidents identified as regressions
+- Rollback Success Rate: % of rollback attempts that successfully resolve incidents
 - Incident Recurrence Rate: <5% (same root cause within 90 days)
 - PIR Completion Rate: 100% for P0/P1
 - Preventive Action Completion Rate: >90% within due dates
@@ -1390,6 +1886,7 @@ This orchestration succeeds when:
 
 **Primary Agents**:
 - **incident-responder**: Overall coordination, triage, communication
+- **regression-analyst**: Regression triage, bisect, rollback assessment
 - **reliability-engineer**: Tier 1 response, monitoring, validation
 - **component-owner**: Tier 2 advanced troubleshooting
 - **architecture-designer**: Tier 3 architectural analysis
@@ -1408,8 +1905,17 @@ This orchestration succeeds when:
 
 **Related Commands**:
 - Deployment: `commands/flow-deploy-to-production.md` (rollback procedures)
+- Regression Check: `@commands/regression-check.md` (baseline comparison)
+- Regression Bisect: `@commands/regression-bisect.md` (find introducing commit)
 - Hypercare: `commands/flow-hypercare-monitoring.md` (post-deployment monitoring)
 - Operational Readiness: `templates/deployment/operational-readiness-review-template.md`
+
+**Related Agents**:
+- Regression Analyst: `@agents/regression-analyst.md` (deep regression analysis)
+
+**Related Schemas**:
+- Regression Entry: `@schemas/regression/regression-entry.yaml` (regression register format)
+- Incident Record: `@schemas/incidents/incident-record.yaml` (incident documentation)
 
 **Gate Criteria**:
 - `flows/gate-criteria-by-phase.md` (incident severity classification)

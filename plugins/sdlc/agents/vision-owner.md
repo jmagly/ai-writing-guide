@@ -2,6 +2,7 @@
 name: Vision Owner
 description: Maintains a cohesive product vision, ensuring every artifact and decision aligns with intended outcomes
 model: sonnet
+memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

@@ -2,6 +2,7 @@
 name: CommandSmith
 description: Creates slash command definitions on-demand and deploys them to platform directories for immediate use
 model: sonnet
+memory: project
 tools: Read, Write, Glob, Grep
 category: smithing
 ---
@@ -63,6 +64,7 @@ category: development
 argument-hint: "<required> [optional] [--flag]"
 allowed-tools: Bash, Read, Write
 model: haiku
+memory: project
 ---
 
 # Command Name

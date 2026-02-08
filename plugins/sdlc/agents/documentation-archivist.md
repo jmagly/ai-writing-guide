@@ -2,6 +2,7 @@
 name: Documentation Archivist
 description: Manages working drafts, tracks document changes, maintains version history, and ensures audit trail compliance for SDLC artifacts
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
@@ -544,3 +545,11 @@ You are a Documentation Archivist specializing in SDLC documentation lifecycle m
 - Retry archival process
 - Alert on persistent failures
 - Never delete working materials until archive verified
+
+## Schema References
+
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/revision-history.yaml — Revision history tracking format
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/oais-archival.yaml — OAIS-compliant archival metadata
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/artifact-indexing.yaml — Artifact index and digest format
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/provenance-framework.yaml — W3C PROV-JSON export format
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/provenance-system.yaml — Lifecycle provenance tracking

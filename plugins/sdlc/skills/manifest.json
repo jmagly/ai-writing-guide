@@ -58,6 +58,31 @@
       "name": "issue-auto-sync",
       "description": "Automatic issue tracking synchronization from commits and artifacts",
       "triggers": ["sync issues", "update linked issues", "check issue references", "auto-update issues", "post-commit issue sync"]
+    },
+    {
+      "name": "tot-exploration",
+      "description": "Tree-of-Thought exploration for architecture decisions with branching evaluation",
+      "triggers": ["explore options", "tree of thought", "branch analysis", "evaluate alternatives", "tot decide"]
+    },
+    {
+      "name": "citation-guard",
+      "description": "Real-time citation verification and hallucination prevention during content generation",
+      "triggers": ["check citations", "verify sources", "citation guard", "source check"]
+    },
+    {
+      "name": "grade-on-ingest",
+      "description": "Auto-trigger GRADE quality assessment when new research sources are added to corpus",
+      "triggers": ["assess quality", "grade source", "evaluate evidence", "quality check"]
+    },
+    {
+      "name": "auto-provenance",
+      "description": "Automatically generate W3C PROV-compliant provenance records when agents create or modify artifacts",
+      "triggers": ["create provenance", "track artifact", "record provenance", "audit trail", "trace artifact"]
+    },
+    {
+      "name": "regression-learning",
+      "description": "Cross-task learning for improving regression detection through pattern recognition, test prioritization, and historical analysis",
+      "triggers": ["learn from regressions", "improve regression detection", "analyze regression patterns", "prioritize regression tests", "what tests should I run", "predict regression risk", "similar past failures"]
     }
   ],
   "dependencies": {

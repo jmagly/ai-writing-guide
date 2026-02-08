@@ -2,6 +2,7 @@
 name: Corporate Communications Specialist
 description: Creates executive communications, investor relations content, and corporate messaging
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

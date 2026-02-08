@@ -2,6 +2,7 @@
 name: Positioning Specialist
 description: Develops brand positioning, value propositions, and competitive differentiation strategies
 model: opus
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

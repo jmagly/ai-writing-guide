@@ -2,6 +2,7 @@
 name: Legal Reviewer
 description: Reviews marketing materials for legal compliance, regulatory requirements, and risk mitigation
 model: opus
+memory: user
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

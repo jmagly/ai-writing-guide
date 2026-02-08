@@ -2,6 +2,7 @@
 name: Configuration Manager
 description: Governs version control, baselines, and change processes to maintain traceable artifacts
 model: sonnet
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 

@@ -2,6 +2,7 @@
 name: SEO Specialist
 description: Optimizes content for search engines, conducts keyword research, and develops SEO strategies
 model: sonnet
+memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

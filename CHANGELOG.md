@@ -5,9 +5,57 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2026.2.0] - 2026-02-08 – "Universal Deploy" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **Universal deployment** | All 8 providers now receive all 4 artifact types (agents, commands, skills, rules) |
+| **External Ralph loop** | Crash-resilient iterative task execution across sessions (6-8 hours) |
+| **Research framework** | 8 specialized research agents, 10 commands, 8 templates |
+| **Rules as artifact type** | Deployable enforcement rules propagate to all platforms |
+| **Agent persistence** | Anti-laziness detection, HITL gates, cross-loop learning |
+| **Regression testing** | Automated regression detection integrated across SDLC |
+| **Unified extension system** | Complete Phase 4 with hooks, dynamic discovery, registry |
+| **GitHub Copilot full support** | Rules and skills deploy alongside agents and commands |
+| **Test consolidation** | 31.7% test reduction (3,837 → 2,619) with zero coverage loss |
+| **Research-first rules** | Agents must research before decisions, parse instructions before acting |
 
 ### Added
+
+**Universal Deployment Architecture**:
+
+- All 8 providers (Claude, Codex, Copilot, Cursor, Factory, OpenCode, Warp, Windsurf) now receive all 4 artifact types
+- 32 provider × artifact combinations supported with per-provider support levels (`native`, `conventional`, `aggregated`)
+- Provider implementations refactored for consistent deploy paths across `tools/agents/providers/*.mjs`
+- ADR documented at `.aiwg/architecture/adr-universal-provider-deployment.md`
+
+**Rules as Deployable Artifact Type**:
+
+- Rules are now a first-class deployable artifact alongside agents, commands, and skills
+- Core enforcement rules (no-attribution, token-security, versioning, citation-policy, anti-laziness, executable-feedback, failure-mitigation) deploy to all providers
+- Content-injection platforms (Copilot, Windsurf) receive rules injected into their context files
+- Discrete-file platforms (Claude, Codex, Cursor, Factory, OpenCode, Warp) receive individual rule files
+
+**Zero AI Attribution Enforcement**:
+
+- New `no-attribution.md` rule enforced across all 8 platforms
+- No `Co-Authored-By`, `Generated with`, or tool branding in any output
+- `aiwg use` and `aiwg regenerate` include no-attribution conventions for every platform
+
+**GitHub Copilot Full Integration**:
+
+- Rules deployed to `.github/copilot-rules/` directory
+- Skills deployed to `.github/skills/` directory
+- Commands converted to YAML agent format in `.github/agents/`
+- Complete parity with other providers
+
+**Research-First and Instruction-Following Rules**:
+
+- `research-before-decision.md` - HIGH enforcement rule requiring research before technical decisions
+- `instruction-comprehension.md` - HIGH enforcement rule requiring instruction parsing before acting
+- 7th thought type added to thought protocol: Research 🔬
+- NL router updated with research, planning, and clarification routing patterns
+- Simple language translations document at `docs/simple-language-translations.md`
 
 **External Ralph Loop - Crash-Resilient Task Execution**:
 
@@ -15,70 +63,119 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Wraps Claude Code sessions with crash recovery and cross-session persistence
   - Pre/post session snapshots capture git status, .aiwg state, file hashes
   - Periodic checkpoints during session (configurable interval, default 30 min)
-  - Two-phase state assessment: Orient (understand what happened) → Generate (intelligent continuation)
+  - Two-phase state assessment: Orient → Generate continuation prompts
   - Comprehensive output capture: stdout, stderr, session transcript, parsed events
-- **`/ralph-external-status`** - Check external loop status
-- **`/ralph-external-abort`** - Abort external loop and cleanup
-- **Ralph External addon** (`tools/ralph-external/`):
-  - `orchestrator.mjs` - Main loop coordination (~450 lines)
-  - `session-launcher.mjs` - Claude CLI wrapper with capture (39 tests)
-  - `output-analyzer.mjs` - Session output analysis (29 tests)
-  - `snapshot-manager.mjs` - Pre/post session snapshots (23 tests)
-  - `checkpoint-manager.mjs` - Periodic state checkpoints (22 tests)
-  - `state-assessor.mjs` - Two-phase assessment system
-  - `recovery-engine.mjs` - Crash detection and recovery (25 tests)
-  - **166 passing tests** total
-- State directory: `.aiwg/ralph-external/` with full iteration history
-
-**Multi-Provider Support for External Ralph**:
-
-- **`--provider` flag** - Target different CLI providers (claude, codex)
+- **`/ralph-external-status`** and **`/ralph-external-abort`** commands
+- **4-layer intelligent control system** (Epic #26):
+  - Layer 1: Loop Lifecycle (initialization, iteration, termination)
+  - Layer 2: Intelligent Control (memory, analytics, early stopping, best output)
+  - Layer 3: Cross-Task Learning (similar task detection, strategy transfer)
+  - Layer 4: Multi-Loop Management (concurrent loops, dashboard, monitoring)
+- **Multi-provider support** with `--provider` flag (claude, codex)
   - Provider adapter pattern with capability-based degradation
   - Model mapping: opus→gpt-5.3-codex, sonnet→codex-mini-latest, haiku→gpt-5-codex-mini
-  - Graceful fallback when provider lacks capabilities (e.g., MCP support)
+- **Research-backed options** (REF-015, REF-021):
+  - `--memory <n|preset>` - Memory capacity with presets: simple(1), moderate(3), complex(5), maximum(10)
+  - `--cross-task` / `--no-cross-task` - Cross-task learning from past loops
+  - `--no-analytics`, `--no-best-output`, `--no-early-stopping`
+- **Multi-loop state management** with monitoring dashboard
+- **Security and safety guide** at `docs/ralph-external/security-safety.md`
+- State directory: `.aiwg/ralph-external/` with full iteration history
 
-**Research-Backed Options (REF-015, REF-021)**:
+**Research Framework**:
 
-- **`--memory <n|preset>`** - Memory capacity Ω with presets: simple(1), moderate(3), complex(5), maximum(10)
-- **`--cross-task` / `--no-cross-task`** - Cross-task learning from similar past loops
-- **`--no-analytics`** - Disable iteration analytics collection
-- **`--no-best-output`** - Disable best output selection (use final iteration instead of peak quality)
-- **`--no-early-stopping`** - Disable early stopping on high confidence
+- 8 specialized research agents (Quality Assessor, Citation Verifier, Writing Validator, Prompt Optimizer, Content Diversifier, etc.)
+- 10 research commands (`/verify-citations`, `/grade-report`, `/citation-check`, `/corpus-health`, etc.)
+- 8 research templates (frontmatter, quality assessment, evidence review)
+- GRADE evidence quality assessment workflow
+- W3C PROV-compliant provenance tracking with `prov-record.yaml` schema
+- Citation verification workflow ensuring no fabricated references
+- Research corpus with papers, findings, and topic syntheses
 
-**When to Use External vs Internal Ralph**:
+**Agent Persistence and Anti-Laziness**:
 
-| Feature | Internal (`/ralph`) | External (`/ralph-external`) |
-|---------|---------------------|------------------------------|
-| Session duration | Single session | Multi-session (6-8 hours) |
-| Crash recovery | Limited | Full supervisor recovery |
-| State capture | Basic | Comprehensive snapshots |
-| Context corruption | Risk exists | External state preserved |
+- HITL gate integration with comprehensive test suite
+- Cross-loop learning between Ralph iterations
+- Laziness Detection agent analyzing actions for test deletion, skip patterns, feature removal
+- Recovery Orchestrator coordinating PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE protocol
+- Progress Tracker monitoring iterative task progress with regression detection
+- Prompt Reinforcement Agent injecting anti-laziness directives at strategic points
+- Avoidance pattern catalog at `agentic/code/addons/persistence/patterns/avoidance-catalog.yaml`
 
-**Example Usage**:
+**Regression Testing Capability**:
 
-```bash
-# Long-running migration
-/ralph-external "Migrate codebase to TypeScript" \
-  --completion "npx tsc --noEmit exits 0" \
-  --max-iterations 20 \
-  --budget 5.0
+- Regression Analyst agent for detecting behavioral changes between versions
+- Advanced regression detection skills
+- Integration across SDLC commands for continuous regression monitoring
+- Automation and cross-task learning for regression patterns
 
-# With Codex provider
-/ralph-external "Implement feature X" \
-  --completion "npm test passes" \
-  --provider codex
+**Unified Extension System (Phase 4)**:
 
-# With research-backed options
-/ralph-external "Fix all tests" \
-  --completion "npm test passes" \
-  --memory complex \
-  --cross-task
-```
+- Complete implementation of unified extension registry (`src/extensions/registry.ts`)
+- All 10 extension types: agent, command, skill, hook, tool, mcp-server, framework, addon, template, prompt
+- Dynamic discovery and capability-based semantic search
+- Hooks as first-class extension type with lifecycle event handling
+- 40 CLI commands with full TypeScript type definitions
+- Legacy router removed in favor of unified command dispatch
+
+**Thought Protocols and Agent Enhancements**:
+
+- 6 thought types standardized: Goal 🎯, Progress 📊, Extraction 🔍, Reasoning 💭, Exception ⚠️, Synthesis ✅
+- Few-shot examples required for all agent definitions (2-3 per agent)
+- New specialized agents: Regression Analyst, Laziness Detector, Recovery Orchestrator, Progress Tracker, Prompt Reinforcement Agent
+- Memory frontmatter for Claude Code feature adoption
+- Agent persistence integration with reflection memory
+
+**Schema and Framework Wiring**:
+
+- 67 schemas moved from `.aiwg/` to `agentic/code/` (framework source, not project output)
+- 43/43 schema coverage achieved across all SDLC components
+- Cost and reproducibility schemas wired to CLI commands
+- Reflexion episodic memory wired into Ralph addon
+- Tree-of-Thought architecture pattern implementation
+- Executable feedback loop pattern implementation
+
+**Documentation**:
+
+- AIWG Development Guide at `docs/development/aiwg-development-guide.md`
+- Claude Code features analysis and reference documentation
+- Hook patterns, disk output conventions, and skills unification docs
+- Comprehensive Epic #26 Ralph documentation
+- Integration guides updated for all 8 providers
+- Simple language translations for natural language routing
 
 ### Changed
 
-- **AIWG framework context** - Added dogfooding explanation to CLAUDE.md documenting how this repository uses AIWG to develop itself
-- **Framework registry tracking** - `.aiwg/frameworks/` now tracked for framework installation state
+- **Model configurations** updated to latest versions across all providers
+- **Framework registry tracking** - `.aiwg/frameworks/` now tracked for installation state
+- **AIWG framework context** - Added dogfooding explanation to CLAUDE.md
+- **Ralph addon** reorganized: Ralph-specific components moved from `sdlc-complete` to dedicated `ralph` addon
+- **NL router** expanded with research, planning, and clarification routing patterns
+- **Thought protocol** expanded from 6 to 7 thought types (added Research 🔬)
+- **Rules manifest** expanded with 2 new core-tier HIGH-enforcement rules
+
+### Fixed
+
+- **Ralph-external race condition** - Async provider registration now properly awaited before `createProvider()` calls
+- **TypeScript compilation errors** - All Platform record types updated with `opencode` and `warp` entries
+- **Docker CI compatibility** - Skip tsx-dependent integration tests in Docker environment
+- **CLI flag parsing** - Resolved test failures for command-line argument handling
+- **Flaky timing tests** - Relaxed duration assertions in workspace-migrator and security-validator tests
+- **Agent deduplication** - Check agent IDs instead of registry size for proper dedup detection
+- **REF number collisions** - Fixed duplicate research reference numbering
+- **`.aiwg/` boundary documentation** - Clarified framework source vs project output distinction
+
+### Removed
+
+- **Markdown lint CI job** - Removed from Gitea CI pipeline (was non-blocking, framework content never conforms to strict lint rules)
+- **Legacy CLI router** - Replaced by unified extension system
+- **Priority command filtering** - All commands from core addons deploy without filtering
+
+### Refactored
+
+- **Test suite consolidation** - Reduced from ~3,837 to ~2,619 tests (31.7% reduction) with zero coverage loss using `for`/`forEach` inside single `it()` blocks instead of `test.each`/`it.each`
+- **158 research issues filed** and classified for tracking implementation work
+- **Schema organization** - All schemas now live in framework source (`agentic/code/`) not project output (`.aiwg/`)
 
 ---
 
@@ -1026,230 +1123,3 @@ This release introduces the **Voice Framework** addon and comprehensive **Skills
    ```
 
 ---
-
-## [Unreleased]
-
-### Inception Phase - Plugin System Architecture (2025-10-17 to 2025-10-18)
-
-**Phase Objective**: Document and baseline the AIWG SDLC framework plugin system architecture with complete SDLC artifacts, demonstrating self-application capability through comprehensive planning and multi-agent orchestration.
-
-**Phase Status**: Weeks 1-3 COMPLETE (Oct 17-18), Week 4 IN PROGRESS
-
-#### Added
-
-**Architecture Documentation** (Week 2 - Oct 18):
-- Software Architecture Document (SAD) v1.0 (95/100 quality, 12,847 words) - **BASELINED**
-  - 10 comprehensive Mermaid.js diagrams (system, logical, deployment, security, component views)
-  - Complete plugin system architecture for extensibility (platforms, compliance, verticals, workflows)
-  - 100% requirements traceability (intake → SAD → enhancement plans)
-  - Multi-agent synthesis (4 parallel reviewers: Security, Test, Requirements, Documentation)
-- Architecture Decision Records (6 ADRs, avg 88.3/100 quality):
-  - ADR-001: Plugin Manifest Format (YAML with semantic versioning)
-  - ADR-002: Plugin Isolation Strategy (filesystem boundaries, no code execution)
-  - ADR-003: Traceability Automation Approach
-  - ADR-004: Contributor Workspace Isolation
-  - ADR-005: Quality Gate Thresholds (80/100 baseline)
-  - ADR-006: Plugin Rollback Strategy (transaction-based, <5 second target)
-
-**Enhancement Plans** (Week 2 - Oct 18):
-- Security Enhancement Plan (4-week roadmap, 89 hours):
-  - Addresses 5 critical vulnerabilities (path traversal, YAML deserialization, CLAUDE.md injection, dependency verification, secret exposure)
-  - 68+ security test cases defined
-  - Defense-in-depth architecture
-- Testability Enhancement Plan (10-week roadmap, 80 hours):
-  - Addresses 4 critical testing gaps (no automated tests, no plugin test framework, no performance benchmarks, no cross-platform validation)
-  - 200+ test cases defined across 5 test levels
-  - 80%+ code coverage target
-
-**Testing Documentation** (Week 3 - Oct 18):
-- Framework Testing Documentation (7,800 words):
-  - Existing framework testing approach (markdown lint, manifest sync, GitHub Actions CI/CD)
-  - 12 markdown linting rules enforced via custom fixers
-  - Quality gates operational (9,505 violations detected, 42 manifests validated)
-- Quality Gates Validation Report (6,500+ words):
-  - All automated quality gates confirmed operational
-  - 6 identified gaps with mitigation plans
-  - Framework stability validated (zero critical bugs)
-- Test Strategy (6,847 words):
-  - Comprehensive testing approach for plugin system
-  - 200+ test cases (unit, integration, security, performance, usability)
-  - Risk-based prioritization (60% effort on security + rollback)
-- Framework Dogfooding Assessment (10,500+ words):
-  - Self-application success metrics (94,000+ words generated in 48 hours)
-  - Multi-agent orchestration validation (+13 point quality improvements)
-  - Process learnings and recommendations
-
-**Deployment Documentation** (Week 4 - Oct 18):
-- Plugin Deployment Plan (14,500 words):
-  - Complete plugin lifecycle (installation, rollback, update, uninstall)
-  - Transaction-based rollback (<5 second target)
-  - Security validation (path isolation, YAML safety, dependency verification)
-  - Operational procedures and troubleshooting guides
-  - 3-phase rollout strategy (Internal → Early Adopters → General Availability)
-
-**Planning Artifacts** (Week 1 - Oct 17):
-- Inception Phase Plan (12,000+ words):
-  - 4-week Inception roadmap (Oct 17 - Nov 14)
-  - 6 gate criteria for Lifecycle Objective Milestone
-  - Success metrics, deliverables, constraints
-- Feature Ideas Backlog (2,500+ words):
-  - 23 feature ideas captured for Elaboration phase
-  - Research team/flows, backlog management, critical evaluation posture
-
-#### Changed
-
-**Directory Organization** (Week 2 - Oct 18):
-- Reorganized `.aiwg/planning/contributor-workflow/` → `.aiwg/planning/sdlc-framework/`
-  - Scope clarification: documenting AIWG plugin system (not implementing new contributor workflow)
-  - Reality check: framework already operational, Inception documents existing system
-- Separated baseline artifacts (`.aiwg/planning/`) from intermediate work (`.aiwg/working/`):
-  - Baseline: SAD v1.0, ADRs, test docs
-  - Working: SAD drafts, reviews, updates, enhancement plans
-- Archived intermediate artifacts for historical reference
-
-**Inception Phase Plan** (Week 2 - Oct 18):
-- Updated to reflect plugin system documentation focus
-- Clarified scope confusion (documenting existing vs building new)
-- Marked "Functional Prototype" gate criterion as **ALREADY MET** (framework operational)
-- Updated Week 3-4 activities (framework validation vs new implementation)
-
-**Quality Scores** (Week 2 - Oct 18):
-- Vision Document: 98/100 (pre-Inception baseline)
-- Software Architecture Document: 82/100 (v0.1) → **95/100** (v1.0 synthesis)
-- ADRs: 85-92/100 (avg 88.3/100)
-- Enhancement Plans: 89-92/100 (avg 90.5/100)
-- **Overall Average**: 91.3/100 (exceeds 80/100 target by +14.1%)
-
-#### Fixed
-
-**Scope Clarity** (Week 2 - Oct 18):
-- Resolved confusion about "contributor workflow" vs "plugin system"
-- Added explicit scope clarification section to Inception plan
-- Confirmed AIWG framework IS the functional prototype (not new features to build)
-
-**Directory Clutter** (Week 2 - Oct 18):
-- Moved intermediate artifacts (drafts, reviews, updates) to `.aiwg/working/`
-- Kept only baseline documents in `.aiwg/planning/`
-- Clear separation improves navigation and artifact findability
-
-**Gate Criteria Assumptions** (Week 2 - Oct 18):
-- Validated "Functional Prototype" already met (framework operational)
-- Updated gate criteria scoring (3/6 MET, 1/6 at 75%, 2/6 pending)
-- Forecast: PASS or CONDITIONAL PASS on November 14 gate decision
-
-### Performance Metrics (Inception Weeks 1-3)
-
-**Velocity**:
-- Weeks 1-3 completed in 2 days (Oct 17-18) - **13-19 days ahead of schedule**
-- Architecture baseline: 2 days (vs estimated 5-7 days) → **60-70% faster**
-- ADR extraction: 1 day (vs estimated 2-3 days) → **50-67% faster**
-- Test documentation: 1 day (vs estimated 3-4 days) → **75% faster**
-- **Overall**: 2-3x faster artifact generation via multi-agent orchestration
-
-**Quality**:
-- 22 documents created, 125,000+ words
-- Average quality score: 91.3/100 (exceeds 80/100 target by +14.1%)
-- Multi-agent review improvements: +10-15 points average
-- Requirements traceability: 100% coverage
-
-**Self-Application**:
-- Framework successfully managed its own development (dogfooding successful)
-- Multi-agent orchestration proven (4 parallel reviewers + synthesizer)
-- Quality gates operational (markdown lint 9,505 violations, manifest sync 42 directories)
-- Zero critical bugs blocking framework usage
-
-### Gate Criteria Progress (as of 2025-10-18)
-
-| Criterion | Priority | Status | Score |
-|-----------|----------|--------|-------|
-| 1. SDLC Artifact Completeness | CRITICAL | ⏳ 75% | 12/16 artifacts |
-| 2. Requirements Traceability | CRITICAL | ✅ MET | 100% |
-| 3. Functional Prototype | HIGH | ✅ MET | 100% (framework operational) |
-| 4. Risk Mitigation | HIGH | ✅ MET | 100% (top 3 risks mitigated) |
-| 5. Velocity Validation | MEDIUM | ⏳ Pending | Week 4 retrospective |
-| 6. Stakeholder Alignment | MEDIUM | ⏳ Ongoing | Continuous validation |
-
-**Overall**: 🟢 ON TRACK for PASS or CONDITIONAL PASS on November 14
-
-### Multi-Agent Orchestration Pattern (Validated)
-
-**Pattern**: Primary Author → Parallel Reviewers (4) → Documentation Synthesizer
-
-**Evidence** (SAD v1.0 synthesis):
-- Primary Draft (v0.1): 82/100 (8,500 words, ~8 hours)
-- Security Review: 78→90/100 (+12 points, identified 5 vulnerabilities)
-- Testability Review: 86→95/100 (+9 points, identified 4 testing gaps)
-- Requirements Review: 92→96/100 (+4 points, validated 100% traceability)
-- Documentation Review: 88→92/100 (+4 points, improved clarity)
-- **Final Synthesis (v1.0)**: **95/100** (+13 points from v0.1, 12,847 words, ~6 hours)
-
-**Result**: High-quality artifacts in 60-70% less time than manual solo drafting.
-
-### Process Improvements Identified
-
-**From Dogfooding Assessment**:
-1. ✅ **Upfront Scope Clarity**: Define "documenting vs building" before drafting artifacts
-2. ✅ **Directory Structure Confirmation**: Confirm organization in Week 1 planning
-3. ✅ **Baseline vs Working Separation**: Immediate archiving after artifact finalization
-4. ✅ **Gate Criteria Validation**: Validate assumptions early ("Is this already done?")
-5. ✅ **Multi-Agent Pattern Documentation**: Formalize for reuse across all artifacts
-6. ✅ **Feature Backlog Early Creation**: Standard Week 1 deliverable (prevents scope creep)
-
-### Known Issues / Limitations
-
-**Quality Gate Gaps** (acknowledged, addressed in enhancement plans):
-1. No automated traceability validation (manual matrices) - Testability Plan Week 6-7
-2. No automated link validation (broken cross-references possible) - Testability Plan Week 8
-3. No automated template compliance checking - Deferred to Elaboration
-4. No security scanning (SAST/DAST for Node.js code) - Security Plan Week 2
-5. No performance regression testing - Deferred to Construction
-6. No API integration testing (GitHub API) - Testability Plan Week 9-10
-
-**Friction Points** (from dogfooding):
-1. Markdown linting violations (9,505 to remediate) - Fixers available, CI/CD prevents new violations
-2. Directory reorganization mid-Inception - Resolved, process improvements implemented
-3. Agent context limitations (large files >12,000 words) - Use offset/limit, file splitting
-
-### Next Steps (Week 4 - Oct 18 onwards)
-
-**Remaining Inception Deliverables**:
-- ✅ Plugin Deployment Plan - **COMPLETE** (Oct 18, 14,500 words)
-- ⏳ CHANGELOG Entry - **IN PROGRESS** (this file)
-- ⏳ Phase Retrospective (comprehensive reflection on Inception)
-- ⏳ Gate Review Report (assess all 6 gate criteria, recommend decision)
-
-**Elaboration Phase Prep**:
-- Triage feature backlog (23 ideas → prioritize top 5-10)
-- Security Enhancement Plan execution (4 weeks, 89 hours)
-- Testability Enhancement Plan execution (10 weeks, 80 hours)
-- Requirements elaboration (expand top features into use cases)
-
-**November 14 Gate Decision**: Expected PASS or CONDITIONAL PASS
-
----
-
-## Project Information
-
-**Repository**: https://github.com/jmagly/ai-writing-guide
-**Documentation**: `/home/manitcor/dev/ai-writing-guide/.aiwg/`
-**Current Phase**: Inception (Weeks 1-3 complete, Week 4 in progress)
-**Next Milestone**: Lifecycle Objective (LO) - November 14, 2025
-
-### Contributing
-
-See `.aiwg/intake/` for project intake documentation and `CLAUDE.md` for development guidance.
-
-### SDLC Framework
-
-This project uses the AIWG SDLC framework for complete lifecycle management:
-- 58 specialized agents (Architecture Designer, Test Architect, Security Architect, etc.)
-- 42+ commands (phase transitions, quality gates, traceability checks)
-- 100+ templates (requirements, architecture, testing, security, deployment)
-- Multi-agent orchestration patterns (Primary Author → Reviewers → Synthesizer)
-
-For more information, see `agentic/code/frameworks/sdlc-complete/README.md`
-
----
-
-**Changelog Started**: 2025-10-18 (Inception Week 4)
-**Last Updated**: 2026-01-22 (Unreleased)

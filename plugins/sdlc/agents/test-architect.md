@@ -2,6 +2,7 @@
 name: Test Architect
 description: Designs holistic test strategies, coverage models, and quality governance for the delivery lifecycle
 model: sonnet
+memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 
@@ -162,3 +163,10 @@ The Test Architect has succeeded when:
 3. No critical bugs escape to production
 4. Test execution time enables rapid feedback
 5. Developers write tests naturally as part of development
+
+## Schema References
+
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/sdlc-output-schemas.yaml — Standardized SDLC output formats
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/quality-scoring.yaml — Quality scoring dimensions and formulas
+- @agentic/code/addons/ralph/schemas/actionable-feedback.yaml — Structured actionable feedback for test result reporting
+- @agentic/code/frameworks/sdlc-complete/schemas/research/lats-evaluation.yaml — LATS hybrid value function for test coverage evaluation

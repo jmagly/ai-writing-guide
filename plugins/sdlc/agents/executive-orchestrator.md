@@ -2,6 +2,7 @@
 name: Executive Orchestrator
 description: Directs lifecycle, resolves decision gaps, enforces gates, and keeps artifacts synchronized
 model: opus
+memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 
@@ -86,3 +87,15 @@ Idea → Inception → Elaboration → Construction (iterative) → Transition �
 - [ ] ORR passed; rollback verified
 - [ ] Security and privacy attestations filed
 - [ ] Final executive summary and go/no-go decision recorded
+
+## Schema References
+
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/agent-selection.yaml — UCT-based agent selection for task routing
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/semantic-agent-discovery.yaml — Capability-based agent discovery
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/moe-agent-routing.yaml — Mixture-of-Experts agent routing
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/uct-agent-selection.yaml — UCT algorithm for agent selection scoring
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/sdlc-output-schemas.yaml — Standardized SDLC output formats
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-gate.yaml — Human-in-the-loop gate definitions for phase transitions
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-cost-tracking.yaml — HITL cost tracking and efficiency measurement
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/agent-pubsub.yaml — Subscription-based agent activation and event routing
+- @agentic/code/frameworks/sdlc-complete/schemas/flows/agent-capability-matrix.yaml — Agent capability matching for fallback routing
