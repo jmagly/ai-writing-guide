@@ -37,36 +37,54 @@ const MODE_MAP: Record<Framework, string> = {
 /**
  * Provider to deployment paths mapping
  */
-const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands: string }> = {
+const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands: string; rules: string }> = {
   claude: {
     agents: '.claude/agents',
     skills: '.claude/skills',
     commands: '.claude/commands',
+    rules: '.claude/rules',
   },
   factory: {
     agents: '.factory/droids',
     skills: '.factory/skills',
     commands: '.factory/commands',
+    rules: '.factory/rules',
   },
   codex: {
     agents: '.codex/agents',
     skills: '.codex/skills',
     commands: '.codex/commands',
+    rules: '.codex/rules',
   },
   opencode: {
     agents: '.opencode/agent',
-    skills: '.opencode/skills',
+    skills: '.opencode/skill',
     commands: '.opencode/command',
+    rules: '.opencode/rule',
   },
   copilot: {
     agents: '.github/agents',
     skills: '.github/skills',
     commands: '.github/commands',
+    rules: '.github/copilot-rules',
   },
   cursor: {
     agents: '.cursor/agents',
     skills: '.cursor/skills',
     commands: '.cursor/commands',
+    rules: '.cursor/rules',
+  },
+  warp: {
+    agents: '.warp/agents',
+    skills: '.warp/skills',
+    commands: '.warp/commands',
+    rules: '.warp/rules',
+  },
+  windsurf: {
+    agents: '.windsurf/agents',
+    skills: '.windsurf/skills',
+    commands: '.windsurf/workflows',
+    rules: '.windsurf/rules',
   },
 };
 
@@ -104,7 +122,7 @@ export class UseHandler implements CommandHandler {
 
     // Map framework name to deploy mode
     const mode = MODE_MAP[framework as Framework];
-    const deployArgs = ['--mode', mode, '--deploy-commands', '--deploy-skills', ...remainingArgs];
+    const deployArgs = ['--mode', mode, '--deploy-commands', '--deploy-skills', '--deploy-rules', ...remainingArgs];
 
     // Check if --no-utils was passed
     const skipUtils = remainingArgs.includes('--no-utils');
@@ -125,7 +143,7 @@ export class UseHandler implements CommandHandler {
     }
 
     // Build common args for addon deployments (inherit provider and target)
-    const addonBaseArgs = ['--deploy-commands', '--deploy-skills'];
+    const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
     if (provider) addonBaseArgs.push('--provider', provider);
     if (target) addonBaseArgs.push('--target', target);
 
@@ -172,6 +190,7 @@ export class UseHandler implements CommandHandler {
         agentsPath: paths.agents,
         skillsPath: paths.skills,
         commandsPath: paths.commands,
+        rulesPath: paths.rules,
         provider,
         cwd: target,
       });

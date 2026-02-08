@@ -20,7 +20,9 @@ export function getCommandsDirectory(platform: Platform, projectPath: string): s
     'factory': '.factory/commands',
     'cursor': '.cursor/commands',
     'codex': '.codex/commands',
-    'copilot': '.github/agents',  // Copilot treats commands as agents
+    'copilot': '.github/commands',
+    'opencode': '.opencode/command',
+    'warp': '.warp/commands',
     'windsurf': '.windsurf/workflows',
     'generic': 'commands',
   };
@@ -41,7 +43,9 @@ export function getAgentsDirectory(platform: Platform, projectPath: string): str
     'cursor': '.cursor/agents',
     'codex': '.codex/agents',
     'copilot': '.github/agents',
-    'windsurf': 'AGENTS.md',  // Windsurf uses aggregated file
+    'opencode': '.opencode/agent',
+    'warp': '.warp/agents',
+    'windsurf': '.windsurf/agents',
     'generic': 'agents',
   };
   return join(projectPath, dirs[platform]);
@@ -63,6 +67,8 @@ export function getSkillsDirectory(platform: Platform, projectPath: string): str
     'cursor': '.cursor/skills',
     'codex': '.codex/skills',
     'copilot': '.github/skills',
+    'opencode': '.opencode/skill',
+    'warp': '.warp/skills',
     'windsurf': '.windsurf/skills',
     'generic': 'skills',
   };
@@ -76,7 +82,8 @@ export function getSkillsDirectory(platform: Platform, projectPath: string): str
  * @returns File extension (with dot)
  */
 export function getFileExtension(platform: Platform): string {
-  return platform === 'cursor' ? '.json' : '.md';
+  if (platform === 'cursor') return '.json';
+  return '.md';
 }
 
 /**
@@ -92,7 +99,9 @@ export function getRulesDirectory(platform: Platform, projectPath: string): stri
     'factory': '.factory/rules',
     'cursor': '.cursor/rules',
     'codex': '.codex/rules',
-    'copilot': '.github/copilot',
+    'copilot': '.github/copilot-rules',
+    'opencode': '.opencode/rule',
+    'warp': '.warp/rules',
     'windsurf': '.windsurf/rules',
     'generic': 'rules',
   };
@@ -106,7 +115,7 @@ export function getRulesDirectory(platform: Platform, projectPath: string): stri
  * @returns True if platform uses aggregated agent/command files
  */
 export function usesAggregatedFiles(platform: Platform): boolean {
-  return platform === 'windsurf';
+  return platform === 'windsurf' || platform === 'warp';
 }
 
 /**
@@ -122,6 +131,8 @@ export function getConfigFileName(platform: Platform): string {
     'cursor': '.cursorrules',
     'codex': 'AGENTS.md',
     'copilot': 'copilot-instructions.md',
+    'opencode': 'AGENTS.md',
+    'warp': 'WARP.md',
     'windsurf': '.windsurfrules',
     'generic': 'README.md',
   };

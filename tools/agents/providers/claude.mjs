@@ -26,7 +26,8 @@ import {
   filterAgentFiles,
   getAddonAgentFiles,
   getAddonCommandFiles,
-  getAddonSkillDirs
+  getAddonSkillDirs,
+  getAddonRuleFiles
 } from './base.mjs';
 
 // ============================================================================
@@ -43,11 +44,21 @@ export const paths = {
   rules: '.claude/rules/'
 };
 
+export const support = {
+  agents: 'native',
+  commands: 'native',
+  skills: 'native',
+  rules: 'native'
+};
+
 export const capabilities = {
   skills: true,
   rules: true,
   aggregatedOutput: false,
-  yamlFormat: false
+  yamlFormat: false,
+  mdcFormat: false,
+  homeDirectoryDeploy: false,
+  projectLocalMirror: false
 };
 
 // ============================================================================
@@ -242,8 +253,10 @@ export async function deploy(opts) {
     mode,
     deployCommands: shouldDeployCommands,
     deploySkills: shouldDeploySkills,
+    deployRules: shouldDeployRules,
     commandsOnly,
     skillsOnly,
+    rulesOnly,
     dryRun
   } = opts;
 
@@ -255,6 +268,7 @@ export async function deploy(opts) {
   const agentFiles = [];
   const commandFiles = [];
   const skillDirs = [];
+  const ruleFiles = [];
 
   // Check for addon-style directory structure (direct agents/, commands/, skills/ subdirs)
   // This handles deployment when --source points to an addon directory
@@ -282,6 +296,13 @@ export async function deploy(opts) {
         skillDirs.push(...listSkillDirs(addonSkillsDir));
       }
     }
+
+    if (shouldDeployRules || rulesOnly) {
+      const addonRulesDir = path.join(srcRoot, 'rules');
+      if (fs.existsSync(addonRulesDir)) {
+        ruleFiles.push(...listMdFiles(addonRulesDir));
+      }
+    }
   }
 
   // All addons (dynamically discovered)
@@ -294,6 +315,10 @@ export async function deploy(opts) {
 
     if (shouldDeploySkills || skillsOnly) {
       skillDirs.push(...getAddonSkillDirs(srcRoot));
+    }
+
+    if (shouldDeployRules || rulesOnly) {
+      ruleFiles.push(...getAddonRuleFiles(srcRoot));
     }
   }
 
@@ -311,6 +336,13 @@ export async function deploy(opts) {
       const sdlcSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'skills');
       skillDirs.push(...listSkillDirs(sdlcSkillsDir));
     }
+
+    if (shouldDeployRules || rulesOnly) {
+      const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
+      if (fs.existsSync(sdlcRulesDir)) {
+        ruleFiles.push(...listMdFiles(sdlcRulesDir));
+      }
+    }
   }
 
   // Marketing framework
@@ -326,6 +358,13 @@ export async function deploy(opts) {
     if (shouldDeploySkills || skillsOnly) {
       const marketingSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'skills');
       skillDirs.push(...listSkillDirs(marketingSkillsDir));
+    }
+
+    if (shouldDeployRules || rulesOnly) {
+      const marketingRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'rules');
+      if (fs.existsSync(marketingRulesDir)) {
+        ruleFiles.push(...listMdFiles(marketingRulesDir));
+      }
     }
   }
 
@@ -350,6 +389,11 @@ export async function deploy(opts) {
     deploySkills(skillDirs, target, opts);
   }
 
+  if (shouldDeployRules || rulesOnly) {
+    console.log(`\nDeploying ${ruleFiles.length} rules...`);
+    deployRules(ruleFiles, target, opts);
+  }
+
   // Post-deployment
   await postDeploy(target, opts);
 
@@ -364,6 +408,7 @@ export default {
   name,
   aliases,
   paths,
+  support,
   capabilities,
   transformAgent,
   transformCommand,

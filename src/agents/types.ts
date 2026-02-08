@@ -13,14 +13,38 @@
  * | factory    | .factory/droids/         | AGENTS.md            | ✅ Full       |
  * | cursor     | .cursor/agents/          | .cursorrules         | ✅ Full       |
  * | codex      | .codex/agents/           | AGENTS.md            | ✅ Full       |
- * | windsurf   | AGENTS.md (aggregated)   | .windsurfrules       | 🧪 Experimental |
- * | copilot    | .github/                 | copilot-instructions | 📋 Manual     |
+ * | opencode   | .opencode/agent/         | AGENTS.md            | ✅ Full       |
+ * | warp       | .warp/agents/            | WARP.md              | ✅ Full       |
+ * | windsurf   | .windsurf/agents/        | .windsurfrules       | 🧪 Experimental |
+ * | copilot    | .github/agents/          | copilot-instructions | ✅ Full       |
  * | generic    | agents/                  | varies               | ✅ Full       |
  *
  * CLI usage: --provider <platform> or --platform <platform>
  */
-export type Platform = 'claude' | 'codex' | 'copilot' | 'cursor' | 'factory' | 'generic' | 'windsurf';
+export type Platform = 'claude' | 'codex' | 'copilot' | 'cursor' | 'factory' | 'opencode' | 'warp' | 'windsurf' | 'generic';
 export type AgentCategory = 'writing-quality' | 'sdlc' | 'security' | 'testing' | 'architecture' | 'documentation' | 'general';
+export type ArtifactType = 'agent' | 'command' | 'skill' | 'rule';
+export type SupportLevel = 'native' | 'conventional' | 'aggregated';
+
+/**
+ * Provider path configuration (all four artifact types required)
+ */
+export interface ProviderPaths {
+  agents: string;
+  commands: string;
+  skills: string;
+  rules: string;
+}
+
+/**
+ * Support level per artifact type for a provider
+ */
+export interface ProviderSupport {
+  agents: SupportLevel;
+  commands: SupportLevel;
+  skills: SupportLevel;
+  rules: SupportLevel;
+}
 
 /**
  * Agent metadata from frontmatter

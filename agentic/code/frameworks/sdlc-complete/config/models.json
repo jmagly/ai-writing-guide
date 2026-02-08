@@ -4,7 +4,7 @@
   "title": "AIWG Model Configuration",
   "description": "Default model mappings for AIWG SDLC framework deployment. Users can customize these values for their specific needs.",
   "version": "1.0.0",
-  "lastUpdated": "2026-02-03",
+  "lastUpdated": "2026-02-06",
 
   "claude": {
     "reasoning": {
@@ -38,16 +38,16 @@
 
   "openai": {
     "reasoning": {
-      "model": "gpt-5",
-      "description": "OpenAI's most capable reasoning model"
+      "model": "gpt-5.3-codex",
+      "description": "GPT-5.3-Codex - Most capable, combines Codex + GPT-5 training stacks (Feb 2026)"
     },
     "coding": {
-      "model": "gpt-5-codex",
-      "description": "OpenAI's specialized code model"
+      "model": "codex-mini-latest",
+      "description": "codex-mini-latest - Fine-tuned o4-mini, default CLI model, cost-effective ($1.50/1M input)"
     },
     "efficiency": {
-      "model": "gpt-5-codex",
-      "description": "OpenAI's fast model for simple tasks"
+      "model": "gpt-5-codex-mini",
+      "description": "GPT-5-Codex-Mini - Smaller model, 4x more usage than full GPT-5.3-Codex"
     }
   },
 

@@ -12,10 +12,12 @@
 ################################################################################
 
 # Primary model for Codex sessions
-model = "gpt-5.1-codex-max"
+# Options: gpt-5.3-codex (most capable), codex-mini-latest (default, cost-effective),
+#          gpt-5-codex-mini (4x more usage)
+model = "codex-mini-latest"
 
-# Model for /review command
-review_model = "gpt-5.1-codex-max"
+# Model for /review command (use most capable for thorough code review)
+review_model = "gpt-5.3-codex"
 
 # Reasoning effort: minimal | low | medium | high | xhigh
 model_reasoning_effort = "medium"
@@ -51,11 +53,31 @@ project_doc_fallback_filenames = ["CLAUDE.md", "WARP.md"]
 ################################################################################
 
 [features]
-# Enable web search capability
+# Enable web search capability (cached by default, use --search for live)
 web_search_request = true
 
-# Enable image viewing
+# Enable image viewing (PNG, JPEG attachments in composer)
 view_image_tool = true
+
+################################################################################
+# Skills
+################################################################################
+
+# Skills are loaded from ~/.codex/skills/ and .agents/skills/ in repos
+# Use $skill-creator to bootstrap new skills
+
+# Example: disable a specific skill
+# [[skills.config]]
+# name = "my-skill"
+# enabled = false
+
+################################################################################
+# Memory
+################################################################################
+
+[memory]
+# Thread memory summaries for cross-session context
+enabled = true
 
 ################################################################################
 # AIWG MCP Server (Optional)
@@ -82,21 +104,28 @@ view_image_tool = true
 
 # AIWG SDLC profile - full autonomy for development
 [profiles.aiwg-sdlc]
-model = "gpt-5.1-codex-max"
+model = "gpt-5.3-codex"
 model_reasoning_effort = "high"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+# Cost-effective development profile
+[profiles.aiwg-dev]
+model = "codex-mini-latest"
+model_reasoning_effort = "medium"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 
 # Read-only analysis profile
 [profiles.aiwg-readonly]
-model = "gpt-5.1"
+model = "gpt-5-codex-mini"
 model_reasoning_effort = "medium"
 approval_policy = "on-request"
 sandbox_mode = "read-only"
 
 # Full autonomy profile (use with caution)
 [profiles.aiwg-auto]
-model = "gpt-5.1-codex-max"
+model = "gpt-5.3-codex"
 model_reasoning_effort = "high"
 approval_policy = "never"
 sandbox_mode = "workspace-write"

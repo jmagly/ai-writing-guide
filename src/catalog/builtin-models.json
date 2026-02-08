@@ -236,6 +236,93 @@
       "source": "builtin",
       "lastVerified": "2025-12-12"
     },
+    "gpt-5.3-codex": {
+      "provider": "openai",
+      "displayName": "GPT-5.3-Codex",
+      "releaseDate": "2026-02-05",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 192000,
+        "maxOutputTokens": 16384,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "excellent",
+        "coding": "excellent",
+        "speed": "good"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.01,
+        "outputPer1kTokens": 0.04,
+        "currency": "USD",
+        "lastUpdated": "2026-02-06"
+      },
+      "aliases": ["gpt-5.3-codex", "gpt5.3-codex"],
+      "tags": ["flagship", "coding", "reasoning", "codex"],
+      "source": "builtin",
+      "lastVerified": "2026-02-06"
+    },
+    "codex-mini-latest": {
+      "provider": "openai",
+      "displayName": "Codex Mini (Latest)",
+      "releaseDate": "2026-01-15",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 192000,
+        "maxOutputTokens": 16384,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "good",
+        "coding": "excellent",
+        "speed": "excellent"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.0015,
+        "outputPer1kTokens": 0.006,
+        "currency": "USD",
+        "lastUpdated": "2026-02-06"
+      },
+      "aliases": ["codex-mini"],
+      "tags": ["coding", "efficient", "default-cli", "codex"],
+      "source": "builtin",
+      "lastVerified": "2026-02-06"
+    },
+    "gpt-5-codex-mini": {
+      "provider": "openai",
+      "displayName": "GPT-5-Codex-Mini",
+      "releaseDate": "2026-01-10",
+      "status": "active",
+      "deprecated": false,
+      "deprecationDate": null,
+      "successorModel": null,
+      "capabilities": {
+        "contextWindow": 192000,
+        "maxOutputTokens": 16384,
+        "vision": true,
+        "toolUse": true,
+        "streaming": true,
+        "reasoning": "good",
+        "coding": "good",
+        "speed": "excellent"
+      },
+      "pricing": {
+        "inputPer1kTokens": 0.001,
+        "outputPer1kTokens": 0.004,
+        "currency": "USD",
+        "lastUpdated": "2026-02-06"
+      },
+      "aliases": ["gpt5-codex-mini"],
+      "tags": ["budget", "coding", "efficient", "codex"],
+      "source": "builtin",
+      "lastVerified": "2026-02-06"
+    },
     "gpt-4-turbo": {
       "provider": "openai",
       "displayName": "GPT-4 Turbo",
@@ -384,9 +471,9 @@
     }
   },
   "metadata": {
-    "version": "1.0.0",
-    "lastRefresh": "2025-12-12T00:00:00Z",
-    "modelCount": 12,
+    "version": "1.1.0",
+    "lastRefresh": "2026-02-06T00:00:00Z",
+    "modelCount": 15,
     "providerCount": 4
   }
 }

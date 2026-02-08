@@ -7,12 +7,15 @@
  *   - Output: AGENTS.md (aggregated agents)
  *   - Output: .windsurfrules (orchestration context)
  *   - Workflows: .windsurf/workflows/ (commands as workflows)
+ *   - Skills: .windsurf/skills/ (discrete skill directories)
+ *   - Rules: .windsurf/rules/ (discrete rule files)
  *
  * Special features:
  *   - Aggregated output (all agents in single AGENTS.md)
  *   - Plain markdown format (no YAML frontmatter)
  *   - Capabilities tags for tools
  *   - Workflow format for commands
+ *   - Conventional skills and rules deployment
  *   - EXPERIMENTAL: Untested, may require adjustments
  */
 
@@ -24,7 +27,12 @@ import {
   listMdFilesRecursive,
   initializeFrameworkWorkspace,
   getAddonAgentFiles,
-  getAddonCommandFiles
+  getAddonCommandFiles,
+  getAddonRuleFiles,
+  getAddonSkillDirs,
+  listSkillDirs,
+  deploySkillDir,
+  deployFiles
 } from './base.mjs';
 
 // ============================================================================
@@ -35,15 +43,22 @@ export const name = 'windsurf';
 export const aliases = [];
 
 export const paths = {
-  agents: null,  // Aggregated into AGENTS.md
+  agents: '.windsurf/agents/',  // Discrete mirrors alongside AGENTS.md
   commands: '.windsurf/workflows/',
-  skills: null,
-  rules: null
+  skills: '.windsurf/skills/',
+  rules: '.windsurf/rules/'
+};
+
+export const support = {
+  agents: 'aggregated',      // Agents aggregated into AGENTS.md
+  commands: 'native',        // Native workflow/commands support
+  skills: 'conventional',    // Conventional discrete deployment
+  rules: 'conventional'      // Conventional discrete deployment
 };
 
 export const capabilities = {
-  skills: false,
-  rules: false,
+  skills: true,
+  rules: true,
   aggregatedOutput: true,  // All content in single file
   yamlFormat: false
 };
@@ -362,6 +377,34 @@ export function deployWorkflows(commandFiles, targetDir, opts) {
 }
 
 // ============================================================================
+// Skills Deployment
+// ============================================================================
+
+/**
+ * Deploy skills as discrete directories
+ */
+export function deploySkills(skillDirs, targetDir, opts) {
+  const destDir = path.join(targetDir, paths.skills);
+  ensureDir(destDir, opts.dryRun);
+  for (const skillDir of skillDirs) {
+    deploySkillDir(skillDir, destDir, opts);
+  }
+}
+
+// ============================================================================
+// Rules Deployment
+// ============================================================================
+
+/**
+ * Deploy rules as discrete files
+ */
+export function deployRules(ruleFiles, targetDir, opts) {
+  const destDir = path.join(targetDir, paths.rules);
+  ensureDir(destDir, opts.dryRun);
+  return deployFiles(ruleFiles, destDir, opts, transformAgent);
+}
+
+// ============================================================================
 // Post-Deployment
 // ============================================================================
 
@@ -387,9 +430,11 @@ export async function deploy(opts) {
     target,
     mode,
     deployCommands,
-    deploySkills,
+    deploySkills: shouldDeploySkills,
+    deployRules: shouldDeployRules,
     commandsOnly,
     skillsOnly,
+    rulesOnly,
     dryRun
   } = opts;
 
@@ -419,14 +464,14 @@ export async function deploy(opts) {
   }
 
   // Generate aggregated AGENTS.md
-  if (allAgentFiles.length > 0 && !commandsOnly && !skillsOnly) {
+  if (allAgentFiles.length > 0 && !commandsOnly && !skillsOnly && !rulesOnly) {
     const agentsMdPath = path.join(target, 'AGENTS.md');
     console.log(`\nGenerating AGENTS.md with ${allAgentFiles.length} agents...`);
     generateAgentsMd(allAgentFiles, agentsMdPath, opts);
   }
 
   // Generate .windsurfrules with orchestration context
-  if (!commandsOnly && !skillsOnly) {
+  if (!commandsOnly && !skillsOnly && !rulesOnly) {
     console.log('\nGenerating .windsurfrules orchestration file...');
     generateWindsurfRules(srcRoot, target, opts);
   }
@@ -457,9 +502,58 @@ export async function deploy(opts) {
     }
   }
 
-  // Note about skills
-  if (deploySkills || skillsOnly) {
-    console.log('\nNote: Skills are not directly supported for Windsurf. Reference skill files in prompts using @-mentions.');
+  // Deploy skills
+  if (shouldDeploySkills || skillsOnly) {
+    // Collect skill directories based on mode
+    const skillDirs = [];
+
+    // All addons (dynamically discovered)
+    if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+      skillDirs.push(...getAddonSkillDirs(srcRoot));
+    }
+
+    // Frameworks
+    if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
+      const sdlcSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'skills');
+      skillDirs.push(...listSkillDirs(sdlcSkillsDir));
+    }
+
+    if (mode === 'marketing' || mode === 'all') {
+      const marketingSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'skills');
+      skillDirs.push(...listSkillDirs(marketingSkillsDir));
+    }
+
+    if (skillDirs.length > 0) {
+      console.log(`\nDeploying ${skillDirs.length} skills...`);
+      deploySkills(skillDirs, target, opts);
+    }
+  }
+
+  // Deploy rules
+  if (shouldDeployRules || rulesOnly) {
+    // Collect rule files based on mode
+    const ruleFiles = [];
+
+    // All addons (dynamically discovered)
+    if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+      ruleFiles.push(...getAddonRuleFiles(srcRoot));
+    }
+
+    // Frameworks
+    if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
+      const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
+      ruleFiles.push(...listMdFiles(sdlcRulesDir));
+    }
+
+    if (mode === 'marketing' || mode === 'all') {
+      const marketingRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'rules');
+      ruleFiles.push(...listMdFiles(marketingRulesDir));
+    }
+
+    if (ruleFiles.length > 0) {
+      console.log(`\nDeploying ${ruleFiles.length} rules...`);
+      deployRules(ruleFiles, target, opts);
+    }
   }
 
   // Post-deployment
@@ -472,6 +566,12 @@ export async function deploy(opts) {
   if (deployCommands || commandsOnly) {
     console.log('  - .windsurf/workflows/ (commands as workflows)');
   }
+  if (shouldDeploySkills || skillsOnly) {
+    console.log('  - .windsurf/skills/ (discrete skill directories)');
+  }
+  if (shouldDeployRules || rulesOnly) {
+    console.log('  - .windsurf/rules/ (discrete rule files)');
+  }
   console.log('='.repeat(70) + '\n');
 }
 
@@ -483,6 +583,7 @@ export default {
   name,
   aliases,
   paths,
+  support,
   capabilities,
   transformAgent,
   transformCommand,
@@ -490,6 +591,8 @@ export default {
   generateAgentsMd,
   generateWindsurfRules,
   deployWorkflows,
+  deploySkills,
+  deployRules,
   postDeploy,
   getFileExtension,
   deploy

@@ -8,9 +8,10 @@
  *   - Agents: <project>/.codex/agents/ (project-local)
  *   - Commands: ~/.codex/prompts/ (home directory, NOT project)
  *   - Skills: ~/.codex/skills/ (home directory, NOT project)
+ *   - Rules: <project>/.codex/rules/ (project-local, conventional)
  *
  * Special features:
- *   - Model replacement (opus/sonnet/haiku -> gpt variants)
+ *   - Model replacement (opus/sonnet/haiku -> gpt-5.3-codex/codex-mini-latest/gpt-5-codex-mini)
  *   - --as-agents-md aggregation option
  *   - Delegates commands to deploy-prompts-codex.mjs (deploys to ~/.codex/prompts/)
  *   - Delegates skills to deploy-skills-codex.mjs (deploys to ~/.codex/skills/)
@@ -29,7 +30,10 @@ import {
   initializeFrameworkWorkspace,
   getAddonAgentFiles,
   getAddonCommandFiles,
-  getAddonSkillDirs
+  getAddonSkillDirs,
+  getAddonRuleFiles,
+  listSkillDirs,
+  deploySkillDir
 } from './base.mjs';
 
 // ============================================================================
@@ -41,14 +45,21 @@ export const aliases = ['openai'];
 
 export const paths = {
   agents: '.codex/agents/',
-  commands: null,  // Commands go to ~/.codex/prompts/ (home directory)
-  skills: null,    // Skills go to ~/.codex/skills/ (home directory)
-  rules: null
+  commands: '.codex/commands/',  // Project-local mirror for conventional deployment
+  skills: '.codex/skills/',      // Project-local mirror for conventional deployment
+  rules: '.codex/rules/'
+};
+
+export const support = {
+  agents: 'native',
+  commands: 'native',
+  skills: 'native',
+  rules: 'conventional'
 };
 
 export const capabilities = {
   skills: true,  // But deployed to home dir
-  rules: false,
+  rules: true,
   aggregatedOutput: true,  // --as-agents-md
   yamlFormat: false
 };
@@ -62,9 +73,9 @@ export const capabilities = {
  */
 export function mapModel(originalModel, modelCfg, modelsConfig) {
   const gptModels = {
-    'opus': 'gpt-5',
-    'sonnet': 'gpt-5-codex',
-    'haiku': 'gpt-4o-mini'
+    'opus': 'gpt-5.3-codex',
+    'sonnet': 'codex-mini-latest',
+    'haiku': 'gpt-5-codex-mini'
   };
 
   // Handle override models first
@@ -127,9 +138,9 @@ export function transformAgent(srcPath, content, opts) {
   const { reasoningModel, codingModel, efficiencyModel } = opts;
 
   const models = {
-    reasoning: reasoningModel || 'gpt-5',
-    coding: codingModel || 'gpt-5-codex',
-    efficiency: efficiencyModel || 'gpt-4o-mini'
+    reasoning: reasoningModel || 'gpt-5.3-codex',
+    coding: codingModel || 'codex-mini-latest',
+    efficiency: efficiencyModel || 'gpt-5-codex-mini'
   };
 
   return replaceModelFrontmatter(content, models);
@@ -226,6 +237,15 @@ export async function deploySkills(targetDir, srcRoot, opts) {
 }
 
 /**
+ * Deploy rules to .codex/rules/
+ */
+export function deployRules(ruleFiles, targetDir, opts) {
+  const destDir = path.join(targetDir, paths.rules);
+  ensureDir(destDir, opts.dryRun);
+  return deployFiles(ruleFiles, destDir, opts, transformAgent);
+}
+
+/**
  * Aggregate agents to single AGENTS.md file
  */
 export function aggregateToAgentsMd(agentFiles, destPath, opts) {
@@ -287,8 +307,10 @@ export async function deploy(opts) {
     mode,
     deployCommands: shouldDeployCommands,
     deploySkills: shouldDeploySkills,
+    deployRules: shouldDeployRules,
     commandsOnly,
     skillsOnly,
+    rulesOnly,
     dryRun,
     asAgentsMd,
     createAgentsMd: shouldCreateAgentsMd
@@ -300,25 +322,37 @@ export async function deploy(opts) {
 
   // Collect source files based on mode
   const agentFiles = [];
+  const ruleFiles = [];
 
   // Frameworks
   if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
     const sdlcAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
     agentFiles.push(...listMdFiles(sdlcAgentsDir));
+
+    const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
+    if (fs.existsSync(sdlcRulesDir)) {
+      ruleFiles.push(...listMdFiles(sdlcRulesDir));
+    }
   }
 
   if (mode === 'marketing' || mode === 'all') {
     const marketingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'agents');
     agentFiles.push(...listMdFiles(marketingAgentsDir));
+
+    const marketingRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'rules');
+    if (fs.existsSync(marketingRulesDir)) {
+      ruleFiles.push(...listMdFiles(marketingRulesDir));
+    }
   }
 
   // All addons (dynamically discovered)
   if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
     agentFiles.push(...getAddonAgentFiles(srcRoot));
+    ruleFiles.push(...getAddonRuleFiles(srcRoot));
   }
 
   // Deploy based on flags
-  if (!commandsOnly && !skillsOnly) {
+  if (!commandsOnly && !skillsOnly && !rulesOnly) {
     if (asAgentsMd) {
       // Aggregate to single AGENTS.md
       const destPath = path.join(target, 'AGENTS.md');
@@ -340,6 +374,11 @@ export async function deploy(opts) {
     await deploySkills(target, srcRoot, opts);
   }
 
+  if (shouldDeployRules || rulesOnly) {
+    console.log(`\nDeploying ${ruleFiles.length} rules...`);
+    deployRules(ruleFiles, target, opts);
+  }
+
   // Post-deployment
   await postDeploy(target, { ...opts, createAgentsMd: shouldCreateAgentsMd });
 
@@ -354,6 +393,7 @@ export default {
   name,
   aliases,
   paths,
+  support,
   capabilities,
   transformAgent,
   transformCommand,
@@ -361,6 +401,7 @@ export default {
   deployAgents,
   deployCommands,
   deploySkills,
+  deployRules,
   aggregateToAgentsMd,
   createAgentsMd,
   postDeploy,

@@ -14,8 +14,10 @@
  *   --mode <type>            Deployment mode: general, sdlc, marketing, both, or all (default)
  *   --deploy-commands        Deploy commands in addition to agents
  *   --deploy-skills          Deploy skills in addition to agents
+ *   --deploy-rules           Deploy rules in addition to agents
  *   --commands-only          Deploy only commands (skip agents)
  *   --skills-only            Deploy only skills (skip agents)
+ *   --rules-only             Deploy only rules (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
  *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, warp, or windsurf
@@ -35,14 +37,14 @@
  *
  * Providers:
  *   claude    - Claude Code (default) - .claude/agents/, .claude/commands/, .claude/skills/, .claude/rules/
- *   factory   - Factory AI - .factory/droids/, .factory/commands/
- *   codex     - OpenAI Codex - .codex/agents/, .codex/commands/, ~/.codex/skills/
+ *   factory   - Factory AI - .factory/droids/, .factory/commands/, .factory/skills/, .factory/rules/
+ *   codex     - OpenAI Codex - .codex/agents/, .codex/commands/, .codex/skills/, .codex/rules/
  *   openai    - Alias for codex
- *   opencode  - OpenCode - .opencode/agent/, .opencode/command/
- *   copilot   - GitHub Copilot - .github/agents/ (YAML format)
- *   cursor    - Cursor IDE - .cursor/rules/ (MDC format)
- *   warp      - Warp Terminal - WARP.md (aggregated)
- *   windsurf  - Windsurf (experimental) - AGENTS.md, .windsurfrules
+ *   opencode  - OpenCode - .opencode/agent/, .opencode/command/, .opencode/skill/, .opencode/rule/
+ *   copilot   - GitHub Copilot - .github/agents/, .github/commands/, .github/skills/, .github/copilot-rules/
+ *   cursor    - Cursor IDE - .cursor/agents/, .cursor/commands/, .cursor/skills/, .cursor/rules/
+ *   warp      - Warp Terminal - .warp/agents/, .warp/commands/, .warp/skills/, .warp/rules/ + WARP.md
+ *   windsurf  - Windsurf - .windsurf/agents/, .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/
  *
  * Defaults:
  *   --source resolves relative to this script's repo root (../..)
@@ -85,8 +87,10 @@ function parseArgs() {
     createAgentsMd: false,
     deployCommands: false,
     deploySkills: false,
+    deployRules: false,
     commandsOnly: false,
     skillsOnly: false,
+    rulesOnly: false,
     filter: null,           // Glob pattern for agent names
     filterRole: null,       // Filter by role: reasoning|coding|efficiency
     save: false,            // Save model config to project models.json
@@ -107,8 +111,10 @@ function parseArgs() {
     else if (a === '--create-agents-md') cfg.createAgentsMd = true;
     else if (a === '--deploy-commands') cfg.deployCommands = true;
     else if (a === '--deploy-skills') cfg.deploySkills = true;
+    else if (a === '--deploy-rules') cfg.deployRules = true;
     else if (a === '--commands-only') cfg.commandsOnly = true;
     else if (a === '--skills-only') cfg.skillsOnly = true;
+    else if (a === '--rules-only') cfg.rulesOnly = true;
     else if (a === '--filter' && args[i + 1]) cfg.filter = args[++i];
     else if (a === '--filter-role' && args[i + 1]) cfg.filterRole = args[++i];
     else if (a === '--save') cfg.save = true;
@@ -135,8 +141,10 @@ Options:
   --mode <type>            Deployment mode: general, sdlc, marketing, both, or all (default)
   --deploy-commands        Deploy commands in addition to agents
   --deploy-skills          Deploy skills in addition to agents
+  --deploy-rules           Deploy rules in addition to agents
   --commands-only          Deploy only commands (skip agents)
   --skills-only            Deploy only skills (skip agents)
+  --rules-only             Deploy only rules (skip agents)
   --dry-run                Show what would be deployed without writing
   --force                  Overwrite existing files
   --provider <name>        Target provider (see below)
@@ -150,23 +158,23 @@ Options:
   --as-agents-md           Aggregate to single AGENTS.md (Codex)
   --create-agents-md       Create/update AGENTS.md template
 
-Providers:
+Providers (all deploy agents, commands, skills, and rules):
   claude    - Claude Code (default)
               Paths: .claude/agents/, .claude/commands/, .claude/skills/, .claude/rules/
   factory   - Factory AI
-              Paths: .factory/droids/, .factory/commands/
+              Paths: .factory/droids/, .factory/commands/, .factory/skills/, .factory/rules/
   codex     - OpenAI Codex (alias: openai)
-              Paths: .codex/agents/, .codex/commands/, ~/.codex/skills/
+              Paths: .codex/agents/, .codex/commands/, .codex/skills/, .codex/rules/
   opencode  - OpenCode
-              Paths: .opencode/agent/, .opencode/command/
+              Paths: .opencode/agent/, .opencode/command/, .opencode/skill/, .opencode/rule/
   copilot   - GitHub Copilot
-              Paths: .github/agents/ (YAML format)
+              Paths: .github/agents/, .github/commands/, .github/skills/, .github/copilot-rules/
   cursor    - Cursor IDE
-              Paths: .cursor/rules/ (MDC format)
+              Paths: .cursor/agents/, .cursor/commands/, .cursor/skills/, .cursor/rules/
   warp      - Warp Terminal
-              Output: WARP.md (aggregated)
-  windsurf  - Windsurf (EXPERIMENTAL)
-              Output: AGENTS.md, .windsurfrules, .windsurf/workflows/
+              Paths: .warp/agents/, .warp/commands/, .warp/skills/, .warp/rules/ + WARP.md
+  windsurf  - Windsurf
+              Paths: .windsurf/agents/, .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/
 
 Modes:
   general   - Writing-quality addon agents and commands (alias: writing)
@@ -363,8 +371,10 @@ function deepMerge(target, source) {
     createAgentsMd: cfg.createAgentsMd,
     deployCommands: cfg.deployCommands,
     deploySkills: cfg.deploySkills,
+    deployRules: cfg.deployRules,
     commandsOnly: cfg.commandsOnly,
     skillsOnly: cfg.skillsOnly,
+    rulesOnly: cfg.rulesOnly,
     filter: cfg.filter,
     filterRole: cfg.filterRole,
     save: cfg.save,

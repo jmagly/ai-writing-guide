@@ -674,27 +674,52 @@ export function getAddonSkillDirs(srcRoot, excludeAddons = []) {
 }
 
 /**
- * Get addon files by category (agents, commands, skills)
+ * Get all rule files from all addons
+ * @param {string} srcRoot - Source root directory
+ * @param {string[]} excludeAddons - Addon names to exclude (default: none)
+ * @returns {string[]} - Array of rule file paths
+ */
+export function getAddonRuleFiles(srcRoot, excludeAddons = []) {
+  const addons = discoverAddons(srcRoot);
+  const files = [];
+
+  for (const addon of addons) {
+    if (excludeAddons.includes(addon.name)) continue;
+
+    const rulesDir = path.join(addon.path, 'rules');
+    if (fs.existsSync(rulesDir)) {
+      files.push(...listMdFiles(rulesDir));
+    }
+  }
+
+  return files;
+}
+
+/**
+ * Get addon files by category (agents, commands, skills, rules)
  * @param {string} srcRoot - Source root directory
  * @param {object} options - Options
  * @param {string[]} options.excludeAddons - Addon names to exclude
  * @param {boolean} options.includeAgents - Include agent files (default: true)
  * @param {boolean} options.includeCommands - Include command files (default: true)
  * @param {boolean} options.includeSkills - Include skill directories (default: true)
- * @returns {{agents: string[], commands: string[], skills: string[]}}
+ * @param {boolean} options.includeRules - Include rule files (default: true)
+ * @returns {{agents: string[], commands: string[], skills: string[], rules: string[]}}
  */
 export function getAddonFiles(srcRoot, options = {}) {
   const {
     excludeAddons = [],
     includeAgents = true,
     includeCommands = true,
-    includeSkills = true
+    includeSkills = true,
+    includeRules = true
   } = options;
 
   return {
     agents: includeAgents ? getAddonAgentFiles(srcRoot, excludeAddons) : [],
     commands: includeCommands ? getAddonCommandFiles(srcRoot, excludeAddons) : [],
-    skills: includeSkills ? getAddonSkillDirs(srcRoot, excludeAddons) : []
+    skills: includeSkills ? getAddonSkillDirs(srcRoot, excludeAddons) : [],
+    rules: includeRules ? getAddonRuleFiles(srcRoot, excludeAddons) : []
   };
 }
 
@@ -709,6 +734,9 @@ export const ProviderInterface = {
   name: 'base',
   aliases: [],
 
+  // ── Path Configuration ──────────────────────────────────────────────
+  // ALL four paths are REQUIRED for v2. Every provider deploys every artifact type.
+  // Provider dictates which directories to use; null paths are no longer allowed.
   paths: {
     agents: null,
     commands: null,
@@ -716,40 +744,65 @@ export const ProviderInterface = {
     rules: null
   },
 
+  // ── Support Level per Artifact Type ─────────────────────────────────
+  // Distinguishes native platform support from AIWG conventional directories.
+  //   'native'       - Platform natively discovers and uses these files
+  //   'conventional' - AIWG directory convention; available for @-mention context loading
+  //   'aggregated'   - Content included in aggregated file AND deployed as discrete files
+  support: {
+    agents: 'conventional',
+    commands: 'conventional',
+    skills: 'conventional',
+    rules: 'conventional'
+  },
+
+  // ── Provider Capabilities ───────────────────────────────────────────
   capabilities: {
     skills: false,
     rules: false,
     aggregatedOutput: false,
-    yamlFormat: false
+    yamlFormat: false,
+    mdcFormat: false,
+    homeDirectoryDeploy: false,
+    projectLocalMirror: false
   },
 
-  // Transform agent content for this provider
-  transformAgent(srcPath, content, opts) {
-    return content;
+  // ── Home Directory Paths (Codex-specific) ───────────────────────────
+  // Only populated for providers that deploy to home directory.
+  homePaths: {
+    commands: null,
+    skills: null
   },
 
-  // Transform command content for this provider
-  transformCommand(srcPath, content, opts) {
-    return content;
-  },
+  // ── Artifact Transformation ─────────────────────────────────────────
+  transformAgent(srcPath, content, opts) { return content; },
+  transformCommand(srcPath, content, opts) { return content; },
+  transformSkill(srcPath, content, opts) { return content; },
+  transformRule(srcPath, content, opts) { return content; },
 
-  // Map model shorthand to provider-specific format
-  mapModel(shorthand, modelCfg, modelsConfig) {
-    return shorthand;
-  },
+  // ── Model Mapping ──────────────────────────────────────────────────
+  mapModel(shorthand, modelCfg, modelsConfig) { return shorthand; },
 
-  // Create/update AGENTS.md for this provider
+  // ── Deployment Functions ────────────────────────────────────────────
+  // All four deploy functions are available. Providers override as needed.
+  deployAgents(agentFiles, targetDir, opts) {},
+  deployCommands(commandFiles, targetDir, opts) {},
+  deploySkills(skillDirs, targetDir, opts) {},
+  deployRules(ruleFiles, targetDir, opts) {},
+
+  // ── Aggregation (for Warp, Windsurf) ────────────────────────────────
+  aggregate(artifacts, targetDir, opts) {},
+
+  // ── Create/update AGENTS.md ────────────────────────────────────────
   createAgentsMd(target, srcRoot, dryRun) {
     // Override in provider
   },
 
-  // Post-deployment hook (e.g., Factory settings.json)
+  // ── Post-deployment hook ───────────────────────────────────────────
   async postDeploy(targetDir, opts) {
     // Override in provider if needed
   },
 
-  // Get file extension for this provider
-  getFileExtension(type) {
-    return '.md';
-  }
+  // ── File Extension ────────────────────────────────────────────────
+  getFileExtension(type) { return '.md'; }
 };

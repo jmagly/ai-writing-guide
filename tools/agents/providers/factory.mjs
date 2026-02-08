@@ -7,6 +7,8 @@
  * Deployment paths:
  *   - Agents: .factory/droids/
  *   - Commands: .factory/commands/
+ *   - Skills: .factory/skills/
+ *   - Rules: .factory/rules/
  *
  * Special features:
  *   - Transforms agent names to kebab-case
@@ -28,7 +30,11 @@ import {
   createAgentsMdFromTemplate,
   initializeFrameworkWorkspace,
   getAddonAgentFiles,
-  getAddonCommandFiles
+  getAddonCommandFiles,
+  getAddonRuleFiles,
+  getAddonSkillDirs,
+  listSkillDirs,
+  deploySkillDir
 } from './base.mjs';
 
 // ============================================================================
@@ -41,13 +47,20 @@ export const aliases = [];
 export const paths = {
   agents: '.factory/droids/',
   commands: '.factory/commands/',
-  skills: null,  // Factory doesn't support skills directly
-  rules: null
+  skills: '.factory/skills/',
+  rules: '.factory/rules/'
+};
+
+export const support = {
+  agents: 'native',
+  commands: 'native',
+  skills: 'conventional',
+  rules: 'conventional'
 };
 
 export const capabilities = {
-  skills: false,
-  rules: false,
+  skills: true,
+  rules: true,
   aggregatedOutput: false,
   yamlFormat: false
 };
@@ -282,6 +295,26 @@ export function deployCommands(commandFiles, targetDir, opts) {
   return deployFiles(commandFiles, destDir, opts, transformCommand);
 }
 
+/**
+ * Deploy skills to .factory/skills/
+ */
+export function deploySkills(skillDirs, targetDir, opts) {
+  const destDir = path.join(targetDir, paths.skills);
+  ensureDir(destDir, opts.dryRun);
+  for (const skillDir of skillDirs) {
+    deploySkillDir(skillDir, destDir, opts);
+  }
+}
+
+/**
+ * Deploy rules to .factory/rules/
+ */
+export function deployRules(ruleFiles, targetDir, opts) {
+  const destDir = path.join(targetDir, paths.rules);
+  ensureDir(destDir, opts.dryRun);
+  return deployFiles(ruleFiles, destDir, opts, transformAgent);
+}
+
 // ============================================================================
 // AGENTS.md
 // ============================================================================
@@ -444,7 +477,11 @@ export async function deploy(opts) {
     target,
     mode,
     deployCommands: shouldDeployCommands,
+    deploySkills: shouldDeploySkills,
+    deployRules: shouldDeployRules,
     commandsOnly,
+    skillsOnly,
+    rulesOnly,
     dryRun,
     createAgentsMd: shouldCreateAgentsMd
   } = opts;
@@ -456,6 +493,8 @@ export async function deploy(opts) {
   // Collect source files based on mode
   const agentFiles = [];
   const commandFiles = [];
+  const ruleFiles = [];
+  const skillDirs = [];
 
   // All addons (dynamically discovered)
   if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
@@ -463,6 +502,14 @@ export async function deploy(opts) {
 
     if (shouldDeployCommands || commandsOnly) {
       commandFiles.push(...getAddonCommandFiles(srcRoot));
+    }
+
+    if (shouldDeployRules || rulesOnly) {
+      ruleFiles.push(...getAddonRuleFiles(srcRoot));
+    }
+
+    if (shouldDeploySkills || skillsOnly) {
+      skillDirs.push(...getAddonSkillDirs(srcRoot));
     }
   }
 
@@ -475,6 +522,16 @@ export async function deploy(opts) {
       const sdlcCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
       commandFiles.push(...listMdFilesRecursive(sdlcCommandsDir));
     }
+
+    if (shouldDeployRules || rulesOnly) {
+      const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
+      ruleFiles.push(...listMdFiles(sdlcRulesDir));
+    }
+
+    if (shouldDeploySkills || skillsOnly) {
+      const sdlcSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'skills');
+      skillDirs.push(...listSkillDirs(sdlcSkillsDir));
+    }
   }
 
   // Marketing framework
@@ -486,10 +543,20 @@ export async function deploy(opts) {
       const marketingCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'commands');
       commandFiles.push(...listMdFilesRecursive(marketingCommandsDir));
     }
+
+    if (shouldDeployRules || rulesOnly) {
+      const marketingRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'rules');
+      ruleFiles.push(...listMdFiles(marketingRulesDir));
+    }
+
+    if (shouldDeploySkills || skillsOnly) {
+      const marketingSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'skills');
+      skillDirs.push(...listSkillDirs(marketingSkillsDir));
+    }
   }
 
   // Deploy based on flags
-  if (!commandsOnly) {
+  if (!commandsOnly && !skillsOnly && !rulesOnly) {
     console.log(`\nDeploying ${agentFiles.length} agents as droids...`);
     deployAgents(agentFiles, target, opts);
   }
@@ -497,6 +564,16 @@ export async function deploy(opts) {
   if (shouldDeployCommands || commandsOnly) {
     console.log(`\nDeploying ${commandFiles.length} commands...`);
     deployCommands(commandFiles, target, opts);
+  }
+
+  if (shouldDeploySkills || skillsOnly) {
+    console.log(`\nDeploying ${skillDirs.length} skills...`);
+    deploySkills(skillDirs, target, opts);
+  }
+
+  if (shouldDeployRules || rulesOnly) {
+    console.log(`\nDeploying ${ruleFiles.length} rules...`);
+    deployRules(ruleFiles, target, opts);
   }
 
   // Post-deployment
@@ -513,6 +590,7 @@ export default {
   name,
   aliases,
   paths,
+  support,
   capabilities,
   transformAgent,
   transformCommand,
@@ -520,6 +598,8 @@ export default {
   mapToolsToFactory,
   deployAgents,
   deployCommands,
+  deploySkills,
+  deployRules,
   createAgentsMd,
   enableFactoryCustomDroids,
   postDeploy,
