@@ -55,7 +55,10 @@ jobs:
       - name: Validate marketplace.json
         run: |
           echo "Validating marketplace.json..."
-          if [ -f "marketplace.json" ]; then
+          if [ -f ".claude-plugin/marketplace.json" ]; then
+            echo "✓ marketplace.json exists at .claude-plugin/"
+            cat ".claude-plugin/marketplace.json" | head -20
+          elif [ -f "marketplace.json" ]; then
             echo "✓ marketplace.json exists at repo root"
             cat "marketplace.json" | head -20
           elif [ -f "plugins/.claude-plugin/marketplace.json" ]; then

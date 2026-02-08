@@ -154,21 +154,19 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Configure npm for Gitea registry
-        run: |
-          npm config set @roctinam:registry ${{ env.GITEA_NPM_REGISTRY }}
-
       - name: Wait for package propagation
         run: sleep 10
 
-      - name: Install from Gitea registry
+      - name: Verify package exists in Gitea registry
         run: |
-          npm install -g aiwg --registry=${{ env.GITEA_NPM_REGISTRY }} || {
-            echo "Note: Global install may fail in container, trying local"
-            npm install aiwg --registry=${{ env.GITEA_NPM_REGISTRY }}
-          }
-
-      - name: Verify installation
-        run: |
-          npx aiwg --version || echo "Version check completed"
-          npx aiwg --help | head -20 || echo "Help output completed"
+          # Only check that the package metadata is accessible, don't install
+          # (installing pulls all transitive deps which aren't in Gitea registry)
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ env.GITEA_NPM_REGISTRY }}aiwg")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ Package aiwg found in Gitea registry"
+            curl -s "${{ env.GITEA_NPM_REGISTRY }}aiwg" | head -5
+          else
+            echo "✗ Package not found (HTTP $HTTP_CODE)"
+            exit 1
+          fi
