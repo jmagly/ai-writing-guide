@@ -24,6 +24,8 @@ export interface RegistrationOptions {
   skillsPath?: string;
   /** Path to deployed commands directory */
   commandsPath?: string;
+  /** Path to deployed rules directory */
+  rulesPath?: string;
   /** Provider platform name */
   provider: string;
   /** Working directory for relative path resolution */

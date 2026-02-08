@@ -516,6 +516,8 @@ export class AgentGenerator {
       copilot: '.github/agents',
       cursor: '.cursor/agents',
       factory: '.factory/droids',
+      opencode: '.opencode/agent',
+      warp: '.warp/agents',
       generic: 'agents',
       windsurf: '.windsurf/agents',
     };

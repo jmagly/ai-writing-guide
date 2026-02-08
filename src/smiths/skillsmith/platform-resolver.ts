@@ -35,6 +35,18 @@ const PLATFORM_CONFIGS: Record<Platform, PlatformSkillConfig> = {
     supportsSkills: false,
     alternativeStrategy: 'command',
   },
+  opencode: {
+    baseDir: '.opencode/skill',
+    extension: '.md',
+    supportsSkills: false,
+    alternativeStrategy: 'command',
+  },
+  warp: {
+    baseDir: '.warp/skills',
+    extension: '.md',
+    supportsSkills: false,
+    alternativeStrategy: 'command',
+  },
   windsurf: {
     baseDir: '.windsurf/skills',
     extension: '.md',
