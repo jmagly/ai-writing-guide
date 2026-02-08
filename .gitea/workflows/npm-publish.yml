@@ -104,7 +104,16 @@ jobs:
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
           # Publish with scoped package name for Gitea
-          npm publish --registry=${{ env.GITEA_NPM_REGISTRY }}
+          # Allow re-runs: treat "version already exists" (409) as success
+          npm publish --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee publish-output.txt || {
+            if grep -q "package version already exists" publish-output.txt; then
+              echo "✓ Version already published - treating as success"
+            else
+              echo "✗ Publish failed"
+              cat publish-output.txt
+              exit 1
+            fi
+          }
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
