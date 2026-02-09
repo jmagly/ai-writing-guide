@@ -87,6 +87,23 @@ Maps natural language requests to AIWG rules, skills, and workflows. Used by the
 | "don't change that file" | Constraint violation correction | `instruction-comprehension` |
 | "follow my instructions exactly" | Strict compliance demand | `instruction-comprehension` |
 
+## Issue Management
+
+| User Says | Maps To | Skill/Command |
+|-----------|---------|---------------|
+| "address the open issues" | Issue-driven ralph loop | `address-issues --all-open` |
+| "work through the bugs" | Bug-filtered issue loop | `address-issues --filter "label:bug"` |
+| "fix open issues" | All open issue loop | `address-issues --all-open` |
+| "tackle issue 17" | Single issue loop | `address-issues 17` |
+| "address issues 17, 18, 19" | Multi-issue loop | `address-issues 17 18 19` |
+| "work on the bug backlog" | Bug backlog loop | `address-issues --filter "status:open label:bug"` |
+| "fix the reported bugs" | Bug-filtered issue loop | `address-issues --filter "label:bug"` |
+| "go through the open tickets" | All open issue loop | `address-issues --all-open` |
+| "handle the issue queue" | All open issue loop | `address-issues --all-open` |
+| "process the open issues" | All open issue loop | `address-issues --all-open` |
+| "work on issue 17 interactively" | Interactive single issue | `address-issues 17 --interactive` |
+| "address all bugs with branches" | Branch-per-issue bug loop | `address-issues --filter "label:bug" --branch-per-issue` |
+
 ## Incident & Urgency
 
 | User Says | Maps To | Skill/Command |
@@ -123,3 +140,5 @@ When these patterns are detected, the corresponding rules are activated in the a
 - @agentic/code/addons/aiwg-utils/rules/research-before-decision.md - Research rule
 - @agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md - Instruction rule
 - @agentic/code/frameworks/sdlc-complete/rules/thought-protocol.md - Thought types
+- @.claude/commands/address-issues.md - Issue-driven ralph loop command
+- @.claude/skills/issue-driven-ralph/SKILL.md - Issue-driven ralph skill
