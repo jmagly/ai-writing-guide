@@ -7,6 +7,10 @@ import Config from './config.mjs';
 import FileWatcher from './file-watcher.mjs';
 import CronScheduler from './cron-scheduler.mjs';
 import EventRouter from './event-router.mjs';
+import { IPCServer } from './ipc-server.mjs';
+import { AgentSupervisor } from './agent-supervisor.mjs';
+import { TaskStore } from './task-store.mjs';
+import { AutomationEngine } from './automation-engine.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,6 +21,10 @@ class DaemonMain {
     this.cronScheduler = null;
     this.eventRouter = null;
     this.messagingBus = null;
+    this.ipcServer = null;
+    this.supervisor = null;
+    this.taskStore = null;
+    this.automationEngine = null;
     this.shutdownInProgress = false;
     this.isRotating = false;
     this.startTime = Date.now();
@@ -25,6 +33,8 @@ class DaemonMain {
     this.heartbeatFile = '.aiwg/daemon/heartbeat';
     this.stateFile = '.aiwg/daemon/state.json';
     this.logFile = '.aiwg/daemon/daemon.log';
+    this.socketPath = '.aiwg/daemon/daemon.sock';
+    this.taskStorePath = '.aiwg/daemon/tasks.json';
     this.lockFd = null;
   }
 
@@ -156,6 +166,41 @@ class DaemonMain {
   async initializeSubsystems() {
     this.eventRouter = new EventRouter();
 
+    // Initialize task store (persistent task tracking)
+    this.taskStore = new TaskStore(this.taskStorePath);
+    await this.taskStore.initialize();
+    this.log(`Task store initialized (${this.taskStore.size} existing tasks)`);
+
+    // Initialize agent supervisor (spawns claude -p subprocesses)
+    const maxConcurrency = this.config.get('daemon.max_parallel_actions') || 3;
+    const taskTimeoutMs = (this.config.get('daemon.action_timeout_minutes') || 120) * 60 * 1000;
+    this.supervisor = new AgentSupervisor({
+      maxConcurrency,
+      taskStore: this.taskStore,
+      taskTimeout: taskTimeoutMs,
+    });
+    this.supervisor.on('task:started', (e) => this.log(`Agent task started: ${e.taskId} (PID ${e.pid})`));
+    this.supervisor.on('task:completed', (e) => this.log(`Agent task completed: ${e.taskId} (${e.duration}ms)`));
+    this.supervisor.on('task:failed', (e) => this.log(`Agent task failed: ${e.taskId} - ${e.error}`));
+    this.supervisor.on('task:timeout', (e) => this.log(`Agent task timed out: ${e.taskId}`));
+    this.log(`Agent supervisor started (max ${maxConcurrency} concurrent)`);
+
+    // Initialize automation engine (trigger-action rules)
+    this.automationEngine = new AutomationEngine({
+      supervisor: this.supervisor,
+    });
+    const rules = this.config.get('rules') || [];
+    if (rules.length > 0) {
+      this.automationEngine.loadRules(rules);
+      this.log(`Automation engine loaded ${this.automationEngine.ruleCount} rules`);
+    }
+
+    // Initialize IPC server (Unix domain socket for CLI communication)
+    this.ipcServer = new IPCServer(this.socketPath);
+    this._registerIPCMethods();
+    await this.ipcServer.start();
+    this.log(`IPC server listening on ${this.socketPath}`);
+
     const watchConfig = this.config.get('watch');
     if (watchConfig?.enabled) {
       this.fileWatcher = new FileWatcher(watchConfig, watchConfig.debounce_ms);
@@ -183,7 +228,123 @@ class DaemonMain {
       this.log(`Messaging subsystem not available: ${error.message}`);
     }
 
-    this.eventRouter.on('event', (event) => this.handleEvent(event));
+    // Route events through automation engine
+    this.eventRouter.on('event', (event) => {
+      this.handleEvent(event);
+      this.automationEngine.processEvent(event);
+    });
+  }
+
+  /**
+   * Register IPC method handlers for CLI communication
+   */
+  _registerIPCMethods() {
+    this.ipcServer.registerMethods({
+      // Daemon status
+      'daemon.status': () => ({
+        pid: process.pid,
+        uptime_seconds: Math.floor((Date.now() - this.startTime) / 1000),
+        started_at: new Date(this.startTime).toISOString(),
+        health: 'healthy',
+        subsystems: {
+          ipc: { clients: this.ipcServer.clientCount },
+          supervisor: this.supervisor.getStatus(),
+          automation: this.automationEngine.getStatus(),
+          file_watcher: this.fileWatcher?.getStats() || { enabled: false },
+          scheduler: this.cronScheduler?.getStats() || { enabled: false },
+          messaging: this.messagingBus ? { enabled: true, adapters: this.messagingBus.adapterCount } : { enabled: false },
+        },
+      }),
+
+      // Task management
+      'task.submit': (params) => {
+        if (!params.prompt) {
+          const err = new Error('Missing required parameter: prompt');
+          err.code = 'INVALID_PARAMS';
+          throw err;
+        }
+        const task = this.supervisor.submit(params.prompt, {
+          agent: params.agent,
+          priority: params.priority || 0,
+        });
+        return { taskId: task.id, state: task.state };
+      },
+
+      'task.cancel': (params) => {
+        if (!params.taskId) {
+          const err = new Error('Missing required parameter: taskId');
+          err.code = 'INVALID_PARAMS';
+          throw err;
+        }
+        const cancelled = this.supervisor.cancel(params.taskId);
+        return { cancelled };
+      },
+
+      'task.list': (params) => {
+        return this.taskStore.getTasks({
+          state: params?.state,
+          limit: params?.limit || 20,
+        });
+      },
+
+      'task.get': (params) => {
+        if (!params.taskId) {
+          const err = new Error('Missing required parameter: taskId');
+          err.code = 'INVALID_PARAMS';
+          throw err;
+        }
+        const task = this.taskStore.getTask(params.taskId);
+        if (!task) {
+          const err = new Error(`Task not found: ${params.taskId}`);
+          err.code = 'INVALID_PARAMS';
+          throw err;
+        }
+        return task;
+      },
+
+      'task.stats': () => {
+        return this.taskStore.getStats();
+      },
+
+      // Automation
+      'automation.status': () => {
+        return this.automationEngine.getStatus();
+      },
+
+      'automation.enable': (params) => {
+        if (params.ruleId) {
+          return { success: this.automationEngine.setRuleEnabled(params.ruleId, true) };
+        }
+        this.automationEngine.setEnabled(true);
+        return { enabled: true };
+      },
+
+      'automation.disable': (params) => {
+        if (params.ruleId) {
+          return { success: this.automationEngine.setRuleEnabled(params.ruleId, false) };
+        }
+        this.automationEngine.setEnabled(false);
+        return { enabled: false };
+      },
+
+      // Chat (send message via IPC for non-tmux clients)
+      'chat.send': (params) => {
+        if (!params.message) {
+          const err = new Error('Missing required parameter: message');
+          err.code = 'INVALID_PARAMS';
+          throw err;
+        }
+        // Submit as a task via supervisor
+        const task = this.supervisor.submit(params.message, {
+          priority: params.priority || 5, // Chat messages get higher priority
+          metadata: { source: 'ipc-chat' },
+        });
+        return { taskId: task.id };
+      },
+
+      // Ping for health checks
+      'ping': () => ({ pong: true, timestamp: new Date().toISOString() }),
+    });
   }
 
   handleEvent(event) {
@@ -228,19 +389,35 @@ class DaemonMain {
   }
 
   writeState() {
+    const supervisorStatus = this.supervisor ? this.supervisor.getStatus() : { running: 0, queued: 0, tasks: { running: [], queued: [] } };
+    const taskStats = this.taskStore ? this.taskStore.getStats() : {};
+
     const state = {
       pid: process.pid,
       started_at: new Date(this.startTime).toISOString(),
       last_heartbeat: new Date().toISOString(),
       uptime_seconds: Math.floor((Date.now() - this.startTime) / 1000),
       restart_count: 0,
+      ipc: {
+        socket: this.socketPath,
+        clients: this.ipcServer ? this.ipcServer.clientCount : 0,
+      },
+      agents: {
+        running: supervisorStatus.running,
+        queued: supervisorStatus.queued,
+        max_concurrency: supervisorStatus.maxConcurrency,
+        tasks: supervisorStatus.tasks,
+      },
+      task_stats: taskStats,
       monitors: {
         file_watcher: this.fileWatcher?.getStats() || { enabled: false },
         webhook: { enabled: false },
         scheduler: this.cronScheduler?.getStats() || { enabled: false }
       },
-      recent_actions: [],
-      active_actions: [],
+      automation: this.automationEngine ? {
+        enabled: this.automationEngine.enabled,
+        rule_count: this.automationEngine.ruleCount,
+      } : { enabled: false },
       health: {
         status: 'healthy',
         last_check: new Date().toISOString(),
@@ -272,6 +449,27 @@ class DaemonMain {
 
     this.shutdownInProgress = true;
     this.log(`Shutdown initiated (${signal})`);
+
+    // Stop IPC server (reject new connections)
+    if (this.ipcServer) {
+      try {
+        await this.ipcServer.stop();
+        this.log('IPC server stopped');
+      } catch (error) {
+        this.log(`Error stopping IPC server: ${error.message}`);
+      }
+    }
+
+    // Drain agent supervisor (wait for running tasks, cancel queued)
+    if (this.supervisor) {
+      try {
+        this.log(`Draining supervisor (${this.supervisor.runningCount} running, ${this.supervisor.queuedCount} queued)`);
+        await this.supervisor.shutdown(15000);
+        this.log('Agent supervisor drained');
+      } catch (error) {
+        this.log(`Error draining supervisor: ${error.message}`);
+      }
+    }
 
     // Shutdown messaging adapters
     if (this.messagingBus) {
