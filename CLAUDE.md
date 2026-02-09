@@ -344,6 +344,15 @@ aiwg doctor
 
 <!-- TEAM DIRECTIVES: Add project-specific guidance below this line -->
 
+## Context Window Configuration (Optional)
+
+<!-- Uncomment and set if running on a local/GPU system with limited context.
+     This guides parallel subagent limits and compaction aggressiveness.
+     Leave commented out for Anthropic cloud systems (1M+ context).
+     See @.claude/rules/context-budget.md for the full lookup table. -->
+
+<!-- AIWG_CONTEXT_WINDOW: 100000 -->
+
 ## What AIWG Is
 
 **AI Writing Guide (AIWG)** is a framework that provides AI coding assistants with structured workflows, specialized agents, and artifact management. It's not just documentation - it's an operational system that:
