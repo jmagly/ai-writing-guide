@@ -18,12 +18,13 @@ Ralph transforms single-pass AI execution into iterative completion loops. Inste
 └──────────────────────────────────────────┘
 ```
 
-## Two Modes
+## Three Modes
 
 | Mode | Command | Best For | Session Duration |
 |------|---------|----------|------------------|
 | **Internal** | `/ralph` | Tasks that fit in one session | Minutes to ~1 hour |
 | **External** | `/ralph-external` | Long-running tasks (6-8 hours) | Multiple sessions |
+| **Daemon** | `aiwg daemon start` | Always-on supervision | Continuous (days/weeks) |
 
 ## Quick Start
 
@@ -237,6 +238,56 @@ The provider adapter handles capability differences automatically. If the target
 │       └── checkpoints/        # Periodic checkpoints
 └── completion-report.md    # Final summary
 ```
+
+## Persistent Ralph via Daemon
+
+The daemon mode extends Ralph into always-on project supervision. Instead of manually launching Ralph loops, the daemon can trigger them automatically based on file changes, schedules, or messaging commands.
+
+### When to Use Daemon Mode
+
+| Scenario | Use This Mode |
+|----------|---------------|
+| One-off task, quick fix | Internal (`/ralph`) |
+| Multi-hour migration, overnight task | External (`/ralph-external`) |
+| Continuous monitoring, auto-triggered tasks | Daemon (`aiwg daemon start`) |
+
+### How It Works
+
+The daemon watches your project and can submit tasks to the Agent Supervisor, which spawns `claude -p` subprocesses — the same mechanism Ralph uses internally.
+
+```bash
+# Start the daemon
+aiwg daemon start
+
+# Submit a task via IPC
+aiwg daemon task submit "Fix all failing tests"
+
+# Or trigger automatically via automation rules in .aiwg/daemon.json:
+{
+  "rules": [{
+    "id": "auto-fix-tests",
+    "trigger": { "event": "file.changed", "pattern": "src/**/*.ts" },
+    "condition": { "check": "npm test", "expect": "failure" },
+    "action": { "type": "agent", "prompt": "Fix the failing tests" }
+  }]
+}
+```
+
+### Daemon + Messaging
+
+When messaging adapters are enabled (Slack, Discord, Telegram), you can interact with Ralph-like workflows from chat:
+
+```
+/ask What tests are currently failing?
+/status
+/approve gate-123
+```
+
+The `/ask` command spawns a `claude -p` process with full project context, just like Ralph does.
+
+### Setup
+
+See the [Daemon Guide](daemon-guide.md) for full setup instructions and the [Messaging Guide](messaging-guide.md) for platform integration.
 
 ## Best Practices
 

@@ -1,7 +1,7 @@
 # ADR: Messaging Bot Mode (Slack, Discord, Telegram)
 
 **Date**: 2026-02-08
-**Status**: PROPOSED
+**Status**: ACCEPTED
 **Author**: Architecture Designer
 **Category**: Integration Architecture
 **Issue**: #313
@@ -749,3 +749,134 @@ Use an established bot framework that abstracts multiple platforms.
 
 **Rule Status**: PROPOSED
 **Last Updated**: 2026-02-08
+
+## Implementation Addendum (2026-02)
+
+**Implemented in**: #313, #319, #320
+
+### Status Change
+
+This ADR was accepted and implemented across PRs #313 (platform adapters for Slack, Discord, Telegram), #319 (2-way AI chat via ChatHandler), and #320 (hub-chat wiring and messaging hub integration). The implementation follows the platform adapter pattern as specified, with the additions documented below.
+
+### Implementation Path Clarification
+
+The original ADR references `src/messaging/` (TypeScript) for the implementation directory. The actual implementation uses `tools/messaging/` (ES modules / .mjs files) for consistency with other AIWG tooling (`tools/daemon/`, `tools/ralph-external/`, `tools/agents/`). The architecture and interfaces remain as specified; only the directory location and language choice differ.
+
+### Files
+
+```
+tools/messaging/
+├── index.mjs                # Hub factory: createMessagingHub()
+├── event-bus.mjs            # Internal event bus with wildcard subscriptions
+├── message-formatter.mjs    # AiwgEvent → platform message formatting
+├── adapter-registry.mjs     # Adapter discovery and lifecycle
+├── command-router.mjs       # Command dispatch with permissions
+├── chat-handler.mjs         # 2-way AI chat (spawns claude -p)
+├── types.mjs                # Constants: EventTopic, COMMANDS, Severity, etc.
+└── adapters/
+    ├── base.mjs             # Abstract BaseAdapter class
+    ├── slack.mjs            # Slack Bot adapter
+    ├── discord.mjs          # Discord Bot adapter
+    └── telegram.mjs         # Telegram Bot adapter
+```
+
+### 2-Way AI Chat (Not in Original ADR)
+
+The most significant addition beyond the original ADR is bidirectional AI chat via the `ChatHandler` class. The original ADR specified one-way notifications (outbound only) and inbound commands. The implementation adds free-text message handling:
+
+#### ChatHandler Architecture
+
+`ChatHandler` (`tools/messaging/chat-handler.mjs`) spawns `claude -p` subprocesses to process free-text messages from any connected platform:
+
+- **Conversation memory**: Per-chat history tracked via a Map keyed by `{platform}:{chatId}`, storing up to `maxContextMessages` (default 10) message pairs
+- **Concurrency control**: Maximum `maxConcurrent` (default 3) simultaneous AI processes across all chats
+- **Per-chat deduplication**: A `processingChats` Map prevents duplicate processing while a response is in-flight
+- **Response truncation**: Output truncated to `maxResponseLength` (default 4000 chars) to respect platform limits (Telegram's 4096-char limit)
+- **Timeout**: AI processes killed after `timeoutMs` (default 120 seconds)
+- **Prompt context**: `#buildPrompt()` prepends conversation history to the current message for multi-turn context
+
+#### Message Flow
+
+```
+User sends free-text message on Slack/Discord/Telegram
+  → Platform adapter receives message
+  → adapter.onMessage() fires registered handlers
+  → MessagingHub publishes CHAT_MESSAGE event on EventBus
+  → ChatHandler.processMessage(text, context) called
+  → ChatHandler spawns `claude -p` with conversation context
+  → AI response received
+  → Response truncated if needed
+  → Conversation history updated (user + assistant messages)
+  → Response sent back to originating platform via adapter.send()
+```
+
+#### /ask Command
+
+The `/ask` command provides an alternative entry point for AI chat within the command system:
+
+```
+/ask <question>
+  → CommandRouter dispatches to 'ask' handler
+  → ChatHandler.processMessage(question, context)
+  → Response returned as command result
+```
+
+This enables AI interaction even for platforms where free-text routing is not configured.
+
+### BaseAdapter Extensions
+
+The `BaseAdapter` class (`tools/messaging/adapters/base.mjs`) was extended beyond the original ADR's `MessagingAdapter` interface:
+
+| Addition | Purpose |
+|----------|---------|
+| `onMessage(handler)` | Register handlers for free-text (non-command) messages |
+| `_dispatchMessage(text, context)` | Protected method for subclasses to dispatch free-text messages |
+| `hasMessageHandlers()` | Check if any message handlers are registered |
+
+These additions enable the 2-way chat flow. The original `onCommand()`, `send()`, `update()`, `initialize()`, and `shutdown()` methods remain as specified.
+
+### New Event Topics
+
+Three new event topics were added to `EventTopic` in `types.mjs` for chat lifecycle tracking:
+
+| Topic | Purpose |
+|-------|---------|
+| `chat.message` (`CHAT_MESSAGE`) | Published when a free-text message arrives from any platform |
+| `chat.response` (`CHAT_RESPONSE`) | Published when an AI response is generated |
+| `chat.error` (`CHAT_ERROR`) | Published when chat response delivery fails |
+
+### New Command: /ask
+
+Added to the `COMMANDS` constant in `types.mjs`:
+
+```javascript
+ask: { permission: CommandPermission.READ, description: 'Ask AI a question' }
+```
+
+This command requires READ permission (no write operations involved) and is registered in `createMessagingHub()` when chat handling is enabled.
+
+### Chat Configuration
+
+The `createMessagingHub()` factory accepts a `chatHandler` option:
+
+```javascript
+const hub = await createMessagingHub({
+  chatHandler: {
+    agentCommand: 'claude',      // AI command to spawn
+    agentArgs: [],                // Additional CLI arguments
+    maxConcurrent: 3,            // Max simultaneous AI processes
+    maxContextMessages: 10,      // Conversation history depth
+    timeoutMs: 120_000,          // AI response timeout
+    maxResponseLength: 4000,     // Platform char limit
+  }
+});
+```
+
+Setting `chatHandler: false` disables 2-way chat entirely. When omitted, chat is enabled with default settings.
+
+### Cross-References
+
+- ADR-daemon-mode.md — Daemon that hosts the messaging subsystem
+- ADR-ipc-protocol.md — IPC protocol for daemon communication
+- ADR-2way-chat.md — Detailed 2-way chat architecture decision
+- `docs/messaging-guide.md` — User guide

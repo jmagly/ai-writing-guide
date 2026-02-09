@@ -26,11 +26,18 @@ Daemon (daemon-main.mjs)
 | File | Purpose |
 |------|---------|
 | `index.mjs` | CLI entry point (start/stop/status/logs) |
-| `daemon-main.mjs` | Main daemon process |
+| `daemon-main.mjs` | Main daemon process and subsystem orchestration |
 | `config.mjs` | Configuration loader and validator |
 | `file-watcher.mjs` | File system change detection |
 | `cron-scheduler.mjs` | Periodic task scheduling |
 | `event-router.mjs` | Event pub/sub with dead letter queue |
+| `ipc-server.mjs` | JSON-RPC 2.0 server over Unix domain socket |
+| `ipc-client.mjs` | IPC client for CLI↔daemon communication |
+| `agent-supervisor.mjs` | Spawns and tracks `claude -p` subprocesses with concurrency limits |
+| `task-store.mjs` | Persistent task queue with state tracking |
+| `automation-engine.mjs` | Trigger→condition→action rule engine |
+| `tmux-manager.mjs` | Tmux session management for interactive agent sessions |
+| `repl-chat.mjs` | Interactive terminal chat with AI via daemon |
 
 ## Usage
 
@@ -77,7 +84,7 @@ node tools/daemon/index.mjs restart
 
 ## Configuration
 
-Configuration stored in `.aiwg/daemon.yaml` (JSON format). Default configuration created on first start.
+Configuration stored in `.aiwg/daemon.json`. Default configuration created on first start.
 
 ### Default Configuration
 
@@ -127,7 +134,7 @@ Configuration stored in `.aiwg/daemon.yaml` (JSON format). Default configuration
 ```
 .aiwg/
   daemon.pid                  # PID file (only when running)
-  daemon.yaml                 # Configuration
+  daemon.json                 # Configuration
   daemon/
     state.json                # Daemon state
     daemon.log                # Current log
@@ -322,8 +329,40 @@ tail -f .aiwg/daemon/daemon.log
 cat .aiwg/daemon/state.json | jq .
 ```
 
+## Subsystem Architecture
+
+The daemon orchestrates several subsystems initialized in this order:
+
+```
+EventRouter → TaskStore → AgentSupervisor → AutomationEngine
+→ IPCServer → FileWatcher → CronScheduler → MessagingHub
+```
+
+### IPC Server (`ipc-server.mjs`)
+
+JSON-RPC 2.0 protocol over Unix domain socket (`.aiwg/daemon/daemon.sock`). Supports methods: `daemon.status`, `task.submit`, `task.cancel`, `task.list`, `task.get`, `task.stats`, `automation.status`, `automation.enable`, `automation.disable`, `chat.send`, `ping`.
+
+### Agent Supervisor (`agent-supervisor.mjs`)
+
+Manages a pool of `claude -p` subprocesses with configurable concurrency (default: 3). Emits events: `task:started`, `task:completed`, `task:failed`, `task:timeout`. Tasks are persisted in the Task Store.
+
+### Task Store (`task-store.mjs`)
+
+Persistent JSON-based task queue at `.aiwg/daemon/tasks.json`. Tracks task state (queued, running, completed, failed), priority, timestamps, and output.
+
+### Automation Engine (`automation-engine.mjs`)
+
+Event-driven rule system. Rules define trigger→condition→action workflows loaded from `.aiwg/daemon.json`. Supports event matching, shell-based conditions, and agent task actions.
+
+### Messaging Integration
+
+The daemon dynamically imports `tools/messaging/index.mjs` to connect Slack, Discord, and Telegram. See [Messaging Guide](../../docs/messaging-guide.md).
+
 ## References
 
 - ADR: `.aiwg/architecture/adrs/ADR-daemon-mode.md`
-- Issue: #312
+- ADR: `.aiwg/architecture/adrs/ADR-ipc-protocol.md`
+- ADR: `.aiwg/architecture/adrs/ADR-2way-chat.md`
+- User Guide: `docs/daemon-guide.md`
+- Issues: #312, #315, #316, #317, #318
 - Ralph External: `tools/ralph-external/` (background process pattern)

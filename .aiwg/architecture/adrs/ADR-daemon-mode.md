@@ -1,7 +1,7 @@
 # ADR: Daemon Mode (`aiwg daemon`)
 
 **Date**: 2026-02-08
-**Status**: PROPOSED
+**Status**: ACCEPTED
 **Author**: Architecture Designer
 **Category**: System Architecture
 **Issue**: #312
@@ -800,3 +800,106 @@ The daemon and on-demand CLI commands operate on the same `.aiwg/` directory. Co
 - @src/extensions/commands/definitions.ts -- Command extension pattern for daemon subcommands
 - @.claude/rules/token-security.md -- Token security rules (env vars only)
 - Issue #312 -- Parent issue for daemon implementation
+
+## Implementation Addendum (2026-02)
+
+**Implemented in**: #312, #315, #316, #317, #318
+
+### Status Change
+
+This ADR was accepted and implemented across PRs #312 (core daemon), #315 (IPC server + agent supervisor), #316 (task store + automation engine), #317 (tmux manager + REPL chat), and #318 (request channel integration). The implementation follows Option C as specified, with the additions documented below.
+
+### Configuration Format Clarification
+
+The original ADR references `.aiwg/daemon.yaml` as the configuration file. The implementation uses `.aiwg/daemon.json` (JSON format) via the existing `Config` class (`tools/daemon/config.mjs`). This change was made for consistency with other AIWG configuration files (e.g., `.aiwg/frameworks/registry.json`, `.aiwg/daemon/state.json`) which all use JSON. The configuration schema and semantics remain as specified in this ADR; only the serialization format differs.
+
+### Option A Reconciliation
+
+The ADR rejects Option A's `child_process.fork()` with built-in IPC channels. The implementation adopts Unix domain socket IPC (`tools/daemon/ipc-server.mjs`), which is a fundamentally different mechanism from Node.js fork IPC channels:
+
+- **Fork IPC** (rejected): Requires parent-child process relationship, channels break in Docker, tight coupling between launcher and daemon
+- **Unix socket IPC** (adopted): Independent processes, works in any POSIX environment including Docker, JSON-RPC 2.0 protocol, client-server model
+
+The Unix socket approach is consistent with Option C's philosophy of standard Unix primitives (PID files, signals, filesystem). The socket lives at `.aiwg/daemon/daemon.sock` with permissions `0o600`.
+
+### Subsystems Not in Original ADR
+
+The implementation includes 8 subsystems beyond the original ADR scope. These emerged during construction as natural extensions of the daemon architecture:
+
+| Subsystem | File | Purpose |
+|-----------|------|---------|
+| IPC Server | `tools/daemon/ipc-server.mjs` | JSON-RPC 2.0 over Unix domain socket for CLI↔daemon communication |
+| IPC Client | `tools/daemon/ipc-client.mjs` | Client library for connecting to the daemon socket |
+| Agent Supervisor | `tools/daemon/agent-supervisor.mjs` | Spawns and tracks `claude -p` subprocess tasks with concurrency limits |
+| Task Store | `tools/daemon/task-store.mjs` | Persistent task queue at `.aiwg/daemon/tasks.json` |
+| Automation Engine | `tools/daemon/automation-engine.mjs` | Trigger→condition→action rules evaluated against daemon events |
+| Tmux Manager | `tools/daemon/tmux-manager.mjs` | Session management for interactive terminal workflows |
+| REPL Chat | `tools/daemon/repl-chat.mjs` | Interactive terminal chat interface to the daemon |
+| Request Channel | (integrated in daemon-main.mjs) | Daemon-client protocol for structured request/response |
+
+#### Initialization Order
+
+```
+EventRouter → TaskStore → AgentSupervisor → AutomationEngine → IPCServer → FileWatcher → CronScheduler → MessagingHub
+```
+
+#### IPC Protocol
+
+The IPC server implements JSON-RPC 2.0 with newline-delimited JSON framing. Registered methods:
+
+| Method | Parameters | Description |
+|--------|-----------|-------------|
+| `daemon.status` | none | Returns daemon health, uptime, subsystem status |
+| `task.submit` | `{prompt, agent?, priority?}` | Submit a task to the agent supervisor |
+| `task.cancel` | `{taskId}` | Cancel a queued or running task |
+| `task.list` | `{state?, limit?}` | List tasks with optional filtering |
+| `task.get` | `{taskId}` | Get detailed task information |
+| `task.stats` | none | Aggregate task statistics |
+| `automation.status` | none | Automation engine state and rule list |
+| `automation.enable` | `{ruleId?}` | Enable automation (globally or per-rule) |
+| `automation.disable` | `{ruleId?}` | Disable automation (globally or per-rule) |
+| `chat.send` | `{message, priority?}` | Submit a chat message as a task |
+| `ping` | none | Health check (returns `{pong: true}`) |
+
+Standard JSON-RPC error codes: `-32700` (parse), `-32600` (invalid request), `-32601` (method not found), `-32602` (invalid params), `-32603` (internal error).
+
+### Updated File Structure
+
+The daemon directory now contains:
+
+```
+tools/daemon/
+├── daemon-main.mjs          # Main daemon process (entry point)
+├── index.mjs                # CLI entry point (start/stop/status)
+├── config.mjs               # Configuration loader and validator
+├── event-router.mjs         # Event routing and dispatch
+├── file-watcher.mjs         # File system monitoring
+├── cron-scheduler.mjs       # Cron-like scheduled tasks
+├── ipc-server.mjs           # JSON-RPC 2.0 Unix socket server
+├── ipc-client.mjs           # Client library for daemon socket
+├── agent-supervisor.mjs     # Claude subprocess management
+├── task-store.mjs           # Persistent task queue
+├── automation-engine.mjs    # Trigger→condition→action rules
+├── tmux-manager.mjs         # Tmux session management
+├── repl-chat.mjs            # Interactive terminal chat
+└── README.md                # Developer documentation
+```
+
+### Shutdown Sequence
+
+The implementation follows a staged shutdown for graceful termination:
+
+1. **IPC Server**: Stop accepting new connections
+2. **Agent Supervisor**: Drain running tasks (15s timeout), cancel queued tasks
+3. **Messaging Hub**: Disconnect all platform adapters
+4. **Subsystems**: Stop file watcher and cron scheduler
+5. **State**: Write final state to `.aiwg/daemon/state.json`
+6. **Cleanup**: Remove PID file and lock file
+
+### Cross-References
+
+- ADR-ipc-protocol.md — Detailed IPC protocol specification
+- ADR-messaging-bot-mode.md — Messaging subsystem architecture
+- ADR-2way-chat.md — 2-way AI chat architecture
+- `docs/daemon-guide.md` — User guide
+- `tools/daemon/README.md` — Developer documentation

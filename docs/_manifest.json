@@ -24,6 +24,8 @@
     "mention-utilities",
     "deploy-generators",
     "configuration/model-configuration",
+    "daemon-guide",
+    "messaging-guide",
     "troubleshooting",
     "troubleshooting/setup-issues",
     "troubleshooting/deployment-issues",
@@ -210,6 +212,20 @@
       "title": "Model Configuration",
       "summary": "Configure AI models",
       "file": "configuration/model-configuration.md",
+      "parent": "reference"
+    },
+    {
+      "id": "daemon-guide",
+      "title": "Daemon Mode",
+      "summary": "Background daemon operations",
+      "file": "daemon-guide.md",
+      "parent": "reference"
+    },
+    {
+      "id": "messaging-guide",
+      "title": "Messaging",
+      "summary": "Chat platform integration",
+      "file": "messaging-guide.md",
       "parent": "reference"
     },
     {
