@@ -1,0 +1,641 @@
+# RLM Task Tree Schema
+# Recursive task decomposition tree for agentic RAG with hierarchical prompting
+# Based on RLM (Recursive Language Models) pattern from research
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/rlm-task-tree/v1"
+title: "RLM Task Tree Schema"
+description: |
+  Schema for recursive task decomposition tree where each node represents
+  a sub-task with its own prompt, context slice, and potential child tasks.
+  Enables hierarchical RAG and composable LLM reasoning.
+
+type: object
+required:
+  - version
+  - root_task
+
+properties:
+  version:
+    type: string
+    pattern: "^1\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  root_task:
+    $ref: "#/$defs/TaskNode"
+
+  metadata:
+    $ref: "#/$defs/TreeMetadata"
+
+$defs:
+  TaskNode:
+    type: object
+    description: "A single node in the recursive task tree"
+    required:
+      - node_id
+      - prompt
+      - status
+    properties:
+      node_id:
+        type: string
+        pattern: "^task-[a-f0-9]{8}$"
+        description: "Unique identifier for this task node"
+        examples:
+          - "task-a1b2c3d4"
+
+      parent_id:
+        type: string
+        pattern: "^task-[a-f0-9]{8}$"
+        description: "Parent task ID (null for root)"
+        nullable: true
+
+      depth:
+        type: integer
+        minimum: 0
+        description: "Depth in tree (0 = root)"
+
+      prompt:
+        type: string
+        description: "The prompt/question for this task"
+        examples:
+          - "What are the security considerations for the authentication module?"
+          - "Extract all API endpoints from the codebase"
+
+      context:
+        $ref: "#/$defs/ContextReference"
+
+      children:
+        type: array
+        items:
+          $ref: "#/$defs/TaskNode"
+        description: "Child sub-tasks spawned from this task"
+
+      status:
+        type: string
+        enum: [pending, running, completed, failed, cancelled]
+        default: pending
+
+      result:
+        $ref: "#/$defs/TaskResult"
+
+      cost:
+        $ref: "#/$defs/CostTracking"
+
+      timestamps:
+        $ref: "#/$defs/Timestamps"
+
+      execution_config:
+        $ref: "#/$defs/ExecutionConfig"
+
+      decomposition_strategy:
+        type: string
+        enum: [parallel, sequential, conditional, map-reduce]
+        description: "How child tasks should be executed"
+        examples:
+          - "parallel: all children run simultaneously"
+          - "sequential: children run in order"
+          - "conditional: next child depends on previous result"
+          - "map-reduce: scatter-gather pattern"
+
+      merge_strategy:
+        type: string
+        enum: [concatenate, summarize, vote, best-of-n]
+        description: "How to combine child results"
+        examples:
+          - "concatenate: join all results"
+          - "summarize: LLM synthesis of all results"
+          - "vote: majority or consensus"
+          - "best-of-n: select highest quality"
+
+  ContextReference:
+    type: object
+    description: "Reference to context data for this task"
+    properties:
+      type:
+        type: string
+        enum: [full, slice, filtered, summary, none]
+        description: "Type of context provided"
+
+      source:
+        type: string
+        description: "Where context comes from"
+        examples:
+          - "retrieved_documents"
+          - "parent_result"
+          - "variable:doc_summary"
+          - "file:src/auth/login.ts"
+
+      documents:
+        type: array
+        items:
+          $ref: "#/$defs/DocumentReference"
+        description: "Specific documents in context"
+
+      size_tokens:
+        type: integer
+        description: "Approximate token count of context"
+
+      filters:
+        type: object
+        description: "Filters applied to context"
+        properties:
+          file_patterns:
+            type: array
+            items:
+              type: string
+          date_range:
+            type: object
+            properties:
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+          relevance_threshold:
+            type: number
+            minimum: 0
+            maximum: 1
+
+  DocumentReference:
+    type: object
+    description: "Reference to a specific document in context"
+    required:
+      - doc_id
+      - source
+    properties:
+      doc_id:
+        type: string
+        description: "Unique document identifier"
+
+      source:
+        type: string
+        description: "Document source path or URL"
+
+      chunk_ids:
+        type: array
+        items:
+          type: string
+        description: "Specific chunks if document is chunked"
+
+      relevance_score:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Relevance to task (from retrieval)"
+
+      excerpt:
+        type: string
+        description: "Brief excerpt or summary"
+
+  TaskResult:
+    type: object
+    description: "Result of task execution"
+    properties:
+      status:
+        type: string
+        enum: [success, partial, failed, cancelled]
+
+      output:
+        type: string
+        description: "Primary output from task"
+
+      output_type:
+        type: string
+        enum: [text, json, markdown, code, file_path]
+        default: text
+
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Confidence in result quality"
+
+      metadata:
+        type: object
+        description: "Additional result metadata"
+        properties:
+          model_used:
+            type: string
+          temperature:
+            type: number
+          seed:
+            type: integer
+          finish_reason:
+            type: string
+            enum: [stop, length, tool_use, error]
+
+      errors:
+        type: array
+        items:
+          type: object
+          properties:
+            message:
+              type: string
+            code:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+
+      artifacts:
+        type: array
+        items:
+          type: object
+          properties:
+            path:
+              type: string
+            type:
+              type: string
+            description:
+              type: string
+
+  CostTracking:
+    type: object
+    description: "Token and cost tracking per node"
+    properties:
+      input_tokens:
+        type: integer
+        minimum: 0
+        description: "Input tokens consumed"
+
+      output_tokens:
+        type: integer
+        minimum: 0
+        description: "Output tokens generated"
+
+      total_tokens:
+        type: integer
+        minimum: 0
+        description: "Total tokens (input + output)"
+
+      input_cost_usd:
+        type: number
+        minimum: 0
+        description: "Cost of input tokens"
+
+      output_cost_usd:
+        type: number
+        minimum: 0
+        description: "Cost of output tokens"
+
+      total_cost_usd:
+        type: number
+        minimum: 0
+        description: "Total cost for this node"
+
+      subtree_total_cost_usd:
+        type: number
+        minimum: 0
+        description: "Total cost including all descendants"
+
+      cache_hits:
+        type: integer
+        minimum: 0
+        description: "Number of cache hits (if caching enabled)"
+
+      cache_savings_usd:
+        type: number
+        minimum: 0
+        description: "Cost saved from caching"
+
+  Timestamps:
+    type: object
+    description: "Execution timestamps"
+    properties:
+      created_at:
+        type: string
+        format: date-time
+
+      started_at:
+        type: string
+        format: date-time
+
+      completed_at:
+        type: string
+        format: date-time
+
+      duration_ms:
+        type: integer
+        minimum: 0
+        description: "Execution duration in milliseconds"
+
+  ExecutionConfig:
+    type: object
+    description: "Execution configuration for this task"
+    properties:
+      model:
+        type: string
+        description: "Model to use for this task"
+        examples:
+          - "claude-sonnet-4.5"
+          - "gpt-5.3-codex"
+
+      temperature:
+        type: number
+        minimum: 0
+        maximum: 2
+        default: 0.7
+
+      seed:
+        type: integer
+        description: "Random seed for reproducibility"
+
+      max_tokens:
+        type: integer
+        minimum: 1
+        description: "Maximum tokens for response"
+
+      timeout_ms:
+        type: integer
+        minimum: 1000
+        description: "Task timeout in milliseconds"
+
+      retry_policy:
+        type: object
+        properties:
+          max_retries:
+            type: integer
+            minimum: 0
+            default: 3
+          backoff_ms:
+            type: integer
+            minimum: 0
+            default: 1000
+
+      cache_policy:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: false
+          ttl_seconds:
+            type: integer
+            minimum: 0
+
+  TreeMetadata:
+    type: object
+    description: "Metadata about the entire task tree"
+    properties:
+      tree_id:
+        type: string
+        pattern: "^tree-[a-f0-9]{8}$"
+        description: "Unique identifier for this tree"
+
+      root_prompt:
+        type: string
+        description: "Original user prompt that started this tree"
+
+      max_depth:
+        type: integer
+        minimum: 0
+        description: "Maximum depth reached in tree"
+
+      total_nodes:
+        type: integer
+        minimum: 1
+        description: "Total number of nodes in tree"
+
+      completed_nodes:
+        type: integer
+        minimum: 0
+        description: "Number of completed nodes"
+
+      failed_nodes:
+        type: integer
+        minimum: 0
+        description: "Number of failed nodes"
+
+      total_cost_usd:
+        type: number
+        minimum: 0
+        description: "Total cost across entire tree"
+
+      total_tokens:
+        type: integer
+        minimum: 0
+        description: "Total tokens across entire tree"
+
+      execution_mode:
+        type: string
+        enum: [strict, seeded, logged, default]
+        description: "Execution mode for reproducibility"
+
+      session_id:
+        type: string
+        description: "Session identifier for grouping trees"
+
+      created_at:
+        type: string
+        format: date-time
+
+      completed_at:
+        type: string
+        format: date-time
+        nullable: true
+
+      duration_ms:
+        type: integer
+        minimum: 0
+        nullable: true
+
+# Examples
+examples:
+  simple_tree:
+    version: "1.0.0"
+    root_task:
+      node_id: "task-a1b2c3d4"
+      parent_id: null
+      depth: 0
+      prompt: "Analyze security risks in the authentication module"
+      context:
+        type: slice
+        source: "retrieved_documents"
+        documents:
+          - doc_id: "doc-001"
+            source: "src/auth/login.ts"
+            relevance_score: 0.95
+        size_tokens: 5000
+      status: completed
+      result:
+        status: success
+        output: "Identified 3 security risks: (1) Missing rate limiting..."
+        confidence: 0.88
+      cost:
+        input_tokens: 5000
+        output_tokens: 1500
+        total_tokens: 6500
+        total_cost_usd: 0.065
+      children:
+        - node_id: "task-b2c3d4e5"
+          parent_id: "task-a1b2c3d4"
+          depth: 1
+          prompt: "What are the specific OWASP vulnerabilities in the authentication flow?"
+          context:
+            type: filtered
+            source: "parent_result"
+            size_tokens: 2000
+          status: completed
+          result:
+            status: success
+            output: "OWASP A01:2021 - Broken Access Control: Missing session timeout..."
+            confidence: 0.92
+          cost:
+            input_tokens: 2000
+            output_tokens: 800
+            total_tokens: 2800
+            total_cost_usd: 0.028
+        - node_id: "task-c3d4e5f6"
+          parent_id: "task-a1b2c3d4"
+          depth: 1
+          prompt: "Suggest concrete mitigations for the identified risks"
+          context:
+            type: summary
+            source: "parent_result"
+            size_tokens: 1000
+          status: completed
+          result:
+            status: success
+            output: "Mitigation strategies: (1) Implement rate limiting using redis..."
+            confidence: 0.85
+          cost:
+            input_tokens: 1000
+            output_tokens: 600
+            total_tokens: 1600
+            total_cost_usd: 0.016
+    metadata:
+      tree_id: "tree-12345678"
+      root_prompt: "Analyze security risks in the authentication module"
+      max_depth: 1
+      total_nodes: 3
+      completed_nodes: 3
+      failed_nodes: 0
+      total_cost_usd: 0.109
+      total_tokens: 10900
+      execution_mode: seeded
+      created_at: "2026-02-09T10:00:00Z"
+      completed_at: "2026-02-09T10:05:00Z"
+      duration_ms: 300000
+
+  map_reduce_tree:
+    version: "1.0.0"
+    root_task:
+      node_id: "task-root001"
+      depth: 0
+      prompt: "Summarize key points from all API documentation files"
+      decomposition_strategy: map-reduce
+      merge_strategy: summarize
+      status: completed
+      children:
+        - node_id: "task-map001"
+          parent_id: "task-root001"
+          depth: 1
+          prompt: "Summarize api-auth.md"
+          context:
+            type: full
+            source: "file:docs/api/api-auth.md"
+            size_tokens: 3000
+          status: completed
+        - node_id: "task-map002"
+          parent_id: "task-root001"
+          depth: 1
+          prompt: "Summarize api-users.md"
+          context:
+            type: full
+            source: "file:docs/api/api-users.md"
+            size_tokens: 2500
+          status: completed
+        - node_id: "task-reduce001"
+          parent_id: "task-root001"
+          depth: 1
+          prompt: "Combine and synthesize the summaries"
+          context:
+            type: summary
+            source: "parent_result"
+            size_tokens: 1000
+          status: completed
+
+# Storage paths
+storage_paths:
+  task_tree: ".aiwg/rlm/trees/{tree_id}/tree.json"
+  node_snapshot: ".aiwg/rlm/trees/{tree_id}/nodes/{node_id}.json"
+  tree_report: ".aiwg/rlm/trees/{tree_id}/report.md"
+
+# Visualization
+visualization:
+  formats:
+    - mermaid
+    - graphviz
+    - ascii_tree
+
+  mermaid_template: |
+    graph TD
+      {node_definitions}
+      {edges}
+
+    classDef completed fill:#90EE90
+    classDef failed fill:#FFB6C1
+    classDef running fill:#87CEEB
+    classDef pending fill:#D3D3D3
+
+# Agent protocol
+agent_protocol:
+  spawn_child_task:
+    description: "Create a child task node"
+    steps:
+      - generate_node_id
+      - set_parent_reference
+      - increment_depth
+      - define_prompt
+      - slice_context
+      - configure_execution
+      - add_to_tree
+
+  execute_node:
+    description: "Execute a single task node"
+    steps:
+      - validate_context
+      - prepare_prompt
+      - invoke_model
+      - capture_result
+      - update_cost_tracking
+      - set_status
+      - trigger_child_spawning_if_needed
+
+  merge_results:
+    description: "Combine child results according to strategy"
+    strategies:
+      concatenate:
+        - collect_all_child_outputs
+        - join_with_separator
+      summarize:
+        - collect_all_child_outputs
+        - invoke_summarization_model
+      vote:
+        - collect_all_child_outputs
+        - apply_voting_algorithm
+      best_of_n:
+        - collect_all_child_outputs
+        - rank_by_quality_score
+        - select_top_result
+
+# Limits and constraints
+limits:
+  max_depth: 5
+  max_children_per_node: 10
+  max_total_nodes: 100
+  max_context_tokens_per_node: 100000
+  timeout_per_node_ms: 300000
+
+# References
+references:
+  research:
+    - "Recursive Language Models (RLM) pattern"
+    - "Hierarchical RAG architectures"
+  implementation:
+    - "@tools/rlm/"
+    - "@agentic/code/addons/rlm/"
+  related:
+    - "@agentic/code/addons/rlm/schemas/rlm-state.yaml"
+    - "@agentic/code/addons/rlm/schemas/rlm-trajectory.yaml"
+    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"

@@ -1,0 +1,75 @@
+{
+  "id": "rlm",
+  "type": "addon",
+  "name": "Recursive Language Models",
+  "version": "1.0.0",
+  "description": "RLM-inspired recursive context decomposition for processing arbitrarily large codebases and document corpora through programmatic sub-agent delegation",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/ai-writing-guide",
+  "keywords": [
+    "rlm",
+    "recursive",
+    "long-context",
+    "decomposition",
+    "sub-agent",
+    "context-management",
+    "chunking",
+    "fan-out",
+    "batch"
+  ],
+  "researchFoundation": {
+    "REF-089": "Recursive Language Models (Zhang et al., 2026) — REPL-based recursive decomposition for 10M+ token processing",
+    "REF-018": "ReAct — TAO loop structure underlying RLM's iterative REPL",
+    "REF-022": "AutoGen — Sub-agent delegation patterns parallel to llm_query()",
+    "REF-015": "Self-Refine — Iterative refinement with best-output selection"
+  },
+  "entry": {
+    "agents": "agents/",
+    "commands": "commands/",
+    "skills": "skills/",
+    "rules": "rules/",
+    "schemas": "schemas/",
+    "templates": "templates/",
+    "docs": "docs/"
+  },
+  "agents": [
+    "rlm-agent"
+  ],
+  "commands": [
+    "rlm-query",
+    "rlm-batch",
+    "rlm-status"
+  ],
+  "skills": [
+    "rlm-mode"
+  ],
+  "rules": [
+    "rlm-context-management"
+  ],
+  "schemas": [
+    "rlm-task-tree",
+    "rlm-state",
+    "rlm-trajectory",
+    "rlm-cost"
+  ],
+  "templates": [
+    "cost-report"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": ["ralph", "aiwg-utils"]
+  },
+  "configuration": {
+    "defaults": {
+      "maxDepth": 3,
+      "maxSubCalls": 20,
+      "defaultSubModel": "sonnet",
+      "budgetTokens": 500000,
+      "parallelSubCalls": true,
+      "persistState": true
+    }
+  }
+}

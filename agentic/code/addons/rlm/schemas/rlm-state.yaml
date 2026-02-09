@@ -1,0 +1,601 @@
+# RLM State Schema
+# REPL-like state management with named variables for agentic workflows
+# Enables persistent state across recursive task execution
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/rlm-state/v1"
+title: "RLM State Schema"
+description: |
+  Schema for REPL-like state management where agents maintain named variables
+  that persist across task execution. Includes special variables like Final
+  (completion signal) and prompt (original input).
+
+type: object
+required:
+  - version
+  - state_id
+  - variables
+
+properties:
+  version:
+    type: string
+    pattern: "^1\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  state_id:
+    type: string
+    pattern: "^state-[a-f0-9]{8}$"
+    description: "Unique identifier for this state instance"
+    examples:
+      - "state-a1b2c3d4"
+
+  session_id:
+    type: string
+    description: "Session identifier for grouping related states"
+
+  tree_id:
+    type: string
+    pattern: "^tree-[a-f0-9]{8}$"
+    description: "Associated task tree ID if part of RLM execution"
+    nullable: true
+
+  variables:
+    $ref: "#/$defs/VariableStore"
+
+  history:
+    $ref: "#/$defs/StateHistory"
+
+  metadata:
+    $ref: "#/$defs/StateMetadata"
+
+$defs:
+  VariableStore:
+    type: object
+    description: "Named variable storage"
+    properties:
+      # Special variables
+      Final:
+        $ref: "#/$defs/Variable"
+        description: "Special variable indicating completion (null = not complete)"
+
+      prompt:
+        $ref: "#/$defs/Variable"
+        description: "Original user prompt/input"
+
+      # User-defined variables
+      additionalProperties:
+        $ref: "#/$defs/Variable"
+
+    examples:
+      - Final:
+          name: "Final"
+          value: "Authentication module analysis complete. 3 risks identified."
+          type: text
+          created_at: "2026-02-09T10:05:00Z"
+        prompt:
+          name: "prompt"
+          value: "Analyze security risks in the authentication module"
+          type: text
+          created_at: "2026-02-09T10:00:00Z"
+        security_risks:
+          name: "security_risks"
+          value: "file:.aiwg/rlm/state-a1b2c3d4/security-risks.json"
+          type: file_path
+          created_at: "2026-02-09T10:03:00Z"
+        risk_count:
+          name: "risk_count"
+          value: 3
+          type: number
+          created_at: "2026-02-09T10:04:00Z"
+
+  Variable:
+    type: object
+    description: "A single named variable in state"
+    required:
+      - name
+      - value
+      - type
+    properties:
+      name:
+        type: string
+        pattern: "^[a-zA-Z_][a-zA-Z0-9_]*$"
+        description: "Variable name (must be valid identifier)"
+        examples:
+          - "Final"
+          - "prompt"
+          - "doc_summary"
+          - "api_endpoints"
+          - "security_score"
+
+      value:
+        oneOf:
+          - type: string
+          - type: number
+          - type: boolean
+          - type: "null"
+          - type: object
+          - type: array
+        description: "Variable value (can be primitive, object, array, or file path)"
+
+      type:
+        type: string
+        enum: [text, number, boolean, null, json, array, file_path, file_content]
+        description: "Type of variable value"
+
+      description:
+        type: string
+        description: "Human-readable description of variable purpose"
+
+      source:
+        type: string
+        description: "Where this variable came from"
+        examples:
+          - "user_input"
+          - "task-a1b2c3d4"
+          - "retrieval_system"
+          - "computation"
+
+      created_at:
+        type: string
+        format: date-time
+        description: "When variable was created"
+
+      updated_at:
+        type: string
+        format: date-time
+        description: "Last update timestamp"
+
+      access_count:
+        type: integer
+        minimum: 0
+        description: "Number of times variable has been read"
+
+      metadata:
+        type: object
+        description: "Additional variable metadata"
+        properties:
+          read_only:
+            type: boolean
+            default: false
+          scope:
+            type: string
+            enum: [global, session, tree, temporary]
+            default: session
+          ttl_seconds:
+            type: integer
+            minimum: 0
+            description: "Time-to-live for temporary variables"
+
+  StateHistory:
+    type: object
+    description: "History of state mutations"
+    properties:
+      mutations:
+        type: array
+        items:
+          $ref: "#/$defs/StateMutation"
+        description: "Chronological log of all state changes"
+
+      checkpoints:
+        type: array
+        items:
+          $ref: "#/$defs/StateCheckpoint"
+        description: "Named checkpoints for rollback"
+
+  StateMutation:
+    type: object
+    description: "A single state mutation event"
+    required:
+      - mutation_id
+      - operation
+      - variable_name
+      - timestamp
+    properties:
+      mutation_id:
+        type: string
+        pattern: "^mut-[a-f0-9]{8}$"
+        description: "Unique mutation identifier"
+
+      operation:
+        type: string
+        enum: [create, update, delete, rename]
+        description: "Type of mutation"
+
+      variable_name:
+        type: string
+        description: "Variable affected"
+
+      old_value:
+        description: "Previous value (for update/delete)"
+        nullable: true
+
+      new_value:
+        description: "New value (for create/update)"
+        nullable: true
+
+      source:
+        type: string
+        description: "What caused this mutation"
+        examples:
+          - "task-a1b2c3d4"
+          - "user_edit"
+          - "agent_computation"
+
+      timestamp:
+        type: string
+        format: date-time
+
+      metadata:
+        type: object
+        properties:
+          reason:
+            type: string
+          task_node_id:
+            type: string
+
+  StateCheckpoint:
+    type: object
+    description: "Named checkpoint for state rollback"
+    required:
+      - checkpoint_id
+      - name
+      - timestamp
+    properties:
+      checkpoint_id:
+        type: string
+        pattern: "^ckpt-[a-f0-9]{8}$"
+        description: "Unique checkpoint identifier"
+
+      name:
+        type: string
+        description: "Human-readable checkpoint name"
+        examples:
+          - "before_decomposition"
+          - "after_retrieval"
+          - "pre_final_answer"
+
+      timestamp:
+        type: string
+        format: date-time
+
+      snapshot_path:
+        type: string
+        description: "Path to full state snapshot at this checkpoint"
+
+      description:
+        type: string
+        description: "What happened at this checkpoint"
+
+  StateMetadata:
+    type: object
+    description: "Metadata about the state instance"
+    properties:
+      created_at:
+        type: string
+        format: date-time
+
+      last_updated_at:
+        type: string
+        format: date-time
+
+      variable_count:
+        type: integer
+        minimum: 0
+        description: "Total number of variables"
+
+      mutation_count:
+        type: integer
+        minimum: 0
+        description: "Total number of mutations"
+
+      checkpoint_count:
+        type: integer
+        minimum: 0
+        description: "Total number of checkpoints"
+
+      total_size_bytes:
+        type: integer
+        minimum: 0
+        description: "Approximate size of all state data"
+
+      execution_config:
+        $ref: "#/$defs/ExecutionConfig"
+
+      completion_status:
+        type: string
+        enum: [incomplete, complete, error, cancelled]
+        description: "Overall completion status (based on Final variable)"
+
+  ExecutionConfig:
+    type: object
+    description: "Execution configuration for this state"
+    properties:
+      model:
+        type: string
+        description: "Default model for operations"
+
+      temperature:
+        type: number
+        minimum: 0
+        maximum: 2
+        default: 0.7
+
+      seed:
+        type: integer
+        description: "Random seed for reproducibility"
+
+      execution_mode:
+        type: string
+        enum: [strict, seeded, logged, default]
+        default: default
+
+      context_window_tokens:
+        type: integer
+        minimum: 1000
+        description: "Available context window size"
+
+# Special variable rules
+special_variables:
+  Final:
+    description: "Completion signal variable"
+    rules:
+      - "Must be null or undefined until task is complete"
+      - "When set to non-null value, indicates task completion"
+      - "Value should be final answer or summary"
+      - "Setting Final triggers completion handlers"
+    examples:
+      incomplete:
+        Final: null
+      complete:
+        Final: "Analysis complete: 3 security risks identified with mitigations proposed."
+
+  prompt:
+    description: "Original user input"
+    rules:
+      - "Set at state initialization"
+      - "Should be read-only after initialization"
+      - "Contains the original question/task"
+      - "Used for context in recursive calls"
+    examples:
+      prompt: "Analyze security risks in the authentication module"
+
+# Variable naming conventions
+naming_conventions:
+  recommended_patterns:
+    - "snake_case for multi-word names"
+    - "descriptive and clear"
+    - "avoid abbreviations unless common"
+  examples:
+    good:
+      - "doc_summary"
+      - "api_endpoints"
+      - "security_score"
+      - "error_count"
+    avoid:
+      - "ds"  # unclear abbreviation
+      - "x"   # non-descriptive
+      - "data1"  # numbered variables
+
+# Variable scopes
+scopes:
+  global:
+    description: "Available across all sessions"
+    use_cases:
+      - "Configuration settings"
+      - "Persistent cache"
+    storage: ".aiwg/rlm/global-state.json"
+
+  session:
+    description: "Available within one session"
+    use_cases:
+      - "User context"
+      - "Session preferences"
+    storage: ".aiwg/rlm/sessions/{session_id}/state.json"
+
+  tree:
+    description: "Available within one task tree"
+    use_cases:
+      - "Task-specific data"
+      - "Intermediate results"
+    storage: ".aiwg/rlm/trees/{tree_id}/state.json"
+
+  temporary:
+    description: "Short-lived, auto-deleted"
+    use_cases:
+      - "Transient computations"
+      - "Cache with TTL"
+    storage: ".aiwg/rlm/temp/{state_id}/state.json"
+
+# Examples
+examples:
+  basic_state:
+    version: "1.0.0"
+    state_id: "state-a1b2c3d4"
+    session_id: "sess-12345678"
+    tree_id: "tree-87654321"
+    variables:
+      Final: null
+      prompt:
+        name: "prompt"
+        value: "Find all TypeScript errors in the codebase"
+        type: text
+        source: "user_input"
+        created_at: "2026-02-09T10:00:00Z"
+      error_list:
+        name: "error_list"
+        value:
+          - file: "src/auth.ts"
+            line: 42
+            error: "Property 'token' does not exist on type 'User'"
+          - file: "src/utils.ts"
+            line: 15
+            error: "Cannot find name 'process'"
+        type: json
+        source: "task-scan001"
+        created_at: "2026-02-09T10:02:00Z"
+      total_errors:
+        name: "total_errors"
+        value: 2
+        type: number
+        source: "computation"
+        created_at: "2026-02-09T10:02:30Z"
+    history:
+      mutations:
+        - mutation_id: "mut-00000001"
+          operation: create
+          variable_name: "prompt"
+          new_value: "Find all TypeScript errors in the codebase"
+          source: "user_input"
+          timestamp: "2026-02-09T10:00:00Z"
+        - mutation_id: "mut-00000002"
+          operation: create
+          variable_name: "error_list"
+          new_value: [...]
+          source: "task-scan001"
+          timestamp: "2026-02-09T10:02:00Z"
+      checkpoints:
+        - checkpoint_id: "ckpt-init001"
+          name: "initial_state"
+          timestamp: "2026-02-09T10:00:00Z"
+          description: "State initialized with user prompt"
+    metadata:
+      created_at: "2026-02-09T10:00:00Z"
+      last_updated_at: "2026-02-09T10:02:30Z"
+      variable_count: 4
+      mutation_count: 3
+      checkpoint_count: 1
+      completion_status: incomplete
+
+  completed_state:
+    version: "1.0.0"
+    state_id: "state-b2c3d4e5"
+    variables:
+      Final:
+        name: "Final"
+        value: "Found 2 TypeScript errors. Both have been fixed."
+        type: text
+        source: "task-final001"
+        created_at: "2026-02-09T10:10:00Z"
+      prompt:
+        name: "prompt"
+        value: "Find all TypeScript errors in the codebase"
+        type: text
+        created_at: "2026-02-09T10:00:00Z"
+      fixes_applied:
+        name: "fixes_applied"
+        value: "file:.aiwg/rlm/state-b2c3d4e5/fixes.json"
+        type: file_path
+        created_at: "2026-02-09T10:08:00Z"
+    metadata:
+      completion_status: complete
+
+  file_reference_state:
+    version: "1.0.0"
+    state_id: "state-c3d4e5f6"
+    variables:
+      large_document:
+        name: "large_document"
+        value: "file:.aiwg/rlm/state-c3d4e5f6/document.txt"
+        type: file_path
+        description: "Large document stored externally to avoid bloating state"
+        created_at: "2026-02-09T10:00:00Z"
+      doc_summary:
+        name: "doc_summary"
+        value: "This document describes the authentication architecture..."
+        type: text
+        source: "task-summarize001"
+        created_at: "2026-02-09T10:01:00Z"
+
+# Storage paths
+storage_paths:
+  state_file: ".aiwg/rlm/states/{state_id}/state.json"
+  variable_data: ".aiwg/rlm/states/{state_id}/variables/"
+  checkpoints: ".aiwg/rlm/states/{state_id}/checkpoints/"
+  history_log: ".aiwg/rlm/states/{state_id}/history.jsonl"
+
+# Agent protocol
+agent_protocol:
+  initialize_state:
+    description: "Create new state instance"
+    steps:
+      - generate_state_id
+      - set_prompt_variable
+      - set_Final_to_null
+      - create_initial_checkpoint
+      - save_state
+
+  read_variable:
+    description: "Read variable from state"
+    steps:
+      - validate_variable_exists
+      - increment_access_count
+      - load_from_file_if_needed
+      - return_value
+
+  write_variable:
+    description: "Write or update variable"
+    steps:
+      - validate_variable_name
+      - capture_old_value
+      - set_new_value
+      - log_mutation
+      - save_to_file_if_large
+      - update_state
+
+  check_completion:
+    description: "Check if Final is set"
+    steps:
+      - read_Final_variable
+      - if_non_null: return_complete
+      - else: return_incomplete
+
+  checkpoint:
+    description: "Create state checkpoint"
+    steps:
+      - generate_checkpoint_id
+      - snapshot_current_state
+      - save_checkpoint
+      - update_metadata
+
+  rollback:
+    description: "Rollback to checkpoint"
+    steps:
+      - locate_checkpoint
+      - load_checkpoint_snapshot
+      - restore_state
+      - log_rollback_mutation
+
+# Integration with task tree
+task_tree_integration:
+  variable_passing:
+    description: "Pass variables between parent and child tasks"
+    patterns:
+      - "Parent sets variable, child reads"
+      - "Child sets variable, parent reads"
+      - "Sibling tasks share variables"
+
+  completion_propagation:
+    description: "Final variable propagation"
+    rules:
+      - "Leaf task sets Final → result returned to parent"
+      - "Parent can set Final when all children complete"
+      - "Final in root node signals entire tree completion"
+
+# Limits
+limits:
+  max_variables_per_state: 1000
+  max_variable_name_length: 128
+  max_inline_value_size_bytes: 10240  # 10KB, larger goes to file
+  max_history_entries: 10000
+  max_checkpoints: 100
+
+# References
+references:
+  related:
+    - "@agentic/code/addons/rlm/schemas/rlm-task-tree.yaml"
+    - "@agentic/code/addons/rlm/schemas/rlm-trajectory.yaml"
+    - "@tools/rlm/"
+  patterns:
+    - "REPL-style variable management"
+    - "Completion signals (Final variable)"
+    - "State checkpointing for recovery"
