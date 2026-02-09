@@ -445,12 +445,22 @@ export class TelegramAdapter extends BaseAdapter {
   }
 
   /**
-   * Handle a text message (parse commands).
+   * Handle a text message (parse commands or dispatch free-text).
    *
    * @param {Object} message
    */
   async #handleMessage(message) {
     const text = message.text.trim();
+
+    const context = {
+      chatId: String(message.chat.id),
+      messageId: message.message_id,
+      from: {
+        id: message.from.id,
+        username: message.from.username,
+        firstName: message.from.first_name,
+      },
+    };
 
     // Parse bot commands (format: /command or /command@botname)
     const commandMatch = text.match(/^\/([a-z_]+)(?:@\w+)?\s*(.*)/i);
@@ -459,17 +469,13 @@ export class TelegramAdapter extends BaseAdapter {
       const argsText = commandMatch[2];
       const args = argsText ? argsText.split(/\s+/) : [];
 
-      const context = {
-        chatId: String(message.chat.id),
-        messageId: message.message_id,
-        from: {
-          id: message.from.id,
-          username: message.from.username,
-          firstName: message.from.first_name,
-        },
-      };
-
       await this._dispatchCommand(command, args, context);
+      return;
+    }
+
+    // Non-command free-text message → dispatch to message handlers
+    if (this.hasMessageHandlers()) {
+      await this._dispatchMessage(text, context);
     }
   }
 

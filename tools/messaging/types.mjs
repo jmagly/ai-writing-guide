@@ -49,6 +49,11 @@ export const EventTopic = Object.freeze({
   // Daemon
   DAEMON_STARTED: 'daemon.started',
   DAEMON_STOPPING: 'daemon.stopping',
+
+  // Chat
+  CHAT_MESSAGE: 'chat.message',
+  CHAT_RESPONSE: 'chat.response',
+  CHAT_ERROR: 'chat.error',
 });
 
 /**
@@ -70,6 +75,7 @@ export const COMMANDS = Object.freeze({
   reject: { permission: CommandPermission.WRITE, description: 'Reject a pending HITL gate' },
   health: { permission: CommandPermission.READ, description: 'Run health check' },
   help: { permission: CommandPermission.READ, description: 'List available commands' },
+  ask: { permission: CommandPermission.READ, description: 'Ask AI a question (e.g., /ask what is our test coverage?)' },
 });
 
 /**

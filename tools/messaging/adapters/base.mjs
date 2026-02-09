@@ -51,6 +51,9 @@ export class BaseAdapter {
   /** @type {Function[]} */
   #commandHandlers = [];
 
+  /** @type {Function[]} */
+  #messageHandlers = [];
+
   constructor(platform) {
     if (new.target === BaseAdapter) {
       throw new Error('BaseAdapter is abstract — instantiate a platform-specific adapter');
@@ -109,6 +112,15 @@ export class BaseAdapter {
    */
   onCommand(handler) {
     this.#commandHandlers.push(handler);
+  }
+
+  /**
+   * Register a message handler for free-text (non-command) messages.
+   *
+   * @param {(text: string, context: Object) => Promise<void>} handler
+   */
+  onMessage(handler) {
+    this.#messageHandlers.push(handler);
   }
 
   /**
@@ -186,5 +198,33 @@ export class BaseAdapter {
         console.error(`[${this.platform}] Command handler error:`, error);
       }
     }
+  }
+
+  /**
+   * Dispatch a free-text message to registered message handlers.
+   *
+   * @param {string} text - The message text
+   * @param {Object} context - Platform-specific context
+   * @returns {Promise<void>}
+   */
+  async _dispatchMessage(text, context) {
+    this._recordReceive();
+    for (const handler of this.#messageHandlers) {
+      try {
+        await handler(text, { ...context, platform: this.platform });
+      } catch (error) {
+        this._recordError(error);
+        console.error(`[${this.platform}] Message handler error:`, error);
+      }
+    }
+  }
+
+  /**
+   * Check if any message handlers are registered.
+   *
+   * @returns {boolean}
+   */
+  hasMessageHandlers() {
+    return this.#messageHandlers.length > 0;
   }
 }

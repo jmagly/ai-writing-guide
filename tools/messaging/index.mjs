@@ -18,6 +18,7 @@ import {
   shutdownAll,
 } from './adapter-registry.mjs';
 import { CommandRouter } from './command-router.mjs';
+import { ChatHandler } from './chat-handler.mjs';
 import { COMMANDS, EventTopic } from './types.mjs';
 
 /**
@@ -39,10 +40,11 @@ import { COMMANDS, EventTopic } from './types.mjs';
  * @param {Object} [options]
  * @param {Object} [options.adapterConfigs] - Per-adapter config overrides
  * @param {string[]} [options.writeUsers] - User IDs with write permission
+ * @param {import('./chat-handler.mjs').ChatHandlerOptions} [options.chatHandler] - Chat handler config (enables 2-way AI chat)
  * @returns {Promise<MessagingHub|null>} null if no adapters enabled
  */
 export async function createMessagingHub(options = {}) {
-  const { adapterConfigs = {}, writeUsers = [] } = options;
+  const { adapterConfigs = {}, writeUsers = [], chatHandler: chatHandlerConfig } = options;
 
   // Discover and load adapters
   initializeRegistry();
@@ -102,11 +104,81 @@ export async function createMessagingHub(options = {}) {
     });
   }
 
+  // Wire 2-way AI chat if chatHandler config is provided
+  let chatHandler = null;
+  if (chatHandlerConfig !== false) {
+    chatHandler = new ChatHandler(chatHandlerConfig || {});
+
+    // Register /ask command → forwards to chat handler
+    router.registerHandler('ask', async (args, context) => {
+      const question = args.join(' ');
+      if (!question) {
+        return { success: false, error: 'Usage: /ask <question>' };
+      }
+
+      const result = await chatHandler.processMessage(question, {
+        chatId: context.chatId,
+        platform: context.platform,
+        from: context.from,
+      });
+
+      return { success: true, message: result.response };
+    });
+
+    // Wire free-text messages from adapters → chat handler → response
+    for (const [name, adapter] of adapters) {
+      adapter.onMessage(async (text, context) => {
+        bus.publish({
+          topic: EventTopic.CHAT_MESSAGE,
+          source: `${context.platform}-adapter`,
+          severity: 'info',
+          summary: `Chat message from ${context.from?.username || 'unknown'}`,
+          details: { text: text.slice(0, 100), platform: context.platform },
+          project: projectName,
+          timestamp: new Date().toISOString(),
+        });
+
+        const result = await chatHandler.processMessage(text, {
+          chatId: context.chatId,
+          platform: context.platform,
+          from: context.from,
+        });
+
+        // Send AI response back to the originating platform
+        const responseMessage = {
+          title: 'AI Response',
+          body: result.response,
+          severity: 'info',
+          fields: [],
+          project: projectName,
+          timestamp: new Date().toISOString(),
+        };
+
+        try {
+          await adapter.send(responseMessage, context.chatId);
+        } catch (error) {
+          console.error(`[messaging] Failed to send chat response to ${name}: ${error.message}`);
+          bus.publish({
+            topic: EventTopic.CHAT_ERROR,
+            source: 'messaging-hub',
+            severity: 'warning',
+            summary: `Failed to send chat response: ${error.message}`,
+            project: projectName,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    console.log('[messaging] 2-way AI chat enabled');
+  }
+
   console.log(`[messaging] Hub started with ${adapters.size} adapter(s): ${[...adapters.keys()].join(', ')}`);
 
   return {
     bus,
     router,
+    chatHandler,
     adapterCount: adapters.size,
 
     /**

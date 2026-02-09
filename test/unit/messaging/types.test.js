@@ -21,8 +21,8 @@ describe('Messaging Types', () => {
   });
 
   describe('EventTopic', () => {
-    it('exports all 19 event topics', () => {
-      expect(Object.keys(EventTopic)).toHaveLength(19);
+    it('exports all 22 event topics', () => {
+      expect(Object.keys(EventTopic)).toHaveLength(22);
     });
 
     it('exports all Ralph topics', () => {
@@ -61,6 +61,12 @@ describe('Messaging Types', () => {
       expect(EventTopic.DAEMON_STARTED).toBe('daemon.started');
       expect(EventTopic.DAEMON_STOPPING).toBe('daemon.stopping');
     });
+
+    it('exports all chat topics', () => {
+      expect(EventTopic.CHAT_MESSAGE).toBe('chat.message');
+      expect(EventTopic.CHAT_RESPONSE).toBe('chat.response');
+      expect(EventTopic.CHAT_ERROR).toBe('chat.error');
+    });
   });
 
   describe('CommandPermission', () => {
@@ -75,8 +81,8 @@ describe('Messaging Types', () => {
   });
 
   describe('COMMANDS', () => {
-    it('exports all 6 commands', () => {
-      expect(Object.keys(COMMANDS)).toHaveLength(6);
+    it('exports all 7 commands', () => {
+      expect(Object.keys(COMMANDS)).toHaveLength(7);
     });
 
     it('defines status command', () => {
@@ -121,7 +127,14 @@ describe('Messaging Types', () => {
       });
     });
 
-    it('has 4 read commands and 2 write commands', () => {
+    it('defines ask command', () => {
+      expect(COMMANDS.ask).toEqual({
+        permission: 'read',
+        description: 'Ask AI a question (e.g., /ask what is our test coverage?)',
+      });
+    });
+
+    it('has 5 read commands and 2 write commands', () => {
       const readCommands = Object.values(COMMANDS).filter(
         cmd => cmd.permission === 'read'
       );
@@ -129,7 +142,7 @@ describe('Messaging Types', () => {
         cmd => cmd.permission === 'write'
       );
 
-      expect(readCommands).toHaveLength(4);
+      expect(readCommands).toHaveLength(5);
       expect(writeCommands).toHaveLength(2);
     });
 
