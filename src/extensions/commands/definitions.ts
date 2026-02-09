@@ -121,10 +121,10 @@ export const useCommand: Extension = {
   id: 'use',
   type: 'command',
   name: 'Use',
-  description: 'Deploy SDLC, marketing, or writing framework to workspace',
+  description: 'Deploy SDLC, marketing, or writing framework (or addon) to workspace',
   version: '1.0.0',
-  capabilities: ['cli', 'framework', 'deployment'],
-  keywords: ['framework', 'install', 'deploy', 'use'],
+  capabilities: ['cli', 'framework', 'deployment', 'addon'],
+  keywords: ['framework', 'install', 'deploy', 'use', 'addon', 'rlm'],
   category: 'framework',
   platforms: {
     claude: 'full',

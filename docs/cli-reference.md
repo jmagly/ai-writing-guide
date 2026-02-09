@@ -150,22 +150,23 @@ aiwg --use-stable
 
 ### use
 
-Install and deploy framework to your project.
+Install and deploy framework or addon to your project.
 
 ```bash
-aiwg use <framework>
+aiwg use <framework|addon>
 ```
 
 **Arguments:**
 - `<framework>` - Framework name: `sdlc`, `marketing`, `writing`, `all`
+- `<addon>` - Addon name: `rlm`
 
 **Options:**
 - `--provider <name>` - Target platform (claude, copilot, factory, cursor, windsurf, warp, openai, opencode)
-- `--no-utils` - Skip aiwg-utils addon installation
+- `--no-utils` - Skip aiwg-utils addon installation (frameworks only)
 - `--force` - Overwrite existing deployments
 - `--dry-run` - Preview without making changes
 
-**Capabilities:** cli, framework, deployment
+**Capabilities:** cli, framework, deployment, addon
 **Platforms:** All
 **Tools:** Read, Write, Bash, Glob
 
@@ -184,6 +185,12 @@ aiwg use marketing
 # Deploy all frameworks
 aiwg use all
 
+# Deploy RLM addon (recursive context decomposition)
+aiwg use rlm
+
+# Deploy RLM addon to Codex
+aiwg use rlm --provider codex
+
 # Preview deployment without writing files
 aiwg use sdlc --dry-run
 ```
@@ -196,6 +203,12 @@ aiwg use sdlc --dry-run
 | **Marketing Kit** | `marketing` | Complete marketing campaign management |
 | **Writing Quality** | `writing` | Voice profiles and content validation |
 | **All** | `all` | Deploy all frameworks |
+
+**Addon options:**
+
+| Addon | ID | Description |
+|-------|-----|------------|
+| **RLM** | `rlm` | Recursive Language Models — recursive context decomposition for 10M+ token processing |
 
 **Platform targets:**
 

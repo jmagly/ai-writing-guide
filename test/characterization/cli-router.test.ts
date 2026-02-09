@@ -295,13 +295,13 @@ describe('CLI Router Characterization Tests', () => {
     describe('use command', () => {
       it('should require framework name', () => {
         const result = runCli(['use']);
-        expect(result.stderr).toMatch(/Framework name required/i);
+        expect(result.stderr).toMatch(/Framework or addon name required/i);
         expect(result.exitCode).toBe(1);
       });
 
       it('should reject unknown frameworks', () => {
         const result = runCli(['use', 'invalid-framework']);
-        expect(result.stderr).toMatch(/Unknown framework/i);
+        expect(result.stderr).toMatch(/Unknown target/i);
         expect(result.exitCode).toBe(1);
       });
 

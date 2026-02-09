@@ -35,6 +35,19 @@ const MODE_MAP: Record<Framework, string> = {
 };
 
 /**
+ * Valid addon identifiers (deployed independently via `aiwg use <addon>`)
+ */
+const VALID_ADDONS = ['rlm'] as const;
+type Addon = typeof VALID_ADDONS[number];
+
+/**
+ * Addon name to source directory mapping (relative to framework root)
+ */
+const ADDON_PATHS: Record<Addon, string> = {
+  rlm: 'agentic/code/addons/rlm',
+};
+
+/**
  * Provider to deployment paths mapping
  */
 const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands: string; rules: string }> = {
@@ -105,18 +118,70 @@ export class UseHandler implements CommandHandler {
     const framework = ctx.args[0];
     const remainingArgs = ctx.args.slice(1);
 
-    // Validate framework argument
+    // Validate target argument (framework or addon)
     if (!framework) {
       return {
         exitCode: 1,
-        message: 'Error: Framework name required\nAvailable: sdlc, marketing, writing, all',
+        message: 'Error: Framework or addon name required\nFrameworks: sdlc, marketing, writing, all\nAddons: rlm',
       };
     }
 
-    if (!VALID_FRAMEWORKS.includes(framework as Framework)) {
+    const isFramework = VALID_FRAMEWORKS.includes(framework as Framework);
+    const isAddon = VALID_ADDONS.includes(framework as Addon);
+
+    if (!isFramework && !isAddon) {
       return {
         exitCode: 1,
-        message: `Error: Unknown framework '${framework}'\nAvailable: sdlc, marketing, writing, all`,
+        message: `Error: Unknown target '${framework}'\nFrameworks: ${VALID_FRAMEWORKS.join(', ')}\nAddons: ${VALID_ADDONS.join(', ')}`,
+      };
+    }
+
+    // Handle addon-only deployment
+    if (isAddon) {
+      const providerIdx = remainingArgs.findIndex(a => a === '--provider' || a === '--platform');
+      const provider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : 'claude';
+      const targetIdx = remainingArgs.findIndex(a => a === '--target');
+      const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
+
+      const runner = createScriptRunner(ctx.frameworkRoot);
+      const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
+      if (provider) addonBaseArgs.push('--provider', provider);
+      if (target) addonBaseArgs.push('--target', target);
+
+      console.log(`\nDeploying ${framework} addon...`);
+      const frameworkRoot = await getFrameworkRoot();
+      const addonSource = path.join(frameworkRoot, ADDON_PATHS[framework as Addon]);
+      const addonResult = await runner.run('tools/agents/deploy-agents.mjs', [
+        '--source', addonSource,
+        ...addonBaseArgs,
+      ]);
+
+      if (addonResult.exitCode !== 0) {
+        return addonResult;
+      }
+
+      // Register deployed extensions
+      console.log('');
+      console.log('Registering deployed extensions...');
+      try {
+        const registry = getRegistry();
+        const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+        await registerDeployedExtensions(registry, {
+          agentsPath: paths.agents,
+          skillsPath: paths.skills,
+          commandsPath: paths.commands,
+          rulesPath: paths.rules,
+          provider,
+          cwd: target,
+        });
+        console.log('Extension registration complete');
+      } catch (error) {
+        console.error('Warning: Failed to register extensions:', error instanceof Error ? error.message : String(error));
+      }
+
+      return {
+        exitCode: 0,
+        message: `Successfully deployed ${framework} addon`,
       };
     }
 
