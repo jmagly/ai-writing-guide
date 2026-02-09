@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "loops": {
+    "ralph-compare-aiwg-s-ralph-system-ai-mlek65l8kmab": {
+      "loopId": "ralph-compare-aiwg-s-ralph-system-ai-mlek65l8kmab",
+      "pid": 1365721,
+      "objective": "compare AIWG's ralph system + AIWG feature set to https://moltbotai.ai/ and https://openclaw.ai/ create a htorugh cirital review of the three with a gap analysis for aiwg to achive parity/superiority",
+      "completionCriteria": "detailed analysis saved in appropriate place in .aiwg",
+      "status": "running",
+      "startedAt": "2026-02-09T02:34:05.141Z",
+      "lastUpdate": "2026-02-09T02:34:05.141Z",
+      "iteration": 0,
+      "maxIterations": 5,
+      "outputFile": "/mnt/dev-inbox/jmagly/ai-writing-guide/.aiwg/ralph-external/loops/ralph-compare-aiwg-s-ralph-system-ai-mlek65l8kmab/daemon-output.log"
+    }
+  },
+  "updatedAt": "2026-02-09T02:34:05.141Z"
+}
