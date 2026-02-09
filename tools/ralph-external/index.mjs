@@ -19,7 +19,7 @@ import { resolve } from 'path';
 import { Orchestrator } from './orchestrator.mjs';
 import { StateManager } from './state-manager.mjs';
 import { isClaudeAvailable, getClaudeVersion } from './session-launcher.mjs';
-import { createProvider, hasProvider } from './lib/provider-adapter.mjs';
+import { createProvider, hasProvider, ensureProvidersRegistered } from './lib/provider-adapter.mjs';
 import { MemoryManager } from './memory-manager.mjs';
 import { BestOutputTracker } from './best-output-tracker.mjs';
 import { IterationAnalytics } from './iteration-analytics.mjs';
@@ -252,6 +252,7 @@ async function main() {
   }
 
   // Check provider availability
+  await ensureProvidersRegistered();
   const providerName = options.provider || 'claude';
   if (!hasProvider(providerName)) {
     console.error(`Error: Unknown provider '${providerName}'. Available: claude, codex`);

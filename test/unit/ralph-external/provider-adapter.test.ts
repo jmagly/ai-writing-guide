@@ -17,6 +17,7 @@ let createProvider: any;
 let registerProvider: any;
 let listProviders: any;
 let hasProvider: any;
+let ensureProvidersRegistered: any;
 let ClaudeAdapter: any;
 let CodexAdapter: any;
 
@@ -27,6 +28,7 @@ beforeEach(async () => {
   registerProvider = adapterMod.registerProvider;
   listProviders = adapterMod.listProviders;
   hasProvider = adapterMod.hasProvider;
+  ensureProvidersRegistered = adapterMod.ensureProvidersRegistered;
 
   const claudeMod = await import('../../../tools/ralph-external/lib/claude-adapter.mjs');
   ClaudeAdapter = claudeMod.ClaudeAdapter;
@@ -94,6 +96,30 @@ describe('Provider Registry', () => {
   it('throws on unknown provider', () => {
     expect(() => createProvider('nonexistent')).toThrow('Unknown provider');
     expect(() => createProvider('nonexistent')).toThrow('Available providers');
+  });
+
+  // Regression test for race condition bug in tools/ralph-external/index.mjs
+  it('requires ensureProvidersRegistered() before hasProvider() returns accurate results', async () => {
+    // Import a fresh copy of the provider-adapter module to test registration flow
+    const freshMod = await import('../../../tools/ralph-external/lib/provider-adapter.mjs?t=' + Date.now());
+    const freshHasProvider = freshMod.hasProvider;
+    const freshEnsureProvidersRegistered = freshMod.ensureProvidersRegistered;
+
+    // BEFORE ensureProvidersRegistered(), hasProvider() may return false
+    // because registration is async and might not have completed yet
+    const beforeRegistration = freshHasProvider('claude');
+
+    // AFTER ensureProvidersRegistered(), hasProvider('claude') MUST return true
+    await freshEnsureProvidersRegistered();
+    const afterRegistration = freshHasProvider('claude');
+
+    // The bug was calling hasProvider() before awaiting ensureProvidersRegistered(),
+    // which caused a race condition. After the fix, awaiting ensures providers are registered.
+    expect(afterRegistration).toBe(true);
+
+    // Note: We can't reliably assert beforeRegistration === false because in test
+    // environment the registration might complete synchronously. The key invariant is:
+    // after ensureProvidersRegistered(), hasProvider() MUST work correctly.
   });
 });
 
