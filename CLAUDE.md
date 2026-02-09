@@ -207,8 +207,9 @@ aiwg version                 # Show version and channel
 aiwg doctor                  # Check installation health
 aiwg update                  # Check for updates
 
-# Framework management
+# Framework and addon management
 aiwg use sdlc                # Deploy SDLC framework
+aiwg use rlm                 # Deploy RLM addon
 aiwg use sdlc --provider copilot  # Deploy to GitHub Copilot
 aiwg list                    # List installed frameworks
 aiwg remove sdlc             # Remove framework
@@ -259,6 +260,9 @@ aiwg reproducibility-validate  # Validate workflow reproducibility
 | **Creating Extensions** | `@docs/extensions/creating-extensions.md` |
 | **Extension Types** | `@docs/extensions/extension-types.md` |
 | **SDLC Framework** | `@agentic/code/frameworks/sdlc-complete/README.md` |
+| **RLM Addon** | `@agentic/code/addons/rlm/README.md` |
+| **Daemon Mode** | `@docs/daemon-guide.md` |
+| **Messaging Integration** | `@docs/messaging-guide.md` |
 | **Voice Profiles** | `@agentic/code/addons/voice-framework/voices/templates/` |
 | **Natural Language Patterns** | `@docs/simple-language-translations.md` |
 | **Agent Catalog** | `@agentic/code/frameworks/sdlc-complete/agents/` |

@@ -5,6 +5,63 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.2.3] - 2026-02-09 – "Deep Context" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **RLM addon** | Process 10M+ tokens through recursive sub-agent decomposition |
+| **Daemon mode** | Background file watching, cron scheduling, IPC, tmux management |
+| **Messaging subsystem** | Bidirectional Slack, Discord, and Telegram bot integration |
+| **CLI addon support** | `aiwg use rlm` — addons are now first-class CLI targets |
+| **Copilot RLM artifacts** | RLM agents, skills, and rules deploy to GitHub Copilot |
+
+### Added
+
+**RLM Addon — Recursive Language Model Processing** (#321, #322-#329, #331):
+
+- New addon at `agentic/code/addons/rlm/` implementing recursive context decomposition based on REF-089 (Zhang et al., 2026)
+- 4 RLM agents: `rlm-orchestrator`, `rlm-chunk-processor`, `rlm-aggregator`, `rlm-quality-validator`
+- 3 RLM commands: `/rlm-query`, `/rlm-batch`, `/rlm-status`
+- 1 RLM skill: `rlm-mode` — detects large-scale operations and routes to RLM processing
+- 2 RLM rules: `rlm-context-management`, `rlm-subagent-scoping`
+- 5 RLM schemas: `rlm-config.yaml`, `rlm-chunk.yaml`, `rlm-result.yaml`, `rlm-cost.yaml`, `rlm-manifest.yaml`
+- 2 RLM docs: `README.md`, `rlm-patterns.md`
+- Deploy via `aiwg use rlm` or included automatically with `aiwg use sdlc` bundled addons
+- GitHub Copilot deployment: `.github/agents/rlm-*.yaml`, `.github/skills/rlm-mode/`, `.github/copilot-rules/rlm-context-management.md`
+
+**Daemon Mode** (#312):
+
+- Background daemon with file watching and cron-based task scheduling
+- IPC client/server for inter-process communication between daemon and CLI
+- Agent supervisor for managing long-running agent processes
+- Task store for persistent task queue management
+- REPL chat for interactive daemon sessions
+- Tmux manager for terminal multiplexing integration
+- Automation engine for event-driven workflow triggers
+- Full documentation at `docs/daemon-guide.md`
+
+**Messaging Subsystem** (#313):
+
+- Bidirectional chat handler supporting two-way conversations with AI agents
+- Slack, Discord, and Telegram bot adapters with unified interface
+- Base adapter improvements for consistent message handling across platforms
+- Hub chat wiring for routing messages between adapters and agents
+- Typed message system with structured message types
+- Full documentation at `docs/messaging-guide.md`
+
+**CLI Addon Support** (#328):
+
+- `aiwg use rlm` — addons are now first-class targets alongside frameworks
+- `VALID_ADDONS` and `ADDON_PATHS` constants in use handler for addon discovery
+- Updated CLI help text, command definitions, and extension metadata
+- Updated characterization tests for addon-aware error messages
+
+### Fixed
+
+- **Characterization test assertions** — Updated CLI router tests to match addon-aware error messages ("Framework or addon name required", "Unknown target")
+
+---
+
 ## [2026.2.2] - 2026-02-08
 
 ### Fixed

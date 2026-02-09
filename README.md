@@ -95,6 +95,7 @@ npm install -g aiwg
 cd your-project
 aiwg use sdlc              # Full SDLC framework
 aiwg use marketing         # Marketing framework
+aiwg use rlm               # RLM addon (recursive context decomposition)
 aiwg use all               # All frameworks
 
 # Or scaffold a new project
@@ -125,6 +126,7 @@ aiwg new my-project
 
 | Addon | What it does |
 |-------|--------------|
+| **[RLM](agentic/code/addons/rlm/)** | Recursive context decomposition for processing 10M+ tokens via sub-agent delegation |
 | **[Writing Quality](agentic/code/addons/writing-quality/)** | Content validation, AI pattern detection, voice profiles |
 | **[Testing Quality](agentic/code/addons/testing-quality/)** | TDD enforcement, mutation testing, flaky test detection |
 | **[Voice Framework](agentic/code/addons/voice-framework/)** | 4 built-in voice profiles with create/blend/apply skills |
@@ -152,6 +154,10 @@ aiwg new my-project
 
 # Long-running tasks with crash recovery (6-8 hours)
 /ralph-external "Migrate to TypeScript" --completion "npx tsc --noEmit exits 0"
+
+# Process massive codebases with recursive decomposition
+/rlm-query "src/**/*.ts" "Extract all exported interfaces" --model haiku
+/rlm-batch "src/components/*.tsx" "Add TypeScript types" --parallel 4
 
 # Deploy to production
 /flow-deploy-to-production
@@ -244,6 +250,9 @@ AIWG's unified extension system enables dynamic discovery, semantic search, and 
 ### Advanced Topics
 
 - **[Ralph Loop](docs/ralph-guide.md)** — Iterative task execution with crash recovery
+- **[RLM Addon](agentic/code/addons/rlm/README.md)** — Recursive context decomposition for 10M+ token processing
+- **[Daemon Mode](docs/daemon-guide.md)** — Background file watching, cron scheduling, IPC
+- **[Messaging Integration](docs/messaging-guide.md)** — Bidirectional Slack, Discord, and Telegram bots
 - **[Workspace Architecture](docs/architecture/workspace-architecture.md)** — Multi-framework isolation
 - **[Multi-Agent Orchestration](agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md)** — Parallel reviews and synthesis
 - **[MCP Server](docs/mcp/)** — Model Context Protocol integration
