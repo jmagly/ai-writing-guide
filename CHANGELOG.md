@@ -5,6 +5,44 @@ All notable changes to the AI Writing Guide (AIWG) project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.2.4] - 2026-02-09 – "Issue Thread" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **`/address-issues` command** | Issue-thread-driven ralph loops with 2-way human-AI collaboration via issue comments |
+| **Context window budget** | Configure `AIWG_CONTEXT_WINDOW` to control parallel subagent limits on local/GPU systems |
+| **`--interactive` and `--guidance`** | Standard AIWG parameters for discovery prompts and upfront direction |
+
+### Added
+
+**Issue-Driven Ralph Loop** (#333):
+
+- New `/address-issues` command for systematically working through open issues using issue threads as the collaboration surface
+- 3-step cycle protocol per issue: work → post structured status comment → scan thread for human feedback
+- Thread scanning classifies human comments (feedback, question, approval, correction) and responds substantively
+- Multi-issue strategies: sequential (default), batched (related issues), parallel (independent)
+- `--interactive` mode: discovery questions before starting, pause between issues for go/no-go
+- `--guidance` mode: upfront text direction to tailor prioritization without interactive prompts
+- `--branch-per-issue`, `--max-cycles`, `--filter`, `--all-open`, `--provider` parameters
+- Issue tracker support: Gitea (MCP tools) and GitHub (`gh` CLI)
+- New skill at `agentic/code/frameworks/sdlc-complete/skills/issue-driven-ralph/SKILL.md`
+- New command at `agentic/code/frameworks/sdlc-complete/commands/address-issues.md`
+- Natural language triggers: "address the open issues", "tackle issue 17", "work on the bug backlog", etc.
+- 12 NL phrase mappings added to `docs/simple-language-translations.md`
+- Design document at `.aiwg/planning/issue-driven-ralph-loop-design.md`
+
+**Context Window Budget Configuration**:
+
+- New `context-budget.md` rule in `agentic/code/addons/aiwg-utils/rules/` (deploys to all 8 platforms)
+- Users set `AIWG_CONTEXT_WINDOW: <tokens>` in CLAUDE.md team directives to declare context budget
+- Parallel subagent limits auto-scale: `max_parallel = max(1, floor(context_window / 50000))` capped at 20
+- Lookup table: ≤64k→1-2 agents, 65-128k→2-4, 129-256k→4-8, 257-512k→8-12, >512k→12-20
+- Compaction guidance: tighter budgets prefer sequential batches, smaller subagent tasks
+- Updated `subagent-scoping.md` Rule 7 to reference context budget instead of hardcoded values
+- Commented-out `AIWG_CONTEXT_WINDOW` directive added to CLAUDE.md team directives section
+
+---
+
 ## [2026.2.3] - 2026-02-09 – "Deep Context" Release
 
 | What changed | Why you care |
