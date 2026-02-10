@@ -316,7 +316,7 @@ git reset --hard HEAD~3  # Undo last 3 iterations
 2. Review [Best Practices](best-practices.md)
 3. Look at [Examples](examples/) for similar tasks
 4. Ask in Discord: https://discord.gg/BuAusFMxdA
-5. File issue: https://github.com/jmagly/ai-writing-guide/issues
+5. File issue: https://github.com/jmagly/aiwg/issues
 
 When reporting issues, include:
 - Task description

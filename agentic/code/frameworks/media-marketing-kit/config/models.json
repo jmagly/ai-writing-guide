@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jmagly/ai-writing-guide/mmk-models-config.json",
+  "$id": "https://github.com/jmagly/aiwg/mmk-models-config.json",
   "title": "AIWG MMK Model Configuration",
   "description": "Default model mappings for AIWG Media Marketing Kit framework deployment. Users can customize these values for their specific needs.",
   "version": "1.0.0",

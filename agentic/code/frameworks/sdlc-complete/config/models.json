@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jmagly/ai-writing-guide/models-config.json",
+  "$id": "https://github.com/jmagly/aiwg/models-config.json",
   "title": "AIWG Model Configuration",
   "description": "Default model mappings for AIWG SDLC framework deployment. Users can customize these values for their specific needs.",
   "version": "1.0.0",

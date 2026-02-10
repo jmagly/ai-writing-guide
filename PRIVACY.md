@@ -145,7 +145,7 @@ We comply by not collecting data in the first place. Universal compliance throug
 - Review generated artifacts for accidental secret inclusion
 
 **Framework security:**
-- Open source (audit the code: https://github.com/jmagly/ai-writing-guide)
+- Open source (audit the code: https://github.com/jmagly/aiwg)
 - No external dependencies for core functionality (22 scripts, zero npm packages)
 - No network calls except GitHub downloads and AI API (which you initiate)
 
@@ -162,7 +162,7 @@ We'll update this policy if our practices change (e.g., if we ever add analytics
 
 ## Contact
 
-**Questions?** [Open a GitHub issue](https://github.com/jmagly/ai-writing-guide/issues) or [start a discussion](https://github.com/jmagly/ai-writing-guide/discussions).
+**Questions?** [Open a GitHub issue](https://github.com/jmagly/aiwg/issues) or [start a discussion](https://github.com/jmagly/aiwg/discussions).
 
 **Email:** Not provided (to avoid spam). Use GitHub for all communication.
 
@@ -173,6 +173,6 @@ We'll update this policy if our practices change (e.g., if we ever add analytics
 3. **You own your artifacts**
 4. **Your AI provider may collect data** (read their policies)
 5. **No cookies, no tracking, no telemetry**
-6. **Open source** (audit anytime: https://github.com/jmagly/ai-writing-guide)
+6. **Open source** (audit anytime: https://github.com/jmagly/aiwg)
 
 **Privacy by design. Privacy by default. Privacy always.**

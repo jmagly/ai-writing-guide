@@ -270,7 +270,7 @@ gh issue list \
     "assignees": [{"login": "johndoe"}],
     "createdAt": "2026-01-10T10:00:00Z",
     "updatedAt": "2026-01-13T15:30:00Z",
-    "url": "https://github.com/jmagly/ai-writing-guide/issues/42"
+    "url": "https://github.com/jmagly/aiwg/issues/42"
   }
 ]
 ```

@@ -370,9 +370,9 @@ describe('ExtensionSchema', () => {
       ...validAgentExtension,
       author: 'John Magly',
       license: 'Apache-2.0',
-      repository: 'https://github.com/jmagly/ai-writing-guide',
+      repository: 'https://github.com/jmagly/aiwg',
       homepage: 'https://aiwg.io',
-      bugs: 'https://github.com/jmagly/ai-writing-guide/issues',
+      bugs: 'https://github.com/jmagly/aiwg/issues',
       documentation: {
         readme: 'README.md',
         guide: 'docs/guide.md',

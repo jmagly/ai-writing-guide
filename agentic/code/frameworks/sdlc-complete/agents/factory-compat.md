@@ -270,7 +270,7 @@ ls .factory/commands/  # Should show 42+ commands
 
 - **Factory AI Documentation**: https://docs.factory.ai/
 - **Factory Quickstart**: `docs/integrations/factory-quickstart.md`
-- **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
+- **AIWG Repository**: https://github.com/jmagly/aiwg
 - **Deployment Script**: `tools/agents/deploy-agents.mjs`
 
 ## Support
@@ -280,5 +280,5 @@ For Factory-specific questions:
 - **Factory GitHub**: Check Factory AI documentation for issue tracker
 
 For AIWG integration questions:
-- **AIWG Issues**: https://github.com/jmagly/ai-writing-guide/issues
-- **AIWG Discussions**: https://github.com/jmagly/ai-writing-guide/discussions
+- **AIWG Issues**: https://github.com/jmagly/aiwg/issues
+- **AIWG Discussions**: https://github.com/jmagly/aiwg/discussions

@@ -108,7 +108,7 @@ See `.github/workflows/` for:
 ### Resources
 
 - Website: https://aiwg.io
-- Repository: https://github.com/jmagly/ai-writing-guide
+- Repository: https://github.com/jmagly/aiwg
 - Cursor Docs: https://cursor.com/docs/cli/overview
 - Quick Start: `~/.local/share/ai-writing-guide/docs/integrations/cursor-quickstart.md`
 - Redeploy: `aiwg -deploy-agents --provider cursor --create-agents-md`

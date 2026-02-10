@@ -277,7 +277,7 @@ export interface Extension {
   /**
    * Repository URL
    *
-   * @example "https://github.com/jmagly/ai-writing-guide"
+   * @example "https://github.com/jmagly/aiwg"
    */
   repository?: string;
 
@@ -291,7 +291,7 @@ export interface Extension {
   /**
    * Bug tracker URL
    *
-   * @example "https://github.com/jmagly/ai-writing-guide/issues"
+   * @example "https://github.com/jmagly/aiwg/issues"
    */
   bugs?: string;
 

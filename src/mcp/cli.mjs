@@ -333,7 +333,7 @@ ENVIRONMENT:
   AIWG_ROOT    Path to AIWG installation (default: ~/.local/share/ai-writing-guide)
 
 For more information:
-  https://github.com/jmagly/ai-writing-guide
+  https://github.com/jmagly/aiwg
 `);
 }
 

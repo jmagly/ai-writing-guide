@@ -14,7 +14,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/
 
 # Custom repo/prefix/branch/alias-file
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh)" -- \
-  --repo https://github.com/jmagly/ai-writing-guide.git \
+  --repo https://github.com/jmagly/aiwg.git \
   --branch main \
   --prefix $HOME/.local/share/ai-writing-guide \
   --alias-file $HOME/.bash_aliases

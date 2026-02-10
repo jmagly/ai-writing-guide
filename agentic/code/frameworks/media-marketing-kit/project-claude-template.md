@@ -349,5 +349,5 @@ Starting orchestration..."
 
 ## Support
 
-- **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
-- **Issues**: https://github.com/jmagly/ai-writing-guide/issues
+- **AIWG Repository**: https://github.com/jmagly/aiwg
+- **Issues**: https://github.com/jmagly/aiwg/issues

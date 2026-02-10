@@ -1275,7 +1275,7 @@ jq '.iterations[-5:] | .[] | {
 
 For issues not covered in this guide:
 1. Check `.aiwg/ralph-external/{loop-id}/logs/` for detailed logs
-2. Search issues at: https://github.com/jmagly/ai-writing-guide/issues
+2. Search issues at: https://github.com/jmagly/aiwg/issues
 3. Create new issue with: loop ID, error messages, diagnostic output
 
 **Diagnostic Package:**

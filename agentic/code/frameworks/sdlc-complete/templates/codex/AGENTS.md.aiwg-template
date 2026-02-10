@@ -88,6 +88,6 @@ tool_timeout_sec = 60.0
 ### Resources
 
 - Website: https://aiwg.io
-- Repository: https://github.com/jmagly/ai-writing-guide
+- Repository: https://github.com/jmagly/aiwg
 - Quick Start: `~/.local/share/ai-writing-guide/docs/integrations/codex-quickstart.md`
 - Redeploy: `aiwg -deploy-agents --provider codex --create-agents-md`

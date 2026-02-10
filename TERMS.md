@@ -255,7 +255,7 @@ The Software is licensed under the **MIT License** (see LICENSE file). You may:
 
 ## Contact
 
-**Questions?** [Open a GitHub issue](https://github.com/jmagly/ai-writing-guide/issues) or [start a discussion](https://github.com/jmagly/ai-writing-guide/discussions).
+**Questions?** [Open a GitHub issue](https://github.com/jmagly/aiwg/issues) or [start a discussion](https://github.com/jmagly/aiwg/discussions).
 
 **Email:** Not provided (to avoid spam). Use GitHub for all communication.
 

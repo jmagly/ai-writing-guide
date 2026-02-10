@@ -132,7 +132,7 @@ Related Commands:
   aiwg ralph-abort         Abort running loop
   aiwg ralph-resume        Resume interrupted loop
 
-For more: https://github.com/jmagly/ai-writing-guide
+For more: https://github.com/jmagly/aiwg
 `);
 }
 

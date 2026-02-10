@@ -1768,7 +1768,7 @@ aiwg ralph-resume
 ## Support
 
 - **Documentation**: [https://aiwg.io/docs](https://aiwg.io/docs)
-- **GitHub Issues**: [https://github.com/jmagly/ai-writing-guide/issues](https://github.com/jmagly/ai-writing-guide/issues)
+- **GitHub Issues**: [https://github.com/jmagly/aiwg/issues](https://github.com/jmagly/aiwg/issues)
 - **Discord**: [https://discord.gg/BuAusFMxdA](https://discord.gg/BuAusFMxdA)
 - **Telegram**: [https://t.me/+oJg9w2lE6A5lOGFh](https://t.me/+oJg9w2lE6A5lOGFh)
 

@@ -206,7 +206,7 @@ const completeExtension: Extension = {
   },
   author: 'AIWG Contributors',
   license: 'MIT',
-  repository: 'https://github.com/jmagly/ai-writing-guide',
+  repository: 'https://github.com/jmagly/aiwg',
   status: 'stable',
 };
 

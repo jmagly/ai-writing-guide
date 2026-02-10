@@ -19,7 +19,7 @@ The AIWG marketplace hosts 4 official plugins:
 | **Core Utils** | `utils@aiwg` | Essential AIWG utilities and helpers | ~500 KB | 5 | 10 |
 | **Voice Framework** | `voice@aiwg` | Voice profiles and content validation | ~800 KB | 8 | 6 |
 
-**Registry Location:** `https://github.com/jmagly/ai-writing-guide`
+**Registry Location:** `https://github.com/jmagly/aiwg`
 
 **Manifest Format:** Claude Code plugin manifest (JSON)
 
@@ -102,7 +102,7 @@ Plugins can specify exact commit SHAs in the manifest:
   "id": "sdlc@aiwg",
   "version": "2026.2.0",
   "source": {
-    "repository": "https://github.com/jmagly/ai-writing-guide",
+    "repository": "https://github.com/jmagly/aiwg",
     "ref": "7529ae7abc123...",  // Full commit SHA
     "type": "commit"
   }
@@ -119,7 +119,7 @@ git rev-parse HEAD
 git rev-parse v2026.2.0
 
 # From GitHub
-# Navigate to: https://github.com/jmagly/ai-writing-guide/commits/main
+# Navigate to: https://github.com/jmagly/aiwg/commits/main
 # Click any commit → copy full SHA from URL
 ```
 
@@ -383,7 +383,7 @@ echo "Release SHA: $RELEASE_SHA"
 {
   "claudeCode": {
     "source": {
-      "repository": "https://github.com/jmagly/ai-writing-guide",
+      "repository": "https://github.com/jmagly/aiwg",
       "ref": "7529ae7abc123...",  // Update to $RELEASE_SHA
       "type": "commit"
     }
@@ -657,7 +657,7 @@ jobs:
 /plugin marketplace list
 
 # Verify repository access
-curl -I https://github.com/jmagly/ai-writing-guide
+curl -I https://github.com/jmagly/aiwg
 
 # Check plugin availability
 /plugin search aiwg
@@ -673,7 +673,7 @@ curl -I https://github.com/jmagly/ai-writing-guide
 2. Network issues:
    ```bash
    # Try direct install
-   /plugin install https://github.com/jmagly/ai-writing-guide --plugin sdlc
+   /plugin install https://github.com/jmagly/aiwg --plugin sdlc
    ```
 
 3. Plugin not found:

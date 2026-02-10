@@ -492,7 +492,7 @@ Adds native Cursor Editor support with single-file .cursor/rules integration.
 Creating pull request...
 ✓ All changes committed
 ✓ Pushed to origin: contrib/yourname/cursor-integration
-✓ PR created: https://github.com/jmagly/ai-writing-guide/pull/123
+✓ PR created: https://github.com/jmagly/aiwg/pull/123
 
 Next steps:
 - Monitor PR: aiwg -contribute-monitor cursor-integration
@@ -512,7 +512,7 @@ Next steps:
 **While waiting:**
 - Monitor status: `aiwg -contribute-monitor <feature>`
 - Start another contribution if desired
-- Join discussions: https://github.com/jmagly/ai-writing-guide/discussions
+- Join discussions: https://github.com/jmagly/aiwg/discussions
 
 **No response after 3 days?**
 Add polite comment: `gh pr comment <number> --body "Friendly ping for review"`
@@ -638,7 +638,7 @@ Committing changes and pushing...
 Posting PR comment...
 ✓ Comment posted: "All requested changes addressed. Re-ran validation (93/100)."
 
-PR updated: https://github.com/jmagly/ai-writing-guide/pull/123
+PR updated: https://github.com/jmagly/aiwg/pull/123
 ```
 
 > **Pro Tip:** Option 2 (Use AIWG agent) is fastest for straightforward changes. For complex changes requiring discussion, use option 4 to add a comment first.
@@ -992,7 +992,7 @@ PR Type: [1] feature
 Breaking Changes: no
 
 Creating PR...
-✓ PR created: https://github.com/jmagly/ai-writing-guide/pull/124
+✓ PR created: https://github.com/jmagly/aiwg/pull/124
 ```
 
 ### Step 6: Monitor and Respond
@@ -1070,7 +1070,7 @@ aiwg -contribute-abort cursor-integration
 
 **What happens now:**
 - Your code is part of AIWG's next release
-- You're listed as a contributor: https://github.com/jmagly/ai-writing-guide/graphs/contributors
+- You're listed as a contributor: https://github.com/jmagly/aiwg/graphs/contributors
 - Your GitHub profile shows the contribution
 
 **Keep your fork?**
@@ -1078,7 +1078,7 @@ aiwg -contribute-abort cursor-integration
 - No, if this was one-time → Delete fork: `gh repo delete yourname/ai-writing-guide`
 
 **What's next:**
-- Contribute again: Browse [good first issues](https://github.com/jmagly/ai-writing-guide/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+- Contribute again: Browse [good first issues](https://github.com/jmagly/aiwg/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 - Share your experience: Tweet/post about contributing to AIWG
 - Join discussions: Help other contributors in Discord/Discussions
 
@@ -1363,7 +1363,7 @@ If you encounter issues not covered here:
 
 1. **Check documentation:**
 
-   - [GitHub CONTRIBUTING.md](https://github.com/jmagly/ai-writing-guide/blob/main/CONTRIBUTING.md)
+   - [GitHub CONTRIBUTING.md](https://github.com/jmagly/aiwg/blob/main/CONTRIBUTING.md)
    - [Maintainer Guide](#contrib-maintainer)
 
 2. **Search existing issues:**
@@ -1412,7 +1412,7 @@ Now that you understand the contributor workflow:
 
 4. **Join the community:**
 
-   - Star the repo: https://github.com/jmagly/ai-writing-guide
+   - Star the repo: https://github.com/jmagly/aiwg
    - Watch for updates
    - Participate in discussions
 
@@ -1534,6 +1534,6 @@ Don't worry about memorizing these. Claude Code or Warp handles the details.
 aiwg -contribute-start <your-feature-name>
 ```
 
-**Questions?** Open a discussion: https://github.com/jmagly/ai-writing-guide/discussions
+**Questions?** Open a discussion: https://github.com/jmagly/aiwg/discussions
 
-**Found a bug in this guide?** Open an issue: https://github.com/jmagly/ai-writing-guide/issues
+**Found a bug in this guide?** Open an issue: https://github.com/jmagly/aiwg/issues

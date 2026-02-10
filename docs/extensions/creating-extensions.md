@@ -794,7 +794,7 @@ See:
 ## Support
 
 - **Discord**: [Join Server](https://discord.gg/BuAusFMxdA)
-- **GitHub Issues**: [Report Issues](https://github.com/jmagly/ai-writing-guide/issues)
+- **GitHub Issues**: [Report Issues](https://github.com/jmagly/aiwg/issues)
 - **Documentation**: [https://aiwg.io/docs](https://aiwg.io/docs)
 
 ---

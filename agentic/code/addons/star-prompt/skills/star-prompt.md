@@ -24,7 +24,7 @@ After the command has successfully completed its primary task:
    - Check if `gh` CLI is available
    - If available: Run `gh api -X PUT /user/starred/jmagly/ai-writing-guide`
    - If successful: Thank the user
-   - If unavailable or fails: Provide manual link https://github.com/jmagly/ai-writing-guide
+   - If unavailable or fails: Provide manual link https://github.com/jmagly/aiwg
 4. **If "No"**:
    - Thank the user politely and complete
 
@@ -66,13 +66,13 @@ If you found this helpful, would you like to star the repository on GitHub?
    - If fails (not authenticated, network error, etc.):
      ```
      Could not star via gh CLI. You can star manually at:
-     https://github.com/jmagly/ai-writing-guide
+     https://github.com/jmagly/aiwg
      ```
 
 3. If `gh` is not available:
    ```
    GitHub CLI (gh) not found. You can star the repository at:
-   https://github.com/jmagly/ai-writing-guide
+   https://github.com/jmagly/aiwg
    ```
 
 **If user selects "No thanks"**:

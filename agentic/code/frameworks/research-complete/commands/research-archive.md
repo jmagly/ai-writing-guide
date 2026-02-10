@@ -174,7 +174,7 @@ Each archive includes comprehensive metadata:
 ```yaml
 # bag-info.txt (BagIt metadata)
 Source-Organization: AIWG Research Corpus
-Organization-Address: https://github.com/jmagly/ai-writing-guide
+Organization-Address: https://github.com/jmagly/aiwg
 Contact-Name: AIWG Archival Agent
 Contact-Email: research@aiwg.io
 External-Description: Research paper archive for REF-022 (AutoGen)

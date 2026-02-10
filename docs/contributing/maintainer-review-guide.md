@@ -394,7 +394,7 @@ Changes requested on PR #123:
    Why: Ensures `aiwg -deploy-agents --platform cursor` works
 
 Post review? [y/n]: y
-✓ Review posted: https://github.com/jmagly/ai-writing-guide/pull/123
+✓ Review posted: https://github.com/jmagly/aiwg/pull/123
 
 Notification sent to @contributor
 Expected response time: 24-48 hours

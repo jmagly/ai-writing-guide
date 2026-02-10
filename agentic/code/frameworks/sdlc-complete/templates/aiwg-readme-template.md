@@ -151,11 +151,11 @@ This converts:
 
 ## Learn More
 
-- Full SDLC documentation: https://github.com/jmagly/ai-writing-guide
+- Full SDLC documentation: https://github.com/jmagly/aiwg
 - `.aiwg/` structure reference: See repository docs
 - SDLC command reference: `aiwg -help`
 
 ## Questions?
 
 This directory was created by the AI Writing Guide SDLC framework.
-For issues or questions: https://github.com/jmagly/ai-writing-guide/issues
+For issues or questions: https://github.com/jmagly/aiwg/issues

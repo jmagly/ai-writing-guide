@@ -1310,12 +1310,12 @@ Options:
    gh api -X PUT /user/starred/jmagly/ai-writing-guide
    ```
    - If successful: "⭐ Thank you for starring the AI Writing Guide! Your support helps the project grow."
-   - If fails: "Could not star via gh CLI. You can star manually at: https://github.com/jmagly/ai-writing-guide"
+   - If fails: "Could not star via gh CLI. You can star manually at: https://github.com/jmagly/aiwg"
 
 3. If `gh` is not available:
    ```
    GitHub CLI (gh) not found. You can star the repository at:
-   https://github.com/jmagly/ai-writing-guide
+   https://github.com/jmagly/aiwg
    ```
 
 **If user selects "No thanks"**:

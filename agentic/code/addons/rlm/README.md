@@ -383,4 +383,4 @@ Based on REF-089 benchmarks:
 
 **License**: MIT
 **Author**: AIWG Contributors
-**Repository**: https://github.com/jmagly/ai-writing-guide
+**Repository**: https://github.com/jmagly/aiwg

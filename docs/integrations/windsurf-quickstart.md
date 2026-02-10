@@ -263,5 +263,5 @@ See [Ralph Guide](../ralph-guide.md) for full documentation including `--provide
 ## Additional Resources
 
 **Windsurf Documentation**: [windsurf.ai/docs](https://windsurf.ai/docs)
-**AIWG Repository**: [github.com/jmagly/ai-writing-guide](https://github.com/jmagly/ai-writing-guide)
+**AIWG Repository**: [github.com/jmagly/aiwg](https://github.com/jmagly/aiwg)
 **Support**: [Discord](https://discord.gg/BuAusFMxdA) | [Telegram](https://t.me/+oJg9w2lE6A5lOGFh)

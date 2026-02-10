@@ -38,7 +38,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jmagly/ai-writing-guide.git"
+    "url": "git+https://github.com/jmagly/aiwg.git"
   },
   "keywords": [
     "aiwg",
@@ -60,7 +60,7 @@
   "author": "jmagly",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jmagly/ai-writing-guide/issues"
+    "url": "https://github.com/jmagly/aiwg/issues"
   },
   "homepage": "https://aiwg.io",
   "funding": {

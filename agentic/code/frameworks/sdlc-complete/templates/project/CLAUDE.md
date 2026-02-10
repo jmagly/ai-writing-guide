@@ -468,7 +468,7 @@ ls .claude/commands/flow-*.md
 
 ## Resources
 
-- **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
+- **AIWG Repository**: https://github.com/jmagly/aiwg
 - **Framework Documentation**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/README.md`
 - **Phase Workflows**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/`
 - **Template Library**: `$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/templates/`
@@ -476,9 +476,9 @@ ls .claude/commands/flow-*.md
 
 ## Support
 
-- **Issues**: https://github.com/jmagly/ai-writing-guide/issues
-- **Discussions**: https://github.com/jmagly/ai-writing-guide/discussions
-- **Documentation**: https://github.com/jmagly/ai-writing-guide/blob/main/README.md
+- **Issues**: https://github.com/jmagly/aiwg/issues
+- **Discussions**: https://github.com/jmagly/aiwg/discussions
+- **Documentation**: https://github.com/jmagly/aiwg/blob/main/README.md
 
 ---
 

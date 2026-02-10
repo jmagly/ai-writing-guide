@@ -86,7 +86,7 @@ Interested in supporting AIWG? Sponsorships help us:
 - Expand platform support
 - Keep the project free and open-source
 
-**Contact us:** [GitHub Discussions](https://github.com/jmagly/ai-writing-guide/discussions) or reach out directly to discuss sponsorship opportunities.
+**Contact us:** [GitHub Discussions](https://github.com/jmagly/aiwg/discussions) or reach out directly to discuss sponsorship opportunities.
 
 ---
 

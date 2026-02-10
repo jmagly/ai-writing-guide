@@ -1,7 +1,7 @@
 # Windsurf Compatibility (EXPERIMENTAL)
 
 > **WARNING**: Windsurf provider support is experimental and untested.
-> Please report issues at: https://github.com/jmagly/ai-writing-guide/issues
+> Please report issues at: https://github.com/jmagly/aiwg/issues
 
 ## Overview
 
@@ -215,7 +215,7 @@ configuration approaches:
 - **Windsurf Docs**: https://docs.windsurf.com/
 - **AGENTS.md Spec**: https://docs.windsurf.com/windsurf/cascade/agents-md
 - **Workflows**: https://docs.windsurf.com/windsurf/cascade/workflows
-- **AIWG Issues**: https://github.com/jmagly/ai-writing-guide/issues
+- **AIWG Issues**: https://github.com/jmagly/aiwg/issues
 - **AIWG Discord**: https://discord.gg/BuAusFMxdA
 
 ## Support
@@ -225,5 +225,5 @@ For Windsurf-specific questions:
 - **Windsurf Community**: Check Windsurf documentation for community links
 
 For AIWG integration questions:
-- **AIWG Issues**: https://github.com/jmagly/ai-writing-guide/issues
-- **AIWG Discussions**: https://github.com/jmagly/ai-writing-guide/discussions
+- **AIWG Issues**: https://github.com/jmagly/aiwg/issues
+- **AIWG Discussions**: https://github.com/jmagly/aiwg/discussions

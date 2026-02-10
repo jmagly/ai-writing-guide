@@ -65,6 +65,6 @@ Common commands:
 
 ### Resources
 
-- Repo: https://github.com/jmagly/ai-writing-guide
+- Repo: https://github.com/jmagly/aiwg
 - Quick Start: `~/.local/share/ai-writing-guide/docs/integrations/factory-quickstart.md`
 - Redeploy: `aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands --force`

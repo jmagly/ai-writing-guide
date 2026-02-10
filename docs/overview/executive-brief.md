@@ -200,9 +200,9 @@ aiwg use sdlc
 
 **Engage:**
 - **Website:** https://aiwg.io
-- **Repository:** https://github.com/jmagly/ai-writing-guide
+- **Repository:** https://github.com/jmagly/aiwg
 - **Discord:** https://discord.gg/BuAusFMxdA
-- **Issues:** https://github.com/jmagly/ai-writing-guide/issues
+- **Issues:** https://github.com/jmagly/aiwg/issues
 
 ---
 

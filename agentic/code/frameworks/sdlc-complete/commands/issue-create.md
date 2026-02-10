@@ -319,7 +319,7 @@ gh issue create \
 ```
 ✅ Issue created: #42
 
-View at: https://github.com/jmagly/ai-writing-guide/issues/42
+View at: https://github.com/jmagly/aiwg/issues/42
 
 Title: Implement user auth
 Status: open
@@ -613,7 +613,7 @@ File: .aiwg/issues/ISSUE-003.md
 ```
 ✅ Issue created: #128
 
-View at: https://github.com/jmagly/ai-writing-guide/issues/128
+View at: https://github.com/jmagly/aiwg/issues/128
 
 **Title**: Security audit
 **Status**: open

@@ -335,8 +335,8 @@ aiwg doctor
 ## Support
 
 - **Website**: https://aiwg.io
-- **Repository**: https://github.com/jmagly/ai-writing-guide
-- **Issues**: https://github.com/jmagly/ai-writing-guide/issues
+- **Repository**: https://github.com/jmagly/aiwg
+- **Issues**: https://github.com/jmagly/aiwg/issues
 - **Discord**: https://discord.gg/BuAusFMxdA
 - **Telegram**: https://t.me/+oJg9w2lE6A5lOGFh
 

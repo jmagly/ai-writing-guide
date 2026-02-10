@@ -142,7 +142,7 @@ Planned additions to this addon:
 For security questions or to report vulnerabilities:
 
 - **Documentation**: @agentic/code/frameworks/sdlc-complete/docs/token-security.md
-- **Issues**: https://github.com/jmagly/ai-writing-guide/issues
+- **Issues**: https://github.com/jmagly/aiwg/issues
 - **Security**: security@integrolabs.net (for vulnerability reports)
 
 ---

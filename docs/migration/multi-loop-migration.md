@@ -478,7 +478,7 @@ If you encounter issues not covered here:
 1. Check `.aiwg/ralph/registry.json` for loop state
 2. Review logs in `.aiwg/ralph/loops/{loop-id}/`
 3. Try `aiwg doctor` for diagnostic info
-4. Open issue: https://github.com/jmagly/ai-writing-guide/issues
+4. Open issue: https://github.com/jmagly/aiwg/issues
 5. Join Discord: https://discord.gg/BuAusFMxdA
 
 ## Document History

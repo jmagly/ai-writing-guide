@@ -25,6 +25,7 @@ dist/
 build/
 *.egg-info/
 *.tgz
+*.tar.gz
 
 # Temporary files
 *.tmp

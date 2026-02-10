@@ -468,8 +468,8 @@ The paper's emphasis on iterative refinement aligns with AIWG's core purpose:
 
 ### AIWG Documentation
 
-- [AIWG SDLC Framework README](https://github.com/jmagly/ai-writing-guide/blob/main/agentic/code/frameworks/sdlc-complete/README.md)
-- [AIWG CLAUDE.md](https://github.com/jmagly/ai-writing-guide/blob/main/CLAUDE.md)
+- [AIWG SDLC Framework README](https://github.com/jmagly/aiwg/blob/main/agentic/code/frameworks/sdlc-complete/README.md)
+- [AIWG CLAUDE.md](https://github.com/jmagly/aiwg/blob/main/CLAUDE.md)
 
 ## Revision History
 

@@ -540,7 +540,7 @@ File: .aiwg/issues/ISSUE-003.md
 ```
 ✅ Issue updated: #128
 
-View at: https://github.com/jmagly/ai-writing-guide/issues/128
+View at: https://github.com/jmagly/aiwg/issues/128
 
 **Updates**:
 - Assignee: unassigned → @security-team

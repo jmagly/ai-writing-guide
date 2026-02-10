@@ -128,7 +128,7 @@ Related Commands:
   aiwg ralph-abort --loop-id <id>     Abort specific loop
   aiwg ralph-resume --loop-id <id>    Resume paused loop
 
-For more: https://github.com/jmagly/ai-writing-guide
+For more: https://github.com/jmagly/aiwg
 `);
 }
 

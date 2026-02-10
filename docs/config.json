@@ -24,7 +24,7 @@
     "quickLinks": [
       { "label": "Get Started", "href": "#/quickstart" },
       { "label": "SDLC Framework", "href": "#/quickstart-sdlc" },
-      { "label": "View on GitHub", "href": "https://github.com/jmagly/ai-writing-guide" }
+      { "label": "View on GitHub", "href": "https://github.com/jmagly/aiwg" }
     ],
     "quote": "Stop writing prompts. Start shipping software."
   },

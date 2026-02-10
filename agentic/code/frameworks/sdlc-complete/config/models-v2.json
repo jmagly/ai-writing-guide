@@ -1,6 +1,6 @@
 {
-  "$schema": "https://github.com/jmagly/ai-writing-guide/schemas/models-v2.schema.json",
-  "$id": "https://github.com/jmagly/ai-writing-guide/models-config-v2.json",
+  "$schema": "https://github.com/jmagly/aiwg/schemas/models-v2.schema.json",
+  "$id": "https://github.com/jmagly/aiwg/models-config-v2.json",
   "title": "AIWG Model Configuration v2",
   "description": "Enhanced model configuration with tier system for AIWG SDLC framework",
   "version": "2.0.0",

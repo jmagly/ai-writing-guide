@@ -184,7 +184,7 @@ function loadModelConfig(srcRoot) {
 function displayWindsurfWarning() {
   console.log('\n' + '='.repeat(70));
   console.log('[EXPERIMENTAL] Windsurf provider support is experimental and untested.');
-  console.log('Please report issues: https://github.com/jmagly/ai-writing-guide/issues');
+  console.log('Please report issues: https://github.com/jmagly/aiwg/issues');
   console.log('='.repeat(70) + '\n');
 }
 
@@ -525,7 +525,7 @@ function generateWindsurfRules(srcRoot, target, opts, agentCount, commandCount, 
   lines.push('- **All Agents**: @AGENTS.md');
   lines.push('- **Templates**: @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/templates/');
   lines.push('- **Commands**: @~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/commands/');
-  lines.push('- **Repository**: https://github.com/jmagly/ai-writing-guide');
+  lines.push('- **Repository**: https://github.com/jmagly/aiwg');
   lines.push('</references>');
 
   const output = lines.join('\n');

@@ -480,7 +480,7 @@ Research Framework is part of the AI Writing Guide project. See main project doc
 ## Support
 
 - **Documentation**: `@agentic/code/frameworks/research-complete/`
-- **Issues**: https://github.com/jmagly/ai-writing-guide/issues
+- **Issues**: https://github.com/jmagly/aiwg/issues
 - **Discord**: https://discord.gg/BuAusFMxdA
 - **Telegram**: https://t.me/+oJg9w2lE6A5lOGFh
 

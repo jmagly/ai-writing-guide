@@ -12,7 +12,7 @@ aiwg use sdlc        # deploy SDLC framework
 [![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 [![npm downloads](https://img.shields.io/npm/dm/aiwg?color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/jmagly/ai-writing-guide?style=flat-square)](https://github.com/jmagly/ai-writing-guide/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/jmagly/ai-writing-guide?style=flat-square)](https://github.com/jmagly/aiwg/stargazers)
 
 [**Get Started**](#-quick-start) · [**Documentation**](#-documentation) · [**Examples**](examples/) · [**Contributing**](CONTRIBUTING.md) · [**Community**](#-community--support)
 
@@ -265,7 +265,7 @@ AIWG's unified extension system enables dynamic discovery, semantic search, and 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Quick contributions:**
-- Found an AI pattern? [Open an issue](https://github.com/jmagly/ai-writing-guide/issues/new)
+- Found an AI pattern? [Open an issue](https://github.com/jmagly/aiwg/issues/new)
 - Have a better rewrite? Submit a PR to `examples/`
 - Want to add an agent? Use `docs/development/agent-template.md`
 
@@ -276,8 +276,8 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - 🌐 **Website:** [aiwg.io](https://aiwg.io)
 - 💬 **Discord:** [Join Server](https://discord.gg/BuAusFMxdA)
 - 📱 **Telegram:** [Join Group](https://t.me/+oJg9w2lE6A5lOGFh)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/jmagly/ai-writing-guide/issues)
-- 💡 **Discussions:** [GitHub Discussions](https://github.com/jmagly/ai-writing-guide/discussions)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/jmagly/aiwg/issues)
+- 💡 **Discussions:** [GitHub Discussions](https://github.com/jmagly/aiwg/discussions)
 
 ---
 
@@ -329,7 +329,7 @@ Custom AI and blockchain solutions for the digital age.
 </tr>
 </table>
 
-**Interested in sponsoring?** [Contact us](https://github.com/jmagly/ai-writing-guide/discussions)
+**Interested in sponsoring?** [Contact us](https://github.com/jmagly/aiwg/discussions)
 
 ---
 

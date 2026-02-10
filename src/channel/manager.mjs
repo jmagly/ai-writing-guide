@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 const CONFIG_DIR = path.join(os.homedir(), '.aiwg');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'channel.json');
 const EDGE_INSTALL_PATH = path.join(os.homedir(), '.local', 'share', 'ai-writing-guide');
-const REPO_URL = 'https://github.com/jmagly/ai-writing-guide.git';
+const REPO_URL = 'https://github.com/jmagly/aiwg.git';
 
 /**
  * Default channel configuration

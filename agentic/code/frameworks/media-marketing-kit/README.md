@@ -822,13 +822,13 @@ For complete marketing execution, integrate with:
 
 ## Support and Resources
 
-- **Repository**: https://github.com/jmagly/ai-writing-guide
+- **Repository**: https://github.com/jmagly/aiwg
 - **Framework Documentation**: `/agentic/code/frameworks/media-marketing-kit/`
 - **Research Findings**: `.aiwg/planning/mmk-research/RESEARCH-SYNTHESIS.md`
 - **Template Library**: `/templates/`
 - **Agent Catalog**: `/agents/`
-- **Issues**: https://github.com/jmagly/ai-writing-guide/issues
-- **Discussions**: https://github.com/jmagly/ai-writing-guide/discussions
+- **Issues**: https://github.com/jmagly/aiwg/issues
+- **Discussions**: https://github.com/jmagly/aiwg/discussions
 
 ## Contributing
 

@@ -268,7 +268,7 @@ const COMMANDS = {
   github: {
     description: 'Open GitHub repo',
     handler: () => {
-      window.open('https://github.com/jmagly/ai-writing-guide', '_blank');
+      window.open('https://github.com/jmagly/aiwg', '_blank');
       appendLogEntry('NAV', 'Opened GitHub repository');
     },
   },

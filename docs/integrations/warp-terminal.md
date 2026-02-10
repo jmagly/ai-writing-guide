@@ -470,15 +470,15 @@ aiwg -setup-warp              # For Warp
 
 - **Warp Terminal**: https://www.warp.dev/
 - **Warp Rules Documentation**: https://docs.warp.dev/knowledge-and-collaboration/rules
-- **AIWG Repository**: https://github.com/jmagly/ai-writing-guide
+- **AIWG Repository**: https://github.com/jmagly/aiwg
 - **AIWG SDLC Framework**: `~/.local/share/ai-writing-guide/agentic/code/frameworks/sdlc-complete/README.md`
 
 ---
 
 ## Support
 
-- **Issues**: https://github.com/jmagly/ai-writing-guide/issues
-- **Discussions**: https://github.com/jmagly/ai-writing-guide/discussions
+- **Issues**: https://github.com/jmagly/aiwg/issues
+- **Discussions**: https://github.com/jmagly/aiwg/discussions
 - **Warp Support**: https://docs.warp.dev/
 
 ---
