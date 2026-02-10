@@ -4,7 +4,7 @@ This file provides guidance to AI platforms (Claude Code, Warp Terminal, Factory
 
 ## Repository Purpose
 
-This project uses the **AI Writing Guide Media/Marketing Kit (MMK) Framework** for marketing workflow management, campaign development, and creative production.
+This project uses the **AIWG Media/Marketing Kit (MMK) Framework** for marketing workflow management, campaign development, and creative production.
 
 ## MMK Framework Overview
 

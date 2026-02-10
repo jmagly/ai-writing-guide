@@ -28,7 +28,7 @@ properties:
 
   description:
     type: string
-    default: "AI Writing Guide MCP Server"
+    default: "AIWG MCP Server"
 
   protocol_version:
     type: string
@@ -267,7 +267,7 @@ wellknown_template:
     {
       "name": "aiwg-mcp",
       "version": "{{version}}",
-      "description": "AI Writing Guide MCP Server",
+      "description": "AIWG MCP Server",
       "protocol_version": "2024-11-05",
       "homepage": "https://aiwg.io",
       "capabilities": {

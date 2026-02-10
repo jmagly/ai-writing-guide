@@ -34,7 +34,7 @@ const __dirname = path.dirname(__filename);
  */
 function displayHelp() {
   console.log(`
-AI Writing Guide - Workspace Status Tool
+AIWG - Workspace Status Tool
 
 Shows workspace health, installed frameworks, and migration status.
 
@@ -167,7 +167,7 @@ async function workspaceStatus(args) {
       if (options.json) {
         console.log(JSON.stringify(result, null, 2));
       } else {
-        console.log('\nAI Writing Guide - Workspace Status');
+        console.log('\nAIWG - Workspace Status');
         console.log('='.repeat(60));
         console.log('');
         console.log('No .aiwg/ workspace found in this project.');
@@ -276,7 +276,7 @@ async function workspaceStatus(args) {
     }
 
     // Text output
-    console.log('\nAI Writing Guide - Workspace Status');
+    console.log('\nAIWG - Workspace Status');
     console.log('='.repeat(60));
     console.log('');
 

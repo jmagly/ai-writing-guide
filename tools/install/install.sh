@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# AI Writing Guide Installer
+# AIWG Installer
 # - Clones/updates the repository to an install location
 # - Registers CLI aliases: aiwg-deploy-agents, aiwg-new
 

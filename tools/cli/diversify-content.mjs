@@ -16,7 +16,7 @@ const program = new Command();
 
 program
   .name('aiwg-diversify')
-  .description('Generate diverse content variations demonstrating AI Writing Guide principles')
+  .description('Generate diverse content variations demonstrating AIWG principles')
   .version('1.0.0');
 
 program

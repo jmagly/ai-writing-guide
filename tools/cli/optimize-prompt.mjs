@@ -62,7 +62,7 @@ function parseArgs(args) {
 
 function showHelp() {
   console.log(`
-${color('AI Writing Guide - Prompt Optimizer', colors.bright + colors.cyan)}
+${color('AIWG - Prompt Optimizer', colors.bright + colors.cyan)}
 
 ${color('Usage:', colors.bright)} aiwg-optimize-prompt [options] <prompt|file>
 

@@ -9,7 +9,7 @@
 
 ## Overview
 
-The AI Writing Guide (AIWG) framework synthesizes findings from cognitive science, multi-agent systems, software engineering, and archival science to create a research-backed cognitive architecture for AI-augmented software development. This document provides a comprehensive review of the theoretical foundations, empirical evidence, and standards that inform AIWG's design decisions.
+The AIWG framework synthesizes findings from cognitive science, multi-agent systems, software engineering, and archival science to create a research-backed cognitive architecture for AI-augmented software development. This document provides a comprehensive review of the theoretical foundations, empirical evidence, and standards that inform AIWG's design decisions.
 
 AIWG is not a collection of prompt engineering heuristics—it is a systematic integration of established principles from multiple disciplines, operationalized through structured memory, multi-agent coordination, and closed-loop self-correction patterns.
 

@@ -1,8 +1,8 @@
-# AI Writing Guide - Comprehensive Roadmap
+# AIWG - Comprehensive Roadmap
 
 ## Project Vision
 
-Transform the AI Writing Guide from a focused writing improvement tool into the definitive resource for AI prompting,
+Transform the AIWG from a focused writing improvement tool into the definitive resource for AI prompting,
 model optimization, and subagent development - serving both individual users and enterprise pipeline developers.
 
 ## Current State Assessment
@@ -307,7 +307,7 @@ quality_metrics:
 
 ## Call to Action
 
-The AI Writing Guide represents more than documentation - it's a paradigm shift toward intelligent, specialized AI
+The AIWG represents more than documentation - it's a paradigm shift toward intelligent, specialized AI
 assistance. By combining natural writing principles with advanced agent architectures, we're building the future of
 AI-assisted development.
 

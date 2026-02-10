@@ -138,7 +138,7 @@ Use Read and Edit tools to identify and preserve user sections:
 
 # What to REPLACE:
 - Everything between "<!-- AIWG SDLC Framework (auto-updated) -->" marker and EOF
-- OR everything from "## AIWG (AI Writing Guide) SDLC Framework" to EOF
+- OR everything from "## AIWG SDLC Framework" to EOF
 - All subsections under ## AIWG
 
 # What to ADD if missing:
@@ -147,7 +147,7 @@ Use Read and Edit tools to identify and preserve user sections:
 
 **AIWG-managed section headings**:
 
-- `## AIWG (AI Writing Guide) SDLC Framework`
+- `## AIWG SDLC Framework`
 - `## Core Platform Orchestrator Role`
 - `## Natural Language Command Translation`
 - `## AIWG-Specific Rules`
@@ -247,7 +247,7 @@ echo "======================================================================="
 echo ""
 
 # Check 1: AIWG section updated
-if grep -q "## AIWG (AI Writing Guide) SDLC Framework" "$WARP_MD"; then
+if grep -q "## AIWG SDLC Framework" "$WARP_MD"; then
   echo "✓ AIWG section updated"
 else
   echo "❌ AIWG section not found after update"
@@ -354,7 +354,7 @@ This is a financial trading platform built with Python and FastAPI.
 <!-- AIWG SDLC Framework (auto-updated) -->
 <!-- Last updated: 2025-10-15 14:30:00 -->
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {...old AIWG section...}
 
@@ -389,7 +389,7 @@ This is a financial trading platform built with Python and FastAPI.
 <!-- AIWG SDLC Framework (auto-updated) -->
 <!-- Last updated: 2025-10-17 10:45:23 -->
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {...NEW orchestration guidance from template...}
 
@@ -413,7 +413,7 @@ This is a financial trading platform built with Python and FastAPI.
 
 ---
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {...old section...}
 ```
@@ -427,7 +427,7 @@ This is a financial trading platform built with Python and FastAPI.
 
 ...
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {...old section...}
 

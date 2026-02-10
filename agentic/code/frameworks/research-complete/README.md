@@ -466,7 +466,7 @@ aiwg research summarize REF-XXX --ocr
 
 ## Contributing
 
-Research Framework is part of the AI Writing Guide project. See main project documentation for contribution guidelines.
+Research Framework is part of the AIWG project. See main project documentation for contribution guidelines.
 
 ## References
 

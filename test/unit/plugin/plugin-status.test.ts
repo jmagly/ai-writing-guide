@@ -415,7 +415,7 @@ describe('PluginStatus', () => {
 
       const report = await pluginStatus.generateReport();
 
-      expect(report).toContain('AI Writing Guide - Plugin Status');
+      expect(report).toContain('AIWG - Plugin Status');
       expect(report).toContain('Summary:');
       expect(report).toContain('FRAMEWORKS');
       expect(report).toContain('test-framework');

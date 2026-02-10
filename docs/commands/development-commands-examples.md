@@ -720,5 +720,5 @@ Provide a complete, production-ready project structure that follows industry bes
 /commit "Add user authentication feature"
 ```
 
-These commands provide immediate value for common development tasks while following the AI Writing Guide principles of
+These commands provide immediate value for common development tasks while following the AIWG principles of
 authentic expertise and specific, actionable guidance.

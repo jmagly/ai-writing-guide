@@ -61,7 +61,7 @@ export function generateHelp(registry: ExtensionRegistry): string {
   const lines: string[] = [];
 
   // Header
-  lines.push('AIWG - AI Writing Guide CLI');
+  lines.push('AIWG CLI');
   lines.push('');
   lines.push('Usage: aiwg <command> [options]');
   lines.push('');

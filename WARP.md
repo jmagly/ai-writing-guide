@@ -1,4 +1,4 @@
-# AI Writing Guide
+# AIWG
 
 Framework for improving AI-generated content quality with voice profiles, validation tools, and specialized agents.
 
@@ -355,7 +355,7 @@ aiwg doctor
 
 ## What AIWG Is
 
-**AI Writing Guide (AIWG)** is a framework that provides AI coding assistants with structured workflows, specialized agents, and artifact management. It's not just documentation - it's an operational system that:
+**AIWG** is a framework that provides AI coding assistants with structured workflows, specialized agents, and artifact management. It's not just documentation - it's an operational system that:
 
 1. **Deploys agents** - Specialized AI personas (Test Engineer, Security Auditor, etc.) with defined tools and expertise
 2. **Manages artifacts** - All project documents (requirements, architecture, tests) live in `.aiwg/`

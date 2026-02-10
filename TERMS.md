@@ -5,7 +5,7 @@
 
 ## Overview
 
-The AI Writing Guide framework ("the Software") is an **agent toolset and prompting framework** for process automation, provided under the MIT License as open-source software.
+The AIWG framework ("the Software") is an **agent toolset and prompting framework** for process automation, provided under the MIT License as open-source software.
 
 **Current Features:**
 - **Writing Quality utilities** — Remove AI detection patterns, validate content
@@ -179,9 +179,9 @@ The Software is licensed under the **MIT License** (see LICENSE file). You may:
 
 **Not required, but appreciated:**
 
-- You are **not required** to credit the AI Writing Guide in generated artifacts
+- You are **not required** to credit the AIWG in generated artifacts
 - You are **not required** to disclose use of the Software
-- You **may** include attribution if you wish (e.g., "Generated with AI Writing Guide framework")
+- You **may** include attribution if you wish (e.g., "Generated with AIWG framework")
 - You **must** preserve the MIT License notice if distributing the framework code itself
 
 ## Data Collection and Privacy
@@ -278,7 +278,7 @@ The Software is licensed under the **MIT License** (see LICENSE file). You may:
 
 **MIT License**
 
-Copyright (c) 2025 AI Writing Guide Contributors
+Copyright (c) 2025 AIWG Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

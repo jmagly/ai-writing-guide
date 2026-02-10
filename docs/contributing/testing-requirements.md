@@ -1,6 +1,6 @@
 # AIWG Testing Requirements
 
-This document defines testing requirements for contributions to the AI Writing Guide toolkit.
+This document defines testing requirements for contributions to the AIWG toolkit.
 
 ## Regression Testing Requirements
 

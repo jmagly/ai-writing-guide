@@ -35,7 +35,7 @@ const __dirname = path.dirname(__filename);
  */
 function displayHelp() {
   console.log(`
-AI Writing Guide - Workspace Rollback Tool
+AIWG - Workspace Rollback Tool
 
 Rolls back workspace migration from backup.
 
@@ -160,7 +160,7 @@ async function rollbackWorkspace(args) {
     }
 
     // Display header
-    console.log('\nAI Writing Guide - Workspace Rollback');
+    console.log('\nAIWG - Workspace Rollback');
     console.log('='.repeat(80));
     console.log('');
 

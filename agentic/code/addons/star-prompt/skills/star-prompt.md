@@ -1,6 +1,6 @@
 # Star Prompt Skill
 
-**Purpose**: Tastefully ask users if they'd like to star the AI Writing Guide repository after completing regenerate or intake commands.
+**Purpose**: Tastefully ask users if they'd like to star the AIWG repository after completing regenerate or intake commands.
 
 **Usage**: Include this skill at the end of regenerate and intake commands by adding:
 
@@ -37,7 +37,7 @@ After the command has successfully completed its primary task:
 After completing the primary command successfully, present this message:
 
 ```
-The AI Writing Guide is an open-source project that helps improve AI-generated content.
+The AIWG is an open-source project that helps improve AI-generated content.
 If you found this helpful, would you like to star the repository on GitHub?
 ```
 
@@ -61,7 +61,7 @@ If you found this helpful, would you like to star the repository on GitHub?
      ```
    - If successful:
      ```
-     ⭐ Thank you for starring the AI Writing Guide! Your support helps the project grow.
+     ⭐ Thank you for starring the AIWG! Your support helps the project grow.
      ```
    - If fails (not authenticated, network error, etc.):
      ```
@@ -78,7 +78,7 @@ If you found this helpful, would you like to star the repository on GitHub?
 **If user selects "No thanks"**:
 
 ```
-No problem! Thanks for using the AI Writing Guide.
+No problem! Thanks for using the AIWG.
 ```
 
 ### Step 3: Complete

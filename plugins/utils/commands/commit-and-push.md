@@ -483,7 +483,7 @@ git push
 
 ## Project-Specific Conventions
 
-### AI Writing Guide Project
+### AIWG Project
 
 **Common Scopes**:
 - `agents`: SDLC agent definitions

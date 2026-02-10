@@ -31,7 +31,7 @@
  *
  * @example
  * // Output example:
- * AI Writing Guide - Workspace Migration
+ * AIWG - Workspace Migration
  * ================================================================================
  *
  * Detecting legacy workspace...
@@ -96,7 +96,7 @@ const __dirname = path.dirname(__filename);
  */
 function displayHelp() {
   console.log(`
-AI Writing Guide - Workspace Migration Tool
+AIWG - Workspace Migration Tool
 
 Migrates legacy .aiwg/ workspace structure to framework-scoped structure.
 
@@ -249,7 +249,7 @@ async function migrateWorkspace(args) {
     }
 
     // Display header
-    console.log('\nAI Writing Guide - Workspace Migration');
+    console.log('\nAIWG - Workspace Migration');
     console.log('='.repeat(80));
     console.log('');
 

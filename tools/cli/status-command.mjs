@@ -28,7 +28,7 @@
  *
  * @example
  * // Output example:
- * AI Writing Guide - Plugin Status
+ * AIWG - Plugin Status
  * ================================================================================
  *
  * FRAMEWORKS (2 installed)
@@ -579,7 +579,7 @@ function filterPlugins(plugins, options) {
  */
 function displayHelp() {
   console.log(`
-AI Writing Guide - Plugin Status Command
+AIWG - Plugin Status Command
 
 USAGE
   aiwg -status [options] [plugin-id]
@@ -686,7 +686,7 @@ export async function statusCommand(args) {
     }
 
     // Display header
-    console.log('\nAI Writing Guide - Plugin Status');
+    console.log('\nAIWG - Plugin Status');
     console.log('='.repeat(80));
 
     // Group by type

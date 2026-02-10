@@ -21,7 +21,7 @@ describe('generateHelp', () => {
     it('should generate header and usage', () => {
       const help = generateHelp(registry);
 
-      expect(help).toContain('AIWG - AI Writing Guide CLI');
+      expect(help).toContain('AIWG CLI');
       expect(help).toContain('Usage: aiwg <command> [options]');
     });
 
@@ -170,7 +170,7 @@ describe('generateHelp', () => {
       const help = generateHelp(registry);
 
       // Should still show structure
-      expect(help).toContain('AIWG - AI Writing Guide CLI');
+      expect(help).toContain('AIWG CLI');
       expect(help).toContain('Usage:');
       expect(help).toContain('Platform Options:');
       expect(help).toContain('Examples:');

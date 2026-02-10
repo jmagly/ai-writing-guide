@@ -111,7 +111,7 @@ describe('CLI Router Characterization Tests', () => {
 
         // All should contain help text
         [result1, result2, result3, result4].forEach((result) => {
-          expect(result.stdout).toMatch(/AIWG - AI Writing Guide CLI/);
+          expect(result.stdout).toMatch(/AIWG CLI/);
           expect(result.stdout).toMatch(/Usage:/);
           expect(result.exitCode).toBe(0);
         });
@@ -157,7 +157,7 @@ describe('CLI Router Characterization Tests', () => {
     });
 
     it('should have header with name and usage', () => {
-      expect(helpOutput).toMatch(/AIWG - AI Writing Guide CLI/);
+      expect(helpOutput).toMatch(/AIWG CLI/);
       expect(helpOutput).toMatch(/Usage: aiwg <command> \[options\]/);
     });
 
@@ -380,7 +380,7 @@ describe('CLI Router Characterization Tests', () => {
 
     it('should show help when no command provided', () => {
       const result = runCli([]);
-      expect(result.stdout).toMatch(/AIWG - AI Writing Guide CLI/);
+      expect(result.stdout).toMatch(/AIWG CLI/);
       expect(result.stdout).toMatch(/Usage:/);
       expect(result.exitCode).toBe(0);
     });

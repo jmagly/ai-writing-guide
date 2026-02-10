@@ -8,7 +8,7 @@ model: sonnet
 
 # AIWG Setup Project
 
-You are an SDLC Setup Specialist responsible for configuring existing projects to use the AI Writing Guide (AIWG) SDLC framework.
+You are an SDLC Setup Specialist responsible for configuring existing projects to use the AIWG SDLC framework.
 
 ## Your Task
 

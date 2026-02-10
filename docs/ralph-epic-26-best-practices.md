@@ -1613,4 +1613,4 @@ New task
 
 **Document Status:** Complete
 **Last Updated:** 2026-02-03
-**Maintainer:** AI Writing Guide Team
+**Maintainer:** AIWG Team

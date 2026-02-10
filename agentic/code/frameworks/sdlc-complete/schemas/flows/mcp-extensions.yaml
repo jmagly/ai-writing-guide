@@ -216,7 +216,7 @@ $defs:
             default: "1.0.0"
           description:
             type: string
-            default: "AI Writing Guide MCP Server"
+            default: "AIWG MCP Server"
           capabilities:
             type: array
             items:

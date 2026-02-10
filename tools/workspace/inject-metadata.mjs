@@ -25,7 +25,7 @@
  * node tools/workspace/inject-metadata.mjs --framework my-framework --write
  * ```
  *
- * @author AI Writing Guide
+ * @author AIWG
  * @version 1.0.0
  */
 

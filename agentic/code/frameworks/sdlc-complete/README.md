@@ -41,7 +41,7 @@ The SDLC Complete framework provides a comprehensive Plan → Act lifecycle for 
 
 ## Relationship to Core Repository
 
-This framework is part of the AI Writing Guide repository but serves as a standalone SDLC toolkit. The parent repository contains:
+This framework is part of the AIWG repository but serves as a standalone SDLC toolkit. The parent repository contains:
 
 - `/agents/` — General-purpose writing agents (content-diversifier, writing-validator, prompt-optimizer)
 - `/commands/` — General-purpose command documentation
@@ -51,7 +51,7 @@ The SDLC framework agents apply writing guide principles to software artifacts b
 
 ## Installation
 
-Use the AI Writing Guide CLI to deploy this framework:
+Use the AIWG CLI to deploy this framework:
 
 ```bash
 # Install CLI

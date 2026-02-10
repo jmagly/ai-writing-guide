@@ -8,9 +8,9 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 [Brief description of what this project does and its goals]
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
-This project uses the **AI Writing Guide SDLC framework** for software development lifecycle management.
+This project uses the **AIWG SDLC framework** for software development lifecycle management.
 
 ### What is AIWG?
 

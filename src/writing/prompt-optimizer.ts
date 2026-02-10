@@ -2,7 +2,7 @@
  * Prompt Optimization Engine
  *
  * Analyzes and improves prompts to reduce AI patterns and increase authentic output quality.
- * Incorporates AI Writing Guide principles to transform vague prompts into specific,
+ * Incorporates AIWG principles to transform vague prompts into specific,
  * constraint-rich instructions that produce human-like content.
  */
 
@@ -144,7 +144,7 @@ export class PromptOptimizer {
       if (result.improved) {
         improvements.push({
           type: 'constraints',
-          description: 'Added AI Writing Guide constraints',
+          description: 'Added AIWG constraints',
           before: optimized,
           after: result.prompt,
           impact: 'high'
@@ -551,7 +551,7 @@ export class PromptOptimizer {
   }
 
   /**
-   * Load principles from AI Writing Guide
+   * Load principles from AIWG
    */
   loadPrinciplesFromGuide(_guidePath: string): void {
     // This would read from the guide files

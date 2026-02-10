@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Writing Guide (AIWG) SDLC framework supports **Warp Terminal** through native `WARP.md` file integration. Warp automatically loads AIWG agents and commands as project context.
+The AIWG SDLC framework supports **Warp Terminal** through native `WARP.md` file integration. Warp automatically loads AIWG agents and commands as project context.
 
 ## Installation
 
@@ -125,7 +125,7 @@ aiwg -update-warp --target /path/to/project
 <!-- AIWG SDLC Framework (auto-updated) -->
 <!-- Last updated: 2025-10-17T20:42:48.420Z -->
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {AIWG orchestration context}
 

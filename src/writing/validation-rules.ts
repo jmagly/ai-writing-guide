@@ -1,7 +1,7 @@
 /**
  * Validation Rules Module
  *
- * Loads and manages validation rules from AI Writing Guide markdown files.
+ * Loads and manages validation rules from AIWG markdown files.
  * Provides structured rule definitions for banned phrases, AI patterns, and authenticity markers.
  */
 
@@ -32,7 +32,7 @@ export interface RuleSet {
 }
 
 /**
- * Loads validation rules from AI Writing Guide markdown files
+ * Loads validation rules from AIWG markdown files
  */
 export class ValidationRuleLoader {
   private ruleCache: Map<string, RuleSet> = new Map();
@@ -43,7 +43,7 @@ export class ValidationRuleLoader {
   }
 
   /**
-   * Load complete rule set from AI Writing Guide
+   * Load complete rule set from AIWG
    */
   async loadRuleSet(): Promise<RuleSet> {
     const cacheKey = this.guideBasePath || 'default';

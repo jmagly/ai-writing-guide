@@ -2,7 +2,7 @@
  * Traceability System Demonstration
  *
  * This script demonstrates the Requirements Traceability System
- * by scanning the AI Writing Guide project and generating reports.
+ * by scanning the AIWG project and generating reports.
  */
 
 import { TraceabilityChecker } from '../src/traceability/traceability-checker.js';

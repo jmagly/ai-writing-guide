@@ -769,7 +769,7 @@ function showWelcomeOnFirstInteraction() {
 
   appendLogEntry('SYSTEM', `AIWG Documentation Terminal
 
-Welcome to the AI Writing Guide documentation.
+Welcome to the AIWG documentation.
 
 Type "help" for available commands.
 Use the navigation panel or search to explore.

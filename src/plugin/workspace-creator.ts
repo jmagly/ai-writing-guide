@@ -218,7 +218,7 @@ export class WorkspaceCreator {
     } catch {
       await fs.writeFile(
         readmePath,
-        '# AIWG Workspace\n\nFramework-scoped workspace for AI Writing Guide.\n'
+        '# AIWG Workspace\n\nFramework-scoped workspace for AIWG.\n'
       );
     }
 

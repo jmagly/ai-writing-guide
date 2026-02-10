@@ -9,7 +9,7 @@
 
 ## Overview
 
-The AI Writing Guide (AIWG) framework incorporates specific mitigations for the four universal failure archetypes identified in LLM agentic research. These archetypes were catalogued through qualitative analysis of 900 agentic execution traces across multiple model sizes (32B to 671B parameters), demonstrating that **failure patterns are universal across scale** and require deliberate design countermeasures (REF-002, Roig 2025).
+The AIWG framework incorporates specific mitigations for the four universal failure archetypes identified in LLM agentic research. These archetypes were catalogued through qualitative analysis of 900 agentic execution traces across multiple model sizes (32B to 671B parameters), demonstrating that **failure patterns are universal across scale** and require deliberate design countermeasures (REF-002, Roig 2025).
 
 This document maps each archetype to AIWG's mitigation mechanisms, providing configuration examples and verification approaches.
 

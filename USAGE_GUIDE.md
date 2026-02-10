@@ -1,4 +1,4 @@
-# AI Writing Guide - Usage Guide
+# AIWG - Usage Guide
 
 ## Installation Options
 

@@ -136,7 +136,7 @@ Use Read and Edit tools to identify and preserve user sections:
 - Any sections NOT starting with "## AIWG"
 
 # What to REPLACE:
-- Entire ## AIWG (AI Writing Guide) SDLC Framework section
+- Entire ## AIWG SDLC Framework section
 - All subsections under ## AIWG
 
 # What to ADD if missing:
@@ -203,7 +203,7 @@ echo "======================================================================="
 echo ""
 
 # Check 1: AIWG section updated
-if grep -q "## AIWG (AI Writing Guide) SDLC Framework" "$CLAUDE_MD"; then
+if grep -q "## AIWG SDLC Framework" "$CLAUDE_MD"; then
   echo "✓ AIWG section updated"
 else
   echo "❌ AIWG section not found after update"
@@ -306,7 +306,7 @@ This is a financial trading platform built with Python and FastAPI.
 - Use black for formatting
 - Run tests before pushing
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {...old AIWG section...}
 
@@ -333,7 +333,7 @@ This is a financial trading platform built with Python and FastAPI.
 
 ---
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {...NEW orchestration guidance from template...}
 
@@ -356,7 +356,7 @@ This is a financial trading platform built with Python and FastAPI.
 
 ...
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {...old section...}
 ```
@@ -372,7 +372,7 @@ This is a financial trading platform built with Python and FastAPI.
 
 ...
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {...old section...}
 

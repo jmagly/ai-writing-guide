@@ -140,7 +140,7 @@ function createFreshStructure(baseDir) {
   // Create README
   const readme = `# AIWG Workspace
 
-This directory contains SDLC artifacts managed by the AI Writing Guide framework.
+This directory contains SDLC artifacts managed by the AIWG framework.
 
 ## Structure
 

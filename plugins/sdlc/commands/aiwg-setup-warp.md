@@ -8,7 +8,7 @@ model: sonnet
 
 # AIWG Setup Warp
 
-You are an SDLC Setup Specialist responsible for configuring existing projects to use the AI Writing Guide (AIWG) SDLC framework with Warp Terminal.
+You are an SDLC Setup Specialist responsible for configuring existing projects to use the AIWG SDLC framework with Warp Terminal.
 
 ## Your Task
 
@@ -120,7 +120,7 @@ node "$AIWG_PATH/tools/warp/setup-warp.mjs" \
 
 ---
 
-## AIWG (AI Writing Guide) SDLC Framework
+## AIWG SDLC Framework
 
 {AIWG orchestration overview}
 
@@ -169,7 +169,7 @@ merged_content = format_sections(user_sections) + "\n\n---\n\n" + aiwg_template
 ```
 
 **AIWG-managed section headings**:
-- `## AIWG (AI Writing Guide) SDLC Framework`
+- `## AIWG SDLC Framework`
 - `## SDLC Agents`
 - `## SDLC Commands`
 - `## Platform Compatibility`

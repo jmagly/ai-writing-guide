@@ -1,12 +1,12 @@
 # AIWG Configuration
 
-**Purpose**: Centralized configuration for AI Writing Guide (AIWG) SDLC framework paths and settings.
+**Purpose**: Centralized configuration for AIWG SDLC framework paths and settings.
 
 ## Configuration Variables
 
 ### Installation Paths
 
-**AIWG_ROOT**: Base installation path for AI Writing Guide framework
+**AIWG_ROOT**: Base installation path for AIWG framework
 - **Default**: `~/.local/share/ai-writing-guide`
 - **Detection**: Check for installer-created directory
 - **Fallback**: Use current repository root if installed path not found

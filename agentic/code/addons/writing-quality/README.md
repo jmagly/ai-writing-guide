@@ -17,7 +17,7 @@ The Writing Quality addon provides content validation and writing improvement ca
 | Agent | Purpose |
 |-------|---------|
 | `writing-validator` | Validates content for voice consistency and authenticity |
-| `prompt-optimizer` | Enhances prompts using AI Writing Guide principles |
+| `prompt-optimizer` | Enhances prompts using AIWG principles |
 | `content-diversifier` | Generates varied examples and perspectives |
 
 ### Content Directories

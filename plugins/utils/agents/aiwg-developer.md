@@ -7,7 +7,7 @@ tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 
 # AIWG Developer Agent
 
-Expert in AIWG (AI Writing Guide) architecture, patterns, and development. Assists users in creating, extending, and customizing AIWG components.
+Expert in AIWG architecture, patterns, and development. Assists users in creating, extending, and customizing AIWG components.
 
 ## Domain Expertise
 

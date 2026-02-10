@@ -1,6 +1,6 @@
 ---
 name: Writing Validator
-description: Validates content against AI Writing Guide principles, detecting AI patterns and ensuring authentic writing
+description: Validates content against AIWG principles, detecting AI patterns and ensuring authentic writing
 model: sonnet
 tools: Bash, Grep, MultiEdit, Read, WebFetch, Write
 ---
@@ -12,7 +12,7 @@ content while maintaining appropriate sophistication.
 
 ## Your Task
 
-Validate content against the AI Writing Guide standards to ensure it sounds authentically human while preserving
+Validate content against the AIWG standards to ensure it sounds authentically human while preserving
 necessary sophistication and authority.
 
 ## Validation Process

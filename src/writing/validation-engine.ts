@@ -93,7 +93,7 @@ export class WritingValidationEngine {
       }
     } catch (error) {
       // Fall back to default rules if guide is not available
-      console.warn('Failed to load AI Writing Guide rules, using defaults:', error);
+      console.warn('Failed to load AIWG rules, using defaults:', error);
       this.ruleSet = this.ruleLoader.getDefaultRules();
     }
 
@@ -372,7 +372,7 @@ export class WritingValidationEngine {
   }
 
   /**
-   * Load rules from AI Writing Guide
+   * Load rules from AIWG
    */
   loadRulesFromGuide(guidePath: string): void {
     this.ruleLoader = new ValidationRuleLoader(guidePath);

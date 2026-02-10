@@ -31,7 +31,7 @@ export const helpHandler: CommandHandler = {
  */
 function displayHelp(): void {
   console.log(`
-AIWG - AI Writing Guide CLI
+AIWG CLI
 
 Usage: aiwg <command> [options]
 

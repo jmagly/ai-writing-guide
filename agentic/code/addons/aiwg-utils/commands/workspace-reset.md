@@ -201,7 +201,7 @@ mkdir -p .aiwg/{intake,requirements,architecture,planning,risks,testing,security
 cat > .aiwg/README.md <<'EOF'
 # AIWG Workspace
 
-This directory contains SDLC artifacts managed by the AI Writing Guide framework.
+This directory contains SDLC artifacts managed by the AIWG framework.
 
 ## Structure
 

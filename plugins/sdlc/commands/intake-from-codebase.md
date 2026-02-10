@@ -1290,7 +1290,7 @@ After successfully generating all intake documents, offer the user an opportunit
 
 **Prompt**:
 ```
-The AI Writing Guide is an open-source project that helps improve AI-generated content.
+The AIWG is an open-source project that helps improve AI-generated content.
 If you found this helpful, would you like to star the repository on GitHub?
 
 Options:
@@ -1309,7 +1309,7 @@ Options:
    ```bash
    gh api -X PUT /user/starred/jmagly/ai-writing-guide
    ```
-   - If successful: "⭐ Thank you for starring the AI Writing Guide! Your support helps the project grow."
+   - If successful: "⭐ Thank you for starring the AIWG! Your support helps the project grow."
    - If fails: "Could not star via gh CLI. You can star manually at: https://github.com/jmagly/aiwg"
 
 3. If `gh` is not available:
@@ -1320,7 +1320,7 @@ Options:
 
 **If user selects "No thanks"**:
 ```
-No problem! Thanks for using the AI Writing Guide.
+No problem! Thanks for using the AIWG.
 ```
 
 ## References

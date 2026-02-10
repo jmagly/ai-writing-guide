@@ -1,6 +1,6 @@
 # AIWG Troubleshooting Guide
 
-Quick solutions for common issues with the AI Writing Guide framework.
+Quick solutions for common issues with the AIWG framework.
 
 ## Topics
 

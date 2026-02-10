@@ -5,7 +5,7 @@
 
 ## Overview
 
-The AI Writing Guide framework ("the Software") is designed with privacy as a core principle. **We collect zero data. Period.**
+The AIWG framework ("the Software") is designed with privacy as a core principle. **We collect zero data. Period.**
 
 ## Data Collection
 

@@ -1,6 +1,6 @@
 # CommandSmith
 
-Platform-aware slash command generator for AI Writing Guide.
+Platform-aware slash command generator for AIWG.
 
 ## Overview
 
@@ -430,4 +430,4 @@ See `.claude/rules/sdlc-orchestration.md` for orchestration patterns.
 
 ## License
 
-Part of the AI Writing Guide project.
+Part of the AIWG project.

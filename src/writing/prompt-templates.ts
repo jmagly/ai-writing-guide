@@ -1,7 +1,7 @@
 /**
  * Prompt Template Library
  *
- * Pre-optimized prompt templates that incorporate AI Writing Guide principles.
+ * Pre-optimized prompt templates that incorporate AIWG principles.
  * Templates are designed to produce authentic, human-like output by including
  * specific constraints, examples, and voice guidance.
  */

@@ -3,7 +3,7 @@
  * New Project Scaffolder
  *
  * Create a minimal project structure with intake templates, settings.json configuration,
- * and a README tailored to the AI Writing Guide framework. Intended to be invoked via
+ * and a README tailored to the AIWG framework. Intended to be invoked via
  * alias `aiwg-new` and run in the target project directory.
  *
  * Features:
@@ -208,7 +208,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
   const readmePath = path.resolve(process.cwd(), 'README.md');
   if (!fs.existsSync(readmePath)) {
     const readme = `# ${name}\n\n` +
-      `This project uses the AI Writing Guide SDLC Complete framework.\n\n` +
+      `This project uses the AIWG SDLC Complete framework.\n\n` +
       `## Getting Started\n\n` +
       `### 1. Fill Intake Forms\n\n` +
       `Start by completing the intake forms in the \`.aiwg/intake/\` directory:\n\n` +

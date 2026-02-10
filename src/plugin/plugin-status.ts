@@ -343,7 +343,7 @@ export class PluginStatus {
     const lines: string[] = [];
 
     // Header
-    lines.push('AI Writing Guide - Plugin Status');
+    lines.push('AIWG - Plugin Status');
     lines.push('='.repeat(80));
     lines.push('');
 

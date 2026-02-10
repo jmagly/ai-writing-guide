@@ -1,6 +1,6 @@
 # AIWG Development Kit Overview
 
-The AIWG Development Kit provides tools for creating, extending, and customizing the AI Writing Guide framework ecosystem.
+The AIWG Development Kit provides tools for creating, extending, and customizing the AIWG framework ecosystem.
 
 ## Three-Tier Plugin Taxonomy
 

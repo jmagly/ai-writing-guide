@@ -2,7 +2,7 @@
 
 ## AIWG Framework
 
-This project uses the AI Writing Guide (AIWG) framework for structured SDLC workflows.
+This project uses the AIWG framework for structured SDLC workflows.
 
 ### Core Concepts
 

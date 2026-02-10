@@ -18,7 +18,7 @@ These rules apply when working with agent definitions and multi-provider deploym
 
 **General-Purpose Writing Agents** (`agentic/code/agents/`):
 - `writing-validator` - Validates voice consistency and authenticity
-- `prompt-optimizer` - Enhances prompts using AI Writing Guide principles
+- `prompt-optimizer` - Enhances prompts using AIWG principles
 - `content-diversifier` - Generates varied examples and perspectives
 
 **SDLC Framework Agents** (`agentic/code/frameworks/sdlc-complete/agents/`):

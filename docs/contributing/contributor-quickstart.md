@@ -35,7 +35,7 @@ gh --version && node --version && git --version
 
 ## Overview
 
-Contributing to the AI Writing Guide (AIWG) is different from typical open source projects. You'll use AIWG's own Software Development Lifecycle (SDLC) framework to develop your feature—using AIWG to build AIWG (dogfooding). This feedback loop improves both your contribution and the framework itself.
+Contributing to AIWG is different from typical open source projects. You'll use AIWG's own Software Development Lifecycle (SDLC) framework to develop your feature—using AIWG to build AIWG (dogfooding). This feedback loop improves both your contribution and the framework itself.
 
 **What makes this unique:**
 

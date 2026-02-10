@@ -565,7 +565,7 @@ This avoids modifying the model's vocabulary.
 
 ---
 
-## Implications for AI Writing Guide
+## Implications for AIWG
 
 ### 1. Self-Improving Agents
 

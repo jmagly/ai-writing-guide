@@ -1006,7 +1006,7 @@ export class ExampleGenerator {
   private exportAsMarkdown(examples: GeneratedExample[]): string {
     const lines: string[] = [];
 
-    lines.push('# AI Writing Guide - Example Corpus\n');
+    lines.push('# AIWG - Example Corpus\n');
     lines.push(`Generated: ${new Date().toISOString()}`);
     lines.push(`Total Examples: ${examples.length}\n`);
     lines.push('---\n');
@@ -1040,7 +1040,7 @@ export class ExampleGenerator {
   private exportAsHTML(examples: GeneratedExample[]): string {
     const html: string[] = [];
     html.push('<!DOCTYPE html><html><head><title>Examples</title></head><body>');
-    html.push(`<h1>AI Writing Guide Examples (${examples.length})</h1>`);
+    html.push(`<h1>AIWG Examples (${examples.length})</h1>`);
     examples.forEach((ex, idx) => {
       html.push(`<div class="example"><h2>Example ${idx + 1}</h2>`);
       html.push(`<h3>Before (${ex.score.before})</h3><p>${this.escapeHtml(ex.before)}</p>`);

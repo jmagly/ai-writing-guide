@@ -172,7 +172,7 @@ async function cleanup() {
 
 // Run tests
 async function main() {
-  console.log('\n=== AI Writing Guide - Status Command Display Test ===\n');
+  console.log('\n=== AIWG - Status Command Display Test ===\n');
 
   try {
     const registry = await setupTestData();

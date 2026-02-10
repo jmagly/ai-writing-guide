@@ -397,4 +397,4 @@ Before finalizing output, verify:
 
 **Command Version**: 1.0
 **Voice Reference**: ROKO Network - Technical Mythology for Protocol Age
-**Maintained By**: AI Writing Guide Team
+**Maintained By**: AIWG Team

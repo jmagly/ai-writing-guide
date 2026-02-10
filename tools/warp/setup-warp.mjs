@@ -26,7 +26,7 @@ import path from 'path';
 
 // AIWG-managed section headings (will be replaced on update)
 const AIWG_MANAGED_SECTIONS = [
-  'AIWG (AI Writing Guide) SDLC Framework',
+  'AIWG SDLC Framework',
   'AIWG SDLC Framework',
   'SDLC Agents',
   'SDLC Commands',
@@ -257,9 +257,9 @@ function generateAIWGContent(aiwgRoot, mode) {
   content += '---\n\n';
 
   // Add framework overview
-  content += '## AIWG (AI Writing Guide) SDLC Framework\n\n';
+  content += '## AIWG SDLC Framework\n\n';
   content += `**AIWG Installation**: ${aiwgRoot}\n\n`;
-  content += 'This project uses the **AI Writing Guide SDLC framework** for software development lifecycle management.\n\n';
+  content += 'This project uses the **AIWG SDLC framework** for software development lifecycle management.\n\n';
   content += '### What is AIWG?\n\n';
   content += 'AIWG provides:\n\n';
   content += '- **58+ specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)\n';

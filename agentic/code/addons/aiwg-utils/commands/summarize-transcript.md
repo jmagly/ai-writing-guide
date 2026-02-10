@@ -310,4 +310,4 @@ TL;DR
 
 **Template Version**: 1.0
 **Based On**: Roko Dev Community Update (Oct 7 & 9, 2025)
-**Maintained By**: AI Writing Guide Team
+**Maintained By**: AIWG Team

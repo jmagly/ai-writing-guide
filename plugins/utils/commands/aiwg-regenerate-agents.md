@@ -115,7 +115,7 @@ docs/          → Documentation
 
 ## AIWG Framework
 
-This project uses the AI Writing Guide (AIWG) SDLC framework for software development workflows.
+This project uses the AIWG SDLC framework for software development workflows.
 
 ### Available Agents
 

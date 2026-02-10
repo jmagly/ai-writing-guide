@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://aiwg.dev/schemas/voice-profile.schema.json",
   "title": "AIWG Voice Profile",
-  "description": "Schema for defining writing voice profiles in the AI Writing Guide framework",
+  "description": "Schema for defining writing voice profiles in the AIWG framework",
   "type": "object",
   "required": ["name", "version", "description", "tone"],
   "properties": {

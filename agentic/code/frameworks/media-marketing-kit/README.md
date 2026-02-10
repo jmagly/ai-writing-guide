@@ -77,7 +77,7 @@ The framework provides 87+ templates organized by marketing discipline:
 
 ## Relationship to Core Repository
 
-This framework is part of the AI Writing Guide repository but serves as a standalone marketing toolkit. The parent repository contains:
+This framework is part of the AIWG repository but serves as a standalone marketing toolkit. The parent repository contains:
 
 - `/agents/` - General-purpose writing agents (content-diversifier, writing-validator, prompt-optimizer)
 - `/commands/` - General-purpose command documentation
@@ -614,7 +614,7 @@ The MMK framework seamlessly integrates with the SDLC Complete framework for pro
 
 ## Installation
 
-Use the AI Writing Guide CLI to deploy this framework:
+Use the AIWG CLI to deploy this framework:
 
 ```bash
 # Install CLI
@@ -836,7 +836,7 @@ See the parent repository's `AGENTS.md` for contribution guidelines.
 
 ## License
 
-Part of the AI Writing Guide repository. See main repository for license information.
+Part of the AIWG repository. See main repository for license information.
 
 ---
 

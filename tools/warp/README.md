@@ -1,6 +1,6 @@
 # Warp Terminal Integration Tools
 
-This directory contains tools for integrating the AI Writing Guide SDLC framework with Warp Terminal.
+This directory contains tools for integrating the AIWG SDLC framework with Warp Terminal.
 
 ## Overview
 
@@ -63,7 +63,7 @@ The script preserves user-specific content while replacing AIWG-managed sections
 - Any custom `##` headings not matching AIWG patterns
 
 **AIWG-Managed Sections** (replaced on update):
-- `## AIWG (AI Writing Guide) SDLC Framework`
+- `## AIWG SDLC Framework`
 - `## SDLC Agents`
 - `## SDLC Commands`
 - `## Natural Language Command Translation`

@@ -1,6 +1,6 @@
 # CLI Tools
 
-Command-line interface utilities for AI Writing Guide plugin management and status reporting.
+Command-line interface utilities for AIWG plugin management and status reporting.
 
 ## Commands
 
@@ -42,7 +42,7 @@ Displays ASCII tables with:
 **Example Output:**
 
 ```
-AI Writing Guide - Plugin Status
+AIWG - Plugin Status
 ================================================================================
 
 FRAMEWORKS (2 installed)

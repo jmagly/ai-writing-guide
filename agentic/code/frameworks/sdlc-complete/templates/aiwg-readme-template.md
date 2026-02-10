@@ -157,5 +157,5 @@ This converts:
 
 ## Questions?
 
-This directory was created by the AI Writing Guide SDLC framework.
+This directory was created by the AIWG SDLC framework.
 For issues or questions: https://github.com/jmagly/aiwg/issues
