@@ -59,10 +59,10 @@ export class LazinessDetectionHook {
     try {
       const content = fs.readFileSync(patternFile, 'utf8');
       yaml.load(content); // Validate patterns file loads
-    } catch (error) {
-      throw new Error(
-        `Failed to load laziness patterns from ${patternFile}: ${(error as Error).message}`
-      );
+    } catch {
+      // Patterns file is optional — all detection logic is hardcoded.
+      // Missing file is expected in CI and fresh project checkouts
+      // where .aiwg/ doesn't exist.
     }
   }
 
