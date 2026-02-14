@@ -21,7 +21,7 @@ If you create a schema file but no agent references it, it does nothing. If you 
 
 | Tier | Scale | Standalone | Source Location | Example |
 |------|-------|------------|-----------------|---------|
-| **Framework** | Large (50+ agents) | Yes | `agentic/code/frameworks/` | sdlc-complete, media-marketing-kit |
+| **Framework** | Large (50+ agents) | Yes | `agentic/code/frameworks/` | sdlc-complete, media-marketing-kit, media-curator, research-complete |
 | **Extension** | Medium (5-20 agents) | No (requires parent framework) | `frameworks/{id}/extensions/` | gdpr, hipaa, sox |
 | **Addon** | Small (1-10 agents) | Yes | `agentic/code/addons/` | aiwg-utils, voice-framework |
 

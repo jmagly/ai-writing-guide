@@ -95,6 +95,7 @@ npm install -g aiwg
 cd your-project
 aiwg use sdlc              # Full SDLC framework
 aiwg use marketing         # Marketing framework
+aiwg use media-curator     # Media archive management
 aiwg use rlm               # RLM addon (recursive context decomposition)
 aiwg use all               # All frameworks
 
@@ -119,8 +120,10 @@ aiwg new my-project
 
 | Framework | What it does |
 |-----------|--------------|
-| **[SDLC Complete](agentic/code/frameworks/sdlc-complete/)** | Full software development lifecycle with agents, commands, templates, and multi-agent orchestration |
+| **[SDLC Complete](agentic/code/frameworks/sdlc-complete/)** | Full software development lifecycle with 70+ agents, commands, templates, and multi-agent orchestration |
 | **[Media/Marketing Kit](agentic/code/frameworks/media-marketing-kit/)** | Complete marketing campaign management from strategy to analytics |
+| **[Media Curator](agentic/code/frameworks/media-curator/)** | Intelligent media archive management — discography analysis, acquisition, quality filtering, metadata curation, and multi-platform export |
+| **[Research Complete](agentic/code/frameworks/research-complete/)** | Academic research workflow — discovery, acquisition, RAG-based documentation, and citation management |
 
 ### Addons
 
@@ -228,6 +231,8 @@ See [Platform Integration Guides](docs/integrations/) for setup instructions.
 
 - **[SDLC Framework](agentic/code/frameworks/sdlc-complete/README.md)** — Agents, commands, templates, flows
 - **[Marketing Kit](agentic/code/frameworks/media-marketing-kit/README.md)** — Campaign lifecycle guide
+- **[Media Curator](agentic/code/frameworks/media-curator/README.md)** — Media archive management
+- **[Research Complete](agentic/code/frameworks/research-complete/README.md)** — Research workflows
 - **[Voice Framework](agentic/code/addons/voice-framework/)** — Voice profiles and skills
 
 ### Extension System
@@ -239,7 +244,7 @@ AIWG's unified extension system enables dynamic discovery, semantic search, and 
 - **[Extension Types Reference](docs/extensions/extension-types.md)** — Complete type definitions
 
 **Extension types:**
-- **Agents** (35+): Specialized AI personas (API Designer, Test Engineer, Security Auditor)
+- **Agents** (70+): Specialized AI personas (API Designer, Test Engineer, Security Auditor)
 - **Commands** (31): CLI and slash commands (`aiwg use sdlc`, `/mention-wire`)
 - **Skills**: Natural language workflows (project awareness, voice application)
 - **Hooks**: Lifecycle event handlers (pre-session, post-write)

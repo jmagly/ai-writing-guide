@@ -11,7 +11,7 @@ Native Claude Code integration via the plugin marketplace:
 /plugin marketplace add jmagly/ai-writing-guide
 
 # Install plugins
-/plugin install sdlc@aiwg        # 58 SDLC agents
+/plugin install sdlc@aiwg        # 70+ SDLC agents
 /plugin install marketing@aiwg   # 37 marketing agents
 /plugin install utils@aiwg       # Core utilities
 /plugin install voice@aiwg       # Voice profiles
@@ -359,11 +359,11 @@ For complex writing tasks, leverage specialized agents:
 **Quick Start**:
 
 ```bash
-# Deploy general-purpose writing agents to your project
-aiwg -deploy-agents --mode general
+# Deploy SDLC framework to your project
+aiwg use sdlc
 
-# Or deploy all agents (general + SDLC)
-aiwg -deploy-agents --mode both
+# Or deploy all frameworks
+aiwg use all
 ```
 
 **Agent Invocation**:
@@ -389,7 +389,7 @@ aiwg -deploy-agents --mode both
 
 #### SDLC Framework Agents (`/agentic/code/frameworks/sdlc-complete/agents/`)
 
-51 specialized agents covering all development lifecycle phases:
+70+ specialized agents covering all development lifecycle phases:
 
 - **Development**: code-reviewer, test-engineer, architecture-designer, debugger, performance-engineer
 - **Requirements**: requirements-analyst, requirements-reviewer, business-process-analyst

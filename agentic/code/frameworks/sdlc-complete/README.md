@@ -4,13 +4,13 @@
 
 The SDLC Complete framework provides a comprehensive Plan → Act lifecycle for software delivery using AI agents. This specialized framework includes agents, commands, templates, and flows for managing the entire software development lifecycle.
 
-**Supported Platforms:** Claude Code, Warp Terminal, Factory AI, OpenAI/Codex (experimental)
+**Supported Platforms:** Claude Code, Warp Terminal, Factory AI, GitHub Copilot, Cursor, OpenCode, OpenAI/Codex, Windsurf
 
 ## Framework Structure
 
 ### Content
 
-- `agents/` — 50+ specialized SDLC role agents (architecture-designer, requirements-analyst, security-gatekeeper, etc.)
+- `agents/` — 70+ specialized SDLC role agents (architecture-designer, requirements-analyst, security-gatekeeper, etc.)
 - `commands/` — SDLC-specific slash commands (intake-start, orchestrate-project, security-gate, etc.)
 - `templates/` — Markdown templates for all SDLC artifacts
 - `flows/` — Phase-based workflows (Inception → Elaboration → Construction → Transition)
@@ -55,15 +55,20 @@ Use the AIWG CLI to deploy this framework:
 
 ```bash
 # Install CLI
-curl -fsSL https://raw.githubusercontent.com/jmagly/ai-writing-guide/refs/heads/main/tools/install/install.sh | bash
+npm install -g aiwg
 
-# Deploy agents to project (choose your platform)
-aiwg -deploy-agents --mode sdlc                                          # Claude Code
-aiwg -deploy-agents --platform warp --mode sdlc                          # Warp Terminal
-aiwg -deploy-agents --provider factory --mode sdlc --deploy-commands    # Factory AI
+# Deploy to project (choose your platform)
+aiwg use sdlc                           # Claude Code (default)
+aiwg use sdlc --provider warp           # Warp Terminal
+aiwg use sdlc --provider factory        # Factory AI
+aiwg use sdlc --provider copilot        # GitHub Copilot
+aiwg use sdlc --provider cursor         # Cursor
+aiwg use sdlc --provider codex          # OpenAI/Codex
+aiwg use sdlc --provider opencode       # OpenCode
+aiwg use sdlc --provider windsurf       # Windsurf
 
 # Scaffold new project with SDLC templates
-aiwg -new
+aiwg new my-project
 ```
 
 ## Usage

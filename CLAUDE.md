@@ -23,7 +23,9 @@ aiwg use sdlc
 agentic/code/
 ├── frameworks/
 │   ├── sdlc-complete/       # Complete SDLC coverage
-│   └── media-marketing-kit/ # Full marketing operations
+│   ├── media-marketing-kit/ # Full marketing operations
+│   ├── media-curator/       # Media archive management
+│   └── research-complete/   # Research workflow automation
 ├── addons/
 │   └── voice-framework/     # Voice profiles
 └── agents/                  # Writing quality agents
@@ -260,6 +262,8 @@ aiwg reproducibility-validate  # Validate workflow reproducibility
 | **Creating Extensions** | `@docs/extensions/creating-extensions.md` |
 | **Extension Types** | `@docs/extensions/extension-types.md` |
 | **SDLC Framework** | `@agentic/code/frameworks/sdlc-complete/README.md` |
+| **Media Curator** | `@agentic/code/frameworks/media-curator/README.md` |
+| **Research Complete** | `@agentic/code/frameworks/research-complete/README.md` |
 | **RLM Addon** | `@agentic/code/addons/rlm/README.md` |
 | **Daemon Mode** | `@docs/daemon-guide.md` |
 | **Messaging Integration** | `@docs/messaging-guide.md` |

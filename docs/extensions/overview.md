@@ -21,7 +21,7 @@ Extensions are the building blocks of AIWG frameworks and addons. They include:
 | **hook** | Lifecycle event handlers | Pre-session setup, post-write validation |
 | **tool** | External utilities | git, jq, npm |
 | **mcp-server** | MCP protocol servers | AIWG MCP server |
-| **framework** | Complete workflows | SDLC Complete, Marketing Kit |
+| **framework** | Complete workflows | SDLC Complete, Marketing Kit, Media Curator, Research Complete |
 | **addon** | Feature bundles | Voice Framework, Testing Quality |
 | **template** | Document templates | Use case template, ADR template |
 | **prompt** | Reusable prompts | Code review, security audit |
