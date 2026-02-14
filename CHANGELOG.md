@@ -5,7 +5,13 @@ All notable changes to AIWG project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2026.2.5] - 2026-02-14 – "Lean Rules" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **Consolidated rules deployment** | Single `RULES-INDEX.md` replaces 31 individual rule files — ~95% context reduction |
+| **Automatic cleanup** | Old individually-deployed rule files removed on redeploy |
+| **All 8 providers** | Claude, Codex, Factory, Copilot, Cursor, OpenCode, Warp, Windsurf all updated |
 
 ### Changed
 
@@ -18,24 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quick Reference table maps 11 task types to relevant rules
 - Old individually-deployed rule files are automatically cleaned up on redeploy
 - All 8 providers updated: Claude, Codex, Factory, Copilot, Cursor, OpenCode, Warp, Windsurf
-- Manifest bumped to v2.0.0 with consolidation metadata
+- Rules manifest bumped to v2.0.0 with consolidation metadata
 - Fallback: if RULES-INDEX.md is missing, providers fall back to individual file deployment
 
+### Added
+
+- `RULES-INDEX.md` — consolidated rules index with summaries and @-links for all 31 rules
+- 6 new functions in `base.mjs`: `loadRulesManifest`, `groupRulesByTier`, `groupByEnforcement`, `getRulesIndexPath`, `generateConsolidatedRulesContent`, `cleanupOldRuleFiles`
+- 31 unit tests for consolidated rules functions
+- 7 integration tests for consolidated rules deployment and cleanup
+
 **Migration**: Run `aiwg use sdlc` (or your framework) to redeploy. Old individual rule files in target directories are automatically replaced.
-
-**Before/After**:
-```
-# Before (31 files per provider)
-.claude/rules/
-├── no-attribution.md
-├── token-security.md
-├── versioning.md
-├── ... (28 more files, ~9,321 lines total)
-
-# After (1 file per provider)
-.claude/rules/
-└── RULES-INDEX.md    (~200 lines, summaries + @-links)
-```
 
 ---
 
