@@ -5,6 +5,42 @@ All notable changes to AIWG project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.2.8] - 2026-02-14 – "Full Catalog" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **`aiwg use media-curator`** | Media Curator framework now deployable as a standalone CLI target across all 8 providers |
+| **`aiwg use research`** | Research Complete framework now deployable as a standalone CLI target across all 8 providers |
+| **Complete provider list in help** | All 8 providers (claude, copilot, factory, codex, cursor, opencode, warp, windsurf) shown in `aiwg help` |
+| **Documentation audit** | Stale agent counts, deprecated CLI syntax, missing framework references all fixed |
+
+### Added
+
+- **`aiwg use media-curator`** — deploy Media Curator framework (6 agents, 9 commands, 9 skills) to any provider
+- **`aiwg use research`** — deploy Research Complete framework (8 agents, 10 commands) to any provider
+- Deployment blocks added to all 8 provider modules (claude, codex, copilot, cursor, factory, opencode, warp, windsurf)
+- Workspace initialization for media-curator and research-complete in `base.mjs`
+- Both frameworks included in `aiwg use all`
+
+### Changed
+
+- **Help text** updated with complete provider list — all 8 providers now shown (previously only 4)
+- **`VALID_FRAMEWORKS`** expanded: `sdlc, marketing, media-curator, research, writing, general, all`
+- **`help-generator.ts`** synced with `help.ts` for consistent provider display
+- Updated `deploy-agents.mjs` mode documentation with new framework entries
+
+### Fixed
+
+- **Documentation audit** — updated README, CLAUDE.md, USAGE_GUIDE, sdlc-complete/README, development guide, and extensions overview:
+  - Agent counts corrected from "50+" to "70+"
+  - Deprecated `aiwg -deploy-agents` syntax replaced with `aiwg use` commands
+  - Added media-curator and research-complete to framework tables and references
+  - Platform count updated from 4 to 8
+- **CalVer filename** — renamed `v2026.01.3-announcement.md` to `v2026.1.3-announcement.md` (no leading zeros)
+- **Characterization test** — updated to match new provider format in help output
+
+---
+
 ## [2026.2.7] - 2026-02-14 – "Media Curator" Release
 
 | What changed | Why you care |
