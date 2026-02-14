@@ -1,0 +1,77 @@
+# Media Curator Framework - Default Configuration
+
+# Quality thresholds (1-10 scale)
+quality:
+  accept_threshold: 6.0
+  legendary_override: true
+  weights:
+    audio: 0.6
+    video: 0.3
+    uniqueness: 0.3
+
+# Acquisition settings
+acquisition:
+  max_parallel_downloads: 3
+  retry_attempts: 3
+  retry_backoff: exponential
+  format_preferences:
+    audio: [flac, opus, m4a, mp3]
+    video: [mp4, mkv, webm]
+  video_max_resolution: 1080
+  audio_extraction: true
+  audio_codec: libopus
+  audio_bitrate: 128k
+
+# Metadata settings
+metadata:
+  primary_source: musicbrainz
+  artwork_sources: [musicbrainz, fanart.tv, thumbnail]
+  artwork_max_size: 1000x1000
+  naming:
+    audio: "{artist}/{album}/{track:02d} - {title}.{ext}"
+    video: "{artist}/{collection}/{title} [{quality}].{ext}"
+
+# Integrity settings
+integrity:
+  algorithm: sha256
+  self_verifying_manifest: true
+  timestamp_format: "ISO 8601 UTC nanosecond"
+  provenance: true
+
+# Content classification hierarchy
+classification:
+  - albums
+  - singles
+  - sessions/radio
+  - sessions/interviews
+  - sessions/tv
+  - unofficial/live-performances
+  - unofficial/rare-versions
+  - artwork
+  - lyrics
+
+# Export profiles
+export:
+  profiles:
+    plex:
+      audio_formats: [flac, mp3, m4a]
+      video_formats: [mp4, mkv]
+      artwork: "embedded + folder.jpg"
+    jellyfin:
+      audio_formats: [flac, opus, mp3]
+      video_formats: [mp4, mkv, webm]
+      artwork: "embedded + folder.jpg + artist.jpg"
+      nfo_files: true
+    mpd:
+      audio_formats: [flac, opus, mp3]
+      artwork: "folder.jpg"
+    mobile:
+      audio_formats: [opus, m4a, mp3]
+      audio_max_bitrate: 192
+      video_max_resolution: 720
+      artwork_max_size: 500x500
+    archival:
+      audio_formats: [flac, wav]
+      video_formats: [mkv]
+      checksums: true
+      provenance: true
