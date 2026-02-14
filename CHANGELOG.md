@@ -5,6 +5,40 @@ All notable changes to AIWG project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.2.7] - 2026-02-14 – "Media Curator" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **New media-curator framework** | Complete framework for AI-powered media archive management — 31 files across agents, commands, and skills |
+| **6 specialized agents** | Discography analysis, source discovery, acquisition, quality assessment, metadata curation, completeness tracking |
+| **9 commands + 9 skills** | Full pipeline from artist analysis through multi-platform export |
+| **Field-tested patterns** | GAP-NOTE.md, opustags preference, production-context classification — proven on 94GB prototype |
+
+### Added
+
+**Media Curator Framework** (`agentic/code/frameworks/media-curator/`) — complete framework for intelligent media archive management:
+
+- **6 agents**: discography-analyst, source-discoverer, acquisition-manager, quality-assessor, metadata-curator, completeness-tracker
+- **9 commands**: analyze-artist, find-sources, acquire, tag-collection, check-completeness, assemble, curate, export, verify-archive
+- **9 skills**: youtube-acquisition, archive-acquisition, audio-extraction, quality-filtering, metadata-tagging, cover-art-embedding, gap-documentation, integrity-verification, provenance-tracking
+- **Config**: `defaults.yaml` with quality thresholds, acquisition settings, and 5 export profiles (Plex, Jellyfin, MPD, mobile, archival)
+- **Docs**: overview, standards reference, user guide
+
+Key capabilities:
+- Multi-source acquisition (YouTube, Internet Archive, Bandcamp)
+- Quality filtering with configurable accept/reject criteria
+- MusicBrainz/Discogs metadata integration with opustags
+- GAP-NOTE.md pattern for documenting and tracking missing content
+- W3C PROV/PREMIS-compliant archive integrity verification
+- Completeness scoring with gap analysis
+- Multi-platform export for Plex, Jellyfin, MPD, mobile, and archival
+
+Field-tested on Twenty One Pilots discography (1,109 files, 94GB).
+
+Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
+
+---
+
 ## [2026.2.6] - 2026-02-14
 
 ### Fixed
