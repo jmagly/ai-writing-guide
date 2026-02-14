@@ -34,7 +34,9 @@ import {
   getAddonSkillDirs,
   getAddonRuleFiles,
   createAgentsMdFromTemplate,
-  initializeFrameworkWorkspace
+  initializeFrameworkWorkspace,
+  getRulesIndexPath,
+  cleanupOldRuleFiles
 } from './base.mjs';
 
 // ============================================================================
@@ -171,6 +173,7 @@ export async function deployRulesViaScript(targetDir, srcRoot, opts) {
 export function deployRulesInline(ruleFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.rules);
   ensureDir(destDir, opts.dryRun);
+  cleanupOldRuleFiles(destDir, opts);
   return deployFiles(ruleFiles, destDir, opts, transformCommand);
 }
 
@@ -202,10 +205,15 @@ export async function deployRules(ruleFilesOrTarget, targetDirOrSrcRoot, optsOrU
     const srcRoot = targetDirOrSrcRoot;
     const opts = optsOrUndefined;
 
-    // Collect rule files based on mode (simplified - full logic in deploy())
-    const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
-    if (fs.existsSync(sdlcRulesDir)) {
-      ruleFiles.push(...listMdFiles(sdlcRulesDir));
+    // Use consolidated index if available
+    const indexPath = getRulesIndexPath(srcRoot);
+    if (indexPath) {
+      ruleFiles.push(indexPath);
+    } else {
+      const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
+      if (fs.existsSync(sdlcRulesDir)) {
+        ruleFiles.push(...listMdFiles(sdlcRulesDir));
+      }
     }
 
     deployRulesInline(ruleFiles, ruleFilesOrTarget, opts);
@@ -345,9 +353,16 @@ export async function deploy(opts) {
     }
 
     if (shouldDeployRules || rulesOnly) {
-      const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
-      if (fs.existsSync(sdlcRulesDir)) {
-        ruleFiles.push(...listMdFiles(sdlcRulesDir));
+      // Use consolidated RULES-INDEX.md instead of individual files
+      const indexPath = getRulesIndexPath(srcRoot);
+      if (indexPath) {
+        ruleFiles.push(indexPath);
+      } else {
+        // Fallback: deploy individual files if index not found
+        const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
+        if (fs.existsSync(sdlcRulesDir)) {
+          ruleFiles.push(...listMdFiles(sdlcRulesDir));
+        }
       }
     }
   }

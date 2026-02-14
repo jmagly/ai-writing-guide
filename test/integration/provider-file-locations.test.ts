@@ -448,3 +448,137 @@ describe('Edge Cases', () => {
     expect(content).toContain('---');  // Should have proper MDC format
   });
 });
+
+describe('Consolidated Rules Deployment', () => {
+  let projectDir: string;
+  let homeDir: string;
+
+  beforeEach(async () => {
+    await fs.mkdir(TEST_BASE, { recursive: true });
+    const env = await createTestEnv('consolidated-rules');
+    projectDir = env.projectDir;
+    homeDir = env.homeDir;
+  });
+
+  afterEach(async () => {
+    await cleanupTestEnv(projectDir, homeDir);
+  });
+
+  it('deploys RULES-INDEX.md instead of individual rule files for Claude', async () => {
+    runDeploy('claude', projectDir, homeDir);
+
+    const rulesDir = path.join(projectDir, '.claude', 'rules');
+    const exists = await pathExists(rulesDir);
+    expect(exists, '.claude/rules/ should exist').toBe(true);
+
+    const files = await fs.readdir(rulesDir);
+    const mdFiles = files.filter(f => f.endsWith('.md'));
+
+    // Should have RULES-INDEX.md
+    expect(mdFiles).toContain('RULES-INDEX.md');
+
+    // Should NOT have individual rule files like no-attribution.md, anti-laziness.md
+    const individualRules = mdFiles.filter(f => f !== 'RULES-INDEX.md');
+    // Addon rules may also be present, but the 31 core/sdlc/research rules should NOT be
+    const knownIndividualRules = [
+      'no-attribution.md', 'token-security.md', 'versioning.md',
+      'anti-laziness.md', 'executable-feedback.md', 'failure-mitigation.md',
+      'tao-loop.md', 'hitl-gates.md', 'provenance-tracking.md',
+    ];
+    for (const knownRule of knownIndividualRules) {
+      expect(individualRules, `${knownRule} should NOT be deployed individually`).not.toContain(knownRule);
+    }
+  });
+
+  it('RULES-INDEX.md content includes expected sections', async () => {
+    runDeploy('claude', projectDir, homeDir);
+
+    const indexPath = path.join(projectDir, '.claude', 'rules', 'RULES-INDEX.md');
+    const content = await fs.readFile(indexPath, 'utf-8');
+
+    expect(content).toContain('# AIWG Rules Index');
+    expect(content).toContain('## Core Rules');
+    expect(content).toContain('## SDLC Rules');
+    expect(content).toContain('## Quick Reference by Context');
+  });
+
+  it('cleans up old individual rule files on redeploy', async () => {
+    // Simulate old-style deployment with individual files
+    const rulesDir = path.join(projectDir, '.claude', 'rules');
+    await fs.mkdir(rulesDir, { recursive: true });
+    await fs.writeFile(path.join(rulesDir, 'no-attribution.md'), 'old individual rule');
+    await fs.writeFile(path.join(rulesDir, 'anti-laziness.md'), 'old individual rule');
+    await fs.writeFile(path.join(rulesDir, 'token-security.md'), 'old individual rule');
+
+    // Deploy consolidated rules
+    runDeploy('claude', projectDir, homeDir);
+
+    // Old individual files should be cleaned up
+    const oldExists = await pathExists(path.join(rulesDir, 'no-attribution.md'));
+    expect(oldExists, 'no-attribution.md should be removed by cleanup').toBe(false);
+
+    const antiExists = await pathExists(path.join(rulesDir, 'anti-laziness.md'));
+    expect(antiExists, 'anti-laziness.md should be removed by cleanup').toBe(false);
+
+    // RULES-INDEX.md should exist
+    const indexExists = await pathExists(path.join(rulesDir, 'RULES-INDEX.md'));
+    expect(indexExists, 'RULES-INDEX.md should be deployed').toBe(true);
+  });
+
+  it('preserves non-.md files during cleanup', async () => {
+    // Pre-create .mdc file (Cursor-style rule)
+    const rulesDir = path.join(projectDir, '.cursor', 'rules');
+    await fs.mkdir(rulesDir, { recursive: true });
+    await fs.writeFile(path.join(rulesDir, 'custom-rule.mdc'), 'cursor mdc rule');
+    await fs.writeFile(path.join(rulesDir, 'old-rule.md'), 'old individual rule');
+
+    runDeploy('cursor', projectDir, homeDir);
+
+    // .mdc file should still exist
+    const mdcExists = await pathExists(path.join(rulesDir, 'custom-rule.mdc'));
+    expect(mdcExists, '.mdc files should not be removed by cleanup').toBe(true);
+  });
+
+  it('deploys consolidated rules for all file-copy providers', async () => {
+    // Test representative file-copy providers
+    const fileCopyProviders = ['claude', 'factory', 'opencode', 'warp'];
+
+    for (const provider of fileCopyProviders) {
+      const env = await createTestEnv(`consolidated-${provider}`);
+      try {
+        runDeploy(provider, env.projectDir, env.homeDir);
+
+        const config = PROVIDERS[provider];
+        const rulesPath = config.projectPaths.find(p => p.includes('rule'));
+        if (rulesPath) {
+          const fullRulesDir = path.join(env.projectDir, rulesPath);
+          const exists = await pathExists(fullRulesDir);
+          expect(exists, `${provider}: rules dir should exist`).toBe(true);
+
+          const files = await listFilesRecursive(fullRulesDir);
+          const indexFiles = files.filter(f => path.basename(f) === 'RULES-INDEX.md');
+          expect(indexFiles.length, `${provider}: should have RULES-INDEX.md`).toBeGreaterThanOrEqual(1);
+        }
+      } finally {
+        await cleanupTestEnv(env.projectDir, env.homeDir);
+      }
+    }
+  });
+
+  it('--dry-run does not deploy rules or clean up old files', async () => {
+    // Pre-create old-style files
+    const rulesDir = path.join(projectDir, '.claude', 'rules');
+    await fs.mkdir(rulesDir, { recursive: true });
+    await fs.writeFile(path.join(rulesDir, 'old-rule.md'), 'old content');
+
+    runDeploy('claude', projectDir, homeDir, ['--dry-run']);
+
+    // Old file should still exist (not cleaned up)
+    const oldExists = await pathExists(path.join(rulesDir, 'old-rule.md'));
+    expect(oldExists, 'dry-run should not delete old files').toBe(true);
+
+    // RULES-INDEX.md should NOT be deployed
+    const indexExists = await pathExists(path.join(rulesDir, 'RULES-INDEX.md'));
+    expect(indexExists, 'dry-run should not deploy new files').toBe(false);
+  });
+});

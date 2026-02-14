@@ -5,6 +5,40 @@ All notable changes to AIWG project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+**Consolidated Rules Deployment** (#334, #335-#341):
+
+- Rules now deploy as a single `RULES-INDEX.md` file instead of 31 individual rule files
+- ~95% context reduction: ~200-line index replaces ~9,321 lines of bulk content
+- Index contains 2-3 sentence summaries per rule with @-links to full rule files
+- Rules organized by tier (core/sdlc/research) and enforcement level (critical/high/medium)
+- Quick Reference table maps 11 task types to relevant rules
+- Old individually-deployed rule files are automatically cleaned up on redeploy
+- All 8 providers updated: Claude, Codex, Factory, Copilot, Cursor, OpenCode, Warp, Windsurf
+- Manifest bumped to v2.0.0 with consolidation metadata
+- Fallback: if RULES-INDEX.md is missing, providers fall back to individual file deployment
+
+**Migration**: Run `aiwg use sdlc` (or your framework) to redeploy. Old individual rule files in target directories are automatically replaced.
+
+**Before/After**:
+```
+# Before (31 files per provider)
+.claude/rules/
+├── no-attribution.md
+├── token-security.md
+├── versioning.md
+├── ... (28 more files, ~9,321 lines total)
+
+# After (1 file per provider)
+.claude/rules/
+└── RULES-INDEX.md    (~200 lines, summaries + @-links)
+```
+
+---
+
 ## [2026.2.4] - 2026-02-09 – "Issue Thread" Release
 
 | What changed | Why you care |

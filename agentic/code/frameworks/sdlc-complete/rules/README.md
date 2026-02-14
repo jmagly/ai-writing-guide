@@ -32,23 +32,58 @@ These define what AIWG **is** as a tool:
 
 These 7 rules ship with every AIWG installation. They're the behaviors that make AIWG a trustworthy tool rather than an unpredictable assistant.
 
+## Deployment Strategy: Consolidated Index
+
+Instead of deploying all 31 individual rule files (~9,321 lines), AIWG deploys a single **`RULES-INDEX.md`** file (~200 lines) containing:
+
+- 2-3 sentence summaries of each rule (enough to determine relevance)
+- @-links to full rule files for on-demand loading
+- Organization by tier and enforcement level
+- Quick Reference table mapping task types to relevant rules
+
+This achieves **~95% context reduction** while preserving discoverability. Agents scan the summaries and load full rules via @-links only when needed.
+
+### Before/After
+
+```
+# Before: 31 individual files deployed
+.claude/rules/
+├── no-attribution.md
+├── token-security.md
+├── versioning.md
+├── ... (28 more files)
+
+# After: Single consolidated index
+.claude/rules/
+└── RULES-INDEX.md
+```
+
+### Cleanup Behavior
+
+When redeploying, old individually-deployed `.md` files in the target rules directory are automatically cleaned up. Non-`.md` files (e.g., Cursor's `.mdc` files) are preserved.
+
+### Fallback
+
+If `RULES-INDEX.md` is not found in the source, providers fall back to deploying individual rule files.
+
 ## Platform Deployment
 
 Rules deploy to platform-native locations:
 
-| Platform | Location | Mechanism |
-|----------|----------|-----------|
-| Claude Code | `.claude/rules/` | Direct file copy |
-| Cursor | `.cursor/rules/` | Direct file copy |
+| Platform | Target | Mechanism |
+|----------|--------|-----------|
+| Claude Code | `.claude/rules/RULES-INDEX.md` | File copy |
+| Cursor | `.cursor/rules/RULES-INDEX.md` | File copy |
 | Copilot | `.github/copilot-instructions.md` | Content injection |
-| Codex | `~/.codex/instructions.md` | Content injection |
-| Warp | `WARP.md` | Content injection |
-| Factory AI | `.factory/rules/` | Direct file copy |
-| OpenCode | `.opencode/rules/` | Direct file copy |
+| Codex | `.codex/rules/RULES-INDEX.md` | File copy |
+| Warp | `.warp/rules/RULES-INDEX.md` | File copy |
+| Factory AI | `.factory/rules/RULES-INDEX.md` | File copy |
+| OpenCode | `.opencode/rule/RULES-INDEX.md` | File copy |
+| Windsurf | `.windsurf/rules/RULES-INDEX.md` | File copy |
 
-**File copy platforms** get the full rule file with all metadata, examples, and enforcement details.
+**File copy platforms** deploy the consolidated `RULES-INDEX.md` with summaries and @-links.
 
-**Content injection platforms** get a condensed version of each rule embedded in the platform's context file. The `aiwg regenerate` command handles this conversion.
+**Content injection platforms** embed the index content into the platform's context file.
 
 ## CLI Integration
 
@@ -97,7 +132,7 @@ Links to related rules, schemas, and research.
 
 ## Manifest
 
-`manifest.json` registers all rules with metadata for the CLI:
+`manifest.json` (v2.0.0) registers all rules with metadata for the CLI:
 
 - **name**: Rule identifier
 - **file**: Filename in this directory
@@ -105,6 +140,8 @@ Links to related rules, schemas, and research.
 - **tier**: core | sdlc | research
 - **description**: One-line purpose
 - **issue**: Gitea issue reference
+- **consolidation**: Strategy metadata (`index-with-links`, deploy single index file)
+- **deployment.platforms**: Per-platform target paths for `RULES-INDEX.md`
 
 ## Adding New Rules
 

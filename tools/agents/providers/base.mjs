@@ -724,6 +724,135 @@ export function getAddonFiles(srcRoot, options = {}) {
 }
 
 // ============================================================================
+// Consolidated Rules Deployment
+// ============================================================================
+
+/**
+ * Load rules manifest from source directory
+ * @param {string} srcRoot - Source root directory
+ * @returns {object|null} - Parsed manifest or null if not found
+ */
+export function loadRulesManifest(srcRoot) {
+  const manifestPath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules', 'manifest.json');
+  if (!fs.existsSync(manifestPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (e) {
+    console.warn(`Warning: Could not parse rules manifest: ${e.message}`);
+    return null;
+  }
+}
+
+/**
+ * Group rules by tier
+ * @param {Array} rules - Array of rule objects from manifest
+ * @returns {{core: Array, sdlc: Array, research: Array}}
+ */
+export function groupRulesByTier(rules) {
+  const groups = { core: [], sdlc: [], research: [] };
+  for (const rule of rules) {
+    const tier = rule.tier || 'sdlc';
+    if (groups[tier]) {
+      groups[tier].push(rule);
+    }
+  }
+  return groups;
+}
+
+/**
+ * Group rules by enforcement level within a tier
+ * @param {Array} rules - Array of rule objects
+ * @returns {{critical: Array, high: Array, medium: Array}}
+ */
+export function groupByEnforcement(rules) {
+  const groups = { critical: [], high: [], medium: [] };
+  for (const rule of rules) {
+    const level = (rule.enforcement || 'medium').toLowerCase();
+    if (groups[level]) {
+      groups[level].push(rule);
+    }
+  }
+  return groups;
+}
+
+/**
+ * Get the RULES-INDEX.md file path from source
+ * @param {string} srcRoot - Source root directory
+ * @returns {string|null} - Path to RULES-INDEX.md or null
+ */
+export function getRulesIndexPath(srcRoot) {
+  const indexPath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules', 'RULES-INDEX.md');
+  return fs.existsSync(indexPath) ? indexPath : null;
+}
+
+/**
+ * Generate consolidated rules content from manifest for a specific provider.
+ * Used by content-injection providers (copilot, warp, windsurf) that need
+ * the rules content inline rather than as a file.
+ *
+ * @param {string} srcRoot - Source root directory
+ * @param {string} provider - Provider name (for @-link formatting)
+ * @param {string[]} [addonRuleFiles] - Optional addon rule file paths
+ * @returns {string|null} - Generated content or null if manifest/index missing
+ */
+export function generateConsolidatedRulesContent(srcRoot, provider, addonRuleFiles = []) {
+  const indexPath = getRulesIndexPath(srcRoot);
+  if (!indexPath) return null;
+
+  let content = fs.readFileSync(indexPath, 'utf8');
+
+  // Append addon rules section if any addon rules exist
+  if (addonRuleFiles.length > 0) {
+    content += '\n\n---\n\n## Addon Rules\n\n';
+    for (const ruleFile of addonRuleFiles) {
+      const ruleName = path.basename(ruleFile, '.md');
+      content += `- **${ruleName}**: @${path.relative(srcRoot, ruleFile)}\n`;
+    }
+  }
+
+  return content;
+}
+
+/**
+ * Clean up old individually-deployed rule files from target directory.
+ * Removes any .md files that are NOT RULES-INDEX.md.
+ *
+ * @param {string} rulesDir - Target rules directory
+ * @param {object} opts - Options
+ * @param {boolean} opts.dryRun - If true, log but don't delete
+ * @returns {string[]} - List of removed (or would-be-removed) file paths
+ */
+export function cleanupOldRuleFiles(rulesDir, opts = {}) {
+  const { dryRun = false } = opts;
+  const removed = [];
+
+  if (!fs.existsSync(rulesDir)) return removed;
+
+  const entries = fs.readdirSync(rulesDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    if (!entry.name.toLowerCase().endsWith('.md')) continue;
+    if (entry.name === 'RULES-INDEX.md') continue;
+
+    const filePath = path.join(rulesDir, entry.name);
+    removed.push(filePath);
+
+    if (dryRun) {
+      console.log(`[dry-run] would remove old rule: ${entry.name}`);
+    } else {
+      fs.unlinkSync(filePath);
+      console.log(`removed old rule: ${entry.name}`);
+    }
+  }
+
+  if (removed.length > 0) {
+    console.log(`cleaned up ${removed.length} old rule file(s) from ${rulesDir}`);
+  }
+
+  return removed;
+}
+
+// ============================================================================
 // Provider Interface
 // ============================================================================
 

@@ -32,7 +32,9 @@ import {
   getAddonSkillDirs,
   listSkillDirs,
   deploySkillDir,
-  deployFiles
+  deployFiles,
+  getRulesIndexPath,
+  cleanupOldRuleFiles
 } from './base.mjs';
 
 // ============================================================================
@@ -401,6 +403,7 @@ export function deploySkills(skillDirs, targetDir, opts) {
 export function deployRules(ruleFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.rules);
   ensureDir(destDir, opts.dryRun);
+  cleanupOldRuleFiles(destDir, opts);
   return deployFiles(ruleFiles, destDir, opts, transformAgent);
 }
 
@@ -541,8 +544,15 @@ export async function deploy(opts) {
 
     // Frameworks
     if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
-      const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
-      ruleFiles.push(...listMdFiles(sdlcRulesDir));
+      // Use consolidated RULES-INDEX.md instead of individual files
+      const indexPath = getRulesIndexPath(srcRoot);
+      if (indexPath) {
+        ruleFiles.push(indexPath);
+      } else {
+        // Fallback: deploy individual files if index not found
+        const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
+        ruleFiles.push(...listMdFiles(sdlcRulesDir));
+      }
     }
 
     if (mode === 'marketing' || mode === 'all') {

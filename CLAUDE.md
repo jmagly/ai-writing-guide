@@ -304,8 +304,11 @@ Apply mitigations for known LLM failure archetypes: hallucination, context loss,
 
 ### Rules Reference
 
-Full rule documentation: `agentic/code/frameworks/sdlc-complete/rules/`
-Manifest: `agentic/code/frameworks/sdlc-complete/rules/manifest.json`
+Rules deploy as a single consolidated `RULES-INDEX.md` (~200 lines) instead of 31 individual files (~9,321 lines). The index contains summaries with @-links to full rule files for on-demand loading.
+
+- Consolidated index: `agentic/code/frameworks/sdlc-complete/rules/RULES-INDEX.md`
+- Full rule files: `agentic/code/frameworks/sdlc-complete/rules/`
+- Manifest: `agentic/code/frameworks/sdlc-complete/rules/manifest.json`
 
 ## Commit and Output Conventions
 

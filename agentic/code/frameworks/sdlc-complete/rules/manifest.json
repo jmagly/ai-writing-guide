@@ -1,16 +1,23 @@
 {
   "$schema": "https://aiwg.io/schemas/rules-manifest.json",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "AIWG SDLC framework rules - deployable enforcement policies",
+  "consolidation": {
+    "strategy": "index-with-links",
+    "indexFile": "RULES-INDEX.md",
+    "deployIndexOnly": true,
+    "fullRulesLocation": "agentic/code/frameworks/sdlc-complete/rules/",
+    "rationale": "Deploy ~500-line index instead of 9,321-line bulk to reduce context waste by ~95%"
+  },
   "deployment": {
     "platforms": {
       "claude-code": {
-        "target": ".claude/rules/",
+        "target": ".claude/rules/RULES-INDEX.md",
         "mechanism": "file-copy",
         "supported": true
       },
       "cursor": {
-        "target": ".cursor/rules/",
+        "target": ".cursor/rules/RULES-INDEX.md",
         "mechanism": "file-copy",
         "supported": true
       },
@@ -20,22 +27,27 @@
         "supported": true
       },
       "codex": {
-        "target": "~/.codex/instructions.md",
-        "mechanism": "content-injection",
+        "target": ".codex/rules/RULES-INDEX.md",
+        "mechanism": "file-copy",
         "supported": true
       },
       "warp": {
-        "target": "WARP.md",
-        "mechanism": "content-injection",
+        "target": ".warp/rules/RULES-INDEX.md",
+        "mechanism": "file-copy",
         "supported": true
       },
       "factory": {
-        "target": ".factory/rules/",
+        "target": ".factory/rules/RULES-INDEX.md",
         "mechanism": "file-copy",
         "supported": true
       },
       "opencode": {
-        "target": ".opencode/rules/",
+        "target": ".opencode/rule/RULES-INDEX.md",
+        "mechanism": "file-copy",
+        "supported": true
+      },
+      "windsurf": {
+        "target": ".windsurf/rules/RULES-INDEX.md",
         "mechanism": "file-copy",
         "supported": true
       }
