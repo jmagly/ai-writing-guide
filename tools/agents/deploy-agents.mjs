@@ -11,7 +11,7 @@
  * Options:
  *   --source <path>          Source directory (defaults to repo root)
  *   --target <path>          Target directory (defaults to cwd)
- *   --mode <type>            Deployment mode: general, sdlc, marketing, both, or all (default)
+ *   --mode <type>            Deployment mode: general, sdlc, marketing, media-curator, research, both, or all (default)
  *   --deploy-commands        Deploy commands in addition to agents
  *   --deploy-skills          Deploy skills in addition to agents
  *   --deploy-rules           Deploy rules in addition to agents
@@ -28,12 +28,14 @@
  *   --create-agents-md       Create/update AGENTS.md template (Factory/Codex/OpenCode/Cursor)
  *
  * Modes:
- *   general   - Deploy only writing-quality addon agents and commands (alias: writing)
- *   writing   - Deploy only writing-quality addon agents (alias for general)
- *   sdlc      - Deploy only SDLC Complete framework agents and commands
- *   marketing - Deploy only Media/Marketing Kit framework agents and commands
- *   both      - Deploy writing + SDLC (legacy compatibility)
- *   all       - Deploy all frameworks + addons (default)
+ *   general       - Deploy only writing-quality addon agents and commands (alias: writing)
+ *   writing       - Deploy only writing-quality addon agents (alias for general)
+ *   sdlc          - Deploy only SDLC Complete framework agents and commands
+ *   marketing     - Deploy only Media/Marketing Kit framework agents and commands
+ *   media-curator - Deploy only Media Curator framework agents and commands
+ *   research      - Deploy only Research Complete framework agents and commands
+ *   both          - Deploy writing + SDLC (legacy compatibility)
+ *   all           - Deploy all frameworks + addons (default)
  *
  * Providers:
  *   claude    - Claude Code (default) - .claude/agents/, .claude/commands/, .claude/skills/, .claude/rules/
@@ -76,7 +78,7 @@ function parseArgs() {
   const cfg = {
     source: null,
     target: process.cwd(),
-    mode: 'all',  // 'general', 'sdlc', 'marketing', 'both' (legacy), or 'all'
+    mode: 'all',  // 'general', 'sdlc', 'marketing', 'media-curator', 'research', 'both' (legacy), or 'all'
     dryRun: false,
     force: false,
     provider: 'claude',
@@ -138,7 +140,7 @@ Usage:
 Options:
   --source <path>          Source directory (defaults to repo root)
   --target <path>          Target directory (defaults to cwd)
-  --mode <type>            Deployment mode: general, sdlc, marketing, both, or all (default)
+  --mode <type>            Deployment mode: general, sdlc, marketing, media-curator, research, both, or all (default)
   --deploy-commands        Deploy commands in addition to agents
   --deploy-skills          Deploy skills in addition to agents
   --deploy-rules           Deploy rules in addition to agents
@@ -177,11 +179,13 @@ Providers (all deploy agents, commands, skills, and rules):
               Paths: .windsurf/agents/, .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/
 
 Modes:
-  general   - Writing-quality addon agents and commands (alias: writing)
-  sdlc      - SDLC Complete framework agents and commands
-  marketing - Media/Marketing Kit framework agents and commands
-  both      - writing + SDLC (legacy compatibility)
-  all       - All frameworks + addons (default)
+  general       - Writing-quality addon agents and commands (alias: writing)
+  sdlc          - SDLC Complete framework agents and commands
+  marketing     - Media/Marketing Kit framework agents and commands
+  media-curator - Media Curator framework agents and commands
+  research      - Research Complete framework agents and commands
+  both          - writing + SDLC (legacy compatibility)
+  all           - All frameworks + addons (default)
 
 Examples:
   # Deploy SDLC framework to Claude Code

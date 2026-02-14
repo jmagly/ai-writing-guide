@@ -389,6 +389,64 @@ export async function deploy(opts) {
     }
   }
 
+  // Media Curator framework
+  if (mode === 'media-curator' || mode === 'all') {
+    const curatorAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'agents');
+    if (fs.existsSync(curatorAgentsDir)) {
+      agentFiles.push(...listMdFiles(curatorAgentsDir));
+    }
+
+    if (shouldDeployCommands || commandsOnly) {
+      const curatorCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'commands');
+      if (fs.existsSync(curatorCommandsDir)) {
+        commandFiles.push(...listMdFilesRecursive(curatorCommandsDir));
+      }
+    }
+
+    if (shouldDeploySkills || skillsOnly) {
+      const curatorSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'skills');
+      if (fs.existsSync(curatorSkillsDir)) {
+        skillDirs.push(...listSkillDirs(curatorSkillsDir));
+      }
+    }
+
+    if (shouldDeployRules || rulesOnly) {
+      const curatorRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'rules');
+      if (fs.existsSync(curatorRulesDir)) {
+        ruleFiles.push(...listMdFiles(curatorRulesDir));
+      }
+    }
+  }
+
+  // Research framework
+  if (mode === 'research' || mode === 'all') {
+    const researchAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'agents');
+    if (fs.existsSync(researchAgentsDir)) {
+      agentFiles.push(...listMdFiles(researchAgentsDir));
+    }
+
+    if (shouldDeployCommands || commandsOnly) {
+      const researchCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'commands');
+      if (fs.existsSync(researchCommandsDir)) {
+        commandFiles.push(...listMdFilesRecursive(researchCommandsDir));
+      }
+    }
+
+    if (shouldDeploySkills || skillsOnly) {
+      const researchSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'skills');
+      if (fs.existsSync(researchSkillsDir)) {
+        skillDirs.push(...listSkillDirs(researchSkillsDir));
+      }
+    }
+
+    if (shouldDeployRules || rulesOnly) {
+      const researchRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'rules');
+      if (fs.existsSync(researchRulesDir)) {
+        ruleFiles.push(...listMdFiles(researchRulesDir));
+      }
+    }
+  }
+
   // Deploy discrete files for all artifact types
   console.log('\n--- Deploying discrete files ---');
 

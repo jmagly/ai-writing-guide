@@ -355,6 +355,32 @@ export async function deploy(opts) {
     }
   }
 
+  // Media Curator framework
+  if (mode === 'media-curator' || mode === 'all') {
+    const curatorAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'agents');
+    if (fs.existsSync(curatorAgentsDir)) {
+      agentFiles.push(...listMdFiles(curatorAgentsDir));
+    }
+
+    const curatorRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'rules');
+    if (fs.existsSync(curatorRulesDir)) {
+      ruleFiles.push(...listMdFiles(curatorRulesDir));
+    }
+  }
+
+  // Research framework
+  if (mode === 'research' || mode === 'all') {
+    const researchAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'agents');
+    if (fs.existsSync(researchAgentsDir)) {
+      agentFiles.push(...listMdFiles(researchAgentsDir));
+    }
+
+    const researchRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'rules');
+    if (fs.existsSync(researchRulesDir)) {
+      ruleFiles.push(...listMdFiles(researchRulesDir));
+    }
+  }
+
   // All addons (dynamically discovered)
   if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
     agentFiles.push(...getAddonAgentFiles(srcRoot));

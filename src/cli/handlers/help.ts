@@ -36,8 +36,9 @@ AIWG CLI
 Usage: aiwg <command> [options]
 
 Framework Management:
-  use <framework>       Install and deploy framework (sdlc, marketing, writing, all)
-                        Options: --no-utils, --provider <claude|copilot|factory|openai|windsurf>, --force
+  use <framework>       Install and deploy framework
+                        Frameworks: sdlc, marketing, media-curator, research, writing, all
+                        Options: --no-utils, --provider <provider>, --force
   list                  List installed frameworks and addons
   remove <id>           Remove a framework or addon
 
@@ -97,11 +98,15 @@ Maintenance:
   -update               Check for and apply updates
   -help                 Show this help message
 
-Platform Options:
-  --provider copilot    Deploy for GitHub Copilot
-  --provider factory    Deploy for Factory AI
-  --provider openai     Deploy for OpenAI/Codex
-  --provider windsurf   Deploy for Windsurf (EXPERIMENTAL)
+Platform Options (--provider):
+  claude                Claude Code (default)
+  copilot               GitHub Copilot
+  factory               Factory AI
+  codex / openai        OpenAI Codex
+  cursor                Cursor IDE
+  opencode              OpenCode
+  warp                  Warp Terminal
+  windsurf              Windsurf
 
 Model Selection (for 'use' command):
   --reasoning-model <name>   Override model for reasoning tier (opus-level agents)
@@ -122,6 +127,8 @@ Ralph Loop (Iterative Execution):
 
 Examples:
   aiwg use sdlc                    Install SDLC framework
+  aiwg use media-curator           Install Media Curator framework
+  aiwg use research                Install Research framework
   aiwg use all --provider factory  Install all frameworks for Factory AI
   aiwg use sdlc --reasoning-model opus-4-2   Deploy with custom reasoning model
   aiwg use sdlc --coding-model sonnet-5 --save   Deploy with custom model and save

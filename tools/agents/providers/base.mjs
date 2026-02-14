@@ -392,6 +392,20 @@ export function initializeFrameworkWorkspace(target, mode, dryRun) {
     });
   }
 
+  if (mode === 'media-curator' || mode === 'all') {
+    frameworkDirs.push({
+      id: 'media-curator',
+      subdirs: ['repo', 'library', 'working', 'archive']
+    });
+  }
+
+  if (mode === 'research' || mode === 'all') {
+    frameworkDirs.push({
+      id: 'research-complete',
+      subdirs: ['repo', 'corpus', 'working', 'archive']
+    });
+  }
+
   if (frameworkDirs.length === 0) return;
 
   if (dryRun) {

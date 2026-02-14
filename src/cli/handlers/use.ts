@@ -20,7 +20,7 @@ import { registerDeployedExtensions } from '../../extensions/deployment-registra
 /**
  * Valid framework identifiers
  */
-const VALID_FRAMEWORKS = ['sdlc', 'marketing', 'writing', 'general', 'all'] as const;
+const VALID_FRAMEWORKS = ['sdlc', 'marketing', 'media-curator', 'research', 'writing', 'general', 'all'] as const;
 type Framework = typeof VALID_FRAMEWORKS[number];
 
 /**
@@ -29,6 +29,8 @@ type Framework = typeof VALID_FRAMEWORKS[number];
 const MODE_MAP: Record<Framework, string> = {
   sdlc: 'sdlc',
   marketing: 'marketing',
+  'media-curator': 'media-curator',
+  research: 'research',
   writing: 'general',
   general: 'general',
   all: 'all',
@@ -122,7 +124,7 @@ export class UseHandler implements CommandHandler {
     if (!framework) {
       return {
         exitCode: 1,
-        message: 'Error: Framework or addon name required\nFrameworks: sdlc, marketing, writing, all\nAddons: rlm',
+        message: 'Error: Framework or addon name required\nFrameworks: sdlc, marketing, media-curator, research, writing, all\nAddons: rlm',
       };
     }
 

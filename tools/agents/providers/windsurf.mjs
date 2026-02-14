@@ -466,6 +466,22 @@ export async function deploy(opts) {
     allAgentFiles.push(...listMdFiles(marketingAgentsDir));
   }
 
+  // Media Curator framework
+  if (mode === 'media-curator' || mode === 'all') {
+    const curatorAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'agents');
+    if (fs.existsSync(curatorAgentsDir)) {
+      allAgentFiles.push(...listMdFiles(curatorAgentsDir));
+    }
+  }
+
+  // Research framework
+  if (mode === 'research' || mode === 'all') {
+    const researchAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'agents');
+    if (fs.existsSync(researchAgentsDir)) {
+      allAgentFiles.push(...listMdFiles(researchAgentsDir));
+    }
+  }
+
   // Generate aggregated AGENTS.md
   if (allAgentFiles.length > 0 && !commandsOnly && !skillsOnly && !rulesOnly) {
     const agentsMdPath = path.join(target, 'AGENTS.md');
@@ -500,6 +516,22 @@ export async function deploy(opts) {
       commandFiles.push(...listMdFilesRecursive(marketingCommandsDir));
     }
 
+    // Media Curator framework
+    if (mode === 'media-curator' || mode === 'all') {
+      const curatorCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'commands');
+      if (fs.existsSync(curatorCommandsDir)) {
+        commandFiles.push(...listMdFilesRecursive(curatorCommandsDir));
+      }
+    }
+
+    // Research framework
+    if (mode === 'research' || mode === 'all') {
+      const researchCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'commands');
+      if (fs.existsSync(researchCommandsDir)) {
+        commandFiles.push(...listMdFilesRecursive(researchCommandsDir));
+      }
+    }
+
     if (commandFiles.length > 0) {
       deployWorkflows(commandFiles, target, opts);
     }
@@ -524,6 +556,22 @@ export async function deploy(opts) {
     if (mode === 'marketing' || mode === 'all') {
       const marketingSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'skills');
       skillDirs.push(...listSkillDirs(marketingSkillsDir));
+    }
+
+    // Media Curator framework
+    if (mode === 'media-curator' || mode === 'all') {
+      const curatorSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'skills');
+      if (fs.existsSync(curatorSkillsDir)) {
+        skillDirs.push(...listSkillDirs(curatorSkillsDir));
+      }
+    }
+
+    // Research framework
+    if (mode === 'research' || mode === 'all') {
+      const researchSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'skills');
+      if (fs.existsSync(researchSkillsDir)) {
+        skillDirs.push(...listSkillDirs(researchSkillsDir));
+      }
     }
 
     if (skillDirs.length > 0) {
@@ -558,6 +606,22 @@ export async function deploy(opts) {
     if (mode === 'marketing' || mode === 'all') {
       const marketingRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'rules');
       ruleFiles.push(...listMdFiles(marketingRulesDir));
+    }
+
+    // Media Curator framework
+    if (mode === 'media-curator' || mode === 'all') {
+      const curatorRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'rules');
+      if (fs.existsSync(curatorRulesDir)) {
+        ruleFiles.push(...listMdFiles(curatorRulesDir));
+      }
+    }
+
+    // Research framework
+    if (mode === 'research' || mode === 'all') {
+      const researchRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'rules');
+      if (fs.existsSync(researchRulesDir)) {
+        ruleFiles.push(...listMdFiles(researchRulesDir));
+      }
     }
 
     if (ruleFiles.length > 0) {
