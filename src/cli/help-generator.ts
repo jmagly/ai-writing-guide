@@ -85,11 +85,15 @@ export function generateHelp(registry: ExtensionRegistry): string {
   }
 
   // Platform options
-  lines.push('Platform Options:');
-  lines.push('  --provider copilot    Deploy for GitHub Copilot');
-  lines.push('  --provider factory    Deploy for Factory AI');
-  lines.push('  --provider openai     Deploy for OpenAI/Codex');
-  lines.push('  --provider windsurf   Deploy for Windsurf (EXPERIMENTAL)');
+  lines.push('Platform Options (--provider):');
+  lines.push('  claude                Claude Code (default)');
+  lines.push('  copilot               GitHub Copilot');
+  lines.push('  factory               Factory AI');
+  lines.push('  codex / openai        OpenAI Codex');
+  lines.push('  cursor                Cursor IDE');
+  lines.push('  opencode              OpenCode');
+  lines.push('  warp                  Warp Terminal');
+  lines.push('  windsurf              Windsurf');
   lines.push('');
 
   // Examples

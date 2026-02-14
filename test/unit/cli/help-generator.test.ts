@@ -28,11 +28,14 @@ describe('generateHelp', () => {
     it('should include platform options section', () => {
       const help = generateHelp(registry);
 
-      expect(help).toContain('Platform Options:');
-      expect(help).toContain('--provider copilot');
-      expect(help).toContain('--provider factory');
-      expect(help).toContain('--provider openai');
-      expect(help).toContain('--provider windsurf');
+      expect(help).toContain('Platform Options');
+      expect(help).toContain('copilot');
+      expect(help).toContain('factory');
+      expect(help).toContain('openai');
+      expect(help).toContain('windsurf');
+      expect(help).toContain('cursor');
+      expect(help).toContain('opencode');
+      expect(help).toContain('warp');
     });
 
     it('should include examples section', () => {
@@ -172,7 +175,7 @@ describe('generateHelp', () => {
       // Should still show structure
       expect(help).toContain('AIWG CLI');
       expect(help).toContain('Usage:');
-      expect(help).toContain('Platform Options:');
+      expect(help).toContain('Platform Options');
       expect(help).toContain('Examples:');
 
       // Should not show any category headers

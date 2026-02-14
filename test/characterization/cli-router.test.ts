@@ -238,11 +238,14 @@ describe('CLI Router Characterization Tests', () => {
     });
 
     it('should have Platform Options section', () => {
-      expect(helpOutput).toMatch(/Platform Options:/);
-      expect(helpOutput).toMatch(/--provider copilot/);
-      expect(helpOutput).toMatch(/--provider factory/);
-      expect(helpOutput).toMatch(/--provider openai/);
-      expect(helpOutput).toMatch(/--provider windsurf/);
+      expect(helpOutput).toMatch(/Platform Options/);
+      expect(helpOutput).toMatch(/copilot/);
+      expect(helpOutput).toMatch(/factory/);
+      expect(helpOutput).toMatch(/openai/);
+      expect(helpOutput).toMatch(/windsurf/);
+      expect(helpOutput).toMatch(/cursor/);
+      expect(helpOutput).toMatch(/opencode/);
+      expect(helpOutput).toMatch(/warp/);
     });
 
     it('should have Model Selection section', () => {
