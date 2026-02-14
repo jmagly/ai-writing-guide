@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2026.2.5",
+  "version": "2026.2.6",
   "description": "Cognitive architecture for AI-augmented software development with structured memory, ensemble validation, and closed-loop correction. FAIR-aligned artifacts, 84% cost reduction via human-in-the-loop, standards adopted by 100+ organizations.",
   "type": "module",
   "bin": {

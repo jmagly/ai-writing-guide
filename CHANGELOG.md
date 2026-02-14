@@ -5,6 +5,14 @@ All notable changes to AIWG project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.2.6] - 2026-02-14
+
+### Fixed
+
+- Stabilize deployment-registration idempotency test on Node 18 — assertion now checks for no duplicate IDs rather than exact scan order equality
+
+---
+
 ## [2026.2.5] - 2026-02-14 – "Lean Rules" Release
 
 | What changed | Why you care |
