@@ -85,13 +85,18 @@ grep '"version"' package.json | grep -E '\.[0-9]{2}\.' && echo "ERROR: Leading z
 ### 3. Create and Push Tag
 
 ```bash
+# Create signed release commit (if not already committed)
+git commit -S -m "release: v2026.1.5 \"Release Name\""
+
 # Create annotated tag
-git tag -a v2026.1.5 -m "v2026.1.5 - Release Name"
+git tag -s v2026.1.5 -m "v2026.1.5 - Release Name"
 
 # Push to both remotes
 git push origin main --tags
 git push github main --tags
 ```
+
+**Sandboxed agent note**: If release operations run inside a filesystem/network sandbox, request **escalated execution** for signed `git commit`/`git tag` commands so GPG can access `~/.gnupg` and the local gpg-agent socket.
 
 ### 4. Verify Published Version
 
