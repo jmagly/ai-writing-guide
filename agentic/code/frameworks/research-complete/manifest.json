@@ -1,0 +1,24 @@
+{
+  "id": "research-complete",
+  "type": "framework",
+  "name": "Research Complete",
+  "version": "1.0.0",
+  "description": "Research workflow framework for discovery, acquisition, synthesis, citation, quality, and archival operations.",
+  "modeAliases": [
+    "research"
+  ],
+  "entry": {
+    "agents": "agents",
+    "commands": "commands",
+    "skills": "skills",
+    "templates": "templates"
+  },
+  "workspace": {
+    "subdirs": [
+      "repo",
+      "corpus",
+      "working",
+      "archive"
+    ]
+  }
+}

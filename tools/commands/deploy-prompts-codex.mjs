@@ -15,7 +15,7 @@
  * Options:
  *   --source <path>    Source directory (defaults to repo root)
  *   --target <path>    Target directory (defaults to ~/.codex/prompts)
- *   --mode <type>      Deployment mode: general, sdlc, marketing, or all (default)
+ *   --mode <type>      Deployment mode: general, sdlc, marketing (alias: mmk), media-curator, research, or all (default)
  *   --dry-run          Show what would be deployed without writing
  *   --force            Overwrite existing files
  *   --prefix <str>     Prefix for prompt names (default: 'aiwg')
@@ -24,6 +24,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { getFrameworksForMode, normalizeDeploymentMode } from '../agents/providers/base.mjs';
 
 const CODEX_PROMPTS_DIR = path.join(os.homedir(), '.codex', 'prompts');
 
@@ -48,6 +49,7 @@ function parseArgs() {
     else if (a === '--prefix' && args[i + 1]) cfg.prefix = args[++i];
   }
 
+  cfg.mode = normalizeDeploymentMode(cfg.mode);
   return cfg;
 }
 
@@ -244,19 +246,15 @@ function getCommandDirectories(srcRoot, mode) {
     }
   }
 
-  // SDLC framework commands (not core - apply priority filter)
-  if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
-    const sdlcCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
-    if (fs.existsSync(sdlcCommandsDir)) {
-      dirs.push({ dir: sdlcCommandsDir, label: 'sdlc-complete', isCore: false });
-    }
-  }
-
-  // Marketing framework commands (not core - apply priority filter)
-  if (mode === 'marketing' || mode === 'all') {
-    const mmkCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'commands');
-    if (fs.existsSync(mmkCommandsDir)) {
-      dirs.push({ dir: mmkCommandsDir, label: 'media-marketing-kit', isCore: false });
+  // Framework commands are discovered from framework manifests/directory structure.
+  const frameworks = getFrameworksForMode(srcRoot, mode);
+  for (const framework of frameworks) {
+    if (framework.components.commands.exists) {
+      dirs.push({
+        dir: framework.components.commands.path,
+        label: framework.id,
+        isCore: false
+      });
     }
   }
 

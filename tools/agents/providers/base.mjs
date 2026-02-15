@@ -371,39 +371,47 @@ export function deploySkillDir(skillDir, destDir, opts) {
  * Initialize framework-scoped workspace structure
  * Creates .aiwg/frameworks/{framework-id}/ directories
  */
-export function initializeFrameworkWorkspace(target, mode, dryRun) {
+export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = null) {
   const aiwgBase = path.join(target, '.aiwg');
   const frameworksDir = path.join(aiwgBase, 'frameworks');
   const sharedDir = path.join(aiwgBase, 'shared');
 
-  const frameworkDirs = [];
+  const frameworkDirs = srcRoot
+    ? getFrameworksForMode(srcRoot, mode).map(fw => ({
+      id: fw.id,
+      subdirs: fw.workspaceSubdirs
+    }))
+    : [];
 
-  if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
-    frameworkDirs.push({
-      id: 'sdlc-complete',
-      subdirs: ['repo', 'projects', 'working', 'archive']
-    });
-  }
+  // Backward-compatible fallback when source root isn't provided.
+  if (frameworkDirs.length === 0) {
+    if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
+      frameworkDirs.push({
+        id: 'sdlc-complete',
+        subdirs: ['repo', 'projects', 'working', 'archive']
+      });
+    }
 
-  if (mode === 'marketing' || mode === 'all') {
-    frameworkDirs.push({
-      id: 'media-marketing-kit',
-      subdirs: ['repo', 'campaigns', 'working', 'archive']
-    });
-  }
+    if (mode === 'marketing' || mode === 'all') {
+      frameworkDirs.push({
+        id: 'media-marketing-kit',
+        subdirs: ['repo', 'campaigns', 'working', 'archive']
+      });
+    }
 
-  if (mode === 'media-curator' || mode === 'all') {
-    frameworkDirs.push({
-      id: 'media-curator',
-      subdirs: ['repo', 'library', 'working', 'archive']
-    });
-  }
+    if (mode === 'media-curator' || mode === 'all') {
+      frameworkDirs.push({
+        id: 'media-curator',
+        subdirs: ['repo', 'library', 'working', 'archive']
+      });
+    }
 
-  if (mode === 'research' || mode === 'all') {
-    frameworkDirs.push({
-      id: 'research-complete',
-      subdirs: ['repo', 'corpus', 'working', 'archive']
-    });
+    if (mode === 'research' || mode === 'all') {
+      frameworkDirs.push({
+        id: 'research-complete',
+        subdirs: ['repo', 'corpus', 'working', 'archive']
+      });
+    }
   }
 
   if (frameworkDirs.length === 0) return;
@@ -580,6 +588,209 @@ export function filterAgentFiles(files, opts) {
     const { metadata } = parseFrontmatter(content);
     return shouldDeployAgent(filePath, metadata, opts);
   });
+}
+
+// ============================================================================
+// Framework Discovery
+// ============================================================================
+
+const MODE_ALIASES = {
+  writing: 'general',
+  mmk: 'marketing'
+};
+
+const LEGACY_FRAMEWORK_MODE_ALIASES = {
+  'sdlc-complete': ['sdlc'],
+  'media-marketing-kit': ['marketing', 'mmk'],
+  'media-curator': ['media-curator'],
+  'research-complete': ['research']
+};
+
+const DEFAULT_FRAMEWORK_SUBDIRS = {
+  'sdlc-complete': ['repo', 'projects', 'working', 'archive'],
+  'media-marketing-kit': ['repo', 'campaigns', 'working', 'archive'],
+  'media-curator': ['repo', 'library', 'working', 'archive'],
+  'research-complete': ['repo', 'corpus', 'working', 'archive']
+};
+
+function normalizePathSegment(segment) {
+  return String(segment || '')
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '');
+}
+
+function ensureStringArray(value) {
+  if (!value) return [];
+  return Array.isArray(value) ? value.map(v => String(v)) : [String(value)];
+}
+
+function uniqueLower(values) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of values) {
+    const v = String(raw || '').trim().toLowerCase();
+    if (!v || seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+}
+
+export function normalizeDeploymentMode(mode = 'all') {
+  const normalized = String(mode || 'all').toLowerCase();
+  return MODE_ALIASES[normalized] || normalized;
+}
+
+function resolveFrameworkComponentDir(frameworkPath, manifest, component) {
+  const entry = manifest?.entry?.[component];
+  const relPath = normalizePathSegment(entry || component);
+  return path.join(frameworkPath, relPath);
+}
+
+/**
+ * Discover framework roots under agentic/code/frameworks.
+ * Framework metadata is loaded from root manifest.json when present.
+ */
+export function discoverFrameworks(srcRoot) {
+  const frameworksRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks');
+  if (!fs.existsSync(frameworksRoot)) return [];
+
+  const frameworks = [];
+  const entries = fs.readdirSync(frameworksRoot, { withFileTypes: true })
+    .filter(e => e.isDirectory())
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  for (const entry of entries) {
+    const frameworkPath = path.join(frameworksRoot, entry.name);
+    const manifestPath = path.join(frameworkPath, 'manifest.json');
+    let manifest = {};
+
+    if (fs.existsSync(manifestPath)) {
+      try {
+        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      } catch (e) {
+        console.warn(`Warning: Could not parse framework manifest for ${entry.name}: ${e.message}`);
+      }
+    }
+
+    const id = String(manifest.id || manifest.framework || entry.name);
+    const aliases = uniqueLower([
+      id,
+      entry.name,
+      ...ensureStringArray(manifest.modeAliases),
+      ...ensureStringArray(manifest.aliases),
+      ...(LEGACY_FRAMEWORK_MODE_ALIASES[id] || [])
+    ]);
+
+    const workspaceSubdirs = ensureStringArray(
+      manifest.workspace?.subdirs || manifest.workspace?.directories
+    );
+
+    const agentsDir = resolveFrameworkComponentDir(frameworkPath, manifest, 'agents');
+    const commandsDir = resolveFrameworkComponentDir(frameworkPath, manifest, 'commands');
+    const skillsDir = resolveFrameworkComponentDir(frameworkPath, manifest, 'skills');
+    const rulesDir = resolveFrameworkComponentDir(frameworkPath, manifest, 'rules');
+
+    frameworks.push({
+      id,
+      name: manifest.name || entry.name,
+      path: frameworkPath,
+      manifest,
+      aliases,
+      workspaceSubdirs: workspaceSubdirs.length > 0
+        ? workspaceSubdirs
+        : (DEFAULT_FRAMEWORK_SUBDIRS[id] || ['repo', 'working', 'archive']),
+      components: {
+        agents: { path: agentsDir, exists: fs.existsSync(agentsDir) },
+        commands: { path: commandsDir, exists: fs.existsSync(commandsDir) },
+        skills: { path: skillsDir, exists: fs.existsSync(skillsDir) },
+        rules: { path: rulesDir, exists: fs.existsSync(rulesDir) }
+      }
+    });
+  }
+
+  return frameworks;
+}
+
+/**
+ * Select frameworks for a deployment mode.
+ */
+export function getFrameworksForMode(srcRoot, mode) {
+  const normalizedMode = normalizeDeploymentMode(mode);
+  const frameworks = discoverFrameworks(srcRoot);
+
+  if (normalizedMode === 'all') return frameworks;
+  if (normalizedMode === 'general') return [];
+  if (normalizedMode === 'both') {
+    return frameworks.filter(fw => fw.aliases.includes('sdlc'));
+  }
+
+  return frameworks.filter(fw =>
+    fw.id.toLowerCase() === normalizedMode || fw.aliases.includes(normalizedMode)
+  );
+}
+
+/**
+ * Collect framework artifacts for a deployment mode.
+ * @param {string} srcRoot - Source root directory
+ * @param {string} mode - Deployment mode
+ * @param {object} options - Collection options
+ * @param {boolean} options.includeAgents - Include agents
+ * @param {boolean} options.includeCommands - Include commands
+ * @param {boolean} options.includeSkills - Include skills
+ * @param {boolean} options.includeRules - Include rules
+ * @param {boolean} options.recursiveCommands - Use recursive command listing
+ * @param {boolean} options.consolidatedSdlcRules - Use RULES-INDEX for SDLC when available
+ * @returns {{frameworks: Array, agents: string[], commands: string[], skills: string[], rules: string[]}}
+ */
+export function collectFrameworkArtifacts(srcRoot, mode, options = {}) {
+  const {
+    includeAgents = true,
+    includeCommands = true,
+    includeSkills = true,
+    includeRules = true,
+    recursiveCommands = true,
+    consolidatedSdlcRules = true
+  } = options;
+
+  const frameworks = getFrameworksForMode(srcRoot, mode);
+  const artifacts = {
+    frameworks,
+    agents: [],
+    commands: [],
+    skills: [],
+    rules: []
+  };
+
+  for (const framework of frameworks) {
+    if (includeAgents && framework.components.agents.exists) {
+      artifacts.agents.push(...listMdFiles(framework.components.agents.path));
+    }
+
+    if (includeCommands && framework.components.commands.exists) {
+      const commandFiles = recursiveCommands
+        ? listMdFilesRecursive(framework.components.commands.path)
+        : listMdFiles(framework.components.commands.path);
+      artifacts.commands.push(...commandFiles);
+    }
+
+    if (includeSkills && framework.components.skills.exists) {
+      artifacts.skills.push(...listSkillDirs(framework.components.skills.path));
+    }
+
+    if (includeRules && framework.components.rules.exists) {
+      if (consolidatedSdlcRules && framework.id === 'sdlc-complete') {
+        const indexPath = getRulesIndexPath(srcRoot);
+        if (indexPath) {
+          artifacts.rules.push(indexPath);
+          continue;
+        }
+      }
+      artifacts.rules.push(...listMdFiles(framework.components.rules.path));
+    }
+  }
+
+  return artifacts;
 }
 
 // ============================================================================

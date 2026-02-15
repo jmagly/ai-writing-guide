@@ -11,7 +11,7 @@
  * Options:
  *   --source <path>          Source directory (defaults to repo root)
  *   --target <path>          Target directory (defaults to cwd)
- *   --mode <type>            Deployment mode: general, sdlc, marketing, media-curator, research, both, or all (default)
+ *   --mode <type>            Deployment mode: general, sdlc, marketing (alias: mmk), media-curator, research, both, or all (default)
  *   --deploy-commands        Deploy commands in addition to agents
  *   --deploy-skills          Deploy skills in addition to agents
  *   --deploy-rules           Deploy rules in addition to agents
@@ -31,7 +31,7 @@
  *   general       - Deploy only writing-quality addon agents and commands (alias: writing)
  *   writing       - Deploy only writing-quality addon agents (alias for general)
  *   sdlc          - Deploy only SDLC Complete framework agents and commands
- *   marketing     - Deploy only Media/Marketing Kit framework agents and commands
+ *   marketing     - Deploy only Media/Marketing Kit framework agents and commands (alias: mmk)
  *   media-curator - Deploy only Media Curator framework agents and commands
  *   research      - Deploy only Research Complete framework agents and commands
  *   both          - Deploy writing + SDLC (legacy compatibility)
@@ -140,7 +140,7 @@ Usage:
 Options:
   --source <path>          Source directory (defaults to repo root)
   --target <path>          Target directory (defaults to cwd)
-  --mode <type>            Deployment mode: general, sdlc, marketing, media-curator, research, both, or all (default)
+  --mode <type>            Deployment mode: general, sdlc, marketing (alias: mmk), media-curator, research, both, or all (default)
   --deploy-commands        Deploy commands in addition to agents
   --deploy-skills          Deploy skills in addition to agents
   --deploy-rules           Deploy rules in addition to agents
@@ -181,7 +181,7 @@ Providers (all deploy agents, commands, skills, and rules):
 Modes:
   general       - Writing-quality addon agents and commands (alias: writing)
   sdlc          - SDLC Complete framework agents and commands
-  marketing     - Media/Marketing Kit framework agents and commands
+  marketing     - Media/Marketing Kit framework agents and commands (alias: mmk)
   media-curator - Media Curator framework agents and commands
   research      - Research Complete framework agents and commands
   both          - writing + SDLC (legacy compatibility)
@@ -342,6 +342,7 @@ function deepMerge(target, source) {
 
   // Normalize mode aliases
   if (cfg.mode === 'writing') cfg.mode = 'general';
+  if (cfg.mode === 'mmk') cfg.mode = 'marketing';
 
   console.log(`\n=== AIWG Agent Deployment ===`);
   console.log(`Provider: ${cfg.provider}`);

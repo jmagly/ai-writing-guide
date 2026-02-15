@@ -34,6 +34,8 @@ import {
   getAddonRuleFiles,
   listSkillDirs,
   deploySkillDir,
+  getFrameworksForMode,
+  normalizeDeploymentMode,
   getRulesIndexPath,
   cleanupOldRuleFiles
 } from './base.mjs';
@@ -223,6 +225,7 @@ export async function deploySkills(targetDir, srcRoot, opts) {
     const args = ['--source', srcRoot];
     if (opts.dryRun) args.push('--dry-run');
     if (opts.force) args.push('--force');
+    if (opts.mode) args.push('--mode', opts.mode);
 
     const child = spawn('node', [scriptPath, ...args], {
       stdio: 'inherit',
@@ -281,7 +284,7 @@ export function createAgentsMd(target, srcRoot, dryRun) {
 // ============================================================================
 
 export async function postDeploy(targetDir, opts) {
-  initializeFrameworkWorkspace(targetDir, opts.mode, opts.dryRun);
+  initializeFrameworkWorkspace(targetDir, opts.mode, opts.dryRun, opts.srcRoot);
 
   if (opts.createAgentsMd) {
     createAgentsMd(targetDir, opts.srcRoot, opts.dryRun);
@@ -326,63 +329,31 @@ export async function deploy(opts) {
   // Collect source files based on mode
   const agentFiles = [];
   const ruleFiles = [];
+  const normalizedMode = normalizeDeploymentMode(mode);
 
-  // Frameworks
-  if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
-    const sdlcAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
-    agentFiles.push(...listMdFiles(sdlcAgentsDir));
+  // Frameworks discovered from manifests/directory structure
+  const frameworks = getFrameworksForMode(srcRoot, normalizedMode);
+  for (const framework of frameworks) {
+    if (framework.components.agents.exists) {
+      agentFiles.push(...listMdFiles(framework.components.agents.path));
+    }
 
-    // Use consolidated RULES-INDEX.md instead of individual files
-    const indexPath = getRulesIndexPath(srcRoot);
-    if (indexPath) {
-      ruleFiles.push(indexPath);
-    } else {
-      // Fallback: deploy individual files if index not found
-      const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
-      if (fs.existsSync(sdlcRulesDir)) {
-        ruleFiles.push(...listMdFiles(sdlcRulesDir));
+    if (framework.id === 'sdlc-complete' && framework.components.rules.exists) {
+      // Use consolidated RULES-INDEX.md for SDLC rules when available.
+      const indexPath = getRulesIndexPath(srcRoot);
+      if (indexPath) {
+        ruleFiles.push(indexPath);
+        continue;
       }
     }
-  }
 
-  if (mode === 'marketing' || mode === 'all') {
-    const marketingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'agents');
-    agentFiles.push(...listMdFiles(marketingAgentsDir));
-
-    const marketingRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'rules');
-    if (fs.existsSync(marketingRulesDir)) {
-      ruleFiles.push(...listMdFiles(marketingRulesDir));
-    }
-  }
-
-  // Media Curator framework
-  if (mode === 'media-curator' || mode === 'all') {
-    const curatorAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'agents');
-    if (fs.existsSync(curatorAgentsDir)) {
-      agentFiles.push(...listMdFiles(curatorAgentsDir));
-    }
-
-    const curatorRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'rules');
-    if (fs.existsSync(curatorRulesDir)) {
-      ruleFiles.push(...listMdFiles(curatorRulesDir));
-    }
-  }
-
-  // Research framework
-  if (mode === 'research' || mode === 'all') {
-    const researchAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'agents');
-    if (fs.existsSync(researchAgentsDir)) {
-      agentFiles.push(...listMdFiles(researchAgentsDir));
-    }
-
-    const researchRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'rules');
-    if (fs.existsSync(researchRulesDir)) {
-      ruleFiles.push(...listMdFiles(researchRulesDir));
+    if (framework.components.rules.exists) {
+      ruleFiles.push(...listMdFiles(framework.components.rules.path));
     }
   }
 
   // All addons (dynamically discovered)
-  if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+  if (normalizedMode === 'general' || normalizedMode === 'sdlc' || normalizedMode === 'both' || normalizedMode === 'all') {
     agentFiles.push(...getAddonAgentFiles(srcRoot));
     ruleFiles.push(...getAddonRuleFiles(srcRoot));
   }

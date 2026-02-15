@@ -17,10 +17,11 @@
     "package-plugins": "node tools/plugin/package-plugins.mjs --all",
     "package-plugins:clean": "node tools/plugin/package-plugins.mjs --all --clean",
     "build": "tsc",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:ci": "vitest run --exclude \"test/integration/**\" --exclude \"test/characterization/**\" --exclude \"test/smoke/**\" --exclude \"test/unit/intake/git-history-analyzer.test.ts\" --exclude \"test/unit/ralph-external/snapshot-manager.test.ts\" --exclude \"test/unit/smiths/toolsmith/runtime-discovery.test.ts\"",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
-    "test:watch": "vitest --watch",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage"
   },

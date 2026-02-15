@@ -15,7 +15,7 @@
  * Options:
  *   --source <path>    Source directory (defaults to repo root)
  *   --target <path>    Target directory (defaults to ~/.codex/skills)
- *   --mode <type>      Deployment mode: addons, sdlc, mmk, or all (default)
+ *   --mode <type>      Deployment mode: addons, sdlc, marketing, media-curator, research, or all (default)
  *   --dry-run          Show what would be deployed without writing
  *   --force            Overwrite existing files
  */
@@ -23,6 +23,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { getFrameworksForMode, normalizeDeploymentMode } from '../agents/providers/base.mjs';
 
 const CODEX_SKILLS_DIR = path.join(os.homedir(), '.codex', 'skills');
 const MAX_NAME_LENGTH = 100;
@@ -47,6 +48,7 @@ function parseArgs() {
     else if (a === '--force') cfg.force = true;
   }
 
+  cfg.mode = normalizeDeploymentMode(cfg.mode);
   return cfg;
 }
 
@@ -246,19 +248,11 @@ function getSkillDirectories(srcRoot, mode) {
     }
   }
 
-  // SDLC framework skills
-  if (mode === 'sdlc' || mode === 'all') {
-    const sdlcSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'skills');
-    if (fs.existsSync(sdlcSkillsDir)) {
-      dirs.push({ dir: sdlcSkillsDir, label: 'sdlc-complete' });
-    }
-  }
-
-  // Marketing framework skills
-  if (mode === 'mmk' || mode === 'marketing' || mode === 'all') {
-    const mmkSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'skills');
-    if (fs.existsSync(mmkSkillsDir)) {
-      dirs.push({ dir: mmkSkillsDir, label: 'media-marketing-kit' });
+  // Framework skills discovered from framework manifests/directory structure.
+  const frameworks = getFrameworksForMode(srcRoot, mode);
+  for (const framework of frameworks) {
+    if (framework.components.skills.exists) {
+      dirs.push({ dir: framework.components.skills.path, label: framework.id });
     }
   }
 

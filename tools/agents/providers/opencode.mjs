@@ -32,7 +32,8 @@ import {
   getAddonSkillDirs,
   listSkillDirs,
   deploySkillDir,
-  getRulesIndexPath,
+  normalizeDeploymentMode,
+  collectFrameworkArtifacts,
   cleanupOldRuleFiles
 } from './base.mjs';
 
@@ -318,7 +319,7 @@ export function createAgentsMd(target, srcRoot, dryRun) {
 // ============================================================================
 
 export async function postDeploy(targetDir, opts) {
-  initializeFrameworkWorkspace(targetDir, opts.mode, opts.dryRun);
+  initializeFrameworkWorkspace(targetDir, opts.mode, opts.dryRun, opts.srcRoot);
 
   if (opts.createAgentsMd) {
     createAgentsMd(targetDir, opts.srcRoot, opts.dryRun);
@@ -360,9 +361,10 @@ export async function deploy(opts) {
   const commandFiles = [];
   const skillDirs = [];
   const ruleFiles = [];
+  const normalizedMode = normalizeDeploymentMode(mode);
 
   // All addons (dynamically discovered)
-  if (mode === 'general' || mode === 'writing' || mode === 'sdlc' || mode === 'both' || mode === 'all') {
+  if (normalizedMode === 'general' || normalizedMode === 'sdlc' || normalizedMode === 'both' || normalizedMode === 'all') {
     agentFiles.push(...getAddonAgentFiles(srcRoot));
 
     if (shouldDeployCommands || commandsOnly) {
@@ -378,113 +380,18 @@ export async function deploy(opts) {
     }
   }
 
-  // Frameworks
-  if (mode === 'sdlc' || mode === 'both' || mode === 'all') {
-    const sdlcAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
-    agentFiles.push(...listMdFiles(sdlcAgentsDir));
-
-    if (shouldDeployCommands || commandsOnly) {
-      const sdlcCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'commands');
-      commandFiles.push(...listMdFilesRecursive(sdlcCommandsDir));
-    }
-
-    if (shouldDeploySkills || skillsOnly) {
-      const sdlcSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'skills');
-      skillDirs.push(...listSkillDirs(sdlcSkillsDir));
-    }
-
-    if (shouldDeployRules || rulesOnly) {
-      // Use consolidated RULES-INDEX.md instead of individual files
-      const indexPath = getRulesIndexPath(srcRoot);
-      if (indexPath) {
-        ruleFiles.push(indexPath);
-      } else {
-        // Fallback: deploy individual files if index not found
-        const sdlcRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'rules');
-        if (fs.existsSync(sdlcRulesDir)) {
-          ruleFiles.push(...listMdFiles(sdlcRulesDir));
-        }
-      }
-    }
-  }
-
-  if (mode === 'marketing' || mode === 'all') {
-    const marketingAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'agents');
-    agentFiles.push(...listMdFiles(marketingAgentsDir));
-
-    if (shouldDeployCommands || commandsOnly) {
-      const marketingCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'commands');
-      commandFiles.push(...listMdFilesRecursive(marketingCommandsDir));
-    }
-
-    if (shouldDeploySkills || skillsOnly) {
-      const marketingSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'skills');
-      skillDirs.push(...listSkillDirs(marketingSkillsDir));
-    }
-
-    if (shouldDeployRules || rulesOnly) {
-      const marketingRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-marketing-kit', 'rules');
-      ruleFiles.push(...listMdFiles(marketingRulesDir));
-    }
-  }
-
-  // Media Curator framework
-  if (mode === 'media-curator' || mode === 'all') {
-    const curatorAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'agents');
-    if (fs.existsSync(curatorAgentsDir)) {
-      agentFiles.push(...listMdFiles(curatorAgentsDir));
-    }
-
-    if (shouldDeployCommands || commandsOnly) {
-      const curatorCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'commands');
-      if (fs.existsSync(curatorCommandsDir)) {
-        commandFiles.push(...listMdFilesRecursive(curatorCommandsDir));
-      }
-    }
-
-    if (shouldDeploySkills || skillsOnly) {
-      const curatorSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'skills');
-      if (fs.existsSync(curatorSkillsDir)) {
-        skillDirs.push(...listSkillDirs(curatorSkillsDir));
-      }
-    }
-
-    if (shouldDeployRules || rulesOnly) {
-      const curatorRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'media-curator', 'rules');
-      if (fs.existsSync(curatorRulesDir)) {
-        ruleFiles.push(...listMdFiles(curatorRulesDir));
-      }
-    }
-  }
-
-  // Research framework
-  if (mode === 'research' || mode === 'all') {
-    const researchAgentsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'agents');
-    if (fs.existsSync(researchAgentsDir)) {
-      agentFiles.push(...listMdFiles(researchAgentsDir));
-    }
-
-    if (shouldDeployCommands || commandsOnly) {
-      const researchCommandsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'commands');
-      if (fs.existsSync(researchCommandsDir)) {
-        commandFiles.push(...listMdFilesRecursive(researchCommandsDir));
-      }
-    }
-
-    if (shouldDeploySkills || skillsOnly) {
-      const researchSkillsDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'skills');
-      if (fs.existsSync(researchSkillsDir)) {
-        skillDirs.push(...listSkillDirs(researchSkillsDir));
-      }
-    }
-
-    if (shouldDeployRules || rulesOnly) {
-      const researchRulesDir = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'research-complete', 'rules');
-      if (fs.existsSync(researchRulesDir)) {
-        ruleFiles.push(...listMdFiles(researchRulesDir));
-      }
-    }
-  }
+  const frameworkArtifacts = collectFrameworkArtifacts(srcRoot, normalizedMode, {
+    includeAgents: true,
+    includeCommands: shouldDeployCommands || commandsOnly,
+    includeSkills: shouldDeploySkills || skillsOnly,
+    includeRules: shouldDeployRules || rulesOnly,
+    recursiveCommands: true,
+    consolidatedSdlcRules: true
+  });
+  agentFiles.push(...frameworkArtifacts.agents);
+  commandFiles.push(...frameworkArtifacts.commands);
+  skillDirs.push(...frameworkArtifacts.skills);
+  ruleFiles.push(...frameworkArtifacts.rules);
 
   // Deploy
   if (!commandsOnly && !skillsOnly && !rulesOnly) {

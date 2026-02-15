@@ -10,9 +10,10 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
+import { mkdtempSync, rmSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { execSync, spawnSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 
 // Test directories
 const TEST_PROJECT_DIR = path.join(os.tmpdir(), 'aiwg-codex-test-project');
@@ -20,13 +21,26 @@ const TEST_HOME_DIR = path.join(os.tmpdir(), 'aiwg-codex-test-home');
 const TEST_CODEX_DIR = path.join(TEST_HOME_DIR, '.codex');
 const REPO_ROOT = path.resolve(__dirname, '../..');
 
+function canInitGit(): boolean {
+  const tmpDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-codex-git-check-'));
+  try {
+    execFileSync('git', ['init'], { cwd: tmpDir, stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+const GIT_INIT_AVAILABLE = canInitGit();
+
 // Check if codex CLI is available
 function isCodexAvailable(): boolean {
   try {
     const result = spawnSync('codex', ['--version'], {
       encoding: 'utf-8',
       timeout: 5000,
-      shell: true,
     });
     return result.status === 0;
   } catch {
@@ -62,7 +76,6 @@ function runCodex(
       timeout: options.timeout || 30000,
       cwd: options.cwd || process.cwd(),
       env: process.env,
-      shell: true,
     });
     return {
       stdout: result.stdout || '',
@@ -83,7 +96,7 @@ function runAiwg(args: string[], cwd = TEST_PROJECT_DIR): string {
   };
 
   // Use bin/aiwg.mjs which properly awaits async operations
-  return execSync(`node ${REPO_ROOT}/bin/aiwg.mjs ${args.join(' ')}`, {
+  return execFileSync(process.execPath, [path.join(REPO_ROOT, 'bin/aiwg.mjs'), ...args], {
     cwd,
     env,
     encoding: 'utf-8',
@@ -98,21 +111,21 @@ function runScript(scriptPath: string, args: string[] = []): string {
     USERPROFILE: TEST_HOME_DIR,
   };
 
-  return execSync(`node ${path.join(REPO_ROOT, scriptPath)} ${args.join(' ')}`, {
+  return execFileSync(process.execPath, [path.join(REPO_ROOT, scriptPath), ...args], {
     cwd: TEST_PROJECT_DIR,
     env,
     encoding: 'utf-8',
   });
 }
 
-describe('Codex Integration', () => {
+describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
   beforeEach(async () => {
     // Create test directories
     await fs.mkdir(TEST_PROJECT_DIR, { recursive: true });
     await fs.mkdir(TEST_CODEX_DIR, { recursive: true });
 
     // Initialize as git repo (Codex requires this)
-    execSync('git init', { cwd: TEST_PROJECT_DIR, stdio: 'pipe' });
+    execFileSync('git', ['init'], { cwd: TEST_PROJECT_DIR, stdio: 'pipe' });
   });
 
   afterEach(async () => {
@@ -385,6 +398,51 @@ describe('Codex Integration', () => {
       // Verify no AGENTS.md was created (only .git may exist)
       const files = await fs.readdir(TEST_PROJECT_DIR);
       expect(files).not.toContain('AGENTS.md');
+    });
+
+    it('media-curator mode includes media-curator command prompts for codex', () => {
+      const output = runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'media-curator',
+        '--deploy-commands',
+        '--deploy-skills',
+        '--target', TEST_PROJECT_DIR,
+        '--dry-run'
+      ]);
+
+      expect(output).toContain('Mode: media-curator');
+      expect(output).toContain('media-curator (');
+      expect(output).toContain('aiwg-verify-archive');
+    });
+
+    it('research mode includes research command prompts for codex', () => {
+      const output = runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'research',
+        '--deploy-commands',
+        '--deploy-skills',
+        '--target', TEST_PROJECT_DIR,
+        '--dry-run'
+      ]);
+
+      expect(output).toContain('Mode: research');
+      expect(output).toContain('research-complete (');
+      expect(output).toContain('aiwg-research-workflow');
+    });
+
+    it('mmk mode alias deploys media-marketing-kit prompts for codex', () => {
+      const output = runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'mmk',
+        '--deploy-commands',
+        '--deploy-skills',
+        '--target', TEST_PROJECT_DIR,
+        '--dry-run'
+      ]);
+
+      expect(output).toContain('Mode: marketing');
+      expect(output).toContain('media-marketing-kit (');
+      expect(output).toContain('aiwg-marketing-brief');
     });
   });
 

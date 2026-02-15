@@ -20,11 +20,25 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
+import { mkdtempSync, rmSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { execSync, spawnSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
+function canInitGit(): boolean {
+  const tmpDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-provider-git-check-'));
+  try {
+    execFileSync('git', ['init'], { cwd: tmpDir, stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+const GIT_INIT_AVAILABLE = canInitGit();
 
 // Check if tsx is available (needed for bin/aiwg.mjs which goes through router-loader)
 function isTsxAvailable(): boolean {
@@ -124,15 +138,19 @@ async function createTestEnv(provider: string): Promise<{ projectDir: string; ho
   await fs.mkdir(homeDir, { recursive: true });
 
   // Initialize git (some providers require it)
-  execSync('git init', { cwd: projectDir, stdio: 'pipe' });
+  execFileSync('git', ['init'], { cwd: projectDir, stdio: 'pipe' });
 
   return { projectDir, homeDir };
 }
 
 // Helper to clean up test directory
 async function cleanupTestEnv(projectDir: string, homeDir: string): Promise<void> {
-  await fs.rm(projectDir, { recursive: true, force: true });
-  await fs.rm(homeDir, { recursive: true, force: true });
+  if (projectDir) {
+    await fs.rm(projectDir, { recursive: true, force: true });
+  }
+  if (homeDir) {
+    await fs.rm(homeDir, { recursive: true, force: true });
+  }
 }
 
 // Helper to run deployment
@@ -158,8 +176,9 @@ function runDeploy(
     ...extraArgs,
   ];
 
-  return execSync(
-    `node ${path.join(REPO_ROOT, 'tools/agents/deploy-agents.mjs')} ${args.join(' ')}`,
+  return execFileSync(
+    process.execPath,
+    [path.join(REPO_ROOT, 'tools/agents/deploy-agents.mjs'), ...args],
     { cwd: REPO_ROOT, env, encoding: 'utf-8' }
   );
 }
@@ -195,7 +214,7 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
-describe('Provider File Locations', () => {
+describe.skipIf(!GIT_INIT_AVAILABLE)('Provider File Locations', () => {
   // Ensure base test directory exists
   beforeEach(async () => {
     await fs.mkdir(TEST_BASE, { recursive: true });
@@ -367,8 +386,9 @@ describe('Provider File Locations', () => {
         };
 
         // Run aiwg use with provider
-        execSync(
-          `node ${path.join(REPO_ROOT, 'bin/aiwg.mjs')} use sdlc --provider codex --target ${projectDir}`,
+        execFileSync(
+          process.execPath,
+          [path.join(REPO_ROOT, 'bin/aiwg.mjs'), 'use', 'sdlc', '--provider', 'codex', '--target', projectDir],
           { cwd: REPO_ROOT, env, encoding: 'utf-8' }
         );
 
@@ -387,7 +407,7 @@ describe('Provider File Locations', () => {
   });
 });
 
-describe('Edge Cases', () => {
+describe.skipIf(!GIT_INIT_AVAILABLE)('Edge Cases', () => {
   let projectDir: string;
   let homeDir: string;
 
@@ -449,7 +469,7 @@ describe('Edge Cases', () => {
   });
 });
 
-describe('Consolidated Rules Deployment', () => {
+describe.skipIf(!GIT_INIT_AVAILABLE)('Consolidated Rules Deployment', () => {
   let projectDir: string;
   let homeDir: string;
 

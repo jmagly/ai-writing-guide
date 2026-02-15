@@ -9,9 +9,10 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
+import { mkdtempSync, rmSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { execSync, spawnSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 
 // Test directories
 const TEST_PROJECT_DIR = path.join(os.tmpdir(), 'aiwg-cursor-test-project');
@@ -19,13 +20,26 @@ const TEST_HOME_DIR = path.join(os.tmpdir(), 'aiwg-cursor-test-home');
 const TEST_CURSOR_DIR = path.join(TEST_PROJECT_DIR, '.cursor');
 const REPO_ROOT = path.resolve(__dirname, '../..');
 
+function canInitGit(): boolean {
+  const tmpDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-cursor-git-check-'));
+  try {
+    execFileSync('git', ['init'], { cwd: tmpDir, stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+const GIT_INIT_AVAILABLE = canInitGit();
+
 // Check if cursor CLI is available
 function isCursorAvailable(): boolean {
   try {
     const result = spawnSync('cursor', ['--version'], {
       encoding: 'utf-8',
       timeout: 5000,
-      shell: true,
     });
     return result.status === 0;
   } catch {
@@ -61,7 +75,6 @@ function runCursor(
       timeout: options.timeout || 30000,
       cwd: options.cwd || process.cwd(),
       env: process.env,
-      shell: true,
     });
     return {
       stdout: result.stdout || '',
@@ -82,7 +95,7 @@ function runAiwg(args: string[], cwd = TEST_PROJECT_DIR): string {
   };
 
   // Use bin/aiwg.mjs which properly awaits async operations
-  return execSync(`node ${REPO_ROOT}/bin/aiwg.mjs ${args.join(' ')}`, {
+  return execFileSync(process.execPath, [path.join(REPO_ROOT, 'bin/aiwg.mjs'), ...args], {
     cwd,
     env,
     encoding: 'utf-8',
@@ -97,14 +110,14 @@ function runScript(scriptPath: string, args: string[] = []): string {
     USERPROFILE: TEST_HOME_DIR,
   };
 
-  return execSync(`node ${path.join(REPO_ROOT, scriptPath)} ${args.join(' ')}`, {
+  return execFileSync(process.execPath, [path.join(REPO_ROOT, scriptPath), ...args], {
     cwd: TEST_PROJECT_DIR,
     env,
     encoding: 'utf-8',
   });
 }
 
-describe('Cursor Integration', () => {
+describe.skipIf(!GIT_INIT_AVAILABLE)('Cursor Integration', () => {
   beforeEach(async () => {
     // Create test directories
     await fs.mkdir(TEST_PROJECT_DIR, { recursive: true });
@@ -112,7 +125,7 @@ describe('Cursor Integration', () => {
     await fs.mkdir(path.join(TEST_HOME_DIR, '.cursor'), { recursive: true });
 
     // Initialize as git repo (Cursor requires this)
-    execSync('git init', { cwd: TEST_PROJECT_DIR, stdio: 'pipe' });
+    execFileSync('git', ['init'], { cwd: TEST_PROJECT_DIR, stdio: 'pipe' });
   });
 
   afterEach(async () => {
