@@ -3,7 +3,34 @@
 All notable changes to AIWG project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with npm-compatible format (`YYYY.M.PATCH`).
+
+## [2026.2.9] - 2026-02-15 – "Manifest Native" Release
+
+| What changed | Why you care |
+|--------------|--------------|
+| **Provider normalization complete** | All 8 providers now discover framework artifacts via manifests rather than provider-specific hardcoding |
+| **Codex parity for research + media-curator** | Codex prompt and skill deployment now includes new framework components through the same discovery path as other providers |
+| **Automatic framework onboarding** | Adding a framework with a valid `manifest.json` is now enough for CLI discovery/deployment in provider flows |
+| **Less manual curation** | Provider modules were simplified and centralized around shared manifest-aware utilities |
+
+### Added
+
+- `agentic/code/frameworks/research-complete/manifest.json` for explicit framework metadata and artifact entrypoints
+- Manifest-driven framework discovery and mode resolution in shared provider utilities (`discoverFrameworks`, `getFrameworksForMode`, `collectFrameworkArtifacts`)
+- Coverage updates in deployment tests to validate new framework/provider artifact paths and install behavior
+
+### Changed
+
+- Provider deployment logic normalized across Claude, Codex, Copilot, Cursor, Factory, OpenCode, Warp, and Windsurf
+- Codex command prompt deployment now discovers framework command directories from framework manifests/mode selection
+- Codex skill deployment now discovers framework skills from framework manifests/mode selection
+- CLI/provider deployment plumbing refactored to reduce duplicated framework routing code
+
+### Fixed
+
+- Missing Codex deployment coverage for newly added framework components (research and media-curator)
+- Gaps where framework additions required manual provider-by-provider updates instead of manifest-driven discovery
 
 ## [2026.2.8] - 2026-02-14 – "Full Catalog" Release
 
