@@ -442,7 +442,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
 
       expect(output).toContain('Mode: marketing');
       expect(output).toContain('media-marketing-kit (');
-      expect(output).toContain('aiwg-marketing-brief');
+      expect(output).toContain('aiwg-creative-brief');
     });
   });
 

@@ -13,6 +13,9 @@ import { createRegistry } from '../../../src/extensions/registry.js';
 import { registerDeployedExtensions, scanDeployedAgents, scanDeployedSkills } from '../../../src/extensions/deployment-registration.js';
 import type { Extension } from '../../../src/extensions/types.js';
 
+const AGENTS_SOURCE_PATH = 'agentic/code/frameworks/sdlc-complete/agents';
+const SKILLS_SOURCE_PATH = 'agentic/code/frameworks/sdlc-complete/skills';
+
 describe('Deployment Registration', () => {
   let registry: ReturnType<typeof createRegistry>;
 
@@ -22,8 +25,7 @@ describe('Deployment Registration', () => {
 
   describe('scanDeployedAgents', () => {
     it('should scan .claude/agents directory and create extension objects', async () => {
-      // This will use actual deployed agents in test environment
-      const agents = await scanDeployedAgents('.claude/agents', 'claude');
+      const agents = await scanDeployedAgents(AGENTS_SOURCE_PATH, 'claude');
 
       expect(agents).toBeInstanceOf(Array);
       // Each agent should have required Extension fields
@@ -44,7 +46,7 @@ describe('Deployment Registration', () => {
     });
 
     it('should extract agent metadata from frontmatter', async () => {
-      const agents = await scanDeployedAgents('.claude/agents', 'claude');
+      const agents = await scanDeployedAgents(AGENTS_SOURCE_PATH, 'claude');
 
       if (agents.length > 0) {
         const agent = agents[0];
@@ -62,7 +64,7 @@ describe('Deployment Registration', () => {
 
   describe('scanDeployedSkills', () => {
     it('should scan .claude/skills directory and create extension objects', async () => {
-      const skills = await scanDeployedSkills('.claude/skills', 'claude');
+      const skills = await scanDeployedSkills(SKILLS_SOURCE_PATH, 'claude');
 
       expect(skills).toBeInstanceOf(Array);
       if (skills.length > 0) {
@@ -86,8 +88,8 @@ describe('Deployment Registration', () => {
   describe('registerDeployedExtensions', () => {
     it('should register all deployed extensions in the registry', async () => {
       await registerDeployedExtensions(registry, {
-        agentsPath: '.claude/agents',
-        skillsPath: '.claude/skills',
+        agentsPath: AGENTS_SOURCE_PATH,
+        skillsPath: SKILLS_SOURCE_PATH,
         provider: 'claude',
       });
 
@@ -101,7 +103,7 @@ describe('Deployment Registration', () => {
 
     it('should handle partial registration when some paths are missing', async () => {
       await registerDeployedExtensions(registry, {
-        agentsPath: '.claude/agents',
+        agentsPath: AGENTS_SOURCE_PATH,
         skillsPath: '/nonexistent/skills',
         provider: 'claude',
       });
@@ -113,12 +115,12 @@ describe('Deployment Registration', () => {
 
     it('should not duplicate extensions if called multiple times', async () => {
       await registerDeployedExtensions(registry, {
-        agentsPath: '.claude/agents',
+        agentsPath: AGENTS_SOURCE_PATH,
         provider: 'claude',
       });
 
       await registerDeployedExtensions(registry, {
-        agentsPath: '.claude/agents',
+        agentsPath: AGENTS_SOURCE_PATH,
         provider: 'claude',
       });
 
@@ -134,7 +136,7 @@ describe('Deployment Registration', () => {
   describe('Extension lookup after registration', () => {
     it('should allow looking up registered agents by ID', async () => {
       await registerDeployedExtensions(registry, {
-        agentsPath: '.claude/agents',
+        agentsPath: AGENTS_SOURCE_PATH,
         provider: 'claude',
       });
 
@@ -149,7 +151,7 @@ describe('Deployment Registration', () => {
 
     it('should parse keywords and description from agents', async () => {
       await registerDeployedExtensions(registry, {
-        agentsPath: '.claude/agents',
+        agentsPath: AGENTS_SOURCE_PATH,
         provider: 'claude',
       });
 

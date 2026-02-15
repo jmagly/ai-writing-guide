@@ -4,9 +4,9 @@
  * Ensures cost and reproducibility schemas are properly referenced
  * in agent definitions per the anti-pattern prevention rules.
  *
- * @source @.claude/agents/metrics-analyst.md
- * @source @.claude/agents/reliability-engineer.md
- * @source @.claude/agents/debugger.md
+ * @source @agentic/code/frameworks/sdlc-complete/agents/metrics-analyst.md
+ * @source @agentic/code/frameworks/sdlc-complete/agents/reliability-engineer.md
+ * @source @agentic/code/frameworks/sdlc-complete/agents/debugger.md
  * @issues #130, #112, #113, #114, #115
  */
 
@@ -14,7 +14,7 @@ import { describe, it, expect } from 'vitest';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
-const AGENTS_PATH = '.claude/agents';
+const AGENTS_PATH = 'agentic/code/frameworks/sdlc-complete/agents';
 
 describe('Agent Schema Wiring - Cost', () => {
   const agentPath = join(AGENTS_PATH, 'metrics-analyst.md');
