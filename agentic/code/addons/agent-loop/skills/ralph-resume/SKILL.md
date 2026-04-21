@@ -1,11 +1,17 @@
 ---
-namespace: aiwg
 name: ralph-resume
+description: "Resume a paused or interrupted agent loop from its last checkpoint, carrying forward accumulated learnings. Use when a loop timed out, hit its iteration limit, or was interrupted by a network/restart event and still has work to finish."
+namespace: aiwg
 platforms: [all]
-description: Resume an interrupted agent loop from last checkpoint
+triggers:
+  - ralph resume
+  - resume agent loop
+  - continue ralph
+  - resume loop
+user-invocable: true
 commandHint:
-  argumentHint: [--max-iterations N] [--timeout M --interactive --guidance "text"]
-  allowedTools: Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit
+  argumentHint: '[--max-iterations N] [--timeout M --interactive --guidance "text"]'
+  allowedTools: "Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit"
   model: opus
   category: automation
   orchestration: true

@@ -1,7 +1,14 @@
 ---
+name: eval-report
+description: "Generate an aggregate agent quality report from accumulated evaluation results, surfacing per-agent scores, regression trends, and prioritized remediation recommendations. Use when reviewing agent health after eval runs, comparing against a baseline, or preparing a quality dashboard for stakeholders."
 namespace: aiwg
 platforms: [all]
-description: Generate an aggregate agent quality report from evaluation results, showing scores, regressions, and recommendations
+triggers:
+  - eval report
+  - quality report
+  - agent quality
+  - evaluation summary
+user-invocable: true
 ---
 
 # Evaluation Report

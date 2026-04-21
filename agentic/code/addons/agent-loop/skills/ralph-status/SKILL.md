@@ -1,11 +1,17 @@
 ---
-namespace: aiwg
 name: ralph-status
+description: "Display the current or historical status of an agent loop, including iteration progress, completion reports, and failure details. Use when checking whether a loop is active, reviewing past loop results, or diagnosing a stalled iteration."
+namespace: aiwg
 platforms: [all]
-description: Check status of current or previous agent loop
+triggers:
+  - ralph status
+  - loop status
+  - check agent loop
+  - is ralph running
+user-invocable: true
 commandHint:
-  argumentHint: [--verbose] [--latest] [--all --interactive --guidance "text"]
-  allowedTools: Read, Glob, Bash
+  argumentHint: '[--verbose] [--latest] [--all --interactive --guidance "text"]'
+  allowedTools: "Read, Glob, Bash"
   model: haiku
   category: automation
 ---

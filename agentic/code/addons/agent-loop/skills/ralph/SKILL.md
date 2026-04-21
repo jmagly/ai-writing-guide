@@ -1,13 +1,20 @@
 ---
-namespace: aiwg
 name: al
+description: "Execute an iterative agent task loop that retries until verifiable completion criteria pass. Use when automating multi-step fixes, running tests to green, hitting coverage targets, or any task needing retry-until-done logic."
+namespace: aiwg
 aliases: [ralph, agent-loop]
 deprecated_names: [ralph]
 platforms: [all]
-description: Execute iterative task loop until completion criteria are met - iteration beats perfection
+triggers:
+  - ralph
+  - agent loop
+  - loop until
+  - keep trying until
+  - iterate on
+user-invocable: true
 commandHint:
-  argumentHint: "<task>" --completion "<criteria>" [--max-iterations N] [--timeout M] [--interactive --guidance "text"]
-  allowedTools: Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit
+  argumentHint: '"<task>" --completion "<criteria>" [--max-iterations N] [--timeout M] [--interactive --guidance "text"]'
+  allowedTools: "Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit"
   model: opus
   category: automation
   orchestration: true

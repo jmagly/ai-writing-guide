@@ -1,11 +1,17 @@
 ---
-namespace: aiwg
 name: ralph-abort
+description: "Stop a running or paused agent loop and optionally revert all file changes made during iterations. Use when a loop is stuck, producing unwanted changes, or no longer needed."
+namespace: aiwg
 platforms: [all]
-description: Abort a running agent loop and optionally revert changes
+triggers:
+  - ralph abort
+  - stop agent loop
+  - cancel ralph
+  - abort loop
+user-invocable: true
 commandHint:
-  argumentHint: [--keep-changes] [--revert] [--force --interactive --guidance "text"]
-  allowedTools: Read, Write, Bash
+  argumentHint: '[--keep-changes] [--revert] [--force --interactive --guidance "text"]'
+  allowedTools: "Read, Write, Bash"
   model: sonnet
   category: automation
 ---
