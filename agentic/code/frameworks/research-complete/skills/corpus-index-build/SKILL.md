@@ -14,6 +14,8 @@ commandHint:
 
 Build research graph indices from corpus state. Reads graph definitions from `.aiwg/config.yaml` and generates by-topic, by-year, authors, and citation-network indices from the current findings and citation data.
 
+> **Scope: research corpora, not SDLC artifacts.** This skill renders the human-readable markdown indices declared under `.aiwg/config.yaml` `graphs:` (output paths like `indices/by-topic.md`) from corpus frontmatter. The CLI command `aiwg index build` is a separate feature operated by the `index` skill in `aiwg-utils` — it builds the SDLC artifact graph at `.aiwg/.index/*` (JSON nodes/edges/checksums) and does **not** render the markdown indices listed in `index.graphs.indices.manifest`. If `aiwg index build` did not produce your `indices/*.md`, that is expected — invoke `corpus-index-build` instead.
+
 ## Triggers
 
 - "build the research indices"
