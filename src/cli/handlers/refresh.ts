@@ -62,7 +62,7 @@ export const refreshHandler: CommandHandler = {
       if (invokedAs === 'sync' || invokedAs === '--sync') {
         ui.warn("'aiwg sync' is deprecated — use 'aiwg refresh' instead (renamed to avoid git sync confusion)");
       }
-      console.log(`  ${ui.brandMark()} ${ui.bold('aiwg refresh')}${dryRun ? ui.dim('  (dry run)') : ''}`);
+      console.log(`  ${ui.brandMark()} ${ui.bold('aiwg refresh')}${dryRun ? ui.dimText('  (dry run)') : ''}`);
       ui.rule();
     }
 
