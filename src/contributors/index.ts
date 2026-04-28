@@ -18,6 +18,8 @@ export type {
 
 export { discoverContributors } from './discover.js';
 export { runDetection, isInUse } from './detect.js';
+export { inferProjectType } from './heuristic.js';
+export type { HeuristicDimension, HeuristicDimensionKind, HeuristicReport } from './heuristic.js';
 export {
   StatusContributorSchema,
   ResearchContributorSchema,
