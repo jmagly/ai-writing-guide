@@ -2123,6 +2123,42 @@ export const opsCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Memory Subsystem Commands
+
+export const memoryCommand: Extension = {
+  id: 'memory',
+  type: 'skill',
+  name: 'Memory',
+  description: 'Storage operations on the AIWG memory subsystem — resolve paths, list, get, put, delete, append JSONL events through the configured backend',
+  version: '1.0.0',
+  capabilities: ['cli', 'memory', 'semantic-memory', 'storage', 'pkm'],
+  keywords: ['memory', 'semantic-memory', 'reflections', 'pages'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['where is memory', 'memory path', 'list memory', 'aiwg memory'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<path|list|get|put|delete|append-log> [options]',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Parse subcommand and arguments',
+        'Resolve storage adapter for memory subsystem',
+        'Read/write/list/delete/append-log via the adapter',
+        'Print result',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Knowledge Base Commands
 
 export const kbCommand: Extension = {
@@ -2562,6 +2598,9 @@ export const commandDefinitions: Extension[] = [
 
   // Knowledge Base (1)
   kbCommand,
+
+  // Memory subsystem (1)
+  memoryCommand,
 
   // Agentic Tools (5) — RLM support tools
   chunkCommand,
