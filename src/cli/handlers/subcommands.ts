@@ -485,6 +485,34 @@ export const opsHandler: CommandHandler = {
 };
 
 /**
+ * Storage command handler
+ *
+ * Dynamically imports and delegates to src/storage/cli.ts.
+ * Handles subcommands: show, list-backends, test
+ *
+ * @implements #934
+ * @implements #954
+ */
+export const storageHandler: CommandHandler = {
+  id: 'storage',
+  name: 'Storage',
+  description: 'Storage adapter commands (show, list-backends, test)',
+  category: 'utility',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import('../../storage/cli.js');
+      await main(ctx.args);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `Storage command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * RLM agentic tools handler
  *
  * Routes `aiwg chunk`, `aiwg fanout`, `aiwg rlm-prep`, `aiwg rlm-search`,
@@ -597,6 +625,7 @@ export const subcommandHandlers: CommandHandler[] = [
   skillsHandler,
   configHandler,
   opsHandler,
+  storageHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,
