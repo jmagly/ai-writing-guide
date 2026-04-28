@@ -240,6 +240,139 @@ describe('activity-log CLI', () => {
     });
   });
 
+  describe('rotate (#977)', () => {
+    async function seed(lines: string[]): Promise<void> {
+      await mkdir(join(projectRoot, '.aiwg'), { recursive: true });
+      await writeFile(logPath, lines.join('\n') + '\n', 'utf-8');
+    }
+
+    it('refuses to rotate an empty log', async () => {
+      await expect(main(['rotate'])).rejects.toThrow(/Nothing to rotate/);
+    });
+
+    it('archives everything by default and leaves only the rotate-record entry', async () => {
+      await seed([
+        '## [2026-01-01 10:00] create | one',
+        '## [2026-02-01 10:00] update | two',
+        '## [2026-03-01 10:00] deploy | three',
+      ]);
+
+      await main(['rotate']);
+
+      const live = await readFile(logPath, 'utf-8');
+      const liveLines = live.trim().split('\n');
+      expect(liveLines).toHaveLength(1);
+      expect(liveLines[0]).toMatch(/archive \| activity-log rotated, archived 3 entries to archive\/activity-log\/.*\.log$/);
+
+      // Find the archive
+      const archiveDir = join(projectRoot, '.aiwg', 'archive', 'activity-log');
+      const { readdirSync } = await import('fs');
+      const archives = readdirSync(archiveDir);
+      expect(archives).toHaveLength(1);
+
+      const archive = await readFile(join(archiveDir, archives[0]), 'utf-8');
+      const archiveLines = archive.trim().split('\n');
+      expect(archiveLines).toHaveLength(3);
+      expect(archiveLines[0]).toContain('one');
+      expect(archiveLines[2]).toContain('three');
+    });
+
+    it('--keep-last N retains the tail inline and archives the head', async () => {
+      await seed([
+        '## [2026-01-01 10:00] create | one',
+        '## [2026-02-01 10:00] update | two',
+        '## [2026-03-01 10:00] deploy | three',
+        '## [2026-04-01 10:00] update | four',
+        '## [2026-04-15 10:00] deploy | five',
+      ]);
+
+      await main(['rotate', '--keep-last', '2']);
+
+      const live = await readFile(logPath, 'utf-8');
+      const liveLines = live.trim().split('\n');
+      // 2 retained + 1 rotate-record entry
+      expect(liveLines).toHaveLength(3);
+      expect(liveLines[0]).toContain('four');
+      expect(liveLines[1]).toContain('five');
+      expect(liveLines[2]).toMatch(/archive \| activity-log rotated, archived 3 entries/);
+    });
+
+    it('--keep-last <Nd> retains entries newer than N days', async () => {
+      const now = Date.now();
+      const dayMs = 86_400_000;
+      const fmt = (ms: number) => {
+        const d = new Date(ms);
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(d.getUTCDate()).padStart(2, '0');
+        const HH = String(d.getUTCHours()).padStart(2, '0');
+        const MM = String(d.getUTCMinutes()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd} ${HH}:${MM}`;
+      };
+
+      await seed([
+        `## [${fmt(now - 100 * dayMs)}] create | old1`,
+        `## [${fmt(now - 80 * dayMs)}] update | old2`,
+        `## [${fmt(now - 30 * dayMs)}] deploy | recent1`,
+        `## [${fmt(now - 5 * dayMs)}] update | recent2`,
+      ]);
+
+      await main(['rotate', '--keep-last', '60d']);
+
+      const live = await readFile(logPath, 'utf-8');
+      expect(live).toContain('recent1');
+      expect(live).toContain('recent2');
+      expect(live).not.toContain('old1');
+      expect(live).not.toContain('old2');
+
+      const archiveDir = join(projectRoot, '.aiwg', 'archive', 'activity-log');
+      const { readdirSync } = await import('fs');
+      const archives = readdirSync(archiveDir);
+      const archive = await readFile(join(archiveDir, archives[0]), 'utf-8');
+      expect(archive).toContain('old1');
+      expect(archive).toContain('old2');
+      expect(archive).not.toContain('recent1');
+    });
+
+    it('refuses when --keep-last would retain everything', async () => {
+      await seed([
+        '## [2026-04-01 10:00] create | one',
+        '## [2026-04-02 10:00] update | two',
+      ]);
+      await expect(main(['rotate', '--keep-last', '10'])).rejects.toThrow(/Nothing to archive/);
+    });
+
+    it('--to <path> writes archive to the explicit destination', async () => {
+      await seed([
+        '## [2026-04-01 10:00] create | one',
+        '## [2026-04-02 10:00] update | two',
+      ]);
+
+      await main(['rotate', '--to', 'custom-archives/april.log']);
+
+      const customPath = join(projectRoot, '.aiwg', 'custom-archives', 'april.log');
+      expect(existsSync(customPath)).toBe(true);
+      const archive = await readFile(customPath, 'utf-8');
+      expect(archive).toContain('one');
+      expect(archive).toContain('two');
+    });
+
+    it('refuses to overwrite an existing archive', async () => {
+      await seed(['## [2026-04-01 10:00] create | one']);
+      await main(['rotate', '--to', 'existing.log']);
+
+      // Re-seed and try to rotate to the same destination
+      await seed(['## [2026-04-02 10:00] update | two']);
+      await expect(main(['rotate', '--to', 'existing.log'])).rejects.toThrow(/Refusing to overwrite/);
+    });
+
+    it('rejects malformed --keep-last', async () => {
+      await seed(['## [2026-04-01 10:00] create | one']);
+      await expect(main(['rotate', '--keep-last', '90days'])).rejects.toThrow(/--keep-last must be/);
+      await expect(main(['rotate', '--keep-last', '0'])).rejects.toThrow(/positive/);
+    });
+  });
+
   describe('storage routing', () => {
     it('honors roots.activity_log override from storage.config', async () => {
       // Configure activity_log to live in a non-default location
