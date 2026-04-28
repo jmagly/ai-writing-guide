@@ -18,11 +18,11 @@ Findings come from focused web research per backend, conducted 2026-04-28. Each 
 
 ---
 
-## Naming clarification — "Forte" in the issue body
+## Naming clarification — "Forte" → Fortemi (resolved)
 
-The issue body lists *"Obsidian, Forte, Logseq, Notion, AnythingLLM, and similar"*. There is no widely-known PKM product named "Forte" matching the others on that list. There **is** an internal AIWG project called **Fortemi** — a Rust/PostgreSQL semantic memory system with SKOS hierarchies, pgvector embeddings, and W3C PROV tracking, documented at `.aiwg/planning/training-framework/phase-4-fortemi-review.md`.
+The issue body lists *"Obsidian, Forte, Logseq, Notion, AnythingLLM, and similar"*. **"Forte" was confirmed by the issue author to refer to Fortemi** — the internal AIWG project: a Rust/PostgreSQL semantic memory system with SKOS hierarchies, pgvector embeddings, and W3C PROV tracking, documented at `.aiwg/planning/training-framework/phase-4-fortemi-review.md`.
 
-**Open question for the issue author:** does "Forte" in #934 refer to **Fortemi** (in which case it is a first-party adapter, designed against the internal MCP tool surface), or to a third-party tool we should still identify? This research note proceeds on both interpretations and flags the choice as a follow-up sub-issue (`SPIKE: Forte ↔ Fortemi clarification`).
+The `fortemi` adapter is therefore a **first-party adapter** against the Fortemi MCP tool surface (`capture_knowledge`, `update_note`, `manage_concepts`, `bulk_reprocess_notes`). Resolution captured on issue #961.
 
 ---
 
@@ -106,7 +106,7 @@ Caveats:
 
 **Adapter strategy:** RAG-shaped target — write markdown as a multipart upload to `/api/v1/document/upload/:folder`, where folder = subsystem name. One-way flow (we write; user queries via AnythingLLM UI). No read-back parity for adapter `read()`/`query()` — those operations should fall through to the `fs` cache.
 
-### `fortemi` (first-party, if intended)
+### `fortemi` (first-party — confirmed)
 
 | Aspect | Finding | Status |
 |---|---|---|
@@ -116,7 +116,7 @@ Caveats:
 | Public docs | Not public | CONFIRMED |
 | Maturity | Phase 4 review confirms "feasible with minor workarounds" | CONFIRMED |
 
-**Adapter strategy (if pursued):** call Fortemi via the MCP tool surface (the most stable contract); avoid direct Postgres. **Blocked on:** confirmation from issue author that "Forte" → "Fortemi" was intended (sub-issue `SPIKE: Forte ↔ Fortemi clarification`).
+**Adapter strategy:** call Fortemi via the MCP tool surface (the most stable contract); avoid direct Postgres connections from the adapter.
 
 ### `s3`
 
@@ -164,10 +164,9 @@ AnythingLLM, Notion (rate-limited), Fortemi (queue-based) — these don't synchr
 
 ## Open questions surfaced by research
 
-1. **"Forte" identity** — Fortemi (first-party) or an unidentified third-party tool? File a spike.
-2. **Logseq DB version readiness** — when it ships, do we keep file-backed compatibility or fork the adapter? Defer to phase 2 implementation.
-3. **Notion external_id strategy** — sha256(subsystem+path) is durable but opaque to humans browsing in Notion. Worth a UX review before building.
-4. **AnythingLLM read parity** — for subsystems that need to *read* what was written (e.g., research corpus), AnythingLLM doesn't expose chunked read-back. Fall through to `fs`-cached copy.
+1. **Logseq DB version readiness** — when it ships, do we keep file-backed compatibility or fork the adapter? Defer to phase 2 implementation.
+2. **Notion external_id strategy** — sha256(subsystem+path) is durable but opaque to humans browsing in Notion. Worth a UX review before building.
+3. **AnythingLLM read parity** — for subsystems that need to *read* what was written (e.g., research corpus), AnythingLLM doesn't expose chunked read-back. Fall through to `fs`-cached copy.
 
 ---
 

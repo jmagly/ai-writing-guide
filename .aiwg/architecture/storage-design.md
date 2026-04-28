@@ -217,12 +217,13 @@ The research note (`.aiwg/architecture/research/storage-backends.md`) carries ci
 - `read()` and `list()` fall through to a local `.aiwg/.storage-cache/anythingllm/<subsystem>/` mirror, since AnythingLLM does not expose chunked read-back.
 - `query()` implemented via the chat-thread query API.
 
-### 5.6 `fortemi` (first-party — gated on the "Forte" clarification spike)
+### 5.6 `fortemi` (first-party)
 
 - Calls Fortemi via the configured MCP server; tools used: `capture_knowledge`, `update_note`, `manage_concepts`, `bulk_reprocess_notes`.
 - `note_id` derived from `subsystem + ':' + path`.
 - SKOS `scheme` from config used to scope the subsystem's notes.
 - `query()` implemented via Fortemi's semantic search MCP tool.
+- "Forte" in the originating issue body confirmed (#961) to refer to Fortemi.
 
 ### 5.7 `s3`
 
@@ -321,11 +322,10 @@ Consumer migrations follow the same order, one PR per consumer:
 
 ## 10. Open questions and risks
 
-1. **"Forte" identity** — Fortemi (first-party) or unidentified third-party? Tracked as `SPIKE: clarify Forte ↔ Fortemi`. Adapter blocked on resolution.
-2. **Logseq DB version** — when it ships, the file-write fallback needs a re-check. Tracked as a phase-2 follow-up.
-3. **Notion external_id UX** — the `External ID` page property is opaque to humans browsing in Notion. Worth a UX review before phase 2.
-4. **AnythingLLM read parity** — for subsystems that need to *read* what was written, the cache fall-through doubles disk usage. Acceptable; document.
-5. **Backend reachability at session start** — `aiwg session` health check should probe declared backends and warn early. Tracked as a follow-up.
+1. **Logseq DB version** — when it ships, the file-write fallback needs a re-check. Tracked as a phase-2 follow-up.
+2. **Notion external_id UX** — the `External ID` page property is opaque to humans browsing in Notion. Worth a UX review before phase 2.
+3. **AnythingLLM read parity** — for subsystems that need to *read* what was written, the cache fall-through doubles disk usage. Acceptable; document.
+4. **Backend reachability at session start** — `aiwg session` health check should probe declared backends and warn early. Tracked as a follow-up.
 
 ---
 

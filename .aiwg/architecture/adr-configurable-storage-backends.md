@@ -79,9 +79,11 @@ Rejected: Notion and AnythingLLM cannot meet this contract (rate limits, async e
 
 ## Risks and open questions
 
-1. **"Forte" identity** — issue #934 lists "Forte" alongside Obsidian/Logseq/Notion. No widely-known PKM tool by that name; AIWG has an internal project called Fortemi. Tracked as `SPIKE: clarify Forte ↔ Fortemi`. The `fortemi` adapter is conditionally in scope pending resolution.
-2. **Logseq DB version** — the Logseq DB-backed rewrite is in development as of April 2025. The `logseq` adapter targets the file-backed graph; needs re-validation when DB version stabilizes.
-3. **Backend reachability at session start** — `aiwg session` should warn early if a declared backend is offline. Tracked as a follow-up.
+1. **Logseq DB version** — the Logseq DB-backed rewrite is in development as of April 2025. The `logseq` adapter targets the file-backed graph; needs re-validation when DB version stabilizes.
+2. **Backend reachability at session start** — `aiwg session` should warn early if a declared backend is offline. Tracked as a follow-up.
+
+Resolved during the design pass:
+- "Forte" in #934 refers to Fortemi (the first-party AIWG semantic-memory project). Confirmed on #961.
 
 ## References
 
