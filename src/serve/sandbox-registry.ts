@@ -16,9 +16,9 @@
  */
 
 import { randomUUID } from 'crypto';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync } from 'fs';
 import { homedir } from 'os';
-import { join } from 'path';
+import { dirname, isAbsolute, join, resolve as resolvePath } from 'path';
 
 // ============================================================
 // Types
@@ -131,23 +131,109 @@ interface AgentIdentityRecord {
   lastSeenAt: string;
 }
 
-const IDENTITY_STORE_PATH = join(homedir(), '.config', 'aiwg', 'sandbox-agents.json');
+/**
+ * Default identity store location — global, host-level. Preserved for
+ * backward compatibility when `.aiwg/storage.config` doesn't redirect
+ * `sandbox_identity` (#969).
+ */
+const DEFAULT_IDENTITY_STORE_PATH = join(homedir(), '.config', 'aiwg', 'sandbox-agents.json');
+
+/**
+ * Resolve the identity-store path, honoring `roots.sandbox_identity`
+ * in `.aiwg/storage.config` when set. Sync read because the sandbox
+ * registry constructor is sync and load happens at construction time.
+ *
+ * Backend support: only `fs` (or absent config) is currently supported
+ * for the identity store — non-fs backends would require an async
+ * adapter call which doesn't fit the sync constructor. Throws a clear
+ * error if the user has configured a non-fs backend for this subsystem.
+ *
+ * Exported for testing — production callers omit `projectRootOverride`
+ * to use `process.cwd()`.
+ *
+ * @issue #969
+ */
+export function resolveIdentityStorePath(projectRootOverride?: string): string {
+  // First check env var for tests / one-off overrides
+  const envOverride = process.env['AIWG_SANDBOX_IDENTITY_STORE'];
+  if (envOverride) return envOverride;
+
+  // Try storage.config — sync read of project-local file
+  const projectRoot = projectRootOverride ?? process.cwd();
+  const configPath = join(projectRoot, '.aiwg', 'storage.config');
+  if (!existsSync(configPath)) return DEFAULT_IDENTITY_STORE_PATH;
+
+  try {
+    const raw = readFileSync(configPath, 'utf-8');
+    const parsed = JSON.parse(raw) as {
+      version?: string;
+      roots?: Record<string, string>;
+      backends?: Record<string, { type?: string }>;
+    };
+    if (parsed.version !== '1') return DEFAULT_IDENTITY_STORE_PATH;
+
+    // Refuse non-fs backends — sync constructor can't await an adapter
+    const backendType = parsed.backends?.['sandbox_identity']?.type;
+    if (backendType && backendType !== 'fs') {
+      throw new Error(
+        `sandbox-registry: backend "${backendType}" not supported for sandbox_identity ` +
+          `(only fs supported in v1; sync load constraint). Configure roots.sandbox_identity ` +
+          `to redirect within the fs backend, or remove the backends.sandbox_identity entry.`
+      );
+    }
+
+    const override = parsed.roots?.['sandbox_identity'];
+    if (override) {
+      // Expand ~/ and resolve relative paths against project root
+      let resolved = override;
+      if (resolved.startsWith('~/')) resolved = join(homedir(), resolved.slice(2));
+      else if (resolved === '~') resolved = homedir();
+      else if (!isAbsolute(resolved)) resolved = resolvePath(projectRoot, resolved);
+      // The override is a directory; the legacy file lives inside it
+      return join(resolved, 'sandbox-agents.json');
+    }
+  } catch (err) {
+    // Throw on configured-but-unsupported, swallow on parse errors
+    if (err instanceof Error && err.message.startsWith('sandbox-registry: backend')) {
+      throw err;
+    }
+    // ignore — fall through to default
+  }
+  return DEFAULT_IDENTITY_STORE_PATH;
+}
 
 function loadIdentityStore(): Map<string, AgentIdentityRecord> {
+  const path = resolveIdentityStorePath();
   try {
-    if (existsSync(IDENTITY_STORE_PATH)) {
-      const data = JSON.parse(readFileSync(IDENTITY_STORE_PATH, 'utf-8')) as AgentIdentityRecord[];
+    if (existsSync(path)) {
+      const data = JSON.parse(readFileSync(path, 'utf-8')) as AgentIdentityRecord[];
       return new Map(data.map((r) => [r.instanceId, r]));
     }
   } catch { /* ignore parse/read errors */ }
   return new Map();
 }
 
+/**
+ * Save the identity store atomically: write to a temp file in the same
+ * directory, then rename onto the live path. Prevents readers from
+ * observing a half-written JSON file under concurrent SIGINT.
+ */
 function saveIdentityStore(store: Map<string, AgentIdentityRecord>): void {
+  const path = resolveIdentityStorePath();
   try {
-    mkdirSync(join(homedir(), '.config', 'aiwg'), { recursive: true });
-    writeFileSync(IDENTITY_STORE_PATH, JSON.stringify([...store.values()], null, 2), 'utf-8');
-  } catch { /* ignore write errors */ }
+    const dir = dirname(path);
+    mkdirSync(dir, { recursive: true });
+
+    const tmp = `${path}.tmp.${process.pid}`;
+    writeFileSync(tmp, JSON.stringify([...store.values()], null, 2), 'utf-8');
+    try {
+      renameSync(tmp, path);
+    } catch (err) {
+      // Best-effort cleanup of the temp file
+      try { unlinkSync(tmp); } catch { /* ignore */ }
+      throw err;
+    }
+  } catch { /* ignore write errors — non-fatal per existing contract */ }
 }
 
 /** Convenience helper — returns true if the sandbox advertises a feature flag. */
