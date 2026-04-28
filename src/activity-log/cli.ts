@@ -112,15 +112,48 @@ async function handleAppend(args: string[]): Promise<void> {
     console.warn(`warning: summary is ${summary.length} chars (rule recommends ≤120)`);
   }
 
+  // #975: honor AIWG_SKIP_ACTIVITY_LOG=1 per the activity-log rule.
+  if (isActivityLogSkipped()) {
+    return;
+  }
+
   const adapter = await resolveStorage('activity_log');
   const newLine = formatEntry({ timestamp: new Date(), operation: op, summary });
 
-  // Read-then-write append. Idempotent at the line level.
-  const existing = (await adapter.read(LOG_PATH)) ?? '';
-  const trailing = existing.length === 0 || existing.endsWith('\n') ? '' : '\n';
-  await adapter.write(LOG_PATH, existing + trailing + newLine + '\n');
+  // #976: prefer atomic append when the backend supports it. The fs
+  // backend uses fs.appendFile (O_APPEND) so concurrent appenders don't
+  // race with each other. Fall back to read-then-write for backends
+  // that don't expose append (e.g., Notion, AnythingLLM, Fortemi) —
+  // those backends have their own concurrency models anyway.
+  if (typeof adapter.append === 'function') {
+    // Append guarantees no read-modify-write race. We need to ensure the
+    // existing log ends with a newline before our line; do that with a
+    // single-byte preamble append when needed.
+    const existing = (await adapter.read(LOG_PATH)) ?? '';
+    if (existing.length > 0 && !existing.endsWith('\n')) {
+      await adapter.append(LOG_PATH, '\n');
+    }
+    await adapter.append(LOG_PATH, newLine + '\n');
+  } else {
+    const existing = (await adapter.read(LOG_PATH)) ?? '';
+    const trailing = existing.length === 0 || existing.endsWith('\n') ? '' : '\n';
+    await adapter.write(LOG_PATH, existing + trailing + newLine + '\n');
+  }
 
   console.log(`Entry appended to .aiwg/activity.log:\n  ${newLine}`);
+}
+
+/**
+ * Returns true when AIWG_SKIP_ACTIVITY_LOG is set (per the activity-log
+ * rule's documented opt-out). Accepts "1", "true" (case-insensitive),
+ * or any non-empty value other than "0"/"false".
+ */
+function isActivityLogSkipped(): boolean {
+  const raw = process.env['AIWG_SKIP_ACTIVITY_LOG'];
+  if (!raw) return false;
+  const v = raw.toLowerCase().trim();
+  if (v === '0' || v === 'false' || v === '') return false;
+  return true;
 }
 
 async function handleStats(): Promise<void> {

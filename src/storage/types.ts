@@ -102,6 +102,15 @@ export interface StorageAdapter {
   /** Idempotent. Overwrites by default. */
   write(path: string, content: string, meta?: WriteMeta): Promise<void>;
 
+  /**
+   * Atomic append. Optional — backends that don't expose an
+   * append-friendly primitive omit this and callers fall back to
+   * read-then-write. The fs backend implements this via fs.appendFile
+   * (POSIX O_APPEND), which the kernel guarantees atomic for writes
+   * within PIPE_BUF (4096 bytes on Linux). See #976.
+   */
+  append?(path: string, content: string): Promise<void>;
+
   /** Returns entries whose path starts with `prefix`. Empty string lists all. */
   list(prefix: string): Promise<StorageEntry[]>;
 
