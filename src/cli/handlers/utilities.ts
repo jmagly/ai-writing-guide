@@ -166,6 +166,70 @@ async function scanSourceNamespaceIssues(frameworkRoot: string): Promise<string[
   return issues;
 }
 
+/**
+ * Scan every `<framework>/<kind>/contributor.md` under `agentic/code/` and
+ * validate its frontmatter against the registered schema for its kind.
+ * Returns a list of human-readable issue lines for output, plus a count of
+ * problems found. Per ADR-023 §Schema validation, malformed contributors
+ * fail strict validation.
+ */
+async function scanContributorIssues(
+  frameworkRoot: string
+): Promise<{ lines: string[]; count: number }> {
+  // Lazy-imported so the validate-metadata path stays fast when there are
+  // no contributors yet; also avoids an upfront dep load when zod is unused.
+  const [{ parseFrontmatter }, { validateContributor, getRegisteredKinds }] = await Promise.all([
+    import('../../artifacts/index-builder.js'),
+    import('../../contributors/validation.js'),
+  ]);
+
+  const kinds = new Set(getRegisteredKinds());
+  const sourceRoot = path.join(frameworkRoot, 'agentic/code');
+  const lines: string[] = [];
+  let count = 0;
+
+  async function walk(dir: string): Promise<void> {
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        await walk(full);
+      } else if (e.name === 'contributor.md') {
+        // Only validate if the parent directory name is a registered kind.
+        // Avoids treating unrelated files named `contributor.md` as contributors.
+        const parent = path.basename(path.dirname(full));
+        if (!kinds.has(parent)) continue;
+
+        try {
+          const content = fs.readFileSync(full, 'utf-8');
+          const { data } = parseFrontmatter(content);
+          const validation = validateContributor(data);
+          if (!validation.ok) {
+            const rel = path.relative(frameworkRoot, full);
+            lines.push(`  ERROR  ${rel}`);
+            for (const err of validation.errors) {
+              lines.push(`         ${err}`);
+            }
+            count++;
+          }
+        } catch (err) {
+          const rel = path.relative(frameworkRoot, full);
+          lines.push(`  ERROR  ${rel}: ${(err as Error).message}`);
+          count++;
+        }
+      }
+    }
+  }
+
+  await walk(sourceRoot);
+  return { lines, count };
+}
+
 export const validateMetadataHandler: CommandHandler = {
   id: 'validate-metadata',
   name: 'Validate Metadata',
@@ -202,6 +266,32 @@ export const validateMetadataHandler: CommandHandler = {
       }
     } catch {
       // Namespace scan is non-fatal
+    }
+
+    // Append contributor validation: walk source contributor.md files and
+    // validate their frontmatter against the kind's zod schema (ADR-023).
+    try {
+      const { lines, count } = await scanContributorIssues(frameworkRoot);
+      if (count > 0) {
+        console.log('\n── Contributor validation ──');
+        console.log(`  ${count} contributor file(s) failed schema validation:`);
+        lines.slice(0, 40).forEach(l => console.log(l));
+        if (lines.length > 40) {
+          console.log(`  ... and ${lines.length - 40} more lines`);
+        }
+        // Strict mode escalates to a non-zero exit so CI catches drift.
+        if (ctx.args.includes('--strict') && result.exitCode === 0) {
+          return {
+            exitCode: 1,
+            message: `Contributor validation failed: ${count} file(s) violated schema`,
+          };
+        }
+      } else {
+        console.log('\n── Contributor validation: all contributor.md files conform to schema ✓');
+      }
+    } catch {
+      // Contributor scan is non-fatal — never break validate-metadata if zod
+      // import or filesystem walk hits an unexpected condition.
     }
 
     return result;
