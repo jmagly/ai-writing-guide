@@ -20,7 +20,7 @@ For AIWG maintenance operations, the CLI is the preferred approach over direct f
 | Remove framework | `aiwg remove <framework>` | Delete framework files manually |
 | Check health | `aiwg doctor` | Manually inspect file presence |
 | Update AIWG | `aiwg update` | `npm install -g aiwg` directly |
-| Sync deployment | `aiwg sync` | Run `use` for each framework individually |
+| Refresh deployment | `aiwg refresh` (deprecated alias: `aiwg sync`) | Run `use` for each framework individually |
 | Add extension | `aiwg add-agent/add-command/add-skill` | Write directly to `.claude/agents/` |
 | Check version | `aiwg version` | Read `package.json` manually |
 | Detect provider | `aiwg runtime-info` | Inspect directory structure |
@@ -29,9 +29,9 @@ For AIWG maintenance operations, the CLI is the preferred approach over direct f
 
 Before starting any orchestration session expected to exceed 30 minutes:
 
-1. `aiwg sync --dry-run` — check if deployment is current
+1. `aiwg refresh --dry-run` — check if deployment is current
 2. `aiwg doctor` — establish baseline health
-3. If issues found: run `aiwg sync` or delegate to AIWG Steward agent
+3. If issues found: run `aiwg refresh` or delegate to AIWG Steward agent
 4. `aiwg runtime-info` — confirm active provider
 
 This ensures agents work against current templates, agent definitions, and rules.
@@ -43,8 +43,8 @@ Agents should initiate self-maintenance when:
 | Trigger | Action |
 |---------|--------|
 | Start of long orchestration session | Pre-flight check (above) |
-| User asks about AIWG currency | `aiwg sync --dry-run` → report + offer sync |
-| `aiwg doctor` reports errors | `aiwg sync` or invoke AIWG Steward |
+| User asks about AIWG currency | `aiwg refresh --dry-run` → report + offer refresh |
+| `aiwg doctor` reports errors | `aiwg refresh` or invoke AIWG Steward |
 | Deploying to a new provider | `aiwg use <framework> --provider <p>` |
 | User adds/removes a framework | `aiwg use` / `aiwg remove` |
 | Multiple background tasks needed | `aiwg mc start` + `aiwg mc dispatch` |
@@ -120,7 +120,7 @@ Agent: I'll copy the agent files to .github/agents/...
 
 ```
 Agent: Starting phase transition orchestration.
-       Pre-flight: aiwg sync --dry-run → all current
+       Pre-flight: aiwg refresh --dry-run → all current
        Pre-flight: aiwg doctor → healthy
        Proceeding with orchestration...
 ```

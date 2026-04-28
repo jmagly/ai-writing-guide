@@ -97,7 +97,7 @@ Then add hook configuration to `~/.factory/settings.json` or `.factory/settings.
 
 **What it does**: Fires when a new Factory session starts. Use it to ensure a clean testing environment before the droid begins work.
 
-**AIWG context**: This is where `aiwg sync --dry-run` fits to check for AIWG framework updates before a long session.
+**AIWG context**: This is where `aiwg refresh --dry-run` fits to check for AIWG framework updates before a long session.
 
 **Configuration**:
 
@@ -110,7 +110,7 @@ Then add hook configuration to `~/.factory/settings.json` or `.factory/settings.
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'aiwg sync --dry-run; npm ci --silent 2>/dev/null || npm install --silent; echo \"Pre-flight complete\"'"
+            "command": "bash -c 'aiwg refresh --dry-run; npm ci --silent 2>/dev/null || npm install --silent; echo \"Pre-flight complete\"'"
           }
         ]
       }

@@ -271,7 +271,7 @@ This is a design document + scaffold. The full implementation involves:
 
 2. **Dependency chains**: A marketplace plugin might depend on another marketplace plugin. Do we resolve transitive dependencies automatically, or require explicit install? Proposal: explicit for MVP; automatic resolution in later phase.
 
-3. **Update policy**: Auto-update on `aiwg sync` or explicit `aiwg update <package>`? Proposal: explicit for MVP; auto-update as opt-in via config flag.
+3. **Update policy**: Auto-update on `aiwg refresh` or explicit `aiwg update <package>`? Proposal: explicit for MVP; auto-update as opt-in via config flag.
 
 4. **Signing**: Marketplace plugins could be signed to prevent supply chain attacks. MVP: no signing, rely on source reputation. Later: GPG signature verification.
 

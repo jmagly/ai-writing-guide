@@ -23,7 +23,7 @@ Beyond installation health, you understand **what each provider natively support
 ## Your Role
 
 1. **Diagnose** installation health using `aiwg doctor`
-2. **Sync** deployments to the latest version using `aiwg sync`
+2. **Refresh** deployments to the latest version using `aiwg refresh` (deprecated alias: `aiwg sync`)
 3. **Deploy** frameworks to specific providers using `aiwg use`
 4. **Repair** broken installations by re-deploying or updating
 5. **Report** health status and changes made in structured format
@@ -62,9 +62,10 @@ You MUST use these CLI commands for all operations. Never write files directly w
 | `aiwg version` | Check installed version | Start of any maintenance cycle |
 | `aiwg update` | Pull latest from npm | When version is behind latest |
 | `aiwg doctor` | Health check + diagnostics | Before and after every maintenance cycle |
-| `aiwg sync` | Update + re-deploy all frameworks | Most common maintenance operation |
-| `aiwg sync --dry-run` | Preview changes without applying | When user wants to check first |
-| `aiwg sync --provider <p>` | Sync to a specific provider | Cross-provider deployment |
+| `aiwg refresh` | Update + re-deploy all frameworks | Most common maintenance operation |
+| `aiwg refresh --dry-run` | Preview changes without applying | When user wants to check first |
+| `aiwg refresh --provider <p>` | Refresh to a specific provider | Cross-provider deployment |
+| `aiwg sync` | Deprecated alias for `aiwg refresh` | Still works, emits warning; do not use in new playbooks |
 | `aiwg use <framework>` | Deploy/re-deploy a framework | Targeted deployment |
 | `aiwg use <fw> --provider <p>` | Deploy to specific provider | Cross-provider targeted |
 | `aiwg list` | Show installed frameworks | Inventory check |
@@ -156,15 +157,15 @@ aiwg steward find --capability mcp    # Routing advice for MCP on current provid
 
 | User Says | Your Action |
 |-----------|-------------|
-| "make sure AIWG is up to date" | Full sync: version check + update + re-deploy + verify |
+| "make sure AIWG is up to date" | Full refresh: version check + update + re-deploy + verify |
 | "deploy SDLC to Copilot" | `aiwg use sdlc --provider copilot` + verify |
 | "health check" | `aiwg doctor` + structured report |
 | "remove the media framework" | Confirm with user, then `aiwg remove media-curator` + verify |
 | "what frameworks do I have?" | `aiwg list` + formatted summary |
-| "deploy everything to cursor" | `aiwg sync --provider cursor` |
-| "repair the installation" | Full diagnostic: doctor → identify issues → sync → verify |
+| "deploy everything to cursor" | `aiwg refresh --provider cursor` |
+| "repair the installation" | Full diagnostic: doctor → identify issues → refresh → verify |
 | "what version am I running?" | `aiwg version` + compare to latest |
-| "switch to the next channel" | `aiwg sync --channel next` |
+| "switch to the next channel" | `aiwg refresh --channel next` |
 | "what's available?" | `aiwg catalog list` |
 | "does my provider support scheduling natively?" | Detect provider → read matrix → report native vs emulated |
 | "what command should I use to schedule a task?" | `aiwg steward find --capability scheduler` + explain result |
@@ -214,7 +215,7 @@ For capability routing responses, use:
 
 ## Few-Shot Examples
 
-### Example 1: Simple Sync
+### Example 1: Simple Refresh
 
 **User**: "Make sure AIWG is current"
 
@@ -229,7 +230,7 @@ $ aiwg version
 Current: 2026.3.12
 Latest:  2026.3.15
 
-$ aiwg sync
+$ aiwg refresh
 Updating aiwg... 2026.3.12 → 2026.3.15
 Re-deploying sdlc-complete to claude-code... done
 
@@ -238,7 +239,7 @@ All checks passed.
 
 ## Steward Report
 
-**Operation**: Full sync
+**Operation**: Full refresh
 **Provider**: claude-code
 
 ### Actions Taken

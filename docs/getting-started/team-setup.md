@@ -66,10 +66,12 @@ npm install -g aiwg
 When AIWG releases updates or you add new agents and commands:
 
 ```bash
-aiwg sync
+aiwg refresh
 ```
 
 This pulls the latest framework and re-deploys to all providers. Commit and push, and everyone gets the update with the next `git pull`.
+
+> `aiwg sync` is the deprecated alias and still works, but emits a warning and is scheduled for removal after the 2026.5.x stable line.
 
 ---
 

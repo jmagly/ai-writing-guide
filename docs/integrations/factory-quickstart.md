@@ -212,7 +212,7 @@ Factory provides 9 lifecycle hook events (superset of Claude Code):
 | `UserPromptSubmit` | Input preprocessing |
 | `Stop` | Completion notification |
 | `SubagentStop` | Post-subagent logging (AIWG trace) |
-| `SessionStart` | Pre-flight checks (`aiwg sync --dry-run`) |
+| `SessionStart` | Pre-flight checks (`aiwg refresh --dry-run`) |
 | `SessionEnd` | Cleanup |
 | `PreCompact` | Context preservation |
 | `Notification` | Desktop alerts |
@@ -228,7 +228,7 @@ Configure in `~/.factory/settings.json` or `.factory/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "aiwg sync --dry-run"
+            "command": "aiwg refresh --dry-run"
           }
         ]
       }
@@ -355,12 +355,12 @@ This generates `.factory-plugin/plugin.json` — a manifest following Factory AI
   "author": { "name": "AIWG Contributors", "email": "support@aiwg.io" },
   "contents": { "droids": 190, "commands": 50, "skills": 12, "rules": 7 },
   "hooks": {
-    "SessionStart": [{ "matcher": "*", "hooks": [{ "type": "command", "command": "aiwg sync --dry-run --quiet" }] }]
+    "SessionStart": [{ "matcher": "*", "hooks": [{ "type": "command", "command": "aiwg refresh --dry-run --quiet" }] }]
   }
 }
 ```
 
-The bundle includes identity fields (`name`, `version`, `description`, `author`, `homepage`, `repository`, `license`), artifact counts derived from the files actually deployed to `.factory/`, and a `SessionStart` hook that runs `aiwg sync --dry-run --quiet` at the start of every session.
+The bundle includes identity fields (`name`, `version`, `description`, `author`, `homepage`, `repository`, `license`), artifact counts derived from the files actually deployed to `.factory/`, and a `SessionStart` hook that runs `aiwg refresh --dry-run --quiet` at the start of every session.
 
 **When to use**: Plugin packaging is additive — the standard `.factory/` file deployment happens first and is what Factory loads at runtime. Use `--as-plugin` when you want to distribute or version-pin the full AIWG framework as a self-describing bundle, or when your team's Factory workspace uses a plugin registry rather than individual file deploys.
 
