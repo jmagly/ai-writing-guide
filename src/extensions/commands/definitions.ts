@@ -2123,6 +2123,43 @@ export const opsCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Storage Commands
+
+export const storageCommand: Extension = {
+  id: 'storage',
+  type: 'skill',
+  name: 'Storage',
+  description: 'Manage AIWG storage adapters — show effective config, list compiled-in backends, round-trip-test a subsystem',
+  version: '1.0.0',
+  capabilities: ['cli', 'storage', 'configuration', 'pkm', 'self-maintenance'],
+  keywords: ['storage', 'backend', 'adapter', 'obsidian', 'logseq', 'notion', 'fortemi', 'pkm'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['storage show', 'storage backends', 'where do my notes go', 'aiwg storage'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<show|list-backends|test <subsystem>>',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Parse subcommand',
+        'Load .aiwg/storage.config (or default to fs)',
+        'Resolve backend per subsystem',
+        'Execute requested operation',
+        'Print results',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Agentic Tools Commands (RLM support tools)
 
 export const chunkCommand: Extension = {
@@ -2444,6 +2481,9 @@ export const commandDefinitions: Extension[] = [
 
   // Ops (1)
   opsCommand,
+
+  // Storage (1)
+  storageCommand,
 
   // Agentic Tools (5) — RLM support tools
   chunkCommand,

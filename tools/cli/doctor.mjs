@@ -253,6 +253,29 @@ async function runDoctor() {
     check('Behaviors', 'info', 'No behaviors deployed (run: aiwg use daemon)');
   }
 
+  // 11a. Storage config validation (no-op when .aiwg/storage.config absent)
+  try {
+    const projectDir = process.cwd();
+    const storageCfgPath = path.join(projectDir, '.aiwg', 'storage.config');
+    if (await fileExists(storageCfgPath)) {
+      try {
+        const raw = await fs.readFile(storageCfgPath, 'utf-8');
+        const parsed = JSON.parse(raw);
+        // Lazy import the validator from the compiled storage module so we
+        // don't duplicate the credential-walk logic in this script.
+        const { validateStorageConfig } = await import(path.join(AIWG_ROOT, 'dist', 'src', 'storage', 'config.js'));
+        validateStorageConfig(parsed, storageCfgPath);
+        check('Storage Config', 'ok', `Valid: ${storageCfgPath}`);
+      } catch (err) {
+        check('Storage Config', 'error', err.message);
+      }
+    } else {
+      check('Storage Config', 'info', 'No .aiwg/storage.config (using fs defaults)');
+    }
+  } catch {
+    // Validator import failed (e.g., dist not built in dev). Non-fatal — skip silently.
+  }
+
   // 11. Check .gitignore for AIWG runtime patterns (warning if missing)
   const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/'];
   const gitignorePath = path.join(process.cwd(), '.gitignore');
