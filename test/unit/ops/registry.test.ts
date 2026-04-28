@@ -224,6 +224,143 @@ describe('OpsRegistry', () => {
     });
   });
 
+  describe('initWorkspace --from / adopt-existing', () => {
+    it('should adopt an existing .git repo at the target path without re-initing', async () => {
+      const opsHome = join(tempDir, 'home');
+      const repoPath = join(opsHome, 'sysops');
+      // Pre-create a fake existing git repo
+      await mkdir(join(repoPath, '.git'), { recursive: true });
+      await writeFile(join(repoPath, '.git', 'config'), '[core]\n\trepositoryformatversion = 0\n');
+
+      const registry = new OpsRegistry(tempDir);
+      await registry.initWorkspace({
+        name: 'pre-existing',
+        home: opsHome,
+        mode: 'multi-repo',
+        extensions: ['sys'],
+        silent: true,
+      });
+
+      // .git was preserved (we wrote a marker config file; assert it still exists)
+      const cfg = await readFile(join(repoPath, '.git', 'config'), 'utf-8');
+      expect(cfg).toContain('repositoryformatversion');
+
+      // OpsInventory.yaml seeded
+      expect(existsSync(join(repoPath, 'OpsInventory.yaml'))).toBe(true);
+    });
+
+    it('should reject --from with multi-repo + multiple extensions', async () => {
+      const registry = new OpsRegistry(tempDir);
+      await expect(
+        registry.initWorkspace({
+          name: 'bad-from',
+          home: join(tempDir, 'bad-from-home'),
+          mode: 'multi-repo',
+          extensions: ['sys', 'dev'],
+          from: 'https://example.com/repo.git',
+          silent: true,
+        })
+      ).rejects.toThrow(/single-repo mode or exactly one extension/);
+    });
+
+    it('should preserve an existing OpsInventory.yaml when adopting', async () => {
+      const opsHome = join(tempDir, 'home2');
+      const repoPath = join(opsHome, 'sysops');
+      await mkdir(join(repoPath, '.git'), { recursive: true });
+      await writeFile(
+        join(repoPath, 'OpsInventory.yaml'),
+        '# user-customized\napiVersion: aiwg.io/v1\nkind: OpsInventory\n',
+        'utf-8'
+      );
+
+      const registry = new OpsRegistry(tempDir);
+      await registry.initWorkspace({
+        name: 'preserve',
+        home: opsHome,
+        mode: 'multi-repo',
+        extensions: ['sys'],
+        silent: true,
+      });
+
+      const content = await readFile(join(repoPath, 'OpsInventory.yaml'), 'utf-8');
+      expect(content).toContain('# user-customized');
+    });
+  });
+
+  describe('adoptRepo', () => {
+    it('should register an existing local clone with detected remote', async () => {
+      const repoPath = join(tempDir, 'sysops');
+      await mkdir(repoPath, { recursive: true });
+      // Real git init so `git config` works
+      const { execSync } = await import('child_process');
+      execSync('git init', { cwd: repoPath, stdio: 'pipe' });
+      execSync('git remote add origin https://example.com/owner/sysops.git', {
+        cwd: repoPath,
+        stdio: 'pipe',
+      });
+
+      const registry = new OpsRegistry(tempDir);
+      const result = await registry.adoptRepo(repoPath, {
+        workspace: 'home',
+        extensions: ['sys'],
+        silent: true,
+      });
+
+      expect(result.workspace).toBe('home');
+      expect(result.repoName).toBe('sysops');
+
+      const data = await registry.load();
+      const repo = data.workspaces['home'].repos['sysops'];
+      expect(repo.path).toBe(repoPath);
+      expect(repo.remote).toBe('https://example.com/owner/sysops.git');
+
+      // OpsInventory.yaml was seeded since it didn't exist
+      expect(existsSync(join(repoPath, 'OpsInventory.yaml'))).toBe(true);
+    });
+
+    it('should not overwrite an existing OpsInventory.yaml on adopt', async () => {
+      const repoPath = join(tempDir, 'devops');
+      await mkdir(repoPath, { recursive: true });
+      await writeFile(
+        join(repoPath, 'OpsInventory.yaml'),
+        '# preserved\napiVersion: aiwg.io/v1\n',
+        'utf-8'
+      );
+
+      const registry = new OpsRegistry(tempDir);
+      await registry.adoptRepo(repoPath, { workspace: 'home', silent: true });
+
+      const content = await readFile(join(repoPath, 'OpsInventory.yaml'), 'utf-8');
+      expect(content).toContain('# preserved');
+    });
+
+    it('should refuse to adopt a path nested inside an already-registered repo', async () => {
+      const outer = join(tempDir, 'sysops');
+      const inner = join(outer, 'sub', 'devops');
+      await mkdir(inner, { recursive: true });
+
+      const registry = new OpsRegistry(tempDir);
+      await registry.adoptRepo(outer, { workspace: 'home', silent: true });
+      await expect(
+        registry.adoptRepo(inner, { workspace: 'home', silent: true })
+      ).rejects.toThrow(/nested inside registered repo/);
+    });
+
+    it('should be idempotent when adopting the same path twice', async () => {
+      const repoPath = join(tempDir, 'itops');
+      await mkdir(repoPath, { recursive: true });
+
+      const registry = new OpsRegistry(tempDir);
+      const a = await registry.adoptRepo(repoPath, { workspace: 'home', silent: true });
+      const b = await registry.adoptRepo(repoPath, { workspace: 'home', silent: true });
+      expect(a.repoName).toBe(b.repoName);
+
+      const data = await registry.load();
+      // Only one entry should exist
+      expect(Object.keys(data.workspaces['home'].repos)).toEqual(['itops']);
+    });
+  });
+
   describe('discoverWorkspaces', () => {
     it('should find candidates by OpsInventory.yaml marker', async () => {
       const root = join(tempDir, 'home');

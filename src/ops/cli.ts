@@ -61,6 +61,10 @@ export async function main(args: string[]): Promise<void> {
       await handleDiscover(registry, subArgs);
       break;
 
+    case 'adopt':
+      await handleAdopt(registry, subArgs);
+      break;
+
     default:
       printUsage();
       if (subcommand) {
@@ -79,6 +83,7 @@ async function handleInit(registry: OpsRegistry, args: string[]): Promise<void> 
   let extensions = ['sys', 'it', 'dev'];
   let prefix: string | undefined;
   let provider: string | undefined;
+  let from: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -89,6 +94,7 @@ async function handleInit(registry: OpsRegistry, args: string[]): Promise<void> 
       case '--ext': extensions = args[++i].split(','); break;
       case '--prefix': prefix = args[++i]; break;
       case '--provider': provider = args[++i]; break;
+      case '--from': from = args[++i]; break;
     }
   }
 
@@ -104,7 +110,31 @@ async function handleInit(registry: OpsRegistry, args: string[]): Promise<void> 
     prefix,
     provider,
     silent,
+    from,
   });
+}
+
+async function handleAdopt(registry: OpsRegistry, args: string[]): Promise<void> {
+  let path: string | undefined;
+  let workspace: string | undefined;
+  let extensions: string[] | undefined;
+  let name: string | undefined;
+  let silent = false;
+
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--workspace') workspace = args[++i];
+    else if (a === '--ext') extensions = args[++i].split(',');
+    else if (a === '--name') name = args[++i];
+    else if (a === '--silent') silent = true;
+    else if (!a.startsWith('--') && !path) path = a;
+  }
+
+  if (!path) {
+    throw new Error('Usage: aiwg ops adopt <path> [--workspace <n>] [--ext <list>] [--name <n>]');
+  }
+
+  await registry.adoptRepo(path, { workspace, extensions, name, silent });
 }
 
 async function handleStatus(registry: OpsRegistry, args: string[]): Promise<void> {
@@ -198,6 +228,7 @@ Subcommands:
   list                    List registered workspaces
   push [--workspace <n>]  Push workspace repos to remote
   discover [root...]      Scan filesystem for orphaned ops-workspace clones
+  adopt <path>            Register an existing local clone as a repo entry
 
 Init options:
   --silent                Skip interactive prompts
@@ -207,6 +238,8 @@ Init options:
   --ext <list>            Comma-separated extensions: sys,it,dev,stream
   --prefix <name>         Repo naming prefix (e.g., "myorg")
   --provider <name>       Remote provider for auto-push (github, gitea, or URL)
+  --from <git-url>        Clone this URL into the target repo instead of init.
+                          Requires single-repo mode or exactly one --ext value.
 
 Global flags:
   --config-dir <path>     Override config directory
@@ -228,5 +261,11 @@ Discover options:
   --register              Write NEW candidates into the registry
   --yes, -y               Alias for --register
   --workspace <name>      Bucket workspace for registered entries (default: "discovered")
-  --json                  Machine-readable output`);
+  --json                  Machine-readable output
+
+Adopt options:
+  --workspace <name>      Workspace to attach to (default: "default")
+  --ext <list>            Comma-separated extensions for the adopted repo
+  --name <name>           Override repo name (default: basename of path)
+  --silent                Suppress informational logging`);
 }
