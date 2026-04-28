@@ -7,10 +7,10 @@
  * @implements #544
  */
 
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { resolve, dirname } from 'path';
+import { readFile, writeFile, mkdir, readdir } from 'fs/promises';
+import { resolve, dirname, basename, sep } from 'path';
 import { homedir } from 'os';
-import { existsSync } from 'fs';
+import { existsSync, statSync } from 'fs';
 import { execSync } from 'child_process';
 import { resolveConfigDir } from '../config/user-config.js';
 
@@ -63,6 +63,32 @@ export interface InitOptions {
   prefix?: string;
   provider?: string;
   silent?: boolean;
+}
+
+/**
+ * Result of a single discovered ops-workspace candidate
+ */
+export interface DiscoveredCandidate {
+  /** Absolute path to the workspace root */
+  path: string;
+  /** Inferred workspace name (basename) */
+  name: string;
+  /** Git remote URL if a `.git` directory is present, else undefined */
+  remote?: string;
+  /** True if the path matches an entry in any registered workspace */
+  alreadyRegistered: boolean;
+  /** Marker that triggered detection (for transparency) */
+  marker: 'OpsInventory.yaml';
+}
+
+/**
+ * Options for discovery
+ */
+export interface DiscoverOptions {
+  /** Roots to scan. Defaults to [homedir()]. */
+  roots?: string[];
+  /** Maximum directory depth from each root. Default 3. */
+  maxDepth?: number;
 }
 
 /**
@@ -293,6 +319,162 @@ export class OpsRegistry {
   }
 
   /**
+   * Walk the given roots looking for ops-workspace candidates.
+   *
+   * A candidate is any directory containing `OpsInventory.yaml`. Skips
+   * `node_modules`, `.git`, and other obvious noise. Candidates nested
+   * inside another candidate are dropped (siblings-only by design — see
+   * #935).
+   */
+  async discoverWorkspaces(opts: DiscoverOptions = {}): Promise<DiscoveredCandidate[]> {
+    const roots = (opts.roots && opts.roots.length > 0 ? opts.roots : [homedir()]).map((r) =>
+      resolve(r)
+    );
+    const maxDepth = opts.maxDepth ?? 3;
+
+    const data = await this.load();
+    const registeredPaths = new Set<string>();
+    for (const ws of Object.values(data.workspaces)) {
+      for (const repo of Object.values(ws.repos)) {
+        registeredPaths.add(resolve(repo.path));
+      }
+    }
+
+    const found: DiscoveredCandidate[] = [];
+    const seen = new Set<string>();
+
+    const skipNames = new Set([
+      'node_modules',
+      '.git',
+      '.aiwg', // walk past, never into
+      '.cache',
+      '.npm',
+      '.yarn',
+      '.pnpm-store',
+      '.venv',
+      'venv',
+      'dist',
+      'build',
+      'target',
+    ]);
+
+    const walk = async (dir: string, depth: number): Promise<void> => {
+      if (depth > maxDepth) return;
+      if (seen.has(dir)) return;
+      seen.add(dir);
+
+      // Marker check at this level
+      if (existsSync(resolve(dir, 'OpsInventory.yaml'))) {
+        found.push({
+          path: dir,
+          name: basename(dir),
+          remote: readGitRemote(dir),
+          alreadyRegistered: registeredPaths.has(dir),
+          marker: 'OpsInventory.yaml',
+        });
+        // Don't descend further — workspaces shouldn't nest.
+        return;
+      }
+
+      let entries: string[];
+      try {
+        entries = await readdir(dir);
+      } catch {
+        return;
+      }
+
+      for (const entry of entries) {
+        if (entry.startsWith('.') && entry !== '.aiwg') {
+          // Allow hidden roots only in narrow cases; skip the rest.
+          if (skipNames.has(entry)) continue;
+          if (entry === '.git') continue;
+        }
+        if (skipNames.has(entry)) continue;
+
+        const child = resolve(dir, entry);
+        let isDir = false;
+        try {
+          isDir = statSync(child).isDirectory();
+        } catch {
+          continue;
+        }
+        if (!isDir) continue;
+
+        await walk(child, depth + 1);
+      }
+    };
+
+    for (const root of roots) {
+      if (!existsSync(root)) continue;
+      await walk(root, 0);
+    }
+
+    // Drop nested candidates (deeper paths whose ancestor is also a candidate)
+    found.sort((a, b) => a.path.length - b.path.length);
+    const kept: DiscoveredCandidate[] = [];
+    for (const cand of found) {
+      const nested = kept.some(
+        (k) => cand.path !== k.path && cand.path.startsWith(k.path + sep)
+      );
+      if (!nested) kept.push(cand);
+    }
+
+    return kept;
+  }
+
+  /**
+   * Register discovered candidates as a workspace in the registry.
+   *
+   * Creates a single multi-repo workspace and adds each candidate as a
+   * repo entry. Skips candidates whose path is already registered.
+   */
+  async registerDiscovered(
+    workspaceName: string,
+    candidates: DiscoveredCandidate[]
+  ): Promise<{ added: number; skipped: number }> {
+    if (candidates.length === 0) return { added: 0, skipped: 0 };
+
+    const data = await this.load();
+
+    if (!data.workspaces[workspaceName]) {
+      data.workspaces[workspaceName] = {
+        home: dirname(candidates[0].path),
+        mode: 'multi-repo',
+        repos: {},
+      };
+    }
+    const ws = data.workspaces[workspaceName];
+
+    let added = 0;
+    let skipped = 0;
+    for (const cand of candidates) {
+      if (cand.alreadyRegistered) {
+        skipped++;
+        continue;
+      }
+      // Avoid clobbering an existing repo entry of the same name
+      let repoName = cand.name;
+      let suffix = 2;
+      while (ws.repos[repoName]) {
+        repoName = `${cand.name}-${suffix++}`;
+      }
+      ws.repos[repoName] = {
+        path: cand.path,
+        remote: cand.remote,
+        extensions: [],
+      };
+      added++;
+    }
+
+    if (Object.keys(data.workspaces).length === 1) {
+      data.defaultWorkspace = workspaceName;
+    }
+
+    await this.save(data);
+    return { added, skipped };
+  }
+
+  /**
    * Push workspace repos to remote (always private)
    */
   async pushWorkspace(workspaceName?: string): Promise<void> {
@@ -322,6 +504,25 @@ export class OpsRegistry {
         console.log(`  ${repoName}: no remote configured`);
       }
     }
+  }
+}
+
+/**
+ * Return the `origin` remote URL for a git repo rooted at `dirPath`, or
+ * undefined if not a git repo or no origin configured.
+ */
+function readGitRemote(dirPath: string): string | undefined {
+  if (!existsSync(resolve(dirPath, '.git'))) return undefined;
+  try {
+    const out = execSync('git config --get remote.origin.url', {
+      cwd: dirPath,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+    return out || undefined;
+  } catch {
+    return undefined;
   }
 }
 

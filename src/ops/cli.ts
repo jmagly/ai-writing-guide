@@ -57,6 +57,10 @@ export async function main(args: string[]): Promise<void> {
       await handlePush(registry, subArgs);
       break;
 
+    case 'discover':
+      await handleDiscover(registry, subArgs);
+      break;
+
     default:
       printUsage();
       if (subcommand) {
@@ -130,6 +134,60 @@ async function handlePush(registry: OpsRegistry, args: string[]): Promise<void> 
   await registry.pushWorkspace(workspace);
 }
 
+async function handleDiscover(registry: OpsRegistry, args: string[]): Promise<void> {
+  const roots: string[] = [];
+  let maxDepth = 3;
+  let register = false;
+  let workspaceName = 'discovered';
+  let asJson = false;
+
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--max-depth') {
+      maxDepth = Number(args[++i]);
+    } else if (a === '--register' || a === '--yes' || a === '-y') {
+      register = true;
+    } else if (a === '--workspace') {
+      workspaceName = args[++i];
+    } else if (a === '--json') {
+      asJson = true;
+    } else if (!a.startsWith('--')) {
+      roots.push(a);
+    }
+  }
+
+  const candidates = await registry.discoverWorkspaces({
+    roots: roots.length > 0 ? roots : undefined,
+    maxDepth,
+  });
+
+  if (asJson) {
+    console.log(JSON.stringify({ candidates }, null, 2));
+  } else if (candidates.length === 0) {
+    console.log('No ops workspace candidates found.');
+  } else {
+    console.log(`Found ${candidates.length} candidate(s):\n`);
+    console.log('  STATUS  NAME           REMOTE                                   PATH');
+    for (const c of candidates) {
+      const status = c.alreadyRegistered ? 'KNOWN ' : 'NEW   ';
+      const name = (c.name + ' '.repeat(14)).slice(0, 14);
+      const remote = (c.remote || '-').slice(0, 40).padEnd(40);
+      console.log(`  ${status}  ${name} ${remote} ${c.path}`);
+    }
+    console.log('');
+  }
+
+  if (register) {
+    const result = await registry.registerDiscovered(workspaceName, candidates);
+    console.log(
+      `Registered ${result.added} new entr${result.added === 1 ? 'y' : 'ies'} ` +
+        `(skipped ${result.skipped} already-known) into workspace "${workspaceName}".`
+    );
+  } else if (candidates.some((c) => !c.alreadyRegistered)) {
+    console.log('Run with --register to add NEW candidates to the registry.');
+  }
+}
+
 function printUsage(): void {
   console.log(`Usage: aiwg ops <subcommand> [options]
 
@@ -139,6 +197,7 @@ Subcommands:
   use <workspace>         Switch active workspace
   list                    List registered workspaces
   push [--workspace <n>]  Push workspace repos to remote
+  discover [root...]      Scan filesystem for orphaned ops-workspace clones
 
 Init options:
   --silent                Skip interactive prompts
@@ -160,5 +219,14 @@ Examples:
   aiwg ops status --all
   aiwg ops use client-acme
   aiwg ops list
-  aiwg ops push --workspace personal`);
+  aiwg ops push --workspace personal
+  aiwg ops discover ~/projects ~/work --max-depth 4
+  aiwg ops discover --register --workspace home
+
+Discover options:
+  --max-depth <n>         Max walk depth from each root (default: 3)
+  --register              Write NEW candidates into the registry
+  --yes, -y               Alias for --register
+  --workspace <name>      Bucket workspace for registered entries (default: "discovered")
+  --json                  Machine-readable output`);
 }

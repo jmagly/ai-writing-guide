@@ -224,6 +224,115 @@ describe('OpsRegistry', () => {
     });
   });
 
+  describe('discoverWorkspaces', () => {
+    it('should find candidates by OpsInventory.yaml marker', async () => {
+      const root = join(tempDir, 'home');
+      const a = join(root, 'sysops');
+      const b = join(root, 'devops');
+      await mkdir(a, { recursive: true });
+      await mkdir(b, { recursive: true });
+      await writeFile(join(a, 'OpsInventory.yaml'), 'apiVersion: aiwg.io/v1\n', 'utf-8');
+      await writeFile(join(b, 'OpsInventory.yaml'), 'apiVersion: aiwg.io/v1\n', 'utf-8');
+
+      const registry = new OpsRegistry(tempDir);
+      const found = await registry.discoverWorkspaces({ roots: [root] });
+
+      const paths = found.map((c) => c.path).sort();
+      expect(paths).toEqual([b, a].sort());
+      expect(found.every((c) => c.alreadyRegistered === false)).toBe(true);
+      expect(found.every((c) => c.marker === 'OpsInventory.yaml')).toBe(true);
+    });
+
+    it('should skip nested candidates (siblings only)', async () => {
+      const root = join(tempDir, 'home');
+      const outer = join(root, 'sysops');
+      const inner = join(outer, 'devops');
+      await mkdir(inner, { recursive: true });
+      await writeFile(join(outer, 'OpsInventory.yaml'), '', 'utf-8');
+      await writeFile(join(inner, 'OpsInventory.yaml'), '', 'utf-8');
+
+      const registry = new OpsRegistry(tempDir);
+      const found = await registry.discoverWorkspaces({ roots: [root] });
+
+      // The walker stops descending past a hit, so inner is never even visited.
+      expect(found.map((c) => c.path)).toEqual([outer]);
+    });
+
+    it('should mark already-registered candidates', async () => {
+      const root = join(tempDir, 'home');
+      const a = join(root, 'sysops');
+      await mkdir(a, { recursive: true });
+      await writeFile(join(a, 'OpsInventory.yaml'), '', 'utf-8');
+
+      const registry = new OpsRegistry(tempDir);
+      // Pre-register via initWorkspace using an explicit home pointing at an
+      // unrelated subdir (so the init nesting check doesn't trip), then
+      // patch the entry's path to match the discovery target.
+      await registry.initWorkspace({
+        name: 'pre',
+        home: join(tempDir, 'pre-home'),
+        mode: 'multi-repo',
+        extensions: ['sys'],
+        silent: true,
+      });
+      // Mutate the registry directly to simulate an already-registered repo.
+      const data = await registry.load();
+      data.workspaces['pre'].repos['sysops'] = {
+        path: a,
+        extensions: ['sys'],
+      };
+      await registry.save(data);
+
+      const found = await registry.discoverWorkspaces({ roots: [root] });
+      const hit = found.find((c) => c.path === a);
+      expect(hit?.alreadyRegistered).toBe(true);
+    });
+
+    it('should respect --max-depth', async () => {
+      const root = join(tempDir, 'home');
+      const deep = join(root, 'l1', 'l2', 'l3', 'l4', 'sysops');
+      await mkdir(deep, { recursive: true });
+      await writeFile(join(deep, 'OpsInventory.yaml'), '', 'utf-8');
+
+      const registry = new OpsRegistry(tempDir);
+      const shallow = await registry.discoverWorkspaces({ roots: [root], maxDepth: 2 });
+      const full = await registry.discoverWorkspaces({ roots: [root], maxDepth: 6 });
+      expect(shallow).toHaveLength(0);
+      expect(full).toHaveLength(1);
+    });
+
+    it('should skip node_modules and other noise dirs', async () => {
+      const root = join(tempDir, 'home');
+      const noise = join(root, 'node_modules', 'pkg', 'fixture');
+      await mkdir(noise, { recursive: true });
+      await writeFile(join(noise, 'OpsInventory.yaml'), '', 'utf-8');
+
+      const registry = new OpsRegistry(tempDir);
+      const found = await registry.discoverWorkspaces({ roots: [root], maxDepth: 6 });
+      expect(found).toHaveLength(0);
+    });
+  });
+
+  describe('registerDiscovered', () => {
+    it('should add new candidates and skip already-registered ones', async () => {
+      const root = join(tempDir, 'home');
+      const a = join(root, 'sysops');
+      await mkdir(a, { recursive: true });
+      await writeFile(join(a, 'OpsInventory.yaml'), '', 'utf-8');
+
+      const registry = new OpsRegistry(tempDir);
+      const candidates = await registry.discoverWorkspaces({ roots: [root] });
+      const result = await registry.registerDiscovered('home', candidates);
+
+      expect(result.added).toBe(1);
+      expect(result.skipped).toBe(0);
+
+      const data = await registry.load();
+      expect(data.workspaces['home']).toBeDefined();
+      expect(data.workspaces['home'].repos['sysops'].path).toBe(a);
+    });
+  });
+
   describe('OpsInventory stub', () => {
     it('should contain valid YAML structure', async () => {
       const opsHome = join(tempDir, 'ops-inv');
