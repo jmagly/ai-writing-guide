@@ -35,7 +35,17 @@ Ingest any source — a URL, local file, or freeform note — into the knowledge
 Tag this source with a topic hint (e.g., `--topic "machine-learning"`). Influences which entity/concept pages to touch.
 
 ### `--kb <path>` (optional)
-Root of the knowledge base. Defaults to `.aiwg/kb/`.
+Root of the knowledge base. **Default**: resolved by `aiwg kb path` (#965), which reads `resolveStorage('kb')` and honors any `roots.kb` override in `.aiwg/storage.config`. On the default `fs` backend this is `.aiwg/kb/`. To redirect the KB to an Obsidian vault or other backend without changing this skill, configure `.aiwg/storage.config` (#934).
+
+When this skill needs to resolve the root from inside a Bash step:
+
+```bash
+KB_ROOT=$(aiwg kb path)
+# write a page through the adapter (preferred — honors all backends):
+echo "# Foo" | aiwg kb put entities/foo.md
+# or write directly to the resolved fs path (fs backend only):
+echo "# Foo" > "$KB_ROOT/entities/foo.md"
+```
 
 ### `--dry-run` (optional)
 Show what would be created or updated without writing files.
