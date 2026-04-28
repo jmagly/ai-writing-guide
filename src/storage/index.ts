@@ -14,6 +14,7 @@
 import { loadStorageConfig, resolveSubsystemRoot } from './config.js';
 import { FilesystemAdapter } from './backends/fs.js';
 import { ObsidianAdapter } from './backends/obsidian.js';
+import { LogseqAdapter } from './backends/logseq.js';
 import type {
   BackendConfig,
   StorageAdapter,
@@ -43,6 +44,7 @@ export {
 } from './config.js';
 export { FilesystemAdapter } from './backends/fs.js';
 export { ObsidianAdapter } from './backends/obsidian.js';
+export { LogseqAdapter } from './backends/logseq.js';
 
 interface RegistryState {
   projectRoot: string;
@@ -121,6 +123,7 @@ function createAdapter(subsystem: SubsystemKey, s: RegistryState): StorageAdapte
     case 'obsidian':
       return new ObsidianAdapter(backend);
     case 'logseq':
+      return new LogseqAdapter(backend);
     case 'notion':
     case 'anythingllm':
     case 'fortemi':
@@ -128,7 +131,7 @@ function createAdapter(subsystem: SubsystemKey, s: RegistryState): StorageAdapte
     case 'webdav':
       throw new Error(
         `storage: backend "${backend.type}" is declared in storage.config but not yet implemented. ` +
-          `Phase 1 ships with the fs backend only — see issues #957–#963 and #972 for backend implementations.`
+          `See issues #959, #960, #962, #963, and #972 for tracking.`
       );
     default: {
       // Exhaustiveness check
