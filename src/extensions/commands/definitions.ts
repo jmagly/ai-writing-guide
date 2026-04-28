@@ -2123,6 +2123,42 @@ export const opsCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Reflections Subsystem Commands
+
+export const reflectionsCommand: Extension = {
+  id: 'reflections',
+  type: 'skill',
+  name: 'Reflections',
+  description: 'Storage operations on the AIWG reflections subsystem — used by ralph-reflect / reflection-injection',
+  version: '1.0.0',
+  capabilities: ['cli', 'reflections', 'agent-loop', 'storage'],
+  keywords: ['reflections', 'ralph-reflect', 'reflection-injection', 'agent-loop'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['where are reflections', 'reflections path', 'list reflections', 'aiwg reflections'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<path|list|get|put|delete|append-log> [options]',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Parse subcommand and arguments',
+        'Resolve storage adapter for reflections subsystem',
+        'Read/write/list/delete/append-log via the adapter',
+        'Print result',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Memory Subsystem Commands
 
 export const memoryCommand: Extension = {
@@ -2601,6 +2637,9 @@ export const commandDefinitions: Extension[] = [
 
   // Memory subsystem (1)
   memoryCommand,
+
+  // Reflections subsystem (1)
+  reflectionsCommand,
 
   // Agentic Tools (5) — RLM support tools
   chunkCommand,
