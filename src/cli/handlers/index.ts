@@ -73,6 +73,7 @@ import {
   configHandler,
   opsHandler,
   storageHandler,
+  activityLogHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,
@@ -136,6 +137,7 @@ export {
   configHandler,
   opsHandler,
   storageHandler,
+  activityLogHandler,
   runtimeInfoHandler,
 
   // Agentic Tools (RLM)
@@ -303,6 +305,9 @@ export const allHandlers: CommandHandler[] = [
 
   // Storage (#934)
   storageHandler,
+
+  // Activity Log (#934, #964)
+  activityLogHandler,
 
   // Agentic Tools (RLM support tools)
   chunkHandler,
