@@ -185,7 +185,7 @@ function backendStatus(type: BackendType): BackendStatus {
     case 'anythingllm':
       return { implemented: false, note: 'planned (#960) — multipart upload' };
     case 'fortemi':
-      return { implemented: false, note: 'planned (#972) — MCP tool surface' };
+      return { implemented: true, note: 'MCP-routed via configured Fortemi server (alpha)' };
     case 's3':
       return { implemented: false, note: 'planned (#962) — phase 3' };
     case 'webdav':

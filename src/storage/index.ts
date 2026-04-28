@@ -15,6 +15,7 @@ import { loadStorageConfig, resolveSubsystemRoot } from './config.js';
 import { FilesystemAdapter } from './backends/fs.js';
 import { ObsidianAdapter } from './backends/obsidian.js';
 import { LogseqAdapter } from './backends/logseq.js';
+import { FortemiAdapter } from './backends/fortemi.js';
 import type {
   BackendConfig,
   StorageAdapter,
@@ -45,6 +46,8 @@ export {
 export { FilesystemAdapter } from './backends/fs.js';
 export { ObsidianAdapter } from './backends/obsidian.js';
 export { LogseqAdapter } from './backends/logseq.js';
+export { FortemiAdapter } from './backends/fortemi.js';
+export type { McpClientLike, McpClientFactory, FortemiAdapterOptions } from './backends/fortemi.js';
 
 interface RegistryState {
   projectRoot: string;
@@ -124,14 +127,15 @@ function createAdapter(subsystem: SubsystemKey, s: RegistryState): StorageAdapte
       return new ObsidianAdapter(backend);
     case 'logseq':
       return new LogseqAdapter(backend);
+    case 'fortemi':
+      return new FortemiAdapter({ subsystem, config: backend });
     case 'notion':
     case 'anythingllm':
-    case 'fortemi':
     case 's3':
     case 'webdav':
       throw new Error(
         `storage: backend "${backend.type}" is declared in storage.config but not yet implemented. ` +
-          `See issues #959, #960, #962, #963, and #972 for tracking.`
+          `See issues #959, #960, #962, and #963 for tracking.`
       );
     default: {
       // Exhaustiveness check
