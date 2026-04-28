@@ -515,6 +515,60 @@ export const activityLogHandler: CommandHandler = {
 };
 
 /**
+ * Provenance command handler — routes \`aiwg provenance\` through
+ * resolveStorage('provenance') for provenance-* skills (#968).
+ *
+ * @implements #934
+ * @implements #968
+ */
+export const provenanceHandler: CommandHandler = {
+  id: 'provenance',
+  name: 'Provenance',
+  description: 'Provenance subsystem storage operations (path, list, get, put, delete, append-log)',
+  category: 'utility',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import('../../provenance/cli.js');
+      await main(ctx.args);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `provenance command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
+ * Research storage command handler — routes \`aiwg research-store\`
+ * through resolveStorage('research') for research-acquire / corpus-*
+ * skills (#968). Disambiguated from existing research-* workflow
+ * commands by the \`-store\` suffix.
+ *
+ * @implements #934
+ * @implements #968
+ */
+export const researchStoreHandler: CommandHandler = {
+  id: 'research-store',
+  name: 'Research Store',
+  description: 'Research subsystem storage operations (path, list, get, put, delete, append-log)',
+  category: 'utility',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import('../../research/storage-cli.js');
+      await main(ctx.args);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `research-store command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Reflections command handler
  *
  * Routes \`aiwg reflections <subcommand>\` through resolveStorage('reflections')
@@ -746,6 +800,8 @@ export const subcommandHandlers: CommandHandler[] = [
   kbHandler,
   memoryHandler,
   reflectionsHandler,
+  provenanceHandler,
+  researchStoreHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,

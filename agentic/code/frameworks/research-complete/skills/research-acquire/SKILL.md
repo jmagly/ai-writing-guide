@@ -159,3 +159,13 @@ source:
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/research/frontmatter-schema.yaml - Metadata format
 - @.aiwg/research/fixity-manifest.json - Checksum tracking
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/provenance-tracking.md - Provenance requirements
+
+## Storage Routing (#934, #968)
+
+This skill's persistence flows through `resolveStorage('research')`. On the default `fs` backend the research corpus lives at `.aiwg/research/`. **Heavy artifacts (papers, archived sources) can move to a secondary drive** by setting `roots.research` in `.aiwg/storage.config` (one of the headline #934 use cases).
+
+```bash
+aiwg research-store path                            # resolved root
+aiwg research-store list --prefix sources/
+aiwg research-store get sources/paper-123.md
+```
