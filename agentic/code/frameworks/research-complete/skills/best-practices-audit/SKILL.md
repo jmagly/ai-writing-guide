@@ -68,10 +68,57 @@ runs the research pipeline.
    in scope. `--validate` switches to claim re-verification mode (no
    generative findings).
 
+### Step 1.5: Contributor Discovery (per ADR-023)
+
+Before fan-out, discover any installed framework's `kind: research` contributors
+that match the project. The discovery convention is described in ADR-023; the
+runtime authority is `src/contributors/discover.ts` and the discovery loop
+matches the algorithm there.
+
+1. Read `.aiwg/frameworks/registry.json`. For each registered framework id,
+   check for `<source-path>/research/contributor.md` under
+   `agentic/code/frameworks/`, `agentic/code/addons/`, or `agentic/code/extensions/`
+   (first match wins per ADR-023 §Layout).
+2. Walk `.aiwg/contributors/research/*.md` for project-local research
+   contributors.
+3. For each candidate, parse YAML frontmatter and validate against the
+   `kind: research` schema (published at
+   `agentic/code/frameworks/research-complete/skills/best-practices-audit/contributor.schema.json`).
+4. Run each contributor's `detect.glob` against the project root. Skip contributors
+   whose detection produces fewer than `detect.minCount` matches — installed
+   but unused frameworks do not pollute the audit.
+5. For each in-use research contributor, fold its frontmatter into the
+   research plan:
+
+   - **`focus_areas`** — intersect with the user's `--focus` flag if present.
+     If `--focus` is omitted, use the contributor's full focus list. Multiple
+     contributors' areas merge with union semantics.
+   - **`sources.preferred`** and **`sources.exclude`** — add to the audit's
+     allow / block lists. The user's `--sources` and `--exclude` flags take
+     precedence; contributor preferences fill in defaults the user did not
+     specify.
+   - **`recency_default_months`** — used as the per-contributor default
+     when `--recency` is not set. When multiple contributors disagree, pick
+     the **shorter** window (more conservative — fresher sources are a
+     stronger guarantee than older sources).
+6. Stamp `origin: <framework-id>` on every finding sourced through that
+   contributor's expanded plan. Findings sourced from the generic path
+   (no contributor) get `origin: generic`. Project-local research
+   contributors stamp `origin: project-local`.
+7. **No regression when no contributors are present.** If discovery returns
+   zero in-use contributors, fall through to the bare generic path described
+   in #943 — same behavior as before this issue's wiring landed.
+
+When validate-metadata is available, the schema enforces correctness at
+deploy time. At audit time, this step trusts validated frontmatter; a
+contributor that fails parsing or validation is logged and skipped per
+ADR-023 §Failure mode.
+
 ### Step 2: Research Fan-Out
 
 Dispatch research per claim/focus area using the AIWG research-complete
-agents. **Reuse existing capabilities — do not implement parallel research
+agents, expanded by any contributor configurations from Step 1.5.
+**Reuse existing capabilities — do not implement parallel research
 machinery.**
 
 Available capabilities (load-on-demand from research-complete):
@@ -205,8 +252,8 @@ audit's core value proposition.
 - Auto-ingest into the knowledge-base framework — defer until best-practices-audit
   has been used in anger and we can see whether ingestion is valuable
   (#929 open question 4)
-- Contributor-driven prompt expansion — that's #944's wiring, separate from
-  this bare command
+- (Contributor-driven prompt expansion now wired in — see Step 1.5 above. The
+  earlier "deferred" note from #943 is resolved by #944.)
 
 ## References
 

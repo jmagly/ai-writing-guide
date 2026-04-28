@@ -74,6 +74,60 @@ describe('dogfood: live source tree status contributors', () => {
     }
   });
 
+  it('discovers all three reference research contributors', async () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'aiwg-dogfood-research-'));
+    try {
+      mkdirSync(path.join(tmp, '.aiwg', 'frameworks'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, '.aiwg', 'frameworks', 'registry.json'),
+        JSON.stringify({
+          version: '1.0.0',
+          created: new Date().toISOString(),
+          frameworks: [
+            { id: 'sdlc-complete' },
+            { id: 'research-complete' },
+            { id: 'media-marketing-kit' },
+          ],
+        })
+      );
+
+      // SDLC marker.
+      mkdirSync(path.join(tmp, '.aiwg', 'architecture'), { recursive: true });
+      writeFileSync(path.join(tmp, '.aiwg', 'architecture', 'SAD.md'), '# SAD');
+
+      // Research-complete marker.
+      mkdirSync(path.join(tmp, '.aiwg', 'research', 'findings'), { recursive: true });
+      writeFileSync(path.join(tmp, '.aiwg', 'research', 'findings', 'REF-001.md'), '# REF-001');
+
+      // Marketing kit marker.
+      mkdirSync(path.join(tmp, '.aiwg', 'marketing'), { recursive: true });
+      writeFileSync(path.join(tmp, '.aiwg', 'marketing', 'brand-profile.md'), '# brand');
+
+      const result = await discoverContributors('research', {
+        frameworkRoot: repoRoot,
+        projectRoot: tmp,
+      });
+
+      const origins = result.records.map(r => r.origin);
+      expect(origins).toEqual([
+        'sdlc-complete',
+        'research-complete',
+        'media-marketing-kit',
+      ]);
+      expect(result.skipped).toHaveLength(0);
+
+      // Verify each contributor's frontmatter parsed with the kind: research
+      // shape — focus_areas is the discriminator we care about most.
+      for (const r of result.records) {
+        const data = r.data as { focus_areas: string[]; recency_default_months?: number };
+        expect(Array.isArray(data.focus_areas)).toBe(true);
+        expect(data.focus_areas.length).toBeGreaterThan(0);
+      }
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('filters out a contributor whose detection signals are absent', async () => {
     const tmp = mkdtempSync(path.join(tmpdir(), 'aiwg-dogfood-empty-'));
     try {
