@@ -10,7 +10,7 @@
 import { readFile, writeFile, mkdir, readdir } from 'fs/promises';
 import { resolve, dirname, basename, sep } from 'path';
 import { homedir } from 'os';
-import { existsSync, statSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
 import { execSync } from 'child_process';
 import { resolveConfigDir } from '../config/user-config.js';
 
@@ -62,6 +62,26 @@ export interface InitOptions {
   extensions: string[];
   prefix?: string;
   provider?: string;
+  silent?: boolean;
+  /**
+   * If set, clone this git URL into the target repo instead of running
+   * `git init`. Only valid for single-repo mode or multi-repo with
+   * exactly one extension (otherwise the URL would map ambiguously).
+   */
+  from?: string;
+}
+
+/**
+ * Adopt options for registering an existing local clone
+ */
+export interface AdoptOptions {
+  /** Target workspace bucket. Defaults to "default". */
+  workspace?: string;
+  /** Extensions to record on the adopted repo entry. */
+  extensions?: string[];
+  /** Repo name override (defaults to basename of path). */
+  name?: string;
+  /** Suppress informational logging. */
   silent?: boolean;
 }
 
@@ -177,6 +197,13 @@ export class OpsRegistry {
       repos: {},
     };
 
+    if (opts.from && opts.mode === 'multi-repo' && opts.extensions.length > 1) {
+      throw new Error(
+        '--from <url> requires single-repo mode or exactly one extension. ' +
+          'Use --mode single-repo, or pass --ext with a single value.'
+      );
+    }
+
     if (opts.mode === 'multi-repo') {
       // Create separate repo for each extension
       for (const ext of opts.extensions) {
@@ -184,31 +211,25 @@ export class OpsRegistry {
         const repoName = opts.prefix ? `${opts.prefix}-${fullName}` : fullName;
         const repoPath = resolve(opsHome, repoName);
 
+        const provisioned = await provisionRepo(repoPath, opts.from, !!opts.silent);
+
         workspace.repos[repoName] = {
           path: repoPath,
+          remote: provisioned.remote,
           extensions: [ext],
         };
 
-        // Create directory and git init
-        await mkdir(repoPath, { recursive: true });
-        if (!existsSync(resolve(repoPath, '.git'))) {
-          execSync('git init', { cwd: repoPath, stdio: 'pipe' });
-        }
-
-        // Seed OpsInventory stub
+        // Seed OpsInventory stub (only if missing — never overwrite)
         await seedInventory(repoPath, repoName, ext);
 
-        console.log(`  Created ${repoName} at ${repoPath}`);
+        if (!opts.silent) console.log(`  ${provisioned.action} ${repoName} at ${repoPath}`);
       }
     } else {
       // Single-repo mode: one repo, subdirectories per domain
       const repoName = opts.prefix ? `${opts.prefix}-ops` : 'ops';
       const repoPath = resolve(opsHome, repoName);
 
-      await mkdir(repoPath, { recursive: true });
-      if (!existsSync(resolve(repoPath, '.git'))) {
-        execSync('git init', { cwd: repoPath, stdio: 'pipe' });
-      }
+      const provisioned = await provisionRepo(repoPath, opts.from, !!opts.silent);
 
       // Create subdirectories for each extension
       for (const ext of opts.extensions) {
@@ -220,10 +241,11 @@ export class OpsRegistry {
 
       workspace.repos[repoName] = {
         path: repoPath,
+        remote: provisioned.remote,
         extensions: opts.extensions,
       };
 
-      console.log(`  Created ${repoName} at ${repoPath}`);
+      if (!opts.silent) console.log(`  ${provisioned.action} ${repoName} at ${repoPath}`);
     }
 
     // Register workspace
@@ -316,6 +338,83 @@ export class OpsRegistry {
       const repoCount = Object.keys(ws.repos).length;
       console.log(`  ${isDefault ? '*' : ' '} ${name} — ${ws.mode}, ${repoCount} repo(s), ${ws.home}`);
     }
+  }
+
+  /**
+   * Adopt an existing local clone as a repo entry under a workspace.
+   *
+   * Detects the git remote, seeds OpsInventory.yaml only if missing
+   * (never overwrites an existing inventory), and registers the repo.
+   * Refuses to register a path nested inside another registered repo.
+   */
+  async adoptRepo(repoPath: string, opts: AdoptOptions = {}): Promise<{ workspace: string; repoName: string }> {
+    const absPath = resolve(repoPath);
+    if (!existsSync(absPath)) {
+      throw new Error(`Path does not exist: ${absPath}`);
+    }
+    if (!statSync(absPath).isDirectory()) {
+      throw new Error(`Path is not a directory: ${absPath}`);
+    }
+
+    const data = await this.load();
+
+    // Refuse if this path is nested inside another registered repo
+    for (const ws of Object.values(data.workspaces)) {
+      for (const repo of Object.values(ws.repos)) {
+        const registered = resolve(repo.path);
+        if (registered !== absPath && absPath.startsWith(registered + sep)) {
+          throw new Error(
+            `Refusing to adopt: ${absPath} is nested inside registered repo ${registered}.`
+          );
+        }
+      }
+    }
+
+    const workspaceName = opts.workspace ?? 'default';
+    if (!data.workspaces[workspaceName]) {
+      data.workspaces[workspaceName] = {
+        home: dirname(absPath),
+        mode: 'multi-repo',
+        repos: {},
+      };
+    }
+    const ws = data.workspaces[workspaceName];
+
+    const remote = readGitRemote(absPath);
+    let repoName = opts.name ?? basename(absPath);
+    let suffix = 2;
+    while (ws.repos[repoName]) {
+      // Same path already registered? Treat as idempotent.
+      if (resolve(ws.repos[repoName].path) === absPath) {
+        if (!opts.silent) console.log(`  Already registered: ${repoName} -> ${absPath}`);
+        return { workspace: workspaceName, repoName };
+      }
+      repoName = `${opts.name ?? basename(absPath)}-${suffix++}`;
+    }
+
+    // Seed OpsInventory.yaml only if missing — never overwrite existing.
+    const inventoryPath = resolve(absPath, 'OpsInventory.yaml');
+    if (!existsSync(inventoryPath)) {
+      const ext = (opts.extensions && opts.extensions[0]) ?? 'sys';
+      await seedInventory(absPath, repoName, ext);
+    }
+
+    ws.repos[repoName] = {
+      path: absPath,
+      remote,
+      extensions: opts.extensions ?? [],
+    };
+
+    if (Object.keys(data.workspaces).length === 1) {
+      data.defaultWorkspace = workspaceName;
+    }
+
+    await this.save(data);
+    if (!opts.silent) {
+      console.log(`Adopted ${repoName} at ${absPath} into workspace "${workspaceName}".`);
+      if (remote) console.log(`  Remote: ${remote}`);
+    }
+    return { workspace: workspaceName, repoName };
   }
 
   /**
@@ -505,6 +604,64 @@ export class OpsRegistry {
       }
     }
   }
+}
+
+/**
+ * Provision a repo at `repoPath`. Order of preference:
+ *   1. Pre-existing `.git` at the path → adopt (read remote, no init/clone).
+ *   2. `--from <url>` provided and target is empty → `git clone`.
+ *   3. Fallback → `mkdir` + `git init`.
+ *
+ * Returns the action taken and the resolved remote URL (if any).
+ */
+async function provisionRepo(
+  repoPath: string,
+  fromUrl: string | undefined,
+  silent: boolean
+): Promise<{ action: 'Adopted' | 'Cloned' | 'Created'; remote?: string }> {
+  // Case 1: existing .git at the path → adopt in place.
+  if (existsSync(resolve(repoPath, '.git'))) {
+    return { action: 'Adopted', remote: readGitRemote(repoPath) };
+  }
+
+  // Case 2: --from URL → clone (only if target is empty or doesn't exist).
+  if (fromUrl) {
+    const exists = existsSync(repoPath);
+    if (exists) {
+      // Refuse to clone over a non-empty existing dir to avoid surprise overwrites.
+      let entries: string[] = [];
+      try {
+        entries = readdirSync(repoPath);
+      } catch {
+        // ignore
+      }
+      if (entries.filter((e) => !e.startsWith('.')).length > 0) {
+        throw new Error(
+          `Refusing to clone into non-empty directory: ${repoPath}. Move or remove it first.`
+        );
+      }
+    }
+    await mkdir(dirname(repoPath), { recursive: true });
+    execSync(
+      `git clone ${shellEscape(fromUrl)} ${shellEscape(repoPath)}`,
+      { stdio: silent ? 'pipe' : 'inherit' }
+    );
+    return { action: 'Cloned', remote: readGitRemote(repoPath) };
+  }
+
+  // Case 3: fresh init.
+  await mkdir(repoPath, { recursive: true });
+  execSync('git init', { cwd: repoPath, stdio: 'pipe' });
+  return { action: 'Created', remote: undefined };
+}
+
+/**
+ * Minimal shell escaping for git URLs and paths passed via execSync.
+ * URLs are URL-encoded already, but paths may contain spaces.
+ */
+function shellEscape(s: string): string {
+  if (/^[A-Za-z0-9_@:./~+,=-]+$/.test(s)) return s;
+  return `'${s.replace(/'/g, "'\\''")}'`;
 }
 
 /**
