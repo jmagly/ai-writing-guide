@@ -116,12 +116,19 @@ A failure to write the activity log entry must never block or fail the primary o
 
 ## Append Pattern
 
+**Preferred** — the AIWG CLI (#964 wires this through `resolveStorage('activity_log')`, so the entry honors `.aiwg/storage.config` redirection):
+
 ```bash
-# Append a single entry (timestamp in UTC)
+aiwg activity-log append <operation> "<summary>"
+```
+
+**Fallback** — when the AIWG CLI isn't available (legacy / minimal-environment agents):
+
+```bash
 echo "## [$(date -u '+%Y-%m-%d %H:%M')] <operation> | <summary>" >> .aiwg/activity.log
 ```
 
-When running as an agent without shell access, use the Write tool in append mode or read the file and append the new line before writing back.
+When running as an agent without shell access, use the Write tool in append mode or read the file and append the new line before writing back. On the default `fs` backend, both paths produce byte-identical output.
 
 ## Checklist
 

@@ -485,6 +485,36 @@ export const opsHandler: CommandHandler = {
 };
 
 /**
+ * Activity-log command handler
+ *
+ * Dynamically imports and delegates to src/activity-log/cli.ts.
+ * Handles subcommands: show, append, stats. Persistence routes through
+ * resolveStorage('activity_log') so the log honors any storage.config
+ * override (#934).
+ *
+ * @implements #934
+ * @implements #964
+ */
+export const activityLogHandler: CommandHandler = {
+  id: 'activity-log',
+  name: 'Activity Log',
+  description: 'Query and manage .aiwg/activity.log (show, append, stats)',
+  category: 'utility',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import('../../activity-log/cli.js');
+      await main(ctx.args);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `activity-log command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Storage command handler
  *
  * Dynamically imports and delegates to src/storage/cli.ts.
@@ -626,6 +656,7 @@ export const subcommandHandlers: CommandHandler[] = [
   configHandler,
   opsHandler,
   storageHandler,
+  activityLogHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,

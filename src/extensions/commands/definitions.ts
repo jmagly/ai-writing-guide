@@ -2123,6 +2123,42 @@ export const opsCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Activity Log Commands
+
+export const activityLogCommand: Extension = {
+  id: 'activity-log',
+  type: 'skill',
+  name: 'Activity Log',
+  description: 'Query and manage .aiwg/activity.log — show entries, append new ones, summarize stats',
+  version: '1.0.0',
+  capabilities: ['cli', 'activity-log', 'audit', 'self-maintenance'],
+  keywords: ['activity', 'log', 'audit', 'history', 'timeline'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['activity log', 'show activity', 'log this', 'audit timeline'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<show|append|stats> [options]',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Parse subcommand and options',
+        'Resolve storage adapter for activity_log subsystem',
+        'Read or write entries via the adapter',
+        'Format output (newest-first for show, table for stats)',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Storage Commands
 
 export const storageCommand: Extension = {
@@ -2484,6 +2520,9 @@ export const commandDefinitions: Extension[] = [
 
   // Storage (1)
   storageCommand,
+
+  // Activity Log (1)
+  activityLogCommand,
 
   // Agentic Tools (5) — RLM support tools
   chunkCommand,

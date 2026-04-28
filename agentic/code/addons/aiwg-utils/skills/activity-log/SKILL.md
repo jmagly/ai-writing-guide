@@ -172,8 +172,13 @@ If the user's intent is ambiguous:
 - "Are you looking to read recent activity or record a new entry?"
 - "Which operation type should I filter on? Valid types: ingest, create, update, delete, query, lint, deploy, archive, promote."
 
+## Storage routing
+
+`aiwg activity-log` routes through `resolveStorage('activity_log')` (#964). On the default `fs` backend, the log file is `.aiwg/activity.log` and the line format is byte-identical to the legacy `echo >> .aiwg/activity.log` pattern. Configuring `.aiwg/storage.config` redirects the log to a different filesystem location (via `roots.activity_log`) without changing how agents call the CLI.
+
 ## References
 
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/activity-log.md — Rule that governs when agents must append entries
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/index/SKILL.md — Artifact index skill (complementary query tool)
+- @$AIWG_ROOT/.aiwg/architecture/storage-design.md — Storage adapter design (#934)
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference
