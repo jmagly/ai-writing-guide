@@ -515,6 +515,34 @@ export const activityLogHandler: CommandHandler = {
 };
 
 /**
+ * Reflections command handler
+ *
+ * Routes \`aiwg reflections <subcommand>\` through resolveStorage('reflections')
+ * for ralph-reflect / reflection-injection skills (#967).
+ *
+ * @implements #934
+ * @implements #967
+ */
+export const reflectionsHandler: CommandHandler = {
+  id: 'reflections',
+  name: 'Reflections',
+  description: 'Reflections subsystem storage operations (path, list, get, put, delete, append-log)',
+  category: 'utility',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import('../../reflections/cli.js');
+      await main(ctx.args);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `reflections command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Memory command handler
  *
  * Routes \`aiwg memory <subcommand>\` through resolveStorage('memory') so
@@ -717,6 +745,7 @@ export const subcommandHandlers: CommandHandler[] = [
   activityLogHandler,
   kbHandler,
   memoryHandler,
+  reflectionsHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,

@@ -266,3 +266,17 @@ Usage:
 - @$AIWG_ROOT/tools/ralph-external/lib/memory-retrieval.mjs — Memory query logic
 - @$AIWG_ROOT/tools/ralph-external/lib/memory-promotion.mjs — Cross-task memory promotion
 - @$AIWG_ROOT/agentic/code/addons/ralph/README.md — Al documentation
+
+## Storage Routing (#934, #967)
+
+This skill's persistence flows through `resolveStorage('memory')`. On the default `fs` backend the agent-loop memory lives at `.aiwg/ralph/memory.json` (and `.aiwg/ralph-external/memory.json` for external loops). To redirect into Obsidian, Logseq, Fortemi, or another backend without changing this skill, configure `roots.memory` or `backends.memory` in `.aiwg/storage.config` (#934).
+
+When this skill needs to read/write loop memory from a Bash step, prefer the storage-routed CLI:
+
+```bash
+aiwg memory get ralph/memory.json                # read global ralph memory
+echo '{"loop_id":"x","learnings":[]}' | aiwg memory put ralph/memory.json
+echo '{"event":"learned","ts":"..."}' | aiwg memory append-log ralph/learning.jsonl
+```
+
+The legacy direct-fs paths (`.aiwg/ralph/memory.json`) continue to work on the default `fs` backend — they're byte-identical to what the adapter writes — but only the adapter route honors `storage.config` redirection.

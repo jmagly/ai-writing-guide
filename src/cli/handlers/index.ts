@@ -76,6 +76,7 @@ import {
   activityLogHandler,
   kbHandler,
   memoryHandler,
+  reflectionsHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,
@@ -142,6 +143,7 @@ export {
   activityLogHandler,
   kbHandler,
   memoryHandler,
+  reflectionsHandler,
   runtimeInfoHandler,
 
   // Agentic Tools (RLM)
@@ -318,6 +320,9 @@ export const allHandlers: CommandHandler[] = [
 
   // Memory subsystem (#934, #966)
   memoryHandler,
+
+  // Reflections subsystem (#934, #967)
+  reflectionsHandler,
 
   // Agentic Tools (RLM support tools)
   chunkHandler,

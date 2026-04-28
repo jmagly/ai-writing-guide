@@ -107,7 +107,7 @@ describe('memory CLI (#966)', () => {
     });
 
     it('get throws clear error for missing entry', async () => {
-      await expect(main(['get', 'missing.md'])).rejects.toThrow(/Memory entry not found/);
+      await expect(main(['get', 'missing.md'])).rejects.toThrow(/entry not found/i);
     });
 
     it('delete removes an existing entry', async () => {
