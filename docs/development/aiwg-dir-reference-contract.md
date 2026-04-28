@@ -172,7 +172,7 @@ MY_CORPUS=/path/to/custom/corpus
 | `@$TOKEN/<path>` (env var not set) | WARN | Add to `.env` or export |
 | `@.aiwg/<normalized>` | YES | Tier 1 or Tier 2, in `memory.creates` |
 | `@.aiwg/<repo-local>` | NO | Silently fails in user projects |
-| `@.claude/<path>` | NO | Overwritten by `aiwg sync` |
+| `@.claude/<path>` | NO | Overwritten by `aiwg refresh` |
 | `@agentic/code/<path>` | NO (legacy) | Migrate to `@$AIWG_ROOT/agentic/code/` |
 | `@src/<path>` | NO (legacy) | Migrate to `@$AIWG_ROOT/src/` |
 | `@docs/<path>` | NO (legacy) | Migrate to `@$AIWG_ROOT/docs/` |

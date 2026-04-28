@@ -171,8 +171,8 @@ npm install -g aiwg                  # stable (latest dist-tag, default)
 npm install -g aiwg@next             # latest alpha/beta/RC
 npm install -g aiwg@nightly          # latest nightly snapshot
 npm install -g aiwg@2026.1.5-rc.3    # specific RC by exact version
-aiwg sync --channel next             # switch installed version to next channel
-aiwg sync --channel latest           # switch back to stable
+aiwg refresh --channel next          # switch installed version to next channel
+aiwg refresh --channel latest        # switch back to stable
 ```
 
 ### What pre-release means

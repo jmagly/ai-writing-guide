@@ -5,6 +5,20 @@ All notable changes to AIWG project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with npm-compatible format (`YYYY.M.PATCH`).
 
+## [Unreleased]
+
+### Changed
+
+- **`aiwg sync` renamed to `aiwg refresh`** (#932). The new name better matches the operation's semantics (re-deploy + health check, not a directional sync). `aiwg sync` continues to work as a deprecated alias and emits a runtime warning. Canonical docs (`CLAUDE.md`, `AIWG.md`, `docs/cli-reference.md`, agent playbooks, self-maintenance rule and templates) now use `aiwg refresh`. Removal target: after the 2026.5.x stable line; the alias will be removed in 2026.6.0.
+
+### Fixed
+
+- **`aiwg ops init` no longer creates nested ops workspaces** (#935). `initWorkspace()` walks up from the target home looking for `OpsInventory.yaml` and refuses with a clear error and a suggested sibling path if it finds one in an ancestor.
+
+### Internal
+
+- `.agents/` deployment directory is now gitignored, mirroring `.claude/` and `.codex/` (#949). 395 generated files removed from the index; regenerable via `aiwg use`.
+
 ## [2026.4.0] - 2026-04-01 – "Autonomous Systems"
 
 > First major version milestone. Covers everything since v2026.3.2. Intermediate builds (3.3, 3.4) were internal test releases — this is the stable release users should upgrade to.

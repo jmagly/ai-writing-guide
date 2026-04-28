@@ -153,16 +153,16 @@ aiwg --use-stable
 
 ---
 
-### sync
+### refresh
 
-Sync AIWG to latest version and re-deploy all frameworks to active provider.
+Refresh AIWG to the latest version and re-deploy all frameworks to the active provider. **Formerly `aiwg sync`** — `aiwg sync` still works as a deprecated alias (emits a warning, scheduled for removal after the 2026.5.x stable line).
 
 ```bash
-aiwg sync
-aiwg --sync
+aiwg refresh
+aiwg --refresh
 ```
 
-**Capabilities:** cli, sync, maintenance, deploy, self-maintenance
+**Capabilities:** cli, refresh, sync, maintenance, deploy, self-maintenance
 **Platforms:** All
 **Tools:** Bash, Read
 
@@ -185,25 +185,25 @@ aiwg --sync
 
 **Examples:**
 ```bash
-# Full sync (update + re-deploy + verify)
-aiwg sync
+# Full refresh (update + re-deploy + verify)
+aiwg refresh
 
 # Check what would change
-aiwg sync --dry-run
+aiwg refresh --dry-run
 
-# Sync to specific provider
-aiwg sync --provider copilot
+# Refresh to specific provider
+aiwg refresh --provider copilot
 
 # Re-deploy only SDLC framework, skip update
-aiwg sync --skip-update --frameworks sdlc
+aiwg refresh --skip-update --frameworks sdlc
 
 # Quiet mode for agent orchestration
-aiwg sync --quiet
+aiwg refresh --quiet
 ```
 
 **Example output:**
 ```
-◆ aiwg sync
+◆ aiwg refresh
 ──────────────────────────────
 ℹ Detecting provider...
 ✓ Provider: claude
@@ -216,7 +216,7 @@ aiwg sync --quiet
 ℹ Running health check...
 ✓ Health check passed
 ──────────────────────────────
-✓ Sync complete
+✓ Refresh complete
 ```
 
 ---
@@ -480,13 +480,13 @@ aiwg session --no-repair            # skip auto-repair (still checks and reports
 
 **Pre-flight sequence:**
 1. **Version check** — updates aiwg if stale (`npm install -g aiwg@latest`)
-2. **Health check** — runs `aiwg doctor`; auto-repairs fixable issues via `aiwg sync`
+2. **Health check** — runs `aiwg doctor`; auto-repairs fixable issues via `aiwg refresh`
 3. **Deployment check** — redeploys framework files to the provider if missing or stale
 4. **MCP inject** (when `mcp` subcommand or `--profile` used) — runs `aiwg mcp inject --provider <p>`
 5. **Launch** — spawns binary (claude, codex, opencode) or prints start instructions (IDE providers: cursor, windsurf, copilot, etc.)
 
 **Auto-repair escalation:**
-- Strategy 1: `aiwg sync` (update + redeploy)
+- Strategy 1: `aiwg refresh` (update + redeploy)
 - Strategy 2: `npm install -g aiwg@latest` + redeploy all frameworks
 - If unresolvable: surfaces `aiwg feedback --type bug` as escape hatch
 
@@ -1031,7 +1031,7 @@ Cross-provider scheduler that detects native cron capability (Claude Code `CronC
 
 **Examples:**
 ```bash
-/schedule create --name daily-sync --cron "0 9 * * *" --task "aiwg sync"
+/schedule create --name daily-refresh --cron "0 9 * * *" --task "aiwg refresh"
 /schedule create --name health-check --cron "0 */6 * * *" --task "aiwg doctor"
 ```
 
@@ -2974,7 +2974,7 @@ All commands are registered as extensions in the unified schema. This enables:
 
 | Category | Count | Commands |
 |----------|-------|----------|
-| **Maintenance** | 5 | help, version, doctor, update, sync |
+| **Maintenance** | 5 | help, version, doctor, update, refresh (alias: `sync`, deprecated) |
 | **Framework** | 3 | use, list, remove |
 | **Project** | 1 | new |
 | **Workspace** | 3 | status, migrate-workspace, rollback-workspace |

@@ -30,7 +30,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | What's new | "what's new in AIWG" | Read `docs/releases/v{version}-announcement.md` |
 | How-to | "how do I deploy to copilot" | Search docs in priority order |
 | What-is | "what is a soul file" | Concept lookup from extension/addon docs |
-| Command help | "what does aiwg sync do" | Search `docs/cli-reference.md` |
+| Command help | "what does aiwg refresh do" | Search `docs/cli-reference.md` |
 | Provider query | "does cursor support MCP" | Read capability matrix |
 | Status query | "is AIWG healthy" | Steward handoff → `aiwg doctor` |
 | Version query | "what version of AIWG" | Steward handoff → `aiwg version` |

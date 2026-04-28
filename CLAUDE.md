@@ -289,10 +289,12 @@ aiwg index deps .aiwg/requirements/UC-001.md --json  # Show dependencies
 aiwg index stats --json                  # Index statistics
 
 # Self-maintenance
-aiwg sync                    # Sync to latest version + re-deploy all frameworks
-aiwg sync --dry-run          # Check what would change (no side effects)
-aiwg sync --provider copilot # Sync to specific provider
-aiwg doctor                  # Health check + diagnostics
+aiwg refresh                    # Refresh to latest version + re-deploy all frameworks
+aiwg refresh --dry-run          # Check what would change (no side effects)
+aiwg refresh --provider copilot # Refresh to specific provider
+aiwg doctor                     # Health check + diagnostics
+# `aiwg sync` is a deprecated alias for `aiwg refresh` — emits a warning,
+# scheduled for removal after the 2026.5.x stable line.
 
 # Background orchestration (Mission Control)
 aiwg mc start                # Start Mission Control session
@@ -534,8 +536,8 @@ npm install -g aiwg              # stable (latest dist-tag)
 npm install -g aiwg@next         # latest alpha/beta/RC
 npm install -g aiwg@nightly      # latest nightly snapshot
 npm install -g aiwg@2026.4.0-rc.3 # specific RC by exact version
-aiwg sync --channel next         # switch installed version to next channel
-aiwg sync --channel latest       # switch back to stable
+aiwg refresh --channel next      # switch installed version to next channel
+aiwg refresh --channel latest    # switch back to stable
 ```
 
 **Pipeline flow:** `dev → nightly → alpha → beta → RC → stable`
