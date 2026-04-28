@@ -515,6 +515,35 @@ export const activityLogHandler: CommandHandler = {
 };
 
 /**
+ * Memory command handler
+ *
+ * Routes \`aiwg memory <subcommand>\` through resolveStorage('memory') so
+ * the four memory skills (memory-ingest, memory-lint, memory-log-append,
+ * memory-query-capture) honor any storage.config redirection.
+ *
+ * @implements #934
+ * @implements #966
+ */
+export const memoryHandler: CommandHandler = {
+  id: 'memory',
+  name: 'Memory',
+  description: 'Memory subsystem storage operations (path, list, get, put, delete, append-log)',
+  category: 'utility',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import('../../memory/cli.js');
+      await main(ctx.args);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `memory command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Knowledge-base command handler
  *
  * Routes \`aiwg kb <subcommand>\` through resolveStorage('kb') so the KB
@@ -687,6 +716,7 @@ export const subcommandHandlers: CommandHandler[] = [
   storageHandler,
   activityLogHandler,
   kbHandler,
+  memoryHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,

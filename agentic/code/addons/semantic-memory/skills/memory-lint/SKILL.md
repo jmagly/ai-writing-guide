@@ -127,3 +127,19 @@ memory-lint
 # Lint all consumers in the workspace
 memory-lint --consumer all
 ```
+
+## Storage Routing (#934, #966)
+
+This skill's persistence flows through `resolveStorage('memory')`. On the default `fs` backend the memory subsystem lives at `.aiwg/memory/` and behavior is byte-identical to direct file writes. To redirect memory artifacts into Obsidian, Logseq, Fortemi, or another backend without changing this skill, configure `.aiwg/storage.config` (#934).
+
+When this skill needs to read or write memory artifacts from a Bash step:
+
+```bash
+aiwg memory path                        # resolved root (fs only)
+aiwg memory list --prefix research-complete/
+aiwg memory get research-complete/index.md
+echo "# index" | aiwg memory put research-complete/index.md
+echo '{"op":"ingest","summary":"foo"}' | aiwg memory append-log research-complete/.log.jsonl
+```
+
+The `aiwg memory append-log` subcommand uses atomic `O_APPEND` (#976) on the fs backend — concurrent appenders don't race.
