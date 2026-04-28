@@ -20,15 +20,16 @@ describe('activity-log auto-append hook (#978)', () => {
   let projectRoot: string;
   let logPath: string;
   let stderrSpy: ReturnType<typeof vi.spyOn>;
-  let originalCwd: string;
   let originalSkipEnv: string | undefined;
 
   beforeEach(async () => {
     projectRoot = await mkdtemp(join(tmpdir(), 'aiwg-activity-hook-test-'));
     logPath = join(projectRoot, '.aiwg', 'activity.log');
-    originalCwd = process.cwd();
-    process.chdir(projectRoot);
     resetStorage();
+    // Initialize the storage state explicitly against the temp project
+    // root. The hook calls resolveStorage() which honors this state and
+    // does not consult process.cwd() — important because vitest runs
+    // tests in workers where process.chdir() is forbidden.
     await initStorage(projectRoot);
 
     originalSkipEnv = process.env.AIWG_SKIP_ACTIVITY_LOG;
@@ -39,7 +40,6 @@ describe('activity-log auto-append hook (#978)', () => {
 
   afterEach(async () => {
     stderrSpy.mockRestore();
-    process.chdir(originalCwd);
     if (originalSkipEnv === undefined) delete process.env.AIWG_SKIP_ACTIVITY_LOG;
     else process.env.AIWG_SKIP_ACTIVITY_LOG = originalSkipEnv;
     resetStorage();
