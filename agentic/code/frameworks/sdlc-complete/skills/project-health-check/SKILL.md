@@ -282,6 +282,6 @@ Allow users to define additional metrics:
 
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Collect and analyze actual metrics before scoring; do not estimate health from assumptions
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md — Health thresholds must be numeric (e.g., test coverage ≥ 80%); never "good enough" conditions
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/project-status/SKILL.md — Provides SDLC artifact-based status; this skill provides code and team metrics
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/project-status/SKILL.md — Provides SDLC artifact-based status; this skill provides code and team metrics
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/security-audit/SKILL.md — Security metrics feed directly into this skill's health score calculation
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/codebase-health/SKILL.md — Code structure metrics complement the project-level metrics produced here

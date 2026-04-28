@@ -45,4 +45,4 @@ Feature description: $ARGUMENTS
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md — Fully parse the feature description before drafting; track all multi-part requirements
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Confirm scope and output location before writing; PRD commits product direction
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/intake-start/SKILL.md — Intake validation skill that feeds the requirements context a PRD builds on
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/project-status/SKILL.md — Use to orient within the SDLC phase before generating PRD artifacts
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/project-status/SKILL.md — Use to orient within the SDLC phase before generating PRD artifacts

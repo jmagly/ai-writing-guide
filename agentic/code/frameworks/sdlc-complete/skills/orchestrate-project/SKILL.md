@@ -38,5 +38,5 @@ Coordinate lifecycle work for the current phase/iteration:
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/parallel-then-synthesize.md — Launch independent agents in parallel; synthesize into a single status summary
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Escalate blockers to human; do not autonomously resolve gate failures
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/sdlc-orchestration.md — Phase orchestration patterns this skill implements
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/project-status/SKILL.md — Use for phase detection before dispatching agents
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/project-status/SKILL.md — Use for phase detection before dispatching agents
 
