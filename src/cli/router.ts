@@ -17,15 +17,18 @@ import { getFrameworkRoot } from '../channel/manager.mjs';
 import type { HandlerContext } from './handlers/types.js';
 import { HookRegistry, HookExecutor } from './hooks/index.js';
 import type { HookContext } from './hooks/index.js';
+import { activityLogPostCommandHook } from './hooks/builtin/activity-log-hook.js';
 import { tryExecuteCliExtension } from './cli-extension-loader.js';
 import * as ui from './ui.js';
 
 // Cached loaded registry
 let cachedRegistry: LoadedRegistry | null = null;
 
-// Global hook registry and executor
+// Global hook registry and executor. Register built-in hooks at module
+// load time so they fire for every command without per-handler wiring.
 const hookRegistry = new HookRegistry();
 const hookExecutor = new HookExecutor(hookRegistry);
+hookRegistry.register(activityLogPostCommandHook);
 
 /**
  * Initialize the CLI router
