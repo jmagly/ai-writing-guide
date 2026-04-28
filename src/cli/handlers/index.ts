@@ -77,6 +77,8 @@ import {
   kbHandler,
   memoryHandler,
   reflectionsHandler,
+  provenanceHandler,
+  researchStoreHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,
@@ -144,6 +146,8 @@ export {
   kbHandler,
   memoryHandler,
   reflectionsHandler,
+  provenanceHandler,
+  researchStoreHandler,
   runtimeInfoHandler,
 
   // Agentic Tools (RLM)
@@ -323,6 +327,12 @@ export const allHandlers: CommandHandler[] = [
 
   // Reflections subsystem (#934, #967)
   reflectionsHandler,
+
+  // Provenance subsystem (#934, #968)
+  provenanceHandler,
+
+  // Research subsystem (#934, #968)
+  researchStoreHandler,
 
   // Agentic Tools (RLM support tools)
   chunkHandler,

@@ -384,3 +384,13 @@ induct-research <target>
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/skills/research-quality/SKILL.md — GRADE scoring for inducted items
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/address-issues/SKILL.md — Analogous pattern for code issues
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md — Parallel batch analysis constraints
+
+## Storage Routing (#934, #968)
+
+This skill's persistence flows through `resolveStorage('research')`. On the default `fs` backend the research corpus lives at `.aiwg/research/`. **Heavy artifacts (papers, archived sources) can move to a secondary drive** by setting `roots.research` in `.aiwg/storage.config` (one of the headline #934 use cases).
+
+```bash
+aiwg research-store path                            # resolved root
+aiwg research-store list --prefix sources/
+aiwg research-store get sources/paper-123.md
+```

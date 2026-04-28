@@ -2123,6 +2123,66 @@ export const opsCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Provenance Subsystem Commands
+
+export const provenanceCommand: Extension = {
+  id: 'provenance',
+  type: 'skill',
+  name: 'Provenance',
+  description: 'Storage operations on the AIWG provenance subsystem — used by provenance-* skills for W3C PROV records',
+  version: '1.0.0',
+  capabilities: ['cli', 'provenance', 'storage', 'audit', 'w3c-prov'],
+  keywords: ['provenance', 'prov', 'lineage', 'audit'],
+  category: 'utility',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['provenance path', 'list provenance', 'aiwg provenance'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<path|list|get|put|delete|append-log> [options]',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Parse subcommand and arguments',
+        'Resolve storage adapter for provenance subsystem',
+        'Read/write/list/delete/append-log via the adapter',
+        'Print result',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
+// Research Store Commands
+
+export const researchStoreCommand: Extension = {
+  id: 'research-store',
+  type: 'skill',
+  name: 'Research Store',
+  description: 'Storage operations on the AIWG research subsystem — corpus pages, source archives, and citation indexes',
+  version: '1.0.0',
+  capabilities: ['cli', 'research', 'corpus', 'storage'],
+  keywords: ['research', 'corpus', 'research-store'],
+  category: 'utility',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['research-store path', 'list research', 'aiwg research-store'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<path|list|get|put|delete|append-log> [options]',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Parse subcommand and arguments',
+        'Resolve storage adapter for research subsystem',
+        'Read/write/list/delete/append-log via the adapter',
+        'Print result',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Reflections Subsystem Commands
 
 export const reflectionsCommand: Extension = {
@@ -2640,6 +2700,12 @@ export const commandDefinitions: Extension[] = [
 
   // Reflections subsystem (1)
   reflectionsCommand,
+
+  // Provenance subsystem (1)
+  provenanceCommand,
+
+  // Research subsystem (1)
+  researchStoreCommand,
 
   // Agentic Tools (5) — RLM support tools
   chunkCommand,
