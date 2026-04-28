@@ -1802,6 +1802,42 @@ export const cleanupAuditCommand: Extension = {
 
 // SDLC Orchestration Commands
 
+export const bestPracticesAuditCommand: Extension = {
+  id: 'best-practices-audit',
+  type: 'skill',
+  name: 'Best-Practices Audit',
+  description: 'Research-grounded validation of a target against current external best practices, vendor documentation, and practitioner discussion',
+  version: '1.0.0',
+  capabilities: ['cli', 'research', 'validation', 'audit', 'citations'],
+  keywords: ['best-practices-audit', 'audit', 'validate', 'research', 'practices', 'compare'],
+  category: 'research-validation',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['best practices audit', 'audit best practices', 'validate against current practice', 'research-grounded validation'],
+    commandHint: {
+      template: 'orchestration',
+      executedViaSkillRunner: true,
+      argumentHint: '<target> [--focus <area> --standard <name> --depth quick|standard|deep --cite-threshold <N> --dissent --validate --output <path>]',
+      allowedTools: ['Read', 'Write', 'Glob', 'Grep', 'Bash', 'WebFetch', 'WebSearch'],
+      executionSteps: [
+        'Scope target and inventory claims',
+        'Research fan-out via research-complete agents',
+        'Source quality gating (citation-guard, GRADE, recency)',
+        'Comparison and alignment determination',
+        'Report writeup with full citations',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const sdlcAccelerateCommand: Extension = {
   id: 'sdlc-accelerate',
   type: 'skill',
@@ -2386,6 +2422,9 @@ export const commandDefinitions: Extension[] = [
 
   // SDLC Orchestration (1)
   sdlcAccelerateCommand,
+
+  // Research Validation (1)
+  bestPracticesAuditCommand,
 
   // Index (1)
   indexCommand,

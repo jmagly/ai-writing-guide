@@ -80,6 +80,7 @@ import {
   subcommandHandlers,
 } from './subcommands.js';
 import { runtimeInfoHandler } from './runtime-info.js';
+import { bestPracticesAuditHandler } from './best-practices-audit.js';
 // sync was renamed to refresh (#694). refreshHandler exposes both 'refresh'
 // (primary) and 'sync' (deprecated alias) to preserve backward compatibility.
 import { refreshHandler } from './refresh.js';
@@ -184,6 +185,9 @@ export {
   // SDLC Orchestration
   sdlcAccelerateHandler,
 
+  // Research / Validation
+  bestPracticesAuditHandler,
+
   // Agent Teams
   teamHandler,
 
@@ -282,6 +286,9 @@ export const allHandlers: CommandHandler[] = [
 
   // SDLC Orchestration
   sdlcAccelerateHandler,
+
+  // Research / Validation
+  bestPracticesAuditHandler,
 
   // Daemon
   ...daemonHandlers,

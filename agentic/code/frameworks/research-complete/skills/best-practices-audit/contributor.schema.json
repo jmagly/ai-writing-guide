@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/contributors/research.schema.json",
+  "title": "Research Contributor",
+  "description": "Frontmatter schema for `<framework>/research/contributor.md` files. Consumed by `best-practices-audit` (and any other `kind: research` aggregator) to expand the research fan-out plan with framework-specific focus areas, source preferences, and recency defaults. Runtime authority is the zod schema in src/contributors/validation.ts; this JSON Schema serves as published documentation.",
+  "type": "object",
+  "required": ["kind", "domain", "description", "detect", "focus_areas"],
+  "additionalProperties": true,
+  "properties": {
+    "kind": {
+      "const": "research",
+      "description": "Discriminator. Must be the literal `research`."
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name of the domain this contributor researches (e.g. 'SDLC artifacts', 'Marketing campaigns')."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One-line description of what this contributor researches."
+    },
+    "detect": {
+      "type": "object",
+      "required": ["glob"],
+      "additionalProperties": false,
+      "description": "Declarative detection spec — the framework is in scope for research only when these globs match.",
+      "properties": {
+        "glob": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "minCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "focus_areas": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Focus areas this contributor's domain emphasizes during research (e.g. 'security', 'performance'). The audit's `--focus` flag intersects with this list."
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Source class preferences applied during research fan-out. Used together with --sources / --exclude on the audit command.",
+      "properties": {
+        "preferred": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Preferred source classes (e.g. 'ietf', 'w3c', 'owasp', 'vendor-docs')."
+        },
+        "exclude": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicitly excluded source classes (e.g. 'seo-spam', 'ai-content-farms')."
+        }
+      }
+    },
+    "recency_default_months": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Default recency window in months. Applied when the user does not specify --recency. Tighter for fast-moving domains (e.g. 6 for frontend frameworks); wider for compliance/legal (e.g. 36)."
+    }
+  }
+}
