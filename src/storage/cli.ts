@@ -177,7 +177,7 @@ function backendStatus(type: BackendType): BackendStatus {
     case 'fs':
       return { implemented: true, note: 'default backend — local filesystem' };
     case 'obsidian':
-      return { implemented: false, note: 'planned (#957) — uses Obsidian CLI' };
+      return { implemented: true, note: 'fs-shaped vault writes; refuses .obsidian/' };
     case 'logseq':
       return { implemented: false, note: 'planned (#958) — HTTP API at :12315' };
     case 'notion':

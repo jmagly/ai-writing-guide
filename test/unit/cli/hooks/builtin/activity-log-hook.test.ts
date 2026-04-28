@@ -160,14 +160,16 @@ describe('activity-log auto-append hook (#978)', () => {
   describe('failure handling', () => {
     it('is non-blocking on storage failure (logs to stderr, returns continue)', async () => {
       // Force resolveStorage to fail by configuring a backend that
-      // doesn't have an implementation yet
+      // doesn't have an implementation yet (notion is still planned)
       const { writeFile, mkdir } = await import('fs/promises');
       await mkdir(join(projectRoot, '.aiwg'), { recursive: true });
       await writeFile(
         join(projectRoot, '.aiwg', 'storage.config'),
         JSON.stringify({
           version: '1',
-          backends: { activity_log: { type: 'obsidian', vault: '/tmp/nonexistent' } },
+          backends: {
+            activity_log: { type: 'notion', parent: { pageId: 'abc-123' } },
+          },
         }),
         'utf-8'
       );
@@ -179,7 +181,6 @@ describe('activity-log auto-append hook (#978)', () => {
       );
       expect(result.action).toBe('continue');
       expect(stderrSpy).toHaveBeenCalled();
-      // Verify the message mentions our hook context
       const stderrCalls = stderrSpy.mock.calls.map((c) => String(c[0])).join(' ');
       expect(stderrCalls).toMatch(/activity-log auto-append failed/);
     });
