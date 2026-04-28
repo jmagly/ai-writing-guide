@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rm, readFile } from 'fs/promises';
+import { mkdtemp, rm, readFile, writeFile, mkdir } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { existsSync } from 'fs';
@@ -139,6 +139,42 @@ describe('OpsRegistry', () => {
           silent: true,
         })
       ).rejects.toThrow(/already exists/);
+    });
+
+    it('should refuse to nest inside an existing ops workspace (OpsInventory.yaml marker)', async () => {
+      const outer = join(tempDir, 'sysops');
+      await mkdir(outer, { recursive: true });
+      await writeFile(join(outer, 'OpsInventory.yaml'), 'apiVersion: aiwg.io/v1\n', 'utf-8');
+
+      const registry = new OpsRegistry(tempDir);
+
+      await expect(
+        registry.initWorkspace({
+          name: 'itops',
+          home: join(outer, 'itops'),
+          mode: 'multi-repo',
+          extensions: ['it'],
+          silent: true,
+        })
+      ).rejects.toThrow(/already an ops workspace/);
+    });
+
+    it('should refuse to nest more than one level deep under an ops workspace', async () => {
+      const outer = join(tempDir, 'sysops');
+      await mkdir(outer, { recursive: true });
+      await writeFile(join(outer, 'OpsInventory.yaml'), 'apiVersion: aiwg.io/v1\n', 'utf-8');
+
+      const registry = new OpsRegistry(tempDir);
+
+      await expect(
+        registry.initWorkspace({
+          name: 'itops',
+          home: join(outer, 'nested', 'itops'),
+          mode: 'multi-repo',
+          extensions: ['it'],
+          silent: true,
+        })
+      ).rejects.toThrow(/Suggested location/);
     });
 
     it('should set first workspace as default', async () => {

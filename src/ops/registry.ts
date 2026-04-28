@@ -8,7 +8,7 @@
  */
 
 import { readFile, writeFile, mkdir } from 'fs/promises';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
 import { homedir } from 'os';
 import { existsSync } from 'fs';
 import { execSync } from 'child_process';
@@ -131,6 +131,18 @@ export class OpsRegistry {
 
     // Resolve home directory
     const opsHome = opts.home || resolve(homedir(), 'ops', opts.name);
+
+    // Refuse to create nested ops workspaces — walk up from the parent of
+    // opsHome looking for OpsInventory.yaml. Sibling layout is required.
+    const enclosing = findEnclosingOpsWorkspace(opsHome);
+    if (enclosing) {
+      const suggested = resolve(dirname(enclosing), opts.name);
+      throw new Error(
+        `${enclosing} is already an ops workspace.\n` +
+          `Ops workspaces must be siblings of one another, not nested.\n` +
+          `Suggested location: ${suggested}`
+      );
+    }
 
     // Build workspace
     const workspace: OpsWorkspace = {
@@ -310,6 +322,28 @@ export class OpsRegistry {
         console.log(`  ${repoName}: no remote configured`);
       }
     }
+  }
+}
+
+/**
+ * Walk up from targetPath's parent looking for an enclosing ops workspace.
+ * Returns the path of the enclosing workspace, or null if none found.
+ *
+ * Marker: OpsInventory.yaml (the file the ops scaffolder seeds at workspace
+ * root). `.aiwg/` is intentionally not used as a marker since AIWG project
+ * roots routinely contain `.aiwg/aiwg.config` without being ops workspaces.
+ */
+function findEnclosingOpsWorkspace(targetPath: string): string | null {
+  const resolved = resolve(targetPath);
+  let current = dirname(resolved);
+  // Stop walking when dirname() no longer advances (filesystem root).
+  while (true) {
+    if (existsSync(resolve(current, 'OpsInventory.yaml'))) {
+      return current;
+    }
+    const parent = dirname(current);
+    if (parent === current) return null;
+    current = parent;
   }
 }
 
