@@ -179,7 +179,7 @@ function backendStatus(type: BackendType): BackendStatus {
     case 'obsidian':
       return { implemented: true, note: 'fs-shaped vault writes; refuses .obsidian/' };
     case 'logseq':
-      return { implemented: false, note: 'planned (#958) — HTTP API at :12315' };
+      return { implemented: true, note: 'fs writes; YAML→property:: transform; refuses logseq/' };
     case 'notion':
       return { implemented: false, note: 'planned (#959) — REST + external_id upsert' };
     case 'anythingllm':
