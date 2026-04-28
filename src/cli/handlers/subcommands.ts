@@ -515,6 +515,35 @@ export const activityLogHandler: CommandHandler = {
 };
 
 /**
+ * Knowledge-base command handler
+ *
+ * Routes \`aiwg kb <subcommand>\` through resolveStorage('kb') so the KB
+ * honors any storage.config redirection without each kb skill
+ * hardcoding `.aiwg/kb/`.
+ *
+ * @implements #934
+ * @implements #965
+ */
+export const kbHandler: CommandHandler = {
+  id: 'kb',
+  name: 'Knowledge Base',
+  description: 'Knowledge base storage operations (path, list, get, put, delete)',
+  category: 'utility',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import('../../kb/cli.js');
+      await main(ctx.args);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `kb command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Storage command handler
  *
  * Dynamically imports and delegates to src/storage/cli.ts.
@@ -657,6 +686,7 @@ export const subcommandHandlers: CommandHandler[] = [
   opsHandler,
   storageHandler,
   activityLogHandler,
+  kbHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,

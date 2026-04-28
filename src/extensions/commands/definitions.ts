@@ -2123,6 +2123,42 @@ export const opsCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Knowledge Base Commands
+
+export const kbCommand: Extension = {
+  id: 'kb',
+  type: 'skill',
+  name: 'Knowledge Base',
+  description: 'Storage operations on the AIWG knowledge base — resolve paths, list pages, get/put/delete entries through the configured backend',
+  version: '1.0.0',
+  capabilities: ['cli', 'kb', 'knowledge-base', 'storage', 'pkm'],
+  keywords: ['kb', 'knowledge-base', 'pages', 'entities', 'concepts'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['where is the kb', 'kb path', 'list kb pages', 'aiwg kb'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<path|list|get|put|delete> [options]',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Parse subcommand and arguments',
+        'Resolve storage adapter for kb subsystem',
+        'Read/write/list/delete via the adapter',
+        'Print result',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Activity Log Commands
 
 export const activityLogCommand: Extension = {
@@ -2523,6 +2559,9 @@ export const commandDefinitions: Extension[] = [
 
   // Activity Log (1)
   activityLogCommand,
+
+  // Knowledge Base (1)
+  kbCommand,
 
   // Agentic Tools (5) — RLM support tools
   chunkCommand,

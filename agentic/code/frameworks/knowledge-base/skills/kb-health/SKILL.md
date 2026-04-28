@@ -27,7 +27,13 @@ Audit the knowledge base for structural and content issues. Reports problems and
 Scope the check to a subdirectory (e.g., `--path .aiwg/kb/entities/`). Defaults to full KB root.
 
 ### `--kb <path>` (optional)
-Root of the knowledge base. Defaults to `.aiwg/kb/`.
+Root of the knowledge base. **Default**: resolved by `aiwg kb path` (#965), which reads `resolveStorage('kb')` and honors any `roots.kb` override in `.aiwg/storage.config`. On the default `fs` backend this is `.aiwg/kb/`.
+
+```bash
+KB_ROOT=$(aiwg kb path)
+aiwg kb list --prefix entities/
+aiwg kb get entities/foo.md
+```
 
 ### `--fix` (optional)
 Automatically repair issues that are safe to fix without human judgment:
