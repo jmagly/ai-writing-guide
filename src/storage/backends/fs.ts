@@ -11,7 +11,7 @@
  */
 
 import { existsSync } from 'fs';
-import { mkdir, readFile, readdir, rm, stat, writeFile } from 'fs/promises';
+import { appendFile, mkdir, readFile, readdir, rm, stat, writeFile } from 'fs/promises';
 import { dirname, join, relative, resolve, sep } from 'path';
 import type { StorageAdapter, StorageEntry, WriteMeta } from '../types.js';
 
@@ -61,6 +61,18 @@ export class FilesystemAdapter implements StorageAdapter {
     const abs = this.resolveSafe(path);
     await mkdir(dirname(abs), { recursive: true });
     await writeFile(abs, content, 'utf-8');
+  }
+
+  /**
+   * Atomic append. Uses fs.appendFile, which opens with O_APPEND so the
+   * kernel guarantees atomicity for writes ≤ PIPE_BUF (4096 bytes on
+   * Linux). Concurrent appenders interleave at line granularity rather
+   * than racing read-then-write. See #976.
+   */
+  async append(path: string, content: string): Promise<void> {
+    const abs = this.resolveSafe(path);
+    await mkdir(dirname(abs), { recursive: true });
+    await appendFile(abs, content, 'utf-8');
   }
 
   async list(prefix: string): Promise<StorageEntry[]> {

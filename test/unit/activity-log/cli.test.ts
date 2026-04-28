@@ -180,6 +180,66 @@ describe('activity-log CLI', () => {
     });
   });
 
+  describe('AIWG_SKIP_ACTIVITY_LOG (#975)', () => {
+    const originalEnv = process.env.AIWG_SKIP_ACTIVITY_LOG;
+
+    afterEach(() => {
+      if (originalEnv === undefined) {
+        delete process.env.AIWG_SKIP_ACTIVITY_LOG;
+      } else {
+        process.env.AIWG_SKIP_ACTIVITY_LOG = originalEnv;
+      }
+    });
+
+    it('skips append when AIWG_SKIP_ACTIVITY_LOG=1', async () => {
+      process.env.AIWG_SKIP_ACTIVITY_LOG = '1';
+      await main(['append', 'create', 'should not appear']);
+      expect(existsSync(logPath)).toBe(false);
+    });
+
+    it('skips append when AIWG_SKIP_ACTIVITY_LOG=true (case insensitive)', async () => {
+      process.env.AIWG_SKIP_ACTIVITY_LOG = 'TRUE';
+      await main(['append', 'create', 'nope']);
+      expect(existsSync(logPath)).toBe(false);
+    });
+
+    it('does NOT skip when AIWG_SKIP_ACTIVITY_LOG=0', async () => {
+      process.env.AIWG_SKIP_ACTIVITY_LOG = '0';
+      await main(['append', 'create', 'this should appear']);
+      expect(existsSync(logPath)).toBe(true);
+    });
+
+    it('does NOT skip when AIWG_SKIP_ACTIVITY_LOG=false', async () => {
+      process.env.AIWG_SKIP_ACTIVITY_LOG = 'false';
+      await main(['append', 'create', 'visible']);
+      expect(existsSync(logPath)).toBe(true);
+    });
+
+    it('does NOT skip when AIWG_SKIP_ACTIVITY_LOG is unset', async () => {
+      delete process.env.AIWG_SKIP_ACTIVITY_LOG;
+      await main(['append', 'create', 'visible']);
+      expect(existsSync(logPath)).toBe(true);
+    });
+  });
+
+  describe('concurrent append atomicity (#976)', () => {
+    it('does not lose entries under 10 parallel appends', async () => {
+      const calls: Promise<void>[] = [];
+      for (let i = 0; i < 10; i++) {
+        calls.push(main(['append', 'create', `parallel-entry-${i}`]));
+      }
+      await Promise.all(calls);
+
+      const content = await readFile(logPath, 'utf-8');
+      const lines = content.split('\n').filter((l) => l.length > 0);
+      // Every entry must be present
+      expect(lines).toHaveLength(10);
+      for (let i = 0; i < 10; i++) {
+        expect(content).toContain(`parallel-entry-${i}`);
+      }
+    });
+  });
+
   describe('storage routing', () => {
     it('honors roots.activity_log override from storage.config', async () => {
       // Configure activity_log to live in a non-default location
