@@ -85,7 +85,7 @@ describe('storage/index resolveStorage', () => {
       join(projectRoot, '.aiwg', 'storage.config'),
       JSON.stringify({
         version: '1',
-        backends: { memory: { type: 'obsidian', vault: '/tmp/vault' } },
+        backends: { memory: { type: 'notion', parent: { pageId: 'abc-123' } } },
       }),
       'utf-8'
     );

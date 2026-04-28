@@ -13,6 +13,7 @@
 
 import { loadStorageConfig, resolveSubsystemRoot } from './config.js';
 import { FilesystemAdapter } from './backends/fs.js';
+import { ObsidianAdapter } from './backends/obsidian.js';
 import type {
   BackendConfig,
   StorageAdapter,
@@ -41,6 +42,7 @@ export {
   DEFAULT_SUBSYSTEM_ROOTS,
 } from './config.js';
 export { FilesystemAdapter } from './backends/fs.js';
+export { ObsidianAdapter } from './backends/obsidian.js';
 
 interface RegistryState {
   projectRoot: string;
@@ -117,6 +119,7 @@ function createAdapter(subsystem: SubsystemKey, s: RegistryState): StorageAdapte
       return new FilesystemAdapter(root);
     }
     case 'obsidian':
+      return new ObsidianAdapter(backend);
     case 'logseq':
     case 'notion':
     case 'anythingllm':
