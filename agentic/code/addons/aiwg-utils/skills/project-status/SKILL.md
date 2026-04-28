@@ -1,703 +1,183 @@
 ---
 namespace: aiwg
 platforms: [all]
-description: Analyze project state from .aiwg/ artifacts and provide contextual status with recommended next steps
+description: Cross-framework project status aggregator — discovers status contributors from installed frameworks and project-local overrides, runs declarative detection, and produces a unified status report
 commandHint:
-  argumentHint: [project-directory=. --interactive --guidance "text"]
+  argumentHint: "[project-directory=.] [--json] [--guidance \"text\"]"
   allowedTools: Read, Glob, Grep, Bash
   model: sonnet
-  category: sdlc-management
+  category: aiwg-utility
 ---
 
-# Project Status
+# Project Status (Cross-Framework Aggregator)
 
 ## Task
 
-Analyze `.aiwg/` artifacts to determine project state and provide actionable status report with phase-appropriate next commands.
+Produce a unified status report covering every installed framework, addon, or
+extension that ships a `kind: status` contributor and is in active use on this
+project.
 
-When invoked with `/project-status [project-directory]`:
-
-1. **Scan** `.aiwg/` directory for artifacts
-2. **Detect** current SDLC phase and workflow state
-3. **Analyze** completion of phase milestones
-4. **Identify** blockers and gaps
-5. **Recommend** next commands based on current state
+This is the cross-framework aggregator described in ADR-023 §Reference
+contributor frontmatter. It replaces the prior SDLC-only project-status
+behavior. SDLC-specific reporting now lives in the SDLC framework's status
+contributor at `agentic/code/frameworks/sdlc-complete/status/contributor.md` —
+when SDLC is the only contributor in use, the resulting report is functionally
+equivalent to the prior behavior.
 
 ## Parameters
 
-- **`[project-directory]`** (optional): Path to project root (default: current directory `.`)
-
-## Inputs
-
-Scans `.aiwg/` directory for:
-- **Intake**: `intake/project-intake.md`, `solution-profile.md`, `option-matrix.md`
-- **Planning**: `planning/phase-plan-*.md`, `planning/iteration-plan-*.md`
-- **Requirements**: `requirements/*.md`
-- **Architecture**: `architecture/SAD.md`, `architecture/ADR-*.md`
-- **Risks**: `risks/risk-list.md`
-- **Testing**: `testing/test-*.md`
-- **Security**: `security/threat-model.md`, `security/security-*.md`
-- **Quality**: `quality/code-review-*.md`, `quality/retrospective-*.md`
-- **Deployment**: `deployment/deployment-plan.md`
-- **Gates**: `gates/gate-*.md`
-- **Handoffs**: `handoffs/handoff-*.md`
-- **Decisions**: `decisions/change-*.md`
-- **Team**: `team/team-profile.yaml`, `team/agent-assignments.md`
-
-## Outputs
-
-**Console output**: Formatted status report with phase detection, milestone progress, blockers, and recommended next steps.
+- **`[project-directory]`** (optional): Path to project root. Default: current directory `.`
+- **`--json`** (optional): Emit machine-readable JSON instead of human-readable markdown
+- **`--guidance "text"`** (optional): Extra context the agent should weigh while interpreting contributor blocks
 
 ## Workflow
 
-### Step 1: Discover .aiwg/ Structure
+### Step 1: Locate the registry and project root
+
+Read `.aiwg/frameworks/registry.json` from the project root. The registry lists
+installed frameworks/addons/extensions by `id`. If the file is missing, treat
+it as zero installed frameworks — discovery still finds project-local
+contributors.
 
 ```bash
-# Check if .aiwg/ exists
-ls .aiwg/ 2>/dev/null
-
-# If not found, check for legacy intake/ directory
-ls intake/ 2>/dev/null
+cat ./.aiwg/frameworks/registry.json 2>/dev/null
 ```
 
-**Decision**:
-- If `.aiwg/` exists → proceed with analysis
-- If only `intake/` exists → warn about legacy location, proceed with limited analysis
-- If neither exists → report "No SDLC artifacts found. Run `/intake-wizard` to start."
+### Step 2: Discover candidate contributors
 
-### Step 2: Detect Current Phase
+Two sources, processed in order:
 
-**Phase Detection Logic** (priority order):
+1. **Framework-shipped contributors** — for each `id` in the registry, look up
+   its source path under the AIWG installation. Try in order:
+   - `<AIWG_ROOT>/agentic/code/frameworks/<id>/status/contributor.md`
+   - `<AIWG_ROOT>/agentic/code/addons/<id>/status/contributor.md`
+   - `<AIWG_ROOT>/agentic/code/extensions/<id>/status/contributor.md`
 
-1. **Pre-Inception** (No intake):
-   - Condition: No `.aiwg/intake/` directory OR intake files missing
-   - Status: "Project not started"
-   - Next: Choose ONE intake method:
-     - `/intake-wizard` (interactive generation)
-     - `/intake-from-codebase` (analyze existing code)
-     - `/intake-start` (enhance user-provided intake files)
+   Use `Glob` to discover, then `Read` to load the contributor file.
 
-2. **Inception** (Intake complete, no phase plan):
-   - Condition: Intake files present + NO `planning/phase-plan-inception.md`
-   - Status: "Intake complete, ready for Inception"
-   - Next: `/flow-concept-to-inception`
+2. **Project-local contributors** — every `*.md` file in
+   `<project-root>/.aiwg/contributors/status/`. These are user-authored
+   contributors that do not require forking a framework.
 
-3. **Inception Active** (Phase plan exists, not complete):
-   - Condition: `planning/phase-plan-inception.md` exists + NO `gates/gate-inception.md` OR gate status ≠ PASSED
-   - Status: "Inception phase active"
-   - Next: Continue Inception activities, complete gate check
+### Step 3: Validate and run detection
 
-4. **Elaboration** (Inception gate passed, elaboration active):
-   - Condition: `gates/gate-inception.md` PASSED + `planning/phase-plan-elaboration.md` exists
-   - Status: "Elaboration phase active"
-   - Next: Architecture baseline, risk retirement, iteration planning
+For each candidate file:
 
-5. **Construction** (Elaboration gate passed, construction active):
-   - Condition: `gates/gate-elaboration.md` PASSED + `planning/iteration-plan-*.csv` exists
-   - Status: "Construction phase active (Iteration N)"
-   - Next: Feature delivery, testing, iteration assessments
+1. Parse YAML frontmatter. Skip with a warning if frontmatter is malformed
+   or missing required fields (`kind`, `domain`, `description`, `detect.glob`).
+   The schema is published at
+   `<AIWG_ROOT>/agentic/code/addons/aiwg-utils/skills/project-status/contributor.schema.json`
+   — `aiwg validate-metadata` enforces it at deploy time, so most files
+   reaching this step are valid.
+2. Run the contributor's `detect.glob` patterns against the project root using
+   `Glob`. Deduplicate matches. If unique match count is less than
+   `detect.minCount` (default 1), the contributor is **installed but not in
+   use** — silently filter out.
+3. For surviving contributors, the agent reads the contributor file's body
+   to learn what to report and how to format it.
 
-6. **Transition** (Construction complete, deployment prep):
-   - Condition: `gates/gate-construction.md` PASSED + `deployment/deployment-plan.md` exists
-   - Status: "Transition phase active"
-   - Next: Deployment, training, hypercare monitoring
+### Step 4: Gather state per contributor
 
-7. **Production** (Deployed):
-   - Condition: `deployment/production-deployment-*.md` exists with "Status: Deployed"
-   - Status: "In production"
-   - Next: Monitoring, incident response, continuous improvement
+For each in-use contributor, follow its body's guidance to read source files
+and compute reported state. Contributors are descriptive — they tell the
+agent what to look at; they do not run code.
 
-### Step 3: Analyze Phase Completeness
+Keep blocks compact. Per ADR-023 §Output voice, contributors emit observed
+state (counts, dates, phase names). Do **not** synthesize prescriptive
+"recommended commands" inside a contributor's block.
 
-For detected phase, check milestone artifacts:
+### Step 5: Render the unified report
 
-#### Inception Milestone Artifacts
-
-**Required**:
-- [ ] `intake/project-intake.md` - Project vision and scope
-- [ ] `intake/solution-profile.md` - Profile and improvement roadmap
-- [ ] `intake/option-matrix.md` - Priorities and framework application
-- [ ] `planning/phase-plan-inception.md` - Inception activities
-- [ ] `risks/risk-list.md` - Initial risk register
-- [ ] `team/agent-assignments.md` - Agent assignments
-
-**Optional but Recommended**:
-- [ ] `architecture/ADR-001-*.md` - Initial architecture decisions
-- [ ] `requirements/vision.md` - Business case and vision
-- [ ] `requirements/business-case.md` - Funding and ROI
-
-**Gate Criteria** (for `gates/gate-inception.md`):
-- [ ] Stakeholder agreement on vision, scope, funding
-- [ ] Critical use cases identified
-- [ ] Initial risk list baselined
-- [ ] Architecture direction proposed
-
-#### Elaboration Milestone Artifacts
-
-**Required**:
-- [ ] `planning/phase-plan-elaboration.md` - Elaboration activities
-- [ ] `architecture/SAD.md` - Software Architecture Document
-- [ ] `architecture/executable-prototype.md` - Architectural baseline
-- [ ] `requirements/use-case-*.md` - Use case specifications (3+ architecturally significant)
-- [ ] `requirements/supplementary-requirements.md` - NFRs
-- [ ] `planning/iteration-plan-elaboration.csv` - Iteration plan
-- [ ] `risks/risk-list.md` - Updated with retired HIGH risks
-
-**Optional but Recommended**:
-- [ ] `architecture/ADR-*.md` - Multiple ADRs (5-10)
-- [ ] `testing/test-strategy.md` - Test approach
-- [ ] `security/threat-model.md` - Security analysis
-- [ ] `deployment/cm-plan.md` - Configuration management
-- [ ] `team/development-case.md` - Process tailoring
-
-**Gate Criteria** (for `gates/gate-elaboration.md`):
-- [ ] Executable architectural prototype validated
-- [ ] Baseline architecture document approved
-- [ ] Top 3-5 HIGH risks retired or mitigated
-- [ ] Iteration plan for Construction baselined
-
-#### Construction Milestone Artifacts
-
-**Required**:
-- [ ] `planning/iteration-plan-*.csv` - Iteration plans (multiple)
-- [ ] `quality/iteration-assessment-*.md` - Iteration assessments
-- [ ] `testing/test-results-*.md` - Test evidence (unit, integration, E2E)
-- [ ] `requirements/use-case-*.md` - All use cases implemented
-- [ ] `deployment/integration-build-plan.md` - CI/CD pipeline
-
-**Optional but Recommended**:
-- [ ] `quality/code-review-*.md` - Code review reports
-- [ ] `testing/test-coverage-report.md` - Coverage metrics
-- [ ] `quality/retrospective-*.md` - Sprint retrospectives
-- [ ] `architecture/ADR-*.md` - Additional ADRs for design decisions
-- [ ] `security/security-review-*.md` - Security validations
-
-**Gate Criteria** (for `gates/gate-construction.md`):
-- [ ] Feature set meets acceptance tests
-- [ ] Test coverage targets met (60-80%+)
-- [ ] Defects triaged (no open HIGH/CRITICAL)
-- [ ] Deployment pipeline proven
-- [ ] Performance targets validated
-
-#### Transition Milestone Artifacts
-
-**Required**:
-- [ ] `deployment/deployment-plan.md` - Rollout plan
-- [ ] `deployment/release-notes.md` - User-facing documentation
-- [ ] `team/training-pack.md` - Training materials
-- [ ] `deployment/support-handover.md` - Support readiness
-- [ ] `testing/product-acceptance-plan.md` - Final acceptance tests
-- [ ] `deployment/rollback-plan.md` - Rollback procedures
-
-**Optional but Recommended**:
-- [ ] `deployment/runbook.md` - Operational procedures
-- [ ] `security/security-sign-off.md` - Security approval
-- [ ] `quality/orr-checklist.md` - Operational Readiness Review
-- [ ] `team/knowledge-transfer-*.md` - Knowledge handoff
-- [ ] `deployment/hypercare-plan.md` - Post-launch monitoring
-
-**Gate Criteria** (for `gates/gate-transition.md`):
-- [ ] Users trained
-- [ ] Release criteria met
-- [ ] Support handover accepted
-- [ ] Production deployment successful
-- [ ] Hypercare monitoring active
-
-### Step 4: Identify Blockers and Gaps
-
-**Critical Blockers** (stop progress):
-- Missing required artifacts for current phase
-- Failed gate checks (status: FAILED or BLOCKED)
-- Open HIGH/CRITICAL risks with no mitigation
-- Critical decisions pending resolution
-- Test coverage below threshold for profile
-
-**Important Gaps** (slow progress):
-- Optional artifacts missing (ADRs, test strategy)
-- Moderate risks without mitigation plans
-- Incomplete iteration assessments
-- Missing retrospectives (learning opportunities)
-- Security reviews overdue
-
-**Minor Gaps** (nice to have):
-- Documentation gaps (runbooks, training materials)
-- Metrics not tracked
-- Process improvements not documented
-
-### Step 5: Recommend Next Commands
-
-Based on phase and state, recommend **3-5 most relevant commands**:
-
-#### Pre-Inception → Intake Complete
-
-```markdown
-**Recommended Next Steps**:
-
-Choose ONE intake method:
-
-1. **Generate intake interactively** (recommended for new projects):
-   - `/intake-wizard "your project description"`
-   - Or complete partial intake: `/intake-wizard --complete --interactive`
-
-2. **Generate intake from codebase** (for existing projects):
-   - `/intake-from-codebase .`
-
-3. **Enhance user-provided intake files** (if you manually created intake docs):
-   - `/intake-start .aiwg/intake/`
-```
-
-#### Intake Complete → Inception Active
-
-```markdown
-**Recommended Next Steps**:
-
-1. **Begin Concept → Inception flow**:
-   - `/flow-concept-to-inception`
-   - Natural language: "Start Inception" or "Let's begin Inception phase"
-
-2. **Initiate risk management**:
-   - `/flow-risk-management-cycle`
-
-3. **Document architecture decisions** (if not done):
-   - Manually create `architecture/ADR-001-<decision>.md`
-```
-
-#### Inception Active → Elaboration
-
-```markdown
-**Recommended Next Steps**:
-
-1. **Check Inception gate readiness**:
-   - `/flow-gate-check inception`
-
-2. **If gate passed, transition to Elaboration**:
-   - `/flow-inception-to-elaboration .aiwg/`
-
-3. **Blockers** (if gate not ready):
-   - {list missing artifacts}
-   - {list open HIGH risks}
-   - {list pending decisions}
-```
-
-#### Elaboration Active → Construction
-
-```markdown
-**Recommended Next Steps**:
-
-1. **Build architectural baseline**:
-   - `/build-poc <feature-or-risk>` (for risky architecture)
-   - Manually create `architecture/SAD.md` and `architecture/executable-prototype.md`
-
-2. **Evolve architecture**:
-   - `/flow-architecture-evolution <trigger>`
-
-3. **Retire risks**:
-   - `/flow-risk-management-cycle .aiwg/`
-
-4. **Define test strategy**:
-   - `/flow-test-strategy-execution <test-level>`
-
-5. **Check Elaboration gate readiness**:
-   - `/flow-gate-check elaboration`
-
-6. **If gate passed, transition to Construction**:
-   - `/flow-elaboration-to-construction .aiwg/`
-```
-
-#### Construction Active (Iterations)
-
-```markdown
-**Recommended Next Steps**:
-
-1. **Run dual-track iteration** (recommended):
-   - `/flow-iteration-dual-track <iteration-number>`
-
-2. **Or separate Discovery and Delivery**:
-   - `/flow-discovery-track <iteration-number+1>` (plan ahead)
-   - `/flow-delivery-track <iteration-number>` (deliver current)
-
-3. **Execute test strategy**:
-   - `/flow-test-strategy-execution <test-level> <component>`
-
-4. **Manage evolving requirements**:
-   - `/flow-requirements-evolution .aiwg/ --iteration <N>`
-
-5. **Review security**:
-   - `/flow-security-review-cycle .aiwg/ --iteration <N>`
-
-6. **Conduct retrospective** (end of iteration):
-   - `/flow-retrospective-cycle iteration <iteration-number>`
-
-7. **Check Construction gate readiness** (when feature complete):
-   - `/flow-gate-check construction`
-```
-
-#### Construction → Transition
-
-```markdown
-**Recommended Next Steps**:
-
-1. **Validate Construction gate**:
-   - `/flow-gate-check construction`
-
-2. **If gate passed, transition to Transition**:
-   - `/flow-construction-to-transition .aiwg/`
-
-3. **Blockers** (if gate not ready):
-   - {list failing tests}
-   - {list coverage gaps}
-   - {list open defects}
-```
-
-#### Transition Active → Production
-
-```markdown
-**Recommended Next Steps**:
-
-1. **Deploy to production**:
-   - `/flow-deploy-to-production <blue-green|canary> <version>`
-
-2. **Validate handoffs**:
-   - `/flow-handoff-checklist Construction Transition`
-
-3. **Initiate hypercare monitoring**:
-   - `/flow-hypercare-monitoring <duration-days>`
-
-4. **Check Transition gate readiness**:
-   - `/flow-gate-check transition`
-```
-
-#### Production (Ongoing)
-
-```markdown
-**Recommended Next Steps**:
-
-1. **Monitor health**:
-   - `/project-health-check`
-
-2. **Respond to incidents** (if issues):
-   - `/flow-incident-response <incident-id> <severity>`
-
-3. **Optimize performance** (if degradation):
-   - `/flow-performance-optimization <trigger> <component>`
-
-4. **Validate compliance** (periodic):
-   - `/flow-compliance-validation <framework>`
-
-5. **Onboard new team members** (if team growing):
-   - `/flow-team-onboarding <name> <role>`
-
-6. **Conduct retrospective** (periodic):
-   - `/flow-retrospective-cycle release <version>`
-```
-
-### Step 6: Generate Status Report
-
-**Output Format**:
-
-```markdown
-# Project Status Report
-
-**Generated**: {current date and time}
-**Project**: {from intake/project-intake.md metadata, or "Unknown"}
-**Profile**: {from intake/solution-profile.md, or "Not Set"}
-**Priority**: {from intake/option-matrix.md Step 3 top weight, or "Not Set"}
-
----
-
-## Current Phase
-
-**Phase**: {Pre-Inception | Inception | Elaboration | Construction | Transition | Production}
-**Status**: {Not Started | Active | Blocked | Complete}
-**Duration**: {calculated from phase-plan dates, if available}
-
-{Brief description of phase focus}
-
----
-
-## Milestone Progress
-
-### {Current Phase} Milestone
-
-**Required Artifacts**: {X/Y complete}
-- [x] {completed artifact 1}
-- [x] {completed artifact 2}
-- [ ] {missing artifact 1} ← **REQUIRED**
-- [ ] {missing artifact 2} ← **REQUIRED**
-
-**Optional Artifacts**: {X/Y complete}
-- [x] {completed optional 1}
-- [ ] {missing optional 1}
-
-**Gate Criteria**: {X/Y met}
-- [x] {met criterion 1}
-- [ ] {unmet criterion 1} ← **BLOCKER**
-
----
-
-## Risks and Blockers
-
-### Critical Blockers (Stop Progress)
-{If none: "✅ No critical blockers"}
-
-1. **{Blocker 1}**
-   - Impact: {description}
-   - Resolution: {recommended action}
-   - Owner: {agent or team member}
-
-2. **{Blocker 2}**
-   - Impact: {description}
-   - Resolution: {recommended action}
-   - Owner: {agent or team member}
-
-### Important Gaps (Slow Progress)
-{If none: "✅ No important gaps"}
-
-- {Gap 1}: {description and recommendation}
-- {Gap 2}: {description and recommendation}
-
-### Active Risks
-{Read from risks/risk-list.md, show top 3-5 HIGH/MEDIUM risks}
-
-**Risk #{n}**: {risk name}
-- Status: {Identified | Mitigating | Monitoring}
-- Impact: {HIGH | MEDIUM}
-- Mitigation: {summary of strategies}
-
----
-
-## Team and Velocity
-
-**Team Size**: {from intake/project-intake.md or team/team-profile.yaml}
-**Current Iteration**: {from planning/iteration-plan-*.csv, if in Construction}
-**Active Agents**: {from team/agent-assignments.md, if exists}
-
-{If iteration data available:}
-**Velocity**: {completed story points / planned story points}
-**Test Coverage**: {from testing/test-coverage-report.md, if exists}
-**Open Defects**: {from quality/ or testing/, if tracked}
-
----
-
-## Recommended Next Steps
-
-{Based on phase and state, show 3-5 most relevant commands}
-
-### Immediate Actions
-
-1. **{Command 1}**
-   ```bash
-   /{command-name} {args}
-   ```
-   {Why: brief explanation}
-
-2. **{Command 2}**
-   ```bash
-   /{command-name} {args}
-   ```
-   {Why: brief explanation}
-
-### Follow-Up Actions
-
-3. **{Command 3}**
-   ```bash
-   /{command-name} {args}
-   ```
-   {Why: brief explanation}
-
-4. **{Command 4}**
-   ```bash
-   /{command-name} {args}
-   ```
-   {Why: brief explanation}
-
----
-
-## Quick Reference
-
-**All Available Commands**:
-
-**Intake Methods** (choose ONE):
-- `/intake-wizard` - Generate intake interactively
-- `/intake-from-codebase` - Generate intake by analyzing codebase
-- `/intake-start` - Enhance user-provided intake files
-
-**Phase Workflows**:
-- `/flow-concept-to-inception` - Execute Inception phase
-- `/flow-inception-to-elaboration` - Transition to Elaboration
-- `/flow-elaboration-to-construction` - Transition to Construction
-- `/flow-construction-to-transition` - Transition to Transition
-- `/flow-iteration-dual-track` - Run Discovery + Delivery iteration
-- `/flow-gate-check <phase>` - Validate phase gate criteria
-- `/flow-risk-management-cycle` - Manage project risks
-- `/flow-test-strategy-execution` - Execute test strategy
-- `/flow-security-review-cycle` - Security validation
-- `/flow-architecture-evolution` - Evolve architecture
-- `/flow-deploy-to-production` - Deploy to production
-- `/flow-hypercare-monitoring` - Post-launch monitoring
-- `/project-health-check` - Overall project health
-- `/project-status` - This report (refresh status)
-
-For complete command list, see `.claude/commands/` directory.
-
----
-
-**Natural Language Support**: You can use natural language instead of slash commands:
-- Instead of `/project-status`, say "Where are we?" or "What's next?"
-- Instead of `/flow-inception-to-elaboration`, say "Transition to Elaboration" or "Start Elaboration"
-- See `.aiwg/docs/simple-language-translations.md` for complete translation table
-
-**Tip**: Run `/project-status` (or say "Where are we?") anytime to refresh this report and see updated recommendations.
-```
-
-## Phase Progression Reference
-
-**Master Workflow** (happy path):
+Default (markdown) output shape:
 
 ```
-Pre-Inception
-    ↓
-  Choose ONE intake method:
-  - intake-wizard (interactive)
-  - intake-from-codebase (analyze code)
-  - intake-start (enhance user files)
-    ↓
-Intake Complete
-    ↓
-  flow-concept-to-inception
-    ↓
-Inception (Active)
-    ↓
-  [Architecture decisions, risk management, team alignment]
-    ↓
-  flow-gate-check inception → PASSED
-    ↓
-  flow-inception-to-elaboration
-    ↓
-Elaboration (Active)
-    ↓
-  [Architectural baseline, risk retirement, use case elaboration]
-  build-poc (if needed)
-  flow-architecture-evolution
-  flow-risk-management-cycle
-    ↓
-  flow-gate-check elaboration → PASSED
-    ↓
-  flow-elaboration-to-construction
-    ↓
-Construction (Active)
-    ↓
-  [Iterative development]
-  flow-iteration-dual-track (repeated)
-  OR flow-discovery-track + flow-delivery-track
-  flow-test-strategy-execution
-  flow-requirements-evolution
-  flow-security-review-cycle
-  flow-retrospective-cycle
-    ↓
-  flow-gate-check construction → PASSED
-    ↓
-  flow-construction-to-transition
-    ↓
-Transition (Active)
-    ↓
-  [Deployment preparation]
-  flow-handoff-checklist
-  flow-deploy-to-production
-  flow-hypercare-monitoring
-    ↓
-  flow-gate-check transition → PASSED
-    ↓
-Production
-    ↓
-  [Ongoing operations]
-  project-health-check
-  flow-incident-response (as needed)
-  flow-performance-optimization (as needed)
-  flow-compliance-validation (periodic)
-  flow-retrospective-cycle (periodic)
+Project: <project-name> (<detected-domain-summary>)
+├─ <Domain 1>: <one-line summary> (origin: <framework-id>)
+│  ├─ <fact 1>
+│  ├─ <fact 2>
+│  └─ <fact N>
+├─ <Domain 2>: <one-line summary> (origin: <framework-id>)
+│  └─ ...
+└─ <Domain K>: <one-line summary> (origin: project-local)
+   └─ ...
 ```
 
-**Continuous Flows** (run throughout lifecycle):
-- `flow-risk-management-cycle` - Ongoing risk tracking
-- `flow-requirements-evolution` - Living requirements management
-- `flow-architecture-evolution` - Architecture refinement
-- `flow-security-review-cycle` - Security validation
-- `flow-change-control` - Change management
-- `flow-retrospective-cycle` - Continuous improvement
+Every block carries an **`origin:`** stamp — the framework id (e.g.
+`sdlc-complete`, `media-curator`) or the literal `project-local`. This lets
+the user see at a glance whether a finding came from a framework's
+contributor or a project-specific override.
 
-**Ad-Hoc Flows** (trigger-based):
-- `flow-team-onboarding` - When new team members join
-- `flow-knowledge-transfer` - When expertise handoff needed
-- `flow-cross-team-sync` - When coordination needed
-- `flow-incident-response` - When production issues occur
-- `flow-performance-optimization` - When performance degrades
-- `flow-compliance-validation` - When compliance audit required
-- `build-poc` - When technical risk needs validation
+### Step 6: Handle empty discovery
 
-## Error Handling
+If discovery returns zero in-use contributors:
 
-### No .aiwg/ Directory
+- **In a project that has frameworks installed but none are in use yet**:
+  surface "No active framework contributors detected. Run
+  `/intake-wizard` if this is a new project, or check
+  `.aiwg/frameworks/registry.json` to confirm what's installed."
+- **In a project with no `.aiwg/`**: defer to the heuristic fallback
+  described in `<AIWG_ROOT>/agentic/code/addons/aiwg-utils/skills/project-status/heuristic-fallback.md`
+  (added by issue #941). When that file is not yet present, surface a
+  short "No project state detected" message.
 
-```markdown
-# Project Status Report
+## --json output
 
-**Status**: ❌ No SDLC artifacts found
+Returns a structured array of contributor blocks. Stable shape:
 
-The `.aiwg/` directory does not exist in this project.
-
-**Recommended Next Steps**:
-
-1. **Start a new SDLC project**:
-   ```bash
-   /intake-wizard "your project description"
-   ```
-
-2. **Analyze existing codebase**:
-   ```bash
-   /intake-from-codebase .
-   ```
-
-3. **Learn more**:
-   - See SDLC framework documentation: `agentic/code/frameworks/sdlc-complete/README.md`
-   - See phase workflows: `agentic/code/frameworks/sdlc-complete/plan-act-sdlc.md`
+```json
+{
+  "project_root": "/abs/path",
+  "contributors": [
+    {
+      "origin": "sdlc-complete",
+      "domain": "SDLC",
+      "summary": "Construction phase, iteration 12, 3 open risks",
+      "detail": [
+        { "label": "Phase", "value": "Construction (entered 2026-04-01)" },
+        { "label": "Iteration", "value": "12 of 18 planned" }
+      ]
+    }
+  ],
+  "skipped": [
+    { "origin": "media-curator", "reason": "detection-no-match" }
+  ]
+}
 ```
 
-### Corrupted or Incomplete Artifacts
+Downstream tooling (CI status badges, dashboards) consumes this shape directly.
 
-If artifacts exist but are malformed:
-- **WARN**: "Found {artifact} but could not parse. May be incomplete or corrupted."
-- **Recommendation**: "Review {artifact} manually or regenerate using {command}."
+## Failure mode
 
-### Conflicting State
+Per ADR-023 §Failure mode:
 
-If artifacts indicate conflicting states (e.g., Elaboration gate PASSED but no Construction artifacts):
-- **WARN**: "Conflicting state detected. Gate passed but next phase not started."
-- **Recommendation**: "Run `/flow-{phase}-to-{next-phase}` to transition."
+- A contributor that fails frontmatter parsing or validation is **skipped**
+  with reason `schema-violation`; aggregation continues.
+- A contributor whose detection throws (rare — only filesystem permission
+  errors should cause this) is skipped with reason `detection-error`.
+- One bad contributor never aborts the whole report.
 
-## Best Practices
+When `--json` is set, skips appear under the `skipped` array. In markdown
+output, skips are summarized under a `─ Skipped contributors` footer when
+non-empty.
 
-1. **Run frequently**: Use `/project-status` at start of each work session to orient
-2. **After major milestones**: Check status after completing gate checks or phase transitions
-3. **When stuck**: If unsure what to do next, check status for recommendations
-4. **Team coordination**: Share status report with team to align on current state
-5. **Progress tracking**: Compare status reports over time to measure velocity
+## Anti-Patterns
 
-## Success Criteria
-
-This command succeeds when:
-- [ ] `.aiwg/` directory scanned successfully
-- [ ] Current phase detected accurately
-- [ ] Milestone progress calculated
-- [ ] Blockers identified (if any)
-- [ ] Next steps recommended (3-5 relevant commands)
-- [ ] Status report formatted and output to console
+- **Do not invent contributor state.** If a contributor's detection matches
+  but its source files are absent or unreadable, emit the block with a
+  clear "details unavailable" note rather than fabricating values.
+- **Do not merge or reorder contributor blocks.** Registry order and
+  project-local-last is the contract per ADR-023 §Discovery Algorithm.
+  Users rely on it for predictable diffs over time.
+- **Do not call into other AIWG commands** (`aiwg index build`, `aiwg run …`)
+  from this skill. Status reporting is read-only. If a contributor needs
+  built indexes, surface their absence rather than building them mid-report.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Scan .aiwg/ artifacts before determining phase; base detection on actual file presence
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/artifact-discovery.md — Artifact discovery patterns used to detect phase and milestone completeness
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/sdlc-orchestration.md — Phase progression model and gate criteria that status detection is based on
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/project-health-check/SKILL.md — Complementary skill that reports code and team health metrics
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/orchestrate-project/SKILL.md — Orchestration skill that this status skill informs with phase context
-
+- @.aiwg/architecture/decisions/ADR-023-contributor-discovery-convention.md — Convention this skill implements
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/project-status/contributor.schema.json — Published JSON Schema for `kind: status` frontmatter
+- @$AIWG_ROOT/src/contributors/discover.ts — TS reference implementation used by `aiwg validate-metadata`; demonstrates the discovery algorithm in code
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/status/contributor.md — Reference status contributor (SDLC framework)
+- @$AIWG_ROOT/agentic/code/frameworks/media-curator/status/contributor.md — Reference status contributor (media archives)
+- @$AIWG_ROOT/agentic/code/frameworks/research-complete/status/contributor.md — Reference status contributor (research corpora)
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/project-health-check/SKILL.md — Complementary skill: code and team health metrics (out of scope for project-status)
