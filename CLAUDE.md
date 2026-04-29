@@ -296,6 +296,30 @@ aiwg doctor                     # Health check + diagnostics
 # `aiwg sync` is a deprecated alias for `aiwg refresh` — emits a warning,
 # scheduled for removal after the 2026.5.x stable line.
 
+# Storage subsystem (#934)
+aiwg storage show                   # Effective config + resolved paths per subsystem
+aiwg storage list-backends          # READY/STUB inventory of compiled-in adapters
+aiwg storage test memory            # Round-trip probe through configured backend
+aiwg storage migrate memory \
+  --from fs:.aiwg/memory \
+  --to obsidian:~/vaults/main \
+  --to-folder AIWG/memory --dry-run # Move data between backends
+# Per-subsystem CLIs route through resolveStorage(<subsystem>):
+aiwg activity-log show              # show / append / stats / rotate
+aiwg memory list                    # path / list / get / put / delete / append-log
+aiwg reflections list               # same surface as memory
+aiwg kb path                        # path / list / get / put / delete
+aiwg provenance list                # same surface as memory
+aiwg research-store path            # research corpus storage primitives
+# See @docs/storage/ for the full guide.
+
+# Ops ecosystem
+aiwg ops init --workspace personal --ext sys,dev   # Bootstrap workspace
+aiwg ops init --from https://…/repo.git --ext it   # Clone-existing flow (#936)
+aiwg ops adopt ~/sysops --workspace home --ext sys # Register a pre-cloned repo (#936)
+aiwg ops discover ~ --register                     # Auto-find orphaned clones (#937)
+aiwg ops status / list / use / push                # Standard lifecycle
+
 # Background orchestration (Mission Control)
 aiwg mc start                # Start Mission Control session
 aiwg mc dispatch <id> "..."  # Add background mission

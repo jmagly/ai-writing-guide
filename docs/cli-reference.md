@@ -31,12 +31,20 @@ Complete reference for all `aiwg` CLI commands.
 - [Index Commands](#index-commands)
 - [Addon Commands](#addon-commands)
 - [Storage Commands](#storage-commands)
+- [Ops Commands](#ops-commands)
 
 ---
 
-> **Storage subsystem:** AIWG persists artifacts (memory, kb, activity-log, reflections, provenance, research) through a pluggable adapter system. See [`docs/storage/`](storage/README.md) for the full guide. Storage CLIs:
+> **Storage subsystem:** AIWG persists artifacts (memory, kb, activity-log,
+> reflections, provenance, research) through a pluggable adapter system.
+> See [`docs/storage/`](storage/README.md) for the full guide.
+>
+> Storage CLIs:
+>
 > - `aiwg storage` — config inspection, migration, doctor probe
-> - `aiwg memory` / `aiwg reflections` / `aiwg kb` / `aiwg activity-log` / `aiwg provenance` / `aiwg research-store` — per-subsystem `path` / `list` / `get` / `put` / `delete` / `append-log`
+> - `aiwg memory` / `aiwg reflections` / `aiwg kb` / `aiwg activity-log` /
+>   `aiwg provenance` / `aiwg research-store` — per-subsystem
+>   `path` / `list` / `get` / `put` / `delete` / `append-log`
 
 ---
 
@@ -2921,6 +2929,293 @@ aiwg index stats --graph project --json
 # Framework graph stats
 aiwg index stats --graph framework
 ```
+
+---
+
+## Storage Commands
+
+AIWG persists artifacts (memory pages, knowledge-base entries, activity log, reflections, provenance records, research corpus, sandbox identities) through a pluggable storage adapter system (#934). By default everything lives on the local filesystem under `.aiwg/`. With `.aiwg/storage.config` you can route any subsystem to Obsidian, Logseq, Fortemi, or a different filesystem location.
+
+**See [`docs/storage/`](storage/README.md) for the full guide** — overview, security model, migration walkthrough, and per-backend pages.
+
+### storage
+
+Inspect and operate on the storage adapter system.
+
+```bash
+aiwg storage <subcommand>
+```
+
+**Subcommands:**
+
+| Subcommand | Purpose |
+|------------|---------|
+| `show` | Print effective config + resolved physical paths per subsystem |
+| `list-backends` | Inventory of compiled-in adapters with READY/STUB status |
+| `test <subsystem>` | Round-trip write/read/list/delete probe through the configured backend |
+| `migrate <subsystem>` | Copy entries from one backend to another (#955) |
+
+**Examples:**
+
+```bash
+# Inspect what's configured
+aiwg storage show
+
+# Which backends are implemented vs planned
+aiwg storage list-backends
+
+# Verify connectivity for the activity_log subsystem
+aiwg storage test activity_log
+
+# Migrate AIWG memory from local fs to an Obsidian vault
+aiwg storage migrate memory \
+  --from fs:.aiwg/memory \
+  --to obsidian:~/vaults/main \
+  --to-folder AIWG/memory \
+  --dry-run
+
+# Without --dry-run when the preview looks right
+aiwg storage migrate memory \
+  --from fs:.aiwg/memory \
+  --to obsidian:~/vaults/main \
+  --to-folder AIWG/memory
+```
+
+**Implemented backends:** `fs`, `obsidian`, `logseq`, `fortemi` (alpha).
+**Stub (tracked):** `notion` (#959), `anythingllm` (#960), `s3` (#962), `webdav` (#963).
+
+**Migrate spec format:** `<type>:<location>` (e.g., `fs:./dir`, `obsidian:~/vault`, `logseq:./graph`, `fortemi:server-name`). Use `--from-folder`/`--to-folder` for Obsidian subfolders. See `docs/storage/migration.md` for details.
+
+---
+
+### activity-log
+
+Query and manage `.aiwg/activity.log` — a chronological record of cross-framework operations. Routes through `resolveStorage('activity_log')`.
+
+```bash
+aiwg activity-log <subcommand>
+```
+
+**Subcommands:**
+
+| Subcommand | Purpose |
+|------------|---------|
+| `show [--since YYYY-MM-DD] [--operation OP] [--limit N]` | Display entries newest-first |
+| `append <operation> "<summary>"` | Append a canonical-format entry (atomic via `O_APPEND`) |
+| `stats` | Operation-count breakdown + date range |
+| `rotate [--keep-last <Nd\|N>] [--to <path>]` | Archive entries to a sibling file (#977) |
+
+**Operations** (one per entry): `ingest`, `create`, `update`, `delete`, `query`, `lint`, `deploy`, `archive`, `promote`.
+
+**Wire format:** `## [YYYY-MM-DD HH:MM] <operation> | <summary>`
+
+**Environment:**
+- `AIWG_SKIP_ACTIVITY_LOG=1` — suppress append (per the activity-log rule)
+
+**Examples:**
+
+```bash
+# Recent activity
+aiwg activity-log show --limit 10
+
+# Filter
+aiwg activity-log show --since 2026-04-01 --operation deploy
+
+# Append (atomic — concurrent agents don't race)
+aiwg activity-log append create ".aiwg/requirements/UC-007.md"
+
+# Stats
+aiwg activity-log stats
+
+# Rotate: archive everything older than 90 days, keep recent inline
+aiwg activity-log rotate --keep-last 90d
+```
+
+**Auto-append hook (#978):** A post-command hook auto-logs qualifying CLI commands (`use`, `refresh`, `remove`, `add-{agent,command,skill,template,behavior}`, `validate-metadata`, `index`, `ops`). Honors `AIWG_SKIP_ACTIVITY_LOG=1`. Failures non-fatal.
+
+---
+
+### memory
+
+Storage operations on the AIWG memory subsystem. Routes through `resolveStorage('memory')`. Used by `memory-ingest` / `memory-lint` / `memory-log-append` / `memory-query-capture` skills (#966).
+
+```bash
+aiwg memory <subcommand>
+```
+
+**Subcommands:** `path` / `list` / `get` / `put` / `delete` / `append-log`.
+
+**Examples:**
+
+```bash
+aiwg memory path                                         # resolved root (fs only)
+aiwg memory list --prefix research-complete/
+aiwg memory get research-complete/index.md
+echo "# index" | aiwg memory put research-complete/index.md
+echo '{"op":"ingest","summary":"foo"}' \
+  | aiwg memory append-log research-complete/.log.jsonl
+```
+
+**`append-log` semantics:** reads a single JSON object from stdin, appends as one JSONL line. Atomic via `adapter.append` (#976) on backends that support it.
+
+---
+
+### reflections
+
+Storage operations on the reflections subsystem. Routes through `resolveStorage('reflections')`. Used by `ralph-reflect` and `reflection-injection` skills (#967).
+
+```bash
+aiwg reflections <subcommand>
+```
+
+Same surface as `aiwg memory`: `path` / `list` / `get` / `put` / `delete` / `append-log`.
+
+```bash
+aiwg reflections list --prefix sessions/
+aiwg reflections get sessions/2026-04-28.md
+echo '{"event":"reflect"}' | aiwg reflections append-log sessions/log.jsonl
+```
+
+---
+
+### kb
+
+Storage operations on the knowledge-base subsystem. Routes through `resolveStorage('kb')`. Used by `kb-ingest` and `kb-health` skills (#965).
+
+```bash
+aiwg kb <subcommand>
+```
+
+**Subcommands:** `path` / `list` / `get` / `put` / `delete`.
+
+```bash
+aiwg kb path                          # resolved root
+aiwg kb path entities/foo.md          # absolute path to that file
+aiwg kb list --prefix entities/
+aiwg kb get entities/foo.md
+echo "# foo" | aiwg kb put entities/foo.md
+aiwg kb delete entities/old.md
+```
+
+**Note:** kb-ingest/kb-health skills' `--kb <path>` argument now defaults to whatever `aiwg kb path` resolves — `.aiwg/kb/` on the default `fs` backend, or whatever `roots.kb` / `backends.kb` redirects to.
+
+---
+
+### provenance
+
+Storage operations on the provenance subsystem (W3C PROV records). Routes through `resolveStorage('provenance')`. Used by `provenance-create` / `provenance-query` / `provenance-report` / `provenance-validate` / `auto-provenance` skills (#968).
+
+```bash
+aiwg provenance <subcommand>
+```
+
+Same surface as `aiwg memory`.
+
+```bash
+aiwg provenance list --prefix activities/
+aiwg provenance get activities/2026-04-28-deploy.json
+```
+
+---
+
+### research-store
+
+Storage operations on the research subsystem. Routes through `resolveStorage('research')`. Used by `research-acquire`, `induct-research`, `corpus-*` skills (#968). Named `research-store` (suffixed) to disambiguate from the many existing `research-*` workflow commands.
+
+```bash
+aiwg research-store <subcommand>
+```
+
+Same surface as `aiwg memory`.
+
+```bash
+aiwg research-store path                            # resolved corpus root
+aiwg research-store list --prefix sources/
+aiwg research-store get sources/paper-123.md
+```
+
+**Heavy artifacts on a secondary drive:** set `roots.research` in `.aiwg/storage.config` — one of the headline #934 use cases.
+
+---
+
+## Ops Commands
+
+Manage AIWG ops ecosystem workspaces (sysops, devops, itops, streamops). See `agentic/code/frameworks/ops-complete/`.
+
+### ops
+
+```bash
+aiwg ops <subcommand>
+```
+
+**Subcommands:**
+
+| Subcommand | Purpose |
+|------------|---------|
+| `init` | Bootstrap a new ops workspace |
+| `status [--all]` | Show workspace health |
+| `use <workspace>` | Switch active workspace |
+| `list` (alias `ls`) | List registered workspaces |
+| `push [--workspace <n>]` | Push workspace repos to remote |
+| `discover [root...]` | Scan filesystem for orphaned ops-workspace clones (#937) |
+| `adopt <path>` | Register an existing local clone as a repo entry (#936) |
+
+**`init` flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--silent` | Skip interactive prompts |
+| `--workspace <name>` | Workspace name (default: `default`) |
+| `--home <path>` | Parent directory for repos |
+| `--mode <mode>` | `single-repo` or `multi-repo` (default: `multi-repo`) |
+| `--ext <list>` | Comma-separated extensions: `sys,it,dev,stream` |
+| `--prefix <name>` | Repo naming prefix (e.g., `myorg`) |
+| `--provider <name>` | Remote provider for auto-push (`github`, `gitea`, or URL) |
+| `--from <git-url>` | Clone the URL into the target repo instead of init (#936) |
+
+**Nesting refusal (#935):** `init` walks up from the target home looking for `OpsInventory.yaml`. If an ancestor has one, init refuses with a suggested sibling path — ops workspaces must be siblings, never nested.
+
+**Examples:**
+
+```bash
+# Multi-repo workspace under ~/ops/personal/
+aiwg ops init --workspace personal --ext sys,dev,it
+
+# Clone an existing remote into the target instead of git init (#936)
+aiwg ops init --workspace itops --ext it \
+  --from https://git.integrolabs.net/me/itops.git
+
+# Adopt an already-cloned repo (#936)
+aiwg ops adopt ~/sysops --workspace home --ext sys
+
+# Scan the filesystem for orphaned ops clones (#937)
+aiwg ops discover ~                          # preview only
+aiwg ops discover ~ --register --workspace home
+
+# Standard lifecycle
+aiwg ops status
+aiwg ops list
+aiwg ops use client-acme
+aiwg ops push --workspace personal
+```
+
+**`adopt` flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--workspace <name>` | Workspace bucket (default: `default`) |
+| `--ext <list>` | Comma-separated extensions to record on the repo entry |
+| `--name <name>` | Override repo name (default: basename of path) |
+| `--silent` | Suppress informational logging |
+
+**`discover` flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--max-depth <n>` | Walk depth from each root (default: 3) |
+| `--register` (alias `--yes`/`-y`) | Write NEW candidates to `ops.json` |
+| `--workspace <name>` | Bucket workspace for registered entries (default: `discovered`) |
+| `--json` | Machine-readable output |
 
 ---
 
