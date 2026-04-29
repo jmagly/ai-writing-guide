@@ -30,6 +30,13 @@ Complete reference for all `aiwg` CLI commands.
 - [SDLC Orchestration Commands](#sdlc-orchestration-commands)
 - [Index Commands](#index-commands)
 - [Addon Commands](#addon-commands)
+- [Storage Commands](#storage-commands)
+
+---
+
+> **Storage subsystem:** AIWG persists artifacts (memory, kb, activity-log, reflections, provenance, research) through a pluggable adapter system. See [`docs/storage/`](storage/README.md) for the full guide. Storage CLIs:
+> - `aiwg storage` — config inspection, migration, doctor probe
+> - `aiwg memory` / `aiwg reflections` / `aiwg kb` / `aiwg activity-log` / `aiwg provenance` / `aiwg research-store` — per-subsystem `path` / `list` / `get` / `put` / `delete` / `append-log`
 
 ---
 
