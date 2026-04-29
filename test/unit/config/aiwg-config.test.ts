@@ -17,6 +17,7 @@ import {
   updateInstalled,
   hashManifest,
   migrateLegacyRegistry,
+  resolveRemotes,
 } from '../../../src/config/aiwg-config.js';
 
 function makeTmpDir(): string {
@@ -295,6 +296,74 @@ describe('aiwg-config', () => {
 
       // Should not overwrite the existing entry
       expect(result.installed['sdlc'].version).toBe('2026.3.4');
+    });
+  });
+
+  // ── resolveRemotes (#994) ──────────────────────────────────────────────────
+
+  describe('resolveRemotes', () => {
+    it('returns origin defaults when remotes is undefined', () => {
+      const r = resolveRemotes(undefined);
+      expect(r).toEqual({
+        primary: 'origin',
+        issue_tracker: 'origin',
+        ci: 'origin',
+        secondary: [],
+      });
+    });
+
+    it('returns origin defaults for an empty block', () => {
+      const r = resolveRemotes({});
+      expect(r.primary).toBe('origin');
+      expect(r.issue_tracker).toBe('origin');
+      expect(r.ci).toBe('origin');
+      expect(r.secondary).toEqual([]);
+    });
+
+    it('inherits issue_tracker and ci from primary when unset', () => {
+      const r = resolveRemotes({ primary: 'gitea' });
+      expect(r.primary).toBe('gitea');
+      expect(r.issue_tracker).toBe('gitea');
+      expect(r.ci).toBe('gitea');
+    });
+
+    it('keeps explicit issue_tracker and ci values', () => {
+      const r = resolveRemotes({
+        primary: 'origin',
+        issue_tracker: 'gitea',
+        ci: 'jenkins',
+      });
+      expect(r.issue_tracker).toBe('gitea');
+      expect(r.ci).toBe('jenkins');
+    });
+
+    it('preserves secondary remotes', () => {
+      const r = resolveRemotes({
+        secondary: [
+          { name: 'github', purpose: 'public-mirror', push_on_release: true },
+        ],
+      });
+      expect(r.secondary).toHaveLength(1);
+      expect(r.secondary[0]).toMatchObject({
+        name: 'github',
+        purpose: 'public-mirror',
+        push_on_release: true,
+      });
+    });
+  });
+
+  describe('readAiwgConfig with remotes block', () => {
+    it('round-trips a config containing remotes', async () => {
+      const cfg = emptyConfig();
+      cfg.remotes = {
+        primary: 'origin',
+        secondary: [{ name: 'github', purpose: 'public-mirror' }],
+      };
+      await writeAiwgConfig(tmpDir, cfg);
+
+      const read = await readAiwgConfig(tmpDir);
+      expect(read?.remotes?.primary).toBe('origin');
+      expect(read?.remotes?.secondary?.[0]?.name).toBe('github');
     });
   });
 });

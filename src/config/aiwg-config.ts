@@ -53,6 +53,46 @@ export interface InstalledEntry {
 }
 
 /**
+ * One secondary remote: a mirror, fork base, or publishing target.
+ */
+export interface SecondaryRemote {
+  /** Must match a name from `git remote` */
+  name: string;
+  /** Free-form tag (mirror | upstream | publish | replica | …) */
+  purpose?: string;
+  /** Hint to release workflows: push tags here on stable cuts */
+  push_on_release?: boolean;
+}
+
+/**
+ * Repo origin topology — declares which remote is primary (CI / issues / PRs)
+ * and which are secondary (mirrors, publishing targets).
+ *
+ * @implements #994
+ */
+export interface RemotesConfig {
+  /** git remote name driving CI / PRs by default. Defaults to "origin". */
+  primary?: string;
+  /** Where issues live. Defaults to `primary`. */
+  issue_tracker?: string;
+  /** Where CI runs. Defaults to `primary`. */
+  ci?: string;
+  /** Mirrors, fork bases, publishing targets. */
+  secondary?: SecondaryRemote[];
+}
+
+/**
+ * Resolved remote topology — every field guaranteed to be set.
+ * Returned by {@link resolveRemotes}.
+ */
+export interface ResolvedRemotes {
+  primary: string;
+  issue_tracker: string;
+  ci: string;
+  secondary: SecondaryRemote[];
+}
+
+/**
  * Top-level shape of .aiwg/aiwg.config
  */
 export interface AiwgConfig {
@@ -76,6 +116,33 @@ export interface AiwgConfig {
    * Executed with `sh -c "<command>"` (or `cmd /c` on Windows).
    */
   scripts: Record<string, string>;
+
+  /**
+   * Repo origin topology. Optional — when absent, agents treat `origin` as primary.
+   * @implements #994
+   */
+  remotes?: RemotesConfig;
+}
+
+/**
+ * Resolve the repo remote topology with defaults applied.
+ *
+ * Defaults:
+ *   - `primary` defaults to "origin"
+ *   - `issue_tracker` defaults to `primary`
+ *   - `ci` defaults to `primary`
+ *   - `secondary` defaults to `[]`
+ *
+ * Pass an absent or partial `remotes` block — every field comes back populated.
+ */
+export function resolveRemotes(remotes: RemotesConfig | undefined): ResolvedRemotes {
+  const primary = remotes?.primary ?? 'origin';
+  return {
+    primary,
+    issue_tracker: remotes?.issue_tracker ?? primary,
+    ci: remotes?.ci ?? primary,
+    secondary: remotes?.secondary ?? [],
+  };
 }
 
 /**

@@ -276,6 +276,59 @@ async function runDoctor() {
     // Validator import failed (e.g., dist not built in dev). Non-fatal — skip silently.
   }
 
+  // 11b. Validate .aiwg/aiwg.config remotes block (#994)
+  // Ensures any declared remote name actually exists in `git remote`.
+  try {
+    const projectDir = process.cwd();
+    const aiwgCfgPath = path.join(projectDir, '.aiwg', 'aiwg.config');
+    if (await fileExists(aiwgCfgPath)) {
+      let raw;
+      try {
+        raw = JSON.parse(await fs.readFile(aiwgCfgPath, 'utf-8'));
+      } catch (err) {
+        check('Remotes Config', 'error', `Failed to parse .aiwg/aiwg.config: ${err.message}`);
+        raw = null;
+      }
+      if (raw && raw.remotes) {
+        // Collect actual git remote names; tolerate non-git directories.
+        let gitRemotes = [];
+        try {
+          gitRemotes = execSync('git remote', { cwd: projectDir, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+            .trim()
+            .split('\n')
+            .filter(Boolean);
+        } catch {
+          // Not a git repo — skip silently
+        }
+
+        if (gitRemotes.length > 0) {
+          const declared = [];
+          if (raw.remotes.primary) declared.push({ field: 'primary', name: raw.remotes.primary });
+          if (raw.remotes.issue_tracker) declared.push({ field: 'issue_tracker', name: raw.remotes.issue_tracker });
+          if (raw.remotes.ci) declared.push({ field: 'ci', name: raw.remotes.ci });
+          for (const sec of raw.remotes.secondary || []) {
+            if (sec && sec.name) declared.push({ field: `secondary.${sec.name}`, name: sec.name });
+          }
+
+          const missing = declared.filter(d => !gitRemotes.includes(d.name));
+          if (missing.length === 0) {
+            const primary = raw.remotes.primary || 'origin';
+            check('Remotes Config', 'ok', `primary=${primary} (${declared.length} declared, all present)`);
+          } else {
+            const list = missing.map(m => `${m.field}=${m.name}`).join(', ');
+            check(
+              'Remotes Config',
+              'warn',
+              `Declared remote(s) missing from git: ${list}. Available: ${gitRemotes.join(', ')}`,
+            );
+          }
+        }
+      }
+    }
+  } catch {
+    // Non-fatal — skip silently
+  }
+
   // 11. Check .gitignore for AIWG runtime patterns (warning if missing)
   const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/'];
   const gitignorePath = path.join(process.cwd(), '.gitignore');

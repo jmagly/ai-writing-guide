@@ -56,9 +56,55 @@
       "type": "object",
       "description": "Framework-specific settings",
       "additionalProperties": true
+    },
+    "remotes": {
+      "type": "object",
+      "description": "Repo origin topology — declares primary (CI/issues/PRs) and secondary remotes (#994)",
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "type": "string",
+          "description": "git remote name driving CI/PRs by default. Defaults to 'origin' when absent."
+        },
+        "issue_tracker": {
+          "type": "string",
+          "description": "Where issues live. Defaults to primary."
+        },
+        "ci": {
+          "type": "string",
+          "description": "Where CI runs. Defaults to primary."
+        },
+        "secondary": {
+          "type": "array",
+          "description": "Mirrors, fork bases, and publishing targets",
+          "items": {
+            "$ref": "#/definitions/SecondaryRemote"
+          }
+        }
+      }
     }
   },
   "definitions": {
+    "SecondaryRemote": {
+      "type": "object",
+      "description": "A non-primary git remote (mirror, upstream, publishing target)",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Must match a name from `git remote`"
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Free-form tag (mirror | upstream | publish | replica)"
+        },
+        "push_on_release": {
+          "type": "boolean",
+          "description": "Hint to release workflows to push tags here on stable cuts"
+        }
+      }
+    },
     "InstalledFramework": {
       "type": "object",
       "description": "Metadata for an installed AIWG framework",
