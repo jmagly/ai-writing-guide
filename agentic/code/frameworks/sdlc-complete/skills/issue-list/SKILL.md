@@ -184,13 +184,15 @@ Extract from command invocation:
 
 ### Step 2: Load Configuration
 
-Same as `/issue-create` command:
+Same resolution rules as `/issue-create` (preferred path):
 
-1. Check `.aiwg/config.yaml`
-2. Fallback to `CLAUDE.md`
-3. Default to `local` provider
+1. **`--provider` flag** — explicit override always wins.
+2. **`.aiwg/aiwg.config` `remotes.issue_tracker`** (#994) — derive provider via `resolveRemotes()` + `resolveRemoteProvider()` from `src/config/aiwg-config.ts`.
+3. **Legacy `.aiwg/config.yaml`** (`ticketing` block) — back-compat.
+4. **`CLAUDE.md` "Issueing Configuration"** — fallback.
+5. **`local`** — default.
 
-Override with `--provider` if specified.
+When `resolveRemoteProvider(url)` returns `'unknown'` (self-hosted instances), the operator must pass `--provider` explicitly. Don't guess.
 
 ### Step 3: Fetch Issues (Provider-Specific)
 

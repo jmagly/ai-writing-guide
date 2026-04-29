@@ -125,6 +125,41 @@ export interface AiwgConfig {
 }
 
 /**
+ * Provider tag for a given remote URL. Used by skills (issue-create,
+ * pr-review, commit-and-push) to pick the right CLI / MCP client when
+ * the operator didn't pass `--provider` explicitly.
+ *
+ * Recognized hosts:
+ *   - github.com         → 'github'
+ *   - gitlab.com / gitlab.* → 'gitlab'
+ *   - any host containing 'gitea' (or matching the typical Gitea path shape) → 'gitea'
+ *
+ * Returns 'unknown' for self-hosted instances we can't classify by host alone —
+ * callers should then prompt the operator or fall back to the configured
+ * AIWG provider list.
+ *
+ * @implements #997
+ */
+export function resolveRemoteProvider(remoteUrl: string): 'github' | 'gitlab' | 'gitea' | 'unknown' {
+  if (!remoteUrl) return 'unknown';
+  const lower = remoteUrl.toLowerCase();
+
+  // github.com (or git@github.com:owner/repo.git form)
+  if (/(^|[/@])github\.com[:/]/.test(lower)) return 'github';
+
+  // gitlab.com or self-hosted gitlab
+  if (/(^|[/@])gitlab\./.test(lower) || lower.includes('/gitlab/')) return 'gitlab';
+
+  // gitea — identified by hostname token. Self-hosted Gitea instances often
+  // don't include 'gitea' in their hostname (e.g. corporate git servers), so
+  // 'unknown' is the honest answer there — callers should consult the
+  // configured AIWG provider list rather than guess.
+  if (lower.includes('gitea')) return 'gitea';
+
+  return 'unknown';
+}
+
+/**
  * Resolve the repo remote topology with defaults applied.
  *
  * Defaults:
