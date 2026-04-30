@@ -19,6 +19,7 @@ import {
   migrateLegacyRegistry,
   resolveRemotes,
   resolveRemoteProvider,
+  resolveDelivery,
 } from '../../../src/config/aiwg-config.js';
 
 function makeTmpDir(): string {
@@ -388,6 +389,87 @@ describe('aiwg-config', () => {
     it('does not misclassify github fork urls in a path segment', () => {
       // Path-only "github" (without being the host) should not match
       expect(resolveRemoteProvider('https://example.com/github/repo.git')).toBe('unknown');
+    });
+  });
+
+  // ── resolveDelivery (#995) ─────────────────────────────────────────────────
+
+  describe('resolveDelivery', () => {
+    it('returns conservative defaults when delivery is undefined', () => {
+      const r = resolveDelivery(undefined);
+      expect(r.mode).toBe('pr-required');
+      expect(r.default_branch).toBe('main');
+      expect(r.merge_style).toBe('rebase-merge');
+      expect(r.delete_branch_on_merge).toBe(true);
+      expect(r.require_ci_green).toBe(true);
+      expect(r.require_signed_commits).toBe(false);
+      expect(r.force_push_policy).toBe('never');
+      expect(r.auto_close_issues).toBe(true);
+      expect(r.issue_comment_on_cycle).toBe(true);
+    });
+
+    it('preserves explicit overrides', () => {
+      const r = resolveDelivery({
+        mode: 'direct',
+        default_branch: 'develop',
+        merge_style: 'squash',
+        require_signed_commits: true,
+        force_push_policy: 'own-branch-only',
+      });
+      expect(r.mode).toBe('direct');
+      expect(r.default_branch).toBe('develop');
+      expect(r.merge_style).toBe('squash');
+      expect(r.require_signed_commits).toBe(true);
+      expect(r.force_push_policy).toBe('own-branch-only');
+    });
+
+    it('merges custom branch_naming overrides with the default set', () => {
+      const r = resolveDelivery({
+        branch_naming: {
+          prefix_by_type: { feat: 'feature/{slug}' },
+        },
+      });
+      // Override applied
+      expect(r.branch_naming.prefix_by_type.feat).toBe('feature/{slug}');
+      // Defaults still present for other types
+      expect(r.branch_naming.prefix_by_type.fix).toBe('fix/{issue}-{slug}');
+      expect(r.branch_naming.prefix_by_type.docs).toBe('docs/{slug}');
+    });
+
+    it('returns the default branch_naming map when delivery has no branch_naming', () => {
+      const r = resolveDelivery({ mode: 'pr-required' });
+      expect(r.branch_naming.prefix_by_type.feat).toBe('feat/{issue}-{slug}');
+      expect(r.branch_naming.prefix_by_type.chore).toBe('chore/{slug}');
+    });
+
+    it('explicit false values override the default true', () => {
+      const r = resolveDelivery({
+        delete_branch_on_merge: false,
+        require_ci_green: false,
+        auto_close_issues: false,
+        issue_comment_on_cycle: false,
+      });
+      expect(r.delete_branch_on_merge).toBe(false);
+      expect(r.require_ci_green).toBe(false);
+      expect(r.auto_close_issues).toBe(false);
+      expect(r.issue_comment_on_cycle).toBe(false);
+    });
+  });
+
+  describe('readAiwgConfig with delivery block', () => {
+    it('round-trips a config containing delivery', async () => {
+      const cfg = emptyConfig();
+      cfg.delivery = {
+        mode: 'pr-required',
+        default_branch: 'main',
+        merge_style: 'rebase-merge',
+        require_ci_green: true,
+      };
+      await writeAiwgConfig(tmpDir, cfg);
+      const read = await readAiwgConfig(tmpDir);
+      expect(read?.delivery?.mode).toBe('pr-required');
+      expect(read?.delivery?.default_branch).toBe('main');
+      expect(read?.delivery?.merge_style).toBe('rebase-merge');
     });
   });
 

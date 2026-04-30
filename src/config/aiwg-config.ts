@@ -122,6 +122,120 @@ export interface AiwgConfig {
    * @implements #994
    */
   remotes?: RemotesConfig;
+
+  /**
+   * Repo control / delivery policy — how AIWG agents are expected to ship code.
+   * Optional — when absent, agents fall back to the conservative defaults
+   * applied by `resolveDelivery()`.
+   * @implements #995
+   */
+  delivery?: DeliveryConfig;
+}
+
+/**
+ * How agents should ship code — modes:
+ *   - `direct`         : commit & push straight to default_branch
+ *   - `feature-branch` : create a branch and push it, but don't open a PR
+ *   - `pr-required`    : feature branch + PR via the resolved primary remote
+ */
+export type DeliveryMode = 'direct' | 'feature-branch' | 'pr-required';
+
+/**
+ * Merge style preference; matches the values Gitea/GitHub/GitLab APIs accept.
+ */
+export type MergeStyle = 'rebase-merge' | 'squash' | 'merge' | 'fast-forward-only';
+
+/**
+ * Force-push policy:
+ *   - `never`           : agents may never force-push
+ *   - `own-branch-only` : OK on the agent's own feature branch, never to main
+ *   - `allowed`         : escape hatch for tooling that needs it
+ */
+export type ForcePushPolicy = 'never' | 'own-branch-only' | 'allowed';
+
+/**
+ * Branch-naming convention. `{issue}` and `{slug}` are interpolated by skills.
+ */
+export interface BranchNaming {
+  prefix_by_type?: Partial<Record<'feat' | 'fix' | 'docs' | 'chore' | 'refactor' | 'test', string>>;
+}
+
+/**
+ * Repo control policy — see DeliveryMode for the high-level shape. Every field
+ * is optional; sensible defaults applied via {@link resolveDelivery}.
+ *
+ * @implements #995
+ */
+export interface DeliveryConfig {
+  mode?: DeliveryMode;
+  default_branch?: string;
+  branch_naming?: BranchNaming;
+  merge_style?: MergeStyle;
+  delete_branch_on_merge?: boolean;
+  /** When true, agents must wait for CI green before declaring done. */
+  require_ci_green?: boolean;
+  require_signed_commits?: boolean;
+  force_push_policy?: ForcePushPolicy;
+  /** Include "Closes #N" / "Fixes #N" in PR body when an issue is referenced. */
+  auto_close_issues?: boolean;
+  /** Post AL CYCLE status comments to issue threads from address-issues loops. */
+  issue_comment_on_cycle?: boolean;
+}
+
+/**
+ * Resolved delivery policy with all defaults applied. Returned by
+ * {@link resolveDelivery}.
+ */
+export interface ResolvedDelivery {
+  mode: DeliveryMode;
+  default_branch: string;
+  branch_naming: Required<BranchNaming>;
+  merge_style: MergeStyle;
+  delete_branch_on_merge: boolean;
+  require_ci_green: boolean;
+  require_signed_commits: boolean;
+  force_push_policy: ForcePushPolicy;
+  auto_close_issues: boolean;
+  issue_comment_on_cycle: boolean;
+}
+
+const DEFAULT_BRANCH_NAMING: Required<BranchNaming> = {
+  prefix_by_type: {
+    feat: 'feat/{issue}-{slug}',
+    fix: 'fix/{issue}-{slug}',
+    docs: 'docs/{slug}',
+    chore: 'chore/{slug}',
+    refactor: 'refactor/{slug}',
+    test: 'test/{slug}',
+  },
+};
+
+/**
+ * Resolve the delivery policy with defaults applied.
+ *
+ * Defaults are intentionally conservative — they match what AIWG agents
+ * naturally do today (PR-required, rebase-merge, no force pushes, post issue
+ * comments) so that adding the schema doesn't shift behavior for existing
+ * projects.
+ */
+export function resolveDelivery(delivery: DeliveryConfig | undefined): ResolvedDelivery {
+  return {
+    mode: delivery?.mode ?? 'pr-required',
+    default_branch: delivery?.default_branch ?? 'main',
+    branch_naming: {
+      prefix_by_type: {
+        ...DEFAULT_BRANCH_NAMING.prefix_by_type,
+        ...(delivery?.branch_naming?.prefix_by_type ?? {}),
+      },
+    },
+    merge_style: delivery?.merge_style ?? 'rebase-merge',
+    delete_branch_on_merge: delivery?.delete_branch_on_merge ?? true,
+    require_ci_green: delivery?.require_ci_green ?? true,
+    require_signed_commits: delivery?.require_signed_commits ?? false,
+    force_push_policy: delivery?.force_push_policy ?? 'never',
+    auto_close_issues: delivery?.auto_close_issues ?? true,
+    issue_comment_on_cycle: delivery?.issue_comment_on_cycle ?? true,
+  };
 }
 
 /**
