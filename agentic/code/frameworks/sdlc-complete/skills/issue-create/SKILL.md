@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: issue-create
 platforms: [all]
 description: Create a new ticket/issue with configurable backend (Gitea, GitHub, Jira, Linear, or local files)
 commandHint:

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: provenance-report
 platforms: [all]
 description: Generate provenance coverage dashboard and statistics
 commandHint:

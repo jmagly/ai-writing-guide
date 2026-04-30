@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-risk-management-cycle
 platforms: [all]
 description: Orchestrate continuous risk identification, assessment, tracking, and retirement across SDLC phases
 commandHint:
-  argumentHint: [project-directory] [--iteration N] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[project-directory] [--iteration N] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

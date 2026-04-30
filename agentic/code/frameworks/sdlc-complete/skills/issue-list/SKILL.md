@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: issue-list
 platforms: [all]
 description: List and filter tickets/issues from configured backend
 commandHint:

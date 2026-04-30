@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: aiwg-update-agents-md
 platforms: [all]
 description: Update AGENTS.md with project-specific context for Factory AI based on codebase analysis
 commandHint:
-  argumentHint: [project-directory] [--provider factory --interactive --guidance "text"]
-  allowedTools: Read, Write, Edit, Glob, Grep, Bash, TodoWrite
+  argumentHint: '[project-directory] [--provider factory --interactive --guidance "text"]'
+  allowedTools: 'Read, Write, Edit, Glob, Grep, Bash, TodoWrite'
   model: sonnet
   category: sdlc-setup
 ---

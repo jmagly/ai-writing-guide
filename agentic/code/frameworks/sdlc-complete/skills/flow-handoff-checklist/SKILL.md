@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: flow-handoff-checklist
 platforms: [all]
 description: Orchestrate handoff validation between SDLC phases and tracks (Discovery→Delivery, Delivery→Ops, phase transitions)
 commandHint:

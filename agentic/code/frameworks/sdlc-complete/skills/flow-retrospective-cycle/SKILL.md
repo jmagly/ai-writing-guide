@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-retrospective-cycle
 platforms: [all]
 description: Orchestrate systematic retrospective cycle with structured feedback collection, improvement tracking, and action item management
 commandHint:
-  argumentHint: [retrospective-type] [iteration-number] [project-directory] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[retrospective-type] [iteration-number] [project-directory] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

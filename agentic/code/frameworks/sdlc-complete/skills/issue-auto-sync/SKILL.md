@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: issue-auto-sync
 platforms: [all]
 description: Detect issue references in commits and artifacts and automatically update or close linked tracker issues
 

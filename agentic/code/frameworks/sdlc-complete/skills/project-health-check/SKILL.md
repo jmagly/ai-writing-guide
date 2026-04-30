@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: project-health-check
 platforms: [all]
 description: Analyze overall project health and metrics
 commandHint:

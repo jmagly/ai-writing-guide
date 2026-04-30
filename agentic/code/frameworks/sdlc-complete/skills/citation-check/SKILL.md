@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: citation-check
 platforms: [all]
 description: Check a file for citation quality and GRADE compliance
 commandHint:

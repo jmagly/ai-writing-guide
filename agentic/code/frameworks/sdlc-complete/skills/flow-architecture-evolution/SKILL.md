@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-architecture-evolution
 platforms: [all]
 description: Orchestrate architecture evolution workflow with ADR management, architecture review, breaking change analysis, and migration planning
 commandHint:
-  argumentHint: [trigger-event] [project-directory] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[trigger-event] [project-directory] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

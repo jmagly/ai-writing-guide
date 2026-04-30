@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: check-traceability
 platforms: [all]
 description: Verify the full refinement chain from use cases through behavioral specs, pseudo-code specs, code, and tests — report coverage at each layer and identify gaps
 commandHint:
-  argumentHint: [path-to-project] [--layer all|uc|behavioral|pseudo|code|test] [--format table|csv|json] [--interactive] [--guidance "text"]
-  allowedTools: Read, Write, Glob, Grep
+  argumentHint: '[path-to-project] [--layer all|uc|behavioral|pseudo|code|test] [--format table|csv|json] [--interactive] [--guidance "text"]'
+  allowedTools: 'Read, Write, Glob, Grep'
   model: sonnet
   category: documentation-tracking
 ---

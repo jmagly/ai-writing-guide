@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: pr-review
 platforms: [all]
 description: Conduct comprehensive PR review from multiple perspectives (PM, Developer, QA, Security)
 commandHint:

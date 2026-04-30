@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: flow-gate-check
 platforms: [all]
 description: Orchestrate SDLC phase gate validation with multi-agent review and comprehensive reporting
 commandHint:

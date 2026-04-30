@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: generate-realization
 platforms: [all]
 description: Generate behavioral specifications (Layer 3) from use cases and architecture documents using multi-agent orchestration
 commandHint:

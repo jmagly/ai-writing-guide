@@ -2,18 +2,18 @@
 namespace: aiwg
 platforms: [all]
 name: contract-manifest
-description: Generate a human-readable manifest for a chain of AIWG skills, showing agent assignments, contract fields (requires:/ensures:), data flow between steps, and parallelization opportunities. Makes orchestration graphs debuggable and auditable.
+description: "Generate a human-readable manifest for a chain of AIWG skills, showing agent assignments, contract fields (requires:/ensures:), data flow between steps, and parallelization opportunities. Makes orchestration graphs debuggable and auditable."
 requires:
-  - skills: ordered list of AIWG skill names or file paths to include in the manifest
+  - "skills: ordered list of AIWG skill names or file paths to include in the manifest"
   - "if workflow-file: path to a YAML/JSON workflow definition listing the skill chain"
 ensures:
-  - manifest: human-readable manifest with per-skill contracts, wiring table, and execution order
-  - data-flow: table showing which ensures: output from each skill satisfies which requires: input of the next
-  - warnings: list of semantic-only matches (matched by meaning not exact name) and unresolved requires:
+  - "manifest: human-readable manifest with per-skill contracts, wiring table, and execution order"
+  - "data-flow: table showing which ensures: output from each skill satisfies which requires: input of the next"
+  - "warnings: list of semantic-only matches (matched by meaning not exact name) and unresolved requires"
   - "if mermaid: Mermaid LR diagram of the skill chain"
 errors:
-  - skill-not-found: one or more skill names cannot be resolved to a SKILL.md file
-  - no-contracts: none of the specified skills have requires:/ensures: fields — nothing to manifest
+  - "skill-not-found: one or more skill names cannot be resolved to a SKILL.md file"
+  - "no-contracts: none of the specified skills have requires:/ensures: fields — nothing to manifest"
 invariants:
   - manifest generation never executes skills — static analysis only
   - semantic matches are flagged as warnings, never silently accepted as definite wires

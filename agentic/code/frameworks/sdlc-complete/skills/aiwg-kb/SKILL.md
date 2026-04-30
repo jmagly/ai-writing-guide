@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: aiwg-kb
 platforms: [all]
 description: Search AIWG knowledge base for help, documentation, and troubleshooting
 commandHint:
-  argumentHint: "<topic> [--interactive] [--guidance "text"]"
-  allowedTools: Read, Glob, Grep
+  argumentHint: '<topic> [--interactive] [--guidance "text"]'
+  allowedTools: 'Read, Glob, Grep'
   model: haiku
   category: sdlc-help
 ---

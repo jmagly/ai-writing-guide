@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: regression-api-contract
 platforms: [all]
 description: Detect breaking changes in API contracts across REST, GraphQL, and gRPC interfaces with semver enforcement
 

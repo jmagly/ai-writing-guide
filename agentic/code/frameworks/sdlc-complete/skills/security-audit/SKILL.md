@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: security-audit
 platforms: [all]
 description: Perform comprehensive security assessment
 commandHint:

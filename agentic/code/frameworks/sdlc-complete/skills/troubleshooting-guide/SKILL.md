@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: troubleshooting-guide
 platforms: [all]
 description: Generate troubleshooting documentation
 commandHint:

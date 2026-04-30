@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: regression-check
 platforms: [all]
 description: Compare current behavior against baseline to detect regressions
 commandHint:

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: provenance-validate
 platforms: [all]
 description: Validate provenance records and chains for completeness and consistency
 commandHint:

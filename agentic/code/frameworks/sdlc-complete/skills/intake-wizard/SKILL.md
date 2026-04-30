@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: intake-wizard
 platforms: [all]
 description: Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning and optional guidance
 commandHint:

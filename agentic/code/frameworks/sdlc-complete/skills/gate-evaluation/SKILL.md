@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: gate-evaluation
 platforms: [all]
 description: Validate phase gate criteria with multi-agent review and generate pass/fail reports
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: intake-start
 platforms: [all]
 description: Ingest the Project Intake Form and kick off Concept → Inception with agent assignments, accepts optional guidance to tailor process
 commandHint:

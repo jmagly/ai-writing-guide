@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: project-timeline-simulator
 platforms: [all]
 description: Simulate project outcomes with variable modeling, risk assessment, and resource optimization scenarios.
 commandHint:
-  argumentHint: "Specify project timeline parameters [--interactive] [--guidance "text"]"
-  allowedTools: Bash(gh *), Read
+  argumentHint: 'Specify project timeline parameters [--interactive] [--guidance "text"]'
+  allowedTools: 'Bash(gh *), Read'
   category: project-task-management
 ---
 

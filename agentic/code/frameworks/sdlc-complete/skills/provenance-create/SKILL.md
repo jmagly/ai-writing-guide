@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: provenance-create
 platforms: [all]
 description: Create a W3C PROV-compliant provenance record for an artifact
 commandHint:

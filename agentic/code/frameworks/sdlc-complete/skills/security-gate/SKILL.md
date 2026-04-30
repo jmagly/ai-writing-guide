@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: security-gate
 platforms: [all]
 description: Enforce minimum security criteria before iteration close or release
 commandHint:

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: corpus-health
 platforms: [all]
 description: Report on research corpus health, completeness, and integrity
 commandHint:

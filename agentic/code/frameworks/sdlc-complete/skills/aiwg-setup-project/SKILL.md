@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: aiwg-setup-project
 platforms: [all]
 description: Update project CLAUDE.md with AIWG framework context and configuration
 commandHint:

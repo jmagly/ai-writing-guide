@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: orchestrate-project
 platforms: [all]
 description: Plan iterations, delegate to SDLC agents, and compile iteration status
 commandHint:

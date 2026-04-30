@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: decompose-file
 platforms: [all]
 description: Analyze large source files and produce decomposition plans, optionally executing refactoring with import updates and test verification
 

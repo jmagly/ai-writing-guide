@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: regression-report
 platforms: [all]
 description: Generate comprehensive regression analysis reports combining bisect, baseline, and metrics data with actionable recommendations
 

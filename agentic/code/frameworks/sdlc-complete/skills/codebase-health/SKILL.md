@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: codebase-health
 platforms: [all]
 description: Scan source code and report agent-readiness metrics with actionable recommendations
 commandHint:
-  argumentHint: [path] [--threshold N] [--error-threshold N] [--format text|json|markdown] [--include glob] [--exclude glob] [--ci]
-  allowedTools: Bash, Read, Glob, Grep, Write
+  argumentHint: '[path] [--threshold N] [--error-threshold N] [--format text|json|markdown] [--include glob] [--exclude glob] [--ci]'
+  allowedTools: 'Bash, Read, Glob, Grep, Write'
   model: sonnet
   category: code-analysis-testing
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: artifact-orchestration
 platforms: [all]
 description: Orchestrate multi-agent artifact generation using the Primary Author, Parallel Reviewers, Synthesizer, Archive pattern
 
