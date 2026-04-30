@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: aiwg-regenerate-claude
 platforms: [all]
 description: Regenerate CLAUDE.md for Claude Code with hook file architecture
 ---

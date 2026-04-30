@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: add-agent
 platforms: [all]
 description: Scaffold a new agent definition file inside an existing addon or framework
 ---

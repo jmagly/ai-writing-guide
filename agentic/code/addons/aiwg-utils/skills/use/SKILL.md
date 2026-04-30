@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: use
 platforms: [all]
 description: Deploy AIWG frameworks and addons to the current workspace across supported providers
 ---

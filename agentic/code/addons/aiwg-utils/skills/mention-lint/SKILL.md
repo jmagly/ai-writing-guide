@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: mention-lint
 platforms: [all]
 description: Lint @-mentions for style consistency and correctness
 ---

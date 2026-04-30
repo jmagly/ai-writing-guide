@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: roko-voice
 platforms: [all]
 description: Transform standard technical content into ROKO voice — dense technical mythology wrapped in cypherpunk cultural narrative
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: daemon-init
 platforms: [all]
 description: Initialize AIWG daemon mode configuration from a named profile for persistent background sessions
 

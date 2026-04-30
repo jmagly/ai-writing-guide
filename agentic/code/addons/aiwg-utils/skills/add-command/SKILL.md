@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: add-command
 platforms: [all]
 description: Scaffold a new command definition inside an existing addon or framework
 ---

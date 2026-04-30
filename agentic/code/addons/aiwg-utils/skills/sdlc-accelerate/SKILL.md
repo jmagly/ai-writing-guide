@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: sdlc-accelerate
 description: End-to-end SDLC ramp-up from idea to construction-ready with automated phase transitions
 commandHint:
   argumentHint: "<description> [--from-codebase <path>] [--resume] [--dry-run]"

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: doc-sync
 description: Synchronize documentation and code to eliminate drift with parallel audit and auto-fix
 commandHint:
   argumentHint: "<direction> [--dry-run] [--scope <path>] [--incremental]"

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: cost-report
 platforms: [all]
 description: Generate a cost and token-spending report for the current or most recent workflow session
 

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: customize-setup
 platforms: [all]
 description: Set up personal AIWG customization mode from a local clone or fork — makes your clone the live global AIWG instance so edits go live immediately
 ---

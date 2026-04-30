@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: project-status
 platforms: [all]
 description: Cross-framework project status aggregator — discovers status contributors from installed frameworks and project-local overrides, runs declarative detection, and produces a unified status report
 commandHint:

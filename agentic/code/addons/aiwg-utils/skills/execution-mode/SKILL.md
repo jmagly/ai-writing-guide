@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: execution-mode
 platforms: [all]
 description: Set or report the reproducibility mode governing how AIWG workflows execute, from standard to fully auditable
 ---

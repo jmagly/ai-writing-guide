@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: steward
 platforms: [all]
 description: Provide provider capability awareness and route commands by answering what the current provider supports natively vs must emulate
 ---

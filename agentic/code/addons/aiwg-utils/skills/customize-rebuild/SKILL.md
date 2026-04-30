@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: customize-rebuild
 platforms: [all]
 description: Rebuild and redeploy AIWG from local customization source — makes recent edits live
 ---

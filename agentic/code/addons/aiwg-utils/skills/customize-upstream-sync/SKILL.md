@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: customize-upstream-sync
 platforms: [all]
 description: Pull the latest upstream AIWG updates into the user's fork and rebuild — preserves user customizations
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: soul-status
 platforms: [all]
 description: Show SOUL.md enforcement state across all installed providers with quality check
 commandHint:

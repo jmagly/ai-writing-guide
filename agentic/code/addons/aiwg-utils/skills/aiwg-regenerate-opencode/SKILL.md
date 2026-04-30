@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: aiwg-regenerate-opencode
 platforms: [all]
 description: Regenerate OpenCode context file (.opencode/context.md) with AIWG framework content
 commandHint:

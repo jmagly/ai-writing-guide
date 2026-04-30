@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: aiwg-regenerate-warp
 platforms: [all]
 description: Regenerate WARP.md for Warp Terminal with preserved team directives
 ---

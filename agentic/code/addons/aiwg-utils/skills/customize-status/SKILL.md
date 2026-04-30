@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: customize-status
 platforms: [all]
 description: Show current AIWG customization status — mode, source path, what you've customized vs upstream
 ---

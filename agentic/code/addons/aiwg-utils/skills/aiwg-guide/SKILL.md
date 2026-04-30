@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: aiwg-guide
 description: Contextual AIWG help — explains current version features, answers how-to questions, routes live queries to the steward
 platforms: [claude-code, codex, opencode, warp, cursor, windsurf, copilot, factory, openclaw, hermes]
 

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: runtime-info
 platforms: [all]
 description: Display a comprehensive runtime environment report covering detected provider, available tools, AIWG version, and installed frameworks
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: summarize-transcript
 platforms: [all]
 description: Analyze and summarize a transcript, meeting notes, or discussion thread into a clear actionable document
 ---

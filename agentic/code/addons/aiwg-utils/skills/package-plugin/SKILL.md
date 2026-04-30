@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: package-plugin
 platforms: [all]
 description: Bundle a single plugin into a distributable marketplace archive, validating metadata and optionally publishing
 ---

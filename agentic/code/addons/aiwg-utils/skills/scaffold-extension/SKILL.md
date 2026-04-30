@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: scaffold-extension
 platforms: [all]
 description: Create a new extension package inside an existing framework's extensions/ directory
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: voice-to-soul
 platforms: [all]
 description: Generate a SOUL.md from an existing AIWG voice profile
 commandHint:

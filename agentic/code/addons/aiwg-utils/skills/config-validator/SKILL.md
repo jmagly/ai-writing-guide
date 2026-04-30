@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: config-validator
 platforms: [all]
 description: Validate AIWG configuration files and project setup for correctness and completeness
 

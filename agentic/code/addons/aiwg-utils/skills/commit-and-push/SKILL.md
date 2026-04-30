@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: commit-and-push
 platforms: [all]
 description: Create a well-formatted git commit and push to remote repository
 commandHint:

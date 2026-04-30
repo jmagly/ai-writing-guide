@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: contribute-start
 platforms: [all]
 description: Initialize an AIWG contribution workflow by creating a feature branch, configuring DCO, and linking a tracking issue
 ---

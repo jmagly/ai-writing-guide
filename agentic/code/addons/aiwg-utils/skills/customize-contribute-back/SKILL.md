@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: customize-contribute-back
 platforms: [all]
 description: Contribute a user's AIWG customization back upstream as a PR — reviews for general applicability, creates branch, opens PR
 ---

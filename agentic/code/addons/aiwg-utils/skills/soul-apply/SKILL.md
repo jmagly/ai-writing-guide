@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: soul-apply
 platforms: [all]
 description: Apply a SOUL.md identity to content generation, incorporating worldview, opinions, and character
 

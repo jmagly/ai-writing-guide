@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: skills
 platforms: [all]
 description: Manage the AIWG skills registry by listing, searching, inspecting, installing, and publishing skills
 

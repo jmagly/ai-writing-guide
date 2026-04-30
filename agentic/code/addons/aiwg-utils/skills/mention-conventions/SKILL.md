@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: mention-conventions
 platforms: [all]
 description: Display @-mention naming conventions and placement rules
 ---

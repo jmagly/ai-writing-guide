@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: mention-validate
 platforms: [all]
 description: Validate all @-mentions resolve to existing files
 ---
