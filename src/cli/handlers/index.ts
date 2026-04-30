@@ -30,6 +30,7 @@ import {
   updateHandler,
   utilityHandlers,
 } from './utilities.js';
+import { skillLintHandler } from './skill-lint.js';
 import {
   addAgentHandler,
   addCommandHandler,
@@ -161,6 +162,7 @@ export {
   prefillCardsHandler,
   contributeStartHandler,
   validateMetadataHandler,
+  skillLintHandler,
 
   // Plugin
   installPluginHandler,
@@ -275,6 +277,7 @@ export const allHandlers: CommandHandler[] = [
   prefillCardsHandler,
   contributeStartHandler,
   validateMetadataHandler,
+  skillLintHandler,
 
   // Plugin packaging
   installPluginHandler,

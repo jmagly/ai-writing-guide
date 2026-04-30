@@ -856,6 +856,34 @@ export const validateMetadataCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const skillLintCommand: Extension = {
+  id: 'skill-lint',
+  type: 'skill',
+  name: 'Skill Lint',
+  description: 'Score SKILL.md files against a quality rubric (schema, description, discoverability, body)',
+  version: '1.0.0',
+  capabilities: ['cli', 'validation', 'metadata', 'quality'],
+  keywords: ['lint', 'quality', 'skill', 'rubric'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['skill lint', 'lint skills', 'score skills', 'skill quality'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<path> [--rubric strict|standard|lenient] [--json]',
+      allowedTools: ['Read'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Plugin Commands
 
 export const installPluginCommand: Extension = {
@@ -2605,10 +2633,11 @@ export const commandDefinitions: Extension[] = [
   // Toolsmith (1)
   runtimeInfoCommand,
 
-  // Utility (3)
+  // Utility (4)
   prefillCardsCommand,
   contributeStartCommand,
   validateMetadataCommand,
+  skillLintCommand,
 
   // Plugin (5)
   installPluginCommand,
