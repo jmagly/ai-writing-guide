@@ -329,6 +329,64 @@ async function runDoctor() {
     // Non-fatal — skip silently
   }
 
+  // 11c. Validate .aiwg/aiwg.config delivery block (#995)
+  // Sanity-check the resolved delivery policy against actual repo state.
+  try {
+    const projectDir = process.cwd();
+    const aiwgCfgPath = path.join(projectDir, '.aiwg', 'aiwg.config');
+    if (await fileExists(aiwgCfgPath)) {
+      let raw;
+      try {
+        raw = JSON.parse(await fs.readFile(aiwgCfgPath, 'utf-8'));
+      } catch {
+        raw = null;
+      }
+      if (raw && raw.delivery) {
+        const d = raw.delivery;
+        const issues = [];
+
+        // mode validation
+        const validModes = ['direct', 'feature-branch', 'pr-required'];
+        if (d.mode && !validModes.includes(d.mode)) {
+          issues.push(`mode=${d.mode} (must be one of ${validModes.join(', ')})`);
+        }
+
+        // merge_style validation
+        const validMergeStyles = ['rebase-merge', 'squash', 'merge', 'fast-forward-only'];
+        if (d.merge_style && !validMergeStyles.includes(d.merge_style)) {
+          issues.push(`merge_style=${d.merge_style} (must be one of ${validMergeStyles.join(', ')})`);
+        }
+
+        // force_push_policy validation
+        const validForcePush = ['never', 'own-branch-only', 'allowed'];
+        if (d.force_push_policy && !validForcePush.includes(d.force_push_policy)) {
+          issues.push(`force_push_policy=${d.force_push_policy} (must be one of ${validForcePush.join(', ')})`);
+        }
+
+        // default_branch existence — best effort, only when in a git repo
+        const defaultBranch = d.default_branch || 'main';
+        try {
+          execSync(`git -C ${JSON.stringify(projectDir)} rev-parse --verify --quiet ${JSON.stringify(defaultBranch)}`, {
+            stdio: 'pipe',
+          });
+        } catch {
+          // Branch may not exist locally on a fresh clone; downgrade to info, not error
+          issues.push(`default_branch '${defaultBranch}' not found locally (may be remote-only — this is informational)`);
+        }
+
+        if (issues.length === 0) {
+          const mode = d.mode || 'pr-required';
+          const merge = d.merge_style || 'rebase-merge';
+          check('Delivery Policy', 'ok', `mode=${mode} merge=${merge} default_branch=${defaultBranch}`);
+        } else {
+          check('Delivery Policy', 'warn', issues.join('; '));
+        }
+      }
+    }
+  } catch {
+    // Non-fatal — skip silently
+  }
+
   // 11. Check .gitignore for AIWG runtime patterns (warning if missing)
   const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/'];
   const gitignorePath = path.join(process.cwd(), '.gitignore');

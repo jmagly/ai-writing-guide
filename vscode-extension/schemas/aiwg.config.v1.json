@@ -82,6 +82,66 @@
           }
         }
       }
+    },
+    "delivery": {
+      "type": "object",
+      "description": "Repo control / delivery policy — how AIWG agents are expected to ship code (#995)",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["direct", "feature-branch", "pr-required"],
+          "description": "How agents deliver code. direct = commit/push to default_branch; feature-branch = push branch, no PR; pr-required = branch + PR (default)"
+        },
+        "default_branch": {
+          "type": "string",
+          "description": "Default branch name. Defaults to 'main'."
+        },
+        "branch_naming": {
+          "type": "object",
+          "description": "Branch-naming conventions. {issue} and {slug} are interpolated by skills.",
+          "additionalProperties": false,
+          "properties": {
+            "prefix_by_type": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Per commit-type branch prefix templates (feat, fix, docs, chore, refactor, test)"
+            }
+          }
+        },
+        "merge_style": {
+          "type": "string",
+          "enum": ["rebase-merge", "squash", "merge", "fast-forward-only"],
+          "description": "Merge style. Defaults to 'rebase-merge'."
+        },
+        "delete_branch_on_merge": {
+          "type": "boolean",
+          "description": "Delete the feature branch after merge. Default true."
+        },
+        "require_ci_green": {
+          "type": "boolean",
+          "description": "Agent must wait for CI green before declaring done. Default true."
+        },
+        "require_signed_commits": {
+          "type": "boolean",
+          "description": "Default false."
+        },
+        "force_push_policy": {
+          "type": "string",
+          "enum": ["never", "own-branch-only", "allowed"],
+          "description": "Force-push policy. Default 'never'."
+        },
+        "auto_close_issues": {
+          "type": "boolean",
+          "description": "Include 'Closes #N' in PR body. Default true."
+        },
+        "issue_comment_on_cycle": {
+          "type": "boolean",
+          "description": "Post AL CYCLE status comments to issue threads. Default true."
+        }
+      }
     }
   },
   "definitions": {
