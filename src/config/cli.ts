@@ -81,6 +81,10 @@ export async function main(args: string[]): Promise<void> {
       await handleGitignore(subArgs);
       break;
 
+    case 'show':
+      await handleShow(subArgs);
+      break;
+
     default:
       printUsage();
       if (subcommand) {
@@ -218,6 +222,124 @@ async function handleEdit(config: UserConfig): Promise<void> {
   }
 }
 
+/**
+ * `aiwg config show --project [--json]` — print the resolved project-level
+ * .aiwg/aiwg.config (#999).
+ *
+ * Without `--project`, prints a hint pointing at `list` (user config) or
+ * `show --project` (project config). Project mode resolves the remotes block
+ * via the same defaults the rest of AIWG uses (origin → primary → issue/ci).
+ */
+async function handleShow(args: string[]): Promise<void> {
+  const isProject = args.includes('--project');
+  const isJson = args.includes('--json');
+
+  if (!isProject) {
+    console.log(`aiwg config show requires a scope flag.
+
+For user-level config:    aiwg config list
+For project-level config: aiwg config show --project [--json]
+`);
+    throw new AiwgError({
+      code: 'ERR_USAGE_MISSING_FLAG',
+      message: 'aiwg config show requires --project (or use `aiwg config list` for user config)',
+      hint: 'Try: aiwg config show --project',
+      exitCode: EXIT_CODES.USAGE,
+    });
+  }
+
+  // Lazy-import to keep startup cost low for unrelated subcommands.
+  const { readAiwgConfig, resolveRemotes, getProjectDir } = await import('./aiwg-config.js');
+  const { spawnSync } = await import('child_process');
+
+  const projectDir = getProjectDir(undefined, args);
+  const cfg = await readAiwgConfig(projectDir);
+
+  if (!cfg) {
+    throw new AiwgError({
+      code: 'ERR_NO_PROJECT_CONFIG',
+      message: 'No .aiwg/aiwg.config in this project.',
+      hint: 'Run `aiwg init` to scaffold one, or use `aiwg use <framework>` to deploy.',
+      exitCode: EXIT_CODES.CONFIG,
+    });
+  }
+
+  const resolvedRemotes = resolveRemotes(cfg.remotes);
+
+  // Resolve each declared remote name to its URL via git. Best-effort.
+  function getUrl(name: string): string | null {
+    const r = spawnSync('git', ['-C', projectDir, 'remote', 'get-url', name], {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    if (r.status !== 0) return null;
+    const out = r.stdout?.toString().trim();
+    return out || null;
+  }
+
+  const remotesView = {
+    primary: { name: resolvedRemotes.primary, url: getUrl(resolvedRemotes.primary) },
+    issue_tracker: { name: resolvedRemotes.issue_tracker, url: getUrl(resolvedRemotes.issue_tracker) },
+    ci: { name: resolvedRemotes.ci, url: getUrl(resolvedRemotes.ci) },
+    secondary: resolvedRemotes.secondary.map((s) => ({
+      ...s,
+      url: getUrl(s.name),
+    })),
+    has_remotes_block: !!cfg.remotes,
+  };
+
+  if (isJson) {
+    console.log(JSON.stringify({
+      project_dir: projectDir,
+      version: cfg.version,
+      providers: cfg.providers,
+      installed: cfg.installed,
+      scripts: cfg.scripts,
+      remotes: remotesView,
+    }, null, 2));
+    return;
+  }
+
+  // Human-readable view
+  console.log(`Project config: ${projectDir}/.aiwg/aiwg.config\n`);
+  console.log(`Schema version: ${cfg.version}`);
+  console.log(`Providers:      ${cfg.providers.join(', ') || '(none)'}`);
+  console.log('');
+  console.log('Installed frameworks:');
+  const installed = Object.entries(cfg.installed);
+  if (installed.length === 0) {
+    console.log('  (none)');
+  } else {
+    for (const [name, entry] of installed) {
+      const providers = Object.keys(entry.deployedTo).join(', ') || '(no targets)';
+      console.log(`  - ${name} v${entry.version} → ${providers}`);
+    }
+  }
+  console.log('');
+  console.log('Remote topology:');
+  if (!remotesView.has_remotes_block) {
+    console.log('  (no `remotes` block — defaults: origin is primary, issue tracker, and CI)');
+  }
+  const fmt = (label: string, ref: { name: string; url: string | null }) => {
+    const u = ref.url ? ` (${ref.url})` : ' (no such remote in `git remote`)';
+    return `  ${label}: ${ref.name}${u}`;
+  };
+  console.log(fmt('Primary       ', remotesView.primary));
+  if (remotesView.issue_tracker.name !== remotesView.primary.name) {
+    console.log(fmt('Issue tracker ', remotesView.issue_tracker));
+  }
+  if (remotesView.ci.name !== remotesView.primary.name) {
+    console.log(fmt('CI            ', remotesView.ci));
+  }
+  for (const sec of remotesView.secondary) {
+    const purpose = sec.purpose ? ` — ${sec.purpose}` : '';
+    const release = sec.push_on_release ? ' [push tags on release]' : '';
+    const u = sec.url ? ` (${sec.url})` : ' (no such remote in `git remote`)';
+    console.log(`  Secondary     : ${sec.name}${u}${purpose}${release}`);
+  }
+  console.log('');
+}
+
 async function handleGitignore(args: string[]): Promise<void> {
   const { spawnSync } = await import('child_process');
   // Locate the gitignore CLI script relative to this compiled module
@@ -235,6 +357,7 @@ Subcommands:
   get <key>           Read a config value
   set <key> <value>   Write a config value
   list                Show all user config
+  show --project      Show resolved project config (.aiwg/aiwg.config)
   validate            Validate all config files
   reset [<key>]       Reset key or all config to defaults
   path                Print config directory path
@@ -249,6 +372,8 @@ Examples:
   aiwg config set defaults.verbosity quiet
   aiwg config set updates.channel next
   aiwg config list
+  aiwg config show --project
+  aiwg config show --project --json
   aiwg config validate
   aiwg config path
   aiwg config reset defaults.provider
