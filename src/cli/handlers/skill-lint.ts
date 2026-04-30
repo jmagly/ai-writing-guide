@@ -247,18 +247,28 @@ async function* walkSkillFiles(rootPath: string): AsyncGenerator<string> {
 }
 
 /**
- * Lint all SKILL.md files under a path. Returns a structured report.
+ * Lint all SKILL.md files under one or more paths. Returns a structured
+ * report. Each path may be a directory (walked recursively) or a
+ * specific SKILL.md file. Files in `failedCount` and the per-file list
+ * are deduplicated.
  *
  * Pure function — does not print or exit. The CLI handler renders
  * output and translates the report into an exit code.
  */
 export async function lintSkills(
-  targetPath: string,
+  targetPaths: string | string[],
   rubric: RubricMode = 'standard'
 ): Promise<LintReport> {
+  const targets = Array.isArray(targetPaths) ? targetPaths : [targetPaths];
+  const seen = new Set<string>();
   const files: SkillScore[] = [];
-  for await (const f of walkSkillFiles(targetPath)) {
-    files.push(await lintSkillFile(f, rubric));
+  for (const target of targets) {
+    for await (const f of walkSkillFiles(target)) {
+      const resolved = path.resolve(f);
+      if (seen.has(resolved)) continue;
+      seen.add(resolved);
+      files.push(await lintSkillFile(f, rubric));
+    }
   }
   const total = files.reduce((sum, f) => sum + f.score, 0);
   return {
@@ -271,11 +281,11 @@ export async function lintSkills(
 }
 
 function parseArgs(args: string[]): {
-  target: string;
+  targets: string[];
   rubric: RubricMode;
   json: boolean;
 } {
-  let target = 'agentic/code';
+  const targets: string[] = [];
   let rubric: RubricMode = 'standard';
   let json = false;
 
@@ -289,10 +299,11 @@ function parseArgs(args: string[]): {
         rubric = next;
       }
     } else if (!a.startsWith('-')) {
-      target = a;
+      targets.push(a);
     }
   }
-  return { target, rubric, json };
+  if (targets.length === 0) targets.push('agentic/code');
+  return { targets, rubric, json };
 }
 
 function renderTextReport(report: LintReport): void {
@@ -322,8 +333,8 @@ export const skillLintHandler: CommandHandler = {
   aliases: ['-skill-lint', '--skill-lint'],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    const { target, rubric, json } = parseArgs(ctx.args);
-    const report = await lintSkills(target, rubric);
+    const { targets, rubric, json } = parseArgs(ctx.args);
+    const report = await lintSkills(targets, rubric);
 
     if (json) {
       console.log(JSON.stringify(report, null, 2));

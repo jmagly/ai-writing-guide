@@ -1,0 +1,143 @@
+# Skill Quality (skill-lint) — runs on PRs that change any SKILL.md and posts
+# results as a sticky PR comment so reviewers see scores inline.
+#
+# Complements the schema-only validate-skill-frontmatter job in
+# metadata-validation.yml: that job is the gate (PR fails on violations);
+# this job is the diagnostic (PR comment with per-dimension breakdown).
+#
+# Refs #1015 Phase D.
+
+name: Skill Lint (PR comment)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/SKILL.md"
+      - "src/cli/handlers/skill-lint.ts"
+      - "src/extensions/validation.ts"
+      - "tools/cli/format-skill-lint-comment.mjs"
+      - ".gitea/workflows/skill-lint-pr.yml"
+
+jobs:
+  skill-lint:
+    name: Score SKILL.md changes
+    runs-on: ubuntu-latest
+    container: node:20
+    timeout-minutes: 8
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Identify changed SKILL.md files
+        id: changed
+        shell: bash
+        run: |
+          BASE_REF="${{ gitea.base_ref || gitea.event.pull_request.base.ref || 'main' }}"
+          git fetch --no-tags origin "$BASE_REF" || true
+
+          if BASE_SHA=$(git merge-base HEAD "origin/$BASE_REF" 2>/dev/null); then
+            :
+          elif BASE_SHA=$(git rev-parse "origin/$BASE_REF" 2>/dev/null); then
+            :
+          else
+            BASE_SHA="HEAD~1"
+          fi
+          echo "Base: $BASE_SHA"
+
+          # Filter to SKILL.md in shell — git pathspec ** is literal without :(glob).
+          git diff --name-only --diff-filter=AM "$BASE_SHA"..HEAD \
+            | grep -E '(^|/)SKILL\.md$' \
+            > .changed-skills.txt || true
+
+          sed -i '/^$/d' .changed-skills.txt
+          COUNT=$(wc -l < .changed-skills.txt | tr -d ' ')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+          if [ "$COUNT" -gt 0 ]; then
+            echo "Changed SKILL.md files ($COUNT):"
+            cat .changed-skills.txt
+          else
+            echo "No SKILL.md files changed."
+          fi
+
+      - name: Run skill-lint and format comment
+        if: steps.changed.outputs.count != '0'
+        shell: bash
+        run: |
+          # Read changed files into a bash array to pass as positional args.
+          mapfile -t FILES < .changed-skills.txt
+          node bin/aiwg.mjs skill-lint "${FILES[@]}" --json \
+            > skill-lint.json
+          node tools/cli/format-skill-lint-comment.mjs < skill-lint.json \
+            > skill-lint-comment.md
+          echo "── Comment preview ──"
+          cat skill-lint-comment.md
+
+      - name: Empty-PR placeholder comment
+        if: steps.changed.outputs.count == '0'
+        shell: bash
+        run: |
+          cat > skill-lint-comment.md <<'EOF'
+          <!-- aiwg-skill-lint-bot -->
+          ## Skill Quality
+          _No SKILL.md files changed in this PR._
+          EOF
+
+      # NOTE: we use a self-contained Node script to post/edit the sticky comment
+      # via the Gitea API rather than a third-party action. Keeps the workflow
+      # free of external action dependencies and avoids the supply-chain
+      # concerns we declined under PR #97.
+      - name: Post or update sticky PR comment
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_REPO: ${{ gitea.repository }}
+          GITEA_PR: ${{ gitea.event.pull_request.number }}
+          GITEA_API: ${{ gitea.api_url || 'https://git.integrolabs.net/api/v1' }}
+        run: |
+          BODY=$(cat skill-lint-comment.md)
+          MARKER="<!-- aiwg-skill-lint-bot -->"
+
+          # Find existing bot comment by marker.
+          EXISTING_ID=$(curl -fsSL \
+            -H "Authorization: token $GITEA_TOKEN" \
+            "$GITEA_API/repos/$GITEA_REPO/issues/$GITEA_PR/comments" \
+            | node -e "
+              const data = JSON.parse(require('fs').readFileSync(0,'utf8'));
+              const m = data.find(c => c.body && c.body.includes('$MARKER'));
+              process.stdout.write(m ? String(m.id) : '');
+            ")
+
+          PAYLOAD=$(node -e "
+            const body = require('fs').readFileSync('skill-lint-comment.md','utf8');
+            process.stdout.write(JSON.stringify({ body }));
+          ")
+
+          if [ -n "$EXISTING_ID" ]; then
+            echo "Updating existing comment $EXISTING_ID"
+            curl -fsSL -X PATCH \
+              -H "Authorization: token $GITEA_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "$GITEA_API/repos/$GITEA_REPO/issues/comments/$EXISTING_ID" > /dev/null
+          else
+            echo "Creating new comment"
+            curl -fsSL -X POST \
+              -H "Authorization: token $GITEA_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "$GITEA_API/repos/$GITEA_REPO/issues/$GITEA_PR/comments" > /dev/null
+          fi

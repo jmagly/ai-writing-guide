@@ -103,20 +103,23 @@ skills that haven't been fleshed out.
 
 ## CI integration
 
-The diff-aware/full-corpus skill-frontmatter linter (#1014, in
-`tools/linters/skill-frontmatter-linter.mjs`) remains the schema-only
-fast gate. `skill-lint` is a richer, complementary check:
+Two workflows in `.gitea/workflows/` cover skill quality:
+
+- **`metadata-validation.yml`** (#1014) — schema-only gate. Fails the PR
+  if any SKILL.md violates the schema. Runs against the full corpus.
+- **`skill-lint-pr.yml`** (#1015 Phase D) — diagnostic. Runs
+  `aiwg skill-lint --json` on changed SKILL.md files and posts a
+  sticky PR comment with per-dimension scores. Non-blocking by default.
+
+For an ad-hoc CI step in another workflow:
 
 ```yaml
-# Optional CI step — replace standard with strict for stricter projects
+# Optional — replace `standard` with `strict` for stricter projects
 - name: Skill quality (lint)
   run: aiwg skill-lint agentic/code --rubric standard
 ```
 
 The command exits 0 when all files meet the threshold, 1 otherwise.
-
-For a sticky PR comment surface (Phase D, separate workflow), pipe
-`--json` output through a comment-rendering action.
 
 ## Relation to other tools
 
