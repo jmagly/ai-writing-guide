@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: rlm-status
 platforms: [all]
 description: Show status of RLM task tree execution
 commandHint:

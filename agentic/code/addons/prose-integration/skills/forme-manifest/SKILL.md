@@ -5,7 +5,7 @@ description: Read a multi-service OpenProse program directory, analyze all servi
 version: 0.1.0
 platforms: [all]
 requires:
-  - program-dir: path to directory containing a multi-service OpenProse program (index.md with kind: program and services: list)
+  - "program-dir: path to directory containing a multi-service OpenProse program (index.md with kind: program and services: list)"
 ensures:
   - wiring-manifest: human-readable manifest showing service contracts, dependency graph, and execution order
   - mermaid-diagram: visual dependency graph in Mermaid LR format

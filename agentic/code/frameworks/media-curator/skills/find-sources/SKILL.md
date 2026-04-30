@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: find-sources
 platforms: [all]
 description: Discover and rank media sources across platforms for an artist or specific content
 commandHint:
-  argumentHint: "<artist>" [--scope complete|album:NAME|era:NAME|track:NAME] [--tier 1-4] [--output sources.yaml]
-  allowedTools: Bash, Read, Write, WebSearch, WebFetch
+  argumentHint: '"<artist>" [--scope complete|album:NAME|era:NAME|track:NAME] [--tier 1-4] [--output sources.yaml]'
+  allowedTools: 'Bash, Read, Write, WebSearch, WebFetch'
   model: sonnet
   category: media-curator
 ---

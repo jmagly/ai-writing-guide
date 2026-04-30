@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: rlm-search
 platforms: [all]
 description: Run the full Recursive Language Model pipeline — prep, fan out across chunks, and recursively synthesize until results fit one context window
 ---

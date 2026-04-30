@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: tag-collection
 platforms: [all]
 description: Apply metadata tags, embed artwork, and organize media files with consistent naming
 commandHint:

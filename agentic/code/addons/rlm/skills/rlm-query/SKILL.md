@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: rlm-query
 platforms: [all]
 description: Spawn sub-agent to process focused context and return structured result
 commandHint:
-  argumentHint: "<context-file> <sub-prompt>" [--model <model>] [--output <file>] [--depth <n>]
-  allowedTools: Read, Write, Grep, Glob, Bash
+  argumentHint: '"<context-file> <sub-prompt>" [--model <model>] [--output <file>] [--depth <n>]'
+  allowedTools: 'Read, Write, Grep, Glob, Bash'
   model: sonnet
   category: rlm
 ---

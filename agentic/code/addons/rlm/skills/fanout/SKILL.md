@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: fanout
 platforms: [all]
 description: Dispatch the same query to multiple subagents in parallel across chunks in a manifest and aggregate results with source provenance
 ---

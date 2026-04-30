@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: check-completeness
 platforms: [all]
 description: Analyze collection completeness against canonical discography and generate prioritized gap report
 commandHint:
-  argumentHint: "<artist>" [--collection <path>] [--gaps-only] [--priority high|medium|low|all] [--output report.yaml]
-  allowedTools: Bash, Read, Write, Glob, Grep, WebSearch, WebFetch
+  argumentHint: '"<artist>" [--collection <path>] [--gaps-only] [--priority high|medium|low|all] [--output report.yaml]'
+  allowedTools: 'Bash, Read, Write, Glob, Grep, WebSearch, WebFetch'
   model: sonnet
   category: media-curator
 ---

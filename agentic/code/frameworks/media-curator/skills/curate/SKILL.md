@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: curate
 platforms: [all]
 description: Orchestrate end-to-end media curation from analysis through acquisition, tagging, and verification
 commandHint:
-  argumentHint: "<artist>" [--scope complete|era:NAME|style:NAME] [--output <dir>] [--quality <threshold>] [--export <profile>]
-  allowedTools: Bash, Read, Write, Glob, Grep, WebSearch, WebFetch, Task
+  argumentHint: '"<artist>" [--scope complete|era:NAME|style:NAME] [--output <dir>] [--quality <threshold>] [--export <profile>]'
+  allowedTools: 'Bash, Read, Write, Glob, Grep, WebSearch, WebFetch, Task'
   model: opus
   category: media-curator
   orchestration: true

@@ -8,8 +8,8 @@ requires:
   - program: path to an OpenProse program file (.md with contract frontmatter)
   - "if program has requires: fields: values for each required input"
 ensures:
-  - output: the program's ensures: outputs, delivered per contract obligation
-  - run-state: execution artifacts saved to .aiwg/working/prose-runs/{run-id}/
+  - "output: the program's ensures: outputs, delivered per contract obligation"
+  - "run-state: execution artifacts saved to .aiwg/working/prose-runs/{run-id}/"
   - "if multi-service (kind: program + services:): wiring manifest generated before execution"
 errors:
   - prose-not-found: OpenProse installation not detected; run /prose-detect for guidance

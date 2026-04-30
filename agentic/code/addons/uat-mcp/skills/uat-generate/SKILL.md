@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: uat-generate
 platforms: [all]
 description: Discover MCP tools and generate a phased UAT plan with agent-executable test specifications
 commandHint:
-  argumentHint: [--mode mcp] [--server <name>] [--output <path>] [--execution-mode quick|standard|full] [--interactive]
-  allowedTools: Read, Write, Glob, Grep, Bash, Task
+  argumentHint: '[--mode mcp] [--server <name>] [--output <path>] [--execution-mode quick|standard|full] [--interactive]'
+  allowedTools: 'Read, Write, Glob, Grep, Bash, Task'
   model: opus
   category: uat-mcp
 ---

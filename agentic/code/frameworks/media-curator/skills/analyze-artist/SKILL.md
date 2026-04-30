@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: analyze-artist
 platforms: [all]
 description: Analyze an artist's discography to identify eras, catalog structure, and collection plan
 commandHint:
-  argumentHint: "<artist_name>" [--scope complete|era:NAME|style:NAME] [--depth quick|moderate|thorough]
-  allowedTools: WebSearch, WebFetch, Read, Write, Bash
+  argumentHint: '"<artist_name>" [--scope complete|era:NAME|style:NAME] [--depth quick|moderate|thorough]'
+  allowedTools: 'WebSearch, WebFetch, Read, Write, Bash'
   model: sonnet
   category: media-curator
 ---

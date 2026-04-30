@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: export
 platforms: [all]
 description: Export media collection to platform-specific formats (Plex, Jellyfin, MPD, mobile, archival)
 commandHint:

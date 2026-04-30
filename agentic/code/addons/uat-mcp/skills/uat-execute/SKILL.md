@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: uat-execute
 platforms: [all]
 description: Execute a UAT plan against live MCP connections, tracking pass/fail per test and filing issues on failure
 commandHint:

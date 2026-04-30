@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: uat-report
 platforms: [all]
 description: Generate UAT completion report with tool coverage matrix, pass/fail metrics, and regression detection
 commandHint:

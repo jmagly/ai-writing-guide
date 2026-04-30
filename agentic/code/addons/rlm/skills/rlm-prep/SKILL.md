@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: rlm-prep
 platforms: [all]
 description: Prepare source content for RLM processing by discovering files, chunking each one, and writing a unified searchable manifest
 ---

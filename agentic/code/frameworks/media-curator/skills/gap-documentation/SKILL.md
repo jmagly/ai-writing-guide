@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: gap-documentation
 platforms: [all]
 description: Document missing content in media archives with standardized GAP-NOTE markers that guide acquisition and measure completeness
 ---
