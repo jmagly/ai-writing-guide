@@ -124,7 +124,7 @@ jobs:
           "
 
   validate-skill-frontmatter:
-    name: Validate SKILL.md Frontmatter (changed files)
+    name: Validate SKILL.md Frontmatter (full corpus)
     runs-on: ubuntu-latest
     container: node:20
     timeout-minutes: 5
@@ -132,54 +132,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install js-yaml
         run: npm install --no-save js-yaml
 
-      - name: Identify changed SKILL.md files
-        id: changed
-        shell: bash
-        run: |
-          BASE_REF="${{ gitea.base_ref || gitea.event.pull_request.base.ref || 'main' }}"
-          git fetch --no-tags origin "$BASE_REF" || true
-
-          # Resolve base SHA. Prefer merge-base for accurate three-way diff;
-          # fall back to direct ref then to HEAD~1 for non-PR runs.
-          if BASE_SHA=$(git merge-base HEAD "origin/$BASE_REF" 2>/dev/null); then
-            :
-          elif BASE_SHA=$(git rev-parse "origin/$BASE_REF" 2>/dev/null); then
-            :
-          else
-            BASE_SHA="HEAD~1"
-          fi
-          echo "Base: $BASE_SHA"
-
-          # Get all changed/added files (no git pathspec — `**` is literal
-          # without `:(glob)` magic). Then filter to SKILL.md in shell.
-          git diff --name-only --diff-filter=AM "$BASE_SHA"..HEAD \
-            | grep -E '(^|/)SKILL\.md$' \
-            > .changed-skills.txt || true
-
-          # Strip empty lines so `wc -l` is meaningful and xargs gets a
-          # genuinely empty stream when nothing changed.
-          sed -i '/^$/d' .changed-skills.txt
-
-          COUNT=$(wc -l < .changed-skills.txt)
-          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
-
-          if [ "$COUNT" -gt 0 ]; then
-            echo "Changed SKILL.md files ($COUNT):"
-            cat .changed-skills.txt
-          else
-            echo "No SKILL.md files changed in this PR."
-          fi
-
-      - name: Lint changed SKILL.md frontmatter
-        if: steps.changed.outputs.count != '0'
-        shell: bash
-        run: xargs -r node tools/linters/skill-frontmatter-linter.mjs < .changed-skills.txt
+      - name: Lint all SKILL.md frontmatter under agentic/code
+        run: node tools/linters/skill-frontmatter-linter.mjs agentic/code
 
   performance-check:
     name: Validation Performance
