@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-discover
 platforms: [all]
 description: Search for research papers across academic databases
 commandHint:

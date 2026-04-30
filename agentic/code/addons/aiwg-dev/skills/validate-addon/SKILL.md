@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: validate-addon
 description: Validate an entire AIWG addon package for completeness and release readiness
 platforms: [all]
 

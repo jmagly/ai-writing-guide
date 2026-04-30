@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-quality
 platforms: [all]
 description: Assess source quality using GRADE methodology
 commandHint:

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: devkit-validate
 platforms: [all]
 description: Validate addon, framework, or extension structure and manifest
 ---

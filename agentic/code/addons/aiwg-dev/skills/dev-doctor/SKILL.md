@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: dev-doctor
 description: Run a development-focused health check on the AIWG repository structure
 platforms: [all]
 

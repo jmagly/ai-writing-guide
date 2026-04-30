@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: devkit-create-skill
 platforms: [all]
 description: Enable interactive design mode
 ---

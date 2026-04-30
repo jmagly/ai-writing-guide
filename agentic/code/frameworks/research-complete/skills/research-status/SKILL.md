@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-status
 platforms: [all]
 description: Show research corpus health and statistics
 commandHint:

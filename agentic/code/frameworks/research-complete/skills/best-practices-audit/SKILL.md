@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: best-practices-audit
 platforms: [all]
 description: Research-grounded validation of a target (file, directory, or topic) against current external best practices, vendor documentation, and practitioner discussion — produces a cited, evidence-grounded comparison
 commandHint:

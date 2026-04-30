@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: prompt-engineer
 platforms: [all]
 description: Production prompt engineering — write, iterate, and refine prompts with built-in eval loop feedback
 commandHint:

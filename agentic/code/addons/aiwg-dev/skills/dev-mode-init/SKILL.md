@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: dev-mode-init
 description: Switch AIWG CLI to dev mode (local repo source), rebuild, deploy dev tools, and run a health check — all via the Steward agent
 platforms: [all]
 

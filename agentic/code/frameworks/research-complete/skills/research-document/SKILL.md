@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-document
 platforms: [all]
 description: Generate summaries and literature notes from research papers
 commandHint:

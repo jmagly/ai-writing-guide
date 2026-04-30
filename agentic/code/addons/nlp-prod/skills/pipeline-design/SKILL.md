@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: pipeline-design
 platforms: [all]
 description: Interactive LLM inference pipeline design — elicits requirements, recommends pattern, scaffolds production-ready artifacts
 commandHint:

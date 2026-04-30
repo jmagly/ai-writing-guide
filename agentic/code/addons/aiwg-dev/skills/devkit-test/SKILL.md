@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: devkit-test
 platforms: [all]
 description: Auto-fix discoverable issues
 ---

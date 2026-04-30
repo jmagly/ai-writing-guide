@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-workflow
 platforms: [all]
 description: Execute multi-stage research workflows
 commandHint:

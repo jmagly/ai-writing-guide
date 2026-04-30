@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: forensics-status
 platforms: [all]
 description: Show investigation status dashboard
 commandHint:

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: voice-create
 platforms: [all]
 description: Generate custom voice profiles from natural language descriptions by mapping tone, formality, and domain to voice dimensions
 ---

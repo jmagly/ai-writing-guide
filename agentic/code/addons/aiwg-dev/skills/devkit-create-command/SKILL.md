@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: devkit-create-command
 platforms: [all]
 description: Create a new slash command with AI-guided behavior definition
 ---

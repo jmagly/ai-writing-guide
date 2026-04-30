@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: devkit-create-framework
 platforms: [all]
 description: Comma-separated phase names
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: voice-blend
 platforms: [all]
 description: Combine multiple voice profiles with weighted mixing to create hybrid voices
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: forensics-investigate
 platforms: [all]
 description: Full multi-agent investigation workflow
 commandHint:

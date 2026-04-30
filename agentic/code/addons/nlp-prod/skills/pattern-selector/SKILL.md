@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: pattern-selector
 platforms: [all]
 description: Recommends the right LLM pipeline pattern for a use case — simple chain, embedded agent, state machine, RAG, eval loop, or dynamic prompt
 commandHint:

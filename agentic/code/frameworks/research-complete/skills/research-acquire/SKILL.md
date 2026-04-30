@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-acquire
 platforms: [all]
 description: Download research papers and extract metadata
 commandHint:

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: forensics-profile
 platforms: [all]
 description: Build target system profile via SSH or cloud API enumeration
 commandHint:

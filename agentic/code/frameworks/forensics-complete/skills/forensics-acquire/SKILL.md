@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: forensics-acquire
 platforms: [all]
 description: Evidence acquisition with chain of custody and hash verification
 commandHint:

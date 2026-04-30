@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-provenance
 platforms: [all]
 description: Query provenance chains and artifact relationships
 commandHint:

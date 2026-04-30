@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-cite
 platforms: [all]
 description: Format citations and generate bibliographies
 commandHint:

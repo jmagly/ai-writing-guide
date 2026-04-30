@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: forensics-timeline
 platforms: [all]
 description: Build correlated event timeline from multiple sources
 commandHint:

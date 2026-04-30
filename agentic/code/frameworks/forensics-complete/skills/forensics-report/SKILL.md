@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: forensics-report
 platforms: [all]
 description: Generate forensic investigation report
 commandHint:

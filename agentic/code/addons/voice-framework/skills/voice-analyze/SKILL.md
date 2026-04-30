@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: voice-analyze
 platforms: [all]
 description: Reverse-engineer voice profiles from sample content by analyzing writing patterns
 ---

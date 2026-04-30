@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: devkit-create-agent
 platforms: [all]
 description: Create a new agent with AI-guided expertise definition following the Agent Design Bible
 ---
