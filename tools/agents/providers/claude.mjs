@@ -38,7 +38,9 @@ import {
   collectFrameworkArtifacts,
   cleanupOldRuleFiles,
   filterCommandsAgainstSkills,
-  deploySoulCompanions
+  deploySoulCompanions,
+  buildRemotesTopologyBlock,
+  interpolateContextTokens
 } from './base.mjs';
 
 // ============================================================================
@@ -311,15 +313,17 @@ export async function postDeploy(targetDir, opts) {
  * Falls back gracefully if template is missing (older installs).
  */
 /**
- * Substitute {{TOKEN}} placeholders in hook file content with deployment counts.
+ * Substitute {{TOKEN}} placeholders in hook file content with deployment counts
+ * and the resolved remotes topology (#998).
+ *
+ * Delegates to the shared interpolateContextTokens helper in base.mjs so the
+ * Claude hook file and the AGENTS.md template path render the same tokens.
  */
-function interpolateHookTokens(content, counts) {
-  if (!counts) return content;
-  return content
-    .replace(/\{\{AGENTS_COUNT\}\}/g, String(counts.agents || 0))
-    .replace(/\{\{COMMANDS_COUNT\}\}/g, String(counts.commands || 0))
-    .replace(/\{\{SKILLS_COUNT\}\}/g, String(counts.skills || 0))
-    .replace(/\{\{RULES_COUNT\}\}/g, String(counts.rules || 0));
+function interpolateHookTokens(content, counts, targetDir) {
+  return interpolateContextTokens(content, {
+    counts,
+    topology: targetDir ? buildRemotesTopologyBlock(targetDir) : '',
+  });
 }
 
 function deployHookFile(targetDir, opts) {
@@ -352,7 +356,7 @@ function deployHookFile(targetDir, opts) {
     console.log('[dry-run] Would write AIWG.md from template');
   } else {
     let content = fs.readFileSync(templatePath, 'utf8');
-    content = interpolateHookTokens(content, effectiveCounts);
+    content = interpolateHookTokens(content, effectiveCounts, targetDir);
     fs.writeFileSync(hookDest, content, 'utf8');
     console.log('Created AIWG.md (hook file)');
   }

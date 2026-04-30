@@ -2,6 +2,7 @@
 
 AIWG connected via MCP (`aiwg mcp serve`). Tools: workflow-run, artifact-read, artifact-write, template-render, agent-list.
 
+{{REMOTES_TOPOLOGY}}
 ## Route to AIWG When
 
 - Structured artifacts needed (requirements, architecture, test plans, risk registers)

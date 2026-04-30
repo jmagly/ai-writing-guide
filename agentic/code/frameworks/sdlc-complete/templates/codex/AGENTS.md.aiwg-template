@@ -19,6 +19,7 @@ npm run lint
 
 <!-- AIWG SDLC Framework Integration -->
 
+{{REMOTES_TOPOLOGY}}
 ## AIWG SDLC Framework
 
 This project uses [AIWG](https://aiwg.io) for SDLC orchestration.

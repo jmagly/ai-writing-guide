@@ -4,6 +4,7 @@ This file provides project-specific guidance for OpenCode's AI coding agent.
 
 <!-- AIWG SDLC Framework Integration -->
 
+{{REMOTES_TOPOLOGY}}
 ## AIWG SDLC Framework
 
 This project uses the AIWG SDLC Framework for software development lifecycle management.

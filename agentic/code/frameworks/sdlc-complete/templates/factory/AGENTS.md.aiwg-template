@@ -15,6 +15,7 @@ npm run lint
 
 <!-- AIWG SDLC Framework Integration -->
 
+{{REMOTES_TOPOLOGY}}
 ## AIWG SDLC Framework
 
 **53 SDLC droids** in `.factory/droids/` | **42+ commands** in `.factory/commands/`
