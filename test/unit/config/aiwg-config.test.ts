@@ -18,6 +18,7 @@ import {
   hashManifest,
   migrateLegacyRegistry,
   resolveRemotes,
+  resolveRemoteProvider,
 } from '../../../src/config/aiwg-config.js';
 
 function makeTmpDir(): string {
@@ -349,6 +350,44 @@ describe('aiwg-config', () => {
         purpose: 'public-mirror',
         push_on_release: true,
       });
+    });
+  });
+
+  // ── resolveRemoteProvider (#997) ───────────────────────────────────────────
+
+  describe('resolveRemoteProvider', () => {
+    it('returns unknown for an empty URL', () => {
+      expect(resolveRemoteProvider('')).toBe('unknown');
+    });
+
+    it('detects github.com over https', () => {
+      expect(resolveRemoteProvider('https://github.com/jmagly/aiwg.git')).toBe('github');
+    });
+
+    it('detects github.com over ssh', () => {
+      expect(resolveRemoteProvider('git@github.com:jmagly/aiwg.git')).toBe('github');
+    });
+
+    it('detects gitlab.com', () => {
+      expect(resolveRemoteProvider('https://gitlab.com/group/repo.git')).toBe('gitlab');
+    });
+
+    it('detects self-hosted gitlab', () => {
+      expect(resolveRemoteProvider('https://gitlab.example.com/group/repo.git')).toBe('gitlab');
+    });
+
+    it('detects gitea by hostname substring', () => {
+      expect(resolveRemoteProvider('https://gitea.example.org/owner/repo.git')).toBe('gitea');
+      expect(resolveRemoteProvider('git@gitea.local:owner/repo.git')).toBe('gitea');
+    });
+
+    it('returns unknown for self-hosted instances without telling hostname', () => {
+      expect(resolveRemoteProvider('https://git.example.com/owner/repo.git')).toBe('unknown');
+    });
+
+    it('does not misclassify github fork urls in a path segment', () => {
+      // Path-only "github" (without being the host) should not match
+      expect(resolveRemoteProvider('https://example.com/github/repo.git')).toBe('unknown');
     });
   });
 

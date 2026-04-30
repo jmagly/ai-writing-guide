@@ -12,14 +12,36 @@ commandHint:
 
 **PR Link/Number**: $ARGUMENTS
 
-> **Instructions**: Execute each task in the order given to conduct a thorough code review. Update GitHub with this review.
+> **Instructions**: Execute each task in the order given to conduct a thorough code review. Post the review back to the PR on the resolved primary remote (see "Provider Resolution" below).
 > **Important**: The future is now—any improvements or "future" recommendations must be addressed **immediately**.
+
+---
+
+## Provider Resolution
+
+Don't assume GitHub. The PR API to use is determined by the project's `.aiwg/aiwg.config` `remotes.primary` (#994):
+
+```ts
+import { readAiwgConfig, resolveRemotes, resolveRemoteProvider } from 'aiwg/config';
+
+const cfg = await readAiwgConfig(projectDir);
+const resolved = resolveRemotes(cfg?.remotes);     // primary defaults to "origin"
+const url = exec(`git remote get-url ${resolved.primary}`).trim();
+const host = resolveRemoteProvider(url);           // 'github' | 'gitea' | 'gitlab' | 'unknown'
+```
+
+- `host === 'github'` → `gh pr view`, `gh pr review`, `gh api`
+- `host === 'gitea'`  → Gitea MCP `pull_request_*` tools or `tea` CLI
+- `host === 'gitlab'` → `glab` CLI
+- `host === 'unknown'` → ask the operator which provider to use; don't guess
+
+When the operator passes a full PR URL (`<pr_link_or_number>`), parse the host out of the URL and prefer that — the URL is the operator's explicit choice.
 
 ---
 
 ## Arguments
 
-- `<pr_link_or_number>` - GitHub PR URL or PR number (required)
+- `<pr_link_or_number>` - PR URL or PR number on the resolved primary remote (required)
 - `--interactive` - Prompt for confirmation before posting review
 - `--guidance "text"` - Additional review guidance or focus areas
 - `--regression-gate` - Run regression check before merge approval (default: true)

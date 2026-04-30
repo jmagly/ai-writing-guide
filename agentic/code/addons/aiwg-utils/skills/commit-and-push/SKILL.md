@@ -134,9 +134,33 @@ EOF
 
 ### Step 4: Push
 
+Default to `git push` (uses the branch's tracked upstream). When the project declares a `remotes` block in `.aiwg/aiwg.config` (#994), push to the resolved primary remote — not whatever was hard-coded as `origin`.
+
+**Resolution rule** (consult `.aiwg/aiwg.config`):
+
+1. If `remotes.primary` is set → push to that remote name.
+2. Otherwise → fall back to the default `origin`.
+
+The `resolveRemotes()` helper in `src/config/aiwg-config.ts` returns the resolved remote topology with these defaults applied. Skills don't need to re-implement the rule — read it, use it.
+
 ```bash
+# Default — branch tracks an upstream
 git push
+
+# Explicit primary (when not the branch's tracked upstream)
+git push <resolved-primary>
 ```
+
+### Release-time mirroring
+
+When pushing tags as part of a stable release cut, also mirror the tags to every `secondary[]` entry whose `push_on_release` flag is `true`. Example for this repo's topology (`origin` = Gitea primary, `github` = public mirror):
+
+```bash
+git push origin --tags          # primary CI / release
+git push github --tags          # mirror — only because push_on_release: true
+```
+
+Skip secondary remotes that don't have `push_on_release: true`. Don't push branches to mirrors — only tags on stable releases.
 
 **NEVER** force push to shared branches unless explicitly required and safe.
 
