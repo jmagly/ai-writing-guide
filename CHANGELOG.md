@@ -7,13 +7,26 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Project repo topology in `.aiwg/aiwg.config`** (#994). New `remotes` block declares `primary` (CI/issues/PRs), `issue_tracker`, `ci`, and `secondary[]` (mirrors with `push_on_release` flag). `resolveRemotes()` helper applies defaults — when absent, `origin` is treated as primary, fully back-compat. `aiwg doctor` validates that every named remote exists in `git remote`. Closes a class of "agent guessed wrong" failures for projects running on Gitea/GitLab/internal GitHub with a public mirror.
+- **`resolveRemoteProvider(url)` helper** (#997). Returns `'github' | 'gitlab' | 'gitea' | 'unknown'` from a remote URL. Self-hosted instances without a tell-tale hostname return `'unknown'` so callers ask the operator instead of guessing.
+- **Delivery / repo-control policy in `.aiwg/aiwg.config`** (#995). New `delivery` block declares `mode` (direct / feature-branch / pr-required), `default_branch`, `branch_naming.prefix_by_type`, `merge_style`, `delete_branch_on_merge`, `force_push_policy`, `require_ci_green`, `require_signed_commits`, `auto_close_issues`, `issue_comment_on_cycle`. `resolveDelivery()` applies conservative defaults that match what AIWG agents do today — no regression for existing projects. `aiwg doctor` enum-validates and best-effort checks `default_branch` exists in git.
+- **Repo topology emitted into `AIWG.md` / `AGENTS.md`** (#998). `aiwg use` now interpolates a `## Repo Topology` section into the Claude hook file and every template-based provider (codex / cursor / factory / hermes / opencode). Agents see primary/secondary remote URLs at session start without reading `.aiwg/aiwg.config` directly. Empty when no `remotes` block configured.
+- **`aiwg config show --project [--json]`** (#999). New CLI surface for inspecting the resolved project config: providers, installed frameworks, and the resolved remotes topology (with URLs resolved via `git remote get-url`). `--json` flag for CI scripts. Errors with `ERR_NO_PROJECT_CONFIG` and a helpful hint when `.aiwg/aiwg.config` is absent.
+- **`aiwg config get|set --project <key> [<value>]`** (#1006). Read and write the project config from the CLI without hand-editing JSON. Dotted paths (`delivery.mode`, `remotes.primary`). Enum validation on `set` for `delivery.mode` / `delivery.merge_style` / `delivery.force_push_policy` rejects unknown values with a clear hint listing allowed members. Boolean coercion for the five `delivery.*` boolean fields. Read-modify-write preserves unrelated fields via `writeAiwgConfig()` (atomic, secret-safe).
+- **Intake-wizard delivery-policy question** (#1005). `/intake-wizard` now asks "How does your team ship code?" with three preset answers (`direct` / `feature-branch` / `pr-required`) plus an advanced sub-flow for `merge_style`, `force_push_policy`, `require_signed_commits`. `default_branch` derived from `git symbolic-ref HEAD` — handles `master → main` migrations gracefully.
+
 ### Changed
 
 - **`aiwg sync` renamed to `aiwg refresh`** (#932). The new name better matches the operation's semantics (re-deploy + health check, not a directional sync). `aiwg sync` continues to work as a deprecated alias and emits a runtime warning. Canonical docs (`CLAUDE.md`, `AIWG.md`, `docs/cli-reference.md`, agent playbooks, self-maintenance rule and templates) now use `aiwg refresh`. Removal target: after the 2026.5.x stable line; the alias will be removed in 2026.6.0.
+- **Skill consumers respect resolved remotes** (#997). `commit-and-push`, `issue-create`, `issue-list`, `pr-review` SKILL.md prose updated to consult `resolveRemotes()` / `resolveRemoteProvider()` with explicit precedence: `--provider` flag > resolved `remotes.issue_tracker` URL host > legacy `.aiwg/config.yaml` ticketing > `CLAUDE.md` block > `local`. Self-hosted instances classified as `'unknown'` prompt the operator rather than guessing.
+- **Skill consumers respect resolved delivery policy** (#1007). Same skills updated to consult `resolveDelivery()` for `mode` (controls branch creation + PR opening), `force_push_policy`, `require_signed_commits`, `branch_naming`, `merge_style`, `delete_branch_on_merge`, `require_ci_green`, `auto_close_issues`, `issue_comment_on_cycle`. Defaults preserve today's behavior.
 
 ### Fixed
 
 - **`aiwg ops init` no longer creates nested ops workspaces** (#935). `initWorkspace()` walks up from the target home looking for `OpsInventory.yaml` and refuses with a clear error and a suggested sibling path if it finds one in an ancestor.
+- **`aiwg validate-metadata` no longer crashes with `ERR_MODULE_NOT_FOUND`** (#1001). Import path drift in `tools/cli/validate-metadata.mjs:11` — was importing `../../dist/plugin/metadata-validator.js`, but the TS build emits to `../../dist/src/plugin/metadata-validator.js`. One-line fix plus a regression test that parses the import statement and asserts it resolves to a real file on disk.
 
 ### Internal
 
