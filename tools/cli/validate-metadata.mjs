@@ -8,7 +8,7 @@
  * @module tools/cli/validate-metadata
  */
 
-import { MetadataValidator } from '../../dist/plugin/metadata-validator.js';
+import { MetadataValidator } from '../../dist/src/plugin/metadata-validator.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import chalk from 'chalk';
