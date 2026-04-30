@@ -100,14 +100,21 @@ export async function main(args: string[]): Promise<void> {
 }
 
 async function handleGet(config: UserConfig, args: string[]): Promise<void> {
-  const key = args[0];
+  const isProject = args.includes('--project');
+  const positional = args.filter(a => a !== '--project');
+  const key = positional[0];
   if (!key) {
     throw new AiwgError({
       code: 'ERR_USAGE_MISSING_ARG',
       message: 'aiwg config get requires a key',
-      hint: 'Example: aiwg config get defaults.provider',
+      hint: 'Example: aiwg config get defaults.provider  (or --project delivery.mode)',
       exitCode: EXIT_CODES.USAGE,
     });
+  }
+
+  if (isProject) {
+    await projectConfigGet(key, args);
+    return;
   }
 
   const value = await config.get(key);
@@ -121,20 +128,139 @@ async function handleGet(config: UserConfig, args: string[]): Promise<void> {
 }
 
 async function handleSet(config: UserConfig, args: string[]): Promise<void> {
-  const key = args[0];
-  const value = args[1];
+  const isProject = args.includes('--project');
+  const positional = args.filter(a => a !== '--project');
+  const key = positional[0];
+  const value = positional[1];
 
   if (!key || value === undefined) {
     throw new AiwgError({
       code: 'ERR_USAGE_MISSING_ARG',
       message: 'aiwg config set requires both a key and a value',
-      hint: 'Example: aiwg config set defaults.verbosity quiet',
+      hint: 'Example: aiwg config set defaults.verbosity quiet  (or --project delivery.mode pr-required)',
       exitCode: EXIT_CODES.USAGE,
     });
   }
 
+  if (isProject) {
+    await projectConfigSet(key, value, args);
+    return;
+  }
+
   await config.set(key, value);
   console.log(`Set ${key} = ${value}`);
+}
+
+// ── Project-config get/set (#1006) ────────────────────────────────────────────
+//
+// Extends `aiwg config get|set` with `--project` to read/write the project-
+// level .aiwg/aiwg.config. Dotted paths address nested fields:
+//   aiwg config get --project delivery.mode
+//   aiwg config set --project delivery.mode pr-required
+//   aiwg config get --project remotes.primary
+//
+// Set validates enum membership for known fields (delivery.mode,
+// delivery.merge_style, delivery.force_push_policy) before writing.
+
+const ENUM_RULES: Record<string, readonly string[]> = {
+  'delivery.mode': ['direct', 'feature-branch', 'pr-required'],
+  'delivery.merge_style': ['rebase-merge', 'squash', 'merge', 'fast-forward-only'],
+  'delivery.force_push_policy': ['never', 'own-branch-only', 'allowed'],
+};
+
+const BOOLEAN_FIELDS = new Set([
+  'delivery.delete_branch_on_merge',
+  'delivery.require_ci_green',
+  'delivery.require_signed_commits',
+  'delivery.auto_close_issues',
+  'delivery.issue_comment_on_cycle',
+]);
+
+async function projectConfigGet(key: string, args: string[]): Promise<void> {
+  const { readAiwgConfig, getProjectDir } = await import('./aiwg-config.js');
+  const projectDir = getProjectDir(undefined, args);
+  const cfg = await readAiwgConfig(projectDir);
+  if (!cfg) {
+    throw new AiwgError({
+      code: 'ERR_NO_PROJECT_CONFIG',
+      message: 'No .aiwg/aiwg.config in this project.',
+      hint: 'Run `aiwg init` to scaffold one, or use `aiwg use <framework>` to deploy.',
+      exitCode: EXIT_CODES.CONFIG,
+    });
+  }
+
+  const value = getDottedPath(cfg as unknown as Record<string, unknown>, key);
+  if (value === undefined) {
+    console.log('(not set)');
+  } else if (typeof value === 'object') {
+    console.log(JSON.stringify(value, null, 2));
+  } else {
+    console.log(String(value));
+  }
+}
+
+async function projectConfigSet(key: string, raw: string, args: string[]): Promise<void> {
+  const { readAiwgConfig, writeAiwgConfig, getProjectDir, emptyConfig } = await import('./aiwg-config.js');
+  const projectDir = getProjectDir(undefined, args);
+
+  // Validate enum fields before writing
+  const allowed = ENUM_RULES[key];
+  if (allowed && !allowed.includes(raw)) {
+    throw new AiwgError({
+      code: 'ERR_INVALID_VALUE',
+      message: `Invalid value for ${key}: '${raw}'. Allowed: ${allowed.join(', ')}`,
+      hint: `Try: aiwg config set --project ${key} ${allowed[0]}`,
+      exitCode: EXIT_CODES.USAGE,
+    });
+  }
+
+  // Coerce booleans for known boolean fields
+  let value: unknown = raw;
+  if (BOOLEAN_FIELDS.has(key)) {
+    if (raw === 'true') value = true;
+    else if (raw === 'false') value = false;
+    else {
+      throw new AiwgError({
+        code: 'ERR_INVALID_VALUE',
+        message: `${key} must be 'true' or 'false', got '${raw}'`,
+        hint: `Try: aiwg config set --project ${key} true`,
+        exitCode: EXIT_CODES.USAGE,
+      });
+    }
+  }
+
+  // Read-modify-write — preserve unrelated fields. emptyConfig() seeds the
+  // base shape when no config file exists yet (e.g. brand-new project).
+  const cfg = (await readAiwgConfig(projectDir)) ?? emptyConfig();
+  setDottedPath(cfg as unknown as Record<string, unknown>, key, value);
+  await writeAiwgConfig(projectDir, cfg);
+  console.log(`Set --project ${key} = ${raw}`);
+}
+
+/** Read a dotted path from a nested record. Returns undefined when any segment is missing. */
+function getDottedPath(obj: Record<string, unknown>, key: string): unknown {
+  const parts = key.split('.');
+  let cur: unknown = obj;
+  for (const p of parts) {
+    if (cur === null || typeof cur !== 'object') return undefined;
+    cur = (cur as Record<string, unknown>)[p];
+  }
+  return cur;
+}
+
+/** Write a dotted path into a nested record, creating intermediate objects. */
+function setDottedPath(obj: Record<string, unknown>, key: string, value: unknown): void {
+  const parts = key.split('.');
+  const last = parts.pop()!;
+  let cur: Record<string, unknown> = obj;
+  for (const p of parts) {
+    const next = cur[p];
+    if (next === undefined || next === null || typeof next !== 'object' || Array.isArray(next)) {
+      cur[p] = {};
+    }
+    cur = cur[p] as Record<string, unknown>;
+  }
+  cur[last] = value;
 }
 
 async function handleList(config: UserConfig): Promise<void> {
@@ -354,8 +480,10 @@ function printUsage(): void {
   console.log(`Usage: aiwg config <subcommand> [options]
 
 Subcommands:
-  get <key>           Read a config value
-  set <key> <value>   Write a config value
+  get <key>                       Read a user config value
+  get --project <key>             Read a project config value (.aiwg/aiwg.config)
+  set <key> <value>               Write a user config value
+  set --project <key> <value>     Write a project config value (validates enums)
   list                Show all user config
   show --project      Show resolved project config (.aiwg/aiwg.config)
   validate            Validate all config files
@@ -374,6 +502,9 @@ Examples:
   aiwg config list
   aiwg config show --project
   aiwg config show --project --json
+  aiwg config get --project delivery.mode
+  aiwg config set --project delivery.mode pr-required
+  aiwg config set --project delivery.merge_style squash
   aiwg config validate
   aiwg config path
   aiwg config reset defaults.provider
