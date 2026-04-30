@@ -33,16 +33,17 @@ function writeConfig(dir: string, body: Record<string, unknown>): void {
   writeFileSync(join(dir, '.aiwg', 'aiwg.config'), JSON.stringify(cfg, null, 2));
 }
 
+// Note: vitest runs tests in worker threads where process.chdir() is unsupported,
+// so we drive the handler via its `--target <path>` flag — same path the real
+// CLI uses when the operator points at a non-cwd project.
+
 describe('aiwg config show --project (#999)', () => {
   let tmp: string;
-  let originalCwd: string;
   let logs: string[];
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     tmp = makeTmpRepo();
-    originalCwd = process.cwd();
-    process.chdir(tmp);
     logs = [];
     consoleSpy = vi.spyOn(console, 'log').mockImplementation((msg: unknown) => {
       logs.push(typeof msg === 'string' ? msg : JSON.stringify(msg));
@@ -50,13 +51,12 @@ describe('aiwg config show --project (#999)', () => {
   });
 
   afterEach(() => {
-    consoleSpy.mockRestore();
-    process.chdir(originalCwd);
+    consoleSpy?.mockRestore();
     rmSync(tmp, { recursive: true, force: true });
   });
 
   it('errors when no project config exists', async () => {
-    await expect(main(['show', '--project'])).rejects.toMatchObject({
+    await expect(main(['show', '--project', '--target', tmp])).rejects.toMatchObject({
       code: 'ERR_NO_PROJECT_CONFIG',
     });
   });
@@ -69,7 +69,7 @@ describe('aiwg config show --project (#999)', () => {
 
   it('prints human-readable view with default (origin) remote topology', async () => {
     writeConfig(tmp, {});
-    await main(['show', '--project']);
+    await main(['show', '--project', '--target', tmp]);
     const out = logs.join('\n');
     expect(out).toContain('Project config:');
     expect(out).toContain('Schema version: 1');
@@ -84,7 +84,7 @@ describe('aiwg config show --project (#999)', () => {
     writeConfig(tmp, {
       remotes: { primary: 'origin' },
     });
-    await main(['show', '--project']);
+    await main(['show', '--project', '--target', tmp]);
     const out = logs.join('\n');
     expect(out).toContain('https://example.com/owner/repo.git');
     expect(out).not.toContain('no `remotes` block');
@@ -99,7 +99,7 @@ describe('aiwg config show --project (#999)', () => {
         secondary: [{ name: 'github', purpose: 'public-mirror', push_on_release: true }],
       },
     });
-    await main(['show', '--project']);
+    await main(['show', '--project', '--target', tmp]);
     const out = logs.join('\n');
     expect(out).toContain('Secondary');
     expect(out).toContain('github.com/o/r.git');
@@ -112,7 +112,7 @@ describe('aiwg config show --project (#999)', () => {
     writeConfig(tmp, {
       remotes: { primary: 'origin', secondary: [{ name: 'mirror' }] },
     });
-    await main(['show', '--project', '--json']);
+    await main(['show', '--project', '--json', '--target', tmp]);
     const out = logs.join('\n');
     const parsed = JSON.parse(out);
     expect(parsed).toMatchObject({
@@ -127,7 +127,7 @@ describe('aiwg config show --project (#999)', () => {
 
   it('reports url:null in JSON when remote name does not exist in git', async () => {
     writeConfig(tmp, { remotes: { primary: 'nonexistent' } });
-    await main(['show', '--project', '--json']);
+    await main(['show', '--project', '--json', '--target', tmp]);
     const parsed = JSON.parse(logs.join('\n'));
     expect(parsed.remotes.primary).toEqual({ name: 'nonexistent', url: null });
   });
