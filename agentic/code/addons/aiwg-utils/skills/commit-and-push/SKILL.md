@@ -132,6 +132,23 @@ EOF
 
 **DO NOT use**: `--no-verify`, `--allow-empty-message`, `--amend` (unless explicitly correcting last commit).
 
+### Delivery policy resolution (before staging)
+
+Before staging or committing, consult `.aiwg/aiwg.config` `delivery` (#995) via `resolveDelivery()` — the resolved policy controls **how** this commit gets shipped:
+
+| Field | Effect on this skill |
+|-------|----------------------|
+| `mode: direct` | Commit and push directly to `default_branch` — skip branch creation |
+| `mode: feature-branch` | Create a feature branch (per `branch_naming`), commit, push the branch, but don't open a PR |
+| `mode: pr-required` (default) | Feature branch + push + open PR via the resolved primary remote (#994) |
+| `force_push_policy: never` (default) | Refuse `git push --force` / `--force-with-lease` regardless of branch |
+| `force_push_policy: own-branch-only` | Allow force-push only on the agent's own feature branch, never `default_branch` |
+| `force_push_policy: allowed` | No force-push restriction (rare; signal of an unusual workflow) |
+| `require_signed_commits: true` | Add `-S` to `git commit` |
+| `branch_naming.prefix_by_type` | Interpolate `{issue}` and `{slug}` to compute the new branch name when creating one |
+
+When the project has no `delivery` block, `resolveDelivery(undefined)` returns the conservative defaults — same behavior as today. No regression for existing projects.
+
 ### Step 4: Push
 
 Default to `git push` (uses the branch's tracked upstream). When the project declares a `remotes` block in `.aiwg/aiwg.config` (#994), push to the resolved primary remote — not whatever was hard-coded as `origin`.
