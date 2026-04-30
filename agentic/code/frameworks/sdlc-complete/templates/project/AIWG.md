@@ -57,6 +57,7 @@ All SDLC artifacts (requirements, architecture, testing, etc.) are stored in **`
 └── reports/             # Generated reports and indices
 ```
 
+{{REMOTES_TOPOLOGY}}
 ## Core Platform Orchestrator Role
 
 **IMPORTANT**: You (Claude Code) are the **Core Orchestrator** for SDLC workflows, not a command executor.

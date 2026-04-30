@@ -12,6 +12,7 @@ import realFs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
 import { createRequire } from 'module';
+import { execSync as nodeExecSync } from 'child_process';
 
 // Use graceful-fs to prevent EMFILE crashes on systems with low ulimit.
 // graceful-fs queues open() calls when FD pressure is detected and retries
@@ -763,6 +764,93 @@ export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = nul
 // ============================================================================
 
 /**
+ * Build a Markdown "Repo Topology" block from .aiwg/aiwg.config remotes (#998).
+ *
+ * Returns an empty string when there's no `remotes` block configured — agents
+ * should fall back to the today-default behavior in that case.
+ *
+ * The output is a small Markdown section suitable for token substitution into
+ * AIWG.md / AGENTS.md / similar context files. URL resolution is best-effort:
+ * when `git remote get-url <name>` fails (not a git repo, missing remote), the
+ * remote name is shown without a URL.
+ *
+ * @param {string} targetDir - Project directory (the one that owns .aiwg/aiwg.config)
+ * @returns {string} Markdown block (with leading/trailing blank lines), or '' when absent
+ */
+export function buildRemotesTopologyBlock(targetDir) {
+  const cfgPath = path.join(targetDir, '.aiwg', 'aiwg.config');
+  if (!fs.existsSync(cfgPath)) return '';
+
+  let cfg;
+  try {
+    cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+  } catch {
+    return '';
+  }
+  if (!cfg || !cfg.remotes) return '';
+
+  // Apply the same defaults as resolveRemotes() in src/config/aiwg-config.ts.
+  // Inlined here so the deploy path doesn't depend on the compiled TS bundle.
+  const primary = cfg.remotes.primary || 'origin';
+  const issueTracker = cfg.remotes.issue_tracker || primary;
+  const ci = cfg.remotes.ci || primary;
+  const secondary = Array.isArray(cfg.remotes.secondary) ? cfg.remotes.secondary : [];
+
+  function getUrl(remote) {
+    try {
+      return nodeExecSync(`git -C ${JSON.stringify(targetDir)} remote get-url ${JSON.stringify(remote)}`, {
+        stdio: ['ignore', 'pipe', 'ignore'],
+        encoding: 'utf8',
+      }).trim();
+    } catch {
+      return '';
+    }
+  }
+
+  const lines = [];
+  lines.push('## Repo Topology');
+  lines.push('');
+  lines.push('Agents: respect this when picking remotes/providers. From `.aiwg/aiwg.config` `remotes` block (#994).');
+  lines.push('');
+  const primaryUrl = getUrl(primary);
+  const primarySuffix = primaryUrl ? ` (${primaryUrl})` : '';
+  lines.push(`- **Primary**: \`${primary}\`${primarySuffix} — issues, PRs, CI live here`);
+  if (issueTracker !== primary) {
+    const u = getUrl(issueTracker);
+    lines.push(`- **Issue tracker**: \`${issueTracker}\`${u ? ` (${u})` : ''}`);
+  }
+  if (ci !== primary) {
+    const u = getUrl(ci);
+    lines.push(`- **CI**: \`${ci}\`${u ? ` (${u})` : ''}`);
+  }
+  for (const sec of secondary) {
+    if (!sec || !sec.name) continue;
+    const u = getUrl(sec.name);
+    const purpose = sec.purpose ? ` — ${sec.purpose}` : '';
+    const releaseTag = sec.push_on_release ? ' (push tags on release)' : '';
+    lines.push(`- **Secondary**: \`${sec.name}\`${u ? ` (${u})` : ''}${purpose}${releaseTag}`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+/**
+ * Substitute the topology + count tokens in template content. Shared by the
+ * Claude hook file and createAgentsMdFromTemplate so every consumer gets the
+ * same {{REMOTES_TOPOLOGY}} treatment without each provider reinventing it.
+ */
+export function interpolateContextTokens(content, opts) {
+  const counts = opts?.counts || {};
+  const topology = opts?.topology || '';
+  return content
+    .replace(/\{\{AGENTS_COUNT\}\}/g, String(counts.agents || 0))
+    .replace(/\{\{COMMANDS_COUNT\}\}/g, String(counts.commands || 0))
+    .replace(/\{\{SKILLS_COUNT\}\}/g, String(counts.skills || 0))
+    .replace(/\{\{RULES_COUNT\}\}/g, String(counts.rules || 0))
+    .replace(/\{\{REMOTES_TOPOLOGY\}\}/g, topology);
+}
+
+/**
  * Create or update AGENTS.md from template
  * Common logic used by multiple providers
  */
@@ -775,7 +863,12 @@ export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dry
     return;
   }
 
-  const template = fs.readFileSync(templatePath, 'utf8');
+  let template = fs.readFileSync(templatePath, 'utf8');
+  // Token interpolation — gives every template-based provider {{REMOTES_TOPOLOGY}}
+  // and the shared count tokens for free.
+  template = interpolateContextTokens(template, {
+    topology: buildRemotesTopologyBlock(target),
+  });
 
   if (fs.existsSync(destPath)) {
     const existing = fs.readFileSync(destPath, 'utf8');
