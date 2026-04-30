@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: budget-review
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "<review-period> [--budget-area value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '<review-period> [--budget-area value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Budget Review Command

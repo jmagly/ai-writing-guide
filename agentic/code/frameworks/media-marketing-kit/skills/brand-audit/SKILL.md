@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: brand-audit
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "[--audit-scope value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '[--audit-scope value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Brand Audit Command

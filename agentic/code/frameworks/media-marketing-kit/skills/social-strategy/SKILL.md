@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: social-strategy
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "<strategy-period> [--platforms value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '<strategy-period> [--platforms value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Social Strategy Command

@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: brand-review
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "<asset-path> [--review-type value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '<asset-path> [--review-type value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Brand Review Command

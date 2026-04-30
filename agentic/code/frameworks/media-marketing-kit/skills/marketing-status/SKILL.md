@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: marketing-status
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "[--report-type value] [--focus-area value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '[--report-type value] [--focus-area value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Marketing Status Command

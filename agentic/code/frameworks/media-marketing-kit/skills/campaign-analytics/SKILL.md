@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: campaign-analytics
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "<campaign-name> [--analysis-type value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '<campaign-name> [--analysis-type value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Campaign Analytics Command

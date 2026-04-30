@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: intake-from-campaign
 platforms: [all]
 description: Scan existing campaign materials, media kit, or marketing assets and generate intake documents by analyzing content, brand elements, and performance data
 commandHint:

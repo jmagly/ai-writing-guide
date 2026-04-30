@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: performance-digest
 platforms: [all]
 description: Generate executive-ready marketing performance summaries with insights, trends, and prioritized recommendations
 ---

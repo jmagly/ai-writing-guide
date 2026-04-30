@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: brand-compliance
 platforms: [all]
 description: Validate brand compliance across visual, verbal, and legal dimensions with actionable reports
 ---
