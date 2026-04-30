@@ -39,6 +39,21 @@ When the operator passes a full PR URL (`<pr_link_or_number>`), parse the host o
 
 ---
 
+## Delivery Policy Resolution (#995)
+
+When approving and merging, consult `.aiwg/aiwg.config` `delivery` via `resolveDelivery()`. The resolved policy controls **how** the merge happens:
+
+| Field | Effect on this skill |
+|-------|----------------------|
+| `merge_style` (default `rebase-merge`) | Pass through to the PR API on merge. Allowed: `rebase-merge` / `squash` / `merge` / `fast-forward-only` |
+| `delete_branch_on_merge` (default `true`) | Pass `delete_branch: true` to the merge call so the feature branch is cleaned up |
+| `require_ci_green` (default `true`) | Block approval until CI is green on the PR's head SHA. Don't approve a red PR even if the diff looks fine. |
+| `require_signed_commits` (default `false`) | When `true`, reject the PR if any commit on the head ref is unsigned |
+
+When no `delivery` block is configured, `resolveDelivery(undefined)` returns the conservative defaults — same behavior this skill exhibits today.
+
+---
+
 ## Arguments
 
 - `<pr_link_or_number>` - PR URL or PR number on the resolved primary remote (required)

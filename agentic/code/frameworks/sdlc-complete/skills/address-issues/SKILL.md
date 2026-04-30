@@ -97,7 +97,23 @@ When `--interactive` is set:
 When `--guidance` is provided, the orchestrator incorporates the guidance into its prioritization, approach selection, and cycle behavior without pausing for interactive questions. Guidance text is included in the context for every cycle.
 
 ### --branch-per-issue (optional)
-Create a separate git branch for each issue (`fix/issue-N`).
+Create a separate git branch for each issue (`fix/issue-N`). When the project's delivery policy is `mode: pr-required` (the default), branch-per-issue is **implicitly always-on** even without this flag — see Delivery Policy below.
+
+## Delivery Policy Resolution (#995)
+
+Before starting the loop, read `.aiwg/aiwg.config` `delivery` via `resolveDelivery()` and apply the resolved values:
+
+| Field | Effect on this skill |
+|-------|----------------------|
+| `mode: direct` | Commit and push fixes directly to `default_branch`. No branch, no PR. Treat `--branch-per-issue` as an error in this mode. |
+| `mode: feature-branch` | One branch per issue, but don't open a PR — push the branch and stop. |
+| `mode: pr-required` (default) | Branch-per-issue is implicit. Open a PR via the resolved primary remote (#994) for each resolved issue. |
+| `branch_naming.prefix_by_type` | Use the `fix/{issue}-{slug}` template when creating the branch. `{issue}` is the issue number, `{slug}` derives from the title. |
+| `auto_close_issues: true` (default) | Include `Closes #N` in the PR body so the merge auto-closes the issue. |
+| `issue_comment_on_cycle: true` (default) | Post AL CYCLE status comments to the issue thread (today's behavior). When `false`, suppress cycle comments — useful for noisy automation. |
+| `require_ci_green: true` (default) | Wait for CI green on the PR before declaring resolved. |
+
+When the project has no `delivery` block, defaults match what this skill does today. No behavior change for existing users.
 
 ## Execution Flow
 
