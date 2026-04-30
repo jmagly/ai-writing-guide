@@ -11,6 +11,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 import semver from 'semver';
+import { validateSkillFrontmatter } from '../extensions/validation.js';
 
 /**
  * Severity levels for validation errors and warnings
@@ -129,8 +130,14 @@ export class MetadataValidator {
       // Read file content
       const content = await fs.readFile(manifestPath, 'utf-8');
 
-      // Validate content
-      const contentResult = await this.validateManifest(content, path.dirname(manifestPath), path.basename(manifestPath));
+      // Dispatch by filename — each artifact type has its own self-contained
+      // validator. Adding a new artifact type means adding a new method, not
+      // editing a growing if/else inside validateManifest.
+      const filename = path.basename(manifestPath);
+      const basePath = path.dirname(manifestPath);
+      const contentResult = filename === 'SKILL.md'
+        ? await this.validateSkillManifest(content, basePath, filename)
+        : await this.validateManifest(content, basePath, filename);
 
       // Merge results
       result.errors = contentResult.errors;
@@ -230,6 +237,58 @@ export class MetadataValidator {
     result.valid = result.errors.length === 0 &&
       (!this.options.strict || result.warnings.length === 0);
 
+    return result;
+  }
+
+  /**
+   * Validate a SKILL.md frontmatter file.
+   *
+   * SKILL.md is a separate artifact type from manifest.md/BEHAVIOR.md and
+   * has its own schema ({@link SkillFrontmatterSchema} in
+   * `src/extensions/validation.ts`). It does NOT carry `version`, `type`,
+   * `dependencies`, or `files` fields, so we route it through a dedicated
+   * validator instead of branching inside {@link validateManifest}.
+   *
+   * Adding a new artifact type? Add a sibling method here, then dispatch
+   * to it from {@link validateFile} based on filename.
+   *
+   * @param content - Full SKILL.md file contents (frontmatter + body)
+   * @param _basePath - Reserved for future cross-file checks
+   * @param filename - File basename, used in error.path for diagnostics
+   * @returns Validation result
+   */
+  async validateSkillManifest(
+    content: string,
+    _basePath?: string,
+    filename?: string
+  ): Promise<ValidationResult> {
+    const result: ValidationResult = {
+      valid: false,
+      errors: [],
+      warnings: []
+    };
+
+    const manifest = this.parseFrontmatter(content, result);
+    if (!manifest) {
+      return result;
+    }
+
+    const skillResult = validateSkillFrontmatter(manifest);
+    if (skillResult.success) {
+      result.manifest = manifest;
+    } else {
+      for (const issue of skillResult.errors.errors) {
+        result.errors.push({
+          path: filename,
+          field: issue.path.join('.'),
+          message: issue.message,
+          severity: 'error',
+        });
+      }
+    }
+
+    result.valid = result.errors.length === 0 &&
+      (!this.options.strict || result.warnings.length === 0);
     return result;
   }
 
@@ -904,11 +963,16 @@ export class MetadataValidator {
   }
 
   /**
-   * Find all manifest.md and BEHAVIOR.md files in a directory
+   * Find all manifest.md, BEHAVIOR.md, and SKILL.md files in a directory.
+   *
+   * Each filename routes to a different schema in {@link validateManifest}:
+   * - manifest.md — plugin manifest schema (requires version, type)
+   * - BEHAVIOR.md — behavior schema (triggers/hooks)
+   * - SKILL.md — skill frontmatter schema (name, description, …)
    *
    * @param dirPath - Directory to search
    * @param recursive - Whether to search subdirectories
-   * @returns Array of absolute manifest/behavior file paths
+   * @returns Array of absolute artifact file paths
    */
   private async findManifestFiles(dirPath: string, recursive: boolean): Promise<string[]> {
     const manifestFiles: string[] = [];
@@ -921,7 +985,11 @@ export class MetadataValidator {
       if (entry.isDirectory() && recursive) {
         const subManifests = await this.findManifestFiles(fullPath, recursive);
         manifestFiles.push(...subManifests);
-      } else if (entry.isFile() && (entry.name === 'manifest.md' || entry.name === 'BEHAVIOR.md')) {
+      } else if (entry.isFile() && (
+        entry.name === 'manifest.md' ||
+        entry.name === 'BEHAVIOR.md' ||
+        entry.name === 'SKILL.md'
+      )) {
         manifestFiles.push(fullPath);
       }
     }
