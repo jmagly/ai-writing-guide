@@ -450,8 +450,13 @@ aiwg add-skill <name> --to <target>                 # Add skill definition
 aiwg add-template <name> --to <target>              # Add document template
 
 # Validate
-aiwg validate-metadata                              # Check all extension metadata
+aiwg validate-metadata                              # Check all extension metadata (manifest.md / BEHAVIOR.md)
+node tools/linters/skill-frontmatter-linter.mjs    # Check SKILL.md frontmatter (YAML parse, required fields)
 ```
+
+The skill-frontmatter linter accepts directories or specific files. CI runs it against
+SKILL.md files changed in a PR; contributors should run it locally before pushing skill
+edits to catch invalid YAML or missing fields like `name`.
 
 ### In-Session Commands (Inside Claude Code)
 
