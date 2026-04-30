@@ -4,8 +4,8 @@ name: ralph-status
 platforms: [all]
 description: Check status of current or previous agent loop
 commandHint:
-  argumentHint: [--verbose] [--latest] [--all --interactive --guidance "text"]
-  allowedTools: Read, Glob, Bash
+  argumentHint: '[--verbose] [--latest] [--all --interactive --guidance "text"]'
+  allowedTools: "Read, Glob, Bash"
   model: haiku
   category: automation
 ---

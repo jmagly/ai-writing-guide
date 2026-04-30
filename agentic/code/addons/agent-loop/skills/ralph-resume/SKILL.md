@@ -4,8 +4,8 @@ name: ralph-resume
 platforms: [all]
 description: Resume an interrupted agent loop from last checkpoint
 commandHint:
-  argumentHint: [--max-iterations N] [--timeout M --interactive --guidance "text"]
-  allowedTools: Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit
+  argumentHint: '[--max-iterations N] [--timeout M --interactive --guidance "text"]'
+  allowedTools: "Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit"
   model: opus
   category: automation
   orchestration: true

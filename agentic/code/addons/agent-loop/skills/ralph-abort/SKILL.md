@@ -4,8 +4,8 @@ name: ralph-abort
 platforms: [all]
 description: Abort a running agent loop and optionally revert changes
 commandHint:
-  argumentHint: [--keep-changes] [--revert] [--force --interactive --guidance "text"]
-  allowedTools: Read, Write, Bash
+  argumentHint: '[--keep-changes] [--revert] [--force --interactive --guidance "text"]'
+  allowedTools: "Read, Write, Bash"
   model: sonnet
   category: automation
 ---

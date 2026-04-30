@@ -6,8 +6,8 @@ deprecated_names: [ralph]
 platforms: [all]
 description: Execute iterative task loop until completion criteria are met - iteration beats perfection
 commandHint:
-  argumentHint: "<task>" --completion "<criteria>" [--max-iterations N] [--timeout M] [--interactive --guidance "text"]
-  allowedTools: Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit
+  argumentHint: '"<task>" --completion "<criteria>" [--max-iterations N] [--timeout M] [--interactive --guidance "text"]'
+  allowedTools: "Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit"
   model: opus
   category: automation
   orchestration: true
