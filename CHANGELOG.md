@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+> Targeting **2026.5.0**. The 2026.4.0 line shipped 2026-04-01; rc.32–rc.33 carried integration work that crossed the May calendar boundary. Per CalVer, the in-progress series rolls to `2026.5.0-rc.N` starting with rc.1 — content below carries forward unchanged.
+
 ### Added
 
 - **Skill quality system — `aiwg skill-lint` + sticky PR comment** (#1015 Phases C–D). New `aiwg skill-lint <path...> [--rubric strict|standard|lenient] [--json]` CLI scores SKILL.md files against a four-dimension rubric (Schema 40%, Description 20%, Discoverability 20%, Body 20%). Three thresholds: lenient ≥40, standard ≥60, strict ≥80. Companion CI workflow `.gitea/workflows/skill-lint-pr.yml` runs the linter on changed SKILL.md files in PRs and posts a single sticky comment with per-dimension scores via the Gitea API directly — no third-party action dependency. Rubric documented in `docs/skills/quality-rubric.md`.
