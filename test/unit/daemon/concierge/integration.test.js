@@ -33,11 +33,12 @@ describe('Concierge integration (#642)', () => {
 
     const meta = await loader.parseFrontmatter(entry.path);
     expect(meta.name).toBe('concierge');
-    expect(meta.scope).toBe('daemon');
     expect(meta.module).toBe('tools/daemon/concierge/orchestrator.mjs');
-    expect(meta.trigger).toContain('chat-message');
-    expect(meta.trigger).toContain('session-start');
-    expect(meta.trigger).toContain('on-error');
+    // Canonical shape per #1025 — scope and triggers nest under metadata.
+    expect(meta.metadata.scope).toBe('daemon');
+    expect(meta.metadata.triggers).toContain('chat-message');
+    expect(meta.metadata.triggers).toContain('session-start');
+    expect(meta.metadata.triggers).toContain('on-error');
   });
 
   it('should activate concierge orchestrator via loadAll', async () => {

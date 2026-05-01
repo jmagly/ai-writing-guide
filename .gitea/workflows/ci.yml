@@ -27,14 +27,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: |
-          # --omit=optional skips sharp (can't download binary from GitHub in CI).
-          # Re-install @rollup/rollup-linux-x64-gnu separately — it's also optional
-          # but is a registry package (no GitHub download) and is required by vitest.
-          # --ignore-scripts on the second pass prevents sharp from being re-triggered.
-          npm ci --omit=optional
-          ROLLUP_VER=$(node -e "console.log(require('./node_modules/rollup/package.json').version)")
-          npm install --no-save --omit=optional --ignore-scripts "@rollup/rollup-linux-x64-gnu@${ROLLUP_VER}"
+        # Plain `npm ci` (no --omit=optional). Sharp's prebuilt libvips
+        # binary is in its optionalDependencies — skipping optional deps
+        # forced sharp to fall back to a from-source gyp build that needed
+        # libvips-dev system headers (#1018). Other workflows already use
+        # plain `npm ci` and resolve sharp without issue.
+        run: npm ci
 
       - name: Run type check
         run: npm run typecheck
@@ -65,10 +63,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: |
-          npm ci --omit=optional
-          ROLLUP_VER=$(node -e "console.log(require('./node_modules/rollup/package.json').version)")
-          npm install --no-save --omit=optional --ignore-scripts "@rollup/rollup-linux-x64-gnu@${ROLLUP_VER}"
+        # Plain `npm ci` — see ci.yml Test job comment re: sharp + libvips (#1018).
+        run: npm ci
 
       - name: Build TypeScript
         run: npm run build
