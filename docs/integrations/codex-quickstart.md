@@ -105,6 +105,47 @@ Codex loads skills from two locations:
 
 Use the built-in `$skill-creator` to bootstrap new skills.
 
+### Skills Context Budget (2% ceiling)
+
+Codex CLI reserves a hardcoded **2% of the model's context window** for the "available skills" metadata block (skill name + short description) shown to the model at turn start. Source: `codex-rs/core-skills/src/render.rs:18` (`SKILL_METADATA_CONTEXT_WINDOW_PERCENT: usize = 2`).
+
+Approximate budgets:
+
+| Model context window | Skills metadata budget |
+|----------------------|------------------------|
+| 200k tokens          | ~4,000 tokens          |
+| 400k tokens          | ~8,000 tokens          |
+| 1M tokens            | ~20,000 tokens         |
+
+When the budget is exceeded, Codex degrades in three stages:
+1. Render full descriptions.
+2. Truncate descriptions to fit (`Skill descriptions were shortened to fit the 2% skills context budget…`).
+3. Drop entire skills from the visible list (`Exceeded skills context budget of 2%. All skill descriptions were removed and N additional skills were not included…`).
+
+**Important nuance:** dropped skills are still on disk and still invocable by exact name — Codex only stops advertising them to the model. SKILL.md is read on selection, not on listing. So this is a **discovery problem, not a capability loss**.
+
+#### Why this hits AIWG users
+
+`aiwg use sdlc --provider codex` deploys ~400 skill files to `~/.codex/skills/`. Adding `media-curator`, `forensics-complete`, `research-complete` (or `aiwg use all`) pushes the total well past what fits in 2% of a 200k-context model. Combined with Codex's built-in `.system/` skills and any installed plugins, the warning is expected at full deployment on smaller-context models.
+
+#### What you can do
+
+The 2% ceiling is hardcoded — there is no env var, CLI flag, or config knob to raise it. Tracked upstream as [openai/codex#19679](https://github.com/openai/codex/issues/19679). The supported levers are:
+
+1. **Disable unused skills in `~/.codex/config.toml`:**
+   ```toml
+   [[skills.config]]
+   name = "soul-blend"
+   enabled = false
+   ```
+   Repeat for every skill you do not actively use. This is Codex's first-class lever (`codex-rs/core-skills/src/config_rules.rs`).
+
+2. **Deploy fewer frameworks to Codex.** Prefer `aiwg use sdlc --provider codex` over `aiwg use all --provider codex`. Add other frameworks only if you actively use them in Codex sessions.
+
+3. **Remove unused skill directories** under `~/.codex/skills/<name>/` for skills you will never invoke. Re-run `aiwg use` later to restore.
+
+4. **Use a larger-context model.** 2% of 1M is 20k tokens versus 4k on a 200k-context model — the budget scales linearly with the configured context window.
+
 ---
 
 ## Configuration
@@ -546,6 +587,8 @@ ls ~/.codex/skills/
 ls .agents/skills/    # Project-local
 ```
 Restart Codex after installing new skills.
+
+**Warning: `Exceeded skills context budget of 2%, all skill descriptions were removed and N additional skills were not included…`?** This is Codex's hardcoded 2% skills metadata ceiling — see [Skills Context Budget](#skills-context-budget-2-ceiling) above. Dropped skills are still invocable by exact name; only their visibility to the model is removed. Mitigate by disabling unused skills in `~/.codex/config.toml` (`[[skills.config]] name = "..." enabled = false`), deploying fewer frameworks, or using a larger-context model. Tracking issue: [openai/codex#19679](https://github.com/openai/codex/issues/19679).
 
 **Config not applying?** Inspect effective config:
 ```text
