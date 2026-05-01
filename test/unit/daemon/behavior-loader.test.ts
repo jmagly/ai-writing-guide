@@ -67,18 +67,19 @@ describe('DaemonBehaviorLoader (#642)', () => {
   });
 
   describe('parseFrontmatter', () => {
-    it('should parse YAML frontmatter from .behavior.md', async () => {
+    it('should parse YAML frontmatter from .behavior.md (canonical metadata shape)', async () => {
       const file = join(tmpDir, 'test.behavior.md');
       writeFileSync(file, [
         '---',
         'name: concierge',
         'type: behavior',
-        'scope: daemon',
         'module: tools/daemon/concierge/orchestrator.mjs',
-        'trigger:',
-        '  - session-start',
-        '  - chat-message',
-        '  - on-error',
+        'metadata:',
+        '  scope: daemon',
+        '  triggers:',
+        '    - session-start',
+        '    - chat-message',
+        '    - on-error',
         '---',
         '# Concierge',
       ].join('\n'));
@@ -87,9 +88,9 @@ describe('DaemonBehaviorLoader (#642)', () => {
       const meta = await loader.parseFrontmatter(file);
       expect(meta).not.toBeNull();
       expect(meta.name).toBe('concierge');
-      expect(meta.scope).toBe('daemon');
       expect(meta.module).toBe('tools/daemon/concierge/orchestrator.mjs');
-      expect(meta.trigger).toEqual(['session-start', 'chat-message', 'on-error']);
+      expect(meta.metadata.scope).toBe('daemon');
+      expect(meta.metadata.triggers).toEqual(['session-start', 'chat-message', 'on-error']);
     });
 
     it('should return null for files without frontmatter', async () => {
@@ -112,10 +113,13 @@ describe('DaemonBehaviorLoader (#642)', () => {
   });
 
   describe('loadAll', () => {
-    it('should skip behaviors without scope: daemon', async () => {
+    it('should skip behaviors without metadata.scope: daemon', async () => {
       const behaviorDir = join(tmpDir, 'agentic', 'code', 'addons', 'test', 'behaviors');
       mkdirSync(behaviorDir, { recursive: true });
-      writeFileSync(join(behaviorDir, 'agent.behavior.md'), '---\nname: agent\nscope: agent\n---\n');
+      writeFileSync(
+        join(behaviorDir, 'agent.behavior.md'),
+        '---\nname: agent\nmetadata:\n  scope: agent\n---\n'
+      );
 
       const loader = new DaemonBehaviorLoader({
         projectRoot: tmpDir,
@@ -128,7 +132,10 @@ describe('DaemonBehaviorLoader (#642)', () => {
     it('should skip behaviors without module field', async () => {
       const behaviorDir = join(tmpDir, 'agentic', 'code', 'addons', 'test', 'behaviors');
       mkdirSync(behaviorDir, { recursive: true });
-      writeFileSync(join(behaviorDir, 'prompt-only.behavior.md'), '---\nname: prompt-only\nscope: daemon\n---\n');
+      writeFileSync(
+        join(behaviorDir, 'prompt-only.behavior.md'),
+        '---\nname: prompt-only\nmetadata:\n  scope: daemon\n---\n'
+      );
 
       const loader = new DaemonBehaviorLoader({
         projectRoot: tmpDir,
@@ -150,7 +157,7 @@ describe('DaemonBehaviorLoader (#642)', () => {
       };
       (loader as any)._active.set('mock', {
         name: 'mock',
-        meta: { trigger: ['chat-message', 'session-start'] },
+        meta: { metadata: { triggers: ['chat-message', 'session-start'] } },
         orchestrator: mockOrchestrator,
       });
 
@@ -181,7 +188,10 @@ describe('DaemonBehaviorLoader (#642)', () => {
       const loader = new DaemonBehaviorLoader({ projectRoot: tmpDir });
       (loader as any)._active.set('concierge', {
         name: 'concierge',
-        meta: { trigger: ['chat-message'], module: 'tools/daemon/concierge/orchestrator.mjs' },
+        meta: {
+          metadata: { triggers: ['chat-message'] },
+          module: 'tools/daemon/concierge/orchestrator.mjs',
+        },
         orchestrator: { getStatus: () => ({}) },
         tier: 'addon',
         path: '/some/path',

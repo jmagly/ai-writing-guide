@@ -598,17 +598,20 @@ export class MetadataValidator {
       }
     }
 
-    // Behavior-specific validation (#609)
+    // Behavior-specific validation (#609, #1025)
+    // Canonical shape per #1025: behavior fields nest under `metadata:`.
+    // The daemon loader (tools/daemon/behavior-loader.mjs) reads
+    // metadata.scope and metadata.triggers (plural).
     if (manifest.type === 'behavior') {
       const meta = manifest.metadata as Record<string, unknown> | undefined;
-      if (!meta || (!('trigger' in meta) && !('triggers' in meta))) {
+      if (!meta || !('triggers' in meta)) {
         errors.push({
-          field: 'metadata.trigger',
-          message: 'Behavior must declare at least one trigger or triggers array in metadata',
+          field: 'metadata.triggers',
+          message: 'Behavior must declare a triggers array in metadata',
           severity: 'error'
         });
       }
-      if (!meta?.scope && !manifest.metadata) {
+      if (!meta?.scope) {
         errors.push({
           field: 'metadata.scope',
           message: 'Behavior should declare scope (daemon, interactive, or both)',

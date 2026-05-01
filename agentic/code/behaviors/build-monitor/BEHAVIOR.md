@@ -1,51 +1,52 @@
 ---
 name: build-monitor
 version: 1.0.0
-description: Track build health by monitoring build tool completions and running scheduled build checks.
-# platforms restricted to daemon-capable systems (Tier 1) — behaviors require a
-# persistent background process for trigger management and lifecycle hooks.
-# Tier 3 platforms (cursor, windsurf, copilot, factory) require a display server
-# or IDE host and cannot support daemon; see capability-matrix.yaml daemon_tier.
-platforms: [claude-code, opencode, warp, openclaw, codex]
-
-triggers:
-  - "monitor build"
-  - "check build health"
-  - "build status"
-
+description: Track build health by monitoring build tool completions and running scheduled
+  build checks.
+platforms:
+- claude-code
+- opencode
+- warp
+- openclaw
+- codex
+metadata:
+  triggers:
+  - monitor build
+  - check build health
+  - build status
+  scope: daemon
 inputs:
-  - name: command
-    type: string
-    required: false
-    description: Build command to run
-    default: "npm run build"
-
+- name: command
+  type: string
+  required: false
+  description: Build command to run
+  default: npm run build
 hooks:
   on_tool_complete:
-    - tool: build
-      action: run_script
-      script: scripts/post-build-check.sh
-    - tool: tsc
-      action: run_script
-      script: scripts/post-build-check.sh
+  - tool: build
+    action: run_script
+    script: scripts/post-build-check.sh
+  - tool: tsc
+    action: run_script
+    script: scripts/post-build-check.sh
   on_schedule:
-    - cron: "0 */4 * * *"
-      action: run_script
-      script: scripts/scheduled-build.sh
-
+  - cron: 0 */4 * * *
+    action: run_script
+    script: scripts/scheduled-build.sh
 scripts:
   main: scripts/main.sh
   post-build-check: scripts/post-build-check.sh
   scheduled-build: scripts/scheduled-build.sh
-
 manifest:
   category: build
   requires:
-    bins: [node]
+    bins:
+    - node
   outputs:
-    - type: report
-      path: .aiwg/reports/build/
-  composable_with: [test-watcher]
+  - type: report
+    path: .aiwg/reports/build/
+  composable_with:
+  - test-watcher
 ---
 
 # Build Monitor

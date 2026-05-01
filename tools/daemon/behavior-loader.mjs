@@ -1,11 +1,20 @@
 /**
  * DaemonBehaviorLoader — discovers, loads, and activates daemon behaviors.
  *
- * Behaviors are `.behavior.md` files with YAML frontmatter declaring:
- *   - name: identifier
- *   - trigger: [session-start, pre-response, on-error, chat-message]
- *   - module: path to orchestrator module (relative to AIWG root)
- *   - scope: daemon
+ * Behaviors are BEHAVIOR.md (or .behavior.md) files with YAML frontmatter.
+ * The canonical shape (per #1025) nests behavior fields under `metadata:`:
+ *
+ *   ---
+ *   name: my-behavior
+ *   module: tools/daemon/my-behavior/orchestrator.mjs
+ *   metadata:
+ *     scope: daemon
+ *     triggers: [session-start, pre-response, on-error, chat-message]
+ *   ---
+ *
+ * - `name` and `module` stay at top level.
+ * - `scope` and `triggers` (plural) live inside `metadata:` so they share
+ *   shape with the validator (see src/plugin/metadata-validator.ts:604).
  *
  * The module must export a class with a standard interface:
  *   - constructor(options)     — receives { supervisor, memoryManager, provider, config }
@@ -24,6 +33,7 @@
 
 import { readdir, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import yaml from 'js-yaml';
 
 export class DaemonBehaviorLoader {
   /**
@@ -80,7 +90,11 @@ export class DaemonBehaviorLoader {
   }
 
   /**
-   * Parse YAML frontmatter from a .behavior.md file.
+   * Parse YAML frontmatter from a BEHAVIOR.md file.
+   *
+   * Uses js-yaml for full YAML support, including nested mappings —
+   * required for the canonical metadata.* shape (#1025).
+   *
    * @param {string} filePath
    * @returns {Promise<Object|null>}
    */
@@ -89,42 +103,13 @@ export class DaemonBehaviorLoader {
     const match = content.match(/^---\n([\s\S]*?)\n---/);
     if (!match) return null;
 
-    // Simple YAML parse for frontmatter (no dependency on yaml package)
-    const frontmatter = {};
-    let currentKey = null;
-    for (const line of match[1].split('\n')) {
-      // Handle key: value (with value)
-      const kvMatch = line.match(/^(\w[\w-]*):\s+(.+)$/);
-      if (kvMatch) {
-        const [, key, rawVal] = kvMatch;
-        currentKey = key;
-        // Parse inline arrays: [a, b, c]
-        const arrayMatch = rawVal.match(/^\[(.+)\]$/);
-        if (arrayMatch) {
-          frontmatter[key] = arrayMatch[1].split(',').map(s => s.trim());
-        } else {
-          frontmatter[key] = rawVal.trim();
-        }
-        continue;
-      }
-      // Handle bare key: (no value — expects list items below)
-      const bareKeyMatch = line.match(/^(\w[\w-]*):\s*$/);
-      if (bareKeyMatch) {
-        currentKey = bareKeyMatch[1];
-        frontmatter[currentKey] = [];
-        continue;
-      }
-      // Handle list items under current key (  - value)
-      const listMatch = line.match(/^\s+-\s+(.+)$/);
-      if (listMatch && currentKey) {
-        if (!Array.isArray(frontmatter[currentKey])) {
-          frontmatter[currentKey] = [];
-        }
-        frontmatter[currentKey].push(listMatch[1].trim());
-      }
+    let parsed;
+    try {
+      parsed = yaml.load(match[1]);
+    } catch {
+      return null;
     }
-
-    return frontmatter;
+    return (parsed && typeof parsed === 'object') ? parsed : null;
   }
 
   /**
@@ -139,7 +124,7 @@ export class DaemonBehaviorLoader {
     for (const entry of discovered) {
       try {
         const meta = await this.parseFrontmatter(entry.path);
-        if (!meta || meta.scope !== 'daemon') continue;
+        if (!meta || meta.metadata?.scope !== 'daemon') continue;
         if (!meta.name) continue;
         if (!meta.module) {
           // No module = prompt-only behavior (no orchestrator to load)
@@ -217,7 +202,7 @@ export class DaemonBehaviorLoader {
     for (const entry of discovered) {
       try {
         const meta = await this.parseFrontmatter(entry.path);
-        if (!meta || meta.scope !== 'daemon') continue;
+        if (!meta || meta.metadata?.scope !== 'daemon') continue;
         if (!meta.name || meta.name !== name) continue;
         if (!meta.module) continue;
         matchedEntry = { ...entry, meta };
@@ -282,7 +267,7 @@ export class DaemonBehaviorLoader {
   getForTrigger(trigger) {
     const result = [];
     for (const [, loaded] of this._active) {
-      const triggers = loaded.meta.trigger || [];
+      const triggers = loaded.meta.metadata?.triggers || [];
       if (triggers.includes(trigger)) {
         result.push(loaded.orchestrator);
       }
@@ -315,7 +300,7 @@ export class DaemonBehaviorLoader {
         [...this._active].map(([name, loaded]) => [
           name,
           {
-            triggers: loaded.meta.trigger || [],
+            triggers: loaded.meta.metadata?.triggers || [],
             module: loaded.meta.module,
             tier: loaded.tier,
             path: loaded.path,

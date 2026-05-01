@@ -2,56 +2,60 @@
 name: test-watcher
 version: 1.0.0
 description: Reactive test execution that runs tests on file changes and on a schedule.
-# platforms restricted to daemon-capable systems (Tier 1) — behaviors require a
-# persistent background process for trigger management and lifecycle hooks.
-# Tier 3 platforms (cursor, windsurf, copilot, factory) require a display server
-# or IDE host and cannot support daemon; see capability-matrix.yaml daemon_tier.
-platforms: [claude-code, opencode, warp, openclaw, codex]
-
-triggers:
-  - "watch tests"
-  - "run tests on change"
-  - "test watcher"
-
+platforms:
+- claude-code
+- opencode
+- warp
+- openclaw
+- codex
+metadata:
+  triggers:
+  - watch tests
+  - run tests on change
+  - test watcher
+  scope: daemon
 inputs:
-  - name: pattern
-    type: string
-    required: false
-    description: Test file pattern to watch
-    default: "test/**"
-  - name: runner
-    type: enum
-    values: [npm, vitest, jest, pytest]
-    default: npm
-    description: Test runner to use
-
+- name: pattern
+  type: string
+  required: false
+  description: Test file pattern to watch
+  default: test/**
+- name: runner
+  type: enum
+  values:
+  - npm
+  - vitest
+  - jest
+  - pytest
+  default: npm
+  description: Test runner to use
 hooks:
   on_file_write:
-    - filter: "src/**/*.{ts,js,mjs}"
-      action: run_script
-      script: scripts/run-related-tests.sh
-    - filter: "test/**/*.{ts,js,mjs}"
-      action: run_script
-      script: scripts/run-changed-test.sh
+  - filter: src/**/*.{ts,js,mjs}
+    action: run_script
+    script: scripts/run-related-tests.sh
+  - filter: test/**/*.{ts,js,mjs}
+    action: run_script
+    script: scripts/run-changed-test.sh
   on_schedule:
-    - cron: "0 */2 * * *"
-      action: run_script
-      script: scripts/full-suite.sh
-
+  - cron: 0 */2 * * *
+    action: run_script
+    script: scripts/full-suite.sh
 scripts:
   main: scripts/main.sh
   run-related-tests: scripts/run-related-tests.sh
   run-changed-test: scripts/run-changed-test.sh
   full-suite: scripts/full-suite.sh
-
 manifest:
   category: testing
   requires:
-    bins: [node]
+    bins:
+    - node
   outputs:
-    - type: report
-      path: .aiwg/reports/testing/
-  composable_with: [quality-gate-watcher]
+  - type: report
+    path: .aiwg/reports/testing/
+  composable_with:
+  - quality-gate-watcher
 ---
 
 # Test Watcher

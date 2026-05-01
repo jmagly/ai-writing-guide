@@ -1,42 +1,42 @@
 ---
 name: artifact-sync
 version: 1.0.0
-description: Keep the SDLC artifact index current by reacting to changes in .aiwg/ directories.
-# platforms restricted to daemon-capable systems (Tier 1) — behaviors require a
-# persistent background process for trigger management and lifecycle hooks.
-# Tier 3 platforms (cursor, windsurf, copilot, factory) require a display server
-# or IDE host and cannot support daemon; see capability-matrix.yaml daemon_tier.
-platforms: [claude-code, opencode, warp, openclaw, codex]
-
-triggers:
-  - "sync artifacts"
-  - "rebuild artifact index"
-  - "update artifact index"
-
+description: Keep the SDLC artifact index current by reacting to changes in .aiwg/
+  directories.
+platforms:
+- claude-code
+- opencode
+- warp
+- openclaw
+- codex
+metadata:
+  triggers:
+  - sync artifacts
+  - rebuild artifact index
+  - update artifact index
+  scope: daemon
 inputs:
-  - name: force
-    type: boolean
-    required: false
-    default: false
-    description: Force a full index rebuild even if no changes detected
-
+- name: force
+  type: boolean
+  required: false
+  default: false
+  description: Force a full index rebuild even if no changes detected
 hooks:
   on_file_write:
-    - filter: ".aiwg/**/*.md"
-      action: run_script
-      script: scripts/incremental-sync.sh
-
+  - filter: .aiwg/**/*.md
+    action: run_script
+    script: scripts/incremental-sync.sh
 scripts:
   main: scripts/main.sh
   incremental-sync: scripts/incremental-sync.sh
-
 manifest:
   category: sdlc
   requires:
-    bins: [node]
+    bins:
+    - node
   outputs:
-    - type: index
-      path: .aiwg/reports/
+  - type: index
+    path: .aiwg/reports/
 ---
 
 # Artifact Sync

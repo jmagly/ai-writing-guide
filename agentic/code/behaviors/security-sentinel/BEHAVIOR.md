@@ -1,57 +1,62 @@
 ---
 name: security-sentinel
 version: 1.0.0
-description: Continuous security monitoring with reactive scanning on file changes, deploys, and scheduled audits.
-# platforms restricted to daemon-capable systems (Tier 1) — behaviors require a
-# persistent background process for trigger management and lifecycle hooks.
-# Tier 3 platforms (cursor, windsurf, copilot, factory) require a display server
-# or IDE host and cannot support daemon; see capability-matrix.yaml daemon_tier.
-platforms: [claude-code, opencode, warp, openclaw, codex]
-
-triggers:
-  - "run security scan"
-  - "check for vulnerabilities"
-  - "security audit"
-
+description: Continuous security monitoring with reactive scanning on file changes,
+  deploys, and scheduled audits.
+platforms:
+- claude-code
+- opencode
+- warp
+- openclaw
+- codex
+metadata:
+  triggers:
+  - run security scan
+  - check for vulnerabilities
+  - security audit
+  scope: daemon
 inputs:
-  - name: target
-    type: path
-    required: false
-    description: File or directory to scan (defaults to project root)
-    default: "."
-  - name: severity
-    type: enum
-    values: [low, medium, high, critical]
-    default: medium
-    description: Minimum severity threshold for reporting
-
+- name: target
+  type: path
+  required: false
+  description: File or directory to scan (defaults to project root)
+  default: .
+- name: severity
+  type: enum
+  values:
+  - low
+  - medium
+  - high
+  - critical
+  default: medium
+  description: Minimum severity threshold for reporting
 hooks:
   on_file_write:
-    - filter: "**/*.{ts,js,mjs,py,go,rs}"
-      action: run_script
-      script: scripts/scan-changed-file.sh
+  - filter: '**/*.{ts,js,mjs,py,go,rs}'
+    action: run_script
+    script: scripts/scan-changed-file.sh
   on_deploy:
-    - action: run_script
-      script: scripts/post-deploy-scan.sh
+  - action: run_script
+    script: scripts/post-deploy-scan.sh
   on_schedule:
-    - cron: "0 */6 * * *"
-      action: run_script
-      script: scripts/periodic-audit.sh
-
+  - cron: 0 */6 * * *
+    action: run_script
+    script: scripts/periodic-audit.sh
 scripts:
   main: scripts/main.sh
   scan-changed-file: scripts/scan-changed-file.sh
   post-deploy-scan: scripts/post-deploy-scan.sh
   periodic-audit: scripts/periodic-audit.sh
-
 manifest:
   category: security
   requires:
-    bins: [node]
+    bins:
+    - node
   outputs:
-    - type: report
-      path: .aiwg/reports/security/
-  composable_with: [quality-gate-watcher]
+  - type: report
+    path: .aiwg/reports/security/
+  composable_with:
+  - quality-gate-watcher
 ---
 
 # Security Sentinel

@@ -80,37 +80,20 @@ describe('Behavior Metadata Validation', () => {
   // =========================================================================
 
   describe('validateRequiredFields — behavior specifics', () => {
-    it('emits error when behavior has no trigger or triggers declared in metadata', () => {
+    it('emits error when behavior has no triggers declared in metadata', () => {
       const manifest = {
         name: 'silent-behavior',
         version: '1.0.0',
         type: 'behavior' as const,
-        description: 'A behavior with no trigger',
+        description: 'A behavior with no triggers',
         files: [],
-        metadata: {} as Record<string, unknown>,
+        metadata: { scope: 'daemon' } as Record<string, unknown>,
       };
 
       const errors = validator.validateRequiredFields(manifest);
-      const triggerError = errors.find(e => e.field === 'metadata.trigger');
+      const triggerError = errors.find(e => e.field === 'metadata.triggers');
       expect(triggerError).toBeDefined();
       expect(triggerError?.severity).toBe('error');
-    });
-
-    it('accepts behavior when metadata.trigger is declared', () => {
-      const manifest = {
-        name: 'test-watcher',
-        version: '1.0.0',
-        type: 'behavior' as const,
-        description: 'Runs tests on file change',
-        files: [],
-        metadata: {
-          trigger: 'file-change',
-        } as Record<string, unknown>,
-      };
-
-      const errors = validator.validateRequiredFields(manifest);
-      const triggerErrors = errors.filter(e => e.field === 'metadata.trigger');
-      expect(triggerErrors).toHaveLength(0);
     });
 
     it('accepts behavior when metadata.triggers array is declared', () => {
@@ -121,12 +104,13 @@ describe('Behavior Metadata Validation', () => {
         description: 'Fires on multiple events',
         files: [],
         metadata: {
+          scope: 'daemon',
           triggers: ['session-start', 'file-change'],
         } as Record<string, unknown>,
       };
 
       const errors = validator.validateRequiredFields(manifest);
-      const triggerErrors = errors.filter(e => e.field === 'metadata.trigger');
+      const triggerErrors = errors.filter(e => e.field === 'metadata.triggers');
       expect(triggerErrors).toHaveLength(0);
     });
 
@@ -138,7 +122,8 @@ describe('Behavior Metadata Validation', () => {
         description: 'Agent-based behavior',
         files: [],
         metadata: {
-          trigger: 'session-start',
+          scope: 'daemon',
+          triggers: ['session-start'],
         },
       };
 
@@ -162,7 +147,8 @@ describe('Behavior Metadata Validation', () => {
         description: 'Monitors CI build results and alerts on failure',
         files: [],
         metadata: {
-          trigger: 'post-build',
+          scope: 'daemon',
+          triggers: ['post-build'],
         } as Record<string, unknown>,
       };
 
@@ -179,7 +165,8 @@ describe('Behavior Metadata Validation', () => {
         description: 'Persistent front-facing interface for daemon sessions',
         files: [],
         metadata: {
-          trigger: 'session-start',
+          scope: 'daemon',
+          triggers: ['session-start'],
           mode: 'agent',
           routing: { strategy: 'intent-first', fallback: 'surface-with-context' },
           memory: { session: true, cross_session: true },

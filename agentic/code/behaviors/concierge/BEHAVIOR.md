@@ -1,25 +1,23 @@
 ---
 name: concierge
 version: 1.0.0
-description: >
-  Persistent front-facing interface for the AIWG daemon. Routes user requests to the correct
-  skill, agent, or flow while maintaining a composed, professional interaction register throughout.
-  First fully-featured agent-based behavior; serves as the reference implementation for the
-  AIWG behaviors format.
-# platforms restricted to daemon-capable systems (Tier 1) — behaviors require a
-# persistent background process for trigger management and lifecycle hooks.
-# Tier 3 platforms (cursor, windsurf, copilot, factory) require a display server
-# or IDE host and cannot support daemon; see capability-matrix.yaml daemon_tier.
-platforms: [claude-code, opencode, warp, openclaw, codex]
+description: 'Persistent front-facing interface for the AIWG daemon. Routes user requests
+  to the correct skill, agent, or flow while maintaining a composed, professional
+  interaction register throughout. First fully-featured agent-based behavior; serves
+  as the reference implementation for the AIWG behaviors format.
 
-# Agent-based behavior: instructs the AI directly rather than running shell scripts.
-# Script-based behaviors (build-monitor, test-watcher) use mode: script (default).
-mode: agent
-
-triggers:
+  '
+platforms:
+- claude-code
+- opencode
+- warp
+- openclaw
+- codex
+metadata:
+  triggers:
   - session-start
-
-# Tone profile — five Ps of the concierge register
+  scope: daemon
+mode: agent
 tone:
   register: professional-warm
   verbosity: concise
@@ -30,32 +28,31 @@ tone:
     pleasant: Warmth without informality; the user feels attended to.
     professional: Consistent register regardless of topic sensitivity.
     discreet: Sensitive operations acknowledged and handled without amplification.
-
-# Routing strategy
 routing:
-  strategy: intent-first         # Identify intent before selecting destination
-  fallback: surface-with-context # If unresolvable, surface cleanly with what is known
-  expose_internals: false        # Never show skill/agent names or routing decisions to user
-
-# Memory configuration
+  strategy: intent-first
+  fallback: surface-with-context
+  expose_internals: false
 memory:
-  session: true         # Recall within the current daemon session
-  cross_session: true   # Persist salient context across daemon restarts
+  session: true
+  cross_session: true
   store: .aiwg/daemon/concierge-memory.json
-
 hooks:
   on_session_start:
     action: activate
     description: Concierge greets and reads session context on daemon session open.
-
 manifest:
   category: interaction
   scope: daemon
-  composable_with: [build-monitor, security-sentinel, test-watcher, quality-gate-watcher]
+  composable_with:
+  - build-monitor
+  - security-sentinel
+  - test-watcher
+  - quality-gate-watcher
   outputs:
-    - type: memory
-      path: .aiwg/daemon/concierge-memory.json
-  related_issues: [602]
+  - type: memory
+    path: .aiwg/daemon/concierge-memory.json
+  related_issues:
+  - 602
 ---
 
 # Concierge
