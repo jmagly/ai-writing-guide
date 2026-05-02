@@ -1,3 +1,11 @@
+---
+id: human-authorization
+severity: HIGH
+safety-critical: true
+applies_to: [all-agents]
+tags: [authorization, scope, safety]
+---
+
 # Human Authorization Rules
 
 **Enforcement Level**: HIGH

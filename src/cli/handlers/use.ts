@@ -33,6 +33,11 @@ import {
   discoverProjectLocalBundles,
   type ProjectLocalBundle,
 } from '../../extensions/project-local-discovery.js';
+import { buildUpstreamRegistry } from '../../extensions/upstream-registry.js';
+import {
+  resolveShadows,
+  formatShadowReport,
+} from '../../extensions/shadow-resolver.js';
 
 /**
  * Valid framework identifiers
@@ -687,10 +692,27 @@ async function deployProjectLocalBundles(opts: {
     return { deployed: 0, failed: 0, bundles: [] };
   }
 
+  // #1036 — Resolve shadows against the upstream registry before any deploy.
+  // Refuse to deploy bundles that contain a safety-critical shadow without an
+  // explicit `overrides:` declaration, or that share an artifact id with another
+  // project-local bundle, or that declare a phantom override.
+  const upstream = await buildUpstreamRegistry({ frameworkRoot });
+  const shadowResult = await resolveShadows(targetBundles, upstream);
+  const report = formatShadowReport(shadowResult);
+  if (report) {
+    process.stderr.write(report + '\n');
+  }
+
   let deployed = 0;
   let failed = 0;
 
   for (const bundle of targetBundles) {
+    if (shadowResult.blockedBundleIds.has(bundle.id)) {
+      failed++;
+      ui.warn(`Refused to deploy project-local bundle '${bundle.id}' due to shadow-resolution policy (see ── above ──)`);
+      continue;
+    }
+
     if (verbose || dryRun) {
       const action = dryRun ? '[dry-run] Would deploy' : 'Deploying';
       console.log(`${action} project-local ${bundle.type} '${bundle.id}' from ${bundle.localPath} → ${provider}`);

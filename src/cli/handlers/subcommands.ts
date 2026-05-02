@@ -17,6 +17,8 @@ import { getFrameworkRoot } from "../../channel/manager.mjs";
 import { getRegistry } from "../../extensions/registry.js";
 import { registerDeployedExtensions } from "../../extensions/deployment-registration.js";
 import { discoverProjectLocalBundles } from "../../extensions/project-local-discovery.js";
+import { buildUpstreamRegistry } from "../../extensions/upstream-registry.js";
+import { resolveShadows } from "../../extensions/shadow-resolver.js";
 import { sessionHandler } from "./session.js";
 import { feedbackHandler } from "./feedback.js";
 import { handlerResultFromError } from "../errors.js";
@@ -95,10 +97,16 @@ export const listHandler: CommandHandler = {
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     // Filter args: positional type filter, plus --project-local flag (#1034)
     const projectLocalOnly = ctx.args.includes('--project-local');
+    const shadowsOnly = ctx.args.includes('--shadows');
     const filterType = ctx.args.find((a) => !a.startsWith('--')); // 'agents'|'skills'|'commands'|'all'|undefined
 
     // Project-local bundle discovery (#1034) — read-only scan, no deploy
     const projectLocal = await discoverProjectLocalBundles(ctx.cwd);
+
+    if (shadowsOnly) {
+      // #1036 — surface only artifacts that shadow upstream
+      return await formatShadowsOnly(projectLocal);
+    }
 
     if (projectLocalOnly) {
       // --project-local: only show project-local bundles; skip the deployed-
@@ -290,6 +298,51 @@ function formatProjectLocalOnly(
 
   output += '\n' + '═'.repeat(60) + '\n';
   output += `Counts by type: extension=${result.counts.extension} addon=${result.counts.addon} framework=${result.counts.framework} plugin=${result.counts.plugin}\n`;
+
+  return { exitCode: 0, message: output };
+}
+
+/**
+ * Format `aiwg list --shadows` output: only artifacts that currently shadow
+ * an upstream artifact, with safety-critical and override status. (#1036)
+ */
+async function formatShadowsOnly(
+  projectLocal: Awaited<ReturnType<typeof discoverProjectLocalBundles>>
+): Promise<HandlerResult> {
+  let output = '';
+
+  if (projectLocal.bundles.length === 0) {
+    output += '\nNo project-local bundles — no shadows possible.\n';
+    return { exitCode: 0, message: output };
+  }
+
+  const { getFrameworkRoot: gfr } = await import('../../channel/manager.mjs');
+  const frameworkRoot = await gfr();
+  const upstream = await buildUpstreamRegistry({ frameworkRoot });
+  const result = await resolveShadows(projectLocal.bundles, upstream);
+
+  if (result.shadows.length === 0) {
+    output += '\nNo active shadows.\n';
+    output += '\nProject-local bundles deploy alongside upstream without collision.\n';
+    return { exitCode: 0, message: output };
+  }
+
+  output += `\nActive shadows (${result.shadows.length}):\n`;
+  output += '─'.repeat(60) + '\n';
+  for (const r of result.shadows) {
+    const sc = r.upstream?.safetyCritical ? ' [SAFETY-CRITICAL]' : '';
+    output += `  ${r.artifactType}/${r.artifactId}${sc}\n`;
+    output += `    Bundle: ${r.bundleId} (${r.bundleLocalPath})\n`;
+    output += `    Project-local: ${r.artifactSourcePath}\n`;
+    if (r.upstream) {
+      output += `    Shadows ${r.upstream.source}: ${r.upstream.sourcePath}\n`;
+    }
+    output += `    Verdict: ${r.verdict}\n\n`;
+  }
+
+  if (result.blockedBundleIds.size > 0) {
+    output += `\n⚠ ${result.blockedBundleIds.size} bundle(s) blocked from deployment due to unsafe shadows.\n`;
+  }
 
   return { exitCode: 0, message: output };
 }

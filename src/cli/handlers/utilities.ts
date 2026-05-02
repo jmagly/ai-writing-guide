@@ -21,6 +21,9 @@ import { useHandler as useFrameworkHandler } from './use.js';
 import {
   checkCollisions,
 } from '../../smiths/skillsmith/collision-detector.js';
+import { discoverProjectLocalBundles } from '../../extensions/project-local-discovery.js';
+import { buildUpstreamRegistry } from '../../extensions/upstream-registry.js';
+import { resolveShadows } from '../../extensions/shadow-resolver.js';
 
 /**
  * Maps framework registry IDs (e.g. 'sdlc-complete') to `aiwg use` names (e.g. 'sdlc').
@@ -370,6 +373,38 @@ export const doctorHandler: CommandHandler = {
       }
     } catch {
       // Collision scan is non-fatal for doctor
+    }
+
+    // #1036 — Project-local shadow scan: surface bundles that override upstream
+    // artifacts so operators can audit safety-critical overrides at a glance.
+    try {
+      const projectDir = ctx.cwd || process.cwd();
+      const projectLocal = await discoverProjectLocalBundles(projectDir);
+      if (projectLocal.bundles.length > 0) {
+        const fr = await getFrameworkRoot();
+        const upstream = await buildUpstreamRegistry({ frameworkRoot: fr });
+        const shadowResult = await resolveShadows(projectLocal.bundles, upstream);
+        if (shadowResult.shadows.length > 0 || shadowResult.blockedBundleIds.size > 0) {
+          console.log('\n── Project-local shadow scan ──');
+          console.log('');
+          if (shadowResult.shadows.length > 0) {
+            console.log(`Active shadows: ${shadowResult.shadows.length}`);
+            for (const s of shadowResult.shadows) {
+              const sc = s.upstream?.safetyCritical ? ' [SAFETY-CRITICAL]' : '';
+              console.log(`  ${s.verdict === 'refuse-unsafe' ? '✗' : '⚠'} ${s.artifactType}/${s.artifactId}${sc} (bundle: ${s.bundleId})`);
+            }
+          }
+          if (shadowResult.blockedBundleIds.size > 0) {
+            console.log('');
+            console.log(`✗ ${shadowResult.blockedBundleIds.size} bundle(s) blocked: ${[...shadowResult.blockedBundleIds].join(', ')}`);
+            console.log('  Fix: add `overrides: ["<id>"]` to the project-local manifest.json or remove the conflict.');
+          }
+          console.log('');
+          console.log('  Run `aiwg list --shadows` for full details.');
+        }
+      }
+    } catch {
+      // Shadow scan is non-fatal for doctor
     }
 
     return result;
