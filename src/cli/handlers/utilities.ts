@@ -21,9 +21,6 @@ import { useHandler as useFrameworkHandler } from './use.js';
 import {
   checkCollisions,
 } from '../../smiths/skillsmith/collision-detector.js';
-import { discoverProjectLocalBundles } from '../../extensions/project-local-discovery.js';
-import { buildUpstreamRegistry } from '../../extensions/upstream-registry.js';
-import { resolveShadows } from '../../extensions/shadow-resolver.js';
 
 /**
  * Maps framework registry IDs (e.g. 'sdlc-complete') to `aiwg use` names (e.g. 'sdlc').
@@ -375,36 +372,34 @@ export const doctorHandler: CommandHandler = {
       // Collision scan is non-fatal for doctor
     }
 
-    // #1036 — Project-local shadow scan: surface bundles that override upstream
-    // artifacts so operators can audit safety-critical overrides at a glance.
+    // #1037 / #1049 — Project-local artifacts section: per-type counts,
+    // validation errors, shadows, denylist violations, drift detection,
+    // and provider deployment matrix. Replaces the older inline shadow
+    // scan with the richer section spec'd by design-doctor-log-promote.md.
     try {
       const projectDir = ctx.cwd || process.cwd();
-      const projectLocal = await discoverProjectLocalBundles(projectDir);
-      if (projectLocal.bundles.length > 0) {
-        const fr = await getFrameworkRoot();
-        const upstream = await buildUpstreamRegistry({ frameworkRoot: fr });
-        const shadowResult = await resolveShadows(projectLocal.bundles, upstream);
-        if (shadowResult.shadows.length > 0 || shadowResult.blockedBundleIds.size > 0) {
-          console.log('\n── Project-local shadow scan ──');
-          console.log('');
-          if (shadowResult.shadows.length > 0) {
-            console.log(`Active shadows: ${shadowResult.shadows.length}`);
-            for (const s of shadowResult.shadows) {
-              const sc = s.upstream?.safetyCritical ? ' [SAFETY-CRITICAL]' : '';
-              console.log(`  ${s.verdict === 'refuse-unsafe' ? '✗' : '⚠'} ${s.artifactType}/${s.artifactId}${sc} (bundle: ${s.bundleId})`);
-            }
-          }
-          if (shadowResult.blockedBundleIds.size > 0) {
-            console.log('');
-            console.log(`✗ ${shadowResult.blockedBundleIds.size} bundle(s) blocked: ${[...shadowResult.blockedBundleIds].join(', ')}`);
-            console.log('  Fix: add `overrides: ["<id>"]` to the project-local manifest.json or remove the conflict.');
-          }
-          console.log('');
-          console.log('  Run `aiwg list --shadows` for full details.');
-        }
+      const fr = await getFrameworkRoot();
+      const { readAiwgConfig } = await import('../../config/aiwg-config.js');
+      const config = await readAiwgConfig(projectDir);
+      const { buildProjectLocalDoctorSection } = await import(
+        '../../extensions/project-local-doctor.js'
+      );
+      const onlyProjectLocal = ctx.args.includes('--project-local');
+      const quiet = ctx.args.includes('--quiet');
+      const section = await buildProjectLocalDoctorSection({
+        projectDir, frameworkRoot: fr, config, quiet,
+      });
+      if (section.output) {
+        console.log(section.output);
+      }
+      // When --project-local is requested as the only output and the rest
+      // of doctor printed nothing project-local-specific, fold result exit
+      // into our own findings.
+      if (onlyProjectLocal && section.hasFailures) {
+        return { exitCode: 1, message: '' };
       }
     } catch {
-      // Shadow scan is non-fatal for doctor
+      // Project-local section is non-fatal for doctor
     }
 
     return result;
