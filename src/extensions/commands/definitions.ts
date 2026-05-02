@@ -271,6 +271,34 @@ export const removeCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const promoteCommand: Extension = {
+  id: 'promote',
+  type: 'skill',
+  name: 'Promote',
+  description: 'Graduate a project-local bundle to upstream or a corpus path',
+  version: '1.0.0',
+  capabilities: ['cli', 'framework', 'graduate', 'project-local'],
+  keywords: ['promote', 'graduate', 'upstream', 'corpus', 'project-local', 'bundle'],
+  category: 'framework',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['promote bundle', 'graduate to upstream', 'promote project-local'],
+    commandHint: {
+      template: 'orchestration',
+      argumentHint: '<name> [--to upstream|corpus <path>] [--dry-run] [--cleanup] [--force]',
+      allowedTools: ['Read', 'Write', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const installCommand: Extension = {
   id: 'install',
   type: 'skill',
@@ -2604,10 +2632,11 @@ export const commandDefinitions: Extension[] = [
   updateCommand,
   refreshCommand,
 
-  // Framework (5)
+  // Framework (6)
   useCommand,
   listCommand,
   removeCommand,
+  promoteCommand,
   installCommand,
   packagesCommand,
   marketplaceCommand,
