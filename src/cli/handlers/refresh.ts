@@ -18,6 +18,7 @@ import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { refreshAllPackages } from '../../packages/registry.js';
 import { readAiwgConfig, hashManifest } from '../../config/aiwg-config.js';
+import { discoverProjectLocalBundles } from '../../extensions/project-local-discovery.js';
 import * as ui from '../ui.js';
 
 /**
@@ -143,6 +144,32 @@ export const refreshHandler: CommandHandler = {
           ui.dim(`    Would re-deploy: ${fw}`);
         }
       }
+    }
+
+    // Step 4.25: Report planned project-local deploys (#1035).
+    // The actual deploy is performed by `aiwg use` underneath via deploy.mjs;
+    // this block surfaces what *would* happen during dry-run and what was
+    // covered during a real refresh.
+    try {
+      const plDiscovery = await discoverProjectLocalBundles(process.cwd());
+      const plCount = plDiscovery.bundles.length;
+      if (plCount > 0) {
+        if (dryRun) {
+          if (!quiet) {
+            ui.info(`Would re-deploy ${plCount} project-local bundle(s):`);
+            for (const b of plDiscovery.bundles) {
+              ui.dim(`    ${b.type} '${b.id}' from ${b.localPath}`);
+            }
+          }
+        } else {
+          if (!quiet) ui.success(`Project-local: ${plCount} bundle(s) re-deployed via 'aiwg use'`);
+        }
+      }
+      if (plDiscovery.errors.length > 0 && !quiet) {
+        ui.warn(`Project-local discovery: ${plDiscovery.errors.length} validation error(s) — run 'aiwg list --project-local' for details`);
+      }
+    } catch {
+      // Non-fatal — refresh continues
     }
 
     // Step 4.5: Stale deployment check (#621)

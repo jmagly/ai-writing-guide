@@ -13,6 +13,7 @@ import { readFile, writeFile, mkdir, access, readdir, rename, unlink } from 'fs/
 import { createHash, randomBytes } from 'crypto';
 import { resolve, join, isAbsolute } from 'path';
 import { homedir } from 'os';
+import type { ProjectLocalType } from '../extensions/manifest.js';
 
 const CONFIG_FILENAME = 'aiwg.config';
 const AIWG_DIR = '.aiwg';
@@ -36,11 +37,12 @@ export interface InstalledEntry {
 
   /**
    * Source of the deployment:
-   *   "bundled"    — came from the npm package
-   *   "cache"      — came from ~/.cache/aiwg/packages/ (#557)
-   *   git URL      — direct source URL
+   *   "bundled"       — came from the npm package
+   *   "cache"         — came from ~/.cache/aiwg/packages/ (#557)
+   *   "project-local" — came from .aiwg/{extensions,addons,frameworks,plugins}/<id>/ (#1035)
+   *   git URL         — direct source URL
    */
-  source: 'bundled' | 'cache' | string;
+  source: 'bundled' | 'cache' | 'project-local' | string;
 
   /** ISO-8601 timestamp of last deployment */
   installedAt: string;
@@ -50,6 +52,20 @@ export interface InstalledEntry {
 
   /** SHA-256 of manifest.json at deploy time; used for stale detection */
   manifestHash?: string;
+
+  /**
+   * Project-local-only fields (set when `source === 'project-local'`).
+   *
+   * Per @.aiwg/architecture/adr-unified-registry-shape.md (ADR companion to
+   * #1035). These three fields MUST be present together when source is
+   * `'project-local'` and SHOULD be absent otherwise.
+   */
+  /** Path of the bundle directory relative to project root (e.g., ".aiwg/extensions/foo/"). */
+  localPath?: string;
+  /** Bundle type from the manifest. */
+  localType?: ProjectLocalType;
+  /** Schema version of the manifest.json this entry was written from (currently `'1'`). */
+  manifestVersion?: string;
 }
 
 /**
@@ -401,8 +417,28 @@ export function updateInstalled(
   name: string,
   provider: string,
   counts: DeployedArtifactCounts,
-  opts: { version: string; source: string; manifestHash?: string }
+  opts: {
+    version: string;
+    source: string;
+    manifestHash?: string;
+    /** Set when source === 'project-local'. Relative to project root. */
+    localPath?: string;
+    /** Set when source === 'project-local'. */
+    localType?: ProjectLocalType;
+    /** Set when source === 'project-local'. */
+    manifestVersion?: string;
+  }
 ): AiwgConfig {
+  // Project-local invariant: `source: 'project-local'` requires localPath + localType
+  // (per ADR adr-unified-registry-shape §6 risk mitigation).
+  if (opts.source === 'project-local') {
+    if (!opts.localPath || !opts.localType) {
+      throw new Error(
+        `updateInstalled: source 'project-local' requires localPath and localType (got ${JSON.stringify({ localPath: opts.localPath, localType: opts.localType })})`
+      );
+    }
+  }
+
   const existing = config.installed[name] ?? {
     version: opts.version,
     source: opts.source,
@@ -416,6 +452,18 @@ export function updateInstalled(
   existing.installedAt = new Date().toISOString();
   existing.deployedTo[provider] = counts;
   if (opts.manifestHash) existing.manifestHash = opts.manifestHash;
+
+  if (opts.source === 'project-local') {
+    existing.localPath = opts.localPath;
+    existing.localType = opts.localType;
+    if (opts.manifestVersion) existing.manifestVersion = opts.manifestVersion;
+  } else {
+    // Clear stale project-local fields if a previously project-local entry is
+    // being overwritten by a non-project-local source.
+    delete existing.localPath;
+    delete existing.localType;
+    delete existing.manifestVersion;
+  }
 
   config.installed[name] = existing;
   return config;

@@ -196,6 +196,65 @@ describe('aiwg-config', () => {
       // Should keep original since new opts didn't provide one
       expect(updated.installed['sdlc'].manifestHash).toBe('sha256:original');
     });
+
+    // Project-local (#1035)
+    describe('project-local entries', () => {
+      it('writes localPath/localType/manifestVersion when source=project-local', () => {
+        const cfg = emptyConfig();
+        const updated = updateInstalled(cfg, 'foo', 'claude', { agents: 0, commands: 0, skills: 2, rules: 1 }, {
+          version: '1.0.0',
+          source: 'project-local',
+          localPath: '.aiwg/addons/foo/',
+          localType: 'addon',
+          manifestVersion: '1',
+        });
+
+        const entry = updated.installed['foo'];
+        expect(entry.source).toBe('project-local');
+        expect(entry.localPath).toBe('.aiwg/addons/foo/');
+        expect(entry.localType).toBe('addon');
+        expect(entry.manifestVersion).toBe('1');
+      });
+
+      it('refuses source=project-local without localPath', () => {
+        const cfg = emptyConfig();
+        expect(() => updateInstalled(cfg, 'foo', 'claude', { agents: 0, commands: 0, skills: 0, rules: 0 }, {
+          version: '1.0.0',
+          source: 'project-local',
+          localType: 'addon',
+        })).toThrow(/requires localPath and localType/);
+      });
+
+      it('refuses source=project-local without localType', () => {
+        const cfg = emptyConfig();
+        expect(() => updateInstalled(cfg, 'foo', 'claude', { agents: 0, commands: 0, skills: 0, rules: 0 }, {
+          version: '1.0.0',
+          source: 'project-local',
+          localPath: '.aiwg/addons/foo/',
+        })).toThrow(/requires localPath and localType/);
+      });
+
+      it('clears project-local fields when overwriting with source=bundled', () => {
+        const cfg = emptyConfig();
+        // First write project-local
+        updateInstalled(cfg, 'foo', 'claude', { agents: 0, commands: 0, skills: 1, rules: 0 }, {
+          version: '1.0.0',
+          source: 'project-local',
+          localPath: '.aiwg/addons/foo/',
+          localType: 'addon',
+          manifestVersion: '1',
+        });
+        // Now overwrite with bundled
+        const updated = updateInstalled(cfg, 'foo', 'claude', { agents: 0, commands: 0, skills: 1, rules: 0 }, {
+          version: '2.0.0',
+          source: 'bundled',
+        });
+        expect(updated.installed['foo'].source).toBe('bundled');
+        expect(updated.installed['foo'].localPath).toBeUndefined();
+        expect(updated.installed['foo'].localType).toBeUndefined();
+        expect(updated.installed['foo'].manifestVersion).toBeUndefined();
+      });
+    });
   });
 
   // ── hashManifest ───────────────────────────────────────────────────────────

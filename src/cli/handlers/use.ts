@@ -29,6 +29,10 @@ import {
   formatCollisionReport,
   hasBlockingCollisions,
 } from '../../smiths/skillsmith/collision-detector.js';
+import {
+  discoverProjectLocalBundles,
+  type ProjectLocalBundle,
+} from '../../extensions/project-local-discovery.js';
 
 /**
  * Valid framework identifiers
@@ -569,6 +573,169 @@ async function deployCiHooks(opts: {
 }
 
 /**
+ * Count artifacts contributed by a single project-local bundle by reading the
+ * bundle's source directories. Approximates what deploy-agents.mjs writes to
+ * the provider deploy paths for this specific bundle (skills are subdirs;
+ * everything else is .md files).
+ *
+ * @implements #1035
+ */
+async function countBundleSourceArtifacts(
+  bundlePath: string
+): Promise<{ agents: number; commands: number; skills: number; rules: number }> {
+  const countMd = async (dir: string): Promise<number> => {
+    try {
+      const entries = await fs.readdir(path.join(bundlePath, dir));
+      return entries.filter(f => f.endsWith('.md')).length;
+    } catch {
+      return 0;
+    }
+  };
+  const countDirs = async (dir: string): Promise<number> => {
+    try {
+      const entries = await fs.readdir(path.join(bundlePath, dir), { withFileTypes: true });
+      return entries.filter(e => e.isDirectory()).length;
+    } catch {
+      return 0;
+    }
+  };
+  return {
+    agents: await countMd('agents'),
+    commands: await countMd('commands'),
+    skills: await countDirs('skills'),
+    rules: await countMd('rules'),
+  };
+}
+
+/**
+ * Deploy a single project-local bundle to one provider via deploy-agents.mjs.
+ * Runs the same script and flags used for upstream addons, with the bundle
+ * directory as the `--source`. Idempotent — overwrites prior deploys.
+ *
+ * @implements #1035
+ */
+async function deployOneProjectLocalBundle(opts: {
+  bundle: ProjectLocalBundle;
+  ctx: HandlerContext;
+  frameworkRoot: string;
+  provider: string;
+  target: string;
+  dryRun: boolean;
+  verbose: boolean;
+  quiet: boolean;
+}): Promise<{ exitCode: number; counts: { agents: number; commands: number; skills: number; rules: number } }> {
+  const { bundle, ctx, frameworkRoot, provider, target, dryRun, verbose, quiet } = opts;
+
+  const runner = createScriptRunner(frameworkRoot);
+  const args: string[] = [
+    '--source', bundle.bundlePath,
+    '--deploy-commands', '--deploy-skills', '--deploy-rules',
+    '--provider', provider,
+    '--target', target,
+  ];
+  if (dryRun) args.push('--dry-run');
+  if (verbose) args.push('--verbose');
+  if (quiet && !verbose) args.push('--quiet');
+  // Project-local bundles are addon-shaped — never trigger the legacy commands
+  // migration prompt (which is only relevant for full-framework deploys).
+  args.push('--skip-commands-migration');
+
+  const captureOpts = quiet && !verbose ? { capture: true } : {};
+  const result = await runner.run('tools/agents/deploy-agents.mjs', args, captureOpts);
+
+  // Approximate counts from the bundle's source dirs (deploy-agents.mjs is
+  // idempotent and copies file-for-file from these dirs)
+  const counts = await countBundleSourceArtifacts(bundle.bundlePath);
+  void ctx;
+  return { exitCode: result.exitCode, counts };
+}
+
+/**
+ * Discover and deploy all project-local bundles from `.aiwg/{extensions,addons,
+ * frameworks,plugins}/<id>/` for one provider. Updates `aiwg.config.installed`
+ * with `source: 'project-local'` entries.
+ *
+ * Returns the number of bundles deployed and any deploy errors.
+ *
+ * @implements #1035
+ */
+async function deployProjectLocalBundles(opts: {
+  ctx: HandlerContext;
+  frameworkRoot: string;
+  projectDir: string;
+  provider: string;
+  target: string;
+  dryRun: boolean;
+  verbose: boolean;
+  quiet: boolean;
+  /** When set, restrict to the bundle whose id matches. */
+  onlyBundleId?: string;
+}): Promise<{ deployed: number; failed: number; bundles: ProjectLocalBundle[] }> {
+  const { ctx, frameworkRoot, projectDir, provider, target, dryRun, verbose, quiet, onlyBundleId } = opts;
+
+  const discovery = await discoverProjectLocalBundles(projectDir);
+
+  if (discovery.errors.length > 0 && !quiet) {
+    ui.warn(`Project-local discovery surfaced ${discovery.errors.length} validation error(s) — run 'aiwg list --project-local' for details`);
+  }
+
+  const targetBundles = onlyBundleId
+    ? discovery.bundles.filter(b => b.id === onlyBundleId)
+    : discovery.bundles;
+
+  if (targetBundles.length === 0) {
+    return { deployed: 0, failed: 0, bundles: [] };
+  }
+
+  let deployed = 0;
+  let failed = 0;
+
+  for (const bundle of targetBundles) {
+    if (verbose || dryRun) {
+      const action = dryRun ? '[dry-run] Would deploy' : 'Deploying';
+      console.log(`${action} project-local ${bundle.type} '${bundle.id}' from ${bundle.localPath} → ${provider}`);
+    }
+
+    const result = await deployOneProjectLocalBundle({
+      bundle, ctx, frameworkRoot, provider, target, dryRun, verbose, quiet,
+    });
+
+    if (result.exitCode !== 0) {
+      failed++;
+      ui.warn(`Failed to deploy project-local bundle '${bundle.id}' (exit ${result.exitCode})`);
+      continue;
+    }
+
+    deployed++;
+
+    // Persist registry entry (skip in dry-run — no side effects)
+    if (!dryRun) {
+      try {
+        const config = await readAiwgConfig(projectDir);
+        if (!config) continue;
+        // Hash the bundle's manifest.json for stale detection
+        const manifestAbsPath = path.join(bundle.bundlePath, 'manifest.json');
+        const mHash = await hashManifest(manifestAbsPath);
+        const updated = updateInstalled(config, bundle.id, provider, result.counts, {
+          version: bundle.manifest.version,
+          source: 'project-local',
+          manifestHash: mHash,
+          localPath: bundle.localPath,
+          localType: bundle.type,
+          manifestVersion: bundle.manifest.manifestVersion,
+        });
+        await writeAiwgConfig(projectDir, updated);
+      } catch (err) {
+        // Non-fatal: deploy already succeeded
+        ui.warn(`Project-local registry update failed for '${bundle.id}': ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  }
+
+  return { deployed, failed, bundles: targetBundles };
+}
+
+/**
  * Use command handler
  *
  * Deploys framework agents, commands, and skills to the current project,
@@ -679,10 +846,51 @@ export class UseHandler implements CommandHandler {
     const isFramework = VALID_FRAMEWORKS.includes(framework as Framework);
     const isAddon = !isFramework && await isValidAddon(frameworkRoot, framework);
 
+    // Project-local bundle resolution: when the name doesn't match an upstream
+    // framework or addon, check `.aiwg/{extensions,addons,frameworks,plugins}/<id>/`
+    // for a matching bundle and deploy that single bundle. (#1035)
     if (!isFramework && !isAddon) {
+      const discovery = await discoverProjectLocalBundles(projectDir);
+      const match = discovery.bundles.find(b => b.id === framework);
+      if (match) {
+        const providerIdx = remainingArgs.findIndex(a => a === '--provider' || a === '--platform');
+        const explicitProvider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : null;
+        const dryRunSingle = remainingArgs.includes('--dry-run');
+        const verboseSingle = remainingArgs.includes('--verbose') || remainingArgs.includes('-v');
+        const targetIdxSingle = remainingArgs.findIndex(a => a === '--target');
+        const targetSingle = targetIdxSingle >= 0 && remainingArgs[targetIdxSingle + 1] ? remainingArgs[targetIdxSingle + 1] : process.cwd();
+
+        // Multi-provider expansion mirrors the framework path
+        let providersForSingle: string[];
+        if (explicitProvider) providersForSingle = [explicitProvider];
+        else if (config && config.providers.length > 0) providersForSingle = config.providers;
+        else providersForSingle = ['claude'];
+
+        let totalDeployed = 0;
+        let totalFailed = 0;
+        for (const p of providersForSingle) {
+          const r = await deployProjectLocalBundles({
+            ctx, frameworkRoot, projectDir, provider: p, target: targetSingle,
+            dryRun: dryRunSingle, verbose: verboseSingle, quiet: !verboseSingle && !dryRunSingle,
+            onlyBundleId: framework,
+          });
+          totalDeployed += r.deployed;
+          totalFailed += r.failed;
+        }
+
+        if (!verboseSingle && !dryRunSingle) {
+          ui.blank();
+          ui.success(`project-local ${match.type} '${match.id}' deployed (${totalDeployed} provider(s))`);
+        }
+        return {
+          exitCode: totalFailed > 0 ? 1 : 0,
+          message: totalFailed > 0 ? `${totalFailed} project-local deploy(s) failed` : '',
+        };
+      }
+
       return {
         exitCode: 1,
-        message: `Error: Unknown target '${framework}'\nFrameworks: ${VALID_FRAMEWORKS.join(', ')}\n\nFor addons, run 'aiwg list' to see available addons.\nRun 'aiwg help' for usage information.`,
+        message: `Error: Unknown target '${framework}'\nFrameworks: ${VALID_FRAMEWORKS.join(', ')}\n\nFor addons, run 'aiwg list' to see available addons.\nFor project-local artifacts, run 'aiwg list --project-local'.\nRun 'aiwg help' for usage information.`,
       };
     }
 
@@ -850,13 +1058,14 @@ export class UseHandler implements CommandHandler {
 
     // Check flags
     const skipUtils = remainingArgs.includes('--no-utils');
+    const skipProjectLocal = remainingArgs.includes('--no-project-local');
     const verbose = remainingArgs.includes('--verbose') || remainingArgs.includes('-v');
     const dryRun = remainingArgs.includes('--dry-run');
     const ciHooksEnabled = remainingArgs.includes('--ci-hooks-enabled');
     const force = remainingArgs.includes('--force');
     const skipConflicts = remainingArgs.includes('--skip-conflicts');
     const filteredArgs = deployArgs.filter(
-      a => a !== '--no-utils' && a !== '--ci-hooks-enabled' && a !== '--force' && a !== '--skip-conflicts'
+      a => a !== '--no-utils' && a !== '--no-project-local' && a !== '--ci-hooks-enabled' && a !== '--force' && a !== '--skip-conflicts'
     );
 
     // Pass --quiet to suppress deploy-agents.mjs header/footer in default mode (#460)
@@ -947,6 +1156,28 @@ export class UseHandler implements CommandHandler {
         if (result.exitCode !== 0) {
           return result;
         }
+      }
+    }
+
+    // Deploy project-local bundles (#1035). Auto-runs after upstream addons unless
+    // --no-project-local. Idempotent — overwrites prior deploys. Skipped under
+    // --dry-run-disabled scenarios for safety; --dry-run is honored and logged.
+    if (!skipProjectLocal) {
+      const plResult = await deployProjectLocalBundles({
+        ctx,
+        frameworkRoot,
+        projectDir,
+        provider,
+        target,
+        dryRun,
+        verbose,
+        quiet,
+      });
+      if (plResult.deployed > 0 && quiet) {
+        ui.dim(`  + ${plResult.deployed} project-local bundle(s)`);
+      }
+      if (plResult.failed > 0) {
+        ui.warn(`${plResult.failed} project-local bundle(s) failed to deploy`);
       }
     }
 
