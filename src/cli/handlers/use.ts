@@ -38,6 +38,10 @@ import {
   resolveShadows,
   formatShadowReport,
 } from '../../extensions/shadow-resolver.js';
+import {
+  appendProjectLocalActivity,
+  emitDiscoverEventsDeduped,
+} from '../../extensions/project-local-activity.js';
 
 /**
  * Valid framework identifiers
@@ -692,6 +696,12 @@ async function deployProjectLocalBundles(opts: {
     return { deployed: 0, failed: 0, bundles: [] };
   }
 
+  // #1037/#1049 — Activity log: emit `discover` for newly-seen bundles
+  // (deduped against recent log tail to avoid spam on repeated commands).
+  if (!dryRun) {
+    await emitDiscoverEventsDeduped(targetBundles.map(b => ({ id: b.id, type: b.type })));
+  }
+
   // #1036 — Resolve shadows against the upstream registry before any deploy.
   // Refuse to deploy bundles that contain a safety-critical shadow without an
   // explicit `overrides:` declaration, or that share an artifact id with another
@@ -701,6 +711,26 @@ async function deployProjectLocalBundles(opts: {
   const report = formatShadowReport(shadowResult);
   if (report) {
     process.stderr.write(report + '\n');
+  }
+
+  // #1037/#1049 — Activity log per shadow resolution
+  if (!dryRun) {
+    for (const r of shadowResult.resolutions) {
+      if (r.verdict === 'deploy') continue; // no-collision case is silent
+      const bundle = targetBundles.find(b => b.id === r.bundleId);
+      if (!bundle) continue;
+      const event = r.verdict === 'deploy-acknowledged'
+        ? 'shadow-acknowledged'
+        : r.verdict === 'refuse-unsafe' || r.verdict === 'refuse-phantom' || r.verdict === 'refuse-duplicate'
+          ? 'shadow-refused'
+          : 'conflict';
+      await appendProjectLocalActivity({
+        event,
+        name: bundle.id,
+        type: bundle.type,
+        summary: `${r.verdict}: ${r.artifactType}/${r.artifactId}${r.upstream ? ` overrides ${r.upstream.source}` : ''}`,
+      });
+    }
   }
 
   let deployed = 0;
@@ -725,10 +755,28 @@ async function deployProjectLocalBundles(opts: {
     if (result.exitCode !== 0) {
       failed++;
       ui.warn(`Failed to deploy project-local bundle '${bundle.id}' (exit ${result.exitCode})`);
+      if (!dryRun) {
+        await appendProjectLocalActivity({
+          event: 'deploy-failed',
+          name: bundle.id,
+          type: bundle.type,
+          summary: `${provider}: exit ${result.exitCode}`,
+        });
+      }
       continue;
     }
 
     deployed++;
+
+    if (!dryRun) {
+      const c = result.counts;
+      await appendProjectLocalActivity({
+        event: 'deploy',
+        name: bundle.id,
+        type: bundle.type,
+        summary: `${provider}: agents=${c.agents} commands=${c.commands} skills=${c.skills} rules=${c.rules}`,
+      });
+    }
 
     // Persist registry entry (skip in dry-run — no side effects)
     if (!dryRun) {
