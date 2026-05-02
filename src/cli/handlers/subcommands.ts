@@ -16,6 +16,7 @@ import { createScriptRunner } from "./script-runner.js";
 import { getFrameworkRoot } from "../../channel/manager.mjs";
 import { getRegistry } from "../../extensions/registry.js";
 import { registerDeployedExtensions } from "../../extensions/deployment-registration.js";
+import { discoverProjectLocalBundles } from "../../extensions/project-local-discovery.js";
 import { sessionHandler } from "./session.js";
 import { feedbackHandler } from "./feedback.js";
 import { handlerResultFromError } from "../errors.js";
@@ -92,7 +93,18 @@ export const listHandler: CommandHandler = {
   aliases: ["ls"],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    const filterType = ctx.args[0]; // Optional: 'agents', 'skills', 'commands', 'all'
+    // Filter args: positional type filter, plus --project-local flag (#1034)
+    const projectLocalOnly = ctx.args.includes('--project-local');
+    const filterType = ctx.args.find((a) => !a.startsWith('--')); // 'agents'|'skills'|'commands'|'all'|undefined
+
+    // Project-local bundle discovery (#1034) — read-only scan, no deploy
+    const projectLocal = await discoverProjectLocalBundles(ctx.cwd);
+
+    if (projectLocalOnly) {
+      // --project-local: only show project-local bundles; skip the deployed-
+      // extension registry read entirely
+      return formatProjectLocalOnly(projectLocal);
+    }
 
     // Ensure registry is populated with deployed extensions
     const registry = getRegistry();
@@ -190,6 +202,27 @@ export const listHandler: CommandHandler = {
       }
     }
 
+    // Project-local bundles (#1034) — surfaced as a separate section with
+    // [project] source label
+    const totalProjectLocal =
+      projectLocal.counts.extension +
+      projectLocal.counts.addon +
+      projectLocal.counts.framework +
+      projectLocal.counts.plugin;
+
+    if (totalProjectLocal > 0 || projectLocal.errors.length > 0) {
+      output += `\nProject-local bundles (${totalProjectLocal}):\n`;
+      output += '─'.repeat(60) + '\n';
+      for (const b of projectLocal.bundles) {
+        output += `  ${b.id} [project] [${b.type}]\n`;
+        output += `    Path: ${b.localPath}\n`;
+        output += `    Description: ${b.manifest.description.slice(0, 80)}${b.manifest.description.length > 80 ? '...' : ''}\n\n`;
+      }
+      if (projectLocal.errors.length > 0) {
+        output += `  ⚠ ${projectLocal.errors.length} validation error(s) — see "aiwg doctor" for details\n`;
+      }
+    }
+
     // Summary
     const totalAgents = registry.getByType('agent').length;
     const totalSkills = registry.getByType('skill').length;
@@ -197,9 +230,13 @@ export const listHandler: CommandHandler = {
     const total = totalAgents + totalSkills + totalCommands;
 
     output += '\n' + '═'.repeat(60) + '\n';
-    output += `Total: ${total} extensions (${totalAgents} agents, ${totalSkills} skills, ${totalCommands} commands)\n`;
+    output += `Total: ${total} extensions (${totalAgents} agents, ${totalSkills} skills, ${totalCommands} commands)`;
+    if (totalProjectLocal > 0) {
+      output += ` + ${totalProjectLocal} project-local`;
+    }
+    output += '\n';
 
-    if (total === 0) {
+    if (total === 0 && totalProjectLocal === 0) {
       output += '\nTip: Deploy a framework with "aiwg use sdlc" to get started\n';
     }
 
@@ -209,6 +246,53 @@ export const listHandler: CommandHandler = {
     };
   },
 };
+
+/**
+ * Format `aiwg list --project-local` output: only project-local bundles, with
+ * per-type breakdown and any validation errors surfaced. (#1034)
+ */
+function formatProjectLocalOnly(
+  result: Awaited<ReturnType<typeof discoverProjectLocalBundles>>
+): HandlerResult {
+  let output = '';
+  const total =
+    result.counts.extension +
+    result.counts.addon +
+    result.counts.framework +
+    result.counts.plugin;
+
+  if (total === 0 && result.errors.length === 0) {
+    output += '\nNo project-local bundles found.\n';
+    output += '\nTip: place a manifest.json under .aiwg/{extensions,addons,frameworks,plugins}/<name>/ to author a project-local artifact.\n';
+    return { exitCode: 0, message: output };
+  }
+
+  output += `\nProject-local bundles (${total}):\n`;
+  output += '─'.repeat(60) + '\n';
+  for (const b of result.bundles) {
+    output += `  ${b.id} [project] [${b.type}] v${b.manifest.version}\n`;
+    output += `    Path: ${b.localPath}\n`;
+    output += `    Description: ${b.manifest.description.slice(0, 80)}${b.manifest.description.length > 80 ? '...' : ''}\n\n`;
+  }
+
+  if (result.errors.length > 0) {
+    output += '\nValidation errors:\n';
+    output += '─'.repeat(60) + '\n';
+    for (const e of result.errors.slice(0, 10)) {
+      output += `  [${e.severity}] ${e.path}\n`;
+      output += `    ${e.field}: expected ${e.expected}, got ${e.actual}\n`;
+      if (e.hint) output += `    hint: ${e.hint}\n`;
+    }
+    if (result.errors.length > 10) {
+      output += `  ... and ${result.errors.length - 10} more\n`;
+    }
+  }
+
+  output += '\n' + '═'.repeat(60) + '\n';
+  output += `Counts by type: extension=${result.counts.extension} addon=${result.counts.addon} framework=${result.counts.framework} plugin=${result.counts.plugin}\n`;
+
+  return { exitCode: 0, message: output };
+}
 
 /**
  * Remove framework handler
