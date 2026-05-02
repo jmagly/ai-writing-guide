@@ -66,22 +66,32 @@ The exhaustive 10-provider matrix already runs in `deployment-completeness.test.
 
 | # | Matrix row | Owner | Status |
 |---|---|---|---|
-| R-1 | Revert with deployed file pristine (clean revert) | `project-local-deploy.test.ts` "remove reverts deployed artifacts" | ✅ added |
-| R-2 | Revert with deployed file already missing | `project-local-deploy.test.ts` "remove tolerates already-missing artifacts" | ✅ added |
-| R-3 | Source under `.aiwg/<type>/<name>/` preserved on remove | `project-local-deploy.test.ts` "remove preserves source bundle under .aiwg" | ✅ added |
-| R-4 | Revert with deployed file mutated by operator (warn or abort) | future — `aiwg remove` revert design (#1048 still in design) | ⏳ deferred to #1048 |
-| R-5 | Revert with deployed file replaced by another artifact's deploy | future — depends on #1048 design | ⏳ deferred to #1048 |
+| R-1 | Revert with deployed file pristine (clean revert) | `project-local-remove.test.ts` "Case 1 (pristine)" | ✅ covered |
+| R-2 | Revert with deployed file already missing | `project-local-remove.test.ts` "Case 3 (missing)" | ✅ covered |
+| R-3 | Source under `.aiwg/<type>/<name>/` preserved on remove | `project-local-remove.test.ts` "source preservation invariant" | ✅ covered |
+| R-4 | Revert with deployed file mutated by operator (warn or abort) | `project-local-remove.test.ts` "Case 2 (mutated)" + "Case 2 + --force" | ✅ covered (#1037) |
+| R-5 | Revert with deployed file replaced by another artifact's deploy | `project-local-remove.test.ts` "Case 4 (replaced)" + "Case 4 + --force" | ✅ covered (#1037) |
 
 ### Doctor + UAT
 
 | # | Matrix row | Owner | Status |
 |---|---|---|---|
-| DC-1 | Doctor surfaces shadows, drift, validation errors | future — depends on doctor design (#1049) | ⏳ deferred to #1049 |
+| DC-1 | Doctor surfaces shadows, drift, validation errors | `project-local-doctor.test.ts` (8 tests) | ✅ covered (#1037) |
 | U-1 | UAT script: end-to-end use → list → conflict → remove → graduate cycle | `test/uat/project-local-flow.uat.ts` | ✅ added (use → list → remove; conflict via shadow-resolver verified in unit) |
+
+### Promote (added by #1037)
+
+| # | Matrix row | Owner | Status |
+|---|---|---|---|
+| PR-1 | Promote refuses unknown bundle id | `project-local-promote.test.ts` "PR-1: bundle-not-found" | ✅ covered |
+| PR-2 | `--dry-run` produces a plan without filesystem or registry changes | `project-local-promote.test.ts` "PR-2: --dry-run" | ✅ covered |
+| PR-3 | Hash-verified copy + registry source flip + optional `--cleanup` source removal | `project-local-promote.test.ts` "PR-3:" cluster | ✅ covered |
+| PR-4 | Refuses when destination already exists | `project-local-promote.test.ts` "PR-4: destination-exists" | ✅ covered |
+| PR-5 | Refuses on `@.aiwg/` project-local references; `--force` overrides | `project-local-promote.test.ts` "PR-5: project-local-references" | ✅ covered |
 
 ## Deferrals — explicit
 
-Matrix rows R-4, R-5, and DC-1 are explicitly deferred to their owning issues (#1048, #1049). Their owning issues will add the matching tests when those features land. This strategy doc will be revised at that point.
+All previously-deferred rows (R-4, R-5, DC-1) were closed out by #1037 once #1048 and #1049 landed. No matrix rows are currently deferred.
 
 ## How to run
 

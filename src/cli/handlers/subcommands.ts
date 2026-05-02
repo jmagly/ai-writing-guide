@@ -431,6 +431,100 @@ export const removeHandler: CommandHandler = {
 };
 
 /**
+ * Promote handler — graduate a project-local bundle to upstream or to a
+ * private corpus path. Implements the design at
+ * @.aiwg/architecture/design-doctor-log-promote.md (#1049).
+ *
+ * Usage:
+ *   aiwg promote <name>                          # default: --to upstream
+ *   aiwg promote <name> --to upstream
+ *   aiwg promote <name> --to corpus <path>
+ *   aiwg promote <name> --dry-run
+ *   aiwg promote <name> --cleanup
+ *   aiwg promote <name> --force
+ *
+ * @implements #1037
+ */
+export const promoteHandler: CommandHandler = {
+  id: 'promote',
+  name: 'Promote',
+  description: 'Graduate a project-local bundle to upstream or a corpus path',
+  category: 'framework',
+  aliases: ['-promote', '--promote', 'graduate'],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    const args = ctx.args;
+    const positional = args.find(a => !a.startsWith('-'));
+    if (!positional) {
+      return { exitCode: 1, message: 'Error: bundle name required\n\nUsage: aiwg promote <name> [--to upstream|corpus <path>] [--dry-run] [--cleanup] [--force]' };
+    }
+
+    const toIdx = args.findIndex(a => a === '--to');
+    const toValue = toIdx >= 0 ? args[toIdx + 1] : 'upstream';
+    let corpusPath: string | undefined;
+    if (toValue === 'corpus') {
+      // The argument *after* "corpus" is the path
+      corpusPath = args[toIdx + 2];
+      if (!corpusPath || corpusPath.startsWith('-')) {
+        return { exitCode: 1, message: 'Error: --to corpus requires a path argument' };
+      }
+    } else if (toValue !== 'upstream') {
+      return { exitCode: 1, message: `Error: --to must be 'upstream' or 'corpus' (got '${toValue}')` };
+    }
+
+    const dryRun = args.includes('--dry-run');
+    const cleanup = args.includes('--cleanup');
+    const force = args.includes('--force');
+
+    try {
+      const { readAiwgConfig, writeAiwgConfig, getProjectDir } = await import('../../config/aiwg-config.js');
+      const { promoteProjectLocalBundle } = await import('../../extensions/project-local-promote.js');
+
+      const projectDir = getProjectDir({ cwd: ctx.cwd }, args);
+      const config = await readAiwgConfig(projectDir);
+      if (!config) {
+        return { exitCode: 1, message: 'Error: no .aiwg/aiwg.config found — run `aiwg init` first' };
+      }
+
+      const fr = await getFrameworkRoot();
+      const result = await promoteProjectLocalBundle(config, projectDir, positional, {
+        to: toValue as 'upstream' | 'corpus',
+        corpusPath,
+        dryRun,
+        cleanup,
+        force,
+        frameworkRoot: fr,
+      });
+
+      if (!result.ok) {
+        return { exitCode: 1, message: `Error: ${result.message ?? result.failureReason}` };
+      }
+
+      if (dryRun && result.plan) {
+        console.log('[dry-run] Would copy:');
+        console.log(`  ${result.plan.source} → ${result.plan.destination}`);
+        console.log(`  Files: ${result.plan.files.length}, ${result.plan.totalBytes} bytes`);
+        console.log('  Pre-flight: ✓ manifest valid  ✓ destination clean');
+        console.log('  Hash verification: skipped (dry-run)');
+        console.log(`  Registry update: source: project-local → ${toValue === 'upstream' ? 'bundled' : 'corpus'}`);
+        console.log(`  Cleanup: ${cleanup ? 'will remove .aiwg source after copy' : 'skipped (--cleanup not set)'}`);
+        return { exitCode: 0 };
+      }
+
+      await writeAiwgConfig(projectDir, config);
+      console.log(`✓ Promoted '${positional}' → ${result.plan?.destination}`);
+      if (cleanup) {
+        console.log('  Source removed from .aiwg/');
+      }
+      return { exitCode: 0 };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { exitCode: 1, message: `promote failed: ${msg}` };
+    }
+  },
+};
+
+/**
  * New project handler
  *
  * Delegates to tools/install/new-project.mjs
