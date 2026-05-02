@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, rmSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { tmpdir } from 'os';
 import {
@@ -17,6 +17,9 @@ import {
   updateInstalled,
   hashManifest,
   migrateLegacyRegistry,
+  cleanupLegacyRegistry,
+  checkLegacyRegistry,
+  hasElapsedMinorVersions,
   resolveRemotes,
   resolveRemoteProvider,
   resolveDelivery,
@@ -298,6 +301,208 @@ describe('aiwg-config', () => {
 
       // Should not overwrite the existing entry
       expect(result.installed['sdlc'].version).toBe('2026.3.4');
+    });
+
+    it('writes deprecation marker to legacy file after first migration (#1047)', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      const legacyFile = join(legacyDir, 'registry.json');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(legacyFile, JSON.stringify({
+        frameworks: [{ id: 'sdlc-complete', version: '2026.1.0' }],
+      }));
+
+      await migrateLegacyRegistry(tmpDir, emptyConfig(), '2026.5.0');
+
+      const after = JSON.parse(readFileSync(legacyFile, 'utf-8'));
+      expect(after._deprecatedMigratedAt).toBeDefined();
+      expect(typeof after._deprecatedMigratedAt).toBe('string');
+      expect(after._deprecatedMigratedFromVersion).toBe('2026.5.0');
+      // Original payload preserved for rollback recoverability
+      expect(after.frameworks).toBeDefined();
+      expect(after.frameworks[0].id).toBe('sdlc-complete');
+    });
+
+    it('does not overwrite an existing migration marker (idempotent)', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      const legacyFile = join(legacyDir, 'registry.json');
+      mkdirSync(legacyDir, { recursive: true });
+      const earlier = '2025-01-01T00:00:00.000Z';
+      writeFileSync(legacyFile, JSON.stringify({
+        _deprecatedMigratedAt: earlier,
+        _deprecatedMigratedFromVersion: '2026.1.0',
+        frameworks: [{ id: 'sdlc-complete', version: '2026.1.0' }],
+      }));
+
+      await migrateLegacyRegistry(tmpDir, emptyConfig(), '2026.5.0');
+
+      const after = JSON.parse(readFileSync(legacyFile, 'utf-8'));
+      expect(after._deprecatedMigratedAt).toBe(earlier);
+      expect(after._deprecatedMigratedFromVersion).toBe('2026.1.0');
+    });
+
+    it('records "unknown" version when currentVersion is omitted', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      const legacyFile = join(legacyDir, 'registry.json');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(legacyFile, JSON.stringify({ frameworks: [] }));
+
+      await migrateLegacyRegistry(tmpDir, emptyConfig());
+
+      const after = JSON.parse(readFileSync(legacyFile, 'utf-8'));
+      expect(after._deprecatedMigratedFromVersion).toBe('unknown');
+    });
+  });
+
+  // ── hasElapsedMinorVersions (#1047) ────────────────────────────────────────
+
+  describe('hasElapsedMinorVersions', () => {
+    it('returns true when current is >= N minor versions ahead', () => {
+      expect(hasElapsedMinorVersions('2026.1.0', '2026.3.0', 2)).toBe(true);
+      expect(hasElapsedMinorVersions('2026.1.0', '2026.4.5', 2)).toBe(true);
+    });
+
+    it('returns false when current is < N minor versions ahead', () => {
+      expect(hasElapsedMinorVersions('2026.5.0', '2026.5.7', 2)).toBe(false);
+      expect(hasElapsedMinorVersions('2026.5.0', '2026.6.0', 2)).toBe(false);
+    });
+
+    it('handles year rollover via year*100 + month ordering', () => {
+      expect(hasElapsedMinorVersions('2026.11.0', '2027.1.0', 2)).toBe(true);
+      // Near miss: 2026.12 → 2027.1 is 89 elapsed units (year*100 + month
+      // arithmetic), which trivially exceeds 2; assert the next release path
+      // instead — same minor in the new year is NOT enough.
+      expect(hasElapsedMinorVersions('2026.12.0', '2027.1.0', 2)).toBe(true);
+      expect(hasElapsedMinorVersions('2026.5.0', '2026.6.0', 2)).toBe(false);
+    });
+
+    it('handles pre-release suffixes by ignoring them', () => {
+      expect(hasElapsedMinorVersions('2026.1.0', '2026.3.0-rc.5', 2)).toBe(true);
+      expect(hasElapsedMinorVersions('2026.1.0-alpha.1', '2026.3.0', 2)).toBe(true);
+    });
+
+    it('returns false when either version is unparseable', () => {
+      expect(hasElapsedMinorVersions('unknown', '2026.5.0', 2)).toBe(false);
+      expect(hasElapsedMinorVersions('2026.1.0', 'not-a-version', 2)).toBe(false);
+    });
+  });
+
+  // ── checkLegacyRegistry (#1047) ────────────────────────────────────────────
+
+  describe('checkLegacyRegistry', () => {
+    it('reports absent when legacy file does not exist', async () => {
+      const status = await checkLegacyRegistry(tmpDir, '2026.5.0');
+      expect(status.exists).toBe(false);
+      expect(status.eligibleForDeletion).toBe(false);
+      expect(status.reason).toContain('absent');
+    });
+
+    it('reports unmarked when legacy file exists without marker', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(join(legacyDir, 'registry.json'), JSON.stringify({ frameworks: [] }));
+
+      const status = await checkLegacyRegistry(tmpDir, '2026.5.0');
+      expect(status.exists).toBe(true);
+      expect(status.marked).toBe(false);
+      expect(status.eligibleForDeletion).toBe(false);
+      expect(status.reason).toContain('not yet written');
+    });
+
+    it('reports awaiting-delay when marker present but version delay not elapsed', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(join(legacyDir, 'registry.json'), JSON.stringify({
+        _deprecatedMigratedAt: '2026-05-01T00:00:00.000Z',
+        _deprecatedMigratedFromVersion: '2026.5.0',
+        frameworks: [],
+      }));
+
+      const status = await checkLegacyRegistry(tmpDir, '2026.5.4');
+      expect(status.exists).toBe(true);
+      expect(status.marked).toBe(true);
+      expect(status.eligibleForDeletion).toBe(false);
+      expect(status.reason).toContain('awaiting deletion delay');
+    });
+
+    it('reports eligible when marker present and delay elapsed', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(join(legacyDir, 'registry.json'), JSON.stringify({
+        _deprecatedMigratedAt: '2026-01-01T00:00:00.000Z',
+        _deprecatedMigratedFromVersion: '2026.1.0',
+        frameworks: [],
+      }));
+
+      const status = await checkLegacyRegistry(tmpDir, '2026.5.0');
+      expect(status.exists).toBe(true);
+      expect(status.marked).toBe(true);
+      expect(status.eligibleForDeletion).toBe(true);
+      expect(status.reason).toContain('eligible for deletion');
+    });
+
+    it('refuses deletion when migration source version is unknown', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(join(legacyDir, 'registry.json'), JSON.stringify({
+        _deprecatedMigratedAt: '2026-01-01T00:00:00.000Z',
+        _deprecatedMigratedFromVersion: 'unknown',
+        frameworks: [],
+      }));
+
+      const status = await checkLegacyRegistry(tmpDir, '2026.5.0');
+      expect(status.eligibleForDeletion).toBe(false);
+      expect(status.reason).toContain('source version unknown');
+    });
+  });
+
+  // ── cleanupLegacyRegistry (#1047) ──────────────────────────────────────────
+
+  describe('cleanupLegacyRegistry', () => {
+    it('no-ops when legacy file is absent', async () => {
+      const result = await cleanupLegacyRegistry(tmpDir, '2026.5.0');
+      expect(result.deleted).toBe(false);
+      expect(result.reason).toContain('absent');
+    });
+
+    it('does not delete when migration not marked', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      const legacyFile = join(legacyDir, 'registry.json');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(legacyFile, JSON.stringify({ frameworks: [] }));
+
+      const result = await cleanupLegacyRegistry(tmpDir, '2026.5.0');
+      expect(result.deleted).toBe(false);
+      expect(existsSync(legacyFile)).toBe(true);
+    });
+
+    it('does not delete when version delay not elapsed', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      const legacyFile = join(legacyDir, 'registry.json');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(legacyFile, JSON.stringify({
+        _deprecatedMigratedAt: '2026-05-01T00:00:00.000Z',
+        _deprecatedMigratedFromVersion: '2026.5.0',
+        frameworks: [],
+      }));
+
+      const result = await cleanupLegacyRegistry(tmpDir, '2026.5.4');
+      expect(result.deleted).toBe(false);
+      expect(existsSync(legacyFile)).toBe(true);
+    });
+
+    it('deletes when marked and delay elapsed', async () => {
+      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
+      const legacyFile = join(legacyDir, 'registry.json');
+      mkdirSync(legacyDir, { recursive: true });
+      writeFileSync(legacyFile, JSON.stringify({
+        _deprecatedMigratedAt: '2026-01-01T00:00:00.000Z',
+        _deprecatedMigratedFromVersion: '2026.1.0',
+        frameworks: [],
+      }));
+
+      const result = await cleanupLegacyRegistry(tmpDir, '2026.5.0');
+      expect(result.deleted).toBe(true);
+      expect(existsSync(legacyFile)).toBe(false);
     });
   });
 

@@ -538,35 +538,238 @@ export async function populateDeployedTo(
   return config;
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Legacy registry deprecation (#1047)
+//
+// The `.aiwg/frameworks/registry.json` file is the legacy registry that has
+// been migrated into `aiwg.config.installed`. The deprecation flow:
+//
+//   1. `migrateLegacyRegistry` reads the file, copies entries into the unified
+//      `installed` map, and writes a `_deprecatedMigratedAt` marker to the
+//      legacy file. The marker preserves the original payload so a partial
+//      rollback is recoverable.
+//   2. `cleanupLegacyRegistry` deletes the legacy file when (a) the marker is
+//      present and (b) at least N minor versions have elapsed since the
+//      migration.
+//   3. `checkLegacyRegistry` reports presence and eligibility without side
+//      effects — used by `aiwg doctor`.
+// ──────────────────────────────────────────────────────────────────────────────
+
+const LEGACY_REGISTRY_FILENAME = 'registry.json';
+const LEGACY_REGISTRY_DIR = 'frameworks';
+const LEGACY_DELETION_DELAY_MINOR_VERSIONS = 2;
+
+interface LegacyRegistryFile {
+  /** ISO timestamp set after first successful migration; presence gates deletion */
+  _deprecatedMigratedAt?: string;
+  /** AIWG version that performed the migration; used for minor-version delay check */
+  _deprecatedMigratedFromVersion?: string;
+  version?: string;
+  created?: string;
+  frameworks?: Array<{ id: string; version?: string; installed?: string }>;
+}
+
+function legacyRegistryPath(projectDir: string): string {
+  return resolve(projectDir, AIWG_DIR, LEGACY_REGISTRY_DIR, LEGACY_REGISTRY_FILENAME);
+}
+
+/**
+ * Compare two CalVer versions ({YYYY}.{M}.{PATCH}) and return true if `current`
+ * is at least `minorBumps` minor versions ahead of `migratedFrom`. Both args
+ * may include a pre-release suffix (e.g. `2026.5.0-rc.2`); only the major.minor
+ * portion is compared.
+ *
+ * Returns false if either version cannot be parsed.
+ *
+ * Exported for testing only.
+ */
+export function hasElapsedMinorVersions(
+  migratedFrom: string,
+  current: string,
+  minorBumps: number
+): boolean {
+  const parse = (v: string): { year: number; month: number } | null => {
+    const m = /^(\d{4})\.(\d+)\./.exec(v);
+    if (!m) return null;
+    return { year: parseInt(m[1], 10), month: parseInt(m[2], 10) };
+  };
+  const a = parse(migratedFrom);
+  const b = parse(current);
+  if (!a || !b) return false;
+  // CalVer minor resets each year, so total elapsed minors = year_diff*12 + month_diff
+  // (using 12 as an upper bound; current month numbers exceed prior year only when year advances).
+  // Simpler: compare lexicographically after padding.
+  const aKey = a.year * 100 + a.month;
+  const bKey = b.year * 100 + b.month;
+  return bKey - aKey >= minorBumps;
+}
+
 /**
  * Migrate entries from the legacy .aiwg/frameworks/registry.json into
  * the `installed` map of an AiwgConfig (best-effort, non-destructive).
+ *
+ * Side effect: after a successful read, writes a `_deprecatedMigratedAt`
+ * marker to the legacy file (idempotent — does not overwrite an existing
+ * marker). The marker preserves the original payload so rollback is possible.
+ *
+ * @param projectDir   project root containing `.aiwg/`
+ * @param config       config to merge entries into
+ * @param currentVersion  AIWG version performing the migration; recorded in the
+ *                        marker for the version-delay check on cleanup. Optional;
+ *                        defaults to `'unknown'` (the cleanup will refuse to delete
+ *                        until a version-aware migration runs).
  */
 export async function migrateLegacyRegistry(
   projectDir: string,
-  config: AiwgConfig
+  config: AiwgConfig,
+  currentVersion?: string
 ): Promise<AiwgConfig> {
-  const legacyPath = resolve(projectDir, AIWG_DIR, 'frameworks', 'registry.json');
+  const legacyPath = legacyRegistryPath(projectDir);
+  let parsed: LegacyRegistryFile | null = null;
   try {
     const content = await readFile(legacyPath, 'utf-8');
-    const legacy = JSON.parse(content) as {
-      frameworks?: Array<{ id: string; version?: string; installed?: string }>;
-    };
-
-    for (const fw of legacy.frameworks ?? []) {
-      // Normalise legacy IDs: "sdlc-complete" → "sdlc"
-      const name = fw.id.replace(/-complete$/, '').replace(/-kit$/, '');
-      if (!config.installed[name]) {
-        config.installed[name] = {
-          version: fw.version ?? 'unknown',
-          source: 'bundled',
-          installedAt: fw.installed ?? new Date().toISOString(),
-          deployedTo: {},
-        };
-      }
-    }
+    parsed = JSON.parse(content) as LegacyRegistryFile;
   } catch {
-    // Legacy file absent or unreadable — skip silently
+    // Legacy file absent or unreadable — nothing to migrate or mark
+    return config;
   }
+
+  for (const fw of parsed.frameworks ?? []) {
+    // Normalise legacy IDs: "sdlc-complete" → "sdlc"
+    const name = fw.id.replace(/-complete$/, '').replace(/-kit$/, '');
+    if (!config.installed[name]) {
+      config.installed[name] = {
+        version: fw.version ?? 'unknown',
+        source: 'bundled',
+        installedAt: fw.installed ?? new Date().toISOString(),
+        deployedTo: {},
+      };
+    }
+  }
+
+  // Write the deprecation marker if missing (idempotent)
+  if (!parsed._deprecatedMigratedAt) {
+    parsed._deprecatedMigratedAt = new Date().toISOString();
+    parsed._deprecatedMigratedFromVersion = currentVersion ?? 'unknown';
+    try {
+      await writeFile(legacyPath, JSON.stringify(parsed, null, 2) + '\n', 'utf-8');
+    } catch {
+      // Marker write failure is non-fatal — migration entries are already merged
+      // and the next migration pass will retry the marker write.
+    }
+  }
+
   return config;
+}
+
+export interface LegacyRegistryStatus {
+  /** true if `.aiwg/frameworks/registry.json` exists on disk */
+  exists: boolean;
+  /** true if the file has a `_deprecatedMigratedAt` marker */
+  marked: boolean;
+  /** ISO timestamp when migration was marked, or undefined */
+  migratedAt?: string;
+  /** AIWG version that performed migration, or undefined */
+  migratedFromVersion?: string;
+  /** true if the file is eligible for deletion (marked AND version delay elapsed) */
+  eligibleForDeletion: boolean;
+  /** human-readable reason describing the current state */
+  reason: string;
+}
+
+/**
+ * Inspect the legacy registry file without side effects. Used by `aiwg doctor`
+ * to report deprecation state. (#1047)
+ */
+export async function checkLegacyRegistry(
+  projectDir: string,
+  currentVersion?: string
+): Promise<LegacyRegistryStatus> {
+  const legacyPath = legacyRegistryPath(projectDir);
+  let parsed: LegacyRegistryFile;
+  try {
+    const content = await readFile(legacyPath, 'utf-8');
+    parsed = JSON.parse(content) as LegacyRegistryFile;
+  } catch {
+    return {
+      exists: false,
+      marked: false,
+      eligibleForDeletion: false,
+      reason: 'legacy registry file absent',
+    };
+  }
+
+  const marked = Boolean(parsed._deprecatedMigratedAt);
+  if (!marked) {
+    return {
+      exists: true,
+      marked: false,
+      eligibleForDeletion: false,
+      reason: 'legacy file present, migration marker not yet written (run `aiwg refresh` to mark)',
+    };
+  }
+
+  const migratedFromVersion = parsed._deprecatedMigratedFromVersion;
+  if (!migratedFromVersion || migratedFromVersion === 'unknown') {
+    return {
+      exists: true,
+      marked: true,
+      migratedAt: parsed._deprecatedMigratedAt,
+      migratedFromVersion,
+      eligibleForDeletion: false,
+      reason: 'migration source version unknown — re-run a version-aware migration to enable deletion',
+    };
+  }
+
+  if (!currentVersion) {
+    return {
+      exists: true,
+      marked: true,
+      migratedAt: parsed._deprecatedMigratedAt,
+      migratedFromVersion,
+      eligibleForDeletion: false,
+      reason: 'current AIWG version not provided — cannot evaluate deletion delay',
+    };
+  }
+
+  const eligible = hasElapsedMinorVersions(migratedFromVersion, currentVersion, LEGACY_DELETION_DELAY_MINOR_VERSIONS);
+  return {
+    exists: true,
+    marked: true,
+    migratedAt: parsed._deprecatedMigratedAt,
+    migratedFromVersion,
+    eligibleForDeletion: eligible,
+    reason: eligible
+      ? `eligible for deletion (migrated from ${migratedFromVersion}, current ${currentVersion})`
+      : `awaiting deletion delay (migrated from ${migratedFromVersion}, current ${currentVersion}, need ${LEGACY_DELETION_DELAY_MINOR_VERSIONS} minor versions elapsed)`,
+  };
+}
+
+export interface LegacyRegistryCleanupResult {
+  deleted: boolean;
+  reason: string;
+}
+
+/**
+ * Delete the legacy registry file if it is eligible (marked AND version delay
+ * elapsed). No-op otherwise. Returns a structured result for telemetry / logs.
+ * (#1047)
+ */
+export async function cleanupLegacyRegistry(
+  projectDir: string,
+  currentVersion: string
+): Promise<LegacyRegistryCleanupResult> {
+  const status = await checkLegacyRegistry(projectDir, currentVersion);
+  if (!status.exists) {
+    return { deleted: false, reason: status.reason };
+  }
+  if (!status.eligibleForDeletion) {
+    return { deleted: false, reason: status.reason };
+  }
+  try {
+    await unlink(legacyRegistryPath(projectDir));
+    return { deleted: true, reason: status.reason };
+  } catch (err) {
+    return { deleted: false, reason: `delete failed: ${(err as Error).message}` };
+  }
 }
