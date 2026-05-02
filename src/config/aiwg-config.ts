@@ -66,6 +66,19 @@ export interface InstalledEntry {
   localType?: ProjectLocalType;
   /** Schema version of the manifest.json this entry was written from (currently `'1'`). */
   manifestVersion?: string;
+
+  /**
+   * Hashes of source artifacts at deploy time, keyed by source-relative path
+   * (e.g., "rules/my-rule.md", "skills/my-skill/SKILL.md"). Used by
+   * `aiwg remove` to detect pristine vs. mutated vs. replaced deployed
+   * files per the design at @.aiwg/architecture/design-aiwg-remove-revert.md.
+   *
+   * Optional — older entries without this field fall back to "always-prompt"
+   * remove behavior until the next `aiwg use` re-records them.
+   *
+   * @implements #1037
+   */
+  artifactHashes?: Record<string, string>;
 }
 
 /**
@@ -427,6 +440,8 @@ export function updateInstalled(
     localType?: ProjectLocalType;
     /** Set when source === 'project-local'. */
     manifestVersion?: string;
+    /** Optional source-artifact hash map for project-local remove revert (#1037). */
+    artifactHashes?: Record<string, string>;
   }
 ): AiwgConfig {
   // Project-local invariant: `source: 'project-local'` requires localPath + localType
@@ -457,12 +472,14 @@ export function updateInstalled(
     existing.localPath = opts.localPath;
     existing.localType = opts.localType;
     if (opts.manifestVersion) existing.manifestVersion = opts.manifestVersion;
+    if (opts.artifactHashes) existing.artifactHashes = opts.artifactHashes;
   } else {
     // Clear stale project-local fields if a previously project-local entry is
     // being overwritten by a non-project-local source.
     delete existing.localPath;
     delete existing.localType;
     delete existing.manifestVersion;
+    delete existing.artifactHashes;
   }
 
   config.installed[name] = existing;

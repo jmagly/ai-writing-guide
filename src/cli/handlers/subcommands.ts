@@ -355,11 +355,72 @@ async function formatShadowsOnly(
 export const removeHandler: CommandHandler = {
   id: "remove",
   name: "Remove Framework",
-  description: "Remove installed framework or plugin",
+  description: "Remove installed framework, plugin, or project-local bundle",
   category: "framework",
   aliases: [],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    // #1037 — Project-local-aware remove. If the first positional arg matches
+    // a project-local entry in `installed`, route to the new handler.
+    // Otherwise fall through to the existing plugin-uninstaller flow.
+    const positionalArg = ctx.args.find(a => !a.startsWith('-'));
+    if (positionalArg) {
+      try {
+        const { readAiwgConfig, writeAiwgConfig, getProjectDir } = await import(
+          '../../config/aiwg-config.js'
+        );
+        const { removeProjectLocalBundle } = await import(
+          '../../extensions/project-local-remove.js'
+        );
+        const projectDir = getProjectDir({ cwd: ctx.cwd }, ctx.args);
+        const config = await readAiwgConfig(projectDir);
+        const entry = config?.installed?.[positionalArg];
+        if (config && entry?.source === 'project-local') {
+          const force = ctx.args.includes('--force');
+          const dryRun = ctx.args.includes('--dry-run');
+          const keepRegistry = ctx.args.includes('--keep-registry');
+          const provIdx = ctx.args.findIndex(a => a === '--provider');
+          const provider = provIdx >= 0 ? ctx.args[provIdx + 1] : undefined;
+
+          const result = await removeProjectLocalBundle(
+            config, projectDir, positionalArg, { force, dryRun, keepRegistry, provider },
+          );
+
+          // Print outcome summary
+          const lines: string[] = [];
+          if (dryRun) lines.push(`[dry-run] Plan for project-local '${positionalArg}':`);
+          for (const o of result.outcomes) {
+            const marker = o.reverted ? '✓' : '⚠';
+            lines.push(`  ${marker} ${o.provider} :: ${o.artifactPath}  [${o.case}] ${o.message}`);
+          }
+          if (result.revertedProviders.length > 0) {
+            lines.push(`Fully reverted: ${result.revertedProviders.join(', ')}`);
+          }
+          if (result.partialProviders.length > 0) {
+            lines.push(`Partial (registry preserved): ${result.partialProviders.join(', ')}`);
+          }
+          if (lines.length > 0) console.log(lines.join('\n'));
+
+          if (!dryRun) {
+            await writeAiwgConfig(projectDir, config);
+          }
+
+          // Note: source under .aiwg/<type>/<name>/ is intentionally NOT
+          // deleted (load-bearing invariant from #1048 design).
+          return {
+            exitCode: result.partialProviders.length > 0 ? 1 : 0,
+            message: result.partialProviders.length > 0
+              ? `Some artifacts skipped (see above). Use --force to override mutation refusal.`
+              : '',
+          };
+        }
+      } catch (err) {
+        // Fall through to upstream remove on any error in the project-local path
+        const msg = err instanceof Error ? err.message : String(err);
+        process.stderr.write(`project-local remove pre-check failed (falling through): ${msg}\n`);
+      }
+    }
+
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 

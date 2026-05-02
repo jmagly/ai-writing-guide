@@ -42,6 +42,7 @@ import {
   appendProjectLocalActivity,
   emitDiscoverEventsDeduped,
 } from '../../extensions/project-local-activity.js';
+import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
 
 /**
  * Valid framework identifiers
@@ -786,6 +787,9 @@ async function deployProjectLocalBundles(opts: {
         // Hash the bundle's manifest.json for stale detection
         const manifestAbsPath = path.join(bundle.bundlePath, 'manifest.json');
         const mHash = await hashManifest(manifestAbsPath);
+        // #1037 — record per-artifact source hashes so `aiwg remove` can
+        // detect pristine vs mutated vs replaced deployed files.
+        const artifactHashes = await hashBundleArtifacts(bundle.bundlePath);
         const updated = updateInstalled(config, bundle.id, provider, result.counts, {
           version: bundle.manifest.version,
           source: 'project-local',
@@ -793,6 +797,7 @@ async function deployProjectLocalBundles(opts: {
           localPath: bundle.localPath,
           localType: bundle.type,
           manifestVersion: bundle.manifest.manifestVersion,
+          artifactHashes,
         });
         await writeAiwgConfig(projectDir, updated);
       } catch (err) {
