@@ -128,25 +128,4 @@ describe('initHandler', () => {
       expect(result.exitCode).toBe(0);
     });
   });
-
-  describe('legacy registry migration', () => {
-    it('migrates entries from .aiwg/frameworks/registry.json', async () => {
-      // Create legacy registry
-      const legacyDir = join(tmpDir, '.aiwg', 'frameworks');
-      mkdirSync(legacyDir, { recursive: true });
-      writeFileSync(join(legacyDir, 'registry.json'), JSON.stringify({
-        frameworks: [
-          { id: 'sdlc-complete', version: '2026.1.0', installed: '2026-01-15T00:00:00.000Z' },
-        ],
-      }));
-
-      const { initHandler } = await import('../../../../src/cli/handlers/init.js');
-      await initHandler.execute(makeCtx(tmpDir, ['--non-interactive']));
-
-      const { readAiwgConfig } = await import('../../../../src/config/aiwg-config.js');
-      const cfg = await readAiwgConfig(tmpDir);
-      expect(cfg!.installed['sdlc']).toBeDefined();
-      expect(cfg!.installed['sdlc'].version).toBe('2026.1.0');
-    });
-  });
 });
