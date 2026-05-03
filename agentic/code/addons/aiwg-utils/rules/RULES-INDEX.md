@@ -4,7 +4,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (14 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (15 rules — active with aiwg-utils addon)
 
 ### HIGH
 
@@ -47,6 +47,11 @@ Core meta-utility rules for agent coordination, context management, and platform
 **Summary**: Agents must seek explicit human authorization before irreversible or high-stakes actions — especially when those actions are implied by findings rather than explicitly requested. A recommendation is not authorization to act. Covers: removal of artifacts, scope expansion beyond task, closing work items with implied resolution, acting on research findings. Pattern: discover → report → await authorization → act. Agents must proactively recognize scope boundaries; don't rely on system-level friction as the only gate.
 **When to apply**: Any action not explicitly stated in the task, removal of files/artifacts/components, scope expansion, closing issues, acting on review findings or recommendations, changes to shared resources
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md
+
+#### delivery-policy
+**Summary**: AIWG projects declare their git workflow in `.aiwg/aiwg.config` `delivery` block (`mode`: direct / feature-branch / pr-required, `default_branch`, `require_ci_green`, `force_push_policy`, `auto_close_issues`). Agents MUST read this before recommending or executing branch/PR/commit actions. `direct` = commit straight to main with `Closes #N`; `feature-branch` = branch only; `pr-required` = branch + PR + review. Use configured `remotes.{primary,issue_tracker,ci}` rather than guessing. Don't ask the user to pick a workflow when the config already answers it.
+**When to apply**: Any branch creation, PR opening, push to default_branch, force-push, issue closure via commit message, interactive question about git workflow
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/delivery-policy.md
 
 ### MEDIUM
 
@@ -105,6 +110,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 | **Loop/gate conditions** | vague-discretion |
 | **Parallel dispatch design** | parallel-then-synthesize, subagent-scoping, context-budget |
 | **Activity tracking** | activity-log |
+| **Git workflow / branching / PRs** | delivery-policy, human-authorization |
 
 ---
 
