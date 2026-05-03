@@ -607,7 +607,7 @@ export function deploySoulCompanions(soulFiles, destDir, opts) {
  *   - If explicit restriction list → only deploy if opts.provider is in the list; keep list in deployed copy
  */
 export function deploySkillDir(skillDir, destDir, opts) {
-  const { force = false, dryRun = false, provider } = opts;
+  const { force = false, dryRun = false, provider, transformSkillMd } = opts;
   const verbose = opts.verbose === true;
   const skillName = path.basename(skillDir);
 
@@ -640,6 +640,13 @@ export function deploySkillDir(skillDir, destDir, opts) {
         if (entry.name === 'SKILL.md' && provider) {
           const platformName = PROVIDER_TO_PLATFORM[provider] || provider;
           srcContent = injectPlatformInContent(srcContent, platformName);
+
+          // Provider-specific frontmatter transform (e.g. Factory remaps
+          // commandHint.allowedTools / commandHint.model). Optional callback —
+          // most providers leave SKILL.md alone after platform injection.
+          if (typeof transformSkillMd === 'function') {
+            srcContent = transformSkillMd(srcContent, opts) || srcContent;
+          }
         }
 
         if (fs.existsSync(destPath)) {

@@ -314,6 +314,113 @@ describe('Factory AI Integration', () => {
     });
   });
 
+  describe('Skill Frontmatter Transformation (Issue #102)', () => {
+    // Skills ship with commandHint.allowedTools using Claude Code tool names
+    // (Bash, Write, MultiEdit) and commandHint.model using Claude shorthand
+    // (sonnet/opus/haiku). The Factory provider must transform these on deploy
+    // so SKILL.md is consistent with how agents are transformed.
+    //
+    // Bug: tools/agents/providers/factory.mjs deploySkills() copies SKILL.md
+    // verbatim without remapping tools or models. Skills land in .factory/skills/
+    // referencing tools that don't exist in Factory (Bash should be Execute,
+    // Write should be Create+Edit, MultiEdit should be Edit+ApplyPatch).
+
+    it('skills are deployed and contain SKILL.md', async () => {
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'factory',
+        '--mode', 'sdlc',
+        '--deploy-skills',
+        '--target', TEST_PROJECT_DIR
+      ]);
+
+      const skillsDir = path.join(TEST_FACTORY_DIR, 'skills');
+      const exists = await fs.access(skillsDir).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+      const entries = await fs.readdir(skillsDir, { withFileTypes: true });
+      const skillDirs = entries.filter(e => e.isDirectory());
+      expect(skillDirs.length).toBeGreaterThan(0);
+    });
+
+    it('SKILL.md commandHint.allowedTools maps Claude tool names to Factory equivalents', async () => {
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'factory',
+        '--mode', 'sdlc',
+        '--deploy-skills',
+        '--target', TEST_PROJECT_DIR
+      ]);
+
+      const skillsDir = path.join(TEST_FACTORY_DIR, 'skills');
+      const entries = await fs.readdir(skillsDir, { withFileTypes: true });
+      const skillDirs = entries.filter(e => e.isDirectory()).map(e => e.name);
+
+      // Find at least one skill whose source uses Bash or Write or MultiEdit
+      // and verify deployed SKILL.md uses Factory-mapped names.
+      let inspectedAny = false;
+      for (const skillName of skillDirs) {
+        const skillMdPath = path.join(skillsDir, skillName, 'SKILL.md');
+        const exists = await fs.access(skillMdPath).then(() => true).catch(() => false);
+        if (!exists) continue;
+
+        const content = await fs.readFile(skillMdPath, 'utf-8');
+        const fmMatch = content.match(/^(?:<!--[^>]*-->\s*)?---\n([\s\S]*?)\n---/);
+        if (!fmMatch) continue;
+        const fm = fmMatch[1];
+
+        const allowedToolsMatch = fm.match(/allowedTools:\s*['"]?([^'"\n]+)['"]?/);
+        if (!allowedToolsMatch) continue;
+        inspectedAny = true;
+
+        const allowed = allowedToolsMatch[1];
+        // Factory-incompatible Claude tool names should not survive transformation
+        expect(allowed).not.toMatch(/\bMultiEdit\b/);
+        // Bash should have been mapped to Execute (with Bash(*) allowlist syntax also mapped)
+        expect(allowed).not.toMatch(/\bBash\b/);
+        // Write should map to Create (Factory uses Create + Edit)
+        expect(allowed).not.toMatch(/\bWrite\b/);
+      }
+
+      // Sanity: corpus has at least one skill with Bash/Write/MultiEdit in source
+      expect(inspectedAny).toBe(true);
+    });
+
+    it('SKILL.md commandHint.model is mapped to Factory model id (not Claude shorthand)', async () => {
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'factory',
+        '--mode', 'sdlc',
+        '--deploy-skills',
+        '--target', TEST_PROJECT_DIR
+      ]);
+
+      const skillsDir = path.join(TEST_FACTORY_DIR, 'skills');
+      const entries = await fs.readdir(skillsDir, { withFileTypes: true });
+      const skillDirs = entries.filter(e => e.isDirectory()).map(e => e.name);
+
+      let inspectedAny = false;
+      for (const skillName of skillDirs) {
+        const skillMdPath = path.join(skillsDir, skillName, 'SKILL.md');
+        const exists = await fs.access(skillMdPath).then(() => true).catch(() => false);
+        if (!exists) continue;
+
+        const content = await fs.readFile(skillMdPath, 'utf-8');
+        const fmMatch = content.match(/^(?:<!--[^>]*-->\s*)?---\n([\s\S]*?)\n---/);
+        if (!fmMatch) continue;
+
+        // Look for `model:` inside commandHint block (indented two spaces)
+        const modelMatch = fmMatch[1].match(/\n\s{2,}model:\s*([^\s\n]+)/);
+        if (!modelMatch) continue;
+        inspectedAny = true;
+
+        const model = modelMatch[1].replace(/['"]/g, '').toLowerCase();
+        // Bare Claude shorthand should be transformed away — Factory expects
+        // an explicit model id (claude-opus-4-x / claude-sonnet-4-x / claude-haiku-...)
+        // or `inherit`. Bare 'opus'/'sonnet'/'haiku' is the bug signature.
+        expect(['opus', 'sonnet', 'haiku']).not.toContain(model);
+      }
+
+      expect(inspectedAny).toBe(true);
+    });
+  });
+
   describe('AGENTS.md Generation', () => {
     it('generates AGENTS.md for Factory provider', async () => {
       runScript('tools/agents/deploy-agents.mjs', [

@@ -323,6 +323,125 @@ tools: ${JSON.stringify(factoryTools)}
 }
 
 /**
+ * Map a skill commandHint.allowedTools string to Factory equivalents.
+ *
+ * Skill `allowedTools` differs from agent `tools` — it may carry Claude
+ * Code's allowlist syntax (e.g. `Bash(git *, gh *)`, `Bash(npm:*)`) where
+ * the parentheses contain commas that must NOT be treated as token
+ * separators. This tokenizer respects parentheses, then maps each token's
+ * identifier head:
+ *
+ *   Bash(git *, gh *)  →  Execute(git *, gh *)
+ *   Bash               →  Execute
+ *   Write              →  Create  (Factory pairs Create+Edit but for hint-only
+ *                                  use we keep the head unique)
+ *   MultiEdit          →  Edit
+ *   mcp__gitea__*      →  mcp__gitea__*  (passthrough)
+ *
+ * Returns a comma-separated string suitable for re-insertion into SKILL.md.
+ */
+export function mapAllowedToolsString(allowedTools) {
+  if (!allowedTools) return '';
+  const tokens = [];
+  let buf = '';
+  let depth = 0;
+  for (const ch of allowedTools) {
+    if (ch === '(') { depth += 1; buf += ch; continue; }
+    if (ch === ')') { depth = Math.max(0, depth - 1); buf += ch; continue; }
+    if (ch === ',' && depth === 0) {
+      if (buf.trim()) tokens.push(buf.trim());
+      buf = '';
+      continue;
+    }
+    buf += ch;
+  }
+  if (buf.trim()) tokens.push(buf.trim());
+
+  const headMap = {
+    Bash: 'Execute',
+    Write: 'Create',
+    MultiEdit: 'Edit',
+    WebFetch: 'FetchUrl'
+  };
+
+  const mapped = tokens.map(tok => {
+    const m = tok.match(/^([A-Za-z_][\w]*)(.*)$/);
+    if (!m) return tok;
+    const [, head, rest] = m;
+    const newHead = headMap[head] || head;
+    return `${newHead}${rest}`;
+  });
+
+  // Deduplicate while preserving order
+  const seen = new Set();
+  const out = [];
+  for (const t of mapped) {
+    if (!seen.has(t)) { seen.add(t); out.push(t); }
+  }
+  return out.join(', ');
+}
+
+/**
+ * Transform SKILL.md frontmatter for Factory.
+ *
+ * Skills declare optional `commandHint:` metadata describing how the skill
+ * should be invoked as a slash command. The hint carries Claude-native tool
+ * names and Claude model shorthand, both of which are wrong on Factory:
+ *
+ *   commandHint:
+ *     allowedTools: 'WebSearch, Read, Write, Bash'   ← Bash/Write/MultiEdit
+ *     model: sonnet                                  ← bare shorthand
+ *
+ * This transform rewrites the indented allowedTools and model fields so
+ * the deployed SKILL.md is consistent with how agent droids are transformed
+ * by transformAgent() — Bash → Execute, Write → Create+Edit, MultiEdit →
+ * Edit+ApplyPatch, sonnet → claude-sonnet-4-x, etc.
+ *
+ * Issue: #1056 (upstream #102)
+ */
+export function transformSkillFrontmatter(content, opts) {
+  const { modelsConfig = {} } = opts || {};
+
+  // Match frontmatter, allowing an optional leading HTML comment.
+  const fmMatch = content.match(/^((?:<!--[\s\S]*?-->\s*)?)---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!fmMatch) return content;
+
+  const [, prefix, frontmatter, body] = fmMatch;
+  let updated = frontmatter;
+
+  // Match commandHint.allowedTools — indented under commandHint:.
+  // Example:
+  //   commandHint:
+  //     allowedTools: 'WebSearch, Read, Write, Bash'
+  // Quotes are optional; inline comments are not preserved (rare in source).
+  updated = updated.replace(
+    /^(\s+allowedTools:\s*)(['"]?)([^\n'"]+)\2/m,
+    (_match, lead, quote, raw) => {
+      const mapped = mapAllowedToolsString(raw);
+      // Keep the original quoting style — fall back to single quotes if none.
+      const q = quote || "'";
+      return `${lead}${q}${mapped}${q}`;
+    }
+  );
+
+  // Match commandHint.model — indented under commandHint:.
+  // Example:
+  //   commandHint:
+  //     model: sonnet
+  updated = updated.replace(
+    /^(\s+model:\s*)(['"]?)([^\s\n'"]+)\2/m,
+    (_match, lead, quote, raw) => {
+      const mapped = mapModel(raw, opts, modelsConfig);
+      const q = quote;
+      return `${lead}${q}${mapped}${q}`;
+    }
+  );
+
+  if (updated === frontmatter) return content;
+  return `${prefix}---\n${updated}\n---\n${body}`;
+}
+
+/**
  * Transform command for Factory
  * Commands use similar format to agents
  */
@@ -390,8 +509,9 @@ export function deployCommands(commandFiles, targetDir, opts) {
 export function deploySkills(skillDirs, targetDir, opts) {
   const destDir = path.join(targetDir, paths.skills);
   ensureDir(destDir, opts.dryRun);
+  const skillOpts = { ...opts, transformSkillMd: transformSkillFrontmatter };
   for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, opts);
+    deploySkillDir(skillDir, destDir, skillOpts);
   }
 }
 
@@ -873,6 +993,7 @@ export default {
   capabilities,
   transformAgent,
   transformCommand,
+  transformSkillFrontmatter,
   mapModel,
   mapReasoningEffort,
   mapToolsToFactory,
