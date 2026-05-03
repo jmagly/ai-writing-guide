@@ -106,10 +106,12 @@ Node.js: v20.10.0
 Check installation health and diagnose issues.
 
 ```bash
-aiwg doctor [--project-local] [--quiet]
+aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 ```
 
 **Flags:**
+- `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, windsurf, openclaw, hermes). Defaults to auto-detect across deployed providers.
+- `--all-providers` — Enumerate every supported provider, including ones with nothing deployed.
 - `--project-local` — Show only the project-local artifacts section. Exit code reflects only project-local findings.
 - `--quiet` — Suppress informational subsections (counts, shadows). Show only failures.
 

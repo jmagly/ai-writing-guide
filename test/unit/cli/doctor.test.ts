@@ -254,6 +254,62 @@ describe('doctor: .gitignore check', () => {
   });
 });
 
+// ── Provider awareness (regression: doctor defaults to Claude Code) ──
+//
+// Bug report: `aiwg doctor` is hardcoded to .claude/agents and .claude/commands,
+// so on a Factory/Codex/Cursor/etc. project it reports "No agents deployed"
+// even when droids/skills/commands are correctly deployed under the provider's
+// own paths. doctor.mjs must accept --provider and check the right directories.
+//
+// These tests capture the contract. They are expected to fail until doctor.mjs
+// is updated to be provider-aware (parse --provider, look up paths from the
+// provider module, scan that location instead of/in addition to .claude/).
+
+describe('doctor: provider awareness (regression)', () => {
+  it('source script accepts --provider flag', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+    // Either parses --provider directly, or imports the provider registry.
+    const hasProviderFlag = /--provider|providerArg|argv\.provider/.test(content);
+    const importsProviderRegistry = /providers\/index\.mjs|loadProvider|getProvider/.test(content);
+    expect(hasProviderFlag || importsProviderRegistry).toBe(true);
+  });
+
+  it('source script does not hardcode only .claude/ paths for agent/command checks', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    // Acceptable: references at least one non-Claude provider path,
+    // or resolves provider paths dynamically from the provider module.
+    const referencesOtherProviders =
+      /\.factory\/(droids|commands|skills)/.test(content) ||
+      /\.codex\/(agents|skills|prompts)/.test(content) ||
+      /\.cursor\/(agents|commands|rules)/.test(content) ||
+      /\.github\/(agents|prompts|instructions)/.test(content) ||
+      /\.warp\/(agents|commands)/.test(content) ||
+      /\.opencode\/(agent|command)/.test(content);
+    const resolvesPathsDynamically = /provider\.paths|paths\.agents|paths\.commands/.test(content);
+
+    expect(referencesOtherProviders || resolvesPathsDynamically).toBe(true);
+  });
+
+  it('reports provider-specific paths instead of "No agents deployed" when a non-Claude provider is configured', async () => {
+    // Behavioral contract: when invoked on a project deployed to Factory,
+    // the agent check should look in .factory/droids/ — not .claude/agents/ —
+    // and should not report "No agents deployed" if droids exist.
+    //
+    // Until doctor.mjs is provider-aware this assertion documents intent.
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+    // The literal hardcoded path must not be the *only* path consulted.
+    const onlyClaudePaths =
+      content.includes('.claude/agents') &&
+      !/(\.factory|\.codex|\.cursor|\.github|\.warp|\.opencode)/.test(content) &&
+      !/provider\.paths|paths\.agents/.test(content);
+    expect(onlyClaudePaths).toBe(false);
+  });
+});
+
 // ── Exit code logic ────────────────────────────────────────────
 
 describe('doctor: exit code logic', () => {

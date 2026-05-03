@@ -17,6 +17,85 @@ const AIWG_ROOT = process.env.AIWG_ROOT || await getFrameworkRoot();
 
 const checks = [];
 
+// ---- Provider awareness (#1057) ----------------------------------------
+// doctor used to hardcode .claude/agents and .claude/commands. On a project
+// deployed to Factory, Codex, Cursor, etc. that produced misleading "No
+// agents deployed" output. The per-provider section below resolves paths
+// from the provider modules themselves (paths.agents / paths.commands)
+// instead of literal .claude/* strings.
+
+// Static registry of supported providers and their human-readable labels.
+// Each entry exposes .paths via dynamic import so we don't pull all ten
+// provider modules eagerly when the user hasn't deployed to any of them.
+const PROVIDER_LABELS = {
+  claude:   'Claude Code',
+  factory:  'Factory',
+  codex:    'Codex',
+  copilot:  'Copilot',
+  cursor:   'Cursor',
+  opencode: 'OpenCode',
+  warp:     'Warp',
+  windsurf: 'Windsurf',
+  openclaw: 'OpenClaw',
+  hermes:   'Hermes',
+};
+
+// Quick-detect dirs (agents-only) — used when no --provider flag is given.
+// Mirrors the agents path each provider exports. Kept literal here so the
+// check is fast and string-greppable without loading every provider module.
+const PROVIDER_AGENT_DIRS = {
+  claude:   '.claude/agents',
+  factory:  '.factory/droids',
+  codex:    '.codex/agents',
+  copilot:  '.github/agents',
+  cursor:   '.cursor/agents',
+  opencode: '.opencode/agent',
+  warp:     '.warp/agents',
+  windsurf: '.windsurf/agents',
+  // openclaw/hermes deploy to ~/.{provider}/ — handled separately
+};
+
+// Parse doctor-specific flags from process.argv (no commander dependency).
+function parseDoctorArgs(argv) {
+  const out = { provider: null, allProviders: false };
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = argv[i];
+    if (a === '--provider' && argv[i + 1]) { out.provider = argv[i + 1]; i += 1; continue; }
+    if (a.startsWith('--provider=')) { out.provider = a.slice('--provider='.length); continue; }
+    if (a === '--all-providers') { out.allProviders = true; continue; }
+  }
+  return out;
+}
+
+async function loadProvider(name) {
+  try {
+    const mod = await import(path.join(AIWG_ROOT, 'tools/agents/providers', `${name}.mjs`));
+    return mod.default || mod;
+  } catch {
+    return null;
+  }
+}
+
+// Resolve an absolute project path from a provider's paths.<kind> entry.
+// Some providers export absolute paths (openclaw, hermes); relative ones
+// resolve against process.cwd().
+function resolveProviderPath(p) {
+  if (!p) return null;
+  return path.isAbsolute(p) ? p : path.join(process.cwd(), p);
+}
+
+async function detectDeployedProviders() {
+  const detected = [];
+  for (const [name, dir] of Object.entries(PROVIDER_AGENT_DIRS)) {
+    if (await fileExists(path.join(process.cwd(), dir))) detected.push(name);
+  }
+  // Aggregated providers (Windsurf / Hermes) leave a project-root AGENTS.md.
+  if (await fileExists(path.join(process.cwd(), 'AGENTS.md')) && !detected.includes('windsurf')) {
+    detected.push('windsurf');
+  }
+  return detected;
+}
+
 function check(name, status, message) {
   checks.push({ name, status, message });
 }
@@ -113,26 +192,73 @@ async function runDoctor() {
     check('Project .aiwg/', 'info', 'No .aiwg/ in current directory (not an AIWG project)');
   }
 
-  // 4. Check Claude Code
-  const claudeAgents = path.join(process.cwd(), '.claude/agents');
-  const hasClaudeAgents = await fileExists(claudeAgents);
-  if (hasClaudeAgents) {
-    const files = await fs.readdir(claudeAgents);
-    const agentCount = files.filter(f => f.endsWith('.md')).length;
-    check('Claude Code Agents', 'ok', `${agentCount} agents deployed`);
+  // 4-5. Provider-aware agents + commands check (#1057).
+  // Determine which providers to inspect:
+  //   --provider <name>  → just that one
+  //   --all-providers    → every supported provider
+  //   (default)          → auto-detect deployed providers via PROVIDER_AGENT_DIRS
+  const { provider: providerArg, allProviders } = parseDoctorArgs(process.argv.slice(2));
+  let providersToCheck = [];
+  if (providerArg) {
+    providersToCheck = [providerArg];
+  } else if (allProviders) {
+    providersToCheck = Object.keys(PROVIDER_LABELS);
   } else {
-    check('Claude Code Agents', 'info', 'No agents deployed (run: aiwg use sdlc)');
+    providersToCheck = await detectDeployedProviders();
+    // Always include claude as a baseline so existing single-provider users
+    // still get the "Claude Code Agents" line they're used to.
+    if (!providersToCheck.includes('claude')) providersToCheck.unshift('claude');
   }
 
-  // 5. Check commands
-  const claudeCommands = path.join(process.cwd(), '.claude/commands');
-  const hasClaudeCommands = await fileExists(claudeCommands);
-  if (hasClaudeCommands) {
-    const files = await fs.readdir(claudeCommands);
-    const cmdCount = files.filter(f => f.endsWith('.md')).length;
-    check('Claude Code Commands', 'ok', `${cmdCount} commands deployed`);
-  } else {
-    check('Claude Code Commands', 'info', 'No commands deployed');
+  for (const provName of providersToCheck) {
+    const provider = await loadProvider(provName);
+    const label = PROVIDER_LABELS[provName] || provName;
+    if (!provider || !provider.paths) {
+      check(`${label} Agents`, 'warn', `Unknown provider: ${provName}`);
+      continue;
+    }
+
+    // Agents
+    const agentsPathRel = provider.paths.agents;
+    const agentsPath = resolveProviderPath(agentsPathRel);
+    if (agentsPath && await fileExists(agentsPath)) {
+      try {
+        const stat = await fs.stat(agentsPath);
+        if (stat.isDirectory()) {
+          const files = await fs.readdir(agentsPath);
+          const agentCount = files.filter(f => f.endsWith('.md') || f.endsWith('.agent.md')).length;
+          check(`${label} Agents`, 'ok', `${agentCount} agents deployed (${agentsPathRel})`);
+        } else {
+          // Aggregated single-file (e.g. Hermes/Windsurf AGENTS.md)
+          check(`${label} Agents`, 'ok', `Aggregated at ${agentsPathRel}`);
+        }
+      } catch {
+        check(`${label} Agents`, 'info', `No agents deployed at ${agentsPathRel}`);
+      }
+    } else if (providerArg || allProviders) {
+      // User explicitly asked about this provider — be explicit when missing.
+      check(`${label} Agents`, 'info', `No agents deployed (run: aiwg use sdlc --provider ${provName})`);
+    } else if (provName === 'claude') {
+      // Default-case fallback for back-compat output.
+      check('Claude Code Agents', 'info', 'No agents deployed (run: aiwg use sdlc)');
+    }
+
+    // Commands
+    const commandsPathRel = provider.paths.commands;
+    if (commandsPathRel) {
+      const commandsPath = resolveProviderPath(commandsPathRel);
+      if (commandsPath && await fileExists(commandsPath)) {
+        try {
+          const files = await fs.readdir(commandsPath);
+          const cmdCount = files.filter(f => f.endsWith('.md') || f.endsWith('.prompt.md')).length;
+          check(`${label} Commands`, 'ok', `${cmdCount} commands deployed (${commandsPathRel})`);
+        } catch {
+          // Skip silently — commands are optional for several providers
+        }
+      } else if (provName === 'claude') {
+        check('Claude Code Commands', 'info', 'No commands deployed');
+      }
+    }
   }
 
   // 6. Check Skill Seekers (optional)
