@@ -117,15 +117,35 @@ export function writeFile(dest, data, dryRun) {
 // Deployment Manifest (File Ownership Tagging)
 // ============================================================================
 
-const MANAGED_MARKER_RE = /^<!-- aiwg:managed /;
+// Match either form so legacy-marker files are recognized as already-managed:
+//   <!-- aiwg:managed v... ...   (legacy, line 1, breaks YAML frontmatter parsing)
+//   # aiwg:managed v... ...      (current, inside frontmatter as a YAML comment)
+const MANAGED_MARKER_RE = /^(?:<!-- aiwg:managed |# aiwg:managed )/m;
 const MANIFEST_FILENAME = '.aiwg-manifest.json';
 
 /**
- * Prepend `<!-- aiwg:managed vVERSION SOURCE -->` header to markdown content.
- * Skips if already present.
+ * Add an `aiwg:managed vVERSION SOURCE` marker to deployed markdown content.
+ *
+ * For files with YAML frontmatter (start with `---\n`), inject the marker as
+ * a YAML comment INSIDE the frontmatter. This keeps `---` on line 1, which
+ * Claude Code (and other YAML frontmatter parsers) require to discover
+ * agents/skills/commands. Issue #1059.
+ *
+ * For files without frontmatter, fall back to the legacy HTML-comment-at-top
+ * form (no parser to break).
+ *
+ * Idempotent — skips if either form of the marker is already present.
  */
 export function addManagedMarker(content, version, source) {
   if (MANAGED_MARKER_RE.test(content)) return content;
+  // Frontmatter present → inject as YAML comment after the opening `---\n`.
+  if (content.startsWith('---\n')) {
+    return content.replace(
+      /^---\n/,
+      `---\n# aiwg:managed v${version} ${source}\n`
+    );
+  }
+  // No frontmatter → legacy HTML-comment-at-top form is safe.
   return `<!-- aiwg:managed v${version} ${source} -->\n${content}`;
 }
 

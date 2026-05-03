@@ -153,12 +153,64 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Claude Code Integration', () => {
         'utf-8'
       );
 
-      // Check YAML frontmatter format (may have aiwg:managed marker before frontmatter)
-      expect(agentContent).toMatch(/---\n/);
+      // Check YAML frontmatter format. After #1059 the aiwg:managed marker
+      // lives INSIDE the frontmatter as a YAML comment, so the file must
+      // start with `---` on line 1 (Claude Code's loader requires this).
+      expect(agentContent).toMatch(/^---\n/);
       expect(agentContent).toMatch(/name: .+/);
       expect(agentContent).toMatch(/description: .+/);
       expect(agentContent).toMatch(/model: (sonnet|opus|haiku)/);
       expect(agentContent).toMatch(/\n---\n/);
+    });
+
+    // Regression: every deployed agent must have `---` on line 1 so Claude
+    // Code's frontmatter parser can discover it. Issue #1059.
+    it('every deployed agent file starts with --- on line 1', async () => {
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'claude',
+        '--mode', 'sdlc',
+        '--target', TEST_PROJECT_DIR
+      ]);
+
+      const agentsDir = path.join(TEST_CLAUDE_DIR, 'agents');
+      // .soul.md files are prose companions co-located with agents, not
+      // agents themselves — they have no frontmatter by design and Claude
+      // Code ignores them.
+      const agents = (await fs.readdir(agentsDir))
+        .filter(f => f.endsWith('.md') && !f.endsWith('.soul.md'));
+      expect(agents.length).toBeGreaterThan(0);
+
+      const offenders: string[] = [];
+      for (const name of agents) {
+        const content = await fs.readFile(path.join(agentsDir, name), 'utf-8');
+        if (!content.startsWith('---\n') && !content.startsWith('---\r\n')) {
+          offenders.push(name + ': ' + content.split('\n')[0].slice(0, 80));
+        }
+      }
+      expect(offenders, `agents with non-frontmatter line 1:\n${offenders.join('\n')}`).toEqual([]);
+    });
+
+    // Regression: aiwg:managed marker must still be present after deploy
+    // (moved inside frontmatter, but ownership tracking stays grep-able).
+    // Issue #1059.
+    it('aiwg:managed marker is present inside frontmatter, not before it', async () => {
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'claude',
+        '--mode', 'sdlc',
+        '--target', TEST_PROJECT_DIR
+      ]);
+
+      const agentsDir = path.join(TEST_CLAUDE_DIR, 'agents');
+      const agents = (await fs.readdir(agentsDir)).filter(f => f.endsWith('.md'));
+      const sample = agents.slice(0, 5);
+
+      for (const name of sample) {
+        const content = await fs.readFile(path.join(agentsDir, name), 'utf-8');
+        // Marker must be present (ownership tracking)
+        expect(content).toMatch(/aiwg:managed v\S+ \S+/);
+        // Marker must not be on line 1 (would break frontmatter)
+        expect(content.split('\n')[0]).not.toMatch(/aiwg:managed/);
+      }
     });
 
     it('includes tools in frontmatter', async () => {
