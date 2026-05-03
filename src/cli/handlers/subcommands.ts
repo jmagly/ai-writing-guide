@@ -525,6 +525,98 @@ export const promoteHandler: CommandHandler = {
 };
 
 /**
+ * New bundle handler — scaffolds a project-local bundle under
+ * `.aiwg/{type}/{name}/` with a valid manifest, starter artifact, and a
+ * README that includes the identical-form portability reminder.
+ *
+ * Usage:
+ *   aiwg new-bundle <name>                      # default: --type extension --starter skill
+ *   aiwg new-bundle <name> --type addon
+ *   aiwg new-bundle <name> --type framework --starter minimal
+ *   aiwg new-bundle <name> --starter rule --description "Custom rule"
+ *
+ * @implements #1050
+ */
+export const newBundleHandler: CommandHandler = {
+  id: 'new-bundle',
+  name: 'New Bundle',
+  description: 'Scaffold a project-local bundle under .aiwg/{type}/{name}/',
+  category: 'scaffolding',
+  aliases: ['new-extension', 'new-addon', 'new-framework', 'new-plugin'],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    const args = ctx.args;
+    const positional = args.find(a => !a.startsWith('-'));
+    if (!positional) {
+      return {
+        exitCode: 1,
+        message: 'Error: bundle name required\n\nUsage: aiwg new-bundle <name> [--type extension|addon|framework|plugin] [--starter skill|rule|agent|minimal] [--description "..."]',
+      };
+    }
+
+    // Type can be inferred from the alias used to invoke (new-extension etc.)
+    const aliasMap: Record<string, 'extension' | 'addon' | 'framework' | 'plugin'> = {
+      'new-extension': 'extension',
+      'new-addon': 'addon',
+      'new-framework': 'framework',
+      'new-plugin': 'plugin',
+    };
+    const invoked = ctx.rawArgs[0] ?? '';
+    const aliasType = aliasMap[invoked];
+
+    const typeIdx = args.findIndex(a => a === '--type');
+    const typeFlag = typeIdx >= 0 ? args[typeIdx + 1] : undefined;
+    const type = (typeFlag ?? aliasType ?? 'extension') as 'extension' | 'addon' | 'framework' | 'plugin';
+    if (!['extension', 'addon', 'framework', 'plugin'].includes(type)) {
+      return { exitCode: 1, message: `Error: --type must be one of extension|addon|framework|plugin (got '${type}')` };
+    }
+
+    const starterIdx = args.findIndex(a => a === '--starter');
+    const starter = starterIdx >= 0 ? (args[starterIdx + 1] as 'skill' | 'rule' | 'agent' | 'minimal') : undefined;
+    if (starter && !['skill', 'rule', 'agent', 'minimal'].includes(starter)) {
+      return { exitCode: 1, message: `Error: --starter must be one of skill|rule|agent|minimal (got '${starter}')` };
+    }
+
+    const descIdx = args.findIndex(a => a === '--description');
+    const description = descIdx >= 0 ? args[descIdx + 1] : undefined;
+
+    const { scaffoldProjectLocalBundle } = await import('../../extensions/project-local-scaffold.js');
+
+    try {
+      const result = await scaffoldProjectLocalBundle({
+        type,
+        name: positional,
+        description,
+        starter,
+        projectDir: ctx.cwd,
+      });
+
+      if (result.alreadyExists) {
+        return {
+          exitCode: 1,
+          message: `Refused: bundle already exists at ${result.bundlePath}. Remove it first or pick a different name.`,
+        };
+      }
+
+      console.log(`✓ Scaffolded project-local ${type} '${positional}' at ${result.bundlePath}`);
+      console.log('  Files created:');
+      for (const f of result.filesCreated) console.log(`    + ${f}`);
+      console.log('');
+      console.log('Next steps:');
+      console.log(`  1. Edit manifest.json (description, version, keywords)`);
+      console.log(`  2. Customize the starter artifact under ${result.bundlePath}/`);
+      console.log(`  3. Deploy:  aiwg use ${positional}`);
+      console.log(`  4. Inspect: aiwg doctor --project-local`);
+
+      return { exitCode: 0 };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { exitCode: 1, message: `Error: ${msg}` };
+    }
+  },
+};
+
+/**
  * New project handler
  *
  * Delegates to tools/install/new-project.mjs

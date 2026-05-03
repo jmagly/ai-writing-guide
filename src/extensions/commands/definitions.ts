@@ -271,6 +271,34 @@ export const removeCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const newBundleCommand: Extension = {
+  id: 'new-bundle',
+  type: 'skill',
+  name: 'New Bundle',
+  description: 'Scaffold a project-local bundle under .aiwg/{type}/{name}/',
+  version: '1.0.0',
+  capabilities: ['cli', 'scaffolding', 'project-local'],
+  keywords: ['new', 'bundle', 'scaffold', 'project-local', 'extension', 'addon', 'framework', 'plugin'],
+  category: 'scaffolding',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['new bundle', 'scaffold project-local', 'new extension', 'new addon'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<name> [--type extension|addon|framework|plugin] [--starter skill|rule|agent|minimal] [--description "..."]',
+      allowedTools: ['Read', 'Write', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const promoteCommand: Extension = {
   id: 'promote',
   type: 'skill',
@@ -2637,6 +2665,7 @@ export const commandDefinitions: Extension[] = [
   listCommand,
   removeCommand,
   promoteCommand,
+  newBundleCommand,
   installCommand,
   packagesCommand,
   marketplaceCommand,

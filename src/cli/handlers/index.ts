@@ -64,6 +64,7 @@ import {
   listHandler,
   removeHandler,
   promoteHandler,
+  newBundleHandler,
   newProjectHandler,
   installPluginHandler,
   uninstallPluginHandler,
@@ -130,6 +131,7 @@ export {
   runHandler,
 
   // Project
+  newBundleHandler,
   newProjectHandler,
 
   // Workspace
@@ -262,6 +264,7 @@ export const allHandlers: CommandHandler[] = [
   marketplaceHandler,
 
   // Project setup
+  newBundleHandler,
   newProjectHandler,
   initHandler,
   runHandler,
