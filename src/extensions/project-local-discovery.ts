@@ -10,7 +10,7 @@
  * @architecture .aiwg/architecture/design-manifest-schema.md (#1044)
  */
 
-import { readFile, readdir, lstat, stat } from 'fs/promises';
+import { readFile, readdir, lstat, stat, access } from 'fs/promises';
 import { resolve, join } from 'path';
 import {
   BundleManifestSchema,
@@ -139,6 +139,17 @@ export async function discoverProjectLocalBundles(
       if (!isDir) continue;
 
       const manifestPath = join(bundlePath, 'manifest.json');
+
+      // Silently skip directories without manifest.json — these are not
+      // project-local bundles. Most commonly, .aiwg/frameworks/<id>/ holds
+      // workspace state from initializeFrameworkWorkspace() (archive/,
+      // projects/, repo/, working/), not a bundle. Issue #1058.
+      try {
+        await access(manifestPath);
+      } catch {
+        continue;
+      }
+
       totalScanned++;
 
       // Enforce per-project bundle count cap (#1042 D2 / NFR-PL-12)

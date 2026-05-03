@@ -65,12 +65,15 @@ describe('project-local-discovery', () => {
       expect(result.isEmpty).toBe(true);
     });
 
-    it('returns empty result when dirs exist but contain no manifest.json', async () => {
+    it('silently skips dirs without manifest.json (workspace state, not bundles)', async () => {
+      // Per #1058: dirs without manifest.json are not malformed bundles —
+      // they're workspace state (e.g. .aiwg/frameworks/<id>/working/) or
+      // simply empty placeholder dirs. The scanner ignores them silently.
       mkdirSync(join(tmpDir, '.aiwg', 'extensions', 'foo'), { recursive: true });
-      // No manifest.json inside
       const result = await discoverProjectLocalBundles(tmpDir);
       expect(result.bundles).toEqual([]);
-      expect(result.errors.length).toBe(1); // Missing manifest.json reported as error
+      expect(result.errors).toEqual([]);
+      expect(result.isEmpty).toBe(true);
     });
 
     it('silently skips missing dirs and processes present ones (UC-PL-2 incremental add)', async () => {
@@ -235,6 +238,57 @@ describe('project-local-discovery', () => {
       );
       expect(result.bundle).toBeUndefined();
       expect(result.errors[0].actual).toBe('absent');
+    });
+  });
+
+  // Regression: framework workspace dirs created by aiwg use must not be
+  // flagged as malformed bundles. The path .aiwg/frameworks/<id>/ is
+  // overloaded — both project-local framework bundles AND workspace state
+  // from initializeFrameworkWorkspace() share that location. Issue #1058.
+  describe('framework workspace dirs (#1058)', () => {
+    it('silently skips .aiwg/frameworks/<id>/ dirs without manifest.json', async () => {
+      // Simulate workspace state from `aiwg use sdlc`
+      const wsDir = join(tmpDir, '.aiwg', 'frameworks', 'sdlc-complete');
+      mkdirSync(join(wsDir, 'archive'), { recursive: true });
+      mkdirSync(join(wsDir, 'projects'), { recursive: true });
+      mkdirSync(join(wsDir, 'repo'), { recursive: true });
+      mkdirSync(join(wsDir, 'working'), { recursive: true });
+      // Note: no manifest.json — this is workspace state, not a bundle
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+      expect(result.bundles).toEqual([]);
+      expect(result.errors).toEqual([]);
+      expect(result.isEmpty).toBe(true);
+    });
+
+    it('still flags real malformed bundles (manifest.json present but invalid)', async () => {
+      // A genuine project-local bundle with a broken manifest still errors
+      const bundleDir = join(tmpDir, '.aiwg', 'frameworks', 'my-framework');
+      mkdirSync(bundleDir, { recursive: true });
+      writeFileSync(join(bundleDir, 'manifest.json'), 'not json');
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+      expect(result.bundles).toEqual([]);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0].field).toBe('(JSON parse)');
+    });
+
+    it('happily coexists: workspace dirs ignored, real bundles discovered', async () => {
+      // Workspace dir (no manifest)
+      mkdirSync(join(tmpDir, '.aiwg', 'frameworks', 'sdlc-complete', 'working'), { recursive: true });
+      // Real bundle (has manifest)
+      const frameworkManifest = validManifest({
+        id: 'my-fw',
+        type: 'framework',
+        frameworkConfig: { path: 'src/' },
+      });
+      delete (frameworkManifest as Record<string, unknown>).addonConfig;
+      writeBundle(tmpDir, 'frameworks', 'my-fw', frameworkManifest);
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+      expect(result.bundles).toHaveLength(1);
+      expect(result.bundles[0].id).toBe('my-fw');
+      expect(result.errors).toEqual([]);
     });
   });
 });
