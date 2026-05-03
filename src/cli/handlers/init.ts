@@ -20,7 +20,6 @@ import {
   readAiwgConfig,
   writeAiwgConfig,
   emptyConfig,
-  migrateLegacyRegistry,
   populateDeployedTo,
   VALID_PROVIDERS,
   getConfigPath,
@@ -178,10 +177,7 @@ export const initHandler: CommandHandler = {
     let config = emptyConfig(providers);
     config.scripts = scripts;
 
-    // Migrate legacy registry.json entries
-    config = await migrateLegacyRegistry(projectDir, config);
-
-    // Populate deployedTo from disk for migrated entries with empty deployedTo (#721)
+    // Populate deployedTo from disk for entries with empty deployedTo (#721)
     config = await populateDeployedTo(config, projectDir);
 
     // Write

@@ -413,26 +413,6 @@ async function runDoctor() {
     // No .gitignore or unreadable — skip silently
   }
 
-  // 12. Legacy .aiwg/frameworks/registry.json deprecation (#1047)
-  try {
-    const legacyPath = path.join(process.cwd(), '.aiwg', 'frameworks', 'registry.json');
-    if (await fileExists(legacyPath)) {
-      const content = await fs.readFile(legacyPath, 'utf-8');
-      const parsed = JSON.parse(content);
-      if (parsed._deprecatedMigratedAt) {
-        const fromVersion = parsed._deprecatedMigratedFromVersion || 'unknown';
-        check('Legacy Registry', 'info',
-          `.aiwg/frameworks/registry.json present (migrated from ${fromVersion}; will be removed after 2 minor versions elapse)`);
-      } else {
-        check('Legacy Registry', 'warn',
-          '.aiwg/frameworks/registry.json present but unmarked — run "aiwg init" or "aiwg refresh" to mark as migrated, then delete after 2 minor versions');
-      }
-    }
-    // No legacy file present → no check emitted (clean state)
-  } catch {
-    // Legacy file unreadable or malformed — skip silently
-  }
-
   // Print results
   console.log('');
 
