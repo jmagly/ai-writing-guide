@@ -228,6 +228,19 @@ aiwg use ring                # Deploy Ring Methodology addon
 aiwg use sdlc --provider copilot  # Deploy to GitHub Copilot
 aiwg list                    # List installed frameworks
 aiwg remove sdlc             # Remove framework
+aiwg remove my-bundle        # Remove project-local bundle (source preserved; --force, --dry-run supported)
+
+# Project-local bundles (.aiwg/{extensions,addons,frameworks,plugins}/<name>/)
+aiwg new-bundle my-rules --type extension --starter rule    # Scaffold project-local bundle
+aiwg new-extension my-ext                                   # Alias: --type extension implied
+aiwg new-addon my-pack                                      # Alias: --type addon implied
+aiwg use my-rules                                           # Deploy a single project-local bundle
+aiwg list --project-local                                   # Show project-local inventory
+aiwg doctor --project-local                                 # Health check (counts, validation, drift, matrix)
+aiwg promote my-rules                                       # Graduate to upstream (hash-verified copy)
+aiwg promote my-rules --to corpus ~/my-corpus/              # Graduate to private corpus
+aiwg promote my-rules --dry-run                             # Preview without writing
+aiwg activity-log show                                      # Audit lifecycle events
 
 # Project setup
 aiwg new my-project          # Create new project with scaffolding

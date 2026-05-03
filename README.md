@@ -373,6 +373,25 @@ aiwg new my-project
 aiwg doctor
 ```
 
+### Customize Without Forking
+
+Author project-specific rules, skills, agents, addons, or frameworks
+directly under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`.
+No fork, no rebuild. Discovered automatically by `aiwg use`.
+
+```bash
+aiwg new-bundle my-team-rules --type extension --starter rule
+# edit the rule, then:
+aiwg use my-team-rules
+aiwg doctor --project-local      # health check (counts, validation, drift)
+aiwg promote my-team-rules        # graduate to upstream when proven
+```
+
+The bundle is **byte-identical** in shape to its upstream form, so
+`aiwg promote` is a hash-verified copy with zero rewrite. See the
+[customization guide](docs/customization/README.md) for the three paths
+(project-local, fork, corpus).
+
 ### Claude Code Plugin (Alternative)
 
 ```bash

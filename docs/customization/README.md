@@ -1,133 +1,158 @@
 # Make AIWG Yours
 
-By the end of this, Claude will permanently know your preferences — your rules, your agents, your workflow — and any changes you make will go live immediately.
+Three paths, depending on what you're customizing and how you want it
+shared.
 
-This is the **personal customization** guide. If you're building framework components to contribute upstream, see [Developer Mode](../development/dev-testing.md) instead.
+| Path | When | Effort | Shareable? |
+|------|------|--------|------------|
+| **A — Project-local** | Per-project rules, agents, skills | 5 minutes — no fork | No (lives in your project) |
+| **B — Fork** | Cross-project customization, contributing back | 30 minutes — fork + dev mode | Yes (PR upstream) |
+| **C — Corpus** | Cross-project sharing without going public | One-time setup per corpus | Within your team / org |
 
----
-
-## What You Can Make Yours
-
-Everything AIWG deploys to Claude is just a text file. That means you can edit any of it:
-
-**Rules** — how Claude behaves with you, specifically:
-- "Always know I'm a backend engineer who prefers direct answers without trailing summaries"
-- "When writing SQL, default to PostgreSQL syntax"
-- "My team uses trunk-based development — never suggest long-lived feature branches"
-
-**Agents** — specialized personas tuned to your domain:
-- A domain specialist for your industry (fintech, biotech, legal, whatever)
-- A code reviewer who knows your team's specific standards
-- A writing partner who understands your voice
-
-**Skills** — trigger phrases and workflows for how you actually work:
-- A personal research workflow that saves notes in your preferred format
-- A commit message helper that follows your team's conventions
-- A deployment checklist tuned to your stack
-
-**Prompts and templates** — reusable starting points for recurring work.
+If unsure, **start with Path A.** It's the lowest commitment and the
+easiest to graduate later.
 
 ---
 
-## The Steward Sets This Up
+## Path A — Project-Local (recommended for most users)
 
-You don't need to run CLI commands or edit config files. The AIWG Steward handles the setup.
+Author bundles directly inside your project under `.aiwg/{type}/{name}/`.
+No fork, no clone, no rebuild — just files in your repo. Discovered
+automatically by `aiwg use`.
 
-Tell the Steward what you want:
-
-> "Set up AIWG customization mode for me — I want to edit my rules and agents live"
-
-The Steward will ask one question: do you want to fork AIWG on GitHub first (recommended), or just clone it locally?
-
-- **Fork** (recommended): Your fork on GitHub is your source of truth. You can pull upstream updates when AIWG releases new features, and contribute your customizations back if they'd be useful to others.
-- **Local clone**: Fastest to start. No upstream sync, but everything else works the same.
-
-The Steward takes care of the rest — the fork or clone, the dev mode setup, the initial deployment. You don't see npm or build internals.
-
----
-
-## The Live Edit Loop
-
-Once you're set up, the loop is:
-
-```
-1. Edit a file in your AIWG clone
-2. Tell the Steward: "apply my changes"
-3. Change is active in your next session
+```bash
+aiwg new-bundle my-team-rules --type extension --starter rule
+# edit .aiwg/extensions/my-team-rules/rules/my-team-rules.md
+aiwg use my-team-rules
+aiwg doctor --project-local
 ```
 
-That's it. "Apply my changes", "rebuild", "make this live", "deploy my customizations" — they all do the same thing. The Steward figures out what changed and deploys it.
+The bundle deploys alongside upstream artifacts to whatever providers
+your project targets (`.claude/`, `.cursor/`, `.codex/`, etc.). It
+shadows upstream artifacts with the same id, with safety-critical
+denylist enforcement so you can't accidentally override the wrong thing.
 
-Most customizations (rules, agents, skills) are instant — no build step, just a deploy. The Steward only runs a full build when something in the TypeScript source changed, which for personal customization almost never happens.
+Graduate to upstream or to a private corpus when ready:
+
+```bash
+aiwg promote my-team-rules                          # → upstream
+aiwg promote my-team-rules --to corpus ~/my-corpus/ # → private corpus
+```
+
+The graduate operation is a hash-verified copy — no rewrite, no migration
+([identical-form ADR](../../.aiwg/architecture/adr-identical-form-portability.md)).
+
+**See:**
+- [Quickstart](project-local-quickstart.md) — first bundle in 5 minutes
+- [Lifecycle reference](project-local-lifecycle.md) — full operator surface
+- [Type disambiguation](extensions-vs-addons-vs-frameworks-vs-plugins.md) — pick the right type
+- [Troubleshooting](project-local-troubleshooting.md) — common failures
+- [From-fork migration](from-fork-to-project-local.md) — moving existing fork-based work
 
 ---
 
-## Two Paths
+## Path B — Fork (for upstream contributions)
 
-### Fork (recommended)
+When you're building something you might contribute to AIWG itself, or
+you want to live on the bleeding edge with custom branches, fork AIWG on
+GitHub and run in dev mode. The Steward agent handles the setup.
 
-When the Steward sets up a fork, you get:
+> "Set up AIWG customization mode for me — I want to fork and contribute back"
+
+What you get:
 - Your own copy of AIWG on GitHub that you control
-- Upstream sync: pull in new AIWG releases without losing your customizations
-- The ability to contribute a customization back if it turns out to be generally useful
+- Upstream sync via `"sync my AIWG"` — pulls new releases without overwriting your edits
+- One command to PR a change back upstream
 
-Tell the Steward: `"sync my AIWG"` to pull upstream updates. It shows you what's coming in before merging, and never overwrites files you've added.
+Use Path B when:
+- You're modifying AIWG **core** (TypeScript source, build scripts, deploy pipeline)
+- Your customization is generally useful and you want it merged
+- You want bleeding-edge AIWG features before they're released
 
-### Local Clone
+If you're "just" customizing rules / skills / agents, **Path A is
+simpler** — you can always graduate to Path B later by promoting your
+project-local bundles to upstream and PRing them.
 
-If you don't need upstream sync or GitHub integration, a local clone is simpler. Everything works the same — edit files, say "apply my changes", done. You just won't get upstream updates automatically.
-
-You can always add a fork later.
-
----
-
-## Check What You've Customized
-
-> "What have I customized?" / "Show my AIWG setup" / "Customization status"
-
-The Steward shows:
-- Which mode you're in (fork vs local clone)
-- Where your AIWG clone lives
-- Which files you've added or changed vs the default
-- How many upstream commits you haven't pulled yet (fork mode)
+**See:** [Fork workflow](fork-workflow.md) — how the fork/upstream sync works under the hood.
 
 ---
 
-## Contributing a Customization Back
+## Path C — Corpus (cross-project sharing)
 
-If you build something that might be useful to others — a domain agent, an improved skill, a generally applicable rule — the Steward can open a PR to the main AIWG repo.
+When you have customizations to share across many of your own projects
+without making them public:
 
-> "PR this back to AIWG" / "Contribute this upstream"
+1. Create a corpus directory: `mkdir ~/my-corpus`
+2. Author bundles there directly, or promote project-local bundles into it:
+   ```bash
+   aiwg promote my-team-rules --to corpus ~/my-corpus/
+   ```
+3. Other projects pick up corpus bundles via `aiwg.config` registration
+   (set `source: 'corpus'` paths in the project's installed config)
 
-The Steward reviews whether it's generally applicable (not personal to you), creates a feature branch with a proper conventional commit, and opens a pull request. If it looks personal, it declines gracefully and explains why that's fine — your fork is exactly the right place for personal stuff.
+The corpus is **byte-identical** to both project-local and upstream
+forms — same manifest, same layout — so a bundle moves between any of
+the three locations by copy.
 
----
-
-## Going Back
-
-If you ever want to go back to the standard npm-installed AIWG:
-
-> "Switch back to stable AIWG"
-
-The Steward runs `aiwg --use-stable` and syncs from the npm package. Your fork/clone stays where it is — you can reactivate customization mode anytime.
-
----
-
-## Quick Reference
-
-| You Say | What Happens |
-|---------|-------------|
-| "Set up AIWG customization mode" | Steward forks/clones, sets up dev mode, deploys |
-| "Apply my changes" | Deploys changes from your clone |
-| "What have I customized?" | Shows your changes vs default |
-| "Sync my AIWG" | Pulls upstream updates into your fork |
-| "PR this back to AIWG" | Opens a pull request to the main repo |
-| "Switch back to stable" | Returns to npm package |
+Use Path C when:
+- You have several private repos that all need the same customizations
+- The customization isn't public-marketplace-suitable but it isn't
+  per-project either
+- You want versioned, audited shared bundles without managing your own
+  AIWG fork
 
 ---
 
-## Next Steps
+## Decision tree
 
-- [Customization Examples](examples.md) — 5 concrete examples of what people actually customize
-- [Fork Workflow](fork-workflow.md) — How the fork/upstream sync works under the hood
-- [Developer Mode](../development/dev-testing.md) — If you want to contribute to AIWG itself (not just customize it)
+```
+Are you modifying AIWG core (TS source, build, deploy pipeline)?
+│
+├─ Yes ──→ Path B (fork)
+│
+└─ No ──→ Are you sharing this across many of your projects?
+          │
+          ├─ Yes, privately ──→ Path C (corpus)
+          ├─ Yes, publicly ──→ Path A first, then aiwg promote → Path B
+          └─ No, single project ──→ Path A (project-local)
+```
+
+---
+
+## Mixing paths
+
+The three paths compose:
+
+- A project on Path A can later promote a bundle to upstream (Path B) or
+  to a corpus (Path C).
+- A Path B fork can deploy alongside Path A project-local bundles —
+  the project's `.aiwg/extensions/foo/` shadows the fork's
+  `agentic/code/addons/foo/` cleanly.
+- A corpus (Path C) is just another `source` in the registry — your
+  project pulls bundled, project-local, **and** corpus artifacts
+  together.
+
+You don't have to commit to one path forever. Start where you are; move
+when you outgrow it.
+
+---
+
+## Quick reference
+
+| You want to... | Use |
+|----------------|-----|
+| Add one rule for one project | `aiwg new-bundle my-rule --starter rule` (Path A) |
+| Add a feature pack of related skills | `aiwg new-bundle my-pack --type addon` (Path A) |
+| Share customizations across your repos privately | `aiwg promote my-pack --to corpus ~/corpus/` (Path C) |
+| Contribute a customization back to AIWG | `aiwg promote my-pack` (Path A → Path B + PR) |
+| Modify AIWG itself (CLI, deploy, build) | Steward sets up a fork (Path B) |
+
+---
+
+## Next steps
+
+- [Project-local quickstart](project-local-quickstart.md) — start here
+- [Type disambiguation](extensions-vs-addons-vs-frameworks-vs-plugins.md) — extension vs addon vs framework vs plugin
+- [Customization examples](examples.md) — real scenarios people customize
+- [Fork workflow](fork-workflow.md) — Path B details
+- [Plugin marketplace guide](../plugin-marketplace-guide.md) — public distribution (different from the three paths above)

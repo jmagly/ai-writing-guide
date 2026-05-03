@@ -106,8 +106,12 @@ Node.js: v20.10.0
 Check installation health and diagnose issues.
 
 ```bash
-aiwg doctor
+aiwg doctor [--project-local] [--quiet]
 ```
+
+**Flags:**
+- `--project-local` — Show only the project-local artifacts section. Exit code reflects only project-local findings.
+- `--quiet` — Suppress informational subsections (counts, shadows). Show only failures.
 
 **Capabilities:** cli, diagnostics, health-check
 **Platforms:** All
@@ -122,6 +126,9 @@ aiwg doctor
 - MCP server availability
 - System dependencies (git, jq, etc.)
 - `memory.topology` contracts — runs `validateMemoryTopology()` against every installed framework/addon manifest; flags missing required fields, invalid `crossRefStyle` values (must be `at-mention | wikilink | markdown-link | yaml-ref`), namespaces not under `.aiwg/`, empty `derivedPages`, and wrong array shapes for `lintRules`/`ingestRequires` (per ADR-021)
+- **Project-local artifacts** ([design](../.aiwg/architecture/design-doctor-log-promote.md)) — per-type counts, manifest validation, active shadows (informational vs blocking), denylist violations, deploy-state drift (deployed file hash vs registered `artifactHashes`), provider deployment matrix. Section is suppressed entirely when no project-local content exists.
+
+**Doctor exits 0 when:** no validation errors, no denylist violations, no drift. Shadows alone do not fail doctor — they're informational by design.
 
 **Example output:**
 ```
@@ -393,14 +400,20 @@ Total: 2 frameworks, 2 addons
 
 ### remove
 
-Remove a framework or addon.
+Remove a framework, addon, or project-local bundle.
 
 ```bash
-aiwg remove <id>
+aiwg remove <id> [--force] [--dry-run] [--provider <p>] [--keep-registry]
 ```
 
 **Arguments:**
-- `<id>` - Framework or addon ID (e.g., `sdlc`, `marketing`, `voice-framework`)
+- `<id>` — Framework, addon, or project-local bundle id (e.g., `sdlc`, `marketing`, `voice-framework`, `my-team-rules`)
+
+**Flags (project-local bundles):**
+- `--force` — Skip the case-2 mutation prompt and revert operator-edited deployed files. Does **not** delete bundle source under `.aiwg/<type>/<name>/`. Does **not** authorize deleting another bundle's deployed file.
+- `--dry-run` — Print the revert plan; no filesystem or registry changes.
+- `--provider <p>` — Restrict revert to one provider (e.g., `claude`, `cursor`).
+- `--keep-registry` — Revert deployed files but leave the `installed` entry in `aiwg.config`.
 
 **Capabilities:** cli, framework, uninstall
 **Platforms:** All
@@ -409,18 +422,120 @@ aiwg remove <id>
 **Examples:**
 
 ```bash
-# Remove SDLC framework
+# Remove an upstream framework
 aiwg remove sdlc
 
-# Remove voice framework addon
-aiwg remove voice-framework
+# Remove a project-local bundle (revert deploys, preserve source)
+aiwg remove my-team-rules
+
+# Preview without changes
+aiwg remove my-team-rules --dry-run
+
+# Override mutation refusal
+aiwg remove my-team-rules --force
 ```
 
-**Actions:**
-- Removes deployed files from `.claude/`, `.github/`, etc.
-- Updates framework registry
-- Removes workspace artifacts (`.aiwg/<framework>/`)
-- Preserves user-created content
+**Routing:**
+- If `<id>` matches a project-local entry in `aiwg.config.installed`, routes to the project-local revert handler ([design](../.aiwg/architecture/design-aiwg-remove-revert.md)) which uses recorded `artifactHashes` to detect pristine vs mutated vs replaced deployed files.
+- Otherwise, falls through to the upstream framework / plugin uninstaller.
+
+**Source preservation invariant:** `aiwg remove` never deletes content under `.aiwg/<type>/<name>/`. To remove the source, use `rm -rf` explicitly.
+
+**Activity log:** Emits `remove`, plus `remove-mutated` / `remove-conflict` per skipped artifact, plus `remove-force` when `--force` is used.
+
+---
+
+### promote
+
+Graduate a project-local bundle to upstream or to a private corpus path.
+Implements the identical-form portability invariant ([ADR #1038](../.aiwg/architecture/adr-identical-form-portability.md)) — copies `.aiwg/<type>/<name>/` to its destination and re-hashes every file to verify byte-identical correctness.
+
+```bash
+aiwg promote <name> [--to upstream|corpus <path>] [--dry-run] [--cleanup] [--force]
+```
+
+**Arguments:**
+- `<name>` — Project-local bundle id
+
+**Flags:**
+- `--to upstream` (default) — Copy to `agentic/code/addons/<name>/` (or `agentic/code/frameworks/<name>/` for `type: framework`)
+- `--to corpus <path>` — Copy to `<path>/<name>/`. The path must exist; `<name>` must not pre-exist there.
+- `--dry-run` — Print the plan (source, destination, file count, total bytes); no writes.
+- `--cleanup` — Remove the `.aiwg/<type>/<name>/` source after a successful copy.
+- `--force` — Bypass the `@.aiwg/` reference refusal (those references will dangle in the destination).
+
+**Capabilities:** cli, framework, graduate, project-local
+**Platforms:** All
+**Tools:** Read, Write, Bash
+
+**Pre-flight checks (in order):**
+1. Bundle exists under `.aiwg/{type}/{name}/`
+2. Destination doesn't already exist (refuses overwrite — must `aiwg remove` from upstream first)
+3. No `@.aiwg/` references that would dangle (refuse without `--force`)
+
+**Operation:**
+1. Snapshot SHA-256 of every source file
+2. Recursive `cp` to destination
+3. Re-hash every destination file; **roll back** (delete dest) on any mismatch
+4. Update registry: `source: 'project-local'` → `'bundled'` (or `'corpus'`)
+5. Emit `promote` (or `promote-failed`) to the activity log
+
+**Examples:**
+
+```bash
+aiwg promote my-team-rules                           # default --to upstream
+aiwg promote my-team-rules --to corpus ~/my-corpus/  # private corpus
+aiwg promote my-team-rules --dry-run                 # preview
+aiwg promote my-team-rules --cleanup                 # remove .aiwg source after copy
+```
+
+---
+
+### new-bundle
+
+Scaffold a project-local bundle under `.aiwg/{type}/{name}/` with a valid manifest, a starter artifact, and a README that includes the identical-form portability reminder.
+
+```bash
+aiwg new-bundle <name> [--type extension|addon|framework|plugin] [--starter skill|rule|agent|minimal] [--description "..."]
+```
+
+**Arguments:**
+- `<name>` — Bundle id (kebab-case: `a-z0-9-`, no leading/trailing hyphen)
+
+**Flags:**
+- `--type` — Bundle type (default: `extension`). Inferred from invocation when called via aliases (`new-extension`, `new-addon`, `new-framework`, `new-plugin`).
+- `--starter` — Which starter artifact to drop in. Default: `skill` for addon/extension; `minimal` for framework/plugin.
+- `--description` — Free-text human description for the manifest.
+
+**Aliases:** `new-extension`, `new-addon`, `new-framework`, `new-plugin`
+
+**Capabilities:** cli, scaffolding, project-local
+**Platforms:** All
+**Tools:** Read, Write, Bash
+
+**Examples:**
+
+```bash
+# Default extension with skill starter
+aiwg new-bundle my-team-rules
+
+# Addon with rule starter and custom description
+aiwg new-bundle pg-helpers --type addon --starter rule --description "Postgres query helpers"
+
+# Framework via alias
+aiwg new-framework healthcare-sdlc
+
+# Plugin (minimal starter)
+aiwg new-plugin my-distro --starter minimal
+```
+
+**What gets created:**
+- `manifest.json` — valid against the canonical schema, all required fields filled
+- `README.md` — usage, customization tips, identical-form reminder, deploy/remove/promote commands
+- Starter artifact: `skills/<name>-skill/SKILL.md`, `rules/<name>.md`, or `agents/<name>.md` depending on `--starter`
+- Type-specific stubs: `src/.gitkeep` for framework, `payload/.gitkeep` for plugin
+
+The bundle is immediately deployable: `aiwg use <name>`.
 
 ---
 
