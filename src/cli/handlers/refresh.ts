@@ -17,7 +17,15 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { refreshAllPackages } from '../../packages/registry.js';
-import { readAiwgConfig, hashManifest } from '../../config/aiwg-config.js';
+import {
+  readAiwgConfig,
+  writeAiwgConfig,
+  hashManifest,
+  migrateLegacyRegistry,
+  cleanupLegacyRegistry,
+  checkLegacyRegistry,
+} from '../../config/aiwg-config.js';
+import { getVersionInfo } from '../../channel/manager.mjs';
 import { discoverProjectLocalBundles } from '../../extensions/project-local-discovery.js';
 import * as ui from '../ui.js';
 
@@ -100,6 +108,37 @@ export const refreshHandler: CommandHandler = {
         ui.blank();
       }
       return { exitCode: 0 };
+    }
+
+    // Step 2.75: Mark legacy `.aiwg/frameworks/registry.json` as migrated (#1054)
+    // The migration helper is idempotent — no-op when the file is absent or
+    // already marked. Surfaces a one-line note when the marker actually lands.
+    if (!dryRun) {
+      try {
+        const projectDir = process.cwd();
+        const versionInfo = await getVersionInfo();
+        const currentVersion = versionInfo?.version ?? 'unknown';
+        const before = await checkLegacyRegistry(projectDir, currentVersion);
+        if (before.exists && !before.marked) {
+          const config = await readAiwgConfig(projectDir);
+          if (config) {
+            const updated = await migrateLegacyRegistry(projectDir, config, currentVersion);
+            await writeAiwgConfig(projectDir, updated);
+            if (!quiet) ui.success('Legacy registry marked as migrated (eligible for cleanup after 2 minor versions)');
+          }
+        }
+      } catch (err) {
+        if (!quiet) ui.warn(`Legacy registry mark failed (non-fatal): ${err instanceof Error ? err.message : String(err)}`);
+      }
+    } else {
+      try {
+        const status = await checkLegacyRegistry(process.cwd());
+        if (status.exists && !status.marked && !quiet) {
+          ui.dim('  Would mark legacy .aiwg/frameworks/registry.json as migrated');
+        }
+      } catch {
+        // ignore
+      }
     }
 
     // Step 3: Update package (unless --skip-update)
@@ -212,6 +251,23 @@ export const refreshHandler: CommandHandler = {
         }
       } catch {
         if (!quiet) ui.dim('  Stale check skipped (non-critical)');
+      }
+    }
+
+    // Step 4.75: Cleanup eligible legacy registry file (#1054)
+    // Deletes `.aiwg/frameworks/registry.json` when the migration marker is
+    // present AND ≥ 2 minor versions have elapsed since marking.
+    if (!dryRun) {
+      try {
+        const versionInfo = await getVersionInfo();
+        const currentVersion = versionInfo?.version ?? 'unknown';
+        const result = await cleanupLegacyRegistry(process.cwd(), currentVersion);
+        if (result.deleted && !quiet) {
+          ui.success(`Legacy registry cleaned up: ${result.reason}`);
+        }
+        // Silent on no-op — the file is either absent or not yet eligible
+      } catch (err) {
+        if (!quiet) ui.warn(`Legacy registry cleanup failed (non-fatal): ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
