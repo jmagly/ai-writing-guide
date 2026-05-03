@@ -356,6 +356,54 @@ Before starting any orchestration session > 30 minutes:
 
 > `aiwg sync` is the deprecated alias for `aiwg refresh`. It still works but emits a warning; scheduled for removal after the 2026.5.x stable line.
 
+## Project-Local Customization
+
+Per-project rules, skills, agents, addons, or frameworks live under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`. They're discovered automatically by `aiwg use` and deploy alongside upstream artifacts. The bundle layout is **byte-identical** in shape to its upstream form, so `aiwg promote` is a hash-verified copy with zero rewrite ([identical-form ADR](.aiwg/architecture/adr-identical-form-portability.md)).
+
+### CLI commands
+
+```bash
+# Scaffold
+aiwg new-bundle <name> --type extension --starter rule
+aiwg new-extension <name>      # alias: --type extension
+aiwg new-addon <name>          # alias: --type addon
+aiwg new-framework <name>      # alias: --type framework
+aiwg new-plugin <name>         # alias: --type plugin
+
+# Deploy / inspect
+aiwg use <name>                # deploy a single project-local bundle
+aiwg list --project-local      # inventory + validation status
+aiwg doctor --project-local    # counts, validation, shadows, drift, matrix
+
+# Remove (source under .aiwg/<type>/<name>/ is NEVER deleted)
+aiwg remove <name>             # revert deployed files
+aiwg remove <name> --force     # also revert operator-edited files
+aiwg remove <name> --dry-run   # preview
+
+# Graduate
+aiwg promote <name>                          # default: --to upstream
+aiwg promote <name> --to corpus <path>       # to private corpus
+aiwg promote <name> --dry-run                # preview
+aiwg promote <name> --cleanup                # remove .aiwg source after copy
+
+# Audit
+aiwg activity-log show         # 12 lifecycle events: discover, deploy, conflict, shadow, remove, promote, ...
+```
+
+### Three customization paths
+
+| Path | When | Effort |
+|------|------|--------|
+| **A — Project-local** | Per-project rules, agents, skills | 5 minutes — no fork |
+| **B — Fork** | Cross-project customization, contributing back, modifying AIWG core | 30 minutes — fork + dev mode |
+| **C — Corpus** | Cross-project sharing without going public | One-time setup per corpus |
+
+Start with Path A; graduate to B or C when ready. See [`docs/customization/README.md`](docs/customization/README.md) for the decision tree, and [`project-local-quickstart.md`](docs/customization/project-local-quickstart.md) for a 5-minute first bundle.
+
+### Safety-critical override policy
+
+Project-local artifacts can shadow upstream cleanly. AIWG enforces a denylist: shadowing a safety-critical upstream artifact requires an explicit `overrides:` declaration in the project-local manifest. `--force` does **not** bypass this (or the source-preservation invariant). See [`adr-override-shadow-policy.md`](.aiwg/architecture/adr-override-shadow-policy.md).
+
 ## Phase Overview
 
 **Inception** (4-6 weeks):

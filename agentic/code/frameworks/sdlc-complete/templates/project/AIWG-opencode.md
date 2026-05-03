@@ -10,6 +10,23 @@ SDLC Complete — agents, commands, skills, and rules for full lifecycle coverag
 
 - `aiwg status` — Show workspace health
 - `aiwg use sdlc --provider opencode` — Deploy SDLC framework for OpenCode
+- `aiwg new-bundle <name> --type extension` — Scaffold a project-local bundle
+- `aiwg doctor --project-local` — Health check project-local artifacts
+- `aiwg promote <name>` — Graduate project-local bundle to upstream
+
+## Customize Per Project
+
+Author project-specific rules, skills, agents, addons, or frameworks under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`. Discovered automatically by `aiwg use`.
+
+```bash
+aiwg new-bundle my-rules --type extension --starter rule
+aiwg use my-rules
+aiwg doctor --project-local
+aiwg promote my-rules                           # graduate to upstream
+aiwg promote my-rules --to corpus ~/my-corpus/  # or to private corpus
+```
+
+The bundle is byte-identical in shape to its upstream form, so `aiwg promote` is a hash-verified copy with no rewrite. See `docs/customization/README.md` for Path A (project-local), B (fork), C (corpus).
 
 ## Artifacts
 
