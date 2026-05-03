@@ -1,0 +1,89 @@
+{
+  "id": "security-engineering",
+  "type": "framework",
+  "name": "Security Engineering",
+  "version": "0.1.0",
+  "description": "Applied security framework for cryptographic primitive selection, chain-of-trust design, secret handling at runtime, supply-chain trust, physical-access threat modeling, and authentication-factor architecture. Pattern-based, product-agnostic — composes with sdlc-complete's threat-modeling and audit agents rather than replacing them.",
+  "modeAliases": [
+    "security-eng",
+    "secure-dev",
+    "applied-security"
+  ],
+  "entry": {
+    "agents": "agents",
+    "skills": "skills",
+    "templates": "templates",
+    "rules": "rules"
+  },
+  "workspace": {
+    "subdirs": [
+      "decisions",
+      "chain-of-trust",
+      "factors",
+      "degraded-modes",
+      "physical-threats",
+      "supply-chain",
+      "reviews"
+    ]
+  },
+  "standards": [
+    "NIST SP 800-57 (Key Management)",
+    "NIST SP 800-63B (Authentication)",
+    "NIST SP 800-108 (KDFs)",
+    "NIST SP 800-208 (Stateful Hash-Based Signatures)",
+    "RFC 5869 (HKDF)",
+    "RFC 9106 (Argon2)",
+    "RFC 8446 (TLS 1.3)",
+    "OWASP ASVS 4.0",
+    "OWASP Cryptographic Storage Cheat Sheet",
+    "FIPS 140-3"
+  ],
+  "metadata": {
+    "created": "2026-05-03",
+    "last_updated": "2026-05-03",
+    "total_agents": 0,
+    "total_commands": 0,
+    "total_skills": 0,
+    "total_rules": 0,
+    "status": "scaffolding"
+  },
+  "memory": {
+    "creates": [
+      { "path": ".aiwg/security-engineering/",                "description": "Security engineering root directory" },
+      { "path": ".aiwg/security-engineering/decisions/",      "description": "Cryptographic and design decision records" },
+      { "path": ".aiwg/security-engineering/chain-of-trust/", "description": "Bootstrap and verification chain designs" },
+      { "path": ".aiwg/security-engineering/factors/",        "description": "Authentication factor design rationale" },
+      { "path": ".aiwg/security-engineering/degraded-modes/", "description": "Fail-closed/fail-open behavior matrices" },
+      { "path": ".aiwg/security-engineering/physical-threats/", "description": "Physical-access threat scenarios" },
+      { "path": ".aiwg/security-engineering/supply-chain/",   "description": "Supply-chain trust artifacts (pinning, repro builds)" },
+      { "path": ".aiwg/security-engineering/reviews/",        "description": "Applied-security review reports" }
+    ],
+    "topology": {
+      "namespace": ".aiwg/security-engineering",
+      "index": ".aiwg/security-engineering/index.md",
+      "log": ".aiwg/security-engineering/.log.jsonl",
+      "crossRefStyle": "at-mention"
+    }
+  },
+  "boundary": {
+    "owns": [
+      "Cryptographic primitive selection (AEAD, KDF, MAC, signature)",
+      "Chain-of-trust / bootstrap integrity",
+      "Authentication factor architecture",
+      "Degraded-mode (fail-closed/fail-open) design",
+      "Runtime secret handling (fd passing, scratch surface, error paths)",
+      "Supply-chain trust beyond CVE scanning",
+      "Physical-access threat modeling"
+    ],
+    "delegatesTo": {
+      "sdlc-complete/security-architect": "STRIDE threat modeling at system altitude",
+      "sdlc-complete/security-auditor": "OWASP Top 10, CVE scanning, secrets-in-repo, SAST/DAST",
+      "sdlc-complete/security-gatekeeper": "Phase-gate compliance and control coverage",
+      "forensics-complete": "Post-incident analysis and IOC enrichment"
+    }
+  },
+  "catalog_format": {
+    "style": "suggested-default-with-research-path",
+    "description": "Each skill that names tools/libraries provides (1) a suggested default with selection rationale, (2) a short menu of vetted alternatives with selection criteria, and (3) a research-path block describing how to evaluate newer or domain-specific options. Skills never hard-pick a vendor product."
+  }
+}
