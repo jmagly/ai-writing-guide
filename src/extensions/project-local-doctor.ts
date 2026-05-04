@@ -19,6 +19,7 @@ import { resolve } from 'path';
 import { discoverProjectLocalBundles } from './project-local-discovery.js';
 import { buildUpstreamRegistry } from './upstream-registry.js';
 import { resolveShadows } from './shadow-resolver.js';
+import { checkBundleManifestIgnored } from './project-local-gitignore.js';
 import type { ProjectLocalType } from './manifest.js';
 import type { AiwgConfig } from '../config/aiwg-config.js';
 
@@ -231,7 +232,38 @@ export async function buildProjectLocalDoctorSection(
     }
   }
 
-  const hasFailures = validationErrors > 0 || denylistViolations > 0 || driftCount > 0;
+  // #1085 — flag bundles whose source is silently git-ignored. Best-effort
+  // (uses `git check-ignore`); skipped silently outside git repos.
+  let gitignoredCount = 0;
+  if (discovery.bundles.length > 0) {
+    const ignored: string[] = [];
+    for (const b of discovery.bundles) {
+      const isIgnored = await checkBundleManifestIgnored(projectDir, b.manifestPath);
+      if (isIgnored === true) ignored.push(`${b.type}/${b.id} (${b.manifestPath})`);
+    }
+    gitignoredCount = ignored.length;
+    if (ignored.length > 0) {
+      lines.push(`  Git tracking: ✗ ${ignored.length} bundle${ignored.length === 1 ? '' : 's'} silently ignored`);
+      for (const i of ignored.slice(0, 5)) {
+        lines.push(`    ✗ ${i}`);
+      }
+      if (ignored.length > 5) {
+        lines.push(`    + ${ignored.length - 5} more`);
+      }
+      lines.push('    Project-local bundle source should be tracked. Add to .gitignore:');
+      lines.push('      !.aiwg/addons/');
+      lines.push('      !.aiwg/extensions/');
+      lines.push('      !.aiwg/frameworks/');
+      lines.push('      !.aiwg/plugins/');
+      lines.push('    Or run `aiwg new-bundle <name>` to have AIWG add this block automatically.');
+      lines.push('');
+    } else if (!quiet) {
+      lines.push('  Git tracking: ✓ all bundle manifests visible to git');
+      lines.push('');
+    }
+  }
+
+  const hasFailures = validationErrors > 0 || denylistViolations > 0 || driftCount > 0 || gitignoredCount > 0;
   return {
     output: lines.join('\n'),
     validationErrors,

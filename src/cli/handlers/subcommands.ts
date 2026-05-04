@@ -601,6 +601,25 @@ export const newBundleHandler: CommandHandler = {
       console.log(`✓ Scaffolded project-local ${type} '${positional}' at ${result.bundlePath}`);
       console.log('  Files created:');
       for (const f of result.filesCreated) console.log(`    + ${f}`);
+
+      // #1085 — when the project blanket-ignores .aiwg/, the new bundle's
+      // source would be silently dropped from version control. Detect and
+      // self-heal idempotently.
+      try {
+        const { appendAiwgSourceTrackBlock } = await import(
+          '../../extensions/project-local-gitignore.js'
+        );
+        const ig = await appendAiwgSourceTrackBlock(ctx.cwd);
+        if (ig.added) {
+          console.log('');
+          console.log(`  → ${ig.reason}`);
+          console.log('    .aiwg/{addons,extensions,frameworks,plugins}/ now tracked by git.');
+          console.log('    Generated state under .aiwg/ (working/, ralph/, research/, ...) stays ignored.');
+        }
+      } catch {
+        // .gitignore management is best-effort; don't fail the scaffold
+      }
+
       console.log('');
       console.log('Next steps:');
       console.log(`  1. Edit manifest.json (description, version, keywords)`);

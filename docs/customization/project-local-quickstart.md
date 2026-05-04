@@ -105,10 +105,32 @@ when you ask for it explicitly.
 
 | You ran | What happened |
 |---------|---------------|
-| `aiwg new-bundle` | Created `.aiwg/extensions/my-team-rules/` with valid manifest + starter |
+| `aiwg new-bundle` | Created `.aiwg/extensions/my-team-rules/` with valid manifest + starter; if your `.gitignore` blanket-ignored `.aiwg/`, AIWG appended a managed un-ignore block so the bundle source is tracked by git |
 | `aiwg use my-team-rules` | Discovered, validated, resolved shadows, deployed to provider paths, recorded artifactHashes |
-| `aiwg doctor --project-local` | Reported counts, validation, shadows, drift — all from the registry + filesystem |
+| `aiwg doctor --project-local` | Reported counts, validation, shadows, drift, and any bundles silently git-ignored — all from the registry + filesystem |
 | `aiwg remove my-team-rules` | Hash-checked deployed file (pristine), deleted it, dropped registry entry; source preserved |
+
+### A note on `.gitignore`
+
+AIWG-managed projects historically `.gitignore` the whole `.aiwg/` tree because most of its content is generated state (working scratch, ralph state, research corpora, etc.). Project-local bundle source under `.aiwg/{addons,extensions,frameworks,plugins}/` is the exception — it's operator-authored, and it should travel with the project.
+
+`aiwg new-bundle` detects this and self-heals: when it finds a blanket `.aiwg/` ignore rule and no existing source-directory negation, it appends a sentinel-marked block:
+
+```gitignore
+# AIWG project-local bundle source — track these (managed by AIWG)
+!.aiwg/aiwg.config
+!.aiwg/addons/
+!.aiwg/extensions/
+!.aiwg/frameworks/
+!.aiwg/plugins/
+```
+
+The block is idempotent (re-running `new-bundle` doesn't duplicate it) and a no-op when:
+- there's no `.gitignore` (the project may not be using git)
+- `.aiwg/` isn't blanket-ignored (you've configured selective ignores)
+- you already have an explicit `!.aiwg/...` negation (you're managing this yourself)
+
+If you adopted project-local bundles before this self-heal landed, run `aiwg doctor --project-local` — it surfaces any bundle whose `manifest.json` is currently git-ignored, with the exact lines to add to `.gitignore`.
 
 ## Next steps
 
