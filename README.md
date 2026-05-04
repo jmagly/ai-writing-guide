@@ -426,6 +426,7 @@ aiwg use sdlc --provider windsurf      # Windsurf
 | **[Media Curator](agentic/code/frameworks/media-curator/)** | 6 | — | Intelligent media archive management — discography analysis, source discovery, quality filtering, metadata curation, multi-platform export (Plex, Jellyfin, MPD) |
 | **[Research Complete](agentic/code/frameworks/research-complete/)** | 8 | 6 | Academic research automation — paper discovery, citation management, RAG-based summarization, GRADE quality scoring, FAIR compliance, W3C PROV provenance |
 | **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 2 | 3 | Operational infrastructure — incident management, runbooks, troubleshooting workflows |
+| **[Security Engineering](agentic/code/frameworks/security-engineering/)** | 2 | 5 | Applied security beyond STRIDE/OWASP — cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode design, runtime secret hygiene, supply-chain trust, physical-access threats. Pattern-based, product-agnostic |
 
 ### Addons (21)
 

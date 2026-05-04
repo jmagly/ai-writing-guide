@@ -47,7 +47,7 @@ import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
 /**
  * Valid framework identifiers
  */
-const VALID_FRAMEWORKS = ['sdlc', 'marketing', 'media-curator', 'research', 'forensics', 'ops', 'knowledge-base', 'writing', 'general', 'all'] as const;
+const VALID_FRAMEWORKS = ['sdlc', 'marketing', 'media-curator', 'research', 'forensics', 'security-engineering', 'ops', 'knowledge-base', 'writing', 'general', 'all'] as const;
 type Framework = typeof VALID_FRAMEWORKS[number];
 
 /**
@@ -61,6 +61,7 @@ const MODE_MAP: Record<Framework, string> = {
   'media-curator': 'media-curator',
   research: 'research',
   forensics: 'forensics',
+  'security-engineering': 'security-engineering',
   ops: 'ops-complete',      // ops-complete manifest id is 'ops-complete' (modeAlias: ops)
   'knowledge-base': 'knowledge-base',
   writing: 'general',
@@ -80,6 +81,7 @@ const FRAMEWORK_DIR_MAP: Partial<Record<string, string>> = {
   'media-curator': 'media-curator',
   research: 'research-complete',
   forensics: 'forensics-complete',
+  'security-engineering': 'security-engineering',
   ops: 'ops-complete',
   'knowledge-base': 'knowledge-base',
   // 'writing' and 'general' have no backing framework directory
@@ -323,6 +325,13 @@ const NEXT_STEPS: Record<string, string[]> = {
   'research': [
     'Open Claude Code and use:  /research-discover "topic"',
     'Research workflow:         /research-workflow',
+    'Check health:              aiwg doctor',
+  ],
+  'security-engineering': [
+    'Applied crypto review:     ask "applied crypto review of <file>" (loads applied-cryptographer agent)',
+    'Chain-of-trust review:     ask "review the boot chain in <files>" (loads secure-bootstrap-reviewer)',
+    'Threat enumeration:        ask "physical threat scenarios for this system" (loads physical-threat-modeling skill)',
+    'Decision template:         see agentic/code/frameworks/security-engineering/templates/cryptographic-decisions.md',
     'Check health:              aiwg doctor',
   ],
   'all': [
@@ -901,7 +910,7 @@ export class UseHandler implements CommandHandler {
           : '';
         return {
           exitCode: 1,
-          message: `Error: Framework or addon name required\nFrameworks: sdlc, marketing, media-curator, research, forensics, ops, knowledge-base, all\nAddons: rlm, ring, daemon, aiwg-dev${advisory}`,
+          message: `Error: Framework or addon name required\nFrameworks: sdlc, marketing, media-curator, research, forensics, security-engineering, ops, knowledge-base, all\nAddons: rlm, ring, daemon, aiwg-dev${advisory}`,
         };
       }
       const installedNames = Object.keys(config.installed);

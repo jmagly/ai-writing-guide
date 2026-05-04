@@ -25,11 +25,12 @@ aiwg use sdlc
 ```
 agentic/code/
 ├── frameworks/
-│   ├── sdlc-complete/       # Complete SDLC coverage
-│   ├── forensics-complete/  # Digital forensics & incident response
-│   ├── media-marketing-kit/ # Full marketing operations
-│   ├── media-curator/       # Media archive management
-│   └── research-complete/   # Research workflow automation
+│   ├── sdlc-complete/        # Complete SDLC coverage
+│   ├── forensics-complete/   # Digital forensics & incident response
+│   ├── security-engineering/ # Applied security (crypto, chain-of-trust, factors, degraded modes, supply-chain, physical threats)
+│   ├── media-marketing-kit/  # Full marketing operations
+│   ├── media-curator/        # Media archive management
+│   └── research-complete/    # Research workflow automation
 ├── addons/
 │   └── voice-framework/     # Voice profiles
 └── agents/                  # Writing quality agents
@@ -360,6 +361,7 @@ aiwg reproducibility-validate  # Validate workflow reproducibility
 | **Forensics Complete** | `@agentic/code/frameworks/forensics-complete/README.md` |
 | **Media Curator** | `@agentic/code/frameworks/media-curator/README.md` |
 | **Research Complete** | `@agentic/code/frameworks/research-complete/README.md` |
+| **Security Engineering** | `@agentic/code/frameworks/security-engineering/README.md` |
 | **RLM Addon** | `@agentic/code/addons/rlm/README.md` |
 | **Ring Methodology Addon** | `@agentic/code/addons/ring-methodology/README.md` |
 | **Daemon Mode** | `@docs/daemon-guide.md` |
@@ -417,9 +419,9 @@ Rules are organized in a two-level hierarchy: each component owns its own `RULES
 
 - Global index: `agentic/code/RULES-INDEX.md` (assembled during deployment)
 - Component indexes:
-  - sdlc-complete (33 rules): `agentic/code/frameworks/sdlc-complete/rules/RULES-INDEX.md`
-  - aiwg-utils (7 rules): `agentic/code/addons/aiwg-utils/rules/RULES-INDEX.md`
-  - ring-methodology (7 rules): `agentic/code/addons/ring-methodology/rules/RULES-INDEX.md`
+  - sdlc-complete: `agentic/code/frameworks/sdlc-complete/rules/RULES-INDEX.md`
+  - aiwg-utils: `agentic/code/addons/aiwg-utils/rules/RULES-INDEX.md` (includes `delivery-policy` rule for git workflow)
+  - security-engineering: `agentic/code/frameworks/security-engineering/rules/RULES-INDEX.md` (4 applied-cryptography rules: `no-unauthenticated-encryption`, `no-key-reuse-across-purposes`, `no-adhoc-kdf`, `crypto-flag-verification`)
 - Architecture decision: `.aiwg/architecture/adr-rules-index-hierarchy.md`
 
 ## Commit and Output Conventions
