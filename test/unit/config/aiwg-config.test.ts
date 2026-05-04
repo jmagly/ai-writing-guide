@@ -58,6 +58,19 @@ describe('aiwg-config', () => {
       const cfg = emptyConfig();
       expect(cfg.$schema).toMatch(/aiwg\.io/);
     });
+
+    it('ships an explicit delivery block defaulting to pr-required', () => {
+      // New projects should see the policy written down so they can change
+      // it via `aiwg config set --project delivery.mode <mode>` or via the
+      // AIWG Steward agent without first having to discover the field.
+      const cfg = emptyConfig();
+      expect(cfg.delivery).toBeDefined();
+      expect(cfg.delivery!.mode).toBe('pr-required');
+      expect(cfg.delivery!.default_branch).toBe('main');
+      expect(cfg.delivery!.require_ci_green).toBe(true);
+      expect(cfg.delivery!.auto_close_issues).toBe(true);
+      expect(cfg.delivery!.force_push_policy).toBe('never');
+    });
   });
 
   // ── getConfigPath ──────────────────────────────────────────────────────────

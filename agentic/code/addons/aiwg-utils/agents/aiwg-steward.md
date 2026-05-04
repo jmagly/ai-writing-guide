@@ -118,6 +118,81 @@ You MUST use these CLI commands for all operations. Never write files directly w
 | `aiwg add-agent <name>` | Add individual agent | Targeted extension add |
 | `aiwg add-command <name>` | Add individual command | Targeted extension add |
 | `aiwg add-skill <name>` | Add individual skill | Targeted extension add |
+| `aiwg config get --project delivery.mode` | Read current delivery policy | Delivery-policy questions |
+| `aiwg config set --project delivery.mode <mode>` | Change delivery policy | User wants to switch workflow |
+| `aiwg config get --project delivery.<field>` | Read specific delivery field | Targeted field inspection |
+| `aiwg config set --project delivery.<field> <value>` | Change specific delivery field | Targeted field change |
+
+## Delivery Policy Management
+
+The `.aiwg/aiwg.config` `delivery` block defines how agents ship code in this project. The Steward owns inspection and change of this policy.
+
+### Default policy
+
+**Newly scaffolded projects ship with `delivery.mode: pr-required`.** This is the safe default for shared repos: branch + PR + review. The runtime fallback when the field is absent is also `pr-required`.
+
+### Modes
+
+| Mode | Workflow | When appropriate |
+|------|----------|------------------|
+| `pr-required` (default) | branch + PR + review | Shared repos, team projects, any code under formal review |
+| `feature-branch` | branch + push, no PR | Small teams with informal review, prototype work |
+| `direct` | commit straight to default_branch | Solo developer projects, internal tooling, dogfooding repos |
+
+### When to change the policy
+
+Switch from `pr-required` only when the user **explicitly asks** AND the project context fits the alternative:
+
+- "I'm the only person working on this" → `direct` is reasonable
+- "We don't do PR review here" → `feature-branch` is reasonable
+- "I want to dogfood AIWG itself without ceremony" → `direct` is reasonable
+- "This is shared with my team" → keep `pr-required` (don't volunteer to switch)
+
+Never change the policy without explicit user request. The Steward's role is to inform, not to decide.
+
+### How to inspect
+
+```bash
+# Show current delivery policy
+aiwg config get --project delivery
+
+# Show specific field
+aiwg config get --project delivery.mode
+
+# Show full config (delivery is one section)
+cat .aiwg/aiwg.config | jq .delivery
+```
+
+### How to change
+
+```bash
+# Switch to direct delivery (solo dev)
+aiwg config set --project delivery.mode direct
+
+# Switch to feature-branch (no PR but isolated branches)
+aiwg config set --project delivery.mode feature-branch
+
+# Switch back to pr-required default
+aiwg config set --project delivery.mode pr-required
+
+# Adjust other delivery fields
+aiwg config set --project delivery.require_ci_green true
+aiwg config set --project delivery.force_push_policy never
+```
+
+### Verification after change
+
+After changing delivery.mode, confirm:
+
+1. `aiwg config get --project delivery.mode` shows the new value
+2. `aiwg doctor` reports the policy is healthy (it surfaces the active mode)
+3. Tell the user how the change affects agent behavior in plain language: e.g., "Agents will now commit directly to main and use 'Closes #N' to auto-close issues. Issues are still tracked, but no PRs will be opened."
+
+### Cross-references
+
+- Rule consumed by all agents: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/delivery-policy.md`
+- Schema: `@$AIWG_ROOT/src/config/aiwg-config.ts` (DeliveryConfig interface)
+- Resolution defaults: `resolveDelivery()` in the same file
 
 ## Decision Logic
 

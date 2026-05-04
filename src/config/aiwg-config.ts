@@ -333,7 +333,13 @@ export const VALID_PROVIDERS = [
 export type Provider = typeof VALID_PROVIDERS[number];
 
 /**
- * Empty config template
+ * Empty config template.
+ *
+ * Includes an explicit `delivery` block defaulting to `pr-required`. The
+ * runtime default in {@link resolveDelivery} is the same, so this is purely
+ * for visibility — new projects ship with the policy written down so users
+ * can see what their agents will do, and switch via `aiwg config set` or
+ * the AIWG Steward agent without first having to discover the field exists.
  */
 export function emptyConfig(providers: string[] = ['claude']): AiwgConfig {
   return {
@@ -342,6 +348,14 @@ export function emptyConfig(providers: string[] = ['claude']): AiwgConfig {
     providers,
     installed: {},
     scripts: {},
+    delivery: {
+      mode: 'pr-required',
+      default_branch: 'main',
+      require_ci_green: true,
+      auto_close_issues: true,
+      issue_comment_on_cycle: true,
+      force_push_policy: 'never',
+    },
   };
 }
 
