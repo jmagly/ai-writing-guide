@@ -13,11 +13,11 @@
  * @implements #1037
  */
 
-import { createHash } from 'crypto';
-import { lstat, readFile, readdir, stat, unlink } from 'fs/promises';
+import { lstat, readdir, stat, unlink } from 'fs/promises';
 import { resolve, join, relative } from 'path';
 import type { AiwgConfig, InstalledEntry } from '../config/aiwg-config.js';
 import { appendProjectLocalActivity } from './project-local-activity.js';
+import { sha256OfFileNormalized } from './managed-marker.js';
 
 export type RemoveCase =
   | 'pristine'      // Case 1
@@ -66,9 +66,18 @@ export interface RemoveResult {
   isProjectLocal: boolean;
 }
 
+/**
+ * Hash an artifact file with the managed-marker line stripped.
+ *
+ * Source files have no marker (it's deploy-time-injected); deployed files
+ * do. Stripping the marker on both sides makes the hash insensitive to
+ * the marker, which is the equivalence relation we actually want for
+ * pristine/mutated/drift checks. See `managed-marker.ts` for the details.
+ *
+ * @implements #1086
+ */
 async function sha256Hex(absPath: string): Promise<string> {
-  const buf = await readFile(absPath);
-  return createHash('sha256').update(buf).digest('hex');
+  return sha256OfFileNormalized(absPath);
 }
 
 /**

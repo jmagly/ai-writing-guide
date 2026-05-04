@@ -140,6 +140,38 @@ describe('project-local-doctor (DC-1)', () => {
     expect(r.hasFailures).toBe(false);
   });
 
+  it('reports zero drift when deployed file carries managed-marker (#1086)', async () => {
+    // Source has no marker; recorded hash is sha256(source).
+    // Deployer injected an HTML-comment marker on line 1 — normalization
+    // must strip it on both sides so the hash equivalence still holds.
+    writeBundle(projectDir, 'foo');
+    deployRule(projectDir, '<!-- aiwg:managed v2026.5.0-rc.6 bundled -->\nrule body');
+    const hashes = { 'rules/r1.md': sha256('rule body') };
+    const config = makeConfig('foo', hashes);
+
+    const r = await buildProjectLocalDoctorSection({
+      projectDir, frameworkRoot, config,
+    });
+    expect(r.driftCount).toBe(0);
+    expect(r.hasFailures).toBe(false);
+  });
+
+  it('still detects real drift when content differs beyond the marker (#1086)', async () => {
+    writeBundle(projectDir, 'foo');
+    deployRule(
+      projectDir,
+      '<!-- aiwg:managed v2026.5.0-rc.6 bundled -->\nrule body EDITED',
+    );
+    const hashes = { 'rules/r1.md': sha256('rule body') };
+    const config = makeConfig('foo', hashes);
+
+    const r = await buildProjectLocalDoctorSection({
+      projectDir, frameworkRoot, config,
+    });
+    expect(r.driftCount).toBe(1);
+    expect(r.hasFailures).toBe(true);
+  });
+
   it('quiet mode suppresses informational subsections but keeps failures', async () => {
     writeBundle(projectDir, 'foo');
     deployRule(projectDir, 'mutated');

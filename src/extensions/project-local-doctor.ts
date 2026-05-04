@@ -13,13 +13,12 @@
  * @implements #1037
  */
 
-import { createHash } from 'crypto';
-import { readFile } from 'fs/promises';
 import { resolve } from 'path';
 import { discoverProjectLocalBundles } from './project-local-discovery.js';
 import { buildUpstreamRegistry } from './upstream-registry.js';
 import { resolveShadows } from './shadow-resolver.js';
 import { checkBundleManifestIgnored } from './project-local-gitignore.js';
+import { sha256OfFileNormalized } from './managed-marker.js';
 import type { ProjectLocalType } from './manifest.js';
 import type { AiwgConfig } from '../config/aiwg-config.js';
 
@@ -45,10 +44,18 @@ interface BuildOptions {
   quiet?: boolean;
 }
 
+/**
+ * Hash a deployed file with the managed-marker stripped. Returns null on
+ * read errors (e.g., file missing — caller treats as deploy-not-present).
+ *
+ * Source files are recorded via the same normalization in
+ * `hashBundleArtifacts()`, so the equivalence relation is symmetric.
+ *
+ * @implements #1086
+ */
 async function sha256(absPath: string): Promise<string | null> {
   try {
-    const buf = await readFile(absPath);
-    return createHash('sha256').update(buf).digest('hex');
+    return await sha256OfFileNormalized(absPath);
   } catch {
     return null;
   }
