@@ -122,6 +122,80 @@ Top 3-5 security recommendations based on threat analysis.
 4. **Internal Network → Admin Access**: Privileged access management
 5. **Third-Party Integrations**: API gateway with strict controls
 
+## Physical Access Considerations
+
+> **Purpose**: STRIDE assumes a network adversary against a fixed-asset server and is silent on physical attacks. This section forces explicit consideration of physical-access threats. If the system is purely datacenter-bound and operators never carry assets, mark this section "NOT APPLICABLE — datacenter-only" and continue. Otherwise, fill in.
+
+### Applicability prompts
+
+- Is any asset portable (laptops, USBs, mobile, IoT field devices)? `[Yes / No]`
+- Is any asset stored unattended (hotel rooms, baggage, shared offices)? `[Yes / No]`
+- Are operations performed in shared, semi-public, or hostile environments? `[Yes / No]`
+- Are operators identifiable as targets (executives, security operators, journalists)? `[Yes / No]`
+- Does the threat model explicitly include a physical-access adversary? `[Yes / No]`
+
+If any of the above is "Yes", the system has physical-access considerations. Use the `security-engineering` framework's `physical-threat-modeling` skill to enumerate threats, and create a `physical-threat-scenarios.md` document at `.aiwg/security-engineering/physical-threats/`.
+
+### Threats in scope (check applicable from `physical-threat-modeling` library)
+
+- [ ] Evil-maid swap of bootstrap / boot media (Threat 1)
+- [ ] Thunderbolt / USB-C DMA attack (Threat 2)
+- [ ] Hostile USB peripheral / BadUSB (Threat 3)
+- [ ] Travel-host root compromise (Threat 4)
+- [ ] Coercion / rubber-hose attack (Threat 5)
+- [ ] Cold-boot RAM extraction (Threat 6)
+- [ ] Hardware implant in supply chain (Threat 7)
+- [ ] Side-channel / TEMPEST observation (Threat 8)
+- [ ] Visual / shoulder-surfing (Threat 9)
+- [ ] Lost or stolen device, no other compromise (Threat 10)
+
+### Mitigation references
+
+- Chain-of-trust mitigations → `chain-of-trust-design.md` (Patterns A/B/C/D)
+- Coercion mitigations → `factor-design-rationale.md` (FIDO2 PIN, duress codes)
+- DMA/USB mitigations → operational hardening (BIOS settings, runbook)
+- Cold-boot mitigations → `secret-handling-runtime.md` (memory hygiene); operational (S5 lock)
+- Supply-chain implant → `supply-chain-trust` skill (procurement, diversity)
+
+## Trusted Host Assumptions
+
+> **Purpose**: When the system runs on hardware not under the security team's full control (operator laptops, customer environments, edge devices, "bring-your-own-device"), the host itself is a trust dependency. STRIDE rarely surfaces this; document it explicitly.
+
+### Host control matrix
+
+| Host class | Examples | Control level | What we assume |
+|---|---|---|---|
+| Fully managed | datacenter VMs, hardened SREs' workstations | High | trusted boot, monitored |
+| Partially managed | corporate laptops with MDM | Medium | OS-level controls; firmware not always managed |
+| Unmanaged | operator-owned, BYOD, partner systems | Low | only what we verify at runtime |
+| Hostile | airport kiosks, hotel computers, partner-supplied devices | None | nothing |
+
+### Per-host-class assumptions
+
+For each host class the system actually deploys to, document:
+
+- **Firmware integrity**: `[managed at HQ / vendor-default / unknown]`
+- **OS update policy**: `[forced via MDM / vendor managed / operator-managed / none]`
+- **Boot integrity**: `[Secure Boot with operator keys / Secure Boot with OEM keys / disabled / unknown]`
+- **Removable media policy**: `[allowlist / restricted / unrestricted]`
+- **Network policy**: `[VPN-required / no restrictions]`
+- **Operator persona**: `[trained security professional / general user]`
+
+### Mitigations by host class
+
+- **Unmanaged or Hostile** host classes: STRONGLY recommend Pattern B from `chain-of-trust-design.md` (signed live image), so the host stops being a trust dependency.
+- **Partially managed** host classes: minimum baseline of Secure Boot with attestation (Pattern C measured boot if TPM available).
+- **Fully managed** host classes: standard SDLC controls suffice.
+
+### Open assumptions about host environment
+
+For each remaining assumption, document explicitly:
+
+- **Assumption**: `[e.g., "Operator hardware BIOS is locked at HQ provisioning"]`
+  - Why we accept it: `[reasoning]`
+  - Owner: `[who validates this assumption stays true]`
+  - Compromise impact: `[what happens if the assumption breaks]`
+
 ## STRIDE Threat Analysis
 
 ### Threat Identification Methodology
