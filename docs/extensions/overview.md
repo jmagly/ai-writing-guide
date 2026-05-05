@@ -3,6 +3,7 @@
 AIWG's unified extension system provides a single schema for all extension types, enabling dynamic discovery, semantic search, and cross-platform deployment.
 
 **References:**
+
 - @src/extensions/types.ts - Core type definitions
 - @.aiwg/architecture/unified-extension-schema.md - Complete schema documentation
 - @src/extensions/commands/definitions.ts - Example command extensions
@@ -25,6 +26,9 @@ Extensions are the building blocks of AIWG frameworks and addons. They include:
 | **addon** | Feature bundles | Voice Framework, Testing Quality |
 | **template** | Document templates | Use case template, ADR template |
 | **prompt** | Reusable prompts | Code review, security audit |
+| **soul** | Agent identity and character (worldview, opinions, vocabulary) | Project SOUL.md, agent-scoped `.soul.md` |
+| **behavior** | Reactive capabilities with hooks, scripts, and structured inputs | Build monitor, security sentinel, concierge |
+| **team** | Multi-agent compositions with roles, dispatch mode, and handoffs | API development, full-stack, security review |
 
 > **Skills are the canonical source type for agentic workflows.** When you author a `SKILL.md`, AIWG deploys it natively for providers that support skills and generates a corresponding command file for providers that need it. Use `aiwg add-skill` to create new workflows; `aiwg add-command` is for advanced direct-command authoring only.
 
@@ -72,6 +76,7 @@ interface Extension {
 Specialized AI personas with defined roles, tools, and workflows.
 
 **Metadata:**
+
 ```typescript
 interface AgentMetadata {
   role: string;                     // e.g., "API Design and Contract Definition"
@@ -87,6 +92,7 @@ interface AgentMetadata {
 ```
 
 **Example:**
+
 ```typescript
 {
   id: 'api-designer',
@@ -110,6 +116,7 @@ interface AgentMetadata {
 CLI and slash commands with argument parsing and execution logic.
 
 **Metadata:**
+
 ```typescript
 interface CommandMetadata {
   template: 'utility' | 'transformation' | 'orchestration';
@@ -122,6 +129,7 @@ interface CommandMetadata {
 ```
 
 **Example:**
+
 ```typescript
 {
   id: 'use',
@@ -145,6 +153,7 @@ interface CommandMetadata {
 Natural language workflows triggered by phrases or conditions.
 
 **Metadata:**
+
 ```typescript
 interface SkillMetadata {
   triggerPhrases: string[];         // e.g., ["what's next?", "project status"]
@@ -156,6 +165,7 @@ interface SkillMetadata {
 ```
 
 **Example:**
+
 ```typescript
 {
   id: 'project-awareness',
@@ -179,6 +189,7 @@ interface SkillMetadata {
 Lifecycle event handlers for session, command, and tool events.
 
 **Metadata:**
+
 ```typescript
 interface HookMetadata {
   event: HookEvent;                 // When to trigger
@@ -202,6 +213,7 @@ type HookEvent =
 External CLI utilities with discovery and verification.
 
 **Metadata:**
+
 ```typescript
 interface ToolMetadata {
   category: 'core' | 'languages' | 'utilities' | 'custom';
@@ -219,6 +231,7 @@ interface ToolMetadata {
 Model Context Protocol servers with capabilities and tools.
 
 **Metadata:**
+
 ```typescript
 interface MCPServerMetadata {
   mcpVersion: string;               // e.g., "1.0"
@@ -239,6 +252,7 @@ interface MCPServerMetadata {
 Complete workflows that bundle multiple extensions.
 
 **Metadata:**
+
 ```typescript
 interface FrameworkMetadata {
   domain: string;                   // e.g., "sdlc", "marketing"
@@ -259,6 +273,7 @@ interface FrameworkMetadata {
 Feature bundles that extend frameworks.
 
 **Metadata:**
+
 ```typescript
 interface AddonMetadata {
   entry: {
@@ -271,6 +286,110 @@ interface AddonMetadata {
     commands?: string[];
     skills?: string[];
   };
+}
+```
+
+---
+
+### Template Extensions
+
+Document scaffolds with named variables and sections that produce SDLC
+artifacts (use cases, ADRs, test plans). Bundled inside frameworks.
+
+**Metadata:**
+
+```typescript
+interface TemplateMetadata {
+  format: string;                   // "markdown" | "yaml" | "json" | "handlebars"
+  variables?: TemplateVariable[];
+  sections?: string[];
+  targetArtifact?: string;          // e.g., "use-case", "test-plan"
+}
+```
+
+---
+
+### Prompt Extensions
+
+Reusable parameterized prompt fragments that agents and skills compose
+into larger workflows (review checklists, role primers, reliability
+reminders).
+
+**Metadata:**
+
+```typescript
+interface PromptMetadata {
+  category: string;                 // "core" | "reliability" | "agents" | "review"
+  purpose: string;
+  useWhen: string[];
+  variables?: string[];
+  requiredContext?: string[];
+}
+```
+
+---
+
+### Soul Extensions
+
+Agent identity files (`SOUL.md`) declaring worldview, opinions,
+vocabulary, and boundaries. Soul defines *who* the agent is — distinct
+from voice (how it sounds) and skills (what it does). Scope is either
+project-wide or per-agent.
+
+**Metadata:**
+
+```typescript
+interface SoulMetadata {
+  scope: 'project' | 'agent';
+  targetAgent?: string;             // Required when scope is 'agent'
+  sections: string[];               // who-i-am, worldview, opinions, vocabulary, boundaries
+  companions?: { style?: string; memory?: string; examples?: string };
+  estimatedTokens?: number;
+}
+```
+
+---
+
+### Behavior Extensions
+
+Reactive capabilities that combine NLP triggers with event hooks
+(`on_file_write`, `on_schedule`, `on_commit`) and shell scripts. Native
+on OpenClaw; emulated via the AIWG daemon on other providers. Behaviors
+degrade to skills on platforms without hook support.
+
+**Metadata:**
+
+```typescript
+interface BehaviorMetadata {
+  triggerPhrases?: string[];
+  inputs?: BehaviorInput[];
+  hooks?: Partial<Record<BehaviorHookEvent, BehaviorHookAction[]>>;
+  scripts?: Record<string, string>;
+  manifest?: { category?: string; requires?: { bins?: string[] }; outputs?: Array<{type: string; path: string}> };
+}
+```
+
+---
+
+### Team Extensions
+
+Multi-agent compositions (2–8 agents) with assigned roles, an execution
+mode, and inter-agent handoffs. Native on Claude Code via the Task tool;
+emulated on other providers via `aiwg mc` Mission Control. Source format
+is JSON; schema lives in `agentic/code/frameworks/sdlc-complete/teams/schema.json`.
+
+**Definition (not in `metadata` — teams use a top-level JSON schema):**
+
+```typescript
+interface TeamDefinition {
+  name: string;
+  slug: string;
+  description: string;
+  dispatch?: 'parallel' | 'sequential' | 'consensus';
+  agents: TeamMember[];             // 2–8 entries
+  handoffs?: TeamHandoff[];
+  sdlc_phases?: string[];
+  max_context_agents?: number;
 }
 ```
 
@@ -309,6 +428,7 @@ type PlatformSupport = 'full' | 'partial' | 'experimental' | 'none';
 ```
 
 **Platform examples:**
+
 - Claude Code: `.claude/agents/`, `.claude/commands/`
 - GitHub Copilot: `.github/agents/`, `.github/commands/`
 - Warp: `WARP.md` (symlinked to `CLAUDE.md`)
@@ -354,6 +474,7 @@ registry.search({ search: 'authentication' });
 ### Discovery
 
 Extensions are discovered from:
+
 - Built-in directories (`agentic/code/frameworks/`, `agentic/code/addons/`)
 - Installed packages (`node_modules/@aiwg/*/`)
 - Local directories (`.aiwg/frameworks/`)
@@ -409,6 +530,7 @@ Extensions can declare dependencies:
 ```
 
 **Dependency resolution:**
+
 1. Check required extensions are installed
 2. Install recommended extensions if available
 3. Verify no conflicts exist
@@ -419,6 +541,7 @@ Extensions can declare dependencies:
 ## Creating Extensions
 
 See:
+
 - [Creating Extensions Guide](creating-extensions.md)
 - [Extension Types Reference](extension-types.md)
 - @docs/development/agent-template.md
@@ -457,26 +580,31 @@ class ExtensionRegistry {
 ## Benefits
 
 ### Unified Schema
+
 - Single source of truth for all extension metadata
 - Type-safe TypeScript definitions
 - Consistent validation rules
 
 ### Dynamic Discovery
+
 - Extensions found automatically
 - Capability-based search
 - Platform-aware filtering
 
 ### Multi-Platform Support
+
 - Deploy to any supported platform
 - Platform-specific path overrides
 - Compatibility declarations
 
 ### Dependency Management
+
 - Automatic dependency resolution
 - Conflict detection
 - Version constraints
 
 ### Help Generation
+
 - Dynamic help from metadata
 - Always in sync with extensions
 - Rich examples and descriptions

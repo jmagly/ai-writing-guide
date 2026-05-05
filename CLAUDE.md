@@ -30,9 +30,11 @@ agentic/code/
 │   ├── security-engineering/ # Applied security (crypto, chain-of-trust, factors, degraded modes, supply-chain, physical threats)
 │   ├── media-marketing-kit/  # Full marketing operations
 │   ├── media-curator/        # Media archive management
-│   └── research-complete/    # Research workflow automation
+│   ├── research-complete/    # Research workflow automation
+│   ├── knowledge-base/       # Knowledge base / wiki framework
+│   └── ops-complete/         # Operational infrastructure (incident, runbooks, troubleshooting)
 ├── addons/
-│   └── voice-framework/     # Voice profiles
+│   └── voice-framework/     # Voice profiles (one of 27 addons)
 └── agents/                  # Writing quality agents
 
 src/                         # CLI and MCP server implementation
@@ -110,11 +112,14 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 # Add AIWG marketplace (one-time)
 /plugin marketplace add jmagly/ai-writing-guide
 
-# Install plugins
+# Install plugins (7 published in marketplace.json)
 /plugin install sdlc@aiwg        # Full SDLC framework
 /plugin install marketing@aiwg   # Marketing operations framework
 /plugin install utils@aiwg       # Core utilities
 /plugin install voice@aiwg       # Voice profiles
+/plugin install writing@aiwg     # Writing quality and AI-pattern detection
+/plugin install training@aiwg    # Fine-tuning dataset curation
+/plugin install hooks@aiwg       # AIWG hooks (context loaders, validators)
 
 # Verify
 /plugin list
@@ -135,7 +140,7 @@ aiwg new my-project    # Scaffold new project
 aiwg help              # Show all commands
 aiwg doctor            # Check installation health
 
-# See @docs/cli-reference.md for all 67 commands
+# See @docs/cli-reference.md for the full CLI reference
 ```
 
 ## Project Artifacts (.aiwg/)
@@ -171,6 +176,9 @@ AIWG uses a unified extension system for all extension types:
 - **addon** - Feature bundles (Voice, Testing Quality)
 - **template** - Document templates (use case, ADR)
 - **prompt** - Reusable prompts
+- **soul** - SOUL.md identity profiles (worldview, values, voice)
+- **behavior** - Reactive behavior bundles (OpenClaw native)
+- **team** - Multi-agent team compositions
 
 **Key Features:**
 - Dynamic discovery and registration
@@ -184,17 +192,17 @@ AIWG uses a unified extension system for all extension types:
 - `@docs/extensions/creating-extensions.md` - Build custom extensions
 - `@docs/extensions/extension-types.md` - Complete type reference
 - `@src/extensions/types.ts` - TypeScript type definitions
-- `@src/extensions/commands/definitions.ts` - All 50 command definitions
+- `@src/extensions/commands/definitions.ts` - Canonical CLI command definitions
 
-## CLI Commands (67 Total)
+## CLI Commands
 
-**See `@docs/cli-reference.md` for complete documentation.**
+**See `@docs/cli-reference.md` for complete documentation.** The canonical command list lives in `@src/extensions/commands/definitions.ts` (currently ~85 entries — count grows as features land; the categories table below is a curated overview, not an exhaustive enumeration).
 
 ### Categories
 
 | Category | Commands |
 |----------|----------|
-| **Maintenance** (5) | help, version, doctor, update, sync |
+| **Maintenance** (5) | help, version, doctor, update, refresh |
 | **Framework** (3) | use, list, remove |
 | **Project** (1) | new |
 | **Workspace** (3) | status, migrate-workspace, rollback-workspace |
@@ -225,7 +233,6 @@ aiwg update                  # Check for updates
 # Framework and addon management
 aiwg use sdlc                # Deploy SDLC framework
 aiwg use rlm                 # Deploy RLM addon
-aiwg use ring                # Deploy Ring Methodology addon
 aiwg use sdlc --provider copilot  # Deploy to GitHub Copilot
 aiwg list                    # List installed frameworks
 aiwg remove sdlc             # Remove framework
@@ -363,7 +370,6 @@ aiwg reproducibility-validate  # Validate workflow reproducibility
 | **Research Complete** | `@agentic/code/frameworks/research-complete/README.md` |
 | **Security Engineering** | `@agentic/code/frameworks/security-engineering/README.md` |
 | **RLM Addon** | `@agentic/code/addons/rlm/README.md` |
-| **Ring Methodology Addon** | `@agentic/code/addons/ring-methodology/README.md` |
 | **Daemon Mode** | `@docs/daemon-guide.md` |
 | **Messaging Integration** | `@docs/messaging-guide.md` |
 | **Voice Profiles** | `@agentic/code/addons/voice-framework/voices/templates/` |
@@ -563,11 +569,11 @@ This is a standard multi-stage release pipeline. Pre-release tags are **internal
 | Stage | Tag format | Example | npm dist-tag | Install via |
 |-------|-----------|---------|-------------|-------------|
 | Dev/local | (no tag — local source install) | — | — | `npm install -g .` from repo |
-| Nightly | `vYYYY.M.PATCH-nightly.YYYYMMDD` | `v2026.4.0-nightly.20260403` | `nightly` | `npm install -g aiwg@nightly` |
-| Alpha | `vYYYY.M.PATCH-alpha.N` | `v2026.4.0-alpha.1` | `next` | `npm install -g aiwg@next` |
-| Beta | `vYYYY.M.PATCH-beta.N` | `v2026.4.0-beta.1` | `next` | `npm install -g aiwg@next` |
-| RC | `vYYYY.M.PATCH-rc.N` | `v2026.4.0-rc.3` | `next` | `npm install -g aiwg@next` |
-| Stable | `vYYYY.M.PATCH` | `v2026.4.0` | `latest` | `npm install -g aiwg` (default) |
+| Nightly | `vYYYY.M.PATCH-nightly.YYYYMMDD` | `v2026.5.0-nightly.20260403` | `nightly` | `npm install -g aiwg@nightly` |
+| Alpha | `vYYYY.M.PATCH-alpha.N` | `v2026.5.0-alpha.1` | `next` | `npm install -g aiwg@next` |
+| Beta | `vYYYY.M.PATCH-beta.N` | `v2026.5.0-beta.1` | `next` | `npm install -g aiwg@next` |
+| RC | `vYYYY.M.PATCH-rc.N` | `v2026.5.0-rc.3` | `next` | `npm install -g aiwg@next` |
+| Stable | `vYYYY.M.PATCH` | `v2026.5.0` | `latest` | `npm install -g aiwg` (default) |
 
 **Channel commands:**
 ```bash

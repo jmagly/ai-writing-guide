@@ -4,7 +4,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (15 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (19 rules — active with aiwg-utils addon)
 
 ### HIGH
 
@@ -90,6 +90,21 @@ Core meta-utility rules for agent coordination, context management, and platform
 **When to apply**: Any agent that writes, removes, or promotes artifacts in `.aiwg/`; post-deploy steps; lint/validation passes; archive operations
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/activity-log.md
 
+#### debug-source-not-output
+**Summary**: When debugging in multi-project or monorepo contexts, agents must navigate to the originating source code rather than analyze build artifacts (minified JS, compiled bundles, vendored output). The source project is the right place to investigate; output is downstream of the bug. Detect output paths (`dist/`, `build/`, `node_modules/`, `*.min.*`) and map back to the source project before reasoning.
+**When to apply**: Debugging in monorepos, investigating issues in installed npm/cargo packages, tracing errors that surface in compiled artifacts
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/debug-source-not-output.md
+
+#### post-commit-index-refresh
+**Summary**: After a successful git commit, check whether artifact indices are configured (`.aiwg/index/`) and rebuild any indices whose source paths were touched by the commit. Stale indices cause `aiwg index query` to return outdated results, mislead downstream agents, and silently corrupt traceability chains.
+**When to apply**: Any post-commit step in AIWG-managed projects; agent loops that touch artifact source paths and need fresh index reads downstream
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/post-commit-index-refresh.md
+
+#### soul-enforcement
+**Summary**: When `SOUL.md` is present at project root, agents must read it fully and internalize the identity, worldview, and voice it defines before generating any content. The soul takes priority over generic persona defaults — it is not a style guide, it is who the agent is for the duration of the session.
+**When to apply**: Any content-generation task in a project with a SOUL.md file; voice/persona handoffs; multi-agent collaborations where consistent identity matters
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/soul-enforcement.md
+
 ---
 
 ## Quick Reference by Context
@@ -111,12 +126,12 @@ Core meta-utility rules for agent coordination, context management, and platform
 | **Parallel dispatch design** | parallel-then-synthesize, subagent-scoping, context-budget |
 | **Activity tracking** | activity-log |
 | **Git workflow / branching / PRs** | delivery-policy, human-authorization |
-
----
-
 | **Estimation and planning** | no-time-estimates, vague-discretion, subagent-scoping |
+| **Debugging in monorepos / output trees** | debug-source-not-output |
+| **Post-commit hygiene** | post-commit-index-refresh, activity-log |
+| **Identity / voice / persona** | soul-enforcement |
 
 ---
 
-*Generated from aiwg-utils manifest.json — 15 rules*
+*Generated from aiwg-utils manifest.json — 19 rules*
 *Full rule files: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/*

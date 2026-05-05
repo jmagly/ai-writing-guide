@@ -114,7 +114,11 @@
     "diagram-generation",
     "native-ux-tools",
     "vague-discretion",
-    "activity-log"
+    "activity-log",
+    "delivery-policy",
+    "debug-source-not-output",
+    "post-commit-index-refresh",
+    "soul-enforcement"
   ],
   "templates": [
     "devkit/addon-manifest",

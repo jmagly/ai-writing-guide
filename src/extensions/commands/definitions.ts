@@ -567,6 +567,66 @@ export const diagnoseCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Feedback Command (#885)
+
+export const feedbackCommand: Extension = {
+  id: 'feedback',
+  type: 'skill',
+  name: 'Feedback',
+  description: 'Submit a bug report, feature request, or doc gap to the AIWG GitHub repo (auto-prefilled with system context)',
+  version: '1.0.0',
+  capabilities: ['cli', 'feedback', 'bug-report', 'feature-request', 'github-integration'],
+  keywords: ['feedback', 'bug', 'report', 'issue', 'feature-request', 'gh', 'github'],
+  category: 'maintenance',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['report a bug', 'feature request', 'submit feedback', 'file an issue'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[--type bug|feature|doc] [--title T --body B] [--no-context]',
+      allowedTools: ['Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
+// Session Command (#884)
+
+export const sessionCommand: Extension = {
+  id: 'session',
+  type: 'skill',
+  name: 'Session',
+  description: 'Start an agentic session with pre-flight checks (version, doctor, deployment, optional MCP inject) and provider launch',
+  version: '1.0.0',
+  capabilities: ['cli', 'session', 'pre-flight', 'provider-launch', 'mcp-inject'],
+  keywords: ['session', 'start', 'launch', 'pre-flight', 'mcp', 'provider'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['start session', 'launch session', 'session mcp', 'agentic session'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[mcp] [--provider P] [--no-repair] [--profile name]',
+      allowedTools: ['Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Sandbox Management Commands (#917)
 
 export const sandboxCommand: Extension = {
@@ -2806,6 +2866,12 @@ export const commandDefinitions: Extension[] = [
 
   // Diagnose (#925)
   diagnoseCommand,
+
+  // Feedback (#885)
+  feedbackCommand,
+
+  // Session (#884)
+  sessionCommand,
 ];
 
 // ============================================

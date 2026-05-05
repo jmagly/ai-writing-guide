@@ -1,11 +1,54 @@
 {
-  "timestamp": "2026-04-17T07:51:54Z",
+  "timestamp": "2026-05-05T00:30:00Z",
   "direction": "code-to-docs",
-  "scope": "full repo",
-  "findings_total": 26,
-  "fixes_applied": 19,
-  "files_modified": [
-    "docs/cli-reference.md",
-    "CLAUDE.md"
-  ]
+  "scope": "full repo (src/ + agentic/code/)",
+  "guidance": "agentic/code/ files treated as authoritative source",
+  "phases": [
+    {
+      "phase": "audit",
+      "auditors_run": ["cli", "extensions", "frameworks", "agents-skills", "schemas", "crossref"],
+      "findings_total": 59,
+      "findings_high": 39,
+      "findings_medium": 16,
+      "findings_low": 4
+    },
+    {
+      "phase": "auto-fix-pass-1",
+      "fixes_applied": 14,
+      "files_modified": ["CLAUDE.md", "AIWG.md", "README.md"]
+    },
+    {
+      "phase": "errata-correction-pass-2",
+      "fixes_applied": 28,
+      "files_modified": [
+        "AIWG.md",
+        "CLAUDE.md",
+        "README.md",
+        "docs/cli-reference.md",
+        "docs/extensions/extension-types.md",
+        "docs/extensions/overview.md",
+        "docs/extensions/creating-extensions.md",
+        "docs/releases/v2026.4.0-announcement.md",
+        "agentic/code/addons/aiwg-utils/manifest.json",
+        "agentic/code/addons/aiwg-utils/rules/RULES-INDEX.md",
+        "src/extensions/commands/definitions.ts"
+      ],
+      "files_created": [
+        "docs/configuration/aiwg-config.md",
+        "docs/configuration/setup-manifest.md",
+        ".aiwg/reports/doc-sync-20260505T035506Z.md"
+      ]
+    }
+  ],
+  "totals": {
+    "fixes_applied": 42,
+    "fixes_remaining": 0,
+    "files_modified": 11,
+    "files_created": 3
+  },
+  "validation": {
+    "tsc_noEmit": "clean",
+    "markdownlint_authored_files": "clean (RULES-INDEX.md has pre-existing pattern violations matching existing entries; CLAUDE.md/AIWG.md/docs/configuration/*.md clean)"
+  },
+  "report": ".aiwg/reports/doc-sync-20260505T035506Z.md"
 }

@@ -12,9 +12,9 @@ This project uses the **AIWG SDLC framework** for software development lifecycle
 
 AIWG is a comprehensive SDLC framework providing:
 
-- **2 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
-- **7 skills** for project management, security, testing, deployment, and traceability
-- **100+ templates** for requirements, architecture, testing, security, deployment artifacts
+- **98 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
+- **110 skills** for project management, security, testing, deployment, and traceability
+- **200+ templates** for requirements, architecture, testing, security, deployment artifacts
 - **Phase-based workflows** with gate criteria and milestone tracking
 - **Multi-agent orchestration** patterns for collaborative artifact generation
 
@@ -31,9 +31,9 @@ AIWG is a comprehensive SDLC framework providing:
 ls {AIWG_ROOT}/agentic/code/frameworks/sdlc-complete/
 
 # Available resources:
-# - agents/     → 2 agents
-# - skills/     → 7 skills
-# - templates/  → 100+ artifact templates
+# - agents/     → 98 agents
+# - skills/     → 110 skills
+# - templates/  → 200+ artifact templates
 # - flows/      → Phase workflow documentation
 ```
 
@@ -232,7 +232,9 @@ Expected duration: 15-20 minutes.
 Starting orchestration..."
 ```
 
-### Available Commands (For Reference)
+### Available Skills (For Reference)
+
+These are AIWG **skills** (deployed under each provider's `skills/` directory — `.claude/skills/`, `.codex/skills/`, etc.). They're invoked via the host's skill mechanism (slash-prefixed in Claude Code, natural language elsewhere). They are NOT bin-style CLI commands; `aiwg <name>` will not run them.
 
 **Intake & Inception**:
 
@@ -283,9 +285,9 @@ Starting orchestration..."
 - `/check-traceability <path-to-csv>` - Verify requirements-to-code traceability
 - `/security-gate` - Enforce security criteria before release
 
-### Command Parameters
+### Skill Parameters
 
-All flow commands support standard parameters:
+All flow skills support standard parameters:
 
 - `[project-directory]` - Path to project root (default: `.`)
 - `--guidance "text"` - Strategic guidance to influence execution

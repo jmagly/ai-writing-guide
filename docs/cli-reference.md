@@ -5,9 +5,13 @@ Complete reference for all `aiwg` CLI commands.
 **Prerequisites:** Node.js ≥18.0.0 and `npm install -g aiwg`
 
 **References:**
+
 - @src/extensions/commands/definitions.ts - Command extension definitions
 - @src/extensions/types.ts - Extension type system
 - @.aiwg/architecture/unified-extension-schema.md - Extension schema documentation
+- @docs/configuration/aiwg-config.md - `.aiwg/aiwg.config` field reference (delivery, remotes, installed)
+- @docs/configuration/setup-manifest.md - `setup.aiwg.io/v1` SetupManifest reference
+- @docs/configuration/model-configuration.md - `models.json` model role mapping
 
 ---
 
@@ -29,6 +33,8 @@ Complete reference for all `aiwg` CLI commands.
 - [Documentation Commands](#documentation-commands)
 - [SDLC Orchestration Commands](#sdlc-orchestration-commands)
 - [Index Commands](#index-commands)
+- [Configuration Commands](#configuration-commands)
+- [Agentic Tools (RLM)](#agentic-tools-rlm)
 - [Addon Commands](#addon-commands)
 - [Storage Commands](#storage-commands)
 - [Ops Commands](#ops-commands)
@@ -65,6 +71,7 @@ aiwg --help
 **Tools:** None required
 
 Shows:
+
 - Available commands grouped by category
 - Common usage patterns
 - Platform-specific notes
@@ -87,12 +94,14 @@ aiwg --version
 **Tools:** Read
 
 Shows:
+
 - Current AIWG version
 - Active channel (stable/main)
 - Installation path
 - Node.js version
 
 **Example output:**
+
 ```
 AIWG v2026.1.5 (stable)
 Installed: ~/.nvm/versions/node/v20.10.0/lib/node_modules/aiwg
@@ -110,6 +119,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 ```
 
 **Flags:**
+
 - `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, windsurf, openclaw, hermes). Defaults to auto-detect across deployed providers.
 - `--all-providers` — Enumerate every supported provider, including ones with nothing deployed.
 - `--project-local` — Show only the project-local artifacts section. Exit code reflects only project-local findings.
@@ -120,6 +130,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 **Tools:** Read, Bash
 
 **Checks:**
+
 - AIWG installation and version
 - Node.js version compatibility
 - Project `.aiwg/` directory structure
@@ -133,6 +144,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 **Doctor exits 0 when:** no validation errors, no denylist violations, no drift. Shadows alone do not fail doctor — they're informational by design.
 
 **Example output:**
+
 ```
 ✓ AIWG installed: v2026.1.5
 ✓ Node.js version: v20.10.0 (meets requirement ≥18.0.0)
@@ -160,6 +172,7 @@ aiwg -update
 **Tools:** Bash
 
 **Actions:**
+
 - Checks npm registry for newer version
 - Shows changelog highlights
 - Prompts for update confirmation
@@ -167,6 +180,7 @@ aiwg -update
 - Verifies successful update
 
 **Channel switching:**
+
 ```bash
 # Switch to bleeding edge (main branch)
 aiwg --use-main
@@ -191,6 +205,7 @@ aiwg --refresh
 **Tools:** Bash, Read
 
 **Actions:**
+
 - Detects active provider (claude-code, copilot, cursor, etc.)
 - Checks current AIWG version
 - Updates package to latest (unless `--skip-update`)
@@ -198,6 +213,7 @@ aiwg --refresh
 - Runs health check via `aiwg doctor`
 
 **Flags:**
+
 | Flag | Description |
 |------|-------------|
 | `--dry-run` | Show what would change without making changes |
@@ -208,6 +224,7 @@ aiwg --refresh
 | `--frameworks <list>` | Comma-separated frameworks to re-deploy |
 
 **Examples:**
+
 ```bash
 # Full refresh (update + re-deploy + verify)
 aiwg refresh
@@ -226,6 +243,7 @@ aiwg refresh --quiet
 ```
 
 **Example output:**
+
 ```
 ◆ aiwg refresh
 ──────────────────────────────
@@ -245,6 +263,63 @@ aiwg refresh --quiet
 
 ---
 
+### diagnose
+
+Produce a shareable support bundle (logs + env + config) for bug reports.
+
+```bash
+aiwg diagnose [--stdout] [--include-secrets]
+```
+
+**Options:**
+
+- `--stdout` - Emit a single-file JSON manifest to stdout instead of writing a tarball
+- `--include-secrets` - Skip log sanitization (inspect the bundle before sharing)
+
+**Capabilities:** cli, diagnostics, troubleshooting, support, bundle
+**Platforms:** All
+**Tools:** Bash
+
+By default writes `aiwg-diagnose-YYYYMMDDHHMMSS.tar.gz` in the current directory
+containing logs, environment info, config snapshot, and recent git activity.
+Secrets in logs are sanitized unless `--include-secrets` is passed.
+
+---
+
+### steward
+
+Provider capability awareness — answer "what does my provider support?" and "what command should I use?".
+
+```bash
+aiwg steward capabilities [--provider <name>] [--feature <name>] [--all]
+aiwg steward find --capability <name>
+```
+
+**Subcommands:**
+
+- `capabilities` - Show provider/feature capability matrix entries
+- `find` - Routing advice for the current provider
+
+**Options:**
+
+- `--provider <name>` - Capabilities for a specific provider (claude, copilot, cursor, ...)
+- `--feature <name>` - Provider support matrix for a specific feature
+- `--all` - Print the full matrix (all providers x all features)
+- `--capability <name>` - (with `find`) feature to look up routing for
+
+**Capabilities:** cli, maintenance, capability-matrix, provider-routing, diagnostics
+**Tools:** Bash, Read
+
+**Examples:**
+
+```bash
+aiwg steward capabilities --provider claude
+aiwg steward capabilities --feature cron
+aiwg steward find --capability cron
+```
+
+---
+
 ## Framework Management
 
 ### use
@@ -256,10 +331,12 @@ aiwg use <framework|addon>
 ```
 
 **Arguments:**
+
 - `<framework>` - Framework name: `sdlc`, `marketing`, `writing`, `all`
 - `<addon>` - Addon name: any addon in `agentic/code/addons/` (e.g., `rlm`, `ralph`, `ring-methodology`)
 
 **Options:**
+
 - `--provider <name>` - Target platform (claude, copilot, factory, cursor, windsurf, warp, codex, opencode, hermes, openclaw, local)
 - `--model <name>` - Override model for all tiers (blanket)
 - `--reasoning-model <name>` - Override reasoning tier model (alias: `--reasoning`)
@@ -364,6 +441,7 @@ aiwg use sdlc --ci-hooks-enabled --dry-run
 On first run after the commands-to-skills migration, `aiwg use` detects an existing commands directory and offers to delete it before deploying skills. Keeping both causes duplicate entries in the provider command palette. The prompt is shown when running interactively; in CI/non-TTY contexts the migration runs silently. Pass `--skip-commands-migration` to opt out (a warning is printed instead). Home-directory providers (codex, openclaw) are excluded from this migration.
 
 **Notes:**
+
 - **Codex**: Commands and skills deploy to `~` (user-level) for availability across all projects; the provider ID is `codex`, not `openai`
 - **Windsurf**: Agents aggregated into `AGENTS.md` at project root; no separate agent files
 - **Warp**: Agents and commands also aggregated into `WARP.md` for single-file context loading
@@ -386,6 +464,7 @@ aiwg list
 **Tools:** Read
 
 **Output format:**
+
 ```
 Installed Frameworks:
   sdlc-complete (v1.0.0) - Full SDLC framework
@@ -409,9 +488,11 @@ aiwg remove <id> [--force] [--dry-run] [--provider <p>] [--keep-registry]
 ```
 
 **Arguments:**
+
 - `<id>` — Framework, addon, or project-local bundle id (e.g., `sdlc`, `marketing`, `voice-framework`, `my-team-rules`)
 
 **Flags (project-local bundles):**
+
 - `--force` — Skip the case-2 mutation prompt and revert operator-edited deployed files. Does **not** delete bundle source under `.aiwg/<type>/<name>/`. Does **not** authorize deleting another bundle's deployed file.
 - `--dry-run` — Print the revert plan; no filesystem or registry changes.
 - `--provider <p>` — Restrict revert to one provider (e.g., `claude`, `cursor`).
@@ -438,6 +519,7 @@ aiwg remove my-team-rules --force
 ```
 
 **Routing:**
+
 - If `<id>` matches a project-local entry in `aiwg.config.installed`, routes to the project-local revert handler ([design](../.aiwg/architecture/design-aiwg-remove-revert.md)) which uses recorded `artifactHashes` to detect pristine vs mutated vs replaced deployed files.
 - Otherwise, falls through to the upstream framework / plugin uninstaller.
 
@@ -457,9 +539,11 @@ aiwg promote <name> [--to upstream|corpus <path>] [--dry-run] [--cleanup] [--for
 ```
 
 **Arguments:**
+
 - `<name>` — Project-local bundle id
 
 **Flags:**
+
 - `--to upstream` (default) — Copy to `agentic/code/addons/<name>/` (or `agentic/code/frameworks/<name>/` for `type: framework`)
 - `--to corpus <path>` — Copy to `<path>/<name>/`. The path must exist; `<name>` must not pre-exist there.
 - `--dry-run` — Print the plan (source, destination, file count, total bytes); no writes.
@@ -471,11 +555,13 @@ aiwg promote <name> [--to upstream|corpus <path>] [--dry-run] [--cleanup] [--for
 **Tools:** Read, Write, Bash
 
 **Pre-flight checks (in order):**
+
 1. Bundle exists under `.aiwg/{type}/{name}/`
 2. Destination doesn't already exist (refuses overwrite — must `aiwg remove` from upstream first)
 3. No `@.aiwg/` references that would dangle (refuse without `--force`)
 
 **Operation:**
+
 1. Snapshot SHA-256 of every source file
 2. Recursive `cp` to destination
 3. Re-hash every destination file; **roll back** (delete dest) on any mismatch
@@ -502,9 +588,11 @@ aiwg new-bundle <name> [--type extension|addon|framework|plugin] [--starter skil
 ```
 
 **Arguments:**
+
 - `<name>` — Bundle id (kebab-case: `a-z0-9-`, no leading/trailing hyphen)
 
 **Flags:**
+
 - `--type` — Bundle type (default: `extension`). Inferred from invocation when called via aliases (`new-extension`, `new-addon`, `new-framework`, `new-plugin`).
 - `--starter` — Which starter artifact to drop in. Default: `skill` for addon/extension; `minimal` for framework/plugin.
 - `--description` — Free-text human description for the manifest.
@@ -532,12 +620,92 @@ aiwg new-plugin my-distro --starter minimal
 ```
 
 **What gets created:**
+
 - `manifest.json` — valid against the canonical schema, all required fields filled
 - `README.md` — usage, customization tips, identical-form reminder, deploy/remove/promote commands
 - Starter artifact: `skills/<name>-skill/SKILL.md`, `rules/<name>.md`, or `agents/<name>.md` depending on `--starter`
 - Type-specific stubs: `src/.gitkeep` for framework, `payload/.gitkeep` for plugin
 
 The bundle is immediately deployable: `aiwg use <name>`.
+
+---
+
+### install
+
+Install an AIWG-compatible framework, addon, or extension package from a
+remote Git repository into the local registry cache. Distinct from
+`install-plugin` (Claude Code plugin format).
+
+```bash
+aiwg install <ref> [--deploy] [--provider <name>] [--target <dir>] [--refresh]
+```
+
+**Arguments:**
+
+- `<ref>` - Git URL or short reference for a package
+
+**Options:**
+
+- `--deploy` - Deploy immediately after install
+- `--provider <name>` - Target provider (claude, copilot, cursor, ...) — default `claude`
+- `--target <dir>` - Project directory to deploy into — default cwd
+- `--refresh` - Force re-pull even if package is already cached
+
+**Capabilities:** cli, framework, install, git
+**Tools:** Read, Write, Bash
+
+---
+
+### marketplace
+
+Search and list packages across configured marketplace adapters (clawhub, openclaw, local).
+
+```bash
+aiwg marketplace search <query> [--source <id>] [--json]
+aiwg marketplace list [--source <id>] [--json]
+```
+
+**Subcommands:**
+
+- `search <query>` - Search marketplace catalogs for matching packages
+- `list` - List all packages from configured sources
+
+**Options:**
+
+- `--source <id>` - Limit to a specific source (clawhub, openclaw, local)
+- `--json` - Emit structured JSON for programmatic consumption
+
+**Capabilities:** cli, marketplace, search, discovery
+**Tools:** Read
+
+**Examples:**
+
+```bash
+aiwg marketplace search auth
+aiwg marketplace search auth --source clawhub
+aiwg marketplace list --json
+```
+
+---
+
+### packages
+
+Manage packages installed via `aiwg install` (the remote-package registry).
+
+```bash
+aiwg packages list
+aiwg packages info <key>
+aiwg packages remove <key>
+```
+
+**Subcommands:**
+
+- `list` - List all installed remote packages
+- `info <key>` - Show metadata, cache state, and deploy hint for a package
+- `remove <key>` - Remove a package from the local registry and cache
+
+**Capabilities:** cli, framework, query, uninstall
+**Tools:** Read
 
 ---
 
@@ -553,6 +721,7 @@ aiwg -new <project-name>
 ```
 
 **Arguments:**
+
 - `<project-name>` - Name of project directory to create
 
 **Capabilities:** cli, project, scaffolding
@@ -560,6 +729,7 @@ aiwg -new <project-name>
 **Tools:** Read, Write, Bash
 
 **Creates:**
+
 ```
 my-project/
 ├── .aiwg/
@@ -604,6 +774,7 @@ aiwg session --no-repair            # skip auto-repair (still checks and reports
 ```
 
 **Options:**
+
 - `mcp` - Inject configured MCP servers into the provider config before launching
 - `--provider <p>` - Override provider (default: `providers[0]` from `.aiwg/aiwg.config`, then `claude`)
 - `--no-repair` - Skip auto-repair; still runs health checks and reports issues
@@ -611,6 +782,7 @@ aiwg session --no-repair            # skip auto-repair (still checks and reports
 - `--persist` - When combined with `--profile`, writes servers to the provider's default config instead of using an ephemeral temp file
 
 **Pre-flight sequence:**
+
 1. **Version check** — updates aiwg if stale (`npm install -g aiwg@latest`)
 2. **Health check** — runs `aiwg doctor`; auto-repairs fixable issues via `aiwg refresh`
 3. **Deployment check** — redeploys framework files to the provider if missing or stale
@@ -618,6 +790,7 @@ aiwg session --no-repair            # skip auto-repair (still checks and reports
 5. **Launch** — spawns binary (claude, codex, opencode) or prints start instructions (IDE providers: cursor, windsurf, copilot, etc.)
 
 **Auto-repair escalation:**
+
 - Strategy 1: `aiwg refresh` (update + redeploy)
 - Strategy 2: `npm install -g aiwg@latest` + redeploy all frameworks
 - If unresolvable: surfaces `aiwg feedback --type bug` as escape hatch
@@ -670,6 +843,7 @@ aiwg serve --no-open --read-only
 ```
 
 **Options:**
+
 - `--port <n>` - Port to listen on (default: `7337`)
 - `--bind <host>` - Interface to bind (default: `127.0.0.1`)
 - `--no-open` - Skip auto-opening browser
@@ -682,6 +856,72 @@ aiwg serve --no-open --read-only
 **Requires:** `hono`, `@hono/node-server`, `ws` (auto-installed on first use; or `npm install hono @hono/node-server ws`)
 
 **See also:** [Serve Guide](serve-guide.md) for full API reference, WebSocket protocols, and integration details.
+
+---
+
+### init
+
+Initialize an AIWG project by creating `.aiwg/aiwg.config` (provider registry,
+scripts, delivery policy). Distinct from `aiwg new` (which scaffolds a
+brand-new project tree).
+
+```bash
+aiwg init [--force] [--non-interactive | --yes]
+```
+
+**Options:**
+
+- `--force` - Overwrite an existing `.aiwg/aiwg.config`
+- `--non-interactive`, `--yes` - Skip prompts and accept detected defaults
+
+**Capabilities:** cli, project, config, setup
+**Tools:** Read, Write
+
+If a config already exists, the command exits without changes unless `--force` is passed.
+
+---
+
+### run
+
+Execute a named script defined in `.aiwg/aiwg.config` (analogous to `npm run`).
+
+```bash
+aiwg run [script-name] [project-dir]
+```
+
+**Arguments:**
+
+- `[script-name]` - Script entry from `aiwg.config`. Omit to list all scripts.
+- `[project-dir]` - Project directory (default cwd)
+
+**Capabilities:** cli, utility, scripts
+**Tools:** Read, Bash
+
+---
+
+### sandbox
+
+Sandbox agent identity management — alias logical agent names to persistent
+identities, resolve aliases, and list known identities.
+
+```bash
+aiwg sandbox alias <ref>
+aiwg sandbox resolve <ref>
+aiwg sandbox identities [--json]
+```
+
+**Subcommands:**
+
+- `alias <ref>` - Bind a logical agent name to a persistent identity
+- `resolve <ref>` - Resolve a logical name to its identity record
+- `identities` - List all known persistent agent identities
+
+**Options:**
+
+- `--json` - (with `identities`) emit structured JSON
+
+**Capabilities:** cli, sandbox, agent-identity, agent-routing
+**Tools:** Bash
 
 ---
 
@@ -701,6 +941,7 @@ aiwg -status
 **Tools:** Read, Bash
 
 **Shows:**
+
 - Project directory
 - Installed frameworks and versions
 - Framework health status
@@ -710,6 +951,7 @@ aiwg -status
 - Git status (if git repo)
 
 **Example output:**
+
 ```
 Workspace: /home/user/customer-portal
 Git: clean (main branch)
@@ -743,6 +985,7 @@ aiwg migrate-workspace
 **Migrates:**
 
 From (legacy):
+
 ```
 .aiwg/
 ├── intake/
@@ -751,6 +994,7 @@ From (legacy):
 ```
 
 To (framework-scoped):
+
 ```
 .aiwg/
 ├── frameworks/
@@ -763,6 +1007,7 @@ To (framework-scoped):
 ```
 
 **Safety:**
+
 - Creates backup in `.aiwg.backup-<timestamp>/`
 - Validates migration before committing
 - Preserves all content
@@ -783,6 +1028,7 @@ aiwg rollback-workspace
 **Tools:** Read, Write, Bash
 
 **Restores from:**
+
 - `.aiwg.backup-<timestamp>/` directories
 - Prompts to select backup if multiple exist
 - Validates backup before restoring
@@ -811,6 +1057,7 @@ aiwg mcp serve
 ```
 
 **Actions:**
+
 - Starts stdio-based MCP server
 - Exposes AIWG tools, resources, and prompts
 - Supports Claude Desktop, Cursor, Factory
@@ -824,12 +1071,15 @@ aiwg mcp install <client>
 ```
 
 **Arguments:**
+
 - `<client>` - Client name: `claude`, `cursor`, `factory`
 
 **Options:**
+
 - `--dry-run` - Preview without writing
 
 **Actions:**
+
 - Generates client-specific config
 - Adds to `~/.config/claude/config.json` (Claude Desktop)
 - Adds to `.cursor/config.json` (Cursor)
@@ -854,6 +1104,7 @@ aiwg mcp info
 ```
 
 **Shows:**
+
 - MCP protocol version
 - Available tools
 - Available resources
@@ -874,9 +1125,11 @@ aiwg mcp add <name> --type stdio --command <cmd> [--args <a,b>] [--env KEY=VAL]
 ```
 
 **Arguments:**
+
 - `<name>` - Unique server name (referenced by profiles and inject)
 
 **Options:**
+
 - `--type <type>` - Server type: `http` (default), `stdio`, `sse`
 - `--url <url>` - URL for http/sse servers
 - `--command <cmd>` - Executable for stdio servers
@@ -935,6 +1188,7 @@ aiwg mcp inject --all [--dry-run]
 ```
 
 **Options:**
+
 - `--provider <name>` - Target provider (`claude`, `codex`, `cursor`, `copilot`, `windsurf`, `opencode`, `warp`, `factory`, `openclaw`, `hermes`)
 - `--all` - Inject into all providers that have been configured before
 - `--profile <name>` - Resolve server set from a named MCP profile (see `mcp profile`)
@@ -1065,6 +1319,7 @@ aiwg catalog list
 ```
 
 **Options:**
+
 - `--provider <name>` - Filter by provider (anthropic, openai, google)
 - `--type <type>` - Filter by type (chat, completion, embedding)
 
@@ -1077,6 +1332,7 @@ aiwg catalog info <model-id>
 ```
 
 **Arguments:**
+
 - `<model-id>` - Model identifier (e.g., `claude-opus-4-6`)
 
 #### catalog search
@@ -1088,11 +1344,33 @@ aiwg catalog search <query>
 ```
 
 **Arguments:**
+
 - `<query>` - Search terms
 
 **Capabilities:** cli, catalog, models
 **Platforms:** All
 **Tools:** Read
+
+---
+
+### skills
+
+Skill registry operations — search, install, and inspect skills from local sources, ClawHub, and OpenClaw.
+
+```bash
+aiwg skills <subcommand> [options]
+```
+
+**Subcommands:**
+
+- `list` - List skills from configured registries
+- `search <query>` - Search the skill registry by keyword
+- `info <id>` - Show metadata for a specific skill
+- `install <id>` - Install a skill from the registry
+- `publish <path>` - Publish a local skill to a registry
+
+**Capabilities:** cli, skills, registry, search, install, publish
+**Tools:** Read, Bash
 
 ---
 
@@ -1111,6 +1389,7 @@ aiwg runtime-info
 **Tools:** Read, Bash
 
 **Shows:**
+
 - Platform detection (Claude Code, Cursor, etc.)
 - Available tools (Read, Write, Bash, Glob, Grep)
 - System utilities (git, jq, curl, etc.)
@@ -1118,6 +1397,7 @@ aiwg runtime-info
 - Tool capabilities and limitations
 
 **Example output:**
+
 ```
 Platform: Claude Code
 AI Model: claude-sonnet-4-6
@@ -1156,12 +1436,14 @@ Cross-provider scheduler that detects native cron capability (Claude Code `CronC
 ```
 
 **Options:**
+
 - `--name` — Unique task name (required)
 - `--cron` — 5-field cron expression (required)
 - `--task` — Prompt or command to run (required)
 - `--provider native|aiwg-cli` — Override backend detection
 
 **Examples:**
+
 ```bash
 /schedule create --name daily-refresh --cron "0 9 * * *" --task "aiwg refresh"
 /schedule create --name health-check --cron "0 */6 * * *" --task "aiwg doctor"
@@ -1224,6 +1506,7 @@ aiwg prefill-cards
 **Tools:** Read, Write
 
 **Actions:**
+
 - Reads `.aiwg/team-profile.json`
 - Finds empty SDLC cards (use cases, architecture docs, etc.)
 - Fills in standard metadata (author, date, version)
@@ -1261,6 +1544,7 @@ aiwg contribute-start
 **Tools:** Read, Write, Bash
 
 **Actions:**
+
 - Guides through contribution setup
 - Creates feature branch
 - Sets up development environment
@@ -1277,6 +1561,7 @@ aiwg validate-metadata [path]
 ```
 
 **Arguments:**
+
 - `[path]` - Optional path to validate (defaults to current directory)
 
 **Capabilities:** cli, validation, metadata
@@ -1284,6 +1569,7 @@ aiwg validate-metadata [path]
 **Tools:** Read
 
 **Validates:**
+
 - Extension schema compliance
 - Required fields present
 - Version format correct
@@ -1316,12 +1602,14 @@ aiwg feedback --no-context                 # skip attaching system context
 **Aliases:** `report`
 
 **Options:**
+
 - `--type <t>` - Feedback type: `bug`, `feature`, `doc`, `other` (interactive prompt if omitted)
 - `--title <text>` - Issue title (interactive prompt if omitted)
 - `--body <text>` - Issue description (interactive prompt if omitted)
 - `--no-context` - Skip collecting and attaching system context
 
 **Submission flow:**
+
 1. If `gh` CLI is available → `gh issue create --repo jmagly/aiwg` with appropriate label
 2. Otherwise → opens browser with pre-filled GitHub issue URL
 3. If no browser (non-TTY) → prints formatted issue body to stdout for manual filing
@@ -1367,6 +1655,69 @@ aiwg feedback --type bug --title "crash" --body "details" --no-context
 
 ---
 
+### lint
+
+Lint AIWG artifacts against declarative rule sets discovered from installed frameworks.
+
+```bash
+aiwg lint <target> [--ruleset <name>] [--format full|summary|json]
+                   [--ci] [--fail-on error|warn|info] [--dry-run]
+aiwg lint --list-rulesets
+aiwg lint --list-rules <ruleset>
+```
+
+**Arguments:**
+
+- `<target>` - File or directory to lint
+
+**Options:**
+
+- `--ruleset <name>` - Force a specific ruleset (otherwise auto-detected from path)
+- `--format full|summary|json` - Output format
+- `--ci` - CI-friendly output and exit codes
+- `--fail-on error|warn|info` - Severity threshold for non-zero exit
+- `--dry-run` - Report what would run without executing rules
+- `--list-rulesets` - List all discovered rulesets
+- `--list-rules <name>` - List rules contained in a ruleset
+
+**Capabilities:** cli, lint, validation, quality
+**Tools:** Bash, Read, Glob, Grep
+
+**Examples:**
+
+```bash
+aiwg lint .aiwg/research/ --ruleset research
+aiwg lint .aiwg/ --format json --ci --fail-on warn
+aiwg lint --list-rulesets
+```
+
+---
+
+### skill-lint
+
+Score `SKILL.md` files against a quality rubric (schema, description, discoverability, body).
+
+```bash
+aiwg skill-lint <path> [--rubric strict|standard|lenient] [--json]
+```
+
+**Arguments:**
+
+- `<path>` - File or directory containing skills (default `agentic/code`)
+
+**Options:**
+
+- `--rubric strict|standard|lenient` - Threshold profile (default `standard`)
+- `--json` - Emit structured JSON report
+
+**Capabilities:** cli, validation, metadata, quality
+**Tools:** Read
+
+Output reports per-file scores with dimension-level notes for any file
+under the rubric threshold, and an aggregate average across all scanned files.
+
+---
+
 ## Plugin Commands
 
 **Note:** Plugin commands are specific to Claude Code integration.
@@ -1380,6 +1731,7 @@ aiwg install-plugin <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Plugin name from marketplace
 
 **Capabilities:** cli, plugin, install
@@ -1403,6 +1755,7 @@ aiwg uninstall-plugin <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Plugin name
 
 **Capabilities:** cli, plugin, uninstall
@@ -1424,6 +1777,7 @@ aiwg plugin-status
 **Tools:** Read
 
 **Shows:**
+
 - Installed plugins
 - Plugin versions
 - Enabled/disabled status
@@ -1440,6 +1794,7 @@ aiwg package-plugin <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Plugin name to package
 
 **Capabilities:** cli, plugin, packaging
@@ -1447,6 +1802,7 @@ aiwg package-plugin <name>
 **Tools:** Read, Write, Bash
 
 **Creates:**
+
 - `dist/plugins/<name>.plugin.tar.gz`
 - Manifest validation
 - README and LICENSE inclusion
@@ -1466,6 +1822,7 @@ aiwg package-all-plugins
 **Tools:** Read, Write, Bash
 
 **Creates:**
+
 - Packages for: sdlc, marketing, utils, voice
 - Validates all manifests
 - Generates marketplace index
@@ -1487,6 +1844,7 @@ Skills are the **canonical source type** for agentic workflows. During `aiwg use
 | **Legacy direct commands** | Authored command files still supported; not generated from a skill |
 
 **Authoring guidance:**
+
 - New workflow? → `aiwg add-skill` — AIWG handles deployment and command generation
 - Modifying an existing workflow? → Edit the `SKILL.md` source, not the generated command files
 - Advanced direct command? → `aiwg add-command` (deprecated path, still supported)
@@ -1500,6 +1858,7 @@ aiwg add-agent <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Agent name (e.g., "API Designer")
 
 **Capabilities:** cli, scaffolding, agent
@@ -1507,6 +1866,7 @@ aiwg add-agent <name>
 **Tools:** Read, Write
 
 **Creates:**
+
 - Agent markdown file with frontmatter
 - Extension definition entry
 - Platform-specific adaptations
@@ -1532,6 +1892,7 @@ aiwg add-command <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Command name (e.g., "validate-api")
 
 **Capabilities:** cli, scaffolding, command
@@ -1549,6 +1910,7 @@ aiwg add-skill <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Skill name (e.g., "project-awareness")
 
 **Capabilities:** cli, scaffolding, skill
@@ -1566,9 +1928,11 @@ aiwg add-behavior <name> [options]
 ```
 
 **Arguments:**
+
 - `<name>` - Behavior name (kebab-case recommended)
 
 **Options:**
+
 - `--description, -d` - Behavior description
 - `--hooks` - Comma-separated hook events (default: `on_file_write`). Available: `on_file_write`, `on_tool_complete`, `on_schedule`, `on_commit`, `on_pr_open`, `on_deploy`, `on_session_start`, `on_session_end`
 - `--category` - Behavior category (default: `general`)
@@ -1579,6 +1943,7 @@ aiwg add-behavior <name> [options]
 **Tools:** Read, Write
 
 **Creates:**
+
 ```
 agentic/code/behaviors/<name>/
 ├── BEHAVIOR.md          # Pre-filled with hooks and triggers
@@ -1587,6 +1952,7 @@ agentic/code/behaviors/<name>/
 ```
 
 **Examples:**
+
 ```bash
 aiwg add-behavior security-scanner
 aiwg add-behavior test-watcher --hooks on_file_write,on_schedule --category testing
@@ -1604,6 +1970,7 @@ aiwg add-template <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Template name (e.g., "use-case-template")
 
 **Capabilities:** cli, scaffolding, template
@@ -1621,6 +1988,7 @@ aiwg scaffold-addon <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Addon name (e.g., "my-addon")
 
 **Capabilities:** cli, scaffolding, addon
@@ -1628,6 +1996,7 @@ aiwg scaffold-addon <name>
 **Tools:** Read, Write
 
 **Creates:**
+
 ```
 agentic/code/addons/my-addon/
 ├── manifest.json
@@ -1649,6 +2018,7 @@ aiwg scaffold-extension <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Extension name
 
 **Capabilities:** cli, scaffolding, extension
@@ -1666,6 +2036,7 @@ aiwg scaffold-framework <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Framework name (e.g., "security-framework")
 
 **Capabilities:** cli, scaffolding, framework
@@ -1673,6 +2044,7 @@ aiwg scaffold-framework <name>
 **Tools:** Read, Write
 
 **Creates:**
+
 ```
 agentic/code/frameworks/security-framework/
 ├── manifest.json
@@ -1699,6 +2071,7 @@ aiwg behavior <list|info|apply|remove> [name] [options]
 ```
 
 **Subcommands:**
+
 - `list` - List all available behaviors
 - `info <name>` - Show behavior details (BEHAVIOR.md content)
 - `apply <name>` - Apply a behavior to the daemon
@@ -1709,6 +2082,7 @@ aiwg behavior <list|info|apply|remove> [name] [options]
 **Tools:** Read, Bash, Write
 
 **Examples:**
+
 ```bash
 aiwg behavior list
 aiwg behavior info security-sentinel
@@ -1725,9 +2099,11 @@ aiwg daemon-init [profile-name] [--force]
 ```
 
 **Arguments:**
+
 - `[profile-name]` - Profile template to use (default: `manager`)
 
 **Options:**
+
 - `--force` - Overwrite existing config
 
 **Capabilities:** cli, daemon, configuration, scaffolding
@@ -1735,6 +2111,7 @@ aiwg daemon-init [profile-name] [--force]
 **Tools:** Bash, Read, Write
 
 **Creates:**
+
 - `.aiwg/daemon.yaml` from the selected profile template
 - `.env.example` with required environment variables
 
@@ -1772,6 +2149,7 @@ aiwg mission-control <subcommand> [options]
 | `list [--json]` | List all sessions |
 
 **Examples:**
+
 ```bash
 # Start a named session
 aiwg mc start --name "Construction Sprint 4"
@@ -1789,6 +2167,7 @@ aiwg mc stop mc-abc123 --drain
 ```
 
 **Example output:**
+
 ```
 ◆ MISSION CONTROL — Construction Sprint 4  [mc-abc123]
 ──────────────────────────────────────────────────────────
@@ -1921,11 +2300,13 @@ aiwg ralph "<task-description>"
 ```
 
 **Arguments:**
+
 - `<task-description>` - Natural language task description
 
 **Options:**
 
 **Core Options:**
+
 - `--completion "<criteria>"` - Success criteria (e.g., "npm test passes")
 - `--max-iterations <n>` - Maximum iterations (default: 10)
 - `--timeout <seconds>` - Per-iteration timeout (default: 300)
@@ -1935,6 +2316,7 @@ aiwg ralph "<task-description>"
 - `--mcp-config <json>` - MCP server configuration JSON
 
 **Research-Backed Options (REF-015, REF-021):**
+
 - `-m, --memory <n|preset>` - Memory capacity Ω: 1-10 or preset (simple, moderate, complex, maximum). Default: 3
 - `--cross-task` / `--no-cross-task` - Enable/disable cross-task learning (default: enabled)
 - `--no-analytics` - Disable iteration analytics
@@ -1942,6 +2324,7 @@ aiwg ralph "<task-description>"
 - `--no-early-stopping` - Disable early stopping on high confidence
 
 **Epic #26 Control Options:**
+
 - `--enable-pid-control` - Enable PID control layer (default: true)
 - `--disable-pid-control` - Disable PID control layer
 - `--enable-overseer` - Enable oversight layer (default: true)
@@ -1999,6 +2382,7 @@ aiwg ralph "Fix all integration tests" \
 ```
 
 **Iteration pattern:**
+
 1. Analyze current state (with PID control input)
 2. Plan next step (informed by semantic memory)
 3. Execute step
@@ -2009,6 +2393,7 @@ aiwg ralph "Fix all integration tests" \
 **Control Layers (Epic #26):**
 
 **PID Control Layer:**
+
 - Adjusts agent autonomy based on progress
 - Prevents oscillation and runaway behavior
 - Gain profiles optimize for different scenarios:
@@ -2019,12 +2404,14 @@ aiwg ralph "Fix all integration tests" \
   - `cautious`: Extra validation (Kp=0.2, Ki=0.03, Kd=0.05)
 
 **Semantic Memory:**
+
 - Remembers learnings across loop runs
 - Queries similar past situations
 - Prevents repeating mistakes
 - Shares insights between tasks
 
 **Oversight Layer:**
+
 - Validates actions before execution
 - Flags risky operations
 - Requires confirmation for critical changes
@@ -2050,6 +2437,7 @@ aiwg ralph-status
 **Tools:** Read
 
 **Shows:**
+
 - Current loop active/inactive
 - Task description
 - Iterations completed
@@ -2062,6 +2450,7 @@ aiwg ralph-status
   - Oversight status (active interventions, warnings issued, health score)
 
 **Example output:**
+
 ```
 Agent Loop Status: Active
 
@@ -2113,6 +2502,7 @@ aiwg ralph-abort
 **Tools:** Read, Write
 
 **Actions:**
+
 - Stops current loop
 - Saves final state (including Epic #26 control state)
 - Archives loop history
@@ -2134,6 +2524,7 @@ aiwg ralph-resume
 **Tools:** Read, Write
 
 **Actions:**
+
 - Loads last saved state (including Epic #26 control layers)
 - Restores PID controller state
 - Reloads semantic memory context
@@ -2156,6 +2547,7 @@ aiwg ralph-attach
 **Tools:** Read
 
 **Actions:**
+
 - Attaches to a running external agent loop
 - Streams live output (press Ctrl+C to detach)
 - Shows current iteration progress in real time
@@ -2172,6 +2564,7 @@ aiwg agent-loop-ext "<task-description>"
 ```
 
 **Arguments:**
+
 - `<task-description>` - Natural language task description
 
 **Options:**
@@ -2179,11 +2572,13 @@ aiwg agent-loop-ext "<task-description>"
 All options from `ralph` command plus:
 
 **External-Specific Options:**
+
 - `--checkpoint-interval <n>` - Checkpoint every N iterations (default: 1)
 - `--crash-recovery` - Enable crash recovery (default: true)
 - `--state-file <path>` - Custom state file location (default: `.aiwg/ralph-external/state.json`)
 
 **Epic #26 Control Options:**
+
 - Same as `ralph` command
 
 **Capabilities:** cli, ralph, orchestration, external
@@ -2208,6 +2603,7 @@ aiwg ralph-external "Migrate database schema" \
 ```
 
 **Difference from `ralph`:**
+
 - Designed for longer-running tasks
 - Full state persistence to disk
 - Automatic checkpoint creation
@@ -2235,10 +2631,12 @@ aiwg ralph-memory list
 ```
 
 **Options:**
+
 - `--limit <n>` - Limit results (default: 20)
 - `--sort <field>` - Sort by: `date`, `similarity`, `usage_count` (default: `date`)
 
 **Example output:**
+
 ```
 Semantic Memory Learnings (127 total)
 
@@ -2264,9 +2662,11 @@ aiwg ralph-memory query "<pattern>"
 ```
 
 **Arguments:**
+
 - `<pattern>` - Query text or pattern
 
 **Options:**
+
 - `--threshold <n>` - Similarity threshold 0-1 (default: 0.7)
 - `--limit <n>` - Max results (default: 10)
 
@@ -2285,6 +2685,7 @@ aiwg ralph-memory prune [--older-than <days>]
 ```
 
 **Options:**
+
 - `--older-than <days>` - Remove entries older than N days (default: 90)
 - `--unused` - Remove entries never referenced
 - `--dry-run` - Preview without deleting
@@ -2298,6 +2699,7 @@ aiwg ralph-memory export <file>
 ```
 
 **Arguments:**
+
 - `<file>` - Output file path
 
 **Example:**
@@ -2315,9 +2717,11 @@ aiwg ralph-memory import <file>
 ```
 
 **Arguments:**
+
 - `<file>` - Input file path
 
 **Options:**
+
 - `--merge` - Merge with existing (default: replace)
 
 **Capabilities:** cli, ralph, memory
@@ -2345,6 +2749,7 @@ aiwg ralph-config show
 ```
 
 **Example output:**
+
 ```
 Al Configuration
 
@@ -2378,6 +2783,7 @@ aiwg ralph-config set <key> <value>
 ```
 
 **Arguments:**
+
 - `<key>` - Configuration key (dot-notation)
 - `<value>` - New value
 
@@ -2403,6 +2809,7 @@ aiwg ralph-config reset
 ```
 
 **Options:**
+
 - `--confirm` - Skip confirmation prompt
 
 #### ralph-config preset
@@ -2414,6 +2821,7 @@ aiwg ralph-config preset <name>
 ```
 
 **Arguments:**
+
 - `<name>` - Preset name: `conservative`, `balanced`, `aggressive`
 
 **Presets:**
@@ -2448,9 +2856,11 @@ aiwg doc-sync <direction> [options]
 ```
 
 **Arguments:**
+
 - `<direction>` - Sync direction: `code-to-docs`, `docs-to-code`, `full`
 
 **Options:**
+
 - `--interactive` - Prompt for each sync decision
 - `--guidance "text"` - Human guidance for ambiguous cases
 - `--scope "path"` - Limit to specific directory (default: `.`)
@@ -2474,6 +2884,7 @@ aiwg doc-sync <direction> [options]
 | `full` | Bidirectional reconciliation |
 
 **Execution phases:**
+
 1. Init and file inventory
 2. Parallel domain audit (8 auditors)
 3. Cross-reference validation
@@ -2501,6 +2912,7 @@ aiwg doc-sync code-to-docs --scope docs/extensions/
 ```
 
 **Output locations:**
+
 - Audit report: `.aiwg/reports/doc-sync-audit-{date}.md`
 - Sync state: `.aiwg/.last-doc-sync`
 
@@ -2517,9 +2929,11 @@ aiwg sdlc-accelerate <description> [options]
 ```
 
 **Arguments:**
+
 - `<description>` - Project description (idea entry point)
 
 **Options:**
+
 - `--from-codebase <path>` - Scan existing code instead of starting from idea
 - `--interactive` - Full interactive mode at every step
 - `--guidance "text"` - Project-level guidance for all phases
@@ -2583,6 +2997,51 @@ aiwg sdlc-accelerate --auto "Quick prototype"
 
 ---
 
+### best-practices-audit
+
+Research-grounded validation of a target (file, directory, or freeform topic)
+against current external best practices, vendor documentation, and
+practitioner discussion.
+
+```bash
+aiwg best-practices-audit <target> [options]
+```
+
+**Arguments:**
+
+- `<target>` - Path or freeform topic to audit
+
+**Options:**
+
+- `--focus <area>` - Focus area (security, performance, accessibility, licensing, ...)
+- `--framework <name>` - Bias toward a named stack (React, Kubernetes, ...)
+- `--standard <name>` - Align to a standard (OWASP, SOC2, WCAG 2.2, ...)
+- `--recency <window>` - Source recency window (default `18m`)
+- `--depth quick|standard|deep` - Research effort budget (default `standard`)
+- `--sources <list>` - Restrict to source classes (vendor-docs, standards-bodies, ...)
+- `--exclude <list>` - Exclude domain classes (e.g., SEO-spam)
+- `--cite-threshold <N>` - Minimum distinct sources before reporting a finding (default `2`)
+- `--dissent` - Surface practitioner disagreement, not just consensus
+- `--validate` - Re-validate existing claims in the target instead of fresh audit
+- `--output <path>` - Output path (default `.aiwg/reports/best-practices-audit-<slug>-<date>.md`)
+- `--provider <name>` - Agent system to use (default `claude`)
+- `--dangerous` - Enable provider's unrestricted mode
+- `--params "<args>"` - Pass arbitrary args verbatim to the agent binary
+
+**Capabilities:** cli, research, validation, audit, citations
+**Tools:** Read, Write, Glob, Grep, Bash, WebFetch, WebSearch
+
+**Examples:**
+
+```bash
+aiwg best-practices-audit ".aiwg/architecture/SAD.md" --focus security --standard OWASP
+aiwg best-practices-audit "src/auth/" --focus security --depth deep --dissent
+aiwg best-practices-audit "FastAPI request validation patterns" --recency 6m
+aiwg best-practices-audit ".aiwg/architecture/" --validate
+```
+
+---
+
 ## Planning Skills
 
 ### issue-planner
@@ -2594,9 +3053,11 @@ Transform a high-level objective into a fully researched, SDLC-gated issue backl
 ```
 
 **Arguments:**
+
 - `<objective>` — Feature, capability, integration, or initiative to plan. One-liner or multi-paragraph brief.
 
 **Options:**
+
 - `--interactive` — Ask discovery questions before researching (scope constraints, excluded technologies, target phase, priority bias)
 - `--dry-run` — Generate full plan and issue list but do not file anything. Outputs a preview table.
 - `--guidance "text"` — Upfront direction shaping research focus, prioritization, and scope without interactive prompts
@@ -2698,12 +3159,14 @@ aiwg index <subcommand> [options]
 ```
 
 **Subcommands:**
+
 - `build` - Build/rebuild the artifact index
 - `query` - Search artifacts by keyword, type, phase, tags
 - `deps` - Show artifact dependency graph
 - `stats` - Show index statistics
 
 **Global option (all subcommands):**
+
 - `--graph <name>` - Target a specific graph: built-in (`project`, `codebase`, `framework`) or user-defined
 
 **Capabilities:** cli, index, artifacts, search, dependencies
@@ -2721,6 +3184,7 @@ aiwg index build [options]
 ```
 
 **Options:**
+
 - `--force` - Full rebuild (ignore checksums, re-index everything)
 - `--verbose` - Show detailed progress during indexing
 - `--all` - Build all known graphs (built-in + user-defined)
@@ -2746,6 +3210,7 @@ index:
 ```
 
 Fields:
+
 - `scanDirs` (required) — directories to scan, relative to project root
 - `extensions` — file extensions to index (default: `.md`, `.yaml`, `.json`)
 - `defaultBuild` — whether to include in `aiwg index build` with no `--graph` (default: `true`)
@@ -2850,6 +3315,7 @@ aiwg index build --scope documentation/references
 ```
 
 **Output structure:**
+
 ```
 .aiwg/.index/
 ├── project/          # .aiwg/ artifacts
@@ -2875,9 +3341,11 @@ aiwg index query [search-text] [options]
 ```
 
 **Arguments:**
+
 - `[search-text]` - Optional keyword search (weighted: title 3x, tags 2x, summary 1x, path 0.5x)
 
 **Options:**
+
 - `--type <type>` - Filter by artifact type (e.g., `use-case`, `adr`, `test-plan`)
 - `--phase <phase>` - Filter by SDLC phase (e.g., `requirements`, `architecture`, `testing`)
 - `--tags <tag1,tag2>` - Filter by tags (AND logic — all tags must match)
@@ -2927,6 +3395,7 @@ aiwg index neighbors --node <id> [options]
 ```
 
 **Options:**
+
 - `--node <id>` - Node identifier (e.g., `REF-008`, `.aiwg/requirements/UC-001.md`)
 - `--direction <dir>` - `in`, `out`, or `both` (default: `both`)
 - `--edge-type <type>` - Filter by edge type (e.g., `cites`, `cited-by`, `implements`, `depends-on`)
@@ -2976,15 +3445,18 @@ aiwg index deps <path> [options]
 ```
 
 **Arguments:**
+
 - `<path>` - Path to the artifact (e.g., `.aiwg/requirements/UC-001.md`)
 
 **Options:**
+
 - `--direction <dir>` - Direction: `upstream`, `downstream`, or `both` (default: `both`)
 - `--depth <n>` - Maximum traversal depth (default: 3)
 - `--graph <type>` - Use a specific graph's dependency data
 - `--json` - Output as JSON (recommended for agents)
 
 **Behavior:**
+
 - `upstream` - What this artifact depends on (its @-mentions)
 - `downstream` - What depends on this artifact (mentions it)
 - `both` - Both directions
@@ -3018,14 +3490,17 @@ aiwg index stats [options]
 ```
 
 **Options:**
+
 - `--graph <type>` - Show stats for a specific graph only
 - `--json` - Output as JSON (recommended for agents)
 
 **Default behavior** (no `--graph`):
+
 - Human-readable: shows each available graph with a section header
 - JSON: returns an object keyed by graph name with all stats
 
 **Reports:**
+
 - Artifact counts by SDLC phase and type
 - Tag distribution
 - Dependency graph metrics (edges, orphaned artifacts)
@@ -3127,6 +3602,7 @@ aiwg activity-log <subcommand>
 **Wire format:** `## [YYYY-MM-DD HH:MM] <operation> | <summary>`
 
 **Environment:**
+
 - `AIWG_SKIP_ACTIVITY_LOG=1` — suppress append (per the activity-log rule)
 
 **Examples:**
@@ -3351,10 +3827,172 @@ aiwg cleanup-audit [--scope <path>] [--fix] [--verbose]
 **Tools:** Bash, Glob, Grep, Read, Write, Edit
 
 **Actions:**
+
 - Scans for unused exports, orphaned files, and dead code
 - Detects stale manifest entries and broken references
 - Reports findings with severity classification
 - Optionally applies auto-fixes with `--fix`
+
+---
+
+## Configuration Commands
+
+### config
+
+Manage user-level AIWG configuration (preferences persisted across projects).
+
+```bash
+aiwg config <subcommand> [args] [--config-dir <path>]
+```
+
+**Subcommands:**
+
+- `get <key>` - Read a configuration value
+- `set <key> <value>` - Write a configuration value
+- `list` - List all configuration keys and values
+- `validate` - Check the config file against the schema
+- `reset` - Restore defaults
+- `path` - Print the resolved config file path
+- `edit` - Open the config in `$EDITOR`
+
+**Options:**
+
+- `--config-dir <path>` - Override the config directory
+
+**Capabilities:** cli, configuration, user-config, preferences
+**Tools:** Read, Write, Bash
+
+Resolution order: `$AIWG_CONFIG` env var → `--config-dir` flag → `~/.aiwg/` → `~/.config/aiwg/`.
+
+---
+
+## Agentic Tools (RLM)
+
+Recursive Language Model utilities for processing content larger than a
+single context window — chunk, fan out queries, and synthesize results.
+
+### chunk
+
+Split a file into overlapping chunks suitable for parallel fanout processing.
+
+```bash
+aiwg chunk <file> [--size N] [--overlap N] [--format json|text] [--output <dir>]
+```
+
+**Arguments:**
+
+- `<file>` - Source file to split
+
+**Options:**
+
+- `--size N` - Target chunk size
+- `--overlap N` - Overlap between adjacent chunks
+- `--format json|text` - Output format
+- `--output <dir>` - Destination directory for chunks and manifest
+
+**Capabilities:** rlm, chunking, agentic-tools, context-decomposition
+**Tools:** Read, Write, Bash
+
+Writes chunk files plus a JSON manifest describing chunk locations and metadata.
+
+---
+
+### fanout
+
+Dispatch the same query to multiple subagents in parallel across a chunk manifest.
+
+```bash
+aiwg fanout <query> --chunks <dir|manifest.json> [--parallel N] [--model haiku|sonnet|opus]
+```
+
+**Arguments:**
+
+- `<query>` - Query to dispatch to each chunk
+
+**Options:**
+
+- `--chunks <dir|manifest.json>` - Chunk directory or manifest produced by `aiwg chunk` / `aiwg rlm-prep`
+- `--parallel N` - Maximum concurrent subagents
+- `--model haiku|sonnet|opus` - Model tier per subagent
+
+**Capabilities:** rlm, fanout, agentic-tools, parallel-search
+**Tools:** Read, Bash, Glob, Grep
+
+---
+
+### rlm-prep
+
+Prepare source content for RLM processing — chunk, index, and write a manifest.
+
+```bash
+aiwg rlm-prep <file|dir> [--output <dir>]
+                         [--strategy semantic-boundary|fixed-count|adaptive]
+                         [--size N]
+```
+
+**Arguments:**
+
+- `<file|dir>` - Source file or directory
+
+**Options:**
+
+- `--output <dir>` - Destination for chunks + manifest
+- `--strategy <name>` - Chunking strategy (default `semantic-boundary`)
+- `--size N` - Chunk size hint
+
+**Capabilities:** rlm, prep, agentic-tools, indexing
+**Tools:** Read, Write, Glob, Bash
+
+---
+
+### rlm-search
+
+Full recursive search pipeline: prep, fanout, recurse, synthesize.
+
+```bash
+aiwg rlm-search <query> --source <file|dir>
+                        [--depth N] [--parallel N] [--budget N]
+```
+
+**Arguments:**
+
+- `<query>` - Search query
+
+**Options:**
+
+- `--source <file|dir>` - Source content to search
+- `--depth N` - Maximum recursion depth
+- `--parallel N` - Subagent concurrency cap
+- `--budget N` - Token or cost budget ceiling
+
+**Capabilities:** rlm, search, agentic-tools, recursive, synthesis
+**Tools:** Read, Write, Glob, Grep, Bash
+
+Runs `rlm-prep` if needed, fans out across all chunks, recurses if results
+exceed context, and produces a synthesized answer with provenance and cost
+summary.
+
+---
+
+### rlm-status
+
+Show active RLM task tree, progress per node, and cost breakdown.
+
+```bash
+aiwg rlm-status [--cost] [--tree] [--json] [--task-id <id>]
+```
+
+**Options:**
+
+- `--cost` - Include cost breakdown
+- `--tree` - Render the task tree
+- `--json` - Emit structured JSON
+- `--task-id <id>` - Inspect a specific task
+
+**Capabilities:** rlm, status, agentic-tools, monitoring
+**Tools:** Read, Bash
+
+State source: `.aiwg/ralph/rlm-state.json`.
 
 ---
 
@@ -3374,6 +4012,7 @@ All commands are registered as extensions in the unified schema. This enables:
 - **Platform awareness**: Deploy to correct platform paths
 
 **Extension properties:**
+
 - `id`: Unique identifier (kebab-case)
 - `type`: Extension type (`command`, `agent`, `skill`, etc.)
 - `name`: Human-readable name
@@ -3384,6 +4023,7 @@ All commands are registered as extensions in the unified schema. This enables:
 - `metadata`: Type-specific data
 
 **See also:**
+
 - @src/extensions/types.ts - Full type definitions
 - @.aiwg/architecture/unified-extension-schema.md - Schema documentation
 

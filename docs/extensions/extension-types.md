@@ -21,7 +21,8 @@ type ExtensionType =
   | 'template'     // Document templates
   | 'prompt'       // Reusable prompts
   | 'soul'         // Agent identity and character
-  | 'behavior';    // Reactive capabilities with hooks
+  | 'behavior'     // Reactive capabilities with hooks
+  | 'team';        // Multi-agent team compositions
 ```
 
 ---
@@ -699,7 +700,34 @@ interface AddonMetadata {
 
 ## Template Extensions
 
-Document templates with variables and sections.
+Document scaffolds with named variables and sections, used to generate
+SDLC artifacts (use cases, ADRs, test plans, architecture docs, etc.).
+Templates ship as markdown/YAML/JSON files with placeholder variables;
+agents and skills populate the variables when generating artifacts.
+
+### Deployment Paths
+
+Templates are typically bundled inside frameworks rather than deployed
+to per-platform paths. The framework manifest's `metadata.includes.templates`
+references template IDs, and templates live under the framework's
+`templates/` subdirectory. Some addons deploy templates per platform via
+`pathTemplate: '.{platform}/templates/{id}.md'`.
+
+| Platform | Path |
+|----------|------|
+| Bundled in framework | `agentic/code/frameworks/{framework}/templates/{id}.md` |
+| Per-platform (rare) | `.{platform}/templates/{id}.md` |
+
+### Required Fields
+
+- `format` — Template language (`markdown`, `yaml`, `json`, `handlebars`)
+
+### Optional Fields
+
+- `variables` — Typed variable definitions consumed during fill-in
+- `sections` — Named sections present in the template body
+- `targetArtifact` — Logical artifact this template produces
+  (`use-case`, `architecture-doc`, `test-plan`, etc.)
 
 ### TemplateMetadata
 
@@ -723,11 +751,74 @@ interface TemplateVariable {
 }
 ```
 
+### Example
+
+```json
+{
+  "id": "use-case-template",
+  "type": "template",
+  "name": "Use Case Template",
+  "description": "Template for documenting use cases with actors, flows, and exceptions",
+  "version": "1.0.0",
+  "capabilities": ["documentation", "requirements", "use-case"],
+  "keywords": ["use-case", "requirements", "template"],
+  "category": "sdlc/requirements",
+  "platforms": { "claude": "full", "generic": "full" },
+  "deployment": {
+    "pathTemplate": "agentic/code/frameworks/sdlc-complete/templates/{id}.md"
+  },
+  "metadata": {
+    "type": "template",
+    "format": "markdown",
+    "targetArtifact": "use-case",
+    "sections": ["actors", "preconditions", "main-flow", "alternate-flows", "exceptions"],
+    "variables": [
+      { "name": "useCaseId", "description": "Unique use case identifier", "type": "string", "required": true },
+      { "name": "actor", "description": "Primary actor", "type": "string", "required": true },
+      { "name": "priority", "description": "Priority", "type": "string", "required": false, "default": "Medium" }
+    ]
+  }
+}
+```
+
+### Related References
+
+- `template-engine` skill — load, validate, and populate templates
+- `prefill-cards` skill — auto-populate template metadata headers
+- @agentic/code/frameworks/sdlc-complete/templates/ — 100+ ready-to-use templates
+
 ---
 
 ## Prompt Extensions
 
-Reusable prompt templates.
+Reusable prompt fragments with declared purpose and required context.
+Prompts are smaller than skills — a prompt is a parameterized chunk of
+instructions that an agent or skill composes into a larger workflow.
+Use prompts for repeated framing (review checklists, role primers,
+reliability reminders) that multiple agents or skills consume.
+
+### Deployment Paths
+
+Prompts deploy alongside skills/commands on platforms that have a prompts
+directory, and bundled inside frameworks otherwise.
+
+| Platform | Path |
+|----------|------|
+| Claude Code | `.claude/prompts/{id}.md` |
+| Codex | `~/.codex/prompts/{id}.md` |
+| GitHub Copilot | `.github/prompts/{id}.md` |
+| Bundled in framework | `agentic/code/frameworks/{framework}/prompts/{id}.md` |
+
+### Required Fields
+
+- `category` — Classification (`core`, `reliability`, `agents`, `review`, etc.)
+- `purpose` — What this prompt accomplishes
+- `useWhen` — Situations where the prompt should be composed in
+
+### Optional Fields
+
+- `variables` — Names of placeholder variables in the prompt body
+- `requiredContext` — Context the caller must inject for the prompt to work
 
 ### PromptMetadata
 
@@ -744,11 +835,81 @@ interface PromptMetadata {
 }
 ```
 
+### Example
+
+```json
+{
+  "id": "review-checklist",
+  "type": "prompt",
+  "name": "Code Review Checklist",
+  "description": "Reusable checklist prompt for code review agents",
+  "version": "1.0.0",
+  "capabilities": ["code-review", "quality"],
+  "keywords": ["review", "checklist", "quality"],
+  "category": "review",
+  "platforms": { "claude": "full", "generic": "full" },
+  "deployment": {
+    "pathTemplate": ".{platform}/prompts/{id}.md"
+  },
+  "metadata": {
+    "type": "prompt",
+    "category": "review",
+    "purpose": "Provide a consistent review checklist that any reviewer agent can compose into its own prompt",
+    "useWhen": [
+      "Code review agent invocation",
+      "PR-review skill execution",
+      "Pre-merge gate validation"
+    ],
+    "variables": ["filePath", "language", "changeScope"],
+    "requiredContext": ["diff", "test-results"]
+  }
+}
+```
+
+### Related References
+
+- `pr-review` skill — composes review prompts into multi-perspective reviews
+- `review-synthesis` skill — aggregates multi-reviewer feedback
+- @agentic/code/frameworks/sdlc-complete/prompts/ — bundled review and reliability prompts
+
 ---
 
 ## Soul Extensions
 
-Agent identity and character definitions based on the soul.md specification.
+Agent identity and character definitions based on the
+[soul.md specification](https://github.com/aaronjmars/soul.md). A soul
+declares *who* an agent is — worldview, opinions, vocabulary, boundaries —
+distinct from *how* it sounds (voice profile) or *what* it does (skill /
+agent definition). Souls are scoped either project-wide (one identity for
+all agents) or per-agent (a specific character for one agent).
+
+### Deployment Paths
+
+Souls deploy as `SOUL.md` files. Project-scoped souls live at the project
+root for each platform; agent-scoped souls live alongside the agent file
+with a `.soul.md` companion suffix.
+
+| Platform | Project-scoped | Agent-scoped |
+|----------|----------------|--------------|
+| Claude Code | `.claude/SOUL.md` | `.claude/agents/{agent}.soul.md` |
+| Cursor | `.cursor/SOUL.md` | `.cursor/agents/{agent}.soul.md` |
+| OpenClaw | `~/.openclaw/SOUL.md` | `~/.openclaw/agents/{agent}.soul.md` |
+| Generic | `SOUL.md` (project root) | `agents/{agent}.soul.md` |
+
+The `soul-enable` skill wires SOUL.md into platform context files;
+`soul-disable` reverses it without deleting the source.
+
+### Required Fields
+
+- `scope` — `project` or `agent`
+- `sections` — Sections present in the SOUL.md body
+  (commonly `who-i-am`, `worldview`, `opinions`, `vocabulary`, `boundaries`)
+
+### Optional Fields
+
+- `targetAgent` — Required when `scope` is `agent`; the agent name this soul applies to
+- `companions` — Related files (`STYLE.md`, `MEMORY.md`, `examples/`)
+- `estimatedTokens` — Context budget estimate
 
 ### SoulMetadata
 
@@ -815,11 +976,50 @@ interface SoulMetadata {
 }
 ```
 
+### Related References
+
+- `soul-create`, `soul-enhance`, `soul-validate`, `soul-blend` — authoring skills
+- `soul-apply` — apply a soul during content generation
+- `soul-to-voice` / `voice-to-soul` — convert between soul and voice profiles
+- @agentic/code/addons/voice-framework/ — voice profile companion ecosystem
+- @agentic/code/frameworks/sdlc-complete/agents/*.soul.md — agent-scoped soul examples
+
 ---
 
 ## Behavior Extensions
 
 Reactive capabilities with scripts, event hooks, and structured inputs. Behaviors extend beyond skills by subscribing to system events and reacting automatically. On platforms without hook support, behaviors degrade gracefully to skills (NLP triggers only).
+
+### Deployment Paths
+
+Behaviors deploy as a directory containing `BEHAVIOR.md` plus an optional
+`scripts/` subdirectory. OpenClaw is the reference implementation with
+native hook support; other platforms emulate via the AIWG daemon.
+
+| Platform | Path | Hook Support |
+|----------|------|--------------|
+| OpenClaw | `~/.openclaw/behaviors/{id}/` | Native |
+| Claude Code | `.claude/behaviors/{id}/` | Partial (via settings.json hooks) |
+| Cursor | `.cursor/behaviors/{id}/` | Emulated (daemon) |
+| Warp | `.warp/behaviors/{id}/` | Emulated (daemon) |
+| Copilot | `.github/behaviors/{id}/` | Emulated (daemon) |
+| Windsurf | `.windsurf/behaviors/{id}/` | Emulated (daemon) |
+| Factory | `.factory/behaviors/{id}/` | Emulated (daemon) |
+| Codex | `~/.codex/behaviors/{id}/` | Emulated (daemon) |
+| OpenCode | `.opencode/behaviors/{id}/` | Emulated (daemon) |
+
+### Required Fields
+
+At least one of `triggerPhrases`, `hooks`, or `scripts` must be present —
+a behavior with none of these has no way to activate.
+
+### Optional Fields
+
+- `triggerPhrases` — NLP invocation phrases (parallel to skills)
+- `inputs` — Structured typed input parameters
+- `hooks` — Event subscriptions (`on_file_write`, `on_schedule`, etc.)
+- `scripts` — Logical name to script path map
+- `manifest` — Category, runtime requires, declared outputs, composability
 
 ### BehaviorMetadata
 
@@ -1087,11 +1287,13 @@ interface DeploymentConfig {
 ```
 
 **Path variables:**
+
 - `{platform}` - Target platform (claude, copilot, etc.)
 - `{id}` - Extension ID
 - `{type}` - Extension type
 
 **Path examples:**
+
 - `.{platform}/agents/{id}.md` → `.claude/agents/api-designer.md`
 - `.{platform}/commands/{id}.md` → `.github/agents/use.md`
 - `.{platform}/skills/{id}/SKILL.md` → `.cursor/skills/project-awareness/SKILL.md`
@@ -1114,6 +1316,7 @@ interface ValidationRules {
 ```
 
 **Required fields for all extensions:**
+
 - `id` - Unique identifier (kebab-case)
 - `type` - Extension type
 - `name` - Human-readable name
@@ -1129,11 +1332,43 @@ interface ValidationRules {
 
 ## Team Extensions
 
-Multi-agent team compositions that work across all AIWG providers. On Claude Code, teams invoke agents natively. On all other providers, teams are emulated via `aiwg mc` (Mission Control) orchestration.
+Multi-agent team compositions that work across all AIWG providers. A team
+groups 2–8 agents with assigned roles (lead, contributor, reviewer,
+advisor), an execution mode (parallel, sequential, consensus), and
+optional inter-agent handoffs. On Claude Code, teams invoke agents
+natively via the Task tool; on all other providers, teams are emulated
+via `aiwg mc` (Mission Control) orchestration.
 
 **Source format:** JSON files in `agentic/code/frameworks/*/teams/`
 **Schema:** `agentic/code/frameworks/sdlc-complete/teams/schema.json`
 **CLI:** `aiwg team run|list|info`
+
+### Deployment Paths
+
+Teams ship as part of their parent framework rather than per-platform.
+Project-local teams in `.aiwg/teams/<slug>.json` take precedence over
+framework-bundled teams.
+
+| Source | Path |
+|--------|------|
+| Framework-bundled | `agentic/code/frameworks/{framework}/teams/{slug}.json` |
+| Project-local | `.aiwg/teams/{slug}.json` |
+
+### Required Fields
+
+- `name` — Human-readable team name
+- `slug` — Kebab-case CLI identifier
+- `description` — One-line purpose
+- `agents` — 2–8 team members with `agent` and `role`
+
+### Optional Fields
+
+- `dispatch` — Execution mode (`parallel`, `sequential`, `consensus`)
+- `use_cases` — Scenarios where this team excels
+- `handoffs` — Inter-agent artifact passing with quality gates
+- `sdlc_phases` — Active SDLC phases (Inception, Elaboration, etc.)
+- `max_context_agents` — Context budget cap (2–4)
+- `overlap_resolution` — Capability conflict resolution rules
 
 ### TeamDefinition
 
@@ -1187,6 +1422,38 @@ interface TeamHandoff {
 ### Deployment
 
 Teams are deployed as part of `aiwg use <framework>`. Project-local teams can be placed in `.aiwg/teams/<slug>.json` and take precedence over framework teams.
+
+### Example
+
+```json
+{
+  "name": "API Development Team",
+  "slug": "api-development",
+  "description": "Design, build, test, and document production-grade APIs",
+  "dispatch": "sequential",
+  "agents": [
+    { "agent": "api-designer", "role": "lead",
+      "responsibilities": ["Define API contracts", "Establish versioning"] },
+    { "agent": "test-engineer", "role": "contributor",
+      "responsibilities": ["Write contract and integration tests"] },
+    { "agent": "security-auditor", "role": "reviewer",
+      "responsibilities": ["Review auth and rate limiting"] }
+  ],
+  "handoffs": [
+    { "from": "api-designer", "to": "test-engineer",
+      "artifact": "OpenAPI spec", "gate": "spec validates against schema" }
+  ],
+  "sdlc_phases": ["Elaboration", "Construction"],
+  "max_context_agents": 3
+}
+```
+
+### Related References
+
+- `team` skill — `aiwg team run|list|info` orchestration
+- `parallel-dispatch` skill — Mission Control fallback for non-Claude providers
+- @agentic/code/frameworks/sdlc-complete/teams/schema.json — full JSON Schema
+- @agentic/code/frameworks/sdlc-complete/teams/README.md — usage guide
 
 ---
 

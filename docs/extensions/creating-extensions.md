@@ -3,6 +3,7 @@
 Learn how to create custom agents, commands, skills, and other extensions for AIWG.
 
 **References:**
+
 - @docs/extensions/overview.md - Extension system overview
 - @docs/extensions/extension-types.md - Type reference
 - @src/extensions/types.ts - Type definitions
@@ -142,9 +143,11 @@ Review code for security vulnerabilities including:
 ## Example Usage
 
 ```
+
 "Review authentication code in src/auth/ for security issues"
 "Scan for SQL injection vulnerabilities"
 "Generate security report for production deployment"
+
 ```
 
 ## References
@@ -178,6 +181,7 @@ interface AgentMetadata {
 ### Best Practices
 
 **DO:**
+
 - Define clear, specific roles
 - List required tools explicitly
 - Provide step-by-step workflows
@@ -186,6 +190,7 @@ interface AgentMetadata {
 - Use appropriate model tier (haiku for simple, opus for complex)
 
 **DON'T:**
+
 - Make agents too generic
 - Omit tool requirements
 - Skip workflow documentation
@@ -292,6 +297,7 @@ Critical Issues:
 
 Report saved to: .aiwg/security/scan-report.md
 ```
+
 ```
 
 ### Command Metadata
@@ -331,18 +337,21 @@ interface CommandOption {
 ### Command Templates
 
 **Utility** - Simple operations:
+
 - Single file operations
 - Status checks
 - Information display
 - Quick transformations
 
 **Transformation** - Data processing:
+
 - File format conversion
 - Code generation
 - Report generation
 - Data validation
 
 **Orchestration** - Complex workflows:
+
 - Multi-step processes
 - Agent coordination
 - Framework deployment
@@ -369,6 +378,7 @@ Skills are natural language workflows. Claude Code uses the `description:` field
 | Negation patterns ("what are we NOT doing") | Generic phrases ("run this", "do that") |
 
 **Do NOT add a `triggers:` key to frontmatter.** Triggers are expressed through:
+
 - `description:` — primary NL signal (frontmatter)
 - `## Triggers` section in body — supplementary alt expressions only
 
@@ -478,17 +488,20 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 
 **Skill activates:**
 ```
+
 Security-sensitive code detected
 
 You're modifying authentication logic. Consider:
-  - Input validation on username/password
-  - Rate limiting to prevent brute force
-  - Secure password hashing (bcrypt, scrypt)
-  - Session token security (httpOnly, secure flags)
-  - Audit logging for failed attempts
+
+- Input validation on username/password
+- Rate limiting to prevent brute force
+- Secure password hashing (bcrypt, scrypt)
+- Session token security (httpOnly, secure flags)
+- Audit logging for failed attempts
 
 Recommend security review before merging.
 Run: /security-auditor "Review auth changes"
+
 ```
 ```
 
@@ -665,6 +678,166 @@ variables:
 
 ---
 
+## Creating Souls
+
+Souls declare agent identity — worldview, opinions, vocabulary, and
+boundaries. Author souls when you need an agent or a whole project to
+hold a consistent character across sessions.
+
+### Authoring Workflow
+
+Use the soul authoring skills rather than writing SOUL.md by hand —
+they enforce the section structure and validate output.
+
+```bash
+# Generate from source material or interactive prompts
+aiwg soul-create --interactive
+
+# Improve an existing SOUL.md
+aiwg soul-enhance .claude/SOUL.md
+
+# Validate before committing
+aiwg soul-validate .claude/SOUL.md
+
+# Convert between soul and voice profile
+aiwg soul-to-voice .claude/SOUL.md
+aiwg voice-to-soul agentic/code/addons/voice-framework/voices/templates/technical-authority.md
+```
+
+### Required Sections
+
+Author the SOUL.md body with these sections:
+
+- `who-i-am` — Core identity statement
+- `worldview` — Perspective and philosophy
+- `opinions` — Held positions and stances
+- `vocabulary` — Preferred and avoided language
+- `boundaries` — What this agent will and will not do
+
+### Project vs Agent Scope
+
+Project-scoped souls live at the platform context root
+(`.claude/SOUL.md`, `.cursor/SOUL.md`). Agent-scoped souls live next to
+the agent file with a `.soul.md` suffix
+(`.claude/agents/test-engineer.soul.md`). Set `scope` and (for agent
+scope) `targetAgent` in the manifest.
+
+### Wiring Souls Into Context
+
+After authoring, run `aiwg soul-enable` to wire SOUL.md into platform
+context files. `aiwg soul-disable` reverses it without deleting the
+source. `aiwg soul-status` shows enforcement state across providers.
+
+---
+
+## Creating Behaviors
+
+Behaviors are reactive capabilities that subscribe to system events and
+optionally execute shell scripts. Reach for a behavior when the
+capability needs to be always-on and event-driven, not just NL-invoked.
+
+### Authoring Workflow
+
+Use `aiwg add-behavior` to scaffold the directory layout — it creates
+`BEHAVIOR.md` plus a `scripts/` subdirectory and registers the behavior
+with the daemon.
+
+```bash
+# Scaffold a new behavior (defaults to script mode)
+aiwg add-behavior security-sentinel
+
+# Scaffold an agent-mode behavior (no scripts; AI body)
+aiwg add-behavior concierge --mode agent
+
+# Deploy to a specific provider
+aiwg add-behavior security-sentinel --provider openclaw
+
+# Lifecycle
+aiwg behavior list
+aiwg behavior run <name>
+aiwg behavior stop <name>
+```
+
+### Choosing a Mode
+
+- **`mode: script` (default)** — Shell scripts execute on hook events.
+  Use for build monitoring, scheduled audits, deterministic checks.
+- **`mode: agent`** — The BEHAVIOR.md body instructs the AI directly,
+  no scripts. Use for routing, interaction-layer behaviors (Concierge),
+  or anything where AI judgment is central.
+
+### Required Frontmatter
+
+Every BEHAVIOR.md needs `name`, `version`, `description`, `platforms`,
+and at least one of `triggers` (NLP), `hooks` (events), or `scripts`.
+The full frontmatter reference is in
+[Extension Types — Behavior](extension-types.md#behavior-extensions).
+
+### Cross-Platform Notes
+
+OpenClaw is the reference implementation with native hook support.
+Other providers emulate hooks via the AIWG daemon — install and run
+the daemon for full behavior coverage. On platforms with no hook
+support, behaviors degrade to skills (NLP triggers only) automatically.
+
+---
+
+## Creating Teams
+
+Teams compose 2–8 agents into a coordinated workflow. Author a team
+when a recurring multi-agent task benefits from explicit role
+assignment, dispatch ordering, and handoff gates.
+
+### Authoring Workflow
+
+Teams are JSON files validated against a schema. Place framework teams
+in `agentic/code/frameworks/{framework}/teams/{slug}.json`; place
+project-local teams in `.aiwg/teams/{slug}.json` (project-local takes
+precedence over framework teams with the same slug).
+
+```bash
+# List installed teams
+aiwg team list
+
+# Inspect a team
+aiwg team info api-development
+
+# Run a team
+aiwg team run api-development --task "Design and ship the payments API"
+```
+
+Validate against the schema at
+`agentic/code/frameworks/sdlc-complete/teams/schema.json` before
+committing.
+
+### Team Authoring Checklist
+
+- **2–8 agents** — Smaller teams are clearer; larger teams hit context
+  budget and coordination limits.
+- **One `lead`** — Other roles are `contributor`, `reviewer`, `advisor`.
+- **Pick a dispatch mode** — `sequential` (default) for handoff chains,
+  `parallel` for independent reviews, `consensus` for joint decisions.
+- **Declare handoffs explicitly** — Each handoff names the source
+  agent, target agent, artifact passed, and quality gate.
+- **Set `max_context_agents`** — Default is 4; lower it (2–3) for
+  context-constrained sessions.
+
+### Native vs Emulated Execution
+
+On Claude Code, teams dispatch agents natively via the Task tool. On
+all other providers, AIWG falls back to `aiwg mc` (Mission Control)
+orchestration — make sure the daemon is running and the requested
+agents have been deployed to that provider.
+
+### Related Patterns
+
+Teams complement SkillSmith (skills) and AgentSmith (agents) — author
+the constituent agents first, then compose them into a team. The
+`parallel-dispatch` skill is the shared primitive both team execution
+modes use under the hood.
+
+---
+
 ## Validation
 
 Validate your extension before deployment:
@@ -674,6 +847,7 @@ aiwg validate-metadata path/to/extension.json
 ```
 
 **Checks:**
+
 - All required fields present
 - ID follows kebab-case convention
 - Version format valid (semver or CalVer)
@@ -826,6 +1000,7 @@ aiwg use @myorg/aiwg-security
 ## Examples
 
 See:
+
 - @agentic/code/frameworks/sdlc-complete/agents/ - Agent examples
 - @agentic/code/frameworks/sdlc-complete/commands/ - Command examples
 - @agentic/code/frameworks/sdlc-complete/skills/ - Skill examples

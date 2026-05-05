@@ -4,7 +4,7 @@
 
 **Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 4 more platforms**
 
-188 agents, 50 CLI commands, 128 skills, 5 core frameworks + training marketplace plugin, 23 addons. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, and fine-tuning dataset curation — all deployable with one command.
+200+ agents, 67+ CLI commands, 130+ skills, 8 core frameworks + training marketplace plugin, 27 addons. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
 ```bash
 npm i -g aiwg        # install globally
@@ -185,6 +185,7 @@ Inception → Elaboration → Construction → Transition → Production
 ```
 
 Cognitive load optimization follows Miller's 7±2 limits (1956) and Sweller's worked examples approach (1988):
+
 - 4 phases (not 12)
 - 3-5 artifacts per phase (not 20)
 - 5-7 section headings per template (not 15)
@@ -334,8 +335,8 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 - **35 enforcement rules** — anti-laziness detection, token security, citation integrity, executable feedback, failure mitigation across 6 LLM archetypes
 - **334 artifact templates** — progressive disclosure templates for requirements, architecture, testing, security, deployment, and more
 - **8 platform support** — deploy to Claude Code, Copilot, Cursor, Warp, Factory AI, OpenCode, Codex, and Windsurf
-- **5 core frameworks + training marketplace plugin** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
-- **23 addons** — semantic-memory kernel, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, voice profiles, testing quality, mutation testing, UAT automation, and more
+- **8 core frameworks + training marketplace plugin** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
+- **27 addons** — semantic-memory kernel, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, voice profiles, testing quality, mutation testing, UAT automation, and more
 - **Agent Loop** — iterative task execution with automatic error recovery and crash resilience (6-8 hour sessions)
 - **RLM addon** — recursive context decomposition for processing 10M+ tokens via sub-agent delegation
 - **YAML metalanguage** — declarative schema-validated workflow definitions (JSON Schema 2020-12)
@@ -358,7 +359,7 @@ npm install -g aiwg
 
 # Deploy to your project
 cd your-project
-aiwg use sdlc              # Full SDLC framework (90 agents, 34 rules, 170+ templates)
+aiwg use sdlc              # Full SDLC framework (98 agents, 38 rules, 200+ templates)
 aiwg use forensics         # Digital forensics & incident response (13 agents, 10 skills)
 aiwg use marketing         # Marketing operations (37 agents, 87+ templates)
 aiwg use media-curator     # Media archive management (6 agents, 9 commands)
@@ -420,15 +421,15 @@ aiwg use sdlc --provider windsurf      # Windsurf
 
 | Framework | Agents | Templates | What It Does |
 |-----------|--------|-----------|--------------|
-| **[SDLC Complete](agentic/code/frameworks/sdlc-complete/)** | 90 | 170+ | Full software development lifecycle — Inception through Production with multi-agent orchestration, quality gates, and DORA metrics |
+| **[SDLC Complete](agentic/code/frameworks/sdlc-complete/)** | 98 | 200+ | Full software development lifecycle — Inception through Production with multi-agent orchestration, quality gates, and DORA metrics |
 | **[Forensics Complete](agentic/code/frameworks/forensics-complete/)** | 13 | 8 | Digital forensics and incident response — evidence acquisition, timeline reconstruction, IOC extraction, Sigma rule hunting. NIST SP 800-86, MITRE ATT&CK, STIX 2.1 |
 | **[Media/Marketing Kit](agentic/code/frameworks/media-marketing-kit/)** | 37 | 87+ | End-to-end marketing operations — strategy, content creation, campaign management, brand compliance, analytics, and reporting |
 | **[Media Curator](agentic/code/frameworks/media-curator/)** | 6 | — | Intelligent media archive management — discography analysis, source discovery, quality filtering, metadata curation, multi-platform export (Plex, Jellyfin, MPD) |
 | **[Research Complete](agentic/code/frameworks/research-complete/)** | 8 | 6 | Academic research automation — paper discovery, citation management, RAG-based summarization, GRADE quality scoring, FAIR compliance, W3C PROV provenance |
-| **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 2 | 3 | Operational infrastructure — incident management, runbooks, troubleshooting workflows |
+| **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 12 | 3 | Operational infrastructure — incident management, runbooks, troubleshooting workflows |
 | **[Security Engineering](agentic/code/frameworks/security-engineering/)** | 2 | 5 | Applied security beyond STRIDE/OWASP — cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode design, runtime secret hygiene, supply-chain trust, physical-access threats. Pattern-based, product-agnostic |
 
-### Addons (21)
+### Addons (27)
 
 | Addon | What It Does |
 |-------|--------------|
@@ -438,8 +439,14 @@ aiwg use sdlc --provider windsurf      # Windsurf
 | **[Voice Framework](agentic/code/addons/voice-framework/)** | 4 built-in voice profiles (technical-authority, friendly-explainer, executive-brief, casual-conversational) with create/blend/apply skills |
 | **[UAT-MCP Toolkit](agentic/code/addons/uat-mcp/)** | User acceptance testing with MCP-powered test execution, coverage tracking, and regression detection |
 | **[AIWG Evals](agentic/code/addons/aiwg-evals/)** | Agent evaluation framework — archetype resistance testing (Roig 2025), performance benchmarks, quality scoring |
-| **[Ralph](agentic/code/addons/ralph/)** | Iterative task execution engine — automatic error recovery, crash resilience, completion tracking |
-| **[Security](agentic/code/addons/security/)** | Security testing, vulnerability scanning, SAST integration, compliance validation |
+| **[Agent Loop](agentic/code/addons/agent-loop/)** | Iterative task execution engine (`aiwg ralph` / `aiwg agent-loop-ext`) — automatic error recovery, crash resilience, completion tracking |
+| **[Agentic Installer](agentic/code/addons/agentic-installer/)** | `setup.aiwg.io/v1` SetupManifest installer — cross-platform install workflows with recovery |
+| **[AIWG Dev](agentic/code/addons/aiwg-dev/)** | AIWG development tooling — extension scaffolding, local-source dev mode |
+| **[Daemon](agentic/code/addons/daemon/)** | Persistent daemon mode — background sessions, task queue, health monitoring |
+| **[LLM Wiki](agentic/code/addons/llm-wiki/)** | Obsidian-native knowledge base for LLM agents — semantic linking, vault integration |
+| **[NLP Prod](agentic/code/addons/nlp-prod/)** | Production NLP pipelines — entity extraction, classification, summarization |
+| **[Prose Integration](agentic/code/addons/prose-integration/)** | OpenProse contract grammar integration — declarative service contracts |
+| **[Semantic Memory](agentic/code/addons/semantic-memory/)** | Semantic memory kernel — query, capture, lifecycle management for agent memory |
 | **[Context Curator](agentic/code/addons/context-curator/)** | Context pre-filtering to remove distractors — production-grade agent reliability |
 | **[Verbalized Sampling](agentic/code/addons/verbalized-sampling/)** | Probability distribution prompting — 1.6-2.1x output diversity improvement |
 | **[Guided Implementation](agentic/code/addons/guided-implementation/)** | Bounded iteration control for issue-to-code automation |
@@ -1303,6 +1310,7 @@ External Ralph runs as a **persistent background process** with PID file trackin
 ```
 
 External Ralph features:
+
 - **Crash resilience** — PID file recovery, automatic restart on process death
 - **Checkpoint system** — saves progress at each iteration boundary, resumes from last checkpoint
 - **Cross-session persistence** — state stored in `.aiwg/ralph-external/`, survives terminal disconnects
@@ -1612,16 +1620,19 @@ Full research background, citations, and methodology: [docs/research/](docs/rese
 ### By Audience
 
 **Practitioners:**
+
 - [Quick Start Guide](docs/quickstart.md) — Hands-on workflows
 - [Agent Loop Guide](docs/ralph-guide.md) — Iterative execution with crash recovery
 - [Platform Guides](docs/integrations/) — 5-10 minute setup per platform
 
 **Technical Leaders:**
+
 - [Extension System Overview](docs/extensions/overview.md) — Architecture and capabilities
 - [Workspace Architecture](docs/architecture/workspace-architecture.md) — Multi-framework isolation
 - [Multi-Agent Orchestration](agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md) — Ensemble patterns
 
 **Researchers & Evaluators:**
+
 - [Research Background](docs/research/) — Literature review and citations
 - [Glossary](docs/research/glossary.md) — Professional terminology mapping
 - [Production-Grade Guide](docs/production-grade-guide.md) — Failure mode mitigation
@@ -1636,7 +1647,7 @@ Full research background, citations, and methodology: [docs/research/](docs/rese
 
 ### Framework Documentation
 
-- **[SDLC Framework](agentic/code/frameworks/sdlc-complete/README.md)** — 90 agents, phase workflows, quality gates
+- **[SDLC Framework](agentic/code/frameworks/sdlc-complete/README.md)** — 98 agents, phase workflows, quality gates
 - **[Forensics Complete](agentic/code/frameworks/forensics-complete/README.md)** — DFIR investigation workflows
 - **[Marketing Kit](agentic/code/frameworks/media-marketing-kit/README.md)** — 37 agents, campaign lifecycle
 - **[Media Curator](agentic/code/frameworks/media-curator/README.md)** — Media archive management
@@ -1667,6 +1678,7 @@ AIWG's unified extension system enables dynamic discovery, semantic search, and 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Quick contributions:**
+
 - Found an AI pattern? [Open an issue](https://github.com/jmagly/aiwg/issues/new)
 - Have a better rewrite? Submit a PR to `examples/`
 - Want to add an agent? Use `aiwg add-agent` or see `docs/development/agent-template.md`
