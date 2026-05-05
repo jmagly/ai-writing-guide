@@ -45,7 +45,7 @@ export async function main(args: string[]): Promise<void> {
       await handleShow(projectRoot);
       break;
     case 'list-backends':
-      await handleListBackends();
+      await handleListBackends(subArgs);
       break;
     case 'test':
       await handleTest(projectRoot, subArgs);
@@ -91,7 +91,23 @@ async function handleShow(projectRoot: string): Promise<void> {
   console.log('');
 }
 
-async function handleListBackends(): Promise<void> {
+async function handleListBackends(args: string[] = []): Promise<void> {
+  const json = args.includes('--json');
+
+  if (json) {
+    const out = BACKEND_TYPES.map((t) => {
+      const status = backendStatus(t);
+      return {
+        type: t,
+        status: status.implemented ? 'ready' : 'stub',
+        note: status.note,
+        ...(status.trackingIssue ? { tracking_issue: status.trackingIssue } : {}),
+      };
+    });
+    console.log(JSON.stringify(out, null, 2));
+    return;
+  }
+
   console.log(`Compiled-in storage backends:\n`);
   console.log(`  STATUS   TYPE          NOTES`);
   console.log(`  ──────   ────────────  ────────────────────────────────────────`);
@@ -453,9 +469,12 @@ function describeBackendLocation(
 interface BackendStatus {
   implemented: boolean;
   note: string;
+  trackingIssue?: string;
 }
 
-function backendStatus(type: BackendType): BackendStatus {
+const ISSUE_TRACKER_BASE = 'https://git.integrolabs.net/roctinam/aiwg/issues';
+
+export function backendStatus(type: BackendType): BackendStatus {
   switch (type) {
     case 'fs':
       return { implemented: true, note: 'default backend — local filesystem' };
@@ -464,15 +483,31 @@ function backendStatus(type: BackendType): BackendStatus {
     case 'logseq':
       return { implemented: true, note: 'fs writes; YAML→property:: transform; refuses logseq/' };
     case 'notion':
-      return { implemented: false, note: 'planned (#959) — REST + external_id upsert' };
+      return {
+        implemented: false,
+        note: 'planned (#959) — REST + external_id upsert',
+        trackingIssue: `${ISSUE_TRACKER_BASE}/959`,
+      };
     case 'anythingllm':
-      return { implemented: false, note: 'planned (#960) — multipart upload' };
+      return {
+        implemented: false,
+        note: 'planned (#960) — multipart upload',
+        trackingIssue: `${ISSUE_TRACKER_BASE}/960`,
+      };
     case 'fortemi':
       return { implemented: true, note: 'MCP-routed via configured Fortemi server (alpha)' };
     case 's3':
-      return { implemented: false, note: 'planned (#962) — phase 3' };
+      return {
+        implemented: false,
+        note: 'planned (#962) — phase 3',
+        trackingIssue: `${ISSUE_TRACKER_BASE}/962`,
+      };
     case 'webdav':
-      return { implemented: false, note: 'planned (#963) — phase 3' };
+      return {
+        implemented: false,
+        note: 'planned (#963) — phase 3',
+        trackingIssue: `${ISSUE_TRACKER_BASE}/963`,
+      };
     default: {
       const _exhaustive: never = type;
       void _exhaustive;
@@ -486,7 +521,7 @@ function printUsage(): void {
 
 Subcommands:
   show                          Print effective config + resolved physical paths
-  list-backends                 Inventory of compiled-in adapters with their status
+  list-backends [--json]        Inventory of compiled-in adapters; --json emits structured output including tracking_issue URL for stubs
   test <subsystem>              Round-trip read/write/list/delete through the configured backend
   migrate <subsystem>           Copy entries from one backend to another (#955)
     --from <type>:<location>    Source spec (fs:./dir, obsidian:~/vault, logseq:./graph, fortemi:server)

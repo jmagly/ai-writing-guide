@@ -93,6 +93,23 @@ describe('storage/index resolveStorage', () => {
     await expect(resolveStorage('memory')).rejects.toThrow(/not yet implemented/);
   });
 
+  it.each([
+    ['notion', '#959', { type: 'notion', parent: { pageId: 'abc' } }],
+    ['anythingllm', '#960', { type: 'anythingllm', baseUrl: 'http://x', workspace: 'w' }],
+    ['s3', '#962', { type: 's3', bucket: 'b', region: 'us-east-1' }],
+    ['webdav', '#963', { type: 'webdav', url: 'http://x', basePath: '/' }],
+  ] as const)('stub backend %s error points at tracking issue %s (#1087)', async (_type, expectedIssue, backendCfg) => {
+    await mkdir(join(projectRoot, '.aiwg'), { recursive: true });
+    await writeFile(
+      join(projectRoot, '.aiwg', 'storage.config'),
+      JSON.stringify({ version: '1', backends: { memory: backendCfg } }),
+      'utf-8'
+    );
+    await initStorage(projectRoot);
+    const escaped = expectedIssue.replace('#', '\\#');
+    await expect(resolveStorage('memory')).rejects.toThrow(new RegExp(`Tracked at ${escaped}`));
+  });
+
   it('getLoadedConfig returns null when no storage.config', async () => {
     const cfg = await getLoadedConfig(projectRoot);
     expect(cfg).toBeNull();

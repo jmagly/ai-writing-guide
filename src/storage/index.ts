@@ -132,11 +132,18 @@ function createAdapter(subsystem: SubsystemKey, s: RegistryState): StorageAdapte
     case 'notion':
     case 'anythingllm':
     case 's3':
-    case 'webdav':
+    case 'webdav': {
+      const stubIssues: Record<'notion' | 'anythingllm' | 's3' | 'webdav', string> = {
+        notion: '#959',
+        anythingllm: '#960',
+        s3: '#962',
+        webdav: '#963',
+      };
       throw new Error(
         `storage: backend "${backend.type}" is declared in storage.config but not yet implemented. ` +
-          `See issues #959, #960, #962, and #963 for tracking.`
+          `Tracked at ${stubIssues[backend.type]} — see https://git.integrolabs.net/roctinam/aiwg/issues/${stubIssues[backend.type].slice(1)} for status.`
       );
+    }
     default: {
       // Exhaustiveness check
       const _exhaustive: never = backend;
