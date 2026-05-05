@@ -407,27 +407,24 @@ export function transformSkillFrontmatter(content, opts) {
   if (!fmMatch) return content;
 
   const [, prefix, frontmatter, body] = fmMatch;
-  let updated = frontmatter;
 
-  // Match commandHint.allowedTools — indented under commandHint:.
-  // Example:
-  //   commandHint:
-  //     allowedTools: 'WebSearch, Read, Write, Bash'
-  // Quotes are optional; inline comments are not preserved (rare in source).
+  // Step 1: filter top-level keys to the Factory-recognized allowlist (#102).
+  // Anything else is AIWG-internal metadata or Claude Code-specific and would
+  // confuse Factory's skill loader. Block-aware parsing preserves multi-line
+  // values like the `commandHint:` map.
+  const filtered = filterFactorySkillFrontmatter(frontmatter);
+
+  // Step 2: rewrite the still-Claude-flavored bits inside `commandHint:` —
+  // tool name remap and model shorthand → Factory model id.
+  let updated = filtered;
   updated = updated.replace(
     /^(\s+allowedTools:\s*)(['"]?)([^\n'"]+)\2/m,
     (_match, lead, quote, raw) => {
       const mapped = mapAllowedToolsString(raw);
-      // Keep the original quoting style — fall back to single quotes if none.
       const q = quote || "'";
       return `${lead}${q}${mapped}${q}`;
     }
   );
-
-  // Match commandHint.model — indented under commandHint:.
-  // Example:
-  //   commandHint:
-  //     model: sonnet
   updated = updated.replace(
     /^(\s+model:\s*)(['"]?)([^\s\n'"]+)\2/m,
     (_match, lead, quote, raw) => {
@@ -439,6 +436,52 @@ export function transformSkillFrontmatter(content, opts) {
 
   if (updated === frontmatter) return content;
   return `${prefix}---\n${updated}\n---\n${body}`;
+}
+
+/**
+ * Top-level frontmatter keys Factory recognizes for skills.
+ *
+ * The list comes from Factory's skill loader contract — anything not in it is
+ * either AIWG-internal (`namespace`, `platforms`, `memory`, `category`,
+ * `orchestration`, `subagent-optimized`, `version`) or a Claude Code-only
+ * concept (`tools`, `model` at the top level — Factory handles those via
+ * `commandHint:` for skills).
+ *
+ * Issue: #102 — Factory provider must strip non-Factory fields, not pass them through.
+ */
+const FACTORY_SKILL_TOP_LEVEL_KEYS = new Set([
+  'name',
+  'description',
+  'user-invocable',
+  'disable-model-invocation',
+  'commandHint',
+]);
+
+/**
+ * Filter a YAML frontmatter string down to Factory-recognized top-level keys.
+ *
+ * Preserves the order and exact line content of kept blocks (no YAML round-trip),
+ * including indented continuation lines. Block boundaries are detected by
+ * unindented `key:` lines.
+ */
+export function filterFactorySkillFrontmatter(frontmatter) {
+  const lines = frontmatter.split('\n');
+  const kept = [];
+  let keepingCurrent = true;
+
+  for (const line of lines) {
+    const topKeyMatch = line.match(/^([A-Za-z_][\w-]*)\s*:/);
+    if (topKeyMatch) {
+      // Start of a new top-level block — decide whether to keep it.
+      keepingCurrent = FACTORY_SKILL_TOP_LEVEL_KEYS.has(topKeyMatch[1]);
+      if (keepingCurrent) kept.push(line);
+      continue;
+    }
+    // Continuation of the current block (indented value, list item, blank line).
+    if (keepingCurrent) kept.push(line);
+  }
+
+  return kept.join('\n');
 }
 
 /**
@@ -994,6 +1037,7 @@ export default {
   transformAgent,
   transformCommand,
   transformSkillFrontmatter,
+  filterFactorySkillFrontmatter,
   mapModel,
   mapReasoningEffort,
   mapToolsToFactory,

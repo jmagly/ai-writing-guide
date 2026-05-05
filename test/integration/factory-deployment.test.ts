@@ -383,6 +383,46 @@ describe('Factory AI Integration', () => {
       expect(inspectedAny).toBe(true);
     });
 
+    it('SKILL.md frontmatter strips AIWG-only top-level keys (#102)', async () => {
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'factory',
+        '--mode', 'sdlc',
+        '--deploy-skills',
+        '--target', TEST_PROJECT_DIR
+      ]);
+
+      const skillsDir = path.join(TEST_FACTORY_DIR, 'skills');
+      const entries = await fs.readdir(skillsDir, { withFileTypes: true });
+      const skillDirs = entries.filter(e => e.isDirectory()).map(e => e.name);
+
+      // Top-level keys Factory does not recognize. Anything in this list that
+      // survives deployment is the bug from #102.
+      const FORBIDDEN_TOP_LEVEL = [
+        'namespace', 'platforms', 'memory', 'category',
+        'orchestration', 'subagent-optimized', 'version', 'tools',
+      ];
+
+      const offenders: string[] = [];
+      for (const skillName of skillDirs) {
+        const skillMdPath = path.join(skillsDir, skillName, 'SKILL.md');
+        const exists = await fs.access(skillMdPath).then(() => true).catch(() => false);
+        if (!exists) continue;
+
+        const content = await fs.readFile(skillMdPath, 'utf-8');
+        const fmMatch = content.match(/^(?:<!--[\s\S]*?-->\s*)?---\n([\s\S]*?)\n---/);
+        if (!fmMatch) continue;
+        const fm = fmMatch[1];
+
+        for (const key of FORBIDDEN_TOP_LEVEL) {
+          // Match `<key>:` only at line start (no leading whitespace) — top level only.
+          const re = new RegExp(`^${key}:`, 'm');
+          if (re.test(fm)) offenders.push(`${skillName}: ${key}`);
+        }
+      }
+
+      expect(offenders, `Top-level non-Factory keys leaked through:\n  ${offenders.join('\n  ')}`).toEqual([]);
+    });
+
     it('SKILL.md commandHint.model is mapped to Factory model id (not Claude shorthand)', async () => {
       runScript('tools/agents/deploy-agents.mjs', [
         '--provider', 'factory',
