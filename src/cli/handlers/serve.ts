@@ -721,37 +721,31 @@ async function startServer(opts: {
     }
   });
 
+  // Proxy the loadout registry (frameworks/providers/init scripts/presets)
+  // used by the UI's compose builder.
+  app.get('/api/sandboxes/:id/loadout-registry', async (c: any) => {
+    const sandbox = sandboxRegistry.get(c.req.param('id'));
+    if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+    try {
+      const resp = await fetch(`${sandbox.httpEndpoint}/api/v1/loadout/registry`);
+      return c.json(await resp.json(), resp.status);
+    } catch (err) {
+      return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+    }
+  });
+
+  // Pass-through proxy for VM creation. Forwards the request body verbatim to
+  // the sandbox /api/v1/vms endpoint so the UI can use either preset
+  // (profile/loadout) or custom (composition) shapes without translation loss.
   app.post('/api/sandboxes/:id/provision', async (c: any) => {
     const sandbox = sandboxRegistry.get(c.req.param('id'));
     if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
     try {
-      const body = await c.req.json() as {
-        name: string;
-        loadout: string;
-        overrides?: {
-          add_packages?: string[];
-          aiwg_frameworks?: string[];
-          memory_mb?: number;
-          vcpus?: number;
-        };
-      };
-      // Map ProvisionRequest → CreateVmRequest (sandbox /api/v1/vms schema).
-      // The sandbox uses `loadout` field directly; resource overrides are top-level.
-      // `add_packages` has no direct equivalent in CreateVmRequest — dropped for now.
-      // `aiwg_frameworks` override maps to composition.aiwg.frameworks when set.
-      const vmBody: Record<string, unknown> = {
-        name: body.name,
-        loadout: body.loadout,
-      };
-      if (body.overrides?.vcpus !== undefined) vmBody['vcpus'] = body.overrides.vcpus;
-      if (body.overrides?.memory_mb !== undefined) vmBody['memory_mb'] = body.overrides.memory_mb;
-      if (body.overrides?.aiwg_frameworks?.length) {
-        vmBody['composition'] = { aiwg: { frameworks: body.overrides.aiwg_frameworks } };
-      }
+      const body = await c.req.json();
       const resp = await fetch(`${sandbox.httpEndpoint}/api/v1/vms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(vmBody),
+        body: JSON.stringify(body),
       });
       return c.json(await resp.json(), resp.status);
     } catch (err) {

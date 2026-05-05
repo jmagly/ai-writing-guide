@@ -14,6 +14,27 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { api, type HitlRequest } from '../../lib/api.js';
 import styles from './HitlDrawer.module.css';
 
+/**
+ * Strip ANSI escape sequences and TTY-only control bytes from terminal output
+ * so it renders cleanly in plain HTML. The browser drops the ESC byte itself
+ * but leaves the visible CSI tail (e.g. "[1;30r"), which is what users see as
+ * gibberish in HITL prompts captured from a PTY stream.
+ */
+function stripAnsi(input: string): string {
+  if (!input) return '';
+  return input
+    // CSI: ESC [ ... <final byte>
+    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
+    // OSC: ESC ] ... BEL (or ST = ESC \)
+    .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    // Other ESC-prefixed two-char sequences (ESC =, ESC >, etc.)
+    .replace(/\x1b[@-Z\\-_]/g, '')
+    // Lone ESC
+    .replace(/\x1b/g, '')
+    // Carriage returns and bells become noise in flowing text
+    .replace(/[\r\x07]/g, '');
+}
+
 // ---- State ----
 
 interface State {
@@ -153,11 +174,11 @@ export function HitlDrawer() {
       {active && (
         <div className={styles.body}>
           <div className={styles.prompt}>
-            <p className={styles.promptText}>{active.prompt}</p>
+            <p className={styles.promptText}>{stripAnsi(active.prompt)}</p>
             {active.context && (
               <details className={styles.context}>
                 <summary>Recent output context</summary>
-                <pre>{active.context}</pre>
+                <pre>{stripAnsi(active.context)}</pre>
               </details>
             )}
           </div>

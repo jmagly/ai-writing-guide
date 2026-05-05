@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { api, type SandboxSummary, type SandboxAgent, type SandboxTask, type SubmitTaskRequest, type AiwgExecRequest, type AiwgExecResponse, type AgentCandidate, type Loadout, type VmInfo } from '../../lib/api.js';
+import { api, type SandboxSummary, type SandboxAgent, type SandboxTask, type SubmitTaskRequest, type AiwgExecRequest, type AiwgExecResponse, type AgentCandidate, type Loadout, type LoadoutRegistry, type CreateVmRequest, type VmInfo } from '../../lib/api.js';
 import styles from './SandboxPanel.module.css';
 import { SessionPicker } from './SessionPicker.js';
 
@@ -552,9 +552,43 @@ function RemoteAiwgPanel({
 }
 
 // ---- Provision Modal (#915) ----
+//
+// Mirrors the agentic-sandbox management UI provision dialog:
+// - Preset mode: loadout picker + read-only detail panel showing what's bundled
+// - Custom mode: init script + framework/provider chip picker + compose summary
+// - Resource selectors auto-populate from loadout defaults but stay editable
 
-const COMMON_PACKAGES = ['poetry', 'pre-commit', 'semgrep', 'trivy', 'bandit', 'httpie', 'jq', 'gh'];
-const KNOWN_FRAMEWORKS = ['sdlc-complete', 'forensics-complete', 'media-marketing-kit', 'research-complete'];
+type LoadoutMode = 'preset' | 'custom';
+
+const VCPU_OPTIONS = [2, 4, 8, 16];
+const MEMORY_MB_OPTIONS = [
+  { value: 4096, label: '4' },
+  { value: 8192, label: '8' },
+  { value: 16384, label: '16' },
+  { value: 32768, label: '32' },
+];
+const DISK_GB_OPTIONS = [30, 50, 100, 200];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  'per-provider': 'Single Provider',
+  'collaboration': 'Multi-Provider',
+  'task-focused': 'Task-Focused',
+  'backward-compat': 'Baseline',
+  'other': 'Other',
+};
+const CATEGORY_ORDER = ['per-provider', 'collaboration', 'task-focused', 'backward-compat', 'other'];
+
+function parseMemoryToMb(mem: string | undefined): number | null {
+  if (!mem) return null;
+  const m = mem.match(/^(\d+)\s*(G|M)/i);
+  if (!m) return null;
+  const val = parseInt(m[1], 10);
+  return m[2].toUpperCase() === 'G' ? val * 1024 : val;
+}
+
+function closestOption(target: number, options: number[]): number {
+  return options.reduce((a, b) => (Math.abs(b - target) < Math.abs(a - target) ? b : a));
+}
 
 function ProvisionModal({
   sandboxId,
@@ -562,105 +596,347 @@ function ProvisionModal({
   onProvisioned,
 }: { sandboxId: string; onClose: () => void; onProvisioned: () => void }) {
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
+  const [registry, setRegistry] = useState<LoadoutRegistry | null>(null);
+  const [mode, setMode] = useState<LoadoutMode>('preset');
+
   const [vmName, setVmName] = useState('');
-  const [selectedLoadout, setSelectedLoadout] = useState('');
-  const [addPackages, setAddPackages] = useState<string[]>([]);
-  const [frameworks, setFrameworks] = useState<string[]>([]);
+  const [selectedLoadoutPath, setSelectedLoadoutPath] = useState('');
+
+  const [initScript, setInitScript] = useState('ubuntu');
+  const [composeFrameworks, setComposeFrameworks] = useState<string[]>([]);
+  const [composeProviders, setComposeProviders] = useState<string[]>([]);
+
+  const [vcpus, setVcpus] = useState<number>(4);
+  const [memoryMb, setMemoryMb] = useState<number>(8192);
+  const [diskGb, setDiskGb] = useState<number>(50);
+  const [agentshare, setAgentshare] = useState(true);
+  const [autostart, setAutostart] = useState(true);
+
   const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resourceHint, setResourceHint] = useState(false);
 
+  // Fetch loadouts + registry
   useEffect(() => {
     api.sandboxLoadouts(sandboxId)
-      .then((ls) => {
-        setLoadouts(ls);
-        if (ls.length > 0) setSelectedLoadout(ls[0].name);
+      .then((resp) => {
+        const arr: Loadout[] = Array.isArray(resp)
+          ? resp
+          : Array.isArray((resp as { loadouts?: Loadout[] })?.loadouts)
+            ? (resp as { loadouts: Loadout[] }).loadouts
+            : [];
+        setLoadouts(arr);
+        // Default to claude-only if available, else first
+        const claudeOnly = arr.find((l) => l.name === 'claude-only');
+        const initial = claudeOnly ?? arr[0];
+        if (initial) setSelectedLoadoutPath(initial.path);
       })
-      .catch(() => { /* loadouts unavailable */ });
+      .catch((e) => setError(String(e)));
+
+    api.sandboxLoadoutRegistry(sandboxId)
+      .then((reg) => {
+        setRegistry(reg);
+        const def = reg.init_scripts?.find((s) => s.default);
+        if (def) setInitScript(def.name);
+      })
+      .catch(() => { /* registry optional */ });
   }, [sandboxId]);
 
-  const togglePackage = (pkg: string) =>
-    setAddPackages((prev) => prev.includes(pkg) ? prev.filter((p) => p !== pkg) : [...prev, pkg]);
+  const selectedLoadout = loadouts.find((l) => l.path === selectedLoadoutPath);
 
-  const toggleFramework = (fw: string) =>
-    setFrameworks((prev) => prev.includes(fw) ? prev.filter((f) => f !== fw) : [...prev, fw]);
+  // Auto-apply loadout resource defaults when selection changes
+  useEffect(() => {
+    if (!selectedLoadout?.resources) {
+      setResourceHint(false);
+      return;
+    }
+    const r = selectedLoadout.resources;
+    let applied = false;
+    if (r.cpus && VCPU_OPTIONS.includes(r.cpus)) {
+      setVcpus(r.cpus);
+      applied = true;
+    }
+    const mb = parseMemoryToMb(r.memory);
+    if (mb) {
+      setMemoryMb(closestOption(mb, MEMORY_MB_OPTIONS.map((o) => o.value)));
+      applied = true;
+    }
+    if (r.disk) {
+      const gb = parseInt(r.disk, 10);
+      if (!Number.isNaN(gb)) {
+        setDiskGb(closestOption(gb, DISK_GB_OPTIONS));
+        applied = true;
+      }
+    }
+    setResourceHint(applied);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLoadoutPath]);
+
+  const groupedLoadouts = (() => {
+    const by: Record<string, Loadout[]> = {};
+    for (const l of loadouts) {
+      const cat = l.category || 'other';
+      (by[cat] ??= []).push(l);
+    }
+    return CATEGORY_ORDER
+      .filter((cat) => by[cat]?.length)
+      .map((cat) => ({ cat, items: by[cat] }));
+  })();
+
+  const toggleChip = (kind: 'fw' | 'pv', name: string) => {
+    if (kind === 'fw') {
+      setComposeFrameworks((prev) =>
+        prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name]
+      );
+    } else {
+      setComposeProviders((prev) =>
+        prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name]
+      );
+    }
+  };
+
+  const validName = vmName.trim().length > 0 && /^[-a-z0-9]+$/.test(vmName.trim());
+  const fullName = validName ? `agent-${vmName.trim()}` : '';
+
+  const canSubmit = (() => {
+    if (!validName || provisioning) return false;
+    if (mode === 'preset') return Boolean(selectedLoadoutPath);
+    return composeProviders.length > 0;
+  })();
 
   const handleProvision = useCallback(async () => {
-    if (!vmName.trim() || !selectedLoadout) return;
+    if (!validName) {
+      setError('Name must be lowercase letters, numbers, or hyphens.');
+      return;
+    }
     setProvisioning(true);
     setError(null);
     try {
-      await api.sandboxProvision(sandboxId, {
-        name: vmName.trim(),
-        loadout: selectedLoadout,
-        overrides: {
-          ...(addPackages.length > 0 ? { add_packages: addPackages } : {}),
-          ...(frameworks.length > 0 ? { aiwg_frameworks: frameworks } : {}),
-        },
-      });
+      const base: CreateVmRequest = {
+        name: fullName,
+        profile: '',
+        vcpus,
+        memory_mb: memoryMb,
+        disk_gb: diskGb,
+        agentshare,
+        start: autostart,
+      };
+      const body: CreateVmRequest = mode === 'preset'
+        ? { ...base, loadout: selectedLoadoutPath }
+        : {
+            ...base,
+            loadout: '',
+            composition: {
+              init: initScript,
+              aiwg: { frameworks: composeFrameworks, providers: composeProviders },
+            },
+          };
+      await api.sandboxProvision(sandboxId, body);
       onProvisioned();
       onClose();
     } catch (e) {
-      setError(`Provision failed: ${String(e)}`);
+      setError(`Provision failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setProvisioning(false);
     }
-  }, [sandboxId, vmName, selectedLoadout, addPackages, frameworks, onProvisioned, onClose]);
+  }, [
+    sandboxId, validName, fullName, mode, selectedLoadoutPath,
+    initScript, composeFrameworks, composeProviders,
+    vcpus, memoryMb, diskGb, agentshare, autostart,
+    onProvisioned, onClose,
+  ]);
 
   return (
     <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true" aria-label="Provision VM">
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
-          <h3>Provision New Agent VM</h3>
+          <h3>Create Agent VM</h3>
           <button type="button" className={styles.modalClose} onClick={onClose} aria-label="Close">✕</button>
         </div>
         <div className={styles.modalBody}>
+          {/* Name */}
           <div className={styles.provisionFormRow}>
-            <label className={styles.provisionLabel}>VM Name</label>
-            <input
-              className={styles.remoteInput}
-              value={vmName}
-              onChange={(e) => setVmName(e.target.value)}
-              placeholder="agent-01"
-              autoFocus
-            />
+            <label className={styles.provisionLabel}>Name</label>
+            <div className={styles.inputPrefix}>
+              <span className={styles.inputPrefixLabel}>agent-</span>
+              <input
+                value={vmName}
+                onChange={(e) => setVmName(e.target.value)}
+                placeholder="01"
+                autoFocus
+                pattern="[-a-z0-9]+"
+              />
+            </div>
+            <div className={styles.formHelp}>Lowercase letters, numbers, and hyphens only</div>
           </div>
-          <div className={styles.provisionFormRow}>
-            <label className={styles.provisionLabel}>Base Loadout</label>
-            <select
-              className={styles.remoteSelect}
-              value={selectedLoadout}
-              onChange={(e) => setSelectedLoadout(e.target.value)}
-            >
-              {loadouts.length === 0
-                ? <option value="">No loadouts available</option>
-                : loadouts.map((l) => (
-                    <option key={l.name} value={l.name}>{l.name}{l.description ? ` — ${l.description}` : ''}</option>
-                  ))
-              }
-            </select>
+
+          {/* Mode tabs */}
+          <div className={styles.modeTabs}>
+            <button
+              type="button"
+              className={`${styles.modeTab} ${mode === 'preset' ? styles.modeTabActive : ''}`}
+              onClick={() => setMode('preset')}
+            >Preset</button>
+            <button
+              type="button"
+              className={`${styles.modeTab} ${mode === 'custom' ? styles.modeTabActive : ''}`}
+              onClick={() => setMode('custom')}
+            >Custom</button>
           </div>
-          <div className={styles.provisionSection}>
-            <div className={styles.provisionSectionLabel}>Extra Packages</div>
-            <div className={styles.provisionCheckboxGrid}>
-              {COMMON_PACKAGES.map((pkg) => (
-                <label key={pkg} className={styles.provisionCheckbox}>
-                  <input type="checkbox" checked={addPackages.includes(pkg)} onChange={() => togglePackage(pkg)} />
-                  {pkg}
-                </label>
-              ))}
+
+          {/* Preset panel */}
+          {mode === 'preset' && (
+            <>
+              <div className={styles.provisionFormRow}>
+                <label className={styles.provisionLabel}>Profile</label>
+                <select
+                  className={styles.remoteSelect}
+                  value={selectedLoadoutPath}
+                  onChange={(e) => setSelectedLoadoutPath(e.target.value)}
+                >
+                  {loadouts.length === 0 && <option value="">Loading…</option>}
+                  {groupedLoadouts.map(({ cat, items }) => (
+                    <optgroup key={cat} label={CATEGORY_LABELS[cat] ?? cat}>
+                      {items.map((l) => (
+                        <option key={l.path} value={l.path}>{l.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+              {selectedLoadout && (
+                <div className={styles.loadoutDetail}>
+                  {selectedLoadout.description && (
+                    <div className={styles.loadoutDesc}>{selectedLoadout.description}</div>
+                  )}
+                  <div className={styles.loadoutTags}>
+                    {selectedLoadout.network_mode && (
+                      <span
+                        className={`${styles.loadoutTag} ${selectedLoadout.network_mode === 'isolated' ? styles.tagWarn : ''}`}
+                      >{selectedLoadout.network_mode} network</span>
+                    )}
+                    {(selectedLoadout.ai_tools ?? []).map((t) => (
+                      <span key={`ai-${t}`} className={`${styles.loadoutTag} ${styles.tagAi}`}>
+                        {t.replace(/_/g, ' ')}
+                      </span>
+                    ))}
+                    {(selectedLoadout.frameworks ?? []).map((fw) => (
+                      <span key={`fw-${fw.name}`} className={`${styles.loadoutTag} ${styles.tagFw}`}>
+                        {fw.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Custom compose panel */}
+          {mode === 'custom' && (
+            <>
+              <div className={styles.provisionFormRow}>
+                <label className={styles.provisionLabel}>Init Script</label>
+                <select
+                  className={styles.remoteSelect}
+                  value={initScript}
+                  onChange={(e) => setInitScript(e.target.value)}
+                >
+                  {(registry?.init_scripts ?? [
+                    { name: 'ubuntu', label: 'Ubuntu 24.04 LTS (full dev)' },
+                    { name: 'ubuntu-minimal', label: 'Ubuntu 24.04 LTS (minimal)' },
+                    { name: 'alpine', label: 'Alpine Linux (minimal)' },
+                  ]).map((s) => (
+                    <option key={s.name} value={s.name}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.provisionFormRow}>
+                <label className={styles.provisionLabel}>Frameworks</label>
+                <div className={styles.chipGrid}>
+                  {(registry?.frameworks ?? []).map((fw) => {
+                    const selected = composeFrameworks.includes(fw.name);
+                    return (
+                      <button
+                        key={fw.name}
+                        type="button"
+                        className={`${styles.chip} ${selected ? styles.chipSelected : ''} ${fw.reserved ? styles.chipReserved : ''}`}
+                        title={fw.description || fw.label}
+                        disabled={fw.reserved}
+                        onClick={() => !fw.reserved && toggleChip('fw', fw.name)}
+                      >{fw.label}</button>
+                    );
+                  })}
+                  {!registry && <span className={styles.formHelp}>Loading registry…</span>}
+                </div>
+              </div>
+              <div className={styles.provisionFormRow}>
+                <label className={styles.provisionLabel}>Providers</label>
+                <div className={styles.chipGrid}>
+                  {(registry?.providers ?? []).map((pv) => {
+                    const selected = composeProviders.includes(pv.name);
+                    return (
+                      <button
+                        key={pv.name}
+                        type="button"
+                        className={`${styles.chip} ${selected ? styles.chipSelected : ''}`}
+                        title={pv.label}
+                        onClick={() => toggleChip('pv', pv.name)}
+                      >{pv.label}</button>
+                    );
+                  })}
+                </div>
+              </div>
+              {(composeFrameworks.length > 0 || composeProviders.length > 0) && (
+                <div className={styles.composeSummary}>
+                  <span className={styles.composeLabel}>init:</span> <code>{initScript}</code>{' '}
+                  <span className={styles.composeLabel}>frameworks:</span>{' '}
+                  {composeFrameworks.length > 0
+                    ? composeFrameworks.map((f) => <code key={f}>{f}</code>).reduce((acc, el, i) => i === 0 ? [el] : [...acc, ' ', el], [] as React.ReactNode[])
+                    : <em>none</em>}{' '}
+                  <span className={styles.composeLabel}>providers:</span>{' '}
+                  {composeProviders.length > 0
+                    ? composeProviders.map((p) => <code key={p}>{p}</code>).reduce((acc, el, i) => i === 0 ? [el] : [...acc, ' ', el], [] as React.ReactNode[])
+                    : <em>none</em>}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Resources */}
+          <div className={styles.formRowInline}>
+            <div className={styles.provisionFormRow}>
+              <label className={styles.provisionLabel}>vCPUs</label>
+              <select className={styles.remoteSelect} value={vcpus} onChange={(e) => setVcpus(Number(e.target.value))}>
+                {VCPU_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+            <div className={styles.provisionFormRow}>
+              <label className={styles.provisionLabel}>Memory (GB)</label>
+              <select className={styles.remoteSelect} value={memoryMb} onChange={(e) => setMemoryMb(Number(e.target.value))}>
+                {MEMORY_MB_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div className={styles.provisionFormRow}>
+              <label className={styles.provisionLabel}>Disk (GB)</label>
+              <select className={styles.remoteSelect} value={diskGb} onChange={(e) => setDiskGb(Number(e.target.value))}>
+                {DISK_GB_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
             </div>
           </div>
-          <div className={styles.provisionSection}>
-            <div className={styles.provisionSectionLabel}>AIWG Frameworks</div>
-            <div className={styles.provisionCheckboxGrid}>
-              {KNOWN_FRAMEWORKS.map((fw) => (
-                <label key={fw} className={styles.provisionCheckbox}>
-                  <input type="checkbox" checked={frameworks.includes(fw)} onChange={() => toggleFramework(fw)} />
-                  {fw}
-                </label>
-              ))}
-            </div>
-          </div>
+          {resourceHint && mode === 'preset' && (
+            <div className={styles.resourceHint}>Defaults from loadout applied. Override above if needed.</div>
+          )}
+
+          {/* Toggles */}
+          <label className={styles.provisionCheckbox}>
+            <input type="checkbox" checked={agentshare} onChange={(e) => setAgentshare(e.target.checked)} />
+            Enable agentshare mounts
+          </label>
+          <label className={styles.provisionCheckbox}>
+            <input type="checkbox" checked={autostart} onChange={(e) => setAutostart(e.target.checked)} />
+            Start VM after creation
+          </label>
+
           {error && <div className={styles.error}>{error}</div>}
         </div>
         <div className={styles.modalFooter}>
@@ -671,9 +947,10 @@ function ProvisionModal({
             type="button"
             className={styles.actionBtn}
             onClick={handleProvision}
-            disabled={provisioning || !vmName.trim() || !selectedLoadout}
+            disabled={!canSubmit}
+            title={!validName ? 'Enter a valid name first' : (mode === 'custom' && composeProviders.length === 0 ? 'Select at least one provider' : '')}
           >
-            {provisioning ? 'Provisioning…' : 'Provision'}
+            {provisioning ? 'Creating…' : 'Create VM'}
           </button>
         </div>
       </div>

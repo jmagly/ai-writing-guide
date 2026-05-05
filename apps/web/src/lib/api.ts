@@ -6,7 +6,23 @@ const BASE = '';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, init);
-  if (!res.ok) throw new Error(`API ${path} failed: ${res.status} ${res.statusText}`);
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.clone().json() as { error?: unknown };
+      const err = body?.error;
+      if (typeof err === 'string') detail = err;
+      else if (err && typeof err === 'object') {
+        const m = (err as { message?: unknown }).message;
+        if (typeof m === 'string') detail = m;
+        else detail = JSON.stringify(err);
+      }
+    } catch {
+      try { detail = await res.text(); } catch { /* ignore */ }
+    }
+    const suffix = detail ? ` — ${detail}` : '';
+    throw new Error(`API ${path} failed: ${res.status} ${res.statusText}${suffix}`);
+  }
   return res.json() as Promise<T>;
 }
 
@@ -339,28 +355,86 @@ export interface CreateSessionResponse {
 
 // ---- Loadout types (#733 #915) ----
 
+export interface LoadoutResources {
+  cpus?: number;
+  memory?: string;
+  disk?: string;
+}
+
+export interface LoadoutFrameworkRef {
+  name: string;
+  providers?: string[];
+}
+
+/** Loadout profile metadata returned by GET /api/v1/loadouts on the sandbox. */
 export interface Loadout {
   name: string;
+  /** Relative path used as the loadout identifier when creating a VM. */
+  path: string;
   description?: string;
-  resources?: { cpus?: number; memory?: string; disk?: string };
+  category?: string;
+  complexity?: string;
+  resources?: LoadoutResources;
+  network_mode?: string;
+  ai_tools?: string[];
+  frameworks?: LoadoutFrameworkRef[];
+  extends?: string[];
 }
 
-/** Override patches applied on top of a base loadout during provisioning (#915). */
-export interface ProvisionOverrides {
-  /** Extra packages to install */
-  add_packages?: string[];
-  /** AIWG frameworks to deploy */
-  aiwg_frameworks?: string[];
-  /** Memory in MB (overrides loadout default) */
-  memory_mb?: number;
-  /** vCPU count (overrides loadout default) */
-  vcpus?: number;
+export interface LoadoutsResponse {
+  loadouts: Loadout[];
 }
 
-export interface ProvisionRequest {
+// ---- Loadout registry (compose builder) ----
+
+export interface RegistryFramework {
   name: string;
-  loadout: string;
-  overrides?: ProvisionOverrides;
+  label: string;
+  description?: string;
+  reserved?: boolean;
+}
+
+export interface RegistryProvider {
+  name: string;
+  label: string;
+  layer?: string;
+}
+
+export interface RegistryInitScript {
+  name: string;
+  label: string;
+  description?: string;
+  default?: boolean;
+  layers?: string[];
+}
+
+export interface LoadoutRegistry {
+  version?: string;
+  frameworks: RegistryFramework[];
+  providers: RegistryProvider[];
+  init_scripts: RegistryInitScript[];
+}
+
+/** Body for VM creation. Mirrors the sandbox /api/v1/vms contract. */
+export interface CreateVmRequest {
+  name: string;
+  /** Optional named profile (legacy); empty when using loadout or composition. */
+  profile?: string;
+  /** Loadout path (preset mode). Empty in custom mode. */
+  loadout?: string;
+  /** Custom composition (overrides loadout when provided). */
+  composition?: {
+    init?: string;
+    aiwg?: {
+      frameworks?: string[];
+      providers?: string[];
+    };
+  };
+  vcpus?: number;
+  memory_mb?: number;
+  disk_gb?: number;
+  agentshare?: boolean;
+  start?: boolean;
 }
 
 // ---- Task types (#907) ----
@@ -451,7 +525,8 @@ export const api = {
   forgetSandbox: (id: string) => request<{ ok: boolean }>(`/api/sandboxes/${id}/forget`, { method: 'DELETE' }),
   agents: () => request<AgentsResponse>('/api/agents'),
   sandboxAgents: (id: string) => request<{ agents: SandboxAgent[] }>(`/api/sandboxes/${id}/agents`),
-  sandboxLoadouts: (id: string) => request<Loadout[]>(`/api/sandboxes/${id}/loadouts`),
+  sandboxLoadouts: (id: string) => request<LoadoutsResponse>(`/api/sandboxes/${id}/loadouts`),
+  sandboxLoadoutRegistry: (id: string) => request<LoadoutRegistry>(`/api/sandboxes/${id}/loadout-registry`),
   // VM inventory (#930)
   sandboxVms: (id: string, opts?: { state?: string; prefix?: string }) => {
     const params = new URLSearchParams();
@@ -464,8 +539,8 @@ export const api = {
     request<VmDetail>(`/api/sandboxes/${id}/vms/${encodeURIComponent(name)}`),
   sandboxAgentsFull: (id: string) =>
     request<FullAgentsResponse>(`/api/sandboxes/${id}/agents/full`),
-  sandboxProvision: (id: string, body: ProvisionRequest) =>
-    request<{ agent_id: string }>(`/api/sandboxes/${id}/provision`, {
+  sandboxProvision: (id: string, body: CreateVmRequest) =>
+    request<{ agent_id?: string; operation?: { id: string } }>(`/api/sandboxes/${id}/provision`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

@@ -854,3 +854,187 @@
   height: 14px;
   cursor: pointer;
 }
+
+/* ---- Provision modal v2 (parity with agentic-sandbox UI) ---- */
+
+.modeTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.modeTab {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.modeTab:hover {
+  color: #ccc;
+}
+
+.modeTabActive {
+  color: #5a8fff;
+  border-bottom-color: #5a8fff;
+}
+
+.inputPrefix {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  background: #161616;
+  overflow: hidden;
+}
+
+.inputPrefixLabel {
+  padding: 0 8px;
+  background: #1e1e1e;
+  color: #888;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #2a2a2a;
+  font-family: monospace;
+}
+
+.inputPrefix input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #ddd;
+  padding: 6px 8px;
+  font-size: 12px;
+  outline: none;
+}
+
+.formHelp {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.formRowInline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.loadoutDetail {
+  background: #161616;
+  border: 1px solid #1e1e1e;
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loadoutDesc {
+  font-size: 12px;
+  color: #aaa;
+  line-height: 1.4;
+}
+
+.loadoutTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.loadoutTag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: #1e1e1e;
+  color: #888;
+  border: 1px solid #2a2a2a;
+}
+
+.tagAi {
+  background: #1a2438;
+  color: #6a9aff;
+  border-color: #2a3a55;
+}
+
+.tagFw {
+  background: #1f2a1a;
+  color: #8acb6a;
+  border-color: #2f4a2a;
+}
+
+.tagWarn {
+  background: #3a1f1a;
+  color: #d8835a;
+  border-color: #5a3a2a;
+}
+
+.resourceHint {
+  font-size: 10px;
+  color: #5a8fff;
+  font-style: italic;
+}
+
+.chipGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 4px 10px;
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  color: #aaa;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip:hover {
+  border-color: #3a3a3a;
+  color: #ddd;
+}
+
+.chipSelected {
+  background: #1a2438;
+  border-color: #5a8fff;
+  color: #5a8fff;
+}
+
+.chipReserved {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.composeSummary {
+  background: #161616;
+  border: 1px solid #1e1e1e;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #aaa;
+  line-height: 1.6;
+}
+
+.composeSummary code {
+  background: #1e1e1e;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #5a8fff;
+  font-size: 10px;
+}
+
+.composeLabel {
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+  margin-right: 4px;
+}
