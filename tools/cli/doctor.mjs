@@ -354,6 +354,40 @@ async function runDoctor() {
     // Skip silently if not installed — addons are optional
   }
 
+  // 9b. Upstream addon manifest sweep (#1088)
+  // Every directory under agentic/code/addons/ must declare itself via
+  // either manifest.json (canonical) or WIP.md (deferred). Anything else
+  // ships dark — discoverable by `aiwg use <name>` but invisible to the
+  // catalog, registry, and validator.
+  try {
+    const upstreamAddonsDir = path.join(AIWG_ROOT, 'agentic/code/addons');
+    if (await fileExists(upstreamAddonsDir)) {
+      const entries = await fs.readdir(upstreamAddonsDir, { withFileTypes: true });
+      const orphaned = [];
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const addonPath = path.join(upstreamAddonsDir, entry.name);
+        const hasManifest = await fileExists(path.join(addonPath, 'manifest.json'));
+        const hasWip = await fileExists(path.join(addonPath, 'WIP.md'));
+        if (!hasManifest && !hasWip) {
+          orphaned.push(entry.name);
+        }
+      }
+      if (orphaned.length > 0) {
+        check(
+          'Upstream addon manifests',
+          'warn',
+          `${orphaned.length} addon(s) missing both manifest.json and WIP.md: ${orphaned.join(', ')}. ` +
+            `Each upstream addon must declare itself as deployable (manifest.json) or deferred (WIP.md). See #1088.`,
+        );
+      } else {
+        check('Upstream addon manifests', 'ok', `${entries.filter(e => e.isDirectory()).length} addons declared`);
+      }
+    }
+  } catch {
+    // Sweep is best-effort; never block doctor on FS exceptions
+  }
+
   // 10. Check behaviors (OpenClaw native or Claude emulated)
   const openclawBehaviors = path.join(os.homedir(), '.openclaw', 'behaviors');
   const claudeHooks = path.join(process.cwd(), '.claude', 'hooks');

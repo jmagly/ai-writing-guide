@@ -1,0 +1,31 @@
+{
+  "id": "agent-persistence",
+  "type": "addon",
+  "name": "Agent Persistence",
+  "version": "1.0.0",
+  "description": "Human-in-the-loop (HITL) gate definitions for agent operations. Provides reusable YAML gates for destructive-action authorization, false-positive override, and recovery escalation. Loaded by agent loops and orchestrators that need bounded human checkpoints.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "hitl",
+    "gates",
+    "authorization",
+    "human-in-the-loop",
+    "agent-persistence",
+    "escalation",
+    "destructive-action"
+  ],
+  "entry": {
+    "gates": "gates/",
+    "docs": "docs/"
+  },
+  "gates": [
+    "destructive-action-gate",
+    "false-positive-override-gate",
+    "recovery-escalation-gate"
+  ],
+  "platforms": ["claude-code", "factory-ai", "openai-codex"]
+}
