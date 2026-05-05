@@ -105,6 +105,8 @@ import { runHandler } from './run.js';
 import { stewardHandler, stewardHandlers } from './steward.js';
 import { serveHandler } from './serve.js';
 import { lintHandler } from './lint.js';
+import { feedbackHandler } from './feedback.js';
+import { sessionHandler } from './session.js';
 import { sandboxHandler, sandboxHandlers } from './sandbox.js';
 import { diagnoseHandler } from './diagnose.js';
 
@@ -361,6 +363,12 @@ export const allHandlers: CommandHandler[] = [
 
   // Lint
   lintHandler,
+
+  // Feedback (#885)
+  feedbackHandler,
+
+  // Session (#884)
+  sessionHandler,
 ];
 
 /**
