@@ -1387,6 +1387,51 @@ export class UseHandler implements CommandHandler {
       await deployCiHooks({ frameworkRoot, framework, target, dryRun });
     }
 
+    // PUW-018 (#1119) cross-provider hook bridge — opt-in via
+    // --enable-cross-provider-hooks. When enabled and at least one canonical
+    // hook source exists at agentic/code/addons/aiwg-hooks/canonical/*.yaml,
+    // translate to provider-native artifacts (Codex TOML, Copilot JSON,
+    // Factory shell, Hermes Python plugin). Per ADR-3 §7 autoInstall policy
+    // this is opt-in.
+    if (remainingArgs.includes('--enable-cross-provider-hooks') && !dryRun) {
+      try {
+        const { loadHookSources, bridgeAll } = await import('../../smiths/hook-bridge/index.js');
+        const { sources, errors } = await loadHookSources(frameworkRoot);
+        if (errors.length > 0) {
+          for (const err of errors) {
+            ui.warn(`hook-bridge load: ${err}`);
+          }
+        }
+        if (sources.length === 0) {
+          if (verbose) {
+            ui.dim('  hook-bridge: no canonical hook sources found at agentic/code/addons/aiwg-hooks/canonical/ — flag is a no-op');
+          }
+        } else {
+          // Cross-provider providers per ADR-3 §7 (no-op if their dir not present)
+          const bridgeProviders = ['codex', 'copilot', 'factory', 'hermes'];
+          const results = await bridgeAll(sources, bridgeProviders, {
+            projectPath: target,
+            dryRun,
+            verbose,
+          });
+          let emittedCount = 0;
+          for (const r of results) {
+            if (r.skipped) {
+              if (verbose) ui.dim(`  hook-bridge skipped ${r.provider}: ${r.skipReason}`);
+              continue;
+            }
+            emittedCount += r.emittedPaths.length;
+            for (const w of r.warnings) ui.dim(`  hook-bridge ${r.provider}: ${w}`);
+          }
+          if (emittedCount > 0) {
+            ui.dim(`  hook-bridge: emitted ${emittedCount} cross-provider hook artifact(s)`);
+          }
+        }
+      } catch (err) {
+        ui.warn(`hook-bridge: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
     // Update installed section in config (#621)
     if (config !== null && !dryRun) {
       try {

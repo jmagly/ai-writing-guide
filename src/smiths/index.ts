@@ -34,6 +34,10 @@ export * from './commandsmith/index.js';
 // (different concern — assembly of cross-platform context vs subagent persona generation).
 export * as ContextPipeline from './context-pipeline/index.js';
 
+// Re-export hook-bridge (cross-provider hook translator; ADR-3 / PUW-018).
+// Namespaced because translator types overlap by intent (HookSource etc.).
+export * as HookBridge from './hook-bridge/index.js';
+
 // Note: The default exported 'Platform' type is for AI platforms (claude, factory, etc.)
 // For OS platforms, use 'OSPlatform' instead
 
@@ -54,3 +58,4 @@ export const AGENTSMITH_DIR = `${SMITHS_DIR}/agentsmith`;
 export const SKILLSMITH_DIR = `${SMITHS_DIR}/skillsmith`;
 export const COMMANDSMITH_DIR = `${SMITHS_DIR}/commandsmith`;
 export const CONTEXT_PIPELINE_DIR = `${SMITHS_DIR}/context-pipeline`;
+export const HOOK_BRIDGE_DIR = `${SMITHS_DIR}/hook-bridge`;
