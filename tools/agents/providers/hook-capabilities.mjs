@@ -24,7 +24,10 @@ export const PROVIDER_CAPABILITIES = {
     atLinkSupport: true,
     hookFileName: 'AIWG-cursor.md',
     hookDirective: '@AIWG-cursor.md',
-    contextFile: '.cursorrules',
+    // PUW-037 (#1138): .cursorrules is deprecated by Cursor in favor of
+    // AGENTS.md + .cursor/rules/*.mdc with MDC frontmatter. AGENTS.md is
+    // the canonical context file going forward.
+    contextFile: 'AGENTS.md',
   },
   copilot: {
     atLinkSupport: false,

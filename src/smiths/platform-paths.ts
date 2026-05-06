@@ -150,7 +150,7 @@ export function getConfigFileName(platform: Platform): string {
   const configs: Record<Platform, string> = {
     'claude': 'CLAUDE.md',
     'factory': 'AGENTS.md',
-    'cursor': '.cursorrules',
+    'cursor': 'AGENTS.md',  // PUW-037 (#1138): .cursorrules deprecated; Cursor reads AGENTS.md + .cursor/rules/ MDC files
     'codex': 'AGENTS.md',
     'copilot': 'copilot-instructions.md',
     'hermes': 'AGENTS.md',
