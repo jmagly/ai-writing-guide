@@ -125,6 +125,31 @@ export const contributeStartHandler: CommandHandler = {
 /** Namespace field regex for SKILL.md frontmatter */
 const NAMESPACE_RE = /^namespace:\s*(\S+)/m;
 
+/** Description field regex (single-line + multi-line `>` and `|` block scalars) */
+const DESCRIPTION_RE = /^description:\s*([>|]?)\s*\n?([\s\S]*?)(?=\n\w+:|\n---|$)/m;
+
+/**
+ * Count complete sentences in a description string. A sentence is delimited
+ * by `.`, `?`, or `!` followed by whitespace or end-of-string.
+ *
+ * Per the oz-skills two-sentence discipline (PUW-030 / #1131): skills
+ * should describe themselves in 1-2 sentences. Longer descriptions are
+ * generally a sign that the skill is doing too much (god-session) or that
+ * detail belongs in the body, not the frontmatter. Lint-only — does not
+ * block deploy.
+ */
+function countSentences(s: string): number {
+  if (!s) return 0;
+  const trimmed = s.trim();
+  if (trimmed.length === 0) return 0;
+  const matches = trimmed.match(/[.!?]+(?:\s|$)/g);
+  if (!matches) return 1; // No terminator — treat as one bare sentence
+  // Trailing terminator counted; if no trailing terminator, the unterminated
+  // text is also a sentence.
+  const endsWithTerminator = /[.!?][)\]"'\s]*$/.test(trimmed);
+  return matches.length + (endsWithTerminator ? 0 : 1);
+}
+
 /**
  * Scan source SKILL.md files in `agentic/code/` for namespace issues:
  * - Missing `namespace: aiwg`
@@ -154,6 +179,20 @@ async function scanSourceNamespaceIssues(frameworkRoot: string): Promise<string[
           if (!nsMatch) {
             const rel = path.relative(frameworkRoot, full);
             issues.push(`  WARN  missing namespace field: ${rel}`);
+          }
+          // PUW-030 (#1131) — two-sentence skill description discipline.
+          // Lint-only. We extract the description block (handles single-line
+          // and YAML block scalars) and count sentence terminators.
+          const fmEnd = content.indexOf('\n---', 4);
+          const fm = fmEnd > 0 ? content.slice(0, fmEnd) : content;
+          const descMatch = fm.match(DESCRIPTION_RE);
+          if (descMatch) {
+            const desc = (descMatch[2] || '').trim().replace(/\n+/g, ' ');
+            const sentenceCount = countSentences(desc);
+            if (sentenceCount > 3) {
+              const rel = path.relative(frameworkRoot, full);
+              issues.push(`  WARN  description too long (${sentenceCount} sentences; oz-skills convention is 1-2): ${rel}`);
+            }
           }
         } catch {
           // unreadable
