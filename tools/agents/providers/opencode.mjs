@@ -54,8 +54,34 @@ export const paths = {
   agents: '.opencode/agent/',   // Discovered via {agent,agents}/**/*.md glob (#773)
   commands: '',                 // Not deployed — commands derive from skills automatically
   skills: '.opencode/skill/',
-  rules: '.opencode/rule/'
+  rules: '.opencode/rule/',
+  modes: '.opencode/mode/'      // PUW-035 (#1136) — TUI-selectable primary modes
 };
+
+/**
+ * SDLC primary roles emitted as OpenCode TUI modes per PUW-035 (#1136).
+ *
+ * OpenCode scans `.opencode/{mode,modes}/*.md` for selectable primary modes.
+ * AIWG SDLC role agents map naturally onto modes — operators pick a "mode"
+ * when starting an OpenCode session and get the role's persona + tool set
+ * loaded automatically.
+ *
+ * The list is curated rather than auto-derived. Auto-promoting all 190+
+ * AIWG agents would clutter the TUI mode picker. The selected roles are
+ * the ones most often invoked as session-level primary personas.
+ */
+const SDLC_PRIMARY_ROLES = [
+  'architecture-designer',
+  'security-architect',
+  'test-architect',
+  'requirements-analyst',
+  'product-strategist',
+  'documentation-synthesizer',
+  'code-reviewer',
+  'debugger',
+  'devops-engineer',
+  'incident-responder',
+];
 
 export const support = {
   agents: 'native',       // Discovered via {agent,agents}/**/*.md glob
@@ -325,11 +351,65 @@ export function createAgentsMd(target, srcRoot, dryRun) {
 // Post-Deployment
 // ============================================================================
 
+/**
+ * Emit selected SDLC primary-role agents as OpenCode TUI modes
+ * (PUW-035 / #1136). Uses already-deployed agent files at
+ * `.opencode/agent/<role>.md` as the source — copies them to
+ * `.opencode/mode/<role>.md` for the TUI mode picker.
+ *
+ * Per ADR-1 §0.6 always-deploy invariant: agents/ files keep deploying
+ * unchanged; the mode/ files are an additive layer.
+ */
+export function deployModes(targetDir, opts) {
+  const agentsDir = path.join(targetDir, paths.agents);
+  const modesDir = path.join(targetDir, paths.modes);
+
+  if (!fs.existsSync(agentsDir)) {
+    return 0;
+  }
+
+  ensureDir(modesDir, opts.dryRun);
+  let count = 0;
+
+  for (const roleId of SDLC_PRIMARY_ROLES) {
+    const agentSrc = path.join(agentsDir, `${roleId}.md`);
+    const modeDest = path.join(modesDir, `${roleId}.md`);
+
+    if (!fs.existsSync(agentSrc)) {
+      // Role's agent file isn't deployed (e.g., pruned framework or
+      // stale-list entry). Skip silently; not an error.
+      continue;
+    }
+
+    if (opts.dryRun) {
+      console.log(`[dry-run] Would emit OpenCode mode: ${roleId}`);
+      count++;
+      continue;
+    }
+
+    fs.copyFileSync(agentSrc, modeDest);
+    count++;
+  }
+
+  if (opts.verbose && count > 0) {
+    console.log(`Deployed ${count} OpenCode primary modes to ${modesDir}`);
+  }
+
+  return count;
+}
+
 export async function postDeploy(targetDir, opts) {
   initializeFrameworkWorkspace(targetDir, opts.mode, opts.dryRun, opts.srcRoot);
 
   if (opts.createAgentsMd) {
     createAgentsMd(targetDir, opts.srcRoot, opts.dryRun);
+  }
+
+  // PUW-035 (#1136): emit SDLC primary roles as TUI modes.
+  try {
+    deployModes(targetDir, opts || {});
+  } catch (err) {
+    console.warn(`Warning: OpenCode mode deploy failed: ${err && err.message ? err.message : err}`);
   }
 }
 
