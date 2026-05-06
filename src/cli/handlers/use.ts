@@ -192,7 +192,7 @@ const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands:
   opencode: {
     agents: '.opencode/agent',  // Discovered via {agent,agents}/**/*.md glob (#773)
     skills: '.opencode/skill',
-    commands: '',               // Commands derive from skills automatically — no .opencode/command/ directory
+    commands: '.opencode/command', // OpenCode scans .opencode/command/**/*.md via ConfigCommand.load() (PUW-006 #1107)
     rules: '.opencode/rule',
     behaviors: '.opencode/rule', // Emulated via session wrapper
   },

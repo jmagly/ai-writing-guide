@@ -545,7 +545,7 @@ const PROVIDER_DEPLOY_DIRS: Record<string, { agents: string; skills: string; com
   claude:   { agents: '.claude/agents',       skills: '.claude/skills',      commands: '.claude/commands',    rules: '.claude/rules'          },
   copilot:  { agents: '.github/agents',       skills: '.github/skills',      commands: '.github/commands',   rules: '.github/copilot-rules'   },
   cursor:   { agents: '.cursor/agents',       skills: '.cursor/skills',      commands: '.cursor/commands',    rules: '.cursor/rules'           },
-  opencode: { agents: '.opencode/agent',      skills: '.opencode/skill',     commands: '',                   rules: '.opencode/rule'           },
+  opencode: { agents: '.opencode/agent',      skills: '.opencode/skill',     commands: '.opencode/command',  rules: '.opencode/rule'           },
   warp:     { agents: '.warp/agents',         skills: '.warp/skills',        commands: '.warp/commands',      rules: '.warp/rules'             },
   windsurf: { agents: '.windsurf/agents',     skills: '.windsurf/skills',    commands: '.windsurf/workflows', rules: '.windsurf/rules'         },
   factory:  { agents: '.factory/droids',      skills: '.factory/skills',     commands: '.factory/commands',   rules: '.factory/rules'          },

@@ -23,7 +23,7 @@ export function getCommandsDirectory(platform: Platform, projectPath: string): s
     'codex': '.codex/commands', // Codex commands are a static built-in enum in codex-rs; .codex/commands/ files are not auto-scanned. Path keeps writing per ADR-1 always-deploy invariant — files remain operator-visible and bridged via AGENTS.md links. See #1104.
     'copilot': '.github/agents',
     'hermes': '', // Served via MCP, not file-deployed
-    'opencode': '', // Commands derive from skills automatically — no .opencode/command/ directory scanned
+    'opencode': '.opencode/command', // OpenCode scans .opencode/command/**/*.md via ConfigCommand.load() (PUW-006 #1107)
     'openclaw': join(homedir(), '.openclaw', 'commands'),
     'warp': '.warp/commands', // Not natively discovered — content delivered via WARP.md
     'windsurf': '.windsurf/workflows',

@@ -101,7 +101,7 @@ interface SkillFrontmatter {
  */
 const PROVIDERS_NEEDING_COMMANDS = new Set([
   'factory',
-  // opencode: commands derive from skills automatically in OpenCode — no separate command dir
+  'opencode',  // OpenCode scans .opencode/command/**/*.md via ConfigCommand.load() (PUW-006 #1107)
   'warp',
   'windsurf',
   'copilot',
@@ -116,7 +116,6 @@ const SKILLS_ONLY_PROVIDERS = new Set([
   'claude',
   'cursor',
   'hermes',
-  'opencode', // commands derive from skills automatically in OpenCode
 ]);
 
 /**

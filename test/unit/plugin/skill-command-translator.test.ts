@@ -25,8 +25,8 @@ describe('Provider classification', () => {
   describe('providerNeedsCommands', () => {
     it('should return true for legacy/native-command providers', () => {
       expect(providerNeedsCommands('factory')).toBe(true);
-      // opencode: commands derive from skills automatically — no separate command dir
-      expect(providerNeedsCommands('opencode')).toBe(false);
+      // opencode: PUW-006 (#1107) — OpenCode scans .opencode/command/**/*.md
+      expect(providerNeedsCommands('opencode')).toBe(true);
       expect(providerNeedsCommands('warp')).toBe(true);
       expect(providerNeedsCommands('windsurf')).toBe(true);
       expect(providerNeedsCommands('copilot')).toBe(true);
@@ -54,8 +54,8 @@ describe('Provider classification', () => {
 
     it('should return false for command-needing providers', () => {
       expect(providerUsesSkillsNatively('factory')).toBe(false);
-      // opencode uses skills natively (commands derive from skills automatically)
-      expect(providerUsesSkillsNatively('opencode')).toBe(true);
+      // opencode is now command-needing per PUW-006 (#1107)
+      expect(providerUsesSkillsNatively('opencode')).toBe(false);
     });
   });
 });
