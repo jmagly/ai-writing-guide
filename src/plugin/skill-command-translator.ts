@@ -36,6 +36,13 @@ export interface TranslationOptions {
    * fixtures. Pass `projectPath` explicitly when targetDir is non-standard.
    */
   projectPath?: string;
+  /**
+   * Optional filter — only skills whose name returns true from this predicate
+   * are translated. When omitted, all skills are translated. Used by Claude
+   * (PUW-015 #1116) to limit translation to flow-* skills + a small allowlist
+   * of operator-invocable command surfaces.
+   */
+  nameFilter?: (skillName: string) => boolean;
 }
 
 export interface TranslatedCommand {
@@ -330,8 +337,11 @@ export async function translateSkillsToCommands(
     totalProcessed: 0,
   };
 
-  // Check if this provider needs commands
-  if (!providerNeedsCommands(options.provider)) {
+  // Check if this provider needs commands. nameFilter overrides the
+  // provider gating: when an operator passes an explicit filter (e.g. Claude
+  // flow→command emission per PUW-015 #1116), they're opting in to selective
+  // translation regardless of the provider's default skills-native posture.
+  if (!options.nameFilter && !providerNeedsCommands(options.provider)) {
     if (options.verbose) {
       console.log(`  Provider '${options.provider}' uses skills natively — skipping command generation`);
     }
@@ -350,6 +360,10 @@ export async function translateSkillsToCommands(
 
   // Process each skill
   for (const skillName of entries) {
+    // Apply name filter when provided (PUW-015 / #1116 — Claude flow filter).
+    if (options.nameFilter && !options.nameFilter(skillName)) {
+      continue;
+    }
     result.totalProcessed++;
     const skillMdPath = path.join(skillsDir, skillName, 'SKILL.md');
 

@@ -1300,6 +1300,39 @@ export class UseHandler implements CommandHandler {
       }
     }
 
+    // PUW-015 (#1116): Claude Code SDLC flow commands.
+    // Claude is `skills-native` so it doesn't go through the translator above,
+    // but operators expect `/flow-*` slash-command tab completion. Emit
+    // command stubs for flow-prefixed skills into .claude/commands/. Skills
+    // continue to deploy at .claude/skills/; this is purely additive per
+    // ADR-1 §0.6 always-deploy invariant.
+    if (provider === 'claude' && !dryRun) {
+      try {
+        const claudeSkillsDir = path.join(target, '.claude/skills');
+        const claudeCommandsDir = path.join(target, '.claude/commands');
+        const flowFilter = (skillName: string) =>
+          skillName.startsWith('flow-') ||
+          skillName === 'sdlc-accelerate' ||
+          skillName === 'project-status' ||
+          skillName === 'intake-wizard' ||
+          skillName === 'intake-from-codebase' ||
+          skillName === 'intake-start';
+        const r = await translateSkillsToCommands(claudeSkillsDir, {
+          provider: 'claude',
+          targetDir: claudeCommandsDir,
+          projectPath: target,
+          dryRun,
+          verbose,
+          nameFilter: flowFilter,
+        });
+        if (verbose && r.translated.length > 0) {
+          ui.success(`Translated ${r.translated.length} SDLC flows → Claude slash commands`);
+        }
+      } catch (error) {
+        ui.warn(`Claude flow → command translation failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+
     // Register deployed extensions in the registry
     if (verbose) {
       console.log('');

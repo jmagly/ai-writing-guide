@@ -126,10 +126,16 @@ function deployCommands(commandFiles, opts) {
  * Skills are directories containing SKILL.md and supporting files.
  */
 function deploySkills(skillDirs, opts) {
-  ensureDir(paths.skills, opts.dryRun);
+  // PUW-025 (#1126): 2-level namespacing under ~/.openclaw/skills/aiwg/<name>/
+  // avoids collision with non-AIWG skills (especially ClaWHub installs).
+  // Within OpenClaw's 2-level recursion limit. Always-deploy invariant
+  // applies: existing flat-layout deploys remain valid; the new namespaced
+  // layout is the canonical path going forward.
+  const aiwgNamespacedRoot = path.join(paths.skills, 'aiwg');
+  ensureDir(aiwgNamespacedRoot, opts.dryRun);
 
   for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, paths.skills, opts);
+    deploySkillDir(skillDir, aiwgNamespacedRoot, opts);
   }
 }
 
@@ -359,7 +365,7 @@ export async function deploy(opts) {
 
   // Skills
   if (shouldDeploySkills || skillsOnly) {
-    if (verbose) console.log(`\nDeploying ${skillDirs.length} skills to ${paths.skills}...`);
+    if (verbose) console.log(`\nDeploying ${skillDirs.length} skills to ${paths.skills}/aiwg/ (PUW-025 namespaced)...`);
     deploySkills(skillDirs, opts);
     counts.skills = skillDirs.length;
   }
