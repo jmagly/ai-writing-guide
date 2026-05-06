@@ -36,3 +36,14 @@ export {
   type AgentsMdProvider,
 } from './provider-policy.js';
 export { generateAiwgMd } from './aiwg-md.js';
+export {
+  SOFT_WARN_BYTES,
+  HARD_ERROR_BYTES,
+  SPILLOVER_START,
+  SPILLOVER_END,
+  partitionForOverflow,
+  injectSpilloverBlock,
+  extractNonSpillover,
+  SafetyCriticalOverflowError,
+  type OverflowPriorityMap,
+} from './overflow.js';

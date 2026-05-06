@@ -25,6 +25,11 @@ import type {
 import { sanitizeDescription, sanitizeTags } from './sanitizer.js';
 import { checkPathAllowed } from './allowlist.js';
 import { generateAiwgMd } from './aiwg-md.js';
+import {
+  SafetyCriticalOverflowError,
+  injectSpilloverBlock,
+  partitionForOverflow,
+} from './overflow.js';
 
 const SECTION_TITLES: Record<IndexedArtifactType, string> = {
   agents: 'Agents',
@@ -108,10 +113,23 @@ export function renderSection(section: AgentsMdSection): { markdown: string; war
 
 /**
  * Build the full AGENTS.md content (in-memory; does not write).
+ *
+ * When the assembled content would exceed the 30KB soft threshold, the
+ * generator partitions sections via `partitionForOverflow` (per ADR-1 §6 /
+ * PUW-029) and emits two strings: the trimmed AGENTS.md content plus the
+ * spillover-only markdown that the caller writes into AGENTS.override.md's
+ * spillover block.
  */
-export function buildAgentsMd(opts: ContextPipelineOptions): { content: string; warnings: string[] } {
+export function buildAgentsMd(opts: ContextPipelineOptions): {
+  content: string;
+  warnings: string[];
+  spilloverContent: string;
+  splitOccurred: boolean;
+} {
   const warnings: string[] = [];
   const parts: string[] = [];
+  let spilloverContent = '';
+  let splitOccurred = false;
 
   parts.push('# AGENTS.md');
   parts.push(`${AIWG_SIGNATURE_COMMENT}`);
@@ -135,11 +153,36 @@ export function buildAgentsMd(opts: ContextPipelineOptions): { content: string; 
     }
   }
 
-  for (const section of opts.sections) {
-    const { markdown, warnings: secWarnings } = renderSection(section);
-    if (markdown) {
-      parts.push(markdown);
+  // PUW-029 auto-split: when total entry bytes exceed the soft threshold,
+  // partition sections so AGENTS.md stays under 30KB and the rest goes to
+  // the spillover block. Safety-critical entries are always pinned to main.
+  let mainSections = opts.sections;
+  let spilloverSections: typeof opts.sections = [];
+  try {
+    const partition = partitionForOverflow(
+      opts.sections,
+      opts.overflowPriorityMap || {},
+    );
+    if (partition.splitOccurred) {
+      mainSections = partition.mainSections;
+      spilloverSections = partition.spilloverSections;
+      splitOccurred = true;
+      warnings.push(
+        `auto-split engaged: AGENTS.md ~${partition.estimatedMainBytes}b, ` +
+        `spillover ~${partition.estimatedSpilloverBytes}b (Codex 32KB cap respected)`,
+      );
     }
+  } catch (err) {
+    if (err instanceof SafetyCriticalOverflowError) {
+      // Hard error per ADR-1 §6 — do not silently truncate safeguards.
+      throw err;
+    }
+    throw err;
+  }
+
+  for (const section of mainSections) {
+    const { markdown, warnings: secWarnings } = renderSection(section);
+    if (markdown) parts.push(markdown);
     warnings.push(...secWarnings);
   }
 
@@ -148,7 +191,20 @@ export function buildAgentsMd(opts: ContextPipelineOptions): { content: string; 
   parts.push('*See `AGENTS.override.md` for operator-authored additions and overflow.*');
   parts.push('');
 
-  return { content: parts.join('\n'), warnings };
+  // Build the spillover-only markdown when split occurred.
+  if (splitOccurred && spilloverSections.length > 0) {
+    const spilloverParts: string[] = [];
+    spilloverParts.push('<!-- AIWG-managed spillover. Operator content lives outside this block. -->');
+    spilloverParts.push('');
+    for (const section of spilloverSections) {
+      const { markdown, warnings: secWarnings } = renderSection(section);
+      if (markdown) spilloverParts.push(markdown);
+      warnings.push(...secWarnings);
+    }
+    spilloverContent = spilloverParts.join('\n');
+  }
+
+  return { content: parts.join('\n'), warnings, spilloverContent, splitOccurred };
 }
 
 /**
@@ -198,6 +254,39 @@ async function atomicWrite(filePath: string, content: string): Promise<void> {
 }
 
 /**
+ * Inject a spillover block into AGENTS.override.md, preserving operator-authored
+ * content outside the block. Per ADR-1 §5: shared file partitioning with the
+ * `<!-- spillover-from-AGENTS.md:START/END -->` markers. Generator only writes
+ * inside that block.
+ */
+async function writeSpilloverBlock(
+  projectPath: string,
+  spilloverMarkdown: string,
+  result: ContextPipelineResult,
+): Promise<void> {
+  const overridePath = path.join(projectPath, 'AGENTS.override.md');
+  let existing = '';
+  try {
+    existing = await fs.readFile(overridePath, 'utf8');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw err;
+    }
+    // Create AGENTS.override.md with a header explaining the partition.
+    existing = [
+      '# AGENTS.override.md',
+      '',
+      '<!-- Operator-authored additions go here. The block below is AIWG-managed spillover; -->',
+      '<!-- do not edit between the spillover markers. Content outside is preserved across runs. -->',
+      '',
+    ].join('\n');
+  }
+  const updated = injectSpilloverBlock(existing, spilloverMarkdown);
+  await atomicWrite(overridePath, updated);
+  result.warnings.push(`spillover written to AGENTS.override.md (${Buffer.byteLength(spilloverMarkdown, 'utf8')}b)`);
+}
+
+/**
  * Generate AIWG.md and AGENTS.md at the project root.
  *
  * Skeleton implementation: emits AGENTS.md with link-index sections; AIWG.md
@@ -225,11 +314,14 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
           `AGENTS.md exists and is not AIWG-managed; not overwritten. Pass --force to back up and replace.`,
         );
       } else {
-        const { content, warnings } = buildAgentsMd(opts);
-        await atomicWrite(agentsMdPath, content);
+        const built = buildAgentsMd(opts);
+        await atomicWrite(agentsMdPath, built.content);
         result.agentsMdPath = agentsMdPath;
-        result.agentsMdBytes = Buffer.byteLength(content, 'utf8');
-        result.warnings.push(...warnings);
+        result.agentsMdBytes = Buffer.byteLength(built.content, 'utf8');
+        result.warnings.push(...built.warnings);
+        if (built.splitOccurred) {
+          await writeSpilloverBlock(opts.projectPath, built.spilloverContent, result);
+        }
       }
     } else if (opts.force) {
       // Backup before overwrite per ADR-1 §5 R1 mitigation.
@@ -245,17 +337,23 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
           throw err;
         }
       }
-      const { content, warnings } = buildAgentsMd(opts);
-      await atomicWrite(agentsMdPath, content);
+      const built = buildAgentsMd(opts);
+      await atomicWrite(agentsMdPath, built.content);
       result.agentsMdPath = agentsMdPath;
-      result.agentsMdBytes = Buffer.byteLength(content, 'utf8');
-      result.warnings.push(...warnings);
+      result.agentsMdBytes = Buffer.byteLength(built.content, 'utf8');
+      result.warnings.push(...built.warnings);
+      if (built.splitOccurred) {
+        await writeSpilloverBlock(opts.projectPath, built.spilloverContent, result);
+      }
     } else {
-      const { content, warnings } = buildAgentsMd(opts);
-      await atomicWrite(agentsMdPath, content);
+      const built = buildAgentsMd(opts);
+      await atomicWrite(agentsMdPath, built.content);
       result.agentsMdPath = agentsMdPath;
-      result.agentsMdBytes = Buffer.byteLength(content, 'utf8');
-      result.warnings.push(...warnings);
+      result.agentsMdBytes = Buffer.byteLength(built.content, 'utf8');
+      result.warnings.push(...built.warnings);
+      if (built.splitOccurred) {
+        await writeSpilloverBlock(opts.projectPath, built.spilloverContent, result);
+      }
     }
   }
 

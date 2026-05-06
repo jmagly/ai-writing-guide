@@ -81,6 +81,17 @@ export interface ContextPipelineOptions {
 
   /** Skip emission of either file (corresponds to --no-aiwg-md / --no-agents-md / --no-context-files) */
   skip?: { aiwgMd?: boolean; agentsMd?: boolean };
+
+  /**
+   * Operator-declared overflow priority map per ADR-1 §6 / PUW-029.
+   *
+   * Keyed by artifact id. Special key `*` is the wildcard default. Values
+   * 1 (pinned to AGENTS.md), 2 (medium; default), 3 (low; first to overflow).
+   *
+   * When omitted, all entries default to priority 2 except safety-critical
+   * artifacts which are pinned to priority 1 unconditionally.
+   */
+  overflowPriorityMap?: Record<string, 1 | 2 | 3>;
 }
 
 /**
