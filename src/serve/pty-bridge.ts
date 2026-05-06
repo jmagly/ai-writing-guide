@@ -27,10 +27,21 @@
  *   → { type: 'kill_session',  agent_id, session_name }         — must use session_name, not command_id
  *   ← { type: 'shell_started', agent_id, command_id }           — idempotent: same cmd_id on reconnect (#903)
  *   ← { type: 'session_list',  agent_id, sessions[] }           — provides session_name for kill (#901)
- *   ← { type: 'output',        agent_id, command_id, stream, data, ts }
+ *   ← { type: 'output',        agent_id, command_id, stream, data, ts, seq? }
  *   ← { type: 'session_killed' | 'session_detached', agent_id, exit_code? }
  *
+ * Replay-on-attach (#1144), gated on the sandbox advertising `join_session` in
+ * supported_client_messages and `replay_buffer` in features. After `shell_started`,
+ * AIWG sends:
+ *   → { type: 'join_session', agent_id, command_id, replay_from }
+ * and the sandbox emits buffered output frames carrying `seq`. AIWG prepends
+ * `\x1bc` (full terminal reset) ahead of the first replay frame so xterm.js
+ * agrees with tmux on the starting cursor/screen state, eliminating the
+ * first-frame alignment glitch. On unexpected disconnect, the bridge resumes
+ * from the last observed seq instead of replaying from zero.
+ *
  * @issue #712
+ * @issue #1144 — replay session history when AIWG attaches to running session
  * @see #657 — agentic-sandbox PTY transport
  * @see #711 — HTTP server scaffold
  */
@@ -211,7 +222,15 @@ export async function spawnPty(
   // Phase 2a: explicit management WS endpoint
   if (opts.wsEndpoint) {
     const agentId = opts.agentId || process.env.AIWG_SANDBOX_AGENT_ID || 'agent-01';
-    await spawnSandboxWsPty(session, agentId, opts.wsEndpoint, opts);
+    // Look up advertised capabilities for this endpoint so spawnSandboxWsPty
+    // can capability-gate the replay-on-attach handshake (#1144).
+    let capabilities: { supported_client_messages: string[]; features: string[] } | undefined;
+    try {
+      const { sandboxRegistry } = await import('./sandbox-registry.js');
+      const match = sandboxRegistry.list().find((s) => s.wsEndpoint === opts.wsEndpoint);
+      capabilities = match?.wsCapabilities;
+    } catch { /* registry not available — proceed without capability gating */ }
+    await spawnSandboxWsPty(session, agentId, opts.wsEndpoint, { ...opts, capabilities });
     return;
   }
 
@@ -221,15 +240,32 @@ export async function spawnPty(
     const sandboxes = sandboxRegistry.list();
     const connected = sandboxes.find((s) => s.connected && s.wsEndpoint);
     if (connected) {
-      const agentId = opts.agentId
-        || process.env.AIWG_SANDBOX_AGENT_ID
-        || connected.agents.find((a) => a.status === 'ready')?.agentId
+      // #1146: refuse silent fallback when multiple ready agents exist and the
+      // caller has not chosen one. Single-agent case still auto-selects.
+      const explicit = opts.agentId || process.env.AIWG_SANDBOX_AGENT_ID;
+      const ready = connected.agents.filter((a) => a.status === 'ready');
+      if (!explicit && ready.length > 1) {
+        const ids = ready.map((a) => a.agentId).join(', ');
+        throw new Error(
+          `Sandbox '${connected.name}' has ${ready.length} ready agents (${ids}); ` +
+          `pass ?agent=<agentId> on /ws/pty/:sessionId or set AIWG_SANDBOX_AGENT_ID.`,
+        );
+      }
+      const agentId = explicit
+        || ready[0]?.agentId
         || connected.agents[0]?.agentId
         || 'agent-01';
-      await spawnSandboxWsPty(session, agentId, connected.wsEndpoint, opts);
+      await spawnSandboxWsPty(session, agentId, connected.wsEndpoint, {
+        ...opts,
+        capabilities: connected.wsCapabilities,
+      });
       return;
     }
-  } catch { /* registry not available — fall through to local PTY */ }
+  } catch (err) {
+    // #1146: if we threw above to demand explicit selection, propagate it.
+    if (err instanceof Error && err.message.startsWith('Sandbox ')) throw err;
+    /* registry not available — fall through to local PTY */
+  }
 
   // Phase 2c: legacy REST-based sandbox (AIWG_SANDBOX_ENDPOINT env var — deprecated)
   const sandboxEndpoint = opts.sandboxEndpoint || process.env.AIWG_SANDBOX_ENDPOINT;
@@ -308,7 +344,17 @@ async function spawnSandboxWsPty(
   session: PtySession,
   agentId: string,
   wsEndpoint: string,
-  opts: { cols?: number; rows?: number },
+  opts: {
+    cols?: number;
+    rows?: number;
+    /**
+     * Sandbox-advertised WS capabilities. When supplied AND the sandbox lists
+     * `join_session` in supported_client_messages and `replay_buffer` in
+     * features, spawnSandboxWsPty will request session history replay after
+     * `shell_started` (#1144).
+     */
+    capabilities?: { supported_client_messages: string[]; features: string[] };
+  },
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let wsMod: any;
@@ -327,6 +373,15 @@ async function spawnSandboxWsPty(
   const cols = opts.cols ?? 120;
   const rows = opts.rows ?? 30;
 
+  // Replay-on-attach capability gating (#1144). The sandbox must advertise
+  // both `join_session` as a client message and `replay_buffer` as a feature
+  // before AIWG will request history; otherwise we keep the old start_shell
+  // path unchanged.
+  const replayCapable =
+    !!opts.capabilities
+    && opts.capabilities.supported_client_messages.includes('join_session')
+    && opts.capabilities.features.includes('replay_buffer');
+
   return new Promise<void>((resolve, reject) => {
     let commandId: string | null = null;
     // session_name resolved via list_sessions after shell_started (#901)
@@ -337,6 +392,13 @@ async function spawnSandboxWsPty(
     let settled = false;
     let reconnectAttempt = 0;
     const MAX_RECONNECT = 8;
+    // #1144: persist last seen sequence number so reconnects resume from gap point
+    let lastSeq = 0;
+    // #1144: prepend a single xterm full-reset before the first replay frame so
+    // the renderer's cursor/screen state agrees with tmux on its starting point.
+    // Without the reset, mid-conversation bytes overlap whatever was on screen
+    // and produce the alignment glitch described in #1144.
+    let needsReplayReset = false;
 
     // sock is reassigned on each reconnect; sendMsg always uses the current one
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -383,6 +445,19 @@ async function spawnSandboxWsPty(
           settle();
           // Request session list to resolve the session_name needed for kill (#901)
           sendMsg({ type: 'list_sessions', agent_id: agentId });
+          // #1144: ask the sandbox to replay buffered output so a late attach
+          // sees existing session history. On the initial attach lastSeq is 0
+          // (full replay); on reconnect lastSeq is the last frame we saw, so
+          // we resume from the gap rather than re-rendering history.
+          if (replayCapable) {
+            needsReplayReset = true;
+            sendMsg({
+              type: 'join_session',
+              agent_id: agentId,
+              command_id: commandId,
+              replay_from: lastSeq,
+            });
+          }
           return;
         }
 
@@ -403,7 +478,19 @@ async function spawnSandboxWsPty(
           (msg['stream'] === 'stdout' || msg['stream'] === undefined) &&
           msg['data']
         ) {
-          const data = typeof msg['data'] === 'string' ? msg['data'] : String(msg['data']);
+          let data = typeof msg['data'] === 'string' ? msg['data'] : String(msg['data']);
+          // #1144: track sandbox-supplied seq so reconnects can resume from
+          // the gap point rather than replaying from the buffer head.
+          const seq = msg['seq'];
+          if (typeof seq === 'number' && seq > lastSeq) lastSeq = seq;
+          // #1144: emit a full xterm reset (`\x1bc`) ahead of the first frame
+          // following a replay request so the renderer agrees with tmux on
+          // the starting state. Eliminates the alignment glitch where
+          // mid-session bytes overlap the prior screen content.
+          if (needsReplayReset) {
+            data = '\x1bc' + data;
+            needsReplayReset = false;
+          }
           onDataCb?.(data);
           return;
         }
