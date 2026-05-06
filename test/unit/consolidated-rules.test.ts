@@ -412,6 +412,12 @@ describe('Consolidated Rules Functions', () => {
   // ==========================================================================
 
   describe('cleanupOldRuleFiles', () => {
+    // Per #1143 fix in commit b903841f: cleanupOldRuleFiles is now opt-in
+    // via opts.cleanRules. The default-off mode preserves rules across
+    // addon-after-main deploys. These tests pass cleanRules: true to
+    // exercise the cleanup logic itself.
+    const CLEAN_OPTS = { cleanRules: true } as const;
+
     let rulesDir: string;
 
     beforeEach(() => {
@@ -419,13 +425,19 @@ describe('Consolidated Rules Functions', () => {
       fs.mkdirSync(rulesDir, { recursive: true });
     });
 
+    it('is a no-op when cleanRules is not passed (#1143 default-off)', () => {
+      fs.writeFileSync(path.join(rulesDir, 'old-rule.md'), 'old');
+      const removed = base.cleanupOldRuleFiles(rulesDir);
+      expect(removed).toHaveLength(0);
+      expect(fs.existsSync(path.join(rulesDir, 'old-rule.md'))).toBe(true);
+    });
+
     it('removes old .md files but keeps RULES-INDEX.md', () => {
-      // Create test files
       fs.writeFileSync(path.join(rulesDir, 'no-attribution.md'), 'old rule');
       fs.writeFileSync(path.join(rulesDir, 'anti-laziness.md'), 'old rule');
       fs.writeFileSync(path.join(rulesDir, 'RULES-INDEX.md'), 'index content');
 
-      const removed = base.cleanupOldRuleFiles(rulesDir);
+      const removed = base.cleanupOldRuleFiles(rulesDir, CLEAN_OPTS);
 
       expect(removed).toHaveLength(2);
       expect(fs.existsSync(path.join(rulesDir, 'no-attribution.md'))).toBe(false);
@@ -438,7 +450,7 @@ describe('Consolidated Rules Functions', () => {
       fs.writeFileSync(path.join(rulesDir, 'config.json'), '{}');
       fs.writeFileSync(path.join(rulesDir, 'old-rule.md'), 'old');
 
-      const removed = base.cleanupOldRuleFiles(rulesDir);
+      const removed = base.cleanupOldRuleFiles(rulesDir, CLEAN_OPTS);
 
       expect(removed).toHaveLength(1);
       expect(fs.existsSync(path.join(rulesDir, 'existing.mdc'))).toBe(true);
@@ -449,7 +461,7 @@ describe('Consolidated Rules Functions', () => {
       fs.mkdirSync(path.join(rulesDir, 'subdir'));
       fs.writeFileSync(path.join(rulesDir, 'subdir', 'nested.md'), 'nested');
 
-      const removed = base.cleanupOldRuleFiles(rulesDir);
+      const removed = base.cleanupOldRuleFiles(rulesDir, CLEAN_OPTS);
 
       expect(removed).toHaveLength(0);
       expect(fs.existsSync(path.join(rulesDir, 'subdir', 'nested.md'))).toBe(true);
@@ -458,32 +470,52 @@ describe('Consolidated Rules Functions', () => {
     it('dry-run mode does not delete files', () => {
       fs.writeFileSync(path.join(rulesDir, 'old-rule.md'), 'old');
 
-      const removed = base.cleanupOldRuleFiles(rulesDir, { dryRun: true });
+      const removed = base.cleanupOldRuleFiles(rulesDir, { ...CLEAN_OPTS, dryRun: true });
 
       expect(removed).toHaveLength(1);
       expect(fs.existsSync(path.join(rulesDir, 'old-rule.md'))).toBe(true);
     });
 
     it('handles non-existent directory gracefully', () => {
-      const removed = base.cleanupOldRuleFiles('/tmp/nonexistent-rules-dir');
+      const removed = base.cleanupOldRuleFiles('/tmp/nonexistent-rules-dir', CLEAN_OPTS);
       expect(removed).toHaveLength(0);
     });
 
     it('handles empty directory', () => {
-      const removed = base.cleanupOldRuleFiles(rulesDir);
+      const removed = base.cleanupOldRuleFiles(rulesDir, CLEAN_OPTS);
       expect(removed).toHaveLength(0);
     });
 
     it('handles case sensitivity for RULES-INDEX.md', () => {
-      // Only exact match "RULES-INDEX.md" should be preserved
       fs.writeFileSync(path.join(rulesDir, 'RULES-INDEX.md'), 'index');
       fs.writeFileSync(path.join(rulesDir, 'rules-index.md'), 'lowercase variant');
 
-      const removed = base.cleanupOldRuleFiles(rulesDir);
+      const removed = base.cleanupOldRuleFiles(rulesDir, CLEAN_OPTS);
 
       expect(removed).toHaveLength(1);
       expect(fs.existsSync(path.join(rulesDir, 'RULES-INDEX.md'))).toBe(true);
       expect(fs.existsSync(path.join(rulesDir, 'rules-index.md'))).toBe(false);
+    });
+
+    it('skips files in incomingFiles (per-deploy refresh)', () => {
+      fs.writeFileSync(path.join(rulesDir, 'keep-me.md'), 'keep');
+      fs.writeFileSync(path.join(rulesDir, 'remove-me.md'), 'remove');
+
+      const removed = base.cleanupOldRuleFiles(rulesDir, {
+        ...CLEAN_OPTS,
+        incomingFiles: ['/anywhere/keep-me.md'],
+      });
+
+      expect(removed).toHaveLength(1);
+      expect(fs.existsSync(path.join(rulesDir, 'keep-me.md'))).toBe(true);
+      expect(fs.existsSync(path.join(rulesDir, 'remove-me.md'))).toBe(false);
+    });
+
+    it('treats empty incomingFiles array as no-op even with cleanRules:true', () => {
+      fs.writeFileSync(path.join(rulesDir, 'should-survive.md'), 'survive');
+      const removed = base.cleanupOldRuleFiles(rulesDir, { ...CLEAN_OPTS, incomingFiles: [] });
+      expect(removed).toHaveLength(0);
+      expect(fs.existsSync(path.join(rulesDir, 'should-survive.md'))).toBe(true);
     });
   });
 });
