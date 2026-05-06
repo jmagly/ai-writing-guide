@@ -344,6 +344,44 @@ Does simple things.`,
     await fs.rm(tmpDir, { recursive: true, force: true });
   });
 
+  it('writes Copilot dual paths: .github/commands/*.md and .github/prompts/*.prompt.md (PUW-004 #1105)', async () => {
+    // Mirror the real use.ts layout: project root with .github/commands/.
+    const projectRoot = path.join(tmpDir, 'project');
+    const copilotCommandsDir = path.join(projectRoot, '.github', 'commands');
+    await fs.mkdir(copilotCommandsDir, { recursive: true });
+
+    const result = await translateSkillsToCommands(skillsDir, {
+      provider: 'copilot',
+      targetDir: copilotCommandsDir,
+      projectPath: projectRoot,
+    });
+    expect(result.translated.length).toBeGreaterThan(0);
+
+    // Legacy path: .github/commands/<id>.md (kept per always-deploy invariant)
+    const legacyPath = path.join(copilotCommandsDir, 'deploy-framework.md');
+    await expect(fs.access(legacyPath)).resolves.toBeUndefined();
+
+    // New path: .github/prompts/<id>.prompt.md
+    const promptPath = path.join(projectRoot, '.github', 'prompts', 'deploy-framework.prompt.md');
+    await expect(fs.access(promptPath)).resolves.toBeUndefined();
+
+    const promptContent = await fs.readFile(promptPath, 'utf-8');
+    expect(promptContent).toContain('Deploy a framework to the workspace');
+  });
+
+  it('does NOT write .github/prompts/ for non-Copilot providers', async () => {
+    const projectRoot = path.join(tmpDir, 'project');
+    const factoryCommandsDir = path.join(projectRoot, '.factory', 'commands');
+    await fs.mkdir(factoryCommandsDir, { recursive: true });
+
+    await translateSkillsToCommands(skillsDir, {
+      provider: 'factory',
+      targetDir: factoryCommandsDir,
+      projectPath: projectRoot,
+    });
+    await expect(fs.access(path.join(projectRoot, '.github', 'prompts'))).rejects.toThrow();
+  });
+
   it('should skip translation for skills-native providers', async () => {
     const result = await translateSkillsToCommands(skillsDir, {
       provider: 'claude',

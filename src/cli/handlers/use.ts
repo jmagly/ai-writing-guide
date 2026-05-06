@@ -1288,6 +1288,7 @@ export class UseHandler implements CommandHandler {
         const translationResult = await translateSkillsToCommands(targetSkillsDir, {
           provider,
           targetDir: targetCommandsDir,
+          projectPath: target,
           dryRun,
           verbose,
         });

@@ -28,6 +28,14 @@ export interface TranslationOptions {
   dryRun?: boolean;
   /** If true, log verbose output */
   verbose?: boolean;
+  /**
+   * Project root path. Used by per-provider dual-write paths (e.g., Copilot
+   * `.github/prompts/<id>.prompt.md`). When omitted, dual-write derives the
+   * root from `path.dirname(path.dirname(targetDir))` which works for
+   * standard `<root>/.github/commands/` layouts but not arbitrary test
+   * fixtures. Pass `projectPath` explicitly when targetDir is non-standard.
+   */
+  projectPath?: string;
 }
 
 export interface TranslatedCommand {
@@ -384,6 +392,19 @@ export async function translateSkillsToCommands(
         const targetPath = path.join(options.targetDir, commandFilename);
         await fs.mkdir(options.targetDir, { recursive: true });
         await fs.writeFile(targetPath, commandContent, 'utf-8');
+
+        // Copilot dual-write per PUW-004 (#1105): also emit to
+        // `.github/prompts/<skill>.prompt.md` so Copilot Chat picks up the
+        // skills as `/`-invocable prompt files. Always-deploy invariant
+        // (ADR-1 §0.6) keeps the legacy `.github/commands/` write above.
+        if (options.provider === 'copilot') {
+          const projectRoot = options.projectPath
+            ?? path.dirname(path.dirname(options.targetDir));
+          const promptsDir = path.join(projectRoot, '.github', 'prompts');
+          const promptPath = path.join(promptsDir, `${skillName}.prompt.md`);
+          await fs.mkdir(promptsDir, { recursive: true });
+          await fs.writeFile(promptPath, commandContent, 'utf-8');
+        }
       }
 
       result.translated.push(translated);
