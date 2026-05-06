@@ -5,7 +5,7 @@
   "version": "1.1.0",
   "description": "Claude Code hook templates for workflow tracing, permissions, session management, context injection, and quality gates",
   "core": false,
-  "autoInstall": false,
+  "autoInstall": true,
   "author": "AIWG Contributors",
   "license": "MIT",
   "repository": "https://github.com/jmagly/aiwg",
