@@ -43,6 +43,7 @@ import {
   emitDiscoverEventsDeduped,
 } from '../../extensions/project-local-activity.js';
 import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
+import { installAiwgHooks } from '../../extensions/claude-hooks-installer.js';
 // Context-pipeline: emits AIWG.md + AGENTS.md as the last step of `aiwg use`
 // for non-Claude providers per ADR-1 (.aiwg/architecture/adr-agents-md-aggregation.md).
 // Distinct from agentsmith (which creates subagent personas).
@@ -1385,6 +1386,39 @@ export class UseHandler implements CommandHandler {
     // Deploy CI workflow files when --ci-hooks-enabled is set (#661)
     if (ciHooksEnabled) {
       await deployCiHooks({ frameworkRoot, framework, target, dryRun });
+    }
+
+    // PUW-010 (#1111) Claude Code aiwg-hooks autoInstall — wire the
+    // addon's JS handler scripts into .claude/settings.json with backup-
+    // and-rollback per ADR-3 §5. Default ON for Claude per ADR-3 §7;
+    // operator opts out via --no-hooks.
+    if (provider === 'claude' && !dryRun && !remainingArgs.includes('--no-hooks')) {
+      try {
+        const r = await installAiwgHooks({
+          projectPath: target,
+          frameworkRoot,
+          dryRun,
+          verbose,
+        });
+        if (r) {
+          if (verbose && r.installedScripts.length > 0) {
+            ui.dim(`  aiwg-hooks: installed ${r.installedScripts.length} hook scripts to .claude/hooks/`);
+          }
+          if (verbose && r.registeredEvents.length > 0) {
+            for (const event of r.registeredEvents) {
+              ui.dim(`  aiwg-hooks registered: ${event}`);
+            }
+          }
+          if (r.backupPath) {
+            ui.dim(`  aiwg-hooks: backed up settings.json to ${r.backupPath}`);
+          }
+          for (const w of r.warnings) {
+            ui.dim(`  aiwg-hooks: ${w}`);
+          }
+        }
+      } catch (err) {
+        ui.warn(`aiwg-hooks installer: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
 
     // PUW-018 (#1119) cross-provider hook bridge — opt-in via
