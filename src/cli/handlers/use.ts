@@ -44,6 +44,7 @@ import {
 } from '../../extensions/project-local-activity.js';
 import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
 import { installAiwgHooks } from '../../extensions/claude-hooks-installer.js';
+import { detectScope, mirrorSkillsToUserScope } from '../scope-resolver.js';
 // Context-pipeline: emits AIWG.md + AGENTS.md as the last step of `aiwg use`
 // for non-Claude providers per ADR-1 (.aiwg/architecture/adr-agents-md-aggregation.md).
 // Distinct from agentsmith (which creates subagent personas).
@@ -1158,6 +1159,20 @@ export class UseHandler implements CommandHandler {
     const ciHooksEnabled = remainingArgs.includes('--ci-hooks-enabled');
     const force = remainingArgs.includes('--force');
     const skipConflicts = remainingArgs.includes('--skip-conflicts');
+
+    // PUW-027 (#1128): --scope user|project per ADR-4. Default project.
+    let scope: 'project' | 'user';
+    try {
+      scope = detectScope(remainingArgs);
+    } catch (err) {
+      return {
+        exitCode: 1,
+        message: `Error: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+    if (scope === 'user' && verbose) {
+      ui.dim(`  --scope user: deploy targets redirect to home-rooted paths per ADR-4 §2`);
+    }
     const filteredArgs = deployArgs.filter(
       a => a !== '--no-utils' && a !== '--no-project-local' && a !== '--ci-hooks-enabled' && a !== '--force' && a !== '--skip-conflicts'
     );
@@ -1386,6 +1401,25 @@ export class UseHandler implements CommandHandler {
     // Deploy CI workflow files when --ci-hooks-enabled is set (#661)
     if (ciHooksEnabled) {
       await deployCiHooks({ frameworkRoot, framework, target, dryRun });
+    }
+
+    // PUW-027 (#1128) --scope user: mirror project-deployed skills to the
+    // user-scope target per ADR-4 §2. The project-scope deploy stays in
+    // place; the user-scope copy is additive and makes skills available
+    // across all the operator's projects.
+    if (scope === 'user' && !dryRun) {
+      try {
+        const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+        const projectSkillsDir = path.isAbsolute(paths.skills)
+          ? paths.skills
+          : path.join(target, paths.skills);
+        const r = await mirrorSkillsToUserScope(provider, projectSkillsDir);
+        if (r.count > 0) {
+          ui.dim(`  --scope user: mirrored ${r.count} skill(s) to ${r.targetDir}`);
+        }
+      } catch (err) {
+        ui.warn(`--scope user mirror failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
 
     // PUW-010 (#1111) Claude Code aiwg-hooks autoInstall — wire the
