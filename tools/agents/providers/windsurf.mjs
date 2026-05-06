@@ -174,24 +174,46 @@ export function transformCommand(srcPath, content, opts) {
 }
 
 /**
- * Transform rule content for Windsurf — injects trigger: always_on frontmatter.
- * Windsurf reads .windsurf/rules/*.md with YAML frontmatter controlling when each
- * rule is active. Without a trigger field the rule may not be loaded.
+ * Transform rule content for Windsurf — injects trigger frontmatter per ADR-2.
+ *
+ * Defaults to `trigger: always_on` (the ADR-2 §2 default-preservation choice
+ * for the existing AIWG rule corpus). When the source frontmatter declares
+ * a `globs:` or `applyTo:` field, the trigger is upgraded to `glob` and the
+ * glob pattern is passed through as the Windsurf-native `glob:` field
+ * (PUW-020 / #1121, glob-mode part of ADR-2 §1 mapping).
+ *
+ * Per ADR-2 §5: non-always_on modes require a live-Windsurf smoke test
+ * gate before shipping to operators with the live loader. Until that gate
+ * lands, the safe default is preserved for rules without explicit globs.
  */
 export function transformRule(srcPath, content, opts) {
   const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
 
   if (fmMatch) {
     const [, frontmatter, body] = fmMatch;
-    // Already has a trigger field — preserve the file as-is
+    // Already has a trigger field — preserve the file as-is.
     if (/^trigger:/m.test(frontmatter)) {
       return content;
     }
-    // Inject trigger: always_on as the first frontmatter field
+
+    // PUW-021 (#1122 sibling): pass through globs / applyTo as glob trigger.
+    const globsMatch = /^\s*globs?\s*:\s*(.+)$/m.exec(frontmatter);
+    const applyToMatch = /^\s*applyTo\s*:\s*(.+)$/m.exec(frontmatter);
+    if (globsMatch || applyToMatch) {
+      const globValue = (globsMatch?.[1] || applyToMatch?.[1] || '').trim().replace(/^['"]|['"]$/g, '');
+      const triggerLines = [`trigger: glob`];
+      // Add Windsurf-native `glob:` field if not already present.
+      if (!/^\s*glob\s*:/m.test(frontmatter)) {
+        triggerLines.push(`glob: '${globValue}'`);
+      }
+      return `---\n${triggerLines.join('\n')}\n${frontmatter}\n---\n${body}`;
+    }
+
+    // Default: trigger: always_on (ADR-2 §2 safe default).
     return `---\ntrigger: always_on\n${frontmatter}\n---\n${body}`;
   }
 
-  // No frontmatter — wrap with trigger
+  // No frontmatter — wrap with trigger.
   return `---\ntrigger: always_on\n---\n\n${content}`;
 }
 
