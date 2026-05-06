@@ -84,8 +84,15 @@ export function Terminal({ sessionId, readOnly = false }: TerminalProps) {
       xtermRef.current = term;
       fitRef.current = fit;
 
-      // Resize observer
-      const ro = new ResizeObserver(() => fit.fit());
+      // Resize observer — skip degenerate container sizes (sidebar collapse,
+      // hidden panel, dev StrictMode double-mount). A fit() call against a
+      // ~0px box computes garbage cols/rows that would clamp tmux to a
+      // sub-region of the visible area.
+      const ro = new ResizeObserver((entries) => {
+        const box = entries[0]?.contentRect;
+        if (!box || box.width < 50 || box.height < 20) return;
+        fit.fit();
+      });
       ro.observe(containerRef.current!);
 
       // WebSocket
@@ -115,6 +122,16 @@ export function Terminal({ sessionId, readOnly = false }: TerminalProps) {
           ws.send({ type: 'data', payload: data });
         });
         term.onResize(({ cols, rows }) => {
+          // Drop degenerate sizes — tmux clamps the window to whatever it
+          // gets and can't recover a sub-region paint until a clean resize.
+          if (
+            !Number.isFinite(cols) ||
+            !Number.isFinite(rows) ||
+            cols < 20 ||
+            rows < 5
+          ) {
+            return;
+          }
           ws.send({ type: 'resize', cols, rows });
         });
       }
