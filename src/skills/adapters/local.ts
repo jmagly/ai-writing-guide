@@ -344,6 +344,36 @@ export class LocalAdapter implements RegistryAdapter {
         fs.cpSync(srcPath, destPath, { recursive: true });
       }
     }
+
+    // Codex `agents/openai.yaml` UI sidecar (#1129 PUW-028).
+    // Additive — sidecar absence is graceful. Failures here are non-fatal.
+    if (target === 'codex') {
+      try {
+        const { emitCodexSidecar } = await import('../../smiths/skillsmith/codex-sidecar.js');
+        const skillMdPath = path.join(targetDir, 'SKILL.md');
+        let metadata: { name?: string; description?: string } = {};
+        try {
+          const skillContent = fs.readFileSync(skillMdPath, 'utf8');
+          const fmMatch = /^---\s*\n([\s\S]*?)\n---/.exec(skillContent);
+          if (fmMatch) {
+            const yaml = await import('js-yaml');
+            const fm = yaml.load(fmMatch[1]);
+            if (fm && typeof fm === 'object') {
+              metadata = fm as { name?: string; description?: string };
+            }
+          }
+        } catch {
+          // Frontmatter parse failure → fall through with empty metadata;
+          // sidecar will use folder name as display_name.
+        }
+        await emitCodexSidecar(targetDir, metadata);
+      } catch (err) {
+        // Sidecar emission must never block the deploy. Log and move on.
+        console.warn(
+          `Warning: Codex sidecar emission failed for ${name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
   }
 
   /**
