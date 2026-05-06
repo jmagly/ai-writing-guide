@@ -146,6 +146,22 @@ export function transformRule(srcPath, content, opts) {
       return content;
     }
 
+    // PUW-021 (#1122): if source frontmatter declares `globs:` (or
+    // `applyTo:` for Copilot-style rules), emit Cursor MDC `globs:` plus
+    // `alwaysApply: false`. The activation mode is implicitly `glob`.
+    const globsMatch = /^\s*globs?\s*:\s*(.+)$/m.exec(existingFm);
+    const applyToMatch = /^\s*applyTo\s*:\s*(.+)$/m.exec(existingFm);
+    if (globsMatch || applyToMatch) {
+      const globValue = (globsMatch?.[1] || applyToMatch?.[1] || '').trim().replace(/^['"]|['"]$/g, '');
+      let mergedFm = existingFm.trimEnd();
+      // Add globs field if absent (operator already set globs would have matched).
+      if (!globsMatch) {
+        mergedFm += `\nglobs: '${globValue}'`;
+      }
+      mergedFm += '\nalwaysApply: false';
+      return `---\n${mergedFm}\n---\n${body}`;
+    }
+
     const updatedFm = existingFm.trimEnd() + '\nalwaysApply: true';
     return `---\n${updatedFm}\n---\n${body}`;
   }
