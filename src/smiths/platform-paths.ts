@@ -20,7 +20,7 @@ export function getCommandsDirectory(platform: Platform, projectPath: string): s
     'claude': '.claude/commands',
     'factory': '.factory/commands',
     'cursor': '.cursor/commands',
-    'codex': '.codex/commands',
+    'codex': '.codex/commands', // Codex commands are a static built-in enum in codex-rs; .codex/commands/ files are not auto-scanned. Path keeps writing per ADR-1 always-deploy invariant — files remain operator-visible and bridged via AGENTS.md links. See #1104.
     'copilot': '.github/agents',
     'hermes': '', // Served via MCP, not file-deployed
     'opencode': '', // Commands derive from skills automatically — no .opencode/command/ directory scanned
