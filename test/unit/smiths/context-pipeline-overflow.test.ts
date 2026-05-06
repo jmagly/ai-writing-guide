@@ -194,6 +194,58 @@ describe('buildAgentsMd with overflow', () => {
   });
 });
 
+describe('twin-file emission per ADR-1 §4', () => {
+  it('writes .hermes.md alongside AGENTS.md for hermes provider', async () => {
+    const result = await generate({
+      provider: 'hermes',
+      projectPath: tmpDir,
+      sections: [{ type: 'agents', entries: [makeEntry('foo')] }],
+    });
+    expect(result.twinPaths).toContain(path.join(tmpDir, '.hermes.md'));
+    const hermes = await fs.readFile(path.join(tmpDir, '.hermes.md'), 'utf8');
+    const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
+    expect(hermes).toBe(agents);
+  });
+
+  it('writes WARP.md alongside AGENTS.md for warp provider', async () => {
+    const result = await generate({
+      provider: 'warp',
+      projectPath: tmpDir,
+      sections: [{ type: 'agents', entries: [makeEntry('foo')] }],
+    });
+    expect(result.twinPaths).toContain(path.join(tmpDir, 'WARP.md'));
+    const warp = await fs.readFile(path.join(tmpDir, 'WARP.md'), 'utf8');
+    const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
+    expect(warp).toBe(agents);
+  });
+
+  it('does not write twin files for codex', async () => {
+    const result = await generate({
+      provider: 'codex',
+      projectPath: tmpDir,
+      sections: [{ type: 'agents', entries: [makeEntry('foo')] }],
+    });
+    expect(result.twinPaths).toEqual([]);
+  });
+
+  it('respects detectExistingFiles guard for twin files', async () => {
+    // Pre-existing operator-claimed .hermes.md (no AIWG signature).
+    await fs.writeFile(path.join(tmpDir, '.hermes.md'), '# Operator content\n', 'utf8');
+    const result = await generate({
+      provider: 'hermes',
+      projectPath: tmpDir,
+      sections: [{ type: 'agents', entries: [makeEntry('foo')] }],
+      detectExistingFiles: true,
+    });
+    // Twin should not be in twinPaths (refused to overwrite).
+    expect(result.twinPaths).toEqual([]);
+    // Operator content preserved.
+    const hermes = await fs.readFile(path.join(tmpDir, '.hermes.md'), 'utf8');
+    expect(hermes).toBe('# Operator content\n');
+    expect(result.warnings.some((w) => w.includes('.hermes.md exists'))).toBe(true);
+  });
+});
+
 describe('generate end-to-end with auto-split', () => {
   it('writes AGENTS.md + AGENTS.override.md spillover when content overflows', async () => {
     const entries: IndexEntry[] = [];
