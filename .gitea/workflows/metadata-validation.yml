@@ -51,6 +51,17 @@ jobs:
       - name: Check dist directory
         run: ls -la dist/src/plugin/ || echo "dist/src/plugin/ directory does not exist"
 
+      - name: Check marketplace.json version (PUW-038 #1139)
+        run: |
+          echo "Checking .claude-plugin/marketplace.json version is in lockstep with package.json..."
+          # Pre-release tags allow stable-line match (rc.N drift accepted).
+          # Stable tags require exact match.
+          if [[ "${GITEA_REF:-}" == refs/tags/v* && "${GITEA_REF:-}" != *-rc.* && "${GITEA_REF:-}" != *-alpha.* && "${GITEA_REF:-}" != *-beta.* && "${GITEA_REF:-}" != *-nightly.* ]]; then
+            node tools/workspace/check-marketplace-version.mjs
+          else
+            node tools/workspace/check-marketplace-version.mjs --allow-prerelease-mismatch
+          fi
+
       - name: Validate Metadata Schema
         run: |
           echo "Validating plugin metadata..."
