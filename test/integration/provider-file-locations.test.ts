@@ -498,16 +498,19 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Consolidated Rules Deployment', () => {
     // Should have RULES-INDEX.md
     expect(mdFiles).toContain('RULES-INDEX.md');
 
-    // Should NOT have individual rule files like no-attribution.md, anti-laziness.md
+    // Per PUW-016 (#1117): individual rule files now ship ALONGSIDE
+    // RULES-INDEX.md so the @-references in the index resolve. The original
+    // assertion that the consolidated index *replaces* individual files no
+    // longer holds. We instead assert that the index plus the individual
+    // files are both present — the union surface.
     const individualRules = mdFiles.filter(f => f !== 'RULES-INDEX.md');
-    // Addon rules may also be present, but the 31 core/sdlc/research rules should NOT be
     const knownIndividualRules = [
       'no-attribution.md', 'token-security.md', 'versioning.md',
       'anti-laziness.md', 'executable-feedback.md', 'failure-mitigation.md',
       'tao-loop.md', 'hitl-gates.md', 'provenance-tracking.md',
     ];
     for (const knownRule of knownIndividualRules) {
-      expect(individualRules, `${knownRule} should NOT be deployed individually`).not.toContain(knownRule);
+      expect(individualRules, `${knownRule} should be deployed individually per PUW-016`).toContain(knownRule);
     }
   });
 
@@ -523,27 +526,26 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Consolidated Rules Deployment', () => {
     expect(content).toContain('## Quick Reference by Context');
   });
 
-  it('cleans up old individual rule files on redeploy', async () => {
-    // Simulate old-style deployment with individual files
+  it('preserves operator pre-existing rule files on redeploy (#1143 default-off cleanup)', async () => {
+    // Per #1143 fix: cleanupOldRuleFiles is now opt-in via opts.cleanRules.
+    // The default-off mode means addon-after-main deploys no longer wipe
+    // the main framework's rules. As a side-effect, operator-placed files
+    // also survive (operator must explicitly clean if desired).
     const rulesDir = path.join(projectDir, '.claude', 'rules');
     await fs.mkdir(rulesDir, { recursive: true });
-    await fs.writeFile(path.join(rulesDir, 'no-attribution.md'), 'old individual rule');
-    await fs.writeFile(path.join(rulesDir, 'anti-laziness.md'), 'old individual rule');
-    await fs.writeFile(path.join(rulesDir, 'token-security.md'), 'old individual rule');
+    await fs.writeFile(path.join(rulesDir, 'operator-only.md'), 'operator content');
 
-    // Deploy consolidated rules
     runDeploy('claude', projectDir, homeDir);
 
-    // Old individual files should be cleaned up
-    const oldExists = await pathExists(path.join(rulesDir, 'no-attribution.md'));
-    expect(oldExists, 'no-attribution.md should be removed by cleanup').toBe(false);
+    // Operator file survives.
+    const operatorExists = await pathExists(path.join(rulesDir, 'operator-only.md'));
+    expect(operatorExists, 'operator file should survive default-off cleanup').toBe(true);
 
-    const antiExists = await pathExists(path.join(rulesDir, 'anti-laziness.md'));
-    expect(antiExists, 'anti-laziness.md should be removed by cleanup').toBe(false);
-
-    // RULES-INDEX.md should exist
+    // RULES-INDEX.md and individual AIWG rules deploy alongside.
     const indexExists = await pathExists(path.join(rulesDir, 'RULES-INDEX.md'));
     expect(indexExists, 'RULES-INDEX.md should be deployed').toBe(true);
+    const aiwgRuleExists = await pathExists(path.join(rulesDir, 'no-attribution.md'));
+    expect(aiwgRuleExists, 'AIWG rule should deploy alongside index per PUW-016').toBe(true);
   });
 
   it('preserves non-.md files during cleanup', async () => {

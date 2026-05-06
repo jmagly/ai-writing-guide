@@ -607,19 +607,23 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Deployment Completeness', () => {
       expect(content.length).toBeGreaterThan(500);
     });
 
-    it('does NOT deploy individual rule files that are consolidated', async () => {
+    it('deploys individual rule files alongside RULES-INDEX.md (PUW-016 #1117)', async () => {
+      // Per PUW-016: individual rule files now ship alongside the
+      // consolidated RULES-INDEX.md so the index's @-references resolve.
+      // The original test expected only RULES-INDEX.md; the assertion is
+      // flipped to require both surfaces.
       runDeploy(prov.name, projectDir, homeDir);
       const rulesDir = path.join(projectDir, prov.ruleDir);
       const files = await fs.readdir(rulesDir).catch(() => []);
       const mdFiles = files.filter(f => f.endsWith('.md'));
 
-      // Known individual rules that should NOT be present
-      const consolidated = ['no-attribution.md', 'anti-laziness.md', 'token-security.md',
+      const expectedRules = ['no-attribution.md', 'anti-laziness.md', 'token-security.md',
         'executable-feedback.md', 'versioning.md', 'failure-mitigation.md'];
 
-      for (const rule of consolidated) {
-        expect(mdFiles, `${providerName}: ${rule} should not be deployed individually`).not.toContain(rule);
+      for (const rule of expectedRules) {
+        expect(mdFiles, `${providerName}: ${rule} should be deployed alongside RULES-INDEX.md`).toContain(rule);
       }
+      expect(mdFiles, `${providerName}: RULES-INDEX.md still ships`).toContain('RULES-INDEX.md');
     });
   });
 
