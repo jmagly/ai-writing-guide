@@ -297,6 +297,67 @@ export function createAgentsMd(target, srcRoot, dryRun) {
 }
 
 // ============================================================================
+// Cloud agent + worktree configuration (PUW-019 #1120)
+// ============================================================================
+
+/**
+ * Deploy Cursor cloud-agent + worktree config templates.
+ *
+ * Per PUW-019: AIWG ships templates at
+ *   agentic/code/frameworks/sdlc-complete/templates/cursor/environment.json.aiwg-template
+ *   agentic/code/frameworks/sdlc-complete/templates/cursor/worktrees.json.aiwg-template
+ * but they were never wired into the deployer. This emits them at
+ *   .cursor/environment.json
+ *   .cursor/worktrees.json
+ * only when the operator-provided file is absent (always-deploy invariant
+ * §0.6 — we don't overwrite operator-authored config). When the file
+ * exists, deploy is skipped with a verbose-only note.
+ */
+export function deployCursorConfigTemplates(targetDir, srcRoot, opts) {
+  const cursorDir = path.join(targetDir, '.cursor');
+  ensureDir(cursorDir, opts?.dryRun);
+
+  const templates = [
+    { src: 'cursor/environment.json.aiwg-template', dest: 'environment.json' },
+    { src: 'cursor/worktrees.json.aiwg-template', dest: 'worktrees.json' },
+  ];
+
+  for (const t of templates) {
+    const srcPath = path.join(
+      srcRoot,
+      'agentic',
+      'code',
+      'frameworks',
+      'sdlc-complete',
+      'templates',
+      t.src,
+    );
+    const destPath = path.join(cursorDir, t.dest);
+
+    if (!fs.existsSync(srcPath)) {
+      if (opts?.verbose) {
+        console.log(`  cursor template not found, skipping: ${t.src}`);
+      }
+      continue;
+    }
+    if (fs.existsSync(destPath)) {
+      if (opts?.verbose) {
+        console.log(`  ${t.dest} exists, preserving operator content`);
+      }
+      continue;
+    }
+    if (opts?.dryRun) {
+      console.log(`[dry-run] Would deploy cursor template ${t.src} -> .cursor/${t.dest}`);
+      continue;
+    }
+    fs.copyFileSync(srcPath, destPath);
+    if (opts?.verbose) {
+      console.log(`deployed cursor template: .cursor/${t.dest}`);
+    }
+  }
+}
+
+// ============================================================================
 // Post-Deployment
 // ============================================================================
 
@@ -305,6 +366,15 @@ export async function postDeploy(targetDir, opts) {
 
   if (opts.createAgentsMd) {
     createAgentsMd(targetDir, opts.srcRoot, opts.dryRun);
+  }
+
+  // PUW-019 (#1120): wire environment.json + worktrees.json templates.
+  try {
+    deployCursorConfigTemplates(targetDir, opts.srcRoot, opts);
+  } catch (err) {
+    console.warn(
+      `Warning: cursor template deploy failed: ${err && err.message ? err.message : err}`,
+    );
   }
 }
 
