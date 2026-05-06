@@ -96,6 +96,64 @@ export function transformCommand(srcPath, content, opts) {
   return content;
 }
 
+/**
+ * Transform rule content for Cursor — inject MDC frontmatter with the
+ * activation mode mapping per ADR-2 (rule activation mode schema).
+ *
+ * Reads the source rule's `activation:` field (or defaults to alwaysApply
+ * per ADR-2 §2 default-preservation) and emits the corresponding MDC
+ * frontmatter fields:
+ *   - alwaysApply (true): activation === 'alwaysApply' (default)
+ *   - alwaysApply (false), no globs: activation === 'auto'
+ *   - globs: activation === 'glob' + globs: '<pattern>'
+ *   - alwaysApply (false), description: activation === 'manual'
+ *
+ * Per ADR-2 §5: until the live-Cursor smoke test gate is in CI, all rules
+ * deploy with alwaysApply: true regardless of source `activation` value
+ * (with a deploy-time warning when the source declared a non-alwaysApply
+ * mode). The deploy-time warning is emitted by the deployer, not this
+ * transform.
+ */
+export function transformRule(srcPath, content, opts) {
+  // Detect proper YAML frontmatter — must close within the first 30 lines.
+  // Files with `---` horizontal rules deeper in markdown content (like
+  // RULES-INDEX.md) can have multiple `---` lines without being frontmatter;
+  // the line-budget keeps us from misidentifying horizontal rules as frontmatter
+  // delimiters.
+  const lines = content.split('\n');
+  let fmEnd = -1;
+  if (lines[0]?.trim() === '---') {
+    for (let i = 1; i < Math.min(lines.length, 30); i++) {
+      if (lines[i].trim() === '---') {
+        fmEnd = i;
+        break;
+      }
+      // YAML frontmatter is key:value pairs. If we see a markdown heading or
+      // bold/italic markers in what would be frontmatter, this is not YAML.
+      if (/^(#{1,6}\s|\*\*|^\* )/.test(lines[i])) {
+        fmEnd = -1;
+        break;
+      }
+    }
+  }
+
+  if (fmEnd > 0) {
+    const existingFm = lines.slice(1, fmEnd).join('\n');
+    const body = lines.slice(fmEnd + 1).join('\n');
+
+    // If the operator already set alwaysApply, leave it alone.
+    if (/^\s*alwaysApply\s*:\s*\w+/m.test(existingFm)) {
+      return content;
+    }
+
+    const updatedFm = existingFm.trimEnd() + '\nalwaysApply: true';
+    return `---\n${updatedFm}\n---\n${body}`;
+  }
+
+  // No (proper) frontmatter — prepend a minimal MDC block.
+  return `---\nalwaysApply: true\n---\n${content}`;
+}
+
 // ============================================================================
 // Model Mapping (not applicable for Cursor)
 // ============================================================================
@@ -181,7 +239,9 @@ export function deployRulesInline(ruleFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.rules);
   ensureDir(destDir, opts.dryRun);
   cleanupOldRuleFiles(destDir, opts);
-  return deployFiles(ruleFiles, destDir, opts, transformCommand);
+  // Use transformRule (PUW-011 #1112) so deployed rules carry MDC
+  // alwaysApply: true frontmatter — the safe default per ADR-2 §2.
+  return deployFiles(ruleFiles, destDir, opts, transformRule);
 }
 
 /**
