@@ -259,7 +259,9 @@ export function deploySkills(skillDirs, targetDir, opts) {
 export function deployRules(ruleFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.rules);
   ensureDir(destDir, opts.dryRun);
-  cleanupOldRuleFiles(destDir, opts);
+  // Pass incomingFiles so addon deploys with 0 rules don't wipe the main
+  // framework's rules (#1143 mitigation; also fixes #1117 PUW-016).
+  cleanupOldRuleFiles(destDir, { ...opts, incomingFiles: ruleFiles });
   return deployFiles(ruleFiles, destDir, opts, transformCommand);
 }
 

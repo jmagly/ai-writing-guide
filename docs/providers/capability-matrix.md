@@ -26,7 +26,7 @@ The baseline provider is Claude Code; all gap reporting in `aiwg doctor` is rela
 | **Agent Teams** | Native | Emulated | Emulated | Native | Native | Emulated | Emulated | Emulated | Emulated |
 | **Mission Control** | Native | Emulated | Emulated | Emulated | Native | Emulated | Emulated | Emulated | Emulated |
 | **Behaviors** | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | **Native** |
-| **MCP** | Native | — | — | Native | Partial | Native | — | — | — |
+| **MCP** | Native | — | — | Native | Partial | Native | — | Native | — |
 | **Daemon** | **T1** + T2 | **T1** + T2 | — | — | — | **T1** | **T1** | — | **T1** |
 
 **Legend:** Native = first-class platform support. Emulated = AIWG emulation via daemon/mc. — = not supported.
@@ -151,12 +151,12 @@ Extend the provider with external tool servers via the Model Context Protocol.
 | Factory AI | Native | MCP protocol (stdio + HTTP) | `aiwg mcp install factory` |
 | OpenCode | Native | MCP protocol (built-in) | `aiwg mcp install opencode` |
 | Warp Terminal | Not supported | — | — |
-| Windsurf | Not supported | — | — |
+| Windsurf | Native | MCP protocol (built-in) | `aiwg mcp install windsurf` |
 | OpenClaw | Not supported | — | — |
 
 **Factory AI:** Native MCP support with both `stdio` (local process) and `http` (remote endpoint) transports. Configuration in `.factory/mcp.json` (project) and `~/.factory/mcp.json` (user). Built-in registry of 40+ pre-configured servers.
 
-**Codex, Copilot, Warp, Windsurf, OpenClaw:** MCP tools must be accessed through the AIWG CLI layer (`aiwg mcp serve`) rather than native platform integration.
+**Codex, Copilot, Warp, OpenClaw:** MCP tools must be accessed through the AIWG CLI layer (`aiwg mcp serve`) rather than native platform integration.
 
 ---
 

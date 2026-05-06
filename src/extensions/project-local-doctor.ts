@@ -14,6 +14,7 @@
  */
 
 import { resolve } from 'path';
+import { homedir } from 'os';
 import { discoverProjectLocalBundles } from './project-local-discovery.js';
 import { buildUpstreamRegistry } from './upstream-registry.js';
 import { resolveShadows } from './shadow-resolver.js';
@@ -70,6 +71,11 @@ const TYPE_DIR: Record<ProjectLocalType, string> = {
   plugin: 'plugins',
 };
 
+// Per PUW-026 (#1127): home-deploying providers get absolute prefixes so
+// `resolve(projectDir, prefix)` correctly produces the home-rooted path
+// (resolve treats absolute paths as authoritative). Previously these were
+// `null`, which silently skipped lifecycle operations against home-deployed
+// project-local bundles.
 const PROVIDER_PREFIX: Record<string, string | null> = {
   claude: '.claude',
   cursor: '.cursor',
@@ -79,8 +85,8 @@ const PROVIDER_PREFIX: Record<string, string | null> = {
   warp: '.warp',
   codex: '.codex',
   copilot: '.github',
-  openclaw: null,
-  hermes: null,
+  openclaw: resolve(homedir(), '.openclaw'),
+  hermes: resolve(homedir(), '.hermes'),
 };
 
 export async function buildProjectLocalDoctorSection(

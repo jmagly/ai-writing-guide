@@ -22,7 +22,7 @@ export function getCommandsDirectory(platform: Platform, projectPath: string): s
     'cursor': '.cursor/commands',
     'codex': '.codex/commands', // Codex commands are a static built-in enum in codex-rs; .codex/commands/ files are not auto-scanned. Path keeps writing per ADR-1 always-deploy invariant — files remain operator-visible and bridged via AGENTS.md links. See #1104.
     'copilot': '.github/agents',
-    'hermes': '', // Served via MCP, not file-deployed
+    'hermes': '', // Hermes commands are statically registered in Python; no file-based command directory
     'opencode': '.opencode/command', // OpenCode scans .opencode/command/**/*.md via ConfigCommand.load() (PUW-006 #1107)
     'openclaw': join(homedir(), '.openclaw', 'commands'),
     'warp': '.warp/commands', // Not natively discovered — content delivered via WARP.md
@@ -51,7 +51,7 @@ export function getAgentsDirectory(platform: Platform, projectPath: string): str
     'codex': '.codex/agents',
     'copilot': '.github/agents',
     'hermes': '', // Aggregated into AGENTS.md at project root
-    'opencode': '', // Agents are config-only in OpenCode (opencode.json agent key) — no directory scanned
+    'opencode': '', // OpenCode agents are scanned via {agent,agents}/**/*.md glob (#773); not used by this getter — see PROVIDER_PATHS in src/cli/handlers/use.ts
     'openclaw': join(homedir(), '.openclaw', 'agents'),
     'warp': '.warp/agents', // Not natively discovered — content delivered via WARP.md
     'windsurf': '.windsurf/agents',

@@ -15,6 +15,7 @@
 
 import { lstat, readdir, stat, unlink } from 'fs/promises';
 import { resolve, join, relative } from 'path';
+import { homedir } from 'os';
 import type { AiwgConfig, InstalledEntry } from '../config/aiwg-config.js';
 import { appendProjectLocalActivity } from './project-local-activity.js';
 import { sha256OfFileNormalized } from './managed-marker.js';
@@ -148,6 +149,10 @@ export async function hashBundleArtifacts(
  * scope for revert in this iteration; they are silently skipped with a
  * message).
  */
+// Per PUW-026 (#1127): home-deploying providers get absolute prefixes so
+// `resolve(projectDir, prefix)` correctly produces the home-rooted path.
+// Previously these were `null`, which silently skipped lifecycle ops
+// against home-deployed project-local bundles (OpenClaw, Hermes).
 const PROVIDER_PREFIX: Record<string, string | null> = {
   claude: '.claude',
   cursor: '.cursor',
@@ -157,8 +162,8 @@ const PROVIDER_PREFIX: Record<string, string | null> = {
   warp: '.warp',
   codex: '.codex',
   copilot: '.github',     // copilot uses .github/agents, .github/instructions, .github/skills
-  openclaw: null,         // HOME-deploying — skipped this iteration
-  hermes: null,           // HOME-deploying — skipped this iteration
+  openclaw: resolve(homedir(), '.openclaw'),
+  hermes: resolve(homedir(), '.hermes'),
 };
 
 /**

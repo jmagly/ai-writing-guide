@@ -1205,6 +1205,15 @@ export function collectFrameworkArtifacts(srcRoot, mode, options = {}) {
         const indexPath = getRulesIndexPath(srcRoot);
         if (indexPath) {
           artifacts.rules.push(indexPath);
+          // PUW-016 (#1117): also include individual rule files referenced
+          // by the index. RULES-INDEX.md links to per-rule files; if those
+          // files don't ship the links resolve to nowhere. Filter the
+          // index file itself out of listMdFiles so it isn't pushed twice.
+          const indexBase = indexPath.split('/').pop();
+          artifacts.rules.push(
+            ...listMdFiles(framework.components.rules.path)
+              .filter((f) => !f.endsWith(indexBase))
+          );
           continue;
         }
       }
@@ -1584,17 +1593,50 @@ export function generateConsolidatedRulesContent(srcRoot, provider, addonRuleFil
  * @param {boolean} opts.dryRun - If true, log but don't delete
  * @returns {string[]} - List of removed (or would-be-removed) file paths
  */
+/**
+ * Remove stale rule files from a deploy directory before writing fresh ones.
+ *
+ * Per #1143 + #1117: addon deploys run as separate `deploy-agents.mjs`
+ * invocations after the main framework, and the previous "wipe all non-index
+ * .md before writing" behavior caused the main framework's rules to be
+ * silently destroyed by every subsequent addon deploy (whether or not the
+ * addon shipped any rules of its own).
+ *
+ * The fix: cleanup only fires when the operator explicitly asks via
+ * `opts.cleanRules: true`. The deploy-time cleanup is replaced by a
+ * dedicated `aiwg refresh --clean-rules` operator flow (follow-up issue).
+ *
+ * Existing callers that pass `incomingFiles: []` still get a no-op; existing
+ * callers that pass nothing get the legacy (now-disabled) cleanup as a no-op
+ * by default.
+ *
+ * @param {string} rulesDir
+ * @param {object} opts
+ * @param {boolean} [opts.dryRun]
+ * @param {boolean} [opts.cleanRules] explicit opt-in to remove stale files
+ * @param {string[]} [opts.incomingFiles] when cleanRules=true, only files NOT
+ *   in this list are removed
+ */
 export function cleanupOldRuleFiles(rulesDir, opts = {}) {
-  const { dryRun = false } = opts;
+  const { dryRun = false, cleanRules = false, incomingFiles } = opts;
   const removed = [];
 
   if (!fs.existsSync(rulesDir)) return removed;
+  if (!cleanRules) return removed;
+  if (Array.isArray(incomingFiles) && incomingFiles.length === 0) return removed;
+
+  const incomingBasenames = new Set(
+    Array.isArray(incomingFiles)
+      ? incomingFiles.map((f) => path.basename(f))
+      : []
+  );
 
   const entries = fs.readdirSync(rulesDir, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     if (!entry.name.toLowerCase().endsWith('.md')) continue;
     if (entry.name === 'RULES-INDEX.md') continue;
+    if (incomingBasenames.has(entry.name)) continue;
 
     const filePath = path.join(rulesDir, entry.name);
     removed.push(filePath);

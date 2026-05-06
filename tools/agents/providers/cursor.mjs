@@ -238,7 +238,8 @@ export async function deployRulesViaScript(targetDir, srcRoot, opts) {
 export function deployRulesInline(ruleFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.rules);
   ensureDir(destDir, opts.dryRun);
-  cleanupOldRuleFiles(destDir, opts);
+  // #1143: skip cleanup when this deploy has 0 rules.
+  cleanupOldRuleFiles(destDir, { ...opts, incomingFiles: ruleFiles });
   // Use transformRule (PUW-011 #1112) so deployed rules carry MDC
   // alwaysApply: true frontmatter — the safe default per ADR-2 §2.
   return deployFiles(ruleFiles, destDir, opts, transformRule);
