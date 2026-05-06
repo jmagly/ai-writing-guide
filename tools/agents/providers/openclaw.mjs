@@ -59,6 +59,9 @@ export const paths = {
   skills: path.join(openclawHome, 'skills'),
   rules: path.join(openclawHome, 'rules'),
   behaviors: path.join(openclawHome, 'behaviors'),
+  // Per ADR-3 + PUW-008/009: native hook loader path.
+  // BEHAVIOR.md → HOOK.md + handler.js translation lands here.
+  hooks: path.join(openclawHome, 'hooks'),
 };
 
 export const support = {
@@ -185,6 +188,40 @@ function deployBehaviors(behaviorDirs, opts) {
     }
 
     count++;
+  }
+
+  // PUW-008/PUW-009 (#1109/#1110) per ADR-3: also emit hook artifacts to
+  // ~/.openclaw/hooks/<name>/ so OpenClaw's native hook loader picks them
+  // up. The behaviors/ writes above keep happening per always-deploy
+  // invariant (operator visibility); hooks/ is the discovery bridge.
+  try {
+    ensureDir(paths.hooks, opts.dryRun);
+    if (!opts.dryRun) {
+      // Lazy import so this is only loaded when behaviors exist.
+      import('./openclaw-translator.mjs').then((mod) => {
+        let translated = 0;
+        const skipped = [];
+        for (const behaviorDir of behaviorDirs) {
+          const behaviorName = path.basename(behaviorDir);
+          const hookDir = path.join(paths.hooks, behaviorName);
+          const r = mod.translateBehaviorToHook(behaviorDir, hookDir, opts);
+          if (r.ok) translated++;
+          else skipped.push({ name: behaviorName, reason: r.reason });
+        }
+        if (translated > 0) {
+          console.log(`Translated ${translated} behavior(s) to OpenClaw hooks at ${paths.hooks}`);
+        }
+        if (skipped.length > 0 && opts.verbose) {
+          for (const s of skipped) {
+            console.log(`Skipped hook translation for ${s.name}: ${s.reason}`);
+          }
+        }
+      }).catch((err) => {
+        console.warn(`Warning: hook translation failed: ${err.message || err}`);
+      });
+    }
+  } catch (err) {
+    console.warn(`Warning: hook deployment skipped: ${err.message || err}`);
   }
 
   return count;

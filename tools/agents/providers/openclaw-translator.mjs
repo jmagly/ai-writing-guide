@@ -1,0 +1,348 @@
+/**
+ * OpenClaw behavior → hook translator (PUW-008 / #1109, PUW-009 / #1110).
+ *
+ * Per ADR-3 §1, AIWG hook source (BEHAVIOR.md frontmatter + scripts/) is
+ * translated to OpenClaw-native hook artifacts (HOOK.md + handler.js) at
+ * deploy time. The original BEHAVIOR.md continues to deploy under
+ * ~/.openclaw/behaviors/<name>/ per ADR-1 §0.6 always-deploy invariant
+ * (operator visibility); this translator additionally emits to
+ * ~/.openclaw/hooks/<name>/ which is the path OpenClaw natively scans.
+ *
+ * AIWG behavior YAML frontmatter has a `hooks:` field shaped like:
+ *
+ *   hooks:
+ *     on_file_write:
+ *       - filter: '**\/*.{ts,js}'
+ *         action: run_script
+ *         script: scripts/scan.sh
+ *     on_deploy:
+ *       - action: run_script
+ *         script: scripts/post-deploy.sh
+ *
+ * The translator emits one HOOK.md per behavior carrying frontmatter that
+ * lists the events the hook subscribes to, plus a handler.js that
+ * dispatches to the right script based on the event the loader passes in.
+ *
+ * @implements ADR-3 (.aiwg/architecture/adr-hook-deployment-generalization.md)
+ * @issue #1109 #1110
+ */
+
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+/**
+ * Parse YAML frontmatter from BEHAVIOR.md. Returns null when no frontmatter
+ * is present or the parse fails — the caller skips translation in that case.
+ *
+ * Lightweight parser that handles the subset of YAML used in BEHAVIOR.md
+ * frontmatter (key:value, lists, nested maps). For broader YAML support a
+ * library would be needed, but the format is constrained.
+ */
+function parseBehaviorFrontmatter(content) {
+  const match = /^---\s*\n([\s\S]*?)\n---/.exec(content);
+  if (!match) return null;
+
+  const fmRaw = match[1];
+  const lines = fmRaw.split('\n');
+  const frontmatter = {};
+
+  // Top-level fields we care about
+  let inHooks = false;
+  let currentEvent = null;
+  let currentEntry = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+
+    // Top-level fields (no indentation)
+    if (!/^\s/.test(line)) {
+      inHooks = false;
+      currentEvent = null;
+      currentEntry = null;
+
+      const nameMatch = /^name:\s*(.+)/.exec(line);
+      if (nameMatch) { frontmatter.name = nameMatch[1].trim(); continue; }
+
+      const versionMatch = /^version:\s*(.+)/.exec(line);
+      if (versionMatch) { frontmatter.version = versionMatch[1].trim(); continue; }
+
+      const descMatch = /^description:\s*(.+)?/.exec(line);
+      if (descMatch) {
+        // Multi-line descriptions continue until next top-level key.
+        let desc = (descMatch[1] || '').trim();
+        let j = i + 1;
+        while (j < lines.length && /^\s+/.test(lines[j]) && !/^\s+\w+:/.test(lines[j])) {
+          desc += ' ' + lines[j].trim();
+          j++;
+        }
+        frontmatter.description = desc;
+        i = j - 1;
+        continue;
+      }
+
+      if (/^hooks:/.test(line)) {
+        inHooks = true;
+        frontmatter.hooks = {};
+        continue;
+      }
+      continue;
+    }
+
+    // Inside `hooks:` block
+    if (inHooks) {
+      // Event key (one level of indentation, ends with colon, no list dash)
+      const eventMatch = /^\s{2,4}([a-z_][a-z0-9_]*):\s*$/i.exec(line);
+      if (eventMatch) {
+        currentEvent = eventMatch[1];
+        frontmatter.hooks[currentEvent] = [];
+        currentEntry = null;
+        continue;
+      }
+
+      // List entry start (dash with field)
+      const listStart = /^\s+-\s*(\w+):\s*(.+)?/.exec(line);
+      if (listStart && currentEvent) {
+        currentEntry = { [listStart[1]]: (listStart[2] || '').trim().replace(/^['"]|['"]$/g, '') };
+        frontmatter.hooks[currentEvent].push(currentEntry);
+        continue;
+      }
+
+      // Continuation field within a list entry
+      const fieldMatch = /^\s+(\w+):\s*(.+)/.exec(line);
+      if (fieldMatch && currentEntry) {
+        currentEntry[fieldMatch[1]] = fieldMatch[2].trim().replace(/^['"]|['"]$/g, '');
+        continue;
+      }
+    }
+  }
+
+  return frontmatter;
+}
+
+/**
+ * Render the HOOK.md content for OpenClaw's hook loader.
+ *
+ * Frontmatter fields:
+ *   - name: behavior name
+ *   - description: short description
+ *   - events: list of event names this hook subscribes to
+ *   - handler: relative path to the JS handler
+ *   - aiwg_managed: provenance signature per ADR-3
+ */
+export function renderHookMd(behavior) {
+  const events = Object.keys(behavior.hooks || {});
+  const eventsList = events.length > 0
+    ? events.map((e) => `  - ${e}`).join('\n')
+    : '  []';
+
+  const description = (behavior.description || '').replace(/"/g, '\\"').slice(0, 200);
+
+  return [
+    '---',
+    `name: ${behavior.name}`,
+    `description: "${description}"`,
+    'events:',
+    eventsList,
+    'handler: ./handler.js',
+    'aiwg_managed: true',
+    '---',
+    '',
+    `# ${behavior.name}`,
+    '',
+    behavior.description || '',
+    '',
+    `Generated by AIWG from \`agentic/code/behaviors/${behavior.name}/BEHAVIOR.md\`.`,
+    `Edits to this file are overwritten on \`aiwg use\`. Edit the source BEHAVIOR.md instead.`,
+    '',
+  ].join('\n');
+}
+
+/**
+ * Render the handler.js dispatcher for one behavior.
+ *
+ * The handler receives an event payload from OpenClaw's hook loader and
+ * dispatches to the correct script based on the event name. Per ADR-3 §3,
+ * the stdin schema is normalized to the AIWG canonical shape:
+ *
+ *   { event, tool, args, project_dir, session_id }
+ *
+ * Per ADR-3 §4, the handler exits 0 (allow), 1 (block), or 2 (warn).
+ *
+ * The handler is intentionally minimal — it forwards execution to the
+ * behavior's existing scripts/*.sh files. AIWG never invents new logic;
+ * the translator is a transport-layer change only.
+ */
+export function renderHandlerJs(behavior, scriptsRelDir = './scripts') {
+  // Build an event → scripts mapping from the hooks: frontmatter.
+  const dispatchTable = {};
+  for (const [event, entries] of Object.entries(behavior.hooks || {})) {
+    dispatchTable[event] = (entries || [])
+      .filter((e) => e.action === 'run_script' && e.script)
+      .map((e) => ({
+        script: e.script.startsWith('scripts/')
+          ? e.script.slice('scripts/'.length)
+          : e.script,
+        filter: e.filter || null,
+      }));
+  }
+
+  // Stable JSON for the dispatch table embedded in the handler source.
+  const dispatchJson = JSON.stringify(dispatchTable, null, 2)
+    .split('\n').map((l) => '  ' + l).join('\n').trim();
+
+  return `#!/usr/bin/env node
+// Generated by AIWG (PUW-008/PUW-009). Do not edit; regenerated on \`aiwg use\`.
+// Handler for OpenClaw hook \`${behavior.name}\`. Dispatches to scripts in
+// ./scripts/ based on the event delivered by OpenClaw's hook loader.
+//
+// Stdin contract (AIWG canonical, per ADR-3 §3):
+//   { event, tool, args, project_dir, session_id }
+// Exit codes (per ADR-3 §4):
+//   0 = allow, 1 = block, 2 = warn-and-continue
+
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { minimatch } from 'minimatch';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const SCRIPTS_DIR = resolve(__dirname, ${JSON.stringify(scriptsRelDir)});
+
+const DISPATCH = ${dispatchJson};
+
+function readStdin() {
+  try {
+    const data = readFileSync(0, 'utf8');
+    return data ? JSON.parse(data) : {};
+  } catch {
+    return {};
+  }
+}
+
+function pathMatches(filter, candidate) {
+  if (!filter) return true;
+  if (!candidate) return false;
+  try {
+    return minimatch(candidate, filter, { matchBase: true });
+  } catch {
+    return true;
+  }
+}
+
+const payload = readStdin();
+const event = process.env.AIWG_HOOK_EVENT || payload.event;
+const targetPath = payload.path || payload.file || (payload.args && payload.args[0]) || null;
+
+const handlers = DISPATCH[event] || [];
+if (handlers.length === 0) {
+  process.exit(0);
+}
+
+let worstExit = 0;
+for (const h of handlers) {
+  if (!pathMatches(h.filter, targetPath)) continue;
+  const scriptPath = join(SCRIPTS_DIR, h.script);
+  const result = spawnSync(scriptPath, [], {
+    stdio: ['pipe', 'inherit', 'inherit'],
+    input: JSON.stringify(payload),
+    env: {
+      ...process.env,
+      AIWG_HOOK_EVENT: event,
+      AIWG_PROJECT_DIR: payload.project_dir || process.env.AIWG_PROJECT_DIR || '',
+      AIWG_TOOL_NAME: payload.tool || '',
+    },
+  });
+  if (result.status !== null && result.status > worstExit) {
+    worstExit = result.status;
+  }
+}
+process.exit(worstExit > 2 ? 1 : worstExit);
+`;
+}
+
+/**
+ * Translate one BEHAVIOR.md into HOOK.md + handler.js artifacts.
+ *
+ * @param {string} behaviorDir absolute path of source behavior directory
+ * @param {string} hookDestDir absolute path of destination hook directory
+ * @param {object} opts deploy options (dryRun supported)
+ * @returns {{ ok: boolean, reason?: string, hookMdPath?: string, handlerPath?: string }}
+ */
+export function translateBehaviorToHook(behaviorDir, hookDestDir, opts = {}) {
+  const behaviorMdPath = path.join(behaviorDir, 'BEHAVIOR.md');
+  if (!fs.existsSync(behaviorMdPath)) {
+    return { ok: false, reason: 'BEHAVIOR.md not found' };
+  }
+
+  const content = fs.readFileSync(behaviorMdPath, 'utf8');
+  const fm = parseBehaviorFrontmatter(content);
+  if (!fm || !fm.name) {
+    return { ok: false, reason: 'BEHAVIOR.md frontmatter missing or unparseable' };
+  }
+
+  // Behaviors without a `hooks:` block don't have anything for OpenClaw's
+  // hook loader to subscribe to (e.g. `mode: agent` behaviors). Skip them.
+  if (!fm.hooks || Object.keys(fm.hooks).length === 0) {
+    return { ok: false, reason: 'no hooks declared in frontmatter' };
+  }
+
+  const hookMd = renderHookMd(fm);
+  const handlerJs = renderHandlerJs(fm);
+
+  if (opts.dryRun) {
+    return { ok: true, hookMdPath: '<dry-run>', handlerPath: '<dry-run>' };
+  }
+
+  fs.mkdirSync(hookDestDir, { recursive: true });
+  const hookMdPath = path.join(hookDestDir, 'HOOK.md');
+  const handlerPath = path.join(hookDestDir, 'handler.js');
+  fs.writeFileSync(hookMdPath, hookMd, 'utf8');
+  fs.writeFileSync(handlerPath, handlerJs, 'utf8');
+  try { fs.chmodSync(handlerPath, 0o755); } catch { /* non-POSIX */ }
+
+  // Also copy scripts/ alongside the handler so it can find them by
+  // relative path. The behavior's BEHAVIOR.md references scripts/<name>.sh
+  // and the handler's spawnSync uses the same convention.
+  const sourceScripts = path.join(behaviorDir, 'scripts');
+  if (fs.existsSync(sourceScripts)) {
+    const destScripts = path.join(hookDestDir, 'scripts');
+    fs.mkdirSync(destScripts, { recursive: true });
+    for (const entry of fs.readdirSync(sourceScripts)) {
+      const src = path.join(sourceScripts, entry);
+      const dst = path.join(destScripts, entry);
+      if (fs.statSync(src).isFile()) {
+        fs.copyFileSync(src, dst);
+        try { fs.chmodSync(dst, 0o755); } catch { /* non-POSIX */ }
+      }
+    }
+  }
+
+  return { ok: true, hookMdPath, handlerPath };
+}
+
+/**
+ * Translate every behavior under behaviorsRoot into hooks under hooksRoot.
+ *
+ * @returns {{ translated: number, skipped: Array<{name: string, reason: string}> }}
+ */
+export function translateAllBehaviors(behaviorsRoot, hooksRoot, opts = {}) {
+  const result = { translated: 0, skipped: [] };
+  if (!fs.existsSync(behaviorsRoot)) return result;
+
+  const entries = fs.readdirSync(behaviorsRoot, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const behaviorDir = path.join(behaviorsRoot, entry.name);
+    const hookDir = path.join(hooksRoot, entry.name);
+    const r = translateBehaviorToHook(behaviorDir, hookDir, opts);
+    if (r.ok) {
+      result.translated++;
+    } else {
+      result.skipped.push({ name: entry.name, reason: r.reason });
+    }
+  }
+
+  return result;
+}
