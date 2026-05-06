@@ -43,6 +43,15 @@ import {
   emitDiscoverEventsDeduped,
 } from '../../extensions/project-local-activity.js';
 import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
+// Context-pipeline: emits AIWG.md + AGENTS.md as the last step of `aiwg use`
+// for non-Claude providers per ADR-1 (.aiwg/architecture/adr-agents-md-aggregation.md).
+// Distinct from agentsmith (which creates subagent personas).
+import {
+  generate as generateContextFiles,
+  discoverDeployedArtifacts,
+  shouldEmitContextFiles,
+} from '../../smiths/context-pipeline/index.js';
+import type { Platform } from '../../agents/types.js';
 
 /**
  * Valid framework identifiers
@@ -1363,6 +1372,69 @@ export class UseHandler implements CommandHandler {
         await writeAiwgConfig(projectDir, updatedConfig);
       } catch {
         // Non-fatal: config tracking failure must not block deployment
+      }
+    }
+
+    // Context-pipeline emission (ADR-1 §0 + §0.5 + §7).
+    //
+    // For the seven AGENTS.md providers (codex/cursor/windsurf/hermes/warp/factory/
+    // opencode), emit AIWG.md + AGENTS.md at project root as the last filesystem
+    // step before activity-log close. The generator-runs-after-deploy invariant
+    // (ADR-1 §7) means the link index can only cite files we observe on disk:
+    // failed deploys produce shorter indexes, never broken links.
+    //
+    // Operators opt out via --no-context-files / --no-aiwg-md / --no-agents-md.
+    if (!dryRun && shouldEmitContextFiles(provider as Platform)) {
+      const skipContext = remainingArgs.includes('--no-context-files');
+      const skipAiwgMd = skipContext || remainingArgs.includes('--no-aiwg-md');
+      const skipAgentsMd = skipContext || remainingArgs.includes('--no-agents-md');
+      const forceContext = remainingArgs.includes('--force-context-files');
+
+      try {
+        const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+        const sections = await discoverDeployedArtifacts(target, {
+          agents: paths.agents,
+          rules: paths.rules,
+          skills: paths.skills,
+          behaviors: paths.behaviors,
+        });
+
+        const ctxResult = await generateContextFiles({
+          provider: provider as Platform,
+          projectPath: target,
+          sections,
+          detectExistingFiles: true,
+          force: forceContext,
+          skip: { aiwgMd: skipAiwgMd, agentsMd: skipAgentsMd },
+        });
+
+        if (verbose && ctxResult.agentsMdPath) {
+          ui.dim(`  Wrote AGENTS.md (${ctxResult.agentsMdBytes} bytes)`);
+        }
+        if (verbose && ctxResult.aiwgMdPath) {
+          ui.dim(`  Wrote AIWG.md`);
+        }
+        for (const w of ctxResult.warnings) {
+          ui.dim(`  context-pipeline: ${w}`);
+        }
+        for (const b of ctxResult.backupPaths) {
+          ui.dim(`  Backup created: ${b}`);
+        }
+
+        // PUW-029 size validation hook (#1130). Hard error at 32KB matches
+        // Codex's config_toml.rs:68 cap. Soft warning at 30KB.
+        if (provider === 'codex' && ctxResult.agentsMdBytes > 0) {
+          if (ctxResult.agentsMdBytes >= 32 * 1024) {
+            ui.dim(`  WARNING: AGENTS.md (${ctxResult.agentsMdBytes} bytes) exceeds Codex 32KB cap. Auto-split lands in PUW-029 implementation; manual split needed for now.`);
+          } else if (ctxResult.agentsMdBytes >= 30 * 1024) {
+            ui.dim(`  Note: AGENTS.md (${ctxResult.agentsMdBytes} bytes) approaches Codex 32KB cap (warn threshold 30KB).`);
+          }
+        }
+      } catch (err) {
+        // Non-fatal: context-pipeline emission must not block deployment.
+        // Operator can re-run aiwg use to retry.
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`Warning: context-pipeline emission failed: ${msg}`);
       }
     }
 

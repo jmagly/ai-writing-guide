@@ -25,3 +25,14 @@ export {
 } from './generator.js';
 export { sanitizeDescription, sanitizeTag, sanitizeTags } from './sanitizer.js';
 export { checkPathAllowed } from './allowlist.js';
+export {
+  discoverDeployedArtifacts,
+  discoverSection,
+  type DiscoveryPaths,
+} from './discovery.js';
+export {
+  AGENTS_MD_PROVIDERS,
+  shouldEmitContextFiles,
+  type AgentsMdProvider,
+} from './provider-policy.js';
+export { generateAiwgMd } from './aiwg-md.js';
