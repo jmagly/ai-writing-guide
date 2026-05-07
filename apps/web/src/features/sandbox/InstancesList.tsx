@@ -80,6 +80,23 @@ function isVmRunning(state: string): boolean {
   return /^(running|paused)$/i.test(state);
 }
 
+/**
+ * Match a sandbox-side agent record to a VM/container name.
+ *
+ * agentId is commonly `<vm-name>-<suffix>` (provisioning hash) rather than
+ * exactly `<vm-name>`, so the match has to be loose. Mirrors the existing
+ * SandboxPanel agent-grid filter so both surfaces agree on which agent
+ * belongs to which instance.
+ */
+function findBoundAgent(agents: SandboxAgent[], instanceName: string): SandboxAgent | undefined {
+  return agents.find(
+    (a) =>
+      a.agentId === instanceName ||
+      a.agentId.startsWith(`${instanceName}-`) ||
+      a.logicalName === instanceName,
+  );
+}
+
 export interface InstancesListProps {
   sandboxes: SandboxSummary[];
   selectedSandboxId: string | null;
@@ -188,9 +205,7 @@ export function InstancesList({
     const claimed = new Set<string>();
 
     for (const vm of vms) {
-      const boundAgent = selectedSandbox.agents.find(
-        (a) => a.agentId === vm.name || a.logicalName === vm.name,
-      );
+      const boundAgent = findBoundAgent(selectedSandbox.agents, vm.name);
       if (boundAgent) claimed.add(boundAgent.agentId);
       out.push({
         key: `vm:${vm.name}`,
@@ -205,9 +220,7 @@ export function InstancesList({
     }
 
     for (const ct of containers) {
-      const boundAgent = selectedSandbox.agents.find(
-        (a) => a.agentId === ct.name || a.logicalName === ct.name,
-      );
+      const boundAgent = findBoundAgent(selectedSandbox.agents, ct.name);
       if (boundAgent) claimed.add(boundAgent.agentId);
       out.push({
         key: `ct:${ct.name}`,
@@ -477,9 +490,9 @@ export function InstancesList({
                   onSelectInstance(selectedInstance === row.name ? null : row.name);
                 }}
                 onOpenPane={
-                  row.agent && selectedSandboxId && onOpenPane
+                  row.agent && selectedSandboxId
                     ? () =>
-                        onOpenPane({
+                        onOpenPane?.({
                           sandboxId: selectedSandboxId,
                           agentId: row.agent!.agentId,
                           label: row.name,
@@ -629,19 +642,28 @@ function InstanceRowItem({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Open pane — explicit affordance for "attach a terminal session
-            to this instance." Only rendered when the row has a bound agent
-            (no agent = no PTY surface to attach to). Clicking it opens or
-            focuses the matching pane in the multi-pane stack above. */}
-        {onOpenPane && (
-          <button
-            type="button"
-            className={styles.actionBtn}
-            onClick={onOpenPane}
-            title="Open a terminal pane for this instance"
-          >
-            📺 Pane
-          </button>
-        )}
+            to this instance." Always visible so the affordance is
+            discoverable; disabled with an explanatory tooltip when no agent
+            is bound (e.g., a stopped VM, or a running VM that hasn't had
+            its agent deployed yet). Clicking opens or focuses the matching
+            pane in the multi-pane stack above. */}
+        <button
+          type="button"
+          className={styles.actionBtn}
+          onClick={onOpenPane ?? undefined}
+          disabled={!onOpenPane}
+          title={
+            onOpenPane
+              ? 'Open a terminal pane for this instance'
+              : row.kind === 'vm'
+                ? 'No agent attached — start the VM and click ⚡ Deploy first'
+                : row.kind === 'container'
+                  ? 'Container has no AIWG agent attached — start it first'
+                  : 'No bound agent'
+          }
+        >
+          📺 Pane
+        </button>
 
         {row.kind === 'vm' && row.vm && (
           <>
