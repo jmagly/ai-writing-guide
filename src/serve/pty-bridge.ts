@@ -30,15 +30,24 @@
  *   ← { type: 'output',        agent_id, command_id, stream, data, ts, seq? }
  *   ← { type: 'session_killed' | 'session_detached', agent_id, exit_code? }
  *
- * Replay-on-attach (#1144), gated on the sandbox advertising `join_session` in
- * supported_client_messages and `replay_buffer` in features. After `shell_started`,
- * AIWG sends:
+ * Replay-on-attach (#1144). After `shell_started`, AIWG sends:
  *   → { type: 'join_session', agent_id, command_id, replay_from }
  * and the sandbox emits buffered output frames carrying `seq`. AIWG prepends
  * `\x1bc` (full terminal reset) ahead of the first replay frame so xterm.js
  * agrees with tmux on the starting cursor/screen state, eliminating the
  * first-frame alignment glitch. On unexpected disconnect, the bridge resumes
  * from the last observed seq instead of replaying from zero.
+ *
+ * Capability negotiation (operator review on #1144, 2026-05-07): the original
+ * implementation gated this strictly on the sandbox advertising `join_session`
+ * + `replay_buffer` in a server-hello banner (agentic-sandbox#190). That
+ * banner doesn't ship today, so the gate kept replay disabled even on
+ * sandboxes that fully support it. The bridge now uses an opportunistic
+ * probe: if the banner explicitly signals support, replay is enabled; if the
+ * banner is absent, the bridge sends `join_session` anyway and treats an
+ * `error` response with an "unknown" / "not supported" / "session not found"
+ * message as the negative signal. Either path is logged so an operator can
+ * tell from `aiwg serve` output which mode the bridge is running in.
  *
  * @issue #712
  * @issue #1144 — replay session history when AIWG attaches to running session
@@ -373,14 +382,47 @@ async function spawnSandboxWsPty(
   const cols = opts.cols ?? 120;
   const rows = opts.rows ?? 30;
 
-  // Replay-on-attach capability gating (#1144). The sandbox must advertise
-  // both `join_session` as a client message and `replay_buffer` as a feature
-  // before AIWG will request history; otherwise we keep the old start_shell
-  // path unchanged.
-  const replayCapable =
-    !!opts.capabilities
-    && opts.capabilities.supported_client_messages.includes('join_session')
-    && opts.capabilities.features.includes('replay_buffer');
+  // Replay-on-attach negotiation (#1144). Three states:
+  //   "advertised" — banner explicitly lists join_session + replay_buffer.
+  //   "probe"      — no banner present; we'll send join_session opportunistically
+  //                  and watch for an "unknown message" / "not supported" error
+  //                  to demote to "unsupported" if the sandbox can't handle it.
+  //   "unsupported"— banner advertises capabilities but join_session is absent
+  //                  (rare — would mean a partial banner). Skip entirely.
+  //
+  // Default behavior is opportunistic: if the operator hasn't supplied a
+  // capability map, or it lists no client messages, we still try. This keeps
+  // the replay path useful on sandboxes that support join_session without
+  // shipping the server-hello banner from agentic-sandbox#190.
+  let replayMode: 'advertised' | 'probe' | 'unsupported';
+  if (!opts.capabilities) {
+    replayMode = 'probe';
+  } else if (
+    opts.capabilities.supported_client_messages.includes('join_session') &&
+    opts.capabilities.features.includes('replay_buffer')
+  ) {
+    replayMode = 'advertised';
+  } else if (
+    opts.capabilities.supported_client_messages.length === 0 &&
+    opts.capabilities.features.length === 0
+  ) {
+    // Sandbox supplied an empty banner — treat as no-banner-yet, probe.
+    replayMode = 'probe';
+  } else {
+    // Banner present but missing the bits we care about — don't probe; the
+    // sandbox has explicitly told us it doesn't support replay.
+    replayMode = 'unsupported';
+  }
+
+  console.info(
+    `[pty-bridge] sandbox WS ${wsEndpoint} (agent=${agentId}): replay ${
+      replayMode === 'advertised'
+        ? 'enabled (banner)'
+        : replayMode === 'probe'
+          ? 'enabled (opportunistic — no banner advertised)'
+          : 'disabled (banner explicitly omits join_session/replay_buffer)'
+    }`,
+  );
 
   return new Promise<void>((resolve, reject) => {
     let commandId: string | null = null;
@@ -449,7 +491,7 @@ async function spawnSandboxWsPty(
           // sees existing session history. On the initial attach lastSeq is 0
           // (full replay); on reconnect lastSeq is the last frame we saw, so
           // we resume from the gap rather than re-rendering history.
-          if (replayCapable) {
+          if (replayMode !== 'unsupported') {
             needsReplayReset = true;
             sendMsg({
               type: 'join_session',
@@ -458,6 +500,35 @@ async function spawnSandboxWsPty(
               replay_from: lastSeq,
             });
           }
+          return;
+        }
+
+        // Probe-mode error handling (#1144): if the sandbox doesn't recognize
+        // the join_session message, demote to 'unsupported' so the renderer
+        // doesn't keep waiting for a replay reset that's never going to come,
+        // and log so the operator can see why replay didn't take effect.
+        if (msg['type'] === 'error') {
+          const errMsg = String(msg['message'] ?? '').toLowerCase();
+          const looksLikeUnsupported =
+            errMsg.includes('unknown message') ||
+            errMsg.includes('unsupported') ||
+            errMsg.includes('not supported') ||
+            errMsg.includes('session not found') ||
+            errMsg.includes('unknown type');
+          if (
+            looksLikeUnsupported &&
+            (replayMode === 'probe' || replayMode === 'advertised')
+          ) {
+            console.warn(
+              `[pty-bridge] sandbox declined join_session for agent=${agentId}: "${msg['message']}" — demoting to unsupported, falling back to live-only`,
+            );
+            replayMode = 'unsupported';
+            // Cancel the pending reset — there will be no replay frame to
+            // prepend `\x1bc` to.
+            needsReplayReset = false;
+          }
+          // Other error types are forwarded as-is to the existing handler
+          // chain (no action here — pre-existing behavior).
           return;
         }
 
