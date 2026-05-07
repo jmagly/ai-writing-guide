@@ -343,9 +343,9 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Provider File Locations', () => {
         claude: ['.claude'],
         codex: ['.codex', '.agents'],  // .agents/skills/ cross-agent compat (#766)
         factory: ['.factory'],
-        copilot: ['.github'],
+        copilot: ['.github', '.agents'],   // PUW-012 #1113
         cursor: ['.cursor'],
-        opencode: ['.opencode'],
+        opencode: ['.opencode', '.agents'], // PUW-012 #1113
         warp: ['.warp', '.agents'],  // Discrete files + WARP.md aggregated + .agents/skills/ cross-agent compat (#771)
         windsurf: ['.windsurf', '.windsurfrules', '.agents'],  // .agents/skills/ cross-agent compat (#576)
       };

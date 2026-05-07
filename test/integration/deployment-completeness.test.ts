@@ -840,8 +840,8 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Deployment Completeness', () => {
             claude: ['.claude'],
             cursor: ['.cursor'],
             factory: ['.factory'],
-            codex: ['.codex', '.agents'],  // .agents/skills/ = cross-agent path (#766)
-            opencode: ['.opencode'],
+            codex: ['.codex', '.agents'],     // .agents/skills/ = cross-agent path (#766)
+            opencode: ['.opencode', '.agents'], // PUW-012 #1113
           };
 
           const allowedDirs = ['.git', '.aiwg', ...(providerDirMap[providerName] || [])];
