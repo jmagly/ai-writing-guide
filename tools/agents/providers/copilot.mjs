@@ -382,13 +382,28 @@ export function deployCommands(commandFiles, targetDir, opts) {
 }
 
 /**
- * Deploy skills to .github/skills/
+ * Deploy skills to .github/skills/ (primary) and .agents/skills/ (cross-agent
+ * compatibility, PUW-012 #1113). Additive secondary path; does not replace
+ * the primary `.github/skills/` deploy.
  */
 export function deploySkills(skillDirs, targetDir, opts) {
+  // Primary: .github/skills/
   const destDir = path.join(targetDir, paths.skills);
   ensureDir(destDir, opts.dryRun);
   for (const skillDir of skillDirs) {
     deploySkillDir(skillDir, destDir, opts);
+  }
+
+  // Cross-agent compatibility: .agents/skills/
+  const crossAgentDir = path.join(targetDir, '.agents', 'skills');
+  ensureDir(crossAgentDir, opts.dryRun);
+  if (!opts.dryRun) {
+    console.log(`Deploying cross-agent skills to ${path.relative(process.cwd(), crossAgentDir)}...`);
+  } else {
+    console.log(`[dry-run] Would deploy cross-agent skills to .agents/skills/`);
+  }
+  for (const skillDir of skillDirs) {
+    deploySkillDir(skillDir, crossAgentDir, opts);
   }
 }
 

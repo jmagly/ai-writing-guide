@@ -319,13 +319,33 @@ export function deployCommands(_commandFiles, _targetDir, _opts) {
 }
 
 /**
- * Deploy skills to .opencode/skill/
+ * Deploy skills to .opencode/skill/ (primary) and .agents/skills/ (cross-agent
+ * compatibility, PUW-012 #1113).
+ *
+ * The .agents/skills/ path is an interop convention for projects using
+ * multiple AI coding tools. OpenCode's skill walker scans the project tree
+ * and picks up `.agents/skills/<name>/SKILL.md` as a secondary discovery
+ * location, so this is purely additive — does not replace the primary
+ * `.opencode/skill/` deploy.
  */
 export function deploySkills(skillDirs, targetDir, opts) {
+  // Primary: .opencode/skill/
   const destDir = path.join(targetDir, paths.skills);
   ensureDir(destDir, opts.dryRun);
   for (const skillDir of skillDirs) {
     deploySkillDir(skillDir, destDir, opts);
+  }
+
+  // Cross-agent compatibility: .agents/skills/
+  const crossAgentDir = path.join(targetDir, '.agents', 'skills');
+  ensureDir(crossAgentDir, opts.dryRun);
+  if (!opts.dryRun) {
+    console.log(`Deploying cross-agent skills to ${path.relative(process.cwd(), crossAgentDir)}...`);
+  } else {
+    console.log(`[dry-run] Would deploy cross-agent skills to .agents/skills/`);
+  }
+  for (const skillDir of skillDirs) {
+    deploySkillDir(skillDir, crossAgentDir, opts);
   }
 }
 

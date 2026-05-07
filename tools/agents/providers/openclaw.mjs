@@ -137,6 +137,22 @@ function deploySkills(skillDirs, opts) {
   for (const skillDir of skillDirs) {
     deploySkillDir(skillDir, aiwgNamespacedRoot, opts);
   }
+
+  // PUW-012 (#1113): also deploy to project-local .agents/skills/ as a
+  // cross-agent compatibility path. OpenClaw's primary deploy is the
+  // home-dir namespaced layout above; this secondary surface lets other
+  // tools running on the same project pick up the same skills via the
+  // universal `.agents/skills/<name>/SKILL.md` discovery convention.
+  const crossAgentDir = path.join(process.cwd(), '.agents', 'skills');
+  ensureDir(crossAgentDir, opts.dryRun);
+  if (!opts.dryRun) {
+    console.log(`Deploying cross-agent skills to ${path.relative(process.cwd(), crossAgentDir)}...`);
+  } else {
+    console.log(`[dry-run] Would deploy cross-agent skills to .agents/skills/`);
+  }
+  for (const skillDir of skillDirs) {
+    deploySkillDir(skillDir, crossAgentDir, opts);
+  }
 }
 
 /**

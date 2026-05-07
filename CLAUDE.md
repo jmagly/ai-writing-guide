@@ -80,13 +80,13 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 |----------|--------|----------|--------|-------|---------|
 | Claude Code | `.claude/agents/` | `.claude/commands/` | `.claude/skills/` | `.claude/rules/` | `aiwg use sdlc` |
 | OpenAI/Codex | `.codex/agents/` | `~/.codex/prompts/` (scanned) + `.codex/commands/` (deployed for visibility; not scanned — Codex commands are a static enum) | `~/.codex/skills/` + `.agents/skills/` | `.codex/rules/` | `aiwg use sdlc --provider codex` |
-| GitHub Copilot | `.github/agents/` | `.github/prompts/` | `.github/prompts/` | `.github/instructions/` | `aiwg use sdlc --provider copilot` |
+| GitHub Copilot | `.github/agents/` | `.github/prompts/` | `.github/skills/` + `.agents/skills/` | `.github/instructions/` | `aiwg use sdlc --provider copilot` |
 | Factory AI | `.factory/droids/` | `.factory/commands/` | `.factory/skills/` | `.factory/rules/` | `aiwg use sdlc --provider factory` |
 | Cursor | `.cursor/agents/` | `.cursor/commands/` | `.cursor/skills/` | `.cursor/rules/` | `aiwg use sdlc --provider cursor` |
-| OpenCode | `.opencode/agent/` | `.opencode/command/` | `.opencode/skill/` | `.opencode/rule/` | `aiwg use sdlc --provider opencode` |
-| Warp Terminal | `.warp/agents/` + WARP.md | `.warp/commands/` | `.warp/skills/` | `.warp/rules/` | `aiwg use sdlc --provider warp` |
-| Windsurf | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` | `.windsurf/rules/` | `aiwg use sdlc --provider windsurf` |
-| OpenClaw | `~/.openclaw/agents/` | `~/.openclaw/commands/` | `~/.openclaw/skills/` | `~/.openclaw/rules/` | `aiwg use sdlc --provider openclaw` |
+| OpenCode | `.opencode/agent/` | `.opencode/command/` | `.opencode/skill/` + `.agents/skills/` | `.opencode/rule/` | `aiwg use sdlc --provider opencode` |
+| Warp Terminal | `.warp/agents/` + WARP.md | `.warp/commands/` | `.warp/skills/` + `.agents/skills/` | `.warp/rules/` | `aiwg use sdlc --provider warp` |
+| Windsurf | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` + `.agents/skills/` | `.windsurf/rules/` | `aiwg use sdlc --provider windsurf` |
+| OpenClaw | `~/.openclaw/agents/` | `~/.openclaw/commands/` | `~/.openclaw/skills/` + `.agents/skills/` | `~/.openclaw/rules/` | `aiwg use sdlc --provider openclaw` |
 | Hermes | AGENTS.md | — | `~/.hermes/skills/` | — | `aiwg use sdlc --provider hermes` |
 
 **Special cases:**
