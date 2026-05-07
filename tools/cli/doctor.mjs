@@ -57,14 +57,217 @@ const PROVIDER_AGENT_DIRS = {
 
 // Parse doctor-specific flags from process.argv (no commander dependency).
 function parseDoctorArgs(argv) {
-  const out = { provider: null, allProviders: false };
+  const out = { provider: null, allProviders: false, noBudgetCheck: false };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === '--provider' && argv[i + 1]) { out.provider = argv[i + 1]; i += 1; continue; }
     if (a.startsWith('--provider=')) { out.provider = a.slice('--provider='.length); continue; }
     if (a === '--all-providers') { out.allProviders = true; continue; }
+    if (a === '--no-budget-check') { out.noBudgetCheck = true; continue; }
   }
   return out;
+}
+
+// ---- Skill listing budget check (#1150) -------------------------------
+//
+// Estimates the size of the skill listing the platform will render at
+// session start and warns when it exceeds the platform's default budget,
+// before the operator sees post-hoc truncation in /doctor (#1147).
+//
+// Per-platform model (see issue body for sources):
+//   claude   — `skillListingBudgetFraction` × context window (default 1%
+//              × 200k = 2000 tokens). User override read from
+//              ~/.claude/settings.json.
+//   codex    — fixed 8000-char cap built into Codex itself.
+//   others   — skip (no documented budget).
+//
+// Token estimation: ~4 chars/token is the standard rough heuristic. Each
+// listing entry is approximately `- name: description\n` so we sum
+// `name.length + description.length + 5` per skill.
+
+const CLAUDE_DEFAULT_BUDGET_FRACTION = 0.01;
+const CLAUDE_DEFAULT_CONTEXT_WINDOW = 200_000;
+const CODEX_LISTING_CHAR_CAP = 8000;
+const CHARS_PER_TOKEN = 4;
+
+async function readClaudeBudgetOverride() {
+  const candidates = [
+    path.join(os.homedir(), '.claude', 'settings.json'),
+    path.join(os.homedir(), '.config', 'claude', 'settings.json'),
+  ];
+  for (const p of candidates) {
+    try {
+      const txt = await fs.readFile(p, 'utf-8');
+      const data = JSON.parse(txt);
+      const v = data.skillListingBudgetFraction;
+      if (typeof v === 'number' && v > 0 && v <= 1) return { value: v, source: p };
+    } catch {
+      /* missing or unreadable — try next */
+    }
+  }
+  return null;
+}
+
+async function readContextWindowDirective() {
+  // Honor `<!-- AIWG_CONTEXT_WINDOW: N -->` declared in the project's
+  // platform context file (CLAUDE.md and friends, per context-budget rule).
+  const candidates = [
+    path.join(process.cwd(), 'CLAUDE.md'),
+    path.join(process.cwd(), 'AGENTS.md'),
+    path.join(process.cwd(), 'AIWG.md'),
+  ];
+  for (const p of candidates) {
+    try {
+      const txt = await fs.readFile(p, 'utf-8');
+      const m = /AIWG_CONTEXT_WINDOW:\s*(\d+)/.exec(txt);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (n > 0) return { value: n, source: path.basename(p) };
+      }
+    } catch {
+      /* missing — try next */
+    }
+  }
+  return null;
+}
+
+// Strip a single ---\n...\n--- frontmatter block and pull `name:` and
+// `description:` keys. Cheaper than a full YAML parse and good enough — the
+// real listing render uses the same first-N-chars-from-frontmatter shape.
+function extractSkillFrontmatter(src) {
+  const fmEnd = src.indexOf('\n---', 4);
+  if (!src.startsWith('---') || fmEnd < 0) return null;
+  const block = src.slice(3, fmEnd);
+  // Multi-line description support: collapse continuation lines that don't
+  // start with a top-level key into the previous value.
+  const out = {};
+  const lines = block.split('\n');
+  let lastKey = null;
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (!line) { lastKey = null; continue; }
+    const m = /^([a-zA-Z][a-zA-Z0-9_-]*):\s*(.*)$/.exec(line);
+    if (m) {
+      lastKey = m[1];
+      out[lastKey] = m[2].trim();
+    } else if (lastKey && line.startsWith(' ')) {
+      out[lastKey] = `${out[lastKey]} ${line.trim()}`.trim();
+    }
+  }
+  return out;
+}
+
+async function measureSkillsListing(skillsDir) {
+  let totalChars = 0;
+  let count = 0;
+  let totalDescChars = 0;
+  let entries = [];
+  try {
+    entries = await fs.readdir(skillsDir, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  for (const dirent of entries) {
+    if (!dirent.isDirectory()) continue;
+    const skillFile = path.join(skillsDir, dirent.name, 'SKILL.md');
+    let raw = '';
+    try {
+      raw = await fs.readFile(skillFile, 'utf-8');
+    } catch {
+      continue;
+    }
+    const fm = extractSkillFrontmatter(raw);
+    if (!fm?.name) continue;
+    const desc = (fm.description || '').replace(/^["']|["']$/g, '');
+    const entryChars = fm.name.length + desc.length + 5; // "- name: desc\n"
+    totalChars += entryChars;
+    totalDescChars += desc.length;
+    count += 1;
+  }
+  if (count === 0) return null;
+  return {
+    count,
+    totalChars,
+    totalTokens: Math.ceil(totalChars / CHARS_PER_TOKEN),
+    avgDescChars: Math.round(totalDescChars / count),
+  };
+}
+
+async function checkSkillBudgetForProvider(provName, label, skillsPathRel) {
+  if (!skillsPathRel || skillsPathRel === 'native' || skillsPathRel === true) {
+    // Not a deployable skill path on this provider.
+    return;
+  }
+  const skillsDir = resolveProviderPath(skillsPathRel);
+  if (!skillsDir || !(await fileExists(skillsDir))) return;
+
+  const stats = await measureSkillsListing(skillsDir);
+  if (!stats) return;
+
+  // Determine the budget for this provider.
+  let budget = null;
+  let budgetUnit = 'tokens';
+  let budgetSource = '';
+  let usage = stats.totalTokens;
+  let usageUnit = 'tokens';
+  let recommendations = [];
+
+  let usingOverride = false;
+
+  if (provName === 'claude') {
+    const ctxDirective = await readContextWindowDirective();
+    const ctx = ctxDirective?.value ?? CLAUDE_DEFAULT_CONTEXT_WINDOW;
+    const override = await readClaudeBudgetOverride();
+    usingOverride = Boolean(override);
+    const fraction = override?.value ?? CLAUDE_DEFAULT_BUDGET_FRACTION;
+    budget = Math.floor((ctx * fraction) / CHARS_PER_TOKEN);
+    budgetSource = override
+      ? `${(fraction * 100).toFixed(2)}% × ${ctx.toLocaleString()} ctx (override in ${override.source.replace(os.homedir(), '~')})`
+      : `${(fraction * 100).toFixed(2)}% × ${ctx.toLocaleString()} ctx (default)${ctxDirective ? ` — ctx from ${ctxDirective.source}` : ''}`;
+    if (usage > budget) {
+      // Round up to next 1% step, capped at 10%.
+      const needed = (usage * CHARS_PER_TOKEN) / ctx;
+      const recommendedFraction = Math.min(0.1, Math.ceil(needed * 100) / 100);
+      const verb = override ? 'raise' : 'set';
+      recommendations.push(
+        `${verb} skillListingBudgetFraction to ${recommendedFraction} (~${Math.round(recommendedFraction * 100)}%) in ~/.claude/settings.json`,
+      );
+      recommendations.push('or remove unused frameworks (e.g. aiwg remove media-marketing)');
+      recommendations.push('see docs/skills-budget-guide.md for full options');
+    }
+  } else if (provName === 'codex') {
+    budget = CODEX_LISTING_CHAR_CAP;
+    budgetUnit = 'chars';
+    usage = stats.totalChars;
+    usageUnit = 'chars';
+    budgetSource = `${CODEX_LISTING_CHAR_CAP.toLocaleString()}-char built-in cap`;
+    if (usage > budget) {
+      recommendations.push('Codex caps the listing at 8 000 chars — trim skill descriptions or remove unused frameworks');
+      recommendations.push('see docs/skills-budget-guide.md');
+    }
+  } else {
+    // Other platforms: emit an info-level usage line without a verdict so
+    // the operator still sees the surface area.
+    check(
+      `${label} Skill Budget`,
+      'info',
+      `${stats.count} skills, ~${stats.totalTokens.toLocaleString()} tokens — no documented budget for ${provName}, skipping verdict`,
+    );
+    return;
+  }
+
+  const ratio = usage / budget;
+  const usageStr = `${usage.toLocaleString()} ${usageUnit}`;
+  const budgetStr = `${budget.toLocaleString()} ${budgetUnit}`;
+  const summary = `${stats.count} skills (avg ${stats.avgDescChars} chars desc), est. ${usageStr} vs ${budgetStr} budget — ${budgetSource}`;
+
+  if (usage > budget) {
+    const recBlock = recommendations.length ? ` | ${recommendations.join(' | ')}` : '';
+    const verdict = usingOverride ? 'EXCEEDS OVERRIDE' : 'EXCEEDS DEFAULT';
+    check(`${label} Skill Budget`, 'warn', `${verdict} (${ratio.toFixed(2)}×) — ${summary}${recBlock}`);
+  } else {
+    check(`${label} Skill Budget`, 'ok', `${ratio < 0.5 ? 'OK' : 'tight'} (${ratio.toFixed(2)}×) — ${summary}`);
+  }
 }
 
 async function loadProvider(name) {
@@ -197,7 +400,7 @@ async function runDoctor() {
   //   --provider <name>  → just that one
   //   --all-providers    → every supported provider
   //   (default)          → auto-detect deployed providers via PROVIDER_AGENT_DIRS
-  const { provider: providerArg, allProviders } = parseDoctorArgs(process.argv.slice(2));
+  const { provider: providerArg, allProviders, noBudgetCheck } = parseDoctorArgs(process.argv.slice(2));
   let providersToCheck = [];
   if (providerArg) {
     providersToCheck = [providerArg];
@@ -258,6 +461,12 @@ async function runDoctor() {
       } else if (provName === 'claude') {
         check('Claude Code Commands', 'info', 'No commands deployed');
       }
+    }
+
+    // Skill listing budget (#1150) — pre-flight warn before the operator
+    // sees post-hoc truncation in /doctor inside the running session.
+    if (!noBudgetCheck) {
+      await checkSkillBudgetForProvider(provName, label, provider.paths.skills);
     }
   }
 
