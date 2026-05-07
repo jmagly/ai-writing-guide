@@ -782,6 +782,140 @@ async function startServer(opts: {
     }
   });
 
+  // ---- VM lifecycle proxies (#1146) ----
+  // Mirror /api/v1/vms/{name}/{start,stop,restart,destroy,deploy-agent} and
+  // DELETE /api/v1/vms/{name}. Bodies and query strings are forwarded as-is so
+  // callers can pass libvirt-specific options (mode, timeout_seconds, force,
+  // delete_disk, etc.) without AIWG having to know about them.
+  for (const action of ['start', 'stop', 'restart', 'destroy', 'deploy-agent'] as const) {
+    app.post(`/api/sandboxes/:id/vms/:name/${action}`, async (c: any) => {
+      const sandbox = sandboxRegistry.get(c.req.param('id'));
+      if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+      try {
+        const body = await c.req.text().catch(() => '');
+        const headers: Record<string, string> = {};
+        const ct = c.req.header('content-type');
+        if (body && ct) headers['Content-Type'] = ct;
+        const resp = await fetch(
+          `${sandbox.httpEndpoint}/api/v1/vms/${encodeURIComponent(c.req.param('name'))}/${action}`,
+          { method: 'POST', headers, body: body || undefined },
+        );
+        const text = await resp.text();
+        return c.body(text, resp.status, { 'Content-Type': resp.headers.get('content-type') ?? 'application/json' });
+      } catch (err) {
+        return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+      }
+    });
+  }
+
+  app.delete('/api/sandboxes/:id/vms/:name', async (c: any) => {
+    const sandbox = sandboxRegistry.get(c.req.param('id'));
+    if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+    try {
+      const url = new URL(`${sandbox.httpEndpoint}/api/v1/vms/${encodeURIComponent(c.req.param('name'))}`);
+      const force = c.req.query('force');
+      const deleteDisk = c.req.query('delete_disk');
+      if (force) url.searchParams.set('force', force);
+      if (deleteDisk) url.searchParams.set('delete_disk', deleteDisk);
+      const resp = await fetch(url.toString(), { method: 'DELETE' });
+      const text = await resp.text();
+      return c.body(text, resp.status, { 'Content-Type': resp.headers.get('content-type') ?? 'application/json' });
+    } catch (err) {
+      return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+    }
+  });
+
+  // ---- Containers proxies (#1146) ----
+  // Mirror /api/v1/containers (list/get/create/delete/start/stop) and
+  // /api/v1/container-images. Same pattern as the /vms proxy block — thin
+  // pass-through so the dashboard's container surface lights up identically
+  // to the agentic-sandbox dashboard's Instances panel.
+  app.get('/api/sandboxes/:id/containers', async (c: any) => {
+    const sandbox = sandboxRegistry.get(c.req.param('id'));
+    if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+    try {
+      const url = new URL(`${sandbox.httpEndpoint}/api/v1/containers`);
+      const status = c.req.query('status');
+      if (status) url.searchParams.set('status', status);
+      const resp = await fetch(url.toString());
+      return c.json(await resp.json(), resp.status);
+    } catch (err) {
+      return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+    }
+  });
+
+  app.get('/api/sandboxes/:id/containers/:name', async (c: any) => {
+    const sandbox = sandboxRegistry.get(c.req.param('id'));
+    if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+    try {
+      const resp = await fetch(
+        `${sandbox.httpEndpoint}/api/v1/containers/${encodeURIComponent(c.req.param('name'))}`,
+      );
+      return c.json(await resp.json(), resp.status);
+    } catch (err) {
+      return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+    }
+  });
+
+  app.post('/api/sandboxes/:id/containers', async (c: any) => {
+    const sandbox = sandboxRegistry.get(c.req.param('id'));
+    if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+    try {
+      const body = await c.req.json();
+      const resp = await fetch(`${sandbox.httpEndpoint}/api/v1/containers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return c.json(await resp.json(), resp.status);
+    } catch (err) {
+      return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+    }
+  });
+
+  for (const action of ['start', 'stop'] as const) {
+    app.post(`/api/sandboxes/:id/containers/:name/${action}`, async (c: any) => {
+      const sandbox = sandboxRegistry.get(c.req.param('id'));
+      if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+      try {
+        const resp = await fetch(
+          `${sandbox.httpEndpoint}/api/v1/containers/${encodeURIComponent(c.req.param('name'))}/${action}`,
+          { method: 'POST' },
+        );
+        const text = await resp.text();
+        return c.body(text, resp.status, { 'Content-Type': resp.headers.get('content-type') ?? 'application/json' });
+      } catch (err) {
+        return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+      }
+    });
+  }
+
+  app.delete('/api/sandboxes/:id/containers/:name', async (c: any) => {
+    const sandbox = sandboxRegistry.get(c.req.param('id'));
+    if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+    try {
+      const resp = await fetch(
+        `${sandbox.httpEndpoint}/api/v1/containers/${encodeURIComponent(c.req.param('name'))}`,
+        { method: 'DELETE' },
+      );
+      const text = await resp.text();
+      return c.body(text, resp.status, { 'Content-Type': resp.headers.get('content-type') ?? 'application/json' });
+    } catch (err) {
+      return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+    }
+  });
+
+  app.get('/api/sandboxes/:id/container-images', async (c: any) => {
+    const sandbox = sandboxRegistry.get(c.req.param('id'));
+    if (!sandbox) return c.json({ error: 'Sandbox not found' }, 404);
+    try {
+      const resp = await fetch(`${sandbox.httpEndpoint}/api/v1/container-images`);
+      return c.json(await resp.json(), resp.status);
+    } catch (err) {
+      return c.json({ error: `Sandbox unreachable: ${err instanceof Error ? err.message : String(err)}` }, 502);
+    }
+  });
+
   // Agent identity alias endpoint (#917)
   // Assigns a stable human-readable logical name to an agent.
   // Persists in ~/.config/aiwg/sandbox-agents.json so name survives AIWG restarts.

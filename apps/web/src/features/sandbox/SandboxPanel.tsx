@@ -9,9 +9,10 @@
  */
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { api, type SandboxSummary, type SandboxAgent, type SandboxTask, type SubmitTaskRequest, type AiwgExecRequest, type AiwgExecResponse, type AgentCandidate, type Loadout, type LoadoutRegistry, type CreateVmRequest, type VmInfo } from '../../lib/api.js';
+import { api, type SandboxSummary, type SandboxAgent, type SandboxTask, type SubmitTaskRequest, type AiwgExecRequest, type AiwgExecResponse, type AgentCandidate, type Loadout, type LoadoutRegistry, type CreateVmRequest } from '../../lib/api.js';
 import styles from './SandboxPanel.module.css';
 import { SessionPicker } from './SessionPicker.js';
+import { InstancesList } from './InstancesList.js';
 
 // ---- State ----
 
@@ -170,63 +171,34 @@ export function SandboxPanel() {
 
   return (
     <div className={styles.panel}>
-      {/* Sidebar: sandbox list */}
-      <aside className={styles.sidebar} aria-label="Registered sandboxes">
-        <div className={styles.sidebarHeader}>
-          <h3 className={styles.sidebarTitle}>Sandboxes</h3>
-          {state.sandboxes.some(s => !s.connected) && (
-            <button
-              type="button"
-              className={styles.clearOfflineBtn}
-              onClick={handleClearOffline}
-              disabled={state.clearing}
-              title="Remove all disconnected sandboxes to force re-registration"
-            >
-              {state.clearing ? 'Clearing…' : 'Clear Offline'}
-            </button>
-          )}
-        </div>
-        {state.sandboxes.length === 0 ? (
-          <div className={styles.empty}>
-            <p>No sandboxes registered.</p>
-            <p className={styles.hint}>
-              Start an agentic-sandbox with <code>aiwg_serve.enabled = true</code> to see it here.
-            </p>
-          </div>
-        ) : (
-          <ul className={styles.sandboxList}>
-            {state.sandboxes.map((s) => (
-              <li key={s.id} className={styles.sandboxRow}>
-                <button
-                  type="button"
-                  className={[
-                    s.id === state.selectedSandbox ? styles.sandboxItemActive : styles.sandboxItem,
-                    !s.connected ? styles.sandboxItemDisconnected : '',
-                  ].join(' ')}
-                  onClick={() => dispatch({ type: 'SET_SELECTED', id: s.id })}
-                >
-                  <span className={styles.sandboxName}>{s.name}</span>
-                  <span className={styles.sandboxMeta}>
-                    {statusBadge(s.connected ? 'ready' : 'disconnected')}
-                    {s.connected
-                      ? `${s.agentCount} agent${s.agentCount !== 1 ? 's' : ''}`
-                      : 'offline'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={styles.sandboxDeleteBtn}
-                  onClick={(e) => { e.stopPropagation(); handleForgetSandbox(s.id); }}
-                  title="Remove this sandbox from the registry"
-                  aria-label={`Remove ${s.name}`}
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </aside>
+      {/* Sidebar: combined Instances list (#1146).
+          Replaces the previous sandboxes-only sidebar — sandbox selector is now
+          a header dropdown above a per-sandbox merged list of agents + VMs +
+          containers with runtime-aware lifecycle buttons. */}
+      <InstancesList
+        sandboxes={state.sandboxes}
+        selectedSandboxId={state.selectedSandbox}
+        selectedInstance={selectedVm}
+        onSelectSandbox={(id) => dispatch({ type: 'SET_SELECTED', id })}
+        onSelectInstance={setSelectedVm}
+        onForgetSandbox={handleForgetSandbox}
+        onClearOffline={handleClearOffline}
+        clearing={state.clearing}
+        onAgentAction={handleAgentAction}
+        actionInProgress={state.actionInProgress}
+        onLifecycleChanged={async () => {
+          // Lifecycle changes (VM start/stop/delete, container start/stop)
+          // can shift agent presence; refresh sandbox summary so the agent
+          // grid on the right stays consistent.
+          try {
+            const data = await api.sandboxes();
+            dispatch({ type: 'SET_SANDBOXES', sandboxes: data.sandboxes });
+          } catch {
+            /* polling will catch up */
+          }
+        }}
+        onRequestProvision={() => setShowProvisionModal(true)}
+      />
 
       {/* Main: sandbox detail + agent grid */}
       <div className={styles.main}>
@@ -309,14 +281,8 @@ export function SandboxPanel() {
               </div>
             )}
 
-            {/* VMs section (#930) — rendered when sandbox is connected. */}
-            {selectedSandbox.connected && (
-              <SandboxVmsView
-                sandboxId={selectedSandbox.id}
-                selectedVm={selectedVm}
-                onSelectVm={setSelectedVm}
-              />
-            )}
+            {/* VMs are rendered in the combined Instances sidebar (#1146);
+                the standalone SandboxVmsView from #930 is no longer needed. */}
 
             {/* Tab bar */}
             <div className={styles.tabBar} role="tablist">
@@ -1296,163 +1262,3 @@ function AgentCard({
   );
 }
 
-// ---- VMs View (#930) ----
-
-const VM_STATE_COLORS: Record<string, string> = {
-  running: '#4caf50',
-  stopped: '#555',
-  paused: '#ff9800',
-  shutdown: '#555',
-  crashed: '#f44336',
-  suspended: '#9c27b0',
-  unknown: '#777',
-};
-
-function fmtBytes(mb?: number): string {
-  if (mb === undefined || mb === null) return '—';
-  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
-  return `${mb} MB`;
-}
-
-function SandboxVmsView({
-  sandboxId,
-  selectedVm,
-  onSelectVm,
-}: {
-  sandboxId: string;
-  selectedVm: string | null;
-  onSelectVm: (name: string | null) => void;
-}) {
-  const [vms, setVms] = useState<VmInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [httpHealthy, setHttpHealthy] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    async function poll() {
-      try {
-        const data = await api.sandboxVms(sandboxId);
-        if (!active) return;
-        setVms(data.vms ?? []);
-        setError(null);
-        setHttpHealthy(true);
-      } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : String(err));
-        setHttpHealthy(false);
-      } finally {
-        if (active) setLoading(false);
-      }
-      if (active) timer = setTimeout(poll, 5000);
-    }
-    poll();
-    return () => {
-      active = false;
-      if (timer) clearTimeout(timer);
-    };
-  }, [sandboxId]);
-
-  if (loading && vms.length === 0 && !error) {
-    return (
-      <div className={styles.sandboxInfo} style={{ padding: '8px 16px' }}>
-        Loading VMs…
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ padding: '12px 16px', borderBottom: '1px solid #2a2a2a' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>
-          VMs <span style={{ color: '#888', fontWeight: 400 }}>({vms.length})</span>
-          {httpHealthy === false && (
-            <span
-              style={{ marginLeft: 8, fontSize: 11, color: '#ff9800' }}
-              title="WebSocket connected, but HTTP /api/v1/vms not reachable"
-            >
-              HTTP degraded
-            </span>
-          )}
-        </h3>
-        {selectedVm && (
-          <button
-            type="button"
-            onClick={() => onSelectVm(null)}
-            style={{ fontSize: 12, padding: '2px 8px', cursor: 'pointer' }}
-            title="Clear VM filter"
-          >
-            Clear filter ({selectedVm})
-          </button>
-        )}
-      </div>
-      {error && vms.length === 0 ? (
-        <div className={styles.error} role="alert">
-          VM list unavailable: {error}
-        </div>
-      ) : vms.length === 0 ? (
-        <div className={styles.emptyAgents}>No VMs on this sandbox.</div>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: 8,
-          }}
-          role="list"
-          aria-label="Virtual machines"
-        >
-          {vms.map((vm) => {
-            const selected = vm.name === selectedVm;
-            const color = VM_STATE_COLORS[vm.state] || '#777';
-            return (
-              <button
-                key={vm.name}
-                type="button"
-                role="listitem"
-                onClick={() => onSelectVm(selected ? null : vm.name)}
-                title={vm.uuid ? `UUID: ${vm.uuid}` : vm.name}
-                style={{
-                  textAlign: 'left',
-                  padding: 10,
-                  borderRadius: 6,
-                  border: selected ? '2px solid #2196f3' : '1px solid #333',
-                  background: selected ? '#1a2a3a' : '#151515',
-                  color: '#ddd',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 13 }}>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: color,
-                    }}
-                    aria-label={`State: ${vm.state}`}
-                  />
-                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {vm.name}
-                  </span>
-                  <span style={{ fontSize: 11, color: '#888', fontWeight: 400 }}>{vm.state}</span>
-                </div>
-                <div style={{ fontSize: 11, color: '#aaa', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {vm.vcpus !== undefined && <span>{vm.vcpus} vCPU</span>}
-                  {vm.memory_mb !== undefined && <span>{fmtBytes(vm.memory_mb)}</span>}
-                  {vm.ip_address && <span style={{ fontFamily: 'monospace' }}>{vm.ip_address}</span>}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}

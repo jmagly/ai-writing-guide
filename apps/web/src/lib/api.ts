@@ -274,6 +274,46 @@ export interface VmDetail extends VmInfo {
   };
 }
 
+// ---- Container types (#1146) ----
+
+/** Container info as reported by sandbox GET /api/v1/containers. */
+export interface ContainerInfo {
+  id: string;
+  name: string;
+  /** docker_runtime::ContainerStatus serialized as a string. Common values:
+   *  "running", "stopped", "exited", "paused", "restarting", "dead". */
+  status: string;
+  finished_at?: string;
+}
+
+export interface ContainersResponse {
+  containers: ContainerInfo[];
+  total: number;
+}
+
+/** Curated agent container image — GET /api/v1/container-images. */
+export interface ContainerImage {
+  /** Full image reference (`agentic/claude:latest`). The `ref` field name is
+   *  intentional — that's the on-the-wire JSON key. */
+  ref: string;
+  label: string;
+  description: string;
+  default?: boolean;
+}
+
+export interface ContainerImagesResponse {
+  images: ContainerImage[];
+}
+
+export interface CreateContainerRequest {
+  name: string;
+  image: string;
+  env?: string[] | Array<{ key: string; value: string }>;
+  mounts?: string[];
+  network?: string;
+  cmd?: string[];
+}
+
 /** Authoritative agent record from sandbox HTTP API (not the event-cached view). */
 export interface FullSandboxAgent {
   id: string;
@@ -547,6 +587,57 @@ export const api = {
     }),
   agentAction: (sandboxId: string, agentId: string, action: 'start' | 'stop' | 'destroy' | 'reprovision') =>
     request<{ ok: boolean }>(`/api/sandboxes/${sandboxId}/agents/${agentId}/${action}`, { method: 'POST' }),
+
+  // VM lifecycle (#1146)
+  vmAction: (
+    sandboxId: string,
+    name: string,
+    action: 'start' | 'stop' | 'restart' | 'destroy' | 'deploy-agent',
+    body?: unknown,
+  ) =>
+    request<unknown>(`/api/sandboxes/${sandboxId}/vms/${encodeURIComponent(name)}/${action}`, {
+      method: 'POST',
+      ...(body !== undefined
+        ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+        : {}),
+    }),
+  deleteVm: (sandboxId: string, name: string, opts?: { force?: boolean; deleteDisk?: boolean }) => {
+    const params = new URLSearchParams();
+    if (opts?.force) params.set('force', 'true');
+    if (opts?.deleteDisk) params.set('delete_disk', 'true');
+    const qs = params.toString();
+    return request<unknown>(
+      `/api/sandboxes/${sandboxId}/vms/${encodeURIComponent(name)}${qs ? `?${qs}` : ''}`,
+      { method: 'DELETE' },
+    );
+  },
+
+  // Containers (#1146)
+  sandboxContainers: (sandboxId: string, opts?: { status?: 'running' | 'stopped' | 'all' }) => {
+    const params = new URLSearchParams();
+    if (opts?.status) params.set('status', opts.status);
+    const qs = params.toString();
+    return request<ContainersResponse>(`/api/sandboxes/${sandboxId}/containers${qs ? `?${qs}` : ''}`);
+  },
+  sandboxContainer: (sandboxId: string, name: string) =>
+    request<ContainerInfo>(`/api/sandboxes/${sandboxId}/containers/${encodeURIComponent(name)}`),
+  createContainer: (sandboxId: string, body: CreateContainerRequest) =>
+    request<ContainerInfo>(`/api/sandboxes/${sandboxId}/containers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+  containerAction: (sandboxId: string, name: string, action: 'start' | 'stop') =>
+    request<unknown>(
+      `/api/sandboxes/${sandboxId}/containers/${encodeURIComponent(name)}/${action}`,
+      { method: 'POST' },
+    ),
+  deleteContainer: (sandboxId: string, name: string) =>
+    request<unknown>(`/api/sandboxes/${sandboxId}/containers/${encodeURIComponent(name)}`, {
+      method: 'DELETE',
+    }),
+  sandboxContainerImages: (sandboxId: string) =>
+    request<ContainerImagesResponse>(`/api/sandboxes/${sandboxId}/container-images`),
 
   // Sessions (#896)
   agentSessions: (sandboxId: string, agentId: string) =>
