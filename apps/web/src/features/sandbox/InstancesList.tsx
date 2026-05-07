@@ -470,20 +470,23 @@ export function InstancesList({
                 row={row}
                 isSelected={selectedInstance === row.name}
                 onSelect={() => {
-                  const isToggleOff = selectedInstance === row.name;
-                  onSelectInstance(isToggleOff ? null : row.name);
-                  // Open (or focus) a pane for this instance when it has a
-                  // bound agent. Toggle-off does not close the pane — close
-                  // is a deliberate action via the tab's ✕ button.
-                  if (!isToggleOff && row.agent && selectedSandboxId && onOpenPane) {
-                    onOpenPane({
-                      sandboxId: selectedSandboxId,
-                      agentId: row.agent.agentId,
-                      label: row.name,
-                      kind: row.kind,
-                    });
-                  }
+                  // Row click only toggles the selection / agent-grid filter.
+                  // Opening a terminal pane is a separate explicit action via
+                  // the per-row "📺 Pane" button (clearer affordance than
+                  // implicit click-to-attach — see #1146 phase 3 follow-up).
+                  onSelectInstance(selectedInstance === row.name ? null : row.name);
                 }}
+                onOpenPane={
+                  row.agent && selectedSandboxId && onOpenPane
+                    ? () =>
+                        onOpenPane({
+                          sandboxId: selectedSandboxId,
+                          agentId: row.agent!.agentId,
+                          label: row.name,
+                          kind: row.kind,
+                        })
+                    : undefined
+                }
                 busy={busyInstance?.startsWith(`${row.kind === 'vm' ? 'vm' : row.kind === 'container' ? 'ct' : 'ag'}:${row.name}`) ?? false}
                 onVmAction={handleVmAction}
                 onVmDelete={handleVmDelete}
@@ -541,6 +544,10 @@ interface InstanceRowItemProps {
   isSelected: boolean;
   busy: boolean;
   onSelect: () => void;
+  /** Provided only when the row has a bound agent — drives the explicit
+   *  "📺 Pane" affordance per #1146 phase 3 follow-up. Rows without an
+   *  attached agent simply don't render the button. */
+  onOpenPane?: () => void;
   onVmAction: (
     name: string,
     action: 'start' | 'stop' | 'restart' | 'destroy' | 'deploy-agent',
@@ -557,6 +564,7 @@ function InstanceRowItem({
   isSelected,
   busy,
   onSelect,
+  onOpenPane,
   onVmAction,
   onVmDelete,
   onContainerAction,
@@ -620,6 +628,21 @@ function InstanceRowItem({
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Open pane — explicit affordance for "attach a terminal session
+            to this instance." Only rendered when the row has a bound agent
+            (no agent = no PTY surface to attach to). Clicking it opens or
+            focuses the matching pane in the multi-pane stack above. */}
+        {onOpenPane && (
+          <button
+            type="button"
+            className={styles.actionBtn}
+            onClick={onOpenPane}
+            title="Open a terminal pane for this instance"
+          >
+            📺 Pane
+          </button>
+        )}
+
         {row.kind === 'vm' && row.vm && (
           <>
             {!isVmRunning(row.vm.state) && (

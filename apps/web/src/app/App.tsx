@@ -1,12 +1,15 @@
 /**
  * AIWG Dashboard root application.
  *
- * Tabs: Terminal | Missions | Telemetry | Memory
+ * Tabs: Missions | Sandbox | Telemetry | Memory
+ *
+ * The standalone Terminal tab was retired in favor of the per-instance
+ * multi-pane terminal stack inside the Sandbox tab (#1146 phase 3) — one
+ * generic terminal pane connected to a single session was redundant once
+ * each VM/container/agent could attach its own pane independently.
  */
 
 import { useState } from 'react';
-import { Terminal } from '../features/terminal/Terminal.js';
-import { SessionSelector } from '../features/terminal/SessionSelector.js';
 import { MissionControl } from '../features/missions/MissionControl.js';
 import { TelemetryDashboard } from '../features/telemetry/TelemetryDashboard.js';
 import { MemoryPanel } from '../features/memory/MemoryPanel.js';
@@ -15,13 +18,11 @@ import { SandboxPanel } from '../features/sandbox/SandboxPanel.js';
 import { Onboarding, isFirstVisit } from '../features/onboarding/Onboarding.js';
 import styles from './App.module.css';
 
-type Tab = 'terminal' | 'missions' | 'telemetry' | 'memory' | 'sandbox';
+type Tab = 'missions' | 'sandbox' | 'telemetry' | 'memory';
 
 export function App() {
   const [tab, setTab] = useState<Tab>('missions');
-  const [sessionId, setSessionId] = useState('default');
   const [showOnboarding, setShowOnboarding] = useState(isFirstVisit);
-  const readOnly = new URLSearchParams(location.search).has('readonly');
 
   return (
     <div className={styles.app}>
@@ -33,7 +34,7 @@ export function App() {
           <span aria-hidden="true">⚙</span> AIWG Dashboard
         </h1>
         <nav className={styles.nav} aria-label="Dashboard tabs">
-          {(['terminal', 'missions', 'sandbox', 'telemetry', 'memory'] as const).map((t) => (
+          {(['missions', 'sandbox', 'telemetry', 'memory'] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -46,9 +47,6 @@ export function App() {
           ))}
         </nav>
         <div className={styles.headerRight}>
-          {tab === 'terminal' && (
-            <SessionSelector selected={sessionId} onSelect={setSessionId} />
-          )}
           <button
             type="button"
             className={styles.newTaskBtn}
@@ -61,11 +59,8 @@ export function App() {
       </header>
 
       <main className={styles.main} role="main">
-        {tab === 'terminal' && (
-          <Terminal key={sessionId} sessionId={sessionId} readOnly={readOnly} />
-        )}
         {tab === 'missions' && <MissionControl />}
-        {tab === 'telemetry' && <TelemetryDashboard sessionId={sessionId} />}
+        {tab === 'telemetry' && <TelemetryDashboard sessionId="default" />}
         {tab === 'sandbox' && <SandboxPanel />}
         {tab === 'memory' && <MemoryPanel />}
       </main>
