@@ -341,8 +341,7 @@ Which option do you prefer?
 ```
 This requires searching across the entire codebase. I'll use RLM processing:
 
-/rlm-query "Find all console.log statements with file and line number" \
-   "**/*.{js,ts,jsx,tsx}"
+/rlm-query "**/*.{js,ts,jsx,tsx}" "Find all console.log statements with file and line number"
 
 This will:
 1. Recursively scan all JavaScript/TypeScript files

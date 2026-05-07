@@ -6,6 +6,10 @@ const RLM_MODE_PATH = join('agentic/code/addons/rlm/skills/rlm-mode', 'SKILL.md'
 const README_PATH = 'README.md';
 const RELEASE_NOTES_PATH = join('docs/releases', 'v2026.2.3-announcement.md');
 
+function staleContinuationFlag(command: 'rlm-query' | 'rlm-batch', flag: '--path' | '--pattern' | '--parallel'): RegExp {
+  return new RegExp(`\\/${command}(?:[^\\n]*\\\\\\n\\s*)*[^\\n]*${flag}\\b`);
+}
+
 describe('rlm addon command surface', () => {
   let rlmMode = '';
   let readme = '';
@@ -26,8 +30,8 @@ describe('rlm addon command surface', () => {
 
   it('keeps rlm-query examples aligned with the positional command interface', () => {
     expect(rlmMode).toContain('/rlm-query "{context-source}" "{query}" --depth {N}');
-    expect(rlmMode).not.toMatch(/\/rlm-query[^\n]*--path\b/);
-    expect(rlmMode).not.toMatch(/\/rlm-query[^\n]*--pattern\b/);
+    expect(rlmMode).not.toMatch(staleContinuationFlag('rlm-query', '--path'));
+    expect(rlmMode).not.toMatch(staleContinuationFlag('rlm-query', '--pattern'));
   });
 
   it('uses max-parallel for rlm-batch examples across canonical docs', () => {
@@ -35,9 +39,9 @@ describe('rlm addon command surface', () => {
     expect(rlmMode).toContain('--aggregate summarize --max-parallel {N}');
 
     for (const content of [rlmMode, readme, releaseNotes]) {
-      expect(content).not.toMatch(/\/rlm-batch[^\n]*--parallel\b/);
-      expect(content).not.toMatch(/\/rlm-batch[^\n]*--path\b/);
-      expect(content).not.toMatch(/\/rlm-batch[^\n]*--pattern\b/);
+      expect(content).not.toMatch(staleContinuationFlag('rlm-batch', '--parallel'));
+      expect(content).not.toMatch(staleContinuationFlag('rlm-batch', '--path'));
+      expect(content).not.toMatch(staleContinuationFlag('rlm-batch', '--pattern'));
     }
 
     expect(readme).toContain('/rlm-batch "src/components/*.tsx" "Add TypeScript types" --max-parallel 4');
