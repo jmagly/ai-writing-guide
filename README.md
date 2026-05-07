@@ -1064,7 +1064,7 @@ See [Messaging Guide](docs/messaging-guide.md) for setup and configuration.
 
 # Process massive codebases with recursive context decomposition
 /rlm-query "src/**/*.ts" "Extract all exported interfaces" --model haiku
-/rlm-batch "src/components/*.tsx" "Add TypeScript types" --parallel 4
+/rlm-batch "src/components/*.tsx" "Add TypeScript types" --max-parallel 4
 
 # Digital forensics investigation
 /forensics-investigate
@@ -1369,7 +1369,7 @@ Process codebases and documents far beyond any model's context window:
 /rlm-query "src/**/*.ts" "Extract all exported interfaces" --model haiku
 
 # Batch: parallel processing with configurable concurrency
-/rlm-batch "src/components/*.tsx" "Add TypeScript types" --parallel 4
+/rlm-batch "src/components/*.tsx" "Add TypeScript types" --max-parallel 4
 
 # Status: monitor decomposition progress
 /rlm-status
