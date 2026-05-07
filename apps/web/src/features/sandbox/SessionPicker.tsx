@@ -48,9 +48,18 @@ interface WsSession {
 
 // ---- Terminal Pane ----
 
-interface TerminalPaneProps {
+export interface TerminalPaneProps {
   sandboxId: string;
   agentId: string;
+  /** Optional live agent metrics rendered in the status bar — drives the
+   *  per-pane CPU/MEM/DSK header chips required by issue #1146 phase 3. */
+  stats?: {
+    cpu_percent?: number;
+    memory_used_bytes?: number;
+    memory_total_bytes?: number;
+    disk_used_bytes?: number;
+    disk_total_bytes?: number;
+  };
 }
 
 type Phase = 'connecting' | 'listing' | 'picking' | 'attaching' | 'attached';
@@ -58,7 +67,14 @@ type Phase = 'connecting' | 'listing' | 'picking' | 'attaching' | 'attached';
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_ATTEMPTS = 8;
 
-function TerminalPane({ sandboxId, agentId }: TerminalPaneProps) {
+function fmtBytesShort(bytes?: number): string {
+  if (!bytes || bytes <= 0) return '—';
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)}G`;
+  if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(0)}M`;
+  return `${(bytes / 1024).toFixed(0)}K`;
+}
+
+export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
   const [phase, setPhase] = useState<Phase>('connecting');
   const [sessions, setSessions] = useState<WsSession[]>([]);
   const [statusText, setStatusText] = useState('Connecting…');
@@ -418,6 +434,61 @@ function TerminalPane({ sandboxId, agentId }: TerminalPaneProps) {
     requestSessionList();
   };
 
+  // Resync (#1146 phase 3): drop the cached output buffer for the current
+  // command id, hard-reset the xterm screen, refit, and re-attach. Mirrors
+  // the agentic-sandbox dashboard `resyncPane` behavior added in #180. Used
+  // when the rendered screen has drifted from the underlying tmux state
+  // (orphaned escape codes, partial replays, etc).
+  const handleResync = () => {
+    const cmdId = attachedCmdRef.current;
+    if (!cmdId) return;
+    sessionBuffersRef.current.delete(cmdId);
+    if (xtermRef.current) {
+      try { xtermRef.current.reset(); } catch { /* ignore */ }
+      try { fitAddonRef.current?.fit(); } catch { /* ignore */ }
+    }
+    const sessName = pickedSessionRef.current;
+    if (sessName && wsRef.current?.readyState === WebSocket.OPEN) {
+      attachedCmdRef.current = null;
+      setPhase('attaching');
+      setStatusText(`Resyncing ${sessName}…`);
+      sendWs({
+        type: 'attach_session',
+        agent_id: agentId,
+        session_name: sessName,
+        cols: xtermRef.current?.cols ?? 80,
+        rows: xtermRef.current?.rows ?? 24,
+      });
+    }
+  };
+
+  // Reconnect (#1146 phase 3): re-list sessions and reattach without
+  // resetting xterm. Use when the WS dropped briefly or the operator just
+  // wants to confirm the session list is fresh.
+  const handleReconnect = () => {
+    setWsError(null);
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      requestSessionList();
+      const sessName = pickedSessionRef.current;
+      if (sessName && phase !== 'attached') {
+        setPhase('attaching');
+        setStatusText(`Reattaching to ${sessName}…`);
+        sendWs({
+          type: 'attach_session',
+          agent_id: agentId,
+          session_name: sessName,
+          cols: xtermRef.current?.cols ?? 80,
+          rows: xtermRef.current?.rows ?? 24,
+        });
+      }
+    } else {
+      // WS is closed — force the reconnect timer to fire now.
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      reconnectAttemptsRef.current = 0;
+      wsRef.current?.close();
+    }
+  };
+
   // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
@@ -428,11 +499,50 @@ function TerminalPane({ sandboxId, agentId }: TerminalPaneProps) {
       <div className={styles.termStatus}>
         <span className={[styles.termDot, connected ? styles.termDotOn : styles.termDotOff].join(' ')} />
         <span>{statusText}</span>
-        {phase === 'attached' && (
-          <button type="button" className={styles.backBtn} onClick={handleBack}>
-            ← Sessions
-          </button>
+
+        {/* Live stats (#1146 phase 3) */}
+        {stats && (
+          <span style={{ marginLeft: 8, fontSize: 11, color: '#888', display: 'inline-flex', gap: 8 }}>
+            {typeof stats.cpu_percent === 'number' && (
+              <span title="CPU">{`CPU ${stats.cpu_percent.toFixed(0)}%`}</span>
+            )}
+            {stats.memory_used_bytes && stats.memory_total_bytes && (
+              <span title="Memory">
+                {`MEM ${fmtBytesShort(stats.memory_used_bytes)}/${fmtBytesShort(stats.memory_total_bytes)}`}
+              </span>
+            )}
+            {stats.disk_used_bytes && stats.disk_total_bytes && (
+              <span title="Disk">
+                {`DSK ${fmtBytesShort(stats.disk_used_bytes)}/${fmtBytesShort(stats.disk_total_bytes)}`}
+              </span>
+            )}
+          </span>
         )}
+
+        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 4 }}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={handleResync}
+            title="Reset terminal and re-attach to the current session"
+            disabled={!attachedCmdRef.current}
+          >
+            ⟳ Resync
+          </button>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={handleReconnect}
+            title="Re-list sessions and re-attach without resetting the terminal"
+          >
+            ↺ Reconnect
+          </button>
+          {phase === 'attached' && (
+            <button type="button" className={styles.backBtn} onClick={handleBack}>
+              ← Sessions
+            </button>
+          )}
+        </span>
       </div>
 
       {/* Non-terminal error banner */}

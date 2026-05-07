@@ -11,8 +11,8 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { api, type SandboxSummary, type SandboxAgent, type SandboxTask, type SubmitTaskRequest, type AiwgExecRequest, type AiwgExecResponse, type AgentCandidate, type Loadout, type LoadoutRegistry, type CreateVmRequest } from '../../lib/api.js';
 import styles from './SandboxPanel.module.css';
-import { SessionPicker } from './SessionPicker.js';
 import { InstancesList } from './InstancesList.js';
+import { PaneStack, type PaneStackHandle } from './PaneStack.js';
 
 // ---- State ----
 
@@ -42,15 +42,67 @@ const INITIAL: State = {
   clearing: false,
 };
 
+// ---- Last-selected persistence (#1146 phase 3, section E) ----
+//
+// Persist the operator's last-selected sandbox + instance across reloads so a
+// fresh page load lands on the same workspace they were on. Failure to read
+// or write is non-fatal — localStorage may be disabled in private windows.
+
+const LS_KEY_SANDBOX = 'aiwg:sandbox:lastSelectedSandbox';
+const lsKeyInstance = (sandboxId: string) => `aiwg:sandbox:${sandboxId}:lastSelectedInstance`;
+
+function readLastSelectedSandbox(): string | null {
+  try {
+    return localStorage.getItem(LS_KEY_SANDBOX);
+  } catch {
+    return null;
+  }
+}
+
+function writeLastSelectedSandbox(id: string | null) {
+  try {
+    if (id) localStorage.setItem(LS_KEY_SANDBOX, id);
+    else localStorage.removeItem(LS_KEY_SANDBOX);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readLastSelectedInstance(sandboxId: string): string | null {
+  try {
+    return localStorage.getItem(lsKeyInstance(sandboxId));
+  } catch {
+    return null;
+  }
+}
+
+function writeLastSelectedInstance(sandboxId: string, name: string | null) {
+  try {
+    if (name) localStorage.setItem(lsKeyInstance(sandboxId), name);
+    else localStorage.removeItem(lsKeyInstance(sandboxId));
+  } catch {
+    /* ignore */
+  }
+}
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_SANDBOXES': {
-      const selected = state.selectedSandbox && action.sandboxes.some(s => s.id === state.selectedSandbox)
+      // Honor an existing in-memory selection when it still resolves; if it
+      // doesn't, fall back to the last-selected persisted value; finally fall
+      // back to the first sandbox.
+      const stillResolves = state.selectedSandbox && action.sandboxes.some(s => s.id === state.selectedSandbox);
+      const remembered = !stillResolves ? readLastSelectedSandbox() : null;
+      const rememberedResolves = remembered && action.sandboxes.some(s => s.id === remembered);
+      const selected = stillResolves
         ? state.selectedSandbox
-        : action.sandboxes[0]?.id ?? null;
+        : rememberedResolves
+          ? remembered
+          : action.sandboxes[0]?.id ?? null;
       return { ...state, sandboxes: action.sandboxes, selectedSandbox: selected };
     }
     case 'SET_SELECTED':
+      writeLastSelectedSandbox(action.id);
       return { ...state, selectedSandbox: action.id };
     case 'SET_LOADING':
       return { ...state, loading: action.loading };
@@ -109,8 +161,44 @@ export function SandboxPanel() {
   const [activeTab, setActiveTab] = useState<'agents' | 'tasks' | 'remote'>('agents');
   const [showProvisionModal, setShowProvisionModal] = useState(false);
   // VM filter (#930): when set, only agents whose hostname/IP match are shown.
-  // Also drives the VM card "selected" state.
+  // Also drives the VM card "selected" state. Persists per-sandbox in
+  // localStorage (#1146 phase 3, section E).
   const [selectedVm, setSelectedVm] = useState<string | null>(null);
+
+  // Restore the per-sandbox last-selected instance whenever the active
+  // sandbox changes. Setting selectedVm directly here (rather than going
+  // through a wrapper) keeps the contract with InstancesList unchanged.
+  useEffect(() => {
+    if (!state.selectedSandbox) {
+      setSelectedVm(null);
+      return;
+    }
+    setSelectedVm(readLastSelectedInstance(state.selectedSandbox));
+  }, [state.selectedSandbox]);
+
+  // PaneStack handle — captured on first mount; openPane is the bridge from
+  // InstancesList row clicks to the multi-pane terminal area.
+  const paneStackRef = useRef<PaneStackHandle | null>(null);
+  const handlePaneStackMount = useCallback((handle: PaneStackHandle) => {
+    paneStackRef.current = handle;
+  }, []);
+
+  // Build a stable per-sandbox agent map so PaneStack can pull live metrics
+  // for whichever agent each open pane is attached to. Computed on render —
+  // sandbox poll already debounces upstream changes.
+  const agentsBySandbox: Record<string, SandboxAgent[]> = (() => {
+    const out: Record<string, SandboxAgent[]> = {};
+    for (const s of state.sandboxes) out[s.id] = s.agents;
+    return out;
+  })();
+
+  const persistAndSetSelectedVm = useCallback(
+    (name: string | null) => {
+      setSelectedVm(name);
+      if (state.selectedSandbox) writeLastSelectedInstance(state.selectedSandbox, name);
+    },
+    [state.selectedSandbox],
+  );
 
   // Poll sandboxes
   useEffect(() => {
@@ -180,7 +268,7 @@ export function SandboxPanel() {
         selectedSandboxId={state.selectedSandbox}
         selectedInstance={selectedVm}
         onSelectSandbox={(id) => dispatch({ type: 'SET_SELECTED', id })}
-        onSelectInstance={setSelectedVm}
+        onSelectInstance={persistAndSetSelectedVm}
         onForgetSandbox={handleForgetSandbox}
         onClearOffline={handleClearOffline}
         clearing={state.clearing}
@@ -198,6 +286,7 @@ export function SandboxPanel() {
           }
         }}
         onRequestProvision={() => setShowProvisionModal(true)}
+        onOpenPane={(info) => paneStackRef.current?.openPane(info)}
       />
 
       {/* Main: sandbox detail + agent grid */}
@@ -234,9 +323,9 @@ export function SandboxPanel() {
                     type="button"
                     className={styles.actionBtn}
                     onClick={() => setShowProvisionModal(true)}
-                    title="Provision a new agent VM on this sandbox"
+                    title="Create a new agent VM or container on this sandbox"
                   >
-                    Provision VM
+                    + New Instance
                   </button>
                 )}
               </div>
@@ -283,6 +372,15 @@ export function SandboxPanel() {
 
             {/* VMs are rendered in the combined Instances sidebar (#1146);
                 the standalone SandboxVmsView from #930 is no longer needed. */}
+
+            {/* Multi-pane terminal stack (#1146 phase 3, section B) — sits
+                above the agent grid so the operator can keep multiple
+                sessions attached while still browsing per-agent details
+                below. Renders nothing when no panes are open. */}
+            <PaneStack
+              agentsBySandbox={agentsBySandbox}
+              onMount={handlePaneStackMount}
+            />
 
             {/* Tab bar */}
             <div className={styles.tabBar} role="tablist">
@@ -561,6 +659,12 @@ function ProvisionModal({
   onClose,
   onProvisioned,
 }: { sandboxId: string; onClose: () => void; onProvisioned: () => void }) {
+  // Runtime switch (#1146 phase 3, section D) — drives whether the modal
+  // submits POST /vms or POST /containers. Containers reuse only the Name
+  // field + their own image picker; VM-specific loadout/compose/resources
+  // panels are hidden for containers.
+  const [runtime, setRuntime] = useState<'vm' | 'container'>('vm');
+
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
   const [registry, setRegistry] = useState<LoadoutRegistry | null>(null);
   const [mode, setMode] = useState<LoadoutMode>('preset');
@@ -577,6 +681,11 @@ function ProvisionModal({
   const [diskGb, setDiskGb] = useState<number>(50);
   const [agentshare, setAgentshare] = useState(true);
   const [autostart, setAutostart] = useState(true);
+
+  // Container fields (#1146 phase 3)
+  const [containerImages, setContainerImages] = useState<Array<{ ref: string; label: string; description: string; default?: boolean }>>([]);
+  const [containerImage, setContainerImage] = useState<string>('');
+  const [customContainerImage, setCustomContainerImage] = useState<string>('');
 
   const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -606,6 +715,18 @@ function ProvisionModal({
         if (def) setInitScript(def.name);
       })
       .catch(() => { /* registry optional */ });
+
+    // Container image picker source (#1146 phase 3). Best-effort — if the
+    // sandbox doesn't expose /api/v1/container-images we fall back to a
+    // free-text image field via the customContainerImage path below.
+    api.sandboxContainerImages(sandboxId)
+      .then((r) => {
+        const imgs = r.images ?? [];
+        setContainerImages(imgs);
+        const def = imgs.find((i) => i.default) ?? imgs[0];
+        if (def) setContainerImage(def.ref);
+      })
+      .catch(() => { /* image list optional */ });
   }, [sandboxId]);
 
   const selectedLoadout = loadouts.find((l) => l.path === selectedLoadoutPath);
@@ -663,9 +784,11 @@ function ProvisionModal({
 
   const validName = vmName.trim().length > 0 && /^[-a-z0-9]+$/.test(vmName.trim());
   const fullName = validName ? `agent-${vmName.trim()}` : '';
+  const effectiveContainerImage = containerImage === '__custom__' ? customContainerImage.trim() : containerImage;
 
   const canSubmit = (() => {
     if (!validName || provisioning) return false;
+    if (runtime === 'container') return Boolean(effectiveContainerImage);
     if (mode === 'preset') return Boolean(selectedLoadoutPath);
     return composeProviders.length > 0;
   })();
@@ -678,6 +801,19 @@ function ProvisionModal({
     setProvisioning(true);
     setError(null);
     try {
+      if (runtime === 'container') {
+        if (!effectiveContainerImage) {
+          setError('Container image is required.');
+          return;
+        }
+        await api.createContainer(sandboxId, {
+          name: fullName,
+          image: effectiveContainerImage,
+        });
+        onProvisioned();
+        onClose();
+        return;
+      }
       const base: CreateVmRequest = {
         name: fullName,
         profile: '',
@@ -701,7 +837,7 @@ function ProvisionModal({
       onProvisioned();
       onClose();
     } catch (e) {
-      setError(`Provision failed: ${e instanceof Error ? e.message : String(e)}`);
+      setError(`${runtime === 'container' ? 'Container create' : 'Provision'} failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setProvisioning(false);
     }
@@ -709,17 +845,43 @@ function ProvisionModal({
     sandboxId, validName, fullName, mode, selectedLoadoutPath,
     initScript, composeFrameworks, composeProviders,
     vcpus, memoryMb, diskGb, agentshare, autostart,
+    runtime, effectiveContainerImage,
     onProvisioned, onClose,
   ]);
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true" aria-label="Provision VM">
+    <div
+      className={styles.modalOverlay}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={runtime === 'container' ? 'Create container' : 'Provision VM'}
+    >
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
-          <h3>Create Agent VM</h3>
+          <h3>{runtime === 'container' ? 'Create Agent Container' : 'Create Agent VM'}</h3>
           <button type="button" className={styles.modalClose} onClick={onClose} aria-label="Close">✕</button>
         </div>
         <div className={styles.modalBody}>
+          {/* Runtime selector (#1146 phase 3, section D) */}
+          <div className={styles.provisionFormRow}>
+            <label className={styles.provisionLabel}>Runtime</label>
+            <select
+              className={styles.remoteSelect}
+              value={runtime}
+              onChange={(e) => setRuntime(e.target.value as 'vm' | 'container')}
+              aria-label="Runtime"
+            >
+              <option value="vm">VM (libvirt)</option>
+              <option value="container">Container (Docker)</option>
+            </select>
+            <div className={styles.formHelp}>
+              {runtime === 'vm'
+                ? 'Provisioned via libvirt with a configurable loadout, full agentshare and resource controls.'
+                : 'Started from a curated agent image. No loadout/resource controls — image is baked.'}
+            </div>
+          </div>
+
           {/* Name */}
           <div className={styles.provisionFormRow}>
             <label className={styles.provisionLabel}>Name</label>
@@ -736,7 +898,50 @@ function ProvisionModal({
             <div className={styles.formHelp}>Lowercase letters, numbers, and hyphens only</div>
           </div>
 
-          {/* Mode tabs */}
+          {/* Container-only: image picker (#1146 phase 3) */}
+          {runtime === 'container' && (
+            <>
+              <div className={styles.provisionFormRow}>
+                <label className={styles.provisionLabel}>Image</label>
+                <select
+                  className={styles.remoteSelect}
+                  value={containerImage}
+                  onChange={(e) => setContainerImage(e.target.value)}
+                  aria-label="Container image"
+                >
+                  {containerImages.length === 0 && !containerImage && (
+                    <option value="">Loading…</option>
+                  )}
+                  {containerImages.map((img) => (
+                    <option key={img.ref} value={img.ref}>
+                      {img.label} — {img.ref}
+                    </option>
+                  ))}
+                  <option value="__custom__">Custom…</option>
+                </select>
+                {containerImage === '__custom__' && (
+                  <input
+                    style={{ marginTop: 6, width: '100%' }}
+                    placeholder="agentic/your-image:tag"
+                    value={customContainerImage}
+                    onChange={(e) => setCustomContainerImage(e.target.value)}
+                  />
+                )}
+                {containerImage && containerImage !== '__custom__' && (
+                  <div className={styles.formHelp}>
+                    {containerImages.find((i) => i.ref === containerImage)?.description}
+                  </div>
+                )}
+              </div>
+              <div className={styles.formHelp} style={{ marginTop: -4 }}>
+                Mounts, env vars, and network mode are not exposed yet — falls back to image defaults
+                (matches the agentic-sandbox dashboard #178 deviation).
+              </div>
+            </>
+          )}
+
+          {/* Mode tabs (VM-only) */}
+          {runtime === 'vm' && (
           <div className={styles.modeTabs}>
             <button
               type="button"
@@ -749,9 +954,10 @@ function ProvisionModal({
               onClick={() => setMode('custom')}
             >Custom</button>
           </div>
+          )}
 
           {/* Preset panel */}
-          {mode === 'preset' && (
+          {runtime === 'vm' && mode === 'preset' && (
             <>
               <div className={styles.provisionFormRow}>
                 <label className={styles.provisionLabel}>Profile</label>
@@ -797,8 +1003,8 @@ function ProvisionModal({
             </>
           )}
 
-          {/* Custom compose panel */}
-          {mode === 'custom' && (
+          {/* Custom compose panel (VM-only) */}
+          {runtime === 'vm' && mode === 'custom' && (
             <>
               <div className={styles.provisionFormRow}>
                 <label className={styles.provisionLabel}>Init Script</label>
@@ -868,7 +1074,8 @@ function ProvisionModal({
             </>
           )}
 
-          {/* Resources */}
+          {/* Resources (VM-only) */}
+          {runtime === 'vm' && (
           <div className={styles.formRowInline}>
             <div className={styles.provisionFormRow}>
               <label className={styles.provisionLabel}>vCPUs</label>
@@ -889,19 +1096,24 @@ function ProvisionModal({
               </select>
             </div>
           </div>
-          {resourceHint && mode === 'preset' && (
+          )}
+          {runtime === 'vm' && resourceHint && mode === 'preset' && (
             <div className={styles.resourceHint}>Defaults from loadout applied. Override above if needed.</div>
           )}
 
-          {/* Toggles */}
-          <label className={styles.provisionCheckbox}>
-            <input type="checkbox" checked={agentshare} onChange={(e) => setAgentshare(e.target.checked)} />
-            Enable agentshare mounts
-          </label>
-          <label className={styles.provisionCheckbox}>
-            <input type="checkbox" checked={autostart} onChange={(e) => setAutostart(e.target.checked)} />
-            Start VM after creation
-          </label>
+          {/* Toggles (VM-only) */}
+          {runtime === 'vm' && (
+            <>
+              <label className={styles.provisionCheckbox}>
+                <input type="checkbox" checked={agentshare} onChange={(e) => setAgentshare(e.target.checked)} />
+                Enable agentshare mounts
+              </label>
+              <label className={styles.provisionCheckbox}>
+                <input type="checkbox" checked={autostart} onChange={(e) => setAutostart(e.target.checked)} />
+                Start VM after creation
+              </label>
+            </>
+          )}
 
           {error && <div className={styles.error}>{error}</div>}
         </div>
@@ -914,9 +1126,21 @@ function ProvisionModal({
             className={styles.actionBtn}
             onClick={handleProvision}
             disabled={!canSubmit}
-            title={!validName ? 'Enter a valid name first' : (mode === 'custom' && composeProviders.length === 0 ? 'Select at least one provider' : '')}
+            title={
+              !validName
+                ? 'Enter a valid name first'
+                : runtime === 'container' && !effectiveContainerImage
+                  ? 'Pick or enter a container image'
+                  : runtime === 'vm' && mode === 'custom' && composeProviders.length === 0
+                    ? 'Select at least one provider'
+                    : ''
+            }
           >
-            {provisioning ? 'Creating…' : 'Create VM'}
+            {provisioning
+              ? 'Creating…'
+              : runtime === 'container'
+                ? 'Create Container'
+                : 'Create VM'}
           </button>
         </div>
       </div>
@@ -1251,13 +1475,8 @@ function AgentCard({
         )}
       </div>
 
-      {/* Session picker — only when sandbox is connected and agent is active */}
-      {sandboxConnected && (agent.status === 'ready' || agent.status === 'busy') && (
-        <SessionPicker
-          sandboxId={sandboxId}
-          agentId={agent.agentId}
-        />
-      )}
+      {/* Per-card session picker removed — terminal sessions are managed by
+          the multi-pane PaneStack at the top of the panel (#1146 phase 3). */}
     </div>
   );
 }

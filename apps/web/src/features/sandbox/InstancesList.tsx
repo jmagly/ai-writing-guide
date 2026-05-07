@@ -104,6 +104,15 @@ export interface InstancesListProps {
   /** Fired when the operator clicks "Provision VM" in the empty/header
    *  area — opens the existing modal in SandboxPanel. */
   onRequestProvision: () => void;
+  /** Fired when a row that has a bound agent is selected — opens (or
+   *  focuses) a multi-pane terminal pane for that instance (#1146 phase 3,
+   *  section B). Rows without a bound agent skip this callback. */
+  onOpenPane?: (info: {
+    sandboxId: string;
+    agentId: string;
+    label: string;
+    kind: 'vm' | 'container' | 'agent';
+  }) => void;
 }
 
 export function InstancesList({
@@ -119,6 +128,7 @@ export function InstancesList({
   actionInProgress,
   onLifecycleChanged,
   onRequestProvision,
+  onOpenPane,
 }: InstancesListProps) {
   const [vms, setVms] = useState<VmInfo[]>([]);
   const [containers, setContainers] = useState<ContainerInfo[]>([]);
@@ -459,9 +469,21 @@ export function InstancesList({
                 key={row.key}
                 row={row}
                 isSelected={selectedInstance === row.name}
-                onSelect={() =>
-                  onSelectInstance(selectedInstance === row.name ? null : row.name)
-                }
+                onSelect={() => {
+                  const isToggleOff = selectedInstance === row.name;
+                  onSelectInstance(isToggleOff ? null : row.name);
+                  // Open (or focus) a pane for this instance when it has a
+                  // bound agent. Toggle-off does not close the pane — close
+                  // is a deliberate action via the tab's ✕ button.
+                  if (!isToggleOff && row.agent && selectedSandboxId && onOpenPane) {
+                    onOpenPane({
+                      sandboxId: selectedSandboxId,
+                      agentId: row.agent.agentId,
+                      label: row.name,
+                      kind: row.kind,
+                    });
+                  }
+                }}
                 busy={busyInstance?.startsWith(`${row.kind === 'vm' ? 'vm' : row.kind === 'container' ? 'ct' : 'ag'}:${row.name}`) ?? false}
                 onVmAction={handleVmAction}
                 onVmDelete={handleVmDelete}
