@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: corpus-export
-description: Package corpus subsets as distribution archives. Select papers by cluster, topic, REF range, or custom filter; bundle PDFs, analysis docs, citation sidecars, web sources, and BibTeX into a tar.gz with manifest.
+description: Package corpus subsets as distribution archives. Filter by cluster, topic, REF range, or custom expression; bundles PDFs, analysis, citations, and BibTeX into tar.gz.
 commandHint:
   argumentHint: "[--cluster <name>] [--refs <range>] [--topic <name>] [--filter <expr>] [--output <path>] [--format tar.gz|zip]"
   allowedTools: Read, Write, Glob, Grep, Bash

@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 name: container-forensics
-description: "Docker, containerd/CRI-O, and Kubernetes forensic investigation covering container inventory (docker and crictl), privilege checks, image verification, layer analysis (dive), escape detection, eBPF runtime monitoring (Falco, Tetragon, Tracee), K8s RBAC audit, etcd security audit, and API server audit log analysis"
+description: "Forensic investigation of Docker, containerd/CRI-O, and Kubernetes — inventory, escape detection, eBPF runtime monitoring, RBAC and etcd audit. Use when investigating container compromise."
 tools: Bash, Read, Write, Glob, Grep
 platforms: [all]
 

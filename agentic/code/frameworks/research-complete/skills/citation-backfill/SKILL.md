@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: citation-backfill
-description: Rebuild bidirectional citation edges across the research corpus. Scans outgoing citation tables, computes the inverse map, and rewrites all incoming tables to match. Fixes one-directional citation graphs after batch inductions.
+description: Rebuild bidirectional citation edges in a research corpus. Scans outgoing citations, computes the inverse map, rewrites incoming tables. Fixes one-directional graphs.
 commandHint:
   argumentHint: "[--dry-run] [--scope REF-XXX] [--format full|summary|json]"
   allowedTools: Read, Write, Glob, Grep, Bash

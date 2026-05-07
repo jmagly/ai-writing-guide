@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: corpus-snapshot
-description: Generate a comprehensive corpus snapshot report from template, computing all metrics (dimensions, topology, degree distribution, delta from previous) and assisting with analysis sections (clusters, chains, gaps).
+description: Generate a corpus snapshot report — computes dimensions, topology, degree distribution, delta from previous. Helps with cluster, chain, and gap analysis sections.
 commandHint:
   argumentHint: "[--compute-only] [--delta-only] [--template <path>] [--format full|summary|json]"
   allowedTools: Read, Write, Glob, Grep, Bash

@@ -2,7 +2,7 @@
 namespace: aiwg
 name: secret-handling-runtime
 platforms: [all]
-description: Decision-aid skill for runtime secret hygiene — fd passing, scratch surface verification, error-path safety, identifier hygiene, and avoiding the SECRETS_ENV aggregation anti-pattern
+description: Decision aid for runtime secret hygiene — fd passing, scratch surface, error-path safety, identifier hygiene, and avoiding the SECRETS_ENV aggregation anti-pattern.
 
 ---
 

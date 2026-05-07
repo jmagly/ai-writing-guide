@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: induct-research
-description: Induct research sources into a research repository. Point at an issue, a single file, a directory of papers, or a URI and the skill reads, annotates, and files structured induction tasks — one per source. Similar to address-issues but for research corpora instead of code backlogs.
+description: Induct research sources (issue, file, directory, or URI) into a research corpus — reads, annotates, and files structured induction tasks. Like address-issues but for research.
 commandHint:
   argumentHint: "<target> [--repo <dest>] [--dry-run] [--priority high|medium|low] [--tag <topic>] [--recursive]"
   allowedTools: Read, Write, Glob, Grep, Bash, Agent, WebFetch, WebSearch, mcp__gitea__issue_write, mcp__gitea__issue_read, mcp__gitea__list_issues, mcp__hound__authenticate

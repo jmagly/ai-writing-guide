@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 name: log-analysis
-description: "Multi-source log correlation across auth.log, syslog, journald, application logs, and web access logs with pattern detection for brute force, privilege escalation, and lateral movement"
+description: "Correlate auth.log, syslog, journald, application, and web logs to detect brute force, privilege escalation, and lateral movement."
 tools: Bash, Read, Write, Glob, Grep
 platforms: [all]
 

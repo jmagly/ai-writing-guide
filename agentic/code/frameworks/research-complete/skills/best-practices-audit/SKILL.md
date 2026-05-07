@@ -2,7 +2,7 @@
 namespace: aiwg
 name: best-practices-audit
 platforms: [all]
-description: Research-grounded validation of a target (file, directory, or topic) against current external best practices, vendor documentation, and practitioner discussion — produces a cited, evidence-grounded comparison
+description: Research-grounded validation of a target (file, directory, or topic) against external best practices and vendor docs. Produces a cited, evidence-grounded comparison.
 commandHint:
   argumentHint: "<target> [--focus <area>] [--standard <name>] [--depth quick|standard|deep] [--cite-threshold <N>] [--dissent] [--validate] [--output <path>]"
   allowedTools: Read, Write, Glob, Grep, Bash, WebFetch, WebSearch

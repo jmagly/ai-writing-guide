@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: research-gap-detect
-description: Build the mutual citation graph, find connected components, identify isolated clusters, and optionally search for bridge candidates and file gap issues. Automates the manual cluster analysis workflow.
+description: Build the mutual citation graph, find connected components, identify isolated clusters, and optionally search for bridge candidates and file gap issues.
 commandHint:
   argumentHint: "[--clusters-only] [--file-issues] [--search-bridges] [--format full|summary|json]"
   allowedTools: Read, Write, Glob, Grep, Bash, Agent, WebSearch

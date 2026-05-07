@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: research-quality-audit
-description: Audit research corpus for shallow stubs, incomplete sections, missing source files, and doc depth issues. Detects docs written from abstracts rather than full papers and optionally auto-dispatches expansion agents.
+description: Audit a research corpus for shallow stubs, missing sources, and doc-depth issues. Detects docs written from abstracts rather than full papers; can dispatch expansion agents.
 commandHint:
   argumentHint: "[--range REF-XXX:YYY] [--fix] [--threshold N] [--format full|summary|json]"
   allowedTools: Read, Write, Glob, Grep, Bash, Agent

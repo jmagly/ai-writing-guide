@@ -2,7 +2,7 @@
 namespace: aiwg
 name: physical-threat-modeling
 platforms: [all]
-description: Threat library for physical-access threats that STRIDE and OWASP Top 10 don't cover — evil-maid, DMA, hostile peripheral, travel-host, coercion, cold-boot, supply-chain implant, side-channel
+description: "Threat library for physical-access threats STRIDE and OWASP Top 10 miss — evil-maid, DMA, hostile peripheral, travel-host, coercion, cold-boot, side-channel."
 
 ---
 

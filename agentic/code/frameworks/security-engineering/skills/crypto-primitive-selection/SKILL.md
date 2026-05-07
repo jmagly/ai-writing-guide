@@ -2,7 +2,7 @@
 namespace: aiwg
 name: crypto-primitive-selection
 platforms: [all]
-description: Decision-aid skill for choosing cryptographic primitives (AEAD, KDF, MAC, signature) and identifying anti-patterns (CBC-without-MAC, ad-hoc KDF, key reuse, PBKDF2-on-high-entropy, openssl enc without explicit flags)
+description: "Decision aid for choosing AEAD, KDF, MAC, and signature primitives — flags anti-patterns (CBC-without-MAC, ad-hoc KDF, key reuse, PBKDF2-on-high-entropy)."
 
 ---
 

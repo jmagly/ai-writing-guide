@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: contract-validate
-description: "Validate that a chain of AIWG skills has all requires: inputs satisfied by upstream ensures: outputs before execution. Catches missing dependencies at wiring time rather than at runtime."
+description: "Validate that an AIWG skill chain has all requires inputs satisfied by upstream ensures outputs. Catches missing dependencies at wiring time, not runtime."
 requires:
   - "skills: ordered list of AIWG skill names or file paths forming the workflow to validate"
   - "if workflow-file: path to a YAML/JSON workflow definition"

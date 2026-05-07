@@ -2,7 +2,7 @@
 namespace: aiwg
 name: chain-of-trust-design
 platforms: [all]
-description: Decision-aid skill for bootstrap and verification chains; forces the "what authenticates the code that authenticates everything else" question and provides patterns for signed bootstrap, measured boot, signed live images, and recovery
+description: "Decision aid for bootstrap and verification chains — forces the 'what authenticates the authenticator' question; patterns for signed bootstrap, measured boot, recovery."
 
 ---
 

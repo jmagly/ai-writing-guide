@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 name: tdd-enforce
-description: Configure TDD enforcement via pre-commit hooks and CI coverage gates. Use when setting up test-first development workflow, adding coverage gates, or enforcing TDD practices.
+description: Configure TDD enforcement via pre-commit hooks and CI coverage gates. Use when setting up test-first workflows or adding coverage gates.
 version: 1.0.0
 platforms: [all]
 

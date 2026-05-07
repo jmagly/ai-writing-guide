@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: issue-planner
-description: Research-grounded SDLC issue planner. Given an objective, dispatches parallel research agents, generates the supporting SDLC doc corpus, then files prioritized, cross-referenced issues and awaits human review before work begins.
+description: Research-grounded SDLC issue planner — dispatches parallel research, generates the supporting doc corpus, then files prioritized cross-referenced issues for human review.
 requires:
   - objective: non-empty string describing the feature, capability, or initiative to plan
   - tracker: issue tracker accessible (gitea | github | local) — auto-detected from project config

@@ -2,7 +2,7 @@
 namespace: aiwg
 name: supply-chain-trust
 platforms: [all]
-description: Decision-aid skill for supply-chain trust beyond CVE scanning and SBOM. Covers dependency pinning depth, reproducible builds, snapshot pinning, firmware version locking, and vendor+hash-lock for critical-path deps
+description: Decision aid for supply-chain trust beyond CVE/SBOM — pinning depth, reproducible builds, snapshot pins, firmware locking, and vendor+hash-lock for critical-path deps.
 
 ---
 

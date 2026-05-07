@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: contract-manifest
-description: "Generate a human-readable manifest for a chain of AIWG skills, showing agent assignments, contract fields (requires:/ensures:), data flow between steps, and parallelization opportunities. Makes orchestration graphs debuggable and auditable."
+description: "Generate a human-readable manifest for an AIWG skill chain — agent assignments, requires/ensures contracts, data flow, and parallelization opportunities."
 requires:
   - "skills: ordered list of AIWG skill names or file paths to include in the manifest"
   - "if workflow-file: path to a YAML/JSON workflow definition listing the skill chain"

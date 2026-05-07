@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 name: ai-pattern-detection
-description: Detects AI-generated writing patterns and suggests authentic alternatives. Auto-applies when reviewing content, editing documents, generating text, or when user mentions writing quality, AI detection, authenticity, or natural voice.
+description: Detect AI-generated writing patterns and suggest authentic alternatives. Use when reviewing or editing content, or when the user mentions authenticity or natural voice.
 version: 1.0.0
 platforms: [all]
 

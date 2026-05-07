@@ -2,7 +2,7 @@
 namespace: aiwg
 name: auth-factor-design
 platforms: [all]
-description: Decision-aid skill for authentication factor architecture. Forces explicit have/know/are mapping, coercion-resistance analysis, FIDO2 PIN/UV policy, and identifies anti-patterns like Python deps in PRF hot paths
+description: Decision aid for authentication factor architecture — have/know/are mapping, coercion resistance, FIDO2 PIN/UV policy, and PRF hot-path anti-patterns.
 
 ---
 

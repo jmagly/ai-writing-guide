@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: corpus-index-build
-description: Build graph indices (by-topic, by-year, authors, citation-network) from corpus state using definitions in .aiwg/config.yaml. Replaces manual 3-agent dispatch with a single command.
+description: Build graph indices (by-topic, by-year, authors, citation-network) from corpus state using definitions in .aiwg/config.yaml. Replaces a manual 3-agent dispatch.
 commandHint:
   argumentHint: "[--graph <name>] [--all] [--force] [--format full|summary|json]"
   allowedTools: Read, Write, Glob, Grep, Bash
