@@ -243,12 +243,23 @@ describe('USER_SCOPE_PATHS coverage', () => {
     }
   });
 
-  it('uses ~/.agents/skills/ as cross-provider canonical target for the 5 bridge providers', () => {
+  it('uses ~/.agents/skills/ as cross-provider canonical target for the 4 bridge providers', () => {
+    // #1164 — Factory was previously included here but its docs explicitly
+    // call out ~/.factory/skills/ as the user-scope path. We deploy there
+    // instead. Factory may also scan ~/.agents/skills/ — if confirmed by
+    // primary source, add it back to the cross-provider mirror set.
     const crossAgentPath = path.join(homedir(), '.agents', 'skills');
     expect(USER_SCOPE_PATHS.codex.skills).toBe(crossAgentPath);
     expect(USER_SCOPE_PATHS.copilot.skills).toBe(crossAgentPath);
     expect(USER_SCOPE_PATHS.warp.skills).toBe(crossAgentPath);
     expect(USER_SCOPE_PATHS.opencode.skills).toBe(crossAgentPath);
-    expect(USER_SCOPE_PATHS.factory.skills).toBe(crossAgentPath);
+    expect(USER_SCOPE_PATHS.factory.skills).toBe(path.join(homedir(), '.factory', 'skills'));
+  });
+
+  // #1161 — OpenCode user-scope discovery roots at ~/.config/opencode/, not
+  // ~/.opencode/. Subdirs are plural per OpenCode docs convention.
+  it('places opencode user-scope agents and commands under ~/.config/opencode/ (plural)', () => {
+    expect(USER_SCOPE_PATHS.opencode.agents).toBe(path.join(homedir(), '.config', 'opencode', 'agents'));
+    expect(USER_SCOPE_PATHS.opencode.commands).toBe(path.join(homedir(), '.config', 'opencode', 'commands'));
   });
 });

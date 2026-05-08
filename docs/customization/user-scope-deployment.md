@@ -51,7 +51,9 @@ aiwg remove sdlc --user --provider claude --dry-run
 | Hermes | `~/.hermes/skills/` | Always user-scope (skills only) |
 | Codex | `~/.agents/skills/` (skills); `~/.codex/prompts/` (commands; deploy-for-visibility, not auto-scanned) | **Verified** ([`codex-rs/core-skills/src/loader.rs`](https://github.com/openai/codex)) |
 | Cursor | `~/.cursor/{agents,skills,commands,rules}/` | **Unverified** — Cursor's "User Rules" feature is in-app settings (not filesystem); project-scope `.cursor/rules/*.mdc` is confirmed, user-scope filesystem discovery is not. See [#1159](https://git.integrolabs.net/roctinam/aiwg/issues/1159) |
-| Copilot / OpenCode / Warp / Windsurf / Factory | `~/.{provider}/...` paths defined in `USER_SCOPE_PATHS` | Path map registered; per-platform verification tracked as Phase 2 follow-ups |
+| OpenCode | `~/.config/opencode/{agents,commands}/`; skills at `~/.agents/skills/` (cross-provider canonical) | **Verified** ([opencode.ai/docs/skills](https://opencode.ai/docs/skills/), [opencode.ai/docs/rules](https://opencode.ai/docs/rules/)) — user-scope root is `~/.config/opencode/`, NOT `~/.opencode/` |
+| Factory AI | `~/.factory/{droids,skills,commands}/` | **Verified** ([docs.factory.ai/cli/configuration/skills](https://docs.factory.ai/cli/configuration/skills)) for skills; droids/commands paths follow project-scope convention |
+| Copilot / Warp / Windsurf | `~/.{provider}/...` paths defined in `USER_SCOPE_PATHS` | Path map registered; per-platform verification tracked as Phase 2 follow-ups |
 
 `aiwg use ... --scope user --provider <unknown>` errors fast rather
 than silently falling back to project scope.

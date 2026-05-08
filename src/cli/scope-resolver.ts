@@ -76,10 +76,26 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     behaviors: path.join(homedir(), '.cursor', 'rules'),
   },
   opencode: {
-    agents: path.join(homedir(), '.opencode', 'agent'),
+    // #1161 — Verified against OpenCode docs (opencode.ai/docs/skills,
+    // opencode.ai/docs/rules, deepwiki.com/sst/opencode/5.7-skills-system).
+    // User-scope discovery roots at ~/.config/opencode/, NOT ~/.opencode/.
+    // Subdirectories use the plural forms per the OpenCode docs convention
+    // (agents/, commands/, skills/, etc.) — though the project-scope loader
+    // accepts both singular and plural via globs (#773, #1107). At user
+    // scope we use the plural form per the documented preference.
+    //
+    // Skills are also scanned by OpenCode at ~/.agents/skills/ (the
+    // cross-provider canonical) and ~/.claude/skills/ — we deploy to
+    // .agents/skills/ to keep one user-scope skills dir shared across
+    // Codex/Copilot/Warp/Factory/OpenCode rather than duplicating into
+    // ~/.config/opencode/skills/ as well.
+    //
+    // Rules at user scope route through ~/.config/opencode/AGENTS.md per
+    // the docs — there is no discrete user-scope rules dir.
+    agents: path.join(homedir(), '.config', 'opencode', 'agents'),
     skills: path.join(homedir(), '.agents', 'skills'),
-    commands: path.join(homedir(), '.opencode', 'command'),
-    rules: '', // AGENTS.md only
+    commands: path.join(homedir(), '.config', 'opencode', 'commands'),
+    rules: '',
     behaviors: '',
   },
   warp: {
@@ -111,10 +127,25 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     behaviors: path.join(homedir(), '.openclaw', 'behaviors'),
   },
   factory: {
+    // #1164 — Verified against Factory docs (docs.factory.ai/cli/configuration/skills).
+    // Skills primary user-scope path is ~/.factory/skills/, NOT the
+    // cross-provider .agents/skills/ canonical. Factory's docs explicitly say
+    // "for personal use across all projects, you can copy skills to
+    // ~/.factory/skills/skill-name" — there's no public statement that
+    // Factory scans ~/.agents/skills/, so we deploy to the documented path.
+    //
+    // Droids and commands at user scope mirror the project-scope layout
+    // (.factory/droids/ and .factory/commands/). These paths aren't called
+    // out explicitly in the Factory docs as user-scope discovery roots; they
+    // follow the same convention as the skills path. If Factory adds dedicated
+    // user-scope discovery for these, this entry should be revisited.
+    //
+    // Rules at user scope route through AGENTS.md per Factory's
+    // multi-platform AGENTS.md convention — no discrete user-scope rules dir.
     agents: path.join(homedir(), '.factory', 'droids'),
-    skills: path.join(homedir(), '.agents', 'skills'),
+    skills: path.join(homedir(), '.factory', 'skills'),
     commands: path.join(homedir(), '.factory', 'commands'),
-    rules: '', // AGENTS.md only
+    rules: '',
     behaviors: '',
   },
 };
