@@ -338,6 +338,123 @@ export const validateMetadataHandler: CommandHandler = {
 };
 
 /**
+ * #1156 Phase 1 — Validate the per-user registry at `~/.aiwg/installed.json`.
+ *
+ * Checks each registered framework+provider deploy:
+ *   - Registry entry parses correctly
+ *   - Recorded artifact entries (Cycle 3 mirrors) still exist on disk
+ *   - Per-artifact-type counts match the actual entry-name list length
+ *   - Pre-Cycle-3 entries (no `entries` snapshot) are surfaced as "limited
+ *     drift detection" rather than failures
+ *
+ * Returns exit 1 when drift is detected, exit 0 otherwise. Output is plain
+ * text suitable for terminal consumption.
+ */
+async function runUserScopeDoctor(verbose: boolean): Promise<HandlerResult> {
+  const { readUserRegistry, userRegistryPath } = await import('../../config/user-registry.js');
+  const { USER_SCOPE_PATHS } = await import('../scope-resolver.js');
+  const fsp2 = await import('node:fs/promises');
+  const path2 = await import('node:path');
+
+  const registry = await readUserRegistry();
+  const frameworks = Object.entries(registry.installed);
+  const lines: string[] = [];
+  lines.push('');
+  lines.push('── User-scope registry validation ──');
+  lines.push(`Registry path: ${userRegistryPath()}`);
+  lines.push('');
+
+  if (frameworks.length === 0) {
+    lines.push('No frameworks deployed at user scope. Run `aiwg use <fw> --scope user` to install.');
+    return { exitCode: 0, message: lines.join('\n') + '\n' };
+  }
+
+  let driftCount = 0;
+  let limitedCount = 0;
+
+  for (const [name, entry] of frameworks) {
+    lines.push(`▸ ${name}  v${entry.version}  [${entry.source}]`);
+    for (const [provider, providerDeployRaw] of Object.entries(entry.deployedTo)) {
+      // Cast through unknown for the optional `entries` snapshot.
+      const providerDeploy = providerDeployRaw as unknown as {
+        agents: number; commands: number; skills: number; rules: number;
+        entries?: { agents?: string[]; commands?: string[]; skills?: string[]; rules?: string[]; behaviors?: string[] };
+      };
+      const userPaths = USER_SCOPE_PATHS[provider];
+      if (!userPaths) {
+        lines.push(`    ${provider}: ⚠ no user-scope path map registered for this provider`);
+        driftCount++;
+        continue;
+      }
+
+      const recorded = providerDeploy.entries;
+      if (!recorded) {
+        lines.push(`    ${provider}: ⚠ pre-Cycle-3 entry — no per-artifact manifest, drift detection limited`);
+        lines.push(`               counts: agents=${providerDeploy.agents} commands=${providerDeploy.commands} skills=${providerDeploy.skills} rules=${providerDeploy.rules}`);
+        limitedCount++;
+        continue;
+      }
+
+      // Walk the recorded entry names and check each one exists on disk.
+      const checks: Array<[string, string, string[] | undefined, number]> = [
+        ['agents', userPaths.agents, recorded.agents, providerDeploy.agents],
+        ['commands', userPaths.commands, recorded.commands, providerDeploy.commands],
+        ['skills', userPaths.skills, recorded.skills, providerDeploy.skills],
+        ['rules', userPaths.rules, recorded.rules, providerDeploy.rules],
+      ];
+
+      const issues: string[] = [];
+      for (const [type, dir, names, expectedCount] of checks) {
+        if (!dir || !names) continue;
+        let present = 0;
+        const missing: string[] = [];
+        for (const n of names) {
+          const target = path2.join(dir, n);
+          const stat = await fsp2.stat(target).catch(() => null);
+          if (stat) present++;
+          else missing.push(n);
+        }
+        if (names.length !== expectedCount) {
+          issues.push(`count drift on ${type}: registry says ${expectedCount}, manifest lists ${names.length}`);
+        }
+        if (missing.length > 0) {
+          issues.push(`${type}: ${missing.length}/${names.length} entries missing from ${dir}`);
+          if (verbose) {
+            for (const m of missing) issues.push(`    missing: ${path2.join(dir, m)}`);
+          }
+        } else if (verbose) {
+          issues.push(`${type}: ${present}/${names.length} present at ${dir}`);
+        }
+      }
+
+      if (issues.length === 0) {
+        lines.push(`    ${provider}: ✓ all recorded artifacts present`);
+      } else {
+        const hasMissing = issues.some(i => i.includes('missing') || i.includes('drift'));
+        const marker = hasMissing ? '✗' : 'ℹ';
+        lines.push(`    ${provider}: ${marker}`);
+        for (const i of issues) lines.push(`        ${i}`);
+        if (hasMissing) driftCount++;
+      }
+    }
+  }
+
+  lines.push('');
+  lines.push('═'.repeat(60));
+  lines.push(`Frameworks: ${frameworks.length}   Drift: ${driftCount}   Limited (pre-Cycle-3): ${limitedCount}`);
+  if (driftCount > 0) {
+    lines.push('');
+    lines.push('Drift detected. To repair, re-run `aiwg use <framework> --scope user --provider <p>`.');
+    lines.push('To remove a stale registry entry, run `aiwg remove <framework> --scope user`.');
+  }
+
+  return {
+    exitCode: driftCount > 0 ? 1 : 0,
+    message: lines.join('\n') + '\n',
+  };
+}
+
+/**
  * Handler for doctor command
  *
  * Runs health diagnostics on the AIWG installation and workspace.
@@ -347,6 +464,7 @@ export const validateMetadataHandler: CommandHandler = {
  *   aiwg -doctor
  *   aiwg --doctor
  *   aiwg doctor --verbose
+ *   aiwg doctor --scope user      # validate ~/.aiwg/installed.json
  */
 export const doctorHandler: CommandHandler = {
   id: 'doctor',
@@ -356,6 +474,18 @@ export const doctorHandler: CommandHandler = {
   aliases: ['-doctor', '--doctor'],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    // #1156 Phase 1 — `aiwg doctor --scope user` / `aiwg doctor --user`
+    // validates the per-user registry (~/.aiwg/installed.json) without
+    // running the project-scope diagnostics. Operators need this to verify
+    // their user-scope deployments from any cwd, including shells with no
+    // project at all.
+    const userScopeRequested =
+      ctx.args.includes('--user') ||
+      (ctx.args.includes('--scope') && ctx.args[ctx.args.indexOf('--scope') + 1] === 'user');
+    if (userScopeRequested) {
+      return await runUserScopeDoctor(ctx.args.includes('--verbose') || ctx.args.includes('-v'));
+    }
+
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 

@@ -19,6 +19,36 @@ import type { DeployedArtifactCounts, InstalledEntry } from './aiwg-config.js';
 import { userScopeConfigPath } from '../cli/scope-resolver.js';
 
 /**
+ * Per-artifact-type entry list captured at deploy time. Each list contains the
+ * top-level filenames or directory names this deploy created under the
+ * provider's user-scope target. `aiwg remove --scope user` walks these to
+ * delete precisely what was deployed without disturbing artifacts owned by
+ * other frameworks at the same shared user-scope dirs.
+ */
+export interface UserScopeArtifactEntries {
+  agents?: string[];
+  commands?: string[];
+  skills?: string[];
+  rules?: string[];
+  behaviors?: string[];
+}
+
+/**
+ * One per-provider entry in the user registry. Extends the project-scope
+ * `DeployedArtifactCounts` with the entry-name lists needed for precise
+ * remove. Older registry entries written before #1156 Cycle 3 may lack
+ * `entries` — `removeUserScopeDeploy` falls back to the conservative
+ * "registry-only revert" behavior in that case.
+ */
+export interface UserScopeProviderDeploy extends DeployedArtifactCounts {
+  /**
+   * Entry names recorded by the mirror (one list per artifact type).
+   * Optional for back-compat with older registry files.
+   */
+  entries?: UserScopeArtifactEntries;
+}
+
+/**
  * Path to ~/.aiwg/installed.json. Distinct from `userScopeConfigPath()`
  * (which points at ~/.aiwg/aiwg.config and is reserved for future user-level
  * config that mirrors the project aiwg.config structure).
@@ -81,10 +111,13 @@ export async function writeUserRegistry(registry: UserRegistry): Promise<void> {
 /**
  * Record a successful user-scope deploy. Idempotent — re-running `aiwg use
  * --scope user` for the same framework+provider overwrites the prior entry's
- * counts and timestamp.
+ * counts, entries, and timestamp.
  *
  * Mutates the passed registry in place AND writes it to disk so callers don't
  * have to manage the persistence dance themselves.
+ *
+ * `entries` (optional) records the actual artifact names this deploy
+ * mirrored, enabling precise remove later.
  */
 export async function recordUserDeploy(opts: {
   framework: string;
@@ -92,12 +125,17 @@ export async function recordUserDeploy(opts: {
   version: string;
   source: string;
   counts: DeployedArtifactCounts;
+  entries?: UserScopeArtifactEntries;
   manifestHash?: string;
 }): Promise<UserRegistry> {
   const registry = await readUserRegistry();
   const existing = registry.installed[opts.framework];
   const deployedTo = existing?.deployedTo ?? {};
-  deployedTo[opts.provider] = opts.counts;
+  // Merge the new counts with the optional entries snapshot. Cast through
+  // UserScopeProviderDeploy so the registry can carry the richer shape.
+  const merged: UserScopeProviderDeploy = { ...opts.counts };
+  if (opts.entries) merged.entries = opts.entries;
+  deployedTo[opts.provider] = merged;
   registry.installed[opts.framework] = {
     version: opts.version,
     source: opts.source,

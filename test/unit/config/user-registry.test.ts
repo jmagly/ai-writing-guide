@@ -146,6 +146,32 @@ describe('user-registry (#1156)', () => {
     expect(r.installed.sdlc).toBeUndefined();
   });
 
+  // #1156 Cycle 3 — entries snapshot for precise remove
+  it('records artifact entries when supplied', async () => {
+    const { recordUserDeploy, readUserRegistry } = await import(
+      '../../../src/config/user-registry.js'
+    );
+    await recordUserDeploy({
+      framework: 'sdlc',
+      provider: 'claude',
+      version: '2026.5.0',
+      source: 'bundled',
+      counts: { agents: 2, commands: 0, skills: 3, rules: 1 },
+      entries: {
+        agents: ['agent-a', 'agent-b'],
+        skills: ['sk1', 'sk2', 'sk3'],
+        rules: ['rule-1.md'],
+      },
+    });
+    const r = await readUserRegistry();
+    const entry = r.installed.sdlc.deployedTo.claude as unknown as {
+      entries?: { agents?: string[]; skills?: string[]; rules?: string[] };
+    };
+    expect(entry.entries?.agents).toEqual(['agent-a', 'agent-b']);
+    expect(entry.entries?.skills).toEqual(['sk1', 'sk2', 'sk3']);
+    expect(entry.entries?.rules).toEqual(['rule-1.md']);
+  });
+
   it('returns empty registry on parse failure', async () => {
     const { userRegistryPath, readUserRegistry } = await import(
       '../../../src/config/user-registry.js'

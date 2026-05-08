@@ -189,6 +189,32 @@ describe('mirrorToUserScope (#1156)', () => {
     expect(r.commands.targetDir).toContain('.claude/commands');
     expect(r.rules.targetDir).toContain('.claude/rules');
   });
+
+  // #1156 Cycle 3 — mirror returns entry names so the registry can record
+  // exactly what was deployed, enabling precise remove later.
+  it('returns entry names for each artifact type that was actually mirrored', async () => {
+    // Populate a couple of source directories so the mirror has real content.
+    await fs.mkdir(path.join(projectSkillsDir, 'skill-foo'), { recursive: true });
+    await fs.writeFile(path.join(projectSkillsDir, 'skill-foo', 'SKILL.md'), '# foo', 'utf-8');
+    await fs.mkdir(path.join(projectSkillsDir, 'skill-bar'), { recursive: true });
+    await fs.writeFile(path.join(projectSkillsDir, 'skill-bar', 'SKILL.md'), '# bar', 'utf-8');
+    await fs.writeFile(path.join(projectCommandsDir, 'cmd-baz.md'), '# baz', 'utf-8');
+
+    const r = await mirrorToUserScope('claude', {
+      agents: projectAgentsDir,
+      skills: projectSkillsDir,
+      commands: projectCommandsDir,
+      rules: projectRulesDir,
+      behaviors: '',
+    });
+
+    expect(r.skills.entries.sort()).toEqual(['skill-bar', 'skill-foo']);
+    expect(r.skills.count).toBe(2);
+    expect(r.commands.entries).toEqual(['cmd-baz.md']);
+    expect(r.commands.count).toBe(1);
+    expect(r.agents.entries).toEqual([]);
+    expect(r.rules.entries).toEqual([]);
+  });
 });
 
 describe('rejectOpenClawProjectScope (#1156)', () => {

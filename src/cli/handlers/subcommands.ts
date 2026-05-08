@@ -410,14 +410,16 @@ async function formatUserScopeRegistry(): Promise<HandlerResult> {
  * #1156 Phase 1 — Revert a user-scope mirror.
  *
  * Reads `~/.aiwg/installed.json`, looks up the framework + provider entry,
- * deletes only the artifact subdirectories in the provider's
- * `USER_SCOPE_PATHS` that were populated by the mirror, then updates the
- * registry. With `--dry-run`, lists what would be removed without touching
- * the filesystem.
+ * and deletes the specific artifact entries this deploy created (recorded
+ * by the mirror in Cycle 3). With `--dry-run`, lists what would be removed
+ * without touching the filesystem.
  *
- * Caveat: the user-scope mirror is per-provider, so other providers' mirrors
- * for the same framework remain intact unless `--provider` is omitted (in
- * which case all providers are reverted).
+ * Back-compat: registry entries written before Cycle 3 lack the `entries`
+ * snapshot. For those, the handler falls back to the conservative
+ * registry-only revert and tells the operator to clean up manually.
+ *
+ * Multi-provider: if `--provider` is omitted, all of the framework's
+ * provider deployments are reverted in one pass.
  */
 async function removeUserScopeDeploy(args: ReadonlyArray<string>): Promise<HandlerResult> {
   const positional = args.find(a => !a.startsWith('-'));
@@ -452,9 +454,13 @@ async function removeUserScopeDeploy(args: ReadonlyArray<string>): Promise<Handl
   }
 
   const fs = await import('node:fs/promises');
+  const path = await import('node:path');
   const linesOut: string[] = [];
   if (dryRun) linesOut.push(`[dry-run] Plan for user-scope remove of '${positional}':`);
   else linesOut.push(`Removing user-scope mirror of '${positional}':`);
+
+  let totalDeleted = 0;
+  let conservativeFallbackUsed = false;
 
   for (const p of providersToRevert) {
     const userPaths = USER_SCOPE_PATHS[p];
@@ -462,25 +468,68 @@ async function removeUserScopeDeploy(args: ReadonlyArray<string>): Promise<Handl
       linesOut.push(`  ⚠ ${p}: no user-scope paths registered — skipping (manual cleanup may be needed)`);
       continue;
     }
-    const targets = [
-      { type: 'agents', path: userPaths.agents },
-      { type: 'commands', path: userPaths.commands },
-      { type: 'skills', path: userPaths.skills },
-      { type: 'rules', path: userPaths.rules },
-      { type: 'behaviors', path: userPaths.behaviors },
-    ].filter(t => t.path);
 
-    for (const t of targets) {
-      // We don't track which individual files came from which framework, so
-      // the conservative behavior is: leave the directory in place but
-      // surface its existence for the operator. A future cycle can record
-      // per-framework manifests at user scope and revert precisely.
-      try {
+    // Cast through unknown to access the optional `entries` snapshot recorded
+    // by the Cycle 3 mirror. Older registry entries won't have it.
+    const providerEntry = entry.deployedTo[p] as unknown as {
+      entries?: { agents?: string[]; commands?: string[]; skills?: string[]; rules?: string[]; behaviors?: string[] };
+    };
+    const recorded = providerEntry?.entries;
+
+    if (!recorded) {
+      // Pre-Cycle-3 entry: surface the deploy paths and let the operator
+      // clean them up manually. We can't safely auto-delete because the dirs
+      // are shared with other frameworks.
+      conservativeFallbackUsed = true;
+      const existingDirs = [
+        { type: 'agents', path: userPaths.agents },
+        { type: 'commands', path: userPaths.commands },
+        { type: 'skills', path: userPaths.skills },
+        { type: 'rules', path: userPaths.rules },
+        { type: 'behaviors', path: userPaths.behaviors },
+      ].filter(t => t.path);
+      linesOut.push(`  ⚠ ${p}: registry entry has no per-artifact manifest (deployed before Cycle 3). Manual cleanup of these dirs may be needed:`);
+      for (const t of existingDirs) {
         const stat = await fs.stat(t.path).catch(() => null);
         if (stat && stat.isDirectory()) {
-          linesOut.push(`  ${dryRun ? '·' : '✓'} ${p} ${t.type}: ${t.path} (registry entry will be removed; shared artifacts preserved)`);
+          linesOut.push(`      - ${t.path}`);
         }
-      } catch { /* ignore */ }
+      }
+      continue;
+    }
+
+    // Precise revert — walk the recorded entry names and delete each one
+    // from its corresponding user-scope dir.
+    const sets: Array<[string, string, string[] | undefined]> = [
+      ['agents', userPaths.agents, recorded.agents],
+      ['commands', userPaths.commands, recorded.commands],
+      ['skills', userPaths.skills, recorded.skills],
+      ['rules', userPaths.rules, recorded.rules],
+      ['behaviors', userPaths.behaviors, recorded.behaviors],
+    ];
+    for (const [type, dir, names] of sets) {
+      if (!dir || !names || names.length === 0) continue;
+      let deletedHere = 0;
+      for (const name of names) {
+        const target = path.join(dir, name);
+        if (dryRun) {
+          linesOut.push(`  · ${p} ${type}: ${target}`);
+          deletedHere++;
+          continue;
+        }
+        try {
+          await fs.rm(target, { recursive: true, force: true });
+          deletedHere++;
+          totalDeleted++;
+        } catch (err) {
+          linesOut.push(`  ⚠ ${p} ${type}: failed to remove ${target}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+      if (!dryRun && deletedHere > 0) {
+        linesOut.push(`  ✓ ${p} ${type}: removed ${deletedHere} entry/entries from ${dir}`);
+      } else if (dryRun) {
+        linesOut.push(`    (${deletedHere} ${type} would be removed from ${dir})`);
+      }
     }
   }
 
@@ -491,8 +540,11 @@ async function removeUserScopeDeploy(args: ReadonlyArray<string>): Promise<Handl
       await removeUserDeploy({ framework: positional });
     }
     linesOut.push('');
-    linesOut.push(`Registry updated. Note: user-scope mirror is multi-tenant — artifact files at the deploy paths above are NOT deleted, only the registry entry.`);
-    linesOut.push('To fully remove the artifact files, delete the directories listed above manually.');
+    if (conservativeFallbackUsed) {
+      linesOut.push('Registry updated. Some providers had no per-artifact manifest (pre-Cycle-3 deploys); inspect the dirs listed above and clean up manually if needed.');
+    } else {
+      linesOut.push(`Registry updated. ${totalDeleted} artifact entry/entries removed.`);
+    }
   }
 
   return {

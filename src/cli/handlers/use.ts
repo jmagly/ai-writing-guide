@@ -1467,7 +1467,9 @@ export class UseHandler implements CommandHandler {
           // Record the deploy in the per-user registry. Counts come from the
           // mirror result so they reflect what actually landed at user scope,
           // not what was deployed at project scope (the two can diverge if
-          // some artifact dirs were empty in the project tree).
+          // some artifact dirs were empty in the project tree). Entry names
+          // are recorded so `aiwg remove --scope user` can revert precisely
+          // (delete only this deploy's artifacts, not other frameworks').
           try {
             const { recordUserDeploy } = await import('../../config/user-registry.js');
             const versionInfo = await getVersionInfo().catch(() => ({ version: 'unknown' }));
@@ -1481,6 +1483,13 @@ export class UseHandler implements CommandHandler {
                 commands: r.commands.count,
                 skills: r.skills.count,
                 rules: r.rules.count,
+              },
+              entries: {
+                agents: r.agents.entries,
+                commands: r.commands.entries,
+                skills: r.skills.entries,
+                rules: r.rules.entries,
+                behaviors: r.behaviors.entries,
               },
             });
           } catch (registryErr) {

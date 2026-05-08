@@ -173,6 +173,18 @@ export async function mirrorSkillsToUserScope(
 }
 
 /**
+ * Per-artifact-type mirror result. `entries` are the top-level directory or
+ * file names that were successfully copied — these become the entries in the
+ * per-user registry's `artifactEntries` map and let `aiwg remove --scope user`
+ * delete only what this deploy created (rather than wiping shared dirs).
+ */
+export interface ArtifactMirrorResult {
+  count: number;
+  targetDir: string;
+  entries: string[];
+}
+
+/**
  * #1156 Phase 1 — Mirror the full per-provider artifact set (agents, commands,
  * skills, rules) from project scope to the user-scope target. Additive: the
  * project-scope deploy stays in place; user-scope copies are created alongside
@@ -180,21 +192,22 @@ export async function mirrorSkillsToUserScope(
  *
  * `projectPaths` are the relative or absolute paths the caller already resolved
  * for project-scope deployment. Each one whose user-scope counterpart is
- * non-empty gets mirrored. Returns per-artifact-type counts and the resolved
- * user-scope target directories so the caller can surface them.
+ * non-empty gets mirrored. Returns per-artifact-type counts, the resolved
+ * user-scope target directories, and the list of entry names that were copied
+ * (so callers can record them in a per-framework manifest for precise remove).
  */
 export async function mirrorToUserScope(
   provider: string,
   projectPaths: { agents: string; skills: string; commands: string; rules: string; behaviors: string },
 ): Promise<{
-  agents: { count: number; targetDir: string };
-  skills: { count: number; targetDir: string };
-  commands: { count: number; targetDir: string };
-  rules: { count: number; targetDir: string };
-  behaviors: { count: number; targetDir: string };
+  agents: ArtifactMirrorResult;
+  skills: ArtifactMirrorResult;
+  commands: ArtifactMirrorResult;
+  rules: ArtifactMirrorResult;
+  behaviors: ArtifactMirrorResult;
 }> {
   const userPaths = USER_SCOPE_PATHS[provider];
-  const empty = { count: 0, targetDir: '' };
+  const empty: ArtifactMirrorResult = { count: 0, targetDir: '', entries: [] };
   if (!userPaths) {
     return { agents: empty, skills: empty, commands: empty, rules: empty, behaviors: empty };
   }
@@ -210,26 +223,30 @@ export async function mirrorToUserScope(
 
 /**
  * Copy every directory or file under `src` into `dst` (creating `dst` if
- * needed). Returns the count of top-level entries successfully copied.
+ * needed). Returns the count of top-level entries successfully copied and
+ * the entry names themselves — the names are needed by callers that record
+ * a per-framework manifest at user scope so `aiwg remove --scope user` can
+ * delete only what this deploy created.
  *
  * Used by the user-scope mirror to cover both directory-style artifacts
  * (skills, agents) and file-style artifacts (commands, rules in some
  * providers). Failures on individual entries are swallowed so a single bad
  * entry doesn't fail the whole mirror.
  */
-async function mirrorArtifactDir(src: string, dst: string): Promise<{ count: number; targetDir: string }> {
-  if (!src || !dst) return { count: 0, targetDir: dst };
+async function mirrorArtifactDir(src: string, dst: string): Promise<ArtifactMirrorResult> {
+  if (!src || !dst) return { count: 0, targetDir: dst, entries: [] };
   const fs = await import('node:fs/promises');
 
   let dirents;
   try {
     dirents = await fs.readdir(src, { withFileTypes: true });
   } catch {
-    return { count: 0, targetDir: dst };
+    return { count: 0, targetDir: dst, entries: [] };
   }
 
   await fs.mkdir(dst, { recursive: true });
   let count = 0;
+  const entries: string[] = [];
   for (const entry of dirents) {
     const s = path.join(src, entry.name);
     const d = path.join(dst, entry.name);
@@ -242,11 +259,12 @@ async function mirrorArtifactDir(src: string, dst: string): Promise<{ count: num
         continue;
       }
       count++;
+      entries.push(entry.name);
     } catch {
       // ignore individual failures
     }
   }
-  return { count, targetDir: dst };
+  return { count, targetDir: dst, entries };
 }
 
 /**
