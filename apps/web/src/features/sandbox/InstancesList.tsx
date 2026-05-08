@@ -22,6 +22,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   api,
   type ContainerInfo,
+  type FullSandboxAgent,
   type SandboxAgent,
   type SandboxSummary,
   type VmInfo,
@@ -97,6 +98,42 @@ function findBoundAgent(agents: SandboxAgent[], instanceName: string): SandboxAg
   );
 }
 
+/**
+ * Same loose match against the REST-polled FullSandboxAgent list. Used as a
+ * fallback when the event-driven registry is empty (sandbox not pushing
+ * agent.connected events to this AIWG instance).
+ */
+function findFullAgent(agents: FullSandboxAgent[], instanceName: string): FullSandboxAgent | undefined {
+  return agents.find(
+    (a) =>
+      a.id === instanceName ||
+      a.id.startsWith(`${instanceName}-`) ||
+      a.hostname === instanceName,
+  );
+}
+
+/**
+ * Project a FullSandboxAgent (REST shape) into a SandboxAgent (registry/event
+ * shape) so the rest of the UI can consume it uniformly. We can't recover
+ * fields the REST endpoint doesn't carry (loadout, frameworks, metrics
+ * history) — leave them undefined; downstream consumers already treat them
+ * as optional.
+ */
+function syntheticAgent(full: FullSandboxAgent): SandboxAgent {
+  // FullSandboxAgent.status is a string; SandboxAgent.status is a literal
+  // union. Coerce only the values we know about; fall back to 'ready' so the
+  // Pane button lights up rather than staying disabled on an unknown status.
+  const KNOWN_STATUSES = ['starting', 'provisioning', 'ready', 'busy', 'error', 'disconnected'] as const;
+  const status = (KNOWN_STATUSES as readonly string[]).includes(full.status)
+    ? (full.status as SandboxAgent['status'])
+    : 'ready';
+  return {
+    agentId: full.id,
+    status,
+    logicalName: full.hostname,
+  };
+}
+
 export interface InstancesListProps {
   sandboxes: SandboxSummary[];
   selectedSandboxId: string | null;
@@ -149,6 +186,13 @@ export function InstancesList({
 }: InstancesListProps) {
   const [vms, setVms] = useState<VmInfo[]>([]);
   const [containers, setContainers] = useState<ContainerInfo[]>([]);
+  // REST-backed agent fallback (#1151 follow-up). When the event-driven
+  // sandbox-registry agent push isn't reaching this AIWG instance, the
+  // selectedSandbox.agents list is empty and every Pane button stays
+  // disabled even though the sandbox itself reports the agent as
+  // connected. Polling /api/sandboxes/:id/agents/full directly gives us
+  // an authoritative agent inventory regardless of the event push state.
+  const [agentsFull, setAgentsFull] = useState<FullSandboxAgent[]>([]);
   const [vmsDegraded, setVmsDegraded] = useState(false);
   const [containersDegraded, setContainersDegraded] = useState(false);
   const [busyInstance, setBusyInstance] = useState<string | null>(null);
@@ -181,31 +225,60 @@ export function InstancesList({
     }
   }, [selectedSandboxId, selectedSandbox?.connected]);
 
+  const pollAgentsFull = useCallback(async () => {
+    if (!selectedSandboxId || !selectedSandbox?.connected) return;
+    try {
+      const data = await api.sandboxAgentsFull(selectedSandboxId);
+      setAgentsFull(data.agents ?? []);
+    } catch {
+      // Best effort — leave the previous list in place. We still try the
+      // event-driven registry view as the primary source.
+    }
+  }, [selectedSandboxId, selectedSandbox?.connected]);
+
   useEffect(() => {
     if (!selectedSandboxId) {
       setVms([]);
       setContainers([]);
+      setAgentsFull([]);
       return;
     }
     pollVms();
     pollContainers();
+    pollAgentsFull();
     const id = setInterval(() => {
       pollVms();
       pollContainers();
+      pollAgentsFull();
     }, 10000);
     return () => clearInterval(id);
-  }, [selectedSandboxId, pollVms, pollContainers]);
+  }, [selectedSandboxId, pollVms, pollContainers, pollAgentsFull]);
 
   // Build the merged row list. Agents that are bound to a known VM/container
   // are folded into that row's secondary metadata to avoid duplicates; orphan
   // agents (no matching VM/container — e.g. external hosts) get their own row.
+  //
+  // Bound-agent lookup tries the event-driven registry first, then falls back
+  // to the REST-polled `agentsFull` list. The fallback is what makes the Pane
+  // button light up on a fresh `aiwg serve` whose sandbox isn't pushing
+  // agent.connected events to it (the on-screen "No agents connected"
+  // condition the operator hit).
+  const findBoundForName = (instanceName: string): SandboxAgent | undefined => {
+    const fromRegistry = selectedSandbox
+      ? findBoundAgent(selectedSandbox.agents, instanceName)
+      : undefined;
+    if (fromRegistry) return fromRegistry;
+    const fromFull = findFullAgent(agentsFull, instanceName);
+    return fromFull ? syntheticAgent(fromFull) : undefined;
+  };
+
   const rows: InstanceRow[] = (() => {
     if (!selectedSandbox) return [];
     const out: InstanceRow[] = [];
     const claimed = new Set<string>();
 
     for (const vm of vms) {
-      const boundAgent = findBoundAgent(selectedSandbox.agents, vm.name);
+      const boundAgent = findBoundForName(vm.name);
       if (boundAgent) claimed.add(boundAgent.agentId);
       out.push({
         key: `vm:${vm.name}`,
@@ -220,7 +293,7 @@ export function InstancesList({
     }
 
     for (const ct of containers) {
-      const boundAgent = findBoundAgent(selectedSandbox.agents, ct.name);
+      const boundAgent = findBoundForName(ct.name);
       if (boundAgent) claimed.add(boundAgent.agentId);
       out.push({
         key: `ct:${ct.name}`,
@@ -244,6 +317,27 @@ export function InstancesList({
         secondary: a.loadout,
         agentAttached: true,
         agent: a,
+      });
+    }
+
+    // Surface REST-only agents (event push isn't reaching us, but the agent is
+    // alive on the sandbox) as orphan rows so the operator can attach to them
+    // even without a matching VM/container. Avoid double-listing the ones
+    // already claimed by VM/container rows above.
+    for (const fa of agentsFull) {
+      const claimedAlready =
+        claimed.has(fa.id) ||
+        (selectedSandbox &&
+          selectedSandbox.agents.some((a) => a.agentId === fa.id));
+      if (claimedAlready) continue;
+      const synth = syntheticAgent(fa);
+      out.push({
+        key: `ag:${fa.id}`,
+        kind: 'agent',
+        name: synth.logicalName ?? synth.agentId,
+        state: synth.status,
+        agentAttached: true,
+        agent: synth,
       });
     }
 
