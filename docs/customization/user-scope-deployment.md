@@ -49,10 +49,23 @@ aiwg remove sdlc --user --provider claude --dry-run
 | Claude Code | `~/.claude/{agents,commands,skills,rules}/` | **Verified** ([docs](https://code.claude.com/docs/en/skills)) |
 | OpenClaw | `~/.openclaw/{agents,commands,skills,rules,behaviors}/` | Always user-scope (no `--scope project`) |
 | Hermes | `~/.hermes/skills/` | Always user-scope (skills only) |
-| Codex / Cursor / Copilot / OpenCode / Warp / Windsurf / Factory | `~/.{provider}/...` paths defined in `USER_SCOPE_PATHS` | Path map registered; per-platform verification tracked as Phase 2 follow-ups |
+| Codex | `~/.agents/skills/` (skills); `~/.codex/prompts/` (commands; deploy-for-visibility, not auto-scanned) | **Verified** ([`codex-rs/core-skills/src/loader.rs`](https://github.com/openai/codex)) |
+| Cursor | `~/.cursor/{agents,skills,commands,rules}/` | **Unverified** — Cursor's "User Rules" feature is in-app settings (not filesystem); project-scope `.cursor/rules/*.mdc` is confirmed, user-scope filesystem discovery is not. See [#1159](https://git.integrolabs.net/roctinam/aiwg/issues/1159) |
+| Copilot / OpenCode / Warp / Windsurf / Factory | `~/.{provider}/...` paths defined in `USER_SCOPE_PATHS` | Path map registered; per-platform verification tracked as Phase 2 follow-ups |
 
 `aiwg use ... --scope user --provider <unknown>` errors fast rather
 than silently falling back to project scope.
+
+### Codex specifics
+
+Codex's user-scope skills land at `~/.agents/skills/` — that's the
+cross-provider canonical path the codex-rs loader actually scans. Codex
+commands deploy at `~/.codex/prompts/` for operator visibility, but
+codex-rs ships a static built-in command enum so this directory is **not
+auto-scanned** by the runtime. The directory exists per AIWG's ADR-1
+"always deploy" invariant: operators can see what AIWG would have
+shipped, and AGENTS.md acts as the discovery bridge for the actual
+commands. Same applies at project scope (`.codex/prompts/`).
 
 ## How It Works
 

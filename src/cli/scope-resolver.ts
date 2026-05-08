@@ -35,10 +35,18 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     behaviors: path.join(homedir(), '.claude', 'hooks'),
   },
   codex: {
-    agents: '', // AGENTS.md only — no per-agent dir at user scope
+    // #1158 — Verified against `codex-rs/core-skills/src/loader.rs` and
+    // `docs/providers/skills-paths.md`. Skills primary path is
+    // `~/.agents/skills/` (the cross-provider canonical). Commands deploy at
+    // `~/.codex/prompts/` for operator visibility per ADR-1; codex-rs ships a
+    // static built-in command enum so this directory is not auto-scanned, but
+    // it is the documented location and is where Codex would look if it ever
+    // scanned. Agents/rules at user scope route through AGENTS.md, not a
+    // discrete directory — left empty here.
+    agents: '',
     skills: path.join(homedir(), '.agents', 'skills'),
     commands: path.join(homedir(), '.codex', 'prompts'),
-    rules: '', // AGENTS.md only
+    rules: '',
     behaviors: '',
   },
   copilot: {
@@ -49,6 +57,18 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     behaviors: '',
   },
   cursor: {
+    // #1159 — Cursor is closed-source; user-scope behavior is unverified.
+    // Cursor's documented "User Rules" feature lives in the app's settings
+    // UI (preference data under platform-specific config dirs), not as
+    // markdown files in `~/.cursor/`. Project Rules at `.cursor/rules/*.mdc`
+    // are confirmed (per #1138 PUW-037), but user-scope filesystem
+    // discovery is not documented anywhere AIWG can verify.
+    //
+    // The paths below are the natural home-dir mirrors of the project-scope
+    // layout. Deploying there is harmless (Cursor will ignore the files if
+    // it doesn't scan them) but may also be invisible to the runtime. Until
+    // Cursor publishes user-scope discovery rules, treat this row as
+    // "unverified" — see docs/customization/user-scope-deployment.md.
     agents: path.join(homedir(), '.cursor', 'agents'),
     skills: path.join(homedir(), '.cursor', 'skills'),
     commands: path.join(homedir(), '.cursor', 'commands'),
