@@ -1,0 +1,200 @@
+# User-Scope Deployment
+
+`aiwg use` deploys frameworks to your project tree by default
+(`.claude/`, `.codex/`, `.factory/`, etc.). With `--scope user`, AIWG also
+mirrors the deploy to the platform's user-scope directory under your
+home folder, so the framework is available across every project on the
+machine without re-running `aiwg use` per project.
+
+This is most useful when:
+
+- You're the sole user of a workstation and want a framework available
+  globally
+- A platform's discovery model favors user-scope (Claude Code reads
+  `~/.claude/skills/` from every project automatically)
+- You manage a small fleet of repos and don't want a `.claude/` deploy
+  in each one
+
+If you're working in a team repo where everyone needs the same
+deployment regardless of personal setup, stick with the default
+project-scope deploy and commit `.aiwg/` (or whichever provider dirs
+your team uses).
+
+## Quick Start
+
+```bash
+# Deploy SDLC to ~/.claude/{agents,commands,skills,rules}/ alongside
+# the project deploy
+aiwg use sdlc --provider claude --scope user
+
+# --user is a shorthand for --scope user
+aiwg use sdlc --provider claude --user
+
+# List user-scope deployments (works from any cwd)
+aiwg list --scope user
+
+# Validate user-scope registry against actual disk state
+aiwg doctor --scope user
+aiwg doctor --user --verbose       # surface every missing path
+
+# Revert the user-scope mirror (registry + recorded artifact files)
+aiwg remove sdlc --scope user
+aiwg remove sdlc --user --provider claude --dry-run
+```
+
+## Supported Providers
+
+| Provider | User-scope path | Status |
+|----------|-----------------|--------|
+| Claude Code | `~/.claude/{agents,commands,skills,rules}/` | **Verified** ([docs](https://code.claude.com/docs/en/skills)) |
+| OpenClaw | `~/.openclaw/{agents,commands,skills,rules,behaviors}/` | Always user-scope (no `--scope project`) |
+| Hermes | `~/.hermes/skills/` | Always user-scope (skills only) |
+| Codex / Cursor / Copilot / OpenCode / Warp / Windsurf / Factory | `~/.{provider}/...` paths defined in `USER_SCOPE_PATHS` | Path map registered; per-platform verification tracked as Phase 2 follow-ups |
+
+`aiwg use ... --scope user --provider <unknown>` errors fast rather
+than silently falling back to project scope.
+
+## How It Works
+
+A user-scope deploy is **additive**: it doesn't replace the project
+deploy, it copies alongside it.
+
+1. `aiwg use sdlc --provider claude --scope user` runs the normal
+   project-scope deploy first (writing to `.claude/`)
+2. Then it mirrors each artifact directory (agents, commands, skills,
+   rules, behaviors) to the corresponding user-scope path
+3. The mirror records exactly which entries it copied, per artifact
+   type, so `aiwg remove` can later delete only this framework's
+   contributions to the shared user-scope dirs
+4. The deploy is recorded in a per-user registry at
+   `~/.aiwg/installed.json` so `aiwg list` and `aiwg doctor` can find
+   it from any cwd
+
+## The Per-User Registry
+
+`~/.aiwg/installed.json` holds one entry per framework deployed at
+user scope:
+
+```json
+{
+  "version": "1",
+  "installed": {
+    "sdlc": {
+      "version": "2026.5.0",
+      "source": "bundled",
+      "installedAt": "2026-05-08T02:33:00.000Z",
+      "deployedTo": {
+        "claude": {
+          "agents": 189,
+          "commands": 0,
+          "skills": 386,
+          "rules": 14,
+          "entries": {
+            "agents": ["api-designer", "test-engineer", "..."],
+            "skills": ["sdlc-accelerate", "intake-wizard", "..."]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+The `entries` snapshot is what enables precise `aiwg remove --scope
+user`: the handler reads this list and deletes exactly those entries
+from the user-scope dirs, leaving every other framework's artifacts
+in place.
+
+Older registry entries (written before the `entries` snapshot was
+recorded) fall back to a conservative "registry-only revert" with a
+manual cleanup hint. Re-running `aiwg use` upgrades the entry.
+
+## Coexistence with Project Scope
+
+Both scopes can be installed simultaneously. The project deploy in
+`.claude/` shadows the user deploy in `~/.claude/` for any project
+that contains the project artifacts (mirroring how Claude Code itself
+resolves: project takes precedence over user). See
+[`scope-precedence.md`](./scope-precedence.md) for the resolution
+rules.
+
+This means you can:
+
+- Pin a specific framework version at user scope as your default
+- Override per-project with a different version or with custom
+  project-local bundles
+
+## Removing a User-Scope Deploy
+
+```bash
+# Revert all providers' user-scope mirrors of sdlc
+aiwg remove sdlc --scope user
+
+# Revert just one provider
+aiwg remove sdlc --user --provider claude
+
+# Preview without touching disk
+aiwg remove sdlc --user --provider claude --dry-run
+```
+
+The remove handler:
+
+1. Looks up the framework's entry in `~/.aiwg/installed.json`
+2. For each provider's deploy, walks the recorded `entries` list
+3. Deletes each entry from its corresponding user-scope dir
+4. Updates the registry
+
+Other frameworks' artifacts in the same user-scope dirs are untouched.
+
+## Validation with Doctor
+
+```bash
+aiwg doctor --scope user            # summary — exit 1 on drift
+aiwg doctor --user --verbose        # list every missing path
+```
+
+`aiwg doctor --scope user` walks the per-user registry, calls `stat`
+on each recorded entry path, and reports drift. Drift means a
+recorded entry doesn't exist on disk anymore — usually because
+something was deleted manually. Repair by re-running `aiwg use` or
+clear the stale registry entry with `aiwg remove --scope user`.
+
+## OpenClaw and Hermes
+
+OpenClaw is exclusively user-scope by design — its native discovery
+model only reads from `~/.openclaw/`. So:
+
+- `aiwg use ... --provider openclaw` is implicitly user-scope (no
+  flag needed)
+- `aiwg use ... --provider openclaw --scope user` is a no-op
+- `aiwg use ... --provider openclaw --scope project` errors with a
+  clear message: there is no project-scope OpenClaw deploy to track
+
+Hermes is similar (skills-only at user scope by design).
+
+## Test Isolation
+
+If you're writing tests that exercise user-scope behavior and don't
+want them to clobber your real `~/.aiwg/installed.json`, set
+`AIWG_USER_REGISTRY_PATH` to a tmpdir path. The registry helper
+honors this env override and reads/writes there instead.
+
+```bash
+export AIWG_USER_REGISTRY_PATH=/tmp/aiwg-test-reg/installed.json
+```
+
+Production code never sets this — it exists for the test suite.
+
+## Related
+
+- [`scope-precedence.md`](./scope-precedence.md) — How project-scope
+  and user-scope deploys resolve when both are installed
+- [`README.md`](./README.md) — Customization paths overview
+- [`from-fork-to-project-local.md`](./from-fork-to-project-local.md)
+  — Project-local bundle workflow
+
+## See Also
+
+- AIWG #1156 — User-scope deployment for providers that support
+  ~/-level discovery
+- ADR-4 — Scope flag and path map
