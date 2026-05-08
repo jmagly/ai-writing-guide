@@ -1,0 +1,24 @@
+{
+  "name": "security-engineering",
+  "version": "2026.5.0",
+  "description": "Applied security framework for cryptographic primitive selection, chain-of-trust design, authentication factor analysis, supply-chain trust, and physical-threat modeling. Complements OWASP-style application audits.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "security",
+    "cryptography",
+    "chain-of-trust",
+    "authentication",
+    "supply-chain",
+    "fido2",
+    "kdf",
+    "aead",
+    "physical-threats",
+    "secure-bootstrap"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Media Curator Agents",
+  "path": "agentic/code/frameworks/media-curator/agents",
+  "files": [
+    "acquisition-manager.md",
+    "completeness-tracker.md",
+    "discography-analyst.md",
+    "metadata-curator.md",
+    "quality-assessor.md",
+    "source-discoverer.md"
+  ],
+  "ignore": [
+    "manifest.json"
+  ]
+}

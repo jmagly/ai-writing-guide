@@ -284,6 +284,274 @@ Then install in Codex via the \`/plugins\` command or the repo marketplace.
 `
   },
 
+  'forensics': {
+    name: 'forensics',
+    displayName: 'AIWG Forensics Complete',
+    version: '2026.5.0',
+    description: 'Digital forensics and incident response framework with 14 specialized agents covering target profiling, evidence acquisition, log/memory/container/cloud analysis, IOC extraction, and reporting.',
+    sources: {
+      agents: 'agentic/code/frameworks/forensics-complete/agents',
+      commands: 'agentic/code/frameworks/forensics-complete/commands',
+      skills: 'agentic/code/frameworks/forensics-complete/skills'
+    },
+    readme: `# AIWG Forensics Complete
+
+Digital forensics and incident response framework with 14 specialized agents.
+
+## Features
+
+- **Triage & Acquisition**: RFC 3227 volatility-order capture, chain of custody, hash verification
+- **Multi-Domain Analysis**: Logs, memory (Volatility 3), containers (Docker/K8s), cloud (AWS/Azure/GCP)
+- **Threat Hunting**: Sigma rule application, IOC extraction in STIX 2.1 format
+- **Reporting**: Executive summaries, technical findings, MITRE ATT&CK mapping, remediation plans
+
+## Quick Start
+
+\`\`\`bash
+# Full investigation workflow
+/forensics-investigate
+
+# Quick triage
+/forensics-triage
+
+# Build target profile
+/forensics-profile
+
+# Generate forensic report
+/forensics-report
+\`\`\`
+
+## Documentation
+
+- Full guide: https://docs.aiwg.io/forensics
+- Discord: https://discord.gg/BuAusFMxdA
+`
+  },
+
+  'security-engineering': {
+    name: 'security-engineering',
+    displayName: 'AIWG Security Engineering',
+    version: '2026.5.0',
+    description: 'Applied security framework for cryptographic primitive selection, chain-of-trust design, authentication factor analysis, supply-chain trust, and physical-threat modeling. Complements OWASP-style application audits.',
+    sources: {
+      agents: 'agentic/code/frameworks/security-engineering/agents',
+      commands: 'agentic/code/frameworks/security-engineering/commands',
+      skills: 'agentic/code/frameworks/security-engineering/skills'
+    },
+    readme: `# AIWG Security Engineering
+
+Applied security engineering framework for cryptographic primitive selection, chain-of-trust integrity, and physical-threat modeling.
+
+## Features
+
+- **Applied Cryptography Review**: AEAD selection, KDF correctness, key separation, openssl flag verification
+- **Chain-of-Trust Design**: Bootstrap integrity, signing key custody, measured boot
+- **Authentication Factor Design**: have/know/are mapping, coercion-resistance, FIDO2 PIN/UV policy
+- **Supply-Chain Trust**: Beyond CVE/SBOM — pinning depth, reproducible builds, firmware version locking
+- **Physical Threat Modeling**: Evil-maid, DMA, hostile peripherals, cold-boot, side-channel
+
+## Agents
+
+- \`applied-cryptographer\` - Crypto primitive selection and KDF correctness
+- \`secure-bootstrap-reviewer\` - Chain-of-trust integrity
+
+## Quick Start
+
+\`\`\`bash
+# Crypto primitive selection
+/crypto-primitive-selection
+
+# Chain-of-trust design
+/chain-of-trust-design
+
+# Auth factor design
+/auth-factor-design
+\`\`\`
+
+## Documentation
+
+- Full guide: https://docs.aiwg.io/security-engineering
+- Discord: https://discord.gg/BuAusFMxdA
+`
+  },
+
+  'research': {
+    name: 'research',
+    displayName: 'AIWG Research Complete',
+    version: '2026.5.0',
+    description: 'Research workflow framework with 9 specialized agents for discovery, acquisition, synthesis, citation management, GRADE quality assessment, and OAIS-compliant archival.',
+    sources: {
+      agents: 'agentic/code/frameworks/research-complete/agents',
+      commands: 'agentic/code/frameworks/research-complete/commands',
+      skills: 'agentic/code/frameworks/research-complete/skills'
+    },
+    readme: `# AIWG Research Complete
+
+Research workflow framework with 9 specialized agents for academic and technical research.
+
+## Features
+
+- **Discovery**: Multi-database search, gap detection, reproducible search strategies
+- **Acquisition**: PDF download, metadata extraction, provenance tracking
+- **Synthesis**: Literature notes, structured summaries, citation networks
+- **Quality (GRADE)**: Source quality assessment, FAIR compliance, hedging enforcement
+- **Archival (OAIS)**: Long-term preservation, integrity verification, version control
+- **Citation Management**: 9,000+ styles, reference verification, hallucination detection
+
+## Quick Start
+
+\`\`\`bash
+# Discover sources
+/research-discover
+
+# Run full pipeline
+/research-workflow
+
+# Verify citations
+/verify-citations
+
+# Generate corpus snapshot
+/corpus-snapshot
+\`\`\`
+
+## Documentation
+
+- Full guide: https://docs.aiwg.io/research
+- Discord: https://discord.gg/BuAusFMxdA
+`
+  },
+
+  'media-curator': {
+    name: 'media-curator',
+    displayName: 'AIWG Media Curator',
+    version: '2026.5.0',
+    description: 'Media archive management framework with 7 specialized agents for source discovery, acquisition (yt-dlp / Internet Archive / Bandcamp), quality assessment, metadata tagging, and provenance tracking.',
+    sources: {
+      agents: 'agentic/code/frameworks/media-curator/agents',
+      commands: 'agentic/code/frameworks/media-curator/commands',
+      skills: 'agentic/code/frameworks/media-curator/skills'
+    },
+    readme: `# AIWG Media Curator
+
+Media archive management framework with 7 specialized agents.
+
+## Features
+
+- **Discography Analysis**: Era identification, catalog structure
+- **Source Discovery**: Multi-platform ranking (YouTube, Internet Archive, Bandcamp)
+- **Acquisition**: yt-dlp patterns, archive download, format selection
+- **Quality Filtering**: Audio/video quality scoring, accept/reject thresholds
+- **Metadata Curation**: opustags / ffmpeg patterns, cover art embedding
+- **Provenance Tracking**: W3C PROV-O derivation chains
+- **Export**: Plex / Jellyfin / MPD / archival formats
+
+## Quick Start
+
+\`\`\`bash
+# Full curation workflow
+/curate
+
+# Acquire from sources
+/acquire
+
+# Tag a collection
+/tag-collection
+
+# Verify archive integrity
+/verify-archive
+\`\`\`
+
+## Documentation
+
+- Full guide: https://docs.aiwg.io/media-curator
+- Discord: https://discord.gg/BuAusFMxdA
+`
+  },
+
+  'ops': {
+    name: 'ops',
+    displayName: 'AIWG Ops Complete',
+    version: '2026.5.0',
+    description: 'Operational infrastructure framework with 12 specialized agents covering incident response, runbook execution, fleet inventory, certificate lifecycle, and disaster recovery planning.',
+    sources: {
+      agents: 'agentic/code/frameworks/ops-complete/agents',
+      commands: 'agentic/code/frameworks/ops-complete/commands',
+      skills: 'agentic/code/frameworks/ops-complete/skills'
+    },
+    readme: `# AIWG Ops Complete
+
+Operational infrastructure framework with 12 specialized agents for sysops, devops, and itops workflows.
+
+## Features
+
+- **Fleet Inventory**: Reconcile hosts, services, network resources
+- **Runbook Execution**: Step-by-step with verification gates and audit trails
+- **Incident Response**: Triage, escalation, post-mortem
+- **Certificate Lifecycle**: Issuance, renewal, revocation, expiry monitoring
+- **Disaster Recovery**: Topology-aware runbook generation with RTO budgets
+- **Identity & Secrets**: IdP audits, OpenBao/Vault operations, key rotation
+- **Stream Health**: Transcoder, output, service availability monitoring
+
+## Quick Start
+
+\`\`\`bash
+# Manage ops workspaces
+/ops
+
+# Execute a runbook
+/ops-run
+
+# Health check fleet
+/ops-status
+\`\`\`
+
+## Documentation
+
+- Full guide: https://docs.aiwg.io/ops
+- Discord: https://discord.gg/BuAusFMxdA
+`
+  },
+
+  'knowledge-base': {
+    name: 'knowledge-base',
+    displayName: 'AIWG Knowledge Base',
+    version: '2026.5.0',
+    description: 'Knowledge-base / wiki framework with skills for ingestion, query, and lint. Build a structured, citable corpus with cross-references and concept pages.',
+    sources: {
+      skills: 'agentic/code/frameworks/knowledge-base/skills'
+    },
+    readme: `# AIWG Knowledge Base
+
+Knowledge-base / wiki framework for structured corpus authoring.
+
+## Features
+
+- **Source Ingestion**: URL, file, or freeform note → entity + concept pages
+- **Query**: Search the local KB, synthesize answers with inline citations
+- **Health & Lint**: Orphan page detection, broken wiki-links, stale claims, index regeneration
+
+## Skills
+
+- \`kb-ingest\`: Ingest a source into the knowledge base
+- \`kb-health\`: Lint and health-check the KB
+
+## Quick Start
+
+\`\`\`bash
+# Ingest a source
+/kb-ingest "https://example.com/article"
+
+# Health check
+/kb-health
+\`\`\`
+
+## Documentation
+
+- Full guide: https://docs.aiwg.io/knowledge-base
+- Discord: https://discord.gg/BuAusFMxdA
+`
+  },
+
   'hooks': {
     name: 'hooks',
     displayName: 'AIWG Hooks',

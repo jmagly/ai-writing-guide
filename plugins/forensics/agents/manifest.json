@@ -1,0 +1,181 @@
+{
+  "framework": "forensics-complete",
+  "version": "1.0.0",
+  "description": "Complete digital forensics and incident response framework with 13 specialized agents",
+  "agents": [
+    {
+      "id": "forensics-recon-agent",
+      "name": "Recon Agent",
+      "file": "recon-agent.md",
+      "description": "Target reconnaissance and system profiling",
+      "stage": "reconnaissance",
+      "capabilities": ["system_discovery", "service_enumeration", "user_inventory", "network_baseline", "security_assessment"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-triage-agent",
+      "name": "Triage Agent",
+      "file": "triage-agent.md",
+      "description": "Quick triage and volatile data capture following RFC 3227",
+      "stage": "triage",
+      "capabilities": ["volatile_capture", "red_flag_detection", "quick_assessment", "network_snapshot", "process_inventory"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-acquisition-agent",
+      "name": "Acquisition Agent",
+      "file": "acquisition-agent.md",
+      "description": "Evidence collection with chain of custody and hash verification",
+      "stage": "acquisition",
+      "capabilities": ["evidence_collection", "hash_verification", "chain_of_custody", "log_preservation", "forensic_imaging"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-log-analyst",
+      "name": "Log Analyst",
+      "file": "log-analyst.md",
+      "description": "Authentication, system, and application log analysis",
+      "stage": "analysis",
+      "capabilities": ["auth_log_analysis", "syslog_analysis", "journal_analysis", "brute_force_detection", "privilege_escalation_detection"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-persistence-hunter",
+      "name": "Persistence Hunter",
+      "file": "persistence-hunter.md",
+      "description": "Cron, systemd, authorized_keys, rootkit, and kernel module persistence detection",
+      "stage": "analysis",
+      "capabilities": ["cron_detection", "systemd_persistence", "ssh_key_audit", "rootkit_detection", "kernel_module_analysis", "pam_tampering"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-container-analyst",
+      "name": "Container Analyst",
+      "file": "container-analyst.md",
+      "description": "Docker and Kubernetes forensics and container escape detection",
+      "stage": "analysis",
+      "capabilities": ["container_inventory", "privilege_escalation", "image_integrity", "volume_analysis", "container_network"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-network-analyst",
+      "name": "Network Analyst",
+      "file": "network-analyst.md",
+      "description": "Traffic analysis, C2 detection, and lateral movement identification",
+      "stage": "analysis",
+      "capabilities": ["connection_analysis", "dns_analysis", "beaconing_detection", "lateral_movement", "c2_detection"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-memory-analyst",
+      "name": "Memory Analyst",
+      "file": "memory-analyst.md",
+      "description": "Volatility 3 memory forensics for process, network, and rootkit analysis",
+      "stage": "analysis",
+      "capabilities": ["memory_acquisition", "process_analysis", "rootkit_detection", "injected_code", "credential_extraction"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "opus"
+    },
+    {
+      "id": "forensics-cloud-analyst",
+      "name": "Cloud Analyst",
+      "file": "cloud-analyst.md",
+      "description": "AWS, Azure, and GCP forensic artifact collection and analysis",
+      "stage": "analysis",
+      "capabilities": ["cloudtrail_analysis", "iam_review", "flow_log_analysis", "api_anomaly_detection", "resource_inventory"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep", "WebFetch"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-timeline-builder",
+      "name": "Timeline Builder",
+      "file": "timeline-builder.md",
+      "description": "Multi-source event correlation and attack chain reconstruction",
+      "stage": "timeline",
+      "capabilities": ["event_correlation", "timestamp_normalization", "attack_chain", "patient_zero", "timeline_visualization"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep"],
+      "model": "opus"
+    },
+    {
+      "id": "forensics-ioc-analyst",
+      "name": "IOC Analyst",
+      "file": "ioc-analyst.md",
+      "description": "IOC extraction, enrichment, and STIX 2.1 observable mapping",
+      "stage": "analysis",
+      "capabilities": ["ioc_extraction", "threat_enrichment", "stix_mapping", "detection_rules", "misp_integration"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep", "WebFetch"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-reporting-agent",
+      "name": "Reporting Agent",
+      "file": "reporting-agent.md",
+      "description": "Forensic report generation with executive summary and remediation plan",
+      "stage": "reporting",
+      "capabilities": ["finding_compilation", "severity_classification", "executive_summary", "remediation_planning", "evidence_documentation"],
+      "tools": ["Read", "Write", "Glob", "Grep"],
+      "model": "sonnet"
+    },
+    {
+      "id": "forensics-orchestrator",
+      "name": "Forensics Orchestrator",
+      "file": "forensics-orchestrator.md",
+      "description": "Multi-agent investigation workflow coordination",
+      "stage": "orchestration",
+      "capabilities": ["workflow_coordination", "agent_delegation", "artifact_handoff", "quality_gates", "status_tracking"],
+      "tools": ["Bash", "Read", "Write", "Glob", "Grep", "Task"],
+      "model": "opus"
+    }
+  ],
+  "workflow_stages": [
+    {
+      "stage": "reconnaissance",
+      "agents": ["forensics-recon-agent"],
+      "description": "Profile target system, discover services, establish baseline"
+    },
+    {
+      "stage": "triage",
+      "agents": ["forensics-triage-agent"],
+      "description": "Capture volatile data, detect active threats, quick assessment"
+    },
+    {
+      "stage": "acquisition",
+      "agents": ["forensics-acquisition-agent"],
+      "description": "Collect and preserve evidence with chain of custody"
+    },
+    {
+      "stage": "analysis",
+      "agents": ["forensics-log-analyst", "forensics-persistence-hunter", "forensics-container-analyst", "forensics-network-analyst", "forensics-memory-analyst", "forensics-cloud-analyst", "forensics-ioc-analyst"],
+      "description": "Deep-dive analysis across multiple domains"
+    },
+    {
+      "stage": "timeline",
+      "agents": ["forensics-timeline-builder"],
+      "description": "Correlate events across sources, reconstruct attack chain"
+    },
+    {
+      "stage": "reporting",
+      "agents": ["forensics-reporting-agent"],
+      "description": "Compile findings into forensic report with remediation plan"
+    },
+    {
+      "stage": "orchestration",
+      "agents": ["forensics-orchestrator"],
+      "description": "Coordinate multi-agent investigation workflow"
+    }
+  ],
+  "metadata": {
+    "created": "2026-02-27",
+    "last_updated": "2026-02-27",
+    "version": "1.0.0",
+    "total_agents": 13,
+    "status": "active"
+  }
+}

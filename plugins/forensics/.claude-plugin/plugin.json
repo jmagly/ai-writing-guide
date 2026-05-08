@@ -1,0 +1,24 @@
+{
+  "name": "forensics",
+  "version": "2026.5.0",
+  "description": "Digital forensics and incident response framework with 14 specialized agents covering target profiling, evidence acquisition, log/memory/container/cloud analysis, IOC extraction, and reporting.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "forensics",
+    "incident-response",
+    "dfir",
+    "security",
+    "memory-analysis",
+    "container-forensics",
+    "cloud-forensics",
+    "ioc",
+    "stix",
+    "mitre-attack"
+  ]
+}
