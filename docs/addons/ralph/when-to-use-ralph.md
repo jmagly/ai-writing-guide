@@ -336,8 +336,8 @@ Ralph isn't for every phase of development - it's for the implementation phase a
 
 - [Quickstart Guide](quickstart.md) - Getting started with Ralph
 - [Best Practices](best-practices.md) - Writing effective tasks and criteria
-- [AIWG SDLC Framework](../../frameworks/sdlc-complete/orchestrator-architecture) - Documentation-first development
-- [Production Grade Guide](../../frameworks/sdlc-complete/production-grade-guide) - How to document before you build
+- [AIWG SDLC Framework](../../frameworks/sdlc-complete/orchestrator-architecture.md) - Documentation-first development
+- [Production Grade Guide](../../frameworks/sdlc-complete/production-grade-guide.md) - How to document before you build
 
 ## External Resources
 

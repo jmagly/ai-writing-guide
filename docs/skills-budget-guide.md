@@ -133,7 +133,35 @@ If you regularly switch between very different domains (forensics, marketing, de
 aiwg doctor
 ```
 
-Reports skill counts per provider and flags configurations likely to exceed default budgets. (A budget-aware warning is tracked in the AIWG roadmap; see #1148 / #1147 for status.)
+`aiwg doctor` runs a per-provider **Skill Budget** check (#1150) for every deployed skills directory it finds. The check sums each `SKILL.md`'s `name + description` from frontmatter, converts via the standard ~4 chars/token heuristic, and compares against the platform's default budget.
+
+| Platform | Budget |
+|----------|--------|
+| Claude Code | `skillListingBudgetFraction × context_window` (default `1% × 200,000 = 2,000 tokens`) |
+| Codex | Fixed 8,000-char built-in cap |
+| Other | Info-only line — no documented budget |
+
+The check honors:
+- Your existing `~/.claude/settings.json` override (or `~/.config/claude/settings.json` fallback). When the user is already at e.g. `0.05`, the verdict reads **EXCEEDS OVERRIDE** rather than the misleading "EXCEEDS DEFAULT".
+- The `<!-- AIWG_CONTEXT_WINDOW: N -->` directive in `CLAUDE.md` / `AGENTS.md` / `AIWG.md` — overrides the assumed 200,000-token context.
+
+Sample output on a sysops + sdlc + marketing + ops + forensics workspace:
+
+```
+⚠ Claude Code Skill Budget: EXCEEDS OVERRIDE (9.50×) — 393 skills (avg 101 chars desc),
+  est. 11,870 tokens vs 1,250 tokens budget — 5.00% × 100,000 ctx (override in ~/.claude/settings.json)
+  | raise skillListingBudgetFraction to 0.1 (~10%) in ~/.claude/settings.json
+  | or remove unused frameworks (e.g. aiwg remove media-marketing)
+  | see docs/skills-budget-guide.md for full options
+○ Factory Skill Budget: 294 skills, ~8,807 tokens — no documented budget for factory, skipping verdict
+○ Copilot Skill Budget: 296 skills, ~8,846 tokens — no documented budget for copilot, skipping verdict
+```
+
+To suppress in CI runs that don't care about pre-flight surface analysis:
+
+```bash
+aiwg doctor --no-budget-check
+```
 
 ---
 

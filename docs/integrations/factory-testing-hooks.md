@@ -585,7 +585,7 @@ export AIWG_SMART_HOOKS=false
 
 - [Factory Quickstart — Hooks](factory-quickstart.md#hooks) — 9 hook events overview
 - [Factory MCP Reference](factory-mcp-sidecar.md) — MCP + hooks integration
-- [Testing Quality Addon](../../../agentic/code/addons/testing-quality/README.md) — AIWG testing skills
-- [Auto Test Execution Skill](../../../agentic/code/addons/ralph/skills/auto-test-execution/SKILL.md) — Automated test loop
-- [Flaky Fix Skill](../../../agentic/code/addons/testing-quality/skills/flaky-fix/SKILL.md) — Fix flaky tests
+- [Testing Quality Addon](https://github.com/jmagly/aiwg/blob/main/agentic/code/addons/testing-quality/README.md) — AIWG testing skills
+- [Auto Test Execution Skill](https://github.com/jmagly/aiwg/blob/main/agentic/code/addons/agent-loop/skills/auto-test-execution/SKILL.md) — Automated test loop
+- [Flaky Fix Skill](https://github.com/jmagly/aiwg/blob/main/agentic/code/addons/testing-quality/skills/flaky-fix/SKILL.md) — Fix flaky tests
 - [Factory Official Docs](https://docs.factory.ai/guides/hooks/testing-automation) — Vendor documentation

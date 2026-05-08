@@ -73,7 +73,7 @@ cp /path/to/your-fork/agentic/code/addons/my-team-helpers/manifest.json \
 ```
 
 Because the on-disk layout is **byte-identical** between project-local
-and upstream ([identical-form ADR](../../.aiwg/architecture/adr-identical-form-portability.md)),
+and upstream ([identical-form ADR](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md)),
 no rewrite is needed.
 
 ### 3. Audit `@-references`
@@ -184,4 +184,4 @@ or project-local) and not maintain both indefinitely.
 - [Customization README](README.md) — Path A / B / C overview
 - [Lifecycle reference](project-local-lifecycle.md)
 - [Fork workflow](fork-workflow.md) — Path B specifics
-- [Identical-form ADR](../../.aiwg/architecture/adr-identical-form-portability.md) — why copies just work
+- [Identical-form ADR](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md) — why copies just work

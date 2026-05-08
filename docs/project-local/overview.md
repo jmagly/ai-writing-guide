@@ -34,4 +34,4 @@ aiwg activity-log show        # audit trail
 
 The load-bearing invariant: a project-local bundle is **byte-identical**
 in shape to its upstream form, so `aiwg promote` is a hash-verified copy
-with zero rewrite ([ADR #1038](../../.aiwg/architecture/adr-identical-form-portability.md)).
+with zero rewrite ([ADR #1038](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md)).

@@ -73,7 +73,7 @@ Per-bundle deploy:
 ## Conflict resolution (shadow policy)
 
 When a project-local artifact has the same id as an upstream artifact,
-the resolver chooses one of seven verdicts ([ADR #1041](../../.aiwg/architecture/adr-override-shadow-policy.md)):
+the resolver chooses one of seven verdicts ([ADR #1041](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-override-shadow-policy.md)):
 
 | # | Case | Default | `--force`? |
 |---|------|---------|-----------|
@@ -134,7 +134,7 @@ remove`. `--force` skips the case-2 prompt only — it does **not**
 authorize destroying another bundle's deploy (case 4) and does **not**
 bypass OS permission errors (case 5).
 
-For the full per-case revert behavior, see [`design-aiwg-remove-revert.md`](../../.aiwg/architecture/design-aiwg-remove-revert.md).
+For the full per-case revert behavior, see [`design-aiwg-remove-revert.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-aiwg-remove-revert.md).
 
 ## Graduation: `aiwg promote`
 
@@ -213,6 +213,6 @@ For the migration story, see the [forking guide](fork-workflow.md).
 
 - [Quickstart](project-local-quickstart.md) — first bundle in 5 minutes
 - [Type disambiguation](extensions-vs-addons-vs-frameworks-vs-plugins.md) — which type to author
-- Design: [`design-aiwg-remove-revert.md`](../../.aiwg/architecture/design-aiwg-remove-revert.md)
-- Design: [`design-doctor-log-promote.md`](../../.aiwg/architecture/design-doctor-log-promote.md)
-- ADR: [`adr-identical-form-portability.md`](../../.aiwg/architecture/adr-identical-form-portability.md)
+- Design: [`design-aiwg-remove-revert.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-aiwg-remove-revert.md)
+- Design: [`design-doctor-log-promote.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-doctor-log-promote.md)
+- ADR: [`adr-identical-form-portability.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md)

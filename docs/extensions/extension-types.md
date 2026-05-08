@@ -540,7 +540,7 @@ memory?: {
 
 When present, declares a semantic memory topology that kernel skills (`memory-ingest`, `memory-lint`, `memory-query-capture`) can operate on. The kernel reads this contract to parameterize topology-agnostic behavior.
 
-See [ADR-021](../../.aiwg/architecture/decisions/ADR-021-semantic-memory-kernel.md) for architectural decisions.
+See [ADR-021](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/decisions/ADR-021-semantic-memory-kernel.md) for architectural decisions.
 
 ```typescript
 interface MemoryTopology {

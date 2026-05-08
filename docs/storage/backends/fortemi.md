@@ -1,6 +1,6 @@
 # Backend: `fortemi` (alpha)
 
-Routes a subsystem's persistence into [Fortemi](../../.aiwg/planning/training-framework/phase-4-fortemi-review.md), the first-party AIWG semantic-memory project. Fortemi is Rust + PostgreSQL + pgvector with SKOS hierarchies, MRL embeddings, and W3C PROV provenance. Communication happens over MCP.
+Routes a subsystem's persistence into [Fortemi](https://github.com/jmagly/aiwg/blob/main/.aiwg/planning/training-framework/phase-4-fortemi-review.md), the first-party AIWG semantic-memory project. Fortemi is Rust + PostgreSQL + pgvector with SKOS hierarchies, MRL embeddings, and W3C PROV provenance. Communication happens over MCP.
 
 ## Status: alpha
 

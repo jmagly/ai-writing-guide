@@ -24,7 +24,7 @@ If you create a schema file but no agent references it, it does nothing. If you 
 | **Node.js** | ≥ 18 (20 recommended) | Matches CI. Use [nvm](https://github.com/nvm-sh/nvm) to manage versions. |
 | **npm** | ≥ 8 | Bundled with Node 18+. |
 | **Git** | any | Standard source control. |
-| **C++ build tools** | — | Required by native modules. See [CONTRIBUTING.md](../../CONTRIBUTING.md#prerequisites) for OS-specific install instructions. |
+| **C++ build tools** | — | Required by native modules. See [CONTRIBUTING.md](https://github.com/jmagly/aiwg/blob/main/CONTRIBUTING.md#prerequisites) for OS-specific install instructions. |
 
 ### Installing
 

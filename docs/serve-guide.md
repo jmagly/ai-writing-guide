@@ -34,17 +34,108 @@ The dashboard opens at `http://127.0.0.1:7337` by default.
 
 ## Web Dashboard
 
-The dashboard is a React SPA with five tabs:
+The dashboard is a React SPA with four tabs:
 
 | Tab | Purpose |
 |-----|---------|
-| **Terminal** | Full xterm.js terminal emulator connected via WebSocket PTY bridge |
 | **Missions** | Dispatch, monitor, pause, resume, and abort Mission Control tasks |
-| **Sandbox** | Manage registered agentic-sandbox instances — agent grid with lifecycle controls |
+| **Sandbox** | Manage registered agentic-sandbox instances — combined Instances panel with runtime badges, lifecycle controls, and a multi-pane terminal stack (#1146) |
 | **Telemetry** | Token usage, gate pass/fail rates, iteration counts, scope progress |
 | **Memory** | Agent memory inspection |
 
+The standalone **Terminal** tab present in earlier builds was retired in #1146 phase 3. Terminal sessions now live inside the Sandbox tab as per-instance panes in a multi-pane stack — each VM, container, or agent attaches its own pane independently.
+
 A persistent **HITL drawer** slides up from the bottom when any agent is blocked on human input. It polls for pending requests and lets operators respond or dismiss them without leaving the current tab.
+
+### Sandbox tab — Instances panel (#1146)
+
+The Sandbox tab is the single surface for managing every runtime the sandbox tracks. Layout:
+
+- **Header dropdown** — sandbox selector (one entry per registered sandbox). Persists across reloads via `localStorage`.
+- **Combined Instances list** — VMs (libvirt), containers (Docker), and orphan agents merged into a single list, sorted by name. Each row carries:
+  - Status dot (running / ready / busy / stopped / crashed)
+  - Runtime badge: `[VM]` (blue), `[CT]` (green), or `[AG]` (purple, for orphan agents)
+  - Instance name + secondary line (loadout for VMs, image for containers)
+  - State token (`running`, `stopped`, `paused`, ...)
+  - Session-count badge `· N` when the sandbox has pushed a session inventory (#1151, depends on `agent.sessions` event from agentic-sandbox#192)
+  - Runtime-aware lifecycle buttons (matrix below)
+- **Multi-pane terminal stack** — sits above the agent grid; renders only once at least one pane is open. Click 📺 **Pane** on a row to attach. Multiple panes coexist; switching foreground does not disconnect.
+
+#### Lifecycle button matrix
+
+VMs and containers have different sandbox APIs, so the dashboard renders only the buttons whose endpoints actually exist. No phantom controls.
+
+| Runtime / state | Buttons |
+|---|---|
+| **VM, running** | ⚡ Deploy *(only when no agent attached)* · ↻ Restart · ⏸ Stop · ⏻ Force off · ✕ Delete |
+| **VM, stopped** | ▶ Start · 🗑 Delete |
+| **Container, running** | ⏸ Stop · ✕ Delete |
+| **Container, stopped** | ▶ Start · 🗑 Delete |
+| **Agent (orphan)** | Stop *(or Start)* · ↻ Reprov · ✕ Destroy |
+
+Disk-destroying operations (Force off, Delete) confirm via `window.confirm`.
+
+#### 📺 Pane — explicit attach affordance
+
+Each row has a 📺 **Pane** button that opens (or focuses) a terminal pane in the stack above. The button is always visible; it disables when no agent is attached, with a tooltip explaining the next step (e.g., *"Start the VM and click ⚡ Deploy first"* for a stopped VM).
+
+This split replaces the earlier click-row-to-attach behavior, which conflated two separate actions:
+
+- **Row click** — toggles selection / agent-grid filter only.
+- **📺 Pane button** — opens a pane.
+
+#### Pane controls
+
+Every open pane carries:
+
+- **Live status bar** — connection dot, status text, optional CPU% / MEM / DSK chips driven by `agent.latestMetrics` from the existing 3 s sandbox poll
+- **⟳ Resync** — drops the cached output buffer for the current session, hard-resets xterm, refits, re-attaches. Use when rendered state has drifted from tmux state (orphaned escape codes, partial replays). Mirrors `resyncPane` from agentic-sandbox#180.
+- **↺ Reconnect** — re-lists sessions and re-attaches without resetting xterm. Use when the WS dropped briefly.
+- **← Sessions** — back to the picker (visible only when attached)
+
+#### Create Instance dialog (Runtime switch)
+
+Click **+ New Instance** in the panel header. The **Runtime** dropdown at the top drives which fields render below:
+
+- **VM** — Name + Loadout (preset or custom compose) + vCPUs / Memory / Disk + agentshare / autostart toggles. Submits `POST /api/v1/vms`.
+- **Container** — Name + Image picker fed by `GET /api/v1/container-images`, with a "Custom…" free-text fallback. Submits `POST /api/v1/containers`. Mounts / env / network UI deliberately not exposed (matches the agentic-sandbox dashboard's #178 deviation).
+
+#### Last-selected persistence
+
+The active sandbox id and per-sandbox selected instance persist to `localStorage`:
+
+| Key | Value |
+|---|---|
+| `aiwg:sandbox:lastSelectedSandbox` | sandbox id |
+| `aiwg:sandbox:<id>:lastSelectedInstance` | instance name |
+
+On reload the previous selection is restored if it still resolves; otherwise the reducer falls back to the first registered sandbox. Failure to read or write `localStorage` (private windows, etc.) is non-fatal.
+
+#### Libvirt-degraded fallback
+
+VMs and containers poll independently every 10 s. When `/api/v1/vms` returns a timeout or 408 (sandbox#187 — libvirt RPC sluggishness after long uptime), the agents + containers list keeps rendering and a yellow `⚠ libvirt degraded — VM list unavailable` banner appears at the top of the sidebar with a **Retry** button. No more empty list when one backend is sick.
+
+#### REST agent-list fallback
+
+The combined sidebar primarily binds rows against the event-driven sandbox registry. When a sandbox isn't pushing `agent.connected` events to this AIWG instance (operator-side `aiwg_serve.enabled` is false, registration race, etc.), the registry's agent list is empty and every Pane button stays disabled. To work around this, `InstancesList` polls `/api/sandboxes/:id/agents/full` every 10 s as a secondary source. Bound-agent lookup tries the registry first, then synthesizes a `SandboxAgent` from the REST `FullSandboxAgent` payload when the registry has nothing — so Pane lights up against the live agent inventory regardless of the event push.
+
+#### Replay-on-attach negotiation (#1144)
+
+When attaching a pane, AIWG sends a `join_session` message after `shell_started` so a late-attaching client sees the existing session history. Negotiation has three states:
+
+- **`advertised`** — sandbox's WS banner explicitly lists `join_session` + `replay_buffer`
+- **`probe`** — no banner present (or banner empty). AIWG sends `join_session` anyway and treats an `error` reply with `"unknown message"` / `"unsupported"` / `"session not found"` as the negative signal — demote to `unsupported`, fall back to live-only.
+- **`unsupported`** — banner present but explicitly omits the bits we care about
+
+Each attach logs the negotiated state to `aiwg serve` output:
+
+```
+[pty-bridge] sandbox WS … (agent=…): replay enabled (banner)
+[pty-bridge] sandbox WS … (agent=…): replay enabled (opportunistic — no banner advertised)
+[pty-bridge] sandbox declined join_session for agent=… : "…" — demoting to unsupported
+```
+
+Replay activates against today's sandboxes without waiting for `agentic-sandbox#190` to ship the server-hello banner.
 
 ## Sandbox Registration API
 

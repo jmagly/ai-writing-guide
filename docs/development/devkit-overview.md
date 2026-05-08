@@ -14,7 +14,7 @@ This deploys:
 - **Rules** — `skill-placement`, `no-circular-skill-calls`, `component-completeness`, `addon-boundaries`
 - **Skills** — `validate-component`, `validate-addon`, `dev-doctor`, and all `devkit-*` commands
 
-`aiwg-dev` is deliberately excluded from `aiwg use all` — it targets AIWG contributors, not end users. The exclusion is enforced by `"devOnly": true` in `aiwg-dev`'s `manifest.json`; `discoverAddons()` skips any addon with that flag. `aiwg use aiwg-dev` still works explicitly. See the [aiwg-dev overview](../addons/aiwg-dev/overview) for details.
+`aiwg-dev` is deliberately excluded from `aiwg use all` — it targets AIWG contributors, not end users. The exclusion is enforced by `"devOnly": true` in `aiwg-dev`'s `manifest.json`; `discoverAddons()` skips any addon with that flag. `aiwg use aiwg-dev` still works explicitly. See the [aiwg-dev overview](../addons/aiwg-dev/overview.md) for details.
 
 ## Three-Tier Plugin Taxonomy
 

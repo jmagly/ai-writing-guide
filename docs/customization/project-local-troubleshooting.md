@@ -52,7 +52,7 @@ Or scaffold a fresh bundle and copy the structure: `aiwg new-bundle <name> --typ
 
 ### "<= 64 KB" / "<= 200 bundles per project"
 
-The threat model ([#1042](../../.aiwg/architecture/threat-model-project-local.md))
+The threat model ([#1042](https://github.com/jmagly/aiwg/blob/main/.aiwg/security/threat-model-project-local-artifacts.md))
 sets DoS limits. If you're hitting these you almost certainly want one
 of:
 
@@ -160,7 +160,7 @@ aiwg new-bundle foo
 ### "Some artifacts skipped (see above). Use --force to override mutation refusal."
 
 `aiwg remove` detected operator-edited deployed files (case 2 from the
-[design](../../.aiwg/architecture/design-aiwg-remove-revert.md)) and
+[design](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-aiwg-remove-revert.md)) and
 refused to delete them by default to avoid losing your edits.
 
 **Fix (you really want them gone):**
@@ -251,6 +251,6 @@ operations.
 ## See also
 
 - [Lifecycle reference](project-local-lifecycle.md) — full operator surface
-- [Remove revert design](../../.aiwg/architecture/design-aiwg-remove-revert.md) — case-by-case behavior
-- [Doctor + log + promote design](../../.aiwg/architecture/design-doctor-log-promote.md)
+- [Remove revert design](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-aiwg-remove-revert.md) — case-by-case behavior
+- [Doctor + log + promote design](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-doctor-log-promote.md)
 - [Type disambiguation](extensions-vs-addons-vs-frameworks-vs-plugins.md)

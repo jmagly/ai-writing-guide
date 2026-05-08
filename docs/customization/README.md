@@ -40,7 +40,7 @@ aiwg promote my-team-rules --to corpus ~/my-corpus/ # → private corpus
 ```
 
 The graduate operation is a hash-verified copy — no rewrite, no migration
-([identical-form ADR](../../.aiwg/architecture/adr-identical-form-portability.md)).
+([identical-form ADR](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md)).
 
 **See:**
 - [Quickstart](project-local-quickstart.md) — first bundle in 5 minutes

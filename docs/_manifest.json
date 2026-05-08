@@ -45,6 +45,7 @@
     "integrations/opencode-quickstart",
     "integrations/warp-terminal-quickstart",
     "integrations/windsurf-quickstart",
+    "integrations/hermes-quickstart",
     "integrations/cross-platform-config",
     "openclaw-guide",
     "quickstart-sdlc",
@@ -220,7 +221,30 @@
     "addons/testing-quality/quickstart",
     "addons/voice-framework",
     "addons/voice-framework/overview",
-    "addons/voice-framework/quickstart"
+    "addons/voice-framework/quickstart",
+    "serve-guide",
+    "concierge-guide",
+    "customization",
+    "customization/README",
+    "customization/project-local-quickstart",
+    "customization/project-local-lifecycle",
+    "customization/project-local-troubleshooting",
+    "customization/from-fork-to-project-local",
+    "customization/extensions-vs-addons-vs-frameworks-vs-plugins",
+    "storage",
+    "storage/README",
+    "storage/overview",
+    "storage/migration",
+    "storage/security",
+    "providers",
+    "providers/capability-matrix",
+    "project-local/overview",
+    "mcp/profiles",
+    "mcp/codex-profiles",
+    "configuration/setup-manifest",
+    "getting-started/README",
+    "mcp",
+    "configuration"
   ],
   "sections": [
     {
@@ -347,6 +371,13 @@
       "parent": "integrations"
     },
     {
+      "id": "integrations/hermes-quickstart",
+      "title": "Hermes Agent",
+      "summary": "Setup AIWG as an MCP sidecar for Hermes Agent",
+      "file": "integrations/hermes-quickstart.md",
+      "parent": "integrations"
+    },
+    {
       "id": "integrations/cross-platform-config",
       "title": "Configuration",
       "summary": "Shared configuration across platforms",
@@ -356,7 +387,7 @@
     {
       "id": "openclaw-guide",
       "title": "OpenClaw Guide",
-      "summary": "Deploy to OpenClaw — 10th platform, first with native behaviors support. ClawHub publication and ~/.openclaw/ structure.",
+      "summary": "Deploy to OpenClaw \u2014 10th platform, first with native behaviors support. ClawHub publication and ~/.openclaw/ structure.",
       "file": "openclaw-guide.md",
       "parent": "integrations"
     },
@@ -533,7 +564,7 @@
     },
     {
       "id": "soul-md-guide",
-      "title": "SOUL.md — Agent Identity",
+      "title": "SOUL.md \u2014 Agent Identity",
       "summary": "Give agents persistent character: worldview, opinions, reasoning traits. soul-create, soul-enable, soul-blend.",
       "file": "soul-md-guide.md",
       "parent": "reference"
@@ -548,7 +579,7 @@
     {
       "id": "behaviors-guide",
       "title": "Behaviors",
-      "summary": "Behavior bundles — directives and toolsets for daemon-governed agents",
+      "summary": "Behavior bundles \u2014 directives and toolsets for daemon-governed agents",
       "file": "behaviors-guide.md",
       "parent": "reference"
     },
@@ -829,7 +860,7 @@
     },
     {
       "id": "releases/v2026.4.0-announcement",
-      "title": "v2026.4.0 — Autonomous Systems",
+      "title": "v2026.4.0 \u2014 Autonomous Systems",
       "summary": "Major release: corpus architecture, daemon, Mission Control, behaviors, SOUL.md, OpenClaw, Hermes, ops-complete, and more.",
       "file": "releases/v2026.4.0-announcement.md",
       "parent": "releases"
@@ -1099,7 +1130,7 @@
     {
       "id": "frameworks/sdlc-complete",
       "title": "SDLC Complete",
-      "summary": "Full lifecycle framework — internal docs and deep guides",
+      "summary": "Full lifecycle framework \u2014 internal docs and deep guides",
       "collapsed": true,
       "parent": "frameworks"
     },
@@ -1197,7 +1228,7 @@
     {
       "id": "addons/ralph",
       "title": "Ralph Addon",
-      "summary": "Iterative loop execution — quickstart, best practices, troubleshooting",
+      "summary": "Iterative loop execution \u2014 quickstart, best practices, troubleshooting",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1246,7 +1277,7 @@
     {
       "id": "addons/rlm",
       "title": "RLM Addon",
-      "summary": "Recursive Language Model — deployment, multi-provider, integration guides",
+      "summary": "Recursive Language Model \u2014 deployment, multi-provider, integration guides",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1295,7 +1326,7 @@
     {
       "id": "tools/ralph-external",
       "title": "External Ralph",
-      "summary": "Crash-resilient external loop — snapshot manager and provider API",
+      "summary": "Crash-resilient external loop \u2014 snapshot manager and provider API",
       "collapsed": true,
       "parent": "tools"
     },
@@ -1337,7 +1368,7 @@
     {
       "id": "frameworks/ops-complete",
       "title": "Ops Complete",
-      "summary": "Operational infrastructure framework — YAML-native with sys, it, dev, stream extensions",
+      "summary": "Operational infrastructure framework \u2014 YAML-native with sys, it, dev, stream extensions",
       "collapsed": true,
       "parent": "frameworks"
     },
@@ -1351,7 +1382,7 @@
     {
       "id": "frameworks/ops-complete/overview",
       "title": "Overview",
-      "summary": "ops-complete is the operational infrastructure layer for AIWG — a framework for AI agents working in",
+      "summary": "ops-complete is the operational infrastructure layer for AIWG \u2014 a framework for AI agents working in",
       "file": "frameworks/ops-complete/overview.md",
       "parent": "frameworks/ops-complete"
     },
@@ -1386,14 +1417,14 @@
     {
       "id": "addons/aiwg-dev",
       "title": "AIWG Dev",
-      "summary": "Developer toolkit — validate-component, dev-doctor, link-check, devkit scaffolding",
+      "summary": "Developer toolkit \u2014 validate-component, dev-doctor, link-check, devkit scaffolding",
       "collapsed": true,
       "parent": "addons"
     },
     {
       "id": "addons/aiwg-dev/overview",
       "title": "Overview",
-      "summary": "aiwg-dev is the developer toolkit for contributors building AIWG itself — adding new addons, framewo",
+      "summary": "aiwg-dev is the developer toolkit for contributors building AIWG itself \u2014 adding new addons, framewo",
       "file": "addons/aiwg-dev/overview.md",
       "parent": "addons/aiwg-dev"
     },
@@ -1407,7 +1438,7 @@
     {
       "id": "addons/aiwg-utils",
       "title": "AIWG Utils",
-      "summary": "Core utility rules — subagent scoping, context budget, instruction comprehension",
+      "summary": "Core utility rules \u2014 subagent scoping, context budget, instruction comprehension",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1428,7 +1459,7 @@
     {
       "id": "addons/auto-memory",
       "title": "Auto Memory",
-      "summary": "Automatic memory management — seed templates, memory evolution, cross-session persistence",
+      "summary": "Automatic memory management \u2014 seed templates, memory evolution, cross-session persistence",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1442,7 +1473,7 @@
     {
       "id": "addons/daemon",
       "title": "Daemon Addon",
-      "summary": "Persistent background agent — web UI, YAML profiles, scheduled tasks, Telegram",
+      "summary": "Persistent background agent \u2014 web UI, YAML profiles, scheduled tasks, Telegram",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1484,14 +1515,14 @@
     {
       "id": "addons/prose-integration",
       "title": "Prose Integration",
-      "summary": "OpenProse contract-driven execution — five skills, obligation semantics",
+      "summary": "OpenProse contract-driven execution \u2014 five skills, obligation semantics",
       "collapsed": true,
       "parent": "addons"
     },
     {
       "id": "addons/prose-integration/overview",
       "title": "Overview",
-      "summary": "The prose-integration addon provides AIWG tools for working with OpenProse programs — Markdown files",
+      "summary": "The prose-integration addon provides AIWG tools for working with OpenProse programs \u2014 Markdown files",
       "file": "addons/prose-integration/overview.md",
       "parent": "addons/prose-integration"
     },
@@ -1561,7 +1592,7 @@
     {
       "id": "addons/voice-framework",
       "title": "Voice Framework",
-      "summary": "Voice profile documentation — four built-in voices, custom profiles, blending",
+      "summary": "Voice profile documentation \u2014 four built-in voices, custom profiles, blending",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1578,6 +1609,155 @@
       "summary": "Apply your first voice profile to content in about 2 minutes.",
       "file": "addons/voice-framework/quickstart.md",
       "parent": "addons/voice-framework"
+    },
+    {
+      "id": "serve-guide",
+      "title": "Serve Guide",
+      "summary": "Run AIWG as a long-lived daemon",
+      "file": "serve-guide.md"
+    },
+    {
+      "id": "concierge-guide",
+      "title": "Concierge Guide",
+      "summary": "Concierge agent interface",
+      "file": "concierge-guide.md"
+    },
+    {
+      "id": "customization",
+      "title": "Customization",
+      "summary": "Project-local extensions, addons, and frameworks"
+    },
+    {
+      "id": "customization/README",
+      "title": "Customization Overview",
+      "summary": "Pick a customization path",
+      "file": "customization/README.md",
+      "parent": "customization"
+    },
+    {
+      "id": "customization/project-local-quickstart",
+      "title": "Project-Local Quickstart",
+      "summary": "5-minute first bundle",
+      "file": "customization/project-local-quickstart.md",
+      "parent": "customization"
+    },
+    {
+      "id": "customization/project-local-lifecycle",
+      "title": "Project-Local Lifecycle",
+      "summary": "Bundle lifecycle and graduation",
+      "file": "customization/project-local-lifecycle.md",
+      "parent": "customization"
+    },
+    {
+      "id": "customization/project-local-troubleshooting",
+      "title": "Project-Local Troubleshooting",
+      "summary": "Diagnose project-local bundle issues",
+      "file": "customization/project-local-troubleshooting.md",
+      "parent": "customization"
+    },
+    {
+      "id": "customization/from-fork-to-project-local",
+      "title": "From Fork to Project-Local",
+      "summary": "Migrate fork-based customization",
+      "file": "customization/from-fork-to-project-local.md",
+      "parent": "customization"
+    },
+    {
+      "id": "customization/extensions-vs-addons-vs-frameworks-vs-plugins",
+      "title": "Extensions vs Addons vs Frameworks vs Plugins",
+      "summary": "Choose the right bundle type",
+      "file": "customization/extensions-vs-addons-vs-frameworks-vs-plugins.md",
+      "parent": "customization"
+    },
+    {
+      "id": "storage",
+      "title": "Storage",
+      "summary": "Storage subsystems and backends"
+    },
+    {
+      "id": "storage/README",
+      "title": "Storage Overview",
+      "summary": "AIWG storage subsystem",
+      "file": "storage/README.md",
+      "parent": "storage"
+    },
+    {
+      "id": "storage/overview",
+      "title": "Storage Architecture",
+      "summary": "How AIWG storage is organized",
+      "file": "storage/overview.md",
+      "parent": "storage"
+    },
+    {
+      "id": "storage/migration",
+      "title": "Storage Migration",
+      "summary": "Migrate between storage backends",
+      "file": "storage/migration.md",
+      "parent": "storage"
+    },
+    {
+      "id": "storage/security",
+      "title": "Storage Security",
+      "summary": "Access control and threat model",
+      "file": "storage/security.md",
+      "parent": "storage"
+    },
+    {
+      "id": "providers",
+      "title": "Providers",
+      "summary": "AI coding platforms supported by AIWG"
+    },
+    {
+      "id": "providers/capability-matrix",
+      "title": "Capability Matrix",
+      "summary": "Cross-provider feature comparison",
+      "file": "providers/capability-matrix.md",
+      "parent": "providers"
+    },
+    {
+      "id": "project-local/overview",
+      "title": "Project-Local Overview",
+      "summary": "Per-project bundles",
+      "file": "project-local/overview.md",
+      "parent": "customization"
+    },
+    {
+      "id": "mcp/profiles",
+      "title": "MCP Profiles",
+      "summary": "Reusable MCP server profiles",
+      "file": "mcp/profiles.md",
+      "parent": "mcp"
+    },
+    {
+      "id": "mcp/codex-profiles",
+      "title": "Codex MCP Profiles",
+      "summary": "Codex-specific MCP profiles",
+      "file": "mcp/codex-profiles.md",
+      "parent": "mcp"
+    },
+    {
+      "id": "configuration/setup-manifest",
+      "title": "Setup Manifest",
+      "summary": "setup.aiwg.io/v1 manifest reference",
+      "file": "configuration/setup-manifest.md",
+      "parent": "configuration"
+    },
+    {
+      "id": "getting-started/README",
+      "title": "Getting Started Index",
+      "summary": "Index of getting-started guides",
+      "file": "getting-started/README.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "mcp",
+      "title": "MCP",
+      "summary": "Model Context Protocol servers and profiles"
+    },
+    {
+      "id": "configuration",
+      "title": "Configuration",
+      "summary": "AIWG configuration files and settings"
     }
   ]
 }

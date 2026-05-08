@@ -13,7 +13,7 @@ description: Pointer to the canonical bundle manifest schema.
 
 | Source | What it contains |
 |--------|------------------|
-| [`design-manifest-schema.md`](../../.aiwg/architecture/design-manifest-schema.md) | Full schema design (#1044) |
+| [`design-manifest-schema.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-manifest-schema.md) | Full schema design (#1044) |
 | [`src/extensions/manifest.ts`](../../src/extensions/manifest.ts) | Zod schema (executable contract) |
 | [`src/extensions/types.ts`](../../src/extensions/types.ts) | TypeScript types |
 

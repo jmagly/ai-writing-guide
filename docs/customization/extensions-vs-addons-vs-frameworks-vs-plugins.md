@@ -93,16 +93,16 @@ artifact semantics.
                                             marketplace (plugin-packaged)
 ```
 
-The **identical-form portability invariant** ([ADR #1038](../../.aiwg/architecture/adr-identical-form-portability.md))
+The **identical-form portability invariant** ([ADR #1038](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md))
 means a project-local bundle is byte-identical to its upstream form.
 `aiwg promote` is therefore a copy + verify; no rewrite, no migration.
 
 ## Cross-references
 
-- Bundle manifest schema: [`@src/extensions/types.ts`](../../src/extensions/types.ts), [`design-manifest-schema.md`](../../.aiwg/architecture/design-manifest-schema.md)
-- Identical-form ADR: [`adr-identical-form-portability.md`](../../.aiwg/architecture/adr-identical-form-portability.md)
-- Directory layout ADR: [`adr-aiwg-directory-layout.md`](../../.aiwg/architecture/adr-aiwg-directory-layout.md)
-- Override / shadow policy: [`adr-override-shadow-policy.md`](../../.aiwg/architecture/adr-override-shadow-policy.md)
+- Bundle manifest schema: [`@src/extensions/types.ts`](../../src/extensions/types.ts), [`design-manifest-schema.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-manifest-schema.md)
+- Identical-form ADR: [`adr-identical-form-portability.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md)
+- Directory layout ADR: [`adr-aiwg-directory-layout.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-aiwg-directory-layout.md)
+- Override / shadow policy: [`adr-override-shadow-policy.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-override-shadow-policy.md)
 - Scaffolding CLI: `aiwg new-bundle <name> --type {extension|addon|framework|plugin}`
 - Lifecycle guide: [`project-local-lifecycle.md`](project-local-lifecycle.md)
 - 5-minute quickstart: [`project-local-quickstart.md`](project-local-quickstart.md)
