@@ -139,7 +139,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 - MCP server availability
 - System dependencies (git, jq, etc.)
 - `memory.topology` contracts — runs `validateMemoryTopology()` against every installed framework/addon manifest; flags missing required fields, invalid `crossRefStyle` values (must be `at-mention | wikilink | markdown-link | yaml-ref`), namespaces not under `.aiwg/`, empty `derivedPages`, and wrong array shapes for `lintRules`/`ingestRequires` (per ADR-021)
-- **Project-local artifacts** ([design](../.aiwg/architecture/design-doctor-log-promote.md)) — per-type counts, manifest validation, active shadows (informational vs blocking), denylist violations, deploy-state drift (deployed file hash vs registered `artifactHashes`), provider deployment matrix. Section is suppressed entirely when no project-local content exists.
+- **Project-local artifacts** ([design](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-doctor-log-promote.md)) — per-type counts, manifest validation, active shadows (informational vs blocking), denylist violations, deploy-state drift (deployed file hash vs registered `artifactHashes`), provider deployment matrix. Section is suppressed entirely when no project-local content exists.
 
 **Doctor exits 0 when:** no validation errors, no denylist violations, no drift. Shadows alone do not fail doctor — they're informational by design.
 
@@ -520,7 +520,7 @@ aiwg remove my-team-rules --force
 
 **Routing:**
 
-- If `<id>` matches a project-local entry in `aiwg.config.installed`, routes to the project-local revert handler ([design](../.aiwg/architecture/design-aiwg-remove-revert.md)) which uses recorded `artifactHashes` to detect pristine vs mutated vs replaced deployed files.
+- If `<id>` matches a project-local entry in `aiwg.config.installed`, routes to the project-local revert handler ([design](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-aiwg-remove-revert.md)) which uses recorded `artifactHashes` to detect pristine vs mutated vs replaced deployed files.
 - Otherwise, falls through to the upstream framework / plugin uninstaller.
 
 **Source preservation invariant:** `aiwg remove` never deletes content under `.aiwg/<type>/<name>/`. To remove the source, use `rm -rf` explicitly.
@@ -532,7 +532,7 @@ aiwg remove my-team-rules --force
 ### promote
 
 Graduate a project-local bundle to upstream or to a private corpus path.
-Implements the identical-form portability invariant ([ADR #1038](../.aiwg/architecture/adr-identical-form-portability.md)) — copies `.aiwg/<type>/<name>/` to its destination and re-hashes every file to verify byte-identical correctness.
+Implements the identical-form portability invariant ([ADR #1038](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md)) — copies `.aiwg/<type>/<name>/` to its destination and re-hashes every file to verify byte-identical correctness.
 
 ```bash
 aiwg promote <name> [--to upstream|corpus <path>] [--dry-run] [--cleanup] [--force]
@@ -1721,6 +1721,28 @@ under the rubric threshold, and an aggregate average across all scanned files.
 ## Plugin Commands
 
 **Note:** Plugin commands are specific to Claude Code integration.
+
+### Published plugins
+
+The AIWG marketplace publishes **13 plugins** at `.claude-plugin/marketplace.json`:
+
+| Plugin | Source | Description |
+|---|---|---|
+| `sdlc` | `frameworks/sdlc-complete` | Full SDLC framework with 220 specialized agents |
+| `marketing` | `frameworks/media-marketing-kit` | Marketing operations framework |
+| `forensics` | `frameworks/forensics-complete` | Digital forensics & incident response (13 agents, 19 skills) |
+| `security-engineering` | `frameworks/security-engineering` | Applied security: crypto, chain-of-trust, factors, supply-chain |
+| `research` | `frameworks/research-complete` | Research workflow automation (8 agents, 20 skills) |
+| `media-curator` | `frameworks/media-curator` | Media archive management (6 agents, 18 skills) |
+| `ops` | `frameworks/ops-complete` | Operational infrastructure: incident, runbooks, troubleshooting |
+| `knowledge-base` | `frameworks/knowledge-base` | Knowledge base / wiki framework |
+| `utils` | `addons/aiwg-utils` | Core AIWG utilities |
+| `voice` | `addons/voice-framework` | Voice profiles for consistent writing |
+| `writing` | `addons/writing-quality` | Writing quality and AI-pattern detection |
+| `training` | `jmagly/aiwg-training` (separate repo) | Fine-tuning dataset curation |
+| `hooks` | `addons/aiwg-hooks` | Workflow tracing and session hooks |
+
+Install any of them with `/plugin install <name>@aiwg` after running `/plugin marketplace add jmagly/ai-writing-guide` once.
 
 ### install-plugin
 
@@ -3267,7 +3289,7 @@ index:
     topK: 10
 ```
 
-See [Graph Backends](../extensions/graph-backends.md) for full backend documentation.
+See [Graph Backends](extensions/graph-backends.md) for full backend documentation.
 
 **Documentation-only repos**: If your repo has no `src/`, `test/`, or `tools/` directories, `aiwg index build` will skip the `codebase` graph with a warning and still build the `project` graph. To index documentation under a custom path, define a user-defined graph:
 

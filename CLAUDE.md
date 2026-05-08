@@ -112,14 +112,20 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 # Add AIWG marketplace (one-time)
 /plugin marketplace add jmagly/ai-writing-guide
 
-# Install plugins (7 published in marketplace.json)
-/plugin install sdlc@aiwg        # Full SDLC framework
-/plugin install marketing@aiwg   # Marketing operations framework
-/plugin install utils@aiwg       # Core utilities
-/plugin install voice@aiwg       # Voice profiles
-/plugin install writing@aiwg     # Writing quality and AI-pattern detection
-/plugin install training@aiwg    # Fine-tuning dataset curation
-/plugin install hooks@aiwg       # AIWG hooks (context loaders, validators)
+# Install plugins (13 published in marketplace.json)
+/plugin install sdlc@aiwg                  # Full SDLC framework
+/plugin install marketing@aiwg             # Marketing operations framework
+/plugin install forensics@aiwg             # Digital forensics & incident response
+/plugin install security-engineering@aiwg  # Applied security (crypto, chain-of-trust, factors)
+/plugin install research@aiwg              # Research workflow automation
+/plugin install media-curator@aiwg         # Media archive management
+/plugin install ops@aiwg                   # Operational infrastructure (incident, runbooks)
+/plugin install knowledge-base@aiwg        # Knowledge base / wiki framework
+/plugin install utils@aiwg                 # Core utilities
+/plugin install voice@aiwg                 # Voice profiles
+/plugin install writing@aiwg               # Writing quality and AI-pattern detection
+/plugin install training@aiwg              # Fine-tuning dataset curation
+/plugin install hooks@aiwg                 # AIWG hooks (context loaders, validators)
 
 # Verify
 /plugin list
