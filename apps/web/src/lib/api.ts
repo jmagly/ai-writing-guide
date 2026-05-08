@@ -372,7 +372,16 @@ export interface HitlResponse {
 export interface ConnectionsResponse {
   server: { status: 'ok'; readOnly: boolean; uptime: number };
   ptySessions: string[];
-  sandboxes: Array<{ id: string; name: string; connected: boolean; agentCount: number }>;
+  sandboxes: Array<{
+    id: string;
+    name: string;
+    connected: boolean;
+    agentCount: number;
+    /** #1157 — total VMs reported by the sandbox; null when offline or unavailable */
+    vmCount: number | null;
+    /** #1157 — total containers reported by the sandbox; null when offline or unavailable */
+    containerCount: number | null;
+  }>;
   mcpServers: Array<{ name: string; status: string }>;
   subsystems: {
     ralph: { status: 'active' | 'idle' | 'unknown'; activeLoops: number };

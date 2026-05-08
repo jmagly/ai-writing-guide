@@ -478,20 +478,75 @@ async function startServer(opts: {
 
   // Connection status — server health, PTY sessions, sandboxes, subsystem status (#887)
   const serverStartTime = Date.now();
-  app.get('/api/connections', (c: any) => {
+
+  // VM/container count cache — keyed by sandbox id, 5s TTL (#1157).
+  // Avoids hammering each registered sandbox with two extra HTTP round-trips
+  // every time the telemetry tab polls /api/connections.
+  type InventoryCounts = { vmCount: number | null; containerCount: number | null };
+  const COUNTS_TTL_MS = 5000;
+  const countsCache = new Map<string, { at: number; counts: InventoryCounts }>();
+  const FETCH_TIMEOUT_MS = 1500;
+
+  async function fetchWithTimeout(url: string): Promise<unknown> {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const resp = await fetch(url, { signal: ctrl.signal });
+      if (!resp.ok) return null;
+      return await resp.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function getInventoryCounts(s: { id: string; httpEndpoint: string; connected: boolean }): Promise<InventoryCounts> {
+    if (!s.connected) return { vmCount: null, containerCount: null };
+    const cached = countsCache.get(s.id);
+    if (cached && Date.now() - cached.at < COUNTS_TTL_MS) return cached.counts;
+    let vmCount: number | null = null;
+    let containerCount: number | null = null;
+    try {
+      const [vms, containers] = await Promise.all([
+        fetchWithTimeout(`${s.httpEndpoint}/api/v1/vms`).catch(() => null),
+        fetchWithTimeout(`${s.httpEndpoint}/api/v1/containers`).catch(() => null),
+      ]);
+      if (vms && typeof (vms as { total?: unknown }).total === 'number') {
+        vmCount = (vms as { total: number }).total;
+      }
+      if (containers && typeof (containers as { total?: unknown }).total === 'number') {
+        containerCount = (containers as { total: number }).total;
+      }
+    } catch { /* ignore */ }
+    const counts: InventoryCounts = { vmCount, containerCount };
+    countsCache.set(s.id, { at: Date.now(), counts });
+    return counts;
+  }
+
+  app.get('/api/connections', async (c: any) => {
     const uptime = Date.now() - serverStartTime;
 
     // PTY sessions
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sessions: string[] = [...(ptyRegistry as any)['sessions'].keys()];
 
-    // Sandboxes
-    const allSandboxes = sandboxRegistry.list().map((s) => ({
-      id: s.id,
-      name: s.name,
-      connected: s.connected,
-      agentCount: s.agentCount,
-    }));
+    // Sandboxes — augmented with VM/container counts (#1157).
+    // null counts indicate the sandbox is offline or didn't respond; the UI
+    // renders these as `?` rather than `0` so missing data is distinguishable
+    // from a confirmed empty inventory.
+    const sandboxList = sandboxRegistry.list();
+    const allSandboxes = await Promise.all(
+      sandboxList.map(async (s) => {
+        const counts = await getInventoryCounts({ id: s.id, httpEndpoint: s.httpEndpoint, connected: s.connected });
+        return {
+          id: s.id,
+          name: s.name,
+          connected: s.connected,
+          agentCount: s.agentCount,
+          vmCount: counts.vmCount,
+          containerCount: counts.containerCount,
+        };
+      }),
+    );
 
     // Ralph subsystem — read .aiwg/ralph/registry.json if present
     let ralphStatus: 'active' | 'idle' | 'unknown' = 'unknown';

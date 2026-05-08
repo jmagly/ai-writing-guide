@@ -215,7 +215,26 @@ export function TelemetryDashboard({ sessionId }: Props) {
                 {connections.sandboxes.length}
               </span>
               <span className={styles.connectionMeta}>
-                {connections.sandboxes.length === 0 ? 'none registered' : connections.sandboxes.map((s) => `${s.name}${s.connected ? '' : ' (offline)'}`).join(', ')}
+                {(() => {
+                  if (connections.sandboxes.length === 0) return 'none registered';
+                  // #1157 — show instance breakdown alongside host names so it's
+                  // obvious the badge counts hosts, not runtime instances.
+                  let agents = 0;
+                  let vms = 0;
+                  let containers = 0;
+                  let anyVmsUnknown = false;
+                  let anyContainersUnknown = false;
+                  for (const s of connections.sandboxes) {
+                    agents += s.agentCount;
+                    if (s.vmCount === null) anyVmsUnknown = true;
+                    else vms += s.vmCount;
+                    if (s.containerCount === null) anyContainersUnknown = true;
+                    else containers += s.containerCount;
+                  }
+                  const fmt = (n: number, unknown: boolean) => (unknown ? `${n}+?` : `${n}`);
+                  const hosts = connections.sandboxes.map((s) => `${s.name}${s.connected ? '' : ' (offline)'}`).join(', ');
+                  return `${agents} agents · ${fmt(vms, anyVmsUnknown)} VMs · ${fmt(containers, anyContainersUnknown)} containers — ${hosts}`;
+                })()}
               </span>
             </div>
             {connections.mcpServers.length > 0 && (
