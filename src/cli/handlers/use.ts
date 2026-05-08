@@ -44,7 +44,7 @@ import {
 } from '../../extensions/project-local-activity.js';
 import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
 import { installAiwgHooks } from '../../extensions/claude-hooks-installer.js';
-import { detectScope, mirrorSkillsToUserScope } from '../scope-resolver.js';
+import { detectScope, mirrorToUserScope, rejectOpenClawProjectScope } from '../scope-resolver.js';
 // Context-pipeline: emits AIWG.md + AGENTS.md as the last step of `aiwg use`
 // for non-Claude providers per ADR-1 (.aiwg/architecture/adr-agents-md-aggregation.md).
 // Distinct from agentsmith (which creates subagent personas).
@@ -1161,9 +1161,13 @@ export class UseHandler implements CommandHandler {
     const skipConflicts = remainingArgs.includes('--skip-conflicts');
 
     // PUW-027 (#1128): --scope user|project per ADR-4. Default project.
+    // #1156 Phase 1: --user is a shorthand for --scope user.
     let scope: 'project' | 'user';
     try {
       scope = detectScope(remainingArgs);
+      if (scope === 'project' && remainingArgs.includes('--user')) {
+        scope = 'user';
+      }
     } catch (err) {
       return {
         exitCode: 1,
@@ -1171,7 +1175,7 @@ export class UseHandler implements CommandHandler {
       };
     }
     if (scope === 'user' && verbose) {
-      ui.dim(`  --scope user: deploy targets redirect to home-rooted paths per ADR-4 §2`);
+      ui.dim(`  --scope user: deploy targets mirror to home-rooted paths per ADR-4 §2`);
     }
     const filteredArgs = deployArgs.filter(
       a => a !== '--no-utils' && a !== '--no-project-local' && a !== '--ci-hooks-enabled' && a !== '--force' && a !== '--skip-conflicts'
@@ -1211,6 +1215,29 @@ export class UseHandler implements CommandHandler {
     const provider = providers[0];
     const targetIdx = remainingArgs.findIndex(a => a === '--target');
     const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
+
+    // #1156 Phase 1 — OpenClaw is exclusively user-scope; reject --scope project.
+    try {
+      rejectOpenClawProjectScope(provider, scope);
+    } catch (err) {
+      return {
+        exitCode: 1,
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+
+    // #1156 Phase 1 — Reject --scope user for providers that don't have a
+    // documented user-scope path map. Operators get a clear error rather than a
+    // silent fall-through to project-only deployment.
+    if (scope === 'user') {
+      const { USER_SCOPE_PATHS } = await import('../scope-resolver.js');
+      if (!USER_SCOPE_PATHS[provider]) {
+        return {
+          exitCode: 1,
+          message: `--scope user not supported for provider '${provider}' — see docs/customization/user-scope-deployment.md for the supported list`,
+        };
+      }
+    }
 
     // Pre-deployment collision check (skip in dry-run — nothing is written)
     if (!dryRun) {
@@ -1403,19 +1430,36 @@ export class UseHandler implements CommandHandler {
       await deployCiHooks({ frameworkRoot, framework, target, dryRun });
     }
 
-    // PUW-027 (#1128) --scope user: mirror project-deployed skills to the
+    // PUW-027 (#1128), #1156 Phase 1 — --scope user: mirror the full
+    // per-provider artifact set (agents/commands/skills/rules) to the
     // user-scope target per ADR-4 §2. The project-scope deploy stays in
-    // place; the user-scope copy is additive and makes skills available
-    // across all the operator's projects.
+    // place; user-scope copies are additive so the framework is available
+    // across every project on the operator's machine.
     if (scope === 'user' && !dryRun) {
       try {
         const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
-        const projectSkillsDir = path.isAbsolute(paths.skills)
-          ? paths.skills
-          : path.join(target, paths.skills);
-        const r = await mirrorSkillsToUserScope(provider, projectSkillsDir);
-        if (r.count > 0) {
-          ui.dim(`  --scope user: mirrored ${r.count} skill(s) to ${r.targetDir}`);
+        const resolveProjectPath = (p: string): string =>
+          !p ? '' : path.isAbsolute(p) ? p : path.join(target, p);
+        const projectPaths = {
+          agents: resolveProjectPath(paths.agents),
+          skills: resolveProjectPath(paths.skills),
+          commands: resolveProjectPath(paths.commands),
+          rules: resolveProjectPath(paths.rules),
+          behaviors: resolveProjectPath(paths.behaviors),
+        };
+        const r = await mirrorToUserScope(provider, projectPaths);
+        const summary: string[] = [];
+        if (r.agents.count > 0) summary.push(`${r.agents.count} agent(s)`);
+        if (r.commands.count > 0) summary.push(`${r.commands.count} command(s)`);
+        if (r.skills.count > 0) summary.push(`${r.skills.count} skill(s)`);
+        if (r.rules.count > 0) summary.push(`${r.rules.count} rule(s)`);
+        if (r.behaviors.count > 0) summary.push(`${r.behaviors.count} behavior(s)`);
+        if (summary.length > 0) {
+          // Show the per-type breakdown plus the primary user-scope target dir.
+          // Prefer skills.targetDir as the surfaced location since most providers
+          // share `~/.<provider>/` for the others.
+          const headline = r.skills.targetDir || r.agents.targetDir || r.commands.targetDir || r.rules.targetDir;
+          ui.dim(`  --scope user: mirrored ${summary.join(', ')} to ${headline}`);
         }
       } catch (err) {
         ui.warn(`--scope user mirror failed: ${err instanceof Error ? err.message : String(err)}`);

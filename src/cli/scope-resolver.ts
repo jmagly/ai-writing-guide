@@ -169,31 +169,100 @@ export async function mirrorSkillsToUserScope(
   if (!userPaths || !userPaths.skills) {
     return { count: 0, targetDir: '' };
   }
+  return mirrorArtifactDir(projectSkillsDir, userPaths.skills);
+}
 
+/**
+ * #1156 Phase 1 — Mirror the full per-provider artifact set (agents, commands,
+ * skills, rules) from project scope to the user-scope target. Additive: the
+ * project-scope deploy stays in place; user-scope copies are created alongside
+ * so the framework is available across every project on the machine.
+ *
+ * `projectPaths` are the relative or absolute paths the caller already resolved
+ * for project-scope deployment. Each one whose user-scope counterpart is
+ * non-empty gets mirrored. Returns per-artifact-type counts and the resolved
+ * user-scope target directories so the caller can surface them.
+ */
+export async function mirrorToUserScope(
+  provider: string,
+  projectPaths: { agents: string; skills: string; commands: string; rules: string; behaviors: string },
+): Promise<{
+  agents: { count: number; targetDir: string };
+  skills: { count: number; targetDir: string };
+  commands: { count: number; targetDir: string };
+  rules: { count: number; targetDir: string };
+  behaviors: { count: number; targetDir: string };
+}> {
+  const userPaths = USER_SCOPE_PATHS[provider];
+  const empty = { count: 0, targetDir: '' };
+  if (!userPaths) {
+    return { agents: empty, skills: empty, commands: empty, rules: empty, behaviors: empty };
+  }
+  const [agents, skills, commands, rules, behaviors] = await Promise.all([
+    userPaths.agents ? mirrorArtifactDir(projectPaths.agents, userPaths.agents) : Promise.resolve(empty),
+    userPaths.skills ? mirrorArtifactDir(projectPaths.skills, userPaths.skills) : Promise.resolve(empty),
+    userPaths.commands ? mirrorArtifactDir(projectPaths.commands, userPaths.commands) : Promise.resolve(empty),
+    userPaths.rules ? mirrorArtifactDir(projectPaths.rules, userPaths.rules) : Promise.resolve(empty),
+    userPaths.behaviors ? mirrorArtifactDir(projectPaths.behaviors, userPaths.behaviors) : Promise.resolve(empty),
+  ]);
+  return { agents, skills, commands, rules, behaviors };
+}
+
+/**
+ * Copy every directory or file under `src` into `dst` (creating `dst` if
+ * needed). Returns the count of top-level entries successfully copied.
+ *
+ * Used by the user-scope mirror to cover both directory-style artifacts
+ * (skills, agents) and file-style artifacts (commands, rules in some
+ * providers). Failures on individual entries are swallowed so a single bad
+ * entry doesn't fail the whole mirror.
+ */
+async function mirrorArtifactDir(src: string, dst: string): Promise<{ count: number; targetDir: string }> {
+  if (!src || !dst) return { count: 0, targetDir: dst };
   const fs = await import('node:fs/promises');
 
-  let entries: Array<{ name: string; isDirectory: boolean }>;
+  let dirents;
   try {
-    const dirents = await fs.readdir(projectSkillsDir, { withFileTypes: true });
-    entries = dirents.map((e) => ({ name: e.name, isDirectory: e.isDirectory() }));
+    dirents = await fs.readdir(src, { withFileTypes: true });
   } catch {
-    return { count: 0, targetDir: userPaths.skills };
+    return { count: 0, targetDir: dst };
   }
 
-  await fs.mkdir(userPaths.skills, { recursive: true });
-
+  await fs.mkdir(dst, { recursive: true });
   let count = 0;
-  for (const entry of entries) {
-    if (!entry.isDirectory) continue;
-    const src = path.join(projectSkillsDir, entry.name);
-    const dst = path.join(userPaths.skills, entry.name);
+  for (const entry of dirents) {
+    const s = path.join(src, entry.name);
+    const d = path.join(dst, entry.name);
     try {
-      await fs.cp(src, dst, { recursive: true, force: true });
+      if (entry.isDirectory()) {
+        await fs.cp(s, d, { recursive: true, force: true });
+      } else if (entry.isFile()) {
+        await fs.copyFile(s, d);
+      } else {
+        continue;
+      }
       count++;
     } catch {
-      // Skip individual failures; surface in caller's verbose output.
+      // ignore individual failures
     }
   }
+  return { count, targetDir: dst };
+}
 
-  return { count, targetDir: userPaths.skills };
+/**
+ * #1156 Phase 1 — OpenClaw is exclusively user-scope. `--scope project` against
+ * OpenClaw is meaningless because all OpenClaw paths are already home-rooted;
+ * silently accepting it would create the false impression that project-scope
+ * deploys are tracked. This helper is called by the use/list/remove handlers
+ * to fail fast with a clear message on `--scope project --provider openclaw`.
+ *
+ * `--scope user --provider openclaw` is a no-op: that's already what OpenClaw
+ * does without the flag.
+ */
+export function rejectOpenClawProjectScope(provider: string, scope: Scope): void {
+  if (provider === 'openclaw' && scope === 'project') {
+    throw new Error(
+      "OpenClaw is exclusively user-scope (~/.openclaw/). '--scope project' is not supported for this provider; omit the flag or pass '--scope user'.",
+    );
+  }
 }

@@ -13,6 +13,8 @@ import {
   resolveScopePaths,
   USER_SCOPE_PATHS,
   mirrorSkillsToUserScope,
+  mirrorToUserScope,
+  rejectOpenClawProjectScope,
 } from '../../../src/cli/scope-resolver.js';
 
 describe('detectScope', () => {
@@ -120,6 +122,90 @@ describe('mirrorSkillsToUserScope', () => {
   it('emits a non-empty target dir for codex', async () => {
     const r = await mirrorSkillsToUserScope('codex', projectSkillsDir);
     expect(r.targetDir).toContain('agents/skills');
+  });
+});
+
+describe('mirrorToUserScope (#1156)', () => {
+  let tmpRoot: string;
+  let projectAgentsDir: string;
+  let projectSkillsDir: string;
+  let projectCommandsDir: string;
+  let projectRulesDir: string;
+
+  beforeEach(async () => {
+    tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-scope-mirror-full-'));
+    projectAgentsDir = path.join(tmpRoot, 'project', '.claude', 'agents');
+    projectSkillsDir = path.join(tmpRoot, 'project', '.claude', 'skills');
+    projectCommandsDir = path.join(tmpRoot, 'project', '.claude', 'commands');
+    projectRulesDir = path.join(tmpRoot, 'project', '.claude', 'rules');
+    await fs.mkdir(projectAgentsDir, { recursive: true });
+    await fs.mkdir(projectSkillsDir, { recursive: true });
+    await fs.mkdir(projectCommandsDir, { recursive: true });
+    await fs.mkdir(projectRulesDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await fs.rm(tmpRoot, { recursive: true, force: true });
+  });
+
+  it('returns zero counts for unknown provider', async () => {
+    const r = await mirrorToUserScope('nonexistent', {
+      agents: projectAgentsDir,
+      skills: projectSkillsDir,
+      commands: projectCommandsDir,
+      rules: projectRulesDir,
+      behaviors: '',
+    });
+    expect(r.agents.count).toBe(0);
+    expect(r.skills.count).toBe(0);
+    expect(r.commands.count).toBe(0);
+    expect(r.rules.count).toBe(0);
+  });
+
+  it('returns zero counts when project artifact dirs are empty', async () => {
+    const r = await mirrorToUserScope('claude', {
+      agents: projectAgentsDir,
+      skills: projectSkillsDir,
+      commands: projectCommandsDir,
+      rules: projectRulesDir,
+      behaviors: '',
+    });
+    expect(r.agents.count).toBe(0);
+    expect(r.skills.count).toBe(0);
+    expect(r.commands.count).toBe(0);
+    expect(r.rules.count).toBe(0);
+  });
+
+  it('emits non-empty target dirs for claude', async () => {
+    const r = await mirrorToUserScope('claude', {
+      agents: projectAgentsDir,
+      skills: projectSkillsDir,
+      commands: projectCommandsDir,
+      rules: projectRulesDir,
+      behaviors: '',
+    });
+    expect(r.agents.targetDir).toContain('.claude/agents');
+    expect(r.skills.targetDir).toContain('.claude/skills');
+    expect(r.commands.targetDir).toContain('.claude/commands');
+    expect(r.rules.targetDir).toContain('.claude/rules');
+  });
+});
+
+describe('rejectOpenClawProjectScope (#1156)', () => {
+  it('throws on --scope project + openclaw', () => {
+    expect(() => rejectOpenClawProjectScope('openclaw', 'project')).toThrow(
+      /OpenClaw is exclusively user-scope/,
+    );
+  });
+
+  it('is a no-op for openclaw + scope user', () => {
+    expect(() => rejectOpenClawProjectScope('openclaw', 'user')).not.toThrow();
+  });
+
+  it('is a no-op for non-openclaw providers regardless of scope', () => {
+    expect(() => rejectOpenClawProjectScope('claude', 'project')).not.toThrow();
+    expect(() => rejectOpenClawProjectScope('claude', 'user')).not.toThrow();
+    expect(() => rejectOpenClawProjectScope('codex', 'project')).not.toThrow();
   });
 });
 
