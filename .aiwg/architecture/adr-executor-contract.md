@@ -2,7 +2,7 @@
 
 ## Status
 
-**PROPOSED**
+**ACCEPTED** (2026-05-08, operator approved with v1.x deferrals as written)
 
 ## Date
 
@@ -189,10 +189,10 @@ The existing test strategy at `.aiwg/testing/test-strategy-daemon-serve-sandbox.
 
 | Role | Reviewer | Status |
 |---|---|---|
-| Architecture Designer | (this ADR) | DRAFT |
-| Security Architect | TBD | Pending — auth model and loopback-default |
-| Reliability Engineer | TBD | Pending — resumability semantics |
-| Test Architect | TBD | Pending — conformance suite shape |
-| Operator (you) | TBD | Pending |
+| Architecture Designer | (this ADR) | ACCEPTED |
+| Security Architect | TBD | Deferred to v1.1 (mTLS); v1.0 token-on-register approved |
+| Reliability Engineer | TBD | Resumability opt-in approved |
+| Test Architect | TBD | Conformance suite shape approved |
+| Operator | (sign-off in #1177) | ACCEPTED 2026-05-08 |
 
-This ADR moves DRAFT → ACCEPTED on operator approval. No implementation code is written until then.
+This ADR is ACCEPTED. Child issues #1178–#1183 are unblocked and may begin work. Cross-repo coordination for #1180 is filed as a companion issue in the agentic-sandbox tracker.
