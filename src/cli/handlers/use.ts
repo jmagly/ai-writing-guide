@@ -1434,7 +1434,10 @@ export class UseHandler implements CommandHandler {
     // per-provider artifact set (agents/commands/skills/rules) to the
     // user-scope target per ADR-4 §2. The project-scope deploy stays in
     // place; user-scope copies are additive so the framework is available
-    // across every project on the operator's machine.
+    // across every project on the operator's machine. After a successful
+    // mirror, record the deploy in the per-user registry at
+    // ~/.aiwg/installed.json so `aiwg list --scope user` and `aiwg remove
+    // --scope user` can find it from any cwd.
     if (scope === 'user' && !dryRun) {
       try {
         const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
@@ -1460,6 +1463,29 @@ export class UseHandler implements CommandHandler {
           // share `~/.<provider>/` for the others.
           const headline = r.skills.targetDir || r.agents.targetDir || r.commands.targetDir || r.rules.targetDir;
           ui.dim(`  --scope user: mirrored ${summary.join(', ')} to ${headline}`);
+
+          // Record the deploy in the per-user registry. Counts come from the
+          // mirror result so they reflect what actually landed at user scope,
+          // not what was deployed at project scope (the two can diverge if
+          // some artifact dirs were empty in the project tree).
+          try {
+            const { recordUserDeploy } = await import('../../config/user-registry.js');
+            const versionInfo = await getVersionInfo().catch(() => ({ version: 'unknown' }));
+            await recordUserDeploy({
+              framework,
+              provider,
+              version: versionInfo.version,
+              source: 'bundled',
+              counts: {
+                agents: r.agents.count,
+                commands: r.commands.count,
+                skills: r.skills.count,
+                rules: r.rules.count,
+              },
+            });
+          } catch (registryErr) {
+            ui.warn(`user-scope registry update failed: ${registryErr instanceof Error ? registryErr.message : String(registryErr)}`);
+          }
         }
       } catch (err) {
         ui.warn(`--scope user mirror failed: ${err instanceof Error ? err.message : String(err)}`);

@@ -1,0 +1,159 @@
+/**
+ * Tests for the per-user AIWG registry (#1156 Phase 1).
+ *
+ * The registry lives at `~/.aiwg/installed.json`. We isolate by setting
+ * HOME to a tmpdir for each test so writes don't leak into the real user
+ * profile.
+ */
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
+
+describe('user-registry (#1156)', () => {
+  let tmpDir: string;
+  let originalOverride: string | undefined;
+
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-user-reg-'));
+    originalOverride = process.env.AIWG_USER_REGISTRY_PATH;
+    // Test-only env override — the registry helper checks this first and
+    // bypasses the real ~/.aiwg/ entirely so we don't clobber the operator's
+    // actual user-scope state.
+    process.env.AIWG_USER_REGISTRY_PATH = path.join(tmpDir, 'installed.json');
+  });
+
+  afterEach(async () => {
+    if (originalOverride !== undefined) process.env.AIWG_USER_REGISTRY_PATH = originalOverride;
+    else delete process.env.AIWG_USER_REGISTRY_PATH;
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it('returns empty registry when file is missing', async () => {
+    const { readUserRegistry } = await import('../../../src/config/user-registry.js');
+    const r = await readUserRegistry();
+    expect(r.version).toBe('1');
+    expect(r.installed).toEqual({});
+  });
+
+  it('records a deploy and reads it back', async () => {
+    const { recordUserDeploy, readUserRegistry } = await import(
+      '../../../src/config/user-registry.js'
+    );
+    await recordUserDeploy({
+      framework: 'sdlc',
+      provider: 'claude',
+      version: '2026.5.0',
+      source: 'bundled',
+      counts: { agents: 5, commands: 0, skills: 12, rules: 3 },
+    });
+    const r = await readUserRegistry();
+    expect(r.installed.sdlc).toBeDefined();
+    expect(r.installed.sdlc.deployedTo.claude).toEqual({
+      agents: 5,
+      commands: 0,
+      skills: 12,
+      rules: 3,
+    });
+    expect(r.installed.sdlc.version).toBe('2026.5.0');
+  });
+
+  it('overwrites prior counts when the same framework+provider is recorded twice', async () => {
+    const { recordUserDeploy, readUserRegistry } = await import(
+      '../../../src/config/user-registry.js'
+    );
+    await recordUserDeploy({
+      framework: 'sdlc',
+      provider: 'claude',
+      version: '2026.5.0',
+      source: 'bundled',
+      counts: { agents: 5, commands: 0, skills: 12, rules: 3 },
+    });
+    await recordUserDeploy({
+      framework: 'sdlc',
+      provider: 'claude',
+      version: '2026.5.1',
+      source: 'bundled',
+      counts: { agents: 6, commands: 0, skills: 14, rules: 3 },
+    });
+    const r = await readUserRegistry();
+    expect(r.installed.sdlc.deployedTo.claude.agents).toBe(6);
+    expect(r.installed.sdlc.version).toBe('2026.5.1');
+  });
+
+  it('keeps other-provider entries when removing one provider', async () => {
+    const { recordUserDeploy, removeUserDeploy, readUserRegistry } = await import(
+      '../../../src/config/user-registry.js'
+    );
+    await recordUserDeploy({
+      framework: 'sdlc',
+      provider: 'claude',
+      version: '2026.5.0',
+      source: 'bundled',
+      counts: { agents: 5, commands: 0, skills: 12, rules: 3 },
+    });
+    await recordUserDeploy({
+      framework: 'sdlc',
+      provider: 'codex',
+      version: '2026.5.0',
+      source: 'bundled',
+      counts: { agents: 0, commands: 5, skills: 12, rules: 0 },
+    });
+    await removeUserDeploy({ framework: 'sdlc', provider: 'claude' });
+    const r = await readUserRegistry();
+    expect(r.installed.sdlc).toBeDefined();
+    expect(r.installed.sdlc.deployedTo.claude).toBeUndefined();
+    expect(r.installed.sdlc.deployedTo.codex).toBeDefined();
+  });
+
+  it('removes the framework entry when the last provider is removed', async () => {
+    const { recordUserDeploy, removeUserDeploy, readUserRegistry } = await import(
+      '../../../src/config/user-registry.js'
+    );
+    await recordUserDeploy({
+      framework: 'marketing',
+      provider: 'claude',
+      version: '1.0.0',
+      source: 'bundled',
+      counts: { agents: 1, commands: 0, skills: 1, rules: 0 },
+    });
+    await removeUserDeploy({ framework: 'marketing', provider: 'claude' });
+    const r = await readUserRegistry();
+    expect(r.installed.marketing).toBeUndefined();
+  });
+
+  it('removeUserDeploy without provider removes whole framework entry', async () => {
+    const { recordUserDeploy, removeUserDeploy, readUserRegistry } = await import(
+      '../../../src/config/user-registry.js'
+    );
+    await recordUserDeploy({
+      framework: 'sdlc',
+      provider: 'claude',
+      version: '2026.5.0',
+      source: 'bundled',
+      counts: { agents: 5, commands: 0, skills: 12, rules: 3 },
+    });
+    await recordUserDeploy({
+      framework: 'sdlc',
+      provider: 'codex',
+      version: '2026.5.0',
+      source: 'bundled',
+      counts: { agents: 0, commands: 5, skills: 12, rules: 0 },
+    });
+    await removeUserDeploy({ framework: 'sdlc' });
+    const r = await readUserRegistry();
+    expect(r.installed.sdlc).toBeUndefined();
+  });
+
+  it('returns empty registry on parse failure', async () => {
+    const { userRegistryPath, readUserRegistry } = await import(
+      '../../../src/config/user-registry.js'
+    );
+    const p = userRegistryPath();
+    await fs.mkdir(path.dirname(p), { recursive: true });
+    await fs.writeFile(p, '{not json', 'utf-8');
+    const r = await readUserRegistry();
+    expect(r.installed).toEqual({});
+  });
+});

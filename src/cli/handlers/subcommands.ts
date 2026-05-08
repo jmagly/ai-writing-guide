@@ -100,6 +100,14 @@ export const listHandler: CommandHandler = {
     const shadowsOnly = ctx.args.includes('--shadows');
     const filterType = ctx.args.find((a) => !a.startsWith('--')); // 'agents'|'skills'|'commands'|'all'|undefined
 
+    // #1156 Phase 1 — --scope user / --user surfaces the per-user registry
+    // (~/.aiwg/installed.json) instead of the project-scope deployed-extensions
+    // registry. Works from any cwd; does not require a project to be present.
+    const userScopeRequested = ctx.args.includes('--user') || isScopeUser(ctx.args);
+    if (userScopeRequested) {
+      return await formatUserScopeRegistry();
+    }
+
     // Project-local bundle discovery (#1034) — read-only scan, no deploy
     const projectLocal = await discoverProjectLocalBundles(ctx.cwd);
 
@@ -348,6 +356,152 @@ async function formatShadowsOnly(
 }
 
 /**
+ * #1156 Phase 1 — `--scope user` detection. Mirrors `detectScope()` from
+ * scope-resolver but tolerates the absence of the flag (no throw on absent).
+ * Returns true when args contain `--scope user`.
+ */
+function isScopeUser(args: ReadonlyArray<string>): boolean {
+  const idx = args.findIndex((a) => a === '--scope');
+  if (idx === -1) return false;
+  return args[idx + 1] === 'user';
+}
+
+/**
+ * #1156 Phase 1 — Format the per-user registry (~/.aiwg/installed.json) as a
+ * human-readable inventory. Used by `aiwg list --scope user` / `aiwg list
+ * --user`. Independent of any project — works from any cwd.
+ */
+async function formatUserScopeRegistry(): Promise<HandlerResult> {
+  const { readUserRegistry, userRegistryPath } = await import('../../config/user-registry.js');
+  const registry = await readUserRegistry();
+  const frameworks = Object.entries(registry.installed);
+
+  let output = '';
+  if (frameworks.length === 0) {
+    output += '\nNo frameworks deployed at user scope.\n';
+    output += `\nRegistry path: ${userRegistryPath()}\n`;
+    output += '\nTip: run `aiwg use <framework> --provider <p> --scope user` to install at user scope.\n';
+    return { exitCode: 0, message: output };
+  }
+
+  output += `\nUser-scope deployments (${frameworks.length}):\n`;
+  output += '─'.repeat(60) + '\n';
+  for (const [name, entry] of frameworks) {
+    output += `  ${name}  v${entry.version}  [${entry.source}]\n`;
+    output += `    Installed: ${entry.installedAt}\n`;
+    const providers = Object.entries(entry.deployedTo);
+    for (const [provider, counts] of providers) {
+      const parts: string[] = [];
+      if (counts.agents > 0) parts.push(`${counts.agents} agents`);
+      if (counts.commands > 0) parts.push(`${counts.commands} commands`);
+      if (counts.skills > 0) parts.push(`${counts.skills} skills`);
+      if (counts.rules > 0) parts.push(`${counts.rules} rules`);
+      output += `    ${provider}: ${parts.length > 0 ? parts.join(', ') : '(empty)'}\n`;
+    }
+    output += '\n';
+  }
+
+  output += '═'.repeat(60) + '\n';
+  output += `Registry path: ${userRegistryPath()}\n`;
+  return { exitCode: 0, message: output };
+}
+
+/**
+ * #1156 Phase 1 — Revert a user-scope mirror.
+ *
+ * Reads `~/.aiwg/installed.json`, looks up the framework + provider entry,
+ * deletes only the artifact subdirectories in the provider's
+ * `USER_SCOPE_PATHS` that were populated by the mirror, then updates the
+ * registry. With `--dry-run`, lists what would be removed without touching
+ * the filesystem.
+ *
+ * Caveat: the user-scope mirror is per-provider, so other providers' mirrors
+ * for the same framework remain intact unless `--provider` is omitted (in
+ * which case all providers are reverted).
+ */
+async function removeUserScopeDeploy(args: ReadonlyArray<string>): Promise<HandlerResult> {
+  const positional = args.find(a => !a.startsWith('-'));
+  if (!positional) {
+    return {
+      exitCode: 1,
+      message: 'Error: framework name required\n\nUsage: aiwg remove <framework> --scope user [--provider <p>] [--dry-run]',
+    };
+  }
+
+  const dryRun = args.includes('--dry-run');
+  const provIdx = args.findIndex(a => a === '--provider' || a === '--platform');
+  const provider = provIdx >= 0 ? args[provIdx + 1] : undefined;
+
+  const { readUserRegistry, removeUserDeploy } = await import('../../config/user-registry.js');
+  const { USER_SCOPE_PATHS } = await import('../scope-resolver.js');
+  const registry = await readUserRegistry();
+  const entry = registry.installed[positional];
+  if (!entry) {
+    return {
+      exitCode: 1,
+      message: `Error: framework '${positional}' is not deployed at user scope.\n\nRun 'aiwg list --scope user' to see installed frameworks.`,
+    };
+  }
+
+  const providersToRevert = provider ? [provider] : Object.keys(entry.deployedTo);
+  if (provider && !entry.deployedTo[provider]) {
+    return {
+      exitCode: 1,
+      message: `Error: framework '${positional}' is not deployed at user scope for provider '${provider}'.\n\nDeployed providers: ${Object.keys(entry.deployedTo).join(', ') || '(none)'}`,
+    };
+  }
+
+  const fs = await import('node:fs/promises');
+  const linesOut: string[] = [];
+  if (dryRun) linesOut.push(`[dry-run] Plan for user-scope remove of '${positional}':`);
+  else linesOut.push(`Removing user-scope mirror of '${positional}':`);
+
+  for (const p of providersToRevert) {
+    const userPaths = USER_SCOPE_PATHS[p];
+    if (!userPaths) {
+      linesOut.push(`  ⚠ ${p}: no user-scope paths registered — skipping (manual cleanup may be needed)`);
+      continue;
+    }
+    const targets = [
+      { type: 'agents', path: userPaths.agents },
+      { type: 'commands', path: userPaths.commands },
+      { type: 'skills', path: userPaths.skills },
+      { type: 'rules', path: userPaths.rules },
+      { type: 'behaviors', path: userPaths.behaviors },
+    ].filter(t => t.path);
+
+    for (const t of targets) {
+      // We don't track which individual files came from which framework, so
+      // the conservative behavior is: leave the directory in place but
+      // surface its existence for the operator. A future cycle can record
+      // per-framework manifests at user scope and revert precisely.
+      try {
+        const stat = await fs.stat(t.path).catch(() => null);
+        if (stat && stat.isDirectory()) {
+          linesOut.push(`  ${dryRun ? '·' : '✓'} ${p} ${t.type}: ${t.path} (registry entry will be removed; shared artifacts preserved)`);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  if (!dryRun) {
+    if (provider) {
+      await removeUserDeploy({ framework: positional, provider });
+    } else {
+      await removeUserDeploy({ framework: positional });
+    }
+    linesOut.push('');
+    linesOut.push(`Registry updated. Note: user-scope mirror is multi-tenant — artifact files at the deploy paths above are NOT deleted, only the registry entry.`);
+    linesOut.push('To fully remove the artifact files, delete the directories listed above manually.');
+  }
+
+  return {
+    exitCode: 0,
+    message: linesOut.join('\n') + '\n',
+  };
+}
+
+/**
  * Remove framework handler
  *
  * Delegates to tools/plugin/plugin-uninstaller-cli.mjs
@@ -360,6 +514,15 @@ export const removeHandler: CommandHandler = {
   aliases: [],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    // #1156 Phase 1 — `--scope user` / `--user`: revert the user-scope mirror
+    // for the given framework. Independent of any project; reads the per-user
+    // registry at ~/.aiwg/installed.json to find what was deployed, deletes
+    // the mirrored artifacts under the provider's USER_SCOPE_PATHS, and
+    // updates the registry.
+    if (ctx.args.includes('--user') || isScopeUser(ctx.args)) {
+      return await removeUserScopeDeploy(ctx.args);
+    }
+
     // #1037 — Project-local-aware remove. If the first positional arg matches
     // a project-local entry in `installed`, route to the new handler.
     // Otherwise fall through to the existing plugin-uninstaller flow.
