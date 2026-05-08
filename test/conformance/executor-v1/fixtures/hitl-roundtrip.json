@@ -1,0 +1,105 @@
+{
+  "_fixture": "hitl-roundtrip",
+  "_description": "Full HITL conformance round-trip: mission.hitl_required event from executor → operator submits POST /api/v1/missions/:id/hitl_response → aiwg serve forwards mission.hitl_responded over WS to executor → executor resumes and completes. Executor must advertise 'hitl' capability. Schema refs: $defs/event_envelope (data_mission_hitl_required, data_mission_hitl_responded), $defs/hitl_response_payload.",
+  "_schema_refs": [
+    "#/$defs/event_envelope",
+    "#/$defs/hitl_response_payload"
+  ],
+  "preconditions": {
+    "executor_registered": {
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "capabilities": [
+        "isolation:vm",
+        "runtime:claude-code",
+        "platform:linux/x64",
+        "hitl"
+      ]
+    },
+    "mission_running": {
+      "mission_id": "m-hitl001",
+      "state": "running"
+    }
+  },
+  "event_sequence": [
+    {
+      "_step": 1,
+      "_description": "Executor blocked on human input; emits mission.hitl_required. Mission state transitions to 'hitl-required'.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.hitl_required",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-hitl001",
+      "ts": "2026-05-08T20:20:00.000Z",
+      "data": {
+        "hitl_id": "hitl-abc-001",
+        "prompt": "The test suite expects the endpoint to return 422 for malformed payloads but the current code returns 400. Which status code should be canonical for this project?",
+        "context": "File: src/api/users.ts lines 88-102. Existing tests use 400 in 14 places and 422 in 3 places.",
+        "expires_at": "2026-05-08T20:50:00.000Z"
+      }
+    },
+    {
+      "_step": 2,
+      "_description": "Operator sees the HITL drawer in the dashboard and submits a response via REST.",
+      "_type": "rest_request",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/missions/m-hitl001/hitl_response",
+        "headers": {
+          "Authorization": "Bearer exec_tk_8Hy3mNpQvRsT2uWxYzA4bCdEfGhJkLo"
+        },
+        "body": {
+          "_validates_as": "#/$defs/hitl_response_payload",
+          "hitl_id": "hitl-abc-001",
+          "response": "Use 422 for validation errors — update all 14 instances to 422. HTTP 422 is semantically correct for request validation failures."
+        }
+      },
+      "response": {
+        "status": 202
+      }
+    },
+    {
+      "_step": 3,
+      "_description": "aiwg serve forwards the operator response to the executor over WS as mission.hitl_responded.",
+      "_validates_as": "#/$defs/event_envelope",
+      "_direction": "aiwg_serve → executor",
+      "event": "mission.hitl_responded",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-hitl001",
+      "ts": "2026-05-08T20:20:47.300Z",
+      "data": {
+        "hitl_id": "hitl-abc-001",
+        "response": "Use 422 for validation errors — update all 14 instances to 422. HTTP 422 is semantically correct for request validation failures.",
+        "responded_at": "2026-05-08T20:20:47.000Z"
+      }
+    },
+    {
+      "_step": 4,
+      "_description": "Executor received the response and resumed work.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.progress",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-hitl001",
+      "ts": "2026-05-08T20:21:00.000Z",
+      "data": {
+        "phase": "implementation",
+        "iteration": 3,
+        "tokens_used": 28900,
+        "summary": "Updating 14 HTTP status codes from 400 to 422 in src/api/ and test fixtures."
+      }
+    },
+    {
+      "_step": 5,
+      "_description": "Mission completed after the HITL response was incorporated.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.completed",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-hitl001",
+      "ts": "2026-05-08T20:23:15.000Z",
+      "data": {
+        "state": "done",
+        "exit_code": 0,
+        "tokens_total": 39400,
+        "summary": "All 17 status codes standardised to 422. npm test exits 0."
+      }
+    }
+  ]
+}

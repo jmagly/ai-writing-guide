@@ -1,7 +1,7 @@
 # Executor Contract — `executor.aiwg.io/v1`
 
 **Spec version**: `1.0.0`
-**Status**: DRAFT (depends on `.aiwg/architecture/adr-executor-contract.md` approval)
+**Status**: ACCEPTED (ADR accepted 2026-05-08; see `.aiwg/architecture/adr-executor-contract.md`)
 **Last updated**: 2026-05-08
 
 This is the implementer-facing specification for AIWG executors. The architectural rationale lives in `.aiwg/architecture/adr-executor-contract.md`. The JSON Schema for register payloads and event types lives at `schemas/executor-v1.json`.
@@ -69,24 +69,27 @@ queued ─► assigned ─► running ─► (paused | hitl-required | suspended
 |---|---|---|
 | `executor.registered` | aiwg serve → operator | aiwg serve internal (after register handshake) |
 | `executor.deregistered` | aiwg serve → operator | aiwg serve internal |
+| `executor.resync` | executor → aiwg serve | Resumable (sent on every WS reconnect) |
 | `mission.assigned` | executor → aiwg serve | Core |
 | `mission.started` | executor → aiwg serve | Core |
 | `mission.progress` | executor → aiwg serve | Core (any cadence) |
 | `mission.hitl_required` | executor → aiwg serve | HITL |
 | `mission.hitl_responded` | aiwg serve → executor | HITL (operator response payload) |
 | `mission.paused` | executor → aiwg serve | Optional |
-| `mission.resumed` | executor → aiwg serve | Optional |
+| `mission.resumed` | executor → aiwg serve | Optional (core for Resumable reconnect) |
 | `mission.suspended` | executor → aiwg serve | Resumable |
 | `mission.reconnected` | executor → aiwg serve | Resumable |
 | `mission.completed` | executor → aiwg serve | Core |
 | `mission.failed` | executor → aiwg serve | Core |
 | `mission.aborted` | executor → aiwg serve | Core |
 
-Event payloads use snake_case field names (matching the existing `SandboxEvent` shape from `agentic-sandbox`'s Rust serde). See JSON Schema for complete shapes.
+Event payloads use snake_case field names (matching the existing `SandboxEvent` shape from `agentic-sandbox`'s Rust serde). See `schemas/executor-v1.json` (`$defs/event_envelope` and per-event `$defs/data_*`) for complete shapes, required fields, and discriminated-union definitions.
 
 ## REST routes
 
 ### `POST /api/v1/executors/register`
+
+Schema: `schemas/executor-v1.json#/$defs/register_payload` (request), `#/$defs/register_response` (response).
 
 Called by the executor at boot. Body:
 
@@ -127,13 +130,17 @@ Notes:
 
 ### `DELETE /api/v1/executors/:id`
 
-Operator-initiated deregister. Executor SHOULD also deregister itself on graceful shutdown.
+No request body. Response: `204 No Content`. Executor SHOULD also call this on graceful shutdown.
 
 ### `GET /api/v1/executors`
+
+Schema: `schemas/executor-v1.json#/$defs/executors_list_response`.
 
 Lists registered executors with current status. Response includes `connected: bool`, `last_event_ts`, current mission count.
 
 ### `POST /api/v1/sessions/:id/dispatch`
+
+Schema: `schemas/executor-v1.json#/$defs/dispatch_payload` (request), `#/$defs/dispatch_response` (202 response).
 
 Called by `aiwg serve` (or any client posting through `aiwg serve`) to dispatch a mission. Body:
 
@@ -171,9 +178,13 @@ Response (`202 Accepted`):
 
 ### `GET /api/v1/missions/:id`
 
+Schema: `schemas/executor-v1.json#/$defs/mission_status_response`.
+
 Mission status snapshot. Returns current state, last N events, executor identity, and PTY session reference if applicable.
 
 ### `POST /api/v1/missions/:id/hitl_response`
+
+Schema: `schemas/executor-v1.json#/$defs/hitl_response_payload`.
 
 Submit a human response to a `mission.hitl_required` event.
 
@@ -188,7 +199,7 @@ Submit a human response to a `mission.hitl_required` event.
 
 ### `POST /api/v1/missions/:id/pause`, `/resume`, `/abort`
 
-Operator controls. Each emits the corresponding lifecycle event.
+No request body. Response: `202 Accepted`. Each operation emits the corresponding lifecycle event (`mission.paused`, `mission.resumed`, `mission.aborted`).
 
 ## WebSocket event stream
 
@@ -203,10 +214,13 @@ The executor MAY initiate the connection to push events, OR aiwg serve MAY initi
 ### Reconnection semantics
 
 - Disconnects are routine. Both sides reconnect with exponential backoff (capped at 30s).
-- On reconnect, the executor sends an `executor.resync` event with the list of mission IDs it currently owns. `aiwg serve` reconciles and may emit replays of any missed dispatches.
+- On reconnect, the executor sends an `executor.resync` event (schema: `#/$defs/data_executor_resync`) with the list of mission IDs it currently owns. `aiwg serve` reconciles and may emit replays of any missed dispatches.
 - For resumable executors with `mission.suspended` missions, on reconnect aiwg serve emits `mission.resumed` and the executor continues.
+- Required for Resumable conformance; see fixtures at `test/conformance/executor-v1/fixtures/resumable-suspend-resume.json`.
 
 ### Event envelope
+
+Schema: `schemas/executor-v1.json#/$defs/event_envelope`. The `event` field discriminates the `data` payload; each per-event data shape is at `#/$defs/data_<event_type>` (dots replaced with underscores, e.g. `#/$defs/data_mission_progress`).
 
 ```json
 {
@@ -223,7 +237,7 @@ The executor MAY initiate the connection to push events, OR aiwg serve MAY initi
 }
 ```
 
-`event` field is the event type from the vocabulary table above. `data` shape is per-event-type; see JSON Schema for full definitions.
+`event` is one of the 15 event types in the vocabulary table above. `mission_id` is present on all `mission.*` events and omitted on `executor.*` events. `ts` is an RFC 3339 timestamp (UTC, sub-second precision permitted). `data` shape is per-event-type; see the JSON Schema `$defs/data_*` entries for required fields and allowed values.
 
 ## Auth and trust model
 

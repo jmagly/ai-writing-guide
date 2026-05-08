@@ -1,0 +1,726 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12",
+  "$id": "executor.aiwg.io/v1",
+  "title": "Executor Contract v1",
+  "description": "JSON Schema for the AIWG executor contract (executor.aiwg.io/v1). Covers register/deregister payloads, dispatch payloads, mission status, HITL round-trips, WebSocket event envelopes, and per-event-type data shapes. Spec authoritative prose lives at docs/contracts/executor.v1.md.",
+  "$defs": {
+    "executor_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Stable executor identity — a UUID persisted by the executor across restarts."
+    },
+    "mission_id": {
+      "type": "string",
+      "description": "Opaque mission identifier. Typically prefixed 'm-' followed by an alphanumeric slug.",
+      "minLength": 1
+    },
+    "hitl_id": {
+      "type": "string",
+      "description": "Opaque HITL request identifier scoped to the originating mission.",
+      "minLength": 1
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp with sub-second precision permitted. All timestamps are UTC."
+    },
+    "spec_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Executor contract spec version. Minor bumps add backward-compatible fields; major bumps may break. aiwg serve refuses unknown major versions."
+    },
+    "capability": {
+      "type": "string",
+      "description": "A capability string declared by the executor. Format is either 'category:specifier' for parameterised capabilities, a bare flag (e.g. 'resumable'), or a custom extension prefixed 'x-'.",
+      "oneOf": [
+        {
+          "description": "Isolation capability: isolation:vm | isolation:container | isolation:host | isolation:microvm | isolation:none",
+          "pattern": "^isolation:(vm|container|host|microvm|none|[a-z][a-z0-9_-]*)$"
+        },
+        {
+          "description": "Runtime capability: runtime:claude-code | runtime:codex | runtime:cursor | runtime:aider | runtime:custom:<name>",
+          "pattern": "^runtime:(claude-code|codex|cursor|aider|custom:[a-z][a-z0-9_-]*)$"
+        },
+        {
+          "description": "Platform capability: platform:linux/x64 | platform:linux/arm64 | platform:darwin/arm64 | platform:wsl/x64",
+          "pattern": "^platform:[a-z][a-z0-9_-]*/[a-z][a-z0-9_-]+$"
+        },
+        {
+          "description": "Bare flag — resumable: executor persists mission state across restarts.",
+          "const": "resumable"
+        },
+        {
+          "description": "Bare flag — hitl: executor supports mission.hitl_required flow.",
+          "const": "hitl"
+        },
+        {
+          "description": "Bare flag — multi-tenant: executor isolates missions across users.",
+          "const": "multi-tenant"
+        },
+        {
+          "description": "Custom extension capability, prefixed x-.",
+          "pattern": "^x-[a-z][a-z0-9_:-]*$"
+        }
+      ]
+    },
+    "mission_state": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "assigned",
+        "running",
+        "paused",
+        "hitl-required",
+        "suspended",
+        "done",
+        "failed",
+        "aborted"
+      ],
+      "description": "One of the nine mission lifecycle states. queued/assigned/running/paused/hitl-required/suspended are non-terminal. done/failed/aborted are terminal."
+    },
+    "transport_endpoints": {
+      "type": "object",
+      "description": "Addresses where aiwg serve can reach the executor.",
+      "required": ["rest", "ws"],
+      "additionalProperties": false,
+      "properties": {
+        "rest": {
+          "type": "string",
+          "format": "uri",
+          "description": "HTTP REST base URL for the executor (e.g. http://127.0.0.1:8122)."
+        },
+        "ws": {
+          "type": "string",
+          "format": "uri",
+          "description": "WebSocket URL for the executor event stream (e.g. ws://127.0.0.1:8121)."
+        },
+        "grpc": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional gRPC endpoint. Not required for conformance; used by agentic-sandbox."
+        }
+      }
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "executor.registered",
+        "executor.deregistered",
+        "executor.resync",
+        "mission.assigned",
+        "mission.started",
+        "mission.progress",
+        "mission.hitl_required",
+        "mission.hitl_responded",
+        "mission.paused",
+        "mission.resumed",
+        "mission.suspended",
+        "mission.reconnected",
+        "mission.completed",
+        "mission.failed",
+        "mission.aborted"
+      ],
+      "description": "All 15 event types in the executor contract vocabulary. executor.* events are aiwg-serve-internal; mission.* events are emitted by the executor except mission.hitl_responded which travels from aiwg serve to executor."
+    },
+    "register_payload": {
+      "type": "object",
+      "title": "RegisterPayload",
+      "description": "Body for POST /api/v1/executors/register. Called by the executor at boot or on reconnect. Defined in docs/contracts/executor.v1.md §REST routes.",
+      "required": [
+        "executor_id",
+        "name",
+        "version",
+        "spec_version",
+        "transport_endpoints",
+        "capabilities"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "executor_id": { "$ref": "#/$defs/executor_id" },
+        "name": {
+          "type": "string",
+          "description": "Human-readable executor name. Must be non-empty.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "type": "string",
+          "description": "Executor software version (SemVer recommended).",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "spec_version": { "$ref": "#/$defs/spec_version" },
+        "transport_endpoints": { "$ref": "#/$defs/transport_endpoints" },
+        "capabilities": {
+          "type": "array",
+          "description": "Declared capability strings. At least one capability SHOULD be present for meaningful routing.",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "register_response": {
+      "type": "object",
+      "title": "RegisterResponse",
+      "description": "201 Created response to POST /api/v1/executors/register.",
+      "required": ["executor_id", "token", "registered_at"],
+      "additionalProperties": false,
+      "properties": {
+        "executor_id": { "$ref": "#/$defs/executor_id" },
+        "token": {
+          "type": "string",
+          "description": "Opaque bearer token issued once by aiwg serve, bound to the executor_id. Executor includes this on subsequent REST calls (Authorization: Bearer <token>) and WS upgrade (?token=<token>). Store securely; not reissued unless rotated.",
+          "minLength": 1
+        },
+        "registered_at": { "$ref": "#/$defs/ts" }
+      }
+    },
+    "executor_status": {
+      "type": "object",
+      "title": "ExecutorStatus",
+      "description": "Per-executor record in the GET /api/v1/executors list response.",
+      "required": [
+        "executor_id",
+        "name",
+        "version",
+        "spec_version",
+        "transport_endpoints",
+        "capabilities",
+        "connected",
+        "registered_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "executor_id": { "$ref": "#/$defs/executor_id" },
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "spec_version": { "$ref": "#/$defs/spec_version" },
+        "transport_endpoints": { "$ref": "#/$defs/transport_endpoints" },
+        "capabilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true
+        },
+        "connected": {
+          "type": "boolean",
+          "description": "Whether the WS event stream from this executor is currently open."
+        },
+        "last_event_ts": {
+          "$ref": "#/$defs/ts",
+          "description": "Timestamp of the most recent event received from this executor. Omitted if no events received yet."
+        },
+        "active_mission_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of non-terminal missions currently owned by this executor."
+        },
+        "registered_at": { "$ref": "#/$defs/ts" },
+        "disconnected_at": {
+          "$ref": "#/$defs/ts",
+          "description": "When the WS last disconnected. Omitted if connected or never disconnected."
+        }
+      }
+    },
+    "executors_list_response": {
+      "type": "object",
+      "title": "ExecutorsListResponse",
+      "description": "Response body for GET /api/v1/executors.",
+      "required": ["executors"],
+      "additionalProperties": false,
+      "properties": {
+        "executors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/executor_status" }
+        }
+      }
+    },
+    "executor_filter": {
+      "type": "object",
+      "title": "ExecutorFilter",
+      "description": "Optional filter supplied in the dispatch payload to constrain which executor receives the mission. Extends AgentFilter with executor-level fields.",
+      "additionalProperties": false,
+      "properties": {
+        "executor_id": {
+          "oneOf": [
+            { "$ref": "#/$defs/executor_id" },
+            { "type": "null" }
+          ],
+          "description": "Pin to a specific executor. null means any executor."
+        },
+        "capabilities": {
+          "type": "array",
+          "description": "Executor must advertise ALL listed capabilities.",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "dispatch_payload": {
+      "type": "object",
+      "title": "DispatchPayload",
+      "description": "Body for POST /api/v1/sessions/:id/dispatch. Called by aiwg serve (or a client posting through it) to assign a mission. If long_running:true, dispatch MUST route to a resumable executor (503 if none). Defined in docs/contracts/executor.v1.md §REST routes.",
+      "required": ["mission_id", "objective", "completion"],
+      "additionalProperties": false,
+      "properties": {
+        "mission_id": { "$ref": "#/$defs/mission_id" },
+        "objective": {
+          "type": "string",
+          "description": "Human-readable description of the mission goal. Passed verbatim to the agent.",
+          "minLength": 1
+        },
+        "completion": {
+          "type": "string",
+          "description": "Measurable completion criterion. Should be a command or observable condition, not a vague description.",
+          "minLength": 1
+        },
+        "long_running": {
+          "type": "boolean",
+          "description": "If true, dispatch routes only to executors advertising the 'resumable' capability. Defaults to false.",
+          "default": false
+        },
+        "executor_filter": { "$ref": "#/$defs/executor_filter" },
+        "metadata": {
+          "type": "object",
+          "description": "Arbitrary operator-supplied metadata (issue numbers, session IDs, labels). Passed through to the executor unchanged.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "dispatch_response": {
+      "type": "object",
+      "title": "DispatchResponse",
+      "description": "202 Accepted response to POST /api/v1/sessions/:id/dispatch.",
+      "required": ["mission_id", "executor_id", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "mission_id": { "$ref": "#/$defs/mission_id" },
+        "executor_id": { "$ref": "#/$defs/executor_id" },
+        "status": {
+          "type": "string",
+          "const": "assigned",
+          "description": "Always 'assigned' — indicates the executor has accepted the mission."
+        },
+        "estimated_start": {
+          "$ref": "#/$defs/ts",
+          "description": "Executor-provided optimistic start time. Informational only."
+        }
+      }
+    },
+    "mission_status_response": {
+      "type": "object",
+      "title": "MissionStatusResponse",
+      "description": "Response body for GET /api/v1/missions/:id. Returns current state snapshot with recent event history.",
+      "required": ["mission_id", "executor_id", "state", "created_at", "updated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "mission_id": { "$ref": "#/$defs/mission_id" },
+        "executor_id": { "$ref": "#/$defs/executor_id" },
+        "state": { "$ref": "#/$defs/mission_state" },
+        "created_at": { "$ref": "#/$defs/ts" },
+        "updated_at": { "$ref": "#/$defs/ts" },
+        "completed_at": {
+          "$ref": "#/$defs/ts",
+          "description": "Timestamp when the mission reached a terminal state. Omitted for non-terminal missions."
+        },
+        "recent_events": {
+          "type": "array",
+          "description": "Last N event envelopes for this mission (N is server-configured, typically 50). Events are ordered oldest-first.",
+          "items": { "$ref": "#/$defs/event_envelope" }
+        },
+        "pty_session_ref": {
+          "type": "string",
+          "description": "PTY session identifier if the executor is driving an interactive terminal session. Used by the dashboard screen reader."
+        },
+        "exit_code": {
+          "type": "integer",
+          "description": "Process exit code for completed or failed missions. Omitted for non-terminal states."
+        },
+        "error": {
+          "type": "string",
+          "description": "Human-readable error message for failed missions."
+        }
+      }
+    },
+    "hitl_response_payload": {
+      "type": "object",
+      "title": "HitlResponsePayload",
+      "description": "Body for POST /api/v1/missions/:id/hitl_response. Operator submits a human response to a pending mission.hitl_required event. aiwg serve forwards this as a mission.hitl_responded WS event to the executor.",
+      "required": ["hitl_id", "response"],
+      "additionalProperties": false,
+      "properties": {
+        "hitl_id": { "$ref": "#/$defs/hitl_id" },
+        "response": {
+          "type": "string",
+          "description": "The operator's text response to the HITL prompt.",
+          "minLength": 1
+        }
+      }
+    },
+    "event_envelope": {
+      "type": "object",
+      "title": "EventEnvelope",
+      "description": "WebSocket event envelope. All executor → aiwg serve events and aiwg serve → executor events use this wrapper shape. The 'event' field discriminates the 'data' payload.",
+      "required": ["event", "executor_id", "ts"],
+      "additionalProperties": false,
+      "properties": {
+        "event": { "$ref": "#/$defs/event_type" },
+        "executor_id": { "$ref": "#/$defs/executor_id" },
+        "mission_id": {
+          "$ref": "#/$defs/mission_id",
+          "description": "Present on all mission.* events. Omitted for executor.* events."
+        },
+        "ts": { "$ref": "#/$defs/ts" },
+        "data": {
+          "description": "Per-event-type payload. Shape is discriminated by the 'event' field. See $defs/data_* for each event type.",
+          "oneOf": [
+            { "$ref": "#/$defs/data_executor_registered" },
+            { "$ref": "#/$defs/data_executor_deregistered" },
+            { "$ref": "#/$defs/data_executor_resync" },
+            { "$ref": "#/$defs/data_mission_assigned" },
+            { "$ref": "#/$defs/data_mission_started" },
+            { "$ref": "#/$defs/data_mission_progress" },
+            { "$ref": "#/$defs/data_mission_hitl_required" },
+            { "$ref": "#/$defs/data_mission_hitl_responded" },
+            { "$ref": "#/$defs/data_mission_paused" },
+            { "$ref": "#/$defs/data_mission_resumed" },
+            { "$ref": "#/$defs/data_mission_suspended" },
+            { "$ref": "#/$defs/data_mission_reconnected" },
+            { "$ref": "#/$defs/data_mission_completed" },
+            { "$ref": "#/$defs/data_mission_failed" },
+            { "$ref": "#/$defs/data_mission_aborted" }
+          ]
+        }
+      }
+    },
+    "data_executor_registered": {
+      "type": "object",
+      "title": "data:executor.registered",
+      "description": "Data payload for executor.registered. Emitted by aiwg serve internally after a successful POST /api/v1/executors/register handshake. Direction: aiwg serve → operator dashboard.",
+      "required": ["name", "capabilities"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "capabilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true
+        },
+        "transport_endpoints": { "$ref": "#/$defs/transport_endpoints" }
+      }
+    },
+    "data_executor_deregistered": {
+      "type": "object",
+      "title": "data:executor.deregistered",
+      "description": "Data payload for executor.deregistered. Emitted by aiwg serve when an executor deregisters (DELETE /api/v1/executors/:id) or its WS drops with no reconnect. Direction: aiwg serve → operator dashboard.",
+      "required": ["reason"],
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": ["graceful_shutdown", "operator_deleted", "timeout"],
+          "description": "Why the executor deregistered."
+        }
+      }
+    },
+    "data_executor_resync": {
+      "type": "object",
+      "title": "data:executor.resync",
+      "description": "Data payload for executor.resync. Sent by the executor immediately after (re)connecting the WS event stream. Lists all mission IDs currently owned by the executor so aiwg serve can reconcile state and replay any missed dispatches.",
+      "required": ["owned_mission_ids"],
+      "additionalProperties": false,
+      "properties": {
+        "owned_mission_ids": {
+          "type": "array",
+          "description": "Complete list of non-terminal mission IDs currently owned by this executor.",
+          "items": { "$ref": "#/$defs/mission_id" },
+          "uniqueItems": true
+        },
+        "protocol_version": {
+          "type": "string",
+          "description": "Optional: executor's current spec_version, for version negotiation on reconnect."
+        }
+      }
+    },
+    "data_mission_assigned": {
+      "type": "object",
+      "title": "data:mission.assigned",
+      "description": "Data payload for mission.assigned. Emitted by the executor immediately after accepting ownership of a dispatched mission. Required for Core conformance.",
+      "required": ["state"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "const": "assigned"
+        },
+        "estimated_start": { "$ref": "#/$defs/ts" }
+      }
+    },
+    "data_mission_started": {
+      "type": "object",
+      "title": "data:mission.started",
+      "description": "Data payload for mission.started. Emitted when the executor begins active work on the mission. Required for Core conformance.",
+      "required": ["state"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "const": "running"
+        },
+        "agent_runtime": {
+          "type": "string",
+          "description": "Which agent runtime is executing the mission (e.g. 'claude-code', 'codex')."
+        },
+        "pty_session_id": {
+          "type": "string",
+          "description": "PTY session ID if the executor opened an interactive terminal."
+        }
+      }
+    },
+    "data_mission_progress": {
+      "type": "object",
+      "title": "data:mission.progress",
+      "description": "Data payload for mission.progress. Emitted at any cadence while the mission is running. Required for Core conformance (executor MUST emit at least once before completion).",
+      "additionalProperties": false,
+      "properties": {
+        "phase": {
+          "type": "string",
+          "description": "Named phase the executor is currently in (e.g. 'planning', 'implementation', 'testing')."
+        },
+        "iteration": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Loop iteration counter for iterative agents."
+        },
+        "tokens_used": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cumulative token count consumed by the agent since mission start."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Human-readable progress note."
+        },
+        "pct_complete": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Optional estimated percentage completion. Executor MAY omit."
+        }
+      }
+    },
+    "data_mission_hitl_required": {
+      "type": "object",
+      "title": "data:mission.hitl_required",
+      "description": "Data payload for mission.hitl_required. Emitted when the agent needs human input before it can continue. Required for HITL conformance. Drives the dashboard HITL drawer.",
+      "required": ["hitl_id", "prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "hitl_id": { "$ref": "#/$defs/hitl_id" },
+        "prompt": {
+          "type": "string",
+          "description": "The question or request to present to the human operator.",
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "description": "Additional context to help the operator respond (e.g. file path, code snippet, error message)."
+        },
+        "expires_at": {
+          "$ref": "#/$defs/ts",
+          "description": "If set, the HITL request will auto-timeout at this time and the mission will fail."
+        }
+      }
+    },
+    "data_mission_hitl_responded": {
+      "type": "object",
+      "title": "data:mission.hitl_responded",
+      "description": "Data payload for mission.hitl_responded. Forwarded by aiwg serve to the executor over WS after the operator submits POST /api/v1/missions/:id/hitl_response. Required for HITL conformance. Direction: aiwg serve → executor.",
+      "required": ["hitl_id", "response"],
+      "additionalProperties": false,
+      "properties": {
+        "hitl_id": { "$ref": "#/$defs/hitl_id" },
+        "response": {
+          "type": "string",
+          "description": "The operator's text response.",
+          "minLength": 1
+        },
+        "responded_at": { "$ref": "#/$defs/ts" }
+      }
+    },
+    "data_mission_paused": {
+      "type": "object",
+      "title": "data:mission.paused",
+      "description": "Data payload for mission.paused. Emitted when an operator-initiated pause takes effect. Optional conformance level.",
+      "required": ["state"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "const": "paused"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable reason for the pause."
+        }
+      }
+    },
+    "data_mission_resumed": {
+      "type": "object",
+      "title": "data:mission.resumed",
+      "description": "Data payload for mission.resumed. Emitted when a paused or suspended mission resumes execution. Optional for pause/resume; Required for Resumable conformance on reconnect.",
+      "required": ["state"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "const": "running"
+        },
+        "resumed_from": {
+          "type": "string",
+          "enum": ["paused", "suspended"],
+          "description": "The prior state from which the mission resumed."
+        }
+      }
+    },
+    "data_mission_suspended": {
+      "type": "object",
+      "title": "data:mission.suspended",
+      "description": "Data payload for mission.suspended. Emitted when a resumable executor durably persists a running mission before going offline. Required for Resumable conformance.",
+      "required": ["state", "checkpoint_id"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "const": "suspended"
+        },
+        "checkpoint_id": {
+          "type": "string",
+          "description": "Executor-scoped opaque identifier for the persisted checkpoint. Presented back to the executor on resume so it can load the right state.",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why the mission is being suspended (e.g. 'executor_shutdown', 'operator_request')."
+        }
+      }
+    },
+    "data_mission_reconnected": {
+      "type": "object",
+      "title": "data:mission.reconnected",
+      "description": "Data payload for mission.reconnected. Emitted by the executor after successfully reconnecting a suspended mission following an executor restart. Required for Resumable conformance.",
+      "required": ["checkpoint_id"],
+      "additionalProperties": false,
+      "properties": {
+        "checkpoint_id": {
+          "type": "string",
+          "description": "Checkpoint ID used to reload state, matching the checkpoint_id from the prior mission.suspended event."
+        }
+      }
+    },
+    "data_mission_completed": {
+      "type": "object",
+      "title": "data:mission.completed",
+      "description": "Data payload for mission.completed. Terminal success state. Required for Core conformance.",
+      "required": ["state"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "const": "done"
+        },
+        "exit_code": {
+          "type": "integer",
+          "description": "Agent process exit code. 0 indicates clean completion."
+        },
+        "tokens_total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total tokens consumed over the mission lifetime."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Human-readable completion summary."
+        },
+        "artifacts": {
+          "type": "array",
+          "description": "Optional list of key output paths or artifact references produced by the mission.",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "data_mission_failed": {
+      "type": "object",
+      "title": "data:mission.failed",
+      "description": "Data payload for mission.failed. Terminal failure state. Required for Core conformance.",
+      "required": ["state", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "const": "failed"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Machine-readable failure reason code (e.g. 'exit_nonzero', 'timeout', 'crash', 'completion_not_met').",
+          "minLength": 1
+        },
+        "error": {
+          "type": "string",
+          "description": "Human-readable error message."
+        },
+        "exit_code": {
+          "type": "integer",
+          "description": "Agent process exit code if the failure was a process exit."
+        },
+        "tokens_total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total tokens consumed before failure."
+        }
+      }
+    },
+    "data_mission_aborted": {
+      "type": "object",
+      "title": "data:mission.aborted",
+      "description": "Data payload for mission.aborted. Terminal cancelled-by-operator state. Required for Core conformance.",
+      "required": ["state"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "const": "aborted"
+        },
+        "aborted_by": {
+          "type": "string",
+          "enum": ["operator", "system"],
+          "description": "Whether the abort was operator-initiated or system-initiated (e.g. executor capacity limit)."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable abort reason."
+        }
+      }
+    }
+  },
+  "type": "object",
+  "description": "Top-level schema root. Use $ref to the specific $defs for each message type. This root schema is a namespace container; it does not validate any single message by itself.",
+  "properties": {
+    "register_payload": { "$ref": "#/$defs/register_payload" },
+    "register_response": { "$ref": "#/$defs/register_response" },
+    "executor_status": { "$ref": "#/$defs/executor_status" },
+    "executors_list_response": { "$ref": "#/$defs/executors_list_response" },
+    "dispatch_payload": { "$ref": "#/$defs/dispatch_payload" },
+    "dispatch_response": { "$ref": "#/$defs/dispatch_response" },
+    "mission_status_response": { "$ref": "#/$defs/mission_status_response" },
+    "hitl_response_payload": { "$ref": "#/$defs/hitl_response_payload" },
+    "event_envelope": { "$ref": "#/$defs/event_envelope" }
+  }
+}

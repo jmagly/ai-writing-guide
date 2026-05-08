@@ -40,6 +40,13 @@ jobs:
       - name: Build CLI (required by integration tests that spawn bin/aiwg.mjs)
         run: npm run build:cli
 
+      - name: Lint schemas
+        # Validates schemas/executor-v1.json (draft-2020-12) and all
+        # fixtures in test/conformance/executor-v1/fixtures/ against it.
+        # Fails the build if the schema is structurally invalid or a fixture
+        # violates the declared _validates_as shape. (#1178)
+        run: npm run lint:schemas
+
       - name: Run tests
         env:
           # CI runs in docker-in-docker on the Gitea runner — cold start is

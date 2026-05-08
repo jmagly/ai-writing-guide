@@ -1,0 +1,134 @@
+{
+  "_fixture": "dispatch-aborted",
+  "_description": "Operator-initiated abort during a running mission. Covers POST /api/v1/missions/:id/abort and the resulting mission.aborted terminal event. Schema refs: $defs/dispatch_payload, $defs/dispatch_response, $defs/event_envelope.",
+  "_schema_refs": [
+    "#/$defs/dispatch_payload",
+    "#/$defs/dispatch_response",
+    "#/$defs/event_envelope"
+  ],
+  "preconditions": {
+    "executor_registered": {
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "capabilities": ["isolation:vm", "runtime:claude-code", "platform:linux/x64"]
+    }
+  },
+  "dispatch": {
+    "request": {
+      "method": "POST",
+      "path": "/api/v1/sessions/ws-2026-05-08/dispatch",
+      "headers": {
+        "Authorization": "Bearer exec_tk_8Hy3mNpQvRsT2uWxYzA4bCdEfGhJkLo"
+      },
+      "body": {
+        "_validates_as": "#/$defs/dispatch_payload",
+        "mission_id": "m-ghi789",
+        "objective": "Migrate all SQL queries in src/users/ to use parameterised statements.",
+        "completion": "eslint --rule no-raw-sql passes on src/users/",
+        "long_running": false,
+        "executor_filter": {
+          "executor_id": null,
+          "capabilities": []
+        },
+        "metadata": {
+          "issue": 1173,
+          "session_id": "ws-2026-05-08"
+        }
+      }
+    },
+    "response": {
+      "status": 202,
+      "body": {
+        "_validates_as": "#/$defs/dispatch_response",
+        "mission_id": "m-ghi789",
+        "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "status": "assigned"
+      }
+    }
+  },
+  "event_sequence_before_abort": [
+    {
+      "_step": 1,
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.assigned",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-ghi789",
+      "ts": "2026-05-08T20:10:00.100Z",
+      "data": {
+        "state": "assigned"
+      }
+    },
+    {
+      "_step": 2,
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.started",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-ghi789",
+      "ts": "2026-05-08T20:10:00.900Z",
+      "data": {
+        "state": "running",
+        "agent_runtime": "claude-code"
+      }
+    },
+    {
+      "_step": 3,
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.progress",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-ghi789",
+      "ts": "2026-05-08T20:10:30.000Z",
+      "data": {
+        "phase": "scanning",
+        "iteration": 1,
+        "tokens_used": 5100,
+        "summary": "Found 23 raw SQL queries across 8 files. Starting parameterisation."
+      }
+    }
+  ],
+  "abort_request": {
+    "_description": "Operator issues abort while mission is running.",
+    "request": {
+      "method": "POST",
+      "path": "/api/v1/missions/m-ghi789/abort",
+      "headers": {
+        "Authorization": "Bearer exec_tk_8Hy3mNpQvRsT2uWxYzA4bCdEfGhJkLo"
+      }
+    },
+    "response": {
+      "status": 202
+    }
+  },
+  "event_sequence_after_abort": [
+    {
+      "_step": 4,
+      "_description": "Executor acknowledges abort; mission terminates in 'aborted' state.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.aborted",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-ghi789",
+      "ts": "2026-05-08T20:10:31.400Z",
+      "data": {
+        "state": "aborted",
+        "aborted_by": "operator",
+        "reason": "Operator issued abort via POST /api/v1/missions/m-ghi789/abort."
+      }
+    }
+  ],
+  "mission_status_after_abort": {
+    "request": {
+      "method": "GET",
+      "path": "/api/v1/missions/m-ghi789"
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "_validates_as": "#/$defs/mission_status_response",
+        "mission_id": "m-ghi789",
+        "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "state": "aborted",
+        "created_at": "2026-05-08T20:10:00.000Z",
+        "updated_at": "2026-05-08T20:10:31.400Z",
+        "completed_at": "2026-05-08T20:10:31.400Z"
+      }
+    }
+  }
+}

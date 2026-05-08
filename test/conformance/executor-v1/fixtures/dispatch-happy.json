@@ -1,0 +1,149 @@
+{
+  "_fixture": "dispatch-happy",
+  "_description": "Happy-path dispatch: mission is assigned, started, makes progress twice, then completes successfully. Covers the full Core conformance lifecycle: assigned → started → progress × 2 → completed. Schema refs: $defs/dispatch_payload, $defs/dispatch_response, $defs/event_envelope.",
+  "_schema_refs": [
+    "#/$defs/dispatch_payload",
+    "#/$defs/dispatch_response",
+    "#/$defs/event_envelope"
+  ],
+  "preconditions": {
+    "executor_registered": {
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "capabilities": ["isolation:vm", "runtime:claude-code", "platform:linux/x64", "hitl"]
+    }
+  },
+  "dispatch": {
+    "request": {
+      "method": "POST",
+      "path": "/api/v1/sessions/ws-2026-05-08/dispatch",
+      "headers": {
+        "Authorization": "Bearer exec_tk_8Hy3mNpQvRsT2uWxYzA4bCdEfGhJkLo"
+      },
+      "body": {
+        "_validates_as": "#/$defs/dispatch_payload",
+        "mission_id": "m-abc123",
+        "objective": "Add JWT validation to /auth/login and verify the endpoint returns 401 on an expired token.",
+        "completion": "npm test exits 0; curl -H 'Authorization: Bearer expired-token' /auth/login returns 401",
+        "long_running": false,
+        "executor_filter": {
+          "executor_id": null,
+          "capabilities": ["runtime:claude-code"]
+        },
+        "metadata": {
+          "issue": 1171,
+          "session_id": "ws-2026-05-08",
+          "triggered_by": "operator"
+        }
+      }
+    },
+    "response": {
+      "status": 202,
+      "body": {
+        "_validates_as": "#/$defs/dispatch_response",
+        "mission_id": "m-abc123",
+        "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "status": "assigned",
+        "estimated_start": "2026-05-08T19:30:05.000Z"
+      }
+    }
+  },
+  "event_sequence": [
+    {
+      "_step": 1,
+      "_description": "Executor accepted ownership; mission state transitions to 'assigned'.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.assigned",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-abc123",
+      "ts": "2026-05-08T19:30:05.100Z",
+      "data": {
+        "state": "assigned",
+        "estimated_start": "2026-05-08T19:30:05.000Z"
+      }
+    },
+    {
+      "_step": 2,
+      "_description": "Executor began active work; mission state transitions to 'running'.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.started",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-abc123",
+      "ts": "2026-05-08T19:30:06.000Z",
+      "data": {
+        "state": "running",
+        "agent_runtime": "claude-code",
+        "pty_session_id": "pty-20260508-001"
+      }
+    },
+    {
+      "_step": 3,
+      "_description": "First progress event: planning phase.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.progress",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-abc123",
+      "ts": "2026-05-08T19:30:30.000Z",
+      "data": {
+        "phase": "planning",
+        "iteration": 1,
+        "tokens_used": 8200,
+        "summary": "Reviewing existing /auth/login endpoint; planning JWT middleware insertion point.",
+        "pct_complete": 20
+      }
+    },
+    {
+      "_step": 4,
+      "_description": "Second progress event: implementation phase.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.progress",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-abc123",
+      "ts": "2026-05-08T19:31:15.000Z",
+      "data": {
+        "phase": "implementation",
+        "iteration": 2,
+        "tokens_used": 31400,
+        "summary": "JWT middleware implemented; running npm test to verify.",
+        "pct_complete": 75
+      }
+    },
+    {
+      "_step": 5,
+      "_description": "Mission completed successfully; terminal state 'done'.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.completed",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-abc123",
+      "ts": "2026-05-08T19:31:58.000Z",
+      "data": {
+        "state": "done",
+        "exit_code": 0,
+        "tokens_total": 42700,
+        "summary": "JWT validation added. All 47 tests pass. /auth/login returns 401 on expired token.",
+        "artifacts": [
+          { "path": "src/middleware/jwt-validator.ts", "description": "New JWT middleware" },
+          { "path": "test/auth/jwt-validator.test.ts", "description": "Unit tests for JWT middleware" }
+        ]
+      }
+    }
+  ],
+  "mission_status_after_completion": {
+    "request": {
+      "method": "GET",
+      "path": "/api/v1/missions/m-abc123"
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "_validates_as": "#/$defs/mission_status_response",
+        "mission_id": "m-abc123",
+        "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "state": "done",
+        "created_at": "2026-05-08T19:30:05.000Z",
+        "updated_at": "2026-05-08T19:31:58.000Z",
+        "completed_at": "2026-05-08T19:31:58.000Z",
+        "exit_code": 0
+      }
+    }
+  }
+}

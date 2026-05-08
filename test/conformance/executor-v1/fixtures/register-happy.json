@@ -1,0 +1,92 @@
+{
+  "_fixture": "register-happy",
+  "_description": "Happy-path executor registration and deregistration. Exercises POST /api/v1/executors/register (201) and DELETE /api/v1/executors/:id. Schema refs: $defs/register_payload, $defs/register_response.",
+  "_schema_ref": "executor.aiwg.io/v1#/$defs/register_payload",
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/executors/register",
+    "body": {
+      "_validates_as": "#/$defs/register_payload",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "agentic-sandbox-local",
+      "version": "0.3.0",
+      "spec_version": "1.0.0",
+      "transport_endpoints": {
+        "rest": "http://127.0.0.1:8122",
+        "ws": "ws://127.0.0.1:8121"
+      },
+      "capabilities": [
+        "isolation:vm",
+        "runtime:claude-code",
+        "platform:linux/x64",
+        "resumable",
+        "hitl"
+      ]
+    }
+  },
+  "response": {
+    "status": 201,
+    "body": {
+      "_validates_as": "#/$defs/register_response",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "token": "exec_tk_8Hy3mNpQvRsT2uWxYzA4bCdEfGhJkLo",
+      "registered_at": "2026-05-08T19:30:00.000Z"
+    }
+  },
+  "assertions": [
+    "response.status == 201",
+    "response.body.executor_id == request.body.executor_id",
+    "response.body.token is non-empty string",
+    "response.body.registered_at is RFC 3339 timestamp"
+  ],
+  "deregister": {
+    "request": {
+      "method": "DELETE",
+      "path": "/api/v1/executors/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "headers": {
+        "Authorization": "Bearer exec_tk_8Hy3mNpQvRsT2uWxYzA4bCdEfGhJkLo"
+      }
+    },
+    "response": {
+      "status": 204
+    }
+  },
+  "list_after_register": {
+    "request": {
+      "method": "GET",
+      "path": "/api/v1/executors",
+      "headers": {
+        "Authorization": "Bearer exec_tk_8Hy3mNpQvRsT2uWxYzA4bCdEfGhJkLo"
+      }
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "_validates_as": "#/$defs/executors_list_response",
+        "executors": [
+          {
+            "_validates_as": "#/$defs/executor_status",
+            "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "name": "agentic-sandbox-local",
+            "version": "0.3.0",
+            "spec_version": "1.0.0",
+            "transport_endpoints": {
+              "rest": "http://127.0.0.1:8122",
+              "ws": "ws://127.0.0.1:8121"
+            },
+            "capabilities": [
+              "isolation:vm",
+              "runtime:claude-code",
+              "platform:linux/x64",
+              "resumable",
+              "hitl"
+            ],
+            "connected": true,
+            "active_mission_count": 0,
+            "registered_at": "2026-05-08T19:30:00.000Z"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -42,7 +42,8 @@
     "uat:opencode": "vitest run --config config/vitest.uat-live.config.js --reporter=verbose ralph-live-opencode",
     "uat:factory": "vitest run --config config/vitest.uat-live.config.js --reporter=verbose ralph-live-factory",
     "uat:daemon": "vitest run --config config/vitest.uat-daemon.config.js",
-    "uat:daemon:claude": "vitest run --config config/vitest.uat-daemon.config.js --reporter=verbose daemon-live-claude"
+    "uat:daemon:claude": "vitest run --config config/vitest.uat-daemon.config.js --reporter=verbose daemon-live-claude",
+    "lint:schemas": "node tools/scripts/lint-schemas.mjs"
   },
   "files": [
     "bin/",

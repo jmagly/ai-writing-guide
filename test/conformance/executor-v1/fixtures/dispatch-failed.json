@@ -1,0 +1,128 @@
+{
+  "_fixture": "dispatch-failed",
+  "_description": "Mission fails non-recoverably after partial progress. Covers the Core conformance failure path: assigned → started → progress → failed. Schema refs: $defs/dispatch_payload, $defs/dispatch_response, $defs/event_envelope.",
+  "_schema_refs": [
+    "#/$defs/dispatch_payload",
+    "#/$defs/dispatch_response",
+    "#/$defs/event_envelope"
+  ],
+  "preconditions": {
+    "executor_registered": {
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "capabilities": ["isolation:vm", "runtime:claude-code", "platform:linux/x64"]
+    }
+  },
+  "dispatch": {
+    "request": {
+      "method": "POST",
+      "path": "/api/v1/sessions/ws-2026-05-08/dispatch",
+      "headers": {
+        "Authorization": "Bearer exec_tk_8Hy3mNpQvRsT2uWxYzA4bCdEfGhJkLo"
+      },
+      "body": {
+        "_validates_as": "#/$defs/dispatch_payload",
+        "mission_id": "m-def456",
+        "objective": "Refactor the database connection pool to use pg-pool v3.",
+        "completion": "npm test exits 0; no references to pg-pool v2 remain in src/",
+        "long_running": false,
+        "executor_filter": {
+          "executor_id": null,
+          "capabilities": ["runtime:claude-code"]
+        },
+        "metadata": {
+          "issue": 1172,
+          "session_id": "ws-2026-05-08"
+        }
+      }
+    },
+    "response": {
+      "status": 202,
+      "body": {
+        "_validates_as": "#/$defs/dispatch_response",
+        "mission_id": "m-def456",
+        "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "status": "assigned",
+        "estimated_start": "2026-05-08T20:00:02.000Z"
+      }
+    }
+  },
+  "event_sequence": [
+    {
+      "_step": 1,
+      "_description": "Executor accepted the mission.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.assigned",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-def456",
+      "ts": "2026-05-08T20:00:02.300Z",
+      "data": {
+        "state": "assigned",
+        "estimated_start": "2026-05-08T20:00:02.000Z"
+      }
+    },
+    {
+      "_step": 2,
+      "_description": "Executor began work.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.started",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-def456",
+      "ts": "2026-05-08T20:00:03.100Z",
+      "data": {
+        "state": "running",
+        "agent_runtime": "claude-code"
+      }
+    },
+    {
+      "_step": 3,
+      "_description": "Partial progress before failure.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.progress",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-def456",
+      "ts": "2026-05-08T20:00:45.000Z",
+      "data": {
+        "phase": "implementation",
+        "iteration": 1,
+        "tokens_used": 14300,
+        "summary": "Partially refactored db/pool.ts; encountering type errors from pg-pool v3 API change."
+      }
+    },
+    {
+      "_step": 4,
+      "_description": "Mission failed — completion criterion not met after exhausting attempts.",
+      "_validates_as": "#/$defs/event_envelope",
+      "event": "mission.failed",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-def456",
+      "ts": "2026-05-08T20:03:11.000Z",
+      "data": {
+        "state": "failed",
+        "reason": "completion_not_met",
+        "error": "npm test exits 4 — 12 TypeScript type errors remain in db/pool.ts after 3 correction attempts.",
+        "exit_code": 4,
+        "tokens_total": 67800
+      }
+    }
+  ],
+  "mission_status_after_failure": {
+    "request": {
+      "method": "GET",
+      "path": "/api/v1/missions/m-def456"
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "_validates_as": "#/$defs/mission_status_response",
+        "mission_id": "m-def456",
+        "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "state": "failed",
+        "created_at": "2026-05-08T20:00:02.000Z",
+        "updated_at": "2026-05-08T20:03:11.000Z",
+        "completed_at": "2026-05-08T20:03:11.000Z",
+        "exit_code": 4,
+        "error": "npm test exits 4 — 12 TypeScript type errors remain in db/pool.ts after 3 correction attempts."
+      }
+    }
+  }
+}
