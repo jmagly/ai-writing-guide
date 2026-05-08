@@ -270,9 +270,32 @@ export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
       try { msg = JSON.parse(evt.data as string); }
       catch { return; }
 
+      // Diagnostic: surface every inbound message — type + agent_id (when
+      // present) — so we can see exactly what the sandbox sent for this
+      // pane. The verbose form helps debug "session_list never arrives"
+      // symptoms: if the sandbox replies for a different agent_id form
+      // than this pane queried, the trace lights up the mismatch directly.
+      console.debug(
+        `[SessionPicker] msg pane=${agentId} type=${String(msg['type'])} agent_id=${String(msg['agent_id'] ?? '<none>')}`,
+      );
+      const replyAgent = msg['agent_id'];
+      if (replyAgent !== undefined && !matchesAgent(replyAgent)) {
+        console.warn(
+          `[SessionPicker] DROPPED ${String(msg['type'])} — pane agent=${agentId}, reply agent_id=${String(replyAgent)} (loose match failed)`,
+        );
+      }
+
       switch (msg['type']) {
         case 'session_list': {
           if (!matchesAgent(msg['agent_id'])) break;
+          // Watchdog cleared — session_list arrived as expected.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const wd = (wsRef.current as any)?._sessionListWatchdog;
+          if (wd) {
+            clearTimeout(wd);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (wsRef.current as any)._sessionListWatchdog = null;
+          }
           const raw = (msg['sessions'] as WsSession[] | undefined) ?? [];
           // Diagnostic — surface what the sandbox actually returned so an
           // operator can see in DevTools whether sessions arrived at all.
@@ -371,6 +394,20 @@ export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
         // before list_sessions is handled.
         ws.send(JSON.stringify({ type: 'subscribe', agent_id: agentId }));
         ws.send(JSON.stringify({ type: 'list_sessions', agent_id: agentId }));
+
+        // Watchdog: warn if session_list doesn't arrive within 3s. Catches
+        // the case where the sandbox accepts subscribe + list_sessions but
+        // silently drops the reply (e.g., the agent_id we're querying isn't
+        // tracked in the sandbox's active_sessions map).
+        const watchdog = setTimeout(() => {
+          if (isMounted && (phase === 'listing' || phase === 'connecting')) {
+            console.warn(
+              `[SessionPicker] no session_list reply within 3s for agent=${agentId} (sandbox=${sandboxId}). The sandbox may not have this agent_id registered. Try the agentic-sandbox dashboard's list_sessions for the same id to compare.`,
+            );
+          }
+        }, 3000);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (ws as any)._sessionListWatchdog = watchdog;
       };
 
       ws.onmessage = handleMessage;
