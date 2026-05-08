@@ -129,7 +129,7 @@ export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
     const term = new Terminal({
       rows: 24,
       cols: 80,
-      scrollback: 0, // replay from sessionBuffersRef on re-attach
+      scrollback: 5000, // local ring buffer for historical output (#1154); re-attach replay still served by sessionBuffersRef
       cursorBlink: true,
       convertEol: false,
       theme: {

@@ -12,9 +12,31 @@
  * existing SandboxPanel CSS module.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { TerminalPane } from './SessionPicker.js';
 import type { SandboxAgent } from '../../lib/api.js';
+
+const HEIGHT_STORAGE_KEY = 'aiwg:sandbox:paneStackHeight';
+const MIN_HEIGHT = 200;
+const DEFAULT_HEIGHT = 380;
+
+function loadStoredHeight(): number {
+  try {
+    const raw = window.localStorage.getItem(HEIGHT_STORAGE_KEY);
+    if (!raw) return DEFAULT_HEIGHT;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < MIN_HEIGHT) return DEFAULT_HEIGHT;
+    return n;
+  } catch {
+    return DEFAULT_HEIGHT;
+  }
+}
+
+function maxAllowedHeight(): number {
+  // Cap at 90% of viewport so tab strip / page chrome stay reachable.
+  if (typeof window === 'undefined') return 2000;
+  return Math.max(MIN_HEIGHT, Math.floor(window.innerHeight * 0.9));
+}
 
 export interface PaneSpec {
   /** Stable identity per (sandboxId, agentId) — opening the same instance
@@ -52,6 +74,46 @@ function paneKey(sandboxId: string, agentId: string): string {
 export function PaneStack({ agentsBySandbox, onActiveChange, onMount }: PaneStackProps) {
   const [panes, setPanes] = useState<PaneSpec[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [paneHeight, setPaneHeight] = useState<number>(() =>
+    typeof window === 'undefined' ? DEFAULT_HEIGHT : loadStoredHeight(),
+  );
+  const dragStateRef = useRef<{ startY: number; startHeight: number } | null>(null);
+
+  const onResizeStart = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      dragStateRef.current = { startY: e.clientY, startHeight: paneHeight };
+      const onMove = (ev: MouseEvent) => {
+        const s = dragStateRef.current;
+        if (!s) return;
+        const delta = ev.clientY - s.startY;
+        const next = Math.min(maxAllowedHeight(), Math.max(MIN_HEIGHT, s.startHeight + delta));
+        setPaneHeight(next);
+      };
+      const onUp = () => {
+        dragStateRef.current = null;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+      };
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'row-resize';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    },
+    [paneHeight],
+  );
+
+  // Persist height changes (debounced via the natural mouseup boundary —
+  // each render writes the latest committed value).
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(HEIGHT_STORAGE_KEY, String(paneHeight));
+    } catch {
+      /* localStorage unavailable — accept the in-memory value */
+    }
+  }, [paneHeight]);
 
   const openPane = useCallback((spec: Omit<PaneSpec, 'id'>) => {
     const id = paneKey(spec.sandboxId, spec.agentId);
@@ -179,8 +241,11 @@ export function PaneStack({ agentsBySandbox, onActiveChange, onMount }: PaneStac
       {/* Stack of panes — keep all mounted, hide non-active so each pane's
           WS + xterm stay attached and continue buffering output even when
           backgrounded. Issue #1146 acceptance: "switching foreground works
-          without disconnecting." */}
-      <div style={{ position: 'relative', minHeight: 380 }}>
+          without disconnecting."
+          Height is operator-controlled via the drag handle below (#1153)
+          and persisted to localStorage across reloads. SessionPicker's
+          ResizeObserver fires xterm.fit() so PTY cols/rows stay correct. */}
+      <div style={{ position: 'relative', height: paneHeight }}>
         {panes.map((p) => {
           const isActive = p.id === activeId;
           const agents = agentsBySandbox[p.sandboxId] ?? [];
@@ -199,7 +264,7 @@ export function PaneStack({ agentsBySandbox, onActiveChange, onMount }: PaneStac
               key={p.id}
               style={{
                 display: isActive ? 'block' : 'none',
-                height: 380,
+                height: '100%',
               }}
               role="tabpanel"
               aria-hidden={!isActive}
@@ -209,6 +274,24 @@ export function PaneStack({ agentsBySandbox, onActiveChange, onMount }: PaneStac
           );
         })}
       </div>
+
+      {/* Vertical resize handle — drag to grow/shrink pane stack (#1153).
+          Sits between PaneStack and the agent grid below. */}
+      <div
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize terminal pane stack"
+        onMouseDown={onResizeStart}
+        style={{
+          height: 6,
+          cursor: 'row-resize',
+          background: '#1a1a1a',
+          borderTop: '1px solid #2a2a2a',
+          borderBottom: '1px solid #2a2a2a',
+          flexShrink: 0,
+        }}
+        title="Drag to resize"
+      />
     </div>
   );
 }
