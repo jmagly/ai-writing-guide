@@ -21,6 +21,14 @@ import {
   type RegisterRequest,
 } from '../../serve/sandbox-registry.js';
 import { routeTask, type AgentFilter } from '../../serve/agent-router.js';
+import {
+  executorRegistry,
+  validateRegisterPayload,
+  validateDispatchPayload,
+  validateEventEnvelope,
+  type ExecutorRegisterRequest,
+  type EventEnvelope,
+} from '../../serve/executor-registry.js';
 import { AiwgError, EXIT_CODES } from '../errors.js';
 
 const DEFAULT_PORT = 7337;
@@ -130,6 +138,42 @@ function handleSandboxWs(ws: any, sandboxId: string, token: string): void {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleExecutorWs(ws: any, executorId: string, token: string): void {
+  if (!executorRegistry.authenticate(executorId, token)) {
+    ws.close(4001, 'Unauthorized');
+    return;
+  }
+
+  // Duck-typed WS connection handle for registry.pushToExecutor()
+  executorRegistry.setConnected(executorId, true, ws);
+
+  ws.on('message', (data: Buffer | string) => {
+    if (!executorRegistry.authenticate(executorId, token)) return;
+    try {
+      const raw: unknown = JSON.parse(data.toString());
+      const { valid } = validateEventEnvelope(raw);
+      if (!valid) {
+        logServeWarn('executor-ws', `invalid event envelope from executor ${executorId} — ignored`);
+        return;
+      }
+      const envelope = raw as EventEnvelope;
+      // Ensure executor_id matches the authenticated connection
+      envelope.executor_id = executorId;
+      executorRegistry.handleEvent(envelope);
+    } catch { /* ignore malformed events */ }
+  });
+
+  ws.on('close', () => {
+    executorRegistry.setConnected(executorId, false);
+    logServeDebug('executor-ws', `executor ${executorId} WS disconnected`);
+  });
+
+  ws.on('error', (err: unknown) => {
+    console.error(`[executor-registry] WebSocket error for ${executorId}:`, err);
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handlePtyWs(ws: any, sessionId: string, command: string, cmdArgs: string[], cwd?: string, wsEndpoint?: string, agentId?: string): void {
   // createPtyWsHandler expects a Hono-context-like object for param/query extraction.
   // We provide a minimal shim since we've already parsed the URL.
@@ -200,6 +244,18 @@ async function setupWebSockets(httpServer: any, readOnly: boolean): Promise<void
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wss.handleUpgrade(req, socket, head, (ws: any) => {
         handleSandboxWs(ws, sandboxId, token);
+      });
+      return;
+    }
+
+    // /ws/executors/:executorId — executor contract v1 bidirectional event stream (#1179)
+    const executorMatch = pathname.match(/^\/ws\/executors\/([^/]+)$/);
+    if (executorMatch) {
+      const executorId = executorMatch[1];
+      const token = url.searchParams.get('token') ?? '';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      wss.handleUpgrade(req, socket, head, (ws: any) => {
+        handleExecutorWs(ws, executorId, token);
       });
       return;
     }
@@ -625,16 +681,266 @@ async function startServer(opts: {
   // Mission Control API stubs (#715)
   app.get('/api/missions', (c: any) => c.json({ missions: [], sessions: [] }));
   app.get('/api/sessions/:id/missions', (c: any) => c.json({ missions: [] }));
+
+  // Legacy dispatch route — stub preserved for backward compat
+  // TODO: remove after v1.x once all callers migrate to /api/v1/sessions/:id/dispatch
   app.post('/api/sessions/:id/dispatch', async (c: any) => {
-    const { task = '', completion = '' } = await c.req.json().catch(() => ({}));
+    // 301 → /api/v1/sessions/:id/dispatch so existing callers get a clear redirect signal
     const sessionId: string = c.req.param('id');
-    const missionId = `mission-${Date.now()}`;
-    telemetryStore.ingest(createEvent('mission.dispatch', sessionId, { task, completion }, missionId));
-    return c.json({ id: missionId, task, completion, status: 'queued' }, 202);
+    return c.redirect(`/api/v1/sessions/${sessionId}/dispatch`, 301);
   });
   app.put('/api/missions/:id/pause', (c: any) => c.json({ ok: true }));
   app.put('/api/missions/:id/resume', (c: any) => c.json({ ok: true }));
   app.delete('/api/missions/:id', (c: any) => c.json({ ok: true }));
+
+  // ── Executor Registry API (#1179) ──────────────────────────────────────────
+
+  // POST /api/v1/executors/register → 201 with executor_id + token
+  app.post('/api/v1/executors/register', async (c: any) => {
+    let body: unknown;
+    try { body = await c.req.json(); }
+    catch { return c.json({ error: 'Invalid JSON body' }, 400); }
+
+    const { valid, errors } = validateRegisterPayload(body);
+    if (!valid) {
+      return c.json({ error: `Invalid register payload: ${errors}` }, 400);
+    }
+
+    const result = executorRegistry.register(body as ExecutorRegisterRequest);
+    if ('status' in result && result.status === 400) {
+      return c.json({ error: result.error }, 400);
+    }
+    // Emit telemetry (reuse agent.spawn as closest match for executor registration)
+    const resp = result as { executor_id: string; token: string; registered_at: string };
+    telemetryStore.ingest(createEvent('agent.spawn', resp.executor_id, { name: (body as ExecutorRegisterRequest).name }));
+    return c.json(resp, 201);
+  });
+
+  // DELETE /api/v1/executors/:id → 204; auth required
+  app.delete('/api/v1/executors/:id', (c: any) => {
+    const executorId: string = c.req.param('id');
+    const authHeader: string = c.req.header('authorization') ?? '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!executorRegistry.authenticate(executorId, token)) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    const ok = executorRegistry.deregister(executorId, 'operator_deleted');
+    if (!ok) return c.json({ error: 'Executor not found' }, 404);
+    return new Response(null, { status: 204 });
+  });
+
+  // GET /api/v1/executors → list
+  app.get('/api/v1/executors', (c: any) => {
+    return c.json({ executors: executorRegistry.list() });
+  });
+
+  // GET /api/v1/executors/:id → single executor status
+  app.get('/api/v1/executors/:id', (c: any) => {
+    const summary = executorRegistry.get(c.req.param('id'));
+    if (!summary) return c.json({ error: 'Executor not found' }, 404);
+    return c.json(summary);
+  });
+
+  // POST /api/v1/sessions/:id/dispatch → 202; replaces the #715 stub
+  app.post('/api/v1/sessions/:id/dispatch', async (c: any) => {
+    const sessionId: string = c.req.param('id');
+
+    let body: unknown;
+    try { body = await c.req.json(); }
+    catch { return c.json({ error: 'Invalid JSON body' }, 400); }
+
+    // 1. Validate payload against schema
+    const { valid, errors } = validateDispatchPayload(body);
+    if (!valid) {
+      return c.json({ error: `Invalid dispatch payload: ${errors}` }, 400);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload = body as any;
+    const missionId: string = payload.mission_id;
+    const longRunning: boolean = payload.long_running === true;
+    const executorFilter = payload.executor_filter ?? {};
+
+    // 2. Resolve executor via registry's pickByFilter
+    const pickResult = executorRegistry.pickByFilter(executorFilter, longRunning);
+
+    if (!pickResult) {
+      if (longRunning) {
+        return c.json({ error: 'no_resumable_executor_available' }, 503);
+      }
+      return c.json({ error: 'no_executor_available' }, 503);
+    }
+
+    const { executor } = pickResult;
+
+    // 3. Forward dispatch to the chosen executor's REST endpoint
+    const forwardUrl = `${executor.transportEndpoints.rest}/dispatch`;
+    let estimatedStart: string | undefined;
+    try {
+      const fwdResp = await fetch(forwardUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${executor.token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!fwdResp.ok) {
+        // Executor returned an error — treat as forward failure
+        const errBody = await fwdResp.text().catch(() => '');
+        logServeWarn('dispatch', `executor ${executor.executorId} returned ${fwdResp.status} on forward: ${errBody}`);
+
+        // Mark mission failed and emit telemetry
+        executorRegistry.assignMission(missionId, executor.executorId);
+        executorRegistry.failMission(missionId, `executor returned ${fwdResp.status}`);
+        telemetryStore.ingest(createEvent('mission.abort', sessionId, { missionId, executorId: executor.executorId }, missionId));
+        return c.json({ error: 'executor_forward_failed', detail: errBody }, 502);
+      }
+
+      // Parse estimated_start if the executor provides it
+      try {
+        const fwdData = await fwdResp.json() as Record<string, unknown>;
+        if (typeof fwdData.estimated_start === 'string') {
+          estimatedStart = fwdData.estimated_start;
+        }
+      } catch { /* optional */ }
+    } catch (err) {
+      // Executor unreachable
+      logServeWarn('dispatch', `executor ${executor.executorId} unreachable at ${forwardUrl}:`, err);
+      executorRegistry.assignMission(missionId, executor.executorId);
+      executorRegistry.failMission(missionId, 'executor unreachable');
+      telemetryStore.ingest(createEvent('mission.abort', sessionId, { missionId, executorId: executor.executorId }, missionId));
+      return c.json({ error: 'executor_unreachable' }, 502);
+    }
+
+    // 4. Record the mission and emit telemetry
+    executorRegistry.assignMission(missionId, executor.executorId);
+    telemetryStore.ingest(createEvent('mission.dispatch', sessionId, {
+      missionId,
+      executorId: executor.executorId,
+      objective: payload.objective,
+      completion: payload.completion,
+    }, missionId));
+
+    // 5. Return 202 Accepted
+    const dispatchResp: Record<string, unknown> = {
+      mission_id: missionId,
+      executor_id: executor.executorId,
+      status: 'assigned',
+    };
+    if (estimatedStart) dispatchResp.estimated_start = estimatedStart;
+    return c.json(dispatchResp, 202);
+  });
+
+  // GET /api/v1/missions/:id → mission status snapshot
+  app.get('/api/v1/missions/:id', (c: any) => {
+    const mission = executorRegistry.getMission(c.req.param('id'));
+    if (!mission) return c.json({ error: 'Mission not found' }, 404);
+    return c.json({
+      mission_id: mission.missionId,
+      executor_id: mission.executorId,
+      state: mission.state,
+      created_at: mission.createdAt,
+      updated_at: mission.updatedAt,
+      completed_at: mission.completedAt,
+      recent_events: mission.recentEvents,
+      pty_session_ref: mission.ptySessionRef,
+      exit_code: mission.exitCode,
+      error: mission.error,
+    });
+  });
+
+  // POST /api/v1/missions/:id/hitl_response → 200; forwards to owning executor over WS
+  app.post('/api/v1/missions/:id/hitl_response', async (c: any) => {
+    const missionId: string = c.req.param('id');
+    const mission = executorRegistry.getMission(missionId);
+    if (!mission) return c.json({ error: 'Mission not found' }, 404);
+
+    let body: unknown;
+    try { body = await c.req.json(); }
+    catch { return c.json({ error: 'Invalid JSON body' }, 400); }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload = body as any;
+    if (!payload.hitl_id || !payload.response) {
+      return c.json({ error: 'hitl_id and response are required' }, 400);
+    }
+
+    // Push hitl_responded event to the executor over WS
+    const envelope: EventEnvelope = {
+      event: 'mission.hitl_responded',
+      executor_id: mission.executorId,
+      mission_id: missionId,
+      ts: new Date().toISOString(),
+      data: {
+        hitl_id: payload.hitl_id,
+        response: payload.response,
+        responded_at: new Date().toISOString(),
+      },
+    };
+
+    const pushed = executorRegistry.pushToExecutor(mission.executorId, envelope);
+    if (!pushed) {
+      return c.json({ error: 'executor_not_connected' }, 503);
+    }
+    return c.json({ ok: true });
+  });
+
+  // POST /api/v1/missions/:id/pause → 200
+  app.post('/api/v1/missions/:id/pause', (c: any) => {
+    const missionId: string = c.req.param('id');
+    const mission = executorRegistry.getMission(missionId);
+    if (!mission) return c.json({ error: 'Mission not found' }, 404);
+
+    // Forward pause command to executor over WS
+    executorRegistry.pushToExecutor(mission.executorId, {
+      event: 'mission.paused',
+      executor_id: mission.executorId,
+      mission_id: missionId,
+      ts: new Date().toISOString(),
+      data: { state: 'paused', reason: 'operator_request' },
+    });
+
+    executorRegistry.transitionMission(missionId, 'paused');
+    return c.json({ ok: true });
+  });
+
+  // POST /api/v1/missions/:id/resume → 200
+  app.post('/api/v1/missions/:id/resume', (c: any) => {
+    const missionId: string = c.req.param('id');
+    const mission = executorRegistry.getMission(missionId);
+    if (!mission) return c.json({ error: 'Mission not found' }, 404);
+
+    executorRegistry.pushToExecutor(mission.executorId, {
+      event: 'mission.resumed',
+      executor_id: mission.executorId,
+      mission_id: missionId,
+      ts: new Date().toISOString(),
+      data: { state: 'running', resumed_from: 'paused' },
+    });
+
+    executorRegistry.transitionMission(missionId, 'running');
+    return c.json({ ok: true });
+  });
+
+  // POST /api/v1/missions/:id/abort → 200
+  app.post('/api/v1/missions/:id/abort', (c: any) => {
+    const missionId: string = c.req.param('id');
+    const mission = executorRegistry.getMission(missionId);
+    if (!mission) return c.json({ error: 'Mission not found' }, 404);
+
+    executorRegistry.pushToExecutor(mission.executorId, {
+      event: 'mission.aborted',
+      executor_id: mission.executorId,
+      mission_id: missionId,
+      ts: new Date().toISOString(),
+      data: { state: 'aborted', aborted_by: 'operator', reason: 'operator_request' },
+    });
+
+    executorRegistry.transitionMission(missionId, 'aborted');
+    return c.json({ ok: true });
+  });
 
   // Telemetry API (#716)
   app.get('/api/telemetry', (c: any) => {

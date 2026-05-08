@@ -5,12 +5,107 @@
  * Selects the best available agent for a task based on declared filters
  * (framework requirements, inventory, resource thresholds) and real-time
  * metrics (CPU/memory load from #911).
+ *
+ * Also exposes routeMission() for executor-level routing (#1179).
  */
 
 import type { SandboxAgent } from './sandbox-registry.js';
+import type { ExecutorRegistration, ExecutorFilter } from './executor-registry.js';
 
 // ============================================================
 // Types
+// ============================================================
+
+// ============================================================
+// Executor-level routing (#1179)
+// ============================================================
+
+export interface ExecutorCandidate {
+  executor: ExecutorRegistration;
+  matchReason: string;
+  rejected: Array<{ executorId: string; reason: string }>;
+}
+
+export interface ExecutorRoutingResult {
+  selected?: ExecutorCandidate;
+  candidates: ExecutorCandidate[];
+  filter: ExecutorFilter;
+}
+
+/**
+ * Select the best executor from the provided list using filter criteria.
+ *
+ * Default-selection policy (per ADR §3):
+ *   1. Sandbox-first: prefer any executor with isolation:vm or isolation:container
+ *   2. Local fallback: isolation:none or isolation:host
+ *   3. 503 if no executor is connected and matching
+ *
+ * `long_running: true` requires the 'resumable' capability.
+ *
+ * Returns an ExecutorRoutingResult with the selected executor and full candidate list.
+ */
+export function routeMission(
+  executors: ExecutorRegistration[],
+  filter: ExecutorFilter,
+  longRunning = false,
+): ExecutorRoutingResult {
+  const matched: ExecutorCandidate[] = [];
+  const rejected: Array<{ executorId: string; reason: string }> = [];
+
+  // Only consider connected executors
+  const connected = executors.filter((e) => e.connected);
+  const disconnected = executors.filter((e) => !e.connected);
+  for (const e of disconnected) {
+    rejected.push({ executorId: e.executorId, reason: 'executor not connected' });
+  }
+
+  for (const executor of connected) {
+    // Pinned executor_id
+    if (filter.executor_id && executor.executorId !== filter.executor_id) {
+      rejected.push({ executorId: executor.executorId, reason: `executor_id does not match '${filter.executor_id}'` });
+      continue;
+    }
+    // Long-running requires resumable
+    if (longRunning && !executor.capabilities.includes('resumable')) {
+      rejected.push({ executorId: executor.executorId, reason: 'long_running requires resumable capability' });
+      continue;
+    }
+    // All requested capabilities must be present
+    if (filter.capabilities && filter.capabilities.length > 0) {
+      const missing = filter.capabilities.filter((c) => !executor.capabilities.includes(c));
+      if (missing.length > 0) {
+        rejected.push({ executorId: executor.executorId, reason: `missing capabilities: ${missing.join(', ')}` });
+        continue;
+      }
+    }
+    matched.push({
+      executor,
+      matchReason: 'matches all filter criteria',
+      rejected,
+    });
+  }
+
+  if (matched.length === 0) {
+    return { selected: undefined, candidates: [], filter };
+  }
+
+  // ADR §3: sandbox-first policy — prefer vm/container isolation
+  const sandboxFirst = matched.filter((c) =>
+    c.executor.capabilities.some((cap) => cap === 'isolation:vm' || cap === 'isolation:container')
+  );
+
+  let selected: ExecutorCandidate;
+  if (sandboxFirst.length > 0) {
+    selected = { ...sandboxFirst[0]!, matchReason: 'sandbox-first (isolation:vm/container)', rejected };
+  } else {
+    selected = { ...matched[0]!, matchReason: 'local fallback (no vm/container executor)', rejected };
+  }
+
+  return { selected, candidates: matched, filter };
+}
+
+// ============================================================
+// Agent-level routing (#916)
 // ============================================================
 
 /** Filter criteria for selecting an agent to run a task (#916). */
