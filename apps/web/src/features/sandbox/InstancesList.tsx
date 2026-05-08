@@ -621,6 +621,29 @@ function InstanceRowItem({
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13 }}>
             {row.name}
           </span>
+          {/* Session-count badge (#1151). Only rendered when the sandbox has
+              actually pushed an inventory — undefined sessions[] = unknown,
+              not zero, so we don't want to claim "0 sessions" for sandboxes
+              still on the pre-#192 build. */}
+          {row.agent?.sessions && row.agent.sessions.length > 0 && (
+            <span
+              title={
+                row.agent.sessions
+                  .map((s) => `${s.session_name} (${s.session_type})`)
+                  .join('\n')
+              }
+              style={{
+                fontSize: 10,
+                color: '#7fb8ff',
+                padding: '0 4px',
+                borderRadius: 2,
+                background: '#1a3a5a',
+                fontFamily: 'monospace',
+              }}
+            >
+              · {row.agent.sessions.length}
+            </span>
+          )}
           <span style={{ fontSize: 10, color: '#888' }}>{row.state}</span>
         </div>
         {row.secondary && (

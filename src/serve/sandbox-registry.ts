@@ -73,8 +73,19 @@ export interface SandboxAgent {
   aiwgFrameworks?: Array<{ name: string; providers: string[]; version?: string; content_hash?: string }>;
   connectedAt?: string;
   lastHeartbeat?: string;
-  /** Live session count — incremented/decremented by session.start/session.end events */
+  /** Live session count — incremented/decremented by session.start/session.end events.
+   *  Approximate; `sessions` is authoritative when present (drift-resistant). */
   sessionCount?: number;
+  /**
+   * Authoritative session inventory pushed by the sandbox via the
+   * `agent.sessions` event (#1151, sandbox#192). Replaces wholesale on each
+   * event so a missed start/end can't desync the count.
+   *
+   * Undefined when the sandbox is on a build that doesn't emit
+   * `agent.sessions` yet — UI should fall back to "no badge" rather than
+   * rendering "0 sessions" for unknown state.
+   */
+  sessions?: SessionInfo[];
   /** Agent/command/skill manifest inventory — populated by agent.inventory_updated events (#906) */
   inventory?: AgentInventory;
   /** Latest metrics snapshot — populated by agent.metrics_updated events (#911) */
@@ -95,6 +106,30 @@ export interface SandboxAgent {
    * Persisted in ~/.config/aiwg/sandbox-agents.json (#917).
    */
   logicalName?: string;
+}
+
+// ============================================================
+// Session inventory (#1151)
+// ============================================================
+
+/**
+ * One live session record on an agent. Pushed by the sandbox in the
+ * `agent.sessions` event (sandbox#192) as a full inventory replace.
+ *
+ * Field shape mirrors the dashboard's WS `session_list` reply so the UI
+ * can render the same data on either surface.
+ */
+export interface SessionInfo {
+  session_id: string;
+  session_name: string;
+  session_type: 'interactive' | 'headless' | 'background';
+  command: string;
+  /** Unix epoch seconds — kept as raw seconds so the consumer can format
+   *  it in the local timezone. */
+  created_at_secs: number;
+  /** True when the sandbox has a screen-state snapshot for this session
+   *  available via `GET /api/v1/sessions/:id/screen` (#913). */
+  has_screen: boolean;
 }
 
 // ============================================================
@@ -348,6 +383,7 @@ export type SandboxEventType =
   | 'agent.provisioning_stalled'  // no provisioning progress for 30s+ (#911)
   | 'framework.update_available'  // sandbox framework version behind host (#910)
   | 'session.screen_updated'      // screen state hash changed (throttled) (#913)
+  | 'agent.sessions'              // full session inventory replace — drift-resistant (#1151, sandbox#192)
   | 'aiwg.log';                   // log line from sandbox AIWG instance (#914)
 
 
@@ -403,6 +439,11 @@ export interface SandboxEvent {
   agentInstanceId?: string;
   /** Operator-assigned logical name — set on agent.connected events */
   agentLogicalName?: string;
+  // Session inventory fields (#1151)
+  /** Full session inventory — set on agent.sessions events. The sandbox
+   *  replaces the agent's session list wholesale on each event so missed
+   *  session.start / session.end deltas can't desync the count. */
+  sessions?: SessionInfo[];
 }
 
 export interface HitlRequest {
@@ -868,6 +909,20 @@ export class SandboxRegistry {
         if (agent) {
           if (agent.status === 'busy') agent.status = 'ready';
           if (agent.sessionCount) agent.sessionCount = Math.max(0, agent.sessionCount - 1);
+          agent.lastHeartbeat = event.timestamp;
+        }
+        break;
+      }
+      case 'agent.sessions': {
+        // Full inventory replace (#1151). The sandbox is authoritative for
+        // session state — replacing wholesale (rather than merging) means a
+        // missed session.start / session.end can't permanently desync the
+        // count. sessionCount is also resynced from the new array length so
+        // the legacy approximate-count consumers stay accurate.
+        const agent = sandbox.agents.get(event.agentId);
+        if (agent && Array.isArray(event.sessions)) {
+          agent.sessions = event.sessions;
+          agent.sessionCount = event.sessions.length;
           agent.lastHeartbeat = event.timestamp;
         }
         break;

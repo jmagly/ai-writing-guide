@@ -162,6 +162,21 @@ export interface AgentInventory {
 
 // ---- Sandbox types (#731) ----
 
+/**
+ * One live session record on an agent (#1151). Mirrored from the
+ * sandbox-registry SessionInfo type — pushed via agent.sessions events and
+ * surfaced in InstancesList as the per-row session count badge.
+ */
+export interface SessionInfo {
+  session_id: string;
+  session_name: string;
+  session_type: 'interactive' | 'headless' | 'background';
+  command: string;
+  /** Unix epoch seconds — raw so the consumer formats locally. */
+  created_at_secs: number;
+  has_screen: boolean;
+}
+
 export interface SandboxAgent {
   agentId: string;
   status: 'starting' | 'provisioning' | 'ready' | 'busy' | 'error' | 'disconnected';
@@ -184,6 +199,11 @@ export interface SandboxAgent {
   instanceId?: string;
   /** Operator-assigned stable human-readable name (e.g. "security-01") (#917) */
   logicalName?: string;
+  /** Authoritative live session inventory — populated by `agent.sessions`
+   *  events (#1151, sandbox#192). Undefined when the sandbox is on a build
+   *  that doesn't emit the event yet — UI should fall back to "no badge"
+   *  rather than "0 sessions" for unknown state. */
+  sessions?: SessionInfo[];
 }
 
 // ---- Agent identity types (#917) ----
