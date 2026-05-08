@@ -43,7 +43,8 @@
     "uat:factory": "vitest run --config config/vitest.uat-live.config.js --reporter=verbose ralph-live-factory",
     "uat:daemon": "vitest run --config config/vitest.uat-daemon.config.js",
     "uat:daemon:claude": "vitest run --config config/vitest.uat-daemon.config.js --reporter=verbose daemon-live-claude",
-    "lint:schemas": "node tools/scripts/lint-schemas.mjs"
+    "lint:schemas": "node tools/scripts/lint-schemas.mjs",
+    "test:conformance": "vitest run --config config/vitest.conformance.config.js test/conformance/executor-v1/"
   },
   "files": [
     "bin/",

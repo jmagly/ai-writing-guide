@@ -47,6 +47,12 @@ jobs:
         # violates the declared _validates_as shape. (#1178)
         run: npm run lint:schemas
 
+      - name: Run conformance suite (fixture mode)
+        # Exercises the executor-contract v1 dispatch path via fixture replay.
+        # Runs as a separate step (not folded into test:ci) to keep the existing
+        # CI budget intact. Zero network I/O — fully deterministic. (#1183)
+        run: npm run test:conformance
+
       - name: Run tests
         env:
           # CI runs in docker-in-docker on the Gitea runner — cold start is
