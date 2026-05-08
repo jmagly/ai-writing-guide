@@ -7,7 +7,7 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
-> Targeting **2026.5.0**. The 2026.4.0 line shipped 2026-04-01; rc.32–rc.33 carried integration work that crossed the May calendar boundary. Per CalVer, the in-progress series rolls to `2026.5.0-rc.N` starting with rc.1 — content below carries forward unchanged.
+> Targeting **2026.5.0** stable. The 2026.4.0 stable tag was never cut — the rc series stopped at `v2026.4.0-rc.33` and rolled forward to `v2026.5.0-rc.1`. Everything that accumulated across both rc lines (Project-local lifecycle, user-scope deployment, plugin parity, sandbox wire-shape adoption, etc.) ships together as 2026.5.0 stable. The 2026.4.0 entry below is preserved as historical RC notes; it does not represent a published stable release.
 
 ### Highlights
 
@@ -78,9 +78,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 - New unit tests: 7 for `aiwg skill-lint` rubric (perfect/stub/no-triggers/agent-only/broken-YAML fixtures + threshold modes). Behavior-loader and concierge integration tests updated for canonical metadata.* shape.
 - `.agents/` deployment directory is now gitignored, mirroring `.claude/` and `.codex/` (#949). 395 generated files removed from the index; regenerable via `aiwg use`.
 
-## [2026.4.0] - 2026-04-01 – "Autonomous Systems"
+## [2026.4.0] - 2026-04-01 – "Autonomous Systems" (RC line — never cut as stable)
 
-> First major version milestone. Covers everything since v2026.3.2. Intermediate builds (3.3, 3.4) were internal test releases — this is the stable release users should upgrade to.
+> ⚠️ The 2026.4.0 stable tag was never published. This entry is preserved as historical context for the rc.1 → rc.33 release-candidate series; the work landed in main and is folded into the upcoming **2026.5.0** stable. There is no `v2026.4.0` git tag and `npm install aiwg@2026.4.0` will not resolve.
+>
+> Original entry retained below for traceability.
 
 | What changed | Why you care |
 |---|---|
