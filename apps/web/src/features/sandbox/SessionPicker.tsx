@@ -248,6 +248,22 @@ export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
   useEffect(() => {
     let isMounted = true;
 
+    // Loose agent_id match — the bound row.agent.agentId we were given may be
+    // `agent-01-<hash>` while the sandbox replies with the bare hostname
+    // `agent-01` (or vice versa). Strict equality used to silently drop the
+    // session_list reply in that case, leaving the picker hung on the
+    // "Listing sessions…" spinner forever. Mirrors the same loose pattern
+    // the sidebar's findBoundAgent uses.
+    const matchesAgent = (replyId: unknown): boolean => {
+      if (typeof replyId !== 'string') return false;
+      if (replyId === agentId) return true;
+      // Prefix forms in either direction: our id may be the longer hashed
+      // version or the bare one — accept either as the same agent.
+      const longer = agentId.length >= replyId.length ? agentId : replyId;
+      const shorter = agentId.length >= replyId.length ? replyId : agentId;
+      return longer === shorter || longer.startsWith(`${shorter}-`);
+    };
+
     function handleMessage(evt: MessageEvent) {
       if (!isMounted) return;
       let msg: Record<string, unknown>;
@@ -256,8 +272,14 @@ export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
 
       switch (msg['type']) {
         case 'session_list': {
-          if (msg['agent_id'] !== agentId) break;
+          if (!matchesAgent(msg['agent_id'])) break;
           const raw = (msg['sessions'] as WsSession[] | undefined) ?? [];
+          // Diagnostic — surface what the sandbox actually returned so an
+          // operator can see in DevTools whether sessions arrived at all.
+          console.info(
+            `[SessionPicker] session_list reply for agent=${agentId} (sandbox replied with agent_id=${String(msg['agent_id'])}): ${raw.length} session(s):`,
+            raw.map((s) => ({ name: s.session_name, type: s.session_type, running: s.running })),
+          );
           setSessions(raw);
           setPhase((prev) => {
             if (prev === 'listing') {
@@ -283,7 +305,7 @@ export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
         }
 
         case 'session_attached': {
-          if (msg['agent_id'] !== agentId) break;
+          if (!matchesAgent(msg['agent_id'])) break;
           const cmdId = msg['command_id'] as string | undefined;
           if (!cmdId) break;
           // Update routing ref — useEffect below handles xterm init/replay
@@ -295,7 +317,7 @@ export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
         }
 
         case 'output': {
-          if (msg['agent_id'] !== agentId) break;
+          if (!matchesAgent(msg['agent_id'])) break;
           const cmdId = msg['command_id'] as string | undefined;
           const data = msg['data'] as string | undefined;
           if (!cmdId || !data) break;
@@ -577,7 +599,21 @@ export function TerminalPane({ sandboxId, agentId, stats }: TerminalPaneProps) {
           {phase === 'picking' && (
             <>
               {sessions.length === 0 && (
-                <div className={styles.infoRow}>No active sessions for this agent.</div>
+                <div className={styles.infoRow}>
+                  No sessions reported by the sandbox for this agent
+                  (<code>agent_id={agentId}</code>). If a tmux session is running on the
+                  VM, check <code>aiwg serve</code> logs for the <code>session_list</code>
+                  reply (the sandbox may know the agent under a different id).
+                  Click <strong>+ New Terminal</strong> below to spawn a fresh shell.
+                </div>
+              )}
+              {sessions.length > 0 && sessions.every(s => !(s.running && s.session_type === 'interactive')) && (
+                <div className={styles.infoRow}>
+                  {sessions.length} session(s) returned but none are attachable
+                  (running + interactive). Non-interactive types
+                  ({Array.from(new Set(sessions.map(s => s.session_type))).join(', ')})
+                  don't carry a PTY. Click <strong>+ New Terminal</strong> to spawn one.
+                </div>
               )}
 
               {sessions.map((s) => (
