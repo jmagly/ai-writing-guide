@@ -338,8 +338,46 @@ async function setupWebSockets(httpServer: any, readOnly: boolean): Promise<void
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const sandboxWs = new WS(mgmtWsUrl) as any;
 
+          // Open-race fix (#1151 follow-up): the browser fires its first
+          // messages (subscribe + list_sessions) inside its own ws.onopen
+          // handler, which fires the moment the upgrade completes —
+          // BEFORE the upstream sandbox WS finishes opening. If we register
+          // the browser→sandbox listener inside sandboxWs.on('open', …) the
+          // browser's first messages have no listener yet and get silently
+          // dropped, leaving the pane forever stuck on "Listing sessions…".
+          // Two-pane setups hit this asymmetrically — pure timing decides
+          // which pane "wins" the race. Workaround: register the browser
+          // listener immediately, queue messages while upstream is still
+          // connecting, flush on upstream open.
+          const pendingFromBrowser: (Buffer | string)[] = [];
+          let upstreamOpen = false;
+
+          browserWs.on('message', (data: Buffer | string) => {
+            if (upstreamOpen && sandboxWs.readyState === 1) {
+              try { sandboxWs.send(typeof data === 'string' ? data : data.toString()); }
+              catch (err) { logServeWarn('mgmt-proxy', `relay browser→sandbox failed for ${sandboxId}`, err); }
+            } else {
+              // Upstream not ready yet — queue and flush on open. Cap the
+              // queue at a reasonable size so a hung upstream doesn't grow
+              // memory unbounded.
+              if (pendingFromBrowser.length < 64) {
+                pendingFromBrowser.push(data);
+              } else {
+                logServeWarn('mgmt-proxy', `dropped browser message for ${sandboxId} — upstream still connecting and queue full`);
+              }
+            }
+          });
+          browserWs.on('close', () => { try { sandboxWs.close(); } catch { /* ignore */ } });
+
           sandboxWs.on('open', () => {
-            logServeDebug('mgmt-proxy', `upstream WS open for sandbox ${sandboxId}`);
+            logServeDebug('mgmt-proxy', `upstream WS open for sandbox ${sandboxId} (flushing ${pendingFromBrowser.length} queued msg)`);
+            upstreamOpen = true;
+            // Flush queued browser→sandbox messages in order.
+            while (pendingFromBrowser.length) {
+              const data = pendingFromBrowser.shift()!;
+              try { sandboxWs.send(typeof data === 'string' ? data : data.toString()); }
+              catch (err) { logServeWarn('mgmt-proxy', `flush browser→sandbox failed for ${sandboxId}`, err); }
+            }
             // Relay sandbox → browser
             sandboxWs.on('message', (data: Buffer | string) => {
               if (browserWs.readyState === 1) {
@@ -355,17 +393,6 @@ async function setupWebSockets(httpServer: any, readOnly: boolean): Promise<void
               logServeWarn('mgmt-proxy', `upstream WS error for sandbox ${sandboxId} (${mgmtWsUrl})`, err);
               try { browserWs.close(1011, 'Sandbox WS error'); } catch { /* already closed */ }
             });
-
-            // Relay browser → sandbox
-            browserWs.on('message', (data: Buffer | string) => {
-              if (sandboxWs.readyState === 1) {
-                try { sandboxWs.send(typeof data === 'string' ? data : data.toString()); }
-                catch (err) { logServeWarn('mgmt-proxy', `relay browser→sandbox failed for ${sandboxId}`, err); }
-              } else {
-                logServeWarn('mgmt-proxy', `dropped browser message for ${sandboxId} — upstream readyState=${sandboxWs.readyState}`);
-              }
-            });
-            browserWs.on('close', () => { try { sandboxWs.close(); } catch { /* ignore */ } });
           });
 
           sandboxWs.on('error', (err: unknown) => {
