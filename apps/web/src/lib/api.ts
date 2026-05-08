@@ -418,8 +418,15 @@ export interface CreateSessionRequest {
 export interface CreateSessionResponse {
   session_id: string;
   session_name: string;
-  /** Relative WS URL on the sandbox: /ws/sessions/:id/orchestrate */
-  ws_url: string;
+  // #1155 / agentic-sandbox#191 — v2026.5.0 dropped the bogus `ws_url` field
+  // (the path didn't actually exist) and replaced it with a self-describing
+  // pair: a bare WS endpoint to dial and a pre-baked first frame to send.
+  /** Bare WS endpoint to dial (host placeholder substituted by client). */
+  ws_endpoint: string;
+  /** Pre-baked first frame to send on the freshly-opened WS. */
+  join_message: { type: 'join_session'; session_id: string; role?: 'controller' | 'observer' };
+  /** @deprecated Removed in agentic-sandbox v2026.5.0; kept optional for older sandboxes. */
+  ws_url?: string;
 }
 
 // ---- Loadout types (#733 #915) ----

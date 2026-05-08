@@ -527,6 +527,7 @@ const SNAKE_TO_DOT_EVENT_TYPE: Record<string, SandboxEventType> = {
   task_completed: 'task.completed',
   task_failed: 'task.failed',
   aiwg_log: 'aiwg.log',
+  agent_sessions: 'agent.sessions', // sandbox#192 — full session inventory replace (#1155)
 };
 
 /** Top-level field aliases from snake_case payloads → camelCase view. */
