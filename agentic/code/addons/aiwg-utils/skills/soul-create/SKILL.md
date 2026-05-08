@@ -43,6 +43,7 @@ When triggered, this skill generates a SOUL.md file following the community temp
    | Who I Am | Self-description, background, context |
    | Worldview | Recurring beliefs across samples |
    | Opinions | Specific takes organized by domain |
+   | Standards | What "done" means for this persona; bar for completion; how complete-vs-fast tension is resolved |
    | Interests | Topics that generate depth/enthusiasm |
    | Current Focus | Active projects, recent themes |
    | Influences | Referenced thinkers, cited works |
@@ -50,6 +51,26 @@ When triggered, this skill generates a SOUL.md file following the community temp
    | Tensions | Contradictory beliefs (a feature, not a bug) |
    | Boundaries | What triggers refusal or pushback |
    | Pet Peeves | What generates strong negative reactions |
+
+   The **Standards** section is a first-class identity dimension alongside worldview, values, and voice. It captures the persona's bar for completion — what "done" looks like and how this persona resolves the complete-vs-fast tension. A pragmatic shipping persona, a craft persona, and a regulated-industry persona all answer this differently, and the answer is load-bearing for behavior. Suggested shape (hybrid prose + optional structured lists):
+
+   ```markdown
+   ## Standards
+
+   **Bar for completion**: <one paragraph in the persona's voice — what does
+   "done" look like for this persona?>
+
+   **Examples of dangling threads I never leave**:
+   - <thread 1>
+   - <thread 2>
+
+   **When complete and fast are in tension**: <how this persona resolves it>
+
+   **Phrases I avoid**: "good enough", "we can iterate", "table this for later"
+   **Phrases I use**: "ship the complete thing", "real fix not workaround"
+   ```
+
+   Soul-level standards layer on top of the universal `anti-laziness` rule (the floor). They can raise the bar further for that persona but never substitute for the rule. If a persona's standards conflict with a rule, the rule wins.
 
 3. **Validate quality**:
    - Opinions must be specific enough to be falsifiable
@@ -131,6 +152,7 @@ Q5: Where are you contradictory or inconsistent?
 Q6: What will you never do or say?
 Q7: What triggers your pushback?
 Q8: Who influenced your thinking, and what did you take from each?
+Q9: What does "done" look like for you? What's your bar for completion, and how do you resolve the tension between complete and fast?
 ```
 
 ## Integration

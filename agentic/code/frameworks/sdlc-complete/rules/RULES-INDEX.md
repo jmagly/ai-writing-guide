@@ -35,8 +35,8 @@ Core rules are non-negotiable defaults deployed to every AIWG installation.
 ### HIGH
 
 #### anti-laziness
-**Summary**: Never delete tests to make them pass. Never skip tests. Never remove features instead of fixing them. Never weaken assertions. Escalate to human after 3 failed attempts. Recovery protocol: PAUSE > DIAGNOSE > ADAPT > RETRY > ESCALATE.
-**When to apply**: Test failures, difficult bugs, refactoring challenges, coverage regression, premature task abandonment
+**Summary**: Two halves. **Floor** (Rules 1–8): never delete tests, skip tests, remove features, weaken assertions, suppress CI signals, or hide blockers. Escalate after 3 failed attempts; recovery protocol PAUSE > DIAGNOSE > ADAPT > RETRY > ESCALATE. **Ceiling** ("Boil the Ocean Within Scope" + Rule 9): inside the authorized scope, deliver the whole thing — code + tests + docs + verification — tie off dangling threads, prefer real fix over workaround, ship the finished product not a plan. Strictly bounded by `human-authorization` and `scoped-reasoning`: the ambition applies inside the lines, never to expand them. Paired with `vague-discretion` for measurable completion.
+**When to apply**: Test failures, difficult bugs, refactoring challenges, coverage regression, premature task abandonment, returning a plan when a deliverable was requested, leaving identical bugs untouched in adjacent code, shipping code without tests/docs/verification
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/anti-laziness.md
 
 #### executable-feedback

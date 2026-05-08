@@ -55,6 +55,7 @@ For each missing recommended section, generate a draft:
 
 | Missing Section | Generation Strategy |
 |----------------|-------------------|
+| Standards | Propose a bar-for-completion paragraph + dangling-thread examples + complete-vs-fast resolution. Infer from opinions and pet peeves about quality, shipping, and "good enough." Surface as a draft for the author to confirm. |
 | Boundaries | Infer from opinions — strong opinions imply boundaries |
 | Tensions | Find contradictions between stated opinions |
 | Vocabulary | Extract signature terms from existing text |

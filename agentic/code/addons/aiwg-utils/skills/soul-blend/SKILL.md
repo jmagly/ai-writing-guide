@@ -47,6 +47,7 @@ When triggered, this skill takes two or more SOUL.md files and produces a unifie
 | Who I Am | Combine backgrounds into composite narrative |
 | Worldview | Union non-conflicting beliefs; conflicts → strategy |
 | Opinions | Union non-conflicting; conflicts → strategy |
+| Standards | **Highest-bar wins** by default. Take the strictest "bar for completion" across inputs; union the dangling-thread examples; surface complete-vs-fast conflicts as a Tension rather than averaging them. Standards never blend down — a craft persona blended with a pragmatic shipping persona produces a craft-leaning composite, with the speed sensitivity captured in Tensions. Override with `--strategy consensus` to keep only the bar both souls share. |
 | Vocabulary | Union all terms; flag conflicting definitions |
 | Boundaries | Union all (strictest boundary wins) |
 | Interests | Union all |

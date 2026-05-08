@@ -20,6 +20,34 @@ These rules prevent destructive avoidance behaviors where agents abandon difficu
 | 94% of iteration failures from bad feedback | REF-015: Self-Refine | Feedback quality paramount for recovery |
 | Four failure archetypes | REF-002: LLM Failures | Premature action, over-helpfulness, context pollution, fragile execution |
 
+## The Standard: Boil the Ocean (Within Scope)
+
+The rules below set the **floor** — the destructive shortcuts agents must never take. This section sets the **ceiling** — what completion is supposed to look like before a single shortcut is even considered. The floor and ceiling are paired: a task is not "done" because no rule was broken; a task is done when the work itself is complete.
+
+### Positive Standard
+
+**Do the whole thing.** The marginal cost of completeness is near zero. Code without tests is incomplete. Tests without docs are incomplete. A fix without an integration check is incomplete. There is no efficiency argument for shipping less than the whole thing inside the authorized scope.
+
+**Tie off the dangling thread.** If you noticed it, you fix it. Filing an issue and walking is not closing the thread — the issue *is* the thread. The exception is when fixing it would expand scope (see Within-Scope Discipline below); in that case, file the issue *and* state plainly that the thread is being deferred, do not pretend it is closed.
+
+**Real fix over workaround.** If the workaround takes 10 minutes and the real fix takes 15, do the real fix. Workarounds become permanent. A workaround is acceptable only when the real fix is genuinely out of scope or blocked on a decision the agent cannot make.
+
+**The answer is the finished product.** When asked to do X, "here is a plan to do X" is not the answer unless the user explicitly asked for a plan. The default deliverable is X done.
+
+**Time, fatigue, and complexity are not excuses.** Decompose, recurse, parallelize, escalate research — but do not punt. The recovery protocol below exists for cases where 3 honest attempts have failed; it is not a shortcut around starting the work.
+
+**The bar is "holy shit, that's done."** Internalize the difference between "the task is technically complete" and "the work demonstrably exceeds expectations." Aim for the latter as default. "Polite satisfaction" from the reviewer is the failure mode; "genuine impression" is the target.
+
+### Within-Scope Discipline
+
+This standard applies *strictly within the authorized scope*. It must never be read as license to expand scope autonomously.
+
+- **Reconciliation with `human-authorization`**: A finding is not authorization to act. "Boil the ocean" means: inside the authorized scope, leave nothing half-done. It does **not** mean: discover adjacent work and absorb it. Adjacent work gets filed as issues and reported, not silently completed.
+- **Reconciliation with `scoped-reasoning` and `distractor-filter`**: Completeness must respect the task's time, entity, and operation boundaries. Boiling the ocean inside the lines drawn by the user is the goal; redrawing the lines is a violation.
+- **Reconciliation with `vague-discretion`**: Ambition without measurable completion criteria becomes drift. This rule sets the ceiling; `vague-discretion` ensures the ceiling is checkable. Both apply: the standard is **measurably done AND ambitiously complete**.
+
+The summary: **draw the lines once, then leave nothing half-done inside them.**
+
 ## Mandatory Rules
 
 ### Rule 1: Never Delete Tests to Pass
@@ -333,6 +361,93 @@ Removing a failing job from the workflow entirely is equally forbidden. The job 
 4. For flaky tests: add targeted retry with bounded attempts, then fix the flakiness
 5. Never apply blanket suppression as a workaround
 
+### Rule 9: Do the Whole Thing (Within Scope)
+
+This rule operationalizes the positive standard above. Where Rules 1–8 forbid destructive shortcuts, Rule 9 forbids the equally common failure of stopping short of a complete deliverable.
+
+**FORBIDDEN — "I'll deliver a plan instead of the thing"**:
+```
+User: "Add JWT validation to the login endpoint."
+Agent: "Here is a plan to add JWT validation:
+  1. Choose a library (jose recommended)
+  2. Add middleware
+  3. Wire it into the route
+  4. Write tests
+  Want me to proceed?"
+```
+
+The user asked for the feature, not a plan to build the feature. Default to shipping X done.
+
+**REQUIRED — "Here is the finished thing"**:
+```
+Agent: "Done. Added jose-based JWT validation as middleware in
+       src/auth/jwt.ts, wired into POST /auth/login. Added 6 tests
+       covering valid token, expired token, malformed token, missing
+       token, wrong signature, and replay. npm test green."
+```
+
+**FORBIDDEN — "I'll table the dangling thread"**:
+```
+Agent: "Fixed the bug. I noticed the same null-check is missing in
+       three other handlers but I'll table that for a separate task."
+```
+
+If the same bug exists in three other call sites you just touched, fixing them is part of fixing the bug — not a separate task. The exception is when fixing them would expand scope into a different module or feature; in that case, file an issue and say so explicitly.
+
+**REQUIRED — "Tied off the thread"**:
+```
+Agent: "Fixed the null-check in the original handler and the three
+       other handlers in the same module that had the identical bug.
+       Added a regression test for each. The same pattern likely
+       applies in the legacy adapter (src/legacy/) but that module
+       is out of scope for this ticket — filed #N."
+```
+
+**FORBIDDEN — "Workaround instead of real fix"**:
+```
+Agent: "The session refresh was failing because userId wasn't being
+       re-populated. I added a fallback that re-derives userId from
+       the email when missing. Tests pass."
+```
+
+The fallback masks the bug. Next time userId is missing for a different reason, the fallback hides it.
+
+**REQUIRED — "Real fix"**:
+```
+Agent: "The session refresh was failing because refreshToken() didn't
+       re-populate userId after validation. Fixed refreshToken() to
+       set userId from the decoded payload. Removed the temporary
+       fallback I considered — it would have hidden future regressions."
+```
+
+**FORBIDDEN — "Code without the rest"**:
+```
+Agent: "Implemented the feature." (No tests. No docs touched. No
+       integration check run. No verification command executed.)
+```
+
+**REQUIRED — "The whole thing"**:
+```
+Agent: "Implemented the feature.
+       - Code: src/feature/X.ts (143 lines)
+       - Tests: 12 unit + 3 integration, all green
+       - Docs: updated docs/api/X.md and the relevant README section
+       - Verification: npm test && npx tsc --noEmit both pass
+       - No coverage regression."
+```
+
+**Detection Patterns for Rule 9**:
+- Agent returns a plan when a deliverable was requested
+- Agent fixes the reported instance but ignores identical bugs in adjacent code it just read
+- Agent introduces a fallback/workaround alongside a comment hinting at a deeper bug
+- Code committed without corresponding tests or documentation updates when both were in scope
+- Agent declares "done" without running the verification command for the work just performed
+
+**When Rule 9 Yields to Other Rules**:
+- `human-authorization` outranks Rule 9 when the agent's "completing the thing" would expand scope or take an irreversible action without authorization
+- `scoped-reasoning` outranks Rule 9 when "completing the thing" would pull in out-of-scope time periods, entities, or operations
+- The recovery protocol (Rule 6) applies if 3 honest attempts at the real fix fail — escalate, do not workaround
+
 ## Test Analysis
 
 Test failure investigation is an analysis process, not a binary pass/fail decision. When tests fail, the correct response is diagnosis, not suppression.
@@ -562,6 +677,9 @@ For this task, you MUST:
 - PRESERVE all existing tests (do not delete or skip)
 - MAINTAIN or IMPROVE test coverage
 - ESCALATE to human if stuck after 3 attempts
+- DELIVER the whole thing within scope: code + tests + docs + verification
+- TIE OFF dangling threads inside the authorized scope; file issues for adjacent work outside it
+- SHIP the finished product when asked for X — not a plan to build X (unless a plan was explicitly requested)
 
 You MUST NOT:
 - Delete, skip, or disable any tests
@@ -711,6 +829,9 @@ Before completing any code task:
 - [ ] If stuck, escalated with full context
 - [ ] Iteration quality tracked
 - [ ] Reflection memory updated
+- [ ] The whole thing was delivered within scope (code + tests + docs + verification command run)
+- [ ] Dangling threads inside scope tied off; adjacent work outside scope filed as issues, not silently absorbed
+- [ ] Final deliverable is the finished product, not a plan to build it (unless a plan was explicitly requested)
 
 ## References
 
@@ -721,10 +842,12 @@ Before completing any code task:
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/executable-feedback.md - Executable feedback rules
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/actionable-feedback.md - Actionable feedback rules
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/tao-loop.md - TAO loop standardization
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md - Measurable completion criteria (paired ceiling-floor with this rule)
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md - Within-scope discipline boundary
 - @$AIWG_ROOT/agentic/code/addons/persistence/patterns/avoidance-catalog.yaml - Pattern catalog
 - @$AIWG_ROOT/agentic/code/addons/ralph/schemas/reflection-memory.json - Reflection memory schema
 
 ---
 
 **Rule Status**: ACTIVE
-**Last Updated**: 2026-03-24
+**Last Updated**: 2026-05-08
