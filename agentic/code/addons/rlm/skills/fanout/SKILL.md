@@ -3,6 +3,7 @@ namespace: aiwg
 name: fanout
 platforms: [all]
 description: Dispatch the same query to multiple subagents in parallel across chunks in a manifest and aggregate results with source provenance
+version: 1.1.0
 ---
 
 # Fanout
@@ -24,7 +25,7 @@ Alternate expressions and non-obvious activations:
 |---------|---------|--------|
 | Fanout search | "search all chunks for authentication bugs" | Fanout query across manifest |
 | Explicit chunks dir | "fanout across .aiwg/rlm-chunks/auth/" | `--chunks .aiwg/rlm-chunks/auth/` |
-| Limit parallelism | "search chunks, max 2 at a time" | `--parallel 2` |
+| Limit parallelism | "search chunks, max 2 at a time" | `--max-parallel 2` |
 | Synthesis request | "search all chunks and give me one answer" | `--synthesize` |
 | Model selection | "use haiku to search the chunks" | `--model haiku` |
 | Manifest path | "fanout using manifest.json" | `--chunks manifest.json` |
@@ -37,9 +38,9 @@ When triggered:
 
 2. **Load manifest** — read `manifest.json` from the chunks directory, or use the provided manifest path directly. Validate that chunk files exist.
 
-3. **Respect context budget** — if `AIWG_CONTEXT_WINDOW` is set, cap `--parallel` at the budget-appropriate limit per the context-budget rule. Default cap is 4 parallel subagents.
+3. **Respect context budget** — if `AIWG_CONTEXT_WINDOW` is set, cap `--max-parallel` at the budget-appropriate limit per the context-budget rule. Default cap is 4 parallel subagents.
 
-4. **Dispatch subagents** — launch up to `--parallel` subagents simultaneously. Each subagent:
+4. **Dispatch subagents** — launch up to `--max-parallel` subagents simultaneously. Each subagent:
    - Receives the query and exactly one chunk's content
    - Is instructed to answer only from that chunk's content
    - Returns a structured result: `{ chunk_id, answer, confidence, relevant_lines }`
@@ -96,7 +97,7 @@ chunk-0007, lines 203-208).
 
 - `<query>` — Natural language question or task to answer using the chunks (required)
 - `--chunks <dir|manifest.json>` — Path to chunks directory or manifest file (default: `.aiwg/rlm-chunks/`)
-- `--parallel N` — Max simultaneously active subagents (default: `4`, bounded by context budget)
+- `--max-parallel N` — Max simultaneously active subagents (default: `4`, bounded by context budget). Alias `--parallel` is accepted for one release cycle and emits a deprecation warning; remove it after the next stable release.
 - `--model haiku|sonnet|opus` — Model for subagents (default: `haiku` for cost efficiency)
 - `--synthesize` — After collecting results, synthesize into a single answer
 
@@ -157,7 +158,7 @@ Express error handler in `src/middleware/error.ts` and forwarded to the logger
 
 **Action**:
 ```bash
-aiwg fanout "find all database connection setup" --chunks .aiwg/rlm-chunks/services/ --parallel 2
+aiwg fanout "find all database connection setup" --chunks .aiwg/rlm-chunks/services/ --max-parallel 2
 ```
 
 **Response**: Runs subagents in batches of 2. Reports matches with provenance after all 9 chunks are processed.
@@ -184,7 +185,7 @@ If the user's intent is ambiguous:
 
 - "Which chunks directory should I search? (found: `.aiwg/rlm-chunks/`)"
 - "Should I synthesize the results into one answer, or list all matches with provenance?"
-- "How many parallel subagents? Default is 4."
+- "How many parallel subagents? Default is 4 (use `--max-parallel N` to override)."
 
 ## References
 

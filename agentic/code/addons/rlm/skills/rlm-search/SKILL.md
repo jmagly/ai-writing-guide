@@ -3,6 +3,7 @@ namespace: aiwg
 name: rlm-search
 platforms: [all]
 description: Run the full Recursive Language Model pipeline — prep, fan out across chunks, and recursively synthesize until results fit one context window
+version: 1.1.0
 ---
 
 # RLM Search
@@ -38,7 +39,7 @@ When triggered:
 
 2. **Check for existing prep** — look for a valid manifest in `.aiwg/rlm-prep/` matching the source. If found and not stale, skip prep. If not found, run `rlm-prep` automatically.
 
-3. **Initial fanout (level 1)** — dispatch the query across all chunks, up to `--parallel` subagents at a time. Collect results with provenance.
+3. **Initial fanout (level 1)** — dispatch the query across all chunks, up to `--max-parallel` subagents at a time. Collect results with provenance.
 
 4. **Check synthesis fit** — measure the total size of all level-1 results. If they fit in a single context window, synthesize directly (base case). If not, recurse.
 
@@ -99,7 +100,7 @@ Cost summary: 47 subagents, 184,320 tokens (~$0.18), 1 synthesis pass
 - `<query>` — Natural language question or task (required)
 - `--source <file|dir>` — Source content to search (default: `.`)
 - `--depth N` — Maximum recursion depth before forcing synthesis (default: `3`)
-- `--parallel N` — Max parallel subagents per level (default: `4`, bounded by context budget)
+- `--max-parallel N` — Max parallel subagents per level (default: `4`, bounded by context budget). Alias `--parallel` is accepted for one release cycle and emits a deprecation warning; remove it after the next stable release.
 - `--budget N` — Token budget for the entire operation (default: `500000`)
 
 ## Examples
@@ -157,7 +158,7 @@ Level-1 produces 28 matching fragments totaling 40,000 tokens (too large for one
 aiwg rlm-search "how are Stripe webhooks handled?" \
   --source src/payments/ \
   --budget 100000 \
-  --parallel 4
+  --max-parallel 4
 ```
 
 **Response**: If budget would be exceeded, the pipeline pauses and reports: "Budget checkpoint: 82,400 tokens used. Continue (remaining budget: 17,600)? [y/n]"
@@ -188,7 +189,7 @@ aiwg rlm-search "identify any irreversible operations with no rollback path" \
 aiwg rlm-search "where is the database connection string configured?" \
   --source . \
   --depth 1 \
-  --parallel 8
+  --max-parallel 8
 ```
 
 **Response**: Forces synthesis at depth 1 — faster but may miss cross-chunk context. Reports results within a single fanout pass.
