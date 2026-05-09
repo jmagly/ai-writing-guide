@@ -120,8 +120,9 @@ export async function main(args: string[]): Promise<void> {
       console.log('  aiwg index discover "create intake"');
       console.log('  aiwg index discover "deploy production" --limit 5 --json');
       console.log('  aiwg index discover "audit security" --type skill');
-      console.log('  aiwg index show intake-wizard');
-      console.log('  aiwg index show flow-deploy-to-production --json');
+      console.log('  aiwg index show skill intake-wizard');
+      console.log('  aiwg index show skill flow-deploy-to-production --json');
+      console.log('  aiwg index show agent aiwg-steward');
       console.log('  aiwg index query "authentication" --type use-case');
       console.log('  aiwg index query "security rules" --graph framework --json');
       console.log('  aiwg index deps .aiwg/requirements/UC-001.md');
@@ -638,13 +639,17 @@ async function handleDiscover(args: string[]): Promise<void> {
 }
 
 /**
- * Handle 'index show' command — print the full text of a specific skill,
- * agent, command, or rule by name (or path).
+ * Handle 'index show' command — print the full text of a specific
+ * artifact by type and name.
+ *
+ * Shape (#1218):
+ *   aiwg show <type> <name> [--json] [--first] [--graph <name>]
+ *
+ * Type is positional (not a flag) so the verb reads as
+ * "show <kind> <name>". `<type>` is one of: skill, agent, command, rule.
  *
  * Companion to `discover`: where discover ranks candidates, show fetches
  * the artifact body so consumers don't need to navigate the filesystem.
- *
- * @implements #1218
  */
 async function handleShow(args: string[]): Promise<void> {
   const { showArtifact } = await import('./query-engine.js');
@@ -659,29 +664,52 @@ async function handleShow(args: string[]): Promise<void> {
     else positional.push(arg);
   }
 
-  const name = positional.join(' ').trim();
-  if (!name) {
-    console.error('Error: aiwg index show requires a skill/agent/command/rule name');
-    console.log('');
-    console.log('Usage: aiwg index show <name> [--type <kinds>] [--json] [--first] [--graph <name>]');
-    console.log('');
-    console.log('Examples:');
-    console.log('  aiwg index show intake-wizard');
-    console.log('  aiwg index show flow-deploy-to-production --json');
-    console.log('  aiwg index show address-issues --type skill');
-    console.log('');
-    console.log('Tip: use `aiwg discover "<phrase>"` first to find the right name.');
+  const ALLOWED_TYPES = ['skill', 'agent', 'command', 'rule'];
+  const HELP_TEXT = [
+    '',
+    'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>]',
+    '       aiwg index show <type> <name> ...',
+    '',
+    'Types: skill | agent | command | rule',
+    '',
+    'Examples:',
+    '  aiwg show skill intake-wizard',
+    '  aiwg show skill flow-deploy-to-production --json',
+    '  aiwg show agent aiwg-steward',
+    '  aiwg show command discover',
+    '',
+    'Tip: use `aiwg discover "<phrase>"` first to find the right name.',
+  ].join('\n');
+
+  if (positional.length === 0) {
+    console.error('Error: aiwg show requires a type and name');
+    console.error(HELP_TEXT);
     process.exit(1);
   }
 
-  let typeFilter: string[] | undefined;
+  // First positional MUST be the type. Reject ambiguous "name only"
+  // input — operators occasionally typed `aiwg show intake-wizard`
+  // when they meant `aiwg show skill intake-wizard`. Suggest the fix.
+  const type = positional[0].toLowerCase();
+  if (!ALLOWED_TYPES.includes(type)) {
+    console.error(`Error: "${positional[0]}" is not a valid artifact type.`);
+    console.error(`Did you mean: aiwg show skill ${positional[0]} ?`);
+    console.error(HELP_TEXT);
+    process.exit(1);
+  }
+
+  const name = positional.slice(1).join(' ').trim();
+  if (!name) {
+    console.error(`Error: aiwg show ${type} requires a name`);
+    console.error(HELP_TEXT);
+    process.exit(1);
+  }
+
   let json = false;
   let first = false;
 
   for (let i = 0; i < flags.length; i++) {
-    if (flags[i] === '--type' && i + 1 < flags.length) {
-      typeFilter = flags[++i].split(',').map(s => s.trim()).filter(Boolean);
-    } else if (flags[i] === '--json') {
+    if (flags[i] === '--json') {
       json = true;
     } else if (flags[i] === '--first') {
       first = true;
@@ -692,7 +720,7 @@ async function handleShow(args: string[]): Promise<void> {
 
   await showArtifact(cwd, {
     name,
-    typeFilter,
+    typeFilter: [type],
     json,
     first,
     graph,

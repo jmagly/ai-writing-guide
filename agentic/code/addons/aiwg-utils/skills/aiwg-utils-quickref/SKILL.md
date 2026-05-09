@@ -43,6 +43,19 @@ If a user asks about a specific framework's surface, the corresponding quickref 
 
 If a quickref isn't loaded, the framework isn't installed in this project. Use `aiwg list` to confirm.
 
+## Self-maintenance kernel (always loaded)
+
+These ops skills are kernel-resident — already in your context regardless of `aiwg discover`. If discovery breaks, you still have the surfaces to repair the install:
+
+- `steward` — provider capability awareness + command routing
+- `aiwg-doctor` — installation health check with remediation steps
+- `aiwg-refresh` — update CLI + redeploy frameworks (alias: `aiwg sync`)
+- `aiwg-status` — workspace status dashboard
+- `aiwg-help` — list every CLI command, args, and examples
+- `use` — deploy a framework or addon
+
+Pair with the `aiwg-steward` agent (always-deployed) for orchestrated repair: health check → refresh → re-doctor.
+
 ## Capability domains
 
 | Domain | Covers |

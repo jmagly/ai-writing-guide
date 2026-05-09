@@ -2,6 +2,7 @@
 name: aiwg-doctor
 namespace: aiwg
 platforms: [all]
+kernel: true
 description: Run a comprehensive health check on the AIWG installation and workspace with pass/fail diagnostics and remediation steps
 ---
 

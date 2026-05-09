@@ -998,7 +998,7 @@ export const showCommand: Extension = {
     ],
     commandHint: {
       template: 'utility',
-      argumentHint: '<name> [--type skill,agent,...] [--json] [--first]',
+      argumentHint: '<type> <name> [--json] [--first]   # type: skill | agent | command | rule',
       allowedTools: ['Read'],
     },
   } satisfies SkillMetadata,
