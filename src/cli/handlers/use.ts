@@ -1408,18 +1408,30 @@ export class UseHandler implements CommandHandler {
     // Rebuild the `framework` artifact index (#1212/#1214) so
     // `aiwg index discover` queries return fresh capability data.
     // Best-effort — index rebuild failure must not fail the deploy.
+    //
+    // Pre-flight: skip when the framework source dirs aren't present
+    // (e.g., test fixtures, deploy from npm install rather than the
+    // source repo). buildIndex() calls `process.exit(1)` on missing
+    // scan dirs which would short-circuit our catch. The `framework`
+    // graph requires `agentic/code/frameworks` to be readable.
     if (!dryRun) {
-      try {
-        const { buildIndex } = await import('../../artifacts/index-builder.js');
-        await buildIndex(target, { graph: 'framework', explicit: false });
-        if (verbose) console.log('Framework artifact index rebuilt');
-      } catch (error) {
-        if (verbose) {
-          console.error(
-            'Warning: framework index rebuild failed:',
-            error instanceof Error ? error.message : String(error),
-          );
+      const fwSrcDir = path.join(target, 'agentic', 'code', 'frameworks');
+      const hasFrameworkSrc = await fs.access(fwSrcDir).then(() => true).catch(() => false);
+      if (hasFrameworkSrc) {
+        try {
+          const { buildIndex } = await import('../../artifacts/index-builder.js');
+          await buildIndex(target, { graph: 'framework', explicit: false });
+          if (verbose) console.log('Framework artifact index rebuilt');
+        } catch (error) {
+          if (verbose) {
+            console.error(
+              'Warning: framework index rebuild failed:',
+              error instanceof Error ? error.message : String(error),
+            );
+          }
         }
+      } else if (verbose) {
+        console.log('Framework source not found; skipping index rebuild');
       }
     }
 
