@@ -73,6 +73,7 @@ import {
   packageAllPluginsHandler,
   indexHandler,
   discoverHandler,
+  showHandler,
   skillsHandler,
   configHandler,
   opsHandler,
@@ -149,6 +150,7 @@ export {
   catalogHandler,
   indexHandler,
   discoverHandler,
+  showHandler,
   skillsHandler,
   configHandler,
   opsHandler,
@@ -288,6 +290,7 @@ export const allHandlers: CommandHandler[] = [
   catalogHandler,
   indexHandler,
   discoverHandler,
+  showHandler,
   skillsHandler,
   runtimeInfoHandler,
 

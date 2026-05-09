@@ -53,6 +53,10 @@ export async function main(args: string[]): Promise<void> {
       await handleDiscover(subcommandArgs);
       break;
 
+    case 'show':
+      await handleShow(subcommandArgs);
+      break;
+
     case 'deps':
       await handleDeps(subcommandArgs);
       break;
@@ -98,6 +102,7 @@ export async function main(args: string[]): Promise<void> {
       console.log('  build      Build/rebuild the artifact index');
       console.log('  query      Search artifacts by keyword, type, phase, tags');
       console.log('  discover   Capability search across skills/agents/commands/rules (#1214)');
+      console.log('  show       Print the full text of a specific skill/agent/command/rule');
       console.log('  deps       Show artifact dependency graph');
       console.log('  stats      Show index statistics');
       console.log('  neighbors  Get neighbors of a node in a graph');
@@ -115,6 +120,8 @@ export async function main(args: string[]): Promise<void> {
       console.log('  aiwg index discover "create intake"');
       console.log('  aiwg index discover "deploy production" --limit 5 --json');
       console.log('  aiwg index discover "audit security" --type skill');
+      console.log('  aiwg index show intake-wizard');
+      console.log('  aiwg index show flow-deploy-to-production --json');
       console.log('  aiwg index query "authentication" --type use-case');
       console.log('  aiwg index query "security rules" --graph framework --json');
       console.log('  aiwg index deps .aiwg/requirements/UC-001.md');
@@ -626,6 +633,68 @@ async function handleDiscover(args: string[]): Promise<void> {
     typeFilter,
     limit,
     json,
+    graph,
+  });
+}
+
+/**
+ * Handle 'index show' command — print the full text of a specific skill,
+ * agent, command, or rule by name (or path).
+ *
+ * Companion to `discover`: where discover ranks candidates, show fetches
+ * the artifact body so consumers don't need to navigate the filesystem.
+ *
+ * @implements #1218
+ */
+async function handleShow(args: string[]): Promise<void> {
+  const { showArtifact } = await import('./query-engine.js');
+  const cwd = process.cwd();
+
+  const positional: string[] = [];
+  const flags: string[] = [];
+  let inFlags = false;
+  for (const arg of args) {
+    if (arg.startsWith('--')) inFlags = true;
+    if (inFlags) flags.push(arg);
+    else positional.push(arg);
+  }
+
+  const name = positional.join(' ').trim();
+  if (!name) {
+    console.error('Error: aiwg index show requires a skill/agent/command/rule name');
+    console.log('');
+    console.log('Usage: aiwg index show <name> [--type <kinds>] [--json] [--first] [--graph <name>]');
+    console.log('');
+    console.log('Examples:');
+    console.log('  aiwg index show intake-wizard');
+    console.log('  aiwg index show flow-deploy-to-production --json');
+    console.log('  aiwg index show address-issues --type skill');
+    console.log('');
+    console.log('Tip: use `aiwg discover "<phrase>"` first to find the right name.');
+    process.exit(1);
+  }
+
+  let typeFilter: string[] | undefined;
+  let json = false;
+  let first = false;
+
+  for (let i = 0; i < flags.length; i++) {
+    if (flags[i] === '--type' && i + 1 < flags.length) {
+      typeFilter = flags[++i].split(',').map(s => s.trim()).filter(Boolean);
+    } else if (flags[i] === '--json') {
+      json = true;
+    } else if (flags[i] === '--first') {
+      first = true;
+    }
+  }
+
+  const graph = parseGraphFlag(flags);
+
+  await showArtifact(cwd, {
+    name,
+    typeFilter,
+    json,
+    first,
     graph,
   });
 }

@@ -427,3 +427,156 @@ export async function discoverCapability(
   console.log('');
   console.log('★ = kernel skill (always-loaded). Others are reachable via the index.');
 }
+
+export interface ShowParams {
+  /** Skill name (e.g. `intake-wizard`), title, or artifact path */
+  name: string;
+  /** Restrict to specific types — defaults to skill/agent/command/rule */
+  typeFilter?: string[];
+  /** Emit a JSON envelope (path + content) instead of raw file text */
+  json?: boolean;
+  /** Override default graph (defaults to `framework`, falls back to `project`) */
+  graph?: GraphType;
+  /** When ambiguous, pick the first match instead of erroring */
+  first?: boolean;
+}
+
+/**
+ * Read and emit the full text of a specific artifact (typically a
+ * SKILL.md). Consumers don't need to know where AIWG stores skills —
+ * they pass the skill name and the CLI reads the file from the indexed
+ * location.
+ *
+ * Lookup order:
+ *   1. Exact path match against any indexed entry's stored path
+ *   2. Basename match (e.g. `intake-wizard` matches an entry whose
+ *      directory basename is `intake-wizard`)
+ *   3. Title match (case-insensitive)
+ *
+ * On ambiguity, lists all matches and exits with code 2 unless
+ * `--first` is supplied.
+ */
+export async function showArtifact(
+  cwd: string,
+  params: ShowParams,
+): Promise<void> {
+  const { promises: fs } = await import('node:fs');
+  const path = await import('node:path');
+  const types = params.typeFilter && params.typeFilter.length > 0
+    ? params.typeFilter
+    : DEFAULT_DISCOVER_TYPES;
+  const aiwgRoot = await getAiwgRootForDiscover();
+
+  // Source the same graphs as discoverCapability for symmetry.
+  let entries: MetadataEntry[] = [];
+  if (params.graph) {
+    const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', params.graph);
+    if (idx) entries = Object.values(idx.entries);
+  } else {
+    for (const g of ['framework', 'project', 'codebase'] as GraphType[]) {
+      const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', g);
+      if (idx) entries.push(...Object.values(idx.entries));
+    }
+    if (entries.length === 0) {
+      const legacy = loadMetadataIndex(cwd);
+      if (legacy) entries.push(...Object.values(legacy.entries));
+    }
+  }
+
+  if (entries.length === 0) {
+    console.error('Error: No artifact index found.');
+    console.error('Run `aiwg index build --graph framework` (or `aiwg use <framework>`) first.');
+    process.exit(1);
+  }
+
+  const candidates = entries.filter(e => types.includes(e.type));
+  const needle = params.name.trim();
+  const needleLower = needle.toLowerCase();
+
+  // Exact path match — most precise.
+  let matches = candidates.filter(e => e.path === needle);
+
+  // Basename match — directory name (skills/<name>/SKILL.md) or filename
+  // stem for agent/command/rule files.
+  if (matches.length === 0) {
+    matches = candidates.filter(e => {
+      const stem = path.basename(path.dirname(e.path));
+      const fileStem = path.basename(e.path).replace(/\.[^.]+$/, '');
+      return stem === needle || fileStem === needle;
+    });
+  }
+
+  // Title match (case-insensitive) — last-resort fallback.
+  if (matches.length === 0) {
+    matches = candidates.filter(e =>
+      typeof e.title === 'string' && e.title.toLowerCase() === needleLower,
+    );
+  }
+
+  if (matches.length === 0) {
+    console.error(`Error: no artifact found matching "${needle}".`);
+    console.error('Try `aiwg discover "<phrase>"` to find the right name.');
+    process.exit(1);
+  }
+
+  // Resolve relative framework-graph paths to absolute paths.
+  function resolvePath(entry: MetadataEntry): string {
+    if (entry.kernel) return entry.path;
+    if (path.isAbsolute(entry.path)) return entry.path;
+    if (aiwgRoot && entry.path.startsWith('agentic/code/')) {
+      return path.join(aiwgRoot, entry.path);
+    }
+    // Project-graph entries are stored relative to the project root (cwd).
+    return path.join(cwd, entry.path);
+  }
+
+  if (matches.length > 1 && !params.first) {
+    if (params.json) {
+      console.log(JSON.stringify({
+        ambiguous: true,
+        name: needle,
+        matches: matches.map(e => ({
+          path: resolvePath(e),
+          type: e.type,
+          title: e.title,
+          kernel: e.kernel ?? false,
+        })),
+      }, null, 2));
+    } else {
+      console.error(`Ambiguous: "${needle}" matches ${matches.length} artifacts. Disambiguate with --type or pass the full path:`);
+      for (const e of matches) {
+        console.error(`  ${e.type.padEnd(7)} ${resolvePath(e)}`);
+      }
+      console.error('');
+      console.error('Re-run with `--first` to pick the top match, or `--type skill` to filter.');
+    }
+    process.exit(2);
+  }
+
+  const entry = matches[0];
+  const filePath = resolvePath(entry);
+  let content: string;
+  try {
+    content = await fs.readFile(filePath, 'utf8');
+  } catch (err) {
+    const e = err as NodeJS.ErrnoException;
+    console.error(`Error reading ${filePath}: ${e.message ?? String(err)}`);
+    process.exit(1);
+  }
+
+  if (params.json) {
+    console.log(JSON.stringify({
+      path: filePath,
+      type: entry.type,
+      title: entry.title,
+      kernel: entry.kernel ?? false,
+      content,
+    }, null, 2));
+    return;
+  }
+
+  // Plain mode: stream the file content unmodified so the consumer
+  // (agent or operator) sees exactly what the source authored.
+  process.stdout.write(content);
+  if (!content.endsWith('\n')) process.stdout.write('\n');
+}

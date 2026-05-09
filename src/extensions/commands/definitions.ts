@@ -966,6 +966,44 @@ export const discoverCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Show: companion to `discover`. Where `discover` ranks candidates,
+// `show` fetches the full body of one specific artifact (#1218). This
+// closes the loop so consumers never need to navigate AIWG's storage
+// paths themselves — the CLI is the access point.
+export const showCommand: Extension = {
+  id: 'show',
+  type: 'skill',
+  name: 'Show',
+  description: 'Print the full text of a specific AIWG skill, agent, command, or rule by name',
+  version: '1.0.0',
+  capabilities: ['cli', 'discovery', 'read', 'capability', 'skills'],
+  keywords: ['show', 'cat', 'read skill', 'print skill', 'get skill content', 'aiwg show'],
+  category: 'index',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'show skill',
+      'print skill',
+      'read skill',
+      'get skill content',
+      'aiwg show',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<name> [--type skill,agent,...] [--json] [--first]',
+      allowedTools: ['Read'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Toolsmith Commands
 
 export const runtimeInfoCommand: Extension = {
@@ -2947,9 +2985,10 @@ export const commandDefinitions: Extension[] = [
   // Research Validation (1)
   bestPracticesAuditCommand,
 
-  // Index + Discovery (2)
+  // Index + Discovery (3)
   indexCommand,
   discoverCommand,
+  showCommand,
 
   // Reproducibility (4)
   executionModeCommand,

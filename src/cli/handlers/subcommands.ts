@@ -1045,6 +1045,35 @@ export const discoverHandler: CommandHandler = {
 };
 
 /**
+ * Show command handler — fetch the full text of a specific artifact (#1218).
+ *
+ * Forwards to the same implementation as `aiwg index show`. Companion to
+ * `aiwg discover`: where discover ranks candidates, show fetches the body
+ * so consumers don't need to navigate AIWG's storage paths themselves.
+ *
+ *   aiwg show <name> [--type skill,agent,...] [--json] [--first]
+ */
+export const showHandler: CommandHandler = {
+  id: "show",
+  name: "Show",
+  description:
+    "Print the full text of a specific AIWG skill, agent, command, or rule by name",
+  category: "index",
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import("../../artifacts/cli.js");
+      await main(["show", ...ctx.args]);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `Show command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Skills command handler
  *
  * Dynamically imports and delegates to src/skills/cli.ts.
@@ -1456,6 +1485,7 @@ export const subcommandHandlers: CommandHandler[] = [
   packageAllPluginsHandler,
   indexHandler,
   discoverHandler,
+  showHandler,
   skillsHandler,
   configHandler,
   opsHandler,
