@@ -4,7 +4,7 @@ name: rlm-batch
 platforms: [all]
 description: Parallel fan-out processing - spawn multiple sub-agents for chunked context processing
 commandHint:
-  argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>] [--force] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>] [--depth <n>]'
+  argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>] [--force] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>] [--depth <n>] [--no-cache] [--cache-only]'
   allowedTools: 'Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit'
   model: opus
   category: automation
@@ -252,6 +252,14 @@ Which dependency graph to query. Defaults to `project`. Aligns with `aiwg index 
 
 Graph traversal depth. Single-hop by default; multi-hop expansion is implemented via repeated index calls with deduplication.
 
+### --no-cache (optional, #1203)
+
+Bypass the result cache for this batch — do not read existing cache entries, but still write per-input results for future calls.
+
+### --cache-only (optional, #1203)
+
+Read-only audit: error out if any input would not be a cache hit. Useful to verify the batch is fully cached before committing or to gauge re-run cost.
+
 ## Planned Capabilities
 
 These flags are reserved in the design but not yet implemented. Tracked in Gitea #1201.
@@ -295,7 +303,14 @@ When implemented, this flag will be added to `argumentHint` and become enforceab
    Skip branches not selected. Continue with the resolved file list.
 
 3. Count matched files
-4. Estimate cost:
+4. **Cache pre-pass** (#1203, unless `--no-cache`):
+   - For each resolved input, compose `CacheKey = { inputs:[{artifactId, contentHash}], query, subPrompt, model, aggregateStrategy }` and call `computeHash(key)` (`src/rlm/cache/hash.ts`).
+   - Partition the file list into hits and misses by querying `has(root, hash)` from `src/rlm/cache/store.ts`.
+   - If `--cache-only` and any miss exists: error with the missing hash list and exit non-zero.
+   - Skip dispatch for hits — load results directly from cache.
+   - Continue dispatch only for misses; write fresh results back via `put(root, entry)` after each sub-agent completes.
+   - Cost report includes `cache_hit_count`, `cache_miss_count`, and `tokens_saved`.
+5. Estimate cost:
    ```
    Estimated tokens per file: {avg_file_size}
    Total files: {count}
@@ -305,9 +320,9 @@ When implemented, this flag will be added to `argumentHint` and become enforceab
    Input tokens: {count * avg_size}
    Output tokens: {estimated based on prompt}
    ```
-5. Prompt for confirmation (if cost > $1.00)
-6. Create output directory
-7. Log batch initialization
+6. Prompt for confirmation (if cost > $1.00)
+7. Create output directory
+8. Log batch initialization
 
 **Communicate**:
 ```

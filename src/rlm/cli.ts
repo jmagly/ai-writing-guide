@@ -47,6 +47,12 @@ export async function main(args: string[]): Promise<void> {
       await handleRlmStatus(subArgs);
       break;
 
+    case 'rlm-cache': {
+      const { main: cacheMain } = await import('./cache/cli.js');
+      await cacheMain(subArgs);
+      break;
+    }
+
     default:
       printUsage();
       if (subcommand) {

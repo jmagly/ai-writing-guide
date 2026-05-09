@@ -87,6 +87,7 @@ import {
   rlmPrepHandler,
   rlmSearchHandler,
   rlmStatusCliHandler,
+  rlmCacheHandler,
   subcommandHandlers,
 } from './subcommands.js';
 import { runtimeInfoHandler } from './runtime-info.js';
@@ -164,6 +165,7 @@ export {
   rlmPrepHandler,
   rlmSearchHandler,
   rlmStatusCliHandler,
+  rlmCacheHandler,
 
   // Utilities
   prefillCardsHandler,
@@ -356,6 +358,7 @@ export const allHandlers: CommandHandler[] = [
   rlmPrepHandler,
   rlmSearchHandler,
   rlmStatusCliHandler,
+  rlmCacheHandler,
 
   // Web dashboard
   serveHandler,

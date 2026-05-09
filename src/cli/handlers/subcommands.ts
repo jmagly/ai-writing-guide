@@ -1395,6 +1395,19 @@ export const rlmStatusCliHandler: CommandHandler = {
   },
 };
 
+/** RLM result cache (#1203). */
+export const rlmCacheHandler: CommandHandler = {
+  id: 'rlm-cache',
+  name: 'RLM Cache',
+  description: 'Manage cached RLM results (list, stats, evict, clear) — keyed by index content-hash',
+  category: 'agentic-tools',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    return rlmToolsHandler.execute({ ...ctx, args: ['rlm-cache', ...ctx.args] });
+  },
+};
+
 /**
  * All subcommand handlers
  */
@@ -1425,6 +1438,7 @@ export const subcommandHandlers: CommandHandler[] = [
   rlmPrepHandler,
   rlmSearchHandler,
   rlmStatusCliHandler,
+  rlmCacheHandler,
   sessionHandler,
   feedbackHandler,
 ];

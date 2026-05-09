@@ -4,7 +4,7 @@ name: rlm-query
 platforms: [all]
 description: Spawn sub-agent to process focused context and return structured result
 commandHint:
-  argumentHint: '"<context-file> <sub-prompt>" [--model <model>] [--output <file>] [--depth <n>] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>]'
+  argumentHint: '"<context-file> <sub-prompt>" [--model <model>] [--output <file>] [--depth <n>] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>] [--no-cache] [--cache-only]'
   allowedTools: 'Read, Write, Grep, Glob, Bash'
   model: sonnet
   category: rlm
@@ -117,6 +117,14 @@ Restrict which side of the dependency graph to traverse. Defaults to `both`. Ali
 
 Which dependency graph to query. Defaults to `project`. Valid values match the `aiwg index neighbors --graph` flag (e.g., `framework`, `project`, `codebase`, or a user-defined graph name).
 
+### --no-cache (optional, #1203)
+
+Bypass the result cache: do not read existing cache entries, but still write the result for future calls. Use to force a re-run when you suspect external state has changed in a way the cache key would not capture.
+
+### --cache-only (optional, #1203)
+
+Read-only audit: error out if the call would not be a cache hit. Useful to verify reproducibility before committing or to gauge what re-running would cost.
+
 ### --depth <n> (optional)
 
 When `--neighbors-of` is set, controls graph traversal depth (default: `1`). Otherwise tracks current recursion depth (internal use).
@@ -163,8 +171,14 @@ These flags are reserved in the design but not yet implemented. Tracked in Gitea
    - Use the matched file list as the context source
 
 3. **Read** all resolved files into memory.
-4. **Validate** total context size (<50% of model window).
-5. If too large, error and suggest filtering (`--neighbors-of` with smaller `--depth`, narrower glob, or `--use-index` with stricter query).
+4. **Cache lookup** (#1203, unless `--no-cache`):
+   - Compute content hash for each resolved file (or pull from `aiwg index query --id <id> --json`)
+   - Compose `CacheKey = { inputs[], query, subPrompt, model, aggregateStrategy }` and call `computeHash(key)` (`src/rlm/cache/hash.ts`)
+   - If `aiwg rlm-cache` reports a hit (`get(root, hash)` succeeds): return the cached `result.json` immediately and log `cache_hit=true` in the cost report. Skip dispatch.
+   - If miss and `--cache-only`: error with the hash and exit non-zero.
+   - Otherwise: continue to Phase 2 dispatch. After dispatch, write `{result, manifest, metadata}` via `put(root, entry)`.
+5. **Validate** total context size (<50% of model window).
+6. If too large, error and suggest filtering (`--neighbors-of` with smaller `--depth`, narrower glob, or `--use-index` with stricter query).
 
 **Communication**:
 ```

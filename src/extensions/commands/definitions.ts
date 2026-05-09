@@ -11,7 +11,7 @@
  * @issue #42
  */
 
-import type { Extension, SkillMetadata } from '../types.js';
+import type { CommandMetadata, Extension, SkillMetadata } from '../types.js';
 
 // ============================================
 // Individual Command Definitions
@@ -2744,6 +2744,31 @@ export const rlmStatusCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const rlmCacheCommand: Extension = {
+  id: 'rlm-cache',
+  type: 'command',
+  name: 'RLM Cache',
+  description: 'Manage cached RLM results (list, stats, evict, clear) — keyed by index content-hash (#1203)',
+  version: '1.0.0',
+  capabilities: ['rlm', 'cache', 'agentic-tools', 'efficiency'],
+  keywords: ['rlm-cache', 'cache', 'rlm', 'evict', 'list', 'stats'],
+  category: 'agentic-tools',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<list|stats|evict|clear> [args]',
+    allowedTools: ['Read', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
 // ============================================
 // Aggregated Exports
 // ============================================
@@ -2925,6 +2950,7 @@ export const commandDefinitions: Extension[] = [
   rlmPrepCommand,
   rlmSearchCommand,
   rlmStatusCommand,
+  rlmCacheCommand,
 
   // Sandbox management (#917)
   sandboxCommand,
