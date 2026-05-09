@@ -67,7 +67,8 @@ These are CLI tools and services on top of the text-file substrate. The substrat
 - `aiwg ralph` — autonomous iterate-until-done loops
 - `aiwg mc` — background mission-control for parallel tasks
 - `aiwg daemon` — persistent session manager
-- `aiwg index` — searchable artifact index
+- `aiwg discover` — capability search across AIWG's 400+ skills/agents/commands/rules
+- `aiwg index` — searchable artifact index (project + codebase + framework graphs)
 - `aiwg mcp` — MCP server for runtime tool access
 
 Turn any of these on when you want persistence, parallelism, or automation. Turn them off and your deployed agents, skills, and rules still work — they are still text files the platform reads natively.
@@ -941,7 +942,21 @@ aiwg scaffold-framework my-framework
 aiwg validate-metadata
 ```
 
-### Artifact Index & Discovery
+### Capability Discovery — `aiwg discover`
+
+The headline operator surface for finding the right AIWG skill, agent, command, or rule by capability. Most AIWG skills (~391 of 400) are **not loaded into your platform's flat skill listing** — they live at `<provider-dir>/.aiwg/skills/` and are reachable only through `aiwg discover`. The kernel set on disk is small on purpose: one `<framework>-quickref` per installed framework + core utilities (~9 skills total), well under every supported platform's skill-listing budget.
+
+```bash
+# Find a skill by capability
+aiwg discover "deploy production"           # → flow-deploy-to-production
+aiwg discover "create intake"               # → intake-* family
+aiwg discover "audit security" --type skill --limit 5
+aiwg discover "<phrase>" --json             # stable schema for sub-agents
+```
+
+The kernel quickrefs ship **curated, validated discovery phrases per capability domain** — phrases tested against the live scorer to surface the right top-3 candidates. See [`docs/discovery-and-kernel-skills.md`](docs/discovery-and-kernel-skills.md) for the full best-practices guide.
+
+### Artifact Index — `aiwg index`
 
 ```bash
 # Build searchable artifact index
@@ -958,7 +973,7 @@ aiwg index deps .aiwg/requirements/UC-001.md --json
 aiwg index stats --json
 ```
 
-The index supports multiple graphs: project graph (`.aiwg/` artifacts) and framework graph (`agentic/code/` + `docs/`).
+The index supports multiple graphs: project graph (`.aiwg/` artifacts), codebase graph (`src/` / `test/` / `tools/`), and framework graph (`agentic/code/` + `docs/`).
 
 ### Doc Sync — Bidirectional Documentation
 
