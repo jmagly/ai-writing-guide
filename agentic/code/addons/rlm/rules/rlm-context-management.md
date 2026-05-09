@@ -12,13 +12,45 @@ These rules enforce Recursive Language Model (RLM) patterns for context manageme
 
 ## Research Foundation
 
-From REF-089 Recursive Language Models (Zhang et al., 2026):
+These rules synthesize five references in the AIWG research corpus. Each finding is hedged according to its GRADE quality assessment.
+
+| REF | Source | GRADE | Used For |
+|-----|--------|-------|----------|
+| REF-089 (Zhang et al., MIT CSAIL, 2026) | arXiv 2512.24601v2 | LOW (peer-review pending) | Core RLM paradigm — Rules 1-5, Rule 10 |
+| REF-086 (Kim et al., Google DeepMind, 2025) | arXiv 2512.08296 | LOW (peer-review pending) | Coordination topology — Rule 6, Rule 7 |
+| REF-088 (Wexford, DEV blog, 2026) | dev.to | VERY LOW (practitioner synthesis) | Sub-agent count cap — Rule 8 |
+| REF-127 (Zylos Research, 2026) | Industry report | VERY LOW (aggregated industry data) | Long-running degradation — Rule 9 |
+| REF-169 (Evans et al., Google PoI, 2026) | arXiv 2603.20639 | MODERATE (preprint, established institution) | Centaur-mode design direction (forward-looking, not yet enforced) |
+
+### Core findings
+
+From **REF-089** (Recursive Language Models — Zhang et al., 2026):
 
 > "The key insight is that arbitrarily long user prompts should not be fed into the neural network directly but should instead be treated as *part of the environment* that the LLM is tasked to *symbolically and recursively interact with*." (p. 1)
 
 > "Compared to the summarization agent which ingests the entire input context, RLMs are up to 3× cheaper while maintaining stronger performance across all tasks because the RLM is able to selectively view context." (p. 6)
 
 > "Unfortunately, compaction is rarely expressive enough for tasks that require dense access throughout the prompt. It presumes that *some* details that appear early in the prompt can safely be forgotten to make room for new content." (p. 1)
+
+From **REF-086** (Towards a Science of Scaling Agent Systems — Kim et al., DeepMind, 2025):
+
+> "Independent multi-agent systems amplify errors at 17.2x the rate of single agents, while centralized coordination reduces this to 4.4x magnification." (Kim et al., 2025)
+
+> "Multi-agent coordination produces diminishing or negative returns once single-agent baselines exceed approximately 45% task performance." (Kim et al., 2025)
+
+> "Sequential reasoning tasks degraded by 39-70% across all multi-agent variants." (Kim et al., 2025)
+
+From **REF-088** (How to Build Multi-Agent Systems — Wexford, 2026 — *practitioner synthesis, not primary research*):
+
+> "Beyond 7 agents, coordination overhead begins to dominate actual productive work. The cognitive complexity of managing agent interactions grows faster than the capabilities gained." (Wexford, 2026)
+
+From **REF-127** (Long-Running AI Agents and Task Decomposition — Zylos Research, 2026 — *industry report, aggregated data*):
+
+> "Industry reports suggest agent success rate degrades after approximately 35 minutes of operation, and that doubling task duration quadruples the failure rate." (Zylos Research, 2026; primary citation not provided in source)
+
+From **REF-169** (Agentic AI and the Next Intelligence Explosion — Evans et al., 2026):
+
+> "A recursive descent into collective deliberation that expands when complexity demands and collapses when the problem resolves." (Evans, Bratton, & Agüera y Arcas, 2026)
 
 ## Problem Statement
 
@@ -309,6 +341,108 @@ Domain prior: Authentication logic typically in:
 
 Search space reduced from 500 files to 12 files via priors
 ```
+
+### Rule 6: RLM Is Centralized Coordination — Aggregate, Don't Bag-of-Agents
+
+**Research Basis**: REF-086 — independent multi-agent systems amplify errors at 17.2x; centralized coordination reduces this to 4.4x. (GRADE: LOW, peer-review pending.)
+
+RLM's recursive sub-call architecture is **centralized by design**: the root LLM is the controller, sub-agents are dispatched by the root and their outputs are aggregated by the root. This puts RLM in the 4.4x error-magnification bucket, not 17.2x. But `rlm-batch` parallel fan-out can degrade into "bag of agents" behavior if results are silently merged without active reconciliation.
+
+**FORBIDDEN**:
+```
+Agent dispatches /rlm-batch with 5 sub-agents
+Each sub-agent produces a finding
+Agent concatenates the 5 outputs and returns "here's the report"
+  ↑ no reconciliation, no conflict detection, no aggregation logic
+```
+
+**REQUIRED**:
+```
+Agent dispatches /rlm-batch with 5 sub-agents
+Each sub-agent produces a structured finding
+Agent (or aggregator strategy):
+  - Reconciles conflicts between sub-agent outputs
+  - Detects contradictions and flags them
+  - Produces a coherent synthesis with provenance
+  - Returns a single integrated result, not a concatenation
+```
+
+The `--aggregate` strategy on `rlm-batch` (e.g., `concat`, `summarize`) is the reconciliation layer. Choose it deliberately — `concat` is appropriate only when sub-agent outputs are guaranteed independent (one file each, no cross-cutting concerns).
+
+### Rule 7: Don't Use RLM When a Single Agent Already Works
+
+**Research Basis**: REF-086 — multi-agent coordination produces diminishing or negative returns once single-agent baselines exceed approximately 45% task performance. Sequential reasoning tasks degrade 39-70% across all multi-agent variants. (GRADE: LOW, peer-review pending.)
+
+RLM is most valuable for tasks where a single agent struggles: long context, distributed information across many files, multi-file synthesis. For tasks where a single agent already performs well — focused queries, small files, single-file analysis — RLM adds coordination overhead without benefit.
+
+**Decision threshold**: If a single Read+Grep would resolve the task in <50% context utilization, do not escalate to RLM.
+
+**Sequential dependency warning**: If each step of the task depends on the prior step's result (each step needs the answer from the last), use a single agent. Splitting into sub-agents loses the chain.
+
+**FORBIDDEN**:
+```
+Task: Read this 200-line config file and tell me the database URL
+Agent: Let me dispatch /rlm-query against this file
+  ↑ overkill — single Read suffices
+```
+
+**REQUIRED**:
+```
+Task: Read this 200-line config file and tell me the database URL
+Agent: Reading the file directly
+*Read with line range; extract the URL*
+```
+
+Reserve RLM for tasks where the single-agent baseline genuinely struggles. Below the 45% threshold the coordination tax is paid in *negative* returns.
+
+### Rule 8: Concurrent Sub-Agent Cap — 3-7 Sweet Spot, Hard Cap at 7
+
+**Research Basis**: REF-088 — practitioner synthesis reports 3-7 agents as the optimal range; n*(n-1)/2 communication paths cause coordination overhead to dominate beyond 7. (GRADE: VERY LOW — practitioner blog, no primary research; corroborated by REF-086 LOW-grade primary research on coordination tax.)
+
+Concurrent sub-agent count from a single RLM dispatch must respect the multi-agent coordination sweet spot:
+
+| Concurrent count | Coordination state |
+|---|---|
+| 1-2 | Trivial, but loses parallelism benefits |
+| 3-5 | Optimal for most tasks |
+| 5-7 | Peak for complex tasks |
+| 8+ | Coordination overhead dominates; auto-batch into waves of ≤7 |
+
+**`rlm-batch` defaults**: `--max-parallel=4` is the default — mid-sweet-spot, n*(n-1)/2 = 6 paths, fits all `AIWG_CONTEXT_WINDOW` tiers ≥65k.
+
+**Hard cap**: Never spawn more than 7 concurrent sub-agents from a single RLM dispatch. If `--max-parallel` requests >7, auto-batch into sequential waves of ≤7.
+
+**Cross-reference**: When `AIWG_CONTEXT_WINDOW` is declared in the project context, the `context-budget` rule provides additional caps based on context-window tier. The smaller of the two limits applies. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md`.
+
+### Rule 9: Long-Running RLM Operations Must Checkpoint
+
+**Research Basis**: REF-127 — industry reports suggest agent success rate degrades after ~35 minutes of operation; doubling task duration quadruples the failure rate. (GRADE: VERY LOW — aggregated industry data, no primary citation given. Treat as warning signal, not hard limit.)
+
+For any RLM operation expected to exceed 30 minutes of wall-clock time:
+
+1. **Externalize state to filesystem** at regular intervals — intermediate result files, progress checkpoints under `.aiwg/working/rlm-runs/{id}/`
+2. **Make state recoverable** — agent must be able to resume from last checkpoint, not start over
+3. **Prefer split-into-loops over one-long-run** — if the task is shaped as "process N items, each takes M minutes," split into multiple `aiwg ralph`-style iterations with persistent state
+4. **Surface elapsed-time warning** — `rlm-status` should display elapsed wall-clock time and warn at 25 minutes that the operation is approaching the practitioner-reported degradation threshold
+
+**Why this matters**: REF-127's quadratic failure scaling (industry-reported, not peer-reviewed) implies a 60-minute run is roughly 4x more likely to fail than a 30-minute run. For RLM operations on large corpora, this is the difference between successful completion and partial failure with no recovery path.
+
+**Hedging**: The 35-minute threshold is *not* primary research. It is practitioner heuristic from an industry report (REF-127, GRADE: VERY LOW). Treat the rule as a defensive checkpoint discipline, not a precise ceiling.
+
+### Rule 10: Coding-Capable Models for the RLM Root
+
+**Research Basis**: REF-089 Appendix B — "Qwen3-8B (non-coder) struggled without sufficient coding capabilities." (GRADE: LOW, peer-review pending.)
+
+RLM relies on the root LLM emitting code (regex, glob, REPL operations) to filter and decompose context. Models without strong coding ability underperform as RLM root agents.
+
+**Required defaults**:
+- RLM root agents (the agent invoking `/rlm-query` or `/rlm-batch`): **sonnet or opus**, never haiku
+- RLM sub-agents performing simple extraction (single-file pattern matching, count, yes/no): **haiku is appropriate**
+- RLM sub-agents performing analysis or synthesis: **sonnet**
+
+**Output token limits matter** (REF-089 Appendix B): RLM root agents emit code, which can be verbose. Models with restrictive output token limits (<4k) cap RLM effectiveness. If the configured root model has lower output limits, surface a warning before dispatch.
+
+**Synchronous LM calls are slow** (REF-089 Appendix B): For deep recursive trees, synchronous sub-calls become prohibitive. Prefer `rlm-batch` (parallel fan-out) over chains of `rlm-query` (sequential) when recursion depth >1.
 
 ## Integration Patterns
 
@@ -659,6 +793,6 @@ From REF-089 Appendix B, important limitations to be aware of:
 ---
 
 **Rule Status**: ACTIVE
-**Last Updated**: 2026-02-09
-**Research Basis**: REF-089 (Zhang, Kraska, & Khattab, 2026)
-**Issue**: #322 (Core RLM Addon)
+**Last Updated**: 2026-05-08
+**Research Basis**: REF-089 (Zhang, Kraska, & Khattab, 2026, GRADE: LOW); REF-086 (Kim et al., DeepMind, 2025, GRADE: LOW); REF-088 (Wexford, 2026, GRADE: VERY LOW); REF-127 (Zylos Research, 2026, GRADE: VERY LOW); REF-169 (Evans et al., 2026, GRADE: MODERATE)
+**Issue**: #322 (Core RLM Addon); #1196 (research-corpus update epic); #1197, #1198, #1199 (this update)
