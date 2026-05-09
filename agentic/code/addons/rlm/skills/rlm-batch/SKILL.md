@@ -4,7 +4,7 @@ name: rlm-batch
 platforms: [all]
 description: Parallel fan-out processing - spawn multiple sub-agents for chunked context processing
 commandHint:
-  argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>]'
+  argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>] [--force]'
   allowedTools: 'Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit'
   model: opus
   category: automation

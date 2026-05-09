@@ -501,7 +501,9 @@ Attempting recovery from last checkpoint...
   - Recovered state up to sub-call 1.3
   - 2 recent sub-calls may need re-execution
 
-Recovered state displayed below. Use /rlm-repair to fix state file.
+Recovered state displayed below. To resume, restart the originating
+RLM command and pass the recovered task tree ID. To discard the recovered
+state and start fresh, delete the state file under `.aiwg/rlm-runs/`.
 ```
 
 ## Integration Points
