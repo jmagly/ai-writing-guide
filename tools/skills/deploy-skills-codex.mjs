@@ -283,6 +283,11 @@ function deploySkill(skill, targetDir, opts) {
   // Create skill directory and write SKILL.md
   ensureDir(skillDir);
   fs.writeFileSync(destPath, skill.content, 'utf8');
+  // Drop a marker file so future deploys can identify AIWG-managed
+  // skills regardless of frontmatter format (Codex strips `namespace:`
+  // during transform, so the SKILL.md alone isn't a reliable signal).
+  // Cleanup keys off this presence.
+  fs.writeFileSync(path.join(skillDir, '.aiwg-managed'), 'aiwg\n', 'utf8');
   console.log(`  deployed: ${skill.name}`);
 
   return { action: 'deploy', reason: 'success' };
@@ -355,14 +360,53 @@ function getSkillDirectories(srcRoot, mode) {
     process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
     process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
 
+  // Track every AIWG-managed source skill name so we can scope post-deploy
+  // cleanup to skills AIWG ships — never delete user-authored or
+  // third-party skills sitting alongside.
+  //
+  // Two name spaces matter for cleanup: source basename (`addons/foo/skills/<name>/`)
+  // AND deployed name (the `name:` frontmatter field, which Codex uses as
+  // the target directory). Sample: source `archive-acquisition` deploys
+  // as `Archive Acquisition`. Track both so cleanup catches each form.
+  const allManagedNames = new Set();
+  const desiredNames = new Set();
+
+  // Pre-pass: walk every framework/addon skill directory in the source
+  // tree (not just those matching the requested mode) so cleanup can
+  // remove stale skills from previously-deployed-but-no-longer-deployed
+  // frameworks. Bounded to AIWG source roots so user-authored skills in
+  // ~/.codex/skills/ are never affected.
+  for (const { dir } of getSkillDirectories(srcRoot, 'all')) {
+    const allSkills = findSkillDirs(dir);
+    for (const s of allSkills) {
+      allManagedNames.add(path.basename(s));
+      // Also record the frontmatter `name:` since Codex uses that as the
+      // target dir. Best-effort — ignore parse errors.
+      try {
+        const content = fs.readFileSync(path.join(s, 'SKILL.md'), 'utf8');
+        const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+        if (fmMatch) {
+          const nameMatch = fmMatch[1].match(/^\s*name:\s*(.+?)\s*$/m);
+          if (nameMatch) {
+            allManagedNames.add(stripWrappingQuotes(nameMatch[1]));
+          }
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
   for (const { dir, label } of skillDirs) {
-    let skills = findSkillDirs(dir);
+    const found = findSkillDirs(dir);
+    if (found.length === 0) continue;
+
+    for (const s of found) allManagedNames.add(path.basename(s));
+
+    const skills = copyStandardSkills
+      ? found
+      : found.filter(s => isKernelSkill(s));
     if (skills.length === 0) continue;
 
-    if (!copyStandardSkills) {
-      skills = skills.filter(s => isKernelSkill(s));
-      if (skills.length === 0) continue;
-    }
+    for (const s of skills) desiredNames.add(path.basename(s));
 
     console.log(`\n${label} (${skills.length} skills):`);
 
@@ -382,7 +426,58 @@ function getSkillDirectories(srcRoot, mode) {
     }
   }
 
-  console.log(`\nSummary: ${totalDeployed} deployed, ${totalSkipped} skipped`);
+  // Post-deploy cleanup: remove any AIWG-managed skill in the target that
+  // isn't in the current desired set. AIWG-managed = either (a) source
+  // basename matches an AIWG source dir, or (b) the deployed SKILL.md
+  // declares `namespace: aiwg` in frontmatter. The latter catches stale
+  // skills from renamed sources or title-cased name fields. We never
+  // touch directories whose SKILL.md lacks AIWG provenance — those are
+  // user-authored or third-party skills sitting alongside.
+  let totalPruned = 0;
+  if (fs.existsSync(target)) {
+    const targetEntries = fs.readdirSync(target, { withFileTypes: true });
+    for (const entry of targetEntries) {
+      if (!entry.isDirectory()) continue;
+      const name = entry.name;
+      if (desiredNames.has(name)) continue;
+
+      let isAiwgManaged = allManagedNames.has(name);
+      if (!isAiwgManaged) {
+        // Check for the .aiwg-managed marker file (preferred — survives
+        // frontmatter transforms) or fall back to namespace check.
+        const markerFile = path.join(target, name, '.aiwg-managed');
+        if (fs.existsSync(markerFile)) {
+          isAiwgManaged = true;
+        } else {
+          const skillFile = path.join(target, name, 'SKILL.md');
+          if (fs.existsSync(skillFile)) {
+            try {
+              const content = fs.readFileSync(skillFile, 'utf8');
+              const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+              if (fmMatch) {
+                const fm = fmMatch[1];
+                if (/^\s*namespace:\s*["']?aiwg["']?\s*$/m.test(fm)) {
+                  isAiwgManaged = true;
+                }
+              }
+            } catch { /* ignore unreadable; leave alone */ }
+          }
+        }
+      }
+      if (!isAiwgManaged) continue;
+
+      const full = path.join(target, name);
+      if (dryRun) {
+        console.log(`  [dry-run] would prune stale skill: ${name}`);
+      } else {
+        fs.rmSync(full, { recursive: true, force: true });
+      }
+      totalPruned++;
+    }
+  }
+
+  const prunedNote = totalPruned > 0 ? `, ${totalPruned} pruned` : '';
+  console.log(`\nSummary: ${totalDeployed} deployed, ${totalSkipped} skipped${prunedNote}`);
 
   if (!dryRun && totalDeployed > 0) {
     console.log(`\nRestart Codex to load new skills.`);
