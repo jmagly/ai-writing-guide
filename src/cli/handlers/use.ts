@@ -1434,7 +1434,13 @@ export class UseHandler implements CommandHandler {
     // source repo). buildIndex() calls `process.exit(1)` on missing
     // scan dirs which would short-circuit our catch.
     if (!dryRun) {
-      const fwSrcDir = path.join(target, 'agentic', 'code', 'frameworks');
+      // Build the framework graph against $AIWG_ROOT, not the project's
+      // target dir (#1217). The framework source is user-global at
+      // AIWG_ROOT — recording AIWG_ROOT-relative paths makes the index
+      // resolvable from any project. Falls back to project target only
+      // if AIWG_ROOT is unset or unreadable (rare).
+      const aiwgRootForIndex = process.env.AIWG_ROOT || frameworkRoot || target;
+      const fwSrcDir = path.join(aiwgRootForIndex, 'agentic', 'code', 'frameworks');
       const hasFrameworkSrc = await fs.access(fwSrcDir).then(() => true).catch(() => false);
       if (hasFrameworkSrc) {
         // Always announce the index build — this is the visible-to-user
@@ -1453,7 +1459,10 @@ export class UseHandler implements CommandHandler {
         if (!verbose) console.log = () => {};
         try {
           const { buildIndex } = await import('../../artifacts/index-builder.js');
-          await buildIndex(target, { graph: 'framework', explicit: false });
+          // Build against AIWG_ROOT so stored paths resolve from any
+          // project (#1217). The output index location is XDG-shared
+          // regardless of build cwd.
+          await buildIndex(aiwgRootForIndex, { graph: 'framework', explicit: false });
           console.log = origLog;
           const indexElapsedSec = ((Date.now() - indexStart) / 1000).toFixed(1);
           ui.success(`Capability index ready (${indexElapsedSec}s) — try \`aiwg discover "<phrase>"\``);

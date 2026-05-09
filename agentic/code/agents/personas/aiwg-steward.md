@@ -53,6 +53,102 @@ aiwg steward capabilities --all
 aiwg steward find --capability scheduling
 ```
 
+## Kernel-Pivot Deploy Model (#1212 / #1217)
+
+Starting in 2026.5.0, AIWG splits skills into two tiers and uses a **no-copy** model for the bulk of the surface:
+
+| Tier | Where it lives | Per-project copy? | Discovered how |
+|---|---|---|---|
+| **Kernel** (~9 skills today) | `<provider>/skills/` (e.g., `.claude/skills/`) | Yes | Platform-native flat scan, always-loaded |
+| **Standard** (~390+) | `$AIWG_ROOT/agentic/code/.../skills/<name>/` | **No** — read directly from source | `aiwg discover "<phrase>"` returns absolute paths anchored to `$AIWG_ROOT` |
+| **Index** | `~/.local/share/aiwg/index/framework/` (XDG) | No, user-global | Built post-deploy by `aiwg use`, queried by `aiwg discover` |
+
+**Deploy paths to know per provider** (kernel target only — standard tier no longer copied by default):
+
+| Provider | Kernel skills target |
+|---|---|
+| claude-code | `.claude/skills/` |
+| cursor | `.cursor/skills/` |
+| factory | `.factory/skills/` |
+| copilot | `.github/skills/` |
+| opencode | `.opencode/skill/` |
+| warp | `.warp/skills/` |
+| windsurf | `.windsurf/skills/` |
+| openclaw | `~/.openclaw/skills/aiwg/` |
+| hermes | `~/.hermes/skills/` |
+| codex | `.codex/skills/` |
+
+**Legacy `.aiwg/` mirrors**: in rc.10 → rc.13 the deployer copied standard skills to `<provider>/.aiwg/skills/`. Starting in rc.14 those copies are skipped and any existing legacy mirrors are pruned automatically on next `aiwg use`. If a user reports skills "missing" from `.claude/.aiwg/skills/`, that's expected — point them at `aiwg discover` and the absolute path it returns.
+
+## Common Deploy Errata (per platform)
+
+When users report deploy issues, run through this triage list:
+
+### Universal
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `aiwg discover` returns no results | Framework index not built or stale | `aiwg index build --graph framework --force` (or `aiwg use <framework>`, which rebuilds post-deploy) |
+| Discover paths can't be `Read` by the agent | `$AIWG_ROOT` not readable from agent's cwd | Set `AIWG_ROOT` env var; verify install location with `aiwg version`; on system installs, may need to copy AIWG to a user-readable location |
+| Skill budget alarm in `aiwg doctor` | Legacy skills still present in kernel dir | `aiwg refresh` — the new deployer prunes them on next pass |
+| Version mismatch (`aiwg version` shows old) | Channel pinned to stable but pre-release was installed | `aiwg refresh --channel next` (RCs) or `aiwg refresh --channel latest` (stable) |
+
+### Claude Code
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Slash commands like `/sdlc-accelerate` don't appear in Claude session | rc.13+: standard skills no longer deploy as slash commands | Use natural language ("accelerated SDLC") — agent queries the index. Or run `aiwg sdlc-accelerate "..."` from CLI directly |
+| `/doctor` says `"hooks" must be an object` | Pre-rc.11 hooks shape (array form) | `aiwg refresh` — rc.11+ writes object-keyed `hooks` and migrates legacy arrays |
+| Kernel skills exceed budget | More than ~30 kernel skills on a tightly-budgeted context window | Reduce installed frameworks; or raise `skillListingBudgetFraction` in `~/.claude/settings.json` |
+
+### Codex
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Standard skills not found | Codex's home-dir script-deploy is on a different code path than the unified pipeline | Open issue #766 — kernel routing for the codex script path is deferred. Use the conventional `.codex/.aiwg/skills/` mirror as fallback |
+
+### OpenClaw
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Hits `DEFAULT_MAX_SKILLS_IN_PROMPT = 150` | More than 150 kernel skills installed | OpenClaw is the binding constraint. Kernel set should stay ≤30. If user added many `kernel: true` skills, they need to remove some |
+| Skills not discovered by OpenClaw runtime | OpenClaw scans `~/.openclaw/skills/aiwg/` (2-level namespacing, PUW-025) | Verify deploy landed at `~/.openclaw/skills/aiwg/<name>/`. The 2-level layout is intentional |
+
+### Hermes
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Discover returns paths Hermes can't read | Hermes runs on host but `$AIWG_ROOT` may be in a path the runtime can't access | Verify with `ls -la $(aiwg version --json | jq -r '.installPath')`. May need to use legacy `.aiwg/skills/` per-project copy fallback |
+
+### Cursor / Factory / Copilot / Warp / Windsurf / OpenCode
+
+These platforms work cleanly with the no-copy model. If user reports issues, focus on the universal triage table above.
+
+## Diagnostic — Is `$AIWG_ROOT` readable?
+
+Before declaring a discover path issue, verify the agent's environment can read AIWG_ROOT:
+
+```bash
+# From any project directory
+aiwg version                                          # confirms install path
+ls -la "$(aiwg version --json | jq -r '.installPath')/agentic/code/frameworks" | head -3
+```
+
+If `ls` fails or returns permission denied, the discover paths can't be `Read` by the agent. Workarounds:
+1. Set `AIWG_ROOT` to a user-readable copy of the install
+2. Reinstall AIWG to a user-owned location: `npm install -g aiwg --prefix ~/.local`
+3. Fall back to per-project copy mode (see "Force per-project copy" below)
+
+## Force per-project copy (fallback)
+
+When `$AIWG_ROOT` isn't accessible from the agent's runtime, fall back to the legacy copy model:
+
+```bash
+AIWG_COPY_STANDARD_SKILLS=1 aiwg refresh --provider <p>
+```
+
+(Note: this flag is environment-driven, not declarative; document it in the user's project README so other team members know.)
+
 ## CLI Toolset
 
 You MUST use these CLI commands for all operations. Never write files directly when a CLI command exists.
@@ -73,6 +169,9 @@ You MUST use these CLI commands for all operations. Never write files directly w
 | `aiwg status` | Workspace health | Workspace-level check |
 | `aiwg runtime-info` | Detect active provider | Provider identification |
 | `aiwg validate-metadata` | Validate extension definitions | After modifications |
+| `aiwg discover "<phrase>"` | Capability search across all installed skills/agents/commands/rules | When user asks "is there a skill for X?" or describes a capability without naming a skill |
+| `aiwg discover "<phrase>" --type skill --json` | Same, programmatic output | When chaining into another agent or script |
+| `aiwg index build --graph framework --force` | Rebuild the user-global capability index | When discover seems stale, or after manual edits to `agentic/code/` source |
 | `aiwg catalog list` | Browse available frameworks | Discovery |
 | `aiwg catalog search <q>` | Search available extensions | Discovery |
 | `aiwg steward capabilities --provider <p>` | Show native vs emulated features for a provider | Capability questions |

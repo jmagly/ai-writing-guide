@@ -45,6 +45,7 @@ function runScript(scriptPath: string, args: string[] = []): string {
     ...process.env,
     HOME: TEST_HOME_DIR,
     USERPROFILE: TEST_HOME_DIR,
+    AIWG_COPY_STANDARD_SKILLS: '1',
   };
 
   return execSync(`node ${path.join(REPO_ROOT, scriptPath)} ${args.join(' ')}`, {

@@ -290,6 +290,26 @@ export interface DiscoverParams {
 
 const DEFAULT_DISCOVER_TYPES = ['skill', 'agent', 'command', 'rule'];
 
+/**
+ * Resolve the AIWG installation root for path-anchoring discover output.
+ * Discover returns paths anchored to AIWG_ROOT so the agent's `Read`
+ * tool can resolve them from any project working directory (#1217).
+ */
+async function getAiwgRootForDiscover(): Promise<string | null> {
+  if (process.env.AIWG_ROOT) return process.env.AIWG_ROOT;
+  try {
+    const mod: { getFrameworkRoot?: () => Promise<string | null> } =
+      await import('../channel/manager.mjs');
+    if (typeof mod.getFrameworkRoot === 'function') {
+      const r = await mod.getFrameworkRoot();
+      return r || null;
+    }
+  } catch {
+    // channel manager unavailable — fall through
+  }
+  return null;
+}
+
 export async function discoverCapability(
   cwd: string,
   params: DiscoverParams,
@@ -299,6 +319,9 @@ export async function discoverCapability(
     ? params.typeFilter
     : DEFAULT_DISCOVER_TYPES;
   const limit = params.limit ?? 10;
+  // For framework-graph entries, anchor returned paths to AIWG_ROOT so
+  // they resolve from any project working directory (#1217).
+  const aiwgRoot = await getAiwgRootForDiscover();
 
   // Source: prefer `framework` graph (built post-deploy), fall back to
   // project / codebase / legacy depending on what's available.
@@ -340,11 +363,31 @@ export async function discoverCapability(
 
   const queryTimeMs = Date.now() - startTime;
 
+  /**
+   * Resolve a stored framework-graph path to an absolute AIWG_ROOT
+   * path (#1217). Framework-graph entries are stored as paths relative
+   * to the AIWG repo root (e.g. `agentic/code/frameworks/.../SKILL.md`);
+   * anchoring them to `AIWG_ROOT` makes them readable from any project
+   * working directory.
+   *
+   * Kernel skills are excluded from anchoring — they're copied per-project
+   * and the agent reads them from the platform-native skills dir.
+   * Non-framework entries (project / codebase graphs) keep their stored
+   * paths unchanged.
+   */
+  function resolvePath(entry: MetadataEntry): string {
+    if (entry.kernel) return entry.path;
+    if (!aiwgRoot) return entry.path;
+    if (entry.path.startsWith('/')) return entry.path;
+    if (entry.path.startsWith('agentic/code/')) return `${aiwgRoot}/${entry.path}`;
+    return entry.path;
+  }
+
   if (params.json) {
     console.log(JSON.stringify({
-      query: { phrase: params.phrase, types, limit },
+      query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null },
       results: scored.map(r => ({
-        path: r.entry.path,
+        path: resolvePath(r.entry),
         type: r.entry.type,
         title: r.entry.title,
         score: Math.round(r.score * 100) / 100,
@@ -373,7 +416,7 @@ export async function discoverCapability(
     const topTrigger = r.entry.triggers && r.entry.triggers.length > 0
       ? r.entry.triggers[0]
       : '';
-    console.log(`  ${kernelTag}score=${score}  ${type} ${r.entry.path}`);
+    console.log(`  ${kernelTag}score=${score}  ${type} ${resolvePath(r.entry)}`);
     if (r.entry.capability) {
       console.log(`               ${r.entry.capability}`);
     }

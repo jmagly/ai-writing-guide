@@ -65,7 +65,7 @@ function runDeploy(
   homeDir: string,
   extraArgs: string[] = [],
 ): string {
-  const env = { ...process.env, HOME: homeDir, USERPROFILE: homeDir };
+  const env = { ...process.env, HOME: homeDir, USERPROFILE: homeDir, AIWG_COPY_STANDARD_SKILLS: '1' };
   const args = [
     '--provider', provider,
     '--mode', 'sdlc',

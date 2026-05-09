@@ -273,7 +273,15 @@ export function deployCommands(commandFiles, targetDir, opts) {
 export function deploySkills(skillDirs, targetDir, opts) {
   const standardDestDir = path.join(targetDir, paths.skills);
   const kernelDestDir = path.join(targetDir, kernelSkillsPath);
-  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
+  // Honor AIWG_COPY_STANDARD_SKILLS=1 as the env-var escape hatch for
+  // the fallback case where $AIWG_ROOT isn't readable from the agent
+  // (system-wide installs, sandboxed runtimes). Default behavior (#1217)
+  // is no-copy.
+  const copyStandardSkills =
+    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
+    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
+  const skillOpts = { ...opts, copyStandardSkills };
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, skillOpts);
   // Remove legacy bare-named skills superseded by their aiwg- prefixed replacements
   cleanupLegacyBuiltinCollisions(standardDestDir, opts);
 }

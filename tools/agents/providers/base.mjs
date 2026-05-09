@@ -764,30 +764,49 @@ export function isKernelSkill(skillDir) {
 }
 
 /**
- * Deploy skills with kernel-vs-standard routing (#1212/#1216).
+ * Deploy skills with kernel-vs-standard routing (#1212/#1216/#1217).
  *
  * Partitions `skillDirs` into kernel skills (frontmatter `kernel: true`)
- * and standard skills, then deploys each set to the corresponding
- * destination directory. All providers route through this helper so
- * the partition logic stays in one place.
+ * and standard skills.
+ *
+ * **Kernel skills** copy to `kernelDestDir` (platform-native dir,
+ * always-loaded by the platform). Small set, ~9 quickrefs.
+ *
+ * **Standard skills** are NOT copied per-project (#1217). They live at
+ * `$AIWG_ROOT/agentic/code/.../skills/<name>/` and `aiwg discover`
+ * returns absolute paths anchored there. The agent reads them directly
+ * via the `Read` tool — no per-project mirror, no stale-copy risk.
+ * `standardDestDir` is retained as a fallback when `$AIWG_ROOT` is not
+ * readable, and as the cleanup target for legacy `.aiwg/skills/`
+ * directories from rc.13 and earlier deploys.
  *
  * @param skillDirs        absolute paths to source skill directories
- * @param standardDestDir  absolute path for standard skills
- *                         (e.g., `.cursor/.aiwg/skills`)
+ * @param standardDestDir  absolute path for standard skills (legacy
+ *                         per-project mirror — used only as cleanup
+ *                         target by default; populated if
+ *                         `opts.copyStandardSkills` is true)
  * @param kernelDestDir    absolute path for kernel skills
  *                         (e.g., `.cursor/skills`); pass null/undefined
- *                         to disable kernel routing for providers that
- *                         don't support a separate native skills dir
- * @param opts             standard deploy opts forwarded to `deploySkillDir`
+ *                         to disable kernel routing
+ * @param opts             standard deploy opts forwarded to
+ *                         `deploySkillDir`. New optional flags:
+ *                         - `copyStandardSkills` (default: false) —
+ *                           force per-project copy of standard skills
+ *                           (used when $AIWG_ROOT is not readable from
+ *                           the agent's working directory)
  *
- * @returns `{ kernel, standard, prunedFromKernelDir }` deployed counts
+ * @returns `{ kernel, standardCopied, prunedFromKernelDir,
+ *             prunedFromStandardDir }` deployed/pruned counts
  *
- * Pre-pivot cleanup: when the same skill name appears in both the
- * incoming standard set AND on disk in the kernel directory, the
- * kernel-dir copy is a leftover from a pre-pivot deploy (the skill has
- * since moved to the standard tier). This helper prunes those entries
- * — but ONLY those — so user-authored skills the operator placed in
- * the kernel dir survive untouched.
+ * Cleanup behavior:
+ *   - Kernel dir: prune any AIWG-shaped skill whose name now belongs
+ *     to the standard tier (rc.13 behavior, preserved).
+ *   - Standard dir: when standard copies are NOT being deployed this
+ *     run, prune any AIWG-shaped skill that exists under
+ *     `standardDestDir`. These are legacy per-project mirrors from
+ *     rc.13 deploys; the canonical source is now `$AIWG_ROOT`.
+ *   - User-authored skills (no SKILL.md, or names not in our deploy
+ *     manifest) survive untouched in both directories.
  */
 export function deploySkillsWithKernelRouting(
   skillDirs,
@@ -795,7 +814,14 @@ export function deploySkillsWithKernelRouting(
   kernelDestDir,
   opts,
 ) {
-  ensureDir(standardDestDir, opts?.dryRun);
+  // Caller can opt in via `opts.copyStandardSkills`. Otherwise, read the
+  // `AIWG_COPY_STANDARD_SKILLS` env-var escape hatch. Default (#1217) is
+  // no-copy: standard skills stay at their source path under $AIWG_ROOT and
+  // are reached via the artifact index.
+  const copyStandardSkills =
+    opts?.copyStandardSkills === true ||
+    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
+    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
 
   const kernel = [];
   const standard = [];
@@ -804,44 +830,94 @@ export function deploySkillsWithKernelRouting(
     else standard.push(dir);
   }
 
-  // Names of skills moving to the standard tier this run — they should
-  // NOT remain in the kernel dir. Use this set to scope the prune.
+  // Names of skills in the deploy manifest — bound the cleanup to
+  // names AIWG manages so user-authored content survives.
   const standardNames = new Set(standard.map(p => path.basename(p)));
+  const allSkillNames = new Set([...standardNames, ...kernel.map(p => path.basename(p))]);
 
   if (kernel.length > 0 && kernelDestDir) {
     ensureDir(kernelDestDir, opts?.dryRun);
     for (const dir of kernel) deploySkillDir(dir, kernelDestDir, opts);
   }
 
-  for (const dir of standard) deploySkillDir(dir, standardDestDir, opts);
+  // Standard tier copy is OFF by default (#1217). Only fires when the
+  // operator explicitly opts in via `copyStandardSkills` — typically
+  // because $AIWG_ROOT isn't readable from the agent's working dir.
+  let standardCopied = 0;
+  if (copyStandardSkills && standard.length > 0) {
+    ensureDir(standardDestDir, opts?.dryRun);
+    for (const dir of standard) {
+      deploySkillDir(dir, standardDestDir, opts);
+      standardCopied++;
+    }
+  }
 
-  // Pre-pivot cleanup of the kernel directory.
+  // Kernel-dir cleanup: prune skills whose name moved to the standard
+  // tier (rc.13 logic, preserved).
   let prunedFromKernelDir = 0;
   if (kernelDestDir && fs.existsSync(kernelDestDir) && !opts?.dryRun) {
     for (const entry of fs.readdirSync(kernelDestDir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
-      // Only consider AIWG-shaped skill directories (have a SKILL.md)
       const skillMd = path.join(kernelDestDir, entry.name, 'SKILL.md');
       if (!fs.existsSync(skillMd)) continue;
-      // Prune only when the same name now belongs to the standard tier.
-      // User-authored skills (different names) survive.
       if (!standardNames.has(entry.name)) continue;
       const target = path.join(kernelDestDir, entry.name);
       try {
         fs.rmSync(target, { recursive: true, force: true });
         prunedFromKernelDir++;
-        if (opts?.verbose) {
-          console.log(`pruned legacy from kernel dir: ${entry.name}`);
-        }
+        if (opts?.verbose) console.log(`pruned legacy from kernel dir: ${entry.name}`);
       } catch (err) {
-        if (opts?.verbose) {
-          console.warn(`Warning: could not prune ${target}: ${err.message}`);
-        }
+        if (opts?.verbose) console.warn(`Warning: could not prune ${target}: ${err.message}`);
       }
     }
   }
 
-  return { kernel: kernel.length, standard: standard.length, prunedFromKernelDir };
+  // Standard-dir cleanup (#1217): when we're NOT copying standard
+  // skills, anything AIWG-named under standardDestDir is a legacy
+  // mirror from a rc.13-or-earlier deploy. Prune to clean up.
+  let prunedFromStandardDir = 0;
+  if (
+    !copyStandardSkills &&
+    standardDestDir &&
+    fs.existsSync(standardDestDir) &&
+    !opts?.dryRun
+  ) {
+    for (const entry of fs.readdirSync(standardDestDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const skillMd = path.join(standardDestDir, entry.name, 'SKILL.md');
+      if (!fs.existsSync(skillMd)) continue;
+      // Only prune skills AIWG manages — bound by the deploy manifest.
+      if (!allSkillNames.has(entry.name)) continue;
+      const target = path.join(standardDestDir, entry.name);
+      try {
+        fs.rmSync(target, { recursive: true, force: true });
+        prunedFromStandardDir++;
+        if (opts?.verbose) console.log(`pruned legacy from standard dir: ${entry.name}`);
+      } catch (err) {
+        if (opts?.verbose) console.warn(`Warning: could not prune ${target}: ${err.message}`);
+      }
+    }
+    // Try to remove the now-empty standard dir + its parent .aiwg/
+    // wrapper if both end up empty. Best-effort.
+    try {
+      const remaining = fs.readdirSync(standardDestDir);
+      if (remaining.length === 0) {
+        fs.rmdirSync(standardDestDir);
+        const aiwgWrapper = path.dirname(standardDestDir);
+        if (path.basename(aiwgWrapper) === '.aiwg') {
+          const wrapperRemaining = fs.readdirSync(aiwgWrapper);
+          if (wrapperRemaining.length === 0) fs.rmdirSync(aiwgWrapper);
+        }
+      }
+    } catch { /* non-fatal */ }
+  }
+
+  return {
+    kernel: kernel.length,
+    standardCopied,
+    prunedFromKernelDir,
+    prunedFromStandardDir,
+  };
 }
 
 /**

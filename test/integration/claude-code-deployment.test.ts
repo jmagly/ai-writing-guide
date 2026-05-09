@@ -93,6 +93,11 @@ function runScript(scriptPath: string, args: string[] = []): string {
     ...process.env,
     HOME: TEST_HOME_DIR,
     USERPROFILE: TEST_HOME_DIR,
+    // Default to copy mode for the integration tests so they continue
+    // exercising the per-project mirror at `.claude/.aiwg/skills/`.
+    // No-copy is the production default (#1217); these tests verify
+    // the still-supported fallback path.
+    AIWG_COPY_STANDARD_SKILLS: '1',
   };
 
   return execFileSync(process.execPath, [path.join(REPO_ROOT, scriptPath), ...args], {
