@@ -49,6 +49,10 @@ export async function main(args: string[]): Promise<void> {
       await handleQuery(subcommandArgs);
       break;
 
+    case 'discover':
+      await handleDiscover(subcommandArgs);
+      break;
+
     case 'deps':
       await handleDeps(subcommandArgs);
       break;
@@ -93,6 +97,7 @@ export async function main(args: string[]): Promise<void> {
       console.log('Available subcommands:');
       console.log('  build      Build/rebuild the artifact index');
       console.log('  query      Search artifacts by keyword, type, phase, tags');
+      console.log('  discover   Capability search across skills/agents/commands/rules (#1214)');
       console.log('  deps       Show artifact dependency graph');
       console.log('  stats      Show index statistics');
       console.log('  neighbors  Get neighbors of a node in a graph');
@@ -107,6 +112,9 @@ export async function main(args: string[]): Promise<void> {
       console.log('  aiwg index build');
       console.log('  aiwg index build --all');
       console.log('  aiwg index build --graph codebase --force');
+      console.log('  aiwg index discover "create intake"');
+      console.log('  aiwg index discover "deploy production" --limit 5 --json');
+      console.log('  aiwg index discover "audit security" --type skill');
       console.log('  aiwg index query "authentication" --type use-case');
       console.log('  aiwg index query "security rules" --graph framework --json');
       console.log('  aiwg index deps .aiwg/requirements/UC-001.md');
@@ -119,7 +127,7 @@ export async function main(args: string[]): Promise<void> {
 
     default:
       console.error(`Error: Unknown index subcommand '${subcommand}'`);
-      console.log('Available: build, query, deps, stats, neighbors, set, watch');
+      console.log('Available: build, query, discover, deps, stats, neighbors, set, watch');
       process.exit(1);
   }
 }
@@ -550,5 +558,74 @@ async function handleSetQuery(args: string[]): Promise<void> {
     direction,
     edgeType,
     json,
+  });
+}
+
+/**
+ * Handle 'index discover' command — capability-search for AIWG skills,
+ * agents, commands, and rules.
+ *
+ * Like `query` but tuned for capability lookups: ranks by trigger
+ * phrase + capability description first, falls back to title/tag/path
+ * matches. Defaults to AIWG artifact kinds (skill/agent/command/rule),
+ * narrowable via `--type`.
+ *
+ * Returns a token-tight format intended for in-context agent
+ * consumption — path, score, type, top trigger, capability snippet.
+ *
+ * @implements #1214
+ */
+async function handleDiscover(args: string[]): Promise<void> {
+  const { discoverCapability } = await import('./query-engine.js');
+  const cwd = process.cwd();
+
+  // Parse positional phrase (everything before flags)
+  const textParts: string[] = [];
+  const flags: string[] = [];
+  let inFlags = false;
+  for (const arg of args) {
+    if (arg.startsWith('--')) inFlags = true;
+    if (inFlags) flags.push(arg);
+    else textParts.push(arg);
+  }
+
+  const phrase = textParts.join(' ').trim();
+  if (!phrase) {
+    console.error('Error: aiwg index discover requires a search phrase');
+    console.log('');
+    console.log('Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json] [--graph <name>]');
+    console.log('');
+    console.log('Examples:');
+    console.log('  aiwg index discover "create intake"');
+    console.log('  aiwg index discover "deploy production" --limit 5');
+    console.log('  aiwg index discover "audit security" --type skill,agent');
+    console.log('  aiwg index discover "intake" --json');
+    process.exit(1);
+  }
+
+  // Parse flags
+  let typeFilter: string[] | undefined;
+  let limit = 10;
+  let json = false;
+
+  for (let i = 0; i < flags.length; i++) {
+    if (flags[i] === '--type' && i + 1 < flags.length) {
+      typeFilter = flags[++i].split(',').map(s => s.trim()).filter(Boolean);
+    } else if (flags[i] === '--limit' && i + 1 < flags.length) {
+      const n = parseInt(flags[++i], 10);
+      if (!Number.isNaN(n) && n > 0) limit = n;
+    } else if (flags[i] === '--json') {
+      json = true;
+    }
+  }
+
+  const graph = parseGraphFlag(flags);
+
+  await discoverCapability(cwd, {
+    phrase,
+    typeFilter,
+    limit,
+    json,
+    graph,
   });
 }

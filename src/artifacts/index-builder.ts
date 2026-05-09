@@ -87,11 +87,43 @@ function inferPhase(filePath: string): string {
 }
 
 /**
- * Determine artifact type from frontmatter or filename
+ * Determine artifact type from frontmatter or filename.
+ *
+ * Path-based detection for AIWG artifact kinds (#1214) takes precedence
+ * over the legacy basename heuristics so `agentic/code/.../skills/foo/SKILL.md`
+ * always lands as `type: 'skill'` regardless of frontmatter.
  */
 function inferType(data: Record<string, unknown>, filePath: string): string {
   if (typeof data.type === 'string') return data.type;
+
+  // AIWG artifact kinds — match on framework/addon source path layout.
+  // Normalize separators so matchers are cross-platform.
+  const normalized = filePath.replace(/\\/g, '/');
   const basename = path.basename(filePath, path.extname(filePath)).toLowerCase();
+
+  // Skills: SKILL.md inside a skills/<slug>/ directory.
+  if (basename === 'skill' && /\/skills\/[^/]+\/SKILL\.md$/i.test(normalized)) {
+    return 'skill';
+  }
+  // Agents: <name>.md inside an agents/ directory under frameworks/addons.
+  if (/\/(?:frameworks|addons)\/[^/]+\/agents\/[^/]+\.md$/i.test(normalized)) {
+    return 'agent';
+  }
+  // Commands: <name>.md inside a commands/ directory under frameworks/addons.
+  if (/\/(?:frameworks|addons)\/[^/]+\/commands\/[^/]+\.md$/i.test(normalized)) {
+    return 'command';
+  }
+  // Rules: <name>.md inside a rules/ directory under frameworks/addons
+  // (excluding RULES-INDEX.md and READMEs).
+  if (
+    /\/(?:frameworks|addons)\/[^/]+\/rules\/[^/]+\.md$/i.test(normalized) &&
+    !/RULES-INDEX\.md$/i.test(normalized) &&
+    basename !== 'readme'
+  ) {
+    return 'rule';
+  }
+
+  // Legacy SDLC artifact heuristics (existing behavior preserved).
   if (basename.startsWith('uc-') || basename.includes('use-case')) return 'use-case';
   if (basename.startsWith('adr-') || basename.includes('adr')) return 'adr';
   if (basename.startsWith('tp-') || basename.includes('test-plan')) return 'test-plan';
@@ -102,6 +134,76 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
   if (basename.includes('risk')) return 'risk';
   if (basename.includes('deploy')) return 'deployment';
   return 'document';
+}
+
+/**
+ * Extract trigger phrases from a SKILL.md / agent body.
+ *
+ * Skills declare alternate activation phrases under a `## Triggers`
+ * heading; the body typically lists them as bullet points. This
+ * function pulls each bullet's leading phrase (the part before any
+ * `→` arrow or em-dash explanation), lowercased and trimmed.
+ *
+ * Returns an empty array when no `## Triggers` section is found —
+ * non-skill artifacts get `triggers: undefined` after this is wired.
+ *
+ * @implements #1214
+ */
+export function extractTriggers(body: string): string[] {
+  // Find a `## Triggers` heading (case-insensitive). Capture the
+  // section content until the next `## ` heading or end of file.
+  // Note: avoid the multi-line `m` flag with `$` — `$` would match
+  // every line terminator and stop capture at the first blank line.
+  const sectionMatch = body.match(/(?:^|\n)##\s+Triggers\b[^\n]*\n([\s\S]*?)(?=\n##\s|$)/i);
+  if (!sectionMatch) return [];
+
+  const section = sectionMatch[1];
+  const phrases: string[] = [];
+
+  for (const rawLine of section.split('\n')) {
+    const line = rawLine.trim();
+    if (!line.startsWith('-') && !line.startsWith('*') && !line.startsWith('+')) continue;
+    // Strip the bullet marker, optional surrounding quotes, and split on
+    // common explanation separators ("→", " — ", " - " when followed by
+    // explanatory text).
+    let phrase = line.replace(/^[-*+]\s+/, '').trim();
+    // Drop any leading quote characters
+    phrase = phrase.replace(/^["“”'`]+/, '').trim();
+    // Cut at the first explanation separator
+    const sepMatch = phrase.match(/^(.*?)\s*(?:→|—|--|\s-\s)/);
+    if (sepMatch) phrase = sepMatch[1];
+    // Strip trailing quotes / colons
+    phrase = phrase.replace(/["“”'`:.]+\s*$/, '').trim();
+    if (phrase.length === 0) continue;
+    if (phrase.length > 200) continue; // Reject pathological lines
+    phrases.push(phrase.toLowerCase());
+  }
+
+  return phrases;
+}
+
+/**
+ * Extract a capability summary for a skill/agent/command/rule.
+ *
+ * Prefers the frontmatter `description` field (used uniformly across
+ * AIWG SKILL.md / agent files). Falls back to the first non-heading
+ * paragraph of the body. Capped at 240 chars so the index stays
+ * token-tight when surfaced via `aiwg index discover`.
+ *
+ * @implements #1214
+ */
+export function extractCapability(data: Record<string, unknown>, body: string): string | undefined {
+  if (typeof data.description === 'string' && data.description.trim().length > 0) {
+    return data.description.trim().slice(0, 240);
+  }
+  // Fallback: first non-empty paragraph that isn't a heading.
+  const stripped = body.replace(/^---\n[\s\S]*?\n---\n/, '');
+  for (const block of stripped.split(/\n\s*\n/)) {
+    const trimmed = block.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    return trimmed.replace(/\s+/g, ' ').slice(0, 240);
+  }
+  return undefined;
 }
 
 /**
@@ -413,6 +515,15 @@ export async function buildIndex(
       const summary = extractSummary(data, body);
       const dependencies = extractMentions(content);
 
+      // Discovery metadata (#1214) — only meaningful for AIWG artifact
+      // kinds. Kept undefined on other types so the index file stays
+      // small for the common case.
+      const isDiscoverable = type === 'skill' || type === 'agent' || type === 'command' || type === 'rule';
+      const triggers = isDiscoverable ? extractTriggers(body) : undefined;
+      const capability = isDiscoverable ? extractCapability(data, body) : undefined;
+      const kernel =
+        data.kernel === true || data.kernel === 'true' ? true : undefined;
+
       entry = {
         path: relativePath,
         type,
@@ -425,6 +536,9 @@ export async function buildIndex(
         summary,
         dependencies,
         dependents: [], // Computed after all entries are processed
+        ...(triggers && triggers.length > 0 ? { triggers } : {}),
+        ...(capability ? { capability } : {}),
+        ...(kernel ? { kernel } : {}),
       };
     }
 

@@ -48,6 +48,30 @@ export interface MetadataEntry {
 
   /** Computed: paths that reference this artifact */
   dependents: string[];
+
+  /**
+   * Trigger phrases extracted from the `## Triggers` section of skill / agent
+   * descriptors. One entry per phrase, lowercased. Used by capability search
+   * (#1214) to boost matches that hit a skill's declared activation phrase.
+   */
+  triggers?: string[];
+
+  /**
+   * Capability summary — what this artifact does, in one sentence.
+   * Drawn from frontmatter `description` for skills/agents/commands/rules.
+   * Used by capability search (#1214) for substring scoring above the
+   * generic body summary.
+   */
+  capability?: string;
+
+  /**
+   * `kernel: true` from frontmatter. Marks always-loaded skills the
+   * deploy pipeline routes to the platform-native skills directory
+   * (#1212). Surfaced in the index for `aiwg index discover` so the
+   * agent can prefer non-kernel skills when the kernel set already
+   * covers a request.
+   */
+  kernel?: boolean;
 }
 
 /**
@@ -350,7 +374,11 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
     scanDirs: ['agentic/code/frameworks', 'agentic/code/addons', 'agentic/code/agents', 'docs'],
     extensions: ['.md', '.yaml', '.json'],
     shared: true,
-    defaultBuild: false, // Explicitly requested via --graph framework
+    // Not built by `aiwg index build` (no flag) — that would write to
+    // the shared XDG location from any project. Freshness is guaranteed
+    // by the explicit post-deploy rebuild in `useHandler` (#1212/#1214)
+    // and by `aiwg index build --graph framework` for manual rebuilds.
+    defaultBuild: false,
   },
   project: {
     type: 'project',
