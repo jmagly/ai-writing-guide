@@ -2,30 +2,280 @@
 
 > **Version**: 2026.5.0+
 > **Status**: Active — landed across all 10 supported providers
-> **Reference**: epic [#1212](https://git.integrolabs.net/roctinam/aiwg/issues/1212), [`skill-discovery`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) rule (HIGH)
+> **Reference**: epics [#1212](https://git.integrolabs.net/roctinam/aiwg/issues/1212), [#1217](https://git.integrolabs.net/roctinam/aiwg/issues/1217), [#1218](https://git.integrolabs.net/roctinam/aiwg/issues/1218); [`skill-discovery`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) rule (HIGH)
 
 ## What changed and why
 
-AIWG ships hundreds of skills across its installed frameworks. Agentic platforms (Claude Code, OpenClaw, Cursor, Codex, Factory, etc.) cap how many skills they will list in any given context — Claude Code at 25% of context window by default, OpenClaw at 150 hard, others on similar trajectories. The historical "deploy everything to the platform-native skills directory" pattern doesn't scale through these caps.
+AIWG ships **400+ skills** across its frameworks. Agentic platforms (Claude Code, OpenClaw, Cursor, Codex, Factory, etc.) cap how many skills they will list in any given context — Claude Code at 25% of context window by default, OpenClaw at 150 hard, others on similar trajectories. The historical "deploy everything to the platform-native skills directory" pattern doesn't scale through these caps.
 
-Starting in 2026.5.0, AIWG splits its skill surface into two tiers per provider:
+Starting in 2026.5.0, AIWG splits its skill surface into two tiers, with discovery + on-demand fetch closing the loop:
 
-- **Kernel skills** — always-loaded, deployed to the platform-native skills directory (`.claude/skills/`, `.factory/skills/`, etc.). Today: one `<framework>-quickref` per installed framework + `aiwg-utils-quickref`. ~9 skills total.
-- **Standard skills** — sequestered under `<provider-dir>/.aiwg/skills/`. Hidden from the platform's flat skill listing. Reachable through `aiwg discover`.
+- **Kernel skills** — always-loaded into the platform's flat skill listing. ~15 skills total: 9 quickrefs (one per installed framework + utils) and 6 self-maintenance ops.
+- **Standard skills** — the other 380+ skills. Stay at `$AIWG_ROOT` and are **not copied per-project** by default (#1217). Reachable via `aiwg discover` (find) and `aiwg show` (fetch).
 
-This document is the operator's guide to using the new model effectively.
+This document is the operator's guide to using the new model effectively, plus verification steps so you can confirm it's actually working.
 
 ## TL;DR
 
 ```bash
+# Find what skill handles your need
 aiwg discover "<the user's need, paraphrased>" --limit 3
+
+# Fetch the full body of a specific skill / agent / command / rule
+aiwg show skill <name>
+aiwg show agent <name>
+aiwg show command <name>
+aiwg show rule <name>
+
+# Health check
+aiwg doctor
 ```
 
-Run that first. Surface the top match (or top-3) to the user. Skip discovery only when the user named a specific skill, when the capability is clearly outside AIWG's scope, or when you ran the same query in this session.
+If the kernel quickref or the always-loaded ops skills don't already answer the question, run `aiwg discover`. Surface the top match (or top-3) to the user. Use `aiwg show` to read the file content without navigating storage paths yourself.
+
+## How the two-tier model works
+
+```
+Source of truth ($AIWG_ROOT/agentic/code/...)
+│
+│  ┌────────────────────────────┐
+├─►│ KERNEL skills              │  copied per-project to platform-native skills dir
+│  │ kernel: true in frontmatter│  always-loaded into agent context
+│  │ (~15 skills today)         │  budget-bound; keep tight
+│  └────────────────────────────┘
+│
+└─►┌────────────────────────────┐
+   │ STANDARD skills            │  NOT copied (#1217 default)
+   │ kernel: false / unset      │  agent reads from $AIWG_ROOT via `aiwg show`
+   │ (~385 skills today)        │  reached through `aiwg discover`
+   └────────────────────────────┘
+
+           ▲                              ▲
+           │                              │
+   `aiwg use sdlc`                `aiwg discover "..."`
+    deploys both tiers           returns absolute paths
+    (kernel copies, standard     anchored to $AIWG_ROOT
+    skipped by default)          → `aiwg show skill <name>`
+```
+
+### Why no-copy for standard skills?
+
+Three reasons (#1217):
+
+1. **No stale copies.** When AIWG updates, every project sees the new content immediately. No drift between `$AIWG_ROOT` and per-project mirrors.
+2. **No bloat.** A typical AIWG install at `$AIWG_ROOT` is one tree. With the old per-project copy, every project carried 391 redundant skill files. Across 20 projects that's 20× duplication of the same content.
+3. **Consistent with the budget pivot.** Standard skills are *not* in the platform's flat scan anyway. Whether they live at `<provider>/.aiwg/skills/` or stay at `$AIWG_ROOT/agentic/code/...` makes no difference to the platform — but it makes a big difference to disk and freshness.
+
+### Opting back in to per-project copies
+
+Some workflows still want the per-project mirror — sandboxed runtimes where `$AIWG_ROOT` isn't readable, air-gapped corpora, etc.
+
+```bash
+AIWG_COPY_STANDARD_SKILLS=1 aiwg use sdlc
+```
+
+This restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`).
+
+## The kernel set today (15 skills, ~15-25k tokens total)
+
+### Framework quickrefs (9)
+
+One quickref per framework, deployed when that framework is installed. Each one teaches the framework's mental model and lists curated `aiwg discover` phrases. They do **not** enumerate the full skill surface.
+
+| Quickref | Framework |
+|---|---|
+| `sdlc-quickref` | sdlc-complete |
+| `forensics-quickref` | forensics-complete |
+| `research-quickref` | research-complete |
+| `media-curator-quickref` | media-curator |
+| `marketing-quickref` | media-marketing-kit |
+| `ops-quickref` | ops-complete |
+| `security-engineering-quickref` | security-engineering |
+| `knowledge-base-quickref` | knowledge-base |
+| `aiwg-utils-quickref` | aiwg-utils (always present) |
+
+### Self-maintenance ops (6, new in rc.17)
+
+These deploy regardless of framework. They exist so the agent retains *self-repair* surfaces even when discovery itself is broken (corrupted index, missing `$AIWG_ROOT`, etc.):
+
+| Skill | Purpose |
+|---|---|
+| `steward` | Provider capability awareness + command routing |
+| `aiwg-doctor` | Installation health check with remediation steps |
+| `aiwg-refresh` | Update CLI + redeploy frameworks (alias: `aiwg sync`) |
+| `aiwg-status` | Workspace status dashboard |
+| `aiwg-help` | List every CLI command, arguments, and examples |
+| `use` | Deploy a framework or addon |
+
+These pair with the always-deployed `aiwg-steward` agent for orchestrated repair: status → doctor → refresh → re-doctor.
+
+## The discover → show flow
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ User asks: "I need to deploy this to production"        │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│ Agent: aiwg discover "deploy production"                │
+│                                                         │
+│   ★ score=0.51  skill   /home/.../flow-deploy-to-       │
+│                          production/SKILL.md            │
+│                          Orchestrate production deploy  │
+│                          with strategy selection,       │
+│                          validation, rollback ...       │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│ Agent: aiwg show skill flow-deploy-to-production        │
+│                                                         │
+│   ---                                                   │
+│   namespace: aiwg                                       │
+│   name: flow-deploy-to-production                       │
+│   ...                                                   │
+│   ---                                                   │
+│   # flow-deploy-to-production                           │
+│   You orchestrate production deployments...             │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+                Agent applies the skill
+```
+
+Two-step pattern by design. **Discover** ranks candidates and returns metadata. **Show** fetches the full body without the agent having to navigate the filesystem. Consumers don't need to know where AIWG stores skills.
+
+## Per-provider deployment paths
+
+The kernel + standard split applies uniformly. All 10 providers honor `AIWG_COPY_STANDARD_SKILLS` for the standard tier.
+
+| Provider | Kernel skills | Standard skills (when opt-in) | Cross-agent dump |
+|---|---|---|---|
+| Claude Code | `.claude/skills/` | `.claude/.aiwg/skills/` | — |
+| Cursor | `.cursor/skills/` | `.cursor/.aiwg/skills/` | — |
+| Factory AI | `.factory/skills/` | `.factory/.aiwg/skills/` | — |
+| GitHub Copilot | `.github/skills/` | `.github/.aiwg/skills/` | — |
+| Warp | `.warp/skills/` | `.warp/.aiwg/skills/` | — |
+| Windsurf | `.windsurf/skills/` | `.windsurf/.aiwg/skills/` | — |
+| Hermes | `~/.hermes/skills/` | `~/.hermes/.aiwg/skills/` | — |
+| OpenCode | `.opencode/skill/` | `.opencode/.aiwg/skill/` | `.agents/skills/` |
+| OpenClaw | `~/.openclaw/skills/aiwg/` | `~/.openclaw/.aiwg/skills/` | `.agents/skills/` |
+| Codex | `~/.codex/skills/` | `~/.codex/skills/` (filtered) | `.agents/skills/` |
+
+**Notes on the asymmetric providers:**
+
+- **Codex** writes to `~/.codex/skills/` (home-dir, single tier). The deploy script filters by `kernel: true` when `AIWG_COPY_STANDARD_SKILLS` is unset, so only kernel skills land. Opt in to write all skills.
+- **OpenCode** uses singular `.opencode/skill/` (platform convention). Cross-agent dump at `.agents/skills/` honors the same env-var filter.
+- **OpenClaw** is user-scope only — pass `--scope user`, not `--target`. Kernel skills nest under `aiwg/` namespace at `~/.openclaw/skills/aiwg/` to avoid collisions with non-AIWG ClaWHub installs.
+
+## Verifying it's working
+
+After running `aiwg use <framework>`, here are the checks you can run.
+
+### 1. Confirm the kernel set is what you expect
+
+```bash
+# For Claude Code
+ls .claude/skills/
+```
+
+You should see the framework quickrefs and the 6 ops skills. Today's expected set for an `sdlc` install:
+
+```
+aiwg-doctor          aiwg-help            aiwg-refresh
+aiwg-status          aiwg-utils-quickref  sdlc-quickref
+steward              use
+```
+
+For `aiwg use all` (every framework), you'll see all 9 quickrefs + 6 ops = 15 skills.
+
+### 2. Confirm no per-project standard mirror by default
+
+```bash
+ls .claude/.aiwg/skills/ 2>&1
+# expected: ls: cannot access '.claude/.aiwg/skills/': No such file or directory
+```
+
+If the directory exists with content, either you set `AIWG_COPY_STANDARD_SKILLS=1` or you're on a pre-rc.14 version. Verify your version:
+
+```bash
+aiwg version
+```
+
+Should be `2026.5.0-rc.14` or later.
+
+### 3. Confirm `aiwg discover` returns absolute paths
+
+```bash
+aiwg discover "deploy production" --limit 1 --json
+```
+
+Expected (path is anchored to `$AIWG_ROOT`):
+
+```json
+{
+  "query": { "phrase": "deploy production", ... },
+  "results": [
+    {
+      "path": "/home/you/.../aiwg/agentic/code/frameworks/sdlc-complete/skills/flow-deploy-to-production/SKILL.md",
+      "type": "skill",
+      ...
+    }
+  ]
+}
+```
+
+If `path` is relative (`agentic/code/...`), check that `aiwg use` rebuilt the framework index — it should always rebuild post-deploy.
+
+### 4. Confirm `aiwg show` reads from the indexed location
+
+```bash
+aiwg show skill flow-deploy-to-production | head -20
+```
+
+You should see the SKILL.md frontmatter + body streaming. If you get "no artifact found matching", run `aiwg discover` first to confirm the name and check `aiwg index stats --graph framework` to confirm the index is current.
+
+### 5. Confirm `aiwg doctor` is green
+
+```bash
+aiwg doctor
+```
+
+The skill-listing budget check (per provider) should report well under the cap. For Claude Code with the default 25% budget on a 200k context, you should see something like:
+
+```
+[OK] Claude Code Skills        ~14k / 50k tokens (28%)
+```
+
+If the budget is exceeded, your kernel set has grown — only quickrefs + ops belong there.
+
+### 6. Confirm self-repair surfaces are in context
+
+In your agent session, ask the model:
+
+> "Without running any commands, list the AIWG skills you currently have loaded."
+
+You should see the 9 quickrefs and 6 ops skills enumerated. If only quickrefs appear, your install is on a pre-rc.17 version — run `aiwg refresh` to pick up the expanded kernel.
+
+### 7. End-to-end: discover → show in one shot
+
+```bash
+# Find a skill
+aiwg discover "intake wizard" --limit 1
+
+# Read its body
+aiwg show skill intake-wizard | head -10
+
+# Read by JSON envelope (path + content)
+aiwg show skill intake-wizard --json | jq -r .path
+```
+
+The `path` returned by show should match the `path` returned by discover — both anchored to `$AIWG_ROOT`.
 
 ## The rule that enforces this: `skill-discovery` (HIGH)
 
-The aiwg-utils addon ships a HIGH-enforcement rule named `skill-discovery` that mandates the discovery query before declining a user request as "AIWG can't do that" or improvising a custom workflow when an AIWG skill might already exist. Full text: `agentic/code/addons/aiwg-utils/rules/skill-discovery.md`.
+The aiwg-utils addon ships a HIGH-enforcement rule named `skill-discovery` that mandates the discovery query before declining a user request as "AIWG can't do that" or improvising a custom workflow. Full text: `agentic/code/addons/aiwg-utils/rules/skill-discovery.md`.
 
 The rule lives next to `research-before-decision` (technical research) and `instruction-comprehension` (parsing the actual need). The three layer cleanly:
 
@@ -33,28 +283,9 @@ The rule lives next to `research-before-decision` (technical research) and `inst
 2. **`skill-discovery`** — query the index for what AIWG already provides
 3. **`research-before-decision`** — research the technical implementation if no skill matches
 
-## Lead with discovery, not memory
-
-Your kernel set is ~9 skills. AIWG's installed surface today is ~400. The math forces a discipline: query before answering.
-
-### When to query
-
-Always query when:
-- The user describes a capability ("I want to...", "help me...", "can you...")
-- Your kernel quickrefs don't list a direct match
-- A previous attempt failed and you don't know which skill should handle it
-
-### When to skip the query
-
-Skip when:
-- The user named a specific skill or command (`/flow-deploy-to-production`, `aiwg use sdlc`)
-- The capability is clearly outside AIWG's scope (general programming questions unrelated to AIWG, weather queries, etc.)
-- You queried for the same need within the current session and the result is in working memory
-- The kernel quickref directly lists the skill — you've already done the lookup mentally
-
 ## Patterns that work
 
-### 1. Capability lookup with the user's own words
+### Capability lookup with the user's own words
 
 ```bash
 aiwg discover "deploy to production"
@@ -63,9 +294,9 @@ aiwg discover "create an architecture decision record"
 aiwg discover "scan this codebase to bootstrap an SDLC project"
 ```
 
-Don't translate to AIWG vocabulary first — discovery is tuned for natural-language phrasing. The scorer looks at trigger phrases (declared in each skill's `## Triggers` section), capability descriptions, titles, tags, summary, and path, weighted in that order.
+Don't translate to AIWG vocabulary first — discovery is tuned for natural-language phrasing. The scorer looks at trigger phrases (declared in each skill's `## Triggers` section, weighted 4×), capability descriptions (2×), titles, tags, summaries, and paths.
 
-### 2. Type-narrowing for tighter results
+### Type-narrowing for tighter results
 
 ```bash
 aiwg discover "review code"          --type agent     # who handles code review
@@ -75,36 +306,16 @@ aiwg discover "no unauthenticated"   --type rule      # which rule enforces it
 
 The default `--type` is `skill,agent,command,rule`. Narrowing helps when you specifically want one kind.
 
-### 3. JSON for sub-agent consumption
+### JSON for sub-agent consumption
 
 ```bash
 aiwg discover "deploy production" --json --limit 3
+aiwg show skill flow-deploy-to-production --json
 ```
 
-JSON output emits a stable schema:
+JSON output emits a stable schema, compact enough to forward to a subagent without context-bloat.
 
-```json
-{
-  "query": { "phrase": "deploy production", "types": ["skill","agent","command","rule"], "limit": 3 },
-  "results": [
-    {
-      "path": "agentic/code/frameworks/sdlc-complete/skills/flow-deploy-to-production/SKILL.md",
-      "type": "skill",
-      "title": "flow-deploy-to-production",
-      "score": 0.51,
-      "triggers": ["deploy to production", "ship it"],
-      "capability": "Orchestrate production deployment with strategy selection...",
-      "kernel": false
-    }
-  ],
-  "total": 1,
-  "query_time_ms": 16
-}
-```
-
-Compact enough to forward to a subagent without context-bloat.
-
-### 4. Surface candidates to the user
+### Surface candidates to the user
 
 When the top match is clear, name it:
 
@@ -133,7 +344,7 @@ Without having queried first, this answer is likely wrong. The kernel set is int
 
 ### Enumerating from memory
 
-The kernel quickrefs (`sdlc-quickref`, `forensics-quickref`, etc.) are pointer-heavy by design. Each one lists ~15–25 high-traffic skills. The framework's actual skill count is often 2–3× that. Enumerating from a quickref is enumerating from a curated subset — not the full surface.
+The kernel quickrefs are pointer-heavy by design. Each one lists ~15–25 high-traffic skills. The framework's actual skill count is often 2–3× that. Enumerating from a quickref is enumerating from a curated subset — not the full surface.
 
 > ❌ "The SDLC framework has these skills: [lists from sdlc-quickref's table]. Anything not in this list, AIWG can't do."
 >
@@ -147,43 +358,25 @@ The curated skill encodes deliberate decisions — templates, gate criteria, mul
 >
 > ✅ User asks for a SAD → agent runs `aiwg discover "create SAD"` → finds `artifact-orchestration` + the SDLC architecture-evolution flow → invokes those, which apply the AIWG SAD template and multi-agent review pattern
 
-### Skipping the query because "it's obvious"
+### Reading skills by raw filesystem path
 
-If it's truly obvious from the kernel quickref, fine. If you're going from memory of skills you saw months ago, query — your memory is stale, the index is fresh.
+> ❌ Agent: "Let me cat `/home/.../agentic/code/frameworks/.../skills/intake-wizard/SKILL.md`"
+>
+> ✅ Agent: "Let me run `aiwg show skill intake-wizard`"
 
-## Mental model: index as runtime discovery, kernel as orientation
+The CLI is the access point. It works the same regardless of where AIWG is installed (npm global, dev mode, custom corpus path) and survives layout changes.
 
-Think of the kernel set the way you think of a Linux kernel: it's the always-resident core that knows how to load everything else on demand. The kernel quickrefs orient you to each framework's purpose and most-reached-for skills. The index is the lookup table for everything past that point.
+## Recovery when discovery itself breaks
 
-`aiwg use` rebuilds the framework artifact index post-deploy as a best-effort step, so discovery queries always see the current installed surface — you don't need to manually `aiwg index build` between deploys.
+The 6 self-maintenance ops kernel skills exist precisely for this case. If `aiwg discover` errors out:
 
-## Per-provider deployment paths
+1. **`aiwg-doctor`** — diagnose what's broken (missing `$AIWG_ROOT`, corrupted index, version mismatch, etc.)
+2. **`aiwg-status`** — see what's currently deployed
+3. **`aiwg-refresh`** — update CLI + redeploy frameworks
+4. **`steward`** — get provider-specific routing advice
+5. Re-run `aiwg discover` to confirm
 
-The kernel + standard split applies uniformly across all 10 supported providers. Files marked `kernel: true` route to the platform-native dir; everything else routes to the `.aiwg/` namespace.
-
-| Provider | Kernel skills | Standard skills |
-|---|---|---|
-| Claude Code | `.claude/skills/` | `.claude/.aiwg/skills/` |
-| Cursor | `.cursor/skills/` | `.cursor/.aiwg/skills/` |
-| Factory AI | `.factory/skills/` | `.factory/.aiwg/skills/` |
-| GitHub Copilot | `.github/skills/` | `.github/.aiwg/skills/` |
-| OpenCode | `.opencode/skill/` | `.opencode/.aiwg/skill/` |
-| Warp | `.warp/skills/` | `.warp/.aiwg/skills/` |
-| Windsurf | `.windsurf/skills/` | `.windsurf/.aiwg/skills/` |
-| OpenClaw | `~/.openclaw/skills/aiwg/` | `~/.openclaw/.aiwg/skills/` |
-| Hermes | `~/.hermes/skills/` | `~/.hermes/.aiwg/skills/` |
-| Codex | `.codex/skills/` | `.codex/.aiwg/skills/` |
-
-## Recovery when you catch yourself improvising
-
-If you notice you're about to decline or write a custom workflow without having queried:
-
-1. **Stop** before responding
-2. **Query** the index with the user's need
-3. **Read** the top results' capability descriptions
-4. **Choose** the best match (or report top-3) and proceed
-
-It is always better to query late than not to query at all.
+The `aiwg-steward` agent (always-deployed alongside the framework agents) orchestrates this sequence end-to-end. Invoke it via `@aiwg-steward` in your platform's agent UI.
 
 ## Adding a kernel skill
 
@@ -201,17 +394,22 @@ description: ...
 
 Then deploy with `aiwg use <framework>`. The provider's `deploySkills` partitions by `kernel: true` and routes to the platform-native dir.
 
-The bar for kernel-tier skills is high: it should be content that *every session must see immediately*, not content that the agent could find via discovery. Today's kernel set is exactly framework directories — adding more dilutes the orientation function.
+The bar for kernel-tier skills is high. Today's kernel falls into two categories — orientation (quickrefs) and self-repair (ops). Adding more dilutes both functions and burns budget.
 
 ## Backward compatibility
 
-`aiwg index discover` still works (same dispatch path). The top-level `aiwg discover` is the canonical surface; the index-namespaced form is preserved so older skill bodies and external references don't break.
+- `aiwg index discover` still works (same dispatch path). The top-level `aiwg discover` is the canonical surface.
+- `aiwg index show <type> <name>` still works alongside the top-level `aiwg show <type> <name>`.
+- `aiwg sync` is a deprecated alias for `aiwg refresh` — emits a warning, scheduled for removal after the 2026.5.x stable line.
+- Pre-rc.14 installs will still find their skills under `<provider>/.aiwg/skills/` — `aiwg refresh` migrates to the new layout (deletes the legacy mirror) on next deploy.
 
 ## References
 
 - CLI reference [Discovery section](cli-reference.md#discovery) — full command reference
 - [`skill-discovery`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) — HIGH-enforcement framing rule
 - Epic [#1212](https://git.integrolabs.net/roctinam/aiwg/issues/1212) — index-driven skill discovery
+- Epic [#1217](https://git.integrolabs.net/roctinam/aiwg/issues/1217) — no-copy default
+- Epic [#1218](https://git.integrolabs.net/roctinam/aiwg/issues/1218) — `aiwg show` companion to discover
 - [`aiwg-utils-quickref`](../agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md) — kernel utility quickref that surfaces this discipline
 - [Architecture audit](../.aiwg/architecture/audit-index-subsystem-2026-05.md) — index subsystem audit that produced the 450-LOC implementation path
 - [Provider landscape research](../.aiwg/research/findings/skill-budget-landscape-2026-05.md) — survey of skill-budget caps across the 10 supported providers

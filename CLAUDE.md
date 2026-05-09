@@ -313,11 +313,22 @@ aiwg discover "create intake"            # ranks intake-* skills, intake-coordin
 aiwg discover "deploy production" --limit 3   # flow-deploy-to-production tops at score 0.51
 aiwg discover "audit security" --type skill   # narrow to skills only
 aiwg discover "<phrase>" --json          # Stable schema for sub-agent consumption
-# Most AIWG skills (391 of 400) are NOT in your context — they live at
-# <provider-dir>/.aiwg/skills/ and are reached via `aiwg discover`. The kernel
-# set (one quickref per installed framework + utils) is what's always-loaded.
-# The skill-discovery HIGH rule mandates `aiwg discover` before declining a
-# user request as out-of-scope.
+
+# Show — fetch the full text of a specific artifact by name (#1218)
+aiwg show skill intake-wizard            # streams SKILL.md to stdout
+aiwg show agent aiwg-steward             # agent definition
+aiwg show command discover               # CLI command spec
+aiwg show rule no-attribution            # rule body
+aiwg show skill <name> --json            # path + content envelope
+
+# Most AIWG skills (~385 of 400) are NOT in your context — they stay at
+# $AIWG_ROOT (no per-project copy by default, #1217) and are reached via
+# `aiwg discover` + `aiwg show`. The kernel set (9 framework quickrefs +
+# 6 self-maintenance ops: steward, aiwg-doctor, aiwg-refresh, aiwg-status,
+# aiwg-help, use) is what's always-loaded — 15 skills total.
+# The skill-discovery HIGH rule mandates `aiwg discover` before declining
+# a user request as out-of-scope.
+# To force per-project copies (sandboxed runtimes): AIWG_COPY_STANDARD_SKILLS=1
 
 # Artifact index — build/query graph indices (project, codebase, framework, user-defined)
 aiwg index build                         # Build/rebuild artifact index

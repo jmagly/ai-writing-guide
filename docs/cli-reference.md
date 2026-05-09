@@ -3244,6 +3244,46 @@ Discovery results for "deploy production" (3 matches, 16ms):
 
 Multi-token queries require ≥50% token overlap to surface partial matches — gibberish queries return zero results rather than incidental hits.
 
+### show
+
+Print the full text of a specific AIWG skill, agent, command, or rule by name (#1218). The companion to `discover`: where discover ranks candidates, show fetches the body so consumers don't navigate AIWG's storage paths themselves.
+
+```bash
+aiwg show <type> <name> [options]
+aiwg index show <type> <name> [options]      # equivalent
+```
+
+**Type** is positional and required. Allowed values: `skill`, `agent`, `command`, `rule`.
+
+**Options:**
+
+- `--json` — Emit `{ path, type, title, kernel, content }` envelope. Default mode streams the file unmodified.
+- `--first` — On ambiguity, pick the top match instead of erroring with the disambiguation list.
+- `--graph <name>` — Override the default graph (defaults to `framework` then `project`).
+
+**Lookup order:**
+
+1. Exact path match against any indexed entry's stored path
+2. Basename match (skill directory name like `intake-wizard`, or filename stem for agents)
+3. Title match (case-insensitive)
+
+**Examples:**
+
+```bash
+aiwg show skill intake-wizard                       # streams SKILL.md to stdout
+aiwg show skill flow-deploy-to-production --json    # path + content envelope
+aiwg show agent aiwg-steward                        # agent definition
+aiwg show command discover                          # CLI command spec
+aiwg show rule no-attribution                       # rule body
+```
+
+**Errors:**
+
+- Calling `aiwg show <name>` with the type omitted prints a "did you mean: aiwg show skill <name>?" hint and exits 1.
+- Ambiguous matches list all candidates and exit 2 unless `--first` is supplied.
+
+**Why a separate command:** the kernel pivot (#1212) intentionally hides ~385 skills from the platform's flat scan; the no-copy default (#1217) leaves them at `$AIWG_ROOT` rather than mirroring per-project. `aiwg show` makes them trivially reachable without the consumer needing to know the storage layout. Pair with `aiwg discover` for find → fetch.
+
 ### Best-practice usage guidance
 
 Discovery is the operator surface that makes the **kernel + on-demand model** work across all 10 supported providers (Claude Code, Cursor, Factory, Copilot, OpenCode, Warp, Windsurf, OpenClaw, Hermes, Codex). Each provider deploys a small kernel set of always-loaded quickref skills; everything else sits at `<provider-dir>/.aiwg/skills/` and is reached via `aiwg discover`.
@@ -3260,7 +3300,9 @@ Then surface the top match (or top-3 candidates) — this makes your reasoning a
 
 **Use `--json` from sub-agents.** The JSON schema (`path / type / title / score / triggers / capability / kernel`) is stable and compact enough to forward to a subagent without context-bloat.
 
-**Don't skip discovery before declining or improvising.** The `skill-discovery` HIGH framing rule mandates `aiwg discover` before saying "AIWG can't do that" or writing a custom workflow from scratch. Most AIWG skills (391 of 400 today) are NOT in your loaded context — the kernel set is just the orientation layer.
+**Don't skip discovery before declining or improvising.** The `skill-discovery` HIGH framing rule mandates `aiwg discover` before saying "AIWG can't do that" or writing a custom workflow from scratch. Most AIWG skills (~385 of 400 today) are NOT in your loaded context — the kernel set is just the orientation layer + self-maintenance ops.
+
+**Read skill bodies via `aiwg show`, not via filesystem paths.** When discovery returns a candidate and you need its full body, call `aiwg show skill <name>`. Don't construct paths or `cat` files directly — the CLI is the access point and works the same regardless of where AIWG is installed.
 
 **Skip discovery only when:**
 - The user named a specific skill or command (e.g., `/flow-deploy-to-production`)
@@ -3306,6 +3348,7 @@ aiwg index <subcommand> [options]
 - `build` - Build/rebuild the artifact index
 - `query` - Search artifacts by keyword, type, phase, tags
 - `discover` - Capability search across AIWG skills/agents/commands/rules (canonical form is the top-level [`aiwg discover`](#discover); this subcommand is preserved for backward compatibility)
+- `show` - Print the full text of a specific skill/agent/command/rule (canonical form is the top-level [`aiwg show`](#show))
 - `deps` - Show artifact dependency graph
 - `stats` - Show index statistics
 - `neighbors` - Get neighbors of a node in a graph

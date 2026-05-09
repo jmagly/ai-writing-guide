@@ -68,6 +68,7 @@ These are CLI tools and services on top of the text-file substrate. The substrat
 - `aiwg mc` — background mission-control for parallel tasks
 - `aiwg daemon` — persistent session manager
 - `aiwg discover` — capability search across AIWG's 400+ skills/agents/commands/rules
+- `aiwg show` — fetch the full body of a specific skill / agent / command / rule
 - `aiwg index` — searchable artifact index (project + codebase + framework graphs)
 - `aiwg mcp` — MCP server for runtime tool access
 
@@ -942,9 +943,9 @@ aiwg scaffold-framework my-framework
 aiwg validate-metadata
 ```
 
-### Capability Discovery — `aiwg discover`
+### Capability Discovery — `aiwg discover` + `aiwg show`
 
-The headline operator surface for finding the right AIWG skill, agent, command, or rule by capability. Most AIWG skills (~391 of 400) are **not loaded into your platform's flat skill listing** — they live at `<provider-dir>/.aiwg/skills/` and are reachable only through `aiwg discover`. The kernel set on disk is small on purpose: one `<framework>-quickref` per installed framework + core utilities (~9 skills total), well under every supported platform's skill-listing budget.
+The headline operator surface for finding and reading AIWG capabilities. Most AIWG skills (~385 of 400) are **not loaded into your platform's flat skill listing** — they stay at `$AIWG_ROOT` and are reached on demand through `aiwg discover` (find) and `aiwg show` (fetch). The kernel set on disk is small on purpose: 9 framework quickrefs + 6 self-maintenance ops = 15 skills, well under every supported platform's skill-listing budget.
 
 ```bash
 # Find a skill by capability
@@ -952,9 +953,15 @@ aiwg discover "deploy production"           # → flow-deploy-to-production
 aiwg discover "create intake"               # → intake-* family
 aiwg discover "audit security" --type skill --limit 5
 aiwg discover "<phrase>" --json             # stable schema for sub-agents
+
+# Fetch the full body of a specific artifact (companion to discover)
+aiwg show skill flow-deploy-to-production
+aiwg show agent aiwg-steward
+aiwg show command discover
+aiwg show rule no-attribution
 ```
 
-The kernel quickrefs ship **curated, validated discovery phrases per capability domain** — phrases tested against the live scorer to surface the right top-3 candidates. See [`docs/discovery-and-kernel-skills.md`](docs/discovery-and-kernel-skills.md) for the full best-practices guide.
+The kernel quickrefs ship **curated, validated discovery phrases per capability domain** — phrases tested against the live scorer to surface the right top-3 candidates. The 6 self-maintenance ops (`steward`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`) stay loaded so the agent retains repair surfaces even when discovery itself is broken. See [`docs/discovery-and-kernel-skills.md`](docs/discovery-and-kernel-skills.md) for the full best-practices guide, ASCII flow diagrams, and verification steps.
 
 ### Artifact Index — `aiwg index`
 
