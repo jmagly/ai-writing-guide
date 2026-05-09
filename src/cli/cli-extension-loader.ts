@@ -189,14 +189,42 @@ interface ClaudeHookEntry {
   command: string;
 }
 
-interface ClaudeHookMatcher {
+interface ClaudeHookGroup {
+  matcher?: string;
+  hooks: ClaudeHookEntry[];
+}
+
+/** Legacy shape written before #107: array of `{matcher, hooks}` */
+interface LegacyClaudeHookMatcher {
   matcher: string;
   hooks: ClaudeHookEntry[];
 }
 
+type ClaudeHooksField = Record<string, ClaudeHookGroup[]>;
+
 interface ClaudeSettings {
   [key: string]: unknown;
-  hooks?: ClaudeHookMatcher[];
+  hooks?: ClaudeHooksField | LegacyClaudeHookMatcher[];
+}
+
+/**
+ * Migrate legacy array-shaped hooks to the object form Claude Code expects.
+ * See #107.
+ */
+function normalizeClaudeHooks(
+  raw: ClaudeHooksField | LegacyClaudeHookMatcher[] | undefined,
+): ClaudeHooksField {
+  if (Array.isArray(raw)) {
+    const out: ClaudeHooksField = {};
+    for (const m of raw) {
+      if (!m || typeof m.matcher !== 'string' || !Array.isArray(m.hooks)) continue;
+      if (!out[m.matcher]) out[m.matcher] = [];
+      out[m.matcher].push({ hooks: m.hooks });
+    }
+    return out;
+  }
+  if (raw && typeof raw === 'object') return raw;
+  return {};
 }
 
 /**
@@ -205,6 +233,10 @@ interface ClaudeSettings {
  * Reads .claude/settings.json, merges hook entries for subcommands that
  * declare hook_event, and writes back. Idempotent — duplicate entries
  * are skipped. Only registers events in AUTO_HOOK_EVENTS.
+ *
+ * Schema: writes the object-keyed form Claude Code requires (#107). If
+ * an existing settings.json has a legacy array-shaped `hooks` field, it
+ * is migrated to the object shape during this write.
  *
  * @implements #480
  */
@@ -224,9 +256,9 @@ export async function registerHooks(
     settings = {};
   }
 
-  if (!Array.isArray(settings.hooks)) {
-    settings.hooks = [];
-  }
+  const wasLegacy = Array.isArray(settings.hooks);
+  const hooksObj = normalizeClaudeHooks(settings.hooks);
+  settings.hooks = hooksObj;
 
   const registered: string[] = [];
 
@@ -236,26 +268,23 @@ export async function registerHooks(
     }
 
     const command = `aiwg ${namespace} ${name}`;
-    const matcher = sub.hook_event;
+    const event = sub.hook_event;
 
-    // Find existing matcher group or create one
-    let group = settings.hooks.find(h => h.matcher === matcher);
-    if (!group) {
-      group = { matcher, hooks: [] };
-      settings.hooks.push(group);
-    }
+    if (!hooksObj[event]) hooksObj[event] = [];
+    const groups = hooksObj[event];
 
-    // Check for duplicate
-    const exists = group.hooks.some(h => h.command === command);
-    if (exists) {
-      continue;
-    }
+    // Skip if any existing group already has this command
+    const exists = groups.some(
+      (g) => Array.isArray(g.hooks) && g.hooks.some((h) => h.command === command),
+    );
+    if (exists) continue;
 
-    group.hooks.push({ type: 'command', command });
-    registered.push(`${matcher} → ${command}`);
+    groups.push({ hooks: [{ type: 'command', command }] });
+    registered.push(`${event} → ${command}`);
   }
 
-  if (registered.length > 0) {
+  // Write if we registered anything OR migrated an existing legacy field.
+  if (registered.length > 0 || wasLegacy) {
     await fs.mkdir(path.join(cwd, '.claude'), { recursive: true });
     await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2) + '\n');
   }
@@ -267,7 +296,10 @@ export async function registerHooks(
  * Remove Claude Code hooks for a given namespace.
  *
  * Strips hook entries whose command matches `aiwg <namespace> *`.
- * Removes empty matcher groups. Writes back only if changes were made.
+ * Removes empty groups. Writes back only if changes were made.
+ *
+ * Migrates legacy array-shaped `hooks` fields to object form on write
+ * (#107).
  */
 export async function unregisterHooks(
   cwd: string,
@@ -283,23 +315,29 @@ export async function unregisterHooks(
     return 0;
   }
 
-  if (!Array.isArray(settings.hooks)) {
-    return 0;
-  }
+  if (!settings.hooks) return 0;
+
+  const wasLegacy = Array.isArray(settings.hooks);
+  const hooksObj = normalizeClaudeHooks(settings.hooks);
+  settings.hooks = hooksObj;
 
   const prefix = `aiwg ${namespace} `;
   let removed = 0;
 
-  for (const group of settings.hooks) {
-    const before = group.hooks.length;
-    group.hooks = group.hooks.filter(h => !h.command.startsWith(prefix));
-    removed += before - group.hooks.length;
+  for (const event of Object.keys(hooksObj)) {
+    const groups = hooksObj[event];
+    for (const group of groups) {
+      const before = group.hooks.length;
+      group.hooks = group.hooks.filter((h) => !h.command.startsWith(prefix));
+      removed += before - group.hooks.length;
+    }
+    // Drop empty groups
+    hooksObj[event] = groups.filter((g) => g.hooks.length > 0);
+    // Drop the event entirely if no groups remain
+    if (hooksObj[event].length === 0) delete hooksObj[event];
   }
 
-  // Remove empty groups
-  settings.hooks = settings.hooks.filter(g => g.hooks.length > 0);
-
-  if (removed > 0) {
+  if (removed > 0 || wasLegacy) {
     await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2) + '\n');
   }
 

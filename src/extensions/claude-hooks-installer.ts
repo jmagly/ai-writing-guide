@@ -9,9 +9,22 @@
  *   3. Merges AIWG hook entries with `_aiwg_managed: true` tagging
  *   4. Writes settings.json atomically
  *
- * The merge preserves operator-authored entries. `aiwg refresh
- * --restore-hooks` reads the most-recent .bak.<timestamp> file and
- * restores it.
+ * Schema: Claude Code requires `hooks` to be an object keyed by event
+ * name, each value an array of matcher groups. See #107.
+ *
+ *   {
+ *     "hooks": {
+ *       "<EventName>": [
+ *         { "matcher": "<optional regex>",
+ *           "hooks": [{ "type": "command", "command": "..." }] }
+ *       ]
+ *     }
+ *   }
+ *
+ * The merge preserves operator-authored entries. Legacy array-shaped
+ * hook fields written by older AIWG builds are migrated to the object
+ * shape on read. `aiwg refresh --restore-hooks` reads the most-recent
+ * .bak.<timestamp> file and restores it.
  */
 
 import { promises as fs } from 'node:fs';
@@ -35,14 +48,22 @@ interface HookEntry {
   _aiwg_id?: string;
 }
 
-interface HookMatcher {
-  matcher: string;
+interface HookGroup {
+  matcher?: string;
   hooks: HookEntry[];
 }
 
+type HooksField = Record<string, HookGroup[]>;
+
 interface ClaudeSettings {
   [key: string]: unknown;
-  hooks?: HookMatcher[];
+  hooks?: HooksField | LegacyHookMatcher[];
+}
+
+/** Legacy shape written by AIWG before #107: array of `{matcher, hooks}` */
+interface LegacyHookMatcher {
+  matcher: string;
+  hooks: HookEntry[];
 }
 
 export interface InstallOptions {
@@ -64,16 +85,51 @@ export interface InstallResult {
   backupPath?: string;
   registeredEvents: string[];
   warnings: string[];
+  /** True when the installer migrated a legacy array-shaped `hooks` field */
+  migratedFromLegacy?: boolean;
 }
 
 /**
- * Detect whether the existing settings.json carries the AIWG signature
- * (any hook entry tagged `_aiwg_managed: true`).
+ * Migrate a legacy array-shaped `hooks` field to the object form Claude
+ * Code expects. Returns the normalized object.
+ */
+function migrateLegacyHooks(legacy: LegacyHookMatcher[]): HooksField {
+  const out: HooksField = {};
+  for (const m of legacy) {
+    if (!m || typeof m.matcher !== 'string' || !Array.isArray(m.hooks)) continue;
+    if (!out[m.matcher]) out[m.matcher] = [];
+    out[m.matcher].push({ hooks: m.hooks });
+  }
+  return out;
+}
+
+/**
+ * Normalize the hooks field to the object form, migrating legacy arrays.
+ * Returns `[hooks, didMigrate]`.
+ */
+function normalizeHooks(
+  raw: HooksField | LegacyHookMatcher[] | undefined,
+): [HooksField, boolean] {
+  if (Array.isArray(raw)) return [migrateLegacyHooks(raw), true];
+  if (raw && typeof raw === 'object') return [raw, false];
+  return [{}, false];
+}
+
+/**
+ * Detect whether the existing settings carries the AIWG signature
+ * (any hook entry tagged `_aiwg_managed: true`). Accepts both the
+ * current object form and the legacy array form.
  */
 function hasAiwgMarker(settings: ClaudeSettings): boolean {
-  if (!Array.isArray(settings.hooks)) return false;
-  return settings.hooks.some((m) =>
-    Array.isArray(m.hooks) && m.hooks.some((h) => h && h._aiwg_managed === true),
+  const hooksField = settings.hooks;
+  if (!hooksField) return false;
+
+  const groups: HookGroup[] = Array.isArray(hooksField)
+    ? hooksField.map((m) => ({ hooks: m.hooks }))
+    : Object.values(hooksField).flat();
+
+  return groups.some(
+    (g) => Array.isArray(g.hooks) && g.hooks.some((h) => h && h._aiwg_managed === true),
   );
 }
 
@@ -179,10 +235,15 @@ export async function installAiwgHooks(opts: InstallOptions): Promise<InstallRes
     }
   }
 
-  // 4. Merge AIWG hook entries
-  if (!Array.isArray(settings.hooks)) {
-    settings.hooks = [];
+  // 4. Normalize (migrate legacy array shape → object shape) and merge
+  const [hooksObj, migrated] = normalizeHooks(settings.hooks);
+  if (migrated) {
+    result.migratedFromLegacy = true;
+    result.warnings.push(
+      'Migrated legacy array-shaped hooks field to object form (#107).',
+    );
   }
+  settings.hooks = hooksObj;
 
   for (const { file, events } of HOOK_SCRIPTS) {
     if (!sourceFiles.includes(file)) continue;
@@ -190,19 +251,25 @@ export async function installAiwgHooks(opts: InstallOptions): Promise<InstallRes
     const hookId = file.replace(/\.js$/, '');
 
     for (const event of events) {
-      let matcher = settings.hooks.find((m) => m.matcher === event);
-      if (!matcher) {
-        matcher = { matcher: event, hooks: [] };
-        settings.hooks.push(matcher);
-      }
-      // Skip if AIWG entry already present
-      const exists = matcher.hooks.some((h) => h._aiwg_id === hookId);
-      if (exists) continue;
-      matcher.hooks.push({
-        type: 'command',
-        command,
-        _aiwg_managed: true,
-        _aiwg_id: hookId,
+      if (!hooksObj[event]) hooksObj[event] = [];
+      const groups = hooksObj[event];
+
+      // Skip if AIWG entry for this hookId is already present anywhere
+      // in this event's groups.
+      const alreadyPresent = groups.some(
+        (g) => Array.isArray(g.hooks) && g.hooks.some((h) => h._aiwg_id === hookId),
+      );
+      if (alreadyPresent) continue;
+
+      groups.push({
+        hooks: [
+          {
+            type: 'command',
+            command,
+            _aiwg_managed: true,
+            _aiwg_id: hookId,
+          },
+        ],
       });
       result.registeredEvents.push(`${event} → ${hookId}`);
     }
