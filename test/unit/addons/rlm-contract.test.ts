@@ -143,6 +143,16 @@ describe('rlm canonical command surface contract', () => {
     expect(query?.flags).toContain('--depth');
   });
 
+  it('declares the index-integration flags from #1206 (--neighbors-of, --direction, --graph)', () => {
+    // Gitea #1206: graph-bounded recursion via the artifact index.
+    for (const skill of ['rlm-query', 'rlm-batch'] as const) {
+      const surface = surfaces.get(skill);
+      expect(surface?.flags, `${skill} must declare --neighbors-of`).toContain('--neighbors-of');
+      expect(surface?.flags, `${skill} must declare --direction`).toContain('--direction');
+      expect(surface?.flags, `${skill} must declare --graph`).toContain('--graph');
+    }
+  });
+
   it('every /rlm-<name> reference points to a real shipped skill', async () => {
     const violations: string[] = [];
     for (const file of docFiles) {

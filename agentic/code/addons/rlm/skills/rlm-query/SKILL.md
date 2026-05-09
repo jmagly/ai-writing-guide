@@ -4,7 +4,7 @@ name: rlm-query
 platforms: [all]
 description: Spawn sub-agent to process focused context and return structured result
 commandHint:
-  argumentHint: '"<context-file> <sub-prompt>" [--model <model>] [--output <file>] [--depth <n>]'
+  argumentHint: '"<context-file> <sub-prompt>" [--model <model>] [--output <file>] [--depth <n>] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>]'
   allowedTools: 'Read, Write, Grep, Glob, Bash'
   model: sonnet
   category: rlm
@@ -89,8 +89,37 @@ Save the sub-agent's response to a file instead of returning inline.
 - Command returns path to file instead of full content
 - File can be used as input to subsequent `rlm-query` calls
 
+### --neighbors-of <id> (optional, requires aiwg index)
+
+Resolve the context source from the artifact index's dependency graph instead of from a glob pattern. Pass an artifact ID (path or REF-XXX identifier) — the skill resolves its neighbors and dispatches the sub-prompt over them.
+
+**Requires**: `aiwg index` capability available (built and reachable). When the index is unavailable, the skill errors with a remediation pointer.
+
+**Resolution**:
+
+```bash
+# At depth=1 (default), maps directly to the index CLI:
+aiwg index neighbors --graph <graph> --node <id> --direction <dir> --json
+
+# At depth >1, the skill expands recursively by calling neighbors on each
+# result up to <N> hops, deduplicating along the way.
+```
+
+### --direction <in|out|both> (optional, with --neighbors-of)
+
+Restrict which side of the dependency graph to traverse. Defaults to `both`. Aligns with the `aiwg index neighbors` CLI direction flag.
+
+- `in` — upstream (artifacts that depend on the node)
+- `out` — downstream (artifacts the node depends on)
+- `both` — both directions (default)
+
+### --graph <name> (optional, with --neighbors-of)
+
+Which dependency graph to query. Defaults to `project`. Valid values match the `aiwg index neighbors --graph` flag (e.g., `framework`, `project`, `codebase`, or a user-defined graph name).
+
 ### --depth <n> (optional)
-Track current recursion depth (for internal use).
+
+When `--neighbors-of` is set, controls graph traversal depth (default: `1`). Otherwise tracks current recursion depth (internal use).
 
 **Purpose**:
 - Prevents infinite recursion if sub-agent spawns sub-queries

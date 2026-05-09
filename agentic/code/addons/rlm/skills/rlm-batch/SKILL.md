@@ -4,7 +4,7 @@ name: rlm-batch
 platforms: [all]
 description: Parallel fan-out processing - spawn multiple sub-agents for chunked context processing
 commandHint:
-  argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>] [--force]'
+  argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>] [--force] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>] [--depth <n>]'
   allowedTools: 'Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit'
   model: opus
   category: automation
@@ -215,6 +215,42 @@ Maximum number of sub-agents running concurrently.
 **Output token limits matter**: RLM root agents emit code (regex, glob, dispatch logic) which can be verbose. Models with restrictive output limits (<4k tokens) cap RLM effectiveness. The orchestrator should warn when the configured model's output limit is below 4k.
 
 **Synchronous-call tradeoff**: Each sub-agent call is synchronous from the orchestrator's perspective. Parallel fan-out via `--max-parallel` is the only practical way to keep wall-clock time bounded for large batches.
+
+### --neighbors-of <id> (optional, requires aiwg index)
+
+Resolve the input file set from the artifact index's dependency graph instead of from a glob pattern. Pass an artifact ID (path or REF-XXX identifier); the skill resolves its neighbors and dispatches the sub-prompt over them.
+
+**Requires**: `aiwg index` capability available (built and reachable). If unavailable, error with remediation pointer.
+
+**Resolution**:
+
+```bash
+# Depth 1 (default) maps directly to the index CLI:
+aiwg index neighbors --graph <graph> --node <id> --direction <dir> --json
+
+# Depth >1 expands recursively, deduplicating along the way.
+```
+
+**Example**:
+
+```
+/rlm-batch --neighbors-of "src/auth/sessionManager.ts" --depth 1 \
+  "list every test that exercises this module"
+```
+
+This is the graph-bounded context-source axis described in @.aiwg/architecture/adr-rlm-index-integration.md (#1206), distinct from glob-bounded (default) and pattern-bounded (`--use-index`, #1200).
+
+### --direction <in|out|both> (with --neighbors-of)
+
+`in` = upstream deps, `out` = downstream deps, `both` = both directions (default). Aligns with `aiwg index neighbors --direction`.
+
+### --graph <name> (with --neighbors-of)
+
+Which dependency graph to query. Defaults to `project`. Aligns with `aiwg index neighbors --graph`.
+
+### --depth <n> (with --neighbors-of, default: 1)
+
+Graph traversal depth. Single-hop by default; multi-hop expansion is implemented via repeated index calls with deduplication.
 
 ## Planned Capabilities
 
