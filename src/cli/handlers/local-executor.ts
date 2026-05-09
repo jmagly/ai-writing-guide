@@ -149,8 +149,6 @@ export const localExecutorServeHandler: CommandHandler = {
     let startExecutorServer: any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let DaemonSupervisor: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let AgentSupervisor: any;
 
     try {
       const shimMod = await (new Function('m', 'return import(m)'))(
@@ -160,7 +158,6 @@ export const localExecutorServeHandler: CommandHandler = {
       startExecutorServer = shimMod.startExecutorServer;
     } catch (err) {
       return {
-        success:  false,
         message:  `Failed to load executor-shim: ${(err as Error).message}`,
         exitCode: 1,
       };
@@ -173,7 +170,6 @@ export const localExecutorServeHandler: CommandHandler = {
       DaemonSupervisor = dsMod.DaemonSupervisor;
     } catch (err) {
       return {
-        success:  false,
         message:  `Failed to load DaemonSupervisor: ${(err as Error).message}`,
         exitCode: 1,
       };
@@ -248,7 +244,6 @@ export const localExecutorServeHandler: CommandHandler = {
       token = await shim.register();
     } catch (err) {
       return {
-        success:  false,
         message:  `Failed to register with aiwg-serve at ${opts.aiwgServe}: ${(err as Error).message}\n` +
                   'Is aiwg serve running? Start it with: aiwg serve --no-open',
         exitCode: 1,
@@ -266,7 +261,6 @@ export const localExecutorServeHandler: CommandHandler = {
     } catch (err) {
       await shim.deregister();
       return {
-        success:  false,
         message:  `Failed to start executor server: ${(err as Error).message}`,
         exitCode: 1,
       };
@@ -308,7 +302,7 @@ export const localExecutorServeHandler: CommandHandler = {
       process.once('SIGTERM', () => { void cleanup('SIGTERM'); });
     });
 
-    return { success: true, message: 'Local executor stopped.' };
+    return { exitCode: 0, message: 'Local executor stopped.' };
   },
 };
 
@@ -345,11 +339,10 @@ export const localExecutorHandler: CommandHandler = {
         'Environment:\n' +
         '  AIWG_SERVE_ENDPOINT     Override --aiwg-serve default\n'
       );
-      return { success: true };
+      return { exitCode: 0 };
     }
 
     return {
-      success:  false,
       message:  `Unknown subcommand: ${subcommand}. Run \`aiwg local-executor help\` for usage.`,
       exitCode: 1,
     };
