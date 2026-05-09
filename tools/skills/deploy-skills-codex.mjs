@@ -27,7 +27,7 @@ let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
 import os from 'os';
-import { getFrameworksForMode, normalizeDeploymentMode, skillMatchesProvider } from '../agents/providers/base.mjs';
+import { getFrameworksForMode, normalizeDeploymentMode, skillMatchesProvider, isKernelSkill } from '../agents/providers/base.mjs';
 
 const CODEX_SKILLS_DIR = path.join(os.homedir(), '.codex', 'skills');
 const MAX_NAME_LENGTH = 100;
@@ -347,9 +347,22 @@ function getSkillDirectories(srcRoot, mode) {
   let totalDeployed = 0;
   let totalSkipped = 0;
 
+  // Honor #1217 kernel-pivot default: deploy only kernel skills unless the
+  // operator opts in to copy standard skills via env var. Codex deploys to
+  // ~/.codex/skills/ (home dir) so the kernel/standard split is enforced
+  // at filter time rather than via separate destination directories.
+  const copyStandardSkills =
+    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
+    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
+
   for (const { dir, label } of skillDirs) {
-    const skills = findSkillDirs(dir);
+    let skills = findSkillDirs(dir);
     if (skills.length === 0) continue;
+
+    if (!copyStandardSkills) {
+      skills = skills.filter(s => isKernelSkill(s));
+      if (skills.length === 0) continue;
+    }
 
     console.log(`\n${label} (${skills.length} skills):`);
 

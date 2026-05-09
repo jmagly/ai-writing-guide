@@ -23,6 +23,7 @@ const _require = createRequire(import.meta.url);
 let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
+import os from 'os';
 import { spawn } from 'child_process';
 import {
   ensureDir,
@@ -63,10 +64,11 @@ export const paths = {
   rules: '.codex/rules/'
 };
 
-// Kernel skills (always-loaded) deploy to the platform-native dir.
-// (#766 prerequisite: skills currently deploy to .codex/skills/ project-local;
-// when #766 lands, kernel can move to ~/.codex/skills/ for user-scope.)
-export const kernelSkillsPath = '.codex/skills/';
+// Kernel skills (always-loaded) deploy to ~/.codex/skills/ — the path Codex
+// natively scans. The standard tier (when AIWG_COPY_STANDARD_SKILLS=1) lands
+// at the same dir alongside kernel skills; the deploy-skills-codex.mjs
+// script filters non-kernel skills out by default (#1217).
+export const kernelSkillsPath = path.join(os.homedir(), '.codex', 'skills');
 
 export const support = {
   agents: 'native',

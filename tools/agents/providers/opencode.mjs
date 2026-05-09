@@ -37,6 +37,7 @@ import {
   listSkillDirs,
   deploySkillDir,
   deploySkillsWithKernelRouting,
+  isKernelSkill,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
   cleanupOldRuleFiles,
@@ -341,16 +342,27 @@ export function deploySkills(skillDirs, targetDir, opts) {
   const kernelDestDir = path.join(targetDir, kernelSkillsPath);
   deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 
-  // Cross-agent compatibility: .agents/skills/
-  const crossAgentDir = path.join(targetDir, '.agents', 'skills');
-  ensureDir(crossAgentDir, opts.dryRun);
-  if (!opts.dryRun) {
-    console.log(`Deploying cross-agent skills to ${path.relative(process.cwd(), crossAgentDir)}...`);
-  } else {
-    console.log(`[dry-run] Would deploy cross-agent skills to .agents/skills/`);
-  }
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, crossAgentDir, opts);
+  // Cross-agent compatibility: .agents/skills/ — honors #1217 no-copy
+  // default. Filter to kernel-only unless operator opts in via env var so
+  // standard skills stay at $AIWG_ROOT and are reached via `aiwg discover`.
+  const copyStandardSkills =
+    opts?.copyStandardSkills === true ||
+    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
+    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
+  const crossAgentSkills = copyStandardSkills
+    ? skillDirs
+    : skillDirs.filter(d => isKernelSkill(d));
+  if (crossAgentSkills.length > 0) {
+    const crossAgentDir = path.join(targetDir, '.agents', 'skills');
+    ensureDir(crossAgentDir, opts.dryRun);
+    if (!opts.dryRun) {
+      console.log(`Deploying cross-agent skills to ${path.relative(process.cwd(), crossAgentDir)}...`);
+    } else {
+      console.log(`[dry-run] Would deploy cross-agent skills to .agents/skills/`);
+    }
+    for (const skillDir of crossAgentSkills) {
+      deploySkillDir(skillDir, crossAgentDir, opts);
+    }
   }
 }
 
