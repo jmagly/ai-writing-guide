@@ -14,7 +14,7 @@ You are operating in a project that has AIWG installed. This skill is your alway
 
 | Need | Skill / command | Why |
 |---|---|---|
-| **Find a skill the user is asking for, by capability** | `aiwg index discover "<phrase>"` | Most AIWG skills are NOT loaded into your context — they live behind the index. Always query before declining. |
+| **Find a skill the user is asking for, by capability** | `aiwg discover "<phrase>"` | Most AIWG skills are NOT loaded into your context — they live behind the index. Always query before declining. |
 | **Project status / where am I** | `aiwg-status`, `project-status` | Cross-framework status; flags blockers and next actions. |
 | **Health check the AIWG installation** | `aiwg doctor` | Surface drift, missing deploys, hook breakage, budget warnings. |
 | **What version is installed** | `aiwg version` | Channel + path. Useful when troubleshooting. |
@@ -57,8 +57,8 @@ agentic/code/        ← framework + addon source (NOT deployed; read-only refer
 | Situation | Action |
 |---|---|
 | User asks "what can AIWG do?" generically | Skim the framework quickrefs above; offer the top 3 most-relevant. |
-| User asks "find me a skill that does X" | `aiwg index discover "X"` — return ranked candidates. |
-| User asks "is there a skill for Y?" and it's not in any quickref | `aiwg index discover "Y"` — don't say "no" without checking. |
+| User asks "find me a skill that does X" | `aiwg discover "X"` — return ranked candidates. |
+| User asks "is there a skill for Y?" and it's not in any quickref | `aiwg discover "Y"` — don't say "no" without checking. |
 | User asks about a specific framework's catalog | Direct them to that framework's quickref + invite an index query. |
 | User asks for AIWG version / config / status | `aiwg version`, `aiwg-status`, `aiwg doctor`. |
 
@@ -72,7 +72,7 @@ agentic/code/        ← framework + addon source (NOT deployed; read-only refer
 
 ```bash
 aiwg help                          # full CLI surface
-aiwg index discover "<your need>"  # find the right skill
+aiwg discover "<your need>"  # find the right skill
 aiwg-kb "<question>"               # conceptual help
 ```
 

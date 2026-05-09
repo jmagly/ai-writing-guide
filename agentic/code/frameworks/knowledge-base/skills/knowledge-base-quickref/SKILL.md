@@ -74,7 +74,7 @@ Install via `aiwg use llm-wiki --profile <name>`. The profile shapes how `kb-ing
 ## Finding the right skill when this quickref doesn't list it
 
 ```bash
-aiwg index discover "<phrase>"
+aiwg discover "<phrase>"
 ```
 
 The KB framework is small (2 skills) but the kernel semantic-memory skills sit alongside it (5 skills). For ingest-related asks, the right entry is usually `kb-ingest` (KB-shaped) or `memory-ingest` (kernel-direct, any consumer's semantic memory).
@@ -87,4 +87,4 @@ The KB framework is small (2 skills) but the kernel semantic-memory skills sit a
 
 ## Don't list from this skill — query the index
 
-If a user asks "what KB skills are available?", **do not enumerate from memory**. Run `aiwg index discover --type skill --graph framework "knowledge"` and remind the user that the kernel semantic-memory skills (`memory-*`) are loaded independently.
+If a user asks "what KB skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "knowledge"` and remind the user that the kernel semantic-memory skills (`memory-*`) are loaded independently.

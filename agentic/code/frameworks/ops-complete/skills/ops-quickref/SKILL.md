@@ -62,7 +62,7 @@ When generating ops artifacts, always validate against the schema (the framework
 ## Finding the right skill when this quickref doesn't list it
 
 ```bash
-aiwg index discover "<phrase>"
+aiwg discover "<phrase>"
 ```
 
 Most ops skills come from the extensions, not the base framework. If the user's task doesn't match `ops-audit-trail` or `ops-verify`, check the index — and check which extensions are installed via `aiwg list`.
@@ -88,4 +88,4 @@ Use `aiwg-utils-quickref` and the `aiwg ops` command for cross-workspace orchest
 
 ## Don't list from this skill — query the index
 
-If a user asks "what ops skills are available?", **do not enumerate from memory**. Run `aiwg index discover --type skill --graph framework "ops"` (filtering for the installed extensions). This skill exists to orient.
+If a user asks "what ops skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "ops"` (filtering for the installed extensions). This skill exists to orient.

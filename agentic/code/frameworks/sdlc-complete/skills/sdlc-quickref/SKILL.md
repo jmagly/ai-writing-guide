@@ -72,7 +72,7 @@ All SDLC artifacts live under `.aiwg/`:
 ## Finding the right skill when this quickref doesn't list it
 
 ```bash
-aiwg index discover "<what you're trying to do>"
+aiwg discover "<what you're trying to do>"
 ```
 
 The index ranks skills by capability/trigger match across the entire installed surface. Use this **before** asking the user to recall a skill name — many SDLC skills are highly specific (e.g., `flow-cross-team-sync`, `risk-cycle`, `artifact-metadata`) and won't surface from a generic phase keyword.
@@ -85,4 +85,4 @@ The index ranks skills by capability/trigger match across the entire installed s
 
 ## Don't list from this skill — query the index
 
-If a user asks "what SDLC skills are available?" or "what can the SDLC framework do?", **do not enumerate from memory**. Run `aiwg index discover` (or read `.aiwg/index/` directly). This skill exists to orient, not to replace the index.
+If a user asks "what SDLC skills are available?" or "what can the SDLC framework do?", **do not enumerate from memory**. Run `aiwg discover` (or read `.aiwg/index/` directly). This skill exists to orient, not to replace the index.

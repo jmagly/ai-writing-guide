@@ -67,7 +67,7 @@ These deploy to `.claude/rules/` and are enforced via the rules-index pipeline.
 ## Finding the right skill when this quickref doesn't list it
 
 ```bash
-aiwg index discover "<security decision phrase>"
+aiwg discover "<security decision phrase>"
 ```
 
 For asks outside the seven listed skills (e.g., "audit a TLS config", "review a JWT implementation"), the SDLC framework's `flow-security-review-cycle` and the broader index are the right surfaces. This framework is decision-time, not audit-time.
@@ -80,4 +80,4 @@ For asks outside the seven listed skills (e.g., "audit a TLS config", "review a 
 
 ## Don't list from this skill — query the index
 
-If a user asks "what security skills are available?", **do not enumerate from memory**. Run `aiwg index discover --type skill --graph framework "security"`. This skill exists to orient.
+If a user asks "what security skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "security"`. This skill exists to orient.

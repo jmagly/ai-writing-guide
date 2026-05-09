@@ -44,7 +44,7 @@ Research workflow automation. Builds and maintains a citation-graphed research c
 | Best-practices audit (cited) | `best-practices-audit` | "audit X against best practices" |
 | Quality audit of corpus depth | `research-quality-audit` | "audit shallow stubs" |
 
-This framework ships **20 skills**. Reach for `aiwg index discover` for anything not listed.
+This framework ships **20 skills**. Reach for `aiwg discover` for anything not listed.
 
 ## Corpus directory layout
 
@@ -72,7 +72,7 @@ Research artifacts go under `.aiwg/research/`:
 ## Finding the right skill when this quickref doesn't list it
 
 ```bash
-aiwg index discover "<phrase>"
+aiwg discover "<phrase>"
 ```
 
 The corpus is large and operations are highly composable. Common alternates: `induct-research` (the "ingest a single source" entry), `research-workflow` (multi-stage pipeline), `research-query` (the "ask the corpus" entry).
@@ -93,4 +93,4 @@ Quality grading is opinionated and built-in. When inducting:
 
 ## Don't list from this skill — query the index
 
-If a user asks "what research skills are available?", **do not enumerate from memory**. Run `aiwg index discover --type skill --graph framework "research"`. This skill exists to orient.
+If a user asks "what research skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "research"`. This skill exists to orient.

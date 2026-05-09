@@ -39,7 +39,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md
 
 #### skill-discovery
-**Summary**: Most AIWG skills are NOT loaded into your context — only the kernel set (framework quickrefs + core utilities). The bulk lives at `<provider-dir>/.aiwg/skills/` and is reachable only through the artifact index. Before declining a user request as "AIWG can't do that" or improvising a custom workflow, you MUST query `aiwg index discover "<paraphrased need>"`. Surface the top match (or top-3 candidates) to the user; the discovery is auditable. Skip the query only when the user named a specific skill, the capability is clearly outside AIWG's scope, or you've just queried within the session.
+**Summary**: Most AIWG skills are NOT loaded into your context — only the kernel set (framework quickrefs + core utilities). The bulk lives at `<provider-dir>/.aiwg/skills/` and is reachable only through the artifact index. Before declining a user request as "AIWG can't do that" or improvising a custom workflow, you MUST query `aiwg discover "<paraphrased need>"`. Surface the top match (or top-3 candidates) to the user; the discovery is auditable. Skip the query only when the user named a specific skill, the capability is clearly outside AIWG's scope, or you've just queried within the session.
 **When to apply**: Any user request describing a capability, before declining as out-of-scope, before improvising a custom workflow when an AIWG skill might exist
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/skill-discovery.md
 

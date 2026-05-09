@@ -70,7 +70,7 @@ Curation artifacts go under `.aiwg/media/`:
 ## Finding the right skill when this quickref doesn't list it
 
 ```bash
-aiwg index discover "<phrase>"
+aiwg discover "<phrase>"
 ```
 
 For unusual asks (e.g., "merge two artists' catalogs", "deduplicate by acoustic fingerprint") — query the index. Pattern skills (`youtube-acquisition`, `metadata-tagging`) describe ffmpeg/yt-dlp patterns rather than full workflows; reach for them when the operator wants the recipe, not the orchestration.
@@ -84,4 +84,4 @@ For unusual asks (e.g., "merge two artists' catalogs", "deduplicate by acoustic 
 
 ## Don't list from this skill — query the index
 
-If a user asks "what media skills are available?", **do not enumerate from memory**. Run `aiwg index discover --type skill --graph framework "media"`. This skill exists to orient.
+If a user asks "what media skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "media"`. This skill exists to orient.

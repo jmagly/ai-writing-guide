@@ -923,6 +923,49 @@ export const indexCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Discovery — first-class top-level verb (#1212)
+//
+// Discovery is the operator surface for finding AIWG skills, agents, commands,
+// and rules by capability. It heavily leverages the artifact index machinery
+// but is exposed as its own top-level command (`aiwg discover`) rather than a
+// subcommand of `aiwg index` to avoid agentic confusion between the project's
+// general-purpose graph indices (project / codebase / framework / user-defined)
+// and the specific AIWG capability-search surface.
+export const discoverCommand: Extension = {
+  id: 'discover',
+  type: 'skill',
+  name: 'Discover',
+  description: 'Find AIWG skills, agents, commands, and rules by capability — index-driven on-demand discovery',
+  version: '1.0.0',
+  capabilities: ['cli', 'discovery', 'search', 'capability', 'skills'],
+  keywords: ['discover', 'find skill', 'capability', 'search skills', 'what skill does', 'skill for'],
+  category: 'index',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'discover',
+      'find a skill',
+      'find skill for',
+      'what skill handles',
+      'capability search',
+      'aiwg discover',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '"<phrase>" [--limit N] [--type skill,agent,...] [--json]',
+      allowedTools: ['Read'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Toolsmith Commands
 
 export const runtimeInfoCommand: Extension = {
@@ -2904,8 +2947,9 @@ export const commandDefinitions: Extension[] = [
   // Research Validation (1)
   bestPracticesAuditCommand,
 
-  // Index (1)
+  // Index + Discovery (2)
   indexCommand,
+  discoverCommand,
 
   // Reproducibility (4)
   executionModeCommand,

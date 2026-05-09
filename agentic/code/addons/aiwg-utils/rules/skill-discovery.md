@@ -31,7 +31,7 @@ The fix is a single discipline: **query the index before declining or improvisin
 Before saying "AIWG doesn't have a skill for that" or "no workflow exists for this," **you MUST query the artifact index**:
 
 ```bash
-aiwg index discover "<the user's need, paraphrased>"
+aiwg discover "<the user's need, paraphrased>"
 ```
 
 The index covers every deployed AIWG skill, agent, command, and rule — including the 90%+ that aren't loaded in your context. If `discover` returns ranked candidates, load and use the top match. If multiple are close, present the top-3 to the user.
@@ -45,7 +45,7 @@ Agent: "AIWG doesn't seem to have a deployment skill. Let me write a custom scri
 **REQUIRED**:
 ```
 User: "I need to deploy this to production"
-Agent: *runs `aiwg index discover "deploy production"`*
+Agent: *runs `aiwg discover "deploy production"`*
        *gets back flow-deploy-to-production at score 0.51*
        *uses that skill*
 ```
@@ -63,7 +63,7 @@ Agent: *writes a SAD from scratch using its general training*
 **REQUIRED**:
 ```
 Task: Generate a Software Architecture Document
-Agent: *runs `aiwg index discover "create SAD"`*
+Agent: *runs `aiwg discover "create SAD"`*
        *finds artifact-orchestration + the SDLC architecture-evolution flow*
        *invokes those, which apply the AIWG SAD template and multi-agent review pattern*
 ```
@@ -108,23 +108,23 @@ This makes your reasoning auditable and gives the user a chance to redirect.
 ### By capability
 
 ```bash
-aiwg index discover "create a security review"
-aiwg index discover "audit the supply chain"
-aiwg index discover "deploy to staging"
+aiwg discover "create a security review"
+aiwg discover "audit the supply chain"
+aiwg discover "deploy to staging"
 ```
 
 ### By type filter
 
 ```bash
-aiwg index discover "validate"        --type skill
-aiwg index discover "review code"     --type agent
-aiwg index discover "rule against X"  --type rule
+aiwg discover "validate"        --type skill
+aiwg discover "review code"     --type agent
+aiwg discover "rule against X"  --type rule
 ```
 
 ### Token-tight output for in-context use
 
 ```bash
-aiwg index discover "..." --json --limit 3
+aiwg discover "..." --json --limit 3
 ```
 
 The JSON mode emits a stable schema (`path`, `type`, `score`, `triggers`, `capability`, `kernel`) that's compact enough to forward to a sub-agent or reason about programmatically.
@@ -156,7 +156,7 @@ It is always better to query late than not to query at all.
 This rule layers cleanly with the rest of aiwg-utils:
 
 - **research-before-decision** — addresses *technical* research before acting. This rule extends the discipline to *AIWG itself*: research what AIWG can do before declining or improvising.
-- **instruction-comprehension** — extracts the user's actual need. The phrase passed to `aiwg index discover` should reflect the parsed intent, not the user's verbatim words if those are ambiguous.
+- **instruction-comprehension** — extracts the user's actual need. The phrase passed to `aiwg discover` should reflect the parsed intent, not the user's verbatim words if those are ambiguous.
 - **human-authorization** — never invoke a destructive skill (deploy, force-push, delete) without authorization, even when the index returns a match.
 - **god-session** — the discover query is one focused step; if the result is a complex multi-skill flow, decompose normally rather than absorbing the whole flow into your current session.
 
@@ -168,7 +168,7 @@ Universal. Every AIWG-supported provider has a skill-listing budget; the index-d
 
 Before declining a user request on the grounds that AIWG can't do it, verify:
 
-- [ ] Did I run `aiwg index discover "<paraphrased need>"`?
+- [ ] Did I run `aiwg discover "<paraphrased need>"`?
 - [ ] Did I check the right `--type` filter (skill, agent, command, rule)?
 - [ ] Did I read the top result's `capability` description, not just its name?
 - [ ] If multiple results were close, did I report them to the user?

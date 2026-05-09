@@ -36,7 +36,7 @@ Digital forensics & incident response. RFC 3227-aligned triage, multi-source tim
 | Generate the investigation report | `forensics-report` | "generate forensic report" |
 | Status of in-flight investigation | `forensics-status` | "investigation status" |
 
-This framework ships **19 skills**. The above are the high-traffic ones; others (e.g., `target-profiling`, `integrity-verification`) are reachable via `aiwg index discover`.
+This framework ships **19 skills**. The above are the high-traffic ones; others (e.g., `target-profiling`, `integrity-verification`) are reachable via `aiwg discover`.
 
 ## Investigation phase model
 
@@ -67,7 +67,7 @@ Forensic artifacts go under `.aiwg/forensics/` when the project uses the framewo
 ## Finding the right skill when this quickref doesn't list it
 
 ```bash
-aiwg index discover "<what you're trying to do>"
+aiwg discover "<what you're trying to do>"
 ```
 
 For broad or unusual asks ("find lateral movement", "audit kerberoasting", "extract a rootkit signature") — the index ranks by capability and trigger phrases across the entire installed surface. Don't say "AIWG can't do that" without checking.
@@ -81,4 +81,4 @@ For broad or unusual asks ("find lateral movement", "audit kerberoasting", "extr
 
 ## Don't list from this skill — query the index
 
-If a user asks "what forensics skills are available?", **do not enumerate from memory**. Run `aiwg index discover --type skill --graph framework "forensics"` (or just read this quickref). This skill exists to orient, not to replace the index.
+If a user asks "what forensics skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "forensics"` (or just read this quickref). This skill exists to orient, not to replace the index.

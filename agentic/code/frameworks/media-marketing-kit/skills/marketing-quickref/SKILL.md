@@ -100,7 +100,7 @@ Marketing artifacts go under `.aiwg/marketing/` when the framework is in use:
 ## Finding the right skill when this quickref doesn't list it
 
 ```bash
-aiwg index discover "<phrase>"
+aiwg discover "<phrase>"
 ```
 
 This framework is the largest by skill count (33). For unusual asks (e.g., "build an attribution model", "audit a landing page"), the index ranks better than memory.
@@ -114,4 +114,4 @@ This framework is the largest by skill count (33). For unusual asks (e.g., "buil
 
 ## Don't list from this skill — query the index
 
-If a user asks "what marketing skills are available?", **do not enumerate from memory**. Run `aiwg index discover --type skill --graph framework "marketing"`. This skill exists to orient.
+If a user asks "what marketing skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "marketing"`. This skill exists to orient.

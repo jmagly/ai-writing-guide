@@ -1013,6 +1013,38 @@ export const indexHandler: CommandHandler = {
 };
 
 /**
+ * Discovery command handler — first-class top-level verb (#1212).
+ *
+ * Forwards to the same implementation as `aiwg index discover` but
+ * exposes discovery as its own command so agents don't conflate it
+ * with the project's general-purpose artifact graph indices.
+ *
+ *   aiwg discover "<phrase>" [--limit N] [--type skill,agent,...] [--json]
+ */
+export const discoverHandler: CommandHandler = {
+  id: "discover",
+  name: "Discover",
+  description:
+    "Find AIWG skills, agents, commands, and rules by capability — index-driven on-demand discovery",
+  category: "index",
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      // Delegate to the same handler `aiwg index discover` uses, by
+      // prepending the `discover` subcommand and reusing the artifacts
+      // CLI router. This keeps a single implementation path.
+      const { main } = await import("../../artifacts/cli.js");
+      await main(["discover", ...ctx.args]);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `Discover command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Skills command handler
  *
  * Dynamically imports and delegates to src/skills/cli.ts.
@@ -1423,6 +1455,7 @@ export const subcommandHandlers: CommandHandler[] = [
   packagePluginHandler,
   packageAllPluginsHandler,
   indexHandler,
+  discoverHandler,
   skillsHandler,
   configHandler,
   opsHandler,

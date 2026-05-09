@@ -79,6 +79,7 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **`aiwg discover` promoted to a first-class top-level command**. Previously `aiwg index discover` (subcommand of `aiwg index`); the new surface is `aiwg discover "<phrase>" [--limit N] [--type skill,agent,...] [--json]`. Discovery is the operator surface for finding AIWG skills, agents, commands, and rules by capability — it leverages the artifact index machinery but exists as its own verb so agents don't conflate it with the project's general-purpose graph indices (project / codebase / framework / user-defined). Same scoring (4× trigger boost, 2× capability) and same JSON schema as before. The legacy `aiwg index discover` path still works; the kernel quickrefs and the `skill-discovery` rule have been updated to use `aiwg discover`.
 - **Skill-only `.aiwg/` path move ported to all 9 remaining providers** (#1216). Kernel-vs-standard skill routing now applies uniformly across the AIWG fleet:
 
   | Provider | Standard skills | Kernel skills |
