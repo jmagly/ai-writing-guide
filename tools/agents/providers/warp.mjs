@@ -33,6 +33,9 @@ import {
   listSkillDirs,
   deploySkillDir,
   deploySkillsWithKernelRouting,
+  isKernelSkill,
+  pruneStaleAiwgSkills,
+  computeAllKernelNames,
   initializeFrameworkWorkspace,
   getAddonAgentFiles,
   getAddonCommandFiles,
@@ -303,7 +306,19 @@ export async function deploy(opts) {
       const addonSkillsDir = path.join(srcRoot, 'skills');
       if (fs.existsSync(addonSkillsDir)) {
         skillDirs.push(...listSkillDirs(addonSkillsDir));
-      }
+    
+    // Holistic post-deploy cleanup of stale AIWG-managed kernel
+    // skills (renamed/removed sources). Uses the global kernel set
+    // (computeAllKernelNames walks all source frameworks/addons),
+    // not just this-call's skillDirs, because aiwg use invokes
+    // deploy-agents.mjs multiple times.
+    {
+      const _kernelDestDir = path.isAbsolute(kernelSkillsPath)
+        ? kernelSkillsPath
+        : path.join(target, kernelSkillsPath);
+      pruneStaleAiwgSkills(_kernelDestDir, computeAllKernelNames(srcRoot), opts);
+    }
+  }
     }
 
     if (shouldDeployRules || rulesOnly) {

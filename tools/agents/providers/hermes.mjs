@@ -28,6 +28,9 @@ import {
   listSkillDirs,
   deploySkillDir,
   deploySkillsWithKernelRouting,
+  isKernelSkill,
+  pruneStaleAiwgSkills,
+  computeAllKernelNames,
   deployFiles,
   getAddonSkillDirs,
   normalizeDeploymentMode,
@@ -208,6 +211,12 @@ export async function deploy(opts) {
     } else if (!opts.quiet) {
       console.log('  No skills found to deploy');
     }
+
+    // Holistic post-deploy cleanup of stale AIWG-managed kernel skills.
+    // Uses the global kernel set (walks all source frameworks/addons),
+    // not just this-call's skillDirs, because aiwg use invokes
+    // deploy-agents.mjs multiple times.
+    pruneStaleAiwgSkills(kernelSkillsPath, computeAllKernelNames(srcRoot), opts);
   }
 
   // ── AGENTS.md ──────────────────────────────────────────────────────────────

@@ -853,7 +853,10 @@ export function deploySkillsWithKernelRouting(
   }
 
   // Kernel-dir cleanup: prune skills whose name moved to the standard
-  // tier (rc.13 logic, preserved).
+  // tier (rc.13 logic). Holistic cleanup of orphaned skills (renamed or
+  // removed sources) happens in a separate post-all-deploys step
+  // (`pruneStaleAiwgSkills`) — running per-call here would race because
+  // `deploySkills` may be invoked multiple times in one orchestration.
   let prunedFromKernelDir = 0;
   if (kernelDestDir && fs.existsSync(kernelDestDir) && !opts?.dryRun) {
     for (const entry of fs.readdirSync(kernelDestDir, { withFileTypes: true })) {
@@ -918,6 +921,117 @@ export function deploySkillsWithKernelRouting(
     prunedFromKernelDir,
     prunedFromStandardDir,
   };
+}
+
+/**
+ * Compute the global desired-kernel set by walking the entire AIWG
+ * source tree (frameworks + addons), regardless of which deploy mode
+ * is in flight. Used by `pruneStaleAiwgSkills` so cleanup never races
+ * with sibling deploy invocations (`aiwg use` runs `deploy-agents.mjs`
+ * multiple times — once per framework, once per addon batch).
+ *
+ * @param {string} srcRoot AIWG repo / install root
+ * @returns {string[]} basenames of every source skill dir whose
+ *   SKILL.md frontmatter has `kernel: true`
+ */
+export function computeAllKernelNames(srcRoot) {
+  // The caller may pass an addon/framework path (e.g. when deploying a
+  // single addon), not the AIWG install root. Walk up until we find a
+  // directory that contains BOTH `agentic/code/frameworks` and
+  // `agentic/code/addons` — that's the AIWG root.
+  const aiwgRoot = process.env.AIWG_ROOT || (() => {
+    let cur = path.resolve(srcRoot);
+    for (let i = 0; i < 8; i++) {
+      if (
+        fs.existsSync(path.join(cur, 'agentic', 'code', 'frameworks')) &&
+        fs.existsSync(path.join(cur, 'agentic', 'code', 'addons'))
+      ) return cur;
+      const parent = path.dirname(cur);
+      if (parent === cur) break;
+      cur = parent;
+    }
+    return srcRoot;
+  })();
+
+  const names = new Set();
+  const roots = [
+    path.join(aiwgRoot, 'agentic', 'code', 'frameworks'),
+    path.join(aiwgRoot, 'agentic', 'code', 'addons'),
+  ];
+  for (const root of roots) {
+    if (!fs.existsSync(root)) continue;
+    for (const componentEntry of fs.readdirSync(root, { withFileTypes: true })) {
+      if (!componentEntry.isDirectory()) continue;
+      const skillsDir = path.join(root, componentEntry.name, 'skills');
+      if (!fs.existsSync(skillsDir)) continue;
+      for (const skillEntry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+        if (!skillEntry.isDirectory()) continue;
+        const fullPath = path.join(skillsDir, skillEntry.name);
+        if (isKernelSkill(fullPath)) names.add(skillEntry.name);
+      }
+    }
+  }
+  return Array.from(names);
+}
+
+/**
+ * Holistic post-deploy cleanup of stale AIWG-managed skills.
+ *
+ * Run this AFTER all `deploySkills` invocations have completed for a
+ * given provider so the desired-name set reflects every kernel skill
+ * deployed across all frameworks/addons. Per-call cleanup races because
+ * `deploySkills` may be invoked multiple times in one orchestration —
+ * this function does the cleanup once at the end.
+ *
+ * Identifies AIWG-managed skills via:
+ *   1. `.aiwg-managed` marker file (preferred — set by `deploySkillDir`)
+ *   2. Frontmatter `namespace: aiwg` (migration fallback for pre-marker
+ *      deploys; stops firing after one redeploy)
+ *
+ * Bounded to entries identified above, so user-authored skills next to
+ * AIWG-managed ones are never touched.
+ *
+ * @param {string} kernelDestDir absolute path to the platform's kernel
+ *   skills dir (e.g. `<project>/.claude/skills/`)
+ * @param {string[]} desiredKernelNames names of every kernel skill that
+ *   SHOULD remain (basenames of source dirs)
+ * @param {object} opts `{ dryRun, verbose }`
+ * @returns {number} count of pruned entries
+ */
+export function pruneStaleAiwgSkills(kernelDestDir, desiredKernelNames, opts = {}) {
+  if (!kernelDestDir || !fs.existsSync(kernelDestDir)) return 0;
+  if (opts.dryRun) return 0;
+  const desired = new Set(desiredKernelNames);
+  let pruned = 0;
+  for (const entry of fs.readdirSync(kernelDestDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    if (desired.has(entry.name)) continue;
+
+    const skillMd = path.join(kernelDestDir, entry.name, 'SKILL.md');
+    if (!fs.existsSync(skillMd)) continue;
+
+    const marker = path.join(kernelDestDir, entry.name, '.aiwg-managed');
+    let isAiwgManaged = fs.existsSync(marker);
+    if (!isAiwgManaged) {
+      try {
+        const content = fs.readFileSync(skillMd, 'utf8');
+        const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+        if (fmMatch && /^\s*namespace:\s*["']?aiwg["']?\s*$/m.test(fmMatch[1])) {
+          isAiwgManaged = true;
+        }
+      } catch { /* unreadable — leave alone */ }
+    }
+    if (!isAiwgManaged) continue;
+
+    try {
+      fs.rmSync(path.join(kernelDestDir, entry.name), { recursive: true, force: true });
+      pruned++;
+      if (opts.verbose) console.log(`pruned stale AIWG skill: ${entry.name}`);
+    } catch (err) {
+      if (opts.verbose) console.warn(`Warning: could not prune ${entry.name}: ${err.message}`);
+    }
+  }
+  return pruned;
 }
 
 /**
@@ -990,6 +1104,17 @@ export function deploySkillDir(skillDir, destDir, opts) {
   }
 
   copyRecursive(skillDir, destSkillDir);
+
+  // Drop a `.aiwg-managed` marker so future cleanup runs can identify
+  // AIWG-deployed skills regardless of frontmatter shape (some providers
+  // strip `namespace:` during transform). Cleanup keys off this presence
+  // to safely prune renamed/removed source skills.
+  if (!dryRun) {
+    try {
+      fs.writeFileSync(path.join(destSkillDir, '.aiwg-managed'), 'aiwg\n', 'utf8');
+    } catch { /* non-fatal */ }
+  }
+
   if (verbose) console.log(`deployed skill: ${skillName}`);
 }
 

@@ -40,6 +40,9 @@ import {
   listSkillDirs,
   deploySkillDir,
   deploySkillsWithKernelRouting,
+  isKernelSkill,
+  pruneStaleAiwgSkills,
+  computeAllKernelNames,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
   cleanupOldRuleFiles,
@@ -398,16 +401,26 @@ export function deploySkills(skillDirs, targetDir, opts) {
   const kernelDestDir = path.join(targetDir, kernelSkillsPath);
   deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 
-  // Cross-agent compatibility: .agents/skills/
-  const crossAgentDir = path.join(targetDir, '.agents', 'skills');
-  ensureDir(crossAgentDir, opts.dryRun);
-  if (!opts.dryRun) {
-    console.log(`Deploying cross-agent skills to ${path.relative(process.cwd(), crossAgentDir)}...`);
-  } else {
-    console.log(`[dry-run] Would deploy cross-agent skills to .agents/skills/`);
-  }
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, crossAgentDir, opts);
+  // Cross-agent compatibility: .agents/skills/ — honors #1217 no-copy
+  // default. Filter to kernel-only unless operator opts in via env var.
+  const copyStandardSkills =
+    opts?.copyStandardSkills === true ||
+    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
+    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
+  const crossAgentSkills = copyStandardSkills
+    ? skillDirs
+    : skillDirs.filter(d => isKernelSkill(d));
+  if (crossAgentSkills.length > 0) {
+    const crossAgentDir = path.join(targetDir, '.agents', 'skills');
+    ensureDir(crossAgentDir, opts.dryRun);
+    if (!opts.dryRun) {
+      console.log(`Deploying cross-agent skills to ${path.relative(process.cwd(), crossAgentDir)}...`);
+    } else {
+      console.log(`[dry-run] Would deploy cross-agent skills to .agents/skills/`);
+    }
+    for (const skillDir of crossAgentSkills) {
+      deploySkillDir(skillDir, crossAgentDir, opts);
+    }
   }
 }
 
@@ -536,7 +549,19 @@ export async function deploy(opts) {
 
     if (shouldDeploySkills || skillsOnly) {
       skillDirs.push(...getAddonSkillDirs(srcRoot));
+  
+    // Holistic post-deploy cleanup of stale AIWG-managed kernel
+    // skills (renamed/removed sources). Uses the global kernel set
+    // (computeAllKernelNames walks all source frameworks/addons),
+    // not just this-call's skillDirs, because aiwg use invokes
+    // deploy-agents.mjs multiple times.
+    {
+      const _kernelDestDir = path.isAbsolute(kernelSkillsPath)
+        ? kernelSkillsPath
+        : path.join(target, kernelSkillsPath);
+      pruneStaleAiwgSkills(_kernelDestDir, computeAllKernelNames(srcRoot), opts);
     }
+  }
 
     if (shouldDeployRules || rulesOnly) {
       ruleFiles.push(...getAddonRuleFiles(srcRoot));
