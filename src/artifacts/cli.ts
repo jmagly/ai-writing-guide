@@ -613,7 +613,8 @@ async function handleDiscover(args: string[]): Promise<void> {
 
   // Parse flags
   let typeFilter: string[] | undefined;
-  let limit = 10;
+  // K=5 default — see query-engine.ts comment (#1218 Wave A).
+  let limit = 5;
   let json = false;
 
   for (let i = 0; i < flags.length; i++) {
@@ -687,22 +688,28 @@ async function handleShow(args: string[]): Promise<void> {
     process.exit(1);
   }
 
-  // First positional MUST be the type. Reject ambiguous "name only"
-  // input — operators occasionally typed `aiwg show intake-wizard`
-  // when they meant `aiwg show skill intake-wizard`. Suggest the fix.
-  const type = positional[0].toLowerCase();
-  if (!ALLOWED_TYPES.includes(type)) {
-    console.error(`Error: "${positional[0]}" is not a valid artifact type.`);
-    console.error(`Did you mean: aiwg show skill ${positional[0]} ?`);
-    console.error(HELP_TEXT);
-    process.exit(1);
-  }
-
-  const name = positional.slice(1).join(' ').trim();
-  if (!name) {
-    console.error(`Error: aiwg show ${type} requires a name`);
-    console.error(HELP_TEXT);
-    process.exit(1);
+  // Wave A (#1218): if the first positional is a known type, treat it
+  // as the type. If it's NOT a known type, fall through to single-name
+  // mode — `aiwg show intake-wizard` works as long as the name is
+  // unambiguous across artifact types. Multi-type matches still error
+  // with the disambiguation list (existing behavior in showArtifact).
+  let type: string | null = null;
+  let name: string;
+  const firstLower = positional[0].toLowerCase();
+  if (ALLOWED_TYPES.includes(firstLower)) {
+    type = firstLower;
+    name = positional.slice(1).join(' ').trim();
+    if (!name) {
+      console.error(`Error: aiwg show ${type} requires a name`);
+      console.error(HELP_TEXT);
+      process.exit(1);
+    }
+  } else {
+    // Single-name fallback. Pass to showArtifact without a type filter
+    // so its existing ambiguity logic kicks in: unique match → succeed,
+    // multiple matches → list candidates and exit 2 (or pick first
+    // with `--first`).
+    name = positional.join(' ').trim();
   }
 
   let json = false;
@@ -720,7 +727,7 @@ async function handleShow(args: string[]): Promise<void> {
 
   await showArtifact(cwd, {
     name,
-    typeFilter: [type],
+    typeFilter: type ? [type] : undefined,
     json,
     first,
     graph,

@@ -318,7 +318,12 @@ export async function discoverCapability(
   const types = params.typeFilter && params.typeFilter.length > 0
     ? params.typeFilter
     : DEFAULT_DISCOVER_TYPES;
-  const limit = params.limit ?? 10;
+  // Default top-K = 5 (Wave A from #1218): peer-reviewed work on tool
+  // retrieval (Semantic Tool Discovery for MCP, arXiv:2603.20313) reports
+  // 97.1% hit@K=3 at scale; K=5 keeps a buffer above K=3 while halving
+  // the prior K=10 default. Operators wanting more breadth can pass
+  // `--limit N` explicitly.
+  const limit = params.limit ?? 5;
   // For framework-graph entries, anchor returned paths to AIWG_ROOT so
   // they resolve from any project working directory (#1217).
   const aiwgRoot = await getAiwgRootForDiscover();
