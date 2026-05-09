@@ -69,6 +69,12 @@ export async function main(args: string[]): Promise<void> {
       await handleWatch(subcommandArgs);
       break;
 
+    case 'views': {
+      const { main: viewsMain } = await import('./views/cli.js');
+      await viewsMain(subcommandArgs);
+      break;
+    }
+
     case undefined:
       console.error('Error: Index subcommand required');
       console.log('');
