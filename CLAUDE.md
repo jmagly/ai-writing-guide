@@ -308,7 +308,18 @@ aiwg sdlc-accelerate "Project description"  # Idea to construction-ready
 aiwg sdlc-accelerate --from-codebase .      # From existing code
 aiwg sdlc-accelerate --resume               # Resume pipeline
 
-# Artifact index
+# Discovery — find AIWG skills/agents/commands/rules by capability (#1212)
+aiwg discover "create intake"            # ranks intake-* skills, intake-coordinator agent
+aiwg discover "deploy production" --limit 3   # flow-deploy-to-production tops at score 0.51
+aiwg discover "audit security" --type skill   # narrow to skills only
+aiwg discover "<phrase>" --json          # Stable schema for sub-agent consumption
+# Most AIWG skills (391 of 400) are NOT in your context — they live at
+# <provider-dir>/.aiwg/skills/ and are reached via `aiwg discover`. The kernel
+# set (one quickref per installed framework + utils) is what's always-loaded.
+# The skill-discovery HIGH rule mandates `aiwg discover` before declining a
+# user request as out-of-scope.
+
+# Artifact index — build/query graph indices (project, codebase, framework, user-defined)
 aiwg index build                         # Build/rebuild artifact index
 aiwg index build --force --verbose       # Full rebuild with progress
 aiwg index query "authentication" --json # Search artifacts
@@ -367,6 +378,7 @@ aiwg reproducibility-validate  # Validate workflow reproducibility
 |-------|----------|
 | **AIWG Development Guide** | `@docs/development/aiwg-development-guide.md` |
 | **CLI Reference** | `@docs/cli-reference.md` |
+| **Discovery & Kernel Skills** | `@docs/discovery-and-kernel-skills.md` |
 | **Extension System** | `@docs/extensions/overview.md` |
 | **Creating Extensions** | `@docs/extensions/creating-extensions.md` |
 | **Extension Types** | `@docs/extensions/extension-types.md` |

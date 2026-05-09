@@ -3183,9 +3183,102 @@ Transform a high-level objective into a fully researched, SDLC-gated issue backl
 
 ---
 
+## Discovery
+
+Top-level capability search across AIWG skills, agents, commands, and rules. **Reach for `aiwg discover` early and often** — it is the first-class operator surface for finding the right AIWG capability for a need, and the kernel skill set deliberately deploys only a small directory of quickrefs to your platform's flat skill listing. Everything else lives at `<provider-dir>/.aiwg/skills/` and is reachable only through this command.
+
+### discover
+
+Find AIWG skills, agents, commands, and rules by capability — index-driven on-demand discovery (#1212).
+
+```bash
+aiwg discover "<phrase>" [options]
+```
+
+**Options:**
+
+- `--limit <N>` — Max ranked results (default: 10)
+- `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule`. Examples: `--type skill`, `--type skill,agent`
+- `--json` — Emit a stable JSON schema (`path`, `type`, `title`, `score`, `triggers`, `capability`, `kernel`) for programmatic agent consumption
+- `--graph <name>` — Override the default graph. Defaults to `framework` (the AIWG capability graph), which is rebuilt automatically after every `aiwg use`.
+
+**Examples:**
+
+```bash
+aiwg discover "create intake"                       # ranks intake-* skills + intake-coordinator agent
+aiwg discover "deploy production" --limit 3         # flow-deploy-to-production tops at score 0.51
+aiwg discover "audit security" --type skill         # narrow to skills only
+aiwg discover "review code" --type agent --json     # JSON for sub-agent consumption
+```
+
+**Output (default):**
+
+Token-tight format optimized for in-context agent consumption — names the path, type, score, the top trigger phrase that earned the match, and the capability description.
+
+```
+Discovery results for "deploy production" (3 matches, 16ms):
+
+    score=0.51  skill   .../sdlc-complete/skills/flow-deploy-to-production/SKILL.md
+                Orchestrate production deployment with strategy selection, validation,
+                automated rollback, and regression gates
+    score=0.36  skill   .../aiwg-utils/skills/customize-rebuild/SKILL.md
+                Rebuild and redeploy AIWG from local customization source
+                trigger: "apply my changes"
+    score=0.26  agent   .../media-marketing-kit/agents/production-coordinator.md
+                Manages creative production workflows, coordinates timelines
+
+★ = kernel skill (always-loaded). Others are reachable via the index.
+```
+
+**How scoring works:**
+
+| Field matched | Weight | Notes |
+|---|---|---|
+| Trigger phrase, exact match | 4× | The strongest signal — hits a skill's declared `## Triggers` line |
+| Trigger phrase, substring | 4× × 0.6 | Partial trigger overlap |
+| Capability description | 2× | Frontmatter `description` (or first body paragraph fallback) |
+| Title | 3× | Boost for exact title match |
+| Tags | 2× | Per-tag |
+| Summary | 1× | Body summary |
+| Path | 0.5× | Filename / path substring |
+
+Multi-token queries require ≥50% token overlap to surface partial matches — gibberish queries return zero results rather than incidental hits.
+
+### Best-practice usage guidance
+
+Discovery is the operator surface that makes the **kernel + on-demand model** work across all 10 supported providers (Claude Code, Cursor, Factory, Copilot, OpenCode, Warp, Windsurf, OpenClaw, Hermes, Codex). Each provider deploys a small kernel set of always-loaded quickref skills; everything else sits at `<provider-dir>/.aiwg/skills/` and is reached via `aiwg discover`.
+
+**Lead with discovery, not with memory.** When a user describes a capability, query first:
+
+```bash
+aiwg discover "<the user's need, paraphrased>" --limit 3
+```
+
+Then surface the top match (or top-3 candidates) — this makes your reasoning auditable and gives the user a chance to redirect.
+
+**Use type filters to tighten results.** When the user wants a workflow, restrict to `--type skill`. When they want to know who handles something, `--type agent`. When they ask about enforcement, `--type rule`.
+
+**Use `--json` from sub-agents.** The JSON schema (`path / type / title / score / triggers / capability / kernel`) is stable and compact enough to forward to a subagent without context-bloat.
+
+**Don't skip discovery before declining or improvising.** The `skill-discovery` HIGH framing rule mandates `aiwg discover` before saying "AIWG can't do that" or writing a custom workflow from scratch. Most AIWG skills (391 of 400 today) are NOT in your loaded context — the kernel set is just the orientation layer.
+
+**Skip discovery only when:**
+- The user named a specific skill or command (e.g., `/flow-deploy-to-production`)
+- The capability is clearly outside AIWG's scope
+- You ran the same query in this session and the result is in working memory
+- A kernel quickref directly lists the skill — you've already done the lookup
+
+**The framework graph stays fresh automatically.** `aiwg use` rebuilds the framework artifact index post-deploy (best-effort), so `aiwg discover` queries always reflect the current installed surface. You don't need to invoke `aiwg index build --graph framework` manually unless you've edited skill source between deploys.
+
+**Backward compatibility:** `aiwg index discover` still works (same dispatch). The top-level `aiwg discover` is the canonical surface; the index-namespaced form is preserved so older skill bodies and external references don't break.
+
+---
+
 ## Index Commands
 
-Commands for building and querying the artifact index. The index provides structured, pre-computed metadata about project artifacts, enabling agents and developers to discover, search, and navigate artifacts without manual file searching.
+Commands for building and querying the artifact index. The index provides structured, pre-computed metadata about project artifacts, enabling agents and developers to navigate artifacts without manual file searching.
+
+> **Looking for `aiwg discover`?** It moved to a top-level command (see [Discovery](#discovery) above). The legacy `aiwg index discover` form still works.
 
 The index uses a **multi-graph architecture** with three built-in graph types plus user-defined graphs:
 
@@ -3212,8 +3305,12 @@ aiwg index <subcommand> [options]
 
 - `build` - Build/rebuild the artifact index
 - `query` - Search artifacts by keyword, type, phase, tags
+- `discover` - Capability search across AIWG skills/agents/commands/rules (canonical form is the top-level [`aiwg discover`](#discover); this subcommand is preserved for backward compatibility)
 - `deps` - Show artifact dependency graph
 - `stats` - Show index statistics
+- `neighbors` - Get neighbors of a node in a graph
+- `set` - Set operations (intersection, union, difference) on neighbor sets
+- `watch` - Filesystem watcher for automatic incremental updates
 
 **Global option (all subcommands):**
 

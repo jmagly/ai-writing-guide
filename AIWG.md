@@ -314,6 +314,24 @@ You: [Orchestrate flow-security-review-cycle with guidance="focus on authenticat
 5. **Traceability**: Maintain traceability from requirements → code → tests → deployment
 6. **Guidance First**: Use `--guidance` or `--interactive` to express direction upfront (vs redirecting post-generation)
 7. **Parallel Execution**: Launch independent agents in single message with multiple Task calls
+8. **Discovery First**: Most AIWG skills are NOT loaded into your context — only the kernel set (one quickref per installed framework + core utilities). Before declining a user request as out-of-scope or improvising a custom workflow, run `aiwg discover "<paraphrased need>"`. The kernel quickrefs orient you; the index is the way you find the rest. See the `skill-discovery` HIGH rule.
+
+## Kernel Skill Layout (#1212)
+
+AIWG ships skills in two tiers to fit within agentic platforms' skill-listing budgets (Claude Code's 25%-of-context cap, OpenClaw's 150-skill hard cap, etc.):
+
+| Tier | Path (Claude Code shown; same shape on all 10 providers) | Contents |
+|---|---|---|
+| **Kernel** (always-loaded) | `.claude/skills/` | ~9 skills: one `<framework>-quickref` per installed framework + `aiwg-utils-quickref`. Marked `kernel: true` in frontmatter. |
+| **Standard** (index-discoverable) | `.claude/.aiwg/skills/` | Everything else — ~391 skills today. Hidden from the platform's flat skill listing; reachable via `aiwg discover`. |
+
+The kernel quickrefs are directories — they list the framework's high-traffic skills with one-liners and explicitly tell you to query the index for the rest. **Do not enumerate skills from memory.** Use:
+
+```bash
+aiwg discover "<phrase>" [--type skill,agent,command,rule] [--limit N] [--json]
+```
+
+`aiwg use` rebuilds the framework artifact index post-deploy (best-effort), so discovery queries always see the current installed surface.
 
 ## Reference Documentation
 
