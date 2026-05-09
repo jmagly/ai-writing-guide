@@ -859,6 +859,34 @@ aiwg serve --no-open --read-only
 
 ---
 
+### local-executor
+
+Start a no-sandbox host-process executor that boots `DaemonSupervisor` + `ExecutorShim` and registers with `aiwg serve` for mission dispatch. Implements `executor.aiwg.io/v1` Core + HITL conformance with `isolation: none` (#1181).
+
+```bash
+aiwg local-executor serve
+aiwg local-executor serve --port 7400 --aiwg-serve http://127.0.0.1:7337
+aiwg local-executor serve --max-concurrency 4 --executor-id <uuid>
+```
+
+**Options:**
+
+- `--port <n>` - Port the executor listens on (default: auto-allocated)
+- `--bind <host>` - Interface to bind (default: `127.0.0.1`)
+- `--aiwg-serve <url>` - URL of the parent `aiwg serve` to register with (default: `http://127.0.0.1:7337`)
+- `--max-concurrency <n>` - Max concurrent missions (default: `2`)
+- `--executor-id <uuid>` - Stable executor ID for re-registration (default: generated)
+
+**Conformance:** `executor-contract` v1 — Core + HITL profiles, `isolation: none`.
+
+**Capabilities:** cli, executor, missions, hitl
+**Platforms:** All
+**Tools:** Bash
+
+**See also:** [Executor Contract ADR](.aiwg/architecture/adr-executor-contract.md), [executor.aiwg.io/v1 spec](.aiwg/architecture/executor.aiwg.io-v1.md).
+
+---
+
 ### init
 
 Initialize an AIWG project by creating `.aiwg/aiwg.config` (provider registry,
