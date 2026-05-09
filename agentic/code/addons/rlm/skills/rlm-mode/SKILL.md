@@ -2,7 +2,7 @@
 namespace: aiwg
 name: rlm-mode
 description: Detect requests for recursive decomposition and large-scale operations that benefit from RLM processing
-version: 1.0.0
+version: 1.1.0
 platforms: [all]
 
 ---
@@ -101,19 +101,20 @@ When RLM is appropriate, suggest the right strategy:
 
 **Suggested command**:
 ```
-/rlm-query "{query}" --path {directory} --pattern "{glob}" --depth {N}
+/rlm-query "{context-source}" "{query}" --depth {N}
 ```
+
+The first positional argument is the context source — a single file path or glob pattern. The second is the sub-prompt for the spawned sub-agent.
 
 **Example**:
 ```
 User: "find all TODO comments across the entire codebase"
 
 Decomposition:
+  Context source: "**/*.{js,ts,jsx,tsx}" (all code files)
   Query: "Extract TODO comments with file:line locations"
-  Path: "." (whole repo)
-  Pattern: "**/*.{js,ts,jsx,tsx}" (all code files)
 
-Suggested: /rlm-query "Extract TODO comments" --path . --pattern "**/*.{js,ts,jsx,tsx}"
+Suggested: /rlm-query "**/*.{js,ts,jsx,tsx}" "Extract TODO comments with file:line locations"
 ```
 
 ### Strategy 2: Batch Processing (`rlm-batch`)
@@ -128,23 +129,24 @@ Suggested: /rlm-query "Extract TODO comments" --path . --pattern "**/*.{js,ts,js
 
 **Suggested command**:
 ```
-/rlm-batch "{operation}" --path {directory} --pattern "{glob}" --parallel {N}
+/rlm-batch "{glob-pattern}" "{operation}" --max-parallel {N}
 ```
+
+The first positional argument is the glob pattern that selects target files. The second is the operation applied to each file (use `{file}` as the placeholder for the current file path).
 
 **Example**:
 ```
 User: "add TypeScript types to every JavaScript file in src/"
 
 Decomposition:
-  Operation: "Add TypeScript type annotations"
-  Path: "src/"
-  Pattern: "**/*.js"
-  Parallel: 4 (concurrent workers)
+  Glob pattern: "src/**/*.js"
+  Operation: "Add TypeScript type annotations to {file}"
+  Max parallel: 4 (concurrent workers)
 
-Suggested: /rlm-batch "Add TypeScript type annotations" --path src/ --pattern "**/*.js" --parallel 4
+Suggested: /rlm-batch "src/**/*.js" "Add TypeScript type annotations to {file}" --max-parallel 4
 ```
 
-### Strategy 3: Hierarchical Summary (`rlm-summarize`)
+### Strategy 3: Hierarchical Summary (`rlm-batch` with summarize aggregation)
 
 **Use when**: User wants to understand large-scale structure or relationships
 
@@ -156,19 +158,27 @@ Suggested: /rlm-batch "Add TypeScript type annotations" --path src/ --pattern "*
 
 **Suggested command**:
 ```
-/rlm-summarize --path {directory} --depth {N} --output-format {markdown|json}
+/rlm-batch "{glob-pattern}" "Summarize {file} for repository structure analysis" --aggregate summarize --max-parallel {N}
 ```
+
+Pick a glob pattern that matches your repository layout. Common patterns:
+
+- `**/README.md` — works for monolith *and* monorepo layouts (use a `.gitignore`-aware glob to avoid `node_modules/`)
+- `apps/*/README.md` — multi-app monorepos
+- `packages/*/README.md` — workspace-style monorepos
+- `src/*/index.{ts,js}` — top-level module entry points
 
 **Example**:
 ```
 User: "summarize the whole repository so I can understand the architecture"
 
 Decomposition:
-  Path: "." (whole repo)
-  Depth: 3 (top 3 levels)
-  Format: markdown
+  Glob pattern: "**/README.md" (adapt to your layout)
+  Operation: "Summarize {file} for architecture overview"
+  Max parallel: 3
+  Aggregate: summarize (collapse all sub-summaries into one overview)
 
-Suggested: /rlm-summarize --path . --depth 3 --output-format markdown
+Suggested: /rlm-batch "**/README.md" "Summarize {file} for architecture overview" --aggregate summarize --max-parallel 3
 ```
 
 ## Response Templates
@@ -231,50 +241,56 @@ RLM approach?
 
 ## Parameter Extraction
 
-### Path Extraction
+### Context Source Construction
+
+The context source is the first positional argument — a single file path or glob pattern. Construct it from explicit and implicit signals.
 
 **From explicit mention**:
-- "in src/" → `--path src/`
-- "under lib/components/" → `--path lib/components/`
-- "the test directory" → `--path test/`
+- "in src/" → `src/**/*`
+- "under lib/components/" → `lib/components/**/*`
+- "the test directory" → `test/**/*`
 
 **From implicit context**:
-- No mention → `--path .` (whole repo)
-- "the codebase" → `--path .`
-- "source files" → `--path src/` (if src/ exists)
+- No mention → `**/*` (whole repo)
+- "the codebase" → `**/*`
+- "source files" → `src/**/*` (if `src/` exists)
 
-### Pattern Extraction
+### File Type Filters
+
+Combine the directory scope with a type filter to narrow the glob.
 
 **From file type mention**:
-- "TypeScript files" → `--pattern "**/*.ts"`
-- "React components" → `--pattern "**/*.{jsx,tsx}"`
-- "test files" → `--pattern "**/*.test.{js,ts}"`
-- "markdown docs" → `--pattern "**/*.md"`
+- "TypeScript files" → append `*.ts`
+- "React components" → append `*.{jsx,tsx}`
+- "test files" → append `*.test.{js,ts}`
+- "markdown docs" → append `*.md`
 
 **From explicit pattern**:
-- "files matching *.config.js" → `--pattern "**/*.config.js"`
+- "files matching *.config.js" → use `**/*.config.js`
 
 **Default**:
-- No mention → `--pattern "**/*"` (all files)
+- No mention → leave the context source broad (`**/*`)
 
 ### Depth Extraction
 
 **From explicit mention**:
 - "top-level only" → `--depth 1`
 - "two levels deep" → `--depth 2`
-- "recursively" → `--depth -1` (infinite)
+- "recursively" → omit (use default)
 
 **From implicit context**:
 - Summary request → `--depth 3` (reasonable overview)
-- Search request → `--depth -1` (exhaustive)
-- Transform request → `--depth -1` (all matches)
+- Search request → omit (exhaustive)
+- Transform request → omit (all matches)
 
 ### Parallelism Extraction
 
-**For batch operations**:
-- Default: `--parallel 4` (balanced)
-- User mentions "fast" → `--parallel 8` (aggressive)
-- User mentions "careful" → `--parallel 2` (conservative)
+**For batch operations** (`rlm-batch`):
+- Default: `--max-parallel 4` (balanced, mid-sweet-spot)
+- User mentions "fast" → `--max-parallel 7` (upper bound; see context-budget rule)
+- User mentions "careful" → `--max-parallel 2` (conservative)
+
+When `AIWG_CONTEXT_WINDOW` is declared in the project context, the parallel cap is bounded by the context-budget rule. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md`.
 
 ## Clarification Prompts
 
@@ -296,7 +312,7 @@ To set up RLM processing, I need to clarify:
 3. **Operation**: What should I do with each file?
    - [ ] Extract information (use rlm-query)
    - [ ] Transform/update (use rlm-batch)
-   - [ ] Summarize structure (use rlm-summarize)
+   - [ ] Summarize structure (use rlm-batch with summarize aggregation)
 
 Please provide these details.
 ```
@@ -336,17 +352,14 @@ Which option do you prefer?
 - Strategy: rlm-query (finding information)
 
 **Extraction**:
+- Context source: "**/*.{js,ts,jsx,tsx}" (JavaScript/TypeScript files)
 - Query: "Find all console.log statements"
-- Path: "." (entire project)
-- Pattern: "**/*.{js,ts,jsx,tsx}" (JavaScript/TypeScript files)
 
 **Response**:
 ```
 This requires searching across the entire codebase. I'll use RLM processing:
 
-/rlm-query "Find all console.log statements with file and line number" \
-  --path . \
-  --pattern "**/*.{js,ts,jsx,tsx}"
+/rlm-query "**/*.{js,ts,jsx,tsx}" "Find all console.log statements with file and line number"
 
 This will:
 1. Recursively scan all JavaScript/TypeScript files
@@ -365,19 +378,15 @@ Proceeding...
 - Strategy: rlm-batch (transformation)
 
 **Extraction**:
-- Operation: "Replace AuthContext with useAuth hook"
-- Path: "src/" (source code)
-- Pattern: "**/*.{jsx,tsx}" (React components)
-- Parallel: 4 (default)
+- Glob pattern: "src/**/*.{jsx,tsx}" (React components)
+- Operation: "Replace AuthContext with useAuth hook in {file}"
+- Max parallel: 4 (default)
 
 **Response**:
 ```
 This is a batch refactoring task that will affect multiple components. Using RLM:
 
-/rlm-batch "Replace AuthContext with useAuth hook pattern" \
-  --path src/ \
-  --pattern "**/*.{jsx,tsx}" \
-  --parallel 4
+/rlm-batch "src/**/*.{jsx,tsx}" "Replace AuthContext with useAuth hook in {file}" --max-parallel 4
 
 This will:
 1. Identify all React components using AuthContext
@@ -394,24 +403,25 @@ Proceeding with batch operation...
 
 **Detection**:
 - Trigger: "summarize the whole repository"
-- Strategy: rlm-summarize (hierarchical understanding)
+- Strategy: rlm-batch with summarize aggregation (hierarchical understanding)
 
 **Extraction**:
-- Path: "." (entire repo)
-- Depth: 3 (good overview depth)
-- Format: markdown
+- Glob pattern: "**/README.md" (works across layouts; substitute `apps/*/README.md` or `packages/*/README.md` for monorepos)
+- Operation: "Summarize {file} for architecture overview"
+- Max parallel: 3
+- Aggregate: summarize
 
 **Response**:
 ```
-I'll create a hierarchical summary of the repository using RLM:
+I'll create a hierarchical summary of the repository using RLM batch aggregation:
 
-/rlm-summarize --path . --depth 3 --output-format markdown
+/rlm-batch "**/README.md" "Summarize {file} for architecture overview" --aggregate summarize --max-parallel 3
 
 This will:
-1. Analyze the top 3 levels of directory structure
-2. Identify main modules and their purposes
-3. Map dependencies and relationships
-4. Generate a markdown summary document
+1. Summarize each README independently (sub-agent per file)
+2. Aggregate the summaries into one overview
+3. Preserve chunked processing for large repositories
+4. Generate a concise architecture summary
 
 Proceeding...
 ```
@@ -434,9 +444,7 @@ I can check for missing error handling. To choose the right approach:
 3. Entire codebase? (I'll use RLM processing)
 
 **If entire codebase, I recommend:**
-/rlm-query "Identify functions missing try-catch or error handling" \
-  --path . \
-  --pattern "**/*.{js,ts}"
+/rlm-query "**/*.{js,ts}" "Identify functions missing try-catch or error handling"
 
 Which scope did you have in mind?
 ```
@@ -480,15 +488,15 @@ Which scope did you have in mind?
 
 ## Related
 
-- `/rlm-query` command - recursive information extraction
-- `/rlm-batch` command - parallel batch processing
-- `/rlm-summarize` command - hierarchical summarization
+- `/rlm-query` command — recursive information extraction (positional: context-source, sub-prompt)
+- `/rlm-batch` command — parallel batch processing (positional: glob-pattern, operation; supports `--aggregate summarize` for hierarchical summary)
 - `@$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-config.yaml` - RLM configuration schema
 - `@$AIWG_ROOT/agentic/code/addons/rlm/docs/rlm-architecture.md` - RLM system design
 - `@.aiwg/research/findings/REF-087-recursive-decomposition.md` - Decomposition research
 
 ## Version History
 
+- **1.1.0**: Aligned command examples with shipped positional command surface; replaced nonexistent `rlm-summarize` with `rlm-batch --aggregate summarize`; renamed `--parallel` to `--max-parallel`; generalized Strategy 3 example for monolith and monorepo layouts (Gitea #1191, #1193, #1194; tracks upstream PR #103)
 - **1.0.0**: Initial implementation for RLM mode detection and routing
 
 ## References
