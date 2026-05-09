@@ -142,16 +142,35 @@ These flags are reserved in the design but not yet implemented. Tracked in Gitea
 
 ### Phase 1: Context Loading
 
-1. Resolve file path or glob pattern
-2. Read all matching files
-3. Validate total context size (<50% of model window)
-4. If too large, error and suggest filtering
+**Argument resolution** — pick the context-source axis from the parsed flags:
+
+1. **If `--neighbors-of <id>` is present** (graph-bounded; #1206):
+   - Verify `aiwg index` is available. Run `aiwg index stats --json` once; on failure, error with "neighbors-of requires aiwg index — run `aiwg index build` first".
+   - Resolve direct neighbors:
+     ```bash
+     aiwg index neighbors --graph "${graph:-project}" \
+       --node "<id>" \
+       --direction "${direction:-both}" \
+       --json
+     ```
+   - If `--depth N` (N > 1): expand iteratively. For each new neighbor, run the same `aiwg index neighbors` call; deduplicate by node id; stop after N hops or when the frontier is empty.
+   - Map the resolved node IDs to file paths via `aiwg index query --id <id> --json` (or use the `path` field returned by `neighbors` directly when present).
+   - Treat the deduplicated path list as the context source. Skip the glob/path branch below.
+   - On empty result set, error with the offending node id and a suggestion to verify it exists via `aiwg index query "<id>"`.
+
+2. **Else if a glob pattern or single path is supplied**:
+   - Resolve the glob with `find` / `glob` semantics
+   - Use the matched file list as the context source
+
+3. **Read** all resolved files into memory.
+4. **Validate** total context size (<50% of model window).
+5. If too large, error and suggest filtering (`--neighbors-of` with smaller `--depth`, narrower glob, or `--use-index` with stricter query).
 
 **Communication**:
 ```
-Loading context from: {pattern}
-Matched files: {count}
-Total size: {size} tokens
+Context source: {neighbors-of <id> @ depth N | pattern}
+Matched files:  {count}
+Total size:     {size} tokens
 Spawning sub-agent with {model}...
 ```
 

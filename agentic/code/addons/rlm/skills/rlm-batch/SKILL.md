@@ -264,11 +264,36 @@ When implemented, this flag will be added to `argumentHint` and become enforceab
 
 ### Phase 1: Initialization
 
-1. Parse glob pattern and sub-prompt
-2. Resolve glob pattern to file list:
+1. Parse arguments (sub-prompt plus context-source flags)
+2. **Resolve the input file list** by picking exactly one context-source axis:
+
+   **a) `--neighbors-of <id>` — graph-bounded (#1206)**
+
+   ```bash
+   # Verify the index is available
+   aiwg index stats --json >/dev/null \
+     || die "neighbors-of requires aiwg index — run 'aiwg index build' first"
+
+   # Direct neighbors at depth 1
+   aiwg index neighbors \
+     --graph "${graph:-project}" \
+     --node "<id>" \
+     --direction "${direction:-both}" \
+     --json
+   ```
+
+   For `--depth N` where N > 1: iterate the same call over each new neighbor, deduplicating by node id, stopping after N hops or when the frontier is empty. Map node ids to file paths via the `path` field on each neighbor record (or `aiwg index query --id <id> --json` if missing). On empty result, error with the offending node id.
+
+   **b) Glob pattern (default)**
+
    ```bash
    find . -path "{pattern}" -type f
    ```
+
+   **c) `--use-index` query** — see #1200 documentation.
+
+   Skip branches not selected. Continue with the resolved file list.
+
 3. Count matched files
 4. Estimate cost:
    ```
