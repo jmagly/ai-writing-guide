@@ -118,7 +118,8 @@
     "delivery-policy",
     "debug-source-not-output",
     "post-commit-index-refresh",
-    "soul-enforcement"
+    "soul-enforcement",
+    "skill-discovery"
   ],
   "templates": [
     "devkit/addon-manifest",

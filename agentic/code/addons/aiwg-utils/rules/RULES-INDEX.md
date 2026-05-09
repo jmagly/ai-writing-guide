@@ -38,6 +38,11 @@ Core meta-utility rules for agent coordination, context management, and platform
 **When to apply**: Technical decision-making, API usage, configuration changes, dependency selection, error diagnosis, import resolution
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md
 
+#### skill-discovery
+**Summary**: Most AIWG skills are NOT loaded into your context — only the kernel set (framework quickrefs + core utilities). The bulk lives at `<provider-dir>/.aiwg/skills/` and is reachable only through the artifact index. Before declining a user request as "AIWG can't do that" or improvising a custom workflow, you MUST query `aiwg index discover "<paraphrased need>"`. Surface the top match (or top-3 candidates) to the user; the discovery is auditable. Skip the query only when the user named a specific skill, the capability is clearly outside AIWG's scope, or you've just queried within the session.
+**When to apply**: Any user request describing a capability, before declining as out-of-scope, before improvising a custom workflow when an AIWG skill might exist
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/skill-discovery.md
+
 #### native-ux-tools
 **Summary**: Agents MUST prefer platform-native interaction tools (e.g., AskUserQuestion in Claude Code) over plain text output for interactive questions. Check tool availability before asking, fall back to formatted markdown if unavailable. One question per interaction turn. Includes platform capability matrix for all 8 supported platforms.
 **When to apply**: Interactive commands (--interactive flag), decision gates, user confirmations, intake wizards, any agent question
@@ -118,6 +123,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 | **Agent definition scope** | god-session, subagent-scoping |
 | **Documentation** | diagram-generation |
 | **Research/decisions** | research-before-decision |
+| **Skill / capability lookup** | skill-discovery, research-before-decision |
 | **Error diagnosis** | research-before-decision, instruction-comprehension |
 | **Constrained systems** | context-budget, subagent-scoping |
 | **Authorization gates** | human-authorization, native-ux-tools |
@@ -133,5 +139,5 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-*Generated from aiwg-utils manifest.json — 19 rules*
+*Generated from aiwg-utils manifest.json — 20 rules*
 *Full rule files: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/*
