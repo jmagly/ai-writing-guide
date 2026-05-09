@@ -327,36 +327,42 @@ async function runPreDeployCollisionCheck(opts: {
  */
 const NEXT_STEPS: Record<string, string[]> = {
   // Claude Code (default)
+  //
+  // Standard skills no longer deploy as slash commands. Reach AIWG
+  // capabilities through `aiwg discover` (CLI) or natural-language
+  // requests (the agent queries the index for you).
   'sdlc': [
-    'Start a project:   aiwg sdlc-accelerate "Your project idea"',
-    'Or open Claude:    claude (then use /sdlc-accelerate in the session)',
+    'Find a skill:      aiwg discover "<what you want to do>"',
+    'Browse via Claude: open Claude and ask for the "accelerated SDLC" or "create intake"',
+    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
     'Check health:      aiwg doctor',
   ],
   'marketing': [
-    'Open Claude Code and use:  /campaign-kickoff',
-    'Marketing intake:          /marketing-intake',
-    'Check health:              aiwg doctor',
+    'Find a skill:      aiwg discover "<marketing need>"',
+    'Browse via Claude: ask for "marketing intake" or "campaign kickoff" — agent queries the index',
+    'Check health:      aiwg doctor',
   ],
   'media-curator': [
-    'Open Claude Code and use:  /analyze-artist "Artist Name"',
-    'Find sources:              /find-sources "query"',
-    'Check health:              aiwg doctor',
+    'Find a skill:      aiwg discover "<media task>"',
+    'Browse via Claude: ask "analyze [artist] discography" or "find sources for [content]"',
+    'Check health:      aiwg doctor',
   ],
   'research': [
-    'Open Claude Code and use:  /research-discover "topic"',
-    'Research workflow:         /research-workflow',
-    'Check health:              aiwg doctor',
+    'Find a skill:      aiwg discover "<research task>"',
+    'Browse via Claude: ask "research workflow" or "induct [paper]" — agent queries the index',
+    'Check health:      aiwg doctor',
   ],
   'security-engineering': [
-    'Applied crypto review:     ask "applied crypto review of <file>" (loads applied-cryptographer agent)',
-    'Chain-of-trust review:     ask "review the boot chain in <files>" (loads secure-bootstrap-reviewer)',
-    'Threat enumeration:        ask "physical threat scenarios for this system" (loads physical-threat-modeling skill)',
-    'Decision template:         see agentic/code/frameworks/security-engineering/templates/cryptographic-decisions.md',
-    'Check health:              aiwg doctor',
+    'Find a skill:      aiwg discover "<security decision>"',
+    'Crypto primitives: ask "choose AEAD" or "ad-hoc KDF review"',
+    'Chain of trust:    ask "review the boot chain" or "signed bootstrap design"',
+    'Decision template: agentic/code/frameworks/security-engineering/templates/cryptographic-decisions.md',
+    'Check health:      aiwg doctor',
   ],
   'all': [
-    'Start a project:   aiwg sdlc-accelerate "Your project idea"',
-    'Or open Claude:    claude (then use /sdlc-accelerate in the session)',
+    'Find a skill:      aiwg discover "<what you want to do>"',
+    'Browse via Claude: open Claude and describe your need — agent queries the index',
+    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
     'Check health:      aiwg doctor',
   ],
 
@@ -379,27 +385,31 @@ const NEXT_STEPS: Record<string, string[]> = {
 
   // Factory AI
   'factory/sdlc': [
-    'Open Factory:      factory (droids are deployed and ready)',
-    'Start a project:   aiwg sdlc-accelerate "Your project idea"',
+    'Find a skill:      aiwg discover "<what you want to do>"',
+    'Open Factory:      factory (droids deployed; ask for "accelerated SDLC")',
+    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
     'Check health:      aiwg doctor',
   ],
 
   // Cursor
   'cursor/sdlc': [
-    'Open Cursor:       cursor . (agents are in .cursor/agents/)',
-    'Start a project:   aiwg sdlc-accelerate "Your project idea"',
+    'Find a skill:      aiwg discover "<what you want to do>"',
+    'Open Cursor:       cursor . (agents in .cursor/agents/; ask for "accelerated SDLC")',
+    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
     'Check health:      aiwg doctor',
   ],
 
   // Warp Terminal
   'warp/sdlc': [
-    'Open Warp:         warp (agents and commands loaded from .warp/)',
-    'Start a project:   aiwg sdlc-accelerate "Your project idea"',
+    'Find a skill:      aiwg discover "<what you want to do>"',
+    'Open Warp:         warp (agents/commands aggregated into WARP.md)',
+    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
     'Check health:      aiwg doctor',
   ],
 
   // GitHub Copilot
   'copilot/sdlc': [
+    'Find a skill:      aiwg discover "<what you want to do>"',
     'Open VS Code:      code . (Copilot agents in .github/agents/)',
     'Copilot chat:      @workspace use the SDLC workflow agents',
     'Check health:      aiwg doctor',
@@ -407,15 +417,17 @@ const NEXT_STEPS: Record<string, string[]> = {
 
   // OpenAI Codex
   'codex/sdlc': [
+    'Find a skill:      aiwg discover "<what you want to do>"',
     'Open Codex:        codex (agents in .codex/agents/, prompts in ~/.codex/prompts/)',
-    'Start a project:   aiwg sdlc-accelerate "Your project idea"',
+    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
     'Check health:      aiwg doctor',
   ],
 
   // Windsurf
   'windsurf/sdlc': [
+    'Find a skill:      aiwg discover "<what you want to do>"',
     'Open Windsurf:     AGENTS.md and .windsurf/ are ready',
-    'Start a project:   Ask Cascade: "sdlc-accelerate my project"',
+    'Ask Cascade:       "accelerated SDLC for my project" — agent queries the index',
     'Check health:      aiwg doctor',
   ],
 
@@ -1411,32 +1423,49 @@ export class UseHandler implements CommandHandler {
     }
 
     // Rebuild the `framework` artifact index (#1212/#1214) so
-    // `aiwg index discover` queries return fresh capability data.
-    // Best-effort — index rebuild failure must not fail the deploy.
+    // `aiwg discover` queries return fresh capability data. This step
+    // can take a few seconds on a full install (~2,000 artifacts) —
+    // surface the work to the operator so the apparent stall during
+    // `aiwg use` is legible. Best-effort — index rebuild failure must
+    // not fail the deploy.
     //
     // Pre-flight: skip when the framework source dirs aren't present
     // (e.g., test fixtures, deploy from npm install rather than the
     // source repo). buildIndex() calls `process.exit(1)` on missing
-    // scan dirs which would short-circuit our catch. The `framework`
-    // graph requires `agentic/code/frameworks` to be readable.
+    // scan dirs which would short-circuit our catch.
     if (!dryRun) {
       const fwSrcDir = path.join(target, 'agentic', 'code', 'frameworks');
       const hasFrameworkSrc = await fs.access(fwSrcDir).then(() => true).catch(() => false);
       if (hasFrameworkSrc) {
+        // Always announce the index build — this is the visible-to-user
+        // expensive step on a full install (~2,000 artifacts indexed).
+        // Without messaging, the operator sees an apparent stall after
+        // the deploy summary. Verbose mode lets buildIndex's own
+        // progress through; otherwise we show a single-line spinner-
+        // style message and capture the noisy stat lines.
+        ui.blank();
+        ui.info('Building capability index for `aiwg discover`…');
+        ui.dim('  Indexing skills, agents, commands, and rules. Reused incrementally on next deploy.');
+
+        const indexStart = Date.now();
+        // Capture buildIndex's own console.log noise unless verbose
+        const origLog = console.log;
+        if (!verbose) console.log = () => {};
         try {
           const { buildIndex } = await import('../../artifacts/index-builder.js');
           await buildIndex(target, { graph: 'framework', explicit: false });
-          if (verbose) console.log('Framework artifact index rebuilt');
+          console.log = origLog;
+          const indexElapsedSec = ((Date.now() - indexStart) / 1000).toFixed(1);
+          ui.success(`Capability index ready (${indexElapsedSec}s) — try \`aiwg discover "<phrase>"\``);
         } catch (error) {
-          if (verbose) {
-            console.error(
-              'Warning: framework index rebuild failed:',
-              error instanceof Error ? error.message : String(error),
-            );
-          }
+          console.log = origLog;
+          ui.warn(
+            `Capability index build failed: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          ui.dim('  Deploy succeeded — skills reachable, but `aiwg discover` may return stale results until next rebuild.');
         }
       } else if (verbose) {
-        console.log('Framework source not found; skipping index rebuild');
+        console.log('Framework source not found; skipping capability index rebuild');
       }
     }
 
