@@ -67,10 +67,14 @@ Override the default model for the sub-agent.
 - `sonnet` - Balanced (default for most queries)
 - `haiku` - Fast and cheap (for simple extraction)
 
-**Model selection guidance**:
+**Model selection guidance** (per REF-089 Appendix B; GRADE: LOW, peer-review pending):
 - Use `haiku` for: counting, extracting simple patterns, yes/no questions
 - Use `sonnet` for: summarization, moderate analysis, code review
 - Use `opus` for: complex reasoning, architectural decisions, multi-step analysis
+
+**RLM root vs sub-agent**: When `rlm-query` itself dispatches sub-calls (recursion via `--depth >1`), the *root* agent should be coding-capable (sonnet or opus). Per REF-089, "Qwen3-8B (non-coder) struggled without sufficient coding capabilities." Sub-agents performing simple extraction can safely be `haiku`; sub-agents performing analysis or synthesis should be `sonnet` or higher.
+
+**Output token limits**: RLM root agents emit code, which can be verbose. Models with output token limits below 4k will underperform. Surface a warning when the configured model has lower limits.
 
 ### --output <file> (optional)
 Save the sub-agent's response to a file instead of returning inline.
@@ -98,6 +102,12 @@ Track current recursion depth (for internal use).
 - Depth 1: First sub-agent
 - Depth 2: Sub-agent's sub-agent
 - Depth 3: Maximum (further nesting blocked)
+
+## Planned Capabilities
+
+These flags are reserved in the design but not yet implemented. Tracked in Gitea #1201.
+
+- `--save-trajectory <path>` — Persist a structured trajectory of the dispatch + sub-agent result suitable for offline analysis or future fine-tuning. Format: JSON Lines with one entry per call. REF-089 (p. 5) reports a 28.3% performance improvement from 1,000 trajectory samples for fine-tuning RLM-specialized models. When implemented, this flag will be added to `argumentHint` and become enforceable by the canonical command surface contract test.
 
 ## Execution Flow
 

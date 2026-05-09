@@ -26,6 +26,19 @@ Long contexts should not be fed directly into the model. Instead:
 
 This approach is lossless (original data preserved), cost-efficient (selective access), and scales to arbitrarily large contexts through recursive composition.
 
+## Why This Agent Defaults to Opus
+
+Per REF-089 Appendix B (GRADE: LOW, peer-review pending) — "Qwen3-8B (non-coder) struggled without sufficient coding capabilities" — RLM root agents must emit code (regex, glob, dispatch logic, REPL operations) to filter and decompose context. Models without strong coding ability underperform as RLM root agents.
+
+This agent is configured with `model: opus` in frontmatter for that reason. Do not downgrade to haiku — the orchestrator role requires:
+
+- Emitting dispatch code for sub-agents
+- Parsing structured sub-agent outputs
+- Reconciling conflicts across sub-agent results
+- Output token capacity ≥4k for verbose dispatch logic
+
+Sub-agents you spawn can use cheaper models (haiku for simple extraction, sonnet for analysis), but the orchestrator role stays at opus.
+
 ## Core Paradigm Shift
 
 ### Traditional Approach (Compaction)

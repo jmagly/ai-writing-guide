@@ -105,12 +105,23 @@ Each sub-agent creates a file named after its input file:
 ### --aggregate (default: concat)
 How to combine sub-agent results.
 
+**Quick disambiguation** — pick by output shape:
+
+| Sub-agent output shape | Use strategy |
+|---|---|
+| Independent prose findings, one per file | `concat` |
+| Lists or key-value pairs likely to overlap across sub-agents | `merge` |
+| Verbose findings that need executive synthesis | `summarize` |
+| Findings that should be filtered to a subset (e.g., "files missing X") | `filter` (when implemented; today use `concat` + post-filter) |
+
+**Choose deliberately** — `concat` is the default but is appropriate ONLY when sub-agent outputs are truly independent. Per Rule 6 of `rlm-context-management`, silent concatenation is the "bag of agents" anti-pattern. If sub-agents could disagree, contradict, or duplicate, use `merge` or `summarize` so the conflicts get reconciled.
+
 **Strategies**:
 
 #### concat (default)
 Concatenate all results in order.
 
-**Use when**: Results are independent and order matters (e.g., list of findings).
+**Use when**: Results are independent and order matters (e.g., list of findings, one finding per file with no cross-cutting concerns).
 
 **Output format**:
 ```markdown
@@ -169,13 +180,15 @@ Use a final summarization agent to condense all results.
 
 **Cost note**: Adds one additional LLM call with full context of all results.
 
-### --max-parallel (default: 10)
+### --max-parallel (default: 4)
 Maximum number of sub-agents running concurrently.
 
-**Guidelines**:
-- Start with 10 for typical batches (<100 files)
-- Increase to 20-50 for large batches (100-1000 files)
-- Keep under 100 to avoid rate limiting
+**Guidelines** (aligned with Rule 8 of `rlm-context-management`):
+
+- Default: 4 — mid-sweet-spot per REF-088 (GRADE: VERY LOW), n*(n-1)/2 = 6 communication paths, fits all `AIWG_CONTEXT_WINDOW` tiers ≥65k
+- Recommended range: 3-5 for most tasks, 5-7 for complex tasks
+- **Hard cap: 7** — values >7 are auto-batched into sequential waves of ≤7. Per REF-086 (GRADE: LOW), independent multi-agent error amplification grows nonlinearly past the small-team coordination range
+- **Context-budget interaction**: when `AIWG_CONTEXT_WINDOW` is set, the smaller of the budget cap and the 7-agent hard cap applies. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md`
 
 **Rate limits**:
 - Claude API: 50 requests/minute
@@ -183,8 +196,33 @@ Maximum number of sub-agents running concurrently.
 
 **System resource limits**:
 - Each sub-agent uses ~100MB RAM
-- 50 parallel = ~5GB RAM usage
+- 7 parallel = ~700MB RAM usage
 - Adjust based on available system memory
+
+**Migration note**: Earlier versions defaulted to 10 with guidance to scale to 20-50. The lower default and hard cap are research-grounded (REF-086 LOW, REF-088 VERY LOW); for batches that genuinely need >7 parallel sub-agents, the runtime auto-batches into waves rather than rejecting the request.
+
+## Model Selection
+
+**Research basis**: REF-089 Appendix B (GRADE: LOW, peer-review pending) — "Qwen3-8B (non-coder) struggled without sufficient coding capabilities" and "Qwen3-235B-A22B showed smaller gains due to running out of output tokens."
+
+| Role | Recommended | Avoid | Reason |
+|---|---|---|---|
+| Orchestrator (this skill) | `opus` | haiku | Emits dispatch code, parses sub-agent results, performs aggregation reasoning |
+| Sub-agent — simple extraction | `haiku` | — | "Count TODOs", "list exports", yes/no checks; cheap and fast |
+| Sub-agent — analysis/synthesis | `sonnet` | haiku | "Identify security issues", "summarize approach"; haiku underperforms |
+| Sub-agent — complex reasoning | `opus` | — | Multi-step analysis, code generation, architectural review |
+
+**Output token limits matter**: RLM root agents emit code (regex, glob, dispatch logic) which can be verbose. Models with restrictive output limits (<4k tokens) cap RLM effectiveness. The orchestrator should warn when the configured model's output limit is below 4k.
+
+**Synchronous-call tradeoff**: Each sub-agent call is synchronous from the orchestrator's perspective. Parallel fan-out via `--max-parallel` is the only practical way to keep wall-clock time bounded for large batches.
+
+## Planned Capabilities
+
+These flags are reserved in the design but not yet implemented. Tracked in Gitea #1201.
+
+- `--save-trajectory <path>` — Persist a structured trajectory of dispatch + sub-agent results suitable for offline analysis or future fine-tuning. Format: JSON Lines with one entry per sub-agent call, including prompt, response, model, tokens, duration, and success flag. REF-089 (p. 5) reports a 28.3% performance improvement from 1,000 trajectory samples for fine-tuning RLM-specialized models.
+
+When implemented, this flag will be added to `argumentHint` and become enforceable by the canonical command surface contract test.
 
 ## Execution Flow
 

@@ -456,6 +456,20 @@ Which scope did you have in mind?
 - **Confirmation**: Always confirm strategy before invoking RLM commands
 - **Fallback**: If user rejects RLM, warn about context limits but proceed if insisted
 
+## Model Selection Guidance
+
+Per REF-089 Appendix B (GRADE: LOW, peer-review pending) — RLM relies on the root agent emitting code, so non-coding-capable models underperform.
+
+When suggesting a strategy, also recommend the model:
+
+| Sub-prompt complexity | Recommended sub-agent model |
+|---|---|
+| Simple extraction (count, list, yes/no) | `--model haiku` |
+| Moderate analysis (summarize, classify, code review) | `--model sonnet` (default) |
+| Complex reasoning (architectural review, multi-step inference) | `--model opus` |
+
+The orchestrating agent (the one invoking `/rlm-query` or `/rlm-batch`) should itself be coding-capable — sonnet or opus, never haiku — because it must emit dispatch code, parse sub-agent results, and aggregate. Output token limits below 4k cap orchestrator effectiveness.
+
 ## Performance Heuristics
 
 ### File Count Estimation
