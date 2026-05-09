@@ -10,6 +10,17 @@ description: SDLC framework quick reference — phase model, capability domains,
 
 This is your always-loaded directory for the AIWG **SDLC framework** (300+ skills). It does **not** list every skill. Instead, it teaches you the framework's mental model and gives you **curated search phrases** that map to `aiwg discover` lookups. Use the phrases — each is validated to surface its target skill in the top-3 ranked results.
 
+## Canonical access pattern: discover → show
+
+When you find a candidate via `aiwg discover`, fetch its body with `aiwg show <type> <name>`. **Never** use `find`, `ls`, `Glob`, or direct `Read` on `<provider>/skills/` paths — those reflect the kernel-pivot deploy state, not the full surface.
+
+```bash
+aiwg discover "<phrase>"             # find — returns ranked candidates
+aiwg show skill <name>               # fetch — streams the SKILL.md body
+```
+
+If your platform's Skill tool errors on a non-kernel skill (expected — most aren't kernel), the fallback is `aiwg show`, never filesystem browsing. Last-resort if `aiwg` itself is broken: read directly from `$AIWG_ROOT/agentic/code/...` (the canonical corpus, always present).
+
 ## How to use this quickref
 
 1. Identify which **capability domain** the user's need belongs to (table below)

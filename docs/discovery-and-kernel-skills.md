@@ -366,6 +366,26 @@ The curated skill encodes deliberate decisions — templates, gate criteria, mul
 
 The CLI is the access point. It works the same regardless of where AIWG is installed (npm global, dev mode, custom corpus path) and survives layout changes.
 
+### Filesystem-browsing after discover returned a path
+
+This is the most common drift mode. Discovery succeeded, the path came back, and instead of running `aiwg show`, the agent reaches for `find` / `ls` / `Glob` to "locate the deployed copy."
+
+> ❌ `aiwg discover "intake wizard"` → returns path → agent runs `find . -name "intake-wizard"` to "find a deployed copy"
+>
+> ❌ Agent: "The Skill tool says `aiwg:intake-wizard` doesn't exist. Let me grep for it."
+>
+> ✅ `aiwg discover "intake wizard"` → returns path → agent runs `aiwg show skill intake-wizard`
+
+There is no "deployed copy to locate." Most AIWG skills aren't deployed per-project (no-copy default, #1217). The `aiwg show` command always fetches from the indexed location regardless of deploy state.
+
+### Reaching for the filesystem when the platform Skill tool errors
+
+The platform's Skill tool can only invoke kernel-listed skills directly. For everything else, it will error — that's expected behavior. The fallback is `aiwg show`, never filesystem traversal.
+
+> ❌ Skill tool errors → agent runs `find` / `ls` / `Read` on `<provider>/skills/` paths
+>
+> ✅ Skill tool errors → agent runs `aiwg show <type> <name>` and applies the returned body
+
 ## Recovery when discovery itself breaks
 
 The 6 self-maintenance ops kernel skills exist precisely for this case. If `aiwg discover` errors out:
@@ -377,6 +397,26 @@ The 6 self-maintenance ops kernel skills exist precisely for this case. If `aiwg
 5. Re-run `aiwg discover` to confirm
 
 The `aiwg-steward` agent (always-deployed alongside the framework agents) orchestrates this sequence end-to-end. Invoke it via `@aiwg-steward` in your platform's agent UI.
+
+### Last-resort: read the canonical corpus directly
+
+If even the kernel ops skills fail (e.g., catastrophic install corruption), the AIWG corpus at `$AIWG_ROOT/agentic/code/` is the canonical source of truth. It is always present at the install root and survives any deploy-state corruption.
+
+| Asset type | Corpus path |
+|---|---|
+| Framework skill | `$AIWG_ROOT/agentic/code/frameworks/<framework>/skills/<name>/SKILL.md` |
+| Addon skill | `$AIWG_ROOT/agentic/code/addons/<addon>/skills/<name>/SKILL.md` |
+| Framework agent | `$AIWG_ROOT/agentic/code/frameworks/<framework>/agents/<name>.md` |
+| Persona agent | `$AIWG_ROOT/agentic/code/agents/personas/<name>.md` |
+| Framework rule | `$AIWG_ROOT/agentic/code/frameworks/<framework>/rules/<name>.md` |
+| Addon rule | `$AIWG_ROOT/agentic/code/addons/<addon>/rules/<name>.md` |
+
+Resolve `$AIWG_ROOT` from one of:
+- `$AIWG_ROOT` environment variable
+- `aiwg runtime-info` output (path field)
+- `aiwg version` output (path field — always reports the resolved install root)
+
+Reading the corpus directly is **only acceptable as a last resort**. The CLI is the right tool first; corpus paths are the safety net under it.
 
 ## Adding a kernel skill
 

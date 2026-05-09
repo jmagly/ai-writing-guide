@@ -83,7 +83,63 @@ You may proceed without querying the index when:
 - You queried for the same need within the current session and the result is in working memory
 - The kernel quickref directly lists the skill the user needs (in which case you've already done the lookup mentally)
 
-### Rule 5: Surface the Top Match, Don't Hide the Search
+### Rule 5: Discover → Show Is the Canonical Access Pattern
+
+**Discovery alone isn't enough.** When `aiwg discover` returns a path, the next step to read the skill body is `aiwg show <type> <name>` — never `find`, `ls`, `Glob`, `Grep`, or `Read` on the discovered path.
+
+The two-step pattern:
+
+```bash
+aiwg discover "deploy to production"        # → returns ranked candidates with paths
+aiwg show skill flow-deploy-to-production   # → streams the SKILL.md body
+```
+
+`discover` is the lookup. `show` is the fetch. They are designed to compose. The agent should never need to navigate AIWG's storage layout — that's the whole point of having both commands.
+
+**FORBIDDEN — filesystem-browsing after discover returned a path**:
+
+```
+Agent: *runs `aiwg discover "intake wizard"` → gets path/to/intake-wizard/SKILL.md*
+Agent: *runs `find . -name "intake-wizard" -type d`*    ← antipattern
+Agent: *runs `ls .claude/skills/`*                       ← antipattern
+Agent: *Reads the path directly with the Read tool*      ← antipattern (skip the show command)
+```
+
+**REQUIRED**:
+
+```
+Agent: *runs `aiwg discover "intake wizard"` → gets path*
+Agent: *runs `aiwg show skill intake-wizard`*           ← correct fetch
+```
+
+### Rule 6: Failure-Mode Guidance — When Skill Invocation Errors
+
+If your platform's native Skill tool rejects a skill name (because it's not in the kernel listing — most AIWG skills aren't), **do NOT fall back to filesystem browsing**. The fallback hierarchy is:
+
+1. **Primary**: `aiwg show <type> <name>` — fetches the body via the indexed location, regardless of where the file lives on disk
+2. **Secondary**: `aiwg show skill <name> --json` — same fetch with explicit path + content envelope, useful when you need to forward to a sub-agent
+3. **Last resort (only if `aiwg` CLI itself is unavailable)**: read directly from the AIWG install corpus at `$AIWG_ROOT/agentic/code/frameworks/<framework>/skills/<name>/SKILL.md` or `$AIWG_ROOT/agentic/code/addons/<addon>/skills/<name>/SKILL.md`. The corpus is the canonical source of truth and is always present at the install root. `aiwg discover --json` returns absolute paths anchored to `$AIWG_ROOT` for exactly this reason.
+
+The corpus path is the authoritative source. **`find`, `ls`, and `Glob` against `<provider>/skills/` directories are never correct** — those reflect the kernel pivot's deploy state (only kernel skills mirror there), not the full surface.
+
+**FORBIDDEN — natural-but-wrong fallback when Skill tool errors**:
+
+```
+Skill tool: aiwg:intake-wizard not found
+Agent: *runs `find . -name "intake-wizard"`*           ← wrong
+Agent: *runs `ls .claude/skills/`*                      ← wrong
+Agent: *runs `grep -r "intake-wizard" agentic/`*        ← wrong
+```
+
+**REQUIRED**:
+
+```
+Skill tool: aiwg:intake-wizard not found
+Agent: *runs `aiwg show skill intake-wizard`*          ← primary fallback
+       (or `cat $AIWG_ROOT/agentic/code/.../intake-wizard/SKILL.md` only if `aiwg` is broken)
+```
+
+### Rule 7: Surface the Top Match, Don't Hide the Search
 
 When you query the index, mention to the user that you did. Naming the candidate skills (with a one-line capability summary) is more useful than silently picking one and proceeding. Examples:
 
@@ -139,15 +195,45 @@ You may be in violation of this rule if:
 | You wrote a custom workflow from scratch | Didn't check whether a curated skill exists |
 | You enumerated skills from memory and missed obvious ones | Treated the kernel set as exhaustive |
 | The user pointed at a skill you should have known about | Didn't query the index, or queried the wrong phrase |
+| You ran `find` / `ls` / `Glob` against a `<provider>/skills/` directory | Filesystem-browsing antipattern after the kernel pivot — use `aiwg show` |
+| You read a SKILL.md path directly with the Read tool after `discover` returned the path | Skipped the `show` step; closes the loop incorrectly |
+| The platform Skill tool errored and your next action wasn't `aiwg show` | Failure-mode guidance violated |
 
 ## Recovery
+
+### Path A — never queried in the first place
 
 If you catch yourself about to decline or improvise without having queried:
 
 1. **STOP** before responding
-2. **QUERY** the index with the user's need
+2. **QUERY** the index: `aiwg discover "<the user's need>"`
 3. **READ** the top results' capability descriptions
-4. **CHOOSE** the best match (or report top-3 to the user) and proceed
+4. **FETCH** the chosen skill's body: `aiwg show <type> <name>`
+5. **APPLY** the skill
+
+### Path B — discover succeeded but you went to the filesystem
+
+If you queried, got a path, then started running `find` / `ls` / `Read` on the path:
+
+1. **STOP** the filesystem operation
+2. **FETCH** the body via `aiwg show <type> <name>` instead
+3. The path returned by `discover` is anchored to `$AIWG_ROOT`; you don't need to find the file — just call `show`
+
+### Path C — the platform Skill tool errored on a non-kernel skill
+
+This is expected. Most AIWG skills aren't in the kernel listing. The platform's Skill tool can only invoke kernel-listed skills directly.
+
+1. Take the skill name (and its type, from `discover`)
+2. Run `aiwg show <type> <name>` — that returns the body
+3. Apply the skill's instructions yourself (the body is a system-prompt-style instruction set; follow it)
+
+### Path D — `aiwg` CLI itself is broken
+
+Only as a last resort:
+
+1. Read the corpus directly at `$AIWG_ROOT/agentic/code/frameworks/<framework>/skills/<name>/SKILL.md` or `$AIWG_ROOT/agentic/code/addons/<addon>/skills/<name>/SKILL.md`
+2. After resolving, fix the CLI: run `aiwg-doctor` (always-loaded kernel skill) to diagnose, then `aiwg-refresh` to repair
+3. The 6 self-maintenance kernel skills (`steward`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`) exist precisely for this case — they're always loaded so they're available even when discovery is broken
 
 It is always better to query late than not to query at all.
 
@@ -155,7 +241,7 @@ It is always better to query late than not to query at all.
 
 This rule layers cleanly with the rest of aiwg-utils:
 
-- **research-before-decision** — addresses *technical* research before acting. This rule extends the discipline to *AIWG itself*: research what AIWG can do before declining or improvising.
+- **research-before-decision** — addresses *technical* research before acting. This rule extends the discipline to *AIWG itself*: research what AIWG can do before declining or improvising. **For AIWG-internal content, "research" specifically means `aiwg discover` + `aiwg show`, NOT `Read` / `Glob` / `Grep` against AIWG storage paths.** The filesystem is the wrong tool for AIWG-internal lookups; the CLI is the right one.
 - **instruction-comprehension** — extracts the user's actual need. The phrase passed to `aiwg discover` should reflect the parsed intent, not the user's verbatim words if those are ambiguous.
 - **human-authorization** — never invoke a destructive skill (deploy, force-push, delete) without authorization, even when the index returns a match.
 - **god-session** — the discover query is one focused step; if the result is a complex multi-skill flow, decompose normally rather than absorbing the whole flow into your current session.
@@ -175,6 +261,14 @@ Before declining a user request on the grounds that AIWG can't do it, verify:
 - [ ] Have I confirmed the need is genuinely outside AIWG's scope?
 
 If any answer is "no" — query before answering.
+
+After `aiwg discover` returns a match, before reading anything from disk, verify:
+
+- [ ] Did I use `aiwg show <type> <name>` to fetch the body?
+- [ ] If the platform Skill tool errored, did I fall back to `aiwg show` (not `find` / `ls` / `Read`)?
+- [ ] If `aiwg show` is somehow unavailable, am I reading from `$AIWG_ROOT/agentic/code/...` (the canonical corpus), not from a `<provider>/skills/` deploy mirror?
+
+If any answer is "no" — you're navigating the filesystem when you should be using the CLI. Stop and run `aiwg show`.
 
 ## References
 

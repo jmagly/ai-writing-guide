@@ -15,16 +15,33 @@ This is your always-loaded core directory for AIWG. It does **not** list every u
 1. Identify the **capability domain** the user's need belongs to
 2. Pick a **curated phrase** from that domain (or paraphrase the user's words)
 3. Run `aiwg discover "<phrase>"` and surface the top match to the user
+4. Fetch the matched skill body with `aiwg show <type> <name>` — never `find` / `ls` / `Read`
 
 **Do not enumerate skills from memory.** AIWG ships hundreds of skills; you only see the kernel set in your context.
 
-## The discovery rule
+## The canonical pipeline: `discover → show`
 
-Most AIWG skills (~391 of 400) are **not in your context**. They live at `<provider-dir>/.aiwg/skills/` and are reachable only via `aiwg discover`. Before declining a user request as "AIWG can't do that" or improvising a custom workflow, you **must** query:
+Most AIWG skills (~385 of 400) are **not in your context** and are not in `<provider>/skills/` either — they stay at `$AIWG_ROOT` (no per-project copy by default, #1217). Two commands close the loop:
 
 ```bash
+# 1. Find — returns ranked candidates with absolute paths
 aiwg discover "<the user's need, paraphrased>"
+
+# 2. Fetch — streams the SKILL.md body for the chosen candidate
+aiwg show skill <name>          # or: agent | command | rule
 ```
+
+`discover` and `show` are designed to compose. **You should never need to navigate the filesystem to read AIWG content.** That's the whole point of the CLI.
+
+### When the platform Skill tool errors
+
+Most AIWG skills aren't kernel-listed, so the platform's Skill tool will reject them. This is expected behavior, not a bug. The fallback hierarchy:
+
+1. **`aiwg show <type> <name>`** — primary fetch. Always works regardless of kernel status.
+2. **`aiwg show <type> <name> --json`** — same fetch with `{ path, content }` envelope, useful for forwarding to a sub-agent.
+3. **Read directly from `$AIWG_ROOT/agentic/code/`** — last-resort fallback. Only if the `aiwg` CLI itself is broken. The corpus at `$AIWG_ROOT/agentic/code/frameworks/<name>/skills/<skill>/SKILL.md` and `$AIWG_ROOT/agentic/code/addons/<name>/skills/<skill>/SKILL.md` is the canonical source — it is always present at the install root and survives any deploy-state corruption.
+
+**Forbidden after `discover` returns a path**: running `find`, `ls`, `Glob`, or `Read` on a `<provider>/skills/` directory. Those reflect the kernel-pivot deploy state, not the full surface. Use `aiwg show`.
 
 This is mandated by the `skill-discovery` HIGH rule. Surface the top match (or top-3) to the user — the search is auditable.
 

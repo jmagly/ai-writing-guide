@@ -10,6 +10,17 @@ description: Ops framework quick reference — capability domains, extension mod
 
 This is your always-loaded directory for the AIWG **ops-complete** framework. It does **not** list every skill. The framework is small (2 base skills) but extends via `sys` / `it` / `dev` / `stream` extensions — discovery is how you find the extension surface.
 
+## Canonical access pattern: discover → show
+
+When you find a candidate via `aiwg discover`, fetch its body with `aiwg show <type> <name>`. **Never** use `find`, `ls`, `Glob`, or direct `Read` on `<provider>/skills/` paths — those reflect the kernel-pivot deploy state, not the full surface.
+
+```bash
+aiwg discover "<phrase>"             # find — returns ranked candidates
+aiwg show skill <name>               # fetch — streams the SKILL.md body
+```
+
+If your platform's Skill tool errors on a non-kernel skill (expected — most aren't kernel), the fallback is `aiwg show`, never filesystem browsing. Last-resort if `aiwg` itself is broken: read directly from `$AIWG_ROOT/agentic/code/...` (the canonical corpus, always present).
+
 ## How to use this quickref
 
 1. Identify the **capability domain** the user's need belongs to
