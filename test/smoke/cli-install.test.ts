@@ -188,11 +188,11 @@ describe('CLI Installation Smoke Tests', () => {
       expect(existsSync(join(deployDir, '.claude/agents'))).toBe(true);
 
       // Check skills deployed
-      expect(existsSync(join(deployDir, '.claude/skills'))).toBe(true);
+      expect(existsSync(join(deployDir, '.claude/.aiwg/skills'))).toBe(true);
 
       // Check voice skills specifically
-      expect(existsSync(join(deployDir, '.claude/skills/voice-apply/SKILL.md'))).toBe(true);
-      expect(existsSync(join(deployDir, '.claude/skills/voice-create/SKILL.md'))).toBe(true);
+      expect(existsSync(join(deployDir, '.claude/.aiwg/skills/voice-apply/SKILL.md'))).toBe(true);
+      expect(existsSync(join(deployDir, '.claude/.aiwg/skills/voice-create/SKILL.md'))).toBe(true);
     });
 
     it('should deploy SDLC framework files', () => {
@@ -214,7 +214,7 @@ describe('CLI Installation Smoke Tests', () => {
       expect(existsSync(join(sdlcDir, '.claude/commands'))).toBe(true);
 
       // Check skills deployed
-      expect(existsSync(join(sdlcDir, '.claude/skills'))).toBe(true);
+      expect(existsSync(join(sdlcDir, '.claude/.aiwg/skills'))).toBe(true);
     });
   });
 

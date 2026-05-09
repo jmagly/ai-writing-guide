@@ -8,7 +8,7 @@
  * Issue #21: Fix provider deployment file locations
  *
  * Expected locations by provider (universal deployment - all 4 artifact types):
- * - Claude:   .claude/agents/, .claude/commands/, .claude/skills/, .claude/rules/
+ * - Claude:   .claude/agents/, .claude/commands/, .claude/.aiwg/skills/, .claude/rules/
  * - Codex:    .codex/agents/, .codex/rules/ (project) + ~/.codex/prompts/, ~/.codex/skills/ (home)
  * - Factory:  .factory/droids/, .factory/commands/, .factory/skills/, .factory/rules/
  * - Copilot:  .github/agents/ (.agent.md), .github/prompts/ (.prompt.md), .github/skills/, .github/instructions/ (.instructions.md)
@@ -69,7 +69,7 @@ interface ProviderConfig {
 const PROVIDERS: Record<string, ProviderConfig> = {
   claude: {
     name: 'claude',
-    projectPaths: ['.claude/agents', '.claude/commands', '.claude/skills', '.claude/rules'],
+    projectPaths: ['.claude/agents', '.claude/commands', '.claude/.aiwg/skills', '.claude/rules'],
     forbiddenPaths: [],
     fileExtension: '.md',
     minArtifacts: 10,

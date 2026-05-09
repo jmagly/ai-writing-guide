@@ -224,10 +224,11 @@ interface ProviderExpectation {
 const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
   claude: {
     name: 'claude',
-    requiredDirs: ['.claude/agents', '.claude/skills', '.claude/commands', '.claude/rules'],
+    // Skills sit under .claude/.aiwg/skills/ — index-driven discovery (#1212)
+    requiredDirs: ['.claude/agents', '.claude/.aiwg/skills', '.claude/commands', '.claude/rules'],
     rootFiles: [],
     agentDir: '.claude/agents',
-    skillDir: '.claude/skills',
+    skillDir: '.claude/.aiwg/skills',
     ruleDir: '.claude/rules',
     aggregatedAgents: false,
     usesHomePaths: false,
@@ -899,9 +900,9 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Deployment Completeness', () => {
       ).toBeGreaterThan(0.85);  // At least 85% of sdlc source agents should deploy
     });
 
-    it('every source skill is deployed to .claude/skills/', async () => {
+    it('every source skill is deployed to .claude/.aiwg/skills/', async () => {
       runDeploy('claude', projectDir, homeDir);
-      const skillsDir = path.join(projectDir, '.claude/skills');
+      const skillsDir = path.join(projectDir, '.claude/.aiwg/skills');
       const entries = await fs.readdir(skillsDir, { withFileTypes: true }).catch(() => []);
       const deployedSkillDirs = new Set(
         (entries as any[])

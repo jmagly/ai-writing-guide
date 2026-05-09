@@ -237,7 +237,8 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Claude Code Integration', () => {
   });
 
   describe('Skill Deployment', () => {
-    it('deploys skills to .claude/skills/', async () => {
+    // Skills deploy to .claude/.aiwg/skills/ — index-driven discovery (#1212).
+    it('deploys skills to .claude/.aiwg/skills/', async () => {
       runScript('tools/agents/deploy-agents.mjs', [
         '--provider', 'claude',
         '--mode', 'sdlc',
@@ -245,7 +246,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Claude Code Integration', () => {
         '--target', TEST_PROJECT_DIR
       ]);
 
-      const skillsDir = path.join(TEST_CLAUDE_DIR, 'skills');
+      const skillsDir = path.join(TEST_CLAUDE_DIR, '.aiwg', 'skills');
       const skills = await fs.readdir(skillsDir);
 
       expect(skills.length).toBeGreaterThan(0);
@@ -259,7 +260,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Claude Code Integration', () => {
         '--target', TEST_PROJECT_DIR
       ]);
 
-      const skillsDir = path.join(TEST_CLAUDE_DIR, 'skills');
+      const skillsDir = path.join(TEST_CLAUDE_DIR, '.aiwg', 'skills');
       const skills = await fs.readdir(skillsDir);
 
       for (const skill of skills) {

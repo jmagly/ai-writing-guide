@@ -5,10 +5,19 @@
  * provider with full support for agents, commands, skills, and rules.
  *
  * Deployment paths:
- *   - Agents: .claude/agents/
- *   - Commands: .claude/commands/
- *   - Skills: .claude/skills/
- *   - Rules: .claude/rules/
+ *   Skills are sequestered under `.claude/.aiwg/skills/` so the
+ *   platform's flat-namespace skill-listing budget doesn't truncate
+ *   them. Discovery is index-driven (epic #1212). The kernel of
+ *   always-loaded skills deploys to `.claude/skills/` so Claude Code's
+ *   native loader picks them up. Agents, commands, and rules continue
+ *   to deploy to their platform-native paths.
+ *
+ *   - Agents:        .claude/agents/         (platform-native)
+ *   - Commands:      .claude/commands/       (platform-native)
+ *   - AIWG skills:   .claude/.aiwg/skills/   (index-driven discovery)
+ *   - Kernel skills: .claude/skills/         (platform-native, always-loaded)
+ *   - Rules:         .claude/rules/          (platform-native)
+ *   - Hooks/settings: .claude/               (platform-native)
  */
 
 import realFs from 'fs';
@@ -26,6 +35,7 @@ import {
   writeFile,
   deployFiles,
   deploySkillDir,
+  isKernelSkill,
   parseFrontmatter,
   initializeFrameworkWorkspace,
   filterAgentFiles,
@@ -53,9 +63,18 @@ export const aliases = [];
 export const paths = {
   agents: '.claude/agents/',
   commands: '.claude/commands/',
-  skills: '.claude/skills/',
-  rules: '.claude/rules/'
+  // Skills are hidden under `.claude/.aiwg/skills/` so the platform's
+  // flat-namespace skill-listing budget doesn't truncate them.
+  // Discovery is index-driven (#1212). The kernel set deploys to
+  // `kernelSkills` separately so Claude Code natively loads it.
+  skills: '.claude/.aiwg/skills/',
+  rules: '.claude/rules/',
 };
+
+// Kernel skills path: always-loaded set the platform sees natively.
+// The rest of AIWG's skills sit at `paths.skills` and are reached
+// through the artifact index (epic #1212).
+export const kernelSkillsPath = '.claude/skills/';
 
 export const support = {
   agents: 'native',
@@ -236,19 +255,47 @@ export function deployCommands(commandFiles, targetDir, opts) {
 }
 
 /**
- * Deploy skills to .claude/skills/
- * Skills are directories containing SKILL.md and supporting files
+ * Deploy skills.
+ *
+ * Skills are directories containing SKILL.md and supporting files. Two
+ * deploy targets per epic #1212:
+ *
+ *  - **Kernel skills** (frontmatter `kernel: true`) → `.claude/skills/`
+ *    (platform-native, always-loaded). These are the always-on
+ *    quickref / utility skills that frame the agent's interaction with
+ *    the rest of AIWG. Kept small (~10-15 entries) to fit within the
+ *    platform's flat-namespace skill-listing budget.
+ *
+ *  - **Standard skills** → `.claude/.aiwg/skills/`. The bulk of AIWG's
+ *    skills, hidden from the platform's flat listing and discoverable
+ *    via the artifact index.
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  const destDir = path.join(targetDir, paths.skills);
-  ensureDir(destDir, opts.dryRun);
+  const standardDestDir = path.join(targetDir, paths.skills);
+  const kernelDestDir = path.join(targetDir, kernelSkillsPath);
+  ensureDir(standardDestDir, opts.dryRun);
 
+  // Partition into kernel and standard before creating dirs unnecessarily
+  const kernelSkills = [];
+  const standardSkills = [];
   for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, opts);
+    if (isKernelSkill(skillDir)) kernelSkills.push(skillDir);
+    else standardSkills.push(skillDir);
+  }
+
+  if (kernelSkills.length > 0) {
+    ensureDir(kernelDestDir, opts.dryRun);
+    for (const skillDir of kernelSkills) {
+      deploySkillDir(skillDir, kernelDestDir, opts);
+    }
+  }
+
+  for (const skillDir of standardSkills) {
+    deploySkillDir(skillDir, standardDestDir, opts);
   }
 
   // Remove legacy bare-named skills superseded by their aiwg- prefixed replacements
-  cleanupLegacyBuiltinCollisions(destDir, opts);
+  cleanupLegacyBuiltinCollisions(standardDestDir, opts);
 }
 
 /**

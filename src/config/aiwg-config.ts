@@ -542,7 +542,7 @@ export async function hashManifest(manifestPath: string): Promise<string | undef
  * Mirrors PROVIDER_PATHS in use.ts; kept here to avoid circular imports.
  */
 const PROVIDER_DEPLOY_DIRS: Record<string, { agents: string; skills: string; commands: string; rules: string }> = {
-  claude:   { agents: '.claude/agents',       skills: '.claude/skills',      commands: '.claude/commands',    rules: '.claude/rules'          },
+  claude:   { agents: '.claude/agents',       skills: '.claude/.aiwg/skills', commands: '.claude/commands',    rules: '.claude/rules'          },
   copilot:  { agents: '.github/agents',       skills: '.github/skills',      commands: '.github/commands',   rules: '.github/copilot-rules'   },
   cursor:   { agents: '.cursor/agents',       skills: '.cursor/skills',      commands: '.cursor/commands',    rules: '.cursor/rules'           },
   opencode: { agents: '.opencode/agent',      skills: '.opencode/skill',     commands: '.opencode/command',  rules: '.opencode/rule'           },

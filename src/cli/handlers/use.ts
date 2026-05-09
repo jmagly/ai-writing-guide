@@ -172,7 +172,11 @@ export function addonPath(frameworkRoot: string, name: string): string {
 const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands: string; rules: string; behaviors: string }> = {
   claude: {
     agents: '.claude/agents',
-    skills: '.claude/skills',
+    // Skills hidden under .claude/.aiwg/skills so Claude Code's flat-namespace
+    // skill-listing budget doesn't truncate them. Discovery is index-driven
+    // via `aiwg index` (epic #1212). Kernel skills (always-loaded set) deploy
+    // separately to .claude/skills/ for native platform discovery.
+    skills: '.claude/.aiwg/skills',
     commands: '.claude/commands',
     rules: '.claude/rules',
     behaviors: '.claude/hooks',  // Emulated via hook wrapper
@@ -1346,12 +1350,12 @@ export class UseHandler implements CommandHandler {
     // PUW-015 (#1116): Claude Code SDLC flow commands.
     // Claude is `skills-native` so it doesn't go through the translator above,
     // but operators expect `/flow-*` slash-command tab completion. Emit
-    // command stubs for flow-prefixed skills into .claude/commands/. Skills
-    // continue to deploy at .claude/skills/; this is purely additive per
-    // ADR-1 §0.6 always-deploy invariant.
+    // command stubs for flow-prefixed skills into .claude/commands/. Skill
+    // sources now live at .claude/.aiwg/skills/ (#1212); commands continue
+    // to deploy to the platform-native .claude/commands/ path.
     if (provider === 'claude' && !dryRun) {
       try {
-        const claudeSkillsDir = path.join(target, '.claude/skills');
+        const claudeSkillsDir = path.join(target, '.claude/.aiwg/skills');
         const claudeCommandsDir = path.join(target, '.claude/commands');
         const flowFilter = (skillName: string) =>
           skillName.startsWith('flow-') ||

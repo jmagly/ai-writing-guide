@@ -745,6 +745,25 @@ export function deploySoulCompanions(soulFiles, destDir, opts) {
 }
 
 /**
+ * Read a skill's SKILL.md frontmatter and return whether it is a
+ * "kernel" skill — always-loaded, deploys to the platform's native
+ * skills directory rather than the AIWG-namespaced one. Per epic
+ * #1212. A skill opts in by setting `kernel: true` in its frontmatter.
+ *
+ * Note: `parseFrontmatter` keeps values as strings (no YAML coercion).
+ * Accept both the string `"true"` and the boolean `true` so callers
+ * are not surprised if a future parser upgrade returns booleans.
+ */
+export function isKernelSkill(skillDir) {
+  const skillMdPath = path.join(skillDir, 'SKILL.md');
+  if (!fs.existsSync(skillMdPath)) return false;
+  const content = fs.readFileSync(skillMdPath, 'utf8');
+  const { metadata } = parseFrontmatter(content);
+  const v = metadata?.kernel;
+  return v === true || v === 'true';
+}
+
+/**
  * Deploy a skill directory (copy recursively).
  *
  * Platform handling (controlled by opts.provider):

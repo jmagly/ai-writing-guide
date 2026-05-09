@@ -111,9 +111,11 @@ describe('project-local deploy integration (#1046)', () => {
     const result = runDeploy(env, 'claude');
     expect(result.status).toBe(0);
 
-    // Per-type provider paths verified
+    // Per-type provider paths verified. Skills live under .claude/.aiwg/skills/
+    // for Claude (#1212 — index-driven discovery to side-step the platform's
+    // flat-namespace skill-listing budget). Rules stay platform-native.
     const ruleFile = path.join(env.projectDir, '.claude', 'rules', 'pl-rule.md');
-    const skillFile = path.join(env.projectDir, '.claude', 'skills', 'demo-skill', 'SKILL.md');
+    const skillFile = path.join(env.projectDir, '.claude', '.aiwg', 'skills', 'demo-skill', 'SKILL.md');
     expect(existsSync(ruleFile), `rule should exist at ${ruleFile}`).toBe(true);
     expect(existsSync(skillFile), `skill should exist at ${skillFile}`).toBe(true);
   });
