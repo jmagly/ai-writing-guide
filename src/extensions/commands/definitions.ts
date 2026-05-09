@@ -537,6 +537,69 @@ export const serveCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Local Executor Command (#1181)
+
+export const localExecutorCommand: Extension = {
+  id: 'local-executor',
+  type: 'skill',
+  name: 'Local Executor',
+  description: 'Start a no-sandbox host-process executor (isolation:none, Core+HITL conformance) registered with aiwg serve',
+  version: '1.0.0',
+  capabilities: ['cli', 'executor', 'missions', 'hitl'],
+  keywords: ['local-executor', 'executor', 'missions', 'dispatch', 'hitl', 'no-sandbox'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'local executor',
+      'start executor',
+      'aiwg local-executor serve',
+      'no-sandbox executor',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: 'serve [--port <n>] [--bind <host>] [--aiwg-serve <url>] [--max-concurrency <n>] [--executor-id <uuid>]',
+      allowedTools: ['Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
+export const localExecutorServeCommand: Extension = {
+  id: 'local-executor-serve',
+  type: 'skill',
+  name: 'Local Executor Serve',
+  description: 'Serve subcommand for the local executor — boots DaemonSupervisor + ExecutorShim and registers with aiwg serve',
+  version: '1.0.0',
+  capabilities: ['cli', 'executor', 'serve'],
+  keywords: ['local-executor-serve', 'executor', 'serve'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['aiwg local-executor serve'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[--port <n>] [--bind <host>] [--aiwg-serve <url>] [--max-concurrency <n>]',
+      allowedTools: ['Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Diagnose Command (#925)
 
 export const diagnoseCommand: Extension = {
@@ -2735,6 +2798,8 @@ export const commandDefinitions: Extension[] = [
   initCommand,
   runCommand,
   serveCommand,
+  localExecutorCommand,
+  localExecutorServeCommand,
 
   // Workspace (3)
   statusCommand,

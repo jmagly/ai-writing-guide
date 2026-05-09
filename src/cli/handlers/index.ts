@@ -109,6 +109,7 @@ import { feedbackHandler } from './feedback.js';
 import { sessionHandler } from './session.js';
 import { sandboxHandler, sandboxHandlers } from './sandbox.js';
 import { diagnoseHandler } from './diagnose.js';
+import { localExecutorHandler, localExecutorServeHandler } from './local-executor.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -218,6 +219,10 @@ export {
 
   // Serve
   serveHandler,
+
+  // Local Executor (#1181)
+  localExecutorHandler,
+  localExecutorServeHandler,
 
   // Sandbox management
   sandboxHandler,
@@ -354,6 +359,10 @@ export const allHandlers: CommandHandler[] = [
 
   // Web dashboard
   serveHandler,
+
+  // Local Executor (#1181)
+  localExecutorHandler,
+  localExecutorServeHandler,
 
   // Sandbox management (#917)
   ...sandboxHandlers,
