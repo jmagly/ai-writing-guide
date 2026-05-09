@@ -119,10 +119,17 @@ function waitForEvent(emitter, event, timeoutMs = 200) {
   });
 }
 
-/** Pick a random unprivileged port in the range 40000–59999. */
-function randomPort() {
-  return 40_000 + Math.floor(Math.random() * 20_000);
-}
+/**
+ * Sentinel value passed to listen() so the OS picks a free port.
+ *
+ * We previously rolled a random port in 40000-59999, which produced
+ * occasional EADDRINUSE flakes when two consecutive WebServer instances
+ * happened to land on the same port (or collided with OS services or
+ * sockets stuck in TIME_WAIT). Using port 0 lets the kernel hand back
+ * a guaranteed-free port via server.address().port — readable on the
+ * WebServer instance after start() resolves.
+ */
+const OS_ASSIGNED_PORT = 0;
 
 /** Make a simple HTTP request and return { statusCode, body }. */
 function httpRequest(options, body = null) {
@@ -513,16 +520,16 @@ describe('WebServer', () => {
   const TOKEN = 'test-uat-token-abc123';
 
   beforeEach(async () => {
-    port = randomPort();
     ({ ds, stub } = makeSupervisor());
 
     web = new WebServer({
-      port,
+      port: OS_ASSIGNED_PORT,    // OS picks a free port; read back below
       host: '127.0.0.1',
       token: TOKEN,
       daemonSupervisor: ds,
     });
     await web.start();
+    port = web.port;             // updated by start() to the actual bound port
   });
 
   afterEach(async () => {

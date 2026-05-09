@@ -64,6 +64,13 @@ export class WebServer extends EventEmitter {
       });
 
       this.server.listen(this.port, this.host, () => {
+        // When port: 0 is requested, the OS assigns a free port — read back
+        // the actual bound port so callers can connect. Eliminates port-pick
+        // races in tests that previously rolled random ports.
+        const addr = this.server.address();
+        if (addr && typeof addr === 'object' && typeof addr.port === 'number') {
+          this.port = addr.port;
+        }
         this.emit('listening', { port: this.port, host: this.host });
         resolve();
       });
