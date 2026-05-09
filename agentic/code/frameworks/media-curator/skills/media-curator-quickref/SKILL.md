@@ -3,59 +3,101 @@ name: media-curator-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Media-curator framework quick reference — discography analysis, source discovery, acquisition, quality filtering, metadata tagging, and archive integrity
+description: Media-curator framework quick reference — capability domains and curated discovery phrases for discography analysis, source discovery, acquisition, quality filtering, metadata, and archive integrity
 ---
 
 # Media Curator Framework — Quick Reference
 
-You are operating in a project that has the AIWG **media-curator** framework installed. This skill is your always-loaded directory for media archive curation. The full skill catalog is reachable through the AIWG artifact index.
+This is your always-loaded directory for the AIWG **media-curator** framework. It does **not** list every skill. Instead, it teaches the framework's mental model and gives you **curated search phrases** that map to `aiwg discover` lookups.
+
+## How to use this quickref
+
+1. Identify the **capability domain** the user's need belongs to
+2. Pick a **curated phrase** from that domain (or paraphrase the user's words)
+3. Run `aiwg discover "<phrase>"` and surface the top match (or top-3) to the user
+
+**Do not enumerate skills from memory.** Discovery is the lookup surface.
 
 ## What this framework is for
 
 End-to-end media archive management: discover sources across YouTube/Internet Archive/Bandcamp, acquire with `yt-dlp`-based patterns, score quality, embed cover art, apply consistent metadata, generate gap notes for missing content, verify integrity with SHA-256, and export to platform-specific formats (Plex, Jellyfin, MPD, mobile, archival).
 
-## When to reach for which skill
+## Capability domains
 
-| Need | Skill | How to invoke |
-|---|---|---|
-| Plan an artist's catalog | `analyze-artist` | "analyze artist X" |
-| End-to-end curation orchestration | `curate` | "curate this artist" |
-| Discover sources for content | `find-sources` | "find sources for X" |
-| Download discovered sources | `acquire` | "download these" |
-| Assemble compilations / playlists | `assemble` | "make a [theme] compilation" |
-| Apply metadata tags to files | `tag-collection` | "tag these files" |
-| Check collection completeness | `check-completeness` | "what's missing from my X collection?" |
-| Document a gap | `gap-documentation` | "note that [release] is missing" |
-| Verify archive integrity | `verify-archive` | "verify the archive" |
-| Export for a target platform | `export` | "export to plex" |
-| Audio extraction / transcoding | `audio-extraction` | (ffmpeg patterns) |
-| Cover art embedding | `cover-art-embedding` | (image embed patterns) |
-| Metadata tagging (opustags/ffmpeg) | `metadata-tagging` | (low-level patterns) |
-| YouTube acquisition (yt-dlp) | `youtube-acquisition` | (yt-dlp patterns) |
-| Internet Archive acquisition | `archive-acquisition` | (archive.org patterns) |
-| Quality scoring & filter | `quality-filtering` | "filter low-quality results" |
-| Provenance for derivation chains | `provenance-tracking` | "track derivation" |
-| Integrity verification (SHA-256) | `integrity-verification` | "verify checksums" |
+| Domain | Covers |
+|---|---|
+| **Catalog planning** | Artist discography analysis, canonical catalog structure |
+| **Discovery & acquisition** | Find sources, download with quality scoring, yt-dlp / Internet Archive patterns |
+| **Metadata & assembly** | Tag files, embed cover art, assemble compilations |
+| **Completeness & gaps** | Audit collection completeness, document missing content |
+| **Integrity & export** | SHA-256 verification, platform-specific export bundles |
+| **Provenance** | Track derivation chains for media files |
 
-This framework ships **18 skills**. The above are the operator-facing entries; pattern skills (`metadata-tagging`, `youtube-acquisition`, etc.) are library references rather than top-level workflows.
+## Curated discovery phrases
+
+### Catalog planning
+
+```bash
+aiwg discover "analyze artist discography"     # → analyze-artist
+```
+
+### Discovery & acquisition
+
+```bash
+aiwg discover "find media sources"             # → find-sources
+aiwg discover "acquire media"                  # → acquire
+aiwg discover "youtube acquisition"            # → youtube-acquisition (pattern reference)
+aiwg discover "archive acquisition"            # → archive-acquisition (pattern reference)
+aiwg discover "audio extraction"               # → audio-extraction (pattern reference)
+aiwg discover "quality filter media"           # → quality-filtering
+```
+
+### Metadata & assembly
+
+```bash
+aiwg discover "tag media collection"           # → tag-collection
+aiwg discover "metadata tagging"               # → metadata-tagging (pattern reference)
+aiwg discover "cover art embedding"            # → cover-art-embedding (pattern reference)
+aiwg discover "assemble compilation"           # → assemble
+```
+
+### Completeness & gaps
+
+```bash
+aiwg discover "check collection completeness"  # → check-completeness
+aiwg discover "gap documentation"              # → gap-documentation
+```
+
+### Integrity & export
+
+```bash
+aiwg discover "verify archive integrity"       # → verify-archive (score 0.73)
+aiwg discover "integrity verification"         # → integrity-verification
+aiwg discover "export media collection"        # → export (score 1.00)
+```
+
+### Orchestration & provenance
+
+```bash
+aiwg discover "curate"                         # → curate (end-to-end orchestrator)
+aiwg discover "provenance tracking"            # → provenance-tracking
+```
 
 ## Workflow shape
 
 ```
-analyze-artist (catalog plan) →
-  find-sources (discovery) →
-    quality-filtering (accept/reject) →
-      acquire (download) →
-        tag-collection (metadata) →
-          verify-archive (integrity) →
+analyze-artist (catalog plan)  →
+  find-sources (discovery)  →
+    quality-filtering (accept/reject)  →
+      acquire (download)  →
+        tag-collection (metadata)  →
+          verify-archive (integrity)  →
             export (target platform)
 ```
 
 `gap-documentation` and `check-completeness` run cross-cutting at any stage.
 
 ## Artifact directory layout
-
-Curation artifacts go under `.aiwg/media/`:
 
 ```
 .aiwg/media/
@@ -67,21 +109,16 @@ Curation artifacts go under `.aiwg/media/`:
 └── verify/           # Integrity reports
 ```
 
-## Finding the right skill when this quickref doesn't list it
+## When the curated phrases don't fit
 
 ```bash
-aiwg discover "<phrase>"
+aiwg discover "<your need, paraphrased>" --limit 5
 ```
 
-For unusual asks (e.g., "merge two artists' catalogs", "deduplicate by acoustic fingerprint") — query the index. Pattern skills (`youtube-acquisition`, `metadata-tagging`) describe ffmpeg/yt-dlp patterns rather than full workflows; reach for them when the operator wants the recipe, not the orchestration.
+## Anti-pattern: don't enumerate
 
-## Common multi-skill flows
+If a user asks "what media skills are available?", **do not list from this skill**. Run:
 
-- **New artist, full ingestion**: `analyze-artist` → `find-sources` → `quality-filtering` → `acquire` → `tag-collection` → `verify-archive`
-- **Compilation build**: `assemble` → `tag-collection` → `cover-art-embedding` → `export`
-- **Gap-driven acquisition**: `check-completeness` → `gap-documentation` → `find-sources` → `acquire`
-- **Quarterly archive verification**: `verify-archive` → `integrity-verification` → `provenance-tracking`
-
-## Don't list from this skill — query the index
-
-If a user asks "what media skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "media"`. This skill exists to orient.
+```bash
+aiwg discover --type skill --limit 20 "<their interest area>"
+```

@@ -79,6 +79,16 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Quickref skills standardized as discovery primers, not skill enumerations**. All 9 kernel quickrefs (`sdlc-quickref`, `aiwg-utils-quickref`, and the 7 framework-specific ones) rewritten to a consistent template:
+
+  1. **Capability domains** — categorical buckets explaining the framework's surface
+  2. **Curated discovery phrases** — pre-validated `aiwg discover "<phrase>"` commands per domain, each tested to surface the target skill in the top-3 ranked results (with example scores like `→ flow-deploy-to-production (score 0.51)`, `→ verify-citations (score 1.00)`)
+  3. **Mental model + artifact directory layout**
+  4. **Anti-pattern guard**: explicit "do not enumerate skills from memory; run `aiwg discover --type skill --limit 20 \"<area>\"` instead"
+
+  This flips the quickrefs' role from skill-table reference to discovery primer. The agent learns which phrasings work — phrases curated and validated by AIWG maintainers, encoded directly into the kernel layer. Rather than enumerating ever-growing skill catalogs, the kernel teaches *how to find* them. Phrases were validated against the live discovery scorer; failed phrases were iterated until they surface the correct top result, or omitted when the underlying skill needs richer trigger declarations downstream.
+
+  Net effect: each quickref stays tight even as frameworks grow (no list maintenance), and discovery becomes habit rather than fallback. The pattern induces every agent loop through the index instead of going from memory.
 - **`aiwg discover` promoted to a first-class top-level command**. Previously `aiwg index discover` (subcommand of `aiwg index`); the new surface is `aiwg discover "<phrase>" [--limit N] [--type skill,agent,...] [--json]`. Discovery is the operator surface for finding AIWG skills, agents, commands, and rules by capability — it leverages the artifact index machinery but exists as its own verb so agents don't conflate it with the project's general-purpose graph indices (project / codebase / framework / user-defined). Same scoring (4× trigger boost, 2× capability) and same JSON schema as before. The legacy `aiwg index discover` path still works; the kernel quickrefs and the `skill-discovery` rule have been updated to use `aiwg discover`.
 - **Skill-only `.aiwg/` path move ported to all 9 remaining providers** (#1216). Kernel-vs-standard skill routing now applies uniformly across the AIWG fleet:
 

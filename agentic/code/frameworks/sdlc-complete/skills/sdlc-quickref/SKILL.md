@@ -3,86 +3,166 @@ name: sdlc-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: SDLC framework quick reference — phase model, key skills index, and how to find more via the AIWG artifact index
+description: SDLC framework quick reference — phase model, capability domains, and curated discovery phrases that surface the right skill on `aiwg discover`
 ---
 
 # SDLC Framework — Quick Reference
 
-You are operating in a project that has the AIWG **SDLC framework** installed. This skill is your always-loaded directory: it gives you the framework's shape and points you at the right skill for a given task. The full skill catalog lives behind the AIWG artifact index — query it on demand instead of asking the user to remember names.
+This is your always-loaded directory for the AIWG **SDLC framework** (300+ skills). It does **not** list every skill. Instead, it teaches you the framework's mental model and gives you **curated search phrases** that map to `aiwg discover` lookups. Use the phrases — each is validated to surface its target skill in the top-3 ranked results.
+
+## How to use this quickref
+
+1. Identify which **capability domain** the user's need belongs to (table below)
+2. Pick a **curated phrase** from that domain (or paraphrase the user's words)
+3. Run `aiwg discover "<phrase>"` and surface the top match (or top-3) to the user
+4. If no curated phrase fits, improvise — `aiwg discover` is forgiving with natural language
+
+**Do not enumerate skills from memory.** The framework ships hundreds of skills and the kernel set you can see is just the orientation layer.
 
 ## What this framework is for
 
 End-to-end software-development-lifecycle support. Phase-based workflows (Inception → Elaboration → Construction → Transition → Production) with multi-agent artifact generation, gate criteria, traceability, and 100+ document templates.
 
-## When to reach for which skill
+## Capability domains
 
-| Need | Skill | How to invoke |
-|---|---|---|
-| Start a new project from scratch | `intake-wizard`, `intake-start` | "create intake forms" / "start inception" |
-| Analyze an existing codebase to scaffold artifacts | `intake-from-codebase` | "scan this repo and generate intake" |
-| Transition phases (Inception → Elaboration → ...) | `flow-inception-to-elaboration`, `flow-elaboration-to-construction`, `flow-construction-to-transition` | "transition to elaboration" |
-| Generate a specific artifact (SAD, ADR, test plan, ...) | `artifact-orchestration` | "create a SAD" / "draft an ADR for X" |
-| Run a phase gate check | `flow-gate-check` | "check inception gate" / "are we ready for X?" |
-| Continuous risk management | `flow-risk-management-cycle` | "update risks" |
-| Continuous architecture evolution | `flow-architecture-evolution` | "evolve architecture for Y" |
-| Continuous test execution | `flow-test-strategy-execution` | "run integration tests" |
-| Continuous security review | `flow-security-review-cycle` | "run security review" |
-| Project status / where-are-we | `project-status`, `project-health-check` | "where are we?" / "project status" |
-| Deploy to production | `flow-deploy-to-production`, `flow-hypercare-monitoring` | "deploy to prod" |
-| Incident response | `flow-incident-response` | "production incident" |
-| Compliance validation | `flow-compliance-validation` | "validate SOC2 compliance" |
-| Onboard a team member | `flow-team-onboarding` | "onboard X" |
-| Knowledge transfer | `flow-knowledge-transfer` | "knowledge transfer to X" |
-| Retrospective | `flow-retrospective-cycle` | "run retro" |
+| Domain | Covers |
+|---|---|
+| **Project bootstrap** | Starting a new project, scaffolding intake, scanning a codebase to seed an SDLC corpus |
+| **Phase transitions** | Moving between Inception / Elaboration / Construction / Transition / Production |
+| **Continuous workflows** | Recurring cycles: requirements, architecture, tests, security, performance, risk |
+| **Quality gates** | Phase-boundary validation, traceability, gate criteria |
+| **Team & process** | Onboarding, knowledge transfer, retrospectives, cross-team sync |
+| **Production & ops** | Deployment, hypercare, incident response |
+| **Compliance** | Regulatory frameworks (SOC2, GDPR, HIPAA, PCI-DSS) and change control |
+| **Artifact generation** | Architecture docs, ADRs, test plans, deployment plans, runbooks |
 
-This is a curated subset (≈25 of the framework's most-reached-for entries). The framework ships **300+ skills** total — the rest are reachable through the index.
+## Curated discovery phrases
 
-## Phase model
+Each phrase has been tested — running it through `aiwg discover` returns the listed skill in the top-3 ranked results. Use them verbatim or as a starting point for your own phrasing.
 
-```
-Inception (4-6w) → Elaboration (4-8w) → Construction (8-16w) → Transition (2-4w) → Production
-   │                  │                     │                       │
-   LO milestone      LA milestone          IOC milestone           PR milestone
+### Project bootstrap
+
+```bash
+aiwg discover "start a new project"            # → new-project (score 1.00)
+aiwg discover "scan codebase for intake"       # → intake-from-codebase
+aiwg discover "intake wizard"                  # → intake-wizard
 ```
 
-- **Inception**: validate problem, vision, risks, business case. Output: project brief, risk register seed.
-- **Elaboration**: detailed requirements, architecture baseline, risk retirement (PoCs/spikes), test strategy.
-- **Construction**: feature implementation, automated testing, security validation, performance.
-- **Transition**: production deployment, UAT, support handover, hypercare (2-4w).
-- **Production**: ongoing operations, incident response, feature iteration.
+### Phase transitions
 
-## Artifact directory: `.aiwg/`
+```bash
+aiwg discover "inception to elaboration"       # → flow-inception-to-elaboration
+aiwg discover "elaboration to construction"    # → flow-elaboration-to-construction
+aiwg discover "construction to transition"     # → flow-construction-to-transition
+aiwg discover "concept to inception"           # → flow-concept-to-inception
+```
 
-All SDLC artifacts live under `.aiwg/`:
+### Continuous workflows
+
+```bash
+aiwg discover "risk management cycle"          # → flow-risk-management-cycle (score 0.93)
+aiwg discover "execute test strategy"          # → flow-test-strategy-execution
+aiwg discover "performance optimization cycle" # → flow-performance-optimization
+aiwg discover "security review cycle"          # → flow-security-review-cycle
+aiwg discover "requirements evolution"         # → flow-requirements-evolution
+aiwg discover "architecture evolution"         # → flow-architecture-evolution
+aiwg discover "iteration dual track"           # → flow-iteration-dual-track
+aiwg discover "delivery track"                 # → flow-delivery-track
+aiwg discover "discovery track"                # → flow-discovery-track
+```
+
+### Quality gates
+
+```bash
+aiwg discover "phase gate check"               # → flow-gate-check
+aiwg discover "gate evaluation"                # → gate-evaluation
+aiwg discover "traceability check"             # → check-traceability
+aiwg discover "handoff checklist"              # → flow-handoff-checklist
+```
+
+### Team & process
+
+```bash
+aiwg discover "team onboarding"                # → flow-team-onboarding (score 1.00)
+aiwg discover "knowledge transfer"             # → flow-knowledge-transfer
+aiwg discover "retrospective"                  # → flow-retrospective-cycle (score 1.00)
+aiwg discover "cross-team synchronization"     # → flow-cross-team-sync (score 1.00)
+```
+
+### Production & ops
+
+```bash
+aiwg discover "deploy production"              # → flow-deploy-to-production (score 0.51)
+aiwg discover "production hypercare"           # → flow-hypercare-monitoring
+aiwg discover "production incident triage"     # → flow-incident-response (score 0.55)
+```
+
+### Compliance
+
+```bash
+aiwg discover "compliance validation"          # → flow-compliance-validation (score 1.00)
+aiwg discover "change control"                 # → flow-change-control
+```
+
+### Artifact generation
+
+```bash
+aiwg discover "create SAD"                     # → artifact-orchestration (score 1.00)
+aiwg discover "generate use case realization"  # → generate-realization
+aiwg discover "build proof of concept"         # → build-poc
+aiwg discover "decision support matrix"        # → decision-support
+```
+
+## Mental model — the phase machine
+
+```
+Inception (4-6w)  →  Elaboration (4-8w)  →  Construction (8-16w)  →  Transition (2-4w)  →  Production
+   │                    │                       │                        │
+   LO milestone        LA milestone            IOC milestone            PR milestone
+```
+
+- **Inception** — validate problem, vision, risks, business case
+- **Elaboration** — detailed requirements, architecture baseline, risk retirement, test strategy
+- **Construction** — feature implementation, automated testing, security validation, performance
+- **Transition** — production deployment, UAT, support handover, hypercare (2-4w)
+- **Production** — ongoing operations, incident response, feature iteration
+
+Cross-cutting: risk-management, architecture-evolution, requirements-evolution, security-review, performance-optimization, test-strategy run continuously across all phases.
+
+## Artifact directory layout
+
+All SDLC artifacts go under `.aiwg/`:
 
 ```
 .aiwg/
 ├── intake/        # Project intake forms, solution profiles
 ├── requirements/  # Use cases, user stories, NFRs
 ├── architecture/  # SAD, ADRs, diagrams
-├── planning/      # Phase plans, iteration plans
+├── planning/      # Phase and iteration plans
 ├── risks/         # Risk register
-├── testing/       # Test strategy, test plans
+├── testing/       # Test strategy, plans
 ├── security/      # Threat models, security gates
 ├── deployment/    # Deployment plans, runbooks
 ├── working/       # Temporary scratch (safe to delete)
 └── reports/       # Generated reports
 ```
 
-## Finding the right skill when this quickref doesn't list it
+## When the curated phrases don't fit
+
+Improvise. The discovery scorer uses trigger phrases (4× weight), capability descriptions (2× weight), titles, tags, summaries, and paths. Multi-token queries require ≥50% token overlap, so noise queries return zero results.
 
 ```bash
-aiwg discover "<what you're trying to do>"
+aiwg discover "<your need, paraphrased>" --limit 5
 ```
 
-The index ranks skills by capability/trigger match across the entire installed surface. Use this **before** asking the user to recall a skill name — many SDLC skills are highly specific (e.g., `flow-cross-team-sync`, `risk-cycle`, `artifact-metadata`) and won't surface from a generic phase keyword.
+If the top-3 results all score below ~0.20, the framework genuinely may not have a curated skill for that need. Then you can improvise — but always check first.
 
-## Common multi-skill flows
+## Anti-pattern: don't enumerate
 
-- **New feature, full lifecycle**: `intake-wizard` → `flow-concept-to-inception` → `flow-inception-to-elaboration` → `flow-elaboration-to-construction` → `flow-deploy-to-production`
-- **Add to in-flight project**: `project-status` → `flow-requirements-evolution` → `flow-test-strategy-execution`
-- **Pre-release gate**: `flow-gate-check <phase>` → `flow-security-review-cycle` → `flow-deploy-to-production`
+If a user asks "what SDLC skills are available?" or "what can the SDLC framework do?", **do not list from this skill or from memory**. Run:
 
-## Don't list from this skill — query the index
+```bash
+aiwg discover --type skill --limit 20 "<their interest area>"
+```
 
-If a user asks "what SDLC skills are available?" or "what can the SDLC framework do?", **do not enumerate from memory**. Run `aiwg discover` (or read `.aiwg/index/` directly). This skill exists to orient, not to replace the index.
+This skill is the orientation layer; the index is the lookup. Enumerating from memory means you're treating the kernel set as exhaustive — which it deliberately isn't.

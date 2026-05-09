@@ -3,74 +3,104 @@ name: marketing-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Marketing framework quick reference — campaign intake through analytics, brand compliance, content production, audience synthesis, and approval workflows
+description: Marketing framework quick reference — capability domains and curated discovery phrases for campaign intake, brand compliance, content production, audience synthesis, and approval workflows
 ---
 
 # Marketing Framework — Quick Reference
 
-You are operating in a project that has the AIWG **media-marketing-kit** framework installed. This skill is your always-loaded directory for marketing operations. The full skill catalog is reachable through the AIWG artifact index.
+This is your always-loaded directory for the AIWG **media-marketing-kit** framework (33 skills — the largest by skill count). It does **not** list every skill. Instead, it teaches the framework's domains and gives you **curated search phrases** that map to `aiwg discover` lookups.
+
+## How to use this quickref
+
+1. Identify the **capability domain** the user's need belongs to
+2. Pick a **curated phrase** from that domain (or paraphrase the user's words)
+3. Run `aiwg discover "<phrase>"` and surface the top match (or top-3) to the user
+
+**Do not enumerate skills from memory.** Discovery is the lookup surface.
 
 ## What this framework is for
 
 Full marketing operations stack: campaign strategy and intake, content production (briefs / scripts / asset production), audience synthesis, brand compliance and identity refinement, multi-stakeholder approval workflows, performance analytics, and crisis / event / email / social-strategy primitives.
 
-## When to reach for which skill
+## Capability domains
+
+| Domain | Covers |
+|---|---|
+| **Intake & strategy** | Campaign intake forms, audience synthesis, competitive intel |
+| **Brand** | Identity refinement, compliance, audit/review |
+| **Production** | Creative briefs, asset production, video, email, social, content planning |
+| **Approval & QA** | Multi-stakeholder approval routing, asset QA protocol |
+| **Analytics & reporting** | Campaign analytics, performance digests, attribution |
+| **Operations** | Project status, retrospectives, kickoffs, data pipelines |
+| **Cross-cutting** | Crisis response, legal compliance, budget review, PR launch |
+
+## Curated discovery phrases
 
 ### Intake & strategy
 
-| Need | Skill |
-|---|---|
-| Generate campaign intake forms | `marketing-intake` / `marketing-intake-wizard` |
-| Validate intake + start strategy phase | `intake-start-campaign` |
-| Scan existing assets for intake | `intake-from-campaign` |
-| Audience persona synthesis | `audience-synthesis` |
-| Competitive intel | `competitive-intel`, `competitive-analysis` |
+```bash
+aiwg discover "marketing intake wizard"        # → marketing-intake-wizard (score 1.00)
+aiwg discover "intake start campaign"          # → intake-start-campaign
+aiwg discover "intake from campaign"           # → intake-from-campaign
+aiwg discover "audience synthesis"             # → audience-synthesis
+aiwg discover "competitive intel"              # → competitive-intel (score 0.82)
+aiwg discover "competitive analysis"           # → competitive-analysis
+```
 
 ### Brand
 
-| Need | Skill |
-|---|---|
-| Brand identity refinement | `brand-identity-refinement` |
-| Brand compliance (visual/verbal/legal) | `brand-compliance` |
-| Brand audit / review | `brand-audit`, `brand-review` |
+```bash
+aiwg discover "brand identity refinement"      # → brand-identity-refinement
+aiwg discover "brand compliance"               # → brand-compliance
+aiwg discover "brand audit"                    # → brand-audit
+aiwg discover "brand review"                   # → brand-review
+```
 
 ### Production
 
-| Need | Skill |
-|---|---|
-| Creative brief | `creative-brief` |
-| Asset production | `asset-production` |
-| Video production | `video-production` |
-| Email campaign | `email-campaign` |
-| Social strategy | `social-strategy` |
-| Event marketing | `event-marketing` |
-| Sales enablement | `sales-enablement` |
-| Content planning | `content-planning` |
+```bash
+aiwg discover "creative brief"                 # → creative-brief (score 0.93)
+aiwg discover "asset production"               # → asset-production
+aiwg discover "video production"               # → video-production
+aiwg discover "email campaign"                 # → email-campaign
+aiwg discover "social strategy"                # → social-strategy
+aiwg discover "event marketing"                # → event-marketing
+aiwg discover "sales enablement"               # → sales-enablement
+aiwg discover "content planning"               # → content-planning
+```
 
-### Workflow & approvals
+### Approval & QA
 
-| Need | Skill |
-|---|---|
-| Approval workflow (multi-stakeholder) | `approval-workflow` |
-| QA protocol on assets | `qa-protocol` |
-| Marketing data pipeline | `data-pipeline` |
-| Performance digest | `performance-digest` |
-| Marketing project status | `marketing-status` |
-| Marketing retrospective | `marketing-retrospective` |
-| Campaign analytics | `campaign-analytics` |
-| Campaign kickoff | `campaign-kickoff` |
-| Marketing review synthesis | `review-synthesis` |
-| PR launch | `pr-launch` |
+```bash
+aiwg discover "approval workflow"              # → approval-workflow
+aiwg discover "qa protocol"                    # → qa-protocol
+```
+
+### Analytics & reporting
+
+```bash
+aiwg discover "campaign analytics"             # → campaign-analytics (score 0.93)
+aiwg discover "performance digest"             # → performance-digest
+aiwg discover "data pipeline marketing"        # → data-pipeline
+aiwg discover "marketing review synthesis"     # → review-synthesis
+```
+
+### Operations
+
+```bash
+aiwg discover "marketing status"               # → marketing-status
+aiwg discover "marketing retrospective"        # → marketing-retrospective
+aiwg discover "campaign kickoff"               # → campaign-kickoff
+aiwg discover "pr launch"                      # → pr-launch
+```
 
 ### Cross-cutting
 
-| Need | Skill |
-|---|---|
-| Crisis response | `crisis-response` |
-| Legal compliance | `legal-compliance` |
-| Budget review | `budget-review` |
-
-This framework ships **33 skills**, the most of any installed framework. The tables above are the high-traffic entries — for everything else, query the index.
+```bash
+aiwg discover "crisis response"                # → crisis-response
+aiwg discover "legal compliance"               # → legal-compliance
+aiwg discover "budget review"                  # → budget-review
+```
 
 ## Phase model
 
@@ -85,8 +115,6 @@ Intake → Strategy → Production → Distribution → Analytics → Retrospect
 
 ## Artifact directory layout
 
-Marketing artifacts go under `.aiwg/marketing/` when the framework is in use:
-
 ```
 .aiwg/marketing/
 ├── intake/           # Campaign intake forms, brand profiles
@@ -97,21 +125,16 @@ Marketing artifacts go under `.aiwg/marketing/` when the framework is in use:
 └── retrospectives/   # Lessons learned per campaign
 ```
 
-## Finding the right skill when this quickref doesn't list it
+## When the curated phrases don't fit
 
 ```bash
-aiwg discover "<phrase>"
+aiwg discover "<your need, paraphrased>" --limit 5
 ```
 
-This framework is the largest by skill count (33). For unusual asks (e.g., "build an attribution model", "audit a landing page"), the index ranks better than memory.
+## Anti-pattern: don't enumerate
 
-## Common multi-skill flows
+If a user asks "what marketing skills are available?", **do not list from this skill**. Run:
 
-- **New campaign, full lifecycle**: `marketing-intake-wizard` → `intake-start-campaign` → `audience-synthesis` → `creative-brief` → `asset-production` → `approval-workflow` → `qa-protocol` → `campaign-analytics` → `marketing-retrospective`
-- **Brand refresh**: `brand-audit` → `brand-identity-refinement` → `brand-compliance`
-- **PR + launch**: `pr-launch` → `social-strategy` → `email-campaign` → `crisis-response` (on standby)
-- **Quarterly performance review**: `campaign-analytics` → `performance-digest` → `review-synthesis`
-
-## Don't list from this skill — query the index
-
-If a user asks "what marketing skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "marketing"`. This skill exists to orient.
+```bash
+aiwg discover --type skill --limit 20 "<their interest area>"
+```

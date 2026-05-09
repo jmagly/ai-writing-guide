@@ -3,25 +3,68 @@ name: knowledge-base-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Knowledge-base framework quick reference — semantic-memory-backed wiki/KB ingestion and health, plus llm-wiki addon profiles
+description: Knowledge-base framework quick reference — capability domains and curated discovery phrases for KB ingest/health, semantic-memory kernel skills, and llm-wiki profiles
 ---
 
 # Knowledge Base Framework — Quick Reference
 
-You are operating in a project that has the AIWG **knowledge-base** framework installed. This skill is your always-loaded directory for KB / wiki workflows. The full surface is reachable through the AIWG artifact index.
+This is your always-loaded directory for the AIWG **knowledge-base** framework. It does **not** list every skill. Most heavy lifting comes from the **semantic-memory kernel** in `aiwg-utils` (`memory-ingest`, `memory-lint`, etc.) — this framework is a thin topology on top.
+
+## How to use this quickref
+
+1. Identify the **capability domain** the user's need belongs to
+2. Pick a **curated phrase** from that domain
+3. Run `aiwg discover "<phrase>"` and surface the top match to the user
+
+**Do not enumerate skills from memory.** Discovery is the lookup surface.
 
 ## What this framework is for
 
 A **thin topology** on top of AIWG's semantic-memory kernel — turning any project's `.aiwg/kb/` into a queryable knowledge base. Sources get ingested into structured pages (entities, concepts, summaries, syntheses) with cross-references, deduplication, and lint coverage. Pairs naturally with the `llm-wiki` addon for Obsidian-compatible profiles (book-companion / personal / research-deep-dive / business-team / generic).
 
-## When to reach for which skill
+## Capability domains
 
-| Need | Skill |
+| Domain | Covers |
 |---|---|
-| Ingest a source (URL / file / note) into the KB | `kb-ingest` |
-| Health-check the KB (orphan pages, broken refs) | `kb-health` |
+| **KB lifecycle** | Ingest sources, health-check the KB |
+| **Semantic memory kernel** (in aiwg-utils) | Generic ingest/lint/log/query primitives any consumer can declare a topology against |
+| **LLM-wiki profiles** | Topology profiles that shape how `kb-ingest` derives pages |
+| **Cross-ref traversal** | Graph-native via `aiwg index neighbors --graph kb` |
 
-This framework ships **2 skills** — both load-bearing for the KB lifecycle. Most of the heavy lifting comes from the **semantic-memory kernel** (`memory-ingest`, `memory-lint`, `memory-query-capture`, `memory-log-append`, `memory-log-render`) which is in the always-on aiwg-utils kernel set, not this framework.
+## Curated discovery phrases
+
+### KB lifecycle
+
+```bash
+aiwg discover "kb-ingest"                      # → kb-ingest (score 1.00)
+aiwg discover "ingest source into knowledge base" # → kb-ingest
+aiwg discover "kb-health"                      # → kb-health (score 1.00)
+aiwg discover "knowledge base lint"            # → kb-health
+```
+
+### Semantic memory kernel (aiwg-utils)
+
+```bash
+aiwg discover "memory ingest"                  # → memory-ingest
+aiwg discover "memory lint"                    # → memory-lint
+aiwg discover "memory log append"              # → memory-log-append
+aiwg discover "memory log render"              # → memory-log-render
+aiwg discover "memory query capture"           # → memory-query-capture
+```
+
+### LLM-wiki profiles (in the llm-wiki addon)
+
+```bash
+aiwg discover "llm wiki profile"               # → llm-wiki addon entries
+aiwg discover "book companion knowledge base"  # → llm-wiki book-companion profile
+aiwg discover "research deep dive wiki"        # → llm-wiki research-deep-dive profile
+```
+
+### Cross-ref traversal (uses the artifact index, not a skill)
+
+```bash
+aiwg index neighbors --graph kb --node <slug>  # traverse the KB graph
+```
 
 ## How knowledge-base composes with semantic-memory
 
@@ -46,9 +89,7 @@ When ingesting via `kb-ingest`, the topology produces:
 
 Cross-references between these are graph-native (visible to `aiwg index neighbors`).
 
-## Profiles via the `llm-wiki` addon
-
-Reach for `llm-wiki` to pick a topology profile:
+## Profile selection (via `llm-wiki` addon)
 
 | Profile | Use for |
 |---|---|
@@ -71,20 +112,16 @@ Install via `aiwg use llm-wiki --profile <name>`. The profile shapes how `kb-ing
 └── log.jsonl         # Semantic-memory event log
 ```
 
-## Finding the right skill when this quickref doesn't list it
+## When the curated phrases don't fit
 
 ```bash
-aiwg discover "<phrase>"
+aiwg discover "<your need, paraphrased>" --limit 5
 ```
 
-The KB framework is small (2 skills) but the kernel semantic-memory skills sit alongside it (5 skills). For ingest-related asks, the right entry is usually `kb-ingest` (KB-shaped) or `memory-ingest` (kernel-direct, any consumer's semantic memory).
+## Anti-pattern: don't enumerate
 
-## Common multi-skill flows
+If a user asks "what KB skills are available?", **do not list from this skill**. Run:
 
-- **Ingest a URL**: `kb-ingest <url>` → derives entity/concept/summary pages → `memory-log-append` records event
-- **Quarterly health check**: `kb-health` → fixes orphans, broken cross-refs, stale claims → regenerates index
-- **Cross-corpus query**: use `aiwg index neighbors --graph kb --node <slug>` to traverse the KB graph
-
-## Don't list from this skill — query the index
-
-If a user asks "what KB skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "knowledge"` and remind the user that the kernel semantic-memory skills (`memory-*`) are loaded independently.
+```bash
+aiwg discover --type skill --limit 20 "<their interest area>"
+```

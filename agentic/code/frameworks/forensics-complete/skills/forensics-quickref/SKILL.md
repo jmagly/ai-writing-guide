@@ -3,56 +3,96 @@ name: forensics-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Forensics framework quick reference — incident response, log analysis, evidence preservation, IOC extraction, and the multi-agent investigate flow
+description: Forensics framework quick reference — capability domains and curated discovery phrases for incident response, log analysis, evidence preservation, and IOC extraction
 ---
 
 # Forensics Framework — Quick Reference
 
-You are operating in a project that has the AIWG **forensics-complete** framework installed. This skill is your always-loaded directory for digital forensics and incident response. The full skill catalog is reachable through the AIWG artifact index — query it on demand.
+This is your always-loaded directory for the AIWG **forensics-complete** framework. It does **not** list every skill. Instead, it teaches the framework's mental model and gives you **curated search phrases** that map to `aiwg discover` lookups.
+
+## How to use this quickref
+
+1. Identify the **capability domain** the user's need belongs to
+2. Pick a **curated phrase** from that domain (or paraphrase the user's words)
+3. Run `aiwg discover "<phrase>"` and surface the top match (or top-3) to the user
+4. If the top result isn't right, iterate the phrasing — the scorer is forgiving
+
+**Do not enumerate skills from memory.** The framework ships ~20 skills and discovery is the lookup surface.
 
 ## What this framework is for
 
 Digital forensics & incident response. RFC 3227-aligned triage, multi-source timeline reconstruction, IOC extraction, chain-of-custody preservation, and Sigma-rule-based threat hunting. Multi-platform (Linux / cloud / containers / memory).
 
-## When to reach for which skill
+## Capability domains
 
-| Need | Skill | How to invoke |
-|---|---|---|
-| Quick triage of a possibly-compromised host | `forensics-triage` | "triage this host" / "RFC 3227 quick capture" |
-| Full investigation, multi-agent | `forensics-investigate` | "investigate the breach" |
-| Acquire evidence with chain of custody | `forensics-acquire` | "acquire evidence from X" |
-| Build target system profile | `forensics-profile` | "profile target host" |
-| Extract IOCs from artifacts | `forensics-ioc` | "extract IOCs" |
-| Threat hunt with Sigma rules | `forensics-hunt` | "hunt for [pattern]" |
-| Reconstruct event timeline | `forensics-timeline` | "build the timeline" |
-| Analyze a Linux system | `linux-forensics` | "linux forensic analysis" |
-| Analyze a memory dump | `memory-forensics` | "analyze memory dump" |
-| Cloud (AWS/Azure/GCP) forensics | `cloud-forensics` | "cloud audit log review" |
-| Container/Docker/K8s forensics | `container-forensics` | "container forensic analysis" |
-| Supply-chain compromise check | `supply-chain-forensics` | "audit supply chain" |
-| Multi-source log correlation | `log-analysis` | "correlate auth logs" |
-| Evidence preservation checklist | `evidence-preservation` | "chain of custody for X" |
-| Apply Sigma rules to logs | `sigma-hunting` | "convert sigma rule to elastic" |
-| Generate the investigation report | `forensics-report` | "generate forensic report" |
-| Status of in-flight investigation | `forensics-status` | "investigation status" |
+| Domain | Covers |
+|---|---|
+| **Triage & acquisition** | Quick host triage following RFC 3227, evidence acquisition with chain of custody, target system profiling |
+| **Platform-specific analysis** | Linux, memory dumps, cloud (AWS/Azure/GCP), Docker/K8s containers, supply chain |
+| **Investigation orchestration** | Full multi-agent investigation, log correlation, IOC extraction & STIX 2.1 mapping |
+| **Threat hunting** | Sigma rule application across log sources |
+| **Reporting** | Investigation reports with evidence, timeline reconstruction |
 
-This framework ships **19 skills**. The above are the high-traffic ones; others (e.g., `target-profiling`, `integrity-verification`) are reachable via `aiwg discover`.
+## Curated discovery phrases
 
-## Investigation phase model
+### Triage & acquisition
+
+```bash
+aiwg discover "forensic triage"                # → forensics-triage
+aiwg discover "evidence acquisition"           # → forensics-acquire (score 0.55)
+aiwg discover "target system profile"          # → forensics-profile
+```
+
+### Platform-specific analysis
+
+```bash
+aiwg discover "linux forensics"                # → linux-forensics (score 0.51)
+aiwg discover "memory forensics"               # → memory-forensics (score 0.94)
+aiwg discover "cloud forensics"                # → cloud-forensics (score 0.63)
+aiwg discover "container forensics"            # → container-forensics
+aiwg discover "supply chain compromise"        # → supply-chain-forensics
+```
+
+### Investigation orchestration
+
+```bash
+aiwg discover "forensics investigation"        # → forensics-investigate (top-3; refine if needed)
+aiwg discover "log analysis"                   # → log-analysis
+aiwg discover "extract iocs"                   # → forensics-ioc
+aiwg discover "build forensic timeline"        # → forensics-timeline
+```
+
+### Threat hunting
+
+```bash
+aiwg discover "threat hunt with sigma rules"   # → sigma-hunting (score 1.00)
+aiwg discover "forensics hunt"                 # → forensics-hunt
+```
+
+### Reporting & integrity
+
+```bash
+aiwg discover "forensic report"                # → forensics-report
+aiwg discover "investigation status"           # → forensics-status
+aiwg discover "evidence preservation"          # → evidence-preservation
+aiwg discover "integrity verification"         # → integrity-verification
+```
+
+## Mental model — the investigation pipeline
 
 ```
-Triage (RFC 3227) → Acquisition → Analysis → IOC extraction → Reporting
-   forensics-triage   forensics-acquire   linux-forensics    forensics-ioc   forensics-report
-                                          memory-forensics
-                                          cloud-forensics
-                                          container-forensics
+Triage (RFC 3227)  →  Acquisition  →  Platform analysis  →  IOC extraction  →  Reporting
+   forensics-triage    forensics-acquire   linux-forensics    forensics-ioc    forensics-report
+                                           memory-forensics
+                                           cloud-forensics
+                                           container-forensics
 ```
 
 Cross-cutting: `forensics-hunt` (Sigma) and `log-analysis` (correlation) feed both Analysis and IOC extraction.
 
 ## Artifact directory layout
 
-Forensic artifacts go under `.aiwg/forensics/` when the project uses the framework:
+Forensic artifacts go under `.aiwg/forensics/` when the framework is in use:
 
 ```
 .aiwg/forensics/
@@ -64,21 +104,20 @@ Forensic artifacts go under `.aiwg/forensics/` when the project uses the framewo
 └── chain-of-custody.md  # Master CoC log
 ```
 
-## Finding the right skill when this quickref doesn't list it
+## When the curated phrases don't fit
 
 ```bash
-aiwg discover "<what you're trying to do>"
+aiwg discover "<your need, paraphrased>" --limit 5
 ```
 
-For broad or unusual asks ("find lateral movement", "audit kerberoasting", "extract a rootkit signature") — the index ranks by capability and trigger phrases across the entire installed surface. Don't say "AIWG can't do that" without checking.
+If the top-3 results all score below ~0.20, the framework genuinely may not have a curated skill for that need. Then improvise — but always check first.
 
-## Common multi-skill flows
+## Anti-pattern: don't enumerate
 
-- **Compromise reported, full workflow**: `forensics-triage` → `forensics-acquire` → `forensics-profile` → `linux-forensics` (or `memory-forensics`) → `forensics-ioc` → `forensics-timeline` → `forensics-report`
-- **Quick audit log sweep**: `cloud-forensics` → `log-analysis` → `forensics-ioc`
-- **Sigma-rule deployment**: `sigma-hunting` → `forensics-hunt`
-- **Container escape triage**: `container-forensics` → `forensics-acquire` → `forensics-investigate`
+If a user asks "what forensics skills are available?", **do not list from this skill**. Run:
 
-## Don't list from this skill — query the index
+```bash
+aiwg discover --type skill --limit 20 "<their interest area>"
+```
 
-If a user asks "what forensics skills are available?", **do not enumerate from memory**. Run `aiwg discover --type skill --graph framework "forensics"` (or just read this quickref). This skill exists to orient, not to replace the index.
+This skill is the orientation layer. The index is the lookup.

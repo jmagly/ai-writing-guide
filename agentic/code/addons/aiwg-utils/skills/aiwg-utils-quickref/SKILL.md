@@ -3,31 +3,34 @@ name: aiwg-utils-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: AIWG core utilities quick reference — always-on framing, steward, index discovery, doctor, and meta operations
+description: AIWG core utilities quick reference — capability domains and curated discovery phrases for the always-on framing, steward, index, and meta operations
 ---
 
 # AIWG Core Utilities — Quick Reference
 
-You are operating in a project that has AIWG installed. This skill is your always-loaded core directory: it covers the cross-cutting utility surface (steward, index, doctor, version, status) and points you at framework-specific quickrefs for SDLC / forensics / research / etc.
+This is your always-loaded core directory for AIWG. It does **not** list every utility skill. Instead, it teaches the cross-cutting domains and gives you **curated search phrases** that map to `aiwg discover` lookups, plus a list of which framework-specific quickrefs are loaded.
 
-## Always reach for these
+## How to use this quickref
 
-| Need | Skill / command | Why |
-|---|---|---|
-| **Find a skill the user is asking for, by capability** | `aiwg discover "<phrase>"` | Most AIWG skills are NOT loaded into your context — they live behind the index. Always query before declining. |
-| **Project status / where am I** | `aiwg-status`, `project-status` | Cross-framework status; flags blockers and next actions. |
-| **Health check the AIWG installation** | `aiwg doctor` | Surface drift, missing deploys, hook breakage, budget warnings. |
-| **What version is installed** | `aiwg version` | Channel + path. Useful when troubleshooting. |
-| **Re-deploy to current provider** | `aiwg refresh` (or skill: `update`) | Runs after install/upgrade or when the user reports stale skills. |
-| **Delegate maintenance to the steward** | `aiwg-steward` agent | Routes provider-specific or version-mismatch questions. |
-| **Look up an SDLC artifact** | `artifact-lookup` | Search `.aiwg/` by topic / type / phase. |
-| **Search the AIWG knowledge base** | `aiwg-kb` | Conceptual help, troubleshooting docs. |
-| **Run an interactive intake** | `intake-wizard` | Start new project / framework setup. |
-| **Audit @-mentions across files** | `mention-validate`, `mention-lint` | Pre-commit sanity check on cross-references. |
+1. Identify the **capability domain** the user's need belongs to
+2. Pick a **curated phrase** from that domain (or paraphrase the user's words)
+3. Run `aiwg discover "<phrase>"` and surface the top match to the user
+
+**Do not enumerate skills from memory.** AIWG ships hundreds of skills; you only see the kernel set in your context.
+
+## The discovery rule
+
+Most AIWG skills (~391 of 400) are **not in your context**. They live at `<provider-dir>/.aiwg/skills/` and are reachable only via `aiwg discover`. Before declining a user request as "AIWG can't do that" or improvising a custom workflow, you **must** query:
+
+```bash
+aiwg discover "<the user's need, paraphrased>"
+```
+
+This is mandated by the `skill-discovery` HIGH rule. Surface the top match (or top-3) to the user — the search is auditable.
 
 ## Framework quickrefs (loaded if framework is installed)
 
-If a user asks about a specific framework's surface, the corresponding quickref is your first stop — it lists the framework's high-traffic skills with one-liners. These are kernel-resident, so they're already in your context:
+If a user asks about a specific framework's surface, the corresponding quickref is your first stop. These are kernel-resident, so they're already in your context:
 
 - `sdlc-quickref` — software-development-lifecycle workflows
 - `forensics-quickref` — incident response and digital forensics
@@ -35,44 +38,127 @@ If a user asks about a specific framework's surface, the corresponding quickref 
 - `media-curator-quickref` — media archive management
 - `marketing-quickref` — marketing operations and campaigns
 - `ops-quickref` — operational infrastructure and runbooks
-- `security-engineering-quickref` — applied security and crypto
+- `security-engineering-quickref` — applied security and crypto decisions
 - `knowledge-base-quickref` — wiki and documentation workflows
 
-If a quickref isn't listed above, the framework isn't installed in this project. Use `aiwg list` to confirm.
+If a quickref isn't loaded, the framework isn't installed in this project. Use `aiwg list` to confirm.
 
-## How AIWG layouts on disk
+## Capability domains
+
+| Domain | Covers |
+|---|---|
+| **Workspace status & health** | Project status, doctor, version, runtime info |
+| **Lookup & query** | Capability discovery, KB query, artifact lookup, AIWG help |
+| **Maintenance** | Refresh, deploy, hooks, regenerate context files |
+| **Mentions & traceability** | @-mention validation, lint, wiring across files |
+| **Activity & provenance** | Activity log, provenance records |
+| **Steward & policy** | Provider capability awareness, delivery policy |
+
+## Curated discovery phrases
+
+### Workspace status & health
+
+```bash
+aiwg discover "aiwg status"                    # → aiwg-status
+aiwg discover "aiwg doctor"                    # → aiwg-doctor
+aiwg discover "version"                        # → version
+aiwg discover "runtime info"                   # → runtime-info
+aiwg discover "project status"                 # → project-status
+aiwg discover "project health check"           # → project-health-check
+aiwg discover "workspace health"               # → workspace-health
+```
+
+### Lookup & query
+
+```bash
+aiwg discover "<capability phrase>"            # itself — discovery is the entry surface
+aiwg discover "aiwg help"                      # → aiwg-help
+aiwg discover "search aiwg knowledge base"     # → aiwg-kb
+aiwg discover "artifact lookup"                # → artifact-lookup
+aiwg discover "intake wizard"                  # → intake-wizard
+```
+
+### Maintenance
+
+```bash
+aiwg discover "aiwg refresh"                   # → update / refresh
+aiwg discover "deploy framework"               # → use
+aiwg discover "regenerate claude.md"           # → aiwg-regenerate-claude
+aiwg discover "regenerate AGENTS.md"           # → aiwg-regenerate-agents
+aiwg discover "hook enable"                    # → hook-enable
+aiwg discover "hook disable"                   # → hook-disable
+aiwg discover "hook status"                    # → hook-status
+```
+
+### Mentions & traceability
+
+```bash
+aiwg discover "mention validate"               # → mention-validate
+aiwg discover "mention lint"                   # → mention-lint
+aiwg discover "mention wire traceability"      # → mention-wire
+aiwg discover "mention conventions"            # → mention-conventions
+aiwg discover "mention report"                 # → mention-report
+```
+
+### Activity & provenance
+
+```bash
+aiwg discover "activity log"                   # → activity-log
+aiwg discover "create provenance record"       # → provenance-create
+aiwg discover "auto provenance"                # → auto-provenance
+```
+
+### Steward & policy
+
+```bash
+aiwg discover "aiwg steward"                   # → steward (agent + policy router)
+aiwg discover "delivery policy"                # → delivery-policy rule (and related skills)
+```
+
+## On-disk layout
 
 ```
 agentic/code/        ← framework + addon source (NOT deployed; read-only reference)
 .aiwg/               ← project artifacts (use cases, ADRs, test plans, etc.)
 .claude/skills/      ← always-loaded "kernel" skills (this skill is here)
-.claude/.aiwg/skills/ ← bulk AIWG skills (index-discovered, not flat-listed)
+.claude/.aiwg/skills/ ← bulk AIWG skills (index-discoverable, not flat-listed)
 .claude/agents/      ← AIWG agents (platform-native)
 .claude/commands/    ← Generated command stubs for tab completion
 .claude/rules/       ← AIWG rules
 ```
 
-## When to query the index versus answer from this skill
+Same shape on every supported provider — see `docs/discovery-and-kernel-skills.md` for the full per-provider table.
+
+## When to query the index versus answer from kernel
 
 | Situation | Action |
 |---|---|
 | User asks "what can AIWG do?" generically | Skim the framework quickrefs above; offer the top 3 most-relevant. |
 | User asks "find me a skill that does X" | `aiwg discover "X"` — return ranked candidates. |
 | User asks "is there a skill for Y?" and it's not in any quickref | `aiwg discover "Y"` — don't say "no" without checking. |
-| User asks about a specific framework's catalog | Direct them to that framework's quickref + invite an index query. |
+| User asks about a specific framework's catalog | Direct them to that framework's quickref + invite a discover query. |
 | User asks for AIWG version / config / status | `aiwg version`, `aiwg-status`, `aiwg doctor`. |
 
-## Anti-patterns to avoid
+## When the curated phrases don't fit
 
-- **Do not enumerate skills from memory.** AIWG ships hundreds of skills; your context only holds the kernel set. Query the index.
-- **Do not deploy or modify framework source.** Framework files under `agentic/code/` are read-only references; project work happens in `.aiwg/` and any `src/` directories the project owns.
+```bash
+aiwg discover "<your need, paraphrased>" --limit 5
+```
+
+If the top-3 results all score below ~0.20, the framework genuinely may not have a curated skill. Then improvise — but always check first.
+
+## Anti-patterns
+
+- **Do not enumerate skills from memory.** Query the index.
+- **Do not deploy or modify framework source.** Files under `agentic/code/` are read-only references; project work happens in `.aiwg/` and any `src/` directories the project owns.
 - **Do not bypass the steward for cross-provider questions.** If the user asks "does this work on Codex?" or "deploy to Cursor", invoke the AIWG Steward — it has the provider-capability matrix you don't.
+- **Do not fabricate skill names.** If `aiwg discover` doesn't return a match, the skill genuinely may not exist — say so.
 
 ## When you don't know what to do
 
 ```bash
 aiwg help                          # full CLI surface
-aiwg discover "<your need>"  # find the right skill
+aiwg discover "<your need>"        # find the right skill
 aiwg-kb "<question>"               # conceptual help
 ```
 
