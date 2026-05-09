@@ -75,6 +75,18 @@ export async function main(args: string[]): Promise<void> {
       break;
     }
 
+    case 'enrich': {
+      const { main: enrichMain } = await import('./enrichment/cli.js');
+      await enrichMain(subcommandArgs);
+      break;
+    }
+
+    case 'doctor': {
+      const { main: doctorMain } = await import('./audit/cli.js');
+      await doctorMain(subcommandArgs);
+      break;
+    }
+
     case undefined:
       console.error('Error: Index subcommand required');
       console.log('');
