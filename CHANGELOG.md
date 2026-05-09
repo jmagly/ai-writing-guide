@@ -79,6 +79,22 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Skill-only `.aiwg/` path move ported to all 9 remaining providers** (#1216). Kernel-vs-standard skill routing now applies uniformly across the AIWG fleet:
+
+  | Provider | Standard skills | Kernel skills |
+  |---|---|---|
+  | Claude Code | `.claude/.aiwg/skills/` | `.claude/skills/` |
+  | Cursor | `.cursor/.aiwg/skills/` | `.cursor/skills/` |
+  | Factory AI | `.factory/.aiwg/skills/` | `.factory/skills/` |
+  | GitHub Copilot | `.github/.aiwg/skills/` | `.github/skills/` |
+  | OpenCode | `.opencode/.aiwg/skill/` | `.opencode/skill/` |
+  | Warp | `.warp/.aiwg/skills/` | `.warp/skills/` |
+  | Windsurf | `.windsurf/.aiwg/skills/` | `.windsurf/skills/` |
+  | OpenClaw | `~/.openclaw/.aiwg/skills/` | `~/.openclaw/skills/aiwg/` |
+  | Hermes | `~/.hermes/.aiwg/skills/` | `~/.hermes/skills/` |
+  | Codex | `.codex/.aiwg/skills/` | `.codex/skills/` |
+
+  All 6 standard providers verified live: each ships **9 kernel skills + 391 standard skills** (vs the prior flat 400). OpenClaw's 150-skill hard cap is comfortably cleared regardless of how many frameworks are installed. New `deploySkillsWithKernelRouting()` helper in `base.mjs` factors the partition logic so each provider's `deploySkills` is now ~3 lines. PROVIDER_PATHS in `use.ts` and PROVIDER_DEPLOY_DIRS in `aiwg-config.ts` updated to mirror. 7 integration test files re-pointed at the new layout. Codex's home-dir script-delegated path (per #766) preserves its existing `~/.codex/skills/` deploy unchanged — kernel routing for that surface waits for #766.
 - **`skill-discovery` HIGH framing rule** (#1215). Closes the kernel-pivot loop: tells agents that most AIWG skills are NOT in their context (they live at `<provider-dir>/.aiwg/skills/`, reachable only through the artifact index) and **mandates** an `aiwg index discover "<paraphrased need>"` query before declining "AIWG can't do that" or improvising a custom workflow. Names exceptions (user named a specific skill, capability is clearly out of scope, query already done in session) and requires the agent to surface the top match (or top-3) to the user so the discovery is auditable. Layers cleanly with `research-before-decision` (technical research) and `instruction-comprehension` (parsing the actual need). aiwg-utils rule count 19 → 20. Deploys via the standard rules-index pipeline.
 - **Kernel quickrefs for the remaining 7 frameworks** (#1213). Each shipped framework now has a `kernel: true` directory skill: `forensics-quickref`, `research-quickref`, `media-curator-quickref`, `marketing-quickref`, `ops-quickref`, `security-engineering-quickref`, `knowledge-base-quickref`. Each lists the framework's high-traffic skills with one-liners, names the artifact-directory layout, sketches the workflow phase model, and ends with a "don't enumerate from memory — query the index" guard. Total kernel-resident skill count after this lands: **9** (8 framework quickrefs + `aiwg-utils-quickref`), well under OpenClaw's 150-skill floor and Claude Code's 25%-of-context budget regardless of how many frameworks are installed. Previously-flat 393-skill listing is now 9 visible kernel skills + 392 index-discoverable skills hidden under `.claude/.aiwg/skills/`.
 

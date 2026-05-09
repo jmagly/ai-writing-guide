@@ -27,6 +27,7 @@ import {
   listMdFiles,
   listSkillDirs,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   deployFiles,
   getAddonSkillDirs,
   normalizeDeploymentMode,
@@ -43,9 +44,16 @@ export const aliases = [];
 export const paths = {
   agents: 'AGENTS.md',                           // Aggregated routing guide at project root
   commands: '',                                   // Not applicable — MCP replaces commands
-  skills: path.join(os.homedir(), '.hermes', 'skills'),  // User-global skills
+  // Skills sequestered under ~/.hermes/.aiwg/skills/ — index-driven discovery (#1212).
+  skills: path.join(os.homedir(), '.hermes', '.aiwg', 'skills'),
   rules: '',                                      // Not applicable — Hermes uses AGENTS.md
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+// Hermes scanning behavior of nested .aiwg/ has not been independently
+// verified (per #1216 out-of-scope note); the kernel-native split is
+// preserved for parity with other providers.
+export const kernelSkillsPath = path.join(os.homedir(), '.hermes', 'skills');
 
 export const support = {
   agents: 'aggregated',      // Agents aggregated into lean AGENTS.md
@@ -136,21 +144,22 @@ export function generateAgentsMd(agentCount, skillCount, targetDir, opts) {
 // ============================================================================
 
 /**
- * Deploy skills to ~/.hermes/skills/
+ * Deploy skills with kernel-vs-standard routing (#1212/#1216).
  *
- * Skills are user-global in Hermes, deployed once, available in all projects.
+ * Skills are user-global in Hermes, deployed once, available in all
+ * projects. Kernel routing per the cross-provider pattern:
+ *   - kernel skills → ~/.hermes/skills/         (platform-native, always-loaded)
+ *   - standard      → ~/.hermes/.aiwg/skills/   (index-discoverable)
  */
 export function deploySkills(skillDirs, opts) {
-  const destDir = paths.skills;
-  ensureDir(destDir, opts.dryRun);
+  const standardDestDir = paths.skills;
+  const kernelDestDir = kernelSkillsPath;
 
   if (!opts.dryRun) {
-    console.log(`  Deploying ${skillDirs.length} skills to ${destDir}...`);
+    console.log(`  Deploying ${skillDirs.length} skills (kernel + standard split)...`);
   }
 
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, opts);
-  }
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 }
 
 // ============================================================================

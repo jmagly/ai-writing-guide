@@ -36,6 +36,7 @@ import {
   getAddonSkillDirs,
   listSkillDirs,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
   cleanupOldRuleFiles,
@@ -53,10 +54,14 @@ export const aliases = [];
 export const paths = {
   agents: '.opencode/agent/',   // Discovered via {agent,agents}/**/*.md glob (#773)
   commands: '',                 // Not deployed — commands derive from skills automatically
-  skills: '.opencode/skill/',
+  // Skills sequestered under .opencode/.aiwg/skill/ — index-driven discovery (#1212).
+  skills: '.opencode/.aiwg/skill/',
   rules: '.opencode/rule/',
   modes: '.opencode/mode/'      // PUW-035 (#1136) — TUI-selectable primary modes
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+export const kernelSkillsPath = '.opencode/skill/';
 
 /**
  * SDLC primary roles emitted as OpenCode TUI modes per PUW-035 (#1136).
@@ -329,12 +334,12 @@ export function deployCommands(_commandFiles, _targetDir, _opts) {
  * `.opencode/skill/` deploy.
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  // Primary: .opencode/skill/
-  const destDir = path.join(targetDir, paths.skills);
-  ensureDir(destDir, opts.dryRun);
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, opts);
-  }
+  // Primary: kernel-vs-standard routing (#1212/#1216)
+  //   - kernel skills → .opencode/skill/         (platform-native, always-loaded)
+  //   - standard      → .opencode/.aiwg/skill/   (index-discoverable)
+  const standardDestDir = path.join(targetDir, paths.skills);
+  const kernelDestDir = path.join(targetDir, kernelSkillsPath);
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 
   // Cross-agent compatibility: .agents/skills/
   const crossAgentDir = path.join(targetDir, '.agents', 'skills');

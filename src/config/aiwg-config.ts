@@ -543,15 +543,15 @@ export async function hashManifest(manifestPath: string): Promise<string | undef
  */
 const PROVIDER_DEPLOY_DIRS: Record<string, { agents: string; skills: string; commands: string; rules: string }> = {
   claude:   { agents: '.claude/agents',       skills: '.claude/.aiwg/skills', commands: '.claude/commands',    rules: '.claude/rules'          },
-  copilot:  { agents: '.github/agents',       skills: '.github/skills',      commands: '.github/commands',   rules: '.github/copilot-rules'   },
-  cursor:   { agents: '.cursor/agents',       skills: '.cursor/skills',      commands: '.cursor/commands',    rules: '.cursor/rules'           },
-  opencode: { agents: '.opencode/agent',      skills: '.opencode/skill',     commands: '.opencode/command',  rules: '.opencode/rule'           },
-  warp:     { agents: '.warp/agents',         skills: '.warp/skills',        commands: '.warp/commands',      rules: '.warp/rules'             },
-  windsurf: { agents: '.windsurf/agents',     skills: '.windsurf/skills',    commands: '.windsurf/workflows', rules: '.windsurf/rules'         },
-  factory:  { agents: '.factory/droids',      skills: '.factory/skills',     commands: '.factory/commands',   rules: '.factory/rules'          },
-  codex:    { agents: '.codex/agents',        skills: '.codex/skills',       commands: '.codex/commands',     rules: '.codex/rules'            },
-  hermes:   { agents: '',                     skills: join(homedir(), '.hermes', 'skills'),   commands: '',                   rules: ''                        },
-  openclaw: { agents: join(homedir(), '.openclaw', 'agents'), skills: join(homedir(), '.openclaw', 'skills'), commands: join(homedir(), '.openclaw', 'commands'), rules: join(homedir(), '.openclaw', 'rules') },
+  copilot:  { agents: '.github/agents',       skills: '.github/.aiwg/skills', commands: '.github/commands',   rules: '.github/copilot-rules'   },
+  cursor:   { agents: '.cursor/agents',       skills: '.cursor/.aiwg/skills', commands: '.cursor/commands',    rules: '.cursor/rules'           },
+  opencode: { agents: '.opencode/agent',      skills: '.opencode/.aiwg/skill', commands: '.opencode/command',  rules: '.opencode/rule'           },
+  warp:     { agents: '.warp/agents',         skills: '.warp/.aiwg/skills',   commands: '.warp/commands',      rules: '.warp/rules'             },
+  windsurf: { agents: '.windsurf/agents',     skills: '.windsurf/.aiwg/skills', commands: '.windsurf/workflows', rules: '.windsurf/rules'       },
+  factory:  { agents: '.factory/droids',      skills: '.factory/.aiwg/skills', commands: '.factory/commands',   rules: '.factory/rules'          },
+  codex:    { agents: '.codex/agents',        skills: '.codex/.aiwg/skills',  commands: '.codex/commands',     rules: '.codex/rules'            },
+  hermes:   { agents: '',                     skills: join(homedir(), '.hermes', '.aiwg', 'skills'), commands: '',  rules: ''                    },
+  openclaw: { agents: join(homedir(), '.openclaw', 'agents'), skills: join(homedir(), '.openclaw', '.aiwg', 'skills'), commands: join(homedir(), '.openclaw', 'commands'), rules: join(homedir(), '.openclaw', 'rules') },
 };
 
 /**

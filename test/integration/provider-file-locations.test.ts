@@ -84,35 +84,35 @@ const PROVIDERS: Record<string, ProviderConfig> = {
   },
   factory: {
     name: 'factory',
-    projectPaths: ['.factory/droids', '.factory/commands', '.factory/skills', '.factory/rules'],
+    projectPaths: ['.factory/droids', '.factory/commands', '.factory/.aiwg/skills', '.factory/rules'],
     forbiddenPaths: ['.claude', '.codex'],
     fileExtension: '.md',
     minArtifacts: 5,
   },
   copilot: {
     name: 'copilot',
-    projectPaths: ['.github/agents', '.github/prompts', '.github/skills', '.github/instructions'],
+    projectPaths: ['.github/agents', '.github/prompts', '.github/.aiwg/skills', '.github/instructions'],
     forbiddenPaths: ['.claude', '.codex', '.factory'],
     fileExtension: '.agent.md',  // Copilot uses .agent.md for agents
     minArtifacts: 5,
   },
   cursor: {
     name: 'cursor',
-    projectPaths: ['.cursor/agents', '.cursor/commands', '.cursor/skills', '.cursor/rules'],
+    projectPaths: ['.cursor/agents', '.cursor/commands', '.cursor/.aiwg/skills', '.cursor/rules'],
     forbiddenPaths: ['.claude', '.codex', '.factory', '.github/agents'],
     fileExtension: '.md',  // Most artifacts are .md; rules are .mdc
     minArtifacts: 5,
   },
   opencode: {
     name: 'opencode',
-    projectPaths: ['.opencode/agent', '.opencode/skill', '.opencode/rule'],
+    projectPaths: ['.opencode/agent', '.opencode/.aiwg/skill', '.opencode/rule'],
     forbiddenPaths: ['.claude', '.codex', '.cursor', '.opencode/commands'],
     fileExtension: '.md',
     minArtifacts: 5,
   },
   warp: {
     name: 'warp',
-    projectPaths: ['.warp/skills'],  // Only skills are natively discovered; agents/commands/rules via WARP.md
+    projectPaths: ['.warp/.aiwg/skills'],  // Only skills are natively discovered; agents/commands/rules via WARP.md
     rootFiles: ['WARP.md'],
     forbiddenPaths: ['.claude/agents'],
     fileExtension: '.md',
@@ -120,7 +120,7 @@ const PROVIDERS: Record<string, ProviderConfig> = {
   },
   windsurf: {
     name: 'windsurf',
-    projectPaths: ['.windsurf/skills', '.windsurf/rules', '.agents/skills'],  // Agents → aggregated AGENTS.md; commands → skills (#551); cross-agent skills (#576)
+    projectPaths: ['.windsurf/.aiwg/skills', '.windsurf/rules', '.agents/skills'],  // Agents → aggregated AGENTS.md; commands → skills (#551); cross-agent skills (#576)
     rootFiles: ['AGENTS.md', '.windsurfrules'],  // .windsurfrules is now a deprecated stub pointing to .windsurf/rules/aiwg-orchestration.md
     forbiddenPaths: ['.claude/agents', '.codex'],
     fileExtension: '.md',

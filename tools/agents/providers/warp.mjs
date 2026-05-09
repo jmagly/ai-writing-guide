@@ -32,6 +32,7 @@ import {
   listMdFiles,
   listSkillDirs,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   initializeFrameworkWorkspace,
   getAddonAgentFiles,
   getAddonCommandFiles,
@@ -49,11 +50,15 @@ export const name = 'warp';
 export const aliases = [];
 
 export const paths = {
-  skills: '.warp/skills/',
+  // Skills sequestered under .warp/.aiwg/skills/ — index-driven discovery (#1212).
+  skills: '.warp/.aiwg/skills/',
   crossAgentSkills: '.agents/skills/',  // Cross-agent compatibility path (#771)
   // agents, commands, rules: delivered via aggregated WARP.md only
   // Warp does not discover .warp/agents/, .warp/commands/, or .warp/rules/
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+export const kernelSkillsPath = '.warp/skills/';
 
 export const support = {
   agents: 'aggregated',      // WARP.md only — no discrete .warp/agents/
@@ -164,13 +169,12 @@ export function transformCommand(srcPath, content, opts) {
  * The .agents/skills/ path is an interop convention for projects using multiple AI coding tools.
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  // Primary: .warp/skills/
-  const destDir = path.join(targetDir, paths.skills);
-  ensureDir(destDir, opts.dryRun);
-
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, opts);
-  }
+  // Primary: kernel-vs-standard routing (#1212/#1216)
+  //   - kernel skills → .warp/skills/         (platform-native, always-loaded)
+  //   - standard      → .warp/.aiwg/skills/   (index-discoverable)
+  const standardDestDir = path.join(targetDir, paths.skills);
+  const kernelDestDir = path.join(targetDir, kernelSkillsPath);
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 
   // Cross-agent compatibility: .agents/skills/
   const crossAgentDir = path.join(targetDir, paths.crossAgentSkills);

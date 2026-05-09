@@ -764,6 +764,50 @@ export function isKernelSkill(skillDir) {
 }
 
 /**
+ * Deploy skills with kernel-vs-standard routing (#1212/#1216).
+ *
+ * Partitions `skillDirs` into kernel skills (frontmatter `kernel: true`)
+ * and standard skills, then deploys each set to the corresponding
+ * destination directory. All providers route through this helper so
+ * the partition logic stays in one place.
+ *
+ * @param skillDirs        absolute paths to source skill directories
+ * @param standardDestDir  absolute path for standard skills
+ *                         (e.g., `.cursor/.aiwg/skills`)
+ * @param kernelDestDir    absolute path for kernel skills
+ *                         (e.g., `.cursor/skills`); pass null/undefined
+ *                         to disable kernel routing for providers that
+ *                         don't support a separate native skills dir
+ * @param opts             standard deploy opts forwarded to `deploySkillDir`
+ *
+ * @returns `{ kernel, standard }` deployed counts
+ */
+export function deploySkillsWithKernelRouting(
+  skillDirs,
+  standardDestDir,
+  kernelDestDir,
+  opts,
+) {
+  ensureDir(standardDestDir, opts?.dryRun);
+
+  const kernel = [];
+  const standard = [];
+  for (const dir of skillDirs) {
+    if (kernelDestDir && isKernelSkill(dir)) kernel.push(dir);
+    else standard.push(dir);
+  }
+
+  if (kernel.length > 0 && kernelDestDir) {
+    ensureDir(kernelDestDir, opts?.dryRun);
+    for (const dir of kernel) deploySkillDir(dir, kernelDestDir, opts);
+  }
+
+  for (const dir of standard) deploySkillDir(dir, standardDestDir, opts);
+
+  return { kernel: kernel.length, standard: standard.length };
+}
+
+/**
  * Deploy a skill directory (copy recursively).
  *
  * Platform handling (controlled by opts.provider):

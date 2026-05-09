@@ -32,6 +32,7 @@ import {
   listSkillDirs,
   deployFiles,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   filterAgentFiles,
   getAddonAgentFiles,
   getAddonCommandFiles,
@@ -56,9 +57,13 @@ export const aliases = [];
 export const paths = {
   agents: '.cursor/agents/',
   commands: '.cursor/commands/',
-  skills: '.cursor/skills/',
+  // Skills sequestered under .cursor/.aiwg/skills/ — index-driven discovery (#1212).
+  skills: '.cursor/.aiwg/skills/',
   rules: '.cursor/rules/'
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+export const kernelSkillsPath = '.cursor/skills/';
 
 export const support = {
   agents: 'conventional',
@@ -201,16 +206,14 @@ export function deployCommands(commandFiles, targetDir, opts) {
 }
 
 /**
- * Deploy skills to .cursor/skills/
- * Skills are directories containing SKILL.md and supporting files
+ * Deploy skills with kernel-vs-standard routing (#1212/#1216).
+ *   - kernel skills → .cursor/skills/        (platform-native, always-loaded)
+ *   - standard      → .cursor/.aiwg/skills/  (index-discoverable)
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  const destDir = path.join(targetDir, paths.skills);
-  ensureDir(destDir, opts.dryRun);
-
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, opts);
-  }
+  const standardDestDir = path.join(targetDir, paths.skills);
+  const kernelDestDir = path.join(targetDir, kernelSkillsPath);
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 }
 
 /**

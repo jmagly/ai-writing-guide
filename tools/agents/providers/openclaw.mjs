@@ -31,6 +31,7 @@ import {
   listMdFilesRecursive,
   listSkillDirs,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   deployFiles,
   getAddonAgentFiles,
   getAddonCommandFiles,
@@ -56,13 +57,19 @@ const openclawHome = path.join(os.homedir(), '.openclaw');
 export const paths = {
   agents: path.join(openclawHome, 'agents'),
   commands: path.join(openclawHome, 'commands'),
-  skills: path.join(openclawHome, 'skills'),
+  // Skills sequestered under ~/.openclaw/.aiwg/skills/ — index-driven discovery (#1212).
+  skills: path.join(openclawHome, '.aiwg', 'skills'),
   rules: path.join(openclawHome, 'rules'),
   behaviors: path.join(openclawHome, 'behaviors'),
   // Per ADR-3 + PUW-008/009: native hook loader path.
   // BEHAVIOR.md → HOOK.md + handler.js translation lands here.
   hooks: path.join(openclawHome, 'hooks'),
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+// Critical for OpenClaw: DEFAULT_MAX_SKILLS_IN_PROMPT = 150, so the
+// kernel set must come in under that floor (~9 today, well under cap).
+export const kernelSkillsPath = path.join(openclawHome, 'skills');
 
 export const support = {
   agents: 'native',
@@ -122,21 +129,27 @@ function deployCommands(commandFiles, opts) {
 }
 
 /**
- * Deploy skills to ~/.openclaw/skills/
- * Skills are directories containing SKILL.md and supporting files.
+ * Deploy skills with kernel-vs-standard routing (#1212/#1216).
+ *
+ * OpenClaw is the binding constraint for the kernel pivot:
+ * `DEFAULT_MAX_SKILLS_IN_PROMPT = 150` is the hard cap. The kernel set
+ * (one quickref per installed framework + core utility set, ~9 today)
+ * fits comfortably under that floor regardless of how many frameworks
+ * are installed.
+ *
+ *   - kernel skills → ~/.openclaw/skills/aiwg/<name>     (platform-native, always-loaded)
+ *   - standard      → ~/.openclaw/.aiwg/skills/<name>    (index-discoverable, hidden from flat scan)
+ *
+ * The legacy `aiwg/` 2-level namespacing under the kernel path (PUW-025
+ * #1126) is preserved to avoid collision with non-AIWG ClaWHub installs.
  */
 function deploySkills(skillDirs, opts) {
-  // PUW-025 (#1126): 2-level namespacing under ~/.openclaw/skills/aiwg/<name>/
-  // avoids collision with non-AIWG skills (especially ClaWHub installs).
-  // Within OpenClaw's 2-level recursion limit. Always-deploy invariant
-  // applies: existing flat-layout deploys remain valid; the new namespaced
-  // layout is the canonical path going forward.
-  const aiwgNamespacedRoot = path.join(paths.skills, 'aiwg');
-  ensureDir(aiwgNamespacedRoot, opts.dryRun);
+  // Standard: ~/.openclaw/.aiwg/skills/ (no extra aiwg/ — the .aiwg/ segment IS the namespace)
+  const standardDestDir = paths.skills;
+  // Kernel: ~/.openclaw/skills/aiwg/ (preserves legacy 2-level namespacing)
+  const kernelDestDir = path.join(kernelSkillsPath, 'aiwg');
 
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, aiwgNamespacedRoot, opts);
-  }
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 
   // PUW-012 (#1113): also deploy to project-local .agents/skills/ as a
   // cross-agent compatibility path. OpenClaw's primary deploy is the

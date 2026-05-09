@@ -35,7 +35,7 @@ import {
   writeFile,
   deployFiles,
   deploySkillDir,
-  isKernelSkill,
+  deploySkillsWithKernelRouting,
   parseFrontmatter,
   initializeFrameworkWorkspace,
   filterAgentFiles,
@@ -273,27 +273,7 @@ export function deployCommands(commandFiles, targetDir, opts) {
 export function deploySkills(skillDirs, targetDir, opts) {
   const standardDestDir = path.join(targetDir, paths.skills);
   const kernelDestDir = path.join(targetDir, kernelSkillsPath);
-  ensureDir(standardDestDir, opts.dryRun);
-
-  // Partition into kernel and standard before creating dirs unnecessarily
-  const kernelSkills = [];
-  const standardSkills = [];
-  for (const skillDir of skillDirs) {
-    if (isKernelSkill(skillDir)) kernelSkills.push(skillDir);
-    else standardSkills.push(skillDir);
-  }
-
-  if (kernelSkills.length > 0) {
-    ensureDir(kernelDestDir, opts.dryRun);
-    for (const skillDir of kernelSkills) {
-      deploySkillDir(skillDir, kernelDestDir, opts);
-    }
-  }
-
-  for (const skillDir of standardSkills) {
-    deploySkillDir(skillDir, standardDestDir, opts);
-  }
-
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
   // Remove legacy bare-named skills superseded by their aiwg- prefixed replacements
   cleanupLegacyBuiltinCollisions(standardDestDir, opts);
 }

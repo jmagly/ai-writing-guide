@@ -39,6 +39,7 @@ import {
   getAddonSkillDirs,
   listSkillDirs,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
   cleanupOldRuleFiles,
@@ -56,9 +57,13 @@ export const aliases = [];
 export const paths = {
   agents: '.factory/droids/',
   commands: '.factory/commands/',
-  skills: '.factory/skills/',
+  // Skills sequestered under .factory/.aiwg/skills/ — index-driven discovery (#1212).
+  skills: '.factory/.aiwg/skills/',
   rules: '.factory/rules/'
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+export const kernelSkillsPath = '.factory/skills/';
 
 export const support = {
   agents: 'native',
@@ -547,15 +552,15 @@ export function deployCommands(commandFiles, targetDir, opts) {
 }
 
 /**
- * Deploy skills to .factory/skills/
+ * Deploy skills with kernel-vs-standard routing (#1212/#1216).
+ *   - kernel skills → .factory/skills/        (platform-native, always-loaded)
+ *   - standard      → .factory/.aiwg/skills/  (index-discoverable)
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  const destDir = path.join(targetDir, paths.skills);
-  ensureDir(destDir, opts.dryRun);
+  const standardDestDir = path.join(targetDir, paths.skills);
+  const kernelDestDir = path.join(targetDir, kernelSkillsPath);
   const skillOpts = { ...opts, transformSkillMd: transformSkillFrontmatter };
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, skillOpts);
-  }
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, skillOpts);
 }
 
 /**

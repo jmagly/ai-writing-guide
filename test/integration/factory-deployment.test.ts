@@ -333,7 +333,7 @@ describe('Factory AI Integration', () => {
         '--target', TEST_PROJECT_DIR
       ]);
 
-      const skillsDir = path.join(TEST_FACTORY_DIR, 'skills');
+      const skillsDir = path.join(TEST_FACTORY_DIR, '.aiwg', 'skills');
       const exists = await fs.access(skillsDir).then(() => true).catch(() => false);
       expect(exists).toBe(true);
       const entries = await fs.readdir(skillsDir, { withFileTypes: true });
@@ -349,7 +349,7 @@ describe('Factory AI Integration', () => {
         '--target', TEST_PROJECT_DIR
       ]);
 
-      const skillsDir = path.join(TEST_FACTORY_DIR, 'skills');
+      const skillsDir = path.join(TEST_FACTORY_DIR, '.aiwg', 'skills');
       const entries = await fs.readdir(skillsDir, { withFileTypes: true });
       const skillDirs = entries.filter(e => e.isDirectory()).map(e => e.name);
 
@@ -391,7 +391,7 @@ describe('Factory AI Integration', () => {
         '--target', TEST_PROJECT_DIR
       ]);
 
-      const skillsDir = path.join(TEST_FACTORY_DIR, 'skills');
+      const skillsDir = path.join(TEST_FACTORY_DIR, '.aiwg', 'skills');
       const entries = await fs.readdir(skillsDir, { withFileTypes: true });
       const skillDirs = entries.filter(e => e.isDirectory()).map(e => e.name);
 
@@ -431,7 +431,7 @@ describe('Factory AI Integration', () => {
         '--target', TEST_PROJECT_DIR
       ]);
 
-      const skillsDir = path.join(TEST_FACTORY_DIR, 'skills');
+      const skillsDir = path.join(TEST_FACTORY_DIR, '.aiwg', 'skills');
       const entries = await fs.readdir(skillsDir, { withFileTypes: true });
       const skillDirs = entries.filter(e => e.isDirectory()).map(e => e.name);
 

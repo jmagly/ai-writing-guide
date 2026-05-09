@@ -39,6 +39,7 @@ import {
   getAddonSkillDirs,
   listSkillDirs,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
   cleanupOldRuleFiles,
@@ -56,9 +57,13 @@ export const aliases = [];
 export const paths = {
   agents: '.github/agents/',
   commands: '.github/prompts/',
-  skills: '.github/skills/',
+  // Skills sequestered under .github/.aiwg/skills/ — index-driven discovery (#1212).
+  skills: '.github/.aiwg/skills/',
   rules: '.github/instructions/'
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+export const kernelSkillsPath = '.github/skills/';
 
 export const support = {
   agents: 'native',
@@ -382,17 +387,16 @@ export function deployCommands(commandFiles, targetDir, opts) {
 }
 
 /**
- * Deploy skills to .github/skills/ (primary) and .agents/skills/ (cross-agent
- * compatibility, PUW-012 #1113). Additive secondary path; does not replace
- * the primary `.github/skills/` deploy.
+ * Deploy skills with kernel-vs-standard routing (#1212/#1216) plus
+ * .agents/skills/ cross-agent compatibility (PUW-012 #1113).
+ *   - kernel skills → .github/skills/         (platform-native, always-loaded)
+ *   - standard      → .github/.aiwg/skills/   (index-discoverable)
+ *   - cross-agent compatibility mirror is preserved at .agents/skills/.
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  // Primary: .github/skills/
-  const destDir = path.join(targetDir, paths.skills);
-  ensureDir(destDir, opts.dryRun);
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, opts);
-  }
+  const standardDestDir = path.join(targetDir, paths.skills);
+  const kernelDestDir = path.join(targetDir, kernelSkillsPath);
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 
   // Cross-agent compatibility: .agents/skills/
   const crossAgentDir = path.join(targetDir, '.agents', 'skills');

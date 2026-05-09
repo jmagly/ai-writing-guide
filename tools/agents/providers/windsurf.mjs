@@ -38,6 +38,7 @@ import {
   getAddonSkillDirs,
   listSkillDirs,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   deployFiles,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
@@ -56,10 +57,14 @@ export const aliases = [];
 export const paths = {
   agents: '.windsurf/agents/',      // Discrete mirrors alongside AGENTS.md
   commands: '.windsurf/workflows/',
-  skills: '.windsurf/skills/',
+  // Skills sequestered under .windsurf/.aiwg/skills/ — index-driven discovery (#1212).
+  skills: '.windsurf/.aiwg/skills/',
   crossAgentSkills: '.agents/skills/',  // Cross-agent compatibility path (#576)
   rules: '.windsurf/rules/'
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+export const kernelSkillsPath = '.windsurf/skills/';
 
 export const support = {
   agents: 'aggregated',      // Agents aggregated into AGENTS.md
@@ -473,12 +478,12 @@ export function deployWorkflows(commandFiles, targetDir, opts) {
  * The .agents/skills/ path is an interop convention for projects using multiple AI coding tools.
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  // Primary: .windsurf/skills/
-  const destDir = path.join(targetDir, paths.skills);
-  ensureDir(destDir, opts.dryRun);
-  for (const skillDir of skillDirs) {
-    deploySkillDir(skillDir, destDir, opts);
-  }
+  // Primary: kernel-vs-standard routing (#1212/#1216)
+  //   - kernel skills → .windsurf/skills/         (platform-native, always-loaded)
+  //   - standard      → .windsurf/.aiwg/skills/   (index-discoverable)
+  const standardDestDir = path.join(targetDir, paths.skills);
+  const kernelDestDir = path.join(targetDir, kernelSkillsPath);
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 
   // Cross-agent compatibility: .agents/skills/
   const crossAgentDir = path.join(targetDir, paths.crossAgentSkills);

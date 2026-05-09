@@ -183,63 +183,68 @@ const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands:
   },
   factory: {
     agents: '.factory/droids',
-    skills: '.factory/skills',
+    // Skills hidden under .aiwg/ for index-driven discovery (#1212)
+    skills: '.factory/.aiwg/skills',
     commands: '.factory/commands',
     rules: '.factory/rules',
     behaviors: '.factory/rules', // Emulated via session wrapper in rules dir
   },
   codex: {
     agents: '.codex/agents',
-    skills: '.codex/skills',
+    skills: '.codex/.aiwg/skills',
     commands: '.codex/commands',
     rules: '.codex/rules',
     behaviors: '.codex/rules',   // Emulated via session wrapper
   },
   opencode: {
     agents: '.opencode/agent',  // Discovered via {agent,agents}/**/*.md glob (#773)
-    skills: '.opencode/skill',
+    skills: '.opencode/.aiwg/skill',
     commands: '.opencode/command', // OpenCode scans .opencode/command/**/*.md via ConfigCommand.load() (PUW-006 #1107)
     rules: '.opencode/rule',
     behaviors: '.opencode/rule', // Emulated via session wrapper
   },
   copilot: {
     agents: '.github/agents',
-    skills: '.github/skills',
+    skills: '.github/.aiwg/skills',
     commands: '.github/commands',
     rules: '.github/copilot-rules',
     behaviors: '.github/copilot-rules', // Emulated via session wrapper
   },
   cursor: {
     agents: '.cursor/agents',
-    skills: '.cursor/skills',
+    skills: '.cursor/.aiwg/skills',
     commands: '.cursor/commands',
     rules: '.cursor/rules',
     behaviors: '.cursor/rules',  // Emulated via session wrapper
   },
   warp: {
     agents: '.warp/agents',
-    skills: '.warp/skills',
+    skills: '.warp/.aiwg/skills',
     commands: '.warp/commands',
     rules: '.warp/rules',
     behaviors: '',               // Aggregated into WARP.md behaviors section
   },
   windsurf: {
     agents: '.windsurf/agents',
-    skills: '.windsurf/skills',
+    skills: '.windsurf/.aiwg/skills',
     commands: '.windsurf/workflows',
     rules: '.windsurf/rules',
     behaviors: '.windsurf/rules', // Emulated via session wrapper
   },
   hermes: {
-    agents: '',                                            // Aggregated into AGENTS.md at project root
-    skills: path.join(os.homedir(), '.hermes', 'skills'), // User-global skills
-    commands: '',                                          // Served via MCP, not file-deployed
-    rules: '',                                             // Not applicable — Hermes uses AGENTS.md
-    behaviors: '',                                         // Not yet supported
+    agents: '',                                                              // Aggregated into AGENTS.md at project root
+    skills: path.join(os.homedir(), '.hermes', '.aiwg', 'skills'),          // User-global skills (sequestered for #1212)
+    commands: '',                                                            // Served via MCP, not file-deployed
+    rules: '',                                                               // Not applicable — Hermes uses AGENTS.md
+    behaviors: '',                                                           // Not yet supported
   },
   openclaw: {
     agents: path.join(os.homedir(), '.openclaw', 'agents'),
-    skills: path.join(os.homedir(), '.openclaw', 'skills'),
+    // Sequestered under ~/.openclaw/.aiwg/skills/ for index-driven discovery
+    // (#1212). OpenClaw's 150-skill cap is the binding constraint; the kernel
+    // set goes to ~/.openclaw/skills/aiwg/<name> (preserved by the provider's
+    // own deploySkills, not represented here).
+    skills: path.join(os.homedir(), '.openclaw', '.aiwg', 'skills'),
     commands: path.join(os.homedir(), '.openclaw', 'commands'),
     rules: path.join(os.homedir(), '.openclaw', 'rules'),
     behaviors: path.join(os.homedir(), '.openclaw', 'behaviors'), // Native behavior support

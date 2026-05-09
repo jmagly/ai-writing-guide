@@ -125,7 +125,7 @@ describe('project-local deploy integration (#1046)', () => {
     expect(result.status).toBe(0);
 
     const ruleFile = path.join(env.projectDir, '.cursor', 'rules', 'pl-rule.md');
-    const skillFile = path.join(env.projectDir, '.cursor', 'skills', 'demo-skill', 'SKILL.md');
+    const skillFile = path.join(env.projectDir, '.cursor', '.aiwg', 'skills', 'demo-skill', 'SKILL.md');
     // Cursor uses .mdc rule extension via translation; either .md or .mdc may
     // appear depending on deploy-agents.mjs version. Accept either.
     const ruleAlt = path.join(env.projectDir, '.cursor', 'rules', 'pl-rule.mdc');

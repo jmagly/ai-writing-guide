@@ -38,6 +38,7 @@ import {
   getAddonRuleFiles,
   listSkillDirs,
   deploySkillDir,
+  deploySkillsWithKernelRouting,
   getFrameworksForMode,
   normalizeDeploymentMode,
   getRulesIndexPath,
@@ -57,9 +58,15 @@ export const aliases = ['openai'];
 export const paths = {
   agents: '.codex/agents/',
   commands: '.codex/commands/',  // Project-local mirror for conventional deployment
-  skills: '.codex/skills/',      // Project-local mirror for conventional deployment
+  // Skills sequestered under .codex/.aiwg/skills/ — index-driven discovery (#1212).
+  skills: '.codex/.aiwg/skills/',
   rules: '.codex/rules/'
 };
+
+// Kernel skills (always-loaded) deploy to the platform-native dir.
+// (#766 prerequisite: skills currently deploy to .codex/skills/ project-local;
+// when #766 lands, kernel can move to ~/.codex/skills/ for user-scope.)
+export const kernelSkillsPath = '.codex/skills/';
 
 export const support = {
   agents: 'native',
