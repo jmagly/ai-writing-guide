@@ -465,8 +465,15 @@ async function runDoctor() {
 
     // Skill listing budget (#1150) — pre-flight warn before the operator
     // sees post-hoc truncation in /doctor inside the running session.
+    //
+    // Post-kernel-pivot (#1212): the platform's flat skill listing scans
+    // `kernelSkillsPath` (e.g., `.claude/skills/`) — that's what the
+    // budget actually applies to. Standard-tier skills under
+    // `<provider>/.aiwg/skills/` are hidden from the platform scanner
+    // and don't count against the budget.
     if (!noBudgetCheck) {
-      await checkSkillBudgetForProvider(provName, label, provider.paths.skills);
+      const budgetPath = provider.kernelSkillsPath || provider.paths.skills;
+      await checkSkillBudgetForProvider(provName, label, budgetPath);
     }
   }
 

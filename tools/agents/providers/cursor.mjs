@@ -640,6 +640,7 @@ export default {
   name,
   aliases,
   paths,
+  kernelSkillsPath,
   support,
   capabilities,
   transformAgent,

@@ -780,7 +780,14 @@ export function isKernelSkill(skillDir) {
  *                         don't support a separate native skills dir
  * @param opts             standard deploy opts forwarded to `deploySkillDir`
  *
- * @returns `{ kernel, standard }` deployed counts
+ * @returns `{ kernel, standard, prunedFromKernelDir }` deployed counts
+ *
+ * Pre-pivot cleanup: when the same skill name appears in both the
+ * incoming standard set AND on disk in the kernel directory, the
+ * kernel-dir copy is a leftover from a pre-pivot deploy (the skill has
+ * since moved to the standard tier). This helper prunes those entries
+ * — but ONLY those — so user-authored skills the operator placed in
+ * the kernel dir survive untouched.
  */
 export function deploySkillsWithKernelRouting(
   skillDirs,
@@ -797,6 +804,10 @@ export function deploySkillsWithKernelRouting(
     else standard.push(dir);
   }
 
+  // Names of skills moving to the standard tier this run — they should
+  // NOT remain in the kernel dir. Use this set to scope the prune.
+  const standardNames = new Set(standard.map(p => path.basename(p)));
+
   if (kernel.length > 0 && kernelDestDir) {
     ensureDir(kernelDestDir, opts?.dryRun);
     for (const dir of kernel) deploySkillDir(dir, kernelDestDir, opts);
@@ -804,7 +815,33 @@ export function deploySkillsWithKernelRouting(
 
   for (const dir of standard) deploySkillDir(dir, standardDestDir, opts);
 
-  return { kernel: kernel.length, standard: standard.length };
+  // Pre-pivot cleanup of the kernel directory.
+  let prunedFromKernelDir = 0;
+  if (kernelDestDir && fs.existsSync(kernelDestDir) && !opts?.dryRun) {
+    for (const entry of fs.readdirSync(kernelDestDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      // Only consider AIWG-shaped skill directories (have a SKILL.md)
+      const skillMd = path.join(kernelDestDir, entry.name, 'SKILL.md');
+      if (!fs.existsSync(skillMd)) continue;
+      // Prune only when the same name now belongs to the standard tier.
+      // User-authored skills (different names) survive.
+      if (!standardNames.has(entry.name)) continue;
+      const target = path.join(kernelDestDir, entry.name);
+      try {
+        fs.rmSync(target, { recursive: true, force: true });
+        prunedFromKernelDir++;
+        if (opts?.verbose) {
+          console.log(`pruned legacy from kernel dir: ${entry.name}`);
+        }
+      } catch (err) {
+        if (opts?.verbose) {
+          console.warn(`Warning: could not prune ${target}: ${err.message}`);
+        }
+      }
+    }
+  }
+
+  return { kernel: kernel.length, standard: standard.length, prunedFromKernelDir };
 }
 
 /**
