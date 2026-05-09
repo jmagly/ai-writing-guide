@@ -59,9 +59,19 @@ Starting in 2026.5.0, AIWG splits skills into two tiers and uses a **no-copy** m
 
 | Tier | Where it lives | Per-project copy? | Discovered how |
 |---|---|---|---|
-| **Kernel** (~9 skills today) | `<provider>/skills/` (e.g., `.claude/skills/`) | Yes | Platform-native flat scan, always-loaded |
-| **Standard** (~390+) | `$AIWG_ROOT/agentic/code/.../skills/<name>/` | **No** — read directly from source | `aiwg discover "<phrase>"` returns absolute paths anchored to `$AIWG_ROOT` |
+| **Kernel** (15 skills today) | `<provider>/skills/` (e.g., `.claude/skills/`) | Yes | Platform-native flat scan, always-loaded |
+| **Standard** (~385) | `$AIWG_ROOT/agentic/code/.../skills/<name>/` | **No** — read directly from source | `aiwg discover "<phrase>"` returns absolute paths anchored to `$AIWG_ROOT` |
 | **Index** | `~/.local/share/aiwg/index/framework/` (XDG) | No, user-global | Built post-deploy by `aiwg use`, queried by `aiwg discover` |
+
+**Kernel set = 9 framework quickrefs + 6 self-maintenance ops** (steward, aiwg-doctor, aiwg-refresh, aiwg-status, aiwg-help, use). The 6 ops were promoted to kernel in rc.17 so the agent retains repair surfaces even when discovery itself is broken.
+
+**Stale-skill cleanup (rc.21+)**: every `aiwg use` writes a `.aiwg-managed` marker file alongside SKILL.md. Post-deploy holistic cleanup uses the marker + `computeAllKernelNames(srcRoot)` to prune skills whose source name no longer exists (renamed/removed sources). Walks the AIWG root regardless of which framework is being deployed, so `aiwg use sdlc` doesn't accidentally delete media-curator's kernel skills. Codex pre-marker orphans (e.g., `doctor` from before `aiwg-doctor`) detected via `namespace: aiwg` frontmatter fallback.
+
+**No-copy opt-in**: `AIWG_COPY_STANDARD_SKILLS=1` env var forces the legacy per-project mirror behavior (writes all 400 skills to `<provider>/.aiwg/skills/`). For sandboxed runtimes where `$AIWG_ROOT` isn't readable.
+
+**Discover defaults (rc.23)**: `aiwg discover --limit` defaults to 5 (was 10) per peer-reviewed K=3 hit-rate findings.
+
+**Show single-name fallback (rc.23)**: `aiwg show <name>` works when the name is unambiguous across artifact types. `aiwg show <type> <name>` still works and is preferred when the type is known. Multi-type matches still error with the disambiguation list.
 
 **Deploy paths to know per provider** (kernel target only — standard tier no longer copied by default):
 
@@ -182,19 +192,54 @@ You MUST use these CLI commands for all operations. Never write files directly w
 | `aiwg add-command <name>` | Add individual command | Targeted extension add |
 | `aiwg add-skill <name>` | Add individual skill | Targeted extension add |
 
+## Context Discipline (Critical)
+
+You are a sub-agent with a finite context window. AIWG CLI commands are verbose by default (`aiwg doctor` ≈ 30 lines per provider × 10 providers; `aiwg list` ≈ 200+ lines on a fully-deployed system). **Reading verbose output uncritically will saturate your context and force you to thrash through compact loops.** Three rules:
+
+### Rule A: Use `--json | jq` for any structured query
+
+Always:
+```bash
+aiwg version --json | jq -r '.version'                          # not: aiwg version
+aiwg discover "..." --json --limit 3 | jq -r '.results[].path'  # not: aiwg discover (table mode)
+aiwg index stats --json | jq -r '.totalArtifacts'               # not: aiwg index stats
+```
+
+Never read a full table-mode output when the same command supports `--json` + a targeted `jq` filter.
+
+### Rule B: For verification, pick the SMALLEST signal
+
+When confirming a deploy worked, you don't need the full `aiwg doctor` output. Use the verdict line only:
+
+```bash
+aiwg doctor 2>&1 | grep -E "passed|FAIL|warning"   # one line per status
+ls .claude/skills/ | wc -l                          # kernel count → expect 15
+[ -d .claude/.aiwg/skills ] && echo FAIL || echo PASS  # no-copy default check
+```
+
+Never run `aiwg doctor` and then read every line. Filter first, read what's actionable.
+
+### Rule C: Delegate discovery to `aiwg-finder`
+
+If your task involves "find me the right skill/agent/command/rule for X," call the **`aiwg-finder` companion agent** instead of running multiple `aiwg discover` queries yourself. The finder is purpose-built for that workload and returns a structured envelope (`{ selected, alternatives, body, rationale }`) — much smaller than streaming raw discover output through your context.
+
+The steward and finder partition the maintenance/discovery responsibilities cleanly:
+- **Steward** (you) = install health, version sync, deploy, repair
+- **Finder** = capability search, tool selection, skill body fetch
+
 ## Decision Logic
 
 For any maintenance request, follow this sequence:
 
 ```
-1. DETECT      → aiwg runtime-info (identify provider)
-2. BASELINE    → aiwg doctor (establish current health)
-3. CHECK       → aiwg version (compare to latest)
+1. DETECT      → aiwg runtime-info --json | jq -r '.provider'
+2. BASELINE    → aiwg doctor 2>&1 | grep -E "passed|FAIL|warning"
+3. CHECK       → aiwg version --json | jq -r '.version'
 4. CAPABILITIES→ Read capability-matrix.yaml if feature routing is needed
 5. PLAN        → Determine what needs to change
 6. CONFIRM     → For destructive operations, ask user
-7. EXECUTE     → Run CLI commands
-8. VERIFY      → aiwg doctor (confirm health after changes)
+7. EXECUTE     → Run CLI commands (one at a time, small outputs)
+8. VERIFY      → aiwg doctor 2>&1 | grep -E "passed|FAIL"
 9. REPORT      → Structured summary of actions taken
 ```
 
