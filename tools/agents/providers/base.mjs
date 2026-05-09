@@ -181,16 +181,45 @@ export function writeSidecarManifest(dir, manifest, dryRun) {
 /**
  * Update sidecar manifest entries for a batch of deployed files.
  * Merges into existing manifest if present.
+ *
+ * `frameworkSlug` (optional, per-entry) records which AIWG framework
+ * the file came from (e.g., 'forensics-complete', 'sdlc-complete').
+ * Used by the cross-framework collision guard (#1169) to detect
+ * silent overwrites when two frameworks ship a file with the same
+ * filename but different content.
  */
 export function updateSidecarManifest(dir, deployedEntries, opts) {
   const { dryRun = false, version = 'unknown', source = 'bundled' } = opts;
   const existing = readSidecarManifest(dir) || { managed: {} };
 
-  for (const { filename, hash } of deployedEntries) {
-    existing.managed[filename] = { hash: `sha256:${hash}`, source, version };
+  for (const entry of deployedEntries) {
+    const { filename, hash, frameworkSlug } = entry;
+    const sidecarEntry = { hash: `sha256:${hash}`, source, version };
+    if (frameworkSlug) sidecarEntry.frameworkSlug = frameworkSlug;
+    existing.managed[filename] = sidecarEntry;
   }
 
   writeSidecarManifest(dir, existing, dryRun);
+}
+
+// ============================================================================
+// Cross-Framework Collision Detection (#1169)
+// ============================================================================
+
+/**
+ * Extract the framework slug from a source file path.
+ *
+ * Recognizes paths under `agentic/code/frameworks/<slug>/...` and
+ * `agentic/code/addons/<slug>/...`. Returns null for paths outside
+ * those namespaces (operator-authored bundles, addons under
+ * `.aiwg/addons/`, etc.) — those don't get collision-tracked.
+ */
+export function extractFrameworkSlug(srcPath) {
+  if (typeof srcPath !== 'string') return null;
+  // Normalize separators for cross-platform matching
+  const normalized = srcPath.replace(/\\/g, '/');
+  const m = normalized.match(/agentic\/code\/(?:frameworks|addons)\/([^/]+)\//);
+  return m ? m[1] : null;
 }
 
 // ============================================================================
@@ -519,10 +548,17 @@ export function deployFiles(files, destDir, opts, transformFn) {
   const { force = false, dryRun = false, provider = 'claude', fileExtension = '.md', injectPlatform = false } = opts;
   const deployVersion = opts.deployVersion || 'unknown';
   const deploySource = opts.deploySource || 'bundled';
-  const seen = new Set();
+  // Map of dest path → first batch entry that claimed it. Used to detect
+  // and report cross-framework collisions within a single deploy batch
+  // (#1169). Each value: { src, frameworkSlug }
+  const seen = new Map();
   const actions = [];
+  // Collision report — one entry per detected cross-framework collision
+  // (within-batch or against sidecar). Surfaced after the loop.
+  const collisions = [];
 
-  // Read sidecar manifest for hash-based skip-on-match (#749)
+  // Read sidecar manifest for hash-based skip-on-match (#749) and
+  // cross-framework collision detection (#1169)
   const sidecar = readSidecarManifest(destDir);
   const sidecarManaged = sidecar?.managed || {};
 
@@ -535,14 +571,10 @@ export function deployFiles(files, destDir, opts, transformFn) {
     }
 
     let dest = path.join(destDir, base);
+    const currentFrameworkSlug = extractFrameworkSlug(f);
 
-    // Check for duplicate destination in this batch
-    if (seen.has(dest)) {
-      actions.push({ type: 'skip', src: f, dest, reason: 'duplicate' });
-      continue;
-    }
-
-    // Read and transform source content
+    // Read and transform source content (needed for content-equality check
+    // and the collision-vs-duplicate distinction)
     const srcContent = fs.readFileSync(f, 'utf8');
     let transformedContent = transformFn ? transformFn(f, srcContent, opts) : srcContent;
 
@@ -560,13 +592,86 @@ export function deployFiles(files, destDir, opts, transformFn) {
     // Compute content hash for sidecar comparison
     const hash = contentHash(transformedContent);
 
+    // Within-batch collision check (#1169). If a previous file in this
+    // batch already claimed this dest, distinguish:
+    //   - Same content (transform/normalize is idempotent) → silent skip
+    //   - Same framework + different content → "duplicate" (legacy reason)
+    //   - Different framework + different content → "collision"
+    if (seen.has(dest)) {
+      const prev = seen.get(dest);
+      const prevContent = prev.transformedContent;
+      if (prevContent === transformedContent) {
+        actions.push({ type: 'skip', src: f, dest, reason: 'duplicate-identical' });
+        continue;
+      }
+      const prevSlug = prev.frameworkSlug;
+      if (currentFrameworkSlug && prevSlug && currentFrameworkSlug !== prevSlug) {
+        // Cross-framework collision within a single deploy batch — first
+        // wins; second is skipped. `--force` keeps the first entry too,
+        // since we have no principled way to pick a winner among peers.
+        collisions.push({
+          dest,
+          filename: base,
+          existingFramework: prevSlug,
+          existingSrc: prev.src,
+          incomingFramework: currentFrameworkSlug,
+          incomingSrc: f,
+          scope: 'within-batch',
+        });
+        actions.push({
+          type: 'skip',
+          src: f,
+          dest,
+          reason: 'collision',
+          collidingFramework: prevSlug,
+        });
+        continue;
+      }
+      actions.push({ type: 'skip', src: f, dest, reason: 'duplicate' });
+      continue;
+    }
+
     // Skip-on-match: compare hash against sidecar manifest before reading dest file (#749)
     // Guard: only skip if the destination file still exists on disk. cleanupOldRuleFiles
     // may have deleted it before deployFiles runs, so the sidecar record is stale.
     if (!force && sidecarManaged[base]?.hash === `sha256:${hash}` && fs.existsSync(dest)) {
       actions.push({ type: 'skip', src: f, dest, reason: 'hash-match' });
-      seen.add(dest);
+      seen.set(dest, { src: f, frameworkSlug: currentFrameworkSlug, transformedContent });
       continue;
+    }
+
+    // Cross-batch collision check against sidecar (#1169). If the dest
+    // file is already managed by a *different* framework than this deploy,
+    // and the new content differs, refuse to silently overwrite.
+    if (
+      !force &&
+      fs.existsSync(dest) &&
+      sidecarManaged[base]?.frameworkSlug &&
+      currentFrameworkSlug &&
+      sidecarManaged[base].frameworkSlug !== currentFrameworkSlug
+    ) {
+      const destContent = fs.readFileSync(dest, 'utf8');
+      if (destContent !== transformedContent) {
+        collisions.push({
+          dest,
+          filename: base,
+          existingFramework: sidecarManaged[base].frameworkSlug,
+          existingSrc: null,
+          incomingFramework: currentFrameworkSlug,
+          incomingSrc: f,
+          scope: 'cross-batch',
+        });
+        actions.push({
+          type: 'skip',
+          src: f,
+          dest,
+          reason: 'collision',
+          collidingFramework: sidecarManaged[base].frameworkSlug,
+        });
+        // Don't claim the dest in `seen` — we did not deploy. The sidecar
+        // entry already holds the previous framework's record and stays.
+        continue;
+      }
     }
 
     // Fallback: check destination file content directly
@@ -574,16 +679,16 @@ export function deployFiles(files, destDir, opts, transformFn) {
       const destContent = fs.readFileSync(dest, 'utf8');
       if (destContent === transformedContent) {
         actions.push({ type: 'skip', src: f, dest, reason: 'unchanged', hash });
-        seen.add(dest);
+        seen.set(dest, { src: f, frameworkSlug: currentFrameworkSlug, transformedContent });
         continue;
       }
-      actions.push({ type: 'deploy', src: f, dest, content: transformedContent, reason: 'changed', hash });
+      actions.push({ type: 'deploy', src: f, dest, content: transformedContent, reason: 'changed', hash, frameworkSlug: currentFrameworkSlug });
     } else if (force && fs.existsSync(dest)) {
-      actions.push({ type: 'deploy', src: f, dest, content: transformedContent, reason: 'forced', hash });
+      actions.push({ type: 'deploy', src: f, dest, content: transformedContent, reason: 'forced', hash, frameworkSlug: currentFrameworkSlug });
     } else {
-      actions.push({ type: 'deploy', src: f, dest, content: transformedContent, reason: 'new', hash });
+      actions.push({ type: 'deploy', src: f, dest, content: transformedContent, reason: 'new', hash, frameworkSlug: currentFrameworkSlug });
     }
-    seen.add(dest);
+    seen.set(dest, { src: f, frameworkSlug: currentFrameworkSlug, transformedContent });
   }
 
   const verbose = opts.verbose === true;
@@ -593,7 +698,7 @@ export function deployFiles(files, destDir, opts, transformFn) {
       if (dryRun) console.log(`[dry-run] deploy ${a.src} -> ${a.dest} (${a.reason})`);
       else writeFile(a.dest, a.content, false);
       if (verbose) console.log(`deployed ${path.basename(a.src)} -> ${path.relative(process.cwd(), a.dest)} (${a.reason})`);
-      deployedEntries.push({ filename: path.basename(a.dest), hash: a.hash });
+      deployedEntries.push({ filename: path.basename(a.dest), hash: a.hash, frameworkSlug: a.frameworkSlug });
     } else if (a.type === 'skip') {
       if (verbose) console.log(`skip (${a.reason}): ${path.basename(a.dest)}`);
       // Preserve existing sidecar entries for skipped files
@@ -601,7 +706,28 @@ export function deployFiles(files, destDir, opts, transformFn) {
     }
   }
 
-  // Update sidecar manifest with deployed file hashes (#749)
+  // Surface cross-framework collisions to the operator (#1169). Always
+  // visible (not gated on verbose) because silent loss is the failure
+  // mode this guard exists to prevent.
+  if (collisions.length > 0) {
+    const tag = force ? 'override' : 'skip';
+    console.warn(
+      `\n⚠ Cross-framework deploy collision${collisions.length > 1 ? 's' : ''} detected (${collisions.length}):`,
+    );
+    for (const c of collisions) {
+      console.warn(
+        `  ${c.filename}: ${c.existingFramework} owns this slot; ${c.incomingFramework} skipped (${c.scope})`,
+      );
+    }
+    if (!force) {
+      console.warn(
+        `  Re-run with --force to override (last-wins) or rename the colliding file at framework source.`,
+      );
+    }
+  }
+
+  // Update sidecar manifest with deployed file hashes (#749) including
+  // framework slug for future collision detection (#1169).
   if (deployedEntries.length > 0) {
     updateSidecarManifest(destDir, deployedEntries, { dryRun, version: deployVersion, source: deploySource });
   }
