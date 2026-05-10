@@ -502,6 +502,72 @@ function printNextSteps(framework: Framework, provider: string = 'claude'): void
 }
 
 /**
+ * Per-provider session-reload requirement after `aiwg use`.
+ *
+ * Most agentic platforms read their `<provider>/agents/` directory at session
+ * start and cache the agent registry for the lifetime of the session. A
+ * deploy that lands new agent files is invisible to any session that was
+ * already running when the deploy completed — the Agent / Task tool will
+ * still report `Agent type 'foo' not found` until the session reloads.
+ *
+ * Issue #1240: surfacing this requirement in `aiwg use` output and in the
+ * Steward FAQ so operators stop hitting the "fallback to general-purpose"
+ * path silently.
+ */
+const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string }> = {
+  claude: {
+    action: 'Restart your Claude Code session (close and reopen) to load the newly deployed agents.',
+    rationale: 'Claude Code reads .claude/agents/ at session start. A running session retains its old registry until reloaded.',
+  },
+  codex: {
+    action: 'Restart your Codex session to pick up newly deployed agents and home-dir skills.',
+    rationale: 'Codex caches its agent and skill registry per session. ~/.codex/skills/ and .codex/agents/ are scanned on startup.',
+  },
+  copilot: {
+    action: 'Reload the VS Code window (`Developer: Reload Window`) so Copilot picks up the new .github/agents/ entries.',
+    rationale: 'VS Code/Copilot caches workspace agent definitions until the window reloads.',
+  },
+  cursor: {
+    action: 'Restart Cursor (close and reopen the project) to load the newly deployed agents.',
+    rationale: 'Cursor reads .cursor/agents/ and .cursor/rules/ on workspace open.',
+  },
+  warp: {
+    action: 'Open a fresh Warp tab — WARP.md is re-read on tab start.',
+    rationale: 'Warp aggregates context from WARP.md when a new tab spawns; existing tabs keep the prior version.',
+  },
+  windsurf: {
+    action: 'Restart Windsurf or reload the workspace so the aggregated AGENTS.md is re-parsed.',
+    rationale: 'Windsurf reads AGENTS.md once per workspace session.',
+  },
+  factory: {
+    action: 'Restart your Factory droid runtime to pick up new entries in .factory/droids/.',
+    rationale: 'Factory caches the droid manifest at runtime start.',
+  },
+  opencode: {
+    action: 'Restart your OpenCode session — `.opencode/agent/` is scanned on startup.',
+    rationale: 'OpenCode loads agent files on session start and does not hot-reload.',
+  },
+  hermes: {
+    action: 'Restart the Hermes MCP server (or reload its config) so the new ~/.hermes/skills/ entries register.',
+    rationale: 'Hermes runs as a long-lived MCP host; changes to its skill directory require a server reload.',
+  },
+  openclaw: {
+    action: 'Restart OpenClaw — ~/.openclaw/agents/ and ~/.openclaw/skills/ are loaded on startup.',
+    rationale: 'OpenClaw reads its home-dir registry once per process.',
+  },
+};
+
+function printSessionReloadNotice(provider: string): void {
+  const notice = SESSION_RELOAD_NOTICE[provider];
+  if (!notice) return;
+  ui.section('Session reload required:', [
+    notice.action,
+    `Why: ${notice.rationale}`,
+    'Until reloaded, the Agent/Task tool will report "Agent type not found" for the newly deployed agents.',
+  ]);
+}
+
+/**
  * Count deployed artifacts in target directories
  *
  * @implements #609
@@ -1597,6 +1663,13 @@ export class UseHandler implements CommandHandler {
       if (counts.behaviors > 0) ui.deployCount('Behaviors', counts.behaviors);
       ui.blank();
       printNextSteps(framework as Framework, provider);
+
+      // #1240: warn the operator that the running session can't see the newly
+      // deployed agents until reloaded. Skipping this notice is what produced
+      // the "Agent type 'software-implementer' not found" symptom on a stale
+      // Claude Code session.
+      ui.blank();
+      printSessionReloadNotice(provider);
 
       // Append version confirmation line (#719)
       try {

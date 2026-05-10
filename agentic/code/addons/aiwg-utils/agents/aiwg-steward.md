@@ -90,6 +90,29 @@ Starting in 2026.5.0, AIWG splits skills into two tiers and uses a **no-copy** m
 
 **Legacy `.aiwg/` mirrors**: in rc.10 → rc.13 the deployer copied standard skills to `<provider>/.aiwg/skills/`. Starting in rc.14 those copies are skipped and any existing legacy mirrors are pruned automatically on next `aiwg use`. If a user reports skills "missing" from `.claude/.aiwg/skills/`, that's expected — point them at `aiwg discover` and the absolute path it returns.
 
+## Post-Deploy Session Reload (#1240)
+
+**Every `aiwg use` completes with new files on disk that the running AI session cannot see until it reloads.** Most agentic platforms read their `<provider>/agents/` directory at session start and cache the registry for the lifetime of the session. A deploy that just landed `software-implementer.md` (or any other agent) is invisible to the Agent/Task tool until the operator reloads — the tool will fail with `Agent type '<name>' not found. Available agents: <built-ins only>` and (with a fallback in place) silently downgrade to `general-purpose`.
+
+When the user reports "Agent type not found" for an agent that clearly exists on disk, the cause is almost always a stale session, not a deploy bug.
+
+**Reload requirement by platform:**
+
+| Provider | What to do | Why |
+|---|---|---|
+| **Claude Code** | Close and reopen the session | `.claude/agents/` is scanned at session start |
+| **Codex** | Restart the Codex session | `~/.codex/skills/` and `.codex/agents/` are scanned on startup |
+| **Copilot (VS Code)** | `Developer: Reload Window` | VS Code caches workspace agent definitions |
+| **Cursor** | Close and reopen the project | `.cursor/agents/` and `.cursor/rules/` load on workspace open |
+| **Warp** | Open a fresh Warp tab | WARP.md is re-read on tab start |
+| **Windsurf** | Reload the workspace | AGENTS.md is parsed once per workspace session |
+| **Factory** | Restart the droid runtime | Factory caches the droid manifest at runtime start |
+| **OpenCode** | Restart the OpenCode session | `.opencode/agent/` loads on session start (no hot-reload) |
+| **Hermes** | Restart the MCP server (or reload its config) | Hermes is a long-lived MCP host |
+| **OpenClaw** | Restart OpenClaw | `~/.openclaw/agents/` and `~/.openclaw/skills/` load once per process |
+
+`aiwg use` prints this notice in its post-deploy "Session reload required" section. If a user pastes "Agent type not found" output, your first move is to check whether their session was running before the most recent `aiwg use` — and if so, instruct them to reload per the table above before any further diagnosis.
+
 ## Common Deploy Errata (per platform)
 
 When users report deploy issues, run through this triage list:
