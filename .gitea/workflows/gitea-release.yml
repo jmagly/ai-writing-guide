@@ -37,25 +37,59 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version verified: $VERSION"
 
+      # Authentication note (#1246, #1247):
+      # `secrets.NPM_TOKEN` is a **Gitea API token** (gta_... format) —
+      # NOT an npmjs.org token. Same token is used by npm-publish.yml to
+      # auth against Gitea's bundled npm registry. The name is historical
+      # and was kept in rc.38 by operator preference to avoid a secret-
+      # rotation cycle. The npmjs.org public-registry token lives at
+      # `secrets.NPMJS_TOKEN` and is referenced only by npm-publish.yml.
       - name: Create or reuse Gitea release
         run: |
-          VERSION=${{ steps.version.outputs.version }}
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
           # Mark as prerelease if tag contains a suffix (RC, beta, alpha, etc.)
-          BASE=${VERSION%%-*}
+          BASE="${VERSION%%-*}"
           if [ "$VERSION" != "$BASE" ]; then
             PRERELEASE=true
           else
             PRERELEASE=false
           fi
 
-          curl -X POST \
+          # Build the release body via jq -n so the JSON is correctly escaped.
+          # The previous inline `-d "{...\\\`\\\`\\\`...}"` form (#1246) mangled
+          # the triple-backtick code-fence escaping at YAML expansion time and
+          # Gitea responded with `"[]: json: string unexpected end of JSON
+          # input"` — silently caught by `|| echo`, so no Release was ever
+          # created from rc.27 through rc.37.
+          BODY_MD=$(printf '## Installation\n\n```bash\nnpm install -g aiwg@%s\n```\n\nAlso available from Gitea registry:\n```bash\nnpm install -g aiwg@%s --registry=https://git.integrolabs.net/api/packages/roctinam/npm/\n```\n\n## Notes\n\nGitea release is auto-created on tag push. GitHub releases are managed manually.\n' "$VERSION" "$VERSION")
+
+          PAYLOAD=$(jq -n \
+            --arg tag "v${VERSION}" \
+            --arg body "$BODY_MD" \
+            --argjson prerelease "$PRERELEASE" \
+            '{tag_name: $tag, name: $tag, body: $body, draft: false, prerelease: $prerelease}')
+
+          URL="${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases"
+          # POST and capture both response body + HTTP code so we can
+          # distinguish "created" (201) from "already exists" (409) from
+          # real failures (4xx/5xx without a 409). pipefail-safe.
+          HTTP_CODE=$(curl -s -o /tmp/release-response.json -w "%{http_code}" -X POST \
             -H "Authorization: token ${{ secrets.NPM_TOKEN }}" \
             -H "Content-Type: application/json" \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases" \
-            -d "{
-              \"tag_name\": \"v${VERSION}\",
-              \"name\": \"v${VERSION}\",
-              \"body\": \"## Installation\\n\\n\\\`\\\`\\\`bash\\nnpm install -g aiwg@${VERSION}\\n\\\`\\\`\\\`\\n\\nAlso available from Gitea registry:\\n\\\`\\\`\\\`bash\\nnpm install -g aiwg@${VERSION} --registry=https://git.integrolabs.net/api/packages/roctinam/npm/\\n\\\`\\\`\\\`\\n\\n## Notes\\n\\nGitea release is auto-created on tag push. GitHub releases are managed manually.\",
-              \"draft\": false,
-              \"prerelease\": ${PRERELEASE}
-            }" || echo "Release may already exist"
+            -d "$PAYLOAD" \
+            "$URL")
+
+          case "$HTTP_CODE" in
+            201|200)
+              echo "Release created: v${VERSION}"
+              ;;
+            409)
+              echo "Release v${VERSION} already exists — treating as success"
+              ;;
+            *)
+              echo "Release creation failed (HTTP ${HTTP_CODE}):"
+              cat /tmp/release-response.json
+              exit 1
+              ;;
+          esac

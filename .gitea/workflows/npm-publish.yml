@@ -4,8 +4,14 @@
 # when a version tag is pushed. Uses CalVer versioning: vYYYY.M.PATCH
 #
 # REQUIRED SECRETS:
-#   NPM_TOKEN    - Gitea access token with package:write scope (for Gitea registry)
-#   NPMJS_TOKEN  - npmjs.org granular access token (bypasses 2FA for CI)
+#   NPM_TOKEN    - **Gitea API token** (gta_...) with package:write scope on
+#                  Gitea's bundled npm registry, plus repository:write so the
+#                  same token can also drive gitea-release.yml. Despite the
+#                  name, this is NOT an npmjs.org token — the legacy name is
+#                  preserved by operator preference.
+#   NPMJS_TOKEN  - npmjs.org granular access token (npm_...). Bypasses 2FA
+#                  for CI. Must have read+write scope on the `aiwg` package
+#                  under the npmjs.org account that owns it.
 #
 # To publish a new version:
 #   1. Update version in package.json
@@ -82,6 +88,11 @@ jobs:
 
       - name: Publish pre-release to Gitea npm registry
         run: |
+          # set -o pipefail (#1247): without it, `npm publish ... | tee` returns
+          # tee's exit code (always 0) and the || block below never fires, so
+          # publish failures silently report success. Same fix in all four
+          # publish steps.
+          set -o pipefail
           cat > .npmrc << 'NPMRC'
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
@@ -89,6 +100,7 @@ jobs:
             if grep -qE "package version already exists|EPUBLISHCONFLICT|409" publish-output.txt; then
               echo "✓ Pre-release version already published to Gitea"
             else
+              echo "✗ Gitea pre-release publish failed (HTTP/npm error above)"
               cat publish-output.txt; exit 1
             fi
           }
@@ -97,13 +109,20 @@ jobs:
 
       - name: Publish pre-release to public npmjs.org
         run: |
+          set -o pipefail
           cat > .npmrc << 'NPMRC'
           //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
           npm publish --access public --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee publish-public-output.txt || {
-            if grep -qE "cannot publish over|EPUBLISHCONFLICT|403" publish-public-output.txt; then
+            # 409/403/"cannot publish over" = "already published" (success).
+            # 404 PUT = token/scope/ownership problem (failure — must surface,
+            # see #1247). Anything else = unexpected (failure).
+            if grep -qE "cannot publish over|EPUBLISHCONFLICT|409" publish-public-output.txt; then
               echo "✓ Pre-release version already published to npmjs.org"
             else
+              echo "✗ Public npmjs.org pre-release publish failed (HTTP/npm error above)"
+              echo "  Common causes: NPMJS_TOKEN missing scope on the aiwg package,"
+              echo "  npmjs.org account ownership change, or token rotation needed."
               cat publish-public-output.txt; exit 1
             fi
           }
@@ -171,6 +190,7 @@ jobs:
       - name: Publish to Gitea npm registry
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
+          set -o pipefail
           # Configure auth for Gitea registry
           cat > .npmrc << 'NPMRC'
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
@@ -192,17 +212,22 @@ jobs:
       - name: Publish to public npmjs.org
         if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.skip_public != 'true' }}
         run: |
+          set -o pipefail
           # Configure auth for public npm registry
           cat > .npmrc << 'NPMRC'
           //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
 
-          # Allow re-runs: treat "version already exists" as success
+          # Allow re-runs: treat "version already exists" as success.
+          # 404 PUT is intentionally NOT swallowed (#1247) — it indicates
+          # token scope / package ownership failure that must surface.
           npm publish --access public 2>&1 | tee publish-public-output.txt || {
-            if grep -qE "cannot publish over the previously published|EPUBLISHCONFLICT|403" publish-public-output.txt; then
+            if grep -qE "cannot publish over the previously published|EPUBLISHCONFLICT|409" publish-public-output.txt; then
               echo "✓ Version already published to npmjs.org - treating as success"
             else
-              echo "✗ Public npm publish failed"
+              echo "✗ Public npm publish failed (HTTP/npm error above)"
+              echo "  Common causes: NPMJS_TOKEN missing scope on the aiwg package,"
+              echo "  npmjs.org account ownership change, or token rotation needed."
               cat publish-public-output.txt
               exit 1
             fi
