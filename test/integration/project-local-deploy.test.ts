@@ -174,4 +174,69 @@ describe('project-local deploy integration (#1046)', () => {
     expect(runDeploy(env, 'claude').status).toBe(0);
     expect(existsSync(ruleFile), 'deploy is idempotent — restores missing file').toBe(true);
   });
+
+  // #1228 follow-up: `aiwg use` must invoke deploy-agents.mjs with --copy-all
+  // for project-local bundles. The default deploy mode (#1217) is no-copy +
+  // index-driven discovery, which assumes upstream skills at $AIWG_ROOT.
+  // Project-local bundles live under the project's .aiwg/ tree and aren't in
+  // the framework graph, so without --copy-all their skills never reach the
+  // standard-tier sequestered path and become unreachable from both the
+  // platform and the index.
+  it('PL-COPY-ALL: project-local skills land at <provider>/.aiwg/skills/ via aiwg use', () => {
+    const aiwgBin = path.join(REPO_ROOT, 'bin/aiwg.mjs');
+
+    // Minimal aiwg.config so `aiwg use` doesn't try to run init wizard
+    writeFileSync(
+      path.join(env.projectDir, '.aiwg', 'aiwg.config'),
+      JSON.stringify({ providers: ['claude'] }, null, 2),
+    );
+
+    let result: { status: number; stdout: string };
+    try {
+      const stdout = execFileSync(
+        process.execPath,
+        [aiwgBin, 'use', 'sdlc', '--provider', 'claude', '--quiet'],
+        {
+          cwd: env.projectDir,
+          env: {
+            ...process.env,
+            AIWG_ROOT: REPO_ROOT,
+            HOME: env.homeDir,
+            USERPROFILE: env.homeDir,
+          },
+          encoding: 'utf-8',
+          timeout: 180_000,
+        },
+      );
+      result = { status: 0, stdout };
+    } catch (e: any) {
+      result = { status: e.status ?? 1, stdout: (e.stdout || '') + (e.stderr || '') };
+    }
+
+    expect(result.status, `aiwg use stdout:\n${result.stdout}`).toBe(0);
+
+    // The project-local bundle's skill must land at the standard-tier
+    // sequestered path — this is what was broken before the fix.
+    const projectLocalSkill = path.join(
+      env.projectDir,
+      '.claude',
+      '.aiwg',
+      'skills',
+      'demo-skill',
+      'SKILL.md',
+    );
+    expect(
+      existsSync(projectLocalSkill),
+      `project-local skill must deploy to ${projectLocalSkill}`,
+    ).toBe(true);
+
+    // And the bundle's rule must still land alongside platform rules.
+    const projectLocalRule = path.join(
+      env.projectDir,
+      '.claude',
+      'rules',
+      'pl-rule.md',
+    );
+    expect(existsSync(projectLocalRule)).toBe(true);
+  });
 });

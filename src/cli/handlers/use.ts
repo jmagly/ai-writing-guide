@@ -740,6 +740,15 @@ async function deployOneProjectLocalBundle(opts: {
     '--deploy-commands', '--deploy-skills', '--deploy-rules',
     '--provider', provider,
     '--target', target,
+    // Project-local skills MUST land in the per-project skills tier
+    // (#1228 follow-up). Default deploy mode after #1217 is no-copy +
+    // index-driven discovery, but that model assumes upstream skills at
+    // $AIWG_ROOT — project-local bundles live under the project's .aiwg/
+    // tree and aren't reachable via `aiwg discover` of the framework
+    // graph. Without --copy-all, the bundle's rules deploy but its skills
+    // never reach <provider>/.aiwg/skills/, leaving them invisible to
+    // both the platform and the index.
+    '--copy-all',
   ];
   if (dryRun) args.push('--dry-run');
   if (verbose) args.push('--verbose');
