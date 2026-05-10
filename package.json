@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2026.5.0-rc.26",
+  "version": "2026.5.0-rc.27",
   "description": "Deployment tool and support utility for AI context. Copies agents, skills, commands, rules, and behaviors into the paths each AI platform reads (Claude Code, Codex, Copilot, Cursor, Warp, OpenClaw, and 4 more) so one source of truth works across 10 platforms. Optional utilities for persistent artifact memory, background orchestration, autonomous loops, and artifact indexing.",
   "type": "module",
   "bin": {
@@ -238,7 +238,10 @@
     "@hono/node-server": "^1.19.14",
     "hono": "^4.12.14",
     "node-pty": "^1.0.0",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "@xenova/transformers": "^2.17.2",
+    "hnswlib-node": "^3.0.0",
+    "better-sqlite3": "^12.8.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
@@ -246,16 +249,13 @@
     "@types/semver": "^7.7.1",
     "@vitest/coverage-v8": "^2.1.0",
     "@vitest/ui": "^2.1.0",
-    "@xenova/transformers": "^2.17.2",
     "@xterm/headless": "^6.0.0",
-    "better-sqlite3": "^12.8.0",
     "cli-table3": "^0.6.5",
     "graphology": "^0.26.0",
     "graphology-operators": "^1.6.0",
     "graphology-shortest-path": "^2.1.0",
     "graphology-traversal": "^0.3.0",
     "graphology-types": "^0.24.0",
-    "hnswlib-node": "^3.0.0",
     "simple-statistics": "^7.8.8",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",

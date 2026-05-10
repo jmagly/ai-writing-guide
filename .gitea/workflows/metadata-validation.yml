@@ -40,12 +40,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        # --ignore-scripts skips native-binary downloads (e.g. sharp →
-        # libvips from github.com) that the metadata validator doesn't
-        # need. Build is pure TypeScript; no native deps required.
-        # Avoids transient CI failures when sharp's libvips download
-        # times out (frequent on this runner).
-        run: npm ci --ignore-scripts
+        # --omit=optional skips runtime-optional features (embedding
+        # index via @xenova/transformers + hnswlib-node, daemon PTY
+        # bridge via node-pty, SQLite storage backend). The metadata
+        # validator only needs fs/path/yaml/semver/zod — all
+        # already in required deps. Avoids the libvips download
+        # (transitive via @xenova → sharp) that frequently times out
+        # from github.com on this runner. Required deps + devDeps
+        # still install normally with full install scripts.
+        run: npm ci --omit=optional
 
       - name: Build TypeScript
         run: |
@@ -167,12 +170,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        # --ignore-scripts skips native-binary downloads (e.g. sharp →
-        # libvips from github.com) that the metadata validator doesn't
-        # need. Build is pure TypeScript; no native deps required.
-        # Avoids transient CI failures when sharp's libvips download
-        # times out (frequent on this runner).
-        run: npm ci --ignore-scripts
+        # --omit=optional skips runtime-optional features (embedding
+        # index via @xenova/transformers + hnswlib-node, daemon PTY
+        # bridge via node-pty, SQLite storage backend). The metadata
+        # validator only needs fs/path/yaml/semver/zod — all
+        # already in required deps. Avoids the libvips download
+        # (transitive via @xenova → sharp) that frequently times out
+        # from github.com on this runner. Required deps + devDeps
+        # still install normally with full install scripts.
+        run: npm ci --omit=optional
 
       - name: Build TypeScript
         run: npm run build
