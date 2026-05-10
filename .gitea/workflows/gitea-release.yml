@@ -31,6 +31,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install jq (node:20 image does not ship it by default)
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            apt-get update && apt-get install -y --no-install-recommends jq
+          fi
+
       - name: Extract version from package.json
         id: version
         run: |
