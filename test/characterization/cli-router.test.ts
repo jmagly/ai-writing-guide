@@ -281,7 +281,7 @@ describe('CLI Router Characterization Tests', () => {
         mkdirSync(tempDir, { recursive: true });
         try {
           const result = runCli(['use'], { cwd: tempDir });
-          expect(result.stderr).toMatch(/Framework or addon name required/i);
+          expect(result.stderr).toMatch(/Framework,? addon,? or extension name required/i);
           expect(result.exitCode).toBe(1);
         } finally {
           rmSync(tempDir, { recursive: true, force: true });

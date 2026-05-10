@@ -347,8 +347,18 @@ export async function discoverCapability(
   }
 
   if (entries.length === 0) {
+    // Empty-index case (#1221). Surface a hint that explains the gap rather
+    // than returning a bare zero-result envelope — the latter trains agents
+    // to conclude "AIWG doesn't have a skill for that" when in fact the
+    // index simply hasn't been built in this workspace yet.
+    const hint = 'No artifact index found. Run `aiwg index build --graph framework` (or `aiwg use <framework>`) first.';
     if (params.json) {
-      console.log(JSON.stringify({ query: { phrase: params.phrase, types }, results: [], total: 0 }, null, 2));
+      console.log(JSON.stringify({
+        query: { phrase: params.phrase, types },
+        results: [],
+        total: 0,
+        hint,
+      }, null, 2));
     } else {
       console.error('Error: No artifact index found.');
       console.log('Run `aiwg index build --graph framework` (or `aiwg use <framework>`) first.');
@@ -388,6 +398,12 @@ export async function discoverCapability(
     return entry.path;
   }
 
+  // Build a hint string when the index has entries but no scored matches —
+  // this is the second silent-failure mode #1221 calls out.
+  const emptyResultHint = scored.length === 0
+    ? `No matches in the indexed corpus. The framework index has ${entries.length} entries but none scored against "${params.phrase}". Try a broader phrase, check \`aiwg index stats --graph framework\`, or rebuild with \`aiwg index build --graph framework --force\`.`
+    : null;
+
   if (params.json) {
     console.log(JSON.stringify({
       query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null },
@@ -402,6 +418,7 @@ export async function discoverCapability(
       })),
       total: scored.length,
       query_time_ms: queryTimeMs,
+      ...(emptyResultHint ? { hint: emptyResultHint } : {}),
     }, null, 2));
     return;
   }
@@ -447,6 +464,77 @@ export interface ShowParams {
 }
 
 /**
+ * Scan the AIWG_ROOT corpus for an artifact matching `name` (#1221).
+ *
+ * Walks the well-known artifact layouts under
+ * `agentic/code/{frameworks,addons,extensions}/<bundle>/{skills,agents,commands,rules,templates}/`
+ * and returns the first match. Used as a fallback in `aiwg show` when an
+ * artifact isn't in any built index — either because the workspace hasn't
+ * been deployed to yet, or because the bundle hasn't been installed.
+ *
+ * Returns the resolved absolute path plus enough metadata for the caller
+ * to surface a useful install hint. Returns null if nothing matches.
+ */
+async function findCorpusArtifact(
+  aiwgRoot: string,
+  name: string,
+  typeFilter: string[],
+): Promise<{
+  path: string;
+  type: string;
+  bundleKind: 'framework' | 'addon' | 'extension' | null;
+  bundleId: string | null;
+} | null> {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const fsp = fs.promises;
+
+  const groups: Array<{ kind: 'framework' | 'addon' | 'extension'; dir: string }> = [
+    { kind: 'framework', dir: path.join(aiwgRoot, 'agentic/code/frameworks') },
+    { kind: 'addon', dir: path.join(aiwgRoot, 'agentic/code/addons') },
+    { kind: 'extension', dir: path.join(aiwgRoot, 'agentic/code/extensions') },
+  ];
+
+  // (subdir, type, layout) — 'flat' = `<name>.md`, 'slug' = `<name>/SKILL.md`
+  const tries: Array<{ sub: string; type: string; layout: 'flat' | 'slug' }> = [
+    { sub: 'skills', type: 'skill', layout: 'slug' },
+    { sub: 'skills', type: 'skill', layout: 'flat' },
+    { sub: 'agents', type: 'agent', layout: 'flat' },
+    { sub: 'commands', type: 'command', layout: 'flat' },
+    { sub: 'rules', type: 'rule', layout: 'flat' },
+    { sub: 'templates', type: 'template', layout: 'flat' },
+  ];
+
+  for (const group of groups) {
+    let bundles: string[];
+    try {
+      bundles = (await fsp.readdir(group.dir, { withFileTypes: true }))
+        .filter(d => d.isDirectory())
+        .map(d => d.name);
+    } catch {
+      continue;
+    }
+    for (const bundle of bundles) {
+      for (const t of tries) {
+        if (typeFilter.length > 0 && !typeFilter.includes(t.type)) continue;
+        const candidate = t.layout === 'slug'
+          ? path.join(group.dir, bundle, t.sub, name, 'SKILL.md')
+          : path.join(group.dir, bundle, t.sub, `${name}.md`);
+        try {
+          const stat = await fsp.stat(candidate);
+          if (stat.isFile()) {
+            return { path: candidate, type: t.type, bundleKind: group.kind, bundleId: bundle };
+          }
+        } catch {
+          // not present — continue
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Read and emit the full text of a specific artifact (typically a
  * SKILL.md). Consumers don't need to know where AIWG stores skills —
  * they pass the skill name and the CLI reads the file from the indexed
@@ -457,6 +545,7 @@ export interface ShowParams {
  *   2. Basename match (e.g. `intake-wizard` matches an entry whose
  *      directory basename is `intake-wizard`)
  *   3. Title match (case-insensitive)
+ *   4. Corpus fallback under AIWG_ROOT (#1221)
  *
  * On ambiguity, lists all matches and exits with code 2 unless
  * `--first` is supplied.
@@ -519,6 +608,52 @@ export async function showArtifact(
   }
 
   if (matches.length === 0) {
+    // Corpus fallback (#1221): when the artifact isn't in any indexed graph,
+    // scan the AIWG_ROOT corpus for a likely match and render it with an
+    // "(uninstalled)" banner. This keeps `aiwg show` useful in workspaces
+    // where the operator hasn't run `aiwg use` yet, or where the framework
+    // index is stale, rather than exiting with a misleading "not found".
+    if (aiwgRoot) {
+      const corpusMatch = await findCorpusArtifact(aiwgRoot, needle, types);
+      if (corpusMatch) {
+        let content: string;
+        try {
+          content = await fs.readFile(corpusMatch.path, 'utf8');
+        } catch (err) {
+          const e = err as NodeJS.ErrnoException;
+          console.error(`Error reading ${corpusMatch.path}: ${e.message ?? String(err)}`);
+          process.exit(1);
+        }
+        const installHint = corpusMatch.bundleKind && corpusMatch.bundleId
+          ? `Run \`aiwg use ${corpusMatch.bundleId}\` to install this ${corpusMatch.bundleKind} into the workspace.`
+          : 'Run `aiwg index build --graph framework` to refresh the artifact index.';
+        if (params.json) {
+          console.log(JSON.stringify({
+            path: corpusMatch.path,
+            type: corpusMatch.type,
+            title: needle,
+            kernel: false,
+            uninstalled: true,
+            hint: installHint,
+            content,
+          }, null, 2));
+          return;
+        }
+        // Plain text mode: prepend a banner so consumers see the artifact is
+        // corpus-only, then stream the body.
+        const banner = [
+          '<!-- AIWG: corpus-only artifact — not in the indexed workspace.',
+          `     ${installHint}`,
+          '     Origin: ' + corpusMatch.path,
+          '-->',
+          '',
+        ].join('\n');
+        process.stdout.write(banner);
+        process.stdout.write(content);
+        if (!content.endsWith('\n')) process.stdout.write('\n');
+        return;
+      }
+    }
     console.error(`Error: no artifact found matching "${needle}".`);
     console.error('Try `aiwg discover "<phrase>"` to find the right name.');
     process.exit(1);

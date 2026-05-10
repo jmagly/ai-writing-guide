@@ -123,6 +123,51 @@ export async function getAllAddons(frameworkRoot: string): Promise<string[]> {
 }
 
 /**
+ * Extensions excluded from `aiwg use all` deployment.
+ * `api-adapter` is an OpenAPI spec, not a deployable artifact bundle.
+ */
+export const USE_ALL_EXTENSIONS_DISALLOW = new Set(['api-adapter']);
+
+/**
+ * Discover all extension names from `agentic/code/extensions/*` (#1221).
+ *
+ * Extensions are addon-shaped bundles with their own `manifest.json`,
+ * `skills/`, `rules/`, and `templates/` directories. Only directories
+ * containing a `manifest.json` are considered deployable; bare directories
+ * (e.g. `api-adapter` which only ships an OpenAPI spec) are skipped.
+ */
+export async function getAllExtensions(frameworkRoot: string): Promise<string[]> {
+  const extensionsDir = path.join(frameworkRoot, 'agentic/code/extensions');
+  let entries: import('fs').Dirent[];
+  try {
+    entries = await fs.readdir(extensionsDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const result: string[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (USE_ALL_EXTENSIONS_DISALLOW.has(entry.name)) continue;
+    const manifestPath = path.join(extensionsDir, entry.name, 'manifest.json');
+    try {
+      await fs.access(manifestPath);
+      result.push(entry.name);
+    } catch {
+      // Directory without a manifest is not deployable as an extension.
+      continue;
+    }
+  }
+  return result;
+}
+
+/**
+ * Resolve extension source path from its name.
+ */
+export function extensionPath(frameworkRoot: string, name: string): string {
+  return path.join(frameworkRoot, 'agentic/code/extensions', name);
+}
+
+/**
  * Check whether a given addon name exists on disk.
  * The USE_ALL_DISALLOW list does NOT block explicit single-addon installs —
  * contributors can still run `aiwg use aiwg-dev` directly.
@@ -942,7 +987,7 @@ export class UseHandler implements CommandHandler {
           : '';
         return {
           exitCode: 1,
-          message: `Error: Framework or addon name required\nFrameworks: sdlc, marketing, media-curator, research, forensics, security-engineering, ops, knowledge-base, all\nAddons: rlm, ring, daemon, aiwg-dev${advisory}`,
+          message: `Error: Framework, addon, or extension name required\nFrameworks: sdlc, marketing, media-curator, research, forensics, security-engineering, ops, knowledge-base, all\nAddons: rlm, ring, daemon, aiwg-dev (full list: \`aiwg list\`)\nExtensions: sys, net, it, sec, stream, dev (full list: \`ls $AIWG_ROOT/agentic/code/extensions\`)\n'all' deploys every framework + every addon + every extension.${advisory}`,
         };
       }
       const installedNames = Object.keys(config.installed);
@@ -961,11 +1006,17 @@ export class UseHandler implements CommandHandler {
     const frameworkRoot = await getFrameworkRoot();
     const isFramework = VALID_FRAMEWORKS.includes(framework as Framework);
     const isAddon = !isFramework && await isValidAddon(frameworkRoot, framework);
+    // Extensions live in `agentic/code/extensions/<name>/` and are addon-shaped
+    // bundles. We treat them as addons for deployment purposes (#1222) — when
+    // the user runs `aiwg use sys` we resolve to the extension source dir and
+    // deploy via the addon code path below by remapping `addonPath()` lookup.
+    const isExtension = !isFramework && !isAddon
+      && (await getAllExtensions(frameworkRoot)).includes(framework);
 
     // Project-local bundle resolution: when the name doesn't match an upstream
-    // framework or addon, check `.aiwg/{extensions,addons,frameworks,plugins}/<id>/`
-    // for a matching bundle and deploy that single bundle. (#1035)
-    if (!isFramework && !isAddon) {
+    // framework, addon, or extension, check `.aiwg/{extensions,addons,
+    // frameworks,plugins}/<id>/` for a matching bundle. (#1035)
+    if (!isFramework && !isAddon && !isExtension) {
       const discovery = await discoverProjectLocalBundles(projectDir);
       const match = discovery.bundles.find(b => b.id === framework);
       if (match) {
@@ -1006,12 +1057,13 @@ export class UseHandler implements CommandHandler {
 
       return {
         exitCode: 1,
-        message: `Error: Unknown target '${framework}'\nFrameworks: ${VALID_FRAMEWORKS.join(', ')}\n\nFor addons, run 'aiwg list' to see available addons.\nFor project-local artifacts, run 'aiwg list --project-local'.\nRun 'aiwg help' for usage information.`,
+        message: `Error: Unknown target '${framework}'\nFrameworks: ${VALID_FRAMEWORKS.join(', ')}\n\n'all' deploys every framework + every addon + every extension.\nFor a single addon, run 'aiwg list' to see available addons.\nFor extensions (sys, net, it, sec, stream, dev), see $AIWG_ROOT/agentic/code/extensions/.\nFor project-local artifacts, run 'aiwg list --project-local'.\nRun 'aiwg help' for usage information.`,
       };
     }
 
-    // Handle addon-only deployment
-    if (isAddon) {
+    // Handle addon-only or extension-only deployment.
+    // Extensions are addon-shaped bundles — same code path, different source dir.
+    if (isAddon || isExtension) {
       const providerIdx = remainingArgs.findIndex(a => a === '--provider' || a === '--platform');
       const explicitAddonProvider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : null;
       const provider = explicitAddonProvider ?? (config?.providers?.[0] ?? 'claude');
@@ -1027,9 +1079,12 @@ export class UseHandler implements CommandHandler {
         addonBaseArgs.push('--copy-all');
       }
 
+      const kind = isExtension ? 'extension' : 'addon';
       ui.blank();
-      ui.header(`  Deploying ${framework} addon...`);
-      const addonSource = addonPath(frameworkRoot, framework);
+      ui.header(`  Deploying ${framework} ${kind}...`);
+      const addonSource = isExtension
+        ? extensionPath(frameworkRoot, framework)
+        : addonPath(frameworkRoot, framework);
       const addonResult = await runner.run('tools/agents/deploy-agents.mjs', [
         '--quiet', '--source', addonSource,
         ...addonBaseArgs,
@@ -1319,6 +1374,27 @@ export class UseHandler implements CommandHandler {
           ? ['--quiet', '--source', source, ...addonBaseArgs]
           : ['--source', source, ...addonBaseArgs];
         const result = await runner.run('tools/agents/deploy-agents.mjs', addonArgs, captureOpts);
+        if (result.exitCode !== 0) {
+          return result;
+        }
+      }
+
+      // Deploy all extensions from agentic/code/extensions/* (#1222).
+      // Extensions are addon-shaped bundles (manifest type: "addon") that live
+      // in a separate top-level dir to keep ops/sysops/itops/devops grouped.
+      // `aiwg use all` was previously silent about them, leaving 6 extension
+      // bundles undeployed even when the user explicitly asked for everything.
+      const allExtensions = await getAllExtensions(frameworkRoot);
+      for (const ext of allExtensions) {
+        if (verbose) {
+          console.log('');
+          console.log(`Deploying ${ext} extension...`);
+        }
+        const source = extensionPath(frameworkRoot, ext);
+        const extArgs = quiet
+          ? ['--quiet', '--source', source, ...addonBaseArgs]
+          : ['--source', source, ...addonBaseArgs];
+        const result = await runner.run('tools/agents/deploy-agents.mjs', extArgs, captureOpts);
         if (result.exitCode !== 0) {
           return result;
         }

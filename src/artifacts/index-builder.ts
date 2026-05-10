@@ -101,26 +101,45 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
   const normalized = filePath.replace(/\\/g, '/');
   const basename = path.basename(filePath, path.extname(filePath)).toLowerCase();
 
-  // Skills: SKILL.md inside a skills/<slug>/ directory.
+  // Skills: SKILL.md inside a skills/<slug>/ directory (frameworks/addons layout).
   if (basename === 'skill' && /\/skills\/[^/]+\/SKILL\.md$/i.test(normalized)) {
     return 'skill';
   }
-  // Agents: <name>.md inside an agents/ directory under frameworks/addons.
-  if (/\/(?:frameworks|addons)\/[^/]+\/agents\/[^/]+\.md$/i.test(normalized)) {
+  // Skills (extensions layout, #1221): flat `<group>/skills/<name>.md`
+  // under `agentic/code/extensions/`. Extensions don't use the slug-dir
+  // convention — every `.md` directly under an extension's `skills/` is a
+  // skill. README.md is skipped explicitly to avoid mistyping prose docs.
+  if (
+    /\/extensions\/[^/]+\/skills\/[^/]+\.md$/i.test(normalized) &&
+    basename !== 'readme'
+  ) {
+    return 'skill';
+  }
+  // Agents: <name>.md inside an agents/ directory under frameworks/addons/extensions.
+  if (/\/(?:frameworks|addons|extensions)\/[^/]+\/agents\/[^/]+\.md$/i.test(normalized)) {
     return 'agent';
   }
-  // Commands: <name>.md inside a commands/ directory under frameworks/addons.
-  if (/\/(?:frameworks|addons)\/[^/]+\/commands\/[^/]+\.md$/i.test(normalized)) {
+  // Commands: <name>.md inside a commands/ directory under frameworks/addons/extensions.
+  if (/\/(?:frameworks|addons|extensions)\/[^/]+\/commands\/[^/]+\.md$/i.test(normalized)) {
     return 'command';
   }
-  // Rules: <name>.md inside a rules/ directory under frameworks/addons
+  // Rules: <name>.md inside a rules/ directory under frameworks/addons/extensions
   // (excluding RULES-INDEX.md and READMEs).
   if (
-    /\/(?:frameworks|addons)\/[^/]+\/rules\/[^/]+\.md$/i.test(normalized) &&
+    /\/(?:frameworks|addons|extensions)\/[^/]+\/rules\/[^/]+\.md$/i.test(normalized) &&
     !/RULES-INDEX\.md$/i.test(normalized) &&
     basename !== 'readme'
   ) {
     return 'rule';
+  }
+  // Templates: <name>.md inside a templates/ directory under extensions.
+  // Extensions ship templates as a first-class artifact kind — surface them
+  // in the index so `aiwg discover` can find scaffolding patterns.
+  if (
+    /\/extensions\/[^/]+\/templates\/[^/]+\.md$/i.test(normalized) &&
+    basename !== 'readme'
+  ) {
+    return 'template';
   }
 
   // Legacy SDLC artifact heuristics (existing behavior preserved).
