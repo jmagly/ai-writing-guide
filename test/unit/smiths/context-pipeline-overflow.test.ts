@@ -163,19 +163,11 @@ describe('extractNonSpillover', () => {
   });
 });
 
-describe('buildAgentsMd with overflow', () => {
-  it('does not split when content is under threshold', () => {
-    const opts: ContextPipelineOptions = {
-      provider: 'codex',
-      projectPath: tmpDir,
-      sections: [{ type: 'agents', entries: [makeEntry('small')] }],
-    };
-    const built = buildAgentsMd(opts);
-    expect(built.splitOccurred).toBe(false);
-    expect(built.spilloverContent).toBe('');
-  });
-
-  it('splits when total exceeds threshold and emits spillover content', () => {
+describe('buildAgentsMd thin-pointer body (#1239)', () => {
+  it('never splits or emits spillover, even with hundreds of sections entries', () => {
+    // Post-#1239 the AGENTS.md body is a thin pointer to AIWG.md and ignores
+    // opts.sections entirely. Auto-split is dead in the happy path because
+    // the body cannot grow with deploy size.
     const entries: IndexEntry[] = [];
     for (let i = 0; i < 300; i++) {
       entries.push(makeEntry(`entry-${i}`, 100));
@@ -187,10 +179,10 @@ describe('buildAgentsMd with overflow', () => {
       overflowPriorityMap: { '*': 3 },
     };
     const built = buildAgentsMd(opts);
-    expect(built.splitOccurred).toBe(true);
-    expect(built.spilloverContent).toContain('## Agents');
-    expect(built.spilloverContent).toContain('AIWG-managed spillover');
-    expect(built.warnings.some((w) => w.includes('auto-split engaged'))).toBe(true);
+    expect(built.splitOccurred).toBe(false);
+    expect(built.spilloverContent).toBe('');
+    expect(built.warnings).toEqual([]);
+    expect(Buffer.byteLength(built.content, 'utf8')).toBeLessThan(4 * 1024);
   });
 });
 
@@ -246,8 +238,8 @@ describe('twin-file emission per ADR-1 §4', () => {
   });
 });
 
-describe('generate end-to-end with auto-split', () => {
-  it('writes AGENTS.md + AGENTS.override.md spillover when content overflows', async () => {
+describe('generate end-to-end thin-pointer (#1239)', () => {
+  it('writes a small AGENTS.md and never creates an AGENTS.override.md spillover block on a clean repo', async () => {
     const entries: IndexEntry[] = [];
     for (let i = 0; i < 300; i++) {
       entries.push(makeEntry(`auto-entry-${String(i).padStart(3, '0')}`, 100));
@@ -261,19 +253,20 @@ describe('generate end-to-end with auto-split', () => {
     });
 
     expect(result.agentsMdPath).toContain('AGENTS.md');
+    expect(result.warnings).toEqual([]);
 
-    // AGENTS.override.md should exist with a spillover block.
-    const overrideContent = await fs.readFile(
-      path.join(tmpDir, 'AGENTS.override.md'),
-      'utf8',
-    );
-    expect(overrideContent).toContain(SPILLOVER_START);
-    expect(overrideContent).toContain(SPILLOVER_END);
-    expect(overrideContent).toContain('## Agents');
+    const agentsContent = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
+    expect(Buffer.byteLength(agentsContent, 'utf8')).toBeLessThan(4 * 1024);
+    expect(agentsContent).not.toContain('## Agents');
+    expect(agentsContent).not.toContain('auto-entry-');
+
+    // No spillover should be written by the happy path.
+    await expect(
+      fs.readFile(path.join(tmpDir, 'AGENTS.override.md'), 'utf8'),
+    ).rejects.toThrow();
   });
 
-  it('preserves operator-authored AGENTS.override.md content across split runs', async () => {
-    // Operator pre-existing content
+  it('preserves operator-authored AGENTS.override.md content across runs', async () => {
     const operatorContent =
       '# AGENTS.override.md\n\n## Operator notes\n\nimportant stuff that should never be touched\n';
     await fs.writeFile(path.join(tmpDir, 'AGENTS.override.md'), operatorContent, 'utf8');
@@ -291,7 +284,7 @@ describe('generate end-to-end with auto-split', () => {
     });
 
     const after = await fs.readFile(path.join(tmpDir, 'AGENTS.override.md'), 'utf8');
-    expect(after).toContain('important stuff that should never be touched');
-    expect(after).toContain(SPILLOVER_START);
+    expect(after).toBe(operatorContent);
+    expect(after).not.toContain(SPILLOVER_START);
   });
 });

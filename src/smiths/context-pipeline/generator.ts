@@ -25,11 +25,7 @@ import type {
 import { sanitizeDescription, sanitizeTags } from './sanitizer.js';
 import { checkPathAllowed } from './allowlist.js';
 import { generateAiwgMd } from './aiwg-md.js';
-import {
-  SafetyCriticalOverflowError,
-  injectSpilloverBlock,
-  partitionForOverflow,
-} from './overflow.js';
+import { injectSpilloverBlock } from './overflow.js';
 
 const SECTION_TITLES: Record<IndexedArtifactType, string> = {
   agents: 'Agents',
@@ -114,11 +110,19 @@ export function renderSection(section: AgentsMdSection): { markdown: string; war
 /**
  * Build the full AGENTS.md content (in-memory; does not write).
  *
- * When the assembled content would exceed the 30KB soft threshold, the
- * generator partitions sections via `partitionForOverflow` (per ADR-1 §6 /
- * PUW-029) and emits two strings: the trimmed AGENTS.md content plus the
- * spillover-only markdown that the caller writes into AGENTS.override.md's
- * spillover block.
+ * Per operator direction (#1239): AGENTS.md is a thin pointer to AIWG.md at
+ * project root. AIWG.md mirrors CLAUDE.md (ADR-1 §0.5) and contains the full
+ * framework guidance — including the kernel-skill discovery pattern
+ * (`aiwg discover` / `aiwg show`). Inlining a full link-index here pushed the
+ * file past Codex's 32KB cap on real deploys, triggered auto-split, and ran
+ * every artifact description through the sanitizer (rejecting any with
+ * backticks). The thin-pointer body sidesteps all of that: zero warnings on
+ * any provider, regardless of how many artifacts are deployed.
+ *
+ * `opts.sections` is accepted for backwards compatibility with callers that
+ * still aggregate a link-index (no internal use). `splitOccurred` is always
+ * false; `spilloverContent` is always empty. The `partitionForOverflow` /
+ * spillover utilities remain exported for any external consumer.
  */
 export function buildAgentsMd(opts: ContextPipelineOptions): {
   content: string;
@@ -128,8 +132,6 @@ export function buildAgentsMd(opts: ContextPipelineOptions): {
 } {
   const warnings: string[] = [];
   const parts: string[] = [];
-  let spilloverContent = '';
-  let splitOccurred = false;
 
   parts.push('# AGENTS.md');
   parts.push(`${AIWG_SIGNATURE_COMMENT}`);
@@ -139,6 +141,11 @@ export function buildAgentsMd(opts: ContextPipelineOptions): {
   parts.push('');
   parts.push('See [AIWG.md](./AIWG.md) for the full AIWG framework context');
   parts.push('(active frameworks, addons, agents, behaviors, rules).');
+  parts.push('');
+  parts.push('Deployed artifacts live under your provider\'s native directory');
+  parts.push('(for example `.codex/agents/`, `.warp/agents/`, `.github/agents/`).');
+  parts.push('Use `aiwg discover "<intent>"` and `aiwg show <type> <name>` to browse');
+  parts.push('skills, agents, rules, and commands across the installation.');
   parts.push('');
 
   if (opts.projectContext && opts.projectContext.trim().length > 0) {
@@ -153,81 +160,12 @@ export function buildAgentsMd(opts: ContextPipelineOptions): {
     }
   }
 
-  // PUW-029 auto-split: render the whole content once to measure actual
-  // bytes (per-entry size estimates can drift from rendered output by 2x).
-  // If the rendered total exceeds the soft threshold, partition based on
-  // a per-entry estimator calibrated to the actual rendered output.
-  let mainSections = opts.sections;
-  let spilloverSections: typeof opts.sections = [];
-
-  // First pass: render all sections to measure ground-truth bytes.
-  const renderedSections = opts.sections.map((s) => {
-    const { markdown, warnings: secWarnings } = renderSection(s);
-    warnings.push(...secWarnings);
-    return { section: s, markdown };
-  });
-  const renderedAllBytes = renderedSections.reduce(
-    (acc, r) => acc + Buffer.byteLength(r.markdown, 'utf8'),
-    0,
-  );
-
-  if (renderedAllBytes > 30 * 1024) {
-    try {
-      // Build a render-calibrated estimator: bytes per entry, actually
-      // measured by rendering one entry at a time. Far more accurate than
-      // the heuristic estimator in defaultEstimateEntry.
-      const calibratedEstimator = (entry: typeof opts.sections[number]['entries'][number]) => {
-        const { markdown } = renderEntry(entry);
-        return markdown ? Buffer.byteLength(markdown, 'utf8') + 2 /* spacer */ : 0;
-      };
-      const partition = partitionForOverflow(
-        opts.sections,
-        opts.overflowPriorityMap || {},
-        30 * 1024,
-        calibratedEstimator,
-      );
-      if (partition.splitOccurred) {
-        mainSections = partition.mainSections;
-        spilloverSections = partition.spilloverSections;
-        splitOccurred = true;
-        warnings.push(
-          `auto-split engaged: AGENTS.md ~${partition.estimatedMainBytes}b, ` +
-          `spillover ~${partition.estimatedSpilloverBytes}b (Codex 32KB cap respected)`,
-        );
-      }
-    } catch (err) {
-      if (err instanceof SafetyCriticalOverflowError) {
-        throw err;
-      }
-      throw err;
-    }
-  }
-
-  for (const section of mainSections) {
-    const { markdown, warnings: secWarnings } = renderSection(section);
-    if (markdown) parts.push(markdown);
-    warnings.push(...secWarnings);
-  }
-
   parts.push('---');
   parts.push('');
-  parts.push('*See `AGENTS.override.md` for operator-authored additions and overflow.*');
+  parts.push('*See `AGENTS.override.md` for operator-authored additions.*');
   parts.push('');
 
-  // Build the spillover-only markdown when split occurred.
-  if (splitOccurred && spilloverSections.length > 0) {
-    const spilloverParts: string[] = [];
-    spilloverParts.push('<!-- AIWG-managed spillover. Operator content lives outside this block. -->');
-    spilloverParts.push('');
-    for (const section of spilloverSections) {
-      const { markdown, warnings: secWarnings } = renderSection(section);
-      if (markdown) spilloverParts.push(markdown);
-      warnings.push(...secWarnings);
-    }
-    spilloverContent = spilloverParts.join('\n');
-  }
-
-  return { content: parts.join('\n'), warnings, spilloverContent, splitOccurred };
+  return { content: parts.join('\n'), warnings, spilloverContent: '', splitOccurred: false };
 }
 
 /**

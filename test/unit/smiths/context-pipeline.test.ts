@@ -268,20 +268,37 @@ describe('buildAgentsMd', () => {
     expect(content).toContain('<!-- aiwg-managed -->');
   });
 
-  it('emits link-indexed sections', () => {
-    const { content } = buildAgentsMd(baseOpts);
-    expect(content).toContain('## Agents');
-    expect(content).toContain('**api-designer**');
-    expect(content).toContain('.codex/agents/api-designer.md');
+  it('does not inline a link-index of deployed artifacts (#1239)', () => {
+    const { content, splitOccurred, spilloverContent } = buildAgentsMd(baseOpts);
+    expect(content).not.toContain('## Agents');
+    expect(content).not.toContain('**api-designer**');
+    expect(content).not.toContain('.codex/agents/api-designer.md');
+    expect(splitOccurred).toBe(false);
+    expect(spilloverContent).toBe('');
   });
 
-  it('omits empty sections', () => {
-    const opts: ContextPipelineOptions = {
+  it('points readers at aiwg discover / aiwg show', () => {
+    const { content } = buildAgentsMd(baseOpts);
+    expect(content).toContain('aiwg discover');
+    expect(content).toContain('aiwg show');
+  });
+
+  it('stays well under the 30KB soft threshold', () => {
+    const huge: ContextPipelineOptions = {
       ...baseOpts,
-      sections: [{ type: 'agents', entries: [] }],
+      sections: [
+        {
+          type: 'agents',
+          entries: Array.from({ length: 500 }, (_, i) => ({
+            id: `agent-${i}`,
+            description: `Agent number ${i} with some descriptive text`,
+            path: `.codex/agents/agent-${i}.md`,
+          })),
+        },
+      ],
     };
-    const { content } = buildAgentsMd(opts);
-    expect(content).not.toContain('## Agents');
+    const { content } = buildAgentsMd(huge);
+    expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(4 * 1024);
   });
 
   it('includes Project Context when provided', () => {
@@ -309,7 +326,10 @@ describe('buildAgentsMd', () => {
     expect(content).toContain('AGENTS.override.md');
   });
 
-  it('drops malformed entries with warnings rather than aborting', () => {
+  it('emits no warnings for a deploy with backtick-bearing artifact descriptions (#1239)', () => {
+    // Pre-#1239 the link-index ran every description through the sanitizer
+    // and rejected backtick-bearing entries with a warning. The thin-pointer
+    // body never sees `opts.sections`, so those warnings stop firing.
     const opts: ContextPipelineOptions = {
       ...baseOpts,
       sections: [
@@ -317,22 +337,15 @@ describe('buildAgentsMd', () => {
           type: 'agents',
           entries: [
             {
-              id: 'good',
-              description: 'A good agent',
-              path: '.codex/agents/good.md',
-            },
-            {
-              id: 'evil',
-              description: 'Has `injection`',
-              path: '.codex/agents/evil.md',
+              id: 'aiwg-finder',
+              description: 'Runs the `aiwg discover` + `aiwg show` pipeline',
+              path: '.codex/agents/aiwg-finder.md',
             },
           ],
         },
       ],
     };
-    const { content, warnings } = buildAgentsMd(opts);
-    expect(content).toContain('**good**');
-    expect(content).not.toContain('**evil**');
-    expect(warnings.some((w) => w.includes('evil'))).toBe(true);
+    const { warnings } = buildAgentsMd(opts);
+    expect(warnings).toEqual([]);
   });
 });

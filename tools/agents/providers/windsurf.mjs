@@ -245,6 +245,11 @@ export function generateAgentsMd(files, destPath, opts) {
 
   const lines = [];
   lines.push('# AGENTS.md');
+  // Canonical AIWG signature in the first 4 lines so the context-pipeline
+  // `isOverwriteSafe` check (#1239) recognizes this file as AIWG-managed and
+  // overwrites it with the thin-pointer body. Without this, context-pipeline
+  // refuses to replace the legacy 2MB+ aggregate writer's output.
+  lines.push('<!-- aiwg-managed -->');
   lines.push('');
   lines.push('> AIWG Agent Directory for Windsurf');
   lines.push('');
