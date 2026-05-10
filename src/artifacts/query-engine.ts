@@ -408,13 +408,13 @@ export async function discoverCapability(
    * anchoring them to `AIWG_ROOT` makes them readable from any project
    * working directory.
    *
-   * Kernel skills are excluded from anchoring — they're copied per-project
-   * and the agent reads them from the platform-native skills dir.
+   * Kernel skills are anchored the same way (#1230) — `aiwg show` reads
+   * the source corpus, not platform deploy mirrors, so kernel entries
+   * need the same `AIWG_ROOT` anchoring as non-kernel framework entries.
    * Non-framework entries (project / codebase graphs) keep their stored
    * paths unchanged.
    */
   function resolvePath(entry: MetadataEntry): string {
-    if (entry.kernel) return entry.path;
     if (!aiwgRoot) return entry.path;
     if (entry.path.startsWith('/')) return entry.path;
     if (entry.path.startsWith('agentic/code/')) return `${aiwgRoot}/${entry.path}`;
@@ -696,8 +696,9 @@ export async function showArtifact(
   }
 
   // Resolve relative framework-graph paths to absolute paths.
+  // Kernel entries are anchored the same way as non-kernel framework entries
+  // (#1230) — show reads the source corpus, not platform deploy mirrors.
   function resolvePath(entry: MetadataEntry): string {
-    if (entry.kernel) return entry.path;
     if (path.isAbsolute(entry.path)) return entry.path;
     if (aiwgRoot && entry.path.startsWith('agentic/code/')) {
       return path.join(aiwgRoot, entry.path);

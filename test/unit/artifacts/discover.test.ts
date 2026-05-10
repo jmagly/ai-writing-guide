@@ -251,4 +251,68 @@ describe('discoverCapability — JSON output', () => {
       expect(top).toHaveProperty('capability');
     }
   });
+
+  // #1230 — kernel-marked skills used to short-circuit path anchoring,
+  // emitting the stored relative path (`agentic/code/.../SKILL.md`).
+  // `aiwg show` then resolved against cwd → ENOENT from any non-AIWG
+  // workspace. Both kernel and non-kernel framework entries must now
+  // anchor to AIWG_ROOT so the path is reachable regardless of cwd.
+  it('emits absolute paths for kernel-marked skills (#1230)', async () => {
+    // Pin AIWG_ROOT to the test's tmp tree so discover anchors against it
+    // instead of the host environment's real AIWG_ROOT.
+    const prevAiwgRoot = process.env.AIWG_ROOT;
+    process.env.AIWG_ROOT = cwd;
+    try {
+
+    writeSkill(
+      'kernel-quickref',
+      'aiwg-utils',
+      `---\nname: kernel-quickref\nkernel: true\ndescription: Always-loaded kernel quickref\n---\n\n## Triggers\n\n- "kernel quickref"\n`,
+    );
+    writeSkill(
+      'normal-skill',
+      'aiwg-utils',
+      `---\nname: normal-skill\ndescription: A non-kernel skill\n---\n\n## Triggers\n\n- "normal skill"\n`,
+    );
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    consoleSpy.mockRestore();
+    consoleErrSpy.mockRestore();
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+      captured.push(args.join(' ')),
+    );
+
+    await discoverCapability(cwd, {
+      phrase: 'kernel quickref',
+      graph: 'framework',
+      json: true,
+      limit: 5,
+    });
+
+    logSpy.mockRestore();
+
+    const parsed = JSON.parse(captured.join('\n'));
+    const kernelHit = parsed.results.find((r: { kernel: boolean }) => r.kernel === true);
+    expect(kernelHit, 'kernel-marked skill must appear in discover results').toBeDefined();
+    // The fix: kernel paths must be absolute, anchored to aiwg_root.
+    // Before #1230 they came back as `agentic/code/.../SKILL.md` (relative)
+    // and broke aiwg show from any cwd != AIWG_ROOT.
+    expect(path.isAbsolute(kernelHit.path)).toBe(true);
+    // Path must end at the source SKILL.md under agentic/code/, regardless
+    // of /tmp ↔ /private/tmp symlink games on the host.
+    expect(kernelHit.path).toMatch(
+      /agentic\/code\/frameworks\/aiwg-utils\/skills\/kernel-quickref\/SKILL\.md$/,
+    );
+    // And the resolved path must actually exist on disk — this is the
+    // contract aiwg show depends on.
+    expect(fs.existsSync(kernelHit.path)).toBe(true);
+    } finally {
+      if (prevAiwgRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevAiwgRoot;
+    }
+  });
 });
