@@ -4,7 +4,7 @@ name: rlm-batch
 platforms: [all]
 description: Parallel fan-out processing - spawn multiple sub-agents for chunked context processing
 commandHint:
-  argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>] [--force] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>] [--depth <n>] [--no-cache] [--cache-only]'
+  argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>] [--force] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>] [--depth <n>] [--no-cache] [--cache-only] [--require-citations]'
   allowedTools: 'Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit'
   model: opus
   category: automation
@@ -259,6 +259,106 @@ Bypass the result cache for this batch — do not read existing cache entries, b
 ### --cache-only (optional, #1203)
 
 Read-only audit: error out if any input would not be a cache hit. Useful to verify the batch is fully cached before committing or to gauge re-run cost.
+
+### --require-citations (optional, #1223)
+
+Opt in to the index-backed citation contract. When set:
+
+- Each sub-agent's system prompt is augmented with the citation-emission instructions from the [Citation Format](#citation-format) section below
+- Sub-agents are required to attach a citation tuple to every finding that references source content
+- Aggregation strategies preserve citations through merge (see [Citation Format → Aggregation Behavior](#aggregation-behavior))
+- The aggregate output can be validated downstream with `aiwg verify-citations --rlm` (see #1225)
+
+Default: **off**. Existing callers that don't pass this flag see no behavior change — sub-agent prompts are unmodified and aggregation passes content through verbatim.
+
+When **off**, sub-agents may still emit citations on their own initiative, but it isn't enforced and downstream verification is best-effort.
+
+## Citation Format
+
+When `--require-citations` is set, sub-agents emit findings tagged with a citation tuple that links each claim back to a specific artifact + content version. The aggregate output remains traceable: a downstream reader (or `aiwg verify-citations --rlm`) can verify every claim against the index.
+
+### Tuple shape
+
+```
+{
+  "artifact_id": "<project-relative-path>",
+  "content_hash": "<sha256, 16 hex chars>",
+  "lines": "L<start>-<end>"   // optional; omit for whole-file citation
+}
+```
+
+- **`artifact_id`** — project-relative path. Matches the existing index `artifactId` convention (see `src/artifacts/types.ts`, `src/artifacts/audit/types.ts`).
+- **`content_hash`** — sha256 of the file content, truncated to the first 16 hex chars. Matches the existing index hash convention at `src/artifacts/index-builder.ts:243` (`createHash('sha256').update(content).digest('hex').slice(0, 16)`).
+- **`lines`** — optional `"L42-58"` for a range or `"L42"` for a single line. Omit for whole-file citations.
+
+### Inline rendered form
+
+When emitting markdown, sub-agents render citations inline next to the claim:
+
+```markdown
+- **Plaintext password comparison in login flow** [src/auth/login.ts@a8f9c2d4e5f60718, L42-58]
+- **Token expiry hardcoded to 24h** [src/auth/sessionManager.ts@b3d1e9c2f48a5b6c, L101]
+```
+
+The bracket format is `[<artifact_id>@<content_hash>, <lines>]`. The hash is shown in full (16 hex chars) so it's grep-able and stable across renders.
+
+### Path-only fallback
+
+When the cited source is *not* present in the artifact index — e.g., the user passed a glob outside `aiwg index` coverage — sub-agents emit a path-only citation:
+
+```markdown
+- **Hardcoded credential** [src/legacy/auth.py, L88]
+```
+
+`aiwg verify-citations --rlm` flags these as `un-versioned` (warning, not error). With `--strict` they become errors.
+
+### Aggregation behavior
+
+The `--aggregate` strategy controls how citations propagate through the merge:
+
+| Strategy | Citation behavior |
+|---|---|
+| `concat` | Pass through verbatim. Each sub-agent's findings + citations land in a per-file section. (Tracked in #1224.) |
+| `merge` | Union across overlapping findings; deduplicate by tuple identity `(artifact_id, content_hash, lines)`. Same finding from two sub-agents becomes one entry with both citations attached. (Tracked in #1224.) |
+| `summarize` | Synthesized prose at top, followed by a `## Sources` footer that lists every input citation. The summarizer agent is told NOT to drop citations during synthesis. (Tracked in #1224.) |
+
+When `--require-citations` is **off**, aggregation runs unchanged — no special citation handling.
+
+### Sub-agent prompt augmentation
+
+When the flag is set, the orchestrator prepends the following instruction block to each sub-agent's system prompt (after the user's sub-prompt, before the file content):
+
+```
+CITATION REQUIREMENT (--require-citations is active):
+
+Every finding you emit MUST carry a citation tuple linking it back to specific
+content in the source file. Use the inline bracket form for markdown output:
+
+  [<file-path>@<content-hash>, L<start>-<end>]
+
+Example:
+  - **SQL injection risk** [src/db/query.ts@<hash>, L42-58]
+
+The orchestrator will provide the file's content_hash. Use it verbatim. If the
+file isn't index-tracked, the orchestrator will signal "path-only" — emit:
+
+  [<file-path>, L<start>-<end>]
+
+Findings without citations may be rejected or flagged downstream.
+```
+
+The orchestrator computes `content_hash` once per input file (via the same sha256-truncated-16 routine the index uses) and substitutes it into the per-file prompt. Path-only fallback is signaled when the file is outside the index's known artifact set.
+
+### Schema reference
+
+A machine-readable JSON schema for the citation tuple is at `agentic/code/addons/rlm/schemas/citation-tuple.json` (#1223). Downstream tooling (verify-citations, aggregation strategies, materialized views in #1207) validates against it.
+
+### Why this matters
+
+- Closes the "trust me" gap in current RLM aggregations — every claim points at a verifiable artifact + version
+- Re-running the same query later, downstream tools detect which findings became stale (file content changed) vs. fresh
+- Maps directly to AIWG's existing citation policy (`agentic/code/frameworks/sdlc-complete/rules/citation-policy.md`) — never fabricate, always trace
+- Makes RLM outputs suitable as evidence in security audits, code reviews, and traceability work
 
 ## Planned Capabilities
 

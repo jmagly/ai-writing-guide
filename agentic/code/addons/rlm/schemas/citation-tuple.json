@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/rlm/citation-tuple.json",
+  "title": "RLM Citation Tuple",
+  "description": "Citation linking an RLM-emitted finding to a specific artifact + content version. Issued by sub-agents when rlm-batch runs with --require-citations. Verified downstream by `aiwg verify-citations --rlm`.",
+  "type": "object",
+  "required": ["artifact_id"],
+  "properties": {
+    "artifact_id": {
+      "type": "string",
+      "description": "Project-relative path to the cited artifact. Matches the existing index `artifactId` convention (src/artifacts/types.ts, src/artifacts/audit/types.ts).",
+      "minLength": 1,
+      "examples": [
+        "src/auth/login.ts",
+        ".aiwg/requirements/UC-007.md"
+      ]
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "sha256 of the artifact content, truncated to the first 16 hex chars. Matches src/artifacts/index-builder.ts:243. Omit for path-only fallback citations (artifact not in the index).",
+      "pattern": "^[0-9a-f]{16}$",
+      "examples": [
+        "a8f9c2d4e5f60718",
+        "b3d1e9c2f48a5b6c"
+      ]
+    },
+    "lines": {
+      "type": "string",
+      "description": "Cited line range. `L<start>-<end>` for a range, `L<n>` for a single line. Omit for whole-file citations.",
+      "pattern": "^L\\d+(-\\d+)?$",
+      "examples": ["L42-58", "L101", "L1-50"]
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "artifact_id": "src/auth/login.ts",
+      "content_hash": "a8f9c2d4e5f60718",
+      "lines": "L42-58"
+    },
+    {
+      "artifact_id": "src/auth/sessionManager.ts",
+      "content_hash": "b3d1e9c2f48a5b6c",
+      "lines": "L101"
+    },
+    {
+      "artifact_id": "src/legacy/auth.py",
+      "lines": "L88"
+    }
+  ],
+  "x-inline-form": {
+    "description": "When rendered inline in markdown output, use bracketed form `[artifact_id@content_hash, lines]` or `[artifact_id, lines]` for path-only fallback.",
+    "pattern": "\\[(?<artifact_id>[^@\\]]+)(@(?<content_hash>[0-9a-f]{16}))?(, (?<lines>L\\d+(-\\d+)?))?\\]",
+    "examples": [
+      "[src/auth/login.ts@a8f9c2d4e5f60718, L42-58]",
+      "[src/legacy/auth.py, L88]"
+    ]
+  },
+  "x-references": {
+    "issues": ["#1205", "#1223"],
+    "epic": "#1196",
+    "adr": ".aiwg/architecture/adr-rlm-index-integration.md",
+    "skill": "agentic/code/addons/rlm/skills/rlm-batch/SKILL.md",
+    "hash_implementation": "src/artifacts/index-builder.ts:243"
+  }
+}
