@@ -417,23 +417,23 @@ const NEXT_STEPS: Record<string, string[]> = {
   ],
 
   // Hermes Agent (MCP-based)
-  // v0.4.0+ ships `hermes mcp install` (CLI flow, no manual YAML edit) and
-  // real-time config reload. We lead with the CLI form and demote the
-  // manual edit to "or" per the quickstart's recommended flow (#1241).
+  // Verified against Hermes v0.4.0+ source (hermes_cli/main.py:10860 —
+  // mcp subcommand surface is `serve`, `add`, `remove`, `list`, `test`,
+  // `configure`; no `install` subcommand). #1243.
   'hermes/sdlc': [
-    'Connect via MCP:   hermes mcp install aiwg --command "aiwg" --args "mcp,serve"',
+    'Connect via MCP:   hermes mcp add aiwg --command aiwg --args mcp serve',
     '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
     'Start Hermes:      hermes chat "Create an architecture decision for..."',
     'MCP guide:         docs/integrations/hermes-quickstart.md',
   ],
   'hermes/marketing': [
-    'Connect via MCP:   hermes mcp install aiwg --command "aiwg" --args "mcp,serve"',
+    'Connect via MCP:   hermes mcp add aiwg --command aiwg --args mcp serve',
     '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
     'Start Hermes:      hermes chat "Create a marketing campaign for..."',
     'MCP guide:         docs/integrations/hermes-quickstart.md',
   ],
   'hermes/all': [
-    'Connect via MCP:   hermes mcp install aiwg --command "aiwg" --args "mcp,serve"',
+    'Connect via MCP:   hermes mcp add aiwg --command aiwg --args mcp serve',
     '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
     'Start Hermes:      hermes chat',
     'AIWG MCP guide:   docs/integrations/hermes-quickstart.md',
@@ -559,9 +559,9 @@ const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string;
     rationale: 'OpenCode loads agent files on session start and does not hot-reload.',
   },
   hermes: {
-    action: 'Hermes v0.4.0+ reloads ~/.hermes/config.yaml in real time — no MCP-server restart needed for config changes. New entries in ~/.hermes/skills/ register on the next chat session if your Hermes build caches the skill registry per-session; if a kernel skill (e.g. aiwg-doctor) does not appear, start a fresh `hermes chat` to refresh.',
-    rationale: 'Hermes loader behavior split: config reloads live (v0.4.0+), but skill-directory registration is per-session in most builds.',
-    symptom: 'Until refreshed, newly deployed kernel skills will be missing from `hermes skills list` and unreachable via natural-language invocation.',
+    action: 'In an active Hermes session, run /reload-skills to pick up new skills in ~/.hermes/skills/ and /reload-mcp to pick up MCP server changes (~/.hermes/config.yaml) — both are in-session slash commands, no chat restart needed. Restart the chat only as a fallback if the slash commands are unavailable.',
+    rationale: 'Hermes loads skills and MCP config at session start (verified in hermes_cli/commands.py:178 and hermes_cli/config.py:1228). The /reload-skills and /reload-mcp slash commands re-scan in place; /reload-mcp prompts for confirmation by default.',
+    symptom: 'Until reloaded, newly deployed kernel skills are missing from `hermes skills list` and unreachable via natural-language invocation; new MCP servers (incl. AIWG) are missing from the tool surface.',
   },
   openclaw: {
     action: 'Restart OpenClaw — ~/.openclaw/agents/ and ~/.openclaw/skills/ are loaded on startup.',

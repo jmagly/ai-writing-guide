@@ -114,13 +114,15 @@ aiwg mcp info    # Confirm MCP server is available
 
 Add the AIWG MCP server to Hermes configuration.
 
-**Option A — CLI install (v0.4.0+, recommended):**
+**Option A — CLI add (v0.4.0+, recommended):**
 
 ```bash
-hermes mcp install aiwg --command "aiwg" --args "mcp,serve"
+hermes mcp add aiwg --command aiwg --args mcp serve
 ```
 
-This adds the entry to `~/.hermes/config.yaml` automatically. Config reloads in real-time — no restart needed.
+This appends an entry to `~/.hermes/config.yaml` automatically. Verified against Hermes source `hermes_cli/main.py:10860-10895`: the mcp subcommand surface is `serve | add | remove | list | test | configure` — no `install` subcommand. `--args` is `nargs="*"`, so pass tokens space-separated (`mcp serve`), not comma-separated.
+
+In an active chat, run `/reload-mcp` after adding to pick up the new server without restarting the session.
 
 **Option B — Manual config edit:**
 
@@ -133,7 +135,7 @@ mcp_servers:
     args: ["mcp", "serve"]
 ```
 
-Config changes apply immediately (v0.4.0+) — no restart required.
+After saving, run `/reload-mcp` in your active Hermes chat to apply.
 
 **Why this is lean by default:** AIWG's MCP server exposes exactly 5 tools (`workflow-run`, `artifact-read`, `artifact-write`, `template-render`, `agent-list`) — no more. This keeps the schema footprint to ~3,000 tokens. No tool whitelisting is needed because the server surface is already minimal.
 
@@ -151,9 +153,18 @@ Hermes should list the 5 AIWG tools.
 
 Create an `AGENTS.md` at your project root that tells Hermes when to call AIWG.
 
-> **v0.4.0+:** Hermes now recognizes both `AGENTS.md` and `CLAUDE.md` as context files. If your project already has a `CLAUDE.md` (e.g., from Claude Code), Hermes will load it automatically — you can use it in place of `AGENTS.md` or alongside it. This makes AIWG integration portable: the same context file works for both Claude Code and Hermes without duplication.
+> **First-match-wins context loading** (verified against `agent/prompt_builder.py:1410-1436`). Hermes loads exactly **one** project-context file per turn, by priority:
+>
+> 1. `.hermes.md` / `HERMES.md` (walks up to git root)
+> 2. `AGENTS.md` / `agents.md` (cwd only, no walk)
+> 3. `CLAUDE.md` / `claude.md` (cwd only, no walk)
+> 4. `.cursorrules` / `.cursor/rules/*.mdc` (cwd only)
+>
+> The code comment is explicit: *"Priority (first found wins — only ONE project context type is loaded)."* Earlier docs that suggested Hermes loads `AGENTS.md` and `CLAUDE.md` together were aspirational. AIWG always emits a `.hermes.md` twin file (#1239 / #1242), so when this integration is installed, `AGENTS.md` and `CLAUDE.md` never load on Hermes turns — they remain valid context files for Claude Code, Codex, etc., but are silent on Hermes.
 
-> **Critical context:** Hermes loads context files in full on every turn. Every character costs tokens on every message. Keep routing guidance under 1,000 characters total across both files.
+> **Each context source is capped at 20,000 chars** (`CONTEXT_FILE_MAX_CHARS` in `agent/prompt_builder.py:1284`). Above that, head/tail truncation kicks in with a marker noting the cut. The thin `.hermes.md` AIWG emits (~930 bytes) is well under the cap.
+
+> **Token budget reminder:** even within the 20K cap, Hermes loads context in full on every turn. Keep routing guidance compact — AIWG's default `.hermes.md` is ~230 tokens.
 
 **Create `AGENTS.md` in your project root:**
 
@@ -320,23 +331,23 @@ AIWG's MCP server exposes exactly 5 tools — no more, no less. Two variables af
 
 > **#1242 update**: The `aiwg-orchestrate` skill (~150 tokens) is auto-installed at `~/.hermes/skills/aiwg-orchestrate/`. Despite the modest schema cost, using it for AIWG workflows nets a large savings — direct MCP calls would add 3,000-8,000 tokens *per workflow* to the parent context; `delegate_task` via this skill keeps that cost in the child agent and returns a ~200-token summary to the parent. Net positive after the first workflow.
 
-### With verbose AGENTS.md or large CLAUDE.md auto-loaded
+### Worst-case: large `.hermes.md` near the 20K-char cap
 
-Hermes v0.4.0+ recognizes `CLAUDE.md` at project root **in addition to** `AGENTS.md`. If your project has a CLAUDE.md beyond a few KB, Hermes loads its full content on every turn — well over the 1,000-char target. The AIWG-managed `AIWG.md` at project root mirrors CLAUDE.md (or stubs to `.aiwg/AIWG.md`); Hermes does **not** auto-load `AIWG.md` itself, so the thin AGENTS.md pointer to it is a CLI-side reference, not a turn-time load.
+Hermes loads exactly **one** project-context file per turn (priority order documented in Part 3). Because AIWG always emits a `.hermes.md` at project root, AGENTS.md and CLAUDE.md never load on Hermes turns when this integration is installed — they remain valid for Claude Code, Codex, and other providers. So the worst case isn't "AGENTS.md + CLAUDE.md stacked" but "operator hand-edited `.hermes.md` to pack as much as possible up to the 20K-char head/tail-truncation cap."
 
 | Component | Tokens |
 |---|---|
 | Hermes system prompt | ~1,500 |
-| AGENTS.md (~5,000 chars) | ~1,500 |
-| CLAUDE.md auto-loaded (~10,000 chars) | ~3,000 |
+| `.hermes.md` at the 20K-char cap (head/tail truncation point) | ~5,000 |
 | MEMORY.md | ~800 |
 | USER.md | ~500 |
 | AIWG MCP schema (5 tools) | ~3,000 |
 | AIWG kernel skills | ~1,200 |
-| **Total overhead** | **~11,500** |
-| **Available for conversation** (32K context) | **~21,268 (65%)** |
+| `aiwg-orchestrate` skill | ~150 |
+| **Total overhead** | **~12,150** |
+| **Available for conversation** (32K context) | **~20,618 (63%)** |
 
-The compression threshold fires at 50% of context by default (30% recommended for local models). Keep AGENTS.md under 1,000 characters and audit CLAUDE.md size — symlink to a leaner project-context file if needed.
+The compression threshold fires at 50% of context by default (30% recommended for local models). Note that `CONTEXT_FILE_MAX_CHARS = 20,000` in `agent/prompt_builder.py:1284` bounds the worst case — even a runaway `.hermes.md` cannot exceed 20K chars in the prompt because Hermes head/tail-truncates above that with a `[...truncated]` marker. Keep `.hermes.md` lean by default; if you need a longer routing guide, write the bulk to a file Hermes can fetch on demand via `artifact-read`.
 
 ### Recommended compression config for 12GB VRAM
 
