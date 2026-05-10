@@ -3,7 +3,7 @@ name: media-curator-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Media-curator framework quick reference — capability domains and curated discovery phrases for discography analysis, source discovery, acquisition, quality filtering, metadata, and archive integrity
+description: AUTO-INVOKE when user mentions media curation, discography, archive, music collection, source acquisition, metadata tagging, Plex, Jellyfin, MPD. Media-curator framework quick reference — discovery phrases for discography analysis, source discovery, acquisition, quality filtering, metadata, archive integrity.
 ---
 
 # Media Curator Framework — Quick Reference

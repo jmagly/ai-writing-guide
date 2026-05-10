@@ -3,7 +3,7 @@ name: sdlc-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: SDLC framework quick reference — phase model, capability domains, and curated discovery phrases that surface the right skill on `aiwg discover`
+description: AUTO-INVOKE when user mentions SDLC, requirements, architecture, ADR, use case, user story, test plan, phase gate, inception, elaboration, construction, transition, intake, deploy. SDLC framework quick reference — phase model, capability domains, and curated discovery phrases for aiwg discover.
 ---
 
 # SDLC Framework — Quick Reference

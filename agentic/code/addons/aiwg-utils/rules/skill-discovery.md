@@ -101,6 +101,72 @@ Agent: *runs `aiwg discover "deploy production"`*
        *uses that skill*
 ```
 
+### Rule 1.5: Query Discover BEFORE Filesystem Search (the discover-first protocol)
+
+For any user request mentioning **AIWG**, framework names (**sdlc, research, forensics, ops, security-engineering, knowledge-base, marketing, media-curator, knowledge-base**), or capability keywords (**skill, agent, rule, command, addon, workflow, flow, template**), `aiwg discover` MUST be the first information-gathering tool call.
+
+Filesystem `Grep` / `Glob` / `Read` against any of the following directories is **FORBIDDEN** for AIWG-related lookups until `aiwg discover` has been consulted at least once in the current session:
+
+- `.claude/` (Claude Code)
+- `.codex/`, `~/.codex/` (OpenAI Codex)
+- `.github/agents/`, `.github/skills/`, `.github/instructions/`, `.github/prompts/` (Copilot)
+- `.cursor/` (Cursor)
+- `.warp/`, `WARP.md` (Warp)
+- `.windsurf/`, `AGENTS.md` (Windsurf)
+- `.factory/` (Factory)
+- `.opencode/` (OpenCode)
+- `.hermes.md`, `~/.hermes/skills/` (Hermes)
+- `~/.openclaw/` (OpenClaw)
+- `agentic/code/` (AIWG framework source, when working inside the AIWG repo itself)
+
+This rule exists because the failure mode it prevents is the most common one users report: an agent has fast filesystem tools and a literal-string hit on an AIWG keyword, so it short-circuits to grep and never realizes `aiwg discover` would have given a ranked, context-rich answer covering 10x more surface area.
+
+**FORBIDDEN — filesystem-first for AIWG-keyword query**:
+
+```
+User: "tell me about AIWG's RLM agent"
+Agent: *runs `grep -r "rlm" .factory/`*  ← FORBIDDEN as first move
+       *hits rlm-agent.md by literal string match*
+       *answers from that one file*
+       Skipped: 8 other RLM-related skills, rules, and templates that
+       `aiwg discover "rlm"` would have surfaced.
+```
+
+**REQUIRED — discover-first for AIWG-keyword query**:
+
+```
+User: "tell me about AIWG's RLM agent"
+Agent: *runs `aiwg discover "rlm agent"`*
+       *gets back rlm-agent (agent), rlm-context-management (rule),
+        rlm-quickref (skill), and 6 others ranked by relevance*
+       *picks the best match (or top-3) and uses `aiwg show <type> <name>`*
+       *answers from the ranked set, not from whatever grep hit first*
+```
+
+#### When subagent delegation is available, prefer `aiwg-finder`
+
+When the platform supports spawning subagents (Claude Code's Task tool, Hermes's `delegate_task`, etc.), dispatching to the `aiwg-finder` agent is preferred over self-service `aiwg discover` + `aiwg show` in the parent context. The finder agent:
+
+- Runs the discover query in its own context (parent context stays clean).
+- Returns the selected artifact body plus a one-paragraph capability summary.
+- Costs ~200 parent tokens vs. ~3,000-8,000 for the full discover+show transcript inline.
+
+Pattern (Claude Code, but symmetric on other subagent-capable platforms):
+
+```
+Task(subagent_type="aiwg-finder", prompt="find the skill or agent for: <user's intent>")
+```
+
+#### When you may skip the discover query (same as Rule 4 below — kept here for proximity)
+
+You may skip the index query when:
+- The user named a specific skill or command (`/flow-deploy-to-production`, `aiwg use sdlc`).
+- The capability is clearly outside AIWG's scope (general programming, weather, translation).
+- You've already queried for the same need within the current session.
+- The kernel quickref directly lists the skill the user needs.
+
+In every other case, **discover first**.
+
 ### Rule 2: Query the Index Before Improvising
 
 Even when you can technically implement something from scratch, check first whether AIWG already has a curated skill for it. The curated skill encodes deliberate decisions (templates, gate criteria, multi-agent patterns, framework conventions) that an ad-hoc improvisation will miss.

@@ -6,6 +6,26 @@ Rules owned by the sdlc-complete framework. Each entry provides a summary suffic
 
 ---
 
+## ⚠ Discover-First Protocol (HIGH-priority pre-flight rule)
+
+**Before any filesystem search for AIWG content, run `aiwg discover` first.**
+
+For any user request mentioning **AIWG**, framework names (sdlc/research/forensics/ops/security-engineering/marketing/media-curator/knowledge-base), or capability keywords (skill/agent/rule/command/addon/workflow/template), the FIRST information-gathering tool call MUST be:
+
+```
+aiwg discover "<paraphrased user intent>"
+```
+
+Filesystem `Grep`/`Glob`/`Read` against any provider artifact directory (`.claude/`, `.factory/`, `.codex/`, `.warp/`, `.cursor/`, `.windsurf/`, `.opencode/`, `.github/`, `~/.hermes/`, `~/.openclaw/`, or `agentic/code/`) for AIWG-related lookups is **FORBIDDEN** until discover has been consulted at least once in the current session. The discover command searches an indexed ranking across all 400+ AIWG artifacts; a literal-string grep hits 1-10 files and misses the bulk.
+
+When the platform supports subagent delegation (Claude Code Task tool, Hermes `delegate_task`, Factory droid spawn), prefer the `aiwg-finder` subagent over self-service `aiwg discover` + `aiwg show` — it keeps the discover transcript out of the parent context.
+
+**You may skip discover only when**: the user named a specific skill (`/flow-deploy-to-production`), the capability is clearly outside AIWG's scope (general programming, weather, translation), or you've already queried for the same need in the current session.
+
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/skill-discovery.md (Rule 1.5)
+
+---
+
 ## Core Rules (7 rules — always active)
 
 Core rules are non-negotiable defaults deployed to every AIWG installation.

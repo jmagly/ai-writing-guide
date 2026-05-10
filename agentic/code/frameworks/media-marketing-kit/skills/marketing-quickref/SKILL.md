@@ -3,7 +3,7 @@ name: marketing-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Marketing framework quick reference — capability domains and curated discovery phrases for campaign intake, brand compliance, content production, audience synthesis, and approval workflows
+description: AUTO-INVOKE when user mentions marketing, campaign, brand, content production, audience persona, copy, social media, marketing intake, approval workflow. Marketing framework quick reference — discovery phrases for campaign intake, brand compliance, content production, audience synthesis, approval workflows.
 ---
 
 # Marketing Framework — Quick Reference

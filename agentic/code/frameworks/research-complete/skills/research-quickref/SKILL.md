@@ -3,7 +3,7 @@ name: research-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Research framework quick reference — capability domains and curated discovery phrases for corpus inception, paper acquisition, GRADE quality, citation graphs, and provenance-tracked synthesis
+description: AUTO-INVOKE when user mentions research, paper, citation, GRADE, corpus, provenance, literature review, induct paper, evidence, bibliography. Research framework quick reference — discovery phrases for corpus inception, paper acquisition, GRADE quality, citation graphs, provenance-tracked synthesis.
 ---
 
 # Research Framework — Quick Reference

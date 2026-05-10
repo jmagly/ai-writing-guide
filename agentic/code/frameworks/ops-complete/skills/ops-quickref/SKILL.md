@@ -3,7 +3,7 @@ name: ops-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Ops framework quick reference — capability domains, extension model, and curated discovery phrases for runbooks, inventory, audit trail, and verification
+description: AUTO-INVOKE when user mentions ops, runbook, inventory, audit trail, ops repo, sysops, devops, itops, infrastructure operations, fleet management. Ops framework quick reference — capability domains, extension model, and discovery phrases for runbooks, inventory, audit trail, verification.
 ---
 
 # Ops Framework — Quick Reference

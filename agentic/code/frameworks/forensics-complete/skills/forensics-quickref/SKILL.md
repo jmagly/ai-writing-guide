@@ -3,7 +3,7 @@ name: forensics-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Forensics framework quick reference — capability domains and curated discovery phrases for incident response, log analysis, evidence preservation, and IOC extraction
+description: AUTO-INVOKE when user mentions forensics, incident response, IOC, log analysis, evidence preservation, breach investigation, threat hunting, attack timeline. Forensics framework quick reference — discovery phrases for incident response, log analysis, evidence preservation, IOC extraction.
 ---
 
 # Forensics Framework — Quick Reference

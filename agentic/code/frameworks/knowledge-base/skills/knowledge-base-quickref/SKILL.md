@@ -3,7 +3,7 @@ name: knowledge-base-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Knowledge-base framework quick reference — capability domains and curated discovery phrases for KB ingest/health, semantic-memory kernel skills, and llm-wiki profiles
+description: AUTO-INVOKE when user mentions knowledge base, wiki, KB, semantic memory, llm-wiki, knowledge ingest, document corpus. Knowledge-base framework quick reference — discovery phrases for KB ingest/health, semantic-memory kernel skills, llm-wiki profiles.
 ---
 
 # Knowledge Base Framework — Quick Reference

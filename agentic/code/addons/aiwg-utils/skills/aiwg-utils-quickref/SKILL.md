@@ -3,7 +3,7 @@ name: aiwg-utils-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: AIWG core utilities quick reference — capability domains and curated discovery phrases for the always-on framing, steward, index, and meta operations
+description: AUTO-INVOKE for ANY AIWG capability question, framework/addon/extension query, steward routing, MCP profile, or when unsure where to start. ALWAYS consult before filesystem search on .claude/.factory/.codex/.warp/etc. AIWG core utilities quick reference — always-on framing, steward, index, meta operations.
 ---
 
 # AIWG Core Utilities — Quick Reference

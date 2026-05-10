@@ -3,7 +3,7 @@ name: security-engineering-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: Security-engineering framework quick reference — decision domains and curated discovery phrases for crypto primitives, chain-of-trust, auth factors, degraded modes, supply-chain trust, and physical-threat modeling
+description: AUTO-INVOKE when user mentions cryptography, AEAD, KDF, chain of trust, signing key, auth factor, MFA, secret hygiene, supply chain trust, physical threat. Security-engineering quick reference — decision domains for crypto primitives, chain-of-trust, auth factors, degraded modes, supply-chain trust, physical-threat modeling.
 ---
 
 # Security Engineering Framework — Quick Reference
