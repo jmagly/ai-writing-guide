@@ -459,7 +459,14 @@ async function runDoctor() {
           // Skip silently — commands are optional for several providers
         }
       } else if (provName === 'claude') {
-        check('Claude Code Commands', 'info', 'No commands deployed');
+        // Claude Code uses a skill-only deployment model — `aiwg use` does not
+        // deploy slash commands here. Capabilities are reached via natural
+        // language ("create an intake form") or `aiwg discover` (#1228).
+        check(
+          'Claude Code Commands',
+          'ok',
+          'Skill-only model — capabilities reached via natural language or `aiwg discover`'
+        );
       }
     }
 

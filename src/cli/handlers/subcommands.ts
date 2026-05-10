@@ -254,6 +254,12 @@ export const listHandler: CommandHandler = {
 
     if (total === 0 && totalProjectLocal === 0) {
       output += '\nTip: Deploy a framework with "aiwg use sdlc" to get started\n';
+    } else if (totalCommands === 0 && totalAgents > 0) {
+      // Skill-only model (Claude Code default): commands aren't deployed as
+      // slash commands; capabilities reach the agent via natural language or
+      // `aiwg discover` (#1228). Surface this so 0 commands doesn't look like
+      // a deploy failure.
+      output += '\nNote: 0 commands is expected on Claude Code — capabilities are reached via natural language or `aiwg discover "<phrase>"`.\n';
     }
 
     return {

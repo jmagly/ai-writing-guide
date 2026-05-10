@@ -559,10 +559,22 @@ async function countDeployedArtifacts(
       return 0;
     }
   };
+  // Kernel skills deploy to the platform-native skills dir (always-loaded
+  // set) while standard skills sequester under <provider>/.aiwg/skills (the
+  // index-driven discovery tier). Both contribute to the deployed surface,
+  // so both must be counted (#1228). Derive the kernel path by stripping
+  // the `.aiwg/` segment from the standard path.
+  const kernelSkillsPath = paths.skills
+    ? paths.skills.replace(/(^|\/)\.aiwg\/skills?$/, '$1skills')
+    : '';
   return {
     agents: await countMd(paths.agents),
     commands: await countMd(paths.commands),
-    skills: await countDirs(paths.skills),
+    skills:
+      (await countDirs(paths.skills)) +
+      (kernelSkillsPath && kernelSkillsPath !== paths.skills
+        ? await countDirs(kernelSkillsPath)
+        : 0),
     rules: await countRules(paths.rules),
     behaviors: await countDirs(paths.behaviors),
   };

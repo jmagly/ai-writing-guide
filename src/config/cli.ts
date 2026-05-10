@@ -469,7 +469,10 @@ For project-level config: aiwg config show --project [--json]
 async function handleGitignore(args: string[]): Promise<void> {
   const { spawnSync } = await import('child_process');
   // Locate the gitignore CLI script relative to this compiled module
-  const scriptPath = path.resolve(_scriptDir, '../../tools/cli/config-gitignore.mjs');
+  // (#1228). At runtime this module lives at `dist/src/config/cli.js`,
+  // so we need three `..` segments to reach the package root where
+  // `tools/cli/` is shipped (see package.json `files`).
+  const scriptPath = path.resolve(_scriptDir, '../../../tools/cli/config-gitignore.mjs');
   const result = spawnSync(process.execPath, [scriptPath, ...args], { stdio: 'inherit' });
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
