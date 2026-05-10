@@ -187,7 +187,7 @@ describe('buildAgentsMd thin-pointer body (#1239)', () => {
 });
 
 describe('twin-file emission per ADR-1 §4', () => {
-  it('writes .hermes.md alongside AGENTS.md for hermes provider', async () => {
+  it('writes .hermes.md alongside AGENTS.md, with Hermes-specific MCP suffix (#1242)', async () => {
     const result = await generate({
       provider: 'hermes',
       projectPath: tmpDir,
@@ -196,7 +196,21 @@ describe('twin-file emission per ADR-1 §4', () => {
     expect(result.twinPaths).toContain(path.join(tmpDir, '.hermes.md'));
     const hermes = await fs.readFile(path.join(tmpDir, '.hermes.md'), 'utf8');
     const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
-    expect(hermes).toBe(agents);
+
+    // The twin diverges from AGENTS.md by appending the Hermes-MCP suffix.
+    // AGENTS.md must remain the cross-platform thin pointer (no Hermes-isms).
+    expect(hermes).not.toBe(agents);
+    expect(agents).not.toContain('## For Hermes Sessions');
+
+    // Hermes twin must start with the AGENTS.md body and append the suffix.
+    expect(hermes.startsWith(agents)).toBe(true);
+    expect(hermes).toContain('## For Hermes Sessions');
+    expect(hermes).toContain('artifact-read AIWG.md');
+    expect(hermes).toContain('aiwg discover');
+    expect(hermes).toContain('delegate_task');
+
+    // Total stays comfortably inside Hermes's <1,000-char turn-budget target.
+    expect(Buffer.byteLength(hermes, 'utf8')).toBeLessThan(1024);
   });
 
   it('writes WARP.md alongside AGENTS.md for warp provider', async () => {

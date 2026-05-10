@@ -215,8 +215,13 @@ export async function deploy(opts) {
     // Holistic post-deploy cleanup of stale AIWG-managed kernel skills.
     // Uses the global kernel set (walks all source frameworks/addons),
     // not just this-call's skillDirs, because aiwg use invokes
-    // deploy-agents.mjs multiple times.
-    pruneStaleAiwgSkills(kernelSkillsPath, computeAllKernelNames(srcRoot), opts);
+    // deploy-agents.mjs multiple times. Hermes augments the canonical
+    // set with `aiwg-orchestrate` (#1242) — the orchestrate skill is a
+    // template-driven convenience install (not part of any framework's
+    // skills/), so without this exemption the prune would delete it
+    // every time it's auto-installed.
+    const desiredKernel = [...computeAllKernelNames(srcRoot), 'aiwg-orchestrate'];
+    pruneStaleAiwgSkills(kernelSkillsPath, desiredKernel, opts);
   }
 
   // ── AGENTS.md ──────────────────────────────────────────────────────────────
@@ -233,12 +238,85 @@ export async function deploy(opts) {
     generateAgentsMd(agentCount, skillCount, target, opts);
   }
 
+  // ── aiwg-orchestrate convenience skill (#1242) ──────────────────────────────
+  // First-deploy-only copy: lays down the delegate_task wrapper at
+  // ~/.hermes/skills/aiwg-orchestrate/SKILL.md if it isn't already present.
+  // The skill provides ~95% per-workflow context reduction by routing AIWG
+  // calls through Hermes's `delegate_task` instead of inline MCP. Idempotent
+  // on re-run — operator edits are preserved across `aiwg use` invocations.
+  if (!skillsOnly && !opts.commandsOnly && !opts.rulesOnly) {
+    deployAiwgOrchestrateSkill(srcRoot, opts);
+  }
+
   // ── Post-deployment hint ───────────────────────────────────────────────────
   if (!opts.quiet) {
     console.log('');
     console.log('Commands and rules are served via MCP (not deployed as files).');
     console.log('Next: configure ~/.hermes/config.yaml to connect AIWG MCP server.');
     console.log('See: docs/integrations/hermes-quickstart.md (Part 2)');
+  }
+}
+
+// ============================================================================
+// aiwg-orchestrate auto-install (#1242)
+// ============================================================================
+
+/**
+ * Copy the aiwg-orchestrate skill template to ~/.hermes/skills/ on first
+ * deploy. Skip if a SKILL.md already exists — preserves operator edits and
+ * any prior version they're running. Errors during the copy are non-fatal:
+ * the rest of the deploy must succeed even if the home dir is read-only or
+ * the template is missing in this checkout.
+ */
+function deployAiwgOrchestrateSkill(srcRoot, opts) {
+  const templatePath = path.join(
+    srcRoot,
+    'agentic',
+    'code',
+    'frameworks',
+    'sdlc-complete',
+    'templates',
+    'hermes',
+    'skills',
+    'aiwg-orchestrate',
+    'SKILL.md',
+  );
+
+  if (!fs.existsSync(templatePath)) {
+    if (!opts.quiet) {
+      console.log('  aiwg-orchestrate template not present in this build — skipping auto-install');
+    }
+    return;
+  }
+
+  const destDir = path.join(kernelSkillsPath, 'aiwg-orchestrate');
+  const destPath = path.join(destDir, 'SKILL.md');
+
+  if (fs.existsSync(destPath)) {
+    if (!opts.quiet) {
+      console.log(`  aiwg-orchestrate already present at ${destPath} — operator copy preserved`);
+    }
+    return;
+  }
+
+  if (opts.dryRun) {
+    if (!opts.quiet) {
+      console.log(`  [dry-run] Would install aiwg-orchestrate to ${destPath}`);
+    }
+    return;
+  }
+
+  try {
+    ensureDir(destDir);
+    const content = fs.readFileSync(templatePath, 'utf8');
+    fs.writeFileSync(destPath, content, 'utf8');
+    if (!opts.quiet) {
+      console.log(`  Installed aiwg-orchestrate to ${destPath} (delegate_task wrapper, 95% context reduction)`);
+    }
+  } catch (err) {
+    if (!opts.quiet) {
+      console.log(`  aiwg-orchestrate auto-install skipped: ${err.message}`);
+    }
   }
 }
 

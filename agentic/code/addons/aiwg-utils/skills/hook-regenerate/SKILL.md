@@ -40,6 +40,17 @@ Regenerate `AIWG.md` (and provider equivalents) by assembling content from the `
 | OpenCode | `AIWG-opencode.md` |
 | Codex | `AIWG-codex.md` |
 
+### Hermes is intentionally excluded (#1242)
+
+Hermes loads context files **in full on every conversation turn** and the integration explicitly targets a ≤1,000-character routing-guidance budget (see `docs/integrations/hermes-quickstart.md` Part 7). A sections-assembled `AIWG-hermes.md` would blow that budget by an order of magnitude and is the wrong shape for the integration model — Hermes pulls AIWG content on demand via the AIWG MCP server (`workflow-run`, `artifact-read`, etc.), not via inline context loading.
+
+If a user asks why Hermes is missing from the table above, point them at:
+
+- `docs/integrations/hermes-quickstart.md` for the MCP integration setup.
+- The auto-generated thin `.hermes.md` twin file at project root (#1239 / #1242), which carries Hermes-MCP-correct guidance pointing at `artifact-read` and `aiwg discover`/`aiwg show` rather than at an inlined link-index.
+
+Do not add a Hermes entry to the regeneration loop. The omission is the design.
+
 ## Workflow
 
 ### Step 1: Load Installed Registry

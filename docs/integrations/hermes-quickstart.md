@@ -236,15 +236,21 @@ Hermes and AIWG each own distinct state. Do not synchronize them.
 
 ---
 
-## Part 6: Add the Optional Skill (delegate_task)
+## Part 6: aiwg-orchestrate Skill (auto-installed)
 
-After the base flow works, add a convenience skill that uses `delegate_task` to keep AIWG workflows out of the parent context.
+After Part 4, AIWG ships a convenience skill that uses `delegate_task` to keep AIWG workflows out of the parent context.
 
 **Why:** Direct MCP calls add 3,000-8,000 tokens to the parent context per workflow. `delegate_task` reduces this to ~200 tokens — a 95% reduction.
 
+> **#1242 update**: Since 2026.5.0+ `aiwg use --provider hermes` automatically installs this skill at `~/.hermes/skills/aiwg-orchestrate/SKILL.md` on first deploy. The install is idempotent — your edits are preserved across subsequent `aiwg use` runs. The Hermes provider's prune-stale-skills sweep treats `aiwg-orchestrate` as part of the kernel set so it survives reruns.
+
 > **API note (v0.4.0):** `delegate_task` automatically excludes context files (AGENTS.md, SOUL.md) and memory (MEMORY.md, USER.md) from child agents — this is hardcoded behavior, not a per-call parameter. The delegation model is configured globally in `~/.hermes/config.yaml` under `delegation.model`.
 
-**Create `~/.hermes/skills/aiwg-orchestrate/SKILL.md`:**
+**To verify the install:** `ls ~/.hermes/skills/aiwg-orchestrate/SKILL.md`
+
+**To re-install** (after deletion or to reset to the shipped version): `rm -rf ~/.hermes/skills/aiwg-orchestrate && aiwg use sdlc --provider hermes`
+
+**Manual creation** (if for some reason auto-install was skipped — e.g. read-only home dir): create `~/.hermes/skills/aiwg-orchestrate/SKILL.md` with the body below.
 
 ```markdown
 ---
@@ -306,10 +312,13 @@ AIWG's MCP server exposes exactly 5 tools — no more, no less. Two variables af
 | USER.md | ~500 |
 | AIWG MCP schema (5 tools) | ~3,000 |
 | AIWG kernel skills at `~/.hermes/skills/` (6 skills post-rc.14 pivot) | ~1,200 |
-| **Total overhead** | **~7,250** |
-| **Available for conversation** (32K context) | **~25,518 (78%)** |
+| `aiwg-orchestrate` skill (auto-installed, #1242) | ~150 |
+| **Total overhead** | **~7,400** |
+| **Available for conversation** (32K context) | **~25,368 (77%)** |
 
 > **#1241 update**: After `aiwg use --provider hermes`, six AIWG kernel skills (aiwg-doctor, aiwg-help, aiwg-language-map, aiwg-refresh, aiwg-status, aiwg-utils-quickref) deploy to `~/.hermes/skills/`. Hermes loads these natively per skill; budget rough estimate ~200 tokens each. Subtract this row if you remove the AIWG addon or use only the MCP surface.
+
+> **#1242 update**: The `aiwg-orchestrate` skill (~150 tokens) is auto-installed at `~/.hermes/skills/aiwg-orchestrate/`. Despite the modest schema cost, using it for AIWG workflows nets a large savings — direct MCP calls would add 3,000-8,000 tokens *per workflow* to the parent context; `delegate_task` via this skill keeps that cost in the child agent and returns a ~200-token summary to the parent. Net positive after the first workflow.
 
 ### With verbose AGENTS.md or large CLAUDE.md auto-loaded
 

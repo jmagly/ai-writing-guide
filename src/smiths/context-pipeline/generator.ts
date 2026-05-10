@@ -228,7 +228,9 @@ async function atomicWrite(filePath: string, content: string): Promise<void> {
  *
  * Hermes scans `.hermes.md` first (priority 1) and falls back to AGENTS.md.
  * Warp prefers AGENTS.md but tooling expects `WARP.md` to exist. Both are
- * written with the same content as AGENTS.md.
+ * written with the same content as AGENTS.md, except Hermes — see
+ * `applyTwinSuffix` below for the Hermes-specific MCP guidance suffix
+ * (#1242).
  */
 const TWIN_FILES_BY_PROVIDER: Record<string, ReadonlyArray<string>> = {
   hermes: ['.hermes.md'],
@@ -236,9 +238,49 @@ const TWIN_FILES_BY_PROVIDER: Record<string, ReadonlyArray<string>> = {
 };
 
 /**
- * Write per-provider twin files (.hermes.md, WARP.md) carrying the same
- * content as AGENTS.md. Operator-claimed twin files are not overwritten
- * unless --force is set, matching the AGENTS.md guard.
+ * Hermes-specific suffix appended to `.hermes.md` (#1242).
+ *
+ * The cross-platform AGENTS.md thin pointer (#1239) says *"See [AIWG.md] for
+ * the full AIWG framework context."* From inside a Hermes turn that link is
+ * a dead end — Hermes auto-loads AGENTS.md and CLAUDE.md but not AIWG.md.
+ * The twin file gets a Hermes-correct alternative path so a model running
+ * inside Hermes knows to call `artifact-read` over MCP rather than chase the
+ * AIWG.md link.
+ *
+ * Suffix is ~390 chars (~95 tokens) — keeps the .hermes.md twin total under
+ * Hermes's <1,000-char turn-budget target on top of the 579-byte primary.
+ */
+const HERMES_TWIN_SUFFIX = [
+  '',
+  '## For Hermes Sessions',
+  '',
+  'From inside a Hermes turn, the AIWG.md link above is a CLI-side reference — Hermes does',
+  'not auto-load AIWG.md. To browse AIWG capabilities live, use one of:',
+  '',
+  '- `artifact-read AIWG.md` via the AIWG MCP server (loads on demand, costs tokens once).',
+  '- `aiwg discover "<intent>"` and `aiwg show <type> <name>` from the CLI sidecar.',
+  '- `delegate_task` to the AIWG-orchestrate skill for structured artifact workflows.',
+  '',
+].join('\n');
+
+/**
+ * Apply provider-specific transformations to twin-file content.
+ *
+ * Currently used only for Hermes (#1242). Extend by adding more
+ * provider-keyed branches as new twin formats need divergence.
+ */
+function applyTwinSuffix(provider: string, baseContent: string): string {
+  if (provider === 'hermes') {
+    return `${baseContent}${HERMES_TWIN_SUFFIX}`;
+  }
+  return baseContent;
+}
+
+/**
+ * Write per-provider twin files (.hermes.md, WARP.md). Twin content is the
+ * AGENTS.md body plus any provider-specific suffix from `applyTwinSuffix`.
+ * Operator-claimed twin files are not overwritten unless --force is set,
+ * matching the AGENTS.md guard.
  */
 async function writeTwinFiles(
   provider: string,
@@ -249,6 +291,8 @@ async function writeTwinFiles(
 ): Promise<void> {
   const twinNames = TWIN_FILES_BY_PROVIDER[provider];
   if (!twinNames || twinNames.length === 0) return;
+
+  const twinContent = applyTwinSuffix(provider, agentsMdContent);
 
   for (const twinName of twinNames) {
     const twinPath = path.join(projectPath, twinName);
@@ -273,7 +317,7 @@ async function writeTwinFiles(
       }
     }
 
-    await atomicWrite(twinPath, agentsMdContent);
+    await atomicWrite(twinPath, twinContent);
     result.twinPaths.push(twinPath);
   }
 }
