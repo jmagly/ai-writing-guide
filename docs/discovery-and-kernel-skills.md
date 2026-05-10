@@ -10,7 +10,7 @@ AIWG ships **400+ skills** across its frameworks. Agentic platforms (Claude Code
 
 Starting in 2026.5.0, AIWG splits its skill surface into two tiers, with discovery + on-demand fetch closing the loop:
 
-- **Kernel skills** — always-loaded into the platform's flat skill listing. ~15 skills total: 9 quickrefs (one per installed framework + utils) and 6 self-maintenance ops.
+- **Kernel skills** — always-loaded into the platform's flat skill listing. ~16 skills total: 9 quickrefs (one per installed framework + utils), the `aiwg-language-map` for addons + extensions, and 6 self-maintenance ops.
 - **Standard skills** — the other 380+ skills. Stay at `$AIWG_ROOT` and are **not copied per-project** by default (#1217). Reachable via `aiwg discover` (find) and `aiwg show` (fetch).
 
 This document is the operator's guide to using the new model effectively, plus verification steps so you can confirm it's actually working.
@@ -41,7 +41,7 @@ Source of truth ($AIWG_ROOT/agentic/code/...)
 │  ┌────────────────────────────┐
 ├─►│ KERNEL skills              │  copied per-project to platform-native skills dir
 │  │ kernel: true in frontmatter│  always-loaded into agent context
-│  │ (~15 skills today)         │  budget-bound; keep tight
+│  │ (~16 skills today)         │  budget-bound; keep tight
 │  └────────────────────────────┘
 │
 └─►┌────────────────────────────┐
@@ -77,7 +77,7 @@ aiwg use all --copy-all           # works for `aiwg use all` too
 
 The `--copy-all` flag (alias `--copy-standard-skills`) restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`).
 
-## The kernel set today (15 skills, ~15-25k tokens total)
+## The kernel set today (16 skills, ~15-25k tokens total)
 
 ### Framework quickrefs (9)
 
@@ -94,6 +94,12 @@ One quickref per framework, deployed when that framework is installed. Each one 
 | `security-engineering-quickref` | security-engineering |
 | `knowledge-base-quickref` | knowledge-base |
 | `aiwg-utils-quickref` | aiwg-utils (always present) |
+
+### Addon + extension language map (1)
+
+| Quickref | Covers |
+|---|---|
+| `aiwg-language-map` | the ~270 skills across 28 addons + 7 ops extensions — capability domains, curated discover phrases, and a keyword→domain cheat sheet (#1227 follow-up) |
 
 ### Self-maintenance ops (6, new in rc.17)
 
@@ -189,7 +195,7 @@ aiwg-status          aiwg-utils-quickref  sdlc-quickref
 steward              use
 ```
 
-For `aiwg use all` (every framework), you'll see all 9 quickrefs + 6 ops = 15 skills.
+For `aiwg use all` (every framework), you'll see all 9 quickrefs + `aiwg-language-map` + 6 ops = 16 skills.
 
 ### 2. Confirm no per-project standard mirror by default
 

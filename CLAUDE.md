@@ -334,9 +334,10 @@ aiwg run skill <name> --cwd <path> -- <args...>   # explicit CWD override
 
 # Most AIWG skills (~385 of 400) are NOT in your context — they stay at
 # $AIWG_ROOT (no per-project copy by default, #1217) and are reached via
-# `aiwg discover` + `aiwg show`. The kernel set (9 framework quickrefs +
-# 6 self-maintenance ops: steward, aiwg-doctor, aiwg-refresh, aiwg-status,
-# aiwg-help, use) is what's always-loaded — 15 skills total.
+# `aiwg discover` + `aiwg show`. The kernel set is what's always-loaded:
+# 8 framework quickrefs + aiwg-utils-quickref + aiwg-language-map (covers
+# addons + extensions) + 6 self-maintenance ops (steward, aiwg-doctor,
+# aiwg-refresh, aiwg-status, aiwg-help, use) = 16 skills total.
 # The skill-discovery HIGH rule mandates `aiwg discover` before declining
 # a user request as out-of-scope.
 # To force per-project copies (sandboxed runtimes): pass --copy-all
