@@ -50,10 +50,12 @@ aiwg remove sdlc --user --provider claude --dry-run
 | OpenClaw | `~/.openclaw/{agents,commands,skills,rules,behaviors}/` | Always user-scope (no `--scope project`) |
 | Hermes | `~/.hermes/skills/` | Always user-scope (skills only) |
 | Codex | `~/.agents/skills/` (skills); `~/.codex/prompts/` (commands; deploy-for-visibility, not auto-scanned) | **Verified** ([`codex-rs/core-skills/src/loader.rs`](https://github.com/openai/codex)) |
-| Cursor | `~/.cursor/{agents,skills,commands,rules}/` | **Unverified** — Cursor's "User Rules" feature is in-app settings (not filesystem); project-scope `.cursor/rules/*.mdc` is confirmed, user-scope filesystem discovery is not. See [#1159](https://git.integrolabs.net/roctinam/aiwg/issues/1159) |
+| Cursor | `~/.cursor/{agents,skills,commands,rules}/` (harmless mirror; not auto-scanned) | **Non-applicable** — Cursor's "User Rules" feature is in-app settings, not filesystem-discovered; only project-scope `.cursor/rules/*.mdc` is confirmed. See [#1159](https://git.integrolabs.net/roctinam/aiwg/issues/1159) |
 | OpenCode | `~/.config/opencode/{agents,commands}/`; skills at `~/.agents/skills/` (cross-provider canonical) | **Verified** ([opencode.ai/docs/skills](https://opencode.ai/docs/skills/), [opencode.ai/docs/rules](https://opencode.ai/docs/rules/)) — user-scope root is `~/.config/opencode/`, NOT `~/.opencode/` |
 | Factory AI | `~/.factory/{droids,skills,commands}/` | **Verified** ([docs.factory.ai/cli/configuration/skills](https://docs.factory.ai/cli/configuration/skills)) for skills; droids/commands paths follow project-scope convention |
-| Copilot / Warp / Windsurf | `~/.{provider}/...` paths defined in `USER_SCOPE_PATHS` | Path map registered; per-platform verification tracked as Phase 2 follow-ups |
+| Copilot | `~/.config/github-copilot/{agents,prompts,instructions}/` (harmless mirror; not auto-scanned) | **Non-applicable** — VS Code Copilot's user-scope customization is `settings.json` + Settings Sync, not filesystem discovery. See [#1160](https://git.integrolabs.net/roctinam/aiwg/issues/1160) |
+| Warp | `~/.warp/{agents,commands,rules}/` (harmless mirror; not auto-scanned) | **Non-applicable** — Warp's user-scope mechanism is Warp Drive (cloud-synced), not filesystem discovery. WARP.md aggregation is the project-scope path. See [#1162](https://git.integrolabs.net/roctinam/aiwg/issues/1162) |
+| Windsurf | `~/.windsurf/{agents,skills,workflows,rules}/` (harmless mirror; not auto-scanned) | **Non-applicable** — Windsurf's user-scope mechanism is Cascade Memories (in-app, agent-managed) + global rules in the settings UI, not filesystem discovery. See [#1163](https://git.integrolabs.net/roctinam/aiwg/issues/1163) |
 
 `aiwg use ... --scope user --provider <unknown>` errors fast rather
 than silently falling back to project scope.

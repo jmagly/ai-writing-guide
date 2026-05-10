@@ -50,6 +50,25 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     behaviors: '',
   },
   copilot: {
+    // #1160 — Non-applicable for filesystem user-scope discovery.
+    //
+    // VS Code GitHub Copilot's user-scope customization mechanism is the
+    // VS Code settings UI (`settings.json` → `github.copilot.chat.*` keys
+    // and `chat.modeFiles`/`chat.promptFiles` discovery), NOT a home-dir
+    // filesystem scan. `~/.config/github-copilot/` exists on Linux but
+    // stores auth state, not customization markdown files. Workspace
+    // customization is `.github/{copilot-instructions.md,prompts/,agents/,
+    // instructions/}` — see `PROVIDER_PATHS.copilot` in use.ts for the
+    // project-scope deploy that IS verified.
+    //
+    // The paths below remain populated as a "harmless mirror" — deploying
+    // there does not break Copilot, but the runtime won't pick them up.
+    // Operators wanting cross-project Copilot customization should use
+    // VS Code's Settings Sync (settings.json), not AIWG `--scope user`.
+    //
+    // Skills route through ~/.agents/skills/ which IS a documented
+    // cross-provider canonical (Codex/OpenCode scan it; Copilot does
+    // not auto-scan but doesn't refuse either).
     agents: path.join(homedir(), '.config', 'github-copilot', 'agents'),
     skills: path.join(homedir(), '.agents', 'skills'),
     commands: path.join(homedir(), '.config', 'github-copilot', 'prompts'),
@@ -99,6 +118,22 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     behaviors: '',
   },
   warp: {
+    // #1162 — Non-applicable for filesystem user-scope discovery.
+    //
+    // Warp's user-scope mechanism is **Warp Drive** (cloud-synced agents,
+    // workflows, notebooks, and rules tied to the operator's Warp account),
+    // not a filesystem scan under `~/.warp/`. The project-scope AIWG
+    // surface for Warp is `WARP.md` aggregation at the project root via
+    // `aiwg-regenerate-warp` — that's the verified discovery path.
+    //
+    // The paths below remain populated as a "harmless mirror" — deploying
+    // there does not break Warp, but the runtime won't pick them up.
+    // Operators wanting cross-project Warp customization should publish
+    // to Warp Drive via the Warp app, not AIWG `--scope user`.
+    //
+    // Skills route through ~/.agents/skills/ as a courtesy (Warp does not
+    // auto-scan it but doesn't refuse either; aligns with the cross-
+    // provider canonical used by Codex/OpenCode).
     agents: path.join(homedir(), '.warp', 'agents'),
     skills: path.join(homedir(), '.agents', 'skills'),
     commands: path.join(homedir(), '.warp', 'commands'),
@@ -106,6 +141,20 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     behaviors: '',
   },
   windsurf: {
+    // #1163 — Non-applicable for filesystem user-scope discovery.
+    //
+    // Windsurf's user-scope mechanism is **Cascade Memories** (in-app,
+    // managed by the Cascade agent itself, not file-discovered) and
+    // global rules in the Windsurf settings UI. Project-scope discovery
+    // is `.windsurf/{rules,workflows}/` and AGENTS.md aggregation. There
+    // is no documented filesystem scan of `~/.windsurf/` for user-scope
+    // content.
+    //
+    // The paths below remain populated as a "harmless mirror" — deploying
+    // there does not break Windsurf, but the runtime won't pick them up.
+    // Operators wanting cross-project Windsurf customization should use
+    // Cascade Memories (commit a memory via the agent UI) or the
+    // Windsurf settings UI, not AIWG `--scope user`.
     agents: path.join(homedir(), '.windsurf', 'agents'),
     skills: path.join(homedir(), '.windsurf', 'skills'),
     commands: path.join(homedir(), '.windsurf', 'workflows'),
