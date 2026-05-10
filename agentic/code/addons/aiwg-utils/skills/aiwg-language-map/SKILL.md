@@ -28,7 +28,7 @@ The map has two sections:
 - **Addon capability domains** — user-need clusters (memory, loops, voice, etc.) routed to addons
 - **Extension domains** — operational scopes (sys, net, sec, etc.) for `ops-complete`
 
-Each entry is one line: a curated discover phrase plus the bundle that owns the result. Use the phrase as written — they've been chosen to surface the relevant skill in the top results.
+Each section opens with an explicit `aiwg discover "<phrase>"` example. Table rows underneath show **bare phrases** — pass them straight to `aiwg discover` (the verb is implied by the section header). Phrases have been verified against the index; each surfaces the listed bundle in the top results.
 
 ---
 
@@ -38,121 +38,157 @@ Each entry is one line: a curated discover phrase plus the bundle that owns the 
 
 When the user needs an iterative coding loop, recursive context decomposition, eval gates, or guided autonomous implementation.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "ralph loop"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| Iterative AI coding loop with auto-recovery | `aiwg discover "iterative coding loop"` | agent-loop |
-| Resume / abort / status of a running loop | `aiwg discover "ralph status"` | agent-loop |
-| External crash-resilient loop variant | `aiwg discover "crash-resilient agent loop"` | agent-loop |
-| Recursive decomposition of a huge corpus | `aiwg discover "recursive language model query"` | rlm |
-| RLM batch processing with parallel sub-agents | `aiwg discover "rlm batch fan-out"` | rlm |
-| Bounded autonomous issue-to-code | `aiwg discover "guided implementation"` | guided-implementation |
-| Eval-driven generator/critic loop | `aiwg discover "eval loop"` | aiwg-evals |
+| Iterative AI coding loop (Ralph) | `ralph loop` | agent-loop |
+| Loop status / abort / resume / attach | `ralph attach` (or `ralph abort` / `ralph resume` / `ralph status`) | agent-loop |
+| External crash-resilient loop variant | `ralph external loop` | agent-loop |
+| Recursive decomposition of a huge corpus | `rlm query` | rlm |
+| RLM batch processing with parallel sub-agents | `rlm batch fan-out` | rlm |
+| Bounded autonomous issue-to-code | `guided implementation` | guided-implementation |
+| Inner generator/critic eval loop in a pipeline | `eval loop` | nlp-prod |
+| KAMI-based agent quality eval framework | `agent quality eval` | aiwg-evals |
 
 ### Memory & state
 
 When the user needs persistent agent memory, semantic ingestion, or context curation.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "memory ingest"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| Semantic memory ingestion or query | `aiwg discover "semantic memory ingest"` | semantic-memory |
-| Lint or capture a memory entry | `aiwg discover "memory lint"` | semantic-memory |
-| Filter context to remove distractors | `aiwg discover "filter distractors from context"` | context-curator |
-| Project-local LLM-maintained wiki | `aiwg discover "llm wiki"` | llm-wiki |
-| Auto-memory templates for new projects | `aiwg discover "auto memory seed"` | auto-memory |
+| Semantic memory ingest | `memory ingest` | semantic-memory |
+| Lint memory entries | `semantic memory lint` | semantic-memory |
+| Capture / query memory | `memory query` | semantic-memory |
+| Filter context to remove distractors | `filter distractors from context` | context-curator |
+
+> Bundles `auto-memory` and `llm-wiki` ship as templates / topology only — they have no indexable skills today. For project-local memory bootstrapping, use `aiwg-utils` (`auto memory templates` lives there). The `llm-wiki` topology is consumed by the knowledge-base framework — see `knowledge-base-quickref`.
 
 ### Voice & writing quality
 
 When the user is producing or reviewing prose and needs voice consistency, AI-pattern detection, or related text quality work.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "apply voice profile"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| Apply a voice profile to existing content | `aiwg discover "apply voice profile"` | voice-framework |
-| Create a new voice profile | `aiwg discover "create voice profile"` | voice-framework |
-| Blend two voices | `aiwg discover "blend voice profiles"` | voice-framework |
-| Analyze content's current voice | `aiwg discover "analyze voice"` | voice-framework |
-| Detect AI-pattern artifacts in writing | `aiwg discover "ai pattern detection"` | writing-quality |
-| Improve output diversity (verbalized sampling) | `aiwg discover "verbalized sampling diversity"` | verbalized-sampling |
+| Apply a voice profile to existing content | `apply voice profile` | voice-framework |
+| Create a new voice profile | `create voice profile` | voice-framework |
+| Blend two voices | `blend voice profiles` | voice-framework |
+| Analyze content's current voice | `analyze voice` | voice-framework |
+| Detect AI-pattern artifacts in writing | `ai pattern detection` | writing-quality |
+| Improve output diversity (verbalized sampling) | `verbalized sampling` | verbalized-sampling |
 
 ### NLP & inference pipelines
 
 When the user is building or optimizing LLM inference systems.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "pipeline architect"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| LLM inference pipeline architecture | `aiwg discover "llm inference pipeline architecture"` | nlp-prod |
-| Cost analysis for LLM workloads | `aiwg discover "llm cost analysis"` | nlp-prod |
-| Pipeline pattern selection | `aiwg discover "pipeline pattern selection"` | nlp-prod |
+| LLM inference pipeline architecture | `pipeline architect` | nlp-prod |
+| Pipeline pattern selection | `pipeline pattern` | nlp-prod |
+| Cost optimizer for LLM workloads | `llm cost optimizer` | nlp-prod |
+| Eval-loop generator/critic | `eval loop` | nlp-prod |
+| Productionize an inference pipeline | `pipeline productionize` | nlp-prod |
+| Prompt engineering | `prompt engineer` | nlp-prod |
 
 ### Documentation intelligence
 
 When the user is scraping, extracting, or analyzing documentation as a corpus.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "doc analyst"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| Coordinate doc analysis (master orchestrator) | `aiwg discover "doc intelligence orchestrator"` | doc-intelligence |
-| Scrape and extract documentation | `aiwg discover "doc scrape extract"` | doc-intelligence |
-| OpenProse program operations (read/parse/run) | `aiwg discover "prose program execute"` | prose-integration |
+| Coordinate doc analysis (master orchestrator) | `doc analyst` | doc-intelligence |
+| Scrape documentation sites | `doc scraper` | doc-intelligence |
+| Extract from PDFs | `pdf extractor` | doc-intelligence |
+| Run an OpenProse program | `prose run` | prose-integration |
+| Validate / parse a Prose program | `prose validate` | prose-integration |
 
 ### Testing & quality
 
 When the user needs test enforcement, UAT, or quality automation.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "tdd enforce"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| TDD enforcement / test gates | `aiwg discover "tdd enforce"` | testing-quality |
-| Mutation testing | `aiwg discover "mutation analyze"` | testing-quality |
-| UAT plan generation via MCP | `aiwg discover "uat plan generation"` | uat-mcp |
-| UAT execution via MCP | `aiwg discover "uat execute mcp"` | uat-mcp |
+| TDD enforcement / test gates | `tdd enforce` | testing-quality |
+| Mutation testing analyst | `mutation analyst` | sdlc-complete (agent) |
+| Mutation test runner | `mutation test` | testing-quality |
+| UAT plan generation via MCP | `uat plan` | uat-mcp |
+| UAT execution via MCP | `uat execute` | uat-mcp |
 
 ### Skill / extension authoring
 
 When the user is building new AIWG content (skills, addons, framework changes).
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "skill architect"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| End-to-end skill creation orchestrator | `aiwg discover "skill architect orchestrator"` | skill-factory |
-| Build, enhance, validate a skill | `aiwg discover "skill builder enhancer"` | skill-factory |
-| AIWG framework development tooling | `aiwg discover "aiwg framework development"` | aiwg-dev |
-| Validate framework manifests | `aiwg discover "validate framework manifest"` | aiwg-dev |
+| End-to-end skill creation orchestrator | `skill architect` | skill-factory |
+| Build a skill | `skill builder` | skill-factory |
+| Enhance / validate / package a skill | `skill packager` | skill-factory |
+| Validate an AIWG addon | `validate addon` | aiwg-dev |
+| Validate a framework component | `validate component` | aiwg-dev |
+| AIWG devkit build helpers | `devkit build` | aiwg-dev |
+| Link-check across docs | `link check` | aiwg-dev |
 
 ### Color & UX
 
 When the user needs color theory or palette tooling.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "color palette"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| Generate or review a color palette | `aiwg discover "color palette generate"` | color-palette |
-| Color theory fundamentals reference | `aiwg discover "color theory"` | color-palette |
-| Accessibility / contrast review | `aiwg discover "color accessibility contrast"` | color-palette |
+| Generate or review a color palette | `color palette` | color-palette |
+| Color theory fundamentals reference | `color theory` | color-palette |
+| Accessibility / contrast review | `color accessibility` | color-palette |
 
 ### Daemon & background work
 
 When the user needs persistent sessions or background orchestration.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "daemon init"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| Concierge / persistent daemon session | `aiwg discover "daemon concierge session"` | daemon |
-| Mission Control (background mission orchestrator) | `aiwg discover "mission control orchestrate"` | daemon |
-| Star-prompt for repo recommendations | `aiwg discover "star prompt"` | star-prompt |
+| Concierge daemon entry / init | `daemon init` | aiwg-utils |
+| Concierge agent (front-of-house) | `concierge daemon` | daemon |
+| Mission Control (background mission orchestrator) | `mc dispatch` | agent-loop |
+| Star-prompt for repo recommendations | `star prompt` | star-prompt |
 
 ### Setup & installer
 
 When the user is bootstrapping a project or installing AIWG itself.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "setup manifest generate"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| Generate a reproducible installer manifest | `aiwg discover "setup manifest generate"` | agentic-installer |
-| Validate / run a setup manifest | `aiwg discover "setup manifest validate run"` | agentic-installer |
+| Generate a reproducible installer manifest | `setup manifest generate` | agentic-installer |
+| Validate / run a setup manifest | `setup manifest validate run` | agentic-installer |
 
 ### Hooks & integration
 
-When the user needs platform-level lifecycle hooks or external bridges.
+When the user needs platform-level lifecycle hooks, HITL gates, or external bridges.
 
-| Need | Discover phrase | Bundle |
+Example: `aiwg discover "hitl patterns"`. Phrases below pass straight to `aiwg discover`.
+
+| Need | Phrase | Bundle |
 |---|---|---|
-| Trace / permission / session hooks for Claude Code | `aiwg discover "claude hooks trace permissions"` | aiwg-hooks |
-| HITL gate definitions for agent ops | `aiwg discover "human in the loop gate"` | agent-persistence |
-| Bridge Claude to Factory Droid (MCP) | `aiwg discover "factory droid bridge"` | droid-bridge |
+| HITL gate patterns (rule) | `hitl patterns` | sdlc-complete (rule) |
+| HITL gates (rule, ensemble review) | `hitl gates` | sdlc-complete (rule) |
+| Factory AI compat agent | `factory compat` | sdlc-complete (agent) |
+
+> The `aiwg-hooks`, `agent-persistence`, and `droid-bridge` addons ship templates / rules / MCP servers without indexable skills. Their content lives in `.claude/hooks/` (Claude Code lifecycle hooks), in HITL rules under sdlc-complete, and as a separate MCP server respectively. Use the curated phrases above to surface the rules; the hook scripts themselves are accessible via the `aiwg-hooks` addon README.
 
 ### Core meta-utilities
 
@@ -162,79 +198,82 @@ For everything else AIWG-internal — context regeneration, workspace management
 
 ## Extension domains (ops-complete)
 
-Operational extensions live under `agentic/code/extensions/<domain>/` and extend `ops-complete`. They carry both skills AND rules. The framework-level `ops-quickref` lists the high-level extension model; this section gives you direct discover phrases.
+Operational extensions live under `agentic/code/extensions/<domain>/` and extend `ops-complete`. They carry both skills AND rules. The framework-level `ops-quickref` lists the high-level extension model; this section gives you direct phrases.
+
+Each block opens with one explicit `aiwg discover` example; remaining phrases are bare — pass straight to `aiwg discover`.
 
 ### sys — per-host operations
 
 Hardware, OS, boot chains, fleet host documentation, immutable bases, hardware safety procedures.
 
-```bash
-aiwg discover "host profiling sys"             # → sys-host-profile
-aiwg discover "system spec audit"              # → system-spec audit skills
-aiwg discover "luks tpm dual phase"            # → sec-luks-dual-phase rule (sys+sec border)
+```
+aiwg discover "sys host profile"   # → sys-host-profiler agent (1.00)
+sys host audit                     # → sys-host-audit skill
+luks tpm dual phase                # → sec-luks-dual-phase rule (sys+sec border)
+sys host independence              # → sys-host-independence rule
 ```
 
 ### net — network operations
 
 VLANs, DNS, firewalls, Cloudflare tunnels, UniFi config, network state authority, cert expiry gates, tunnel safety.
 
-```bash
-aiwg discover "vlan audit"                     # → net-vlan-audit
-aiwg discover "dns check"                      # → net-dns-check
-aiwg discover "firewall change blast radius"   # → net-change-blast-radius rule
-aiwg discover "tunnel safety review"           # → net-tunnel-safety rule
+```
+aiwg discover "vlan audit"   # → net-vlan-audit (1.00)
+net dns check                # → net-dns-check skill
+net change blast radius      # → net-change-blast-radius rule
+tunnel safety                # → net-tunnel-safety rule
+net state authority          # → net-state-authority rule
 ```
 
 ### sec — security operations
 
 PKI, LUKS, TPM2, YubiKey, SSH CA, access auditing, cert expiry gates, key material handling.
 
-```bash
-aiwg discover "cert expiry scan"               # → sec-cert-scan
-aiwg discover "access audit snapshot"          # → sec-access-snapshot
-aiwg discover "ssh key audit"                  # → sec-ssh-key-audit
-aiwg discover "key material handling"          # → sec-key-material-handling rule
+```
+aiwg discover "sec cert scan"   # → sec-cert-scan
+sec access snapshot             # → sec-access-snapshot
+sec access audit frequency      # → sec-access-audit-frequency rule
+sec cert expiry gate            # → sec-cert-expiry-gates rule
+key material handling           # → sec-key-material-handling rule
+sec luks dual phase             # → sec-luks-dual-phase rule
 ```
 
 ### dev — CI/CD and build automation
 
 Pipeline safety, idempotent builds, secret hygiene, self-contained CI builders.
 
-```bash
-aiwg discover "pipeline safety ci"             # → dev-pipeline-safety rule
-aiwg discover "idempotent build"               # → dev-idempotent-builds rule
-aiwg discover "ci secret hygiene"              # → dev-secret-hygiene rule
-aiwg discover "self contained ci builder"      # → dev-ci-self-contained rule
+```
+aiwg discover "pipeline safety ci"   # → dev-pipeline-safety rule
+idempotent build                     # → dev-idempotent-builds rule
+ci secret hygiene                    # → dev-secret-hygiene rule
+self contained ci builder            # → dev-ci-self-contained rule
 ```
 
 ### it — IT ops, CMDB, asset management
 
 Asset registry, service deployments, disaster recovery, change control, asset authority, DR validation.
 
-```bash
-aiwg discover "cmdb asset audit"               # → it-asset-audit
-aiwg discover "service health check"           # → it-service-health rule
-aiwg discover "dr validation"                  # → it-dr-validation rule
-aiwg discover "change control workflow"        # → it-change-control rule
+```
+aiwg discover "it asset sync"   # → it-asset-sync skill (0.81)
+it asset authority              # → it-asset-authority rule
+it service health               # → it-service-health rule
+it dr validation                # → it-dr-validation rule
+it change control               # → it-change-control rule
 ```
 
 ### stream — streaming media operations
 
 Transcoders, restreaming, platform integrations, stream pipeline gates.
 
-```bash
-aiwg discover "stream pipeline deploy"         # → stream-deploy
-aiwg discover "stream pipeline gate"           # → stream-pipeline-gates rule
-aiwg discover "stream credential safety"       # → stream-safety rule
+```
+aiwg discover "stream deploy"   # → stream-deploy skill
+stream pipeline gates           # → stream-pipeline-gates rule
+stream safety                   # → stream-safety rule
 ```
 
 ### api-adapter — external API integrations
 
-Reserved for external API adapter scaffolding. Currently a placeholder bundle with no skills or rules; will populate as adapters land.
-
-```bash
-aiwg discover "api adapter"                    # may return zero results until populated
-```
+Reserved for external API adapter scaffolding. Currently a placeholder bundle with no skills or rules; phrases will appear as adapters are added.
 
 ---
 
