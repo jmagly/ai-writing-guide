@@ -60,6 +60,14 @@ If a user asks about a specific framework's surface, the corresponding quickref 
 
 If a quickref isn't loaded, the framework isn't installed in this project. Use `aiwg list` to confirm.
 
+## Addons & extensions (separate kernel quickref)
+
+For everything **outside the framework set** — the ~270 skills across 28 addons (loops, voice, memory, color, testing, NLP, etc.) and 7 ops extensions (sys/net/sec/dev/it/stream/api-adapter) — load `aiwg-language-map`. It's also kernel-resident and acts as the orientation layer for the addon/extension surface, with curated discover phrases per capability domain.
+
+```
+aiwg-language-map  → addon capability domains + extension domains + cheat sheet
+```
+
 ## Self-maintenance kernel (always loaded)
 
 These ops skills are kernel-resident — already in your context regardless of `aiwg discover`. If discovery breaks, you still have the surfaces to repair the install:
