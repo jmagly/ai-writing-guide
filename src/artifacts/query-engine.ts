@@ -295,6 +295,29 @@ const DEFAULT_DISCOVER_TYPES = ['skill', 'agent', 'command', 'rule'];
  * Discover returns paths anchored to AIWG_ROOT so the agent's `Read`
  * tool can resolve them from any project working directory (#1217).
  */
+/**
+ * Build the `run_hint` string for a script-bearing skill entry (#1227).
+ *
+ * Format: `aiwg run skill <name> [-- <argsHint>]`. The skill name is the
+ * basename of its source directory (skills/<name>/SKILL.md), which is
+ * what `aiwg run skill` accepts.
+ */
+function buildRunHint(entry: MetadataEntry): string {
+  // Use the directory basename for slug-layout skills, filename stem otherwise.
+  const lastSlash = entry.path.lastIndexOf('/');
+  const tail = lastSlash >= 0 ? entry.path.slice(lastSlash + 1) : entry.path;
+  let name: string;
+  if (tail === 'SKILL.md' && lastSlash >= 0) {
+    const dir = entry.path.slice(0, lastSlash);
+    const dirSlash = dir.lastIndexOf('/');
+    name = dirSlash >= 0 ? dir.slice(dirSlash + 1) : dir;
+  } else {
+    name = tail.replace(/\.[^.]+$/, '');
+  }
+  const argsHint = entry.script?.argsHint ? ` -- ${entry.script.argsHint}` : '';
+  return `aiwg run skill ${name}${argsHint}`;
+}
+
 async function getAiwgRootForDiscover(): Promise<string | null> {
   if (process.env.AIWG_ROOT) return process.env.AIWG_ROOT;
   try {
@@ -415,6 +438,15 @@ export async function discoverCapability(
         triggers: r.entry.triggers ?? [],
         capability: r.entry.capability ?? r.entry.summary,
         kernel: r.entry.kernel ?? false,
+        // #1227 — surface script-bearing skills so agents know to use
+        // `aiwg run skill <name>` instead of executing instructions
+        // themselves.
+        ...(r.entry.script
+          ? {
+              executable: true,
+              run_hint: buildRunHint(r.entry),
+            }
+          : {}),
       })),
       total: scored.length,
       query_time_ms: queryTimeMs,
@@ -435,12 +467,16 @@ export async function discoverCapability(
     const score = r.score.toFixed(2).padStart(4);
     const type = r.entry.type.padEnd(7);
     const kernelTag = r.entry.kernel ? '★ ' : '  ';
+    const execTag = r.entry.script ? ' [exec]' : '';
     const topTrigger = r.entry.triggers && r.entry.triggers.length > 0
       ? r.entry.triggers[0]
       : '';
-    console.log(`  ${kernelTag}score=${score}  ${type} ${resolvePath(r.entry)}`);
+    console.log(`  ${kernelTag}score=${score}  ${type} ${resolvePath(r.entry)}${execTag}`);
     if (r.entry.capability) {
       console.log(`               ${r.entry.capability}`);
+    }
+    if (r.entry.script) {
+      console.log(`               run: ${buildRunHint(r.entry)}`);
     }
     if (topTrigger) {
       console.log(`               trigger: "${topTrigger}"`);
@@ -710,6 +746,12 @@ export async function showArtifact(
       type: entry.type,
       title: entry.title,
       kernel: entry.kernel ?? false,
+      // #1227 — surface script-bearing skills so callers can route to
+      // `aiwg run skill <name>` instead of treating SKILL.md as
+      // instructions for the agent to execute itself.
+      ...(entry.script
+        ? { executable: true, run_hint: buildRunHint(entry) }
+        : {}),
       content,
     }, null, 2));
     return;
@@ -717,6 +759,12 @@ export async function showArtifact(
 
   // Plain mode: stream the file content unmodified so the consumer
   // (agent or operator) sees exactly what the source authored.
+  // #1227 — for script-bearing skills, prepend a one-line banner so
+  // agents reading the body immediately see the skill is executable.
+  if (entry.script) {
+    const hint = buildRunHint(entry);
+    process.stdout.write(`<!-- AIWG: executable skill — run via: ${hint} -->\n`);
+  }
   process.stdout.write(content);
   if (!content.endsWith('\n')) process.stdout.write('\n');
 }

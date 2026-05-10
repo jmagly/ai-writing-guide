@@ -72,6 +72,43 @@ export interface MetadataEntry {
    * covers a request.
    */
   kernel?: boolean;
+
+  /**
+   * Script entrypoint declaration for executable skills (#1227).
+   *
+   * When present, the skill has a backing script the CLI can invoke via
+   * `aiwg run skill <name>`. Surfaced in `aiwg discover --json` as
+   * `executable: true` + a `run_hint` so agents know to use the run
+   * command instead of trying to execute the SKILL.md instructions
+   * themselves.
+   */
+  script?: SkillScriptSpec;
+}
+
+/**
+ * Skill script entrypoint declaration (#1227).
+ *
+ * Parsed from the optional `script:` block in a SKILL.md frontmatter. The
+ * `entrypoint` is resolved relative to the skill's source directory; the
+ * runtime executes from the calling project's root by default so relative
+ * paths the script reads/writes resolve into the user's project, not the
+ * AIWG install.
+ */
+export interface SkillScriptSpec {
+  /** Path to the script file, relative to the skill's source directory */
+  entrypoint: string;
+  /** Runtime to dispatch with: node | python | python3 | bash | sh | pwsh | ruby | auto */
+  runtime: string;
+  /**
+   * Working directory policy. Default is `project-root`: the script runs
+   * from the project the CLI was invoked from, so relative paths resolve
+   * into the caller's tree. `skill-dir` is rare (only for skills that
+   * bundle assets they read via relative paths); `aiwg-root` is an escape
+   * hatch and almost never correct.
+   */
+  cwd?: 'project-root' | 'skill-dir' | 'aiwg-root';
+  /** Optional human-readable hint shown by `aiwg discover` and `aiwg show` */
+  argsHint?: string;
 }
 
 /**

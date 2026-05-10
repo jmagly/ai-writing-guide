@@ -237,6 +237,43 @@ export function extractCapability(data: Record<string, unknown>, body: string): 
 }
 
 /**
+ * Extract a SkillScriptSpec from skill frontmatter (#1227).
+ *
+ * The `script:` block is optional — only skills with a backing executable
+ * declare it. Schema:
+ *
+ *   script:
+ *     entrypoint: scripts/voice_loader.py   # required, relative to skill dir
+ *     runtime: python3                       # required (node|python3|bash|...)
+ *     cwd: project-root                      # optional, default project-root
+ *     argsHint: "--voice <name> --input <path>"  # optional UX hint
+ *
+ * Returns undefined when the block is absent or malformed. Malformed
+ * blocks are silently dropped — index builder logs a warning so authors
+ * see it, but the artifact still indexes as a non-executable skill.
+ */
+export function extractSkillScript(
+  data: Record<string, unknown>,
+): import('./types.js').SkillScriptSpec | undefined {
+  const raw = data.script;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const block = raw as Record<string, unknown>;
+  const entrypoint = typeof block.entrypoint === 'string' ? block.entrypoint.trim() : '';
+  const runtime = typeof block.runtime === 'string' ? block.runtime.trim() : '';
+  if (!entrypoint || !runtime) return undefined;
+  const cwdRaw = typeof block.cwd === 'string' ? block.cwd.trim() : 'project-root';
+  const cwd: 'project-root' | 'skill-dir' | 'aiwg-root' =
+    cwdRaw === 'skill-dir' || cwdRaw === 'aiwg-root' ? cwdRaw : 'project-root';
+  const argsHint = typeof block.argsHint === 'string' ? block.argsHint.trim() : undefined;
+  return {
+    entrypoint,
+    runtime,
+    cwd,
+    ...(argsHint ? { argsHint } : {}),
+  };
+}
+
+/**
  * Compute truncated SHA-256 checksum (16 hex chars)
  */
 function computeChecksum(content: string): string {
@@ -553,6 +590,8 @@ export async function buildIndex(
       const capability = isDiscoverable ? extractCapability(data, body) : undefined;
       const kernel =
         data.kernel === true || data.kernel === 'true' ? true : undefined;
+      // Script entrypoint metadata is meaningful for skills only (#1227).
+      const script = type === 'skill' ? extractSkillScript(data) : undefined;
 
       entry = {
         path: relativePath,
@@ -569,6 +608,7 @@ export async function buildIndex(
         ...(triggers && triggers.length > 0 ? { triggers } : {}),
         ...(capability ? { capability } : {}),
         ...(kernel ? { kernel } : {}),
+        ...(script ? { script } : {}),
       };
     }
 
