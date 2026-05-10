@@ -157,6 +157,7 @@ function parseArgs() {
     else if (a === '--quiet' || a === '-q') cfg.quiet = true;
     else if (a === '--as-plugin') cfg.asPlugin = true;
     else if (a === '--skip-commands-migration') cfg.skipCommandsMigration = true;
+    else if (a === '--copy-all' || a === '--copy-standard-skills') cfg.copyStandardSkills = true;
     else if (a === '--help' || a === '-h') {
       printHelp();
       process.exit(0);
@@ -197,6 +198,11 @@ Options:
   --as-agents-md               Aggregate to single AGENTS.md (Codex)
   --create-agents-md           Create/update AGENTS.md template
   --skip-commands-migration    Skip deleting the commands directory before skills deployment
+  --copy-all                   Copy ALL skills per-project (legacy mirror at <provider>/.aiwg/skills/).
+                               Default is kernel-only + index-driven discovery for the rest (#1217).
+                               Use this for sandboxed runtimes / air-gapped corpora where
+                               $AIWG_ROOT isn't readable from the agent's working dir.
+                               Alias: --copy-standard-skills (matches AIWG_COPY_STANDARD_SKILLS env var).
                                (warns about duplicate entries in the provider command palette)
 
 Model Override Examples:
@@ -575,6 +581,11 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
     asPlugin: cfg.asPlugin,
     deployBehaviors: cfg.deployBehaviors,
     skipCommandsMigration: cfg.skipCommandsMigration,
+    // #1217 / #1219: --copy-all flag forces legacy per-project mirror
+    // for the standard tier. Default is no-copy + index-driven discovery.
+    // Backwards compat with AIWG_COPY_STANDARD_SKILLS env var preserved
+    // by deploySkillsWithKernelRouting (base.mjs).
+    copyStandardSkills: cfg.copyStandardSkills === true,
     deployVersion: getDeployVersion(srcRoot),
     deploySource: 'bundled',
   };

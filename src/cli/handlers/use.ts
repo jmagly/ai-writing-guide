@@ -1022,6 +1022,10 @@ export class UseHandler implements CommandHandler {
       const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
       if (provider) addonBaseArgs.push('--provider', provider);
       if (target) addonBaseArgs.push('--target', target);
+      // Forward --copy-all (#1219) so addon-only deploys also honor it.
+      if (remainingArgs.includes('--copy-all') || remainingArgs.includes('--copy-standard-skills')) {
+        addonBaseArgs.push('--copy-all');
+      }
 
       ui.blank();
       ui.header(`  Deploying ${framework} addon...`);
@@ -1296,6 +1300,11 @@ export class UseHandler implements CommandHandler {
     if (provider) addonBaseArgs.push('--provider', provider);
     if (target) addonBaseArgs.push('--target', target);
     if (verbose) addonBaseArgs.push('--verbose');
+    // Forward --copy-all to addon deploys so the legacy mirror behavior
+    // is consistent across the framework + every addon (#1219).
+    if (remainingArgs.includes('--copy-all') || remainingArgs.includes('--copy-standard-skills')) {
+      addonBaseArgs.push('--copy-all');
+    }
 
     // Deploy all addons (excluding disallow list) unless --no-utils
     if (!skipUtils) {

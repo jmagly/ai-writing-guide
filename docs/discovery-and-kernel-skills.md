@@ -71,10 +71,12 @@ Three reasons (#1217):
 Some workflows still want the per-project mirror — sandboxed runtimes where `$AIWG_ROOT` isn't readable, air-gapped corpora, etc.
 
 ```bash
-AIWG_COPY_STANDARD_SKILLS=1 aiwg use sdlc
+aiwg use sdlc --copy-all          # preferred — explicit CLI flag
+aiwg use all --copy-all           # works for `aiwg use all` too
+AIWG_COPY_STANDARD_SKILLS=1 aiwg use sdlc   # legacy env-var, still supported
 ```
 
-This restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`).
+The `--copy-all` flag (alias `--copy-standard-skills`) restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`). The env var is preserved for backward compat with scripts that pre-date the flag.
 
 ## The kernel set today (15 skills, ~15-25k tokens total)
 
@@ -197,7 +199,7 @@ ls .claude/.aiwg/skills/ 2>&1
 # expected: ls: cannot access '.claude/.aiwg/skills/': No such file or directory
 ```
 
-If the directory exists with content, either you set `AIWG_COPY_STANDARD_SKILLS=1` or you're on a pre-rc.14 version. Verify your version:
+If the directory exists with content, either you passed `--copy-all` (or set `AIWG_COPY_STANDARD_SKILLS=1`), or you're on a pre-rc.14 version. Verify your version:
 
 ```bash
 aiwg version

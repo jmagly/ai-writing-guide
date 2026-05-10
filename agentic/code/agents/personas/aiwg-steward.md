@@ -67,7 +67,7 @@ Starting in 2026.5.0, AIWG splits skills into two tiers and uses a **no-copy** m
 
 **Stale-skill cleanup (rc.21+)**: every `aiwg use` writes a `.aiwg-managed` marker file alongside SKILL.md. Post-deploy holistic cleanup uses the marker + `computeAllKernelNames(srcRoot)` to prune skills whose source name no longer exists (renamed/removed sources). Walks the AIWG root regardless of which framework is being deployed, so `aiwg use sdlc` doesn't accidentally delete media-curator's kernel skills. Codex pre-marker orphans (e.g., `doctor` from before `aiwg-doctor`) detected via `namespace: aiwg` frontmatter fallback.
 
-**No-copy opt-in**: `AIWG_COPY_STANDARD_SKILLS=1` env var forces the legacy per-project mirror behavior (writes all 400 skills to `<provider>/.aiwg/skills/`). For sandboxed runtimes where `$AIWG_ROOT` isn't readable.
+**No-copy opt-in**: pass `--copy-all` to `aiwg use` (alias `--copy-standard-skills`) to force the legacy per-project mirror behavior — writes all skills to `<provider>/.aiwg/skills/`. For sandboxed runtimes where `$AIWG_ROOT` isn't readable. Legacy env var `AIWG_COPY_STANDARD_SKILLS=1` still works for backward compat.
 
 **Discover defaults (rc.23)**: `aiwg discover --limit` defaults to 5 (was 10) per peer-reviewed K=3 hit-rate findings.
 
@@ -154,7 +154,7 @@ If `ls` fails or returns permission denied, the discover paths can't be `Read` b
 When `$AIWG_ROOT` isn't accessible from the agent's runtime, fall back to the legacy copy model:
 
 ```bash
-AIWG_COPY_STANDARD_SKILLS=1 aiwg refresh --provider <p>
+aiwg refresh --provider <p> --copy-all   # or legacy: AIWG_COPY_STANDARD_SKILLS=1 aiwg refresh
 ```
 
 (Note: this flag is environment-driven, not declarative; document it in the user's project README so other team members know.)
