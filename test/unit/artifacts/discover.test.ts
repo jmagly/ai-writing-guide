@@ -315,4 +315,65 @@ describe('discoverCapability — JSON output', () => {
       else process.env.AIWG_ROOT = prevAiwgRoot;
     }
   });
+
+  // #1233 — exact-name queries against kernel skills used to score ~0.10
+  // because the title was derived from the Markdown heading ("AIWG
+  // Doctor") which no longer contained the hyphenated slug. The scorer
+  // now floors exact-name match (case- and separator-insensitive) so
+  // the literal slug, the spaced form, and the underscore form all
+  // return the artifact at top-1.
+  it('floors exact-name queries to score 1.0 for kernel skills (#1233)', async () => {
+    const prevAiwgRoot = process.env.AIWG_ROOT;
+    process.env.AIWG_ROOT = cwd;
+    try {
+
+    // Seed a kernel skill whose Markdown heading drops the hyphen the
+    // user types — exactly the failure mode #1233 documents.
+    writeSkill(
+      'aiwg-doctor',
+      'aiwg-utils',
+      `---\nname: aiwg-doctor\nkernel: true\ndescription: Run a comprehensive health check\n---\n\n# AIWG Doctor\n\nDiagnostics.\n`,
+    );
+    // And a non-kernel skill whose title contains the same words so we
+    // confirm the floor (not the title-substring path) is what's lifting
+    // the kernel skill to 1.0.
+    writeSkill(
+      'doctor-helper',
+      'aiwg-utils',
+      `---\nname: doctor-helper\ndescription: Helps the AIWG doctor\n---\n\n# Doctor Helper\n`,
+    );
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    consoleSpy.mockRestore();
+    consoleErrSpy.mockRestore();
+
+    // Three forms of the same query — slug, spaced, underscored — all
+    // must return the kernel skill at top-1 with score 1.
+    for (const phrase of ['aiwg-doctor', 'aiwg doctor', 'aiwg_doctor']) {
+      const captured: string[] = [];
+      const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+        captured.push(args.join(' ')),
+      );
+      await discoverCapability(cwd, {
+        phrase,
+        graph: 'framework',
+        json: true,
+        limit: 3,
+      });
+      logSpy.mockRestore();
+
+      const parsed = JSON.parse(captured.join('\n'));
+      expect(parsed.results.length, `phrase=${phrase} returned no results`).toBeGreaterThan(0);
+      const top = parsed.results[0];
+      expect(top.path, `phrase=${phrase} top result`).toMatch(/aiwg-doctor\/SKILL\.md$/);
+      expect(top.score, `phrase=${phrase} top score`).toBe(1);
+      expect(top.kernel).toBe(true);
+    }
+    } finally {
+      if (prevAiwgRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevAiwgRoot;
+    }
+  });
 });

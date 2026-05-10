@@ -28,6 +28,16 @@ export interface MetadataEntry {
   /** Title from frontmatter or first heading */
   title: string;
 
+  /**
+   * Canonical short name (#1233). For skills this is the SKILL.md
+   * directory basename (e.g. `aiwg-doctor`); for agents/commands/rules
+   * the filename without extension; falls back to frontmatter `name`
+   * when present. Used by the scorer to floor exact-name queries to 1.0
+   * so that hyphenated kernel-skill names remain searchable even when
+   * the rendered title strips the hyphen.
+   */
+  name?: string;
+
   /** Tags from frontmatter */
   tags: string[];
 

@@ -53,10 +53,39 @@ function tokenize(text: string): string[] {
  * search via `aiwg index discover` ranks the right skill on top
  * instead of bottoming out on a path-substring match (#1214).
  */
+/**
+ * Normalize a string for exact-name comparison (#1233) — lowercase and
+ * collapse `-` / `_` / whitespace runs so hyphenated kernel-skill names
+ * like `aiwg-doctor` match queries with spaces ("aiwg doctor") and the
+ * rendered title ("AIWG Doctor") matches the slug query.
+ */
+function normalizeName(s: string): string {
+  return s.toLowerCase().replace(/[-_\s]+/g, ' ').trim();
+}
+
 function scoreEntry(entry: MetadataEntry, text: string): number {
   const lower = text.toLowerCase();
   const tokens = tokenize(text);
   let score = 0;
+
+  // Exact-name floor (#1233) — if the query (normalized) exactly matches
+  // the entry's canonical name, this is the artifact the user is asking
+  // for and it must surface at the top regardless of how cluttered the
+  // rest of the corpus scoring gets. Hyphens, underscores, and whitespace
+  // are interchangeable in the comparison so `aiwg-doctor`, `aiwg doctor`,
+  // and `aiwg_doctor` all match a kernel skill with `name: aiwg-doctor`.
+  //
+  // Returns 1.001 (not 1.0) so an exact-name hit sorts above the many
+  // capped-at-1.0 substring matches that share generic words like "use".
+  // Display rounding (Math.round(score * 100) / 100) hides the offset, so
+  // the user still sees `score: 1.0` while sort order is preserved.
+  if (entry.name) {
+    const queryNorm = normalizeName(text);
+    const nameNorm = normalizeName(entry.name);
+    if (queryNorm === nameNorm) {
+      return 1.001;
+    }
+  }
 
   // Searchable text — joined once so per-token includes() is cheap
   const titleLower = entry.title.toLowerCase();

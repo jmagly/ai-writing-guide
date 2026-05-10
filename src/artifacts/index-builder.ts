@@ -67,6 +67,32 @@ function extractTitle(data: Record<string, unknown>, body: string): string {
 }
 
 /**
+ * Extract canonical short name (#1233) used for exact-name search match.
+ *
+ * Priority:
+ *   1. frontmatter `name:` field if present
+ *   2. parent directory basename for skills/agents/commands/rules layouts
+ *      (skills conventionally live in `<...>/skills/<name>/SKILL.md`)
+ *   3. filename without extension as final fallback
+ *
+ * The result is the literal slug a user would type to find the artifact —
+ * `aiwg-doctor`, `intake-wizard`, `flow-deploy-to-production` — preserving
+ * hyphens so the scorer can match queries that contain them.
+ */
+function extractCanonicalName(data: Record<string, unknown>, relativePath: string): string {
+  if (typeof data.name === 'string' && data.name.trim().length > 0) {
+    return data.name.trim();
+  }
+  const filename = path.basename(relativePath);
+  // For skill/agent/command/rule layouts: <type>s/<name>/<TYPE>.md
+  const isCanonicalLayout = /^(SKILL|AGENT|COMMAND|RULE)\.md$/i.test(filename);
+  if (isCanonicalLayout) {
+    return path.basename(path.dirname(relativePath));
+  }
+  return filename.replace(/\.md$/i, '');
+}
+
+/**
  * Extract summary from content (first 500 chars of description or body)
  */
 function extractSummary(data: Record<string, unknown>, body: string): string {
@@ -592,6 +618,10 @@ export async function buildIndex(
         data.kernel === true || data.kernel === 'true' ? true : undefined;
       // Script entrypoint metadata is meaningful for skills only (#1227).
       const script = type === 'skill' ? extractSkillScript(data) : undefined;
+      // Canonical short name (#1233) — used by the scorer to floor exact-name
+      // queries to 1.0 so hyphenated kernel-skill names like `aiwg-doctor`
+      // remain searchable even when the rendered title strips the hyphen.
+      const name = isDiscoverable ? extractCanonicalName(data, relativePath) : undefined;
 
       entry = {
         path: relativePath,
@@ -605,6 +635,7 @@ export async function buildIndex(
         summary,
         dependencies,
         dependents: [], // Computed after all entries are processed
+        ...(name ? { name } : {}),
         ...(triggers && triggers.length > 0 ? { triggers } : {}),
         ...(capability ? { capability } : {}),
         ...(kernel ? { kernel } : {}),
