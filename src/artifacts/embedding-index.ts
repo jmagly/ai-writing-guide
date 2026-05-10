@@ -69,13 +69,13 @@ export async function checkEmbeddingDeps(): Promise<{ available: boolean; missin
   const missing: string[] = [];
 
   try {
-    await import('@xenova/transformers');
+    await (new Function('m', 'return import(m)'))('@xenova/transformers');
   } catch {
     missing.push('@xenova/transformers');
   }
 
   try {
-    await import('hnswlib-node');
+    await (new Function('m', 'return import(m)'))('hnswlib-node');
   } catch {
     missing.push('hnswlib-node');
   }
@@ -99,8 +99,9 @@ export async function buildEmbeddingIndex(
   outputDir: string,
   model: string = DEFAULT_EMBEDDING_MODEL
 ): Promise<number> {
-  const { pipeline } = await import('@xenova/transformers');
-  const hnswlib = await import('hnswlib-node');
+  const transformersMod = await (new Function('m', 'return import(m)'))('@xenova/transformers');
+  const { pipeline } = transformersMod;
+  const hnswlib: any = await (new Function('m', 'return import(m)'))('hnswlib-node');
   const HierarchicalNSW = hnswlib.HierarchicalNSW ?? hnswlib.default?.HierarchicalNSW;
 
   if (!HierarchicalNSW) {
@@ -184,8 +185,9 @@ export async function semanticQuery(
     throw new Error(`No embedding index found at ${indexDir}/embeddings/`);
   }
 
-  const { pipeline } = await import('@xenova/transformers');
-  const hnswlib = await import('hnswlib-node');
+  const transformersMod = await (new Function('m', 'return import(m)'))('@xenova/transformers');
+  const { pipeline } = transformersMod;
+  const hnswlib: any = await (new Function('m', 'return import(m)'))('hnswlib-node');
   const HierarchicalNSW = hnswlib.HierarchicalNSW ?? hnswlib.default?.HierarchicalNSW;
 
   if (!HierarchicalNSW) {
