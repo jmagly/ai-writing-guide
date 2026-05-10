@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: issue-comment
 platforms: [all]
 description: Add structured comments to issues using templates for progress, feedback, or blockers
 commandHint:

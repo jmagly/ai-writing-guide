@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-requirements-evolution
 platforms: [all]
 description: Orchestrate living requirements refinement, change control, impact analysis, and traceability maintenance throughout SDLC
 commandHint:
-  argumentHint: [project-directory] [--iteration N] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[project-directory] [--iteration N] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

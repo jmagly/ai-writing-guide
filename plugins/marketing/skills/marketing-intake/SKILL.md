@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: marketing-intake
 platforms: [all]
 description: Enable interactive question mode
 commandHint:
-  argumentHint: "[--project-type value] [--intake-directory value] [--interactive value] [--guidance "text"] [--interactive]"
+  argumentHint: '[--project-type value] [--intake-directory value] [--interactive value] [--guidance "text"] [--interactive]'
 ---
 
 # Marketing Intake Command

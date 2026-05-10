@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: grade-report
 platforms: [all]
 description: Generate corpus-wide GRADE quality distribution report
 commandHint:

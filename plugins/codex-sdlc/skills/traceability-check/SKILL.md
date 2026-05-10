@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: traceability-check
 platforms: [all]
 description: Verify bidirectional traceability from requirements to code to tests and identify coverage gaps and orphan artifacts
 

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: provenance-create
 platforms: [all]
 description: Create a W3C PROV-compliant provenance record for an artifact
 commandHint:
@@ -62,3 +63,14 @@ When invoked, create provenance record:
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/provenance/prov-record.yaml - PROV record schema
 - @.aiwg/research/provenance/docs/provenance-guide.md - Provenance guide
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/provenance-tracking.md - Provenance tracking rules
+
+## Storage Routing (#934, #968)
+
+This skill's persistence flows through `resolveStorage('provenance')`. On the default `fs` backend provenance records live at `.aiwg/provenance/`. To redirect into Obsidian, Logseq, Fortemi, or another backend, configure `roots.provenance` or `backends.provenance` in `.aiwg/storage.config` (#934).
+
+```bash
+aiwg provenance path                                # resolved root
+aiwg provenance list --prefix activities/
+aiwg provenance get activities/2026-04-28-deploy.json
+echo '{"@context":"...","activity":"..."}' | aiwg provenance put activities/x.json
+```

@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-change-control
 platforms: [all]
 description: Orchestrate change control workflow with baseline management, impact assessment, CCB review, and communication
 commandHint:
-  argumentHint: [change-type] [change-id] [project-directory] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[change-type] [change-id] [project-directory] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

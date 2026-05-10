@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: video-production
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "<project-name> [--video-type value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '<project-name> [--video-type value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Video Production Command

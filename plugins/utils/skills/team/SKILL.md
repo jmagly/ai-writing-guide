@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: team
 platforms: [all]
 description: Orchestrate multi-agent teams across AIWG providers natively on Claude Code or emulated via Mission Control elsewhere
 ---

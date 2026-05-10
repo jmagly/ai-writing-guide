@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: issue-sync
 platforms: [all]
 description: Automatically detect and update linked issues based on commits, artifacts, and task events
 commandHint:
-  argumentHint: [--commit <sha>] [--scan-recent <count>] [--artifact <path>] [--dry-run]
-  allowedTools: Bash(git *, gh *), Read, Glob, mcp__gitea__*
+  argumentHint: '[--commit <sha>] [--scan-recent <count>] [--artifact <path>] [--dry-run]'
+  allowedTools: 'Bash(git *, gh *), Read, Glob, mcp__gitea__*'
   model: sonnet
   category: project-management
 ---

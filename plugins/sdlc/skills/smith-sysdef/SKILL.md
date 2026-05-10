@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: smith-sysdef
 platforms: [all]
 description: Generate system definition file for ToolSmith with tested OS commands
 commandHint:
-  argumentHint: [--categories <list>] [--output <path>] [--verify-only] [--update --interactive --guidance "text"]
-  allowedTools: Bash, Read, Write, Glob
+  argumentHint: '[--categories <list>] [--output <path>] [--verify-only] [--update --interactive --guidance "text"]'
+  allowedTools: 'Bash, Read, Write, Glob'
   model: haiku
   category: smithing
 ---

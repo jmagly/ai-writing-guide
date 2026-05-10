@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: build-poc
 platforms: [all]
 description: Build a Proof of Concept (PoC) to validate technical feasibility and retire architectural risks
 commandHint:

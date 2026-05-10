@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: competitive-analysis
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "[--analysis-focus value] [--competitors value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '[--analysis-focus value] [--competitors value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Competitive Analysis Command

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: retrospective-analyzer
 platforms: [all]
 description: Analyze team retrospectives for insights
 commandHint:

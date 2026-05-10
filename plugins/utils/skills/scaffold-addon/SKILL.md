@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: scaffold-addon
 platforms: [all]
 description: Create a complete addon package structure inside agentic/code/addons/
 

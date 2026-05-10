@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: pr-review
 platforms: [all]
 description: Conduct comprehensive PR review from multiple perspectives (PM, Developer, QA, Security)
 commandHint:
@@ -12,14 +13,51 @@ commandHint:
 
 **PR Link/Number**: $ARGUMENTS
 
-> **Instructions**: Execute each task in the order given to conduct a thorough code review. Update GitHub with this review.
+> **Instructions**: Execute each task in the order given to conduct a thorough code review. Post the review back to the PR on the resolved primary remote (see "Provider Resolution" below).
 > **Important**: The future is now—any improvements or "future" recommendations must be addressed **immediately**.
+
+---
+
+## Provider Resolution
+
+Don't assume GitHub. The PR API to use is determined by the project's `.aiwg/aiwg.config` `remotes.primary` (#994):
+
+```ts
+import { readAiwgConfig, resolveRemotes, resolveRemoteProvider } from 'aiwg/config';
+
+const cfg = await readAiwgConfig(projectDir);
+const resolved = resolveRemotes(cfg?.remotes);     // primary defaults to "origin"
+const url = exec(`git remote get-url ${resolved.primary}`).trim();
+const host = resolveRemoteProvider(url);           // 'github' | 'gitea' | 'gitlab' | 'unknown'
+```
+
+- `host === 'github'` → `gh pr view`, `gh pr review`, `gh api`
+- `host === 'gitea'`  → Gitea MCP `pull_request_*` tools or `tea` CLI
+- `host === 'gitlab'` → `glab` CLI
+- `host === 'unknown'` → ask the operator which provider to use; don't guess
+
+When the operator passes a full PR URL (`<pr_link_or_number>`), parse the host out of the URL and prefer that — the URL is the operator's explicit choice.
+
+---
+
+## Delivery Policy Resolution (#995)
+
+When approving and merging, consult `.aiwg/aiwg.config` `delivery` via `resolveDelivery()`. The resolved policy controls **how** the merge happens:
+
+| Field | Effect on this skill |
+|-------|----------------------|
+| `merge_style` (default `rebase-merge`) | Pass through to the PR API on merge. Allowed: `rebase-merge` / `squash` / `merge` / `fast-forward-only` |
+| `delete_branch_on_merge` (default `true`) | Pass `delete_branch: true` to the merge call so the feature branch is cleaned up |
+| `require_ci_green` (default `true`) | Block approval until CI is green on the PR's head SHA. Don't approve a red PR even if the diff looks fine. |
+| `require_signed_commits` (default `false`) | When `true`, reject the PR if any commit on the head ref is unsigned |
+
+When no `delivery` block is configured, `resolveDelivery(undefined)` returns the conservative defaults — same behavior this skill exhibits today.
 
 ---
 
 ## Arguments
 
-- `<pr_link_or_number>` - GitHub PR URL or PR number (required)
+- `<pr_link_or_number>` - PR URL or PR number on the resolved primary remote (required)
 - `--interactive` - Prompt for confirmation before posting review
 - `--guidance "text"` - Additional review guidance or focus areas
 - `--regression-gate` - Run regression check before merge approval (default: true)

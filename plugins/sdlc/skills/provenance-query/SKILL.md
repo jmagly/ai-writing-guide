@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: provenance-query
 platforms: [all]
 description: Query provenance chains to trace artifact derivation and impact
 commandHint:

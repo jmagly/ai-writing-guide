@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: citation-guard
 platforms: [all]
 description: Verify citations against the research corpus to prevent hallucinated references and enforce GRADE compliance
 

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: flow-delivery-track
 platforms: [all]
 description: Orchestrate Delivery Track flow with test-driven development, quality gates, and iteration assessment
 commandHint:

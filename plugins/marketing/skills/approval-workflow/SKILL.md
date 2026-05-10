@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: approval-workflow
 platforms: [all]
 description: Route marketing assets through multi-stakeholder approval chains with status tracking and escalation
 ---
@@ -563,7 +564,7 @@ escalation:
 
   manual_escalate:
     allowed_by: [submitter, stakeholder]
-    to: [marketing-director, project-manager]
+    to: [marketing-director, marketing-project-manager]
 
   crisis_escalate:
     trigger: tier_4 + overdue

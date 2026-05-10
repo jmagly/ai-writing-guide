@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: migrate-hook
 platforms: [all]
 description: Migrate existing CLAUDE.md full-injection to the AIWG.md hook file architecture
 commandHint:

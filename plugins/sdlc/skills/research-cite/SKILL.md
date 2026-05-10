@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: research-cite
 platforms: [all]
 description: Generate properly formatted citation from research corpus
 commandHint:

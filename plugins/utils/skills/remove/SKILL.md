@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: remove
 platforms: [all]
 description: Remove a deployed framework or addon from the current workspace
 

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: hook-regenerate
 platforms: [all]
 description: Rebuild AIWG hook files from currently installed framework manifests
 commandHint:

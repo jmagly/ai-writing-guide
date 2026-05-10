@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: snapshot
 platforms: [all]
 description: Capture, list, show, or replay point-in-time workflow snapshots so execution state can be preserved and reproduced
 ---

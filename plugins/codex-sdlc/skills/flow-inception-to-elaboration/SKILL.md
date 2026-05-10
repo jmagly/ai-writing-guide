@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-inception-to-elaboration
 platforms: [all]
 description: Orchestrate Inception→Elaboration phase transition with architecture baselining and risk retirement
 commandHint:
-  argumentHint: [project-directory] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[project-directory] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

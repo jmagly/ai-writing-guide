@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: package-all-plugins
 platforms: [all]
 description: Batch package every plugin in the workspace in a single release-prep operation
 ---

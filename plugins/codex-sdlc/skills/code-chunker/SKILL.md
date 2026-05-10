@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: code-chunker
 platforms: [all]
 description: Map source file structure into navigable sections with line ranges and summaries for efficient agent navigation
 

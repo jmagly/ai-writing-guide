@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-cross-team-sync
 platforms: [all]
 description: Orchestrate cross-team synchronization with dependency mapping, sync cadence, blocker escalation, integration planning, and cross-team demos
 commandHint:
-  argumentHint: [team-a] [team-b] [sync-frequency] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[team-a] [team-b] [sync-frequency] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

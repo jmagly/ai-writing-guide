@@ -24,9 +24,9 @@
       "model": "sonnet"
     },
     {
-      "id": "forensics-acquisition-agent",
-      "name": "Acquisition Agent",
-      "file": "acquisition-agent.md",
+      "id": "forensics-forensic-acquisition-agent",
+      "name": "Forensic Acquisition Agent",
+      "file": "forensic-acquisition-agent.md",
       "description": "Evidence collection with chain of custody and hash verification",
       "stage": "acquisition",
       "capabilities": ["evidence_collection", "hash_verification", "chain_of_custody", "log_preservation", "forensic_imaging"],
@@ -147,7 +147,7 @@
     },
     {
       "stage": "acquisition",
-      "agents": ["forensics-acquisition-agent"],
+      "agents": ["forensics-forensic-acquisition-agent"],
       "description": "Collect and preserve evidence with chain of custody"
     },
     {

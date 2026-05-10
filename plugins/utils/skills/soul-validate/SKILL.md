@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: soul-validate
 platforms: [all]
 description: Validate a SOUL.md file against community best practices and quality criteria
 
@@ -35,6 +36,7 @@ When triggered, this skill performs a comprehensive quality assessment of a SOUL
 | Who I Am | Yes | Specific background, not generic. Mentions concrete experience. |
 | Worldview | Yes | Beliefs specific enough to be falsifiable. Not platitudes. |
 | Opinions | Yes | Organized by domain. Each opinion could be disagreed with. |
+| Standards | Recommended | Concrete bar for completion. Names dangling threads this persona never leaves and how complete-vs-fast tension resolves. Not "I value quality." |
 | Vocabulary | Recommended | Actual terms with personal definitions, not categories. |
 | Boundaries | Recommended | Concrete refusals, not vague ethical statements. |
 | Current Focus | Optional | Active projects, current thinking. Dated or contextual. |
@@ -42,6 +44,8 @@ When triggered, this skill performs a comprehensive quality assessment of a SOUL
 | Tensions | Optional | Genuine contradictions — shows self-awareness. |
 | Pet Peeves | Optional | Specific triggers, not generic annoyances. |
 | Interests | Optional | Deep interests that inform cross-domain thinking. |
+
+**Backwards compatibility**: Souls that predate the Standards section validate with a **warning**, not an error. Existing souls remain functional; `/soul-enhance` proposes Standards content. New souls created via `/soul-create` should populate the section.
 
 ### Quality Tests
 
@@ -60,6 +64,8 @@ Check for vague language patterns that weaken the soul:
 |-------------|-----------------|
 | "I have nuanced views on X" | "I think X is overrated because Y" |
 | "I value quality" | "I'll delay a release to fix a flaky test" |
+| "I aim for excellence" | "Done = no dangling threads, real fix not workaround" |
+| "I believe in completeness" | "I never ship a fix without a regression test for it" |
 | "I'm interested in technology" | "I've spent 10 years on distributed systems" |
 | "I believe in best practices" | "Most 'best practices' are cargo cult" |
 
@@ -106,6 +112,7 @@ Section Completeness
   ✓ Who I Am          Present, specific
   ✓ Worldview         Present, 4 falsifiable beliefs
   ✓ Opinions          Present, organized by 3 domains
+  ⚠ Standards         Missing — what's this persona's bar for "done"? (warning, not error)
   ✓ Vocabulary        Present, 12 terms defined
   ✗ Boundaries        Missing — what will the agent refuse?
   ✓ Current Focus     Present

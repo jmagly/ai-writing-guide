@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-concept-to-inception
 platforms: [all]
 description: Orchestrate Concept→Inception phase transition with intake validation and vision alignment
 commandHint:
-  argumentHint: [project-directory] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[project-directory] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

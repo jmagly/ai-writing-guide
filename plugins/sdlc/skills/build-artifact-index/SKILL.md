@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: build-artifact-index
 platforms: [all]
 description: Build or rebuild the SDLC artifact index for agent-navigable discovery
 commandHint:
-  argumentHint: [--force] [--verbose] [--interactive] [--guidance "text"]
-  allowedTools: Read, Write, Glob, Grep, Bash
+  argumentHint: '[--force] [--verbose] [--interactive] [--guidance "text"]'
+  allowedTools: 'Read, Write, Glob, Grep, Bash'
   model: sonnet
   category: documentation-tracking
 ---

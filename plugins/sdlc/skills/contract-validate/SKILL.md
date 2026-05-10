@@ -2,22 +2,22 @@
 namespace: aiwg
 platforms: [all]
 name: contract-validate
-description: Validate that a chain of AIWG skills has all requires: inputs satisfied by upstream ensures: outputs before execution. Catches missing dependencies at wiring time rather than at runtime.
+description: "Validate that an AIWG skill chain has all requires inputs satisfied by upstream ensures outputs. Catches missing dependencies at wiring time, not runtime."
 requires:
-  - skills: ordered list of AIWG skill names or file paths forming the workflow to validate
+  - "skills: ordered list of AIWG skill names or file paths forming the workflow to validate"
   - "if workflow-file: path to a YAML/JSON workflow definition"
-  - external-inputs: names of inputs the calling workflow will provide (optional; unmatched requires: are flagged as unresolved)
+  - "external-inputs: names of inputs the calling workflow will provide (optional; unmatched requires are flagged as unresolved)"
 ensures:
-  - validation-report: pass/fail report per skill with specific missing dependency details
-  - verdict: VALID (all requires: satisfied), INVALID (unresolved requires: found), or VALID WITH WARNINGS (semantic matches only)
+  - "validation-report: pass/fail report per skill with specific missing dependency details"
+  - "verdict: VALID (all requires: satisfied), INVALID (unresolved requires: found), or VALID WITH WARNINGS (semantic matches only)"
   - "if INVALID: specific list of which skill requires which input and which upstream skill should provide it"
 errors:
-  - skill-not-found: one or more skill names cannot be resolved to a SKILL.md file
-  - no-contracts: none of the specified skills have contract fields — cannot validate
+  - "skill-not-found: one or more skill names cannot be resolved to a SKILL.md file"
+  - "no-contracts: none of the specified skills have contract fields — cannot validate"
 invariants:
   - validation never executes skills — static analysis only
   - semantic matches are flagged as warnings, not counted as resolved for VALID verdict
-  - a workflow with any unresolved requires: always returns INVALID
+  - "a workflow with any unresolved requires: always returns INVALID"
 commandHint:
   argumentHint: "<skill1> <skill2> ... | --workflow <file.yaml> [--external input1,input2] [--strict]"
   allowedTools: Read, Glob, Grep

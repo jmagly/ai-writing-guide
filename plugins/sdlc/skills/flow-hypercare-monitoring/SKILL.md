@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-hypercare-monitoring
 platforms: [all]
 description: Orchestrate hypercare monitoring period with 24/7 support, SLO tracking, and rapid issue response
 commandHint:
-  argumentHint: [hypercare-duration-days] [project-directory] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[hypercare-duration-days] [project-directory] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

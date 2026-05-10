@@ -541,7 +541,7 @@ verify_download() {
 
 ## See Also
 
-- **@$AIWG_ROOT/agentic/code/frameworks/media-curator/agents/quality-assessor.md** - Agent that uses this skill
+- **@$AIWG_ROOT/agentic/code/frameworks/media-curator/agents/media-quality-assessor.md** - Agent that uses this skill
 - **@$AIWG_ROOT/agentic/code/frameworks/media-curator/tools/ffprobe-wrapper.md** - Metadata extraction tool
 - **@$AIWG_ROOT/agentic/code/frameworks/media-curator/agents/download-orchestrator.md** - Integration point for quality decisions
 

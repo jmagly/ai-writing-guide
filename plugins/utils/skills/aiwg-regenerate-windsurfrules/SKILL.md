@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: aiwg-regenerate-windsurfrules
 platforms: [all]
 description: Regenerate .windsurfrules for Windsurf with preserved team directives
 ---

@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: campaign-kickoff
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "<campaign-name> [--campaign-type value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '<campaign-name> [--campaign-type value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # Campaign Kickoff Command

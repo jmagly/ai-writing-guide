@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: grade-on-ingest
 platforms: [all]
 description: Trigger GRADE quality assessment automatically when new research sources or findings enter the corpus
 

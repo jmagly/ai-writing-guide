@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/contributors/status.schema.json",
+  "title": "Status Contributor",
+  "description": "Frontmatter schema for `<framework>/status/contributor.md` files. Consumed by the project-status aggregator. Contributors report observed state for their domain — descriptive only, no prescriptive next-action arrays. Runtime authority is the zod schema in src/contributors/validation.ts; this JSON Schema serves as published documentation and external tooling integration.",
+  "type": "object",
+  "required": ["kind", "domain", "description", "detect"],
+  "additionalProperties": true,
+  "properties": {
+    "kind": {
+      "const": "status",
+      "description": "Discriminator. Must be the literal `status`."
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name of the domain this contributor reports on (e.g. 'SDLC', 'Research corpus', 'Media library')."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One-line description of what this contributor reports."
+    },
+    "detect": {
+      "type": "object",
+      "required": ["glob"],
+      "additionalProperties": false,
+      "description": "Declarative detection spec. Determines whether the framework is in use on this project. No script execution.",
+      "properties": {
+        "glob": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Glob patterns relative to project root. The aggregator deduplicates matches across all patterns."
+        },
+        "minCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Minimum unique matched files to count as in-use. Default: 1."
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Reserved for future regex-against-content checks. Currently unused."
+        }
+      }
+    },
+    "fields": {
+      "type": "object",
+      "description": "Optional declarative field extractors. Each entry pulls a value out of a file using regex or count. Lets contributors stay data-driven; the aggregator reads these to populate the report block.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["string", "number", "date"]
+          },
+          "source": {
+            "type": "string",
+            "description": "Path (relative to project root) of the file to read."
+          },
+          "regex": {
+            "type": "string",
+            "description": "Regex with one capture group to extract the field value."
+          },
+          "count": {
+            "type": "string",
+            "description": "Regex pattern; the field value is the count of matching lines in the source file."
+          }
+        }
+      }
+    }
+  }
+}

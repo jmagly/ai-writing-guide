@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-construction-to-transition
 platforms: [all]
 description: Orchestrate Construction→Transition phase transition with IOC validation, production deployment, and operational handover
 commandHint:
-  argumentHint: [project-directory] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[project-directory] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

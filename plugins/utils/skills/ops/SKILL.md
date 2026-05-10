@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: ops
 platforms: [all]
 description: Manage the AIWG ops ecosystem of sysops, devops, and itops workspaces and frameworks
 

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: flow-compliance-validation
 platforms: [all]
 description: Orchestrate compliance validation workflow with requirements mapping, audit evidence collection, gap analysis, remediation tracking, and attestation
 commandHint:

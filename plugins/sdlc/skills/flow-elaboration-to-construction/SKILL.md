@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-elaboration-to-construction
 platforms: [all]
 description: Orchestrate Elaboration→Construction phase transition with iteration planning, team scaling, and full-scale development kickoff
 commandHint:
-  argumentHint: [project-directory] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[project-directory] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

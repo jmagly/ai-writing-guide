@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: hook-status
 platforms: [all]
 description: Show AIWG hook state across all installed providers
 commandHint:

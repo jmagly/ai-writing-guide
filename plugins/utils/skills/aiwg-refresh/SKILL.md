@@ -1,6 +1,8 @@
 ---
 namespace: aiwg
+name: aiwg-refresh
 platforms: [all]
+kernel: true
 description: Update AIWG CLI and redeploy frameworks/tools to current project without leaving the session
 ---
 

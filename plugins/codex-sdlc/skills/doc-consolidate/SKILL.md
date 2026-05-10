@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: doc-consolidate
 description: Crawl repository for scattered docs and consolidate into categorized reference index in .aiwg/docs/
 commandHint:
   argumentHint: "[--dry-run] [--scope <path>] [--incremental] [--prefix <dir>]"

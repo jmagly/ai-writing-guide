@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: index
 platforms: [all]
 description: Build, query, inspect dependencies, and report statistics for the searchable index of SDLC artifacts in .aiwg/
 ---
@@ -7,6 +8,8 @@ description: Build, query, inspect dependencies, and report statistics for the s
 # Artifact Index
 
 You manage the AIWG artifact index — building or rebuilding the searchable index of all SDLC artifacts in `.aiwg/`, querying it by text, inspecting dependency graphs, and reporting index statistics.
+
+> **Scope: SDLC artifacts, not research corpora.** This skill (and `aiwg index ...`) operates on the SDLC artifact graph stored under `.aiwg/.index/*` (JSON: nodes, edges, checksums). It does **not** generate the human-readable markdown indices declared in `.aiwg/config.yaml` under `index.graphs.indices.manifest` for research-papers-style corpora. For those rendered indices (`indices/by-topic.md`, `indices/by-year.md`, `indices/authors.md`, etc.), use the `corpus-index-build` skill from `research-complete`.
 
 ## Triggers
 

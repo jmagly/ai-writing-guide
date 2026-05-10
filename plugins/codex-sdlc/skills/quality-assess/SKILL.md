@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: quality-assess
 platforms: [all]
 description: Perform GRADE quality assessment on a research source
 commandHint:

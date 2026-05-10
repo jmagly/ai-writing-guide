@@ -1,9 +1,10 @@
 ---
 namespace: aiwg
+name: pr-launch
 platforms: [all]
 description: Project directory path (default current directory)
 commandHint:
-  argumentHint: "<announcement-name> [--launch-type value] [--project-directory value] [--guidance "text"] [--interactive]"
+  argumentHint: '<announcement-name> [--launch-type value] [--project-directory value] [--guidance "text"] [--interactive]'
 ---
 
 # PR Launch Command

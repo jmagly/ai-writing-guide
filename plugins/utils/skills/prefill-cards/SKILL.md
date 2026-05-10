@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: prefill-cards
 platforms: [all]
 description: Auto-populate SDLC artifact metadata headers across all templates using team profile configuration
 ---

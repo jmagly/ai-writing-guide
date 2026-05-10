@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: scaffold-framework
 platforms: [all]
 description: Create a complete framework package structure inside agentic/code/frameworks/
 

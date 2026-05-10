@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: intake-wizard
 platforms: [all]
 description: Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning and optional guidance
 commandHint:
@@ -240,6 +241,39 @@ Applied:
 - If user uses technical jargon confidently → ask about architecture preferences
 - If user is non-technical → skip entirely, choose based on team size and scale
 - If user mentions existing tech stack → align with it for maintainability
+
+#### 8. Delivery Policy (1 question, always ask) — #1005
+
+**Always ask** — captures how AIWG agents should ship code in this project. Persists to `.aiwg/aiwg.config` `delivery.mode` so every downstream skill (commit-and-push, address-issues, pr-review) reads from the same source of truth.
+
+**Question** (use the platform's native UX picker — `AskUserQuestion` on Claude Code):
+
+> "How does your team ship code?"
+>
+> 1. Solo — commit and push directly to main (`mode: direct`)
+> 2. Feature branches, no PR review required (`mode: feature-branch`)
+> 3. Pull requests required, CI must be green (`mode: pr-required`) — **default**
+> 4. Customize all delivery settings (drop into advanced flow)
+
+**Adaptive Logic**:
+- If user picked `direct` and team-size answer was >1 → warn: "Direct commits skip review. Are you sure for a multi-person team?"
+- If user picked `pr-required` (default) → no further questions; persist defaults from `resolveDelivery()`
+- If user picked `feature-branch` → confirm branch-naming pattern stays at default (`feat/{issue}-{slug}` etc.)
+
+**Advanced flow** (option 4 only, 3 sub-questions):
+- "Preferred merge style?" → `rebase-merge` (default) | `squash` | `merge` | `fast-forward-only`
+- "Force-push policy?" → `never` (default) | `own-branch-only` | `allowed`
+- "Require signed commits?" → no (default) | yes
+
+**Default branch derivation**:
+- Run `git symbolic-ref HEAD` (or `git rev-parse --abbrev-ref HEAD` on a fresh repo) to detect the configured default branch
+- Persist that value as `delivery.default_branch`. Falls back to `main` when no git repo exists yet
+- Handles `master` → `main` migrations gracefully
+
+**Persistence**:
+- Write the resolved policy to `.aiwg/aiwg.config` `delivery` block via `writeAiwgConfig()`
+- Only persist non-default values to keep the config minimal — `resolveDelivery()` fills in the rest at read time
+- Confirm with one line: "Delivery policy saved: mode=pr-required, merge=rebase-merge, default_branch=main"
 
 ### Example Question Flow
 

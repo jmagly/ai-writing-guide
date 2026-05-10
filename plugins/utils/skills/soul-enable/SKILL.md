@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: soul-enable
 platforms: [all]
 description: Enable soul enforcement by wiring SOUL.md into platform context files and deploying the enforcement rule
 commandHint:

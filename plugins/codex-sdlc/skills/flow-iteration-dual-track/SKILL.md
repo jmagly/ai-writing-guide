@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: flow-iteration-dual-track
 platforms: [all]
 description: Orchestrate dual-track iteration with synchronized Discovery (next) and Delivery (current) workflows
 commandHint:

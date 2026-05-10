@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: smith-mcpdef
 platforms: [all]
 description: Generate MCP environment definition for MCPSmith with Docker and Node.js verification
 commandHint:
-  argumentHint: [--output <path>] [--verify-only] [--update] [--create-network --interactive --guidance "text"]
-  allowedTools: Bash, Read, Write, Glob
+  argumentHint: '[--output <path>] [--verify-only] [--update] [--create-network --interactive --guidance "text"]'
+  allowedTools: 'Bash, Read, Write, Glob'
   model: haiku
   category: smithing
 ---

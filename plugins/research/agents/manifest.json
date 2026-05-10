@@ -20,8 +20,8 @@
     },
     {
       "id": "research-acquisition-agent",
-      "name": "Acquisition Agent",
-      "file": "acquisition-agent.md",
+      "name": "Research Acquisition Agent",
+      "file": "research-acquisition-agent.md",
       "description": "Download and organize research papers with metadata extraction",
       "stage": "acquisition",
       "capabilities": [

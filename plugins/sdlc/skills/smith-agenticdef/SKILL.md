@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: smith-agenticdef
 platforms: [all]
 description: Generate or update the agentic environment definition for AgentSmith, SkillSmith, and CommandSmith
 commandHint:
-  argumentHint: "[--verify-only] [--update] [--interactive] [--guidance "text"]"
-  allowedTools: Read, Write, Glob, Bash
+  argumentHint: '[--verify-only] [--update] [--interactive] [--guidance "text"]'
+  allowedTools: 'Read, Write, Glob, Bash'
   model: haiku
   category: smithing
 ---

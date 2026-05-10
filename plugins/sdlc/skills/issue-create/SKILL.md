@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: issue-create
 platforms: [all]
 description: Create a new ticket/issue with configurable backend (Gitea, GitHub, Jira, Linear, or local files)
 commandHint:
@@ -117,39 +118,39 @@ Extract from command invocation:
 
 ### Step 2: Load Configuration
 
-**Check locations in order**:
+**Resolution precedence** (highest first):
 
-1. `.aiwg/config.yaml` (if exists):
-   ```yaml
-   ticketing:
-     provider: gitea
-     url: https://git.integrolabs.net
-     owner: roctinam
-     repo: ai-writing-guide
-     auth:
-       token_file: ~/.config/gitea/token
-   ```
+1. **`--provider` flag** — explicit override always wins.
+2. **`.aiwg/aiwg.config` `remotes.issue_tracker`** (#994) — derive provider from the remote's URL.
+3. **Legacy `.aiwg/config.yaml`** (`ticketing` block) — back-compat for older projects.
+4. **`CLAUDE.md` "Issueing Configuration" block** — fallback for projects pre-dating either.
+5. **`local`** — default if nothing is configured.
 
-2. `CLAUDE.md` (if `.aiwg/config.yaml` not found):
-   ```markdown
-   ## Issueing Configuration
+**Resolving from `.aiwg/aiwg.config`** (the preferred path):
 
-   - **Provider**: gitea
-   - **URL**: https://git.integrolabs.net
-   - **Owner**: roctinam
-   - **Repo**: ai-writing-guide
-   - **Token File**: ~/.config/gitea/token
-   ```
+```ts
+import { readAiwgConfig, resolveRemotes, resolveRemoteProvider } from 'aiwg/config';
 
-3. Default (if no config found):
-   ```yaml
-   ticketing:
-     provider: local
-   ```
+const cfg = await readAiwgConfig(projectDir);
+const resolved = resolveRemotes(cfg?.remotes);
+// resolved.issue_tracker is a git remote name (defaults to "origin")
 
-**Override with flags**:
-- If `--provider` specified, use that instead of configured provider
-- Warning if override differs from config: "⚠️ Using --provider local (configured: gitea)"
+// Resolve the URL via `git remote get-url <name>`
+const url = exec(`git remote get-url ${resolved.issue_tracker}`).trim();
+const provider = resolveRemoteProvider(url); // 'gitea' | 'github' | 'gitlab' | 'unknown'
+```
+
+When `provider === 'unknown'` (self-hosted instances we can't classify by URL), the operator must pass `--provider` explicitly. Don't guess.
+
+**Worked example for this repo** (`origin` → `git.integrolabs.net/roctinam/aiwg`):
+
+- `resolved.issue_tracker` = `'origin'`
+- `git remote get-url origin` = `git@git.integrolabs.net:roctinam/aiwg.git`
+- `resolveRemoteProvider(url)` returns `'unknown'` (the host doesn't include "gitea")
+- → operator must set `--provider gitea`, OR the project's `aiwg.config` providers list must explicitly include `gitea` so we can fall through to that.
+
+**Override warning**: if `--provider` differs from the auto-resolved one, print:
+`⚠️ Using --provider github (resolved from .aiwg/aiwg.config: gitea)`
 
 ### Step 3: Regression Detection (for Bug Reports)
 

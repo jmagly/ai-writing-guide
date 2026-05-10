@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: install-plugin
 platforms: [all]
 description: Install plugins into Claude Code from the AIWG marketplace with registry lookup, download, and local deployment
 ---

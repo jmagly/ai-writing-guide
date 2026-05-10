@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: flow-guided-implementation
 platforms: [all]
 description: Orchestrate autonomous issue-to-code implementation using existing tools and agents with bounded iteration
 ---

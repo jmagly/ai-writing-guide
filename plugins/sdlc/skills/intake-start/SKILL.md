@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: intake-start
 platforms: [all]
 description: Ingest the Project Intake Form and kick off Concept → Inception with agent assignments, accepts optional guidance to tailor process
 commandHint:
@@ -857,6 +858,6 @@ No problem! Thanks for using the AIWG.
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Stop and await user action when critical gaps are found; never silently fill required fields
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md — Process the --guidance parameter fully before tailoring phase plan; do not ignore strategic intent
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md — Phase plan completion criteria must be concrete (artifacts present, weights sum to 1.0, not "good enough")
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/project-status/SKILL.md — Use after intake-start completes to confirm phase and next steps
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/project-status/SKILL.md — Use after intake-start completes to confirm phase and next steps
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/orchestrate-project/SKILL.md — Hands off to orchestrator once intake validation and planning artifacts are generated
 

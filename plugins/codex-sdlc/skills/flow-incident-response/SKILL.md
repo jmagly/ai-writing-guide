@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: flow-incident-response
 platforms: [all]
 description: Orchestrate production incident triage, escalation, resolution, and post-incident review using ITIL best practices
 commandHint:

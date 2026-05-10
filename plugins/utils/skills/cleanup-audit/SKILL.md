@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: cleanup-audit
 description: Audit codebase for dead code, unused exports, orphaned files, and stale manifests
 commandHint:
   argumentHint: "[--scope <path>] [--type <exports|files|deps|manifests>] [--json] [--fix] [--dry-run]"

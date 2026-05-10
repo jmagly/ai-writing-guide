@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: uninstall-plugin
 platforms: [all]
 description: Remove a previously installed Claude Code plugin and unregister it from the local plugin registry
 ---

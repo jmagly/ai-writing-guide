@@ -1,10 +1,11 @@
 ---
 namespace: aiwg
+name: flow-security-review-cycle
 platforms: [all]
 description: Orchestrate continuous security validation, threat modeling, vulnerability management, and security gate enforcement across SDLC phases
 commandHint:
-  argumentHint: [project-directory] [--iteration N] [--guidance "text"] [--interactive]
-  allowedTools: Task, Read, Write, Glob, TodoWrite
+  argumentHint: '[project-directory] [--iteration N] [--guidance "text"] [--interactive]'
+  allowedTools: 'Task, Read, Write, Glob, TodoWrite'
   model: opus
   category: sdlc-orchestration
   orchestration: true

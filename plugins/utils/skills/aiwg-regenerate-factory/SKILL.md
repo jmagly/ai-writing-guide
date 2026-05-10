@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: aiwg-regenerate-factory
 platforms: [all]
 description: "Regenerate AGENTS.md for Factory AI with hook file architecture"
 ---

@@ -1,5 +1,6 @@
 ---
 namespace: aiwg
+name: issue-update
 platforms: [all]
 description: Update existing ticket/issue with status changes, comments, or field updates
 commandHint:
