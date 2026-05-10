@@ -2,6 +2,7 @@
 namespace: aiwg
 name: aiwg-regenerate
 platforms: [all]
+kernel: true
 description: Regenerate platform context file with preserved team directives
 ---
 

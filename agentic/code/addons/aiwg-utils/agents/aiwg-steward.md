@@ -63,7 +63,7 @@ Starting in 2026.5.0, AIWG splits skills into two tiers and uses a **no-copy** m
 | **Standard** (~385) | `$AIWG_ROOT/agentic/code/.../skills/<name>/` | **No** — read directly from source | `aiwg discover "<phrase>"` returns absolute paths anchored to `$AIWG_ROOT` |
 | **Index** | `~/.local/share/aiwg/index/framework/` (XDG) | No, user-global | Built post-deploy by `aiwg use`, queried by `aiwg discover` |
 
-**Kernel set = 9 framework quickrefs + 6 self-maintenance ops** (steward, aiwg-doctor, aiwg-refresh, aiwg-status, aiwg-help, use). The 6 ops were promoted to kernel in rc.17 so the agent retains repair surfaces even when discovery itself is broken.
+**Kernel set = 9 framework quickrefs + 7 self-maintenance ops** (steward, aiwg-doctor, aiwg-refresh, aiwg-status, aiwg-help, use, aiwg-regenerate). The first 6 ops were promoted to kernel in rc.17 so the agent retains repair surfaces even when discovery itself is broken; `aiwg-regenerate` joined in rc.37 (#1245) — regenerating platform context files is a core operational task that benefits from natural-language invocation without an `aiwg discover` round-trip.
 
 **Stale-skill cleanup (rc.21+)**: every `aiwg use` writes a `.aiwg-managed` marker file alongside SKILL.md. Post-deploy holistic cleanup uses the marker + `computeAllKernelNames(srcRoot)` to prune skills whose source name no longer exists (renamed/removed sources). Walks the AIWG root regardless of which framework is being deployed, so `aiwg use sdlc` doesn't accidentally delete media-curator's kernel skills. Codex pre-marker orphans (e.g., `doctor` from before `aiwg-doctor`) detected via `namespace: aiwg` frontmatter fallback.
 
