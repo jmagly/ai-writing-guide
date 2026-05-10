@@ -29,6 +29,7 @@
     "test:coverage": "vitest --config config/vitest.config.js --coverage",
     "test:ui": "vitest --config config/vitest.config.js --ui",
     "test:watch": "vitest --config config/vitest.config.js",
+    "test:node": "node --test tools/ralph-external/*.test.mjs test/unit/ralph/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage",
     "check:install-size": "node tools/cli/check-install-size.mjs --verbose",

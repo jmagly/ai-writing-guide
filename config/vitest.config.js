@@ -17,9 +17,21 @@ export default defineConfig({
     // UAT tests run in their own vitest config to avoid thread-pool conflicts
     // caused by ESM dynamic imports in the stub UAT fixtures.
     // CI runs stub UAT separately via: npm run uat
+    //
+    // The tools/ralph-external/*.test.mjs and test/unit/ralph/*.test.mjs
+    // files also use the node:test runner — see `npm run test:node`.
+    // They're outside vitest's include globs already, but listing them
+    // here makes the separation explicit (#1210).
+    //
+    // vscode-extension has its own test runner (`node ./test/runTests.js`)
+    // and depends on the `vscode` module which only resolves inside the
+    // VS Code Extension Test Runner — never let vitest discover it (#1210).
     exclude: [
       'test/**/*.test.mjs',
       'test/uat/**',
+      'tools/ralph-external/**',
+      'test/unit/ralph/**',
+      'vscode-extension/**',
       'node_modules/**',
       'dist/**'
     ],

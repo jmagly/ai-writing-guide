@@ -79,7 +79,11 @@ const FIXTURE = JSON.parse(
 );
 
 const EXECUTOR_ID = FIXTURE.preconditions.executor_registered.executor_id;
-const DISPATCH_BODY = FIXTURE.dispatch.request.body;
+// Strip the `_validates_as` fixture-annotation key before passing to the
+// schema validator — the executor.aiwg.io/v1 dispatch_payload schema doesn't
+// allow extra properties, but the conformance fixture annotates each example
+// body with `_validates_as` so the fixture file is self-describing.
+const { _validates_as: _ignored, ...DISPATCH_BODY } = FIXTURE.dispatch.request.body;
 const MISSION_ID = DISPATCH_BODY.mission_id;
 
 // ── Mock executor server ──────────────────────────────────────────────────────
