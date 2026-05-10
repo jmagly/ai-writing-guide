@@ -35,7 +35,7 @@ type HooksField = Record<string, HookGroup[]>;
 async function makeAddonHooks(root: string): Promise<void> {
   const dir = path.join(root, 'agentic', 'code', 'addons', 'aiwg-hooks', 'hooks');
   await fs.mkdir(dir, { recursive: true });
-  for (const file of ['aiwg-permissions.js', 'aiwg-session.js', 'aiwg-trace.js']) {
+  for (const file of ['aiwg-permissions.cjs', 'aiwg-session.cjs', 'aiwg-trace.cjs']) {
     await fs.writeFile(path.join(dir, file), '#!/usr/bin/env node\n', 'utf8');
   }
 }
@@ -72,9 +72,9 @@ describe('installAiwgHooks', () => {
     expect(r).not.toBeNull();
     const claudeHooksDir = path.join(projectPath, '.claude', 'hooks');
     const installed = await fs.readdir(claudeHooksDir);
-    expect(installed).toContain('aiwg-permissions.js');
-    expect(installed).toContain('aiwg-session.js');
-    expect(installed).toContain('aiwg-trace.js');
+    expect(installed).toContain('aiwg-permissions.cjs');
+    expect(installed).toContain('aiwg-session.cjs');
+    expect(installed).toContain('aiwg-trace.cjs');
   });
 
   it('writes settings.json with hooks as an object keyed by event name (#107)', async () => {

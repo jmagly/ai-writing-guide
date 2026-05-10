@@ -193,7 +193,7 @@ AIWG hooks integrate with Claude Code 2.0.43+ lifecycle events.
 Captures agent execution history for debugging and recovery.
 
 ```javascript
-// .claude/hooks/aiwg-trace.js
+// .claude/hooks/aiwg-trace.cjs
 // Automatically logs:
 // - SubagentStart: agent_id, type, timestamp
 // - SubagentStop: agent_id, transcript_path, duration
@@ -214,7 +214,7 @@ node ~/.local/share/ai-writing-guide/agentic/code/addons/aiwg-hooks/scripts/trac
 Auto-approve trusted operations to reduce prompts:
 
 ```javascript
-// .claude/hooks/aiwg-permissions.js
+// .claude/hooks/aiwg-permissions.cjs
 // Auto-approves:
 // - Write to .aiwg/**
 // - Read from ai-writing-guide/**
@@ -227,14 +227,14 @@ Manage named sessions for workflow persistence:
 
 ```bash
 # Generate session name
-node aiwg-session.js suggest inception-to-elaboration
+node aiwg-session.cjs suggest inception-to-elaboration
 # Output: aiwg-inception-to-elaboration-2025-01-15-1030
 
 # Record session
-node aiwg-session.js record aiwg-my-session --workflow security-review
+node aiwg-session.cjs record aiwg-my-session --workflow security-review
 
 # List recent sessions
-node aiwg-session.js list
+node aiwg-session.cjs list
 ```
 
 ## Prompt Registry

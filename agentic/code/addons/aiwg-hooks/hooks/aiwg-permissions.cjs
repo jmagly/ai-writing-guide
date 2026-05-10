@@ -13,7 +13,7 @@
  * Add to .claude/settings.local.json:
  * {
  *   "hooks": {
- *     "PermissionRequest": ["node", "/path/to/aiwg-permissions.js"]
+ *     "PermissionRequest": ["node", "/path/to/aiwg-permissions.cjs"]
  *   }
  * }
  */

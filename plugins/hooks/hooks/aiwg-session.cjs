@@ -14,9 +14,9 @@
  * This hook is invoked by AIWG flow commands to suggest session names.
  * It can also be used manually:
  *
- *   node aiwg-session.js suggest <workflow-name>
- *   node aiwg-session.js record <session-name>
- *   node aiwg-session.js list
+ *   node aiwg-session.cjs suggest <workflow-name>
+ *   node aiwg-session.cjs record <session-name>
+ *   node aiwg-session.cjs list
  */
 
 const fs = require('fs');
@@ -162,7 +162,7 @@ async function main() {
       // Record a session
       const name = arg;
       if (!name) {
-        console.error('Usage: aiwg-session.js record <session-name> [--workflow <name>]');
+        console.error('Usage: aiwg-session.cjs record <session-name> [--workflow <name>]');
         process.exit(1);
       }
 
@@ -182,7 +182,7 @@ async function main() {
       // Mark session complete
       const name = arg;
       if (!name) {
-        console.error('Usage: aiwg-session.js complete <session-name>');
+        console.error('Usage: aiwg-session.cjs complete <session-name>');
         process.exit(1);
       }
 
@@ -215,17 +215,17 @@ async function main() {
 AIWG Session Manager
 
 Usage:
-  aiwg-session.js suggest <workflow> [--phase <phase>] [--iteration <n>]
-  aiwg-session.js record <name> [--workflow <name>]
-  aiwg-session.js complete <name>
-  aiwg-session.js list [--workflow <filter>] [--status <active|complete>]
+  aiwg-session.cjs suggest <workflow> [--phase <phase>] [--iteration <n>]
+  aiwg-session.cjs record <name> [--workflow <name>]
+  aiwg-session.cjs complete <name>
+  aiwg-session.cjs list [--workflow <filter>] [--status <active|complete>]
 
 Examples:
-  aiwg-session.js suggest inception-to-elaboration
+  aiwg-session.cjs suggest inception-to-elaboration
   # Output: aiwg-inception-to-elaboration-2025-01-15-1030
 
-  aiwg-session.js record aiwg-security-review-2025-01-15 --workflow security-review
-  aiwg-session.js list
+  aiwg-session.cjs record aiwg-security-review-2025-01-15 --workflow security-review
+  aiwg-session.cjs list
 `);
   }
 }

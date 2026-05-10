@@ -21,7 +21,7 @@ cp -r aiwg-hooks/hooks/* ~/.config/claude/hooks/
 
 ## Hooks
 
-### aiwg-trace.js
+### aiwg-trace.cjs
 
 Captures multi-agent workflow execution traces.
 
@@ -36,8 +36,8 @@ Add to `.claude/settings.local.json`:
 ```json
 {
   "hooks": {
-    "SubagentStart": ["node", "~/.config/claude/hooks/aiwg-trace.js", "start"],
-    "SubagentStop": ["node", "~/.config/claude/hooks/aiwg-trace.js", "stop"]
+    "SubagentStart": ["node", "~/.config/claude/hooks/aiwg-trace.cjs", "start"],
+    "SubagentStop": ["node", "~/.config/claude/hooks/aiwg-trace.cjs", "stop"]
   }
 }
 ```

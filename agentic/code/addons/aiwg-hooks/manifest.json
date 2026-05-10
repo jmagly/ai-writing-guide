@@ -39,19 +39,19 @@
       "id": "aiwg-trace",
       "type": "executable",
       "description": "Workflow trace capture for debugging and reproducibility",
-      "file": "hooks/aiwg-trace.js"
+      "file": "hooks/aiwg-trace.cjs"
     },
     {
       "id": "aiwg-permissions",
       "type": "executable",
       "description": "Tool permission validation and enforcement",
-      "file": "hooks/aiwg-permissions.js"
+      "file": "hooks/aiwg-permissions.cjs"
     },
     {
       "id": "aiwg-session",
       "type": "executable",
       "description": "Session state management and context preservation",
-      "file": "hooks/aiwg-session.js"
+      "file": "hooks/aiwg-session.cjs"
     },
     {
       "id": "pretooluse-context",

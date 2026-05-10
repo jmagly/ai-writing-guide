@@ -17,8 +17,8 @@
  * Add to .claude/settings.local.json:
  * {
  *   "hooks": {
- *     "SubagentStart": ["node", "/path/to/aiwg-trace.js", "start"],
- *     "SubagentStop": ["node", "/path/to/aiwg-trace.js", "stop"]
+ *     "SubagentStart": ["node", "/path/to/aiwg-trace.cjs", "start"],
+ *     "SubagentStop": ["node", "/path/to/aiwg-trace.cjs", "stop"]
  *   }
  * }
  */
@@ -143,7 +143,7 @@ async function main() {
       await handleTool(input);
       break;
     default:
-      console.error('Usage: aiwg-trace.js <start|stop|tool>');
+      console.error('Usage: aiwg-trace.cjs <start|stop|tool>');
       process.exit(1);
   }
 }

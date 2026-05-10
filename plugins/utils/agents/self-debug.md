@@ -229,4 +229,4 @@ Context: [paste relevant context]
 
 - `prompts/reliability/resilience.md` - Recovery protocol
 - `eval-agent --scenario recovery-test` - Test recovery
-- `aiwg-trace.js` - Failure context from traces
+- `aiwg-trace.cjs` - Failure context from traces

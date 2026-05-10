@@ -36,9 +36,9 @@ import * as path from 'node:path';
  * Per the script-source comments at agentic/code/addons/aiwg-hooks/hooks/.
  */
 const HOOK_SCRIPTS: ReadonlyArray<{ file: string; events: ReadonlyArray<string> }> = [
-  { file: 'aiwg-permissions.js', events: ['PermissionRequest'] },
-  { file: 'aiwg-session.js', events: ['SessionStart'] },
-  { file: 'aiwg-trace.js', events: ['SubagentStart', 'SubagentStop'] },
+  { file: 'aiwg-permissions.cjs', events: ['PermissionRequest'] },
+  { file: 'aiwg-session.cjs', events: ['SessionStart'] },
+  { file: 'aiwg-trace.cjs', events: ['SubagentStart', 'SubagentStop'] },
 ];
 
 interface HookEntry {
@@ -248,7 +248,7 @@ export async function installAiwgHooks(opts: InstallOptions): Promise<InstallRes
   for (const { file, events } of HOOK_SCRIPTS) {
     if (!sourceFiles.includes(file)) continue;
     const command = `node ${path.join('.claude', 'hooks', file)}`;
-    const hookId = file.replace(/\.js$/, '');
+    const hookId = file.replace(/\.(cjs|js)$/, '');
 
     for (const event of events) {
       if (!hooksObj[event]) hooksObj[event] = [];
