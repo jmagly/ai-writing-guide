@@ -41,7 +41,7 @@ Use the Media Curator framework when:
 | Analysis | `discography-analyst` | MusicBrainz lookup |
 | Discovery | `source-discoverer` | YouTube, Archive, Bandcamp search |
 | Acquisition | `acquisition-manager` | yt-dlp, wget, audio extraction |
-| Quality | `quality-assessor` | Quality filtering, scoring |
+| Quality | `media-quality-assessor` | Quality filtering, scoring |
 | Metadata | `metadata-curator` | Tagging, artwork, organization |
 | Tracking | `completeness-tracker` | Gap documentation, inventory |
 

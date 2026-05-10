@@ -72,7 +72,7 @@ aiwg research --version
 ```
 .claude/agents/
 ├── discovery-agent.md       # Semantic search and gap detection
-├── acquisition-agent.md     # PDF download and FAIR validation
+├── research-acquisition-agent.md     # PDF download and FAIR validation
 ├── documentation-agent.md   # RAG summarization and note creation
 ├── citation-agent.md        # Citation formatting and networks
 ├── quality-agent.md         # GRADE assessments and FAIR validation
@@ -92,7 +92,7 @@ aiwg research --version
 │   └── notes/
 └── config/                  # Agent configurations
     ├── discovery-agent.yaml
-    ├── acquisition-agent.yaml
+    ├── research-acquisition-agent.yaml
     ├── documentation-agent.yaml
     ├── citation-agent.yaml
     ├── quality-agent.yaml
@@ -248,7 +248,7 @@ discovery_agent:
 ### Acquisition Agent Settings
 
 ```yaml
-# .aiwg/research/config/acquisition-agent.yaml
+# .aiwg/research/config/research-acquisition-agent.yaml
 acquisition_agent:
   download:
     timeout_seconds: 60
@@ -322,7 +322,7 @@ Knowledge Base
 │
 └── config/                 # Configuration
     ├── discovery-agent.yaml
-    ├── acquisition-agent.yaml
+    ├── research-acquisition-agent.yaml
     └── documentation-agent.yaml
 ```
 

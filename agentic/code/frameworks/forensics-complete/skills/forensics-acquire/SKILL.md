@@ -237,7 +237,7 @@ entries:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/frameworks/forensics-complete/agents/acquisition-agent.md - Acquisition Agent
+- @$AIWG_ROOT/agentic/code/frameworks/forensics-complete/agents/forensic-acquisition-agent.md - Acquisition Agent
 - @$AIWG_ROOT/agentic/code/frameworks/forensics-complete/templates/evidence-manifest.yaml - Manifest schema
 - @$AIWG_ROOT/agentic/code/frameworks/forensics-complete/templates/custody-log.yaml - Custody log schema
 - @$AIWG_ROOT/agentic/code/frameworks/forensics-complete/commands/forensics-investigate.md - Full workflow

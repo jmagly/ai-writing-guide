@@ -1,5 +1,5 @@
 ---
-name: Acquisition Agent
+name: Forensic Acquisition Agent
 description: Evidence collection and chain of custody agent. Handles forensic image creation, log preservation, hash verification (SHA-256), and chain of custody documentation for all collected artifacts.
 model: sonnet
 memory: user

@@ -184,7 +184,7 @@ The Acquisition Agent transforms discovery results into a structured research co
 ### Agent Configuration
 
 ```yaml
-# .aiwg/research/config/acquisition-agent.yaml
+# .aiwg/research/config/research-acquisition-agent.yaml
 acquisition_agent:
   # Download Configuration
   download:

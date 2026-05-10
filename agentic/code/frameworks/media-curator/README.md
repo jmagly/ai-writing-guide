@@ -37,7 +37,7 @@ aiwg use media-curator
 | Discography research and era identification | `discography-analyst` | `/analyze-artist` |
 | Multi-platform source discovery | `source-discoverer` | `/find-sources` |
 | Download orchestration with format selection | `acquisition-manager` | `/acquire` |
-| Audio/video quality scoring and filtering | `quality-assessor` | (integrated) |
+| Audio/video quality scoring and filtering | `media-quality-assessor` | (integrated) |
 | Metadata tagging and artwork embedding | `metadata-curator` | `/tag-collection` |
 | Gap analysis and completeness tracking | `completeness-tracker` | `/check-completeness` |
 | Narrative and playlist assembly | (integrated) | `/assemble` |
@@ -52,7 +52,7 @@ media-curator/
 │   ├── discography-analyst.md      # Era/project identification
 │   ├── source-discoverer.md        # Finding content across platforms
 │   ├── acquisition-manager.md      # Download orchestration
-│   ├── quality-assessor.md         # Accept/reject criteria
+│   ├── media-quality-assessor.md         # Accept/reject criteria
 │   ├── metadata-curator.md         # Tagging and organization
 │   └── completeness-tracker.md     # Gap analysis
 ├── commands/

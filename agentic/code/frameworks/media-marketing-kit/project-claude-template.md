@@ -176,7 +176,7 @@ Task(
 - **accessibility-checker**: Accessibility standards
 
 ### Orchestration Agents (opus tier)
-- **project-manager**: Project coordination
+- **marketing-project-manager**: Project coordination
 - **campaign-orchestrator**: Campaign execution
 - **workflow-coordinator**: Process optimization
 

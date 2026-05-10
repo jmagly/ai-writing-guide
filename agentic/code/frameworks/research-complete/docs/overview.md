@@ -38,7 +38,7 @@ Eight agents, one per workflow stage:
 | Agent | Purpose | Key Capability |
 |-------|---------|----------------|
 | `discovery-agent` | Semantic search, gap detection | 200M+ papers via Semantic Scholar; citation network traversal |
-| `acquisition-agent` | Download PDFs, assign IDs | FAIR validation, SHA-256 checksums, deduplication |
+| `research-acquisition-agent` | Download PDFs, assign IDs | FAIR validation, SHA-256 checksums, deduplication |
 | `documentation-agent` | RAG summarization | Zero-hallucination target; multi-level summaries; Zettelkasten notes |
 | `citation-agent` | Format citations | 9000+ citation styles; citation network analysis |
 | `quality-agent` | Assess paper quality | GRADE methodology (High/Moderate/Low/Very Low) |

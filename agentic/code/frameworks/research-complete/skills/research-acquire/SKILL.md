@@ -145,7 +145,7 @@ activity:
   ended_at: "2026-02-03T12:00:15Z"
 
 agent:
-  id: "urn:aiwg:agent:acquisition-agent"
+  id: "urn:aiwg:agent:research-acquisition-agent"
   type: "aiwg_agent"
 
 source:
@@ -155,7 +155,7 @@ source:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/frameworks/research-complete/agents/acquisition-agent.md - Acquisition Agent
+- @$AIWG_ROOT/agentic/code/frameworks/research-complete/agents/research-acquisition-agent.md - Acquisition Agent
 - @$AIWG_ROOT/src/research/services/acquisition-service.ts - Download implementation
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/research/frontmatter-schema.yaml - Metadata format
 - @.aiwg/research/fixity-manifest.json - Checksum tracking

@@ -149,7 +149,7 @@ discovery_agent:
     recency_weight: 0.10     # How recent the paper is
 ```
 
-**Set download concurrency** in `acquisition-agent.yaml`:
+**Set download concurrency** in `research-acquisition-agent.yaml`:
 ```yaml
 acquisition_agent:
   download:

@@ -1,5 +1,5 @@
 ---
-name: Deployment Manager
+name: Ops Deployment Manager
 description: Deploy, upgrade, and rollback Docker Compose or systemd services with OpsGates, dry-run validation, and rollback-on-failure
 model: sonnet
 memory: project

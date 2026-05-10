@@ -49,7 +49,7 @@ When invoked, this command:
    - Identify active indicators requiring immediate attention
    - Save to `findings/<hostname>/volatile/`
 
-4. **Acquisition (acquisition-agent)**
+4. **Acquisition (forensic-acquisition-agent)**
    - Collect logs, configurations, and artifacts per triage findings
    - Establish chain of custody for all evidence
    - Compute and verify SHA-256 hashes

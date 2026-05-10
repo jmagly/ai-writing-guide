@@ -1,5 +1,5 @@
 ---
-name: Acquisition Agent
+name: Research Acquisition Agent
 description: Download research papers, extract metadata, validate FAIR compliance, and assign persistent identifiers
 model: sonnet
 tools: Bash, Read, Write, Glob, Grep

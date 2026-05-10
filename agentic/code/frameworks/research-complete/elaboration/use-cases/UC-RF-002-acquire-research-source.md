@@ -15,7 +15,7 @@
 - Related Documents:
   - Vision: @$AIWG_ROOT/agentic/code/frameworks/research-complete/inception/vision-document.md
   - Risks: @$AIWG_ROOT/agentic/code/frameworks/research-complete/inception/initial-risk-assessment.md (T-04: Copyright Compliance)
-  - Agent: @$AIWG_ROOT/agentic/code/frameworks/research-complete/elaboration/agents/acquisition-agent.md
+  - Agent: @$AIWG_ROOT/agentic/code/frameworks/research-complete/elaboration/agents/research-acquisition-agent.md
   - Precursor: @$AIWG_ROOT/agentic/code/frameworks/research-complete/elaboration/use-cases/UC-RF-001-discover-research-papers.md
 
 ## 1. Use-Case Identifier and Name
@@ -422,7 +422,7 @@ Alternative triggers:
 
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/inception/vision-document.md - Section 7.1 (Must Have: Acquisition Management)
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/inception/initial-risk-assessment.md - T-04 (Copyright Compliance Risk)
-- @$AIWG_ROOT/agentic/code/frameworks/research-complete/elaboration/agents/acquisition-agent.md - Agent specification
+- @$AIWG_ROOT/agentic/code/frameworks/research-complete/elaboration/agents/research-acquisition-agent.md - Agent specification
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/elaboration/use-cases/UC-RF-001-discover-research-papers.md - Precursor use case
 - [FAIR Principles](https://www.go-fair.org/fair-principles/) - Data management standards
 - [F-UJI Assessment Tool](https://www.f-uji.net/) - FAIR scoring methodology

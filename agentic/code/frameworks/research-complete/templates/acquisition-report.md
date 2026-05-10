@@ -587,7 +587,7 @@ Before marking acquisition complete:
 
 - **Template Type:** research-acquisition-report
 - **Framework:** research-complete
-- **Primary Agent:** @$AIWG_ROOT/agentic/code/frameworks/research-complete/agents/acquisition-agent.md
+- **Primary Agent:** @$AIWG_ROOT/agentic/code/frameworks/research-complete/agents/research-acquisition-agent.md
 - **Related Templates:**
   - @$AIWG_ROOT/agentic/code/frameworks/research-complete/templates/literature-note.md
   - @$AIWG_ROOT/agentic/code/frameworks/research-complete/templates/provenance-record.yaml

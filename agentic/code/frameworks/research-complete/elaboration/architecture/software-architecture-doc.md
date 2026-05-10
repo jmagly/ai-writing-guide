@@ -1315,7 +1315,7 @@ interface LogConfig {
 const ComponentLogLevels = {
   'orchestrator': 'info',
   'discovery-agent': 'info',
-  'acquisition-agent': 'info',
+  'research-acquisition-agent': 'info',
   'documentation-agent': 'debug',  // More verbose for LLM debugging
   'citation-agent': 'info',
   'provenance-agent': 'debug',

@@ -79,7 +79,7 @@ Complete pipeline from literature search to documented findings:
    - Rank and filter results
    - Present top candidates
 
-2. **Acquisition** (agent: acquisition-agent)
+2. **Acquisition** (agent: research-acquisition-agent)
    - Download selected papers
    - Extract metadata
    - Generate frontmatter
@@ -112,11 +112,11 @@ Streamlined acquisition workflow:
 
 **Stages:**
 
-1. **Download** (agent: acquisition-agent)
+1. **Download** (agent: research-acquisition-agent)
    - Fetch PDF from source
    - Verify file integrity
 
-2. **Metadata Extraction** (agent: acquisition-agent)
+2. **Metadata Extraction** (agent: research-acquisition-agent)
    - Parse PDF metadata
    - Enrich via CrossRef/Semantic Scholar
    - Assign REF-XXX identifier
@@ -234,7 +234,7 @@ Selected: 3 papers
 Workflow Progress: [████████░░] Stage 2/5
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Stage 2: Acquisition (agent: acquisition-agent)
+Stage 2: Acquisition (agent: research-acquisition-agent)
 ─────────────────────────────────────────────────────────────────────
   Status: Running...
 
@@ -457,7 +457,7 @@ name: focused-acquisition
 description: Acquire and document specific papers
 stages:
   - name: acquisition
-    agent: acquisition-agent
+    agent: research-acquisition-agent
     inputs:
       - doi_list
 

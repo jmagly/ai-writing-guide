@@ -564,7 +564,7 @@ escalation:
 
   manual_escalate:
     allowed_by: [submitter, stakeholder]
-    to: [marketing-director, project-manager]
+    to: [marketing-director, marketing-project-manager]
 
   crisis_escalate:
     trigger: tier_4 + overdue

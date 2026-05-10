@@ -16,7 +16,7 @@
       "claude": "sonnet",
       "rationale": "Quick triage needs fast, accurate analysis of volatile data"
     },
-    "acquisition-agent": {
+    "forensic-acquisition-agent": {
       "claude": "sonnet",
       "rationale": "Evidence collection follows structured procedures"
     },

@@ -43,7 +43,7 @@ reconnaissance --> triage --> acquisition --> analysis --> timeline --> reportin
 |-------|-------|--------|
 | Reconnaissance | recon-agent | `target-profile.md` |
 | Triage | triage-agent | `triage-findings.md` |
-| Acquisition | acquisition-agent | `evidence-manifest.yaml` + collected data |
+| Acquisition | forensic-acquisition-agent | `evidence-manifest.yaml` + collected data |
 | Analysis | log/persistence/container/network/memory/cloud analysts | `phase-N-findings.md` |
 | Timeline | timeline-builder | `incident-timeline.md` |
 | IOC Extraction | ioc-analyst | `ioc-register.md` |
@@ -55,7 +55,7 @@ reconnaissance --> triage --> acquisition --> analysis --> timeline --> reportin
 |-------|-------|-------------|
 | recon-agent | Reconnaissance | Target system profiling and baseline discovery |
 | triage-agent | Triage | RFC 3227 volatile data capture and red flag detection |
-| acquisition-agent | Acquisition | Evidence collection with chain of custody |
+| forensic-acquisition-agent | Acquisition | Evidence collection with chain of custody |
 | log-analyst | Analysis | Auth, system, and application log analysis |
 | persistence-hunter | Analysis | Cron, systemd, SSH keys, rootkit, kernel module detection |
 | container-analyst | Analysis | Docker and Kubernetes forensics |
