@@ -8,21 +8,28 @@ Integrate AIWG with [Hermes Agent](https://github.com/NousResearch/hermes-agent)
 
 ## Architecture
 
+The AIWG–Hermes seam is a single MCP connection. Hermes can sit upstream of any messaging platform or editor that Hermes itself supports — AIWG doesn't need to know about those upstream surfaces.
+
 ```
-Hermes Agent (host)
-  ├── Conversation, memory, sessions
-  ├── Built-in tools (40+)
-  ├── Skills (~/.hermes/skills/)
-  └── MCP connection
-        └── AIWG MCP Server (sidecar)
-              └── .aiwg/ artifacts, workflows, templates
+[Terminal / Telegram / Discord / Signal / Slack / Mattermost / Matrix / Zed (via ACP)]
+                                  │
+                                  ▼
+                        Hermes Agent (host)
+                          ├── Conversation, memory (MEMORY.md/USER.md), sessions
+                          ├── Built-in tools (40+) and slash commands (65+)
+                          ├── Skills (~/.hermes/skills/)
+                          ├── /kanban (built-in agent task board)
+                          ├── /handoff (cross-platform session transfer)
+                          └── MCP connection
+                                └── AIWG MCP Server (sidecar)
+                                      └── .aiwg/ artifacts, workflows, templates
 ```
 
-**Hermes owns**: conversation flow, persistent memory (MEMORY.md, USER.md), session history (state.db), user model, skills.
+**Hermes owns**: conversation flow, persistent memory (MEMORY.md, USER.md), session history (state.db), user model, skills, in-session task tracking (kanban), platform handoff, scheduled tasks (`/cron`).
 
-**AIWG owns**: workflow execution, artifact output in `.aiwg/`, template rendering, agent definitions.
+**AIWG owns**: workflow execution, artifact output in `.aiwg/`, template rendering, agent definitions, persistent SDLC artifacts.
 
-**MCP is the seam.** Coexistence with clear boundaries — not system unification.
+**MCP is the seam.** Coexistence with clear boundaries — not system unification. AIWG does not need to know which platform a Hermes turn originated from; Hermes does not need to know how AIWG produces an artifact.
 
 ### Recommended Model Strategy
 
@@ -217,7 +224,7 @@ for our user service. Save it as a persistent AIWG artifact.
 
 **What should happen:**
 
-1. Hermes reads the routing rules in AGENTS.md
+1. Hermes reads the routing rules in `.hermes.md` (or `AGENTS.md` as fallback per Part 3)
 2. Hermes calls `workflow-run` or `artifact-write` via MCP
 3. AIWG creates the artifact in `.aiwg/architecture/`
 4. Hermes receives the result and stores a reference
@@ -228,6 +235,37 @@ for our user service. Save it as a persistent AIWG artifact.
 ls .aiwg/architecture/
 # Should show the new ADR file
 ```
+
+### Composing with Hermes session features
+
+Once Part 4 works, you can chain AIWG calls with Hermes's session-management commands. None of these require AIWG configuration — they work on top of the MCP seam.
+
+**Hand the session off to mobile** (`/handoff <platform>` — landed in Hermes #23400, source: `gateway/run.py:_process_handoff`):
+
+```
+You: Create the inception use cases for our auth feature, then I'll review on the train.
+Hermes: <runs aiwg-orchestrate to file UC-001..UC-004 in .aiwg/requirements/>
+You: /handoff telegram
+Hermes: ✓ Session transferred. Continue from your phone.
+```
+
+The chat continues on Telegram (or Discord, Signal/SMS via Twilio, Mattermost, Matrix, etc. — any gateway platform Hermes supports). Mobile messages route back to the same Hermes session, which still holds the AIWG MCP connection.
+
+**Run an AIWG workflow in the background** (`/background <prompt>` aliases `/bg`, `/btw`):
+
+```
+/bg use aiwg-orchestrate to draft the SAD for the payment service
+```
+
+The prompt runs without blocking your foreground chat. Use `/agents` (alias `/tasks`) to check progress.
+
+**Set a standing AIWG goal** (`/goal "<text>"`):
+
+```
+/goal Complete SDLC inception phase by EOW — file all use cases, ADRs, risk register
+```
+
+Hermes carries this across turns and proactively triggers AIWG workflows toward the goal. Pause/resume/clear with `/goal pause | resume | clear | status`.
 
 ---
 
@@ -393,6 +431,96 @@ Run these checks to confirm the integration is working:
 | Artifact read | Ask Hermes to read the artifact | Uses `artifact-read`, not memory |
 | Memory boundary | Check `~/.hermes/memories/MEMORY.md` | Contains path + summary, not body |
 | Failure mode | Stop `aiwg mcp serve`, ask for artifact | Hermes handles gracefully |
+
+---
+
+## Hermes Capabilities Reference
+
+A compact catalog of Hermes v0.4.0+ surface area that interacts with the AIWG seam. Citations point at the Hermes Agent source so future drift is detectable. None of these require AIWG-side code changes — they compose with the existing MCP integration.
+
+### `/kanban` — built-in agent task board
+
+Hermes ships a multi-profile collaboration board with task lifecycle: `todo → ready → running → blocked → done → archived`. 15-verb subcommand surface (`list`, `show`, `create`, `assign`, `link`, `unlink`, `claim`, `comment`, `complete`, `block`, `unblock`, `archive`, …).
+
+**Source**: `hermes_cli/kanban.py`, `hermes_cli/kanban_db.py`, design spec `docs/hermes-kanban-v1-spec.pdf`.
+
+**AIWG composition note**: `/kanban` is in-session task tracking; AIWG is for **persistent SDLC artifacts**. Use `/kanban` to coordinate the agent's day-to-day work flow inside one session. Use AIWG (`workflow-run`, `artifact-write`) to file durable use cases, architecture decisions, test plans, etc. into `.aiwg/`. They compose well: a kanban task ("Draft auth use cases") can call `aiwg-orchestrate` to actually produce the artifact, then mark itself complete with the artifact path in the comment.
+
+### `/handoff <platform>` — cross-platform session transfer
+
+Transfer an active Hermes session to Telegram, Discord, Signal/SMS, Mattermost, Matrix, Slack, or any other supported platform. Recently landed in Hermes #23400.
+
+**Source**: `gateway/run.py:_process_handoff`, `hermes_cli/commands.py:178` area.
+
+**AIWG composition note**: AIWG sessions running in a Hermes terminal can be handed to mobile. The MCP connection stays attached to the same Hermes session, so AIWG state survives the handoff. Useful for long-running SDLC workflows where the operator needs to step away.
+
+### ACP adapter — Agent Communication Protocol
+
+Hermes can be exposed as an ACP agent. ACP is Zed's editor-agent protocol, enabling chains like `Zed → ACP → Hermes → MCP → AIWG`.
+
+**Source**: `acp_adapter/server.py`, `acp_adapter/__init__.py`.
+
+**AIWG composition note**: AIWG is transitively reachable from Zed via Hermes-as-ACP-agent. No AIWG configuration needed — the same `aiwg use --provider hermes` setup works.
+
+### `/agents` (alias `/tasks`) — running-task inspector
+
+Show active agents and running tasks spawned via `delegate_task`.
+
+**Source**: `hermes_cli/commands.py` `CommandDef("agents", …, aliases=("tasks",))`.
+
+**AIWG composition note**: When `aiwg-orchestrate` dispatches a child agent via `delegate_task`, monitor it with `/agents` to see progress, model usage, and elapsed time. Useful during long AIWG workflows.
+
+### `/goal <text>` — standing goal across turns
+
+Hermes maintains a goal that persists across turns until achieved, paused, or cleared. Subcommands: `pause | resume | clear | status`.
+
+**Source**: `hermes_cli/commands.py` `CommandDef("goal", …)`.
+
+**AIWG composition note**: A standing goal like *"Complete SDLC inception"* can pair with AIWG workflows — Hermes proactively triggers `aiwg-orchestrate` calls toward the goal across turns without re-prompting.
+
+### `/cron` — scheduled tasks
+
+Hermes has its own scheduled-task surface, separate from `aiwg schedule`.
+
+**Source**: `cron/` directory in the Hermes repo.
+
+**AIWG composition note**: Boundary recommendation —
+- **Hermes `/cron`**: schedule recurring conversational tasks (daily standup digest, periodic check-ins, polling external systems through Hermes tools).
+- **`aiwg schedule`**: schedule recurring AIWG workflows that produce SDLC artifacts (weekly retrospective reports, monthly architecture reviews).
+
+The Steward's capability matrix routes operators to the right tool — when in doubt, ask the Steward.
+
+### `/snapshot` and `/rollback` — Hermes filesystem checkpoints
+
+Hermes can create and restore filesystem snapshots of its config and state. `/rollback [number]` restores by checkpoint number.
+
+**Source**: `hermes_cli/commands.py` `CommandDef("snapshot"/"rollback")`.
+
+**AIWG composition note**: Different scope from AIWG's `.aiwg/working/` artifacts. Hermes snapshots cover Hermes's own state (configs, session db); AIWG checkpoints cover SDLC artifacts. They don't overlap — operators don't need to coordinate them.
+
+### `/background` (alias `/bg`, `/btw`) — fire-and-forget prompts
+
+Run a prompt without blocking the foreground chat.
+
+**Source**: `hermes_cli/commands.py` `CommandDef("background", …, aliases=("bg", "btw"))`.
+
+**AIWG composition note**: Pairs naturally with `aiwg-orchestrate` for fire-and-forget workflows: *"`/bg` use aiwg-orchestrate to draft the SAD"* runs the workflow concurrently, monitor with `/agents`.
+
+### Gateway platforms — multi-platform reach
+
+Discord, Slack, Telegram (incl. DM topics), DingTalk, Signal/SMS via Twilio, Mattermost, Matrix, Webhook, OpenAI-compatible API server.
+
+**Source**: `gateway/platforms/` directory.
+
+**AIWG composition note**: AIWG workflows are platform-agnostic from Hermes's perspective — the same `.aiwg/` artifacts produced via MCP work whether the conversation is happening in terminal, Discord, or via SMS. The thin `.hermes.md` we ship is loaded the same way regardless of platform.
+
+### Plugin system
+
+Hermes hosts plugins at `plugins/` (kanban, memory, observability, disk-cleanup, google_meet, image_gen, model-providers, hermes-achievements, context_engine).
+
+**Source**: `plugins/` directory.
+
+**AIWG composition note**: AIWG ships as an MCP server, not a Hermes plugin. The MCP-server choice is intentional — same AIWG code works against any MCP host (Claude Desktop, Codex, Hermes, future MCP clients) with no per-host plugin work. A `plugins/aiwg/` would be a separate architectural choice, not pursued today.
 
 ---
 

@@ -108,10 +108,28 @@ When the user reports "Agent type not found" for an agent that clearly exists on
 | **Windsurf** | Reload the workspace | AGENTS.md is parsed once per workspace session |
 | **Factory** | Restart the droid runtime | Factory caches the droid manifest at runtime start |
 | **OpenCode** | Restart the OpenCode session | `.opencode/agent/` loads on session start (no hot-reload) |
-| **Hermes** | Restart the MCP server (or reload its config) | Hermes is a long-lived MCP host |
+| **Hermes** | `/reload-skills` and `/reload-mcp` (slash commands; restart chat as fallback) | Skill and MCP config are loaded at session start; Hermes provides in-session re-scan commands |
 | **OpenClaw** | Restart OpenClaw | `~/.openclaw/agents/` and `~/.openclaw/skills/` load once per process |
 
 `aiwg use` prints this notice in its post-deploy "Session reload required" section. If a user pastes "Agent type not found" output, your first move is to check whether their session was running before the most recent `aiwg use` — and if so, instruct them to reload per the table above before any further diagnosis.
+
+## Hermes Composition Reference (#1244)
+
+Hermes Agent ships a 65-command slash surface beyond the AIWG MCP seam. When users ask about composing AIWG with Hermes-side features, here's the authoritative routing:
+
+| Hermes feature | What it is | AIWG composition |
+|---|---|---|
+| `/kanban` (15 verbs) | In-session multi-profile task board with todo→ready→running→blocked→done lifecycle (`hermes_cli/kanban.py`) | Kanban for in-session task flow; AIWG for persistent SDLC artifacts. Compose: a kanban task can call `aiwg-orchestrate` to produce the artifact, then mark itself complete with the artifact path |
+| `/handoff <platform>` | Transfer active session to Telegram/Discord/Signal/Slack/Mattermost/Matrix/DingTalk/SMS (`gateway/run.py:_process_handoff`) | AIWG state survives the handoff (the MCP connection stays attached). Operators can start a workflow in terminal and finish from mobile |
+| `/agents` (alias `/tasks`) | Inspect running tasks spawned via `delegate_task` | Use to monitor `aiwg-orchestrate` child agents during long workflows |
+| `/goal "<text>"` | Standing goal across turns until achieved/paused/cleared | Pair with AIWG: `/goal "Complete SDLC inception"` triggers iterative `aiwg-orchestrate` calls toward the goal |
+| `/cron` | Scheduled tasks (Hermes-side) | Boundary: `/cron` for recurring conversational tasks (digests, polls); `aiwg schedule` for recurring AIWG workflows that produce SDLC artifacts |
+| `/snapshot` and `/rollback` | Hermes-state filesystem checkpoints | Different scope from `.aiwg/working/` — they don't overlap; no operator coordination required |
+| `/background` (alias `/bg`, `/btw`) | Fire-and-forget prompts | Pairs with `aiwg-orchestrate` for non-blocking workflows |
+| ACP adapter (`acp_adapter/server.py`) | Exposes Hermes as an Agent Communication Protocol server (Zed integration) | Three-hop chain works: `Zed → ACP → Hermes → MCP → AIWG`. No AIWG-side config required |
+| Plugin system (`plugins/`) | Hermes-native plugins (kanban, memory, observability, disk-cleanup, google_meet, image_gen, …) | AIWG ships as MCP server, not a plugin — same AIWG code works against any MCP host. Don't redirect users to write a `plugins/aiwg/` |
+
+When a user asks how to compose AIWG with Hermes-side features (`/kanban` for tasks, `/cron` for scheduling, etc.), use this table to give the boundary recommendation rather than guessing. Hermes file:line citations let you defend the answer if the user pushes back.
 
 ## Common Deploy Errata (per platform)
 
