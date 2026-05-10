@@ -486,11 +486,15 @@ Estimated time remaining: {estimate}
 
 ### Phase 4: Aggregate Results
 
-Apply aggregation strategy:
+Apply aggregation strategy. When `--require-citations` is active, every strategy below MUST preserve sub-agent citation tuples through the merge — see [Citation Format → Aggregation Behavior](#aggregation-behavior) for the per-strategy contract. Implementation specifics for each strategy follow.
+
+**Citation parsing** (used by `merge` and `summarize`): extract inline citations from each sub-agent result by matching the bracket pattern from the [Citation Format](#citation-format) section. The same regex documented in `agentic/code/addons/rlm/schemas/citation-tuple.json` (`x-inline-form.pattern`) applies. Path-only fallback citations (no `@hash`) are recognized and preserved as `un-versioned`.
 
 #### For concat strategy:
 ```bash
-# Concatenate all results with file headers
+# Concatenate all results with file headers.
+# Citations: pass through verbatim. No parsing, no dedup. Each sub-agent's
+# section retains its citations exactly as emitted (#1224).
 cat > aggregate.md <<EOF
 # Batch Processing Results
 
@@ -513,17 +517,64 @@ for result in results/*.result.md; do
 done
 ```
 
+`concat` is appropriate when sub-agent outputs are independent — citations from different files don't need reconciliation. Pure pass-through preserves traceability with zero merge logic.
+
 #### For merge strategy:
-1. Parse each result file as structured data
-2. Extract unique items across all files
-3. Sort and deduplicate
-4. Format as aggregated list
+
+When `--require-citations` is active:
+
+1. Parse each result file for findings + their inline citations
+2. For each finding, extract its citation tuples (`{artifact_id, content_hash, lines}`)
+3. Deduplicate findings by content equality
+4. **Citation deduplication**: when two sub-agents produce the same finding from different sources, attach all distinct citation tuples to the merged finding. Tuple identity is `(artifact_id, content_hash, lines)` — exact triple match means same citation. Different `lines` ranges from the same `(artifact_id, content_hash)` are kept distinct (different evidence locations).
+5. Render the merged finding with all attached citations inline (space-separated bracket forms)
+
+When `--require-citations` is **off**: legacy behavior — parse as structured data, extract unique items, sort, dedupe.
+
+Example merged finding:
+
+```markdown
+- **SQL injection in user lookup** [src/db/userQuery.ts@a8f9c2d4e5f60718, L42-50] [src/admin/userLookup.ts@c4d2e1a98f7b6c5a, L88-94]
+```
 
 #### For summarize strategy:
-1. Concatenate all results
-2. Spawn summarization agent with full context
-3. Apply summarization prompt
-4. Save summary as aggregate.md
+
+When `--require-citations` is active:
+
+1. Collect all sub-agent results AND extract every citation tuple from them (including path-only)
+2. Spawn summarization agent with the full context AND an explicit instruction:
+   ```
+   You MUST NOT drop or omit citations during summarization. The synthesized
+   prose may rephrase findings, but every claim that was citation-backed in
+   the input MUST remain citation-backed in the output. If you cannot retain
+   a specific citation, omit the underlying claim rather than the citation.
+   ```
+3. Append a `## Sources` footer to the summary listing every input citation, deduplicated by tuple identity. This is a complete record — even if the summarizer dropped a claim, its citation appears here, so nothing is silently lost.
+4. Save synthesized prose + Sources footer as `aggregate.md`
+
+When `--require-citations` is **off**: legacy behavior — concatenate all results, summarize, save.
+
+Example summarized output:
+
+```markdown
+# Summary: Auth Module Security Findings
+
+The auth module contains three high-severity issues clustered around
+session handling. Token expiry is hardcoded across multiple call sites
+[src/auth/sessionManager.ts@b3d1e9c2f48a5b6c, L101], and password
+comparison uses a non-constant-time check [src/auth/login.ts@a8f9c2d4e5f60718, L42-58].
+
+...
+
+## Sources
+
+- src/auth/login.ts@a8f9c2d4e5f60718 (L42-58)
+- src/auth/sessionManager.ts@b3d1e9c2f48a5b6c (L101)
+- src/auth/refreshToken.ts@d5e4f6a18b29c7d3 (L15-30)
+- src/legacy/auth.py (L88) [un-versioned]
+```
+
+The footer is mechanical — it's the union of all input citations regardless of which made it into the synthesized prose. Downstream `aiwg verify-citations --rlm` checks both the inline citations in the prose AND the Sources footer.
 
 ### Phase 5: Completion Report
 
