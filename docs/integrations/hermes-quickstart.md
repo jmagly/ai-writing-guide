@@ -296,33 +296,38 @@ Understanding the token budget helps configure Hermes for local hardware.
 
 ### With lean AGENTS.md (recommended)
 
-AIWG's MCP server exposes exactly 5 tools — no more, no less. The main variable is AGENTS.md size.
+AIWG's MCP server exposes exactly 5 tools — no more, no less. Two variables affect overhead: AGENTS.md size and the AIWG kernel-skill set installed at `~/.hermes/skills/`.
 
 | Component | Tokens |
 |---|---|
 | Hermes system prompt | ~1,500 |
-| AGENTS.md (<1,000 chars) | ~250 |
+| AGENTS.md (≤1,000 chars; AIWG-default thin pointer is ~580 chars / ~145 tokens) | ~250 |
 | MEMORY.md | ~800 |
 | USER.md | ~500 |
 | AIWG MCP schema (5 tools) | ~3,000 |
-| **Total overhead** | **~6,050** |
-| **Available for conversation** (32K context) | **~26,700 (81%)** |
+| AIWG kernel skills at `~/.hermes/skills/` (6 skills post-rc.14 pivot) | ~1,200 |
+| **Total overhead** | **~7,250** |
+| **Available for conversation** (32K context) | **~25,518 (78%)** |
 
-### With verbose AGENTS.md
+> **#1241 update**: After `aiwg use --provider hermes`, six AIWG kernel skills (aiwg-doctor, aiwg-help, aiwg-language-map, aiwg-refresh, aiwg-status, aiwg-utils-quickref) deploy to `~/.hermes/skills/`. Hermes loads these natively per skill; budget rough estimate ~200 tokens each. Subtract this row if you remove the AIWG addon or use only the MCP surface.
 
-If AGENTS.md grows beyond the 1,000-character target:
+### With verbose AGENTS.md or large CLAUDE.md auto-loaded
+
+Hermes v0.4.0+ recognizes `CLAUDE.md` at project root **in addition to** `AGENTS.md`. If your project has a CLAUDE.md beyond a few KB, Hermes loads its full content on every turn — well over the 1,000-char target. The AIWG-managed `AIWG.md` at project root mirrors CLAUDE.md (or stubs to `.aiwg/AIWG.md`); Hermes does **not** auto-load `AIWG.md` itself, so the thin AGENTS.md pointer to it is a CLI-side reference, not a turn-time load.
 
 | Component | Tokens |
 |---|---|
 | Hermes system prompt | ~1,500 |
 | AGENTS.md (~5,000 chars) | ~1,500 |
+| CLAUDE.md auto-loaded (~10,000 chars) | ~3,000 |
 | MEMORY.md | ~800 |
 | USER.md | ~500 |
 | AIWG MCP schema (5 tools) | ~3,000 |
-| **Total overhead** | **~7,300** |
-| **Available for conversation** (32K context) | **~25,468 (77%)** |
+| AIWG kernel skills | ~1,200 |
+| **Total overhead** | **~11,500** |
+| **Available for conversation** (32K context) | **~21,268 (65%)** |
 
-The compression threshold fires at 50% of context by default (30% recommended for local models). Keep AGENTS.md under 1,000 characters for maximum conversation headroom.
+The compression threshold fires at 50% of context by default (30% recommended for local models). Keep AGENTS.md under 1,000 characters and audit CLAUDE.md size — symlink to a leaner project-context file if needed.
 
 ### Recommended compression config for 12GB VRAM
 

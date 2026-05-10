@@ -278,7 +278,12 @@ const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands:
   },
   hermes: {
     agents: '',                                                              // Aggregated into AGENTS.md at project root
-    skills: path.join(os.homedir(), '.hermes', '.aiwg', 'skills'),          // User-global skills (sequestered for #1212)
+    // The .aiwg/ subdir is the legacy sequester (#1212) for non-kernel
+    // standard skills. Post-rc.14 kernel pivot, kernel skills land one
+    // level up at ~/.hermes/skills/<name>/ where Hermes natively scans;
+    // this `.aiwg/skills/` path stays empty in current deploys but is
+    // preserved here for the legacy mirror code path. See #1241.
+    skills: path.join(os.homedir(), '.hermes', '.aiwg', 'skills'),
     commands: '',                                                            // Served via MCP, not file-deployed
     rules: '',                                                               // Not applicable — Hermes uses AGENTS.md
     behaviors: '',                                                           // Not yet supported
@@ -412,18 +417,24 @@ const NEXT_STEPS: Record<string, string[]> = {
   ],
 
   // Hermes Agent (MCP-based)
+  // v0.4.0+ ships `hermes mcp install` (CLI flow, no manual YAML edit) and
+  // real-time config reload. We lead with the CLI form and demote the
+  // manual edit to "or" per the quickstart's recommended flow (#1241).
   'hermes/sdlc': [
-    'Configure MCP:     Add aiwg to ~/.hermes/config.yaml (see aiwg mcp info)',
+    'Connect via MCP:   hermes mcp install aiwg --command "aiwg" --args "mcp,serve"',
+    '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
     'Start Hermes:      hermes chat "Create an architecture decision for..."',
     'MCP guide:         docs/integrations/hermes-quickstart.md',
   ],
   'hermes/marketing': [
-    'Configure MCP:     Add aiwg to ~/.hermes/config.yaml (see aiwg mcp info)',
+    'Connect via MCP:   hermes mcp install aiwg --command "aiwg" --args "mcp,serve"',
+    '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
     'Start Hermes:      hermes chat "Create a marketing campaign for..."',
     'MCP guide:         docs/integrations/hermes-quickstart.md',
   ],
   'hermes/all': [
-    'Configure MCP:     Add aiwg to ~/.hermes/config.yaml (see aiwg mcp info)',
+    'Connect via MCP:   hermes mcp install aiwg --command "aiwg" --args "mcp,serve"',
+    '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
     'Start Hermes:      hermes chat',
     'AIWG MCP guide:   docs/integrations/hermes-quickstart.md',
   ],
@@ -514,7 +525,7 @@ function printNextSteps(framework: Framework, provider: string = 'claude'): void
  * Steward FAQ so operators stop hitting the "fallback to general-purpose"
  * path silently.
  */
-const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string }> = {
+const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string; symptom?: string }> = {
   claude: {
     action: 'Restart your Claude Code session (close and reopen) to load the newly deployed agents.',
     rationale: 'Claude Code reads .claude/agents/ at session start. A running session retains its old registry until reloaded.',
@@ -548,8 +559,9 @@ const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string 
     rationale: 'OpenCode loads agent files on session start and does not hot-reload.',
   },
   hermes: {
-    action: 'Restart the Hermes MCP server (or reload its config) so the new ~/.hermes/skills/ entries register.',
-    rationale: 'Hermes runs as a long-lived MCP host; changes to its skill directory require a server reload.',
+    action: 'Hermes v0.4.0+ reloads ~/.hermes/config.yaml in real time — no MCP-server restart needed for config changes. New entries in ~/.hermes/skills/ register on the next chat session if your Hermes build caches the skill registry per-session; if a kernel skill (e.g. aiwg-doctor) does not appear, start a fresh `hermes chat` to refresh.',
+    rationale: 'Hermes loader behavior split: config reloads live (v0.4.0+), but skill-directory registration is per-session in most builds.',
+    symptom: 'Until refreshed, newly deployed kernel skills will be missing from `hermes skills list` and unreachable via natural-language invocation.',
   },
   openclaw: {
     action: 'Restart OpenClaw — ~/.openclaw/agents/ and ~/.openclaw/skills/ are loaded on startup.',
@@ -560,10 +572,12 @@ const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string 
 function printSessionReloadNotice(provider: string): void {
   const notice = SESSION_RELOAD_NOTICE[provider];
   if (!notice) return;
+  const defaultSymptom =
+    'Until reloaded, the Agent/Task tool will report "Agent type not found" for the newly deployed agents.';
   ui.section('Session reload required:', [
     notice.action,
     `Why: ${notice.rationale}`,
-    'Until reloaded, the Agent/Task tool will report "Agent type not found" for the newly deployed agents.',
+    notice.symptom ?? defaultSymptom,
   ]);
 }
 
