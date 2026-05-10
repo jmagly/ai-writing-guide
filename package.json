@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2026.5.0-rc.32",
+  "version": "2026.5.0-rc.33",
   "description": "Deployment tool and support utility for AI context. Copies agents, skills, commands, rules, and behaviors into the paths each AI platform reads (Claude Code, Codex, Copilot, Cursor, Warp, OpenClaw, and 4 more) so one source of truth works across 10 platforms. Optional utilities for persistent artifact memory, background orchestration, autonomous loops, and artifact indexing.",
   "type": "module",
   "bin": {

@@ -473,7 +473,7 @@ describe("Subcommand Handlers", () => {
 
   describe("subcommandHandlers array", () => {
     it("should export all subcommand handlers with correct IDs", () => {
-      expect(subcommandHandlers).toHaveLength(33);
+      expect(subcommandHandlers).toHaveLength(32);
 
       const handlerIds = subcommandHandlers.map((h) => h.id);
       const expectedIds = [
@@ -492,7 +492,6 @@ describe("Subcommand Handlers", () => {
         "index",
         "discover",
         "show",
-        "run", // #1227 — `aiwg run skill <name>` script-bearing skill executor
         "features",
         "skills",
         "config",

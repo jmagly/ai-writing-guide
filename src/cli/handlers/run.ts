@@ -55,6 +55,20 @@ export const runHandler: CommandHandler = {
     const scriptName = ctx.args[0];
     const projectDir = getProjectDir(ctx, ctx.args);
 
+    // #1227 — `aiwg run skill <name>` dispatches to the script-bearing
+    // skill executor in src/skills/run.ts. Routed here so we don't have
+    // two handlers competing for `id: "run"` in the dispatch table.
+    if (scriptName === 'skill') {
+      try {
+        const { main } = await import('../../skills/run.js');
+        const exitCode = await main(ctx.args);
+        return { exitCode };
+      } catch (error) {
+        const result = handlerResultFromError(error);
+        return { ...result, message: `Skill run failed: ${result.message}` };
+      }
+    }
+
     const config = await readAiwgConfig(projectDir);
 
     if (!config) {

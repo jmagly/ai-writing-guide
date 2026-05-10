@@ -1101,36 +1101,6 @@ export const showHandler: CommandHandler = {
 };
 
 /**
- * Run command handler — execute a script-bearing skill (#1227).
- *
- * Resolves the skill via the artifact index and dispatches its script
- * entrypoint through the runtime registry. Default CWD is the project
- * root the CLI was invoked from, so relative paths inside the script
- * resolve into the user's tree (not into AIWG's install).
- *
- *   aiwg run skill <name> [--cwd <path>] [-- <args forwarded to script>]
- */
-export const runHandler: CommandHandler = {
-  id: "run",
-  name: "Run",
-  description:
-    "Execute a script-bearing skill via the CLI runtime registry (project-root CWD)",
-  category: "index",
-  aliases: [],
-
-  async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    try {
-      const { main } = await import("../../skills/run.js");
-      const exitCode = await main(ctx.args);
-      return { exitCode };
-    } catch (error) {
-      const result = handlerResultFromError(error);
-      return { ...result, message: `Run command failed: ${result.message}` };
-    }
-  },
-};
-
-/**
  * Skills command handler
  *
  * Dynamically imports and delegates to src/skills/cli.ts.
@@ -1543,7 +1513,6 @@ export const subcommandHandlers: CommandHandler[] = [
   indexHandler,
   discoverHandler,
   showHandler,
-  runHandler,
   featuresHandler,
   skillsHandler,
   configHandler,

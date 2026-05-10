@@ -447,11 +447,12 @@ export const initCommand: Extension = {
 export const runCommand: Extension = {
   id: 'run',
   type: 'skill',
-  name: 'Run Script',
-  description: 'Run a user-defined script from .aiwg/aiwg.config',
-  version: '1.0.0',
-  capabilities: ['cli', 'utility', 'scripts'],
-  keywords: ['run', 'script', 'execute', 'npm-run'],
+  name: 'Run Script or Skill',
+  description:
+    'Run a user-defined script from .aiwg/aiwg.config, or execute a script-bearing skill via `aiwg run skill <name>` (#1227)',
+  version: '1.1.0',
+  capabilities: ['cli', 'utility', 'scripts', 'skills'],
+  keywords: ['run', 'script', 'execute', 'npm-run', 'skill'],
   category: 'utility',
   platforms: {
     claude: 'full',
@@ -463,10 +464,10 @@ export const runCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['run script', 'aiwg run', 'list scripts'],
+    triggerPhrases: ['run script', 'aiwg run', 'list scripts', 'run skill', 'aiwg run skill'],
     commandHint: {
       template: 'utility',
-      argumentHint: '[script-name]',
+      argumentHint: '[script-name] | skill <name> [-- <args...>]',
       allowedTools: ['Read', 'Bash'],
     },
   } satisfies SkillMetadata,

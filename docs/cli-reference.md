@@ -911,6 +911,10 @@ If a config already exists, the command exits without changes unless `--force` i
 
 ### run
 
+Two routes, dispatched by the first argument:
+
+#### `aiwg run [script-name]` — user scripts from `aiwg.config`
+
 Execute a named script defined in `.aiwg/aiwg.config` (analogous to `npm run`).
 
 ```bash
@@ -922,7 +926,56 @@ aiwg run [script-name] [project-dir]
 - `[script-name]` - Script entry from `aiwg.config`. Omit to list all scripts.
 - `[project-dir]` - Project directory (default cwd)
 
-**Capabilities:** cli, utility, scripts
+#### `aiwg run skill <name>` — script-bearing skills (#1227)
+
+Execute a skill's declared script entrypoint via the CLI's runtime registry.
+Resolves the skill via the artifact index (the same one `aiwg discover` and
+`aiwg show` use), reads its `script:` frontmatter block, and dispatches the
+entrypoint with the right interpreter (node, python3, bash, sh, pwsh, ruby,
+or `auto` by extension/shebang).
+
+```bash
+aiwg run skill <name> [--cwd <path>] [-- <args forwarded to script>]
+```
+
+**Examples:**
+
+```bash
+aiwg run skill voice-apply -- --voice technical-authority --input draft.md
+aiwg run skill template-engine -- render adr-template.md --vars vars.yaml
+aiwg run skill ai-pattern-detection -- --path docs/
+```
+
+**CWD invariant:** the script runs from the project root the CLI was invoked
+from, **not** from the skill's source directory. Skill scripts live at
+`$AIWG_ROOT/agentic/code/...` but operate on the user's project, so relative
+paths (`.aiwg/`, `src/`, `package.json`) resolve into the user's tree. Override
+via `--cwd <path>` for scripted/CI cases. Per-skill manifest can also set
+`cwd: skill-dir` (rare) or `cwd: aiwg-root` (escape hatch).
+
+**Env vars exposed to the script:**
+
+| Var | Value |
+|---|---|
+| `AIWG_PROJECT_ROOT` | absolute path to the calling project's root |
+| `AIWG_SKILL_DIR` | absolute path to the skill's source directory |
+| `AIWG_ROOT` | AIWG installation root |
+
+**Manifest schema** (in SKILL.md frontmatter):
+
+```yaml
+script:
+  entrypoint: scripts/voice_loader.py   # required, relative to skill dir
+  runtime: python3                       # required: node|python3|bash|sh|pwsh|ruby|auto
+  cwd: project-root                      # optional, default
+  argsHint: "--voice <name> --input <path>"  # optional UX hint
+```
+
+Skills without a `script:` block remain pure-instructional (no behavior change).
+Discovery surfaces script-bearing skills with `"executable": true` and a
+`run_hint` in `aiwg discover --json`; human output marks them with `[exec]`.
+
+**Capabilities:** cli, utility, scripts, skills
 **Tools:** Read, Bash
 
 ---

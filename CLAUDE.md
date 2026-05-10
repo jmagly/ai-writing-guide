@@ -321,6 +321,17 @@ aiwg show command discover               # CLI command spec
 aiwg show rule no-attribution            # rule body
 aiwg show skill <name> --json            # path + content envelope
 
+# Run — execute a script-bearing skill (#1227)
+aiwg run skill voice-apply -- --voice technical-authority --input draft.md
+aiwg run skill template-engine -- render adr-template.md --vars vars.yaml
+aiwg run skill <name> --cwd <path> -- <args...>   # explicit CWD override
+# Skills with a `script:` frontmatter block are dispatched through the CLI's
+# runtime registry (node/python3/bash/sh/pwsh/ruby/auto) with project-root CWD,
+# so relative paths inside the script resolve into the calling project — not
+# into AIWG's install. `aiwg discover` flags executable skills as
+# `"executable": true` with a `run_hint`; `aiwg show` prepends a one-line
+# banner so agents know to use this command instead of running raw paths.
+
 # Most AIWG skills (~385 of 400) are NOT in your context — they stay at
 # $AIWG_ROOT (no per-project copy by default, #1217) and are reached via
 # `aiwg discover` + `aiwg show`. The kernel set (9 framework quickrefs +
