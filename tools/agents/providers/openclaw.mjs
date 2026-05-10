@@ -163,10 +163,7 @@ function deploySkills(skillDirs, opts) {
   // Honors #1217 no-copy default: filter to kernel-only unless the
   // operator opts in via env var so standard skills stay at $AIWG_ROOT
   // and are reached via `aiwg discover`.
-  const copyStandardSkills =
-    opts?.copyStandardSkills === true ||
-    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
-    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
+  const copyStandardSkills = opts?.copyStandardSkills === true;
   const crossAgentSkills = copyStandardSkills
     ? skillDirs
     : skillDirs.filter(d => isKernelSkill(d));

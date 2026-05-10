@@ -202,7 +202,7 @@ Options:
                                Default is kernel-only + index-driven discovery for the rest (#1217).
                                Use this for sandboxed runtimes / air-gapped corpora where
                                $AIWG_ROOT isn't readable from the agent's working dir.
-                               Alias: --copy-standard-skills (matches AIWG_COPY_STANDARD_SKILLS env var).
+                               Alias: --copy-standard-skills — rc.29 era).
                                (warns about duplicate entries in the provider command palette)
 
 Model Override Examples:
@@ -583,8 +583,8 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
     skipCommandsMigration: cfg.skipCommandsMigration,
     // #1217 / #1219: --copy-all flag forces legacy per-project mirror
     // for the standard tier. Default is no-copy + index-driven discovery.
-    // Backwards compat with AIWG_COPY_STANDARD_SKILLS env var preserved
-    // by deploySkillsWithKernelRouting (base.mjs).
+    // Replaces the legacy AIWG_COPY_STANDARD_SKILLS env var (removed rc.30).
+    // Default (#1217) is no-copy + index-driven discovery.
     copyStandardSkills: cfg.copyStandardSkills === true,
     deployVersion: getDeployVersion(srcRoot),
     deploySource: 'bundled',

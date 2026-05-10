@@ -40,7 +40,8 @@ function parseArgs() {
     target: CODEX_SKILLS_DIR,
     mode: 'all',
     dryRun: false,
-    force: false
+    force: false,
+    copyStandardSkills: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -50,6 +51,7 @@ function parseArgs() {
     else if (a === '--mode' && args[i + 1]) cfg.mode = String(args[++i]).toLowerCase();
     else if (a === '--dry-run') cfg.dryRun = true;
     else if (a === '--force') cfg.force = true;
+    else if (a === '--copy-all' || a === '--copy-standard-skills') cfg.copyStandardSkills = true;
   }
 
   cfg.mode = normalizeDeploymentMode(cfg.mode);
@@ -352,13 +354,12 @@ function getSkillDirectories(srcRoot, mode) {
   let totalDeployed = 0;
   let totalSkipped = 0;
 
-  // Honor #1217 kernel-pivot default: deploy only kernel skills unless the
-  // operator opts in to copy standard skills via env var. Codex deploys to
-  // ~/.codex/skills/ (home dir) so the kernel/standard split is enforced
-  // at filter time rather than via separate destination directories.
-  const copyStandardSkills =
-    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
-    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
+  // Honor #1217 kernel-pivot default: deploy only kernel skills unless
+  // the operator opts in via `--copy-all` (or `--copy-standard-skills`).
+  // Codex deploys to ~/.codex/skills/ (home dir) so the kernel/standard
+  // split is enforced at filter time rather than via separate
+  // destination directories.
+  const copyStandardSkills = cfg.copyStandardSkills === true;
 
   // Track every AIWG-managed source skill name so we can scope post-deploy
   // cleanup to skills AIWG ships — never delete user-authored or

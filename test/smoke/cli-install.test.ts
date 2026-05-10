@@ -26,6 +26,11 @@ const DEPLOY_SCRIPT = join(PROJECT_ROOT, 'tools/agents/deploy-agents.mjs');
 let testDir: string;
 
 function runNode(args: string[], options: { cwd?: string; timeout?: number } = {}): string {
+  // #1219 rc.30: legacy mirror tests opt in via --copy-all.
+  const isDeploy = args.some(a => a.includes('deploy-agents.mjs')) || args.includes('use');
+  if (isDeploy && !args.includes('--copy-all') && !args.includes('--dry-run')) {
+    args = [...args, '--copy-all'];
+  }
   const result = spawnSync(process.execPath, args, {
     encoding: 'utf-8',
     timeout: options.timeout ?? 30000,

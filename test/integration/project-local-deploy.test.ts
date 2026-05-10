@@ -68,6 +68,7 @@ function makeEnv(label: string): Env {
 }
 
 function runDeploy(env: Env, provider: string, extra: string[] = []): { stdout: string; status: number } {
+  if (!extra.includes("--copy-all")) extra = [...extra, "--copy-all"];
   const args = [
     DEPLOY_SCRIPT,
     '--source', env.bundleDir,

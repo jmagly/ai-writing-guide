@@ -814,14 +814,11 @@ export function deploySkillsWithKernelRouting(
   kernelDestDir,
   opts,
 ) {
-  // Caller can opt in via `opts.copyStandardSkills`. Otherwise, read the
-  // `AIWG_COPY_STANDARD_SKILLS` env-var escape hatch. Default (#1217) is
-  // no-copy: standard skills stay at their source path under $AIWG_ROOT and
-  // are reached via the artifact index.
-  const copyStandardSkills =
-    opts?.copyStandardSkills === true ||
-    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
-    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
+  // Caller opts in via `opts.copyStandardSkills` (set by `--copy-all`
+  // CLI flag, #1219). Default (#1217) is no-copy: standard skills stay
+  // at their source path under $AIWG_ROOT and are reached via the
+  // artifact index.
+  const copyStandardSkills = opts?.copyStandardSkills === true;
 
   const kernel = [];
   const standard = [];

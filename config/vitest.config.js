@@ -27,13 +27,6 @@ export default defineConfig({
     // Environment configuration
     environment: 'node',
 
-    // Default integration tests to copy-mode skill deploy (#1217 fallback).
-    // Production default is no-copy (kernel-only); tests opt back in to keep
-    // exercising the per-project mirror at `.claude/.aiwg/skills/`.
-    env: {
-      AIWG_COPY_STANDARD_SKILLS: '1',
-    },
-
     // Coverage configuration
     coverage: {
       provider: 'v8',

@@ -276,11 +276,10 @@ export function deployCommands(commandFiles, targetDir, opts) {
 export function deploySkills(skillDirs, targetDir, opts) {
   const standardDestDir = path.join(targetDir, paths.skills);
   const kernelDestDir = path.join(targetDir, kernelSkillsPath);
-  // copyStandardSkills resolution priority:
-  //   1. opts.copyStandardSkills (set by `--copy-all` CLI flag, #1219)
-  //   2. AIWG_COPY_STANDARD_SKILLS env var (legacy escape hatch, #1217)
-  //   3. default false (kernel-only + index-driven discovery)
-  // Just forward opts to deploySkillsWithKernelRouting — that helper
+  // copyStandardSkills resolution: opts.copyStandardSkills (set by
+  // `--copy-all` CLI flag, #1219). Default (#1217) is no-copy +
+  // index-driven discovery. The deploySkillsWithKernelRouting helper
+  // does the actual partition + cleanup.
   // does the same priority resolution centrally.
   deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
   // Remove legacy bare-named skills superseded by their aiwg- prefixed replacements

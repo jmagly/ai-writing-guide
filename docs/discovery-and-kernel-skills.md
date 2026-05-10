@@ -73,10 +73,9 @@ Some workflows still want the per-project mirror — sandboxed runtimes where `$
 ```bash
 aiwg use sdlc --copy-all          # preferred — explicit CLI flag
 aiwg use all --copy-all           # works for `aiwg use all` too
-AIWG_COPY_STANDARD_SKILLS=1 aiwg use sdlc   # legacy env-var, still supported
 ```
 
-The `--copy-all` flag (alias `--copy-standard-skills`) restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`). The env var is preserved for backward compat with scripts that pre-date the flag.
+The `--copy-all` flag (alias `--copy-standard-skills`) restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`).
 
 ## The kernel set today (15 skills, ~15-25k tokens total)
 
@@ -150,7 +149,7 @@ Two-step pattern by design. **Discover** ranks candidates and returns metadata. 
 
 ## Per-provider deployment paths
 
-The kernel + standard split applies uniformly. All 10 providers honor `AIWG_COPY_STANDARD_SKILLS` for the standard tier.
+The kernel + standard split applies uniformly. All 10 providers honor the `--copy-all` flag for the standard tier.
 
 | Provider | Kernel skills | Standard skills (when opt-in) | Cross-agent dump |
 |---|---|---|---|
@@ -167,7 +166,7 @@ The kernel + standard split applies uniformly. All 10 providers honor `AIWG_COPY
 
 **Notes on the asymmetric providers:**
 
-- **Codex** writes to `~/.codex/skills/` (home-dir, single tier). The deploy script filters by `kernel: true` when `AIWG_COPY_STANDARD_SKILLS` is unset, so only kernel skills land. Opt in to write all skills.
+- **Codex** writes to `~/.codex/skills/` (home-dir, single tier). The deploy script filters by `kernel: true` by default, so only kernel skills land. Pass `--copy-all` to write the full set.
 - **OpenCode** uses singular `.opencode/skill/` (platform convention). Cross-agent dump at `.agents/skills/` honors the same env-var filter.
 - **OpenClaw** is user-scope only — pass `--scope user`, not `--target`. Kernel skills nest under `aiwg/` namespace at `~/.openclaw/skills/aiwg/` to avoid collisions with non-AIWG ClaWHub installs.
 
@@ -199,7 +198,7 @@ ls .claude/.aiwg/skills/ 2>&1
 # expected: ls: cannot access '.claude/.aiwg/skills/': No such file or directory
 ```
 
-If the directory exists with content, either you passed `--copy-all` (or set `AIWG_COPY_STANDARD_SKILLS=1`), or you're on a pre-rc.14 version. Verify your version:
+If the directory exists with content, either you passed `--copy-all` (or set `
 
 ```bash
 aiwg version

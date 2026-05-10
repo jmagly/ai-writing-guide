@@ -92,7 +92,6 @@ function runAiwg(args: string[], cwd = TEST_PROJECT_DIR): string {
     ...process.env,
     HOME: TEST_HOME_DIR,
     USERPROFILE: TEST_HOME_DIR,
-    AIWG_COPY_STANDARD_SKILLS: '1',
   };
 
   // Use bin/aiwg.mjs which properly awaits async operations
@@ -105,11 +104,13 @@ function runAiwg(args: string[], cwd = TEST_PROJECT_DIR): string {
 
 // Helper to run deployment scripts directly
 function runScript(scriptPath: string, args: string[] = []): string {
+  // Integration tests exercise the legacy per-project mirror.
+  // Inject --copy-all so deploys produce assertable output. (#1219 rc.30 — env-var removed)
+  if (!args.includes('--copy-all')) args = [...args, '--copy-all'];
   const env = {
     ...process.env,
     HOME: TEST_HOME_DIR,
     USERPROFILE: TEST_HOME_DIR,
-    AIWG_COPY_STANDARD_SKILLS: '1',
   };
 
   return execFileSync(process.execPath, [path.join(REPO_ROOT, scriptPath), ...args], {

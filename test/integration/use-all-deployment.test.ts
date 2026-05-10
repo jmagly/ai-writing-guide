@@ -22,6 +22,9 @@ function runAiwg(
   args: string[],
   cwd: string = os.tmpdir()
 ): { stdout: string; stderr: string; exitCode: number } {
+  if (args.includes('use') && !args.includes('--copy-all') && !args.includes('--dry-run')) {
+    args = [...args, '--copy-all'];
+  }
   const result = spawnSync(process.execPath, [BIN, ...args], {
     cwd,
     encoding: 'utf-8',

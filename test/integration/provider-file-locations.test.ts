@@ -160,6 +160,7 @@ function runDeploy(
   homeDir: string,
   extraArgs: string[] = []
 ): string {
+  if (!extraArgs.includes("--copy-all")) extraArgs = [...extraArgs, "--copy-all"];
   const env = {
     ...process.env,
     HOME: homeDir,

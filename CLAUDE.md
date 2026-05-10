@@ -328,9 +328,8 @@ aiwg show skill <name> --json            # path + content envelope
 # aiwg-help, use) is what's always-loaded — 15 skills total.
 # The skill-discovery HIGH rule mandates `aiwg discover` before declining
 # a user request as out-of-scope.
-# To force per-project copies (sandboxed runtimes): pass --copy-all flag,
-# e.g. `aiwg use sdlc --copy-all`. Legacy env-var AIWG_COPY_STANDARD_SKILLS=1
-# is still honored for backward compat.
+# To force per-project copies (sandboxed runtimes): pass --copy-all
+# (e.g. `aiwg use sdlc --copy-all`). Default is no-copy + index-driven discovery.
 
 # Artifact index — build/query graph indices (project, codebase, framework, user-defined)
 aiwg index build                         # Build/rebuild artifact index

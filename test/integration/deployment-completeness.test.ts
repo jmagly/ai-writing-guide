@@ -65,7 +65,9 @@ function runDeploy(
   homeDir: string,
   extraArgs: string[] = [],
 ): string {
-  const env = { ...process.env, HOME: homeDir, USERPROFILE: homeDir, AIWG_COPY_STANDARD_SKILLS: '1' };
+  // Integration tests exercise the legacy per-project mirror via --copy-all.
+  if (!extraArgs.includes('--copy-all')) extraArgs = [...extraArgs, '--copy-all'];
+  const env = { ...process.env, HOME: homeDir, USERPROFILE: homeDir };
   const args = [
     '--provider', provider,
     '--mode', 'sdlc',

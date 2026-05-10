@@ -403,10 +403,7 @@ export function deploySkills(skillDirs, targetDir, opts) {
 
   // Cross-agent compatibility: .agents/skills/ — honors #1217 no-copy
   // default. Filter to kernel-only unless operator opts in via env var.
-  const copyStandardSkills =
-    opts?.copyStandardSkills === true ||
-    process.env.AIWG_COPY_STANDARD_SKILLS === '1' ||
-    process.env.AIWG_COPY_STANDARD_SKILLS === 'true';
+  const copyStandardSkills = opts?.copyStandardSkills === true;
   const crossAgentSkills = copyStandardSkills
     ? skillDirs
     : skillDirs.filter(d => isKernelSkill(d));

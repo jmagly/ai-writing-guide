@@ -65,7 +65,7 @@ export const paths = {
 };
 
 // Kernel skills (always-loaded) deploy to ~/.codex/skills/ — the path Codex
-// natively scans. The standard tier (when AIWG_COPY_STANDARD_SKILLS=1) lands
+// natively scans. The standard tier (when `--copy-all` is passed) lands
 // at the same dir alongside kernel skills; the deploy-skills-codex.mjs
 // script filters non-kernel skills out by default (#1217).
 export const kernelSkillsPath = path.join(os.homedir(), '.codex', 'skills');
@@ -209,6 +209,7 @@ export async function deployCommands(targetDir, srcRoot, opts) {
     if (opts.dryRun) args.push('--dry-run');
     if (opts.force) args.push('--force');
     if (opts.mode) args.push('--mode', opts.mode);
+    if (opts.copyStandardSkills === true) args.push('--copy-all');
 
     const child = spawn('node', [scriptPath, ...args], {
       stdio: 'inherit',
@@ -243,6 +244,7 @@ export async function deploySkills(targetDir, srcRoot, opts) {
     if (opts.dryRun) args.push('--dry-run');
     if (opts.force) args.push('--force');
     if (opts.mode) args.push('--mode', opts.mode);
+    if (opts.copyStandardSkills === true) args.push('--copy-all');
 
     const child = spawn('node', [scriptPath, ...args], {
       stdio: 'inherit',
@@ -266,6 +268,7 @@ export async function deploySkills(targetDir, srcRoot, opts) {
     if (opts.dryRun) args.push('--dry-run');
     if (opts.force) args.push('--force');
     if (opts.mode) args.push('--mode', opts.mode);
+    if (opts.copyStandardSkills === true) args.push('--copy-all');
 
     const child = spawn('node', [scriptPath, ...args], {
       stdio: 'inherit',
