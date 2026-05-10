@@ -1,0 +1,101 @@
+/* Tmux cheatsheet panel for the sandbox tab strip (#1166). */
+
+.toggleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 6px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #999;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 80ms ease, color 80ms ease, border-color 80ms ease;
+}
+
+.toggleButton:hover {
+  background: #2a2a2a;
+  color: #ddd;
+  border-color: #3a3a3a;
+}
+
+.toggleButton[aria-expanded='true'] {
+  background: #2a2a2a;
+  color: #ddd;
+  border-color: #3a3a3a;
+}
+
+.panel {
+  background: #0f0f0f;
+  border-bottom: 1px solid #2a2a2a;
+  padding: 8px 10px 10px;
+  font-size: 12px;
+  color: #c0c0c0;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.title {
+  font-weight: 600;
+  color: #ddd;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.note {
+  font-size: 10px;
+  color: #888;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+  font-family: var(--mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.row {
+  display: contents;
+}
+
+.action {
+  color: #aaa;
+}
+
+.keys {
+  color: #c8c8c8;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 0 5px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #d8d8d8;
+}
+
+.detachRow .action,
+.detachRow .keys {
+  color: #ffe27a;
+  font-weight: 600;
+}
+
+.detachRow .kbd {
+  background: #2a2208;
+  border-color: #5a4a18;
+  color: #ffe27a;
+}

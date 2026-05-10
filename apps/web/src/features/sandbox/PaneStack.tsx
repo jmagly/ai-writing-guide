@@ -15,6 +15,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TerminalPane } from './SessionPicker.js';
 import type { SandboxAgent } from '../../lib/api.js';
+import {
+  TmuxCheatsheetPanel,
+  TmuxCheatsheetToggle,
+  useTmuxCheatsheet,
+} from './TmuxCheatsheet.js';
 
 const HEIGHT_STORAGE_KEY = 'aiwg:sandbox:paneStackHeight';
 const MIN_HEIGHT = 200;
@@ -74,6 +79,8 @@ function paneKey(sandboxId: string, agentId: string): string {
 export function PaneStack({ agentsBySandbox, onActiveChange, onMount }: PaneStackProps) {
   const [panes, setPanes] = useState<PaneSpec[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  // Tmux cheatsheet open/close state — persisted across reloads (#1166).
+  const cheatsheet = useTmuxCheatsheet();
   const [paneHeight, setPaneHeight] = useState<number>(() =>
     typeof window === 'undefined' ? DEFAULT_HEIGHT : loadStoredHeight(),
   );
@@ -175,6 +182,9 @@ export function PaneStack({ agentsBySandbox, onActiveChange, onMount }: PaneStac
         role="tablist"
         aria-label="Open instance panes"
       >
+        {/* Tmux cheatsheet toggle — pinned left, ahead of the dynamic tab list,
+            so its position is stable as panes open/close (#1166). */}
+        <TmuxCheatsheetToggle open={cheatsheet.open} onToggle={cheatsheet.toggle} />
         {panes.map((p) => {
           const isActive = p.id === activeId;
           const badge = p.kind === 'vm' ? 'VM' : p.kind === 'container' ? 'CT' : 'AG';
@@ -237,6 +247,12 @@ export function PaneStack({ agentsBySandbox, onActiveChange, onMount }: PaneStac
           );
         })}
       </div>
+
+      {/* Tmux cheatsheet panel — sits between the tab strip and the active
+          pane when toggled open. Default-collapsed, so it doesn't steal
+          vertical real estate from the terminal. State persists in
+          localStorage (#1166). */}
+      <TmuxCheatsheetPanel open={cheatsheet.open} />
 
       {/* Stack of panes — keep all mounted, hide non-active so each pane's
           WS + xterm stay attached and continue buffering output even when
