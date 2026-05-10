@@ -20,6 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     container: node:20
     timeout-minutes: 5
+    # Force bash as the default shell — the gitea-runner-host's default is
+    # `sh` (dash), which rejects `set -o pipefail` with "Illegal option"
+    # (#1246/#1247 first attempt in rc.38 hit this). node:20 ships /bin/bash.
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout code

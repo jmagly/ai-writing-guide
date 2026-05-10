@@ -58,6 +58,10 @@ jobs:
     runs-on: ubuntu-latest
     container: node:20
     timeout-minutes: 15
+    # Force bash so `set -o pipefail` works (gitea-runner-host default is sh/dash).
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout code
@@ -136,6 +140,9 @@ jobs:
     runs-on: ubuntu-latest
     container: node:20
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout code
