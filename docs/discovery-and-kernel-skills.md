@@ -33,7 +33,78 @@ aiwg doctor
 
 If the kernel quickref or the always-loaded ops skills don't already answer the question, run `aiwg discover`. Surface the top match (or top-3) to the user. Use `aiwg show` to read the file content without navigating storage paths yourself.
 
+## ⚠ Discover-First Protocol (rc.41+)
+
+For any user request mentioning **AIWG**, framework names (sdlc, research, forensics, ops, security-engineering, knowledge-base, marketing, media-curator), or capability keywords (skill, agent, rule, command, addon, workflow, template), `aiwg discover` MUST be the first information-gathering tool call.
+
+Filesystem `Grep`/`Glob`/`Read` against any provider artifact directory (`.claude/`, `.codex/`, `.factory/`, `.warp/`, `.cursor/`, `.windsurf/`, `.opencode/`, `.github/`, `~/.hermes/`, `~/.openclaw/`, or `agentic/code/`) for AIWG-related lookups is **forbidden** until discover has been consulted at least once in the current session.
+
+**Why this is a strict rule (issue [#1249](https://git.integrolabs.net/roctinam/aiwg/issues/1249))**: a literal-string grep hits 1-10 files; `aiwg discover` returns the indexed ranking across all 400+ artifacts. A Factory droid user reported going straight to `Grep "rlm"` for an AIWG question, hitting `rlm-agent.md` by literal match, and missing 8 other RLM-related skills, rules, and templates that discover would have surfaced. Rule 1.5 in `skill-discovery.md` codifies this discipline.
+
+**When the platform supports subagent delegation** (Claude Code's `Task` tool, Hermes's `delegate_task`, Factory's droid spawn), prefer the `aiwg-finder` subagent over self-service `aiwg discover` + `aiwg show`. The finder agent runs the lookup in its own context and returns the selected artifact body plus a one-paragraph capability summary — ~200 parent tokens vs. ~3,000-8,000 for inline discover+show.
+
+```bash
+# Self-service (works on every platform)
+aiwg discover "deploy production" --limit 3
+aiwg show skill flow-deploy-to-production
+
+# Delegated (Claude Code Task tool example; symmetric on Hermes/Factory)
+Task(subagent_type="aiwg-finder", prompt="find the skill for deploying production")
+```
+
+You may skip the discover query only when: the user named a specific skill (`/flow-deploy-to-production`); the capability is clearly outside AIWG's scope (general programming, weather, translation); or you've already queried for the same need in the current session.
+
 ## How the two-tier model works
+
+```mermaid
+flowchart TB
+  subgraph KERNEL["Kernel tier — 16 skills, always loaded"]
+    direction LR
+    K1[9 framework quickrefs<br/>sdlc / research / forensics /<br/>marketing / media-curator /<br/>security-eng / knowledge-base /<br/>ops / aiwg-utils-quickref]
+    K2[7 self-maintenance ops<br/>steward / aiwg-doctor /<br/>aiwg-refresh / aiwg-status /<br/>aiwg-help / use /<br/>aiwg-regenerate]
+  end
+
+  subgraph STANDARD["Standard tier — ~385 skills, read from $AIWG_ROOT"]
+    direction LR
+    S1[SDLC workflows<br/>intake-wizard, sdlc-accelerate,<br/>flow-deploy-to-production,<br/>address-issues, ...]
+    S2[Domain skills<br/>media-curator, research-,<br/>forensics-, marketing-, ...]
+    S3[Specialized<br/>aiwg-orchestrate hermes-only,<br/>per-provider regenerators, ...]
+  end
+
+  AGENT([AI session<br/>natural-language request])
+
+  AGENT -->|Always sees| KERNEL
+  AGENT -.->|Optionally queries| INDEX[(aiwg index<br/>artifact index)]
+  INDEX -.->|aiwg discover phrase| STANDARD
+  STANDARD -.->|aiwg show name| AGENT
+
+  classDef optional stroke-dasharray: 5 5,fill:#fef9e7
+  class INDEX optional
+  class STANDARD optional
+```
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Agent as AI session
+  participant CLI as aiwg CLI
+  participant Index as artifact index<br/>(~/.local/share/aiwg/)
+  participant FS as $AIWG_ROOT<br/>(framework source)
+
+  User->>Agent: "deploy this to production"
+  Note over Agent: Kernel skill aiwg-utils-quickref<br/>doesn't match. Run discover.
+  Agent->>CLI: aiwg discover "deploy production"
+  CLI->>Index: rank artifacts by capability + triggers
+  Index-->>CLI: top 3 results with paths + scores
+  CLI-->>Agent: flow-deploy-to-production [0.51]<br/>+ 2 alternatives
+  Agent->>CLI: aiwg show skill flow-deploy-to-production
+  CLI->>FS: read SKILL.md
+  FS-->>CLI: full skill body
+  CLI-->>Agent: SKILL.md content (instructions)
+  Agent->>User: Apply the skill's protocol
+```
+
+The two-tier model below describes the deployed layout; the diagrams above show how an agent actually navigates it.
 
 ```
 Source of truth ($AIWG_ROOT/agentic/code/...)
