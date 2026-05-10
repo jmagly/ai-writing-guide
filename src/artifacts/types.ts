@@ -371,12 +371,21 @@ export interface GraphConfig {
 export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
   framework: {
     type: 'framework',
-    // Includes `agentic/code/extensions` (#1221) so extension bundles
-    // (sys, net, it, sec, stream, dev, api-adapter) appear in `aiwg discover`
-    // alongside frameworks and addons. Extensions use a flat
-    // `<group>/skills/<name>.md` layout — `inferType()` in index-builder.ts
-    // recognizes that pattern explicitly.
-    scanDirs: ['agentic/code/frameworks', 'agentic/code/addons', 'agentic/code/extensions', 'agentic/code/agents', 'docs'],
+    // Includes `agentic/code/extensions` and `agentic/code/behaviors`
+    // (#1221) so extension bundles (sys, net, it, sec, stream, dev) and
+    // top-level behaviors (concierge, security-sentinel, ...) appear in
+    // `aiwg discover` alongside frameworks and addons. `inferType()` in
+    // index-builder.ts uses nearest-type-dir ancestor matching to handle
+    // every nested layout (slug vs flat, frameworks/<f>/extensions/<sub>,
+    // research-complete/elaboration/{agents,commands}, etc.).
+    scanDirs: [
+      'agentic/code/frameworks',
+      'agentic/code/addons',
+      'agentic/code/extensions',
+      'agentic/code/agents',
+      'agentic/code/behaviors',
+      'docs',
+    ],
     extensions: ['.md', '.yaml', '.json'],
     shared: true,
     // Not built by `aiwg index build` (no flag) — that would write to

@@ -96,50 +96,61 @@ function inferPhase(filePath: string): string {
 function inferType(data: Record<string, unknown>, filePath: string): string {
   if (typeof data.type === 'string') return data.type;
 
-  // AIWG artifact kinds — match on framework/addon source path layout.
   // Normalize separators so matchers are cross-platform.
   const normalized = filePath.replace(/\\/g, '/');
   const basename = path.basename(filePath, path.extname(filePath)).toLowerCase();
 
-  // Skills: SKILL.md inside a skills/<slug>/ directory (frameworks/addons layout).
-  if (basename === 'skill' && /\/skills\/[^/]+\/SKILL\.md$/i.test(normalized)) {
-    return 'skill';
-  }
-  // Skills (extensions layout, #1221): flat `<group>/skills/<name>.md`
-  // under `agentic/code/extensions/`. Extensions don't use the slug-dir
-  // convention — every `.md` directly under an extension's `skills/` is a
-  // skill. README.md is skipped explicitly to avoid mistyping prose docs.
-  if (
-    /\/extensions\/[^/]+\/skills\/[^/]+\.md$/i.test(normalized) &&
-    basename !== 'readme'
-  ) {
-    return 'skill';
-  }
-  // Agents: <name>.md inside an agents/ directory under frameworks/addons/extensions.
-  if (/\/(?:frameworks|addons|extensions)\/[^/]+\/agents\/[^/]+\.md$/i.test(normalized)) {
-    return 'agent';
-  }
-  // Commands: <name>.md inside a commands/ directory under frameworks/addons/extensions.
-  if (/\/(?:frameworks|addons|extensions)\/[^/]+\/commands\/[^/]+\.md$/i.test(normalized)) {
-    return 'command';
-  }
-  // Rules: <name>.md inside a rules/ directory under frameworks/addons/extensions
-  // (excluding RULES-INDEX.md and READMEs).
-  if (
-    /\/(?:frameworks|addons|extensions)\/[^/]+\/rules\/[^/]+\.md$/i.test(normalized) &&
-    !/RULES-INDEX\.md$/i.test(normalized) &&
-    basename !== 'readme'
-  ) {
-    return 'rule';
-  }
-  // Templates: <name>.md inside a templates/ directory under extensions.
-  // Extensions ship templates as a first-class artifact kind — surface them
-  // in the index so `aiwg discover` can find scaffolding patterns.
-  if (
-    /\/extensions\/[^/]+\/templates\/[^/]+\.md$/i.test(normalized) &&
-    basename !== 'readme'
-  ) {
-    return 'template';
+  // Nearest-type-dir-ancestor classification (#1221 audit).
+  //
+  // The AIWG corpus uses many different nesting depths for artifacts:
+  //   frameworks/<f>/skills/<slug>/SKILL.md
+  //   frameworks/<f>/extensions/<sub>/skills/<slug>/SKILL.md
+  //   frameworks/<f>/templates/hermes/skills/<slug>/SKILL.md
+  //   frameworks/<f>/elaboration/agents/<n>.md          (research-complete)
+  //   addons/<a>/agents/<n>.md
+  //   addons/<a>/prompts/agents/<n>.md                  (aiwg-utils)
+  //   addons/<a>/skills/skills/SKILL.md                 (aiwg-utils self-skill)
+  //   addons/<a>/templates/<n>.md
+  //   addons/<a>/behaviors/<n>.md
+  //   addons/<a>/hooks/<n>.md
+  //   extensions/<e>/skills/<n>.md                      (flat — no slug dir)
+  //   extensions/<e>/rules/<n>.md
+  //   agentic/code/behaviors/<sub>/...                  (top-level behaviors)
+  //
+  // Walk the path segments from the file upward; the first segment matching
+  // a known artifact-type directory determines the kind. This handles every
+  // nested layout uniformly.
+  const segments = normalized.split('/');
+  const skipBasenames = new Set(['readme', 'rules-index', 'index']);
+  if (!skipBasenames.has(basename) && filePath.match(/\.md$/i)) {
+    // Look at directory segments only (exclude the file itself).
+    for (let i = segments.length - 2; i >= 0; i--) {
+      const seg = segments[i];
+      switch (seg) {
+        case 'skills': {
+          // Skills come in two layouts:
+          //   slug-style: skills/<slug>/SKILL.md  → file is SKILL.md
+          //   flat-style: skills/<name>.md        → file is the artifact
+          // Both classify as 'skill'. Slug-style is canonical for frameworks
+          // and addons; flat is used by extensions.
+          return 'skill';
+        }
+        case 'agents':
+          return 'agent';
+        case 'commands':
+          return 'command';
+        case 'rules':
+          // Rules/RULES-INDEX.md is a curated index file, not a rule.
+          if (basename === 'rules-index' || basename === 'index') break;
+          return 'rule';
+        case 'templates':
+          return 'template';
+        case 'behaviors':
+          return 'behavior';
+        case 'hooks':
+          return 'hook';
+      }
+    }
   }
 
   // Legacy SDLC artifact heuristics (existing behavior preserved).
