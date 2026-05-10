@@ -486,6 +486,28 @@ async function runDoctor() {
     check('Skill Seekers', 'info', 'Not installed (optional). Run: aiwg install-skill-seekers');
   }
 
+  // 6b. Check Optional Features (#1219) — runtime-optional packages
+  // tracked in optionalDependencies + the features catalog.
+  try {
+    const { getAllFeatureStatuses } = await import(path.join(AIWG_ROOT, 'dist', 'src', 'features', 'status.js'));
+    const statuses = await getAllFeatureStatuses();
+    for (const s of statuses) {
+      const label = `Optional: ${s.feature.name}`;
+      if (s.available) {
+        const versions = s.packages.map(p => `${p.name} ${p.version ?? '?'}`).join(', ');
+        check(label, 'ok', `installed (${versions})`);
+      } else {
+        check(label, 'info', `not installed — \`aiwg features install ${s.feature.name}\` to enable`);
+      }
+    }
+  } catch (err) {
+    // Best-effort — if the features module isn't built yet (e.g. on
+    // a fresh dev clone before `npm run build`), just skip the section.
+    if (process.env.AIWG_DEBUG) {
+      console.error(`Optional Features check skipped: ${err?.message ?? err}`);
+    }
+  }
+
   // 7. Check Node.js version
   const nodeVersion = process.version;
   const major = parseInt(nodeVersion.slice(1).split('.')[0]);

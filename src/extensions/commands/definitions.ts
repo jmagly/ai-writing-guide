@@ -1004,6 +1004,41 @@ export const showCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Features: list, inspect (and eventually install) AIWG's optional
+// runtime features — embeddings, sqlite, pty, webserver. (#1219)
+export const featuresCommand: Extension = {
+  id: 'features',
+  type: 'skill',
+  name: 'Features',
+  description: 'List, inspect, and (eventually) install AIWG\'s optional runtime features',
+  version: '1.0.0',
+  capabilities: ['cli', 'maintenance', 'install', 'optional-deps'],
+  keywords: ['features', 'optional', 'install', 'embeddings', 'sqlite', 'pty', 'webserver'],
+  category: 'maintenance',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'aiwg features',
+      'optional features',
+      'install optional',
+      'enable embeddings',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[status|info|install|remove] [name] [--json]',
+      allowedTools: ['Read', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Toolsmith Commands
 
 export const runtimeInfoCommand: Extension = {
@@ -2989,6 +3024,9 @@ export const commandDefinitions: Extension[] = [
   indexCommand,
   discoverCommand,
   showCommand,
+
+  // Optional Features (1)
+  featuresCommand,
 
   // Reproducibility (4)
   executionModeCommand,

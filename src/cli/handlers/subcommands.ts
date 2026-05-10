@@ -1045,6 +1045,33 @@ export const discoverHandler: CommandHandler = {
 };
 
 /**
+ * Features command handler — manage AIWG's optional runtime features (#1219).
+ *
+ * Subcommands: status / info / install / remove. Cycle 1 ships
+ * status + info; install + remove arrive in Cycle 3 once install-mode
+ * detection is designed.
+ */
+export const featuresHandler: CommandHandler = {
+  id: "features",
+  name: "Features",
+  description:
+    "List, inspect, and (eventually) install AIWG's optional runtime features",
+  category: "maintenance",
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import("../../features/cli.js");
+      await main(ctx.args);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `Features command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Show command handler — fetch the full text of a specific artifact (#1218).
  *
  * Forwards to the same implementation as `aiwg index show`. Companion to
@@ -1486,6 +1513,7 @@ export const subcommandHandlers: CommandHandler[] = [
   indexHandler,
   discoverHandler,
   showHandler,
+  featuresHandler,
   skillsHandler,
   configHandler,
   opsHandler,

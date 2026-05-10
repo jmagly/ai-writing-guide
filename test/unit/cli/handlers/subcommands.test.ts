@@ -473,7 +473,7 @@ describe("Subcommand Handlers", () => {
 
   describe("subcommandHandlers array", () => {
     it("should export all subcommand handlers with correct IDs", () => {
-      expect(subcommandHandlers).toHaveLength(31);
+      expect(subcommandHandlers).toHaveLength(32);
 
       const handlerIds = subcommandHandlers.map((h) => h.id);
       const expectedIds = [
@@ -492,6 +492,7 @@ describe("Subcommand Handlers", () => {
         "index",
         "discover",
         "show",
+        "features",
         "skills",
         "config",
         "ops",

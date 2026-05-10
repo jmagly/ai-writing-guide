@@ -74,6 +74,7 @@ import {
   indexHandler,
   discoverHandler,
   showHandler,
+  featuresHandler,
   skillsHandler,
   configHandler,
   opsHandler,
@@ -151,6 +152,7 @@ export {
   indexHandler,
   discoverHandler,
   showHandler,
+  featuresHandler,
   skillsHandler,
   configHandler,
   opsHandler,
@@ -291,6 +293,7 @@ export const allHandlers: CommandHandler[] = [
   indexHandler,
   discoverHandler,
   showHandler,
+  featuresHandler,
   skillsHandler,
   runtimeInfoHandler,
 
