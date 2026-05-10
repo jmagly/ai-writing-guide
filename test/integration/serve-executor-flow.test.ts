@@ -28,18 +28,6 @@ const projectRoot = resolve(__dirname, '..', '..');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Find a free TCP port by binding to port 0. */
-async function freePort() {
-  return new Promise((resolve, reject) => {
-    const srv = net.createServer();
-    srv.listen(0, '127.0.0.1', () => {
-      const addr = /** @type {net.AddressInfo} */ (srv.address());
-      srv.close(() => resolve(addr.port));
-    });
-    srv.on('error', reject);
-  });
-}
-
 /** Simple HTTP client for our local servers. */
 async function httpRequest(url, { method = 'GET', headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
@@ -106,7 +94,6 @@ class MockExecutorServer {
   }
 
   async start(httpPort, wsPort) {
-    this.port = httpPort;
     this.wsPort = wsPort;
 
     // HTTP server for REST dispatch
@@ -130,8 +117,17 @@ class MockExecutorServer {
       }
     });
 
+    // Listen on port 0 (or the requested port if provided) and report the
+    // actual port back via server.address(). Listening on 0 directly
+    // eliminates the TOCTOU race that the prior freePort() pattern had —
+    // there's no window between "found free port" and "listen on it" where
+    // another process could grab the port (#1226 RC CI fix).
     await new Promise((resolve, reject) => {
-      this.server.listen(httpPort, '127.0.0.1', resolve);
+      this.server.listen(httpPort ?? 0, '127.0.0.1', () => {
+        const addr = /** @type {net.AddressInfo} */ (this.server.address());
+        this.port = addr.port;
+        resolve();
+      });
       this.server.on('error', reject);
     });
   }
@@ -168,12 +164,12 @@ describe('executor dispatch flow (integration)', () => {
   let validateDispatchPayload;
 
   beforeAll(async () => {
-    // Allocate ports
-    httpPort = await freePort();
-
-    // Start mock executor
+    // Start mock executor on an OS-assigned free port (passes 0 → server
+    // reports actual port via server.address()). Avoids the TOCTOU race
+    // the prior freePort+listen pattern had under parallel CI test runs.
     mockExecutor = new MockExecutorServer();
-    await mockExecutor.start(httpPort, null);
+    await mockExecutor.start(0, null);
+    httpPort = mockExecutor.port;
 
     // Load registry
     const mod = await loadRegistry();
