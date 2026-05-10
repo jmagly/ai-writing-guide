@@ -12,7 +12,7 @@ Comprehensive yt-dlp command patterns for downloading video and audio content fr
 
 ## Overview
 
-**yt-dlp** is the primary tool for media acquisition from YouTube and 1000+ other sites. This skill documents proven patterns from production use, including workarounds for common issues like the SABR 403 error that affects format selection on newer videos.
+**yt-dlp** is the primary tool for media acquisition from YouTube and 1000+ other sites. This skill documents proven patterns from production use, including workarounds for the n-challenge / EJS gate, PO-token requirements, and the older SABR 403 issue.
 
 **Key Capabilities**:
 - Download best available quality (video + audio)
@@ -21,6 +21,53 @@ Comprehensive yt-dlp command patterns for downloading video and audio content fr
 - Embed metadata and thumbnails
 - Download subtitles and auto-captions
 - Work around platform restrictions
+
+## Prerequisites (#1229)
+
+As of 2026, basic format selectors return only image storyboards on most YouTube videos until two relatively new gates are satisfied. **Read this section before any acquisition attempt** — running yt-dlp without these prerequisites produces "Only images are available for download" failures that look like format-selector bugs but aren't.
+
+### 1. n-challenge / EJS solver
+
+YouTube returns ciphered streaming URLs whose `n` parameter must be transformed by JavaScript extracted from the player. yt-dlp delegates this to the `yt-dlp-ejs` plugin plus a JS runtime. Without both, all real formats are filtered out and only `sb*` storyboard formats remain.
+
+```bash
+# Install the EJS plugin
+pip install --user yt-dlp-ejs
+
+# JS runtime — deno preferred, node accepted
+which deno || sudo apt install -y deno   # Debian/Ubuntu
+# OR: yt-dlp --js-runtimes node:/usr/bin/node ...
+```
+
+Reference: <https://github.com/yt-dlp/yt-dlp/wiki/EJS>
+
+### 2. PO Token (Proof of Origin)
+
+Many client variants (`mweb`, `ios`, `web`) demand a Proof-of-Origin token tied to a logged-in / browser-attested session. Without a PO token provider those clients are skipped, narrowing the available format list. Standard provider:
+
+```bash
+pip install --user bgutil-ytdlp-pot-provider
+```
+
+Reference: <https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide>
+
+### 3. Plugin discovery — install yt-dlp via pip, NOT the standalone zipapp
+
+This is the gotcha that bites operators most often. The standalone yt-dlp **zipapp** (the form distributed at `/usr/local/bin/yt-dlp` from the official static download) does not expose user site-packages to its plugin-discovery path. Even after `pip install --user yt-dlp-ejs`, a zipapp invocation will silently fail to find the EJS solver. Symptoms: `n challenge solving failed` warnings even after installing the plugin.
+
+The fix is to install yt-dlp itself via pip so it shares `site-packages` with the EJS plugin, then ensure `~/.local/bin` precedes `/usr/local/bin` on PATH:
+
+```bash
+pip install --user --break-system-packages yt-dlp-ejs   # plugin
+pip install --user --break-system-packages -U yt-dlp    # 2026.03.17+ — same site-packages
+export PATH="$HOME/.local/bin:$PATH"
+
+# Verify the EJS solver is discovered
+~/.local/bin/yt-dlp -F "https://www.youtube.com/watch?v=VIDEO_ID"
+# Should now list real formats, not just sb*
+```
+
+After this, downloads typically succeed automatically — yt-dlp's EJS solver may even fall back to the `android_vr` client without needing the JS runtime.
 
 ## Basic Download Patterns
 
@@ -46,29 +93,30 @@ yt-dlp -f "bestvideo+bestaudio" \
   "VIDEO_URL"
 ```
 
-### SABR 403 Workaround
+### Failure-Mode Triage (#1229)
 
-**Problem**: YouTube's SABR system returns 403 errors on some format selectors for newer videos (2023+).
+Match the symptom to the right gate before changing format selectors. Three distinct failures look similar but require different fixes:
 
-**Solution**: Use simpler format selectors that let yt-dlp handle the complexity.
+| Symptom | Cause | Fix |
+|---|---|---|
+| `-F` lists only `sb0..sb3` storyboard formats; warning `n challenge solving failed`, `Only images are available` | n-challenge / EJS missing | Install `yt-dlp-ejs` and a JS runtime (see Prerequisites). Most failures resolve here. |
+| Client-specific 403s; warning `mweb formats require a GVS PO Token` or similar | PO token required | Install `bgutil-ytdlp-pot-provider` (see Prerequisites). |
+| Explicit-format 403 on `bestvideo[ext=mp4]+bestaudio[ext=m4a]` selectors against newer videos | SABR | Simplify to `best[ext=mp4]/best` (below). |
+
+#### SABR 403 (legacy fix — keep for explicit-selector failures)
 
 ```bash
-# BROKEN (SABR 403 on newer videos):
+# BROKEN (SABR 403 on explicit selectors):
 yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]" "VIDEO_URL"
 
 # WORKS (SABR-compatible):
 yt-dlp -f "best[ext=mp4]/best" "VIDEO_URL"
 
-# Audio-only SABR workaround:
+# Audio-only SABR-safe:
 yt-dlp -f "bestaudio/best" -x --audio-format mp3 "VIDEO_URL"
 ```
 
-**When to use**:
-- Videos uploaded after 2023
-- Videos showing "HTTP Error 403: Forbidden" with explicit format codes
-- Premium/restricted content
-
-**Why it works**: The simpler selector `best[ext=mp4]/best` avoids triggering YouTube's anti-bot SABR system while still getting high quality. The `/best` fallback ensures download succeeds even if mp4 unavailable.
+**Why this still helps even with EJS in place**: `best[ext=mp4]/best` lets yt-dlp pick a single combined stream rather than negotiating separate video/audio tracks, which sidesteps both SABR 403s and several PO-token edge cases.
 
 ### Audio-Only Extraction
 
@@ -563,6 +611,23 @@ yt-dlp --cookies cookies.txt "VIDEO_URL"
 yt-dlp --cookies-from-browser chrome --cookies cookies.txt "VIDEO_URL"
 ```
 
+#### Flatpak browser profiles (#1229)
+
+`--cookies-from-browser chromium` does NOT find Flatpak Chromium installs (or any other Flatpak browser) — the binary's default profile path doesn't match the Flatpak sandbox layout. Pass an explicit profile path:
+
+```bash
+# Flatpak Chromium
+yt-dlp --cookies-from-browser "chromium:$HOME/.var/app/org.chromium.Chromium/config/chromium" "VIDEO_URL"
+
+# Flatpak Ungoogled Chromium
+yt-dlp --cookies-from-browser "chromium:$HOME/.var/app/io.github.ungoogled_software.ungoogled_chromium/config/chromium" "VIDEO_URL"
+
+# Flatpak Firefox
+yt-dlp --cookies-from-browser "firefox:$HOME/.var/app/org.mozilla.firefox/.mozilla/firefox" "VIDEO_URL"
+```
+
+The same pattern (`<browser>:<profile-path>`) applies to any Flatpak browser. Native (non-Flatpak) installs are auto-discovered without the explicit path.
+
 ## Post-Processing
 
 ### FFmpeg Operations
@@ -685,7 +750,26 @@ yt-dlp "https://archive.org/download/IDENTIFIER/"
 
 ## Troubleshooting Patterns
 
-### 403 Forbidden (SABR Error)
+### Only storyboards available / "n challenge solving failed"
+
+Most common 2026 failure. The EJS solver is missing or invisible to a zipapp install. See **Prerequisites** above for the full fix.
+
+```bash
+# Quick fix path:
+pip install --user --break-system-packages yt-dlp-ejs yt-dlp
+export PATH="$HOME/.local/bin:$PATH"
+~/.local/bin/yt-dlp -F "VIDEO_URL"   # confirm real formats appear
+```
+
+### "mweb formats require a GVS PO Token" / client-specific 403s
+
+PO token provider missing. See **Prerequisites** above.
+
+```bash
+pip install --user bgutil-ytdlp-pot-provider
+```
+
+### 403 Forbidden on explicit format selectors (legacy SABR)
 
 ```bash
 # Use simplified format selector
@@ -694,8 +778,8 @@ yt-dlp -f "best[ext=mp4]/best" "VIDEO_URL"
 # Audio-only fallback
 yt-dlp -f "bestaudio/best" -x --audio-format mp3 "VIDEO_URL"
 
-# Update yt-dlp
-pip install -U yt-dlp
+# Update yt-dlp (and EJS plugin)
+pip install --user --break-system-packages -U yt-dlp yt-dlp-ejs
 ```
 
 ### Slow Download Speed
@@ -815,14 +899,15 @@ yt-dlp -f "best[ext=mp4]/best" \
 
 ## Best Practices
 
-1. **Always use `--embed-metadata`** - Preserves video metadata in file
-2. **Use download archive** - Prevents re-downloading with `--download-archive`
-3. **Apply SABR workaround** - Use `best[ext=mp4]/best` for newer videos
-4. **Rate limit large downloads** - Use `--sleep-interval` for playlists/channels
-5. **Organize with output templates** - Use `-o` for consistent file organization
-6. **Keep yt-dlp updated** - Run `pip install -U yt-dlp` regularly
-7. **Test format selection** - Use `-F` to list formats before downloading
-8. **Use cookies for member content** - `--cookies-from-browser` for restricted content
+1. **Verify Prerequisites first** — Install `yt-dlp-ejs` + a JS runtime, and confirm `yt-dlp` itself was installed via `pip` (not the standalone zipapp) so plugins resolve. See the Prerequisites section above.
+2. **Always use `--embed-metadata`** - Preserves video metadata in file
+3. **Use download archive** - Prevents re-downloading with `--download-archive`
+4. **Apply SABR workaround** - Use `best[ext=mp4]/best` for explicit-selector failures on newer videos
+5. **Rate limit large downloads** - Use `--sleep-interval` for playlists/channels
+6. **Organize with output templates** - Use `-o` for consistent file organization
+7. **Install yt-dlp via pip, not the zipapp** — `pip install --user --break-system-packages -U yt-dlp` shares site-packages with `yt-dlp-ejs`; distros / package managers shipping the zipapp form will silently break plugin discovery.
+8. **Test format selection** - Use `-F` to list formats before downloading; if you only see `sb*` storyboard formats, an EJS prerequisite is missing.
+9. **Use cookies for member content** - `--cookies-from-browser` for restricted content; pass an explicit profile path for Flatpak browsers (see Authentication and Cookies > Flatpak browser profiles).
 
 ## See Also
 

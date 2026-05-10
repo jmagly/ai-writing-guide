@@ -544,7 +544,7 @@ aiwg download-queue --input yt.yaml --format best
 ## See Also
 
 - Source Discoverer Agent: `@$AIWG_ROOT/agentic/code/frameworks/media-curator/agents/source-discoverer.md`
-- YouTube Acquisition Skill: `@$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/youtube-acquisition.md`
+- YouTube Acquisition Skill: `@$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/youtube-acquisition/SKILL.md` — **read its Prerequisites section before triggering YouTube downloads** (EJS / PO-token / pip-vs-zipapp gotchas)
 - Queue Manager Agent: `@$AIWG_ROOT/agentic/code/frameworks/media-curator/agents/queue-manager.md`
 
 ## References

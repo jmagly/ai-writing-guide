@@ -696,5 +696,6 @@ export_metadata() {
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Seek explicit authorization before irreversible actions (overwrites, deletions)
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Research sources before deciding on acquisition strategy
 - @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/find-sources/SKILL.md — Source discovery skill used before acquisition
+- @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/youtube-acquisition/SKILL.md — yt-dlp patterns; **read the Prerequisites section before any YouTube acquisition** (EJS / PO-token / pip-vs-zipapp gotchas)
 - @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/integrity-verification/SKILL.md — Verify downloaded files after acquisition
 - @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/provenance-tracking/SKILL.md — Track origin and derivation of acquired media
