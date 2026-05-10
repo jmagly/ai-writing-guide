@@ -84,6 +84,21 @@ function displayHelp(): void {
     ['catalog search <q>', 'Search models by query'],
   ]);
 
+  helpGroup('DISCOVERY', [
+    ['discover "<phrase>"', 'Find skills/agents/commands/rules by capability'],
+    ['show <type> <name>', 'Stream the body of an indexed artifact'],
+    ['index <subcommand>', 'Manage the artifact index (build/query/discover/deps/stats)'],
+  ]);
+
+  helpGroup('DISPATCH', [
+    ['run skill <name>', 'Execute a script-bearing skill'],
+    ['run <script-name>', 'Run a user-defined script from .aiwg/aiwg.config'],
+  ]);
+
+  helpGroup('FEATURES', [
+    ['features', 'Show optional feature install status'],
+  ]);
+
   helpGroup('SCAFFOLDING', [
     ['add-agent <name>', 'Add agent to addon/framework'],
     ['add-command <name>', 'Add command to addon/framework'],
@@ -102,6 +117,7 @@ function displayHelp(): void {
   helpGroup('MAINTENANCE', [
     ['doctor', 'Check installation health'],
     ['version', 'Show version and channel info'],
+    ['refresh', 'Update AIWG and redeploy frameworks (formerly: sync)'],
     ['update', 'Check for updates'],
     ['help', 'Show this help message'],
   ]);
@@ -117,9 +133,10 @@ function displayHelp(): void {
   console.log(`  ${ui.dimText('Providers:')} claude (default), copilot, factory, codex, cursor, opencode, warp, windsurf`);
   ui.blank();
   console.log(`  ${ui.dimText('Examples:')}`);
-  console.log(`    aiwg use sdlc                  ${ui.dimText('Install SDLC framework')}`);
-  console.log(`    aiwg use all --provider factory ${ui.dimText('Install all for Factory AI')}`);
+  console.log(`    aiwg use sdlc                   ${ui.dimText('Install SDLC framework')}`);
+  console.log(`    aiwg discover "deploy"          ${ui.dimText('Find skills by capability')}`);
+  console.log(`    aiwg show skill intake-wizard   ${ui.dimText('Stream a skill body')}`);
   console.log(`    aiwg doctor                     ${ui.dimText('Check installation health')}`);
-  console.log(`    aiwg mcp serve                  ${ui.dimText('Start MCP server')}`);
+  console.log(`    aiwg refresh                    ${ui.dimText('Pull latest + redeploy frameworks')}`);
   ui.blank();
 }

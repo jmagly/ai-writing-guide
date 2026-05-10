@@ -26,6 +26,57 @@ The fix is a single discipline: **query the index before declining or improvisin
 
 ## Mandatory Rules
 
+### Rule 0: Recognize Directive Boundaries Before Acting
+
+The other rules in this file fire when a directive arrives. They only work if you *recognize* the arrival. Each user turn must be classified before you act on it:
+
+- **Continuation** — extends or refines the work already in flight (e.g. "and also fix the test", "use Postgres instead", "what's the status?"). Stay in the existing context.
+- **New directive** — introduces a fresh task, often with its own scope (e.g. "address-issues #1230 #1231", "now do a security review", "let's write the release notes"). Reset to discovery mode: identify the task, search for a relevant skill, then proceed.
+
+Failing to draw this line is how agents miss obvious skill invocations. The most common failure modes:
+
+| Symptom | Likely cause |
+|---|---|
+| User pastes a directive that names a skill (e.g. "address-issues …") and the agent reads it as commentary | Treated a new directive as continuation context |
+| User clears the session with `/clear`, then sends a directive in the next turn — agent treats it as residual session state | Did not classify the post-clear input as a fresh directive |
+| User issues a clear command and the agent does adjacent housekeeping instead of the named action | Did not identify the directive; defaulted to the previous flow |
+| Agent has a relevant skill in the index but writes a workflow from scratch | Skipped the discovery query because the directive wasn't recognized as new |
+
+#### When to apply
+
+Run the classification at every turn boundary, not just session start. Specifically:
+
+1. **Session start** — the first user message after the system prompt is always a new directive.
+2. **After `/clear`** — the runtime erases conversation history; the next user message is a new directive even if the wording sounds like a continuation.
+3. **At each user message** — re-classify. A user can pivot mid-session ("ok now switch to the deploy task"); you don't get to ride the previous task's framing forward.
+4. **After tool output** — if the user follows tool output with a fresh imperative, that's a new directive.
+
+#### Required action on a new directive
+
+When the classification result is "new directive":
+
+1. **Name the task** internally (one short phrase: "address three issues", "run security review", "compute test coverage").
+2. **Search the artifact index** with that phrase via `aiwg discover` (see Rules 1–2). This is non-optional — the search runs even if you think you already know which skill to use, because the index is authoritative for what's deployed.
+3. **Fetch the chosen skill** with `aiwg show <type> <name>` (Rule 5).
+4. **Then act**, following the skill's instructions.
+
+Skipping any of steps 1–3 is the failure mode this rule exists to prevent.
+
+#### When classification is genuinely ambiguous
+
+If the input could plausibly be either a continuation or a new directive — for example, the user says "and also" but introduces a new domain — ask one question rather than guessing. A single clarifying question is cheaper than executing the wrong task.
+
+#### Recovery when this rule was violated
+
+If you notice mid-session that you treated a new directive as continuation:
+
+1. Stop the in-flight work
+2. Acknowledge the misclassification explicitly to the user
+3. Run `aiwg discover` against the actual directive
+4. Resume from the correct skill
+
+The user will accept "I missed that this was a new directive — let me restart from the right skill" far more readily than a stale completion of the wrong task.
+
 ### Rule 1: Query the Index Before Declining
 
 Before saying "AIWG doesn't have a skill for that" or "no workflow exists for this," **you MUST query the artifact index**:

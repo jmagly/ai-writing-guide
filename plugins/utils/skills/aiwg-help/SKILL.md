@@ -43,7 +43,9 @@ When triggered:
    aiwg help
    ```
 
-   The help command is built into the CLI registry and requires no external tools. It renders command groups (Framework, Project, Workspace, MCP Server, Toolsmith, Scaffolding, Agent Loop, Maintenance) with aligned descriptions.
+   The help command is built into the CLI registry and requires no external tools. It renders command groups (Framework, Project, Workspace, MCP Server, Toolsmith, Catalog, **Discovery**, **Dispatch**, **Features**, Scaffolding, Ralph Loop, Maintenance, Channel) with aligned descriptions.
+
+   Discovery commands (`discover`, `show`, `index`) are the canonical way to find and read AIWG skills/agents/commands/rules — most of AIWG's surface lives outside the always-loaded kernel set and is reachable only via these commands. Dispatch commands (`run skill <name>`, `run <script>`) execute script-bearing skills and user-defined scripts.
 
 3. **Report the result** inline — present the command groups and highlight the most relevant section if the user expressed a specific area of interest.
 
@@ -60,7 +62,7 @@ When triggered:
 aiwg help
 ```
 
-**Response**: "Here are all available AIWG commands: [output]. The most commonly used are `aiwg use <framework>` to deploy a framework, `aiwg doctor` to check health, and `aiwg sync` to stay current."
+**Response**: "Here are all available AIWG commands: [output]. The most commonly used are `aiwg use <framework>` to deploy a framework, `aiwg discover \"<phrase>\"` to find skills by capability, `aiwg doctor` to check health, and `aiwg refresh` to pull the latest version and redeploy."
 
 ### Example 2: Category-specific help
 
@@ -91,4 +93,5 @@ aiwg help
 ## References
 
 - @$AIWG_ROOT/src/cli/handlers/help.ts — Help command handler
-- @$AIWG_ROOT/docs/cli-reference.md — Full CLI reference with all 50 commands
+- @$AIWG_ROOT/src/extensions/commands/definitions.ts — Canonical command registry (run `aiwg help` for the live list)
+- @$AIWG_ROOT/docs/cli-reference.md — Full CLI reference
