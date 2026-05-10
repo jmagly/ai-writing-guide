@@ -40,6 +40,14 @@ export async function main(args: string[]): Promise<void> {
   const subcommand = args[0];
   const subcommandArgs = args.slice(1);
 
+  // #1231 — intercept --help/-h before subcommand dispatch. Print the
+  // same usage block as the no-args case, but framed as help (exit 0)
+  // rather than as an unknown-subcommand error (exit 1).
+  if (subcommand === '--help' || subcommand === '-h') {
+    printIndexUsage();
+    process.exit(0);
+  }
+
   switch (subcommand) {
     case 'build':
       await handleBuild(subcommandArgs);
@@ -98,38 +106,7 @@ export async function main(args: string[]): Promise<void> {
     case undefined:
       console.error('Error: Index subcommand required');
       console.log('');
-      console.log('Available subcommands:');
-      console.log('  build      Build/rebuild the artifact index');
-      console.log('  query      Search artifacts by keyword, type, phase, tags');
-      console.log('  discover   Capability search across skills/agents/commands/rules (#1214)');
-      console.log('  show       Print the full text of a specific skill/agent/command/rule');
-      console.log('  deps       Show artifact dependency graph');
-      console.log('  stats      Show index statistics');
-      console.log('  neighbors  Get neighbors of a node in a graph');
-      console.log('  set        Set operations (intersection, union, difference) on neighbor sets');
-      console.log('  watch      Start a filesystem watcher for automatic incremental index updates');
-      console.log('');
-      console.log('Options:');
-      console.log('  --graph <name>  Target a specific graph (framework, project, codebase, or user-defined)');
-      console.log('  --all           Build all known graphs (including user-defined)');
-      console.log('');
-      console.log('Examples:');
-      console.log('  aiwg index build');
-      console.log('  aiwg index build --all');
-      console.log('  aiwg index build --graph codebase --force');
-      console.log('  aiwg index discover "create intake"');
-      console.log('  aiwg index discover "deploy production" --limit 5 --json');
-      console.log('  aiwg index discover "audit security" --type skill');
-      console.log('  aiwg index show skill intake-wizard');
-      console.log('  aiwg index show skill flow-deploy-to-production --json');
-      console.log('  aiwg index show agent aiwg-steward');
-      console.log('  aiwg index query "authentication" --type use-case');
-      console.log('  aiwg index query "security rules" --graph framework --json');
-      console.log('  aiwg index deps .aiwg/requirements/UC-001.md');
-      console.log('  aiwg index stats --json');
-      console.log('  aiwg index stats --graph project');
-      console.log('  aiwg index neighbors --graph citation-network --node REF-008 --direction in --edge-type cites');
-      console.log('  aiwg index set --graph citation-network --op intersection --node-a REF-008 --node-b REF-016 --direction in');
+      printIndexUsage();
       process.exit(1);
       break;
 
@@ -138,6 +115,43 @@ export async function main(args: string[]): Promise<void> {
       console.log('Available: build, query, discover, deps, stats, neighbors, set, watch');
       process.exit(1);
   }
+}
+
+function printIndexUsage(): void {
+  console.log('Usage: aiwg index <subcommand> [options]');
+  console.log('');
+  console.log('Available subcommands:');
+  console.log('  build      Build/rebuild the artifact index');
+  console.log('  query      Search artifacts by keyword, type, phase, tags');
+  console.log('  discover   Capability search across skills/agents/commands/rules (#1214)');
+  console.log('  show       Print the full text of a specific skill/agent/command/rule');
+  console.log('  deps       Show artifact dependency graph');
+  console.log('  stats      Show index statistics');
+  console.log('  neighbors  Get neighbors of a node in a graph');
+  console.log('  set        Set operations (intersection, union, difference) on neighbor sets');
+  console.log('  watch      Start a filesystem watcher for automatic incremental index updates');
+  console.log('');
+  console.log('Options:');
+  console.log('  --graph <name>  Target a specific graph (framework, project, codebase, or user-defined)');
+  console.log('  --all           Build all known graphs (including user-defined)');
+  console.log('');
+  console.log('Examples:');
+  console.log('  aiwg index build');
+  console.log('  aiwg index build --all');
+  console.log('  aiwg index build --graph codebase --force');
+  console.log('  aiwg index discover "create intake"');
+  console.log('  aiwg index discover "deploy production" --limit 5 --json');
+  console.log('  aiwg index discover "audit security" --type skill');
+  console.log('  aiwg index show skill intake-wizard');
+  console.log('  aiwg index show skill flow-deploy-to-production --json');
+  console.log('  aiwg index show agent aiwg-steward');
+  console.log('  aiwg index query "authentication" --type use-case');
+  console.log('  aiwg index query "security rules" --graph framework --json');
+  console.log('  aiwg index deps .aiwg/requirements/UC-001.md');
+  console.log('  aiwg index stats --json');
+  console.log('  aiwg index stats --graph project');
+  console.log('  aiwg index neighbors --graph citation-network --node REF-008 --direction in --edge-type cites');
+  console.log('  aiwg index set --graph citation-network --op intersection --node-a REF-008 --node-b REF-016 --direction in');
 }
 
 /**

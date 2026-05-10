@@ -225,6 +225,12 @@ export async function main(args: string[]): Promise<number> {
     return 1;
   }
   const name = args[1];
+  // #1231 — `aiwg run skill --help` should print usage, not search the
+  // index for a skill named "--help".
+  if (name === '--help' || name === '-h') {
+    printUsage();
+    return 0;
+  }
   // Split remaining args at the first `--` separator if present.
   const rest = args.slice(2);
   let cwdOverride: string | undefined;
