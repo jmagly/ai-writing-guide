@@ -1069,6 +1069,38 @@ export const runtimeInfoCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const agentcardCommand: Extension = {
+  id: 'agentcard',
+  type: 'skill',
+  name: 'AgentCard',
+  description: 'Fetch and verify an agentic-sandbox AgentCard JWS signature',
+  version: '1.0.0',
+  capabilities: ['cli', 'a2a', 'security'],
+  keywords: ['agentcard', 'a2a', 'jws', 'verify', 'sandbox'],
+  category: 'toolsmith',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'verify agentcard',
+      'fetch agent card',
+      'verify a2a signature',
+      'check executor signature',
+    ],
+    commandHint: {
+      template: 'utility',
+      allowedTools: ['Read', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Utility Commands
 
 export const prefillCardsCommand: Extension = {
@@ -2957,6 +2989,7 @@ export const commandDefinitions: Extension[] = [
 
   // Toolsmith (1)
   runtimeInfoCommand,
+  agentcardCommand,
 
   // Utility (4)
   prefillCardsCommand,

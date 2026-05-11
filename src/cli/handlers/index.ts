@@ -94,6 +94,7 @@ import {
   subcommandHandlers,
 } from './subcommands.js';
 import { runtimeInfoHandler } from './runtime-info.js';
+import { agentcardHandler } from './agentcard.js';
 import { bestPracticesAuditHandler } from './best-practices-audit.js';
 // sync was renamed to refresh (#694). refreshHandler exposes both 'refresh'
 // (primary) and 'sync' (deprecated alias) to preserve backward compatibility.
@@ -164,6 +165,7 @@ export {
   provenanceHandler,
   researchStoreHandler,
   runtimeInfoHandler,
+  agentcardHandler,
 
   // Agentic Tools (RLM)
   chunkHandler,
@@ -296,6 +298,7 @@ export const allHandlers: CommandHandler[] = [
   featuresHandler,
   skillsHandler,
   runtimeInfoHandler,
+  agentcardHandler,
 
   // Utilities
   prefillCardsHandler,
