@@ -10,6 +10,19 @@ commandHint:
   category: project-management
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Issue List
 
 ## Purpose
@@ -42,7 +55,7 @@ Given optional filter parameters:
 
 ## Inputs
 
-**Configuration sources** (same as `/issue-create` and `/issue-update`):
+**Configuration sources** (same as `issue-create` and `issue-update`):
 1. `.aiwg/config.yaml` - Project-level configuration
 2. `CLAUDE.md` - User-level configuration
 3. Default: `local` provider
@@ -185,7 +198,7 @@ Extract from command invocation:
 
 ### Step 2: Load Configuration
 
-Same resolution rules as `/issue-create` (preferred path):
+Same resolution rules as `issue-create` (preferred path):
 
 1. **`--provider` flag** — explicit override always wins.
 2. **`.aiwg/aiwg.config` `remotes.issue_tracker`** (#994) — derive provider via `resolveRemotes()` + `resolveRemoteProvider()` from `src/config/aiwg-config.ts`.

@@ -11,6 +11,19 @@ commandHint:
   orchestration: true
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Retrospective Cycle Flow
 
 **You are the Core Orchestrator** for systematic retrospectives and continuous improvement cycles.
@@ -993,9 +1006,9 @@ Adjusting to create only 2 new actions (down from 3)
 - Retromat.org format library
 
 **Related Flows**:
-- `/flow-iteration-planning` - Plan iterations with retro actions
-- `/flow-gate-check` - Include retro completion in gates
-- `/flow-change-control` - Process improvements may need CCB
+- `flow-iteration-planning` - Plan iterations with retro actions
+- `flow-gate-check` - Include retro completion in gates
+- `flow-change-control` - Process improvements may need CCB
 
 **Metrics Tracking**:
 - `metrics/team-health-metrics.md`

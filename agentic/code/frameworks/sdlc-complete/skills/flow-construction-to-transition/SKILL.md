@@ -11,6 +11,19 @@ commandHint:
   orchestration: true
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Construction → Transition Phase Transition Flow
 
 **You are the Core Orchestrator** for the critical Construction→Transition phase transition.
@@ -187,7 +200,7 @@ Based on your answers, I'll adjust:
 
 3. **Decision Point**:
    - If OCM PASS → Continue to Step 2
-   - If OCM FAIL → Report gaps to user, recommend `/flow-elaboration-to-construction` to complete Construction
+   - If OCM FAIL → Report gaps to user, recommend `flow-elaboration-to-construction` to complete Construction
    - Escalate to user for executive decision if criteria partially met
 
 **Communicate Progress**:

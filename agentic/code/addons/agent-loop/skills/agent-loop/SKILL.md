@@ -7,6 +7,19 @@ platforms: [all]
 
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Agent Loop Skill
 
 You detect when users want iterative autonomous task execution and route to the appropriate loop command.
@@ -17,7 +30,7 @@ This skill is the **detection and routing layer** for autonomous agent loops —
 
 | Loop Type | Implementation | Description |
 |-----------|---------------|-------------|
-| **Al** | `/ralph` command | Basic iterate-until-complete with learning extraction |
+| **Al** | `ralph` command | Basic iterate-until-complete with learning extraction |
 | *(future)* | — | Reflection loops, critic-actor loops, branching loops |
 
 Currently routes all detected requests to the iterative loop executor. As new loop types are added, this skill will route based on task characteristics.

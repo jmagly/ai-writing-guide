@@ -25,6 +25,19 @@ commandHint:
   orchestration: true
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Address Issues
 
 **You are the Issue-Driven Agent Loop Orchestrator** — systematically working through open issues using the issue thread as a shared collaboration surface between human and agent.
@@ -200,7 +213,7 @@ An issue is considered resolved when ALL of:
 On resolution:
 1. Post a **completion summary** comment to the issue
 2. Optionally close the issue (ask in `--interactive` mode)
-3. Link related commits via `/issue-sync` if available
+3. Link related commits via `issue-sync` if available
 4. Move to the next issue
 
 ### Phase 4: Aggregate Report
@@ -279,11 +292,11 @@ Uses `gh` CLI for equivalent operations:
 
 | Component | How Used |
 |-----------|----------|
-| `/ralph` | Core loop engine (internal) |
-| `/issue-list` | Fetch and filter issues |
-| `/issue-comment` | Post cycle status comments |
-| `/issue-close` | Close resolved issues |
-| `/issue-sync` | Link commits to issues |
+| `ralph` | Core loop engine (internal) |
+| `issue-list` | Fetch and filter issues |
+| `issue-comment` | Post cycle status comments |
+| `issue-close` | Close resolved issues |
+| `issue-sync` | Link commits to issues |
 | `mcp__gitea__*` | Gitea API access |
 
 ## Safety and Guardrails

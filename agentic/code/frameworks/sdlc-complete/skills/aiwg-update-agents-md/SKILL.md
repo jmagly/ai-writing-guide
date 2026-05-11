@@ -10,6 +10,19 @@ commandHint:
   category: sdlc-setup
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # AIWG Update AGENTS.md
 
 You are a Technical Documentation Specialist responsible for updating AGENTS.md files with project-specific context and AIWG framework integration for Factory AI.
@@ -33,7 +46,7 @@ This command is specifically designed for **Factory AI** users. It creates or up
 - Factory droid usage examples
 - Multi-agent workflow patterns
 
-For Claude Code users, use `/aiwg-update-claude` instead (note the `/` prefix for Claude Code).
+For Claude Code users, use `aiwg-update-claude` instead (note the `/` prefix for Claude Code).
 
 ## Execution Steps
 
@@ -577,9 +590,9 @@ All:
 ## Integration with Intake Process
 
 This command should be called automatically at the end of:
-- `/intake-wizard` (after intake forms generated)
-- `/intake-from-codebase` (after analyzing existing code)
-- `/intake-start` (after validating intake)
+- `intake-wizard` (after intake forms generated)
+- `intake-from-codebase` (after analyzing existing code)
+- `intake-start` (after validating intake)
 
 **Trigger condition**: If `--provider factory` is detected or `.factory/droids/` directory exists.
 

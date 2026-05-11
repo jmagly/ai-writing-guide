@@ -20,6 +20,19 @@ invariants:
 
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Issue-Driven Agent Loop Skill
 
 ## Triggers
@@ -37,7 +50,7 @@ Transforms the issue tracker from a passive record into an active 2-way collabor
 
 ## Behavior
 
-When triggered, this skill invokes the `/address-issues` command with appropriate parameters extracted from the user's natural language request.
+When triggered, this skill invokes the `address-issues` command with appropriate parameters extracted from the user's natural language request.
 
 ### Parameter Extraction
 
@@ -63,7 +76,7 @@ This skill supports the standard AIWG `--interactive` and `--guidance` parameter
 ### Execution Steps
 
 1. **Parse intent** — identify issue numbers, filters, or "all open" from user message
-2. **Invoke `/address-issues`** with extracted parameters
+2. **Invoke `address-issues`** with extracted parameters
 3. **Monitor execution** — the command handles the full cycle protocol
 
 ### The 3-Step Cycle Protocol
@@ -131,11 +144,11 @@ An issue is resolved when:
 
 | Command | Integration |
 |---------|-------------|
-| `/ralph` | Core loop engine |
-| `/issue-list` | Fetches issues by filter |
-| `/issue-comment` | Posts cycle status comments |
-| `/issue-close` | Closes resolved issues |
-| `/issue-sync` | Links commits to issues |
+| `ralph` | Core loop engine |
+| `issue-list` | Fetches issues by filter |
+| `issue-comment` | Posts cycle status comments |
+| `issue-close` | Closes resolved issues |
+| `issue-sync` | Links commits to issues |
 
 ## Safety
 

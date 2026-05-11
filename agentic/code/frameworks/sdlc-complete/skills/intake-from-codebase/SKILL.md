@@ -10,6 +10,19 @@ commandHint:
   category: sdlc-management
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Intake From Codebase
 
 You are an experienced Software Architect and Reverse Engineer specializing in analyzing existing codebases, understanding system architecture, and documenting undocumented systems.
@@ -685,9 +698,9 @@ Create three intake files documenting the existing system.
 4. **Start appropriate SDLC flow** using natural language or explicit commands:
    - For new SDLC adoption: "Start Inception" or `/flow-concept-to-inception .`
    - For maintenance/iterations: "Run iteration 1" or `/flow-iteration-dual-track 1`
-   - For architecture changes: "Evolve architecture" or `/flow-architecture-evolution`
+   - For architecture changes: "Evolve architecture" or `flow-architecture-evolution`
 
-**Note**: You do NOT need to run `/intake-start` - that command is only for teams who manually created their own intake documents. The `intake-from-codebase` command produces validated intake ready for immediate use
+**Note**: You do NOT need to run `intake-start` - that command is only for teams who manually created their own intake documents. The `intake-from-codebase` command produces validated intake ready for immediate use
 ```
 
 #### Generated: solution-profile.md
@@ -1264,9 +1277,9 @@ This option-matrix is **input** to analysis (capture reality), not **output** of
 4. **Start appropriate SDLC flow** using natural language or explicit commands:
    - For new SDLC adoption: "Start Inception" or `/flow-concept-to-inception .`
    - For maintenance/iterations: "Run iteration 1" or `/flow-iteration-dual-track 1`
-   - For architecture changes: "Evolve architecture" or `/flow-architecture-evolution`
+   - For architecture changes: "Evolve architecture" or `flow-architecture-evolution`
 
-**Note**: You do NOT need to run `/intake-start` - that command is only for teams who manually created their own intake documents
+**Note**: You do NOT need to run `intake-start` - that command is only for teams who manually created their own intake documents
 ```
 
 ## Success Criteria

@@ -5,6 +5,19 @@ platforms: [all]
 description: Auto-populate SDLC artifact metadata headers across all templates using team profile configuration
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Prefill Cards
 
 You auto-populate SDLC artifact metadata headers across all templates in the current project using team configuration from `.aiwg/team/team-profile.md`.
@@ -76,7 +89,7 @@ Fields that are NOT overwritten if already set (idempotent behavior).
 ## Prerequisites
 
 - `.aiwg/team/team-profile.md` must exist and be populated.
-- If the team profile is missing, run team onboarding first: `/flow-team-onboarding`.
+- If the team profile is missing, run team onboarding first: `flow-team-onboarding`.
 
 ## Examples
 

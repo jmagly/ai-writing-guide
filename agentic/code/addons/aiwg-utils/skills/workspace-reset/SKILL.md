@@ -5,6 +5,19 @@ platforms: [all]
 description: Wipe .aiwg/ directory and optionally restart with fresh intake
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Workspace Reset
 
 Completely wipe the `.aiwg/` directory to start fresh. Optionally backs up existing content and can reinitialize with fresh intake templates.
@@ -221,7 +234,7 @@ This directory contains SDLC artifacts managed by the AIWG framework.
 
 ## Getting Started
 
-Run `/intake-wizard` to begin project intake.
+Run `intake-wizard` to begin project intake.
 EOF
 ```
 
@@ -334,9 +347,9 @@ aiwg -reset-workspace --reinitialize
 
 ## Related Commands
 
-- `/workspace-realign` - Sync docs with project state (non-destructive)
-- `/workspace-prune-working` - Clean up working directory only
-- `/intake-wizard` - Start fresh intake after reset
+- `workspace-realign` - Sync docs with project state (non-destructive)
+- `workspace-prune-working` - Clean up working directory only
+- `intake-wizard` - Start fresh intake after reset
 
 ## References
 

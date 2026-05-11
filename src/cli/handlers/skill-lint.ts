@@ -147,17 +147,67 @@ function scoreDiscoverability(fm: Record<string, unknown>): DimensionScore {
  * Score the body. Looks for a non-trivial amount of skill content
  * after the frontmatter. Very short bodies usually indicate
  * placeholder or stub skills.
+ *
+ * Also flags post-kernel-pivot regressions: slash-prefix references to
+ * non-kernel AIWG skills (e.g. `/issue-list`). Only kernel-listed skills
+ * are platform-invokable; everything else must be reached via
+ * `aiwg discover` / `aiwg show`. See agentic/code/addons/aiwg-utils/rules/skill-discovery.md
+ * and issue #1260.
  */
 function scoreBody(body: string): DimensionScore {
   const text = body.trim();
   const wordCount = text.split(/\s+/).filter(Boolean).length;
-  if (wordCount >= 100) return scoreDimension(true);
-  if (wordCount >= 30) {
-    return partialDimension(60, [`body has ${wordCount} words; aim for ≥100`]);
-  }
-  return scoreDimension(false, [
-    `body has only ${wordCount} words — likely a stub`,
+
+  // Kernel / built-in skills are still legitimately invokable as
+  // slash commands; references to these should not be flagged. The
+  // generated-output exception (templates like aiwg-regenerate-claude
+  // that emit user-facing CLAUDE.md) is handled by the marker below.
+  const KERNEL_SKILLS = new Set([
+    'aiwg-doctor', 'aiwg-refresh', 'aiwg-status', 'aiwg-help', 'use', 'steward',
+    // Claude Code built-ins
+    'help', 'clear', 'init', 'review', 'security-review',
   ]);
+
+  const slashRefRe = /`\/([a-z][a-z0-9-]+)`/g;
+  const offenders = new Set<string>();
+  // Skip lines after the "Available Slash Commands" marker — that block
+  // is template output and slash prefixes there are intentional.
+  const lines = body.split('\n');
+  let inTemplateBlock = false;
+  for (const line of lines) {
+    if (/Available Slash Commands/i.test(line)) {
+      inTemplateBlock = true;
+      continue;
+    }
+    if (inTemplateBlock && /^#{1,3}\s/.test(line)) {
+      // Next heading closes the template block.
+      inTemplateBlock = false;
+    }
+    if (inTemplateBlock) continue;
+    for (const m of line.matchAll(slashRefRe)) {
+      const name = m[1];
+      if (!KERNEL_SKILLS.has(name)) offenders.add(name);
+    }
+  }
+
+  const notes: string[] = [];
+  if (offenders.size > 0) {
+    notes.push(
+      `slash-prefix refs to non-kernel skills: ${[...offenders].slice(0, 8).join(', ')}` +
+      (offenders.size > 8 ? ` (+${offenders.size - 8} more)` : '') +
+      ' — drop the "/" prefix; non-kernel skills are reached via `aiwg discover` + `aiwg show` (#1260)'
+    );
+  }
+
+  if (wordCount >= 100) {
+    return offenders.size > 0 ? partialDimension(80, notes) : scoreDimension(true);
+  }
+  if (wordCount >= 30) {
+    notes.unshift(`body has ${wordCount} words; aim for ≥100`);
+    return partialDimension(offenders.size > 0 ? 45 : 60, notes);
+  }
+  notes.unshift(`body has only ${wordCount} words — likely a stub`);
+  return scoreDimension(false, notes);
 }
 
 function combineScore(dims: SkillScore['dimensions']): number {

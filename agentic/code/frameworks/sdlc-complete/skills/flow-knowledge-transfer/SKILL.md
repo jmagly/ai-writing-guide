@@ -11,6 +11,19 @@ commandHint:
   orchestration: true
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Knowledge Transfer Orchestration Flow
 
 **You are the Core Orchestrator** for structured knowledge transfer between team members.
@@ -1039,9 +1052,9 @@ This orchestration succeeds when:
 - Handover Checklist: `templates/knowledge/handover-checklist-template.md`
 
 **Related Commands**:
-- `/team-roster` - Update team responsibilities
-- `/update-oncall` - Modify on-call schedules
-- `/flow-onboarding` - Full team member onboarding
+- `team-roster` - Update team responsibilities
+- `update-oncall` - Modify on-call schedules
+- `flow-onboarding` - Full team member onboarding
 
 **Best Practices**:
 - `docs/knowledge-transfer-best-practices.md`

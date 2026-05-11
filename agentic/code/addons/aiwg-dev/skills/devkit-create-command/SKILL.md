@@ -5,6 +5,19 @@ platforms: [all]
 description: Create a new slash command with AI-guided behavior definition
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Create AIWG Command
 
 Create a new slash command with AI assistance to define arguments, behavior, and output.
@@ -39,17 +52,17 @@ Create a new slash command with AI assistance to define arguments, behavior, and
 ### utility (default)
 Simple operation, single action command.
 - Best for: Quick tasks, file operations, status checks
-- Example: `/lint-check`, `/deploy-status`
+- Example: `lint-check`, `deploy-status`
 
 ### transformation
 Content/code transformation pipeline with input/output handling.
 - Best for: Format conversion, code refactoring, content processing
-- Example: `/convert-format`, `/refactor-code`
+- Example: `convert-format`, `refactor-code`
 
 ### orchestration
 Multi-agent workflow coordination with phases and parallel execution.
 - Best for: Complex workflows, phase transitions, multi-step processes
-- Example: `/flow-deploy-to-production`, `/flow-security-review`
+- Example: `flow-deploy-to-production`, `flow-security-review`
 
 ## Interactive Mode
 
@@ -127,9 +140,9 @@ aiwg add-command <name> --to <target> --template <type>
 
 ## Related Commands
 
-- `/devkit-create-agent` - Create an agent
-- `/devkit-create-skill` - Create an auto-triggered skill
-- `/devkit-validate` - Validate command structure
+- `devkit-create-agent` - Create an agent
+- `devkit-create-skill` - Create an auto-triggered skill
+- `devkit-validate` - Validate command structure
 
 ## References
 

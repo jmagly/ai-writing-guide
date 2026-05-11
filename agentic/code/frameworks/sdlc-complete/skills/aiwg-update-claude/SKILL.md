@@ -10,6 +10,19 @@ commandHint:
   category: sdlc-setup
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # AIWG Update CLAUDE.md
 
 You are an SDLC Configuration Specialist responsible for updating existing project CLAUDE.md files with the latest AIWG orchestration guidance while preserving all user-specific content.
@@ -468,7 +481,7 @@ Provide clear status report:
 4. **Check Flow Commands**: Ensure `.claude/commands/flow-*.md` are deployed
 
 {if Factory AI detected}
-5. **Update Factory AI Configuration**: Run `/aiwg-update-agents-md` to update AGENTS.md with project-specific content for Factory AI users
+5. **Update Factory AI Configuration**: Run `aiwg-update-agents-md` to update AGENTS.md with project-specific content for Factory AI users
 
 ## Backup
 

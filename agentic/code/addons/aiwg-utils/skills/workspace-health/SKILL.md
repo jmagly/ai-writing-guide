@@ -5,6 +5,19 @@ platforms: [all]
 description: Assess workspace alignment and recommend cleanup or realignment actions at key lifecycle transition points
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Workspace Health Check Skill
 
 Assesses workspace alignment and suggests cleanup or realignment actions at key transition points.
@@ -108,7 +121,7 @@ checks:
 **Overall Status**: [Healthy | Needs Attention | Requires Realignment]
 
 ### Quick Actions
-- [ ] Run `/workspace-prune-working` - 15 stale files in working/
+- [ ] Run `workspace-prune-working` - 15 stale files in working/
 - [ ] Review 3 orphaned draft artifacts
 - [ ] Update risk register (last modified 45 days ago)
 
@@ -124,12 +137,12 @@ checks:
 - Phase: Construction
 - Last phase report: Elaboration completion (2024-12-01)
 - Missing: Construction kickoff documentation
-- Recommendation: Run `/flow-elaboration-to-construction` completion steps
+- Recommendation: Run `flow-elaboration-to-construction` completion steps
 
 #### Traceability
 - Requirements covered: 85%
 - Orphan code files: 3
-- Recommendation: Run `/check-traceability` for details
+- Recommendation: Run `check-traceability` for details
 ```
 
 ## Integration Points
@@ -166,11 +179,11 @@ This skill should:
 
 ## Related Commands
 
-- `/workspace-prune-working` - Clean up working directory
-- `/workspace-realign` - Reorganize documentation structure
-- `/workspace-reset` - Full workspace reset (destructive)
-- `/project-status` - Current project state
-- `/check-traceability` - Verify requirement links
+- `workspace-prune-working` - Clean up working directory
+- `workspace-realign` - Reorganize documentation structure
+- `workspace-reset` - Full workspace reset (destructive)
+- `project-status` - Current project state
+- `check-traceability` - Verify requirement links
 
 ## References
 

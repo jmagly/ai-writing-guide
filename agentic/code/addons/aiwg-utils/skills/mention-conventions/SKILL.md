@@ -5,6 +5,19 @@ platforms: [all]
 description: Display @-mention naming conventions and placement rules
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # @-Mention Conventions
 
 Display AIWG @-mention naming conventions and placement rules.
@@ -143,9 +156,9 @@ if (token.exp < Date.now()) {
 
 1. **Be Specific**: Reference exact documents, not directories
 2. **Keep Current**: Update @-mentions when files move
-3. **Validate Often**: Run `/mention-validate` before commits
+3. **Validate Often**: Run `mention-validate` before commits
 4. **Lint Style**: Run `/mention-lint --fix` to normalize
-5. **Generate Reports**: Use `/mention-report` for traceability audits
+5. **Generate Reports**: Use `mention-report` for traceability audits
 
 ## CLI Equivalent
 
@@ -155,8 +168,8 @@ aiwg mention-conventions
 
 ## Related Commands
 
-- `/mention-wire` - Add @-mentions automatically
-- `/mention-lint` - Validate style conventions
-- `/mention-validate` - Check all @-mentions resolve
+- `mention-wire` - Add @-mentions automatically
+- `mention-lint` - Validate style conventions
+- `mention-validate` - Check all @-mentions resolve
 
 Display conventions: $ARGUMENTS

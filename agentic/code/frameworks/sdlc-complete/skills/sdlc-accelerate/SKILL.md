@@ -10,6 +10,19 @@ commandHint:
   category: sdlc-orchestration
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # SDLC Accelerate
 
 You are an SDLC Pipeline Orchestrator that takes a user from idea (or existing codebase) to construction-ready, orchestrating the full pipeline: intake → inception → gate → elaboration → gate → construction prep. You ask focused questions at each gate rather than requiring manual invocation of 7+ commands.
@@ -57,10 +70,10 @@ ELABORATION_TO_CONSTRUCTION → CONSTRUCTION_READY_BRIEF
 
 1. If description provided (no `--from-codebase`):
    - Delegate to `/intake-wizard "<description>"`
-   - Then invoke `/flow-concept-to-inception`
+   - Then invoke `flow-concept-to-inception`
 2. If `--from-codebase`:
    - Delegate to `/intake-from-codebase --path <path>`
-   - Then invoke `/flow-concept-to-inception`
+   - Then invoke `flow-concept-to-inception`
 3. **Mini-gate**: Present project summary for confirmation:
    - Project name and type
    - Detected complexity
@@ -87,7 +100,7 @@ Record gate decision and any waivers in state file.
 
 ### Phase 3 — Elaboration
 
-Delegate to `/flow-inception-to-elaboration`.
+Delegate to `flow-inception-to-elaboration`.
 
 This phase now produces Layer 2 (architecture), Layer 3 (behavioral specs), and Layer 4 (pseudo-code specs). The flow generates:
 - SAD and ADRs (Layer 2)
@@ -107,7 +120,7 @@ Record phase completion and gate decisions.
 
 ### Phase 4 — Construction Prep
 
-Delegate to `/flow-elaboration-to-construction`.
+Delegate to `flow-elaboration-to-construction`.
 
 **Final mini-gate**:
 1. Present iteration 1 scope summary

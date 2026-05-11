@@ -11,6 +11,19 @@ commandHint:
   platforms: [claude-code, hermes, openclaw]
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Al Config
 
 View and modify Al's runtime configuration. Settings control loop behavior defaults such as iteration limits, timeouts, provider selection, and commit behavior. Changes persist to `.aiwg/ralph/config.json` and apply to all subsequent loops unless overridden per-invocation.
@@ -229,8 +242,8 @@ Usage: /ralph-config preset <name>
 
 | Context | Path |
 |---------|------|
-| In-session loops (`/ralph`) | `.aiwg/ralph/config.json` |
-| External loops (`/ralph-external`) | `.aiwg/ralph-external/config.json` |
+| In-session loops (`ralph`) | `.aiwg/ralph/config.json` |
+| External loops (`ralph-external`) | `.aiwg/ralph-external/config.json` |
 
 Each context has its own config file. `show`, `set`, `reset`, and `preset` operate on the in-session config by default. Use `/ralph-config --external show` to inspect external loop config (if the `--external` flag is available in your install).
 
@@ -293,10 +306,10 @@ Check that the .aiwg/ralph/ directory is writable:
 
 ## Related
 
-- `/ralph` — Start an in-session loop (uses this config as defaults)
-- `/ralph-external` — Start a crash-resilient external loop
-- `/ralph-status` — Check active loop state
-- `/ralph-memory` — Manage accumulated loop memory
+- `ralph` — Start an in-session loop (uses this config as defaults)
+- `ralph-external` — Start a crash-resilient external loop
+- `ralph-status` — Check active loop state
+- `ralph-memory` — Manage accumulated loop memory
 
 ## References
 

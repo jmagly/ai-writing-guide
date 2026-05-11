@@ -11,6 +11,19 @@ commandHint:
   platforms: [claude-code, hermes, openclaw]
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Al Memory
 
 Inspect and manage the semantic memory that Al accumulates across loop iterations. Memory entries record lessons learned, failure patterns, and success patterns so that later iterations — and future loops on similar tasks — benefit from what earlier attempts discovered.
@@ -253,10 +266,10 @@ Usage:
 
 ## Related
 
-- `/ralph` — Loop that generates memory entries
-- `/ralph-external` — External loop with its own memory layer
-- `/ralph-status` — Check loop status and iteration history
-- `/ralph-reflect` — Deeper reflection and memory promotion
+- `ralph` — Loop that generates memory entries
+- `ralph-external` — External loop with its own memory layer
+- `ralph-status` — Check loop status and iteration history
+- `ralph-reflect` — Deeper reflection and memory promotion
 
 ## References
 

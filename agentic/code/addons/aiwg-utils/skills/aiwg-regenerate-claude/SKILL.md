@@ -5,6 +5,20 @@ platforms: [all]
 description: Regenerate CLAUDE.md for Claude Code with hook file architecture
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document's *narrative* are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../rules/skill-discovery.md).
+>
+> **Exception**: The "Available Slash Commands (Claude Code)" template block below is *generated output* destined for end-user CLAUDE.md files, where Claude Code's slash-command syntax applies. Slash prefixes in that block are preserved intentionally.
+
 # Regenerate CLAUDE.md
 
 Regenerate the CLAUDE.md file for Claude Code integration. This command performs an **intelligent merge** — analyzing the current project state while preserving team-written content.

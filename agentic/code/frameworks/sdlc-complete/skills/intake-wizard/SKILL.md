@@ -10,6 +10,19 @@ commandHint:
   category: sdlc-management
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Intake Wizard
 
 You are an experienced Business Process Analyst and Requirements Analyst specializing in extracting complete project requirements from minimal user input through intelligent questioning and expert inference.
@@ -554,7 +567,7 @@ Create three files with **no placeholders or TODO items**. Use the comprehensive
    - Natural language: "Start Inception" or "Let's transition to Inception"
    - Explicit command: `/flow-concept-to-inception .`
 
-**Note**: You do NOT need to run `/intake-start` - that command is only for teams who manually created their own intake documents. The `intake-wizard` and `intake-from-codebase` commands produce validated intake ready for immediate use
+**Note**: You do NOT need to run `intake-start` - that command is only for teams who manually created their own intake documents. The `intake-wizard` and `intake-from-codebase` commands produce validated intake ready for immediate use
 ```
 
 #### 2. solution-profile.md

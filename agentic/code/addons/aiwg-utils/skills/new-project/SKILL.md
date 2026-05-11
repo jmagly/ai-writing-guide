@@ -5,6 +5,19 @@ platforms: [all]
 description: Scaffold a new AIWG-managed project with .aiwg/ directory structure, starter CLAUDE.md, and framework registry
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # New Project
 
 You scaffold a new AIWG-managed project, creating the `.aiwg/` directory structure, deploying a starter CLAUDE.md, and initialising the framework registry.
@@ -63,7 +76,7 @@ When triggered:
    - `CLAUDE.md` (or provider-equivalent) — starter instructions
    - Initial framework deployment for the selected provider
 
-4. **Report the result** — confirm directories created, files written, and next recommended step (`aiwg use sdlc` or `/intake-wizard`).
+4. **Report the result** — confirm directories created, files written, and next recommended step (`aiwg use sdlc` or `intake-wizard`).
 
 ## Examples
 
@@ -104,7 +117,7 @@ aiwg new .
 aiwg new signal-study --template research --provider cursor
 ```
 
-**Response**: "Created `signal-study/` with research-template `.aiwg/` structure and deployed research-complete framework to `.cursor/`. Open the project and run `/intake-wizard` to begin."
+**Response**: "Created `signal-study/` with research-template `.aiwg/` structure and deployed research-complete framework to `.cursor/`. Open the project and run `intake-wizard` to begin."
 
 ### Example 4: List available templates
 

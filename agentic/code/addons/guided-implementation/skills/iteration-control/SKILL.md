@@ -5,6 +5,19 @@ platforms: [all]
 description: Manage bounded iteration loops for autonomous implementation — track retries, synthesize failure feedback, and escalate when limits hit
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # iteration-control
 
 Manages bounded iteration loops for autonomous implementation with escalation.
@@ -167,7 +180,7 @@ iteration_control:
 
 ## Integration
 
-Used by `/flow-guided-implementation` to wrap the validation loop:
+Used by `flow-guided-implementation` to wrap the validation loop:
 
 ```
 FOR EACH task:

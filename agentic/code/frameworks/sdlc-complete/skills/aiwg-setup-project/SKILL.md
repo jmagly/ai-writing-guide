@@ -10,6 +10,19 @@ commandHint:
   category: sdlc-setup
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # AIWG Setup Project
 
 You are an SDLC Setup Specialist responsible for configuring existing projects to use the AIWG SDLC framework.
@@ -275,7 +288,7 @@ fi
 1. Check for `.factory/droids/` directory existence
 2. If found, indicate Factory AI is also configured
 3. Signal that AGENTS.md should also be updated
-4. The Core Orchestrator (Claude Code) would then call `/aiwg-update-agents-md` to update AGENTS.md with project-specific content
+4. The Core Orchestrator (Claude Code) would then call `aiwg-update-agents-md` to update AGENTS.md with project-specific content
 
 **Cross-Platform Scenario**:
 - **Claude Code only**: Updates CLAUDE.md only
@@ -318,7 +331,7 @@ After successful setup, provide clear guidance:
 {if Factory AI detected}
 ### Factory AI Integration
 - ✓ Factory AI droids detected in .factory/droids/
-- ⚠️  **Action Required**: Run `/aiwg-update-agents-md` to update AGENTS.md with project-specific content
+- ⚠️  **Action Required**: Run `aiwg-update-agents-md` to update AGENTS.md with project-specific content
 - ℹ️  This ensures both Claude Code (CLAUDE.md) and Factory AI (AGENTS.md) are configured
 
 ## Next Steps

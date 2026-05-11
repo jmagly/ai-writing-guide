@@ -10,6 +10,19 @@ commandHint:
   category: aiwg-utility
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Project Status (Cross-Framework Aggregator)
 
 ## Task
@@ -114,7 +127,7 @@ If discovery returns zero in-use contributors:
 
 - **In a project that has frameworks installed but none are in use yet**:
   surface "No active framework contributors detected. Run
-  `/intake-wizard` if this is a new project, or check
+  `intake-wizard` if this is a new project, or check
   `.aiwg/frameworks/registry.json` to confirm what's installed."
 - **In a project with no `.aiwg/`**: defer to the heuristic fallback
   described in `<AIWG_ROOT>/agentic/code/addons/aiwg-utils/skills/project-status/heuristic-fallback.md`

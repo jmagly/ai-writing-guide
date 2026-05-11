@@ -5,6 +5,19 @@ platforms: [all]
 description: Generate traceability report from @-mentions
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # @-Mention Traceability Report
 
 Generate traceability report showing relationships between artifacts.
@@ -109,9 +122,9 @@ aiwg mention-report [--format md|json|csv] [--output <file>]
 
 ## Related Commands
 
-- `/mention-wire` - Add @-mentions
-- `/mention-validate` - Validate @-mentions
-- `/check-traceability` - Full traceability verification
+- `mention-wire` - Add @-mentions
+- `mention-validate` - Validate @-mentions
+- `check-traceability` - Full traceability verification
 
 Generate report for: $ARGUMENTS
 

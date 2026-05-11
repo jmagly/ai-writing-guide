@@ -10,6 +10,19 @@ commandHint:
   category: project-management
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Issue Create
 
 ## Purpose
@@ -519,7 +532,7 @@ fi
 - View ticket: {url-or-command}
 - Update status: `/issue-update {ticket-id} --status in_progress`
 - Add comment: `/issue-update {ticket-id} --comment "Working on implementation"`
-- List tickets: `/issue-list`
+- List tickets: `issue-list`
 ```
 
 ## Examples
@@ -750,7 +763,7 @@ Possible causes:
 - Branch name incorrect
 
 Creating issue without regression analysis.
-Use `/regression-check` manually after issue creation to verify.
+Use `regression-check` manually after issue creation to verify.
 ```
 
 ### Missing Title

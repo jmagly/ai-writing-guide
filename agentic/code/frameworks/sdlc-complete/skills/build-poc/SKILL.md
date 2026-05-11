@@ -10,6 +10,19 @@ commandHint:
   category: development
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Build Proof of Concept (PoC)
 
 You are a Technical Validation Specialist focused on rapidly building minimal Proof of Concepts to validate technical feasibility, retire risks, or prove architectural patterns.
@@ -426,9 +439,9 @@ time {language-runtime} poc.{ext}
 - **Transition**: Validate deployment approach, performance tuning
 
 **Related Commands**:
-- `/flow-inception-to-elaboration` - PoCs retire risks during Elaboration
-- `/flow-risk-management-cycle` - PoCs used to retire technical risks
-- `/flow-gate-check` - PoC results used as gate criteria evidence
+- `flow-inception-to-elaboration` - PoCs retire risks during Elaboration
+- `flow-risk-management-cycle` - PoCs used to retire technical risks
+- `flow-gate-check` - PoC results used as gate criteria evidence
 
 **Related Agents**:
 - `software-implementer` - Implements PoC code

@@ -12,15 +12,28 @@ commandHint:
   platforms: [claude-code, hermes, openclaw]
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Al External
 
 **You are the Al External Orchestrator** — launching and managing crash-resilient iterative loops that run outside the AI session for long-running tasks.
 
-## Core Difference from `/ralph`
+## Core Difference from `ralph`
 
-`/ralph` runs the loop inside the current AI session. `/ralph-external` launches the loop as an external process via `tools/ralph-external/run.sh`, persisting all state to `.aiwg/ralph-external/`. If the session dies mid-loop, the loop survives and can be reattached or resumed.
+`ralph` runs the loop inside the current AI session. `ralph-external` launches the loop as an external process via `tools/ralph-external/run.sh`, persisting all state to `.aiwg/ralph-external/`. If the session dies mid-loop, the loop survives and can be reattached or resumed.
 
-Use `/ralph-external` when:
+Use `ralph-external` when:
 - The task will take longer than a single session
 - You need CI/CD pipeline integration
 - You want crash recovery guarantees
@@ -209,11 +222,11 @@ echo "Exit: $?"
 
 ## Related
 
-- `/ralph` — In-session iterative loop (no crash recovery)
-- `/ralph-attach` — Attach to a running external loop's output stream
-- `/ralph-status` — Check active and completed loop status
-- `/ralph-abort` — Stop a running loop
-- `/ralph-resume` — Resume a paused or interrupted loop
+- `ralph` — In-session iterative loop (no crash recovery)
+- `ralph-attach` — Attach to a running external loop's output stream
+- `ralph-status` — Check active and completed loop status
+- `ralph-abort` — Stop a running loop
+- `ralph-resume` — Resume a paused or interrupted loop
 
 ## References
 

@@ -5,6 +5,19 @@ platforms: [all]
 description: Generate deployment configurations (Docker, Kubernetes) for the current project
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Deploy Generator
 
 Generate production-ready deployment configurations based on project analysis.
@@ -149,9 +162,9 @@ aiwg deploy-gen <type> [options]
 
 ## Related Commands
 
-- `/project-health-check` - Analyze project before deployment
-- `/security-audit` - Security review before production
-- `/flow-deploy-to-production` - Full deployment workflow
+- `project-health-check` - Analyze project before deployment
+- `security-audit` - Security review before production
+- `flow-deploy-to-production` - Full deployment workflow
 
 ## Success Metrics
 

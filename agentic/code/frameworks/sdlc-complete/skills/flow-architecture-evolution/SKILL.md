@@ -11,6 +11,19 @@ commandHint:
   orchestration: true
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Architecture Evolution Flow
 
 **You are the Core Orchestrator** for architecture evolution and refinement workflows.
@@ -862,9 +875,9 @@ This orchestration succeeds when:
 - Option Matrix: `templates/intake/option-matrix-template.md`
 
 **Related Flows**:
-- `/flow-inception-to-elaboration` - Initial architecture creation
-- `/flow-change-control` - Change approval process
-- `/flow-gate-check` - Gate validation
+- `flow-inception-to-elaboration` - Initial architecture creation
+- `flow-change-control` - Change approval process
+- `flow-gate-check` - Gate validation
 
 **Architecture Patterns**:
 - Martin Fowler's Strangler Fig Pattern

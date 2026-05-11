@@ -7,6 +7,19 @@ platforms: [all]
 
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Flaky Detect Skill
 
 ## Purpose
@@ -272,7 +285,7 @@ for i in {1..20}; do npm test -- test/api/login.test.ts; done
 
 - Works with `flaky-fix` skill for automated repairs
 - Reports to CI dashboard
-- Feeds into `/flow-gate-check` for release decisions
+- Feeds into `flow-gate-check` for release decisions
 - Tracks in `.aiwg/testing/flaky-registry.md`
 
 ## Script Reference

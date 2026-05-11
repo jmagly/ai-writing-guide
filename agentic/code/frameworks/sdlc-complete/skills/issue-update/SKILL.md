@@ -10,6 +10,19 @@ commandHint:
   category: project-management
 ---
 
+<!-- AIWG-SKILL-CALLOUT -->
+> **Skill access pattern (post-kernel-pivot, 2026.5+)**
+>
+> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+>
+> ```bash
+> aiwg discover "<capability>"
+> aiwg show skill <name>
+> ```
+>
+> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+
+
 # Issue Update
 
 ## Purpose
@@ -42,7 +55,7 @@ Given a ticket ID and update parameters:
 
 ## Inputs
 
-**Configuration sources** (same as `/issue-create`):
+**Configuration sources** (same as `issue-create`):
 1. `.aiwg/config.yaml` - Project-level configuration
 2. `CLAUDE.md` - User-level configuration
 3. Default: `local` provider
@@ -93,7 +106,7 @@ Extract from command invocation:
 
 ### Step 2: Load Configuration
 
-Same as `/issue-create` command:
+Same as `issue-create` command:
 
 1. Check `.aiwg/config.yaml`
 2. Fallback to `CLAUDE.md`
@@ -462,7 +475,7 @@ EOF
 - View ticket: {url-or-command}
 - Add another comment: `/issue-update {ticket-id} --comment "text"`
 - Close ticket: `/issue-update {ticket-id} --status closed`
-- List tickets: `/issue-list`
+- List tickets: `issue-list`
 ```
 
 ## Examples
