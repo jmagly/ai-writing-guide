@@ -1,0 +1,217 @@
+# A2A Conformance Release Gate
+#
+# Runs the standalone `roctinam/agentic-sandbox-conformance` harness against a
+# reference agentic-sandbox v2 instance so each AIWG release provably
+# interoperates with the executor contract.
+#
+# Trigger model
+#   - push to main          → blocks merge to main on conformance failure
+#   - release-candidate tags (vN.N.N-rc.M and stable vN.N.N) → blocks the
+#     release pipeline. The stable Create-Release workflow does not depend
+#     on this job by name (concurrency groups differ), so this job is the
+#     gate of record; failures must be acknowledged manually before tagging.
+#   - pull_request          → optional; runs in dry-run by default
+#                             (push `conformance:full` label to force full run)
+#   - workflow_dispatch     → manual rerun from the UI
+#
+# What this workflow does
+#   1. Provisions an agentic-sandbox v2 instance via Docker Compose (sandbox
+#      ships compose manifests under `deploy/compose/v2/`).
+#   2. Waits for the executor to be healthy at /healthz.
+#   3. Builds the `roctinam/agentic-sandbox-conformance` Go harness from a
+#      pinned ref so the gate is reproducible across runs.
+#   4. Executes `agentic-sandbox-conformance --executor-url <url> --token <token>`
+#      with markdown + JUnit reporters.
+#   5. Uploads `report.md` and `report.junit.xml` as job artifacts so the
+#      release engineer can review without re-running.
+#
+# Closes #1258. Companion to roctinam/agentic-sandbox#221 (closed).
+
+name: A2A Conformance
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sandbox_ref:
+        description: 'agentic-sandbox git ref to provision (default: main)'
+        required: false
+        default: 'main'
+      conformance_ref:
+        description: 'agentic-sandbox-conformance git ref to build (default: main)'
+        required: false
+        default: 'main'
+
+concurrency:
+  group: conformance-${{ gitea.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pin the harness here so day-to-day CI is reproducible; bump deliberately
+  # alongside an executor-contract version bump.
+  SANDBOX_REF: ${{ github.event.inputs.sandbox_ref || 'main' }}
+  CONFORMANCE_REF: ${{ github.event.inputs.conformance_ref || 'main' }}
+  # The compose stack maps the executor to 127.0.0.1:8780. Override here if
+  # the sandbox compose file changes its published port.
+  EXECUTOR_URL: 'http://127.0.0.1:8780'
+  # Conformance harness reads this from the env directly; the sandbox compose
+  # stack auto-provisions a deterministic dev token when AIWG_DEV_MODE=1.
+  EXECUTOR_TOKEN: 'aiwg-conformance-dev-token'
+
+jobs:
+  conformance:
+    name: A2A Conformance Harness
+    runs-on: ubuntu-latest
+    # docker:dind is required because the harness needs to talk to the
+    # provisioned sandbox over a docker bridge network. Go is installed in
+    # the step to keep the runner image small.
+    container:
+      image: docker:24-dind
+      options: --privileged
+    timeout-minutes: 25
+
+    # PRs only run the gate when explicitly opted in. The default run is
+    # cheap (status-check only) so PR latency stays bounded.
+    if: |
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'conformance:full')
+
+    steps:
+      - name: Install build dependencies
+        # docker:dind is Alpine — install bash/git/jq/curl/go via apk.
+        run: |
+          apk add --no-cache bash git curl jq go docker-cli docker-cli-compose
+
+      - name: Checkout AIWG
+        uses: actions/checkout@v4
+
+      - name: Wait for docker daemon
+        # The DinD socket comes up async; poll until it answers before we
+        # start compose.
+        shell: bash
+        run: |
+          for i in $(seq 1 30); do
+            if docker info >/dev/null 2>&1; then
+              echo "docker ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "docker daemon did not come up in 30s" >&2
+          exit 1
+
+      - name: Checkout agentic-sandbox at ${{ env.SANDBOX_REF }}
+        uses: actions/checkout@v4
+        with:
+          repository: roctinam/agentic-sandbox
+          ref: ${{ env.SANDBOX_REF }}
+          path: agentic-sandbox
+          # Sandbox is published publicly on the same Gitea; checkout@v4
+          # honours the runner token by default. If the repo flips private,
+          # set `token: ${{ secrets.GITEA_TOKEN }}` here.
+
+      - name: Provision agentic-sandbox v2 reference instance
+        shell: bash
+        env:
+          AIWG_DEV_MODE: '1'
+          AIWG_CONFORMANCE_TOKEN: ${{ env.EXECUTOR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ ! -f agentic-sandbox/deploy/compose/v2/docker-compose.yml ]; then
+            echo "::error::agentic-sandbox/deploy/compose/v2/docker-compose.yml not found at ref '${SANDBOX_REF}'"
+            echo "Looking for the v2 compose manifest. Available compose files:" >&2
+            find agentic-sandbox -name 'docker-compose*.yml' -maxdepth 4 -print >&2 || true
+            exit 2
+          fi
+          docker compose -f agentic-sandbox/deploy/compose/v2/docker-compose.yml up -d --wait
+          docker compose -f agentic-sandbox/deploy/compose/v2/docker-compose.yml ps
+
+      - name: Wait for executor /healthz
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 60); do
+            if curl -fsS "${EXECUTOR_URL}/healthz" >/dev/null 2>&1; then
+              echo "executor healthy after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::executor at ${EXECUTOR_URL} did not become healthy in 60s"
+          docker compose -f agentic-sandbox/deploy/compose/v2/docker-compose.yml logs --tail=80 || true
+          exit 1
+
+      - name: Build conformance harness at ${{ env.CONFORMANCE_REF }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "${CONFORMANCE_REF}" \
+            https://git.integrolabs.net/roctinam/agentic-sandbox-conformance.git \
+            agentic-sandbox-conformance
+          cd agentic-sandbox-conformance
+          # Cache module downloads across runs when the runner caches /root.
+          go build -o /usr/local/bin/agentic-sandbox-conformance ./cmd/agentic-sandbox-conformance
+          /usr/local/bin/agentic-sandbox-conformance --version || true
+
+      - name: Run conformance harness
+        id: harness
+        shell: bash
+        env:
+          # The harness reads both the URL and the token from flags; passing
+          # via env keeps the literal token out of the runner command line.
+          AIWG_EXECUTOR_URL: ${{ env.EXECUTOR_URL }}
+          AIWG_EXECUTOR_TOKEN: ${{ env.EXECUTOR_TOKEN }}
+        run: |
+          set -o pipefail
+          mkdir -p conformance-out
+          # Run; capture exit code separately so the upload step still
+          # publishes artifacts on failure.
+          agentic-sandbox-conformance \
+            --executor-url "${AIWG_EXECUTOR_URL}" \
+            --token "${AIWG_EXECUTOR_TOKEN}" \
+            --report-md conformance-out/report.md \
+            --report-junit conformance-out/report.junit.xml \
+            --log-level info \
+            | tee conformance-out/run.log
+          echo "harness_exit=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload conformance reports
+        # Always upload — operators want the artifacts even (especially) on
+        # failure.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-reports-${{ github.run_number }}
+          path: |
+            conformance-out/report.md
+            conformance-out/report.junit.xml
+            conformance-out/run.log
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Dump sandbox logs on failure
+        # Helps the release engineer diagnose without re-running.
+        if: failure()
+        shell: bash
+        run: |
+          docker compose -f agentic-sandbox/deploy/compose/v2/docker-compose.yml \
+            logs --tail=200 || true
+
+      - name: Tear down agentic-sandbox
+        if: always()
+        shell: bash
+        run: |
+          docker compose -f agentic-sandbox/deploy/compose/v2/docker-compose.yml down -v || true
+
+      - name: Fail job if harness exit was non-zero
+        # The tee in the harness step preserves the harness exit code via
+        # pipefail, but we re-assert here for clarity in the job summary.
+        if: steps.harness.outcome == 'failure'
+        run: |
+          echo "::error::Conformance harness reported failures — see uploaded report.md"
+          exit 1

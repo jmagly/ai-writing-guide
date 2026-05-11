@@ -112,6 +112,25 @@ npm view aiwg version
 # Should show: 2026.1.5
 ```
 
+## Release Gates
+
+In addition to the four steps above, the following CI workflows act as **release gates** — a failure on any of these blocks the release.
+
+| Gate | Workflow | Trigger | What it proves |
+|------|----------|---------|----------------|
+| Unit + integration tests | `.gitea/workflows/ci.yml` | push to main, tag, PR | Code changes did not regress the suite |
+| Executor-contract conformance (fixture mode) | `.gitea/workflows/ci.yml` (`test:conformance` step) | every CI run | Static fixture replay still matches the contract schema |
+| **A2A conformance against agentic-sandbox v2** | `.gitea/workflows/conformance.yml` | push to main, version tags, manual | AIWG's A2A client interoperates with a live sandbox v2 instance — proves end-to-end interop, not just contract shape (#1258) |
+| Build verification | `.gitea/workflows/ci.yml` (`build` job) | every CI run | `npm run build` produces deployable artifacts |
+
+### A2A Conformance Gate Details
+
+The `A2A Conformance` workflow provisions a reference agentic-sandbox v2 instance via Docker Compose, builds the `roctinam/agentic-sandbox-conformance` Go harness, and runs the suite end-to-end. Failure blocks the release.
+
+- **What to do on green**: proceed with tagging.
+- **What to do on red**: open the run, download the `conformance-reports-*` artifact (`report.md` + `report.junit.xml`), and diagnose. Common categories of failure are listed in the harness's own `report.md`. Do **not** force a stable tag past a red conformance run without explicit issue documentation and a follow-up tracking issue — that's how interop regressions ship.
+- **Workflow inputs**: the manual-dispatch form accepts `sandbox_ref` and `conformance_ref` for pinned-ref retries (e.g., to verify a fix against a specific sandbox commit before the release engineer is back online).
+
 ## Pre-release Tags (alpha/beta)
 
 Pre-release tags are **internal pipeline checkpoints** — not public releases.
