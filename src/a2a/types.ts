@@ -14,6 +14,10 @@
 
 import type { JsonValue } from './jcs.js';
 
+// Re-export so consumers can `import type { JsonValue } from './types.js';`
+// without reaching into the JCS module's surface.
+export type { JsonValue };
+
 // ---------- Task state machine ----------
 
 /** A2A task lifecycle states (executor `TaskState` enum). */

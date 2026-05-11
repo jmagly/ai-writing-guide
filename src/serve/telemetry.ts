@@ -31,7 +31,8 @@ export type TelemetryEventType =
   | 'tokens.used'
   | 'agent.spawn'
   | 'agent.complete'
-  | 'scope.unit.complete';
+  | 'scope.unit.complete'
+  | 'v1.deprecation.observed';
 
 export interface TelemetryEvent {
   /** Unique event ID */
@@ -73,6 +74,21 @@ export interface ScopeUnitPayload {
 export interface AgentPayload {
   agentId: string;
   agentType: string;
+}
+
+/** Payload for `v1.deprecation.observed`. Emitted by the A2A HTTP client
+ *  whenever it observes a `Sunset` or `Deprecated` header on a v1
+ *  endpoint, deduplicated per (path, sunset) pair. Powers the trend-to-zero
+ *  check on the v1 → v2 dispatch migration (#1259). */
+export interface V1DeprecationObservedPayload {
+  /** Request path that returned the deprecation headers. */
+  path: string;
+  /** `Sunset` header value (RFC 8594), if present. */
+  sunset?: string;
+  /** `Deprecated` header value, if present. */
+  deprecated?: string;
+  /** Successor URL extracted from `Link: <…>; rel="successor-version"`. */
+  successor?: string;
 }
 
 // ============================================================
