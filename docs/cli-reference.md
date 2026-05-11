@@ -333,7 +333,7 @@ aiwg use <framework|addon>
 **Arguments:**
 
 - `<framework>` - Framework name: `sdlc`, `marketing`, `writing`, `all`
-- `<addon>` - Addon name: any addon in `agentic/code/addons/` (e.g., `rlm`, `ralph`, `ring-methodology`)
+- `<addon>` - Addon name: any addon in `agentic/code/addons/` (e.g., `rlm`, `ralph`, `voice-framework`)
 
 **Options:**
 
@@ -4296,9 +4296,8 @@ All commands are registered as extensions in the unified schema. This enables:
 | **Code Analysis** | 1 | cleanup-audit |
 | **Index** | 1 | index (4 subcommands) |
 | **Reproducibility** | 4 | execution-mode, snapshot, checkpoint, reproducibility-validate |
-| **Addon: ring** | 5 | ring check, ring circuit-breaker, ring session-start, ring session-end, ring status |
 
-**Total:** 53 built-in + addon commands (addon commands require `aiwg use <addon>`)
+**Total:** 48 built-in + addon commands (addon commands require `aiwg use <addon>`)
 
 ---
 

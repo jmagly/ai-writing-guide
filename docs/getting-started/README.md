@@ -35,7 +35,7 @@ Find the scenario that matches where you are right now.
 | Topic | Guide |
 |---|---|
 | How intake, flows, gates, and sdlc-accelerate work together | [Flow and Gate Process](flow-and-gate-process.md) |
-| Al, Ring, RLM, Voice, and other power features | [Key Addons](key-addons.md) |
+| Al, RLM, Voice, and other power features | [Key Addons](key-addons.md) |
 | Carrying project-specific agents and skills across platforms | [Project-Local Customization](../project-local/overview.md) |
 
 ---
@@ -74,6 +74,6 @@ Read the one-paragraph version of each below, then click the one that sounds rig
 
 **Flow and Gate Process** — The mechanics behind SDLC: how the intake commands, flow commands, gate commands, and the `sdlc-accelerate` meta-command connect and why that structure exists.
 
-**Key Addons** — Al (iterative loops), Ring (four-layer verification), RLM (large codebase handling), Voice Framework (consistent writing style), and other capabilities that extend any framework.
+**Key Addons** — Al (iterative loops), RLM (large codebase handling), Voice Framework (consistent writing style), and other capabilities that extend any framework.
 
 **Project-Local Customization** — How to add project-specific agents, skills, and scripts to `.aiwg/.project/` so they deploy automatically with `aiwg use` and survive platform-directory resets. Keeps platform dirs (`.claude/`, `.codex/`, etc.) fully expendable.
