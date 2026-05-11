@@ -212,6 +212,11 @@ export class PtyWsClient {
   private role: PtyRole = 'observer';
   private lastSeq = 0;
   private sessionId: string | null = null;
+
+  /** Session id surfaced by `binding_hello`. Null until connect resolves. */
+  getSessionId(): string | null {
+    return this.sessionId;
+  }
   private readonly initialReplayFrom: number | undefined;
   private readonly desiredCols: number | undefined;
   private readonly desiredRows: number | undefined;
