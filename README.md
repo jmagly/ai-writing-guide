@@ -312,7 +312,54 @@ User intent → AIWG CLI → Deploy agents + rules + templates → AI platform
 
 ## How It Works
 
-AIWG orchestrates multi-agent workflows where specialized agents collaborate on complex tasks:
+> For visual diagrams of AIWG's architecture, deploy flow, and discovery model, see [`docs/architecture-overview.md`](docs/architecture-overview.md). The prose walkthrough lives in [`docs/how-it-works.md`](docs/how-it-works.md).
+
+**At a glance** — AIWG is a deploy-time tool. `aiwg use` copies plain-text files into your AI platform's native directories and exits. Nothing runs in the background; the AI platform's own loader handles everything from there.
+
+```mermaid
+flowchart LR
+  subgraph Source["AIWG framework source"]
+    direction TB
+    KERN[16 kernel skills<br/>~15-25k tokens]
+    STD[~385 standard skills<br/>read from $AIWG_ROOT]
+    AGENT[200+ agents]
+    RULES[60+ rules]
+    TPL[100+ templates]
+  end
+
+  CLI([aiwg use sdlc<br/>--provider X]) --> DEPLOY
+
+  subgraph DEPLOY["Deploy step (one-shot)"]
+    direction TB
+    COPY[Copy kernel skills, agents,<br/>rules to provider-native dirs]
+    INDEX[Build artifact index<br/>~/.local/share/aiwg/index/]
+    CTX[Emit AIWG.md + AGENTS.md<br/>at project root]
+  end
+
+  Source --> CLI
+  DEPLOY --> Project
+
+  subgraph Project["Your project (after deploy)"]
+    direction TB
+    PLAT[.claude/skills/<br/>.codex/agents/<br/>.warp/agents/ ...]
+    AIWGMD[AIWG.md / .hermes.md /<br/>WARP.md / AGENTS.md]
+    ART[.aiwg/<br/>requirements/<br/>architecture/<br/>...]
+  end
+
+  Project --> SESS
+
+  subgraph SESS["AI session (Claude / Codex / Hermes / etc.)"]
+    direction TB
+    NATIVE[Platform-native loader<br/>reads provider dir]
+    DISC([Optional: aiwg discover<br/>+ aiwg show])
+  end
+
+  classDef optional stroke-dasharray: 5 5,fill:#fef9e7
+  class DISC optional
+  class INDEX optional
+```
+
+**Multi-agent orchestration** — once deployed, AIWG coordinates specialized agents through phase-gated workflows:
 
 ```
 You: "transition to elaboration phase"

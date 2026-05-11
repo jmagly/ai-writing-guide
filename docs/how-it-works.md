@@ -2,6 +2,8 @@
 
 A practical guide to understanding what AIWG does under the hood. No prior knowledge assumed.
 
+> **Want the visual version first?** See [`docs/architecture-overview.md`](architecture-overview.md) for diagram-led explanations of the same concepts below. It pairs MermaidJS diagrams (rendered inline) with placeholders for polished illustrations — useful if you build the mental model better from a picture than from prose.
+
 ## What Problem Does AIWG Solve?
 
 AI coding assistants are powerful, but they start every session with amnesia. They don't know your project's architecture, your team's conventions, or what happened yesterday. AIWG solves this by injecting persistent context — agents, rules, workflows, and project state — directly into the directories your AI assistant reads on startup.
@@ -11,6 +13,50 @@ The result: your AI assistant behaves like a team member who has read all the do
 ## 1. The Injection Model
 
 When you run `aiwg use sdlc`, AIWG copies a set of files into your project. These files are placed in directories that your AI assistant automatically reads.
+
+```mermaid
+flowchart LR
+  subgraph Source["AIWG framework source"]
+    direction TB
+    KERN[16 kernel skills<br/>~15-25k tokens]
+    STD[~385 standard skills<br/>read from $AIWG_ROOT]
+    AGENT[200+ agents]
+    RULES[60+ rules]
+    TPL[100+ templates]
+  end
+
+  CLI([aiwg use sdlc<br/>--provider X]) --> DEPLOY
+
+  subgraph DEPLOY["Deploy step (one-shot)"]
+    direction TB
+    COPY[Copy kernel skills, agents,<br/>rules to provider-native dirs]
+    INDEX[Build artifact index<br/>~/.local/share/aiwg/index/]
+    CTX[Emit AIWG.md + AGENTS.md<br/>at project root]
+  end
+
+  Source --> CLI
+  DEPLOY --> Project
+
+  subgraph Project["Your project (after deploy)"]
+    direction TB
+    PLAT[.claude/skills/<br/>.codex/agents/<br/>.warp/agents/ ...]
+    AIWGMD[AIWG.md / .hermes.md /<br/>WARP.md / AGENTS.md]
+    ART[.aiwg/<br/>requirements/<br/>architecture/<br/>...]
+  end
+
+  Project --> SESS
+
+  subgraph SESS["AI session (Claude / Codex / Hermes / etc.)"]
+    direction TB
+    NATIVE[Platform-native loader<br/>reads provider dir]
+    DISC([Optional: aiwg discover<br/>+ aiwg show])
+  end
+
+  classDef optional stroke-dasharray: 5 5,fill:#fef9e7
+  class DISC optional
+  class INDEX optional
+```
+
 
 ### What Gets Deployed
 
@@ -309,6 +355,48 @@ Over time, `.aiwg/` accumulates institutional knowledge:
 
 This web of linked artifacts means the AI can answer questions like "what tests cover requirement UC-001?" or "what risks affect the authentication module?" by traversing the relationships.
 
+## What's Optional
+
+Not every team needs every AIWG feature. AIWG ships in three configuration tiers — pick the one that matches your appetite. Upgrade later (or downgrade) at will.
+
+```mermaid
+flowchart TB
+  START{What do you want?}
+
+  START -->|"Just AI personas<br/>and basic prompts"| MIN
+  START -->|"Plus structured<br/>artifacts (SDLC, etc.)"| MID
+  START -->|"Plus self-maintaining<br/>discovery + orchestration"| FULL
+
+  subgraph MIN["Minimal — agents only"]
+    direction TB
+    M1["aiwg use sdlc"]
+    M2[Deploys agents/rules/templates<br/>to your provider dir]
+    M3[Use natural language<br/>in the platform as normal]
+    M4[Index built but ignorable]
+  end
+
+  subgraph MID["Standard — agents + artifacts"]
+    direction TB
+    D1["aiwg use sdlc + create .aiwg/"]
+    D2[Use SDLC slash commands<br/>or natural-language requests]
+    D3[Artifacts persist across sessions]
+    D4[Index queryable but optional]
+  end
+
+  subgraph FULL["Full — discovery + utilities"]
+    direction TB
+    F1["aiwg use all"]
+    F2[Agents query aiwg discover<br/>for non-kernel skills]
+    F3[Optional utilities: ralph,<br/>mc, daemon, mcp, schedule]
+    F4[Cross-session memory,<br/>background orchestration]
+  end
+
+  MIN -.->|"upgrade anytime by<br/>adding usage"| MID
+  MID -.->|"upgrade anytime by<br/>using more commands"| FULL
+```
+
+Most users live in Minimal or Standard. Full exists for power users who want background orchestration, autonomous loops, and cross-session memory — but those features only run when you invoke them.
+
 ## Key Takeaways
 
 1. **AIWG is an injection system** — it deploys context files into directories your AI reads
@@ -316,5 +404,6 @@ This web of linked artifacts means the AI can answer questions like "what tests 
 3. **The intake process seeds the memory** — structured questioning establishes the initial project context that every future session builds on
 4. **Flows coordinate agents** — multi-step processes with quality gates
 5. **It works across platforms** — same framework, adapted for Claude, Copilot, Cursor, and more
+6. **Adoption is gradual** — Minimal/Standard/Full tiers let you scale your AIWG footprint to match the project
 
 The net effect: your AI assistant goes from a capable but forgetful tool to a knowledgeable team member that follows your standards, builds real artifacts, and accumulates structured project knowledge that compounds across every session.

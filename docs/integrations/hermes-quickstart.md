@@ -169,6 +169,35 @@ Create an `AGENTS.md` at your project root that tells Hermes when to call AIWG.
 >
 > The code comment is explicit: *"Priority (first found wins — only ONE project context type is loaded)."* Earlier docs that suggested Hermes loads `AGENTS.md` and `CLAUDE.md` together were aspirational. AIWG always emits a `.hermes.md` twin file (#1239 / #1242), so when this integration is installed, `AGENTS.md` and `CLAUDE.md` never load on Hermes turns — they remain valid context files for Claude Code, Codex, etc., but are silent on Hermes.
 
+```mermaid
+flowchart TB
+  TURN([Hermes turn starts])
+  TURN --> CWD[Get cwd]
+  CWD --> WALK[Walk up to git root<br/>looking for .hermes.md or HERMES.md]
+
+  WALK --> H{".hermes.md or<br/>HERMES.md found?"}
+  H -->|Yes| HLOAD[Load .hermes.md<br/>STOP — winner]
+  H -->|No| A{"AGENTS.md or<br/>agents.md in cwd?"}
+  A -->|Yes| ALOAD[Load AGENTS.md<br/>STOP — winner]
+  A -->|No| C{"CLAUDE.md or<br/>claude.md in cwd?"}
+  C -->|Yes| CLOAD[Load CLAUDE.md<br/>STOP — winner]
+  C -->|No| R{".cursorrules or<br/>.cursor/rules/*.mdc?"}
+  R -->|Yes| RLOAD[Load .cursorrules<br/>STOP — winner]
+  R -->|No| NONE[No project context loaded]
+
+  HLOAD --> CAP[Cap at 20,000 chars<br/>head/tail truncate above]
+  ALOAD --> CAP
+  CLOAD --> CAP
+  RLOAD --> CAP
+  CAP --> PROMPT[Inject into system prompt<br/>this turn]
+  NONE --> PROMPT
+
+  classDef winner fill:#d4edda
+  class HLOAD,ALOAD,CLOAD,RLOAD winner
+```
+
+![Polished version (placeholder — generate from #1248 prompts)](../architecture-overview/images/06-hermes-resolver.png)
+
 > **Each context source is capped at 20,000 chars** (`CONTEXT_FILE_MAX_CHARS` in `agent/prompt_builder.py:1284`). Above that, head/tail truncation kicks in with a marker noting the cut. The thin `.hermes.md` AIWG emits (~930 bytes) is well under the cap.
 
 > **Token budget reminder:** even within the 20K cap, Hermes loads context in full on every turn. Keep routing guidance compact — AIWG's default `.hermes.md` is ~230 tokens.
