@@ -202,7 +202,7 @@ AIWG uses a unified extension system for all extension types:
 
 ## CLI Commands
 
-**See `@docs/cli-reference.md` for complete documentation.** The canonical command list lives in `@src/extensions/commands/definitions.ts` (currently ~85 entries — count grows as features land; the categories table below is a curated overview, not an exhaustive enumeration).
+**See `@docs/cli-reference.md` for complete documentation.** The canonical command list lives in `@src/extensions/commands/definitions.ts` (currently ~94 entries — count grows as features land; the categories table below is a curated overview, not an exhaustive enumeration).
 
 ### Categories
 
@@ -336,8 +336,9 @@ aiwg run skill <name> --cwd <path> -- <args...>   # explicit CWD override
 # $AIWG_ROOT (no per-project copy by default, #1217) and are reached via
 # `aiwg discover` + `aiwg show`. The kernel set is what's always-loaded:
 # 8 framework quickrefs + aiwg-utils-quickref + aiwg-language-map (covers
-# addons + extensions) + 6 self-maintenance ops (steward, aiwg-doctor,
-# aiwg-refresh, aiwg-status, aiwg-help, use) = 16 skills total.
+# addons + extensions) + 9 self-maintenance ops (steward, aiwg-doctor,
+# aiwg-refresh, aiwg-regenerate, aiwg-status, aiwg-help, aiwg-issue,
+# aiwg-pr, use) = 19 skills total.
 # The skill-discovery HIGH rule mandates `aiwg discover` before declining
 # a user request as out-of-scope.
 # To force per-project copies (sandboxed runtimes): pass --copy-all
@@ -630,6 +631,13 @@ aiwg refresh --channel latest    # switch back to stable
 **Pipeline flow:** `dev → nightly → alpha → beta → RC → stable`
 
 ### Release Checklist
+
+> **Mechanically driven by the `flow-release` skill** as of 2026.5.2.
+> The skill reads `.aiwg/release.config` and walks the declared gates
+> (local build/test → CI green → doc-sync → CHANGELOG + announcement →
+> README freshness → tag/push → post-release tracker close-outs). The
+> checklist below remains the canonical human-readable reference, but
+> `aiwg run skill flow-release` is the recommended path.
 
 Before pushing a version tag:
 

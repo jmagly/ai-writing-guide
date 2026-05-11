@@ -9,6 +9,76 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
+## [2026.5.2] - 2026-05-11 — Tester-report sweep, kernel issue/PR skills, config-driven release flow
+
+A multi-commit fix sweep driven by an external tester report (sebuh-infsol via jmagly/aiwg#108–#112). What landed: every CLI bug the tester surfaced is fixed; the discovery-kernel surface now has doctor checks; issue/PR filing guidance is both in `docs/` for humans and in always-loaded kernel skills for agents; the release process itself is now config-driven via `.aiwg/release.config` and the `flow-release` skill.
+
+### Highlights
+
+| What changed | Why you care |
+|---|---|
+| **`aiwg steward` works end-to-end** | Both the path resolution bug (#1261) and the schema mismatch (#1262) are fixed. Capability routing is finally usable. |
+| **Kernel skills get Claude command stubs** | `/aiwg-refresh`, `/aiwg-regenerate`, `/aiwg-doctor`, `/aiwg-status`, `/aiwg-help` deploy as `.claude/commands/` entries (#1263). The slash-form is now deterministic instead of churning through agent dialog. |
+| **`aiwg regenerate` is a real CLI command** | Context-only regen of `AIWG.md` + `AGENTS.md` without redeploying frameworks. Faster than `aiwg refresh` when you just need to fix context drift (#1266). |
+| **`aiwg-issue` + `aiwg-pr` kernel skills** | Filing guidance is always-loaded in your agent context. Templates land in `.gitea/ISSUE_TEMPLATE/` + `.github/ISSUE_TEMPLATE/`. (#1269) |
+| **`flow-release` orchestration** | Config-driven release flow consumes `.aiwg/release.config`. Six gates: build/test, CI green, doc-sync, CHANGELOG, README freshness, tag/push, post-release. AIWG itself dogfoods this on 2026.5.2. |
+| **Doctor discovery-availability gate** | `aiwg doctor` now smoke-probes `discover`, `show`, `index`, `runtime-info` and warns when any is broken (#1264(g)). |
+| **Six other CLI fixes** | `runtime-info --discover` ENOENT, `aiwg new --help` no longer scaffolds as a side effect, `aiwg catalog` JSON files now ship in `dist/`, three import-path fixes across `workspace-migrate`/`optimize-prompt`/`diversify-content`, doctor doesn't recommend the unimplemented `install-skill-seekers` (#1264). |
+
+### Added
+
+- **`src/cli/handlers/regenerate.ts`** — new CLI handler. `aiwg regenerate [--provider <name>] [--dry-run] [--force] [--no-aiwg-md] [--no-agents-md]`. Invokes the canonical context pipeline (`src/smiths/context-pipeline/`) without redeploying frameworks. Registered in `handlers/index.ts` and the command extension catalog.
+- **`agentic/code/addons/aiwg-utils/skills/aiwg-issue/SKILL.md`** — kernel skill for filing issues. Covers template selection, environment capture, duplicate detection, the cross-tracker import flow, and anti-patterns.
+- **`agentic/code/addons/aiwg-utils/skills/aiwg-pr/SKILL.md`** — kernel skill for opening PRs. Covers delivery-policy compliance (direct vs feature-branch vs pr-required), the no-attribution rule, the verification gate, CI-green-before-done.
+- **`agentic/code/addons/aiwg-utils/skills/steward-prep-delivery/`** — non-kernel skill plus `find-duplicates.sh` helper that searches the AIWG capability index AND the configured Gitea tracker for likely duplicates before filing.
+- **`agentic/code/frameworks/sdlc-complete/skills/flow-release/SKILL.md`** — config-driven release orchestration skill. Reads `.aiwg/release.config` and walks gates in order with hard-stop semantics. Owned by the Deployment Manager agent.
+- **`agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml`** — JSON Schema for `release.config`. Six gate shapes: steps, invoke_skill, tracker, artifacts, review_diff, actions.
+- **`.aiwg/release.config`** — AIWG's own release rules. Seven gates: local-build-test, ci-green, doc-sync, changelog-and-announcement, readme-freshness, release, post-release.
+- **`.gitea/ISSUE_TEMPLATE/{bug-report,feature-request,tester-report,imported-report}.md`** and **`.gitea/pull_request_template.md`** — Gitea-native templates with delivery-policy and no-attribution callouts. Mirrored to `.github/` for the public mirror.
+- **`docs/contributing/filing-issues.md`** and **`docs/contributing/filing-pull-requests.md`** — human-readable guides matching the kernel skills.
+- **`src/cli/find-package-root.ts`** — shared helper that walks up to AIWG's `package.json`, fixing path resolution in `steward.ts` and `providers/capability-matrix.ts` regardless of compiled vs source layout (#1261).
+- **`agentic/code/addons/aiwg-utils/skills/aiwg-refresh/run.sh`** and **`aiwg-regenerate/run.sh`** — script entrypoints for kernel skills, with matching `script:` frontmatter blocks. `aiwg run skill aiwg-refresh -- <flags>` now works deterministically across platforms.
+- **Discovery-availability doctor checks** — four new probes in `tools/cli/doctor.mjs` for `discover`, `show`, `index`, `runtime-info` (#1264(g)).
+- **`.aiwg/aiwg.config` `delivery` block** is now read by `flow-release` to determine commit pattern (existing semantics, now documented in `aiwg-pr` skill body).
+
+### Changed
+
+- **`src/cli/handlers/steward.ts`** — rewrote to import canonical types from `src/providers/capability-matrix.ts` and render the actual `native_features` + `emulation` YAML schema. Feature names accept hyphenated and underscored forms (#1262).
+- **`src/providers/capability-matrix.ts`** — path resolver now uses `findPackageRoot()` instead of a fixed-depth `..` walk (#1261).
+- **`src/cli/handlers/use.ts`** — extended the Claude command translation pass to deploy kernel-skill stubs for `aiwg-issue`, `aiwg-pr`, and the existing kernel set (#1263).
+- **`src/smiths/context-pipeline/aiwg-md.ts`** — strips `@AIWG.md` self-include directives when copying CLAUDE.md → AIWG.md. AIWG.md is the destination of that include; the directive must not survive as a self-reference (#1268). Test updated in lockstep.
+- **`src/smiths/toolsmith/runtime-discovery.mjs`** — `#writeCatalog` now `mkdir -p`s the parent dir before writing `runtime.json`. Fixes the ENOENT on a fresh project (#1264(b)).
+- **`tools/cli/doctor.mjs`** — replaced the `aiwg install-skill-seekers` recommendation (command never existed) with a pointer to the `skill-factory` addon. Underlying integration is intact via the `doc-intelligence` + `skill-factory` addons from `dca02db1` (#1270 audit closed as not-a-regression).
+- **`tools/cli/workspace-migrate.mjs`**, **`tools/cli/optimize-prompt.mjs`**, **`tools/cli/diversify-content.mjs`** — fixed `dist/plugin/` and `dist/writing/` import paths to use `dist/src/plugin/` and `dist/src/writing/` per tsc's `rootDir=.` layout (#1264(e)).
+- **`tools/install/new-project.mjs`** — `aiwg new <name> --help` is now side-effect-free; previously scaffolded a project as a side effect of help probing (#1264(f)).
+- **`package.json`** build script — `build:copy-mjs` now copies `.json` files too, so `aiwg catalog` data ships in `dist/` (#1264(d)).
+- **`agentic/code/addons/aiwg-utils/skills/aiwg-refresh/SKILL.md`** and **`aiwg-regenerate/SKILL.md`** — added `script:` frontmatter and a guardrail directive instructing agent-mediated invocations to defer to the deterministic CLI rather than running multi-step probes.
+- **`agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md`** — kernel-skill list updated to include `aiwg-issue`, `aiwg-pr`, `aiwg-regenerate`.
+- **`agentic/code/frameworks/sdlc-complete/agents/deployment-manager.md`** — surfaces `flow-release` as the primary release skill ahead of the broader deployment-readiness procedure.
+- **`CLAUDE.md`** — CLI command count corrected (~85 → ~94); self-maintenance kernel-skill count corrected (6 → 9); Release Checklist now points at `flow-release` as the canonical driver.
+- **`CONTRIBUTING.md`** — links to the new `docs/contributing/filing-issues.md` and `filing-pull-requests.md` guides.
+
+### Fixed
+
+See "Highlights" above. Eight discrete bugs from the tester report; all fixed with regression tests where applicable.
+
+### Closed
+
+- **#1261** AIWG_ROOT path resolution
+- **#1262** steward capability matrix schema mismatch
+- **#1263** kernel skills lack Claude command stubs
+- **#1264** discovery / runtime-info / install-skill-seekers / catalog / migrate-workspace / aiwg-new sub-bugs (sub-item (g) doctor-invariant moved to a follow-up; #1271 tracks the deferred AIWG.md template-selection audit)
+- **#1265** imported steward report — closed as duplicate of #1261 + #1262
+- **#1266** aiwg-regenerate CLI subcommand + script entrypoint
+- **#1267** interactive /aiwg-refresh churn
+- **#1268** AIWG.md self-reference (deferred template-selection half tracked in #1271)
+- **#1269** PR + Issue templates and contributor guidance
+- **#1270** Skill Seekers regression — closed as not-a-regression (integration is intact as `doc-intelligence` + `skill-factory` addons)
+
+Imported from `jmagly/aiwg`: #108, #109, #110, #111, #112 — all closed on the source tracker with thank-you comments to `@sebuh-infsol`.
+
+[2026.5.2]: https://git.integrolabs.net/roctinam/aiwg/compare/v2026.5.1...v2026.5.2
+
 ## [2026.5.1] - 2026-05-11 — Hotfix: `aiwg doctor` cannot find `src/channel/manager.mjs` on installed users
 
 A user-reported bug landed within hours of 2026.5.0 cutting: `aiwg --version` and `aiwg --help` worked, but `aiwg doctor` failed on a fresh `npm install -g aiwg` with `Cannot find module 'src/channel/manager.mjs'`. Root cause: three scripts under `tools/cli/` imported from `../../src/channel/manager.mjs` (the source tree), but the npm package only ships `dist/`, not `src/`. Local dev worked because both directories existed; npm-installed users only had `dist/`.

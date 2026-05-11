@@ -195,7 +195,15 @@ Within Claude Code sessions, use interactive commands for AI-guided creation:
 
 ## Filing Issues and PRs
 
-> Templates available at `.gitea/ISSUE_TEMPLATE/` (and mirrored to `.github/ISSUE_TEMPLATE/`) and `.gitea/pull_request_template.md`.
+> **Detailed guides** (preferred reading):
+> - [`docs/contributing/filing-issues.md`](docs/contributing/filing-issues.md) — issue templates, environment capture, duplicate detection, import flow
+> - [`docs/contributing/filing-pull-requests.md`](docs/contributing/filing-pull-requests.md) — delivery policy, no-attribution, verification, CI-green-before-done
+>
+> **In-context kernel skills** (always loaded for AI agents):
+> - `aiwg show skill aiwg-issue` — same content as the issues doc
+> - `aiwg show skill aiwg-pr` — same content as the PR doc
+>
+> Templates available at `.gitea/ISSUE_TEMPLATE/` (and mirrored to `.github/ISSUE_TEMPLATE/`) and `.gitea/pull_request_template.md`. The quick summary below is preserved for browsability.
 
 ### Filing a good issue
 

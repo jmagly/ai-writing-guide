@@ -12,8 +12,8 @@ This project uses the **AIWG SDLC framework** for software development lifecycle
 
 AIWG is a comprehensive SDLC framework providing:
 
-- **115 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
-- **305 skills** for project management, security, testing, deployment, and traceability
+- **193 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
+- **19 skills** for project management, security, testing, deployment, and traceability
 - **100+ templates** for requirements, architecture, testing, security, deployment artifacts
 - **Phase-based workflows** with gate criteria and milestone tracking
 - **Multi-agent orchestration** patterns for collaborative artifact generation
@@ -31,8 +31,8 @@ AIWG is a comprehensive SDLC framework providing:
 ls {AIWG_ROOT}/agentic/code/frameworks/sdlc-complete/
 
 # Available resources:
-# - agents/     → 115 agents
-# - skills/     → 305 skills
+# - agents/     → 193 agents
+# - skills/     → 19 skills
 # - templates/  → 100+ artifact templates
 # - flows/      → Phase workflow documentation
 ```
