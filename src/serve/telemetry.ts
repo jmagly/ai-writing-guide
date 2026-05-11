@@ -32,7 +32,8 @@ export type TelemetryEventType =
   | 'agent.spawn'
   | 'agent.complete'
   | 'scope.unit.complete'
-  | 'v1.deprecation.observed';
+  | 'v1.deprecation.observed'
+  | 'v1.dispatch.fallback';
 
 export interface TelemetryEvent {
   /** Unique event ID */
@@ -74,6 +75,16 @@ export interface ScopeUnitPayload {
 export interface AgentPayload {
   agentId: string;
   agentType: string;
+}
+
+/** Payload for `v1.dispatch.fallback`. Emitted by the dispatch router when
+ *  a v2 A2A `messages:send` returns 404 and we fall back to the executor's
+ *  v1 `/dispatch` endpoint. Powers the trend-to-zero check for the
+ *  v1 → v2 dispatch migration (#1252 + #1259). */
+export interface V1DispatchFallbackPayload {
+  executorId: string;
+  reason: string;
+  sunset?: string;
 }
 
 /** Payload for `v1.deprecation.observed`. Emitted by the A2A HTTP client

@@ -21,6 +21,7 @@ import {
   type RegisterRequest,
 } from '../../serve/sandbox-registry.js';
 import { routeTask, type AgentFilter } from '../../serve/agent-router.js';
+import { routeDispatch, type V1DispatchPayload } from '../../serve/dispatch-router.js';
 import {
   executorRegistry,
   validateRegisterPayload,
@@ -773,45 +774,60 @@ async function startServer(opts: {
 
     const { executor } = pickResult;
 
-    // 3. Forward dispatch to the chosen executor's REST endpoint
-    const forwardUrl = `${executor.transportEndpoints.rest}/dispatch`;
+    // 3. Forward dispatch via the dispatch router (#1252): try A2A v2 first,
+    //    fall back to v1 /dispatch on 404 with a structured warning.
     let estimatedStart: string | undefined;
+    let dispatchPath: 'v2' | 'v1-fallback' = 'v2';
     try {
-      const fwdResp = await fetch(forwardUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${executor.token}`,
+      const result = await routeDispatch(executor, payload as V1DispatchPayload, {
+        onV1Fallback: (info) => {
+          logServeWarn(
+            'dispatch',
+            `v1 fallback for executor ${info.executorId}: ${info.reason}`
+          );
+          telemetryStore.ingest(
+            createEvent('v1.dispatch.fallback', sessionId, info, missionId)
+          );
         },
-        body: JSON.stringify(payload),
+        onDeprecation: (info) => {
+          logServeWarn(
+            'dispatch',
+            `v1 deprecation observed at ${info.path}` +
+              (info.sunset ? ` (sunset: ${info.sunset})` : '')
+          );
+          telemetryStore.ingest(
+            createEvent(
+              'v1.deprecation.observed',
+              sessionId,
+              { ...info } as Record<string, unknown>,
+              missionId
+            )
+          );
+        },
       });
-
-      if (!fwdResp.ok) {
-        // Executor returned an error — treat as forward failure
-        const errBody = await fwdResp.text().catch(() => '');
-        logServeWarn('dispatch', `executor ${executor.executorId} returned ${fwdResp.status} on forward: ${errBody}`);
-
-        // Mark mission failed and emit telemetry
-        executorRegistry.assignMission(missionId, executor.executorId);
-        executorRegistry.failMission(missionId, `executor returned ${fwdResp.status}`);
-        telemetryStore.ingest(createEvent('mission.abort', sessionId, { missionId, executorId: executor.executorId }, missionId));
-        return c.json({ error: 'executor_forward_failed', detail: errBody }, 502);
-      }
-
-      // Parse estimated_start if the executor provides it
-      try {
-        const fwdData = await fwdResp.json() as Record<string, unknown>;
-        if (typeof fwdData.estimated_start === 'string') {
-          estimatedStart = fwdData.estimated_start;
-        }
-      } catch { /* optional */ }
+      dispatchPath = result.dispatchPath;
+      if (result.estimatedStart) estimatedStart = result.estimatedStart;
     } catch (err) {
-      // Executor unreachable
-      logServeWarn('dispatch', `executor ${executor.executorId} unreachable at ${forwardUrl}:`, err);
+      const msg = (err as Error).message ?? String(err);
+      logServeWarn(
+        'dispatch',
+        `executor ${executor.executorId} dispatch failed: ${msg}`
+      );
       executorRegistry.assignMission(missionId, executor.executorId);
-      executorRegistry.failMission(missionId, 'executor unreachable');
-      telemetryStore.ingest(createEvent('mission.abort', sessionId, { missionId, executorId: executor.executorId }, missionId));
-      return c.json({ error: 'executor_unreachable' }, 502);
+      executorRegistry.failMission(missionId, msg);
+      telemetryStore.ingest(
+        createEvent('mission.abort', sessionId, {
+          missionId,
+          executorId: executor.executorId,
+          error: msg,
+        }, missionId)
+      );
+      // Distinguish unreachable (network/timeout) from forward errors.
+      const status = /v1 dispatch failed: \d/.test(msg) ? 502 : 502;
+      const errorTag = /unreachable|ECONN|fetch failed/i.test(msg)
+        ? 'executor_unreachable'
+        : 'executor_forward_failed';
+      return c.json({ error: errorTag, detail: msg }, status);
     }
 
     // 4. Record the mission and emit telemetry
@@ -828,6 +844,7 @@ async function startServer(opts: {
       mission_id: missionId,
       executor_id: executor.executorId,
       status: 'assigned',
+      dispatch_path: dispatchPath,
     };
     if (estimatedStart) dispatchResp.estimated_start = estimatedStart;
     return c.json(dispatchResp, 202);
