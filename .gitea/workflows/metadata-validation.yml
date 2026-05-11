@@ -11,6 +11,7 @@ on:
     branches: [main, develop]
     paths:
       - '.claude/**'
+      - '.claude-plugin/**'
       - 'agentic/**'
       - 'src/plugin/**'
       - 'tools/workspace/**'
@@ -19,6 +20,7 @@ on:
     branches: [main, develop]
     paths:
       - '.claude/**'
+      - '.claude-plugin/**'
       - 'agentic/**'
       - 'src/plugin/**'
       - 'tools/workspace/**'
