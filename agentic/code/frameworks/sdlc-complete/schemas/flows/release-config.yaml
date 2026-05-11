@@ -1,0 +1,208 @@
+# Release Configuration Schema
+#
+# Consumed by the `flow-release` skill (#1266 follow-up). Lives at
+# `.aiwg/release.config` in each project; the skill reads it to know which
+# gates to run, in what order, and what hard-stops vs warn-only.
+#
+# The AIWG repo's own release.config is the reference implementation.
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/release-config/v1"
+title: "AIWG Release Configuration"
+description: |
+  Project-specific release rules for the flow-release skill. The skill walks
+  the `gates` array in order, executes each gate's steps or sub-actions,
+  enforces hard_stop semantics, and applies the policy reminders at every
+  step.
+
+type: object
+required:
+  - version
+  - project
+  - version_policy
+  - gates
+properties:
+  version:
+    type: integer
+    const: 1
+    description: Schema version. Bumped only on incompatible changes.
+
+  project:
+    type: object
+    required: [name]
+    properties:
+      name:
+        type: string
+        description: Canonical project name (matches package.json name).
+      display_name:
+        type: string
+      repo_url:
+        type: string
+        format: uri
+      mirror_url:
+        type: string
+        format: uri
+        description: Optional public-mirror URL (e.g., GitHub) for cross-tracker imports.
+      npm_package:
+        type: string
+        description: npm package name when applicable.
+
+  version_policy:
+    type: object
+    required: [format, channels]
+    properties:
+      format:
+        type: string
+        enum: [calver, semver]
+        description: |
+          calver: `YYYY.M.PATCH` with no leading zeros (enforced by the
+          `versioning` rule). semver: standard MAJOR.MINOR.PATCH.
+      pattern:
+        type: string
+        description: Display-only hint. Loader uses the rule for validation.
+      tag_prefix:
+        type: string
+        default: v
+      channels:
+        type: object
+        description: Per-channel release config (stable, rc, beta, alpha, nightly).
+        additionalProperties:
+          type: object
+          properties:
+            tag_format:
+              type: string
+              description: Template using {YYYY} {M} {PATCH} {N} {YYYYMMDD} placeholders.
+            require_announcement:
+              type: boolean
+              default: false
+            require_changelog:
+              type: boolean
+              default: false
+            require_uat:
+              type: boolean
+              default: false
+
+  gates:
+    type: array
+    description: |
+      Ordered list of gates. Each gate has one of: `steps`, `invoke_skill`,
+      `artifacts`, `review_diff`, or `actions`. `hard_stop: true` halts the
+      flow on failure; false surfaces a warning and continues.
+    items:
+      type: object
+      required: [name, hard_stop]
+      properties:
+        name:
+          type: string
+          description: Stable identifier — referenced in logs and audit trail.
+        hard_stop:
+          type: boolean
+          default: true
+        required_for_channels:
+          type: array
+          items:
+            type: string
+          description: Skip this gate when the target channel is not in this list.
+        steps:
+          type: array
+          description: Shell commands to run sequentially.
+          items:
+            type: object
+            required: [run]
+            properties:
+              id:
+                type: string
+              run:
+                type: string
+                description: Shell command. May contain {version} / {tag} / {channel} placeholders.
+              expect_exit:
+                type: integer
+                default: 0
+              tolerate_pre_existing_flakes:
+                type: array
+                items:
+                  type: string
+                description: Test paths whose failure is known and tolerated.
+              required_for_channels:
+                type: array
+                items:
+                  type: string
+              skip_when_flag:
+                type: string
+                description: CLI flag that, when passed, skips this step.
+              depends_on_channel:
+                type: object
+                description: Per-channel variant of the run command.
+                additionalProperties:
+                  type: string
+        invoke_skill:
+          type: string
+          description: AIWG skill name to dispatch (e.g., `doc-sync`).
+        args:
+          type: object
+          description: Arguments forwarded to the invoked skill.
+        tracker:
+          type: string
+          enum: [gitea, github]
+          description: For CI gates — which tracker hosts the actions runs.
+        owner:
+          type: string
+        repo:
+          type: string
+        timeout_seconds:
+          type: integer
+          minimum: 60
+        poll_interval_seconds:
+          type: integer
+          minimum: 5
+        required_workflows:
+          type: array
+          items:
+            type: string
+        artifacts:
+          type: array
+          description: Files that must exist or contain a specific section.
+          items:
+            type: object
+            required: [path]
+            properties:
+              path:
+                type: string
+              section_pattern:
+                type: string
+              must_exist:
+                type: boolean
+                default: true
+        review_diff:
+          type: object
+          properties:
+            path:
+              type: string
+            since_tag:
+              type: string
+            prompt:
+              type: string
+        actions:
+          type: array
+          description: Post-release hook actions.
+          items:
+            type: object
+
+  policy:
+    type: object
+    description: Project-wide policy flags. These layer on top of the kernel rules.
+    properties:
+      no_ai_attribution:
+        type: boolean
+        default: true
+      ci_green_before_done:
+        type: boolean
+        default: true
+      preserve_pre_release_announcements:
+        type: boolean
+        default: false
+      thank_external_reporters:
+        type: boolean
+        default: true
+
+additionalProperties: false

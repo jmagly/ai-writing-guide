@@ -2,227 +2,215 @@
 namespace: aiwg
 name: flow-release
 platforms: [all]
-description: Orchestrate full release sequence — pre-release validation, version bump, changelog, announcement, UAT gate, tag, push, CI green verification, optional GitHub mirror
+description: Config-driven release orchestration — reads .aiwg/release.config and walks the project's declared gates (local build, CI green, doc-sync, changelog/announcement, README, release entry, post-release housekeeping)
 commandHint:
-  argumentHint: '<version> [--channel <stable|rc|beta|alpha|nightly>] [--dry-run] [--skip-uat] [--no-mirror] [--guidance "text"]'
+  argumentHint: '<version> [--channel <stable|rc|beta|alpha|nightly>] [--dry-run] [--skip-uat] [--no-mirror] [--config <path>] [--guidance "text"]'
   allowedTools: 'Task, Read, Write, Edit, Bash, Glob, Grep, mcp__git-gitea__*'
   model: opus
   category: sdlc-orchestration
   orchestration: true
 ---
 
-# Release Orchestration Flow
+# Release Orchestration Flow (config-driven)
 
-**You are the Core Orchestrator** for AIWG release workflows.
+**You are the Core Orchestrator** for the project's release sequence.
 
-## Your Role
+## Your role
 
-You orchestrate the release sequence, delegating specific tasks to the **Deployment Manager** agent (canonical owner per `agentic/code/frameworks/sdlc-complete/agents/deployment-manager.md`) and validation agents. You do NOT execute the release commands yourself when a focused agent is more appropriate.
+You walk the gates declared in `.aiwg/release.config`, in order, enforcing `hard_stop` semantics. You do not hard-code which gates exist or what they do — the config does. This is what makes the skill portable across projects with different release policies (a CalVer + npm project like AIWG vs. a SemVer + container-only project will share this skill body but differ entirely in their config).
 
-When the user requests this flow:
+When the user requests a release:
 
-1. Interpret the request, confirm the target version and channel
-2. Read this skill as the orchestration guide
-3. Delegate gate checks via the Task tool
-4. Synthesize results and ensure each gate is satisfied
-5. Stop at any failed gate and report — never push past a red gate
-6. Report completion with the release tag URL + CI run URL
+1. **Read `.aiwg/release.config`** (or the path passed via `--config`). If absent, scaffold a starter copy from the schema at `agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml` and ask the operator to review before continuing.
+2. **Resolve the target channel** from `--channel` (default: `stable`).
+3. **Validate the version** against `version_policy.format` and the `versioning` rule (CalVer no-leading-zeros, semver, etc.).
+4. **Walk the `gates` array in order.** For each gate:
+   - Skip if `required_for_channels` is present and the target channel isn't in it.
+   - Execute the gate's body (steps, invoke_skill, artifacts, review_diff, actions).
+   - On failure: if `hard_stop: true`, **halt and report**. If false, log a warning and continue.
+5. **Report** with the release tag URL, CI run URL, and tracker actions taken.
 
-## Release Overview
-
-**Purpose**: Safe, repeatable release sequence with documented gates and audit trail.
-
-**Key activities**:
-- Version validation (CalVer, no leading zeros — per `versioning` rule)
-- CHANGELOG + announcement docs (per CLAUDE.md release documentation requirements)
-- Test + UAT gates (per `UAT Before Release` HIGH rule)
-- Tag creation, push to origin, optional GitHub mirror push
-- CI green verification (per `ci-green-before-done` rule)
-- Gitea/GitHub release creation
-- npm dist-tag promotion (stable → `latest`, pre-release → `next` or `nightly`)
-
-**Expected duration**: 15–45 minutes wall-clock (mostly gate waits, especially CI ~2 min)
-
-## Natural Language Triggers
+## Natural language triggers
 
 - "release v2026.5.2"
 - "cut a release"
 - "promote to stable"
-- "release candidate for the next version"
-- "tag a nightly"
 - "ship it"
+- "tag a nightly"
 
-## Pre-Flight Validation (gate 1)
+## Config-driven gate semantics
 
-Before any version-bumping action, confirm:
+The config schema (`release-config.yaml`) defines five gate shapes. Each gate has exactly one shape:
 
-1. **Repository state**
-   - Working tree clean (`git status --porcelain` is empty)
-   - On `default_branch` (typically `main`) per `delivery-policy`
-   - Up to date with `origin/main` (no unpulled commits)
+### Shape 1: `steps`
 
-2. **Version format** — per the `versioning` CRITICAL rule
-   - CalVer: `YYYY.M.PATCH` (e.g., `2026.5.2`)
-   - No leading zeros: `2026.1.5` not `2026.01.5`
-   - Pre-release tags use canonical suffixes: `-nightly.YYYYMMDD`, `-alpha.N`, `-beta.N`, `-rc.N`
-   - Tag prefix is `v`: `v2026.5.2`
+Sequential shell commands. Each step has an `id`, a `run` template (supports `{version}`, `{tag}`, `{channel}` placeholders), and an `expect_exit` (default 0).
 
-3. **CI status on the release commit**
-   - Last push to `main` produced a green CI run
-   - No outstanding `release-blocker` labeled issues
-
-4. **Delivery policy**
-   - Read `.aiwg/aiwg.config` `delivery.mode`. Release operations always commit
-     directly to `main` regardless of `mode` (the version-bump commit + the
-     announcement + tag push are by convention treated as a release sequence).
-     If `mode` is not `direct`, surface this and confirm with the operator.
-
-**Hard stop on any failure.** Do not proceed.
-
-## Version Bump (gate 2)
-
-If pre-release stage (alpha/beta/RC/nightly), skip CHANGELOG entry creation — pre-release tags are internal pipeline checkpoints per CLAUDE.md's Release Channels section. Only update `package.json`.
-
-If stable release:
-
-1. **Update `package.json`** — bump `version` to the target. No leading zeros.
-2. **Update `CHANGELOG.md`** — add new section with:
-   - Highlights table (What changed | Why you care)
-   - Detailed Added/Changed/Fixed sections
-   - Link to previous version
-3. **Create `docs/releases/v{version}-announcement.md`** — full feature documentation, code examples, migration notes
-4. **Commit** with conventional message:
-
-```
-chore(release): bump version to v{version}
-
-[brief summary of what's in the release]
-
-Refs (any tracking issues)
+```yaml
+- name: local-build-test
+  hard_stop: true
+  steps:
+    - id: typecheck
+      run: npx tsc --noEmit
+    - id: unit-tests
+      run: npm test
+      tolerate_pre_existing_flakes: [test/integration/cli-perf.test.ts]
 ```
 
-## UAT Gate (gate 3)
+Execution: run each step in order. Capture stdout/stderr. Compare exit code to `expect_exit`. If `tolerate_pre_existing_flakes` is set, treat failures in those test files as warnings (not gate failures) — useful for known-flaky perf tests.
 
-**REQUIRED for stable releases** per the `UAT Before Release` HIGH rule:
+Steps may carry:
+- `required_for_channels` (skip when channel not listed)
+- `skip_when_flag` (skip when the named CLI flag is present)
+- `depends_on_channel` (per-channel variant of the `run` command)
 
-```bash
-npm run uat
+### Shape 2: `invoke_skill`
+
+Dispatch another AIWG skill via the Task tool. Pass `args` as input.
+
+```yaml
+- name: doc-sync
+  hard_stop: true
+  invoke_skill: doc-sync
+  args:
+    direction: code-to-docs
+    guidance: |
+      <prose explaining the doc-sync intent>
+    dry_run_first: true
 ```
 
-All 9 UAT tests must pass. UAT validates the external agent loop end-to-end with a stub provider and catches runtime failures that unit tests cannot detect.
+Execution: spawn a sub-agent invoking the named skill with `args`. Wait for completion. On failure, apply the gate's `hard_stop` policy.
 
-Skip only when `--skip-uat` is passed AND the operator has explicitly acknowledged the risk in the release record. Pre-release tags (alpha/beta/RC/nightly) may skip UAT but should run it when possible.
+### Shape 3: `tracker` (CI poll)
 
-**Hard stop on UAT failure.** Fix the underlying issue and re-run UAT before tagging.
+Poll an issue/CI tracker until the workflows referenced complete.
 
-## Test Gate (gate 4)
-
-Even for pre-release tags:
-
-```bash
-npm test
-npx tsc --noEmit
+```yaml
+- name: ci-green
+  hard_stop: true
+  tracker: gitea
+  owner: roctinam
+  repo: aiwg
+  timeout_seconds: 600
+  poll_interval_seconds: 30
+  required_workflows: [ci.yml, validate.yml]
 ```
 
-All tests pass. Document any pre-existing flaky tests that aren't release-blockers (e.g., the cli-perf cold-start flake noted in `6500e167` history).
+Execution: list recent action runs for the release commit. For each `required_workflows` entry, wait for `status: completed` and assert `conclusion: success`. Fail the gate on timeout or any non-success conclusion.
 
-## Tag + Push (gate 5)
+For Gitea, use `mcp__git-gitea__actions_run_read` if available. For GitHub, use `gh run list/view`.
 
-After all earlier gates pass:
+### Shape 4: `artifacts`
 
-```bash
-git tag -a v{version} -m "v{version}"
-git push origin main --tags
+Assert release-time files exist (and optionally contain a section).
+
+```yaml
+- name: changelog-and-announcement
+  hard_stop: true
+  required_for_channels: [stable]
+  artifacts:
+    - path: CHANGELOG.md
+      section_pattern: '## [{version}]'
+    - path: 'docs/releases/v{version}-announcement.md'
+      must_exist: true
 ```
 
-Verify the tag appears on the remote:
+Execution: for each artifact, check `must_exist` (default true) and, if `section_pattern` is provided, grep the file for the pattern (with `{version}` interpolated).
 
-```bash
-git ls-remote --tags origin v{version}
+### Shape 5: `review_diff`
+
+Surface a diff and prompt the operator.
+
+```yaml
+- name: readme-freshness
+  hard_stop: false
+  review_diff:
+    path: README.md
+    since_tag: latest-stable
+    prompt: 'Has the README been reviewed for changes shipping in this release?'
 ```
 
-For projects mirroring to a public GitHub remote, also push to GitHub unless `--no-mirror`:
+Execution: run `git diff <since_tag>..HEAD -- <path>` and present to the operator. Wait for explicit acknowledgment before proceeding. With `hard_stop: false`, a "no" response logs a warning and continues; with `hard_stop: true`, it halts.
 
-```bash
-git push github main --tags
+### Shape 6: `actions` (post-release)
+
+Declarative actions for post-release housekeeping.
+
+```yaml
+- name: post-release
+  hard_stop: false
+  actions:
+    - close_imported_issues_with_thanks: true
+    - update_release_entry: gitea
+    - update_release_entry: github
+      skip_when_flag: '--no-mirror'
 ```
 
-## CI Green Verification (gate 6)
+Each action is interpreted by the skill:
 
-Per `ci-green-before-done` HIGH rule, the release is not done until CI on the tag commit is green.
+- `close_imported_issues_with_thanks: true` — find issues with the `imported` label closed by commits in this release, post a thank-you comment on the source tracker, then close on both sides. Mirrors the May-2026 jmagly→roctinam sweep pattern.
+- `update_release_entry: <tracker>` — create or update the release entry (Gitea/GitHub) with the announcement body.
 
-- Poll the Gitea Actions API for the run triggered by the tag push
-- Wait for completion (AIWG CI takes ~2 minutes)
-- If the run fails, surface the failure log and **stop the release**. Do not create the Gitea/GitHub release entry on a failed CI run.
+## Policy enforcement
 
-## Release Entry Creation (gate 7)
+The config's `policy` block applies at every gate:
 
-After CI green:
+- `no_ai_attribution`: scan commit message / tag message / announcement body for AI-tool branding. Fail if found.
+- `ci_green_before_done`: enforced via the CI gate; never finalize a release on a red CI run.
+- `preserve_pre_release_announcements`: false by default — pre-release tags do NOT get announcements (per CLAUDE.md release-channels guidance).
+- `thank_external_reporters`: enforced in the `post-release` action above.
 
-1. **Gitea Release**: typically auto-created on tag push. Verify it exists at `https://git.integrolabs.net/{owner}/{repo}/releases/tag/v{version}`. Edit the body to include the announcement content if Gitea didn't pick it up.
+## Failure handling
 
-2. **GitHub Release** (for mirrored projects): manual via `gh release create v{version}` with the announcement body. Per CLAUDE.md, do NOT create GitHub releases for pre-release tags — those are internal pipeline checkpoints only.
+- **Pre-tag failures**: revert any version-bump commits, restart after fixing the issue.
+- **Post-tag failures**: never delete pushed tags. Increment patch and re-run the flow.
+- **Gate failures with `hard_stop: true`**: halt immediately, surface the failure log, do not advance.
+- **Gate failures with `hard_stop: false`**: log a warning, continue.
 
-3. **npm dist-tag promotion** (for AIWG-style npm releases):
-   - Stable → `latest` (automatic via `npm publish` if release pipeline is configured)
-   - Pre-release → `next` (alpha/beta/rc) or `nightly`
-   - Verify with `npm dist-tag ls aiwg`
+Apply the `anti-laziness` recovery protocol (PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE) when a gate fails — do not silently bypass with destructive shortcuts like skipping tests or stripping rules.
 
-## Post-Release (gate 8)
+## Defaults when no config exists
 
-1. Update any tracker issues that referenced the release version
-2. Post the release announcement (Discord, Telegram, blog, etc. per project conventions)
-3. If a tester report originated the work in this release, **thank the original reporter** on the source tracker — same pattern used for the jmagly→roctinam sweep (May 2026)
-4. Update `.aiwg/aiwg.config` if the release changed deployed framework versions
-
-## Anti-Patterns to Flag
-
-- **AI attribution in release commits or tag messages** — universal rule, never. Per `no-attribution`.
-- **Skipping the UAT gate without explicit operator acknowledgment** — UAT is the only way to catch runtime mismatches that unit tests can't.
-- **Pushing tags before CI on the release commit is green** — invites a permanently-broken release tag.
-- **Creating a Gitea/GitHub release on a failed CI run** — release artifacts must be tied to a green build.
-- **Editing CHANGELOG.md retroactively after release** — append-only history.
-- **Mixing release prep with feature work** — release commits should only touch `package.json`, `CHANGELOG.md`, and announcement docs.
-
-## Failure Recovery
-
-If a gate fails partway through:
-
-- **Pre-tag failures**: revert version-bump commits (`git reset --hard HEAD~N`), fix the issue, restart.
-- **Post-tag failures**: never delete a pushed tag. Tag forward with a patch increment (`v{version}` → `v{version+1}`) and document the skipped tag in the announcement.
-- **Failed npm publish**: do not retry blindly. npm rejects re-publishing the same version. Bump patch and re-run.
+If `.aiwg/release.config` is missing, scaffold one from the schema and ask the operator to review before continuing. The AIWG repo's own config is the reference implementation; new projects can copy it as a starting point.
 
 ## Owner
 
 Canonical owner: **Deployment Manager** (`agentic/code/frameworks/sdlc-complete/agents/deployment-manager.md`).
 
-The flow may also delegate to:
-- **Reliability Engineer** — for SLO validation pre-release
-- **Security Architect** — when the release includes security-sensitive changes
-- **Technical Writer** — for the announcement doc
+May delegate to:
+- **Reliability Engineer** — SLO validation in pre-release gates
+- **Security Architect** — for security-sensitive releases
+- **Technical Writer** — for the announcement body
+
+## AIWG-specific reference
+
+This repository's `.aiwg/release.config` declares the gates AIWG uses today:
+
+1. **local-build-test** (typecheck, unit tests, build, UAT for stable)
+2. **ci-green** (Gitea workflows on the release commit)
+3. **doc-sync** (code-to-docs sync with agentic/ + docs/ scope)
+4. **changelog-and-announcement** (CHANGELOG.md + docs/releases/ for stable)
+5. **readme-freshness** (diff prompt for stable)
+6. **release** (tag, push, mirror, npm dist-tag)
+7. **post-release** (tracker close-outs + reporter thanks)
+
+That config IS the AIWG release checklist — what was previously prose in CLAUDE.md is now an executable spec.
 
 ## Related
 
-- Rule: `versioning` (CalVer format, no leading zeros)
-- Rule: `no-attribution` (universal across release artifacts)
-- Rule: `ci-green-before-done` (no done without CI green)
-- Rule: `delivery-policy` (direct mode for release commits)
-- Rule: `anti-laziness` (no destructive shortcuts when a gate fails)
-- Skill: `dev-release-coordinate` (extensions/dev — generic tag/build/promote pattern this skill wraps with AIWG-specific gates)
-- Skill: `aiwg-pr` (for the release-prep PR workflow if `delivery.mode` is `pr-required`)
-- Skill: `aiwg-issue` (for filing release blockers)
+- Schema: `agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml`
+- Config: `.aiwg/release.config` (per project)
+- Rules: `versioning`, `no-attribution`, `ci-green-before-done`, `delivery-policy`, `anti-laziness`
+- Skills: `doc-sync` (called by gate 3), `aiwg-pr` (when delivery.mode is pr-required for release prep), `aiwg-issue` (filing release-blocker issues)
 - Doc: CLAUDE.md "Release Documentation Requirements" + "Release Checklist"
-- Doc: `docs/contributing/versioning.md`
 
 ## Acceptance criteria
 
-- [ ] Version validates per CalVer rule (no leading zeros)
-- [ ] CHANGELOG.md has the new section (stable only)
-- [ ] `docs/releases/v{version}-announcement.md` exists (stable only)
-- [ ] UAT passes (or explicitly skipped with operator acknowledgment)
-- [ ] `npm test` and `npx tsc --noEmit` pass
-- [ ] Tag pushed to origin and (if applicable) GitHub
+- [ ] `.aiwg/release.config` validated against the schema
+- [ ] Every gate in `gates` either executed or skipped per `required_for_channels`
+- [ ] All `hard_stop: true` gates green before tag push
 - [ ] CI green on the tag commit
-- [ ] Gitea release exists with the announcement body
-- [ ] No AI attribution anywhere in the commit/tag/announcement
-- [ ] Original reporter thanked (if release closes imported issues)
+- [ ] No AI attribution in commits, tags, or announcement
+- [ ] Original reporters thanked (if release closes imported issues)
+- [ ] Release entry created on Gitea (and GitHub mirror for stable)
+- [ ] npm dist-tag updated correctly per channel
