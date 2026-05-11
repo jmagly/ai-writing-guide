@@ -8,7 +8,9 @@
  * @issue #685
  */
 
-import { getVersionInfo } from '../../src/channel/manager.mjs';
+// Import from dist/ (see tools/cli/doctor.mjs for the rationale — npm
+// package ships dist/, not src/).
+import { getVersionInfo } from '../../dist/src/channel/manager.mjs';
 
 const args = process.argv.slice(2);
 const json = args.includes('--json');

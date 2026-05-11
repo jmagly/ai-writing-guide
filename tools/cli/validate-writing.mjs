@@ -10,11 +10,20 @@ import { readdir, stat } from 'fs/promises';
 import { join, extname, resolve } from 'path';
 import { existsSync } from 'fs';
 
-// Note: In production, import from compiled dist/
-// For development, you may need to compile TypeScript first
-const enginePath = process.env.NODE_ENV === 'production'
-  ? '../../../dist/writing/validation-engine.js'
-  : '../../src/writing/validation-engine.js';
+// Resolve the validation engine path, preferring dist/ (always present in
+// the npm package) and falling back to src/ for dev environments without a
+// compiled build. The previous NODE_ENV gate broke npm-installed users
+// because NODE_ENV is not set to "production" by `npm install -g aiwg`.
+// Same class of bug as `tools/cli/doctor.mjs` (#1250). For a fully
+// general resolver, see _resolve-impl.mjs (future work — config-var
+// approach tracked separately).
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const distEnginePath = resolve(__dirname, '../../dist/writing/validation-engine.js');
+const srcEnginePath = resolve(__dirname, '../../src/writing/validation-engine.js');
+const enginePath = existsSync(distEnginePath) ? distEnginePath : srcEnginePath;
 
 let WritingValidationEngine;
 try {

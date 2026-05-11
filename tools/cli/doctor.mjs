@@ -9,7 +9,14 @@ import os from 'os';
 import path from 'path';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
-import { getFrameworkRoot, getVersionInfo } from '../../src/channel/manager.mjs';
+// Import from dist/ — the npm package ships compiled code under dist/, NOT
+// the source tree. Importing from `../../src/channel/manager.mjs` works in
+// dev (src/ exists at repo root) but breaks on npm-installed users with
+// "Cannot find module 'src/channel/manager.mjs'". This script is invoked
+// from within the AIWG package root by `dist/src/cli/handlers/utilities.js`
+// doctorHandler, so `../../dist/src/channel/manager.mjs` resolves correctly
+// in both dev (after `npm run build:cli`) and in `npm install -g aiwg`.
+import { getFrameworkRoot, getVersionInfo } from '../../dist/src/channel/manager.mjs';
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
 // getFrameworkRoot() resolves correctly for npm global installs, edge, and dev channels.

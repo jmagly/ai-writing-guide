@@ -9,6 +9,27 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
+## [2026.5.1] - 2026-05-11 — Hotfix: `aiwg doctor` cannot find `src/channel/manager.mjs` on installed users
+
+A user-reported bug landed within hours of 2026.5.0 cutting: `aiwg --version` and `aiwg --help` worked, but `aiwg doctor` failed on a fresh `npm install -g aiwg` with `Cannot find module 'src/channel/manager.mjs'`. Root cause: three scripts under `tools/cli/` imported from `../../src/channel/manager.mjs` (the source tree), but the npm package only ships `dist/`, not `src/`. Local dev worked because both directories existed; npm-installed users only had `dist/`.
+
+### Fixed
+
+- **`tools/cli/doctor.mjs`** — import changed from `../../src/channel/manager.mjs` → `../../dist/src/channel/manager.mjs` with a comment explaining the npm-package layout. `aiwg doctor` now works on npm-installed AIWG.
+- **`tools/cli/version.mjs`** — same fix. (Not user-facing for `aiwg --version` because that path is special-cased in `bin/aiwg.mjs`, but `aiwg sync` invokes this script.)
+- **`tools/cli/update.mjs`** — same fix.
+- **`tools/cli/validate-writing.mjs`** — replaced the `NODE_ENV === 'production'` gate (which didn't fire on `npm install -g aiwg` because NODE_ENV isn't set) with an `existsSync(distPath)` check that prefers `dist/` when available and falls back to `src/` for dev. Same class of bug as the three above.
+
+### Audit
+
+Other `tools/` scripts that import from `src/` were audited; the following already have correct fallback logic and were not affected:
+
+- `tools/writing/writing-validator.mjs` — try/catch fallback dist → src
+- `tools/plugin/plugin-installer-cli.mjs`, `plugin-uninstaller-cli.mjs`, `plugin-status-cli.mjs` — `existsSync(distPath)` || `srcPath`
+- `tools/writing/expand-patterns.mjs` — dev-only script not invoked by the CLI
+
+A `_resolve-impl.mjs` shared helper to standardize this resolution across all `tools/` scripts is queued as a follow-up.
+
 ## [2026.5.0] - 2026-05-11 — "Project-Local + Kernel-Pivot Maturity"
 
 The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series stopped at `v2026.4.0-rc.33` and rolled forward to `v2026.5.0-rc.1`. Everything from both rc lines, plus the 41 rc cuts of the 2026.5.0 series, is folded into 2026.5.0 stable. There is no `v2026.4.0` git tag and `npm install aiwg@2026.4.0` will not resolve.

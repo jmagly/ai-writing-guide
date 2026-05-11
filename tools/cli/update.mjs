@@ -14,12 +14,14 @@
  */
 
 import { execSync } from 'child_process';
+// Import from dist/ (see tools/cli/doctor.mjs for the rationale — npm
+// package ships dist/, not src/).
 import {
   loadConfig,
   switchToNext,
   switchToNightly,
   switchToStable,
-} from '../../src/channel/manager.mjs';
+} from '../../dist/src/channel/manager.mjs';
 
 // Parse --channel <value> from argv
 function parseChannel(args) {
