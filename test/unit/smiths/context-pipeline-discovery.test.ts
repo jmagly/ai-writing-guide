@@ -195,13 +195,15 @@ describe('provider policy', () => {
 });
 
 describe('generateAiwgMd', () => {
-  it('mirrors CLAUDE.md content with the AIWG signature inserted', async () => {
+  it('mirrors CLAUDE.md content with the AIWG signature inserted, stripping the @AIWG.md self-include (#1268)', async () => {
     const claudeMd = '# AIWG\n\n@AIWG.md\n\nSome project context here.\n';
     await fs.writeFile(path.join(tmpDir, 'CLAUDE.md'), claudeMd, 'utf8');
     const content = await generateAiwgMd(tmpDir);
     expect(content).toContain('# AIWG');
     expect(content).toContain('<!-- aiwg-managed -->');
-    expect(content).toContain('@AIWG.md');
+    // #1268: AIWG.md IS the content that @AIWG.md would include, so the
+    // directive must not survive into AIWG.md as a self-reference.
+    expect(content).not.toMatch(/^\s*@AIWG\.md\s*$/m);
     expect(content).toContain('Some project context here.');
   });
 
