@@ -60,18 +60,22 @@ aiwg run skill steward-prep-delivery -- "<search terms>"
 
 If a likely duplicate exists, comment on it rather than filing fresh.
 
-### 3. Environment capture (bug reports)
+### 3. Environment capture (REQUIRED — three non-negotiable fields)
 
-Bug reports without environment context get bounced. Collect:
+Bug reports without **AIWG version + operating system + provider** are bounced before triage. Collect ALL of these:
 
 ```bash
-aiwg version           # AIWG version + channel
-aiwg doctor            # workspace health snapshot
-node --version
-uname -a               # OS / kernel
+aiwg version           # → AIWG version + channel (REQUIRED)
+uname -a               # → operating system + kernel (REQUIRED)
+node --version         # → Node version
+aiwg doctor            # workspace health snapshot (helpful)
 ```
 
-Capture the **platform** explicitly: Claude Code, hermes, Codex, Copilot, Cursor, Warp, Factory, OpenCode, Windsurf, OpenClaw. The same bug behaves differently across providers. The tester report imports in May 2026 (#1264–#1268) had to correct the platform from "Claude Code" to "hermes-agent" after the fact — get it right the first time.
+And — also required — the **provider** (the AIWG harness in use): one of `claude-code`, `hermes`, `codex`, `copilot`, `cursor`, `warp`, `factory`, `opencode`, `windsurf`, `openclaw`.
+
+When you (the agent) draft a bug report on behalf of a user, **ask explicitly for each of the three required fields** if they aren't already in the conversation. Don't infer. The May-2026 jmagly→roctinam import sweep needed a correction round because the original GitHub report cited "Claude Code 2.1.137" but the actual harness in use was hermes — same bug, different behavior, wasted half a round-trip to clarify. Don't repeat that.
+
+The bug-report template has a checklist that enforces this; surface it before the operator submits.
 
 ### 4. Reproducible repro
 

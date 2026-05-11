@@ -43,16 +43,25 @@ The `steward-prep-delivery` skill bundles both lookups and gracefully degrades w
 
 Every bug report must include:
 
-### Environment
+### Environment (REQUIRED — three fields are non-negotiable)
+
+Every bug report **must** include these three, copy-pasted verbatim, not paraphrased:
 
 ```bash
-aiwg version           # AIWG version + channel
-aiwg doctor            # workspace health snapshot
-node --version
-uname -a               # OS / kernel
+aiwg version           # → AIWG version + channel (REQUIRED)
+uname -a               # → operating system + kernel (REQUIRED)
+node --version         # → Node version
+aiwg doctor            # workspace health snapshot (helpful)
 ```
 
-**Capture the platform explicitly**: Claude Code, hermes, Codex, Copilot, Cursor, Warp, Factory, OpenCode, Windsurf, OpenClaw. Same bug behaves differently across providers — the May-2026 import sweep had to correct the platform from "Claude Code" to "hermes-agent" after the fact. Get it right the first time.
+And — also required — the **provider** (the AIWG harness you were running): one of `claude-code`, `hermes`, `codex`, `copilot`, `cursor`, `warp`, `factory`, `opencode`, `windsurf`, `openclaw`.
+
+> **Why these three (AIWG version + OS + provider) are non-negotiable:**
+> - **AIWG version**: a bug you're hitting may already be fixed in `main` but not yet in the version you installed. Without the version, the first triage step is asking you for it.
+> - **Operating system**: the same bug behaves differently across Linux kernel versions, macOS, and Windows. Path resolution, permission semantics, shell behavior all diverge.
+> - **Provider**: Claude Code's slash-command path is not Hermes's is not Codex's. The May-2026 tester-report import sweep needed a correction round because the original GitHub report cited "Claude Code 2.1.137" but the actual harness in use was hermes — the slash-command churn behavior the tester observed only happens on hermes (Claude Code's deployed command stubs route to the deterministic CLI). Get this right the first time.
+
+Bug reports missing any of these three will be returned for clarification before any triage work begins. The bug-report template checklist enforces this.
 
 ### Reproducible repro
 

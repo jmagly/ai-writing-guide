@@ -9,7 +9,24 @@ labels: ['tester-report', 'triage']
 
 - Tester:
 - Date:
-- Environment (OS, AIWG version, platform):
+
+## Environment (REQUIRED — applies to ALL findings in this report)
+
+Run these and paste output verbatim:
+
+```bash
+aiwg version                  # AIWG version
+uname -a                      # operating system
+node --version                # Node version
+```
+
+- [ ] **AIWG version**: `<paste from aiwg version>`
+- [ ] **Operating system**: `<paste from uname -a>`
+- [ ] **Provider** (AIWG harness): one of `claude-code` / `hermes` / `codex` / `copilot` / `cursor` / `warp` / `factory` / `opencode` / `windsurf` / `openclaw`
+- [ ] **Node version**: `<paste from node --version>`
+- [ ] **Install location**: one of `npm-global` / `linuxbrew` / `local-source` / `project-local`
+
+> If individual findings used different providers (e.g., one Claude Code, one Hermes), note the per-finding provider inline in the finding section. Same bug behaves differently across providers — the May-2026 tester-report sweep needed correction because the original report cited the wrong provider.
 
 ## Findings
 
