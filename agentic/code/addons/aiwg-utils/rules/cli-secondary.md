@@ -1,4 +1,4 @@
-# CLI Commands Are Secondary to Their Paired Skills/Agents
+# Use Local or Discovered Skill Over Raw CLI
 
 **Enforcement Level**: HIGH
 **Scope**: All agents on AIWG-managed projects
@@ -7,31 +7,50 @@
 
 ## Overview
 
-AIWG is **agentic-first**. The agent self-guides via discovery, then invokes a **skill/agent/command** that carries the full priming context — rules, gates, preservation logic, recovery patterns. The CLI sits *underneath* that priming. It is the imperative tool the skill calls; it is not the agent's primary surface.
+AIWG is **agentic-first**. The agent self-guides via skills and agents that carry the full priming context — rules, gates, preservation logic, recovery patterns. The CLI sits *underneath* that priming. It is the imperative tool the skill calls; it is not the agent's primary surface.
 
-When a CLI command has a paired skill or agent, the agent MUST invoke the skill — not the raw CLI command directly. The skill loads the surrounding discipline. The CLI alone does not.
+## The Hierarchy
 
-**Sole exception**: discovery and finder commands (`aiwg discover`, `aiwg show`, and friends listed below) are themselves the priming entry points. They remain primary and direct-callable. They are *how* the agent gets to the paired skill in the first place.
+The agent's preferred path for any action, in strict priority order:
 
-## The Principle
+| Priority | Surface | When |
+|---|---|---|
+| **1. Local skill or agent** | Already loaded in your context (kernel skills, framework quickrefs, deployed agents) | Always check here first — these are free to invoke |
+| **2. Discovered skill or agent** | Reachable via `aiwg discover "<need>"` + `aiwg show <type> <name>` | When no local skill matches; query the index before improvising or falling to the CLI |
+| **3. Raw CLI command** | Imperative invocation of `aiwg <command>` | Only when no skill exists, OR you are on the discovery surface, OR you are inside a skill that is calling the CLI as its step |
+| **4. Manual file operations** | Direct edits without going through skill or CLI | Last resort — bypasses both priming AND registry update logic |
+
+**Rule of thumb**: if the agent is reaching for the raw CLI for an *action* (mutation, deploy, scaffold, regenerate), it should first ask "is there a skill for this — locally or via `aiwg discover`?" If yes, route through the skill.
+
+**Sole exception**: discovery and finder commands (`aiwg discover`, `aiwg show`, and friends listed in Rule 2) are themselves the priming entry points. They remain primary and direct-callable. They are *how* the agent gets to a discovered skill in the first place — they are the bridge from priority 2 down to priority 1.
+
+## The Flow
 
 ```
 Agent receives task
   ↓
-aiwg discover "<need>"          ← discovery: direct CLI is correct
-  ↓
-aiwg show skill <name>          ← discovery: direct CLI is correct
-  ↓
-Invoke the skill                ← skill loads priming context
-  ↓
-Skill calls the CLI under the hood   ← imperative tool, not the surface
+Is there a LOCAL skill in my context for this?
+  ├─ YES → invoke local skill (priority 1)
+  └─ NO ↓
+        aiwg discover "<need>"          ← discovery CLI is correct here
+        aiwg show skill <name>          ← discovery CLI is correct here
+        ↓
+        Invoke the discovered skill (priority 2)
+        ↓
+        Skill calls the CLI under the hood (priority 3, inside the skill)
 ```
 
 ## Mandatory Rules
 
-### Rule 1: For Action Commands, Prefer the Paired Skill
+### Rule 1: Local Skill First, Then Discovered Skill, Then CLI
 
-When a CLI command has a paired skill or agent, the agent's default invocation MUST be the skill — not the raw CLI command.
+For action commands, the priority is always: **local skill → discovered skill → raw CLI**. The agent must walk down the hierarchy in order, not jump to the CLI:
+
+1. **Check what's already in your context** — kernel skills (`use`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-regenerate`, `aiwg-status`, `steward`, etc.), framework quickrefs that name the right skill, deployed agents (`aiwg-steward`, `aiwg-finder`)
+2. **If no local match, run `aiwg discover "<need>"`** — the bulk of AIWG's surface (~385 of 400 skills) is not in your context but is one query away
+3. **Only fall to the raw CLI when** no local or discovered skill exists, the user explicitly typed the raw command, you are on the discovery surface (Rule 2), or you are inside a paired skill that is calling the CLI as its step
+
+The skill carries the priming. The CLI alone does not.
 
 **FORBIDDEN**:
 ```
@@ -168,15 +187,18 @@ Universal. Every AIWG-supported provider receives the same skill/agent/CLI separ
 
 ## Checklist
 
-Before invoking any CLI command, verify:
+Before invoking any CLI command, walk the hierarchy in order:
 
-- [ ] Is this a discovery/finder command (Rule 2 table)? If yes, run it directly.
-- [ ] Is this a mixed command, and am I using a discovery subcommand (Rule 3)? If yes, run it directly.
-- [ ] Otherwise: does a paired skill exist (Rule 4 table or `aiwg discover`)?
-- [ ] If yes: am I invoking the skill rather than the raw CLI?
-- [ ] If I'm running the CLI directly, do I have one of the exceptions in Rule 6?
+- [ ] Priority 1: Is there a **local skill** in my context (kernel skill, framework quickref entry, deployed agent) that does this? If yes, invoke it.
+- [ ] Priority 2: If no local skill, run `aiwg discover "<need>"`. Did discovery return a paired skill? If yes, fetch it with `aiwg show` and invoke it.
+- [ ] Priority 3: Only after priorities 1 and 2 are exhausted, consider running the CLI directly. Verify one of these holds:
+  - This is a discovery/finder command (Rule 2 table)
+  - This is a mixed command and I'm using a discovery subcommand (Rule 3)
+  - No paired skill exists (Rule 4 table doesn't list one; discover returns no results)
+  - I'm inside a paired skill that is calling the CLI as its step
+  - The user explicitly typed the raw command
 
-If any answer is wrong — stop and route through the skill.
+If priority 1 or 2 has a match and I'm still reaching for the CLI — stop and route through the skill.
 
 ## References
 

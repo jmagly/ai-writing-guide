@@ -12,12 +12,13 @@ This is your always-loaded core directory for AIWG. It does **not** list every u
 
 ## How to use this quickref
 
-1. Identify the **capability domain** the user's need belongs to
-2. Pick a **curated phrase** from that domain (or paraphrase the user's words)
-3. Run `aiwg discover "<phrase>"` and surface the top match to the user
-4. Fetch the matched skill body with `aiwg show <type> <name>` — never `find` / `ls` / `Read`
+Walk the action hierarchy in order. The agent always prefers a **skill** over a raw CLI invocation:
 
-**Do not enumerate skills from memory.** AIWG ships hundreds of skills; you only see the kernel set in your context.
+1. **Priority 1 — Local skill or agent**: check if a skill already in your context handles the need (kernel skills listed below, framework quickrefs, deployed agents like `aiwg-steward` / `aiwg-finder`). These cost nothing to invoke.
+2. **Priority 2 — Discovered skill**: if no local match, pick a **curated phrase** from a capability domain (or paraphrase the user's words), run `aiwg discover "<phrase>"`, surface the top match, and fetch its body with `aiwg show <type> <name>` — never `find` / `ls` / `Read`.
+3. **Priority 3 — Raw CLI**: only when no skill exists at priorities 1 or 2, OR the command is on the discovery surface (`aiwg discover`, `aiwg show`, `aiwg list`, `aiwg version`, `aiwg runtime-info`), OR you are inside a skill that's calling the CLI as its step.
+
+**Do not enumerate skills from memory.** AIWG ships hundreds of skills; you only see the kernel set in your context. See the [`cli-secondary` rule](../../rules/cli-secondary.md) for the full hierarchy and per-command pairings.
 
 ## The canonical pipeline: `discover → show`
 
