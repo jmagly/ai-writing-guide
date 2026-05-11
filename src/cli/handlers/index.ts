@@ -99,6 +99,7 @@ import { bestPracticesAuditHandler } from './best-practices-audit.js';
 // sync was renamed to refresh (#694). refreshHandler exposes both 'refresh'
 // (primary) and 'sync' (deprecated alias) to preserve backward compatibility.
 import { refreshHandler } from './refresh.js';
+import { regenerateHandler, regenerateHandlers } from './regenerate.js';
 import { mcHandler, mcHandlers } from './mc.js';
 import { sdlcAccelerateHandler } from './sdlc-accelerate.js';
 import { teamHandler, teamHandlers } from './team.js';
@@ -126,6 +127,7 @@ export {
   doctorHandler,
   updateHandler,
   refreshHandler,
+  regenerateHandler,
 
   // Framework management
   useHandler,
@@ -254,6 +256,7 @@ export {
   mcHandlers,
   teamHandlers,
   stewardHandlers,
+  regenerateHandlers,
   daemonHandlers,
   sandboxHandlers,
 };
@@ -270,6 +273,7 @@ export const allHandlers: CommandHandler[] = [
   doctorHandler,
   updateHandler,
   refreshHandler,
+  regenerateHandler,
 
   // Framework management
   useHandler,

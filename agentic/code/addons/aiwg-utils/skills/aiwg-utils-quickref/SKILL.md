@@ -75,11 +75,16 @@ These ops skills are kernel-resident — already in your context regardless of `
 - `steward` — provider capability awareness + command routing
 - `aiwg-doctor` — installation health check with remediation steps
 - `aiwg-refresh` — update CLI + redeploy frameworks (alias: `aiwg sync`)
+- `aiwg-regenerate` — regenerate AIWG.md + AGENTS.md without redeploying frameworks (#1266)
 - `aiwg-status` — workspace status dashboard
 - `aiwg-help` — list every CLI command, args, and examples
+- `aiwg-issue` — guide for filing high-quality issues (template selection, env capture, duplicate detection, import flow)
+- `aiwg-pr` — guide for opening high-quality PRs (delivery-policy compliance, no-attribution, CI-green-before-done)
 - `use` — deploy a framework or addon
 
 Pair with the `aiwg-steward` agent (always-deployed) for orchestrated repair: health check → refresh → re-doctor.
+
+When a user wants to **file an issue or open a PR**, route them through `aiwg-issue` / `aiwg-pr` first. Both are kernel skills (in context) and reference `steward-prep-delivery` (which provides a runnable duplicate-detection helper).
 
 ## Capability domains
 

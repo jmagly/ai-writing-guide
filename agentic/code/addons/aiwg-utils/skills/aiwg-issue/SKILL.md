@@ -1,0 +1,169 @@
+---
+namespace: aiwg
+name: aiwg-issue
+platforms: [all]
+kernel: true
+description: Guide for filing high-quality issues — template selection, environment capture, duplicate detection, and import flow for cross-tracker reports
+---
+
+# Filing AIWG Issues
+
+You are helping a user (or yourself, as an autonomous agent) file a high-quality issue. The bar is set by the recent tester-report import sweep (Gitea #1264–#1269): environment captured, exact commands, error text in code blocks, suggested fix paths.
+
+## When this fires
+
+Natural-language triggers:
+
+- "I want to file an issue"
+- "How do I report a bug?"
+- "Help me write up a bug report"
+- "What template should I use?"
+- "Should I file a new issue or comment on an existing one?"
+- "Import this report from GitHub" / "from Discord" / "from email"
+
+## Template selection
+
+| Template | When to use | Path |
+|---|---|---|
+| `bug-report.md` | One concrete defect with a reproduction | `.gitea/ISSUE_TEMPLATE/bug-report.md` |
+| `feature-request.md` | A new capability or enhancement proposal | `.gitea/ISSUE_TEMPLATE/feature-request.md` |
+| `tester-report.md` | A single session that surfaced multiple findings | `.gitea/ISSUE_TEMPLATE/tester-report.md` |
+| `imported-report.md` | Mirroring an issue filed in a different tracker | `.gitea/ISSUE_TEMPLATE/imported-report.md` |
+
+Templates exist in both `.gitea/ISSUE_TEMPLATE/` (for Gitea) and `.github/ISSUE_TEMPLATE/` (for the GitHub mirror). Pick the one matching the target tracker; the content is identical.
+
+## The walkthrough
+
+### 1. Triage first
+
+Ask: is this one bug, or multiple findings from a single session?
+
+- **One issue** → `bug-report.md` or `feature-request.md`
+- **Multiple findings** → `tester-report.md`, split into discrete bugs during follow-up triage
+- **Already filed elsewhere** → `imported-report.md`
+
+**One bug per issue.** If three things broke, file three issues (or one tester-report and split). Don't bundle.
+
+### 2. Duplicate detection (BEFORE filing)
+
+Always check for duplicates first. Cheaper to comment on an existing thread than file again. Use:
+
+```bash
+aiwg discover "<keywords from the proposed title>"
+```
+
+Then search the tracker for matching titles. The `steward-prep-delivery` skill bundles both lookups into one command:
+
+```bash
+aiwg run skill steward-prep-delivery -- "<search terms>"
+```
+
+If a likely duplicate exists, comment on it rather than filing fresh.
+
+### 3. Environment capture (bug reports)
+
+Bug reports without environment context get bounced. Collect:
+
+```bash
+aiwg version           # AIWG version + channel
+aiwg doctor            # workspace health snapshot
+node --version
+uname -a               # OS / kernel
+```
+
+Capture the **platform** explicitly: Claude Code, hermes, Codex, Copilot, Cursor, Warp, Factory, OpenCode, Windsurf, OpenClaw. The same bug behaves differently across providers. The tester report imports in May 2026 (#1264–#1268) had to correct the platform from "Claude Code" to "hermes-agent" after the fact — get it right the first time.
+
+### 4. Reproducible repro
+
+Paste **exact** commands (copy-paste-ready, no `<placeholder>`s without explicit substitution instructions) and **exact** error text in fenced code blocks. Paraphrased errors lose detail.
+
+Bad:
+> "When I run the steward command it errors out"
+
+Good:
+> ```
+> $ aiwg steward capabilities --provider claude-code
+> ERROR ENOENT: no such file or directory, open '/home/linuxbrew/.linuxbrew/lib/node_modules/aiwg/dist/agentic/code/providers/capability-matrix.yaml'
+> ```
+
+### 5. Title format
+
+`type(scope): one-line summary`. Examples:
+
+- `bug(steward): AIWG_ROOT path resolution lands at dist/ instead of package root`
+- `feat(contributing): consistent PR + Issue templates`
+- `regression: Skill Seekers implementation lost`
+- `imported: <original title> (<source>#<number>)` for imports
+
+Vague titles ("doesn't work", "broken") get bumped back. Insist on the typed form.
+
+### 6. Suggested fix (if you've investigated)
+
+If you've already traced the bug, point at the file or line. "I think this is in `src/cli/handlers/steward.ts:26`" is faster than a round-trip. This is optional but valued — the recent #1261/#1262/#1263 imports landed faster because the original reporter included file-line pointers.
+
+### 7. Acceptance criteria
+
+Bug reports should include checkable acceptance:
+
+```markdown
+- [ ] Repro from "Steps to reproduce" no longer fails
+- [ ] Regression test added (if the bug bypassed existing tests)
+- [ ] Related docs updated (if behavior was documented incorrectly)
+```
+
+Feature requests need concrete, checkable conditions — not "works well" or "feels right".
+
+## Import flow (cross-tracker reports)
+
+When a report lands in a different tracker (GitHub mirror, Discord, email, vendor support), mirror to Gitea as `imported-report.md`:
+
+1. Title: `imported: <original title> (<source>#<number>)`
+2. Link the source URL
+3. Preserve the **original reporter handle** and **platform/environment** (correct it if the source got it wrong)
+4. Add a "Status against current main" table
+5. Cross-reference any local issues that duplicate or overlap
+6. If already fixed: note the resolving commit and close as duplicate
+7. **Thank the original reporter** in a closing comment when the work lands
+
+Example: jmagly#108–#112 → roctinam #1264–#1268 sweep (May 2026).
+
+## Filing
+
+```bash
+aiwg run skill issue-create -- "<title>" --provider gitea --labels "bug"
+```
+
+Or use the tracker's web UI with the template. Both are valid.
+
+For Gitea via MCP (if available):
+
+```yaml
+mcp__git-gitea__issue_write:
+  method: create
+  owner: roctinam
+  repo: aiwg
+  title: '<title>'
+  body: '<full body following bug-report.md template>'
+```
+
+## After filing
+
+- Add labels (priority, area, type) per the `ops-issue-tracking` rule conventions
+- Link related issues with `Refs #N` / `Blocked-by: #N` / `Blocks: #N` in the body
+- Watch the thread for triage comments and answer promptly
+
+## Anti-patterns to flag
+
+- **"While I'm at it"** — adding unrelated changes to a bug report. Split into separate issues.
+- **Bundling fixes into the report** — if you have a fix, file the issue first, then submit the PR with `Closes #N`. Don't mix.
+- **Re-filing duplicates** — always run duplicate detection first.
+- **Vague titles** — `type(scope): subject` form is required.
+- **Missing environment** — bug reports without OS/version/platform get clarified before action.
+
+## Related
+
+- Skills: `aiwg-pr` (filing PRs), `steward-prep-delivery` (interactive walkthrough), `issue-create` (low-level filing), `issue-auto-sync` (commit↔issue linking)
+- Templates: `.gitea/ISSUE_TEMPLATE/`, `.github/ISSUE_TEMPLATE/`
+- Docs: `CONTRIBUTING.md` (full contributor guide)
+- Rules: `delivery-policy`, `no-attribution`, `ops-issue-tracking`
+- Origin: #1269 (templates), #1264–#1268 (tester report sweep that motivated this)

@@ -174,6 +174,43 @@ export const refreshCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// #1266 — Regenerate cross-provider context files (AIWG.md + AGENTS.md) without
+// redeploying frameworks. Narrower than refresh; faster for context-drift fixes.
+export const regenerateCommand: Extension = {
+  id: 'regenerate',
+  type: 'skill',
+  name: 'Regenerate Context Files',
+  description: 'Regenerate AIWG.md + AGENTS.md without redeploying frameworks (context-only)',
+  version: '1.0.0',
+  capabilities: ['cli', 'regenerate', 'context', 'maintenance', 'self-maintenance'],
+  keywords: ['regenerate', 'context', 'aiwg.md', 'agents.md', 'redeploy-context'],
+  category: 'maintenance',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['regenerate context', 'rewrite AIWG.md', 'rewrite AGENTS.md', 'fix context files'],
+    commandHint: {
+      template: 'utility',
+      allowedTools: ['Bash', 'Read', 'Write'],
+      argumentHint: '[--provider <name>] [--dry-run] [--force] [--no-aiwg-md] [--no-agents-md]',
+      executionSteps: [
+        'Detect active provider (or accept --provider override)',
+        'Discover deployed artifacts under provider paths',
+        'Regenerate AIWG.md from CLAUDE.md template (or stub if absent)',
+        'Regenerate AGENTS.md link-index sections',
+        'Report which files were written, skipped, or backed up',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Framework Management Commands
 
 export const useCommand: Extension = {
@@ -2950,12 +2987,13 @@ export const rlmCacheCommand: Extension = {
  * - Agentic Tools (5): chunk, fanout, rlm-prep, rlm-search, rlm-status
  */
 export const commandDefinitions: Extension[] = [
-  // Maintenance (5)
+  // Maintenance (6)
   helpCommand,
   versionCommand,
   doctorCommand,
   updateCommand,
   refreshCommand,
+  regenerateCommand,
 
   // Framework (6)
   useCommand,

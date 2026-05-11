@@ -1585,6 +1585,8 @@ export class UseHandler implements CommandHandler {
           skillName === 'aiwg-regenerate-codex' ||
           skillName === 'aiwg-regenerate-opencode' ||
           skillName === 'aiwg-regenerate-agents' ||
+          skillName === 'aiwg-issue' ||           // #1269 — issue filing guide (kernel)
+          skillName === 'aiwg-pr' ||              // #1269 — PR filing guide (kernel)
           skillName === 'use' ||
           skillName === 'steward';
 

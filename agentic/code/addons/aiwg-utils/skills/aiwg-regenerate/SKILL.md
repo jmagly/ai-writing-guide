@@ -4,7 +4,20 @@ name: aiwg-regenerate
 platforms: [all]
 kernel: true
 description: Regenerate platform context file with preserved team directives
+script:
+  entrypoint: run.sh
+  runtime: bash
+  cwd: project-root
+  argsHint: '[--provider <name>] [--dry-run] [--force] [--no-aiwg-md] [--no-agents-md]'
 ---
+
+> **Deterministic execution (#1266)**: this skill has a `script:` entrypoint
+> that shells out to `aiwg regenerate "$@"`. Prefer
+> `aiwg run skill aiwg-regenerate -- <flags>` over agent-mediated invocation.
+> When invoked as a slash command on platforms without a deployed command stub,
+> the agent MUST run only `aiwg regenerate <flags>` and report its output — no
+> exploratory permission requests, no multi-step planning. The deterministic
+> CLI is the source of truth.
 
 # Regenerate Platform Context File
 

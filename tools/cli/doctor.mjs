@@ -570,6 +570,64 @@ async function runDoctor() {
     );
   }
 
+  // 8c. Discovery kernel availability (#1264(g)).
+  //
+  // Verify the discovery commands an AIWG-aware agent expects: discover, show,
+  // index, runtime-info. Each is a smoke probe — non-fatal warning if the
+  // command isn't routable, because doctor must work even on a partially
+  // installed system. Surfaces missing surfaces loudly so an operator/agent
+  // knows the install is degraded before they try to use it.
+  const { spawnSync } = await import('node:child_process');
+  const aiwgBin = process.env.AIWG_BIN || 'aiwg';
+  const probeCommand = (name, args, expectStdout = null) => {
+    try {
+      const r = spawnSync(aiwgBin, args, { encoding: 'utf-8', timeout: 10_000 });
+      if (r.error || r.status !== 0) {
+        const stderr = (r.stderr || '').trim().split('\n')[0] || 'no stderr';
+        return { ok: false, detail: `exit=${r.status ?? '?'} ${stderr}` };
+      }
+      if (expectStdout && !(r.stdout || '').includes(expectStdout)) {
+        return { ok: false, detail: `stdout missing expected marker '${expectStdout}'` };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, detail: e.message };
+    }
+  };
+
+  const discoveryProbes = [
+    {
+      label: 'Discovery: aiwg discover',
+      args: ['discover', 'doctor', '--json', '--limit', '1'],
+      hint: 'aiwg discover is unavailable — agents may bypass index-driven lookup',
+    },
+    {
+      label: 'Discovery: aiwg show',
+      args: ['show', 'skill', 'aiwg-doctor'],
+      hint: 'aiwg show cannot fetch a known kernel skill body',
+    },
+    {
+      label: 'Discovery: aiwg index',
+      args: ['index', 'stats', '--json'],
+      hint: 'aiwg index pipeline unavailable — project-local artifact index may be missing',
+    },
+    {
+      label: 'Discovery: aiwg runtime-info',
+      args: ['runtime-info', '--check', 'aiwg'],
+      hint: 'aiwg runtime-info cannot self-check — toolsmith catalog may be broken',
+    },
+  ];
+
+  for (const probe of discoveryProbes) {
+    const r = probeCommand(probe.label, probe.args);
+    if (r.ok) {
+      check(probe.label, 'ok', `\`aiwg ${probe.args.join(' ')}\` succeeded`);
+    } else {
+      // Warn (not error) — discovery is degraded but doctor itself still works.
+      check(probe.label, 'warn', `${probe.hint} — ${r.detail}`);
+    }
+  }
+
   // 9. Check installed addons
   const addonChecks = [
     { id: 'daemon', label: 'Daemon Addon', manifest: 'agentic/code/addons/daemon/manifest.json',
