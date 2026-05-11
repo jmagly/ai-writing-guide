@@ -1,0 +1,166 @@
+# GitHub Mirror — auto-push tag + create Release on stable tags (#1251)
+#
+# Triggered by tag pushes. On STABLE tags only (no pre-release suffix), this
+# workflow:
+#   1. Pushes main + the tag to the GitHub mirror at jmagly/aiwg
+#   2. Creates a GitHub Release using docs/releases/v${VERSION}-announcement.md
+#      as the body (falls back to extracting the CHANGELOG section if the
+#      announcement file is missing).
+#
+# Pre-release tags (v*-rc.*, v*-alpha.*, v*-beta.*, v*-nightly.*) skip
+# entirely — per CLAUDE.md these are internal pipeline checkpoints and never
+# get a GitHub Release.
+#
+# REQUIRED SECRETS:
+#   GH_TOKEN  - GitHub personal access token with `public_repo` scope
+#               (sufficient for tag push + release creation on the public
+#               jmagly/aiwg mirror). Workflow gracefully skips if absent so
+#               forks without a GitHub mirror don't fail CI.
+
+name: GitHub Mirror
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: github-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror-and-release:
+    name: Mirror to GitHub + Release
+    runs-on: ubuntu-latest
+    container: node:20
+    timeout-minutes: 10
+    # Force bash so we can use set -euo pipefail and array operations.
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so we can push to mirror
+
+      - name: Install gh CLI + jq
+        run: |
+          set -euo pipefail
+          if ! command -v jq >/dev/null 2>&1; then
+            apt-get update && apt-get install -y --no-install-recommends jq
+          fi
+          if ! command -v gh >/dev/null 2>&1; then
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+              | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+              > /etc/apt/sources.list.d/github-cli.list
+            apt-get update && apt-get install -y --no-install-recommends gh
+          fi
+
+      - name: Classify tag (stable vs pre-release) and skip-or-go
+        id: classify
+        run: |
+          set -euo pipefail
+          # GITHUB_REF for a tag push looks like refs/tags/v2026.5.0 or
+          # refs/tags/v2026.5.0-rc.41. Strip the prefix.
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          BASE="${TAG_VERSION%%-*}"
+          if [ "$TAG_VERSION" != "$BASE" ]; then
+            echo "Pre-release tag detected (${TAG_VERSION} contains '-'). Per CLAUDE.md, skipping GitHub fan-out."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "Stable tag detected: v${TAG_VERSION}. Will push to GitHub mirror and create Release."
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "version=${TAG_VERSION}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check GH_TOKEN availability
+        id: token
+        if: ${{ steps.classify.outputs.skip != 'true' }}
+        run: |
+          set -euo pipefail
+          if [ -z "${{ secrets.GH_TOKEN }}" ]; then
+            echo "GH_TOKEN secret is not configured. Skipping GitHub fan-out (forks without a GitHub mirror should leave this empty)."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "GH_TOKEN configured."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push tag + main to GitHub mirror
+        if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Use a one-shot URL with embedded token; never echo the token.
+          # The token lives only in this command's environment, not in git config.
+          git push "https://x-access-token:${GH_TOKEN}@github.com/jmagly/aiwg.git" \
+            "refs/tags/v${{ steps.classify.outputs.version }}:refs/tags/v${{ steps.classify.outputs.version }}"
+          # Best-effort main push (idempotent — if mirror is ahead via a separate
+          # PR flow, this will fast-forward or no-op).
+          git push "https://x-access-token:${GH_TOKEN}@github.com/jmagly/aiwg.git" \
+            "HEAD:refs/heads/main" || \
+            echo "main push declined (likely non-fast-forward — that's fine, the tag is what matters for the release)."
+
+      - name: Resolve release body
+        id: body
+        if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.classify.outputs.version }}"
+          ANNOUNCEMENT="docs/releases/v${VERSION}-announcement.md"
+          if [ -f "$ANNOUNCEMENT" ]; then
+            echo "Using announcement file: $ANNOUNCEMENT"
+            echo "body_file=$ANNOUNCEMENT" >> $GITHUB_OUTPUT
+          else
+            echo "Announcement file not found; extracting CHANGELOG section."
+            # Extract the section between ## [VERSION] and the next ## [ header.
+            awk -v ver="$VERSION" '
+              $0 ~ "^## \\["ver"\\]" { capture=1; print; next }
+              capture && /^## \[/ { exit }
+              capture { print }
+            ' CHANGELOG.md > /tmp/release-body.md
+            if [ ! -s /tmp/release-body.md ]; then
+              echo "WARNING: could not find CHANGELOG section for ${VERSION}; using a minimal body."
+              echo "# AIWG v${VERSION}" > /tmp/release-body.md
+              echo "" >> /tmp/release-body.md
+              echo "See [CHANGELOG.md](https://github.com/jmagly/aiwg/blob/main/CHANGELOG.md) for details." >> /tmp/release-body.md
+            fi
+            echo "body_file=/tmp/release-body.md" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.classify.outputs.version }}"
+          BODY_FILE="${{ steps.body.outputs.body_file }}"
+          # Idempotent — if the release already exists, log and continue.
+          if gh release view "v${VERSION}" --repo jmagly/aiwg >/dev/null 2>&1; then
+            echo "GitHub Release v${VERSION} already exists; treating as success."
+          else
+            gh release create "v${VERSION}" \
+              --repo jmagly/aiwg \
+              --title "v${VERSION}" \
+              --notes-file "$BODY_FILE" \
+              --verify-tag
+            echo "GitHub Release v${VERSION} created."
+          fi
+
+      - name: Summary
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.classify.outputs.skip }}" = "true" ]; then
+            echo "✓ Pre-release tag — GitHub fan-out skipped by design."
+          elif [ "${{ steps.token.outputs.skip }}" = "true" ]; then
+            echo "✓ Stable tag, but GH_TOKEN not configured — skipped (fork mode)."
+          else
+            echo "✓ Stable tag v${{ steps.classify.outputs.version }} mirrored + released to github.com/jmagly/aiwg."
+          fi
