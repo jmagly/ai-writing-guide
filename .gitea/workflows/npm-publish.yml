@@ -111,6 +111,36 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Affirm dist-tag on Gitea (idempotent)
+        # Always re-write the dist-tag, even when publish was skipped as
+        # "already exists". This makes re-runs self-healing if the original
+        # publish lost the tag write (registry race, propagation, etc).
+        run: |
+          set -o pipefail
+          cat > .npmrc << 'NPMRC'
+          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+          VERSION="${{ steps.rcversion.outputs.npm_version }}"
+          TAG="${{ steps.rcversion.outputs.npm_tag }}"
+          for i in 1 2 3 4 5; do
+            if npm dist-tag add "aiwg@${VERSION}" "${TAG}" --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee dist-tag-output.txt; then
+              break
+            fi
+            if grep -qiE "is not in the npm registry|not found|404" dist-tag-output.txt; then
+              echo "Attempt $i: version not yet visible on Gitea, retrying in 10s..."
+              sleep 10
+            else
+              echo "✗ Gitea dist-tag promotion failed"; cat dist-tag-output.txt; exit 1
+            fi
+            if [ "$i" = "5" ]; then
+              echo "✗ Gitea dist-tag promotion exhausted retries"; exit 1
+            fi
+          done
+          echo "Gitea dist-tags after promotion:"
+          npm dist-tag ls aiwg --registry=${{ env.GITEA_NPM_REGISTRY }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish pre-release to public npmjs.org
         run: |
           set -o pipefail
@@ -130,6 +160,39 @@ jobs:
               cat publish-public-output.txt; exit 1
             fi
           }
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+
+      - name: Affirm dist-tag on npmjs.org (idempotent)
+        run: |
+          set -o pipefail
+          cat > .npmrc << 'NPMRC'
+          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+          VERSION="${{ steps.rcversion.outputs.npm_version }}"
+          TAG="${{ steps.rcversion.outputs.npm_tag }}"
+          for i in 1 2 3 4 5; do
+            if npm dist-tag add "aiwg@${VERSION}" "${TAG}" 2>&1 | tee dist-tag-output.txt; then
+              break
+            fi
+            if grep -qiE "is not in the npm registry|not found|404" dist-tag-output.txt; then
+              echo "Attempt $i: version not yet visible on npmjs.org, retrying in 10s..."
+              sleep 10
+            else
+              echo "✗ npmjs.org dist-tag promotion failed"; cat dist-tag-output.txt; exit 1
+            fi
+            if [ "$i" = "5" ]; then
+              echo "✗ npmjs.org dist-tag promotion exhausted retries"; exit 1
+            fi
+          done
+          echo "npmjs.org dist-tags after promotion:"
+          npm view aiwg dist-tags
+          CURRENT=$(npm view "aiwg@${TAG}" version)
+          if [ "$CURRENT" != "$VERSION" ]; then
+            echo "✗ Verification failed: aiwg@${TAG} resolves to ${CURRENT}, expected ${VERSION}"
+            exit 1
+          fi
+          echo "✓ aiwg@${TAG} = ${VERSION} on npmjs.org"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 
@@ -203,7 +266,11 @@ jobs:
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
 
-          # Allow re-runs: treat "version already exists" as success
+          # Stable publishes deliberately omit `--tag` so npm's default
+          # behavior is to set the `latest` dist-tag. The explicit
+          # `npm dist-tag add ... latest` step below makes that promotion
+          # mandatory and self-healing on re-runs — do not collapse them.
+          # Allow re-runs: treat "version already exists" as success.
           npm publish --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee publish-output.txt || {
             if grep -qE "package version already exists|EPUBLISHCONFLICT|409" publish-output.txt; then
               echo "✓ Version already published to Gitea - treating as success"
@@ -216,6 +283,36 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Promote to latest on Gitea (idempotent)
+        # Explicit dist-tag write. Runs even when publish was skipped as
+        # "already exists" — this is the safety net that the user-reported
+        # 2026.5.0 → latest miss exposed. See #1247 follow-up.
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          set -o pipefail
+          cat > .npmrc << 'NPMRC'
+          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+          VERSION="${{ steps.version.outputs.version }}"
+          for i in 1 2 3 4 5; do
+            if npm dist-tag add "aiwg@${VERSION}" latest --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee dist-tag-output.txt; then
+              break
+            fi
+            if grep -qiE "is not in the npm registry|not found|404" dist-tag-output.txt; then
+              echo "Attempt $i: version not yet visible on Gitea, retrying in 10s..."
+              sleep 10
+            else
+              echo "✗ Gitea latest promotion failed"; cat dist-tag-output.txt; exit 1
+            fi
+            if [ "$i" = "5" ]; then
+              echo "✗ Gitea latest promotion exhausted retries"; exit 1
+            fi
+          done
+          echo "Gitea dist-tags after promotion:"
+          npm dist-tag ls aiwg --registry=${{ env.GITEA_NPM_REGISTRY }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish to public npmjs.org
         if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.skip_public != 'true' }}
         run: |
@@ -225,6 +322,8 @@ jobs:
           //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
 
+          # Stable publish — npm's default behavior promotes `latest`, and the
+          # next step re-affirms that explicitly for re-run safety.
           # Allow re-runs: treat "version already exists" as success.
           # 404 PUT is intentionally NOT swallowed (#1247) — it indicates
           # token scope / package ownership failure that must surface.
@@ -239,6 +338,44 @@ jobs:
               exit 1
             fi
           }
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+
+      - name: Promote to latest on npmjs.org (idempotent + verified)
+        # The fix that prevents the 2026.5.0 / 2026.3.3 latest-tag drift the
+        # operator reported. Always writes `latest` after a stable publish,
+        # then verifies via `npm view aiwg@latest version`. If verification
+        # fails, the workflow fails — main must never be left red with a
+        # stale `latest`.
+        if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.skip_public != 'true' }}
+        run: |
+          set -o pipefail
+          cat > .npmrc << 'NPMRC'
+          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+          VERSION="${{ steps.version.outputs.version }}"
+          for i in 1 2 3 4 5; do
+            if npm dist-tag add "aiwg@${VERSION}" latest 2>&1 | tee dist-tag-output.txt; then
+              break
+            fi
+            if grep -qiE "is not in the npm registry|not found|404" dist-tag-output.txt; then
+              echo "Attempt $i: version not yet visible on npmjs.org, retrying in 10s..."
+              sleep 10
+            else
+              echo "✗ npmjs.org latest promotion failed"; cat dist-tag-output.txt; exit 1
+            fi
+            if [ "$i" = "5" ]; then
+              echo "✗ npmjs.org latest promotion exhausted retries"; exit 1
+            fi
+          done
+          echo "npmjs.org dist-tags after promotion:"
+          npm view aiwg dist-tags
+          CURRENT_LATEST=$(npm view aiwg@latest version)
+          if [ "$CURRENT_LATEST" != "$VERSION" ]; then
+            echo "✗ Verification failed: aiwg@latest = ${CURRENT_LATEST}, expected ${VERSION}"
+            exit 1
+          fi
+          echo "✓ aiwg@latest = ${VERSION} on npmjs.org"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 
@@ -273,13 +410,23 @@ jobs:
           fi
 
       - name: Verify package on public npm
-        if: ${{ github.event.inputs.skip_public != 'true' }}
+        if: ${{ github.event.inputs.skip_public != 'true' && github.event_name == 'push' }}
         run: |
-          # Check npmjs.org for the version
-          VERSION=$(curl -s "https://registry.npmjs.org/aiwg/latest" | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version" 2>/dev/null || echo "unknown")
-          echo "Latest version on npmjs.org: $VERSION"
-          if [ "$VERSION" != "unknown" ]; then
-            echo "✓ Package aiwg accessible on npmjs.org"
-          else
-            echo "⚠ Could not verify package on npmjs.org (may still be propagating)"
+          # Fail-loud verification: aiwg@latest on npmjs.org must equal the
+          # version derived from the pushed tag. The prior implementation
+          # only checked that *something* was returned, which let the
+          # 2026.5.0 → 2026.3.3 latest-tag drift slip through. We derive
+          # EXPECTED from the tag ref (not package.json) so this job does
+          # not need to checkout the repo.
+          EXPECTED="${GITHUB_REF#refs/tags/v}"
+          LATEST=$(npm view aiwg@latest version 2>/dev/null || echo "unknown")
+          echo "Latest version on npmjs.org: $LATEST (expected $EXPECTED)"
+          if [ "$LATEST" = "unknown" ]; then
+            echo "✗ Could not query npmjs.org dist-tags"
+            exit 1
           fi
+          if [ "$LATEST" != "$EXPECTED" ]; then
+            echo "✗ aiwg@latest = $LATEST, expected $EXPECTED — latest promotion did not stick"
+            exit 1
+          fi
+          echo "✓ Package aiwg@latest = $EXPECTED on npmjs.org"
