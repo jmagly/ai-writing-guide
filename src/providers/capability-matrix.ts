@@ -13,6 +13,7 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { load as loadYaml } from 'js-yaml';
+import { findPackageRoot } from '../cli/find-package-root.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -102,16 +103,27 @@ let _cached: CapabilityMatrix | null = null;
 
 /**
  * Resolve the path to capability-matrix.yaml relative to the package root.
- * Works for both compiled (dist/) and source (src/) layouts.
+ * Works for both compiled (dist/src/providers/) and source (src/providers/)
+ * layouts by walking up to find the aiwg package.json.
+ *
+ * @issue #1261
  */
 function resolveMatrixPath(): string {
-  // Walk up from this file to the package root
+  if (process.env.AIWG_ROOT) {
+    return resolve(process.env.AIWG_ROOT, 'agentic', 'code', 'providers', 'capability-matrix.yaml');
+  }
+
   const thisDir = typeof __dirname !== 'undefined'
     ? __dirname
     : dirname(fileURLToPath(import.meta.url));
 
-  // From src/providers/ or dist/providers/ → package root
-  const packageRoot = resolve(thisDir, '..', '..');
+  const packageRoot = findPackageRoot(thisDir);
+  if (!packageRoot) {
+    throw new Error(
+      `Cannot locate aiwg package root from ${thisDir}. ` +
+      `Set AIWG_ROOT environment variable as a workaround.`
+    );
+  }
   return resolve(packageRoot, 'agentic', 'code', 'providers', 'capability-matrix.yaml');
 }
 

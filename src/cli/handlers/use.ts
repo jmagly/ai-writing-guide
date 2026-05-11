@@ -1556,10 +1556,17 @@ export class UseHandler implements CommandHandler {
     // command stubs for flow-prefixed skills into .claude/commands/. Skill
     // sources now live at .claude/.aiwg/skills/ (#1212); commands continue
     // to deploy to the platform-native .claude/commands/ path.
+    //
+    // #1263: Also emit command stubs for kernel skills that wrap deterministic
+    // CLI subcommands (aiwg-refresh, aiwg-doctor, aiwg-status, aiwg-help,
+    // aiwg-regenerate, use, steward). Kernel skills live at .claude/skills/
+    // (not .claude/.aiwg/skills/), so a second translation pass is needed.
     if (provider === 'claude' && !dryRun) {
       try {
-        const claudeSkillsDir = path.join(target, '.claude/.aiwg/skills');
+        const claudeStandardSkillsDir = path.join(target, '.claude/.aiwg/skills');
+        const claudeKernelSkillsDir = path.join(target, '.claude/skills');
         const claudeCommandsDir = path.join(target, '.claude/commands');
+
         const flowFilter = (skillName: string) =>
           skillName.startsWith('flow-') ||
           skillName === 'sdlc-accelerate' ||
@@ -1567,7 +1574,21 @@ export class UseHandler implements CommandHandler {
           skillName === 'intake-wizard' ||
           skillName === 'intake-from-codebase' ||
           skillName === 'intake-start';
-        const r = await translateSkillsToCommands(claudeSkillsDir, {
+
+        const kernelFilter = (skillName: string) =>
+          skillName === 'aiwg-refresh' ||
+          skillName === 'aiwg-doctor' ||
+          skillName === 'aiwg-status' ||
+          skillName === 'aiwg-help' ||
+          skillName === 'aiwg-regenerate' ||
+          skillName === 'aiwg-regenerate-claude' ||
+          skillName === 'aiwg-regenerate-codex' ||
+          skillName === 'aiwg-regenerate-opencode' ||
+          skillName === 'aiwg-regenerate-agents' ||
+          skillName === 'use' ||
+          skillName === 'steward';
+
+        const standard = await translateSkillsToCommands(claudeStandardSkillsDir, {
           provider: 'claude',
           targetDir: claudeCommandsDir,
           projectPath: target,
@@ -1575,8 +1596,20 @@ export class UseHandler implements CommandHandler {
           verbose,
           nameFilter: flowFilter,
         });
-        if (verbose && r.translated.length > 0) {
-          ui.success(`Translated ${r.translated.length} SDLC flows → Claude slash commands`);
+        if (verbose && standard.translated.length > 0) {
+          ui.success(`Translated ${standard.translated.length} SDLC flows → Claude slash commands`);
+        }
+
+        const kernel = await translateSkillsToCommands(claudeKernelSkillsDir, {
+          provider: 'claude',
+          targetDir: claudeCommandsDir,
+          projectPath: target,
+          dryRun,
+          verbose,
+          nameFilter: kernelFilter,
+        });
+        if (verbose && kernel.translated.length > 0) {
+          ui.success(`Translated ${kernel.translated.length} kernel skills → Claude slash commands`);
         }
       } catch (error) {
         ui.warn(`Claude flow → command translation failed: ${error instanceof Error ? error.message : String(error)}`);
