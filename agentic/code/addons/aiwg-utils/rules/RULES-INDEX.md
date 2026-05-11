@@ -4,9 +4,14 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (19 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (20 rules — active with aiwg-utils addon)
 
 ### HIGH
+
+#### cli-secondary
+**Summary**: AIWG is agentic-first: when a CLI command has a paired skill or agent, the agent MUST invoke the skill — not the raw CLI directly. The skill carries the priming (pre-flight checks, dry-run preview, preservation logic, gates) that the CLI alone lacks. Sole exception: discovery/finder commands (`aiwg discover`, `aiwg show`, `aiwg list`, `aiwg status`, `aiwg version`, `aiwg runtime-info`, status/info subcommands) stay primary — they ARE the priming entry points. For mixed commands (`aiwg index`, `aiwg packages`, `aiwg ops`, `aiwg storage`), classify per subcommand. Includes a pairing table covering use/refresh/regenerate/doctor/init/promote/scaffold-*/add-*/doc-sync/lint/cleanup-audit/sdlc-accelerate/ralph/mc/steward/index build/ops actions/storage migrate.
+**When to apply**: Before invoking any AIWG CLI command, before writing skill/agent docs that reference CLI commands, when updating quickrefs or routing tables, when filing pairings audits
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/cli-secondary.md
 
 #### no-time-estimates
 **Summary**: Never produce wall-clock time estimates in AI-assisted work contexts. Human+AI development velocity is unknowable and varies non-linearly with operator skill, model quality, task decomposability, and centaur configuration. Instead, express effort in agent-oriented units: scope count (atomic deliverables), agent count and roles, parallelism map (parallel vs sequential batches), and pass estimate (iterations to quality gate). Prohibited phrases include "N days/hours/weeks," "expected duration," and "this should be quick."
@@ -136,8 +141,9 @@ Core meta-utility rules for agent coordination, context management, and platform
 | **Debugging in monorepos / output trees** | debug-source-not-output |
 | **Post-commit hygiene** | post-commit-index-refresh, activity-log |
 | **Identity / voice / persona** | soul-enforcement |
+| **CLI vs skill routing** | cli-secondary, skill-discovery, research-before-decision |
 
 ---
 
-*Generated from aiwg-utils manifest.json — 20 rules*
+*Generated from aiwg-utils manifest.json — 21 rules*
 *Full rule files: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/*

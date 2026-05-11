@@ -120,7 +120,8 @@
     "debug-source-not-output",
     "post-commit-index-refresh",
     "soul-enforcement",
-    "skill-discovery"
+    "skill-discovery",
+    "cli-secondary"
   ],
   "templates": [
     "devkit/addon-manifest",

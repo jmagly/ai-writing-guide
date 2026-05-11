@@ -70,19 +70,25 @@ aiwg-language-map  → addon capability domains + extension domains + cheat shee
 
 ## Self-maintenance kernel (always loaded)
 
-These ops skills are kernel-resident — already in your context regardless of `aiwg discover`. If discovery breaks, you still have the surfaces to repair the install:
+These ops **skills** are kernel-resident — already in your context regardless of `aiwg discover`. They are your primary surface for self-maintenance. Each skill carries the priming the bare CLI cannot — pre-flight checks, dry-run preview, preservation logic, recovery patterns.
 
-- `steward` — provider capability awareness + command routing
-- `aiwg-doctor` — installation health check with remediation steps
-- `aiwg-refresh` — update CLI + redeploy frameworks (alias: `aiwg sync`)
-- `aiwg-regenerate` — regenerate AIWG.md + AGENTS.md without redeploying frameworks (#1266)
-- `aiwg-status` — workspace status dashboard
-- `aiwg-help` — list every CLI command, args, and examples
-- `aiwg-issue` — guide for filing high-quality issues (template selection, env capture, duplicate detection, import flow)
-- `aiwg-pr` — guide for opening high-quality PRs (delivery-policy compliance, no-attribution, CI-green-before-done)
-- `use` — deploy a framework or addon
+> **Skills first, CLI second.** Each row below shows what the skill is for and the CLI command it calls under the hood. Invoke the skill — let it call the CLI. Direct CLI invocation skips the priming and is acceptable only on the discovery surface (Rule 2 of `cli-secondary`). See [`cli-secondary` rule](../../rules/cli-secondary.md) for the full policy.
+
+| Skill (preferred) | Purpose | CLI it wraps |
+|---|---|---|
+| `steward` | Provider capability awareness + command routing | (no single CLI — orchestrates several) |
+| `aiwg-doctor` | Installation health check + remediation | `aiwg doctor` |
+| `aiwg-refresh` | Update CLI + redeploy frameworks with dry-run preview | `aiwg refresh` (alias: `aiwg sync`) |
+| `aiwg-regenerate` | Regenerate AIWG.md + AGENTS.md preserving team directives | `aiwg regenerate` |
+| `aiwg-status` | Workspace status dashboard | `aiwg status` |
+| `aiwg-help` | List CLI commands, args, examples | `aiwg help` |
+| `aiwg-issue` | Filing high-quality issues (template, env, duplicate detection) | (no single CLI) |
+| `aiwg-pr` | Opening high-quality PRs (delivery-policy, no-attribution, CI gate) | (no single CLI) |
+| `use` | Deploy a framework or addon with validation gates | `aiwg use <name>` |
 
 Pair with the `aiwg-steward` agent (always-deployed) for orchestrated repair: health check → refresh → re-doctor.
+
+**Discovery commands stay direct** — `aiwg discover`, `aiwg show`, `aiwg list`, `aiwg version`, `aiwg runtime-info`, status/info subcommands. They have no paired "priming skill" because they ARE the priming entry points.
 
 When a user wants to **file an issue or open a PR**, route them through `aiwg-issue` / `aiwg-pr` first. Both are kernel skills (in context) and reference `steward-prep-delivery` (which provides a runnable duplicate-detection helper).
 
