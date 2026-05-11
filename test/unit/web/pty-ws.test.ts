@@ -49,10 +49,10 @@ class MockWebSocket {
 
   close(code?: number, reason?: string): void {
     this.readyState = MockWebSocket.CLOSED;
-    this.onclose?.call(
-      this as unknown as WebSocket,
-      new CloseEvent('close', { code: code ?? 1000, reason: reason ?? '' })
-    );
+    // `CloseEvent` is not a Node-20 global; the client only reads `.code`
+    // and `.reason`, so a plain duck-typed object suffices.
+    const ev = { code: code ?? 1000, reason: reason ?? '' } as unknown as CloseEvent;
+    this.onclose?.call(this as unknown as WebSocket, ev);
   }
 
   // Test helpers
