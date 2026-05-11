@@ -8,7 +8,7 @@
  */
 
 import { execSync } from 'child_process';
-import { readFile, writeFile, access } from 'fs/promises';
+import { readFile, writeFile, mkdir, access } from 'fs/promises';
 import { existsSync, constants } from 'fs';
 import { resolve, join, dirname } from 'path';
 import { platform, arch, homedir, tmpdir, cpus, totalmem, freemem } from 'os';
@@ -639,6 +639,9 @@ export class RuntimeDiscovery {
    */
   async #writeCatalog(catalog) {
     const catalogPath = join(this.basePath, 'runtime.json');
+    // #1264(b): ensure parent dir exists; first --discover on a fresh project
+    // otherwise fails with ENOENT before any catalog write.
+    await mkdir(this.basePath, { recursive: true });
     await writeFile(catalogPath, JSON.stringify(catalog, null, 2), 'utf-8');
   }
 

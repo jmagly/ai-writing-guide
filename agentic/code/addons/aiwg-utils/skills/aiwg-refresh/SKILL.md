@@ -4,7 +4,19 @@ name: aiwg-refresh
 platforms: [all]
 kernel: true
 description: Update AIWG CLI and redeploy frameworks/tools to current project without leaving the session
+script:
+  entrypoint: run.sh
+  runtime: bash
+  cwd: project-root
+  argsHint: '[--update-cli] [--all] [--provider <name>] [--dry-run] [--channel <name>]'
 ---
+
+> **Deterministic execution (#1267)**: this skill has a `script:` entrypoint.
+> Prefer `aiwg run skill aiwg-refresh -- <flags>` over agent-mediated invocation.
+> When invoked as a slash command on platforms without a deployed command stub
+> (e.g. hermes), the agent MUST run only `aiwg refresh <flags>` and report its
+> output — no exploratory permission requests, no multi-step planning. The
+> deterministic CLI is the source of truth.
 
 # Refresh AIWG Deployment
 

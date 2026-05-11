@@ -497,7 +497,9 @@ async function runDoctor() {
   if (hasSkillSeekers) {
     check('Skill Seekers', 'ok', 'Community skills available');
   } else {
-    check('Skill Seekers', 'info', 'Not installed (optional). Run: aiwg install-skill-seekers');
+    // #1264(c): aiwg install-skill-seekers was never implemented. Stop directing
+    // operators at a missing command.
+    check('Skill Seekers', 'info', 'Not installed (optional). See agentic/code/addons/skill-factory/ for the canonical skill-authoring addon.');
   }
 
   // 6b. Check Optional Features (#1219) — runtime-optional packages

@@ -253,8 +253,10 @@ async function migrateWorkspace(args) {
     console.log('='.repeat(80));
     console.log('');
 
-    // Import WorkspaceMigrator (must use dynamic import for ES modules)
-    const { WorkspaceMigrator } = await import('../../dist/plugin/workspace-migrator.js');
+    // Import WorkspaceMigrator (must use dynamic import for ES modules).
+    // #1264(e): path follows tsc rootDir=. layout — src/plugin/workspace-migrator.ts
+    // compiles to dist/src/plugin/workspace-migrator.js, not dist/plugin/.
+    const { WorkspaceMigrator } = await import('../../dist/src/plugin/workspace-migrator.js');
 
     // Initialize migrator
     const migrator = new WorkspaceMigrator(options.projectRoot);

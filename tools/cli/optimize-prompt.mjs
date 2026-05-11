@@ -311,8 +311,9 @@ async function main() {
 
   try {
     // Dynamic import of the optimizer (ESM compatibility)
-    const optimizerModule = await import('../../dist/writing/prompt-optimizer.js');
-    const templatesModule = await import('../../dist/writing/prompt-templates.js');
+    // #1264(e): tsc rootDir=. compiles src/writing/* to dist/src/writing/*
+    const optimizerModule = await import('../../dist/src/writing/prompt-optimizer.js');
+    const templatesModule = await import('../../dist/src/writing/prompt-templates.js');
 
     const { PromptOptimizer } = optimizerModule;
     const { PromptTemplateLibrary } = templatesModule;

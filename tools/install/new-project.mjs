@@ -21,8 +21,44 @@ import path from 'path';
 import os from 'os';
 import { spawnSync } from 'node:child_process';
 
+function printHelp() {
+  console.log(`aiwg new — Scaffold a new AIWG project
+
+Usage:
+  aiwg new [<project-name>] [options]
+
+Arguments:
+  <project-name>      Project name (defaults to current directory basename)
+
+Options:
+  --name <name>       Override project name explicitly
+  --no-agents         Skip deploying agents
+  --provider <p>      Target provider: claude | openai (default: claude)
+  --help, -h          Show this help and exit (no side effects)
+
+Examples:
+  aiwg new my-project
+  aiwg new --provider openai
+  aiwg new my-project --no-agents
+
+Notes:
+  Scaffolds .aiwg/intake/ templates, CLAUDE.md, AIWG.md, README.md, and
+  initializes a git repo in the current directory. Run from an empty or
+  fresh directory to avoid mixing scaffolded files into existing work.`);
+}
+
 function parseArgs() {
   const args = process.argv.slice(2);
+
+  // #1264(f): --help / -h must be side-effect free. Previously, `aiwg new
+  // <name> --help` would scaffold an entire project in the current directory
+  // because the help flag was ignored. Agents probing for help could
+  // accidentally create .git/.aiwg/.claude in the wrong directory.
+  if (args.includes('--help') || args.includes('-h')) {
+    printHelp();
+    process.exit(0);
+  }
+
   let name = path.basename(process.cwd());
   let withAgents = true; // deploy agents by default
   let provider = 'claude';

@@ -35,10 +35,11 @@ program
   .option('--compare', 'Compare variations and show differences')
   .action(async (input, options) => {
     try {
-      // Dynamic import of TypeScript modules
-      const { ContentDiversifier } = await import('../../dist/writing/content-diversifier.js');
-      const { ExampleGenerator } = await import('../../dist/writing/example-generator.js');
-      const { VoiceAnalyzer } = await import('../../dist/writing/voice-analyzer.js');
+      // Dynamic import of TypeScript modules.
+      // #1264(e): tsc rootDir=. layout — src/writing/* → dist/src/writing/*
+      const { ContentDiversifier } = await import('../../dist/src/writing/content-diversifier.js');
+      const { ExampleGenerator } = await import('../../dist/src/writing/example-generator.js');
+      const { VoiceAnalyzer } = await import('../../dist/src/writing/voice-analyzer.js');
 
       const diversifier = new ContentDiversifier();
       const generator = new ExampleGenerator();

@@ -60,6 +60,8 @@ TODO.local.md
 .factory/
 .github/*
 !.github/workflows/
+!.github/ISSUE_TEMPLATE/
+!.github/pull_request_template.md
 .opencode/
 .warp/
 .windsurf/

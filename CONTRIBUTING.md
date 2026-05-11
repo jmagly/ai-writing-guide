@@ -190,3 +190,78 @@ Within Claude Code sessions, use interactive commands for AI-guided creation:
 - [Creating Addons](docs/development/addon-creation-guide.md)
 - [Creating Extensions](docs/development/extension-creation-guide.md)
 - [Creating Frameworks](docs/development/framework-creation-guide.md)
+
+---
+
+## Filing Issues and PRs
+
+> Templates available at `.gitea/ISSUE_TEMPLATE/` (and mirrored to `.github/ISSUE_TEMPLATE/`) and `.gitea/pull_request_template.md`.
+
+### Filing a good issue
+
+Bad issue: "doesn't work." Good issue: scoped, reproducible, with environment captured.
+
+| Template | When to use |
+|---|---|
+| `bug-report.md` | One concrete defect with a reproduction |
+| `feature-request.md` | A new capability or enhancement proposal |
+| `tester-report.md` | A single session that surfaced multiple findings — to be split during triage |
+| `imported-report.md` | Mirroring an issue filed in a different tracker |
+
+Rules of thumb:
+
+- **One bug per issue.** If you found three things, file three issues (or one tester-report and triage will split it).
+- **Include environment.** AIWG version, OS, node version, and the platform you ran in (Claude Code, hermes, Codex, Cursor, …). Platform matters — the same bug behaves differently across providers.
+- **Paste exact error text.** Code blocks preserve formatting; paraphrased errors lose detail.
+- **Suggest a fix when you've investigated.** "I think this is in `src/x/y.ts:42`" is faster than a round-trip.
+
+### Filing a good PR
+
+Pick `pull_request_template.md`. Required checks:
+
+- `Closes #N` for the issue this resolves (or `Refs #N` if it doesn't close)
+- Verification block filled in (typecheck + tests + CI status)
+- Risk + rollback statement (even if "low / git revert")
+- No AI attribution. The AI is a tool. Tools don't sign their output. No `Co-Authored-By: <AI>` lines, no "Generated with" markers, on any platform.
+
+### Delivery policy
+
+This project declares `delivery.mode` in `.aiwg/aiwg.config`. Three modes:
+
+| Mode | Branch | PR | Closing |
+|---|---|---|---|
+| `direct` | No — commit straight to `default_branch` | No | `Closes #N` in commit |
+| `feature-branch` | Branch per issue | No | `Closes #N` in commit on the branch |
+| `pr-required` | Branch per issue | Required | `Closes #N` in PR body |
+
+Match your workflow to the configured mode. The `delivery-policy` rule in `agentic/code/addons/aiwg-utils/rules/delivery-policy.md` is the canonical reference.
+
+### CI green before done
+
+A commit isn't done until CI is green. AIWG CI runs on `origin` (Gitea) on every push to `main`. Wait for the run; if it fails, fix it before declaring work complete. Never leave `main` red.
+
+### Import flow (cross-tracker reports)
+
+When a report lands in a different tracker (GitHub mirror, Discord, email, vendor support), mirror it into Gitea as an `imported-report.md`:
+
+1. Use the `imported-report.md` template.
+2. Title: `imported: <original title> (<source>#<number>)`.
+3. Link the source URL and preserve the original reporter handle.
+4. Cross-reference any local issues that duplicate or overlap.
+5. If the imported issue is already fixed on current main, note the resolving commit and close as duplicate.
+6. Thank the original reporter in a closing comment when the work lands.
+
+### Discovery first
+
+Before declaring something missing or improvising, run:
+
+```bash
+aiwg discover "<what you want to do>"
+aiwg show skill <name>
+```
+
+AIWG ships 400+ skills, most of which aren't loaded into context. `aiwg discover` is the canonical lookup. Filesystem search under `.claude/skills/`, `.factory/`, etc. only reflects the kernel-deployed subset.
+
+### Steward-assisted prep (future)
+
+The `aiwg-steward` agent will eventually walk you through templated filing — duplicate detection, environment capture, template selection, policy compliance. Tracked at #1269.

@@ -47,13 +47,21 @@ export async function buildAiwgMdContent(projectPath: string): Promise<string> {
     // Insert the AIWG signature comment as the second line.
     // Top line is typically `# AIWG` or `# Project` heading; preserve it.
     const lines = claudeMdContent.split('\n');
-    const firstLine = lines[0] ?? '';
-    const rest = lines.slice(1);
+
+    // #1268: strip `@AIWG.md` self-include directives. CLAUDE.md uses
+    // `@AIWG.md` to pull in the framework context; AIWG.md IS that framework
+    // context, so the directive becomes a self-reference when copied through.
+    // Match the directive when it appears on its own line (possibly indented).
+    const SELF_INCLUDE_PATTERN = /^\s*@AIWG\.md\s*$/;
+    const filtered = lines.filter((line) => !SELF_INCLUDE_PATTERN.test(line));
+
+    const firstLine = filtered[0] ?? '';
+    const rest = filtered.slice(1);
 
     // If the file already carries the signature elsewhere, don't double-insert.
-    const alreadySigned = lines.slice(0, 4).some((l) => l.includes(AIWG_SIGNATURE_COMMENT));
+    const alreadySigned = filtered.slice(0, 4).some((l) => l.includes(AIWG_SIGNATURE_COMMENT));
     if (alreadySigned) {
-      return claudeMdContent;
+      return filtered.join('\n');
     }
 
     return [
