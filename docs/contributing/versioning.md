@@ -120,7 +120,7 @@ In addition to the four steps above, the following CI workflows act as **release
 |------|----------|---------|----------------|
 | Unit + integration tests | `.gitea/workflows/ci.yml` | push to main, tag, PR | Code changes did not regress the suite |
 | Executor-contract conformance (fixture mode) | `.gitea/workflows/ci.yml` (`test:conformance` step) | every CI run | Static fixture replay still matches the contract schema |
-| **A2A conformance against agentic-sandbox v2** | `.gitea/workflows/conformance.yml` | push to main, version tags, manual | AIWG's A2A client interoperates with a live sandbox v2 instance — proves end-to-end interop, not just contract shape (#1258) |
+| **A2A conformance against agentic-sandbox v2** | `.gitea/workflows/conformance.yml` | version tags, manual, opt-in PR label | AIWG's A2A client interoperates with a live sandbox v2 instance — proves end-to-end interop, not just contract shape (#1258). Skips automatically while upstream sandbox v2 is pre-release. |
 | Build verification | `.gitea/workflows/ci.yml` (`build` job) | every CI run | `npm run build` produces deployable artifacts |
 
 ### A2A Conformance Gate Details
