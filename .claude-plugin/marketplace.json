@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "AIWG - Modular agentic framework for SDLC, marketing automation, and workflow orchestration. 90+ agents, 95+ commands, 30+ skills.",
-    "version": "2026.5.1",
+    "version": "2026.5.2",
     "homepage": "https://aiwg.io",
     "repository": "https://github.com/jmagly/aiwg",
     "documentation": "https://docs.aiwg.io",
@@ -24,7 +24,14 @@
       },
       "license": "MIT",
       "category": "development",
-      "keywords": ["sdlc", "project-management", "testing", "security", "architecture", "devops"]
+      "keywords": [
+        "sdlc",
+        "project-management",
+        "testing",
+        "security",
+        "architecture",
+        "devops"
+      ]
     },
     {
       "name": "marketing",
@@ -36,7 +43,14 @@
       },
       "license": "MIT",
       "category": "productivity",
-      "keywords": ["marketing", "campaigns", "content", "brand", "social-media", "analytics"]
+      "keywords": [
+        "marketing",
+        "campaigns",
+        "content",
+        "brand",
+        "social-media",
+        "analytics"
+      ]
     },
     {
       "name": "voice",
@@ -48,7 +62,13 @@
       },
       "license": "MIT",
       "category": "productivity",
-      "keywords": ["voice", "tone", "style", "writing", "authenticity"]
+      "keywords": [
+        "voice",
+        "tone",
+        "style",
+        "writing",
+        "authenticity"
+      ]
     },
     {
       "name": "writing",
@@ -60,7 +80,13 @@
       },
       "license": "MIT",
       "category": "productivity",
-      "keywords": ["writing", "quality", "ai-detection", "authenticity", "editing"]
+      "keywords": [
+        "writing",
+        "quality",
+        "ai-detection",
+        "authenticity",
+        "editing"
+      ]
     },
     {
       "name": "training",
@@ -76,7 +102,17 @@
       },
       "license": "MIT",
       "category": "development",
-      "keywords": ["training-data", "fine-tuning", "dpo", "kto", "alpaca", "sharegpt", "decontamination", "synthetic-data", "datasheet"]
+      "keywords": [
+        "training-data",
+        "fine-tuning",
+        "dpo",
+        "kto",
+        "alpaca",
+        "sharegpt",
+        "decontamination",
+        "synthetic-data",
+        "datasheet"
+      ]
     },
     {
       "name": "utils",
@@ -88,7 +124,13 @@
       },
       "license": "MIT",
       "category": "development",
-      "keywords": ["utilities", "workspace", "context", "devkit", "core"]
+      "keywords": [
+        "utilities",
+        "workspace",
+        "context",
+        "devkit",
+        "core"
+      ]
     },
     {
       "name": "hooks",
@@ -100,7 +142,12 @@
       },
       "license": "MIT",
       "category": "development",
-      "keywords": ["hooks", "tracing", "observability", "debugging"]
+      "keywords": [
+        "hooks",
+        "tracing",
+        "observability",
+        "debugging"
+      ]
     },
     {
       "name": "forensics",
@@ -112,7 +159,16 @@
       },
       "license": "MIT",
       "category": "development",
-      "keywords": ["forensics", "incident-response", "dfir", "security", "memory-analysis", "ioc", "stix", "mitre-attack"]
+      "keywords": [
+        "forensics",
+        "incident-response",
+        "dfir",
+        "security",
+        "memory-analysis",
+        "ioc",
+        "stix",
+        "mitre-attack"
+      ]
     },
     {
       "name": "security-engineering",
@@ -124,7 +180,16 @@
       },
       "license": "MIT",
       "category": "development",
-      "keywords": ["security", "cryptography", "chain-of-trust", "authentication", "fido2", "supply-chain", "kdf", "aead"]
+      "keywords": [
+        "security",
+        "cryptography",
+        "chain-of-trust",
+        "authentication",
+        "fido2",
+        "supply-chain",
+        "kdf",
+        "aead"
+      ]
     },
     {
       "name": "research",
@@ -136,7 +201,16 @@
       },
       "license": "MIT",
       "category": "productivity",
-      "keywords": ["research", "academic", "citations", "grade", "oais", "fair", "literature-review", "provenance"]
+      "keywords": [
+        "research",
+        "academic",
+        "citations",
+        "grade",
+        "oais",
+        "fair",
+        "literature-review",
+        "provenance"
+      ]
     },
     {
       "name": "media-curator",
@@ -148,7 +222,15 @@
       },
       "license": "MIT",
       "category": "productivity",
-      "keywords": ["media", "curation", "archive", "yt-dlp", "metadata", "ffmpeg", "provenance"]
+      "keywords": [
+        "media",
+        "curation",
+        "archive",
+        "yt-dlp",
+        "metadata",
+        "ffmpeg",
+        "provenance"
+      ]
     },
     {
       "name": "ops",
@@ -160,7 +242,15 @@
       },
       "license": "MIT",
       "category": "development",
-      "keywords": ["ops", "sysops", "devops", "itops", "runbooks", "incident-response", "disaster-recovery"]
+      "keywords": [
+        "ops",
+        "sysops",
+        "devops",
+        "itops",
+        "runbooks",
+        "incident-response",
+        "disaster-recovery"
+      ]
     },
     {
       "name": "knowledge-base",
@@ -172,7 +262,14 @@
       },
       "license": "MIT",
       "category": "productivity",
-      "keywords": ["knowledge-base", "wiki", "kb", "ingestion", "citations", "corpus"]
+      "keywords": [
+        "knowledge-base",
+        "wiki",
+        "kb",
+        "ingestion",
+        "citations",
+        "corpus"
+      ]
     }
   ]
 }
