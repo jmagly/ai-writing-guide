@@ -30,7 +30,17 @@ import {
   type ExecutorRegisterRequest,
   type EventEnvelope,
 } from '../../serve/executor-registry.js';
+import {
+  handleWebhook,
+  IdempotencyCache,
+  PushSecretRegistry,
+} from '../../a2a/webhook.js';
 import { AiwgError, EXIT_CODES } from '../errors.js';
+
+// A2A push-notification state — module-scoped so the test harness can
+// monkey-patch them in if needed. One process serves one set of secrets.
+const pushSecretRegistry = new PushSecretRegistry();
+const webhookIdempotency = new IdempotencyCache();
 
 const DEFAULT_PORT = 7337;
 const DEFAULT_HOST = '127.0.0.1';
@@ -957,6 +967,108 @@ async function startServer(opts: {
 
     executorRegistry.transitionMission(missionId, 'aborted');
     return c.json({ ok: true });
+  });
+
+  // ── A2A push notification webhook receiver (#1256) ────────────────────
+  //
+  // Receives StreamResponse-shape payloads pushed by an agentic-sandbox
+  // executor when SSE isn't available (e.g. serverless missions). HMAC
+  // verification is on the raw body, replay window is 5 minutes,
+  // event-id idempotency is in-process. Per-mission secrets are
+  // registered via POST /api/v1/push-configs.
+  //
+  // The endpoint path is configurable via env so deployments behind a
+  // load-balancer with path rewriting can match upstream.
+  const webhookPath =
+    process.env['AIWG_A2A_WEBHOOK_PATH'] ?? '/aiwg/webhooks/a2a';
+
+  app.post(webhookPath, async (c: any) => {
+    const configId =
+      c.req.query('configId') ?? c.req.query('config_id') ?? '';
+    const signature =
+      c.req.header('x-aiwg-signature') ?? c.req.header('X-AIWG-Signature') ?? undefined;
+    const eventId =
+      c.req.header('x-aiwg-event-id') ?? c.req.header('X-AIWG-Event-Id') ?? undefined;
+
+    // Read raw body bytes — signature is computed over UTF-8 bytes.
+    const rawText: string = await c.req.text();
+    const bodyBuf = Buffer.from(rawText, 'utf8');
+
+    const result = await handleWebhook(configId, bodyBuf, signature, eventId, {
+      registry: pushSecretRegistry,
+      idempotency: webhookIdempotency,
+      route: async (entry, event) => {
+        // Append to mission recentEvents via a synthesized envelope.
+        // The 'mission.webhook' event type falls through the registry's
+        // default case (no state mutation), but timestamp + telemetry
+        // still record the delivery for operator visibility.
+        if (entry.missionId) {
+          const mission = executorRegistry.getMission(entry.missionId);
+          if (mission) {
+            executorRegistry.handleEvent({
+              event: 'mission.webhook',
+              executor_id: mission.executorId,
+              mission_id: entry.missionId,
+              ts: new Date().toISOString(),
+              data: { stream_event: event as Record<string, unknown> },
+            });
+          }
+        }
+        telemetryStore.ingest(
+          createEvent('a2a.webhook.received', entry.missionId ?? entry.configId, {
+            configId: entry.configId,
+            ...(entry.taskId ? { taskId: entry.taskId } : {}),
+          })
+        );
+      },
+    });
+    return c.json(result.body, result.status);
+  });
+
+  // POST /api/v1/push-configs → register a per-mission webhook secret.
+  // Returns { configId } so the caller can pass it to
+  // A2AClient.createPushNotificationConfig with `metadata.aiwg.config_id`.
+  app.post('/api/v1/push-configs', async (c: any) => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: 'Invalid JSON body' }, 400);
+    }
+    const p = body as {
+      configId?: string;
+      secret?: string;
+      missionId?: string;
+      taskId?: string;
+      metadata?: Record<string, unknown>;
+    };
+    if (!p.configId || typeof p.configId !== 'string') {
+      return c.json({ error: 'configId is required' }, 400);
+    }
+    if (!p.secret || typeof p.secret !== 'string' || p.secret.length < 16) {
+      return c.json({ error: 'secret is required and must be ≥16 chars' }, 400);
+    }
+    pushSecretRegistry.register({
+      configId: p.configId,
+      secret: p.secret,
+      ...(p.missionId ? { missionId: p.missionId } : {}),
+      ...(p.taskId ? { taskId: p.taskId } : {}),
+      ...(p.metadata ? { metadata: p.metadata } : {}),
+    });
+    return c.json({ ok: true, configId: p.configId }, 201);
+  });
+
+  // DELETE /api/v1/push-configs/:configId → unregister on mission complete.
+  app.delete('/api/v1/push-configs/:configId', (c: any) => {
+    const configId: string = c.req.param('configId');
+    const removed = pushSecretRegistry.unregister(configId);
+    if (!removed) return c.json({ error: 'configId not found' }, 404);
+    return new Response(null, { status: 204 });
+  });
+
+  // GET /api/v1/push-configs → debug surface; lists registered configIds.
+  app.get('/api/v1/push-configs', (_c: any) => {
+    return _c.json({ count: pushSecretRegistry.size() });
   });
 
   // Telemetry API (#716)

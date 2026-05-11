@@ -33,7 +33,8 @@ export type TelemetryEventType =
   | 'agent.complete'
   | 'scope.unit.complete'
   | 'v1.deprecation.observed'
-  | 'v1.dispatch.fallback';
+  | 'v1.dispatch.fallback'
+  | 'a2a.webhook.received';
 
 export interface TelemetryEvent {
   /** Unique event ID */
