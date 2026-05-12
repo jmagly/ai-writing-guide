@@ -33,7 +33,12 @@ export default defineConfig({
       'test/unit/ralph/**',
       'vscode-extension/**',
       'node_modules/**',
-      'dist/**'
+      'dist/**',
+      // Tier-3 integration suite (#1174) — spawns aiwg serve via bin/aiwg.mjs
+      // which requires dist/. Run via `npm run test:integration:serve` against
+      // the dedicated config/vitest.integration.config.js.
+      'test/integration/serve-sandbox-fake.test.ts',
+      'test/integration/serve-pty-bridge.test.ts'
     ],
 
     // Environment configuration
