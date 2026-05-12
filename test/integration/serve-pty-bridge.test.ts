@@ -24,7 +24,7 @@ describe('aiwg serve — PTY bridge resilience smoke', () => {
 
   beforeAll(async () => {
     serve = await spawnAiwgServe();
-    await waitForHttp(serve.url, 5_000);
+    await waitForHttp(serve.url, 20_000);
   }, 60_000);
 
   afterAll(async () => {
@@ -55,7 +55,7 @@ describe('aiwg serve — PTY bridge resilience smoke', () => {
   it('survives SIGINT cleanly when shut down', async () => {
     // Start a dedicated serve just for this test so we don't kill the shared one
     const dedicated = await spawnAiwgServe();
-    await waitForHttp(dedicated.url, 5_000);
+    await waitForHttp(dedicated.url, 20_000);
 
     // Confirm it's alive
     const r = await fetch(dedicated.url);

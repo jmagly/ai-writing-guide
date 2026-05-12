@@ -37,7 +37,7 @@ describe('aiwg serve end-to-end against fake sandbox', () => {
   beforeAll(async () => {
     fake = await startFakeSandbox({ scenario: happyPath() });
     serve = await spawnAiwgServe();
-    await waitForHttp(serve.url, 5_000);
+    await waitForHttp(serve.url, 20_000);
   }, 60_000);
 
   afterAll(async () => {
@@ -157,7 +157,7 @@ describe('aiwg serve — dashboard proxies (#1174 cycle 2)', () => {
   beforeAll(async () => {
     fake = await startFakeSandbox({ scenario: happyPath() });
     serve = await spawnAiwgServe();
-    await waitForHttp(serve.url, 5_000);
+    await waitForHttp(serve.url, 20_000);
 
     // Register the fake with serve so dashboard routes resolve to it.
     // The register schema is documented in src/serve/sandbox-registry.ts as

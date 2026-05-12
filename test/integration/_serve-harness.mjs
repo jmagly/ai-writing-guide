@@ -119,11 +119,16 @@ export async function spawnAiwgServe(opts = {}) {
 /**
  * Poll an HTTP endpoint until it returns 2xx, or throw after timeoutMs.
  *
+ * Default timeout is 15s — CI cold-start can take >5s when aiwg serve loads
+ * the full module graph behind a docker-in-docker runner. Override via
+ * AIWG_SERVE_HTTP_TIMEOUT_MS for slow CI hosts.
+ *
  * @param {string} url
- * @param {number} [timeoutMs=5000]
+ * @param {number} [timeoutMs]
  */
-export async function waitForHttp(url, timeoutMs = 5_000) {
-  const deadline = Date.now() + timeoutMs;
+export async function waitForHttp(url, timeoutMs) {
+  const t = timeoutMs ?? (Number(process.env.AIWG_SERVE_HTTP_TIMEOUT_MS) || 15_000);
+  const deadline = Date.now() + t;
   let lastErr;
   while (Date.now() < deadline) {
     try {
@@ -134,5 +139,5 @@ export async function waitForHttp(url, timeoutMs = 5_000) {
     }
     await delay(50);
   }
-  throw new Error(`waitForHttp(${url}): no response within ${timeoutMs}ms (${lastErr || ''})`);
+  throw new Error(`waitForHttp(${url}): no response within ${t}ms (${lastErr || ''})`);
 }
