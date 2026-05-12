@@ -7,7 +7,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
-_Nothing yet for the next release line._
+### Security
+
+- **Added `SECURITY.md`** with a documented private reporting channel (`security@integrolabs.net`), Gitea-advisory fallback, response SLA (24h ack / 7d assessment / 90d coordinated disclosure), in-scope / out-of-scope clarification, and safe-harbor language for good-faith researchers. Closes a long-standing operational gap surfaced by the May 2026 Mini Shai-Hulud supply-chain hardening audit (#1285). The project-scoped PGP/age key is queued for follow-up — until it's published under `.github/keys/`, reports are accepted in plain text from a maintainer-controlled address that can negotiate encrypted follow-up.
 
 ## [2026.5.2] - 2026-05-11 — Tester-report sweep, kernel issue/PR skills, config-driven release flow
 

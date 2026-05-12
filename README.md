@@ -1763,6 +1763,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - **Telegram:** [Join Group](https://t.me/+oJg9w2lE6A5lOGFh)
 - **Issues:** [GitHub Issues](https://github.com/jmagly/aiwg/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/jmagly/aiwg/discussions)
+- **Security:** Report vulnerabilities per [SECURITY.md](SECURITY.md) — do not file public issues.
 
 ---
 
