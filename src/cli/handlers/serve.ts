@@ -509,7 +509,12 @@ export async function startServer(opts: {
     // Plain dynamic import — runtime-resolved, no static analysis issue, and
     // works in sandboxed VM contexts like vitest where the Function-constructor
     // import path raises ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING (#1277).
+    // hono is an optionalDependency; tsc may not find its types under
+    // `npm ci --omit=optional` (e.g. metadata-validation workflow). The
+    // try/catch + auto-install fallback below handles that at runtime.
+    // @ts-ignore — optional dep; may not be installed at typecheck time
     honoMod = await import('hono');
+    // @ts-ignore — optional dep; may not be installed at typecheck time
     nodeMod = await import('@hono/node-server');
   } catch {
     // Auto-install optional serve dependencies on first use
@@ -529,7 +534,9 @@ export async function startServer(opts: {
     }
     // Retry imports after install
     try {
+      // @ts-ignore — optional dep; may not be installed at typecheck time
       honoMod = await import('hono');
+      // @ts-ignore — optional dep; may not be installed at typecheck time
       nodeMod = await import('@hono/node-server');
     } catch (err) {
       throw new AiwgError({
