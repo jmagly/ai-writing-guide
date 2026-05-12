@@ -123,6 +123,48 @@ Operator decisions on the 7 outstanding questions surfaced by the audit pass:
 
 These decisions are authoritative for implementation. Issue bodies and acceptance criteria should be re-read against this section before work begins.
 
+## Completion Sequence (Locked 2026-05-12)
+
+After the decision-resolution round, the implementation order is fixed at nine waves. Each wave's exit is the next wave's entry. Within a wave, issues are parallel unless explicitly ordered.
+
+| Wave | Issues | Effort | Risk closed |
+|------|--------|--------|-------------|
+| **1 — Free wins** (four separate commits) | #1279 (A1), #1280 (A2), #1284 (A6), #1285 (A7) | 4× S | S3 (worm amplifier removed); three active rule-violation fixes |
+| **2 — Workflow hardening** (per-workflow PRs) | #1281 (A3), #1282 (A4), A20 (new — dep-source policy) | M + M + S-M | S5 (builder hijack); injection vector |
+| **3 — Tag signing** | #1299 (A9 — split from #1287) | S | Establishes the cryptographic gate for waves 4-5 |
+| **4 — Compensating controls + trusted publishing** | #1286 (A10), #1283 (A5) | M + M-L | S1 (NPMJS_TOKEN eliminated on the npmjs.org leg); S2 substantially mitigated |
+| **5 — Tarball signing** | #1287 (A8 only — A9 split out to #1299) | M | S6 (mirror desync), S9 partial |
+| **6 — Publish-time evidence** | #1288 (A11+A12+A13) | S + S + S-M | Mini-Shai-Hulud tarball injection detected at publish time |
+| **7 — pnpm + age gate** (A21 before A15) | A21 (new — pnpm spike), #1290 (A15) | M-L + S | S7 (typo squat / cooldown window) |
+| **8 — PR-trigger audit** | #1289 (A14) | M | S2 fully closed |
+| **9 — Track B wave 1** | #1292 (B2 — ships first), #1294 (B7), #1293 (B3), #1291 (B1) | S, S, S, M | User-facing capabilities; AIWG-self adoption dogfoods each |
+| **Phase 3 — after Track B wave 1** | A16, A17, A18, A19, B13, B14 | varies | Native-deps audit, egress filter, dedicated publish runner, disclosure runbook, dep-source Track B mirror, pnpm baseline Track B mirror |
+
+### Wave-Specific Notes
+
+- **Wave 1**: four separate commits, not bundled. Cleaner audit trail; cheaper to revert one without the others.
+- **Wave 2**: per-workflow PRs for A3+A4 (one PR per workflow file). A20 ships as its own PR; lockfile + manifest policy is independent of the per-workflow digest/SHA pins.
+- **Wave 3**: A9 (#1299) is the cryptographic gate everything in wave 4+ depends on. Single S-effort issue but load-bearing.
+- **Wave 4**: A10 and A5 ship as one coordinated change. A10's signed-tag verify step lands in all three publish workflows (Gitea + Gitea-release + new GitHub Actions). A5 adds the GitHub Actions workflow and uses A10's verify step.
+- **Wave 5**: A8 (tarball signing) requires the OIDC identity established in wave 4 for keyless cosign. Land it after A5.
+- **Wave 7**: A21 spike resolves the workspace question before A15 commits to an implementation shape. A15 lands once in its final form (either pnpm-workspace.yaml or .npmrc fallback per spike outcome). Avoids implementing the 7/10-day gate twice.
+- **Wave 8**: A14 narrower in scope after A10 (publish secrets already environment-equivalent-scoped via signed-tag gate). PR-trigger audit covers the non-publish secrets (GT_ACCESS_TOKEN, AIWG_IO_DISPATCH_TOKEN).
+- **Wave 9**: B2 ships first (smallest, dogfoods off A15). B7 and B3 ride alongside (cheap, dogfood off A7 and A4). B1 ships last (uses AIWG's own audit as the reference output, so AIWG-self Phase 1+2 needs to be substantially complete).
+
+### Risk-Reduction Milestones
+
+| After wave | Scenarios closed | Cumulative |
+|-----------|------------------|-----------|
+| Wave 1 | S3 | 1 / 10 |
+| Wave 2 | S5, partial S5 (dep injection) | 2 / 10 |
+| Wave 3 | (gate prep, no direct closure) | 2 / 10 |
+| Wave 4 | S1, substantial S2, partial S8 | 5 / 10 |
+| Wave 5 | S6, partial S9 | 6 / 10 |
+| Wave 6 | tarball-injection detection (cross-cuts S1/S2/S5) | 7 / 10 |
+| Wave 7 | S7 | 8 / 10 |
+| Wave 8 | full S2 | 9 / 10 |
+| Wave 9 + Phase 3 | residual S8, S10 (out of epic scope; covered by separate AI-runtime threat model) | — |
+
 ## Out of Scope (this plan)
 
 - Detailed Shai-Hulud incident analysis beyond what's needed to scope defenses (covered in the defenses brief).
