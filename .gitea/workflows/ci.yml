@@ -34,6 +34,14 @@ jobs:
         # plain `npm ci` and resolve sharp without issue.
         run: npm ci
 
+      - name: Lint dependency sources (#1300)
+        # Scans package.json + package-lock.json for git+, git://, github:,
+        # file:, link:, and non-registry tarball sources. Closes the Mini
+        # Shai-Hulud dep-injection vector (control C22). Allowlist lives at
+        # ci/dep-source-allowlist.yaml; see ADR adr-dep-source-policy.md and
+        # docs/contributing/dependency-sources.md.
+        run: npm run lint:dep-sources
+
       - name: Run type check
         run: npm run typecheck
 

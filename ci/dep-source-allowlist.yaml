@@ -1,0 +1,43 @@
+# Dependency source allowlist for AIWG (#1300 / A20 / control C22).
+#
+# Each entry permits a single dep with an otherwise-policy-violating source.
+# Adding an entry here is a security-relevant change — review carefully.
+#
+# Policy: tools/lint/dep-source.mjs scans package.json and package-lock.json
+# and fails the build when any dep source matches one of:
+#   - git+*                              (any git scheme prefix)
+#   - git://                             (raw git scheme)
+#   - github:owner/repo                  (GitHub shorthand)
+#   - file:                              (local filesystem path)
+#   - link:                              (workspace symlink)
+#   - https?://*.tgz or https?://*.tar.gz from a non-registry host
+#
+# Why: these source patterns are the supply-chain injection vector that
+# Mini Shai-Hulud (March 2026) and similar attacks have used. A `git+`
+# dep can trigger arbitrary `prepare` script execution at install time
+# even when the dep is `optionalDependencies`.
+#
+# Schema:
+#   - name: <package-name>
+#     source-pattern: <exact-source-string OR /regex/flags>
+#     rationale: <why-this-is-acceptable>
+#     last-reviewed-date: YYYY-MM-DD
+#     reviewer: <who-decided-it-was-ok>     # optional but recommended
+#
+# Review cadence: every entry should be re-reviewed quarterly or whenever
+# the dep's upstream ownership rotates. Stale entries are a security debt.
+#
+# Adding an entry:
+#   1. Confirm the dep can't be swapped to a registry version
+#   2. Confirm the upstream source you're allowlisting (the URL or path
+#      itself) is one you trust — not a random fork or a tarball mirror
+#   3. Fill in name, source-pattern, rationale, last-reviewed-date
+#   4. Mention in the commit message that you added an allowlist entry
+#      and what the dep does (so reviewers can sanity-check)
+#
+# See:
+#   - .aiwg/architecture/adr-dep-source-policy.md
+#   - docs/contributing/dependency-sources.md
+#   - Threat model: control C22 in the supply-chain-hardening plan
+
+allowlist: []
