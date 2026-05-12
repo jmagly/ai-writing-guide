@@ -15,9 +15,9 @@
 
 This audit reviews AIWG's release surface against the controls implicated by the Mini Shai-Hulud incident class. The review is read-only and produces remediation recommendations, not code changes.
 
-- **Findings**: 14 (3 CRITICAL, 5 HIGH, 4 MEDIUM, 2 LOW)
+- **Findings**: 15 (3 CRITICAL, 5 HIGH, 5 MEDIUM, 2 LOW)
 - **Rule violations**: 4 existing AIWG rules are actively violated by current workflows (`dev-pipeline-safety`, `dev-secret-hygiene`, `dev-idempotent-builds`, `dev-ci-self-contained`)
-- **Highest-priority fixes**: (1) digest-pin `node:20` and SHA-pin all Actions across all 11 workflows; (2) adopt npm provenance + OIDC trusted publishing on npmjs.org; (3) remove or sandbox `postinstall` hook; (4) move publish secrets to environment-scoped with deployment protection; (5) remove `continue-on-error: true` from the stable-publish test step
+- **Highest-priority fixes**: (1) digest-pin containers and SHA-pin all Actions across all 11 workflows; (2) choose a supported npmjs.org trusted-publishing/provenance path or document token fallback controls; (3) remove or sandbox `postinstall` hook; (4) replace Gitea environment-secret assumptions with supported release-gate controls; (5) remove `continue-on-error: true` from the stable-publish test step; (6) reject unexpected git/tarball/exotic dependency sources
 - **Surface size**: 11 Gitea Actions workflows, 5+ distinct secret types (NPM_TOKEN, NPMJS_TOKEN, GT_ACCESS_TOKEN, GH_TOKEN, AIWG_IO_DISPATCH_TOKEN, DEPLOY_*), 1 lifecycle script, 7 optional native-binding dependencies
 
 ## Workflow × Control Inventory
@@ -57,17 +57,17 @@ Five workflows fire on `pull_request`. Of those, three (`docsite-build.yml`, `me
 **Location**: `npm-publish.yml:112,142,164,197,284,361,398,433` (all references to `secrets.NPMJS_TOKEN` and `secrets.NPM_TOKEN`)
 **Current state**: Two long-lived tokens persist as Gitea Actions repo secrets. `NPMJS_TOKEN` is documented as bypassing 2FA for CI. Either token, if exfiltrated, lets an attacker publish a malicious version under the legitimate package name with no second factor.
 **Risk**: Direct match to Shai-Hulud S1 (token theft → malicious publish). Mini Shai-Hulud (May 2026 wave) demonstrated attackers using stolen tokens to publish 169+ packages within hours.
-**Recommended fix**: Adopt npm OIDC trusted publishing for the npmjs.org publish step (npm 9.5+, requires GitHub Actions OIDC or equivalent provider; verify Gitea Actions OIDC parity status before commit). For Gitea npm registry, evaluate Gitea's own OIDC support — fall back to scoped automation tokens with manual reissue cadence if OIDC unavailable. Pair with `npm publish --provenance` to attach attestation to every release.
-**Effort**: M (npmjs.org), M-L (Gitea, depends on OIDC parity)
+**Recommended fix**: Do not plan this as an in-place Gitea Actions edit. Current npm trusted-publishing docs require npm CLI 11.5.1+ and Node 22.14.0+, support only selected cloud-hosted providers (GitHub Actions, GitLab CI/CD, CircleCI), and do not list Gitea Actions or self-hosted runners. Decide whether npmjs.org publishing moves to a GitHub-hosted mirror workflow, or whether AIWG keeps a constrained npm token with compensating controls until provider support changes. For Gitea's npm registry, continue treating a scoped token as required unless/until Gitea package publishing supports an equivalent trusted path.
+**Effort**: M-L (release-path migration and token fallback decision)
 **Rule**: New rule `release-trusted-publishing.md` under security-engineering or sdlc.
-**References**: npmjs.org provenance docs (verify current URL via WebFetch before final publish); threat model S1, C-A.
+**References**: npm trusted-publishing docs (`https://docs.npmjs.com/trusted-publishers`, verified 2026-05-12); npm provenance docs (`https://docs.npmjs.com/generating-provenance-statements`); threat model S1, C-A.
 
 #### F3. Builder image `node:20` is tag-pinned, not digest-pinned (all 11 workflows)
 
 **Location**: every workflow file declares `container: node:20`
 **Current state**: `node:20` is a mutable tag. The Docker Hub maintainer team could re-point it; a compromised upstream could replace it with a malicious image whose `npm` binary is trojanized. Build runs would fetch the malicious image and execute it with all secrets in scope.
 **Risk**: Direct supply-chain attack vector. Even without active compromise, the build is non-reproducible because `node:20` changes contents over time (`dev-idempotent-builds.md` rule violation).
-**Recommended fix**: Pin every `container:` reference to the immutable digest form: `node:20@sha256:<64-hex>`. Track the digest in a dedicated file (`ci/digests.txt` or similar) so updates are intentional and reviewable. Update digest as a separate commit with explicit operator approval.
+**Recommended fix**: Pin every `container:` reference to immutable digest form, but split release-publish requirements from runtime support. Existing workflows use `node:20`, while npm trusted publishing currently requires Node 22.14.0+ and npm 11.5.1+. Non-publish jobs can stay on digest-pinned Node 20 if that remains the support baseline; npmjs.org trusted-publishing jobs need a Node 22+ release image if A5 moves forward.
 **Effort**: S per workflow, M for all 11 + digest-update process
 **Rule**: `dev-idempotent-builds.md` (rule 2 already requires this)
 **References**: threat model S5, C-E.
@@ -99,10 +99,10 @@ Five workflows fire on `pull_request`. Of those, three (`docsite-build.yml`, `me
 **Location**: All publish workflows reference `secrets.NPM_TOKEN` / `secrets.NPMJS_TOKEN` directly without an `environment:` block
 **Current state**: Secrets are accessible to any workflow run on protected branches/tags. There is no two-person review gate before the publish job sees the secret. A single compromised contributor (or compromised maintainer machine pushing a tag) bypasses any human review.
 **Risk**: Shai-Hulud S2 (workflow injection): a malicious change merged to main and tagged could run with publish secrets in scope.
-**Recommended fix**: Define a Gitea Actions environment (e.g., `release`) and move `NPM_TOKEN` and `NPMJS_TOKEN` into it. Configure a manual approval requirement on the environment. Add `environment: release` to publish jobs. Verify Gitea Actions feature parity with GitHub environments; if missing, document the gap and fall back to required-reviewers on main + signed tags as compensating controls.
+**Recommended fix**: Do not assume GitHub-style `environment:` gates work on Gitea. Current Gitea Actions comparison docs state `jobs.<job_id>.environment` is ignored. Use compensating controls now: protected tags, signed tags, a dedicated publish runner, scoped/rotated tokens, a manual release-approval record, and a release-path ADR. If AIWG moves npmjs.org publishing to GitHub-hosted Actions for trusted publishing, use GitHub environments there; keep Gitea registry publishing on its own constrained path.
 **Effort**: M
 **Rule**: `dev-secret-hygiene.md` rule 2 (active violation).
-**References**: threat model S2, C-H.
+**References**: Gitea Actions comparison docs (`https://docs.gitea.com/usage/actions/comparison`, verified 2026-05-12); threat model S2, C-H.
 
 #### F7. Five workflows trigger on `pull_request`; three reference secrets
 
@@ -171,6 +171,16 @@ Five workflows fire on `pull_request`. Of those, three (`docsite-build.yml`, `me
 **Effort**: S
 **Rule**: New rule `security-disclosure-policy.md`.
 
+#### F15. No dependency-source policy for git / tarball / exotic package references
+
+**Location**: `package.json`, `package-lock.json`, CI install steps
+**Current state**: The audit covers lifecycle scripts and optional deps, but does not separately gate dependency source protocols. Mini Shai-Hulud's newer path used an optional dependency that resolved from GitHub (`github:tanstack/router#...`) and executed its `prepare` script during install.
+**Risk**: A future direct or transitive dependency can introduce a git, GitHub shorthand, direct tarball URL, or `file:` reference that bypasses normal registry trust/signature expectations and reintroduces install-time code execution through `prepare`.
+**Recommended fix**: Add a CI lint that rejects unexpected non-registry dependency sources in `package.json` and lockfiles, with an explicit allowlist if any are ever required. If AIWG migrates installs/builds/tests to pnpm, enforce this through `pnpm-workspace.yaml` with `blockExoticSubdeps: true` plus lockfile linting. Track user-facing guidance as a dependency-source policy capability; npm/Yarn/Bun projects need equivalent lockfile/package manifest linting.
+**Effort**: S-M
+**Rule**: New rule `dependency-source-policy.md`.
+**References**: Aikido Mini Shai-Hulud report (GitHub-hosted optional dependency marker); pnpm `blockExoticSubdeps` docs (`https://pnpm.io/settings#blockexoticsubdeps`).
+
 ### LOW
 
 #### F13. No `npm audit` or `npm audit signatures` step in CI
@@ -211,9 +221,9 @@ Nine distinct active rule violations across six rules. The rules exist; the work
 
 1. **F1 + F4 + F11** (effort S each) — remove postinstall, remove `continue-on-error`, fix token-in-URL. Quick wins, no infra dependencies.
 2. **F3 + F5** (effort M total) — digest-pin builder image, SHA-pin Actions. Establish digest-update process.
-3. **F2 + F6 + F7** (effort M-L) — OIDC trusted publishing + environment-scoped secrets + PR-trigger audit. Single integrated change to publish workflow.
+3. **F2 + F6 + F7** (effort M-L) — supported trusted-publishing/token-fallback decision + Gitea release-gate compensating controls + PR-trigger audit.
 4. **F8** (effort M-L) — release signing (Sigstore + signed tags).
-5. **F9 + F13 + F14** (effort S-M) — tarball assertion, `npm audit`, SBOM. Bundle as release-quality-gate.
+5. **F9 + F13 + F14 + F15** (effort S-M) — tarball assertion, dependency audit/signature gate, SBOM, dependency-source lint. Bundle as release-quality-gate.
 6. **F12** (effort S) — `SECURITY.md`.
 7. **F10** (effort M for audit, L if optional-deps move to peer) — optional native-binding deps audit.
 

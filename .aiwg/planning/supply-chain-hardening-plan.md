@@ -9,8 +9,8 @@
 ## Companion Documents
 
 - @.aiwg/security/working/threat-model-supply-chain.md — STRIDE + 10 Shai-Hulud-class scenarios + 19-control matrix
-- @.aiwg/security/working/publish-pipeline-audit.md — 14 findings against AIWG's actual workflows (file:line precision)
-- @.aiwg/research/working/supply-chain-defenses-brief.md — 21-control defensive catalog + Gitea Actions caveats + AIWG applicability matrix
+- @.aiwg/security/working/publish-pipeline-audit.md — 15 findings against AIWG's actual workflows (file:line precision)
+- @.aiwg/research/working/supply-chain-defenses-brief.md — 22-control defensive catalog + Gitea Actions caveats + AIWG applicability matrix
 
 ## Why This Plan Exists
 
@@ -22,7 +22,7 @@ AIWG is **not currently compromised**. AIWG **structurally resembles** the packa
 
 | Track | Audience | Output |
 |-------|----------|--------|
-| **Track A — AIWG-self hardening** | AIWG maintainers | Code/workflow/process changes to harden AIWG's own publish pipeline. Driven by audit findings F1-F14. |
+| **Track A — AIWG-self hardening** | AIWG maintainers | Code/workflow/process changes to harden AIWG's own publish pipeline. Driven by audit findings F1-F15. |
 | **Track B — User-facing framework capabilities** | AIWG users (any project that ships software) | New skills, rules, agents, templates that let users adopt the same controls in their own pipelines. Driven by the C16-C18 / C13 / C7-C8 / C21 controls flagged "B" or "C" in the applicability matrix. |
 
 Both tracks are filed as a single Gitea epic with sub-issues per capability. Track A is priority:critical, Track B is priority:high.
@@ -37,9 +37,9 @@ Cost-benefit calibrated for "ship before the next exposure window."
 |---|---------|---------------|--------|-------|-----------|
 | A1 | Remove `postinstall` lifecycle script | F1 | S | sdlc | `package.json` no longer has `scripts.postinstall`; PATH guidance migrated to `aiwg doctor` first-run output; CHANGELOG entry; ADR documenting the removal |
 | A2 | Remove `continue-on-error: true` from stable-publish test step | F4 | S | sdlc | `npm-publish.yml:222` no longer has `continue-on-error`; any tests surfaced as failing are either fixed or quarantined explicitly per `dev-pipeline-safety` |
-| A3 | Digest-pin `container: node:20` across all 11 workflows | F3 | M | sdlc | Every workflow declares `node:20@sha256:<hex>`; `ci/digests.txt` (or equivalent) tracks digest + intentional-update process |
+| A3 | Digest-pin workflow containers, with a release-path decision for Node 22 | F3 | M | sdlc | Non-publish workflows declare `node:20@sha256:<hex>` or an explicitly approved replacement; npmjs.org trusted-publishing path uses Node 22.14.0+ if adopted; `ci/digests.txt` tracks digest + intentional-update process |
 | A4 | SHA-pin all `uses: actions/...@v*` references | F5 | M | sdlc | Every `uses:` references a 40-char SHA with a trailing version comment; Dependabot (or equivalent) configured for intentional bumps |
-| A5 | Adopt npm OIDC trusted publishing + `--provenance` on npmjs.org | F2 | M | sdlc | `NPMJS_TOKEN` removed as static secret on npmjs.org publish path; `npm publish --provenance` emits valid attestation; Gitea Actions OIDC support verified |
+| A5 | Adopt npm trusted publishing/provenance on a supported provider, or document token fallback | F2 | M-L | sdlc | npmjs.org publish path is moved to a supported cloud-hosted provider (currently GitHub Actions/GitLab/CircleCI per npm docs) with Node 22.14.0+ and npm 11.5.1+, OR an ADR documents why AIWG keeps a constrained token temporarily; `NPMJS_TOKEN` removed only after trusted publishing is verified |
 | A6 | Fix `GT_ACCESS_TOKEN`-in-URL antipattern (`docsite-build.yml`, `docsite-deploy.yml`) | F11 | S | sdlc | Token no longer interpolated into git URL; uses `GIT_ASKPASS` or credential helper; token scope verified minimal |
 | A7 | Add `SECURITY.md` with private vulnerability reporting | F12 | S | sdlc | `SECURITY.md` at repo root; documented PGP/age key; documented response SLA; cross-linked from README |
 
@@ -51,12 +51,14 @@ Cost-benefit calibrated for "ship before the next exposure window."
 |---|---------|---------------|--------|-------|-----------|
 | A8 | Sigstore-sign release tarballs + per-release signed manifest | F8 | M-L | sdlc + security-eng | `cosign sign-blob` on every published tarball; signed manifest (SHA-256 + version + tag SHA) attached to Gitea + GitHub release; verification command documented in `docs/releases/verifying.md` |
 | A9 | Sign git tags (GPG or SSH-signing) | F8 | S | sdlc | `git tag -v <vN>` returns valid signature; CI verifies tag signature before publish |
-| A10 | Move publish secrets to environment-scoped with deployment protection | F6 | M | sdlc | `NPM_TOKEN` and `NPMJS_TOKEN` in Gitea Actions environment `release`; manual approval gate verified; Gitea environment-feature parity documented |
+| A10 | Replace Gitea environment-scoped-secret assumption with supported release-gate controls | F6 | M | sdlc | Current Gitea docs say `jobs.<job_id>.environment` is ignored; implement compensating controls: signed tags, protected tag/release workflow, dedicated publish runner, manual release approval record, and scoped/rotated tokens until native Gitea environment protection exists |
 | A11 | Tarball content audit step | F9 | S | sdlc | CI step diffs `npm pack --dry-run` against `ci/expected-tarball-contents.txt`; fails on unexpected additions; expected manifest updated only via explicit commit |
 | A12 | `npm audit signatures` gate in publish CI | F13 | S | sdlc | Pre-publish step runs `npm audit signatures`; fails on unsigned or invalid package |
 | A13 | SBOM generation attached to releases | F14 | S-M | sdlc | CycloneDX SBOM (`@cyclonedx/cyclonedx-npm`) emitted alongside tarball; attached to Gitea + GitHub release |
 | A14 | PR-trigger workflow audit and hardening | F7 | M | sdlc | Each of the 5 PR-triggered workflows reviewed; fork-PR secret exposure mitigated per workflow; Gitea fork-PR default behavior documented |
-| A15 | Release-age gate enabled for AIWG CI installs | (new — covers C16) | S | sdlc | `.npmrc` in repo sets `min-release-age=5`; CI runner honors it on `npm ci`; documented in CONTRIBUTING |
+| A15 | Release-age gate enabled for AIWG CI installs | (new — covers C16) | S | sdlc | 7-day baseline enforced for installs; pnpm target config is `minimumReleaseAge: 10080` in `pnpm-workspace.yaml`; npm fallback is `.npmrc` `min-release-age=7`; lockfile regeneration workflow is documented so the gate applies before newly published versions enter the lockfile |
+| A20 | Lockfile/package-manifest policy rejects unexpected git/tarball/exotic dependencies | (new — covers C22) | S-M | sdlc | CI fails if `package.json` or `package-lock.json` contains unexpected `git+`, `github:`, direct tarball URL, or `file:` dependency sources; allowlist is explicit and reviewed |
+| A21 | Spike and implement pnpm workspace migration for AIWG installs/builds/tests | (new — supports C15/C16/C22) | M-L | sdlc | Root, `apps/web`, `tools/eval`, and addon package installs evaluated for one pnpm workspace + `pnpm-lock.yaml`; workflows use `pnpm install --frozen-lockfile`; npm remains only where required for npmjs.org publishing |
 
 **Phase 2 exit criteria**: All above merged; AIWG passes OpenSSF Scorecard at score >= 7/10 (verify exact threshold); two-person rule enforced on all publish workflows.
 
@@ -76,7 +78,7 @@ These are new framework artifacts (skills, rules, agents, templates) that ship v
 | # | Capability | Type | Maps to control(s) | Effort | Notes |
 |---|-----------|------|--------------------|--------|-------|
 | B1 | `supply-chain-audit` skill | skill | C7, C8, C9, C13, C18 | M | One-shot audit of a user's repo: surfaces tag-pinned actions, unpinned containers, unfiltered PR-triggered workflows with secrets, lifecycle scripts, missing `npm audit signatures` gate |
-| B2 | `release-age-gate` skill | skill | C16 | S | Scaffolds `~/.npmrc` + `.yarnrc.yml` + `~/.bunfig.toml` + project `.npmrc` for 5-day age gate; verifies package-manager versions; documents Corepack-pin gotcha |
+| B2 | `release-age-gate` skill | skill | C16 | S | Scaffolds npm `.npmrc`, pnpm `pnpm-workspace.yaml`/global config, `.yarnrc.yml`, `.bunfig.toml`, and CI config for a 7-day default / 10-day high-sensitivity age gate; verifies package-manager versions; documents Corepack-pin gotcha |
 | B3 | `ci-action-pinning` rule | rule | C7, C8 | S | Lint rule that flags `uses:` references not SHA-pinned and `container:` references not digest-pinned. Companion to existing `dev-idempotent-builds.md` |
 | B4 | `lifecycle-script-policy` rule | rule | C13 | S | Rule + guidance on auditing `pre/post-install`, `prepare`, `prepublishOnly` hooks in own package and in dep graph |
 | B5 | `release-signing` skill | skill | C3, C4 | M | Scaffolds Sigstore/cosign signing and GPG/SSH tag signing into a user's release workflow |
@@ -87,10 +89,12 @@ These are new framework artifacts (skills, rules, agents, templates) that ship v
 | B10 | `workflow-injection-audit` skill | skill | C9, C10 | M | Audits user's CI workflows for PR-triggered + secret-referencing combinations; flags exposure |
 | B11 | Supply-chain incident-response runbook | template + flow | n/a | M | Template for what to do when you discover you shipped (or installed) a compromised package |
 | B12 | `dep-risk-register` skill | skill | (new — operational hygiene) | S | Scaffolds a `ci/dep-risk-register.yaml` tracking each runtime + optional dep, maintainer set, signing status, last-audit date |
+| B13 | `dependency-source-policy` rule/skill | rule + skill | C22 | S-M | Blocks unexpected git, GitHub shorthand, direct tarball URL, and `file:` dependencies in manifests/lockfiles; includes pnpm `blockExoticSubdeps` guidance and lockfile lints for npm/Yarn/Bun |
+| B14 | `pnpm-supply-chain-baseline` skill | skill | C15, C16, C22 | M | Helps projects migrate from npm/yarn/bun install workflows to pnpm workspace + frozen lockfile + release-age gate + exotic-dependency blocking where feasible |
 
 ## Gitea Epic + Sub-Issues — Filing Plan
 
-One parent epic, 19 child issues (Track A: A1-A15; Track B: B1-B12 = first wave 7-8 issues, remainder filed later as backlog). Sub-issues filed in priority order. Each child issue includes:
+One parent epic with Track A and Track B child issues. Initial filing covered A1-A15 plus Track B wave 1; verification cleanup added A20/A21 and B13/B14 follow-ups. Each child issue includes:
 
 - `Blocks:` / `Blocked-by:` per ops-cross-repo rule
 - Acceptance criteria
@@ -105,6 +109,20 @@ Labels:
 - Phase 1 issues: `release/2026.6` milestone tag
 - Phase 2 issues: `release/2026.q3` milestone tag
 
+## Decisions Resolved (2026-05-12)
+
+Operator decisions on the 7 outstanding questions surfaced by the audit pass:
+
+1. **npmjs.org publish path**: Move npmjs.org publishing to **GitHub Actions** (via the existing GitHub mirror) for trusted publishing + provenance. Gitea Actions retains the Gitea-registry publish on a constrained, IP-allowlisted, quarterly-rotated `NPM_TOKEN`. Two parallel publish jobs with explicitly different threat models. Update A5 (#1283), A3 (#1281 — Node 22 image required for the GitHub-side runner).
+2. **pnpm migration scope (A21 spike)**: Spike covers **root + `apps/web` + `tools/eval`**. addon packages and `vscode-extension` are deferred to a Phase 3 follow-up after the spike's lessons land. Update A21.
+3. **Release-age gate**: **7 days everywhere; 10 days on publish workflows.** Slightly more conservative than Aikido's 5-day baseline. Update A15 (#1290) and B2 (#1292).
+4. **Gitea release approval (A10 compensating controls)**: **Signed tags as the HARD gate** (CI verifies signature, fails publish if unsigned) plus a manual approval record in the release notes. Closes S2/S8 robustly without depending on Gitea environment support that doesn't exist. Update A10 (#1286) and A9 (#1287 — A9 becomes load-bearing rather than supplementary).
+5. **Postinstall removal (A1)**: PATH guidance migrates to **`aiwg doctor`** (primary) **plus a README first-run section** (lowest-overhead documentation). No first-failed-command interceptor; no `--help` clutter. Update A1 (#1279).
+6. **Optional native deps (A16)**: **Stay Phase 3.** No promotion. Publish-pipeline controls in Phase 1+2 are higher leverage; native deps are real but not acute risk and none appears on May 2026 target lists.
+7. **Track B priority**: **B2 (release-age-gate skill) ships first** after AIWG-self Phase 1 starts. Smallest effort, highest value-per-token, dogfoods cleanly off A15. B1 (supply-chain-audit) and B13 (dep-source-policy) follow.
+
+These decisions are authoritative for implementation. Issue bodies and acceptance criteria should be re-read against this section before work begins.
+
 ## Out of Scope (this plan)
 
 - Detailed Shai-Hulud incident analysis beyond what's needed to scope defenses (covered in the defenses brief).
@@ -116,10 +134,11 @@ Labels:
 
 - **A2 must complete before A11** — tarball assertion depends on tests actually gating the publish, otherwise the assertion runs against a tarball produced from broken tests.
 - **A5 should complete before A8** — OIDC adoption gives you the OIDC identity to sign with; cosign keyless signing uses the same OIDC.
-- **A10 should complete with or before A5** — environment-scoped secrets is the partner to OIDC adoption; doing OIDC without environment scoping leaves the legacy token's blast radius in place.
+- **A10 should complete with or before A5** — Gitea release-gate compensating controls are the partner to OIDC/token fallback decisions; doing trusted publishing while leaving broad legacy token paths in place preserves too much blast radius.
 - **A7 should be Phase 1 not Phase 2** — `SECURITY.md` is free and the lack of a disclosure channel today is itself an operational gap.
 - **A3 and A4 can be parallel** but should land in one PR per workflow to minimize churn.
-- **B2 (release-age gate) is the cheapest user-facing win** — ship it early in Track B; it's mostly a documentation deliverable.
+- **B2 (release-age gate) is the cheapest user-facing win** — ship it early in Track B; default to 7 days, with a 10-day profile for release workflows.
+- **A21 should precede full A15 enforcement if pnpm is adopted** — otherwise A15 must land as an npm fallback first, then be converted to pnpm workspace config.
 
 ## Risk Register Tracking
 
@@ -127,13 +146,13 @@ This plan inherits the risk register from `threat-model-supply-chain.md`. Each P
 
 | Risk scenario (from threat model) | Closed/reduced by |
 |----------------------------------|-------------------|
-| S1 (token theft → malicious publish) | A5 (OIDC) + A10 (env scope) |
-| S2 (workflow injection) | A4 (SHA-pinning) + A10 (env scope) + A14 (PR-trigger audit) |
+| S1 (token theft → malicious publish) | A5 (trusted publishing or constrained-token fallback) + A10 (release-gate controls) |
+| S2 (workflow injection) | A4 (SHA-pinning) + A10 (release-gate controls) + A14 (PR-trigger audit) |
 | S3 (lifecycle script abuse on user machines) | A1 (remove postinstall) |
 | S5 (builder image hijack) | A3 (digest pin) + A4 (action SHA pin) |
 | S6 (GitHub mirror desync) | A8 (Sigstore signing) + A9 (signed tags) |
-| S7 (dependency confusion / typo squat) | A15 (release-age gate for AIWG-self) + B2 (ship to users) |
-| S8 (maintainer account takeover) | A10 (env scope two-person rule) + operational (hardware 2FA — out of plan scope) |
+| S7 (dependency confusion / typo squat) | A15 (release-age gate for AIWG-self) + A21 (pnpm migration) + B2 (ship to users) |
+| S8 (maintainer account takeover) | A10 (release-gate controls) + operational (hardware 2FA — out of plan scope) |
 | S9 (compromised AIWG-deployed artifact) | A8 (signing) + B5 (user-facing signing capability) |
 | S10 (AI prompt-injection in deployed content) | partially A8 (integrity); fuller mitigation in follow-on threat model on AI-runtime boundary |
 
@@ -143,11 +162,13 @@ Phase 1 closes / substantially reduces 5 of 10 scenarios. Phase 2 closes another
 
 These should resolve in Phase 1 planning, before changes land:
 
-1. **Gitea Actions OIDC support** — what version of Gitea is the runner host on? Does it expose `id-token: write` permissions and integrate with npm's OIDC provider matrix? (Verify via docs.gitea.com.)
-2. **Gitea Actions environments** — does the current Gitea version support environment-scoped secrets with deployment protection rules? If not, what's the compensating-controls plan? (Verify.)
-3. **Gitea fork-PR secret default** — does Gitea Actions expose secrets to fork-PR workflow runs by default? (Verify.)
-4. **npm trusted-publishing provider matrix** — is Gitea on npm's accepted OIDC provider list? If not, can we proxy via a trusted intermediary? (Verify via npm docs.)
-5. **Native-binding optional deps build hooks** — what happens to AIWG users on a `--ignore-scripts` org policy if they have `better-sqlite3` in `optionalDependencies`? (Test before A16 architectural change.)
+1. **npm trusted-publishing release path** — npm docs currently support GitHub Actions/GitLab/CircleCI cloud-hosted runners, not Gitea Actions or self-hosted runners. Decide whether npmjs.org publishing moves to the GitHub mirror workflow or whether AIWG keeps a constrained npm token until support changes.
+2. **Node/npm version for trusted publishing** — npm trusted publishing currently requires npm CLI 11.5.1+ and Node 22.14.0+. Decide whether the release container moves to Node 22 for publish jobs while preserving Node `>=20` runtime support.
+3. **Gitea Actions environments** — current Gitea docs say `jobs.<job_id>.environment` is ignored. Define compensating controls instead of assuming environment-scoped release secrets.
+4. **Gitea fork-PR secret default** — does Gitea Actions expose secrets to fork-PR workflow runs by default? (Verify.)
+5. **Gitea workflow-keyword compatibility** — current docs also call out ignored `concurrency`, `timeout-minutes`, and some permission semantics depending on version. Audit the workflow syntax against the exact deployed Gitea version.
+6. **Native-binding optional deps build hooks** — what happens to AIWG users on a `--ignore-scripts` org policy if they have `better-sqlite3` in `optionalDependencies`? (Test before A16 architectural change.)
+7. **pnpm migration blast radius** — what breaks when root, `apps/web`, `tools/eval`, and addon package installs move from npm lockfiles to pnpm workspace? Verify build, publish, tests, optional native deps, and package contents before replacing npm commands across workflows.
 
 Each open question should become a `type: spike` issue under the epic if it requires investigation effort.
 

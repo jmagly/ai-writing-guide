@@ -40,18 +40,20 @@ Each control is rated for **maturity** (mainstream / emerging / experimental), *
 
 - **What**: Cryptographic attestation that the tarball was built by a specific workflow in a specific source repo. Requires OIDC at publish time.
 - **Defends**: Direct token theft → publish (S1 class) — the attacker without OIDC access cannot mint provenance.
-- **Maturity**: Mainstream (npm 9.5+, supported by GitHub Actions OIDC, increasing provider support).
+- **Maturity**: Mainstream, but provider-constrained. npm's current provenance docs still document `npm publish --provenance` for supported cloud CI/CD providers, and the newer trusted-publishing flow automatically emits provenance for GitHub Actions and GitLab CI/CD when the repository is public.
 - **Cost**: S-M (requires OIDC adoption first).
-- **GRADE**: MODERATE — npm docs are authoritative but the feature is still evolving (verify current spec at npm docs before commit).
+- **GRADE**: HIGH for npm CLI behavior, MODERATE for rollout/provider constraints — npm docs are authoritative but the supported-provider set is changing.
 - **Caveats**: Provenance is *necessary but insufficient*. Mini Shai-Hulud demonstrated provenance can be produced by an attacker-controlled workflow.
+  Current npm docs also state provenance is not a safety claim: it links the package to source/build instructions so consumers can audit them.
 
 #### C2. OIDC trusted publishing (npmjs.org)
 
 - **What**: Replaces long-lived static npm tokens with short-lived OIDC-minted tokens issued per-workflow-run.
 - **Defends**: Long-lived token exfiltration (S1). Reduces blast radius if a runner is briefly compromised.
-- **Maturity**: Mainstream on npmjs.org with GitHub Actions; **partial** on other providers including Gitea Actions (verify current Gitea OIDC support at docs.gitea.com).
+- **Maturity**: Mainstream on npmjs.org for supported cloud providers. As of the 2026-05-12 verification pass, npm trusted publishing supports GitHub Actions, GitLab CI/CD, and CircleCI cloud-hosted runners; self-hosted runners and Gitea Actions are not in the supported-provider set.
 - **Cost**: M.
-- **GRADE**: MODERATE — npm + GitHub docs authoritative; Gitea parity status needs verification.
+- **GRADE**: HIGH for npmjs.org provider support (npm docs); HIGH that current Gitea Actions cannot be treated as a GitHub-equivalent OIDC path for npm trusted publishing.
+- **AIWG note**: The current `.gitea/workflows/npm-publish.yml` path cannot simply be converted to npm trusted publishing. npm docs require npm CLI 11.5.1+ and Node 22.14.0+ for trusted publishing; AIWG currently publishes from `node:20`. A decision is needed: move npmjs.org publishing to a GitHub-hosted mirror workflow, or retain a constrained npm token until npm/Gitea support changes.
 
 #### C3. Sigstore / cosign artifact signing
 
@@ -71,11 +73,12 @@ Each control is rated for **maturity** (mainstream / emerging / experimental), *
 
 #### C5. Two-person rule on release / environment protection
 
-- **What**: GitHub environments with deployment protection require an explicit second-person approval before secrets are released to the job. Gitea Actions environment feature parity needs verification.
+- **What**: GitHub environments with deployment protection require an explicit second-person approval before secrets are released to the job. Current Gitea Actions comparison docs say `jobs.<job_id>.environment` is ignored, so this control is not available as a Gitea Actions workflow keyword today.
 - **Defends**: Single-account compromise → silent publish; insider risk.
-- **Maturity**: Mainstream on GitHub Actions; verify on Gitea.
+- **Maturity**: Mainstream on GitHub Actions; not supported as a direct Gitea Actions `environment:` control in current public docs.
 - **Cost**: M.
-- **GRADE**: MODERATE — GitHub docs authoritative; Gitea parity status needs verification.
+- **GRADE**: HIGH for GitHub Actions; HIGH for the current Gitea non-support statement because it comes from Gitea documentation.
+- **AIWG note**: On Gitea, use compensating controls until native environment protection exists: signed tags, branch/tag protection, release-runner isolation, short-lived/manual token injection, and a documented two-person out-of-band release approval.
 
 #### C6. npm 2FA + automation tokens with IP allowlists
 
@@ -155,7 +158,7 @@ Each control is rated for **maturity** (mainstream / emerging / experimental), *
 
 #### C15. Lockfile pinning + integrity verification
 
-- **What**: Commit `package-lock.json`. Use `npm ci` (not `npm install`) in CI to enforce the lockfile. The lockfile's `integrity` field (sha512-base64) is checked on each install.
+- **What**: Commit one canonical lockfile and use the package manager's frozen/install-from-lock mode in CI (`pnpm install --frozen-lockfile`, `npm ci`, or equivalent). The lockfile's integrity fields are checked on each install.
 - **Defends**: Mid-install tarball substitution; transitive dep version drift.
 - **Maturity**: Mainstream.
 - **Cost**: S.
@@ -163,7 +166,7 @@ Each control is rated for **maturity** (mainstream / emerging / experimental), *
 
 #### C16. Dependency-age / cooldown policies (release-age gate)
 
-- **What**: Don't install package versions until they have existed long enough for the community to report, remove, or patch malicious releases. Recommended baseline: **5 days minimum age**. The four major JavaScript package managers each implemented native support for this in 2025-2026 — no external tool required.
+- **What**: Don't install package versions until they have existed long enough for the community to report, remove, or patch malicious releases. Recommended baseline for AIWG: **7 days minimum age**; high-sensitivity release workflows may use **10 days**. The major JavaScript package managers have native support for this class of control, with pnpm offering the best fit for AIWG because its workspace-level config can pair `minimumReleaseAge` with `blockExoticSubdeps`.
 - **Defends**: Newly-published malicious versions in the Shai-Hulud / Mini Shai-Hulud propagation window (typically detected and removed within 24-72 hours). Typo squat speed-of-attack. Worm-cascade releases where attackers publish dozens of versions per hour.
 - **Maturity**: Mainstream as of late 2025 / early 2026 — native config in all four major package managers. Also available via external tools (Socket, Snyk, Aikido Safe Chain).
 - **Cost**: S — config-file only, no infrastructure.
@@ -173,43 +176,49 @@ Each control is rated for **maturity** (mainstream / emerging / experimental), *
   - Pinned old package-manager versions are the biggest footgun: pnpm <10.16, Yarn <4.12, and older npm releases do not honor the new keys. Corepack pinning in `packageManager` field of `package.json` can override the user's global version.
   - The gate is per-version, not per-package. A long-established package's *latest* version is still subject to the age gate.
 
-**Concrete configuration (5-day baseline)**:
+**Concrete configuration (AIWG 7-day baseline / 10-day high-sensitivity option)**:
 
-| Manager | Config file | Key | 5-day value |
+| Manager | Config file | Key | 7-day value | 10-day value |
 |---------|-------------|-----|-------------|
-| npm 11.14.1+ | `~/.npmrc` | `min-release-age` | `5 days` |
-| pnpm 10.16.0+ | `~/.npmrc` | `minimum-release-age` | `7200` (minutes) |
-| Yarn 4.12+ | `~/.yarnrc.yml` | `npmMinimalAgeGate` | `5d` |
-| Bun 1.3.12+ | `~/.bunfig.toml` | `install.minimumReleaseAge` | `432000` (seconds) |
+| npm 11.x | `~/.npmrc` or project `.npmrc` | `min-release-age` | `7` (days) | `10` (days) |
+| pnpm 10.16.0+ | `pnpm-workspace.yaml` or pnpm global config | `minimumReleaseAge` | `10080` (minutes) | `14400` (minutes) |
+| Yarn 4.12+ | `.yarnrc.yml` | `npmMinimalAgeGate` | `7d` | `10d` |
+| Bun 1.3.12+ | `bunfig.toml` | `install.minimumReleaseAge` | `604800` (seconds) | `864000` (seconds) |
 
-`~/.npmrc` covers both npm and Corepack-pinned pnpm projects when both keys are set (npm will warn about the pnpm-specific `minimum-release-age` key but still honor its own `min-release-age`):
+For npm:
 
 ```ini
-# npm uses days; pnpm uses minutes.
-min-release-age=5
-minimum-release-age=7200
+# npm uses days.
+min-release-age=7
+```
+
+For pnpm, do not rely on `.npmrc` for this setting. Current pnpm docs say only auth and registry settings are read from `.npmrc`; dependency-resolution settings belong in `pnpm-workspace.yaml` or pnpm's global config:
+
+```yaml
+minimumReleaseAge: 10080
+blockExoticSubdeps: true
 ```
 
 Yarn:
 
 ```sh
-yarn config set npmMinimalAgeGate 5d -H
+yarn config set npmMinimalAgeGate 7d -H
 ```
 
 Bun:
 
 ```toml
 [install]
-minimumReleaseAge = 432000
+minimumReleaseAge = 604800
 ```
 
 **Verification commands**:
 
 ```sh
-npm config get min-release-age            # → 5
-pnpm config get minimum-release-age       # → 7200
-yarn config get npmMinimalAgeGate         # → 7200 or 5d depending on display format
-cat ~/.bunfig.toml                        # → minimumReleaseAge = 432000
+npm config get min-release-age            # → 7
+pnpm config get minimumReleaseAge         # → 10080
+yarn config get npmMinimalAgeGate         # → 10080 or 7d depending on display format
+cat ~/.bunfig.toml                        # → minimumReleaseAge = 604800
 ```
 
 **Source docs** (verify URLs at adoption time per citation-policy):
@@ -219,8 +228,8 @@ cat ~/.bunfig.toml                        # → minimumReleaseAge = 432000
 - Bun config: https://bun.com/docs/runtime/bunfig#installminimumreleaseage
 
 **AIWG applicability**:
-- **AIWG-self CI**: adopt for the `npm ci` step in publish workflows. Note that `npm ci` reads `package-lock.json` and the age gate enforces on resolution — for `npm ci` to benefit, the gate must have been in effect when the lockfile was *last regenerated* (i.e., `npm install` regenerated, then committed). Document this in the developer workflow.
-- **User-facing**: ship a skill (`/security-adopt-age-gate` or similar) that scaffolds the `~/.npmrc`, `~/.yarnrc.yml`, `~/.bunfig.toml` entries plus a `.npmrc` at project root for CI runners. Pair with a rule that prefers `npm ci` over `npm install` for reproducibility.
+- **AIWG-self CI**: prefer migrating installs/builds/tests from npm to pnpm and enforcing `pnpm install --frozen-lockfile` with `minimumReleaseAge: 10080` and `blockExoticSubdeps: true`. Until migration is complete, use npm `min-release-age=7` on npm-based install steps and document that the gate only helps if it is active before lockfile regeneration.
+- **User-facing**: ship a skill (`/security-adopt-age-gate` or similar) that scaffolds npm `.npmrc`, pnpm `pnpm-workspace.yaml`/global config, Yarn `.yarnrc.yml`, Bun `bunfig.toml`, plus CI config. Default to 7 days and offer 10 days for release/publish workflows.
 
 #### C17. Install-time intercept tools (Socket / Snyk / Aikido Safe Chain)
 
@@ -274,15 +283,26 @@ The Mini Shai-Hulud propagation primitive is the `prepare` script of an optional
 
 A note on optional native dependencies: `better-sqlite3`, `node-pty`, `node-canvas`, etc. have legitimate build hooks. Banning install scripts wholesale forces users to compile from source another way. Most orgs handle this by maintaining a per-package allowlist with audit dates. (GRADE: MODERATE — practitioner discussion + vendor blog content; no single authoritative spec.)
 
+### 2.5 Git/exotic dependency controls
+
+#### C22. Block transitive git / tarball / exotic dependency sources
+
+- **What**: Prevent dependencies from pulling transitive code from git repositories or direct tarball URLs unless explicitly allowed. Mini Shai-Hulud used an optional git dependency to trigger a `prepare` script; this is the exact dependency-source class this control targets.
+- **Defends**: Optional-dependency `prepare` execution from a GitHub-hosted dependency; dependency confusion through non-registry sources; lockfile poisoning that swaps registry packages for git/tarball references.
+- **Maturity**: Emerging to mainstream. pnpm documents `blockExoticSubdeps` in 11.x, defaulting to true, and older managers can lint lockfiles/package manifests for `git+`, `github:`, `http(s)://*.tgz`, and `file:` entries.
+- **Cost**: S-M depending on existing use of git dependencies.
+- **GRADE**: HIGH for pnpm setting existence; MODERATE for cross-manager enforcement because it requires project-specific linting.
+- **AIWG applicability**: Track B should include this in the lifecycle/dependency-source policy, not only in the release-age gate. Track A should add a CI check that rejects unexpected git/tarball dependencies in lockfiles. If AIWG migrates to pnpm, enforce `blockExoticSubdeps: true` in `pnpm-workspace.yaml`.
+
 ## 4. Gitea Actions Specifics
 
-(GRADE: VERY LOW for any specific feature claim below until verified against docs.gitea.com at implementation time. This section is a starting point for verification, not a feature inventory.)
+(GRADE: HIGH for claims directly verified against current docs.gitea.com comparison page on 2026-05-12; otherwise VERY LOW until the operator's exact Gitea version is checked.)
 
-- **OIDC trusted publishing**: Gitea Actions added OIDC token issuance in a recent version; npm trusted publishing requires specific OIDC provider configuration. Verify support and current limitations before adoption.
-- **Environments and deployment protection rules**: Gitea Actions added environment support after GitHub Actions; feature parity needs verification.
+- **OIDC trusted publishing**: npm trusted publishing does not currently list Gitea Actions as a supported provider. Treat Gitea OIDC as out of scope for npmjs.org trusted publishing until npm adds Gitea or generic OIDC support.
+- **Environments and deployment protection rules**: Current Gitea Actions comparison docs say `jobs.<job_id>.environment` is ignored. Do not plan Gitea environment-scoped release secrets as an implementable workflow-only control.
 - **Branch protection + required reviewers**: Gitea has branch protection; required-reviewers configurability varies by Gitea version.
 - **Secret scoping**: Gitea Actions supports repo-level secrets reliably. Organization-level and environment-level secret behavior should be verified per-version.
-- **Fork PR behavior**: Verify whether Gitea Actions exposes secrets to fork-PR workflow runs. Default behavior may differ from GitHub.
+- **Fork PR behavior**: Current Gitea docs state job-token permissions are restricted for fork pull requests, but the secret-exposure behavior for user-defined secrets still needs instance-version verification.
 - **Runner isolation**: Self-hosted runners' security posture is entirely operator's responsibility. Ephemeral runners and dedicated VMs per job substantially reduce blast radius compared to long-lived shared runners.
 
 **For AIWG specifically**: the Gitea-side controls need verification against the operator's actual deployment version. The AIWG runner (`gitea-runner-host`, per workflow comments) is shared across all workflows — a per-publish-job dedicated runner would substantially reduce risk.
@@ -307,15 +327,16 @@ Classification: **A** = adopt in AIWG's own pipeline; **B** = ship as user-facin
 | C12. SBOM generation | C | Adopt; ship a skill that scaffolds SBOM generation in user workflows |
 | C13. `--ignore-scripts` | B | AIWG-self has only a benign postinstall; ship guidance and a skill |
 | C14. `npm audit signatures` | C | Adopt in CI; ship as user-facing skill |
-| C15. Lockfile pinning | C | Already adopted in AIWG (`npm ci`); document for users |
-| C16. Dependency-age / cooldown | B | Not yet adopted by AIWG; ship guidance |
+| C15. Lockfile pinning | C | Adopt as frozen lockfile installs; migration target should be pnpm workspace + `pnpm-lock.yaml` |
+| C16. Dependency-age / cooldown | C | Adopt in AIWG-self with a 7-day baseline; ship guidance with 7-day default and 10-day high-sensitivity option |
 | C17. Install-time intercept tools | B | Document Aikido Safe Chain, Socket, Snyk as user options |
 | C18. Tarball content audit | C | Adopt for AIWG; ship as skill |
 | C19. Hardware-backed 2FA | A | Operator practice |
 | C20. Maintainer access minimization | A | Operator practice |
 | C21. `SECURITY.md` | C | Adopt for AIWG; ship as template for user projects |
+| C22. Block transitive git / exotic dependency sources | C | Adopt as lockfile/package manifest lint; ship as user-facing policy/lint capability |
 
-**Summary**: 8 controls are A-only (AIWG-self adoption), 5 are B-only (ship as user capability), 11 are C (both).
+**Summary**: 7 controls are A-only (AIWG-self adoption), 3 are B-only (ship as user capability), 12 are C (both).
 
 ## 6. Phased Roadmap for AIWG-Self
 
@@ -323,21 +344,23 @@ Classification: **A** = adopt in AIWG's own pipeline; **B** = ship as user-facin
 
 1. **Remove `postinstall` lifecycle script** (effort: S). Migrate PATH guidance to `aiwg doctor` / `aiwg help` first-run.
 2. **Remove `continue-on-error: true` from stable publish test step** (effort: S). Fix or quarantine any flaky tests surfaced.
-3. **Digest-pin `container: node:20` across all 11 workflows** (effort: M). Create `ci/digests.txt` for tracked digests.
+3. **Digest-pin workflow containers across all 11 workflows** (effort: M). Create `ci/digests.txt` for tracked digests; if npmjs.org trusted publishing moves forward, use a Node 22.14.0+ publish environment for that path.
 4. **SHA-pin all `uses: actions/...@v*` references** (effort: M). Add Dependabot or equivalent for intentional updates.
-5. **Adopt OIDC trusted publishing on npmjs.org with `npm publish --provenance`** (effort: M). Verify Gitea Actions OIDC support before committing.
+5. **Adopt npmjs.org trusted publishing/provenance on a supported provider, or document token fallback** (effort: M-L). Current npm docs do not support Gitea Actions for this path.
 6. **Add `SECURITY.md` with private reporting channel** (effort: S).
 7. **Fix `GT_ACCESS_TOKEN`-in-URL pattern in `docsite-*.yml`** (effort: S).
+8. **Spike pnpm workspace migration** (effort: M). Decide whether root, `apps/web`, `tools/eval`, and addon package installs move from npm lockfiles to one pnpm workspace and one `pnpm-lock.yaml`.
 
 ### Phase 2 — Q3 2026
 
 1. **Sigstore-sign release tarballs + per-release manifest** (effort: M-L).
 2. **Sign git tags (GPG or SSH-signing)** (effort: S — depends on maintainer setup).
-3. **Move publish secrets to environment-scoped with deployment protection rule** (effort: M).
+3. **Replace Gitea environment-scoped-secret assumption with supported release-gate controls** (effort: M). Current Gitea docs say `jobs.<job_id>.environment` is ignored.
 4. **Tarball content audit step (`npm pack --dry-run` vs expected manifest)** (effort: S).
 5. **`npm audit signatures` gate in publish CI** (effort: S).
 6. **SBOM generation (`@cyclonedx/cyclonedx-npm`) attached to releases** (effort: S-M).
 7. **Audit `pull_request`-triggered workflows for secret exposure; harden or split** (effort: M).
+8. **Reject unexpected git/tarball/exotic dependency sources in CI** (effort: S-M).
 
 ### Phase 3 — Longer term
 
@@ -366,9 +389,9 @@ Classification: **A** = adopt in AIWG's own pipeline; **B** = ship as user-facin
 - Companion threat model: `.aiwg/security/working/threat-model-supply-chain.md`. (GRADE: HIGH — paired analysis.)
 
 **Verification gaps to close before treating recommendations as production-ready**:
-- Current state of Gitea Actions OIDC trusted publishing support (docs.gitea.com).
-- Current npm trusted-publishing provider matrix (npmjs.org docs).
-- Gitea environments + deployment protection feature parity vs GitHub Actions.
+- Release-path decision for npmjs.org trusted publishing because Gitea Actions is not currently in npm's supported-provider set.
+- Node/npm version decision for trusted publishing because npm currently requires npm CLI 11.5.1+ and Node 22.14.0+.
+- Gitea release-gate compensating controls because current Gitea docs say `jobs.<job_id>.environment` is ignored.
 - Gitea fork-PR secret exposure default behavior.
 
 These need explicit WebFetch verification when each control is adopted, not at brief-authoring time.
