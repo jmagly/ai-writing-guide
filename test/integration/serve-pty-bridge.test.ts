@@ -57,19 +57,20 @@ describe('aiwg serve — PTY bridge resilience smoke', () => {
     const dedicated = await spawnAiwgServe();
     await waitForHttp(dedicated.url, 20_000, dedicated);
 
-    // Confirm it's alive
-    const r = await fetch(dedicated.url);
-    expect(r.status).toBeLessThan(500);
+    // Confirm it's alive via the API surface (root may return 503 when
+    // apps/web/dist is missing — happens in CI before the web build runs).
+    const r = await fetch(`${dedicated.url}/api/health`);
+    expect(r.status).toBe(200);
 
     // SIGINT
     await dedicated.kill('SIGINT');
 
-    // After kill, the port should be free again — try connecting and expect failure
+    // After kill, /api/health should become unreachable.
     const start = Date.now();
     let stillResponding = true;
     while (Date.now() - start < 3_000) {
       try {
-        const r2 = await fetch(dedicated.url, {
+        const r2 = await fetch(`${dedicated.url}/api/health`, {
           signal: AbortSignal.timeout(200),
         });
         if (r2.status >= 500) { stillResponding = false; break; }
