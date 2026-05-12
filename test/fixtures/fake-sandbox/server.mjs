@@ -170,6 +170,106 @@ export async function startFakeSandbox(opts = {}) {
     return c.json({ agents: instances });
   });
 
+  // ── /api/v1/vms — VM lifecycle (#1146 dashboard proxy target) ─
+  /** @type {Map<string, object>} */
+  const vms = scenario.listVms ? new Map(scenario.listVms().map(v => [v.name, v])) : defaultVMs();
+
+  app.get('/api/v1/vms', (c) => {
+    const state = c.req.query('state');
+    const prefix = c.req.query('prefix');
+    let list = [...vms.values()];
+    if (state) list = list.filter(v => v.state === state);
+    if (prefix) list = list.filter(v => v.name.startsWith(prefix));
+    return c.json({ vms: list });
+  });
+
+  app.get('/api/v1/vms/:name', (c) => {
+    const vm = vms.get(c.req.param('name'));
+    if (!vm) return c.json({ error: 'vm_not_found' }, 404);
+    return c.json(vm);
+  });
+
+  for (const action of ['start', 'stop', 'restart', 'destroy', 'deploy-agent']) {
+    app.post(`/api/v1/vms/:name/${action}`, async (c) => {
+      const vm = vms.get(c.req.param('name'));
+      if (!vm) return c.json({ error: 'vm_not_found' }, 404);
+      const nextState = {
+        start: 'running',
+        stop: 'stopped',
+        restart: 'running',
+        destroy: 'destroyed',
+        'deploy-agent': vm.state,
+      }[action];
+      vm.state = nextState;
+      vm[`${action}_at`] = new Date().toISOString();
+      if (action === 'deploy-agent') {
+        const body = await c.req.json().catch(() => ({}));
+        vm.deployedAgent = body.agent_id || body.name || 'unnamed';
+      }
+      log('fake-sandbox:vm-action', { name: vm.name, action, newState: nextState });
+      return c.json({ ok: true, vm });
+    });
+  }
+
+  app.delete('/api/v1/vms/:name', (c) => {
+    const name = c.req.param('name');
+    if (!vms.has(name)) return c.json({ error: 'vm_not_found' }, 404);
+    vms.delete(name);
+    log('fake-sandbox:vm-delete', { name });
+    return c.json({ ok: true });
+  });
+
+  // POST /api/v1/vms — create a new VM (provision)
+  app.post('/api/v1/vms', async (c) => {
+    let body;
+    try { body = await c.req.json(); }
+    catch { return c.json({ error: 'invalid JSON' }, 400); }
+    const name = body.name || `vm-${randomUUID().slice(0, 8)}`;
+    const vm = {
+      name,
+      state: 'creating',
+      runtime: 'qemu',
+      profile: body.profile || body.loadout || 'default',
+      created_at: new Date().toISOString(),
+    };
+    vms.set(name, vm);
+    log('fake-sandbox:vm-create', { name });
+    return c.json({ ok: true, vm }, 201);
+  });
+
+  // ── /api/v1/containers — Container lifecycle (parallel to /vms) ──
+  /** @type {Map<string, object>} */
+  const containers = scenario.listContainers
+    ? new Map(scenario.listContainers().map(ct => [ct.name, ct]))
+    : new Map();
+
+  app.get('/api/v1/containers', (c) => c.json({ containers: [...containers.values()] }));
+  app.get('/api/v1/containers/:name', (c) => {
+    const ct = containers.get(c.req.param('name'));
+    return ct ? c.json(ct) : c.json({ error: 'container_not_found' }, 404);
+  });
+  app.post('/api/v1/containers', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const name = body.name || `ct-${randomUUID().slice(0, 8)}`;
+    const ct = { name, state: 'created', image: body.image || 'fake:latest' };
+    containers.set(name, ct);
+    return c.json({ ok: true, container: ct }, 201);
+  });
+  for (const action of ['start', 'stop']) {
+    app.post(`/api/v1/containers/:name/${action}`, (c) => {
+      const ct = containers.get(c.req.param('name'));
+      if (!ct) return c.json({ error: 'container_not_found' }, 404);
+      ct.state = action === 'start' ? 'running' : 'stopped';
+      return c.json({ ok: true, container: ct });
+    });
+  }
+  app.delete('/api/v1/containers/:name', (c) => {
+    const name = c.req.param('name');
+    if (!containers.has(name)) return c.json({ error: 'container_not_found' }, 404);
+    containers.delete(name);
+    return c.json({ ok: true });
+  });
+
   // ── /api/sandboxes/register (legacy) ──────────────────────────
   app.post('/api/sandboxes/register', async (c) => {
     let body;
@@ -341,4 +441,19 @@ function defaultInstances() {
       kind: 'container',
     },
   ];
+}
+
+function defaultVMs() {
+  return new Map([
+    ['fake-vm-01', {
+      name: 'fake-vm-01',
+      state: 'stopped',
+      runtime: 'qemu',
+      profile: 'default',
+      cpu: 2,
+      memory_gb: 4,
+      disk_gb: 20,
+      ip: null,
+    }],
+  ]);
 }

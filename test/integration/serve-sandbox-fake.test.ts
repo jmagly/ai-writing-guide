@@ -143,3 +143,120 @@ describe('aiwg serve end-to-end against fake sandbox', () => {
     expect([404, 503]).toContain(resp.status);
   });
 });
+
+/**
+ * Cycle 2 — register fake-sandbox with serve, then drive VM/container
+ * lifecycle through serve's `/api/sandboxes/:id/...` proxy routes. This
+ * exercises the proxy/forwarding layer that AIWG dashboards depend on.
+ */
+describe('aiwg serve — dashboard proxies (#1174 cycle 2)', () => {
+  let fake: Awaited<ReturnType<typeof startFakeSandbox>>;
+  let serve: ServeHandle;
+  let registeredSandboxId: string;
+
+  beforeAll(async () => {
+    fake = await startFakeSandbox({ scenario: happyPath() });
+    serve = await spawnAiwgServe();
+    await waitForHttp(serve.url, 5_000);
+
+    // Register the fake with serve so dashboard routes resolve to it.
+    // The register schema is documented in src/serve/sandbox-registry.ts as
+    // RegisterRequest: { name, grpc_endpoint, ws_endpoint, http_endpoint, ... }.
+    const resp = await fetch(`${serve.url}/api/sandboxes/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `fake-cycle2-${Date.now()}`,
+        instance_id: `instance-${Date.now()}`,
+        grpc_endpoint: fake.url, // fake has no gRPC; serve doesn't probe it for proxy reads
+        ws_endpoint: fake.ws_url,
+        http_endpoint: fake.url,
+        capabilities: ['vms', 'containers'],
+        version: '0.0.0-fake',
+      }),
+    });
+    expect([200, 201]).toContain(resp.status);
+    const body = await resp.json();
+    registeredSandboxId = body.sandbox_id;
+    expect(typeof registeredSandboxId).toBe('string');
+  }, 60_000);
+
+  afterAll(async () => {
+    if (serve) await serve.kill();
+    if (fake) await fake.stop();
+  });
+
+  it('lists VMs via /api/sandboxes/:id/vms proxy', async () => {
+    const resp = await fetch(`${serve.url}/api/sandboxes/${registeredSandboxId}/vms`);
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+    expect(Array.isArray(body.vms)).toBe(true);
+    expect(body.vms.length).toBeGreaterThan(0);
+    expect(body.vms[0]).toMatchObject({ name: expect.any(String), state: expect.any(String) });
+  });
+
+  it('starts a VM via /api/sandboxes/:id/vms/:name/start (lifecycle button matrix)', async () => {
+    const target = 'fake-vm-01';
+    const resp = await fetch(
+      `${serve.url}/api/sandboxes/${registeredSandboxId}/vms/${target}/start`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },
+    );
+    expect([200, 202]).toContain(resp.status);
+    const body = await resp.json();
+    expect(body.ok).toBe(true);
+    expect(body.vm.state).toBe('running');
+
+    // Confirm via GET single
+    const detail = await fetch(`${serve.url}/api/sandboxes/${registeredSandboxId}/vms/${target}`);
+    expect(detail.status).toBe(200);
+    const vm = await detail.json();
+    expect(vm.state).toBe('running');
+  });
+
+  it('cycles VM through stop → restart → destroy via proxy', async () => {
+    const target = 'fake-vm-01';
+    for (const action of ['stop', 'restart', 'destroy'] as const) {
+      const r = await fetch(
+        `${serve.url}/api/sandboxes/${registeredSandboxId}/vms/${target}/${action}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },
+      );
+      expect([200, 202]).toContain(r.status);
+      const body = await r.json();
+      expect(body.ok).toBe(true);
+    }
+  });
+
+  it('returns 404 on /vms/<unknown>/start (no silent fall-through)', async () => {
+    const resp = await fetch(
+      `${serve.url}/api/sandboxes/${registeredSandboxId}/vms/does-not-exist/start`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },
+    );
+    expect(resp.status).toBe(404);
+  });
+
+  it('returns 502 when the registered sandbox endpoint is unreachable', async () => {
+    // Register a second sandbox pointing at an unreachable endpoint
+    const orphanResp = await fetch(`${serve.url}/api/sandboxes/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `orphan-${Date.now()}`,
+        instance_id: `instance-orphan-${Date.now()}`,
+        grpc_endpoint: 'http://127.0.0.1:1',
+        ws_endpoint: 'ws://127.0.0.1:1',
+        http_endpoint: 'http://127.0.0.1:1',
+      }),
+    });
+    expect([200, 201]).toContain(orphanResp.status);
+    const { sandbox_id: orphanId } = await orphanResp.json();
+    const resp = await fetch(`${serve.url}/api/sandboxes/${orphanId}/vms`);
+    expect(resp.status).toBe(502);
+    const body = await resp.json();
+    expect(body.error).toMatch(/unreachable/i);
+  });
+
+  it('returns 404 for /api/sandboxes/<unknown>/vms', async () => {
+    const resp = await fetch(`${serve.url}/api/sandboxes/no-such-sandbox/vms`);
+    expect(resp.status).toBe(404);
+  });
+});

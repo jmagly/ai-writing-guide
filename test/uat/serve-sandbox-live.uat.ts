@@ -131,8 +131,85 @@ describe('aiwg serve — live UAT vs real agentic-sandbox', () => {
     expect(body.executors.length).toBeGreaterThan(0);
   }, 30_000);
 
-  // Out of cycle 1 (deferred to cycle 2-3 of #1176):
-  // - End-to-end mission lifecycle (register → dispatch → execute → terminate)
+  // ── Cycle 2 — read-side scenarios against the running sandbox ───
+  // These exercise the actual sandbox surface AIWG depends on. They are
+  // read-only and safe to run against any running sandbox without altering
+  // state. Mission-lifecycle write tests (dispatch → execute → terminate)
+  // require a connected executor and ride with cycle 3.
+
+  liveIt('sandbox /api/v1/vms returns a vm list', async () => {
+    const resp = await fetch(`${SANDBOX_ENDPOINT}/api/v1/vms`);
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+    expect(body).toHaveProperty('vms');
+    expect(Array.isArray(body.vms)).toBe(true);
+  });
+
+  liveIt('sandbox /api/v1/containers returns a container list', async () => {
+    const resp = await fetch(`${SANDBOX_ENDPOINT}/api/v1/containers`);
+    // Some sandbox builds may not expose containers; accept 200 or 404.
+    expect([200, 404]).toContain(resp.status);
+    if (resp.status === 200) {
+      const body = await resp.json();
+      expect(body).toHaveProperty('containers');
+    }
+  });
+
+  liveIt('serve registers a sandbox pointed at the live agentic-sandbox', async () => {
+    expect(serve).toBeDefined();
+    const wsEndpoint = SANDBOX_ENDPOINT.replace(/^http/, 'ws');
+    const resp = await fetch(`${serve!.url}/api/sandboxes/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `uat-live-${Date.now()}`,
+        instance_id: `uat-instance-${Date.now()}`,
+        grpc_endpoint: SANDBOX_ENDPOINT,
+        ws_endpoint: wsEndpoint,
+        http_endpoint: SANDBOX_ENDPOINT,
+        capabilities: ['vms', 'containers'],
+        version: '0.0.0-uat',
+      }),
+    });
+    expect([200, 201]).toContain(resp.status);
+    const body = await resp.json();
+    expect(typeof body.sandbox_id).toBe('string');
+    expect(typeof body.token).toBe('string');
+  }, 30_000);
+
+  liveIt('serve proxies vms list through the registered live sandbox', async () => {
+    expect(serve).toBeDefined();
+    // Register fresh + use returned sandbox_id (state isolation per test)
+    const wsEndpoint = SANDBOX_ENDPOINT.replace(/^http/, 'ws');
+    const reg = await fetch(`${serve!.url}/api/sandboxes/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `uat-vmproxy-${Date.now()}`,
+        instance_id: `uat-vmproxy-${Date.now()}`,
+        grpc_endpoint: SANDBOX_ENDPOINT,
+        ws_endpoint: wsEndpoint,
+        http_endpoint: SANDBOX_ENDPOINT,
+      }),
+    });
+    const { sandbox_id } = await reg.json();
+
+    const resp = await fetch(`${serve!.url}/api/sandboxes/${sandbox_id}/vms`);
+    expect([200, 502]).toContain(resp.status);
+    if (resp.status === 200) {
+      const body = await resp.json();
+      expect(body).toHaveProperty('vms');
+      expect(Array.isArray(body.vms)).toBe(true);
+    }
+    // 502 is acceptable if the running sandbox doesn't expose the legacy
+    // /api/v1/vms route (some builds gate it behind a libvirt connection).
+  }, 30_000);
+
+  // ── Deferred to cycle 3 ─────────────────────────────────────────
+  // - End-to-end mission lifecycle (register executor → dispatch → execute → terminate)
+  //   requires the running sandbox to register as an executor (not just respond to reads).
+  //   This is a write-side test that ride together with the executor adapter under
+  //   sandbox#193 once mission events fully wire to dispatch.
   // - Multi-pane attach against a real VM
   // - Mid-PTY-session VM stop
   // - Network partition reconnect
