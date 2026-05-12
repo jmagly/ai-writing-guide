@@ -32,7 +32,7 @@ jobs:
   mirror-and-release:
     name: Mirror to GitHub + Release
     runs-on: ubuntu-latest
-    container: node:20
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 10
     # Force bash so we can use set -euo pipefail and array operations.
     defaults:
@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
         with:
           fetch-depth: 0  # full history so we can push to mirror
 

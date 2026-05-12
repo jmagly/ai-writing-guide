@@ -80,7 +80,7 @@ jobs:
     # The runner mounts the host docker socket at /var/run/docker.sock so we
     # use DooD (Docker-outside-of-Docker) — no DinD, no --privileged.
     container:
-      image: node:20-bookworm
+      image: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 25
 
     # PRs only run the gate when explicitly opted in. Default PR run is a
@@ -135,7 +135,7 @@ jobs:
 
       - name: Checkout AIWG
         if: steps.prereq.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install docker + go
         if: steps.prereq.outputs.skip != 'true'
@@ -164,7 +164,7 @@ jobs:
 
       - name: Checkout agentic-sandbox at ${{ env.SANDBOX_REF }}
         if: steps.prereq.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
         with:
           repository: roctinam/agentic-sandbox
           ref: ${{ env.SANDBOX_REF }}
@@ -230,7 +230,7 @@ jobs:
 
       - name: Upload conformance reports
         if: always() && steps.prereq.outputs.skip != 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: conformance-reports-${{ github.run_number }}
           path: |

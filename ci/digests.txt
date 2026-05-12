@@ -1,0 +1,81 @@
+# AIWG CI Pin Manifest
+#
+# Tracks the immutable digests and commit SHAs that the CI workflows pin
+# against, plus the rationale and the intentional-update process. The
+# goal: workflow runs are reproducible across time, and any digest/SHA
+# repointing is a reviewable change rather than a silent supply-chain
+# attack surface.
+#
+# Source rules:
+#   .claude/rules/dev-idempotent-builds.md  (rule 2: no :latest, rule 4: lock files)
+#   .claude/rules/dev-pipeline-safety.md
+#
+# Originating change: #1281 (A3 — digest-pin containers) + #1282 (A4 —
+# SHA-pin actions), Wave 2 of supply-chain hardening epic #1278.
+#
+# Format: one row per pinned reference.
+#   <kind>  <name>            <pin>                             <resolved-version>   <date-pinned>   <update-rationale>
+# Use this as the source of truth when reading workflow diffs — a digest
+# change here without a corresponding "Bump pin" entry below is a red flag.
+#
+# ============================================================================
+# Container images
+# ============================================================================
+
+container  node:20         sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  20.20.2-bookworm  2026-05-12  initial pin (Wave 2 of #1278)
+
+# Notes on the node:20 pin:
+# - Both `node:20` and `node:20-bookworm` tags resolve to this same digest
+#   as of 2026-05-12. The workflows that used `node:20-bookworm` (notably
+#   conformance.yml's matrix container) were converted to `node:20@<digest>`
+#   for uniformity.
+# - Resolved Node runtime: 20.20.2 (active LTS line as of May 2026).
+# - npmjs.org trusted-publishing path (#1283 / A5) may require Node 22.14.0+
+#   on a supported provider (GitHub Actions). When A5 lands, the publish-leg
+#   container will be pinned separately to a node:22 digest and added here
+#   as its own row.
+
+# ============================================================================
+# GitHub Actions
+# ============================================================================
+
+action  actions/checkout         34e114876b0b11c390a56381ad16ebd13914f8d5  v4.3.1  2026-05-12  initial pin (Wave 2 of #1278)
+action  actions/upload-artifact  ea165f8d65b6e75b540449e92b4886f43607fa02  v4.6.2  2026-05-12  initial pin (Wave 2 of #1278)
+
+# Notes on action pinning:
+# - Pin is the 40-character commit SHA of the *immutable* patch tag (v4.X.Y),
+#   resolved at pin time via `git ls-remote https://github.com/actions/<repo>
+#   refs/tags/v4`. The trailing comment in each workflow line shows the
+#   semantic version so readers see at a glance what the SHA refers to.
+# - actions/checkout: v4 (floating) currently aliases the v4.3.1 immutable
+#   patch tag. v4.3.0 release date 2025-08-11; v4.3.1 followed.
+# - actions/upload-artifact: v4.6.2 release date 2025-03-19.
+#
+# ============================================================================
+# Update process
+# ============================================================================
+#
+# 1. Open an issue describing why the bump is wanted (CVE in pinned version,
+#    needed new feature, etc.). Link any upstream advisory.
+# 2. Resolve the new pin:
+#    - Container digest:   `docker pull <name>:<tag>` then take the
+#                          `Digest: sha256:...` line from the pull output.
+#                          Alternatively: `docker buildx imagetools inspect
+#                          <name>:<tag>` for multi-arch awareness.
+#    - Action SHA:         `git ls-remote https://github.com/actions/<repo>
+#                          refs/tags/<semver-tag>`
+# 3. Update *all* workflow occurrences in a single commit. Audit with:
+#    `grep -rn "<pinned-thing>" .gitea/workflows/`
+# 4. Append a row to this file under the same `<kind>` section. Format the
+#    `<update-rationale>` column as: short description + issue ref
+#    (e.g., "CVE-2026-12345 fix, #1310").
+# 5. Commit message format:
+#    `chore(ci): bump <name> pin to <version> (refs #<issue>)`
+# 6. Verify a full CI run passes on the bump commit before tagging anything
+#    that depends on it.
+#
+# Cadence: pins are not bumped on a fixed schedule. A bump is triggered by
+# (a) a security advisory against the current pin, (b) a needed feature in
+# a newer release, or (c) an explicit audit decision to roll forward. See
+# also #1310-class follow-ups for any Dependabot-equivalent automation on
+# Gitea Actions.

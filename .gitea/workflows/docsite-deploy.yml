@@ -19,12 +19,12 @@ jobs:
   deploy-docs:
     name: Build & Deploy Documentation
     runs-on: ubuntu-latest
-    container: node:20
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 15
 
     steps:
       - name: Checkout AIWG
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Clone dbbuilder
         env:

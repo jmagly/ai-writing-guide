@@ -56,7 +56,7 @@ jobs:
     # Publish pre-release tags (nightly, alpha, beta) — nightly → --tag nightly, others → --tag next
     if: ${{ contains(github.ref, '-') && github.event_name == 'push' }}
     runs-on: ubuntu-latest
-    container: node:20
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 15
     # Force bash so `set -o pipefail` works (gitea-runner-host default is sh/dash).
     defaults:
@@ -65,7 +65,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install dependencies
         run: npm ci
@@ -201,7 +201,7 @@ jobs:
     # Only publish final tags (no pre-release suffix)
     if: ${{ !contains(github.ref, '-') }}
     runs-on: ubuntu-latest
-    container: node:20
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 15
     defaults:
       run:
@@ -209,7 +209,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install dependencies
         run: npm ci
@@ -394,7 +394,7 @@ jobs:
   verify-install:
     name: Verify Installation
     runs-on: ubuntu-latest
-    container: node:20
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     needs: build-and-publish
     if: ${{ github.event.inputs.dry_run != 'true' }}
     timeout-minutes: 10

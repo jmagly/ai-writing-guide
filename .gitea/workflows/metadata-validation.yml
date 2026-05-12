@@ -34,12 +34,12 @@ jobs:
   validate-metadata:
     name: Validate Plugin Metadata
     runs-on: ubuntu-latest
-    container: node:20
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 10
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install dependencies
         # --omit=optional skips runtime-optional features (embedding
@@ -153,12 +153,12 @@ jobs:
   validate-skill-frontmatter:
     name: Validate SKILL.md Frontmatter (full corpus)
     runs-on: ubuntu-latest
-    container: node:20
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 5
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install js-yaml
         run: npm install --no-save js-yaml
@@ -170,12 +170,12 @@ jobs:
     name: Validation Performance
     needs: validate-metadata
     runs-on: ubuntu-latest
-    container: node:20
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 5
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install dependencies
         # --omit=optional skips runtime-optional features (embedding
