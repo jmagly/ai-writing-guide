@@ -1,0 +1,158 @@
+# AIWG Supply-Chain Hardening Plan
+
+**Document ID**: PLAN-001-SUPPLY-CHAIN
+**Version**: 0.1 (DRAFT)
+**Created**: 2026-05-12
+**Trigger**: Aikido report — Mini Shai-Hulud npm worm, May 2026 (Silva, 2026-05-12). 169 packages / 373 versions compromised across TanStack, Mistral, UiPath, et al.
+**Status**: Planning — no code changes; awaiting review before implementation.
+
+## Companion Documents
+
+- @.aiwg/security/working/threat-model-supply-chain.md — STRIDE + 10 Shai-Hulud-class scenarios + 19-control matrix
+- @.aiwg/security/working/publish-pipeline-audit.md — 14 findings against AIWG's actual workflows (file:line precision)
+- @.aiwg/research/working/supply-chain-defenses-brief.md — 21-control defensive catalog + Gitea Actions caveats + AIWG applicability matrix
+
+## Why This Plan Exists
+
+AIWG is a high-blast-radius npm package. It deploys context to 10 AI coding platforms — every `aiwg use` writes hundreds of files into directories the user's AI assistant reads as system-prompt content. A compromised AIWG release becomes a worm-grade amplifier: lifecycle script runs on user UID, deployed agent definitions can encode token-exfiltration logic the AI executes against the user's project, and the dual-registry distribution (npmjs.org + self-hosted Gitea) gives an attacker two parallel publish paths.
+
+AIWG is **not currently compromised**. AIWG **structurally resembles** the packages that Mini Shai-Hulud has been compromising: lifecycle script + long-lived publish tokens + tag-pinned builder image + no provenance + no signing + small maintainer team. The plan below closes that gap.
+
+## Two Tracks
+
+| Track | Audience | Output |
+|-------|----------|--------|
+| **Track A — AIWG-self hardening** | AIWG maintainers | Code/workflow/process changes to harden AIWG's own publish pipeline. Driven by audit findings F1-F14. |
+| **Track B — User-facing framework capabilities** | AIWG users (any project that ships software) | New skills, rules, agents, templates that let users adopt the same controls in their own pipelines. Driven by the C16-C18 / C13 / C7-C8 / C21 controls flagged "B" or "C" in the applicability matrix. |
+
+Both tracks are filed as a single Gitea epic with sub-issues per capability. Track A is priority:critical, Track B is priority:high.
+
+## Track A — Phased Roadmap (AIWG-self)
+
+### Phase 1 — Next Release (target: 2026.6.x series)
+
+Cost-benefit calibrated for "ship before the next exposure window."
+
+| # | Control | Audit Finding | Effort | Owner | Acceptance |
+|---|---------|---------------|--------|-------|-----------|
+| A1 | Remove `postinstall` lifecycle script | F1 | S | sdlc | `package.json` no longer has `scripts.postinstall`; PATH guidance migrated to `aiwg doctor` first-run output; CHANGELOG entry; ADR documenting the removal |
+| A2 | Remove `continue-on-error: true` from stable-publish test step | F4 | S | sdlc | `npm-publish.yml:222` no longer has `continue-on-error`; any tests surfaced as failing are either fixed or quarantined explicitly per `dev-pipeline-safety` |
+| A3 | Digest-pin `container: node:20` across all 11 workflows | F3 | M | sdlc | Every workflow declares `node:20@sha256:<hex>`; `ci/digests.txt` (or equivalent) tracks digest + intentional-update process |
+| A4 | SHA-pin all `uses: actions/...@v*` references | F5 | M | sdlc | Every `uses:` references a 40-char SHA with a trailing version comment; Dependabot (or equivalent) configured for intentional bumps |
+| A5 | Adopt npm OIDC trusted publishing + `--provenance` on npmjs.org | F2 | M | sdlc | `NPMJS_TOKEN` removed as static secret on npmjs.org publish path; `npm publish --provenance` emits valid attestation; Gitea Actions OIDC support verified |
+| A6 | Fix `GT_ACCESS_TOKEN`-in-URL antipattern (`docsite-build.yml`, `docsite-deploy.yml`) | F11 | S | sdlc | Token no longer interpolated into git URL; uses `GIT_ASKPASS` or credential helper; token scope verified minimal |
+| A7 | Add `SECURITY.md` with private vulnerability reporting | F12 | S | sdlc | `SECURITY.md` at repo root; documented PGP/age key; documented response SLA; cross-linked from README |
+
+**Phase 1 exit criteria**: All 7 above merged, CHANGELOG entry, 2026.6.0 stable release tagged with provenance attestation visible on npmjs.org, `npm view aiwg@latest --json` includes a non-null `dist.attestations` field.
+
+### Phase 2 — Q3 2026
+
+| # | Control | Audit Finding | Effort | Owner | Acceptance |
+|---|---------|---------------|--------|-------|-----------|
+| A8 | Sigstore-sign release tarballs + per-release signed manifest | F8 | M-L | sdlc + security-eng | `cosign sign-blob` on every published tarball; signed manifest (SHA-256 + version + tag SHA) attached to Gitea + GitHub release; verification command documented in `docs/releases/verifying.md` |
+| A9 | Sign git tags (GPG or SSH-signing) | F8 | S | sdlc | `git tag -v <vN>` returns valid signature; CI verifies tag signature before publish |
+| A10 | Move publish secrets to environment-scoped with deployment protection | F6 | M | sdlc | `NPM_TOKEN` and `NPMJS_TOKEN` in Gitea Actions environment `release`; manual approval gate verified; Gitea environment-feature parity documented |
+| A11 | Tarball content audit step | F9 | S | sdlc | CI step diffs `npm pack --dry-run` against `ci/expected-tarball-contents.txt`; fails on unexpected additions; expected manifest updated only via explicit commit |
+| A12 | `npm audit signatures` gate in publish CI | F13 | S | sdlc | Pre-publish step runs `npm audit signatures`; fails on unsigned or invalid package |
+| A13 | SBOM generation attached to releases | F14 | S-M | sdlc | CycloneDX SBOM (`@cyclonedx/cyclonedx-npm`) emitted alongside tarball; attached to Gitea + GitHub release |
+| A14 | PR-trigger workflow audit and hardening | F7 | M | sdlc | Each of the 5 PR-triggered workflows reviewed; fork-PR secret exposure mitigated per workflow; Gitea fork-PR default behavior documented |
+| A15 | Release-age gate enabled for AIWG CI installs | (new — covers C16) | S | sdlc | `.npmrc` in repo sets `min-release-age=5`; CI runner honors it on `npm ci`; documented in CONTRIBUTING |
+
+**Phase 2 exit criteria**: All above merged; AIWG passes OpenSSF Scorecard at score >= 7/10 (verify exact threshold); two-person rule enforced on all publish workflows.
+
+### Phase 3 — Longer term (Q4 2026 / 2027)
+
+| # | Control | Audit Finding | Effort | Notes |
+|---|---------|---------------|--------|-------|
+| A16 | Audit and minimize optional native-binding deps (`better-sqlite3`, `node-pty`, `hnswlib-node`, etc.) | F10 | M-L | May involve architectural shift — some deps move from `optionalDependencies` to runtime-loaded peer deps |
+| A17 | Egress filter on publish-runner | (operational, no finding) | L | Restrict outbound to npmjs.org, Gitea, GitHub mirror only |
+| A18 | Dedicated publish-only runner separate from CI runner | (operational) | M-L | Isolates publish secrets from broader CI surface |
+| A19 | Disclosure runbook + tabletop incident exercise | F12 follow-up | M | Practice the incident response that `SECURITY.md` documents |
+
+## Track B — User-Facing Framework Capabilities
+
+These are new framework artifacts (skills, rules, agents, templates) that ship via `aiwg use` so that AIWG users can adopt the same controls in their own projects. Track B is priority:high but not priority:critical — it doesn't gate AIWG-self hardening.
+
+| # | Capability | Type | Maps to control(s) | Effort | Notes |
+|---|-----------|------|--------------------|--------|-------|
+| B1 | `supply-chain-audit` skill | skill | C7, C8, C9, C13, C18 | M | One-shot audit of a user's repo: surfaces tag-pinned actions, unpinned containers, unfiltered PR-triggered workflows with secrets, lifecycle scripts, missing `npm audit signatures` gate |
+| B2 | `release-age-gate` skill | skill | C16 | S | Scaffolds `~/.npmrc` + `.yarnrc.yml` + `~/.bunfig.toml` + project `.npmrc` for 5-day age gate; verifies package-manager versions; documents Corepack-pin gotcha |
+| B3 | `ci-action-pinning` rule | rule | C7, C8 | S | Lint rule that flags `uses:` references not SHA-pinned and `container:` references not digest-pinned. Companion to existing `dev-idempotent-builds.md` |
+| B4 | `lifecycle-script-policy` rule | rule | C13 | S | Rule + guidance on auditing `pre/post-install`, `prepare`, `prepublishOnly` hooks in own package and in dep graph |
+| B5 | `release-signing` skill | skill | C3, C4 | M | Scaffolds Sigstore/cosign signing and GPG/SSH tag signing into a user's release workflow |
+| B6 | `trusted-publishing` skill | skill | C1, C2 | M | Guides a user through migrating from static npm tokens to OIDC trusted publishing on npmjs.org; checks provider OIDC support |
+| B7 | `security-md-template` template | template | C21 | S | `SECURITY.md` template with placeholders for private channel, PGP key, response SLA |
+| B8 | `tarball-audit` skill | skill | C18 | S | Scaffolds the `npm pack --dry-run` vs expected manifest check |
+| B9 | `sbom-emit` skill | skill | C12 | S-M | Scaffolds CycloneDX SBOM generation into user release workflow |
+| B10 | `workflow-injection-audit` skill | skill | C9, C10 | M | Audits user's CI workflows for PR-triggered + secret-referencing combinations; flags exposure |
+| B11 | Supply-chain incident-response runbook | template + flow | n/a | M | Template for what to do when you discover you shipped (or installed) a compromised package |
+| B12 | `dep-risk-register` skill | skill | (new — operational hygiene) | S | Scaffolds a `ci/dep-risk-register.yaml` tracking each runtime + optional dep, maintainer set, signing status, last-audit date |
+
+## Gitea Epic + Sub-Issues — Filing Plan
+
+One parent epic, 19 child issues (Track A: A1-A15; Track B: B1-B12 = first wave 7-8 issues, remainder filed later as backlog). Sub-issues filed in priority order. Each child issue includes:
+
+- `Blocks:` / `Blocked-by:` per ops-cross-repo rule
+- Acceptance criteria
+- Effort estimate
+- Audit-finding cross-reference where applicable
+- File:line refs into the audit doc
+
+Labels:
+- All issues: `area: security`, `area: supply-chain`
+- Track A issues: `priority: critical`
+- Track B issues: `priority: high`
+- Phase 1 issues: `release/2026.6` milestone tag
+- Phase 2 issues: `release/2026.q3` milestone tag
+
+## Out of Scope (this plan)
+
+- Detailed Shai-Hulud incident analysis beyond what's needed to scope defenses (covered in the defenses brief).
+- Penetration testing of the Gitea instance itself.
+- Audit of `agentic/code/` deployed artifact integrity at user runtime (separate threat model — covers the AI-runtime trust boundary; planned as a follow-on).
+- Marketing / community-communications about hardening adoption (separate; should follow Phase 1 completion).
+
+## Sequencing Constraints
+
+- **A2 must complete before A11** — tarball assertion depends on tests actually gating the publish, otherwise the assertion runs against a tarball produced from broken tests.
+- **A5 should complete before A8** — OIDC adoption gives you the OIDC identity to sign with; cosign keyless signing uses the same OIDC.
+- **A10 should complete with or before A5** — environment-scoped secrets is the partner to OIDC adoption; doing OIDC without environment scoping leaves the legacy token's blast radius in place.
+- **A7 should be Phase 1 not Phase 2** — `SECURITY.md` is free and the lack of a disclosure channel today is itself an operational gap.
+- **A3 and A4 can be parallel** but should land in one PR per workflow to minimize churn.
+- **B2 (release-age gate) is the cheapest user-facing win** — ship it early in Track B; it's mostly a documentation deliverable.
+
+## Risk Register Tracking
+
+This plan inherits the risk register from `threat-model-supply-chain.md`. Each Phase 1 completion reduces residual risk on specific scenarios:
+
+| Risk scenario (from threat model) | Closed/reduced by |
+|----------------------------------|-------------------|
+| S1 (token theft → malicious publish) | A5 (OIDC) + A10 (env scope) |
+| S2 (workflow injection) | A4 (SHA-pinning) + A10 (env scope) + A14 (PR-trigger audit) |
+| S3 (lifecycle script abuse on user machines) | A1 (remove postinstall) |
+| S5 (builder image hijack) | A3 (digest pin) + A4 (action SHA pin) |
+| S6 (GitHub mirror desync) | A8 (Sigstore signing) + A9 (signed tags) |
+| S7 (dependency confusion / typo squat) | A15 (release-age gate for AIWG-self) + B2 (ship to users) |
+| S8 (maintainer account takeover) | A10 (env scope two-person rule) + operational (hardware 2FA — out of plan scope) |
+| S9 (compromised AIWG-deployed artifact) | A8 (signing) + B5 (user-facing signing capability) |
+| S10 (AI prompt-injection in deployed content) | partially A8 (integrity); fuller mitigation in follow-on threat model on AI-runtime boundary |
+
+Phase 1 closes / substantially reduces 5 of 10 scenarios. Phase 2 closes another 3.
+
+## Open Questions / Verification Required Before Implementation
+
+These should resolve in Phase 1 planning, before changes land:
+
+1. **Gitea Actions OIDC support** — what version of Gitea is the runner host on? Does it expose `id-token: write` permissions and integrate with npm's OIDC provider matrix? (Verify via docs.gitea.com.)
+2. **Gitea Actions environments** — does the current Gitea version support environment-scoped secrets with deployment protection rules? If not, what's the compensating-controls plan? (Verify.)
+3. **Gitea fork-PR secret default** — does Gitea Actions expose secrets to fork-PR workflow runs by default? (Verify.)
+4. **npm trusted-publishing provider matrix** — is Gitea on npm's accepted OIDC provider list? If not, can we proxy via a trusted intermediary? (Verify via npm docs.)
+5. **Native-binding optional deps build hooks** — what happens to AIWG users on a `--ignore-scripts` org policy if they have `better-sqlite3` in `optionalDependencies`? (Test before A16 architectural change.)
+
+Each open question should become a `type: spike` issue under the epic if it requires investigation effort.
+
+---
+
+**Status**: Draft plan, awaiting review. Implementation begins after epic + sub-issues are filed and an operator approves the Phase 1 sequence.
+
+**Next step**: File Gitea epic + Phase 1 + Phase 2 + Track B Wave 1 sub-issues (see "Gitea Epic + Sub-Issues — Filing Plan" above).
