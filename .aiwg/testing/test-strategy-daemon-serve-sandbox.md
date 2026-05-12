@@ -149,7 +149,31 @@ test/fixtures/
 │   ├── start-vm.json
 │   ├── allocate-pty.json
 │   ├── attach-pane.json
-│   └── stream-events.json             # WS event recordings
+│   ├── stream-events.json             # WS event recordings (sandbox-level)
+│   └── executor-v1/                   # AIWG ↔ sandbox executor contract v1 (#1180)
+│       ├── README.md                  # Source-of-truth pointer + recorder workflow
+│       ├── registration/
+│       │   ├── register-request.json  # POST /api/v1/executors/register
+│       │   ├── register-response.json # bearer token issued
+│       │   └── deregister-request.json
+│       ├── dispatch/
+│       │   ├── dispatch-request.json  # POST /api/v1/sessions/:id/dispatch
+│       │   ├── dispatch-response.json # 202 Accepted envelope
+│       │   └── dispatch-errors.json   # 401 / 404 / 503 / 500 problem-json
+│       ├── events/                    # Mission lifecycle wire shapes
+│       │   ├── mission-assigned.json
+│       │   ├── mission-started.json
+│       │   ├── mission-progress.json
+│       │   ├── mission-hitl-required.json
+│       │   ├── mission-hitl-responded.json   # AIWG → sandbox (inbound)
+│       │   ├── mission-suspended.json
+│       │   ├── mission-reconnected.json
+│       │   ├── mission-resumed.json
+│       │   ├── mission-completed.json
+│       │   ├── mission-failed.json
+│       │   └── mission-aborted.json
+│       └── resync/
+│           └── executor-resync.json   # First frame on every WS reconnect
 ├── fake-sandbox/                      # Tier 3 (in-process fake)
 │   ├── server.mjs                     # Hono server + WS event emitter
 │   ├── scenarios/
@@ -161,6 +185,8 @@ test/fixtures/
 └── sandbox-events/                    # Shared sample events
     └── agent-sessions-v1.json
 ```
+
+**Note (2026-05-12 / #1180)**: Sandbox conformance to the executor contract is now exercised through `test/fixtures/sandbox-api/executor-v1/` — these fixtures freeze the wire shapes for registration, dispatch, the 11 mission lifecycle event types, and `executor.resync`. Contract-tier tests assert that AIWG's parsers accept the canonical shapes and reject shape-shifted negatives; integration-tier tests replay them through the fake-sandbox harness without needing a live sandbox. The recorder script (§5.2 below) should refresh both the legacy `sandbox-api/*.json` set **and** `executor-v1/**/*.json` in the same pass.
 
 ### 5.2 Recorder Workflow
 

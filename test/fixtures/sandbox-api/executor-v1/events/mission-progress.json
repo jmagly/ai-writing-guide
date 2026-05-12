@@ -1,0 +1,12 @@
+{
+  "_comment": "RESERVED: emitter exists in sandbox but is not yet wired to a trigger as of effdb43. Shape stable per spec; conformance tests should accept but tolerate absence.",
+  "event": "mission.progress",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:13:30.789Z",
+  "data": {
+    "phase": "execution",
+    "summary": "iteration 3 of 10 — running unit tests",
+    "iteration": 3
+  }
+}

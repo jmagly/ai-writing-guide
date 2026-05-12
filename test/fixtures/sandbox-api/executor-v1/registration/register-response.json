@@ -1,0 +1,4 @@
+{
+  "executor_id": "sandbox-01-uuid",
+  "token": "exec-bearer-token-opaque-string"
+}

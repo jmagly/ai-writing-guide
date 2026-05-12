@@ -1,0 +1,12 @@
+{
+  "event": "mission.failed",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:15:00.000Z",
+  "data": {
+    "state": "failed",
+    "reason": "non_zero_exit",
+    "error": "agent process exited with code 1",
+    "exit_code": 1
+  }
+}

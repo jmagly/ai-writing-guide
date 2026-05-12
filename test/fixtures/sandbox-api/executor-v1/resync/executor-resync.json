@@ -1,0 +1,13 @@
+{
+  "_comment": "FIRST frame sent on every /ws/executors/{id} reconnect. mission_id field is OMITTED (this is an executor-level event, not mission-level). owned_mission_ids excludes terminal states (Completed/Failed/Aborted). After resync, sandbox emits mission.reconnected + mission.resumed for each id in owned_mission_ids.",
+  "event": "executor.resync",
+  "executor_id": "sandbox-01-uuid",
+  "ts": "2026-05-09T07:14:30.000Z",
+  "data": {
+    "owned_mission_ids": [
+      "11111111-2222-3333-4444-555555555555",
+      "66666666-7777-8888-9999-aaaaaaaaaaaa"
+    ],
+    "protocol_version": "1.0.0"
+  }
+}

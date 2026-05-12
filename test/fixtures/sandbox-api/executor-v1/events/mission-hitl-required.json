@@ -1,0 +1,11 @@
+{
+  "event": "mission.hitl_required",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:13:35.000Z",
+  "data": {
+    "hitl_id": "hitl-7a9c-uuid",
+    "prompt": "Approve schema migration? (y/n)",
+    "context": "Migration touches users.email — nullable=true → nullable=false. 47 rows affected."
+  }
+}

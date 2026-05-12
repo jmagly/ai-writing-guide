@@ -1,0 +1,11 @@
+{
+  "_comment": "Inbound (AIWG → sandbox). Operator's HITL response routed over the same /ws/executors/{id} stream.",
+  "event": "mission.hitl_responded",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:13:42.111Z",
+  "data": {
+    "hitl_id": "hitl-7a9c-uuid",
+    "text": "y"
+  }
+}

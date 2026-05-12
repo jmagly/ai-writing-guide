@@ -1,0 +1,10 @@
+{
+  "_comment": "Per-mission, emitted right after executor.resync on every WS reconnect.",
+  "event": "mission.reconnected",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:14:30.222Z",
+  "data": {
+    "checkpoint_id": "ckpt-uuid"
+  }
+}

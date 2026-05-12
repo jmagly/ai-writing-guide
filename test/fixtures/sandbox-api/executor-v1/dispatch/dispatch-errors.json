@@ -1,0 +1,40 @@
+{
+  "_comment": "Canonical error envelopes returned by POST /api/v1/sessions/:id/dispatch. AIWG-side dispatch router should surface these to callers as typed errors.",
+  "unauthorized_401": {
+    "_status": 401,
+    "_body": {
+      "type": "https://aiwg.io/problems/unauthorized",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "Missing or invalid bearer token"
+    }
+  },
+  "agent_not_found_404": {
+    "_status": 404,
+    "_body": {
+      "type": "https://aiwg.io/problems/agent-not-connected",
+      "title": "Agent not connected",
+      "status": 404,
+      "detail": "executor_filter.agent_id 'agent-99' is not currently connected to this executor",
+      "agent_id": "agent-99"
+    }
+  },
+  "service_unavailable_503": {
+    "_status": 503,
+    "_body": {
+      "type": "https://aiwg.io/problems/executor-unavailable",
+      "title": "Executor unavailable",
+      "status": 503,
+      "detail": "executor not registered, no agents connected, or mission store unavailable"
+    }
+  },
+  "internal_error_500": {
+    "_status": 500,
+    "_body": {
+      "type": "https://aiwg.io/problems/dispatch-failure",
+      "title": "Dispatch failure",
+      "status": 500,
+      "detail": "dispatcher couldn't start the session; mission state transitioned to Failed and mission.failed event was emitted"
+    }
+  }
+}

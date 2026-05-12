@@ -1,0 +1,10 @@
+{
+  "event": "mission.assigned",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:13:22.123Z",
+  "data": {
+    "state": "assigned",
+    "estimated_start": "2026-05-09T07:13:22.123Z"
+  }
+}

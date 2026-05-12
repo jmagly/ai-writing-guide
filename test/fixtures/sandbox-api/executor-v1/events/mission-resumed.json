@@ -1,0 +1,10 @@
+{
+  "event": "mission.resumed",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:14:30.223Z",
+  "data": {
+    "state": "running",
+    "resumed_from": "suspended"
+  }
+}

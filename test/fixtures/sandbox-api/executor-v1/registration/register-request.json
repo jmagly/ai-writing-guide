@@ -1,0 +1,18 @@
+{
+  "executor_id": "sandbox-01-uuid",
+  "name": "agentic-sandbox-sandbox-01",
+  "version": "0.4.2",
+  "spec_version": "1.0.0",
+  "transport_endpoints": {
+    "rest": "http://127.0.0.1:8122",
+    "ws": "ws://127.0.0.1:8121"
+  },
+  "capabilities": [
+    "isolation:vm",
+    "isolation:container",
+    "runtime:claude-code",
+    "platform:linux/x64",
+    "resumable",
+    "hitl"
+  ]
+}

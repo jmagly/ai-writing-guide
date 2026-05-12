@@ -1,0 +1,11 @@
+{
+  "event": "mission.completed",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:15:00.000Z",
+  "data": {
+    "state": "done",
+    "exit_code": 0,
+    "summary": "command completed successfully"
+  }
+}

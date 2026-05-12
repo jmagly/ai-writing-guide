@@ -1,0 +1,11 @@
+{
+  "event": "mission.suspended",
+  "executor_id": "sandbox-01-uuid",
+  "mission_id": "11111111-2222-3333-4444-555555555555",
+  "ts": "2026-05-09T07:14:00.500Z",
+  "data": {
+    "state": "suspended",
+    "checkpoint_id": "ckpt-uuid",
+    "reason": "mgmt_server_shutdown"
+  }
+}

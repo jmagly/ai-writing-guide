@@ -1,0 +1,7 @@
+{
+  "_method": "DELETE",
+  "_path": "/api/v1/executors/sandbox-01-uuid",
+  "_headers": {
+    "Authorization": "Bearer exec-bearer-token-opaque-string"
+  }
+}

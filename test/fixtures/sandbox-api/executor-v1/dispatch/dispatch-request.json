@@ -1,0 +1,23 @@
+{
+  "_method": "POST",
+  "_path": "/api/v1/sessions/sandbox-01-uuid/dispatch",
+  "_headers": {
+    "Authorization": "Bearer exec-bearer-token-opaque-string",
+    "Content-Type": "application/json"
+  },
+  "_body": {
+    "mission_id": "11111111-2222-3333-4444-555555555555",
+    "objective": "echo hello world",
+    "completion": "command exits 0",
+    "long_running": false,
+    "executor_filter": {
+      "executor_id": null,
+      "capabilities": [],
+      "agent_id": "agent-01"
+    },
+    "metadata": {
+      "issue": 1180,
+      "session_id": "aiwg-mc-test-session"
+    }
+  }
+}

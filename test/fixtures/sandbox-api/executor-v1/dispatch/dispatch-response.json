@@ -1,0 +1,9 @@
+{
+  "_status": 202,
+  "_body": {
+    "mission_id": "11111111-2222-3333-4444-555555555555",
+    "executor_id": "sandbox-01-uuid",
+    "status": "assigned",
+    "estimated_start": "2026-05-09T07:13:22.123Z"
+  }
+}

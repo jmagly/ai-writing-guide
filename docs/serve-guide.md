@@ -285,7 +285,9 @@ Operators can also dismiss requests via `POST /api/hitl/:id/dismiss`.
 
 ## Integration with agentic-sandbox
 
-To connect an agentic-sandbox instance to `aiwg serve`:
+agentic-sandbox connects to `aiwg serve` through **two parallel paths**: the original sandbox registry (sandbox-level events, dashboard correlation) and the **executor contract v1** (mission-level lifecycle, dispatch acceptance). Both stay operational; the executor path is the canonical integration for new work.
+
+### Quick start
 
 1. Start the dashboard:
    ```bash
@@ -297,9 +299,105 @@ To connect an agentic-sandbox instance to `aiwg serve`:
    export AIWG_SERVE_ENDPOINT=http://127.0.0.1:7337
    ```
 
-3. Start the sandbox — it will auto-register via `POST /api/sandboxes/register`
+3. Start the sandbox — it auto-registers on **both** routes:
+   - `POST /api/sandboxes/register` (existing sandbox path)
+   - `POST /api/v1/executors/register` (executor contract — sandbox `effdb43` / [#193](https://git.integrolabs.net/roctinam/agentic-sandbox/issues/193))
 
-4. The sandbox appears in the dashboard's **Sandbox** tab with its agents and lifecycle controls.
+4. The sandbox appears in the dashboard's **Sandbox** tab. The executor registration is visible via `GET /api/v1/executors`.
+
+### Running the sandbox as an executor
+
+The executor contract gives `aiwg serve` a way to **dispatch missions** to the sandbox and **observe mission-level lifecycle events** alongside the existing sandbox-level event stream. This is what makes `aiwg mc dispatch` work end-to-end against a sandbox-hosted executor.
+
+**Capabilities advertised at registration:**
+
+| Capability | Means |
+|------------|-------|
+| `isolation:vm` | Can execute missions inside KVM/QEMU VMs |
+| `isolation:container` | Can execute missions inside Docker containers |
+| `runtime:claude-code` | Hosts the Claude Code agent runtime |
+| `platform:linux/x64` | Linux on x86-64 host |
+| `resumable` | Mission state survives mgmt-server restarts (via `missions.json`) |
+| `hitl` | Supports human-in-the-loop pause/resume round-trip |
+
+**Bearer token flow:** registration issues a bearer token. The sandbox uses it twice — to authenticate inbound `POST /api/v1/sessions/:id/dispatch` calls (constant-time check), and to authenticate the outbound `/ws/executors/{id}` connection (passed as `?token=...`). The token never appears in `/aiwg/status` output.
+
+**Dispatch path:**
+
+```
+aiwg mc dispatch <session> "<task>"
+        │
+        ▼
+.aiwg/ralph-external/mc/sessions/*/session.json (mission queued)
+        │
+        ▼
+aiwg mc bridge  (queue tailer; #1182)
+        │
+        ▼
+POST /api/v1/sessions/:id/dispatch  ──(bearer)──▶  agentic-sandbox
+        │                                                    │
+        │                                                    ▼
+        └─◀────── /ws/executors/{id} stream ─── mission.assigned
+                  mission.started, .progress, .hitl_required,
+                  .suspended, .reconnected, .resumed, .completed,
+                  .failed, .aborted   +   executor.resync on (re)connect
+```
+
+**Mission state machine:**
+
+```
+Assigned ──┬─→ Running ──┬─→ HitlRequired ─→ Running
+           │             │
+           │             ├─→ Suspended ─────→ Running (after restart + resync)
+           │             │
+           │             └─→ Completed │ Failed │ Aborted   (terminal)
+           │
+           └─→ Failed (dispatcher couldn't start the session)
+```
+
+Terminal states are excluded from `executor.resync.owned_mission_ids`.
+
+### Verifying the integration
+
+After bringing both processes up:
+
+```bash
+# Confirm executor registered
+curl -s http://127.0.0.1:7337/api/v1/executors | jq
+
+# Dispatch a smoke mission (when #1182 lands; until then drive POST directly)
+curl -s -X POST \
+  -H "Authorization: Bearer $EXEC_TOKEN" \
+  -H "Content-Type: application/json" \
+  http://127.0.0.1:8122/api/v1/sessions/$EXECUTOR_ID/dispatch \
+  -d '{
+    "mission_id": "smoke-001",
+    "objective": "echo hello",
+    "long_running": false,
+    "executor_filter": { "agent_id": "agent-01" },
+    "metadata": { "issue": 1180 }
+  }'
+
+# Tap the executor event stream
+websocat "ws://127.0.0.1:7337/ws/executors/$EXECUTOR_ID?token=$EXEC_TOKEN"
+```
+
+Expected sequence on a successful dispatch: `mission.assigned` → `mission.started` → (work happens) → `mission.completed`.
+
+### Known gaps as of sandbox `effdb43`
+
+| Gap | Impact | Tracked |
+|-----|--------|---------|
+| Exit codes — every session termination emits `mission.completed` regardless of exit code (PTY return code not plumbed through `SessionEnd` yet) | Don't gate AIWG smoke tests on `mission.failed` from natural exit-1 | sandbox follow-up |
+| `MissionStore` is in-memory | After a sandbox restart, `executor.resync` reports an empty `owned_mission_ids`; AIWG should drop those missions per spec | sandbox follow-up |
+| Resumability events (`mission.suspended/reconnected/resumed`) — emitter constructors exist but aren't called | Depends on persistence above | sandbox follow-up |
+
+### References
+
+- Wire-shape fixtures: `test/fixtures/sandbox-api/executor-v1/` (canonical JSON shapes for every event, request, and response in the contract)
+- Test strategy: `.aiwg/testing/test-strategy-daemon-serve-sandbox.md` §3.2 (contract tier) and §5.1 (fixture inventory)
+- Sandbox-side spec: `~/dev/agentic-sandbox/docs/aiwg-executor.md` (`spec_version: 1.0.0`)
+- v1 → v2 sunset awareness (deprecation telemetry): [#1259](https://git.integrolabs.net/roctinam/aiwg/issues/1259)
 
 ## Security
 
