@@ -153,6 +153,23 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # DEPRECATED (#1283 / A5, Wave 4 of #1278):
+      # This npmjs.org publish leg is being phased out in favor of OIDC
+      # trusted publishing on the GitHub mirror. The replacement workflow
+      # lives at .github/workflows/npm-publish.yml; it uses
+      # `npm publish --provenance` with short-lived OIDC tokens (no
+      # long-lived NPMJS_TOKEN required).
+      #
+      # Until the operator verifies the GH Actions OIDC path with a real
+      # tag-push, both legs publish to npmjs.org simultaneously. The
+      # npm registry de-dups by version-already-exists: whichever leg
+      # lands first wins; the second gets HTTP 409 / EPUBLISHCONFLICT
+      # and the `cannot publish over` branch below treats that as success
+      # (existing pattern from #1247).
+      #
+      # Operator action item once .github/workflows/npm-publish.yml
+      # produces its first verified release: remove this step (and the
+      # paired stable-tag step lower down) and revoke NPMJS_TOKEN.
       - name: Publish pre-release to public npmjs.org
         run: |
           set -o pipefail
@@ -339,6 +356,13 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # DEPRECATED (#1283 / A5, Wave 4 of #1278):
+      # Stable npmjs.org publish leg — paired with the pre-release leg
+      # above. Same phase-out plan: GH Actions workflow at
+      # .github/workflows/npm-publish.yml uses OIDC trusted publishing
+      # + `--provenance`. Operator removes this block after first
+      # verified OIDC release on the GH mirror and revokes NPMJS_TOKEN.
+      # See .aiwg/architecture/adr-npmjs-org-via-github-actions.md.
       - name: Publish to public npmjs.org
         if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.skip_public != 'true' }}
         run: |

@@ -1,0 +1,236 @@
+# npm Package Publishing — npmjs.org leg via GitHub Actions OIDC trusted publishing
+#
+# This is the NPMJS.ORG leg of AIWG's two-leg publish model.
+# The Gitea-registry leg stays in .gitea/workflows/npm-publish.yml.
+#
+# Why a separate workflow on a different platform:
+# - npm trusted publishing (OIDC) requires Node 22.14.0+ AND a supported
+#   provider. As of 2026-05-12, the supported-provider matrix
+#   (https://docs.npmjs.com/trusted-publishers) lists GitHub Actions and
+#   GitLab CI/CD — Gitea Actions is not included.
+# - Trusted publishing replaces the long-lived NPMJS_TOKEN with short-lived
+#   OIDC tokens that npmjs.org verifies against the workflow's
+#   id-token claims. No secret to rotate, no secret to leak.
+# - `npm publish --provenance` produces a cryptographic attestation linking
+#   the published tarball to (a) the GitHub Actions workflow run that
+#   produced it and (b) the source commit SHA. Anyone can verify via
+#   `npm view aiwg@<version> --json | jq .dist.attestations`.
+#
+# REQUIREMENTS (one-time, operator-side):
+# 1. npmjs.org → package settings → trusted publishers → add a publisher:
+#      Provider:      GitHub Actions
+#      Owner:         jmagly
+#      Repository:    aiwg
+#      Workflow:      npm-publish.yml
+#      Environment:   (leave blank for now — no env-protection in use)
+# 2. GitHub repo settings → Actions → General → Workflow permissions:
+#      Confirm "Read and write permissions" OR explicit per-workflow
+#      `permissions: id-token: write` (we do the latter below, so this
+#      requirement is informational).
+# 3. Tags must be pushed to the GitHub mirror to trigger this workflow:
+#      git push origin main --tags && git push github main --tags
+#    `.aiwg/aiwg.config` `remotes.secondary[github].push_on_release: true`
+#    documents this as the release expectation.
+#
+# Companion controls:
+# - tools/ci/verify-signed-tag.sh (#1299 / A9) — same hard gate used on
+#   the Gitea workflows; runs ahead of `npm publish` here too.
+# - .gitea/workflows/npm-publish.yml — Gitea-registry leg, with deprecation
+#   notes above the npmjs.org publish steps pending operator removal once
+#   the OIDC path verifies its first release.
+# - .aiwg/architecture/adr-npmjs-org-via-github-actions.md — ADR.
+#
+# To publish:
+# 1. Bump version in package.json
+# 2. Sign and push tag: git tag -s vYYYY.M.PATCH -m "..." && git push github main --tags
+# 3. Watch this workflow on the GitHub mirror. The post-publish step verifies
+#    that the provenance attestation landed on npmjs.org.
+
+name: Publish to npmjs.org (OIDC + provenance)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_to_publish:
+        description: 'Existing tag to re-attempt publish for (must already exist on this branch)'
+        required: false
+        type: string
+
+concurrency:
+  group: npmjs-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write   # Required for OIDC trusted publishing to npmjs.org.
+
+jobs:
+  publish-to-npmjs-org:
+    name: Publish to npmjs.org with provenance
+    runs-on: ubuntu-latest
+    # Container pinned by digest per .gitea/workflows/README.md ("CI Pinning
+    # Policy"). Same discipline as the Gitea workflows — no mutable tags.
+    # Row in ci/digests.txt.
+    container: node:22@sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3  # node 22.22.2 (see ci/digests.txt)
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1 (ci/digests.txt)
+        with:
+          # Needed so `git tag -v` can see the tag annotation (signature).
+          fetch-tags: true
+
+      - name: Verify signed tag (#1299 / A9 gate)
+        # Hard cryptographic gate — the same script that gates the Gitea
+        # workflows. Any tag that doesn't verify against a maintainer key
+        # published in .gitea/keys/maintainers.asc (or .gitea/allowed_signers)
+        # halts the workflow before npm sees the publish request. See
+        # tools/ci/verify-signed-tag.sh and docs/contributing/versioning.md.
+        run: bash tools/ci/verify-signed-tag.sh
+
+      - name: Setup Node.js with npmjs.org registry
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0 (ci/digests.txt)
+        with:
+          node-version: '22.x'
+          # Wires `npm publish` against npmjs.org. Combined with
+          # `permissions: id-token: write` above, this enables OIDC
+          # trusted publishing — no NODE_AUTH_TOKEN required.
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Run tests
+        # Test failures must block stable publish. `continue-on-error: true`
+        # was removed from the Gitea workflow per #1280 (A2); the same
+        # discipline applies here.
+        run: npm test -- --run
+
+      - name: Extract and verify version against tag
+        id: version
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          if [ "$TAG_VERSION" != "$VERSION" ]; then
+            echo "Error: Tag ($TAG_VERSION) does not match package.json ($VERSION)"
+            exit 1
+          fi
+          # Pre-release detection — first dash in the version means alpha/
+          # beta/rc/nightly. Trusted publishing emits provenance for both.
+          BASE="${VERSION%%-*}"
+          if [ "$VERSION" != "$BASE" ]; then
+            PRERELEASE=true
+            NPM_TAG=next
+            if echo "$VERSION" | grep -qiE '\-nightly\.'; then
+              NPM_TAG=nightly
+            fi
+          else
+            PRERELEASE=false
+            NPM_TAG=latest
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "npm_tag=$NPM_TAG" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION (pre-release: $PRERELEASE, dist-tag: $NPM_TAG)"
+
+      - name: Check package contents
+        run: |
+          set -o pipefail
+          echo "=== Package contents ==="
+          npm pack --dry-run 2>&1 | tee pack-output.txt
+
+      - name: Verify .aiwg/ excluded from package
+        run: |
+          if grep -q '\.aiwg/' pack-output.txt; then
+            echo "FATAL: .aiwg/ found in npm package contents!"
+            echo ".aiwg/ is project-local SDLC artifacts — must never be published."
+            grep '\.aiwg/' pack-output.txt
+            exit 1
+          fi
+          echo "✓ .aiwg/ correctly excluded from npm package"
+
+      - name: Publish to npmjs.org (OIDC + provenance)
+        # Trusted-publishing mode: no NODE_AUTH_TOKEN env, no .npmrc auth
+        # block. npm 11.5.1+ on Node 22.14.0+ negotiates OIDC against
+        # npmjs.org using the workflow's id-token claims. The provenance
+        # flag attaches a cryptographic attestation linking the tarball
+        # to this workflow run and the source commit SHA — anyone can
+        # verify with `npm view aiwg@<version> --json | jq .dist.attestations`.
+        run: |
+          set -o pipefail
+          NPM_TAG='${{ steps.version.outputs.npm_tag }}'
+          npm publish --provenance --access public --tag "$NPM_TAG" 2>&1 | tee publish-output.txt || {
+            if grep -qE "cannot publish over|EPUBLISHCONFLICT|409" publish-output.txt; then
+              echo "✓ Version already published to npmjs.org — treating as success"
+              echo "already_published=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "✗ npmjs.org publish failed (HTTP/npm error above)"
+              echo "  If this is the first OIDC release, common causes:"
+              echo "  - npmjs.org trusted-publisher not configured for jmagly/aiwg npm-publish.yml"
+              echo "  - permissions: id-token: write not set on workflow"
+              echo "  - Node version below 22.14.0 (we pin 22.22.2 above; should not happen)"
+              cat publish-output.txt
+              exit 1
+            fi
+          }
+
+      - name: Verify provenance attestation landed
+        # Independent post-publish check. Without this, a successful publish
+        # that did NOT actually emit provenance would appear identical to
+        # one that did. Sleeps briefly for registry propagation, then asks
+        # npmjs.org whether `dist.attestations` is populated for the
+        # version we just published.
+        run: |
+          set -o pipefail
+          VERSION='${{ steps.version.outputs.version }}'
+          echo "Waiting 10s for npmjs.org propagation..."
+          sleep 10
+          # `npm view` returns JSON; `.dist.attestations` is non-null when
+          # provenance is present. A missing attestations field means the
+          # publish landed but provenance did not — a configuration
+          # regression we must catch here, not at audit time.
+          ATTESTATIONS=$(npm view "aiwg@${VERSION}" --json 2>/dev/null | jq -r '.dist.attestations // empty')
+          if [ -z "$ATTESTATIONS" ]; then
+            echo "✗ No provenance attestation found for aiwg@${VERSION} on npmjs.org"
+            echo "  The publish step reported success, but the provenance"
+            echo "  flag did not produce an attestation. This usually means"
+            echo "  OIDC trusted publishing is mis-configured upstream."
+            exit 1
+          fi
+          echo "✓ Provenance attestation present for aiwg@${VERSION}"
+          echo "$ATTESTATIONS" | jq '.' | head -40
+
+      - name: Verify dist-tag points at this version
+        # Defense-in-depth against the dist-tag drift the Gitea workflow
+        # was hardened against (#1247, #1280). Even on first OIDC publish
+        # we confirm the dist-tag we asked for actually resolves to the
+        # version we just shipped.
+        run: |
+          set -o pipefail
+          VERSION='${{ steps.version.outputs.version }}'
+          NPM_TAG='${{ steps.version.outputs.npm_tag }}'
+          for i in 1 2 3 4 5; do
+            CURRENT=$(npm view "aiwg@${NPM_TAG}" version 2>/dev/null || echo "")
+            if [ "$CURRENT" = "$VERSION" ]; then
+              echo "✓ aiwg@${NPM_TAG} = ${VERSION} on npmjs.org"
+              exit 0
+            fi
+            echo "Attempt $i: aiwg@${NPM_TAG} = ${CURRENT:-<missing>}, expected ${VERSION}; retrying in 10s..."
+            sleep 10
+          done
+          echo "✗ dist-tag verification exhausted retries (aiwg@${NPM_TAG} did not resolve to ${VERSION})"
+          exit 1
