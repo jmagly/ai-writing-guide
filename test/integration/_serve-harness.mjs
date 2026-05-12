@@ -69,12 +69,15 @@ export async function spawnAiwgServe(opts = {}) {
   const timeoutMs = opts.timeoutMs ?? 15_000;
   const deadline = Date.now() + timeoutMs;
   let dashboardLine = null;
-  let exited = false;
-  child.once('exit', () => {
-    exited = true;
+  /** Wrap into an object so waitForHttp can observe live state via the handle. */
+  const handleState = { exited: false, exitCode: null };
+  child.once('exit', (code) => {
+    handleState.exited = true;
+    handleState.exitCode = code;
   });
+  const exited = () => handleState.exited;
 
-  while (!dashboardLine && Date.now() < deadline && !exited) {
+  while (!dashboardLine && Date.now() < deadline && !exited()) {
     const joined = stdoutBuf.join('');
     const m = joined.match(/Dashboard:\s+(http:\/\/[^\s\r\n]+)/);
     if (m) dashboardLine = m[1];
@@ -102,7 +105,7 @@ export async function spawnAiwgServe(opts = {}) {
   /** @type {(signal?: NodeJS.Signals) => Promise<void>} */
   const kill = (signal = 'SIGINT') =>
     new Promise((resolveKill) => {
-      if (child.exitCode !== null || exited) { resolveKill(); return; }
+      if (child.exitCode !== null || exited()) { resolveKill(); return; }
       child.once('exit', () => resolveKill());
       try { child.kill(signal); } catch { resolveKill(); }
       setTimeout(() => {
@@ -112,7 +115,16 @@ export async function spawnAiwgServe(opts = {}) {
       }, 5_000).unref?.();
     });
 
-  return { url: dashboardLine, port, kill, stdout, stderr };
+  const handle = {
+    url: dashboardLine,
+    port,
+    kill,
+    stdout,
+    stderr,
+    get exited() { return handleState.exited; },
+    get exitCode() { return handleState.exitCode; },
+  };
+  return handle;
 }
 
 /**
@@ -122,21 +134,48 @@ export async function spawnAiwgServe(opts = {}) {
  * module graph behind a docker-in-docker runner. Override via
  * AIWG_SERVE_HTTP_TIMEOUT_MS for slow CI hosts.
  *
+ * Hits /api/health (a known-registered endpoint) by default. If the caller
+ * passed a bare URL we append /api/health so we're verifying readiness
+ * specifically, not just "any 404 means we're up".
+ *
+ * On failure, logs the last fetch error message so CI diagnostics surface
+ * the actual network/refused/timeout reason instead of just "no response
+ * within Nms".
+ *
  * @param {string} url
  * @param {number} [timeoutMs]
+ * @param {ServeHandle} [serveHandle]  When passed, fail fast if the child
+ *   process exited (no point polling a dead server) and include stderr in
+ *   the error message.
  */
-export async function waitForHttp(url, timeoutMs) {
+export async function waitForHttp(url, timeoutMs, serveHandle = null) {
   const t = timeoutMs ?? (Number(process.env.AIWG_SERVE_HTTP_TIMEOUT_MS) || 15_000);
+  const probeUrl = url.endsWith('/api/health') ? url : `${url.replace(/\/+$/, '')}/api/health`;
   const deadline = Date.now() + t;
   let lastErr;
+  let attempts = 0;
   while (Date.now() < deadline) {
+    // Fast-fail when the spawned server is dead.
+    if (serveHandle && serveHandle.exited === true) {
+      throw new Error(
+        `waitForHttp(${probeUrl}): child process exited (code=${serveHandle.exitCode}) before becoming reachable.\n` +
+        `stdout:\n${(serveHandle.stdout || []).join('')}\n` +
+        `stderr:\n${(serveHandle.stderr || []).join('')}`,
+      );
+    }
     try {
-      const resp = await fetch(url);
+      const resp = await fetch(probeUrl);
       if (resp.status < 500) return resp;
+      lastErr = new Error(`status ${resp.status}`);
     } catch (err) {
       lastErr = err;
     }
+    attempts++;
     await delay(50);
   }
-  throw new Error(`waitForHttp(${url}): no response within ${t}ms (${lastErr || ''})`);
+  const stderrDump = serveHandle && serveHandle.stderr && serveHandle.stderr.length > 0
+    ? `\nstderr from server:\n${serveHandle.stderr.join('')}` : '';
+  throw new Error(
+    `waitForHttp(${probeUrl}): no response within ${t}ms after ${attempts} attempts. Last error: ${lastErr?.message || lastErr || 'unknown'}${stderrDump}`,
+  );
 }

@@ -64,6 +64,18 @@ jobs:
           AIWG_PERF_BUDGET_HELP_MS: "500"
         run: npm run test:ci
 
+      - name: Run tier-3 integration suite (#1174)
+        # Spawns aiwg serve via bin/aiwg.mjs on an ephemeral port. Continues
+        # on error while #1277 stabilizes the suite in docker-in-docker — the
+        # diagnostics added in commit (this one) surface stderr + exit code
+        # + fetch-error reason when waitForHttp times out, so failures here
+        # are informational rather than gating.
+        continue-on-error: true
+        env:
+          # Allow the serve startup banner up to 30s in docker-in-docker.
+          AIWG_SERVE_HTTP_TIMEOUT_MS: "30000"
+        run: npm run test:integration:serve
+
   build:
     name: Build
     runs-on: ubuntu-latest

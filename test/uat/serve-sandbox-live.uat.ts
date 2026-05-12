@@ -56,7 +56,7 @@ describe('aiwg serve — live UAT vs real agentic-sandbox', () => {
       return;
     }
     serve = await spawnAiwgServe();
-    await waitForHttp(serve.url, 20_000);
+    await waitForHttp(serve.url, 20_000, serve);
   }, 60_000);
 
   afterAll(async () => {
