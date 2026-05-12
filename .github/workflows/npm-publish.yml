@@ -38,13 +38,39 @@
 # - .gitea/workflows/npm-publish.yml — Gitea-registry leg, with deprecation
 #   notes above the npmjs.org publish steps pending operator removal once
 #   the OIDC path verifies its first release.
-# - .aiwg/architecture/adr-npmjs-org-via-github-actions.md — ADR.
+# - .gitea/workflows/upload-release-sigs.yml — manual operator workflow
+#   that mirrors the four signed assets from the GitHub release to the
+#   Gitea release after this workflow lands them (#1287 / A8 — Wave 5).
+# - .aiwg/architecture/adr-npmjs-org-via-github-actions.md — A5 ADR.
+# - .aiwg/architecture/adr-tarball-cosign-signing.md — A8 ADR.
+#
+# Tarball signing (#1287 / A8 — Wave 5):
+# - After `npm publish`, this workflow cosign-signs the published tarball
+#   using keyless OIDC against Sigstore's Fulcio CA. No long-lived signing
+#   key — the GitHub Actions OIDC token IS the signing identity.
+# - Bundle format (`.sigstore`): self-contained signature + Fulcio cert +
+#   Rekor transparency-log entry. Verified offline with `cosign verify-blob
+#   --bundle …`.
+# - A signed `release-manifest.json` (SHA-256 of tarball, version, tag SHA,
+#   build commit SHA, workflow run URL) is also attached, providing an
+#   audit-ready bridge between the published artifact and this CI run.
+# - All four assets (tarball + .sigstore, manifest + .sigstore) are
+#   uploaded to the GitHub release using the workflow's ephemeral
+#   `GITHUB_TOKEN`. Gitea-side upload is operator-triggered via the
+#   companion .gitea/workflows/upload-release-sigs.yml workflow — kept
+#   manual to avoid expanding the Gitea write-token surface that Wave 4
+#   reduced.
 #
 # To publish:
 # 1. Bump version in package.json
 # 2. Sign and push tag: git tag -s vYYYY.M.PATCH -m "..." && git push github main --tags
 # 3. Watch this workflow on the GitHub mirror. The post-publish step verifies
-#    that the provenance attestation landed on npmjs.org.
+#    that the provenance attestation landed on npmjs.org, then cosign-signs
+#    the tarball + manifest and uploads all four signed assets to the GitHub
+#    release.
+# 4. Mirror the signed assets to the Gitea release with the manual operator
+#    step in the runbook (`gh workflow run upload-release-sigs.yml -F tag=…`
+#    against the Gitea Actions API, or the Gitea Actions UI).
 
 name: Publish to npmjs.org (OIDC + provenance)
 
@@ -227,10 +253,249 @@ jobs:
             CURRENT=$(npm view "aiwg@${NPM_TAG}" version 2>/dev/null || echo "")
             if [ "$CURRENT" = "$VERSION" ]; then
               echo "✓ aiwg@${NPM_TAG} = ${VERSION} on npmjs.org"
-              exit 0
+              break
             fi
             echo "Attempt $i: aiwg@${NPM_TAG} = ${CURRENT:-<missing>}, expected ${VERSION}; retrying in 10s..."
             sleep 10
+            if [ "$i" = "5" ]; then
+              echo "✗ dist-tag verification exhausted retries (aiwg@${NPM_TAG} did not resolve to ${VERSION})"
+              exit 1
+            fi
           done
-          echo "✗ dist-tag verification exhausted retries (aiwg@${NPM_TAG} did not resolve to ${VERSION})"
-          exit 1
+
+      # ============================================================
+      # Tarball Sigstore signing — #1287 / A8 (Wave 5 of #1278)
+      # ============================================================
+      #
+      # The npmjs.org provenance attestation (above) is registry-bound: a
+      # consumer who pulls the tarball from the Gitea bundled npm registry,
+      # a mirror, or any other source has no way to use it. Cosign
+      # keyless-signing produces a registry-independent signature anchored
+      # in the same GitHub Actions OIDC identity that produced the
+      # provenance attestation — same chain of trust, portable artifact.
+
+      - name: Install cosign (keyless signing)
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1 (ci/digests.txt)
+        with:
+          # Pinned to the latest v2.x; v3.x requires cosign-installer v4.
+          # The keyless `sign-blob --bundle` / `verify-blob --bundle` API
+          # is identical across v2.x and v3.x — upgrade path is a digest
+          # bump in ci/digests.txt plus this string.
+          cosign-release: 'v2.6.1'
+
+      - name: Generate tarball + cosign sign + manifest
+        id: sign
+        # Step does four things in order:
+        #   1. Locate (or regenerate) the published tarball.
+        #   2. cosign-sign the tarball → produces aiwg-X.Y.Z.tgz.sigstore.
+        #   3. Build a signed release manifest with SHA-256 + tag + commit
+        #      + workflow run URL for the audit trail.
+        #   4. cosign-sign the manifest → produces release-manifest.json.sigstore.
+        # Keyless signing — no --key flag; cosign uses the ambient
+        # GitHub Actions OIDC token (permissions: id-token: write above).
+        run: |
+          set -euo pipefail
+          VERSION='${{ steps.version.outputs.version }}'
+          TAG="v${VERSION}"
+          TARBALL="aiwg-${VERSION}.tgz"
+
+          # `npm publish` typically leaves the tarball in CWD; if not,
+          # `npm pack` is idempotent and regenerates byte-identical content
+          # from the same package.json + .npmignore + lock state.
+          if [ ! -f "$TARBALL" ]; then
+            echo "Tarball not in CWD after publish — regenerating with npm pack…"
+            npm pack
+          fi
+
+          # Sanity: the tarball must exist now.
+          if [ ! -f "$TARBALL" ]; then
+            echo "✗ Expected tarball $TARBALL not present after npm pack"
+            ls -la
+            exit 1
+          fi
+
+          TARBALL_SHA256=$(sha256sum "$TARBALL" | awk '{print $1}')
+          echo "Tarball: $TARBALL"
+          echo "SHA-256: $TARBALL_SHA256"
+
+          # Sign the tarball. --bundle produces a single self-contained file
+          # carrying the signature, the Fulcio short-lived cert chain, and
+          # the Rekor transparency-log entry. Consumers verify with
+          # `cosign verify-blob --bundle <file>.sigstore <file>` — fully
+          # offline once the bundle is downloaded.
+          cosign sign-blob \
+            --yes \
+            --bundle "${TARBALL}.sigstore" \
+            "$TARBALL"
+          echo "✓ Signed $TARBALL → ${TARBALL}.sigstore"
+
+          # Resolve the annotated tag's object SHA — this is what `git tag
+          # -v` verified against in the A9 gate above. Different from
+          # github.sha (which is the commit SHA the tag points at).
+          TAG_OBJECT_SHA=$(git rev-parse "$TAG" 2>/dev/null || echo "$GITHUB_SHA")
+
+          # Release-manifest schema: human-readable JSON that pins together
+          # version, tarball hash, tag, commit, and CI provenance. Also
+          # signed with cosign so the manifest itself can't be tampered
+          # without invalidating the bundle.
+          ISSUED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          WORKFLOW_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          MANIFEST="release-manifest.json"
+          # Build with `jq -n` to handle escaping correctly; falls back to
+          # printf if jq isn't installed (debian node:22 ships it).
+          if command -v jq >/dev/null 2>&1; then
+            jq -n \
+              --arg package "aiwg" \
+              --arg version "$VERSION" \
+              --arg tarball_sha256 "$TARBALL_SHA256" \
+              --arg tarball_filename "$TARBALL" \
+              --arg tag "$TAG" \
+              --arg tag_object_sha "$TAG_OBJECT_SHA" \
+              --arg commit_sha "$GITHUB_SHA" \
+              --arg workflow_run_url "$WORKFLOW_RUN_URL" \
+              --arg issued_at "$ISSUED_AT" \
+              '{
+                package: $package,
+                version: $version,
+                tarball_sha256: $tarball_sha256,
+                tarball_filename: $tarball_filename,
+                tag: $tag,
+                tag_object_sha: $tag_object_sha,
+                commit_sha: $commit_sha,
+                workflow_run_url: $workflow_run_url,
+                issued_at: $issued_at,
+                signing: {
+                  tool: "cosign v2.6.1",
+                  mode: "keyless",
+                  identity: "github actions oidc",
+                  bundle: ($tarball_filename + ".sigstore")
+                }
+              }' > "$MANIFEST"
+          else
+            # Safety fallback — produces equivalent JSON without jq. Should
+            # never trigger on node:22-bookworm but documented for clarity.
+            cat > "$MANIFEST" <<EOF
+          {
+            "package": "aiwg",
+            "version": "$VERSION",
+            "tarball_sha256": "$TARBALL_SHA256",
+            "tarball_filename": "$TARBALL",
+            "tag": "$TAG",
+            "tag_object_sha": "$TAG_OBJECT_SHA",
+            "commit_sha": "$GITHUB_SHA",
+            "workflow_run_url": "$WORKFLOW_RUN_URL",
+            "issued_at": "$ISSUED_AT",
+            "signing": {
+              "tool": "cosign v2.6.1",
+              "mode": "keyless",
+              "identity": "github actions oidc",
+              "bundle": "${TARBALL}.sigstore"
+            }
+          }
+          EOF
+          fi
+          echo "Manifest written:"
+          cat "$MANIFEST"
+
+          cosign sign-blob \
+            --yes \
+            --bundle "${MANIFEST}.sigstore" \
+            "$MANIFEST"
+          echo "✓ Signed $MANIFEST → ${MANIFEST}.sigstore"
+
+          # Expose names for the upload step.
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+          echo "tarball_sigstore=${TARBALL}.sigstore" >> "$GITHUB_OUTPUT"
+          echo "manifest=$MANIFEST" >> "$GITHUB_OUTPUT"
+          echo "manifest_sigstore=${MANIFEST}.sigstore" >> "$GITHUB_OUTPUT"
+          echo "tarball_sha256=$TARBALL_SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Upload signed release assets to GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # `gh release upload --clobber` is idempotent: if the release was
+        # created by an earlier workflow run (or by `gh release create`
+        # manually), the four assets get attached/replaced. If the release
+        # doesn't exist yet, `gh release create` runs first — typical when
+        # this workflow is the first thing that fires on a tag push.
+        run: |
+          set -euo pipefail
+          VERSION='${{ steps.version.outputs.version }}'
+          TAG="v${VERSION}"
+          TARBALL='${{ steps.sign.outputs.tarball }}'
+          TARBALL_SIG='${{ steps.sign.outputs.tarball_sigstore }}'
+          MANIFEST='${{ steps.sign.outputs.manifest }}'
+          MANIFEST_SIG='${{ steps.sign.outputs.manifest_sigstore }}'
+
+          # Pre-release detection (same logic as the version step above).
+          if [ "$VERSION" != "${VERSION%%-*}" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          else
+            PRERELEASE_FLAG=""
+          fi
+
+          # Ensure the release exists; create it if not. `gh release view`
+          # exits non-zero on miss, which `|| true` swallows for the test.
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG not found — creating it now."
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "Release $TAG. Signed assets attached (cosign keyless, GitHub Actions OIDC). Verify with: cosign verify-blob --bundle ${TARBALL}.sigstore --certificate-identity-regexp '^https://github.com/jmagly/aiwg/.github/workflows/npm-publish.yml@refs/tags/v' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' ${TARBALL}" \
+              $PRERELEASE_FLAG
+          else
+            echo "Release $TAG exists — uploading signed assets."
+          fi
+
+          gh release upload "$TAG" \
+            "$TARBALL" \
+            "$TARBALL_SIG" \
+            "$MANIFEST" \
+            "$MANIFEST_SIG" \
+            --clobber
+
+          echo "✓ Uploaded 4 signed assets to GitHub release $TAG"
+
+      - name: Verification summary
+        # Final operator-facing block. Copy/pasteable verification commands
+        # so the release manager can drop them into a release comment or
+        # consumer-facing announcement without re-deriving them.
+        run: |
+          VERSION='${{ steps.version.outputs.version }}'
+          TAG="v${VERSION}"
+          TARBALL='${{ steps.sign.outputs.tarball }}'
+          SHA='${{ steps.sign.outputs.tarball_sha256 }}'
+          cat <<EOF
+
+          ============================================================
+          Release ${TAG} — signed-asset verification summary
+          ============================================================
+
+          Tarball SHA-256:
+            ${SHA}
+
+          Verify tarball signature (offline, against Sigstore Rekor entry
+          embedded in the bundle):
+
+            cosign verify-blob \\
+              --bundle ${TARBALL}.sigstore \\
+              --certificate-identity-regexp '^https://github.com/jmagly/aiwg/\.github/workflows/npm-publish\.yml@refs/tags/v' \\
+              --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \\
+              ${TARBALL}
+
+          Verify release manifest signature:
+
+            cosign verify-blob \\
+              --bundle release-manifest.json.sigstore \\
+              --certificate-identity-regexp '^https://github.com/jmagly/aiwg/\.github/workflows/npm-publish\.yml@refs/tags/v' \\
+              --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \\
+              release-manifest.json
+
+          Next operator step (mirror sigs to Gitea release):
+
+            gh workflow run upload-release-sigs.yml \\
+              --repo roctinam/aiwg \\
+              -f tag=${TAG}
+
+          See docs/releases/verifying.md for consumer-facing instructions.
+          ============================================================
+          EOF

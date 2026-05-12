@@ -41,8 +41,10 @@ container  node:22         sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30d
 # GitHub Actions
 # ============================================================================
 
-action  actions/checkout         34e114876b0b11c390a56381ad16ebd13914f8d5  v4.3.1  2026-05-12  initial pin (Wave 2 of #1278)
-action  actions/upload-artifact  ea165f8d65b6e75b540449e92b4886f43607fa02  v4.6.2  2026-05-12  initial pin (Wave 2 of #1278)
+action  actions/checkout            34e114876b0b11c390a56381ad16ebd13914f8d5  v4.3.1   2026-05-12  initial pin (Wave 2 of #1278)
+action  actions/upload-artifact     ea165f8d65b6e75b540449e92b4886f43607fa02  v4.6.2   2026-05-12  initial pin (Wave 2 of #1278)
+action  actions/setup-node          49933ea5288caeca8642d1e84afbd3f7d6820020  v4.4.0   2026-05-12  Wave 4 pin (#1283 / A5) — npmjs.org OIDC publish path
+action  sigstore/cosign-installer   7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  v3.10.1  2026-05-12  Wave 5 pin (#1287 / A8) — keyless tarball signing in .github/workflows/npm-publish.yml
 
 # Notes on action pinning:
 # - Pin is the 40-character commit SHA of the *immutable* patch tag (v4.X.Y),
@@ -52,6 +54,35 @@ action  actions/upload-artifact  ea165f8d65b6e75b540449e92b4886f43607fa02  v4.6.
 # - actions/checkout: v4 (floating) currently aliases the v4.3.1 immutable
 #   patch tag. v4.3.0 release date 2025-08-11; v4.3.1 followed.
 # - actions/upload-artifact: v4.6.2 release date 2025-03-19.
+# - actions/setup-node: v4.4.0 used by .github/workflows/npm-publish.yml.
+# - sigstore/cosign-installer: v3.10.1 is the last release of the v3 line.
+#   The v3 line installs Cosign v2.x; the cosign-installer v4 line is
+#   required if/when we move to Cosign v3.x. AIWG pins to Cosign v2.x for
+#   stability — the keyless-signing API (`cosign sign-blob` with
+#   `--bundle`) is identical across v2.x and v3.x, so the operator-side
+#   upgrade path is just a digest+version bump in this file plus a one-line
+#   workflow change once the v4 installer matures.
+#
+# ============================================================================
+# Standalone tools (installed by an action, version pinned in workflow)
+# ============================================================================
+#
+# These tools are not pinned by container digest or action SHA — they're
+# downloaded by an action at run time and pinned by version string in the
+# workflow's `with:` block. The action that installs them IS SHA-pinned
+# above; the action itself verifies the tool binary's SHA-256 against
+# its own embedded manifest.
+#
+# tool  cosign  v2.6.1  2026-05-12  Wave 5 (#1287 / A8) — keyless tarball signing.
+#                                   Latest v2.x release. Selected because (a) the
+#                                   keyless sign-blob + verify-blob CLI surface is
+#                                   stable across v2.x and v3.x, (b) cosign-installer
+#                                   v3.10.1 (our pinned action) supports v2.x natively
+#                                   while v3.x requires cosign-installer v4. Specified
+#                                   as `cosign-release: v2.6.1` in the workflow `with:`
+#                                   block. The action verifies the downloaded binary's
+#                                   SHA-256 against its embedded manifest, so we get
+#                                   integrity even though the version pin is a string.
 #
 # ============================================================================
 # Update process

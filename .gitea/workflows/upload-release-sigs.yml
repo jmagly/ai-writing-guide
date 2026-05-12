@@ -1,0 +1,263 @@
+# Mirror Signed Release Assets from GitHub to Gitea Release
+#
+# Companion to .github/workflows/npm-publish.yml (#1287 / A8 — Wave 5
+# of #1278). The GitHub workflow cosign-signs the published tarball +
+# release manifest and uploads the four signed assets (tarball, tarball
+# bundle, manifest, manifest bundle) to the GitHub release. This
+# workflow mirrors those four assets to the matching Gitea release.
+#
+# Why this is a separate workflow with a manual trigger:
+# - The GitHub workflow runs on github.com; to push files into the
+#   Gitea release directly it would need a Gitea write token in GitHub
+#   secrets. Wave 4 (#1283, #1286) deliberately reduced the Gitea token
+#   surface and the npmjs.org token surface; adding a new Gitea write
+#   token in GitHub would push the wrong direction.
+# - Releases on github.com/jmagly/aiwg are public, so `gh release
+#   download` works without GitHub authentication.
+# - The Gitea side reuses the existing NPM_TOKEN (gta_…) which already
+#   has write:repository scope per the A10 secret-rotation runbook —
+#   no new token required.
+# - The operator-side one-command ritual after each release is
+#   documented in docs/contributing/versioning.md (the release runbook).
+#
+# Trigger: workflow_dispatch with a `tag` input, e.g. v2026.6.0.
+#
+# Companion controls:
+# - .github/workflows/npm-publish.yml — the workflow that produces the
+#   four signed assets in the first place.
+# - .aiwg/architecture/adr-tarball-cosign-signing.md — A8 ADR with the
+#   full rationale for the manual-trigger model.
+# - docs/releases/verifying.md — consumer-facing verification docs.
+
+name: Mirror signed release assets to Gitea release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v2026.6.0) — must already exist on both GitHub and Gitea releases'
+        required: true
+        type: string
+
+concurrency:
+  group: mirror-release-sigs-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  mirror-signed-assets:
+    name: Mirror four signed assets to Gitea release
+    runs-on: ubuntu-latest
+    # Same pinned container as the Gitea publish leg (see ci/digests.txt).
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout (for repo context only)
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1 (ci/digests.txt)
+        with:
+          fetch-depth: 1
+
+      - name: Install gh CLI + jq + curl
+        # node:20-bookworm ships curl but not gh or jq. Pull from apt; the
+        # base image is debian-bookworm so apt is available.
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl jq gnupg
+          # Install gh from the official deb repo.
+          mkdir -p /etc/apt/keyrings
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+            | gpg --dearmor -o /etc/apt/keyrings/githubcli-archive-keyring.gpg
+          chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+            > /etc/apt/sources.list.d/github-cli.list
+          apt-get update
+          apt-get install -y --no-install-recommends gh
+          gh --version
+
+      - name: Validate tag input
+        id: tag
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.tag }}"
+          if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
+            echo "✗ tag input '$TAG' does not match vYYYY.M.PATCH[-pre] CalVer"
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # File names produced by .github/workflows/npm-publish.yml
+          echo "tarball=aiwg-${VERSION}.tgz" >> "$GITHUB_OUTPUT"
+          echo "tarball_sig=aiwg-${VERSION}.tgz.sigstore" >> "$GITHUB_OUTPUT"
+          echo "manifest=release-manifest.json" >> "$GITHUB_OUTPUT"
+          echo "manifest_sig=release-manifest.json.sigstore" >> "$GITHUB_OUTPUT"
+
+      - name: Download signed assets from GitHub release
+        # github.com/jmagly/aiwg releases are public — no GH auth needed.
+        # `gh release download` will exit non-zero if any of the four
+        # files is missing from the release, which is what we want: a
+        # missing sig is a hard fail, not a silent skip.
+        run: |
+          set -euo pipefail
+          TAG='${{ steps.tag.outputs.tag }}'
+          TARBALL='${{ steps.tag.outputs.tarball }}'
+          TARBALL_SIG='${{ steps.tag.outputs.tarball_sig }}'
+          MANIFEST='${{ steps.tag.outputs.manifest }}'
+          MANIFEST_SIG='${{ steps.tag.outputs.manifest_sig }}'
+
+          # `gh release download` against a public repo without GH_TOKEN
+          # works but emits a warning; silence it by passing an empty
+          # token explicitly. The --repo flag bypasses any local repo
+          # detection.
+          GH_TOKEN="" gh release download "$TAG" \
+            --repo jmagly/aiwg \
+            --pattern "$TARBALL" \
+            --pattern "$TARBALL_SIG" \
+            --pattern "$MANIFEST" \
+            --pattern "$MANIFEST_SIG" \
+            --skip-existing
+
+          # Hard-check that all four are present.
+          MISSING=0
+          for f in "$TARBALL" "$TARBALL_SIG" "$MANIFEST" "$MANIFEST_SIG"; do
+            if [ ! -f "$f" ]; then
+              echo "✗ Missing expected asset on GitHub release: $f"
+              MISSING=1
+            else
+              echo "  ✓ Got $f ($(stat -c%s "$f") bytes)"
+            fi
+          done
+          if [ "$MISSING" = "1" ]; then
+            echo ""
+            echo "Did the GitHub publish workflow run yet? Check:"
+            echo "  https://github.com/jmagly/aiwg/releases/tag/$TAG"
+            exit 1
+          fi
+
+      - name: Look up Gitea release ID
+        id: gitea_release
+        env:
+          GITEA_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # The Gitea release API requires the numeric release ID, not the
+        # tag name. Look it up via the tag-resolver endpoint.
+        run: |
+          set -euo pipefail
+          TAG='${{ steps.tag.outputs.tag }}'
+          API="${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/${TAG}"
+          HTTP_CODE=$(curl -s -o /tmp/release.json -w "%{http_code}" \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Accept: application/json" \
+            "$API")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "✗ Gitea release for tag $TAG not found (HTTP $HTTP_CODE)"
+            cat /tmp/release.json
+            echo ""
+            echo "Did the gitea-release.yml workflow run yet? Check:"
+            echo "  ${{ github.server_url }}/${{ github.repository }}/releases"
+            exit 1
+          fi
+          RELEASE_ID=$(jq -r '.id' /tmp/release.json)
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "✗ Release JSON did not contain a numeric id field"
+            cat /tmp/release.json
+            exit 1
+          fi
+          echo "Gitea release ID: $RELEASE_ID"
+          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Upload signed assets to Gitea release
+        env:
+          GITEA_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # Gitea API: POST multipart/form-data to
+        #   /api/v1/repos/{owner}/{repo}/releases/{id}/assets?name={filename}
+        # Idempotency: the API rejects duplicate names with 409. The
+        # script catches that and DELETEs the existing asset before
+        # re-uploading, so re-running the workflow is safe.
+        run: |
+          set -euo pipefail
+          RELEASE_ID='${{ steps.gitea_release.outputs.release_id }}'
+          REPO_API="${{ github.server_url }}/api/v1/repos/${{ github.repository }}"
+
+          upload_asset() {
+            local file="$1"
+            local name
+            name=$(basename "$file")
+            local url="${REPO_API}/releases/${RELEASE_ID}/assets?name=${name}"
+            local code
+            code=$(curl -s -o /tmp/upload.json -w "%{http_code}" \
+              -X POST \
+              -H "Authorization: token ${GITEA_TOKEN}" \
+              -H "Accept: application/json" \
+              -F "attachment=@${file}" \
+              "$url")
+            if [ "$code" = "201" ] || [ "$code" = "200" ]; then
+              echo "  ✓ uploaded $name"
+              return 0
+            fi
+            if [ "$code" = "409" ]; then
+              echo "  ! $name already attached, deleting and re-uploading…"
+              # Find existing asset id from the prior release JSON.
+              local existing_id
+              existing_id=$(jq -r --arg n "$name" '.assets[]? | select(.name == $n) | .id' /tmp/release.json)
+              if [ -n "$existing_id" ] && [ "$existing_id" != "null" ]; then
+                curl -s -o /dev/null -X DELETE \
+                  -H "Authorization: token ${GITEA_TOKEN}" \
+                  "${REPO_API}/releases/${RELEASE_ID}/assets/${existing_id}"
+              fi
+              code=$(curl -s -o /tmp/upload.json -w "%{http_code}" \
+                -X POST \
+                -H "Authorization: token ${GITEA_TOKEN}" \
+                -H "Accept: application/json" \
+                -F "attachment=@${file}" \
+                "$url")
+              if [ "$code" = "201" ] || [ "$code" = "200" ]; then
+                echo "  ✓ re-uploaded $name"
+                return 0
+              fi
+            fi
+            echo "  ✗ upload of $name failed (HTTP $code)"
+            cat /tmp/upload.json
+            return 1
+          }
+
+          upload_asset '${{ steps.tag.outputs.tarball }}'
+          upload_asset '${{ steps.tag.outputs.tarball_sig }}'
+          upload_asset '${{ steps.tag.outputs.manifest }}'
+          upload_asset '${{ steps.tag.outputs.manifest_sig }}'
+
+      - name: Verify all four assets land on Gitea release
+        env:
+          GITEA_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # Independent post-upload check. Re-fetch the release JSON and
+        # confirm each of the four expected filenames is in .assets[].name.
+        run: |
+          set -euo pipefail
+          TAG='${{ steps.tag.outputs.tag }}'
+          API="${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/${TAG}"
+          curl -s -H "Authorization: token ${GITEA_TOKEN}" "$API" > /tmp/final.json
+          MISSING=0
+          for f in \
+            '${{ steps.tag.outputs.tarball }}' \
+            '${{ steps.tag.outputs.tarball_sig }}' \
+            '${{ steps.tag.outputs.manifest }}' \
+            '${{ steps.tag.outputs.manifest_sig }}'; do
+            if ! jq -r '.assets[]?.name' /tmp/final.json | grep -qFx "$f"; then
+              echo "  ✗ $f not present on Gitea release after upload"
+              MISSING=1
+            else
+              echo "  ✓ $f attached"
+            fi
+          done
+          if [ "$MISSING" = "1" ]; then
+            echo ""
+            echo "Final Gitea release asset list:"
+            jq -r '.assets[]?.name' /tmp/final.json
+            exit 1
+          fi
+          echo ""
+          echo "✓ All four signed assets mirrored to Gitea release $TAG"
+          echo "  Consumer verification: docs/releases/verifying.md"

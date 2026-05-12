@@ -189,6 +189,36 @@ npm view aiwg version
 # Should show: 2026.1.5
 ```
 
+### 5. Mirror signed release assets to the Gitea release
+
+Once `.github/workflows/npm-publish.yml` finishes on the GitHub mirror, the GitHub release for the new tag carries four signed assets:
+
+- `aiwg-X.Y.Z.tgz` (the published tarball)
+- `aiwg-X.Y.Z.tgz.sigstore` (cosign keyless signature bundle)
+- `release-manifest.json` (audit manifest — SHA-256, version, tag, commit, workflow run URL)
+- `release-manifest.json.sigstore` (cosign keyless signature bundle for the manifest)
+
+The Gitea-side release does NOT auto-mirror these — to avoid expanding the Gitea write-token surface that Wave 4 reduced (#1283, #1286), the mirror is a single explicit operator command after the GitHub workflow lands the assets. Run:
+
+```bash
+gh workflow run upload-release-sigs.yml \
+  --repo roctinam/aiwg \
+  -f tag=vYYYY.M.PATCH
+```
+
+…or trigger it from the Gitea Actions UI (Actions → "Mirror signed release assets to Gitea release" → Run workflow → enter the tag).
+
+The workflow downloads the four assets from the public GitHub mirror and uploads them to the Gitea release via the existing `NPM_TOKEN` (no new token required). Re-runs are idempotent — duplicate-name uploads are detected (HTTP 409) and the existing asset is deleted then re-uploaded.
+
+Verify both releases have the four sig assets attached:
+
+| Release | URL |
+|---|---|
+| GitHub | <https://github.com/jmagly/aiwg/releases/tag/vYYYY.M.PATCH> |
+| Gitea  | <https://git.integrolabs.net/roctinam/aiwg/releases/tag/vYYYY.M.PATCH> |
+
+Consumer verification commands (cosign-based, registry-independent) are documented in [`docs/releases/verifying.md`](../releases/verifying.md). See [`#1287`](https://git.integrolabs.net/roctinam/aiwg/issues/1287) and [the A8 ADR](../../.aiwg/architecture/adr-tarball-cosign-signing.md) for the full rationale.
+
 ## Release Gates
 
 In addition to the four steps above, the following CI workflows act as **release gates** — a failure on any of these blocks the release.
@@ -200,7 +230,8 @@ In addition to the four steps above, the following CI workflows act as **release
 | **A2A conformance against agentic-sandbox v2** | `.gitea/workflows/conformance.yml` | version tags, manual, opt-in PR label | AIWG's A2A client interoperates with a live sandbox v2 instance — proves end-to-end interop, not just contract shape (#1258). Skips automatically while upstream sandbox v2 is pre-release. |
 | Build verification | `.gitea/workflows/ci.yml` (`build` job) | every CI run | `npm run build` produces deployable artifacts |
 | **Dependency source policy** | `.gitea/workflows/ci.yml` (`Lint dependency sources` step) | every CI run | No `git+`, `github:`, tarball, `file:`, or `link:` dep sources outside the allowlist (#1300 / A20) |
-| **Signed-tag verify** | `.gitea/workflows/npm-publish.yml` + `gitea-release.yml` (`Verify signed tag` step) | tag push | Release tag is cryptographically signed by a maintainer key published in `.gitea/keys/` or `.gitea/allowed_signers` (#1299 / A9) |
+| **Signed-tag verify** | `.gitea/workflows/npm-publish.yml` + `gitea-release.yml` + `.github/workflows/npm-publish.yml` (`Verify signed tag` step) | tag push | Release tag is cryptographically signed by a maintainer key published in `.gitea/keys/` or `.gitea/allowed_signers` (#1299 / A9) |
+| **Cosign tarball signature** | `.github/workflows/npm-publish.yml` (`Generate tarball + cosign sign + manifest` step) | tag push | Published tarball + release manifest are signed via Sigstore keyless OIDC, attached to the GitHub release, mirrored to the Gitea release by `.gitea/workflows/upload-release-sigs.yml` (#1287 / A8) |
 
 ### A2A Conformance Gate Details
 

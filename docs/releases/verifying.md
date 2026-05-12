@@ -1,6 +1,6 @@
 # Verifying AIWG Releases
 
-AIWG ships two cryptographic verifications you can run on any release:
+AIWG ships three cryptographic verifications you can run on any release:
 
 1. **npm provenance attestation** — proves a published tarball was produced
    by a specific GitHub Actions workflow run from a specific source commit.
@@ -9,13 +9,20 @@ AIWG ships two cryptographic verifications you can run on any release:
 2. **Signed git tag** — proves the tag was created by a holder of the AIWG
    maintainer release key. Applies to every release tag from `cee91c96`
    (#1299 / A9, Wave 3 of #1278) forward.
+3. **Cosign tarball signature** — proves the release tarball was produced
+   by the AIWG GitHub Actions publish workflow, registry-independent.
+   Verifiable offline against a Sigstore Rekor transparency-log entry
+   embedded in the signature bundle. Applies to the first release
+   published after #1287 (A8, Wave 5 of #1278) and forward.
 
-This doc walks through both verifications and shows what each one rules out.
+This doc walks through all three verifications and shows what each one
+rules out.
 
 > Historical note: releases earlier than #1299 (`v2026.5.2` and prior) are
 > not retroactively signed. The signed-tag gate is forward-going only.
-> Provenance attestations are also forward-going — releases before A5's
-> first OIDC publish do not have them on npmjs.org.
+> Provenance attestations and cosign tarball signatures are also forward-
+> going — releases before each control's first activation do not have
+> them.
 
 ## Verification 1 — npm provenance attestation
 
@@ -144,18 +151,115 @@ public key whose fingerprint is published in `SECURITY.md`.
   and the operator-hygiene controls in
   [`docs/contributing/secret-rotation.md`](../contributing/secret-rotation.md).
 
-## How the two verifications combine
+## Verification 3 — Cosign tarball signature
 
-| What it catches | Provenance only | Signed tag only | Both |
-|---|---|---|---|
-| Forged tag from compromised maintainer account | No | **Yes** | Yes |
-| Tampered tarball uploaded directly to npmjs.org | **Yes** | No | Yes |
-| Workflow-injection attack via Gitea write access | Partial | **Yes** | Yes |
-| Both Gitea write access AND maintainer key compromised | No | No | A8 (Wave 5, future) |
-| Build environment compromised mid-workflow | Partial | No | Partial |
+### What it proves
 
-Run both. Each rules out a different attacker. The audit (#1278) treats
-the combination as the supply-chain-defense baseline.
+The specific tarball bytes you have on disk were produced by the AIWG
+GitHub Actions publish workflow at `.github/workflows/npm-publish.yml`,
+running on `github.com/jmagly/aiwg` at the tagged commit. Independent of
+both npmjs.org and the registry the tarball came from — works the same
+whether you pulled the file from npmjs.org, the Gitea bundled npm
+registry, the GitHub release, the Gitea release, or any mirror.
+
+The chain of trust roots in Sigstore's Fulcio CA (which only signs
+keyless certificates against verified OIDC identities) and is anchored
+in the Rekor transparency log (which makes silent re-signing detectable
+by anyone watching).
+
+### How to verify
+
+Required: `cosign` CLI v2.0+ — install from
+<https://github.com/sigstore/cosign/releases>.
+
+Download the assets from either the [GitHub
+release](https://github.com/jmagly/aiwg/releases) or the [Gitea
+release](https://git.integrolabs.net/roctinam/aiwg/releases) for the
+version you want to verify. You need:
+
+- `aiwg-X.Y.Z.tgz` (the tarball itself)
+- `aiwg-X.Y.Z.tgz.sigstore` (the signature bundle)
+
+Verify:
+
+```bash
+cosign verify-blob \
+  --bundle aiwg-X.Y.Z.tgz.sigstore \
+  --certificate-identity-regexp '^https://github.com/jmagly/aiwg/\.github/workflows/npm-publish\.yml@refs/tags/v' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  aiwg-X.Y.Z.tgz
+```
+
+Expected output: `Verified OK`.
+
+The two `--certificate-*` flags are non-optional. They are what bind the
+signature to a specific workflow (`.github/workflows/npm-publish.yml` on
+`jmagly/aiwg`) and a specific OIDC issuer (GitHub Actions). Without
+them, `cosign verify-blob` would accept any keyless signature from any
+GitHub Actions workflow on any repo — defeating the point of the
+identity binding.
+
+### Cross-check the release manifest
+
+Every release also ships a signed `release-manifest.json` containing the
+tarball SHA-256, the version, the tag SHA, the source commit SHA, and
+the workflow run URL. Verify it the same way:
+
+```bash
+cosign verify-blob \
+  --bundle release-manifest.json.sigstore \
+  --certificate-identity-regexp '^https://github.com/jmagly/aiwg/\.github/workflows/npm-publish\.yml@refs/tags/v' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  release-manifest.json
+```
+
+Then sanity-check that the manifest's `tarball_sha256` matches the
+actual tarball on disk:
+
+```bash
+jq -r '.tarball_sha256' release-manifest.json
+sha256sum aiwg-X.Y.Z.tgz
+```
+
+The two values must match. If they don't, the manifest is signed for a
+different tarball than the one you have — treat the artifact as
+untrusted.
+
+### What it does **not** prove
+
+- That the source commit was made by an AIWG maintainer. The cosign
+  signature binds the tarball to a specific workflow run, not to a
+  specific human author. Use verification 2 (signed tag) to close that
+  gap.
+- That the tarball is functionally safe. The signature is about *who
+  built what*, not *whether the result is malware-free*. Run AIWG
+  through your own runtime sandbox if that matters to you.
+- That the signing workflow itself is uncompromised. If an attacker can
+  push to `.github/workflows/npm-publish.yml` AND push a signed tag,
+  they can produce a cosign-verifiable malicious tarball. The combined
+  defense (signed tag + cosign signature) closes this — the attacker
+  would need both Gitea/GitHub write access AND the maintainer release
+  key AND a Sigstore-recognized OIDC identity on the AIWG repo.
+
+## How the three verifications combine
+
+| What it catches | Provenance only | Signed tag only | Cosign signature only | All three |
+|---|---|---|---|---|
+| Forged tag from compromised maintainer account | No | **Yes** | No | Yes |
+| Tampered tarball uploaded directly to npmjs.org | **Yes** | No | **Yes** | Yes |
+| Tampered tarball uploaded to Gitea bundled npm registry | No | No | **Yes** | Yes |
+| Tampered tarball on a third-party mirror | No | No | **Yes** | Yes |
+| Workflow-injection attack via Gitea write access | Partial | **Yes** | Partial | Yes |
+| Both Gitea write access AND maintainer key compromised | No | No | No | Partial (still needs Sigstore identity) |
+| Build environment compromised mid-workflow | Partial | No | Partial | Partial |
+
+Run all three. Each rules out a different attacker. The audit (#1278)
+treats the combination as the supply-chain-defense baseline.
+
+The signed tag is the only check that does not depend on
+GitHub-as-OIDC-issuer or npmjs.org-as-registry. It is the cryptographic
+anchor that makes the other two trustworthy even if a registry or OIDC
+provider is itself attacked.
 
 ## What if a verification fails
 
@@ -173,18 +277,27 @@ the combination as the supply-chain-defense baseline.
 
 ## Two-leg model: what gets verified where
 
-AIWG publishes to two registries on every release:
+AIWG publishes to two registries on every release. The signed tag and the
+cosign signature are both registry-independent, so the only verification
+that varies by registry is the npm provenance attestation:
 
-| Registry | URL | Provenance? | Signed tag? |
-|---|---|---|---|
-| npmjs.org | `https://registry.npmjs.org/aiwg` | Yes (post-A5) | Yes (via the tag itself) |
-| Gitea bundled npm | `https://git.integrolabs.net/api/packages/roctinam/npm/aiwg` | No today (#1287 / A8 in Wave 5 will add Sigstore tarball signing as a registry-independent attestation) | Yes |
+| Registry | URL | Provenance? | Signed tag? | Cosign signature? |
+|---|---|---|---|---|
+| npmjs.org | `https://registry.npmjs.org/aiwg` | Yes (post-A5) | Yes (via the tag itself) | Yes (post-A8, via GitHub/Gitea release assets) |
+| Gitea bundled npm | `https://git.integrolabs.net/api/packages/roctinam/npm/aiwg` | No | Yes | Yes (post-A8, via GitHub/Gitea release assets) |
 
-The signed tag is registry-independent — it verifies regardless of where
-you pulled the tarball from. The provenance attestation is npmjs.org-only
-today. For Gitea-registry installs, trust the signed tag plus AIWG's
-operator-hygiene controls for the Gitea-side publish leg
-(#1286 / A10 — compensating controls bundle).
+The signed tag and cosign signature are registry-independent — they
+verify the same way regardless of which registry you pulled the tarball
+from, or whether you pulled it from a mirror. The cosign signature
+specifically closes the "Gitea-registry tarball lacks a provenance
+chain" gap that #1286 (A10) covered with operator-hygiene controls
+only.
+
+To verify a Gitea-registry install end-to-end: download the matching
+`.sigstore` bundle from the [Gitea
+release](https://git.integrolabs.net/roctinam/aiwg/releases), then run
+`cosign verify-blob` against the tarball that npm installed (typically
+at `$(npm root -g)/aiwg/` or wherever your global npm prefix points).
 
 ## References
 
@@ -197,5 +310,7 @@ operator-hygiene controls for the Gitea-side publish leg
 - [`.aiwg/architecture/adr-npmjs-org-via-github-actions.md`](../../.aiwg/architecture/adr-npmjs-org-via-github-actions.md) — A5 ADR
 - [`.aiwg/architecture/adr-signed-tag-verify.md`](../../.aiwg/architecture/adr-signed-tag-verify.md) — A9 ADR
 - [`.aiwg/architecture/adr-gitea-release-compensating-controls.md`](../../.aiwg/architecture/adr-gitea-release-compensating-controls.md) — A10 ADR
+- [`.aiwg/architecture/adr-tarball-cosign-signing.md`](../../.aiwg/architecture/adr-tarball-cosign-signing.md) — A8 ADR
 - [npm Trusted Publishers documentation](https://docs.npmjs.com/trusted-publishers)
 - [GitHub OIDC token claims](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
+- [Sigstore cosign documentation](https://docs.sigstore.dev/cosign/signing/signing_with_blobs/) — keyless sign-blob and bundle format
