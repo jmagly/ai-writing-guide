@@ -43,7 +43,10 @@ Either format is accepted; both can co-exist:
 | GPG (ASCII-armored) | `.gitea/keys/maintainers.asc` | Preferred for long-lived release keys |
 | SSH (allowed-signers format) | `.gitea/allowed_signers` | Acceptable; works with hardware-backed keys (YubiKey, etc.) |
 
-> **Status**: Maintainer release-signing key is being generated. Until either file exists in the repo, the CI gate will fail every release tag with an actionable error. See `docs/contributing/versioning.md` for setup procedure.
+> **GPG maintainer signing key (active)** — registered 2026-05-12
+> Principal:   `AIWG Release Signing <release@aiwg.io>`
+> Fingerprint: `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`
+> Published:   `.gitea/keys/maintainers.asc`
 
 Once the key is published, this section will list the fingerprint(s) so external reproducers can independently verify a release tag against a known-good identity.
 
