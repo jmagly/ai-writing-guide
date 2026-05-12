@@ -27,8 +27,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Clone dbbuilder
+        env:
+          GT_ACCESS_TOKEN: ${{ secrets.GT_ACCESS_TOKEN }}
         run: |
-          git clone https://token:${{ secrets.GT_ACCESS_TOKEN }}@git.integrolabs.net/roctinam/dbbuilder.git /tmp/dbbuilder
+          set -euo pipefail
+          # Token lives in a transient mode-600 file consumed by git's
+          # credential helper. Avoids exposing the token in process
+          # arguments (visible to `ps`, core dumps, error output) which
+          # was the case with the previous token-in-URL pattern.
+          # See .claude/rules/token-security.md rule 2 and #1284 (A6).
+          GIT_CREDS="$(mktemp)"
+          chmod 600 "$GIT_CREDS"
+          trap 'rm -f "$GIT_CREDS"' EXIT
+          printf 'https://token:%s@git.integrolabs.net\n' "${GT_ACCESS_TOKEN}" > "$GIT_CREDS"
+          git -c "credential.helper=store --file=$GIT_CREDS" \
+            clone https://git.integrolabs.net/roctinam/dbbuilder.git /tmp/dbbuilder
 
       - name: Install dbbuilder dependencies
         working-directory: /tmp/dbbuilder/apps/publisher
