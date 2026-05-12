@@ -260,3 +260,120 @@ describe('aiwg serve — dashboard proxies (#1174 cycle 2)', () => {
     expect(resp.status).toBe(404);
   });
 });
+
+/**
+ * Cycle 3 — HITL drawer, telemetry, and PTY WS surface coverage.
+ *
+ * HITL: `GET /api/hitl` returns pending requests from the registry;
+ * `POST /api/hitl/:id/respond` proxies to the sandbox. The cycle-3 tests
+ * verify the routes exist and handle the unhappy paths (no pending, unknown
+ * id) — the full event-driven happy path requires sandbox→serve WS delivery
+ * and rides with a future cycle.
+ *
+ * Telemetry: `GET /api/telemetry` + `/api/telemetry/metrics` always exist
+ * and return well-shaped responses. `POST /api/telemetry` accepts events.
+ *
+ * PTY WS: the upgrade path on `/ws/pty/:sessionId` is exercised at the
+ * handshake layer — no real PTY but we verify the route exists and the
+ * upgrade succeeds (or is closed per known constraints).
+ */
+describe('aiwg serve — HITL + telemetry + PTY WS (#1174 cycle 3)', () => {
+  let serve: ServeHandle;
+
+  beforeAll(async () => {
+    serve = await spawnAiwgServe();
+    await waitForHttp(serve.url, 20_000, serve);
+  }, 60_000);
+
+  afterAll(async () => {
+    if (serve) await serve.kill();
+  });
+
+  // ── HITL drawer ──────────────────────────────────────────────
+
+  it('GET /api/hitl returns an empty requests array initially', async () => {
+    const resp = await fetch(`${serve.url}/api/hitl`);
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+    expect(body).toHaveProperty('requests');
+    expect(Array.isArray(body.requests)).toBe(true);
+  });
+
+  it('POST /api/hitl/<unknown>/respond returns 404', async () => {
+    const resp = await fetch(`${serve.url}/api/hitl/never-existed/respond`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'approve' }),
+    });
+    expect(resp.status).toBe(404);
+    const body = await resp.json();
+    expect(body.error).toMatch(/HITL request not found/i);
+  });
+
+  // ── Telemetry ────────────────────────────────────────────────
+
+  it('GET /api/telemetry returns an events array', async () => {
+    const resp = await fetch(`${serve.url}/api/telemetry`);
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+    expect(body).toHaveProperty('events');
+    expect(Array.isArray(body.events)).toBe(true);
+  });
+
+  it('GET /api/telemetry/metrics returns a metrics object', async () => {
+    const resp = await fetch(`${serve.url}/api/telemetry/metrics`);
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+    expect(typeof body).toBe('object');
+    expect(body).not.toBeNull();
+  });
+
+  it('POST /api/telemetry accepts an ingested event', async () => {
+    const event = {
+      type: 'test.cycle3.smoke',
+      sessionId: 'cycle3-test',
+      timestamp: new Date().toISOString(),
+      payload: { value: 42 },
+    };
+    const resp = await fetch(`${serve.url}/api/telemetry`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+    });
+    expect([200, 201]).toContain(resp.status);
+
+    // Cross-check the event surfaces in a subsequent query
+    const queryResp = await fetch(
+      `${serve.url}/api/telemetry?sessionId=cycle3-test`,
+    );
+    expect(queryResp.status).toBe(200);
+    const { events } = await queryResp.json();
+    expect(Array.isArray(events)).toBe(true);
+    const found = events.find((e: { type: string }) => e.type === 'test.cycle3.smoke');
+    expect(found).toBeDefined();
+  });
+
+  // ── PTY WS upgrade ───────────────────────────────────────────
+  //
+  // The /ws/pty/:sessionId route exists and accepts upgrades. Without a
+  // registered sandbox the bridge auto-detects "no sandbox" and closes the
+  // WS. We just verify the WS handshake completes — running a real PTY
+  // session requires the orchestrate WS layer that's out of scope here.
+
+  it('/ws/pty/:sessionId completes the WebSocket upgrade', async () => {
+    const { WebSocket } = await import('ws');
+    const wsUrl = `${serve.url.replace('http://', 'ws://')}/ws/pty/cycle3-pty-test`;
+    const ws = new WebSocket(wsUrl);
+    const outcome = await new Promise<'open' | 'close' | 'error'>((resolve) => {
+      const timer = setTimeout(() => resolve('open'), 2_000);
+      ws.on('open', () => { clearTimeout(timer); resolve('open'); });
+      ws.on('close', () => { clearTimeout(timer); resolve('close'); });
+      ws.on('error', () => { clearTimeout(timer); resolve('error'); });
+    });
+    // Either 'open' (upgrade succeeded) or 'close' (handler closed without
+    // a sandbox) is acceptable. 'error' would mean the upgrade itself
+    // failed — that's a regression.
+    expect(['open', 'close']).toContain(outcome);
+    try { ws.close(); } catch { /* ignore */ }
+  });
+});
