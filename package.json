@@ -45,7 +45,8 @@
     "uat:daemon": "vitest run --config config/vitest.uat-daemon.config.js",
     "uat:daemon:claude": "vitest run --config config/vitest.uat-daemon.config.js --reporter=verbose daemon-live-claude",
     "lint:schemas": "node tools/scripts/lint-schemas.mjs",
-    "test:conformance": "vitest run --config config/vitest.conformance.config.js test/conformance/executor-v1/"
+    "test:conformance": "vitest run --config config/vitest.conformance.config.js test/conformance/executor-v1/",
+    "test:integration:serve": "vitest run --config config/vitest.integration.config.js"
   },
   "files": [
     "bin/",
