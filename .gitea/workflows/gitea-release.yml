@@ -30,6 +30,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        with:
+          # Needed so `git tag -v` can see the tag annotation (signature).
+          fetch-tags: true
+
+      - name: Verify signed tag (#1299 / A9 gate)
+        # Hard gate: every release tag must verify against a maintainer
+        # public key published in .gitea/keys/ or .gitea/allowed_signers.
+        # Runs BEFORE the release-creation step so a bad signature never
+        # produces a Gitea release record. See tools/ci/verify-signed-tag.sh
+        # and docs/contributing/versioning.md.
+        run: bash tools/ci/verify-signed-tag.sh
 
       - name: Install jq (node:20 image does not ship it by default)
         run: |

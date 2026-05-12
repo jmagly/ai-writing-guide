@@ -32,6 +32,21 @@ If your Gitea account can submit a private security advisory against [`roctinam/
 - Do not attempt to exfiltrate, modify, or destroy data belonging to other users.
 - Do not submit reports that depend on physical access to a target machine or social engineering of a maintainer — those are out of scope.
 
+## Maintainer Signing Keys
+
+Release tags are signed by maintainer keys published in this repo. CI fails to publish any release whose tag does not verify against one of these keys (gate added per [#1299](https://git.integrolabs.net/roctinam/aiwg/issues/1299), enforced by `tools/ci/verify-signed-tag.sh`).
+
+Either format is accepted; both can co-exist:
+
+| Format | Public-key location | Notes |
+|--------|--------------------|-------|
+| GPG (ASCII-armored) | `.gitea/keys/maintainers.asc` | Preferred for long-lived release keys |
+| SSH (allowed-signers format) | `.gitea/allowed_signers` | Acceptable; works with hardware-backed keys (YubiKey, etc.) |
+
+> **Status**: Maintainer release-signing key is being generated. Until either file exists in the repo, the CI gate will fail every release tag with an actionable error. See `docs/contributing/versioning.md` for setup procedure.
+
+Once the key is published, this section will list the fingerprint(s) so external reproducers can independently verify a release tag against a known-good identity.
+
 ## Encryption Key
 
 For encrypted reports, use the AIWG project security key.

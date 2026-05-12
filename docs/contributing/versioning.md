@@ -84,14 +84,21 @@ grep '"version"' package.json | grep -E '\.[0-9]{2}\.' && echo "ERROR: Leading z
 
 ### 3. Create and Push Tag
 
+**Tag signing is mandatory** as of #1299 (A9). CI rejects any release tag whose signature does not verify against a maintainer public key in `.gitea/keys/maintainers.asc` (GPG) or `.gitea/allowed_signers` (SSH). The verify step lives in `.gitea/workflows/npm-publish.yml` and `.gitea/workflows/gitea-release.yml` and is implemented by [`tools/ci/verify-signed-tag.sh`](../../tools/ci/verify-signed-tag.sh).
+
 ```bash
 # Create signed release commit (if not already committed)
 git commit -S -m "release: v2026.1.5 \"Release Name\""
 
-# Create annotated tag
+# Create signed annotated tag (the -s is non-optional)
 git tag -s v2026.1.5 -m "v2026.1.5 - Release Name"
 
-# Push to Gitea (triggers automatic Gitea release + publish workflows)
+# Verify locally before push — fast feedback if signing isn't configured
+git tag -v v2026.1.5
+
+# Push to Gitea (triggers automatic Gitea release + publish workflows;
+# CI verify-signed-tag step will reject if signature doesn't match a
+# published maintainer key)
 git push origin main --tags
 
 # Optional: mirror tag/commit to GitHub
@@ -102,6 +109,76 @@ gh release create v2026.1.5 --repo jmagly/aiwg --title "v2026.1.5 - Release Name
 ```
 
 **Sandboxed agent note**: If release operations run inside a filesystem/network sandbox, request **escalated execution** for signed `git commit`/`git tag` commands so GPG can access `~/.gnupg` and the local gpg-agent socket.
+
+#### Signing your release tag — first-time setup
+
+The CI verify gate requires (a) a maintainer signing key, (b) that key's public component committed under `.gitea/keys/` or `.gitea/allowed_signers`, and (c) tags created with `git tag -s`. Pick one of GPG or SSH and follow the matching procedure.
+
+**Option A — GPG signing (preferred for long-lived release keys):**
+
+```bash
+# 1. Generate a project-scoped key (NOT your personal key)
+gpg --quick-generate-key 'AIWG Release Signing <release@aiwg.io>' ed25519 sign 5y
+
+# 2. Find the key id
+gpg --list-secret-keys --keyid-format=long
+#   sec   ed25519/ABCD1234EFGH5678 2026-05-12 [SC] [expires: 2031-05-12]
+#         <fingerprint>
+
+# 3. Configure git to sign tags by default with this key
+git config --global user.signingkey ABCD1234EFGH5678
+git config --global tag.gpgSign true
+
+# 4. Publish the public key to the repo
+gpg --armor --export ABCD1234EFGH5678 >> .gitea/keys/maintainers.asc
+git add .gitea/keys/maintainers.asc
+git commit -m "security: add maintainer release signing key (refs #1299)"
+git push origin main
+
+# 5. Update SECURITY.md "Maintainer Signing Keys" section with the
+#    fingerprint, then commit + push.
+
+# 6. Make a test signed tag to verify end-to-end:
+git tag -s vYYYY.M.PATCH-rc.0 -m "vYYYY.M.PATCH-rc.0 - signing-setup verification"
+git push origin vYYYY.M.PATCH-rc.0
+#    Watch the resulting workflow run. The "Verify signed tag" step should
+#    print "✓ Tag <name> verified successfully."
+```
+
+**Option B — SSH signing (works with YubiKey / hardware-backed keys):**
+
+```bash
+# 1. Generate a project-scoped SSH key (NOT your personal key). Use a
+#    hardware-backed sk-ed25519 variant if you have a YubiKey or similar.
+ssh-keygen -t ed25519 -f ~/.ssh/aiwg-release-signing -C 'aiwg-release-signing'
+#    (or: ssh-keygen -t ed25519-sk -f ~/.ssh/aiwg-release-signing-sk)
+
+# 2. Configure git to sign tags with SSH
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/aiwg-release-signing.pub
+git config --global tag.gpgSign true
+
+# 3. Publish the public key in OpenSSH allowed-signers format
+echo "release@aiwg.io $(cat ~/.ssh/aiwg-release-signing.pub)" >> .gitea/allowed_signers
+git add .gitea/allowed_signers
+git commit -m "security: add maintainer release signing key (refs #1299)"
+git push origin main
+
+# 4. Update SECURITY.md, test-tag, etc. — same as GPG steps 5-6.
+```
+
+#### Rotation and revocation
+
+Rotate maintainer signing keys on a known cadence (suggested: every 2 years) and immediately on any suspected compromise of the maintainer's workstation. To rotate:
+
+1. Generate the new key per the setup procedure above.
+2. Add its public component to the same `.gitea/keys/maintainers.asc` or `.gitea/allowed_signers` file (do not remove the old key yet — it's still trusted for past releases).
+3. Switch local git config to sign with the new key.
+4. After at least one release with the new key has been verified end-to-end, remove the old key from the public-key file in a documented commit and update SECURITY.md.
+
+#### Historical tags
+
+Release tags created before #1299 landed (`v2026.5.2` and earlier) are **not retroactively signed**. The CI gate fires only on tag pushes (`on: push: tags: [v*]`), so old releases keep their existing un-signed annotations. The gate is forward-going only.
 
 ### 4. Verify Published Version
 
@@ -122,6 +199,8 @@ In addition to the four steps above, the following CI workflows act as **release
 | Executor-contract conformance (fixture mode) | `.gitea/workflows/ci.yml` (`test:conformance` step) | every CI run | Static fixture replay still matches the contract schema |
 | **A2A conformance against agentic-sandbox v2** | `.gitea/workflows/conformance.yml` | version tags, manual, opt-in PR label | AIWG's A2A client interoperates with a live sandbox v2 instance — proves end-to-end interop, not just contract shape (#1258). Skips automatically while upstream sandbox v2 is pre-release. |
 | Build verification | `.gitea/workflows/ci.yml` (`build` job) | every CI run | `npm run build` produces deployable artifacts |
+| **Dependency source policy** | `.gitea/workflows/ci.yml` (`Lint dependency sources` step) | every CI run | No `git+`, `github:`, tarball, `file:`, or `link:` dep sources outside the allowlist (#1300 / A20) |
+| **Signed-tag verify** | `.gitea/workflows/npm-publish.yml` + `gitea-release.yml` (`Verify signed tag` step) | tag push | Release tag is cryptographically signed by a maintainer key published in `.gitea/keys/` or `.gitea/allowed_signers` (#1299 / A9) |
 
 ### A2A Conformance Gate Details
 

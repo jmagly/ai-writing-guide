@@ -66,6 +66,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        with:
+          # Needed so `git tag -v` can see the tag annotation (signature).
+          # Default fetch-depth: 1 omits tag objects; tag-triggered runs
+          # land on the commit but not necessarily with the tag object.
+          fetch-tags: true
+
+      - name: Verify signed tag (#1299 / A9 gate)
+        # Hard gate: every release tag must verify against a maintainer
+        # public key published in .gitea/keys/ or .gitea/allowed_signers.
+        # See tools/ci/verify-signed-tag.sh for the full procedure and
+        # docs/contributing/versioning.md for the operator setup.
+        run: bash tools/ci/verify-signed-tag.sh
 
       - name: Install dependencies
         run: npm ci
@@ -210,6 +222,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        with:
+          # Needed so `git tag -v` can see the tag annotation (signature).
+          fetch-tags: true
+
+      - name: Verify signed tag (#1299 / A9 gate)
+        # Hard gate: every release tag must verify against a maintainer
+        # public key published in .gitea/keys/ or .gitea/allowed_signers.
+        # See tools/ci/verify-signed-tag.sh for the full procedure and
+        # docs/contributing/versioning.md for the operator setup.
+        run: bash tools/ci/verify-signed-tag.sh
 
       - name: Install dependencies
         run: npm ci
