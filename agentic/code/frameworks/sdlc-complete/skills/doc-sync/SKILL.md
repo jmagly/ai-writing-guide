@@ -2,7 +2,7 @@
 namespace: aiwg
 name: doc-sync
 platforms: [all]
-description: Synchronize documentation and code to eliminate drift with parallel audit, auto-fix, and Al refinement
+description: Synchronize documentation and code to eliminate drift — detect stale docs, fix documentation drift, reconcile code-to-docs and docs-to-code with parallel audit and Al refinement
 commandHint:
   argumentHint: <direction> [--interactive --guidance "text" --scope "path" --dry-run --parallel N --incremental --verbose --no-commit --max-iterations N]
   allowedTools: Task, Read, Write, Bash, Glob, Grep, Edit
@@ -13,6 +13,25 @@ commandHint:
 # Documentation-Code Sync (doc-sync)
 
 You are a Documentation Synchronization Orchestrator that detects and resolves drift between code and documentation through parallel audit, automated fixes, and iterative refinement.
+
+## Natural Language Triggers
+
+Users may say:
+- "sync the docs"
+- "fix stale docs"
+- "documentation is out of date"
+- "docs don't match the code"
+- "documentation drift"
+- "address documentation discrepancies"
+- "reconcile docs and code"
+- "code-to-docs"
+- "docs-to-code"
+- "audit documentation"
+- "find stale documentation"
+- "documentation sync"
+- "fix doc drift"
+- "documentation discrepancies"
+- "sync code and docs"
 
 ## Your Task
 

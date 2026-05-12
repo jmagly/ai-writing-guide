@@ -801,6 +801,8 @@ export const newBundleHandler: CommandHandler = {
     const descIdx = args.findIndex(a => a === '--description');
     const description = descIdx >= 0 ? args[descIdx + 1] : undefined;
 
+    const dryRun = args.includes('--dry-run');
+
     const { scaffoldProjectLocalBundle } = await import('../../extensions/project-local-scaffold.js');
 
     try {
@@ -810,6 +812,7 @@ export const newBundleHandler: CommandHandler = {
         description,
         starter,
         projectDir: ctx.cwd,
+        dryRun,
       });
 
       if (result.alreadyExists) {
@@ -817,6 +820,15 @@ export const newBundleHandler: CommandHandler = {
           exitCode: 1,
           message: `Refused: bundle already exists at ${result.bundlePath}. Remove it first or pick a different name.`,
         };
+      }
+
+      if (dryRun) {
+        console.log(`[DRY RUN] Would scaffold project-local ${type} '${positional}' at ${result.bundlePath}`);
+        console.log('  Files that would be created:');
+        for (const f of result.filesCreated) console.log(`    + ${f}`);
+        console.log('');
+        console.log('No files written. Re-run without --dry-run to create.');
+        return { exitCode: 0 };
       }
 
       console.log(`✓ Scaffolded project-local ${type} '${positional}' at ${result.bundlePath}`);
@@ -841,12 +853,31 @@ export const newBundleHandler: CommandHandler = {
         // .gitignore management is best-effort; don't fail the scaffold
       }
 
+      // #1235 — auto-rebuild project graph so the new bundle is immediately
+      // discoverable via `aiwg discover`. Best-effort: don't fail the scaffold
+      // if the index build hiccups.
+      let indexedOk = false;
+      try {
+        const { buildIndex } = await import('../../artifacts/index-builder.js');
+        await buildIndex(ctx.cwd, { graph: 'project', force: false, explicit: true });
+        indexedOk = true;
+      } catch {
+        // ignore — surface via next-steps hint instead
+      }
+
       console.log('');
       console.log('Next steps:');
       console.log(`  1. Edit manifest.json (description, version, keywords)`);
       console.log(`  2. Customize the starter artifact under ${result.bundlePath}/`);
-      console.log(`  3. Deploy:  aiwg use ${positional}`);
-      console.log(`  4. Inspect: aiwg doctor --project-local`);
+      if (indexedOk) {
+        console.log(`  3. Discoverable now via:  aiwg discover "${positional}"`);
+      } else {
+        console.log(`  3. Rebuild project index:  aiwg index build --graph project`);
+        console.log(`     then:                   aiwg discover "${positional}"`);
+      }
+      console.log(`  4. Deploy:  aiwg use ${positional}`);
+      console.log(`  5. Inspect: aiwg doctor --project-local`);
+      console.log(`  6. When mature, promote:  aiwg promote ${positional}`);
 
       return { exitCode: 0 };
     } catch (err) {

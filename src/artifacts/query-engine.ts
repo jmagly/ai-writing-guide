@@ -10,8 +10,28 @@
  */
 
 import { minimatch } from 'minimatch';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import type { QueryParams, QueryResult, MetadataEntry, GraphType, ArtifactIndex } from './types.js';
 import { loadMetadataIndex, loadGraphIndexFile } from './index-reader.js';
+
+/**
+ * Detect whether the workspace has project-local content (#1235). When any
+ * of the four bundle dirs exist with at least one bundle inside, hints
+ * pivot to the project graph instead of the framework graph.
+ */
+function detectProjectLocal(cwd: string): boolean {
+  for (const dir of ['extensions', 'addons', 'frameworks', 'plugins']) {
+    const p = path.join(cwd, '.aiwg', dir);
+    try {
+      const entries = fs.readdirSync(p, { withFileTypes: true });
+      if (entries.some(e => e.isDirectory())) return true;
+    } catch {
+      // ENOENT or other — keep looking
+    }
+  }
+  return false;
+}
 
 export interface QueryOptions {
   json?: boolean;
@@ -451,9 +471,14 @@ export async function discoverCapability(
   }
 
   // Build a hint string when the index has entries but no scored matches —
-  // this is the second silent-failure mode #1221 calls out.
+  // this is the second silent-failure mode #1221 calls out. When the workspace
+  // has project-local content (.aiwg/{extensions,addons,frameworks,plugins}/)
+  // surface a project-graph rebuild hint (#1235).
+  const hasProjectLocal = detectProjectLocal(cwd);
   const emptyResultHint = scored.length === 0
-    ? `No matches in the indexed corpus. The framework index has ${entries.length} entries but none scored against "${params.phrase}". Try a broader phrase, check \`aiwg index stats --graph framework\`, or rebuild with \`aiwg index build --graph framework --force\`.`
+    ? hasProjectLocal
+      ? `No matches in the indexed corpus. ${entries.length} entries indexed, none scored against "${params.phrase}". This workspace has project-local content under .aiwg/ — try \`aiwg index build --graph project && aiwg discover "${params.phrase}"\`, or check \`aiwg index stats --graph project\`.`
+      : `No matches in the indexed corpus. The framework index has ${entries.length} entries but none scored against "${params.phrase}". Try a broader phrase, check \`aiwg index stats --graph framework\`, or rebuild with \`aiwg index build --graph framework --force\`.`
     : null;
 
   if (params.json) {
@@ -486,7 +511,12 @@ export async function discoverCapability(
 
   if (scored.length === 0) {
     console.log(`No discovery matches for "${params.phrase}" in types: ${types.join(',')}.`);
-    console.log('Try a broader phrase, or check `aiwg index stats --graph framework` to confirm the index is built.');
+    if (hasProjectLocal) {
+      console.log('This workspace has project-local content under .aiwg/ —');
+      console.log(`try \`aiwg index build --graph project && aiwg discover "${params.phrase}"\`.`);
+    } else {
+      console.log('Try a broader phrase, or check `aiwg index stats --graph framework` to confirm the index is built.');
+    }
     return;
   }
 

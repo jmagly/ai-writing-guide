@@ -303,6 +303,27 @@ When you don't know which domain a need falls into:
 
 ---
 
+## Project-local extensions (pilot → promote)
+
+Addons and extensions don't all have to come from upstream. Users can pilot their own bundles per-project under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`, validate them, then promote to upstream when mature. Curated phrases:
+
+```bash
+aiwg new-bundle <name>                         # scaffold; auto-builds project graph
+aiwg new-extension <name> --starter rule       # extension with starter rule
+aiwg new-addon <name>                          # addon
+aiwg new-framework <name>                      # framework
+aiwg new-plugin <name>                         # plugin
+aiwg new-bundle <name> --dry-run               # preview without writing
+aiwg list --project-local                      # inventory + validation status
+aiwg doctor --project-local                    # health check (counts, drift, shadows)
+aiwg use <name>                                # deploy single project-local bundle
+aiwg promote <name>                            # graduate to upstream (hash-verified)
+aiwg promote <name> --to corpus <path>         # promote to private corpus instead
+aiwg promote <name> --dry-run                  # preview promotion
+```
+
+After scaffolding, the bundle is immediately discoverable via `aiwg discover "<name>"` — the project graph is rebuilt automatically. No manual `aiwg index build --graph project` step needed.
+
 ## When this map doesn't have a phrase that fits
 
 **Don't enumerate from memory.** Run `aiwg discover` with the user's natural-language phrasing — the index is forgiving. If you get zero results, try:
@@ -311,6 +332,7 @@ When you don't know which domain a need falls into:
 2. A different vocabulary (e.g., "deploy" vs "publish" vs "release")
 3. `aiwg index stats --graph framework` to confirm the index is built and populated
 4. Check whether the bundle is even installed via `aiwg list`
+5. If the workspace has project-local bundles, also check `aiwg index stats --graph project`
 
 If after that the capability genuinely doesn't exist, you can tell the user honestly — but only after the search ran and came up empty. The `skill-discovery` HIGH rule mandates the search before declining.
 

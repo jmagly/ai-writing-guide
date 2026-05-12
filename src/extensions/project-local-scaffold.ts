@@ -31,15 +31,19 @@ export interface ScaffoldOptions {
   projectDir?: string;
   /** Refuse to overwrite an existing bundle. Default true. */
   refuseOnExists?: boolean;
+  /** Preview only — compute the file list without writing. Default false. */
+  dryRun?: boolean;
 }
 
 export interface ScaffoldResult {
   /** Absolute path to the new bundle. */
   bundlePath: string;
-  /** Files created (relative to bundle). */
+  /** Files created (relative to bundle). For dry-run, files that WOULD be created. */
   filesCreated: string[];
   /** True when nothing was written because the bundle already exists. */
   alreadyExists: boolean;
+  /** True when no files were written because dryRun was set. */
+  dryRun?: boolean;
 }
 
 const TYPE_TO_DIR: Record<ProjectLocalType, string> = {
@@ -200,6 +204,7 @@ export async function scaffoldProjectLocalBundle(
 ): Promise<ScaffoldResult> {
   const projectDir = options.projectDir ?? process.cwd();
   const refuseOnExists = options.refuseOnExists ?? true;
+  const dryRun = options.dryRun ?? false;
 
   if (!NAME_REGEX.test(options.name)) {
     throw new Error(
@@ -214,10 +219,23 @@ export async function scaffoldProjectLocalBundle(
   try {
     await stat(bundlePath);
     if (refuseOnExists) {
-      return { bundlePath, filesCreated: [], alreadyExists: true };
+      return { bundlePath, filesCreated: [], alreadyExists: true, dryRun };
     }
   } catch {
     // Doesn't exist — good
+  }
+
+  if (dryRun) {
+    // Compute the file list without writing anything.
+    const starter: StarterKind =
+      options.starter ?? (options.type === 'framework' || options.type === 'plugin' ? 'minimal' : 'skill');
+    const filesCreated: string[] = ['manifest.json', 'README.md'];
+    if (starter === 'skill') filesCreated.push(`skills/${options.name}-skill/SKILL.md`);
+    else if (starter === 'rule') filesCreated.push(`rules/${options.name}.md`);
+    else if (starter === 'agent') filesCreated.push(`agents/${options.name}.md`);
+    if (options.type === 'framework') filesCreated.push('src/.gitkeep');
+    if (options.type === 'plugin') filesCreated.push('payload/.gitkeep');
+    return { bundlePath, filesCreated, alreadyExists: false, dryRun: true };
   }
 
   await mkdir(bundlePath, { recursive: true });

@@ -100,11 +100,20 @@ function displayHelp(): void {
   ]);
 
   helpGroup('SCAFFOLDING', [
-    ['add-agent <name>', 'Add agent to addon/framework'],
-    ['add-command <name>', 'Add command to addon/framework'],
-    ['add-skill <name>', 'Add skill to addon/framework'],
-    ['scaffold-addon <name>', 'Create new addon package'],
-    ['scaffold-framework <name>', 'Create new framework package'],
+    ['new-bundle <name>', 'Create project-local bundle (--type extension|addon|framework|plugin, --starter skill|rule|agent|minimal, --dry-run)'],
+    ['new-extension <name>', 'Alias for new-bundle --type extension'],
+    ['new-addon <name>', 'Alias for new-bundle --type addon'],
+    ['new-framework <name>', 'Alias for new-bundle --type framework'],
+    ['new-plugin <name>', 'Alias for new-bundle --type plugin'],
+    ['add-agent <name>', 'Add agent to existing bundle'],
+    ['add-command <name>', 'Add command to existing bundle'],
+    ['add-skill <name>', 'Add skill to existing bundle'],
+    ['scaffold-addon <name>', '[legacy] Use new-addon instead'],
+    ['scaffold-framework <name>', '[legacy] Use new-framework instead'],
+  ]);
+
+  helpGroup('PROMOTE', [
+    ['promote <name>', 'Graduate project-local bundle to upstream (--to upstream|corpus, --dry-run, --cleanup)'],
   ]);
 
   helpGroup('RALPH LOOP', [

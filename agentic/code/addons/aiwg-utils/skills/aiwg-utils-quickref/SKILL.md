@@ -165,6 +165,23 @@ aiwg discover "aiwg steward"                   # → steward (agent + policy rou
 aiwg discover "delivery policy"                # → delivery-policy rule (and related skills)
 ```
 
+### Project-local extensions (pilot → promote)
+
+AIWG supports authoring rules/skills/agents per-project under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/` — pilot here, promote upstream when mature.
+
+```bash
+aiwg new-bundle <name>                         # scaffold; auto-builds project graph
+aiwg new-extension <name> --starter rule       # extension with a starter rule
+aiwg new-bundle <name> --dry-run               # preview without writing
+aiwg list --project-local                      # inventory + validation
+aiwg doctor --project-local                    # health check (counts, drift, shadows)
+aiwg use <name>                                # deploy a single project-local bundle
+aiwg promote <name>                            # graduate to upstream (hash-verified copy)
+aiwg promote <name> --dry-run                  # preview promotion
+```
+
+After scaffolding, the new bundle is immediately discoverable via `aiwg discover "<name>"`. The framework graph and the project graph search by default; no `--graph` flag needed.
+
 ## On-disk layout
 
 ```

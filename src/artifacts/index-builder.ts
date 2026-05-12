@@ -206,11 +206,17 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
  * @implements #1214
  */
 export function extractTriggers(body: string): string[] {
-  // Find a `## Triggers` heading (case-insensitive). Capture the
-  // section content until the next `## ` heading or end of file.
+  // Find a triggers heading (case-insensitive). Accepted variants:
+  //   ## Triggers
+  //   ## Natural Language Triggers   (used by orchestration skills)
+  //   ## Activation Phrases          (alternate vocabulary)
+  //   ## When to invoke              (intent-style)
+  // Capture the section content until the next `## ` heading or EOF.
   // Note: avoid the multi-line `m` flag with `$` — `$` would match
   // every line terminator and stop capture at the first blank line.
-  const sectionMatch = body.match(/(?:^|\n)##\s+Triggers\b[^\n]*\n([\s\S]*?)(?=\n##\s|$)/i);
+  const sectionMatch = body.match(
+    /(?:^|\n)##\s+(?:(?:Natural\s+Language\s+)?Triggers|Activation\s+Phrases|When\s+to\s+invoke)\b[^\n]*\n([\s\S]*?)(?=\n##\s|$)/i,
+  );
   if (!sectionMatch) return [];
 
   const section = sectionMatch[1];

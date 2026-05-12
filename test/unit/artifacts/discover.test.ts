@@ -94,6 +94,44 @@ Should be ignored.
 `;
     expect(extractTriggers(body)).toEqual(['what can aiwg do', 'list aiwg commands']);
   });
+
+  // #1273 — broadened regex to accept the "Natural Language Triggers" heading
+  // used by orchestration skills like address-issues.
+  it('accepts "## Natural Language Triggers" heading variant', () => {
+    const body = `# Skill
+
+## Natural Language Triggers
+
+Users may say:
+- "address the open issues"
+- "work through the bugs"
+- "fix open issues"
+
+## Parameters
+`;
+    expect(extractTriggers(body)).toEqual([
+      'address the open issues',
+      'work through the bugs',
+      'fix open issues',
+    ]);
+  });
+
+  it('accepts "## Activation Phrases" heading variant', () => {
+    const body = `## Activation Phrases
+
+- "do the thing"
+- "go go go"
+`;
+    expect(extractTriggers(body)).toEqual(['do the thing', 'go go go']);
+  });
+
+  it('accepts "## When to invoke" heading variant', () => {
+    const body = `## When to invoke
+
+- "the user asks for X"
+`;
+    expect(extractTriggers(body)).toEqual(['the user asks for x']);
+  });
 });
 
 describe('extractCapability', () => {
