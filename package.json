@@ -12,7 +12,6 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "postinstall": "node ./bin/postinstall.mjs",
     "docs:collect": "node tools/manifest/collect-component-docs.mjs",
     "docs:collect:dry": "node tools/manifest/collect-component-docs.mjs --dry-run",
     "validate-metadata": "node tools/cli/validate-metadata.mjs",

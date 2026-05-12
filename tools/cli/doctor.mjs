@@ -524,6 +524,45 @@ async function runDoctor() {
     }
   }
 
+  // 6c. Check PATH for `aiwg` (#1279).
+  //
+  // Migrated from the now-removed `bin/postinstall.mjs` lifecycle script. The
+  // postinstall hook was deleted to eliminate a worm-amplification primitive
+  // (audit finding F1 / threat scenario S3, Aikido report 2026-05-12): a
+  // compromised AIWG release with a `postinstall` hook executes arbitrary
+  // code on every machine that `npm install -g aiwg` touches, before the
+  // operator ever invokes the CLI. Removing the hook removes the capability.
+  //
+  // The PATH-guidance UX it provided still has value, so it surfaces here
+  // (and in README "Installation troubleshooting") instead. On success this
+  // check is silent — no need to clutter doctor output when PATH works. On
+  // failure it prints shell-specific guidance and the `npx aiwg` fallback.
+  // Doctor's exit code is not affected (PATH guidance is informational).
+  try {
+    execSync('aiwg --version', { stdio: 'ignore' });
+    // aiwg is callable — no PATH issue to report.
+  } catch {
+    const isTTY = Boolean(process.stdout.isTTY);
+    const cyan = isTTY ? chalk.cyan : (s) => s;
+    const yellow = isTTY ? chalk.yellow : (s) => s;
+    const shell = process.env.SHELL || '';
+    const lines = [];
+    lines.push('aiwg installed but may not be in your PATH.');
+    lines.push('   If you get "command not found", add npm global bin to PATH:');
+    if (shell.includes('zsh')) {
+      lines.push(`     ${cyan('echo \'export PATH="$(npm config get prefix)/bin:$PATH"\' >> ~/.zshrc')}`);
+      lines.push(`     ${cyan('source ~/.zshrc')}`);
+    } else if (shell.includes('bash')) {
+      lines.push(`     ${cyan('echo \'export PATH="$(npm config get prefix)/bin:$PATH"\' >> ~/.bashrc')}`);
+      lines.push(`     ${cyan('source ~/.bashrc')}`);
+    } else {
+      lines.push(`     ${cyan('npm config get prefix')}    # Find your npm global bin directory`);
+      lines.push('     Add that path + /bin to your shell\'s PATH');
+    }
+    lines.push(`   Or run directly with npx: ${cyan('npx aiwg <command>')}`);
+    check('PATH', 'warn', yellow(lines.join('\n        ')));
+  }
+
   // 7. Check Node.js version
   const nodeVersion = process.version;
   const major = parseInt(nodeVersion.slice(1).split('.')[0]);

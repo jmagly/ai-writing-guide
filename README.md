@@ -28,6 +28,21 @@ aiwg use sdlc        # deploy SDLC framework
 
 ---
 
+## Installation Troubleshooting
+
+If `aiwg` is not found after `npm i -g aiwg`, the npm global `bin` directory is not on your `PATH`. Confirm and fix:
+
+```bash
+which aiwg                              # empty? PATH is the issue
+npm config get prefix                   # find npm's global prefix (bin lives under here)
+echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.zshrc   # or ~/.bashrc
+source ~/.zshrc                         # or restart your shell
+```
+
+You can also invoke AIWG without adjusting `PATH` by using `npx aiwg <command>`. For a broader health check — version, deployed providers, missing dependencies, kernel-skill probes — run `aiwg doctor`, which surfaces the same PATH guidance on every invocation if the binary isn't reachable.
+
+---
+
 ## What AIWG Is
 
 AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the specific paths each AI platform looks in — `.claude/agents/`, `~/.codex/skills/`, `.cursor/rules/`, `.github/prompts/`, and six more — so one source of truth works across 10 platforms.
