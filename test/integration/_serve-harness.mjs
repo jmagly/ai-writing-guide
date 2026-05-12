@@ -4,6 +4,12 @@
 // the URL from its "Dashboard: ..." stdout banner, and exposes a typed
 // handle for tests. Uses dist/src/cli/router.js via bin/aiwg.mjs so the
 // tests exercise the same code path users run.
+//
+// Note: in-process testing was explored (#1277) — startServer is exported
+// from src/cli/handlers/serve.ts and works fine in standalone Node, but
+// vitest's fork-pool ESM loader has trouble with the dynamic hono/ws imports.
+// Spawn-based stays the reliable path locally; the CI-stability investigation
+// for this suite is filed as #1277.
 
 import { spawn } from 'node:child_process';
 import { join, resolve } from 'node:path';
@@ -60,17 +66,12 @@ export async function spawnAiwgServe(opts = {}) {
   });
   child.stderr.on('data', (chunk) => stderr.push(chunk.toString()));
 
-  // Watch for "Dashboard: http://127.0.0.1:PORT" in stdout
   const timeoutMs = opts.timeoutMs ?? 15_000;
   const deadline = Date.now() + timeoutMs;
   let dashboardLine = null;
   let exited = false;
-  child.once('exit', (code) => {
+  child.once('exit', () => {
     exited = true;
-    if (!dashboardLine) {
-      // Failed before banner — surface for debugging
-    }
-    void code;
   });
 
   while (!dashboardLine && Date.now() < deadline && !exited) {
@@ -88,7 +89,6 @@ export async function spawnAiwgServe(opts = {}) {
     );
   }
 
-  // Extract port from the URL
   const portMatch = dashboardLine.match(/:(\d+)$/);
   const port = portMatch ? parseInt(portMatch[1], 10) : 0;
 
@@ -105,7 +105,6 @@ export async function spawnAiwgServe(opts = {}) {
       if (child.exitCode !== null || exited) { resolveKill(); return; }
       child.once('exit', () => resolveKill());
       try { child.kill(signal); } catch { resolveKill(); }
-      // Force-kill fallback after 5s
       setTimeout(() => {
         if (child.exitCode === null) {
           try { child.kill('SIGKILL'); } catch {}
@@ -117,10 +116,10 @@ export async function spawnAiwgServe(opts = {}) {
 }
 
 /**
- * Poll an HTTP endpoint until it returns 2xx, or throw after timeoutMs.
+ * Poll an HTTP endpoint until it returns <500, or throw after timeoutMs.
  *
- * Default timeout is 15s — CI cold-start can take >5s when aiwg serve loads
- * the full module graph behind a docker-in-docker runner. Override via
+ * Default 15s — CI cold-start can take >5s when aiwg serve loads its full
+ * module graph behind a docker-in-docker runner. Override via
  * AIWG_SERVE_HTTP_TIMEOUT_MS for slow CI hosts.
  *
  * @param {string} url

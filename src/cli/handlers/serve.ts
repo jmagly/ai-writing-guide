@@ -221,7 +221,8 @@ async function setupWebSockets(httpServer: any, readOnly: boolean): Promise<void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let wsMod: any;
   try {
-    wsMod = await (new Function('m', 'return import(m)'))('ws');
+    // @ts-expect-error — ws lacks bundled types; we use the runtime constructor only
+    wsMod = await import('ws');
   } catch {
     console.warn('[serve] ws package not available — WebSocket routes disabled. Install with: npm install ws');
     return;
@@ -486,7 +487,15 @@ async function setupWebSockets(httpServer: any, readOnly: boolean): Promise<void
  * optional deps (hono, @hono/node-server) that are not yet in package.json.
  * TypeScript sees only `unknown`-typed module shapes here.
  */
-async function startServer(opts: {
+/**
+ * In-process server bootstrap. Exported for tier-3 integration tests
+ * (test/integration/serve-*.test.ts) so they can drive serve as a black-box
+ * client without spawning a child node process. The CLI handler also calls
+ * this internally — same code path, exactly one entry point.
+ *
+ * @see #1277 — moves the integration suite off spawn-based testing
+ */
+export async function startServer(opts: {
   port: number;
   host: string;
   readOnly: boolean;
@@ -497,9 +506,11 @@ async function startServer(opts: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let nodeMod: any;
   try {
-    // Use Function constructor to prevent static analysis of the import path
-    honoMod = await (new Function('m', 'return import(m)'))('hono');
-    nodeMod = await (new Function('m', 'return import(m)'))('@hono/node-server');
+    // Plain dynamic import — runtime-resolved, no static analysis issue, and
+    // works in sandboxed VM contexts like vitest where the Function-constructor
+    // import path raises ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING (#1277).
+    honoMod = await import('hono');
+    nodeMod = await import('@hono/node-server');
   } catch {
     // Auto-install optional serve dependencies on first use
     console.log('Installing serve dependencies (hono, @hono/node-server, ws)...');
@@ -518,8 +529,8 @@ async function startServer(opts: {
     }
     // Retry imports after install
     try {
-      honoMod = await (new Function('m', 'return import(m)'))('hono');
-      nodeMod = await (new Function('m', 'return import(m)'))('@hono/node-server');
+      honoMod = await import('hono');
+      nodeMod = await import('@hono/node-server');
     } catch (err) {
       throw new AiwgError({
         code: 'ERR_SERVE_DEPS_LOAD_FAILED',
