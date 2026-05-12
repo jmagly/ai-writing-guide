@@ -130,12 +130,12 @@ After the decision-resolution round, the implementation order is fixed at nine w
 | Wave | Issues | Effort | Risk closed |
 |------|--------|--------|-------------|
 | **1 — Free wins** (four separate commits) | #1279 (A1), #1280 (A2), #1284 (A6), #1285 (A7) | 4× S | S3 (worm amplifier removed); three active rule-violation fixes |
-| **2 — Workflow hardening** (per-workflow PRs) | #1281 (A3), #1282 (A4), A20 (new — dep-source policy) | M + M + S-M | S5 (builder hijack); injection vector |
+| **2 — Workflow hardening** (per-workflow PRs) | #1281 (A3), #1282 (A4), #1300 (A20 — dep-source policy) | M + M + S-M | S5 (builder hijack); injection vector |
 | **3 — Tag signing** | #1299 (A9 — split from #1287) | S | Establishes the cryptographic gate for waves 4-5 |
 | **4 — Compensating controls + trusted publishing** | #1286 (A10), #1283 (A5) | M + M-L | S1 (NPMJS_TOKEN eliminated on the npmjs.org leg); S2 substantially mitigated |
 | **5 — Tarball signing** | #1287 (A8 only — A9 split out to #1299) | M | S6 (mirror desync), S9 partial |
 | **6 — Publish-time evidence** | #1288 (A11+A12+A13) | S + S + S-M | Mini-Shai-Hulud tarball injection detected at publish time |
-| **7 — pnpm + age gate** (A21 before A15) | A21 (new — pnpm spike), #1290 (A15) | M-L + S | S7 (typo squat / cooldown window) |
+| **7 — pnpm + age gate** (A21 before A15) | #1301 (A21 — pnpm spike), #1290 (A15) | M-L + S | S7 (typo squat / cooldown window) |
 | **8 — PR-trigger audit** | #1289 (A14) | M | S2 fully closed |
 | **9 — Track B wave 1** | #1292 (B2 — ships first), #1294 (B7), #1293 (B3), #1291 (B1) | S, S, S, M | User-facing capabilities; AIWG-self adoption dogfoods each |
 | **Phase 3 — after Track B wave 1** | A16, A17, A18, A19, B13, B14 | varies | Native-deps audit, egress filter, dedicated publish runner, disclosure runbook, dep-source Track B mirror, pnpm baseline Track B mirror |
