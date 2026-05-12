@@ -218,8 +218,12 @@ jobs:
         run: npm run typecheck
 
       - name: Run tests
+        # Test failures must block stable publish. `continue-on-error: true`
+        # removed per #1280 (A2). The CLI perf gate is included here under
+        # parallel load — budgets in test/integration/cli-perf.test.ts
+        # accommodate the parallel-load measurement. See #1302 for the
+        # follow-up to investigate and tighten back toward isolated p50.
         run: npm test -- --run
-        continue-on-error: true  # Don't fail build on test issues
 
       - name: Build TypeScript
         run: npm run build
