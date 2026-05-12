@@ -85,7 +85,19 @@ jobs:
           # Gitea responded with `"[]: json: string unexpected end of JSON
           # input"` — silently caught by `|| echo`, so no Release was ever
           # created from rc.27 through rc.37.
-          BODY_MD=$(printf '## Installation\n\n```bash\nnpm install -g aiwg@%s\n```\n\nAlso available from Gitea registry:\n```bash\nnpm install -g aiwg@%s --registry=https://git.integrolabs.net/api/packages/roctinam/npm/\n```\n\n## Notes\n\nGitea release is auto-created on tag push. GitHub releases are managed manually.\n' "$VERSION" "$VERSION")
+          #
+          # Manual-approval record (#1286 / A10):
+          # Gitea Actions ignores the `environment:` keyword (docs.gitea.com/
+          # usage/actions/comparison) so there is no built-in deployment-
+          # protection-rule gate. In a direct-mode delivery flow, the
+          # tag push itself IS the approval moment — a signed tag (verified
+          # one step above by A9's gate) constitutes the cryptographic
+          # affirmation that the actor below intended this release. We
+          # embed the actor + UTC timestamp into the release body so the
+          # record is permanent, auditable, and survives token rotation.
+          APPROVAL_ACTOR='${{ github.actor }}'
+          APPROVAL_TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          BODY_MD=$(printf '## Installation\n\n```bash\nnpm install -g aiwg@%s\n```\n\nAlso available from Gitea registry:\n```bash\nnpm install -g aiwg@%s --registry=https://git.integrolabs.net/api/packages/roctinam/npm/\n```\n\n## Notes\n\nGitea release is auto-created on tag push. GitHub releases are managed manually.\n\n## Release approval record\n\n- Approved by: %s\n- Tag push (UTC): %s\n- Tag signature verified by: tools/ci/verify-signed-tag.sh (#1299 / A9)\n- Compensating-controls bundle: #1286 (A10)\n' "$VERSION" "$VERSION" "$APPROVAL_ACTOR" "$APPROVAL_TS")
 
           PAYLOAD=$(jq -n \
             --arg tag "v${VERSION}" \
