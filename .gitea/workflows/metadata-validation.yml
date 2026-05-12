@@ -44,12 +44,18 @@ jobs:
       - name: Install dependencies
         # --omit=optional skips runtime-optional features (embedding
         # index via @xenova/transformers + hnswlib-node, daemon PTY
-        # bridge via node-pty, SQLite storage backend). The metadata
-        # validator only needs fs/path/yaml/semver/zod — all
-        # already in required deps. Avoids the libvips download
-        # (transitive via @xenova → sharp) that frequently times out
-        # from github.com on this runner. Required deps + devDeps
-        # still install normally with full install scripts.
+        # bridge via node-pty, SQLite storage backend, hono serve
+        # bridge). The metadata validator only needs fs/path/yaml/
+        # semver/zod — all already in required deps. Avoids the
+        # libvips download (transitive via @xenova → sharp) that
+        # frequently times out from github.com on this runner.
+        # Required deps + devDeps still install normally with full
+        # install scripts.
+        #
+        # Code that imports optional deps (hono, @hono/node-server,
+        # node-pty, etc.) MUST be guarded with `// @ts-ignore` and
+        # wrapped in try/catch — see src/cli/handlers/serve.ts for
+        # the auto-install pattern.
         run: npm ci --omit=optional
 
       - name: Build TypeScript
@@ -174,12 +180,18 @@ jobs:
       - name: Install dependencies
         # --omit=optional skips runtime-optional features (embedding
         # index via @xenova/transformers + hnswlib-node, daemon PTY
-        # bridge via node-pty, SQLite storage backend). The metadata
-        # validator only needs fs/path/yaml/semver/zod — all
-        # already in required deps. Avoids the libvips download
-        # (transitive via @xenova → sharp) that frequently times out
-        # from github.com on this runner. Required deps + devDeps
-        # still install normally with full install scripts.
+        # bridge via node-pty, SQLite storage backend, hono serve
+        # bridge). The metadata validator only needs fs/path/yaml/
+        # semver/zod — all already in required deps. Avoids the
+        # libvips download (transitive via @xenova → sharp) that
+        # frequently times out from github.com on this runner.
+        # Required deps + devDeps still install normally with full
+        # install scripts.
+        #
+        # Code that imports optional deps (hono, @hono/node-server,
+        # node-pty, etc.) MUST be guarded with `// @ts-ignore` and
+        # wrapped in try/catch — see src/cli/handlers/serve.ts for
+        # the auto-install pattern.
         run: npm ci --omit=optional
 
       - name: Build TypeScript
