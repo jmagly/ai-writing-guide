@@ -50,34 +50,6 @@ const DEFAULT_HITL_PATTERNS = [
 
 // ── Platform detection ───────────────────────────────────────────────────────
 
-function detectPlatformCapability() {
-  const plat = os.platform();
-  const arch = os.arch();
-
-  // Map os.arch() values to executor contract vocab
-  const archMap = { x64: 'x64', arm64: 'arm64', arm: 'arm' };
-  const mappedArch = archMap[arch] ?? arch;
-
-  // Detect WSL
-  const isWsl = plat === 'linux' && (
-    process.env.WSL_DISTRO_NAME ||
-    process.env.WSLENV ||
-    // Check /proc/version for Microsoft string
-    (() => {
-      try {
-        const { readFileSync } = await_readFileSync('/proc/version');
-        return readFileSync.includes('Microsoft');
-      } catch { return false; }
-    })()
-  );
-
-  if (isWsl) return `platform:wsl/${mappedArch}`;
-  if (plat === 'darwin') return `platform:darwin/${mappedArch}`;
-  if (plat === 'linux') return `platform:linux/${mappedArch}`;
-  if (plat === 'win32') return `platform:win32/${mappedArch}`;
-  return `platform:${plat}/${mappedArch}`;
-}
-
 // Sync version for module initialisation
 function detectPlatformCapabilitySync() {
   const plat = os.platform();
@@ -341,13 +313,14 @@ export class ExecutorShim extends EventEmitter {
     // Inject response into agent stdin if we have a pid/stdin handle
     this._injectHitlResponse(mission.loopId, response);
 
-    // Emit hitl_responded over WS back to the executor itself (per contract)
-    const respondedEnvelope = this._makeEnvelope(missionId, 'mission.hitl_responded', {
+    // Emit hitl_responded over both EE and WS — local listeners (tests,
+    // metrics) consume the EventEmitter stream; aiwg-serve consumes the
+    // WS stream. Using _emitMissionEvent keeps both in lockstep.
+    this._emitMissionEvent(missionId, 'mission.hitl_responded', {
       hitl_id,
       response,
       responded_at: new Date().toISOString(),
     });
-    this._broadcastWs(respondedEnvelope);
 
     return { missionId, hitl_id, status: 'forwarded' };
   }

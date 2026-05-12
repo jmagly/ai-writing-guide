@@ -200,14 +200,21 @@ describe('ExecutorShim — register', () => {
 
     const { shim } = makeShim();
     const registerPromise = shim.register();
+    // Attach a no-op handler immediately so the recursive retry rejection
+    // never surfaces as an "unhandled rejection" between timer ticks. The
+    // assertion below still observes the eventual rejection.
+    registerPromise.catch(() => {});
 
-    // Advance timers to fast-forward exponential back-off delays
-    for (let i = 0; i < 10; i++) {
-      await vi.runAllTimersAsync();
+    try {
+      // Advance timers to fast-forward exponential back-off delays
+      for (let i = 0; i < 10; i++) {
+        await vi.runAllTimersAsync();
+      }
+
+      await expect(registerPromise).rejects.toThrow('ECONNREFUSED');
+    } finally {
+      vi.useRealTimers();
     }
-
-    await expect(registerPromise).rejects.toThrow('ECONNREFUSED');
-    vi.useRealTimers();
   });
 });
 
