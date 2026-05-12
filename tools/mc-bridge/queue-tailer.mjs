@@ -160,6 +160,9 @@ export async function startQueueTailer(userOpts = {}) {
   const dryRun = Boolean(options.dryRun);
   const dispatchClientP = dryRun ? null : import('./dispatch-client.mjs');
   const statusWriterP = dryRun ? null : import('./status-writer.mjs');
+  const wsClientP = dryRun || options.disableWSSubscription
+    ? null
+    : import('./executor-ws-client.mjs');
 
   log('queue-tailer:start', {
     aiwgServeUrl: options.aiwgServeUrl,
@@ -172,6 +175,11 @@ export async function startQueueTailer(userOpts = {}) {
   // Track which missions are currently being dispatched so a re-tick during
   // backoff doesn't spawn a parallel attempt for the same mission.
   const inflight = new Set();
+  // Track which executors we're subscribed to (executorId → ws handle).
+  const wsSubscriptions = new Map();
+  // missionId → sessionId mapping so we know where to write back when an
+  // event arrives. Populated when dispatch succeeds.
+  const missionToSession = new Map();
 
   /** Resolve the session.json path for a session by reading from disk. */
   const sessionPathFor = (sessionId) =>
@@ -239,6 +247,9 @@ export async function startQueueTailer(userOpts = {}) {
           executorId: outcome.executorId,
           attempts: outcome.attempts,
         });
+        missionToSession.set(mission.id, sessionId);
+        // Subscribe to this executor's WS stream (no-op if already subscribed)
+        await ensureWSSubscription(outcome.executorId);
       } else {
         await applyStatusUpdate(path, {
           missionId: mission.id,
@@ -293,6 +304,53 @@ export async function startQueueTailer(userOpts = {}) {
     }
   };
 
+  /**
+   * Ensure we have a live WS subscription to the given executor. Idempotent —
+   * subsequent calls are no-ops once the subscription is established. When the
+   * subscription is disabled (dryRun or disableWSSubscription), this is a no-op.
+   */
+  async function ensureWSSubscription(executorId) {
+    if (!wsClientP) return;
+    if (!executorId || executorId === 'unknown') return;
+    if (wsSubscriptions.has(executorId)) return;
+    const { startExecutorWS, eventToStatusUpdate } = await wsClientP;
+    const { applyStatusUpdate } = await statusWriterP;
+
+    const handle = startExecutorWS({
+      aiwgServeUrl: options.aiwgServeUrl,
+      executorId,
+      token: options.executorTokens?.[executorId],
+      WebSocketImpl: options.WebSocketImpl,
+      logger: log,
+      onEvent: async (event) => {
+        const update = eventToStatusUpdate(event);
+        if (!update) return;
+        const sessionId = missionToSession.get(update.missionId);
+        if (!sessionId) {
+          log('queue-tailer:event-unmapped-mission', {
+            missionId: update.missionId,
+            event: event.event,
+          });
+          return;
+        }
+        const path = sessionPathFor(sessionId);
+        const res = await applyStatusUpdate(path, update);
+        log('queue-tailer:event-applied', {
+          missionId: update.missionId,
+          event: event.event,
+          newStatus: update.status,
+          outcome: res.outcome,
+        });
+        // Forget the mission once it reaches a terminal state.
+        if (['done', 'failed', 'aborted'].includes(update.status)) {
+          missionToSession.delete(update.missionId);
+        }
+      },
+      onState: (s) => log('queue-tailer:ws-state', { executorId, state: s }),
+    });
+    wsSubscriptions.set(executorId, handle);
+  }
+
   try {
     watcher = watch(options.watchDir, { recursive: true }, () => {
       tick().catch(err => log('queue-tailer:tick-error', { error: String(err) }));
@@ -309,6 +367,15 @@ export async function startQueueTailer(userOpts = {}) {
   // Initial sweep so existing queued missions get seen on startup.
   await tick();
 
+  // If the operator pre-declared executors to subscribe to, hook them up now.
+  // (Useful when missions are dispatched out-of-band and we want immediate
+  // event coverage rather than waiting for the first bridge-driven dispatch.)
+  if (!dryRun && options.subscribeExecutors) {
+    for (const id of options.subscribeExecutors) {
+      await ensureWSSubscription(id);
+    }
+  }
+
   if (options.signal) {
     options.signal.addEventListener('abort', () => { void stop(); }, { once: true });
   }
@@ -317,6 +384,11 @@ export async function startQueueTailer(userOpts = {}) {
     if (stopped) return;
     stopped = true;
     try { watcher?.close?.(); } catch {}
+    // Tear down WS subscriptions.
+    for (const [, handle] of wsSubscriptions) {
+      try { await handle.stop(); } catch {}
+    }
+    wsSubscriptions.clear();
     // Wait briefly for any inflight dispatches to settle so we don't leave
     // half-finished writes.
     const drainStart = Date.now();
