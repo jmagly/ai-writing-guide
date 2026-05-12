@@ -1758,9 +1758,35 @@ a{color:#0070f3}</style></head><body>
     return c.text('Not found', 404);
   });
 
-  const url = `http://${opts.host}:${opts.port}`;
+  // Resolve the actual bound port (matters for opts.port === 0 which lets the
+  // OS pick an ephemeral port). @hono/node-server's serve() accepts a
+  // listen-complete callback that receives the AddressInfo for the bound socket.
+  // We await that callback so the URL we return reflects the real port (#1275).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const server: any = await new Promise<any>((resolve, reject) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const s: any = serve(
+        { fetch: app.fetch, port: opts.port, hostname: opts.host },
+        () => resolve(s),
+      );
+      // Fallback: if serve does not invoke the callback for some reason, resolve
+      // after a short tick so we don't hang indefinitely.
+      setTimeout(() => resolve(s), 100).unref?.();
+    } catch (err) {
+      reject(err);
+    }
+  });
 
-  const server = serve({ fetch: app.fetch, port: opts.port, hostname: opts.host });
+  // Discover the actual bound port. @hono/node-server returns the underlying
+  // http.Server or a wrapper exposing .address() / .server.address().
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const addressSrc: any = server?.server ?? server;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const addr: any = typeof addressSrc?.address === 'function' ? addressSrc.address() : null;
+  const actualPort =
+    typeof addr === 'object' && addr && typeof addr.port === 'number' ? addr.port : opts.port;
+  const url = `http://${opts.host}:${actualPort}`;
 
   // Wire up WebSocket routes via Node.js upgrade event (#851)
   await setupWebSockets(server, opts.readOnly);
