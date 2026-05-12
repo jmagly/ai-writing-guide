@@ -489,3 +489,28 @@ cd apps/web && pnpm build
 3. The WebSocket connection was established (check browser DevTools network tab)
 
 **HITL drawer not appearing** — Verify the sandbox is connected (green status in Sandbox tab) and the `hitl.input_required` event includes a valid `hitlId`.
+
+## Test tiers
+
+The serve seam is covered by a four-tier test strategy documented in [`.aiwg/testing/test-strategy-daemon-serve-sandbox.md`](../.aiwg/testing/test-strategy-daemon-serve-sandbox.md). Running locally:
+
+| Tier | Command | What it tests |
+|------|---------|---------------|
+| 1 — Unit | `npm test` | Module-level logic (mocked transports, no I/O) |
+| 2 — Contract | `npm run test:conformance` | Executor-contract v1 fixture replay (#1183) |
+| 3 — Integration | `npm run test:integration:serve` | Spawns real `aiwg serve` against the in-process [fake-sandbox harness](../test/fixtures/fake-sandbox/README.md) (#1174). Drives HTTP API + WS proxy paths end-to-end without a live VM host. |
+| 4 — Live UAT | `npm run uat:serve-live` | Runs against a real agentic-sandbox at `AIWG_SANDBOX_ENDPOINT` (default `http://127.0.0.1:8122`). Skips cleanly when unreachable, so this is safe to run in any environment (#1176). |
+
+Tiers 1–3 run in CI on every push. Tier 4 is operator-driven — see CLAUDE.md release checklist for when to invoke it before a release.
+
+## Coverage thresholds
+
+`config/vitest.config.js` enforces stricter per-directory thresholds for the serve seam since it's the most load-bearing surface in the integration story:
+
+| Path | lines | branches | functions | statements |
+|------|------:|---------:|----------:|-----------:|
+| `src/serve/**` | 85% | 80% | 85% | 85% |
+| `tools/daemon/**` | 75% | 65% | 75% | 75% |
+| global (everything else) | 80% | 70% | 80% | 80% |
+
+`npm run test:coverage` runs vitest with v8 coverage and fails the build if any threshold drops below the floor. Run it locally before any serve-touching PR to catch regressions before CI.

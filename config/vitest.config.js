@@ -50,11 +50,32 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       reportsDirectory: './coverage',
 
-      // Coverage targets
+      // Coverage targets — globals (apply to anything not matched by
+      // per-directory overrides below).
       lines: 80,
       functions: 80,
       branches: 70,
       statements: 80,
+
+      // Per-directory thresholds (#1176 cycle 3). The serve seam is the most
+      // load-bearing surface in the integration story — stricter thresholds
+      // here catch regressions before they reach the live UAT. tools/daemon/
+      // sits below the seam and gets slightly looser thresholds because it
+      // includes legacy adapter shims still being modernized.
+      thresholds: {
+        'src/serve/**': {
+          lines: 85,
+          branches: 80,
+          functions: 85,
+          statements: 85,
+        },
+        'tools/daemon/**': {
+          lines: 75,
+          branches: 65,
+          functions: 75,
+          statements: 75,
+        },
+      },
 
       // Include/exclude patterns
       include: ['src/**/*.ts'],

@@ -442,6 +442,14 @@ This plan covers testing for:
 - Focus: Components delivered that iteration
 - Updated weekly based on progress
 
+**Sub-strategy: daemon + aiwg serve + agentic-sandbox seam** — [`test-strategy-daemon-serve-sandbox.md`](./test-strategy-daemon-serve-sandbox.md) (#1170 epic). Four tiers covering the cross-process boundary between AIWG and the sandbox management server:
+- Tier 1 (unit) — module-level under `test/unit/serve/`, `test/unit/mc-bridge/` (#1171)
+- Tier 2 (contract) — recorded fixtures in `test/fixtures/sandbox-api/`, executor-v1 conformance suite (#1172, #1183)
+- Tier 3 (integration) — in-process [fake-sandbox harness](../../test/fixtures/fake-sandbox/README.md) (#1173) plus the spawn-based serve suite at `test/integration/serve-*.test.ts` (#1174)
+- Tier 4 (live UAT) — `test/uat/serve-sandbox-live.uat.ts` against a real agentic-sandbox (#1176)
+
+Per-directory coverage thresholds (#1176 cycle 3) tighten the floor for `src/serve/**` to 85/80/85/85 (lines/branches/functions/statements) and `tools/daemon/**` to 75/65/75/75. Global thresholds elsewhere remain 80/70/80/80.
+
 ### 6.2 Test Case Specifications
 
 **Total Test Cases**: 206 (from Requirements Traceability Matrix)

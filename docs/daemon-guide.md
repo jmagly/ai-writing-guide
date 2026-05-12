@@ -1464,3 +1464,14 @@ tail -f .aiwg/daemon/daemon.log | grep automation
 **Q: Can I use the daemon without messaging platforms?**
 
 Yes. Messaging integration is optional. The daemon provides file watching, scheduling, and task management independently.
+
+## Test coverage
+
+The daemon + serve + sandbox seam is covered by a four-tier strategy in [`.aiwg/testing/test-strategy-daemon-serve-sandbox.md`](../.aiwg/testing/test-strategy-daemon-serve-sandbox.md):
+
+- **Tier 1 (unit)** — `npm test` runs the mocked-transport unit suites under `test/unit/serve/` and `test/unit/mc-bridge/`.
+- **Tier 2 (contract)** — `npm run test:conformance` replays the executor-contract v1 fixtures (#1183).
+- **Tier 3 (integration)** — `npm run test:integration:serve` spawns real `aiwg serve` against the in-process fake-sandbox harness and drives full HTTP + WS proxy flows (#1174).
+- **Tier 4 (live UAT)** — `npm run uat:serve-live` runs against a real agentic-sandbox at `AIWG_SANDBOX_ENDPOINT`; skips cleanly when unreachable (#1176).
+
+Tiers 1–3 run in CI. Tier 4 is operator-driven before releases that touch the serve seam.

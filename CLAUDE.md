@@ -656,6 +656,12 @@ Before pushing a version tag:
    npm run uat
    ```
    All 9 tests must pass. UAT validates the external agent loop end-to-end with a stub provider — it catches runtime API mismatches that unit tests cannot (they mock the session launcher). Do not tag if any UAT test fails.
+
+   **Optional: serve-vs-live-sandbox UAT (#1176)** — when a real agentic-sandbox is reachable, also run:
+   ```bash
+   npm run uat:serve-live
+   ```
+   Tests skip cleanly when `AIWG_SANDBOX_ENDPOINT` is unset or unreachable, so this is a safe no-op gate. Run before any release that touches `src/serve/`, the executor contract, or the MC ↔ serve bridge.
 5. **Commit and tag** - `git tag -m "vX.X.X" vX.X.X`
 6. **Push tag to Gitea** - `git push origin main --tags` (automatically creates Gitea Release)
 7. **Optionally mirror to GitHub** - `git push github main --tags`
