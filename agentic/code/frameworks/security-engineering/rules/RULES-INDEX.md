@@ -1,10 +1,10 @@
 # Security Engineering Rules Index
 
-Applied-security enforcement rules for cryptographic primitive choices, chain-of-trust integrity, secret handling, and related design-time concerns. Deployed when the `security-engineering` framework is installed.
+Applied-security enforcement rules for cryptographic primitive choices, chain-of-trust integrity, secret handling, supply-chain pinning, and related design-time concerns. Deployed when the `security-engineering` framework is installed.
 
 ---
 
-## Tier 1 Rules (4 rules — applied cryptography)
+## Tier 1 Rules (5 rules — applied cryptography + supply chain)
 
 ### HIGH
 
@@ -32,6 +32,12 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 **Maps to review finding**: H6
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/crypto-flag-verification.md
 
+#### ci-action-pinning
+**Summary**: Every CI workflow `uses:` reference MUST be a 40-character commit SHA (not a tag); every `container:`/`image:` reference MUST be `<name>:<tag>@sha256:<digest>`. Tools downloaded via `curl | sh` must record an observed-SHA log and support strict-mode SHA enforcement. Floating tags expose CI to silent supply-chain attacks (Shai-Hulud-class worm propagation). Maintain a pin manifest (`ci/digests.txt` or equivalent) as source of truth for diffs.
+**When to apply**: Any workflow file under `.github/workflows/`, `.gitea/workflows/`, or equivalent; any tool-install step in CI
+**Maps to issue**: #1293 (B3 / Mini Shai-Hulud)
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/ci-action-pinning.md
+
 ---
 
 ## Quick Reference by Context
@@ -43,7 +49,9 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 | **Multi-key systems** | no-key-reuse-across-purposes, no-adhoc-kdf |
 | **Password handling** | no-adhoc-kdf (Argon2id/PBKDF2 ≥600k) |
 | **CLI crypto invocations** | crypto-flag-verification, no-unauthenticated-encryption |
-| **Reviewing cryptographic decisions** | All four rules in sequence |
+| **CI workflow review** | ci-action-pinning |
+| **Container image references** | ci-action-pinning |
+| **Reviewing cryptographic decisions** | All four crypto rules in sequence |
 
 ---
 
@@ -53,5 +61,5 @@ Future Tier 2 rules will cover authentication-factor architecture, degraded-mode
 
 ---
 
-*Generated from security-engineering framework — 4 rules in Tier 1*
+*Generated from security-engineering framework — 5 rules in Tier 1*
 *Full rule files: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/*
