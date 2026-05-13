@@ -108,7 +108,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1 (ci/digests.txt)
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1 (ci/digests.txt) — Node 24
 
       - name: Fetch tag object for signature verification
         # actions/checkout@v4 on tag-push uses --no-tags by default
@@ -139,7 +139,7 @@ jobs:
         run: bash tools/ci/verify-signed-tag.sh
 
       - name: Setup Node.js with npmjs.org registry
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0 (ci/digests.txt)
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5.0.0 (ci/digests.txt) — Node 24
         with:
           node-version: '22.x'
           # Wires `npm publish` against npmjs.org. Combined with
@@ -245,11 +245,47 @@ jobs:
         # verify with `npm view aiwg@<version> --json | jq .dist.attestations`.
         run: |
           set -o pipefail
+          # Print OIDC-relevant context so a publish failure can be
+          # diagnosed against the npmjs.org trusted-publisher config.
+          # Trusted publishers match on: repository_owner ('jmagly'),
+          # repository name ('aiwg'), workflow filename ('npm-publish.yml'
+          # — the basename, NOT the full .github/workflows/ path), and
+          # optionally environment. If npm returns 404 PUT, one of these
+          # doesn't match the config.
+          echo "── OIDC publish context ──"
+          echo "  repository:       ${GITHUB_REPOSITORY}"
+          echo "  repository_owner: ${GITHUB_REPOSITORY_OWNER}"
+          echo "  workflow:         ${GITHUB_WORKFLOW}"
+          echo "  workflow_ref:     ${GITHUB_WORKFLOW_REF}"
+          echo "  workflow_sha:     ${GITHUB_WORKFLOW_SHA}"
+          echo "  ref:              ${GITHUB_REF}"
+          echo "  actor:            ${GITHUB_ACTOR}"
+          echo "  npm version:      $(npm --version)"
+          echo "  node version:     $(node --version)"
+          echo
           NPM_TAG='${{ steps.version.outputs.npm_tag }}'
           npm publish --provenance --access public --tag "$NPM_TAG" 2>&1 | tee publish-output.txt || {
             if grep -qE "cannot publish over|EPUBLISHCONFLICT|409" publish-output.txt; then
               echo "✓ Version already published to npmjs.org — treating as success"
               echo "already_published=true" >> "$GITHUB_OUTPUT"
+            elif grep -qE "404.*PUT|is not in this registry" publish-output.txt; then
+              echo "✗ npmjs.org publish failed with 404 — trusted-publisher config mismatch"
+              echo
+              echo "The OIDC handshake worked (provenance attestation was generated,"
+              echo "look for 'Provenance statement published to transparency log'"
+              echo "above), but npmjs.org rejected the publish. The trusted-publisher"
+              echo "config on npmjs.org does not match this workflow's OIDC claims."
+              echo
+              echo "Operator action: visit https://www.npmjs.com/package/aiwg/access"
+              echo "→ Publishing access → Trusted publishers → verify config matches:"
+              echo "  Publisher:         GitHub Actions"
+              echo "  Organization:      ${GITHUB_REPOSITORY_OWNER}"
+              echo "  Repository:        $(echo "${GITHUB_REPOSITORY}" | cut -d/ -f2)"
+              echo "  Workflow filename: npm-publish.yml  (basename only, NOT a path)"
+              echo "  Environment:       (blank, or matches this workflow's environment:)"
+              echo
+              cat publish-output.txt
+              exit 1
             else
               echo "✗ npmjs.org publish failed (HTTP/npm error above)"
               echo "  If this is the first OIDC release, common causes:"
