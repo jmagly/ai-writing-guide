@@ -1,10 +1,20 @@
 # Mirror Signed Release Assets from GitHub to Gitea Release
 #
-# Companion to .github/workflows/npm-publish.yml (#1287 / A8 — Wave 5
-# of #1278). The GitHub workflow cosign-signs the published tarball +
-# release manifest and uploads the four signed assets (tarball, tarball
-# bundle, manifest, manifest bundle) to the GitHub release. This
-# workflow mirrors those four assets to the matching Gitea release.
+# Companion to .github/workflows/npm-publish.yml. The GitHub workflow
+# cosign-signs the published tarball, release manifest, and CycloneDX
+# SBOM, and uploads the six signed assets to the GitHub release. This
+# workflow mirrors those six assets to the matching Gitea release.
+#
+# Asset list (six per release, starting with #1288 / A13):
+#   1. aiwg-X.Y.Z.tgz              (the tarball itself)
+#   2. aiwg-X.Y.Z.tgz.sigstore     (cosign bundle for #1)
+#   3. release-manifest.json       (provenance manifest)
+#   4. release-manifest.json.sigstore   (cosign bundle for #3)
+#   5. aiwg-X.Y.Z.cdx.json         (CycloneDX SBOM)
+#   6. aiwg-X.Y.Z.cdx.json.sigstore     (cosign bundle for #5)
+#
+# Initial control set: #1287 / A8 (Wave 5 of #1278) added assets 1-4.
+# A13 / #1288 (Wave 6) added assets 5-6.
 #
 # Why this is a separate workflow with a manual trigger:
 # - The GitHub workflow runs on github.com; to push files into the
@@ -90,15 +100,18 @@ jobs:
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          # File names produced by .github/workflows/npm-publish.yml
+          # File names produced by .github/workflows/npm-publish.yml.
+          # Six assets per release after #1288 (A13 added the SBOM pair).
           echo "tarball=aiwg-${VERSION}.tgz" >> "$GITHUB_OUTPUT"
           echo "tarball_sig=aiwg-${VERSION}.tgz.sigstore" >> "$GITHUB_OUTPUT"
           echo "manifest=release-manifest.json" >> "$GITHUB_OUTPUT"
           echo "manifest_sig=release-manifest.json.sigstore" >> "$GITHUB_OUTPUT"
+          echo "sbom=aiwg-${VERSION}.cdx.json" >> "$GITHUB_OUTPUT"
+          echo "sbom_sig=aiwg-${VERSION}.cdx.json.sigstore" >> "$GITHUB_OUTPUT"
 
       - name: Download signed assets from GitHub release
         # github.com/jmagly/aiwg releases are public — no GH auth needed.
-        # `gh release download` will exit non-zero if any of the four
+        # `gh release download` will exit non-zero if any of the six
         # files is missing from the release, which is what we want: a
         # missing sig is a hard fail, not a silent skip.
         run: |
@@ -108,6 +121,8 @@ jobs:
           TARBALL_SIG='${{ steps.tag.outputs.tarball_sig }}'
           MANIFEST='${{ steps.tag.outputs.manifest }}'
           MANIFEST_SIG='${{ steps.tag.outputs.manifest_sig }}'
+          SBOM='${{ steps.tag.outputs.sbom }}'
+          SBOM_SIG='${{ steps.tag.outputs.sbom_sig }}'
 
           # `gh release download` against a public repo without GH_TOKEN
           # works but emits a warning; silence it by passing an empty
@@ -119,11 +134,13 @@ jobs:
             --pattern "$TARBALL_SIG" \
             --pattern "$MANIFEST" \
             --pattern "$MANIFEST_SIG" \
+            --pattern "$SBOM" \
+            --pattern "$SBOM_SIG" \
             --skip-existing
 
-          # Hard-check that all four are present.
+          # Hard-check that all six are present.
           MISSING=0
-          for f in "$TARBALL" "$TARBALL_SIG" "$MANIFEST" "$MANIFEST_SIG"; do
+          for f in "$TARBALL" "$TARBALL_SIG" "$MANIFEST" "$MANIFEST_SIG" "$SBOM" "$SBOM_SIG"; do
             if [ ! -f "$f" ]; then
               echo "✗ Missing expected asset on GitHub release: $f"
               MISSING=1
@@ -228,12 +245,14 @@ jobs:
           upload_asset '${{ steps.tag.outputs.tarball_sig }}'
           upload_asset '${{ steps.tag.outputs.manifest }}'
           upload_asset '${{ steps.tag.outputs.manifest_sig }}'
+          upload_asset '${{ steps.tag.outputs.sbom }}'
+          upload_asset '${{ steps.tag.outputs.sbom_sig }}'
 
-      - name: Verify all four assets land on Gitea release
+      - name: Verify all six assets land on Gitea release
         env:
           GITEA_TOKEN: ${{ secrets.NPM_TOKEN }}
         # Independent post-upload check. Re-fetch the release JSON and
-        # confirm each of the four expected filenames is in .assets[].name.
+        # confirm each of the six expected filenames is in .assets[].name.
         run: |
           set -euo pipefail
           TAG='${{ steps.tag.outputs.tag }}'
@@ -244,7 +263,9 @@ jobs:
             '${{ steps.tag.outputs.tarball }}' \
             '${{ steps.tag.outputs.tarball_sig }}' \
             '${{ steps.tag.outputs.manifest }}' \
-            '${{ steps.tag.outputs.manifest_sig }}'; do
+            '${{ steps.tag.outputs.manifest_sig }}' \
+            '${{ steps.tag.outputs.sbom }}' \
+            '${{ steps.tag.outputs.sbom_sig }}'; do
             if ! jq -r '.assets[]?.name' /tmp/final.json | grep -qFx "$f"; then
               echo "  ✗ $f not present on Gitea release after upload"
               MISSING=1
@@ -259,5 +280,5 @@ jobs:
             exit 1
           fi
           echo ""
-          echo "✓ All four signed assets mirrored to Gitea release $TAG"
+          echo "✓ All six signed assets mirrored to Gitea release $TAG"
           echo "  Consumer verification: docs/releases/verifying.md"

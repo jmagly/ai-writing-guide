@@ -1,0 +1,57 @@
+# npm audit signatures waivers for AIWG (#1288 / A12 — Wave 6 of #1278)
+#
+# `tools/lint/audit-signatures.mjs` runs `npm audit signatures` and cross-
+# references the failures against this file. Waived packages are allowed
+# to fail signature verification; non-waived packages MUST verify.
+#
+# Why waivers exist:
+#   Some older sub-deps in the npm ecosystem predate npm's signature
+#   infrastructure (rolled out 2022-2023). Their tarballs on the registry
+#   are unsigned for historical reasons, not because anything is wrong
+#   today. A hard fail with no waiver mechanism would block AIWG forever
+#   on dep graphs that contain even one such package. The waiver
+#   discipline forces re-evaluation on a schedule (`expires`) so we don't
+#   accumulate permanent waivers.
+#
+# Schema:
+#   - name: <npm package name>
+#     version: <exact version or version range>
+#     reason: <why this is acceptable; usually "package predates npm
+#              signature infrastructure">
+#     expires: YYYY-MM-DD       (REQUIRED — forces quarterly re-eval)
+#     tracker: <URL to upstream signature-adoption issue, if known>
+#
+# Procedure when `npm audit signatures` introduces a new unsigned package:
+#   1. Confirm the failure is "missing signature" (not "INVALID signature"
+#      — invalid is a hard stop, never waive).
+#   2. Check whether the upstream has an open issue tracking signature
+#      adoption. If so, link it in `tracker`.
+#   3. Add a row with an `expires` 90 days in the future. Quarterly
+#      re-eval keeps the waiver fresh.
+#   4. Commit the waiver with a message that names the package and the
+#      reason for the missing signature.
+#
+# Procedure when an existing waiver expires:
+#   1. Re-run `npm run lint:audit-signatures` — expired waivers fail.
+#   2. Check whether upstream has added a signed release since the
+#      original waiver. If yes: bump the dep version and remove the
+#      waiver.
+#   3. If still unsigned: extend `expires` by another 90 days and
+#      document in the commit message what (if anything) has changed
+#      upstream.
+#
+# References:
+#   - .aiwg/architecture/adr-publish-time-evidence.md
+#   - tools/lint/audit-signatures.mjs
+#   - npm signatures rollout: https://blog.npmjs.org/post/172999548390/
+#
+# As of 2026-05-12 the live `npm audit signatures` run on AIWG's dep
+# graph reports `377 packages have verified registry signatures, 41
+# packages have verified attestations` — zero failures. No waivers are
+# currently active. This file exists so that future regressions have a
+# documented escape hatch with a time bound.
+#
+# Format: YAML list under `waivers:`. Empty list is the expected normal
+# state — add rows only when a regression appears.
+
+waivers: []

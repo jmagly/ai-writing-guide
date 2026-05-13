@@ -42,6 +42,13 @@ jobs:
         # docs/contributing/dependency-sources.md.
         run: npm run lint:dep-sources
 
+      - name: Audit dep-graph signatures (#1288 / A12)
+        # Runs on every push (not just publish) so signature regressions
+        # in the dep graph surface quickly. Time-bounded waivers live in
+        # ci/npm-audit-signatures-waivers.yaml — expired waivers fail.
+        # See .aiwg/architecture/adr-publish-time-evidence.md.
+        run: npm run lint:audit-signatures
+
       - name: Run type check
         run: npm run typecheck
 

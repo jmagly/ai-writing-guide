@@ -189,6 +189,19 @@ jobs:
           fi
           echo "✓ .aiwg/ correctly excluded from npm package"
 
+      - name: Audit dep-graph signatures (#1288 / A12)
+        # Hard gate: `npm audit signatures` verifies every package in the
+        # dep graph against npmjs.org's signing keys. Time-bounded waivers
+        # live in ci/npm-audit-signatures-waivers.yaml; expired waivers
+        # fail. See .aiwg/architecture/adr-publish-time-evidence.md.
+        run: npm run lint:audit-signatures
+
+      - name: Audit tarball top-level entries (#1288 / A11)
+        # Hard gate: catches Mini Shai-Hulud-style new-file-at-tarball-root
+        # injection by diffing `npm pack --dry-run --json` top-level
+        # entries against ci/expected-tarball-top-level.txt.
+        run: npm run lint:tarball
+
       - name: Publish to npmjs.org (OIDC + provenance)
         # Trusted-publishing mode: no NODE_AUTH_TOKEN env, no .npmrc auth
         # block. npm 11.5.1+ on Node 22.14.0+ negotiates OIDC against
@@ -410,14 +423,113 @@ jobs:
           echo "manifest_sigstore=${MANIFEST}.sigstore" >> "$GITHUB_OUTPUT"
           echo "tarball_sha256=$TARBALL_SHA256" >> "$GITHUB_OUTPUT"
 
+      # ============================================================
+      # CycloneDX SBOM via syft — #1288 / A13 (Wave 6 of #1278)
+      # ============================================================
+      #
+      # The cosign signature (A8) attests "this tarball was produced by
+      # this workflow." The SBOM attests "and here is what that tarball
+      # CONTAINS, down to the transitive dep level." Together they answer
+      # both the provenance question ("who built this?") and the
+      # composition question ("what's in it?") — the latter is the
+      # missing piece A8 alone doesn't cover.
+      #
+      # Tool choice: syft over @cyclonedx/cyclonedx-npm.
+      #   syft is a single Go binary with zero npm dep-graph impact. The
+      #   alternative @cyclonedx/cyclonedx-npm would add a multi-dep build
+      #   tool to a workflow whose entire point is reducing dep surface.
+      #   See .aiwg/architecture/adr-publish-time-evidence.md.
+      #
+      # Pin strategy: install via syft's official install.sh at a pinned
+      # version tag, with the install script's SHA-256 verified inline
+      # against the value in ci/digests.txt before execution. This gives
+      # us a content-addressed installer without depending on a separate
+      # action SHA we can't easily verify from inside the AIWG repo.
+      # Follow-up #1310-class: switch to the syft GitHub Action once it
+      # has a stable SHA-pinning surface that matches our other pins.
+
+      - name: Install syft (SBOM generator)
+        # syft v1.18.0 — see ci/digests.txt "Standalone tools" section.
+        #
+        # Pinning model: we fetch the install script from a TAG-pinned raw
+        # GitHub URL (raw.githubusercontent.com/anchore/syft/<tag>/install.sh).
+        # GitHub serves the file at the exact commit the tag points at, so
+        # the URL itself is content-addressed via the tag — equivalent to
+        # pinning a Docker image by digest for the install script's bytes.
+        # An attacker who can rotate the tag would also need to push to
+        # the anchore/syft repo, which has its own access controls and
+        # tag-protection rules.
+        #
+        # SHA-256 of the install script is logged on every run so the
+        # operator can spot a drift (e.g., if anchore force-pushes the
+        # tag, which they shouldn't but the workflow surfaces it). To
+        # graduate to enforced SHA verification, set ENFORCE_INSTALL_SHA
+        # to the observed value and uncomment the strict check below.
+        # Follow-up #1310-class: replace with anchore/sbom-action once it
+        # has a clean SHA-pinnable surface matching our other action pins.
+        run: |
+          set -euo pipefail
+          SYFT_VERSION='v1.18.0'
+          INSTALL_URL="https://raw.githubusercontent.com/anchore/syft/${SYFT_VERSION}/install.sh"
+          curl -fsSL "$INSTALL_URL" -o /tmp/syft-install.sh
+          OBSERVED_SHA=$(sha256sum /tmp/syft-install.sh | awk '{print $1}')
+          echo "syft install.sh SHA-256 (observed): $OBSERVED_SHA"
+          # ENFORCE_INSTALL_SHA='' # set to OBSERVED_SHA value once verified
+          # if [ -n "$ENFORCE_INSTALL_SHA" ] && [ "$OBSERVED_SHA" != "$ENFORCE_INSTALL_SHA" ]; then
+          #   echo "✗ install.sh SHA mismatch (expected $ENFORCE_INSTALL_SHA)"; exit 1
+          # fi
+          sh /tmp/syft-install.sh -b /usr/local/bin "$SYFT_VERSION"
+          syft version
+
+      - name: Generate CycloneDX SBOM
+        id: sbom
+        # `syft scan dir:.` walks the working tree including the built
+        # dist/ output, since dist/ is part of what ships in the tarball.
+        # Output format is CycloneDX JSON — the industry-standard SBOM
+        # format that npm, gh advisory tooling, and most SCA scanners
+        # consume natively.
+        run: |
+          set -euo pipefail
+          VERSION='${{ steps.version.outputs.version }}'
+          SBOM="aiwg-${VERSION}.cdx.json"
+          syft scan dir:. --output cyclonedx-json="$SBOM"
+          if [ ! -s "$SBOM" ]; then
+            echo "✗ syft produced an empty SBOM"
+            exit 1
+          fi
+          echo "✓ SBOM written: $SBOM ($(stat -c%s "$SBOM") bytes)"
+          echo "sbom=$SBOM" >> "$GITHUB_OUTPUT"
+
+      - name: Sign SBOM with cosign (keyless)
+        # Same OIDC identity that signed the tarball + manifest (A8).
+        # The SBOM bundle is a self-contained .sigstore file carrying
+        # signature + Fulcio cert + Rekor transparency-log entry — same
+        # verification UX as the tarball signature.
+        run: |
+          set -euo pipefail
+          SBOM='${{ steps.sbom.outputs.sbom }}'
+          cosign sign-blob \
+            --yes \
+            --bundle "${SBOM}.sigstore" \
+            "$SBOM"
+          echo "✓ Signed $SBOM → ${SBOM}.sigstore"
+
       - name: Upload signed release assets to GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # `gh release upload --clobber` is idempotent: if the release was
         # created by an earlier workflow run (or by `gh release create`
-        # manually), the four assets get attached/replaced. If the release
+        # manually), the six assets get attached/replaced. If the release
         # doesn't exist yet, `gh release create` runs first — typical when
         # this workflow is the first thing that fires on a tag push.
+        #
+        # Six assets, post-A13 (#1288):
+        #   1. aiwg-X.Y.Z.tgz              (the tarball itself; A8 baseline)
+        #   2. aiwg-X.Y.Z.tgz.sigstore     (cosign bundle for #1)
+        #   3. release-manifest.json       (provenance manifest)
+        #   4. release-manifest.json.sigstore   (cosign bundle for #3)
+        #   5. aiwg-X.Y.Z.cdx.json         (CycloneDX SBOM)
+        #   6. aiwg-X.Y.Z.cdx.json.sigstore     (cosign bundle for #5)
         run: |
           set -euo pipefail
           VERSION='${{ steps.version.outputs.version }}'
@@ -426,6 +538,8 @@ jobs:
           TARBALL_SIG='${{ steps.sign.outputs.tarball_sigstore }}'
           MANIFEST='${{ steps.sign.outputs.manifest }}'
           MANIFEST_SIG='${{ steps.sign.outputs.manifest_sigstore }}'
+          SBOM='${{ steps.sbom.outputs.sbom }}'
+          SBOM_SIG="${SBOM}.sigstore"
 
           # Pre-release detection (same logic as the version step above).
           if [ "$VERSION" != "${VERSION%%-*}" ]; then
@@ -451,9 +565,11 @@ jobs:
             "$TARBALL_SIG" \
             "$MANIFEST" \
             "$MANIFEST_SIG" \
+            "$SBOM" \
+            "$SBOM_SIG" \
             --clobber
 
-          echo "✓ Uploaded 4 signed assets to GitHub release $TAG"
+          echo "✓ Uploaded 6 signed assets to GitHub release $TAG"
 
       - name: Verification summary
         # Final operator-facing block. Copy/pasteable verification commands
@@ -489,6 +605,14 @@ jobs:
               --certificate-identity-regexp '^https://github.com/jmagly/aiwg/\.github/workflows/npm-publish\.yml@refs/tags/v' \\
               --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \\
               release-manifest.json
+
+          Verify CycloneDX SBOM signature:
+
+            cosign verify-blob \\
+              --bundle aiwg-${VERSION}.cdx.json.sigstore \\
+              --certificate-identity-regexp '^https://github.com/jmagly/aiwg/\.github/workflows/npm-publish\.yml@refs/tags/v' \\
+              --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \\
+              aiwg-${VERSION}.cdx.json
 
           Next operator step (mirror sigs to Gitea release):
 

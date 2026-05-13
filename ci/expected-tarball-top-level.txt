@@ -1,0 +1,51 @@
+# AIWG tarball top-level allowlist (#1288 / A11 — Wave 6 of #1278)
+#
+# This file enumerates the top-level entries (files + directories) that
+# `npm pack` is expected to produce. The publish workflows run
+# `tools/lint/tarball-audit.mjs` against this list and fail if anything
+# unexpected appears at the tarball root.
+#
+# Why an allowlist at the top level (not an exact-file-list)?
+#   The Mini Shai-Hulud injection class adds a NEW file at the tarball
+#   root (e.g., a `router_init.js` or `prepare.sh`). Catching that class
+#   is the goal. Deep-tree changes inside agentic/** etc. are normal
+#   and would create an exact-manifest with 4,340+ entries that churns
+#   on every doc/agent edit, drowning the signal in noise.
+#
+# Procedure to ADD a new entry:
+#   1. Verify the new top-level entry is intentional (it's listed in
+#      package.json `files` or implied by .npmignore exclusions).
+#   2. Append a new row below in alphabetical order.
+#   3. Commit the change with a message that says WHY the new top-level
+#      entry is being shipped (e.g., "feat(packaging): ship docs/ at root
+#      for ...").
+#   4. Re-run `npm run lint:tarball` to confirm the audit passes.
+#
+# Procedure to REMOVE an entry:
+#   1. Remove the row.
+#   2. Confirm the entry no longer appears in `npm pack --dry-run --json`.
+#   3. Commit.
+#
+# Format: one entry per line, sorted alphabetically. Comment lines start
+# with `#`. Blank lines are ignored.
+#
+# Sourced from: `npm pack --dry-run --json` on aiwg@2026.5.2 (2026-05-12).
+#
+# References:
+#   - .aiwg/architecture/adr-publish-time-evidence.md (A11+A12+A13 ADR)
+#   - tools/lint/tarball-audit.mjs (scanner)
+#   - Mini Shai-Hulud Aikido report (Sept 2025) — origin of the
+#     extra-file-at-root injection class this allowlist catches.
+#
+CLAUDE.md
+LICENSE
+README.md
+agentic
+apps
+bin
+dist
+man
+package.json
+plugins
+templates
+tools

@@ -1,6 +1,6 @@
 # Verifying AIWG Releases
 
-AIWG ships three cryptographic verifications you can run on any release:
+AIWG ships four cryptographic verifications you can run on any release:
 
 1. **npm provenance attestation** — proves a published tarball was produced
    by a specific GitHub Actions workflow run from a specific source commit.
@@ -14,8 +14,12 @@ AIWG ships three cryptographic verifications you can run on any release:
    Verifiable offline against a Sigstore Rekor transparency-log entry
    embedded in the signature bundle. Applies to the first release
    published after #1287 (A8, Wave 5 of #1278) and forward.
+4. **CycloneDX SBOM** — a registry-independent, signed software bill of
+   materials disclosing exactly what shipped in the tarball, down to the
+   transitive dep level. Applies to the first release published after
+   #1288 (A13, Wave 6 of #1278) and forward.
 
-This doc walks through all three verifications and shows what each one
+This doc walks through all four verifications and shows what each one
 rules out.
 
 > Historical note: releases earlier than #1299 (`v2026.5.2` and prior) are
@@ -241,19 +245,106 @@ untrusted.
   would need both Gitea/GitHub write access AND the maintainer release
   key AND a Sigstore-recognized OIDC identity on the AIWG repo.
 
-## How the three verifications combine
+## Verification 4 — CycloneDX SBOM
 
-| What it catches | Provenance only | Signed tag only | Cosign signature only | All three |
-|---|---|---|---|---|
-| Forged tag from compromised maintainer account | No | **Yes** | No | Yes |
-| Tampered tarball uploaded directly to npmjs.org | **Yes** | No | **Yes** | Yes |
-| Tampered tarball uploaded to Gitea bundled npm registry | No | No | **Yes** | Yes |
-| Tampered tarball on a third-party mirror | No | No | **Yes** | Yes |
-| Workflow-injection attack via Gitea write access | Partial | **Yes** | Partial | Yes |
-| Both Gitea write access AND maintainer key compromised | No | No | No | Partial (still needs Sigstore identity) |
-| Build environment compromised mid-workflow | Partial | No | Partial | Partial |
+### What it proves
 
-Run all three. Each rules out a different attacker. The audit (#1278)
+The signed SBOM discloses what AIWG ships at release time: the exact
+direct + transitive npm deps, their versions, and any non-npm components
+syft detected in the tree. The SBOM bytes are signed with the same
+keyless OIDC identity that signed the tarball (Verification 3), so the
+SBOM can be trusted to the same extent and via the same chain as the
+tarball itself.
+
+This is composition disclosure, not malware detection — the SBOM tells
+you *what's in the box*, not *whether it's safe to run*. Pipe the SBOM
+into your SCA tool of choice (Grype, Trivy, Dependency-Track, Snyk, your
+internal scanner) for vulnerability assessment.
+
+### How to verify
+
+Required: `cosign` CLI v2.0+ — same as Verification 3.
+
+Download from either release:
+
+- `aiwg-X.Y.Z.cdx.json` (the SBOM itself, CycloneDX JSON format)
+- `aiwg-X.Y.Z.cdx.json.sigstore` (the signature bundle)
+
+Verify the signature:
+
+```bash
+cosign verify-blob \
+  --bundle aiwg-X.Y.Z.cdx.json.sigstore \
+  --certificate-identity-regexp '^https://github.com/jmagly/aiwg/\.github/workflows/npm-publish\.yml@refs/tags/v' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  aiwg-X.Y.Z.cdx.json
+```
+
+Expected output: `Verified OK`.
+
+### Inspecting the SBOM
+
+CycloneDX JSON is consumable by any standard SCA tool. A few quick
+inspections:
+
+```bash
+# Top-level metadata
+jq '.metadata' aiwg-X.Y.Z.cdx.json
+
+# Total component count
+jq '.components | length' aiwg-X.Y.Z.cdx.json
+
+# Component names + versions, sorted
+jq -r '.components[] | "\(.name)@\(.version)"' aiwg-X.Y.Z.cdx.json | sort
+```
+
+### Feeding into an SCA scanner
+
+```bash
+# Grype
+grype sbom:aiwg-X.Y.Z.cdx.json
+
+# Trivy
+trivy sbom aiwg-X.Y.Z.cdx.json
+
+# Dependency-Track (upload to your DT instance)
+curl -X POST "https://dt.example.com/api/v1/bom" \
+  -H "X-Api-Key: $DT_API_KEY" \
+  -H "Content-Type: multipart/form-data" \
+  -F "project=$PROJECT_UUID" \
+  -F "bom=@aiwg-X.Y.Z.cdx.json"
+```
+
+### What it does **not** prove
+
+- That a deps in the SBOM is safe. An SBOM is a manifest, not a clean
+  bill of health. Run an SCA scanner against it.
+- That syft found everything. SBOM completeness depends on the
+  generator's ecosystem coverage. For AIWG (pure-npm + Go-binary tools),
+  syft's coverage is comprehensive; for polyglot projects, gaps are
+  possible. The signed manifest tells you what syft observed at
+  release-build time, not what an exhaustive analysis would find.
+- That the SBOM matches the tarball byte-for-byte. The SBOM is generated
+  on the working tree before `npm publish`; we don't post-verify it
+  against the published tarball contents. If you need that, recompute
+  the SBOM yourself with `syft scan` against the downloaded tarball and
+  diff against the signed one.
+
+## How the four verifications combine
+
+| What it catches | Provenance only | Signed tag only | Cosign signature only | SBOM only | All four |
+|---|---|---|---|---|---|
+| Forged tag from compromised maintainer account | No | **Yes** | No | No | Yes |
+| Tampered tarball uploaded directly to npmjs.org | **Yes** | No | **Yes** | Partial | Yes |
+| Tampered tarball uploaded to Gitea bundled npm registry | No | No | **Yes** | Partial | Yes |
+| Tampered tarball on a third-party mirror | No | No | **Yes** | Partial | Yes |
+| Workflow-injection attack via Gitea write access | Partial | **Yes** | Partial | Partial | Yes |
+| Both Gitea write access AND maintainer key compromised | No | No | No | No | Partial (still needs Sigstore identity) |
+| Build environment compromised mid-workflow | Partial | No | Partial | No | Partial |
+| Unknown dep present in tarball | No | No | No | **Yes** | Yes |
+| Known-vulnerable dep present in tarball | No | No | No | **Yes** (via SCA scan) | Yes |
+
+Run all four. Each rules out a different attacker. The audit (#1278)
 treats the combination as the supply-chain-defense baseline.
 
 The signed tag is the only check that does not depend on
@@ -281,10 +372,10 @@ AIWG publishes to two registries on every release. The signed tag and the
 cosign signature are both registry-independent, so the only verification
 that varies by registry is the npm provenance attestation:
 
-| Registry | URL | Provenance? | Signed tag? | Cosign signature? |
-|---|---|---|---|---|
-| npmjs.org | `https://registry.npmjs.org/aiwg` | Yes (post-A5) | Yes (via the tag itself) | Yes (post-A8, via GitHub/Gitea release assets) |
-| Gitea bundled npm | `https://git.integrolabs.net/api/packages/roctinam/npm/aiwg` | No | Yes | Yes (post-A8, via GitHub/Gitea release assets) |
+| Registry | URL | Provenance? | Signed tag? | Cosign signature? | SBOM? |
+|---|---|---|---|---|---|
+| npmjs.org | `https://registry.npmjs.org/aiwg` | Yes (post-A5) | Yes (via the tag itself) | Yes (post-A8, via GitHub/Gitea release assets) | Yes (post-A13, via GitHub/Gitea release assets) |
+| Gitea bundled npm | `https://git.integrolabs.net/api/packages/roctinam/npm/aiwg` | No | Yes | Yes (post-A8, via GitHub/Gitea release assets) | Yes (post-A13, via GitHub/Gitea release assets) |
 
 The signed tag and cosign signature are registry-independent — they
 verify the same way regardless of which registry you pulled the tarball
@@ -306,11 +397,15 @@ at `$(npm root -g)/aiwg/` or wherever your global npm prefix points).
 - [#1299](https://git.integrolabs.net/roctinam/aiwg/issues/1299) — signed-tag verify (A9)
 - [#1286](https://git.integrolabs.net/roctinam/aiwg/issues/1286) — Gitea compensating controls (A10)
 - [#1287](https://git.integrolabs.net/roctinam/aiwg/issues/1287) — tarball Sigstore signing (A8, Wave 5)
+- [#1288](https://git.integrolabs.net/roctinam/aiwg/issues/1288) — publish-time evidence: tarball audit + audit signatures + SBOM (A11/A12/A13, Wave 6)
 - [`SECURITY.md`](../../SECURITY.md) — maintainer key fingerprint(s), private reporting channel
 - [`.aiwg/architecture/adr-npmjs-org-via-github-actions.md`](../../.aiwg/architecture/adr-npmjs-org-via-github-actions.md) — A5 ADR
 - [`.aiwg/architecture/adr-signed-tag-verify.md`](../../.aiwg/architecture/adr-signed-tag-verify.md) — A9 ADR
 - [`.aiwg/architecture/adr-gitea-release-compensating-controls.md`](../../.aiwg/architecture/adr-gitea-release-compensating-controls.md) — A10 ADR
 - [`.aiwg/architecture/adr-tarball-cosign-signing.md`](../../.aiwg/architecture/adr-tarball-cosign-signing.md) — A8 ADR
+- [`.aiwg/architecture/adr-publish-time-evidence.md`](../../.aiwg/architecture/adr-publish-time-evidence.md) — A11+A12+A13 ADR
+- [CycloneDX specification](https://cyclonedx.org/specification/overview/)
+- [syft](https://github.com/anchore/syft)
 - [npm Trusted Publishers documentation](https://docs.npmjs.com/trusted-publishers)
 - [GitHub OIDC token claims](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
 - [Sigstore cosign documentation](https://docs.sigstore.dev/cosign/signing/signing_with_blobs/) — keyless sign-blob and bundle format

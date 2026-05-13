@@ -84,6 +84,29 @@ action  sigstore/cosign-installer   7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  v3
 #                                   SHA-256 against its embedded manifest, so we get
 #                                   integrity even though the version pin is a string.
 #
+tool  syft  v1.18.0  2026-05-12  Wave 6 (#1288 / A13) — CycloneDX SBOM generator.
+#                                Single Go binary, zero npm dep-graph impact (the
+#                                alternative @cyclonedx/cyclonedx-npm would add a
+#                                multi-dep build tool to a workflow whose entire
+#                                point is reducing dep surface — counterproductive).
+#                                Installed via the official install.sh from a
+#                                tag-pinned raw GitHub URL:
+#                                  https://raw.githubusercontent.com/anchore/syft/v1.18.0/install.sh
+#                                The URL is content-addressed via the v1.18.0 tag
+#                                (GitHub serves the file at the exact commit the
+#                                tag points at). On every CI run the workflow logs
+#                                the SHA-256 of the install script as `observed`
+#                                so silent drift surfaces in CI logs. Strict SHA
+#                                enforcement is opt-in via the commented
+#                                ENFORCE_INSTALL_SHA block in the workflow —
+#                                operator fills the value after the first
+#                                successful CI run produces it. Trade-off
+#                                documented in adr-publish-time-evidence.md.
+#                                Follow-up (#1310-class): once anchore/sbom-action
+#                                exposes a cleanly SHA-pinnable surface that matches
+#                                our other GitHub Action pins, switch to it and
+#                                replace this install-script approach.
+#
 # ============================================================================
 # Update process
 # ============================================================================

@@ -88,6 +88,19 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
+      - name: Audit dep-graph signatures (#1288 / A12)
+        # Hard gate: `npm audit signatures` verifies every package in the
+        # dep graph against npmjs.org's signing keys. Time-bounded waivers
+        # live in ci/npm-audit-signatures-waivers.yaml; expired waivers
+        # fail. See .aiwg/architecture/adr-publish-time-evidence.md.
+        run: npm run lint:audit-signatures
+
+      - name: Audit tarball top-level entries (#1288 / A11)
+        # Hard gate: catches Mini Shai-Hulud-style new-file-at-tarball-root
+        # injection by diffing `npm pack --dry-run --json` top-level
+        # entries against ci/expected-tarball-top-level.txt.
+        run: npm run lint:tarball
+
       - name: Set pre-release version in package.json
         id: rcversion
         run: |
@@ -299,6 +312,19 @@ jobs:
             exit 1
           fi
           echo "✓ .aiwg/ correctly excluded from npm package"
+
+      - name: Audit dep-graph signatures (#1288 / A12)
+        # Hard gate: `npm audit signatures` verifies every package in the
+        # dep graph against npmjs.org's signing keys. Time-bounded waivers
+        # live in ci/npm-audit-signatures-waivers.yaml; expired waivers
+        # fail. See .aiwg/architecture/adr-publish-time-evidence.md.
+        run: npm run lint:audit-signatures
+
+      - name: Audit tarball top-level entries (#1288 / A11)
+        # Hard gate: catches Mini Shai-Hulud-style new-file-at-tarball-root
+        # injection by diffing `npm pack --dry-run --json` top-level
+        # entries against ci/expected-tarball-top-level.txt.
+        run: npm run lint:tarball
 
       - name: Publish to Gitea npm registry
         if: ${{ github.event.inputs.dry_run != 'true' }}
