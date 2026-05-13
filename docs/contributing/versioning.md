@@ -87,11 +87,15 @@ grep '"version"' package.json | grep -E '\.[0-9]{2}\.' && echo "ERROR: Leading z
 **Tag signing is mandatory** as of #1299 (A9). CI rejects any release tag whose signature does not verify against a maintainer public key in `.gitea/keys/maintainers.asc` (GPG) or `.gitea/allowed_signers` (SSH). The verify step lives in `.gitea/workflows/npm-publish.yml` and `.gitea/workflows/gitea-release.yml` and is implemented by [`tools/ci/verify-signed-tag.sh`](../../tools/ci/verify-signed-tag.sh).
 
 ```bash
-# Create signed release commit (if not already committed)
+# Create signed release commit (signed by your personal key — GitHub Verified)
 git commit -S -m "release: v2026.1.5 \"Release Name\""
 
-# Create signed annotated tag (the -s is non-optional)
-git tag -s v2026.1.5 -m "v2026.1.5 - Release Name"
+# Create signed annotated tag — explicit -u with the release key fingerprint
+# so the tag is signed by the project's release-only key, not your personal
+# committer key. CI's verify-signed-tag.sh gate validates against the public
+# key at .gitea/keys/maintainers.asc.
+git tag -s -u FE9272F0BC5781E1DE77FAAA719AB63879E84CE8 \
+  -m "v2026.1.5 - Release Name" v2026.1.5
 
 # Verify locally before push — fast feedback if signing isn't configured
 git tag -v v2026.1.5
