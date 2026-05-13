@@ -86,6 +86,9 @@ aiwg discover "fail closed fail open"          # → degraded-mode-design
 aiwg discover "supply chain trust"             # → supply-chain-trust (score 0.67)
 aiwg discover "reproducible build"             # → supply-chain-trust
 aiwg discover "dependency pinning"             # → supply-chain-trust
+aiwg discover "npm supply-chain audit"         # → npm-supply-chain-audit
+aiwg discover "npm release-age gate"           # → npm-release-age-gate
+aiwg discover "supply-chain hardening quickstart" # → supply-chain-hardening-quickstart
 ```
 
 ### Runtime secret hygiene
@@ -113,6 +116,8 @@ aiwg discover "DMA attack"                     # → physical-threat-modeling
 | `auth-factor-design` | Python deps in PRF hot paths, missing coercion-resistance, FIDO2 PIN/UV policy gaps |
 | `degraded-mode-design` | "Type Y to override" prompts, missing degraded-mode matrix, fail-open by accident |
 | `supply-chain-trust` | Dependency pinning by version (not hash), reproducible-build gaps, firmware version-not-locked |
+| `npm-supply-chain-audit` | install lifecycle scripts, Git dependency prepare hooks, publish-token exposure, missing verifier docs |
+| `npm-release-age-gate` | missing `min-release-age`, npm 10 silently ignoring the gate, permanent bypasses |
 | `secret-handling-runtime` | SECRETS_ENV aggregation, missing scratch-surface verification, identifier reuse |
 | `physical-threat-modeling` | evil-maid, DMA, hostile peripheral, travel-host, coercion, cold-boot, supply-chain implant, side-channel |
 

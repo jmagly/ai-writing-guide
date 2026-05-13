@@ -99,6 +99,10 @@ function displayHelp(): void {
     ['features', 'Show optional feature install status'],
   ]);
 
+  helpGroup('VALIDATION', [
+    ['validate-metadata [path]', 'Validate AIWG component metadata (defaults to agentic/code)'],
+  ]);
+
   helpGroup('SCAFFOLDING', [
     ['new-bundle <name>', 'Create project-local bundle (--type extension|addon|framework|plugin, --starter skill|rule|agent|minimal, --dry-run)'],
     ['new-extension <name>', 'Alias for new-bundle --type extension'],

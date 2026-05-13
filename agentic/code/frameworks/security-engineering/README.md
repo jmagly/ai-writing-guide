@@ -1,6 +1,6 @@
 # Security Engineering
 
-**Status**: Scaffolding (v0.1.0) — skills, agents, rules, and templates are tracked as Gitea issues under the `security-engineering-v1` milestone.
+**Status**: Active framework (v0.1.0). Tier 1/Tier 2 applied-security skills are available, with npm supply-chain hardening skills added for the May 2026 Mini Shai-Hulud response.
 
 Applied-security framework for the design-time decisions that web-app threat modeling and CVE scanning don't catch: cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode behavior, runtime secret hygiene, supply-chain trust, and physical-access threats.
 
@@ -54,6 +54,9 @@ Skills never hard-pick a vendor product (no Keycloak/OpenBao/specific HSM models
 - **Skill**: `degraded-mode-design`
 - **Skill**: `secret-handling-runtime`
 - **Skill**: `supply-chain-trust`
+- **Skill**: `supply-chain-hardening-quickstart`
+- **Skill**: `npm-supply-chain-audit`
+- **Skill**: `npm-release-age-gate`
 - **Skill**: `physical-threat-modeling`
 - **Agent**: `secure-bootstrap-reviewer`
 - **Template**: `factor-design-rationale.md`
@@ -77,6 +80,9 @@ aiwg use security-engineering
 
 # Generate a cryptographic decision record
 "record crypto decision: AEAD selection for at-rest backup encryption"
+
+# Harden an npm package after a supply-chain incident
+"npm supply-chain audit and release-age gate review"
 ```
 
 ## Standards referenced

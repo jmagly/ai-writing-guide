@@ -42,37 +42,44 @@ in any AIWG-controlled credential.
 ### How to verify
 
 ```bash
-# Replace 2026.6.0 with the version you want to verify.
-npm view aiwg@2026.6.0 --json | jq .dist.attestations
+# Replace 2026.5.3 with the version you want to verify.
+npm view aiwg@2026.5.3 --json | jq .dist.attestations
 ```
 
-Expected output: a JSON object with `url` and `provenance` fields.
-`provenance` contains a Sigstore bundle linking the tarball SHA to:
+Expected output: a non-empty JSON value under `.dist.attestations`.
+Recent npm CLI/registry versions may represent the attestation metadata
+as an object or an array. The important signal is that the published
+version has an attestation entry linking the tarball SHA to:
 
 - The GitHub Actions workflow file path (`.github/workflows/npm-publish.yml`)
 - The workflow run URL
 - The source commit SHA
 - The build environment (`runner.os`, action versions)
 
-If the output is `null`, `{}`, or missing the `provenance` key, the
-release does **not** have an OIDC-issued provenance attestation. Either
-it predates A5's first OIDC publish, or something went wrong with the
-trusted-publisher configuration. Treat the release with the same trust
-level you would treat a release from any registry without provenance —
-i.e., verify the signed tag below as the next-strongest signal.
+If the output is `null`, `[]`, or `{}`, the release does **not** have an
+OIDC-issued provenance attestation. Either it predates A5's first OIDC
+publish, or something went wrong with the trusted-publisher
+configuration. Treat the release with the same trust level you would
+treat a release from any registry without provenance — i.e., verify the
+signed tag below as the next-strongest signal.
 
 ### Deeper verification
 
-`npm` itself can validate the attestation without you parsing the JSON:
+`npm` itself can validate registry signatures and provenance
+attestations for the dependency tree installed in your current project:
 
 ```bash
-npm audit signatures aiwg@2026.6.0
+mkdir -p /tmp/aiwg-verify && cd /tmp/aiwg-verify
+npm init -y >/dev/null
+npm install --package-lock-only --ignore-scripts aiwg@2026.5.3
+npm audit signatures --include-attestations
 ```
 
-This downloads the tarball, recomputes its SHA, fetches the provenance
-bundle, and verifies the Sigstore signature against the public Sigstore
-transparency log. Output `verified registry signatures, audited <N>
-packages` means the attestation is intact.
+This builds a lockfile without running package lifecycle scripts, then
+asks npm to verify registry signatures and available provenance
+attestations for the downloaded packages. Output like `verified registry
+signatures, audited <N> packages` means npm accepted the signatures for
+that dependency tree.
 
 ### What it does **not** prove
 
@@ -100,12 +107,14 @@ fingerprint in [`SECURITY.md`](../../SECURITY.md).
 git clone https://github.com/jmagly/aiwg.git
 cd aiwg
 
-# Import the published maintainer key. SHA256-pin the file before importing.
-sha256sum -c <(grep -A1 "maintainers.asc fingerprint" SECURITY.md | tail -1)
+# Import the published maintainer key.
 gpg --import .gitea/keys/maintainers.asc
+gpg --fingerprint release@aiwg.io
+# Confirm the fingerprint matches SECURITY.md:
+# FE9272F0BC5781E1DE77FAAA719AB63879E84CE8
 
 # Verify a specific tag.
-git tag -v v2026.6.0
+git tag -v v2026.5.3
 ```
 
 Expected output:
@@ -113,8 +122,8 @@ Expected output:
 ```
 object <commit-sha>
 type commit
-tag v2026.6.0
-tagger AIWG Release Signing <release@aiwg.io> 2026-06-01 12:34:56 +0000
+tag v2026.5.3
+tagger AIWG Release Signing <release@aiwg.io> 2026-05-12 12:34:56 +0000
 
 <tag annotation message>
 gpg: Signature made <date>
@@ -136,7 +145,7 @@ for verification. The command becomes:
 ```bash
 # Configure git to verify against the published allowed-signers file.
 git config gpg.ssh.allowedSignersFile .gitea/allowed_signers
-git tag -v v2026.6.0
+git tag -v v2026.5.3
 ```
 
 Same `Good signature` expectation; the verifying key will be the SSH

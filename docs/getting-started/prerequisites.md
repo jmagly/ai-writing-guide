@@ -4,20 +4,32 @@ Before installing AIWG, ensure you have the following requirements.
 
 ## Required
 
-### Node.js ≥18.0.0 (LTS)
+### Node.js ≥20.0.0
 
 ```bash
-node --version  # Should show v18.x.x or higher
+node --version  # Should show v20.x.x or higher
+npm --version
 ```
+
+AIWG's package runtime supports Node 20 or newer. For new installs,
+prefer the current LTS line, Node 24.
+
+Contributor and release workflows have stricter npm requirements:
+
+| Use case | Requirement | Why |
+|----------|-------------|-----|
+| Install and run AIWG | Node 20+ | Matches the package `engines.node` floor |
+| Change dependencies or regenerate lockfiles | npm 11.5+ | Required for the committed `min-release-age=7` gate |
+| Publish AIWG releases | Node 24 in the release workflow | Current npm 11.x plus npm trusted-publishing support |
 
 **Installation options:**
 
 | Platform | Command |
 |----------|---------|
-| **macOS (Homebrew)** | `brew install node@18` |
-| **Ubuntu/Debian** | `curl -fsSL https://deb.nodesource.com/setup_18.x \| sudo -E bash - && sudo apt-get install -y nodejs` |
-| **Fedora/RHEL** | `curl -fsSL https://rpm.nodesource.com/setup_18.x \| sudo bash - && sudo dnf install -y nodejs` |
-| **NVM (All platforms)** | `nvm install 18 && nvm use 18` |
+| **macOS (Homebrew)** | `brew install node@24` |
+| **Ubuntu/Debian** | `curl -fsSL https://deb.nodesource.com/setup_24.x \| sudo -E bash - && sudo apt-get install -y nodejs` |
+| **Fedora/RHEL** | `curl -fsSL https://rpm.nodesource.com/setup_24.x \| sudo bash - && sudo dnf install -y nodejs` |
+| **NVM (All platforms)** | `nvm install 24 && nvm use 24` |
 | **Windows** | Use WSL2, then follow Ubuntu instructions |
 
 ### AI Platform (Choose One or More)
@@ -79,8 +91,9 @@ git --version
 ## Quick Compatibility Check
 
 ```bash
-# Check Node.js
-node --version && echo "✅ Node.js" || echo "❌ Node.js missing"
+# Check Node.js and npm
+node --version && echo "Node.js present" || echo "Node.js missing"
+npm --version && echo "npm present" || echo "npm missing"
 
 # Check Claude Code (if using)
 claude --version 2>/dev/null && echo "✅ Claude Code" || echo "ℹ️ Claude Code not installed"

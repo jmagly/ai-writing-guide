@@ -261,7 +261,7 @@ Add native Cursor Editor support with single-file .cursor/rules integration.
 
 ## Dependencies
 - Cursor Editor 0.40+
-- Node.js 18.20.8+
+- Node.js 20.0.0+ (Node 24 recommended for release work)
 
 ## Success Criteria
 - Users can deploy agents with one command
@@ -888,7 +888,7 @@ Timeline: 1 week
 ```text
 ✓ Created intake: .aiwg/contrib/cursor-integration/intake.md
 ✓ Analyzed requirements
-✓ Identified dependencies: Node.js 18.20.8+, Cursor 0.40+
+✓ Identified dependencies: Node.js 20.0.0+, Cursor 0.40+
 ✓ Created implementation plan
 
 Next: Start Inception phase? [y/n]

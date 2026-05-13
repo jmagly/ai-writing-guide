@@ -15,6 +15,7 @@ Find the scenario that matches where you are right now.
 | Run a security or code quality audit | [Audit Existing Code](audit-existing-code.md) |
 | Set up my whole team, not just myself | [Team Setup](team-setup.md) |
 | Work in the background while I do other things | [Daemon and Automation](daemon-and-automation.md) |
+| Harden an npm project after a supply-chain incident | [npm Supply-Chain Hardening](../security/supply-chain-hardening.md) |
 
 ---
 

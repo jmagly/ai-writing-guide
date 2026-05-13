@@ -413,7 +413,15 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 
 ## Quick Start
 
-> **Prerequisites:** Node.js >=18.0.0 and an AI platform (Claude Code, GitHub Copilot, Cursor, Warp Terminal, or others). See [Prerequisites Guide](docs/getting-started/prerequisites.md) for details.
+> **Prerequisites:** Node.js >=20.0.0 and an AI platform (Claude Code, GitHub Copilot, Cursor, Warp Terminal, or others). New installs should prefer Node 24. See [Prerequisites Guide](docs/getting-started/prerequisites.md) for details.
+
+> **Verifying releases (v2026.5.3+):** Every AIWG release ships with Sigstore-anchored npm provenance, a signed git tag, a cosign keyless tarball signature, and a signed CycloneDX SBOM. Verification is optional but recommended:
+>
+> ```bash
+> npm view aiwg@2026.5.3 --json | jq .dist.attestations
+> ```
+>
+> Full walkthrough at [`docs/releases/verifying.md`](docs/releases/verifying.md). Adopt the same pattern for your own packages: [`docs/security/supply-chain-hardening.md`](docs/security/supply-chain-hardening.md).
 
 ### Install & Deploy
 

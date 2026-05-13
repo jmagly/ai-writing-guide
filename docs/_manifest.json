@@ -32,6 +32,7 @@
     "overview/what-is-aiwg",
     "overview/executive-brief",
     "getting-started/prerequisites",
+    "security/supply-chain-hardening",
     "quickstart",
     "intake-guide",
     "regenerate-guide",
@@ -277,6 +278,13 @@
       "title": "Prerequisites",
       "summary": "System requirements and setup",
       "file": "getting-started/prerequisites.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "security/supply-chain-hardening",
+      "title": "npm Supply-Chain Hardening",
+      "summary": "Harden npm projects against install-time malware and publish-path abuse",
+      "file": "security/supply-chain-hardening.md",
       "parent": "getting-started"
     },
     {

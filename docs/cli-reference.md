@@ -2,7 +2,7 @@
 
 Complete reference for all `aiwg` CLI commands.
 
-**Prerequisites:** Node.js ≥18.0.0 and `npm install -g aiwg`
+**Prerequisites:** Node.js ≥20.0.0 and `npm install -g aiwg`
 
 **References:**
 
@@ -147,7 +147,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 
 ```
 ✓ AIWG installed: v2026.1.5
-✓ Node.js version: v20.10.0 (meets requirement ≥18.0.0)
+✓ Node.js version: v20.10.0 (meets requirement ≥20.0.0)
 ✓ Project directory: /home/user/my-project
 ✓ Framework registry: 2 frameworks installed
 ✓ Agents deployed: 15
@@ -1638,12 +1638,20 @@ aiwg contribute-start
 Validate plugin/agent metadata.
 
 ```bash
-aiwg validate-metadata [path]
+aiwg validate-metadata [options] [path]
 ```
 
 **Arguments:**
 
-- `[path]` - Optional path to validate (defaults to current directory)
+- `[path]` - Optional path to validate. Defaults to recursive validation of `agentic/code`.
+
+**Options:**
+
+- `--recursive` - Validate all manifests in a directory recursively.
+- `--format text|json` - Select text or JSON output.
+- `--strict` - Treat warnings as errors.
+- `--ci` - CI mode.
+- `--fix` - Auto-fix common metadata issues where supported.
 
 **Capabilities:** cli, validation, metadata
 **Platforms:** All
@@ -1665,6 +1673,9 @@ aiwg validate-metadata
 
 # Validate specific extension
 aiwg validate-metadata .claude/agents/api-designer.md
+
+# Validate a framework's skills
+aiwg validate-metadata --recursive agentic/code/frameworks/security-engineering/skills
 ```
 
 ### feedback

@@ -28,8 +28,8 @@ every registry dep. The lint only flags tarballs from non-registry hosts.
 
 ## Why this policy exists
 
-Mini Shai-Hulud (March 2026) and several other recent supply-chain
-attacks have used dep-source injection as their primary propagation
+Mini Shai-Hulud's May 2026 npm wave and several other recent
+supply-chain attacks have used dep-source injection as a propagation
 vector. The pattern:
 
 1. Attacker gains write access to a project (compromised maintainer
@@ -46,10 +46,12 @@ attention goes to the *names* of new deps, not the *source URLs*. The
 lint forces every exotic source to be either swapped out or explicitly
 allowlisted — every exception becomes a discrete, reviewed decision.
 
-The companion lockfile-integrity policy (Wave 1, #1283) handles a
-related but distinct attack: tampering with `package-lock.json` after
-the fact. The two controls together close the dep-injection vector
-from manifest to lockfile.
+The release-age gate (#1290) and audit-signature gate (#1288) handle
+related but distinct attacks: a brand-new malicious registry version
+entering the lockfile too quickly, and unsigned or invalid registry
+metadata in the installed dependency tree. Together with this
+dep-source lint, those controls cover the most likely manifest-to-
+lockfile injection paths.
 
 ## Reading the failure output
 
@@ -185,7 +187,10 @@ If so, either wait or — with deliberate sign-off — override with
 lockfile commit message.
 
 **Requirements**: npm 11.5+. Earlier versions silently ignore the gate.
-Run `npm install -g npm@^11.5` once on every contributor machine.
+Run `npm install -g npm@^11.5` once on every contributor machine. Release
+publishers should use the project release workflow on Node 24, which
+ships a current npm 11.x and satisfies npm trusted-publishing
+requirements.
 
 ## Related
 
@@ -193,7 +198,9 @@ Run `npm install -g npm@^11.5` once on every contributor machine.
   rationale and alternatives considered.
 - **Allowlist file**: `ci/dep-source-allowlist.yaml`.
 - **Lint script**: `tools/lint/dep-source.mjs`.
-- **Companion controls**: lockfile integrity (#1283), pinned containers
-  and actions (#1281, #1282), postinstall hook removal (#1279),
-  release-age gate (#1290 / Wave 7).
-- **Threat model**: control C22 in `docs/security/supply-chain-hardening-plan.md`.
+- **Companion controls**: audit signatures and SBOM (#1288), pinned
+  containers and actions (#1281, #1282), postinstall hook removal
+  (#1279), release-age gate (#1290 / Wave 7), npm trusted publishing
+  (#1283).
+- **User-facing hardening guide**: `docs/security/supply-chain-hardening.md`.
+- **Planning threat model**: `.aiwg/security/working/threat-model-supply-chain.md`.

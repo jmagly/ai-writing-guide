@@ -118,9 +118,9 @@ export const contributeStartHandler: CommandHandler = {
  * Validates metadata across framework components and artifacts.
  *
  * Usage:
- *   aiwg -validate-metadata
- *   aiwg --validate-metadata
- *   aiwg -validate-metadata --strict
+ *   aiwg validate-metadata
+ *   aiwg validate-metadata --strict
+ *   aiwg validate-metadata --recursive agentic/code/frameworks/security-engineering/skills
  */
 /** Namespace field regex for SKILL.md frontmatter */
 const NAMESPACE_RE = /^namespace:\s*(\S+)/m;
@@ -279,9 +279,14 @@ export const validateMetadataHandler: CommandHandler = {
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
+    const hasPathArg = ctx.args.some(arg => !arg.startsWith('-'));
+    const wantsHelp = ctx.args.includes('--help') || ctx.args.includes('-h');
+    const scriptArgs = wantsHelp || hasPathArg
+      ? ctx.args
+      : ['--recursive', 'agentic/code'];
 
     // Run the core metadata validation script
-    const result = await runner.run('tools/cli/validate-metadata.mjs', ctx.args, {
+    const result = await runner.run('tools/cli/validate-metadata.mjs', scriptArgs, {
       cwd: ctx.cwd,
     });
 

@@ -48,7 +48,7 @@ Either format is accepted; both can co-exist:
 > Fingerprint: `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`
 > Published:   `.gitea/keys/maintainers.asc`
 
-Once the key is published, this section will list the fingerprint(s) so external reproducers can independently verify a release tag against a known-good identity.
+External reproducers should verify release tags only after importing the key above and confirming that the fingerprint reported by `gpg --fingerprint release@aiwg.io` matches the value in this section.
 
 ## Encryption Key
 

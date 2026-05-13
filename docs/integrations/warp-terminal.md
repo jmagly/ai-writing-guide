@@ -10,7 +10,7 @@ The AIWG SDLC framework supports **Warp Terminal** through native `WARP.md` file
 
 - **Warp Terminal** installed (https://www.warp.dev/)
 - **AIWG** installed (`aiwg version` to verify)
-- **Node.js 18.20.8+** (for CLI tools)
+- **Node.js 20.0.0+** (for CLI tools; Node 24 recommended for new installs)
 
 ### Setup
 

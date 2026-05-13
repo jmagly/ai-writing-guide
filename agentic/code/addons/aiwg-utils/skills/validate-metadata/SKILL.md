@@ -27,8 +27,8 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Validate extensions | "validate extensions" | Run `aiwg validate-metadata` |
 | Quality check | "metadata quality" | Run `aiwg validate-metadata` |
 | Single file | "validate this agent file" | Run `aiwg validate-metadata <path>` |
-| Type-scoped | "validate just the skills" | Run `aiwg validate-metadata --type skills` |
-| Fix mode | "validate and report errors clearly" | Run `aiwg validate-metadata --verbose` |
+| Directory-scoped | "validate just security skills" | Run `aiwg validate-metadata --recursive agentic/code/frameworks/security-engineering/skills` |
+| CI mode | "validate metadata for CI" | Run `aiwg validate-metadata --ci --format json --strict` |
 
 ## Behavior
 
@@ -45,20 +45,14 @@ When triggered:
    # Default: validate all extensions
    aiwg validate-metadata
 
-   # Verbose output with line numbers and hints
-   aiwg validate-metadata --verbose
+   # Recursive validation of a directory
+   aiwg validate-metadata --recursive agentic/code/frameworks/security-engineering/skills
 
-   # Scope to a specific type
-   aiwg validate-metadata --type agents
-   aiwg validate-metadata --type skills
-   aiwg validate-metadata --type commands
-   aiwg validate-metadata --type behaviors
+   # Strict CI output
+   aiwg validate-metadata --ci --format json --strict
 
    # Validate a single file
    aiwg validate-metadata agentic/code/addons/aiwg-utils/skills/my-skill/SKILL.md
-
-   # Machine-readable JSON output (for CI)
-   aiwg validate-metadata --json
    ```
 
 3. **Report the result** — list all errors with field, location, and fix hint; summarize pass/fail count.
@@ -100,7 +94,7 @@ PASS   commands/my-command/COMMAND.md
 
 **Action**:
 ```bash
-aiwg validate-metadata --verbose
+aiwg validate-metadata
 ```
 
 **Response**: "Validated 47 extension definitions. 45 passed. 2 errors found:
@@ -109,13 +103,13 @@ aiwg validate-metadata --verbose
 
 ### Example 2: Scoped validation for skills only
 
-**User**: "Check only the skills metadata"
+**User**: "Check only the security-engineering skills metadata"
 
-**Extraction**: Type-scoped to skills
+**Extraction**: Directory-scoped to security-engineering skills
 
 **Action**:
 ```bash
-aiwg validate-metadata --type skills
+aiwg validate-metadata --recursive agentic/code/frameworks/security-engineering/skills
 ```
 
 **Response**: "Validated 38 skill definitions. All passed."
@@ -137,7 +131,7 @@ aiwg validate-metadata agentic/code/addons/aiwg-utils/skills/new-skill/SKILL.md
 
 **Action**:
 ```bash
-aiwg validate-metadata --json
+aiwg validate-metadata --ci --format json --strict
 ```
 
 **Output**:

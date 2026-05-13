@@ -3,7 +3,7 @@
   "type": "framework",
   "name": "Security Engineering",
   "version": "0.1.0",
-  "description": "Applied security framework for cryptographic primitive selection, chain-of-trust design, secret handling at runtime, supply-chain trust, physical-access threat modeling, and authentication-factor architecture. Pattern-based, product-agnostic — composes with sdlc-complete's threat-modeling and audit agents rather than replacing them.",
+  "description": "Applied security framework for cryptographic primitive selection, chain-of-trust design, secret handling at runtime, supply-chain trust, npm supply-chain hardening, physical-access threat modeling, and authentication-factor architecture. Pattern-based, product-agnostic — composes with sdlc-complete's threat-modeling and audit agents rather than replacing them.",
   "modeAliases": [
     "security-eng",
     "secure-dev",
@@ -40,12 +40,12 @@
   ],
   "metadata": {
     "created": "2026-05-03",
-    "last_updated": "2026-05-03",
+    "last_updated": "2026-05-13",
     "total_agents": 0,
     "total_commands": 0,
-    "total_skills": 0,
+    "total_skills": 11,
     "total_rules": 0,
-    "status": "scaffolding"
+    "status": "active"
   },
   "memory": {
     "creates": [
@@ -73,6 +73,7 @@
       "Degraded-mode (fail-closed/fail-open) design",
       "Runtime secret handling (fd passing, scratch surface, error paths)",
       "Supply-chain trust beyond CVE scanning",
+      "npm supply-chain hardening patterns (release-age gates, dep-source policy, trusted-publishing review)",
       "Physical-access threat modeling"
     ],
     "delegatesTo": {

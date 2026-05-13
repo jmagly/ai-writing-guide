@@ -9,6 +9,50 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
+## [2026.5.3] - 2026-05-13 — "Mini Shai-Hulud — supply-chain hardening complete"
+
+The full v2026.5.3 release. Every signed-release control modeled in the Mini Shai-Hulud planning doc (#1278) is now wired into the publish pipeline and verified end-to-end against a real release cycle. The pre-releases earlier in this line (rc.0, rc.1) were internal pipeline checkpoints; this is the public release the audit was leading up to.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **npmjs.org provenance attestation** | Every published tarball carries a Sigstore-anchored attestation linking it to a specific GitHub Actions workflow run and source commit. Verify with `npm view aiwg@2026.5.3 --json \| jq .dist.attestations` or `npm audit signatures`. |
+| **Cosign keyless tarball signature** | Registry-independent signature over the tarball bytes. Works whether you pulled from npmjs.org, Gitea bundled npm, or any mirror. Verify with `cosign verify-blob`. |
+| **CycloneDX SBOM (signed)** | Full direct + transitive dep inventory shipped as a release asset and signed with the same Sigstore identity. Feed into Grype/Trivy/Dependency-Track for vulnerability scans. |
+| **Signed maintainer git tag** | Tag is gpg-signed by `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`, ed25519, expires 2031-05-11). CI refuses to publish any release whose tag does not verify. |
+| **6 signed assets on both GitHub and Gitea releases** | Tarball + .sigstore, release manifest + .sigstore, SBOM + .sigstore — mirrored across both registries so verification works regardless of where you got AIWG. |
+| **Tarball top-level allowlist** | Every release lints what gets included in the published tarball. No surprise files. |
+| **`npm audit signatures` gate at publish time** | The publish step itself runs `npm audit signatures` against the dep tree. If a dep's registry signature is invalid, the publish blocks. |
+| **7-day release-age gate** | `npm install`/`npm update` against AIWG (and any project that opts in to the same pattern) refuses to resolve dependency versions younger than 7 days. Newly-published malicious versions can no longer enter your lockfile. **Requires npm 11.5+ on your dev machine** — `npm install -g npm@^11.5`. |
+| **Dep-source policy lint** | `npm run lint:dep-sources` blocks `git+`, `github:`, tarball-URL, `file:`, `link:` dep sources in `package.json` and `package-lock.json`. Runs every CI build. |
+| **Pinned CI containers + actions** | Every CI workflow pins containers by sha256 digest and actions by 40-char commit SHA. The pin manifest lives in `ci/digests.txt`. No `:latest` anywhere in production paths. |
+
+### Adopting the same pattern in your projects
+
+This release ships new skills for downstream users who want to harden their own npm packages the same way:
+
+- `supply-chain-hardening-quickstart` — orchestrates the user-side hardening pass
+- `npm-supply-chain-audit` — audits lifecycle scripts, Git dependency sources, publish-token exposure, and verifier docs
+- `npm-release-age-gate` — configures and reviews 7-day / 10-day release-age policies
+- `supply-chain-trust` — covers signed tags, provenance, tarball signatures, SBOMs, pinning, and broader trust-chain design
+
+See `docs/security/supply-chain-hardening.md` for the end-to-end walkthrough. The release-publisher note is explicit: npm trusted publishing requires npm 11.5.1+ and Node 22.14+; AIWG's release workflow uses Node 24 so the current npm 11.x line is available without a workflow-local npm upgrade.
+
+### Requirements for the supply-chain controls to be effective
+
+- **Consuming AIWG**: Node 20+ stays fine for the CLI. Provenance verification is optional but recommended — `npm install -g npm@^11.5` to enable `npm audit signatures` and the release-age gate to fire on your machine.
+- **Contributing to AIWG**: npm 11.5+ on your dev machine. The release-age gate fires on every `npm install`/`npm update` — without it, the protection is missing.
+- **Adopting the pattern for your own packages**: Node 22.14+ and npm 11.5.1+ for OIDC trusted publishing on npmjs.org. Or jump straight to Node 24.x, which is what AIWG's CI now runs on.
+
+### References
+
+- `docs/releases/v2026.5.3-announcement.md` — full release announcement
+- `docs/security/supply-chain-hardening.md` — apply the same pattern to your own package
+- `docs/releases/verifying.md` — verify an AIWG release end-to-end
+- `SECURITY.md` — maintainer signing key fingerprint, private reporting channel
+- [#1278](https://git.integrolabs.net/roctinam/aiwg/issues/1278) — supply-chain hardening epic (Track A close-out)
+
 ## [2026.5.3-rc.1] - 2026-05-12 — "Mini Shai-Hulud — OIDC-only publish path"
 
 Supersedes [2026.5.3-rc.0]. Three CI fixes since rc.0 plus a workflow-deactivation pass to clear the dual-publish race that prevented provenance attestation from landing.
