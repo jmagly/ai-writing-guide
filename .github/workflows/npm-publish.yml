@@ -90,7 +90,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write   # Create/upload GitHub release assets (rc.1 retag #8 — gh release).
   id-token: write   # Required for OIDC trusted publishing to npmjs.org.
 
 jobs:
