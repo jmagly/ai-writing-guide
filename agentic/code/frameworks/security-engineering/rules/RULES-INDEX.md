@@ -1,10 +1,10 @@
 # Security Engineering Rules Index
 
-Applied-security enforcement rules for cryptographic primitive choices, chain-of-trust integrity, secret handling, supply-chain pinning, and related design-time concerns. Deployed when the `security-engineering` framework is installed.
+Applied-security enforcement rules for cryptographic primitive choices, chain-of-trust integrity, secret handling, supply-chain pinning, dependency-source policy, and related design-time concerns. Deployed when the `security-engineering` framework is installed.
 
 ---
 
-## Tier 1 Rules (5 rules — applied cryptography + supply chain)
+## Tier 1 Rules (6 rules — applied cryptography + supply chain)
 
 ### HIGH
 
@@ -38,6 +38,12 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 **Maps to issue**: #1293 (B3 / Mini Shai-Hulud)
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/ci-action-pinning.md
 
+#### dependency-source-policy
+**Summary**: Non-registry dependency sources (`git+`, `github:`, raw tarball URLs, `file:`, `link:`) are PROHIBITED — they bypass registry signature verification and can execute arbitrary code at install time via `prepare` scripts (Mini Shai-Hulud's primary propagation vector). Policy applies to `package.json` AND transitive lockfile entries. Exceptions require an allowlist entry with owner, reason, review_date, and explicit risk acceptance. pnpm workspaces must set `blockExoticSubdeps: true` for workspace-scope enforcement.
+**When to apply**: Any change to `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, or `bun.lockb`; CI lint should run on every push
+**Maps to issue**: #1297 (Mini Shai-Hulud follow-up)
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/dependency-source-policy.md
+
 ---
 
 ## Quick Reference by Context
@@ -51,6 +57,7 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 | **CLI crypto invocations** | crypto-flag-verification, no-unauthenticated-encryption |
 | **CI workflow review** | ci-action-pinning |
 | **Container image references** | ci-action-pinning |
+| **package.json / lockfile review** | dependency-source-policy |
 | **Reviewing cryptographic decisions** | All four crypto rules in sequence |
 
 ---
@@ -61,5 +68,5 @@ Future Tier 2 rules will cover authentication-factor architecture, degraded-mode
 
 ---
 
-*Generated from security-engineering framework — 5 rules in Tier 1*
+*Generated from security-engineering framework — 6 rules in Tier 1*
 *Full rule files: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/*
