@@ -117,8 +117,16 @@ jobs:
         # tag object of type commit". Force-fetch the tag object
         # explicitly. See .gitea/workflows/npm-publish.yml prerelease
         # job for the full post-mortem.
+        #
+        # The safe.directory line is required on GH Actions runners
+        # (containerized; runner uid ≠ workspace owner uid → git
+        # refuses with "dubious ownership"). actions/checkout sets
+        # this internally but our custom git fetch step inherits a
+        # fresh shell. Gitea's runner doesn't need this line but
+        # tolerates it as a no-op.
         run: |
           set -o pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           TAG="${GITHUB_REF#refs/tags/}"
           git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
 
