@@ -9,6 +9,66 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
+## [2026.5.4] - 2026-05-13 — "Hermes parity — full MCP surface"
+
+29 issues (5 epics + 18 stories + 1 hotfix + 5 use cases) closing the
+Hermes integration gap. Before this release, Hermes users could reach
+only a small fraction of AIWG via MCP — five tools, one a stub. After this
+release, Hermes users have feature parity with every other AIWG-supported
+provider: 12 core MCP tools always-on, 45+ available via opt-in toolsets,
+all 385 standard skills natively discoverable, top-6 CRITICAL rules
+inlined into AGENTS.md priming.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **Standard skills (~385) now reachable from Hermes** | Earlier AIWG versions deployed standard skills to `~/.hermes/.aiwg/skills/` — a sibling of Hermes's scanned root, invisible to Hermes's `os.walk()`. Moved to `~/.hermes/skills/.aiwg/` (child of scanned root; recursively discovered). Verified against Hermes v0.13.0 `agent/skill_utils.py:478-489`. |
+| **MCP `discover` + `*-list`/`*-show` tool pairs** | The post-#1212 discoverability surface (skills, commands, rules, agents, templates) is now reachable over MCP. Hermes can semantic-search AIWG capabilities and fetch full bodies on demand without project-context preload. |
+| **`mcp_aiwg_command_run`** | One tool dispatches to any of the ~94 allow-listed AIWG CLI commands. Replaces the `workflow-run` stub (which returned parsed metadata but never executed). `shell: false` spawn, destructive ops gated behind `confirmed: true`. |
+| **8 opt-in subsystem toolsets** | `AIWG_MCP_TOOLSETS=memory,kb,research,activity-log,index,ralph,mc,ops` (or `=all`) exposes 45+ additional tools. Default surface stays lean (~2.5K tokens schema) for small-context local Ollama; toolsets scale on demand. |
+| **Top-6 CRITICAL rule priming in AGENTS.md** | The highest-enforcement AIWG rules (no-attribution, anti-laziness, citation-policy, token-security, versioning, ops-safety) are inlined into the generated AGENTS.md as a ~3K-char priming block. The remaining 23 rules reachable on demand via `mcp_aiwg_rule_show`. AGENTS.md stays well under Hermes's 20K cap. |
+| **`.hermes.md` thin pointer emitted at project root** | Hermes loads `.hermes.md` first (priority over AGENTS.md per `agent/prompt_builder.py:1417-1456`). The pointer keeps the actual content in AGENTS.md so it stays usable by other providers (Claude Code, Codex, Cursor). Resolves #1239 doc-debt. |
+| **Curator-protection for AIWG kernel skills** | Hermes v0.12.0+ Curator archives stale skills on a 7-day cycle. AIWG-deployed kernel skills are now registered in `~/.hermes/skills/.bundled_manifest` so the Curator excludes them (verified at `tools/skill_usage.py:155-176`). Standard skills under `.aiwg/` are already protected by the dot-prefix rule. |
+| **`delegate_task` API hotfix** | Earlier versions of the deployer shipped `delegate_task(skip_context_files=True, skip_memory=True)` in the generated AGENTS.md. Those parameters do not exist on Hermes's actual signature — they're hardcoded internally. Replaced with the correct `delegate_task(goal="...", context="...")` form. |
+| **Idempotent skill-path migration helper** | Existing operators with skills at the legacy path get them automatically cleaned up on the next `aiwg refresh --provider hermes`. Hash-matches before removal so user-authored files are never touched. |
+| **Hermes-quickstart refreshed against v0.13.0** | All `agent/`, `hermes_cli/`, `tools/mcp_tool.py` file:line references in the quickstart re-verified against the current Hermes release (commit `942adf6`). Previous docs targeted v0.4.0; refs were drifted by hundreds of lines. |
+| **CI drift verifier** | `tools/verify-hermes-citations.mjs` walks every Hermes citation in AIWG docs and verifies it against the pinned Hermes version. CI runs on every PR touching Hermes docs. Pin: `HERMES_VERIFIED_VERSION = '0.13.0'`. |
+
+### Added
+
+- **MCP discovery toolset** (`src/mcp/tools/discovery.mjs`): `discover`, `skill-list`/`-show`, `command-list`/`-show`, `rule-list`/`-show`, `agent-show`, `template-list`/`-show`. All read-only, global-allowed. Spawns `aiwg discover --json` / `aiwg show --json` subprocess for parity with CLI behavior.
+- **MCP `command-run` tool** (`src/mcp/tools/command-run.mjs`): allow-listed dispatch against `src/extensions/commands/definitions.ts`. `spawn(cmd, args, {shell: false})` — never shell-interpreted. Destructive commands require `confirmed: true`.
+- **8 opt-in MCP subsystem toolsets** (`src/mcp/tools/subsystems.mjs`): memory + reflections, kb, provenance + research-store, activity-log, index, ralph (session-id async pattern), mc (Mission Control), ops. Enabled via `AIWG_MCP_TOOLSETS=<csv>` env var or `aiwg mcp serve --toolsets=<csv>` flag. `=all` enables every known toolset.
+- **`generateHermesMd()`** in Hermes deployer: emits `.hermes.md` thin pointer at project root.
+- **`updateBundledManifest()`** in Hermes deployer: registers AIWG kernel skills with the Curator for archival exclusion. Preserves pre-existing manifest entries.
+- **`migrateLegacySkillPath()`** in Hermes deployer: idempotent cleanup of the legacy `~/.hermes/.aiwg/skills/` path after the new path is verified populated.
+- **`tools/verify-hermes-citations.mjs`**: drift detector for Hermes source citations in AIWG docs.
+- **`.gitea/workflows/hermes-citations.yml`**: CI workflow runs the verifier on PRs touching Hermes docs.
+- **17 new unit tests** in `test/unit/mcp/helpers.test.ts` and `test/unit/mcp/subsystems.test.ts`. All MCP tests passing (46/46).
+- **SDLC corpus** in `.aiwg/`: architecture sketch (`sketch-hermes-mcp-parity.md`), risk register, test strategy, 5 use cases (`UC-HMP-{001..005}`).
+
+### Changed
+
+- **`paths.skills`** in `tools/agents/providers/hermes.mjs` moved from `~/.hermes/.aiwg/skills/` to `~/.hermes/skills/.aiwg/`.
+- **`generateAgentsMd()`** expanded to inline top-6 CRITICAL rule directives (~3K-char priming block, well under Hermes's 19K hard cap; soft warn at 15K). Pointer to `mcp_aiwg_rule_show` for the other 23 rules.
+- **`docs/integrations/hermes-quickstart.md`** refreshed against Hermes v0.13.0. Replaced "What's New in v0.4.0" with "Version compatibility" table. File:line refs updated.
+- **`docs/providers/hermes-skill-fields.md`** adds a "Curator protection" section.
+- **`docs/cli-reference.md`** documents `aiwg mcp serve --toolsets=` flag and the new core tool surface.
+- **`CLAUDE.md`** multi-platform table updated for Hermes; special-cases footnote added.
+
+### Deprecated
+
+- **`workflow-run` MCP tool**: was always a stub. Response body now carries `{deprecated: true, replacement: 'mcp_aiwg_command_run', ...}`. Tool kept for back-compat; new code should use `command-run`.
+
+### Fixed
+
+- **Broken `delegate_task` API in generated Hermes AGENTS.md** (`tools/agents/providers/hermes.mjs:117`). The example `delegate_task(skip_context_files=True, skip_memory=True)` referenced parameters that do not exist on Hermes's actual signature. Replaced with `delegate_task(goal="...", context="...")` plus a one-line note. Every Hermes user since the integration shipped was getting broken example code.
+
+### Issues closed
+
+H1 #1305, E1 #1306, E2 #1307, E3 #1308, E4 #1309, E5 #1310, S20 #1311, S1 #1312, S2 #1313, S4 #1314, S3 #1315, S5 #1316, S6 #1317, S7 #1318, S8 #1319, S9 #1320, S21 #1321, S10 #1322, S11 #1323, S12 #1324, S13 #1325, S14 #1326, S15 #1327, S17 #1328, S22 #1329, S23 #1330, S16 #1331, S18 #1332, S19 #1333 (deferred — no trigger in static tool surface).
+
 ## [2026.5.3] - 2026-05-13 — "Mini Shai-Hulud — supply-chain hardening complete"
 
 The full v2026.5.3 release. Every signed-release control modeled in the Mini Shai-Hulud planning doc (#1278) is now wired into the publish pipeline and verified end-to-end against a real release cycle. The pre-releases earlier in this line (rc.0, rc.1) were internal pipeline checkpoints; this is the public release the audit was leading up to.

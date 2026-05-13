@@ -1135,13 +1135,28 @@ Start the AIWG MCP server.
 
 ```bash
 aiwg mcp serve
+aiwg mcp serve --toolsets=memory,kb,ralph    # opt-in toolsets
+aiwg mcp serve --toolsets=all                # everything (~57 tools)
 ```
+
+**Options:**
+
+- `--toolsets <csv>` — Enable opt-in subsystem toolsets (overrides `AIWG_MCP_TOOLSETS` env var). Known: `memory`, `kb`, `research`, `activity-log`, `index`, `ralph`, `mc`, `ops`, `all`. The `core` set is always on.
 
 **Actions:**
 
 - Starts stdio-based MCP server
-- Exposes AIWG tools, resources, and prompts
-- Supports Claude Desktop, Cursor, Factory
+- Exposes ~12 core tools by default (discover, *-list/*-show pairs, command-run, artifact-read/write)
+- Additional ~45 tools available via opt-in toolsets
+- Supports Claude Desktop, Cursor, Factory, Hermes (as MCP sidecar)
+
+**Default surface (~2.5K tokens schema)**:
+- `discover` — semantic search across skills/agents/commands/rules
+- `skill-list` / `skill-show`, `command-list` / `command-show`, `rule-list` / `rule-show`, `agent-list` / `agent-show`, `template-list` / `template-render` / `template-show`
+- `command-run` — allow-listed CLI dispatch
+- `artifact-read` / `artifact-write`
+
+**Opt-in toolsets**: see [Tool reference](./integrations/hermes-quickstart.md#tool-name-mangling) for details.
 
 #### mcp install
 

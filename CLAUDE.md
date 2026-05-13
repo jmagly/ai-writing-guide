@@ -87,7 +87,7 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 | Warp Terminal | `.warp/agents/` + WARP.md | `.warp/commands/` | `.warp/skills/` + `.agents/skills/` | `.warp/rules/` | `aiwg use sdlc --provider warp` |
 | Windsurf | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` + `.agents/skills/` | `.windsurf/rules/` | `aiwg use sdlc --provider windsurf` |
 | OpenClaw | `~/.openclaw/agents/` | `~/.openclaw/commands/` | `~/.openclaw/skills/` + `.agents/skills/` | `~/.openclaw/rules/` | `aiwg use sdlc --provider openclaw` |
-| Hermes | AGENTS.md | — | `~/.hermes/skills/` | — | `aiwg use sdlc --provider hermes` |
+| Hermes | AGENTS.md + .hermes.md | via MCP `command-run` | `~/.hermes/skills/` (kernel) + `~/.hermes/skills/.aiwg/` (standard) | inlined in AGENTS.md + MCP `rule-list`/`rule-show` | `aiwg use sdlc --provider hermes` |
 
 **Special cases:**
 - **Codex**: Commands and skills deploy to home directory (`~/.codex/prompts/`, `~/.codex/skills/`) for user-level availability across all projects. `.codex/commands/` also deploys at project scope for operator visibility, but Codex commands are a static built-in enum in codex-rs and these files are not auto-scanned by the loader; AGENTS.md is the discovery bridge per ADR-1. Reference: `src/smiths/platform-paths.ts:23`.
@@ -95,6 +95,7 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 - **Warp**: Agents and commands are also aggregated into `WARP.md` for single-file context loading
 - **Windsurf**: Agents are aggregated into `AGENTS.md` at project root
 - **OpenClaw**: All artifacts deploy to home directory (`~/.openclaw/`). First provider to support behaviors (`~/.openclaw/behaviors/`)
+- **Hermes**: MCP sidecar architecture (`Hermes → MCP → AIWG`). Commands reach AIWG via `mcp_aiwg_command_run` (allow-listed). Standard skills (~385) live under `~/.hermes/skills/.aiwg/` and are recursively discovered; kernel skills (~9) live at the top level and are protected from the Curator (v0.12.0+) via the `.bundled_manifest`. The MCP server has ~12 core tools by default; ~45 additional via `AIWG_MCP_TOOLSETS=<csv>`. See `docs/integrations/hermes-quickstart.md`.
 
 ## Writing Principles
 
