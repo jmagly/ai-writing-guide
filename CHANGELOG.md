@@ -7,6 +7,25 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+_Nothing yet for the next release line._
+
+## [2026.5.3-rc.0] - 2026-05-12 — "Mini Shai-Hulud supply-chain hardening — Track A complete"
+
+First end-to-end pre-release exercising the new supply-chain pipeline. Track A of the Mini Shai-Hulud hardening campaign (#1278) ships complete across this release: 13 issues across 8 waves landed since v2026.5.2. Wave 9 (user-facing capabilities — Track B) ships in v2026.5.3 stable.
+
+This rc.0 is the first AIWG release published under the new flow: cryptographically signed git tag (#1299), CI verify gate before any publish step, OIDC trusted publishing on npmjs.org with provenance attestation (#1283), cosign keyless tarball signing with `.sigstore` bundles attached to both registries (#1287), CycloneDX SBOM generation (#1288 / A13), `npm audit signatures` gate (#1288 / A12), tarball top-level allowlist (#1288 / A11), 7-day release-age gate (#1290), and dep-source policy lint (#1300). The full risk-closure tally is 9 of 10 modeled scenarios fully closed; the remaining one (S9) is deferred to a separate AI-runtime-boundary threat model per planning doc § Out of Scope.
+
+### Highlights
+
+| What changed | Why you care |
+|---|---|
+| **Signed tags + cosign tarball signatures** | Every release artifact is verifiable offline against a maintainer key + Sigstore transparency log. Consumers verify with `cosign verify-blob` per `docs/releases/verifying.md`. |
+| **npm provenance attestation** | npmjs.org publishes carry a provenance attestation linking the tarball to the GitHub Actions workflow run + source commit SHA. Verify with `npm view aiwg@<v> --json \| jq .dist.attestations`. |
+| **6 signed release assets per release** | Tarball, tarball .sigstore, release-manifest.json, manifest .sigstore, CycloneDX SBOM, SBOM .sigstore — present on both GitHub and Gitea releases. |
+| **Release-age gate** | npm refuses to resolve any dependency version published less than 7 days ago. Newly-published malicious versions can no longer enter the lockfile during contributor `npm install`/`npm update`. Requires npm 11.5+ — `npm install -g npm@^11.5` once on every dev machine. |
+| **Dep-source lint** | `npm run lint:dep-sources` blocks `git+`, `github:`, tarball-URL, `file:`, `link:` dependency sources in `package.json` and `package-lock.json` — every CI run, not just at publish time. |
+| **Removed postinstall lifecycle hook** | The script was benign, but the *capability* was the Shai-Hulud propagation primitive. `aiwg doctor` now handles the PATH-check UX. |
+
 ### Security
 
 - **PR-trigger workflow audit + same-repo guards** (#1289 — Wave 8 of #1278). Audit finding F7 / threat scenario S2 (workflow injection / fork-PR secret extraction) called for an audit of every `.gitea/workflows/` workflow that triggers on `pull_request`. Primary-source review of the Gitea source code at [`models/secret/secret.go` `GetSecretsOfTask`](https://github.com/go-gitea/gitea/blob/main/models/secret/secret.go) lines 160-165 settled the open question from #1284's audit notes: user-defined secrets (`NPM_TOKEN`, `NPMJS_TOKEN`, `GT_ACCESS_TOKEN`) are NOT exposed to fork PRs by default in current Gitea — only the auto-issued `GITHUB_TOKEN`/`GITEA_TOKEN` per-run token is, and that token is further clamped by `models/actions/token_permissions.go` `restrictCrossRepoAccess`. The audit walked the five PR-triggered workflows: `docsite-build.yml` (fork-PR guard from #1284 already in place; comment updated to reference this audit), `skill-lint-pr.yml` (only references the auto-issued per-run token, not a user secret; security analysis documented inline at top of file so future reviewers don't re-litigate it), `metadata-validation.yml` (no secret references; confirmed PR-safe), `ci.yml` (no secret references; install-script surface mitigated by A15 #1290 release-age gate and A20 #1300 dep-source lint), `conformance.yml` (label-gated via `conformance:full` for PR runs; verified working). A new "PR-trigger workflow hardening" section in `.gitea/workflows/README.md` documents the reusable guard snippet (two variants — fork-PR guard `if: ${{ gitea.event.pull_request.head.repo.fork != true }}` and same-repo guard `if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}`), explains why step-level guards are preferred over job-level (preserves fork-PR validation value), and explains why `pull_request_target` is not the right answer here. Per-workflow disposition matrix + alternatives (blanket no-secrets rule, `pull_request_target`, manual `/safe-to-test` label gate, dedicated PR-runner pool) recorded in `.aiwg/architecture/adr-pr-trigger-hardening.md`. Criticality is informational + defense-in-depth: Gitea's runtime already does the right thing; the guard on `docsite-build.yml` survives the runtime-regression scenario, and the documentation makes the secret-handling intent local-and-visible in each workflow rather than implicit-and-global. No workflow logic changed beyond the docsite comment update; the surface of `grep -n "secrets\." .gitea/workflows/*.yml` is unchanged.
