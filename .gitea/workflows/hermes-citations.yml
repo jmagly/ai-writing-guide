@@ -30,18 +30,17 @@ concurrency:
 
 jobs:
   verify:
+    name: Verify Hermes Citations
     runs-on: ubuntu-latest
+    # Use the same container pin as the working ci.yml — Gitea Actions
+    # runner expects a container that already has node+git available.
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5
     timeout-minutes: 5
     steps:
       - name: Checkout AIWG
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Run citation verifier
-        run: node tools/verify-hermes-citations.mjs
-        # Note: not --strict — drift in older research docs is informational.
+      - name: Verify drift
+        # Not --strict — drift in older research docs is informational.
         # Switch to --strict when the parity assessment refs are refreshed.
+        run: node tools/verify-hermes-citations.mjs
