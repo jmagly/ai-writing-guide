@@ -290,6 +290,16 @@ jobs:
             fi
           }
 
+      - name: Install jq (node:24 image does not ship it by default)
+        # The verify-provenance step and the asset-upload steps below shell
+        # out to jq. node:24-bookworm doesn't include it. rc.1 retag #6
+        # (8d733e2b) blew up here with exit 127 AFTER a fully successful
+        # publish + provenance landing — see CHANGELOG entry for 2026.5.3-rc.1.
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            apt-get update && apt-get install -y --no-install-recommends jq
+          fi
+
       - name: Verify provenance attestation landed
         # Independent post-publish check. Without this, a successful publish
         # that did NOT actually emit provenance would appear identical to
