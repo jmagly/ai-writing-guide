@@ -87,7 +87,12 @@ aiwg discover "supply chain trust"             # → supply-chain-trust (score 0
 aiwg discover "reproducible build"             # → supply-chain-trust
 aiwg discover "dependency pinning"             # → supply-chain-trust
 aiwg discover "npm supply-chain audit"         # → npm-supply-chain-audit
+aiwg discover "ci workflow audit"              # → ci-workflow-audit
+aiwg discover "workflow pinning audit"         # → ci-workflow-audit
 aiwg discover "npm release-age gate"           # → npm-release-age-gate
+aiwg discover "pnpm release age gate"          # → pnpm-release-age-gate
+aiwg discover "yarn release age gate"          # → yarn-release-age-gate
+aiwg discover "bun release age gate"           # → bun-release-age-gate
 aiwg discover "supply-chain hardening quickstart" # → supply-chain-hardening-quickstart
 ```
 
@@ -117,7 +122,11 @@ aiwg discover "DMA attack"                     # → physical-threat-modeling
 | `degraded-mode-design` | "Type Y to override" prompts, missing degraded-mode matrix, fail-open by accident |
 | `supply-chain-trust` | Dependency pinning by version (not hash), reproducible-build gaps, firmware version-not-locked |
 | `npm-supply-chain-audit` | install lifecycle scripts, Git dependency prepare hooks, publish-token exposure, missing verifier docs |
+| `ci-workflow-audit` | tag-pinned actions/containers, bare `:latest`, PR-triggered jobs with `secrets.*`, curl-pipe-shell without hash checks |
 | `npm-release-age-gate` | missing `min-release-age`, npm 10 silently ignoring the gate, permanent bypasses |
+| `pnpm-release-age-gate` | missing `minimumReleaseAge`, missing `blockExoticSubdeps`, Corepack pin < v9.0 silently ignoring the gate |
+| `yarn-release-age-gate` | missing `npmMinimalAgeGate`, Corepack pin < v4.0 silently ignoring the gate, Yarn Classic v1.x lacking gate support |
+| `bun-release-age-gate` | missing `install.minimumReleaseAge`, Bun < v1.1.30 silently ignoring the gate, unit confusion (Bun uses seconds vs pnpm minutes vs npm days vs Yarn duration strings) |
 | `secret-handling-runtime` | SECRETS_ENV aggregation, missing scratch-surface verification, identifier reuse |
 | `physical-threat-modeling` | evil-maid, DMA, hostile peripheral, travel-host, coercion, cold-boot, supply-chain implant, side-channel |
 
