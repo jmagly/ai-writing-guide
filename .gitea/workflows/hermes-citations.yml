@@ -1,0 +1,47 @@
+# Verify Hermes Source Citations
+#
+# Runs tools/verify-hermes-citations.mjs against the pinned Hermes
+# version to catch documentation drift on PRs touching Hermes docs.
+#
+# @issues #1330 (S23)
+
+name: Verify Hermes Citations
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/integrations/hermes-*.md'
+      - 'docs/providers/hermes-*.md'
+      - '.aiwg/research/parity/hermes/**'
+      - 'tools/verify-hermes-citations.mjs'
+      - '.gitea/workflows/hermes-citations.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/integrations/hermes-*.md'
+      - 'docs/providers/hermes-*.md'
+      - '.aiwg/research/parity/hermes/**'
+      - 'tools/verify-hermes-citations.mjs'
+
+concurrency:
+  group: hermes-cite-${{ gitea.head_ref || gitea.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout AIWG
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run citation verifier
+        run: node tools/verify-hermes-citations.mjs
+        # Note: not --strict — drift in older research docs is informational.
+        # Switch to --strict when the parity assessment refs are refreshed.

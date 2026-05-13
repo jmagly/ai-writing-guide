@@ -67,23 +67,26 @@ Configure delegation model in `~/.hermes/config.yaml` under `delegation.model: "
 
 ---
 
-## What's New in v0.4.0
+## Version compatibility
 
-This guide targets Hermes Agent v0.4.0+. Key changes relevant to AIWG integration:
+This guide is verified against **Hermes Agent v0.13.0** (commit `942adf6`, 2026-05).
+File:line references throughout this document are pinned to that version.
 
-| Feature | Description |
+The AIWG integration depends on Hermes capabilities that have been stable
+since v0.4.0:
+
+| Feature | First stable |
 |---|---|
-| **`hermes mcp` CLI** | Install and manage MCP servers via CLI — no manual config editing required |
-| **`hermes tools` TUI** | Interactive tool configuration interface |
-| **Real-time config reload** | Edit `~/.hermes/config.yaml` and changes apply immediately — no restart |
-| **`${ENV_VAR}` substitution** | Use environment variables in config values |
-| **`custom_models.yaml`** | Add user-managed models without editing the main config |
-| **CLAUDE.md recognition** | Hermes now loads `CLAUDE.md` as a context file alongside `AGENTS.md` |
-| **Delegation improvements** | `provider` and `model` now configurable per subagent; thread-safe concurrent delegation |
-| **New platform adapters** | Signal, DingTalk, SMS (Twilio), Mattermost, Matrix, Webhook, OpenAI-compatible API server |
-| **New inference providers** | GitHub Copilot (OAuth 2.1 PKCE), Alibaba DashScope, Kilo Code, OpenCode Zen/Go |
+| `hermes mcp` CLI (`add | remove | list | test | configure`) | v0.4.0 |
+| Real-time config reload (`/reload-mcp`) | v0.4.0 |
+| `${ENV_VAR}` substitution in config values | v0.4.0 |
+| Context-file loader priority `.hermes.md → AGENTS.md → CLAUDE.md` | v0.4.0 |
+| Curator (auto-archives stale skills on 7-day cycle) | v0.12.0 |
+| `hermes mcp login` (OAuth flows) | v0.13.0 |
 
-See [Hermes v0.4.0 release notes](https://hermes-agent.nousresearch.com/changelog) for the full changelog.
+If you're on a newer Hermes minor version and notice file:line drift, run
+`tools/verify-hermes-citations.mjs` (#1330) to check what's stale, or
+[file an issue](https://github.com/jmagly/aiwg/issues/new).
 
 ---
 
@@ -127,7 +130,12 @@ Add the AIWG MCP server to Hermes configuration.
 hermes mcp add aiwg --command aiwg --args mcp serve
 ```
 
-This appends an entry to `~/.hermes/config.yaml` automatically. Verified against Hermes source `hermes_cli/main.py:10860-10895`: the mcp subcommand surface is `serve | add | remove | list | test | configure` — no `install` subcommand. `--args` is `nargs="*"`, so pass tokens space-separated (`mcp serve`), not comma-separated.
+This appends an entry to `~/.hermes/config.yaml` automatically. Verified
+against Hermes v0.13.0 source `hermes_cli/main.py:10911-10956`: the mcp
+subcommand surface is `serve | add | remove (rm) | list (ls) | test |
+configure (config) | login` — no `install` subcommand. `--args` is
+`nargs="*"`, so pass tokens space-separated (`mcp serve`), not
+comma-separated.
 
 In an active chat, run `/reload-mcp` after adding to pick up the new server without restarting the session.
 
@@ -144,15 +152,51 @@ mcp_servers:
 
 After saving, run `/reload-mcp` in your active Hermes chat to apply.
 
-**Why this is lean by default:** AIWG's MCP server exposes exactly 5 tools (`workflow-run`, `artifact-read`, `artifact-write`, `template-render`, `agent-list`) — no more. This keeps the schema footprint to ~3,000 tokens. No tool whitelisting is needed because the server surface is already minimal.
+**Why this is lean by default:** AIWG's MCP server exposes ~12 core tools
+on default startup — discovery (`discover`, `*-list`/`*-show` pairs for
+skill/command/rule/agent/template), the allow-listed `command-run`, plus
+the artifact read/write surface. Schema footprint stays under 2.5K tokens.
 
-**Verify:**
+Beyond the core, ~45 additional tools are available as **opt-in
+toolsets** controlled by the `AIWG_MCP_TOOLSETS` env var or the
+`--toolsets` flag:
+
+```bash
+# Enable specific toolsets at startup
+AIWG_MCP_TOOLSETS=memory,kb,ralph aiwg mcp serve
+
+# Or via CLI flag
+aiwg mcp serve --toolsets=memory,kb,ralph
+
+# Or everything (~57 tools total)
+aiwg mcp serve --toolsets=all
+```
+
+Known toolsets: `memory`, `kb`, `research` (provenance + research-store),
+`activity-log`, `index`, `ralph`, `mc`, `ops`. The `core` set is always
+on; listing it explicitly is harmless. Unknown toolsets log a warning and
+are skipped (non-fatal).
+
+### Tool name mangling
+
+Hermes prefixes every MCP tool name with `mcp_<server-name>_` and sanitizes
+non-alphanumeric characters to `_`. So AIWG's tool `command-run` becomes
+`mcp_aiwg_command_run` in the Hermes tool registry. The mangling regex is
+`[^A-Za-z0-9_] → _`; hyphens and dots both collapse to underscores. The
+9-char `mcp_aiwg_` prefix is included in the 64-char tool-name budget, so
+AIWG tool names stay ≤30 chars locally to leave headroom for the prefix.
+
+**Verify the server registered correctly:**
 
 ```bash
 hermes chat "What AIWG tools are available?"
 ```
 
-Hermes should list the 5 AIWG tools.
+The default core toolset registers ~12 tools; with all toolsets enabled
+Hermes sees ~57. If your output shows only the legacy 5 (workflow-run,
+artifact-read, artifact-write, template-render, agent-list), the
+AIWG installation is stale — run `aiwg refresh` and `/reload-mcp` in
+your active chat.
 
 ---
 
@@ -160,7 +204,7 @@ Hermes should list the 5 AIWG tools.
 
 Create an `AGENTS.md` at your project root that tells Hermes when to call AIWG.
 
-> **First-match-wins context loading** (verified against `agent/prompt_builder.py:1410-1436`). Hermes loads exactly **one** project-context file per turn, by priority:
+> **First-match-wins context loading** (verified against Hermes v0.13.0 `agent/prompt_builder.py:1417-1456`). Hermes loads exactly **one** project-context file per turn, by priority:
 >
 > 1. `.hermes.md` / `HERMES.md` (walks up to git root)
 > 2. `AGENTS.md` / `agents.md` (cwd only, no walk)
@@ -198,7 +242,7 @@ flowchart TB
 
 ![Polished version (placeholder — generate from #1248 prompts)](../architecture-overview/images/06-hermes-resolver.png)
 
-> **Each context source is capped at 20,000 chars** (`CONTEXT_FILE_MAX_CHARS` in `agent/prompt_builder.py:1284`). Above that, head/tail truncation kicks in with a marker noting the cut. The thin `.hermes.md` AIWG emits (~930 bytes) is well under the cap.
+> **Each context source is capped at 20,000 chars** (`CONTEXT_FILE_MAX_CHARS` in v0.13.0 `agent/prompt_builder.py:824`). Above that, head/tail truncation kicks in with a `[...truncated]` marker. The thin `.hermes.md` AIWG emits (~450 chars) is well under the cap, and the deployed `AGENTS.md` (which inlines top-6 CRITICAL rule priming per #1318) is currently ~4,000 chars.
 
 > **Token budget reminder:** even within the 20K cap, Hermes loads context in full on every turn. Keep routing guidance compact — AIWG's default `.hermes.md` is ~230 tokens.
 
@@ -207,8 +251,9 @@ flowchart TB
 ```markdown
 # AIWG Integration
 
-AIWG connected via MCP (`aiwg mcp serve`). Tools: workflow-run, artifact-read,
-artifact-write, template-render, agent-list.
+AIWG connected via MCP (`aiwg mcp serve`). Core tools: discover, skill-list/show,
+command-list/show/run, rule-list/show, agent-list/show, template-list/render/show,
+artifact-read/write. Opt-in via AIWG_MCP_TOOLSETS=memory,kb,ralph,mc,ops,...
 
 ## Route to AIWG When
 
@@ -254,7 +299,7 @@ for our user service. Save it as a persistent AIWG artifact.
 **What should happen:**
 
 1. Hermes reads the routing rules in `.hermes.md` (or `AGENTS.md` as fallback per Part 3)
-2. Hermes calls `workflow-run` or `artifact-write` via MCP
+2. Hermes calls `mcp_aiwg_command_run` (with the appropriate flow command) or `mcp_aiwg_artifact_write` via MCP
 3. AIWG creates the artifact in `.aiwg/architecture/`
 4. Hermes receives the result and stores a reference
 
@@ -322,7 +367,7 @@ After Part 4, AIWG ships a convenience skill that uses `delegate_task` to keep A
 
 > **#1242 update**: Since 2026.5.0+ `aiwg use --provider hermes` automatically installs this skill at `~/.hermes/skills/aiwg-orchestrate/SKILL.md` on first deploy. The install is idempotent — your edits are preserved across subsequent `aiwg use` runs. The Hermes provider's prune-stale-skills sweep treats `aiwg-orchestrate` as part of the kernel set so it survives reruns.
 
-> **API note (v0.4.0):** `delegate_task` automatically excludes context files (AGENTS.md, SOUL.md) and memory (MEMORY.md, USER.md) from child agents — this is hardcoded behavior, not a per-call parameter. The delegation model is configured globally in `~/.hermes/config.yaml` under `delegation.model`.
+> **API note (verified v0.13.0):** `delegate_task` automatically excludes context files (AGENTS.md, SOUL.md, .hermes.md) and memory (MEMORY.md, USER.md) from child agents — this is hardcoded behavior, not a per-call parameter. Earlier AIWG docs that suggested `skip_context_files=True, skip_memory=True` kwargs were incorrect (those parameters do not exist on the signature; the behavior is automatic). The delegation model is configured globally in `~/.hermes/config.yaml` under `delegation.model`.
 
 **To verify the install:** `ls ~/.hermes/skills/aiwg-orchestrate/SKILL.md`
 
@@ -414,7 +459,7 @@ Hermes loads exactly **one** project-context file per turn (priority order docum
 | **Total overhead** | **~12,150** |
 | **Available for conversation** (32K context) | **~20,618 (63%)** |
 
-The compression threshold fires at 50% of context by default (30% recommended for local models). Note that `CONTEXT_FILE_MAX_CHARS = 20,000` in `agent/prompt_builder.py:1284` bounds the worst case — even a runaway `.hermes.md` cannot exceed 20K chars in the prompt because Hermes head/tail-truncates above that with a `[...truncated]` marker. Keep `.hermes.md` lean by default; if you need a longer routing guide, write the bulk to a file Hermes can fetch on demand via `artifact-read`.
+The compression threshold fires at 50% of context by default (30% recommended for local models). Note that `CONTEXT_FILE_MAX_CHARS = 20,000` in v0.13.0 `agent/prompt_builder.py:824` bounds the worst case — even a runaway `.hermes.md` cannot exceed 20K chars in the prompt because Hermes head/tail-truncates above that with a `[...truncated]` marker. Keep `.hermes.md` lean by default; if you need a longer routing guide, write the bulk to a file Hermes can fetch on demand via `artifact-read`.
 
 ### Recommended compression config for 12GB VRAM
 
@@ -443,7 +488,7 @@ delegation:
 
 This routes AIWG workflows delegated via `delegate_task` to a coding-optimized model while the parent stays on `hermes3` for conversation. Only configure after Part 4 is working reliably.
 
-**New in v0.4.0:** Use `hermes tools` to interactively manage MCP tool configuration and `hermes mcp` to install new MCP servers with OAuth 2.1 PKCE support.
+**Hermes CLI surface (v0.13.0):** `hermes tools` interactively manages MCP tool configuration; `hermes mcp` installs new MCP servers (now with OAuth via `hermes mcp login`, added in v0.13.0). See `hermes_cli/main.py:10911-10956` for the verified mcp subcommand list.
 
 ---
 

@@ -68,6 +68,44 @@ metadata:
 
 **Audit guidance:** skills that need operator-configurable values today typically use environment variables read at runtime. Declaring them in `metadata.hermes.config` makes them discoverable in the Hermes UI rather than tribal knowledge.
 
+## Curator protection (Hermes v0.12.0+)
+
+Hermes v0.12.0 introduced an autonomous **Curator** (`agent/curator.py`)
+that periodically grades and archives skills it deems stale. By default,
+the Curator runs every 7 days. Skills are **excluded** from archival when
+either:
+
+1. They appear in `~/.hermes/skills/.bundled_manifest` (one line per
+   skill, format `<name>:<tag>` — only the name before `:` matters; the
+   tag is decorative). Verified at `tools/skill_usage.py:155-176` in v0.13.0.
+2. Their relative path's first component starts with `.` (e.g.
+   `~/.hermes/skills/.aiwg/...`). Verified at `tools/skill_usage.py:241-243`.
+
+**AIWG protection:**
+
+- **Standard skills** deploy to `~/.hermes/skills/.aiwg/...` and are
+  protected by rule (2) automatically — no manifest entry needed.
+- **Kernel skills** land at the top level (`~/.hermes/skills/<name>/SKILL.md`)
+  and need explicit (1) registration. The Hermes deployer
+  (`tools/agents/providers/hermes.mjs`) writes/updates the bundled manifest
+  on every `aiwg use --provider hermes` (or `aiwg refresh --provider hermes`)
+  with one entry per AIWG-managed kernel skill: `<name>:aiwg-managed`.
+
+The deployer preserves any pre-existing manifest entries (Hermes's own
+bundled skills, Skills Hub installs, other tools' entries) when it
+updates AIWG entries. Re-deployment is idempotent.
+
+If you ever need to inspect or hand-edit the manifest:
+
+```bash
+cat ~/.hermes/skills/.bundled_manifest
+```
+
+If a kernel skill is missing from the manifest after deployment (and the
+Curator subsequently archives it), the recovery path is `aiwg refresh
+--provider hermes` — the deploy is idempotent and restores both files and
+manifest entries.
+
 ## Cross-provider portability
 
 These fields are Hermes-specific. Other providers either ignore unknown frontmatter fields (Claude Code, Cursor, Codex) or strip them at deploy time via per-provider transforms (Factory droids). Declaring them on a skill does not break deploys to other providers.
@@ -76,6 +114,8 @@ The AIWG validator at `aiwg validate-metadata` does not currently check these fi
 
 ## References
 
-- `tools/agents/providers/hermes.mjs` — the Hermes deployer
+- `tools/agents/providers/hermes.mjs` — the Hermes deployer (includes `updateBundledManifest()` and `migrateLegacySkillPath()`)
 - `.aiwg/research/parity/hermes/assessment.md §6 gap 3, §7.3` — origin of these features in the parity research
+- `.aiwg/architecture/sketch-hermes-mcp-parity.md` — three-layer parity model with the Curator protection plan (DD-9)
 - `.aiwg/architecture/adr-agents-md-aggregation.md` — ADR-1 for related cross-platform context delivery
+- Hermes upstream: `tools/skill_usage.py:155-176` (`.bundled_manifest` parser) and `agent/curator.py` (the Curator agent)
