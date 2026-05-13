@@ -30,12 +30,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
-        # `git tag -v` finds the tag annotation/signature because the
-        # tag ref is implicitly fetched on tag-push triggers
-        # (refs/tags/X → refs/tags/X). Adding `fetch-tags: true` here
-        # was a bug — actions/checkout@v4 then tries to fetch the same
-        # ref twice and aborts with "Cannot fetch both <sha> and
-        # refs/tags/<tag> to refs/tags/<tag>" (#1299 follow-up).
+
+      - name: Fetch tag object for signature verification
+        # actions/checkout@v4 on tag-push uses --no-tags by default
+        # and writes refs/tags/<tag> as a commit ref, not the tag
+        # object. `git tag -v` then fails with "cannot verify a non-
+        # tag object of type commit". Force-fetch the tag object
+        # explicitly (`+` overwrites the commit-typed ref). See the
+        # prerelease job in npm-publish.yml for the full post-mortem.
+        run: |
+          set -o pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
 
       - name: Verify signed tag (#1299 / A9 gate)
         # Hard gate: every release tag must verify against a maintainer

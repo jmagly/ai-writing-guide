@@ -66,13 +66,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
-        # `git tag -v` finds the tag annotation/signature because the
-        # tag ref is implicitly fetched on tag-push triggers (the
-        # checkout's `+SHA:refs/tags/TAG` fetch IS the tag object).
-        # Adding `fetch-tags: true` here was a bug — actions/checkout
-        # then tries to fetch the same ref twice and aborts with
-        # "Cannot fetch both <sha> and refs/tags/<tag> to
-        # refs/tags/<tag>" (failed run 2050 on tag v2026.5.3-rc.0).
+
+      - name: Fetch tag object for signature verification
+        # actions/checkout@v4 on tag-push events uses --no-tags by
+        # default, so it writes refs/tags/<tag> as a *commit* ref
+        # (pointing at the tagged commit) rather than as the tag
+        # object. `git tag -v` then fails with "cannot verify a
+        # non-tag object of type commit" because the signature lives
+        # on the tag object, not the commit. Force-fetch the tag
+        # object explicitly (`+` overwrites the commit-typed ref).
+        # Setting `fetch-tags: true` on the checkout step instead
+        # would refuse with a refspec collision against the implicit
+        # `+SHA:refs/tags/TAG` fetch the runner does on tag-push.
+        run: |
+          set -o pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
 
       - name: Verify signed tag (#1299 / A9 gate)
         # Hard gate: every release tag must verify against a maintainer
@@ -264,10 +273,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
-        # `git tag -v` finds the tag annotation/signature because the
-        # tag ref is implicitly fetched on tag-push triggers. Adding
-        # `fetch-tags: true` here was a bug — see the prerelease job
-        # above for the post-mortem.
+
+      - name: Fetch tag object for signature verification
+        # See prerelease job above for the full post-mortem.
+        run: |
+          set -o pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
 
       - name: Verify signed tag (#1299 / A9 gate)
         # Hard gate: every release tag must verify against a maintainer
