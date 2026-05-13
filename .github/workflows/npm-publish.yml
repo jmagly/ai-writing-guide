@@ -130,6 +130,14 @@ jobs:
           # trusted publishing — no NODE_AUTH_TOKEN required.
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Upgrade npm to ^11.5 for release-age gate (#1290 / A15)
+        # node:22.x setup-node may ship an npm older than 11.5; the
+        # `min-release-age` config from the repo-root .npmrc requires
+        # npm 11.5+. Defense-in-depth on the most security-sensitive
+        # workflow: ensure the gate is active even on the publish leg.
+        # See docs/contributing/versioning.md § Release-age policy.
+        run: npm install -g npm@^11.5
+
       - name: Install dependencies
         run: npm ci
 

@@ -407,10 +407,115 @@ When bumping versions, always verify the format:
 "version": "2026.1.5"
 ```
 
+## Release-age policy (Wave 7 — A15, #1290)
+
+AIWG enforces a **release-age gate** on the dep graph: a newly published
+version of any dependency must have been on the public registry for at
+least 7 days before it can enter the lockfile. This is configured in the
+repo-root `.npmrc` via `min-release-age=7`.
+
+The gate exists to neutralize the "brand-new-malicious-publish-window"
+attack — the same supply-chain technique used in the Mini Shai-Hulud
+incidents that motivated the rest of Wave 7. If a package is compromised
+at publish time, the gate bounds the window during which AIWG can be
+exposed to the malicious version: a contributor running `npm install <new-dep>`
+or `npm update` against a freshly published malicious version will see
+npm refuse to resolve it until the gate window has elapsed and someone
+(npm, the maintainer, the security community) has had time to notice
+and yank.
+
+### Requirements
+
+- **npm 11.5+** is required for the `min-release-age` config to be
+  honored. Earlier versions silently ignore the config (no error — but
+  no gate either).
+- Node 20.20.2 / 22.x base images ship npm 10.x by default. CI workflows
+  and contributor machines must install npm@^11.5 before lockfile-
+  affecting operations for the gate to be active.
+
+```bash
+# One-time on a contributor machine (or pin in your shell rc)
+npm install -g npm@^11.5
+
+# In CI (publish workflows specifically) — defense in depth
+# Run before any `npm ci` or `npm install` step:
+npm install -g npm@latest
+```
+
+### Default vs high-sensitivity profile
+
+| Profile | Window | When to use |
+|---------|--------|-------------|
+| **Default** (`min-release-age=7`) | 7 days | All contributor workflows + standard CI |
+| **High-sensitivity** (`min-release-age=10` or higher) | 10+ days | Publish workflows touching release artifacts; major version bumps; manual lockfile regeneration on a security-sensitive branch |
+
+The high-sensitivity profile is opt-in via the
+`AIWG_MIN_RELEASE_AGE_HIGH` environment variable, recognized by AIWG
+internal tooling and the publish workflows:
+
+```bash
+# Contributor regenerating the lockfile with the high-sensitivity profile
+AIWG_MIN_RELEASE_AGE_HIGH=10 npm install --userconfig $PWD/.npmrc \
+  --min-release-age "${AIWG_MIN_RELEASE_AGE_HIGH:-7}"
+
+# Or just override the config on the CLI for a single command
+npm install --min-release-age=10
+```
+
+When CI workflows enter "publish" phase, the gate is invoked with the
+high-sensitivity value to add belt-and-suspenders coverage during the
+most security-sensitive moments.
+
+### What happens if the gate fires
+
+`npm install` (or `npm update`) errors with `No matching version found`
+when the only resolutions for a dep request are inside the gate window.
+This is the desired behavior — it prevents the new version from entering
+the lockfile silently.
+
+To proceed:
+
+1. **Preferred**: wait. The gate window is short. A version published
+   today will be installable in 7 days.
+2. **If the dep is truly urgent**: bypass the gate **deliberately** with
+   `npm install --min-release-age=0 <pkg>`. This is a manual,
+   commit-message-justified override. The override must be documented
+   in the lockfile commit, and the security team should be tagged.
+3. **If a malicious version is suspected**: yank from npm if it's
+   AIWG-owned, file an incident issue, contact npm security, and update
+   the dep-source allowlist to pin the previous known-good version.
+
+### Interaction with other gates
+
+- **A11 tarball audit** (`tools/lint/tarball-audit.mjs`) — independent
+  control. Runs at publish time, checks the AIWG tarball's top-level
+  contents. Not affected by the release-age gate.
+- **A12 audit signatures** (`tools/lint/audit-signatures.mjs`) — runs
+  `npm audit signatures` against published deps. Independent of the
+  gate, but the gate prevents new unsigned attestations from entering
+  the tree faster than they can be verified.
+- **A20 dep-source policy** — scans the lockfile for forbidden source
+  patterns (git+, file:, etc.). Independent of the gate; both run.
+
+### Why not pnpm
+
+A21 (#1301) spike evaluated migrating to pnpm so the gate could ship in
+`pnpm-workspace.yaml minimumReleaseAge` shape, which is slightly cleaner.
+The spike outcome was to stay on npm — see
+`.aiwg/architecture/adr-pnpm-workspace-migration.md` for the full
+reasoning. Short version: the migration cost in Wave 7 scope outweighs
+the benefit; the threat-model effect of either shape is equivalent.
+
 ## References
 
 - [Semantic Versioning 2.0.0](https://semver.org/)
 - [Calendar Versioning](https://calver.org/)
 - [npm semver](https://docs.npmjs.com/cli/v6/using-npm/semver)
+- [npm config: min-release-age](https://docs.npmjs.com/cli/v11/using-npm/config#min-release-age)
 - @CLAUDE.md - Release Documentation Requirements
 - @docs/contributing/ci-cd-secrets.md - CI/CD configuration
+- @docs/contributing/dependency-sources.md - Dependency source policy (A20)
+- @.npmrc - Repo-root npm config (release-age gate lives here)
+- @.aiwg/architecture/adr-pnpm-workspace-migration.md - Why npm not pnpm
+- Issue #1290 — A15 release-age gate
+- Issue #1278 — Wave 7 (Mini Shai-Hulud supply-chain hardening) epic

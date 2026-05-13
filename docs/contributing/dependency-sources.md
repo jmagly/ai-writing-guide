@@ -167,6 +167,26 @@ If an entry's `last-reviewed-date` is older than 90 days, that's
 technical debt; consider whether the dep can be swapped to a registry
 version or removed entirely.
 
+## Lockfile regeneration and the release-age gate (#1290)
+
+When you regenerate the lockfile (running `npm install <new-dep>` or
+`npm update`), the repo-root `.npmrc` enforces a **release-age gate**:
+newly published versions of any dep must have been on the public
+registry for at least 7 days before npm will let them into the lockfile.
+
+This is a Wave 7 control against the brand-new-malicious-publish-window
+attack pattern (Mini Shai-Hulud). The full policy lives in
+[`docs/contributing/versioning.md` § Release-age policy](versioning.md).
+
+If your `npm install <pkg>` errors with `No matching version found`,
+check whether the requested version was published less than 7 days ago.
+If so, either wait or — with deliberate sign-off — override with
+`npm install --min-release-age=0 <pkg>` and document the override in the
+lockfile commit message.
+
+**Requirements**: npm 11.5+. Earlier versions silently ignore the gate.
+Run `npm install -g npm@^11.5` once on every contributor machine.
+
 ## Related
 
 - **ADR**: `.aiwg/architecture/adr-dep-source-policy.md` — full policy
@@ -174,5 +194,6 @@ version or removed entirely.
 - **Allowlist file**: `ci/dep-source-allowlist.yaml`.
 - **Lint script**: `tools/lint/dep-source.mjs`.
 - **Companion controls**: lockfile integrity (#1283), pinned containers
-  and actions (#1281, #1282), postinstall hook removal (#1279).
+  and actions (#1281, #1282), postinstall hook removal (#1279),
+  release-age gate (#1290 / Wave 7).
 - **Threat model**: control C22 in `docs/security/supply-chain-hardening-plan.md`.

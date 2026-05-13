@@ -79,6 +79,16 @@ jobs:
         # docs/contributing/versioning.md for the operator setup.
         run: bash tools/ci/verify-signed-tag.sh
 
+      - name: Upgrade npm to ^11.5 for release-age gate (#1290 / A15)
+        # node:20.20.2 base image ships npm 10.8.2; the `min-release-age`
+        # config key from the repo-root .npmrc requires npm 11.5+. This is
+        # defense-in-depth: `npm ci` against a current lockfile doesn't
+        # re-resolve so the gate is a no-op on a locked install, but a
+        # publish workflow is the most security-sensitive moment AIWG has,
+        # and we want the gate genuinely active here.
+        # See docs/contributing/versioning.md § Release-age policy.
+        run: npm install -g npm@^11.5
+
       - name: Install dependencies
         run: npm ci
 
@@ -262,6 +272,16 @@ jobs:
         # See tools/ci/verify-signed-tag.sh for the full procedure and
         # docs/contributing/versioning.md for the operator setup.
         run: bash tools/ci/verify-signed-tag.sh
+
+      - name: Upgrade npm to ^11.5 for release-age gate (#1290 / A15)
+        # node:20.20.2 base image ships npm 10.8.2; the `min-release-age`
+        # config key from the repo-root .npmrc requires npm 11.5+. This is
+        # defense-in-depth: `npm ci` against a current lockfile doesn't
+        # re-resolve so the gate is a no-op on a locked install, but a
+        # publish workflow is the most security-sensitive moment AIWG has,
+        # and we want the gate genuinely active here.
+        # See docs/contributing/versioning.md § Release-age policy.
+        run: npm install -g npm@^11.5
 
       - name: Install dependencies
         run: npm ci
