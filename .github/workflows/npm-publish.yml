@@ -148,12 +148,24 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Upgrade npm to ^11.5 for release-age gate (#1290 / A15)
-        # node:22.x setup-node may ship an npm older than 11.5; the
-        # `min-release-age` config from the repo-root .npmrc requires
-        # npm 11.5+. Defense-in-depth on the most security-sensitive
-        # workflow: ensure the gate is active even on the publish leg.
+        # node:22.x setup-node ships npm 10.9.x; the `min-release-age`
+        # config from the repo-root .npmrc requires npm 11.5+.
+        # Defense-in-depth on the most security-sensitive workflow:
+        # ensure the gate is active even on the publish leg.
         # See docs/contributing/versioning.md § Release-age policy.
-        run: npm install -g npm@^11.5
+        #
+        # `--force` works around a known npm 10→11 self-upgrade bug
+        # on GitHub-hosted runners where the partial-install state
+        # leaves transitive deps (e.g. promise-retry) missing from
+        # arborist's node_modules tree. The guard avoids re-installing
+        # when npm is already ≥11.
+        run: |
+          set -o pipefail
+          MAJOR="$(npm --version | cut -d. -f1)"
+          if [ "${MAJOR}" -lt 11 ]; then
+            npm install -g --force npm@^11.5
+          fi
+          echo "Active npm: $(npm --version)"
 
       - name: Install dependencies
         run: npm ci
