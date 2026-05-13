@@ -47,15 +47,17 @@ export const aliases = [];
 export const paths = {
   agents: 'AGENTS.md',                           // Aggregated routing guide at project root
   commands: '',                                   // Not applicable — MCP replaces commands
-  // Skills sequestered under ~/.hermes/.aiwg/skills/ — index-driven discovery (#1212).
-  skills: path.join(os.homedir(), '.hermes', '.aiwg', 'skills'),
+  // Standard skills under ~/.hermes/skills/.aiwg/ — child of Hermes's scanned root,
+  // recursively discovered (verified `agent/skill_utils.py:478-489`, os.walk follows
+  // subdirs except .git/.github/.hub/.archive). Kernel skills land in the parent.
+  skills: path.join(os.homedir(), '.hermes', 'skills', '.aiwg'),
   rules: '',                                      // Not applicable — Hermes uses AGENTS.md
 };
 
 // Kernel skills (always-loaded) deploy to the platform-native dir.
-// Hermes scanning behavior of nested .aiwg/ has not been independently
-// verified (per #1216 out-of-scope note); the kernel-native split is
-// preserved for parity with other providers.
+// Standard skills land in the .aiwg/ subdirectory under the same root —
+// Hermes recursively walks the skill root (verified against upstream v0.13.0,
+// `agent/skill_utils.py:478-489`).
 export const kernelSkillsPath = path.join(os.homedir(), '.hermes', 'skills');
 
 export const support = {
@@ -153,7 +155,7 @@ export function generateAgentsMd(agentCount, skillCount, targetDir, opts) {
  * Skills are user-global in Hermes, deployed once, available in all
  * projects. Kernel routing per the cross-provider pattern:
  *   - kernel skills → ~/.hermes/skills/         (platform-native, always-loaded)
- *   - standard      → ~/.hermes/.aiwg/skills/   (index-discoverable)
+ *   - standard      → ~/.hermes/skills/.aiwg/   (recursively walked by Hermes)
  */
 export function deploySkills(skillDirs, opts) {
   const standardDestDir = paths.skills;
