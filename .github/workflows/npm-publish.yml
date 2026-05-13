@@ -355,18 +355,32 @@ jobs:
         # would resolve to stale code. After a stable lands, advance @next
         # to point at the same stable version so the channel never lags.
         #
-        # Idempotent — `npm dist-tag add` is a no-op if @next already
-        # points at the target. Uses the same OIDC-issued auth as the
-        # publish step above (npm 11.5+ honors the workflow's id-token
-        # claim for dist-tag operations).
+        # IMPORTANT: OIDC trusted-publishing tokens are publish-scoped only;
+        # `npm dist-tag` requires a regular auth token. This step uses a
+        # narrowly-scoped automation token (`NPM_DIST_TAG_TOKEN` — package
+        # management scope on the `aiwg` package, NOT the old NPMJS_TOKEN).
+        # When the token is absent the step warns and continues — the
+        # tarball + signatures are already published, only the @next
+        # channel lags until an operator advances it manually.
         if: steps.version.outputs.prerelease == 'false'
+        env:
+          NPM_DIST_TAG_TOKEN: ${{ secrets.NPM_DIST_TAG_TOKEN }}
         run: |
           set -o pipefail
           VERSION='${{ steps.version.outputs.version }}'
+          if [ -z "${NPM_DIST_TAG_TOKEN:-}" ]; then
+            echo "⚠ NPM_DIST_TAG_TOKEN not configured — @next will lag @latest."
+            echo "  Operator follow-up: issue a granular automation token with"
+            echo "  package management scope on 'aiwg', store as NPM_DIST_TAG_TOKEN,"
+            echo "  then re-run this workflow OR run manually:"
+            echo "    npm dist-tag add aiwg@${VERSION} next"
+            exit 0
+          fi
           echo "Advancing aiwg@next → ${VERSION}"
+          echo "//registry.npmjs.org/:_authToken=${NPM_DIST_TAG_TOKEN}" > ~/.npmrc
           npm dist-tag add "aiwg@${VERSION}" next
-          # Verify
           CURRENT_NEXT=$(npm view "aiwg@next" version 2>/dev/null || echo "")
+          rm -f ~/.npmrc
           if [ "$CURRENT_NEXT" = "$VERSION" ]; then
             echo "✓ aiwg@next = ${VERSION}"
           else
