@@ -30,9 +30,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
-        with:
-          # Needed so `git tag -v` can see the tag annotation (signature).
-          fetch-tags: true
+        # `git tag -v` finds the tag annotation/signature because the
+        # tag ref is implicitly fetched on tag-push triggers
+        # (refs/tags/X → refs/tags/X). Adding `fetch-tags: true` here
+        # was a bug — actions/checkout@v4 then tries to fetch the same
+        # ref twice and aborts with "Cannot fetch both <sha> and
+        # refs/tags/<tag> to refs/tags/<tag>" (#1299 follow-up).
 
       - name: Verify signed tag (#1299 / A9 gate)
         # Hard gate: every release tag must verify against a maintainer

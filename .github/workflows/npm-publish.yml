@@ -109,9 +109,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1 (ci/digests.txt)
-        with:
-          # Needed so `git tag -v` can see the tag annotation (signature).
-          fetch-tags: true
+        # `git tag -v` finds the tag annotation/signature because the
+        # tag ref is implicitly fetched on tag-push triggers. Adding
+        # `fetch-tags: true` here was a bug — see gitea-release.yml
+        # for the post-mortem.
 
       - name: Verify signed tag (#1299 / A9 gate)
         # Hard cryptographic gate — the same script that gates the Gitea
