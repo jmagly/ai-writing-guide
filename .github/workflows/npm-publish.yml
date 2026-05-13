@@ -383,13 +383,23 @@ jobs:
           fi
           echo "Advancing aiwg@next → ${VERSION}"
           npm dist-tag add "aiwg@${VERSION}" next
-          CURRENT_NEXT=$(npm view "aiwg@next" version 2>/dev/null || echo "")
-          if [ "$CURRENT_NEXT" = "$VERSION" ]; then
-            echo "✓ aiwg@next = ${VERSION}"
-          else
-            echo "✗ aiwg@next = ${CURRENT_NEXT:-<missing>}, expected ${VERSION}"
-            exit 1
-          fi
+          # Cache-bust the verify (npm view caches dist-tags; right after a
+          # mutation the local cache can return the pre-mutation value even
+          # though the registry is updated). Retry against the registry until
+          # the new value propagates, with a hard ceiling.
+          for i in 1 2 3 4 5; do
+            CURRENT_NEXT=$(npm view "aiwg@next" version --prefer-online --no-update-notifier 2>/dev/null || echo "")
+            if [ "$CURRENT_NEXT" = "$VERSION" ]; then
+              echo "✓ aiwg@next = ${VERSION}"
+              break
+            fi
+            echo "Attempt $i: aiwg@next = ${CURRENT_NEXT:-<missing>}, expected ${VERSION}; retrying in 5s..."
+            sleep 5
+            if [ "$i" = "5" ]; then
+              echo "✗ aiwg@next verification exhausted retries"
+              exit 1
+            fi
+          done
 
       # ============================================================
       # Tarball Sigstore signing — #1287 / A8 (Wave 5 of #1278)
