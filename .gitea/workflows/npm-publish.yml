@@ -187,75 +187,32 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # DEPRECATED (#1283 / A5, Wave 4 of #1278):
-      # This npmjs.org publish leg is being phased out in favor of OIDC
-      # trusted publishing on the GitHub mirror. The replacement workflow
-      # lives at .github/workflows/npm-publish.yml; it uses
-      # `npm publish --provenance` with short-lived OIDC tokens (no
-      # long-lived NPMJS_TOKEN required).
+      # DISABLED 2026-05-12 (#1283 / A5, Wave 4 of #1278 — v2026.5.3-rc.0
+      # post-mortem). The npmjs.org publish leg has moved to
+      # .github/workflows/npm-publish.yml (OIDC trusted publishing +
+      # provenance). Operator confirmed npmjs.org trusted publisher is
+      # configured. The first attempt at v2026.5.3-rc.0 had BOTH legs
+      # firing; Gitea's NPMJS_TOKEN-based publish won the race and
+      # landed the version WITHOUT provenance attestation, leaving the
+      # GH Actions OIDC leg with nothing to publish. So we disable the
+      # Gitea npmjs.org legs here. The Gitea-registry leg (above) and
+      # the GitHub-Actions OIDC leg remain the two active publish paths.
       #
-      # Until the operator verifies the GH Actions OIDC path with a real
-      # tag-push, both legs publish to npmjs.org simultaneously. The
-      # npm registry de-dups by version-already-exists: whichever leg
-      # lands first wins; the second gets HTTP 409 / EPUBLISHCONFLICT
-      # and the `cannot publish over` branch below treats that as success
-      # (existing pattern from #1247).
-      #
-      # Operator action item once .github/workflows/npm-publish.yml
-      # produces its first verified release: remove this step (and the
-      # paired stable-tag step lower down) and revoke NPMJS_TOKEN.
-      - name: Publish pre-release to public npmjs.org
-        run: |
-          set -o pipefail
-          cat > .npmrc << 'NPMRC'
-          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
-          NPMRC
-          npm publish --access public --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee publish-public-output.txt || {
-            # 409/403/"cannot publish over" = "already published" (success).
-            # 404 PUT = token/scope/ownership problem (failure — must surface,
-            # see #1247). Anything else = unexpected (failure).
-            if grep -qE "cannot publish over|EPUBLISHCONFLICT|409" publish-public-output.txt; then
-              echo "✓ Pre-release version already published to npmjs.org"
-            else
-              echo "✗ Public npmjs.org pre-release publish failed (HTTP/npm error above)"
-              echo "  Common causes: NPMJS_TOKEN missing scope on the aiwg package,"
-              echo "  npmjs.org account ownership change, or token rotation needed."
-              cat publish-public-output.txt; exit 1
-            fi
-          }
+      # `if: false` is cleaner than deleting because it (a) keeps the
+      # diff small and reversible if OIDC misbehaves, (b) makes the
+      # deactivation visible in CI logs as "skipped" status. The actual
+      # block can be deleted in a future commit once OIDC is proven in
+      # production. NPMJS_TOKEN can also be revoked from Gitea secrets
+      # once that proof lands.
+      - name: Publish pre-release to public npmjs.org (DISABLED — OIDC path active)
+        if: false
+        run: echo "Disabled — see .github/workflows/npm-publish.yml for the OIDC publish."
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 
-      - name: Affirm dist-tag on npmjs.org (idempotent)
-        run: |
-          set -o pipefail
-          cat > .npmrc << 'NPMRC'
-          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
-          NPMRC
-          VERSION="${{ steps.rcversion.outputs.npm_version }}"
-          TAG="${{ steps.rcversion.outputs.npm_tag }}"
-          for i in 1 2 3 4 5; do
-            if npm dist-tag add "aiwg@${VERSION}" "${TAG}" 2>&1 | tee dist-tag-output.txt; then
-              break
-            fi
-            if grep -qiE "is not in the npm registry|not found|404" dist-tag-output.txt; then
-              echo "Attempt $i: version not yet visible on npmjs.org, retrying in 10s..."
-              sleep 10
-            else
-              echo "✗ npmjs.org dist-tag promotion failed"; cat dist-tag-output.txt; exit 1
-            fi
-            if [ "$i" = "5" ]; then
-              echo "✗ npmjs.org dist-tag promotion exhausted retries"; exit 1
-            fi
-          done
-          echo "npmjs.org dist-tags after promotion:"
-          npm view aiwg dist-tags
-          CURRENT=$(npm view "aiwg@${TAG}" version)
-          if [ "$CURRENT" != "$VERSION" ]; then
-            echo "✗ Verification failed: aiwg@${TAG} resolves to ${CURRENT}, expected ${VERSION}"
-            exit 1
-          fi
-          echo "✓ aiwg@${TAG} = ${VERSION} on npmjs.org"
+      - name: Affirm dist-tag on npmjs.org (DISABLED — OIDC path active)
+        if: false
+        run: echo "Disabled — the OIDC publish step in .github/workflows/npm-publish.yml handles dist-tags."
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 
@@ -417,76 +374,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # DEPRECATED (#1283 / A5, Wave 4 of #1278):
-      # Stable npmjs.org publish leg — paired with the pre-release leg
-      # above. Same phase-out plan: GH Actions workflow at
-      # .github/workflows/npm-publish.yml uses OIDC trusted publishing
-      # + `--provenance`. Operator removes this block after first
-      # verified OIDC release on the GH mirror and revokes NPMJS_TOKEN.
-      # See .aiwg/architecture/adr-npmjs-org-via-github-actions.md.
-      - name: Publish to public npmjs.org
-        if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.skip_public != 'true' }}
-        run: |
-          set -o pipefail
-          # Configure auth for public npm registry
-          cat > .npmrc << 'NPMRC'
-          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
-          NPMRC
-
-          # Stable publish — npm's default behavior promotes `latest`, and the
-          # next step re-affirms that explicitly for re-run safety.
-          # Allow re-runs: treat "version already exists" as success.
-          # 404 PUT is intentionally NOT swallowed (#1247) — it indicates
-          # token scope / package ownership failure that must surface.
-          npm publish --access public 2>&1 | tee publish-public-output.txt || {
-            if grep -qE "cannot publish over the previously published|EPUBLISHCONFLICT|409" publish-public-output.txt; then
-              echo "✓ Version already published to npmjs.org - treating as success"
-            else
-              echo "✗ Public npm publish failed (HTTP/npm error above)"
-              echo "  Common causes: NPMJS_TOKEN missing scope on the aiwg package,"
-              echo "  npmjs.org account ownership change, or token rotation needed."
-              cat publish-public-output.txt
-              exit 1
-            fi
-          }
+      # DISABLED 2026-05-12 (#1283 / A5, Wave 4 of #1278 — v2026.5.3-rc.0
+      # post-mortem). See the prerelease job above for the full context.
+      # Stable npmjs.org publish has moved to .github/workflows/
+      # npm-publish.yml (OIDC trusted publishing + provenance).
+      - name: Publish to public npmjs.org (DISABLED — OIDC path active)
+        if: false
+        run: echo "Disabled — see .github/workflows/npm-publish.yml for the OIDC publish."
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 
-      - name: Promote to latest on npmjs.org (idempotent + verified)
-        # The fix that prevents the 2026.5.0 / 2026.3.3 latest-tag drift the
-        # operator reported. Always writes `latest` after a stable publish,
-        # then verifies via `npm view aiwg@latest version`. If verification
-        # fails, the workflow fails — main must never be left red with a
-        # stale `latest`.
-        if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.skip_public != 'true' }}
-        run: |
-          set -o pipefail
-          cat > .npmrc << 'NPMRC'
-          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
-          NPMRC
-          VERSION="${{ steps.version.outputs.version }}"
-          for i in 1 2 3 4 5; do
-            if npm dist-tag add "aiwg@${VERSION}" latest 2>&1 | tee dist-tag-output.txt; then
-              break
-            fi
-            if grep -qiE "is not in the npm registry|not found|404" dist-tag-output.txt; then
-              echo "Attempt $i: version not yet visible on npmjs.org, retrying in 10s..."
-              sleep 10
-            else
-              echo "✗ npmjs.org latest promotion failed"; cat dist-tag-output.txt; exit 1
-            fi
-            if [ "$i" = "5" ]; then
-              echo "✗ npmjs.org latest promotion exhausted retries"; exit 1
-            fi
-          done
-          echo "npmjs.org dist-tags after promotion:"
-          npm view aiwg dist-tags
-          CURRENT_LATEST=$(npm view aiwg@latest version)
-          if [ "$CURRENT_LATEST" != "$VERSION" ]; then
-            echo "✗ Verification failed: aiwg@latest = ${CURRENT_LATEST}, expected ${VERSION}"
-            exit 1
-          fi
-          echo "✓ aiwg@latest = ${VERSION} on npmjs.org"
+      - name: Promote to latest on npmjs.org (DISABLED — OIDC path active)
+        if: false
+        run: echo "Disabled — the OIDC publish step in .github/workflows/npm-publish.yml handles dist-tags."
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 

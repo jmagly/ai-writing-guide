@@ -9,7 +9,31 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
-## [2026.5.3-rc.0] - 2026-05-12 — "Mini Shai-Hulud supply-chain hardening — Track A complete"
+## [2026.5.3-rc.1] - 2026-05-12 — "Mini Shai-Hulud — OIDC-only publish path"
+
+Supersedes [2026.5.3-rc.0]. Three CI fixes since rc.0 plus a workflow-deactivation pass to clear the dual-publish race that prevented provenance attestation from landing.
+
+### Fixed in CI
+
+- **Signed-tag verify on tag-push checkout**. `actions/checkout@v4` on tag-push events writes `refs/tags/<tag>` as a commit ref (not the tag object) by default, so `git tag -v` failed with "cannot verify a non-tag object of type commit." Adding `fetch-tags: true` to the checkout produced a refspec collision (both fetches target `refs/tags/<tag>`). Fix: explicit `git fetch +refs/tags/X:refs/tags/X --depth=1` step after checkout (commits `33cf1c77` + `0fa4dd52`).
+- **Disabled Gitea-side npmjs.org publish** to clear the race that landed rc.0 without provenance. The Gitea workflow's `NPMJS_TOKEN`-based publish won the race against the GH Actions OIDC path, leaving npmjs.org's `aiwg@2026.5.3-rc.0` without a provenance attestation. rc.1 ships with the four Gitea npmjs.org publish/affirm steps `if: false`-gated and the GH Actions OIDC workflow as the sole publisher. NPMJS_TOKEN stays in Gitea (unused) pending operator revocation after rc.1 verifies clean.
+
+### What rc.1 verifies
+
+Same pipeline as rc.0 plus the fixes above:
+
+- Cryptographically signed git tag (#1299 / A9) — verified
+- OIDC trusted publishing on npmjs.org with provenance attestation (#1283 / A5) — **now actually exercised**
+- Cosign keyless tarball signing with `.sigstore` bundles (#1287 / A8) — fires from the GH Actions workflow
+- CycloneDX SBOM via syft (#1288 / A13) — fires from the GH Actions workflow
+- `npm audit signatures` gate (#1288 / A12) — green at publish time
+- Tarball top-level allowlist (#1288 / A11) — green
+- 7-day release-age gate (#1290 / A15) — enforced via npm 11.5+
+- Dep-source policy lint (#1300 / A20) — green
+
+Operator follow-ups (now unblocked): revoke NPMJS_TOKEN on Gitea + npmjs.org once rc.1 lands clean; delete the `if: false`-gated blocks in a future commit.
+
+## [2026.5.3-rc.0] - 2026-05-12 — "Mini Shai-Hulud supply-chain hardening — Track A complete (no provenance)"
 
 First end-to-end pre-release exercising the new supply-chain pipeline. Track A of the Mini Shai-Hulud hardening campaign (#1278) ships complete across this release: 13 issues across 8 waves landed since v2026.5.2. Wave 9 (user-facing capabilities — Track B) ships in v2026.5.3 stable.
 
