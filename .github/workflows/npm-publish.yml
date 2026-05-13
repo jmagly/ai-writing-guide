@@ -587,6 +587,22 @@ jobs:
             "$SBOM"
           echo "✓ Signed $SBOM → ${SBOM}.sigstore"
 
+      - name: Install GitHub CLI (node:24 image does not ship it)
+        # node:24-bookworm doesn't include `gh`. The asset-upload step
+        # below uses `gh release create` / `gh release upload`. rc.1
+        # retag #7 (1f6531f0) blew up here with exit 127 after a
+        # successful cosign + SBOM run. Pin to a specific gh release;
+        # the tarball is content-addressed by the v<X.Y.Z> tag at
+        # raw.githubusercontent (same approach as syft install above).
+        run: |
+          set -euo pipefail
+          GH_VERSION=2.81.0
+          curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz -C /tmp
+          mv "/tmp/gh_${GH_VERSION}_linux_amd64/bin/gh" /usr/local/bin/gh
+          chmod +x /usr/local/bin/gh
+          gh --version
+
       - name: Upload signed release assets to GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
