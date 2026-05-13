@@ -18,12 +18,11 @@ import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { registerDiscoveryTools } from './tools/discovery.mjs';
+import { registerCommandRunTool } from './tools/command-run.mjs';
+import { AIWG_ROOT } from './helpers.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Resolve AIWG root directory
-const AIWG_ROOT = process.env.AIWG_ROOT ||
-  path.join(process.env.HOME || '', '.local/share/ai-writing-guide');
 
 // Framework paths
 const FRAMEWORKS = {
@@ -69,10 +68,23 @@ export function createServer() {
   // TOOLS
   // ============================================
 
-  // Tool: workflow-run
+  // ============================================
+  // Discovery toolset (#1311 #1313 #1320) — registers:
+  //   discover, skill-list, skill-show, command-list, command-show,
+  //   rule-list, rule-show, agent-show, template-list, template-show
+  // ============================================
+  registerDiscoveryTools(server);
+
+  // ============================================
+  // Command-run dispatch (#1312) — registers:
+  //   command-run (replaces workflow-run; allow-listed CLI dispatch)
+  // ============================================
+  registerCommandRunTool(server);
+
+  // Tool: workflow-run (DEPRECATED — use command-run instead, #1315)
   server.registerTool('workflow-run', {
-    title: 'Run AIWG Workflow',
-    description: 'Execute an AIWG workflow (phase transitions, reviews, artifact generation). Automatically applies decompose-task, parallel-execution, and recovery-protocol prompts.',
+    title: 'Run AIWG Workflow (DEPRECATED)',
+    description: '[DEPRECATED — use `command-run` instead] Stub returning workflow metadata. The real execution path is via `command-run` with a CLI command name (see `command-list`). Kept for back-compat.',
     inputSchema: {
       prompt: z.string().describe('Natural language workflow request or command name'),
       guidance: z.string().optional().describe('Strategic guidance to influence execution'),
@@ -127,12 +139,19 @@ export function createServer() {
         prompt: null
       });
 
+      const deprecationNotice = {
+        deprecated: true,
+        replacement: 'mcp_aiwg_command_run',
+        migration: 'Call `command-list` to find the matching CLI command, then invoke `command-run` with command + args. workflow-run returns parsing metadata only — it does not execute workflows.',
+      };
+
       if (dry_run) {
         return {
           content: [{
             type: 'text',
             text: JSON.stringify({
               status: 'dry_run',
+              ...deprecationNotice,
               detected_framework: detectedFramework,
               detected_workflow: workflow,
               workflow_info: workflowInfo,
@@ -146,13 +165,14 @@ export function createServer() {
         };
       }
 
-      // For now, return workflow detection info with integrated prompts
-      // Full implementation will integrate with AIWG CLI
+      // workflow-run is a stub — never actually executed workflows. The
+      // post-#1212 path is command-run via the allow-listed CLI bridge.
       return {
         content: [{
           type: 'text',
           text: JSON.stringify({
             status: 'ready',
+            ...deprecationNotice,
             framework: detectedFramework,
             workflow,
             workflow_info: workflowInfo,
@@ -160,7 +180,7 @@ export function createServer() {
             prompt,
             guidance,
             project_dir,
-            message: 'Workflow parsed with integrated prompts. Full execution requires AIWG CLI integration.'
+            message: 'workflow-run is deprecated. Use command-run for real CLI execution.'
           }, null, 2)
         }]
       };
