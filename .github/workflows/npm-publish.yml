@@ -100,7 +100,7 @@ jobs:
     # Container pinned by digest per .gitea/workflows/README.md ("CI Pinning
     # Policy"). Same discipline as the Gitea workflows — no mutable tags.
     # Row in ci/digests.txt.
-    container: node:22@sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3  # node 22.22.2 (see ci/digests.txt)
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1 (see ci/digests.txt)
     timeout-minutes: 15
     defaults:
       run:
@@ -141,28 +141,21 @@ jobs:
       - name: Setup Node.js with npmjs.org registry
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5.0.0 (ci/digests.txt) — Node 24
         with:
-          node-version: '22.x'
+          node-version: '24.x'
           # Wires `npm publish` against npmjs.org. Combined with
           # `permissions: id-token: write` above, this enables OIDC
           # trusted publishing — no NODE_AUTH_TOKEN required.
           registry-url: 'https://registry.npmjs.org'
 
-      # The repo .npmrc sets `min-release-age=7` (#1290 / A15) which
-      # requires npm 11.5+ to honor. node:22.x setup-node ships
-      # npm 10.9.x and `npm install -g npm@^11.5` deterministically
-      # fails on this runner with arborist's MODULE_NOT_FOUND for
-      # promise-retry (known npm 10→11 self-upgrade bug; --force
-      # doesn't help).
-      #
-      # Skipping the upgrade here is intentional and safe: CI's
-      # `npm ci` against a locked tree does NOT resolve against the
-      # registry, so the release-age gate is a no-op at publish time
-      # regardless of npm version. The gate matters at lockfile
-      # regeneration (contributor `npm install <pkg>` / `npm update`),
-      # which never happens here. Defense-in-depth is enforced via
-      # .gitea/workflows/ci.yml which runs on every push with npm 10
-      # → npm 11.5 upgrade working cleanly on node:20. See post-mortem
-      # in commit history for v2026.5.3-rc.1 retag #4.
+      # node:24 ships npm 11.12.1 natively — clears the npm 11.5.1+
+      # requirement that npm trusted publishing needs WITHOUT a token.
+      # The earlier node:22 (npm 10.9.x) attempt produced provenance
+      # attestations (logIndex'd in Sigstore correctly), but the
+      # subsequent publish PUT lacked OIDC auth headers because npm
+      # 10.x doesn't emit them — npmjs.org returned 404 PUT every
+      # time. node:24 fixes this at the source. The full post-mortem
+      # (8 failed runs across rc.0 + rc.1 retags 1-5) lives in the
+      # commit history; the canonical 'why node 24' is right here.
 
       - name: Install dependencies
         run: npm ci

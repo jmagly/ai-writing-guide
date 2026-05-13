@@ -23,7 +23,8 @@
 # ============================================================================
 
 container  node:20         sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  20.20.2-bookworm  2026-05-12  initial pin (Wave 2 of #1278)
-container  node:22         sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3  22.22.2-bookworm  2026-05-12  npmjs.org OIDC trusted publishing requires Node 22.14.0+, added for .github/workflows/npm-publish.yml (Wave 4 of #1278, #1283)
+container  node:22         sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3  22.22.2-bookworm  2026-05-12  Wave 4 of #1278 (#1283) — superseded by node:24 below for npmjs.org OIDC; retained as a row for traceability
+container  node:24         sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  24.15.0-bookworm  2026-05-12  npmjs.org OIDC trusted publishing requires npm 11.5.1+; node:22 ships npm 10.9.7 and `npm install -g npm@^11.5` deterministically fails on this runner. node:24.15.0 ships npm 11.12.1 natively. Used by .github/workflows/npm-publish.yml (rc.1 retag #6, post-mortem on 7 failed runs)
 
 # Notes on the node:20 pin:
 # - Both `node:20` and `node:20-bookworm` tags resolve to this same digest
