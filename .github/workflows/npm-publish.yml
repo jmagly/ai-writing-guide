@@ -349,6 +349,31 @@ jobs:
             fi
           done
 
+      - name: Advance @next dist-tag on stable releases
+        # On a stable publish (--tag latest), @next is still pointing at
+        # whatever pre-release we cut last. Consumers tracking `aiwg@next`
+        # would resolve to stale code. After a stable lands, advance @next
+        # to point at the same stable version so the channel never lags.
+        #
+        # Idempotent — `npm dist-tag add` is a no-op if @next already
+        # points at the target. Uses the same OIDC-issued auth as the
+        # publish step above (npm 11.5+ honors the workflow's id-token
+        # claim for dist-tag operations).
+        if: steps.version.outputs.prerelease == 'false'
+        run: |
+          set -o pipefail
+          VERSION='${{ steps.version.outputs.version }}'
+          echo "Advancing aiwg@next → ${VERSION}"
+          npm dist-tag add "aiwg@${VERSION}" next
+          # Verify
+          CURRENT_NEXT=$(npm view "aiwg@next" version 2>/dev/null || echo "")
+          if [ "$CURRENT_NEXT" = "$VERSION" ]; then
+            echo "✓ aiwg@next = ${VERSION}"
+          else
+            echo "✗ aiwg@next = ${CURRENT_NEXT:-<missing>}, expected ${VERSION}"
+            exit 1
+          fi
+
       # ============================================================
       # Tarball Sigstore signing — #1287 / A8 (Wave 5 of #1278)
       # ============================================================
