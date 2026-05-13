@@ -186,12 +186,15 @@ describe('Utility Command Handlers', () => {
       expect(validateMetadataHandler.description).toMatch(/metadata/i);
     });
 
-    it('should delegate to tools/cli/validate-metadata.mjs', async () => {
+    it('should delegate to tools/cli/validate-metadata.mjs with default recursive scope', async () => {
+      // When invoked with no path args, validate-metadata defaults to
+      // `--recursive agentic/code` so the CLI shells out without forcing
+      // every user to remember the path. Test reflects that default.
       await validateMetadataHandler.execute(mockContext);
 
       expect(mockRun).toHaveBeenCalledWith(
         'tools/cli/validate-metadata.mjs',
-        mockContext.args,
+        ['--recursive', 'agentic/code'],
         { cwd: mockContext.cwd }
       );
     });
