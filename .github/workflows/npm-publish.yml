@@ -147,25 +147,22 @@ jobs:
           # trusted publishing — no NODE_AUTH_TOKEN required.
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Upgrade npm to ^11.5 for release-age gate (#1290 / A15)
-        # node:22.x setup-node ships npm 10.9.x; the `min-release-age`
-        # config from the repo-root .npmrc requires npm 11.5+.
-        # Defense-in-depth on the most security-sensitive workflow:
-        # ensure the gate is active even on the publish leg.
-        # See docs/contributing/versioning.md § Release-age policy.
-        #
-        # `--force` works around a known npm 10→11 self-upgrade bug
-        # on GitHub-hosted runners where the partial-install state
-        # leaves transitive deps (e.g. promise-retry) missing from
-        # arborist's node_modules tree. The guard avoids re-installing
-        # when npm is already ≥11.
-        run: |
-          set -o pipefail
-          MAJOR="$(npm --version | cut -d. -f1)"
-          if [ "${MAJOR}" -lt 11 ]; then
-            npm install -g --force npm@^11.5
-          fi
-          echo "Active npm: $(npm --version)"
+      # The repo .npmrc sets `min-release-age=7` (#1290 / A15) which
+      # requires npm 11.5+ to honor. node:22.x setup-node ships
+      # npm 10.9.x and `npm install -g npm@^11.5` deterministically
+      # fails on this runner with arborist's MODULE_NOT_FOUND for
+      # promise-retry (known npm 10→11 self-upgrade bug; --force
+      # doesn't help).
+      #
+      # Skipping the upgrade here is intentional and safe: CI's
+      # `npm ci` against a locked tree does NOT resolve against the
+      # registry, so the release-age gate is a no-op at publish time
+      # regardless of npm version. The gate matters at lockfile
+      # regeneration (contributor `npm install <pkg>` / `npm update`),
+      # which never happens here. Defense-in-depth is enforced via
+      # .gitea/workflows/ci.yml which runs on every push with npm 10
+      # → npm 11.5 upgrade working cleanly on node:20. See post-mortem
+      # in commit history for v2026.5.3-rc.1 retag #4.
 
       - name: Install dependencies
         run: npm ci
