@@ -1073,6 +1073,12 @@ export async function main(args = process.argv.slice(2)) {
         process.exit(1);
       }
 
+      // --toolsets flag overrides AIWG_MCP_TOOLSETS env (#1332 / S18)
+      const toolsetsIdx = args.indexOf('--toolsets');
+      if (toolsetsIdx !== -1 && args[toolsetsIdx + 1]) {
+        process.env.AIWG_MCP_TOOLSETS = args[toolsetsIdx + 1];
+      }
+
       await startServer();
       break;
     }

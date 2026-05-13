@@ -20,6 +20,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { registerDiscoveryTools } from './tools/discovery.mjs';
 import { registerCommandRunTool } from './tools/command-run.mjs';
+import { parseToolsets, registerOptInToolsets, KNOWN_TOOLSETS } from './tools/subsystems.mjs';
 import { AIWG_ROOT } from './helpers.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -80,6 +81,16 @@ export function createServer() {
   //   command-run (replaces workflow-run; allow-listed CLI dispatch)
   // ============================================
   registerCommandRunTool(server);
+
+  // ============================================
+  // Opt-in subsystem toolsets (#1322-#1332)
+  //
+  // Enabled via AIWG_MCP_TOOLSETS env or `aiwg mcp serve --toolsets=`.
+  // Known: memory, kb, research, activity-log, index, ralph, mc, ops, all
+  // Default: none (core only — discovery + command-run)
+  // ============================================
+  const requested = parseToolsets(process.env.AIWG_MCP_TOOLSETS || '');
+  registerOptInToolsets(server, requested);
 
   // Tool: workflow-run (DEPRECATED — use command-run instead, #1315)
   server.registerTool('workflow-run', {
