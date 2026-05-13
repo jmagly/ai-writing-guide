@@ -26,6 +26,46 @@ Pins are not bumped on a fixed schedule. A bump is triggered by an advisory agai
 
 Gitea Actions does not currently have first-party Dependabot. Automated PR-filing for pin bumps is a follow-on; until that lands, bumps are operator-initiated per the manual process above.
 
+## PR-trigger workflow hardening
+
+Workflows triggered by `pull_request` events run against the fork's HEAD code on fork PRs. Gitea Actions clamps the auto-issued `GITHUB_TOKEN` scope and does NOT expose user-defined secrets to fork PRs by default (verified against Gitea source — see [`models/secret/secret.go` `GetSecretsOfTask`](https://github.com/go-gitea/gitea/blob/main/models/secret/secret.go) lines 160-165: "ignore secrets for fork pull request, except `GITHUB_TOKEN` and `GITEA_TOKEN` which are automatically generated"). The same file's `models/actions/token_permissions.go` `restrictCrossRepoAccess` clamp further restricts the per-run token's cross-repo capability on fork PRs.
+
+That default behavior means a fork PR cannot directly exfiltrate `NPM_TOKEN`, `NPMJS_TOKEN`, or `GT_ACCESS_TOKEN`. The residual surface is (a) install-script execution from a malicious lockfile change, mitigated by [A15 (#1290, release-age gate)](https://git.integrolabs.net/roctinam/aiwg/issues/1290) and [A20 (#1300, dep-source lint)](https://git.integrolabs.net/roctinam/aiwg/issues/1300); and (b) runtime regressions in Gitea's secret-handling. The hardening pattern below is defense-in-depth for (b): every workflow step that references a user-defined secret gets an explicit guard so the secret-handling assumption is local-and-visible rather than implicit-and-global.
+
+### Reusable guard snippet (step level)
+
+Place on any step that touches a user-defined secret. Step-level (not job-level) preserves non-secret validation steps for fork PRs — fork PR validation has value, and skipping the whole job throws it away.
+
+```yaml
+# Variant A — fork-PR guard (simpler; used by docsite-build.yml).
+# Skips on any fork PR; runs on internal-branch PRs and push events.
+- name: Step that touches a user-defined secret
+  if: ${{ gitea.event.pull_request.head.repo.fork != true }}
+  env:
+    SECRET_VALUE: ${{ secrets.SOME_SECRET }}
+  run: |
+    # ...
+
+# Variant B — same-repo guard (stricter; catches the edge case where a
+# branch in this repo somehow has `fork: true` in the payload).
+- name: Step that touches a user-defined secret
+  if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+  env:
+    SECRET_VALUE: ${{ secrets.SOME_SECRET }}
+  run: |
+    # ...
+```
+
+**Which to use:** Variant A is the documented default and is what `docsite-build.yml` ships. Variant B is stricter and is the canonical GitHub Actions form; on Gitea the two are functionally equivalent because both `gitea.*` and `github.*` expression contexts resolve to the same payload. Pick A for new workflows unless there's a specific reason to require full-name comparison.
+
+**Job-level vs step-level:** Putting the guard at the job level (`jobs.<id>.if: …`) skips the entire job on fork PRs, which discards the validation value of running tests against fork code. Step-level guards on the specific secret-touching steps preserve the rest of the job.
+
+**`pull_request_target` is not the right answer:** GitHub provides `pull_request_target` to opt fork PRs into secret access; Gitea's support for this trigger is version-dependent and the audit decided against relying on it. Use the same-repo guard pattern instead.
+
+### Audit disposition
+
+The A14 audit ([#1289](https://git.integrolabs.net/roctinam/aiwg/issues/1289)) walked the five PR-triggered workflows. ADR at [`.aiwg/architecture/adr-pr-trigger-hardening.md`](../../.aiwg/architecture/adr-pr-trigger-hardening.md) documents the per-workflow disposition matrix.
+
 ## Release-secret policy
 
 The Gitea publish workflows depend on three secrets. Each has a distinct purpose, scope, and rotation lifecycle — they are not interchangeable.

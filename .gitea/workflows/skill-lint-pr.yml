@@ -5,6 +5,24 @@
 # metadata-validation.yml: that job is the gate (PR fails on violations);
 # this job is the diagnostic (PR comment with per-dimension breakdown).
 #
+# PR-trigger security disposition (#1289 / A14):
+# - References `secrets.GITHUB_TOKEN` only. This is the per-run token Gitea
+#   auto-issues for every workflow run; it is NOT a user-defined secret.
+#   The token is scope-clamped to `pull-requests: write` + `contents: read`
+#   below; for fork PRs Gitea additionally clamps cross-repo access via
+#   `restrictCrossRepoAccess` in `models/actions/token_permissions.go`.
+# - User-defined secrets (`NPM_TOKEN`, `NPMJS_TOKEN`, `GT_ACCESS_TOKEN`)
+#   are NOT referenced here and are NOT exposed to fork PRs by default
+#   (verified in Gitea source `models/secret/secret.go` GetSecretsOfTask
+#   lines 160-165).
+# - The workflow does run `npm ci` + `npm run build` against the PR HEAD,
+#   so install-script execution from a malicious fork is a residual
+#   attack surface. Defense in depth: A20 (#1300 dep-source lint) blocks
+#   exotic dep sources in lockfiles, and A15 (#1290 release-age gate)
+#   prevents brand-new malicious publishes from entering the lockfile.
+#   In direct-mode delivery (AIWG), fork PRs are unlikely in practice.
+# See `.aiwg/architecture/adr-pr-trigger-hardening.md`.
+#
 # Refs #1015 Phase D.
 
 name: Skill Lint (PR comment)

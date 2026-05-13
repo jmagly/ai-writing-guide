@@ -32,14 +32,19 @@ jobs:
       - name: Checkout AIWG
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
-      # Fork-PR defense-in-depth: Gitea's secret-exposure behavior for
-      # `pull_request` events from forks is version-dependent and not
-      # currently verified for the running instance (#1278 audit notes).
-      # Skip the dbbuilder clone for fork PRs — docs build will fail on
-      # forks, which is the desired behavior (fork PRs should not reach
-      # docs.aiwg.io deploy paths). Internal-branch PRs and pushes proceed
-      # normally. Revisit once #1289 (A14 — PR-trigger audit) verifies the
-      # exact fork-PR secret-exposure semantics.
+      # Fork-PR defense-in-depth: skip the dbbuilder clone for fork PRs.
+      # The #1289 / A14 audit verified Gitea's fork-PR secret-exposure
+      # semantics by reading the source (`models/secret/secret.go`
+      # `GetSecretsOfTask` — user-defined secrets are NOT exposed to fork
+      # PRs by default; only the auto-issued `GITHUB_TOKEN` is). This
+      # guard remains as belt-and-suspenders so the behavior is explicit
+      # in the workflow rather than relying on runtime defaults that may
+      # drift with Gitea versions, and so fork PRs cannot reach
+      # docs.aiwg.io deploy paths even on a runtime regression. Internal-
+      # branch PRs and pushes proceed normally. See
+      # `.aiwg/architecture/adr-pr-trigger-hardening.md` for the audit
+      # disposition matrix and `.gitea/workflows/README.md` "PR-trigger
+      # workflow hardening" for the reusable guard snippet.
       - name: Clone dbbuilder
         if: ${{ gitea.event.pull_request.head.repo.fork != true }}
         env:
