@@ -356,6 +356,12 @@ export async function deploy(opts) {
     // every time it's auto-installed.
     const desiredKernel = [...computeAllKernelNames(srcRoot), 'aiwg-orchestrate'];
     pruneStaleAiwgSkills(kernelSkillsPath, desiredKernel, opts);
+
+    // Register kernel skills in Hermes's bundled manifest so the Curator
+    // (v0.12.0+, 7-day archival cycle) does not archive them. Standard
+    // skills under `.aiwg/` are already protected by the dot-prefix rule
+    // in tools/skill_usage.py:241-243. (#1317 / S6)
+    updateBundledManifest(desiredKernel, opts);
   }
 
   // ── AGENTS.md + .hermes.md ─────────────────────────────────────────────────
@@ -391,6 +397,71 @@ export async function deploy(opts) {
     console.log('Commands and rules are served via MCP (not deployed as files).');
     console.log('Next: configure ~/.hermes/config.yaml to connect AIWG MCP server.');
     console.log('See: docs/integrations/hermes-quickstart.md (Part 2)');
+  }
+}
+
+// ============================================================================
+// Curator protection (#1317 / S6)
+// ============================================================================
+
+/**
+ * Hermes v0.12.0+ ships an autonomous Curator (`agent/curator.py`) that
+ * grades and archives skills on a 7-day cycle. Skills are excluded from
+ * archival if either:
+ *   (a) they appear in `~/.hermes/skills/.bundled_manifest` (one name per
+ *       line, format `name:tag`), or
+ *   (b) their path's first component starts with `.` (verified at
+ *       `tools/skill_usage.py:241-243`).
+ *
+ * AIWG standard skills under `~/.hermes/skills/.aiwg/...` are protected
+ * by (b) automatically. AIWG kernel skills land at the top level
+ * (`~/.hermes/skills/<name>/SKILL.md`) and need explicit (a) registration.
+ *
+ * This function writes/updates the bundled manifest with the kernel-skill
+ * names AIWG owns. Idempotent: existing entries (from Hermes's own bundle
+ * or other tools) are preserved.
+ */
+export function updateBundledManifest(kernelSkillNames, opts) {
+  const { dryRun, quiet } = opts;
+  const manifestPath = path.join(kernelSkillsPath, '.bundled_manifest');
+  const aiwgTag = 'aiwg-managed';
+
+  // Read existing manifest (if any) and split into "ours" vs "theirs"
+  let existing = '';
+  try {
+    existing = fs.readFileSync(manifestPath, 'utf-8');
+  } catch {
+    existing = '';
+  }
+  const theirs = [];
+  for (const rawLine of existing.split('\n')) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (line.endsWith(`:${aiwgTag}`)) continue;  // ours — drop, will re-add below
+    theirs.push(line);
+  }
+  const ours = kernelSkillNames.map((n) => `${n}:${aiwgTag}`);
+
+  // Stable order: theirs first (preserve operator/Hermes-bundled order), then ours
+  const merged = [...theirs, ...ours].join('\n') + '\n';
+
+  if (dryRun) {
+    if (!quiet) {
+      console.log(`  [curator] [dry-run] Would write ${manifestPath} with ${ours.length} AIWG kernel + ${theirs.length} preserved entries`);
+    }
+    return;
+  }
+
+  try {
+    fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+    fs.writeFileSync(manifestPath, merged, 'utf-8');
+    if (!quiet) {
+      console.log(`  [curator] Bundled manifest updated: ${ours.length} AIWG kernel skills protected (preserved ${theirs.length} pre-existing entries)`);
+    }
+  } catch (err) {
+    if (!quiet) {
+      console.log(`  [curator] Warning: could not write bundled manifest: ${err.message}`);
+    }
   }
 }
 
