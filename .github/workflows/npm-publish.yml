@@ -364,11 +364,16 @@ jobs:
         # channel lags until an operator advances it manually.
         if: steps.version.outputs.prerelease == 'false'
         env:
-          NPM_DIST_TAG_TOKEN: ${{ secrets.NPM_DIST_TAG_TOKEN }}
+          # setup-node generates an npmrc at $NPM_CONFIG_USERCONFIG that
+          # references ${NODE_AUTH_TOKEN}, so dropping the granular dist-tag
+          # token into NODE_AUTH_TOKEN authenticates without rewriting any
+          # config file. The previous publish step ran OIDC (no auth env);
+          # this step's NODE_AUTH_TOKEN binding is scoped to this step only.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_DIST_TAG_TOKEN }}
         run: |
           set -o pipefail
           VERSION='${{ steps.version.outputs.version }}'
-          if [ -z "${NPM_DIST_TAG_TOKEN:-}" ]; then
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
             echo "⚠ NPM_DIST_TAG_TOKEN not configured — @next will lag @latest."
             echo "  Operator follow-up: issue a granular automation token with"
             echo "  package management scope on 'aiwg', store as NPM_DIST_TAG_TOKEN,"
@@ -377,10 +382,8 @@ jobs:
             exit 0
           fi
           echo "Advancing aiwg@next → ${VERSION}"
-          echo "//registry.npmjs.org/:_authToken=${NPM_DIST_TAG_TOKEN}" > ~/.npmrc
           npm dist-tag add "aiwg@${VERSION}" next
           CURRENT_NEXT=$(npm view "aiwg@next" version 2>/dev/null || echo "")
-          rm -f ~/.npmrc
           if [ "$CURRENT_NEXT" = "$VERSION" ]; then
             echo "✓ aiwg@next = ${VERSION}"
           else
