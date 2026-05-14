@@ -45,6 +45,12 @@ import {
 import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
 import { installAiwgHooks } from '../../extensions/claude-hooks-installer.js';
 import { detectScope, mirrorToUserScope, rejectOpenClawProjectScope } from '../scope-resolver.js';
+import { maybeWarnProjectIsolation } from '../project-isolation/index.js';
+
+// Module-level guard so the iteration loops further down (which re-enter
+// execute() per framework/provider) don't re-emit the warning each pass.
+// Reset is not needed: a single CLI process is one user invocation.
+let projectIsolationChecked = false;
 // Context-pipeline: emits AIWG.md + AGENTS.md as the last step of `aiwg use`
 // for non-Claude providers per ADR-1 (.aiwg/architecture/adr-agents-md-aggregation.md).
 // Distinct from agentsmith (which creates subagent personas).
@@ -1026,6 +1032,23 @@ export class UseHandler implements CommandHandler {
     if (prefixIdx >= 0 && remainingArgs[prefixIdx + 1]) {
       // Rewrite --prefix to --target for downstream compatibility
       remainingArgs[prefixIdx] = '--target';
+    }
+
+    // Project-isolation warning (UC-NUA-002 / SAD §5.1). Fires once per CLI
+    // process. Skipped when --target/--prefix is explicit (the user named a
+    // destination) so the warning never fights with intentional out-of-cwd
+    // deploys. Skipped on recursive iteration via the module-level guard.
+    if (!projectIsolationChecked) {
+      projectIsolationChecked = true;
+      const userTargetedExplicitDir = remainingArgs.includes('--target');
+      if (!userTargetedExplicitDir) {
+        const isolationResult = await maybeWarnProjectIsolation({ cwd: ctx.cwd ?? process.cwd() });
+        if (isolationResult.cancelled) {
+          // User pressed Ctrl-C during the delay — exit cleanly with no
+          // artifacts written (UC-NUA-002 Alt A2).
+          return { exitCode: 130, message: 'Cancelled.' };
+        }
+      }
     }
 
     // Read project config for config-first resolution (#621).
