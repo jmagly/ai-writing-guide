@@ -6,7 +6,7 @@ deprecated_names: [ralph]
 platforms: [all]
 description: Execute iterative task loop until completion criteria are met - iteration beats perfection
 commandHint:
-  argumentHint: '"<task>" --completion "<criteria>" [--max-iterations N] [--timeout M] [--interactive --guidance "text"]'
+  argumentHint: '"<task>" [--completion "<criteria>"] [--max-iterations N] [--timeout M] [--interactive --guidance "text"] [--auto-criteria | --no-infer-completion]'
   allowedTools: "Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit"
   model: opus
   category: automation
@@ -50,7 +50,7 @@ The task to execute. Should be:
 - Measurable completion state
 - Self-contained (all context provided)
 
-### --completion (required)
+### --completion (optional — inferred when omitted)
 Success criteria. Must be:
 - Verifiable (tests, lint, compilation)
 - Specific (not subjective)
@@ -65,6 +65,10 @@ Success criteria. Must be:
 **Poor examples** (avoid these):
 - `--completion "code looks good"`
 - `--completion "feature is done"`
+
+**When omitted**: the loop delegates to the `infer-completion-criteria` skill, which derives a measurable criterion from project docs (CLAUDE.md / AGENTS.md / AIWG.md), package manifests, CI configuration, and `.aiwg/` artifacts. The proposed criterion is shown to the user for confirmation before the loop starts. Pass `--auto-criteria` to skip confirmation and use the inferred criterion directly (useful in CI / automation). Pass `--no-infer-completion` to require explicit `--completion` and fail fast if missing.
+
+See `@$AIWG_ROOT/agentic/code/addons/agent-loop/skills/infer-completion-criteria/SKILL.md` for the inference pipeline.
 
 ### --max-iterations (default: 10)
 Safety limit on iterations. Prevents infinite loops.
@@ -94,12 +98,21 @@ Create feature branch for loop work.
 
 ### Phase 1: Initialization
 
-1. Parse task and completion criteria
-2. Validate criteria are verifiable (can be checked via command)
-3. Create `.aiwg/ralph/` workspace if not exists
-4. Initialize iteration counter (i=0)
-5. Create feature branch if --branch specified
-6. Log initialization
+1. Parse task
+2. **Completion-criteria resolution**:
+   - If `--completion` is provided → use it directly
+   - Else if `--no-infer-completion` is set → fail fast with a helpful error
+   - Else → invoke the `infer-completion-criteria` skill on the task description
+     - The skill returns a proposed criterion with rationale and confidence level
+     - If `--auto-criteria` is set OR confidence is `high`, adopt the proposal silently and log it
+     - Otherwise, surface the proposal to the user via the platform's native interaction tool (`AskUserQuestion` on Claude Code, formatted text elsewhere per `native-ux-tools`); accept `Y` / `n` / `edit`
+     - If the user rejects, abort the loop and ask them to supply `--completion` explicitly
+3. Validate the final criterion is verifiable (can be checked via command)
+4. Create `.aiwg/ralph/` workspace if not exists
+5. Initialize iteration counter (i=0)
+6. Create feature branch if --branch specified
+7. **Write the criterion and its rationale into the loop's progress file** (`.aiwg/ralph/<loop-id>/progress.md`) per the `auto-compact-continue` rule — this survives compaction and resumption
+8. Log initialization
 
 **Communicate**:
 ```

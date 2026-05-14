@@ -5,7 +5,7 @@ legacyName: ralph-external
 platforms: [all]
 description: Crash-resilient external agent loop with state persistence and CI/CD integration
 commandHint:
-  argumentHint: "\"<objective>\" --completion \"<criteria>\" [--max-iterations N] [--timeout M] [--provider <p>] [--no-commit] [--branch <name>] [--quiet]"
+  argumentHint: "\"<objective>\" [--completion \"<criteria>\"] [--max-iterations N] [--timeout M] [--provider <p>] [--no-commit] [--branch <name>] [--quiet] [--auto-criteria | --no-infer-completion]"
   allowedTools: Bash, Read, Write
   model: sonnet
   category: automation
@@ -60,13 +60,21 @@ Users may say:
 ### Objective (required)
 The task the loop should accomplish. Passed as the first positional argument.
 
-### --completion (required)
+### --completion (optional — inferred when omitted)
 Success criteria as a verifiable command. The loop exits when this command returns exit code 0.
 
 **Good examples**:
 - `--completion "npm test passes with 0 failures"`
 - `--completion "npx tsc --noEmit exits with code 0"`
 - `--completion "coverage report shows >80%"`
+
+**When omitted**: the launcher invokes the `infer-completion-criteria` skill before the external loop starts. The skill derives a measurable criterion from project state (CLAUDE.md / AGENTS.md / AIWG.md, package manifests, CI configuration, `.aiwg/` artifacts) and emits a structured proposal with rationale. The proposal is written to `.aiwg/ralph-external/<run-id>/inferred-completion.yaml` and used as the loop's gate.
+
+Because `agent-loop-ext` runs externally (potentially headless / in CI), the confirmation flow is:
+- Interactive session (TTY attached): show proposal, accept `Y / n / edit` like the in-session `ralph` skill
+- Non-interactive / `--auto-criteria` / CI environment: use the inferred criterion if confidence is `high`, otherwise fail fast and print the proposal as a diagnostic so the user can re-launch with `--completion` explicitly
+
+Pass `--no-infer-completion` to require explicit `--completion` and fail before launch if missing. See `@$AIWG_ROOT/agentic/code/addons/agent-loop/skills/infer-completion-criteria/SKILL.md`.
 
 ### --max-iterations (default: 10)
 Maximum iterations before the loop halts and saves state for manual review.
@@ -90,8 +98,12 @@ Suppress verbose progress output. Completion banner is always shown.
 
 When triggered:
 
-1. Validate that `--completion` criteria are specified and verifiable
-2. Check for an existing `.aiwg/ralph-external/` workspace; create if absent
+1. **Resolve completion criteria**:
+   - If `--completion` is provided → use it directly
+   - Else if `--no-infer-completion` is set → fail fast before launch with a helpful error
+   - Else → invoke `infer-completion-criteria` skill, persist proposal to `.aiwg/ralph-external/<run-id>/inferred-completion.yaml`, confirm or auto-adopt per session-interactivity rules above
+2. Validate the resolved criterion is verifiable (can be checked via command)
+3. Check for an existing `.aiwg/ralph-external/` workspace; create if absent
 3. Generate a unique `loop-id` (8-character hex) and create the loop state file at `.aiwg/ralph-external/loops/<loop-id>.json`
 4. Write the initial state: `{ objective, completionCriteria, maxIterations, timeout, provider, status: "pending", iteration: 0 }`
 5. If `--branch` is specified, create the git branch now

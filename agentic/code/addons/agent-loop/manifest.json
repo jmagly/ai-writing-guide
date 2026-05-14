@@ -50,7 +50,8 @@
     "execute-feedback",
     "reflection-injection",
     "auto-test-execution",
-    "mission-control"
+    "mission-control",
+    "infer-completion-criteria"
   ],
   "agents": [
     "ralph-loop",

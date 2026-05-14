@@ -74,7 +74,19 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 
 ### Completion Inference
 
-When user doesn't specify explicit verification:
+When the user doesn't specify explicit verification, delegate to the **`infer-completion-criteria`** skill (`@$AIWG_ROOT/agentic/code/addons/agent-loop/skills/infer-completion-criteria/SKILL.md`). That skill runs a deterministic 5-layer pipeline:
+
+1. **Task verb** → criterion class (test-pass, type-clean, regression-gate, coverage, lint-clean, build-pass, implement-feature)
+2. **Project context files** (CLAUDE.md / AGENTS.md / AIWG.md) → canonical commands from the Development section
+3. **Package manifests** (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, `pom.xml`, etc.) → discovered scripts
+4. **CI configuration** (`.github/workflows/`, `.gitea/workflows/`, GitLab/CircleCI/Jenkins) → team's actual "passes" definition
+5. **`.aiwg/` artifacts** (test-strategy, related use cases by ID match, prior progress files) → project-specific gates
+
+Synthesis is validated against the `vague-discretion` rule and emits a structured YAML proposal with criterion, verification command, rationale chain, confidence level, and alternatives considered.
+
+**Use the inline table below ONLY as a last-resort fallback** when the inference skill is unavailable (degraded environment, missing skill deployment). It is intentionally narrow — JavaScript/Node-centric — and represents prior state before `infer-completion-criteria` was added.
+
+Legacy fallback table:
 
 | Task Pattern | Inferred Completion |
 |--------------|---------------------|
@@ -85,6 +97,8 @@ When user doesn't specify explicit verification:
 | "add tests" | "test coverage increases" |
 | "migrate to ESM" | "node runs without errors" |
 | "refactor X" | "npm test passes" (preserve behavior) |
+
+When the inference skill IS available, prefer it. The skill handles multi-language projects, monorepos, CI-defined gates, use-case acceptance criteria, and the refusal case (truly vague tasks like "make it better" that have no measurable criterion).
 
 ### Examples
 
@@ -301,7 +315,9 @@ User: "actually, abort that and just fix the login bug"
 
 ## Related
 
-- `ralph` skill - the iterative loop executor implementation
+- `infer-completion-criteria` skill - derives measurable `--completion` from project state when the user doesn't supply one
+- `ralph` skill - the iterative loop executor implementation (legacy name; `agent-loop` is canonical)
+- `agent-loop-ext` skill - crash-resilient external loop with state persistence
 - `ralph-status` skill - check loop progress
 - `ralph-resume` skill - continue interrupted loops
 - `ralph-abort` skill - abort active loops
