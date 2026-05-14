@@ -9,6 +9,57 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
+## [2026.5.6] - 2026-05-14 — "Agent-loop completion inference + auto-compact discipline"
+
+Two behavioral upgrades to make long-running and iterative work survive context pressure and reach measurable completion without operator hand-holding, plus a CI workflow ordering fix that prevents v2026.5.5-style stable-publish regressions.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **`agent-loop` infers `--completion` from project state** | Run `agent-loop "fix the failing tests"` without `--completion`. A new `infer-completion-criteria` skill walks five evidence layers — task verb → `CLAUDE.md`/`AGENTS.md`/`AIWG.md` Development sections → package manifests (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, `pom.xml`, …) → CI config (`.github/workflows/`, `.gitea/workflows/`, GitLab/CircleCI/Jenkins) → `.aiwg/` artifacts (test-strategy, related use cases by ID match, prior progress files) — and proposes a measurable criterion with rationale and confidence level. High-confidence proposals auto-adopt with `--auto-criteria`; otherwise the proposal is surfaced for confirm/edit/abort. Refusal path is explicit: tasks like "make it better" with no derivable measurable gate get a refusal with concrete rephrasing suggestions. |
+| **New `auto-compact-continue` rule (HIGH)** | The answer to "should I keep working?" is always YES — until measurable completion criteria are met or the user redirects. Context pressure, long tool output, and crossing iteration N are not scope questions. The rule codifies the auto-compact-and-continue discipline backed by Anthropic's [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) and the [Compaction docs](https://platform.claude.com/docs/en/build-with-claude/compaction): write progress files at `.aiwg/working/<task>-progress.md` every 10–15 tool calls (REF-122 aggressive vs passive: 22.7% vs 6% savings), let the platform auto-compact, recover via the AIWG durable substrate (activity log, progress file, git, memory, `CLAUDE.md`/`AGENTS.md`/`AIWG.md`). |
+| **CI: build before tests in `npm-publish.yml`** | The v2026.5.5 stable publish failed because tests ran before build, and several tests assert on `dist/` output (regression test for #1001). The Gitea workflow now matches `ci.yml`: typecheck → build → test → publish. Without this, the next stable publish would have hit the same failure mode. |
+
+### Added
+
+- `agentic/code/addons/agent-loop/skills/infer-completion-criteria/` — new skill (~280 lines). Deterministic 5-layer inference pipeline with structured YAML output (criterion, verification command, rationale, confidence, alternatives, max-iterations suggestion). Documents edge cases for monorepos, multi-language projects, broken-test suites, use-case acceptance criteria, and the refusal path. Wired into `agent-loop/manifest.json` skills array.
+- `agentic/code/addons/aiwg-utils/rules/auto-compact-continue.md` — new HIGH rule (~250 lines). Codifies the auto-compact-and-continue discipline with 8 mandatory rules, interaction with `vague-discretion`/`anti-laziness`/`human-authorization`/`instruction-comprehension`/`skill-discovery`/`activity-log`/`context-budget`, recovery protocol after compaction, named exceptions, and platform applicability across all 10 supported providers. (Landed in v2026.5.5's incident-fix commit f87ba48c; called out in this release for visibility since the user-facing impact is felt now that the agent-loop changes pair with it.)
+- Two new research references in companion `research-papers` repo:
+  - **REF-909** — Anthropic, *Effective Harnesses for Long-Running Agents* (Nov 2025). Initializer-agent / coding-agent pattern, `claude-progress.txt`, "failed approaches" as load-bearing artifact across context resets.
+  - **REF-910** — Anthropic, *Compaction* (Claude API Documentation, 2026). Auto-compact mechanics, `## Compact Instructions`, what survives compaction.
+
+### Changed
+
+- `agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md` — completion-inference section now delegates to the new `infer-completion-criteria` skill. The previous inline 7-row Node-centric pattern table is demoted to a "last-resort fallback" with explanatory note. Related-skills list adds `infer-completion-criteria` and `agent-loop-ext`.
+- `agentic/code/addons/agent-loop/skills/ralph/SKILL.md` — `--completion` is now optional. Phase 1 initialization invokes inference when omitted; high-confidence proposals or `--auto-criteria` adopt silently, otherwise the user is asked via `AskUserQuestion` (per `native-ux-tools`). Loop also writes the resolved criterion and rationale into the loop's progress file per `auto-compact-continue`. New flag: `--no-infer-completion` for explicit-required behavior.
+- `agentic/code/addons/agent-loop/skills/agent-loop-ext/SKILL.md` — same `--completion`-optional treatment for the crash-resilient external loop, with TTY-aware confirmation (interactive: confirm; headless/CI: adopt high-confidence proposals, fail fast with diagnostic on low confidence). Proposal persisted to `.aiwg/ralph-external/<run-id>/inferred-completion.yaml` for crash recovery.
+- `agentic/code/addons/agent-loop/agents/ralph-verifier.md` — gained a "Companion skill" section documenting that when the criterion was inferred, the verifier can reference the rationale chain from the progress file / inferred-completion.yaml in its verification reports.
+- `agentic/code/addons/agent-loop/manifest.json` — added `infer-completion-criteria` to the skills array.
+- `agentic/code/addons/aiwg-utils/manifest.json` — added `auto-compact-continue` to the rules array; `RULES-INDEX.md` updated to 21 rules with the new HIGH-tier entry placed at the top of the index.
+- `.gitea/workflows/npm-publish.yml` — Build step now runs **before** Run tests, matching `ci.yml`. Several tests assert on `dist/` output (e.g. `test/unit/cli/validate-metadata-import.test.ts` asserts the import path resolves to `dist/src/plugin/metadata-validator.js`); pre-2026.5.6 the workflow ran tests against stale build output and the stable publish at v2026.5.5 hit this. Inline comment cites the v2026.5.5 incident so future contributors understand the ordering constraint.
+
+### Fixed
+
+- Stable npm publish path: tests now run against current `dist/` artifacts. The v2026.5.5 publish failure mode (test references resolving against stale or missing build output) is closed.
+
+### Migration notes
+
+No breaking changes. Existing `agent-loop` / `ralph` / `agent-loop-ext` invocations with explicit `--completion` continue to work unchanged. The new behavior only activates when `--completion` is omitted.
+
+If you want the old hard-error-on-missing-completion behavior, pass `--no-infer-completion`. If you want CI-style fully-automated runs that adopt the inferred criterion without confirmation, pass `--auto-criteria`.
+
+### Companion: research-papers corpus
+
+The AIWG research corpus at `git@git.integrolabs.net:roctinam/research-papers.git` gained REF-909 and REF-910 as the load-bearing citations for the new `auto-compact-continue` rule. Both are GRADE LOW (vendor documentation) but authoritative for Claude-specific patterns and reflect production experience from the Claude Code team.
+
+### Links
+
+- [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Anthropic Engineering, Nov 2025
+- [Compaction — Claude API Docs](https://platform.claude.com/docs/en/build-with-claude/compaction) — Anthropic, 2026
+- REF-122 *Active Context Compression* (Verma, 2026) — already in corpus; the empirical basis for aggressive in-session compression
+- Release announcement: [docs/releases/v2026.5.6-announcement.md](docs/releases/v2026.5.6-announcement.md)
+
 ## [2026.5.5] - 2026-05-14 — "Cross-provider discover-first parity"
 
 Two user-facing changes plus the deployment-pipeline fix that makes the

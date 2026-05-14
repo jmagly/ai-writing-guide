@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "AIWG - Modular agentic framework for SDLC, marketing automation, and workflow orchestration. 90+ agents, 95+ commands, 30+ skills.",
-    "version": "2026.5.5",
+    "version": "2026.5.6",
     "homepage": "https://aiwg.io",
     "repository": "https://github.com/jmagly/aiwg",
     "documentation": "https://docs.aiwg.io",
