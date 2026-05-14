@@ -246,10 +246,11 @@ If none of those apply: **continue**.
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md — Aggressive budgeting when `AIWG_CONTEXT_WINDOW` is set
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/skill-discovery.md — Rule 0: classify new directives
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/anti-laziness.md — Rule 6: 3-attempts escalation
-- REF-909 (Anthropic — Effective Harnesses for Long-Running Agents) — initializer-agent / coding-agent pattern, progress files
-- REF-910 (Anthropic — Compaction) — auto-compact mechanics, Compact Instructions, what survives
-- REF-122 (Active Context Compression / Focus Agent) — aggressive vs passive compression discipline
-- REF-128 (Context Window Management Strategies) — effective context is 30-40% smaller than advertised
+- REF-909 (Anthropic — *Effective Harnesses for Long-Running Agents*) — initializer-agent / coding-agent pattern, progress files. Induction: [roctinam/research-papers#615](https://git.integrolabs.net/roctinam/research-papers/issues/615). Source URL: https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents
+- REF-910 (Anthropic — *Compaction*) — auto-compact mechanics, Compact Instructions, what survives. Induction: [roctinam/research-papers#616](https://git.integrolabs.net/roctinam/research-papers/issues/616). Source URL: https://platform.claude.com/docs/en/build-with-claude/compaction
+- REF-122 (Verma — *Active Context Compression / Focus Agent*) — aggressive vs passive compression discipline (22.7% vs 6%)
+- REF-128 (Zylos Research — *Context Window Management Strategies*) — effective context is 30-40% smaller than advertised
+- Commissioning anchor: [roctinam/aiwg#1348](https://git.integrolabs.net/roctinam/aiwg/issues/1348)
 
 ---
 
