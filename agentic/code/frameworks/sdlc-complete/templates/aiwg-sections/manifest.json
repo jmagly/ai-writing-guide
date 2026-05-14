@@ -16,6 +16,13 @@
       "description": "Orchestration responsibilities, multi-agent workflow pattern, NL translations, available commands"
     },
     {
+      "id": "discover-first",
+      "file": "02b-discover-first.md",
+      "title": "Discover-First Protocol",
+      "required": true,
+      "description": "Mandates `aiwg discover` + `aiwg show` before declining requests or improvising workflows. Closes hookup-matrix Finding #2 (#1344) — the discover-first protocol now reaches every provider that loads AIWG.md (Codex, Windsurf, OpenCode, Hermes, plus Warp via twin emission)."
+    },
+    {
       "id": "aiwg-rules",
       "file": "03-aiwg-rules.md",
       "title": "AIWG-Specific Rules",

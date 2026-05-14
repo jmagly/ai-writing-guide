@@ -8,6 +8,17 @@ This file provides project-specific instructions for GitHub Copilot.
 
 This project uses the AIWG SDLC Framework for software development lifecycle management.
 
+### Discover-First Protocol (CRITICAL)
+
+Before declining a user request as "outside AIWG's scope" or improvising a workflow from training data, you MUST consult AIWG's artifact index. AIWG ships ~400 skills, ~190 agents, ~70 commands, and ~60 rules — most are NOT loaded into your context. Reach them via:
+
+```bash
+aiwg discover "<paraphrased user need>"
+aiwg show <type> <name>          # e.g. aiwg show skill flow-deploy-to-production
+```
+
+Run `aiwg discover` whenever the user mentions AIWG, a framework name (sdlc, research, forensics, ops, marketing, security-engineering, media-curator, knowledge-base), or capability keywords (skill, agent, command, rule, workflow). Filesystem search against `.github/agents/`, `.github/skills/`, or `.github/instructions/` is FORBIDDEN as a first move for AIWG-internal lookups — `aiwg discover` covers 10x the surface area with ranked results. The full protocol is documented at `.github/copilot-rules/skill-discovery.md` (or `.github/instructions/skill-discovery.instructions.md`); read it once at session start.
+
 ### Available Custom Agents
 
 AIWG agents are deployed to `.github/agents/` and can be invoked via `@agent-name`:

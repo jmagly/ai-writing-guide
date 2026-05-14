@@ -73,7 +73,32 @@ Cell format: `<evidence-type>: <result>` where result is `fires / partial / unve
 | deployment-scripted: unverified | 13 | discovery-agent column mostly |
 | static-flagged: unverified | 0 | All cells have at least deployment-scripted evidence now |
 
-## CRITICAL FINDING #1 — skill-discovery rule deployment gap
+## RESOLUTION STATUS (cycle 3, 2026-05-14)
+
+Findings #1 and #2 from cycle 2 have been resolved at the deployment-pipeline level. See commit landing this update for the wiring change. Dry-run sweep confirms `skill-discovery` rule now deploys to **8 of 10 providers** via standard `aiwg use`:
+
+| Provider | Before (cycle 2) | After (cycle 3 fix) |
+|---|---|---|
+| Claude Code | ✅ deployed | ✅ deployed |
+| Cursor | ✅ deployed | ✅ deployed |
+| Codex | ❌ missing | ✅ `[dry-run] deploy → .codex/rules/skill-discovery.md (new)` |
+| Copilot | ❌ missing | ✅ `[dry-run] deploy → .github/copilot-rules/skill-discovery.md (new)` |
+| Factory | ❌ missing | ✅ `[dry-run] deploy → .factory/rules/skill-discovery.md (new)` |
+| OpenCode | ❌ missing | ✅ `[dry-run] deploy → .opencode/rule/skill-discovery.md (new)` |
+| Windsurf | ❌ missing | ✅ `[dry-run] deploy → .windsurf/rules/skill-discovery.md (new)` |
+| OpenClaw | ❌ missing | ✅ `[dry-run --scope user] deploy → ~/.openclaw/rules/skill-discovery.md (new)` |
+| Warp | ❌ no channel | ⚠️ still pending — Warp aggregates rules into WARP.md; setup-warp.mjs needs rule aggregation added (separate follow-up) |
+| Hermes | ❌ no filesystem channel | ⚠️ still pending — MCP-mediated; needs MCP-server rule registration (separate follow-up) |
+
+**Fix**: changed `agentic/code/addons/aiwg-utils/manifest.json` `consolidation.deployIndexOnly` from `true` → `false`. The `getAddonRuleFiles` function in `tools/agents/providers/base.mjs` previously skipped addons with `deployIndexOnly: true`; the flag now resolves to `false` so aiwg-utils individual rule files (including `skill-discovery.md`) deploy alongside `RULES-INDEX.md` to every provider's rules directory. Cross-provider parity achieved per saved-memory rule `feedback_parity_no_removal` (always-deploy + adapt, never remove writers).
+
+**Test impact**: 2 tests in `test/unit/consolidated-rules.test.ts` were updated to verify the new positive contract (`includes addons with consolidation.deployIndexOnly=false` + `returns the skill-discovery rule from aiwg-utils`). Full vitest suite: 6,469 pass / 12 skip.
+
+**Remaining gaps**: Warp (#1346 to be filed — rule aggregation into setup-warp.mjs) and Hermes (#1347 to be filed — MCP-server rule registration).
+
+For #1344 (config-bridge inlining): a new template fragment `02b-discover-first.md` was added under `agentic/code/frameworks/sdlc-complete/templates/aiwg-sections/` and registered in the manifest. The Copilot template `copilot-instructions.md.aiwg-template` was updated with the discover-first section inline. Wiring of `aiwg-sections` into the actual context-pipeline (currently `src/smiths/context-pipeline/aiwg-md.ts` copies CLAUDE.md verbatim) is a separate follow-up since the template fragments aren't currently consumed by the live generator — they were orphaned during a prior refactor.
+
+## CRITICAL FINDING #1 — skill-discovery rule deployment gap [RESOLVED for 8 of 10 providers — see RESOLUTION STATUS above]
 
 The discover-first protocol — which mandates that an agent run `aiwg discover` before declining a request as out-of-scope — is encoded in the `skill-discovery` rule. This rule is the linchpin of AIWG's "find skills, don't enumerate from memory" architecture.
 

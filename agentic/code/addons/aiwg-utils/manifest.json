@@ -36,7 +36,8 @@
   "consolidation": {
     "strategy": "index-with-links",
     "rulesIndex": "rules/RULES-INDEX.md",
-    "deployIndexOnly": true
+    "deployIndexOnly": false,
+    "_note": "deployIndexOnly was true (#1343); changed to false 2026-05-14 so individual rule files (including skill-discovery.md) deploy to every provider's rules directory alongside the index. RULES-INDEX.md remains the canonical entry point; its links now resolve to local files on every provider, not just Claude/Cursor."
   },
   "commands": [],
   "agents": [

@@ -381,11 +381,25 @@ describe('Consolidated Rules Functions', () => {
   // ==========================================================================
 
   describe('getAddonRuleFiles (consolidated addon skipping)', () => {
-    it('skips addons with consolidation.deployIndexOnly=true', () => {
+    // Note (#1343 / 2026-05-14): aiwg-utils.manifest.json was changed from
+    // deployIndexOnly=true to false so individual rule files (including
+    // skill-discovery.md) deploy to every provider's rules directory
+    // alongside the index. The "skipping" tests below now verify that
+    // addons WITHOUT deployIndexOnly are included (positive contract) and
+    // that excludeAddons still works to override.
+    it('includes addons with consolidation.deployIndexOnly=false', () => {
       const files = base.getAddonRuleFiles(REPO_ROOT);
-      // aiwg-utils has deployIndexOnly=true and should be excluded
+      // aiwg-utils now has deployIndexOnly=false and SHOULD be included
       const hasUtilsFiles = files.some((f: string) => f.includes('aiwg-utils'));
-      expect(hasUtilsFiles).toBe(false);
+      expect(hasUtilsFiles).toBe(true);
+    });
+
+    it('returns the skill-discovery rule from aiwg-utils (cross-provider parity, #1343)', () => {
+      const files = base.getAddonRuleFiles(REPO_ROOT);
+      const hasSkillDiscovery = files.some((f: string) =>
+        f.endsWith('aiwg-utils/rules/skill-discovery.md')
+      );
+      expect(hasSkillDiscovery).toBe(true);
     });
 
     it('still returns files from addons without consolidation', () => {
@@ -395,15 +409,17 @@ describe('Consolidated Rules Functions', () => {
       expect(Array.isArray(files)).toBe(true);
     });
 
-    it('respects excludeAddons parameter for non-consolidated addons', () => {
-      // Create a temp addon without consolidation to test excludeAddons
-      // Since we can't easily add a real addon, just verify the excludeAddons
-      // contract still works in combination with the new skipping logic
+    it('respects excludeAddons parameter', () => {
+      // Excluding aiwg-utils now removes its rules from the result; without
+      // the exclude they are included.
       const filesNoExclude = base.getAddonRuleFiles(REPO_ROOT);
       const filesWithExclude = base.getAddonRuleFiles(REPO_ROOT, ['aiwg-utils']);
-      // aiwg-utils is already excluded by consolidation
-      // The sets should be equal since aiwg-utils was already excluded by consolidation
-      expect(filesNoExclude).toEqual(filesWithExclude);
+      // filesWithExclude should be a strict subset of filesNoExclude
+      expect(filesNoExclude.length).toBeGreaterThan(filesWithExclude.length);
+      const hasUtilsWhenExcluded = filesWithExclude.some((f: string) =>
+        f.includes('aiwg-utils')
+      );
+      expect(hasUtilsWhenExcluded).toBe(false);
     });
   });
 
