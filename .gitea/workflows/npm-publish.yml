@@ -261,6 +261,14 @@ jobs:
       - name: Run type check
         run: npm run typecheck
 
+      - name: Build TypeScript
+        # Build before tests because several tests assert on dist/ output
+        # (e.g. test/unit/cli/validate-metadata-import.test.ts asserts the
+        # import path resolves to dist/src/plugin/metadata-validator.js
+        # — regression test for #1001). The v2026.5.5 publish failed
+        # because tests ran before build; this ordering matches ci.yml.
+        run: npm run build
+
       - name: Run tests
         # Test failures must block stable publish. `continue-on-error: true`
         # removed per #1280 (A2). The CLI perf gate is included here under
@@ -268,9 +276,6 @@ jobs:
         # accommodate the parallel-load measurement. See #1302 for the
         # follow-up to investigate and tighten back toward isolated p50.
         run: npm test -- --run
-
-      - name: Build TypeScript
-        run: npm run build
 
       - name: Extract and verify version
         id: version
