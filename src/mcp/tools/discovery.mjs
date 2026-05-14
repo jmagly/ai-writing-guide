@@ -140,7 +140,7 @@ export function registerDiscoveryTools(server) {
   // ============================================================
   server.registerTool('rule-list', {
     title: 'List AIWG Rules',
-    description: 'Enumerate AIWG enforcement rules (e.g. no-attribution, anti-laziness, citation-policy). Top-6 CRITICAL rules are inlined into Hermes AGENTS.md priming; this tool reaches the rest.',
+    description: 'Enumerate AIWG enforcement rules (e.g. skill-discovery, no-attribution, anti-laziness, citation-policy). Top-7 CRITICAL/HIGH rules are inlined into Hermes AGENTS.md priming (skill-discovery added #1347); this tool reaches the rest.',
     inputSchema: {
       filter: z.string().optional().describe('Substring filter on rule name'),
       limit: z.number().int().min(1).max(200).default(50),

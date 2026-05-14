@@ -100,22 +100,38 @@ const HERMES_AGENTS_MD_HARD_CAP = 19_000;
 const HERMES_AGENTS_MD_SOFT_WARN = 15_000;
 
 /**
- * Top-6 CRITICAL rule directives, inlined into AGENTS.md for guaranteed
- * priming on every Hermes turn (#1318 / S7).
+ * Top-7 CRITICAL rule directives, inlined into AGENTS.md for guaranteed
+ * priming on every Hermes turn (#1318 / S7; skill-discovery added #1347).
  *
  * The full rule bodies (29 total) are reachable via the MCP `rule-list`
  * and `rule-show` tools (#1320). The bodies exceed Hermes's 20K context
  * cap if inlined verbatim (anti-laziness alone is 32K chars), so we
  * inline compressed directives only and point to MCP for the full text.
  *
- * Selection criteria: rules tagged CRITICAL enforcement level whose
+ * Selection criteria: rules tagged CRITICAL/HIGH enforcement level whose
  * violations are silent or destructive (cost of remembering to query
- * rule-show > cost of inlining the directive).
+ * rule-show > cost of inlining the directive). skill-discovery is HIGH
+ * but is the linchpin of the discover-first architecture across all
+ * providers and is therefore inlined alongside the CRITICAL set.
  */
 const CRITICAL_RULE_DIRECTIVES = `## CRITICAL Rules (always apply)
 
 These are the highest-enforcement AIWG rules. Full bodies via \`mcp_aiwg_rule_show\`.
-Other 23 rules: \`mcp_aiwg_rule_list\`.
+Other 22 rules: \`mcp_aiwg_rule_list\`.
+
+### skill-discovery (discover-first protocol)
+Before declining a user request as "outside AIWG's scope" or improvising a
+workflow from training data, you MUST run \`mcp_aiwg_discover\` against
+the user's need. Most AIWG skills (~385 of ~400) are not in your context —
+they reach you only via \`mcp_aiwg_discover\` + \`mcp_aiwg_skill_show\`. Run
+discover whenever the user mentions AIWG, a framework name (sdlc, research,
+forensics, ops, marketing, security-engineering, media-curator,
+knowledge-base), or capability keywords (skill, agent, command, rule,
+workflow). Filesystem search via \`Read\` / \`Glob\` / \`Grep\` against AIWG
+storage paths is FORBIDDEN as a first move — the MCP discover index covers
+10x the surface area with ranked results. After discover returns a match,
+fetch its body with \`mcp_aiwg_skill_show\` (or the type-specific show
+tool), never read the path directly.
 
 ### no-attribution
 Never add AI-tool attribution to commits, PRs, code, or docs. No \`Co-Authored-By:\`,

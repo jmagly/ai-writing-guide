@@ -245,7 +245,52 @@ function transformCommandToSection(commandPath) {
 }
 
 /**
- * Generate AIWG content section (aggregate agents and commands)
+ * Transform rule markdown file to WARP.md section format.
+ * Rule content is inlined verbatim under an H3 heading (the rule name in
+ * Title Case), so Warp agents see the full rule body in their context.
+ * Per #1346 — closes cross-provider parity gap on the skill-discovery
+ * rule and other aiwg-utils rules that Warp's "rules via WARP.md only"
+ * convention previously left unwired.
+ */
+function transformRuleToSection(rulePath) {
+  const content = fs.readFileSync(rulePath, 'utf8');
+  const name = path.basename(rulePath, '.md');
+
+  // Strip frontmatter if present; the agent doesn't need the YAML.
+  const fmMatch = content.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
+  const body = (fmMatch ? fmMatch[1] : content).trim();
+
+  // Rules typically start with their own H1 (# Rule Name) — we want H3 in
+  // WARP.md so the rule slots under "## AIWG Rules". Strip a leading H1
+  // and rely on the section heading below; downshift surviving H2/H3.
+  const downshifted = body
+    .replace(/^# .+\n+/, '') // drop leading H1
+    .replace(/^## /gm, '#### ')
+    .replace(/^### /gm, '##### ');
+
+  const title = name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return `### ${title}\n\n${downshifted}\n`;
+}
+
+/**
+ * Collect aiwg-utils rule file paths for inlining into WARP.md.
+ * Focused on cross-provider parity rules: discover-first is the linchpin
+ * (#1343, #1346); other aiwg-utils rules are included to match the
+ * intent of "rules via WARP.md" stated in tools/agents/providers/warp.mjs.
+ * Per the activity-log rule and feedback_parity_no_removal: always-deploy.
+ */
+function collectAiwgRulePaths(aiwgRoot) {
+  const utilsRules = path.join(aiwgRoot, 'agentic', 'code', 'addons', 'aiwg-utils', 'rules');
+  if (!fs.existsSync(utilsRules)) return [];
+  return listMdFiles(utilsRules)
+    // RULES-INDEX.md is a navigation aid for filesystem deployments; for
+    // Warp's inlined aggregation the full rule bodies are inlined directly,
+    // so the index would be duplicate content. Skip it.
+    .filter(p => !path.basename(p).startsWith('RULES-INDEX'));
+}
+
+/**
+ * Generate AIWG content section (aggregate agents, commands, and rules)
  */
 function generateAIWGContent(aiwgRoot, mode) {
   const timestamp = new Date().toISOString();
@@ -344,6 +389,33 @@ function generateAIWGContent(aiwgRoot, mode) {
     const section = transformCommandToSection(commandPath);
     if (section) {
       content += section + '\n';
+    }
+  }
+
+  // Aggregate cross-provider rules into WARP.md (#1346 — Warp parity fix).
+  // Warp's only rule-delivery channel is WARP.md (no .warp/rules/ scan),
+  // so the aiwg-utils rules — including the load-bearing skill-discovery
+  // protocol — must be inlined here to reach Warp agents.
+  const rulePaths = collectAiwgRulePaths(aiwgRoot);
+  if (rulePaths.length > 0) {
+    content += '---\n\n';
+    content += '## AIWG Rules\n\n';
+    content += 'These rules govern agent behavior across all AIWG-supported providers. Warp delivers them via this aggregated section because Warp does not natively scan `.warp/rules/`. The full source for each rule lives at `$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/<rule-name>.md`.\n\n';
+    // Place skill-discovery first — it is the load-bearing rule the parity
+    // fix exists to surface (per #1343/#1346). Agents that read top-down
+    // hit the discover-first protocol immediately.
+    const sorted = [...rulePaths].sort((a, b) => {
+      const ax = path.basename(a, '.md');
+      const bx = path.basename(b, '.md');
+      if (ax === 'skill-discovery') return -1;
+      if (bx === 'skill-discovery') return 1;
+      return ax.localeCompare(bx);
+    });
+    for (const rulePath of sorted) {
+      const section = transformRuleToSection(rulePath);
+      if (section) {
+        content += section + '\n';
+      }
     }
   }
 
