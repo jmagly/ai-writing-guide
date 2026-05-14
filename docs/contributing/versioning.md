@@ -171,6 +171,27 @@ git push origin main
 # 4. Update SECURITY.md, test-tag, etc. — same as GPG steps 5-6.
 ```
 
+#### Two-key model — what to use when
+
+Per the convention established in commit `a13dabc5` ("two-key model — personal key signs commits, release key signs tags"), AIWG maintainers use **two keys with two separate purposes**:
+
+| Purpose | Key | UID |
+|---|---|---|
+| **Commit signing** | personal GPG key | maintainer's own identity (e.g. `<1159087+jmagly@users.noreply.github.com>`) |
+| **Tag signing (release)** | AIWG release key | `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`) |
+
+This has one operational gotcha: a typical maintainer git config has `tag.gpgsign=true` AND `user.signingkey=<personal-key>` so commits sign correctly. But `git tag -s` (and even `git tag -a` with `tag.gpgsign=true`) then signs the **tag** with the **personal key** — wrong key for the supply-chain gate.
+
+**Always cut tags via the wrapper:**
+
+```bash
+tools/release/cut-tag.sh 2026.X.Y
+```
+
+The wrapper forces `-u <release-key-fingerprint>` via `git tag -s -u …` so the right key signs the tag regardless of the global `user.signingkey`. It also runs 10 pre-tag checks (CalVer, package.json/marketplace.json lockstep, CHANGELOG, announcement, key published in `.gitea/keys/maintainers.asc`) so common drift bugs fail locally rather than in CI.
+
+**v2026.5.5 incident** (2026-05-14) — for posterity: an agent ran `git tag -a v2026.5.5 -m "…"` directly, which signed with the personal commit-signing key. The supply-chain gate caught it across **three workflows** (Gitea `npm-publish`, Gitea `gitea-release`, GitHub mirror release) and refused to publish any artifacts. No bad release left the gate. Recovery was `git tag -d` + `git push origin :refs/tags/<tag>` + push to remote, then `tools/release/cut-tag.sh <version>`. The wrapper script was added in the same fix commit so the next release ceremony won't repeat the mistake.
+
 #### Rotation and revocation
 
 Rotate maintainer signing keys on a known cadence (suggested: every 2 years) and immediately on any suspected compromise of the maintainer's workstation. To rotate:

@@ -122,7 +122,8 @@
     "post-commit-index-refresh",
     "soul-enforcement",
     "skill-discovery",
-    "cli-secondary"
+    "cli-secondary",
+    "auto-compact-continue"
   ],
   "templates": [
     "devkit/addon-manifest",

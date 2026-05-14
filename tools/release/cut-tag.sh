@@ -1,0 +1,250 @@
+#!/usr/bin/env bash
+# Cut a signed AIWG release tag with the release-signing key.
+#
+# This wrapper exists because git's `user.signingkey` is typically set to
+# a maintainer's PERSONAL commit-signing key. Tags created via plain
+# `git tag -s` (or even `git tag -a` when `tag.gpgsign=true` is set) will
+# then be signed with that personal key, NOT the release key published in
+# `.gitea/keys/maintainers.asc`. The supply-chain gate
+# (`tools/ci/verify-signed-tag.sh`) correctly rejects such tags — but the
+# error surfaces in CI rather than at the moment of the mistake.
+#
+# This script forces the correct release key via `git tag -s -u <fingerprint>`
+# and runs pre-tag sanity checks so the gate-fail loop becomes a local
+# fail-fast loop instead.
+#
+# Background: a13dabc5 (two-key model — personal key signs commits, release
+# key signs tags) and v2026.5.5 incident (signed-tag gate caught wrong-key
+# tag on commit fd2ba49e — recovered via re-tag with this procedure).
+#
+# Usage:
+#   tools/release/cut-tag.sh <version> [-m "<custom tag message>"]
+#
+# Example:
+#   tools/release/cut-tag.sh 2026.5.6
+#   tools/release/cut-tag.sh 2026.5.6 -m "v2026.5.6 — Some Theme"
+#
+# What it does (fail-fast at each step):
+#   1. Verifies <version> matches the CalVer YYYY.M.PATCH shape (no leading zeros)
+#   2. Verifies package.json version matches <version>
+#   3. Verifies .claude-plugin/marketplace.json metadata.version matches (PUW-038 lockstep)
+#   4. Verifies CHANGELOG.md has an entry for [<version>]
+#   5. Verifies docs/releases/v<version>-announcement.md exists
+#   6. Verifies the AIWG release-signing key is available locally
+#   7. Verifies the release-signing key is published in .gitea/keys/maintainers.asc
+#   8. Creates the signed tag with `git tag -s -u <release-key-fingerprint>`
+#   9. Verifies the tag's signature locally before any push (`git tag -v`)
+#  10. Reports next-step push commands; does NOT push automatically
+#
+# The push step is intentionally left to the operator so this script can
+# also be run as a sanity check before a release ceremony.
+
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Configuration — single source of truth for the release-signing key
+# ---------------------------------------------------------------------------
+# Fingerprint of the AIWG release-signing key, per SECURITY.md and
+# .gitea/keys/maintainers.asc. Override via $AIWG_RELEASE_KEY_FINGERPRINT
+# for forks or migration scenarios.
+RELEASE_KEY_FINGERPRINT="${AIWG_RELEASE_KEY_FINGERPRINT:-FE9272F0BC5781E1DE77FAAA719AB63879E84CE8}"
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+if [ $# -lt 1 ]; then
+  cat <<EOF >&2
+Usage: $0 <version> [-m "<tag message>"]
+
+Examples:
+  $0 2026.5.6
+  $0 2026.5.6 -m "v2026.5.6 — Some Release Theme"
+
+The default tag message is "vX.Y.Z — <CalVer date>" if not provided.
+EOF
+  exit 1
+fi
+
+VERSION="$1"
+shift
+
+TAG_MESSAGE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -m|--message)
+      TAG_MESSAGE="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown flag: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+TAG="v${VERSION}"
+
+cat <<EOF
+====================================================================
+AIWG cut-tag — preflight checks for ${TAG}
+====================================================================
+EOF
+
+# ---------------------------------------------------------------------------
+# 1. CalVer shape: YYYY.M.PATCH (no leading zeros on M or PATCH)
+# ---------------------------------------------------------------------------
+if ! [[ "$VERSION" =~ ^[0-9]{4}\.([1-9]|1[0-2])\.([0-9]|[1-9][0-9]+)$ ]]; then
+  cat <<EOF >&2
+FAIL: '$VERSION' does not match CalVer 'YYYY.M.PATCH'.
+       - Month must be 1-12 with NO leading zero (use '5' not '05').
+       - Patch must have no leading zero either.
+       See docs/contributing/versioning.md.
+EOF
+  exit 1
+fi
+echo "  [1/10] CalVer shape OK: $VERSION"
+
+# ---------------------------------------------------------------------------
+# 2. package.json lockstep
+# ---------------------------------------------------------------------------
+PKG_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).version)")
+if [ "$PKG_VERSION" != "$VERSION" ]; then
+  cat <<EOF >&2
+FAIL: package.json version is '$PKG_VERSION', expected '$VERSION'.
+       Run: npm version $VERSION --no-git-tag-version
+       Or edit package.json manually and commit.
+EOF
+  exit 1
+fi
+echo "  [2/10] package.json lockstep OK"
+
+# ---------------------------------------------------------------------------
+# 3. .claude-plugin/marketplace.json metadata.version lockstep (PUW-038 #1139)
+# ---------------------------------------------------------------------------
+MP_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8')).metadata.version)")
+if [ "$MP_VERSION" != "$VERSION" ]; then
+  cat <<EOF >&2
+FAIL: .claude-plugin/marketplace.json metadata.version is '$MP_VERSION',
+       expected '$VERSION' (PUW-038 lockstep — #1139).
+       Update the file and commit.
+EOF
+  exit 1
+fi
+echo "  [3/10] marketplace.json lockstep OK"
+
+# ---------------------------------------------------------------------------
+# 4. CHANGELOG.md entry exists
+# ---------------------------------------------------------------------------
+if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
+  cat <<EOF >&2
+FAIL: CHANGELOG.md does not contain '## [${VERSION}]'.
+       Add the release entry before tagging — see docs/releases/.
+EOF
+  exit 1
+fi
+echo "  [4/10] CHANGELOG.md entry OK"
+
+# ---------------------------------------------------------------------------
+# 5. Release announcement file exists
+# ---------------------------------------------------------------------------
+ANNOUNCEMENT="docs/releases/v${VERSION}-announcement.md"
+if [ ! -f "$ANNOUNCEMENT" ]; then
+  cat <<EOF >&2
+FAIL: $ANNOUNCEMENT does not exist.
+       Create the release announcement before tagging.
+       See docs/releases/v2026.5.5-announcement.md as a template.
+EOF
+  exit 1
+fi
+echo "  [5/10] Announcement file OK"
+
+# ---------------------------------------------------------------------------
+# 6. Release-signing key available locally
+# ---------------------------------------------------------------------------
+if ! gpg --list-secret-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1; then
+  cat <<EOF >&2
+FAIL: Release-signing key $RELEASE_KEY_FINGERPRINT not found in local
+       GPG keyring. Either import it (gpg --import) or override the
+       fingerprint with \$AIWG_RELEASE_KEY_FINGERPRINT.
+       See docs/contributing/versioning.md → "Signing your release tag".
+EOF
+  exit 1
+fi
+echo "  [6/10] Release-signing key present locally"
+
+# ---------------------------------------------------------------------------
+# 7. Release-signing key published in maintainers.asc
+# ---------------------------------------------------------------------------
+# Extract fingerprints from the committed keyring and check ours is among
+# them. We use `gpg --show-keys --with-colons` so the output is parseable
+# without depending on locale.
+if ! gpg --show-keys --with-colons .gitea/keys/maintainers.asc 2>/dev/null \
+     | awk -F: '$1=="fpr" {print $10}' | grep -qx "$RELEASE_KEY_FINGERPRINT"; then
+  cat <<EOF >&2
+FAIL: Release-signing key $RELEASE_KEY_FINGERPRINT is NOT published in
+       .gitea/keys/maintainers.asc. The supply-chain gate will reject
+       the tag. Publish the key:
+         gpg --armor --export $RELEASE_KEY_FINGERPRINT >> .gitea/keys/maintainers.asc
+         git add .gitea/keys/maintainers.asc
+         git commit -m 'security: republish release signing key'
+EOF
+  exit 1
+fi
+echo "  [7/10] Release-signing key published in maintainers.asc"
+
+# ---------------------------------------------------------------------------
+# 8. Create signed tag with explicit release key (-u override)
+# ---------------------------------------------------------------------------
+if [ -z "$TAG_MESSAGE" ]; then
+  TODAY=$(date -u '+%Y-%m-%d')
+  TAG_MESSAGE="${TAG} — ${TODAY}"
+fi
+
+# Refuse to overwrite an existing local tag — operators must run
+# `git tag -d $TAG` explicitly first to acknowledge the destructive op.
+if git rev-parse "$TAG" >/dev/null 2>&1; then
+  cat <<EOF >&2
+FAIL: Tag '$TAG' already exists locally. Refusing to overwrite.
+       To recreate intentionally:
+         git tag -d $TAG
+         git push origin :refs/tags/$TAG    # if it was already pushed
+         $0 $VERSION                          # re-run this script
+EOF
+  exit 1
+fi
+
+git tag -s -u "$RELEASE_KEY_FINGERPRINT" "$TAG" -m "$TAG_MESSAGE"
+echo "  [8/10] Signed tag '$TAG' created with release key"
+
+# ---------------------------------------------------------------------------
+# 9. Local verify (mirror of the CI gate logic)
+# ---------------------------------------------------------------------------
+if ! git tag -v "$TAG" >/dev/null 2>&1; then
+  cat <<EOF >&2
+FAIL: Local 'git tag -v $TAG' verification did not succeed.
+       This means even the local GPG can't verify what it just signed —
+       check that the release key is not expired or revoked.
+       Deleting the bad tag for cleanup:
+EOF
+  git tag -d "$TAG" >/dev/null 2>&1 || true
+  exit 1
+fi
+echo "  [9/10] Local 'git tag -v' verification passed"
+
+# ---------------------------------------------------------------------------
+# 10. Report next steps; do NOT auto-push
+# ---------------------------------------------------------------------------
+cat <<EOF
+
+  [10/10] Ready to push. The push step is left manual on purpose —
+  inspect the tag once more with 'git tag -v $TAG' if you want, then:
+
+    git push origin main --tags
+    git push github main --tags    # if mirroring to GitHub
+
+  After push, watch for the gitea-release / npm-publish / github-mirror
+  workflows. The supply-chain gate runs first; a green gate is the
+  precondition for any artifact emission.
+
+====================================================================
+EOF

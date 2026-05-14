@@ -4,9 +4,14 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (20 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (21 rules — active with aiwg-utils addon)
 
 ### HIGH
+
+#### auto-compact-continue
+**Summary**: The answer to "should I keep working?" is always YES — until the task's measurable completion criteria are met or the user redirects. Context pressure, long tool outputs, and high iteration counts are not scope questions. When context fills, the right response is to compact, checkpoint to durable storage (activity log, progress file at `.aiwg/working/<task>-progress.md`, git history, AIWG memory), and continue. Trust platform auto-compact (REF-910); load-bearing state must live in `CLAUDE.md` / `AGENTS.md` / `AIWG.md` / activity log / progress file / git / `.aiwg/working/` — never only in conversation turns. Maintain a `## Compact Instructions` section so the summarizer preserves completion criteria, last successful step, failed approaches (do not let them be re-attempted), and authorization questions. Apply aggressive in-session compression (REF-122: passive=6% savings, aggressive=22.7%); update the progress file every 10–15 tool calls on long tasks. Exceptions: authorization gates (per `human-authorization`), 3-attempts-failed escalation (per `anti-laziness` Rule 6), explicit user redirect, genuinely ambiguous new directive classification (per `skill-discovery` Rule 0). "Should I continue?" is never the right question.
+**When to apply**: Any long-running session; before context fills; after long tool outputs; when crossing iteration thresholds; when resuming after compaction; when tempted to ask the user permission to keep going
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/auto-compact-continue.md
 
 #### cli-secondary
 **Summary**: AIWG is agentic-first. The agent's strict priority order for any action: (1) **local skill** already loaded in context (kernel skills, framework quickrefs, deployed agents), (2) **discovered skill** via `aiwg discover` + `aiwg show`, (3) raw CLI command, (4) manual file edits as last resort. The skill carries the priming (pre-flight checks, dry-run preview, preservation logic, gates) that the CLI alone lacks. Sole exception: discovery/finder commands (`aiwg discover`, `aiwg show`, `aiwg list`, `aiwg status`, `aiwg version`, `aiwg runtime-info`, status/info subcommands) stay primary — they ARE the priming entry points and the bridge from priority 2 to priority 1. For mixed commands (`aiwg index`, `aiwg packages`, `aiwg ops`, `aiwg storage`), classify per subcommand. Includes a pairing table covering use/refresh/regenerate/doctor/init/promote/scaffold-*/add-*/doc-sync/lint/cleanup-audit/sdlc-accelerate/ralph/mc/steward/index build/ops actions/storage migrate.

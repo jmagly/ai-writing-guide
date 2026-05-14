@@ -663,10 +663,10 @@ Before pushing a version tag:
    npm run uat:serve-live
    ```
    Tests skip cleanly when `AIWG_SANDBOX_ENDPOINT` is unset or unreachable, so this is a safe no-op gate. Run before any release that touches `src/serve/`, the executor contract, or the MC ↔ serve bridge.
-5. **Commit and tag** - `git tag -m "vX.X.X" vX.X.X`
-6. **Push tag to Gitea** - `git push origin main --tags` (automatically creates Gitea Release)
-7. **Optionally mirror to GitHub** - `git push github main --tags`
-8. **Update/Create GitHub Release manually** - via `gh release create|edit`
+5. **Commit the release prep** — `git commit` the package.json/CHANGELOG/announcement bump. Do NOT use plain `git tag -a` or `git tag -s` (they sign with `user.signingkey`, which is typically the maintainer's *personal commit-signing key* — wrong key for tags; the supply-chain gate `tools/ci/verify-signed-tag.sh` will reject in CI).
+6. **Cut the tag via the wrapper** — `tools/release/cut-tag.sh <X.Y.Z>`. Runs 10 pre-tag checks (CalVer shape, `package.json` + `marketplace.json` lockstep, CHANGELOG entry, announcement file present, release-signing key both present locally AND published in `.gitea/keys/maintainers.asc`) and signs with `-u <RELEASE_KEY_FINGERPRINT>` (default: `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`, the `AIWG Release Signing <release@aiwg.io>` key per the two-key model from commit `a13dabc5`). See the v2026.5.5 incident note in `docs/contributing/versioning.md` for what happens when this is skipped.
+7. **Push tag to Gitea** — `git push origin main --tags`. Triggers `gitea-release.yml` + `npm-publish.yml` (both gated on signed-tag verify).
+8. **Mirror to GitHub** — `git push github main --tags`. Triggers `github-mirror.yml` which creates the GitHub Release using `docs/releases/v<version>-announcement.md` as the body. **No manual `gh release create` needed for stable releases** — the workflow handles it. Pre-release tags (`-rc.*`, `-alpha.*`, `-beta.*`, `-nightly.*`) skip GitHub-Release creation by design.
 
 ### Version Format
 

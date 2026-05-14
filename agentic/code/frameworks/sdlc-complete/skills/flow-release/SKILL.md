@@ -166,8 +166,22 @@ The config's `policy` block applies at every gate:
 - **Post-tag failures**: never delete pushed tags. Increment patch and re-run the flow.
 - **Gate failures with `hard_stop: true`**: halt immediately, surface the failure log, do not advance.
 - **Gate failures with `hard_stop: false`**: log a warning, continue.
+- **Supply-chain gate (signed-tag verify) failure**: this is the recovery exception to "never delete pushed tags." If `tools/ci/verify-signed-tag.sh` rejects the tag (wrong signing key, expired key, missing-from-maintainers.asc), no artifacts are emitted by `npm-publish.yml` / `gitea-release.yml` / `github-mirror.yml` — the bad tag is an empty shell. Recovery: `git tag -d <tag>`, push delete to both remotes (`git push origin :refs/tags/<tag>` and `git push github :refs/tags/<tag>`), then re-cut via `tools/release/cut-tag.sh <version>` which forces the release key. Document the incident in `docs/contributing/versioning.md` for the next release.
 
 Apply the `anti-laziness` recovery protocol (PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE) when a gate fails — do not silently bypass with destructive shortcuts like skipping tests or stripping rules.
+
+## Tag-cutting must use the wrapper
+
+**`git tag -a` and `git tag -s` are NOT to be used directly by this skill.** The maintainer's global git config typically has `tag.gpgsign=true` and `user.signingkey=<personal-commit-signing-key>`, which causes plain `git tag` invocations to sign with the **wrong key** — the personal key, not the release key. The supply-chain gate will reject the tag and no artifacts will ship.
+
+Always use `tools/release/cut-tag.sh <version>` for the tag step. The wrapper:
+
+1. Runs 10 pre-tag sanity checks (CalVer shape, package.json + marketplace.json lockstep, CHANGELOG entry, announcement file present, release-signing key present locally AND published in `.gitea/keys/maintainers.asc`)
+2. Signs with `-u <RELEASE_KEY_FINGERPRINT>` (defaults to the AIWG release key; override via `AIWG_RELEASE_KEY_FINGERPRINT` env var for forks)
+3. Verifies the local signature via `git tag -v` before declaring success
+4. Does NOT push automatically — push is left to the operator so a final sanity step can run
+
+This is the canonical path. Any release config that templates a raw `git tag -s` is incorrect and must be migrated to call the wrapper.
 
 ## Defaults when no config exists
 
