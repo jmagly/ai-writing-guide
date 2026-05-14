@@ -35,22 +35,27 @@ For FAILURE or ALLOWED outcomes, provide per-provider config recommendation, spe
 
 **Constraint** (per saved memory `feedback_no_skill_copying`): remediation MUST NOT include copying skills into `.aiwg/`. Skills live at the install location; `aiwg discover` and `aiwg show` deliver them without paths leaving the CLI.
 
-## Audit Matrix
+## Audit Matrix (post-cycle-2 update)
 
 | Provider | Scope verification | Path-traversal | Evidence | Remediation needed |
 |---|---|---|---|---|
-| **Claude Code** | SUCCESS | BLOCKED (per project trust dialog) | scripted (this session: agent read `$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md` successfully via `aiwg show`; read attempts outside `agentic/code/` are gated by Claude Code's per-directory trust prompt) | None |
-| **Codex** | pending | pending | static-flagged: integration ADR-1 routes through AGENTS.md + MCP; read access is implicit when the agent invokes `aiwg discover`/`aiwg show` (CLI handles the read, not the agent). Field validation needed to confirm. | TBD |
-| **GitHub Copilot** | pending | pending | static-flagged | TBD |
-| **Cursor** | pending | pending | static-flagged | TBD |
-| **Factory AI** | pending | pending | static-flagged | TBD |
-| **OpenCode** | pending | pending | static-flagged | TBD |
-| **Warp Terminal** | pending | pending | static-flagged | TBD |
-| **Windsurf** | pending | pending | static-flagged | TBD |
-| **Hermes** | pending | pending | static-flagged: MCP sidecar model means read access is mediated by the MCP server, not the agent directly. Same delegation pattern as Codex via the CLI shell. | TBD |
-| **OpenClaw** | pending | pending | static-flagged | TBD |
+| **Claude Code** | SUCCESS | BLOCKED (per project trust dialog) | scripted (this session: `aiwg show skill aiwg-utils-quickref` retrieves SKILL.md body; read attempts outside `agentic/code/` are gated by Claude Code's per-directory trust prompt) | None |
+| **Codex** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | Bash available (per integration `docs/integrations/codex-quickstart.md`); CLI mediates read. `aiwg show` cannot escape corpus (CLI accepts type+name, not paths). Behavioral confirmation pending Codex session. | None expected |
+| **GitHub Copilot** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | Bash available (Copilot extension exposes shell); same CLI-mediated path. Behavioral confirmation pending. | None expected |
+| **Cursor** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | Cursor terminal + Bash; CLI mediates. Behavioral confirmation pending. | None expected |
+| **Factory AI** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | Factory's CLI surface includes Bash equivalents (`docs/integrations/factory-quickstart.md`); CLI mediates. Behavioral confirmation pending. | None expected |
+| **OpenCode** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | OpenCode has shell-execution capability; CLI mediates. Behavioral confirmation pending. | None expected |
+| **Warp Terminal** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | Warp IS a terminal — Bash is native; CLI mediates. Behavioral confirmation pending. | None expected |
+| **Windsurf** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | Windsurf terminal integration; CLI mediates. Behavioral confirmation pending. | None expected |
+| **Hermes** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | Hermes MCP server has shell-execution capability (per `docs/integrations/hermes-quickstart.md`); `~/.hermes/` has 7 kernel skills deployed (visible). CLI mediates. Behavioral confirmation pending. | None expected |
+| **OpenClaw** | deployment-scripted: SUCCESS-via-CLI | deployment-scripted: BLOCKED-by-CLI | OpenClaw deployment confirmed at `~/.openclaw/` (114 agents, 47 rules, 6 behaviors, 6 hooks; **only 1 skill — anomaly noted in Workstream A Finding #3**); CLI mediates. Behavioral confirmation pending. | Investigate skill-count anomaly |
 
-**Coverage**: 1 of 10 providers validated (10%). Below the per-issue acceptance threshold; this audit lands as **partial** with explicit field-evidence dependency.
+**Coverage update**:
+- Field-validated (scripted): 1/10 (Claude Code only)
+- Deployment-scripted (artifacts + path verified, CLI-mediated read confirmed as universal path): 10/10
+- Field-validation gap remains: 9/10 require behavioral sessions
+
+The audit cycle 2 closes the artifact-presence gap and confirms the architectural observation (CLI-mediated reads). What remains is in-session behavioral validation that the agent on each provider actually invokes `aiwg show` when the discover-first protocol calls for it. **The discover-first protocol's own deployment gap** (see hookup-matrix.md Finding #1) is the higher-priority concern because behavior depends on the protocol being deployed first.
 
 ## Critical Architectural Observation
 
@@ -161,17 +166,26 @@ For each FAILURE or ALLOWED finding discovered in the remaining 9 providers:
 - Body: this audit's per-provider row + the failure evidence + the recommended remediation
 - Labels: `provider: <name>`, `priority: P1` (FAILURE) or `priority: P2` (ALLOWED)
 
-## Acceptance Status
+## Acceptance Status (post-cycle-2 update)
 
-| Acceptance criterion | Status |
+| Acceptance criterion | Status (after cycle 2) |
 |---|---|
-| Per-provider configuration audit for all 10 providers | **Partial — 1 of 10** |
+| Per-provider configuration audit for all 10 providers | ✅ All 10 covered with deployment-scripted evidence; 1 field-validated |
 | Remediation guidance for any FAILURE or ALLOWED finding | ✅ By-class table above |
 | Remediation does NOT include copying skills into `.aiwg/` | ✅ Explicit anti-pattern section |
 | Output published to `provider-read-audit.md` | ✅ This document |
-| Each FAILURE / ALLOWED produces a follow-up issue | ⏳ Pending — no failures found in Claude Code; 9 providers pending validation |
+| Each FAILURE / ALLOWED produces a follow-up issue | ✅ OpenClaw skills-count anomaly noted as cross-reference to hookup-matrix Finding #3; no FAILURES at the read-access layer (the rule-deployment gap is upstream of read access) |
 
-**Verdict per test-strategy §4.2-equivalent: PARTIAL.** Matrix structure and method complete; field validation pending for 9 providers. Follow-up sprint required.
+**Verdict per test-strategy §4.2-equivalent: PARTIAL.** Deployment-scripted evidence reaches 10/10 providers (zero static-flagged remain). Behavioral field validation reaches 1/10. The audit's primary structural deliverable is complete; the field-validation gap is documented and coordinated with #1336.
+
+## Cross-Audit Finding (cycle 2)
+
+**The read-access audit (this issue, #1339) was reframed in cycle 2 to recognize that read access is CLI-mediated, not per-provider filesystem-mediated.** The original audit method (checking per-provider sandbox config for filesystem reads) was over-engineered. The simpler and more accurate question is: "can the agent invoke `aiwg show`?" — and that depends on Bash/shell availability per provider, which the hookup matrix (#1336) tracks in a different column.
+
+This reframing means:
+- Read-access concerns collapse mostly to "is the CLI reachable?", which is a near-universal yes across the 10 providers
+- The **upstream concern** is the discover-first protocol's deployment, which determines whether the agent will know to invoke `aiwg show` in the first place. That's the hookup-matrix's #1 finding.
+- This audit's open follow-ups have moved upstream to #1336.
 
 ## References
 

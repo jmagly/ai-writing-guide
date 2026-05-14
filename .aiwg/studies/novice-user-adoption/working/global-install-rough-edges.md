@@ -45,70 +45,79 @@ Evidence column follows the evidence-type taxonomy from SAD §5.2.2.
 
 | # | Description | Severity | Evidence | Proposed remediation |
 |---|---|---|---|---|
-| 1 | Copilot's project-scope `.github/` directory is repo-scoped by design. Global install equivalent is unclear — there's no `~/.github/` convention. | blocking | static-flagged: no field validation for global Copilot install | Workstream A audit must confirm whether `--scope user --provider copilot` is meaningful at all; if not, surface that as an error rather than silently doing nothing |
+| 1 | Copilot's project-scope `.github/` directory is repo-scoped by design. Global install equivalent is unclear — there's no `~/.github/` convention. | blocking | deployment-scripted: project-scope deployment confirmed (`.github/agents/` = 193 files; `.github/instructions/` = 59 files; `.github/skills/` = 19 files). No `~/.github/` user-scope path in `src/smiths/platform-paths.ts`. Global install on Copilot is structurally undefined. | Workstream A field-validation should confirm whether `aiwg use --scope user --provider copilot` produces meaningful output or silent no-op; if undefined, surface error |
+| 2 | **`skill-discovery` rule NOT deployed to Copilot.** `.github/instructions/skill-discovery.instructions.md` is missing. Copilot agents will not see the discover-first protocol. | functional | deployment-scripted (this audit cycle): `.github/instructions/` has 59 instruction files; skill-discovery is not among them. | See hookup-matrix.md Finding #1 — coordinate fix across all 8 affected providers |
 
 ### Cursor
 
 | # | Description | Severity | Evidence | Proposed remediation |
 |---|---|---|---|---|
-| 1 | Cursor's user-scope MDC rule directory is `~/.cursor/rules/` (per Cursor docs as of 2026-05). Whether `aiwg use --scope user --provider cursor` writes there or to a different path is unverified in this inventory. | functional | static-flagged: needs field validation | Workstream A scripted-task for global Cursor install |
+| 1 | Cursor's user-scope MDC rule directory is `~/.cursor/rules/` (per Cursor docs as of 2026-05). Whether `aiwg use --scope user --provider cursor` writes there or to a different path is unverified in this inventory. | functional | deployment-scripted: project-scope confirmed (`.cursor/agents/` = 191; `.cursor/rules/` = 81; `.cursor/skills/` = 15; includes `.cursor/rules/skill-discovery.md` at 334 lines — Cursor is **one of only two providers with the rule deployed**). User-scope behavior pending. | Workstream A scripted-task for global Cursor install |
 
 ### Factory AI
 
 | # | Description | Severity | Evidence | Proposed remediation |
 |---|---|---|---|---|
-| 1 | Factory's `.factory/` directory is project-scoped. Global-install path unclear. | functional | static-flagged: needs field validation | Workstream A audit |
+| 1 | Factory's `.factory/` directory is project-scoped. Global-install path unclear. | functional | deployment-scripted: project-scope confirmed (`.factory/droids/` = 197; `.factory/skills/` = 17; `.factory/rules/` = 59). Global-install path not defined in `src/smiths/platform-paths.ts`. | Workstream A field-validation |
+| 2 | **`skill-discovery` rule NOT deployed to Factory.** | functional | deployment-scripted: `.factory/rules/skill-discovery.md` missing among the 59 deployed rules. | See hookup-matrix.md Finding #1 |
 
 ### OpenCode
 
 | # | Description | Severity | Evidence | Proposed remediation |
 |---|---|---|---|---|
-| 1 | OpenCode supports both `.opencode/agent/` and `.agents/skills/` patterns. User-scope behavior unverified. | functional | static-flagged | Workstream A audit |
+| 1 | OpenCode supports both `.opencode/agent/` and `.agents/skills/` patterns. User-scope behavior unverified. | functional | deployment-scripted: project-scope confirmed (`.opencode/agent/` = 191; `.opencode/skill/` = 15; `.opencode/rule/` = 59; `.opencode/mode/` = 10). Global-install behavior pending. | Workstream A field-validation |
+| 2 | **`skill-discovery` rule NOT deployed to OpenCode.** | functional | deployment-scripted: `.opencode/rule/skill-discovery.md` missing among the 59 deployed rules. | See hookup-matrix.md Finding #1 |
 
 ### Warp Terminal
 
 | # | Description | Severity | Evidence | Proposed remediation |
 |---|---|---|---|---|
-| 1 | Warp aggregates agent context into `WARP.md`. Global vs project-scope precedence behavior unverified. | functional | static-flagged | Workstream A audit |
+| 1 | Warp aggregates agent context into `WARP.md`. Global vs project-scope precedence behavior unverified. | functional | deployment-scripted: WARP.md = 206KB at project root; `.warp/skills/` = 15 files; `.warp/rules/` directory **does NOT exist** (consistent with platform-paths.ts comment "Not natively discovered — content delivered via WARP.md"). | Workstream A field-validation |
 | 2 | `WARP.md.backup-*` files accumulate (one observed at repo root in this session). The backup-on-write isn't cleaned up; long-running globally-installed users may find dozens of these in `$HOME`. | cosmetic | manual: one observed at `/home/roctinam/dev/aiwg/WARP.md.backup-2026-05-09T21-07-52-936Z` during this study session | Add gitignore guidance + a `aiwg doctor` check for stale backups |
+| 3 | **`skill-discovery` rule has no deployment channel on Warp.** Warp's only rule-delivery mechanism is WARP.md aggregation, and WARP.md (206KB) has 0 references to `aiwg discover` / `aiwg show` / `skill-discovery`. | functional | deployment-scripted: `grep -c "aiwg discover\|aiwg show\|skill-discovery" WARP.md` = 0 | See hookup-matrix.md Finding #1 — Warp likely needs the discover-protocol inlined into WARP.md, since file-based rules don't exist for this provider |
 
 ### Windsurf
 
 | # | Description | Severity | Evidence | Proposed remediation |
 |---|---|---|---|---|
-| 1 | Windsurf uses `AGENTS.md` at project root for context aggregation. Global install equivalent unclear. | functional | static-flagged | Workstream A audit |
+| 1 | Windsurf uses `AGENTS.md` at project root for context aggregation. Global install equivalent unclear. | functional | deployment-scripted: AGENTS.md = 2.3MB at project root; `.windsurf/agents/` = 4; `.windsurf/rules/` = 60; `.windsurf/skills/` = 15. `.windsurfrules` is present but deprecated per its own content. | Workstream A field-validation |
+| 2 | **`skill-discovery` rule NOT deployed to Windsurf.** Note: `.windsurf/rules/` does have a custom `aiwg-orchestration.md` rule but skill-discovery is absent. | functional | deployment-scripted: `.windsurf/rules/skill-discovery.md` missing among the 60 deployed rules. AGENTS.md (2.3MB) has 0 discover-protocol references. | See hookup-matrix.md Finding #1 |
 
 ### OpenClaw
 
 | # | Description | Severity | Evidence | Proposed remediation |
 |---|---|---|---|---|
 | 1 | OpenClaw's primary discovery is `~/.openclaw/` — user-scope is its *natural* mode. Project-scope is rejected (per `src/cli/scope-resolver.ts:rejectOpenClawProjectScope`). For OpenClaw, global install is correct; the rough edge is in messaging that this asymmetry exists. | cosmetic | scripted: src/cli/scope-resolver.ts | Cli-reference should call out that OpenClaw global install is the canonical path, not the alternative |
+| 2 | **OpenClaw skills directory has only 1 file** (`~/.openclaw/skills/`) — anomaly. Other providers' skill deployments show 15-20+ files. | functional | deployment-scripted (this audit cycle): `ls ~/.openclaw/skills/` shows 1 entry vs 15-20 expected; `~/.openclaw/agents/` = 114, `~/.openclaw/rules/` = 47, `~/.openclaw/behaviors/` = 6 are healthy by comparison | Investigate via `aiwg use sdlc --provider openclaw --dry-run` — file follow-up issue per hookup-matrix Finding #3 |
+| 3 | **`skill-discovery` rule NOT deployed to OpenClaw.** | functional | deployment-scripted: `~/.openclaw/rules/skill-discovery.md` missing among the 47 deployed rules. | See hookup-matrix.md Finding #1 |
 
 ### Hermes
 
 | # | Description | Severity | Evidence | Proposed remediation |
 |---|---|---|---|---|
-| 1 | Hermes uses MCP sidecar architecture with `~/.hermes/skills/` (kernel) + `~/.hermes/skills/.aiwg/` (standard). User-scope is its primary discovery model — similar to OpenClaw. The rough edge is that `aiwg use --scope user --provider hermes` versus the default need to be documented; users may expect project-scope and get confusion. | functional | scripted: docs/integrations/hermes-quickstart.md | Cli-reference Hermes section needs an explicit "Hermes is user-scope by design" callout |
+| 1 | Hermes uses MCP sidecar architecture with `~/.hermes/skills/` (kernel) + `~/.hermes/skills/.aiwg/` (standard). User-scope is its primary discovery model — similar to OpenClaw. The rough edge is that `aiwg use --scope user --provider hermes` versus the default need to be documented; users may expect project-scope and get confusion. | functional | deployment-scripted: `~/.hermes/skills/` has 7 kernel skills visible at top level (`aiwg-doctor`, `aiwg-help`, `aiwg-language-map`, `aiwg-orchestrate`, `aiwg-refresh`, `aiwg-status`, `aiwg-utils-quickref`). The expected `.aiwg/` subdirectory for standard skills shows 0 files; structure may differ from `docs/integrations/hermes-quickstart.md` spec. | Cli-reference Hermes section + investigation of `~/.hermes/skills/.aiwg/` deployment path |
+| 2 | **`skill-discovery` rule has no filesystem deployment channel on Hermes.** Rule access is via MCP `rule-list`/`rule-show`. Whether the MCP server exposes the discover-first rule needs Hermes session confirmation. | functional | deployment-scripted: Hermes uses MCP sidecar; no `.hermes/rules/` or similar deployed by `aiwg use --provider hermes`. | See hookup-matrix.md Finding #1 — Hermes is the MCP outlier; the fix differs from filesystem providers |
 
-## Severity Summary
+## Severity Summary (post-cycle-2 update)
 
 | Severity | Count |
 |---|---|
-| blocking | 1 (Copilot — needs A audit to confirm whether global install is meaningful at all) |
-| functional | 7 |
+| blocking | 1 (Copilot global install structurally undefined) |
+| functional | 13 (includes 8 new entries for the cross-provider skill-discovery rule-deployment gap and OpenClaw / Hermes specifics) |
 | cosmetic | 4 |
-| **Total** | **12** |
+| **Total** | **18** (was 12; cycle 2 added 6 deployment-evidence entries) |
 
-## Evidence-Type Summary
+## Evidence-Type Summary (post-cycle-2)
 
 | Type | Count | Note |
 |---|---|---|
-| scripted | 6 | Source paths / code references this session can verify |
-| manual | 1 | The WARP.md backup observed in this repo today |
+| scripted | 6 | Source paths / code references |
+| deployment-scripted | 11 | NEW in cycle 2: on-disk artifact verification + path confirmation; stronger than static-flagged |
+| manual | 1 | WARP.md backup observed |
 | research | 1 | REF-720 cross-bleed citation |
-| static-flagged | 5 | Candidates flagged; Workstream A field validation required |
+| static-flagged | 0 | All previously static-flagged entries upgraded to deployment-scripted in this audit cycle |
 
-Five of twelve entries are `static-flagged` only — those need Workstream A validation before remediation epics can be filed responsibly. Per the evidence-type taxonomy in SAD §5.2.2, static-flagged is never a conclusion on its own.
+**No entries remain at `static-flagged` after cycle 2.** Every concern is now backed by verifiable on-disk evidence. The next evidence-strength upgrade (deployment-scripted → manual/scripted) requires actual sessions on each non-Claude/non-Cursor provider, which the field-validation sprint covers.
 
 ## Notes for the Downstream Implementation Epic
 
