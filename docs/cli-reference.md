@@ -449,6 +449,27 @@ On first run after the commands-to-skills migration, `aiwg use` detects an exist
 - **OpenClaw**: Only provider with behaviors support (`~/.openclaw/behaviors/`); all artifacts deploy to home directory
 - **Local/Ollama**: Uses Claude Code path layout; specify `--coding-model ollama/<model>` to route coding tasks to the local model
 
+#### Scope models: project vs user (global) — ADR-NUA-001
+
+`aiwg use` writes artifacts at two possible scopes. Both are supported.
+
+| Scope | How to invoke | Artifact location example (Claude Code) | When it fits |
+|---|---|---|---|
+| **Project (default, recommended)** | `aiwg use sdlc` from a project root | `./.claude/agents/`, `./.claude/skills/` | A specific codebase or project. Per-project agent set; no bleed across unrelated work. |
+| **User / global** | `aiwg use sdlc --scope user` (or in `$HOME`/`/tmp` with no project signals) | `~/.claude/agents/`, `~/.claude/skills/` | "AIWG in every session" preference. Powers users, ad-hoc work, or providers whose primary discovery is user-scope (OpenClaw, Hermes). |
+
+**Trade-off (REF-720 cross-bleed).** The same `~/.claude/agents/` directory loads into every Claude Code session, regardless of project. Research from MSR/Salesforce (REF-720, *Lost in Multi-Turn Conversation*, 2025) measured a 39% capability drop when context bleeds across unrelated tasks. Project-scope keeps each project's artifact set isolated; user-scope intentionally trades that isolation for ubiquity. Choose the scope that fits the workflow; neither is wrong, and the project-isolation warning from `aiwg use` surfaces the trade-off at deploy time.
+
+**Per-provider notes for global install:**
+
+- **Claude Code** — `~/.claude/agents/` and `./.claude/agents/` merge at load time. `aiwg status --scope` (when implemented per the rough-edge inventory) helps disambiguate which artifacts came from which scope.
+- **Codex** — User-scope is the *primary* discovery path; `~/.codex/prompts/` and `~/.codex/skills/` are where Codex actually looks. Project-scope `.codex/commands/` exists for operator visibility but Codex's loader does not scan it. AGENTS.md is the project-scope discovery bridge per the Codex integration ADR.
+- **OpenClaw** — User-scope is the only supported scope. Project-scope is rejected at the CLI layer.
+- **Hermes** — User-scope is the canonical mode; `~/.hermes/skills/` is the primary loader path.
+- **Copilot / Cursor / Factory / OpenCode / Warp / Windsurf** — Global-install semantics on these providers are pending field validation as part of the Workstream A audit (`.aiwg/studies/novice-user-adoption/working/hookup-matrix.md`).
+
+Status (ADR-NUA-001): **first-class supported flow**. Project-scope remains the recommended default. No deprecation of either mode is planned for the `2026.5.x` line. See `.aiwg/studies/novice-user-adoption/architecture/adr-global-install.md` for the full decision and `.aiwg/studies/novice-user-adoption/working/global-install-rough-edges.md` for the per-provider rough-edge inventory.
+
 ---
 
 ### list

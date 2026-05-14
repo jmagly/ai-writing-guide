@@ -49,6 +49,17 @@ AIWG is a deployment tool and support utility for AI context. At its core, `aiwg
 
 Around that core, AIWG ships utilities for things the base platforms do not handle on their own: persistent artifact memory (`.aiwg/`), background orchestration (`aiwg mc`), autonomous loops (`aiwg ralph`), artifact indexing (`aiwg index`), cost telemetry, health diagnostics, and more. Most are opt-in. The deployment layer works standalone as plain text files the platform reads natively.
 
+### Project scope (recommended) vs user scope (global)
+
+`aiwg use` writes artifacts at one of two scopes. Both are first-class supported (see ADR-NUA-001 in `.aiwg/studies/novice-user-adoption/`):
+
+- **Project scope** — default. Run `aiwg use sdlc` from a project root and the artifacts land in `./.claude/agents/`, `./.claude/skills/`, etc. One project's agent set never bleeds into another's session. **This is the recommended default for most use cases.**
+- **User scope (global install)** — `aiwg use sdlc --scope user` writes to `~/.claude/agents/`, `~/.claude/skills/`, etc. Same artifact set loads into every session, regardless of project. Fits "AIWG in every conversation" workflows and is the canonical mode for OpenClaw and Hermes (whose primary discovery is user-scope).
+
+The trade-off is real: when the same agent set loads into every session, context from one project can bleed into reasoning about another. Research (REF-720, *Lost in Multi-Turn Conversation*, MSR/Salesforce 2025) measured a 39% capability drop when this happens. The non-blocking project-isolation warning surfaces the trade-off at deploy time so the scope choice is informed. Neither scope is wrong; pick the one that fits the workflow.
+
+See `docs/cli-reference.md` (under `aiwg use` → "Scope models") for the per-provider details and the global-install rough-edge inventory.
+
 ## Simple Building Blocks
 
 AIWG ships five primitive artifact types. All are plain text:
