@@ -523,6 +523,7 @@ The bar for kernel-tier skills is high. Today's kernel falls into two categories
 
 ## References
 
+- [Artifact index and manifest loading internals](architecture/index-and-manifest-loading.md) — companion doc covering index file layout, graph configs, manifest loaders, and the search/load pipeline
 - CLI reference [Discovery section](cli-reference.md#discovery) — full command reference
 - [`skill-discovery`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) — HIGH-enforcement framing rule
 - Epic [#1212](https://git.integrolabs.net/roctinam/aiwg/issues/1212) — index-driven skill discovery
