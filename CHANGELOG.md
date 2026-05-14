@@ -9,6 +9,70 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
+## [2026.5.5] - 2026-05-14 — "Cross-provider discover-first parity"
+
+Two user-facing changes plus the deployment-pipeline fix that makes the
+discover-first protocol reach all 10 supported providers on every fresh
+`aiwg use` invocation. Companion artifact: the Novice-User Adoption study
+(Workstreams A-G), landed under `.aiwg/studies/novice-user-adoption/`.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **`aiwg use` warns when invoked from `$HOME` / `/` / `/tmp`** | First-run protection. When `aiwg use sdlc` runs from a directory with no project signals (`.git`, `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `pom.xml`, `Gemfile`, `build.gradle`, `*.csproj`), AIWG emits a 3-second cancellable warning naming the target directory and pointing at recovery. `AIWG_GLOBAL_INSTALL=1` suppresses the delay; non-cancelled emissions write `warn:no-project-signal` to `.aiwg/activity.log`. Stat-only walk completes in <50ms (CI-enforced). |
+| **Discover-first protocol now reaches every provider** | Before this release, the `skill-discovery` rule (mandates `aiwg discover` before declining a request or improvising a workflow) was deployed only to Claude Code and Cursor. Eight other providers had stale leftover copies or no copy at all. After this release, every provider's `aiwg use` invocation deploys the current rule body to its native rules directory, or — for Warp and Hermes — inlines it into the appropriate aggregation surface (WARP.md and AGENTS.md priming). |
+| **Documented scope-model trade-off (REF-720)** | `docs/cli-reference.md` and `README.md` now document the project-scope (default) vs user-scope (global install) trade-off side-by-side, citing the REF-720 cross-context-bleed evidence (39% capability drop). ADR-NUA-001 formalizes global install as a first-class supported flow with project-scope remaining the recommended default. |
+
+### Added
+
+- `src/cli/project-isolation/` — new module (signals.ts, detect.ts, warning.ts, index.ts) wiring the project-isolation warning into `UseHandler.execute()`. 29 unit tests covering per-signal positive cases, walk-depth boundary (MAX_PARENT_DEPTH = 3), Ctrl-C cancellation, env-var suppression, activity-log integration, and a CI-enforced performance gate (<50ms median in a project root).
+- `agentic/code/frameworks/sdlc-complete/templates/aiwg-sections/02b-discover-first.md` — new template fragment registered in the aiwg-sections manifest. Ready for downstream wiring once the fragment-based AIWG.md generator returns to the live pipeline.
+- `.aiwg/studies/novice-user-adoption/` — full study deliverables across Workstreams A-G (10 baselined documents under `working/`): hookup matrix, read-access audit, wizard design + CW, engagement-surface design + Lee & See trust-calibration analysis, global-install rough-edge inventory, comms drafts, three empirical-question instruments.
+- Three new follow-up tracking issues filed and resolved during the study: #1343 (rule deployment), #1346 (Warp aggregation), #1347 (Hermes priming).
+
+### Changed
+
+- `agentic/code/addons/aiwg-utils/manifest.json` — `consolidation.deployIndexOnly` changed from `true` to `false`. Individual rule files (skill-discovery, no-attribution, anti-laziness, etc.) now deploy alongside `RULES-INDEX.md` to every provider's rules directory. Per saved-memory `feedback_parity_no_removal`: always-deploy + adapt — no writer was removed; the deploy set was extended. Closes #1343.
+- `tools/warp/setup-warp.mjs` — new `transformRuleToSection()` and `collectAiwgRulePaths()` helpers plus a "## AIWG Rules" aggregation block in `generateAIWGContent()`. Regenerated WARP.md inlines the full aiwg-utils rule bodies (skill-discovery first), turning the previous "0 discover-protocol references" into 101. Closes #1346.
+- `tools/agents/providers/hermes.mjs` — `CRITICAL_RULE_DIRECTIVES` extended from Top-6 to Top-7. skill-discovery added as the first directive (governs how the agent interacts with AIWG architecturally). ~1KB compressed, well within the 19KB Hermes AGENTS.md hard cap. Closes #1347.
+- `src/mcp/tools/discovery.mjs` — `rule-list` MCP tool description updated to reflect the Top-7 inlining.
+- `agentic/code/frameworks/sdlc-complete/templates/copilot/copilot-instructions.md.aiwg-template` — new "Discover-First Protocol (CRITICAL)" section inlined under the AIWG SDLC Framework heading. Copilot reads `.github/copilot-instructions.md` natively, so the inline section reaches Copilot agents at session start.
+- `docs/cli-reference.md` — new "Scope models: project vs user (global)" section under `aiwg use` with side-by-side comparison, REF-720 trade-off, and per-provider notes.
+- `README.md` — scope-model overview added to "What AIWG Is" with project recommendation, global as first-class supported, REF-720 framing.
+- `test/unit/consolidated-rules.test.ts` — 2 tests rewritten to verify the new positive contract (aiwg-utils rules included, skill-discovery in returned set). 53/53 pass.
+
+### Fixed
+
+- `.claude-plugin/marketplace.json` — bumped `metadata.version` from 2026.5.2 → 2026.5.5 to satisfy the PUW-038 (#1139) lockstep check with `package.json`. The marketplace version had drifted across 2026.5.3 and 2026.5.4 releases; this release brings it back into lockstep.
+- Stale `.claude/rules/skill-discovery.md` (401 lines) and `.cursor/rules/skill-discovery.md` (334 lines) had drifted from the source-of-truth (400 lines, md5 `93a41b...`). Next `aiwg use` invocation overwrites them with the current source.
+
+### Audit / Documentation
+
+- `.aiwg/studies/novice-user-adoption/working/hookup-matrix.md` — full per-platform discovery-hookup matrix; 10/10 providers structurally parity-fixed across cycles 3 and 4. Field-validation gap (behavioral verification per provider) remains as residual work tracked in #1336.
+- Evidence-type taxonomy extension: introduces `deployment-scripted` as an intermediate evidence type between `static-flagged` (file:line reference only) and `scripted` (CI-verifiable behavior). Stronger than static-flagged because it confirms deployment delivers right files to right paths; weaker than full scripted because it does not verify agent behavior on the provider.
+
+### Closed Issues
+
+- #1335 — Workstream B: ship `aiwg use` project-isolation warning
+- #1337 — Workstream C: wizard design doc + Cognitive Walkthrough
+- #1339 — Workstream E: provider read-access audit
+- #1340 — Workstream F: engagement-surface design + trust-calibration framework
+- #1341 — Workstream G: 3 empirical questions (informal-but-directional)
+- #1343 — Deploy skill-discovery rule to all 8 missing providers
+- #1346 — Warp: aggregate aiwg-utils rules into WARP.md
+- #1347 — Hermes: surface skill-discovery via MCP + AGENTS.md priming
+
+### Open by Design
+
+- #1336 — Workstream A hookup audit (partial-pass; field-validation sprint required)
+- #1338 — Workstream D global-install ADR (awaiting 5-day Discord/Telegram comms window)
+- #1342 — Citation-validate sweep (dormant per epic; gated on R-010 mitigation)
+- #1344 — Inline discover-first protocol into AIWG.md / WARP.md / copilot-instructions.md (template fragment ready; AIWG.md generator wiring deferred)
+- #1345 — Investigate OpenClaw skills-count anomaly
+
+[2026.5.5]: https://git.integrolabs.net/roctinam/aiwg/compare/v2026.5.4...v2026.5.5
+
 ## [2026.5.4] - 2026-05-13 — "Hermes parity — full MCP surface"
 
 29 issues (5 epics + 18 stories + 1 hotfix + 5 use cases) closing the
