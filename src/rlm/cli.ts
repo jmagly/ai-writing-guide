@@ -105,13 +105,27 @@ async function handleChunk(args: string[]): Promise<void> {
   const totalLines = lines.length;
 
   if (totalLines <= chunkSize) {
-    // File fits in one chunk — no splitting needed
-    console.log(JSON.stringify({
+    const chunkFile = outputDir ? path.join(outputDir, 'chunk-0000.txt') : absoluteFile;
+    const manifestFile = outputDir ? path.join(outputDir, 'manifest.json') : undefined;
+    const chunks = [{ index: 0, start: 0, end: totalLines - 1, file: chunkFile, lines: totalLines }];
+    const result = {
       source: absoluteFile,
       totalLines,
-      chunks: [{ index: 0, start: 0, end: totalLines - 1, lines: totalLines }],
+      chunkSize,
+      overlap: 0,
+      chunkDir: outputDir,
+      chunks,
       message: 'File fits in a single chunk, no splitting required',
-    }, null, 2));
+    };
+
+    if (outputDir) {
+      fs.mkdirSync(outputDir, { recursive: true });
+      fs.writeFileSync(chunkFile, lines.join('\n'), 'utf-8');
+      fs.writeFileSync(manifestFile!, JSON.stringify(result, null, 2), 'utf-8');
+    }
+
+    // File fits in one chunk — no splitting needed
+    console.log(JSON.stringify(result, null, 2));
     return;
   }
 
@@ -297,7 +311,8 @@ async function handleRlmPrep(args: string[]): Promise<void> {
   };
 
   for (const file of files) {
-    const relPath = path.relative(absoluteSource, file);
+    const relRoot = stat.isFile() ? path.dirname(absoluteSource) : absoluteSource;
+    const relPath = path.relative(relRoot, file);
     const fileOutputDir = path.join(prepDir, relPath + '.chunks');
     fs.mkdirSync(fileOutputDir, { recursive: true });
 
@@ -351,15 +366,24 @@ async function handleRlmSearch(args: string[]): Promise<void> {
     switch (args[i]) {
       case '--source': sourceArg = args[++i]; break;
       case '--depth': depth = parseInt(args[++i], 10); break;
-      case '--parallel': parallel = parseInt(args[++i], 10); break;
+      case '--parallel':
+      case '--max-parallel':
+        parallel = parseInt(args[++i], 10);
+        break;
       case '--budget': budget = parseInt(args[++i], 10); break;
+      case '--help':
+      case '-h':
+        throw new Error('Usage: aiwg rlm-search <query> --source <file|dir> [--depth N] [--parallel N|--max-parallel N] [--budget N]');
       default:
-        if (!args[i].startsWith('--')) query = args[i];
+        if (args[i].startsWith('--')) {
+          throw new Error(`Unknown rlm-search option: ${args[i]}`);
+        }
+        if (!query) query = args[i];
     }
   }
 
   if (!query || !sourceArg) {
-    throw new Error('Usage: aiwg rlm-search <query> --source <file|dir> [--depth N] [--parallel N] [--budget N]');
+    throw new Error('Usage: aiwg rlm-search <query> --source <file|dir> [--depth N] [--parallel N|--max-parallel N] [--budget N]');
   }
 
   const absoluteSource = path.resolve(sourceArg);
@@ -371,8 +395,9 @@ async function handleRlmSearch(args: string[]): Promise<void> {
   console.log(`Max depth: ${depth}, Max parallel: ${parallel}, Token budget: ${budget}`);
   console.log('');
 
-  // Check if source is already prepped
-  if (!fs.existsSync(indexFile)) {
+  // Check if source is already prepped for this source. Older prep indexes may
+  // have omitted single-chunk files, so validate file coverage before reuse.
+  if (!isPrepIndexUsable(indexFile, absoluteSource)) {
     console.log('Source not prepped — running rlm-prep first...');
     await handleRlmPrep(['--output', prepDir, absoluteSource]);
     console.log('');
@@ -420,6 +445,42 @@ async function handleRlmSearch(args: string[]): Promise<void> {
   };
 
   console.log(JSON.stringify(executionPlan, null, 2));
+}
+
+function isPrepIndexUsable(indexFile: string, absoluteSource: string): boolean {
+  if (!fs.existsSync(indexFile)) return false;
+
+  try {
+    const index = JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
+    if (index.source !== absoluteSource) return false;
+    if (!Array.isArray(index.files)) return false;
+
+    const stat = fs.statSync(absoluteSource);
+    const expectedFiles: string[] = [];
+    if (stat.isFile()) {
+      expectedFiles.push(absoluteSource);
+    } else {
+      collectFiles(absoluteSource, expectedFiles);
+    }
+
+    if (index.files.length !== expectedFiles.length) return false;
+
+    const indexed = new Set(index.files.map((f: { path: string }) => f.path));
+    for (const file of expectedFiles) {
+      if (!indexed.has(file)) return false;
+    }
+
+    for (const entry of index.files as { manifest: string; chunks: number }[]) {
+      if (!fs.existsSync(entry.manifest)) return false;
+      const manifest = JSON.parse(fs.readFileSync(entry.manifest, 'utf-8'));
+      if (!Array.isArray(manifest.chunks) || manifest.chunks.length !== entry.chunks) return false;
+      if (manifest.chunks.some((chunk: { file?: string }) => !chunk.file || !fs.existsSync(chunk.file))) return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ============================================================
@@ -551,6 +612,7 @@ rlm-search options:
   --source <file|dir>      Source to search (required)
   --depth N                Max recursion depth (default: 3)
   --parallel N             Max parallel subagents per wave (default: 5)
+  --max-parallel N         Alias for --parallel
   --budget N               Token budget (default: 500000)
 
 rlm-status options:

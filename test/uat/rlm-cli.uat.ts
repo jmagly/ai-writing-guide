@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { existsSync, mkdirSync, rmSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
@@ -175,6 +175,9 @@ describe('UAT: rlm chunk — real repo files', () => {
 
     const result = JSON.parse(stdout);
     expect(result.chunks).toHaveLength(1);
+    expect(result.chunks[0].file).toBe(join(testDir, 'chunk-0000.txt'));
+    expect(existsSync(join(testDir, 'manifest.json'))).toBe(true);
+    expect(existsSync(join(testDir, 'chunk-0000.txt'))).toBe(true);
     expect(result.message).toMatch(/single chunk/i);
   });
 
@@ -334,6 +337,29 @@ describe('UAT: rlm-prep — index real repo directory', () => {
     }
   });
 
+  it('indexes files that each fit in a single chunk', async () => {
+    const sourceDir = join(testDir, 'small-source');
+    const outDir = join(testDir, 'prep-small');
+    mkdirSync(sourceDir, { recursive: true });
+    writeFileSync(join(sourceDir, 'one.md'), '# One\n\nalpha\n', 'utf-8');
+    writeFileSync(join(sourceDir, 'two.md'), '# Two\n\nbeta\n', 'utf-8');
+
+    await captureMain([
+      'rlm-prep', sourceDir,
+      '--output', outDir,
+      '--size', '200',
+    ]);
+
+    const index = JSON.parse(readFileSync(join(outDir, 'index.json'), 'utf-8'));
+    expect(index.files).toHaveLength(2);
+    for (const entry of index.files) {
+      expect(existsSync(entry.manifest)).toBe(true);
+      const manifest = JSON.parse(readFileSync(entry.manifest, 'utf-8'));
+      expect(manifest.chunks).toHaveLength(1);
+      expect(existsSync(manifest.chunks[0].file)).toBe(true);
+    }
+  });
+
   it('preps a single file (not a directory)', async () => {
     const outDir = join(testDir, 'prep-single');
     await captureMain([
@@ -411,6 +437,29 @@ describe('UAT: rlm-search — execution plan against real source', () => {
     expect(plan.phases[0].name).toBe('fanout');
     expect(plan.phases[1].name).toBe('synthesize');
     expect(plan.estimatedSubAgents).toBeGreaterThan(0);
+  });
+
+  it('accepts --max-parallel without treating its value as the query', async () => {
+    const prepDir = join(testDir, '.rlm-prep');
+
+    await captureMain([
+      'rlm-prep', HANDLERS_DIR,
+      '--output', prepDir,
+      '--size', '200',
+    ]);
+
+    const { stdout } = await captureMain([
+      'rlm-search', 'find all CommandHandler implementations',
+      '--source', HANDLERS_DIR,
+      '--depth', '2',
+      '--max-parallel', '4',
+    ], testDir);
+
+    const planJson = stdout.match(/\{[\s\S]*\}/);
+    expect(planJson).not.toBeNull();
+    const plan = JSON.parse(planJson![0]);
+    expect(plan.query).toBe('find all CommandHandler implementations');
+    expect(plan.maxParallel).toBe(4);
   });
 
   it('auto-preps source when .rlm-prep index does not exist', async () => {
