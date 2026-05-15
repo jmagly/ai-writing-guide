@@ -77,4 +77,4 @@ Read the one-paragraph version of each below, then click the one that sounds rig
 
 **Key Addons** — Al (iterative loops), RLM (large codebase handling), Voice Framework (consistent writing style), and other capabilities that extend any framework.
 
-**Project-Local Customization** — How to add project-specific agents, skills, and scripts to `.aiwg/.project/` so they deploy automatically with `aiwg use` and survive platform-directory resets. Keeps platform dirs (`.claude/`, `.codex/`, etc.) fully expendable.
+**Project-Local Customization** — How to add project-specific agents, skills, and scripts under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/` so they deploy automatically with `aiwg use` and survive platform-directory resets. Keeps platform dirs (`.claude/`, `.codex/`, etc.) fully expendable.

@@ -2295,7 +2295,6 @@ export const executionModeCommand: Extension = {
       template: 'utility',
       argumentHint: '<mode> [--seed <value>]',
       allowedTools: ['Read', 'Write'],
-      cliDisabled: true,
     },
   } satisfies SkillMetadata,
 };

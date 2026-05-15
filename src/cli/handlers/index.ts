@@ -116,6 +116,7 @@ import { sessionHandler } from './session.js';
 import { sandboxHandler, sandboxHandlers } from './sandbox.js';
 import { diagnoseHandler } from './diagnose.js';
 import { localExecutorHandler, localExecutorServeHandler } from './local-executor.js';
+import { executionModeHandler } from './execution-mode.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -241,6 +242,7 @@ export {
 
   // Diagnose
   diagnoseHandler,
+  executionModeHandler,
 
   // Lint
   lintHandler,
@@ -343,6 +345,7 @@ export const allHandlers: CommandHandler[] = [
 
   // Config
   configHandler,
+  executionModeHandler,
 
   // Ops
   opsHandler,

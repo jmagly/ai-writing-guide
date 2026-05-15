@@ -137,3 +137,46 @@ If you adopted project-local bundles before this self-heal landed, run `aiwg doc
 - Add more artifacts (`skills/`, `agents/`, `commands/`) — see [`project-local-lifecycle.md`](project-local-lifecycle.md)
 - Pick the right type for your next bundle — see [`extensions-vs-addons-vs-frameworks-vs-plugins.md`](extensions-vs-addons-vs-frameworks-vs-plugins.md)
 - Graduate to upstream — see "Graduation" in the lifecycle doc
+
+## Script-backed skills
+
+For a per-repo skill that runs a script, put both the `SKILL.md` and its
+script inside the project-local bundle:
+
+```text
+.aiwg/extensions/my-team-tools/
+├── manifest.json
+└── skills/
+    └── my-check/
+        ├── SKILL.md
+        └── scripts/
+            └── my_check.py
+```
+
+Declare the script in `SKILL.md` frontmatter:
+
+```markdown
+---
+name: my-check
+description: Run the project-specific check.
+script:
+  entrypoint: scripts/my_check.py
+  runtime: python3
+  cwd: project-root
+---
+
+# my-check
+
+Run the project-specific check and report failures.
+```
+
+Deploy the bundle, then run the skill:
+
+```bash
+aiwg use my-team-tools
+aiwg run skill my-check -- --path src/
+```
+
+By default, skill scripts run from the calling project root, not the skill
+directory. Relative paths such as `.aiwg/`, `src/`, and `package.json`
+therefore resolve against your repository.

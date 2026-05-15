@@ -69,6 +69,7 @@ TODO.local.md
 # AIWG project artifacts — tracked in git (except ephemeral content)
 # .aiwg/ is NOT gitignored — it contains SDLC artifacts (ADRs, use cases, etc.)
 # The following subdirectories are ephemeral and excluded:
+.aiwg/aiwg.config
 .aiwg/working/
 .aiwg/.index/
 .aiwg/.storage-cache/
