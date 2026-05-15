@@ -176,6 +176,14 @@ const BOOLEAN_FIELDS = new Set([
   'delivery.issue_comment_on_cycle',
 ]);
 
+// Integer fields with valid range constraints. Validated at `aiwg config set`.
+// Bounds mirror the JSON schema (vscode-extension/schemas/aiwg.config.v1.json).
+const INTEGER_FIELDS: Record<string, { min: number; max: number }> = {
+  'parallelism.max_parallel_subagents': { min: 1, max: 50 },
+  'parallelism.max_parallel_ralph_loops': { min: 1, max: 20 },
+  'parallelism.max_parallel_mc_missions': { min: 1, max: 20 },
+};
+
 async function projectConfigGet(key: string, args: string[]): Promise<void> {
   const { readAiwgConfig, getProjectDir } = await import('./aiwg-config.js');
   const projectDir = getProjectDir(undefined, args);
@@ -227,6 +235,21 @@ async function projectConfigSet(key: string, raw: string, args: string[]): Promi
         exitCode: EXIT_CODES.USAGE,
       });
     }
+  }
+
+  // Coerce + range-check integers for known integer fields (#1359).
+  const intRule = INTEGER_FIELDS[key];
+  if (intRule) {
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < intRule.min || n > intRule.max) {
+      throw new AiwgError({
+        code: 'ERR_INVALID_VALUE',
+        message: `${key} must be an integer between ${intRule.min} and ${intRule.max}, got '${raw}'`,
+        hint: `Try: aiwg config set --project ${key} ${intRule.min}`,
+        exitCode: EXIT_CODES.USAGE,
+      });
+    }
+    value = n;
   }
 
   // Read-modify-write — preserve unrelated fields. emptyConfig() seeds the
@@ -312,7 +335,14 @@ async function handleValidate(config: UserConfig): Promise<void> {
 }
 
 async function handleReset(config: UserConfig, args: string[]): Promise<void> {
-  const key = args[0];
+  const isProject = args.includes('--project');
+  const positional = args.filter(a => a !== '--project');
+  const key = positional[0];
+
+  if (isProject) {
+    await projectConfigReset(key, args);
+    return;
+  }
 
   if (key) {
     await config.reset(key);
@@ -321,6 +351,76 @@ async function handleReset(config: UserConfig, args: string[]): Promise<void> {
     await config.reset();
     console.log('Reset all config to defaults');
   }
+}
+
+/**
+ * Reset a project-config key to its provider-aware default.
+ *
+ * Currently scoped to the `parallelism` block (#1359). Resetting
+ * `parallelism` (no field suffix) restores the block to the primary
+ * provider's defaults. Resetting a specific field like
+ * `parallelism.max_parallel_subagents` restores just that field.
+ */
+async function projectConfigReset(key: string | undefined, args: string[]): Promise<void> {
+  const {
+    readAiwgConfig,
+    writeAiwgConfig,
+    getProjectDir,
+    getProviderParallelismDefaults,
+  } = await import('./aiwg-config.js');
+
+  if (!key) {
+    throw new AiwgError({
+      code: 'ERR_USAGE_MISSING_ARG',
+      message: 'aiwg config reset --project requires a key',
+      hint: 'Example: aiwg config reset --project parallelism',
+      exitCode: EXIT_CODES.USAGE,
+    });
+  }
+
+  const projectDir = getProjectDir(undefined, args);
+  const cfg = await readAiwgConfig(projectDir);
+  if (!cfg) {
+    throw new AiwgError({
+      code: 'ERR_NO_PROJECT_CONFIG',
+      message: 'No .aiwg/aiwg.config in this project.',
+      hint: 'Run `aiwg init` to scaffold one.',
+      exitCode: EXIT_CODES.CONFIG,
+    });
+  }
+
+  const primary = cfg.providers[0];
+  const defaults = getProviderParallelismDefaults(primary);
+
+  if (key === 'parallelism') {
+    cfg.parallelism = {
+      max_parallel_subagents: defaults.max_parallel_subagents,
+      max_parallel_ralph_loops: defaults.max_parallel_ralph_loops,
+      max_parallel_mc_missions: defaults.max_parallel_mc_missions,
+      rationale: `Reset to provider default for ${primary ?? 'unknown'}`,
+    };
+    await writeAiwgConfig(projectDir, cfg);
+    console.log(`Reset --project parallelism to provider default (${primary ?? 'unknown'})`);
+    return;
+  }
+
+  if (key.startsWith('parallelism.')) {
+    const field = key.slice('parallelism.'.length) as keyof typeof defaults;
+    if (field in defaults) {
+      cfg.parallelism = cfg.parallelism ?? {};
+      (cfg.parallelism as Record<string, unknown>)[field] = defaults[field];
+      await writeAiwgConfig(projectDir, cfg);
+      console.log(`Reset --project ${key} to provider default (${defaults[field]})`);
+      return;
+    }
+  }
+
+  throw new AiwgError({
+    code: 'ERR_INVALID_KEY',
+    message: `Reset for project key '${key}' is not supported.`,
+    hint: 'Supported: parallelism, parallelism.max_parallel_subagents, parallelism.max_parallel_ralph_loops, parallelism.max_parallel_mc_missions',
+    exitCode: EXIT_CODES.USAGE,
+  });
 }
 
 function handlePath(config: UserConfig): void {
@@ -508,6 +608,9 @@ Examples:
   aiwg config get --project delivery.mode
   aiwg config set --project delivery.mode pr-required
   aiwg config set --project delivery.merge_style squash
+  aiwg config get --project parallelism
+  aiwg config set --project parallelism.max_parallel_subagents 6
+  aiwg config reset --project parallelism
   aiwg config validate
   aiwg config path
   aiwg config reset defaults.provider

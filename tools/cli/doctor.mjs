@@ -893,6 +893,61 @@ async function runDoctor() {
           check('Delivery Policy', 'warn', issues.join('; '));
         }
       }
+
+      // 11d. Validate .aiwg/aiwg.config parallelism block (#1359)
+      // Provider-scoped parallelism caps for rate-limit awareness.
+      if (raw && raw.parallelism) {
+        const p = raw.parallelism;
+        const issues = [];
+        const checkRange = (field, min, max) => {
+          if (p[field] !== undefined) {
+            const n = p[field];
+            if (!Number.isInteger(n) || n < min || n > max) {
+              issues.push(`${field}=${n} (must be integer ${min}-${max})`);
+            }
+          }
+        };
+        checkRange('max_parallel_subagents', 1, 50);
+        checkRange('max_parallel_ralph_loops', 1, 20);
+        checkRange('max_parallel_mc_missions', 1, 20);
+
+        // Detect operator override vs provider default
+        const primary = Array.isArray(raw.providers) ? raw.providers[0] : undefined;
+        const PROVIDER_DEFAULTS = {
+          claude:   { max_parallel_subagents: 4 },
+          codex:    { max_parallel_subagents: 10 },
+          copilot:  { max_parallel_subagents: 10 },
+          cursor:   { max_parallel_subagents: 10 },
+          factory:  { max_parallel_subagents: 10 },
+          opencode: { max_parallel_subagents: 10 },
+          warp:     { max_parallel_subagents: 10 },
+          windsurf: { max_parallel_subagents: 10 },
+          openclaw: { max_parallel_subagents: 10 },
+          hermes:   { max_parallel_subagents: 10 },
+        };
+        const expectedDefault = PROVIDER_DEFAULTS[primary]?.max_parallel_subagents ?? 4;
+        const isOverride =
+          p.max_parallel_subagents !== undefined &&
+          p.max_parallel_subagents !== expectedDefault;
+
+        if (issues.length === 0) {
+          const subs = p.max_parallel_subagents ?? expectedDefault;
+          const label = isOverride
+            ? `max_parallel_subagents=${subs} (operator override; provider default for ${primary || 'unknown'} = ${expectedDefault})`
+            : `max_parallel_subagents=${subs} (provider default for ${primary || 'unknown'})`;
+          check('Parallelism Cap', 'ok', label);
+        } else {
+          check('Parallelism Cap', 'warn', issues.join('; '));
+        }
+      } else if (raw) {
+        // No parallelism block — agents will fall back to resolveParallelism()
+        // defaults, but visibility is reduced. Hint at the right command.
+        check(
+          'Parallelism Cap',
+          'info',
+          'no parallelism block — agents fall back to provider defaults; run "aiwg config set --project parallelism.max_parallel_subagents N" to make it explicit',
+        );
+      }
     }
   } catch {
     // Non-fatal — skip silently

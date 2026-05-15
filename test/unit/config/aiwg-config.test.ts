@@ -19,6 +19,9 @@ import {
   resolveRemotes,
   resolveRemoteProvider,
   resolveDelivery,
+  resolveParallelism,
+  getProviderParallelismDefaults,
+  PROVIDER_PARALLELISM_DEFAULTS,
 } from '../../../src/config/aiwg-config.js';
 
 function makeTmpDir(): string {
@@ -70,6 +73,31 @@ describe('aiwg-config', () => {
       expect(cfg.delivery!.require_ci_green).toBe(true);
       expect(cfg.delivery!.auto_close_issues).toBe(true);
       expect(cfg.delivery!.force_push_policy).toBe('never');
+    });
+
+    it('ships an explicit parallelism block with provider defaults (#1359)', () => {
+      const cfg = emptyConfig(); // default provider = claude
+      expect(cfg.parallelism).toBeDefined();
+      expect(cfg.parallelism!.max_parallel_subagents).toBe(4);
+      expect(cfg.parallelism!.max_parallel_ralph_loops).toBe(2);
+      expect(cfg.parallelism!.max_parallel_mc_missions).toBe(4);
+      expect(cfg.parallelism!.rationale).toMatch(/claude/);
+    });
+
+    it('uses codex defaults when codex is the primary provider', () => {
+      const cfg = emptyConfig(['codex']);
+      expect(cfg.parallelism!.max_parallel_subagents).toBe(10);
+      expect(cfg.parallelism!.max_parallel_ralph_loops).toBe(3);
+      expect(cfg.parallelism!.max_parallel_mc_missions).toBe(6);
+      expect(cfg.parallelism!.rationale).toMatch(/codex/);
+    });
+
+    it('falls back to conservative defaults for an unknown primary provider', () => {
+      const cfg = emptyConfig(['mystery-llm']);
+      expect(cfg.parallelism!.max_parallel_subagents).toBe(4);
+      expect(cfg.parallelism!.max_parallel_ralph_loops).toBe(2);
+      expect(cfg.parallelism!.max_parallel_mc_missions).toBe(4);
+      expect(cfg.parallelism!.rationale).toMatch(/unknown provider/i);
     });
   });
 
@@ -485,6 +513,76 @@ describe('aiwg-config', () => {
       const read = await readAiwgConfig(tmpDir);
       expect(read?.remotes?.primary).toBe('origin');
       expect(read?.remotes?.secondary?.[0]?.name).toBe('github');
+    });
+  });
+
+  // ── resolveParallelism (#1359) ─────────────────────────────────────────────
+
+  describe('resolveParallelism', () => {
+    it('returns provider defaults when parallelism is undefined', () => {
+      const r = resolveParallelism(undefined, 'claude');
+      expect(r.max_parallel_subagents).toBe(4);
+      expect(r.max_parallel_ralph_loops).toBe(2);
+      expect(r.max_parallel_mc_missions).toBe(4);
+    });
+
+    it('returns codex defaults for codex provider', () => {
+      const r = resolveParallelism(undefined, 'codex');
+      expect(r.max_parallel_subagents).toBe(10);
+      expect(r.max_parallel_ralph_loops).toBe(3);
+      expect(r.max_parallel_mc_missions).toBe(6);
+    });
+
+    it('returns conservative defaults when provider is unknown', () => {
+      const r = resolveParallelism(undefined, 'mystery-llm');
+      expect(r.max_parallel_subagents).toBe(4);
+      expect(r.max_parallel_ralph_loops).toBe(2);
+      expect(r.max_parallel_mc_missions).toBe(4);
+    });
+
+    it('returns conservative defaults when no provider is supplied', () => {
+      const r = resolveParallelism(undefined, undefined);
+      expect(r.max_parallel_subagents).toBe(4);
+    });
+
+    it('preserves explicit operator overrides over provider defaults', () => {
+      const r = resolveParallelism(
+        { max_parallel_subagents: 12, rationale: 'Team plan bump' },
+        'claude',
+      );
+      expect(r.max_parallel_subagents).toBe(12);
+      // Unset fields still come from provider defaults
+      expect(r.max_parallel_ralph_loops).toBe(2);
+      expect(r.rationale).toBe('Team plan bump');
+    });
+
+    it('every known provider has a complete defaults entry', () => {
+      for (const [name, defs] of Object.entries(PROVIDER_PARALLELISM_DEFAULTS)) {
+        expect(defs.max_parallel_subagents, `${name}.max_parallel_subagents`).toBeGreaterThan(0);
+        expect(defs.max_parallel_ralph_loops, `${name}.max_parallel_ralph_loops`).toBeGreaterThan(0);
+        expect(defs.max_parallel_mc_missions, `${name}.max_parallel_mc_missions`).toBeGreaterThan(0);
+      }
+    });
+
+    it('getProviderParallelismDefaults returns fallback for unknown', () => {
+      const r = getProviderParallelismDefaults('totally-unknown');
+      expect(r.max_parallel_subagents).toBe(4);
+    });
+  });
+
+  describe('readAiwgConfig with parallelism block (#1359)', () => {
+    it('round-trips a config containing parallelism', async () => {
+      const cfg = emptyConfig();
+      cfg.parallelism = {
+        max_parallel_subagents: 6,
+        max_parallel_ralph_loops: 2,
+        max_parallel_mc_missions: 4,
+        rationale: 'bumped after Claude Team upgrade',
+      };
+      await writeAiwgConfig(tmpDir, cfg);
+      const read = await readAiwgConfig(tmpDir);
+      expect(read?.parallelism?.max_parallel_subagents).toBe(6);
+      expect(read?.parallelism?.rationale).toBe('bumped after Claude Team upgrade');
     });
   });
 });

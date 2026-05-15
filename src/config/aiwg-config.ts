@@ -159,6 +159,16 @@ export interface AiwgConfig {
    * @implements #995
    */
   delivery?: DeliveryConfig;
+
+  /**
+   * Provider-scoped parallelism caps — limits how many concurrent subagents,
+   * Ralph loops, and Mission Control missions agents may spawn. Composes with
+   * (takes the minimum of) `context-budget` rule caps and `rlm-context-management`
+   * Rule 8's 7-agent hard cap. Optional — when absent, agents fall back to
+   * provider-specific defaults applied by `resolveParallelism()`.
+   * @implements #1359
+   */
+  parallelism?: ParallelismConfig;
 }
 
 /**
@@ -268,6 +278,110 @@ export function resolveDelivery(delivery: DeliveryConfig | undefined): ResolvedD
 }
 
 /**
+ * Provider-scoped parallelism cap — limits how many concurrent subagents,
+ * Ralph loops, and Mission Control missions agents may spawn. Designed to
+ * keep AIWG within the rate-limit envelope of the underlying model provider
+ * (Anthropic per-key TPM/RPM caps are the most-reported trigger).
+ *
+ * Composes with (effective limit = MIN of):
+ *   - `parallelism.max_parallel_subagents` (this config)
+ *   - `context-budget` rule's `AIWG_CONTEXT_WINDOW`-derived cap, if set
+ *   - `rlm-context-management` Rule 8's 7-agent hard cap (RLM dispatches only)
+ *   - The natural task decomposition (no point spawning 4 when only 2 subtasks exist)
+ *
+ * Every field is optional. Defaults applied via {@link resolveParallelism}.
+ *
+ * @implements #1359
+ */
+export interface ParallelismConfig {
+  /** Max concurrent subagents (Task dispatches, rlm-batch fan-outs). */
+  max_parallel_subagents?: number;
+  /** Max concurrent Ralph external loops (`aiwg agent-loop-ext`). */
+  max_parallel_ralph_loops?: number;
+  /** Max concurrent Mission Control missions (`aiwg mc dispatch`). */
+  max_parallel_mc_missions?: number;
+  /** Free-form note explaining why this cap was chosen (e.g., plan tier). */
+  rationale?: string;
+}
+
+/**
+ * Resolved parallelism caps with all defaults applied. Returned by
+ * {@link resolveParallelism}.
+ */
+export interface ResolvedParallelism {
+  max_parallel_subagents: number;
+  max_parallel_ralph_loops: number;
+  max_parallel_mc_missions: number;
+  rationale?: string;
+}
+
+/**
+ * Per-provider parallelism defaults. Conservative numbers for Anthropic-backed
+ * providers reflect Pro/Team-plan rate limits — operators on Enterprise tiers
+ * should bump via `aiwg config set --project parallelism.max_parallel_subagents N`.
+ *
+ * Sources for the numbers:
+ *   - claude / claude-code: Anthropic per-key throttling at higher concurrency
+ *   - codex / copilot / etc.: OpenAI / GitHub quotas are generally per-org and
+ *     less aggressive at small fan-outs (10 is a safe middle ground)
+ *   - hermes: MCP sidecar; rate-limit depends on upstream provider, operator
+ *     should tune. Conservative 10 default.
+ *   - unknown: conservative 4 default.
+ */
+export const PROVIDER_PARALLELISM_DEFAULTS: Record<string, ResolvedParallelism> = {
+  claude:   { max_parallel_subagents: 4,  max_parallel_ralph_loops: 2, max_parallel_mc_missions: 4 },
+  codex:    { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+  copilot:  { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+  cursor:   { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+  factory:  { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+  opencode: { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+  warp:     { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+  windsurf: { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+  openclaw: { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+  hermes:   { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
+};
+
+const UNKNOWN_PROVIDER_PARALLELISM: ResolvedParallelism = {
+  max_parallel_subagents: 4,
+  max_parallel_ralph_loops: 2,
+  max_parallel_mc_missions: 4,
+};
+
+/**
+ * Return the provider's parallelism defaults, or the conservative fallback
+ * when the provider is unknown.
+ */
+export function getProviderParallelismDefaults(provider: string | undefined): ResolvedParallelism {
+  if (!provider) return UNKNOWN_PROVIDER_PARALLELISM;
+  return PROVIDER_PARALLELISM_DEFAULTS[provider] ?? UNKNOWN_PROVIDER_PARALLELISM;
+}
+
+/**
+ * Resolve the parallelism caps with provider-aware defaults applied. The
+ * primary provider drives the default — typically the first entry in the
+ * project's `providers` array.
+ *
+ * When `parallelism` has explicit values, they override the provider default
+ * field-by-field. When no provider is supplied (or it's not in the defaults
+ * map), the conservative 4-subagent fallback applies.
+ *
+ * @implements #1359
+ */
+export function resolveParallelism(
+  parallelism: ParallelismConfig | undefined,
+  primaryProvider?: string,
+): ResolvedParallelism {
+  const defaults = getProviderParallelismDefaults(primaryProvider);
+  const resolved: ResolvedParallelism = {
+    max_parallel_subagents: parallelism?.max_parallel_subagents ?? defaults.max_parallel_subagents,
+    max_parallel_ralph_loops: parallelism?.max_parallel_ralph_loops ?? defaults.max_parallel_ralph_loops,
+    max_parallel_mc_missions: parallelism?.max_parallel_mc_missions ?? defaults.max_parallel_mc_missions,
+  };
+  if (parallelism?.rationale !== undefined) resolved.rationale = parallelism.rationale;
+  return resolved;
+}
+
+/**
  * Provider tag for a given remote URL. Used by skills (issue-create,
  * pr-review, commit-and-push) to pick the right CLI / MCP client when
  * the operator didn't pass `--provider` explicitly.
@@ -342,6 +456,9 @@ export type Provider = typeof VALID_PROVIDERS[number];
  * the AIWG Steward agent without first having to discover the field exists.
  */
 export function emptyConfig(providers: string[] = ['claude']): AiwgConfig {
+  const primaryProvider = providers[0];
+  const parDefaults = getProviderParallelismDefaults(primaryProvider);
+  const knownProvider = primaryProvider && primaryProvider in PROVIDER_PARALLELISM_DEFAULTS;
   return {
     $schema: 'https://aiwg.io/schemas/aiwg.config.v1.json',
     version: '1',
@@ -355,6 +472,14 @@ export function emptyConfig(providers: string[] = ['claude']): AiwgConfig {
       auto_close_issues: true,
       issue_comment_on_cycle: true,
       force_push_policy: 'never',
+    },
+    parallelism: {
+      max_parallel_subagents: parDefaults.max_parallel_subagents,
+      max_parallel_ralph_loops: parDefaults.max_parallel_ralph_loops,
+      max_parallel_mc_missions: parDefaults.max_parallel_mc_missions,
+      rationale: knownProvider
+        ? `Provider default for ${primaryProvider} — adjust via 'aiwg config set --project parallelism.max_parallel_subagents N'`
+        : `Conservative default (unknown provider) — adjust via 'aiwg config set --project parallelism.max_parallel_subagents N'`,
     },
   };
 }

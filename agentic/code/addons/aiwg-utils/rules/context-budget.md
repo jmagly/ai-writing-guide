@@ -96,6 +96,19 @@ When context budget is constrained, each subagent should produce less output to 
 
 These rules operate at the prompt/convention level. There is no runtime system that enforces them. Agents are expected to read the directive and adjust their behavior accordingly. The rules provide clear lookup tables so the agent can make the right decision without complex reasoning.
 
+### Rule 6: Compose with Provider Parallelism Cap (#1359)
+
+`.aiwg/aiwg.config` may declare a `parallelism.max_parallel_subagents` cap that reflects the model provider's rate-limit envelope (Anthropic per-key TPM/RPM caps in particular). When both `AIWG_CONTEXT_WINDOW` and the provider cap are set, the **smaller** wins:
+
+```
+effective_parallel = min(
+  context_window_tier_cap,            // from this rule's table
+  parallelism.max_parallel_subagents  // from aiwg.config (#1359)
+)
+```
+
+For example, a Claude small-plan project with `AIWG_CONTEXT_WINDOW=512000` (which this rule would allow up to 12 parallel) and `parallelism.max_parallel_subagents=4` is capped at 4. The rate-limit cap wins because exceeding it produces 429s regardless of how much context fits. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md` Rule 8 for the full composition formula across all four cap sources.
+
 ## Compaction Guidance
 
 ### Aggressive Compaction (≤64k)

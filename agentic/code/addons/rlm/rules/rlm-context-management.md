@@ -414,6 +414,18 @@ Concurrent sub-agent count from a single RLM dispatch must respect the multi-age
 
 **Cross-reference**: When `AIWG_CONTEXT_WINDOW` is declared in the project context, the `context-budget` rule provides additional caps based on context-window tier. The smaller of the two limits applies. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md`.
 
+**Composes with the provider parallelism cap (#1359)**: When `.aiwg/aiwg.config` declares a `parallelism.max_parallel_subagents` cap, that value composes with the RLM 7-agent hard cap and the context-budget cap. The effective limit is the **minimum** of all applicable caps:
+
+```
+effective_rlm_parallel = min(
+  parallelism.max_parallel_subagents,    // provider rate-limit cap
+  context_budget_tier_cap,               // from AIWG_CONTEXT_WINDOW
+  7                                      // RLM hard cap (this rule)
+)
+```
+
+For example, a Claude small-plan project with `parallelism.max_parallel_subagents=4` and an `AIWG_CONTEXT_WINDOW=512000` (which would otherwise allow 8-12 parallel) is capped at 4 for RLM dispatches. The provider cap wins because it reflects the actual rate-limit ceiling. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md` Rule 8 for the full composition formula.
+
 ### Rule 9: Long-Running RLM Operations Must Checkpoint
 
 **Research Basis**: REF-127 — industry reports suggest agent success rate degrades after ~35 minutes of operation; doubling task duration quadruples the failure rate. (GRADE: VERY LOW — aggregated industry data, no primary citation given. Treat as warning signal, not hard limit.)

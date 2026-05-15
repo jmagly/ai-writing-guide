@@ -240,6 +240,44 @@ If Total Estimated > 50% of Available Context:
 
 Formula: `max_parallel = max(1, floor(context_window / 50000))` capped at 20.
 
+### Rule 8: Respect Provider Parallelism Cap
+
+In addition to the context-window cap, the project's `.aiwg/aiwg.config` may declare a **provider-scoped parallelism cap** under the `parallelism` block. This cap exists because the model provider's rate limits (Anthropic per-key TPM/RPM caps in particular) — not just context window size — bound how many concurrent subagents are safe to spawn. A small-plan Claude key can have `AIWG_CONTEXT_WINDOW=512000` declared and still get throttled at 3 concurrent agents.
+
+**REQUIRED**:
+
+Before spawning parallel subagents, read `.aiwg/aiwg.config` and resolve the parallelism cap via the `resolveParallelism()` resolver. Then take the **minimum** of all applicable caps:
+
+```
+effective_parallel = min(
+  parallelism.max_parallel_subagents,    // provider rate-limit cap (#1359)
+  context_budget_cap,                    // from AIWG_CONTEXT_WINDOW, if set
+  rlm_hard_cap_of_7,                     // RLM Rule 8 (RLM dispatches only)
+  natural_task_decomposition             // no point spawning 4 for 2 subtasks
+)
+```
+
+**Defaults by provider** (auto-written by `aiwg new` / `aiwg use` / `aiwg refresh`):
+
+| Provider | `max_parallel_subagents` | `max_parallel_ralph_loops` | `max_parallel_mc_missions` |
+|----------|--------------------------|----------------------------|----------------------------|
+| `claude` | 4 | 2 | 4 |
+| `codex` / `copilot` / `cursor` / `factory` / `opencode` / `warp` / `windsurf` / `openclaw` / `hermes` | 10 | 3 | 6 |
+| unknown | 4 | 2 | 4 |
+
+Operators on higher-tier plans (Anthropic Team/Enterprise, OpenAI org with bumped quota) should override via:
+
+```bash
+aiwg config set --project parallelism.max_parallel_subagents 10
+aiwg config reset --project parallelism   # restore provider default
+```
+
+**Composes with**:
+- `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md` — context-window cap
+- `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/rlm-context-management.md` Rule 8 — RLM 7-agent hard cap
+
+When all three caps are set, the smallest wins. This is the same MIN-of-all-caps discipline subagent-scoping has always applied for context, extended now to provider rate limits.
+
 ## Detection Patterns
 
 ### Signs of Overloaded Subagents

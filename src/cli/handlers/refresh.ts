@@ -17,7 +17,12 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { refreshAllPackages } from '../../packages/registry.js';
-import { readAiwgConfig, hashManifest } from '../../config/aiwg-config.js';
+import {
+  readAiwgConfig,
+  writeAiwgConfig,
+  hashManifest,
+  getProviderParallelismDefaults,
+} from '../../config/aiwg-config.js';
 import { discoverProjectLocalBundles } from '../../extensions/project-local-discovery.js';
 import * as ui from '../ui.js';
 
@@ -212,6 +217,31 @@ export const refreshHandler: CommandHandler = {
         }
       } catch {
         if (!quiet) ui.dim('  Stale check skipped (non-critical)');
+      }
+    }
+
+    // Step 4.6: Migrate aiwg.config — add parallelism block if missing (#1359)
+    if (!dryRun) {
+      try {
+        const config = await readAiwgConfig(process.cwd());
+        if (config && !config.parallelism) {
+          const primary = config.providers[0];
+          const defaults = getProviderParallelismDefaults(primary);
+          config.parallelism = {
+            max_parallel_subagents: defaults.max_parallel_subagents,
+            max_parallel_ralph_loops: defaults.max_parallel_ralph_loops,
+            max_parallel_mc_missions: defaults.max_parallel_mc_missions,
+            rationale: `Provider default for ${primary ?? 'unknown'} (migrated by aiwg refresh)`,
+          };
+          await writeAiwgConfig(process.cwd(), config);
+          if (!quiet) {
+            ui.success(
+              `Added parallelism block to .aiwg/aiwg.config (max_parallel_subagents=${defaults.max_parallel_subagents})`,
+            );
+          }
+        }
+      } catch {
+        // Non-fatal — refresh continues even if migration fails
       }
     }
 
