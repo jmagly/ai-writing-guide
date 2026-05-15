@@ -166,6 +166,11 @@ if ! gpg --list-secret-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1; then
 FAIL: Release-signing key $RELEASE_KEY_FINGERPRINT not found in local
        GPG keyring. Either import it (gpg --import) or override the
        fingerprint with \$AIWG_RELEASE_KEY_FINGERPRINT.
+       If you are running from Codex or another agent runtime, check:
+         gpgconf --list-dirs | grep '^homedir:'
+       The runtime may set HOME to an isolated role directory. If the
+       operator keyring is elsewhere, rerun with:
+         GNUPGHOME=/home/<user>/.gnupg tools/release/cut-tag.sh $VERSION
        See docs/contributing/versioning.md → "Signing your release tag".
 EOF
   exit 1

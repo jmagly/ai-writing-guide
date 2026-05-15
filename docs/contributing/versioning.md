@@ -112,7 +112,22 @@ git push github main --tags
 gh release create v2026.1.5 --repo jmagly/aiwg --title "v2026.1.5 - Release Name" --generate-notes
 ```
 
-**Sandboxed agent note**: If release operations run inside a filesystem/network sandbox, request **escalated execution** for signed `git commit`/`git tag` commands so GPG can access `~/.gnupg` and the local gpg-agent socket.
+**Sandboxed agent note**: If release operations run inside a filesystem/network sandbox, request **escalated execution** for signed `git commit`/`git tag` commands so GPG can access the local gpg-agent socket. Also confirm the active GPG home. Some agent runtimes set `HOME` to a role/runtime directory, which makes `gpg` use an empty sandbox keyring even when `/home/<user>/.gnupg` is readable.
+
+Check before cutting the tag:
+
+```bash
+gpgconf --list-dirs | grep '^homedir:'
+gpg --list-secret-keys --keyid-format LONG
+```
+
+If `homedir:` is not the operator keyring that contains the AIWG release key, run the wrapper with `GNUPGHOME` set explicitly:
+
+```bash
+GNUPGHOME=/home/<user>/.gnupg tools/release/cut-tag.sh 2026.X.Y
+```
+
+For example, Codex role runtimes may report a homedir like `/home/<user>/.codex/roles-runtime/full/.gnupg`. In that case, escalation alone is not enough; point `GNUPGHOME` at the operator keyring or import the release key into the runtime keyring.
 
 #### Signing your release tag — first-time setup
 
@@ -189,6 +204,15 @@ tools/release/cut-tag.sh 2026.X.Y
 ```
 
 The wrapper forces `-u <release-key-fingerprint>` via `git tag -s -u …` so the right key signs the tag regardless of the global `user.signingkey`. It also runs 10 pre-tag checks (CalVer, package.json/marketplace.json lockstep, CHANGELOG, announcement, key published in `.gitea/keys/maintainers.asc`) so common drift bugs fail locally rather than in CI.
+
+If the wrapper says the release key is missing but the operator expects it to exist, inspect the active GPG home first:
+
+```bash
+gpgconf --list-dirs | grep '^homedir:'
+GNUPGHOME=/home/<user>/.gnupg gpg --list-secret-keys --keyid-format LONG
+```
+
+When the second command sees `AIWG Release Signing <release@aiwg.io>`, rerun `cut-tag.sh` with the same `GNUPGHOME=...` prefix.
 
 **v2026.5.5 incident** (2026-05-14) — for posterity: an agent ran `git tag -a v2026.5.5 -m "…"` directly, which signed with the personal commit-signing key. The supply-chain gate caught it across **three workflows** (Gitea `npm-publish`, Gitea `gitea-release`, GitHub mirror release) and refused to publish any artifacts. No bad release left the gate. Recovery was `git tag -d` + `git push origin :refs/tags/<tag>` + push to remote, then `tools/release/cut-tag.sh <version>`. The wrapper script was added in the same fix commit so the next release ceremony won't repeat the mistake.
 

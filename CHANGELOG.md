@@ -29,6 +29,7 @@ This release tightens two recently updated automation paths: RLM search now pres
 - `docs/cli-reference.md` — documents `rlm-search --max-parallel` as an accepted alias, and describes the single-chunk prep and prep-index validation behavior.
 - `agentic/code/addons/rlm/skills/rlm-search/SKILL.md` — documents coverage-checked prep reuse and single-chunk indexing.
 - `package.json` — `build:cli` now runs `check:versions` before compiling, catching release-version drift early.
+- `docs/contributing/versioning.md` and `tools/release/cut-tag.sh` — document the Codex/agent-runtime `HOME` vs operator `GNUPGHOME` signing-key gotcha so release agents can find the AIWG release key.
 
 ### Fixed
 
