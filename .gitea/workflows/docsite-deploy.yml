@@ -98,10 +98,35 @@ jobs:
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}
 
       - name: Verify deployment
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          EXPECTED_TAG: ${{ gitea.ref_name }}
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT }} -o StrictHostKeyChecking=accept-new \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            'test -f ${{ secrets.DEPLOY_PATH }}index.html && echo "Deploy verified: index.html present" || { echo "Deploy failed: index.html missing"; exit 1; }'
+          set -euo pipefail
+          # CONTENT verification, not just presence. The original verify
+          # only checked that index.html exists, which left a silent
+          # failure mode — if the served directory diverges from
+          # DEPLOY_PATH (CDN, reverse proxy pointing elsewhere, stale
+          # publish step), rsync writes the new content but the public
+          # site still serves the old. See aiwg#1348-followup
+          # (docs.aiwg.io stuck at v2026.5.0 despite green deploys,
+          # 2026-05-15).
+          echo "Verifying ${EXPECTED_TAG} is present in ${DEPLOY_PATH}index.html"
+          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "test -f '${DEPLOY_PATH}index.html' || { echo '::error::Deploy failed: ${DEPLOY_PATH}index.html missing'; exit 1; }
+             if grep -qF '${EXPECTED_TAG}' '${DEPLOY_PATH}index.html' '${DEPLOY_PATH}releases.html' 2>/dev/null; then
+               echo 'Deploy verified: ${EXPECTED_TAG} referenced in served HTML'
+             else
+               echo '::warning::index.html exists but does NOT reference ${EXPECTED_TAG} —'
+               echo '  rsync may have written to a different path than the webserver serves.'
+               echo '  Check webserver document root vs ${DEPLOY_PATH}, CDN cache, or any'
+               echo '  publish/promote step the server expects between rsync and serve.'
+               exit 1
+             fi"
 
       - name: Cleanup SSH key
         if: always()

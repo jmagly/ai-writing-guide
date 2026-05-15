@@ -19,12 +19,45 @@ jobs:
     name: Trigger aiwg.io deploy
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Dispatch aiwg.io deploy
+        env:
+          AIWG_IO_DISPATCH_TOKEN: ${{ secrets.AIWG_IO_DISPATCH_TOKEN }}
+          REF_NAME: ${{ gitea.ref_name }}
         run: |
-          curl -s -X POST \
-            -H "Authorization: token ${{ secrets.AIWG_IO_DISPATCH_TOKEN }}" \
+          set -euo pipefail
+          # Dispatch the cross-repo deploy and FAIL LOUDLY on any non-2xx.
+          # Prior implementation used `curl -s` without -f, which masked auth
+          # failures — a revoked AIWG_IO_DISPATCH_TOKEN returned HTTP 401 with
+          # `{"message":"invalid username, password or token"}` while the
+          # workflow showed green. See aiwg#1348-followup (notify silent
+          # failure post-supply-chain audit, 2026-05-15).
+          if [ -z "${AIWG_IO_DISPATCH_TOKEN:-}" ]; then
+            echo "::error::AIWG_IO_DISPATCH_TOKEN secret is unset"
+            exit 1
+          fi
+
+          HTTP_STATUS=$(curl -sS -o /tmp/dispatch-body.txt -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: token ${AIWG_IO_DISPATCH_TOKEN}" \
             -H "Content-Type: application/json" \
             "https://git.integrolabs.net/api/v1/repos/roctinam/aiwg.io/actions/workflows/deploy.yml/dispatches" \
-            -d '{"ref":"main","inputs":{"aiwg_version":"${{ gitea.ref_name }}","source_tag":"${{ gitea.ref_name }}"}}'
+            -d "{\"ref\":\"main\",\"inputs\":{\"aiwg_version\":\"${REF_NAME}\",\"source_tag\":\"${REF_NAME}\"}}")
+
+          echo "Dispatch HTTP status: ${HTTP_STATUS}"
+          # Workflow-dispatch returns 204 No Content on success.
+          if [ "${HTTP_STATUS}" != "204" ]; then
+            echo "::error::aiwg.io dispatch failed with HTTP ${HTTP_STATUS}"
+            echo "Response body:"
+            cat /tmp/dispatch-body.txt
+            echo
+            echo "If the body contains 'invalid username, password or token',"
+            echo "rotate AIWG_IO_DISPATCH_TOKEN in roctinam/aiwg repo settings."
+            exit 1
+          fi
+
+          echo "✓ aiwg.io deploy dispatched for ${REF_NAME}"
