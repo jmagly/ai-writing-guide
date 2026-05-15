@@ -9,6 +9,49 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
+## [2026.5.7] - 2026-05-15 — "RLM search reliability + internal loop routing"
+
+This release tightens two recently updated automation paths: RLM search now preserves the user's query and covers small source files, while `agent-loop` routes to the in-session loop by default unless the user explicitly asks for the external daemon.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **`rlm-search --max-parallel` is parsed as an option** | `aiwg rlm-search "find all references to loop structures" --source docs --max-parallel 4` now keeps the full query instead of treating `4` as the query. Unknown flags now fail fast rather than allowing nearby positional values to overwrite the search text. |
+| **RLM prep indexes single-chunk files** | Small docs and source files are included in the prep manifest and search plan. A source tree with only short files no longer produces an empty or partial RLM search. |
+| **Prep reuse is coverage-checked** | Existing prep indexes are validated for source, file, manifest, and chunk coverage before reuse. Incomplete or stale prep from older runs is rebuilt automatically. |
+| **`agent-loop` defaults to the internal loop** | Normal `agent-loop` requests stay in the current session. External daemon routing is still available through explicit external-loop commands or explicit user intent. |
+| **Build-time version lockstep check** | `npm run build:cli` now fails if `package.json`, `package-lock.json`, or `.claude-plugin/marketplace.json` disagree on the release version. |
+
+### Changed
+
+- `agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md` — bumped to skill version 3.1.0 and updated routing guidance so internal/in-session iteration is the default path.
+- `docs/cli-reference.md` — documents `rlm-search --max-parallel` as an accepted alias, and describes the single-chunk prep and prep-index validation behavior.
+- `agentic/code/addons/rlm/skills/rlm-search/SKILL.md` — documents coverage-checked prep reuse and single-chunk indexing.
+- `package.json` — `build:cli` now runs `check:versions` before compiling, catching release-version drift early.
+
+### Fixed
+
+- `src/rlm/cli.ts` — `rlm-search` recognizes `--max-parallel`; unknown flags now produce a CLI error instead of shifting the query positional.
+- `src/rlm/cli.ts` — `rlm-prep` writes manifests and chunk files for sources that fit in one chunk, then indexes them for downstream search.
+- `src/rlm/cli.ts` — prep index reuse now checks that every expected source file, manifest, and chunk exists before search.
+- `tools/workspace/check-marketplace-version.mjs` — now validates `package-lock.json` top-level and root-package versions in addition to marketplace metadata.
+- External loop observability from the prior patch line is included in this release train: external session status can surface captured log output when the daemon path is intentionally used.
+
+### Tests
+
+- `test/uat/rlm-cli.uat.ts` adds regressions for single-chunk manifest creation, single-chunk prep indexing, and `rlm-search --max-parallel 4` query preservation.
+- `test/unit/workspace/check-marketplace-version.test.ts` adds regressions for package-lock top-level drift, package-lock root-package drift, marketplace drift, and the allowed pre-release marketplace exception.
+- Verified locally with `npm run check:versions`, `npm run test -- test/unit/workspace/check-marketplace-version.test.ts`, `npm run uat -- test/uat/rlm-cli.uat.ts`, and `npm run build:cli`.
+
+### Migration notes
+
+No breaking changes. Existing `rlm-search --parallel N` calls continue to work. `--max-parallel N` is now accepted by both the source skill and CLI. Existing `agent-loop` invocations keep working; only the default routing preference changed so external daemon behavior requires explicit external-loop intent.
+
+### Links
+
+- Release announcement: [docs/releases/v2026.5.7-announcement.md](docs/releases/v2026.5.7-announcement.md)
+
 ## [2026.5.6] - 2026-05-14 — "Agent-loop completion inference + auto-compact discipline"
 
 Two behavioral upgrades to make long-running and iterative work survive context pressure and reach measurable completion without operator hand-holding, plus a CI workflow ordering fix that prevents v2026.5.5-style stable-publish regressions.

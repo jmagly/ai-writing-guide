@@ -37,7 +37,7 @@ When triggered:
 
 1. **Extract query and source** — identify the natural language query and the source path (file or directory). Default source is `.` (current directory).
 
-2. **Check for existing prep** — look for a valid manifest in `.aiwg/rlm-prep/` matching the source. If found and not stale, skip prep. If not found, run `rlm-prep` automatically.
+2. **Check for existing prep** — look for a valid manifest in `.aiwg/rlm-prep/` matching the source. Reuse only when the prep index covers every source file, manifest, and chunk. If missing, stale, incomplete, or from an older single-chunk-dropping prep run, rebuild with `rlm-prep`.
 
 3. **Initial fanout (level 1)** — dispatch the query across all chunks, up to `--max-parallel` subagents at a time. Collect results with provenance.
 
@@ -100,8 +100,10 @@ Cost summary: 47 subagents, 184,320 tokens (~$0.18), 1 synthesis pass
 - `<query>` — Natural language question or task (required)
 - `--source <file|dir>` — Source content to search (default: `.`)
 - `--depth N` — Maximum recursion depth before forcing synthesis (default: `3`)
-- `--max-parallel N` — Max parallel subagents per level (default: `4`, bounded by context budget). Alias `--parallel` is accepted for one release cycle and emits a deprecation warning; remove it after the next stable release.
+- `--max-parallel N` — Max parallel subagents per level (default: `4`, bounded by context budget). Alias `--parallel` is also accepted by the CLI.
 - `--budget N` — Token budget for the entire operation (default: `500000`)
+
+Prep coverage note: files that fit within one chunk are still written to a manifest and included in the search plan. Existing prep indexes are validated before reuse so older partial indexes are rebuilt automatically.
 
 ## Examples
 

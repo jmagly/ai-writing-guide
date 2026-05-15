@@ -4241,7 +4241,7 @@ Full recursive search pipeline: prep, fanout, recurse, synthesize.
 
 ```bash
 aiwg rlm-search <query> --source <file|dir>
-                        [--depth N] [--parallel N] [--budget N]
+                        [--depth N] [--parallel N|--max-parallel N] [--budget N]
 ```
 
 **Arguments:**
@@ -4253,6 +4253,7 @@ aiwg rlm-search <query> --source <file|dir>
 - `--source <file|dir>` - Source content to search
 - `--depth N` - Maximum recursion depth
 - `--parallel N` - Subagent concurrency cap
+- `--max-parallel N` - Alias for `--parallel N`; accepted for skill/doc compatibility
 - `--budget N` - Token or cost budget ceiling
 
 **Capabilities:** rlm, search, agentic-tools, recursive, synthesis
@@ -4260,7 +4261,9 @@ aiwg rlm-search <query> --source <file|dir>
 
 Runs `rlm-prep` if needed, fans out across all chunks, recurses if results
 exceed context, and produces a synthesized answer with provenance and cost
-summary.
+summary. Prep reuse is source-aware and coverage-checked before search:
+single-chunk files are indexed, and incomplete or stale prep indexes are rebuilt
+instead of silently dropping files from the search plan.
 
 ---
 

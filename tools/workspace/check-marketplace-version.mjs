@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * Verify .claude-plugin/marketplace.json metadata.version matches package.json version.
+ * Verify release version metadata matches package.json version.
  *
- * PUW-038 (#1139): the marketplace manifest's top-level metadata.version
- * must move in lockstep with package.json on every release; otherwise the
- * Claude Code plugin marketplace UI shows a stale version while npm ships
- * the new one.
+ * PUW-038 (#1139): package-lock.json and the marketplace manifest's top-level
+ * metadata.version must move in lockstep with package.json on every release;
+ * otherwise installs and plugin surfaces can report stale versions while npm
+ * ships the new one.
  *
- * Exits 0 when versions match (ignoring pre-release suffixes when
- * `--allow-prerelease-mismatch` is passed; release tags should match
- * exactly). Exits 1 otherwise with a diagnostic.
+ * Exits 0 when versions match. For marketplace metadata only, pre-release
+ * suffixes may differ when `--allow-prerelease-mismatch` is passed; package
+ * lockfiles must always match package.json exactly.
  *
  * Usage:
  *   node tools/workspace/check-marketplace-version.mjs
@@ -28,50 +28,119 @@ function strip(version) {
   return version.replace(/[-+].*$/, '');
 }
 
-function main() {
-  const args = process.argv.slice(2);
-  const allowPrereleaseMismatch = args.includes('--allow-prerelease-mismatch');
+function readJson(root, relativePath) {
+  return JSON.parse(readFileSync(resolve(root, relativePath), 'utf8'));
+}
 
-  const pkg = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8'));
+export function checkVersionLockstep(
+  root = REPO_ROOT,
+  { allowPrereleaseMismatch = false } = {},
+) {
+  const pkg = readJson(root, 'package.json');
+  const lock = readJson(root, 'package-lock.json');
   const marketplace = JSON.parse(
-    readFileSync(resolve(REPO_ROOT, '.claude-plugin/marketplace.json'), 'utf8'),
+    readFileSync(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'),
   );
 
   const pkgVersion = pkg.version;
+  const lockVersion = lock.version;
+  const lockRootVersion = lock?.packages?.['']?.version;
   const marketplaceVersion = marketplace?.metadata?.version;
 
   if (!pkgVersion) {
-    console.error('FAIL: package.json has no version field');
-    process.exit(1);
+    return {
+      ok: false,
+      message: 'FAIL: package.json has no version field',
+    };
+  }
+  if (!lockVersion) {
+    return {
+      ok: false,
+      message: 'FAIL: package-lock.json has no top-level version field',
+    };
+  }
+  if (!lockRootVersion) {
+    return {
+      ok: false,
+      message: 'FAIL: package-lock.json packages[""].version missing',
+    };
   }
   if (!marketplaceVersion) {
-    console.error('FAIL: .claude-plugin/marketplace.json metadata.version missing');
-    process.exit(1);
+    return {
+      ok: false,
+      message: 'FAIL: .claude-plugin/marketplace.json metadata.version missing',
+    };
+  }
+
+  if (lockVersion !== pkgVersion) {
+    return {
+      ok: false,
+      message:
+        `FAIL: package-lock.json version (${lockVersion}) does not match ` +
+        `package.json (${pkgVersion}).`,
+      fix: `Fix: update package-lock.json version to ${pkgVersion}.`,
+    };
+  }
+
+  if (lockRootVersion !== pkgVersion) {
+    return {
+      ok: false,
+      message:
+        `FAIL: package-lock.json packages[""].version (${lockRootVersion}) does not match ` +
+        `package.json (${pkgVersion}).`,
+      fix: `Fix: update package-lock.json packages[""].version to ${pkgVersion}.`,
+    };
   }
 
   const exactMatch = pkgVersion === marketplaceVersion;
   const stableMatch = strip(pkgVersion) === strip(marketplaceVersion);
 
   if (exactMatch) {
-    console.log(`OK marketplace metadata.version (${marketplaceVersion}) matches package.json`);
-    process.exit(0);
+    return {
+      ok: true,
+      message:
+        `OK package-lock.json and marketplace metadata.version (${marketplaceVersion}) ` +
+        `match package.json (${pkgVersion})`,
+    };
   }
 
   if (allowPrereleaseMismatch && stableMatch) {
-    console.log(
-      `OK marketplace metadata.version (${marketplaceVersion}) matches package.json stable line ` +
-      `(${pkgVersion}) — pre-release suffix differs but allowed by --allow-prerelease-mismatch`,
-    );
+    return {
+      ok: true,
+      message:
+        `OK package-lock.json matches package.json (${pkgVersion}); ` +
+        `marketplace metadata.version (${marketplaceVersion}) matches stable line ` +
+        'with pre-release suffix difference allowed by --allow-prerelease-mismatch',
+    };
+  }
+
+  return {
+    ok: false,
+    message:
+      `FAIL: marketplace metadata.version (${marketplaceVersion}) does not match ` +
+      `package.json (${pkgVersion}). PUW-038 (#1139) requires lockstep bumps.`,
+    fix: `Fix: update .claude-plugin/marketplace.json metadata.version to ${pkgVersion}.`,
+  };
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  const allowPrereleaseMismatch = args.includes('--allow-prerelease-mismatch');
+  const result = checkVersionLockstep(REPO_ROOT, { allowPrereleaseMismatch });
+
+  if (result.ok) {
+    console.log(result.message);
     process.exit(0);
   }
 
-  console.error(
-    `FAIL: marketplace metadata.version (${marketplaceVersion}) does not match ` +
-    `package.json (${pkgVersion}). PUW-038 (#1139) requires lockstep bumps.`,
-  );
-  console.error('');
-  console.error(`Fix: update .claude-plugin/marketplace.json metadata.version to ${pkgVersion}.`);
+  console.error(result.message);
+  if (result.fix) {
+    console.error('');
+    console.error(result.fix);
+  }
   process.exit(1);
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}
