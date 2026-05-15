@@ -50,9 +50,10 @@ export class StrategyPlanner {
    * @returns {StrategyPlan}
    */
   plan(history, metrics) {
-    const situation = this._analyzeSituation(history, metrics);
-    const strategy = this._selectStrategy(situation, history, metrics);
-    const priorities = this._buildPriorities(situation, history, metrics);
+    const normalizedHistory = this._normalizeHistory(history);
+    const situation = this._analyzeSituation(normalizedHistory, metrics);
+    const strategy = this._selectStrategy(situation, normalizedHistory, metrics);
+    const priorities = this._buildPriorities(situation, normalizedHistory, metrics);
     const confidence = this._calculateConfidence(strategy, situation);
 
     if (this.verbose) {
@@ -67,7 +68,7 @@ export class StrategyPlanner {
       confidence,
       metadata: {
         situation,
-        iterationCount: history.length,
+        iterationCount: normalizedHistory.length,
         timestamp: Date.now(),
       },
     };
@@ -80,23 +81,39 @@ export class StrategyPlanner {
    * @returns {boolean}
    */
   shouldEscalate(history, metrics) {
-    if (history.length >= this.escalationThreshold) {
+    const normalizedHistory = this._normalizeHistory(history);
+    if (normalizedHistory.length >= this.escalationThreshold) {
       return true;
     }
 
-    const situation = this._analyzeSituation(history, metrics);
+    const situation = this._analyzeSituation(normalizedHistory, metrics);
 
     // Escalate if stuck for too long
-    if (situation.stuck && history.length >= this.stuckThreshold + 2) {
+    if (situation.stuck && normalizedHistory.length >= this.stuckThreshold + 2) {
       return true;
     }
 
     // Escalate if regressing for multiple iterations
-    if (situation.regressing && history.length >= 4) {
+    if (situation.regressing && normalizedHistory.length >= 4) {
       return true;
     }
 
     return false;
+  }
+
+  /**
+   * Remove sparse or malformed history entries before trend analysis.
+   * Failed pre-agent iterations can leave placeholders without analysis data.
+   *
+   * @private
+   * @param {IterationHistory[]} history
+   * @returns {IterationHistory[]}
+   */
+  _normalizeHistory(history) {
+    if (!Array.isArray(history)) {
+      return [];
+    }
+    return history.filter((entry) => entry && typeof entry === 'object');
   }
 
   /**
@@ -136,7 +153,7 @@ export class StrategyPlanner {
       const progressChanges = recent.map((h, i) => {
         if (i === 0) return 0;
         const prev = recent[i - 1];
-        return (h.analysis?.completionPercentage || 0) - (prev.analysis?.completionPercentage || 0);
+        return (h?.analysis?.completionPercentage || 0) - (prev?.analysis?.completionPercentage || 0);
       }).filter(c => c !== 0);
 
       situation.stuck = progressChanges.every(c => Math.abs(c) < 5); // < 5% change
@@ -148,7 +165,7 @@ export class StrategyPlanner {
       const directions = recent.map((h, i) => {
         if (i === 0) return 0;
         const prev = recent[i - 1];
-        return (h.analysis?.completionPercentage || 0) - (prev.analysis?.completionPercentage || 0);
+        return (h?.analysis?.completionPercentage || 0) - (prev?.analysis?.completionPercentage || 0);
       });
 
       let signChanges = 0;

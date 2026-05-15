@@ -323,6 +323,15 @@ export class RalphStatusHandler implements CommandHandler {
       if (loop.status === 'running') {
         lines.push(`   PID: ${loop.pid}`);
       }
+      if (loop.outputFile) {
+        lines.push(`   Daemon log: ${loop.outputFile}`);
+      }
+      if (loop.sessionStdoutFile) {
+        lines.push(`   Session stdout: ${loop.sessionStdoutFile}`);
+      }
+      if (loop.sessionStderrFile) {
+        lines.push(`   Session stderr: ${loop.sessionStderrFile}`);
+      }
       lines.push('');
     }
 

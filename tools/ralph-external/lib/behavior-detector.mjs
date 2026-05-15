@@ -62,7 +62,8 @@ export class BehaviorDetector {
    * @returns {Detection[]} Array of detections
    */
   detect(history) {
-    if (!history || history.length === 0) {
+    history = this._normalizeHistory(history);
+    if (history.length === 0) {
       return [];
     }
 
@@ -88,6 +89,21 @@ export class BehaviorDetector {
   }
 
   /**
+   * Remove sparse or malformed history entries before behavior detection.
+   * Error-recovery iterations may be represented by partial objects.
+   *
+   * @private
+   * @param {Array} history
+   * @returns {Array}
+   */
+  _normalizeHistory(history) {
+    if (!Array.isArray(history)) {
+      return [];
+    }
+    return history.filter((entry) => entry && typeof entry === 'object');
+  }
+
+  /**
    * Detect stuck loop (same error multiple times)
    * @param {Array} history
    * @returns {Detection|null}
@@ -102,7 +118,7 @@ export class BehaviorDetector {
 
     // Extract error messages/patterns
     const errors = recent.map(iter => {
-      const analysis = iter.analysis || {};
+      const analysis = iter?.analysis || {};
       return {
         message: analysis.failureClass || analysis.error || '',
         blockers: analysis.blockers || [],
@@ -132,7 +148,9 @@ export class BehaviorDetector {
       // Also check if progress has stalled
       const progressDeltas = [];
       for (let i = 1; i < recent.length; i++) {
-        const delta = recent[i].analysis?.completionPercentage - recent[i-1].analysis?.completionPercentage;
+        const delta =
+          (recent[i]?.analysis?.completionPercentage || 0) -
+          (recent[i - 1]?.analysis?.completionPercentage || 0);
         progressDeltas.push(delta || 0);
       }
       const avgProgress = progressDeltas.reduce((sum, d) => sum + d, 0) / progressDeltas.length;
@@ -174,7 +192,7 @@ export class BehaviorDetector {
     // Look for file change patterns
     const recent = history.slice(-6);
     const fileChanges = recent.map(iter => {
-      const artifacts = iter.analysis?.artifactsModified || [];
+      const artifacts = iter?.analysis?.artifactsModified || [];
       return new Set(artifacts);
     });
 
@@ -206,7 +224,7 @@ export class BehaviorDetector {
         message: `Oscillation detected: ${undoRedoCount} undo/redo cycles in recent iterations`,
         evidence: {
           undoRedoCycles: undoRedoCount,
-          recentFileChanges: recent.map(iter => iter.analysis?.artifactsModified || []),
+          recentFileChanges: recent.map(iter => iter?.analysis?.artifactsModified || []),
         },
         recommendations: [
           'Commit to one approach instead of alternating',
@@ -233,15 +251,15 @@ export class BehaviorDetector {
     const first = history[0];
     const recent = history.slice(-3);
 
-    const originalObjective = first.context?.objective || '';
+    const originalObjective = first?.context?.objective || '';
 
     // Check if recent work deviates from original objective
     let deviationScore = 0;
     const deviationExamples = [];
 
     for (const iter of recent) {
-      const learnings = iter.analysis?.learnings || '';
-      const artifacts = iter.analysis?.artifactsModified || [];
+      const learnings = iter?.analysis?.learnings || '';
+      const artifacts = iter?.analysis?.artifactsModified || [];
 
       // Simple keyword-based similarity (in production, use better NLP)
       const originalWords = new Set(originalObjective.toLowerCase().split(/\s+/));
@@ -297,13 +315,13 @@ export class BehaviorDetector {
     const first = history[0];
     const current = history[history.length - 1];
 
-    const estimatedIterations = first.context?.maxIterations || 10;
+    const estimatedIterations = first?.context?.maxIterations || 10;
     const actualIterations = history.length;
     const iterationRatio = actualIterations / estimatedIterations;
 
     // Check iteration budget
     if (iterationRatio >= this.thresholds.resource.iterationMultiplier) {
-      const progressPercent = current.analysis?.completionPercentage || 0;
+      const progressPercent = current?.analysis?.completionPercentage || 0;
 
       return {
         type: 'resource_burn',
@@ -345,8 +363,8 @@ export class BehaviorDetector {
     // Check for test regressions
     let testRegressions = [];
     for (let i = 1; i < recent.length; i++) {
-      const prev = recent[i - 1].analysis || {};
-      const curr = recent[i].analysis || {};
+      const prev = recent[i - 1]?.analysis || {};
+      const curr = recent[i]?.analysis || {};
 
       const prevPassing = prev.testsPassing !== undefined;
       const currPassing = curr.testsPassing !== undefined;

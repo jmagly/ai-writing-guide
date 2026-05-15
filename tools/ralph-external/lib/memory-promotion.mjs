@@ -10,7 +10,7 @@
  * @issue #24
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
 import { LearningExtractor } from './learning-extractor.mjs';
@@ -125,8 +125,7 @@ export class MemoryPromotion {
     const tempPath = `${this.stagingPath}.tmp`;
     writeFileSync(tempPath, JSON.stringify(staging, null, 2));
 
-    const fs = require('fs');
-    fs.renameSync(tempPath, this.stagingPath);
+    renameSync(tempPath, this.stagingPath);
   }
 
   /**

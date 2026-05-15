@@ -305,7 +305,7 @@ export class ExternalMultiLoopStateManager {
         console.warn(`Communication paths: ${paths} (overhead increases quadratically)`);
       }
 
-      const loopId = this.generateLoopId(config.objective);
+      const loopId = config.loopId || this.generateLoopId(config.objective);
       const loopDir = join(this.loopsDir, loopId);
       mkdirSync(loopDir, { recursive: true });
 
@@ -583,7 +583,7 @@ export class ExternalMultiLoopStateManager {
     }
 
     try {
-      const stats = require('fs').lstatSync(legacyStatePath);
+      const stats = lstatSync(legacyStatePath);
       if (stats.isSymbolicLink()) {
         // Already migrated
         return false;

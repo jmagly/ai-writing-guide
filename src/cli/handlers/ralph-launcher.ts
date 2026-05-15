@@ -87,6 +87,9 @@ export interface LoopRegistryEntry {
   iteration: number;
   maxIterations: number;
   outputFile: string;
+  sessionStdoutFile?: string;
+  sessionStderrFile?: string;
+  promptFile?: string;
   provider?: string;
 }
 
@@ -212,6 +215,9 @@ export async function launchExternalRalph(
 
   // Create output file for the detached process
   const outputFile = join(loopDir, 'daemon-output.log');
+  const sessionStdoutFile = join(loopDir, 'outputs', '001-stdout.log');
+  const sessionStderrFile = join(loopDir, 'outputs', '001-stderr.log');
+  const promptFile = join(loopDir, 'prompts', '001-prompt.md');
 
   // Build arguments
   const args = buildArgs(options);
@@ -265,6 +271,9 @@ export async function launchExternalRalph(
     iteration: 0,
     maxIterations: options.maxIterations || 5,
     outputFile,
+    sessionStdoutFile,
+    sessionStderrFile,
+    promptFile,
     provider: options.provider,
   };
   saveLauncherRegistry(projectRoot, launcherRegistry);

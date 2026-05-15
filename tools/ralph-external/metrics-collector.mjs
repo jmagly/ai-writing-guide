@@ -77,19 +77,20 @@ export class MetricsCollector {
    * @returns {IterationMetrics}
    */
   extractIterationMetrics(iteration) {
-    const analysis = iteration.analysis || {};
+    const safeIteration = iteration || {};
+    const analysis = safeIteration.analysis || {};
 
     return {
       completionPercentage: this.normalizePercentage(analysis.completionPercentage || 0),
       qualityScore: this.normalizePercentage(analysis.qualityScore || analysis.confidence || 0.5),
-      errorCount: analysis.errorCount || iteration.errorCount || 0,
+      errorCount: analysis.errorCount || safeIteration.errorCount || 0,
       testsPassing: analysis.testsPassing || 0,
       testsFailing: analysis.testsFailing || 0,
-      learnings: this.extractLearnings(iteration),
-      blockers: this.extractBlockers(iteration),
-      duration: iteration.duration || 0,
+      learnings: this.extractLearnings(safeIteration),
+      blockers: this.extractBlockers(safeIteration),
+      duration: safeIteration.duration || 0,
       filesModified: analysis.filesModified || [],
-      toolCallCount: iteration.toolCallCount || 0,
+      toolCallCount: safeIteration.toolCallCount || 0,
     };
   }
 
@@ -111,21 +112,22 @@ export class MetricsCollector {
    * @returns {string[]}
    */
   extractLearnings(iteration) {
+    const safeIteration = iteration || {};
     const learnings = [];
 
-    if (iteration.analysis?.learnings) {
-      if (Array.isArray(iteration.analysis.learnings)) {
-        learnings.push(...iteration.analysis.learnings);
-      } else if (typeof iteration.analysis.learnings === 'string') {
-        learnings.push(iteration.analysis.learnings);
+    if (safeIteration.analysis?.learnings) {
+      if (Array.isArray(safeIteration.analysis.learnings)) {
+        learnings.push(...safeIteration.analysis.learnings);
+      } else if (typeof safeIteration.analysis.learnings === 'string') {
+        learnings.push(safeIteration.analysis.learnings);
       }
     }
 
-    if (iteration.learnings) {
-      if (Array.isArray(iteration.learnings)) {
-        learnings.push(...iteration.learnings);
-      } else if (typeof iteration.learnings === 'string') {
-        learnings.push(iteration.learnings);
+    if (safeIteration.learnings) {
+      if (Array.isArray(safeIteration.learnings)) {
+        learnings.push(...safeIteration.learnings);
+      } else if (typeof safeIteration.learnings === 'string') {
+        learnings.push(safeIteration.learnings);
       }
     }
 
@@ -138,16 +140,17 @@ export class MetricsCollector {
    * @returns {string[]}
    */
   extractBlockers(iteration) {
+    const safeIteration = iteration || {};
     const blockers = [];
 
-    if (iteration.analysis?.blockers) {
-      blockers.push(...(Array.isArray(iteration.analysis.blockers)
-        ? iteration.analysis.blockers
-        : [iteration.analysis.blockers]));
+    if (safeIteration.analysis?.blockers) {
+      blockers.push(...(Array.isArray(safeIteration.analysis.blockers)
+        ? safeIteration.analysis.blockers
+        : [safeIteration.analysis.blockers]));
     }
 
-    if (iteration.analysis?.failureReason) {
-      blockers.push(iteration.analysis.failureReason);
+    if (safeIteration.analysis?.failureReason) {
+      blockers.push(safeIteration.analysis.failureReason);
     }
 
     return blockers.filter(Boolean);
@@ -286,6 +289,7 @@ export class MetricsCollector {
    * @returns {PIDMetrics}
    */
   collect(iteration) {
+    const safeIteration = iteration || {};
     const metrics = this.extractIterationMetrics(iteration);
 
     const proportional = this.calculateProportional(metrics);
@@ -297,7 +301,7 @@ export class MetricsCollector {
       integral,
       derivative,
       timestamp: Date.now(),
-      iterationNumber: iteration.number || this.history.length + 1,
+      iterationNumber: safeIteration.number || this.history.length + 1,
       raw: metrics,
     };
 

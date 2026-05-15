@@ -209,6 +209,7 @@ export class Orchestrator {
         {
           objective: config.objective,
           completionCriteria: config.completionCriteria,
+          loopId: config.loopId || process.env.RALPH_LOOP_ID,
           maxIterations: config.maxIterations || 5,
           model: config.model || 'opus',
           budgetPerIteration: config.budgetPerIteration || 2.0,
@@ -355,11 +356,15 @@ export class Orchestrator {
 
     // Claude Intelligence Layer
     if (state.config.enableClaudeIntelligence !== false) {
-      this.claudePromptGenerator = new ClaudePromptGenerator({
-        projectRoot: this.projectRoot,
-      });
-      if (this.providerAdapter) {
-        this.claudePromptGenerator.setProviderAdapter(this.providerAdapter);
+      if (providerName === 'claude') {
+        this.claudePromptGenerator = new ClaudePromptGenerator({
+          projectRoot: this.projectRoot,
+        });
+        if (this.providerAdapter) {
+          this.claudePromptGenerator.setProviderAdapter(this.providerAdapter);
+        }
+      } else {
+        console.log(`[External Ralph] Dynamic Claude prompt generation: DISABLED for provider ${providerName}`);
       }
 
       this.validationAgent = new ValidationAgent({
@@ -637,8 +642,10 @@ export class Orchestrator {
             assessment,
           });
 
-          if (!preValidation.valid) {
-            console.warn(`[External Ralph] Pre-validation warnings: ${preValidation.warnings.length}`);
+          const preValidationPassed = preValidation?.passed ?? preValidation?.valid ?? true;
+          const preValidationWarnings = preValidation?.warnings ?? preValidation?.issues ?? [];
+          if (!preValidationPassed) {
+            console.warn(`[External Ralph] Pre-validation warnings: ${preValidationWarnings.length}`);
           }
         }
 
@@ -853,8 +860,10 @@ export class Orchestrator {
             preValidation,
           });
 
-          if (!postValidation.valid) {
-            console.warn(`[External Ralph] Post-validation issues: ${postValidation.errors.length}`);
+          const postValidationPassed = postValidation?.passed ?? postValidation?.valid ?? true;
+          const postValidationErrors = postValidation?.errors ?? postValidation?.issues ?? [];
+          if (!postValidationPassed) {
+            console.warn(`[External Ralph] Post-validation issues: ${postValidationErrors.length}`);
           }
         }
 
@@ -1075,6 +1084,9 @@ export class Orchestrator {
 
       } catch (error) {
         console.error(`[External Ralph] Iteration ${state.currentIteration} error:`, error.message);
+        if (error?.stack) {
+          console.error(error.stack);
+        }
 
         // Stop checkpoint manager if running
         if (this.checkpointManager) {

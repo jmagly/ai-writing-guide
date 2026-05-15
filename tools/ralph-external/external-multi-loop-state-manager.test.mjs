@@ -119,6 +119,23 @@ describe('ExternalMultiLoopStateManager', () => {
       assert.strictEqual(registry.active_loops[0].loop_id, loopId);
     });
 
+    it('should create new loop with explicit ID', async () => {
+      const config = {
+        loopId: 'ralph-explicit-loop-id',
+        objective: 'Fix all tests',
+        completionCriteria: 'npm test passes',
+      };
+
+      const { loopId, state } = await manager.createLoop(config);
+
+      assert.strictEqual(loopId, 'ralph-explicit-loop-id');
+      assert.strictEqual(state.loopId, 'ralph-explicit-loop-id');
+      assert(existsSync(manager.getLoopDir('ralph-explicit-loop-id')));
+
+      const registry = manager.loadRegistry();
+      assert.strictEqual(registry.active_loops[0].loop_id, 'ralph-explicit-loop-id');
+    });
+
     it('should enforce MAX_CONCURRENT_LOOPS', async () => {
       // Create 4 loops
       for (let i = 0; i < 4; i++) {

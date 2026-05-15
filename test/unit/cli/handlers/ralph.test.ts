@@ -264,6 +264,8 @@ describe('Ralph Command Handlers', () => {
           iteration: 2,
           maxIterations: 5,
           outputFile: '/mock/project/.aiwg/ralph-external/test-loop-123.output',
+          sessionStdoutFile: '/mock/project/.aiwg/ralph-external/loops/test-loop-123/outputs/002-stdout.log',
+          sessionStderrFile: '/mock/project/.aiwg/ralph-external/loops/test-loop-123/outputs/002-stderr.log',
         },
       ]);
 
@@ -275,6 +277,9 @@ describe('Ralph Command Handlers', () => {
       expect(result.message).toContain('Fix all tests');
       expect(result.message).toContain('2/5 iterations');
       expect(result.message).toContain('PID: 12345');
+      expect(result.message).toContain('Daemon log: /mock/project/.aiwg/ralph-external/test-loop-123.output');
+      expect(result.message).toContain('Session stdout: /mock/project/.aiwg/ralph-external/loops/test-loop-123/outputs/002-stdout.log');
+      expect(result.message).toContain('Session stderr: /mock/project/.aiwg/ralph-external/loops/test-loop-123/outputs/002-stderr.log');
     });
 
     it('should display all loops when --all flag is passed', async () => {

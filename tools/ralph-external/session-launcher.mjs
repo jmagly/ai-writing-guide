@@ -208,6 +208,7 @@ export class SessionLauncher extends EventEmitter {
 
       this.currentProcess = spawn(binary, args, {
         cwd: options.workingDir,
+        stdio: ['ignore', 'pipe', 'pipe'],
         env: {
           ...process.env,
           ...envOverrides,

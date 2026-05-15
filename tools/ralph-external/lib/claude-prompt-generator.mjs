@@ -92,6 +92,7 @@ export class ClaudePromptGenerator {
 
       const result = spawnSync(binary, args, {
         encoding: 'utf8',
+        input: '',
         timeout: this.timeout,
       });
 

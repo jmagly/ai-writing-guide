@@ -15,7 +15,7 @@
  * @issue #24
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
@@ -192,8 +192,7 @@ export class SemanticMemory {
     writeFileSync(tempPath, JSON.stringify(store, null, 2));
 
     // Atomic rename
-    const fs = require('fs');
-    fs.renameSync(tempPath, this.storePath);
+    renameSync(tempPath, this.storePath);
   }
 
   /**
