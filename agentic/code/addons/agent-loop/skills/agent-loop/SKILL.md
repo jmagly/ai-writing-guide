@@ -2,7 +2,7 @@
 namespace: aiwg
 name: agent-loop
 description: Detect requests for iterative autonomous agent loops and route to the appropriate loop executor
-version: 3.0.0
+version: 3.1.0
 platforms: [all]
 
 ---
@@ -22,7 +22,7 @@ platforms: [all]
 
 # Agent Loop Skill
 
-You detect when users want iterative autonomous task execution and route to the appropriate loop command.
+You detect when users want iterative autonomous task execution and route to an internal, in-session loop by default. External daemon loops are opt-in and require an explicit request.
 
 ## Loop Taxonomy
 
@@ -30,10 +30,33 @@ This skill is the **detection and routing layer** for autonomous agent loops —
 
 | Loop Type | Implementation | Description |
 |-----------|---------------|-------------|
-| **Al** | `ralph` command | Basic iterate-until-complete with learning extraction |
+| **Internal Agent Loop** | current assistant session / internal loop | Default visible iterate-until-complete workflow in the active session |
+| **Al** | internal `ralph` concept | Basic iterate-until-complete when named without external qualifiers |
+| **External Agent Loop** | `agent-loop-ext` / `ralph-external` daemon | Explicitly requested background, detached, crash-resilient, or resumable work |
 | *(future)* | — | Reflection loops, critic-actor loops, branching loops |
 
-Currently routes all detected requests to the iterative loop executor. As new loop types are added, this skill will route based on task characteristics.
+Generic loop requests route to the internal in-session loop. As new loop types are added, this skill will route based on task characteristics.
+
+## Routing Policy
+
+### Default: Internal/In-Session Loop
+
+Use the internal loop when the user says `agent-loop`, `al`, `ralph`, `loop`, `iterate`, `keep trying`, `fix until green`, `address issues`, `handle all listed issues`, or supplies an iteration bound such as `--iterations 200` without explicit external wording.
+
+Run the work visibly in the current assistant session:
+
+1. Establish completion criteria.
+2. Act on the next bounded slice of work.
+3. Verify with the relevant checks.
+4. Adapt and continue until completion, blocker, or the requested iteration cap.
+
+Do not launch detached processes, background sessions, or the Ralph external daemon for generic loop requests.
+
+### Explicit External Route
+
+Route to `agent-loop-ext` / `ralph-external` only when the user explicitly asks for external execution, background execution, a daemon, detached operation, crash resilience, session survival, resume-later behavior, unattended long-running work, or when they name `agent-loop-ext`, `ralph-external`, or the Ralph daemon directly.
+
+If the user says `ralph` without external/background/daemon qualifiers, treat it as the internal loop concept.
 
 ## Triggers
 
@@ -50,16 +73,16 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 
 | Pattern | Example | Action |
 |---------|---------|--------|
-| `ralph this: X` | "ralph this: fix all lint errors" | Extract task, infer completion |
-| `ralph: X` | "ralph: migrate to TypeScript" | Extract task, infer completion |
-| `ralph it` | "ralph it" (after task description) | Use conversation context |
-| `keep trying until X` | "keep trying until tests pass" | Task = current context, completion = X |
-| `loop until X` | "loop until coverage >80%" | Task = improve coverage, completion = X |
-| `iterate until X` | "iterate until no errors" | Task = fix errors, completion = X |
-| `run until passes` | "run until passes" | Infer test command |
-| `fix until green` | "fix until green" | Task = fix tests, completion = tests pass |
-| `keep fixing until X` | "keep fixing until lint is clean" | Task = fix lint, completion = X |
-| `al: X` | "al: fix all lint errors" | Shortcut for agent-loop, extract task |
+| `ralph this: X` | "ralph this: fix all lint errors" | Internal loop: extract task, infer completion |
+| `ralph: X` | "ralph: migrate to TypeScript" | Internal loop: extract task, infer completion |
+| `ralph it` | "ralph it" (after task description) | Internal loop: use conversation context |
+| `keep trying until X` | "keep trying until tests pass" | Internal loop: task = current context, completion = X |
+| `loop until X` | "loop until coverage >80%" | Internal loop: task = improve coverage, completion = X |
+| `iterate until X` | "iterate until no errors" | Internal loop: task = fix errors, completion = X |
+| `run until passes` | "run until passes" | Internal loop: infer test command |
+| `fix until green` | "fix until green" | Internal loop: task = fix tests, completion = tests pass |
+| `keep fixing until X` | "keep fixing until lint is clean" | Internal loop: task = fix lint, completion = X |
+| `al: X` | "al: fix all lint errors" | Internal loop shortcut: extract task |
 
 ## Extraction Logic
 
@@ -107,7 +130,7 @@ When the inference skill IS available, prefer it. The skill handles multi-langua
 - Task: "migrate all files in lib/ to ESM"
 - Completion (inferred): "node --experimental-vm-modules lib/index.js runs without errors"
 
-**Action**: Invoke `/ralph "migrate all files in lib/ to ESM" --completion "node --experimental-vm-modules lib/index.js succeeds"`
+**Action**: Run an internal loop in the current session for `migrate all files in lib/ to ESM` until the inferred completion command succeeds
 
 ---
 
@@ -116,7 +139,7 @@ When the inference skill IS available, prefer it. The skill handles multi-langua
 - Task: "fix failing tests" (from context or implied)
 - Completion: "npm test passes with 0 failures"
 
-**Action**: Invoke `/ralph "fix failing tests" --completion "npm test passes"`
+**Action**: Run an internal loop in the current session until `npm test` passes
 
 ---
 
@@ -125,7 +148,7 @@ When the inference skill IS available, prefer it. The skill handles multi-langua
 - Task: (from conversation context about auth validation)
 - Completion: (infer based on task type)
 
-**Action**: Invoke `/ralph "{context-based task}" --completion "{inferred criteria}"`
+**Action**: Run an internal loop in the current session using the context-based task and inferred criteria
 
 ---
 
@@ -134,7 +157,16 @@ When the inference skill IS available, prefer it. The skill handles multi-langua
 - Task: "add tests to improve coverage"
 - Completion: "npm run coverage shows >80%"
 
-**Action**: Invoke `/ralph "add tests to improve coverage" --completion "coverage report shows >80%"`
+**Action**: Run an internal loop in the current session until the coverage report shows more than 80%
+
+---
+
+**User**: "Run this in the background with crash recovery and let me attach later"
+**Extraction**:
+- Task: (from conversation context)
+- Completion: (infer based on task type)
+
+**Action**: Route to `agent-loop-ext` / `ralph-external` because the user explicitly requested background crash-resilient execution
 
 ## Clarification Prompts
 
@@ -160,9 +192,9 @@ What task should I repeat until success?
 What command tells me when it's done?
 ```
 
-## Multi-Loop Support
+## External/Multi-Loop Support
 
-**Version 2.0** adds concurrent loop execution with registry tracking.
+**Version 2.0** added concurrent loop execution with registry tracking. This applies to explicit external daemon loops, not ordinary internal `agent-loop` requests.
 
 ### Concurrency Limits
 
@@ -178,7 +210,7 @@ All loops have unique identifiers:
 
 ### --loop-id Parameter
 
-Users can optionally specify a loop ID:
+Users can optionally specify a loop ID for external daemon loops:
 
 ```
 /ralph "fix tests" --completion "npm test passes" --loop-id ralph-my-fixes-12345678
@@ -188,7 +220,7 @@ If not provided, ID is auto-generated from task description.
 
 ### Registry Tracking
 
-All active loops tracked in `.aiwg/ralph/registry.json`:
+External active loops are tracked in `.aiwg/ralph/registry.json`:
 
 ```json
 {
@@ -209,7 +241,7 @@ All active loops tracked in `.aiwg/ralph/registry.json`:
 
 ### Concurrent Loop Behavior
 
-**When starting a new loop**:
+**When starting a new external loop**:
 
 1. Check registry: `active_loops.length < 4`
 2. If at limit: Show error with active loop list
@@ -273,22 +305,33 @@ Multi-loop structure per loop:
 
 ## Invocation
 
-Once task and completion are extracted/confirmed, invoke the loop executor skill with:
+Once task and completion are extracted/confirmed, use the default internal route unless explicit external wording is present.
+
+For the default internal route:
+
+- **Task**: The extracted task description
+- **Completion criteria**: The verification command or condition
+- **Max iterations**: If user mentioned iteration limit
+- **Timeout**: If user mentioned time limit
+- **Operation**: Iterate in the current assistant session with visible progress and verification after meaningful changes
+
+For explicit external daemon routes:
 
 - **Task**: The extracted task description
 - **Completion criteria**: The verification command or condition
 - **Max iterations**: If user mentioned iteration limit
 - **Timeout**: If user mentioned time limit
 - **Loop ID**: If user wants a custom loop identifier
+- **Operation**: Route through `agent-loop-ext` / `ralph-external`, then surface status, log, attach, and abort commands
 
-### Multi-Loop Examples
+### External Multi-Loop Examples
 
 **Parallel bug fixes**:
 ```
-User: "ralph: fix TypeScript errors in src/"
+User: "run an external ralph loop to fix TypeScript errors in src/"
 → Loop 1: ralph-fix-ts-errors-a1b2c3d4
 
-User: "also ralph: add missing tests in lib/"
+User: "also run an external ralph loop to add missing tests in lib/"
 → Loop 2: ralph-add-tests-b2c3d4e5
 
 Both running in parallel until completion criteria met.
@@ -296,7 +339,7 @@ Both running in parallel until completion criteria met.
 
 **Sequential with manual abort**:
 ```
-User: "ralph: refactor entire auth module"
+User: "run an external ralph loop to refactor the entire auth module"
 → Loop 1: ralph-refactor-auth-c3d4e5f6 (running)
 
 User: "actually, abort that and just fix the login bug"
@@ -310,13 +353,15 @@ User: "actually, abort that and just fix the login bug"
 - The skill is **exclusive** - once triggered, handle the entire request
 - Always confirm extraction before invoking if there's ambiguity
 - Prefer inferring completion criteria over asking (ask only if truly unclear)
-- Check registry capacity before starting new loops
-- Show helpful errors with active loop list when at capacity
+- Default ambiguous requests to the internal in-session loop
+- Do not start `ralph-external`, detached daemons, or background `aiwg ralph` processes unless the user explicitly asks for them
+- Check registry capacity before starting explicit external loops
+- Show helpful errors with active loop list when explicit external loops are at capacity
 
 ## Related
 
 - `infer-completion-criteria` skill - derives measurable `--completion` from project state when the user doesn't supply one
-- `ralph` skill - the iterative loop executor implementation (legacy name; `agent-loop` is canonical)
+- `ralph` skill - legacy name for the iterative loop concept; `agent-loop` is canonical and defaults to in-session execution
 - `agent-loop-ext` skill - crash-resilient external loop with state persistence
 - `ralph-status` skill - check loop progress
 - `ralph-resume` skill - continue interrupted loops
@@ -327,6 +372,7 @@ User: "actually, abort that and just fix the login bug"
 
 ## Version History
 
+- **3.1.0**: Defaulted generic `agent-loop` routing to internal in-session loops; require explicit wording for external daemon loops
 - **3.0.0**: Renamed from `ralph-loop` to `agent-loop`; added loop taxonomy (Issue #558)
 - **2.0.0**: Added multi-loop support with registry tracking (Issue #268)
 - **1.0.0**: Initial single-loop implementation
