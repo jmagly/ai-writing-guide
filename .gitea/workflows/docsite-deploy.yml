@@ -70,6 +70,36 @@ jobs:
           }
           TENANTS
 
+      - name: Substitute version placeholder in docs overrides
+        run: |
+          set -euo pipefail
+          # The footer in docs/overrides/index.html references the current
+          # AIWG version via the placeholder __AIWG_VERSION__. Substitute
+          # the actual version from package.json before dbbuilder reads
+          # the overrides directory. This keeps the source template free
+          # of per-release manual edits — see aiwg#1348-followup (docs
+          # footer hardcoded to v5.0 surfaced 2026-05-15).
+          AIWG_VERSION="v$(node -p "require('./package.json').version")"
+          echo "Substituting __AIWG_VERSION__ -> ${AIWG_VERSION} in docs/overrides/"
+          # macOS-portable in-place sed via -i.bak then rm; this runs on
+          # Linux runner so the GNU-style -i would also work, but the
+          # explicit form avoids a future portability surprise.
+          sed -i.bak "s/__AIWG_VERSION__/${AIWG_VERSION}/g" docs/overrides/index.html
+          rm -f docs/overrides/index.html.bak
+          # Fail-loud if the placeholder is still present somewhere we
+          # missed — prevents shipping a literal "__AIWG_VERSION__" to
+          # production.
+          if grep -q "__AIWG_VERSION__" docs/overrides/index.html; then
+            echo "::error::__AIWG_VERSION__ placeholder still present in docs/overrides/index.html after substitution"
+            exit 1
+          fi
+          # Confirm the version actually landed.
+          if ! grep -q "${AIWG_VERSION}" docs/overrides/index.html; then
+            echo "::error::Substitution did not write ${AIWG_VERSION} into docs/overrides/index.html"
+            exit 1
+          fi
+          echo "✓ Version substitution complete"
+
       - name: Build doc site
         working-directory: /tmp/dbbuilder/apps/publisher
         run: node scripts/build-tenants.js aiwg-docs
