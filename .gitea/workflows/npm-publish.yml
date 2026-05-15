@@ -116,6 +116,14 @@ jobs:
         # fail. See .aiwg/architecture/adr-publish-time-evidence.md.
         run: npm run lint:audit-signatures
 
+      - name: Scan known affected package feed (#1353)
+        run: |
+          if [ -n "${AIWG_AFFECTED_PACKAGES_CSV:-}" ] || [ -f /mnt/ops/users/roctinam/Downloads/22-packages.csv ]; then
+            npm run lint:affected-packages
+          else
+            echo "Skipping affected-package scan: no CSV source configured on this runner"
+          fi
+
       - name: Audit tarball top-level entries (#1288 / A11)
         # Hard gate: catches Mini Shai-Hulud-style new-file-at-tarball-root
         # injection by diffing `npm pack --dry-run --json` top-level
@@ -316,6 +324,14 @@ jobs:
         # live in ci/npm-audit-signatures-waivers.yaml; expired waivers
         # fail. See .aiwg/architecture/adr-publish-time-evidence.md.
         run: npm run lint:audit-signatures
+
+      - name: Scan known affected package feed (#1353)
+        run: |
+          if [ -n "${AIWG_AFFECTED_PACKAGES_CSV:-}" ] || [ -f /mnt/ops/users/roctinam/Downloads/22-packages.csv ]; then
+            npm run lint:affected-packages
+          else
+            echo "Skipping affected-package scan: no CSV source configured on this runner"
+          fi
 
       - name: Audit tarball top-level entries (#1288 / A11)
         # Hard gate: catches Mini Shai-Hulud-style new-file-at-tarball-root

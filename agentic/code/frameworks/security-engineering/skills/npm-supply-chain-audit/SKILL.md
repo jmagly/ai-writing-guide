@@ -39,6 +39,18 @@ Findings to escalate:
 - `file:` or `link:` sources outside deliberate local workspace
   development.
 
+Run the known-affected package feed scan as a separate hard gate:
+
+```bash
+npm run lint:affected-packages
+AIWG_AFFECTED_PACKAGES_CSV=/mnt/ops/users/roctinam/Downloads/22-packages.csv npm run lint:affected-packages
+AIWG_AFFECTED_PACKAGES_CSV=https://gist.githubusercontent.com/<user>/<gist-id>/raw/22-packages.csv npm run lint:affected-packages
+```
+
+Treat exact package/version hits as incident evidence. Preserve the
+package name, version, published timestamp, detected timestamp range,
+and feed source URL/path in the finding.
+
 ### 2. Lifecycle-script review
 
 Inspect root package scripts and nested package manifests:
@@ -96,7 +108,8 @@ If a known malicious version was installed or a suspicious lifecycle
 script ran, assume secrets reachable from that environment are exposed.
 Rotate npm tokens, GitHub/Gitea tokens, cloud credentials, Kubernetes
 service account tokens, Vault tokens, and deployment secrets. Then audit
-recent publishes and workflow runs.
+recent publishes and workflow runs. If the affected-package feed hit a
+CI runner or workstation cache, quarantine that cache before reuse.
 
 ## Output format
 

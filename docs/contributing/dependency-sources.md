@@ -10,13 +10,16 @@ doc is the contributor-facing companion.
 
 ## What the policy forbids
 
-The lint rejects six dep-source patterns:
+The lint rejects eight dep-source patterns:
 
 | Pattern | Example | Why it's flagged |
 |---|---|---|
 | `git+*` scheme | `git+https://github.com/foo/bar.git` | npm clones the repo and runs its `prepare` script — arbitrary code execution at install time |
 | `git://` scheme | `git://github.com/foo/bar.git` | Same as above |
-| `github:` shorthand | `github:foo/bar` | npm clones the repo and runs its `prepare` script |
+| Hosted git shorthand | `github:foo/bar`, `gitlab:foo/bar`, `gist:1234abcd` | npm clones the repo and runs its `prepare` script |
+| Direct git URL | `https://github.com/foo/bar.git` | Same as above |
+| SSH git spec | `git@github.com:foo/bar.git` | Same as above |
+| GitHub `owner/repo` shorthand | `foo/bar#main` | Same as above |
 | Non-registry tarball | `https://example.com/foo-1.0.0.tgz` | The tarball can contain any payload and lifecycle scripts |
 | `file:` path | `file:./vendor/foo` | Local-path deps bypass dep-resolution review |
 | `link:` symlink | `link:./packages/foo` | Same — and follows the symlink target wherever it points |
@@ -78,7 +81,7 @@ Three things to look at:
    transitive violations, the lockfile path
    (`package-lock.json > node_modules/foo/node_modules/bar`).
 2. **Source** — the exact string that triggered the rule.
-3. **Pattern** — which of the six rules matched.
+3. **Pattern** — which of the eight rules matched.
 
 ## How to fix a violation
 
@@ -138,6 +141,7 @@ Every allowlist entry needs:
 
 ```bash
 npm run lint:dep-sources
+npm run lint:affected-packages
 ```
 
 The check is fast (parses two JSON files and walks the entries). Run it
@@ -153,7 +157,33 @@ Useful flags:
 node tools/lint/dep-source.mjs --help              # show options
 node tools/lint/dep-source.mjs --quiet             # silent on success
 node tools/lint/dep-source.mjs --allowlist <path>  # use a different allowlist
+node tools/lint/affected-packages.mjs --affected-packages-csv /mnt/ops/users/roctinam/Downloads/22-packages.csv
+node tools/lint/affected-packages.mjs --affected-packages-csv https://gist.githubusercontent.com/<user>/<gist-id>/raw/22-packages.csv
 ```
+
+## Known affected package feed
+
+`npm run lint:affected-packages` scans `package.json` and `package-lock.json`
+for exact npm name+version matches from an operator-maintained CSV feed with
+this header:
+
+```csv
+Ecosystem,Namespace,Name,Version,Published,Detected
+```
+
+Source resolution order:
+
+1. `--affected-packages-csv <path|url>`
+2. `AIWG_AFFECTED_PACKAGES_CSV`
+3. The canonical mounted path `/mnt/ops/users/roctinam/Downloads/22-packages.csv`
+
+The scanner dedupes repeated rows by `(ecosystem, normalizedName, version)`,
+tracks the earliest and latest detection timestamps, and reports skipped
+non-npm rows so a future PyPI pass can reuse the same feed.
+
+For automation, publish the CSV as a raw gist and point CI at the **raw** URL,
+not the HTML gist page. The scanner prints the exact source URL or local path it
+used so findings stay traceable in logs and issue comments.
 
 ## Review cadence
 

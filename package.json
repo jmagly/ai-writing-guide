@@ -45,6 +45,7 @@
     "uat:daemon:claude": "vitest run --config config/vitest.uat-daemon.config.js --reporter=verbose daemon-live-claude",
     "lint:schemas": "node tools/scripts/lint-schemas.mjs",
     "lint:dep-sources": "node tools/lint/dep-source.mjs",
+    "lint:affected-packages": "node tools/lint/affected-packages.mjs",
     "lint:tarball": "node tools/lint/tarball-audit.mjs",
     "lint:audit-signatures": "node tools/lint/audit-signatures.mjs",
     "test:conformance": "vitest run --config config/vitest.conformance.config.js test/conformance/executor-v1/",

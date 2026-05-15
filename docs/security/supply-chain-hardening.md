@@ -19,6 +19,7 @@ credentials being used to publish follow-on malicious versions.
 | High-sensitivity gate | `--min-release-age=10` for major bumps or release-prep lockfile churn | Adds review time before sensitive publishes |
 | Lifecycle scripts | Remove package-level `postinstall`/`preinstall` unless truly required | Install hooks are a direct code-execution surface |
 | Exotic dep sources | Reject `git+`, `github:`, non-registry tarballs, `file:`, and `link:` by default | Git deps run `prepare`; non-registry tarballs bypass normal registry review |
+| Known affected package feed | Scan exact package/version hits from an operator-maintained CSV before release and after feed refreshes | Catches packages already known-bad even when they are too new or too obscure for advisory feeds |
 | Release auth | Prefer npm trusted publishing over long-lived npm tokens | OIDC publish tokens are short-lived and workflow-bound |
 | Release evidence | Signed tags, provenance, signed tarball, SBOM | Gives users independent checks for source, builder, bytes, and contents |
 
@@ -56,6 +57,18 @@ required, put it behind an allowlist entry with a reviewer, rationale,
 and review date. Avoid personal forks and branch-tracking Git specs in
 production dependency graphs.
 
+Run the affected-package feed scan before releases, after dependency
+updates, and whenever the operator refreshes the feed:
+
+```bash
+npm run lint:affected-packages
+AIWG_AFFECTED_PACKAGES_CSV=https://gist.githubusercontent.com/<user>/<gist-id>/raw/22-packages.csv npm run lint:affected-packages
+```
+
+Treat exact hits as incident-response evidence, not generic vulnerability
+noise. Preserve the package name, version, published timestamp, detected
+timestamp range, and source path/URL in the finding.
+
 ## Release workflow review
 
 Check release workflows for these properties:
@@ -80,7 +93,9 @@ treat every secret reachable from that environment as exposed. Rotate
 npm tokens, GitHub/Gitea tokens, cloud credentials, Kubernetes service
 account tokens, Vault tokens, deployment secrets, and any package
 publishing permissions. Then audit recent package publishes and workflow
-runs before resuming releases.
+runs before resuming releases. If the affected-package feed identifies a
+hit, quarantine any CI runner cache or workstation npm cache that may
+still contain the tarball.
 
 ## AIWG skills
 

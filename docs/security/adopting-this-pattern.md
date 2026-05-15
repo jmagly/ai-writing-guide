@@ -14,7 +14,7 @@ You're publishing an npm package. You want to:
 
 You're willing to:
 - Bump your dev environment to Node 22.14+ or 24+ (npm 11.5+ requirement)
-- Set up a GitHub or Gitea Actions workflow if you don't have one
+- Set up a GitHub Actions, GitLab CI/CD, CircleCI, or Gitea Actions workflow if you don't have one
 - Generate a maintainer signing key (gpg or ssh, your choice)
 
 Time budget: ~2-3 hours for the first time, mostly waiting on CI runs.
@@ -40,7 +40,7 @@ Plus dev-side:
 |---|---|
 | Node 22.14+ or 24+ on your CI runner | npmjs.org trusted publishing requires npm 11.5+, which requires Node 22.14+. AIWG runs Node 24.x in CI. |
 | npm 11.5+ on your dev machine | The `min-release-age=7` gate fires on every `npm install`. Without npm 11.5+, the gate is silent. `npm install -g npm@^11.5` once. |
-| GitHub Actions or Gitea Actions | OIDC trusted publishing requires a supported provider. **Gitea Actions is NOT yet on the npm trusted-publishers provider list** as of 2026-05. If you use Gitea, you'll publish to npmjs.org from GitHub Actions and use Gitea for everything else. |
+| GitHub Actions, GitLab CI/CD, CircleCI, or Gitea Actions | OIDC trusted publishing requires a supported provider. Checked on **2026-05-14** against npm's trusted-publishers docs: GitHub Actions, GitLab CI/CD, and CircleCI are supported; **Gitea Actions is not listed**. If you use Gitea, publish to npmjs.org from a supported provider and use Gitea for the rest of the release flow. |
 | gpg or ssh key for tag signing | Your choice. gpg is more common; ssh works with hardware tokens (YubiKey, Nitrokey). |
 | `cosign` v2+ and `syft` v1+ available in CI | Both installed via pinned actions/install scripts in the workflow. |
 
@@ -63,53 +63,32 @@ min-release-age=7
 
 Commit `.npmrc` to your repo. Every contributor and every CI run will now enforce the 7-day gate.
 
-Add a dep-source lint script. Create `tools/ci/lint-dep-sources.sh`:
+Add a dep-source lint script by copying or adapting AIWG's production
+implementation instead of a grep snippet:
 
-```bash
-#!/usr/bin/env bash
-# Block dangerous dep source specifiers in package.json and package-lock.json.
-# Refuses git+/github:/tarball-URL/file:/link: sources — these bypass
-# registry signature verification.
-set -euo pipefail
+- `tools/lint/dep-source.mjs`
+- `ci/dep-source-allowlist.yaml`
+- `docs/contributing/dependency-sources.md`
 
-# Patterns we refuse to allow as dep sources
-BAD_PATTERNS=(
-  '"git+'
-  '"github:'
-  '"http://'
-  '"https://.*\.tgz"'
-  '"file:'
-  '"link:'
-)
-
-VIOLATIONS=0
-for pattern in "${BAD_PATTERNS[@]}"; do
-  if grep -E "$pattern" package.json package-lock.json 2>/dev/null; then
-    echo "✗ Found banned dep-source pattern: $pattern"
-    VIOLATIONS=$((VIOLATIONS+1))
-  fi
-done
-
-if [ "$VIOLATIONS" -gt 0 ]; then
-  echo
-  echo "Dep-source lint failed. Use only registry-published versions."
-  exit 1
-fi
-
-echo "✓ All dep sources are registry-published"
-```
+AIWG's linter parses `package.json` and `package-lock.json`, rejects npm's
+documented git dependency forms (`git+...`, `git://`, hosted-git shorthands,
+direct `.git` URLs, SSH git specs, and `owner/repo` GitHub shorthand), and
+allows registry-hosted tarball URLs while still rejecting non-registry
+tarballs.
 
 Add to `package.json`:
 
 ```json
 {
   "scripts": {
-    "lint:dep-sources": "bash tools/ci/lint-dep-sources.sh"
+    "lint:dep-sources": "node tools/lint/dep-source.mjs"
   }
 }
 ```
 
 Wire `npm run lint:dep-sources` into your CI before any publish step.
+If you keep a short grep example for training purposes, label it
+illustrative-only and point maintainers back at the Node-based linter.
 
 ## Step 2 — Generate a maintainer signing key
 

@@ -29,6 +29,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import yaml from 'js-yaml';
+import { classifyDependencySource } from './lib/dep-source.js';
 
 // ---------------------------------------------------------------------------
 // CLI flag parsing
@@ -69,43 +70,6 @@ See docs/contributing/dependency-sources.md for the contributor guide.
  * URL pointing here is just the standard npm tarball location, not an exotic
  * dep source. Anything else is suspicious.
  */
-const KNOWN_REGISTRIES = [
-  /^https?:\/\/registry\.npmjs\.org\//,
-  /^https?:\/\/registry\.yarnpkg\.com\//,
-  /^https?:\/\/npm\.pkg\.github\.com\//,
-];
-
-function isKnownRegistry(url) {
-  return KNOWN_REGISTRIES.some((re) => re.test(url));
-}
-
-/**
- * Classify a dep source. Returns { pattern, label } for forbidden sources or
- * null for permitted ones.
- *
- * `source` is either:
- *   - a version spec from package.json (e.g. "^4.1.0", "git+ssh://...", "file:./foo")
- *   - a `resolved` URL from package-lock.json
- */
-function classify(source) {
-  if (typeof source !== 'string' || source.length === 0) return null;
-
-  if (/^git\+/.test(source)) return { pattern: 'git+*', label: 'git+ scheme prefix' };
-  if (/^git:\/\//.test(source)) return { pattern: 'git://', label: 'raw git:// scheme' };
-  if (/^github:/.test(source)) return { pattern: 'github:owner/repo', label: 'GitHub shorthand' };
-  if (/^file:/.test(source)) return { pattern: 'file:', label: 'local filesystem path' };
-  if (/^link:/.test(source)) return { pattern: 'link:', label: 'workspace symlink' };
-
-  // Direct tarball URL from a non-registry host. Registry-hosted tarballs
-  // (registry.npmjs.org/.../foo.tgz) are normal and allowed.
-  const tarballMatch = /^https?:\/\/[^\s]+?\.(tgz|tar\.gz)(\?|$|#)/.test(source);
-  if (tarballMatch && !isKnownRegistry(source)) {
-    return { pattern: 'direct-tarball', label: 'tarball URL from non-registry host' };
-  }
-
-  return null;
-}
-
 // ---------------------------------------------------------------------------
 // Allowlist
 // ---------------------------------------------------------------------------
@@ -196,7 +160,7 @@ function scanManifest(manifestPath, allowlist) {
     if (!deps || typeof deps !== 'object') continue;
     for (const [name, version] of Object.entries(deps)) {
       scanned++;
-      const classification = classify(version);
+      const classification = classifyDependencySource(version);
       if (!classification) continue;
       const allowed = matchesAllowlist(name, version, allowlist);
       if (allowed) continue;
@@ -233,7 +197,7 @@ function scanLockfile(lockfilePath, allowlist) {
     if (path === '') continue; // root package; covered by manifest scan
     if (!entry || !entry.resolved) continue;
     scanned++;
-    const classification = classify(entry.resolved);
+    const classification = classifyDependencySource(entry.resolved);
     if (!classification) continue;
     const name = extractPackageName(path, entry);
     const allowed = matchesAllowlist(name, entry.resolved, allowlist);

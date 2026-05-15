@@ -32,6 +32,8 @@ File or verify issues for:
 - Remove install lifecycle scripts or document why each one must remain.
 - Block Git, GitHub shorthand, direct tarball, `file:`, and `link:` dep
   sources outside an allowlist.
+- Add a known-affected package feed scan and document how CI points it at
+  the current CSV snapshot (local path or raw gist URL).
 - Add `.npmrc` `min-release-age=7`.
 - Document npm 11.5+ for dependency updates.
 - Move npmjs.org release publishing to trusted publishing where possible.
@@ -43,6 +45,8 @@ File or verify issues for:
 
 - A clean audit result exists with file:line findings or explicit clean
   checks.
+- Known-affected exact matches are distinguished from advisory-vuln
+  results and include package/version/published/detected evidence.
 - Users can install without lifecycle-script surprises.
 - Contributors know when npm 11.5+ is required.
 - Release engineers use Node 24 or another environment satisfying npm

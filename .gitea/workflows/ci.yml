@@ -42,6 +42,17 @@ jobs:
         # docs/contributing/dependency-sources.md.
         run: npm run lint:dep-sources
 
+      - name: Scan known affected package feed (#1353)
+        # Reads the operator-maintained CSV feed from either the canonical
+        # mounted path or AIWG_AFFECTED_PACKAGES_CSV. In CI, prefer a raw gist
+        # URL or another immutable published snapshot so the run is auditable.
+        run: |
+          if [ -n "${AIWG_AFFECTED_PACKAGES_CSV:-}" ] || [ -f /mnt/ops/users/roctinam/Downloads/22-packages.csv ]; then
+            npm run lint:affected-packages
+          else
+            echo "Skipping affected-package scan: no CSV source configured on this runner"
+          fi
+
       - name: Audit dep-graph signatures (#1288 / A12)
         # Runs on every push (not just publish) so signature regressions
         # in the dep graph surface quickly. Time-bounded waivers live in

@@ -5,9 +5,11 @@
 #
 # Why a separate workflow on a different platform:
 # - npm trusted publishing (OIDC) requires Node 22.14.0+ AND a supported
-#   provider. As of 2026-05-12, the supported-provider matrix
-#   (https://docs.npmjs.com/trusted-publishers) lists GitHub Actions and
-#   GitLab CI/CD — Gitea Actions is not included.
+#   provider. Checked on 2026-05-14 against
+#   https://docs.npmjs.com/trusted-publishers: the supported-provider matrix
+#   lists GitHub Actions, GitLab CI/CD, and CircleCI. Gitea Actions is not
+#   included, and npm provenance is still documented only for GitHub Actions
+#   and GitLab CI/CD.
 # - Trusted publishing replaces the long-lived NPMJS_TOKEN with short-lived
 #   OIDC tokens that npmjs.org verifies against the workflow's
 #   id-token claims. No secret to rotate, no secret to leak.
@@ -110,6 +112,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1 (ci/digests.txt) — Node 24
 
+      - name: Resolve release tag
+        id: release_tag
+        env:
+          INPUT_TAG_TO_PUBLISH: ${{ github.event.inputs.tag_to_publish }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${INPUT_TAG_TO_PUBLISH:-}" ]; then
+            RELEASE_TAG="${INPUT_TAG_TO_PUBLISH}"
+          else
+            RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          if [ -z "$RELEASE_TAG" ] || [ "$RELEASE_TAG" = "$GITHUB_REF" ]; then
+            echo "Could not resolve a release tag from this workflow context"
+            exit 1
+          fi
+          case "$RELEASE_TAG" in
+            v*) ;;
+            *)
+              echo "Resolved release tag must start with 'v': $RELEASE_TAG"
+              exit 1
+              ;;
+          esac
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "Resolved release tag: $RELEASE_TAG"
+
       - name: Fetch tag object for signature verification
         # actions/checkout@v4 on tag-push uses --no-tags by default
         # and writes refs/tags/<tag> as a commit ref, not the tag
@@ -127,8 +154,9 @@ jobs:
         run: |
           set -o pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          TAG="${GITHUB_REF#refs/tags/}"
+          TAG='${{ steps.release_tag.outputs.release_tag }}'
           git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
+          git checkout --detach "refs/tags/${TAG}"
 
       - name: Verify signed tag (#1299 / A9 gate)
         # Hard cryptographic gate — the same script that gates the Gitea
@@ -177,7 +205,8 @@ jobs:
         run: |
           set -euo pipefail
           VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          TAG_VERSION='${{ steps.release_tag.outputs.release_tag }}'
+          TAG_VERSION="${TAG_VERSION#v}"
           if [ "$TAG_VERSION" != "$VERSION" ]; then
             echo "Error: Tag ($TAG_VERSION) does not match package.json ($VERSION)"
             exit 1
@@ -222,6 +251,17 @@ jobs:
         # live in ci/npm-audit-signatures-waivers.yaml; expired waivers
         # fail. See .aiwg/architecture/adr-publish-time-evidence.md.
         run: npm run lint:audit-signatures
+
+      - name: Scan known affected package feed (#1353)
+        # Hard gate when a feed source is configured. Prefer a raw gist URL
+        # in AIWG_AFFECTED_PACKAGES_CSV for CI portability; the canonical
+        # mounted path still works on operator-managed runners.
+        run: |
+          if [ -n "${AIWG_AFFECTED_PACKAGES_CSV:-}" ] || [ -f /mnt/ops/users/roctinam/Downloads/22-packages.csv ]; then
+            npm run lint:affected-packages
+          else
+            echo "Skipping affected-package scan: no CSV source configured on this runner"
+          fi
 
       - name: Audit tarball top-level entries (#1288 / A11)
         # Hard gate: catches Mini Shai-Hulud-style new-file-at-tarball-root
