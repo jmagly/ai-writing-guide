@@ -85,3 +85,23 @@ export async function sha256OfFileNormalized(absPath: string): Promise<string> {
   const stripped = stripManagedMarker(buf);
   return createHash('sha256').update(stripped, 'utf8').digest('hex');
 }
+
+/**
+ * Read a file and return both raw and managed-marker-normalized hashes.
+ *
+ * This is used by drift detectors that must remain compatible with
+ * registries populated before #1086 normalization shipped. In that narrow
+ * case the registry may contain the raw deployed hash, while newer deploys
+ * contain the normalized source hash.
+ */
+export async function sha256OfFileRawAndNormalized(absPath: string): Promise<{
+  raw: string;
+  normalized: string;
+}> {
+  const buf = await readFile(absPath, 'utf8');
+  const stripped = stripManagedMarker(buf);
+  return {
+    raw: createHash('sha256').update(buf, 'utf8').digest('hex'),
+    normalized: createHash('sha256').update(stripped, 'utf8').digest('hex'),
+  };
+}

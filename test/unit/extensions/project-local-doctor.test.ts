@@ -156,6 +156,29 @@ describe('project-local-doctor (DC-1)', () => {
     expect(r.hasFailures).toBe(false);
   });
 
+  it('reports zero drift for a stale raw deployed hash with only managed-marker delta (#1370)', async () => {
+    writeBundle(projectDir, 'foo');
+    const deployed =
+      '---\n' +
+      '# aiwg:managed vunknown bundled\n' +
+      'name: voice-stylist\n' +
+      '---\n' +
+      '\nBody.\n';
+    deployRule(projectDir, deployed);
+
+    // Simulates an old or partially-populated registry that recorded the
+    // deployed file hash before managed-marker normalization. Doctor should
+    // treat a raw-hash match as clean so clean redeploys do not drift.
+    const hashes = { 'rules/r1.md': sha256(deployed) };
+    const config = makeConfig('foo', hashes);
+
+    const r = await buildProjectLocalDoctorSection({
+      projectDir, frameworkRoot, config,
+    });
+    expect(r.driftCount).toBe(0);
+    expect(r.hasFailures).toBe(false);
+  });
+
   it('still detects real drift when content differs beyond the marker (#1086)', async () => {
     writeBundle(projectDir, 'foo');
     deployRule(

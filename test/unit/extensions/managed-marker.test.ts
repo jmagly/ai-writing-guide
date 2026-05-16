@@ -12,6 +12,7 @@ import { tmpdir } from 'os';
 import {
   stripManagedMarker,
   sha256OfFileNormalized,
+  sha256OfFileRawAndNormalized,
 } from '../../../src/extensions/managed-marker.js';
 
 function makeTmpDir(): string {
@@ -181,6 +182,21 @@ describe('managed-marker', () => {
       await expect(
         sha256OfFileNormalized(join(tmpDir, 'nonexistent.md'))
       ).rejects.toThrow();
+    });
+
+    it('returns raw and normalized hashes for compatibility checks', async () => {
+      const deployedContent =
+        '---\n' +
+        '# aiwg:managed vunknown bundled\n' +
+        'name: voice-stylist\n' +
+        '---\n' +
+        '\nBody.\n';
+      const depPath = join(tmpDir, 'deployed.md');
+      writeFileSync(depPath, deployedContent, 'utf8');
+
+      const hashes = await sha256OfFileRawAndNormalized(depPath);
+      expect(hashes.raw).not.toBe(hashes.normalized);
+      expect(hashes.normalized).toBe(await sha256OfFileNormalized(depPath));
     });
   });
 });

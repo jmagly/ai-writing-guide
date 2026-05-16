@@ -27,6 +27,8 @@ Keeping a heavy code-search server loaded while doing ops work burns budget on e
 
 The preset profiles map directly to common task classes. Run `aiwg mcp profile init-presets` once to install them, then use `aiwg session --profile <name>` at task start.
 
+`git-gitea` is provider-agnostic: any AIWG provider with MCP injection/support can use it. Some provider guides, especially Hermes, may recommend or require MCP wiring for normal tool access, but that is provider setup guidance, not Git MCP ownership or exclusivity.
+
 ## Quick Start
 
 ```bash
@@ -52,6 +54,8 @@ Installed by `aiwg mcp profile init-presets`. Do not overwrite existing profiles
 | `research` | memory-fortemi, google-drive, google-calendar | Documentation + memory + calendar |
 | `incident` | git-gitea, cmdb-itassets, memory-fortemi, codeindex-codehound | Incident response |
 | `full` | `__all__` | All registered servers (expands at inject time) |
+
+The `git-gitea` entries in `dev`, `ops`, and `incident` are task-profile choices available to all MCP-capable providers. Provider-specific allow/deny rules may restrict dangerous write tools, but they do not make Git MCP provider-specific.
 
 ## Profile Management
 

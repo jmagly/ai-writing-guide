@@ -1342,6 +1342,8 @@ Manage named MCP profiles — ordered subsets of registered servers stored in `~
 
 Profiles let you launch sessions or inject only the servers relevant to a specific task (e.g., `dev` for code editing, `ops` for infrastructure work).
 
+`git-gitea` is a provider-agnostic MCP server option for any MCP-capable AIWG provider. Hermes-specific setup docs may require MCP wiring for Hermes workflows that need tools, but that requirement does not make Git MCP Hermes-exclusive.
+
 ```bash
 aiwg mcp profile <subcommand>
 ```
@@ -1369,6 +1371,8 @@ aiwg mcp profile <subcommand>
 | `research` | memory-fortemi, google-drive, google-calendar | Documentation + memory + calendar |
 | `incident` | git-gitea, cmdb-itassets, memory-fortemi, codeindex-codehound | Incident response |
 | `full` | `__all__` | All registered servers |
+
+`git-gitea` in the built-in presets means "this task profile needs Git/Gitea tools." Provider-specific policies can deny individual high-risk tools, but the server itself is available to all MCP-capable providers.
 
 **Profile options:**
 

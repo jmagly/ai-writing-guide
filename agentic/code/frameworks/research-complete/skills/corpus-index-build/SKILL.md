@@ -40,6 +40,20 @@ Output format: `full` (default), `summary`, or `json`.
 
 ## Configuration
 
+When generating or editing a research corpus `.aiwg/config.yaml`, keep the two index paths distinct:
+
+```yaml
+# Build JSON node graphs (citation network, profiles, etc.):
+#   aiwg index build
+#   aiwg index build --graph <name>
+#
+# Render markdown indices (by-topic.md, by-year.md, authors.md, ...):
+#   These are NOT rendered by `aiwg index build`.
+#   Use this skill instead:
+#     aiwg discover "build research indices"
+#     aiwg show skill corpus-index-build
+```
+
 Graphs are defined in `.aiwg/config.yaml`:
 
 ```yaml
@@ -184,7 +198,7 @@ Each index file stores a `Generated:` timestamp and a source checksum. On increm
 | `citation-backfill` | Must run before citation-network graph build |
 | `research-gap-detect` | Consumes citation-network graph for cluster analysis (#815) |
 | `corpus-snapshot` | Reads index metrics for snapshot reports (#814) |
-| `aiwg index build` | The existing CLI command — this skill extends it for research-specific graphs |
+| `aiwg index build` | Separate AIWG artifact-index command; builds JSON graph artifacts under `.aiwg/.index/*` and does not render `indices/*.md` |
 | `research-status` | Reports index staleness as a health metric |
 
 ## Examples

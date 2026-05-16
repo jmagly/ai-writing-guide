@@ -19,7 +19,7 @@ import { discoverProjectLocalBundles } from './project-local-discovery.js';
 import { buildUpstreamRegistry } from './upstream-registry.js';
 import { resolveShadows } from './shadow-resolver.js';
 import { checkBundleManifestIgnored } from './project-local-gitignore.js';
-import { sha256OfFileNormalized } from './managed-marker.js';
+import { sha256OfFileRawAndNormalized } from './managed-marker.js';
 import type { ProjectLocalType } from './manifest.js';
 import type { AiwgConfig } from '../config/aiwg-config.js';
 
@@ -46,17 +46,18 @@ interface BuildOptions {
 }
 
 /**
- * Hash a deployed file with the managed-marker stripped. Returns null on
- * read errors (e.g., file missing — caller treats as deploy-not-present).
+ * Hash a deployed file in raw and managed-marker-normalized forms. Returns
+ * null on read errors (e.g., file missing — caller treats as
+ * deploy-not-present).
  *
  * Source files are recorded via the same normalization in
  * `hashBundleArtifacts()`, so the equivalence relation is symmetric.
  *
  * @implements #1086
  */
-async function sha256(absPath: string): Promise<string | null> {
+async function hashDeployed(absPath: string): Promise<{ raw: string; normalized: string } | null> {
   try {
-    return await sha256OfFileNormalized(absPath);
+    return await sha256OfFileRawAndNormalized(absPath);
   } catch {
     return null;
   }
@@ -190,12 +191,12 @@ export async function buildProjectLocalDoctorSection(
         if (!prefix) continue;
         for (const [sourceRel, expectedHash] of Object.entries(hashes)) {
           const deployedAbs = resolve(projectDir, `${prefix}/${sourceRel}`);
-          const actualHash = await sha256(deployedAbs);
+          const actualHash = await hashDeployed(deployedAbs);
           if (actualHash === null) {
             // Missing — not drift, deploy is just absent
             continue;
           }
-          if (actualHash !== expectedHash) {
+          if (actualHash.normalized !== expectedHash && actualHash.raw !== expectedHash) {
             driftCount++;
             driftLines.push(`    ✗ ${bundle.id} :: ${sourceRel} @ ${provider}  (deployed file differs from source)`);
           }
@@ -296,4 +297,3 @@ export async function projectLocalDoctorSection(
   const r = await buildProjectLocalDoctorSection({ projectDir, frameworkRoot, config, quiet });
   return r.output;
 }
-

@@ -19,6 +19,9 @@
 
 import type { GraphType } from './types.js';
 import { GRAPH_CONFIGS, loadUserGraphConfigs } from './types.js';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { load as loadYaml } from 'js-yaml';
 
 /** Parse --graph flag from args, returns undefined for "all graphs" */
 function parseGraphFlag(args: string[]): GraphType | undefined {
@@ -307,6 +310,32 @@ async function handleBuild(args: string[]): Promise<void> {
       }
     }
   }
+
+  maybePrintMarkdownIndicesHint(cwd);
+}
+
+function hasMarkdownIndicesManifest(cwd: string): boolean {
+  const configPath = join(cwd, '.aiwg', 'config.yaml');
+  if (!existsSync(configPath)) return false;
+
+  try {
+    const config = loadYaml(readFileSync(configPath, 'utf8')) as Record<string, unknown> | null;
+    const index = config?.index as Record<string, unknown> | undefined;
+    const graphs = index?.graphs as Record<string, unknown> | undefined;
+    const indices = graphs?.indices as Record<string, unknown> | undefined;
+    return Array.isArray(indices?.manifest) && indices.manifest.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function maybePrintMarkdownIndicesHint(cwd: string): void {
+  if (!hasMarkdownIndicesManifest(cwd)) return;
+  console.log('');
+  console.log('Note: markdown indices declared in index.graphs.indices.manifest are not rendered by `aiwg index build`.');
+  console.log('      To render them, use the corpus-index-build skill:');
+  console.log('        aiwg discover "build research indices"');
+  console.log('        aiwg show skill corpus-index-build');
 }
 
 /**
