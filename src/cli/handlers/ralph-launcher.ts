@@ -188,6 +188,44 @@ export function buildArgs(options: RalphLaunchOptions): string[] {
 }
 
 /**
+ * Enforce `parallelism.max_parallel_ralph_loops` from `.aiwg/aiwg.config`.
+ * Hard-fails (throws AiwgError) when the count of running + live Ralph loops
+ * already meets or exceeds the cap. Non-fatal when no config or config read
+ * fails — caller proceeds with launch.
+ *
+ * Extracted so the cap-check logic is unit-testable independently of the
+ * detached-process spawn machinery.
+ *
+ * @implements #1361
+ */
+export async function assertRalphParallelismCap(projectRoot: string): Promise<void> {
+  let cfg: Awaited<ReturnType<typeof import('../../config/aiwg-config.js').readAiwgConfig>>;
+  let resolveParallelism: typeof import('../../config/aiwg-config.js').resolveParallelism;
+  try {
+    const mod = await import('../../config/aiwg-config.js');
+    resolveParallelism = mod.resolveParallelism;
+    cfg = await mod.readAiwgConfig(projectRoot);
+  } catch {
+    return; // Config unreadable — non-fatal, let launch proceed
+  }
+  if (!cfg) return;
+
+  const resolved = resolveParallelism(cfg.parallelism, cfg.providers[0]);
+  const launcherRegistry = loadLauncherRegistry(projectRoot);
+  const activeCount = Object.values(launcherRegistry.loops).filter(
+    (l) => l.status === 'running' && isProcessAlive(l.pid),
+  ).length;
+  if (activeCount >= resolved.max_parallel_ralph_loops) {
+    throw new AiwgError({
+      code: 'ERR_RALPH_PARALLELISM_CAP',
+      message: `Project parallelism cap reached: ${activeCount}/${resolved.max_parallel_ralph_loops} Ralph loops already running.`,
+      hint: `Wait for an existing loop to finish ('aiwg ralph-status'), or bump the cap ('aiwg config set --project parallelism.max_parallel_ralph_loops N').`,
+      exitCode: EXIT_CODES.GENERAL,
+    });
+  }
+}
+
+/**
  * Launch the external Ralph process as a detached daemon
  */
 export async function launchExternalRalph(
@@ -208,6 +246,11 @@ export async function launchExternalRalph(
 
   const registryDir = getRegistryDir(projectRoot);
   mkdirSync(registryDir, { recursive: true });
+
+  // #1361: Enforce project-level max_parallel_ralph_loops cap. Hard fail
+  // (not queue) — Ralph loops are long-running, silent queueing would be
+  // surprising. Tell the operator what's running and how to lift the cap.
+  await assertRalphParallelismCap(projectRoot);
 
   const loopId = options.loopId || generateLoopId(options.objective);
   const loopDir = join(registryDir, 'loops', loopId);

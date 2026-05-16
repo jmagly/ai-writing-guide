@@ -198,6 +198,26 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
     return { exitCode: 1 };
   }
 
+  // #1361: Check project-level parallelism cap. Active missions = running or
+  // queued; if at cap, warn but still queue (FIFO behavior — the mission goes
+  // into the session as 'queued' and will run when a slot frees up).
+  let capWarning: string | undefined;
+  try {
+    const { readAiwgConfig, resolveParallelism } = await import('../../config/aiwg-config.js');
+    const cfg = await readAiwgConfig(ctx.cwd || process.cwd());
+    if (cfg) {
+      const resolved = resolveParallelism(cfg.parallelism, cfg.providers[0]);
+      const activeCount = session.missions.filter(
+        m => m.status === 'running' || m.status === 'queued' || m.status === 'paused',
+      ).length;
+      if (activeCount >= resolved.max_parallel_mc_missions) {
+        capWarning = `Active missions (${activeCount}) at or above project parallelism cap (${resolved.max_parallel_mc_missions}). Mission will queue; bump via 'aiwg config set --project parallelism.max_parallel_mc_missions N'.`;
+      }
+    }
+  } catch {
+    // Non-fatal — config read failure doesn't block dispatch
+  }
+
   const mission: Mission = {
     id: genId('m'),
     objective,
@@ -214,6 +234,7 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
   await writeSession(session);
   await appendLog(session.id, { event: 'mission_dispatched', missionId: mission.id, objective, priority, mode, targetAgent });
 
+  if (capWarning) ui.warn(capWarning);
   ui.success(`Dispatched mission ${mission.id}: ${objective}`);
   const modeLabel = mode === 'pty-orchestrator' ? ` | Mode: PTY orchestrator → ${targetAgent}` : '';
   ui.info(`Priority: ${priority} | Max iterations: ${maxIterations}${modeLabel}`);
@@ -285,6 +306,22 @@ async function mcStatus(ctx: HandlerContext): Promise<HandlerResult> {
   };
 
   console.log(`  ${session.missions.length} missions  |  ${counts.done} done  |  ${counts.running} running  |  ${counts.queued} queued  |  ${counts.failed} failed`);
+
+  // #1361: Show project parallelism cap when one is configured.
+  try {
+    const { readAiwgConfig, resolveParallelism } = await import('../../config/aiwg-config.js');
+    const cfg = await readAiwgConfig(ctx.cwd || process.cwd());
+    if (cfg) {
+      const resolved = resolveParallelism(cfg.parallelism, cfg.providers[0]);
+      const active = counts.running + counts.queued;
+      const cap = resolved.max_parallel_mc_missions;
+      const overCap = active > cap ? ` ${ui.dim(`(${active - cap} over cap — queued)`)}` : '';
+      console.log(`  Parallelism cap: ${active}/${cap} active${overCap}`);
+    }
+  } catch {
+    // Non-fatal
+  }
+
   ui.blank();
 
   return { exitCode: 0 };
