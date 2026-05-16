@@ -19,48 +19,48 @@ import {
 import type { ContextPipelineOptions } from '../../../src/smiths/context-pipeline/index.js';
 
 describe('sanitizeDescription', () => {
-  it('accepts a plain ASCII description', () => {
+  it('accepts a plain ASCII description', async () => {
     const r = sanitizeDescription('Designs and evolves API contracts');
     expect(r.ok).toBe(true);
     expect(r.value).toBe('Designs and evolves API contracts');
   });
 
-  it('rejects backticks (prompt-injection vector)', () => {
+  it('rejects backticks (prompt-injection vector)', async () => {
     const r = sanitizeDescription('Has `code` in it');
     expect(r.ok).toBe(false);
     expect(r.rejectedFor).toBe('backtick');
   });
 
-  it('rejects code fences', () => {
+  it('rejects code fences', async () => {
     const r = sanitizeDescription('Has ```fence``` in it');
     expect(r.ok).toBe(false);
     expect(r.rejectedFor).toMatch(/backtick|code fence/);
   });
 
-  it('rejects HTML tags', () => {
+  it('rejects HTML tags', async () => {
     const r = sanitizeDescription('Has <script>alert(1)</script>');
     expect(r.ok).toBe(false);
     expect(r.rejectedFor).toBe('HTML tag');
   });
 
-  it('rejects absolute URL schemes', () => {
+  it('rejects absolute URL schemes', async () => {
     const r = sanitizeDescription('See https://evil.example.com for details');
     expect(r.ok).toBe(false);
     expect(r.rejectedFor).toBe('absolute URL');
   });
 
-  it('rejects control characters', () => {
+  it('rejects control characters', async () => {
     const r = sanitizeDescription('null byte\x00here');
     expect(r.ok).toBe(false);
     expect(r.rejectedFor).toBe('control character');
   });
 
-  it('rejects empty strings', () => {
+  it('rejects empty strings', async () => {
     expect(sanitizeDescription('').ok).toBe(false);
     expect(sanitizeDescription('   ').ok).toBe(false);
   });
 
-  it('truncates descriptions over 120 chars with ellipsis', () => {
+  it('truncates descriptions over 120 chars with ellipsis', async () => {
     const long = 'a'.repeat(200);
     const r = sanitizeDescription(long);
     expect(r.ok).toBe(true);
@@ -68,7 +68,7 @@ describe('sanitizeDescription', () => {
     expect(r.value.endsWith('…')).toBe(true);
   });
 
-  it('preserves descriptions exactly at the limit', () => {
+  it('preserves descriptions exactly at the limit', async () => {
     const exactly = 'a'.repeat(120);
     const r = sanitizeDescription(exactly);
     expect(r.ok).toBe(true);
@@ -78,24 +78,24 @@ describe('sanitizeDescription', () => {
 });
 
 describe('sanitizeTag', () => {
-  it('accepts kebab-case tags', () => {
+  it('accepts kebab-case tags', async () => {
     expect(sanitizeTag('security').ok).toBe(true);
     expect(sanitizeTag('api-design').ok).toBe(true);
   });
 
-  it('rejects whitespace in tags', () => {
+  it('rejects whitespace in tags', async () => {
     const r = sanitizeTag('two words');
     expect(r.ok).toBe(false);
     expect(r.rejectedFor).toBe('whitespace in tag');
   });
 
-  it('rejects backticks in tags', () => {
+  it('rejects backticks in tags', async () => {
     expect(sanitizeTag('back`tick').ok).toBe(false);
   });
 });
 
 describe('sanitizeTags', () => {
-  it('keeps valid tags and reports rejected ones', () => {
+  it('keeps valid tags and reports rejected ones', async () => {
     const result = sanitizeTags(['security', 'has spaces', 'ok-tag']);
     expect(result.kept).toEqual(['security', 'ok-tag']);
     expect(result.rejected).toHaveLength(1);
@@ -104,7 +104,7 @@ describe('sanitizeTags', () => {
 });
 
 describe('checkPathAllowed', () => {
-  it('accepts known project-scope provider paths', () => {
+  it('accepts known project-scope provider paths', async () => {
     expect(checkPathAllowed('.codex/agents/api-designer.md').ok).toBe(true);
     expect(checkPathAllowed('.codex/commands/deploy.md').ok).toBe(true);
     expect(checkPathAllowed('.codex/rules/no-attribution.md').ok).toBe(true);
@@ -113,59 +113,59 @@ describe('checkPathAllowed', () => {
     expect(checkPathAllowed('.agents/skills/address-issues/SKILL.md').ok).toBe(true);
   });
 
-  it('strips leading ./ and accepts the result', () => {
+  it('strips leading ./ and accepts the result', async () => {
     expect(checkPathAllowed('./.codex/agents/foo.md').ok).toBe(true);
   });
 
-  it('rejects paths outside the AIWG-owned prefix list', () => {
+  it('rejects paths outside the AIWG-owned prefix list', async () => {
     expect(checkPathAllowed('foo/bar.md').ok).toBe(false);
     expect(checkPathAllowed('src/evil.ts').ok).toBe(false);
     expect(checkPathAllowed('.evil/foo.md').ok).toBe(false);
   });
 
-  it('rejects parent-directory traversal', () => {
+  it('rejects parent-directory traversal', async () => {
     const r = checkPathAllowed('.codex/../etc/passwd');
     expect(r.ok).toBe(false);
     expect(r.rejectedFor).toMatch(/parent-dir/);
   });
 
-  it('rejects absolute paths outside home directory', () => {
+  it('rejects absolute paths outside home directory', async () => {
     expect(checkPathAllowed('/etc/passwd').ok).toBe(false);
     expect(checkPathAllowed('/usr/local/bin/aiwg').ok).toBe(false);
   });
 
-  it('accepts ~/.agents/skills/ user-scope path', () => {
+  it('accepts ~/.agents/skills/ user-scope path', async () => {
     const r = checkPathAllowed('~/.agents/skills/address-issues/SKILL.md');
     expect(r.ok).toBe(true);
     expect(r.isUserScope).toBe(true);
   });
 
-  it('accepts ~/.codex/skills/ user-scope path', () => {
+  it('accepts ~/.codex/skills/ user-scope path', async () => {
     const r = checkPathAllowed('~/.codex/skills/foo/SKILL.md');
     expect(r.ok).toBe(true);
     expect(r.isUserScope).toBe(true);
   });
 
-  it('accepts absolute home paths and tags as user-scope', () => {
+  it('accepts absolute home paths and tags as user-scope', async () => {
     const homePath = `${homedir()}/.agents/skills/foo/SKILL.md`.replace(/\\/g, '/');
     const r = checkPathAllowed(homePath);
     expect(r.ok).toBe(true);
     expect(r.isUserScope).toBe(true);
   });
 
-  it('rejects user-scope paths outside the user-scope allowlist', () => {
+  it('rejects user-scope paths outside the user-scope allowlist', async () => {
     const r = checkPathAllowed('~/.evil/skills/foo.md');
     expect(r.ok).toBe(false);
     expect(r.isUserScope).toBe(true);
   });
 
-  it('rejects empty string', () => {
+  it('rejects empty string', async () => {
     expect(checkPathAllowed('').ok).toBe(false);
   });
 });
 
 describe('renderEntry', () => {
-  it('renders a basic entry', () => {
+  it('renders a basic entry', async () => {
     const r = renderEntry({
       id: 'api-designer',
       description: 'Designs API contracts',
@@ -177,7 +177,7 @@ describe('renderEntry', () => {
     expect(r.warning).toBe('');
   });
 
-  it('drops entries with rejected paths', () => {
+  it('drops entries with rejected paths', async () => {
     const r = renderEntry({
       id: 'evil',
       description: 'plain text',
@@ -187,7 +187,7 @@ describe('renderEntry', () => {
     expect(r.warning).toContain('path rejected');
   });
 
-  it('drops entries with rejected descriptions', () => {
+  it('drops entries with rejected descriptions', async () => {
     const r = renderEntry({
       id: 'tricky',
       description: 'has `backticks` here',
@@ -197,7 +197,7 @@ describe('renderEntry', () => {
     expect(r.warning).toContain('description rejected');
   });
 
-  it('emits SAFETY-CRITICAL marker when flagged', () => {
+  it('emits SAFETY-CRITICAL marker when flagged', async () => {
     const r = renderEntry({
       id: 'human-authorization',
       description: 'Require operator approval before irreversible actions',
@@ -207,7 +207,7 @@ describe('renderEntry', () => {
     expect(r.markdown).toContain('(SAFETY-CRITICAL)');
   });
 
-  it('emits SHADOWED marker when shadowedBy is set', () => {
+  it('emits SHADOWED marker when shadowedBy is set', async () => {
     const r = renderEntry({
       id: 'human-authorization',
       description: 'Require operator approval before irreversible actions',
@@ -218,7 +218,7 @@ describe('renderEntry', () => {
     expect(r.markdown).toContain('(SAFETY-CRITICAL, SHADOWED');
   });
 
-  it('emits user-scope marker for ~/.agents/skills/ paths', () => {
+  it('emits user-scope marker for ~/.agents/skills/ paths', async () => {
     const r = renderEntry({
       id: 'user-skill',
       description: 'A user-scope skill',
@@ -227,7 +227,7 @@ describe('renderEntry', () => {
     expect(r.markdown).toContain('user-scope; loader may not auto-resolve');
   });
 
-  it('renders sanitized tags', () => {
+  it('renders sanitized tags', async () => {
     const r = renderEntry({
       id: 'thing',
       description: 'A thing',
@@ -257,19 +257,19 @@ describe('buildAgentsMd', () => {
     ],
   };
 
-  it('emits Framework Context section with AIWG.md link', () => {
-    const { content } = buildAgentsMd(baseOpts);
+  it('emits Framework Context section with AIWG.md link', async () => {
+    const { content } = await buildAgentsMd(baseOpts);
     expect(content).toContain('## Framework Context');
     expect(content).toContain('[AIWG.md](./AIWG.md)');
   });
 
-  it('emits the AIWG signature comment', () => {
-    const { content } = buildAgentsMd(baseOpts);
+  it('emits the AIWG signature comment', async () => {
+    const { content } = await buildAgentsMd(baseOpts);
     expect(content).toContain('<!-- aiwg-managed -->');
   });
 
-  it('does not inline a link-index of deployed artifacts (#1239)', () => {
-    const { content, splitOccurred, spilloverContent } = buildAgentsMd(baseOpts);
+  it('does not inline a link-index of deployed artifacts (#1239)', async () => {
+    const { content, splitOccurred, spilloverContent } = await buildAgentsMd(baseOpts);
     expect(content).not.toContain('## Agents');
     expect(content).not.toContain('**api-designer**');
     expect(content).not.toContain('.codex/agents/api-designer.md');
@@ -277,13 +277,13 @@ describe('buildAgentsMd', () => {
     expect(spilloverContent).toBe('');
   });
 
-  it('points readers at aiwg discover / aiwg show', () => {
-    const { content } = buildAgentsMd(baseOpts);
+  it('points readers at aiwg discover / aiwg show', async () => {
+    const { content } = await buildAgentsMd(baseOpts);
     expect(content).toContain('aiwg discover');
     expect(content).toContain('aiwg show');
   });
 
-  it('stays well under the 30KB soft threshold', () => {
+  it('stays well under the 30KB soft threshold', async () => {
     const huge: ContextPipelineOptions = {
       ...baseOpts,
       sections: [
@@ -297,36 +297,36 @@ describe('buildAgentsMd', () => {
         },
       ],
     };
-    const { content } = buildAgentsMd(huge);
+    const { content } = await buildAgentsMd(huge);
     expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(4 * 1024);
   });
 
-  it('includes Project Context when provided', () => {
+  it('includes Project Context when provided', async () => {
     const opts: ContextPipelineOptions = {
       ...baseOpts,
       projectContext: 'A short project description.',
     };
-    const { content } = buildAgentsMd(opts);
+    const { content } = await buildAgentsMd(opts);
     expect(content).toContain('## Project Context');
     expect(content).toContain('A short project description.');
   });
 
-  it('skips Project Context with sanitization warning when content is rejected', () => {
+  it('skips Project Context with sanitization warning when content is rejected', async () => {
     const opts: ContextPipelineOptions = {
       ...baseOpts,
       projectContext: 'Has `backticks` everywhere',
     };
-    const { content, warnings } = buildAgentsMd(opts);
+    const { content, warnings } = await buildAgentsMd(opts);
     expect(content).not.toContain('## Project Context');
     expect(warnings.some((w) => w.includes('Project Context'))).toBe(true);
   });
 
-  it('emits the AGENTS.override.md trailer', () => {
-    const { content } = buildAgentsMd(baseOpts);
+  it('emits the AGENTS.override.md trailer', async () => {
+    const { content } = await buildAgentsMd(baseOpts);
     expect(content).toContain('AGENTS.override.md');
   });
 
-  it('emits no warnings for a deploy with backtick-bearing artifact descriptions (#1239)', () => {
+  it('emits no warnings for a deploy with backtick-bearing artifact descriptions (#1239)', async () => {
     // Pre-#1239 the link-index ran every description through the sanitizer
     // and rejected backtick-bearing entries with a warning. The thin-pointer
     // body never sees `opts.sections`, so those warnings stop firing.
@@ -345,7 +345,7 @@ describe('buildAgentsMd', () => {
         },
       ],
     };
-    const { warnings } = buildAgentsMd(opts);
+    const { warnings } = await buildAgentsMd(opts);
     expect(warnings).toEqual([]);
   });
 });

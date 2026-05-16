@@ -41,7 +41,7 @@ function makeEntry(id: string, sizeFiller = 0, opts: Partial<IndexEntry> = {}): 
 }
 
 describe('partitionForOverflow', () => {
-  it('returns identity partition when total is under budget', () => {
+  it('returns identity partition when total is under budget', async () => {
     const sections: AgentsMdSection[] = [
       { type: 'agents', entries: [makeEntry('a'), makeEntry('b')] },
     ];
@@ -51,7 +51,7 @@ describe('partitionForOverflow', () => {
     expect(r.mainSections[0].entries).toHaveLength(2);
   });
 
-  it('moves low-priority entries to spillover when over budget', () => {
+  it('moves low-priority entries to spillover when over budget', async () => {
     const heavy = (id: string) => makeEntry(id, 200);
     const sections: AgentsMdSection[] = [
       {
@@ -71,7 +71,7 @@ describe('partitionForOverflow', () => {
     expect(spilledIds).toEqual(['low-1', 'low-2']);
   });
 
-  it('pins safety-critical entries to main regardless of map', () => {
+  it('pins safety-critical entries to main regardless of map', async () => {
     const sections: AgentsMdSection[] = [
       {
         type: 'rules',
@@ -89,7 +89,7 @@ describe('partitionForOverflow', () => {
     expect(mainIds).toContain('human-authorization');
   });
 
-  it('throws SafetyCriticalOverflowError when priority-1 alone exceeds 32KB', () => {
+  it('throws SafetyCriticalOverflowError when priority-1 alone exceeds 32KB', async () => {
     // Build many large safety-critical entries to overflow the 32KB cap.
     const entries: IndexEntry[] = [];
     for (let i = 0; i < 500; i++) {
@@ -100,7 +100,7 @@ describe('partitionForOverflow', () => {
     ).toThrow(SafetyCriticalOverflowError);
   });
 
-  it('respects wildcard default in priority map', () => {
+  it('respects wildcard default in priority map', async () => {
     const sections: AgentsMdSection[] = [
       {
         type: 'agents',
@@ -116,7 +116,7 @@ describe('partitionForOverflow', () => {
 });
 
 describe('injectSpilloverBlock', () => {
-  it('appends a fresh spillover block to operator content', () => {
+  it('appends a fresh spillover block to operator content', async () => {
     const updated = injectSpilloverBlock(
       '# AGENTS.override.md\n\nMy operator content.\n',
       '## Agents\n- entry x\n',
@@ -127,7 +127,7 @@ describe('injectSpilloverBlock', () => {
     expect(updated).toContain('entry x');
   });
 
-  it('replaces an existing spillover block in place', () => {
+  it('replaces an existing spillover block in place', async () => {
     const original =
       `# AGENTS.override.md\n\noperator content\n\n${SPILLOVER_START}\nold spillover\n${SPILLOVER_END}\nfooter\n`;
     const updated = injectSpilloverBlock(original, 'new spillover');
@@ -137,7 +137,7 @@ describe('injectSpilloverBlock', () => {
     expect(updated).not.toContain('old spillover');
   });
 
-  it('preserves operator content byte-for-byte across runs', () => {
+  it('preserves operator content byte-for-byte across runs', async () => {
     const operator = '# AGENTS.override.md\n\nVERY important operator content with `code` and stuff.\n';
     const once = injectSpilloverBlock(operator, 'a');
     const twice = injectSpilloverBlock(once, 'b');
@@ -149,12 +149,12 @@ describe('injectSpilloverBlock', () => {
 });
 
 describe('extractNonSpillover', () => {
-  it('returns content unchanged when no spillover block exists', () => {
+  it('returns content unchanged when no spillover block exists', async () => {
     const r = extractNonSpillover('plain operator content\n');
     expect(r).toBe('plain operator content\n');
   });
 
-  it('strips the spillover block and returns operator content', () => {
+  it('strips the spillover block and returns operator content', async () => {
     const content = `header\n\n${SPILLOVER_START}\nspilled\n${SPILLOVER_END}\nfooter\n`;
     const r = extractNonSpillover(content);
     expect(r).not.toContain('spilled');
@@ -164,7 +164,7 @@ describe('extractNonSpillover', () => {
 });
 
 describe('buildAgentsMd thin-pointer body (#1239)', () => {
-  it('never splits or emits spillover, even with hundreds of sections entries', () => {
+  it('never splits or emits spillover, even with hundreds of sections entries', async () => {
     // Post-#1239 the AGENTS.md body is a thin pointer to AIWG.md and ignores
     // opts.sections entirely. Auto-split is dead in the happy path because
     // the body cannot grow with deploy size.
@@ -178,7 +178,7 @@ describe('buildAgentsMd thin-pointer body (#1239)', () => {
       sections: [{ type: 'agents', entries }],
       overflowPriorityMap: { '*': 3 },
     };
-    const built = buildAgentsMd(opts);
+    const built = await buildAgentsMd(opts);
     expect(built.splitOccurred).toBe(false);
     expect(built.spilloverContent).toBe('');
     expect(built.warnings).toEqual([]);

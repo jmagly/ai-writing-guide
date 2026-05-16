@@ -26,6 +26,7 @@ import { sanitizeDescription, sanitizeTags } from './sanitizer.js';
 import { checkPathAllowed } from './allowlist.js';
 import { generateAiwgMd } from './aiwg-md.js';
 import { injectSpilloverBlock } from './overflow.js';
+import { buildParallelismSection } from './parallelism-section.js';
 
 const SECTION_TITLES: Record<IndexedArtifactType, string> = {
   agents: 'Agents',
@@ -124,12 +125,12 @@ export function renderSection(section: AgentsMdSection): { markdown: string; war
  * false; `spilloverContent` is always empty. The `partitionForOverflow` /
  * spillover utilities remain exported for any external consumer.
  */
-export function buildAgentsMd(opts: ContextPipelineOptions): {
+export async function buildAgentsMd(opts: ContextPipelineOptions): Promise<{
   content: string;
   warnings: string[];
   spilloverContent: string;
   splitOccurred: boolean;
-} {
+}> {
   const warnings: string[] = [];
   const parts: string[] = [];
 
@@ -158,6 +159,14 @@ export function buildAgentsMd(opts: ContextPipelineOptions): {
     } else {
       warnings.push(`dropped Project Context section: ${desc.rejectedFor}`);
     }
+  }
+
+  // #1362: surface the parallelism cap when one is configured. Injected
+  // before the divider so agents see it as part of the framework context,
+  // not as a trailing afterthought.
+  const parallelismSection = await buildParallelismSection(opts.projectPath);
+  if (parallelismSection) {
+    parts.push(parallelismSection);
   }
 
   parts.push('---');
@@ -401,7 +410,7 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
     }
 
     if (canWrite) {
-      const built = buildAgentsMd(opts);
+      const built = await buildAgentsMd(opts);
       await atomicWrite(agentsMdPath, built.content);
       result.agentsMdPath = agentsMdPath;
       result.agentsMdBytes = Buffer.byteLength(built.content, 'utf8');

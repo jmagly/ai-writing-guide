@@ -17,6 +17,7 @@
 
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
+import { buildParallelismSection, replaceOrAppendParallelismBlock } from './parallelism-section.js';
 
 const AIWG_SIGNATURE_COMMENT = '<!-- aiwg-managed -->';
 
@@ -43,6 +44,10 @@ export async function buildAiwgMdContent(projectPath: string): Promise<string> {
     }
   }
 
+  // #1362: parallelism cap section, injected after generation so it surfaces
+  // in regenerated context files regardless of CLAUDE.md content.
+  const parallelismSection = await buildParallelismSection(projectPath);
+
   if (claudeMdContent) {
     // Insert the AIWG signature comment as the second line.
     // Top line is typically `# AIWG` or `# Project` heading; preserve it.
@@ -60,20 +65,20 @@ export async function buildAiwgMdContent(projectPath: string): Promise<string> {
 
     // If the file already carries the signature elsewhere, don't double-insert.
     const alreadySigned = filtered.slice(0, 4).some((l) => l.includes(AIWG_SIGNATURE_COMMENT));
-    if (alreadySigned) {
-      return filtered.join('\n');
-    }
+    const baseContent = alreadySigned
+      ? filtered.join('\n')
+      : [
+          firstLine,
+          AIWG_SIGNATURE_COMMENT,
+          '<!-- AIWG.md is the CLAUDE.md companion for non-Claude providers; same content. -->',
+          ...rest,
+        ].join('\n');
 
-    return [
-      firstLine,
-      AIWG_SIGNATURE_COMMENT,
-      '<!-- AIWG.md is the CLAUDE.md companion for non-Claude providers; same content. -->',
-      ...rest,
-    ].join('\n');
+    return replaceOrAppendParallelismBlock(baseContent, parallelismSection);
   }
 
   // Fallback stub.
-  return [
+  const stub = [
     '# AIWG.md',
     AIWG_SIGNATURE_COMMENT,
     '<!-- CLAUDE.md companion for non-Claude providers. -->',
@@ -82,6 +87,7 @@ export async function buildAiwgMdContent(projectPath: string): Promise<string> {
     'See [.aiwg/AIWG.md](./.aiwg/AIWG.md) for the project framework context.',
     '',
   ].join('\n');
+  return replaceOrAppendParallelismBlock(stub, parallelismSection);
 }
 
 /**
