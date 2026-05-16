@@ -7,7 +7,7 @@
  * the test asserts the marker lands in the project, not elsewhere.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -241,12 +241,20 @@ describe('runSkill — project-root CWD invariant (#1227)', () => {
       }),
       'utf8',
     );
-    const exitCode = await runSkill({
-      cwd: projectDir,
-      name: 'instr-only',
-      args: [],
-    });
-    expect(exitCode).toBe(1);
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const exitCode = await runSkill({
+        cwd: projectDir,
+        name: 'instr-only',
+        args: [],
+      });
+      expect(exitCode).toBe(1);
+      const stderr = errSpy.mock.calls.map(c => c.join(' ')).join('\n');
+      expect(stderr).toContain('aiwg show skill instr-only --first');
+      expect(stderr).toContain('"executable": true');
+    } finally {
+      errSpy.mockRestore();
+    }
   });
 
   it('honors --cwd override', async () => {

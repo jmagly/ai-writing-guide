@@ -689,9 +689,10 @@ export async function showArtifact(
   // stem for agent/command/rule files.
   if (matches.length === 0) {
     matches = candidates.filter(e => {
-      const stem = path.basename(path.dirname(e.path));
+      const dirStem = path.basename(path.dirname(e.path));
+      const basename = path.basename(e.path);
       const fileStem = path.basename(e.path).replace(/\.[^.]+$/, '');
-      return stem === needle || fileStem === needle;
+      return (basename === 'SKILL.md' && dirStem === needle) || fileStem === needle;
     });
   }
 

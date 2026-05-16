@@ -120,6 +120,91 @@ function statusEmoji(status) {
   }
 }
 
+function normalizeRegistryFrameworks(registry) {
+  if (!registry || !registry.frameworks) return [];
+
+  const entries = Array.isArray(registry.frameworks)
+    ? registry.frameworks.map((data) => [data?.id, data])
+    : Object.entries(registry.frameworks);
+
+  return entries
+    .filter(([id]) => typeof id === 'string' && id.length > 0)
+    .map(([id, data]) => ({
+      id,
+      type: data.type || 'framework',
+      version: data.version || 'unknown',
+      health: data.health || 'healthy',
+      installDate: data.installed || data.installedAt || data['install-date'] || 'unknown'
+    }));
+}
+
+async function countDirEntries(dirPath) {
+  try {
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+    return entries.length;
+  } catch {
+    return 0;
+  }
+}
+
+async function collectProviderDeployments(projectRoot) {
+  const providers = [
+    { name: 'claude-code', path: '.claude', artifactDirs: ['agents', 'commands', 'skills', 'rules', 'behaviors'] },
+    { name: 'codex', path: '.codex', artifactDirs: ['agents', 'prompts', 'skills', 'rules'] },
+    { name: 'copilot', path: '.github', artifactDirs: ['prompts', 'instructions'] },
+    { name: 'cursor', path: '.cursor', artifactDirs: ['agents', 'commands', 'skills', 'rules'] },
+    { name: 'opencode', path: '.opencode', artifactDirs: ['agent', 'command', 'skill', 'rule'] },
+    { name: 'warp', path: '.warp', artifactDirs: ['agents', 'commands', 'skills', 'rules'] },
+    { name: 'universal', path: '.agents', artifactDirs: ['agents', 'commands', 'skills', 'rules'] }
+  ];
+
+  const deployments = [];
+  for (const provider of providers) {
+    const providerPath = path.join(projectRoot, provider.path);
+    try {
+      await fs.access(providerPath);
+    } catch {
+      continue;
+    }
+
+    const counts = {};
+    for (const dir of provider.artifactDirs) {
+      const count = await countDirEntries(path.join(providerPath, dir));
+      if (count > 0) counts[dir] = count;
+    }
+    deployments.push({
+      name: provider.name,
+      path: provider.path,
+      counts
+    });
+  }
+  return deployments;
+}
+
+async function collectProjectLocalBundles(aiwgPath, installedFrameworkIds = new Set()) {
+  const bundleDirs = ['extensions', 'addons', 'frameworks', 'plugins'];
+  const bundles = [];
+  for (const type of bundleDirs) {
+    const typeDir = path.join(aiwgPath, type);
+    let entries;
+    try {
+      entries = await fs.readdir(typeDir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    const names = entries
+      .filter(entry => entry.isDirectory())
+      .filter(entry => type !== 'frameworks' || !installedFrameworkIds.has(entry.name))
+      .map(entry => entry.name)
+      .sort();
+    if (names.length > 0) {
+      bundles.push({ type, count: names.length, names });
+    }
+  }
+  return bundles;
+}
+
 // ===========================
 // Main Status Flow
 // ===========================
@@ -146,6 +231,8 @@ async function workspaceStatus(args) {
         isFrameworkScoped: false
       },
       frameworks: [],
+      providerDeployments: [],
+      projectLocalBundles: [],
       health: {
         overall: 'unknown',
         issues: []
@@ -231,19 +318,16 @@ async function workspaceStatus(args) {
     try {
       const registryContent = await fs.readFile(registryPath, 'utf8');
       const registry = JSON.parse(registryContent);
-
-      if (registry.frameworks) {
-        result.frameworks = Object.entries(registry.frameworks).map(([id, data]) => ({
-          id,
-          type: data.type || 'framework',
-          version: data.version || 'unknown',
-          health: data.health || 'unknown',
-          installDate: data['install-date'] || 'unknown'
-        }));
-      }
+      result.frameworks = normalizeRegistryFrameworks(registry);
     } catch {
       // Registry not found or invalid
     }
+
+    result.providerDeployments = await collectProviderDeployments(options.projectRoot);
+    result.projectLocalBundles = await collectProjectLocalBundles(
+      aiwgPath,
+      new Set(result.frameworks.map(framework => framework.id))
+    );
 
     // Determine overall health
     if (result.frameworks.length === 0) {
@@ -310,7 +394,7 @@ async function workspaceStatus(args) {
     console.log('');
 
     // Frameworks
-    console.log('Installed Frameworks:');
+    console.log('Installed Frameworks (registry):');
     if (result.frameworks.length === 0) {
       console.log('  (none)');
       console.log('');
@@ -327,6 +411,31 @@ async function workspaceStatus(args) {
           console.log(`     Health: ${framework.health}`);
           console.log(`     Installed: ${framework.installDate}`);
         }
+      }
+    }
+    console.log('');
+
+    // Provider deployment summary
+    console.log('Provider Deployments:');
+    if (result.providerDeployments.length === 0) {
+      console.log('  (none detected)');
+    } else {
+      for (const deployment of result.providerDeployments) {
+        const counts = Object.entries(deployment.counts)
+          .map(([kind, count]) => `${kind}: ${count}`)
+          .join('   ');
+        console.log(`  ${deployment.name.padEnd(16)} ${deployment.path.padEnd(12)} ${counts || '(no artifacts counted)'}`);
+      }
+    }
+    console.log('');
+
+    // Project-local bundle summary
+    console.log('Project-local Bundles:');
+    if (result.projectLocalBundles.length === 0) {
+      console.log('  (none detected)');
+    } else {
+      for (const group of result.projectLocalBundles) {
+        console.log(`  ${group.type.padEnd(12)} ${group.count} (${group.names.join(', ')})`);
       }
     }
     console.log('');

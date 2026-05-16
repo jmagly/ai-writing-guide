@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { queryIndex } from '../../../src/artifacts/query-engine.js';
+import { queryIndex, showArtifact } from '../../../src/artifacts/query-engine.js';
 import { INDEX_DIR } from '../../../src/artifacts/types.js';
 import type { ArtifactIndex, MetadataEntry } from '../../../src/artifacts/types.js';
 
@@ -154,5 +154,50 @@ describe('Artifact Query Engine', () => {
 
     exitSpy.mockRestore();
     fs.rmSync(emptyDir, { recursive: true, force: true });
+  });
+
+  it('shows a skill SKILL.md by directory name without matching companion docs', async () => {
+    const skillPath = '.aiwg/skills/project-status/SKILL.md';
+    const helperPath = '.aiwg/skills/project-status/heuristic-fallback.md';
+    fs.mkdirSync(path.join(tmpDir, '.aiwg', 'skills', 'project-status'), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, '.aiwg', '.index', 'project'), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, skillPath), '# Project Status\n');
+    fs.writeFileSync(path.join(tmpDir, helperPath), '# Heuristic Fallback\n');
+
+    const projectIndex: ArtifactIndex = {
+      version: '1.0.0',
+      builtAt: '2026-05-16T00:00:00Z',
+      buildTimeMs: 1,
+      entries: {
+        [skillPath]: createMockEntry({
+          path: skillPath,
+          type: 'skill',
+          title: 'project-status',
+          summary: 'Cross-framework project status aggregator.',
+        }),
+        [helperPath]: createMockEntry({
+          path: helperPath,
+          type: 'skill',
+          title: 'heuristic-fallback',
+          summary: 'Companion fallback documentation.',
+        }),
+      },
+    };
+    fs.writeFileSync(
+      path.join(tmpDir, '.aiwg', '.index', 'project', 'metadata.json'),
+      JSON.stringify(projectIndex),
+    );
+
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    let output = '';
+    try {
+      await showArtifact(tmpDir, { typeFilter: ['skill'], name: 'project-status', graph: 'project' });
+      output = stdoutSpy.mock.calls.map(c => String(c[0])).join('');
+    } finally {
+      stdoutSpy.mockRestore();
+    }
+
+    expect(output).toContain('# Project Status');
+    expect(consoleErrorSpy).not.toHaveBeenCalledWith(expect.stringContaining('Ambiguous'));
   });
 });

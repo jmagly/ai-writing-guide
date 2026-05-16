@@ -8,7 +8,9 @@ description: Display workspace status dashboard showing installed frameworks, de
 
 # Status
 
-You display a comprehensive workspace status dashboard: installed frameworks and addons with versions, deployed provider directories, `.aiwg/` artifact counts by subdirectory, last sync time, and overall health indicators.
+You display a comprehensive workspace inventory dashboard: registry-installed frameworks and addons with versions, deployed provider artifact directories, project-local bundles, `.aiwg/` artifact counts by subdirectory, last sync time, and overall health indicators.
+
+This skill is for **workspace inventory / install health**. It is not the cross-framework **project status** aggregator. If the user asks for `project-status`, "where are we?", "what is next?", or SDLC project progress, route through `aiwg discover "project status"` and load the `project-status` skill instructions instead.
 
 ## Triggers
 
@@ -28,6 +30,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Framework inventory | "what frameworks are installed?" | Run `aiwg status` |
 | Artifact counts | "how many requirements do I have?" | Run `aiwg status` |
 | Deployment check | "what's deployed to copilot?" | Run `aiwg status` |
+| Project progress | "project-status" / "where are we?" | Do **not** run `aiwg status`; use `aiwg discover "project status"` then `aiwg show skill project-status --first` |
 
 ## Behavior
 
@@ -37,6 +40,7 @@ When triggered:
    - `status` is a **read-only summary** — it reports current state without running active checks or attempting repairs.
    - `doctor` runs active health checks and can suggest or apply fixes.
    - When users ask "is something wrong?", prefer `doctor`. When they ask "what do I have?", prefer `status`.
+   - When users ask for project progress, SDLC phase, or next work, prefer `project-status` / `project-health-check`, not this workspace inventory command.
 
 2. **Run the command**:
 
@@ -46,8 +50,9 @@ When triggered:
    ```
 
 3. **What the dashboard shows**:
-   - Installed frameworks and addons (name, version, install date)
-   - Deployed provider directories (e.g., `.claude/`, `.github/`, `.cursor/`)
+   - Installed frameworks and addons from `.aiwg/frameworks/registry.json` (name, version, install date)
+   - Deployed provider artifact directories (e.g., `.claude/`, `.github/`, `.cursor/`)
+   - Project-local bundles under `.aiwg/{extensions,addons,frameworks,plugins}/`
    - `.aiwg/` artifact counts per subdirectory (`requirements/`: 4 files, `architecture/`: 2 files, etc.)
    - Last sync timestamp
    - Overall health indicator (OK / WARN / ERROR)
@@ -72,7 +77,7 @@ aiwg status
 AIWG Workspace Status
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Frameworks & Addons
+Installed Frameworks (registry)
   sdlc-complete       v2026.3.15   installed 2026-03-20
   aiwg-utils          v2026.3.15   installed 2026-03-20
   voice-framework     v2026.3.15   installed 2026-03-20
@@ -80,6 +85,9 @@ Frameworks & Addons
 Provider Deployments
   claude-code         .claude/          agents: 58   commands: 42
   copilot             .github/          agents: 58   prompts: 42
+
+Project-local Bundles
+  extensions          1 (agent-ops-control)
 
 .aiwg/ Artifacts
   intake/             2 files
@@ -134,13 +142,13 @@ aiwg status
 aiwg status
 ```
 
-**Response**: Shows the Frameworks & Addons section. If nothing is installed yet: "No frameworks installed. Run `aiwg use sdlc` to deploy the SDLC framework."
+**Response**: Shows the Installed Frameworks (registry), Provider Deployments, and Project-local Bundles sections. If nothing is installed yet: "No frameworks installed. Run `aiwg use sdlc` to deploy the SDLC framework."
 
 ## Clarification Prompts
 
 If the user's intent is ambiguous:
 
-- "Are you looking for a quick summary (`aiwg status`) or a full health check with active diagnostics (`aiwg doctor`)?"
+- "Are you looking for workspace inventory (`aiwg status`), active diagnostics (`aiwg doctor`), or project progress (`project-status`)?"
 
 ## References
 

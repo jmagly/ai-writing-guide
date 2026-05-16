@@ -91,13 +91,25 @@ Pair with the `aiwg-steward` agent (always-deployed) for orchestrated repair: he
 
 **Discovery commands stay direct** — `aiwg discover`, `aiwg show`, `aiwg list`, `aiwg version`, `aiwg runtime-info`, status/info subcommands. They have no paired "priming skill" because they ARE the priming entry points.
 
+### Status intent disambiguation
+
+Route these phrases carefully:
+
+| User intent | Use |
+|---|---|
+| Workspace inventory, installed frameworks, deployed provider files | `aiwg-status` / `aiwg status` |
+| Cross-framework project progress, "project-status", "where are we?", "what is next?" | `aiwg discover "project status"` → `aiwg show skill project-status --first` |
+| SDLC-specific project health or lifecycle gate status | `aiwg discover "SDLC project health check"` and prefer `project-health-check` or `orchestrate-project` when those rank above generic workspace inventory |
+
+Do not answer `project-status` by running only `aiwg status`; that command reports workspace install/deployment inventory, not project progress.
+
 When a user wants to **file an issue or open a PR**, route them through `aiwg-issue` / `aiwg-pr` first. Both are kernel skills (in context) and reference `steward-prep-delivery` (which provides a runnable duplicate-detection helper).
 
 ## Capability domains
 
 | Domain | Covers |
 |---|---|
-| **Workspace status & health** | Project status, doctor, version, runtime info |
+| **Workspace status & health** | Workspace inventory, project status, doctor, version, runtime info |
 | **Lookup & query** | Capability discovery, KB query, artifact lookup, AIWG help |
 | **Maintenance** | Refresh, deploy, hooks, regenerate context files |
 | **Mentions & traceability** | @-mention validation, lint, wiring across files |
@@ -113,8 +125,8 @@ aiwg discover "aiwg status"                    # → aiwg-status
 aiwg discover "aiwg doctor"                    # → aiwg-doctor
 aiwg discover "version"                        # → version
 aiwg discover "runtime info"                   # → runtime-info
-aiwg discover "project status"                 # → project-status
-aiwg discover "project health check"           # → project-health-check
+aiwg discover "project status"                 # → project-status (cross-framework project progress; then `aiwg show skill project-status --first`)
+aiwg discover "SDLC project health check"       # → project-health-check / orchestrate-project
 aiwg discover "workspace health"               # → workspace-health
 ```
 

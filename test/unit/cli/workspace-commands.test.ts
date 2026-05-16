@@ -105,6 +105,60 @@ describe('Workspace CLI Commands', () => {
         console.log = originalLog;
       }
     });
+
+    it('should load array-shaped registry entries and separate deployments from project-local bundles', async () => {
+      await fs.mkdir(path.join(aiwgDir, 'frameworks', 'ops-complete', 'repo'), { recursive: true });
+      await fs.mkdir(path.join(aiwgDir, 'extensions', 'agent-ops-control'), { recursive: true });
+      await fs.mkdir(path.join(testDir, '.codex', 'agents'), { recursive: true });
+      await fs.writeFile(path.join(testDir, '.codex', 'agents', 'ops-agent.md'), '# Ops agent');
+
+      const registry = {
+        version: '1.0.0',
+        created: '2026-05-11T22:50:04.581Z',
+        frameworks: [
+          {
+            id: 'ops-complete',
+            installed: '2026-05-11T22:50:04.581Z',
+            version: '1.0.0'
+          }
+        ]
+      };
+      await fs.writeFile(
+        path.join(aiwgDir, 'frameworks', 'registry.json'),
+        JSON.stringify(registry, null, 2)
+      );
+
+      const { workspaceStatus } = await import('../../../tools/cli/workspace-status.mjs');
+
+      const logs: string[] = [];
+      const originalLog = console.log;
+      console.log = (...args) => logs.push(args.join(' '));
+
+      try {
+        await workspaceStatus(['--json', testDir]);
+        const output = JSON.parse(logs[0]);
+        expect(output.frameworks).toHaveLength(1);
+        expect(output.frameworks[0]).toMatchObject({
+          id: 'ops-complete',
+          version: '1.0.0',
+          installDate: '2026-05-11T22:50:04.581Z'
+        });
+        expect(output.providerDeployments).toEqual([
+          {
+            name: 'codex',
+            path: '.codex',
+            counts: { agents: 1 }
+          }
+        ]);
+        expect(output.projectLocalBundles).toEqual(
+          expect.arrayContaining([
+            { type: 'extensions', count: 1, names: ['agent-ops-control'] }
+          ])
+        );
+      } finally {
+        console.log = originalLog;
+      }
+    });
   });
 
   describe('workspace-rollback', () => {

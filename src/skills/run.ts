@@ -128,7 +128,8 @@ export async function runSkill(opts: RunSkillOptions): Promise<number> {
   }
   if (!entry.script) {
     console.error(`Error: skill "${opts.name}" is instructional only — it has no script entrypoint to run.`);
-    console.error(`Read its instructions with: aiwg show skill ${opts.name}`);
+    console.error(`Read its instructions with: aiwg show skill ${opts.name} --first`);
+    console.error('If you need an executable skill, run `aiwg discover "<phrase>" --json` and choose an entry with "executable": true.');
     return 1;
   }
   const skillDir = resolveSkillDir(entry, opts.cwd, aiwgRoot);
