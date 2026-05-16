@@ -180,15 +180,23 @@ Use a final summarization agent to condense all results.
 
 **Cost note**: Adds one additional LLM call with full context of all results.
 
-### --max-parallel (default: 4)
+### --max-parallel (default: resolved from aiwg.config, fallback 4)
 Maximum number of sub-agents running concurrently.
+
+**Default resolution** (precedence — smallest wins, #1360):
+
+1. **`.aiwg/aiwg.config` `parallelism.max_parallel_subagents`** — the project's provider-scoped cap (#1359). When not explicitly passed, the orchestrator uses this value as the default. Read via `aiwg config get --project parallelism.max_parallel_subagents`.
+2. **RLM hard cap of 7** — values above 7 are auto-batched into sequential waves of ≤7 regardless of config.
+3. **Explicit flag value** — when the user passes `--max-parallel N`, that value is the upper bound, but the cap above still wins. The orchestrator should **warn and clamp** when `N > resolved_cap`, not fail.
+4. **Fallback default of 4** — when no config exists, mid-sweet-spot per REF-088.
+
+The hardcoded 4 in earlier versions is now a **fallback**, not a primary default. Projects with `parallelism.max_parallel_subagents=10` (e.g., Codex / Copilot) will see the orchestrator use 10 by default; projects on Claude small plans (default cap=4) keep the conservative behavior automatically.
 
 **Guidelines** (aligned with Rule 8 of `rlm-context-management`):
 
-- Default: 4 — mid-sweet-spot per REF-088 (GRADE: VERY LOW), n*(n-1)/2 = 6 communication paths, fits all `AIWG_CONTEXT_WINDOW` tiers ≥65k
 - Recommended range: 3-5 for most tasks, 5-7 for complex tasks
 - **Hard cap: 7** — values >7 are auto-batched into sequential waves of ≤7. Per REF-086 (GRADE: LOW), independent multi-agent error amplification grows nonlinearly past the small-team coordination range
-- **Context-budget interaction**: when `AIWG_CONTEXT_WINDOW` is set, the smaller of the budget cap and the 7-agent hard cap applies. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md`
+- **Context-budget interaction**: when `AIWG_CONTEXT_WINDOW` is set, the smallest of the provider cap, the budget cap, and the 7-agent hard cap applies. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md` Rule 6 and `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md` Rule 8 for the full composition formula.
 
 **Rate limits**:
 - Claude API: 50 requests/minute

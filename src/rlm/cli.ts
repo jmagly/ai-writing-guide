@@ -19,6 +19,69 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+
+/**
+ * Resolve the effective `--parallel` / `--max-parallel` value for RLM CLI
+ * commands, composing all applicable caps. Returns:
+ *   { effective, source, clamped, hardCapHit }
+ *
+ * Precedence (smallest wins):
+ *   1. `parallelism.max_parallel_subagents` from `.aiwg/aiwg.config` (#1359)
+ *   2. The RLM Rule 8 hard cap of 7
+ *   3. The user-supplied flag value (or hardcoded fallback when unset)
+ *
+ * When the user passes a value above the cap, we warn and clamp. When no
+ * flag is passed, we use the resolved cap directly as the default — that is
+ * the whole point of the project-level config.
+ *
+ * @implements #1360
+ */
+export async function resolveRlmParallel(
+  userValue: number | undefined,
+  fallbackDefault: number,
+  projectDir: string = process.cwd(),
+): Promise<{ effective: number; source: string; warning?: string }> {
+  const RLM_HARD_CAP = 7;
+  try {
+    const { readAiwgConfig, resolveParallelism } = await import('../config/aiwg-config.js');
+    const cfg = await readAiwgConfig(projectDir);
+    if (!cfg) {
+      // No config — fall back to user value or fallback default, still clamped to RLM hard cap
+      const intended = userValue ?? fallbackDefault;
+      if (intended > RLM_HARD_CAP) {
+        return {
+          effective: RLM_HARD_CAP,
+          source: 'rlm-hard-cap',
+          warning: `--parallel=${intended} clamped to ${RLM_HARD_CAP} (RLM Rule 8 hard cap)`,
+        };
+      }
+      return { effective: intended, source: userValue !== undefined ? 'user-flag' : 'fallback-default' };
+    }
+    const resolved = resolveParallelism(cfg.parallelism, cfg.providers[0]);
+    const providerCap = resolved.max_parallel_subagents;
+    const effectiveCap = Math.min(providerCap, RLM_HARD_CAP);
+    if (userValue === undefined) {
+      // No flag — use the resolved cap as the default
+      return { effective: effectiveCap, source: providerCap <= RLM_HARD_CAP ? 'provider-default' : 'rlm-hard-cap' };
+    }
+    if (userValue > effectiveCap) {
+      const reason = providerCap < RLM_HARD_CAP
+        ? `parallelism.max_parallel_subagents=${providerCap}`
+        : `RLM Rule 8 hard cap of ${RLM_HARD_CAP}`;
+      return {
+        effective: effectiveCap,
+        source: providerCap < RLM_HARD_CAP ? 'provider-cap-clamp' : 'rlm-hard-cap',
+        warning: `--parallel=${userValue} clamped to ${effectiveCap} (${reason})`,
+      };
+    }
+    return { effective: userValue, source: 'user-flag' };
+  } catch {
+    // Config read failed — fall back to user value or fallback default
+    const intended = userValue ?? fallbackDefault;
+    return { effective: Math.min(intended, RLM_HARD_CAP), source: 'fallback' };
+  }
+}
+
 /**
  * Main CLI entry point for RLM agentic tool subcommands
  */
@@ -184,13 +247,15 @@ async function handleChunk(args: string[]): Promise<void> {
 async function handleFanout(args: string[]): Promise<void> {
   let query: string | undefined;
   let chunksPath: string | undefined;
-  let parallel = 5;
+  let userParallel: number | undefined;
   let model = 'sonnet';
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
       case '--chunks': chunksPath = args[++i]; break;
-      case '--parallel': parallel = parseInt(args[++i], 10); break;
+      case '--parallel':
+      case '--max-parallel':
+        userParallel = parseInt(args[++i], 10); break;
       case '--model': model = args[++i]; break;
       default:
         if (!args[i].startsWith('--')) query = args[i];
@@ -200,6 +265,11 @@ async function handleFanout(args: string[]): Promise<void> {
   if (!query || !chunksPath) {
     throw new Error('Usage: aiwg fanout <query> --chunks <dir|manifest.json> [--parallel N] [--model haiku|sonnet|opus]');
   }
+
+  // #1360: Resolve --parallel against aiwg.config parallelism cap (warn + clamp).
+  const resolved = await resolveRlmParallel(userParallel, 5);
+  const parallel = resolved.effective;
+  if (resolved.warning) console.warn(`⚠ ${resolved.warning}`);
 
   // Resolve manifest
   let manifestFile: string;
@@ -359,7 +429,7 @@ async function handleRlmSearch(args: string[]): Promise<void> {
   let query: string | undefined;
   let sourceArg: string | undefined;
   let depth = 3;
-  let parallel = 5;
+  let userParallel: number | undefined;
   let budget = 500000;
 
   for (let i = 0; i < args.length; i++) {
@@ -368,7 +438,7 @@ async function handleRlmSearch(args: string[]): Promise<void> {
       case '--depth': depth = parseInt(args[++i], 10); break;
       case '--parallel':
       case '--max-parallel':
-        parallel = parseInt(args[++i], 10);
+        userParallel = parseInt(args[++i], 10);
         break;
       case '--budget': budget = parseInt(args[++i], 10); break;
       case '--help':
@@ -385,6 +455,11 @@ async function handleRlmSearch(args: string[]): Promise<void> {
   if (!query || !sourceArg) {
     throw new Error('Usage: aiwg rlm-search <query> --source <file|dir> [--depth N] [--parallel N|--max-parallel N] [--budget N]');
   }
+
+  // #1360: Resolve --parallel against aiwg.config parallelism cap (warn + clamp).
+  const resolvedParallel = await resolveRlmParallel(userParallel, 5);
+  const parallel = resolvedParallel.effective;
+  if (resolvedParallel.warning) console.warn(`⚠ ${resolvedParallel.warning}`);
 
   const absoluteSource = path.resolve(sourceArg);
   const prepDir = path.join(process.cwd(), '.rlm-prep');
